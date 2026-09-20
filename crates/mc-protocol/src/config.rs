@@ -433,6 +433,18 @@ pub struct RegistryData {
     /// element payloads (the EntityType codec's data components) are
     /// walked past — the mob lane needs the NAME, nothing more.
     pub entity_types: Vec<String>,
+    /// The `minecraft:entity_type` TAG contents from the Update Tags
+    /// packet — javap: Registry Data itself is ELEMENTS ONLY (see
+    /// `timeline_tags`: the client's `handleUpdateTags` feeds a
+    /// SEPARATE common-phase `ClientboundUpdateTagsPacket` whose map
+    /// value is `TagNetworkSerialization$NetworkPayload` = a readMap
+    /// of tag name -> VarInt id list). Tag name -> member entity-type
+    /// ids (the `entity_types` arrival-order table resolves). The
+    /// chat's '#'-suggestion arms (the type= value walk's `getTags`
+    /// stream — `EntitySelectorOptions lambda$bootStrap$36`) read the
+    /// NAMES; the members are the tag's own identity (the
+    /// `#skeletons` roster the '#'-element MEANS).
+    pub entity_type_tags: Vec<(String, Vec<i32>)>,
     /// The `minecraft:sound_event` entries in ARRIVAL ORDER — the id
     /// table the Entity Sound packet's holder varint resolves through
     /// (`ByteBufCodecs.holder(Registries.SOUND_EVENT, ...)` — the same
@@ -580,6 +592,16 @@ impl RegistryData {
         self.biomes.get(id as usize)
     }
 
+    /// The entry ids one entity-type tag names (e.g.
+    /// `minecraft:skeletons` -> the skeleton/stray/... ids on a real
+    /// server) — `None` for a tag the server never sent.
+    pub fn entity_type_tag_ids(&self, tag: &str) -> Option<&[i32]> {
+        self.entity_type_tags
+            .iter()
+            .find(|(name, _)| name == tag)
+            .map(|(_, ids)| ids.as_slice())
+    }
+
     /// The entry ids one biome tag names (e.g. `minecraft:is_overworld`
     /// -> the plains/forest/... ids on a real server) — `None` for a
     /// tag the server never sent.
@@ -608,6 +630,7 @@ impl RegistryData {
         self.biome_tags.extend(other.biome_tags);
         self.world_clocks.extend(other.world_clocks);
         self.entity_types.extend(other.entity_types);
+        self.entity_type_tags.extend(other.entity_type_tags);
         self.sound_events.extend(other.sound_events);
         self.chicken_variants.extend(other.chicken_variants);
         self.pig_variants.extend(other.pig_variants);
@@ -1293,11 +1316,13 @@ fn read_biome_effects(effects: &Nbt) -> Option<BiomeEffects> {
 /// readMap of { Identifier tag name -> VarInt id list }). Registry
 /// Data is ELEMENTS ONLY — the tags ride THIS packet, and the
 /// client's `handleUpdateTags` feeds them to the registry collector
-/// alongside the elements. The `minecraft:timeline` AND
-/// `minecraft:worldgen/biome` payloads are retained (the two
-/// registries whose tags the client resolves references through —
-/// the dimension's `timelines` reference, and the biome tag
-/// membership the tint/tint-adjacent consumers resolve through);
+/// alongside the elements. The `minecraft:timeline`,
+/// `minecraft:worldgen/biome` AND `minecraft:entity_type` payloads
+/// are retained (the registries whose tags the client resolves
+/// references or suggestions through — the dimension's `timelines`
+/// reference, the biome tag membership the tint/tint-adjacent
+/// consumers resolve through, and the entity-type tag names the
+/// chat's '#'-suggestion arms the `bootStrap$36` walk banks);
 /// every other registry's tags are walked past.
 pub fn parse_update_tags(payload: &[u8]) -> Result<RegistryData> {
     let mut c: &[u8] = payload;
@@ -1333,6 +1358,8 @@ pub fn parse_update_tags(payload: &[u8]) -> Result<RegistryData> {
                 out.timeline_tags.push((tag_name, ids));
             } else if registry_name == "minecraft:worldgen/biome" {
                 out.biome_tags.push((tag_name, ids));
+            } else if registry_name == "minecraft:entity_type" {
+                out.entity_type_tags.push((tag_name, ids));
             }
         }
     }
@@ -1901,17 +1928,20 @@ pub mod test_support {
         p
     }
 
-    /// An Update Tags packet: THREE registries — `minecraft:timeline`
+    /// An Update Tags packet: FOUR registries — `minecraft:timeline`
     /// with the REAL built-in tag contents (in_overworld = the day/
     /// moon/early_game ids, universal = the villager_schedule id),
     /// `minecraft:worldgen/biome` whose tag the client RETAINS (the
-    /// tint consumers' membership table), and a walked-past block tag
-    /// registry (the shape a real server's huge block tag map rides
-    /// in).
+    /// tint consumers' membership table), `minecraft:entity_type`
+    /// whose tags the chat's '#'-suggestion arms read (skeletons =
+    /// the skeleton/stray ids, undead = the stray id — the members
+    /// resolve through the entity_type arrival-order table), and a
+    /// walked-past block tag registry (the shape a real server's huge
+    /// block tag map rides in).
     pub fn update_tags_packet() -> Vec<u8> {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::UPDATE_TAGS);
-        write_varint(&mut p, 3); // three registries
+        write_varint(&mut p, 4); // four registries
         // registry 1: the timeline tags the client retains
         write_string(&mut p, "minecraft:timeline");
         write_varint(&mut p, 2); // two tags
@@ -1929,7 +1959,18 @@ pub mod test_support {
         write_string(&mut p, "minecraft:is_overworld");
         write_varint(&mut p, 1);
         write_varint(&mut p, 0); // plains
-        // registry 3: walked past (nothing consumes block tags)
+        // registry 3: the entity-type tags the client retains (the
+        // chat's '#'-suggestion arms the tag NAMES answer)
+        write_string(&mut p, "minecraft:entity_type");
+        write_varint(&mut p, 2);
+        write_string(&mut p, "minecraft:skeletons");
+        write_varint(&mut p, 2);
+        write_varint(&mut p, 7); // skeleton
+        write_varint(&mut p, 9); // stray
+        write_string(&mut p, "minecraft:undead");
+        write_varint(&mut p, 1);
+        write_varint(&mut p, 9); // stray
+        // registry 4: walked past (nothing consumes block tags)
         write_string(&mut p, "minecraft:block");
         write_varint(&mut p, 1);
         write_string(&mut p, "minecraft:mineable/pickaxe");
@@ -2888,6 +2929,26 @@ mod tests {
         );
         assert_eq!(tags.biome_tag_ids("minecraft:is_forest"), None);
         assert!(tags.biomes.is_empty(), "tags carry names+ids, never elements");
+        // the entity-type tags are retained the same way (the chat's
+        // '#'-suggestion arms the tag NAMES the walk banks); the block
+        // registry's payload is walked past
+        assert_eq!(
+            tags.entity_type_tags,
+            vec![
+                ("minecraft:skeletons".to_string(), vec![7, 9]),
+                ("minecraft:undead".to_string(), vec![9]),
+            ]
+        );
+        assert_eq!(
+            tags.entity_type_tag_ids("minecraft:skeletons"),
+            Some(&[7, 9][..]),
+            "the skeleton/stray ids the tag's roster carries"
+        );
+        assert_eq!(tags.entity_type_tag_ids("minecraft:raiders"), None);
+        assert!(
+            tags.entity_types.is_empty(),
+            "tags carry names+ids, never elements"
+        );
         // wrong packet id is rejected, not guessed
         let mut wrong = Vec::new();
         write_varint(&mut wrong, 0x99);
@@ -2922,6 +2983,49 @@ mod tests {
         // the tag payload accumulate into one RegistryData
         assert_eq!(merged.biome_tags, vec![("minecraft:is_overworld".to_string(), vec![0])]);
         assert!(merged.biomes.is_empty(), "this flow streamed no biome elements");
+        // the entity-type tag knowledge rides the merge too: the tag
+        // payload the update-tags packet carried lands beside the
+        // elements (the '#'-suggestion arms the join ships it for)
+        assert_eq!(
+            merged.entity_type_tags,
+            vec![
+                ("minecraft:skeletons".to_string(), vec![7, 9]),
+                ("minecraft:undead".to_string(), vec![9]),
+            ]
+        );
+        assert!(merged.entity_types.is_empty(), "this flow streamed no entity elements");
+        // the arrival-order roster the ids resolve through (a local
+        // ten-entry table — the fixture's two-entry packet is too small
+        // for the tag's ids to name)
+        let mut with_entities = RegistryData::default();
+        with_entities.entity_types = vec![
+            "minecraft:pig".to_string(),
+            "minecraft:zombie".to_string(),
+            "minecraft:creeper".to_string(),
+            "minecraft:spider".to_string(),
+            "minecraft:enderman".to_string(),
+            "minecraft:witch".to_string(),
+            "minecraft:vindicator".to_string(),
+            "minecraft:skeleton".to_string(),
+            "minecraft:bogged".to_string(),
+            "minecraft:stray".to_string(),
+        ];
+        with_entities.merge(merged.clone());
+        // the full chain the chat's tag lane resolves through: tag ->
+        // ids -> arrival-order names (the id the roster never named the
+        // honest drop keeps)
+        let members: Vec<&str> = with_entities
+            .entity_type_tag_ids("minecraft:skeletons")
+            .expect("tag")
+            .iter()
+            .filter_map(|&id| with_entities.entity_types.get(id as usize))
+            .map(|s| s.as_str())
+            .collect();
+        assert_eq!(
+            members,
+            vec!["minecraft:skeleton", "minecraft:stray"],
+            "tag -> ids -> arrival-order names, for entity types too"
+        );
         let mut with_biomes = parse_registry_data(&registry_packet(false)).expect("biomes");
         with_biomes.merge(merged);
         assert_eq!(with_biomes.biome_name(0), Some("minecraft:plains"));

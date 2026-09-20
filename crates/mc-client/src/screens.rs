@@ -1420,6 +1420,7 @@ fn local_selector_options_suggestions(
     bracket_idx: usize,
     token_start: usize,
     entity_types: &[String],
+    entity_type_tags: &[(String, Vec<String>)],
 ) -> ChatSuggestionSource {
     // the region after the '[' — the parseOptions walk's own ground
     let region = &sel_chars[bracket_idx + 1..];
@@ -1441,7 +1442,7 @@ fn local_selector_options_suggestions(
         // the value position: the option's own walk the 26.2
         // modifiers install (sort / gamemode / type the audited lanes
         // speak, the rest the honest ask keeps)
-        return local_selector_value_suggestions(tail, eq_idx, start, entity_types);
+        return local_selector_value_suggestions(tail, eq_idx, start, entity_types, entity_type_tags);
     }
     let tail_lc = tail.to_lowercase();
     let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = SELECTOR_OPTIONS
@@ -1549,14 +1550,22 @@ fn selector_type_id_matches(rest_lc: &str, id: &str) -> bool {
 /// `Strings.commonPrefix(remaining, prefix)` gate keeps (the arm's
 /// suggestions ONLY when the remaining starts with the prefix), the
 /// positive arm the no-prefix filter on the FULL remaining wears.
-/// The TAG arms (`#` + `!#` prefixes, the registry's `getTags`
-/// stream the walk maps) the house's empty tag table never fires —
-/// the `if (!tags.isEmpty())` gate the honest absence keeps (the
-/// Update-Tags packet's entity-type tags the config phase walked
-/// past, the parse still accepts any tag id the canParseTag
-/// set-membership law speaks).
+/// The TAG ARMS (`#` + `!#` prefixes, the registry's `getTags`
+/// stream the walk maps) the table's non-emptiness gates — javap
+/// `bootStrap$36`: `state.canParseAnyTag()` (the fresh state the
+/// committed simplification keeps — NONE the != SINGLE law answers),
+/// the tags the `HolderSet$Named -> Identifier` map names, the
+/// `state::canParseTag` filter the fresh state's empty parsed-set
+/// passes whole, the filtered list's `!isEmpty()` the BOTH arms
+/// gate keeps, `suggestResource(list, builder, "#")` then
+/// `suggestResource(list, builder, "!#")` — the commonPrefix gate
+/// the prefixed walk wears (the remaining the prefix never starts
+/// with the arm's silence keeps, the bare '#' the empty rest the
+/// forEach arm answers — EVERY tag), the `prefix + tag` text the
+/// accept carries, no tooltips.
 fn local_selector_type_value_suggestions(
     entity_types: &[String],
+    entity_type_tags: &[(String, Vec<String>)],
     element: &str,
 ) -> Vec<mc_protocol::play::CommandSuggestionsMatch> {
     let remaining_lc = element.to_lowercase();
@@ -1574,6 +1583,21 @@ fn local_selector_type_value_suggestions(
         for id in entity_types {
             matches.push(mc_protocol::play::CommandSuggestionsMatch {
                 text: id.clone(),
+                tooltip: None,
+            });
+        }
+        // the tag arms the non-empty table fires (the bytecode's own
+        // arm order: '#' then '!#', the forEach arm ALL tags answers,
+        // the merge sort the final order wears)
+        for (tag, _) in entity_type_tags {
+            matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                text: format!("#{tag}"),
+                tooltip: None,
+            });
+        }
+        for (tag, _) in entity_type_tags {
+            matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                text: format!("!#{tag}"),
                 tooltip: None,
             });
         }
@@ -1598,6 +1622,34 @@ fn local_selector_type_value_suggestions(
                 text: id.clone(),
                 tooltip: None,
             });
+        }
+    }
+    // the tag arms the non-empty table fires: the commonPrefix gate
+    // the prefixed suggestResource keeps — '#' the single-char prefix
+    // banks, '!#' the two-char pair (the bare '#' the empty rest the
+    // forEach arm answers — EVERY tag, the typed tail the
+    // namespace-OR-path filter keeps), the prefix+tag text the accept
+    // carries
+    if !entity_type_tags.is_empty() {
+        if let Some(rest) = remaining_lc.strip_prefix('#') {
+            for (tag, _) in entity_type_tags {
+                if selector_type_id_matches(rest, tag) {
+                    matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                        text: format!("#{tag}"),
+                        tooltip: None,
+                    });
+                }
+            }
+        }
+        if let Some(rest) = remaining_lc.strip_prefix("!#") {
+            for (tag, _) in entity_type_tags {
+                if selector_type_id_matches(rest, tag) {
+                    matches.push(mc_protocol::play::CommandSuggestionsMatch {
+                        text: format!("!#{tag}"),
+                        tooltip: None,
+                    });
+                }
+            }
         }
     }
     matches
@@ -1631,6 +1683,7 @@ fn local_selector_value_suggestions(
     eq_idx: usize,
     tail_start: usize,
     entity_types: &[String],
+    entity_type_tags: &[(String, Vec<String>)],
 ) -> ChatSuggestionSource {
     // the key the readString walk banks (the whitespace the
     // skipWhitespace between key and '=' never counts), the value
@@ -1750,7 +1803,7 @@ fn local_selector_value_suggestions(
         // the type walk's own arms (lambda$bootStrap$36 + the
         // suggestResource pair) — see
         // [`local_selector_type_value_suggestions`]
-        matches = local_selector_type_value_suggestions(entity_types, element);
+        matches = local_selector_type_value_suggestions(entity_types, entity_type_tags, element);
     }
     // the Suggestions.merge sort (the compareToIgnoreCase law)
     matches.sort_by(|a, b| a.text.to_lowercase().cmp(&b.text.to_lowercase()));
@@ -1795,12 +1848,42 @@ fn local_argument_provider(parser: Option<&str>) -> bool {
     )
 }
 
+/// THE LOCAL SUGGESTION WALK'S OWN ENTRY (the 5-arg form the
+/// tag-table-less TEST callers keep — the honest absence the cold
+/// start answers: the '#' arms the empty table's silence keeps, the
+/// type= ID lanes the roster the caller ships speak; the frame
+/// thread's refresh speaks the tag-aware
+/// [`local_command_suggestions_with_tags`] directly). Test-only: the
+/// live build every caller carries the table (the refresh) or the
+/// tag-less ask the honest wrapper keeps is the dead lane the
+/// zero-warning law prunes.
+#[cfg(test)]
 pub fn local_command_suggestions(
     tree: &mc_protocol::play::CommandTree,
     input: &str,
     online_names: &[String],
     allow_selectors: bool,
     entity_types: &[String],
+) -> ChatSuggestionSource {
+    local_command_suggestions_with_tags(tree, input, online_names, allow_selectors, entity_types, &[])
+}
+
+/// THE LOCAL SUGGESTION WALK (the vanilla
+/// `SharedSuggestionProvider`-shaped provider the 26.2 chat opens
+/// before the server's own reply — the tree's literals the walk
+/// descends, the entity slots the local entity lane answers, the
+/// tag table the synced Update Tags packet the '#' arms bank: the
+/// `EntitySelectorOptions lambda$bootStrap$36` walk the
+/// `state.canParseAnyTag()` gate + the filtered list's `!isEmpty()`
+/// the BOTH '#' arms keep). `entity_type_tags` = the join-resolved
+/// tag name -> member NAMES pairs (see `App::entity_type_tags`).
+pub fn local_command_suggestions_with_tags(
+    tree: &mc_protocol::play::CommandTree,
+    input: &str,
+    online_names: &[String],
+    allow_selectors: bool,
+    entity_types: &[String],
+    entity_type_tags: &[(String, Vec<String>)],
 ) -> ChatSuggestionSource {
     let Some(rest) = input.strip_prefix('/') else {
         return ChatSuggestionSource::AskServer;
@@ -1898,6 +1981,7 @@ pub fn local_command_suggestions(
                 online_names,
                 allow_selectors,
                 entity_types,
+                entity_type_tags,
             );
         }
         // no local provider speaks the slot — the ask lane answers
@@ -1945,6 +2029,7 @@ fn local_entity_suggestions(
     online_names: &[String],
     allow_selectors: bool,
     entity_types: &[String],
+    entity_type_tags: &[(String, Vec<String>)],
 ) -> ChatSuggestionSource {
     let partial_str: String = partial.iter().collect();
     let partial_lc = partial_str.to_lowercase();
@@ -1955,7 +2040,7 @@ fn local_entity_suggestions(
         // the '@' walk: the '[' the options walk opens — the name
         // positions the local lane answers, the value states the ask
         if let Some(bracket_idx) = sel_chars.find('[') {
-            return local_selector_options_suggestions(sel_chars, bracket_idx, token_start, entity_types);
+            return local_selector_options_suggestions(sel_chars, bracket_idx, token_start, entity_types, entity_type_tags);
         }
         if !allow_selectors {
             // the selectors the permission gate never names — the '@'
@@ -2396,6 +2481,15 @@ pub enum LoginResult {
         /// the App's roster answers from now on; the empty vec the
         /// snapshot's registry never shipped).
         entity_types: Vec<String>,
+        /// THE ENTITY-TYPE TAG TABLE'S OWN LANE (the synced Update
+        /// Tags packet's `minecraft:entity_type` payload — the tag
+        /// name -> member NAMES the join resolves through the
+        /// arrival-order roster, the id the roster never named the
+        /// honest drop keeps; the chat's '#'-suggestion arms the
+        /// bootStrap$36 walk the table's non-emptiness gates; the
+        /// empty vec the snapshot never shipped — the arms the
+        /// silence keeps).
+        entity_type_tags: Vec<(String, Vec<String>)>,
     },
     /// The server refused or kicked (login disconnect, config kick or a
     /// play-state disconnect), reason flattened from chat.
@@ -3636,6 +3730,17 @@ pub struct App {
     /// keeps (the chat the milestone never reached the empty list
     /// answers — the honest absence).
     pub entity_types: Vec<String>,
+    /// THE ENTITY-TYPE TAG TABLE (the synced Update Tags packet's
+    /// `minecraft:entity_type` payload the join resolved — tag name
+    /// -> member NAMES; the chat's '#'-suggestion arms the
+    /// bootStrap$36 walk the table's NON-EMPTINESS gates, the tag
+    /// NAMES the `getTags` stream's own answer, the members the
+    /// tag's own identity the lane rides beside). The empty vec the
+    /// pre-join cold start keeps — the '#' arms the silence keeps
+    /// (the vanilla's own `!tags.isEmpty()` gate the absence
+    /// answers), the parse still accepts any tag id the canParseTag
+    /// law speaks.
+    pub entity_type_tags: Vec<(String, Vec<String>)>,
     /// THE TAB KEY'S HELD STATE (the vanilla extractTabList's
     /// `keyPlayerList.isDown()` gate): true while TAB sleeps on the
     /// keyboard — the overlay renders only under this flag, the
@@ -4169,6 +4274,7 @@ impl App {
                 names: Vec::new(),
             },
             entity_types: Vec::new(),
+            entity_type_tags: Vec::new(),
             tab_held: false,
             hud_hidden: false,
             chat_open: false,
@@ -11633,7 +11739,7 @@ impl App {
             return;
         }
         match outcome {
-            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, skybox, fog, cloud_fog_end, entity_types, .. }) => {
+            Ok(LoginResult::Loaded { world, camera, spawn_biome, slim_arm, skybox, fog, cloud_fog_end, entity_types, entity_type_tags, .. }) => {
                 if self.screen == ScreenKind::Connect {
                     // the profile's skin model rides the join: the first
                     // world frame's lazy arm load reads THIS flag (set
@@ -11649,6 +11755,9 @@ impl App {
                     // (the chat's type= walk the table answers from
                     // now on — the session's life the sync outlives)
                     self.live_entity_types_updated(entity_types);
+                    // the tag table rides beside the roster (the
+                    // chat's '#'-suggestion arms the names answer)
+                    self.live_entity_type_tags_updated(entity_type_tags);
                     self.enter_network_world(spawn_biome, skybox, fog, cloud_fog_end);
                 } else {
                     // a late success after Escape: the join is cancelled —
@@ -12485,6 +12594,15 @@ impl App {
         self.entity_types = entity_types;
     }
 
+    /// THE ENTITY-TYPE TAG TABLE'S OWN LANE (the join milestone's
+    /// one-shot ship — the synced Update Tags payload lands resolved
+    /// and stands for the session's life, the '#'-suggestion arms
+    /// the table's non-emptiness the chat's fresh list answers from
+    /// now on).
+    pub fn live_entity_type_tags_updated(&mut self, entity_type_tags: Vec<(String, Vec<String>)>) {
+        self.entity_type_tags = entity_type_tags;
+    }
+
     /// THE TAB KEY'S OWN GATE (the vanilla extractTabList's
     /// `keyPlayerList.isDown()` walk — the held state the window loop
     /// polls each frame): the overlay's visibility rides it, the
@@ -12646,13 +12764,16 @@ impl App {
             // filter the overlay's rows wear never rides) + the
             // selector allowance (the 26.2 atom-permission lane the
             // house never reads — the server's own refusal the honest
-            // error, the walk the allowed default keeps)
-            match local_command_suggestions(
+            // error, the walk the allowed default keeps) + the tag
+            // table the join milestone banked (the '#' arms the
+            // bootStrap$36 walk the non-empty table answers)
+            match local_command_suggestions_with_tags(
                 &tree,
                 &self.chat_input,
                 &self.player_list.names,
                 true,
                 &self.entity_types,
+                &self.entity_type_tags,
             ) {
                 ChatSuggestionSource::Local {
                     start,
@@ -23794,12 +23915,264 @@ mod tests {
                 fog: None,
                 cloud_fog_end: None,
                 entity_types: vec!["minecraft:zombie".to_string()],
+                entity_type_tags: vec![(
+                    "minecraft:undead".to_string(),
+                    vec!["minecraft:zombie".to_string()],
+                )],
             }),
         );
         assert_eq!(
             app2.entity_types,
             vec!["minecraft:zombie".to_string()],
             "the join milestone the roster ships"
+        );
+        assert_eq!(
+            app2.entity_type_tags,
+            vec![(
+                "minecraft:undead".to_string(),
+                vec!["minecraft:zombie".to_string()],
+            )],
+            "the join milestone the tag table ships"
+        );
+    }
+
+    #[test]
+    fn the_selector_options_the_type_tag_lane_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        let types = vec![
+            "minecraft:pig".to_string(),
+            "minecraft:zombie".to_string(),
+            "minecraft:skeleton_horse".to_string(),
+        ];
+        // THE SYNCED TAG TABLE (the Update Tags packet's entity_type
+        // payload the join resolved — the tag name -> member NAMES
+        // pairs the '#'-suggestion arms the bootStrap$36 walk banks)
+        let tags = vec![
+            (
+                "minecraft:skeletons".to_string(),
+                vec![
+                    "minecraft:skeleton".to_string(),
+                    "minecraft:stray".to_string(),
+                ],
+            ),
+            (
+                "minecraft:undead".to_string(),
+                vec![
+                    "minecraft:zombie".to_string(),
+                    "minecraft:skeleton_horse".to_string(),
+                ],
+            ),
+        ];
+        // THE EMPTY ELEMENT (the forEach arm ALL four groups answers —
+        // the bytecode's own order '!' ids / bare ids / '#' tags /
+        // '!#' tags the merge sort the final order wears: '!#' the
+        // '!'-then-'#' texts first, the bare ids last)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions_with_tags(&tree, "/kill @a[type=", &[], true, &types, &tags)
+        else {
+            panic!("/kill @a[type= the four-group answer");
+        };
+        assert_eq!((start, length), (14, 0), "the after-'=' element span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![
+                "!#minecraft:skeletons",
+                "!#minecraft:undead",
+                "!minecraft:pig",
+                "!minecraft:skeleton_horse",
+                "!minecraft:zombie",
+                "#minecraft:skeletons",
+                "#minecraft:undead",
+                "minecraft:pig",
+                "minecraft:skeleton_horse",
+                "minecraft:zombie",
+            ],
+            "the both id arms + both tag arms the forEach law answers"
+        );
+        assert!(
+            matches.iter().all(|m| m.tooltip.is_none()),
+            "the plain suggest no tooltip wears"
+        );
+        // THE BARE '#' (the commonPrefix('#', '#') gate opens — the
+        // EMPTY rest the forEach arm answers, EVERY tag the '#' text
+        // wears; the id arms the '#' remaining never matches, the
+        // '!#' arm the commonPrefix('#','!#') emptiness keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions_with_tags(&tree, "/kill @a[type=#", &[], true, &types, &tags)
+        else {
+            panic!("/kill @a[type=# the tag arms answer");
+        };
+        assert_eq!((start, length), (14, 1), "the '#' the element span wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["#minecraft:skeletons", "#minecraft:undead"],
+            "the bare '#' every tag the '#' arm answers"
+        );
+        // THE BARE '!#' (the two-char prefix the commonPrefix keeps —
+        // the '#'-arm the silence wears, the '!#' arm EVERY tag)
+        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+            &tree, "/kill @a[type=!#", &[], true, &types, &tags,
+        ) else {
+            panic!("/kill @a[type=!# the inverted tag arm answers");
+        };
+        assert_eq!((start, length), (14, 2), "the '!#' the element span wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["!#minecraft:skeletons", "!#minecraft:undead"],
+            "the bare '!#' every tag the inverted arm answers"
+        );
+        // THE TYPED VALID TAIL (the tag lane the Identifier.read
+        // answers — 's' the lexically-valid id the parse COMPLETES,
+        // the tag's EXISTENCE the parse never asks, the post-value
+        // state the punctuation wears — the filtered tag arms the
+        // parse's own THROW only answers, see the invalid tail below)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions_with_tags(&tree, "/kill @a[type=#s", &[], true, &types, &tags)
+        else {
+            panic!("/kill @a[type=#s the post-value state answers");
+        };
+        assert_eq!(start, 16, "the parsed tag the parse end names");
+        assert_eq!(length, 0, "the parse cursor's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the valid tag tail the punctuation wears"
+        );
+        // THE FILTERED '#' (the parse's own throw the rollback keeps —
+        // 'SK' the Identifier validation refuses (the uppercase char
+        // the path charset never allows), the rolled-back walk the
+        // suggestResource answers: the remaining lowercases FIRST,
+        // the 'sk' tail the skeletons' path names, the undead's
+        // silence the no-match keeps)
+        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+            &tree,
+            "/kill @a[type=#SK",
+            &[],
+            true,
+            &types,
+            &tags,
+        ) else {
+            panic!("/kill @a[type=#SK the rolled-back walk answers");
+        };
+        assert_eq!((start, length), (14, 3), "the element span the throw wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["#minecraft:skeletons"],
+            "the folded tail the skeletons tag answers"
+        );
+        // THE FILTERED '!#' (the same throw law the inverted arm
+        // wears — 'U' the read refuses, the '!#' arm's own tail the
+        // undead's path names)
+        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+            &tree,
+            "/kill @a[type=!#U",
+            &[],
+            true,
+            &types,
+            &tags,
+        ) else {
+            panic!("/kill @a[type=!#U the rolled-back walk answers");
+        };
+        assert_eq!((start, length), (14, 3), "the '!#U' span the throw wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["!#minecraft:undead"],
+            "the '!#u' tail the undead tag answers"
+        );
+        // THE NAMESPACE PREFIX (the parse 'min' the valid id
+        // completes — the post-value state the punctuation wears,
+        // the namespace-prefix suggestions the THROW lane's own
+        // answer stay, see the 'SK' rollback above)
+        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+            &tree,
+            "/kill @a[type=#min",
+            &[],
+            true,
+            &types,
+            &tags,
+        ) else {
+            panic!("/kill @a[type=#min the post-value state answers");
+        };
+        assert_eq!(start, 18, "the parsed tag the parse end names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the valid tag tail the punctuation wears"
+        );
+        // THE UNKNOWN TAG (the tag's EXISTENCE the parse never asks —
+        // 'zz' the lexically-valid id the parse completes, the
+        // post-value state the punctuation wears, the never-parsed
+        // tag the never-refuted law keeps)
+        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+            &tree,
+            "/kill @a[type=#zz",
+            &[],
+            true,
+            &types,
+            &tags,
+        ) else {
+            panic!("/kill @a[type=#zz the post-value state answers");
+        };
+        assert_eq!(start, 17, "the parsed tag the parse end names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the unknown tag the parse still completes"
+        );
+        // THE COLD START (the tag table the snapshot never shipped —
+        // the empty vec the '#' arms the silence keeps, the ID arms
+        // the roster still speaks)
+        let Src::Local { matches, .. } =
+            local_command_suggestions_with_tags(&tree, "/kill @a[type=#", &[], true, &types, &[])
+        else {
+            panic!("/kill @a[type=# the cold start answers");
+        };
+        assert!(matches.is_empty(), "the empty table the '#' arms silent");
+        // THE COMPLETE TAG ELEMENT (the parse the canParseTag law
+        // never refutes — the tag's EXISTENCE the parse never asks,
+        // the non-empty table the punctuation still answers)
+        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+            &tree,
+            "/kill @a[type=#skeletons",
+            &[],
+            true,
+            &types,
+            &tags,
+        ) else {
+            panic!("/kill @a[type=#skeletons the post-value state answers");
+        };
+        assert_eq!(start, 24, "the parsed tag the parse end names");
+        assert_eq!(length, 0, "the parse cursor's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the tag element the punctuation wears"
+        );
+        // THE TAB APPLY (the selected tag the replace lands — the full
+        // '#minecraft:'-prefixed text the suggestion carries, the tag
+        // table the App's field banks, the refresh's own pass the
+        // '#' lane answers, no request spends)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        app.live_entity_types_updated(types.clone());
+        app.live_entity_type_tags_updated(tags.clone());
+        assert_eq!(app.entity_type_tags, tags, "the one-shot the table banks");
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[type=#".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the '#' lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[type=#minecraft:skeletons",
+            "the apply the full tag lands"
         );
     }
 
@@ -26142,6 +26515,7 @@ mod tests {
                 fog: None,
                 cloud_fog_end: None,
                 entity_types: Vec::new(),
+                entity_type_tags: Vec::new(),
             }),
         );
         assert_eq!(app.screen, ScreenKind::World, "the join lands in the network world");
@@ -26478,6 +26852,7 @@ mod tests {
                     fog,
                     cloud_fog_end,
                     entity_types: Vec::new(),
+                    entity_type_tags: Vec::new(),
                 }
             }
             mc_protocol::WorldOutcome::Disconnected { reason } => {
@@ -26702,6 +27077,7 @@ mod tests {
                 fog: None,
                 cloud_fog_end: None,
                 entity_types: Vec::new(),
+                entity_type_tags: Vec::new(),
             }),
         );
         assert_eq!(
@@ -34065,6 +34441,7 @@ cow_sound_variant: None,
                 fog: None,
                 cloud_fog_end: None,
                 entity_types: Vec::new(),
+                entity_type_tags: Vec::new(),
             }),
         );
         assert!(app.world_is_network, "A adopted");
@@ -34115,6 +34492,7 @@ cow_sound_variant: None,
                 fog: None,
                 cloud_fog_end: None,
                 entity_types: Vec::new(),
+                entity_type_tags: Vec::new(),
             }),
         );
         assert!(

@@ -194,6 +194,24 @@ fn run_join(
             // answers from now on) — captured before the snapshot moves
             // into the live view
             let entity_types = snapshot.registry.entity_types.clone();
+            // the synced registry's own entity-type TAG table: the tag
+            // name -> member NAMES the arrival-order roster resolves
+            // (the id the roster never named the honest drop keeps) —
+            // the chat's '#'-suggestion arms the App answers from now
+            // on; captured before the snapshot moves into the live view
+            let entity_type_tags: Vec<(String, Vec<String>)> = snapshot
+                .registry
+                .entity_type_tags
+                .iter()
+                .map(|(name, ids)| {
+                    (
+                        name.clone(),
+                        ids.iter()
+                            .filter_map(|i| snapshot.registry.entity_types.get(*i as usize).cloned())
+                            .collect(),
+                    )
+                })
+                .collect();
             // the profile's skin model: the login `textures` metadata the
             // session carried from the login phase — the slim/wide
             // selection the first-person arm renders with (None = classic)
@@ -246,6 +264,9 @@ fn run_join(
                     // the registry's roster rides the milestone beside
                     // the world (the type= walk's own source)
                     entity_types,
+                    // the tag table rides beside the roster (the
+                    // '#'-suggestion arms' own source)
+                    entity_type_tags,
                 }),
             ));
             if shipped.is_err() {
