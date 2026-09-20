@@ -189,6 +189,11 @@ fn run_join(
         Ok(mc_protocol::LiveJoin::Live { snapshot, mut session }) => {
             let (entity_id, view_distance, chunks) =
                 (snapshot.info.entity_id, snapshot.info.view_distance, snapshot.chunks.len());
+            // the synced registry's own roster: the entity-type id table
+            // the snapshot carries (the chat's type= value walk the App
+            // answers from now on) — captured before the snapshot moves
+            // into the live view
+            let entity_types = snapshot.registry.entity_types.clone();
             // the profile's skin model: the login `textures` metadata the
             // session carried from the login phase — the slim/wide
             // selection the first-person arm renders with (None = classic)
@@ -238,6 +243,9 @@ fn run_join(
                     skybox,
                     fog,
                     cloud_fog_end,
+                    // the registry's roster rides the milestone beside
+                    // the world (the type= walk's own source)
+                    entity_types,
                 }),
             ));
             if shipped.is_err() {
