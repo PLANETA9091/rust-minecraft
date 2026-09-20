@@ -2598,13 +2598,22 @@ mod tests {
         assert_eq!(app.frame, 12, "one frame per tick");
     }
 
-    /// THE SPRINT WALK's own arm: the staged body sprints the walk
-    /// ticks through — the sprint state the gate arms (the forward the
-    /// walk feeds, the food gate the fresh bar opens), the fov modifier
-    /// the camera state walks toward 1.15, the plain walk the 1.0 the
-    /// rest keeps.
+
+
+    /// THE SPRINT LAW's own arc: the staged body walks the REAL
+    /// terrain through — the land sprint the Ctrl lane arms, the
+    /// shallow water the stop lane retires, the submerged walk the
+    /// re-arm speaks, the FOV the camera state the sprint's 1.15
+    /// target walks, and the plain walk's control the 1.0 keeps.
     #[test]
     fn the_body_sprint_flag_arms_the_sprint_walk() {
+        // THE LAW'S OWN ARC (the audited 26.2 sprint law through the
+        // REAL world's terrain — seed 262's eastward walk crosses the
+        // spawn pond): the land sprint arms, the SHALLOW WATER retires
+        // it (isInShallowWater = wasTouchingWater && !isUnderWater —
+        // the stop lane the impossible sprint speaks), the SUBMERGED
+        // walk the Ctrl lane re-arms (the sprint-swim the shallow gate
+        // never blocks), and the plain walk's control the 1.0 keeps.
         let mut app = crate::screens::App::new(262);
         app.enter_world();
         seed_scene(
@@ -2615,24 +2624,78 @@ mod tests {
             },
         )
         .unwrap();
+        // THE LAND ARC (the first two walk ticks — the pond lies
+        // ahead): the Ctrl lane arms the sprint, the FOV the 1.15
+        // target the half-step blend walks toward
         tick_scene(
             &mut app,
             &SceneOpts {
-                walk_ticks: 12,
+                walk_ticks: 2,
                 body_sprint: true,
                 ..SceneOpts::default()
             },
             None,
         )
         .unwrap();
-        let body = app.body.as_ref().expect("the body survives the sprint");
-        assert!(body.sprinting, "the sprint state the gate arms");
-        assert!(
-            (body.fov_modifier - 1.15).abs() < 1e-4,
-            "the zoom the camera state walks: {}",
-            body.fov_modifier
-        );
-        // the plain walk's own control: the same walk the 1.0 keeps
+        {
+            let body = app.body.as_ref().expect("the body survives the sprint");
+            assert!(body.sprinting, "the land sprint the Ctrl lane arms");
+            assert!(!body.was_touching_water, "the dry land the arc keeps");
+            assert!(
+                body.fov_modifier > 1.0,
+                "the zoom the camera state walks: {}",
+                body.fov_modifier
+            );
+        }
+        // THE SHALLOW ARC (the pond's rim — the walk reaches the water
+        // line): the sprint retires and STAYS retired while the eye
+        // rides above the surface (the shallow gate the stop lane and
+        // the start lane both wear)
+        tick_scene(
+            &mut app,
+            &SceneOpts {
+                walk_ticks: 4,
+                body_sprint: true,
+                ..SceneOpts::default()
+            },
+            None,
+        )
+        .unwrap();
+        {
+            let body = app.body.as_ref().expect("the body survives the wade");
+            assert!(body.was_touching_water, "the rim the walk crosses");
+            assert!(!body.eye_in_water, "the eye above the rim");
+            assert!(
+                !body.sprinting,
+                "the shallow water the sprint refuses"
+            );
+        }
+        // THE SUBMERGED ARC (the pond's depth): the eye under — the
+        // shallow gate off, the Ctrl lane the sprint re-arms (the
+        // sprint-swim the vanilla's own law keeps)
+        tick_scene(
+            &mut app,
+            &SceneOpts {
+                walk_ticks: 7,
+                body_sprint: true,
+                ..SceneOpts::default()
+            },
+            None,
+        )
+        .unwrap();
+        {
+            let body = app.body.as_ref().expect("the body survives the swim");
+            assert!(body.eye_in_water, "the depth the walk reaches");
+            assert!(body.sprinting, "the submerged sprint re-arms");
+            assert!(
+                body.fov_modifier > 1.1,
+                "the zoom the swim state walks: {}",
+                body.fov_modifier
+            );
+        }
+        // the plain walk's own control: the same walk the 1.0 keeps —
+        // the sprinting field the law never arms, the FOV the plain
+        // speed's own 1.0 target the blend never leaves
         let mut app = crate::screens::App::new(262);
         app.enter_world();
         seed_scene(

@@ -190,6 +190,13 @@ pub(crate) fn format_player_chat_line(m: &mc_protocol::play::PlayerChatMessage) 
 }
 
 pub const WHITE: [f32; 3] = [1.0, 1.0, 1.0];
+/// THE SPRINT WINDOW'S OWN SPAN (26.2 Options <init>'s audited
+/// OptionInstance('options.sprintWindow', IntRange(0, 10), 7) — the
+/// double-tap-W window the LocalPlayer.aiStep's sprintTriggerTime
+/// re-arms each fresh first W press, the ticks the second press may
+/// arrive within; the option's slider the client's no-settings-UI
+/// world keeps at its own 7 default).
+pub const SPRINT_WINDOW_TICKS: i32 = 7;
 pub const YELLOW: [f32; 3] = [1.0, 1.0, 0.333];
 pub const GRAY: [f32; 3] = [0.667, 0.667, 0.667];
 /// THE LEVEL NUMBER'S GREEN (javap `ContextualBar.extractExperienceLevel`
@@ -4697,6 +4704,26 @@ pub struct App {
     /// table, the weighted official file pick, the event log the audio
     /// backend mirrors ("block.stone.hit @<tick> #<file> v<vol> p<pitch>").
     pub sounds: crate::sound::BlockSounds,
+    /// THE SPRINT TRIGGER'S OWN STATE (26.2 LocalPlayer.aiStep's own
+    /// law — the audited sprintTriggerTime field): the double-tap-W
+    /// window the head decrement spends (`if > 0: --`, pcs 0-14), the
+    /// kill lane zeroes (shift || backward || slow-not-riding, pcs
+    /// 343-376), the W-press edge either STARTS the sprint (armed,
+    /// pcs 390-402) or RE-ARMS the `options.sprintWindow()` default
+    /// 7 the Options <init> IntRange(0, 10) keeps (pcs 405-425).
+    sprint_trigger_time: i32,
+    /// THE W-PRESS EDGE'S OWN BANK (the audited pre-tick local —
+    /// `input.hasForwardImpulse()` read BEFORE `input.tick()`, pcs
+    /// 82-85, so the start lane compares THIS tick's impulse against
+    /// LAST tick's): false = the edge just spoke, the arm-or-sprint
+    /// fork answers; true = the key held, the fork never reaches.
+    sprint_last_forward: bool,
+    /// THE SPRINT KEY'S OWN RAW SNAPSHOT (the KeyboardInput's
+    /// `keySprint.isDown()` word the Input record carries — the
+    /// per-frame poll stores it, the per-tick law reads it; the raw
+    /// record the wire's PlayerInput packet speaks stays the same
+    /// flags.walk the lane always carried).
+    sprint_key_down: bool,
     /// Server-list ping requests (append-only log, same protocol as
     /// ui_sounds/music events): the headless logic records WHAT to ping,
     /// the window backend performs the blocking network call off the
@@ -5842,6 +5869,9 @@ impl App {
             partial_tick: 1.0,
             end_flash: crate::end_flash::EndFlashState::new(),
             rain_sound_time: 0,
+            sprint_trigger_time: 0,
+            sprint_last_forward: false,
+            sprint_key_down: false,
             ui_sounds: Vec::new(),
             net_requests: Vec::new(),
             next_ping_id: 0,
@@ -6645,6 +6675,23 @@ impl App {
                     b.sprinting = false;
                     b.want_crouch = false;
                 } else if let Some(w) = world {
+                    // THE SPRINT TRIGGER (the audited 26.2 aiStep law —
+                    // the law's own doc the four beats wear): the raw
+                    // input the sprint_key_down snapshot banks, the
+                    // window the head decrement and the kill lanes
+                    // spend, the W-press edge the arm-or-sprint fork
+                    // answers, the stop lanes the sticky state retires
+                    // — the body's sprinting field the law alone
+                    // writes, the tick below the speed/FOV/exhaustion
+                    // folds the state consumes.
+                    Self::sprint_law_tick(
+                        b,
+                        &mut self.sprint_trigger_time,
+                        &mut self.sprint_last_forward,
+                        self.sprint_key_down,
+                        self.food_data.has_enough_food(),
+                        using,
+                    );
                     b.tick(w, using);
                     // THE FOOTSTEP: the body's own cadence law fired on a
                     // solid block under the feet — the block's step voice
@@ -16498,13 +16545,111 @@ impl App {
         }
     }
 
+    /// THE SPRINT LAW'S OWN TICK (26.2 LocalPlayer.aiStep's audited
+    /// walk — scripts/jar_work/aistep_262.txt, the disasm the offsets
+    /// in the doc wear). FOUR beats, the bytecode's own order:
+    /// 1. THE HEAD DECREMENT (pcs 0-14): `if (sprintTriggerTime > 0)
+    ///    --sprintTriggerTime` — the window spends one per tick.
+    /// 2. THE KILL LANE (pcs 343-376): `shift || backward ||
+    ///    (slow && !passenger) -> sprintTriggerTime = 0` — the sneak,
+    ///    the S key, the item-use slowdown off a ride each kill the
+    ///    armed window. (The passenger arm never speaks here — the law
+    ///    only the standing branch calls.)
+    /// 3. THE START LANE (pcs 379-443): `canStartSprinting()` =
+    ///    !isSprinting && hasForwardImpulse && isSprintingPossible
+    ///    && !isSlowDueToUsingItem && !(isMovingSlowly &&
+    ///    !isUnderWater) — the fall-flying-underwater arm the client's
+    ///    no-elytra world never arms. isSprintingPossible(false) =
+    ///    hasEnoughFood && !isInShallowWater (the audited Entity pair:
+    ///    isInShallowWater = isInWater && !isUnderWater — the body's
+    ///    wasTouchingWater/eyeInWater fields answer both) — the
+    ///    mobility-restricted arm the client's world never arms. THEN
+    ///    the W-PRESS EDGE (the audited pre-tick local: pcs 82-85 read
+    ///    last tick's hasForwardImpulse BEFORE input.tick() at 161, so
+    ///    the fork compares THIS tick's impulse against LAST tick's):
+    ///    an armed window setSprinting(true) — THE DOUBLE TAP — an
+    ///    expired one re-arms sprintWindow() (the Options <init>
+    ///    IntRange(0, 10), default 7 — pcs 2322-2336). The Ctrl lane
+    ///    rides beside: keyPresses.sprint() -> setSprinting(true).
+    ///    Both starts STICKY: no lane holds sprint down — the STOP
+    ///    lane alone retires it (the vanilla's own release-Ctrl-and-
+    ///    keep-sprinting law).
+    /// 4. THE STOP LANE (pcs 446-484): shouldStopRunSprinting =
+    ///    !isSprintingPossible || !hasForwardImpulse ||
+    ///    horizontalCollision (the minor-collision carve-out the
+    ///    client's unmodeled flag keeps silent — every collision
+    ///    stops). The swim arm (shouldStopSwimSprinting behind
+    ///    isSwimming) the client's no-swim-pose world never reaches.
+    ///
+    /// The raw input the caller's own snapshot carries — the body's
+    /// forward/want_crouch/was_touching_water/eye_in_water/
+    /// horizontal_collision the verdicts read, the sprinting field the
+    /// START and STOP lanes alone write (the on_movement_input's
+    /// per-frame collapse the same law retired — the state machine
+    /// the tick owns).
+    fn sprint_law_tick(
+        b: &mut crate::body::PlayerBody,
+        trigger: &mut i32,
+        last_forward: &mut bool,
+        sprint_key_down: bool,
+        enough_food: bool,
+        using_item: bool,
+    ) {
+        // THE HEAD DECREMENT (pcs 0-14)
+        if *trigger > 0 {
+            *trigger -= 1;
+        }
+        // THE KILL LANE (pcs 343-376): shift || backward || (slow &&
+        // !passenger). The raw Input.backward the impulse's negative
+        // side answers (the client's ±1/0 fold), the shift the
+        // want_crouch snapshot keeps.
+        let forward_impulse = b.forward > 1e-5; // hasForwardImpulse's 1e-5 compare
+        if b.want_crouch || b.forward < 0.0 || using_item {
+            *trigger = 0;
+        }
+        // THE START LANE (pcs 379-443)
+        let shallow_water = b.was_touching_water && !b.eye_in_water;
+        let slowly = b.crouching && !b.eye_in_water;
+        let can_start = !b.sprinting
+            && forward_impulse
+            && enough_food
+            && !shallow_water
+            && !using_item
+            && !slowly;
+        if can_start {
+            if !*last_forward {
+                // THE W-PRESS EDGE (pcs 386-425): armed -> SPRINT,
+                // expired -> arm the window.
+                if *trigger > 0 {
+                    b.sprinting = true;
+                } else {
+                    *trigger = SPRINT_WINDOW_TICKS;
+                }
+            }
+            if sprint_key_down {
+                // THE CTRL LANE (pcs 428-443)
+                b.sprinting = true;
+            }
+        }
+        // THE STOP LANE (pcs 446-484)
+        if b.sprinting {
+            let possible = enough_food && !shallow_water;
+            if !possible || !forward_impulse || b.horizontal_collision {
+                b.sprinting = false;
+            }
+        }
+        *last_forward = forward_impulse;
+    }
+
     /// The movement keys (the windowed loop's per-frame feed): the
     /// impulses (the KeyboardInput's own ±1 shape) and the state keys
-    /// the body's tick consumes. The SPRINT gate is the vanilla
-    /// canStartSprinting's own core: the forward impulse past 0.8, the
-    /// crouch refused, and the FOOD GATE the
-    /// hasEnoughFoodToDoExhaustiveManoeuvres speaks (the bar over
-    /// SPRINT_LEVEL 6 — a starving body walks).
+    /// the body's tick consumes. The SPRINT STATE the per-tick law
+    /// alone owns — [`Self::sprint_law_tick`] (the audited 26.2
+    /// aiStep walk: the double-tap window, the sticky starts, the
+    /// stop lanes) — this feed only BANKS the raw keys (the sprint
+    /// key's snapshot rides [`Self::sprint_key_down`], the impulses
+    /// the body fields keep); the per-frame collapse the pre-26.2
+    /// rounds wore retires.
     pub fn on_movement_input(
         &mut self,
         forward: f32,
@@ -16534,11 +16679,13 @@ impl App {
             b.left = left;
             b.jumping = jump;
             b.want_crouch = crouch;
-            b.sprinting = sprint
-                && forward > 0.8
-                && !crouch
-                && self.food_data.has_enough_food();
+            // THE SPRINTING FIELD THE TICK LAW ALONE WRITES (the
+            // per-frame collapse the pre-26.2 rounds wore retires —
+            // [`Self::sprint_law_tick`] the start/stop lanes the
+            // audited aiStep walk speaks owns the state machine; the
+            // raw key only BANKS below)
         }
+        self.sprint_key_down = sprint;
         // THE OFFLINE DISMOUNT (the shift edge the server's own
         // handlePlayerInput lane speaks for the wire rides — the
         // singleplayer's client IS the authority): the ride's drop the
@@ -39512,6 +39659,112 @@ cow_sound_variant: None,
         );
     }
 
+    /// THE DOUBLE-TAP W'S OWN WINDOW (26.2 LocalPlayer.aiStep's
+    /// audited sprintTriggerTime law, the law's own state machine the
+    /// [`App::sprint_law_tick`] wears): the FIRST W press ARMS the
+    /// `options.sprintWindow()` default 7 (the Options <init>
+    /// IntRange(0, 10) keeps), the SECOND press INSIDE the window
+    /// STARTS the sprint (the sticky state the Ctrl release keeps),
+    /// the single tap NEVER sprints (the window spends and expires —
+    /// the press, the release, the silence), the Shift and the S key
+    /// KILL the armed window, and the expired re-press re-arms.
+    #[test]
+    fn the_double_tap_w_sprint_window_speaks() {
+        // THE LAW'S OWN HARNESS (the standalone state machine — the
+        // body the fresh constructor stages, the food the fed bar
+        // keeps, the raw keys the parameters carry)
+        let law = |b: &mut crate::body::PlayerBody,
+                   trigger: &mut i32,
+                   last: &mut bool,
+                   sprint_key: bool,
+                   using: bool| {
+            App::sprint_law_tick(b, trigger, last, sprint_key, true, using);
+        };
+        let mut b = crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        let mut trigger = 0;
+        let mut last = false;
+        // THE FIRST PRESS (the W down tick): the window ARMS — the
+        // sprint does NOT start (the vanilla's own single-press
+        // silence)
+        b.forward = 1.0;
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert_eq!(trigger, SPRINT_WINDOW_TICKS, "the window arms");
+        assert!(!b.sprinting, "the first press walks");
+        // THE HOLD (the window spends one per tick — the held key the
+        // edge never re-speaks)
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert_eq!(trigger, SPRINT_WINDOW_TICKS - 1, "the window spends");
+        assert!(!b.sprinting);
+        // THE SECOND PRESS INSIDE THE WINDOW (release first — the
+        // edge the fresh down tick re-speaks): the SPRINT STARTS
+        b.forward = 0.0;
+        law(&mut b, &mut trigger, &mut last, false, false);
+        b.forward = 1.0;
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert!(b.sprinting, "the double tap sprints");
+        // THE STICKY STATE (the Ctrl released, the W held): the sprint
+        // CONTINUES — no lane holds it down, the stop lane's forward
+        // impulse keeps it alive
+        for _ in 0..5 {
+            law(&mut b, &mut trigger, &mut last, false, false);
+            assert!(b.sprinting, "the sticky sprint rides");
+        }
+        // THE STOP (the W released): the forward impulse dies, the
+        // sprint retires
+        b.forward = 0.0;
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert!(!b.sprinting, "the release retires");
+        // THE SINGLE TAP NEVER SPRINTS (press, release, the window
+        // spends past zero — the re-press EXPIRED re-arms, the sprint
+        // stays silent)
+        b.forward = 1.0;
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert!(!b.sprinting, "the fresh press arms anew");
+        b.forward = 0.0;
+        for _ in 0..SPRINT_WINDOW_TICKS {
+            law(&mut b, &mut trigger, &mut last, false, false);
+        }
+        assert_eq!(trigger, 0, "the window expires");
+        b.forward = 1.0;
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert!(!b.sprinting, "the expired press walks");
+        assert_eq!(trigger, SPRINT_WINDOW_TICKS, "the expired re-arms");
+        // THE KILL LANES (the armed window the sneak and the S key
+        // each zero — the re-press inside the window the sprint wears,
+        // the kill the state and the window both retire)
+        b.forward = 0.0;
+        law(&mut b, &mut trigger, &mut last, false, false); // release
+        b.forward = 1.0;
+        law(&mut b, &mut trigger, &mut last, false, false); // re-press: sprint
+        b.forward = 0.0;
+        b.want_crouch = true; // THE SHIFT KILL
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert_eq!(trigger, 0, "the sneak kills the window");
+        assert!(!b.sprinting, "the sneak retires the state too");
+        b.want_crouch = false;
+        b.forward = 1.0;
+        law(&mut b, &mut trigger, &mut last, false, false); // fresh press arms: 7
+        b.forward = -1.0; // THE BACKWARD KILL (the S key)
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert_eq!(trigger, 0, "the backward kills the window");
+        // THE CTRL LANE (the raw key the sprint speaks — the sticky
+        // start the release keeps, the same law the window shares)
+        b.forward = 1.0;
+        law(&mut b, &mut trigger, &mut last, true, false);
+        assert!(b.sprinting, "the Ctrl lane sprints");
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert!(b.sprinting, "the Ctrl release keeps the sprint");
+        // THE COLLISION STOP (shouldStopRunSprinting's own arm)
+        b.horizontal_collision = true;
+        law(&mut b, &mut trigger, &mut last, false, false);
+        assert!(!b.sprinting, "the wall retires the sprint");
+        b.horizontal_collision = false;
+        // THE ITEM-USE SLOWDOWN (the slow && !passenger kill + the
+        // canStart gate the using lane wears)
+        law(&mut b, &mut trigger, &mut last, true, true);
+        assert!(!b.sprinting, "the using body walks");
+    }
+
     /// THE SPRINT'S FOOD GATE (the hasEnoughFoodToDoExhaustiveManoeuvres
     /// law): the bar over 6 sprints, the starving bar walks.
     #[test]
@@ -39519,14 +39772,20 @@ cow_sound_variant: None,
         let mut app = App::new(3);
         app.enter_world();
         app.spawn_offline_body();
+        // THE LAW'S OWN TICK (the sprinting field the per-tick state
+        // machine writes — the on_movement_input feed only banks the
+        // raw keys, the update() walk the law's verdict carries)
         app.on_movement_input(1.0, 0.0, false, false, true);
+        app.update();
         assert!(
             app.body.as_ref().unwrap().sprinting,
             "the fed body sprints"
         );
-        // the bar drops under the gate (food 6 — `> 6` refuses)
+        // the bar drops under the gate (food 6 — `> 6` refuses): the
+        // STOP lane the impossible sprint retires the same tick
         app.food_data.set_food_level(6);
         app.on_movement_input(1.0, 0.0, false, false, true);
+        app.update();
         assert!(
             !app.body.as_ref().unwrap().sprinting,
             "the starving body walks"
