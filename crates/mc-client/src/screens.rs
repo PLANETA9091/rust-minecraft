@@ -1747,49 +1747,120 @@ fn selector_unquoted_ok(c: char) -> bool {
     c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '+')
 }
 
-/// THE READSTRING WALK THE NAME MODIFIER RUNS (javap
-/// `lambda$bootStrap$0` → `StringReader.readString`; the bundled
-/// brigadier 1.2.9 empirically probed): the `"` or `'` open the
-/// readStringUntil walk — the terminator closes (the value ends AT
-/// the close quote, any tail the parse's own ']' expectation dies
-/// at), the backslash escapes the terminator/backslash ONLY (the
-/// other char the INVALID-ESCAPE throw answers, the dangling
-/// backslash the END-OF-QUOTE throw wears), the missing terminator
-/// the same throw answers — the internal whitespace inside the
-/// quotes the value walk consumes. A value NOT opening with a quote
-/// the unquoted-charset law keeps.
-fn selector_read_string_ok(value: &str) -> bool {
-    match value.as_bytes().first() {
-        Some(&q) if q == b'"' || q == b'\'' => selector_quoted_ok(value, q),
-        _ => value.chars().all(selector_unquoted_ok),
-    }
+/// THE VALUE WALK'S OWN THREE-WAY (javap `EntitySelectorParser
+/// .parseOptions` — the post-value tail the audit_bsm13.py bytecode
+/// banks): the modifier's read either consumes the WHOLE element (the
+/// walk RETURNS with the cursor at the input end — the parse
+/// completes, the suggestOptionsNextOrClose state the install at the
+/// offsets 153-160 precedes the canRead return answers ',' + ']' at
+/// the input end), or STOPS at a char the read's charset refuses
+/// (the walk RETURNS with the cursor at the stop — the parse's own
+/// ERROR_EXPECTED_END_OF_OPTIONS throw (the offsets 220-230) the
+/// cursor the stop position names, and the suggestOptionsNextOrClose
+/// state the throw SURVIVES — the UNGATED suggestOptionsNextOrClose
+/// lambda (bsm#13: the bare `suggest(',')` + `suggest(']')` pair, NO
+/// getRemaining/isEmpty gate the bytecode banks) answers ',' + ']' AT
+/// the junk), or THROWS inside the walk (the SUGGEST_NOTHING state
+/// the install at the offsets 132-136 BEFORE the modifier keeps — the
+/// EMPTY local; the sort/gamemode/type modifiers' own providers the
+/// throw survives — the committed folds the incomplete path speaks).
+/// The junk's span the fill's own cursor law keeps: the builder at
+/// the parse cursor, the suggestions replacing [cursor, input end).
+enum SelectorValueWalk {
+    /// the whole element the read consumed — the parse completes
+    Complete,
+    /// the read stopped at the junk char — the offset (in bytes from
+    /// the element's own start) the throw's cursor names
+    Junk(usize),
+    /// the walk threw — the SUGGEST_NOTHING silence (or the
+    /// sort/gamemode/type providers the committed folds speak)
+    Refused,
 }
 
-/// THE READSTRINGUNTIL WALK'S OWN LAW (brigadier 1.2.9 probed:
-/// `"Steve x"` → `Steve x` cursor 9, `""` → `` cursor 2, `"a\"b"` →
-/// `a"b`, `"a\\b"` → `a\b`, `"Ste`/`"a\zb"`/`"a\` → the throws, the
-/// close-quote-not-last (`"a b" x`) the ']' expectation dies at).
-fn selector_quoted_ok(value: &str, terminator: u8) -> bool {
+/// THE UNQUOTED CHARSET RUN THE BRIGADIER READ WALKS SPEAK (the
+/// `isAllowedInUnquotedString` fold the readString/readUnquotedString
+/// walks ride — the greedy run, the first refused char the stop
+/// positions, the byte offset the parse cursor wears).
+fn selector_unquoted_run_len(value: &str) -> usize {
     let b = value.as_bytes();
+    let mut i = 0;
+    while i < b.len() && selector_unquoted_ok(b[i] as char) {
+        i += 1;
+    }
+    i
+}
+
+/// THE NUMBER CHARSET RUN THE READINT/READDOUBLE WALKS SPEAK (the
+/// `isAllowedInNumber` fold — the greedy run, the first refused char
+/// the stop positions).
+fn selector_number_run_len(value: &str) -> usize {
+    let b = value.as_bytes();
+    let mut i = 0;
+    while i < b.len() && selector_number_char_ok(b[i] as char) {
+        i += 1;
+    }
+    i
+}
+
+/// THE IDENTIFIER CHARSET RUN THE RESOURCELOCATION READ WALK SPEAKS
+/// (javap `ResourceLocation.read` — the `isAllowedInResourceLocation`
+/// fold: the `[a-z0-9_.-/]` path/namespace charset + the `:` single
+/// the id's own separator carries — the greedy run, the first refused
+/// char the stop positions; the run's SHAPE the constructor's own
+/// validation answers, the id's existence the registry membership
+/// asks).
+fn selector_identifier_run_len(value: &str) -> usize {
+    let b = value.as_bytes();
+    let mut i = 0;
+    while i < b.len()
+        && (matches!(b[i], b'a'..=b'z' | b'0'..=b'9' | b'_' | b'.' | b'-' | b'/' | b':'))
+    {
+        i += 1;
+    }
+    i
+}
+
+/// THE READSTRING WALK THE NAME MODIFIER RUNS (javap
+/// `lambda$bootStrap$0` → `StringReader.readString`; the bundled
+/// brigadier 1.2.9 empirically probed) — the THREE-WAY law: the `"`
+/// or `'` open the readStringUntil walk — the terminator closes (the
+/// value ends AT the close quote), the close LAST the walk's own
+/// completion wears, a tail after the close the walk RETURNS (the
+/// cursor the post-close position names — the junk lane the tail
+/// wears), the backslash escapes the terminator/backslash ONLY (the
+/// other char the INVALID-ESCAPE throw answers, the dangling
+/// backslash the END-OF-QUOTE throw wears), the missing terminator
+/// the same throw answers — the internal whitespace inside the quotes
+/// the value walk consumes. A value NOT opening with a quote the
+/// unquoted-charset law keeps (the run the caller speaks).
+fn selector_quoted_walk(value: &str) -> SelectorValueWalk {
+    let b = value.as_bytes();
+    let terminator = b[0]; // the '"' or '\'' the caller's quote-led gate speaks
     let mut i = 1; // the open quote consumed
     while i < b.len() {
         match b[i] {
             b'\\' => match b.get(i + 1) {
                 // the escape pair: the terminator or the backslash
                 Some(&e) if e == terminator || e == b'\\' => i += 2,
-                // the invalid escape (or the dangling backslash)
-                _ => return false,
+                // the invalid escape (or the dangling backslash) —
+                // the throw the SUGGEST_NOTHING silence keeps
+                _ => return SelectorValueWalk::Refused,
             },
             c if c == terminator => {
-                // the close quote: the value walk ends HERE — a tail
-                // the parse's own ']' expectation dies at
-                return i == b.len() - 1;
+                // the close quote: the walk RETURNS — the close LAST
+                // the parse's own completion wears, a tail the junk
+                // lane the post-close cursor speaks
+                return if i + 1 == b.len() {
+                    SelectorValueWalk::Complete
+                } else {
+                    SelectorValueWalk::Junk(i + 1)
+                };
             }
             _ => i += 1,
         }
     }
     // the missing terminator — the END-OF-QUOTE throw
-    false
+    SelectorValueWalk::Refused
 }
 
 /// THE NUMBER CHARSET THE BRIGADIER READNUMBER WALK SPEAKS (jar
@@ -1839,10 +1910,10 @@ fn selector_double_ok(value: &str) -> bool {
 /// `charAt` law — empirically probed against the bundled brigadier
 /// 1.2.9) the `StringIndexOutOfBounds` throw wears when the `.` is
 /// the input's last char — the suggestions future the failure
-/// swallows, the EMPTY local the same silence answers). The side's
-/// remaining text the run covers fully speaks — a char the run stops
-/// at the parse's own ']' expectation dies at.
-fn selector_bounds_run_covers(side: &str) -> bool {
+/// swallows, the EMPTY local the same silence answers). The run the
+/// BYTE length returns — the stop position the junk lane's cursor
+/// wears, the full cover the caller's own completion law keeps.
+fn selector_bounds_run_len(side: &str) -> usize {
     let b = side.as_bytes();
     let mut i = 0;
     while i < b.len() {
@@ -1862,68 +1933,115 @@ fn selector_bounds_run_covers(side: &str) -> bool {
             break;
         }
     }
-    i == b.len()
+    i
 }
 
 /// THE BOUNDS FROMREADER LAW (javap `MinMaxBounds$Bounds.fromReader`
 /// + the `Ints`/`Doubles`/`FloatDegrees` wrappers — the walk the
-/// distance/level/x_rotation/y_rotation modifiers run): the empty
-/// value the ERROR-EMPTY throw answers, the min-side run then the
-/// optional `'..'` + the max-side run (the grammar the `'..'` the
-/// run's own stop positions — the '.'-law refuses a `.` followed by
-/// `.`), the both-sides-empty form the ERROR-EMPTY throw wears, the
-/// single-value form the `(min, min)` pair builds. The `Ints`/
-/// `Doubles` wrappers the `areSwapped` check adds (min > max → the
-/// cursor reset + rethrow) and the distance/level walks the
-/// `isPresent` PAIR adds (either side absent → the rollbackAndThrow)
-/// — the closed lanes; the `FloatDegrees` wrapper (the rotations)
-/// NEITHER carries — the open lane the empty side and the swapped
-/// bounds accept, the leftover chars still the ']' expectation dies
-/// at.
-fn selector_bounds_ok(value: &str, ints: bool, closed: bool) -> bool {
+/// distance/level/x_rotation/y_rotation modifiers run) — the
+/// THREE-WAY law: the empty value the ERROR-EMPTY throw answers, the
+/// min-side run then the optional `'..'` + the max-side run (the
+/// grammar the `'..'` the run's own stop positions — the '.'-law
+/// refuses a `.` followed by `.`), the both-sides-empty form the
+/// ERROR-EMPTY throw wears, the single-value form the `(min, min)`
+/// pair builds. The `Ints`/`Doubles` wrappers the `areSwapped` check
+/// adds (min > max → the cursor reset + rethrow) and the
+/// distance/level walks the `isPresent` PAIR adds (either side absent
+/// → the rollbackAndThrow) — the closed lanes; the `FloatDegrees`
+/// wrapper (the rotations) NEITHER carries — the open lane the empty
+/// side and the swapped bounds accept, the walk RETURNS there and
+/// the junk char the stop stopped at the post-value throw lane wears
+/// (',' + ']' at the junk — see [`SelectorValueWalk`]). The throw
+/// INSIDE the walk (the empty runs, the failed parses, the closed
+/// lanes' pair/swap refusals) the SUGGEST_NOTHING silence keeps.
+fn selector_bounds_walk(value: &str, ints: bool, closed: bool) -> SelectorValueWalk {
     if value.is_empty() {
         // the !canRead ERROR-EMPTY throw
-        return false;
+        return SelectorValueWalk::Refused;
     }
-    let (min_side, max_side) = match value.split_once("..") {
-        Some((a, b)) => (a, Some(b)),
-        None => (value, None),
-    };
-    if !selector_bounds_run_covers(min_side) {
-        return false;
-    }
+    let b = value.as_bytes();
+    // the min-side run (the '.'-law)
+    let min_run = selector_bounds_run_len(value);
+    let min_side = &value[..min_run];
     let min_v = if min_side.is_empty() { None } else { Some(min_side) };
-    let max_v = match max_side {
-        Some(s) => {
-            if !selector_bounds_run_covers(s) {
-                return false;
+    // the stop position's own shape: the end, the '..' separator, the
+    // '.'-junk (the peek(1) crash the end-of-input form wears), the
+    // plain junk char — the branch the parse's own walk takes
+    let (max_v, junk) = if min_run >= b.len() {
+        // the min run consumed the whole value: the single-value
+        // (min, min), no junk
+        (min_v, None)
+    } else if b[min_run] == b'.' {
+        match b.get(min_run + 1) {
+            // the '..' separator: skip skip → the max-side run
+            Some(&n) if n == b'.' => {
+                let start = min_run + 2;
+                let max_run = selector_bounds_run_len(&value[start..]);
+                let max_side = &value[start..start + max_run];
+                let max_v = if max_side.is_empty() { None } else { Some(max_side) };
+                let junk = if start + max_run < b.len() {
+                    Some(start + max_run)
+                } else {
+                    None
+                };
+                (max_v, junk)
             }
-            if s.is_empty() { None } else { Some(s) }
+            // the '.' at the input's end: the range check's unguarded
+            // peek(1) the StringIndexOutOfBounds crash wears
+            None => return SelectorValueWalk::Refused,
+            // the '.'-junk with the next char existing but <= '.': the
+            // single-value branch — the '.' the junk's own start
+            Some(_) => (min_v, Some(min_run)),
         }
-        // the single-value form: the (min, min) pair the walk builds
-        None => min_v,
+    } else {
+        // the plain junk char the min run stopped at: the
+        // single-value branch, the junk the stop position names
+        (min_v, Some(min_run))
     };
     match (min_v, max_v) {
         // the both-sides-empty ERROR-EMPTY throw
-        (None, None) => false,
+        (None, None) => SelectorValueWalk::Refused,
         (Some(a), Some(b)) => {
             // the parse fns: Integer.parseInt / Double.parseDouble-shaped
-            let ok = if ints {
-                match (a.parse::<i32>(), b.parse::<i32>()) {
-                    (Ok(x), Ok(y)) => !closed || x <= y,
-                    _ => false,
-                }
-            } else {
-                match (a.parse::<f64>(), b.parse::<f64>()) {
-                    (Ok(x), Ok(y)) => !closed || x <= y,
-                    _ => false,
+            let ok = |s: &str, i: bool| {
+                if i {
+                    s.parse::<i32>().is_ok()
+                } else {
+                    s.parse::<f64>().is_ok()
                 }
             };
-            ok
+            if ok(a, ints) && ok(b, ints) {
+                // the areSwapped check the closed lanes add
+                if closed
+                    && (if ints {
+                        a.parse::<i32>().unwrap() > b.parse::<i32>().unwrap()
+                    } else {
+                        a.parse::<f64>().unwrap() > b.parse::<f64>().unwrap()
+                    })
+                {
+                    return SelectorValueWalk::Refused;
+                }
+                return match junk {
+                    Some(off) => SelectorValueWalk::Junk(off),
+                    None => SelectorValueWalk::Complete,
+                };
+            }
+            // the INVALID-NUMBER throw the failed parse answers
+            SelectorValueWalk::Refused
         }
         // one side absent: the closed walk's isPresent pair the
-        // rollbackAndThrow answers, the open walk the bounds accepts
-        _ => !closed,
+        // rollbackAndThrow answers, the open walk the bounds accepts —
+        // and the junk the walk's own return the post-value lane wears
+        _ => {
+            if closed {
+                SelectorValueWalk::Refused
+            } else {
+                match junk {
+                    Some(off) => SelectorValueWalk::Junk(off),
+                    None => SelectorValueWalk::Complete,
+                }
+            }
+        }
     }
 }
 
@@ -2098,22 +2216,24 @@ fn local_selector_type_value_suggestions(
 /// — and the readString/readUnquotedString walk consumes ANY
 /// unquoted-charset tail (the empty value included, the '!' the
 /// shouldInvertValue consumes first), so the parse COMPLETES and
-/// the post-value punctuation suggests; a char the unquoted set
-/// refuses the value walk leaves — the parse's own ']' expectation
-/// the ERROR lane wears (the EMPTY local below, the honest silence
-/// the parse-throw-catch answers); the trailing whitespace the
+/// the post-value punctuation suggests; the trailing whitespace the
 /// remaining rides (the rollback cursor the element start names);
 /// the VALID complete element the parseOptions continuation
 /// answers — the post-value state the ',' + ']' punctuation
 /// suggests (suggestOptionsNextOrClose); the NUMERIC walks the same
-/// two-lane law wears (the readInt/readDouble/Bounds.fromReader
-/// grammars — the limit/coordinate/distance/level/rotation keys, no
-/// '!' invert the walks carry) — a fully-consumed valid number the
-/// punctuation answers, a failed parse the EMPTY local keeps; the
-/// NAME walk's readString the QUOTED lane adds (the `"`/`'`
+/// law wears (the readInt/readDouble/Bounds.fromReader grammars —
+/// the limit/coordinate/distance/level/rotation keys, no '!' invert
+/// the walks carry) — a fully-consumed valid number the punctuation
+/// answers, a failed parse the EMPTY local keeps; the JUNK lane the
+/// walk-RETURN-vs-throw law speaks (see [`SelectorValueWalk`] — the
+/// read the charset stops at the walk RETURNS, the parse's own
+/// ERROR_EXPECTED_END_OF_OPTIONS throw the suggestOptionsNextOrClose
+/// state survives, the UNGATED pair the ',' + ']' AT the junk wears);
+/// the NAME walk's readString the QUOTED lane adds (the `"`/`'`
 /// terminators + the backslash escapes — the internal whitespace
 /// inside the quotes the value walk consumes, the honest-ask gate
-/// the quoted form bypasses); the unknown keys (the scores map, the
+/// the quoted form bypasses, the tail after the close the junk lane
+/// rides); the unknown keys (the scores map, the
 /// nbt/advancements/predicate compounds) / the internal-whitespace
 /// tails the honest ask keeps).
 fn local_selector_value_suggestions(
@@ -2160,30 +2280,102 @@ fn local_selector_value_suggestions(
             },
         ]
     };
-    let complete = match key {
-        // the sort modifier's switch (the case-sensitive walk)
-        "sort" => SORT_VALUE_SUGGESTIONS.contains(&trimmed),
-        // the gamemode modifier's byName (the '!' the
-        // shouldInvertValue consumes first)
-        "gamemode" => {
-            let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
-            GAMEMODE_VALUE_SUGGESTIONS.contains(&value)
-        }
-        // the type modifier's parse (lambda$bootStrap$35): the '!' the
-        // shouldInvertValue consumes first, the '#' the isTag walk
-        // spends second — the TAG lane the parse never refutes (any
-        // identifier the canParseTag set-membership accepts, the
-        // registry's tag table the parse never asks), the id lane the
-        // `getOptional` membership keeps (the defaulted id the
-        // no-colon form wears)
-        "type" => {
-            let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
-            if let Some(tag) = value.strip_prefix('#') {
-                selector_identifier_ok(tag)
+    let walk = match key {
+        // the SORT modifier (javap `EntitySelectorOptions` — the
+        // parser-taking lambda the audit_bsm13.py round banks): the
+        // readUnquotedString run FIRST (the stopped read RETURNS),
+        // then the provider install, then the case-sensitive switch —
+        // the match the walk returns, the default the
+        // rollbackAndThrow answers (the state the provider keeps —
+        // the fold lane the Refused arm speaks)
+        "sort" => {
+            let run = selector_unquoted_run_len(trimmed);
+            if run == trimmed.len() {
+                if SORT_VALUE_SUGGESTIONS.contains(&trimmed) {
+                    SelectorValueWalk::Complete
+                } else {
+                    SelectorValueWalk::Refused
+                }
+            } else if SORT_VALUE_SUGGESTIONS.contains(&&trimmed[..run]) {
+                SelectorValueWalk::Junk(run)
             } else {
-                let id = selector_defaulted_id(value);
-                entity_types.iter().any(|t| *t == id)
+                SelectorValueWalk::Refused
             }
+        }
+        // the GAMEMODE modifier (the audited walk): the provider
+        // install, the '!' the shouldInvertValue consumes first, the
+        // state gate, the readUnquotedString run (the stopped read
+        // RETURNS), the byName lookup — the hit the walk returns, the
+        // miss the rollbackAndThrow answers (the provider keeps)
+        "gamemode" => {
+            let (inv, value) = match trimmed.strip_prefix('!') {
+                Some(v) => (1, v),
+                None => (0, trimmed),
+            };
+            let run = selector_unquoted_run_len(value);
+            if run == value.len() {
+                if GAMEMODE_VALUE_SUGGESTIONS.contains(&value) {
+                    SelectorValueWalk::Complete
+                } else {
+                    SelectorValueWalk::Refused
+                }
+            } else if GAMEMODE_VALUE_SUGGESTIONS.contains(&&value[..run]) {
+                SelectorValueWalk::Junk(inv + run)
+            } else {
+                SelectorValueWalk::Refused
+            }
+        }
+        // the TYPE modifier (lambda$bootStrap$35 — the audited walk):
+        // the '!' the shouldInvertValue consumes first, the '#' the
+        // isTag walk spends second — the TAG lane the parse never
+        // refutes (any identifier the canParseTag set-membership
+        // accepts, the registry's tag table the parse never asks),
+        // the id lane the `getOptional` membership keeps (the
+        // defaulted id the no-colon form wears, the orElseThrow the
+        // miss throws) — the read the Identifier-charset run speaks
+        // (the stopped read RETURNS, the empty read the throw
+        // answers)
+        "type" => {
+            let (inv, value) = match trimmed.strip_prefix('!') {
+                Some(v) => (1, v),
+                None => (0, trimmed),
+            };
+            let type_walk = |v: &str| -> SelectorValueWalk {
+                if let Some(tag) = v.strip_prefix('#') {
+                    let run = selector_identifier_run_len(tag);
+                    if run == tag.len() {
+                        if selector_identifier_ok(tag) {
+                            SelectorValueWalk::Complete
+                        } else {
+                            SelectorValueWalk::Refused
+                        }
+                    } else if run > 0 && selector_identifier_ok(&tag[..run]) {
+                        SelectorValueWalk::Junk(1 + inv + run)
+                    } else {
+                        // the empty/invalid-shape run the Identifier
+                        // read's own throw answers
+                        SelectorValueWalk::Refused
+                    }
+                } else {
+                    let run = selector_identifier_run_len(v);
+                    let id_ok = |s: &str| {
+                        let id = selector_defaulted_id(s);
+                        entity_types.iter().any(|t| *t == id)
+                    };
+                    if run == v.len() {
+                        if id_ok(v) {
+                            SelectorValueWalk::Complete
+                        } else {
+                            SelectorValueWalk::Refused
+                        }
+                    } else if run > 0 && id_ok(&v[..run]) {
+                        SelectorValueWalk::Junk(inv + run)
+                    } else {
+                        SelectorValueWalk::Refused
+                    }
+                }
+            };
+            type_walk(value)
         }
         // the STRING walks (name / team / tag — the audited
         // lambda$bootStrap$0/$32/$42): the modifiers install NO
@@ -2193,21 +2385,45 @@ fn local_selector_value_suggestions(
         // value included, the leading '!' the shouldInvertValue
         // consumes first — so the parse completes and the post-value
         // punctuation suggests; a char the unquoted set refuses the
-        // value walk stops at (the parse's own ']' expectation the
-        // ERROR lane wears — the EMPTY local below answers). The NAME
-        // walk's readString the QUOTED lane adds: the '"' or '\''
-        // open the readStringUntil walk (the terminator closes, the
-        // backslash escapes the terminator/backslash only, the
+        // value walk stops at AND RETURNS — the junk lane the stop
+        // position wears (',' + ']' at the junk). The NAME walk's
+        // readString the QUOTED lane adds: the '"' or '\'' open the
+        // readStringUntil walk (the terminator closes, the backslash
+        // escapes the terminator/backslash only, the
         // unterminated/invalid-escape forms the throw answers) — the
         // internal whitespace inside the quotes the value walk
-        // consumes, the completion the same punctuation wears
+        // consumes, the tail after the close the junk lane rides
         "name" => {
-            let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
-            selector_read_string_ok(value)
+            let (inv, value) = match trimmed.strip_prefix('!') {
+                Some(v) => (1, v),
+                None => (0, trimmed),
+            };
+            match value.as_bytes().first() {
+                Some(&q) if q == b'"' || q == b'\'' => match selector_quoted_walk(value) {
+                    SelectorValueWalk::Junk(off) => SelectorValueWalk::Junk(inv + off),
+                    other => other,
+                },
+                _ => {
+                    let run = selector_unquoted_run_len(value);
+                    if run == value.len() {
+                        SelectorValueWalk::Complete
+                    } else {
+                        SelectorValueWalk::Junk(inv + run)
+                    }
+                }
+            }
         }
         "team" | "tag" => {
-            let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
-            value.chars().all(selector_unquoted_ok)
+            let (inv, value) = match trimmed.strip_prefix('!') {
+                Some(v) => (1, v),
+                None => (0, trimmed),
+            };
+            let run = selector_unquoted_run_len(value);
+            if run == value.len() {
+                SelectorValueWalk::Complete
+            } else {
+                SelectorValueWalk::Junk(inv + run)
+            }
         }
         // the NUMERIC walks (the audited lambda$bootStrap$3/$5/$7-17/
         // $19/$21/$23 — distance, level, x/y/z/dx/dy/dz, the
@@ -2215,35 +2431,78 @@ fn local_selector_value_suggestions(
         // provider (SUGGEST_NOTHING the value position keeps — the
         // vanilla suggests NO values at the numeric options, the same
         // law the string lanes wear) — the parse's own number grammar
-        // answers the completion: a fully-consumed valid value the
-        // post-value punctuation wears, a failed/stopped parse the
-        // EMPTY local keeps (no round-trip the throw spends). The
-        // LIMIT walk the readInt law keeps, the COORDINATE walks the
-        // readDouble law (the trailing-dot form the parse accepts),
-        // the distance/level walks the Bounds.fromReader grammar +
-        // the isPresent PAIR + the areSwapped check (the closed
-        // lanes), the rotations the same grammar WITHOUT the pair
-        // (the open lane — the empty side and the swapped bounds the
-        // walk accepts).
-        "limit" => selector_int_ok(trimmed),
-        "x" | "y" | "z" | "dx" | "dy" | "dz" => selector_double_ok(trimmed),
-        "distance" => selector_bounds_ok(trimmed, false, true),
-        "level" => selector_bounds_ok(trimmed, true, true),
-        "x_rotation" | "y_rotation" => selector_bounds_ok(trimmed, false, false),
+        // answers: a fully-consumed valid value the post-value
+        // punctuation wears, a run the charset stops inside AND the
+        // parse accepts the junk lane wears (',' + ']' at the junk),
+        // a failed/empty run the INVALID-NUMBER/EXPECTED-NUMBER throw
+        // answers (the EMPTY local keeps — no round-trip the throw
+        // spends). The LIMIT walk the readInt law keeps, the
+        // COORDINATE walks the readDouble law (the trailing-dot form
+        // the parse accepts), the distance/level walks the
+        // Bounds.fromReader grammar + the isPresent PAIR + the
+        // areSwapped check (the closed lanes), the rotations the same
+        // grammar WITHOUT the pair (the open lane — the empty side
+        // and the swapped bounds the walk accepts, the junk the walk's
+        // own return wears)
+        "limit" => {
+            if selector_int_ok(trimmed) {
+                SelectorValueWalk::Complete
+            } else {
+                let run = selector_number_run_len(trimmed);
+                if run > 0 && run < trimmed.len() && trimmed[..run].parse::<i32>().is_ok() {
+                    SelectorValueWalk::Junk(run)
+                } else {
+                    SelectorValueWalk::Refused
+                }
+            }
+        }
+        "x" | "y" | "z" | "dx" | "dy" | "dz" => {
+            if selector_double_ok(trimmed) {
+                SelectorValueWalk::Complete
+            } else {
+                let run = selector_number_run_len(trimmed);
+                if run > 0 && run < trimmed.len() && trimmed[..run].parse::<f64>().is_ok() {
+                    SelectorValueWalk::Junk(run)
+                } else {
+                    SelectorValueWalk::Refused
+                }
+            }
+        }
+        "distance" => selector_bounds_walk(trimmed, false, true),
+        "level" => selector_bounds_walk(trimmed, true, true),
+        "x_rotation" | "y_rotation" => selector_bounds_walk(trimmed, false, false),
         // the unspoken value walks the honest ask keeps (the scores
         // map, the nbt/advancements/predicate compounds)
         _ => return ChatSuggestionSource::AskServer,
     };
-    if complete {
-        // the post-value state — the parseOptions continuation the
-        // successful value parse installs (suggestOptionsNextOrClose:
-        // the ',' separator + the ']' close, the span the parse
-        // cursor's own end names)
-        return ChatSuggestionSource::Local {
-            start: (tail_start + tail.len()) as i32,
-            length: 0,
-            matches: punctuation(),
-        };
+    match walk {
+        SelectorValueWalk::Complete => {
+            // the post-value state — the parseOptions continuation the
+            // successful value parse installs (suggestOptionsNextOrClose:
+            // the ',' separator + the ']' close, the span the parse
+            // cursor's own end names)
+            return ChatSuggestionSource::Local {
+                start: (tail_start + tail.len()) as i32,
+                length: 0,
+                matches: punctuation(),
+            };
+        }
+        SelectorValueWalk::Junk(off) => {
+            // the post-value JUNK lane (the suggestOptionsNextOrClose
+            // state the throw survives — the UNGATED pair the bsm#13
+            // bytecode banks): the ',' + ']' AT the junk, the span
+            // the parse cursor to the input end the fill's own law
+            // keeps (the apply the junk the punctuation replaces)
+            return ChatSuggestionSource::Local {
+                start: (elem_start + off) as i32,
+                length: (tail_start + tail.len() - elem_start - off) as i32,
+                matches: punctuation(),
+            };
+        }
+        // the walk's own throw: the SUGGEST_NOTHING silence the
+        // string/numeric lanes keep, the sort/gamemode/type providers
+        // the throw survives — the folds the walk's last state speaks
+        SelectorValueWalk::Refused => {}
     }
     let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = Vec::new();
     if key == "sort" {
@@ -24300,24 +24559,36 @@ mod tests {
             vec![",", "]"],
             "the '+'/'_' tails the unquoted charset wears"
         );
-        // THE REFUSED CHAR (the '!' the value walk stops at — the
-        // parse's own ']' expectation the ERROR lane wears, the
-        // EMPTY local the catch-swallowed silence answers)
+        // THE REFUSED CHAR (the '!' the value walk stops at AND
+        // RETURNS — the parse's own ERROR_EXPECTED_END_OF_OPTIONS
+        // throw the cursor the stop position names, the
+        // suggestOptionsNextOrClose state the throw survives — the
+        // UNGATED pair the ',' + ']' AT the junk wears)
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[name=Ste!", &[], true, &[])
         else {
             panic!("/kill @a[name=Ste! the refused-char lane answers");
         };
-        assert_eq!((start, length), (14, 4), "the element text's own span");
-        assert!(matches.is_empty(), "the refused char the silence keeps");
+        assert_eq!((start, length), (17, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the junk the post-value state wears"
+        );
         // THE REFUSED CHAR AFTER THE INVERT (the '!' consumed first,
-        // the second the walk stops at)
-        let Src::Local { matches, .. } =
+        // the second the walk stops at — the same junk lane the
+        // post-invert cursor names)
+        let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[name=!Ste!", &[], true, &[])
         else {
             panic!("/kill @a[name=!Ste! the refused-char lane answers");
         };
-        assert!(matches.is_empty(), "the post-invert refusal the silence keeps");
+        assert_eq!((start, length), (18, 1), "the post-invert junk span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the post-invert junk the state wears"
+        );
         // THE INTERNAL WHITESPACE (the committed honest-ask gate —
         // the parse's own ERROR_EXPECTED_END_OF_OPTIONS lane)
         assert_eq!(
@@ -24492,16 +24763,25 @@ mod tests {
             Src::AskServer,
             "the tail after the close the committed ask keeps"
         );
-        // THE TEAM/TAG WALKS REFUSE THE QUOTES (the
+        // THE TEAM/TAG WALKS THE QUOTES THE JUNK LANE WEARS (the
         // readUnquotedString walks the '"' the unquoted charset never
-        // carries — the stopped walk the EMPTY local wears)
-        for key in ["team", "tag"] {
-            let Src::Local { matches, .. } =
+        // carries — the stopped read RETURNS EMPTY (the unquoted walk
+        // never throws on the stop), the parse's own
+        // ERROR_EXPECTED_END_OF_OPTIONS throw the cursor the quote
+        // position names, the UNGATED pair the ',' + ']' at the junk
+        // wears)
+        for (key, span) in [("team", (14, 5)), ("tag", (13, 5))] {
+            let Src::Local { start, length, matches } =
                 local_command_suggestions(&tree, &format!("/kill @a[{key}=\"red\""), &[], true, &[])
             else {
                 panic!("/kill @a[{key}=\"red\" the unquoted refusal answers");
             };
-            assert!(matches.is_empty(), "the '{key}' walk the quote refuses");
+            assert_eq!((start, length), span, "the span the quote cursor names");
+            assert_eq!(
+                matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+                vec![",", "]"],
+                "the '{key}' walk the quote the junk lane wears"
+            );
         }
         // THE NUMERIC KEY NEVER OPENS THE QUOTE (the readInt walk the
         // '"' the number charset refuses — the EXPECTED-NUMBER throw
@@ -24673,14 +24953,20 @@ mod tests {
         assert_eq!((start, length), (9, 12), "the span the exact-case rollback names");
         assert!(matches.is_empty(), "the exact-case lookup the casing refuses");
         // THE INCOMPLETE VALUE THE QUOTED KEY RIDES (the refused tail
-        // the EMPTY local wears — the span the element's own text names)
+        // the value walk stops at AND RETURNS — the junk lane the
+        // stop cursor wears, the span the parse cursor to the input
+        // end names)
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[\"name\"=Ste!", &[], true, &[])
         else {
             panic!("/kill @a[\"name\"=Ste! the refused tail answers");
         };
-        assert_eq!((start, length), (16, 4), "the span the element text wears");
-        assert!(matches.is_empty(), "the refused tail the silence keeps");
+        assert_eq!((start, length), (19, 1), "the span the junk cursor wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the refused tail the junk lane wears"
+        );
         // THE TAB APPLY (the completed quoted key the ',' insert
         // lands — no request the lane spends)
         let mut app = App::new(3);
@@ -24848,6 +25134,216 @@ mod tests {
         );
     }
 
+    /// THE POST-VALUE JUNK LANE (javap `EntitySelectorParser
+    /// .parseOptions` — the audit_bsm13.py bytecode banks: the
+    /// suggestOptionsNextOrClose install (the offsets 153-160)
+    /// PRECEDES the canRead/','/']'/throw checks, the
+    /// ERROR_EXPECTED_END_OF_OPTIONS throw (the offsets 220-230) the
+    /// state survives, and the bsm#13 lambda is UNGATED — the bare
+    /// `suggest(',')` + `suggest(']')` pair, NO getRemaining gate —
+    /// so a value walk that RETURNS with the read stopped at a char
+    /// the charset refuses wears ',' + ']' AT the junk, the span the
+    /// parse cursor to the input end the fill's own law keeps; a
+    /// walk that THROWS (the failed parse, the closed lanes' pair,
+    /// the empty runs) the SUGGEST_NOTHING silence keeps — the
+    /// sort/gamemode/type modifiers' own providers the throw
+    /// survives, the committed folds speak; the junk the ',' applies
+    /// — the replace the range [cursor, input end) the Brigadier
+    /// StringRange law keeps).
+    #[test]
+    fn the_selector_options_the_post_value_junk_lane_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        let types = vec![
+            "minecraft:pig".to_string(),
+            "minecraft:zombie".to_string(),
+            "minecraft:skeleton_horse".to_string(),
+        ];
+        // THE SORT JUNK (the readUnquotedString run 'nearest' the
+        // switch matches — the walk RETURNS, the '!' the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nearest!", &[], true, &[])
+        else {
+            panic!("/kill @a[sort=nearest! the sort junk answers");
+        };
+        assert_eq!((start, length), (21, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the sort junk the post-value state wears"
+        );
+        // THE SORT UNKNOWN (the switch's default the
+        // rollbackAndThrow answers — the provider state the throw
+        // keeps, the fold the silence wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=zz!", &[], true, &[])
+        else {
+            panic!("/kill @a[sort=zz! the sort unknown answers");
+        };
+        assert_eq!((start, length), (14, 3), "the element span the fold wears");
+        assert!(matches.is_empty(), "the unknown sort the fold refuses");
+        // THE GAMEMODE JUNK (the byName hit the walk returns — the
+        // same junk lane)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=creative!", &[], true, &[])
+        else {
+            panic!("/kill @a[gamemode=creative! the gamemode junk answers");
+        };
+        assert_eq!((start, length), (26, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the gamemode junk the state wears"
+        );
+        // THE GAMEMODE UNKNOWN (the byName miss the throw answers —
+        // the provider's fold the silence keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=zz!", &[], true, &[])
+        else {
+            panic!("/kill @a[gamemode=zz! the gamemode unknown answers");
+        };
+        assert_eq!((start, length), (18, 3), "the element span the fold wears");
+        assert!(matches.is_empty(), "the unknown gamemode the fold refuses");
+        // THE TYPE JUNK (the id run 'pig' the membership keeps — the
+        // walk returns, the '!' the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=pig!", &[], true, &types)
+        else {
+            panic!("/kill @a[type=pig! the type junk answers");
+        };
+        assert_eq!((start, length), (17, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the type junk the state wears"
+        );
+        // THE TYPE UNKNOWN (the orElseThrow the membership miss
+        // answers — the provider's fold the silence keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=zz!", &[], true, &types)
+        else {
+            panic!("/kill @a[type=zz! the type unknown answers");
+        };
+        assert_eq!((start, length), (14, 3), "the element span the fold wears");
+        assert!(matches.is_empty(), "the unknown type the fold refuses");
+        // THE TYPE TAG JUNK (the tag the parse never refutes — the
+        // Identifier run the walk returns, the '!' the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=#minecraft:skeletons!", &[], true, &types)
+        else {
+            panic!("/kill @a[type=#minecraft:skeletons! the tag junk answers");
+        };
+        assert_eq!((start, length), (34, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the tag junk the state wears"
+        );
+        // THE BOUNDS JUNK (the single-value form the min run builds —
+        // the pair keeps, the walk returns, the '!' the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[distance=5!", &[], true, &[])
+        else {
+            panic!("/kill @a[distance=5! the bounds junk answers");
+        };
+        assert_eq!((start, length), (19, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the bounds junk the state wears"
+        );
+        // THE BOUNDS RANGE JUNK (the max run '10' the pair keeps —
+        // the '!' the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[distance=5..10!", &[], true, &[])
+        else {
+            panic!("/kill @a[distance=5..10! the range junk answers");
+        };
+        assert_eq!((start, length), (23, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the range junk the state wears"
+        );
+        // THE BOUNDS EMPTY MAX (the pair the closed lane keeps — the
+        // walk THROWS, the SUGGEST_NOTHING silence the empty wears)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[distance=5..!", &[], true, &[])
+        else {
+            panic!("/kill @a[distance=5..! the empty-max refusal answers");
+        };
+        assert!(matches.is_empty(), "the empty max the pair throws");
+        // THE ROTATION JUNK (the open lane's no-pair law the empty
+        // max accepts — the walk returns, the '!' the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[x_rotation=45..!", &[], true, &[])
+        else {
+            panic!("/kill @a[x_rotation=45..! the rotation junk answers");
+        };
+        assert_eq!((start, length), (24, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the rotation junk the state wears"
+        );
+        // THE QUOTED TAIL JUNK (the readString walk RETURNS at the
+        // close — the 'x' tail the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"Steve\"x", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"Steve\"x the quoted tail answers");
+        };
+        assert_eq!((start, length), (21, 1), "the span the post-close cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the quoted tail the junk lane wears"
+        );
+        // THE QUOTED UNTERMINATED (the END-OF-QUOTE throw the walk's
+        // own throw keeps — the SUGGEST_NOTHING silence)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=\"Steve", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"Steve the unterminated refusal answers");
+        };
+        assert!(matches.is_empty(), "the unterminated quote the throw keeps");
+        // THE COORDINATE JUNK (the run '5' the parseDouble accepts —
+        // the 'x' the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[x=5x", &[], true, &[])
+        else {
+            panic!("/kill @a[x=5x the coordinate junk answers");
+        };
+        assert_eq!((start, length), (12, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the coordinate junk the state wears"
+        );
+        // THE TAB APPLY (the ',' applies OVER the junk — the replace
+        // the range [cursor, input end) the StringRange law keeps,
+        // the junk the punctuation replaces — no request the lane
+        // spends)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[sort=nearest!".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the junk lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[sort=nearest,",
+            "the apply the junk replace lands"
+        );
+    }
+
     /// THE NUMERIC VALUE WALKS (javap `EntitySelectorOptions
     /// lambda$bootStrap$3/$5/$7-17/$19/$21/$23` + `MinMaxBounds$Bounds
     /// .fromReader` — the distance/level/coordinate/rotation/limit
@@ -24907,12 +25403,12 @@ mod tests {
             "the negative int the completion wears"
         );
         // THE INVALID INT FORMS (the "5.5" the parseInt throw
-        // answers, the "5x" the ']' expectation dies at, the overflow
-        // the parse's own range law wears, the bare "-" the
-        // INVALID-INT throw answers, the '+' the charset refuses)
+        // answers, the overflow the parse's own range law wears, the
+        // bare "-" the INVALID-INT throw answers, the '+' the charset
+        // refuses — the walk's own throws the SUGGEST_NOTHING silence
+        // keeps)
         for (input, why) in [
             ("/kill @a[limit=5.5", "the fraction the parseInt throw answers"),
-            ("/kill @a[limit=5x", "the leftover char the ']' expectation dies at"),
             (
                 "/kill @a[limit=99999999999",
                 "the overflow the parse's range law wears",
@@ -24927,6 +25423,23 @@ mod tests {
             };
             assert!(matches.is_empty(), "{why}");
         }
+        // THE LEFTOVER CHAR THE JUNK LANE WEARS (the "5x" the run the
+        // charset stops inside AND the parse accepts — the walk
+        // RETURNS, the parse's own ERROR_EXPECTED_END_OF_OPTIONS
+        // throw the cursor the stop position names, the
+        // suggestOptionsNextOrClose state the throw survives — the
+        // UNGATED pair the ',' + ']' AT the junk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5x", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5x the junk lane answers");
+        };
+        assert_eq!((start, length), (16, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the leftover char the junk lane wears"
+        );
         // THE COORDINATE WALKS (the readDouble law — the
         // x/y/z/dx/dy/dz keys the same completion wear; the
         // trailing-dot form the charset law ACCEPTS — the
@@ -25077,13 +25590,21 @@ mod tests {
                 panic!("/kill @a[{key}=.. the both-empty refusal answers");
             };
             assert!(matches.is_empty(), "the empty range the throw keeps");
-            // the leftover char the ']' expectation dies at
-            let Src::Local { matches, .. } =
+            // the leftover char the junk lane wears (the open lane's
+            // no-pair law the absent max accepts — the walk RETURNS,
+            // the ERROR_EXPECTED_END_OF_OPTIONS throw the cursor the
+            // 'x' position names, the ',' + ']' the state wears)
+            let Src::Local { start, length, matches } =
                 local_command_suggestions(&tree, &format!("/kill @a[{key}=45..x"), &[], true, &[])
             else {
-                panic!("/kill @a[{key}=45..x the leftover refusal answers");
+                panic!("/kill @a[{key}=45..x the junk lane answers");
             };
-            assert!(matches.is_empty(), "the unparseable max the ']' lane keeps");
+            assert_eq!((start, length), (24, 1), "the span the junk cursor wears");
+            assert_eq!(
+                matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+                vec![",", "]"],
+                "the unparseable max the junk lane wears"
+            );
         }
         // THE NO-INVERT LAW (the numeric walks carry NO
         // shouldInvertValue — the '!' the read walks refuse)
