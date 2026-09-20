@@ -1,0 +1,290 @@
+=== canHurtPlayer()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+      4: invokevirtual #28.isSurvival:()Z
+      7: ireturn 
+
+=== extractPlayerHealth(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V max_stack=12 max_locals=19 ===
+      0: aload_0 
+      1: invokevirtual #3.getCameraPlayer:()Lnet/minecraft/world/entity/player/Player;
+      4: astore_2 
+      5: aload_2 
+      6: ifnonnull start+10
+      9: return 
+     10: aload_2 
+     11: invokevirtual #443.getHealth:()F
+     14: invokestatic #310.ceil:(F)I
+     17: istore_3 
+     18: aload_0 
+     19: getfield #3.healthBlinkTime:J
+     22: aload_0 
+     23: getfield #3.tickCount:I
+     26: i2l 
+     27: lcmp 
+     28: ifle start+58
+     31: aload_0 
+     32: getfield #3.healthBlinkTime:J
+     35: aload_0 
+     36: getfield #3.tickCount:I
+     39: i2l 
+     40: lsub 
+     41: ldc2_w #1246
+     44: ldiv 
+     45: ldc2_w #1248
+     48: lrem 
+     49: lconst_1 
+     50: lcmp 
+     51: ifne start+58
+     54: iconst_1 
+     55: goto start+59
+     58: iconst_0 
+     59: istore 4
+     61: invokestatic #1251.getMillis:()J
+     64: lstore 5
+     66: iload_3 
+     67: aload_0 
+     68: getfield #3.lastHealth:I
+     71: if_icmpge start+102
+     74: aload_2 
+     75: getfield #443.invulnerableTime:I
+     78: ifle start+102
+     81: aload_0 
+     82: lload 5
+     84: putfield #3.lastHealthTime:J
+     87: aload_0 
+     88: aload_0 
+     89: getfield #3.tickCount:I
+     92: bipush 20
+     94: iadd 
+     95: i2l 
+     96: putfield #3.healthBlinkTime:J
+     99: goto start+135
+    102: iload_3 
+    103: aload_0 
+    104: getfield #3.lastHealth:I
+    107: if_icmple start+135
+    110: aload_2 
+    111: getfield #443.invulnerableTime:I
+    114: ifle start+135
+    117: aload_0 
+    118: lload 5
+    120: putfield #3.lastHealthTime:J
+    123: aload_0 
+    124: aload_0 
+    125: getfield #3.tickCount:I
+    128: bipush 10
+    130: iadd 
+    131: i2l 
+    132: putfield #3.healthBlinkTime:J
+    135: lload 5
+    137: aload_0 
+    138: getfield #3.lastHealthTime:J
+    141: lsub 
+    142: ldc2_w #1264
+    145: lcmp 
+    146: ifle start+160
+    149: aload_0 
+    150: iload_3 
+    151: putfield #3.displayHealth:I
+    154: aload_0 
+    155: lload 5
+    157: putfield #3.lastHealthTime:J
+    160: aload_0 
+    161: iload_3 
+    162: putfield #3.lastHealth:I
+    165: aload_0 
+    166: getfield #3.displayHealth:I
+    169: istore 7
+    171: aload_0 
+    172: getfield #3.random:Lnet/minecraft/util/RandomSource;
+    175: aload_0 
+    176: getfield #3.tickCount:I
+    179: ldc_w #1269
+    182: imul 
+    183: i2l 
+    184: invokeinterface #12.setSeed:(J)V
+    189: aload_1 
+    190: invokevirtual #204.guiWidth:()I
+    193: iconst_2 
+    194: idiv 
+    195: bipush 91
+    197: isub 
+    198: istore 8
+    200: aload_1 
+    201: invokevirtual #204.guiWidth:()I
+    204: iconst_2 
+    205: idiv 
+    206: bipush 91
+    208: iadd 
+    209: istore 9
+    211: aload_1 
+    212: invokevirtual #204.guiHeight:()I
+    215: bipush 39
+    217: isub 
+    218: istore 10
+    220: aload_2 
+    221: getstatic #1275.MAX_HEALTH:Lnet/minecraft/core/Holder;
+    224: invokevirtual #443.getAttributeValue:(Lnet/minecraft/core/Holder;)D
+    227: d2f 
+    228: iload 7
+    230: iload_3 
+    231: invokestatic #1200.max:(II)I
+    234: i2f 
+    235: invokestatic #1200.max:(FF)F
+    238: fstore 11
+    240: aload_2 
+    241: invokevirtual #443.getAbsorptionAmount:()F
+    244: invokestatic #310.ceil:(F)I
+    247: istore 12
+    249: fload 11
+    251: iload 12
+    253: i2f 
+    254: fadd 
+    255: fconst_2 
+    256: fdiv 
+    257: ldc_w #446
+    260: fdiv 
+    261: invokestatic #310.ceil:(F)I
+    264: istore 13
+    266: bipush 10
+    268: iload 13
+    270: iconst_2 
+    271: isub 
+    272: isub 
+    273: iconst_3 
+    274: invokestatic #1200.max:(II)I
+    277: istore 14
+    279: iload 10
+    281: bipush 10
+    283: isub 
+    284: istore 15
+    286: iconst_m1 
+    287: istore 16
+    289: aload_2 
+    290: getstatic #404.REGENERATION:Lnet/minecraft/core/Holder;
+    293: invokevirtual #443.hasEffect:(Lnet/minecraft/core/Holder;)Z
+    296: ifeq start+315
+    299: aload_0 
+    300: getfield #3.tickCount:I
+    303: fload 11
+    305: ldc_w #729
+    308: fadd 
+    309: invokestatic #310.ceil:(F)I
+    312: irem 
+    313: istore 16
+    315: invokestatic #431.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+    318: ldc_w #1296
+    321: invokeinterface #438.push:(Ljava/lang/String;)V
+    326: aload_1 
+    327: aload_2 
+    328: iload 10
+    330: iload 13
+    332: iload 14
+    334: iload 8
+    336: invokestatic #3.extractArmor:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/entity/player/Player;IIII)V
+    339: invokestatic #431.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+    342: ldc_w #1302
+    345: invokeinterface #438.popPush:(Ljava/lang/String;)V
+    350: aload_0 
+    351: aload_1 
+    352: aload_2 
+    353: iload 8
+    355: iload 10
+    357: iload 14
+    359: iload 16
+    361: fload 11
+    363: iload_3 
+    364: iload 7
+    366: iload 12
+    368: iload 4
+    370: invokevirtual #3.extractHearts:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/entity/player/Player;IIIIFIIIZ)V
+    373: aload_0 
+    374: invokevirtual #3.getPlayerVehicleWithHealth:()Lnet/minecraft/world/entity/LivingEntity;
+    377: astore 17
+    379: aload_0 
+    380: aload 17
+    382: invokevirtual #3.getVehicleMaxHearts:(Lnet/minecraft/world/entity/LivingEntity;)I
+    385: istore 18
+    387: iload 18
+    389: ifne start+416
+    392: invokestatic #431.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+    395: ldc_w #1319
+    398: invokeinterface #438.popPush:(Ljava/lang/String;)V
+    403: aload_0 
+    404: aload_1 
+    405: aload_2 
+    406: iload 10
+    408: iload 9
+    410: invokevirtual #3.extractFood:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/entity/player/Player;II)V
+    413: iinc #4086
+    416: invokestatic #431.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+    419: ldc_w #1325
+    422: invokeinterface #438.popPush:(Ljava/lang/String;)V
+    427: aload_0 
+    428: aload_1 
+    429: aload_2 
+    430: iload 18
+    432: iload 15
+    434: iload 9
+    436: invokevirtual #3.extractAirBubbles:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/world/entity/player/Player;III)V
+    439: invokestatic #431.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+    442: invokeinterface #438.pop:()V
+    447: return 
+
+=== nextContextualInfoState()Lnet/minecraft/client/gui/Hud$ContextualInfo; max_stack=1 max_locals=4 ===
+      0: aload_0 
+      1: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #162.player:Lnet/minecraft/client/player/LocalPlayer;
+      7: getfield #325.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+     10: invokevirtual #639.getWaypointManager:()Lnet/minecraft/client/waypoints/ClientWaypointManager;
+     13: invokevirtual #1777.hasWaypoints:()Z
+     16: istore_1 
+     17: aload_0 
+     18: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+     21: getfield #162.player:Lnet/minecraft/client/player/LocalPlayer;
+     24: invokevirtual #325.jumpableVehicle:()Lnet/minecraft/world/entity/PlayerRideableJumping;
+     27: ifnull start+34
+     30: iconst_1 
+     31: goto start+35
+     34: iconst_0 
+     35: istore_2 
+     36: aload_0 
+     37: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+     40: getfield #162.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     43: invokevirtual #661.hasExperience:()Z
+     46: istore_3 
+     47: iload_1 
+     48: ifeq start+85
+     51: iload_2 
+     52: ifeq start+66
+     55: aload_0 
+     56: invokevirtual #3.willPrioritizeJumpInfo:()Z
+     59: ifeq start+66
+     62: getstatic #42.JUMPABLE_VEHICLE:Lnet/minecraft/client/gui/Hud$ContextualInfo;
+     65: areturn 
+     66: iload_3 
+     67: ifeq start+81
+     70: aload_0 
+     71: invokevirtual #3.willPrioritizeExperienceInfo:()Z
+     74: ifeq start+81
+     77: getstatic #42.EXPERIENCE:Lnet/minecraft/client/gui/Hud$ContextualInfo;
+     80: areturn 
+     81: getstatic #42.LOCATOR:Lnet/minecraft/client/gui/Hud$ContextualInfo;
+     84: areturn 
+     85: iload_2 
+     86: ifeq start+93
+     89: getstatic #42.JUMPABLE_VEHICLE:Lnet/minecraft/client/gui/Hud$ContextualInfo;
+     92: areturn 
+     93: iload_3 
+     94: ifeq start+101
+     97: getstatic #42.EXPERIENCE:Lnet/minecraft/client/gui/Hud$ContextualInfo;
+    100: areturn 
+    101: getstatic #42.EMPTY:Lnet/minecraft/client/gui/Hud$ContextualInfo;
+    104: areturn 
+
+=== hasExperience()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+      4: invokevirtual #28.isSurvival:()Z
+      7: ireturn 
+

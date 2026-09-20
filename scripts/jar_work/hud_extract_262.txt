@@ -1,0 +1,207 @@
+=== extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #162.gameRenderer:Lnet/minecraft/client/renderer/GameRenderer;
+      7: invokevirtual #168.gameRenderState:()Lnet/minecraft/client/renderer/state/GameRenderState;
+     10: getfield #174.guiRenderState:Lnet/minecraft/client/renderer/state/gui/GuiRenderState;
+     13: aload_0 
+     14: getfield #3.isHidden:Z
+     17: putfield #180.isHudHidden:Z
+     20: aload_0 
+     21: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+     24: getfield #162.gui:Lnet/minecraft/client/gui/Gui;
+     27: invokevirtual #189.screen:()Lnet/minecraft/client/gui/screens/Screen;
+     30: instanceof net/minecraft/client/gui/screens/LevelLoadingScreen
+     33: ifeq start+37
+     36: return 
+     37: aload_0 
+     38: getfield #3.isHidden:Z
+     41: ifne start+78
+     44: aload_0 
+     45: aload_1 
+     46: aload_2 
+     47: invokevirtual #3.extractCameraOverlays:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     50: aload_0 
+     51: aload_1 
+     52: aload_2 
+     53: invokevirtual #3.extractCrosshair:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     56: aload_1 
+     57: invokevirtual #204.nextStratum:()V
+     60: aload_0 
+     61: aload_1 
+     62: aload_2 
+     63: invokevirtual #3.extractHotbarAndDecorations:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     66: aload_0 
+     67: aload_1 
+     68: aload_2 
+     69: invokevirtual #3.extractEffects:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     72: aload_0 
+     73: aload_1 
+     74: aload_2 
+     75: invokevirtual #3.extractBossOverlay:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     78: aload_0 
+     79: aload_1 
+     80: aload_2 
+     81: invokevirtual #3.extractSleepOverlay:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     84: aload_0 
+     85: getfield #3.isHidden:Z
+     88: ifne start+169
+     91: aload_0 
+     92: aload_1 
+     93: aload_2 
+     94: invokevirtual #3.extractDemoOverlay:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     97: aload_0 
+     98: aload_1 
+     99: aload_2 
+    100: invokevirtual #3.extractScoreboardSidebar:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    103: aload_0 
+    104: aload_1 
+    105: aload_2 
+    106: invokevirtual #3.extractOverlayMessage:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    109: aload_0 
+    110: aload_1 
+    111: aload_2 
+    112: invokevirtual #3.extractTitle:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    115: aload_0 
+    116: aload_1 
+    117: aload_2 
+    118: invokevirtual #3.extractChat:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    121: aload_0 
+    122: aload_1 
+    123: aload_2 
+    124: invokevirtual #3.extractTabList:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    127: aload_0 
+    128: aload_1 
+    129: aload_0 
+    130: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    133: getfield #162.gui:Lnet/minecraft/client/gui/Gui;
+    136: invokevirtual #189.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    139: ifnull start+158
+    142: aload_0 
+    143: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    146: getfield #162.gui:Lnet/minecraft/client/gui/Gui;
+    149: invokevirtual #189.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    152: invokevirtual #239.isInGameUi:()Z
+    155: ifeq start+162
+    158: iconst_1 
+    159: goto start+163
+    162: iconst_0 
+    163: invokevirtual #3.extractSubtitleOverlay:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Z)V
+    166: goto start+204
+    169: aload_0 
+    170: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    173: getfield #162.gui:Lnet/minecraft/client/gui/Gui;
+    176: invokevirtual #189.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    179: ifnull start+204
+    182: aload_0 
+    183: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    186: getfield #162.gui:Lnet/minecraft/client/gui/Gui;
+    189: invokevirtual #189.screen:()Lnet/minecraft/client/gui/screens/Screen;
+    192: invokevirtual #239.isInGameUi:()Z
+    195: ifeq start+204
+    198: aload_0 
+    199: aload_1 
+    200: iconst_1 
+    201: invokevirtual #3.extractSubtitleOverlay:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Z)V
+    204: return 
+
+=== extractHotbarAndDecorations(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V max_stack=4 max_locals=4 ===
+      0: aload_0 
+      1: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #162.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+      7: invokevirtual #661.getPlayerMode:()Lnet/minecraft/world/level/GameType;
+     10: getstatic #667.SPECTATOR:Lnet/minecraft/world/level/GameType;
+     13: if_acmpne start+27
+     16: aload_0 
+     17: getfield #3.spectatorGui:Lnet/minecraft/client/gui/components/spectator/SpectatorGui;
+     20: aload_1 
+     21: invokevirtual #74.extractHotbar:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
+     24: goto start+33
+     27: aload_0 
+     28: aload_1 
+     29: aload_2 
+     30: invokevirtual #3.extractItemHotbar:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+     33: aload_0 
+     34: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+     37: getfield #162.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+     40: invokevirtual #661.canHurtPlayer:()Z
+     43: ifeq start+51
+     46: aload_0 
+     47: aload_1 
+     48: invokevirtual #3.extractPlayerHealth:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
+     51: aload_0 
+     52: aload_1 
+     53: invokevirtual #3.extractVehicleHealth:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
+     56: aload_0 
+     57: invokevirtual #3.nextContextualInfoState:()Lnet/minecraft/client/gui/Hud$ContextualInfo;
+     60: astore_3 
+     61: aload_3 
+     62: aload_0 
+     63: getfield #3.contextualInfoBar:Lcom/mojang/datafixers/util/Pair;
+     66: invokevirtual #52.getFirst:()Ljava/lang/Object;
+     69: if_acmpeq start+101
+     72: aload_0 
+     73: aload_3 
+     74: aload_0 
+     75: getfield #3.contextualInfoBars:Ljava/util/Map;
+     78: aload_3 
+     79: invokeinterface #939.get:(Ljava/lang/Object;)Ljava/lang/Object;
+     84: checkcast java/util/function/Supplier
+     87: invokeinterface #943.get:()Ljava/lang/Object;
+     92: checkcast net/minecraft/client/gui/contextualbar/ContextualBar
+     95: invokestatic #52.of:(Ljava/lang/Object;Ljava/lang/Object;)Lcom/mojang/datafixers/util/Pair;
+     98: putfield #3.contextualInfoBar:Lcom/mojang/datafixers/util/Pair;
+    101: aload_0 
+    102: getfield #3.contextualInfoBar:Lcom/mojang/datafixers/util/Pair;
+    105: invokevirtual #52.getSecond:()Ljava/lang/Object;
+    108: checkcast net/minecraft/client/gui/contextualbar/ContextualBar
+    111: aload_1 
+    112: aload_2 
+    113: invokeinterface #47.extractBackground:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    118: aload_0 
+    119: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    122: getfield #162.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    125: invokevirtual #661.hasExperience:()Z
+    128: ifeq start+165
+    131: aload_0 
+    132: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    135: getfield #162.player:Lnet/minecraft/client/player/LocalPlayer;
+    138: getfield #325.experienceLevel:I
+    141: ifle start+165
+    144: aload_1 
+    145: aload_0 
+    146: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    149: getfield #162.font:Lnet/minecraft/client/gui/Font;
+    152: aload_0 
+    153: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    156: getfield #162.player:Lnet/minecraft/client/player/LocalPlayer;
+    159: getfield #325.experienceLevel:I
+    162: invokestatic #47.extractExperienceLevel:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/gui/Font;I)V
+    165: aload_0 
+    166: getfield #3.contextualInfoBar:Lcom/mojang/datafixers/util/Pair;
+    169: invokevirtual #52.getSecond:()Ljava/lang/Object;
+    172: checkcast net/minecraft/client/gui/contextualbar/ContextualBar
+    175: aload_1 
+    176: aload_2 
+    177: invokeinterface #47.extractRenderState:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/DeltaTracker;)V
+    182: aload_0 
+    183: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    186: getfield #162.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    189: invokevirtual #661.getPlayerMode:()Lnet/minecraft/world/level/GameType;
+    192: getstatic #667.SPECTATOR:Lnet/minecraft/world/level/GameType;
+    195: if_acmpeq start+206
+    198: aload_0 
+    199: aload_1 
+    200: invokevirtual #3.extractSelectedItemName:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
+    203: goto start+227
+    206: aload_0 
+    207: getfield #3.minecraft:Lnet/minecraft/client/Minecraft;
+    210: getfield #162.player:Lnet/minecraft/client/player/LocalPlayer;
+    213: invokevirtual #325.isSpectator:()Z
+    216: ifeq start+227
+    219: aload_0 
+    220: getfield #3.spectatorGui:Lnet/minecraft/client/gui/components/spectator/SpectatorGui;
+    223: aload_1 
+    224: invokevirtual #74.extractAction:(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V
+    227: return 
+

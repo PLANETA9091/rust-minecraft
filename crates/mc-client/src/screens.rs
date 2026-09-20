@@ -4839,6 +4839,24 @@ impl GameMode {
     pub(crate) fn invulnerable(self) -> bool {
         matches!(self, GameMode::Creative | GameMode::Spectator)
     }
+
+    /// `GameType.isSurvival`'s audited fold (javap 26.2 — the acmp
+    /// pair: SURVIVAL | ADVENTURE answer true, creative/spectator
+    /// false). The HUD decorations' own gate the verdict answers twice:
+    /// `MultiPlayerGameMode.canHurtPlayer` pcs 0-7 IS
+    /// `localPlayerMode.isSurvival()` — the
+    /// extractHotbarAndDecorations pcs 33-50 `ifeq` the whole
+    /// extractPlayerHealth body (the armor + hearts + food + air-bubble
+    /// rows, the display-lerp and blink state machines inside) never
+    /// runs — and `MultiPlayerGameMode.hasExperience` pcs 0-7 the SAME
+    /// fold verbatim: the XP contextual bar
+    /// (nextContextualInfoState pcs 36-46's selection) and the
+    /// `hasExperience() && experienceLevel > 0` level digits
+    /// (extractHotbarAndDecorations pcs 118-164) the false the
+    /// creative/spectator frame never draws.
+    pub(crate) fn is_survival(self) -> bool {
+        matches!(self, GameMode::Survival | GameMode::Adventure)
+    }
 }
 
 /// THE SLOT ROW'S OWN STEP (the init walk's `imul 31` — the 26x26
@@ -22504,95 +22522,20 @@ impl App {
         }
     }
 
-    /// Vanilla HUD: crosshair, hotbar + selection, hearts and hunger — all
-    /// official `hud/*` sprites at vanilla positions and sizes.
-    fn render_hud(&mut self, g: &mut Gui, a: &mut GuiAssets) {
+    /// THE SURVIVAL DECORATIONS' OWN WALK (javap Hud.extractPlayerHealth
+    /// — the whole body the extractHotbarAndDecorations pcs 33-50 gate
+    /// hides): the health row's state machine (the blink arm, the
+    /// display lerp) runs per frame INSIDE the gate — the creative/
+    /// spectator frame the body never runs, the display state the
+    /// flick-out freezes exactly the vanilla shape keeps — then the
+    /// hearts walk (the containers, the absorbing/highlight/normal
+    /// fills, the jitter and regen lifts), the hunger row's
+    /// saturation shimmy, the air bubbles' row law with the pop
+    /// voice the dedup carries. The heart jitter's LCG stream the
+    /// air-empty's nextInt(2) continuation keeps — the one-Random
+    /// law the vanilla frame speaks.
+    fn render_survival_decorations(&mut self, g: &mut Gui, a: &mut GuiAssets) {
         let (w, h) = (g.w(), g.h());
-        // THE F1 GATE (javap Hud.extractRenderState's isHidden law — the
-        // `GuiRenderState.isHudHidden = this.isHidden` copy the bytecode
-        // 13-17 keeps, then the hidden groups the TWO ifne branches
-        // speak: the camera overlays + crosshair + hotbar + effects +
-        // boss the first skips (bc 41/78), the demo + scoreboard +
-        // overlay message + title + chat + tab list the second (bc
-        // 88/169); the sleep overlay + the screen-open subtitles the
-        // bytecode keeps drawing the Hud-less client honestly lacks):
-        // the whole HUD layer sleeps while the flag holds — the world
-        // renders bare beneath, the vanilla F1 look. The FPS window's
-        // own bookkeeping the gate keeps counting (the DebugEntryFps
-        // ring the hidden panel's truth still fills — the un-hide the
-        // value's continuity keeps), the debug panel the
-        // DebugScreenOverlay.extractRenderState's own gate hides
-        // (`hud.isHidden() && gui.screen() == null` → return — the
-        // world screen the null-screen shape keeps, the bare world the
-        // F3-open frame still shows).
-        self.record_fps_window();
-        if self.hud_hidden {
-            return;
-        }
-        // THE EXPERIENCE BAR (javap `Hud`'s contextual-bar extract: the
-        // `gameMode.hasExperience()` gate the survival client speaks —
-        // this App IS the survival lane — then `ExperienceBar.
-        // extractBackground`'s own law): the `xpNeededForNextLevel > 0`
-        // arm lifts the whole row (level 0's needed is 7 — the dark
-        // background shows from the first frame, the vanilla survival
-        // look); the background 182x5 at `left(top(Window))` = the
-        // defaults `(w-182)/2` and `h-24-5` the ContextualBar interface
-        // speaks; the fill `(int)(progress * 183.0f)` rides the TEN-INT
-        // region blit — the leftmost `fill` columns of the progress
-        // sprite at 1:1, the CROP the never-a-squish law carries; the
-        // level number renders only past level 0 (the `experienceLevel
-        // > 0` gate the Hud extract speaks): the "%s" translation the
-        // en_us lang names renders as the bare digits, centered
-        // `(w - textWidth)/2` at `h-24-9-2`, the FOUR black neighbor
-        // draws + the green center (the dropShadow-less outline the
-        // -16777216/-8323296 pair speaks).
-        let needed = crate::xp::xp_needed_for_next_level(self.xp.level);
-        if needed > 0 {
-            let (ex, ey) = (w / 2 - 91, h - 29);
-            g.sprite(a, "hud/experience_bar_background", ex, ey);
-            let fill = (self.xp.progress * 183.0) as i32;
-            if fill > 0 {
-                g.sprite_region(a, "hud/experience_bar_progress", 0, 0, fill, 5, ex, ey);
-            }
-            if self.xp.level > 0 {
-                let s = self.xp.level.to_string();
-                let tx = (w - g.text_width(&s)) / 2;
-                let ty = h - 35;
-                for (dx, dy) in [(1i32, 0), (-1, 0), (0, 1), (0, -1)] {
-                    g.text(a, tx + dx, ty + dy, &s, TEXT_OUTLINE_BLACK, false);
-                }
-                g.text(a, tx, ty, &s, EXP_LEVEL_GREEN, false);
-            }
-        }
-        // crosshair: centered 15x15 — ONLY in first person (the vanilla
-        // renderCrosshair's own cameraType gate: a detached camera has no
-        // crosshair)
-        if self.perspective.is_first_person() {
-            g.sprite(a, "hud/crosshair", w / 2 - 7, h / 2 - 7);
-        }
-        // hotbar: 182x22 centered at the bottom, selector around slot 0
-        let (hx, hy) = hotbar_rect(w, h);
-        g.sprite(a, "hud/hotbar", hx, hy);
-        let sel_x = hx - 1 + self.selected_hotbar as i32 * (HEART_SPACING + 12);
-        g.sprite(a, "hud/hotbar_selection", sel_x, hy - 1);
-        // the LIVE store's row over the sprite (the vanilla
-        // renderHotbarAndDecorations): each slot's icon at the vanilla
-        // origin — 3px inset, the 20px pitch — and the count white and
-        // shadowed at the slot's bottom-right, hidden while a single
-        // item rides (the chest screen's own treatment). The offline
-        // world's row is empty — the chrome-only shape the goldens pin.
-        for (i, &(id, count)) in self.hotbar_slots.iter().enumerate() {
-            if count <= 0 {
-                continue; // the wire's own emptiness sentinel
-            }
-            let (ix, iy) = (hx + 3 + i as i32 * 20, hy + 3);
-            draw_item_icon(g, id, ix, iy);
-            if count > 1 {
-                let s = count.to_string();
-                let tw = g.text_width(&s);
-                g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
-            }
-        }
         // THE HEALTH ROW (javap Hud.extractPlayerHealth + extractHearts
         // — the REAL law, the static 10-full render it replaces): the
         // Hud's own state machine (the blink arm, the display lerp)
@@ -22828,6 +22771,126 @@ impl App {
                 // dedup index still forgets)
                 self.last_bubble_pop_sound_played = 0;
             }
+        }
+    }
+
+    /// Vanilla HUD: crosshair, hotbar + selection, hearts and hunger — all
+    /// official `hud/*` sprites at vanilla positions and sizes.
+    fn render_hud(&mut self, g: &mut Gui, a: &mut GuiAssets) {
+        let (w, h) = (g.w(), g.h());
+        // THE F1 GATE (javap Hud.extractRenderState's isHidden law — the
+        // `GuiRenderState.isHudHidden = this.isHidden` copy the bytecode
+        // 13-17 keeps, then the hidden groups the TWO ifne branches
+        // speak: the camera overlays + crosshair + hotbar + effects +
+        // boss the first skips (bc 41/78), the demo + scoreboard +
+        // overlay message + title + chat + tab list the second (bc
+        // 88/169); the sleep overlay + the screen-open subtitles the
+        // bytecode keeps drawing the Hud-less client honestly lacks):
+        // the whole HUD layer sleeps while the flag holds — the world
+        // renders bare beneath, the vanilla F1 look. The FPS window's
+        // own bookkeeping the gate keeps counting (the DebugEntryFps
+        // ring the hidden panel's truth still fills — the un-hide the
+        // value's continuity keeps), the debug panel the
+        // DebugScreenOverlay.extractRenderState's own gate hides
+        // (`hud.isHidden() && gui.screen() == null` → return — the
+        // world screen the null-screen shape keeps, the bare world the
+        // F3-open frame still shows).
+        self.record_fps_window();
+        if self.hud_hidden {
+            return;
+        }
+        // THE EXPERIENCE BAR (javap `Hud`'s contextual-bar extract: the
+        // `gameMode.hasExperience()` gate the survival client speaks —
+        // the survival/adventure lane the bar wears, the
+        // creative/spectator flick the NONE answer keeps (the audited
+        // fold: MultiPlayerGameMode.hasExperience pcs 0-7 IS
+        // `localPlayerMode.isSurvival()`, nextContextualInfoState pcs
+        // 36-46 the verdict's own selection walk — then
+        // `ExperienceBar.extractBackground`'s own law): the
+        // `xpNeededForNextLevel > 0` arm lifts the whole row (level 0's
+        // needed is 7 — the dark background shows from the first
+        // frame, the vanilla survival look); the background 182x5 at `left(top(Window))` = the
+        // defaults `(w-182)/2` and `h-24-5` the ContextualBar interface
+        // speaks; the fill `(int)(progress * 183.0f)` rides the TEN-INT
+        // region blit — the leftmost `fill` columns of the progress
+        // sprite at 1:1, the CROP the never-a-squish law carries; the
+        // level number renders only past level 0 (the `experienceLevel
+        // > 0` gate the Hud extract speaks): the "%s" translation the
+        // en_us lang names renders as the bare digits, centered
+        // `(w - textWidth)/2` at `h-24-9-2`, the FOUR black neighbor
+        // draws + the green center (the dropShadow-less outline the
+        // -16777216/-8323296 pair speaks).
+        let needed = crate::xp::xp_needed_for_next_level(self.xp.level);
+        if self.game_mode.is_survival() && needed > 0 {
+            let (ex, ey) = (w / 2 - 91, h - 29);
+            g.sprite(a, "hud/experience_bar_background", ex, ey);
+            let fill = (self.xp.progress * 183.0) as i32;
+            if fill > 0 {
+                g.sprite_region(a, "hud/experience_bar_progress", 0, 0, fill, 5, ex, ey);
+            }
+            if self.xp.level > 0 {
+                let s = self.xp.level.to_string();
+                let tx = (w - g.text_width(&s)) / 2;
+                let ty = h - 35;
+                for (dx, dy) in [(1i32, 0), (-1, 0), (0, 1), (0, -1)] {
+                    g.text(a, tx + dx, ty + dy, &s, TEXT_OUTLINE_BLACK, false);
+                }
+                g.text(a, tx, ty, &s, EXP_LEVEL_GREEN, false);
+            }
+        }
+        // crosshair: centered 15x15 — ONLY in first person (the vanilla
+        // renderCrosshair's own cameraType gate: a detached camera has no
+        // crosshair)
+        if self.perspective.is_first_person() {
+            g.sprite(a, "hud/crosshair", w / 2 - 7, h / 2 - 7);
+        }
+        // hotbar: 182x22 centered at the bottom, selector around slot 0
+        let (hx, hy) = hotbar_rect(w, h);
+        g.sprite(a, "hud/hotbar", hx, hy);
+        let sel_x = hx - 1 + self.selected_hotbar as i32 * (HEART_SPACING + 12);
+        g.sprite(a, "hud/hotbar_selection", sel_x, hy - 1);
+        // the LIVE store's row over the sprite (the vanilla
+        // renderHotbarAndDecorations): each slot's icon at the vanilla
+        // origin — 3px inset, the 20px pitch — and the count white and
+        // shadowed at the slot's bottom-right, hidden while a single
+        // item rides (the chest screen's own treatment). The offline
+        // world's row is empty — the chrome-only shape the goldens pin.
+        for (i, &(id, count)) in self.hotbar_slots.iter().enumerate() {
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            let (ix, iy) = (hx + 3 + i as i32 * 20, hy + 3);
+            draw_item_icon(g, id, ix, iy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, ix + 17 - tw, iy + 9, &s, WHITE, true);
+            }
+        }
+        // THE DECORATIONS GATE (javap Hud.extractHotbarAndDecorations
+        // pcs 33-50 — the `gameMode.canHurtPlayer()` verdict the
+        // extractPlayerHealth walk opens on, the `ifeq` the four
+        // decoration rows the verdict never reaches —
+        // MultiPlayerGameMode.canHurtPlayer pcs 0-7 folds to
+        // `localPlayerMode.isSurvival()` verbatim, GameType.isSurvival's
+        // acmp pair SURVIVAL | ADVENTURE speaks (creative/spectator
+        // the false the gate keeps silent): the armor + hearts + food
+        // + air-bubbles rows the extractPlayerHealth body draws — the
+        // WHOLE body the gate skips, the state machines (the display
+        // lerp, the blink clock) the creative frame never runs, the
+        // vanilla shape the F4 flick's own HUD silence wears. The XP
+        // bar's row rides the sibling verdict (nextContextualInfoState
+        // pcs 36-46: hasExperience()'s isSurvival fold — the waypoints
+        // and jumpable-vehicle arms this client's empty walks never
+        // speak — the EXPERIENCE bar the false the ContextualInfo.NONE
+        // keeps): the survival rows the creative/spectator body never
+        // wears, the hotbar chrome the gate never gates (pcs 0-32's
+        // own hotbar arm — the item row the 26.2 spectator swaps for
+        // the SpectatorGui's own hotbar — the chrome-only shape the
+        // offline lane keeps while the SpectatorGui component the
+        // honest absence keeps).
+        if self.game_mode.is_survival() {
+            self.render_survival_decorations(g, a);
         }
         // THE EFFECT ICONS (javap Hud.extractEffects — the 26.2 row
         // law, verbatim): the icons render whenever the store carries
@@ -26020,6 +26083,116 @@ mod tests {
         assert!(
             pause_diff > 10_000,
             "the pause screen the hidden HUD's frame still paints: {pause_diff}"
+        );
+    }
+
+    /// THE DECORATIONS GATE'S OWN PIXELS (javap Hud
+    /// .extractHotbarAndDecorations pcs 33-50 — the canHurtPlayer
+    /// `ifeq` the extractPlayerHealth body skips, the pcs 118-164
+    /// `hasExperience() && experienceLevel > 0` the XP digits gate,
+    /// scripts/jar_work/hud_extract_262.txt + hudgates_262.txt): the
+    /// survival frame the hearts + XP rows paint, the creative flick
+    /// the rows never draw — the decoration regions the bare world's
+    /// own bytes answer (the F1-hidden frame's truth the same
+    /// App renders), the hotbar chrome the gate never gates (the pcs
+    /// 0-32 item-hotbar arm the creative frame keeps), the flick back
+    /// the rows resume — the survival/adventure lane the isSurvival
+    /// verdict wears.
+    #[test]
+    fn the_survival_gate_the_decorations_rows_sleep() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        // 640x360 the scale-1 gui keeps — the gui space the fb space is
+        let (hx, hy) = hearts_origin(640, 360);
+        let (xx, xy) = (640 / 2 - 91, 360 - 29); // the XP bar's own slot
+        let (bx, by) = hotbar_rect(640, 360);
+        let diff_count = |a: &[u8], b: &[u8], x0: i32, y0: i32, w: i32, h: i32| -> usize {
+            let mut n = 0usize;
+            for y in y0..y0 + h {
+                for x in x0..x0 + w {
+                    let o = ((y as usize) * 640 + x as usize) * 3;
+                    if a[o..o + 3] != b[o..o + 3] {
+                        n += 1;
+                    }
+                }
+            }
+            n
+        };
+        // THE SURVIVAL FRAME: the hearts + the XP bar's dark background
+        // the full-health body paints
+        app.render(&mut fb, &mut assets);
+        let survival = fb.color.clone();
+        // THE CREATIVE FLICK: the gate the rows never draw
+        app.game_mode = GameMode::Creative;
+        app.render(&mut fb, &mut assets);
+        let creative = fb.color.clone();
+        // THE BARE FRAME (the F1-hidden render — the whole HUD layer
+        // the early return skips, the bare 3D world the decorations'
+        // own silence answers)
+        app.on_toggle_gui_key();
+        app.render(&mut fb, &mut assets);
+        let bare = fb.color.clone();
+        app.on_toggle_gui_key(); // the flag drops — the HUD returns
+        // THE HEARTS ROW the gate hides (182x9 the sprite row's own
+        // band): the survival frame the row paints over the bare
+        // world, the creative frame the row never draws — the region
+        // the bare bytes keep verbatim
+        let surv_vs_crea = diff_count(&survival, &creative, hx, hy, 182, 9);
+        assert!(
+            surv_vs_crea > 500,
+            "the survival hearts the creative flick never paints: {surv_vs_crea}"
+        );
+        let same = hx as usize..(hx + 182) as usize;
+        for y in hy..hy + 9 {
+            let yo = (y as usize) * 640 * 3;
+            assert_eq!(
+                creative[yo + same.start * 3..yo + same.end * 3],
+                bare[yo + same.start * 3..yo + same.end * 3],
+                "the creative hearts row the bare world's own bytes answer"
+            );
+        }
+        // THE XP BAR the sibling verdict hides (182x5 the
+        // contextual-bar background's own slot — level 0's progress
+        // the fill never arms, the dark background the survival lane
+        // paints)
+        let xp_surv_vs_crea = diff_count(&survival, &creative, xx, xy, 182, 5);
+        assert!(
+            xp_surv_vs_crea > 400,
+            "the survival XP background the creative flick never paints: {xp_surv_vs_crea}"
+        );
+        for y in xy..xy + 5 {
+            let yo = (y as usize) * 640 * 3;
+            assert_eq!(
+                creative[yo + same.start * 3..yo + same.end * 3],
+                bare[yo + same.start * 3..yo + same.end * 3],
+                "the creative XP row the bare world's own bytes answer"
+            );
+        }
+        // THE HOTBAR the gate never gates (the pcs 0-32 item-hotbar arm
+        // the creative frame keeps — the chrome-only shape the
+        // decorations' silence never touches)
+        let hot_diff = diff_count(&creative, &bare, bx, by, 182, 22);
+        assert!(
+            hot_diff > 500,
+            "the creative hotbar the gate never hides: {hot_diff}"
+        );
+        // THE FLICK BACK: the survival rows resume (the gate the
+        // verdict's own true lane wears)
+        app.game_mode = GameMode::Survival;
+        app.render(&mut fb, &mut assets);
+        let resumed = fb.color.clone();
+        let resumed_diff = diff_count(&resumed, &creative, hx, hy, 182, 9);
+        assert!(
+            resumed_diff > 500,
+            "the flick back the hearts row resumes: {resumed_diff}"
         );
     }
 
@@ -41090,6 +41263,25 @@ cow_sound_variant: None,
         assert!(GameMode::Creative.invulnerable());
         assert!(!GameMode::Adventure.invulnerable());
         assert!(GameMode::Spectator.invulnerable());
+    }
+
+    /// THE IS-SURVIVAL FOLD (javap 26.2 GameType.isSurvival's acmp
+    /// pair, scripts/jar_work/gametype_262.txt — SURVIVAL | ADVENTURE
+    /// the true the pair speaks, creative/spectator the false): the
+    /// verdict the HUD decorations' own gates wear twice —
+    /// MultiPlayerGameMode.canHurtPlayer pcs 0-7 (the
+    /// extractHotbarAndDecorations pcs 33-50 ifeq the whole
+    /// extractPlayerHealth body skips) and
+    /// MultiPlayerGameMode.hasExperience pcs 0-7 (the XP contextual
+    /// bar the same verdict selects, scripts/jar_work/hudgates_262.txt)
+    /// — the audited equality the two callers' identical bytecode
+    /// keeps.
+    #[test]
+    fn the_gamemode_survival_folds_the_audited_arms_speak() {
+        assert!(GameMode::Survival.is_survival());
+        assert!(GameMode::Adventure.is_survival());
+        assert!(!GameMode::Creative.is_survival());
+        assert!(!GameMode::Spectator.is_survival());
     }
 
     /// THE INVULNERABLE HEAD (javap LivingEntity.hurtServer pcs 0-10,

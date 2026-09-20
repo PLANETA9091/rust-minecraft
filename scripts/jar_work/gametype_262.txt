@@ -1,0 +1,12 @@
+=== isSurvival()Z max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: getstatic #1.SURVIVAL:Lnet/minecraft/world/level/GameType;
+      4: if_acmpeq start+14
+      7: aload_0 
+      8: getstatic #1.ADVENTURE:Lnet/minecraft/world/level/GameType;
+     11: if_acmpne start+18
+     14: iconst_1 
+     15: goto start+19
+     18: iconst_0 
+     19: ireturn 
+
