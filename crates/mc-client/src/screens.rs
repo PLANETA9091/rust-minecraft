@@ -4796,6 +4796,30 @@ impl GameMode {
         let i = self.icon_index();
         Self::ICON_ORDER[(i + 1) % Self::ICON_ORDER.len()]
     }
+
+    /// `GameType.isBlockPlacingRestricted`'s audited fold (javap 26.2 —
+    /// the acmp pair: ADVENTURE | SPECTATOR answer true, survival and
+    /// creative false). The dig lane's own restricted head rides the
+    /// verdict — `MultiPlayerGameMode.startDestroyBlock` pc 0-26 and
+    /// `destroyBlock` pc 0-26 both open on
+    /// `Player.blockActionRestricted`'s walk (the spectator's acmp lane
+    /// refuses outright, the adventure's mayBuild/item walk refuses —
+    /// the client's stacks carry no `can_break` vocabulary, the honest
+    /// absence the item lane answers).
+    pub(crate) fn is_block_placing_restricted(self) -> bool {
+        matches!(self, GameMode::Adventure | GameMode::Spectator)
+    }
+
+    /// `Abilities.instabuild`'s audited grant (javap 26.2
+    /// `GameType.updatePlayerAbilities` — the putfield walk: CREATIVE
+    /// wears `instabuild = true`; the SPECTATOR arm grants mayfly and
+    /// the forced flying but `instabuild = 0` the acmp lane speaks,
+    /// survival/adventure the zero walk keeps). The dig lane's instant
+    /// press/hold the grant answers — the 6-tick carve cadence the
+    /// creative mode feels.
+    pub(crate) fn instabuild(self) -> bool {
+        matches!(self, GameMode::Creative)
+    }
 }
 
 /// THE SLOT ROW'S OWN STEP (the init walk's `imul 31` — the 26x26
@@ -7436,6 +7460,13 @@ impl App {
                         if kind != crate::world::AIR {
                             let held = self.held_id();
                             let (on_ground, eye_water) = self.body_state();
+                            // THE GAMEMODE DISPATCH's own folds (the
+                            // audited instabuild grant + the restricted
+                            // head — the LIVE reads the vanilla
+                            // abilities walk speaks each call, the F4
+                            // flick the bank feeds instantly)
+                            let instabuild = self.game_mode.instabuild();
+                            let restricted = self.game_mode.is_block_placing_restricted();
                             // the direct field split (the method's own
                             // &mut self borrow would live too long)
                             let world_opt = if self.world_is_network {
@@ -7448,7 +7479,8 @@ impl App {
                                 let was_solid =
                                     world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
                                 let (s, b) = dig.continue_destroy_block(
-                                    pos, face, held, world, on_ground, eye_water,
+                                    pos, face, held, world, on_ground, eye_water, instabuild,
+                                    restricted,
                                 );
                                 sends = s;
                                 beat = b;
@@ -7460,11 +7492,14 @@ impl App {
                                     broke_pos = Some(pos);
                                 }
                                 hit_kind = Some(kind);
-                                // the dust rides every CONTINUE tick (the
-                                // vanilla addBreakingBlockEffect arm) — the
+                                // the dust rides every CONTINUE tick the
+                                // TRUE beat keeps (the vanilla
+                                // addBreakingBlockEffect arm) — the
                                 // break tick's cell is already air, the
-                                // render-shape gate never dusts there
-                                if !broke {
+                                // render-shape gate never dusts there,
+                                // and the REFUSED lanes (the restricted
+                                // head's silence) never beat, never dust
+                                if !broke && beat {
                                     dust_site = Some((pos, face));
                                 }
                             }
@@ -7495,33 +7530,12 @@ impl App {
                     }
                 }
                 if broke {
-                    // the completion's local break: the mesh re-speaks
-                    // (the placement's own rhythm); the 2001 event's own
-                    // voice — the broken block's break sound at the
-                    // (v+1)/2, p*0.8 fold (LevelEventHandler case 2001)
-                    self.remesh_offline();
-                    let name = crate::world::NAME_OF[broke_kind as usize];
-                    self.sounds.play(self.frame, name, crate::sound::Lane::Break);
-                    // THE 2001 EVENT'S OWN BURST (javap
-                    // `LevelEventHandler` case 2001: the sound rides
-                    // FIRST, then `addDestroyBlockEffect` — the 4x4x4
-                    // grid the full cube speaks, each debris riding the
-                    // block's own particle tile and the outward
-                    // velocity)
-                    let tile = particle_tile(broke_kind);
-                    if tile != mc_registry::generated::atlas::TILE_NONE {
-                        if let Some(pos) = broke_pos {
-                            let burst = crate::particles::terrain_burst(
-                                tile, pos.0, pos.1, pos.2, &mut self.mob_rng,
-                            );
-                            self.particles.extend(burst);
-                        }
-                    }
-                    // THE REWARD HALF (the vanilla destroyBlock's own
-                    // dropResources): the loot roll, the item entities
-                    // spawning by the popResource law
                     if let Some(pos) = broke_pos {
-                        self.spawn_drops_for(broke_kind, pos);
+                        // THE 2001 EVENT'S OWN VOICE (the break half the
+                        // two dig lanes share — the mesh re-speak, the
+                        // break sound, the debris burst, the reward
+                        // half's creative gate)
+                        self.dig_break_effects(broke_kind, pos);
                     }
                 }
                 if beat {
@@ -8628,6 +8642,11 @@ impl App {
             if kind != crate::world::AIR {
                 let held = self.held_id();
                 let (on_ground, eye_water) = self.body_state();
+                // THE GAMEMODE DISPATCH's own folds (the audited
+                // instabuild grant + the restricted head — the press
+                // the startDestroyBlock's own walk speaks first)
+                let instabuild = self.game_mode.instabuild();
+                let restricted = self.game_mode.is_block_placing_restricted();
                 // the disjoint field split: the world option and the dig
                 // state borrow separately (the checker's own verdict)
                 let world_opt = if self.world_is_network {
@@ -8639,7 +8658,14 @@ impl App {
                 if let Some(world) = world_opt {
                     let was_solid = world.get(h.pos.0, h.pos.1, h.pos.2) != crate::world::AIR;
                     sends = dig.start_destroy_block(
-                        h.pos, h.face, held, world, on_ground, eye_water,
+                        h.pos,
+                        h.face,
+                        held,
+                        world,
+                        on_ground,
+                        eye_water,
+                        instabuild,
+                        restricted,
                     );
                     dug = was_solid
                         && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
@@ -8655,11 +8681,12 @@ impl App {
         }
         self.enqueue_dig(&sends);
         if dug {
-            self.remesh_offline();
-            // THE INSTA-BREAK's own completion (the vanilla startDestroyBlock
-            // lambda's destroyBlock): the drop roll speaks here too
             if let Some(pos) = dug_pos {
-                self.spawn_drops_for(kind, pos);
+                // THE INSTA-BREAK's own completion (the vanilla
+                // startDestroyBlock lambda's destroyBlock): the 2001
+                // voice the singleplayer broadcast speaks, the reward
+                // half's creative gate rides
+                self.dig_break_effects(kind, pos);
             }
         }
         // THE UNCONDITIONAL SWING (the vanilla startAttack's own tail:
@@ -17761,6 +17788,36 @@ impl App {
         }
     }
 
+    /// THE 2001 EVENT'S OWN VOICE — the break half the two dig lanes
+    /// share (javap `LevelEventHandler` case 2001: the sound rides
+    /// FIRST, then `addDestroyBlockEffect`; the completion's mesh
+    /// re-speak the placement's own rhythm keeps; the reward half
+    /// `spawn_drops_for` speaks — the creative arm the instabuild
+    /// grant refuses). The press lane (startDestroyBlock's own
+    /// destroyBlock) and the hold lane (continueDestroyBlock's
+    /// completion) fold here — the singleplayer broadcast both speak.
+    fn dig_break_effects(&mut self, kind: u16, pos: (i32, i32, i32)) {
+        self.remesh_offline();
+        let name = crate::world::NAME_OF[kind as usize];
+        self.sounds.play(self.frame, name, crate::sound::Lane::Break);
+        // THE 2001 EVENT'S OWN BURST (javap
+        // `LevelEventHandler` case 2001: the sound rides
+        // FIRST, then `addDestroyBlockEffect` — the 4x4x4
+        // grid the full cube speaks, each debris riding the
+        // block's own particle tile and the outward
+        // velocity)
+        let tile = particle_tile(kind);
+        if tile != mc_registry::generated::atlas::TILE_NONE {
+            let burst =
+                crate::particles::terrain_burst(tile, pos.0, pos.1, pos.2, &mut self.mob_rng);
+            self.particles.extend(burst);
+        }
+        // THE REWARD HALF (the vanilla destroyBlock's own
+        // dropResources): the loot roll, the item entities
+        // spawning by the popResource law
+        self.spawn_drops_for(kind, pos);
+    }
+
     /// THE REWARD HALF — `Block.dropResources`'s own call the completion
     /// speaks: the loot roll (the generated hand-lane table, the TOOL
     /// GATE riding block_dig's own requiresCorrectToolForDrops flag —
@@ -17771,6 +17828,13 @@ impl App {
     /// server's own stream.
     fn spawn_drops_for(&mut self, kind: u16, pos: (i32, i32, i32)) {
         if self.world_is_network {
+            return;
+        }
+        // THE CREATIVE ARM (the vanilla ServerPlayerGameMode.destroyBlock's
+        // own split): the instabuild mode removes the block WITHOUT the
+        // dropResources walk — no item entities, no mine exhaustion (the
+        // food the mode never spends)
+        if self.game_mode.instabuild() {
             return;
         }
         // THE MINE'S OWN COST (javap Block.playerDestroy: the
@@ -40935,6 +40999,166 @@ cow_sound_variant: None,
             app.food_data.exhaustion() > banked_before,
             "the break banked the mine's own 0.005"
         );
+    }
+
+    /// THE GAMEMODE FOLDS' OWN AUDIT (26.2 GameType
+    /// `isBlockPlacingRestricted`'s acmp pair + GameType
+    /// `updatePlayerAbilities`'s putfield walk): the restricted pair
+    /// the dig lane's own head rides, the instabuild grant CREATIVE
+    /// alone wears — the spectator's mayfly the instabuild walk never
+    /// grants.
+    #[test]
+    fn the_gamemode_folds_the_audited_grants_speak() {
+        assert!(!GameMode::Survival.is_block_placing_restricted());
+        assert!(!GameMode::Creative.is_block_placing_restricted());
+        assert!(GameMode::Adventure.is_block_placing_restricted());
+        assert!(GameMode::Spectator.is_block_placing_restricted());
+        assert!(GameMode::Creative.instabuild());
+        assert!(
+            !GameMode::Spectator.instabuild(),
+            "the mayfly the spectator wears, the instabuild the acmp walk never grants"
+        );
+        assert!(!GameMode::Survival.instabuild());
+        assert!(!GameMode::Adventure.instabuild());
+    }
+
+    /// THE CREATIVE DIG (26.2 MultiPlayerGameMode's audited instabuild
+    /// lanes, scripts/jar_work/mpgamemode_262.txt): the PRESS breaks
+    /// the aimed cell the SAME tick (the lambda$0 prediction, the
+    /// destroyDelay arm, isDestroying the lane never arms), the HOLD
+    /// carves at the 6-tick cadence (the delay head the five decrement
+    /// ticks speak), the REWARD the instabuild arm refuses (no drops,
+    /// no mine exhaustion — the ServerPlayerGameMode.destroyBlock's own
+    /// split), and the 2001 voice the press's own break speaks.
+    #[test]
+    fn the_creative_press_the_offline_world_carves() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let kind_before = app.offline_world.as_ref().unwrap().get(c, surface, c);
+        assert_ne!(kind_before, crate::world::AIR, "the surface cell is solid");
+        let below_before = app.offline_world.as_ref().unwrap().get(c, surface - 1, c);
+        assert_ne!(
+            below_before, crate::world::AIR,
+            "the column's next cell is solid"
+        );
+        // THE PRESS: the cell vanishes the SAME tick — the crack lane
+        // never arms, the delay arms, the swing rides
+        app.on_press(0, 0);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::AIR,
+            "the instant break"
+        );
+        assert!(!app.dig.is_destroying, "the crack lane never arms");
+        assert_eq!(app.dig.delay, 5, "the audited destroyDelay arm");
+        assert!(app.swing.swinging, "the press swung the arm");
+        assert!(app.drops.is_empty(), "the instabuild arm refuses the drops");
+        // THE 2001 VOICE (the press's own destroyBlock — the helper the
+        // two dig lanes share)
+        if sounds_loaded() {
+            use mc_registry::generated::block_sounds as bs;
+            let name = crate::world::NAME_OF[kind_before as usize];
+            let idx = bs::sound_index(name).expect("the surface block in the sound table");
+            let entry = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with(&format!("{} @", bs::SOUND_BREAK[idx])))
+                .expect("the press's break voice");
+            assert!(
+                entry.contains(" v1.000000 p0.800000"),
+                "the break fold (v+1)/2, p*0.8: {entry}"
+            );
+        }
+        // THE CARVE: the eye drops into the hole (the column's next
+        // cell), five decrement ticks keep it standing, the sixth
+        // breaks it (the audited 6-tick cadence the continue's own
+        // delay head speaks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 2.5, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        for t in 0..5 {
+            app.update();
+            assert_eq!(
+                app.offline_world.as_ref().unwrap().get(c, surface - 1, c),
+                below_before,
+                "the decrement tick {t} never breaks"
+            );
+        }
+        app.update();
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface - 1, c),
+            crate::world::AIR,
+            "the sixth tick's own break"
+        );
+        assert_eq!(app.dig.delay, 5, "the delay re-armed");
+        assert!(!app.dig.is_destroying, "the hold lane the state never arms");
+        assert!(
+            app.drops.is_empty(),
+            "the carve's reward the mode never pays"
+        );
+    }
+
+    /// THE SPECTATOR PRESS (26.2 `Player.blockActionRestricted`'s own
+    /// acmp lane): the press speaks NOTHING for the dig — no break, no
+    /// arm, no send — the swing's own tail rides, and the hold never
+    /// dusts (the TRUE beat the refused lanes never speak).
+    #[test]
+    fn the_spectator_press_the_world_keeps_the_block() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Spectator;
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let kind_before = app.offline_world.as_ref().unwrap().get(c, surface, c);
+        assert_ne!(kind_before, crate::world::AIR, "the surface cell is solid");
+        let particles_before = app.particles.len();
+        // THE PRESS: the restricted head the dig never arms — the
+        // swing's own tail rides
+        app.on_press(0, 0);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            kind_before,
+            "the block stands"
+        );
+        assert!(!app.dig.is_destroying, "the dig never arms");
+        assert_eq!(app.dig.delay, 0, "the delay never arms");
+        assert!(app.swing.swinging, "the swing's tail rides the refusal");
+        assert!(app.dig_held, "the button state rides the edge");
+        // THE HOLD: the refused lanes never beat, never dust, never pay
+        app.update();
+        app.update();
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            kind_before,
+            "the hold never breaks"
+        );
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "the refused hold never dusts"
+        );
+        assert!(app.drops.is_empty(), "the reward the refusal never reaches");
+        // THE RELEASE: the isDestroying check keeps silent
+        app.on_left_release();
+        assert!(!app.dig.is_destroying);
     }
 
     /// THE DOUBLE-TAP W'S OWN WINDOW (26.2 LocalPlayer.aiStep's

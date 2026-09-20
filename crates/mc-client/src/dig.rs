@@ -161,11 +161,21 @@ impl DigState {
         }
     }
 
-    /// `MultiPlayerGameMode.startDestroyBlock`'s survival lane (the
-    /// instabuild branch lives in creative, not here). Returns the wire
-    /// sends; the caller speaks them through the prediction counter. The
-    /// body state feeds the insta-break check (the vanilla lambda
-    /// computes `getDestroyProgress` from the LIVE player).
+    /// `MultiPlayerGameMode.startDestroyBlock`'s own dispatch (javap of
+    /// the real 26.2 method, scripts/jar_work/mpgamemode_262.txt): the
+    /// RESTRICTED head the press speaks first (pcs 0-26 —
+    /// `Player.blockActionRestricted`'s verdict: the spectator's acmp
+    /// lane refuses, the adventure's mayBuild/item walk refuses — the
+    /// client's stacks carry no `can_break` vocabulary, the honest
+    /// absence the item lane answers), the INSTABUILD press the
+    /// `GameType.updatePlayerAbilities` grant answers (CREATIVE alone
+    /// wears the flag — the break the lambda$0 prediction speaks, the
+    /// 5-tick delay the continue's own head spends, isDestroying the
+    /// lane never arms), and the survival machine the else lane keeps.
+    /// Returns the wire sends; the caller speaks them through the
+    /// prediction counter. The body state feeds the insta-break check
+    /// (the vanilla lambda computes `getDestroyProgress` from the LIVE
+    /// player).
     pub fn start_destroy_block(
         &mut self,
         pos: (i32, i32, i32),
@@ -174,7 +184,34 @@ impl DigState {
         world: &mut World,
         on_ground: bool,
         eye_in_water: bool,
+        instabuild: bool,
+        restricted: bool,
     ) -> Vec<DigSend> {
+        // THE RESTRICTED HEAD (audited pcs 0-26): the press speaks
+        // NOTHING — no break, no send, no arm. The survival machine's
+        // retarget tail re-enters HERE (continueDestroyBlock's own tail
+        // call), the flick-to-spectator hold the same verdict keeps.
+        if restricted {
+            return Vec::new();
+        }
+        // THE CREATIVE PRESS (audited pcs 46-136): the break rides
+        // destroyBlock's own guards (the air cell the press never
+        // moves), the START send the lambda$0 prediction speaks, the
+        // 5-tick delay the continue's own head spends. The quick
+        // re-press the delay never gates (the audited start has no
+        // delay check — the fast click breaks faster than the hold).
+        // isDestroying NEVER arms (the crack overlay the lane never
+        // earns, the release the isDestroying check keeps silent), the
+        // retarget abort the state has nothing to abort.
+        if instabuild {
+            self.destroy_local(world, pos);
+            self.delay = 5;
+            return vec![DigSend {
+                action: ACTION_START,
+                pos,
+                face,
+            }];
+        }
         // the same-target re-press: a no-op (the vanilla returns true
         // without a send — the dig continues where it stands)
         if self.is_destroying && self.same_destroy_target(pos, held) {
@@ -225,11 +262,16 @@ impl DigState {
         sends
     }
 
-    /// `MultiPlayerGameMode.continueDestroyBlock`'s survival lane — the
-    /// hold tick. Returns (sends, dug): `dug` names whether the tick
-    /// counts as a mining beat (the vanilla's `true` — the caller swings;
-    /// the hit sound rides the same beat every 4th tick, the audio lane's
-    /// own future hook).
+    /// `MultiPlayerGameMode.continueDestroyBlock`'s own dispatch (the
+    /// audited 26.2 walk): the delay head (pcs 0-22 — the decrement
+    /// TRUE the swing's beat keeps), the INSTABUILD hold (pcs 39-131 —
+    /// the delay-0 tick breaks the aimed cell, the START send rides,
+    /// the delay re-arms, the same-target check the lane never asks —
+    /// the carve walks where the aim walks), and the survival machine
+    /// the else lane keeps. Returns (sends, dug): `dug` names whether
+    /// the tick counts as a mining beat (the vanilla's `true` — the
+    /// caller swings; the hit sound rides the same beat every 4th tick,
+    /// the audio lane's own future hook).
     pub fn continue_destroy_block(
         &mut self,
         pos: (i32, i32, i32),
@@ -238,17 +280,40 @@ impl DigState {
         world: &mut World,
         on_ground: bool,
         eye_in_water: bool,
+        instabuild: bool,
+        restricted: bool,
     ) -> (Vec<DigSend>, bool) {
         // the completion cooldown ticks first (the vanilla's own order)
         if self.delay > 0 {
             self.delay -= 1;
             return (Vec::new(), true);
         }
+        // THE CREATIVE HOLD (audited pcs 39-131): the break the
+        // destroyBlock's own guards keep honest (the air cell the tick
+        // never moves), the START send the lambda$0 prediction speaks,
+        // the delay re-arms. The restricted flick (creative ->
+        // spectator mid-hold) the instabuild flip the survival lane
+        // resumes — the start tail's restricted head the flick's
+        // verdict speaks.
+        if instabuild {
+            self.destroy_local(world, pos);
+            self.delay = 5;
+            return (
+                vec![DigSend {
+                    action: ACTION_START,
+                    pos,
+                    face,
+                }],
+                true,
+            );
+        }
         if !self.same_destroy_target(pos, held) {
             // the retarget restarts through the start lane (the vanilla's
-            // own tail call)
-            let sends =
-                self.start_destroy_block(pos, face, held, world, on_ground, eye_in_water);
+            // own tail call — the restricted head the flick's verdict
+            // keeps)
+            let sends = self.start_destroy_block(
+                pos, face, held, world, on_ground, eye_in_water, instabuild, restricted,
+            );
             let retargeted = !sends.is_empty();
             return (sends, retargeted);
         }
@@ -369,7 +434,7 @@ mod tests {
         // seed a stone cell
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         assert_eq!(
             sends,
             vec![DigSend {
@@ -381,7 +446,7 @@ mod tests {
         assert!(d.is_destroying);
         assert_eq!(d.progress, 0.0);
         // the same-target re-press: NO second send (the vanilla's no-op)
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         assert!(sends.is_empty());
     }
 
@@ -390,7 +455,7 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::LEAF_LITTER);
         let mut d = DigState::new();
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         // the START still speaks (the vanilla lambda's own return) and
         // the cell is ALREADY air — no dig state armed
         assert_eq!(sends.len(), 1);
@@ -405,15 +470,15 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         world.set(2, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         // dig a few ticks into the first cell
         for _ in 0..3 {
-            let _ = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+            let _ = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         }
         assert!(d.progress > 0.0);
         // the switch to the neighbor: ABORT(old pos, the NEW face) + the
         // fresh START, the progress zeroed (the vanilla's own reset)
-        let sends = d.start_destroy_block((2, 1, 1), 4, None, &mut world, true, false);
+        let sends = d.start_destroy_block((2, 1, 1), 4, None, &mut world, true, false, false, false);
         assert_eq!(sends.len(), 2);
         assert_eq!(
             sends[0],
@@ -434,10 +499,10 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, Some(7), &mut world, true, false);
+        let _ = d.start_destroy_block((1, 1, 1), 1, Some(7), &mut world, true, false, false, false);
         // the same cell with a DIFFERENT held item: the vanilla's
         // sameDestroyTarget refuses — the abort + the fresh start
-        let sends = d.start_destroy_block((1, 1, 1), 1, Some(9), &mut world, true, false);
+        let sends = d.start_destroy_block((1, 1, 1), 1, Some(9), &mut world, true, false, false, false);
         assert_eq!(sends.len(), 2, "the item switch retargets");
         assert_eq!(sends[0].action, ACTION_ABORT);
         assert_eq!(sends[1].action, ACTION_START);
@@ -448,13 +513,13 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let start = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let start = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         assert_eq!(start.len(), 1);
         let mut beats = 0;
         let mut stop_seen = false;
         while beats < 400 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 stop_seen = true;
                 break;
@@ -474,7 +539,7 @@ mod tests {
         assert!(!d.is_destroying);
         assert_eq!(d.delay, 5);
         // the cooldown: the next continue tick does nothing but tick it
-        let (sends, _) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let (sends, _) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         assert!(sends.is_empty());
         assert_eq!(d.delay, 4);
     }
@@ -484,11 +549,11 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::DIRT);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         let mut beats = 0;
         loop {
             let (sends, _) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
             beats += 1;
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 break;
@@ -503,11 +568,11 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::DIRT);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         let mut beats = 0;
         loop {
             let (sends, _) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, false, false);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, false, false, false, false);
             beats += 1;
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 break;
@@ -524,9 +589,9 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 4, None, &mut world, true, false);
+        let _ = d.start_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false);
         for _ in 0..2 {
-            let _ = d.continue_destroy_block((1, 1, 1), 4, None, &mut world, true, false);
+            let _ = d.continue_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false);
         }
         let sends = d.stop_destroy_block();
         assert_eq!(
@@ -550,12 +615,125 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         // the cell vanishes under the dig (a neighbor's completion)
         world.set(1, 1, 1, crate::world::AIR);
-        let (sends, dug) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false);
+        let (sends, dug) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
         assert!(sends.is_empty());
         assert!(!dug, "the air beat counts nothing");
         assert!(!d.is_destroying);
+    }
+
+    #[test]
+    fn the_creative_press_breaks_instant_and_arms_the_delay() {
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        world.set(2, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        // THE PRESS: the cell vanishes the SAME tick, the START rides,
+        // the delay arms, isDestroying never speaks (the audited
+        // instabuild branch's own shape)
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false);
+        assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the instant break");
+        assert_eq!(sends.len(), 1, "the single prediction send");
+        assert_eq!(sends[0].action, ACTION_START, "the lambda$0's own action");
+        assert_eq!(sends[0].pos, (1, 1, 1));
+        assert!(!d.is_destroying, "the crack lane never arms");
+        assert_eq!(d.progress, 0.0);
+        assert_eq!(d.delay, 5, "the audited destroyDelay arm");
+        // THE RE-PRESS: the delay never gates the start (the audited
+        // pcs 46-136 carry no delay check — the fast click breaks
+        // faster than the hold)
+        let sends = d.start_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false);
+        assert_eq!(world.get(2, 1, 1), crate::world::AIR, "the second instant break");
+        assert_eq!(sends.len(), 1);
+        assert_eq!(d.delay, 5, "the delay re-armed");
+        // THE RELEASE: the isDestroying check keeps silent (no ABORT —
+        // the audited stopDestroyBlock's own guard)
+        assert!(
+            d.stop_destroy_block().is_empty(),
+            "the creative release speaks nothing"
+        );
+    }
+
+    #[test]
+    fn the_creative_hold_carves_the_six_tick_law() {
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        world.set(2, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        // the press breaks the first cell
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false);
+        // THE HOLD: five decrement ticks speak nothing (the delay
+        // head), each still beating the swing (the TRUE return)
+        for t in 0..5 {
+            let (sends, dug) =
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false);
+            assert!(sends.is_empty(), "the decrement tick {t} sends nothing");
+            assert!(dug, "the decrement tick still beats the swing");
+        }
+        // the sixth tick: the delay spent, the aimed cell breaks — the
+        // carve walks where the aim walks (the same-target check the
+        // hold lane never asks)
+        let (sends, dug) =
+            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false);
+        assert!(dug);
+        assert_eq!(sends.len(), 1);
+        assert_eq!(sends[0].action, ACTION_START, "the hold's own START send");
+        assert_eq!(world.get(2, 1, 1), crate::world::AIR, "the carve's second cell");
+        assert_eq!(d.delay, 5, "the delay re-armed");
+        assert!(!d.is_destroying, "the hold lane the state never arms");
+    }
+
+    #[test]
+    fn the_restricted_press_speaks_nothing() {
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        // THE RESTRICTED HEAD: the spectator's acmp lane, the
+        // adventure's mayBuild/item walk — no break, no send, no arm
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true);
+        assert!(sends.is_empty(), "the press sends nothing");
+        assert_eq!(world.get(1, 1, 1), crate::world::STONE, "the block stands");
+        assert!(!d.is_destroying, "the dig never arms");
+        assert_eq!(d.delay, 0, "the delay never arms");
+        // THE HOLD after the refused press: the retarget tail re-enters
+        // the refused start — the same silence, the beat never counts
+        let (sends, dug) =
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true);
+        assert!(sends.is_empty());
+        assert!(!dug, "the refused continue never beats");
+    }
+
+    #[test]
+    fn the_creative_flick_the_survival_lane_resumes() {
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        // the creative press breaks and arms the delay
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false);
+        assert_eq!(d.delay, 5);
+        // THE FLICK TO SURVIVAL (the F4 switcher's own revoke): the
+        // survival machine resumes — the creative press's delay the
+        // continue's own head spends first (five TRUE beats), then the
+        // same-target state never armed (the creative press never
+        // arms) and the survival start re-arms through the tail
+        for i in 0..5 {
+            let (sends, dug) =
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
+            assert!(sends.is_empty(), "the spent delay tick {i} sends nothing");
+            assert!(dug, "the delay tick {i} still beats");
+        }
+        let (sends, dug) =
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false);
+        assert!(dug, "the survival re-arm beats");
+        assert!(d.is_destroying, "the survival dig armed");
+        assert!(!sends.is_empty(), "the survival START rode the re-arm");
+        // THE FLICK TO SPECTATOR: the retarget tail the restricted head
+        // refuses — the carve stops where the flick lands
+        let (sends, dug) =
+            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, false, true);
+        assert!(sends.is_empty());
+        assert!(!dug, "the refused retarget never beats");
     }
 }

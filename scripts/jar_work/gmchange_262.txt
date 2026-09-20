@@ -1,0 +1,54 @@
+=== changeGameModeForPlayer(Lnet/minecraft/world/level/GameType;)Z max_stack=5 max_locals=3 ===
+      0: aload_1 
+      1: aload_0 
+      2: getfield #14.gameModeForPlayer:Lnet/minecraft/world/level/GameType;
+      5: if_acmpne start+10
+      8: iconst_0 
+      9: ireturn 
+     10: aload_0 
+     11: getfield #14.player:Lnet/minecraft/server/level/ServerPlayer;
+     14: invokevirtual #39.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     17: astore_2 
+     18: aload_0 
+     19: aload_1 
+     20: aload_0 
+     21: getfield #14.gameModeForPlayer:Lnet/minecraft/world/level/GameType;
+     24: invokevirtual #14.setGameModeForPlayer:(Lnet/minecraft/world/level/GameType;Lnet/minecraft/world/level/GameType;)V
+     27: aload_2 
+     28: getfield #56.flying:Z
+     31: ifeq start+53
+     34: aload_1 
+     35: getstatic #8.SPECTATOR:Lnet/minecraft/world/level/GameType;
+     38: if_acmpeq start+53
+     41: aload_0 
+     42: invokevirtual #14.isInRangeOfGround:()Z
+     45: ifeq start+53
+     48: aload_2 
+     49: iconst_0 
+     50: putfield #56.flying:Z
+     53: aload_0 
+     54: getfield #14.player:Lnet/minecraft/server/level/ServerPlayer;
+     57: invokevirtual #39.onUpdateAbilities:()V
+     60: aload_0 
+     61: getfield #14.level:Lnet/minecraft/server/level/ServerLevel;
+     64: invokevirtual #72.getServer:()Lnet/minecraft/server/MinecraftServer;
+     67: invokevirtual #78.getPlayerList:()Lnet/minecraft/server/players/PlayerList;
+     70: new net/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket
+     73: dup 
+     74: getstatic #86.UPDATE_GAME_MODE:Lnet/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket$Action;
+     77: aload_0 
+     78: getfield #14.player:Lnet/minecraft/server/level/ServerPlayer;
+     81: invokespecial #83.<init>:(Lnet/minecraft/network/protocol/game/ClientboundPlayerInfoUpdatePacket$Action;Lnet/minecraft/server/level/ServerPlayer;)V
+     84: invokevirtual #95.broadcastAll:(Lnet/minecraft/network/protocol/Packet;)V
+     87: aload_0 
+     88: getfield #14.level:Lnet/minecraft/server/level/ServerLevel;
+     91: invokevirtual #72.updateSleepingPlayerList:()V
+     94: aload_1 
+     95: getstatic #8.CREATIVE:Lnet/minecraft/world/level/GameType;
+     98: if_acmpne start+108
+    101: aload_0 
+    102: getfield #14.player:Lnet/minecraft/server/level/ServerPlayer;
+    105: invokevirtual #39.resetCurrentImpulseContext:()V
+    108: iconst_1 
+    109: ireturn 
+

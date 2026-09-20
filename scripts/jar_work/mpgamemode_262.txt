@@ -1,0 +1,634 @@
+=== startDestroyBlock ===
+=== startDestroyBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z max_stack=6 max_locals=4 ===
+      0: aload_0 
+      1: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+      7: aload_0 
+      8: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     11: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     14: aload_1 
+     15: aload_0 
+     16: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+     19: invokevirtual #64.blockActionRestricted:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/GameType;)Z
+     22: ifeq start+27
+     25: iconst_0 
+     26: ireturn 
+     27: aload_0 
+     28: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     31: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     34: invokevirtual #149.getWorldBorder:()Lnet/minecraft/world/level/border/WorldBorder;
+     37: aload_1 
+     38: invokevirtual #155.isWithinBounds:(Lnet/minecraft/core/BlockPos;)Z
+     41: ifne start+46
+     44: iconst_0 
+     45: ireturn 
+     46: aload_0 
+     47: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     50: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     53: invokevirtual #64.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     56: getfield #161.instabuild:Z
+     59: ifeq start+139
+     62: aload_0 
+     63: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     66: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     69: aload_1 
+     70: invokevirtual #149.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     73: astore_3 
+     74: aload_0 
+     75: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     78: invokevirtual #58.getTutorial:()Lnet/minecraft/client/tutorial/Tutorial;
+     81: aload_0 
+     82: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     85: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     88: aload_1 
+     89: aload_3 
+     90: fconst_1 
+     91: invokevirtual #171.onDestroyBlock:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;F)V
+     94: getstatic #131.DEBUG_BLOCK_BREAK:Z
+     97: ifeq start+112
+    100: getstatic #13.LOGGER:Lorg/slf4j/Logger;
+    103: ldc #176
+    105: aload_1 
+    106: aload_3 
+    107: invokeinterface #143.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    112: aload_0 
+    113: aload_0 
+    114: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    117: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    120: aload_0 
+    121: aload_1 
+    122: aload_2 
+    123: invokedynamic #182
+    128: invokevirtual #13.startPrediction:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/multiplayer/prediction/PredictiveAction;)V
+    131: aload_0 
+    132: iconst_5 
+    133: putfield #13.destroyDelay:I
+    136: goto start+281
+    139: aload_0 
+    140: getfield #13.isDestroying:Z
+    143: ifeq start+154
+    146: aload_0 
+    147: aload_1 
+    148: invokevirtual #13.sameDestroyTarget:(Lnet/minecraft/core/BlockPos;)Z
+    151: ifne start+281
+    154: aload_0 
+    155: getfield #13.isDestroying:Z
+    158: ifeq start+211
+    161: getstatic #131.DEBUG_BLOCK_BREAK:Z
+    164: ifeq start+189
+    167: getstatic #13.LOGGER:Lorg/slf4j/Logger;
+    170: ldc #200
+    172: aload_1 
+    173: aload_0 
+    174: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    177: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    180: aload_1 
+    181: invokevirtual #149.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    184: invokeinterface #143.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    189: aload_0 
+    190: getfield #13.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+    193: new net/minecraft/network/protocol/game/ServerboundPlayerActionPacket
+    196: dup 
+    197: getstatic #205.ABORT_DESTROY_BLOCK:Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;
+    200: aload_0 
+    201: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+    204: aload_2 
+    205: invokespecial #202.<init>:(Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)V
+    208: invokevirtual #214.send:(Lnet/minecraft/network/protocol/Packet;)V
+    211: aload_0 
+    212: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    215: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    218: aload_1 
+    219: invokevirtual #149.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    222: astore_3 
+    223: aload_0 
+    224: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    227: invokevirtual #58.getTutorial:()Lnet/minecraft/client/tutorial/Tutorial;
+    230: aload_0 
+    231: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    234: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    237: aload_1 
+    238: aload_3 
+    239: fconst_0 
+    240: invokevirtual #171.onDestroyBlock:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;F)V
+    243: getstatic #131.DEBUG_BLOCK_BREAK:Z
+    246: ifeq start+261
+    249: getstatic #13.LOGGER:Lorg/slf4j/Logger;
+    252: ldc #219
+    254: aload_1 
+    255: aload_3 
+    256: invokeinterface #143.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    261: aload_0 
+    262: aload_0 
+    263: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    266: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    269: aload_0 
+    270: aload_3 
+    271: aload_1 
+    272: aload_2 
+    273: invokedynamic #221
+    278: invokevirtual #13.startPrediction:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/multiplayer/prediction/PredictiveAction;)V
+    281: iconst_1 
+    282: ireturn 
+
+=== lambda$startDestroyBlock$1(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)Lnet/minecraft/network/protocol/Packet; max_stack=6 max_locals=6 ===
+      0: aload_1 
+      1: invokevirtual #93.isAir:()Z
+      4: ifne start+11
+      7: iconst_1 
+      8: goto start+12
+     11: iconst_0 
+     12: istore 5
+     14: iload 5
+     16: ifeq start+47
+     19: aload_0 
+     20: getfield #13.destroyProgress:F
+     23: fconst_0 
+     24: fcmpl 
+     25: ifne start+47
+     28: aload_1 
+     29: aload_0 
+     30: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     33: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     36: aload_2 
+     37: aload_0 
+     38: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     41: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     44: invokevirtual #93.attack:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;)V
+     47: iload 5
+     49: ifeq start+88
+     52: aload_1 
+     53: aload_0 
+     54: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     57: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     60: aload_0 
+     61: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     64: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     67: invokevirtual #64.level:()Lnet/minecraft/world/level/Level;
+     70: aload_2 
+     71: invokevirtual #93.getDestroyProgress:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)F
+     74: fconst_1 
+     75: fcmpl 
+     76: iflt start+88
+     79: aload_0 
+     80: aload_2 
+     81: invokevirtual #13.destroyBlock:(Lnet/minecraft/core/BlockPos;)Z
+     84: pop 
+     85: goto start+150
+     88: aload_0 
+     89: iconst_1 
+     90: putfield #13.isDestroying:Z
+     93: aload_0 
+     94: aload_2 
+     95: putfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+     98: aload_0 
+     99: aload_0 
+    100: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    103: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    106: invokevirtual #64.getMainHandItem:()Lnet/minecraft/world/item/ItemStack;
+    109: putfield #13.destroyingItem:Lnet/minecraft/world/item/ItemStack;
+    112: aload_0 
+    113: fconst_0 
+    114: putfield #13.destroyProgress:F
+    117: aload_0 
+    118: fconst_0 
+    119: putfield #13.destroyTicks:F
+    122: aload_0 
+    123: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    126: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    129: aload_0 
+    130: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    133: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    136: invokevirtual #64.getId:()I
+    139: aload_0 
+    140: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+    143: aload_0 
+    144: invokevirtual #13.getDestroyStage:()I
+    147: invokevirtual #149.destroyBlockProgress:(ILnet/minecraft/core/BlockPos;I)V
+    150: new net/minecraft/network/protocol/game/ServerboundPlayerActionPacket
+    153: dup 
+    154: getstatic #205.START_DESTROY_BLOCK:Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;
+    157: aload_2 
+    158: aload_3 
+    159: iload 4
+    161: invokespecial #202.<init>:(Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)V
+    164: areturn 
+
+=== lambda$startDestroyBlock$0(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)Lnet/minecraft/network/protocol/Packet; max_stack=6 max_locals=4 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #13.destroyBlock:(Lnet/minecraft/core/BlockPos;)Z
+      5: pop 
+      6: new net/minecraft/network/protocol/game/ServerboundPlayerActionPacket
+      9: dup 
+     10: getstatic #205.START_DESTROY_BLOCK:Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;
+     13: aload_1 
+     14: aload_2 
+     15: iload_3 
+     16: invokespecial #202.<init>:(Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)V
+     19: areturn 
+
+=== continueDestroyBlock ===
+=== continueDestroyBlock(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z max_stack=9 max_locals=5 ===
+      0: aload_0 
+      1: invokevirtual #13.ensureHasSentCarriedItem:()V
+      4: aload_0 
+      5: getfield #13.destroyDelay:I
+      8: ifle start+23
+     11: aload_0 
+     12: dup 
+     13: getfield #13.destroyDelay:I
+     16: iconst_1 
+     17: isub 
+     18: putfield #13.destroyDelay:I
+     21: iconst_1 
+     22: ireturn 
+     23: aload_0 
+     24: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     27: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     30: invokevirtual #64.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     33: getfield #161.instabuild:Z
+     36: ifeq start+132
+     39: aload_0 
+     40: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     43: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     46: invokevirtual #149.getWorldBorder:()Lnet/minecraft/world/level/border/WorldBorder;
+     49: aload_1 
+     50: invokevirtual #155.isWithinBounds:(Lnet/minecraft/core/BlockPos;)Z
+     53: ifeq start+132
+     56: aload_0 
+     57: iconst_5 
+     58: putfield #13.destroyDelay:I
+     61: aload_0 
+     62: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     65: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     68: aload_1 
+     69: invokevirtual #149.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     72: astore_3 
+     73: aload_0 
+     74: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     77: invokevirtual #58.getTutorial:()Lnet/minecraft/client/tutorial/Tutorial;
+     80: aload_0 
+     81: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     84: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     87: aload_1 
+     88: aload_3 
+     89: fconst_1 
+     90: invokevirtual #171.onDestroyBlock:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;F)V
+     93: getstatic #131.DEBUG_BLOCK_BREAK:Z
+     96: ifeq start+111
+     99: getstatic #13.LOGGER:Lorg/slf4j/Logger;
+    102: ldc #251
+    104: aload_1 
+    105: aload_3 
+    106: invokeinterface #143.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    111: aload_0 
+    112: aload_0 
+    113: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    116: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    119: aload_0 
+    120: aload_1 
+    121: aload_2 
+    122: invokedynamic #253
+    127: invokevirtual #13.startPrediction:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/multiplayer/prediction/PredictiveAction;)V
+    130: iconst_1 
+    131: ireturn 
+    132: aload_0 
+    133: aload_1 
+    134: invokevirtual #13.sameDestroyTarget:(Lnet/minecraft/core/BlockPos;)Z
+    137: ifeq start+402
+    140: aload_0 
+    141: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    144: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    147: aload_1 
+    148: invokevirtual #149.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    151: astore_3 
+    152: aload_3 
+    153: invokevirtual #93.isAir:()Z
+    156: ifeq start+166
+    159: aload_0 
+    160: iconst_0 
+    161: putfield #13.isDestroying:Z
+    164: iconst_0 
+    165: ireturn 
+    166: aload_0 
+    167: dup 
+    168: getfield #13.destroyProgress:F
+    171: aload_3 
+    172: aload_0 
+    173: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    176: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    179: aload_0 
+    180: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    183: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    186: invokevirtual #64.level:()Lnet/minecraft/world/level/Level;
+    189: aload_1 
+    190: invokevirtual #93.getDestroyProgress:(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)F
+    193: fadd 
+    194: putfield #13.destroyProgress:F
+    197: aload_0 
+    198: getfield #13.destroyTicks:F
+    201: ldc_w #264
+    204: frem 
+    205: fconst_0 
+    206: fcmpl 
+    207: ifne start+266
+    210: aload_3 
+    211: invokevirtual #93.getSoundType:()Lnet/minecraft/world/level/block/SoundType;
+    214: astore 4
+    216: aload_0 
+    217: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    220: invokevirtual #58.getSoundManager:()Lnet/minecraft/client/sounds/SoundManager;
+    223: new net/minecraft/client/resources/sounds/SimpleSoundInstance
+    226: dup 
+    227: aload 4
+    229: invokevirtual #276.getHitSound:()Lnet/minecraft/sounds/SoundEvent;
+    232: getstatic #282.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    235: aload 4
+    237: invokevirtual #276.getVolume:()F
+    240: fconst_1 
+    241: fadd 
+    242: ldc_w #291
+    245: fdiv 
+    246: aload 4
+    248: invokevirtual #276.getPitch:()F
+    251: ldc_w #295
+    254: fmul 
+    255: invokestatic #297.createUnseededRandom:()Lnet/minecraft/util/RandomSource;
+    258: aload_1 
+    259: invokespecial #273.<init>:(Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFLnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)V
+    262: invokevirtual #306.play:(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;
+    265: pop 
+    266: aload_0 
+    267: dup 
+    268: getfield #13.destroyTicks:F
+    271: fconst_1 
+    272: fadd 
+    273: putfield #13.destroyTicks:F
+    276: aload_0 
+    277: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    280: invokevirtual #58.getTutorial:()Lnet/minecraft/client/tutorial/Tutorial;
+    283: aload_0 
+    284: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    287: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    290: aload_1 
+    291: aload_3 
+    292: aload_0 
+    293: getfield #13.destroyProgress:F
+    296: fconst_0 
+    297: fconst_1 
+    298: invokestatic #312.clamp:(FFF)F
+    301: invokevirtual #171.onDestroyBlock:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;F)V
+    304: aload_0 
+    305: getfield #13.destroyProgress:F
+    308: fconst_1 
+    309: fcmpl 
+    310: iflt start+371
+    313: aload_0 
+    314: iconst_0 
+    315: putfield #13.isDestroying:Z
+    318: getstatic #131.DEBUG_BLOCK_BREAK:Z
+    321: ifeq start+337
+    324: getstatic #13.LOGGER:Lorg/slf4j/Logger;
+    327: ldc_w #317
+    330: aload_1 
+    331: aload_3 
+    332: invokeinterface #143.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    337: aload_0 
+    338: aload_0 
+    339: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    342: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    345: aload_0 
+    346: aload_1 
+    347: aload_2 
+    348: invokedynamic #319
+    353: invokevirtual #13.startPrediction:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/multiplayer/prediction/PredictiveAction;)V
+    356: aload_0 
+    357: fconst_0 
+    358: putfield #13.destroyProgress:F
+    361: aload_0 
+    362: fconst_0 
+    363: putfield #13.destroyTicks:F
+    366: aload_0 
+    367: iconst_5 
+    368: putfield #13.destroyDelay:I
+    371: aload_0 
+    372: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    375: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    378: aload_0 
+    379: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    382: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    385: invokevirtual #64.getId:()I
+    388: aload_0 
+    389: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+    392: aload_0 
+    393: invokevirtual #13.getDestroyStage:()I
+    396: invokevirtual #149.destroyBlockProgress:(ILnet/minecraft/core/BlockPos;I)V
+    399: goto start+409
+    402: aload_0 
+    403: aload_1 
+    404: aload_2 
+    405: invokevirtual #13.startDestroyBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+    408: ireturn 
+    409: iconst_1 
+    410: ireturn 
+
+=== lambda$continueDestroyBlock$1(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)Lnet/minecraft/network/protocol/Packet; max_stack=6 max_locals=4 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #13.destroyBlock:(Lnet/minecraft/core/BlockPos;)Z
+      5: pop 
+      6: new net/minecraft/network/protocol/game/ServerboundPlayerActionPacket
+      9: dup 
+     10: getstatic #205.STOP_DESTROY_BLOCK:Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;
+     13: aload_1 
+     14: aload_2 
+     15: iload_3 
+     16: invokespecial #202.<init>:(Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)V
+     19: areturn 
+
+=== lambda$continueDestroyBlock$0(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)Lnet/minecraft/network/protocol/Packet; max_stack=6 max_locals=4 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #13.destroyBlock:(Lnet/minecraft/core/BlockPos;)Z
+      5: pop 
+      6: new net/minecraft/network/protocol/game/ServerboundPlayerActionPacket
+      9: dup 
+     10: getstatic #205.START_DESTROY_BLOCK:Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;
+     13: aload_1 
+     14: aload_2 
+     15: iload_3 
+     16: invokespecial #202.<init>:(Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;I)V
+     19: areturn 
+
+=== destroyBlock ===
+=== destroyBlock(Lnet/minecraft/core/BlockPos;)Z max_stack=7 max_locals=7 ===
+      0: aload_0 
+      1: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+      7: aload_0 
+      8: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     11: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     14: aload_1 
+     15: aload_0 
+     16: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+     19: invokevirtual #64.blockActionRestricted:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/GameType;)Z
+     22: ifeq start+27
+     25: iconst_0 
+     26: ireturn 
+     27: aload_0 
+     28: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     31: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     34: astore_2 
+     35: aload_2 
+     36: aload_1 
+     37: invokevirtual #79.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     40: astore_3 
+     41: aload_0 
+     42: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     45: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     48: invokevirtual #64.getMainHandItem:()Lnet/minecraft/world/item/ItemStack;
+     51: aload_3 
+     52: aload_2 
+     53: aload_1 
+     54: aload_0 
+     55: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     58: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     61: invokevirtual #19.canDestroyBlock:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/entity/player/Player;)Z
+     64: ifne start+69
+     67: iconst_0 
+     68: ireturn 
+     69: aload_3 
+     70: invokevirtual #93.getBlock:()Lnet/minecraft/world/level/block/Block;
+     73: astore 4
+     75: aload 4
+     77: instanceof net/minecraft/world/level/block/GameMasterBlock
+     80: ifeq start+98
+     83: aload_0 
+     84: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     87: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     90: invokevirtual #64.canUseGameMasterBlocks:()Z
+     93: ifne start+98
+     96: iconst_0 
+     97: ireturn 
+     98: aload_3 
+     99: invokevirtual #93.isAir:()Z
+    102: ifeq start+107
+    105: iconst_0 
+    106: ireturn 
+    107: aload 4
+    109: aload_2 
+    110: aload_1 
+    111: aload_3 
+    112: aload_0 
+    113: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    116: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    119: invokevirtual #107.playerWillDestroy:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/level/block/state/BlockState;
+    122: pop 
+    123: aload_2 
+    124: aload_1 
+    125: invokevirtual #79.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+    128: astore 5
+    130: aload_2 
+    131: aload_1 
+    132: aload 5
+    134: invokevirtual #117.createLegacyBlock:()Lnet/minecraft/world/level/block/state/BlockState;
+    137: bipush 11
+    139: invokevirtual #79.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+    142: istore 6
+    144: iload 6
+    146: ifeq start+157
+    149: aload 4
+    151: aload_2 
+    152: aload_1 
+    153: aload_3 
+    154: invokevirtual #107.destroy:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    157: getstatic #131.DEBUG_BLOCK_BREAK:Z
+    160: ifeq start+193
+    163: getstatic #13.LOGGER:Lorg/slf4j/Logger;
+    166: ldc #140
+    168: iconst_3 
+    169: anewarray java/lang/Object
+    172: dup 
+    173: iconst_0 
+    174: aload_1 
+    175: aastore 
+    176: dup 
+    177: iconst_1 
+    178: aload_3 
+    179: aastore 
+    180: dup 
+    181: iconst_2 
+    182: aload_2 
+    183: aload_1 
+    184: invokevirtual #79.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    187: aastore 
+    188: invokeinterface #143.error:(Ljava/lang/String;[Ljava/lang/Object;)V
+    193: iload 6
+    195: ireturn 
+
+=== stopDestroyBlock ===
+=== stopDestroyBlock()V max_stack=6 max_locals=2 ===
+      0: aload_0 
+      1: getfield #13.isDestroying:Z
+      4: ifeq start+136
+      7: aload_0 
+      8: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     11: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     14: aload_0 
+     15: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+     18: invokevirtual #149.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     21: astore_1 
+     22: aload_0 
+     23: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     26: invokevirtual #58.getTutorial:()Lnet/minecraft/client/tutorial/Tutorial;
+     29: aload_0 
+     30: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     33: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     36: aload_0 
+     37: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+     40: aload_1 
+     41: ldc #224
+     43: invokevirtual #171.onDestroyBlock:(Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;F)V
+     46: getstatic #131.DEBUG_BLOCK_BREAK:Z
+     49: ifeq start+67
+     52: getstatic #13.LOGGER:Lorg/slf4j/Logger;
+     55: ldc #225
+     57: aload_0 
+     58: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+     61: aload_1 
+     62: invokeinterface #143.info:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+     67: aload_0 
+     68: getfield #13.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+     71: new net/minecraft/network/protocol/game/ServerboundPlayerActionPacket
+     74: dup 
+     75: getstatic #205.ABORT_DESTROY_BLOCK:Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;
+     78: aload_0 
+     79: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+     82: getstatic #228.DOWN:Lnet/minecraft/core/Direction;
+     85: invokespecial #202.<init>:(Lnet/minecraft/network/protocol/game/ServerboundPlayerActionPacket$Action;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)V
+     88: invokevirtual #214.send:(Lnet/minecraft/network/protocol/Packet;)V
+     91: aload_0 
+     92: iconst_0 
+     93: putfield #13.isDestroying:Z
+     96: aload_0 
+     97: fconst_0 
+     98: putfield #13.destroyProgress:F
+    101: aload_0 
+    102: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    105: getfield #58.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    108: aload_0 
+    109: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    112: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    115: invokevirtual #64.getId:()I
+    118: aload_0 
+    119: getfield #13.destroyBlockPos:Lnet/minecraft/core/BlockPos;
+    122: iconst_m1 
+    123: invokevirtual #149.destroyBlockProgress:(ILnet/minecraft/core/BlockPos;I)V
+    126: aload_0 
+    127: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+    130: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+    133: invokevirtual #64.resetAttackStrengthTicker:()V
+    136: return 
+
+=== isCreative ===
