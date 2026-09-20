@@ -1,0 +1,147 @@
+=== <init>(Lnet/minecraft/client/Minecraft;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+      9: return 
+
+=== emitGizmos(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V max_stack=14 max_locals=17 ===
+      0: aload_0 
+      1: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #14.player:Lnet/minecraft/client/player/LocalPlayer;
+      7: invokevirtual #20.blockPosition:()Lnet/minecraft/core/BlockPos;
+     10: astore 10
+     12: aload_0 
+     13: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+     16: getfield #14.player:Lnet/minecraft/client/player/LocalPlayer;
+     19: invokevirtual #20.level:()Lnet/minecraft/world/level/Level;
+     22: astore 11
+     24: aload 10
+     26: bipush 246
+     28: bipush 246
+     30: bipush 246
+     32: invokevirtual #30.offset:(III)Lnet/minecraft/core/BlockPos;
+     35: aload 10
+     37: bipush 10
+     39: bipush 10
+     41: bipush 10
+     43: invokevirtual #30.offset:(III)Lnet/minecraft/core/BlockPos;
+     46: invokestatic #30.betweenClosed:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;
+     49: invokeinterface #40.iterator:()Ljava/util/Iterator;
+     54: astore 12
+     56: aload 12
+     58: invokeinterface #46.hasNext:()Z
+     63: ifeq start+196
+     66: aload 12
+     68: invokeinterface #46.next:()Ljava/lang/Object;
+     73: checkcast net/minecraft/core/BlockPos
+     76: astore 13
+     78: aload 11
+     80: aload 13
+     82: invokeinterface #56.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+     87: astore 14
+     89: aload 14
+     91: getstatic #62.WATER:Lnet/minecraft/tags/TagKey;
+     94: invokevirtual #68.is:(Lnet/minecraft/tags/TagKey;)Z
+     97: ifeq start+193
+    100: aload 13
+    102: invokevirtual #30.getY:()I
+    105: i2f 
+    106: aload 14
+    108: aload 11
+    110: aload 13
+    112: invokevirtual #68.getHeight:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)F
+    115: fadd 
+    116: f2d 
+    117: dstore 15
+    119: new net/minecraft/world/phys/AABB
+    122: dup 
+    123: aload 13
+    125: invokevirtual #30.getX:()I
+    128: i2f 
+    129: ldc #86
+    131: fadd 
+    132: f2d 
+    133: aload 13
+    135: invokevirtual #30.getY:()I
+    138: i2f 
+    139: ldc #86
+    141: fadd 
+    142: f2d 
+    143: aload 13
+    145: invokevirtual #30.getZ:()I
+    148: i2f 
+    149: ldc #86
+    151: fadd 
+    152: f2d 
+    153: aload 13
+    155: invokevirtual #30.getX:()I
+    158: i2f 
+    159: ldc #90
+    161: fadd 
+    162: f2d 
+    163: dload 15
+    165: aload 13
+    167: invokevirtual #30.getZ:()I
+    170: i2f 
+    171: ldc #90
+    173: fadd 
+    174: f2d 
+    175: invokespecial #81.<init>:(DDDDDD)V
+    178: ldc #94
+    180: fconst_0 
+    181: fconst_1 
+    182: fconst_0 
+    183: invokestatic #96.colorFromFloat:(FFFF)I
+    186: invokestatic #102.fill:(I)Lnet/minecraft/gizmos/GizmoStyle;
+    189: invokestatic #108.cuboid:(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/gizmos/GizmoStyle;)Lnet/minecraft/gizmos/GizmoProperties;
+    192: pop 
+    193: goto start+56
+    196: aload 10
+    198: bipush 246
+    200: bipush 246
+    202: bipush 246
+    204: invokevirtual #30.offset:(III)Lnet/minecraft/core/BlockPos;
+    207: aload 10
+    209: bipush 10
+    211: bipush 10
+    213: bipush 10
+    215: invokevirtual #30.offset:(III)Lnet/minecraft/core/BlockPos;
+    218: invokestatic #30.betweenClosed:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;
+    221: invokeinterface #40.iterator:()Ljava/util/Iterator;
+    226: astore 12
+    228: aload 12
+    230: invokeinterface #46.hasNext:()Z
+    235: ifeq start+313
+    238: aload 12
+    240: invokeinterface #46.next:()Ljava/lang/Object;
+    245: checkcast net/minecraft/core/BlockPos
+    248: astore 13
+    250: aload 11
+    252: aload 13
+    254: invokeinterface #56.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+    259: astore 14
+    261: aload 14
+    263: getstatic #62.WATER:Lnet/minecraft/tags/TagKey;
+    266: invokevirtual #68.is:(Lnet/minecraft/tags/TagKey;)Z
+    269: ifeq start+310
+    272: aload 14
+    274: invokevirtual #68.getAmount:()I
+    277: invokestatic #117.valueOf:(I)Ljava/lang/String;
+    280: aload 13
+    282: ldc2_w #122
+    285: aload 14
+    287: aload 11
+    289: aload 13
+    291: invokevirtual #68.getHeight:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)F
+    294: f2d 
+    295: ldc2_w #122
+    298: invokestatic #125.atLowerCornerWithOffset:(Lnet/minecraft/core/Vec3i;DDD)Lnet/minecraft/world/phys/Vec3;
+    301: ldc #132
+    303: invokestatic #134.forColorAndCentered:(I)Lnet/minecraft/gizmos/TextGizmo$Style;
+    306: invokestatic #108.billboardText:(Ljava/lang/String;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/gizmos/TextGizmo$Style;)Lnet/minecraft/gizmos/GizmoProperties;
+    309: pop 
+    310: goto start+228
+    313: return 
+

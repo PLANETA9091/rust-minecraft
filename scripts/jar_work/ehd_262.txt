@@ -1,0 +1,342 @@
+=== <init>(Lnet/minecraft/client/Minecraft;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+      9: return 
+
+=== emitGizmos(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V max_stack=9 max_locals=14 ===
+      0: aload_0 
+      1: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #14.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+      7: ifnonnull start+11
+     10: return 
+     11: aload_0 
+     12: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+     15: getfield #14.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     18: invokevirtual #20.entitiesForRendering:()Ljava/lang/Iterable;
+     21: invokeinterface #26.iterator:()Ljava/util/Iterator;
+     26: astore 10
+     28: aload 10
+     30: invokeinterface #32.hasNext:()Z
+     35: ifeq start+244
+     38: aload 10
+     40: invokeinterface #32.next:()Ljava/lang/Object;
+     45: checkcast net/minecraft/world/entity/Entity
+     48: astore 11
+     50: aload 11
+     52: invokevirtual #41.isInvisible:()Z
+     55: ifne start+28
+     58: aload 8
+     60: aload 11
+     62: invokevirtual #41.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+     65: invokevirtual #51.isVisible:(Lnet/minecraft/world/phys/AABB;)Z
+     68: ifne start+74
+     71: goto start+28
+     74: aload_0 
+     75: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+     78: getfield #14.levelExtractor:Lnet/minecraft/client/renderer/extract/LevelExtractor;
+     81: aload 11
+     83: aload 8
+     85: dload_1 
+     86: dload_3 
+     87: dload 5
+     89: invokevirtual #61.isEntityVisible:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/culling/Frustum;DDD)Z
+     92: ifne start+98
+     95: goto start+28
+     98: aload 11
+    100: aload_0 
+    101: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+    104: invokevirtual #14.getCameraEntity:()Lnet/minecraft/world/entity/Entity;
+    107: if_acmpne start+129
+    110: aload_0 
+    111: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+    114: getfield #14.options:Lnet/minecraft/client/Options;
+    117: invokevirtual #75.getCameraType:()Lnet/minecraft/client/CameraType;
+    120: getstatic #81.FIRST_PERSON:Lnet/minecraft/client/CameraType;
+    123: if_acmpne start+129
+    126: goto start+28
+    129: aload_0 
+    130: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+    133: invokevirtual #14.getDeltaTracker:()Lnet/minecraft/client/DeltaTracker;
+    136: aload_0 
+    137: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+    140: getfield #14.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    143: invokevirtual #20.tickRateManager:()Lnet/minecraft/world/TickRateManager;
+    146: aload 11
+    148: invokevirtual #95.isEntityFrozen:(Lnet/minecraft/world/entity/Entity;)Z
+    151: ifne start+158
+    154: iconst_1 
+    155: goto start+159
+    158: iconst_0 
+    159: invokeinterface #101.getGameTimeDeltaPartialTick:(Z)F
+    164: fstore 12
+    166: aload_0 
+    167: aload 11
+    169: fload 12
+    171: iconst_0 
+    172: invokevirtual #8.showHitboxes:(Lnet/minecraft/world/entity/Entity;FZ)V
+    175: getstatic #111.DEBUG_SHOW_LOCAL_SERVER_ENTITY_HIT_BOXES:Z
+    178: ifeq start+241
+    181: aload_0 
+    182: aload 11
+    184: invokevirtual #8.getServerEntity:(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/entity/Entity;
+    187: astore 13
+    189: aload 13
+    191: ifnull start+206
+    194: aload_0 
+    195: aload 11
+    197: fload 12
+    199: iconst_1 
+    200: invokevirtual #8.showHitboxes:(Lnet/minecraft/world/entity/Entity;FZ)V
+    203: goto start+241
+    206: ldc #120
+    208: aload 11
+    210: fload 12
+    212: invokevirtual #41.getPosition:(F)Lnet/minecraft/world/phys/Vec3;
+    215: dconst_0 
+    216: aload 11
+    218: invokevirtual #41.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+    221: invokevirtual #127.getYsize:()D
+    224: ldc2_w #132
+    227: dadd 
+    228: dconst_0 
+    229: invokevirtual #135.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+    232: ldc #142
+    234: invokestatic #144.forColorAndCentered:(I)Lnet/minecraft/gizmos/TextGizmo$Style;
+    237: invokestatic #150.billboardText:(Ljava/lang/String;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/gizmos/TextGizmo$Style;)Lnet/minecraft/gizmos/GizmoProperties;
+    240: pop 
+    241: goto start+28
+    244: return 
+
+=== getServerEntity(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/entity/Entity; max_stack=2 max_locals=4 ===
+      0: aload_0 
+      1: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+      4: invokevirtual #14.getSingleplayerServer:()Lnet/minecraft/client/server/IntegratedServer;
+      7: astore_2 
+      8: aload_2 
+      9: ifnull start+37
+     12: aload_2 
+     13: aload_1 
+     14: invokevirtual #41.level:()Lnet/minecraft/world/level/Level;
+     17: invokevirtual #163.dimension:()Lnet/minecraft/resources/ResourceKey;
+     20: invokevirtual #169.getLevel:(Lnet/minecraft/resources/ResourceKey;)Lnet/minecraft/server/level/ServerLevel;
+     23: astore_3 
+     24: aload_3 
+     25: ifnull start+37
+     28: aload_3 
+     29: aload_1 
+     30: invokevirtual #41.getId:()I
+     33: invokevirtual #179.getEntity:(I)Lnet/minecraft/world/entity/Entity;
+     36: areturn 
+     37: aconst_null 
+     38: areturn 
+
+=== showHitboxes(Lnet/minecraft/world/entity/Entity;FZ)V max_stack=16 max_locals=17 ===
+      0: aload_1 
+      1: invokevirtual #41.position:()Lnet/minecraft/world/phys/Vec3;
+      4: astore 4
+      6: aload_1 
+      7: fload_2 
+      8: invokevirtual #41.getPosition:(F)Lnet/minecraft/world/phys/Vec3;
+     11: astore 5
+     13: aload 5
+     15: aload 4
+     17: invokevirtual #135.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+     20: astore 6
+     22: iload_3 
+     23: ifeq start+31
+     26: ldc #192
+     28: goto start+32
+     31: iconst_m1 
+     32: istore 7
+     34: aload_1 
+     35: invokevirtual #41.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+     38: aload 6
+     40: invokevirtual #127.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+     43: iload 7
+     45: invokestatic #198.stroke:(I)Lnet/minecraft/gizmos/GizmoStyle;
+     48: invokestatic #150.cuboid:(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/gizmos/GizmoStyle;)Lnet/minecraft/gizmos/GizmoProperties;
+     51: pop 
+     52: aload 5
+     54: iload 7
+     56: fconst_2 
+     57: invokestatic #150.point:(Lnet/minecraft/world/phys/Vec3;IF)Lnet/minecraft/gizmos/GizmoProperties;
+     60: pop 
+     61: aload_1 
+     62: invokevirtual #41.getVehicle:()Lnet/minecraft/world/entity/Entity;
+     65: astore 8
+     67: aload 8
+     69: ifnull start+172
+     72: aload 8
+     74: invokevirtual #41.getBbWidth:()F
+     77: aload_1 
+     78: invokevirtual #41.getBbWidth:()F
+     81: invokestatic #219.min:(FF)F
+     84: fconst_2 
+     85: fdiv 
+     86: fstore 9
+     88: ldc #224
+     90: fstore 10
+     92: aload 8
+     94: aload_1 
+     95: invokevirtual #41.getPassengerRidingPosition:(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/phys/Vec3;
+     98: aload 6
+    100: invokevirtual #135.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    103: astore 11
+    105: new net/minecraft/world/phys/AABB
+    108: dup 
+    109: aload 11
+    111: getfield #135.x:D
+    114: fload 9
+    116: f2d 
+    117: dsub 
+    118: aload 11
+    120: getfield #135.y:D
+    123: aload 11
+    125: getfield #135.z:D
+    128: fload 9
+    130: f2d 
+    131: dsub 
+    132: aload 11
+    134: getfield #135.x:D
+    137: fload 9
+    139: f2d 
+    140: dadd 
+    141: aload 11
+    143: getfield #135.y:D
+    146: ldc2_w #241
+    149: dadd 
+    150: aload 11
+    152: getfield #135.z:D
+    155: fload 9
+    157: f2d 
+    158: dadd 
+    159: invokespecial #127.<init>:(DDDDDD)V
+    162: sipush -256
+    165: invokestatic #198.stroke:(I)Lnet/minecraft/gizmos/GizmoStyle;
+    168: invokestatic #150.cuboid:(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/gizmos/GizmoStyle;)Lnet/minecraft/gizmos/GizmoProperties;
+    171: pop 
+    172: aload_1 
+    173: instanceof net/minecraft/world/entity/LivingEntity
+    176: ifeq start+260
+    179: aload_1 
+    180: invokevirtual #41.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+    183: aload 6
+    185: invokevirtual #127.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+    188: astore 9
+    190: ldc #248
+    192: fstore 10
+    194: new net/minecraft/world/phys/AABB
+    197: dup 
+    198: aload 9
+    200: getfield #127.minX:D
+    203: aload 9
+    205: getfield #127.minY:D
+    208: aload_1 
+    209: invokevirtual #41.getEyeHeight:()F
+    212: f2d 
+    213: dadd 
+    214: ldc2_w #258
+    217: dsub 
+    218: aload 9
+    220: getfield #127.minZ:D
+    223: aload 9
+    225: getfield #127.maxX:D
+    228: aload 9
+    230: getfield #127.minY:D
+    233: aload_1 
+    234: invokevirtual #41.getEyeHeight:()F
+    237: f2d 
+    238: dadd 
+    239: ldc2_w #258
+    242: dadd 
+    243: aload 9
+    245: getfield #127.maxZ:D
+    248: invokespecial #127.<init>:(DDDDDD)V
+    251: ldc #142
+    253: invokestatic #198.stroke:(I)Lnet/minecraft/gizmos/GizmoStyle;
+    256: invokestatic #150.cuboid:(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/gizmos/GizmoStyle;)Lnet/minecraft/gizmos/GizmoProperties;
+    259: pop 
+    260: aload_1 
+    261: instanceof net/minecraft/world/entity/boss/enderdragon/EnderDragon
+    264: ifeq start+358
+    267: aload_1 
+    268: checkcast net/minecraft/world/entity/boss/enderdragon/EnderDragon
+    271: astore 9
+    273: aload 9
+    275: invokevirtual #269.getSubEntities:()[Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;
+    278: astore 10
+    280: aload 10
+    282: arraylength 
+    283: istore 11
+    285: iconst_0 
+    286: istore 12
+    288: iload 12
+    290: iload 11
+    292: if_icmpge start+358
+    295: aload 10
+    297: iload 12
+    299: aaload 
+    300: astore 13
+    302: aload 13
+    304: invokevirtual #276.position:()Lnet/minecraft/world/phys/Vec3;
+    307: astore 14
+    309: aload 13
+    311: fload_2 
+    312: invokevirtual #276.getPosition:(F)Lnet/minecraft/world/phys/Vec3;
+    315: astore 15
+    317: aload 15
+    319: aload 14
+    321: invokevirtual #135.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    324: astore 16
+    326: aload 13
+    328: invokevirtual #276.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+    331: aload 16
+    333: invokevirtual #127.move:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+    336: fconst_1 
+    337: ldc_w #280
+    340: fconst_1 
+    341: fconst_0 
+    342: invokestatic #282.colorFromFloat:(FFFF)I
+    345: invokestatic #198.stroke:(I)Lnet/minecraft/gizmos/GizmoStyle;
+    348: invokestatic #150.cuboid:(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/gizmos/GizmoStyle;)Lnet/minecraft/gizmos/GizmoProperties;
+    351: pop 
+    352: iinc #3073
+    355: goto start+288
+    358: aload 5
+    360: dconst_0 
+    361: aload_1 
+    362: invokevirtual #41.getEyeHeight:()F
+    365: f2d 
+    366: dconst_0 
+    367: invokevirtual #135.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+    370: astore 9
+    372: aload_1 
+    373: fload_2 
+    374: invokevirtual #41.getViewVector:(F)Lnet/minecraft/world/phys/Vec3;
+    377: astore 10
+    379: aload 9
+    381: aload 9
+    383: aload 10
+    385: ldc2_w #290
+    388: invokevirtual #135.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    391: invokevirtual #135.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    394: ldc_w #296
+    397: invokestatic #150.arrow:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)Lnet/minecraft/gizmos/GizmoProperties;
+    400: pop 
+    401: iload_3 
+    402: ifeq start+427
+    405: aload_1 
+    406: invokevirtual #41.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    409: astore 11
+    411: aload 5
+    413: aload 5
+    415: aload 11
+    417: invokevirtual #135.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    420: sipush -256
+    423: invokestatic #150.arrow:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)Lnet/minecraft/gizmos/GizmoProperties;
+    426: pop 
+    427: return 
+

@@ -1,0 +1,489 @@
+=== <init>(Lnet/minecraft/world/phys/AABB;Lnet/minecraft/gizmos/GizmoStyle;Z)V max_stack=2 max_locals=4 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+      9: aload_0 
+     10: aload_2 
+     11: putfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+     14: aload_0 
+     15: iload_3 
+     16: putfield #8.coloredCornerStroke:Z
+     19: return 
+
+=== emit(Lnet/minecraft/gizmos/GizmoPrimitives;F)V max_stack=12 max_locals=16 ===
+      0: aload_0 
+      1: getfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+      4: getfield #22.minX:D
+      7: dstore_3 
+      8: aload_0 
+      9: getfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+     12: getfield #22.minY:D
+     15: dstore 5
+     17: aload_0 
+     18: getfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+     21: getfield #22.minZ:D
+     24: dstore 7
+     26: aload_0 
+     27: getfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+     30: getfield #22.maxX:D
+     33: dstore 9
+     35: aload_0 
+     36: getfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+     39: getfield #22.maxY:D
+     42: dstore 11
+     44: aload_0 
+     45: getfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+     48: getfield #22.maxZ:D
+     51: dstore 13
+     53: aload_0 
+     54: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+     57: invokevirtual #43.hasFill:()Z
+     60: ifeq start+421
+     63: aload_0 
+     64: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+     67: fload_2 
+     68: invokevirtual #43.multipliedFill:(F)I
+     71: istore 15
+     73: aload_1 
+     74: new net/minecraft/world/phys/Vec3
+     77: dup 
+     78: dload 9
+     80: dload 5
+     82: dload 7
+     84: invokespecial #52.<init>:(DDD)V
+     87: new net/minecraft/world/phys/Vec3
+     90: dup 
+     91: dload 9
+     93: dload 11
+     95: dload 7
+     97: invokespecial #52.<init>:(DDD)V
+    100: new net/minecraft/world/phys/Vec3
+    103: dup 
+    104: dload 9
+    106: dload 11
+    108: dload 13
+    110: invokespecial #52.<init>:(DDD)V
+    113: new net/minecraft/world/phys/Vec3
+    116: dup 
+    117: dload 9
+    119: dload 5
+    121: dload 13
+    123: invokespecial #52.<init>:(DDD)V
+    126: iload 15
+    128: invokeinterface #58.addQuad:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)V
+    133: aload_1 
+    134: new net/minecraft/world/phys/Vec3
+    137: dup 
+    138: dload_3 
+    139: dload 5
+    141: dload 7
+    143: invokespecial #52.<init>:(DDD)V
+    146: new net/minecraft/world/phys/Vec3
+    149: dup 
+    150: dload_3 
+    151: dload 5
+    153: dload 13
+    155: invokespecial #52.<init>:(DDD)V
+    158: new net/minecraft/world/phys/Vec3
+    161: dup 
+    162: dload_3 
+    163: dload 11
+    165: dload 13
+    167: invokespecial #52.<init>:(DDD)V
+    170: new net/minecraft/world/phys/Vec3
+    173: dup 
+    174: dload_3 
+    175: dload 11
+    177: dload 7
+    179: invokespecial #52.<init>:(DDD)V
+    182: iload 15
+    184: invokeinterface #58.addQuad:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)V
+    189: aload_1 
+    190: new net/minecraft/world/phys/Vec3
+    193: dup 
+    194: dload_3 
+    195: dload 5
+    197: dload 7
+    199: invokespecial #52.<init>:(DDD)V
+    202: new net/minecraft/world/phys/Vec3
+    205: dup 
+    206: dload_3 
+    207: dload 11
+    209: dload 7
+    211: invokespecial #52.<init>:(DDD)V
+    214: new net/minecraft/world/phys/Vec3
+    217: dup 
+    218: dload 9
+    220: dload 11
+    222: dload 7
+    224: invokespecial #52.<init>:(DDD)V
+    227: new net/minecraft/world/phys/Vec3
+    230: dup 
+    231: dload 9
+    233: dload 5
+    235: dload 7
+    237: invokespecial #52.<init>:(DDD)V
+    240: iload 15
+    242: invokeinterface #58.addQuad:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)V
+    247: aload_1 
+    248: new net/minecraft/world/phys/Vec3
+    251: dup 
+    252: dload_3 
+    253: dload 5
+    255: dload 13
+    257: invokespecial #52.<init>:(DDD)V
+    260: new net/minecraft/world/phys/Vec3
+    263: dup 
+    264: dload 9
+    266: dload 5
+    268: dload 13
+    270: invokespecial #52.<init>:(DDD)V
+    273: new net/minecraft/world/phys/Vec3
+    276: dup 
+    277: dload 9
+    279: dload 11
+    281: dload 13
+    283: invokespecial #52.<init>:(DDD)V
+    286: new net/minecraft/world/phys/Vec3
+    289: dup 
+    290: dload_3 
+    291: dload 11
+    293: dload 13
+    295: invokespecial #52.<init>:(DDD)V
+    298: iload 15
+    300: invokeinterface #58.addQuad:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)V
+    305: aload_1 
+    306: new net/minecraft/world/phys/Vec3
+    309: dup 
+    310: dload_3 
+    311: dload 11
+    313: dload 7
+    315: invokespecial #52.<init>:(DDD)V
+    318: new net/minecraft/world/phys/Vec3
+    321: dup 
+    322: dload_3 
+    323: dload 11
+    325: dload 13
+    327: invokespecial #52.<init>:(DDD)V
+    330: new net/minecraft/world/phys/Vec3
+    333: dup 
+    334: dload 9
+    336: dload 11
+    338: dload 13
+    340: invokespecial #52.<init>:(DDD)V
+    343: new net/minecraft/world/phys/Vec3
+    346: dup 
+    347: dload 9
+    349: dload 11
+    351: dload 7
+    353: invokespecial #52.<init>:(DDD)V
+    356: iload 15
+    358: invokeinterface #58.addQuad:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)V
+    363: aload_1 
+    364: new net/minecraft/world/phys/Vec3
+    367: dup 
+    368: dload_3 
+    369: dload 5
+    371: dload 7
+    373: invokespecial #52.<init>:(DDD)V
+    376: new net/minecraft/world/phys/Vec3
+    379: dup 
+    380: dload 9
+    382: dload 5
+    384: dload 7
+    386: invokespecial #52.<init>:(DDD)V
+    389: new net/minecraft/world/phys/Vec3
+    392: dup 
+    393: dload 9
+    395: dload 5
+    397: dload 13
+    399: invokespecial #52.<init>:(DDD)V
+    402: new net/minecraft/world/phys/Vec3
+    405: dup 
+    406: dload_3 
+    407: dload 5
+    409: dload 13
+    411: invokespecial #52.<init>:(DDD)V
+    414: iload 15
+    416: invokeinterface #58.addQuad:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)V
+    421: aload_0 
+    422: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    425: invokevirtual #43.hasStroke:()Z
+    428: ifeq start+972
+    431: aload_0 
+    432: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    435: fload_2 
+    436: invokevirtual #43.multipliedStroke:(F)I
+    439: istore 15
+    441: aload_1 
+    442: new net/minecraft/world/phys/Vec3
+    445: dup 
+    446: dload_3 
+    447: dload 5
+    449: dload 7
+    451: invokespecial #52.<init>:(DDD)V
+    454: new net/minecraft/world/phys/Vec3
+    457: dup 
+    458: dload 9
+    460: dload 5
+    462: dload 7
+    464: invokespecial #52.<init>:(DDD)V
+    467: aload_0 
+    468: getfield #8.coloredCornerStroke:Z
+    471: ifeq start+484
+    474: iload 15
+    476: ldc #69
+    478: invokestatic #71.multiply:(II)I
+    481: goto start+486
+    484: iload 15
+    486: aload_0 
+    487: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    490: invokevirtual #43.strokeWidth:()F
+    493: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    498: aload_1 
+    499: new net/minecraft/world/phys/Vec3
+    502: dup 
+    503: dload_3 
+    504: dload 5
+    506: dload 7
+    508: invokespecial #52.<init>:(DDD)V
+    511: new net/minecraft/world/phys/Vec3
+    514: dup 
+    515: dload_3 
+    516: dload 11
+    518: dload 7
+    520: invokespecial #52.<init>:(DDD)V
+    523: aload_0 
+    524: getfield #8.coloredCornerStroke:Z
+    527: ifeq start+540
+    530: iload 15
+    532: ldc #84
+    534: invokestatic #71.multiply:(II)I
+    537: goto start+542
+    540: iload 15
+    542: aload_0 
+    543: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    546: invokevirtual #43.strokeWidth:()F
+    549: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    554: aload_1 
+    555: new net/minecraft/world/phys/Vec3
+    558: dup 
+    559: dload_3 
+    560: dload 5
+    562: dload 7
+    564: invokespecial #52.<init>:(DDD)V
+    567: new net/minecraft/world/phys/Vec3
+    570: dup 
+    571: dload_3 
+    572: dload 5
+    574: dload 13
+    576: invokespecial #52.<init>:(DDD)V
+    579: aload_0 
+    580: getfield #8.coloredCornerStroke:Z
+    583: ifeq start+596
+    586: iload 15
+    588: ldc #85
+    590: invokestatic #71.multiply:(II)I
+    593: goto start+598
+    596: iload 15
+    598: aload_0 
+    599: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    602: invokevirtual #43.strokeWidth:()F
+    605: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    610: aload_1 
+    611: new net/minecraft/world/phys/Vec3
+    614: dup 
+    615: dload 9
+    617: dload 5
+    619: dload 7
+    621: invokespecial #52.<init>:(DDD)V
+    624: new net/minecraft/world/phys/Vec3
+    627: dup 
+    628: dload 9
+    630: dload 11
+    632: dload 7
+    634: invokespecial #52.<init>:(DDD)V
+    637: iload 15
+    639: aload_0 
+    640: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    643: invokevirtual #43.strokeWidth:()F
+    646: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    651: aload_1 
+    652: new net/minecraft/world/phys/Vec3
+    655: dup 
+    656: dload 9
+    658: dload 11
+    660: dload 7
+    662: invokespecial #52.<init>:(DDD)V
+    665: new net/minecraft/world/phys/Vec3
+    668: dup 
+    669: dload_3 
+    670: dload 11
+    672: dload 7
+    674: invokespecial #52.<init>:(DDD)V
+    677: iload 15
+    679: aload_0 
+    680: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    683: invokevirtual #43.strokeWidth:()F
+    686: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    691: aload_1 
+    692: new net/minecraft/world/phys/Vec3
+    695: dup 
+    696: dload_3 
+    697: dload 11
+    699: dload 7
+    701: invokespecial #52.<init>:(DDD)V
+    704: new net/minecraft/world/phys/Vec3
+    707: dup 
+    708: dload_3 
+    709: dload 11
+    711: dload 13
+    713: invokespecial #52.<init>:(DDD)V
+    716: iload 15
+    718: aload_0 
+    719: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    722: invokevirtual #43.strokeWidth:()F
+    725: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    730: aload_1 
+    731: new net/minecraft/world/phys/Vec3
+    734: dup 
+    735: dload_3 
+    736: dload 11
+    738: dload 13
+    740: invokespecial #52.<init>:(DDD)V
+    743: new net/minecraft/world/phys/Vec3
+    746: dup 
+    747: dload_3 
+    748: dload 5
+    750: dload 13
+    752: invokespecial #52.<init>:(DDD)V
+    755: iload 15
+    757: aload_0 
+    758: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    761: invokevirtual #43.strokeWidth:()F
+    764: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    769: aload_1 
+    770: new net/minecraft/world/phys/Vec3
+    773: dup 
+    774: dload_3 
+    775: dload 5
+    777: dload 13
+    779: invokespecial #52.<init>:(DDD)V
+    782: new net/minecraft/world/phys/Vec3
+    785: dup 
+    786: dload 9
+    788: dload 5
+    790: dload 13
+    792: invokespecial #52.<init>:(DDD)V
+    795: iload 15
+    797: aload_0 
+    798: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    801: invokevirtual #43.strokeWidth:()F
+    804: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    809: aload_1 
+    810: new net/minecraft/world/phys/Vec3
+    813: dup 
+    814: dload 9
+    816: dload 5
+    818: dload 13
+    820: invokespecial #52.<init>:(DDD)V
+    823: new net/minecraft/world/phys/Vec3
+    826: dup 
+    827: dload 9
+    829: dload 5
+    831: dload 7
+    833: invokespecial #52.<init>:(DDD)V
+    836: iload 15
+    838: aload_0 
+    839: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    842: invokevirtual #43.strokeWidth:()F
+    845: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    850: aload_1 
+    851: new net/minecraft/world/phys/Vec3
+    854: dup 
+    855: dload_3 
+    856: dload 11
+    858: dload 13
+    860: invokespecial #52.<init>:(DDD)V
+    863: new net/minecraft/world/phys/Vec3
+    866: dup 
+    867: dload 9
+    869: dload 11
+    871: dload 13
+    873: invokespecial #52.<init>:(DDD)V
+    876: iload 15
+    878: aload_0 
+    879: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    882: invokevirtual #43.strokeWidth:()F
+    885: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    890: aload_1 
+    891: new net/minecraft/world/phys/Vec3
+    894: dup 
+    895: dload 9
+    897: dload 5
+    899: dload 13
+    901: invokespecial #52.<init>:(DDD)V
+    904: new net/minecraft/world/phys/Vec3
+    907: dup 
+    908: dload 9
+    910: dload 11
+    912: dload 13
+    914: invokespecial #52.<init>:(DDD)V
+    917: iload 15
+    919: aload_0 
+    920: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    923: invokevirtual #43.strokeWidth:()F
+    926: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    931: aload_1 
+    932: new net/minecraft/world/phys/Vec3
+    935: dup 
+    936: dload 9
+    938: dload 11
+    940: dload 7
+    942: invokespecial #52.<init>:(DDD)V
+    945: new net/minecraft/world/phys/Vec3
+    948: dup 
+    949: dload 9
+    951: dload 11
+    953: dload 13
+    955: invokespecial #52.<init>:(DDD)V
+    958: iload 15
+    960: aload_0 
+    961: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+    964: invokevirtual #43.strokeWidth:()F
+    967: invokeinterface #58.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    972: return 
+
+=== toString()Ljava/lang/String; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #86
+      6: areturn 
+
+=== hashCode()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #90
+      6: ireturn 
+
+=== equals(Ljava/lang/Object;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokedynamic #94
+      7: ireturn 
+
+=== aabb()Lnet/minecraft/world/phys/AABB; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.aabb:Lnet/minecraft/world/phys/AABB;
+      4: areturn 
+
+=== style()Lnet/minecraft/gizmos/GizmoStyle; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.style:Lnet/minecraft/gizmos/GizmoStyle;
+      4: areturn 
+
+=== coloredCornerStroke()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.coloredCornerStroke:Z
+      4: ireturn 
+

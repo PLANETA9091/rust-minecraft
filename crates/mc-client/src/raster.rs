@@ -51,6 +51,20 @@ pub struct DebugLine {
     pub always_on_top: bool,
 }
 
+/// One debug POINT gizmo (javap 26.2 the `PointGizmo.emit` walk —
+/// `GizmoPrimitives.addPoint(pos, color*alpha, size)` the F3+B
+/// entity hitboxes' own white dot speaks: one at every entity's
+/// lerped position, the `point(lerped, -1, 2.0F)` submit rides). The
+/// draw the same pipeline the [`DebugLine`] wears — the projection,
+/// the near-plane guard, the 2x2 plot the GL point's own ~2px look
+/// proxies, the depth test the stroke's non-always-on-top style
+/// keeps (`GizmoStyle.stroke`'s flag the `iconst_0` init banks).
+pub struct DebugPoint {
+    pub pos: Vec3,
+    pub rgb: [f32; 3],
+    pub alpha: f32,
+}
+
 /// One celestial quad (sun / moon / star / sunrise disc) in world space.
 /// Rendered with the official sky-pipeline semantics: no depth test or
 /// write, no fog, no backface cull — drawn right after the sky-color clear,
@@ -269,9 +283,57 @@ impl Framebuf {
     /// shared Bresenham core, the gizmos' own colors the bytecode's
     /// ARGB folds keep.
     pub fn draw_chunk_borders(&mut self, ctx: &RenderCtx, lines: &[DebugLine]) {
+        self.draw_debug_lines(ctx, lines);
+    }
+
+    /// THE DEBUG GIZMO LINES' OWN PASS (the shared walk the chunk
+    /// borders and the F3+B hitboxes ride — the projection, the
+    /// near-plane guard, the Bresenham core, the depth law each
+    /// [`DebugLine`]'s own always-on-top flag speaks).
+    pub fn draw_debug_lines(&mut self, ctx: &RenderCtx, lines: &[DebugLine]) {
         let vp = ctx.proj.mul(&ctx.view);
         for l in lines {
             self.draw_debug_line(&vp, l.a, l.b, l.rgb, l.alpha, l.always_on_top);
+        }
+    }
+
+    /// THE DEBUG GIZMO POINTS' OWN PASS (javap 26.2 the point
+    /// primitive's GL lane the F3+B hitboxes' white dots speak): the
+    /// projection the lines' own walk wears, the near-plane guard the
+    /// `pa[3] < 0.1` law keeps, the 2x2 plot the GL point's ~2px look
+    /// proxies, the depth test the `<` pass keeps (the stroke style's
+    /// non-always-on-top flag the init banks).
+    pub fn draw_debug_points(&mut self, ctx: &RenderCtx, points: &[DebugPoint]) {
+        let vp = ctx.proj.mul(&ctx.view);
+        let w_px = self.w as f32;
+        let h_px = self.h as f32;
+        for p in points {
+            let pa = vp.transform_point(p.pos);
+            if pa[3] < 0.1 {
+                continue;
+            }
+            let ax = (pa[0] / pa[3] * 0.5 + 0.5) * w_px;
+            let ay = (1.0 - (pa[1] / pa[3] * 0.5 + 0.5)) * h_px;
+            let az = pa[3];
+            let (cx, cy) = (ax.round() as i64, ay.round() as i64);
+            for (ox, oy) in [(0, 0i64), (1, 0), (0, 1)] {
+                let px = cx + ox;
+                let py = cy + oy;
+                if px < 0 || py < 0 || px >= self.w as i64 || py >= self.h as i64 {
+                    continue;
+                }
+                let idx = py as usize * self.w + px as usize;
+                if az < self.depth[idx] {
+                    let o = idx * 3;
+                    for ch in 0..3 {
+                        let bg = self.color[o + ch] as f32 / 255.0;
+                        self.color[o + ch] = (bg * (1.0 - p.alpha) * 255.0
+                            + p.rgb[ch] * p.alpha * 255.0
+                            + 0.5)
+                            as u8;
+                    }
+                }
+            }
         }
     }
 

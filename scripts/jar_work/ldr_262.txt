@@ -1,0 +1,149 @@
+=== <init>(Lnet/minecraft/client/Minecraft;ZZ)V max_stack=2 max_locals=4 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+      9: aload_0 
+     10: iload_2 
+     11: putfield #8.showBlockLight:Z
+     14: aload_0 
+     15: iload_3 
+     16: putfield #8.showSkyLight:Z
+     19: return 
+
+=== emitGizmos(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V max_stack=9 max_locals=20 ===
+      0: aload_0 
+      1: getfield #8.minecraft:Lnet/minecraft/client/Minecraft;
+      4: getfield #21.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+      7: astore 10
+      9: dload_1 
+     10: dload_3 
+     11: dload 5
+     13: invokestatic #27.containing:(DDD)Lnet/minecraft/core/BlockPos;
+     16: astore 11
+     18: new it/unimi/dsi/fastutil/longs/LongOpenHashSet
+     21: dup 
+     22: invokespecial #32.<init>:()V
+     25: astore 12
+     27: aload 11
+     29: bipush 246
+     31: bipush 246
+     33: bipush 246
+     35: invokevirtual #27.offset:(III)Lnet/minecraft/core/BlockPos;
+     38: aload 11
+     40: bipush 10
+     42: bipush 10
+     44: bipush 10
+     46: invokevirtual #27.offset:(III)Lnet/minecraft/core/BlockPos;
+     49: invokestatic #27.betweenClosed:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;
+     52: invokeinterface #44.iterator:()Ljava/util/Iterator;
+     57: astore 13
+     59: aload 13
+     61: invokeinterface #50.hasNext:()Z
+     66: ifeq start+315
+     69: aload 13
+     71: invokeinterface #50.next:()Ljava/lang/Object;
+     76: checkcast net/minecraft/core/BlockPos
+     79: astore 14
+     81: aload 10
+     83: getstatic #60.SKY:Lnet/minecraft/world/level/LightLayer;
+     86: aload 14
+     88: invokevirtual #66.getBrightness:(Lnet/minecraft/world/level/LightLayer;Lnet/minecraft/core/BlockPos;)I
+     91: istore 15
+     93: aload 14
+     95: invokevirtual #27.asLong:()J
+     98: invokestatic #76.blockToSection:(J)J
+    101: lstore 16
+    103: aload 12
+    105: lload 16
+    107: invokeinterface #82.add:(J)Z
+    112: ifeq start+188
+    115: aload 10
+    117: invokevirtual #66.getChunkSource:()Lnet/minecraft/world/level/chunk/ChunkSource;
+    120: invokevirtual #92.getLightEngine:()Lnet/minecraft/world/level/lighting/LevelLightEngine;
+    123: getstatic #60.SKY:Lnet/minecraft/world/level/LightLayer;
+    126: lload 16
+    128: invokestatic #76.of:(J)Lnet/minecraft/core/SectionPos;
+    131: invokevirtual #102.getDebugData:(Lnet/minecraft/world/level/LightLayer;Lnet/minecraft/core/SectionPos;)Ljava/lang/String;
+    134: new net/minecraft/world/phys/Vec3
+    137: dup 
+    138: lload 16
+    140: invokestatic #76.x:(J)I
+    143: bipush 8
+    145: invokestatic #76.sectionToBlockCoord:(II)I
+    148: i2d 
+    149: lload 16
+    151: invokestatic #76.y:(J)I
+    154: bipush 8
+    156: invokestatic #76.sectionToBlockCoord:(II)I
+    159: i2d 
+    160: lload 16
+    162: invokestatic #76.z:(J)I
+    165: bipush 8
+    167: invokestatic #76.sectionToBlockCoord:(II)I
+    170: i2d 
+    171: invokespecial #107.<init>:(DDD)V
+    174: ldc #128
+    176: invokestatic #130.forColorAndCentered:(I)Lnet/minecraft/gizmos/TextGizmo$Style;
+    179: ldc #135
+    181: invokevirtual #130.withScale:(F)Lnet/minecraft/gizmos/TextGizmo$Style;
+    184: invokestatic #141.billboardText:(Ljava/lang/String;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/gizmos/TextGizmo$Style;)Lnet/minecraft/gizmos/GizmoProperties;
+    187: pop 
+    188: iload 15
+    190: bipush 15
+    192: if_icmpeq start+245
+    195: aload_0 
+    196: getfield #8.showSkyLight:Z
+    199: ifeq start+245
+    202: iload 15
+    204: i2f 
+    205: ldc #146
+    207: fdiv 
+    208: ldc #147
+    210: ldc #148
+    212: invokestatic #150.srgbLerp:(FII)I
+    215: istore 18
+    217: iload 15
+    219: invokestatic #156.valueOf:(I)Ljava/lang/String;
+    222: aload 14
+    224: ldc2_w #161
+    227: ldc2_w #163
+    230: ldc2_w #161
+    233: invokestatic #107.atLowerCornerWithOffset:(Lnet/minecraft/core/Vec3i;DDD)Lnet/minecraft/world/phys/Vec3;
+    236: iload 18
+    238: invokestatic #130.forColorAndCentered:(I)Lnet/minecraft/gizmos/TextGizmo$Style;
+    241: invokestatic #141.billboardText:(Ljava/lang/String;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/gizmos/TextGizmo$Style;)Lnet/minecraft/gizmos/GizmoProperties;
+    244: pop 
+    245: aload_0 
+    246: getfield #8.showBlockLight:Z
+    249: ifeq start+312
+    252: aload 10
+    254: getstatic #60.BLOCK:Lnet/minecraft/world/level/LightLayer;
+    257: aload 14
+    259: invokevirtual #66.getBrightness:(Lnet/minecraft/world/level/LightLayer;Lnet/minecraft/core/BlockPos;)I
+    262: istore 18
+    264: iload 18
+    266: ifeq start+312
+    269: iload 18
+    271: i2f 
+    272: ldc #146
+    274: fdiv 
+    275: ldc #172
+    277: sipush -256
+    280: invokestatic #150.srgbLerp:(FII)I
+    283: istore 19
+    285: aload 10
+    287: getstatic #60.BLOCK:Lnet/minecraft/world/level/LightLayer;
+    290: aload 14
+    292: invokevirtual #66.getBrightness:(Lnet/minecraft/world/level/LightLayer;Lnet/minecraft/core/BlockPos;)I
+    295: invokestatic #156.valueOf:(I)Ljava/lang/String;
+    298: aload 14
+    300: invokestatic #107.atCenterOf:(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+    303: iload 19
+    305: invokestatic #130.forColorAndCentered:(I)Lnet/minecraft/gizmos/TextGizmo$Style;
+    308: invokestatic #141.billboardText:(Ljava/lang/String;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/gizmos/TextGizmo$Style;)Lnet/minecraft/gizmos/GizmoProperties;
+    311: pop 
+    312: goto start+59
+    315: return 
+

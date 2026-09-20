@@ -1,0 +1,188 @@
+=== <init>(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V max_stack=2 max_locals=5 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.start:Lnet/minecraft/world/phys/Vec3;
+      9: aload_0 
+     10: aload_2 
+     11: putfield #8.end:Lnet/minecraft/world/phys/Vec3;
+     14: aload_0 
+     15: iload_3 
+     16: putfield #8.color:I
+     19: aload_0 
+     20: fload 4
+     22: putfield #8.width:F
+     25: return 
+
+=== emit(Lnet/minecraft/gizmos/GizmoPrimitives;F)V max_stack=9 max_locals=11 ===
+      0: aload_0 
+      1: getfield #8.color:I
+      4: fload_2 
+      5: invokestatic #25.multiplyAlpha:(IF)I
+      8: istore_3 
+      9: aload_1 
+     10: aload_0 
+     11: getfield #8.start:Lnet/minecraft/world/phys/Vec3;
+     14: aload_0 
+     15: getfield #8.end:Lnet/minecraft/world/phys/Vec3;
+     18: iload_3 
+     19: aload_0 
+     20: getfield #8.width:F
+     23: invokeinterface #31.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+     28: new org/joml/Quaternionf
+     31: dup 
+     32: invokespecial #36.<init>:()V
+     35: new org/joml/Vector3f
+     38: dup 
+     39: fconst_1 
+     40: fconst_0 
+     41: fconst_0 
+     42: invokespecial #39.<init>:(FFF)V
+     45: aload_0 
+     46: getfield #8.end:Lnet/minecraft/world/phys/Vec3;
+     49: aload_0 
+     50: getfield #8.start:Lnet/minecraft/world/phys/Vec3;
+     53: invokevirtual #45.subtract:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+     56: invokevirtual #45.toVector3f:()Lorg/joml/Vector3f;
+     59: invokevirtual #39.normalize:()Lorg/joml/Vector3f;
+     62: invokevirtual #36.rotationTo:(Lorg/joml/Vector3fc;Lorg/joml/Vector3fc;)Lorg/joml/Quaternionf;
+     65: astore 4
+     67: aload_0 
+     68: getfield #8.end:Lnet/minecraft/world/phys/Vec3;
+     71: aload_0 
+     72: getfield #8.start:Lnet/minecraft/world/phys/Vec3;
+     75: invokevirtual #45.distanceTo:(Lnet/minecraft/world/phys/Vec3;)D
+     78: ldc2_w #65
+     81: dmul 
+     82: ldc2_w #65
+     85: dconst_1 
+     86: invokestatic #68.clamp:(DDD)D
+     89: d2f 
+     90: fstore 5
+     92: iconst_4 
+     93: anewarray org/joml/Vector3f
+     96: dup 
+     97: iconst_0 
+     98: aload 4
+    100: fload 5
+    102: fneg 
+    103: fload 5
+    105: fconst_0 
+    106: new org/joml/Vector3f
+    109: dup 
+    110: invokespecial #39.<init>:()V
+    113: invokevirtual #36.transform:(FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f;
+    116: aastore 
+    117: dup 
+    118: iconst_1 
+    119: aload 4
+    121: fload 5
+    123: fneg 
+    124: fconst_0 
+    125: fload 5
+    127: new org/joml/Vector3f
+    130: dup 
+    131: invokespecial #39.<init>:()V
+    134: invokevirtual #36.transform:(FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f;
+    137: aastore 
+    138: dup 
+    139: iconst_2 
+    140: aload 4
+    142: fload 5
+    144: fneg 
+    145: fload 5
+    147: fneg 
+    148: fconst_0 
+    149: new org/joml/Vector3f
+    152: dup 
+    153: invokespecial #39.<init>:()V
+    156: invokevirtual #36.transform:(FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f;
+    159: aastore 
+    160: dup 
+    161: iconst_3 
+    162: aload 4
+    164: fload 5
+    166: fneg 
+    167: fconst_0 
+    168: fload 5
+    170: fneg 
+    171: new org/joml/Vector3f
+    174: dup 
+    175: invokespecial #39.<init>:()V
+    178: invokevirtual #36.transform:(FFFLorg/joml/Vector3f;)Lorg/joml/Vector3f;
+    181: aastore 
+    182: astore 6
+    184: aload 6
+    186: astore 7
+    188: aload 7
+    190: arraylength 
+    191: istore 8
+    193: iconst_0 
+    194: istore 9
+    196: iload 9
+    198: iload 8
+    200: if_icmpge start+256
+    203: aload 7
+    205: iload 9
+    207: aaload 
+    208: astore 10
+    210: aload_1 
+    211: aload_0 
+    212: getfield #8.end:Lnet/minecraft/world/phys/Vec3;
+    215: aload 10
+    217: getfield #39.x:F
+    220: f2d 
+    221: aload 10
+    223: getfield #39.y:F
+    226: f2d 
+    227: aload 10
+    229: getfield #39.z:F
+    232: f2d 
+    233: invokevirtual #45.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+    236: aload_0 
+    237: getfield #8.end:Lnet/minecraft/world/phys/Vec3;
+    240: iload_3 
+    241: aload_0 
+    242: getfield #8.width:F
+    245: invokeinterface #31.addLine:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;IF)V
+    250: iinc #2305
+    253: goto start+196
+    256: return 
+
+=== toString()Ljava/lang/String; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #91
+      6: areturn 
+
+=== hashCode()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #95
+      6: ireturn 
+
+=== equals(Ljava/lang/Object;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokedynamic #99
+      7: ireturn 
+
+=== start()Lnet/minecraft/world/phys/Vec3; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.start:Lnet/minecraft/world/phys/Vec3;
+      4: areturn 
+
+=== end()Lnet/minecraft/world/phys/Vec3; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.end:Lnet/minecraft/world/phys/Vec3;
+      4: areturn 
+
+=== color()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.color:I
+      4: ireturn 
+
+=== width()F max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.width:F
+      4: freturn 
+

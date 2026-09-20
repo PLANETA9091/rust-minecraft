@@ -1,0 +1,58 @@
+=== <init>(Lnet/minecraft/world/phys/Vec3;IF)V max_stack=2 max_locals=4 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.pos:Lnet/minecraft/world/phys/Vec3;
+      9: aload_0 
+     10: iload_2 
+     11: putfield #8.color:I
+     14: aload_0 
+     15: fload_3 
+     16: putfield #8.size:F
+     19: return 
+
+=== emit(Lnet/minecraft/gizmos/GizmoPrimitives;F)V max_stack=4 max_locals=3 ===
+      0: aload_1 
+      1: aload_0 
+      2: getfield #8.pos:Lnet/minecraft/world/phys/Vec3;
+      5: aload_0 
+      6: getfield #8.color:I
+      9: fload_2 
+     10: invokestatic #22.multiplyAlpha:(IF)I
+     13: aload_0 
+     14: getfield #8.size:F
+     17: invokeinterface #28.addPoint:(Lnet/minecraft/world/phys/Vec3;IF)V
+     22: return 
+
+=== toString()Ljava/lang/String; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #33
+      6: areturn 
+
+=== hashCode()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #37
+      6: ireturn 
+
+=== equals(Ljava/lang/Object;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokedynamic #41
+      7: ireturn 
+
+=== pos()Lnet/minecraft/world/phys/Vec3; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.pos:Lnet/minecraft/world/phys/Vec3;
+      4: areturn 
+
+=== color()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.color:I
+      4: ireturn 
+
+=== size()F max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.size:F
+      4: freturn 
+

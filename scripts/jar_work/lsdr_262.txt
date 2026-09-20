@@ -1,0 +1,255 @@
+=== <init>(Lnet/minecraft/client/Minecraft;Lnet/minecraft/world/level/LightLayer;)V max_stack=2 max_locals=3 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: invokestatic #8.now:()Ljava/time/Instant;
+      8: putfield #14.lastUpdateTime:Ljava/time/Instant;
+     11: aload_0 
+     12: aload_1 
+     13: putfield #14.minecraft:Lnet/minecraft/client/Minecraft;
+     16: aload_0 
+     17: aload_2 
+     18: putfield #14.lightLayer:Lnet/minecraft/world/level/LightLayer;
+     21: return 
+
+=== emitGizmos(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V max_stack=7 max_locals=11 ===
+      0: invokestatic #8.now:()Ljava/time/Instant;
+      3: astore 10
+      5: aload_0 
+      6: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+      9: ifnull start+30
+     12: aload_0 
+     13: getfield #14.lastUpdateTime:Ljava/time/Instant;
+     16: aload 10
+     18: invokestatic #32.between:(Ljava/time/temporal/Temporal;Ljava/time/temporal/Temporal;)Ljava/time/Duration;
+     21: getstatic #14.REFRESH_INTERVAL:Ljava/time/Duration;
+     24: invokevirtual #32.compareTo:(Ljava/time/Duration;)I
+     27: ifle start+76
+     30: aload_0 
+     31: aload 10
+     33: putfield #14.lastUpdateTime:Ljava/time/Instant;
+     36: aload_0 
+     37: new net/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData
+     40: dup 
+     41: aload_0 
+     42: getfield #14.minecraft:Lnet/minecraft/client/Minecraft;
+     45: getfield #48.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     48: invokevirtual #54.getLightEngine:()Lnet/minecraft/world/level/lighting/LevelLightEngine;
+     51: aload_0 
+     52: getfield #14.minecraft:Lnet/minecraft/client/Minecraft;
+     55: getfield #48.player:Lnet/minecraft/client/player/LocalPlayer;
+     58: invokevirtual #64.blockPosition:()Lnet/minecraft/core/BlockPos;
+     61: invokestatic #70.of:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/SectionPos;
+     64: bipush 10
+     66: aload_0 
+     67: getfield #14.lightLayer:Lnet/minecraft/world/level/LightLayer;
+     70: invokespecial #45.<init>:(Lnet/minecraft/world/level/lighting/LevelLightEngine;Lnet/minecraft/core/SectionPos;ILnet/minecraft/world/level/LightLayer;)V
+     73: putfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+     76: aload_0 
+     77: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+     80: getfield #45.lightAndBlocksShape:Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;
+     83: aload_0 
+     84: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+     87: getfield #45.minPos:Lnet/minecraft/core/SectionPos;
+     90: getstatic #14.LIGHT_AND_BLOCKS_COLOR:I
+     93: invokestatic #14.renderEdges:(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/core/SectionPos;I)V
+     96: aload_0 
+     97: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+    100: getfield #45.lightShape:Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;
+    103: aload_0 
+    104: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+    107: getfield #45.minPos:Lnet/minecraft/core/SectionPos;
+    110: getstatic #14.LIGHT_ONLY_COLOR:I
+    113: invokestatic #14.renderEdges:(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/core/SectionPos;I)V
+    116: aload_0 
+    117: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+    120: getfield #45.lightAndBlocksShape:Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;
+    123: aload_0 
+    124: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+    127: getfield #45.minPos:Lnet/minecraft/core/SectionPos;
+    130: getstatic #14.LIGHT_AND_BLOCKS_COLOR:I
+    133: invokestatic #14.renderFaces:(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/core/SectionPos;I)V
+    136: aload_0 
+    137: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+    140: getfield #45.lightShape:Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;
+    143: aload_0 
+    144: getfield #14.data:Lnet/minecraft/client/renderer/debug/LightSectionDebugRenderer$SectionData;
+    147: getfield #45.minPos:Lnet/minecraft/core/SectionPos;
+    150: getstatic #14.LIGHT_ONLY_COLOR:I
+    153: invokestatic #14.renderFaces:(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/core/SectionPos;I)V
+    156: return 
+
+=== renderFaces(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/core/SectionPos;I)V max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: aload_1 
+      2: iload_2 
+      3: invokedynamic #103
+      8: invokevirtual #108.forAllFaces:(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape$IntFaceConsumer;)V
+     11: return 
+
+=== renderEdges(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape;Lnet/minecraft/core/SectionPos;I)V max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: aload_1 
+      2: iload_2 
+      3: invokedynamic #113
+      8: iconst_1 
+      9: invokevirtual #108.forAllEdges:(Lnet/minecraft/world/phys/shapes/DiscreteVoxelShape$IntLineConsumer;Z)V
+     12: return 
+
+=== renderFace(Lnet/minecraft/core/Direction;IIII)V max_stack=8 max_locals=7 ===
+      0: new net/minecraft/world/phys/Vec3
+      3: dup 
+      4: iload_1 
+      5: invokestatic #70.sectionToBlockCoord:(I)I
+      8: i2d 
+      9: iload_2 
+     10: invokestatic #70.sectionToBlockCoord:(I)I
+     13: i2d 
+     14: iload_3 
+     15: invokestatic #70.sectionToBlockCoord:(I)I
+     18: i2d 
+     19: invokespecial #120.<init>:(DDD)V
+     22: astore 5
+     24: aload 5
+     26: ldc2_w #129
+     29: ldc2_w #129
+     32: ldc2_w #129
+     35: invokevirtual #120.add:(DDD)Lnet/minecraft/world/phys/Vec3;
+     38: astore 6
+     40: aload 5
+     42: aload 6
+     44: aload_0 
+     45: iload 4
+     47: invokestatic #136.fill:(I)Lnet/minecraft/gizmos/GizmoStyle;
+     50: invokestatic #142.rect:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/Direction;Lnet/minecraft/gizmos/GizmoStyle;)Lnet/minecraft/gizmos/GizmoProperties;
+     53: pop 
+     54: return 
+
+=== renderEdge(IIIIIII)V max_stack=9 max_locals=20 ===
+      0: iload_0 
+      1: invokestatic #70.sectionToBlockCoord:(I)I
+      4: i2d 
+      5: dstore 7
+      7: iload_1 
+      8: invokestatic #70.sectionToBlockCoord:(I)I
+     11: i2d 
+     12: dstore 9
+     14: iload_2 
+     15: invokestatic #70.sectionToBlockCoord:(I)I
+     18: i2d 
+     19: dstore 11
+     21: iload_3 
+     22: invokestatic #70.sectionToBlockCoord:(I)I
+     25: i2d 
+     26: dstore 13
+     28: iload 4
+     30: invokestatic #70.sectionToBlockCoord:(I)I
+     33: i2d 
+     34: dstore 15
+     36: iload 5
+     38: invokestatic #70.sectionToBlockCoord:(I)I
+     41: i2d 
+     42: dstore 17
+     44: iload 6
+     46: invokestatic #148.opaque:(I)I
+     49: istore 19
+     51: new net/minecraft/world/phys/Vec3
+     54: dup 
+     55: dload 7
+     57: dload 9
+     59: dload 11
+     61: invokespecial #120.<init>:(DDD)V
+     64: new net/minecraft/world/phys/Vec3
+     67: dup 
+     68: dload 13
+     70: dload 15
+     72: dload 17
+     74: invokespecial #120.<init>:(DDD)V
+     77: iload 19
+     79: invokestatic #142.line:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;I)Lnet/minecraft/gizmos/GizmoProperties;
+     82: pop 
+     83: return 
+
+=== lambda$renderEdges$0(Lnet/minecraft/core/SectionPos;IIIIIII)V max_stack=7 max_locals=14 ===
+      0: iload_2 
+      1: aload_0 
+      2: invokevirtual #70.getX:()I
+      5: iadd 
+      6: istore 8
+      8: iload_3 
+      9: aload_0 
+     10: invokevirtual #70.getY:()I
+     13: iadd 
+     14: istore 9
+     16: iload 4
+     18: aload_0 
+     19: invokevirtual #70.getZ:()I
+     22: iadd 
+     23: istore 10
+     25: iload 5
+     27: aload_0 
+     28: invokevirtual #70.getX:()I
+     31: iadd 
+     32: istore 11
+     34: iload 6
+     36: aload_0 
+     37: invokevirtual #70.getY:()I
+     40: iadd 
+     41: istore 12
+     43: iload 7
+     45: aload_0 
+     46: invokevirtual #70.getZ:()I
+     49: iadd 
+     50: istore 13
+     52: iload 8
+     54: iload 9
+     56: iload 10
+     58: iload 11
+     60: iload 12
+     62: iload 13
+     64: iload_1 
+     65: invokestatic #14.renderEdge:(IIIIIII)V
+     68: return 
+
+=== lambda$renderFaces$0(Lnet/minecraft/core/SectionPos;ILnet/minecraft/core/Direction;III)V max_stack=5 max_locals=9 ===
+      0: iload_3 
+      1: aload_0 
+      2: invokevirtual #70.getX:()I
+      5: iadd 
+      6: istore 6
+      8: iload 4
+     10: aload_0 
+     11: invokevirtual #70.getY:()I
+     14: iadd 
+     15: istore 7
+     17: iload 5
+     19: aload_0 
+     20: invokevirtual #70.getZ:()I
+     23: iadd 
+     24: istore 8
+     26: aload_2 
+     27: iload 6
+     29: iload 7
+     31: iload 8
+     33: iload_1 
+     34: invokestatic #14.renderFace:(Lnet/minecraft/core/Direction;IIII)V
+     37: return 
+
+=== <clinit>()V max_stack=4 max_locals=0 ===
+      0: ldc2_w #174
+      3: invokestatic #32.ofMillis:(J)Ljava/time/Duration;
+      6: putstatic #14.REFRESH_INTERVAL:Ljava/time/Duration;
+      9: ldc #180
+     11: fconst_1 
+     12: fconst_1 
+     13: fconst_0 
+     14: invokestatic #148.colorFromFloat:(FFFF)I
+     17: putstatic #14.LIGHT_AND_BLOCKS_COLOR:I
+     20: ldc #185
+     22: ldc #180
+     24: ldc #185
+     26: fconst_0 
+     27: invokestatic #148.colorFromFloat:(FFFF)I
+     30: putstatic #14.LIGHT_ONLY_COLOR:I
+     33: return 
+

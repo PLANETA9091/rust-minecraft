@@ -1,0 +1,555 @@
+=== <init>()V max_stack=3 max_locals=1 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: new java/util/ArrayList
+      8: dup 
+      9: invokespecial #7.<init>:()V
+     12: putfield #11.renderers:Ljava/util/List;
+     15: aload_0 
+     16: invokevirtual #11.refreshRendererList:()V
+     19: return 
+
+=== refreshRendererList()V max_stack=7 max_locals=2 ===
+      0: invokestatic #20.getInstance:()Lnet/minecraft/client/Minecraft;
+      3: astore_1 
+      4: aload_0 
+      5: getfield #11.renderers:Ljava/util/List;
+      8: invokeinterface #26.clear:()V
+     13: aload_1 
+     14: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+     17: getstatic #35.CHUNK_BORDERS:Lnet/minecraft/resources/Identifier;
+     20: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+     23: ifeq start+44
+     26: aload_0 
+     27: getfield #11.renderers:Ljava/util/List;
+     30: new net/minecraft/client/renderer/debug/ChunkBorderRenderer
+     33: dup 
+     34: aload_1 
+     35: invokespecial #46.<init>:(Lnet/minecraft/client/Minecraft;)V
+     38: invokeinterface #26.add:(Ljava/lang/Object;)Z
+     43: pop 
+     44: aload_1 
+     45: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+     48: getstatic #35.CHUNK_SECTION_OCTREE:Lnet/minecraft/resources/Identifier;
+     51: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+     54: ifeq start+75
+     57: aload_0 
+     58: getfield #11.renderers:Ljava/util/List;
+     61: new net/minecraft/client/renderer/debug/OctreeDebugRenderer
+     64: dup 
+     65: aload_1 
+     66: invokespecial #58.<init>:(Lnet/minecraft/client/Minecraft;)V
+     69: invokeinterface #26.add:(Ljava/lang/Object;)Z
+     74: pop 
+     75: getstatic #62.DEBUG_PATHFINDING:Z
+     78: ifeq start+98
+     81: aload_0 
+     82: getfield #11.renderers:Ljava/util/List;
+     85: new net/minecraft/client/renderer/debug/PathfindingRenderer
+     88: dup 
+     89: invokespecial #67.<init>:()V
+     92: invokeinterface #26.add:(Ljava/lang/Object;)Z
+     97: pop 
+     98: aload_1 
+     99: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    102: getstatic #35.VISUALIZE_WATER_LEVELS:Lnet/minecraft/resources/Identifier;
+    105: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    108: ifeq start+129
+    111: aload_0 
+    112: getfield #11.renderers:Ljava/util/List;
+    115: new net/minecraft/client/renderer/debug/WaterDebugRenderer
+    118: dup 
+    119: aload_1 
+    120: invokespecial #73.<init>:(Lnet/minecraft/client/Minecraft;)V
+    123: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    128: pop 
+    129: aload_1 
+    130: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    133: getstatic #35.VISUALIZE_HEIGHTMAP:Lnet/minecraft/resources/Identifier;
+    136: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    139: ifeq start+160
+    142: aload_0 
+    143: getfield #11.renderers:Ljava/util/List;
+    146: new net/minecraft/client/renderer/debug/HeightMapRenderer
+    149: dup 
+    150: aload_1 
+    151: invokespecial #79.<init>:(Lnet/minecraft/client/Minecraft;)V
+    154: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    159: pop 
+    160: aload_1 
+    161: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    164: getstatic #35.VISUALIZE_COLLISION_BOXES:Lnet/minecraft/resources/Identifier;
+    167: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    170: ifeq start+191
+    173: aload_0 
+    174: getfield #11.renderers:Ljava/util/List;
+    177: new net/minecraft/client/renderer/debug/CollisionBoxRenderer
+    180: dup 
+    181: aload_1 
+    182: invokespecial #85.<init>:(Lnet/minecraft/client/Minecraft;)V
+    185: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    190: pop 
+    191: aload_1 
+    192: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    195: getstatic #35.VISUALIZE_ENTITY_SUPPORTING_BLOCKS:Lnet/minecraft/resources/Identifier;
+    198: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    201: ifeq start+222
+    204: aload_0 
+    205: getfield #11.renderers:Ljava/util/List;
+    208: new net/minecraft/client/renderer/debug/SupportBlockRenderer
+    211: dup 
+    212: aload_1 
+    213: invokespecial #91.<init>:(Lnet/minecraft/client/Minecraft;)V
+    216: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    221: pop 
+    222: getstatic #62.DEBUG_NEIGHBORSUPDATE:Z
+    225: ifeq start+245
+    228: aload_0 
+    229: getfield #11.renderers:Ljava/util/List;
+    232: new net/minecraft/client/renderer/debug/NeighborsUpdateRenderer
+    235: dup 
+    236: invokespecial #97.<init>:()V
+    239: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    244: pop 
+    245: getstatic #62.DEBUG_EXPERIMENTAL_REDSTONEWIRE_UPDATE_ORDER:Z
+    248: ifeq start+268
+    251: aload_0 
+    252: getfield #11.renderers:Ljava/util/List;
+    255: new net/minecraft/client/renderer/debug/RedstoneWireOrientationsRenderer
+    258: dup 
+    259: invokespecial #103.<init>:()V
+    262: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    267: pop 
+    268: getstatic #62.DEBUG_STRUCTURES:Z
+    271: ifeq start+291
+    274: aload_0 
+    275: getfield #11.renderers:Ljava/util/List;
+    278: new net/minecraft/client/renderer/debug/StructureRenderer
+    281: dup 
+    282: invokespecial #109.<init>:()V
+    285: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    290: pop 
+    291: aload_1 
+    292: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    295: getstatic #35.VISUALIZE_BLOCK_LIGHT_LEVELS:Lnet/minecraft/resources/Identifier;
+    298: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    301: ifne start+317
+    304: aload_1 
+    305: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    308: getstatic #35.VISUALIZE_SKY_LIGHT_LEVELS:Lnet/minecraft/resources/Identifier;
+    311: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    314: ifeq start+355
+    317: aload_0 
+    318: getfield #11.renderers:Ljava/util/List;
+    321: new net/minecraft/client/renderer/debug/LightDebugRenderer
+    324: dup 
+    325: aload_1 
+    326: aload_1 
+    327: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    330: getstatic #35.VISUALIZE_BLOCK_LIGHT_LEVELS:Lnet/minecraft/resources/Identifier;
+    333: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    336: aload_1 
+    337: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    340: getstatic #35.VISUALIZE_SKY_LIGHT_LEVELS:Lnet/minecraft/resources/Identifier;
+    343: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    346: invokespecial #118.<init>:(Lnet/minecraft/client/Minecraft;ZZ)V
+    349: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    354: pop 
+    355: aload_1 
+    356: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    359: getstatic #35.VISUALIZE_SOLID_FACES:Lnet/minecraft/resources/Identifier;
+    362: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    365: ifeq start+386
+    368: aload_0 
+    369: getfield #11.renderers:Ljava/util/List;
+    372: new net/minecraft/client/renderer/debug/SolidFaceRenderer
+    375: dup 
+    376: aload_1 
+    377: invokespecial #126.<init>:(Lnet/minecraft/client/Minecraft;)V
+    380: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    385: pop 
+    386: getstatic #62.DEBUG_VILLAGE_SECTIONS:Z
+    389: ifeq start+409
+    392: aload_0 
+    393: getfield #11.renderers:Ljava/util/List;
+    396: new net/minecraft/client/renderer/debug/VillageSectionsDebugRenderer
+    399: dup 
+    400: invokespecial #132.<init>:()V
+    403: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    408: pop 
+    409: getstatic #62.DEBUG_BRAIN:Z
+    412: ifeq start+433
+    415: aload_0 
+    416: getfield #11.renderers:Ljava/util/List;
+    419: new net/minecraft/client/renderer/debug/BrainDebugRenderer
+    422: dup 
+    423: aload_1 
+    424: invokespecial #138.<init>:(Lnet/minecraft/client/Minecraft;)V
+    427: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    432: pop 
+    433: getstatic #62.DEBUG_POI:Z
+    436: ifeq start+464
+    439: aload_0 
+    440: getfield #11.renderers:Ljava/util/List;
+    443: new net/minecraft/client/renderer/debug/PoiDebugRenderer
+    446: dup 
+    447: new net/minecraft/client/renderer/debug/BrainDebugRenderer
+    450: dup 
+    451: aload_1 
+    452: invokespecial #138.<init>:(Lnet/minecraft/client/Minecraft;)V
+    455: invokespecial #144.<init>:(Lnet/minecraft/client/renderer/debug/BrainDebugRenderer;)V
+    458: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    463: pop 
+    464: getstatic #62.DEBUG_BEES:Z
+    467: ifeq start+488
+    470: aload_0 
+    471: getfield #11.renderers:Ljava/util/List;
+    474: new net/minecraft/client/renderer/debug/BeeDebugRenderer
+    477: dup 
+    478: aload_1 
+    479: invokespecial #152.<init>:(Lnet/minecraft/client/Minecraft;)V
+    482: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    487: pop 
+    488: getstatic #62.DEBUG_RAIDS:Z
+    491: ifeq start+512
+    494: aload_0 
+    495: getfield #11.renderers:Ljava/util/List;
+    498: new net/minecraft/client/renderer/debug/RaidDebugRenderer
+    501: dup 
+    502: aload_1 
+    503: invokespecial #158.<init>:(Lnet/minecraft/client/Minecraft;)V
+    506: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    511: pop 
+    512: getstatic #62.DEBUG_GOAL_SELECTOR:Z
+    515: ifeq start+536
+    518: aload_0 
+    519: getfield #11.renderers:Ljava/util/List;
+    522: new net/minecraft/client/renderer/debug/GoalSelectorDebugRenderer
+    525: dup 
+    526: aload_1 
+    527: invokespecial #164.<init>:(Lnet/minecraft/client/Minecraft;)V
+    530: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    535: pop 
+    536: aload_1 
+    537: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    540: getstatic #35.VISUALIZE_CHUNKS_ON_SERVER:Lnet/minecraft/resources/Identifier;
+    543: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    546: ifeq start+567
+    549: aload_0 
+    550: getfield #11.renderers:Ljava/util/List;
+    553: new net/minecraft/client/renderer/debug/ChunkDebugRenderer
+    556: dup 
+    557: aload_1 
+    558: invokespecial #170.<init>:(Lnet/minecraft/client/Minecraft;)V
+    561: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    566: pop 
+    567: getstatic #62.DEBUG_GAME_EVENT_LISTENERS:Z
+    570: ifeq start+590
+    573: aload_0 
+    574: getfield #11.renderers:Ljava/util/List;
+    577: new net/minecraft/client/renderer/debug/GameEventListenerRenderer
+    580: dup 
+    581: invokespecial #176.<init>:()V
+    584: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    589: pop 
+    590: aload_1 
+    591: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    594: getstatic #35.VISUALIZE_SKY_LIGHT_SECTIONS:Lnet/minecraft/resources/Identifier;
+    597: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    600: ifeq start+624
+    603: aload_0 
+    604: getfield #11.renderers:Ljava/util/List;
+    607: new net/minecraft/client/renderer/debug/LightSectionDebugRenderer
+    610: dup 
+    611: aload_1 
+    612: getstatic #185.SKY:Lnet/minecraft/world/level/LightLayer;
+    615: invokespecial #182.<init>:(Lnet/minecraft/client/Minecraft;Lnet/minecraft/world/level/LightLayer;)V
+    618: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    623: pop 
+    624: getstatic #62.DEBUG_BREEZE_MOB:Z
+    627: ifeq start+648
+    630: aload_0 
+    631: getfield #11.renderers:Ljava/util/List;
+    634: new net/minecraft/client/renderer/debug/BreezeDebugRenderer
+    637: dup 
+    638: aload_1 
+    639: invokespecial #196.<init>:(Lnet/minecraft/client/Minecraft;)V
+    642: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    647: pop 
+    648: getstatic #62.DEBUG_ENTITY_BLOCK_INTERSECTION:Z
+    651: ifeq start+671
+    654: aload_0 
+    655: getfield #11.renderers:Ljava/util/List;
+    658: new net/minecraft/client/renderer/debug/EntityBlockIntersectionDebugRenderer
+    661: dup 
+    662: invokespecial #202.<init>:()V
+    665: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    670: pop 
+    671: aload_1 
+    672: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+    675: getstatic #35.ENTITY_HITBOXES:Lnet/minecraft/resources/Identifier;
+    678: invokevirtual #41.isCurrentlyEnabled:(Lnet/minecraft/resources/Identifier;)Z
+    681: ifeq start+702
+    684: aload_0 
+    685: getfield #11.renderers:Ljava/util/List;
+    688: new net/minecraft/client/renderer/debug/EntityHitboxDebugRenderer
+    691: dup 
+    692: aload_1 
+    693: invokespecial #208.<init>:(Lnet/minecraft/client/Minecraft;)V
+    696: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    701: pop 
+    702: aload_0 
+    703: getfield #11.renderers:Ljava/util/List;
+    706: new net/minecraft/client/renderer/debug/ChunkCullingDebugRenderer
+    709: dup 
+    710: aload_1 
+    711: invokespecial #211.<init>:(Lnet/minecraft/client/Minecraft;)V
+    714: invokeinterface #26.add:(Ljava/lang/Object;)Z
+    719: pop 
+    720: return 
+
+=== emitGizmos(Lnet/minecraft/client/renderer/culling/Frustum;DDDF)V max_stack=10 max_locals=13 ===
+      0: invokestatic #20.getInstance:()Lnet/minecraft/client/Minecraft;
+      3: astore 9
+      5: aload 9
+      7: invokevirtual #20.getConnection:()Lnet/minecraft/client/multiplayer/ClientPacketListener;
+     10: invokevirtual #219.createDebugValueAccess:()Lnet/minecraft/util/debug/DebugValueAccess;
+     13: astore 10
+     15: aload 9
+     17: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+     20: invokevirtual #41.getCurrentlyEnabledVersion:()J
+     23: aload_0 
+     24: getfield #11.lastDebugEntriesVersion:J
+     27: lcmp 
+     28: ifeq start+47
+     31: aload_0 
+     32: aload 9
+     34: getfield #20.debugEntries:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryList;
+     37: invokevirtual #41.getCurrentlyEnabledVersion:()J
+     40: putfield #11.lastDebugEntriesVersion:J
+     43: aload_0 
+     44: invokevirtual #11.refreshRendererList:()V
+     47: aload_0 
+     48: getfield #11.renderers:Ljava/util/List;
+     51: invokeinterface #26.iterator:()Ljava/util/Iterator;
+     56: astore 11
+     58: aload 11
+     60: invokeinterface #237.hasNext:()Z
+     65: ifeq start+100
+     68: aload 11
+     70: invokeinterface #237.next:()Ljava/lang/Object;
+     75: checkcast net/minecraft/client/renderer/debug/DebugRenderer$SimpleDebugRenderer
+     78: astore 12
+     80: aload 12
+     82: dload_2 
+     83: dload 4
+     85: dload 6
+     87: aload 10
+     89: aload_1 
+     90: fload 8
+     92: invokeinterface #246.emitGizmos:(DDDLnet/minecraft/util/debug/DebugValueAccess;Lnet/minecraft/client/renderer/culling/Frustum;F)V
+     97: goto start+58
+    100: return 
+
+=== getTargetedEntity(Lnet/minecraft/world/entity/Entity;I)Ljava/util/Optional; max_stack=7 max_locals=8 ===
+      0: aload_0 
+      1: ifnonnull start+8
+      4: invokestatic #253.empty:()Ljava/util/Optional;
+      7: areturn 
+      8: aload_0 
+      9: invokevirtual #259.getEyePosition:()Lnet/minecraft/world/phys/Vec3;
+     12: astore_2 
+     13: aload_0 
+     14: fconst_1 
+     15: invokevirtual #259.getViewVector:(F)Lnet/minecraft/world/phys/Vec3;
+     18: iload_1 
+     19: i2d 
+     20: invokevirtual #269.scale:(D)Lnet/minecraft/world/phys/Vec3;
+     23: astore_3 
+     24: aload_2 
+     25: aload_3 
+     26: invokevirtual #269.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+     29: astore 4
+     31: aload_0 
+     32: invokevirtual #259.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+     35: aload_3 
+     36: invokevirtual #282.expandTowards:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/AABB;
+     39: dconst_1 
+     40: invokevirtual #282.inflate:(D)Lnet/minecraft/world/phys/AABB;
+     43: astore 5
+     45: iload_1 
+     46: iload_1 
+     47: imul 
+     48: istore 6
+     50: aload_0 
+     51: aload_2 
+     52: aload 4
+     54: aload 5
+     56: getstatic #292.CAN_BE_PICKED:Ljava/util/function/Predicate;
+     59: iload 6
+     61: i2d 
+     62: invokestatic #298.getEntityHitResult:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;D)Lnet/minecraft/world/phys/EntityHitResult;
+     65: astore 7
+     67: aload 7
+     69: ifnonnull start+76
+     72: invokestatic #253.empty:()Ljava/util/Optional;
+     75: areturn 
+     76: aload_2 
+     77: aload 7
+     79: invokevirtual #304.getLocation:()Lnet/minecraft/world/phys/Vec3;
+     82: invokevirtual #269.distanceToSqr:(Lnet/minecraft/world/phys/Vec3;)D
+     85: iload 6
+     87: i2d 
+     88: dcmpl 
+     89: ifle start+96
+     92: invokestatic #253.empty:()Ljava/util/Optional;
+     95: areturn 
+     96: aload 7
+     98: invokevirtual #304.getEntity:()Lnet/minecraft/world/entity/Entity;
+    101: invokestatic #253.of:(Ljava/lang/Object;)Ljava/util/Optional;
+    104: areturn 
+
+=== mixColor(F)Lnet/minecraft/world/phys/Vec3; max_stack=10 max_locals=4 ===
+      0: ldc_w #322
+      3: fstore_1 
+      4: fload_0 
+      5: fconst_0 
+      6: fconst_1 
+      7: invokestatic #320.clamp:(FFF)F
+     10: ldc_w #322
+     13: fmul 
+     14: f2i 
+     15: istore_2 
+     16: fload_0 
+     17: ldc_w #322
+     20: fmul 
+     21: iload_2 
+     22: i2f 
+     23: fsub 
+     24: fstore_3 
+     25: iload_2 
+     26: tableswitch default=start+154 0->start+64 1->start+78 2->start+94 3->start+108 4->start+124 5->start+138
+     64: new net/minecraft/world/phys/Vec3
+     67: dup 
+     68: dconst_1 
+     69: fload_3 
+     70: f2d 
+     71: dconst_0 
+     72: invokespecial #269.<init>:(DDD)V
+     75: goto start+168
+     78: new net/minecraft/world/phys/Vec3
+     81: dup 
+     82: fconst_1 
+     83: fload_3 
+     84: fsub 
+     85: f2d 
+     86: dconst_1 
+     87: dconst_0 
+     88: invokespecial #269.<init>:(DDD)V
+     91: goto start+168
+     94: new net/minecraft/world/phys/Vec3
+     97: dup 
+     98: dconst_0 
+     99: dconst_1 
+    100: fload_3 
+    101: f2d 
+    102: invokespecial #269.<init>:(DDD)V
+    105: goto start+168
+    108: new net/minecraft/world/phys/Vec3
+    111: dup 
+    112: dconst_0 
+    113: dconst_1 
+    114: fload_3 
+    115: f2d 
+    116: dsub 
+    117: dconst_1 
+    118: invokespecial #269.<init>:(DDD)V
+    121: goto start+168
+    124: new net/minecraft/world/phys/Vec3
+    127: dup 
+    128: fload_3 
+    129: f2d 
+    130: dconst_0 
+    131: dconst_1 
+    132: invokespecial #269.<init>:(DDD)V
+    135: goto start+168
+    138: new net/minecraft/world/phys/Vec3
+    141: dup 
+    142: dconst_1 
+    143: dconst_0 
+    144: dconst_1 
+    145: fload_3 
+    146: f2d 
+    147: dsub 
+    148: invokespecial #269.<init>:(DDD)V
+    151: goto start+168
+    154: new java/lang/IllegalStateException
+    157: dup 
+    158: iload_2 
+    159: invokedynamic #332
+    164: invokespecial #330.<init>:(Ljava/lang/String;)V
+    167: athrow 
+    168: areturn 
+
+=== shiftHue(FFFF)Lnet/minecraft/world/phys/Vec3; max_stack=10 max_locals=10 ===
+      0: fload_3 
+      1: invokestatic #11.mixColor:(F)Lnet/minecraft/world/phys/Vec3;
+      4: fload_0 
+      5: f2d 
+      6: invokevirtual #269.scale:(D)Lnet/minecraft/world/phys/Vec3;
+      9: astore 4
+     11: fload_3 
+     12: ldc_w #342
+     15: fadd 
+     16: fconst_1 
+     17: frem 
+     18: invokestatic #11.mixColor:(F)Lnet/minecraft/world/phys/Vec3;
+     21: fload_1 
+     22: f2d 
+     23: invokevirtual #269.scale:(D)Lnet/minecraft/world/phys/Vec3;
+     26: astore 5
+     28: fload_3 
+     29: ldc_w #343
+     32: fadd 
+     33: fconst_1 
+     34: frem 
+     35: invokestatic #11.mixColor:(F)Lnet/minecraft/world/phys/Vec3;
+     38: fload_2 
+     39: f2d 
+     40: invokevirtual #269.scale:(D)Lnet/minecraft/world/phys/Vec3;
+     43: astore 6
+     45: aload 4
+     47: aload 5
+     49: invokevirtual #269.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+     52: aload 6
+     54: invokevirtual #269.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+     57: astore 7
+     59: dconst_1 
+     60: aload 7
+     62: getfield #269.x:D
+     65: invokestatic #349.max:(DD)D
+     68: aload 7
+     70: getfield #269.y:D
+     73: aload 7
+     75: getfield #269.z:D
+     78: invokestatic #349.max:(DD)D
+     81: invokestatic #349.max:(DD)D
+     84: dstore 8
+     86: new net/minecraft/world/phys/Vec3
+     89: dup 
+     90: aload 7
+     92: getfield #269.x:D
+     95: dload 8
+     97: ddiv 
+     98: aload 7
+    100: getfield #269.y:D
+    103: dload 8
+    105: ddiv 
+    106: aload 7
+    108: getfield #269.z:D
+    111: dload 8
+    113: ddiv 
+    114: invokespecial #269.<init>:(DDD)V
+    117: areturn 
+

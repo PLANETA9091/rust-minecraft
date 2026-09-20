@@ -1032,6 +1032,257 @@ pub(crate) fn chunk_border_lines(
     out
 }
 
+/// THE ENTITY HITBOX'S OWN SHAPE (javap 26.2
+/// `EntityHitboxDebugRenderer.showHitboxes`' own inputs — the ONE
+/// entity the walk wears: the tick pose `position()` reads, the
+/// rendered pose `getPosition(partial)` lerps, the bb dimensions
+/// `getBoundingBox` carries, the LIVING arms the `instanceof
+/// LivingEntity` gate alone reaches — the eye strip and the look
+/// arrow the living bodies wear, the boxes/points the plain
+/// entities speak).
+pub(crate) struct HitboxEntityShape {
+    /// THE TICK POSE (javap `Entity.position()` — the bb's own base
+    /// the interpolation delta moves FROM).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// THE RENDERED POSE (javap `Entity.getPosition(partial)` — the
+    /// render lerp's own feet the gizmos ride).
+    pub rendered_x: f64,
+    pub rendered_y: f64,
+    pub rendered_z: f64,
+    pub width: f64,
+    pub height: f64,
+    pub eye_height: f64,
+    /// THE LIVING ARMS' OWN GATE (the `instanceof LivingEntity`
+    /// verdict — the eye strip + the look arrow the mobs wear, the
+    /// hulls/drops/orbs/arrows the plain-entity lanes keep).
+    pub living: bool,
+    /// THE VIEW VECTOR (javap `Entity.getViewVector(partial)` — the
+    /// rotation the look arrow's direction reads; the client's mobs
+    /// the yaw's own body rotation carries, the body pitch the
+    /// walking AI never sets — the zero the honest absence keeps).
+    pub view: [f32; 3],
+}
+
+/// THE HITBOX GIZMOS' OWN CONSTANTS (javap 26.2 the showHitboxes
+/// walk's own ARGB pool: the stroke the `iconst_m1` white keeps, the
+/// eye strip the `ldc #142` RED wears, the look arrow the `ldc_w
+/// #296` BLUE speaks, the vehicle strip the `sipush -256` YELLOW
+/// rides — the server-ghost GREEN `#192` the
+/// DEBUG_SHOW_LOCAL_SERVER flag's own prod-silent lane keeps).
+const HITBOX_WHITE: i32 = -1;
+const HITBOX_EYE_RED: i32 = -65536; // 0xFFFF0000
+const HITBOX_LOOK_BLUE: i32 = -16776961; // 0xFF0000FF
+
+/// THE ARGB WORD'S OWN DECODE (the color int the gizmo styles wear
+/// — the alpha the high byte keeps, the rgb the three lows speak —
+/// the colorFromFloat convention the chunk borders' own constants
+/// wear).
+fn hitbox_argb(c: i32) -> ([f32; 3], f32) {
+    (
+        [
+            ((c >> 16) & 0xFF) as f32 / 255.0,
+            ((c >> 8) & 0xFF) as f32 / 255.0,
+            (c & 0xFF) as f32 / 255.0,
+        ],
+        ((c >> 24) & 0xFF) as f32 / 255.0,
+    )
+}
+
+/// THE ENTITY HITBOXES' OWN GIZMOS (javap 26.2
+/// `EntityHitboxDebugRenderer.showHitboxes(Entity, partial, server)`
+/// — the audited walk the F3+B entry serves; the `serverSide` arm
+/// the DEBUG_SHOW_LOCAL_SERVER flag's own prod-silent lane keeps —
+/// the GREEN ghost box and the billboard text the flag alone
+/// speaks): the WHITE stroke cuboid the interpolation delta
+/// `getPosition(partial) − position()` moves onto the rendered pose
+/// (`bb.move(delta)` + `GizmoStyle.stroke(-1)` the 12-edge wire),
+/// the WHITE point gizmo the lerped position wears
+/// (`point(lerped, -1, 2.0F)`), the LIVING arms the instanceof gate
+/// reaches: the RED eye strip the flat box the eye level ±0.01
+/// wears (`ldc2_w #258` the half-thickness pool keeps) and the BLUE
+/// look arrow the eye's own view vector speaks (the shaft + the
+/// four head lines the shortest-arc rotation from +X builds —
+/// `headLen = clamp(dist * 0.1, 0.1, 1.0)` the audited clamp
+/// keeps). THE VEHICLE ARM the walk's own gates never reach: the
+/// strip the PASSENGER's showHitboxes draws (the camera entity the
+/// first-person verdict skips — the client's only camera type), the
+/// mobs the vehicleless AI keeps — the lane the honest absence
+/// documents. THE FRUSTUM/INVISIBLE gates the client's own entity
+/// pass never arms (the bodies the frame always draws — the
+/// constant-pass the honest absence keeps).
+pub(crate) fn hitbox_gizmos(
+    e: &HitboxEntityShape,
+) -> (
+    Vec<crate::raster::DebugLine>,
+    Vec<crate::raster::DebugPoint>,
+) {
+    // THE INTERPOLATION DELTA (pcs 13-20 — `getPosition(partial) −
+    // position()` the gizmo's own pose offset speaks)
+    let dx = e.rendered_x - e.x;
+    let dy = e.rendered_y - e.y;
+    let dz = e.rendered_z - e.z;
+    let (white, alpha_white) = hitbox_argb(HITBOX_WHITE);
+    let (red, alpha_red) = hitbox_argb(HITBOX_EYE_RED);
+    let (blue, alpha_blue) = hitbox_argb(HITBOX_LOOK_BLUE);
+    let mut lines = Vec::new();
+    let mut points = Vec::new();
+    let box_edges = |min: [f64; 3], max: [f64; 3], rgb: [f32; 3], alpha: f32, out: &mut Vec<crate::raster::DebugLine>| {
+        let corners = [
+            Vec3::new(min[0] as f32, min[1] as f32, min[2] as f32),
+            Vec3::new(max[0] as f32, min[1] as f32, min[2] as f32),
+            Vec3::new(max[0] as f32, min[1] as f32, max[2] as f32),
+            Vec3::new(min[0] as f32, min[1] as f32, max[2] as f32),
+            Vec3::new(min[0] as f32, max[1] as f32, min[2] as f32),
+            Vec3::new(max[0] as f32, max[1] as f32, min[2] as f32),
+            Vec3::new(max[0] as f32, max[1] as f32, max[2] as f32),
+            Vec3::new(min[0] as f32, max[1] as f32, max[2] as f32),
+        ];
+        const CUBOID_EDGES: [(usize, usize); 12] = [
+            (0, 1),
+            (1, 2),
+            (2, 3),
+            (3, 0),
+            (4, 5),
+            (5, 6),
+            (6, 7),
+            (7, 4),
+            (0, 4),
+            (1, 5),
+            (2, 6),
+            (3, 7),
+        ];
+        for (a, b) in CUBOID_EDGES {
+            out.push(crate::raster::DebugLine {
+                a: corners[a],
+                b: corners[b],
+                rgb,
+                alpha,
+                always_on_top: false,
+            });
+        }
+    };
+    // THE WHITE CUBOID (pcs 34-51 — the bb the delta moves, the
+    // stroke(-1) style the 12-edge wire wears)
+    let hw = e.width / 2.0;
+    box_edges(
+        [e.x - hw + dx, e.y + dy, e.z - hw + dz],
+        [e.x + hw + dx, e.y + e.height + dy, e.z + hw + dz],
+        white,
+        alpha_white,
+        &mut lines,
+    );
+    // THE WHITE POINT (pcs 52-60 — the lerped position the dot wears)
+    points.push(crate::raster::DebugPoint {
+        pos: Vec3::new(e.rendered_x as f32, e.rendered_y as f32, e.rendered_z as f32),
+        rgb: white,
+        alpha: alpha_white,
+    });
+    if e.living {
+        // THE RED EYE STRIP (pcs 172-259 — the moved bb's own
+        // extents the eye level ±0.01 wears)
+        let min_y = e.y + dy;
+        let eye = min_y + e.eye_height;
+        const EYE_EPS: f64 = 0.01;
+        box_edges(
+            [e.x - hw + dx, eye - EYE_EPS, e.z - hw + dz],
+            [e.x + hw + dx, eye + EYE_EPS, e.z + hw + dz],
+            red,
+            alpha_red,
+            &mut lines,
+        );
+        // THE BLUE LOOK ARROW (pcs 358-400 — the eye's own view
+        // vector the shaft speaks, the four head lines the
+        // shortest-arc basis builds)
+        let dir = {
+            let v = [e.view[0] as f64, e.view[1] as f64, e.view[2] as f64];
+            let len = (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]).sqrt();
+            if len > 1e-9 {
+                [v[0] / len, v[1] / len, v[2] / len]
+            } else {
+                [0.0f64, 0.0, 0.0]
+            }
+        };
+        let start = [e.rendered_x, e.rendered_y + e.eye_height, e.rendered_z];
+        let arrow_len = 2.0f64;
+        let end = [
+            start[0] + dir[0] * arrow_len,
+            start[1] + dir[1] * arrow_len,
+            start[2] + dir[2] * arrow_len,
+        ];
+        let push_line = |out: &mut Vec<crate::raster::DebugLine>,
+                         a: [f64; 3],
+                         b: [f64; 3],
+                         rgb: [f32; 3],
+                         alpha: f32| {
+            out.push(crate::raster::DebugLine {
+                a: Vec3::new(a[0] as f32, a[1] as f32, a[2] as f32),
+                b: Vec3::new(b[0] as f32, b[1] as f32, b[2] as f32),
+                rgb,
+                alpha,
+                always_on_top: false,
+            });
+        };
+        push_line(&mut lines, start, end, blue, alpha_blue);
+        // THE HEAD'S OWN BASIS (the ArrowGizmo.emit walk — the
+        // rotationTo((1,0,0), dir) the four offsets ride:
+        // headLen = clamp(dist * 0.1, 0.1, 1.0) the audited clamp
+        // keeps, the offsets (−h, ±h, 0) and (−h, 0, ±h) the basis
+        // transforms speak)
+        let head_len = (arrow_len * 0.1).clamp(0.1, 1.0);
+        // THE SHORTEST-ARC QUATERNION (axis = x̂ × dir, w = 1 + x̂·dir
+        // — normalized; the antiparallel degenerate the orthogonal
+        // axis pick wears — the |axis| ≈ 0 lane the exact −X dirs
+        // alone reach)
+        let dot = dir[0]; // x̂·dir
+        let (qx, qy, qz, qw) = if dot > 1.0 - 1e-6 {
+            (0.0f64, 0.0, 0.0, 1.0) // the identity the +X dir wears
+        } else if dot < -1.0 + 1e-6 {
+            (0.0f64, 1.0, 0.0, 0.0) // the 180° yaw the −X dir wears
+        } else {
+            // axis = x̂ × dir = (0, −dir_z, dir_y) — the cross the
+            // unit x̂ speaks
+            let (ax, ay, az) = (0.0f64, -dir[2], dir[1]);
+            let len = (ax * ax + ay * ay + az * az).sqrt();
+            let (ax, ay, az) = (ax / len, ay / len, az / len);
+            let w = 1.0 + dot;
+            let len_q = (ax * ax + ay * ay + az * az + w * w).sqrt();
+            (ax / len_q, ay / len_q, az / len_q, w / len_q)
+        };
+        let rotate = |q: (f64, f64, f64, f64), v: [f64; 3]| -> [f64; 3] {
+            let (qx, qy, qz, qw) = q;
+            // t = 2·(q.xyz × v); v' = v + w·t + q.xyz × t
+            let tx = 2.0 * (qy * v[2] - qz * v[1]);
+            let ty = 2.0 * (qz * v[0] - qx * v[2]);
+            let tz = 2.0 * (qx * v[1] - qy * v[0]);
+            [
+                v[0] + qw * tx + (qy * tz - qz * ty),
+                v[1] + qw * ty + (qz * tx - qx * tz),
+                v[2] + qw * tz + (qx * ty - qy * tx),
+            ]
+        };
+        let up = rotate((qx, qy, qz, qw), [0.0, 1.0, 0.0]);
+        let fwd = rotate((qx, qy, qz, qw), [0.0, 0.0, 1.0]);
+        let head = |a: f64, b: f64| -> [f64; 3] {
+            [
+                end[0] - head_len * dir[0] + a * up[0] + b * fwd[0],
+                end[1] - head_len * dir[1] + a * up[1] + b * fwd[1],
+                end[2] - head_len * dir[2] + a * up[2] + b * fwd[2],
+            ]
+        };
+        for (a, b) in [
+            (head_len, 0.0f64),
+            (0.0, head_len),
+            (-head_len, 0.0),
+            (0.0, -head_len),
+        ] {
+            push_line(&mut lines, end, head(a, b), blue, alpha_blue);
+        }
+    }
+    (lines, points)
+}
+
 /// THE BOTTOM BLOCK'S OWN KEYBIND WORD (javap DebugScreenOverlay
 /// .formatKeybind's own pair — the modifier's isUnbound lane the
 /// empty-string slot keeps (`ldc ""` the ifeq branch banks), the
@@ -6140,6 +6391,17 @@ pub struct App {
     /// toggle's own persistence). False = the silent world the
     /// fresh client keeps.
     pub chunk_borders: bool,
+    /// THE ENTITY HITBOXES' OWN ENTRY (26.2's debug-entry system —
+    /// the `DebugScreenEntryList.isCurrentlyEnabled(entity_hitboxes)`
+    /// gate the audited `refreshRendererList` tail keeps (pcs 671-701
+    /// — the EntityHitboxDebugRenderer the enabled entry alone
+    /// joins), the F3+B chord's own toggle the
+    /// `keyDebugShowHitboxes` lane flips
+    /// (`toggleStatus(ENTITY_HITBOXES)`): the boxes the world draw
+    /// keeps INDEPENDENT of the F3 overlay's own visibility — the
+    /// vanilla entry toggle's own persistence). False = the silent
+    /// world the fresh client keeps.
+    pub hitboxes: bool,
     /// THE CLIENT'S OWN BELIEVED GAME MODE (the 26.2
     /// MultiPlayerGameMode.getPlayerMode's client-side belief — the
     /// survival default the vanilla world creation keeps, the F4
@@ -6632,6 +6894,7 @@ impl App {
             fps_charts: false,
             network_charts: false,
             chunk_borders: false,
+            hitboxes: false,
             game_mode: GameMode::Survival,
             previous_game_mode: None,
             abilities_word: None,
@@ -15683,6 +15946,21 @@ impl App {
         self.debug_modifier_used = true;
     }
 
+    /// THE ENTITY HITBOXES' OWN TOGGLE (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's `keyDebugShowHitboxes` lane
+    /// — the `toggleStatus(ENTITY_HITBOXES)` verdict the
+    /// debugFeedbackTranslated feedback rides: the F3+B chord flips
+    /// the entry, the reduced-debug-info gate the client's own
+    /// vocabulary never arms (the honest constant-pass the
+    /// `isReducedDebugInfo` walk keeps — no reduced-info lane the
+    /// client speaks)). The modifier-spent flag the bare F3 release
+    /// gate reads rides — the chord the F3 modifier's own family
+    /// joins.
+    pub fn on_hitboxes_key(&mut self) {
+        self.hitboxes = !self.hitboxes;
+        self.debug_modifier_used = true;
+    }
+
     /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2
     /// KeyboardHandler.handleDebugKeys's keyDebugSwitchGameMode walk —
     /// the `matches` arm the level/screen/canSwitchGameMode chain
@@ -20160,6 +20438,25 @@ impl App {
             );
             fb.draw_chunk_borders(&ctx, &lines);
         }
+        // THE F3+B ENTITY HITBOXES (javap 26.2 the DebugRenderer list's
+        // ENTITY_HITBOXES arm — the EntityHitboxDebugRenderer.emitGizmos
+        // walk the enabled entry serves: the entitiesForRendering walk
+        // the client's own entity set answers, the invisible/frustum
+        // gates the client's own vocabulary never arms, the CAMERA
+        // ENTITY the first-person verdict skips, the showHitboxes walk
+        // each body wears — the white stroke cuboid the interpolation
+        // delta moves onto the rendered pose, the white point gizmo the
+        // lerped position wears, the LIVING arms the red eye strip + the
+        // blue look arrow speak). The draw rides AFTER the chunk borders
+        // (the renderer list's own order the refreshRendererList walk
+        // banks — the hitbox arm the list's tail keeps) and BEFORE the
+        // dig lane's wireframe (the debug gizmos the level render's own
+        // tail keeps).
+        if self.hitboxes {
+            let (hb_lines, hb_points) = self.entity_hitbox_gizmos();
+            fb.draw_debug_lines(&ctx, &hb_lines);
+            fb.draw_debug_points(&ctx, &hb_points);
+        }
         // THE DIG LANE's frame render (the vanilla LevelRenderer's own
         // pair, both after the terrain and before the hand): the hit
         // outline (the black wireframe on the crosshair's block — every
@@ -20860,6 +21157,163 @@ impl App {
             let [r, g, b, a] = pixel(u, v);
             Some([r, g, b, a])
         });
+    }
+
+    /// THE ENTITY HITBOXES' OWN WALK (javap 26.2
+    /// `EntityHitboxDebugRenderer.emitGizmos` — the
+    /// `entitiesForRendering` iterable the client's own entity set
+    /// answers: the MOBS the AI lanes keep (offline + wire, the
+    /// `box_for` dims + the kind's own eye height the living arms
+    /// wear), the HULLS the boat lane spawns (offline + wire — the
+    /// wire lane's lerp the `net_boat_lerp` fold anchors, the
+    /// offline world the pose verbatim keeps), the DROPS the item
+    /// entities speak (the `lerped_pos` law the render's own fold
+    /// wears, the 0.25x0.25 vanilla ItemEntity dims), the ORBS the
+    /// award lane keeps (the 0.5x0.5 vanilla ExperienceOrb dims),
+    /// the ARROWS the bow lane fires (the inline lerp the render's
+    /// own fold wears, the 0.5x0.5 vanilla AbstractArrow dims). The
+    /// CAMERA ENTITY the first-person verdict skips (the getCamera
+    /// Entity acmp + the FIRST_PERSON gate — the client's only
+    /// camera type the walk always answers), the frustum/invisible
+    /// gates the client's own entity pass never arms, the
+    /// `getGameTimeDeltaPartialTick` the render's own partial speaks.
+    fn entity_hitbox_gizmos(
+        &self,
+    ) -> (
+        Vec<crate::raster::DebugLine>,
+        Vec<crate::raster::DebugPoint>,
+    ) {
+        let partial = self.partial_tick;
+        let mut lines = Vec::new();
+        let mut points = Vec::new();
+        // THE MOBS (the living bodies — the eye strip + the look
+        // arrow the kind's own eye height wears; the view vector the
+        // body yaw's rotation speaks, the body pitch the walking AI
+        // never sets — the zero the honest absence keeps)
+        for mob in self.mobs.iter().chain(self.net_mobs.iter()) {
+            let (min_x, min_y, _, max_x, max_y, _) = mob.box_for();
+            let (rx, ry, rz) = mob.lerped_pos(partial);
+            let yaw = mob.yaw.to_radians();
+            let shape = HitboxEntityShape {
+                x: mob.x,
+                y: mob.y,
+                z: mob.z,
+                rendered_x: rx,
+                rendered_y: ry,
+                rendered_z: rz,
+                width: max_x - min_x,
+                height: max_y - min_y,
+                eye_height: mob.kind.eye_height(),
+                living: true,
+                view: [-(yaw.sin()) as f32, 0.0, yaw.cos() as f32],
+            };
+            let (l, p) = hitbox_gizmos(&shape);
+            lines.extend(l);
+            points.extend(p);
+        }
+        // THE HULLS (the plain entities — the box + the point the
+        // non-living lanes keep; the wire lane's lerp the render's
+        // own submit pose fold mirrors)
+        for boat in self.net_boats.iter().chain(self.offline_boats.iter()) {
+            let (rx, ry, rz) = if self.world_is_network {
+                match self.net_boat_lerp.get(&boat.id) {
+                    Some(l) => {
+                        let t = partial as f64;
+                        (
+                            l.prev.0 + (boat.x - l.prev.0) * t,
+                            l.prev.1 + (boat.y - l.prev.1) * t,
+                            l.prev.2 + (boat.z - l.prev.2) * t,
+                        )
+                    }
+                    None => (boat.x, boat.y, boat.z),
+                }
+            } else {
+                (boat.x, boat.y, boat.z)
+            };
+            let shape = HitboxEntityShape {
+                x: boat.x,
+                y: boat.y,
+                z: boat.z,
+                rendered_x: rx,
+                rendered_y: ry,
+                rendered_z: rz,
+                width: crate::world_view::BOAT_DIMENSIONS_WIDTH as f64,
+                height: crate::world_view::BOAT_DIMENSIONS_HEIGHT as f64,
+                eye_height: 0.0,
+                living: false,
+                view: [0.0, 0.0, 0.0],
+            };
+            let (l, p) = hitbox_gizmos(&shape);
+            lines.extend(l);
+            points.extend(p);
+        }
+        // THE DROPS (the 0.25x0.25 vanilla ItemEntity dims — the
+        // lerped_pos law the render's own fold wears)
+        for d in &self.drops {
+            let (rx, ry, rz) = d.lerped_pos(partial);
+            let shape = HitboxEntityShape {
+                x: d.x,
+                y: d.y,
+                z: d.z,
+                rendered_x: rx,
+                rendered_y: ry,
+                rendered_z: rz,
+                width: crate::drops::ITEM_WIDTH,
+                height: crate::drops::ITEM_HEIGHT,
+                eye_height: 0.0,
+                living: false,
+                view: [0.0, 0.0, 0.0],
+            };
+            let (l, p) = hitbox_gizmos(&shape);
+            lines.extend(l);
+            points.extend(p);
+        }
+        // THE ORBS (the 0.5x0.5 vanilla ExperienceOrb dims — the
+        // lerped_pos law the prev's None arm keeps)
+        for o in &self.orbs {
+            let (rx, ry, rz) = o.lerped_pos(partial);
+            let shape = HitboxEntityShape {
+                x: o.x,
+                y: o.y,
+                z: o.z,
+                rendered_x: rx,
+                rendered_y: ry,
+                rendered_z: rz,
+                width: 0.5,
+                height: 0.5,
+                eye_height: 0.0,
+                living: false,
+                view: [0.0, 0.0, 0.0],
+            };
+            let (l, p) = hitbox_gizmos(&shape);
+            lines.extend(l);
+            points.extend(p);
+        }
+        // THE ARROWS (the 0.5x0.5 vanilla AbstractArrow dims — the
+        // inline lerp the render's own fold wears)
+        for a in &self.arrows {
+            let t = partial as f64;
+            let rx = a.prev_x + (a.x - a.prev_x) * t;
+            let ry = a.prev_y + (a.y - a.prev_y) * t;
+            let rz = a.prev_z + (a.z - a.prev_z) * t;
+            let shape = HitboxEntityShape {
+                x: a.x,
+                y: a.y,
+                z: a.z,
+                rendered_x: rx,
+                rendered_y: ry,
+                rendered_z: rz,
+                width: 0.5,
+                height: 0.5,
+                eye_height: 0.0,
+                living: false,
+                view: [0.0, 0.0, 0.0],
+            };
+            let (l, p) = hitbox_gizmos(&shape);
+            lines.extend(l);
+            points.extend(p);
+        }
+        (lines, points)
     }
 
     fn render_mobs(
@@ -27303,6 +27757,204 @@ mod tests {
         assert!(
             !app.abilities_mayfly() && !app.abilities_instabuild(),
             "the folds the revoked bits answer"
+        );
+    }
+
+    /// THE ENTITY HITBOXES' OWN GIZMOS (javap 26.2 the
+    /// `EntityHitboxDebugRenderer.showHitboxes` walk the F3+B entry
+    /// serves): the white stroke cuboid the interpolation delta
+    /// moves onto the rendered pose, the white point the lerped
+    /// position wears, the LIVING arms the red eye strip + the blue
+    /// look arrow speak (the shaft + the four head lines the
+    /// shortest-arc basis builds), the NON-living body the
+    /// plain-entity lanes keep (the box + the point alone), and the
+    /// exact antiparallel the degenerate basis lane wears (no panic,
+    /// the shaft the −X speaks).
+    #[test]
+    fn the_hitbox_gizmos_the_audited_walk_speaks() {
+        // THE LIVING BODY (the zombie's own dims, the stable tick the
+        // zero delta wears, the yaw 0 the +Z view speaks)
+        let shape = HitboxEntityShape {
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            rendered_x: 10.0,
+            rendered_y: 64.0,
+            rendered_z: 12.0,
+            width: 0.6,
+            height: 1.95,
+            eye_height: 1.74,
+            living: true,
+            view: [0.0, 0.0, 1.0],
+        };
+        let (lines, points) = hitbox_gizmos(&shape);
+        assert_eq!(lines.len(), 29, "the box 12 + the strip 12 + the arrow 5");
+        assert_eq!(points.len(), 1, "the one point the lerped pos wears");
+        // THE WHITE BOX (the 12 edges the bb's own corners speak — the
+        // bottom edge the (0,1) pair wears)
+        let edge = lines
+            .iter()
+            .find(|l| {
+                (l.a.x - 9.7).abs() < 1e-4
+                    && (l.a.y - 64.0).abs() < 1e-4
+                    && (l.a.z - 11.7).abs() < 1e-4
+                    && (l.b.x - 10.3).abs() < 1e-4
+                    && (l.b.z - 11.7).abs() < 1e-4
+            })
+            .expect("the bottom edge the white box wears");
+        assert!(
+            edge.rgb[0] > 0.99 && edge.rgb[1] > 0.99 && edge.rgb[2] > 0.99,
+            "the white stroke the box wears"
+        );
+        assert!(!edge.always_on_top, "the depth-tested lane the style keeps");
+        // THE RED EYE STRIP (the eye level ±0.01 the flat box wears)
+        let strip = lines
+            .iter()
+            .find(|l| (l.a.y - (64.0 + 1.74 - 0.01)).abs() < 1e-4)
+            .expect("the strip's bottom the eye level wears");
+        assert!(
+            strip.rgb[0] > 0.99 && strip.rgb[1] < 0.01 && strip.rgb[2] < 0.01,
+            "the red stroke the strip wears"
+        );
+        // THE BLUE ARROW (the shaft the +Z view speaks — the eye's own
+        // level the 2.0 reach rides)
+        let shaft = lines
+            .iter()
+            .find(|l| {
+                (l.a.x - 10.0).abs() < 1e-4
+                    && (l.a.y - 65.74).abs() < 1e-4
+                    && (l.a.z - 12.0).abs() < 1e-4
+                    && (l.b.x - 10.0).abs() < 1e-4
+                    && (l.b.z - 14.0).abs() < 1e-4
+            })
+            .expect("the shaft the +Z view wears");
+        assert!(
+            shaft.rgb[2] > 0.99 && shaft.rgb[0] < 0.01 && shaft.rgb[1] < 0.01,
+            "the blue stroke the arrow wears"
+        );
+        // THE HEAD LINES (the four the shortest-arc basis builds — the
+        // yaw-only basis the sideways head wears)
+        assert!(
+            lines.iter().any(|l| {
+                (l.b.x - 9.8).abs() < 1e-4
+                    && (l.b.y - 65.74).abs() < 1e-4
+                    && (l.b.z - 13.8).abs() < 1e-4
+            }),
+            "the sideways head the basis speaks"
+        );
+        // THE POINT (the white dot the rendered pos wears)
+        assert!(
+            (points[0].pos.x - 10.0).abs() < 1e-4
+                && (points[0].pos.y - 64.0).abs() < 1e-4
+                && (points[0].pos.z - 12.0).abs() < 1e-4,
+            "the lerped position the point wears"
+        );
+        // THE NON-LIVING BODY (the box + the point alone — the strip
+        // and the arrow the instanceof gate never reaches)
+        let plain = HitboxEntityShape {
+            x: 10.0,
+            y: 64.0,
+            z: 12.0,
+            rendered_x: 10.0,
+            rendered_y: 64.0,
+            rendered_z: 12.0,
+            width: 1.375,
+            height: 0.562,
+            eye_height: 0.0,
+            living: false,
+            view: [0.0, 0.0, 0.0],
+        };
+        let (plain_lines, plain_points) = hitbox_gizmos(&plain);
+        assert_eq!(plain_lines.len(), 12, "the box alone the hull wears");
+        assert_eq!(plain_points.len(), 1, "the point the hull keeps");
+        // THE DELTA (the rendered pose the box moves onto — the
+        // interpolation the +0.5 walk speaks)
+        let moved = HitboxEntityShape {
+            rendered_x: 10.5,
+            ..shape
+        };
+        let (moved_lines, _) = hitbox_gizmos(&moved);
+        assert!(
+            moved_lines.iter().any(|l| {
+                (l.a.x - (10.0 - 0.3 + 0.5)).abs() < 1e-4
+                    && (l.a.y - 64.0).abs() < 1e-4
+            }),
+            "the interpolation delta the box moves"
+        );
+        // THE ANTIPARALLEL (the exact −X dir the degenerate basis lane
+        // wears — no panic, the shaft the −X speaks)
+        let anti = HitboxEntityShape {
+            view: [-1.0, 0.0, 0.0],
+            ..shape
+        };
+        let (anti_lines, _) = hitbox_gizmos(&anti);
+        assert!(
+            anti_lines.iter().any(|l| {
+                (l.b.x - 8.0).abs() < 1e-4
+                    && (l.b.y - 65.74).abs() < 1e-4
+                    && (l.b.z - 12.0).abs() < 1e-4
+            }),
+            "the −X shaft the degenerate lane speaks"
+        );
+    }
+
+    /// THE F3+B CHORD'S OWN WALK (the real App's entity set the
+    /// `entitiesForRendering` lane serves): the entry flip the toggle
+    /// speaks, the MOB the full living walk wears (the box + the
+    /// strip + the arrow + the point), the DROP the plain-entity
+    /// lanes keep (the box + the point), and the CAMERA ENTITY the
+    /// first-person skip keeps silent (the body's own box the walk
+    /// never draws).
+    #[test]
+    fn the_f3_b_chord_the_entity_set_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE TOGGLE (the entry flip the F3+B lane speaks — the
+        // modifier-spent flag the bare F3 release gate reads)
+        assert!(!app.hitboxes, "the fresh client the entry keeps silent");
+        app.on_hitboxes_key();
+        assert!(app.hitboxes, "the chord the entry enables");
+        assert!(app.debug_modifier_used, "the modifier the chord spends");
+        // the body's own pose (the camera entity the first-person
+        // verdict skips)
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        // THE MOB (the zombie 2 blocks east the walk serves — the
+        // stable tick the zero delta wears)
+        app.mobs.push(crate::mob::Zombie::new(7, bx + 2.0, by, bz, 3));
+        // THE DROP (the item entity the plain lanes keep — the spawn
+        // point the None prev wears)
+        let mut rng = crate::drops::Lcg::new(11);
+        app.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+            9, 62, 1, bx + 4.0, by, bz, &mut rng,
+        ));
+        let (lines, points) = app.entity_hitbox_gizmos();
+        assert_eq!(points.len(), 2, "the mob + the drop the points wear");
+        assert_eq!(
+            lines.len(),
+            29 + 12,
+            "the living walk + the plain walk the lines wear"
+        );
+        // THE MOB'S OWN BOX (the white edges the mob's bb corners
+        // speak)
+        let mob_x = (bx + 2.0) as f32;
+        assert!(
+            lines.iter().any(|l| {
+                (l.a.x - (mob_x - 0.3)).abs() < 1e-6 && (l.a.y - by as f32).abs() < 1e-6
+            }),
+            "the mob's box the walk serves"
+        );
+        // THE CAMERA ENTITY'S OWN SILENCE (the body's pose no line
+        // touches — the first-person skip the walk always answers)
+        assert!(
+            !lines.iter().any(|l| {
+                (l.a.x - (bx as f32 - 0.3)).abs() < 1e-6
+                    && (l.a.y - by as f32).abs() < 1e-6
+            }),
+            "the camera entity the skip keeps silent"
         );
     }
 

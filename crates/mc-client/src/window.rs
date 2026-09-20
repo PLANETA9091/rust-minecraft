@@ -1400,6 +1400,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if f3_down && window.is_key_pressed(Key::G, minifb::KeyRepeat::No) {
                 app.on_chunk_borders_key();
             }
+            // THE F3+B ENTITY HITBOXES (the handleDebugKeys'
+            // keyDebugShowHitboxes lane — the toggleStatus(
+            // ENTITY_HITBOXES) verdict the refreshRendererList tail
+            // serves, the boxes the world draw persists the same
+            // entry persistence the borders keep)
+            if f3_down && window.is_key_pressed(Key::B, minifb::KeyRepeat::No) {
+                app.on_hitboxes_key();
+            }
             // THE F3+F4 CHORD (the handleDebugKeys' keyDebugSwitchGameMode
             // lane — the `matches` arm the level/screen/canSwitchGameMode
             // chain guards opens the GameModeSwitcherScreen, the default

@@ -1,0 +1,371 @@
+=== <init>(Ljava/io/File;Lcom/mojang/datafixers/DataFixer;)V max_stack=5 max_locals=3 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: new java/util/HashMap
+      8: dup 
+      9: invokespecial #7.<init>:()V
+     12: putfield #11.allStatuses:Ljava/util/Map;
+     15: aload_0 
+     16: new java/util/ArrayList
+     19: dup 
+     20: invokespecial #16.<init>:()V
+     23: putfield #11.currentlyEnabled:Ljava/util/List;
+     26: aload_0 
+     27: iconst_0 
+     28: putfield #11.isOverlayVisible:Z
+     31: aload_0 
+     32: new java/io/File
+     35: dup 
+     36: aload_1 
+     37: ldc #29
+     39: invokespecial #27.<init>:(Ljava/io/File;Ljava/lang/String;)V
+     42: putfield #11.debugProfileFile:Ljava/io/File;
+     45: aload_0 
+     46: getstatic #39.DEBUG_PROFILE:Lnet/minecraft/util/datafix/DataFixTypes;
+     49: getstatic #45.CODEC:Lcom/mojang/serialization/Codec;
+     52: aload_2 
+     53: sipush 4649
+     56: invokevirtual #39.wrapCodec:(Lcom/mojang/serialization/Codec;Lcom/mojang/datafixers/DataFixer;I)Lcom/mojang/serialization/Codec;
+     59: putfield #11.codec:Lcom/mojang/serialization/Codec;
+     62: aload_0 
+     63: invokevirtual #11.load:()V
+     66: return 
+
+=== load()V max_stack=5 max_locals=3 ===
+      0: aload_0 
+      1: getfield #11.debugProfileFile:Ljava/io/File;
+      4: invokevirtual #27.isFile:()Z
+      7: ifne start+22
+     10: aload_0 
+     11: getstatic #65.DEFAULT:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+     14: invokevirtual #11.resetToProfile:(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+     17: aload_0 
+     18: invokevirtual #11.rebuildCurrentList:()V
+     21: return 
+     22: new com/mojang/serialization/Dynamic
+     25: dup 
+     26: getstatic #80.INSTANCE:Lcom/mojang/serialization/JsonOps;
+     29: aload_0 
+     30: getfield #11.debugProfileFile:Ljava/io/File;
+     33: getstatic #86.UTF_8:Ljava/nio/charset/Charset;
+     36: invokestatic #92.readFileToString:(Ljava/io/File;Ljava/nio/charset/Charset;)Ljava/lang/String;
+     39: invokestatic #98.parse:(Ljava/lang/String;)Lcom/google/gson/JsonElement;
+     42: invokespecial #77.<init>:(Lcom/mojang/serialization/DynamicOps;Ljava/lang/Object;)V
+     45: astore_1 
+     46: aload_0 
+     47: getfield #11.codec:Lcom/mojang/serialization/Codec;
+     50: aload_1 
+     51: invokeinterface #107.parse:(Lcom/mojang/serialization/Dynamic;)Lcom/mojang/serialization/DataResult;
+     56: invokedynamic #111
+     61: invokeinterface #116.getOrThrow:(Ljava/util/function/Function;)Ljava/lang/Object;
+     66: checkcast net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions
+     69: astore_2 
+     70: aload_2 
+     71: invokevirtual #45.profile:()Ljava/util/Optional;
+     74: invokevirtual #126.isPresent:()Z
+     77: ifeq start+97
+     80: aload_0 
+     81: aload_2 
+     82: invokevirtual #45.profile:()Ljava/util/Optional;
+     85: invokevirtual #126.get:()Ljava/lang/Object;
+     88: checkcast net/minecraft/client/gui/components/debug/DebugScreenProfile
+     91: invokevirtual #11.resetToProfile:(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+     94: goto start+119
+     97: aload_0 
+     98: aload_2 
+     99: invokevirtual #45.custom:()Ljava/util/Optional;
+    102: invokestatic #138.of:()Ljava/util/Map;
+    105: invokevirtual #126.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+    108: checkcast java/util/Map
+    111: invokevirtual #11.resetStatuses:(Ljava/util/Map;)V
+    114: aload_0 
+    115: aconst_null 
+    116: putfield #11.profile:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    119: goto start+149
+    122: astore_1 
+    123: getstatic #11.LOGGER:Lorg/slf4j/Logger;
+    126: ldc #161
+    128: aload_0 
+    129: getfield #11.debugProfileFile:Ljava/io/File;
+    132: aload_1 
+    133: invokeinterface #164.error:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+    138: aload_0 
+    139: getstatic #65.DEFAULT:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+    142: invokevirtual #11.resetToProfile:(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+    145: aload_0 
+    146: invokevirtual #11.save:()V
+    149: aload_0 
+    150: invokevirtual #11.rebuildCurrentList:()V
+    153: return 
+
+=== resetStatuses(Ljava/util/Map;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: getfield #11.allStatuses:Ljava/util/Map;
+      4: invokeinterface #138.clear:()V
+      9: aload_0 
+     10: getfield #11.allStatuses:Ljava/util/Map;
+     13: aload_1 
+     14: invokeinterface #138.putAll:(Ljava/util/Map;)V
+     19: return 
+
+=== resetToProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: putfield #11.profile:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+      5: aload_0 
+      6: getstatic #179.PROFILES:Ljava/util/Map;
+      9: aload_1 
+     10: invokeinterface #138.get:(Ljava/lang/Object;)Ljava/lang/Object;
+     15: checkcast java/util/Map
+     18: invokevirtual #11.resetStatuses:(Ljava/util/Map;)V
+     21: return 
+
+=== loadProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #11.resetToProfile:(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)V
+      5: aload_0 
+      6: invokevirtual #11.rebuildCurrentList:()V
+      9: return 
+
+=== getStatus(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus; max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: getfield #11.allStatuses:Ljava/util/Map;
+      4: aload_1 
+      5: getstatic #186.NEVER:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+      8: invokeinterface #138.getOrDefault:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     13: checkcast net/minecraft/client/gui/components/debug/DebugScreenEntryStatus
+     16: areturn 
+
+=== isCurrentlyEnabled(Lnet/minecraft/resources/Identifier;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: getfield #11.currentlyEnabled:Ljava/util/List;
+      4: aload_1 
+      5: invokeinterface #196.contains:(Ljava/lang/Object;)Z
+     10: ireturn 
+
+=== setStatus(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: aconst_null 
+      2: putfield #11.profile:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+      5: aload_0 
+      6: getfield #11.allStatuses:Ljava/util/Map;
+      9: aload_1 
+     10: aload_2 
+     11: invokeinterface #138.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+     16: pop 
+     17: aload_0 
+     18: invokevirtual #11.rebuildCurrentList:()V
+     21: aload_0 
+     22: invokevirtual #11.save:()V
+     25: return 
+
+=== toggleStatus(Lnet/minecraft/resources/Identifier;)Z max_stack=3 max_locals=5 ===
+      0: aload_0 
+      1: getfield #11.allStatuses:Ljava/util/Map;
+      4: aload_1 
+      5: invokeinterface #138.get:(Ljava/lang/Object;)Ljava/lang/Object;
+     10: checkcast net/minecraft/client/gui/components/debug/DebugScreenEntryStatus
+     13: astore_2 
+     14: aload_2 
+     15: astore_3 
+     16: iconst_0 
+     17: istore 4
+     19: aload_3 
+     20: iload 4
+     22: invokedynamic #204
+     27: tableswitch default=start+121 -1->start+121 0->start+56 1->start+66 2->start+93
+     56: aload_0 
+     57: aload_1 
+     58: getstatic #186.NEVER:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+     61: invokevirtual #11.setStatus:(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+     64: iconst_0 
+     65: ireturn 
+     66: aload_0 
+     67: getfield #11.isOverlayVisible:Z
+     70: ifeq start+83
+     73: aload_0 
+     74: aload_1 
+     75: getstatic #186.NEVER:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+     78: invokevirtual #11.setStatus:(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+     81: iconst_0 
+     82: ireturn 
+     83: aload_0 
+     84: aload_1 
+     85: getstatic #186.ALWAYS_ON:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+     88: invokevirtual #11.setStatus:(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+     91: iconst_1 
+     92: ireturn 
+     93: aload_0 
+     94: getfield #11.isOverlayVisible:Z
+     97: ifeq start+111
+    100: aload_0 
+    101: aload_1 
+    102: getstatic #186.IN_OVERLAY:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    105: invokevirtual #11.setStatus:(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    108: goto start+119
+    111: aload_0 
+    112: aload_1 
+    113: getstatic #186.ALWAYS_ON:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    116: invokevirtual #11.setStatus:(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    119: iconst_1 
+    120: ireturn 
+    121: aload_0 
+    122: aload_1 
+    123: getstatic #186.ALWAYS_ON:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+    126: invokevirtual #11.setStatus:(Lnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V
+    129: iconst_1 
+    130: ireturn 
+
+=== getCurrentlyEnabled()Ljava/util/Collection; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #11.currentlyEnabled:Ljava/util/List;
+      4: invokestatic #196.copyOf:(Ljava/util/Collection;)Ljava/util/List;
+      7: areturn 
+
+=== toggleDebugOverlay()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: aload_0 
+      2: getfield #11.isOverlayVisible:Z
+      5: ifne start+12
+      8: iconst_1 
+      9: goto start+13
+     12: iconst_0 
+     13: invokevirtual #11.setOverlayVisible:(Z)V
+     16: return 
+
+=== setOverlayVisible(Z)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: getfield #11.isOverlayVisible:Z
+      4: iload_1 
+      5: if_icmpeq start+17
+      8: aload_0 
+      9: iload_1 
+     10: putfield #11.isOverlayVisible:Z
+     13: aload_0 
+     14: invokevirtual #11.rebuildCurrentList:()V
+     17: return 
+
+=== isOverlayVisible()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #11.isOverlayVisible:Z
+      4: ireturn 
+
+=== rebuildCurrentList()V max_stack=5 max_locals=2 ===
+      0: aload_0 
+      1: getfield #11.currentlyEnabled:Ljava/util/List;
+      4: invokeinterface #196.clear:()V
+      9: invokestatic #228.getInstance:()Lnet/minecraft/client/Minecraft;
+     12: invokevirtual #228.showOnlyReducedInfo:()Z
+     15: istore_1 
+     16: aload_0 
+     17: getfield #11.allStatuses:Ljava/util/Map;
+     20: aload_0 
+     21: iload_1 
+     22: invokedynamic #236
+     27: invokeinterface #138.forEach:(Ljava/util/function/BiConsumer;)V
+     32: aload_0 
+     33: getfield #11.currentlyEnabled:Ljava/util/List;
+     36: invokestatic #245.naturalOrder:()Ljava/util/Comparator;
+     39: invokeinterface #196.sort:(Ljava/util/Comparator;)V
+     44: aload_0 
+     45: dup 
+     46: getfield #11.currentlyEnabledVersion:J
+     49: lconst_1 
+     50: ladd 
+     51: putfield #11.currentlyEnabledVersion:J
+     54: return 
+
+=== getCurrentlyEnabledVersion()J max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: getfield #11.currentlyEnabledVersion:J
+      4: lreturn 
+
+=== isUsingProfile(Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: getfield #11.profile:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+      4: aload_1 
+      5: if_acmpne start+12
+      8: iconst_1 
+      9: goto start+13
+     12: iconst_0 
+     13: ireturn 
+
+=== save()V max_stack=4 max_locals=3 ===
+      0: new net/minecraft/client/gui/components/debug/DebugScreenEntryList$SerializedOptions
+      3: dup 
+      4: aload_0 
+      5: getfield #11.profile:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+      8: invokestatic #126.ofNullable:(Ljava/lang/Object;)Ljava/util/Optional;
+     11: aload_0 
+     12: getfield #11.profile:Lnet/minecraft/client/gui/components/debug/DebugScreenProfile;
+     15: ifnonnull start+28
+     18: aload_0 
+     19: getfield #11.allStatuses:Ljava/util/Map;
+     22: invokestatic #126.of:(Ljava/lang/Object;)Ljava/util/Optional;
+     25: goto start+31
+     28: invokestatic #126.empty:()Ljava/util/Optional;
+     31: invokespecial #45.<init>:(Ljava/util/Optional;Ljava/util/Optional;)V
+     34: astore_1 
+     35: aload_0 
+     36: getfield #11.debugProfileFile:Ljava/io/File;
+     39: aload_0 
+     40: getfield #11.codec:Lcom/mojang/serialization/Codec;
+     43: getstatic #80.INSTANCE:Lcom/mojang/serialization/JsonOps;
+     46: aload_1 
+     47: invokeinterface #107.encodeStart:(Lcom/mojang/serialization/DynamicOps;Ljava/lang/Object;)Lcom/mojang/serialization/DataResult;
+     52: invokeinterface #116.getOrThrow:()Ljava/lang/Object;
+     57: checkcast com/google/gson/JsonElement
+     60: invokevirtual #276.toString:()Ljava/lang/String;
+     63: getstatic #86.UTF_8:Ljava/nio/charset/Charset;
+     66: invokestatic #92.writeStringToFile:(Ljava/io/File;Ljava/lang/String;Ljava/nio/charset/Charset;)V
+     69: goto start+89
+     72: astore_2 
+     73: getstatic #11.LOGGER:Lorg/slf4j/Logger;
+     76: ldc_w #286
+     79: aload_0 
+     80: getfield #11.debugProfileFile:Ljava/io/File;
+     83: aload_2 
+     84: invokeinterface #164.error:(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V
+     89: return 
+
+=== lambda$rebuildCurrentList$0(ZLnet/minecraft/resources/Identifier;Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;)V max_stack=2 max_locals=5 ===
+      0: aload_3 
+      1: getstatic #186.ALWAYS_ON:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+      4: if_acmpeq start+21
+      7: aload_0 
+      8: getfield #11.isOverlayVisible:Z
+     11: ifeq start+54
+     14: aload_3 
+     15: getstatic #186.IN_OVERLAY:Lnet/minecraft/client/gui/components/debug/DebugScreenEntryStatus;
+     18: if_acmpne start+54
+     21: aload_2 
+     22: invokestatic #179.getEntry:(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/gui/components/debug/DebugScreenEntry;
+     25: astore 4
+     27: aload 4
+     29: ifnull start+54
+     32: aload 4
+     34: iload_1 
+     35: invokeinterface #293.isAllowed:(Z)Z
+     40: ifeq start+54
+     43: aload_0 
+     44: getfield #11.currentlyEnabled:Ljava/util/List;
+     47: aload_2 
+     48: invokeinterface #196.add:(Ljava/lang/Object;)Z
+     53: pop 
+     54: return 
+
+=== lambda$load$0(Ljava/lang/String;)Ljava/io/IOException; max_stack=3 max_locals=1 ===
+      0: new java/io/IOException
+      3: dup 
+      4: aload_0 
+      5: invokedynamic #301
+     10: invokespecial #153.<init>:(Ljava/lang/String;)V
+     13: areturn 
+
+=== <clinit>()V max_stack=1 max_locals=0 ===
+      0: invokestatic #309.getLogger:()Lorg/slf4j/Logger;
+      3: putstatic #11.LOGGER:Lorg/slf4j/Logger;
+      6: return 
+
