@@ -6156,6 +6156,24 @@ pub struct App {
     /// feel speaks). `None` until an actual change lands (the
     /// same-mode arm the switchToHoveredGameMode walk keeps silent).
     pub previous_game_mode: Option<GameMode>,
+    /// THE ABILITIES OBJECT'S OWN BANK (the vanilla client's ONE
+    /// `Abilities` instance the whole walk family reads —
+    /// `LocalPlayer.aiStep`'s mayfly gate, `MultiPlayerGameMode`'s
+    /// instabuild lanes, `LivingEntity.hurtServer`'s invulnerable
+    /// head): the server's own word the wire world banks (the
+    /// handlePlayerAbilities walk the echo installer wears), the
+    /// game-mode echo's re-grant the same bank re-writes (the
+    /// audited `GameType.updatePlayerAbilities` walk — the local
+    /// prediction the server's own echo confirms). `None` the two
+    /// honest silences keep: the OFFLINE world (the client IS the
+    /// authority — the mode folds stand in, the
+    /// `GameMode.instabuild`/mayfly walks the updatePlayerAbilities
+    /// arms mirror) and the WIRE world's pre-echo window (the join
+    /// snapshot's own silence — the login word the login phase's
+    /// own lane banks, the folds the wait keeps). The consumers the
+    /// accessors serve: `abilities_mayfly` the fly gate's own
+    /// source, `abilities_instabuild` the dig family's three lanes.
+    pub abilities_word: Option<mc_protocol::play::PlayerAbilitiesWord>,
     /// THE SWITCHER'S OWN HOVERED SLOT (the currentlyHovered bank —
     /// the ICON_ORDER index the cycle press advances and the mouse
     /// hover steals; 0 the closed-state default keeps).
@@ -6616,6 +6634,7 @@ impl App {
             chunk_borders: false,
             game_mode: GameMode::Survival,
             previous_game_mode: None,
+            abilities_word: None,
             gm_hovered: 0,
             gm_first_mouse: None,
             ping_samples: Vec::new(),
@@ -6913,6 +6932,10 @@ impl App {
                             height: b.height(),
             });
             let day_time = (self.day_time_base + self.frame) as i64;
+            // THE MAYFLY READ HOISTED (the accessor's whole-self borrow
+            // the field-split body args cannot ride — the vanilla's own
+            // single `abilities` read the tick's head speaks once)
+            let mayfly = self.abilities_mayfly();
             // the disjoint field borrows: the body mutates while the
             // level reads (the borrow checker splits the fields)
             if let Some(b) = self.body.as_mut() {
@@ -6923,7 +6946,10 @@ impl App {
                 };
                 // THE FLY TRIGGER (the audited 26.2 abilities walk —
                 // the law's own doc the lanes wear): the mayfly the
-                // gamemode bank answers, the spectator sync the force
+                // ABILITIES BANK answers (the vanilla aiStep's own
+                // `abilities.mayfly` read — the server's word the
+                // wire world speaks, the mode folds the absent bank
+                // stands in), the spectator sync the force
                 // lane speaks, the double-tap space the window arms
                 // and toggles, the toggle-on the ground hop rides —
                 // the walk the ride branches reach TOO (the vanilla
@@ -6940,7 +6966,7 @@ impl App {
                     &mut self.fly_trigger_time,
                     &mut self.last_jump_key,
                     b.jumping,
-                    matches!(self.game_mode, GameMode::Creative | GameMode::Spectator),
+                    mayfly,
                     self.game_mode == GameMode::Spectator,
                     self.net_ride.is_some() || self.offline_ride.is_some(),
                 );
@@ -7587,9 +7613,10 @@ impl App {
                             // THE GAMEMODE DISPATCH's own folds (the
                             // audited instabuild grant + the restricted
                             // head — the LIVE reads the vanilla
-                            // abilities walk speaks each call, the F4
-                            // flick the bank feeds instantly)
-                            let instabuild = self.game_mode.instabuild();
+                            // abilities walk speaks each call, the
+                            // ABILITIES BANK the instabuild bit owns,
+                            // the F4 flick the bank feeds instantly)
+                            let instabuild = self.abilities_instabuild();
                             let restricted = self.game_mode.is_block_placing_restricted();
                             // the direct field split (the method's own
                             // &mut self borrow would live too long)
@@ -8768,8 +8795,9 @@ impl App {
                 let (on_ground, eye_water) = self.body_state();
                 // THE GAMEMODE DISPATCH's own folds (the audited
                 // instabuild grant + the restricted head — the press
-                // the startDestroyBlock's own walk speaks first)
-                let instabuild = self.game_mode.instabuild();
+                // the startDestroyBlock's own walk speaks first, the
+                // ABILITIES BANK the instabuild bit owns)
+                let instabuild = self.abilities_instabuild();
                 let restricted = self.game_mode.is_block_placing_restricted();
                 // the disjoint field split: the world option and the dig
                 // state borrow separately (the checker's own verdict)
@@ -17303,6 +17331,58 @@ impl App {
             }
             b.invulnerable = mode.invulnerable();
         }
+        // THE BANK'S OWN RE-GRANT (the vanilla ONE Abilities object
+        // the same `updatePlayerAbilities` walk writes — the Body's
+        // putfields the physics fields mirror, the banked word the
+        // grant bits re-pin: the flying fold the same three arms
+        // speak, the mayfly/instabuild/invulnerable trio the arms'
+        // own grants bank — the CONSUMERS the accessors serve the
+        // re-granted bits read the next tick, the server's own echo
+        // the whole word re-pins when it lands). The absent bank the
+        // silence keeps (the pre-echo window the folds stand in —
+        // nothing the re-grant banks).
+        if let Some(w) = self.abilities_word.as_mut() {
+            match mode {
+                GameMode::Spectator => w.flying = true,
+                GameMode::Creative => {}
+                _ => w.flying = false,
+            }
+            w.mayfly = matches!(mode, GameMode::Creative | GameMode::Spectator);
+            w.instabuild = mode == GameMode::Creative;
+            w.invulnerable = mode.invulnerable();
+        }
+    }
+
+    /// THE MAYFLY GATE'S OWN SOURCE (the vanilla
+    /// `LocalPlayer.aiStep`'s audited read — `abilities.mayfly` the
+    /// ONE `Abilities` object answers, the gamemode fold the BANKED
+    /// word replaces): the wire world's banked word the `mayfly`
+    /// bit speaks verbatim (the server's own grant — a survival
+    /// player the server's mayfly word arms, a creative player the
+    /// revoked word refuses), the absent bank the mode folds stand
+    /// in (the offline world's authority, the pre-echo window's
+    /// wait — the `updatePlayerAbilities` CREATIVE/SPECTATOR arms
+    /// the same grant the fold mirrors).
+    pub fn abilities_mayfly(&self) -> bool {
+        match &self.abilities_word {
+            Some(w) => w.mayfly,
+            None => matches!(self.game_mode, GameMode::Creative | GameMode::Spectator),
+        }
+    }
+
+    /// THE INSTABUILD LANES' OWN SOURCE (the vanilla dig family's
+    /// audited reads — `MultiPlayerGameMode.destroyBlock`'s
+    /// `abilities.instabuild` the instant carve answers,
+    /// `ServerPlayerGameMode.destroyBlock`'s own split the drops
+    /// lane wears): the wire world's banked word the `instabuild`
+    /// bit speaks verbatim, the absent bank the mode fold stands in
+    /// (the `GameMode.instabuild` walk — the CREATIVE arm the
+    /// updatePlayerAbilities mirror).
+    pub fn abilities_instabuild(&self) -> bool {
+        match &self.abilities_word {
+            Some(w) => w.instabuild,
+            None => self.game_mode.instabuild(),
+        }
     }
 
     /// THE ABILITIES ECHO'S OWN BANK (javap 26.2
@@ -17315,12 +17395,13 @@ impl App {
     /// `invulnerable` and `flyingSpeed` putfields the Body-owned
     /// trio completes (the wheel's adjusted speed the server's word
     /// re-pins, the hurt pipeline's head the re-granted flag
-    /// answers). The mayfly/instabuild/walking-speed words the
-    /// model's own bank keeps verbatim (the read ctor's four-bit +
-    /// two-float shape the parse never drops) — the consumers' own
-    /// lanes the mode folds stand in for today (the fly gate's
-    /// gamemode fold, the dig lane's instabuild fold), the
-    /// honest-source upgrade the next rounds name. The putfield
+    /// answers). THE WHOLE WORD THE BANK KEEPS (the vanilla ONE
+    /// `Abilities` object the putfields write — the mayfly and
+    /// instabuild and walking-speed bits the Body never owns the
+    /// bank preserves verbatim, the CONSUMERS the accessors serve:
+    /// the fly gate's `abilities_mayfly` the gamemode fold
+    /// replaces, the dig family's `abilities_instabuild` the three
+    /// lanes read). The putfield
     /// ORDER the handler's own walk banks (flying, instabuild,
     /// invulnerable, mayfly, flyingSpeed, walkingSpeed — the read
     /// the installer's own order follows where the Body owns the
@@ -17336,6 +17417,10 @@ impl App {
             return;
         }
         let Some(w) = word else { return };
+        // THE BANK (the Abilities object's own state — the whole
+        // word the read ctor's shape carries, the consumers'
+        // accessors the bit walks read)
+        self.abilities_word = Some(w.clone());
         if let Some(b) = self.body.as_mut() {
             b.flying = w.flying;
             b.invulnerable = w.invulnerable;
@@ -18098,8 +18183,9 @@ impl App {
         // THE CREATIVE ARM (the vanilla ServerPlayerGameMode.destroyBlock's
         // own split): the instabuild mode removes the block WITHOUT the
         // dropResources walk — no item entities, no mine exhaustion (the
-        // food the mode never spends)
-        if self.game_mode.instabuild() {
+        // food the mode never spends) — the ABILITIES BANK the bit owns
+        // (the offline lane the fold stands in — no server speaks)
+        if self.abilities_instabuild() {
             return;
         }
         // THE MINE'S OWN COST (javap Block.playerDestroy: the
@@ -26784,6 +26870,334 @@ mod tests {
         app.live_abilities_updated(Some(ground));
         let b = app.body.as_ref().expect("the body rides");
         assert!(!b.flying && !b.invulnerable, "the re-bank the state keeps");
+    }
+
+    /// THE ABILITIES BANK'S OWN CONSUMERS (the vanilla ONE
+    /// `Abilities` object the walk family reads — the mayfly gate
+    /// `LocalPlayer.aiStep`'s own read, the instabuild lanes the dig
+    /// family's own): the ABSENT bank the mode folds stand in (the
+    /// offline world's authority, the pre-echo window's wait), the
+    /// BANKED word the folds replace both directions — a survival
+    /// player the server's grant arms, a creative player the
+    /// revoked word refuses (the server's own belief the client's
+    /// consumers truly mirror).
+    #[test]
+    fn the_abilities_bank_the_consumers_read() {
+        // THE ABSENT BANK (the offline world the folds answer — the
+        // fresh app's survival default the zero walk mirrors)
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(app.abilities_word.is_none(), "the fresh bank sleeps");
+        assert!(
+            !app.abilities_mayfly(),
+            "the survival fold the mayfly refuses"
+        );
+        assert!(
+            !app.abilities_instabuild(),
+            "the survival fold the instabuild refuses"
+        );
+        // the creative mode the folds grant (the offline world the
+        // client's own authority speaks)
+        app.game_mode = GameMode::Creative;
+        assert!(
+            app.abilities_mayfly(),
+            "the creative fold the mayfly grants"
+        );
+        assert!(
+            app.abilities_instabuild(),
+            "the creative fold the instabuild grants"
+        );
+        // THE WIRE WORLD'S PRE-ECHO WINDOW (the join snapshot's own
+        // silence — the folds the wait keeps)
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.game_mode = GameMode::Survival;
+        assert!(app.abilities_word.is_none(), "the pre-echo bank sleeps");
+        assert!(
+            !app.abilities_mayfly() && !app.abilities_instabuild(),
+            "the folds the pre-echo window answers"
+        );
+        // THE BANKED WORD (the server's own grant — a SURVIVAL player
+        // the mayfly/instabuild word arms: the vanilla server's
+        // plugin-driven grant the honest wire belief banks)
+        let granted = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: true,
+            instabuild: true,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(granted));
+        assert!(
+            app.abilities_mayfly(),
+            "the survival player the server's mayfly word arms"
+        );
+        assert!(
+            app.abilities_instabuild(),
+            "the survival player the server's instabuild word arms"
+        );
+        // THE REVOKED WORD (the CREATIVE player the server's own word
+        // refuses — the local fold never overrides the wire belief)
+        app.game_mode = GameMode::Creative;
+        let revoked = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: false,
+            instabuild: false,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(revoked));
+        assert!(
+            !app.abilities_mayfly(),
+            "the creative player the revoked word refuses"
+        );
+        assert!(
+            !app.abilities_instabuild(),
+            "the creative player the revoked word refuses"
+        );
+    }
+
+    /// THE FLY GATE'S OWN BANKED WORD (the vanilla aiStep's
+    /// `abilities.mayfly` read the call site wears): the wire
+    /// world's SURVIVAL mode the server's mayfly word arms — the
+    /// real double-tap the flight toggles and the abilities wire
+    /// speaks (the changed tick's own packet the loc6 flag earns),
+    /// the PRE-ECHO window the same survival double-tap refuses (the
+    /// fold the absent bank keeps — the two arms the one gate
+    /// speaks).
+    #[test]
+    fn the_fly_gate_the_banked_word_arms() {
+        // THE PRE-ECHO REFUSAL (the survival mode the fold answers —
+        // no bank, no flight)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        assert!(app.game_mode == GameMode::Survival, "the survival default");
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update(); // THE ARM (the window would bank — the gate refuses first)
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        app.update(); // the release
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update(); // THE WOULD-BE TOGGLE (the gate the fold refuses)
+        assert!(
+            !app.body.as_ref().expect("the body rides").flying,
+            "the pre-echo survival the fold refuses"
+        );
+        // THE BANKED WORD (the server's mayfly grant — the SAME
+        // survival double-tap the flight toggles, the wire the
+        // changed tick speaks)
+        let word = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: true,
+            instabuild: false,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(word));
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        app.update(); // the settle (the stable tick the wire keeps silent)
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update(); // THE ARM
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        app.update(); // the release
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update(); // THE TOGGLE — the banked mayfly the flight arms
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the banked word the double-tap arms"
+        );
+        let mut abilities_seen = false;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::PlayerAbilities { flying } = cmd {
+                assert!(flying, "the toggled-ON state the packet banks");
+                abilities_seen = true;
+            }
+        }
+        assert!(
+            abilities_seen,
+            "the changed tick the abilities wire spoke"
+        );
+    }
+
+    /// THE DIG LANE'S OWN BANKED WORD (the vanilla
+    /// `MultiPlayerGameMode.destroyBlock`'s `abilities.instabuild`
+    /// read the press wears): the wire world's SURVIVAL mode the
+    /// server's instabuild word the CREATIVE PRESS's own signatures
+    /// earns (the crack lane never arms, the destroyDelay the
+    /// creative cadence banks, the START send the wire speaks), the
+    /// PRE-ECHO window the same press the crack lane arms (the fold
+    /// the absent bank keeps), and the CREATIVE player the revoked
+    /// word refuses (the server's own belief the instant carve owns
+    /// — the local edit the wire world the server's own refresh
+    /// banks, `apply_locally` the false keeps).
+    #[test]
+    fn the_dig_lane_the_banked_instabuild_carves() {
+        // THE WIRE WORLD (the air scene one solid cell the test sets —
+        // the body's own eye the aim owns)
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        world.set(0, 32, 0, crate::world::STONE);
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(
+            0.5,
+            34.5,
+            0.5,
+            0.0,
+            90.0, // THE DOWN LOOK (the vanilla degrees — positive the pitch down speaks)
+        ));
+        assert!(
+            app.game_mode == GameMode::Survival,
+            "the survival default the fold keeps"
+        );
+        assert!(
+            !app.dig.apply_locally,
+            "the wire world the server's own authority keeps"
+        );
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // THE PRE-ECHO PRESS (the fold the absent bank keeps — the
+        // crack lane arms, the START send the wire speaks)
+        app.on_press(0, 0);
+        assert!(
+            app.dig.is_destroying,
+            "the survival press the crack lane arms"
+        );
+        let mut starts = 0;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::DigAction { action, .. } = cmd {
+                assert_eq!(action, crate::dig::ACTION_START, "the start speaks");
+                starts += 1;
+            }
+        }
+        assert_eq!(starts, 1, "the survival press the one START speaks");
+        // THE BANKED WORD (the server's instabuild grant — the SAME
+        // survival press the CREATIVE signatures wears: the crack
+        // lane never arms, the destroyDelay the creative cadence
+        // banks, the START send the wire speaks)
+        let word = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: false,
+            instabuild: true,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(word));
+        app.dig = crate::dig::DigState::default();
+        app.dig.apply_locally = false;
+        app.on_press(0, 0);
+        assert!(
+            !app.dig.is_destroying,
+            "the instabuild press the crack lane never arms"
+        );
+        assert_eq!(app.dig.delay, 5, "the audited destroyDelay arm");
+        let mut starts = 0;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::DigAction { action, .. } = cmd {
+                assert_eq!(action, crate::dig::ACTION_START, "the start speaks");
+                starts += 1;
+            }
+        }
+        assert_eq!(starts, 1, "the instabuild press the one START speaks");
+        // THE REVOKED WORD (the CREATIVE mode the server's own word
+        // refuses — the press the crack lane arms again)
+        app.game_mode = GameMode::Creative;
+        let revoked = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: false,
+            instabuild: false,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(revoked));
+        app.dig = crate::dig::DigState::default();
+        app.dig.apply_locally = false;
+        app.on_press(0, 0);
+        assert!(
+            app.dig.is_destroying,
+            "the creative press the revoked word refuses"
+        );
+    }
+
+    /// THE MODE ECHO'S OWN RE-GRANT RE-BANK (the vanilla ONE
+    /// `Abilities` object the `GameType.updatePlayerAbilities` walk
+    /// writes — the setLocalMode's unconditional pcs 21-35 the
+    /// installer wears): the banked word the game-mode echo re-pins
+    /// (the CREATIVE arm the mayfly/instabuild/invulnerable trio the
+    /// FLYING field untouched keeps, the SPECTATOR arm the instant
+    /// flight banks, the SURVIVAL arm the zero walk the four fields
+    /// folds), the server's own echo the whole word re-pins after
+    /// (the newest echo the replace walk speaks), and the absent
+    /// bank the silence keeps (the pre-echo window the re-grant
+    /// never banks).
+    #[test]
+    fn the_mode_echo_the_abilities_word_re_banks() {
+        // THE BANKED SURVIVAL WORD (the server's own echo — the
+        // grounded survival shape the word wears)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        let ground = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: false,
+            instabuild: false,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(ground.clone()));
+        // THE ABSENT BANK (the fresh wire app the mode echo never
+        // banks — the pre-echo window the re-grant keeps silent)
+        let mut fresh = App::new(3);
+        fresh.net_world = Some(air_net_world(2, 0));
+        fresh.enter_network_world(None, Skybox::Overworld, None, None);
+        fresh.live_game_mode_updated(Some(1));
+        assert!(
+            fresh.abilities_word.is_none(),
+            "the absent bank the re-grant keeps silent"
+        );
+        // THE CREATIVE ECHO (the id 1 — the trio the FLYING field
+        // untouched keeps, the consumers the re-granted bits read)
+        app.live_game_mode_updated(Some(1));
+        let w = app.abilities_word.as_ref().expect("the bank re-granted");
+        assert!(w.mayfly && w.instabuild && w.invulnerable, "the trio banks");
+        assert!(!w.flying, "the creative arm the flying field untouched");
+        assert!(
+            app.abilities_mayfly() && app.abilities_instabuild(),
+            "the consumers the re-granted bits read"
+        );
+        // THE SPECTATOR ECHO (the id 3 — the instant flight the word
+        // banks, the instabuild the acmp lane refuses)
+        app.live_game_mode_updated(Some(3));
+        let w = app.abilities_word.as_ref().expect("the bank re-granted");
+        assert!(w.flying && w.mayfly, "the flight the word banks");
+        assert!(!w.instabuild, "the spectator the instabuild refuses");
+        assert!(w.invulnerable, "the spectator the invulnerable wears");
+        // THE SURVIVAL ECHO (the id 0 — the zero walk the four fields
+        // folds, the consumers the revoked bits read)
+        app.live_game_mode_updated(Some(0));
+        let w = app.abilities_word.as_ref().expect("the bank re-granted");
+        assert!(!w.flying && !w.mayfly && !w.instabuild && !w.invulnerable, "the zero walk banks");
+        assert!(
+            !app.abilities_mayfly() && !app.abilities_instabuild(),
+            "the consumers the revoked bits read"
+        );
+        // THE SERVER'S OWN ECHO (the whole word the replace walk
+        // re-pins verbatim — the re-grant the server's word confirms
+        // or replaces)
+        app.live_abilities_updated(Some(ground.clone()));
+        let w = app.abilities_word.as_ref().expect("the echo re-banks");
+        assert_eq!(*w, ground, "the newest echo the word re-pins");
     }
 
     /// THE FLIGHT'S OWN APP LANES (the audited 26.2 walk the update
