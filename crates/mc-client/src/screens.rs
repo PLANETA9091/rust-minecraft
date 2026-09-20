@@ -2052,6 +2052,15 @@ fn selector_earlier_element_walk(
     let value_abs = eq_abs + 1 + value_lead_ws;
     match selector_option_value_walk(&key, value_t, states, entity_types) {
         Some(SelectorValueWalk::Complete) => SelectorEarlierParse::Parsed,
+        // the junk AT the ']' the CLOSE the parse consumes (the
+        // suggestOptionsNextOrClose state the ']' exit answers — the
+        // SUGGEST_NOTHING the audited 251-255 wears —, the parseSelector
+        // ']' expectation the close completes, the options lane the ','
+        // the close never reaches) — the EMPTY silence the successful
+        // parse keeps
+        Some(SelectorValueWalk::Junk(off)) if value_t[off..].starts_with(']') => {
+            SelectorEarlierParse::Dead
+        }
         Some(SelectorValueWalk::Junk(off)) => SelectorEarlierParse::Junk(value_abs + off),
         _ => SelectorEarlierParse::Dead,
     }
@@ -3334,6 +3343,23 @@ fn local_selector_value_suggestions(
             };
         }
         SelectorValueWalk::Junk(off) => {
+            // THE CLOSE BRACKET THE PARSE CONSUMES (javap — the
+            // suggestOptionsNextOrClose install precedes the canRead/
+            // ']' checks, the ']' exit the SUGGEST_NOTHING putfield
+            // wears — the audited 251-255 —, the parseSelector ']'
+            // expectation the close answers, the parse COMPLETES —
+            // the successful parse the suggestions none keeps): the
+            // junk AT the ']' the close law answers — the EMPTY local
+            // the silence wears (the ',' + ']' pair the junk lane
+            // suggests the honest answer never was — the fully-typed
+            // selector nothing shows)
+            if trimmed[off..].starts_with(']') {
+                return ChatSuggestionSource::Local {
+                    start: elem_start as i32,
+                    length: (value_region.len() - ws_len) as i32,
+                    matches: Vec::new(),
+                };
+            }
             // the post-value JUNK lane (the suggestOptionsNextOrClose
             // state the throw survives — the UNGATED pair the bsm#13
             // bytecode banks): the ',' + ']' AT the junk, the span
@@ -27360,6 +27386,123 @@ mod tests {
             local_command_suggestions(&tree, "/kill @a[scores={a=1} x,l", &[], true, &[]),
             Src::AskServer,
             "the post-close ws the honest ask keeps"
+        );
+    }
+
+    /// THE CLOSE BRACKET THE PARSE CONSUMES (javap `EntitySelectorParser
+    /// .parseOptions` + `parseSelector` — the suggestOptionsNextOrClose
+    /// install precedes the canRead/']' checks, the ']' exit the
+    /// SUGGEST_NOTHING putfield wears (the audited 251-255), the
+    /// parseSelector ']' expectation the close answers and the parse
+    /// COMPLETES — the successful parse the suggestions none keeps:
+    /// the fully-typed selector NOTHING shows). The value walks' junk
+    /// verdicts the ']' stop the close law refines — the ',' + ']' pair
+    /// the junk lane suggests the honest answer never was — the EMPTY
+    /// local the silence wears, the TAIL lane and the EARLIER-ELEMENT
+    /// walk the same law keeps; the junk the ']' never leads the pair
+    /// lane wears whole (the 'x'-led junk the span to the input end
+    /// carries — the close the parse consumed AFTER the junk char the
+    /// fill's own cursor law keeps).
+    #[test]
+    fn the_selector_options_the_close_bracket_silence_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE NUMERIC WALK'S ']' STOP THE CLOSE LAW SILENCES (the readInt
+        // the stopped read returns, the mark the modifier wears, the ']'
+        // exit the SUGGEST_NOTHING putfield answers, the parseSelector
+        // ']' expectation the close consumes — the parse completes)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5]", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5] the close law answers");
+        };
+        assert_eq!((start, length), (15, 2), "the value region's own span");
+        assert!(matches.is_empty(), "the typed close the silence wears");
+        // THE SCORES COMPOUND'S ']' STOP THE SAME LAW WEARS (the
+        // post-'}' junk verdict the refined ws law banks, the ']' the
+        // close law silences)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1}]", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1}}] the close law answers");
+        };
+        assert_eq!((start, length), (16, 6), "the value region's own span");
+        assert!(matches.is_empty(), "the compound's close the silence wears");
+        // THE PROVIDER WALKS' ']' STOPS THE SAME SILENCE KEEPS (the
+        // gamemode/byName hit and the sort/switch hit the mark wear,
+        // the close the throw the state survives never suggests)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=creative]", &[], true, &[])
+        else {
+            panic!("/kill @a[gamemode=creative] the close law answers");
+        };
+        assert_eq!((start, length), (18, 9), "the value region's own span");
+        assert!(matches.is_empty(), "the provider walk's close the silence wears");
+        // THE STRING WALK'S ']' STOP THE SAME LAW WEARS (the unquoted
+        // run the ']' the charset refuses — the stopped read RETURNS,
+        // the modifier completes, the close the parse consumes)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve]", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve] the close law answers");
+        };
+        assert_eq!((start, length), (14, 6), "the value region's own span");
+        assert!(matches.is_empty(), "the string walk's close the silence wears");
+        // THE QUOTED VALUE'S ']' TAIL THE SAME LAW WEARS (the
+        // readStringUntil the close quote consumes, the tail the junk
+        // verdict names, the ']' the close law silences)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"Steve x\"]", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"Steve x\"] the close law answers");
+        };
+        assert_eq!((start, length), (14, 10), "the value region's own span");
+        assert!(matches.is_empty(), "the quoted value's close the silence wears");
+        // THE SORT WALK'S ']' STOP THE SAME LAW WEARS (the case-switch
+        // hit the setOrder+mark wear, the ']' the close answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nearest]", &[], true, &[])
+        else {
+            panic!("/kill @a[sort=nearest] the close law answers");
+        };
+        assert_eq!((start, length), (14, 8), "the value region's own span");
+        assert!(matches.is_empty(), "the sort walk's close the silence wears");
+        // THE QUOTED-KEY FORM THE SYNTH THE SAME LAW KEEPS (the
+        // readString KEY walk the readString law speaks, the synth the
+        // value lane rides, the ']' the close silences)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[\"name\"=Steve]", &[], true, &[])
+        else {
+            panic!("/kill @a[\"name\"=Steve] the close law answers");
+        };
+        assert_eq!((start, length), (16, 6), "the synth's value span");
+        assert!(matches.is_empty(), "the quoted-key close the silence wears");
+        // THE EARLIER ELEMENT'S ']' THE PARSE CONSUMES THE SELECTOR
+        // WHOLE (the close the options lane the ',' never reaches —
+        // the parse the successful deathless walk keeps — the EMPTY
+        // silence the earlier-element law wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5],l", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5],l the earlier close law answers");
+        };
+        assert_eq!((start, length), (9, 8), "the element's own span");
+        assert!(matches.is_empty(), "the closed selector the silence wears");
+        // THE JUNK THE ']' NEVER LEADS THE PAIR LANE WEARS WHOLE (the
+        // 'x' the stopped read names, the throw the survived state
+        // carries — the ',' + ']' AT the junk, the span the junk to
+        // the input end the fill's own cursor law keeps — the close
+        // the parse consumed AFTER the junk char)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5x]", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5x] the junk lane answers");
+        };
+        assert_eq!((start, length), (16, 2), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the 'x'-led junk the pair lane wears"
         );
     }
 
