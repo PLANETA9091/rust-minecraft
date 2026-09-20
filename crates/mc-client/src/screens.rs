@@ -1404,6 +1404,82 @@ const SELECTOR_OPTIONS: [(&str, &str); 21] = [
     ("predicate", "Custom predicate"),
 ];
 
+/// THE TOP-LEVEL COMMA THE PARSE CONSUMES (javap
+/// `EntitySelectorParser.parseOptions` — the ',' the loop's own check
+/// (the offsets 173-182) consumes as the element separator ONLY, the
+/// POST-VALUE position the suggestOptionsNextOrClose install
+/// precedes: the completed `key=value` element the separator
+/// precedes, the ',' inside the quoted key/value reads the
+/// readStringUntil walk's own text carries (the terminator closes,
+/// the backslash escapes the terminator/backslash), and the fresh key
+/// read at a ',' the unquoted-charset law refuses (the double-comma
+/// shape — the get("") null the throw keeps, the tail the ',' leads).
+/// The LAST separator the fresh element start names. The segment law
+/// the top-level '=' speaks: the FIRST '=' the key=value separator
+/// arms, a SECOND the value read's own junk poisons — the unquoted
+/// charset refuses '=' and the quoted read the close-quote tail keeps
+/// (the parse's own ']' expectation the junk lane wears — the parse
+/// threw at the second '='), the poison PERMANENT (the later ','s the
+/// parse never reached the separator never earn). The fresh/armed
+/// segment's own ',' the law keeps (the key read threw at it — the
+/// parse never consumed it, the tail carries it).
+fn selector_top_level_comma(region: &str) -> Option<usize> {
+    enum SegmentLaw {
+        /// the segment's top-level '=' yet unseen
+        Fresh,
+        /// the key=value separator the one '=' armed
+        Armed,
+        /// the second '=' the value read's junk keeps — the parse
+        /// threw before the segment's ','
+        Poisoned,
+    }
+    let b = region.as_bytes();
+    let mut i = 0;
+    let mut quote: Option<u8> = None;
+    let mut law = SegmentLaw::Fresh;
+    let mut last: Option<usize> = None;
+    while i < b.len() {
+        match quote {
+            // the quoted read's own text: the escape pair the
+            // terminator/backslash consumes, the terminator closes
+            Some(t) => match b[i] {
+                b'\\' => {
+                    i += if i + 1 < b.len() { 2 } else { 1 };
+                    continue;
+                }
+                c if c == t => quote = None,
+                _ => {}
+            },
+            None => match b[i] {
+                b'"' | b'\'' => quote = Some(b[i]),
+                b'=' => {
+                    law = match law {
+                        SegmentLaw::Fresh => SegmentLaw::Armed,
+                        // the second '=' the junk lane wears — the
+                        // poison permanent
+                        _ => SegmentLaw::Poisoned,
+                    }
+                }
+                b',' => {
+                    // the separator the ARMED segment (the completed
+                    // key=value element) alone earns; the fresh/
+                    // poisoned segment's ',' the key/value read's own
+                    // refusal keeps — the law the ',' survives (the
+                    // poison propagates, the parse never reached past
+                    // it)
+                    if matches!(law, SegmentLaw::Armed) {
+                        last = Some(i);
+                        law = SegmentLaw::Fresh;
+                    }
+                }
+                _ => {}
+            },
+        }
+        i += 1;
+    }
+    last
+}
+
 /// THE OPTIONS' OWN NAME LANE (javap `EntitySelectorParser
 /// .parseOptions` + `EntitySelectorOptions.suggestNames` — the '['
 /// entry and every ',' continuation the suggestNames state installs,
@@ -1414,11 +1490,14 @@ const SELECTOR_OPTIONS: [(&str, &str); 21] = [
 /// gamemode / type the dedicated lanes speak — the '{'/quoted values
 /// and the unspoken keys the honest ask keeps; the 26.2 suggestNames
 /// the '!' prefix the no-match silence answers — the keys the '!' never
-/// starts-with); the QUOTED KEY positions the first-element walk
+/// starts-with); the QUOTED KEY positions the readString KEY walk
 /// speaks (the readString KEY walk the parseOptions loop carries —
-/// see [`local_selector_quoted_key_suggestions`]), the quoted-key
-/// tails the ',' continuation installs the honest ask keeps (the
-/// in-quote commas the naive split never separates); the
+/// see [`local_selector_quoted_key_suggestions`]), the FIRST element
+/// and the ','-continuation installs ALIKE the same walk answers (the
+/// quote-aware split the top-level ',' the parse consumes names —
+/// see [`selector_top_level_comma`]; the suggestOptionsKey state the
+/// ',' consumption re-installs, the same readString walk the key read
+/// rides); the
 /// '='-CARRYING UNKNOWN KEYS the get() throw answers BEFORE the
 /// value walk (the exact-case lookup's null the rollbackAndThrow
 /// keeps — the key-start span the rollback names, the
@@ -1436,34 +1515,41 @@ fn local_selector_options_suggestions(
         // the map value state the honest ask keeps
         return ChatSuggestionSource::AskServer;
     }
-    // the fresh-name position: the region's tail after the last ','
-    // (the comma state the walk re-installs suggestNames at); a tail
-    // carrying '=' the value state speaks — the NAME walk's QUOTED
-    // value lane the quote gate only there retires (the value lane's
-    // readString law speaks it), the first-element QUOTED KEY the
-    // readString KEY walk speaks (the lane below), the quoted-key
-    // tails the ',' continuation installs the honest ask keeps
-    let (tail, first_element) = match region.rfind(',') {
-        Some(i) => (&region[i + 1..], false),
-        None => (region, true),
+    // the fresh element position: the region's tail after the last
+    // TOP-LEVEL ',' the quote-aware split names (the parseOptions ','
+    // the parse consumes as the element separator only — the
+    // completed key=value element it precedes, the in-quote commas
+    // the quoted reads' own text carries); a tail carrying '=' the
+    // value state speaks — the NAME walk's QUOTED value lane the
+    // quote gate only there retires (the value lane's readString law
+    // speaks it), the QUOTED KEY the readString KEY walk speaks (the
+    // lane below — the first element and the continuation installs
+    // ALIKE: the suggestOptionsKey state the ',' consumption
+    // re-installs, the same readString walk the key read rides)
+    let tail = match selector_top_level_comma(region) {
+        Some(i) => &region[i + 1..],
+        None => region,
     };
     // the tail's own span in the FULL input ('/' + the consumed
-    // prefix + the '@' + the selector chars + the '[')
-    let start = token_start + 1 + bracket_idx + 1 + (region.len() - tail.len());
-    // THE QUOTED KEY LANE (the first element only — no ',' the split
-    // found): the skipWhitespace the key read rides first, the
-    // quote-led tail the readString KEY walk answers — the quoted
-    // keys the get() the exact-case lookup resolves, the value walk
-    // the known key rides, the unterminated reads the ALL-21 state
-    // wear
-    if first_element {
+    // prefix + the '@' + the selector chars + the '[') — the region's
+    // own start the walk's region_end span keeps (the tail the offset
+    // the split wears, the region end the SAME for every element)
+    let region_start = token_start + 1 + bracket_idx + 1;
+    let start = region_start + (region.len() - tail.len());
+    // THE QUOTED KEY LANE (EVERY element — the ',' continuation the
+    // suggestOptionsKey state re-installs the same walk rides): the
+    // skipWhitespace the key read rides first, the quote-led tail
+    // the readString KEY walk answers — the quoted keys the get()
+    // the exact-case lookup resolves, the value walk the known key
+    // rides, the unterminated reads the ALL-21 state wear
+    {
         let ws = tail.len() - tail.trim_start_matches([' ', '\t']).len();
         let kt = &tail[ws..];
         if kt.starts_with('"') || kt.starts_with('\'') {
             return local_selector_quoted_key_suggestions(
                 kt,
                 start + ws,
-                start + region.len(),
+                region_start + region.len(),
                 entity_types,
                 entity_type_tags,
             );
@@ -1486,10 +1572,10 @@ fn local_selector_options_suggestions(
         // refuses, the read NOTHING consumes) the same null answers,
         // the invert-char keys ('!name' — the read stops at the '!'
         // the unquoted set never carries) the same silence keeps. The
-        // QUOTED reads the lane never reaches (the quote-led
-        // first-element tails the readString KEY walk answers, the
-        // quote-led continuations the honest ask keeps — the later
-        // rounds' lane); the KNOWN keys the value walk rides (the
+        // QUOTED reads the lane never reaches (the quote-led tails
+        // the readString KEY walk answers above — the first element
+        // and the continuation installs ALIKE); the KNOWN keys the
+        // value walk rides (the
         // unspoken walks the honest ask keeps inside); the no-'='
         // tails the fresh-name lane below already wears (the same
         // suggestNames state the prefix fold filters).
@@ -1514,19 +1600,14 @@ fn local_selector_options_suggestions(
         // keeps)
         return local_selector_value_suggestions(tail, eq_idx, start, entity_types, entity_type_tags);
     }
-    if region.contains('"') {
-        // the quoted positions the FIRST-element walk never reached:
-        // the quoted-key tails the ',' continuation installs, the
-        // quoted values the in-quote commas hide — the honest ask
-        // keeps (the walk's later rounds audit; the single-quote
-        // regions the filter's own silence keeps — the quote-led
-        // first elements the walk answers now)
-        return ChatSuggestionSource::AskServer;
-    }
-    let tail_lc = tail.to_lowercase();
     // the suggestNames forEach arm the prefix fold filters (the
     // lowercase law both sides wear), the merge sort the
-    // case-insensitive law orders
+    // case-insensitive law orders — the QUOTED-VALUE continuations
+    // the region-level ask retired: the parse CONSUMED the earlier
+    // quoted reads (the region's quotes the completed elements
+    // carry — the quote-aware split never splits inside them), the
+    // fresh tail the same suggestNames state the ',' install answers
+    let tail_lc = tail.to_lowercase();
     let mut matches = selector_option_matches();
     matches
         .retain(|m| m.text.to_lowercase().starts_with(&tail_lc));
@@ -25105,13 +25186,18 @@ mod tests {
             matches.is_empty(),
             "the post-quote unknown the silence keeps"
         );
-        // THE QUOTE-LED CONTINUATION THE ASK KEEPS (the quoted-key
-        // tails the later rounds audit — the flip never reaches)
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[name=Steve,\"zzz=x", &[], true, &[]),
-            Src::AskServer,
-            "the quote-led continuation the committed ask keeps"
-        );
+        // THE QUOTE-LED CONTINUATION THE KEY WALK ANSWERS (the
+        // quote-aware split the flip wears — the ',' continuation the
+        // suggestOptionsKey state re-installs, the unterminated read
+        // the ALL-21 state at the input end keeps, the typed prefix
+        // the throw wipes)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,\"zzz=x", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,\"zzz=x the quote-led continuation answers");
+        };
+        assert_eq!((start, length), (26, 0), "the input end the throw cursor wears");
+        assert_eq!(matches.len(), 21, "the ALL-21 state the throw keeps");
         // THE TAB APPLY (the EMPTY local no request spends — the
         // input the silence never touches)
         let mut app = App::new(3);
@@ -25341,6 +25427,254 @@ mod tests {
         assert_eq!(
             app.chat_input, "/kill @a[sort=nearest,",
             "the apply the junk replace lands"
+        );
+    }
+
+    /// THE QUOTE-AWARE CONTINUATION LANE (javap
+    /// `EntitySelectorParser.parseOptions` — the ',' the loop's own
+    /// check consumes as the element separator ONLY: the completed
+    /// key=value element it precedes, the in-quote ',' the
+    /// readStringUntil walk's own text carries (the naive rfind the
+    /// split retired — the in-quote comma the misanswer wore), the
+    /// fresh key read at a ',' the unquoted charset refuses (the
+    /// double-comma shape — the get("") null the throw keeps, the
+    /// tail the ',' leads), the second '=' the value read's own junk
+    /// poisons (the parse threw at it — the later ','s the separator
+    /// never earn); the suggestOptionsKey state the ',' consumption
+    /// re-installs — the QUOTE-LED continuation keys the readString
+    /// KEY walk the first element rides answers (the unterminated
+    /// reads the ALL-21 state at the input end, the terminated
+    /// unknown the rollback cursor the key start names, the invalid
+    /// escape the throw at the backslash keeps), and the fresh-name
+    /// state the consumed quoted values never hide (the region's
+    /// quotes the completed elements carry — the filter the tail
+    /// speaks).
+    #[test]
+    fn the_selector_options_the_quote_aware_continuation_lane_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE IN-QUOTE COMMA THE SPLIT RETIRES (the terminated quoted
+        // value carrying ',' — the top-level separator the parse
+        // consumes AFTER it, the value walk the completion wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a,b\"", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a,b\" the in-quote comma answers");
+        };
+        assert_eq!((start, length), (19, 0), "the consumed value's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the terminated quoted value the punctuation wears"
+        );
+        // THE CONTINUATION AFTER THE IN-QUOTE COMMA (the top-level
+        // ',' the fresh-name state re-installs — the filter the tail
+        // speaks; the naive rfind the IN-QUOTE comma the split wore)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a,b\",so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a,b\",so the continuation answers");
+        };
+        assert_eq!((start, length), (20, 2), "the span the tail key names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["sort="],
+            "the 'so' prefix the sort row wears"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a,b\",na", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a,b\",na the fresh-name walk answers");
+        };
+        assert_eq!((start, length), (20, 2), "the span the tail key names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["name="],
+            "the 'na' prefix the name row wears"
+        );
+        // THE EMPTY TAIL (the ',' consumed, the loop the input end
+        // exits — the suggestOptionsKey state the ALL-21 wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a,b\",", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a,b\", the empty tail answers");
+        };
+        assert_eq!((start, length), (20, 0), "the input end the state wears");
+        assert_eq!(matches.len(), 21, "the ALL-21 fresh names the ',' keeps");
+        assert_eq!(
+            matches[0].text, "advancements=",
+            "the merge sort the case-insensitive law orders"
+        );
+        // THE UNTERMINATED IN-QUOTE COMMA (no top-level ',' the quote
+        // state hides — the first element the value walk rides, the
+        // END-OF-QUOTE throw the SUGGEST_NOTHING silence keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a,b", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a,b the unterminated walk answers");
+        };
+        assert_eq!((start, length), (14, 4), "the element span the silence wears");
+        assert!(matches.is_empty(), "the thrown read the silence keeps");
+        // THE NAIVE-SPLIT MISANSWER RETIRED (the rfind the IN-QUOTE
+        // comma the 'sort=x' tail wore — the sort lane the value walk
+        // NEVER reaches: the name read's own END-OF-QUOTE throw the
+        // parse answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a,sort=x", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a,sort=x the honest walk answers");
+        };
+        assert_eq!((start, length), (14, 9), "the name element span wears");
+        assert!(matches.is_empty(), "the sort lane the quote state hides");
+        // THE QUOTE-LED CONTINUATION KEYS (the ',' state the
+        // suggestOptionsKey re-install — the readString KEY walk the
+        // first element rides answers EVERY element)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,\"so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,\"so the continuation key answers");
+        };
+        assert_eq!((start, length), (23, 0), "the input end the throw cursor wears");
+        assert_eq!(matches.len(), 21, "the ALL-21 state the throw keeps");
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,'na", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,'na the single-quote continuation answers");
+        };
+        assert_eq!((start, length), (23, 0), "the input end the state wears");
+        assert_eq!(matches.len(), 21, "the single-quote form the ALL-21 keeps");
+        // THE TERMINATED CONTINUATION KEY (the known key the '='
+        // expectation consumes — the value walk the synth the
+        // punctuation wears at the input end)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,\"name\"=Steve", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,\"name\"=Steve the terminated key answers");
+        };
+        assert_eq!((start, length), (32, 0), "the consumed value's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the terminated known key the value walk answers"
+        );
+        // THE TERMINATED UNKNOWN CONTINUATION KEY (the get() throw
+        // the rollback cursor the KEY START names — the quote-led
+        // remaining the filter's silence wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,\"zzz\"=x", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,\"zzz\"=x the unknown key answers");
+        };
+        assert_eq!((start, length), (20, 7), "the span the key start names");
+        assert!(matches.is_empty(), "the quote-led remaining the filter refuses");
+        // THE INVALID ESCAPE CONTINUATION KEY (the throw AT THE
+        // BACKSLASH — the remaining the '\' leads, the EMPTY local
+        // the span the escape position names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,\"a\\zb", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,\"a\\zb the invalid escape answers");
+        };
+        assert_eq!((start, length), (22, 3), "the span the escape position names");
+        assert!(matches.is_empty(), "the '\\' remaining the filter refuses");
+        // THE SECOND '=' THE SEGMENT POISONS (the value read's own
+        // junk — the parse's ']' expectation threw at it, the later
+        // ','s the separator NEVER earn — the tail the whole element
+        // keeps, the junk lane the ',' + ']' AT the second '=' wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"x\"=y,so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"x\"=y,so the poisoned segment answers");
+        };
+        assert_eq!((start, length), (17, 5), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the post-value state the throw survives"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=x=y,so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=x=y,so the unquoted poison answers");
+        };
+        assert_eq!((start, length), (15, 5), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the unquoted form the same junk wears"
+        );
+        // THE DOUBLE COMMA (the fresh key read at the second ',' the
+        // unquoted charset refuses — the get("") null the throw
+        // keeps, the tail the ',' LEADS, the filter's silence the
+        // span the second comma names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=x,,", &[], true, &[])
+        else {
+            panic!("/kill @a[name=x,, the double comma answers");
+        };
+        assert_eq!((start, length), (16, 1), "the span the second comma names");
+        assert!(matches.is_empty(), "the ','-led remaining the filter refuses");
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=x,,so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=x,,so the double comma tail answers");
+        };
+        assert_eq!((start, length), (16, 3), "the tail the ',' leads wears");
+        assert!(matches.is_empty(), "the ',so' remaining the filter refuses");
+        // THE KEY-LESS SEGMENT (the fresh key 'y' the read consumes,
+        // the get("y") null the rollback the KEY START names — the
+        // remaining the key start to the input end the silence wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=x,y,so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=x,y,so the key-less segment answers");
+        };
+        assert_eq!((start, length), (16, 4), "the span the key start names");
+        assert!(matches.is_empty(), "the 'y,so' remaining the filter refuses");
+        // THE CONSUMED QUOTED VALUE THE FRESH-NAME STATE NEVER HIDES
+        // (the region-level ask retired — the parse consumed the
+        // quoted read, the ',' continuation the filter speaks)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"Steve x\",so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"Steve x\",so the post-quote walk answers");
+        };
+        assert_eq!((start, length), (24, 2), "the span the tail key names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["sort="],
+            "the 'so' prefix the sort row wears"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"Steve x\",na", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"Steve x\",na the fresh-name walk answers");
+        };
+        assert_eq!((start, length), (24, 2), "the span the tail key names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["name="],
+            "the 'na' prefix the name row wears"
+        );
+        // THE TAB APPLY (the fresh-name local no request spends —
+        // the apply the row the tail replaces)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[name=\"a,b\",na".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the quote-aware lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[name=\"a,b\",name=",
+            "the apply the name row lands"
         );
     }
 
