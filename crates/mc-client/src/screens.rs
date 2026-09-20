@@ -4781,6 +4781,22 @@ impl GameMode {
         }
     }
 
+    /// The GameType id's OWN ANSWER (javap GameType.byId — the
+    /// `ByIdMap.continuous(values(), ZERO)` lookup the STREAM_CODEC's
+    /// idMapper keeps: a KNOWN id its GameType answers, an UNKNOWN
+    /// id the ZERO strategy's values()[0] fallback speaks — the
+    /// SURVIVAL default). The wire word's own inverse — the
+    /// [`Self::wire_id`] fold the change-game-mode packet banks, the
+    /// echo's installer the same codec's decode wears.
+    pub(crate) fn from_wire_id(id: u8) -> GameMode {
+        match id {
+            1 => GameMode::Creative,
+            2 => GameMode::Adventure,
+            3 => GameMode::Spectator,
+            _ => GameMode::Survival, // 0 and the unknown ids the ZERO fallback keeps
+        }
+    }
+
     /// The name line's lang key (the GameModeIcon name field — the
     /// Component.translatable walk the en_us table answers:
     /// "Survival Mode" and the row's three siblings).
@@ -17237,6 +17253,58 @@ impl App {
         self.net_ride = ride;
     }
 
+    /// THE GAME-MODE ECHO'S OWN BANK (javap 26.2
+    /// `MultiPlayerGameMode.setLocalMode(GameType)` — the one-arg
+    /// overload the `ClientPacketListener.handleGameEvent`'s
+    /// CHANGE_GAME_MODEL arm serves: the changed-mode acmp the
+    /// PREVIOUS bank earns (pcs 0-15 — `if (newMode != this.local
+    /// PlayerMode) previousLocalPlayerMode = this.localPlayerMode`),
+    /// the mode bank (pcs 16-20), then the abilities re-grant the
+    /// audited `GameType.updatePlayerAbilities` walk keeps
+    /// UNCONDITIONALLY (pcs 21-35 — the SPECTATOR arm the `flying = 1`
+    /// bank speaks, the SURVIVAL/ADVENTURE arm the zero walk the
+    /// mayfly/instabuild/invulnerable/flying fields folds, the
+    /// CREATIVE arm the mayfly/instabuild/invulnerable trio keeps the
+    /// FLYING FIELD UNTOUCHED — the mid-flight creative switch the
+    /// flight preserves). The server's own echo the change
+    /// never re-sends unchanged (the audited
+    /// `changeGameModeForPlayer` pcs 0-9 acmp the same-mode silence
+    /// keeps), so the unconditional re-grant the real stream never
+    /// double-speaks. The F4 switcher's reopen hover the previous
+    /// bank feeds (the getDefaultSelected law — the wire lane now
+    /// fills what the offline apply alone filled). `None` the silence
+    /// keeps (no echo yet — the join snapshot's own word the login
+    /// lane banks), the shipped persistence the idempotent walk
+    /// re-banks.
+    pub fn live_game_mode_updated(&mut self, word: Option<u8>) {
+        if !self.world_is_network {
+            return;
+        }
+        let Some(id) = word else { return };
+        let mode = GameMode::from_wire_id(id);
+        if mode != self.game_mode {
+            // THE PREVIOUS BANK (pcs 0-15 — the changed mode alone
+            // earns it)
+            self.previous_game_mode = Some(self.game_mode);
+        }
+        // THE MODE BANK (pcs 16-20 — unconditional, the acmp the
+        // idempotent re-ship keeps)
+        self.game_mode = mode;
+        // THE ABILITIES RE-GRANT (pcs 21-35 + the audited
+        // GameType.updatePlayerAbilities walk — unconditional): the
+        // flying fold the three arms speak, the invulnerable word the
+        // instant bank keeps (the tick's own feed the same verdict
+        // re-answers)
+        if let Some(b) = self.body.as_mut() {
+            match mode {
+                GameMode::Spectator => b.flying = true,
+                GameMode::Creative => {}
+                _ => b.flying = false,
+            }
+            b.invulnerable = mode.invulnerable();
+        }
+    }
+
     /// THE OFFLINE MOUNT (javap AbstractBoat.interact's tail — the
     /// `startRiding` the CONSUME verdict carries; the singleplayer's
     /// client IS the authority the offline lane keeps, the local
@@ -26504,6 +26572,102 @@ mod tests {
                 assert!(flying, "the sync's own ON word the only packet speaks");
             }
         }
+    }
+
+    /// THE GAME-MODE ECHO'S OWN BANK (javap 26.2
+    /// `MultiPlayerGameMode.setLocalMode(GameType)` the walk the
+    /// installer wears): the changed word the previous bank earns,
+    /// the mode bank the F4 switcher's reopen hover feeds, the
+    /// abilities re-grant the three arms speak (the survival revoke,
+    /// the spectator's instant flight, the creative's untouched
+    /// flight), the invulnerable word the instant bank keeps, the
+    /// unknown id the ZERO fallback answers, the unchanged word the
+    /// idempotent acmp keeps silent, and the offline world the lane
+    /// never reaches.
+    #[test]
+    fn the_game_mode_echo_the_set_local_mode_speaks() {
+        // THE OFFLINE GATE (the lane the wire world alone reaches)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Survival;
+        app.live_game_mode_updated(Some(1));
+        assert_eq!(app.game_mode, GameMode::Survival, "the offline world the echo never banks");
+        // THE WIRE BANK (the net world the installer serves)
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.game_mode = GameMode::Survival;
+        if let Some(b) = app.body.as_mut() {
+            b.flying = false;
+        }
+        // THE CREATIVE ECHO (the id 1 the from_wire_id fold answers):
+        // the previous bank fills, the mode banks, the flying field
+        // UNTOUCHED (the vanilla CREATIVE arm's own silence), the
+        // invulnerable word the instant bank keeps
+        if let Some(b) = app.body.as_mut() {
+            b.flying = true; // the mid-flight switch the flight preserves
+        }
+        app.live_game_mode_updated(Some(1));
+        assert_eq!(app.game_mode, GameMode::Creative, "the mode the echo banks");
+        assert_eq!(
+            app.previous_game_mode,
+            Some(GameMode::Survival),
+            "the previous bank the changed word earns"
+        );
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the creative arm the flight preserves"
+        );
+        assert!(
+            app.body.as_ref().expect("the body rides").invulnerable,
+            "the invulnerable word the creative grant banks"
+        );
+        // THE SPECTATOR ECHO (the id 3): the instant flight the grant
+        // banks (the updatePlayerAbilities walk's own `flying = 1`)
+        if let Some(b) = app.body.as_mut() {
+            b.flying = false;
+        }
+        app.live_game_mode_updated(Some(3));
+        assert_eq!(app.game_mode, GameMode::Spectator, "the spectator banks");
+        assert!(
+            app.body.as_ref().expect("the body rides").flying,
+            "the spectator arm the flight banks instantly"
+        );
+        // THE SURVIVAL ECHO (the id 0): the zero walk the flight folds,
+        // the invulnerable grant retires
+        app.live_game_mode_updated(Some(0));
+        assert_eq!(app.game_mode, GameMode::Survival, "the survival banks");
+        assert!(
+            !app.body.as_ref().expect("the body rides").flying,
+            "the zero walk the flight folds"
+        );
+        assert!(
+            !app.body.as_ref().expect("the body rides").invulnerable,
+            "the survival arm the grant retires"
+        );
+        // THE UNCHANGED ECHO (the idempotent re-ship): the acmp the
+        // previous bank keeps silent (the server's own
+        // changeGameModeForPlayer never re-sends it — the walk the
+        // vanilla keeps anyway)
+        app.live_game_mode_updated(Some(0));
+        assert_eq!(app.previous_game_mode, Some(GameMode::Spectator),
+            "the unchanged word the bank never re-fills");
+        assert_eq!(app.game_mode, GameMode::Survival, "the mode the acmp keeps");
+        // THE UNKNOWN ID (the ZERO fallback — the
+        // ByIdMap.continuous values()[0] the byId walk keeps): the
+        // SURVIVAL default answers
+        app.game_mode = GameMode::Creative;
+        app.live_game_mode_updated(Some(200));
+        assert_eq!(app.game_mode, GameMode::Survival, "the unknown id the fallback answers");
+        // THE ADVENTURE ECHO (the id 2): the restricted grant the
+        // zero walk answers (the survival family's own arms)
+        app.live_game_mode_updated(Some(2));
+        assert_eq!(app.game_mode, GameMode::Adventure, "the adventure banks");
+        assert!(
+            !app.body.as_ref().expect("the body rides").invulnerable,
+            "the adventure arm the grant never banks"
+        );
     }
 
     /// THE FLIGHT'S OWN APP LANES (the audited 26.2 walk the update

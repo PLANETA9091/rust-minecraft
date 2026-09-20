@@ -373,6 +373,15 @@ pub struct SnapshotView {
     /// carriedItem — the stack riding the mouse) — the click lane's
     /// believed cursor the prediction walks speak.
     pub inventory_carried: (i32, i32),
+    /// THE GAME-MODE ECHO'S OWN WORD (the model's banked CHANGE_
+    /// GAME_MODEL id — the server's own answer the game-event arm
+    /// keeps): `None` until the echo speaks (the join snapshot
+    /// carries none — the login word the login phase's own lane
+    /// banks), `Some(id)` every refresh ships while the echo holds
+    /// (the frame thread's installer the setLocalMode walk wears —
+    /// the idempotent re-bank the unchanged mode's acmp keeps
+    /// silent).
+    pub mode_word: Option<u8>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -2182,6 +2191,10 @@ pub fn materialize_snapshot_view(
         inventory_bundles,
         inventory_state_id,
         inventory_carried,
+        // the join snapshot carries no mode echo — the CHANGE_GAME_
+        // MODEL packets are the only source (the login word the login
+        // phase's own lane banks)
+        mode_word: None,
     }
 }
 
@@ -2590,6 +2603,9 @@ impl LiveView {
                 // the ride's belief rides the pose-less arm too — the
                 // mount is the connection's own word, not the pose's
                 ride: ride_view(&self.model),
+                // the mode echo rides the pose-less arm too — the
+                // server's answer the session's own truth
+                mode_word: self.model.local_game_mode(),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -2644,6 +2660,10 @@ impl LiveView {
             inventory_bundles,
             inventory_state_id,
             inventory_carried,
+            // the mode echo rides every refresh — the server's answer
+            // the session's own truth (the idempotent re-bank the
+            // installer's own acmp keeps silent)
+            mode_word: self.model.local_game_mode(),
         }
     }
 }

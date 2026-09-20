@@ -162,6 +162,7 @@ fn run_join(
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
+                Option<u8>,
             ),
             String,
         >,
@@ -949,6 +950,13 @@ fn run_join(
                                     // debug-sample lane logs (the stacked
                                     // bars the wire's own tick speaks)
                                     tick_snapshot,
+                                    // and the GAME-MODE ECHO'S OWN WORD —
+                                    // the banked CHANGE_GAME_MODEL id the
+                                    // game-event arm keeps (the server's
+                                    // own answer the frame thread's
+                                    // installer banks; None until the
+                                    // echo speaks)
+                                    upd.mode_word,
                                 )))
                                 .is_err()
                             {
@@ -1087,6 +1095,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<i64>,
                 Vec<i64>,
                 Vec<[i64; 4]>,
+                Option<u8>,
             ),
             String,
         >,
@@ -1595,8 +1604,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     ping_samples,
                     bw_samples,
                     tick_samples,
+                    mode_word,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
+                    // THE GAME-MODE ECHO'S OWN BANK (the audited
+                    // setLocalMode walk the installer wears — the
+                    // previous bank, the mode bank, the abilities
+                    // re-grant; the unchanged word the idempotent acmp
+                    // keeps silent)
+                    app.live_game_mode_updated(mode_word);
                     // the ping chart's lane beside the world's: the RTT
                     // snapshot the net worker's ring keeps lands verbatim
                     // (the chart's columns the newest belief re-draws)

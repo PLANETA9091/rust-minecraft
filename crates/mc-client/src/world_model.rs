@@ -125,6 +125,18 @@ pub struct WorldModel {
     /// the rain level (the effective thunder the splash walk speaks).
     rain_level: f32,
     thunder_level: f32,
+    /// THE GAME-MODE ECHO'S OWN WORD (javap 26.2
+    /// `ClientPacketListener.handleGameEvent` pcs 104-126 — the
+    /// CHANGE_GAME_MODEL arm the local mode re-syncs: the
+    /// `floor(param + 0.5)` fold (pcs 37-46, computed BEFORE the arms)
+    /// then `gameMode.setLocalMode(GameType.byId(id))`): the folded id
+    /// the server's own answer banks — `None` until the echo speaks
+    /// (the join's login word the snapshot carries, the echo the
+    /// server's LATER changes ride). The frame thread's App bank reads
+    /// it through the shipped refresh (the setLocalMode walk — the
+    /// previous bank, the mode bank, the abilities re-grant — the
+    /// installer's own law).
+    local_game_mode: Option<u8>,
     /// The latest Set Time's clock states, keyed by order of arrival
     /// (a vanilla overworld server syncs its dimension's default
     /// clock). Multi-clock worlds need the WORLD_CLOCK registry names
@@ -763,6 +775,7 @@ impl WorldModel {
             game_time: 0,
             rain_level: 0.0,
             thunder_level: 0.0,
+            local_game_mode: None,
             clocks: Vec::new(),
             columns: HashMap::new(),
             entities: HashMap::new(),
@@ -1828,11 +1841,16 @@ impl WorldModel {
                 // Level setters — START_RAINING the `setRainLevel(1.0F)`
                 // arm speaks, STOP_RAINING the `setRainLevel(0.0F)` one,
                 // the two LEVEL_CHANGE packets the param arms carry, each
-                // `Mth.clamp(param, 0.0, 1.0)` the setter keeps. The rest
-                // of the vocabulary the honest no-opinion skip (the
-                // game-mode / win-screen / border arms name surfaces this
-                // client does not own yet — the decode never lies about
-                // them, the arms simply keep no state).
+                // `Mth.clamp(param, 0.0, 1.0)` the setter keeps. The
+                // GAME-MODE arm the echo speaks — the `floor(param +
+                // 0.5)` id fold the handleGameEvent head computes (pcs
+                // 37-46), the folded id the model banks (the
+                // setLocalMode walk the frame thread's installer wears —
+                // the previous bank, the mode bank, the abilities
+                // re-grant). The rest of the vocabulary the honest
+                // no-opinion skip (the win-screen / border arms name
+                // surfaces this client does not own yet — the decode
+                // never lies about them, the arms simply keep no state).
                 match g.event {
                     mc_protocol::play::game_event::START_RAINING => {
                         self.rain_level = 1.0;
@@ -1848,6 +1866,15 @@ impl WorldModel {
                     }
                     mc_protocol::play::game_event::THUNDER_LEVEL_CHANGE => {
                         self.thunder_level = g.param.clamp(0.0, 1.0);
+                        true
+                    }
+                    mc_protocol::play::game_event::CHANGE_GAME_MODEL => {
+                        // THE ECHO'S OWN FOLD (pcs 37-46 — the
+                        // `fadd 0.5` + `floor` pair the id computes; the
+                        // byte the GameType ids 0..3 the byId walk
+                        // resolves, the App's installer the byId law
+                        // wears)
+                        self.local_game_mode = Some((g.param + 0.5).floor() as u8);
                         true
                     }
                     _ => false,
@@ -2435,6 +2462,16 @@ impl WorldModel {
     /// the dry world the golden scenes render.
     pub fn rain_level(&self) -> f32 {
         self.rain_level
+    }
+
+    /// THE ECHO'S OWN WORD (the model's banked GameType id — the
+    /// CHANGE_GAME_MODEL fold the game-event arm keeps): `None` until
+    /// the server's echo speaks, `Some(id)` the refresh ships to the
+    /// frame thread's installer (the setLocalMode walk the App bank
+    /// wears — the idempotent re-bank the shipped persistence keeps
+    /// silent).
+    pub fn local_game_mode(&self) -> Option<u8> {
+        self.local_game_mode
     }
 
     /// THE EFFECTIVE THUNDER'S OWN ANSWER (javap `Level.getThunderLevel`
@@ -3376,15 +3413,30 @@ mod tests {
         })));
         assert_eq!(m.thunder_level(), 0.5, "the rain arms the thunder");
         // THE HONEST SKIPS: the vocabulary's other words keep no state —
-        // the game-mode / win-screen arms this client does not own
+        // the win-screen arms this client does not own
         assert!(!m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
             event: mc_protocol::play::game_event::WIN_GAME,
             param: 0.0,
         })), "the win arm is no-opinion");
-        assert!(!m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+        // THE GAME-MODE ECHO (the CHANGE_GAME_MODEL arm the mode
+        // re-sync speaks — the `floor(param + 0.5)` fold the id
+        // computes, the model's word the refresh ships)
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
             event: mc_protocol::play::game_event::CHANGE_GAME_MODEL,
             param: 1.0,
-        })), "the game-mode arm is no-opinion");
+        })), "the echo the mode re-sync speaks");
+        assert_eq!(
+            m.local_game_mode(),
+            Some(1),
+            "floor(1.0 + 0.5) = 1 — the CREATIVE id banks"
+        );
+        // the FOLD'S OWN ROUNDING (param 2.4 → floor(2.9) = 2 — the
+        // ADVENTURE id the next echo banks)
+        assert!(m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {
+            event: mc_protocol::play::game_event::CHANGE_GAME_MODEL,
+            param: 2.4,
+        })));
+        assert_eq!(m.local_game_mode(), Some(2), "the fold's rounding speaks");
         // an UNDEFINED event id the server could still send: the same
         // honest skip (the decode admits the word, the state keeps none)
         assert!(!m.apply(PlayEvent::GameEvent(mc_protocol::play::GameEvent {

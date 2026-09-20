@@ -1,0 +1,324 @@
+=== handleGameEvent(Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket;)V max_stack=14 max_locals=8 ===
+      0: aload_1 
+      1: aload_0 
+      2: aload_0 
+      3: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+      6: invokevirtual #247.packetProcessor:()Lnet/minecraft/network/PacketProcessor;
+      9: invokestatic #389.ensureRunningOnSameThread:(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V
+     12: aload_0 
+     13: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+     16: getfield #247.player:Lnet/minecraft/client/player/LocalPlayer;
+     19: invokestatic #2198.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+     22: checkcast net/minecraft/client/player/LocalPlayer
+     25: astore_2 
+     26: aload_1 
+     27: invokevirtual #2449.getEvent:()Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+     30: astore_3 
+     31: aload_1 
+     32: invokevirtual #2449.getParam:()F
+     35: fstore 4
+     37: fload 4
+     39: ldc_w #2457
+     42: fadd 
+     43: invokestatic #2459.floor:(F)I
+     46: istore 5
+     48: aload_3 
+     49: getstatic #2449.NO_RESPAWN_BLOCK_AVAILABLE:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+     52: if_acmpne start+68
+     55: aload_2 
+     56: ldc_w #2468
+     59: invokestatic #1852.translatable:(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;
+     62: invokevirtual #510.sendSystemMessage:(Lnet/minecraft/network/chat/Component;)V
+     65: goto start+667
+     68: aload_3 
+     69: getstatic #2449.START_RAINING:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+     72: if_acmpne start+86
+     75: aload_0 
+     76: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     79: fconst_0 
+     80: invokevirtual #477.setRainLevel:(F)V
+     83: goto start+667
+     86: aload_3 
+     87: getstatic #2449.STOP_RAINING:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+     90: if_acmpne start+104
+     93: aload_0 
+     94: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     97: fconst_1 
+     98: invokevirtual #477.setRainLevel:(F)V
+    101: goto start+667
+    104: aload_3 
+    105: getstatic #2449.CHANGE_GAME_MODE:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    108: if_acmpne start+129
+    111: aload_0 
+    112: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+    115: getfield #247.gameMode:Lnet/minecraft/client/multiplayer/MultiPlayerGameMode;
+    118: iload 5
+    120: invokestatic #2489.byId:(I)Lnet/minecraft/world/level/GameType;
+    123: invokevirtual #394.setLocalMode:(Lnet/minecraft/world/level/GameType;)V
+    126: goto start+667
+    129: aload_3 
+    130: getstatic #2449.WIN_GAME:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    133: if_acmpne start+164
+    136: aload_0 
+    137: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+    140: getfield #247.gui:Lnet/minecraft/client/gui/Gui;
+    143: new net/minecraft/client/gui/screens/WinScreen
+    146: dup 
+    147: iconst_1 
+    148: aload_0 
+    149: aload_2 
+    150: invokedynamic #2502
+    155: invokespecial #2500.<init>:(ZLjava/lang/Runnable;)V
+    158: invokevirtual #283.setScreen:(Lnet/minecraft/client/gui/screens/Screen;)V
+    161: goto start+667
+    164: aload_3 
+    165: getstatic #2449.DEMO_EVENT:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    168: if_acmpne start+407
+    171: aload_0 
+    172: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+    175: getfield #247.options:Lnet/minecraft/client/Options;
+    178: astore 6
+    180: aconst_null 
+    181: astore 7
+    183: fload 4
+    185: fconst_0 
+    186: fcmpl 
+    187: ifne start+199
+    190: aload_0 
+    191: aload 6
+    193: invokevirtual #16.openDemoIntroScreen:(Lnet/minecraft/client/Options;)V
+    196: goto start+369
+    199: fload 4
+    201: ldc_w #2514
+    204: fcmpl 
+    205: ifne start+267
+    208: ldc_w #2515
+    211: iconst_4 
+    212: anewarray java/lang/Object
+    215: dup 
+    216: iconst_0 
+    217: aload 6
+    219: getfield #632.keyUp:Lnet/minecraft/client/KeyMapping;
+    222: invokevirtual #1847.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+    225: aastore 
+    226: dup 
+    227: iconst_1 
+    228: aload 6
+    230: getfield #632.keyLeft:Lnet/minecraft/client/KeyMapping;
+    233: invokevirtual #1847.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+    236: aastore 
+    237: dup 
+    238: iconst_2 
+    239: aload 6
+    241: getfield #632.keyDown:Lnet/minecraft/client/KeyMapping;
+    244: invokevirtual #1847.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+    247: aastore 
+    248: dup 
+    249: iconst_3 
+    250: aload 6
+    252: getfield #632.keyRight:Lnet/minecraft/client/KeyMapping;
+    255: invokevirtual #1847.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+    258: aastore 
+    259: invokestatic #1852.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+    262: astore 7
+    264: goto start+369
+    267: fload 4
+    269: ldc_w #2529
+    272: fcmpl 
+    273: ifne start+302
+    276: ldc_w #2530
+    279: iconst_1 
+    280: anewarray java/lang/Object
+    283: dup 
+    284: iconst_0 
+    285: aload 6
+    287: getfield #632.keyJump:Lnet/minecraft/client/KeyMapping;
+    290: invokevirtual #1847.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+    293: aastore 
+    294: invokestatic #1852.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+    297: astore 7
+    299: goto start+369
+    302: fload 4
+    304: ldc_w #2535
+    307: fcmpl 
+    308: ifne start+337
+    311: ldc_w #2536
+    314: iconst_1 
+    315: anewarray java/lang/Object
+    318: dup 
+    319: iconst_0 
+    320: aload 6
+    322: getfield #632.keyInventory:Lnet/minecraft/client/KeyMapping;
+    325: invokevirtual #1847.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+    328: aastore 
+    329: invokestatic #1852.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+    332: astore 7
+    334: goto start+369
+    337: fload 4
+    339: ldc_w #2541
+    342: fcmpl 
+    343: ifne start+369
+    346: ldc_w #2542
+    349: iconst_1 
+    350: anewarray java/lang/Object
+    353: dup 
+    354: iconst_0 
+    355: aload 6
+    357: getfield #632.keyScreenshot:Lnet/minecraft/client/KeyMapping;
+    360: invokevirtual #1847.getTranslatedKeyMessage:()Lnet/minecraft/network/chat/Component;
+    363: aastore 
+    364: invokestatic #1852.translatable:(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;
+    367: astore 7
+    369: aload 7
+    371: ifnull start+404
+    374: aload_0 
+    375: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+    378: getfield #247.gui:Lnet/minecraft/client/gui/Gui;
+    381: getfield #283.hud:Lnet/minecraft/client/gui/Hud;
+    384: invokevirtual #289.getChat:()Lnet/minecraft/client/gui/components/ChatComponent;
+    387: aload 7
+    389: invokevirtual #295.addClientSystemMessage:(Lnet/minecraft/network/chat/Component;)V
+    392: aload_0 
+    393: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+    396: invokevirtual #247.getNarrator:()Lnet/minecraft/client/GameNarrator;
+    399: aload 7
+    401: invokevirtual #1865.saySystemQueued:(Lnet/minecraft/network/chat/Component;)V
+    404: goto start+667
+    407: aload_3 
+    408: getstatic #2449.PLAY_ARROW_HIT_SOUND:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    411: if_acmpne start+449
+    414: aload_0 
+    415: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    418: aload_2 
+    419: aload_2 
+    420: invokevirtual #510.getX:()D
+    423: aload_2 
+    424: invokevirtual #510.getEyeY:()D
+    427: aload_2 
+    428: invokevirtual #510.getZ:()D
+    431: getstatic #1489.ARROW_HIT_PLAYER:Lnet/minecraft/sounds/SoundEvent;
+    434: getstatic #1495.PLAYERS:Lnet/minecraft/sounds/SoundSource;
+    437: ldc_w #2562
+    440: ldc_w #2563
+    443: invokevirtual #477.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    446: goto start+667
+    449: aload_3 
+    450: getstatic #2449.RAIN_LEVEL_CHANGE:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    453: if_acmpne start+468
+    456: aload_0 
+    457: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    460: fload 4
+    462: invokevirtual #477.setRainLevel:(F)V
+    465: goto start+667
+    468: aload_3 
+    469: getstatic #2449.THUNDER_LEVEL_CHANGE:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    472: if_acmpne start+487
+    475: aload_0 
+    476: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    479: fload 4
+    481: invokevirtual #477.setThunderLevel:(F)V
+    484: goto start+667
+    487: aload_3 
+    488: getstatic #2449.PUFFER_FISH_STING:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    491: if_acmpne start+525
+    494: aload_0 
+    495: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    498: aload_2 
+    499: aload_2 
+    500: invokevirtual #510.getX:()D
+    503: aload_2 
+    504: invokevirtual #510.getY:()D
+    507: aload_2 
+    508: invokevirtual #510.getZ:()D
+    511: getstatic #1489.PUFFER_FISH_STING:Lnet/minecraft/sounds/SoundEvent;
+    514: getstatic #1495.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+    517: fconst_1 
+    518: fconst_1 
+    519: invokevirtual #477.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    522: goto start+667
+    525: aload_3 
+    526: getstatic #2449.GUARDIAN_ELDER_EFFECT:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    529: if_acmpne start+594
+    532: aload_0 
+    533: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    536: getstatic #1751.ELDER_GUARDIAN:Lnet/minecraft/core/particles/SimpleParticleType;
+    539: aload_2 
+    540: invokevirtual #510.getX:()D
+    543: aload_2 
+    544: invokevirtual #510.getY:()D
+    547: aload_2 
+    548: invokevirtual #510.getZ:()D
+    551: dconst_0 
+    552: dconst_0 
+    553: dconst_0 
+    554: invokevirtual #477.addParticle:(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+    557: iload 5
+    559: iconst_1 
+    560: if_icmpne start+667
+    563: aload_0 
+    564: getfield #16.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    567: aload_2 
+    568: aload_2 
+    569: invokevirtual #510.getX:()D
+    572: aload_2 
+    573: invokevirtual #510.getY:()D
+    576: aload_2 
+    577: invokevirtual #510.getZ:()D
+    580: getstatic #1489.ELDER_GUARDIAN_CURSE:Lnet/minecraft/sounds/SoundEvent;
+    583: getstatic #1495.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+    586: fconst_1 
+    587: fconst_1 
+    588: invokevirtual #477.playSound:(Lnet/minecraft/world/entity/Entity;DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    591: goto start+667
+    594: aload_3 
+    595: getstatic #2449.IMMEDIATE_RESPAWN:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    598: if_acmpne start+620
+    601: aload_2 
+    602: fload 4
+    604: fconst_0 
+    605: fcmpl 
+    606: ifne start+613
+    609: iconst_1 
+    610: goto start+614
+    613: iconst_0 
+    614: invokevirtual #510.setShowDeathScreen:(Z)V
+    617: goto start+667
+    620: aload_3 
+    621: getstatic #2449.LIMITED_CRAFTING:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    624: if_acmpne start+646
+    627: aload_2 
+    628: fload 4
+    630: fconst_1 
+    631: fcmpl 
+    632: ifne start+639
+    635: iconst_1 
+    636: goto start+640
+    639: iconst_0 
+    640: invokevirtual #510.setDoLimitedCrafting:(Z)V
+    643: goto start+667
+    646: aload_3 
+    647: getstatic #2449.LEVEL_CHUNKS_LOAD_START:Lnet/minecraft/network/protocol/game/ClientboundGameEventPacket$Type;
+    650: if_acmpne start+667
+    653: aload_0 
+    654: getfield #16.levelLoadTracker:Lnet/minecraft/client/multiplayer/LevelLoadTracker;
+    657: ifnull start+667
+    660: aload_0 
+    661: getfield #16.levelLoadTracker:Lnet/minecraft/client/multiplayer/LevelLoadTracker;
+    664: invokevirtual #1430.loadingPacketsReceived:()V
+    667: return 
+
+=== lambda$handleGameEvent$0(Lnet/minecraft/client/player/LocalPlayer;)V max_stack=4 max_locals=2 ===
+      0: aload_1 
+      1: getfield #510.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      4: new net/minecraft/network/protocol/game/ServerboundClientCommandPacket
+      7: dup 
+      8: getstatic #4593.PERFORM_RESPAWN:Lnet/minecraft/network/protocol/game/ServerboundClientCommandPacket$Action;
+     11: invokespecial #4590.<init>:(Lnet/minecraft/network/protocol/game/ServerboundClientCommandPacket$Action;)V
+     14: invokevirtual #16.send:(Lnet/minecraft/network/protocol/Packet;)V
+     17: aload_0 
+     18: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+     21: getfield #247.gui:Lnet/minecraft/client/gui/Gui;
+     24: aconst_null 
+     25: invokevirtual #283.setScreen:(Lnet/minecraft/client/gui/screens/Screen;)V
+     28: return 
+

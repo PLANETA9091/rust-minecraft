@@ -1,0 +1,37 @@
+=== setLocalMode(Lnet/minecraft/world/level/GameType;Lnet/minecraft/world/level/GameType;)V max_stack=2 max_locals=3 ===
+      0: aload_0 
+      1: aload_1 
+      2: putfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+      5: aload_0 
+      6: aload_2 
+      7: putfield #13.previousLocalPlayerMode:Lnet/minecraft/world/level/GameType;
+     10: aload_0 
+     11: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+     14: aload_0 
+     15: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     18: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     21: invokevirtual #64.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     24: invokevirtual #28.updatePlayerAbilities:(Lnet/minecraft/world/entity/player/Abilities;)V
+     27: return 
+
+=== setLocalMode(Lnet/minecraft/world/level/GameType;)V max_stack=2 max_locals=2 ===
+      0: aload_1 
+      1: aload_0 
+      2: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+      5: if_acmpeq start+16
+      8: aload_0 
+      9: aload_0 
+     10: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+     13: putfield #13.previousLocalPlayerMode:Lnet/minecraft/world/level/GameType;
+     16: aload_0 
+     17: aload_1 
+     18: putfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+     21: aload_0 
+     22: getfield #13.localPlayerMode:Lnet/minecraft/world/level/GameType;
+     25: aload_0 
+     26: getfield #13.minecraft:Lnet/minecraft/client/Minecraft;
+     29: getfield #58.player:Lnet/minecraft/client/player/LocalPlayer;
+     32: invokevirtual #64.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     35: invokevirtual #28.updatePlayerAbilities:(Lnet/minecraft/world/entity/player/Abilities;)V
+     38: return 
+
