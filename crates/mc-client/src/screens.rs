@@ -782,15 +782,39 @@ fn right_column_x(gui_width: i32, line_width: i32) -> i32 {
 /// GLX law wears; the no-JVM Java row and the no-GC allocation-rate
 /// row the honest skip preserves — the Rust process keeps no JVM
 /// heap and no allocation tracker, the drawn rows the real sources
-/// keep).
+/// keep). The LIVE lane: the draw path's own single probe walk —
+/// the one `/proc` read the frame's rows wear, the pure seam the
+/// `debug_right_lines_from` arm re-speaks.
 fn debug_right_lines(gui_width: i32, gui_height: i32) -> Vec<String> {
+    debug_right_lines_from(
+        system_memory_probe(),
+        cpu_info_probe(),
+        gui_width,
+        gui_height,
+    )
+}
+
+/// THE RIGHT COLUMN'S OWN PURE SEAM (the SAME row fold the live
+/// wrapper wears — the memory pair, the CPU word and the display
+/// row the caller's OWN reading re-speaks: the test the probe's
+/// single verdict the drawn rows pin WHOLE — the double-read race
+/// the VmRSS drift between two `/proc` walks banks retires, the
+/// drawn rows the honest same-reading law keeps; the None probe
+/// the memory rows skip — the CPU row the vec's own head wears —
+/// and the `<unknown>` cpu word the no-proc lane keeps).
+fn debug_right_lines_from(
+    probe: Option<(u64, u64, u64)>,
+    cpu: String,
+    gui_width: i32,
+    gui_height: i32,
+) -> Vec<String> {
     let mut lines = Vec::new();
-    if let Some((used, allocated, max)) = system_memory_probe() {
+    if let Some((used, allocated, max)) = probe {
         let (mem, alloc) = mem_rows(used, allocated, max);
         lines.push(mem);
         lines.push(alloc);
     }
-    lines.push(format!("CPU: {}", cpu_info_probe()));
+    lines.push(format!("CPU: {cpu}"));
     lines.push(display_row(gui_width, gui_height));
     lines
 }
@@ -24278,42 +24302,73 @@ mod tests {
 
         // THE PROBE'S OWN HONESTY (the /proc lanes the Linux process
         // really keeps — the Some verdict, the max > 0, the used <=
-        // max, and the DRAWN row the probe's own numbers re-speaking:
-        // the wire the same fold walks)
+        // max, and the allocated >= used bound the VmSize/VmRSS pair
+        // the kernel keeps)
         let probe = system_memory_probe();
         assert!(probe.is_some(), "the /proc lanes the test env keeps");
         let (used, allocated, max) = probe.unwrap();
         assert!(max > 0, "the max the cgroup/meminfo lane keeps");
         assert!(used <= max, "the resident the limit's own bound keeps");
         assert!(allocated >= used, "the address space the resident bounds");
-        let right = debug_right_lines(854, 480);
+
+        // THE SEAM'S OWN DETERMINISM (the drawn rows the caller's OWN
+        // probe reading re-speak — the SAME triple the mem_rows fold
+        // and the rows pin: the double-read race the VmRSS drift
+        // between two /proc walks banks RETIRES — the live wrapper
+        // the one probe per frame the draw path wears, the exact
+        // numbers the seam's same-reading law pins whole)
+        let right = debug_right_lines_from(
+            Some((used, allocated, max)),
+            cpu_word(8, "Test(R)   CPU(R)"),
+            854,
+            480,
+        );
         let (want_mem, want_alloc) = mem_rows(used, allocated, max);
         assert_eq!(right[0], want_mem, "{}", right[0]);
         assert_eq!(right[1], want_alloc, "{}", right[1]);
-        assert!(right[0].starts_with("Mem: "), "{}", right[0]);
-        assert!(right[1].starts_with("Allocated: "), "{}", right[1]);
+        assert_eq!(
+            right[2], "CPU: 8x Test(R) CPU(R)",
+            "the collapse the whitespace fold wears"
+        );
+        assert_eq!(right[3], "Display: 854x480 (software)");
 
-        // THE CPU ROW (GLX._getCpuInfo's own law — the `%dx %s` count
-        // + name pair and the `.replaceAll('\s+', ' ')` collapse: the
-        // multi-space model the single-space word wears; the probe's
-        // real word the /proc/cpuinfo speaks, the `<unknown>` the
-        // no-proc lane keeps — vanilla's own no-oshi word)
+        // THE SEAM'S NONE ARM (the no-proc lane the memory rows skip
+        // — the CPU row the vec's own head wears, the display row the
+        // tail keeps)
+        let none_right = debug_right_lines_from(
+            None,
+            "<unknown>".to_string(),
+            854,
+            480,
+        );
+        assert_eq!(
+            none_right,
+            vec!["CPU: <unknown>", "Display: 854x480 (software)"]
+        );
+
+        // THE LIVE WRAPPER'S OWN HONESTY (the drawn rows the ONE
+        // probe the frame wears — the row count the Some verdict
+        // keeps, the prefixes the live sources speak, the exact
+        // numbers the seam's same-reading law pinned above; the
+        // /proc/cpuinfo word the env really keeps)
+        let live = debug_right_lines(854, 480);
+        assert_eq!(live.len(), 4, "{live:?}");
+        assert!(live[0].starts_with("Mem: "), "{}", live[0]);
+        assert!(live[1].starts_with("Allocated: "), "{}", live[1]);
+        assert!(live[2].starts_with("CPU: "), "{}", live[2]);
+        assert_ne!(
+            live[2], "CPU: <unknown>",
+            "the /proc/cpuinfo the test env really keeps"
+        );
+        assert_eq!(live[3], "Display: 854x480 (software)");
+
+        // THE CPU WORD'S OWN FOLD (GLX._getCpuInfo's law — the
+        // `%dx %s` count + name pair and the `.replaceAll('\s+', ' ')`
+        // collapse: the multi-space model the single-space word wears)
         assert_eq!(
             cpu_word(2, "Intel(R)   Xeon(R)  Processor"),
             "2x Intel(R) Xeon(R) Processor"
         );
-        let cpu_row = right[2].clone();
-        assert!(cpu_row.starts_with("CPU: "), "{}", cpu_row);
-        assert_ne!(
-            cpu_row, "CPU: <unknown>",
-            "the /proc/cpuinfo the test env really keeps"
-        );
-
-        // THE DISPLAY ROW (DebugEntrySystemSpecs's `Display: %dx%d
-        // (%s)` — the gui pair the caller's own w/h keeps, the
-        // software vendor the CPU-rasterizer's honest word wears)
-        assert_eq!(display_row(854, 480), "Display: 854x480 (software)");
-        assert_eq!(right[3], "Display: 854x480 (software)");
 
         // THE RIGHT X ANCHOR (extractLines' right branch —
         // `guiWidth - 2 - lineWidth` the else lane keeps: 854-2-100
