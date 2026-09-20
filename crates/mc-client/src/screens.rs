@@ -1507,6 +1507,19 @@ fn selector_identifier_ok(s: &str) -> bool {
     ns_ok && path_ok
 }
 
+/// THE UNQUOTED-STRING CHARSET THE BRIGADIER READ SPEAKS (javap
+/// `StringReader.isAllowedInUnquotedString` — the library the client
+/// jar references but never bundles: the `0`-`9`/`A`-`Z`/`a`-`z`
+/// ranges + the `_`/`-`/`.`/`+` singles the three range folds and
+/// the four iconst compares bank; stable since brigadier's 1.13
+/// birth). The readString/readUnquotedString walks the string-valued
+/// option modifiers run consume exactly this set — a char outside
+/// it the value walk stops at (the parse's own ']' expectation the
+/// ERROR lane wears).
+fn selector_unquoted_ok(c: char) -> bool {
+    c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '+')
+}
+
 /// THE VALUE'S OWN DEFAULTED ID (the `ResourceLocation` constructor's
 /// no-colon form — the missing namespace the `minecraft` default
 /// wears, the `DefaultedRegistry.get` lookup the modifier's
@@ -1656,7 +1669,7 @@ fn local_selector_type_value_suggestions(
 }
 
 /// THE OPTIONS' OWN VALUE LANE (javap `EntitySelectorParser
-/// .parseOptions` + `EntitySelectorOptions lambda$bootStrap$25/26/28/29/35/36`
+/// .parseOptions` + `EntitySelectorOptions lambda$bootStrap$0/25/26/28/29/32/35/36/42`
 /// — the '=' the parse consumes, the SUGGEST_NOTHING the value
 /// position starts at, the modifier's own setSuggestions the walk
 /// installs; the ROLLBACK the throw law keeps — an invalid element
@@ -1672,12 +1685,22 @@ fn local_selector_type_value_suggestions(
 /// speaks, the TYPE walk the `$36` suggestResource pair answers
 /// (the negative arm the '!' prefix rides, the positive the bare
 /// ids wear, the tag arms the empty tag table never fires — see
-/// [`local_selector_type_value_suggestions`]), the trailing
-/// whitespace the remaining rides (the rollback cursor the element
-/// start names); the VALID complete element the parseOptions
-/// continuation answers — the post-value state the ',' + ']'
-/// punctuation suggests (suggestOptionsNextOrClose); the unknown
-/// keys / the internal-whitespace tails the honest ask keeps).
+/// [`local_selector_type_value_suggestions`]); the STRING walks
+/// (name / team / tag — the audited `$0`/`$32`/`$42`) install NO
+/// suggestions provider — SUGGEST_NOTHING the value position keeps
+/// — and the readString/readUnquotedString walk consumes ANY
+/// unquoted-charset tail (the empty value included, the '!' the
+/// shouldInvertValue consumes first), so the parse COMPLETES and
+/// the post-value punctuation suggests; a char the unquoted set
+/// refuses the value walk leaves — the parse's own ']' expectation
+/// the ERROR lane wears (the EMPTY local below, the honest silence
+/// the parse-throw-catch answers); the trailing whitespace the
+/// remaining rides (the rollback cursor the element start names);
+/// the VALID complete element the parseOptions continuation
+/// answers — the post-value state the ',' + ']' punctuation
+/// suggests (suggestOptionsNextOrClose); the unknown keys (the
+/// numeric parses — the readInt walks the next rounds' lanes) /
+/// the internal-whitespace tails the honest ask keeps).
 fn local_selector_value_suggestions(
     tail: &str,
     eq_idx: usize,
@@ -1740,8 +1763,22 @@ fn local_selector_value_suggestions(
                 entity_types.iter().any(|t| *t == id)
             }
         }
-        // the unspoken value walks the honest ask keeps (name / team /
-        // tag / the numeric parses — the next rounds' lanes)
+        // the STRING walks (name / team / tag — the audited
+        // lambda$bootStrap$0/$32/$42): the modifiers install NO
+        // suggestions provider (SUGGEST_NOTHING the value position
+        // keeps), the readString (name) / readUnquotedString (team,
+        // tag) walks consume ANY unquoted-charset tail — the empty
+        // value included, the leading '!' the shouldInvertValue
+        // consumes first — so the parse completes and the post-value
+        // punctuation suggests; a char the unquoted set refuses the
+        // value walk stops at (the parse's own ']' expectation the
+        // ERROR lane wears — the EMPTY local below answers)
+        "name" | "team" | "tag" => {
+            let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
+            value.chars().all(selector_unquoted_ok)
+        }
+        // the unspoken value walks the honest ask keeps (the numeric
+        // parses — the readInt walks the next rounds' lanes)
         _ => return ChatSuggestionSource::AskServer,
     };
     if complete {
@@ -1799,12 +1836,16 @@ fn local_selector_value_suggestions(
                 }
             }
         }
-    } else {
+    } else if key == "type" {
         // the type walk's own arms (lambda$bootStrap$36 + the
         // suggestResource pair) — see
         // [`local_selector_type_value_suggestions`]
         matches = local_selector_type_value_suggestions(entity_types, entity_type_tags, element);
     }
+    // the STRING walks' incomplete value (a char the unquoted set
+    // refuses — the value walk stopped at it): NO arms the walk
+    // keeps — the EMPTY local the parse-throw-catch's honest silence
+    // wears (no round-trip the vanilla's own refusal spends)
     // the Suggestions.merge sort (the compareToIgnoreCase law)
     matches.sort_by(|a, b| a.text.to_lowercase().cmp(&b.text.to_lowercase()));
     ChatSuggestionSource::Local {
@@ -23597,13 +23638,10 @@ mod tests {
             vec![",", "]"],
             "the punctuation the successful value wears"
         );
-        // THE UNSPOKEN KEYS (the name / limit value walks the honest
-        // ask keeps — the next rounds' lanes)
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[name=Steve", &[], true, &[]),
-            Src::AskServer,
-            "the name value walk the honest ask keeps"
-        );
+        // THE UNSPOKEN KEYS (the limit value walk the honest ask
+        // keeps — the numeric parses the next rounds' lanes; the name
+        // walk the STRING lanes the audited completion wears — see
+        // the_string_value_lanes test)
         assert_eq!(
             local_command_suggestions(&tree, "/kill @a[limit=5", &[], true, &[]),
             Src::AskServer,
@@ -23649,6 +23687,180 @@ mod tests {
         assert_eq!(
             app.chat_input, "/kill @a[gamemode=!creative",
             "the apply the '!'-text lands"
+        );
+    }
+
+    /// THE STRING VALUE WALKS (javap `EntitySelectorOptions
+    /// lambda$bootStrap$0/$32/$42` — the name/team/tag modifiers the
+    /// disassembly banks: NO setSuggestions call the walks carry
+    /// (SUGGEST_NOTHING the value position keeps), the
+    /// readString/readUnquotedString read the ANY-unquoted-charset
+    /// tail consumes (the empty value included, the leading '!' the
+    /// shouldInvertValue consumes first) — the parse COMPLETES and
+    /// the post-value ',' + ']' punctuation suggests (the
+    /// suggestOptionsNextOrClose state); a char the unquoted set
+    /// refuses the value walk stops at — the parse's own ']'
+    /// expectation the ERROR lane wears, the parse-throw-catch the
+    /// EMPTY local answers (no round-trip the refusal spends); the
+    /// internal-whitespace tail the committed honest-ask gate keeps,
+    /// the numeric parses the readInt walks the next rounds' lanes
+    /// the honest ask keeps).
+    #[test]
+    fn the_selector_options_the_string_value_lanes_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE NAME WALK (the empty value the readString walk banks —
+        // the parse completes, the punctuation the post-value state
+        // suggests, the span the parse cursor's own end names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=", &[], true, &[])
+        else {
+            panic!("/kill @a[name= the string lane answers");
+        };
+        assert_eq!((start, length), (14, 0), "the parse cursor's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the punctuation the post-value state suggests"
+        );
+        // THE TYPED VALUE (any unquoted-charset tail the walk
+        // consumes — the parse completes the same)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve the parse completes");
+        };
+        assert_eq!((start, length), (19, 0), "the consumed value's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the value consumed the punctuation wears"
+        );
+        // THE INVERTED FORM (the '!' the shouldInvertValue consumes
+        // first — the walk the same completion wears)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=!Steve", &[], true, &[])
+        else {
+            panic!("/kill @a[name=!Steve the invert walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the inverted value the same completion wears"
+        );
+        // THE EMPTY INVERTED VALUE (the '!' consumed, the empty read
+        // the walk banks — the parse completes)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=!", &[], true, &[])
+        else {
+            panic!("/kill @a[name=! the empty inverted walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the empty inverted value the completion wears"
+        );
+        // THE TEAM WALK (the readUnquotedString read the $32 banks —
+        // the same completion law)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[team=", &[], true, &[])
+        else {
+            panic!("/kill @a[team= the string lane answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the empty team value the completion wears"
+        );
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[team=!red", &[], true, &[])
+        else {
+            panic!("/kill @a[team=!red the invert walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the inverted team the completion wears"
+        );
+        // THE TAG WALK (the $42 the plainest walk banks — no state
+        // gate the modifier carries, the charset the '+'/'_' tails
+        // wear)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[tag=", &[], true, &[])
+        else {
+            panic!("/kill @a[tag= the string lane answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the empty tag value the completion wears"
+        );
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[tag=my_tag+1", &[], true, &[])
+        else {
+            panic!("/kill @a[tag=my_tag+1 the charset walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the '+'/'_' tails the unquoted charset wears"
+        );
+        // THE REFUSED CHAR (the '!' the value walk stops at — the
+        // parse's own ']' expectation the ERROR lane wears, the
+        // EMPTY local the catch-swallowed silence answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Ste!", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Ste! the refused-char lane answers");
+        };
+        assert_eq!((start, length), (14, 4), "the element text's own span");
+        assert!(matches.is_empty(), "the refused char the silence keeps");
+        // THE REFUSED CHAR AFTER THE INVERT (the '!' consumed first,
+        // the second the walk stops at)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=!Ste!", &[], true, &[])
+        else {
+            panic!("/kill @a[name=!Ste! the refused-char lane answers");
+        };
+        assert!(matches.is_empty(), "the post-invert refusal the silence keeps");
+        // THE INTERNAL WHITESPACE (the committed honest-ask gate —
+        // the parse's own ERROR_EXPECTED_END_OF_OPTIONS lane)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[name=Ste v", &[], true, &[]),
+            Src::AskServer,
+            "the internal whitespace the honest ask keeps"
+        );
+        // THE NUMERIC PARSES (the readInt walks the next rounds'
+        // lanes — the honest ask keeps)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[limit=", &[], true, &[]),
+            Src::AskServer,
+            "the numeric parse the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[distance=", &[], true, &[]),
+            Src::AskServer,
+            "the range parse the honest ask keeps"
+        );
+        // THE TAB APPLY (the selected ',' the zero-length insert
+        // lands — the span the parse cursor's end wears)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[name=".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the string lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[name=,",
+            "the apply the ',' insert lands"
         );
     }
 
@@ -24084,7 +24296,7 @@ mod tests {
         // completes — the post-value state the punctuation wears,
         // the namespace-prefix suggestions the THROW lane's own
         // answer stay, see the 'SK' rollback above)
-        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+        let Src::Local { start, length: _, matches } = local_command_suggestions_with_tags(
             &tree,
             "/kill @a[type=#min",
             &[],
@@ -24104,7 +24316,7 @@ mod tests {
         // 'zz' the lexically-valid id the parse completes, the
         // post-value state the punctuation wears, the never-parsed
         // tag the never-refuted law keeps)
-        let Src::Local { start, length, matches } = local_command_suggestions_with_tags(
+        let Src::Local { start, length: _, matches } = local_command_suggestions_with_tags(
             &tree,
             "/kill @a[type=#zz",
             &[],
