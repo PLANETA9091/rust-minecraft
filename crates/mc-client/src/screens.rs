@@ -1414,16 +1414,21 @@ const SELECTOR_OPTIONS: [(&str, &str); 21] = [
 /// the backslash escapes the terminator/backslash), and the fresh key
 /// read at a ',' the unquoted-charset law refuses (the double-comma
 /// shape — the get("") null the throw keeps, the tail the ',' leads).
-/// The LAST separator the fresh element start names. The segment law
-/// the top-level '=' speaks: the FIRST '=' the key=value separator
-/// arms, a SECOND the value read's own junk poisons — the unquoted
-/// charset refuses '=' and the quoted read the close-quote tail keeps
-/// (the parse's own ']' expectation the junk lane wears — the parse
-/// threw at the second '='), the poison PERMANENT (the later ','s the
-/// parse never reached the separator never earn). The fresh/armed
-/// segment's own ',' the law keeps (the key read threw at it — the
-/// parse never consumed it, the tail carries it).
-fn selector_top_level_comma(region: &str) -> Option<usize> {
+/// The LAST earned separator the fresh element start names. The
+/// segment law the top-level '=' speaks: the FIRST '=' the key=value
+/// separator arms, a SECOND the value read's own junk poisons — the
+/// unquoted charset refuses '=' and the quoted read the close-quote
+/// tail keeps (the parse's own ']' expectation the junk lane wears —
+/// the parse threw at the second '='), the poison PERMANENT (the
+/// later ','s the parse never reached the separator never earn). The
+/// fresh/armed segment's own ',' the law keeps (the key read threw at
+/// it — the parse never consumed it, the tail carries it).
+/// THE SEPARATOR COLLECTOR (the same law every earned
+/// separator the parse consumed collected — the earlier elements
+/// the multi-element parse walks live BETWEEN the earned
+/// separators, the fresh/poisoned segment's ',' never earns and
+/// the tail the LAST earned separator names).
+fn selector_top_level_comma_all(region: &str) -> Vec<usize> {
     enum SegmentLaw {
         /// the segment's top-level '=' yet unseen
         Fresh,
@@ -1437,7 +1442,7 @@ fn selector_top_level_comma(region: &str) -> Option<usize> {
     let mut i = 0;
     let mut quote: Option<u8> = None;
     let mut law = SegmentLaw::Fresh;
-    let mut last: Option<usize> = None;
+    let mut earned: Vec<usize> = Vec::new();
     while i < b.len() {
         match quote {
             // the quoted read's own text: the escape pair the
@@ -1468,7 +1473,7 @@ fn selector_top_level_comma(region: &str) -> Option<usize> {
                     // poison propagates, the parse never reached past
                     // it)
                     if matches!(law, SegmentLaw::Armed) {
-                        last = Some(i);
+                        earned.push(i);
                         law = SegmentLaw::Fresh;
                     }
                 }
@@ -1477,7 +1482,7 @@ fn selector_top_level_comma(region: &str) -> Option<usize> {
         }
         i += 1;
     }
-    last
+    earned
 }
 
 /// THE OPTIONS' OWN NAME LANE (javap `EntitySelectorParser
@@ -1515,6 +1520,50 @@ fn local_selector_options_suggestions(
         // the map value state the honest ask keeps
         return ChatSuggestionSource::AskServer;
     }
+    let region_start = token_start + 1 + bracket_idx + 1;
+    let region_end = region_start + region.len();
+    // THE MULTI-ELEMENT PARSE THE STATE MACHINE SPEAKS (javap 26.2
+    // `InvertableSetOptionState` — the parser's own four fields the
+    // constructor walk banks PERSIST across the ',' elements of one
+    // parse, the earned separators the quote-aware law collects, the
+    // elements BETWEEN them the parse walks before the tail's own
+    // lane answers): the element the parse consumed the state marks
+    // (the SECOND `name=`/`type=cow` element the SINGLE gate throws,
+    // the negative/tag arms the MULTIPLE gate keeps, the repeated
+    // tag the tags-set refusal wears); the deaths the earlier-element
+    // law answers (the walk's own junk the survived NextOrClose pair
+    // wears, every other throw the EMPTY silence keeps)
+    let earned = selector_top_level_comma_all(region);
+    let mut states = SelectorOptionStates::new();
+    let mut elem_start_in_region = 0;
+    for &sep in &earned {
+        let element = &region[elem_start_in_region..sep];
+        let elem_abs = region_start + elem_start_in_region;
+        match selector_earlier_element_walk(element, elem_abs, &mut states, entity_types) {
+            SelectorEarlierParse::Parsed => {}
+            SelectorEarlierParse::Junk(junk_abs) => {
+                // the survived suggestOptionsNextOrClose state the
+                // ',' + ']' pair at the junk wears — the span the
+                // fill's own cursor law keeps ([cursor, input end))
+                return ChatSuggestionSource::Local {
+                    start: junk_abs as i32,
+                    length: (region_end - junk_abs) as i32,
+                    matches: selector_punctuation_matches(),
+                };
+            }
+            SelectorEarlierParse::Dead => {
+                // the parse threw at the element — the SUGGEST_NOTHING
+                // silence (or the provider's own ','-poisoned
+                // remaining) the EMPTY local keeps
+                return ChatSuggestionSource::Local {
+                    start: elem_abs as i32,
+                    length: element.len() as i32,
+                    matches: Vec::new(),
+                };
+            }
+        }
+        elem_start_in_region = sep + 1;
+    }
     // the fresh element position: the region's tail after the last
     // TOP-LEVEL ',' the quote-aware split names (the parseOptions ','
     // the parse consumes as the element separator only — the
@@ -1526,15 +1575,14 @@ fn local_selector_options_suggestions(
     // lane below — the first element and the continuation installs
     // ALIKE: the suggestOptionsKey state the ',' consumption
     // re-installs, the same readString walk the key read rides)
-    let tail = match selector_top_level_comma(region) {
-        Some(i) => &region[i + 1..],
+    let tail = match earned.last() {
+        Some(&i) => &region[i + 1..],
         None => region,
     };
     // the tail's own span in the FULL input ('/' + the consumed
     // prefix + the '@' + the selector chars + the '[') — the region's
     // own start the walk's region_end span keeps (the tail the offset
     // the split wears, the region end the SAME for every element)
-    let region_start = token_start + 1 + bracket_idx + 1;
     let start = region_start + (region.len() - tail.len());
     // THE QUOTED KEY LANE (EVERY element — the ',' continuation the
     // suggestOptionsKey state re-installs the same walk rides): the
@@ -1552,6 +1600,7 @@ fn local_selector_options_suggestions(
                 region_start + region.len(),
                 entity_types,
                 entity_type_tags,
+                &mut states,
             );
         }
     }
@@ -1597,11 +1646,26 @@ fn local_selector_options_suggestions(
         // the value position: the option's own walk the 26.2
         // modifiers install (sort / gamemode / type / the quoted name
         // values the audited lanes speak, the rest the honest ask
-        // keeps)
-        return local_selector_value_suggestions(tail, eq_idx, start, entity_types, entity_type_tags);
+        // keeps) — the STATE GATES the InvertableSetOptionState
+        // family's elements ride (the second element the accumulated
+        // state's arms wear)
+        return local_selector_value_suggestions(
+            tail,
+            eq_idx,
+            start,
+            entity_types,
+            entity_type_tags,
+            &mut states,
+        );
     }
     // the suggestNames forEach arm the prefix fold filters (the
-    // lowercase law both sides wear), the merge sort the
+    // lowercase law both sides wear), the canUse gates the
+    // registered `(parser)Z` predicates speak filter the four
+    // InvertableSetOptionState keys (the canParseAny the audited
+    // $2 name / $31 gamemode / $34 team / $41 type lambdas return —
+    // the SINGLE-marked state the key's own row never answers —
+    // `type=cow,t` the type row the gate hides, `type=!cow,t` the
+    // MULTIPLE state the row keeps), the merge sort the
     // case-insensitive law orders — the QUOTED-VALUE continuations
     // the region-level ask retired: the parse CONSUMED the earlier
     // quoted reads (the region's quotes the completed elements
@@ -1611,6 +1675,16 @@ fn local_selector_options_suggestions(
     let mut matches = selector_option_matches();
     matches
         .retain(|m| m.text.to_lowercase().starts_with(&tail_lc));
+    matches.retain(|m| {
+        let key = m.text.trim_end_matches('=');
+        match key {
+            "name" => states.name.can_parse_any(),
+            "team" => states.team.can_parse_any(),
+            "gamemode" => states.gamemode.can_parse_any(),
+            "type" => states.ty.can_parse_any(),
+            _ => true,
+        }
+    });
     ChatSuggestionSource::Local {
         start: start as i32,
         length: tail.len() as i32,
@@ -1720,16 +1794,32 @@ fn local_selector_quoted_key_suggestions(
     region_end: usize,
     entity_types: &[String],
     entity_type_tags: &[(String, Vec<String>)],
+    states: &mut SelectorOptionStates,
 ) -> ChatSuggestionSource {
     match selector_quoted_key_read(kt) {
         SelectorQuotedKeyRead::CleanUnterminated => {
             // the END-OF-QUOTE throw at the input end — the
             // suggestNames state survives, the remaining "" the FULL
-            // table answers
+            // table answers — the canUse gates the registered
+            // `(parser)Z` predicates speak filter the four
+            // InvertableSetOptionState keys (the canParseAny the
+            // audited $2/$31/$34/$41 lambdas return — a
+            // SINGLE-marked state the key's own row never answers)
+            let mut matches = selector_option_matches();
+            matches.retain(|m| {
+                let key = m.text.trim_end_matches('=');
+                match key {
+                    "name" => states.name.can_parse_any(),
+                    "team" => states.team.can_parse_any(),
+                    "gamemode" => states.gamemode.can_parse_any(),
+                    "type" => states.ty.can_parse_any(),
+                    _ => true,
+                }
+            });
             ChatSuggestionSource::Local {
                 start: region_end as i32,
                 length: 0,
-                matches: selector_option_matches(),
+                matches,
             }
         }
         SelectorQuotedKeyRead::InvalidEscape(esc) => {
@@ -1761,6 +1851,7 @@ fn local_selector_quoted_key_suggestions(
                     synth_start,
                     entity_types,
                     entity_type_tags,
+                    states,
                 );
             }
             // the unknown key (the lookup's own throw) or the '='
@@ -1773,6 +1864,99 @@ fn local_selector_quoted_key_suggestions(
                 matches: Vec::new(),
             }
         }
+    }
+}
+
+/// THE EARLIER ELEMENT'S OWN PARSE VERDICT (the parseOptions loop
+/// the audited offsets speak — the elements the earned separators
+/// leave behind the parse WALKS before the tail's own lane answers:
+/// the key read (the quoted readString walk or the unquoted run the
+/// charset speaks), the get() exact-case lookup (the unknown key the
+/// ERROR_UNKNOWN_OPTION throw answers), the '=' expectation (the
+/// skipWhitespace the parse rides between — the audited offsets
+/// 69-73 — the missing separator the ERROR_EXPECTED_OPTION_VALUE
+/// throw keeps), the modifier's own walk (the state gates the
+/// selector_option_value_walk wires) — the death law the
+/// last-installed suggestion state speaks: the walk's own JUNK the
+/// suggestOptionsNextOrClose install at the offsets 153-160
+/// SURVIVES (the UNGATED ',' + ']' pair at the junk — the same law
+/// the tail's junk lane wears), every other death the
+/// SUGGEST_NOTHING silence (or the provider's own remaining the
+/// ',' tail poisons — the values the filter never starts-with)
+/// answers — the EMPTY local.)
+enum SelectorEarlierParse {
+    /// the element the parse consumed — the state marked, the loop
+    /// continues
+    Parsed,
+    /// the walk returned at the junk char — the survived state the
+    /// punctuation wears, the ABSOLUTE junk offset the span names
+    Junk(usize),
+    /// the parse threw — the EMPTY silence
+    Dead,
+}
+
+fn selector_earlier_element_walk(
+    element: &str,
+    element_abs: usize,
+    states: &mut SelectorOptionStates,
+    entity_types: &[String],
+) -> SelectorEarlierParse {
+    // the loop's own skipWhitespace rides (the offsets 39-43) — the
+    // trailing whitespace the post-value skipWhitespace (146-150)
+    // consumes before the ',' check — the trimmed element the walk
+    // parses
+    let lead_ws = element.len() - element.trim_start_matches([' ', '\t']).len();
+    let t = element.trim_matches([' ', '\t']);
+    if t.is_empty() {
+        // the key read at nothing — the get("") null the throw keeps
+        // (the double-comma law the fresh segment's ',' wears)
+        return SelectorEarlierParse::Dead;
+    }
+    // THE KEY READ (the readString walk the parseOptions loop carries
+    // — the quoted form the terminators/escapes answer, the unquoted
+    // run the charset speaks — the run stops at the '=' the key ends)
+    let (key, key_end, post): (String, usize, &str) = if t.starts_with('"')
+        || t.starts_with('\'')
+    {
+        match selector_quoted_key_read(t) {
+            SelectorQuotedKeyRead::Terminated { key, end } => (key, end, &t[end..]),
+            // the unterminated/invalid quote the completed element
+            // never carries (the quote-aware split the reads
+            // consumed) — the honest Dead the read's own throw wears
+            _ => return SelectorEarlierParse::Dead,
+        }
+    } else {
+        let run = selector_unquoted_run_len(t);
+        (t[..run].to_string(), run, &t[run..])
+    };
+    // THE GET() LOOKUP (the exact-case map the ERROR_UNKNOWN_OPTION
+    // throw guards) — the empty key the unquoted charset's refusal
+    // keeps ('!name=x' the read nothing consumes)
+    if !SELECTOR_OPTIONS.iter().any(|(k, _)| *k == key.as_str()) {
+        return SelectorEarlierParse::Dead;
+    }
+    // THE '=' EXPECTATION (the skipWhitespace the parse rides
+    // between — the audited offsets 69-73 — the missing separator
+    // the ERROR_EXPECTED_OPTION_VALUE throw answers)
+    let post_t = post.trim_start_matches([' ', '\t']);
+    let value = match post_t.strip_prefix('=') {
+        Some(v) => v,
+        None => return SelectorEarlierParse::Dead,
+    };
+    // the skipWhitespace between '=' and the value (the offsets
+    // 125-129) + the trailing ws the post-value skip consumes — the
+    // trimmed value the walk rides (the same law the tail's own
+    // lane wears)
+    let value_lead_ws = value.len() - value.trim_start_matches([' ', '\t']).len();
+    let value_t = value.trim_matches([' ', '\t']);
+    // the value region's own abs start (the committed tail law's
+    // elem_start shape — the '=' abs + 1 + the leading ws)
+    let eq_abs = element_abs + lead_ws + key_end + (post.len() - post_t.len());
+    let value_abs = eq_abs + 1 + value_lead_ws;
+    match selector_option_value_walk(&key, value_t, states, entity_types) {
+        Some(SelectorValueWalk::Complete) => SelectorEarlierParse::Parsed,
+        Some(SelectorValueWalk::Junk(off)) => SelectorEarlierParse::Junk(value_abs + off),
+        _ => SelectorEarlierParse::Dead,
     }
 }
 
@@ -1857,6 +2041,151 @@ enum SelectorValueWalk {
     /// sort/gamemode/type providers the committed folds speak)
     Refused,
 }
+
+/// THE OPTION STATE'S OWN LIMITATION (javap 26.2
+/// `InvertableSetOptionState$Limitation.<clinit>` — the three
+/// constants the enum walk banks, the ordinals the iconst pairs
+/// wear: NONE=0, SINGLE=1, MULTIPLE=2).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum SelectorOptionLimitation {
+    /// nothing parsed yet — every arm still parses
+    None,
+    /// a POSITIVE element marked — NOTHING parses after it
+    Single,
+    /// a NEGATIVE element (or a tag) marked — the negative/tag arms
+    /// still parse, the positive never does
+    Multiple,
+}
+
+/// THE INVERTABLE SET OPTION STATE (javap 26.2
+/// `net/minecraft/commands/arguments/selector/options/
+/// InvertableSetOptionState` — the audited gates the bytecode
+/// speaks): `canLimitToSingle` = state==NONE,
+/// `canLimitToMultiple` = state!=SINGLE,
+/// `canParsePositiveElement` = canLimitToSingle,
+/// `canParseNegativeElement` = canLimitToMultiple,
+/// `canParseAnyTag`/`canParseAny` = canLimitToMultiple,
+/// `canParseTag(tag)` = canParseAnyTag && !tags.contains(tag),
+/// `canParseElement(inverted)` = inverted ? negative : positive;
+/// the marks: `markParsedPositiveElement` → SINGLE,
+/// `markParsedNegativeElement` → MULTIPLE,
+/// `markParsedTag(tag)` → MULTIPLE + tags.add(tag). The state the
+/// PARSER OWNS (the four fields the `<init>` walk banks — nameOption/
+/// teamOption/typeOption/gamemodeOption each `new
+/// InvertableSetOptionState()` once per parser), so it PERSISTS
+/// across the ',' elements of one selector parse — the SECOND
+/// `type=cow` the SINGLE gate throws (the ERROR_INAPPLICABLE_OPTION
+/// the rollbackAndThrow answers), the second `type=!cow` the
+/// MULTIPLE gate keeps, the repeated tag the tags-set refusal wears.
+#[derive(Debug)]
+struct SelectorOptionSetState {
+    state: SelectorOptionLimitation,
+    /// the parsed TAG ids (the type= tag lane's own set — the
+    /// repeat the canParseTag contains-check refuses; the tag's
+    /// EXISTENCE the parse never asks — any identifier lands)
+    tags: std::collections::HashSet<String>,
+}
+
+impl SelectorOptionSetState {
+    fn new() -> Self {
+        Self {
+            state: SelectorOptionLimitation::None,
+            tags: std::collections::HashSet::new(),
+        }
+    }
+    /// javap `canLimitToSingle` — the state==NONE compare
+    fn can_limit_to_single(&self) -> bool {
+        self.state == SelectorOptionLimitation::None
+    }
+    /// javap `canLimitToMultiple` — the state!=SINGLE compare
+    fn can_limit_to_multiple(&self) -> bool {
+        self.state != SelectorOptionLimitation::Single
+    }
+    /// javap `canParsePositiveElement` — the no-'!' element's gate
+    fn can_parse_positive_element(&self) -> bool {
+        self.can_limit_to_single()
+    }
+    /// javap `canParseNegativeElement` — the '!' element's gate
+    fn can_parse_negative_element(&self) -> bool {
+        self.can_limit_to_multiple()
+    }
+    /// javap `canParseAnyTag`
+    fn can_parse_any_tag(&self) -> bool {
+        self.can_limit_to_multiple()
+    }
+    /// javap `canParseAny` — the KEY-suggestion gate the registered
+    /// `(parser)Z` predicates speak (lambda$bootStrap$2 name /
+    /// $31 gamemode / $34 team / $41 type — the suggestNames
+    /// `canUse` test filters the option rows)
+    fn can_parse_any(&self) -> bool {
+        self.can_limit_to_multiple()
+    }
+    /// javap `canParseTag(Identifier)`
+    fn can_parse_tag(&self, tag: &str) -> bool {
+        self.can_parse_any_tag() && !self.tags.contains(tag)
+    }
+    /// javap `canParseElement(Z)` — the inverted flag the
+    /// shouldInvertValue read carries
+    fn can_parse_element(&self, inverted: bool) -> bool {
+        if inverted {
+            self.can_parse_negative_element()
+        } else {
+            self.can_parse_positive_element()
+        }
+    }
+    /// javap `markParsedElement(Z)` — inverted ? MULTIPLE : SINGLE
+    fn mark_parsed_element(&mut self, inverted: bool) {
+        self.state = if inverted {
+            SelectorOptionLimitation::Multiple
+        } else {
+            SelectorOptionLimitation::Single
+        };
+    }
+    /// javap `markParsedTag(Identifier)` — MULTIPLE + the tag the
+    /// set gains
+    fn mark_parsed_tag(&mut self, tag: &str) {
+        self.state = SelectorOptionLimitation::Multiple;
+        self.tags.insert(tag.to_string());
+    }
+}
+
+/// THE PARSER'S OWN OPTION STATES (javap 26.2
+/// `EntitySelectorParser.<init>` — the four `new
+/// InvertableSetOptionState()` fields the constructor walk banks;
+/// the SetOnceOptionState keys (limit/sort/scores/advancements)
+/// carry their own single-parse law the other rounds bank — this
+/// round the InvertableSetOptionState family speaks)
+#[derive(Debug)]
+struct SelectorOptionStates {
+    name: SelectorOptionSetState,
+    team: SelectorOptionSetState,
+    gamemode: SelectorOptionSetState,
+    ty: SelectorOptionSetState,
+}
+
+impl SelectorOptionStates {
+    fn new() -> Self {
+        Self {
+            name: SelectorOptionSetState::new(),
+            team: SelectorOptionSetState::new(),
+            gamemode: SelectorOptionSetState::new(),
+            ty: SelectorOptionSetState::new(),
+        }
+    }
+    /// the option's own state the exact-case key names (the get()
+    /// lookup the parse rides) — None for the keys the
+    /// InvertableSetOptionState family never owns
+    fn for_key(&mut self, key: &str) -> Option<&mut SelectorOptionSetState> {
+        match key {
+            "name" => Some(&mut self.name),
+            "team" => Some(&mut self.team),
+            "gamemode" => Some(&mut self.gamemode),
+            "type" => Some(&mut self.ty),
+            _ => None,
+        }
+    }
+}
+
 
 /// THE UNQUOTED CHARSET RUN THE BRIGADIER READ WALKS SPEAK (the
 /// `isAllowedInUnquotedString` fold the readString/readUnquotedString
@@ -2317,50 +2646,45 @@ fn local_selector_type_value_suggestions(
 /// rides); the unknown keys (the scores map, the
 /// nbt/advancements/predicate compounds) / the internal-whitespace
 /// tails the honest ask keeps).
-fn local_selector_value_suggestions(
-    tail: &str,
-    eq_idx: usize,
-    tail_start: usize,
+/// THE POST-VALUE PUNCTUATION ROWS (the UNGATED
+/// suggestOptionsNextOrClose pair — the bare `suggest(',')` +
+/// `suggest(']')` the bsm#13 bytecode banks, no tooltips the plain
+/// suggests wear).
+fn selector_punctuation_matches() -> Vec<mc_protocol::play::CommandSuggestionsMatch> {
+    vec![
+        mc_protocol::play::CommandSuggestionsMatch {
+            text: ",".to_string(),
+            tooltip: None,
+        },
+        mc_protocol::play::CommandSuggestionsMatch {
+            text: "]".to_string(),
+            tooltip: None,
+        },
+    ]
+}
+
+/// THE PER-KEY VALUE WALK THE OPTION MODIFIERS SPEAK (the audited
+/// walk bodies the committed law keeps, the STATE GATES this round
+/// wires at the audited positions): the InvertableSetOptionState
+/// family's gates ride where the 26.2 bytecode installs them — the
+/// GAMEMODE/TYPE gates BEFORE the value read (lambda$bootStrap$28
+/// offsets 28-33 / $35 plain lane 113-131 + the tag lane's
+/// canParseAnyTag 35-52), the NAME/TEAM gates AFTER the read ($0
+/// offsets 27-33 / $32 offsets 27-32) — the gate the
+/// ERROR_INAPPLICABLE_OPTION rollbackAndThrow answers (the Refused
+/// verdict: the SUGGEST_NOTHING silence for the string keys, the
+/// gamemode/type providers the setSuggestions install PRECEDES the
+/// gate the throw survives — the committed folds the Refused arm
+/// speaks); the MARKS the audited orders wear (markParsedElement
+/// after the gate, markParsedTag after the canParseTag repeat
+/// refusal). None = the unspoken value walks (the scores map, the
+/// nbt/advancements/predicate compounds) the honest ask keeps.
+fn selector_option_value_walk(
+    key: &str,
+    trimmed: &str,
+    states: &mut SelectorOptionStates,
     entity_types: &[String],
-    entity_type_tags: &[(String, Vec<String>)],
-) -> ChatSuggestionSource {
-    // the key the readString walk banks (the whitespace the
-    // skipWhitespace between key and '=' never counts), the value
-    // region the '=' skip leaves
-    let key = tail[..eq_idx].trim();
-    let value_region = &tail[eq_idx + 1..];
-    // the parseOptions skipWhitespace law — the leading whitespace
-    // between '=' and the value the rollback cursor never covers
-    let element = value_region.trim_start_matches([' ', '\t']);
-    let ws_len = value_region.len() - element.len();
-    let elem_start = tail_start + eq_idx + 1 + ws_len;
-    // the trailing-trimmed element the post-value membership asks
-    // (the byName/switch lookups the case-sensitive law keeps); an
-    // INTERNAL whitespace the parse's own ERROR_EXPECTED_END_OF_OPTIONS
-    // lane wears — the honest ask — EXCEPT the name key's QUOTED form:
-    // the readString walk consumes the whitespace INSIDE the quotes
-    // (the value walk never stops there, the ']' expectation never
-    // sees it), so the quoted value rides the quote law instead
-    let trimmed = element.trim_end_matches([' ', '\t']);
-    let name_quoted = key == "name" && {
-        let v = trimmed.strip_prefix('!').unwrap_or(trimmed);
-        v.starts_with('"') || v.starts_with('\'')
-    };
-    if !name_quoted && trimmed.contains([' ', '\t']) {
-        return ChatSuggestionSource::AskServer;
-    }
-    let punctuation = || -> Vec<mc_protocol::play::CommandSuggestionsMatch> {
-        vec![
-            mc_protocol::play::CommandSuggestionsMatch {
-                text: ",".to_string(),
-                tooltip: None,
-            },
-            mc_protocol::play::CommandSuggestionsMatch {
-                text: "]".to_string(),
-                tooltip: None,
-            },
-        ]
-    };
+) -> Option<SelectorValueWalk> {
     let walk = match key {
         // the SORT modifier (javap `EntitySelectorOptions` — the
         // parser-taking lambda the audit_bsm13.py round banks): the
@@ -2393,17 +2717,34 @@ fn local_selector_value_suggestions(
                 Some(v) => (1, v),
                 None => (0, trimmed),
             };
-            let run = selector_unquoted_run_len(value);
-            if run == value.len() {
-                if GAMEMODE_VALUE_SUGGESTIONS.contains(&value) {
-                    SelectorValueWalk::Complete
+            // THE STATE GATE BEFORE THE READ (the audited $28 order —
+            // the canParseElement check at the offsets 28-33 precedes
+            // the readUnquotedString at 47-54; the fail the
+            // rollbackAndThrow(cursor, ERROR_INAPPLICABLE_OPTION,
+            // "gamemode") answers — the provider the setSuggestions
+            // install at 5-12 PRECEDES the gate keeps)
+            let state = states.for_key("gamemode").unwrap();
+            if !state.can_parse_element(inv != 0) {
+                SelectorValueWalk::Refused
+            } else {
+                let run = selector_unquoted_run_len(value);
+                let walk = if run == value.len() {
+                    if GAMEMODE_VALUE_SUGGESTIONS.contains(&value) {
+                        SelectorValueWalk::Complete
+                    } else {
+                        SelectorValueWalk::Refused
+                    }
+                } else if GAMEMODE_VALUE_SUGGESTIONS.contains(&&value[..run]) {
+                    SelectorValueWalk::Junk(inv + run)
                 } else {
                     SelectorValueWalk::Refused
+                };
+                // the MARK after the walk (the audited 97-99 — the
+                // markParsedElement the predicate install follows)
+                if !matches!(walk, SelectorValueWalk::Refused) {
+                    state.mark_parsed_element(inv != 0);
                 }
-            } else if GAMEMODE_VALUE_SUGGESTIONS.contains(&&value[..run]) {
-                SelectorValueWalk::Junk(inv + run)
-            } else {
-                SelectorValueWalk::Refused
+                walk
             }
         }
         // the TYPE modifier (lambda$bootStrap$35 — the audited walk):
@@ -2421,42 +2762,72 @@ fn local_selector_value_suggestions(
                 Some(v) => (1, v),
                 None => (0, trimmed),
             };
-            let type_walk = |v: &str| -> SelectorValueWalk {
-                if let Some(tag) = v.strip_prefix('#') {
-                    let run = selector_identifier_run_len(tag);
-                    if run == tag.len() {
-                        if selector_identifier_ok(tag) {
-                            SelectorValueWalk::Complete
-                        } else {
-                            SelectorValueWalk::Refused
-                        }
-                    } else if run > 0 && selector_identifier_ok(&tag[..run]) {
-                        SelectorValueWalk::Junk(1 + inv + run)
+            if let Some(tag) = value.strip_prefix('#') {
+                // THE TAG LANE: the canParseAnyTag gate BEFORE the
+                // read (the audited $35 offsets 35-52), the
+                // canParseTag repeat refusal AFTER the read (62-81 —
+                // the tags-set contains the parse's own law), the
+                // markParsedTag last (104-107)
+                let run = selector_identifier_run_len(tag);
+                let walk = if run == tag.len() {
+                    if selector_identifier_ok(tag) {
+                        SelectorValueWalk::Complete
                     } else {
-                        // the empty/invalid-shape run the Identifier
-                        // read's own throw answers
                         SelectorValueWalk::Refused
                     }
+                } else if run > 0 && selector_identifier_ok(&tag[..run]) {
+                    SelectorValueWalk::Junk(1 + inv + run)
                 } else {
-                    let run = selector_identifier_run_len(v);
-                    let id_ok = |s: &str| {
-                        let id = selector_defaulted_id(s);
-                        entity_types.iter().any(|t| *t == id)
-                    };
-                    if run == v.len() {
-                        if id_ok(v) {
-                            SelectorValueWalk::Complete
-                        } else {
-                            SelectorValueWalk::Refused
-                        }
-                    } else if run > 0 && id_ok(&v[..run]) {
-                        SelectorValueWalk::Junk(inv + run)
+                    // the empty/invalid-shape run the Identifier
+                    // read's own throw answers
+                    SelectorValueWalk::Refused
+                };
+                if matches!(walk, SelectorValueWalk::Refused) {
+                    return Some(walk);
+                }
+                // the id the read carries — the FULL tag when the run
+                // consumed it, the run prefix the stopped read returns
+                let id = if run == tag.len() {
+                    tag
+                } else {
+                    &tag[..run]
+                };
+                let state = states.for_key("type").unwrap();
+                if !state.can_parse_tag(id) {
+                    return Some(SelectorValueWalk::Refused);
+                }
+                state.mark_parsed_tag(id);
+                walk
+            } else {
+                // THE PLAIN LANE: the canParseElement gate BEFORE the
+                // read (the audited 113-131), the markParsedElement
+                // last (210-212 — the limitToType the positive arm
+                // adds the parser wears)
+                let state = states.for_key("type").unwrap();
+                if !state.can_parse_element(inv != 0) {
+                    return Some(SelectorValueWalk::Refused);
+                }
+                let run = selector_identifier_run_len(value);
+                let id_ok = |s: &str| {
+                    let id = selector_defaulted_id(s);
+                    entity_types.iter().any(|t| *t == id)
+                };
+                let walk = if run == value.len() {
+                    if id_ok(value) {
+                        SelectorValueWalk::Complete
                     } else {
                         SelectorValueWalk::Refused
                     }
+                } else if run > 0 && id_ok(&value[..run]) {
+                    SelectorValueWalk::Junk(inv + run)
+                } else {
+                    SelectorValueWalk::Refused
+                };
+                if !matches!(walk, SelectorValueWalk::Refused) {
+                    state.mark_parsed_element(inv != 0);
                 }
-            };
-            type_walk(value)
+                walk
+            }
         }
         // the STRING walks (name / team / tag — the audited
         // lambda$bootStrap$0/$32/$42): the modifiers install NO
@@ -2479,7 +2850,7 @@ fn local_selector_value_suggestions(
                 Some(v) => (1, v),
                 None => (0, trimmed),
             };
-            match value.as_bytes().first() {
+            let walk = match value.as_bytes().first() {
                 Some(&q) if q == b'"' || q == b'\'' => match selector_quoted_walk(value) {
                     SelectorValueWalk::Junk(off) => SelectorValueWalk::Junk(inv + off),
                     other => other,
@@ -2492,9 +2863,54 @@ fn local_selector_value_suggestions(
                         SelectorValueWalk::Junk(inv + run)
                     }
                 }
+            };
+            // THE STATE GATE AFTER THE READ (the audited $0 order —
+            // the readString at 13-20, the canParseElement at 27-33
+            // AFTER it; the fail the rollbackAndThrow(cursor,
+            // ERROR_INAPPLICABLE_OPTION, "name") answers — NO
+            // provider the name modifier installs (the SUGGEST_NOTHING
+            // 132-136 install keeps) — the EMPTY silence the Refused
+            // verdict wears)
+            if matches!(walk, SelectorValueWalk::Refused) {
+                return Some(walk);
             }
+            let state = states.for_key("name").unwrap();
+            if !state.can_parse_element(inv != 0) {
+                return Some(SelectorValueWalk::Refused);
+            }
+            state.mark_parsed_element(inv != 0);
+            walk
         }
-        "team" | "tag" => {
+        "team" => {
+            // the TEAM modifier (the audited $32 — the state fetch,
+            // cursor, invert, readUnquotedString, the canParseElement
+            // check AFTER the read at 27-32, the predicate, the mark
+            // at 58-60 — the check order the name walk's own carries)
+            let (inv, value) = match trimmed.strip_prefix('!') {
+                Some(v) => (1, v),
+                None => (0, trimmed),
+            };
+            let run = selector_unquoted_run_len(value);
+            let walk = if run == value.len() {
+                SelectorValueWalk::Complete
+            } else {
+                SelectorValueWalk::Junk(inv + run)
+            };
+            if matches!(walk, SelectorValueWalk::Refused) {
+                return Some(walk);
+            }
+            let state = states.for_key("team").unwrap();
+            if !state.can_parse_element(inv != 0) {
+                return Some(SelectorValueWalk::Refused);
+            }
+            state.mark_parsed_element(inv != 0);
+            walk
+        }
+        // the TAG modifier (the audited $42 — the plainest walk, NO
+        // state gate the walk carries — `tag=a,tag=b,tag=a` every
+        // element parses, the state machinery the modifier never
+        // touches)
+        "tag" => {
             let (inv, value) = match trimmed.strip_prefix('!') {
                 Some(v) => (1, v),
                 None => (0, trimmed),
@@ -2554,7 +2970,50 @@ fn local_selector_value_suggestions(
         "x_rotation" | "y_rotation" => selector_bounds_walk(trimmed, false, false),
         // the unspoken value walks the honest ask keeps (the scores
         // map, the nbt/advancements/predicate compounds)
-        _ => return ChatSuggestionSource::AskServer,
+        _ => return None,
+    };
+    Some(walk)
+}
+
+fn local_selector_value_suggestions(
+    tail: &str,
+    eq_idx: usize,
+    tail_start: usize,
+    entity_types: &[String],
+    entity_type_tags: &[(String, Vec<String>)],
+    states: &mut SelectorOptionStates,
+) -> ChatSuggestionSource {
+    // the key the readString walk banks (the whitespace the
+    // skipWhitespace between key and '=' never counts), the value
+    // region the '=' skip leaves
+    let key = tail[..eq_idx].trim();
+    let value_region = &tail[eq_idx + 1..];
+    // the parseOptions skipWhitespace law — the leading whitespace
+    // between '=' and the value the rollback cursor never covers
+    let element = value_region.trim_start_matches([' ', '\t']);
+    let ws_len = value_region.len() - element.len();
+    let elem_start = tail_start + eq_idx + 1 + ws_len;
+    // the trailing-trimmed element the post-value membership asks
+    // (the byName/switch lookups the case-sensitive law keeps); an
+    // INTERNAL whitespace the parse's own ERROR_EXPECTED_END_OF_OPTIONS
+    // lane wears — the honest ask — EXCEPT the name key's QUOTED form:
+    // the readString walk consumes the whitespace INSIDE the quotes
+    // (the value walk never stops there, the ']' expectation never
+    // sees it), so the quoted value rides the quote law instead
+    let trimmed = element.trim_end_matches([' ', '\t']);
+    let name_quoted = key == "name" && {
+        let v = trimmed.strip_prefix('!').unwrap_or(trimmed);
+        v.starts_with('"') || v.starts_with('\'')
+    };
+    if !name_quoted && trimmed.contains([' ', '\t']) {
+        return ChatSuggestionSource::AskServer;
+    }
+    let punctuation = selector_punctuation_matches;
+    let walk = match selector_option_value_walk(key, trimmed, states, entity_types) {
+        Some(walk) => walk,
+        // the unspoken value walks the honest ask keeps (the scores
+        // map, the nbt/advancements/predicate compounds)
+        None => return ChatSuggestionSource::AskServer,
     };
     match walk {
         SelectorValueWalk::Complete => {
@@ -24502,7 +24961,14 @@ mod tests {
             panic!("/kill @a[gamemode=creative, the key state answers");
         };
         assert_eq!((start, length), (27, 0), "the fresh tail's own span");
-        assert_eq!(matches.len(), 21, "the key state the 21 keys re-answer");
+        assert_eq!(
+            matches.len(),
+            20,
+            "the ALL-21 MINUS the gated gamemode row — the consumed\
+             gamemode=creative element the state SINGLE marks, the\
+             canParseAny() false the registered bootStrap$31 predicate\
+             returns, the gamemode row the canUse filter never answers"
+        );
         // THE TAB APPLY (the selected '!creative' the replace lands —
         // the '!' the text carries, the span the input wears)
         let mut app = App::new(3);
@@ -25189,15 +25655,17 @@ mod tests {
         // THE QUOTE-LED CONTINUATION THE KEY WALK ANSWERS (the
         // quote-aware split the flip wears — the ',' continuation the
         // suggestOptionsKey state re-installs, the unterminated read
-        // the ALL-21 state at the input end keeps, the typed prefix
-        // the throw wipes)
+        // the ALL-21 state at the input end keeps MINUS the gated
+        // name row (the consumed name= element the state SINGLE
+        // marks, the canParseAny() false the registered bootStrap$2
+        // predicate returns), the typed prefix the throw wipes)
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[name=Steve,\"zzz=x", &[], true, &[])
         else {
             panic!("/kill @a[name=Steve,\"zzz=x the quote-led continuation answers");
         };
         assert_eq!((start, length), (26, 0), "the input end the throw cursor wears");
-        assert_eq!(matches.len(), 21, "the ALL-21 state the throw keeps");
+        assert_eq!(matches.len(), 20, "the ALL-21 MINUS the gated name row");
         // THE TAB APPLY (the EMPTY local no request spends — the
         // input the silence never touches)
         let mut app = App::new(3);
@@ -25487,20 +25955,25 @@ mod tests {
             panic!("/kill @a[name=\"a,b\",na the fresh-name walk answers");
         };
         assert_eq!((start, length), (20, 2), "the span the tail key names");
-        assert_eq!(
-            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
-            vec!["name="],
-            "the 'na' prefix the name row wears"
+        assert!(
+            matches.is_empty(),
+            "the consumed name the canUse gate the name row hides — the SINGLE\
+             state the canParseAny() false the registered predicate speaks\
+             (the audited bootStrap$2 nameOption gate)"
         );
         // THE EMPTY TAIL (the ',' consumed, the loop the input end
-        // exits — the suggestOptionsKey state the ALL-21 wears)
+        // exits — the suggestOptionsKey state the ALL-21 wears MINUS
+        // the gated name row: the consumed name= element the state
+        // SINGLE marks, the canParseAny() false the registered
+        // bootStrap$2 predicate returns, the name row the canUse
+        // filter never answers)
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[name=\"a,b\",", &[], true, &[])
         else {
             panic!("/kill @a[name=\"a,b\", the empty tail answers");
         };
         assert_eq!((start, length), (20, 0), "the input end the state wears");
-        assert_eq!(matches.len(), 21, "the ALL-21 fresh names the ',' keeps");
+        assert_eq!(matches.len(), 20, "the ALL-21 MINUS the gated name row");
         assert_eq!(
             matches[0].text, "advancements=",
             "the merge sort the case-insensitive law orders"
@@ -25535,27 +26008,35 @@ mod tests {
             panic!("/kill @a[name=Steve,\"so the continuation key answers");
         };
         assert_eq!((start, length), (23, 0), "the input end the throw cursor wears");
-        assert_eq!(matches.len(), 21, "the ALL-21 state the throw keeps");
+        assert_eq!(
+            matches.len(),
+            20,
+            "the ALL-21 MINUS the gated name row (the state the consumed\
+             name= element SINGLE marks, the canParseAny gate hides)"
+        );
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[name=Steve,'na", &[], true, &[])
         else {
             panic!("/kill @a[name=Steve,'na the single-quote continuation answers");
         };
         assert_eq!((start, length), (23, 0), "the input end the state wears");
-        assert_eq!(matches.len(), 21, "the single-quote form the ALL-21 keeps");
-        // THE TERMINATED CONTINUATION KEY (the known key the '='
-        // expectation consumes — the value walk the synth the
-        // punctuation wears at the input end)
+        assert_eq!(matches.len(), 20, "the single-quote form the same gate keeps");
+        // THE TERMINATED CONTINUATION KEY THE STATE GATE REFUSES (the
+        // known key the '=' expectation consumes — the SECOND name=
+        // element the SINGLE state's canParseElement gate THROWS (the
+        // audited $0 order — the readString at 13-20, the gate at
+        // 27-33 AFTER it), the ERROR_INAPPLICABLE_OPTION the parse
+        // answers, NO provider the name modifier installs — the EMPTY
+        // local the SUGGEST_NOTHING silence keeps)
         let Src::Local { start, length, matches } =
             local_command_suggestions(&tree, "/kill @a[name=Steve,\"name\"=Steve", &[], true, &[])
         else {
             panic!("/kill @a[name=Steve,\"name\"=Steve the terminated key answers");
         };
-        assert_eq!((start, length), (32, 0), "the consumed value's own end");
-        assert_eq!(
-            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
-            vec![",", "]"],
-            "the terminated known key the value walk answers"
+        assert_eq!((start, length), (27, 5), "the synth value region the silence wears");
+        assert!(
+            matches.is_empty(),
+            "the second name= element the SINGLE gate throws"
         );
         // THE TERMINATED UNKNOWN CONTINUATION KEY (the get() throw
         // the rollback cursor the KEY START names — the quote-led
@@ -25651,13 +26132,15 @@ mod tests {
             panic!("/kill @a[name=\"Steve x\",na the fresh-name walk answers");
         };
         assert_eq!((start, length), (24, 2), "the span the tail key names");
-        assert_eq!(
-            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
-            vec!["name="],
-            "the 'na' prefix the name row wears"
+        assert!(
+            matches.is_empty(),
+            "the consumed name= element the state SINGLE marks — the canUse\
+             gate the name row hides (the audited bootStrap$2 canParseAny\
+             predicate the suggestNames filter speaks)"
         );
-        // THE TAB APPLY (the fresh-name local no request spends —
-        // the apply the row the tail replaces)
+        // THE TAB APPLY (the fresh-name local the canUse gate the row
+        // never answers — the apply NOTHING the gate hides, the input
+        // the silence keeps)
         let mut app = App::new(3);
         app.enter_world();
         app.on_command_tree(test_provider_tree());
@@ -25673,8 +26156,300 @@ mod tests {
         );
         app.on_chat_tab_key();
         assert_eq!(
-            app.chat_input, "/kill @a[name=\"a,b\",name=",
-            "the apply the name row lands"
+            app.chat_input, "/kill @a[name=\"a,b\",na",
+            "the gated name row the apply never lands — the input the\
+             silence keeps"
+        );
+    }
+
+    /// THE INVERTABLE SET OPTION STATE'S OWN GATES (javap 26.2
+    /// `InvertableSetOptionState` + the audited modifier lambdas —
+    /// the parser's four fields the constructor walk banks PERSIST
+    /// across the ',' elements of one parse, the SECOND element the
+    /// accumulated state's gates wear): the SINGLE state the second
+    /// positive AND negative element throws (the
+    /// ERROR_INAPPLICABLE_OPTION the rollbackAndThrow answers — the
+    /// EMPTY silence the string keys' SUGGEST_NOTHING install keeps),
+    /// the MULTIPLE state the negative/tag arms keeps (the parse
+    /// completes, the punctuation wears), the repeated tag the
+    /// tags-set refusal wears; the gamemode/type providers the
+    /// setSuggestions install PRECEDES the gate the throw survives
+    /// (the committed folds the Refused arm speaks); the canUse
+    /// gates the registered `(parser)Z` predicates speak ($2 name /
+    /// $31 gamemode / $34 team / $41 type) the fresh-key rows
+    /// filter; the earlier-element deaths the parse walk answers —
+    /// the unknown key / the missing '=' / the byName miss the EMPTY
+    /// silence keeps, the walk's own junk the survived NextOrClose
+    /// pair at the junk wears.
+    #[test]
+    fn the_selector_options_the_invertable_set_state_gates_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        let roster = [
+            "minecraft:cow".to_string(),
+            "minecraft:pig".to_string(),
+        ];
+        // THE SECOND NAME ELEMENT THE SINGLE GATE THROWS (the first
+        // `name=Steve` the state SINGLE marks, the second element's
+        // canParseElement(false) the NONE==NONE compare refuses — the
+        // audited $0 order the gate AFTER the read rides, NO provider
+        // the name modifier installs — the EMPTY local the value
+        // region's own span wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,name=", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,name= the state gate answers");
+        };
+        assert_eq!((start, length), (25, 0), "the empty value region the silence wears");
+        assert!(matches.is_empty(), "the second name= the SINGLE gate throws");
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,name=Alex", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,name=Alex the state gate answers");
+        };
+        assert_eq!((start, length), (25, 4), "the consumed value region the silence wears");
+        assert!(matches.is_empty(), "the second name=Alex the SINGLE gate throws");
+        // THE NEGATIVE ELEMENT THE SINGLE GATE THROWS TOO (the
+        // canParseNegativeElement the state!=SINGLE compare keeps —
+        // the SINGLE state the '!' arm refuses)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,name=!Al", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,name=!Al the state gate answers");
+        };
+        assert_eq!((start, length), (25, 3), "the inverted value region the silence wears");
+        assert!(matches.is_empty(), "the second name=! the SINGLE gate throws");
+        // THE MULTIPLE STATE THE NEGATIVE ARMS KEEPS (the first
+        // `name=!a` the state MULTIPLE marks, the second `name=!b`
+        // the canParseNegativeElement the MULTIPLE!=SINGLE compare
+        // accepts — the parse completes, the punctuation the
+        // post-value state wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=!a,name=!b", &[], true, &[])
+        else {
+            panic!("/kill @a[name=!a,name=!b the multiple gate answers");
+        };
+        assert_eq!((start, length), (24, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the second negative the MULTIPLE gate keeps"
+        );
+        // THE POSITIVE ELEMENT THE MULTIPLE GATE THROWS (the
+        // canParsePositiveElement the NONE==NONE compare the MULTIPLE
+        // state never passes)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=!a,name=", &[], true, &[])
+        else {
+            panic!("/kill @a[name=!a,name= the multiple gate answers");
+        };
+        assert_eq!((start, length), (22, 0), "the empty value region the silence wears");
+        assert!(matches.is_empty(), "the second positive the MULTIPLE gate throws");
+        // THE TEAM LANES THE SAME GATES WEAR (the audited $32 — the
+        // check after the read the name walk's own carries)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[team=a,team=", &[], true, &[])
+        else {
+            panic!("/kill @a[team=a,team= the state gate answers");
+        };
+        assert_eq!((start, length), (21, 0), "the empty value region the silence wears");
+        assert!(matches.is_empty(), "the second team= the SINGLE gate throws");
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[team=!a,team=!b", &[], true, &[])
+        else {
+            panic!("/kill @a[team=!a,team=!b the multiple gate answers");
+        };
+        assert_eq!((start, length), (24, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the second negative team the MULTIPLE gate keeps"
+        );
+        // THE TYPE LANES THE GATES WEAR (the audited $35 — the gate
+        // BEFORE the read the plain lane keeps, the id the roster
+        // membership answers): the second positive the SINGLE gate
+        // throws — the provider the setSuggestions install PRECEDES
+        // the gate the throw survives, the fold rows the remaining
+        // wears — and the canUse gate the fresh-key rows filter (the
+        // 't' prefix the type row the SINGLE state hides, the tag row
+        // the same lane keeps; the MULTIPLE state both rows answers)
+        let Src::Local { start, length, matches } = local_command_suggestions(
+            &tree,
+            "/kill @a[type=cow,type=",
+            &[],
+            true,
+            &roster,
+        ) else {
+            panic!("/kill @a[type=cow,type= the state gate answers");
+        };
+        assert_eq!((start, length), (23, 0), "the empty value region the fold wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![
+                "!minecraft:cow",
+                "!minecraft:pig",
+                "minecraft:cow",
+                "minecraft:pig"
+            ],
+            "the provider the gate's throw survives (the BOTH-arms fold)"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=cow,t", &[], true, &roster)
+        else {
+            panic!("/kill @a[type=cow,t the canUse gate answers");
+        };
+        assert_eq!((start, length), (18, 1), "the tail key span wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["tag=", "team="],
+            "the type row the SINGLE state's canParseAny hides — the\
+             't' prefix the tag/team rows the same lane keeps"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=!cow,t", &[], true, &roster)
+        else {
+            panic!("/kill @a[type=!cow,t the canUse gate answers");
+        };
+        assert_eq!((start, length), (19, 1), "the tail key span wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["tag=", "team=", "type="],
+            "the MULTIPLE state all three rows answers"
+        );
+        // THE TAG LANES THE TAGS SET SPEAKS (the audited $35 tag lane
+        // — the canParseAnyTag gate BEFORE the read, the canParseTag
+        // repeat refusal AFTER: the distinct tags the MULTIPLE state
+        // keeps, the parse completes; the repeated tag the refusal
+        // the provider's silence wears — the fold rows the '#'-led
+        // remaining never answers over the tag-table-less caller)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=#a,type=#b", &[], true, &[])
+        else {
+            panic!("/kill @a[type=#a,type=#b the tag lane answers");
+        };
+        assert_eq!((start, length), (24, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the distinct tags the MULTIPLE state keeps"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=#a,type=#a", &[], true, &[])
+        else {
+            panic!("/kill @a[type=#a,type=#a the tag lane answers");
+        };
+        assert_eq!((start, length), (22, 2), "the repeated tag the silence wears");
+        assert!(matches.is_empty(), "the repeated tag the tags-set refusal keeps");
+        // THE GAMEMODE PROVIDER THE GATE'S THROW SURVIVES (the
+        // setSuggestions install at the audited 5-12 PRECEDES the
+        // canParseElement check at 28-33 — the fold rows the
+        // remaining wears: the empty element BOTH arms, the typed
+        // 'cre' the plain arm filters)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=survival,gamemode=", &[], true, &[])
+        else {
+            panic!("/kill @a[gamemode=survival,gamemode= the state gate answers");
+        };
+        assert_eq!((start, length), (36, 0), "the empty value region the fold wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![
+                "!adventure",
+                "!creative",
+                "!spectator",
+                "!survival",
+                "adventure",
+                "creative",
+                "spectator",
+                "survival"
+            ],
+            "the provider the gate's throw survives (the BOTH-arms fold)"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=survival,gamemode=cre", &[], true, &[])
+        else {
+            panic!("/kill @a[gamemode=survival,gamemode=cre the state gate answers");
+        };
+        assert_eq!((start, length), (36, 3), "the typed remaining the fold wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["creative"],
+            "the plain arm the 'cre' prefix filters"
+        );
+        // THE CANUSE GATE THE NAME ROW HIDES (the 'n' prefix the name
+        // row alone answers — the SINGLE state's canParseAny() false
+        // the registered bootStrap$2 predicate returns, the EMPTY
+        // local the filter's silence keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,n", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,n the canUse gate answers");
+        };
+        assert_eq!((start, length), (20, 1), "the tail key span wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["nbt="],
+            "the name row the canUse gate hides — the 'n' prefix the nbt\n             row the same lane keeps"
+        );
+        // THE NUMERIC KEYS THE STATE NEVER TOUCHES (the limit walk no
+        // InvertableSetOptionState carries — the fresh-key lane the
+        // ALL-21 the fresh states keep)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5,", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5, the untouched lane answers");
+        };
+        assert_eq!((start, length), (17, 0), "the input end the state wears");
+        assert_eq!(matches.len(), 21, "the ALL-21 fresh names the numeric key keeps");
+        let Src::Local { start, length, matches } = local_command_suggestions(
+            &tree,
+            "/kill @a[type=cow,limit=5",
+            &[],
+            true,
+            &roster,
+        ) else {
+            panic!("/kill @a[type=cow,limit=5 the mixed lanes answer");
+        };
+        assert_eq!((start, length), (25, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the limit walk the state gates never touch"
+        );
+        // THE EARLIER-ELEMENT DEATHS THE PARSE WALK ANSWERS (the
+        // elements the earned separators leave behind the parse
+        // walks before the tail's own lane: the unknown key the
+        // get() throw answers, the byName miss the walk's own throw
+        // keeps — the EMPTY local the SUGGEST_NOTHING silence wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[zzz=x,name=St", &[], true, &[])
+        else {
+            panic!("/kill @a[zzz=x,name=St the earlier death answers");
+        };
+        assert_eq!((start, length), (9, 5), "the dead element's own span wears");
+        assert!(matches.is_empty(), "the earlier unknown key the throw silences");
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=zzz,name=St", &[], true, &[])
+        else {
+            panic!("/kill @a[gamemode=zzz,name=St the earlier death answers");
+        };
+        assert_eq!((start, length), (9, 12), "the dead element's own span wears");
+        assert!(matches.is_empty(), "the earlier byName miss the throw silences");
+        // THE EARLIER JUNK THE SURVIVED STATE WEARS (the walk RETURNS
+        // at the refused char — the suggestOptionsNextOrClose install
+        // the offsets 153-160 the throw survives — the ',' + ']' pair
+        // AT the junk the UNGATED lambda answers, the span the fill's
+        // own cursor law keeps to the input end)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Ste!e,so", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Ste!e,so the earlier junk answers");
+        };
+        assert_eq!((start, length), (17, 5), "the junk span the input end names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the survived state the punctuation at the junk wears"
         );
     }
 
