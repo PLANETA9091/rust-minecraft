@@ -1424,13 +1424,16 @@ fn local_selector_options_suggestions(
 ) -> ChatSuggestionSource {
     // the region after the '[' — the parseOptions walk's own ground
     let region = &sel_chars[bracket_idx + 1..];
-    if region.contains('{') || region.contains('"') {
-        // the map/quoted value states the honest ask keeps
+    if region.contains('{') {
+        // the map value state the honest ask keeps
         return ChatSuggestionSource::AskServer;
     }
     // the fresh-name position: the region's tail after the last ','
     // (the comma state the walk re-installs suggestNames at); a tail
-    // carrying '=' the value state speaks
+    // carrying '=' the value state speaks — the NAME walk's QUOTED
+    // value lane the quote gate only there retires (the value lane's
+    // readString law speaks it), the quoted KEY positions (the
+    // no-'=' regions) the unaudited honest ask keeps
     let tail = match region.rfind(',') {
         Some(i) => &region[i + 1..],
         None => region,
@@ -1440,9 +1443,17 @@ fn local_selector_options_suggestions(
     let start = token_start + 1 + bracket_idx + 1 + (region.len() - tail.len());
     if let Some(eq_idx) = tail.find('=') {
         // the value position: the option's own walk the 26.2
-        // modifiers install (sort / gamemode / type the audited lanes
-        // speak, the rest the honest ask keeps)
+        // modifiers install (sort / gamemode / type / the quoted name
+        // values the audited lanes speak, the rest the honest ask
+        // keeps)
         return local_selector_value_suggestions(tail, eq_idx, start, entity_types, entity_type_tags);
+    }
+    if region.contains('"') {
+        // the quoted KEY positions the honest ask keeps (the
+        // readString key walk's quoted lane the next rounds audit;
+        // the single-quote regions the filter's own silence wore —
+        // no gate they carried)
+        return ChatSuggestionSource::AskServer;
     }
     let tail_lc = tail.to_lowercase();
     let mut matches: Vec<mc_protocol::play::CommandSuggestionsMatch> = SELECTOR_OPTIONS
@@ -1518,6 +1529,51 @@ fn selector_identifier_ok(s: &str) -> bool {
 /// ERROR lane wears).
 fn selector_unquoted_ok(c: char) -> bool {
     c.is_ascii_alphanumeric() || matches!(c, '_' | '-' | '.' | '+')
+}
+
+/// THE READSTRING WALK THE NAME MODIFIER RUNS (javap
+/// `lambda$bootStrap$0` → `StringReader.readString`; the bundled
+/// brigadier 1.2.9 empirically probed): the `"` or `'` open the
+/// readStringUntil walk — the terminator closes (the value ends AT
+/// the close quote, any tail the parse's own ']' expectation dies
+/// at), the backslash escapes the terminator/backslash ONLY (the
+/// other char the INVALID-ESCAPE throw answers, the dangling
+/// backslash the END-OF-QUOTE throw wears), the missing terminator
+/// the same throw answers — the internal whitespace inside the
+/// quotes the value walk consumes. A value NOT opening with a quote
+/// the unquoted-charset law keeps.
+fn selector_read_string_ok(value: &str) -> bool {
+    match value.as_bytes().first() {
+        Some(&q) if q == b'"' || q == b'\'' => selector_quoted_ok(value, q),
+        _ => value.chars().all(selector_unquoted_ok),
+    }
+}
+
+/// THE READSTRINGUNTIL WALK'S OWN LAW (brigadier 1.2.9 probed:
+/// `"Steve x"` → `Steve x` cursor 9, `""` → `` cursor 2, `"a\"b"` →
+/// `a"b`, `"a\\b"` → `a\b`, `"Ste`/`"a\zb"`/`"a\` → the throws, the
+/// close-quote-not-last (`"a b" x`) the ']' expectation dies at).
+fn selector_quoted_ok(value: &str, terminator: u8) -> bool {
+    let b = value.as_bytes();
+    let mut i = 1; // the open quote consumed
+    while i < b.len() {
+        match b[i] {
+            b'\\' => match b.get(i + 1) {
+                // the escape pair: the terminator or the backslash
+                Some(&e) if e == terminator || e == b'\\' => i += 2,
+                // the invalid escape (or the dangling backslash)
+                _ => return false,
+            },
+            c if c == terminator => {
+                // the close quote: the value walk ends HERE — a tail
+                // the parse's own ']' expectation dies at
+                return i == b.len() - 1;
+            }
+            _ => i += 1,
+        }
+    }
+    // the missing terminator — the END-OF-QUOTE throw
+    false
 }
 
 /// THE NUMBER CHARSET THE BRIGADIER READNUMBER WALK SPEAKS (jar
@@ -1838,8 +1894,12 @@ fn local_selector_type_value_suggestions(
 /// grammars — the limit/coordinate/distance/level/rotation keys, no
 /// '!' invert the walks carry) — a fully-consumed valid number the
 /// punctuation answers, a failed parse the EMPTY local keeps; the
-/// unknown keys (the scores map, the nbt/advancements/predicate
-/// compounds) / the internal-whitespace tails the honest ask keeps).
+/// NAME walk's readString the QUOTED lane adds (the `"`/`'`
+/// terminators + the backslash escapes — the internal whitespace
+/// inside the quotes the value walk consumes, the honest-ask gate
+/// the quoted form bypasses); the unknown keys (the scores map, the
+/// nbt/advancements/predicate compounds) / the internal-whitespace
+/// tails the honest ask keeps).
 fn local_selector_value_suggestions(
     tail: &str,
     eq_idx: usize,
@@ -1860,9 +1920,16 @@ fn local_selector_value_suggestions(
     // the trailing-trimmed element the post-value membership asks
     // (the byName/switch lookups the case-sensitive law keeps); an
     // INTERNAL whitespace the parse's own ERROR_EXPECTED_END_OF_OPTIONS
-    // lane wears — the honest ask
+    // lane wears — the honest ask — EXCEPT the name key's QUOTED form:
+    // the readString walk consumes the whitespace INSIDE the quotes
+    // (the value walk never stops there, the ']' expectation never
+    // sees it), so the quoted value rides the quote law instead
     let trimmed = element.trim_end_matches([' ', '\t']);
-    if trimmed.contains([' ', '\t']) {
+    let name_quoted = key == "name" && {
+        let v = trimmed.strip_prefix('!').unwrap_or(trimmed);
+        v.starts_with('"') || v.starts_with('\'')
+    };
+    if !name_quoted && trimmed.contains([' ', '\t']) {
         return ChatSuggestionSource::AskServer;
     }
     let punctuation = || -> Vec<mc_protocol::play::CommandSuggestionsMatch> {
@@ -1911,8 +1978,18 @@ fn local_selector_value_suggestions(
         // consumes first — so the parse completes and the post-value
         // punctuation suggests; a char the unquoted set refuses the
         // value walk stops at (the parse's own ']' expectation the
-        // ERROR lane wears — the EMPTY local below answers)
-        "name" | "team" | "tag" => {
+        // ERROR lane wears — the EMPTY local below answers). The NAME
+        // walk's readString the QUOTED lane adds: the '"' or '\''
+        // open the readStringUntil walk (the terminator closes, the
+        // backslash escapes the terminator/backslash only, the
+        // unterminated/invalid-escape forms the throw answers) — the
+        // internal whitespace inside the quotes the value walk
+        // consumes, the completion the same punctuation wears
+        "name" => {
+            let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
+            selector_read_string_ok(value)
+        }
+        "team" | "tag" => {
             let value = trimmed.strip_prefix('!').unwrap_or(trimmed);
             value.chars().all(selector_unquoted_ok)
         }
@@ -2093,14 +2170,33 @@ pub fn local_command_suggestions_with_tags(
     // the space-split the StringReader's own token walk keeps: every
     // space-terminated span is a COMPLETED token, the unterminated tail
     // the partial one (a trailing space's empty tail the empty partial
-    // speaks; a double space's empty token the literal equality refuses)
+    // speaks; a double space's empty token the literal equality refuses).
+    // The QUOTED regions the split never breaks: an opening `"`/`'`
+    // guards the spaces (the argument reads' own readStringUntil walk —
+    // the entity value the selector quotes consume), the backslash the
+    // NEXT char escapes inside the quotes only, an unterminated quote
+    // the partial carries whole
     let mut tokens: Vec<Vec<char>> = Vec::new();
     let mut partial = Vec::new();
+    let mut quote: Option<char> = None;
+    let mut escaped = false;
     for &c in &rest_chars {
-        if c == ' ' {
+        if let Some(q) = quote {
+            partial.push(c);
+            if escaped {
+                escaped = false;
+            } else if c == '\\' {
+                escaped = true;
+            } else if c == q {
+                quote = None;
+            }
+        } else if c == ' ' {
             tokens.push(std::mem::take(&mut partial));
         } else {
             partial.push(c);
+            if c == '"' || c == '\'' {
+                quote = Some(c);
+            }
         }
     }
     // the completed-token walk (the case-sensitive literal equality)
@@ -23602,11 +23698,16 @@ mod tests {
             Src::AskServer,
             "the '{{' map value the honest ask keeps"
         );
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[name=\"St", &[], true, &[]),
-            Src::AskServer,
-            "the quoted value the honest ask keeps"
-        );
+        // THE QUOTED VALUE (the name key's readString walk — the
+        // UNTERMINATED quote the END-OF-QUOTE throw answers, the
+        // EMPTY local the parse-throw-catch's silence keeps — see
+        // the_quoted_value_lanes test)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=\"St", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"St the quoted lane answers");
+        };
+        assert!(matches.is_empty(), "the unterminated quote the silence keeps");
         // THE '!' PREFIX (the 26.2 suggestNames the keys the '!'
         // never starts-with — the empty local the silence keeps)
         let Src::Local { matches, .. } =
@@ -24033,6 +24134,181 @@ mod tests {
         app.on_chat_tab_key();
         assert_eq!(
             app.chat_input, "/kill @a[name=,",
+            "the apply the ',' insert lands"
+        );
+    }
+
+    /// THE QUOTED VALUE LANES (javap `EntitySelectorOptions
+    /// lambda$bootStrap$0` → `StringReader.readString` — the NAME
+    /// modifier's read the QUOTED lane carries; the bundled brigadier
+    /// 1.2.9 empirically probed: `"Steve x"` → `Steve x` cursor 9
+    /// (the internal whitespace the value walk consumes), `""` → ``,
+    /// `"a\"b"` → `a"b`, `"a\\b"` → `a\b`, `"Ste` → the
+    /// END-OF-QUOTE throw, `"a\zb"` → the INVALID-ESCAPE throw at the
+    /// escape, `'sq'` the single-quote form the same walk wears): a
+    /// TERMINATED quoted value the parse completes — the post-value
+    /// ',' + ']' punctuation the parse cursor's own end wears; the
+    /// UNTERMINATED/INVALID-ESCAPE/tail-after-close forms the throws
+    /// answer — the EMPTY local the parse-throw-catch's silence keeps
+    /// (no round-trip the throw spends); the '!' the shouldInvertValue
+    /// consumes BEFORE the quote (the inverted quoted form the same
+    /// law wears); the close-quote-not-last form the ']' expectation
+    /// dies at; the team/tag walks' readUnquotedString the quote
+    /// chars REFUSE (the '"' the unquoted charset never carries — the
+    /// EMPTY local the stopped walk wears); the quoted values the
+    /// internal-whitespace honest-ask gate BYPASS (the whitespace
+    /// inside the quotes the value walk never leaks).
+    #[test]
+    fn the_selector_options_the_quoted_value_lanes_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE TERMINATED DOUBLE-QUOTE FORM (the internal space the
+        // value walk consumes — the completion the punctuation wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"Steve x\"", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"Steve x\" the quoted walk answers");
+        };
+        assert_eq!((start, length), (23, 0), "the consumed value's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the terminated quote the punctuation wears"
+        );
+        // THE EMPTY QUOTED VALUE (the immediate close the walk banks)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=\"\"", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"\" the empty quoted walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the empty quoted value the completion wears"
+        );
+        // THE ESCAPED QUOTE (the backslash the terminator escapes —
+        // the value a"b the walk builds)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a\\\"b\"", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a\\\"b\" the escape walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the escaped quote the completion wears"
+        );
+        // THE ESCAPED BACKSLASH (the pair the walk consumes)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=\"a\\\\b\"", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"a\\\\b\" the escape walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the escaped backslash the completion wears"
+        );
+        // THE SINGLE-QUOTE FORM (the readString the '\'' terminator
+        // wears — the same completion)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name='Steve x'", &[], true, &[])
+        else {
+            panic!("/kill @a[name='Steve x' the single-quote walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the single-quote form the completion wears"
+        );
+        // THE INVERTED QUOTED FORM (the '!' the shouldInvertValue
+        // consumes first — the quote the value walk opens after)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[name=!\"Steve x\"", &[], true, &[])
+        else {
+            panic!("/kill @a[name=!\"Steve x\" the invert walk answers");
+        };
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the inverted quoted value the completion wears"
+        );
+        // THE REFUSAL LANES (the unterminated quote, the invalid
+        // escape, the dangling backslash — the EMPTY local the
+        // throws' silence wears; the tail after the close the
+        // tokenizer's own split law the ask wears — the post-value
+        // junk the vanilla's ',' + ']' state the next rounds' lane
+        // keeps)
+        for (input, why) in [
+            (
+                "/kill @a[name=\"Ste",
+                "the unterminated quote the END-OF-QUOTE throw answers",
+            ),
+            (
+                "/kill @a[name=\"a\\zb\"",
+                "the invalid escape the throw answers",
+            ),
+            (
+                "/kill @a[name=\"a\\",
+                "the dangling backslash the END-OF-QUOTE throw answers",
+            ),
+        ] {
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, input, &[], true, &[])
+            else {
+                panic!("{input} the quoted refusal answers");
+            };
+            assert!(matches.is_empty(), "{why}");
+        }
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[name=\"a b\" x", &[], true, &[]),
+            Src::AskServer,
+            "the tail after the close the committed ask keeps"
+        );
+        // THE TEAM/TAG WALKS REFUSE THE QUOTES (the
+        // readUnquotedString walks the '"' the unquoted charset never
+        // carries — the stopped walk the EMPTY local wears)
+        for key in ["team", "tag"] {
+            let Src::Local { matches, .. } =
+                local_command_suggestions(&tree, &format!("/kill @a[{key}=\"red\""), &[], true, &[])
+            else {
+                panic!("/kill @a[{key}=\"red\" the unquoted refusal answers");
+            };
+            assert!(matches.is_empty(), "the '{key}' walk the quote refuses");
+        }
+        // THE NUMERIC KEY NEVER OPENS THE QUOTE (the readInt walk the
+        // '"' the number charset refuses — the EXPECTED-NUMBER throw
+        // the EMPTY local wears; the quoted form with the internal
+        // whitespace the honest-ask gate keeps)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[limit=\"5\"", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=\"5\" the numeric refusal answers");
+        };
+        assert!(matches.is_empty(), "the quoted numeric value the silence keeps");
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[limit=\"5 5\"", &[], true, &[]),
+            Src::AskServer,
+            "the quoted numeric value with whitespace the honest ask keeps"
+        );
+        // THE TAB APPLY (the completed quoted value the ',' insert
+        // lands — no request the lane spends)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[name=\"Steve x\"".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the quoted lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[name=\"Steve x\",",
             "the apply the ',' insert lands"
         );
     }
