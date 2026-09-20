@@ -1285,6 +1285,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         if in_world && app.body.is_none() && !app.world_is_network {
             app.spawn_offline_body();
         }
+        // THE DEBUG MODIFIER'S OWN STATE (the keyDebugModifier held
+        // state the chord walk reads — the binding hoisted OUT of the
+        // in-world block: the release walk the open screen's own
+        // keyReleased law serves must run while the SWITCHER is up, the
+        // same law the F3+F4 open's screen-eats-input shape keeps)
+        let f3_down = window.is_key_down(Key::F3);
         if in_world {
             if let Some((x, y)) = window.get_mouse_pos(minifb::MouseMode::Pass) {
                 if let Some((px, py)) = prev_mouse {
@@ -1353,7 +1359,6 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             // profiler pie, no lightmap viewer — the flags the
             // all-false constants stay, the rows the honest hidden
             // words wear)
-            let f3_down = window.is_key_down(Key::F3);
             if f3_down && window.is_key_pressed(Key::Key2, minifb::KeyRepeat::No) {
                 app.on_fps_charts_key();
             }
@@ -1367,10 +1372,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if f3_down && window.is_key_pressed(Key::G, minifb::KeyRepeat::No) {
                 app.on_chunk_borders_key();
             }
-            if f3_was_down && !f3_down {
-                app.on_debug_modifier_released();
+            // THE F3+F4 CHORD (the handleDebugKeys' keyDebugSwitchGameMode
+            // lane — the `matches` arm the level/screen/canSwitchGameMode
+            // chain guards opens the GameModeSwitcherScreen, the default
+            // hover the getDefaultSelected law answers)
+            if f3_down && window.is_key_pressed(Key::F4, minifb::KeyRepeat::No) {
+                app.on_open_game_mode_switcher();
             }
-            f3_was_down = f3_down;
             // THE MIDDLE-CLICK PICK (vanilla handleKeybinds's keyPickItem
             // lane — the middle button the keybind maps, the
             // `Minecraft.pickBlockOrEntity` walk the loop answers): the
@@ -1385,6 +1393,28 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             }
             was_middle_down = middle_down;
         }
+        // THE DEBUG MODIFIER'S OWN RELEASE (the keyDebugModifier
+        // keyReleased law — hoisted out of the in-world block: the open
+        // SWITCHER the walk eats first (the apply+close the screen's own
+        // keyReleased arm serves), the in-world release the
+        // overlay-toggle flag walk answers, and the OTHER screens the
+        // vanilla Screen.keyReleased law keeps silent — the tracking the
+        // stale flag the next in-world frame re-reads honestly)
+        if f3_was_down && !f3_down
+            && (in_world || app.screen == crate::screens::ScreenKind::GameModeSwitcher)
+        {
+            app.on_debug_modifier_released();
+        }
+        // THE SWITCHER'S OWN F4 CYCLE (the open screen's keyPressed walk
+        // — the keyDebugSwitchGameMode match the getNext law cycles, the
+        // open chord's rising edge the closed state alone consumes: the
+        // two lanes the exclusive screen states never double-fire)
+        if app.screen == crate::screens::ScreenKind::GameModeSwitcher
+            && window.is_key_pressed(Key::F4, minifb::KeyRepeat::No)
+        {
+            app.on_game_mode_switcher_cycle();
+        }
+        f3_was_down = f3_down;
         // THE SCROLL WHEEL (vanilla `MouseHandler.onScroll`'s own law —
         // the event the frame thread answers EVERY frame, the SCREEN
         // arm the bytecode 121-195 keeps first): a CONTAINER screen's

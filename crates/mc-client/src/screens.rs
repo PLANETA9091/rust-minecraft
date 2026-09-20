@@ -4706,6 +4706,191 @@ pub enum ScreenKind {
     /// projection the belief feeds, the clicks the ServerboundContainer
     /// ClickPacket the chest's lane shares speak).
     Crafting,
+    /// THE F3+F4 GAME MODE SWITCHER (javap 26.2 GameModeSwitcherScreen
+    /// — the handleDebugKeys' keyDebugSwitchGameMode lane opens it, the
+    /// open screen's own key walk serves the rest): the audited 125x75
+    /// panel the four 26x26 slots ride (the step-31 row the init walk
+    /// speaks), the hovered mode's name above and the `F4 Next` hint
+    /// below, the F4 tap the getNext law cycles, the F3 RELEASE the
+    /// keyReleased law applies + closes. The isPauseScreen-false screen
+    /// over the live world — the body freeze the container convention
+    /// keeps (the frame==tick model).
+    GameModeSwitcher,
+}
+
+/// THE GAME MODE THE SWITCHER SPEAKS (javap 26.2 GameType's own client
+/// shape — the four GameModeIcon variants the switcher's slot row
+/// wears, THE AUDITED ENUM ORDER: creative, survival, adventure,
+/// spectator — the ordinals the getNext walk cycles by, the slot row's
+/// left-to-right the init loop's VALUES walk keeps). The client's OWN
+/// believed mode rides the App's `game_mode` (the survival default the
+/// vanilla world creation keeps), the dig/food/health laws the
+/// survival mode's shape answers — the mode's gameplay effects the
+/// follow-up rounds earn.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum GameMode {
+    /// The GameModeIcon CREATIVE ordinal 0 — the grass block icon.
+    Creative,
+    /// The GameModeIcon SURVIVAL ordinal 1 — the iron sword icon.
+    Survival,
+    /// The GameModeIcon ADVENTURE ordinal 2 — the map icon.
+    Adventure,
+    /// The GameModeIcon SPECTATOR ordinal 3 — the ender eye icon.
+    Spectator,
+}
+
+impl GameMode {
+    /// The slot row's left-to-right order (the audited $values array —
+    /// the init loop's own walk).
+    pub(crate) const ICON_ORDER: [GameMode; 4] = [
+        GameMode::Creative,
+        GameMode::Survival,
+        GameMode::Adventure,
+        GameMode::Spectator,
+    ];
+
+    /// The icon slot's index (the getFromGameType walk — the ordinals
+    /// the switcher's hover bank speaks).
+    pub(crate) fn icon_index(self) -> usize {
+        Self::ICON_ORDER
+            .iter()
+            .position(|&m| m == self)
+            .expect("the ICON_ORDER array carries every variant")
+    }
+
+    /// The name line's lang key (the GameModeIcon name field — the
+    /// Component.translatable walk the en_us table answers:
+    /// "Survival Mode" and the row's three siblings).
+    pub(crate) fn name_key(self) -> &'static str {
+        match self {
+            GameMode::Creative => "gameMode.creative",
+            GameMode::Survival => "gameMode.survival",
+            GameMode::Adventure => "gameMode.adventure",
+            GameMode::Spectator => "gameMode.spectator",
+        }
+    }
+
+    /// The slot icon's item registry name (the GameModeIcon renderStack
+    /// field — the ItemStack ctor's own walk: GRASS_BLOCK, IRON_SWORD,
+    /// MAP, ENDER_EYE — the ids the client's own registry resolves).
+    pub(crate) fn icon_item(self) -> &'static str {
+        match self {
+            GameMode::Creative => "grass_block",
+            GameMode::Survival => "iron_sword",
+            GameMode::Adventure => "map",
+            GameMode::Spectator => "ender_eye",
+        }
+    }
+
+    /// THE getNext WALK (the GameModeIcon's own law — the ordinal + 1
+    /// mod 4 the enum's VALUES array speaks, the cycle the F4 tap
+    /// serves: creative -> survival -> adventure -> spectator -> ...).
+    pub(crate) fn next_icon(self) -> GameMode {
+        let i = self.icon_index();
+        Self::ICON_ORDER[(i + 1) % Self::ICON_ORDER.len()]
+    }
+}
+
+/// THE SLOT ROW'S OWN STEP (the init walk's `imul 31` — the 26x26
+/// widget's own size PLUS the 5px gap the row's rhythm keeps, the same
+/// constant the clinit's ALL_SLOTS_WIDTH fold speaks).
+const GM_SLOT_STEP: i32 = 31;
+/// THE ROW'S OWN TOTAL (the clinit's law — `values().length * 31 - 5`:
+/// the last slot's trailing gap the fold trims, the 119 the halving
+/// speaks — the row's left edge x = width/2 - 119/2).
+const GM_ALL_SLOTS_WIDTH: i32 = 4 * GM_SLOT_STEP - 5;
+
+/// THE SWITCHER'S OWN GEOMETRY (javap 26.2 GameModeSwitcherScreen's
+/// own walk, every anchor the bytecode's folded arithmetic speaks):
+/// the 125x75 panel blit at (width/2 - 62, height/2 - 58) — the
+/// extractBackground's `isub 31` then `isub 27` chain —, the four
+/// 26x26 slots at (width/2 - 59 + i*31, height/2 - 31) — the init
+/// walk's ALL_SLOTS_WIDTH/2 halving and `imul 31` row —, the hovered
+/// name's line at height/2 - 51 (the render walk's `isub 31` then
+/// `isub 20`), the hint's line at height/2 + 5 (the `iadd 5` tail).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) struct GameModeSwitcherLayout {
+    /// The panel's top-left (the 125x75 blit's x, y).
+    pub panel: (i32, i32),
+    /// The four slot tops (the 26x26 boxes, ICON_ORDER order).
+    pub slots: [(i32, i32); 4],
+    /// The hovered name's centered-text y.
+    pub name_y: i32,
+    /// The `F4 Next` hint's centered-text y.
+    pub hint_y: i32,
+}
+
+/// The pure layout builder (the render and the tests ride the SAME
+/// fold — the geometry the audited bytecode pins, the negative-width
+/// centers the integer division's floor law keeps).
+pub(crate) fn gamemode_switcher_layout(gui_width: i32, gui_height: i32) -> GameModeSwitcherLayout {
+    GameModeSwitcherLayout {
+        panel: (gui_width / 2 - 62, gui_height / 2 - 31 - 27),
+        slots: core::array::from_fn(|i| {
+            (
+                gui_width / 2 - GM_ALL_SLOTS_WIDTH / 2 + i as i32 * GM_SLOT_STEP,
+                gui_height / 2 - GM_SLOT_STEP,
+            )
+        }),
+        name_y: gui_height / 2 - GM_SLOT_STEP - 20,
+        hint_y: gui_height / 2 + 5,
+    }
+}
+
+/// THE PANEL'S OWN PIXEL DECOMPOSITION (the official
+/// `container/gamemode_switcher.png`'s 125x75 content the fill law
+/// speaks — the texture the sprite migration left cache-less, the
+/// chest chrome's own fill convention the draw keeps): the black 1px
+/// outline wears CHAMFERED corners (the top-left diagonal (2,0) ->
+/// (0,2), the three-step top-right (121,0) -> (124,3), the mirrored
+/// bottom pair), the 85-grey inner frame the opaque head band rails
+/// (y1..20), the opaque 33 body the head band fills (y3..18), and
+/// the TRANSLUCENT 33 tail (y20..73, alpha 102/255) the lower two
+/// thirds keeps — every rect the pixel walk's own run map read, the
+/// colors the draw's exact folds wear, the blend law the disjoint
+/// rects never double-speaks.
+pub(crate) fn draw_gamemode_switcher_panel(g: &mut Gui, x: i32, y: i32) {
+    let k = [0.0, 0.0, 0.0, 1.0];
+    let grey = [1.0 / 3.0, 1.0 / 3.0, 1.0 / 3.0, 1.0]; // 85/255
+    let head = [33.0 / 255.0, 33.0 / 255.0, 33.0 / 255.0, 1.0];
+    let body = [33.0 / 255.0, 33.0 / 255.0, 33.0 / 255.0, 0.4]; // 102/255
+    // THE BLACK OUTLINE (the octagon the corner transparency speaks)
+    g.fill(x + 2, y, 120, 1, k); // y0
+    g.fill(x + 1, y + 1, 1, 1, k);
+    g.fill(x + 122, y + 1, 1, 1, k);
+    g.fill(x, y + 2, 1, 1, k); // y2 left (the chamfer's end)
+    g.fill(x + 123, y + 2, 1, 1, k); // y2 right
+    g.fill(x, y + 3, 1, 69, k); // y3..y71 left rail
+    g.fill(x + 124, y + 3, 1, 70, k); // y3..y72 right rail
+    g.fill(x + 123, y + 20, 1, 1, k); // y20's own tail step
+    g.fill(x + 1, y + 72, 1, 1, k);
+    g.fill(x + 2, y + 73, 1, 1, k);
+    g.fill(x + 123, y + 73, 1, 1, k);
+    g.fill(x + 3, y + 74, 120, 1, k);
+    // THE GREY FRAME (y1..y20 — the head band's own rails)
+    g.fill(x + 2, y + 1, 120, 1, grey);
+    g.fill(x + 1, y + 2, 122, 1, grey);
+    g.fill(x + 1, y + 3, 3, 1, grey);
+    g.fill(x + 121, y + 3, 3, 1, grey);
+    g.fill(x + 1, y + 4, 2, 14, grey); // y4..y17
+    g.fill(x + 122, y + 4, 2, 14, grey);
+    g.fill(x + 1, y + 18, 3, 1, grey);
+    g.fill(x + 121, y + 18, 3, 1, grey);
+    g.fill(x + 2, y + 19, 122, 1, grey);
+    g.fill(x + 3, y + 20, 120, 1, grey);
+    // THE OPAQUE HEAD BAND (the 33 the slots' backdrop keeps)
+    g.fill(x + 4, y + 3, 117, 1, head);
+    g.fill(x + 3, y + 4, 119, 14, head); // y4..y17
+    g.fill(x + 4, y + 18, 117, 1, head);
+    // THE TRANSLUCENT TAIL (the lower two thirds the 102-alpha body
+    // keeps — the fringes the chamfered rows carry, the y22..71 core
+    // the 123-wide fill speaks)
+    g.fill(x + 1, y + 20, 1, 52, body); // the x1 rail y20..y71
+    g.fill(x + 2, y + 21, 1, 52, body); // the x2 rail y21..y72
+    g.fill(x + 123, y + 21, 1, 1, body);
+    g.fill(x + 1, y + 22, 123, 50, body); // y22..y71 core
+    g.fill(x + 2, y + 72, 122, 1, body);
+    g.fill(x + 3, y + 73, 120, 1, body);
 }
 
 /// THE HURT VOICE THE DAMAGE TYPE'S EFFECTS NAME (javap the 26.2
@@ -5825,6 +6010,32 @@ pub struct App {
     /// toggle's own persistence). False = the silent world the
     /// fresh client keeps.
     pub chunk_borders: bool,
+    /// THE CLIENT'S OWN BELIEVED GAME MODE (the 26.2
+    /// MultiPlayerGameMode.getPlayerMode's client-side belief — the
+    /// survival default the vanilla world creation keeps, the F4
+    /// switcher's apply the offline world owns: the offline world runs
+    /// the server side locally, the same law the drop lane wears). The
+    /// wire sessions keep the SERVER's belief — the
+    /// ServerboundChangeGameModePacket the encoder-less client refuses
+    /// honestly (the packet lane rides later).
+    pub game_mode: GameMode,
+    /// THE PREVIOUS MODE'S OWN BANK (the 26.2
+    /// MultiPlayerMode.getPreviousPlayerMode's client belief — the
+    /// getDefaultSelected walk's preferred hover: the switcher reopens
+    /// hovering the PREVIOUS mode, the F3+F4 flick the two-mode toggle
+    /// feel speaks). `None` until an actual change lands (the
+    /// same-mode arm the switchToHoveredGameMode walk keeps silent).
+    pub previous_game_mode: Option<GameMode>,
+    /// THE SWITCHER'S OWN HOVERED SLOT (the currentlyHovered bank —
+    /// the ICON_ORDER index the cycle press advances and the mouse
+    /// hover steals; 0 the closed-state default keeps).
+    pub gm_hovered: usize,
+    /// THE FIRST-MOUSE BANK (the screen's firstMouseX/Y pair — the
+    /// render's first frame arms it, the cycle press resets it, and
+    /// the unmoved mouse the cycled hover keeps while the moved mouse
+    /// the hovered slot steals — the setFirstMousePos law the
+    /// extractRenderState walk speaks). `None` = the reset state.
+    pub gm_first_mouse: Option<(i32, i32)>,
     /// THE PING CHART'S OWN SAMPLES (the PingDebugMonitor's
     /// LocalSampleLogger law — the RTT millis the net worker's
     /// pong lane logs, the chart-ordered snapshot the shipped
@@ -6269,6 +6480,10 @@ impl App {
             fps_charts: false,
             network_charts: false,
             chunk_borders: false,
+            game_mode: GameMode::Survival,
+            previous_game_mode: None,
+            gm_hovered: 0,
+            gm_first_mouse: None,
             ping_samples: Vec::new(),
             bw_samples: Vec::new(),
             tick_samples: Vec::new(),
@@ -11266,6 +11481,80 @@ impl App {
         self.render_bundle_tooltip(g, a);
     }
 
+    /// THE F4 SWITCHER'S OWN RENDER (javap 26.2 GameModeSwitcherScreen
+    /// — the extractBackground then extractRenderState order the draw
+    /// keeps: the dimmed world the container convention dims, the
+    /// audited panel the fill decomposition speaks, the hovered name
+    /// above and the `F4 Next` hint below (the select_next walk's aqua
+    /// key word), the four slot sprites the selection over the hover
+    /// wears, the icons the renderStack law draws). The hover walk
+    /// rides BEFORE the slots (the isHoveredOrFocused steal the same
+    /// frame's draw answers). The headless scenes track no mouse — the
+    /// pixel goldens never see this pass.
+    fn render_gamemode_switcher(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let layout = gamemode_switcher_layout(w, h);
+        self.gamemode_switcher_hover(&layout);
+        let (px, py) = layout.panel;
+        draw_gamemode_switcher_panel(g, px, py);
+        // THE HOVERED NAME (the extractRenderState's first centeredText
+        // — the white -1 color the walk carries, the shadow the
+        // GuiGraphics.drawString default wears)
+        let hovered = GameMode::ICON_ORDER[self.gm_hovered];
+        let name = tr(hovered.name_key()).unwrap_or("Game Mode");
+        g.text_centered(a, w / 2, layout.name_y, name, [1.0, 1.0, 1.0], true);
+        // THE HINT (the select_next walk — the `%s Next` format the key
+        // word fills AQUA, the tail the base white keeps)
+        let hint = format_chat_decoration("debug.gamemodes.select_next", &["\u{a7}bF4\u{a7}r"]);
+        g.text_centered(a, w / 2, layout.hint_y, &hint, [1.0, 1.0, 1.0], true);
+        // THE SLOT ROW (the slot sprite, the selection over the
+        // hovered, the icon at the +5 inset the extractWidgetRenderState
+        // walk speaks)
+        for (i, &mode) in GameMode::ICON_ORDER.iter().enumerate() {
+            let (sx, sy) = layout.slots[i];
+            g.sprite_file_region(a, "gui/sprites/gamemode_switcher/slot.png", 0, 0, 26, 26, sx, sy);
+            if i == self.gm_hovered {
+                g.sprite_file_region(
+                    a,
+                    "gui/sprites/gamemode_switcher/selection.png",
+                    0,
+                    0,
+                    26,
+                    26,
+                    sx,
+                    sy,
+                );
+            }
+            if let Some(id) = mc_registry::item_id_by_name(mode.icon_item()) {
+                draw_item_icon(g, id, sx + 5, sy + 5);
+            }
+        }
+    }
+
+    /// THE HOVER WALK (the extractRenderState's own law — the
+    /// firstMouseX/Y bank the first drawn frame arms and the cycle
+    /// press resets, the UNMOVED mouse the cycled hover keeps, the
+    /// moved mouse the 26x26 slot rect the isHoveredOrFocused test
+    /// steals; the headless scenes' absent mouse the silent arm keeps).
+    fn gamemode_switcher_hover(&mut self, layout: &GameModeSwitcherLayout) {
+        let Some((mx, my)) = self.mouse_pos else {
+            return; // the no-live-mouse arm — the cycled hover the
+                    // headless draw keeps
+        };
+        match self.gm_first_mouse {
+            None => self.gm_first_mouse = Some((mx, my)), // the arm frame
+            Some(first) => {
+                if first != (mx, my) {
+                    for (i, &(sx, sy)) in layout.slots.iter().enumerate() {
+                        if mx >= sx && mx < sx + 26 && my >= sy && my < sy + 26 {
+                            self.gm_hovered = i; // the hover steal
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     /// THE CRAFTING TABLE'S OWN RENDER (javap 26.2 CraftingScreen —
     /// the frozen world dimmed, then the REAL background texture the
     /// CRAFTING_TABLE_LOCATION blit speaks: the 176x166 region of the
@@ -15127,6 +15416,80 @@ impl App {
         self.debug_modifier_used = true;
     }
 
+    /// THE F3+F4 CHORD'S OWN OPEN LANE (javap 26.2
+    /// KeyboardHandler.handleDebugKeys's keyDebugSwitchGameMode walk —
+    /// the `matches` arm the level/screen/canSwitchGameMode chain
+    /// guards, the `setScreen(new GameModeSwitcherScreen())` the
+    /// permission verdict serves): the in-world gate the caller's
+    /// keybind law keeps (the same overlay==null && screen==null chain
+    /// every handleKeybinds lane reads), the dead/pause arms the
+    /// client's own modal shape adds. The default hover the
+    /// getDefaultSelected walk answers (the PREVIOUS mode the bank
+    /// carries, else the current), the first-mouse bank the open
+    /// resets, and the chord the modifier-spent flag consumes (the F3
+    /// release the overlay toggle never speaks — the
+    /// usedDebugKeyAsModifier law the F3+G lane already wears).
+    pub fn on_open_game_mode_switcher(&mut self) {
+        if self.screen != ScreenKind::World || self.paused || self.dead {
+            return; // the handleDebugKeys gate chain — the screen-null
+                    // world the walk never passes
+        }
+        self.gm_hovered = self.default_gm_icon();
+        self.gm_first_mouse = None; // the setFirstMousePos reset the
+                                    // open's own law keeps
+        self.screen = ScreenKind::GameModeSwitcher;
+        self.debug_modifier_used = true;
+    }
+
+    /// THE getDefaultSelected WALK (javap 26.2's own law — the
+    /// previous-player-mode arm the non-null bank prefers, the
+    /// current mode the null arm keeps: the reopened switcher hovers
+    /// where the last apply CAME FROM, the F3+F4 flick the two-mode
+    /// toggle feel speaks).
+    fn default_gm_icon(&self) -> usize {
+        self.previous_game_mode
+            .unwrap_or(self.game_mode)
+            .icon_index()
+    }
+
+    /// THE OPEN SCREEN'S OWN F4 CYCLE (javap GameModeSwitcherScreen
+    /// .keyPressed's keyDebugSwitchGameMode arm — the `matches` walk
+    /// sets `currentlyHovered = currentlyHovered.getNext()`, the
+    /// setFirstMousePos reset the same arm speaks): the wrap the mod-4
+    /// ordinal law keeps (creative -> survival -> adventure ->
+    /// spectator -> creative).
+    pub fn on_game_mode_switcher_cycle(&mut self) {
+        if self.screen != ScreenKind::GameModeSwitcher {
+            return; // the screen's own key walk — the closed state the
+                    // lane never reaches
+        }
+        self.gm_hovered = GameMode::ICON_ORDER[self.gm_hovered]
+            .next_icon()
+            .icon_index();
+        self.gm_first_mouse = None; // the keyPressed arm's own reset
+    }
+
+    /// THE F3 RELEASE'S OWN APPLY (javap GameModeSwitcherScreen
+    /// .keyReleased's keyDebugModifier arm — the open screen the key
+    /// walk eats, the `switchToHoveredGameMode()` then
+    /// `setScreen(null)` the match serves): the same-mode arm the
+    /// `icon.mode != current` gate keeps silent (the previous bank the
+    /// change alone earns), the OFFLINE world the apply owns (the
+    /// server side runs locally — the drop lane's own law), and the
+    /// WIRE session the honest refusal keeps: the mode the SERVER's
+    /// belief owns, the ServerboundChangeGameModePacket the
+    /// encoder-less client cannot speak yet (the packet lane rides
+    /// later) — the close the refusal never blocks.
+    pub fn apply_gamemode_hovered(&mut self) {
+        debug_assert_eq!(self.screen, ScreenKind::GameModeSwitcher);
+        let mode = GameMode::ICON_ORDER[self.gm_hovered];
+        if !self.world_is_network && mode != self.game_mode {
+            self.previous_game_mode = Some(self.game_mode);
+            self.game_mode = mode;
+        }
+        self.screen = ScreenKind::World;
+    }
+
     /// THE F2 KEY'S OWN LANE (javap Minecraft.handleKeybinds's
     /// keyScreenshot lane — the `Options.keyScreenshot.consumeClick()`
     /// rising edge the `Screenshot.grab(...)` walk answers): the
@@ -15241,6 +15604,14 @@ impl App {
     /// clears itself and the overlay keeps its state, the bare
     /// release the toggleDebugOverlay flip answers).
     pub fn on_debug_modifier_released(&mut self) {
+        // THE SWITCHER'S OWN RELEASE FIRST (the open screen the key
+        // walk eats — the GameModeSwitcherScreen.keyReleased arm the
+        // keyDebugModifier match serves: apply + close, the overlay
+        // toggle the eaten release never speaks)
+        if self.screen == ScreenKind::GameModeSwitcher {
+            self.apply_gamemode_hovered();
+            return;
+        }
         if self.debug_modifier_used {
             self.debug_modifier_used = false;
         } else {
@@ -18931,6 +19302,17 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_crafting_table(&mut g, a, gw, gh);
+            }
+            ScreenKind::GameModeSwitcher => {
+                // THE F4 SWITCHER'S OWN ROUND (the vanilla
+                // GameModeSwitcherScreen — the isPauseScreen-false
+                // screen over the LIVE world): world underneath, dimmed,
+                // the audited panel + slots + texts. The body freeze the
+                // frame==tick model keeps (the container convention).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_gamemode_switcher(&mut g, a, gw, gh);
             }
         }
     }
@@ -24875,6 +25257,331 @@ mod tests {
         assert!(!app.debug_held, "the overlay the entry never raises");
         app.on_chunk_borders_key();
         assert!(!app.chunk_borders, "the chord lowers");
+    }
+
+    #[test]
+    fn the_gamemode_switcher_layout_the_audited_geometry_speaks() {
+        // THE GEOMETRY'S OWN LAW (javap 26.2 GameModeSwitcherScreen —
+        // the extractBackground's isub-62/isub-31-then-27 chain, the
+        // init walk's ALL_SLOTS_WIDTH/2 halving + the imul-31 row, the
+        // render walk's isub-31-then-20 name line and the iadd-5 hint)
+        let l = gamemode_switcher_layout(854, 480);
+        assert_eq!(l.panel, (854 / 2 - 62, 480 / 2 - 31 - 27), "the 125x75 blit");
+        assert_eq!(l.panel.0, 365, "the panel x the fold speaks");
+        assert_eq!(l.panel.1, 182, "the panel y the fold speaks");
+        // the slot row: x = width/2 - 59 + i*31 (the 119 halving), the
+        // y the height/2 - 31 row keeps
+        let xs: Vec<i32> = l.slots.iter().map(|&(x, _)| x).collect();
+        assert_eq!(xs, vec![368, 399, 430, 461], "the step-31 row");
+        assert!(l.slots.iter().all(|&(_, y)| y == 209), "the slot y");
+        assert_eq!(l.name_y, 189, "the name line");
+        assert_eq!(l.hint_y, 245, "the hint line");
+
+        // THE ODD-WIDTH CENTER'S OWN FLOOR (the integer division the
+        // negative side the vanilla's own math keeps — 853/2 = 426)
+        let l = gamemode_switcher_layout(853, 481);
+        assert_eq!(l.panel.0, 426 - 62, "the odd width's floor");
+        assert_eq!(l.slots[0].0, 426 - 59, "the row's odd-width x");
+        assert_eq!(l.name_y, 240 - 51, "the odd height's floor");
+
+        // THE ICON ORDER'S OWN LAW (the audited $values array — the
+        // ordinals the getNext walk cycles, the slot row's left-to-right)
+        let order = GameMode::ICON_ORDER;
+        assert_eq!(
+            order,
+            [
+                GameMode::Creative,
+                GameMode::Survival,
+                GameMode::Adventure,
+                GameMode::Spectator,
+            ],
+            "the audited enum order"
+        );
+        // the cycle: creative -> survival -> adventure -> spectator ->
+        // creative (the wrap the mod-4 ordinal law keeps)
+        let nexts: Vec<GameMode> = order.iter().map(|&m| m.next_icon()).collect();
+        assert_eq!(nexts, [order[1], order[2], order[3], order[0]], "the getNext law");
+        // the name keys and the icon items (the GameModeIcon fields —
+        // the translatable keys the en_us table answers, the ItemStack
+        // ctor's own four the registry resolves)
+        assert_eq!(GameMode::Creative.name_key(), "gameMode.creative");
+        assert_eq!(GameMode::Survival.name_key(), "gameMode.survival");
+        assert_eq!(GameMode::Adventure.name_key(), "gameMode.adventure");
+        assert_eq!(GameMode::Spectator.name_key(), "gameMode.spectator");
+        assert_eq!(GameMode::Creative.icon_item(), "grass_block");
+        assert_eq!(GameMode::Survival.icon_item(), "iron_sword");
+        assert_eq!(GameMode::Adventure.icon_item(), "map");
+        assert_eq!(GameMode::Spectator.icon_item(), "ender_eye");
+        for mode in order {
+            assert!(
+                mc_registry::item_id_by_name(mode.icon_item()).is_some(),
+                "the icon id the registry carries: {}",
+                mode.icon_item()
+            );
+        }
+        // the survival default (the vanilla world creation's own law)
+        assert_eq!(GameMode::Survival.icon_index(), 1, "the survival slot");
+    }
+
+    #[test]
+    fn the_f4_switcher_lanes_the_audited_hold_law_speaks() {
+        // THE OPEN GATE'S OWN LAW (the handleDebugKeys chain — the
+        // in-world, alive, unpaused world the walk never refuses)
+        let mut app = App::new(3);
+        app.enter_world();
+        assert_eq!(app.game_mode, GameMode::Survival, "the vanilla default");
+        assert!(app.previous_game_mode.is_none(), "the fresh bank sleeps");
+        app.on_open_game_mode_switcher();
+        assert_eq!(app.screen, ScreenKind::GameModeSwitcher, "the screen opens");
+        assert_eq!(app.gm_hovered, 1, "the default hover the current mode speaks");
+        assert!(app.debug_modifier_used, "the chord consumes the modifier");
+        // THE CYCLE WALK (the keyPressed law — the getNext the F4 tap
+        // serves, the wrap the mod-4 ordinal keeps)
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 2, "adventure");
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 3, "spectator");
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 0, "creative");
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 1, "the wrap lands survival");
+        // THE F3 RELEASE'S OWN APPLY (the keyReleased law — the apply
+        // the change earns, the previous bank the old mode fills, the
+        // close the same release keeps)
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 2, "adventure hovered");
+        app.on_debug_modifier_released();
+        assert_eq!(app.screen, ScreenKind::World, "the release closes");
+        assert_eq!(app.game_mode, GameMode::Adventure, "the apply lands");
+        assert_eq!(
+            app.previous_game_mode,
+            Some(GameMode::Survival),
+            "the bank the old mode fills"
+        );
+        // THE REOPEN'S OWN DEFAULT (the getDefaultSelected law — the
+        // PREVIOUS mode the bank prefers: the flick the two-mode toggle
+        // feel speaks)
+        app.on_open_game_mode_switcher();
+        assert_eq!(app.gm_hovered, 1, "the previous mode the reopen hovers");
+        app.on_debug_modifier_released();
+        assert_eq!(app.game_mode, GameMode::Survival, "the flick returns");
+        assert_eq!(
+            app.previous_game_mode,
+            Some(GameMode::Adventure),
+            "the bank the return fills"
+        );
+        // THE SAME-MODE ARM (the `icon.mode != current` gate — the
+        // silent apply the bank never moves)
+        app.on_open_game_mode_switcher(); // hovers the previous
+        assert_eq!(app.gm_hovered, 2, "the adventure the reopen hovers");
+        // cycle thrice to land BACK on survival
+        app.on_game_mode_switcher_cycle();
+        app.on_game_mode_switcher_cycle();
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 1, "survival hovered again");
+        app.on_debug_modifier_released();
+        assert_eq!(app.screen, ScreenKind::World, "the same-mode closes");
+        assert_eq!(app.game_mode, GameMode::Survival, "the mode never moves");
+        assert_eq!(
+            app.previous_game_mode,
+            Some(GameMode::Adventure),
+            "the bank the same-mode arm keeps"
+        );
+        // THE GATES' OWN REFUSALS (the paused world the walk never
+        // passes — the screen the refusal keeps)
+        app.paused = true;
+        app.on_open_game_mode_switcher();
+        assert_eq!(app.screen, ScreenKind::World, "the pause refuses the open");
+        app.paused = false;
+        app.dead = true;
+        app.on_open_game_mode_switcher();
+        assert_eq!(app.screen, ScreenKind::World, "the death refuses the open");
+        app.dead = false;
+        // THE CLOSED-STATE SILENCE (the screen's own key walk — the
+        // cycle and the apply the non-switcher screens never reach)
+        app.gm_hovered = 0;
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 0, "the closed state the cycle never moves");
+        app.on_debug_modifier_released();
+        assert_eq!(app.screen, ScreenKind::World, "the closed release walks the toggle");
+    }
+
+    #[test]
+    fn the_f4_switcher_the_wire_session_the_server_belief_keeps() {
+        // THE WIRE'S OWN REFUSAL (the mode the SERVER's belief owns —
+        // the ServerboundChangeGameModePacket the encoder-less client
+        // cannot speak yet, the close the refusal never blocks)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.world_is_network = true;
+        app.on_open_game_mode_switcher();
+        assert_eq!(app.screen, ScreenKind::GameModeSwitcher, "the open the wire keeps");
+        app.on_game_mode_switcher_cycle();
+        app.on_game_mode_switcher_cycle();
+        app.on_debug_modifier_released();
+        assert_eq!(app.screen, ScreenKind::World, "the release closes");
+        assert_eq!(app.game_mode, GameMode::Survival, "the mode the server owns");
+        assert!(app.previous_game_mode.is_none(), "the bank the wire never fills");
+    }
+
+    #[test]
+    fn the_switcher_hover_walk_the_moved_mouse_steals() {
+        // THE extractRenderState LAW (the firstMouseX/Y bank the first
+        // drawn frame arms and the cycle press resets, the unmoved
+        // mouse the cycled hover keeps, the moved mouse the slot rect
+        // steals)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_open_game_mode_switcher();
+        assert_eq!(app.gm_hovered, 1);
+        // THE ARM FRAME (the setFirstMousePos walk — the first drawn
+        // frame's mouse the bank stores, the hover the same frame keeps)
+        let l = gamemode_switcher_layout(854, 480);
+        app.mouse_pos = Some((l.slots[2].0 + 5, l.slots[2].1 + 5));
+        app.gamemode_switcher_hover(&l);
+        assert_eq!(
+            app.gm_first_mouse,
+            Some((l.slots[2].0 + 5, l.slots[2].1 + 5)),
+            "the bank the arm frame fills"
+        );
+        assert_eq!(app.gm_hovered, 1, "the arm frame the hover keeps");
+        // THE MOVED MOUSE'S OWN STEAL (the unmoved law broken — the
+        // hovered slot the isHoveredOrFocused test takes)
+        app.mouse_pos = Some((l.slots[2].0 + 6, l.slots[2].1 + 5));
+        app.gamemode_switcher_hover(&l);
+        assert_eq!(app.gm_hovered, 2, "the moved mouse steals");
+        // THE OUTSIDE MISS (the slot rects the between-space never
+        // matches — the cycled hover the miss keeps)
+        app.mouse_pos = Some((l.slots[2].0 - 1, l.slots[2].1 + 5));
+        app.gamemode_switcher_hover(&l);
+        assert_eq!(app.gm_hovered, 2, "the outside mouse the hover keeps");
+        // THE CYCLE RESET (the keyPressed arm — the bank the cycle
+        // clears, the next frame the re-arm speaks, the unmoved mouse
+        // the cycled hover keeps)
+        app.on_game_mode_switcher_cycle();
+        assert_eq!(app.gm_hovered, 3, "the cycle advances");
+        assert_eq!(app.gm_first_mouse, None, "the bank the cycle resets");
+        app.gamemode_switcher_hover(&l);
+        assert_eq!(app.gm_hovered, 3, "the re-arm frame the hover keeps");
+        // THE NO-MOUSE ARM (the headless scenes' absent mouse — the
+        // silent walk the cycled hover keeps)
+        app.mouse_pos = None;
+        app.gamemode_switcher_hover(&l);
+        assert_eq!(app.gm_hovered, 3, "the no-mouse arm sleeps");
+    }
+
+    #[test]
+    fn the_switcher_panel_the_pixel_law_speaks() {
+        // THE PANEL'S OWN PIXEL DECOMPOSITION (the audited texture's
+        // exact colors — the opaque head band the 33 fill, the grey
+        // frame the 85 rails, the black outline the chamfered corners
+        // keep, the translucent tail the 102-alpha body wears)
+        let mut fb = crate::raster::Framebuf::new(256, 128);
+        let mut g = Gui::new(&mut fb, 1);
+        draw_gamemode_switcher_panel(&mut g, 0, 0);
+        let px = |x: i32, y: i32| -> [u8; 3] {
+            let o = ((y * 256 + x) * 3) as usize;
+            [fb.color[o], fb.color[o + 1], fb.color[o + 2]]
+        };
+        // the black outline (the y0 row inset 2 — the chamfer the
+        // corner transparency speaks)
+        assert_eq!(px(1, 0), [0, 0, 0], "the chamfer's transparency");
+        assert_eq!(px(2, 0), [0, 0, 0], "the y0 row starts");
+        assert_eq!(px(121, 0), [0, 0, 0], "the y0 row ends");
+        assert_eq!(px(122, 0), [0, 0, 0], "the chamfer keeps silent");
+        assert_eq!(px(0, 2), [0, 0, 0], "the y2 rail lands");
+        assert_eq!(px(124, 3), [0, 0, 0], "the three-step top-right");
+        // the grey frame (85 the inner rail)
+        assert_eq!(px(1, 2), [85, 85, 85], "the grey frame");
+        assert_eq!(px(122, 19), [85, 85, 85], "the y19 grey row");
+        // the opaque head band (33 the slots' backdrop)
+        assert_eq!(px(60, 10), [33, 33, 33], "the head fill");
+        // the translucent tail (the 102-alpha body over the empty
+        // framebuffer — 33 * 0.4 the alpha fold speaks, rounded)
+        let tail = px(60, 60);
+        let expected = (33.0f32 * 0.4).round() as u8;
+        assert_eq!(tail, [expected, expected, expected], "the tail's alpha fold");
+        // the empty framebuffer outside (the 125x75 box the rest skips)
+        assert_eq!(px(0, 74), [0, 0, 0], "the y74 bottom row starts x3");
+        assert_eq!(px(0, 0), [0, 0, 0], "the outside corner sleeps");
+    }
+
+    #[test]
+    fn the_switcher_screen_the_render_round_speaks() {
+        // THE RENDER ROUND (the world beneath dimmed, the panel, the
+        // texts, the slot sprites, the icons — the screen draw the
+        // dispatch arm serves; the assets the cached jar keeps)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/sprites/gamemode_switcher/slot.png").exists());
+        let Some(root) = root else { return };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_open_game_mode_switcher();
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(640, 360);
+        app.render(&mut fb, &mut assets);
+        // the gui space the scale-1 fb keeps (640x360)
+        let l = gamemode_switcher_layout(640, 360);
+        let px = |x: i32, y: i32, c: &[u8]| -> [u8; 3] {
+            let o = ((y * 640 + x) * 3) as usize;
+            [c[o], c[o + 1], c[o + 2]]
+        };
+        let color = fb.color.clone();
+        // THE OPAQUE HEAD BAND (the 33 fill the world's dim the fill
+        // masks whole)
+        assert_eq!(
+            px(l.panel.0 + 60, l.panel.1 + 10, &color),
+            [33, 33, 33],
+            "the head band the world masks"
+        );
+        // THE NAME LINE (the hovered mode's white text above the panel)
+        let name_lit = (0..120)
+            .filter(|&dx| {
+                let (x, y) = (l.panel.0 + 60 - 60 + dx, l.name_y + 2);
+                let p = px(x, y, &color);
+                p[0] > 200 && p[1] > 200 && p[2] > 200
+            })
+            .count();
+        assert!(name_lit > 0, "the name line renders white ({name_lit})");
+        // THE HINT LINE (the aqua F4 word the select_next walk draws)
+        let hint_lit = (0..120)
+            .filter(|&dx| {
+                let (x, y) = (l.panel.0 + 62 - 60 + dx, l.hint_y + 2);
+                let p = px(x, y, &color);
+                p[1] > 180 && p[2] > 180 && p[0] < 160
+            })
+            .count();
+        assert!(hint_lit > 0, "the aqua hint word renders ({hint_lit})");
+        // THE SLOT SPRITES (the slot.png texture the cached jar blits —
+        // the lit pixels the 26x26 box keeps)
+        for (i, &(sx, sy)) in l.slots.iter().enumerate() {
+            let lit = (0..26)
+                .map(|dy| {
+                    (0..26)
+                        .filter(|&dx| {
+                            let p = px(sx + dx, sy + dy, &color);
+                            p[0] as u32 + p[1] as u32 + p[2] as u32 > 30
+                        })
+                        .count()
+                })
+                .sum::<usize>();
+            assert!(lit > 300, "the slot {i} texture renders ({lit} px)");
+        }
+        // THE ICON (the grass block the slot 0 carries — the lit pixels
+        // the +5 inset speaks)
+        let icon_lit = (0..16)
+            .map(|dy| {
+                (0..16)
+                    .filter(|&dx| {
+                        let p = px(l.slots[0].0 + 5 + dx, l.slots[0].1 + 5 + dy, &color);
+                        p[0] as u32 + p[1] as u32 + p[2] as u32 > 60
+                    })
+                    .count()
+            })
+            .sum::<usize>();
+        assert!(icon_lit > 60, "the grass block icon renders ({icon_lit} px)");
     }
 
     #[test]
