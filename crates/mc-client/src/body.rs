@@ -641,6 +641,19 @@ pub struct PlayerBody {
     /// wears — the thrust lane, the fly speeds, the hover, the fall
     /// distance the reset keeps silent, the fov the 1.1 fold speaks.
     pub flying: bool,
+    /// THE NOPHYSICS FLAG (javap `Entity.noPhysics` — the field
+    /// Player.tick's head writes fresh every frame:
+    /// `this.noPhysics = this.isSpectator()`, the spectator the raw
+    /// walk wears, the F4 flick the bank feeds instantly). The move's
+    /// raw branch the flag alone gates (javap Entity.move pcs 0-58:
+    /// the direct position add, the collision flags zeroed, the
+    /// collide walk the early return skips — the fall damage, the
+    /// footsteps, the moveDist, the movement exhaustion, the
+    /// restitution, the walk animation), and the inside-blocks walks
+    /// the isAffectedByBlocks verdict refuses (javap:
+    /// `!isRemoved() && !noPhysics` — the bubble drag, the lava
+    /// ignite/hurt, the water extinguish the gate keeps silent).
+    pub no_physics: bool,
     /// THE CAMERA'S OWN FOV STATE (Camera's fovModifier/oldFovModifier
     /// pair — tickFov's own two fields): the modifier the projection's
     /// 70° option multiplies — the sprint's 1.15 the speed ratio speaks,
@@ -828,6 +841,7 @@ impl PlayerBody {
             want_crouch: false,
             sprinting: false,
             flying: false,
+            no_physics: false,
             fov_modifier: 1.0,
             prev_fov_modifier: 1.0,
             forward: 0.0,
@@ -1341,16 +1355,48 @@ impl PlayerBody {
             }
         }
         let b = box_at(self.x, self.y, self.z, self.height());
-        let col = collide(world, b, mv);
-        self.x += col.dx;
-        self.y += col.dy;
-        self.z += col.dz;
-        self.horizontal_collision = col.horizontal_collision;
-        self.on_ground = col.vertical_collision_below;
-        // THE FALL DISTANCE (doCheckFallDamage's own law over the SWEPT
-        // delta — the accumulation, the water's honest gate, the
-        // landing's fold-and-reset)
-        self.check_fall_damage(world, col.dy);
+        let col = if self.no_physics {
+            // THE NOPHYSICS MOVE (javap Entity.move pcs 0-58 — the
+            // early return the flag speaks): the RAW position add the
+            // collide walk never answers, the four collision flags the
+            // branch zeroes — the client's on_ground the
+            // verticalCollisionBelow fold speaks, the Player.tick
+            // head's spectator arm the same zero wears (pcs 8-26:
+            // spectator || passenger -> setOnGround(false)) — and the
+            // zeroed Collision the skipped walks never speak: the
+            // restitution the empty flags, the step walk the
+            // move_dist's own growth gate, the movement exhaustion the
+            // cm>0 gate, the fall damage the dy=0 sweep. The travel
+            // folds below (the drag, the gravity, the flying restore)
+            // the vanilla walk keeps.
+            self.x += self.vx;
+            self.y += self.vy;
+            self.z += self.vz;
+            self.horizontal_collision = false;
+            self.on_ground = false;
+            Collision {
+                dx: 0.0,
+                dy: 0.0,
+                dz: 0.0,
+                horizontal_collision: false,
+                vertical_collision_below: false,
+                collided_x: false,
+                collided_y: false,
+                collided_z: false,
+            }
+        } else {
+            let col = collide(world, b, mv);
+            self.x += col.dx;
+            self.y += col.dy;
+            self.z += col.dz;
+            self.horizontal_collision = col.horizontal_collision;
+            self.on_ground = col.vertical_collision_below;
+            // THE FALL DISTANCE (doCheckFallDamage's own law over the SWEPT
+            // delta — the accumulation, the water's honest gate, the
+            // landing's fold-and-reset)
+            self.check_fall_damage(world, col.dy);
+            col
+        };
         // THE FOOTSTEP ACCUMULATION (Entity.move's own law over the
         // ACTUAL moved delta): moveDist += horizontalDistance × 0.6 (the
         // climbable branch's full-length lane aside — our vocabulary
@@ -1443,7 +1489,13 @@ impl PlayerBody {
         // physics never walk while a boat holds the player) means this
         // beat speaks for the STANDING body only — the vanilla's own
         // passenger lane rides the vehicle's walk.
-        self.apply_bubble_column_drag(world);
+        // THE INSIDE-BLOCKS WALKS THE FLAG REFUSES (javap
+        // isAffectedByBlocks — `!isRemoved() && !noPhysics`: the
+        // noPhysics body the whole walk skips, the vanilla spectator
+        // the three beats never hears)
+        if !self.no_physics {
+            self.apply_bubble_column_drag(world);
+        }
         // THE LAVA CONTACT (javap `LavaFluid.entityInside`'s own beat —
         // the aiStep tail's applyEffectsFromBlocks the tick's move
         // speaks AFTER, the InsideBlockEffectApplier's order kept:
@@ -1456,7 +1508,7 @@ impl PlayerBody {
         // hurt pipeline answers through its own cooldown, the
         // GENERIC_BURN riding the hurt's success — the playSound's
         // own ifeq gate).
-        if self.touches_lava(world) {
+        if !self.no_physics && self.touches_lava(world) {
             if self.remaining_fire_ticks < LAVA_FIRE_TICKS {
                 self.remaining_fire_ticks = LAVA_FIRE_TICKS;
             }
@@ -1473,7 +1525,7 @@ impl PlayerBody {
         // stays silent. The DOUSE WINS over the brand (the water-after-
         // lava order — the jump-into-the-pond exit the game itself
         // speaks).
-        if self.remaining_fire_ticks > 0 && self.touches_water(world) {
+        if !self.no_physics && self.remaining_fire_ticks > 0 && self.touches_water(world) {
             self.remaining_fire_ticks = 0;
             self.fire_doused_due = true;
         }
@@ -1511,15 +1563,20 @@ impl PlayerBody {
         }
         // THE WALK ANIMATION (LivingEntity.calculateEntityAnimation(true)
         // + updateWalkAnimation, javap): the tick's 3D move distance,
-        // `min(distance * 4.0, 1.0)` into the store's 0.4 blend.
-        let dist = ((self.x - x0) * (self.x - x0)
-            + (self.y - y0) * (self.y - y0)
-            + (self.z - z0) * (self.z - z0))
-            .sqrt() as f32;
-        if dist.is_finite() {
-            self.walk.update((dist * WALK_DISTANCE_SCALE).min(1.0), WALK_BLEND, 1.0);
-        } else {
-            self.walk.stop();
+        // `min(distance * 4.0, 1.0)` into the store's 0.4 blend. The
+        // noPhysics move the store never feeds (javap Entity.move's
+        // early return skips walkAnimation.update — the store holds,
+        // the flying pose the spectator keeps)
+        if !self.no_physics {
+            let dist = ((self.x - x0) * (self.x - x0)
+                + (self.y - y0) * (self.y - y0)
+                + (self.z - z0) * (self.z - z0))
+                .sqrt() as f32;
+            if dist.is_finite() {
+                self.walk.update((dist * WALK_DISTANCE_SCALE).min(1.0), WALK_BLEND, 1.0);
+            } else {
+                self.walk.stop();
+            }
         }
         // THE CAMERA'S OWN FOV BEAT (Camera.tickFov — the modifier the
         // projection's 70° option multiplies): the target the speed
@@ -2087,6 +2144,129 @@ mod tests {
             b.x
         );
         assert!(b.horizontal_collision, "the horizontal flag rides");
+    }
+
+    /// THE NOPHYSICS WALK (javap Entity.move pcs 0-58 — the early
+    /// return the flag speaks): the same wall walk the raw position
+    /// add wears — the body phases THROUGH the wall the collide body
+    /// rests against, the collision flags the branch zeroes, the
+    /// ground the raw walk never claims, and the pace the wall's
+    /// inside never steals (the collide walk the return skips whole).
+    #[test]
+    fn the_nophysics_walk_phases_through_the_wall() {
+        let w = walled_world();
+        // THE COLLIDE CONTROL (the vanilla walk the wall stops — the
+        // existing law's own shape)
+        let mut b = PlayerBody::new(3.0, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(
+            (b.x - (5.0 - WIDTH / 2.0)).abs() < 1e-9,
+            "the face holds at {:.3}",
+            b.x
+        );
+        assert!(b.horizontal_collision, "the wall spoke the flag");
+        // THE NOPHYSICS BODY: the forced flight the spectator sync
+        // speaks rides the flag — the raw walk phases through
+        let mut p = PlayerBody::new(3.0, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut p, &w);
+        p.flying = true; // the spectator sync's own force (the fly law)
+        p.no_physics = true;
+        p.forward = 1.0;
+        for _ in 0..40 {
+            p.tick(&w, false);
+            assert!(!p.on_ground, "the ground never claims the raw body");
+            assert!(!p.horizontal_collision, "the flag the branch zeroes");
+            assert_eq!(
+                p.fall_distance, 0.0,
+                "the fall bank the skipped check never folds"
+            );
+        }
+        assert!(p.x > 6.0, "the walk passed the wall at {:.3}", p.x);
+        // the wall's own inside: the raw walk keeps its pace (the
+        // collide walk the early return never answers)
+        let x_mid = p.x;
+        p.tick(&w, false);
+        assert!(p.x > x_mid, "the raw walk keeps its pace");
+    }
+
+    /// THE NOPHYSICS FALL (the same audited branch): the flag's raw
+    /// walk never lands — the floor the body phases beneath, the fall
+    /// bank never folds (the check the early return skips), the
+    /// collide control the ground claims.
+    #[test]
+    fn the_nophysics_fall_the_floor_never_claims() {
+        let w = flat_world();
+        // THE COLLIDE CONTROL: the falling body lands, the ground claims
+        let mut b = PlayerBody::new(8.0, 6.0, 8.0, 0.0, 0.0);
+        for _ in 0..100 {
+            b.tick(&w, false);
+            if b.on_ground {
+                break;
+            }
+        }
+        assert!(b.on_ground, "the collide body landed");
+        assert!((b.y - 1.0).abs() < 0.01, "the feet rest on the floor");
+        // THE NOPHYSICS BODY: the raw fall walks THROUGH the floor —
+        // no landing, no bank, the descend the collide walk never sees
+        let mut p = PlayerBody::new(8.0, 6.0, 8.0, 0.0, 0.0);
+        p.no_physics = true;
+        for _ in 0..100 {
+            p.tick(&w, false);
+            assert!(!p.on_ground, "the ground never claims the raw body");
+            assert_eq!(p.fall_event, None, "the fall hurt never folds");
+            assert_eq!(p.fall_distance, 0.0, "the bank the skip never feeds");
+        }
+        assert!(p.y < 0.0, "the body phased beneath the floor at {:.3}", p.y);
+    }
+
+    /// THE INSIDE-BLOCKS REFUSALS (javap isAffectedByBlocks —
+    /// `!isRemoved() && !noPhysics`): the noPhysics body rides the
+    /// lava cell without the ignite or the hurt, the water never
+    /// douses the carried clock (the walk the flag keeps silent) —
+    /// the collide controls the vanilla beats wear.
+    #[test]
+    fn the_nophysics_body_the_inside_walks_refuse() {
+        // THE LAVA LANE: the collide control lights and hurts
+        let mut w = flat_world();
+        for x in 7..10 {
+            for z in 7..10 {
+                w.set(x, 1, z, crate::world::LAVA);
+            }
+        }
+        let mut c = PlayerBody::new(8.0, 2.0, 8.0, 0.0, 0.0);
+        for _ in 0..10 {
+            c.tick(&w, false);
+        }
+        assert!(c.lava_hurt_due, "the inside walk hurt the control");
+        assert!(c.remaining_fire_ticks > 0, "the brand rode the control");
+        // THE NOPHYSICS BODY: the same cell the walk never speaks
+        let mut p = PlayerBody::new(8.0, 2.0, 8.0, 0.0, 0.0);
+        p.no_physics = true;
+        for _ in 0..10 {
+            p.tick(&w, false);
+        }
+        assert_eq!(p.remaining_fire_ticks, 0, "the ignite the walk refuses");
+        assert!(!p.lava_hurt_due, "the hurt the walk refuses");
+        // THE DOUSE LANE: the carried clock the water never kills
+        let mut w2 = flat_world();
+        for x in 7..10 {
+            for z in 7..10 {
+                w2.set(x, 1, z, WATER);
+            }
+        }
+        let mut d = PlayerBody::new(8.0, 2.0, 8.0, 0.0, 0.0);
+        d.no_physics = true;
+        d.remaining_fire_ticks = 99; // the %20 cadence's silent lane
+        d.tick(&w2, false);
+        assert_eq!(
+            d.remaining_fire_ticks, 98,
+            "the baseTick clock keeps its decrement, the douse never kills"
+        );
+        assert!(!d.fire_doused_due, "the douse the walk refuses");
     }
 
     #[test]

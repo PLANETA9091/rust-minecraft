@@ -1,0 +1,820 @@
+=== removeTag(Ljava/lang/String;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: getfield #7.tags:Ljava/util/Set;
+      4: aload_1 
+      5: invokeinterface #74.remove:(Ljava/lang/Object;)Z
+     10: ireturn 
+
+=== remove(Lnet/minecraft/world/entity/Entity$RemovalReason;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #7.setRemoved:(Lnet/minecraft/world/entity/Entity$RemovalReason;)V
+      5: return 
+
+=== move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V max_stack=9 max_locals=13 ===
+      0: aload_0 
+      1: getfield #7.noPhysics:Z
+      4: ifeq start+59
+      7: aload_0 
+      8: aload_0 
+      9: invokevirtual #7.getX:()D
+     12: aload_2 
+     13: getfield #30.x:D
+     16: dadd 
+     17: aload_0 
+     18: invokevirtual #7.getY:()D
+     21: aload_2 
+     22: getfield #30.y:D
+     25: dadd 
+     26: aload_0 
+     27: invokevirtual #7.getZ:()D
+     30: aload_2 
+     31: getfield #30.z:D
+     34: dadd 
+     35: invokevirtual #7.setPos:(DDD)V
+     38: aload_0 
+     39: iconst_0 
+     40: putfield #7.horizontalCollision:Z
+     43: aload_0 
+     44: iconst_0 
+     45: putfield #7.verticalCollision:Z
+     48: aload_0 
+     49: iconst_0 
+     50: putfield #7.verticalCollisionBelow:Z
+     53: aload_0 
+     54: iconst_0 
+     55: putfield #7.minorHorizontalCollision:Z
+     58: return 
+     59: aload_1 
+     60: getstatic #831.PISTON:Lnet/minecraft/world/entity/MoverType;
+     63: if_acmpne start+83
+     66: aload_0 
+     67: aload_2 
+     68: invokevirtual #7.limitPistonMovement:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+     71: astore_2 
+     72: aload_2 
+     73: getstatic #30.ZERO:Lnet/minecraft/world/phys/Vec3;
+     76: invokevirtual #30.equals:(Ljava/lang/Object;)Z
+     79: ifeq start+83
+     82: return 
+     83: invokestatic #573.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+     86: astore_3 
+     87: aload_3 
+     88: ldc_w #840
+     91: invokeinterface #580.push:(Ljava/lang/String;)V
+     96: aload_0 
+     97: getfield #7.stuckSpeedMultiplier:Lnet/minecraft/world/phys/Vec3;
+    100: invokevirtual #30.lengthSqr:()D
+    103: ldc2_w #844
+    106: dcmpl 
+    107: ifle start+140
+    110: aload_1 
+    111: getstatic #831.PISTON:Lnet/minecraft/world/entity/MoverType;
+    114: if_acmpeq start+126
+    117: aload_2 
+    118: aload_0 
+    119: getfield #7.stuckSpeedMultiplier:Lnet/minecraft/world/phys/Vec3;
+    122: invokevirtual #30.multiply:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    125: astore_2 
+    126: aload_0 
+    127: getstatic #30.ZERO:Lnet/minecraft/world/phys/Vec3;
+    130: putfield #7.stuckSpeedMultiplier:Lnet/minecraft/world/phys/Vec3;
+    133: aload_0 
+    134: getstatic #30.ZERO:Lnet/minecraft/world/phys/Vec3;
+    137: invokevirtual #7.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    140: aload_0 
+    141: aload_2 
+    142: aload_1 
+    143: invokevirtual #7.maybeBackOffFromEdge:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/entity/MoverType;)Lnet/minecraft/world/phys/Vec3;
+    146: astore_2 
+    147: aload_0 
+    148: aload_2 
+    149: invokevirtual #7.collide:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    152: astore 4
+    154: aload 4
+    156: invokevirtual #30.lengthSqr:()D
+    159: dstore 5
+    161: dload 5
+    163: ldc2_w #844
+    166: dcmpl 
+    167: ifgt start+184
+    170: aload_2 
+    171: invokevirtual #30.lengthSqr:()D
+    174: dload 5
+    176: dsub 
+    177: ldc2_w #844
+    180: dcmpg 
+    181: ifge start+313
+    184: aload_0 
+    185: getfield #7.fallDistance:D
+    188: dconst_0 
+    189: dcmpl 
+    190: ifeq start+276
+    193: dload 5
+    195: dconst_1 
+    196: dcmpl 
+    197: iflt start+276
+    200: aload 4
+    202: invokevirtual #30.length:()D
+    205: ldc2_w #862
+    208: invokestatic #750.min:(DD)D
+    211: dstore 7
+    213: aload_0 
+    214: invokevirtual #7.position:()Lnet/minecraft/world/phys/Vec3;
+    217: aload 4
+    219: invokevirtual #30.normalize:()Lnet/minecraft/world/phys/Vec3;
+    222: dload 7
+    224: invokevirtual #30.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    227: invokevirtual #30.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    230: astore 9
+    232: aload_0 
+    233: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+    236: new net/minecraft/world/level/ClipContext
+    239: dup 
+    240: aload_0 
+    241: invokevirtual #7.position:()Lnet/minecraft/world/phys/Vec3;
+    244: aload 9
+    246: getstatic #878.FALLDAMAGE_RESETTING:Lnet/minecraft/world/level/ClipContext$Block;
+    249: getstatic #884.WATER:Lnet/minecraft/world/level/ClipContext$Fluid;
+    252: aload_0 
+    253: invokespecial #875.<init>:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/level/ClipContext$Block;Lnet/minecraft/world/level/ClipContext$Fluid;Lnet/minecraft/world/entity/Entity;)V
+    256: invokevirtual #207.clip:(Lnet/minecraft/world/level/ClipContext;)Lnet/minecraft/world/phys/BlockHitResult;
+    259: astore 10
+    261: aload 10
+    263: invokevirtual #896.getType:()Lnet/minecraft/world/phys/HitResult$Type;
+    266: getstatic #902.MISS:Lnet/minecraft/world/phys/HitResult$Type;
+    269: if_acmpeq start+276
+    272: aload_0 
+    273: invokevirtual #7.resetFallDistance:()V
+    276: aload_0 
+    277: invokevirtual #7.position:()Lnet/minecraft/world/phys/Vec3;
+    280: astore 7
+    282: aload 7
+    284: aload 4
+    286: invokevirtual #30.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+    289: astore 8
+    291: aload_0 
+    292: new net/minecraft/world/entity/Entity$Movement
+    295: dup 
+    296: aload 7
+    298: aload 8
+    300: aload_2 
+    301: invokespecial #910.<init>:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V
+    304: invokevirtual #7.addMovementThisTick:(Lnet/minecraft/world/entity/Entity$Movement;)V
+    307: aload_0 
+    308: aload 8
+    310: invokevirtual #7.setPos:(Lnet/minecraft/world/phys/Vec3;)V
+    313: aload_3 
+    314: invokeinterface #580.pop:()V
+    319: aload_3 
+    320: ldc_w #921
+    323: invokeinterface #580.push:(Ljava/lang/String;)V
+    328: aload_2 
+    329: getfield #30.x:D
+    332: aload 4
+    334: getfield #30.x:D
+    337: invokestatic #106.equal:(DD)Z
+    340: ifne start+347
+    343: iconst_1 
+    344: goto start+348
+    347: iconst_0 
+    348: istore 7
+    350: aload_2 
+    351: getfield #30.z:D
+    354: aload 4
+    356: getfield #30.z:D
+    359: invokestatic #106.equal:(DD)Z
+    362: ifne start+369
+    365: iconst_1 
+    366: goto start+370
+    369: iconst_0 
+    370: istore 8
+    372: aload_0 
+    373: iload 7
+    375: ifne start+383
+    378: iload 8
+    380: ifeq start+387
+    383: iconst_1 
+    384: goto start+388
+    387: iconst_0 
+    388: putfield #7.horizontalCollision:Z
+    391: aload_2 
+    392: getfield #30.y:D
+    395: invokestatic #750.abs:(D)D
+    398: dconst_0 
+    399: dcmpl 
+    400: ifle start+407
+    403: iconst_1 
+    404: goto start+408
+    407: iconst_0 
+    408: istore 9
+    410: iload 9
+    412: ifne start+422
+    415: aload_0 
+    416: invokevirtual #7.isLocalInstanceAuthoritative:()Z
+    419: ifeq start+483
+    422: aload_0 
+    423: aload_2 
+    424: getfield #30.y:D
+    427: aload 4
+    429: getfield #30.y:D
+    432: dcmpl 
+    433: ifeq start+440
+    436: iconst_1 
+    437: goto start+441
+    440: iconst_0 
+    441: putfield #7.verticalCollision:Z
+    444: aload_0 
+    445: aload_0 
+    446: getfield #7.verticalCollision:Z
+    449: ifeq start+465
+    452: aload_2 
+    453: getfield #30.y:D
+    456: dconst_0 
+    457: dcmpg 
+    458: ifge start+465
+    461: iconst_1 
+    462: goto start+466
+    465: iconst_0 
+    466: putfield #7.verticalCollisionBelow:Z
+    469: aload_0 
+    470: aload_0 
+    471: getfield #7.verticalCollisionBelow:Z
+    474: aload_0 
+    475: getfield #7.horizontalCollision:Z
+    478: aload 4
+    480: invokevirtual #7.setOnGroundWithMovement:(ZZLnet/minecraft/world/phys/Vec3;)V
+    483: aload_0 
+    484: getfield #7.horizontalCollision:Z
+    487: ifeq start+503
+    490: aload_0 
+    491: aload_0 
+    492: aload 4
+    494: invokevirtual #7.isHorizontalCollisionMinor:(Lnet/minecraft/world/phys/Vec3;)Z
+    497: putfield #7.minorHorizontalCollision:Z
+    500: goto start+508
+    503: aload_0 
+    504: iconst_0 
+    505: putfield #7.minorHorizontalCollision:Z
+    508: aload_0 
+    509: invokevirtual #7.getOnPosLegacy:()Lnet/minecraft/core/BlockPos;
+    512: astore 10
+    514: aload_0 
+    515: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+    518: aload 10
+    520: invokevirtual #207.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    523: astore 11
+    525: aload_0 
+    526: invokevirtual #7.isLocalInstanceAuthoritative:()Z
+    529: ifeq start+549
+    532: aload_0 
+    533: aload 4
+    535: getfield #30.y:D
+    538: aload_0 
+    539: invokevirtual #7.onGround:()Z
+    542: aload 11
+    544: aload 10
+    546: invokevirtual #7.checkFallDamage:(DZLnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)V
+    549: aload_0 
+    550: invokevirtual #7.isRemoved:()Z
+    553: ifeq start+563
+    556: aload_3 
+    557: invokeinterface #580.pop:()V
+    562: return 
+    563: aload_0 
+    564: invokevirtual #7.canSimulateMovement:()Z
+    567: ifeq start+601
+    570: iload 9
+    572: ifeq start+582
+    575: aload_0 
+    576: getfield #7.verticalCollision:Z
+    579: ifne start+589
+    582: aload_0 
+    583: getfield #7.horizontalCollision:Z
+    586: ifeq start+601
+    589: aload_0 
+    590: aload 11
+    592: iload 7
+    594: iload 8
+    596: aload 4
+    598: invokevirtual #7.restituteMovementAfterCollisions:(Lnet/minecraft/world/level/block/state/BlockState;ZZLnet/minecraft/world/phys/Vec3;)V
+    601: aload_0 
+    602: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+    605: invokevirtual #207.isClientSide:()Z
+    608: ifeq start+618
+    611: aload_0 
+    612: invokevirtual #7.isLocalInstanceAuthoritative:()Z
+    615: ifeq start+651
+    618: aload_0 
+    619: invokevirtual #7.getMovementEmission:()Lnet/minecraft/world/entity/Entity$MovementEmission;
+    622: astore 12
+    624: aload 12
+    626: invokevirtual #963.emitsAnything:()Z
+    629: ifeq start+651
+    632: aload_0 
+    633: invokevirtual #7.isPassenger:()Z
+    636: ifne start+651
+    639: aload_0 
+    640: aload 12
+    642: aload 4
+    644: aload 10
+    646: aload 11
+    648: invokevirtual #7.applyMovementEmissionAndPlaySound:(Lnet/minecraft/world/entity/Entity$MovementEmission;Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+    651: aload_0 
+    652: invokevirtual #7.getBlockSpeedFactor:()F
+    655: fstore 12
+    657: aload_0 
+    658: aload_0 
+    659: invokevirtual #7.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    662: fload 12
+    664: f2d 
+    665: dconst_1 
+    666: fload 12
+    668: f2d 
+    669: invokevirtual #30.multiply:(DDD)Lnet/minecraft/world/phys/Vec3;
+    672: invokevirtual #7.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+    675: aload_3 
+    676: invokeinterface #580.pop:()V
+    681: return 
+
+=== removeLatestMovementRecording()V max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #7.movementThisTick:Ljava/util/ArrayDeque;
+      4: invokevirtual #159.isEmpty:()Z
+      7: ifne start+18
+     10: aload_0 
+     11: getfield #7.movementThisTick:Ljava/util/ArrayDeque;
+     14: invokevirtual #159.removeLast:()Ljava/lang/Object;
+     17: pop 
+     18: return 
+
+=== moveRelative(FLnet/minecraft/world/phys/Vec3;)V max_stack=3 max_locals=4 ===
+      0: aload_2 
+      1: fload_1 
+      2: aload_0 
+      3: invokevirtual #7.getYRot:()F
+      6: invokestatic #7.getInputVector:(Lnet/minecraft/world/phys/Vec3;FF)Lnet/minecraft/world/phys/Vec3;
+      9: astore_3 
+     10: aload_0 
+     11: aload_0 
+     12: invokevirtual #7.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+     15: aload_3 
+     16: invokevirtual #30.add:(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;
+     19: invokevirtual #7.setDeltaMovement:(Lnet/minecraft/world/phys/Vec3;)V
+     22: return 
+
+=== removeVehicle()V max_stack=4 max_locals=3 ===
+      0: aload_0 
+      1: getfield #7.vehicle:Lnet/minecraft/world/entity/Entity;
+      4: ifnull start+53
+      7: aload_0 
+      8: getfield #7.vehicle:Lnet/minecraft/world/entity/Entity;
+     11: astore_1 
+     12: aload_0 
+     13: aconst_null 
+     14: putfield #7.vehicle:Lnet/minecraft/world/entity/Entity;
+     17: aload_1 
+     18: aload_0 
+     19: invokevirtual #7.removePassenger:(Lnet/minecraft/world/entity/Entity;)V
+     22: aload_0 
+     23: invokevirtual #7.getRemovalReason:()Lnet/minecraft/world/entity/Entity$RemovalReason;
+     26: astore_2 
+     27: aload_2 
+     28: ifnull start+38
+     31: aload_2 
+     32: invokevirtual #436.shouldDestroy:()Z
+     35: ifeq start+53
+     38: aload_0 
+     39: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+     42: aload_0 
+     43: getstatic #445.ENTITY_DISMOUNT:Lnet/minecraft/core/Holder$Reference;
+     46: aload_1 
+     47: getfield #7.position:Lnet/minecraft/world/phys/Vec3;
+     50: invokevirtual #207.gameEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/world/phys/Vec3;)V
+     53: return 
+
+=== removePassenger(Lnet/minecraft/world/entity/Entity;)V max_stack=3 max_locals=2 ===
+      0: aload_1 
+      1: invokevirtual #7.getVehicle:()Lnet/minecraft/world/entity/Entity;
+      4: aload_0 
+      5: if_acmpne start+19
+      8: new java/lang/IllegalStateException
+     11: dup 
+     12: ldc_w #2728
+     15: invokespecial #418.<init>:(Ljava/lang/String;)V
+     18: athrow 
+     19: aload_0 
+     20: getfield #7.passengers:Lcom/google/common/collect/ImmutableList;
+     23: invokevirtual #20.size:()I
+     26: iconst_1 
+     27: if_icmpne start+52
+     30: aload_0 
+     31: getfield #7.passengers:Lcom/google/common/collect/ImmutableList;
+     34: iconst_0 
+     35: invokevirtual #20.get:(I)Ljava/lang/Object;
+     38: aload_1 
+     39: if_acmpne start+52
+     42: aload_0 
+     43: invokestatic #20.of:()Lcom/google/common/collect/ImmutableList;
+     46: putfield #7.passengers:Lcom/google/common/collect/ImmutableList;
+     49: goto start+85
+     52: aload_0 
+     53: aload_0 
+     54: getfield #7.passengers:Lcom/google/common/collect/ImmutableList;
+     57: invokevirtual #20.stream:()Ljava/util/stream/Stream;
+     60: aload_1 
+     61: invokedynamic #2733
+     66: invokeinterface #2437.filter:(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;
+     71: invokestatic #20.toImmutableList:()Ljava/util/stream/Collector;
+     74: invokeinterface #2437.collect:(Ljava/util/stream/Collector;)Ljava/lang/Object;
+     79: checkcast com/google/common/collect/ImmutableList
+     82: putfield #7.passengers:Lcom/google/common/collect/ImmutableList;
+     85: aload_1 
+     86: bipush 60
+     88: putfield #7.boardingCooldown:I
+     91: return 
+
+=== moveOrInterpolateTo(Lnet/minecraft/world/phys/Vec3;FF)V max_stack=4 max_locals=4 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokestatic #140.of:(Ljava/lang/Object;)Ljava/util/Optional;
+      5: fload_2 
+      6: invokestatic #1781.valueOf:(F)Ljava/lang/Float;
+      9: invokestatic #140.of:(Ljava/lang/Object;)Ljava/util/Optional;
+     12: fload_3 
+     13: invokestatic #1781.valueOf:(F)Ljava/lang/Float;
+     16: invokestatic #140.of:(Ljava/lang/Object;)Ljava/util/Optional;
+     19: invokevirtual #7.moveOrInterpolateTo:(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/Optional;)V
+     22: return 
+
+=== moveOrInterpolateTo(FF)V max_stack=4 max_locals=3 ===
+      0: aload_0 
+      1: invokestatic #140.empty:()Ljava/util/Optional;
+      4: fload_1 
+      5: invokestatic #1781.valueOf:(F)Ljava/lang/Float;
+      8: invokestatic #140.of:(Ljava/lang/Object;)Ljava/util/Optional;
+     11: fload_2 
+     12: invokestatic #1781.valueOf:(F)Ljava/lang/Float;
+     15: invokestatic #140.of:(Ljava/lang/Object;)Ljava/util/Optional;
+     18: invokevirtual #7.moveOrInterpolateTo:(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/Optional;)V
+     21: return 
+
+=== moveOrInterpolateTo(Lnet/minecraft/world/phys/Vec3;)V max_stack=4 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokestatic #140.of:(Ljava/lang/Object;)Ljava/util/Optional;
+      5: invokestatic #140.empty:()Ljava/util/Optional;
+      8: invokestatic #140.empty:()Ljava/util/Optional;
+     11: invokevirtual #7.moveOrInterpolateTo:(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/Optional;)V
+     14: return 
+
+=== moveOrInterpolateTo(Ljava/util/Optional;Ljava/util/Optional;Ljava/util/Optional;)V max_stack=5 max_locals=5 ===
+      0: aload_0 
+      1: invokevirtual #7.getInterpolation:()Lnet/minecraft/world/entity/InterpolationHandler;
+      4: astore 4
+      6: aload 4
+      8: ifnull start+67
+     11: aload 4
+     13: aload_1 
+     14: aload 4
+     16: invokevirtual #2749.position:()Lnet/minecraft/world/phys/Vec3;
+     19: invokevirtual #140.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+     22: checkcast net/minecraft/world/phys/Vec3
+     25: aload_2 
+     26: aload 4
+     28: invokevirtual #2749.yRot:()F
+     31: invokestatic #1781.valueOf:(F)Ljava/lang/Float;
+     34: invokevirtual #140.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+     37: checkcast java/lang/Float
+     40: invokevirtual #1781.floatValue:()F
+     43: aload_3 
+     44: aload 4
+     46: invokevirtual #2749.xRot:()F
+     49: invokestatic #1781.valueOf:(F)Ljava/lang/Float;
+     52: invokevirtual #140.orElse:(Ljava/lang/Object;)Ljava/lang/Object;
+     55: checkcast java/lang/Float
+     58: invokevirtual #1781.floatValue:()F
+     61: invokevirtual #2749.interpolateTo:(Lnet/minecraft/world/phys/Vec3;FF)V
+     64: goto start+97
+     67: aload_1 
+     68: aload_0 
+     69: invokedynamic #2772
+     74: invokevirtual #140.ifPresent:(Ljava/util/function/Consumer;)V
+     77: aload_2 
+     78: aload_0 
+     79: invokedynamic #2773
+     84: invokevirtual #140.ifPresent:(Ljava/util/function/Consumer;)V
+     87: aload_3 
+     88: aload_0 
+     89: invokedynamic #2774
+     94: invokevirtual #140.ifPresent:(Ljava/util/function/Consumer;)V
+     97: return 
+
+=== moveTowardsClosestSpace(DDD)V max_stack=10 max_locals=21 ===
+      0: dload_1 
+      1: dload_3 
+      2: dload 5
+      4: invokestatic #226.containing:(DDD)Lnet/minecraft/core/BlockPos;
+      7: astore 7
+      9: new net/minecraft/world/phys/Vec3
+     12: dup 
+     13: dload_1 
+     14: aload 7
+     16: invokevirtual #226.getX:()I
+     19: i2d 
+     20: dsub 
+     21: dload_3 
+     22: aload 7
+     24: invokevirtual #226.getY:()I
+     27: i2d 
+     28: dsub 
+     29: dload 5
+     31: aload 7
+     33: invokevirtual #226.getZ:()I
+     36: i2d 
+     37: dsub 
+     38: invokespecial #30.<init>:(DDD)V
+     41: astore 8
+     43: new net/minecraft/core/BlockPos$MutableBlockPos
+     46: dup 
+     47: invokespecial #2989.<init>:()V
+     50: astore 9
+     52: getstatic #1430.UP:Lnet/minecraft/core/Direction;
+     55: astore 10
+     57: ldc2_w #2996
+     60: dstore 11
+     62: iconst_5 
+     63: anewarray net/minecraft/core/Direction
+     66: dup 
+     67: iconst_0 
+     68: getstatic #1430.NORTH:Lnet/minecraft/core/Direction;
+     71: aastore 
+     72: dup 
+     73: iconst_1 
+     74: getstatic #1430.SOUTH:Lnet/minecraft/core/Direction;
+     77: aastore 
+     78: dup 
+     79: iconst_2 
+     80: getstatic #1430.WEST:Lnet/minecraft/core/Direction;
+     83: aastore 
+     84: dup 
+     85: iconst_3 
+     86: getstatic #1430.EAST:Lnet/minecraft/core/Direction;
+     89: aastore 
+     90: dup 
+     91: iconst_4 
+     92: getstatic #1430.UP:Lnet/minecraft/core/Direction;
+     95: aastore 
+     96: astore 13
+     98: aload 13
+    100: arraylength 
+    101: istore 14
+    103: iconst_0 
+    104: istore 15
+    106: iload 15
+    108: iload 14
+    110: if_icmpge start+207
+    113: aload 13
+    115: iload 15
+    117: aaload 
+    118: astore 16
+    120: aload 9
+    122: aload 7
+    124: aload 16
+    126: invokevirtual #2989.setWithOffset:(Lnet/minecraft/core/Vec3i;Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos$MutableBlockPos;
+    129: pop 
+    130: aload_0 
+    131: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+    134: aload 9
+    136: invokevirtual #207.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    139: aload_0 
+    140: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+    143: aload 9
+    145: invokevirtual #333.isCollisionShapeFullBlock:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+    148: ifne start+201
+    151: aload 8
+    153: aload 16
+    155: invokevirtual #1430.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    158: invokevirtual #30.get:(Lnet/minecraft/core/Direction$Axis;)D
+    161: dstore 17
+    163: aload 16
+    165: invokevirtual #1430.getAxisDirection:()Lnet/minecraft/core/Direction$AxisDirection;
+    168: getstatic #3027.POSITIVE:Lnet/minecraft/core/Direction$AxisDirection;
+    171: if_acmpne start+181
+    174: dconst_1 
+    175: dload 17
+    177: dsub 
+    178: goto start+183
+    181: dload 17
+    183: dstore 19
+    185: dload 19
+    187: dload 11
+    189: dcmpg 
+    190: ifge start+201
+    193: dload 19
+    195: dstore 11
+    197: aload 16
+    199: astore 10
+    201: iinc #3841
+    204: goto start+106
+    207: aload_0 
+    208: getfield #7.random:Lnet/minecraft/util/RandomSource;
+    211: invokeinterface #53.nextFloat:()F
+    216: ldc_w #1229
+    219: fmul 
+    220: ldc_w #1673
+    223: fadd 
+    224: fstore 13
+    226: aload 10
+    228: invokevirtual #1430.getAxisDirection:()Lnet/minecraft/core/Direction$AxisDirection;
+    231: invokevirtual #3027.getStep:()I
+    234: i2f 
+    235: fstore 14
+    237: aload_0 
+    238: invokevirtual #7.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    241: ldc2_w #3035
+    244: invokevirtual #30.scale:(D)Lnet/minecraft/world/phys/Vec3;
+    247: astore 15
+    249: aload 10
+    251: invokevirtual #1430.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    254: getstatic #987.X:Lnet/minecraft/core/Direction$Axis;
+    257: if_acmpne start+283
+    260: aload_0 
+    261: fload 14
+    263: fload 13
+    265: fmul 
+    266: f2d 
+    267: aload 15
+    269: getfield #30.y:D
+    272: aload 15
+    274: getfield #30.z:D
+    277: invokevirtual #7.setDeltaMovement:(DDD)V
+    280: goto start+348
+    283: aload 10
+    285: invokevirtual #1430.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    288: getstatic #987.Y:Lnet/minecraft/core/Direction$Axis;
+    291: if_acmpne start+317
+    294: aload_0 
+    295: aload 15
+    297: getfield #30.x:D
+    300: fload 14
+    302: fload 13
+    304: fmul 
+    305: f2d 
+    306: aload 15
+    308: getfield #30.z:D
+    311: invokevirtual #7.setDeltaMovement:(DDD)V
+    314: goto start+348
+    317: aload 10
+    319: invokevirtual #1430.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    322: getstatic #987.Z:Lnet/minecraft/core/Direction$Axis;
+    325: if_acmpne start+348
+    328: aload_0 
+    329: aload 15
+    331: getfield #30.x:D
+    334: aload 15
+    336: getfield #30.y:D
+    339: fload 14
+    341: fload 13
+    343: fmul 
+    344: f2d 
+    345: invokevirtual #7.setDeltaMovement:(DDD)V
+    348: return 
+
+=== removeAction(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/Component; max_stack=3 max_locals=4 ===
+      0: aload_0 
+      1: invokeinterface #2331.plainCopy:()Lnet/minecraft/network/chat/MutableComponent;
+      6: aload_0 
+      7: invokeinterface #2331.getStyle:()Lnet/minecraft/network/chat/Style;
+     12: aconst_null 
+     13: invokevirtual #3046.withClickEvent:(Lnet/minecraft/network/chat/ClickEvent;)Lnet/minecraft/network/chat/Style;
+     16: invokevirtual #3052.setStyle:(Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/MutableComponent;
+     19: astore_1 
+     20: aload_0 
+     21: invokeinterface #2331.getSiblings:()Ljava/util/List;
+     26: invokeinterface #1094.iterator:()Ljava/util/Iterator;
+     31: astore_2 
+     32: aload_2 
+     33: invokeinterface #1355.hasNext:()Z
+     38: ifeq start+63
+     41: aload_2 
+     42: invokeinterface #1355.next:()Ljava/lang/Object;
+     47: checkcast net/minecraft/network/chat/Component
+     50: astore_3 
+     51: aload_1 
+     52: aload_3 
+     53: invokestatic #7.removeAction:(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/Component;
+     56: invokevirtual #3052.append:(Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/MutableComponent;
+     59: pop 
+     60: goto start+32
+     63: aload_1 
+     64: areturn 
+
+=== removeAfterChangingDimensions()V max_stack=2 max_locals=4 ===
+      0: aload_0 
+      1: getstatic #436.CHANGED_DIMENSION:Lnet/minecraft/world/entity/Entity$RemovalReason;
+      4: invokevirtual #7.setRemoved:(Lnet/minecraft/world/entity/Entity$RemovalReason;)V
+      7: aload_0 
+      8: astore_2 
+      9: aload_2 
+     10: instanceof net/minecraft/world/entity/Leashable
+     13: ifeq start+27
+     16: aload_2 
+     17: checkcast net/minecraft/world/entity/Leashable
+     20: astore_1 
+     21: aload_1 
+     22: invokeinterface #668.removeLeash:()V
+     27: aload_0 
+     28: astore_3 
+     29: aload_3 
+     30: instanceof net/minecraft/world/waypoints/WaypointTransmitter
+     33: ifeq start+66
+     36: aload_3 
+     37: checkcast net/minecraft/world/waypoints/WaypointTransmitter
+     40: astore_1 
+     41: aload_0 
+     42: getfield #7.level:Lnet/minecraft/world/level/Level;
+     45: astore_3 
+     46: aload_3 
+     47: instanceof net/minecraft/server/level/ServerLevel
+     50: ifeq start+66
+     53: aload_3 
+     54: checkcast net/minecraft/server/level/ServerLevel
+     57: astore_2 
+     58: aload_2 
+     59: invokevirtual #622.getWaypointManager:()Lnet/minecraft/server/waypoints/ServerWaypointManager;
+     62: aload_1 
+     63: invokevirtual #3367.untrackWaypoint:(Lnet/minecraft/world/waypoints/WaypointTransmitter;)V
+     66: return 
+
+=== notifyLeasheeRemoved(Lnet/minecraft/world/entity/Leashable;)V max_stack=0 max_locals=2 ===
+      0: return 
+
+=== isRemoved()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #7.removalReason:Lnet/minecraft/world/entity/Entity$RemovalReason;
+      4: ifnull start+11
+      7: iconst_1 
+      8: goto start+12
+     11: iconst_0 
+     12: ireturn 
+
+=== setRemoved(Lnet/minecraft/world/entity/Entity$RemovalReason;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: getfield #7.removalReason:Lnet/minecraft/world/entity/Entity$RemovalReason;
+      4: ifnonnull start+12
+      7: aload_0 
+      8: aload_1 
+      9: putfield #7.removalReason:Lnet/minecraft/world/entity/Entity$RemovalReason;
+     12: aload_0 
+     13: getfield #7.removalReason:Lnet/minecraft/world/entity/Entity$RemovalReason;
+     16: invokevirtual #436.shouldDestroy:()Z
+     19: ifeq start+26
+     22: aload_0 
+     23: invokevirtual #7.stopRiding:()V
+     26: aload_0 
+     27: invokevirtual #7.getPassengers:()Ljava/util/List;
+     30: invokedynamic #3757
+     35: invokeinterface #1094.forEach:(Ljava/util/function/Consumer;)V
+     40: aload_0 
+     41: getfield #7.levelCallback:Lnet/minecraft/world/level/entity/EntityInLevelCallback;
+     44: aload_1 
+     45: invokeinterface #90.onRemove:(Lnet/minecraft/world/entity/Entity$RemovalReason;)V
+     50: aload_0 
+     51: aload_1 
+     52: invokevirtual #7.onRemoval:(Lnet/minecraft/world/entity/Entity$RemovalReason;)V
+     55: return 
+
+=== unsetRemoved()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: aconst_null 
+      2: putfield #7.removalReason:Lnet/minecraft/world/entity/Entity$RemovalReason;
+      5: return 
+
+=== lambda$moveOrInterpolateTo$1(Ljava/lang/Float;)V max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #1781.floatValue:()F
+      5: ldc_w #501
+      8: frem 
+      9: invokevirtual #7.setXRot:(F)V
+     12: return 
+
+=== lambda$moveOrInterpolateTo$0(Ljava/lang/Float;)V max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #1781.floatValue:()F
+      5: ldc_w #501
+      8: frem 
+      9: invokevirtual #7.setYRot:(F)V
+     12: return 
+
+=== lambda$removePassenger$0(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)Z max_stack=2 max_locals=2 ===
+      0: aload_1 
+      1: aload_0 
+      2: if_acmpeq start+9
+      5: iconst_1 
+      6: goto start+10
+      9: iconst_0 
+     10: ireturn 
+

@@ -1,0 +1,161 @@
+=== applyEffectsFromBlocks()V max_stack=5 max_locals=1 ===
+      0: aload_0 
+      1: getfield #7.finalMovementsThisTick:Ljava/util/List;
+      4: invokeinterface #1094.clear:()V
+      9: aload_0 
+     10: getfield #7.finalMovementsThisTick:Ljava/util/List;
+     13: aload_0 
+     14: getfield #7.movementThisTick:Ljava/util/ArrayDeque;
+     17: invokeinterface #1094.addAll:(Ljava/util/Collection;)Z
+     22: pop 
+     23: aload_0 
+     24: getfield #7.movementThisTick:Ljava/util/ArrayDeque;
+     27: invokevirtual #159.clear:()V
+     30: aload_0 
+     31: getfield #7.finalMovementsThisTick:Ljava/util/List;
+     34: invokeinterface #1094.isEmpty:()Z
+     39: ifeq start+70
+     42: aload_0 
+     43: getfield #7.finalMovementsThisTick:Ljava/util/List;
+     46: new net/minecraft/world/entity/Entity$Movement
+     49: dup 
+     50: aload_0 
+     51: invokevirtual #7.oldPosition:()Lnet/minecraft/world/phys/Vec3;
+     54: aload_0 
+     55: invokevirtual #7.position:()Lnet/minecraft/world/phys/Vec3;
+     58: invokespecial #910.<init>:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V
+     61: invokeinterface #1094.add:(Ljava/lang/Object;)Z
+     66: pop 
+     67: goto start+135
+     70: aload_0 
+     71: getfield #7.finalMovementsThisTick:Ljava/util/List;
+     74: invokeinterface #1094.getLast:()Ljava/lang/Object;
+     79: checkcast net/minecraft/world/entity/Entity$Movement
+     82: getfield #910.to:Lnet/minecraft/world/phys/Vec3;
+     85: aload_0 
+     86: invokevirtual #7.position:()Lnet/minecraft/world/phys/Vec3;
+     89: invokevirtual #30.distanceToSqr:(Lnet/minecraft/world/phys/Vec3;)D
+     92: ldc2_w #1121
+     95: dcmpl 
+     96: ifle start+135
+     99: aload_0 
+    100: getfield #7.finalMovementsThisTick:Ljava/util/List;
+    103: new net/minecraft/world/entity/Entity$Movement
+    106: dup 
+    107: aload_0 
+    108: getfield #7.finalMovementsThisTick:Ljava/util/List;
+    111: invokeinterface #1094.getLast:()Ljava/lang/Object;
+    116: checkcast net/minecraft/world/entity/Entity$Movement
+    119: getfield #910.to:Lnet/minecraft/world/phys/Vec3;
+    122: aload_0 
+    123: invokevirtual #7.position:()Lnet/minecraft/world/phys/Vec3;
+    126: invokespecial #910.<init>:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V
+    129: invokeinterface #1094.add:(Ljava/lang/Object;)Z
+    134: pop 
+    135: aload_0 
+    136: aload_0 
+    137: getfield #7.finalMovementsThisTick:Ljava/util/List;
+    140: invokevirtual #7.applyEffectsFromBlocks:(Ljava/util/List;)V
+    143: return 
+
+=== applyEffectsFromBlocksForLastMovements()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: aload_0 
+      2: getfield #7.finalMovementsThisTick:Ljava/util/List;
+      5: invokevirtual #7.applyEffectsFromBlocks:(Ljava/util/List;)V
+      8: return 
+
+=== applyEffectsFromBlocks(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V max_stack=5 max_locals=3 ===
+      0: aload_0 
+      1: new net/minecraft/world/entity/Entity$Movement
+      4: dup 
+      5: aload_1 
+      6: aload_2 
+      7: invokespecial #910.<init>:(Lnet/minecraft/world/phys/Vec3;Lnet/minecraft/world/phys/Vec3;)V
+     10: invokestatic #1094.of:(Ljava/lang/Object;)Ljava/util/List;
+     13: invokevirtual #7.applyEffectsFromBlocks:(Ljava/util/List;)V
+     16: return 
+
+=== applyEffectsFromBlocks(Ljava/util/List;)V max_stack=5 max_locals=6 ===
+      0: aload_0 
+      1: invokevirtual #7.isAffectedByBlocks:()Z
+      4: ifne start+8
+      7: return 
+      8: aload_0 
+      9: invokevirtual #7.onGround:()Z
+     12: ifeq start+43
+     15: aload_0 
+     16: invokevirtual #7.getOnPosLegacy:()Lnet/minecraft/core/BlockPos;
+     19: astore_2 
+     20: aload_0 
+     21: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+     24: aload_2 
+     25: invokevirtual #207.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     28: astore_3 
+     29: aload_3 
+     30: invokevirtual #333.getBlock:()Lnet/minecraft/world/level/block/Block;
+     33: aload_0 
+     34: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+     37: aload_2 
+     38: aload_3 
+     39: aload_0 
+     40: invokevirtual #1037.stepOn:(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/entity/Entity;)V
+     43: aload_0 
+     44: invokevirtual #7.isOnFire:()Z
+     47: istore_2 
+     48: aload_0 
+     49: invokevirtual #7.isFreezing:()Z
+     52: istore_3 
+     53: aload_0 
+     54: invokevirtual #7.getRemainingFireTicks:()I
+     57: istore 4
+     59: aload_0 
+     60: aload_1 
+     61: aload_0 
+     62: getfield #7.insideEffectCollector:Lnet/minecraft/world/entity/InsideBlockEffectApplier$StepBasedCollector;
+     65: invokevirtual #7.checkInsideBlocks:(Ljava/util/List;Lnet/minecraft/world/entity/InsideBlockEffectApplier$StepBasedCollector;)V
+     68: aload_0 
+     69: getfield #7.insideEffectCollector:Lnet/minecraft/world/entity/InsideBlockEffectApplier$StepBasedCollector;
+     72: aload_0 
+     73: invokevirtual #182.applyAndClear:(Lnet/minecraft/world/entity/Entity;)V
+     76: aload_0 
+     77: invokevirtual #7.isInRain:()Z
+     80: ifeq start+87
+     83: aload_0 
+     84: invokevirtual #7.clearFire:()V
+     87: iload_2 
+     88: ifeq start+98
+     91: aload_0 
+     92: invokevirtual #7.isOnFire:()Z
+     95: ifeq start+109
+     98: iload_3 
+     99: ifeq start+113
+    102: aload_0 
+    103: invokevirtual #7.isFreezing:()Z
+    106: ifne start+113
+    109: aload_0 
+    110: invokevirtual #7.playEntityOnFireExtinguishedSound:()V
+    113: aload_0 
+    114: invokevirtual #7.getRemainingFireTicks:()I
+    117: iload 4
+    119: if_icmple start+126
+    122: iconst_1 
+    123: goto start+127
+    126: iconst_0 
+    127: istore 5
+    129: aload_0 
+    130: invokevirtual #7.level:()Lnet/minecraft/world/level/Level;
+    133: invokevirtual #207.isClientSide:()Z
+    136: ifne start+160
+    139: aload_0 
+    140: invokevirtual #7.isOnFire:()Z
+    143: ifne start+160
+    146: iload 5
+    148: ifne start+160
+    151: aload_0 
+    152: aload_0 
+    153: invokevirtual #7.getFireImmuneTicks:()I
+    156: ineg 
+    157: invokevirtual #7.setRemainingFireTicks:(I)V
+    160: return 
+

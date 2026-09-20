@@ -7188,6 +7188,13 @@ impl App {
                         self.food_data.has_enough_food(),
                         using,
                     );
+                    // THE NOPHYSICS FEED (javap Player.tick pcs 0-5 — the
+                    // head write the tick speaks every frame:
+                    // `this.noPhysics = this.isSpectator()` — the
+                    // spectator the raw walk wears, the F4 flick the
+                    // bank feeds instantly; the spectator-or-passenger
+                    // setOnGround arm the body's own lane answers)
+                    b.no_physics = self.game_mode == GameMode::Spectator;
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the
@@ -41159,6 +41166,88 @@ cow_sound_variant: None,
         // THE RELEASE: the isDestroying check keeps silent
         app.on_left_release();
         assert!(!app.dig.is_destroying);
+    }
+
+    /// THE SPECTATOR WALK (26.2 Entity.noPhysics's own law — the
+    /// Player.tick head writes the flag fresh every frame
+    /// `noPhysics = isSpectator()`, the Entity.move branch the raw
+    /// walk wears): the spectator body phases through the stone wall
+    /// the collide body rests against — the noPhysics feed the
+    /// spectator bank wears, the survival walk the collide walk
+    /// keeps.
+    #[test]
+    fn the_spectator_walk_the_terrain_never_stops() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Spectator;
+        // THE WALL: a stone column on the spawn's east walk line (the
+        // vanilla yaw 270 = +X the body's impulse fold wears)
+        let (sx, sy, sz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.y, b.z)
+        };
+        app.body.as_mut().unwrap().yaw = 270.0;
+        let wall_x = sx.floor() as i32 + 3;
+        let wall_z = sz.floor() as i32;
+        let feet = sy.floor() as i32;
+        for dy in 0..3 {
+            app.offline_world
+                .as_mut()
+                .unwrap()
+                .set(wall_x, feet + dy, wall_z, crate::world::STONE);
+        }
+        assert_ne!(
+            app.offline_world
+                .as_ref()
+                .unwrap()
+                .get(wall_x, feet, wall_z),
+            crate::world::AIR,
+            "the wall stands"
+        );
+        // THE SPECTATOR WALK: the noPhysics feed rides the tick, the
+        // raw walk phases through the wall
+        app.on_movement_input(1.0, 0.0, false, false, false);
+        for _ in 0..120 {
+            app.update();
+        }
+        let b = app.body.as_ref().unwrap();
+        assert!(b.no_physics, "the feed the spectator bank wears");
+        assert!(
+            b.x > wall_x as f64 + 1.0,
+            "the spectator phased through at {:.3}",
+            b.x
+        );
+        assert!(!b.horizontal_collision, "the flag the branch zeroes");
+        // THE SURVIVAL CONTROL: the same walk the wall stops — the
+        // collide walk the survival body keeps
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        app2.spawn_offline_body();
+        app2.body.as_mut().unwrap().yaw = 270.0;
+        let (s2x, s2y, s2z) = {
+            let b = app2.body.as_ref().unwrap();
+            (b.x, b.y, b.z)
+        };
+        let wall2_x = s2x.floor() as i32 + 3;
+        for dy in 0..3 {
+            app2
+                .offline_world
+                .as_mut()
+                .unwrap()
+                .set(wall2_x, s2y.floor() as i32 + dy, s2z.floor() as i32, crate::world::STONE);
+        }
+        app2.on_movement_input(1.0, 0.0, false, false, false);
+        for _ in 0..120 {
+            app2.update();
+        }
+        let b2 = app2.body.as_ref().unwrap();
+        assert!(!b2.no_physics, "the survival feed the flag never wears");
+        assert!(
+            b2.x < wall2_x as f64,
+            "the collide body never crossed at {:.3}",
+            b2.x
+        );
     }
 
     /// THE DOUBLE-TAP W'S OWN WINDOW (26.2 LocalPlayer.aiStep's

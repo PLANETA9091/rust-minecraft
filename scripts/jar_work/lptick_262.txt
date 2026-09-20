@@ -1,0 +1,100 @@
+=== tick()V max_stack=7 max_locals=3 ===
+      0: aload_0 
+      1: getfield #7.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+      4: invokevirtual #10.hasClientLoaded:()Z
+      7: ifne start+11
+     10: return 
+     11: aload_0 
+     12: getfield #7.dropSpamThrottler:Lnet/minecraft/util/TickThrottler;
+     15: invokevirtual #21.tick:()V
+     18: aload_0 
+     19: invokespecial #16.tick:()V
+     22: aload_0 
+     23: getfield #7.lastSentInput:Lnet/minecraft/world/entity/player/Input;
+     26: aload_0 
+     27: getfield #7.input:Lnet/minecraft/client/player/ClientInput;
+     30: getfield #49.keyPresses:Lnet/minecraft/world/entity/player/Input;
+     33: invokevirtual #205.equals:(Ljava/lang/Object;)Z
+     36: ifne start+71
+     39: aload_0 
+     40: getfield #7.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+     43: new net/minecraft/network/protocol/game/ServerboundPlayerInputPacket
+     46: dup 
+     47: aload_0 
+     48: getfield #7.input:Lnet/minecraft/client/player/ClientInput;
+     51: getfield #49.keyPresses:Lnet/minecraft/world/entity/player/Input;
+     54: invokespecial #209.<init>:(Lnet/minecraft/world/entity/player/Input;)V
+     57: invokevirtual #10.send:(Lnet/minecraft/network/protocol/Packet;)V
+     60: aload_0 
+     61: aload_0 
+     62: getfield #7.input:Lnet/minecraft/client/player/ClientInput;
+     65: getfield #49.keyPresses:Lnet/minecraft/world/entity/player/Input;
+     68: putfield #7.lastSentInput:Lnet/minecraft/world/entity/player/Input;
+     71: aload_0 
+     72: invokevirtual #7.isPassenger:()Z
+     75: ifeq start+143
+     78: aload_0 
+     79: getfield #7.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+     82: new net/minecraft/network/protocol/game/ServerboundMovePlayerPacket$Rot
+     85: dup 
+     86: aload_0 
+     87: invokevirtual #7.getYRot:()F
+     90: aload_0 
+     91: invokevirtual #7.getXRot:()F
+     94: aload_0 
+     95: invokevirtual #7.onGround:()Z
+     98: aload_0 
+     99: getfield #7.horizontalCollision:Z
+    102: invokespecial #218.<init>:(FFZZ)V
+    105: invokevirtual #10.send:(Lnet/minecraft/network/protocol/Packet;)V
+    108: aload_0 
+    109: invokevirtual #7.getRootVehicle:()Lnet/minecraft/world/entity/Entity;
+    112: astore_1 
+    113: aload_1 
+    114: aload_0 
+    115: if_acmpeq start+140
+    118: aload_1 
+    119: invokevirtual #234.isLocalInstanceAuthoritative:()Z
+    122: ifeq start+140
+    125: aload_0 
+    126: getfield #7.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+    129: aload_1 
+    130: invokestatic #239.fromEntity:(Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/network/protocol/game/ServerboundMoveVehiclePacket;
+    133: invokevirtual #10.send:(Lnet/minecraft/network/protocol/Packet;)V
+    136: aload_0 
+    137: invokevirtual #7.sendIsSprintingIfNeeded:()V
+    140: goto start+147
+    143: aload_0 
+    144: invokevirtual #7.sendPosition:()V
+    147: aload_0 
+    148: getfield #7.ambientSoundHandlers:Ljava/util/List;
+    151: invokeinterface #108.iterator:()Ljava/util/Iterator;
+    156: astore_1 
+    157: aload_1 
+    158: invokeinterface #255.hasNext:()Z
+    163: ifeq start+185
+    166: aload_1 
+    167: invokeinterface #255.next:()Ljava/lang/Object;
+    172: checkcast net/minecraft/client/resources/sounds/AmbientSoundHandler
+    175: astore_2 
+    176: aload_2 
+    177: invokeinterface #263.tick:()V
+    182: goto start+157
+    185: return 
+
+=== tickDeath()V max_stack=3 max_locals=1 ===
+      0: aload_0 
+      1: dup 
+      2: getfield #7.deathTime:I
+      5: iconst_1 
+      6: iadd 
+      7: putfield #7.deathTime:I
+     10: aload_0 
+     11: getfield #7.deathTime:I
+     14: bipush 20
+     16: if_icmpne start+26
+     19: aload_0 
+     20: getstatic #1311.KILLED:Lnet/minecraft/world/entity/Entity$RemovalReason;
+     23: invokevirtual #7.remove:(Lnet/minecraft/world/entity/Entity$RemovalReason;)V
+     26: return 
+

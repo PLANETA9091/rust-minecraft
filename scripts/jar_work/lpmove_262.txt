@@ -1,0 +1,191 @@
+=== removeVehicle()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: invokespecial #16.removeVehicle:()V
+      4: aload_0 
+      5: iconst_0 
+      6: putfield #7.handsBusy:Z
+      9: return 
+
+=== removeRecipeHighlight(Lnet/minecraft/world/item/crafting/display/RecipeDisplayId;)V max_stack=4 max_locals=2 ===
+      0: aload_0 
+      1: getfield #7.recipeBook:Lnet/minecraft/client/ClientRecipeBook;
+      4: aload_1 
+      5: invokevirtual #544.willHighlight:(Lnet/minecraft/world/item/crafting/display/RecipeDisplayId;)Z
+      8: ifeq start+34
+     11: aload_0 
+     12: getfield #7.recipeBook:Lnet/minecraft/client/ClientRecipeBook;
+     15: aload_1 
+     16: invokevirtual #544.removeHighlight:(Lnet/minecraft/world/item/crafting/display/RecipeDisplayId;)V
+     19: aload_0 
+     20: getfield #7.connection:Lnet/minecraft/client/multiplayer/ClientPacketListener;
+     23: new net/minecraft/network/protocol/game/ServerboundRecipeBookSeenRecipePacket
+     26: dup 
+     27: aload_1 
+     28: invokespecial #553.<init>:(Lnet/minecraft/world/item/crafting/display/RecipeDisplayId;)V
+     31: invokevirtual #10.send:(Lnet/minecraft/network/protocol/Packet;)V
+     34: return 
+
+=== moveTowardsClosestSpace(DD)V max_stack=9 max_locals=22 ===
+      0: dload_1 
+      1: aload_0 
+      2: invokevirtual #7.getY:()D
+      5: dload_3 
+      6: invokestatic #396.containing:(DDD)Lnet/minecraft/core/BlockPos;
+      9: astore 5
+     11: aload_0 
+     12: aload 5
+     14: invokevirtual #7.suffocatesAt:(Lnet/minecraft/core/BlockPos;)Z
+     17: ifne start+21
+     20: return 
+     21: dload_1 
+     22: aload 5
+     24: invokevirtual #396.getX:()I
+     27: i2d 
+     28: dsub 
+     29: dstore 6
+     31: dload_3 
+     32: aload 5
+     34: invokevirtual #396.getZ:()I
+     37: i2d 
+     38: dsub 
+     39: dstore 8
+     41: aconst_null 
+     42: astore 10
+     44: ldc2_w #631
+     47: dstore 11
+     49: iconst_4 
+     50: anewarray net/minecraft/core/Direction
+     53: dup 
+     54: iconst_0 
+     55: getstatic #402.WEST:Lnet/minecraft/core/Direction;
+     58: aastore 
+     59: dup 
+     60: iconst_1 
+     61: getstatic #402.EAST:Lnet/minecraft/core/Direction;
+     64: aastore 
+     65: dup 
+     66: iconst_2 
+     67: getstatic #402.NORTH:Lnet/minecraft/core/Direction;
+     70: aastore 
+     71: dup 
+     72: iconst_3 
+     73: getstatic #402.SOUTH:Lnet/minecraft/core/Direction;
+     76: aastore 
+     77: astore 13
+     79: aload 13
+     81: astore 14
+     83: aload 14
+     85: arraylength 
+     86: istore 15
+     88: iconst_0 
+     89: istore 16
+     91: iload 16
+     93: iload 15
+     95: if_icmpge start+178
+     98: aload 14
+    100: iload 16
+    102: aaload 
+    103: astore 17
+    105: aload 17
+    107: invokevirtual #402.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    110: dload 6
+    112: dconst_0 
+    113: dload 8
+    115: invokevirtual #650.choose:(DDD)D
+    118: dstore 18
+    120: aload 17
+    122: invokevirtual #402.getAxisDirection:()Lnet/minecraft/core/Direction$AxisDirection;
+    125: getstatic #659.POSITIVE:Lnet/minecraft/core/Direction$AxisDirection;
+    128: if_acmpne start+138
+    131: dconst_1 
+    132: dload 18
+    134: dsub 
+    135: goto start+140
+    138: dload 18
+    140: dstore 20
+    142: dload 20
+    144: dload 11
+    146: dcmpg 
+    147: ifge start+172
+    150: aload_0 
+    151: aload 5
+    153: aload 17
+    155: invokevirtual #396.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+    158: invokevirtual #7.suffocatesAt:(Lnet/minecraft/core/BlockPos;)Z
+    161: ifne start+172
+    164: dload 20
+    166: dstore 11
+    168: aload 17
+    170: astore 10
+    172: iinc #4097
+    175: goto start+91
+    178: aload 10
+    180: ifnull start+251
+    183: aload_0 
+    184: invokevirtual #7.getDeltaMovement:()Lnet/minecraft/world/phys/Vec3;
+    187: astore 14
+    189: aload 10
+    191: invokevirtual #402.getAxis:()Lnet/minecraft/core/Direction$Axis;
+    194: getstatic #650.X:Lnet/minecraft/core/Direction$Axis;
+    197: if_acmpne start+227
+    200: aload_0 
+    201: ldc2_w #675
+    204: aload 10
+    206: invokevirtual #402.getStepX:()I
+    209: i2d 
+    210: dmul 
+    211: aload 14
+    213: getfield #681.y:D
+    216: aload 14
+    218: getfield #681.z:D
+    221: invokevirtual #7.setDeltaMovement:(DDD)V
+    224: goto start+251
+    227: aload_0 
+    228: aload 14
+    230: getfield #681.x:D
+    233: aload 14
+    235: getfield #681.y:D
+    238: ldc2_w #675
+    241: aload 10
+    243: invokevirtual #402.getStepZ:()I
+    246: i2d 
+    247: dmul 
+    248: invokevirtual #7.setDeltaMovement:(DDD)V
+    251: return 
+
+=== move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V max_stack=4 max_locals=9 ===
+      0: aload_0 
+      1: invokevirtual #7.getX:()D
+      4: dstore_3 
+      5: aload_0 
+      6: invokevirtual #7.getZ:()D
+      9: dstore 5
+     11: aload_0 
+     12: aload_1 
+     13: aload_2 
+     14: invokespecial #16.move:(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V
+     17: aload_0 
+     18: invokevirtual #7.getX:()D
+     21: dload_3 
+     22: dsub 
+     23: d2f 
+     24: fstore 7
+     26: aload_0 
+     27: invokevirtual #7.getZ:()D
+     30: dload 5
+     32: dsub 
+     33: d2f 
+     34: fstore 8
+     36: aload_0 
+     37: fload 7
+     39: fload 8
+     41: invokevirtual #7.updateAutoJump:(FF)V
+     44: aload_0 
+     45: fload 7
+     47: fload 8
+     49: invokestatic #3.length:(FF)F
+     52: ldc_w #1393
+     55: fmul 
+     56: invokevirtual #7.addWalkedDistance:(F)V
+     59: return 
+
