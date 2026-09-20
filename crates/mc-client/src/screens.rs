@@ -2798,9 +2798,10 @@ fn local_selector_type_value_suggestions(
 /// terminators + the backslash escapes — the internal whitespace
 /// inside the quotes the value walk consumes, the honest-ask gate
 /// the quoted form bypasses, the tail after the close the junk lane
-/// rides); the unknown keys (the scores map, the
-/// nbt/advancements/predicate compounds) / the internal-whitespace
-/// tails the honest ask keeps).
+/// rides); the unknown keys (the
+/// nbt/advancements/predicate compounds) the honest ask keeps, the
+/// internal-whitespace tails the walks' own stopped reads the ws the
+/// refined cursor wears (the retired ask the walks' verdicts answer).
 /// THE POST-VALUE PUNCTUATION ROWS (the UNGATED
 /// suggestOptionsNextOrClose pair — the bare `suggest(',')` +
 /// `suggest(']')` the bsm#13 bytecode banks, no tooltips the plain
@@ -3307,32 +3308,37 @@ fn local_selector_value_suggestions(
     let ws_len = value_region.len() - element.len();
     let elem_start = tail_start + eq_idx + 1 + ws_len;
     // the trailing-trimmed element the post-value membership asks
-    // (the byName/switch lookups the case-sensitive law keeps); an
-    // INTERNAL whitespace the parse's own ERROR_EXPECTED_END_OF_OPTIONS
-    // lane wears — the honest ask — EXCEPT the name key's QUOTED form:
-    // the readString walk consumes the whitespace INSIDE the quotes
-    // (the value walk never stops there, the ']' expectation never
-    // sees it), so the quoted value rides the quote law instead —
-    // and EXCEPT the scores COMPOUND's own ground: the audited
-    // 15-16/35-36/44-45/54-55/74-75 loop positions the compound walk
-    // banks skip the whitespace INSIDE the braces AND the parse's own
-    // post-modifier skipWhitespace (the audited 146-150) consumes the
-    // whitespace AFTER the close before the canRead/']' checks — the
-    // '{'-led value the walk's refined verdicts answer whole (the
-    // post-close junk the pair at the refined cursor, the post-close
-    // ']' the close silence, the post-close ws to the end the
-    // NextOrClose pair at the input end — the bracket guard the
-    // forms the walk's own lane delivers); the OTHER keys'
-    // internal-ws forms the honest ask keeps
+    // (the byName/switch lookups the case-sensitive law keeps). THE
+    // INTERNAL-WHITESPACE FORMS THE WALKS SPEAK (the retired
+    // honest-ask gate — the blanket `contains(ws)` → AskServer the
+    // pre-refinement rounds wore retires): the value walks' charsets
+    // STOP at the whitespace char the read refuses (readInt — the
+    // number set, the unquoted run — the [0-9A-Za-z_.+-] set, the
+    // identifier run — the [a-z0-9_.-:/] set, the bounds run — the
+    // '.'-law set), the stopped read the walk RETURNS (the Junk
+    // verdict — the throw the walk never spends on a ws stop), the
+    // parse's OWN post-modifier skipWhitespace (the audited 146-150)
+    // the cursor the ws past the skip refines, the suggestOptionsNextOrClose
+    // install (the audited 153-160) the refined cursor wears, and the
+    // loop's re-entry the '=' expectation throw answers — the state
+    // the throw SURVIVES (the install precedes the body's own
+    // SUGGEST_NOTHING the next iteration spends) — the UNGATED ',' +
+    // ']' pair AT the refined cursor the same law the earlier-element
+    // walk (the committed '@a[limit=5 x,l' lane), the post-quote
+    // refinement ('@a[name="a b" x') and the post-'}' refinement
+    // ('@a[scores={a=1} x') bank. The WALK'S OWN DEATH the ws-carrying
+    // forms never reach the ws (the quoted numeric `limit="5 5"` the
+    // readInt the '"' refuses — the EXPECTED-NUMBER throw the EMPTY
+    // silence wears, the same law `limit="5"` the committed lane
+    // speaks — the ws inside the quotes the numeric walk never sees);
+    // the UNSPOKEN walks (the nbt/advancements/predicate compounds)
+    // the honest ask the None arm keeps below). The name key's QUOTED
+    // form the readString walk consumes the whitespace INSIDE the
+    // quotes (the value walk never stops there) and the scores
+    // COMPOUND's own ground the audited loop positions bank — both
+    // rides the walks' own lanes ungated (the exemptions the old gate
+    // carried the walks' own verdicts answer whole).
     let trimmed = element.trim_end_matches([' ', '\t']);
-    let name_quoted = key == "name" && {
-        let v = trimmed.strip_prefix('!').unwrap_or(trimmed);
-        v.starts_with('"') || v.starts_with('\'')
-    };
-    let scores_compound = key == "scores" && trimmed.starts_with('{');
-    if !name_quoted && !scores_compound && trimmed.contains([' ', '\t']) {
-        return ChatSuggestionSource::AskServer;
-    }
     let punctuation = selector_punctuation_matches;
     let walk = match selector_option_value_walk(key, trimmed, states, entity_types) {
         Some(walk) => walk,
@@ -25346,12 +25352,23 @@ mod tests {
         };
         assert_eq!((start, length), (9, 3), "the span the key start names");
         assert!(matches.is_empty(), "the unknown key the get() throws");
-        // THE INTERNAL WHITESPACE (the parse's own
-        // ERROR_EXPECTED_END_OF_OPTIONS lane — the honest ask)
+        // THE INTERNAL WHITESPACE (the stopped read the ws the
+        // charset refuses — the walk RETURNS, the parse's own
+        // post-modifier skipWhitespace (the audited 146-150) the
+        // cursor refines, the suggestOptionsNextOrClose install (the
+        // audited 153-160) the refined cursor wears — the re-entry
+        // the '=' expectation throws, the state survives — the UNGATED
+        // pair AT the refined cursor the retired ask wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nearest x", &[], true, &[])
+        else {
+            panic!("/kill @a[sort=nearest x the refined junk answers");
+        };
+        assert_eq!((start, length), (22, 1), "the span the refined cursor names");
         assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[sort=nearest x", &[], true, &[]),
-            Src::AskServer,
-            "the mid-tail garbage the honest ask keeps"
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the mid-tail junk the pair wears"
         );
         // THE COMMA AFTER THE VALUE (the key state the parseOptions
         // ',' consumes — the 21 keys re-answer, the value lane never)
@@ -25536,12 +25553,21 @@ mod tests {
             vec![",", "]"],
             "the post-invert junk the state wears"
         );
-        // THE INTERNAL WHITESPACE (the committed honest-ask gate —
-        // the parse's own ERROR_EXPECTED_END_OF_OPTIONS lane)
+        // THE INTERNAL WHITESPACE (the readString walk the stopped
+        // read the ws the unquoted set refuses wears — the walk
+        // RETURNS, the parse's own skipWhitespace the cursor refines,
+        // the pair install the refined cursor wears — the same law
+        // the post-quote lane the '@a[name=\"a b\" x' span banks)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Ste v", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Ste v the refined junk answers");
+        };
+        assert_eq!((start, length), (18, 1), "the span the refined cursor names");
         assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[name=Ste v", &[], true, &[]),
-            Src::AskServer,
-            "the internal whitespace the honest ask keeps"
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the internal-ws junk the pair wears"
         );
         // THE NUMERIC PARSES (the readInt/readDouble/Bounds walks
         // the numeric lanes now speak — the EMPTY value the
@@ -25751,11 +25777,19 @@ mod tests {
             panic!("/kill @a[limit=\"5\" the numeric refusal answers");
         };
         assert!(matches.is_empty(), "the quoted numeric value the silence keeps");
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[limit=\"5 5\"", &[], true, &[]),
-            Src::AskServer,
-            "the quoted numeric value with whitespace the honest ask keeps"
-        );
+        // the quoted form WITH the internal whitespace the walk's OWN
+        // death answers (the retired ask): the readInt the '"' the
+        // number charset refuses — the EXPECTED-NUMBER throw the
+        // walk spends BEFORE any ws the value carries (the ws inside
+        // the quotes the numeric walk never sees), the EMPTY local
+        // the same law the ws-free quoted form wears
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=\"5 5\"", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=\"5 5\" the numeric refusal answers");
+        };
+        assert_eq!((start, length), (15, 5), "the value region's own span");
+        assert!(matches.is_empty(), "the quoted numeric the silence keeps");
         // THE TAB APPLY (the completed quoted value the ',' insert
         // lands — no request the lane spends)
         let mut app = App::new(3);
@@ -27811,13 +27845,186 @@ mod tests {
         };
         assert_eq!((start, length), (16, 7), "the value region's own span");
         assert!(matches.is_empty(), "the mismatched pair the walk's death silences");
-        // THE OTHER KEYS' INTERNAL-WS FORMS THE HONEST ASK KEEPS (the
-        // same lane the committed law banks — the tail gate the
-        // unquoted non-compound forms the round-trip keeps)
+        // THE OTHER KEYS' INTERNAL-WS FORMS THE WALKS SPEAK (the
+        // retired ask the walk's own verdict answers — the stopped
+        // read the refinement the refined cursor wears, the pair the
+        // UNGATED state at the junk keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=5 x", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=5 x the refined junk answers");
+        };
+        assert_eq!((start, length), (17, 1), "the span the refined cursor names");
         assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[limit=5 x", &[], true, &[]),
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the internal-ws junk the pair wears"
+        );
+    }
+
+    /// THE POST-VALUE WS THE WALKS SPEAK (the retired honest-ask
+    /// gate — the internal-ws forms the tail the blanket AskServer
+    /// the pre-refinement rounds wore retires): the value walks'
+    /// charsets STOP at the ws char the read refuses — the stopped
+    /// read the walk RETURNS (the Junk verdict the throw never
+    /// spends on a ws stop), the parse's OWN post-modifier
+    /// skipWhitespace (the audited 146-150) the cursor the ws past
+    /// the skip refines, the suggestOptionsNextOrClose install (the
+    /// audited 153-160) the refined cursor wears, and the loop's
+    /// re-entry the '=' expectation throw answers — the state the
+    /// throw SURVIVES (the install precedes the next body's own
+    /// SUGGEST_NOTHING spend) — the UNGATED ',' + ']' pair AT the
+    /// refined cursor every lane the walk speaks wears (the same
+    /// law the earlier-element walk, the post-quote refinement and
+    /// the post-'}' refinement bank); the WALK'S OWN DEATH the
+    /// throw the walk spends BEFORE the ws (the too-small limit,
+    /// the unknown switch value) the SUGGEST_NOTHING silence (or
+    /// the provider's own fold) keeps, and the UNSPOKEN walks (the
+    /// nbt/advancements/predicate compounds) the honest ask the
+    /// None arm keeps.
+    #[test]
+    fn the_selector_options_the_post_value_ws_walks_speak() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        let types = vec![
+            "minecraft:pig".to_string(),
+            "minecraft:zombie".to_string(),
+            "minecraft:skeleton_horse".to_string(),
+        ];
+        // THE GAMEMODE LANE (the byName hit the stopped read the ws
+        // the byName charset refuses wears — the mark the hit path
+        // keeps, the pair the refined cursor the 'x' wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[gamemode=creative x", &[], true, &[])
+        else {
+            panic!("/kill @a[gamemode=creative x the refined junk answers");
+        };
+        assert_eq!((start, length), (27, 1), "the span the refined cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the gamemode ws junk the pair wears"
+        );
+        // THE TYPE LANE (the id run the membership keeps — the same
+        // refinement the 'x' the pair wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[type=pig x", &[], true, &types)
+        else {
+            panic!("/kill @a[type=pig x the refined junk answers");
+        };
+        assert_eq!((start, length), (18, 1), "the span the refined cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the type ws junk the pair wears"
+        );
+        // THE TEAM LANE (the readUnquotedString the stopped read the
+        // ws wears — the state gate the read AFTER the walk rides,
+        // the mark the hit keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[team=red x", &[], true, &[])
+        else {
+            panic!("/kill @a[team=red x the refined junk answers");
+        };
+        assert_eq!((start, length), (18, 1), "the span the refined cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the team ws junk the pair wears"
+        );
+        // THE TAG LANE (the plainest walk — the ws the charset
+        // refuses, the pair the refined cursor AT the input end the
+        // length-0 span wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[tag=a b", &[], true, &[])
+        else {
+            panic!("/kill @a[tag=a b the refined junk answers");
+        };
+        assert_eq!((start, length), (15, 1), "the input end the refined cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the tag ws junk the pair wears"
+        );
+        // THE COORDINATE LANE (the readDouble the stopped read the ws
+        // wears — the pair the refined cursor the '2' wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[x=1 2", &[], true, &[])
+        else {
+            panic!("/kill @a[x=1 2 the refined junk answers");
+        };
+        assert_eq!((start, length), (13, 1), "the span the refined cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the coordinate ws junk the pair wears"
+        );
+        // THE DISTANCE LANE (the bounds walk the single-value branch
+        // the junk the stop position names — the closed walk the
+        // square form carries, the junk the walk's own return the
+        // post-value lane wears — the pair the refined cursor the
+        // '6' wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[distance=5 6", &[], true, &[])
+        else {
+            panic!("/kill @a[distance=5 6 the refined junk answers");
+        };
+        assert_eq!((start, length), (20, 1), "the span the refined cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the distance ws junk the pair wears"
+        );
+        // THE ROTATION LANE (the OPEN walk the isPresent pair never
+        // carries — the same single-value junk the walk's own return
+        // wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[x_rotation=10 20", &[], true, &[])
+        else {
+            panic!("/kill @a[x_rotation=10 20 the refined junk answers");
+        };
+        assert_eq!((start, length), (23, 2), "the span the refined cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the rotation ws junk the pair wears"
+        );
+        // THE WALK'S OWN DEATH THE WS NEVER REACHES (the too-small
+        // limit the ERROR_LIMIT_TOO_SMALL throw the walk spends on
+        // the value the stopped read returns — the ws after it the
+        // throw never sees — the SUGGEST_NOTHING silence the EMPTY
+        // local wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[limit=0 x", &[], true, &[])
+        else {
+            panic!("/kill @a[limit=0 x the too-small silence answers");
+        };
+        assert_eq!((start, length), (15, 3), "the value region's own span");
+        assert!(matches.is_empty(), "the too-small limit the silence keeps");
+        // THE SORT SWITCH'S OWN THROW (the case-sensitive switch the
+        // unknown value the rollbackAndThrow answers — the provider
+        // the throw survives, the fold the remaining 'nea x' the
+        // splitter law never matches — the EMPTY local the silence
+        // wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[sort=nea x", &[], true, &[])
+        else {
+            panic!("/kill @a[sort=nea x the switch silence answers");
+        };
+        assert_eq!((start, length), (14, 5), "the value region's own span");
+        assert!(matches.is_empty(), "the unknown sort value the silence keeps");
+        // THE UNSPOKEN WALKS THE HONEST ASK KEEPS (the
+        // nbt/advancements compounds the None arm answers — the ws
+        // the forms carry the lane never speaks)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[nbt={a:1b} x", &[], true, &[]),
             Src::AskServer,
-            "the other keys' internal-ws form the honest ask keeps"
+            "the nbt compound the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[advancements={a=true} x", &[], true, &[]),
+            Src::AskServer,
+            "the advancements compound the honest ask keeps"
         );
     }
 
