@@ -1441,6 +1441,16 @@ fn selector_top_level_comma_all(region: &str) -> Vec<usize> {
     let b = region.as_bytes();
     let mut i = 0;
     let mut quote: Option<u8> = None;
+    // THE BRACE DEPTH THE COMPOUND VALUES SPEAK (javap audited — the
+    // scores modifier's own loop consumes the ',' and '=' INSIDE the
+    // braces: bootStrap$46 the body re-loops at 98→19, the ','
+    // consumed at 94-95, the '=' the key=value separator the body
+    // expects at 48-51 — the parseOptions ','/'=' laws the
+    // compound's own text CARRIES, the top-level laws the depth-0
+    // positions alone wear; the quote state rides THROUGH the braces
+    // (the quoted '}' the text carries, the in-quote '{' the depth
+    // never counts))
+    let mut depth: usize = 0;
     let mut law = SegmentLaw::Fresh;
     let mut earned: Vec<usize> = Vec::new();
     while i < b.len() {
@@ -1457,7 +1467,11 @@ fn selector_top_level_comma_all(region: &str) -> Vec<usize> {
             },
             None => match b[i] {
                 b'"' | b'\'' => quote = Some(b[i]),
-                b'=' => {
+                b'{' => depth += 1,
+                // the unbalanced '}' the depth floor keeps — the
+                // malformed compound the walk's own throw answers
+                b'}' => depth = depth.saturating_sub(1),
+                b'=' if depth == 0 => {
                     law = match law {
                         SegmentLaw::Fresh => SegmentLaw::Armed,
                         // the second '=' the junk lane wears — the
@@ -1465,7 +1479,10 @@ fn selector_top_level_comma_all(region: &str) -> Vec<usize> {
                         _ => SegmentLaw::Poisoned,
                     }
                 }
-                b',' => {
+                // the in-brace ',' the compound's own loop consumes
+                // (the audited 94-95 skip) — the separator the depth
+                // never earns
+                b',' if depth == 0 => {
                     // the separator the ARMED segment (the completed
                     // key=value element) alone earns; the fresh/
                     // poisoned segment's ',' the key/value read's own
@@ -1483,6 +1500,47 @@ fn selector_top_level_comma_all(region: &str) -> Vec<usize> {
         i += 1;
     }
     earned
+}
+
+/// THE REGION'S UNSPOKEN MAP-VALUE LAW (javap audited — the '{' the
+/// scores compounds own the compound walk speaks, the OTHER map
+/// keys' compounds the house never walks — the nbt/advancements/
+/// predicate modifiers the parse consumes the house cannot mirror —
+/// the honest ask keeps). The elements the brace-aware split names,
+/// the key the SAME read the parseOptions loop rides (the unquoted
+/// run / the quoted read), the flagged keys the exact-case fold
+/// answers; a '{' the key position or a not-flagged value carries
+/// the walks' own laws keep (the get() throw / the unquoted-run
+/// junk lane the honest answers wear).
+fn region_has_unspoken_map_value(region: &str) -> bool {
+    let earned = selector_top_level_comma_all(region);
+    let mut start = 0usize;
+    let mut elements: Vec<&str> = Vec::new();
+    for &sep in &earned {
+        elements.push(&region[start..sep]);
+        start = sep + 1;
+    }
+    elements.push(&region[start..]);
+    elements.iter().any(|element| {
+        if !element.contains('{') {
+            return false;
+        }
+        // the element's own key (the read the loop rides — the same
+        // law the earlier-element walk speaks)
+        let t = element.trim_matches([' ', '\t']);
+        let key: String = if t.starts_with('"') || t.starts_with('\'') {
+            match selector_quoted_key_read(t) {
+                SelectorQuotedKeyRead::Terminated { key, .. } => key,
+                // the unterminated/invalid read the walk's own
+                // silence keeps — nothing unspoken flags
+                _ => return false,
+            }
+        } else {
+            let run = selector_unquoted_run_len(t);
+            t[..run].to_string()
+        };
+        matches!(key.as_str(), "nbt" | "advancements" | "predicate")
+    })
 }
 
 /// THE OPTIONS' OWN NAME LANE (javap `EntitySelectorParser
@@ -1516,8 +1574,10 @@ fn local_selector_options_suggestions(
 ) -> ChatSuggestionSource {
     // the region after the '[' — the parseOptions walk's own ground
     let region = &sel_chars[bracket_idx + 1..];
-    if region.contains('{') {
-        // the map value state the honest ask keeps
+    if region_has_unspoken_map_value(region) {
+        // the '{' the OTHER keys' compounds own (nbt/advancements/
+        // predicate) — the honest ask keeps (the house speaks the
+        // scores compound alone)
         return ChatSuggestionSource::AskServer;
     }
     // THE CURRENT-ENTITY LAW (javap `parseSelector` — the 's' branch
@@ -3068,11 +3128,121 @@ fn selector_option_value_walk(
         "distance" => selector_bounds_walk(trimmed, false, true),
         "level" => selector_bounds_walk(trimmed, true, true),
         "x_rotation" | "y_rotation" => selector_bounds_walk(trimmed, false, false),
-        // the unspoken value walks the honest ask keeps (the scores
-        // map, the nbt/advancements/predicate compounds)
+        // THE SCORES COMPOUND (the audited lambda$bootStrap$46 — the
+        // walk the region-level ask retired)
+        "scores" => {
+            let verdict = selector_scores_compound_walk(trimmed);
+            // the audited 126-130: the markParsed the SUCCESSFUL
+            // close wears — the expect-'{'/'='/'}' throws and the
+            // fromReader failures the mark never see
+            if !matches!(verdict, SelectorValueWalk::Refused) {
+                states.scores.mark_parsed();
+            }
+            verdict
+        }
+        // the unspoken value walks the honest ask keeps (the
+        // nbt/advancements/predicate compounds — the region-level
+        // flag the entry check asks)
         _ => return None,
     };
     Some(walk)
+}
+
+/// THE SCORES COMPOUND WALK (javap 26.2 `EntitySelectorOptions
+/// lambda$bootStrap$46` — the offset-proven shape: expect '{' (9-12),
+/// the loop { the pre-head ws (15-16), the canRead FALSE exit (19-23),
+/// the peek-'}' exit (26-32), the body ws (35-36), the unquoted key
+/// run — readUnquotedString NEVER throws, the EMPTY key the "" run
+/// wears (39-43), the ws (44-45), the '=' expectation (48-51), the
+/// ws (54-55), the Ints.fromReader range the bounds walk speaks
+/// (58-62), the put (64-73), the ws (74-75), the ',' consumed (78-95),
+/// goto the head (98) }, the exit the expect '}' wears (101-104 — the
+/// INPUT-END exit the same expect throws, the unterminated compound
+/// the silence keeps), the empty map the addPredicate skips (107-113),
+/// the markParsed LAST (126-130). The consumed length the Junk
+/// verdict names — the chars after the '}' the parse's own junk
+/// lane wears.
+fn selector_scores_compound_walk(value: &str) -> SelectorValueWalk {
+    let b = value.as_bytes();
+    let is_ws = |c: u8| matches!(c, b' ' | b'\t');
+    let mut i = 0usize;
+    // the expect '{' (the audited 9-12 — the empty value the same
+    // throw answers)
+    if i >= b.len() || b[i] != b'{' {
+        return SelectorValueWalk::Refused;
+    }
+    i += 1;
+    loop {
+        // the pre-head ws (15-16)
+        while i < b.len() && is_ws(b[i]) {
+            i += 1;
+        }
+        // the canRead FALSE exit (19-23) — the expect '}' at the
+        // input end the unterminated death wears
+        if i >= b.len() {
+            return SelectorValueWalk::Refused;
+        }
+        // the peek-'}' exit (26-32) — the expect '}' the close
+        // consumes (101-104), the mark the close wears
+        if b[i] == b'}' {
+            i += 1;
+            return if i == b.len() {
+                SelectorValueWalk::Complete
+            } else {
+                // the chars after the '}' the parse's own junk lane
+                // wears (the post-value death the NextOrClose pair
+                // answers)
+                SelectorValueWalk::Junk(i)
+            };
+        }
+        // the body ws (35-36)
+        while i < b.len() && is_ws(b[i]) {
+            i += 1;
+        }
+        // the unquoted key run (39-43 — the empty run the "" key
+        // wears, the read never throws)
+        while i < b.len() && selector_unquoted_ok(b[i] as char) {
+            i += 1;
+        }
+        // the ws (44-45)
+        while i < b.len() && is_ws(b[i]) {
+            i += 1;
+        }
+        // the '=' expectation (48-51 — the fail the throw answers)
+        if i >= b.len() || b[i] != b'=' {
+            return SelectorValueWalk::Refused;
+        }
+        i += 1;
+        // the ws (54-55)
+        while i < b.len() && is_ws(b[i]) {
+            i += 1;
+        }
+        // the Ints.fromReader range (58-62) — the bounds walk the
+        // remaining slice rides, the Junk offset the stop names
+        match selector_bounds_walk(&value[i..], true, true) {
+            SelectorValueWalk::Refused => return SelectorValueWalk::Refused,
+            // the range consumed the WHOLE rest — the put lands, the
+            // post-range laws the loop head re-runs, the canRead
+            // FALSE exit the expect '}' at the input end throws
+            SelectorValueWalk::Complete => i = b.len(),
+            // the range consumed off chars — the char AT the stop the
+            // continuation names (the ',' the loop consumes, the '}'
+            // the head exits at, the junk the body re-reads)
+            SelectorValueWalk::Junk(off) => i += off,
+        }
+        // the put (64-73) — unobservable
+        // the post-range ws (74-75)
+        while i < b.len() && is_ws(b[i]) {
+            i += 1;
+        }
+        // the ',' consumed (78-95 — the absent ',' the law the head
+        // re-check keeps: the trailing-comma form the '}' the head
+        // exits at wears)
+        if i < b.len() && b[i] == b',' {
+            i += 1;
+        }
+        // goto the head (98)
+    }
 }
 
 fn local_selector_value_suggestions(
@@ -3111,8 +3281,9 @@ fn local_selector_value_suggestions(
     let punctuation = selector_punctuation_matches;
     let walk = match selector_option_value_walk(key, trimmed, states, entity_types) {
         Some(walk) => walk,
-        // the unspoken value walks the honest ask keeps (the scores
-        // map, the nbt/advancements/predicate compounds)
+        // the unspoken value walks the honest ask keeps (the
+        // nbt/advancements/predicate compounds — the scores compound
+        // the walk speaks)
         None => return ChatSuggestionSource::AskServer,
     };
     match walk {
@@ -24817,11 +24988,19 @@ mod tests {
         };
         assert_eq!((start, length), (9, 3), "the span the key start names");
         assert!(matches.is_empty(), "the prefix '=' the get() null wears");
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[scores={foo:1}", &[], true, &[]),
-            Src::AskServer,
-            "the '{{' map value the honest ask keeps"
-        );
+        // THE SNBT FORM THE '=' EXPECTATION REFUSES (the audited $46
+        // — the compound the walk speaks: the objective read, the
+        // ws, the '=' expectation at 48-51 — the ':' the throw
+        // answers, the SUGGEST_NOTHING silence the EMPTY local
+        // keeps — the '='-led compound the walk accepts, the ':'
+        // form the parse never wore)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={foo:1}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{foo:1}} the compound walk answers");
+        };
+        assert_eq!((start, length), (16, 7), "the value region's own span");
+        assert!(matches.is_empty(), "the ':' form the '=' expectation silences");
         // THE QUOTED VALUE (the name key's readString walk — the
         // UNTERMINATED quote the END-OF-QUOTE throw answers, the
         // EMPTY local the parse-throw-catch's silence keeps — see
@@ -26770,19 +26949,224 @@ mod tests {
         };
         assert_eq!((start, length), (11, 0), "the input end the ALL-21 state wears");
         assert_eq!(matches.len(), 21, "the '@a' rows the FULL table keeps");
-        // THE MAP VALUES THE HONEST ASK KEEPS (the scores/
-        // advancements state the map-value lane never reaches — the
-        // region-level '{' the entry check answers before the state
-        // ever speaks)
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[scores={foo:1},l", &[], true, &[]),
-            Src::AskServer,
-            "the scores compound the honest ask keeps"
-        );
+        // THE MAP VALUES THE LAWS SPLIT (the scores compound the walk
+        // speaks — the SNBT ':' form the '=' expectation the earlier
+        // element THROWS at, the DEAD element the EMPTY silence
+        // wears; the advancements value the unspoken walk the ask
+        // keeps — the region-level flag the entry check answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={foo:1},l", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{foo:1}},l the earlier death answers");
+        };
+        assert_eq!((start, length), (9, 14), "the dead element's own span wears");
+        assert!(matches.is_empty(), "the ':' element the '=' expectation silences");
         assert_eq!(
             local_command_suggestions(&tree, "/kill @a[advancements=", &[], true, &[]),
             Src::AskServer,
             "the advancements value the unspoken walk the ask keeps"
+        );
+    }
+
+    /// THE SCORES COMPOUND WALK (javap 26.2 `EntitySelectorOptions
+    /// lambda$bootStrap$46` — the walk the region-level ask retires):
+    /// the '{'-led compound the walk consumes (the empty compound the
+    /// head exit wears, the '='-led key=range pairs the loop banks,
+    /// the IN-BRACE ',' the compound's own loop consumes — the
+    /// top-level separator the depth never earns —, the trailing ','
+    /// the head's '}' re-check keeps, the Ints ranges the bounds walk
+    /// speaks), the chars after the '}' the parse's own junk lane
+    /// wears, the unterminated compound the expect-'}' at the input
+    /// end silences, the SNBT ':' form the '=' expectation silences,
+    /// the markParsed the successful close wears (the scores row the
+    /// continuation hides, the '@s' limit law the same rows keep),
+    /// the nbt/advancements/predicate compounds the honest ask keeps.
+    #[test]
+    fn the_selector_options_the_scores_compound_walk_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE EMPTY COMPOUND THE HEAD EXIT WEARS (the canRead/peek '}'
+        // law — the isEmpty the addPredicate skips, the markParsed the
+        // close wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{}} the compound walk answers");
+        };
+        assert_eq!((start, length), (18, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the empty compound the parse completes"
+        );
+        // THE '='-LED PAIR THE LOOP BANKS (the objective read, the '='
+        // expectation, the Ints.fromReader range)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1}} the compound walk answers");
+        };
+        assert_eq!((start, length), (21, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the key=range pair the parse completes"
+        );
+        // THE IN-BRACE ',' THE COMPOUND'S OWN LOOP CONSUMES (the
+        // audited 94-95 skip + the 98→19 re-loop — the top-level
+        // separator the depth NEVER earns, the element the compound
+        // owns whole)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1,b=2}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1,b=2}} the compound walk answers");
+        };
+        assert_eq!((start, length), (25, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the in-brace comma the compound consumes"
+        );
+        // THE TRAILING ',' THE HEAD'S '}' RE-CHECK KEEPS (the consumed
+        // separator the head re-runs — the '}' the exit wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1,}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1,}} the compound walk answers");
+        };
+        assert_eq!((start, length), (22, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the trailing comma the parse accepts"
+        );
+        // THE INTS RANGE FORM THE BOUNDS WALK SPEAKS (the fromReader
+        // '..' separator the level lane's own law rides)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1..5}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1..5}} the compound walk answers");
+        };
+        assert_eq!((start, length), (24, 0), "the input end the completion wears");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the range form the parse completes"
+        );
+        // THE CHARS AFTER THE '}' THE JUNK LANE WEARS (the compound
+        // consumed, the parse's own death at the leftover — the
+        // UNGATED pair AT the junk)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1}!", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1}}! the junk lane answers");
+        };
+        assert_eq!((start, length), (21, 1), "the span the junk cursor names");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the leftover char the junk lane wears"
+        );
+        // THE UNTERMINATED COMPOUND THE EXPECT-'}' AT THE INPUT END
+        // SILENCES (the canRead FALSE exit the same expect throws —
+        // the mark the throw never sees)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1 the unterminated law answers");
+        };
+        assert_eq!((start, length), (16, 4), "the value region's own span");
+        assert!(matches.is_empty(), "the unterminated compound the silence keeps");
+        // THE '=' EXPECTATION FAILURES THE COMPOUND WEARS (the SNBT
+        // ':' form the committed flip re-pins beside the missing '='
+        // and the '{'-less value)
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[scores={a}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a}} the '=' expectation answers");
+        };
+        assert!(matches.is_empty(), "the missing '=' the throw silences");
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=}", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=}} the fromReader law answers");
+        };
+        assert!(matches.is_empty(), "the empty range the ERROR-EMPTY silences");
+        let Src::Local { matches, .. } =
+            local_command_suggestions(&tree, "/kill @a[scores=x", &[], true, &[])
+        else {
+            panic!("/kill @a[scores=x the expect-'{{' law answers");
+        };
+        assert!(matches.is_empty(), "the '{{'-less value the throw silences");
+        // THE MARK THE SUCCESSFUL CLOSE WEARS (the earlier element
+        // marks, the scores row the continuation hides — the 's' tail
+        // the sort= row ALONE answers, the empty tail the 20 rows
+        // wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1,b=2},s", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1,b=2}},s the row gates answer");
+        };
+        assert_eq!((start, length), (26, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["sort="],
+            "the parsed scores the own row hides"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1},", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1}}, the row gates answer");
+        };
+        assert_eq!((start, length), (22, 0), "the fresh tail's own span");
+        assert_eq!(matches.len(), 20, "the parsed scores the own row hides");
+        // THE 'l' TAIL THE OTHER ROWS KEEPS (the level= and the
+        // unparsed limit= the 'l' prefix answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores={a=1},l", &[], true, &[])
+        else {
+            panic!("/kill @a[scores={{a=1}},l the row gates answer");
+        };
+        assert_eq!((start, length), (22, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["level=", "limit="],
+            "the scores row hides, the other rows the 'l' tail keeps"
+        );
+        // THE '@s' LAW THE SAME ROWS WEAR (the mark hides the scores
+        // row, the isCurrentEntity law hides the limit row — the
+        // level= row ALONE answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @s[scores={a=1},l", &[], true, &[])
+        else {
+            panic!("/kill @s[scores={{a=1}},l the row gates answer");
+        };
+        assert_eq!((start, length), (22, 1), "the fresh tail's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["level="],
+            "the '@s' rows the two gates hide"
+        );
+        // THE OTHER MAP KEYS THE HONEST ASK KEEPS (the nbt compound
+        // the flag asks — the scores element beside it the ask the
+        // region owns, the lone nbt element the same law wears)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[scores={a=1},nbt={b:1b}", &[], true, &[]),
+            Src::AskServer,
+            "the nbt compound the honest ask keeps"
+        );
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[nbt={},l", &[], true, &[]),
+            Src::AskServer,
+            "the lone nbt element the honest ask keeps"
+        );
+        // THE INTERNAL-WS COMPOUND THE HONEST ASK KEEPS (the
+        // ws-free form the walk speaks, the ws-form the element
+        // check asks — the walk's own ws laws the ask shadows)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[scores={a = 1}", &[], true, &[]),
+            Src::AskServer,
+            "the internal-ws compound the honest ask keeps"
         );
     }
 
@@ -27057,13 +27441,16 @@ mod tests {
             panic!("/kill @a[limit=!5 the no-invert refusal answers");
         };
         assert!(matches.is_empty(), "the '!' the read walk refuses");
-        // THE UNKNOWN KEYS (the scores map, the compound walks — the
-        // honest ask keeps)
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[scores=", &[], true, &[]),
-            Src::AskServer,
-            "the scores map the honest ask keeps"
-        );
+        // THE EMPTY SCORES VALUE THE EXPECT-'{' THROW ANSWERS (the
+        // audited $46 — the compound walk the empty value the same
+        // throw silences — the flip the spoken walk wears)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[scores=", &[], true, &[])
+        else {
+            panic!("/kill @a[scores= the expect-'{{' law answers");
+        };
+        assert_eq!((start, length), (16, 0), "the empty value region's own span");
+        assert!(matches.is_empty(), "the empty compound value the throw silences");
         assert_eq!(
             local_command_suggestions(&tree, "/kill @a[nbt=", &[], true, &[]),
             Src::AskServer,
