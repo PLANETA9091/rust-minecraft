@@ -1418,7 +1418,11 @@ const SELECTOR_OPTIONS: [(&str, &str); 21] = [
 /// speaks (the readString KEY walk the parseOptions loop carries —
 /// see [`local_selector_quoted_key_suggestions`]), the quoted-key
 /// tails the ',' continuation installs the honest ask keeps (the
-/// in-quote commas the naive split never separates).
+/// in-quote commas the naive split never separates); the
+/// '='-CARRYING UNKNOWN KEYS the get() throw answers BEFORE the
+/// value walk (the exact-case lookup's null the rollbackAndThrow
+/// keeps — the key-start span the rollback names, the
+/// '='-carrying remaining no key prefixes — the EMPTY local).
 fn local_selector_options_suggestions(
     sel_chars: &str,
     bracket_idx: usize,
@@ -1466,6 +1470,44 @@ fn local_selector_options_suggestions(
         }
     }
     if let Some(eq_idx) = tail.find('=') {
+        // THE ORDER LAW (javap `EntitySelectorOptions.get` — the
+        // autopush-362 audit banks): the KEY the get() resolves BEFORE
+        // the '=' expectation and the SUGGEST_NOTHING install — the
+        // UNKNOWN key (the exact-case map lookup's null) the
+        // ERROR_UNKNOWN_OPTION rollbackAndThrow answers, the cursor
+        // the KEY START names (the int arg the saved post-skipWhitespace
+        // cursor wears), the '[' entry's suggestNames state the throw
+        // survives — and the '='-carrying remaining no key prefixes
+        // (the 21 keys the '=' never carries) — the EMPTY local the
+        // filter's silence wears, no round-trip the throw spends. The
+        // exact-case law the casing refuses ('NAME' the unknown lane
+        // wears — the same lookup the quoted '"NAME"' walk answers),
+        // the empty key ('=x' — the unquoted read the '=' charset
+        // refuses, the read NOTHING consumes) the same null answers,
+        // the invert-char keys ('!name' — the read stops at the '!'
+        // the unquoted set never carries) the same silence keeps. The
+        // QUOTED reads the lane never reaches (the quote-led
+        // first-element tails the readString KEY walk answers, the
+        // quote-led continuations the honest ask keeps — the later
+        // rounds' lane); the KNOWN keys the value walk rides (the
+        // unspoken walks the honest ask keeps inside); the no-'='
+        // tails the fresh-name lane below already wears (the same
+        // suggestNames state the prefix fold filters).
+        let kt = tail.trim_start_matches([' ', '\t']);
+        if !kt.starts_with('"') && !kt.starts_with('\'') {
+            let key = tail[..eq_idx].trim();
+            if !SELECTOR_OPTIONS.iter().any(|(k, _)| *k == key) {
+                // the get() throw: the rollback the KEY START names
+                // (after the skipWhitespace the parse rides), the span
+                // to the input end the fill's own cursor law keeps
+                let ws = tail.len() - kt.len();
+                return ChatSuggestionSource::Local {
+                    start: (start + ws) as i32,
+                    length: (tail.len() - ws) as i32,
+                    matches: Vec::new(),
+                };
+            }
+        }
         // the value position: the option's own walk the 26.2
         // modifiers install (sort / gamemode / type / the quoted name
         // values the audited lanes speak, the rest the honest ask
@@ -23859,14 +23901,19 @@ mod tests {
         };
         assert_eq!((start, length), (22, 0), "the fresh tail's own span");
         assert_eq!(matches.len(), 21, "the fresh names the state re-answers");
-        // THE VALUE STATES (the '=' tail, the '{' map value, the quoted
-        // value the honest ask keeps — the house speaks no value
-        // providers)
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[so=", &[], true, &[]),
-            Src::AskServer,
-            "the '=' tail the value state speaks"
-        );
+        // THE VALUE STATES (the '=' tail the UNKNOWN-KEY lane the
+        // audited order law wears — the get('so') null the
+        // rollbackAndThrow answers, the '='-carrying remaining no key
+        // prefixes, the EMPTY local the span the key start names —
+        // see the_unknown_key_lane test; the '{' map value the honest
+        // ask keeps — the house speaks no map-value providers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[so=", &[], true, &[])
+        else {
+            panic!("/kill @a[so= the unknown-key walk answers");
+        };
+        assert_eq!((start, length), (9, 3), "the span the key start names");
+        assert!(matches.is_empty(), "the prefix '=' the get() null wears");
         assert_eq!(
             local_command_suggestions(&tree, "/kill @a[scores={foo:1}", &[], true, &[]),
             Src::AskServer,
@@ -24089,11 +24136,17 @@ mod tests {
             vec![",", "]"],
             "the limit walk the numeric completion wears"
         );
-        assert_eq!(
-            local_command_suggestions(&tree, "/kill @a[so=", &[], true, &[]),
-            Src::AskServer,
-            "the unknown key the honest ask keeps"
-        );
+        // THE UNKNOWN KEY (the audited order law the unknown-key lane
+        // wears — the get('so') null the rollback answers, the EMPTY
+        // local the '='-carrying remaining the filter refuses — see
+        // the_unknown_key_lane test)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[so=", &[], true, &[])
+        else {
+            panic!("/kill @a[so= the unknown-key walk answers");
+        };
+        assert_eq!((start, length), (9, 3), "the span the key start names");
+        assert!(matches.is_empty(), "the unknown key the get() throws");
         // THE INTERNAL WHITESPACE (the parse's own
         // ERROR_EXPECTED_END_OF_OPTIONS lane — the honest ask)
         assert_eq!(
@@ -24647,6 +24700,151 @@ mod tests {
         assert_eq!(
             app.chat_input, "/kill @a[\"name\"=Steve,",
             "the apply the ',' insert lands"
+        );
+    }
+
+    /// THE '='-CARRYING UNKNOWN KEYS (javap `EntitySelectorParser
+    /// .parseOptions` + `EntitySelectorOptions.get` — the
+    /// autopush-362 audit's ORDER LAW the bytecode re-confirms: the
+    /// KEY the get() resolves BEFORE the '=' expectation and the
+    /// SUGGEST_NOTHING install — the unknown key the
+    /// ERROR_UNKNOWN_OPTION rollbackAndThrow answers (the cursor the
+    /// KEY START names, the int arg the saved post-skipWhitespace
+    /// cursor wears), the '[' entry's suggestNames state the throw
+    /// survives, and the '='-carrying remaining no key prefixes (the
+    /// 21 keys the '=' never carries) — the EMPTY local the filter's
+    /// silence wears; the exact-case lookup the casing refuses, the
+    /// empty key the '='-charset read refuses, the invert-char keys
+    /// the read stops at — the same silence; the known keys the value
+    /// walk rides, the quote-led continuations the honest ask keeps).
+    #[test]
+    fn the_selector_options_the_unknown_key_lane_speaks() {
+        use crate::screens::ChatSuggestionSource as Src;
+        let tree = test_provider_tree();
+        // THE CANONICAL FLIP (the unquoted 'zzz=x' form — the get()
+        // null the rollback answers, the span the KEY START names, the
+        // '='-carrying remaining the filter refuses)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[zzz=x", &[], true, &[])
+        else {
+            panic!("/kill @a[zzz=x the unknown key answers");
+        };
+        assert_eq!((start, length), (9, 5), "the span the key start names");
+        assert!(matches.is_empty(), "the unknown key the get() throws");
+        // THE EXACT-CASE REFUSAL (the lookup the casing keeps — the
+        // same null the uppercase form answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[NAME=Steve", &[], true, &[])
+        else {
+            panic!("/kill @a[NAME=Steve the exact-case walk answers");
+        };
+        assert_eq!((start, length), (9, 10), "the span the rollback names");
+        assert!(matches.is_empty(), "the casing the lookup refuses");
+        // THE INVERT-CHAR KEY (the unquoted read the '!' the charset
+        // never carries stops at — the key '' the get() null answers,
+        // the same key-start silence)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[!name=Steve", &[], true, &[])
+        else {
+            panic!("/kill @a[!name=Steve the invert-char walk answers");
+        };
+        assert_eq!((start, length), (9, 11), "the span the key start names");
+        assert!(matches.is_empty(), "the stopped read the null answers");
+        // THE EMPTY KEY (the '='-led tail the unquoted read NOTHING
+        // consumes — the get("") null the same throw answers)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[=x", &[], true, &[])
+        else {
+            panic!("/kill @a[=x the empty-key walk answers");
+        };
+        assert_eq!((start, length), (9, 2), "the span the '=' position names");
+        assert!(matches.is_empty(), "the empty key the null answers");
+        // THE PREFIX '=' NEVER FUZZES (the exact-case lookup the 'lim'
+        // key refuses — the value walk never rides the prefix)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[lim=5", &[], true, &[])
+        else {
+            panic!("/kill @a[lim=5 the prefix walk answers");
+        };
+        assert_eq!((start, length), (9, 5), "the span the key start names");
+        assert!(matches.is_empty(), "the prefix key the lookup refuses");
+        // THE CONTINUATION UNKNOWN (the ',' state the suggestNames
+        // re-installs — the same throw the same span names)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,zzz=x", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,zzz=x the continuation walk answers");
+        };
+        assert_eq!((start, length), (20, 5), "the span the continuation key names");
+        assert!(
+            matches.is_empty(),
+            "the continuation unknown the silence keeps"
+        );
+        // THE KNOWN KEYS THE VALUE WALK RIDES (the flip never touches
+        // — the first-element completion the input end wears, the
+        // continuation sort list the value lane keeps)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve the known-key walk answers");
+        };
+        assert_eq!((start, length), (19, 0), "the consumed value's own end");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec![",", "]"],
+            "the known key the value walk answers"
+        );
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=Steve,sort=", &[], true, &[])
+        else {
+            panic!("/kill @a[name=Steve,sort= the continuation ride answers");
+        };
+        assert_eq!((start, length), (25, 0), "the empty element's own span");
+        assert_eq!(
+            matches.iter().map(|m| m.text.as_str()).collect::<Vec<_>>(),
+            vec!["arbitrary", "furthest", "nearest", "random"],
+            "the sort list the merge sort orders"
+        );
+        // THE EARLIER QUOTED VALUE THE TAIL NEVER HIDES (the parse
+        // consumed the quoted value fine — the unquoted unknown key
+        // after the ',' the same get() throw answers, the region's
+        // quote the lane's own order law never reaches)
+        let Src::Local { start, length, matches } =
+            local_command_suggestions(&tree, "/kill @a[name=\"S\",zzz=x", &[], true, &[])
+        else {
+            panic!("/kill @a[name=\"S\",zzz=x the post-quote walk answers");
+        };
+        assert_eq!((start, length), (18, 5), "the span the tail key names");
+        assert!(
+            matches.is_empty(),
+            "the post-quote unknown the silence keeps"
+        );
+        // THE QUOTE-LED CONTINUATION THE ASK KEEPS (the quoted-key
+        // tails the later rounds audit — the flip never reaches)
+        assert_eq!(
+            local_command_suggestions(&tree, "/kill @a[name=Steve,\"zzz=x", &[], true, &[]),
+            Src::AskServer,
+            "the quote-led continuation the committed ask keeps"
+        );
+        // THE TAB APPLY (the EMPTY local no request spends — the
+        // input the silence never touches)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_provider_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.on_chat_key();
+        for c in "/kill @a[zzz=x".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(
+            _rx.try_recv().is_err(),
+            "the unknown-key lane no request spends"
+        );
+        app.on_chat_tab_key();
+        assert_eq!(
+            app.chat_input, "/kill @a[zzz=x",
+            "the empty list the input never touches"
         );
     }
 
