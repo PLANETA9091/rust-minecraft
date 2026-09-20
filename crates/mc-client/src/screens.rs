@@ -17305,6 +17305,44 @@ impl App {
         }
     }
 
+    /// THE ABILITIES ECHO'S OWN BANK (javap 26.2
+    /// `ClientPacketListener.handlePlayerAbilities` — the audited
+    /// six-putfield walk the wire world alone wears): the server's
+    /// own abilities word the client's flying state re-banks — the
+    /// `flying` putfield the CORE speaks (the outbound ONE byte the
+    /// changed fly tick sends, the server's answer this installer
+    /// hears — the prediction the server's own belief confirms), the
+    /// `invulnerable` and `flyingSpeed` putfields the Body-owned
+    /// trio completes (the wheel's adjusted speed the server's word
+    /// re-pins, the hurt pipeline's head the re-granted flag
+    /// answers). The mayfly/instabuild/walking-speed words the
+    /// model's own bank keeps verbatim (the read ctor's four-bit +
+    /// two-float shape the parse never drops) — the consumers' own
+    /// lanes the mode folds stand in for today (the fly gate's
+    /// gamemode fold, the dig lane's instabuild fold), the
+    /// honest-source upgrade the next rounds name. The putfield
+    /// ORDER the handler's own walk banks (flying, instabuild,
+    /// invulnerable, mayfly, flyingSpeed, walkingSpeed — the read
+    /// the installer's own order follows where the Body owns the
+    /// field). The OFFLINE world the local belief owns (no server
+    /// speaks — the gate the mode echo's installer keeps), the
+    /// absent word the join snapshot's silence keeps, the idempotent
+    /// re-bank the unchanged word's same-value putfields keep.
+    pub fn live_abilities_updated(
+        &mut self,
+        word: Option<mc_protocol::play::PlayerAbilitiesWord>,
+    ) {
+        if !self.world_is_network {
+            return;
+        }
+        let Some(w) = word else { return };
+        if let Some(b) = self.body.as_mut() {
+            b.flying = w.flying;
+            b.invulnerable = w.invulnerable;
+            b.flying_speed = w.flying_speed;
+        }
+    }
+
     /// THE OFFLINE MOUNT (javap AbstractBoat.interact's tail — the
     /// `startRiding` the CONSUME verdict carries; the singleplayer's
     /// client IS the authority the offline lane keeps, the local
@@ -26668,6 +26706,84 @@ mod tests {
             !app.body.as_ref().expect("the body rides").invulnerable,
             "the adventure arm the grant never banks"
         );
+    }
+
+    /// THE ABILITIES ECHO'S OWN BANK (javap 26.2
+    /// `ClientPacketListener.handlePlayerAbilities` — the audited
+    /// six-putfield walk the installer wears): the offline gate the
+    /// local belief keeps, the absent word the join snapshot's
+    /// silence keeps, the FLYING putfield the core re-bank speaks
+    /// (both directions — the server's word the prediction confirms
+    /// and the word the prediction revokes), the invulnerable and
+    /// flying-speed putfields the Body-owned trio completes (the
+    /// wheel's adjusted speed the server's word re-pins), and the
+    /// idempotent re-bank the unchanged word's same-value putfields
+    /// keep.
+    #[test]
+    fn the_abilities_echo_the_flying_state_re_banks() {
+        // THE OFFLINE GATE (the lane the wire world alone reaches —
+        // the offline world the local belief owns, no server speaks)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let word = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: true,
+            flying: true,
+            mayfly: true,
+            instabuild: false,
+            flying_speed: 0.07,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(word.clone()));
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(!b.flying, "the offline world the echo never banks");
+        assert!(!b.invulnerable, "the offline gate the trio keeps silent");
+        // THE WIRE BANK (the net world the installer serves)
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        // THE ABSENT WORD (the join snapshot's own silence — the None
+        // the body's belief never touches)
+        app.live_abilities_updated(None);
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(!b.flying, "the absent word the body keeps");
+        // THE FLYING PUTFIELD (the core re-bank — the server's word
+        // the prediction confirms: the grounded body the flight
+        // banks, the invulnerable word and the speed the trio
+        // carries)
+        app.live_abilities_updated(Some(word.clone()));
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(b.flying, "the server's word the flight banks");
+        assert!(b.invulnerable, "the invulnerable putfield banks");
+        assert!(
+            (b.flying_speed - 0.07).abs() < 1e-9,
+            "the flying-speed putfield the word re-pins"
+        );
+        // THE REVERSE PUTFIELD (the server's word the prediction
+        // revokes — the grounded word the flight folds, the
+        // invulnerable grant the word retires)
+        let ground = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: false,
+            instabuild: false,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        app.live_abilities_updated(Some(ground.clone()));
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(!b.flying, "the grounded word the flight folds");
+        assert!(!b.invulnerable, "the retired grant the word wears");
+        assert!(
+            (b.flying_speed - 0.05).abs() < 1e-9,
+            "the default speed the word restores"
+        );
+        // THE IDEMPOTENT RE-BANK (the unchanged word's same-value
+        // putfields — the handler's own unconditional walk the
+        // re-ship keeps silent in state)
+        app.live_abilities_updated(Some(ground));
+        let b = app.body.as_ref().expect("the body rides");
+        assert!(!b.flying && !b.invulnerable, "the re-bank the state keeps");
     }
 
     /// THE FLIGHT'S OWN APP LANES (the audited 26.2 walk the update

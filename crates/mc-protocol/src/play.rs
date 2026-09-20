@@ -107,6 +107,7 @@ pub mod clientbound {
         CB_OPEN_SCREEN as OPEN_SCREEN, CB_CONTAINER_CLOSE as CONTAINER_CLOSE,
         CB_SET_TIME as SET_TIME,
         CB_GAME_EVENT as GAME_EVENT,
+        CB_PLAYER_ABILITIES as PLAYER_ABILITIES,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
         CB_DEBUG_SAMPLE as DEBUG_SAMPLE,
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
@@ -221,6 +222,69 @@ pub fn parse_game_event(payload: &[u8]) -> Result<GameEvent> {
     let event = read_u8(&mut c)?;
     let param = read_f32(&mut c)?;
     Ok(GameEvent { event, param })
+}
+
+/// THE PLAYER ABILITIES' OWN WORD (javap 26.2
+/// `ClientboundPlayerAbilitiesPacket` — the read ctor's
+/// `<init>(FriendlyByteBuf)` walk banks the shape verbatim): the ONE
+/// byte's four flag bits (`iand 1` the invulnerable word, `iand 2` the
+/// FLYING state, `iand 4` the mayfly grant, `bipush 8` the instabuild
+/// grant — the putfield order invulnerable/isFlying/canFly/instabuild
+/// the ctor keeps) plus the TWO speed floats the ctor reads
+/// unconditionally (`readFloat` the flyingSpeed, `readFloat` the
+/// walkingSpeed — no flag gates the walk, the nine-byte body the law
+/// keeps). The MAYBUILD bit (16) the ctor never reads — the
+/// server-side Abilities carries it, the client's packet the four
+/// words alone speak (the ServerboundPlayerAbilitiesPacket's own ctor
+/// the same ONE-byte shape keeps — see [`encode_player_abilities`]).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PlayerAbilitiesWord {
+    /// The invulnerable bit (the ctor's `iand 1` arm).
+    pub invulnerable: bool,
+    /// THE FLYING STATE (the ctor's `iand 2` arm — the bit the
+    /// outbound packet's own `ior 2` law writes).
+    pub flying: bool,
+    /// The mayfly grant (the ctor's `iand 4` arm — the
+    /// `GameType.updatePlayerAbilities` CREATIVE/SPECTATOR word).
+    pub mayfly: bool,
+    /// The instabuild grant (the ctor's `iand 8` arm — the CREATIVE
+    /// word alone).
+    pub instabuild: bool,
+    /// The flying speed (the ctor's first unconditional `readFloat`).
+    pub flying_speed: f32,
+    /// The walking speed (the ctor's second unconditional
+    /// `readFloat` — the field the vanilla movement's own `getSpeed`
+    /// fold never reads, the parity the bank keeps).
+    pub walking_speed: f32,
+}
+
+/// Parse Player Abilities (clientbound play, `minecraft:player_abilities`
+/// id 64): u8 flags, f32 flying speed, f32 walking speed — the
+/// FriendlyByteBuf read ctor's walk (`readByte`, the four `iand` arms,
+/// the two unconditionals).
+pub fn parse_player_abilities(payload: &[u8]) -> Result<PlayerAbilitiesWord> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::PLAYER_ABILITIES,
+        "not a player abilities packet (0x{id:02X})"
+    );
+    anyhow::ensure!(c.len() >= 9, "player abilities truncated");
+    let flags = read_u8(&mut c)?;
+    let invulnerable = flags & 1 != 0;
+    let flying = flags & 2 != 0;
+    let mayfly = flags & 4 != 0;
+    let instabuild = flags & 8 != 0;
+    let flying_speed = read_f32(&mut c)?;
+    let walking_speed = read_f32(&mut c)?;
+    Ok(PlayerAbilitiesWord {
+        invulnerable,
+        flying,
+        mayfly,
+        instabuild,
+        flying_speed,
+        walking_speed,
+    })
 }
 
 /// Entries per section side: 16 for blocks, 4 for biomes.
@@ -8127,6 +8191,18 @@ pub enum PlayEvent {
     /// ClientboundGameEventPacket$Type ids the 26.2 clinit's
     /// `new Type(0)..new Type(13)` walk banks verbatim.
     GameEvent(GameEvent),
+    /// Player Abilities: the server's own abilities word — the ONE
+    /// byte the four flag bits keep (bit 1 the invulnerable word,
+    /// bit 2 the FLYING state, bit 4 the mayfly grant, bit 8 the
+    /// instabuild grant) plus the two speed floats the read ctor
+    /// takes unconditionally. The echo the abilities wire family
+    /// completes: the outbound [`encode_player_abilities`] ONE byte
+    /// the changed fly tick speaks, the serverbound lane's own
+    /// answer this packet rides back — the handler's six-putfield
+    /// walk (flying, instabuild, invulnerable, mayfly, flyingSpeed,
+    /// walkingSpeed) the frame thread's installer wears. See
+    /// [`PlayerAbilitiesWord`].
+    PlayerAbilities(PlayerAbilitiesWord),
     /// Keep-alive probe answered.
     KeepAlive(i64),
     /// Ping probe answered.
@@ -8347,6 +8423,9 @@ impl<S: Read + Write> PlaySession<S> {
                 Ok(PlayEvent::KeepAlive(probe))
             }
             clientbound::GAME_EVENT => Ok(PlayEvent::GameEvent(parse_game_event(&pkt)?)),
+            clientbound::PLAYER_ABILITIES => {
+                Ok(PlayEvent::PlayerAbilities(parse_player_abilities(&pkt)?))
+            }
             clientbound::PING => {
                 let probe = parse_play_ping(&pkt)?;
                 self.conn.send_packet(&encode_play_pong(probe))?;
@@ -9421,6 +9500,85 @@ mod tests {
         let mut w = Vec::new();
         write_varint(&mut w, clientbound::KEEP_ALIVE as i32);
         assert!(parse_game_event(&w).is_err(), "not a game event");
+    }
+
+    #[test]
+    fn player_abilities_wire_word_the_read_ctor_pins() {
+        // THE PACKET ID: the generated table's runtime fact (the 26.2
+        // bootstrapped protocol dump) — `minecraft:player_abilities`
+        // clientbound id 64 (the serverbound sibling the abilities
+        // wire's own ONE-byte lane speaks is id 40).
+        assert_eq!(clientbound::PLAYER_ABILITIES, 64);
+        // THE WIRE SHAPE: varint id + u8 flags + f32 flyingSpeed +
+        // f32 walkingSpeed — the read ctor's walk (`readByte`, the
+        // four `iand` arms, the two unconditionals). The vanilla
+        // Abilities <init> defaults the floats keep: 0.05 / 0.1.
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::PLAYER_ABILITIES as i32);
+        p.push(0x00); // the flag byte: all four words silent
+        p.extend_from_slice(&0.05f32.to_be_bytes());
+        p.extend_from_slice(&0.1f32.to_be_bytes());
+        let w = parse_player_abilities(&p).expect("the silent word decodes");
+        assert!(!w.invulnerable && !w.flying && !w.mayfly && !w.instabuild);
+        assert!((w.flying_speed - 0.05).abs() < 1e-9);
+        assert!((w.walking_speed - 0.1).abs() < 1e-9);
+        // THE FOUR BITS the ctor's `iand` arms fold: bit 1 the
+        // invulnerable word, bit 2 the FLYING state, bit 4 the
+        // mayfly grant, bit 8 the instabuild grant. The full byte
+        // 0x0F all four arms wear.
+        let mut f = Vec::new();
+        write_varint(&mut f, clientbound::PLAYER_ABILITIES as i32);
+        f.push(0x0F);
+        f.extend_from_slice(&0.07f32.to_be_bytes());
+        f.extend_from_slice(&0.12f32.to_be_bytes());
+        let w = parse_player_abilities(&f).expect("the full word decodes");
+        assert!(w.invulnerable && w.flying && w.mayfly && w.instabuild);
+        // THE SINGLE BITS the arms isolate: each bit alone its own
+        // word wears (the peer arms stay silent)
+        for (bit, name) in [(1u8, "invulnerable"), (2, "flying"), (4, "mayfly"), (8, "instabuild")] {
+            let mut b = Vec::new();
+            write_varint(&mut b, clientbound::PLAYER_ABILITIES as i32);
+            b.push(bit);
+            b.extend_from_slice(&0.0f32.to_be_bytes());
+            b.extend_from_slice(&0.0f32.to_be_bytes());
+            let w = parse_player_abilities(&b).expect("the single bit decodes");
+            let (i, fl, m, s) = (
+                w.invulnerable,
+                w.flying,
+                w.mayfly,
+                w.instabuild,
+            );
+            match name {
+                "invulnerable" => assert!(i && !fl && !m && !s),
+                "flying" => assert!(!i && fl && !m && !s),
+                "mayfly" => assert!(!i && !fl && m && !s),
+                _ => assert!(!i && !fl && !m && s),
+            }
+        }
+        // THE MAYBUILD BIT (16) the read ctor never reads: the byte
+        // 0x10 all four words silent — the server-side Abilities
+        // carries it, the client's packet never folds it
+        let mut mb = Vec::new();
+        write_varint(&mut mb, clientbound::PLAYER_ABILITIES as i32);
+        mb.push(0x10);
+        mb.extend_from_slice(&0.0f32.to_be_bytes());
+        mb.extend_from_slice(&0.0f32.to_be_bytes());
+        let w = parse_player_abilities(&mb).expect("the maybuild byte decodes");
+        assert!(!w.invulnerable && !w.flying && !w.mayfly && !w.instabuild);
+        // THE TRUNCATED BODY the ensure keeps: the id + flag alone
+        // is not the packet — the eight-byte float tail the read
+        // ctor demands
+        let mut t = Vec::new();
+        write_varint(&mut t, clientbound::PLAYER_ABILITIES as i32);
+        t.push(0x02);
+        assert!(parse_player_abilities(&t).is_err(), "the float tail missing");
+        // THE WRONG ID the honest refusal keeps
+        let mut w2 = Vec::new();
+        write_varint(&mut w2, clientbound::KEEP_ALIVE as i32);
+        w2.push(0x00);
+        w2.extend_from_slice(&0.0f32.to_be_bytes());
+        w2.extend_from_slice(&0.0f32.to_be_bytes());
+        assert!(parse_player_abilities(&w2).is_err(), "not an abilities packet");
     }
 
     #[test]

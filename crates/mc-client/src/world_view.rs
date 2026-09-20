@@ -382,6 +382,14 @@ pub struct SnapshotView {
     /// the idempotent re-bank the unchanged mode's acmp keeps
     /// silent).
     pub mode_word: Option<u8>,
+    /// THE ABILITIES ECHO'S OWN WORD (the model's banked
+    /// ClientboundPlayerAbilitiesPacket — the server's own word the
+    /// abilities wire rides): `None` until the word lands (the join
+    /// snapshot carries none — the wire word the play stream's own
+    /// echo banks), `Some(word)` every refresh ships while the echo
+    /// holds (the frame thread's installer the handlePlayerAbilities
+    /// walk wears — the idempotent re-bank the newest word keeps).
+    pub abilities_word: Option<mc_protocol::play::PlayerAbilitiesWord>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -2195,6 +2203,10 @@ pub fn materialize_snapshot_view(
         // MODEL packets are the only source (the login word the login
         // phase's own lane banks)
         mode_word: None,
+        // the join snapshot carries no abilities echo — the
+        // ClientboundPlayerAbilitiesPacket the play stream's own lane
+        // banks (the login word the same stream speaks)
+        abilities_word: None,
     }
 }
 
@@ -2606,6 +2618,9 @@ impl LiveView {
                 // the mode echo rides the pose-less arm too — the
                 // server's answer the session's own truth
                 mode_word: self.model.local_game_mode(),
+                // the abilities echo rides the pose-less arm too — the
+                // server's word the session's own truth
+                abilities_word: self.model.abilities_word().cloned(),
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -2664,6 +2679,10 @@ impl LiveView {
             // the session's own truth (the idempotent re-bank the
             // installer's own acmp keeps silent)
             mode_word: self.model.local_game_mode(),
+            // the abilities echo rides every refresh — the server's
+            // word the session's own truth (the idempotent re-bank the
+            // newest word keeps)
+            abilities_word: self.model.abilities_word().cloned(),
         }
     }
 }

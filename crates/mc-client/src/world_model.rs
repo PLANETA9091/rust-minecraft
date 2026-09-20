@@ -137,6 +137,17 @@ pub struct WorldModel {
     /// previous bank, the mode bank, the abilities re-grant — the
     /// installer's own law).
     local_game_mode: Option<u8>,
+    /// THE ABILITIES ECHO'S OWN BANK (javap 26.2
+    /// `ClientPacketListener.handlePlayerAbilities` — the server's own
+    /// abilities word the ClientboundPlayerAbilitiesPacket keeps: the
+    /// ONE byte the four flag bits fold, the two speed floats the read
+    /// ctor takes unconditionally): the full word the bank keeps —
+    /// `None` until the echo lands, `Some(word)` the latest echo
+    /// replaces (the refresh rides it verbatim, the frame thread's
+    /// installer the six-putfield walk wears — the Body-owned fields
+    /// the trio banks, the mayfly/instabuild/walking-speed words the
+    /// model's own bank preserves).
+    abilities_word: Option<mc_protocol::play::PlayerAbilitiesWord>,
     /// The latest Set Time's clock states, keyed by order of arrival
     /// (a vanilla overworld server syncs its dimension's default
     /// clock). Multi-clock worlds need the WORLD_CLOCK registry names
@@ -776,6 +787,7 @@ impl WorldModel {
             rain_level: 0.0,
             thunder_level: 0.0,
             local_game_mode: None,
+            abilities_word: None,
             clocks: Vec::new(),
             columns: HashMap::new(),
             entities: HashMap::new(),
@@ -1880,6 +1892,14 @@ impl WorldModel {
                     _ => false,
                 }
             }
+            PlayEvent::PlayerAbilities(w) => {
+                // THE ABILITIES ECHO'S OWN BANK (the server's own word
+                // the abilities wire rides — the full word the model
+                // keeps, the Body-owned fields the frame thread's
+                // installer banks)
+                self.abilities_word = Some(w);
+                true
+            }
             PlayEvent::PlayerInfoUpdate(u) => {
                 // THE HANDLER'S OWN WALK (javap
                 // ClientPacketListener.handlePlayerInfoUpdate): the
@@ -2472,6 +2492,16 @@ impl WorldModel {
     /// silent).
     pub fn local_game_mode(&self) -> Option<u8> {
         self.local_game_mode
+    }
+
+    /// THE ABILITIES ECHO'S OWN WORD (the model's banked
+    /// ClientboundPlayerAbilitiesPacket — the server's own word the
+    /// abilities wire rides): `None` until the echo lands, `Some(word)`
+    /// the refresh ships to the frame thread's installer (the
+    /// handlePlayerAbilities walk the App bank wears — the idempotent
+    /// re-bank the unchanged word's same-value putfields keep).
+    pub fn abilities_word(&self) -> Option<&mc_protocol::play::PlayerAbilitiesWord> {
+        self.abilities_word.as_ref()
     }
 
     /// THE EFFECTIVE THUNDER'S OWN ANSWER (javap `Level.getThunderLevel`
@@ -3444,6 +3474,49 @@ mod tests {
             param: 1.0,
         })));
         assert_eq!(m.rain_level(), 1.0, "the skips never touch the rain");
+    }
+
+    #[test]
+    fn the_abilities_echo_the_server_word_banks() {
+        // THE BANK (the PlayerAbilities arm — the server's own word
+        // the abilities wire rides, the full word the model keeps
+        // verbatim: the four flag bits and the two speeds the read
+        // ctor folded)
+        let mut m = WorldModel::new();
+        assert!(
+            m.abilities_word().is_none(),
+            "the fresh model the word never carries"
+        );
+        let word = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: true,
+            flying: true,
+            mayfly: true,
+            instabuild: false,
+            flying_speed: 0.07,
+            walking_speed: 0.12,
+        };
+        assert!(
+            m.apply(PlayEvent::PlayerAbilities(word.clone())),
+            "the echo the view's re-ship earns"
+        );
+        let banked = m.abilities_word().expect("the word the model banks");
+        assert_eq!(banked, &word, "the full word the bank keeps verbatim");
+        // THE REPLACE WALK (the newest echo wins — the handler's own
+        // unconditional re-bank the later packet speaks)
+        let newer = mc_protocol::play::PlayerAbilitiesWord {
+            invulnerable: false,
+            flying: false,
+            mayfly: false,
+            instabuild: false,
+            flying_speed: 0.05,
+            walking_speed: 0.1,
+        };
+        assert!(m.apply(PlayEvent::PlayerAbilities(newer.clone())));
+        assert_eq!(
+            m.abilities_word(),
+            Some(&newer),
+            "the newest word the bank replaces"
+        );
     }
 
     #[test]

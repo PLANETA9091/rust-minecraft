@@ -1,0 +1,43 @@
+=== handlePlayerAbilities(Lnet/minecraft/network/protocol/game/ClientboundPlayerAbilitiesPacket;)V max_stack=3 max_locals=3 ===
+      0: aload_1 
+      1: aload_0 
+      2: aload_0 
+      3: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+      6: invokevirtual #247.packetProcessor:()Lnet/minecraft/network/PacketProcessor;
+      9: invokestatic #389.ensureRunningOnSameThread:(Lnet/minecraft/network/protocol/Packet;Lnet/minecraft/network/PacketListener;Lnet/minecraft/network/PacketProcessor;)V
+     12: aload_0 
+     13: getfield #16.minecraft:Lnet/minecraft/client/Minecraft;
+     16: getfield #247.player:Lnet/minecraft/client/player/LocalPlayer;
+     19: astore_2 
+     20: aload_2 
+     21: invokevirtual #747.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     24: aload_1 
+     25: invokevirtual #3411.isFlying:()Z
+     28: putfield #3416.flying:Z
+     31: aload_2 
+     32: invokevirtual #747.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     35: aload_1 
+     36: invokevirtual #3411.canInstabuild:()Z
+     39: putfield #3416.instabuild:Z
+     42: aload_2 
+     43: invokevirtual #747.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     46: aload_1 
+     47: invokevirtual #3411.isInvulnerable:()Z
+     50: putfield #3416.invulnerable:Z
+     53: aload_2 
+     54: invokevirtual #747.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     57: aload_1 
+     58: invokevirtual #3411.canFly:()Z
+     61: putfield #3416.mayfly:Z
+     64: aload_2 
+     65: invokevirtual #747.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     68: aload_1 
+     69: invokevirtual #3411.getFlyingSpeed:()F
+     72: invokevirtual #3416.setFlyingSpeed:(F)V
+     75: aload_2 
+     76: invokevirtual #747.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+     79: aload_1 
+     80: invokevirtual #3411.getWalkingSpeed:()F
+     83: invokevirtual #3416.setWalkingSpeed:(F)V
+     86: return 
+
