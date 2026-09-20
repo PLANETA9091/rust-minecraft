@@ -4820,6 +4820,25 @@ impl GameMode {
     pub(crate) fn instabuild(self) -> bool {
         matches!(self, GameMode::Creative)
     }
+
+    /// `Abilities.invulnerable`'s audited grant (javap 26.2
+    /// `GameType.updatePlayerAbilities` — the putfield walk: CREATIVE
+    /// wears `invulnerable = true`, the SPECTATOR arm grants mayfly +
+    /// the forced flying + `invulnerable = true` (the instabuild the
+    /// same arm refuses), survival/adventure the zero walk keeps —
+    /// the audit the mpgamemode_262.txt evidence carries). The hurt
+    /// pipeline's own head the grant answers —
+    /// `LivingEntity.hurtServer` pcs 0-10 opens on
+    /// `isInvulnerableTo(level, source)`'s verdict (the
+    /// `isInvulnerableToBase` walk: `invulnerable &&
+    /// !source.is(BYPASSES_INVULNERABILITY) && !source.isCreativePlayer()`
+    /// — the bypass tag and the creative-caused-source arms ride
+    /// vocabularies this client's sources never speak: no void walk,
+    /// no player-caused lane), and the air clock's decrease gate the
+    /// grant the never-drain law wears.
+    pub(crate) fn invulnerable(self) -> bool {
+        matches!(self, GameMode::Creative | GameMode::Spectator)
+    }
 }
 
 /// THE SLOT ROW'S OWN STEP (the init walk's `imul 31` — the 26x26
@@ -7195,6 +7214,14 @@ impl App {
                     // bank feeds instantly; the spectator-or-passenger
                     // setOnGround arm the body's own lane answers)
                     b.no_physics = self.game_mode == GameMode::Spectator;
+                    // THE INVULNERABLE FEED (javap
+                    // GameType.updatePlayerAbilities's grant — the
+                    // creative/spectator flag the body's own walks
+                    // answer: the air clock's decrease gate, the hurt
+                    // pipeline's head the App's pipeline folds — the
+                    // F4 flick the bank feeds instantly, the
+                    // survival/adventure flick the grant retires)
+                    b.invulnerable = self.game_mode.invulnerable();
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the
@@ -19060,6 +19087,15 @@ impl App {
     }
 
     fn apply_fall_damage(&mut self, damage: i32) {
+        // THE INVULNERABLE HEAD'S OWN WRAPPER ARM (javap hurtServer
+        // pcs 0-10 — the isInvulnerableTo verdict the fall source's
+        // hurt wears, the voice and the exhaustion the landing the
+        // refusal never lands to earn; the wrapper's pre-pipeline
+        // split the gate repeats the vanilla single-site law keeps —
+        // the hurt_inner head the same verdict speaks)
+        if self.game_mode.invulnerable() {
+            return;
+        }
         self.sounds.play_fall_voice(self.frame, damage);
         // THE DAMAGE SOURCE'S OWN FOOD COST (javap Player.hurt's tail:
         // `causeFoodExhaustion(source.getFoodExhaustion())` — the
@@ -19102,6 +19138,19 @@ impl App {
     /// override's three arms the pipeline speaks: the plain HURT, the
     /// BURNING (lava, onFire), the DROWNING).
     fn hurt_inner(&mut self, amount: f32, voice: HurtVoice) -> bool {
+        // THE INVULNERABLE HEAD (javap hurtServer pcs 0-10 — the
+        // pipeline's own opening verdict
+        // `isInvulnerableTo(level, source) -> false` the flag alone
+        // wears: the isInvulnerableToBase walk the grant answers —
+        // `invulnerable && !source.is(BYPASSES_INVULNERABILITY) &&
+        // !source.isCreativePlayer()` —, the refusal BEFORE the
+        // cooldown, the flash, the health, the voice and the
+        // exhaustion the hurt never lands to earn. The fall lane's
+        // wrapper the same verdict its own head keeps — the voice and
+        // the exhaustion the landing never spends.)
+        if self.game_mode.invulnerable() {
+            return false;
+        }
         if amount <= 0.0 || self.dead {
             return false;
         }
@@ -41027,6 +41076,332 @@ cow_sound_variant: None,
         );
         assert!(!GameMode::Survival.instabuild());
         assert!(!GameMode::Adventure.instabuild());
+    }
+
+    /// THE INVULNERABLE GRANT (26.2 GameType.updatePlayerAbilities's
+    /// audited putfield walk, scripts/jar_work/mpgamemode_262.txt +
+    /// the invuln_262.txt / hurtserver_262.txt / basetick_262.txt
+    /// evidence this round banks): the four modes' own verdicts — the
+    /// creative and the spectator the flag banks, the survival and
+    /// the adventure the zero walk keeps.
+    #[test]
+    fn the_gamemode_invulnerable_folds_the_audited_grants_speak() {
+        assert!(!GameMode::Survival.invulnerable());
+        assert!(GameMode::Creative.invulnerable());
+        assert!(!GameMode::Adventure.invulnerable());
+        assert!(GameMode::Spectator.invulnerable());
+    }
+
+    /// THE INVULNERABLE HEAD (javap LivingEntity.hurtServer pcs 0-10,
+    /// scripts/jar_work/hurtserver_262.txt — the isInvulnerableTo
+    /// verdict the isInvulnerableToBase walk answers, scripts/
+    /// jar_work/invuln_262.txt): the pipeline's opening refusal the
+    /// flag alone wears — every source the client speaks (the plain
+    /// hurt the mob blow and the starve ride, the burning family the
+    /// lava and the onFire cadence speak, the drowning source) the
+    /// head refuses BEFORE the cooldown, the flash, the health, the
+    /// voice the hurt never lands to earn. The survival control the
+    /// same plain hurt the landing law speaks (the bite, the
+    /// re-armed window).
+    #[test]
+    fn the_invulnerable_head_the_pipeline_refuses() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        app.food_data.set_saturation(0.0);
+        let before = app.health;
+        // the plain hurt (the mob blow, the arrow, the starve's own lane)
+        assert!(!app.hurt(5.0), "the head refuses the plain source");
+        // the burning family (the lava dose, the onFire cadence)
+        assert!(
+            !app.hurt_burning(crate::body::LAVA_DAMAGE),
+            "the head refuses the burning family"
+        );
+        // the drowning source
+        assert!(!app.hurt_drowning(crate::body::DROWN_DAMAGE), "the head refuses the drown");
+        // the health the refusals never spend, the arms the landing never earns
+        assert_eq!(app.health, before, "the bite the refusal never spends");
+        assert_eq!(app.invulnerable_time, 0, "the window never armed");
+        assert_eq!(app.hurt_time, 0, "the flash never armed");
+        assert_eq!(app.last_hurt, 0.0, "the comparison bank never armed");
+        assert!(
+            !app
+                .sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.hurt")),
+            "no hurt voice the refused pipeline speaks: {:?}",
+            app.sounds.events
+        );
+        // THE SURVIVAL CONTROL: the same plain hurt the landing law wears
+        app.game_mode = GameMode::Survival;
+        assert!(app.hurt(5.0), "the survival landing speaks");
+        assert_eq!(app.health, before - 5.0, "the bite the landing spends");
+        assert_eq!(app.invulnerable_time, 20, "the window re-armed");
+    }
+
+    /// THE INVULNERABLE SOURCES' OWN LANES (the real App update loop):
+    /// the creative body stands IN the lava — the dose the head
+    /// refuses (the health the bites never spend, the cooldown never
+    /// arms, the GENERIC_BURN the refused hurt never earns), the fire
+    /// visual the fluid walk keeps (the vanilla ignite rides the fluid
+    /// entry, NOT the refused lavaHurt — javap lavaHurt's own walk
+    /// carries no ignite, scripts/jar_work/lavahurt_262.txt); the
+    /// starving creative the empty bar's bite the head refuses.
+    #[test]
+    fn the_invulnerable_lanes_the_doses_never_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let size = app.world_size;
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the lava pool AT the feet cell (the fluid walk the touch speaks)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface as i32, c, crate::world::LAVA);
+        }
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        {
+            let b = app.body.as_mut().unwrap();
+            b.vy = 0.0;
+            b.on_ground = true;
+        }
+        let before = app.health;
+        for _ in 0..40 {
+            app.update();
+        }
+        assert_eq!(app.health, before, "the lava dose the head refuses");
+        assert!(
+            app.body.as_ref().unwrap().remaining_fire_ticks > 0,
+            "the fire visual rides — the ignite the fluid walk keeps"
+        );
+        assert_eq!(app.invulnerable_time, 0, "the cooldown never armed");
+        assert!(
+            !app
+                .sounds
+                .events
+                .iter()
+                .any(|e| e.contains("burn")),
+            "the GENERIC_BURN the refused lava hurt never earns: {:?}",
+            app.sounds.events
+        );
+        // THE STARVE LANE: the empty bar's 80-tick beat the head refuses
+        app.food_data.set_food_level(0);
+        app.food_data.set_saturation(0.0);
+        for _ in 0..90 {
+            app.update();
+        }
+        assert_eq!(
+            app.health, before,
+            "the starve bite the invulnerable head refuses"
+        );
+    }
+
+    /// THE INVULNERABLE AIR CLOCK (javap LivingEntity.baseTick pcs
+    /// 258-280, scripts/jar_work/basetick_262.txt — the player's
+    /// decrease arm `(!bl2 || !abilities.invulnerable)` the flag alone
+    /// answers): the submerged creative body the drain never speaks —
+    /// the pre-drained clock the gated arm REFILLS four a tick
+    /// underwater (the decrease gate false the vanilla else-if rides),
+    /// the dose flag the drain never earns; the survival control the
+    /// same column the one-a-tick drain wears.
+    #[test]
+    fn the_invulnerable_air_clock_the_underwater_never_drains() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let size = app.world_size;
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the 3-deep water column AT the body's own cells (the drown
+        // test's own shape — the eye one cell under the surface)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for y in surface..surface + 3 {
+                w.set(c, y as i32, c, crate::world::WATER);
+            }
+        }
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        {
+            let b = app.body.as_mut().unwrap();
+            b.vy = 0.0;
+            b.on_ground = true;
+            b.air_supply = crate::body::TOTAL_AIR_SUPPLY - 10;
+        }
+        for _ in 0..5 {
+            app.update();
+        }
+        {
+            let b = app.body.as_ref().unwrap();
+            assert!(
+                b.eye_in_water,
+                "the eye the column keeps (the gate's own query)"
+            );
+            assert_eq!(
+                b.air_supply, crate::body::TOTAL_AIR_SUPPLY,
+                "the underwater refill the gated arm speaks — the drain the flag never wears"
+            );
+            assert!(
+                !b.drown_hurt_due,
+                "the dose flag the drain never earns"
+            );
+        }
+        assert_eq!(app.health, 20.0, "the dose the pipeline never sees");
+        // THE SURVIVAL CONTROL: the same column the drain wears
+        app.game_mode = GameMode::Survival;
+        {
+            let b = app.body.as_mut().unwrap();
+            b.air_supply = crate::body::TOTAL_AIR_SUPPLY;
+        }
+        for _ in 0..30 {
+            app.update();
+        }
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(
+            b.air_supply,
+            crate::body::TOTAL_AIR_SUPPLY - 30,
+            "the one-a-tick drain the grant's absence wears"
+        );
+        assert!(!b.drown_hurt_due, "the clock above the -20 fold");
+    }
+
+    /// THE INVULNERABLE FALL (the wrapper arm the pipeline head keeps):
+    /// the creative ten-block landing the fall voice the refusal never
+    /// earns, the health the bite never spends, the window never arms;
+    /// the survival control the same descent the landing law speaks
+    /// (the fall voice, the bite, the re-armed window).
+    #[test]
+    fn the_invulnerable_fall_the_landing_never_spends() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let spawn_feet = app.spawn_y;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (spawn_feet + 10) as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let before = app.health;
+        let mut landed = false;
+        for _ in 0..60 {
+            app.update();
+            if app.body.as_ref().unwrap().on_ground {
+                landed = true;
+                break;
+            }
+        }
+        assert!(landed, "the body landed inside the ticks");
+        assert_eq!(app.health, before, "the bite the refusal never spends");
+        assert_eq!(app.invulnerable_time, 0, "the window never armed");
+        assert!(
+            !app.sounds.events.iter().any(|e| e.contains("_fall @")),
+            "the fall voice the refused landing never earns: {:?}",
+            app.sounds.events
+        );
+        // THE SURVIVAL CONTROL: the same descent the landing law wears
+        app.game_mode = GameMode::Survival;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (spawn_feet + 10) as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        let mut landed = false;
+        for _ in 0..60 {
+            app.update();
+            if app.body.as_ref().unwrap().on_ground {
+                landed = true;
+                break;
+            }
+        }
+        assert!(landed, "the control landed inside the ticks");
+        assert!(
+            app.health < before,
+            "the bite the survival landing spends"
+        );
+        assert_eq!(app.invulnerable_time, 20, "the window re-armed");
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.contains("_fall @")),
+                "the fall voice the survival landing earns"
+            );
+        }
+    }
+
+    /// THE F4 FLICK THE GRANT FEEDS INSTANTLY (the per-frame feed the
+    /// noPhysics head's own shape wears): the survival body the lava
+    /// doses land on, the flick to creative the NEXT beat refuses (the
+    /// health the bites stop spending), the flick back the survival
+    /// doses resume — the grant the mode bank's own law wears.
+    #[test]
+    fn the_f4_flick_the_grant_feeds_instantly() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.world_size;
+        let c = size / 2;
+        let surface = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface as i32, c, crate::world::LAVA);
+        }
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        {
+            let b = app.body.as_mut().unwrap();
+            b.vy = 0.0;
+            b.on_ground = true;
+        }
+        // the survival doses land
+        for _ in 0..30 {
+            app.update();
+        }
+        let drained = app.health;
+        assert!(drained < 20.0, "the survival doses landed: {drained}");
+        // THE FLICK: the grant feeds, the doses refuse — the regen the
+        // emptied bar keeps silent (the full bar's 10-tick beat the
+        // health climbs), the starve bite the 80-tick walk never
+        // reaches inside the 30 (and the invulnerable head would
+        // refuse it anyway)
+        app.food_data.set_food_level(0);
+        app.food_data.set_saturation(0.0);
+        app.game_mode = GameMode::Creative;
+        let mid = app.health;
+        for _ in 0..30 {
+            app.update();
+        }
+        assert_eq!(app.health, mid, "the doses the grant refuses");
+        // THE FLICK BACK: the survival doses resume
+        app.game_mode = GameMode::Survival;
+        for _ in 0..30 {
+            app.update();
+        }
+        assert!(app.health < mid, "the survival doses resumed");
     }
 
     /// THE CREATIVE DIG (26.2 MultiPlayerGameMode's audited instabuild

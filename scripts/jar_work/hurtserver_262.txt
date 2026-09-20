@@ -1,0 +1,312 @@
+=== hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z max_stack=7 max_locals=12 ===
+      0: aload_0 
+      1: aload_1 
+      2: aload_2 
+      3: invokevirtual #3.isInvulnerableTo:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)Z
+      6: ifeq start+11
+      9: iconst_0 
+     10: ireturn 
+     11: aload_0 
+     12: invokevirtual #3.isDeadOrDying:()Z
+     15: ifeq start+20
+     18: iconst_0 
+     19: ireturn 
+     20: aload_2 
+     21: getstatic #1600.IS_FIRE:Lnet/minecraft/tags/TagKey;
+     24: invokevirtual #1605.is:(Lnet/minecraft/tags/TagKey;)Z
+     27: ifeq start+42
+     30: aload_0 
+     31: getstatic #1324.FIRE_RESISTANCE:Lnet/minecraft/core/Holder;
+     34: invokevirtual #3.hasEffect:(Lnet/minecraft/core/Holder;)Z
+     37: ifeq start+42
+     40: iconst_0 
+     41: ireturn 
+     42: aload_0 
+     43: invokevirtual #3.isSleeping:()Z
+     46: ifeq start+53
+     49: aload_0 
+     50: invokevirtual #3.stopSleeping:()V
+     53: aload_0 
+     54: iconst_0 
+     55: putfield #3.noActionTime:I
+     58: fload_3 
+     59: fconst_0 
+     60: fcmpg 
+     61: ifge start+66
+     64: fconst_0 
+     65: fstore_3 
+     66: fload_3 
+     67: fstore 4
+     69: aload_0 
+     70: invokevirtual #3.getUseItem:()Lnet/minecraft/world/item/ItemStack;
+     73: astore 5
+     75: aload_0 
+     76: aload_1 
+     77: aload_2 
+     78: fload_3 
+     79: invokevirtual #3.applyItemBlocking:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)F
+     82: fstore 6
+     84: fload_3 
+     85: fload 6
+     87: fsub 
+     88: fstore_3 
+     89: fload 6
+     91: fconst_0 
+     92: fcmpl 
+     93: ifle start+100
+     96: iconst_1 
+     97: goto start+101
+    100: iconst_0 
+    101: istore 7
+    103: aload_2 
+    104: getstatic #1600.IS_FREEZING:Lnet/minecraft/tags/TagKey;
+    107: invokevirtual #1605.is:(Lnet/minecraft/tags/TagKey;)Z
+    110: ifeq start+129
+    113: aload_0 
+    114: getstatic #465.FREEZE_HURTS_EXTRA_TYPES:Lnet/minecraft/tags/TagKey;
+    117: invokevirtual #3.is:(Lnet/minecraft/tags/TagKey;)Z
+    120: ifeq start+129
+    123: fload_3 
+    124: ldc_w #1630
+    127: fmul 
+    128: fstore_3 
+    129: aload_2 
+    130: getstatic #1600.DAMAGES_HELMET:Lnet/minecraft/tags/TagKey;
+    133: invokevirtual #1605.is:(Lnet/minecraft/tags/TagKey;)Z
+    136: ifeq start+164
+    139: aload_0 
+    140: getstatic #34.HEAD:Lnet/minecraft/world/entity/EquipmentSlot;
+    143: invokevirtual #3.getItemBySlot:(Lnet/minecraft/world/entity/EquipmentSlot;)Lnet/minecraft/world/item/ItemStack;
+    146: invokevirtual #82.isEmpty:()Z
+    149: ifne start+164
+    152: aload_0 
+    153: aload_2 
+    154: fload_3 
+    155: invokevirtual #3.hurtHelmet:(Lnet/minecraft/world/damagesource/DamageSource;F)V
+    158: fload_3 
+    159: ldc_w #1638
+    162: fmul 
+    163: fstore_3 
+    164: fload_3 
+    165: invokestatic #212.isNaN:(F)Z
+    168: ifne start+178
+    171: fload_3 
+    172: invokestatic #212.isInfinite:(F)Z
+    175: ifeq start+181
+    178: ldc #214
+    180: fstore_3 
+    181: iconst_1 
+    182: istore 8
+    184: aload_0 
+    185: getfield #3.invulnerableTime:I
+    188: i2f 
+    189: ldc_w #1646
+    192: fcmpl 
+    193: ifle start+240
+    196: aload_2 
+    197: getstatic #1600.BYPASSES_COOLDOWN:Lnet/minecraft/tags/TagKey;
+    200: invokevirtual #1605.is:(Lnet/minecraft/tags/TagKey;)Z
+    203: ifne start+240
+    206: fload_3 
+    207: aload_0 
+    208: getfield #3.lastHurt:F
+    211: fcmpg 
+    212: ifgt start+217
+    215: iconst_0 
+    216: ireturn 
+    217: aload_0 
+    218: aload_1 
+    219: aload_2 
+    220: fload_3 
+    221: aload_0 
+    222: getfield #3.lastHurt:F
+    225: fsub 
+    226: invokevirtual #3.actuallyHurt:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)V
+    229: aload_0 
+    230: fload_3 
+    231: putfield #3.lastHurt:F
+    234: iconst_0 
+    235: istore 8
+    237: goto start+272
+    240: aload_0 
+    241: fload_3 
+    242: putfield #3.lastHurt:F
+    245: aload_0 
+    246: bipush 20
+    248: putfield #3.invulnerableTime:I
+    251: aload_0 
+    252: aload_1 
+    253: aload_2 
+    254: fload_3 
+    255: invokevirtual #3.actuallyHurt:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)V
+    258: aload_0 
+    259: bipush 10
+    261: putfield #3.hurtDuration:I
+    264: aload_0 
+    265: aload_0 
+    266: getfield #3.hurtDuration:I
+    269: putfield #3.hurtTime:I
+    272: aload_0 
+    273: aload_2 
+    274: invokevirtual #3.resolveMobResponsibleForDamage:(Lnet/minecraft/world/damagesource/DamageSource;)V
+    277: aload_0 
+    278: aload_2 
+    279: invokevirtual #3.resolvePlayerResponsibleForDamage:(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/world/entity/player/Player;
+    282: pop 
+    283: iload 8
+    285: ifeq start+370
+    288: aload 5
+    290: getstatic #907.BLOCKS_ATTACKS:Lnet/minecraft/core/component/DataComponentType;
+    293: invokevirtual #82.get:(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;
+    296: checkcast net/minecraft/world/item/component/BlocksAttacks
+    299: astore 9
+    301: iload 7
+    303: ifeq start+321
+    306: aload 9
+    308: ifnull start+321
+    311: aload 9
+    313: aload_1 
+    314: aload_0 
+    315: invokevirtual #1671.onBlocked:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)V
+    318: goto start+327
+    321: aload_1 
+    322: aload_0 
+    323: aload_2 
+    324: invokevirtual #374.broadcastDamageEvent:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)V
+    327: aload_2 
+    328: getstatic #1600.NO_IMPACT:Lnet/minecraft/tags/TagKey;
+    331: invokevirtual #1605.is:(Lnet/minecraft/tags/TagKey;)Z
+    334: ifne start+352
+    337: iload 7
+    339: ifeq start+348
+    342: fload_3 
+    343: fconst_0 
+    344: fcmpl 
+    345: ifle start+352
+    348: aload_0 
+    349: invokevirtual #3.markHurt:()V
+    352: aload_2 
+    353: getstatic #1600.NO_KNOCKBACK:Lnet/minecraft/tags/TagKey;
+    356: invokevirtual #1605.is:(Lnet/minecraft/tags/TagKey;)Z
+    359: ifne start+370
+    362: aload_0 
+    363: aload_2 
+    364: fload_3 
+    365: iload 7
+    367: invokevirtual #3.dealDefaultKnockback:(Lnet/minecraft/world/damagesource/DamageSource;FZ)V
+    370: aload_0 
+    371: invokevirtual #3.isDeadOrDying:()Z
+    374: ifeq start+411
+    377: aload_0 
+    378: aload_2 
+    379: invokevirtual #3.checkTotemDeathProtection:(Lnet/minecraft/world/damagesource/DamageSource;)Z
+    382: ifne start+426
+    385: iload 8
+    387: ifeq start+403
+    390: aload_0 
+    391: aload_0 
+    392: invokevirtual #3.getDeathSound:()Lnet/minecraft/sounds/SoundEvent;
+    395: invokevirtual #3.makeSound:(Lnet/minecraft/sounds/SoundEvent;)V
+    398: aload_0 
+    399: aload_2 
+    400: invokevirtual #3.playSecondaryHurtSound:(Lnet/minecraft/world/damagesource/DamageSource;)V
+    403: aload_0 
+    404: aload_2 
+    405: invokevirtual #3.die:(Lnet/minecraft/world/damagesource/DamageSource;)V
+    408: goto start+426
+    411: iload 8
+    413: ifeq start+426
+    416: aload_0 
+    417: aload_2 
+    418: invokevirtual #3.playHurtSound:(Lnet/minecraft/world/damagesource/DamageSource;)V
+    421: aload_0 
+    422: aload_2 
+    423: invokevirtual #3.playSecondaryHurtSound:(Lnet/minecraft/world/damagesource/DamageSource;)V
+    426: iload 7
+    428: ifeq start+437
+    431: fload_3 
+    432: fconst_0 
+    433: fcmpl 
+    434: ifle start+441
+    437: iconst_1 
+    438: goto start+442
+    441: iconst_0 
+    442: istore 9
+    444: iload 9
+    446: ifeq start+510
+    449: aload_0 
+    450: aload_2 
+    451: putfield #3.lastDamageSource:Lnet/minecraft/world/damagesource/DamageSource;
+    454: aload_0 
+    455: aload_0 
+    456: invokevirtual #3.level:()Lnet/minecraft/world/level/Level;
+    459: invokevirtual #692.getGameTime:()J
+    462: putfield #3.lastDamageStamp:J
+    465: aload_0 
+    466: invokevirtual #3.getActiveEffects:()Ljava/util/Collection;
+    469: invokeinterface #990.iterator:()Ljava/util/Iterator;
+    474: astore 10
+    476: aload 10
+    478: invokeinterface #996.hasNext:()Z
+    483: ifeq start+510
+    486: aload 10
+    488: invokeinterface #996.next:()Ljava/lang/Object;
+    493: checkcast net/minecraft/world/effect/MobEffectInstance
+    496: astore 11
+    498: aload 11
+    500: aload_1 
+    501: aload_0 
+    502: aload_2 
+    503: fload_3 
+    504: invokevirtual #1004.onMobHurt:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/damagesource/DamageSource;F)V
+    507: goto start+476
+    510: aload_0 
+    511: astore 11
+    513: aload 11
+    515: instanceof net/minecraft/server/level/ServerPlayer
+    518: ifeq start+575
+    521: aload 11
+    523: checkcast net/minecraft/server/level/ServerPlayer
+    526: astore 10
+    528: getstatic #1729.ENTITY_HURT_PLAYER:Lnet/minecraft/advancements/triggers/EntityHurtPlayerTrigger;
+    531: aload 10
+    533: aload_2 
+    534: fload 4
+    536: fload_3 
+    537: iload 7
+    539: invokevirtual #1735.trigger:(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/damagesource/DamageSource;FFZ)V
+    542: fload 6
+    544: fconst_0 
+    545: fcmpl 
+    546: ifle start+575
+    549: fload 6
+    551: ldc_w #1740
+    554: fcmpg 
+    555: ifge start+575
+    558: aload 10
+    560: getstatic #1742.DAMAGE_BLOCKED_BY_SHIELD:Lnet/minecraft/resources/Identifier;
+    563: fload 6
+    565: ldc_w #1646
+    568: fmul 
+    569: invokestatic #393.round:(F)I
+    572: invokevirtual #686.awardStat:(Lnet/minecraft/resources/Identifier;I)V
+    575: aload_2 
+    576: invokevirtual #1605.getEntity:()Lnet/minecraft/world/entity/Entity;
+    579: astore 11
+    581: aload 11
+    583: instanceof net/minecraft/server/level/ServerPlayer
+    586: ifeq start+611
+    589: aload 11
+    591: checkcast net/minecraft/server/level/ServerPlayer
+    594: astore 10
+    596: getstatic #1729.PLAYER_HURT_ENTITY:Lnet/minecraft/advancements/triggers/PlayerHurtEntityTrigger;
+    599: aload 10
+    601: aload_0 
+    602: aload_2 
+    603: fload 4
+    605: fload_3 
+    606: iload 7
+    608: invokevirtual #1762.trigger:(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;FFZ)V
+    611: iload 9
+    613: ireturn 
+

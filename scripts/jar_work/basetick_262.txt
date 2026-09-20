@@ -1,0 +1,314 @@
+=== baseTick()V max_stack=8 max_locals=8 ===
+      0: aload_0 
+      1: aload_0 
+      2: getfield #3.attackAnim:F
+      5: putfield #3.oAttackAnim:F
+      8: aload_0 
+      9: getfield #3.firstTick:Z
+     12: ifeq start+28
+     15: aload_0 
+     16: invokevirtual #3.getSleepingPos:()Ljava/util/Optional;
+     19: aload_0 
+     20: invokedynamic #510
+     25: invokevirtual #99.ifPresent:(Ljava/util/function/Consumer;)V
+     28: aload_0 
+     29: invokevirtual #3.level:()Lnet/minecraft/world/level/Level;
+     32: astore_2 
+     33: aload_2 
+     34: instanceof net/minecraft/server/level/ServerLevel
+     37: ifeq start+50
+     40: aload_2 
+     41: checkcast net/minecraft/server/level/ServerLevel
+     44: astore_1 
+     45: aload_1 
+     46: aload_0 
+     47: invokestatic #519.tickEffects:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LivingEntity;)V
+     50: aload_0 
+     51: invokespecial #6.baseTick:()V
+     54: invokestatic #528.get:()Lnet/minecraft/util/profiling/ProfilerFiller;
+     57: astore_1 
+     58: aload_1 
+     59: ldc_w #533
+     62: invokeinterface #536.push:(Ljava/lang/String;)V
+     67: aload_0 
+     68: invokevirtual #3.isAlive:()Z
+     71: ifeq start+450
+     74: aload_0 
+     75: invokevirtual #3.level:()Lnet/minecraft/world/level/Level;
+     78: astore_3 
+     79: aload_3 
+     80: instanceof net/minecraft/server/level/ServerLevel
+     83: ifeq start+450
+     86: aload_3 
+     87: checkcast net/minecraft/server/level/ServerLevel
+     90: astore_2 
+     91: aload_0 
+     92: instanceof net/minecraft/world/entity/player/Player
+     95: istore_3 
+     96: aload_0 
+     97: invokevirtual #3.isInWall:()Z
+    100: ifeq start+120
+    103: aload_0 
+    104: aload_2 
+    105: aload_0 
+    106: invokevirtual #3.damageSources:()Lnet/minecraft/world/damagesource/DamageSources;
+    109: invokevirtual #207.inWall:()Lnet/minecraft/world/damagesource/DamageSource;
+    112: fconst_1 
+    113: invokevirtual #3.hurtServer:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z
+    116: pop 
+    117: goto start+206
+    120: iload_3 
+    121: ifeq start+206
+    124: aload_2 
+    125: invokevirtual #374.getWorldBorder:()Lnet/minecraft/world/level/border/WorldBorder;
+    128: aload_0 
+    129: invokevirtual #3.getBoundingBox:()Lnet/minecraft/world/phys/AABB;
+    132: invokevirtual #561.isWithinBounds:(Lnet/minecraft/world/phys/AABB;)Z
+    135: ifne start+206
+    138: aload_2 
+    139: invokevirtual #374.getWorldBorder:()Lnet/minecraft/world/level/border/WorldBorder;
+    142: aload_0 
+    143: invokevirtual #561.getDistanceToBorder:(Lnet/minecraft/world/entity/Entity;)D
+    146: aload_2 
+    147: invokevirtual #374.getWorldBorder:()Lnet/minecraft/world/level/border/WorldBorder;
+    150: invokevirtual #561.getSafeZone:()D
+    153: dadd 
+    154: dstore 4
+    156: dload 4
+    158: dconst_0 
+    159: dcmpg 
+    160: ifge start+206
+    163: aload_2 
+    164: invokevirtual #374.getWorldBorder:()Lnet/minecraft/world/level/border/WorldBorder;
+    167: invokevirtual #561.getDamagePerBlock:()D
+    170: dstore 6
+    172: dload 6
+    174: dconst_0 
+    175: dcmpl 
+    176: ifle start+206
+    179: aload_0 
+    180: aload_2 
+    181: aload_0 
+    182: invokevirtual #3.damageSources:()Lnet/minecraft/world/damagesource/DamageSources;
+    185: invokevirtual #207.outOfBorder:()Lnet/minecraft/world/damagesource/DamageSource;
+    188: iconst_1 
+    189: dload 4
+    191: dneg 
+    192: dload 6
+    194: dmul 
+    195: invokestatic #170.floor:(D)I
+    198: invokestatic #393.max:(II)I
+    201: i2f 
+    202: invokevirtual #3.hurtServer:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z
+    205: pop 
+    206: aload_0 
+    207: getstatic #580.WATER:Lnet/minecraft/tags/TagKey;
+    210: invokevirtual #3.isEyeInFluid:(Lnet/minecraft/tags/TagKey;)Z
+    213: ifeq start+396
+    216: aload_2 
+    217: aload_0 
+    218: invokevirtual #3.getX:()D
+    221: aload_0 
+    222: invokevirtual #3.getEyeY:()D
+    225: aload_0 
+    226: invokevirtual #3.getZ:()D
+    229: invokestatic #418.containing:(DDD)Lnet/minecraft/core/BlockPos;
+    232: invokevirtual #374.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    235: getstatic #599.BUBBLE_COLUMN:Lnet/minecraft/world/level/block/Block;
+    238: invokevirtual #399.is:(Ljava/lang/Object;)Z
+    241: ifne start+396
+    244: aload_0 
+    245: invokevirtual #3.canBreatheUnderwater:()Z
+    248: ifne start+279
+    251: aload_0 
+    252: invokestatic #611.hasWaterBreathing:(Lnet/minecraft/world/entity/LivingEntity;)Z
+    255: ifne start+279
+    258: iload_3 
+    259: ifeq start+275
+    262: aload_0 
+    263: checkcast net/minecraft/world/entity/player/Player
+    266: invokevirtual #544.getAbilities:()Lnet/minecraft/world/entity/player/Abilities;
+    269: getfield #621.invulnerable:Z
+    272: ifne start+279
+    275: iconst_1 
+    276: goto start+280
+    279: iconst_0 
+    280: istore 4
+    282: iload 4
+    284: ifeq start+335
+    287: aload_0 
+    288: aload_0 
+    289: aload_0 
+    290: invokevirtual #3.getAirSupply:()I
+    293: invokevirtual #3.decreaseAirSupply:(I)I
+    296: invokevirtual #3.setAirSupply:(I)V
+    299: aload_0 
+    300: invokevirtual #3.shouldTakeDrowningDamage:()Z
+    303: ifeq start+365
+    306: aload_0 
+    307: iconst_0 
+    308: invokevirtual #3.setAirSupply:(I)V
+    311: aload_2 
+    312: aload_0 
+    313: bipush 67
+    315: invokevirtual #374.broadcastEntityEvent:(Lnet/minecraft/world/entity/Entity;B)V
+    318: aload_0 
+    319: aload_2 
+    320: aload_0 
+    321: invokevirtual #3.damageSources:()Lnet/minecraft/world/damagesource/DamageSources;
+    324: invokevirtual #207.drown:()Lnet/minecraft/world/damagesource/DamageSource;
+    327: fconst_2 
+    328: invokevirtual #3.hurtServer:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z
+    331: pop 
+    332: goto start+365
+    335: aload_0 
+    336: invokevirtual #3.getAirSupply:()I
+    339: aload_0 
+    340: invokevirtual #3.getMaxAirSupply:()I
+    343: if_icmpge start+365
+    346: aload_0 
+    347: invokestatic #611.shouldEffectsRefillAirsupply:(Lnet/minecraft/world/entity/LivingEntity;)Z
+    350: ifeq start+365
+    353: aload_0 
+    354: aload_0 
+    355: aload_0 
+    356: invokevirtual #3.getAirSupply:()I
+    359: invokevirtual #3.increaseAirSupply:(I)I
+    362: invokevirtual #3.setAirSupply:(I)V
+    365: aload_0 
+    366: invokevirtual #3.isPassenger:()Z
+    369: ifeq start+393
+    372: aload_0 
+    373: invokevirtual #3.getVehicle:()Lnet/minecraft/world/entity/Entity;
+    376: ifnull start+393
+    379: aload_0 
+    380: invokevirtual #3.getVehicle:()Lnet/minecraft/world/entity/Entity;
+    383: invokevirtual #6.dismountsUnderwater:()Z
+    386: ifeq start+393
+    389: aload_0 
+    390: invokevirtual #3.stopRiding:()V
+    393: goto start+419
+    396: aload_0 
+    397: invokevirtual #3.getAirSupply:()I
+    400: aload_0 
+    401: invokevirtual #3.getMaxAirSupply:()I
+    404: if_icmpge start+419
+    407: aload_0 
+    408: aload_0 
+    409: aload_0 
+    410: invokevirtual #3.getAirSupply:()I
+    413: invokevirtual #3.increaseAirSupply:(I)I
+    416: invokevirtual #3.setAirSupply:(I)V
+    419: aload_0 
+    420: invokevirtual #3.blockPosition:()Lnet/minecraft/core/BlockPos;
+    423: astore 4
+    425: aload_0 
+    426: getfield #3.lastPos:Lnet/minecraft/core/BlockPos;
+    429: aload 4
+    431: invokestatic #675.equal:(Ljava/lang/Object;Ljava/lang/Object;)Z
+    434: ifne start+450
+    437: aload_0 
+    438: aload 4
+    440: putfield #3.lastPos:Lnet/minecraft/core/BlockPos;
+    443: aload_0 
+    444: aload_2 
+    445: aload 4
+    447: invokevirtual #3.onChangedBlock:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)V
+    450: aload_0 
+    451: getfield #3.hurtTime:I
+    454: ifle start+467
+    457: aload_0 
+    458: dup 
+    459: getfield #3.hurtTime:I
+    462: iconst_1 
+    463: isub 
+    464: putfield #3.hurtTime:I
+    467: aload_0 
+    468: getfield #3.invulnerableTime:I
+    471: ifle start+491
+    474: aload_0 
+    475: instanceof net/minecraft/server/level/ServerPlayer
+    478: ifne start+491
+    481: aload_0 
+    482: dup 
+    483: getfield #3.invulnerableTime:I
+    486: iconst_1 
+    487: isub 
+    488: putfield #3.invulnerableTime:I
+    491: aload_0 
+    492: invokevirtual #3.isDeadOrDying:()Z
+    495: ifeq start+513
+    498: aload_0 
+    499: invokevirtual #3.level:()Lnet/minecraft/world/level/Level;
+    502: aload_0 
+    503: invokevirtual #692.shouldTickDeath:(Lnet/minecraft/world/entity/Entity;)Z
+    506: ifeq start+513
+    509: aload_0 
+    510: invokevirtual #3.tickDeath:()V
+    513: aload_0 
+    514: getfield #3.lastHurtByPlayerMemoryTime:I
+    517: ifle start+533
+    520: aload_0 
+    521: dup 
+    522: getfield #3.lastHurtByPlayerMemoryTime:I
+    525: iconst_1 
+    526: isub 
+    527: putfield #3.lastHurtByPlayerMemoryTime:I
+    530: goto start+538
+    533: aload_0 
+    534: aconst_null 
+    535: putfield #3.lastHurtByPlayer:Lnet/minecraft/world/entity/EntityReference;
+    538: aload_0 
+    539: getfield #3.lastHurtMob:Lnet/minecraft/world/entity/LivingEntity;
+    542: ifnull start+560
+    545: aload_0 
+    546: getfield #3.lastHurtMob:Lnet/minecraft/world/entity/LivingEntity;
+    549: invokevirtual #3.isAlive:()Z
+    552: ifne start+560
+    555: aload_0 
+    556: aconst_null 
+    557: putfield #3.lastHurtMob:Lnet/minecraft/world/entity/LivingEntity;
+    560: aload_0 
+    561: invokevirtual #3.getLastHurtByMob:()Lnet/minecraft/world/entity/LivingEntity;
+    564: astore_2 
+    565: aload_2 
+    566: ifnull start+603
+    569: aload_2 
+    570: invokevirtual #3.isAlive:()Z
+    573: ifne start+584
+    576: aload_0 
+    577: aconst_null 
+    578: invokevirtual #3.setLastHurtByMob:(Lnet/minecraft/world/entity/LivingEntity;)V
+    581: goto start+603
+    584: aload_0 
+    585: getfield #3.tickCount:I
+    588: aload_0 
+    589: getfield #3.lastHurtByMobTimestamp:I
+    592: isub 
+    593: bipush 100
+    595: if_icmple start+603
+    598: aload_0 
+    599: aconst_null 
+    600: invokevirtual #3.setLastHurtByMob:(Lnet/minecraft/world/entity/LivingEntity;)V
+    603: aload_0 
+    604: invokevirtual #3.tickEffects:()V
+    607: aload_0 
+    608: aload_0 
+    609: getfield #3.yHeadRot:F
+    612: putfield #3.yHeadRotO:F
+    615: aload_0 
+    616: aload_0 
+    617: getfield #3.yBodyRot:F
+    620: putfield #3.yBodyRotO:F
+    623: aload_0 
+    624: aload_0 
+    625: invokevirtual #3.getYRot:()F
+    628: putfield #3.yRotO:F
+    631: aload_0 
+    632: aload_0 
+    633: invokevirtual #3.getXRot:()F
+    636: putfield #3.xRotO:F
+    639: aload_1 
+    640: invokeinterface #536.pop:()V
+    645: return 
+

@@ -1,0 +1,110 @@
+=== isInvulnerableTo(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)Z max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: aload_1 
+      2: aload_2 
+      3: invokespecial #8.isInvulnerableTo:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;)Z
+      6: ifeq start+11
+      9: iconst_1 
+     10: ireturn 
+     11: aload_2 
+     12: getstatic #1100.IS_DROWNING:Lnet/minecraft/tags/TagKey;
+     15: invokevirtual #867.is:(Lnet/minecraft/tags/TagKey;)Z
+     18: ifeq start+46
+     21: aload_1 
+     22: invokevirtual #738.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+     25: getstatic #826.DROWNING_DAMAGE:Lnet/minecraft/world/level/gamerules/GameRule;
+     28: invokevirtual #826.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+     31: checkcast java/lang/Boolean
+     34: invokevirtual #834.booleanValue:()Z
+     37: ifne start+44
+     40: iconst_1 
+     41: goto start+45
+     44: iconst_0 
+     45: ireturn 
+     46: aload_2 
+     47: getstatic #1100.IS_FALL:Lnet/minecraft/tags/TagKey;
+     50: invokevirtual #867.is:(Lnet/minecraft/tags/TagKey;)Z
+     53: ifeq start+81
+     56: aload_1 
+     57: invokevirtual #738.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+     60: getstatic #826.FALL_DAMAGE:Lnet/minecraft/world/level/gamerules/GameRule;
+     63: invokevirtual #826.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+     66: checkcast java/lang/Boolean
+     69: invokevirtual #834.booleanValue:()Z
+     72: ifne start+79
+     75: iconst_1 
+     76: goto start+80
+     79: iconst_0 
+     80: ireturn 
+     81: aload_2 
+     82: getstatic #1100.IS_FIRE:Lnet/minecraft/tags/TagKey;
+     85: invokevirtual #867.is:(Lnet/minecraft/tags/TagKey;)Z
+     88: ifeq start+116
+     91: aload_1 
+     92: invokevirtual #738.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+     95: getstatic #826.FIRE_DAMAGE:Lnet/minecraft/world/level/gamerules/GameRule;
+     98: invokevirtual #826.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+    101: checkcast java/lang/Boolean
+    104: invokevirtual #834.booleanValue:()Z
+    107: ifne start+114
+    110: iconst_1 
+    111: goto start+115
+    114: iconst_0 
+    115: ireturn 
+    116: aload_2 
+    117: getstatic #1100.IS_FREEZING:Lnet/minecraft/tags/TagKey;
+    120: invokevirtual #867.is:(Lnet/minecraft/tags/TagKey;)Z
+    123: ifeq start+151
+    126: aload_1 
+    127: invokevirtual #738.getGameRules:()Lnet/minecraft/world/level/gamerules/GameRules;
+    130: getstatic #826.FREEZE_DAMAGE:Lnet/minecraft/world/level/gamerules/GameRule;
+    133: invokevirtual #826.get:(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;
+    136: checkcast java/lang/Boolean
+    139: invokevirtual #834.booleanValue:()Z
+    142: ifne start+149
+    145: iconst_1 
+    146: goto start+150
+    149: iconst_0 
+    150: ireturn 
+    151: iconst_0 
+    152: ireturn 
+
+=== isInvulnerableToBase(Lnet/minecraft/world/damagesource/DamageSource;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: invokevirtual #7.isRemoved:()Z
+      4: ifne start+68
+      7: aload_0 
+      8: getfield #7.invulnerable:Z
+     11: ifeq start+31
+     14: aload_1 
+     15: getstatic #3109.BYPASSES_INVULNERABILITY:Lnet/minecraft/tags/TagKey;
+     18: invokevirtual #3114.is:(Lnet/minecraft/tags/TagKey;)Z
+     21: ifne start+31
+     24: aload_1 
+     25: invokevirtual #3114.isCreativePlayer:()Z
+     28: ifeq start+68
+     31: aload_1 
+     32: getstatic #3109.IS_FIRE:Lnet/minecraft/tags/TagKey;
+     35: invokevirtual #3114.is:(Lnet/minecraft/tags/TagKey;)Z
+     38: ifeq start+48
+     41: aload_0 
+     42: invokevirtual #7.fireImmune:()Z
+     45: ifne start+68
+     48: aload_1 
+     49: getstatic #3109.IS_FALL:Lnet/minecraft/tags/TagKey;
+     52: invokevirtual #3114.is:(Lnet/minecraft/tags/TagKey;)Z
+     55: ifeq start+72
+     58: aload_0 
+     59: getstatic #1723.FALL_DAMAGE_IMMUNE:Lnet/minecraft/tags/TagKey;
+     62: invokevirtual #7.is:(Lnet/minecraft/tags/TagKey;)Z
+     65: ifeq start+72
+     68: iconst_1 
+     69: goto start+73
+     72: iconst_0 
+     73: ireturn 
+
+=== isInvulnerableToPiercingWeapon()Z max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokevirtual #7.isInvulnerable:()Z
+      4: ireturn 
+

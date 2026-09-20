@@ -654,6 +654,20 @@ pub struct PlayerBody {
     /// `!isRemoved() && !noPhysics` — the bubble drag, the lava
     /// ignite/hurt, the water extinguish the gate keeps silent).
     pub no_physics: bool,
+    /// THE INVULNERABLE ABILITY (javap `Abilities.invulnerable` — the
+    /// grant `GameType.updatePlayerAbilities`'s putfield walk wears:
+    /// CREATIVE and SPECTATOR the flag banks, survival/adventure the
+    /// zero walk keeps — the audit the mpgamemode_262.txt evidence
+    /// carries). The App feeds it the same per-frame head the
+    /// noPhysics write rides, the F4 flick the bank feeds instantly.
+    /// The hurt pipeline's own head the flag alone refuses (javap
+    /// `LivingEntity.hurtServer` pcs 0-10 — the
+    /// `isInvulnerableTo(level, source)` verdict the pipeline answers
+    /// BEFORE the cooldown speaks), and the air clock's decrease gate
+    /// the flag the never-drain law wears (javap `LivingEntity.baseTick`
+    /// pcs 258-280 — the player's arm `(!bl2 || !abilities.invulnerable)`
+    /// folds, the invulnerable body the underwater refill arm rides).
+    pub invulnerable: bool,
     /// THE CAMERA'S OWN FOV STATE (Camera's fovModifier/oldFovModifier
     /// pair — tickFov's own two fields): the modifier the projection's
     /// 70° option multiplies — the sprint's 1.15 the speed ratio speaks,
@@ -842,6 +856,7 @@ impl PlayerBody {
             sprinting: false,
             flying: false,
             no_physics: false,
+            invulnerable: false,
             fov_modifier: 1.0,
             prev_fov_modifier: 1.0,
             forward: 0.0,
@@ -1206,14 +1221,21 @@ impl PlayerBody {
         // (increaseAirSupply's `Math.min(air + 4, max)`). The
         // bubble-column and water-breathing gates the vanilla arm
         // carries ride vocabulary this body never speaks — the bare
-        // player's own path.
+        // player's own path. THE DECREASE GATE (javap pcs 258-280):
+        // the player's arm `(!bl2 || !abilities.invulnerable)` folds —
+        // the local 3 the `instanceof Player` head stores (pcs 92-95),
+        // so the body's own verdict is the flag alone — the
+        // invulnerable body the drain never speaks, the gated arm the
+        // vanilla else-if refills four a tick UNDERWATER too (the
+        // decrease gate false the refill arm answers, air < max the
+        // same `min(air + 4, max)` fold wears).
         let eye_water = world.get(
             self.x.floor() as i32,
             (self.y + self.eye_height()).floor() as i32,
             self.z.floor() as i32,
         ) == WATER;
         self.eye_in_water = eye_water;
-        if eye_water {
+        if eye_water && !self.invulnerable {
             self.air_supply -= 1;
             if self.air_supply <= DROWN_HURT_FLOOR {
                 self.air_supply = 0;
