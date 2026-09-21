@@ -18530,6 +18530,21 @@ impl App {
                 block
             ));
         }
+        // DebugEntryDayCount — `Day #<n>`: the row the entry's lambda
+        // speaks (`'Day #\x01'` the makeConcatWithConstants recipe
+        // banks) — `Timeline.getPeriodCount` the getTotalTicks /
+        // periodTicks ldiv answers (the empty period the 0 keeps —
+        // OVERWORLD_DAY the period always wears), the period the
+        // client's own DAY_PERIOD_TICKS constant mirrors (the
+        // compile-time snapshot the timeline.rs walk keeps), the total
+        // the day_time_base + frame clock rides (the same game time
+        // the celestials' sample walk reads — the vanilla Level's own
+        // clock the entry's display param speaks).
+        let day_time = (self.day_time_base + self.frame) as i64;
+        lines.push(format!(
+            "Day #{}",
+            day_time / crate::timeline::DAY_PERIOD_TICKS
+        ));
         // DebugEntrySoundMood — the row the vanilla entry's two-slot
         // concat speaks (`\x01\x01` the bootstrap recipe banks):
         // `getChannelDebugString() + String.format(Locale.ROOT,
@@ -27677,21 +27692,50 @@ mod tests {
         );
         let lines = app.debug_lines();
         // THE PLACEMENT (the vanilla entry's own neighborhood — the
-        // light row the SoundMood's left column ride follows): the
-        // Client Light the light lane speaks, the mood row the next
-        // index wears
+        // light row the ride follows, the DayCount entry the 26.2
+        // registration order wears between Light and SoundMood): the
+        // Client Light the light lane speaks, the Day row the next
+        // index wears, the mood row the one after answers
         assert!(
             lines[7].starts_with("Client Light: "),
             "{}",
             lines[7]
         );
+        // THE DAY ROW (the DebugEntryDayCount walk — the fresh world's
+        // dawn clock the zero day speaks)
+        assert_eq!(lines[8], "Day #0", "{}", lines[8]);
         // THE ROW (the vanilla concat's mood half verbatim — the
         // leading space the ldc keeps, the percent the fold answers):
         // the exact word the half-machine speaks
-        assert_eq!(lines[8], format!(" (Mood {}%)", mood_percent(moodiness)));
-        assert_eq!(lines[8], " (Mood 50%)");
+        assert_eq!(lines[9], format!(" (Mood {}%)", mood_percent(moodiness)));
+        assert_eq!(lines[9], " (Mood 50%)");
         // the row the LAST line wears (the left column's own tail)
         assert_eq!(lines.last().unwrap(), " (Mood 50%)");
+    }
+
+    #[test]
+    fn the_f3_day_row_divides_the_world_clock() {
+        // THE DIVISION'S OWN LAW (DebugEntryDayCount's getPeriodCount
+        // walk — the getTotalTicks / periodTicks ldiv the bytecode
+        // keeps, the period the DAY_PERIOD_TICKS constant mirrors):
+        // the base the known-day dawn rides, the frame the same
+        // clock's ticks wear
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.day_time_base = 3 * crate::timeline::DAY_PERIOD_TICKS as u64 + 500;
+        app.frame = 23_000;
+        // the total (72_000 + 500 + 23_000) the 95_500 wears — the
+        // floor division the 3 days + 23_500 ticks the row speaks
+        assert_eq!(app.debug_lines()[8], "Day #3");
+        // the EXACT period boundary: the total the 4 full days the
+        // count 4 wears (the next dawn the day rollover speaks)
+        app.frame = 24_000;
+        assert_eq!(app.debug_lines()[8], "Day #4");
+        // the dawn's own zero: the fresh clock the day 0 keeps
+        app.day_time_base = 0;
+        app.frame = 0;
+        assert_eq!(app.debug_lines()[8], "Day #0");
     }
 
     #[test]
