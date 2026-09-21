@@ -611,6 +611,32 @@ impl BlockSounds {
         let gain = attenuate(volume, dist, voice_max_distance(volume));
         self.play_voice(tick, event, gain, pitch);
     }
+
+    /// THE POSITIONED BLOCK LANE'S STEREO FOLD (the pan law the
+    /// `play_voice_at_pan` doc speaks — the same tail the block lanes
+    /// wear once the callers fold): the row's own `(v+1)/2, p*0.8`
+    /// fold the plain lane keeps first, the gain the same reach fold
+    /// speaks, the pan the log's ` s{:+.6}` tail carries. The CENTER
+    /// voice (pan 0.0) the identity the plain positioned lane keeps:
+    /// the same 4-field shape the unmigrated callers wear, no field
+    /// the no-op never needs.
+    pub fn play_lane_at_pan(&mut self, tick: u64, block: &str, lane: Lane, dist: f64, pan: f32) {
+        if pan == 0.0 {
+            return self.play_lane_at(tick, block, lane, dist);
+        }
+        let Some(idx) = bs::sound_index(block) else {
+            return;
+        };
+        let event = lane.event_of(idx);
+        let (volume, pitch) = lane.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+        let gain = attenuate(volume, dist, voice_max_distance(volume));
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        self.events.push(format!(
+            "{event} @{tick} #{file} v{gain:.6} p{pitch:.6} s{pan:+.6}"
+        ));
+    }
 }
 
 /// THE CAVE MOOD'S OWN BANK (javap `AmbientMoodSettings.LEGACY_CAVE_SETTINGS`
@@ -1340,6 +1366,47 @@ mod tests {
             d.events[0].split(" v").next(),
             "the same event/tick/file the same seed speaks"
         );
+    }
+
+    /// THE BLOCK LANE'S OWN STEREO FOLD (the pan law the positioned
+    /// block lanes' migration wears): the row's own fold the plain
+    /// lane keeps first, the gain the same reach speaks, the pan the
+    /// log's ` s{:+.6}` tail carries; the center voice the identity
+    /// the plain positioned lane keeps.
+    #[test]
+    fn the_block_lane_pan_keeps_the_fold_and_wears_the_tail() {
+        // the center voice: the identical line the plain lane speaks
+        let mut a = BlockSounds::new(11);
+        let mut b = BlockSounds::new(11);
+        a.play_lane_at(36, "stone", Lane::Break, 4.0);
+        b.play_lane_at_pan(36, "stone", Lane::Break, 4.0, 0.0);
+        assert_eq!(a.events, b.events, "the center the identity keeps");
+        assert_eq!(a.events.len(), 1);
+        assert!(!a.events[0].contains(" s"), "no tail the no-op needs");
+
+        // the panned voice: the break row's own fold the plain lane
+        // keeps ((v+1)/2, p*0.8), the gain the same reach folds, the
+        // s tail the signed side wears
+        let idx = bs::sound_index("stone").expect("the stone row the table keeps");
+        let (volume, pitch) = Lane::Break.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
+        let mut c = BlockSounds::new(11);
+        c.play_lane_at_pan(36, "stone", Lane::Break, 4.0, 0.5);
+        let gain = attenuate(volume, 4.0, voice_max_distance(volume));
+        let line = &c.events[0];
+        assert!(
+            line.contains(&format!(" v{gain:.6} p{pitch:.6} s+0.500000")),
+            "the break fold + the tail the pan law speaks: {line}"
+        );
+        assert_eq!(
+            a.events[0].split(" v").next(),
+            c.events[0].split(" v").next(),
+            "the same event/tick/file the same seed speaks"
+        );
+
+        // the negative side the signed tail carries
+        let mut d = BlockSounds::new(11);
+        d.play_lane_at_pan(36, "stone", Lane::Break, 4.0, -0.25);
+        assert!(d.events[0].contains(" s-0.250000"), "{}", d.events[0]);
     }
 
 

@@ -5182,6 +5182,8 @@ fn bubble_rock_step(rock: &mut BubbleRock, bubble_time: i32) {
 /// stream the boat's own random stand-in rides, the gameEvent the
 /// no-vocabulary silence keeps. The free fn the loop borrows keep
 /// (the lanes' &mut self walks the disjoint fields speak directly).
+/// The listener's own yaw the pan lane's fold answers — the splash
+/// the stereo split the ear→source direction speaks.
 #[allow(clippy::too_many_arguments)]
 fn bubble_splash_arm(
     entity_rng: &mut crate::drops::Lcg,
@@ -5193,10 +5195,12 @@ fn bubble_splash_arm(
     y: f64,
     z: f64,
     ear: Option<(f64, f64, f64)>,
+    yaw: f32,
 ) {
     let pitch = 0.8 + 0.8 * entity_rng.next_f32();
     let dist = ear_distance(ear, x, y, z);
-    sounds.play_voice_at(frame, "entity.generic.splash", 1.0, pitch, dist);
+    let pan = ear_pan(ear, yaw, x, y, z);
+    sounds.play_voice_at_pan(frame, "entity.generic.splash", 1.0, pitch, dist, pan);
     let ox = entity_rng.next_f32() as f64;
     let oz = entity_rng.next_f32() as f64;
     let r_frame = level_rng.next_f32();
@@ -9226,11 +9230,19 @@ impl App {
                                 by as f64 + 0.5,
                                 bz as f64 + 0.5,
                             );
-                            self.sounds.play_lane_at(
+                            let pan = ear_pan(
+                                ear,
+                                yaw,
+                                bx as f64 + 0.5,
+                                by as f64 + 0.5,
+                                bz as f64 + 0.5,
+                            );
+                            self.sounds.play_lane_at_pan(
                                 self.frame,
                                 crate::world::NAME_OF[old as usize],
                                 crate::sound::Lane::Break,
                                 dist,
+                                pan,
                             );
                             let tile = particle_tile(old);
                             if tile != mc_registry::generated::atlas::TILE_NONE {
@@ -15322,6 +15334,11 @@ impl App {
         // column — the grid's all-air answer — the null heightmap's
         // honest skip keeps)
         let cam = self.world_camera();
+        // the listener's own yaw the pan lane's fold rides (the vanilla
+        // degrees the camera's render radians convert — the +180° step
+        // the body's own camera wears, the same read the cave mood's
+        // tick and the mob lanes' walk share)
+        let yaw = cam.yaw.to_degrees() - 180.0;
         let cx = cam.pos.x.floor() as i32;
         let cz = cam.pos.z.floor() as i32;
         let cam_floor_y = cam.pos.y.floor() as i32;
@@ -15349,8 +15366,9 @@ impl App {
             .as_ref()
             .map(|b| (b.x, b.y + b.eye_height(), b.z));
         let dist = ear_distance(ear, cx as f64, surface_y as f64, cz as f64);
+        let pan = ear_pan(ear, yaw, cx as f64, surface_y as f64, cz as f64);
         self.sounds
-            .play_voice_at(self.frame, word, volume, pitch, dist);
+            .play_voice_at_pan(self.frame, word, volume, pitch, dist, pan);
     }
 
     /// THE WEATHER'S OWN PASS (javap `WeatherEffectRenderer.render`, the
@@ -15962,6 +15980,9 @@ impl App {
     /// positioned voice speaks (the named entity's own feet the
     /// camera's ear measures).
     pub fn live_voices_updated(&mut self, voices: Vec<crate::world_view::WireVoice>) {
+        // the listener's own yaw the stereo split rides (the named
+        // entity's own spot the pan law's fold answers)
+        let yaw = self.listener_yaw();
         for v in voices {
             let Some(m) = self.net_mobs.iter().find(|m| m.id == v.entity_id) else {
                 continue;
@@ -15978,8 +15999,9 @@ impl App {
                 .as_ref()
                 .map(|b| (b.x, b.y + b.eye_height(), b.z));
             let dist = ear_distance(ear, mx, my, mz);
+            let pan = ear_pan(ear, yaw, mx, my, mz);
             self.sounds
-                .play_voice_at(self.frame, clip, v.volume, v.pitch, dist);
+                .play_voice_at_pan(self.frame, clip, v.volume, v.pitch, dist, pan);
         }
     }
 
@@ -15994,6 +16016,9 @@ impl App {
         &mut self,
         voices: Vec<crate::world_view::WireWorldVoice>,
     ) {
+        // the listener's own yaw the stereo split rides (the world spot
+        // the packet carried the pan law's fold answers)
+        let yaw = self.listener_yaw();
         for v in voices {
             // the audio lane's clip table speaks the names WITHOUT the
             // namespace prefix — the registry name strips its own
@@ -16003,8 +16028,9 @@ impl App {
                 .as_ref()
                 .map(|b| (b.x, b.y + b.eye_height(), b.z));
             let dist = ear_distance(ear, v.x, v.y, v.z);
+            let pan = ear_pan(ear, yaw, v.x, v.y, v.z);
             self.sounds
-                .play_voice_at(self.frame, clip, v.volume, v.pitch, dist);
+                .play_voice_at_pan(self.frame, clip, v.volume, v.pitch, dist, pan);
         }
     }
 
@@ -17027,7 +17053,10 @@ impl App {
             .body
             .as_ref()
             .map(|b| (b.x, b.y + b.eye_height(), b.z));
-        let mut strokes: Vec<(&'static str, f32, f64)> = Vec::new();
+        // the listener's own yaw the stereo split rides (the paddle
+        // strokes' and the splash's flanks the pan law's fold answers)
+        let yaw = self.listener_yaw();
+        let mut strokes: Vec<(&'static str, f32, f64, f32)> = Vec::new();
         for boat in &self.net_boats {
             let (moving_l, moving_r) = match ours {
                 Some((id, l, r)) if id == boat.id => (l, r),
@@ -17160,6 +17189,7 @@ impl App {
                                     boat.y,
                                     boat.z,
                                     ear,
+                                    yaw,
                                 );
                             }
                         }
@@ -17179,6 +17209,7 @@ impl App {
                                     clip,
                                     pitch,
                                     ear_distance(ear, boat.x + dx, boat.y, boat.z + dz),
+                                    ear_pan(ear, yaw, boat.x + dx, boat.y, boat.z + dz),
                                 ));
                             }
                         }
@@ -17191,9 +17222,11 @@ impl App {
         }
         // THE VOICES LAND (the post-loop play the mob lane's own order
         // speaks — the volume 1.0 the playSound call's own arg keeps,
-        // the gain the ear's distance law folds)
-        for (clip, pitch, dist) in strokes {
-            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
+        // the gain the ear's distance law folds, the pan the stereo
+        // split wears)
+        for (clip, pitch, dist, pan) in strokes {
+            self.sounds
+                .play_voice_at_pan(self.frame, clip, 1.0, pitch, dist, pan);
         }
     }
 
@@ -19936,6 +19969,9 @@ impl App {
             .body
             .as_ref()
             .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        // the listener's own yaw the stereo split rides (the splash's
+        // flanks the pan law's fold answers)
+        let yaw = self.listener_yaw();
         for boat in &mut self.offline_boats {
             let phys = self.offline_boat_phys.entry(boat.id).or_default();
             // THE COLUMN'S OWN SCAN (the base-tick beat — the
@@ -19995,6 +20031,7 @@ impl App {
                             boat.y,
                             boat.z,
                             ear,
+                            yaw,
                         );
                     }
                 }
@@ -20086,6 +20123,7 @@ impl App {
                                 boat.y,
                                 boat.z,
                                 ear,
+                                yaw,
                             );
                         }
                     }
@@ -20141,7 +20179,10 @@ impl App {
             .body
             .as_ref()
             .map(|b| (b.x, b.y + b.eye_height(), b.z));
-        let mut strokes: Vec<(&'static str, f32, f64)> = Vec::new();
+        // the listener's own yaw the stereo split rides (the strokes'
+        // flanks the pan law's fold answers)
+        let yaw = self.listener_yaw();
+        let mut strokes: Vec<(&'static str, f32, f64, f32)> = Vec::new();
         for boat in &self.offline_boats {
             let entry = self.paddle_positions.entry(boat.id).or_insert([0.0; 2]);
             for (side, moving) in [(0usize, boat.paddle_left), (1usize, boat.paddle_right)] {
@@ -20158,6 +20199,7 @@ impl App {
                                     clip,
                                     pitch,
                                     ear_distance(ear, boat.x + dx, boat.y, boat.z + dz),
+                                    ear_pan(ear, yaw, boat.x + dx, boat.y, boat.z + dz),
                                 ));
                             }
                         }
@@ -20170,9 +20212,11 @@ impl App {
         }
         // THE VOICES LAND (the post-loop play the wire's own order
         // speaks — the volume 1.0 the playSound call's own arg keeps,
-        // the gain the ear's distance law folds)
-        for (clip, pitch, dist) in strokes {
-            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
+        // the gain the ear's distance law folds, the pan the stereo
+        // split wears)
+        for (clip, pitch, dist, pan) in strokes {
+            self.sounds
+                .play_voice_at_pan(self.frame, clip, 1.0, pitch, dist, pan);
         }
     }
 
@@ -37979,6 +38023,93 @@ mod tests {
         }
     }
 
+    /// THE BLOCK LANES' OWN STEREO WALK (the pan law the positioned
+    /// block lanes' migration wears — the splash the free arm speaks,
+    /// the ear→source direction the listener's own facing answers):
+    /// the east source the facing-south body's own left ear answers
+    /// (the ` s-` tail the signed side wears), the west source the
+    /// right hand speaks (` s+`), the front source the identity the
+    /// plain 4-field shape keeps, the ear-less arm the center no-tail
+    /// shape keeps — the same arms the mob voices' walk banked.
+    #[test]
+    fn the_block_lanes_split_the_right_axis_too() {
+        let splash = |ear: Option<(f64, f64, f64)>, yaw: f32, x: f64| {
+            let mut sounds = crate::sound::BlockSounds::new(5);
+            let mut entity_rng = crate::drops::Lcg::new(0x5EED_5A145);
+            let mut level_rng = crate::drops::Lcg::new(0x5EED_1E7E1);
+            let mut particles: Vec<crate::particles::Particle> = Vec::new();
+            bubble_splash_arm(
+                &mut entity_rng,
+                &mut level_rng,
+                &mut sounds,
+                &mut particles,
+                100,
+                x,
+                64.0,
+                8.0,
+                ear,
+                yaw,
+            );
+            assert_eq!(particles.len(), 1, "the droplet the arm births");
+            assert_eq!(sounds.events.len(), 1, "the one splash the arm speaks");
+            sounds.events.pop().unwrap()
+        };
+        if !sounds_loaded() {
+            // the empty table the silent voice lane keeps — the arm's
+            // pick the None answer speaks
+            let mut sounds = crate::sound::BlockSounds::new(5);
+            let mut entity_rng = crate::drops::Lcg::new(0x5EED_5A145);
+            let mut level_rng = crate::drops::Lcg::new(0x5EED_1E7E1);
+            let mut particles: Vec<crate::particles::Particle> = Vec::new();
+            bubble_splash_arm(
+                &mut entity_rng,
+                &mut level_rng,
+                &mut sounds,
+                &mut particles,
+                100,
+                12.0,
+                64.0,
+                8.0,
+                Some((8.0, 65.0, 8.0)),
+                0.0,
+            );
+            assert!(
+                sounds.events.is_empty(),
+                "the empty table the silent lane keeps: {:?}",
+                sounds.events
+            );
+            return;
+        }
+        // the facing-south body's ear at (8, 65, 8): the east source the
+        // LEFT ear answers (the right axis the (-cos, -sin) pair wears —
+        // facing south the west the right)
+        let east = splash(Some((8.0, 65.0, 8.0)), 0.0, 12.0);
+        assert!(
+            east.contains(" s-") && !east.contains(" s+"),
+            "the east splash the facing-south body's own left: {east}"
+        );
+        // the west source the right hand speaks
+        let west = splash(Some((8.0, 65.0, 8.0)), 0.0, 4.0);
+        assert!(
+            west.contains(" s+") && !west.contains(" s-"),
+            "the west splash the facing-south body's own right: {west}"
+        );
+        // the front source (pure +z) the identity keeps — the right
+        // axis the pure-front ray never answers
+        let front = splash(Some((8.0, 65.0, 8.0)), 0.0, 8.0);
+        assert!(
+            !front.contains(" s"),
+            "the front splash the identity keeps: {front}"
+        );
+        // the ear-less arm the center keeps — the same no-tail shape
+        // the unmigrated lanes wear
+        let deaf = splash(None, 0.0, 12.0);
+        assert!(
+            !deaf.contains(" s"),
+            "the ear-less splash the center keeps: {deaf}"
+        );
+    }
+
     /// THE MOB STEP'S OWN DISTANCE LAW (the cadence's flat voice the
     /// mob's own spot carries — the approach the fold speaks): every
     /// step line's gain the base 0.15 never reaches (the d > 0 the
@@ -54267,9 +54398,13 @@ cow_sound_variant: None,
         // random.nextFloat()` fold draws — the engine's LCG stands
         // in): every voice inside the band
         for e in water.iter().chain(land.iter()) {
+            // the token-scoped walk the param parser speaks — the s
+            // tail the panned lanes may wear the pitch token never
+            // swallows
             let p: f32 = e
-                .rsplit(" p")
-                .next()
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split(' ').next())
                 .expect("the pitch tail")
                 .parse()
                 .expect("the pitch float");
@@ -54368,9 +54503,13 @@ cow_sound_variant: None,
         // THE PITCH (the `0.8F + 0.4F * random.nextFloat()` fold — the
         // engine's LCG stands in, every voice inside the band)
         for e in &water {
+            // the token-scoped walk the param parser speaks — the s
+            // tail the panned lanes may wear the pitch token never
+            // swallows
             let p: f32 = e
-                .rsplit(" p")
-                .next()
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split(' ').next())
                 .expect("the pitch tail")
                 .parse()
                 .expect("the pitch float");
