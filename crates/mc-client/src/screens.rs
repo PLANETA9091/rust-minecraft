@@ -8515,7 +8515,7 @@ impl App {
                 // THE WOLF'S OWN BITES (the events the mob ticks queued
                 // — the (prey id, damage, dir) tuples the caller's own
                 // pass hurts the mob slice by)
-                let mut bite_events: Vec<(i32, f64, f64, f64)> = Vec::new();
+                let mut bite_events: Vec<(i32, i32, f64, f64, f64)> = Vec::new();
                 // THE SKELETON'S OWN SHOTS (the full-draw crossings the
                 // events carry — the arrows the caller's flight lane
                 // pushes, the shoot voice the draw's own pitch speaks)
@@ -8529,7 +8529,7 @@ impl App {
                 // tick carried — the (mob id, damage) pairs the caller
                 // lanes answer: the hurt, the voice, the death loot +
                 // XP the player-kill gate arms)
-                let mut arrow_mob_hits: Vec<(i32, f64, bool)> = Vec::new();
+                let mut arrow_mob_hits: Vec<(i32, f64, bool, Option<i32>)> = Vec::new();
                 // THE CRIT TRAIL'S OWN WORDS (the flight lane's 4-pack
                 // per tick the crit arrows emit — the (x, y, z, vx, vy,
                 // vz) six-packs the particle engine spawns after, the
@@ -8607,6 +8607,12 @@ impl App {
                         // caller's pre-pass arms — the same moment the
                         // avoid's own scan keeps)
                         crate::mob::arm_wolf_hunters(&mut self.mobs);
+                        // THE MOB-SOURCE HURTBY'S OWN REFRESH (the
+                        // reference's live body the same pre-pass
+                        // moment wears — the attacker's own pos the
+                        // counter-fire's aim reads, the dead attacker
+                        // the run's drop answers)
+                        crate::mob::refresh_hurt_by_mob_views(&mut self.mobs);
                         // THE RIDE'S OWN AUTHORITY (the ridden vehicle the
                         // ride branch's own tick spoke — the double tick
                         // the skip refuses: the vanilla order the
@@ -8670,7 +8676,12 @@ impl App {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
                             }
                             if let Some((prey_id, atk)) = ev.attack_prey {
-                                bite_events.push((prey_id, atk.damage, atk.dir_x, atk.dir_z));
+                                // THE ATTACKER'S OWN ID (the event's
+                                // producer the loop's own mob speaks —
+                                // the setLastHurtByMob reference the
+                                // victim's dose names, the counter-fire
+                                // the ref arms)
+                                bite_events.push((mob.id, prey_id, atk.damage, atk.dir_x, atk.dir_z));
                             }
                             if let Some(shot) = ev.arrow_shot {
                                 arrow_shots.push(shot);
@@ -8821,7 +8832,7 @@ impl App {
                                 // but the client's target lanes the
                                 // player alone speak — the honest
                                 // silence the no-word law keeps)
-                                arrow_mob_hits.push((mob_id, dmg, arrow.player_shot));
+                                arrow_mob_hits.push((mob_id, dmg, arrow.player_shot, arrow.owner));
                             }
                             if let Some(pitch) = aev.hit_block {
                                 arrow_block_hits.push((arrow.x, arrow.y, arrow.z, pitch));
@@ -8936,17 +8947,35 @@ impl App {
                 // kill the fire lane's own walk speaks — the death
                 // voice + the loot the player-kill gate CLOSED rolls,
                 // the bite the mob's own dose the vanilla law keeps)
-                for (prey_id, dmg, dir_x, dir_z) in bite_events {
+                for (attacker_id, prey_id, dmg, dir_x, dir_z) in bite_events {
                     let Some(idx) = self.mobs.iter().position(|m| m.id == prey_id) else {
                         continue;
                     };
+                    // THE ATTACKER'S OWN SNAPSHOT (the reference the
+                    // mob-source word names — the live body the id
+                    // finds, the dead/gone body the None keeps)
+                    let attacker = self
+                        .mobs
+                        .iter()
+                        .find(|m| m.id == attacker_id)
+                        .filter(|m| m.health > 0.0 && m.death_time == 0)
+                        .map(crate::mob::mob_prey_view);
                     let Some(mob) = self.mobs.get_mut(idx) else {
                         continue;
                     };
                     if mob.death_time > 0 || mob.health <= 0.0 {
                         continue;
                     }
-                    mob.hurt(dmg, false);
+                    // THE MOB-SOURCE DOSE (javap `LivingEntity.hurt` the
+                    // LivingEntity source the setLastHurtByMob(attacker)
+                    // walk arms — the reference the victim's own HurtBy
+                    // prio-1 goal reads, the counter-fire the archer's
+                    // fangs the wolf's dose answers; the gone attacker
+                    // the null-source word keeps)
+                    match attacker {
+                        Some(a) => mob.hurt_by_mob(dmg, a),
+                        None => mob.hurt(dmg, false),
+                    }
                     mob.knockback(
                         crate::mob::KNOCKBACK_STRENGTH,
                         -dir_x,
@@ -9011,16 +9040,31 @@ impl App {
                 // awards; the damage indicators the melee walk owns
                 // the arrow hit never speaks, the sweep the AoE the
                 // melee lane never shares)
-                for (mob_id, dmg, by_player) in arrow_mob_hits {
+                for (mob_id, dmg, by_player, owner_id) in arrow_mob_hits {
                     let Some(i) = self.mobs.iter().position(|m| m.id == mob_id) else {
                         continue;
                     };
+                    // THE SHOOTER'S OWN SNAPSHOT (the mob-source word
+                    // the owner reference names — the live body the id
+                    // finds, the dead/gone body the None keeps)
+                    let shooter = owner_id
+                        .and_then(|oid| self.mobs.iter().find(|m| m.id == oid))
+                        .filter(|m| m.health > 0.0 && m.death_time == 0)
+                        .map(crate::mob::mob_prey_view);
                     let mob = &mut self.mobs[i];
                     let pitch = mob.voice_pitch();
                     let mob_word = mob.voice_event(crate::mob::VoiceSlot::Hurt);
                     let death_word = mob.voice_event(crate::mob::VoiceSlot::Death);
                     let (mx, my, mz) = (mob.x, mob.y, mob.z);
-                    mob.hurt(dmg, by_player);
+                    // THE DOSE'S OWN SOURCE (the player's shot the
+                    // player word speaks, the mob-shot the reference
+                    // arms — the skeleton's own bolt the wolf's dose
+                    // the setLastHurtByMob walk answers, the gone
+                    // shooter the null-source word keeps)
+                    match shooter {
+                        Some(s) if !by_player => mob.hurt_by_mob(dmg, s),
+                        _ => mob.hurt(dmg, by_player),
+                    }
                     let died = mob.health <= 0.0;
                     if died {
                         self.sounds.play_voice_at(
@@ -9045,7 +9089,12 @@ impl App {
                     // speaks at the mob's own feet, the player-kill
                     // gate the arrow's own shot arms)
                     if died {
-                        let target_loot = self.mobs[i].death_loot(true);
+                        // THE PLAYER-KILL GATE (the arrow's own shot
+                        // the word speaks — the mob-shot kill the gate
+                        // CLOSED rolls, the player's shot the armed
+                        // loot keeps; the 389 bite pass's own law the
+                        // projectile lane now wears)
+                        let target_loot = self.mobs[i].death_loot(by_player);
                         for (item, count) in target_loot {
                             let id = self.next_drop_id;
                             self.next_drop_id += 1;
@@ -37884,6 +37933,58 @@ mod tests {
         assert!(
             sheep_after.death_time > 0,
             "the death clock the corpse walks"
+        );
+    }
+
+    /// THE COUNTER-FIRE THE APP FRAME SPEAKS (the mob-source dose the
+    /// caller's bite pass rides — the archer's own draw the world's
+    /// loop answers): the wolf's fangs the reference arms, the bow
+    /// the LIVE aim draws, the arrow the flight lane's owner word
+    /// carries, the pre-pass refresh the aim's live pos wears.
+    #[test]
+    fn the_counter_fire_the_app_frame_speaks() {
+        let mut app = App::new(5);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y as f64;
+        let mut sk = crate::mob::Zombie::new(
+            40,
+            c as f64 + 0.5,
+            surface,
+            c as f64 + 0.5,
+            41,
+        );
+        sk.kind = crate::mob::MobKind::Skeleton;
+        sk.held_weapon = Some("bow");
+        sk.on_ground = true;
+        sk.health = 1000.0; // the test's own cheat — the bites the draw survives
+        let mut wolf =
+            crate::mob::Zombie::new(41, c as f64 + 4.5, surface, c as f64 + 0.5, 42);
+        wolf.kind = crate::mob::MobKind::Wolf;
+        wolf.on_ground = true;
+        app.mobs = vec![sk, wolf];
+        // THE WARM-UP (the age word the dose's timestamp carries —
+        // tick zero the goal's own refuse keeps)
+        app.update();
+        // THE MOB-SOURCE DOSE (the caller's bite pass the same word
+        // rides — the direct call the wolf's own melee timing the
+        // test keeps out)
+        let wv = crate::mob::mob_prey_view(&app.mobs[1]);
+        app.mobs[0].hurt_by_mob(4.0, wv);
+        let mut fired = None;
+        for _ in 0..160 {
+            app.update();
+            if let Some(a) = app.arrows.iter().find(|a| a.owner == Some(40)) {
+                fired = Some(a.clone());
+                break;
+            }
+        }
+        let a = fired.expect("the counter-fire the app frame speaks");
+        assert!(
+            a.vx > 0.0,
+            "the wolf sits east — the arrow the minus law never flies: {}",
+            a.vx
         );
     }
 

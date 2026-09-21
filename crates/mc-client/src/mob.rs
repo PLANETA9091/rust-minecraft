@@ -2074,6 +2074,12 @@ pub struct ArrowShot {
     /// seeds keep — the triangle draws the shot's own stream spends,
     /// the from_spawn walk re-arms)
     pub seed: u64,
+    /// THE OWNER'S OWN REFERENCE (javap `Projectile.setOwner` the mob
+    /// ctor speaks — the shooter's id the spawn record carries, the
+    /// flight the leftOwner walk reads, the counter-fire's dose the
+    /// ref names; the player's own bow shot the None keeps — the
+    /// player_shot bool the player word speaks)
+    pub owner: Option<i32>,
 }
 
 /// THE ARROW ENTITY (javap `AbstractArrow` the 26.2 bytecode speaks —
@@ -2129,6 +2135,14 @@ pub struct Arrow {
     /// onHitBlock's nextFloat speaks — the id-mixed seed the
     /// entity_voice_seed law keeps)
     rng: Lcg,
+    /// THE OWNER'S OWN REFERENCE (javap `AbstractArrow.getOwner` the
+    /// checkLeftOwner walk reads — the mob-shot's own shooter the id
+    /// names, the self-hit the exclusion refuses, the counter-fire's
+    /// dose the ref arms; None the player's bow shot AND the wire's
+    /// visual lane keep — the player's own box the player_shot word
+    /// answers, the wire's flight the server's authority never
+    /// re-speaks)
+    pub owner: Option<i32>,
 }
 
 /// The arrow's own tick out-edges — the hits the caller's own lanes
@@ -2250,6 +2264,9 @@ impl Arrow {
             // the zero here the caller's field set replaces
             pitch: 0.0,
             seed,
+            // THE OWNER'S OWN REFERENCE (the setOwner walk the mob
+            // ctor speaks — the shooter's own id the flight carries)
+            owner: Some(shooter.id),
         }
     }
 
@@ -2284,6 +2301,7 @@ impl Arrow {
             crit: shot.crit,
             dead: false,
             player_shot: false,
+            owner: shot.owner,
             rng,
         }
     }
@@ -2348,6 +2366,7 @@ impl Arrow {
             crit: power == 1.0,
             dead: false,
             player_shot: true,
+            owner: None,
             rng,
         }
     }
@@ -2404,6 +2423,7 @@ impl Arrow {
             crit,
             dead: false,
             player_shot: false,
+            owner: None,
             rng: Lcg::new(seed),
         }
     }
@@ -2561,16 +2581,72 @@ impl Arrow {
                 self.dead = true;
                 return events;
             }
-        } else if let Some(p) = player {
-            if !p.dead && self.segment_hits_player(p) {
-                // THE DAMAGE (the onHitEntity formula: ceil(clamp(
-                // velocity.length() * baseDamage, 0, 2.147483647E9)) —
-                // the punch-0 bow the knockback never carries)
-                let speed = (self.vx * self.vx + self.vy * self.vy + self.vz * self.vz).sqrt();
-                let dmg = (speed * ARROW_BASE_DAMAGE).clamp(0.0, 2_147_483_647.0).ceil();
-                events.hit_player = Some(dmg);
-                // THE DISCARD (the Pickup.DISALLOWED the mob-shot ctor
-                // keeps — the hit the own removal speaks)
+        } else if self.owner.is_some() {
+            // THE CLIENT'S OWN MOB-SHOT (the owner reference the
+            // setOwner arms — the wire's visual lane the None keeps,
+            // the no-hit word the server's authority never re-speaks):
+            // THE FINDHITENTITIES WALK (the player's box AND the mob
+            // boxes the nearest t answers — the vanilla's own
+            // nearest-hit law the distance order keeps, the OWNER the
+            // checkLeftOwner walk never hits, the dead body the
+            // isAlive gate passes — the counter-fire's fangs the wolf
+            // answers, the stray bolt the passer-by the same law
+            // names)
+            let speed = (self.vx * self.vx + self.vy * self.vy + self.vz * self.vz).sqrt();
+            let mut best: Option<(f64, Option<i32>)> = None;
+            if let Some(p) = player {
+                if !p.dead {
+                    let (hw, inf) = (p.width / 2.0, 0.3);
+                    if let Some(t) = self.segment_hit_param(
+                        (p.x - hw - inf, p.y - inf, p.z - hw - inf),
+                        (p.x + hw + inf, p.y + p.height + inf, p.z + hw + inf),
+                    ) {
+                        best = Some((t, None));
+                    }
+                }
+            }
+            for m in mobs {
+                // the isAlive gate (the LivingEntity.isAlive the
+                // health speaks — the dying body the arrows pass)
+                if m.health <= 0.0 {
+                    continue;
+                }
+                // THE OWNER'S OWN EXCLUSION (the checkLeftOwner law —
+                // the shooter's own box the spawn point sat inside)
+                if self.owner == Some(m.id) {
+                    continue;
+                }
+                let (bx0, by0, bz0, bx1, by1, bz1) = m.box_for();
+                const INF: f64 = 0.3;
+                if let Some(t) = self.segment_hit_param(
+                    (bx0 - INF, by0 - INF, bz0 - INF),
+                    (bx1 + INF, by1 + INF, bz1 + INF),
+                ) {
+                    if best.map_or(true, |(bt, _)| t < bt) {
+                        best = Some((t, Some(m.id)));
+                    }
+                }
+            }
+            if let Some((_, victim)) = best {
+                // THE DAMAGE (the onHitEntity formula the same walk
+                // speaks — ceil(clamp(velocity.length() * baseDamage)),
+                // the CRIT arm the nextInt(i / 2 + 2) bonus rides, the
+                // arrow's own stream the draw spends)
+                let mut dmg = (speed * ARROW_BASE_DAMAGE)
+                    .clamp(0.0, 2_147_483_647.0)
+                    .ceil() as i64;
+                if self.crit {
+                    let bonus = self
+                        .rng
+                        .next_int_inclusive(0, (dmg as i32) / 2 + 1) as i64;
+                    dmg = (dmg + bonus).min(2_147_483_647);
+                }
+                match victim {
+                    None => events.hit_player = Some(dmg as f64),
+                    Some(id) => events.hit_mob = Some((id, dmg as f64)),
+                }
+                // THE DISCARD (the Pickup.DISALLOWED the ctor keeps —
+                // the hit the own removal speaks)
                 self.dead = true;
                 return events;
             }
@@ -2609,22 +2685,6 @@ impl Arrow {
             self.vy -= ARROW_GRAVITY;
         }
         events
-    }
-
-    /// THE ENTITY HIT'S OWN TEST (javap `ProjectileUtil.
-    /// getEntityHitResult` the 26.2 walk: the segment vs the bbox
-    /// `inflate(0.3)` — the ray's own param the hit distance answers,
-    /// the seg-vs-box the slab law speaks).
-    fn segment_hits_player(&self, p: &PlayerView) -> bool {
-        // the player's own box (the x/z the width half-spans, the y
-        // the feet-to-head the height carries), the 0.3 inflate the
-        // vanilla's own margin keeps
-        let (hw, inf) = (p.width / 2.0, 0.3);
-        self.segment_hit_param(
-            (p.x - hw - inf, p.y - inf, p.z - hw - inf),
-            (p.x + hw + inf, p.y + p.height + inf, p.z + hw + inf),
-        )
-        .is_some()
     }
 
     /// THE SEGMENT'S OWN SLAB WALK (the ray-AABB intersection the
@@ -3161,6 +3221,15 @@ pub struct Zombie {
     /// (the fire's own dose the null source never arms). The word the
     /// HurtByTargetGoal's own canUse reads.
     last_hurt_by_player: bool,
+    /// THE MOB-SOURCE HURTBY WORD (javap `LivingEntity.lastHurtByMob`
+    /// the EntityReference the hurt walk's `instanceof LivingEntity`
+    /// arm writes — the WOLF's fangs the dose names, the client's
+    /// snapshot the pre-pass's live refresh wears; the player's own
+    /// dose the None keeps — the reference the setLastHurtByMob(player)
+    /// walk overwrites, the bool word the player lane speaks). The
+    /// word the HurtByTargetGoal's own canUse reads — the prio-1 goal
+    /// the MOB attacker the same class serves.
+    last_hurt_by_mob: Option<PreyView>,
     /// `LivingEntity.lastHurtByMobTimestamp` — the tickCount the
     /// setLastHurtByMob walk stores beside the reference (the event's
     /// own word the 100-tick clear and the goal's reacted-arm read).
@@ -3289,6 +3358,7 @@ impl Zombie {
             vehicle: None,
             passenger: None,
             last_hurt_by_player: false,
+            last_hurt_by_mob: None,
             last_hurt_by_mob_timestamp: 0,
             hurt_by_goal_timestamp: 0,
             retaliation_target: false,
@@ -3405,25 +3475,24 @@ impl Zombie {
         self.dist2_xz(p) < reach2
     }
 
-    /// THE PLAYER'S HIT — the player attack's own out-edge (the hurt
-    /// pipeline's law: the hurtTime restarts at 10, the health walks
-    /// down through the ARMOR LAW (javap `CombatRules.getDamageAfterAbsorb`
-    /// — `f5 = 2.0 + toughness/4` (the zombie's toughness rides the
-    /// base 0.0), `f6 = clamp(armor - dmg/f5, armor*0.2, 20)`, the
-    /// survivor `dmg * (1 - f6/25)`), 0 -> dying).
-    /// THE ATTACKER'S OWN WORD (`by_player` — javap `LivingEntity.hurt`'s
-    /// `source.getEntity() instanceof LivingEntity` + `!is(NO_ANGER)`
-    /// walk: the setLastHurtByMob the direct attacker's reference + the
-    /// tickCount timestamp arms — the client's own vocabulary the
-    /// player's melee / sweep / arrows the true words speak, the fire's
-    /// own null source the false keeps; the word the HurtByTargetGoal's
-    /// prio-1 canUse reads, the 100-tick window the tick's own clear
-    /// walk closes).
-    pub fn hurt(&mut self, amount: f64, by_player: bool) {
-        // the dying never re-hurt (the vanilla's own `dead` gate — the
-        // isDeadOrDying body the hurt pipeline refuses)
+    /// THE HURT'S OWN SHARED BODY (the armor law + the hurt clock +
+    /// the walk speed + the panic stamp — the dose the every source
+    /// wears, the attacker words the per-source tails own): the dying
+    /// never re-hurt (the vanilla's own `dead` gate — the
+    /// isDeadOrDying body the hurt pipeline refuses), the ARMOR LAW
+    /// (javap `CombatRules.getDamageAfterAbsorb` — `f5 = 2.0 +
+    /// toughness/4` (the zombie's toughness rides the base 0.0), `f6
+    /// = clamp(armor - dmg/f5, armor*0.2, 20)`, the survivor `dmg *
+    /// (1 - f6/25)`), the hurtTime restart at 10, the HURT walk
+    /// speed, the PANIC STAMP (PanicGoal.shouldPanic's own gate — the
+    /// last damage source the 40-tick window keeps; the jar's own
+    /// PANIC_CAUSES tag names every source this lane speaks — the
+    /// melee the mob_attack/#is_player_attack members ride, the fire
+    /// lane the in_fire/on_fire members keep). Returns false the
+    /// dying gate kept (the dose never landed).
+    fn hurt_shared(&mut self, amount: f64) -> bool {
         if self.death_time > 0 || self.health <= 0.0 {
-            return;
+            return false;
         }
         let amount = amount as f32;
         // the ARMOR LAW (CombatRules.getDamageAfterAbsorb, the bare
@@ -3433,12 +3502,28 @@ impl Zombie {
         self.health -= amount * (1.0 - f6 / 25.0);
         self.hurt_time = HURT_DURATION_TICKS;
         self.walk.set_speed(crate::body::HURT_WALK_SPEED);
-        // THE PANIC STAMP (PanicGoal.shouldPanic's own gate — the last
-        // damage source the 40-tick window keeps; the jar's own
-        // PANIC_CAUSES tag names every source this lane speaks — the
-        // melee the mob_attack/#is_player_attack members ride, the
-        // fire lane the in_fire/on_fire members keep)
         self.panic_memory_ticks = PANIC_DAMAGE_MEMORY_TICKS;
+        true
+    }
+
+    /// THE PLAYER'S HIT — the player attack's own out-edge (the hurt
+    /// pipeline's law: the shared body the every dose wears, the
+    /// attacker's own word the player tail speaks).
+    /// THE ATTACKER'S OWN WORD (`by_player` — javap `LivingEntity.hurt`'s
+    /// `source.getEntity() instanceof LivingEntity` + `!is(NO_ANGER)`
+    /// walk: the setLastHurtByMob the direct attacker's reference + the
+    /// tickCount timestamp arms — the client's own vocabulary the
+    /// player's melee / sweep / arrows the true words speak, the fire's
+    /// own null source the false keeps; the word the HurtByTargetGoal's
+    /// prio-1 canUse reads, the 100-tick window the tick's own clear
+    /// walk closes). THE REFERENCE'S OWN OVERWRITE (the player dose's
+    /// setLastHurtByMob(player) the same setter the mob dose rides —
+    /// the reference the player's own word replaces, the client's None
+    /// the mob lane keeps).
+    pub fn hurt(&mut self, amount: f64, by_player: bool) {
+        if !self.hurt_shared(amount) {
+            return;
+        }
         // THE LAST-HURT-BY WORD (javap `LivingEntity.hurt` the
         // resolve walk's tail — the LivingEntity source the
         // setLastHurtByMob(attacker) arms, the reference AND the
@@ -3447,6 +3532,7 @@ impl Zombie {
         if by_player {
             self.last_hurt_by_player = true;
             self.last_hurt_by_mob_timestamp = self.age_ticks;
+            self.last_hurt_by_mob = None;
             // THE WOLF'S OWN ANGER (javap NeutralMob.startPersistentAngerTimer
             // — the TimeUtil.rangeOfSeconds(20, 39) the clinit's bipush
             // pair keeps, the [400, 780] tick window the between law
@@ -3460,6 +3546,27 @@ impl Zombie {
                 );
             }
         }
+    }
+
+    /// THE MOB-SOURCE DOSE (javap `LivingEntity.hurt` the
+    /// `instanceof LivingEntity` tail the WOLF's fangs ride — the
+    /// setLastHurtByMob(attacker) walk the same setter the player dose
+    /// speaks: the reference AND the tickCount timestamp the setter
+    /// stores, the shared body the every dose wears). THE PLAYER'S
+    /// OWN WORD the dose never arms (lastHurtByPlayer the player
+    /// doses alone speak — the 100-tick window the same walk keeps),
+    /// THE WOLF'S OWN ANGER the mob dose never rolls (the prio-4
+    /// lane's isAngryAt the PLAYER selector reads — the
+    /// NearestAttackableTargetGoal(Player, ...) class filter the mob
+    /// attacker never answers, the timer the vanilla arms the target
+    /// goal's own word never aims; the prio-7 skeleton lane the hunt
+    /// wears — the honest skip the behavior identical keeps).
+    pub fn hurt_by_mob(&mut self, amount: f64, attacker: PreyView) {
+        if !self.hurt_shared(amount) {
+            return;
+        }
+        self.last_hurt_by_mob = Some(attacker);
+        self.last_hurt_by_mob_timestamp = self.age_ticks;
     }
 
     /// THE ALERTOTHERS' OWN SIBLING WRITE (javap
@@ -3482,6 +3589,88 @@ impl Zombie {
     /// scan).
     pub fn has_target(&self) -> bool {
         self.retaliation_target || self.scan_target
+    }
+
+    /// THE MOB-SOURCE HURTBY LANE (javap the prio-1 goal the same
+    /// class speaks — `getLastHurtByMob()` the LIVING reference the
+    /// wolf's fangs name, the goal's own walk the player lane's shape
+    /// wears): the canUse the reacted-event word answers (the SAME
+    /// event's re-arm the timestamp pair refuses), the start the
+    /// target + the 300 unseen memory the sipush arms + the scan's
+    /// TARGET flag the conflict law steals, the continue the
+    /// follow-range ring + the LOS memory the canAttack law keeps
+    /// (the snapshot the pre-pass's live refresh wears — the
+    /// attacker's own pos the aim reads). The player's own absence
+    /// the lane never gates — the prio-1 goal the reference alone
+    /// reads. NO spider dark gate the retaliation reads (the HurtBy
+    /// prio 1 the light's word never asks — the same law the player
+    /// lane keeps). The zombie's own start the alertOthers ride
+    /// fires (the sibling pass the same-kind box serves).
+    fn retaliation_mob_target(
+        &mut self,
+        world: &World,
+        events: &mut MobEvents,
+    ) -> Option<PreyView> {
+        let victim = self.last_hurt_by_mob?;
+        if self.last_hurt_by_mob_timestamp != self.hurt_by_goal_timestamp {
+            // THE START (javap the goal's own walk — the setTarget +
+            // the timestamp's store + the unseenMemoryTicks = 300
+            // write; the alertSameType the zombie's setAlertOthers
+            // arms — the alertOthers walk the caller's sibling pass
+            // serves, the skeleton's bare ctor the event never fires)
+            self.retaliation_target = true;
+            self.retaliation_unseen_ticks = 0;
+            self.hurt_by_goal_timestamp = self.last_hurt_by_mob_timestamp;
+            // THE FLAG CONFLICT (the GoalSelector's own law — the
+            // higher-prio goal's start the lower-prio running goal's
+            // TARGET flag steals: the scan the preemption stops, the
+            // re-arm the retaliation's drop re-answers)
+            self.scan_target = false;
+            events.retaliation_alert = self.kind == MobKind::Zombie;
+        }
+        if !self.retaliation_target {
+            return None;
+        }
+        // THE CONTINUE (javap `TargetGoal.canContinueToUse` — the
+        // follow-range ring the canAttack law keeps, the mustSee's
+        // unseen memory the 300-tick sipush counts: the LOS the zero
+        // keeps, the blind tick the count spends; the eye-to-eye ray
+        // the Sensing.hasLineOfSight walk answers — the snapshot's
+        // own eye the pre-pass's live refresh wears)
+        let follow_range = if self.kind == MobKind::Skeleton
+            || self.kind == MobKind::Spider
+        {
+            SKELETON_FOLLOW_RANGE
+        } else {
+            ZOMBIE_FOLLOW_RANGE
+        };
+        let dx = victim.x - self.x;
+        let dz = victim.z - self.z;
+        let in_range = dx * dx + dz * dz <= follow_range * follow_range;
+        let los = crate::body::clip_ray(
+            world,
+            crate::math::Vec3::new(
+                self.x as f32,
+                (self.y + self.kind.eye_height()) as f32,
+                self.z as f32,
+            ),
+            crate::math::Vec3::new(
+                victim.x as f32,
+                victim.eye_y as f32,
+                victim.z as f32,
+            ),
+        )
+        .is_none();
+        if los {
+            self.retaliation_unseen_ticks = 0;
+        } else {
+            self.retaliation_unseen_ticks += 1;
+        }
+        if !in_range || self.retaliation_unseen_ticks > HURT_BY_UNSEEN_MEMORY_TICKS {
+            self.retaliation_target = false;
+            return None;
+        }
+        Some(victim)
     }
 
     /// THE ISPANICKING WORD (javap `PathfinderMob.isPanicking` the
@@ -3784,7 +3973,15 @@ impl Zombie {
         // own registerGoals never fills — the lanes the monster kinds
         // gate, the animals the goal-else chain's own rest keeps).
         let target = if self.kind.is_monster() {
-            player.filter(|p| !p.dead).and_then(|p| {
+            // THE MOB-SOURCE HURTBY LANE (the prio-1 goal the
+            // reference speaks — the player's own absence the lane
+            // never gates, the wolf's fangs the archer's own counter
+            // the same goal class serves: the skeleton's BOW the mob
+            // target aims, the zombie's fangs the bite pass deals)
+            if let Some(victim) = self.retaliation_mob_target(world, &mut events) {
+                Some((victim.view(), MeleeVictim::Prey(victim.id)))
+            } else {
+                player.filter(|p| !p.dead).and_then(|p| {
                 let dx = p.x - self.x;
                 let dz = p.z - self.z;
                 let d2 = dx * dx + dz * dz;
@@ -3916,6 +4113,7 @@ impl Zombie {
                 }
             })
             .map(|p| (*p, MeleeVictim::Player))
+            }
         } else if self.kind == MobKind::Wolf {
             // THE WOLF'S OWN TARGET LANES (javap the 26.2 registerGoals
             // the round's dump keeps — targetSelector prio 4
@@ -6858,6 +7056,52 @@ pub fn arm_skeleton_wolf_avoid(mobs: &mut [Zombie]) -> usize {
     armed
 }
 
+/// THE SNAPSHOT'S OWN BUILDER (the PreyView the query stand-ins wear
+/// — the id + the live pos + the eye + the box the reach law reads;
+/// the wolf's hunt lane AND the HurtBy mob-source reference the same
+/// builder serves)
+pub fn mob_prey_view(m: &Zombie) -> PreyView {
+    let (x0, y0, _, x1, y1, _) = m.box_for();
+    PreyView {
+        id: m.id,
+        kind: m.kind,
+        x: m.x,
+        y: m.y,
+        z: m.z,
+        eye_y: m.y + m.kind.eye_height(),
+        width: x1 - x0,
+        height: y1 - y0,
+    }
+}
+
+/// THE MOB-SOURCE HURTBY'S OWN REFRESH (the reference's live body the
+/// pre-pass re-snapshots — the vanilla EntityReference the id names,
+/// the aim the LIVE pos reads: the attacker's own walk the chase
+/// answers, the stale pos the frozen snapshot never wears). The dead
+/// body the canAttack word drops — the reference the null write
+/// clears, the run's own target flag the drop answers (the
+/// canContinueToUse's alive gate the same law speaks). The caller's
+/// own pre-pass moment the wolf's hunt scan shares — the goals' own
+/// tick-before walk.
+pub fn refresh_hurt_by_mob_views(mobs: &mut [Zombie]) {
+    let attackers: Vec<PreyView> = mobs
+        .iter()
+        .filter(|m| m.health > 0.0 && m.death_time == 0)
+        .map(mob_prey_view)
+        .collect();
+    for i in 0..mobs.len() {
+        if let Some(victim) = mobs[i].last_hurt_by_mob {
+            match attackers.iter().find(|a| a.id == victim.id) {
+                Some(a) => mobs[i].last_hurt_by_mob = Some(*a),
+                None => {
+                    mobs[i].last_hurt_by_mob = None;
+                    mobs[i].retaliation_target = false;
+                }
+            }
+        }
+    }
+}
+
 /// THE WOLF'S OWN PREY SCAN (javap the 26.2 `Wolf.registerGoals` the
 /// round's dump keeps — the targetSelector the pre-pass answers before
 /// the ticks, the goals' own moment): every WOLF (`kind == Wolf`,
@@ -6891,19 +7135,7 @@ pub fn arm_wolf_hunters(mobs: &mut [Zombie]) -> usize {
         .iter()
         .filter(|m| m.health > 0.0 && m.death_time == 0)
         .filter(|m| m.kind == MobKind::Sheep || m.kind == MobKind::Skeleton)
-        .map(|m| {
-            let (x0, y0, _, x1, y1, _) = m.box_for();
-            PreyView {
-                id: m.id,
-                kind: m.kind,
-                x: m.x,
-                y: m.y,
-                z: m.z,
-                eye_y: m.y + m.kind.eye_height(),
-                width: x1 - x0,
-                height: y1 - y0,
-            }
-        })
+        .map(mob_prey_view)
         .collect();
     let mut armed = 0;
     for i in 0..mobs.len() {
@@ -7858,6 +8090,239 @@ mod tests {
             "the expired anger the prey lane resumes"
         );
         assert!(ev.attack.is_none(), "the expired lane the player event never speaks");
+    }
+
+    /// THE MOB-SOURCE HURTBY LANE THE WOLF'S FANGS ARM (javap the
+    /// prio-1 goal the LIVING reference reads — the skeleton's own
+    /// counter the same goal class serves): the dose the reference
+    /// arms, the lane the player's ABSENCE never gates, the bow the
+    /// LIVE snapshot aims, the shot the owner's own id carries.
+    #[test]
+    fn the_archers_counter_fire_the_wolfs_fangs_arm() {
+        let world = flat_world();
+        let mut sk = Zombie::new(1, 10.5, 5.0, 10.5, 7);
+        sk.kind = MobKind::Skeleton;
+        sk.held_weapon = Some("bow");
+        sk.on_ground = true;
+        // the warm-up tick (the dose's own timestamp the age word
+        // carries — tick zero the goal's own refuse keeps)
+        sk.tick(&world, None, NIGHT);
+        assert!(!sk.has_target(), "the scanless archer the bow never draws");
+        // THE WOLF'S OWN FANGS (the bite pass's mob-source dose — the
+        // reference the setLastHurtByMob walk arms)
+        let mut wolf = Zombie::new(2, 14.5, 5.0, 10.5, 9);
+        wolf.kind = MobKind::Wolf;
+        wolf.on_ground = true;
+        let wv = mob_prey_view(&wolf);
+        sk.hurt_by_mob(4.0, wv);
+        assert!(sk.last_hurt_by_mob.is_some(), "the dose the reference arms");
+        // THE COUNTER-FIRE (the draw the full-draw crossing speaks —
+        // the arrow the wolf's own box aims)
+        let mut shot = None;
+        for _ in 0..60 {
+            let ev = sk.tick(&world, None, NIGHT);
+            if let Some(s) = ev.arrow_shot {
+                shot = Some(s);
+                break;
+            }
+        }
+        assert!(sk.has_target(), "the mob reference the lane arms");
+        let shot = shot.expect("the counter-fire the archer's bow deals");
+        assert_eq!(shot.owner, Some(1), "the setOwner walk the shooter's id carries");
+        // THE AIM'S OWN LAW (the strafe the goal's own walk drifts —
+        // the arrow the SNAPSHOT's own side flies: the horizontal dot
+        // the minus law refuses)
+        let dxs = wv.x - shot.x;
+        assert!(
+            dxs * shot.vx > 0.0,
+            "the arrow the snapshot's own side flies: dx {} vx {}",
+            dxs,
+            shot.vx
+        );
+    }
+
+    /// THE PLAYER'S DOSE THE REFERENCE OVERWRITES (javap
+    /// setLastHurtByMob(player) the same setter the mob dose rides —
+    /// the reference the player's own word replaces, the client's
+    /// None the mob lane keeps): the mob lane the cleared ref closes,
+    /// the player lane the fresh timestamp re-arms, the target the
+    /// latest dose speaks.
+    #[test]
+    fn the_player_dose_the_mob_reference_overwrites() {
+        let world = flat_world();
+        let mut sk = Zombie::new(3, 10.5, 5.0, 10.5, 11);
+        sk.kind = MobKind::Skeleton;
+        sk.held_weapon = Some("bow");
+        sk.on_ground = true;
+        sk.tick(&world, None, NIGHT);
+        let wv = PreyView {
+            id: 4,
+            kind: MobKind::Wolf,
+            x: 14.5,
+            y: 5.0,
+            z: 10.5,
+            eye_y: 5.0 + MobKind::Wolf.eye_height(),
+            width: 0.6,
+            height: 0.85,
+        };
+        sk.hurt_by_mob(4.0, wv);
+        // THE PLAYER'S OWN PUNCH (the LivingEntity source the same
+        // setter rides — the reference the overwrite speaks)
+        sk.hurt(2.0, true);
+        let p = player_at(12.5, 5.0, 10.5); // 2 blocks east — in ring
+        sk.tick(&world, Some(&p), NIGHT);
+        assert!(
+            sk.last_hurt_by_mob.is_none(),
+            "the reference the player's own word overwrites"
+        );
+        assert!(sk.has_target(), "the player lane the fresh dose re-arms");
+    }
+
+    /// THE MOB-SHOT ARROW THE WOLF'S BOX ANSWERS (the findHitEntities
+    /// walk the player-shot lane's law wears — the mob boxes the
+    /// nearest t answers, the OWNER the checkLeftOwner walk never
+    /// hits, the dead body the isAlive gate passes): the counter-fire
+    /// bolt the wolf's fangs the verdict answers, the damage the
+    /// ceil(|v|*2.0) formula speaks.
+    #[test]
+    fn the_mob_shot_arrow_the_wolfs_box_answers() {
+        let world = arrow_air_world();
+        let mut shooter = Zombie::new(1, 10.0, 5.0, 10.0, 7);
+        shooter.kind = MobKind::Skeleton;
+        shooter.on_ground = true;
+        let mut wolf = Zombie::new(2, 13.5, 5.0, 10.0, 9);
+        wolf.kind = MobKind::Wolf;
+        wolf.on_ground = true;
+        let wv = mob_prey_view(&wolf);
+        // THE SHOT (the performRangedAttack walk — the spawn the
+        // shooter's own eye-minus-0.1 rides, the owner the setOwner
+        // arms: the spawn point the SHOOTER'S OWN box contains — the
+        // self-hit the exclusion refuses)
+        let shot = Arrow::shoot(&shooter, &wv.view());
+        let mut a = Arrow::from_spawn(&shot);
+        assert_eq!(a.owner, Some(1), "the owner the spawn record carries");
+        let mobs = vec![shooter, wolf];
+        let mut hit = None;
+        for _ in 0..40 {
+            let ev = a.tick(&world, None, &mobs);
+            if let Some(h) = ev.hit_mob {
+                hit = Some(h);
+                break;
+            }
+            assert!(!a.dead, "the miss the wall never speaks");
+        }
+        let (mob_id, dmg) = hit.expect("the wolf's box the bolt answers");
+        assert_eq!(mob_id, 2, "the WOLF the nearest law names — the shooter never");
+        assert!(dmg > 0.0, "the ceil(|v|*2.0) the formula speaks");
+        assert!(a.dead, "the DISALLOWED pickup the hit discards");
+        // THE ALIVE GATE (the isAlive word the dying body passes — the
+        // wolf's own corpse the bolts never re-hurt)
+        let mut shooter2 = Zombie::new(1, 10.0, 5.0, 10.0, 7);
+        shooter2.kind = MobKind::Skeleton;
+        shooter2.on_ground = true;
+        let mut dead_wolf = Zombie::new(5, 13.5, 5.0, 10.0, 13);
+        dead_wolf.health = 0.0; // the isAlive gate's own word
+        let dwv = mob_prey_view(&dead_wolf);
+        let shot2 = Arrow::shoot(&shooter2, &dwv.view());
+        let mut b = Arrow::from_spawn(&shot2);
+        let mobs2 = vec![shooter2, dead_wolf];
+        let mut b_hit = false;
+        for _ in 0..40 {
+            let ev = b.tick(&world, None, &mobs2);
+            if ev.hit_mob.is_some() {
+                b_hit = true;
+                break;
+            }
+            if b.dead {
+                break;
+            }
+        }
+        assert!(!b_hit, "the dead body the isAlive gate passes");
+    }
+
+    /// THE HURTBY REFERENCE'S OWN LIVE WALK (the pre-pass refresh the
+    /// pre-pass chain wears — the attacker's own pos the snapshot
+    /// follows, the dead body the reference clears): the aim the LIVE
+    /// pos reads, the stale pos the frozen snapshot never wears.
+    #[test]
+    fn the_hurtby_reference_the_livewalk_refreshes() {
+        let world = flat_world();
+        let mut sk = Zombie::new(1, 10.5, 5.0, 10.5, 7);
+        sk.kind = MobKind::Skeleton;
+        sk.held_weapon = Some("bow");
+        sk.on_ground = true;
+        sk.tick(&world, None, NIGHT);
+        let mut wolf = Zombie::new(2, 14.5, 5.0, 10.5, 9);
+        wolf.kind = MobKind::Wolf;
+        wolf.on_ground = true;
+        sk.hurt_by_mob(4.0, mob_prey_view(&wolf));
+        sk.tick(&world, None, NIGHT);
+        assert!(sk.has_target(), "the dose the lane arms");
+        // THE LIVE REFRESH (the attacker's own walk the snapshot
+        // follows)
+        wolf.x = 12.5;
+        let mut mobs = vec![sk, wolf];
+        refresh_hurt_by_mob_views(&mut mobs);
+        assert_eq!(
+            mobs[0]
+                .last_hurt_by_mob
+                .as_ref()
+                .expect("the ref the live body wears")
+                .x,
+            12.5,
+            "the live pos the snapshot follows"
+        );
+        assert!(mobs[0].retaliation_target, "the live body the run keeps");
+        // THE DEAD DROP (the canAttack word the run answers — the
+        // reference the null write clears, the target flag the drop
+        // keeps)
+        mobs[1].health = 0.0;
+        refresh_hurt_by_mob_views(&mut mobs);
+        assert!(
+            mobs[0].last_hurt_by_mob.is_none(),
+            "the dead attacker the reference clears"
+        );
+        assert!(!mobs[0].retaliation_target, "the dead body the run drops");
+    }
+
+    /// THE WOLF'S ANGER THE MOB DOSE NEVER ROLLS (javap the prio-4
+    /// lane's isAngryAt the PLAYER selector reads — the
+    /// NearestAttackableTargetGoal(Player, ...) class filter the mob
+    /// attacker never answers): the mob-source dose the reference
+    /// arms and the timer leaves, the player dose the window rolls.
+    #[test]
+    fn the_wolfs_anger_the_mob_dose_never_arms() {
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        wolf.on_ground = true;
+        let sk_view = PreyView {
+            id: 9,
+            kind: MobKind::Skeleton,
+            x: 10.5,
+            y: 5.0,
+            z: 8.0,
+            eye_y: 5.0 + MobKind::Skeleton.eye_height(),
+            width: 0.6,
+            height: 1.95,
+        };
+        // THE MOB-SOURCE DOSE (the skeleton's bolt the wolf's own
+        // fangs the prio-7 lane answers — the timer the roll never
+        // spends)
+        wolf.hurt_by_mob(2.0, sk_view);
+        assert_eq!(wolf.anger_ticks, 0, "the mob dose the anger never rolls");
+        assert!(
+            !wolf.last_hurt_by_player,
+            "the mob dose the player word never arms"
+        );
+        assert!(wolf.last_hurt_by_mob.is_some(), "the reference the dose arms");
+        // THE PLAYER'S DOSE (the roll the [400, 780] window speaks)
+        wolf.hurt(2.0, true);
+        assert!(
+            (WOLF_ANGER_SECONDS_MIN * 20..=WOLF_ANGER_SECONDS_MAX * 20)
+                .contains(&wolf.anger_ticks),
+            "the window the roll wears: {}",
+            wolf.anger_ticks
+        );
     }
 
     /// THE ARMED HIT'S OWN PIN (the attribute pipeline the equipment
@@ -9437,6 +9902,7 @@ mod tests {
             crit: true,
             pitch: 1.0,
             seed: 5,
+            owner: None,
         });
         a.tick(&world, None, &[]);
         assert!((a.x - 11.0).abs() < 1e-9, "the free fly the velocity adds");
@@ -9462,6 +9928,7 @@ mod tests {
             crit: true,
             pitch: 1.0,
             seed: 7,
+            owner: None,
         });
         // the wall sits 4.5 blocks out — the 1.2/tick flight the
         // crossing answers within the loop (the fly-till-stick walk)
@@ -9494,6 +9961,7 @@ mod tests {
             crit: true,
             pitch: 1.0,
             seed: 9,
+            owner: None,
         });
         c.tick(&wall, None, &[]);
         while !c.dead {
@@ -9519,9 +9987,19 @@ mod tests {
             crit: true,
             pitch: 1.0,
             seed: 11,
+            owner: None,
         });
         d.prev_x = 30.0;
         d.x = 31.0; // the segment the player's own box (31.6 center) crosses
+        // the MOB-SHOT'S OWN OWNER (the setOwner reference the lane
+        // reads — the client's own bolt the archer's id names, the
+        // wire's None the no-hit word keeps)
+        d.owner = Some(555);
+        // the NON-CRIT bolt the exact formula speaks (the crit arm the
+        // bonus draw rides — the mob-shot lane the same onHitEntity
+        // walk the player-shot lane wears, the draw the seed's stream
+        // spends)
+        d.crit = false;
         let victim = player_at(31.5, 10.0, 32.0);
         let ev = d.tick(&world, Some(&victim), &[]);
         let dmg = ev.hit_player.expect("the player hit the damage speaks");
@@ -9668,6 +10146,7 @@ mod tests {
             crit: true,
             pitch: 1.0,
             seed: 5,
+            owner: None,
         };
         // THE HIT: the living zombie 1.5-2.0 blocks out the segment
         // crosses (the box the 0.3 inflate the hit answers)
