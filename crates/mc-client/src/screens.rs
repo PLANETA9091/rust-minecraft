@@ -7716,6 +7716,15 @@ impl App {
                     if let Some(w) = world {
                         if let Some(pig) = self.mobs.iter_mut().find(|m| m.id == vid) {
                             ride_words = Some([
+                                // THE STATELESS AMBIENT BANK (the
+                                // pre-tick order the vehicle lane's
+                                // own contract keeps — the pig the
+                                // mount admits, no state the word
+                                // reads; the WOLF'S four-arm selection
+                                // the vehicle never carries — no wolf
+                                // mount the game speaks, the post-gate
+                                // lane's own roll the ambient_voice_
+                                // event method wears)
                                 pig.voice_event(crate::mob::VoiceSlot::Ambient),
                                 pig.voice_event(crate::mob::VoiceSlot::Hurt),
                                 pig.voice_event(crate::mob::VoiceSlot::Death),
@@ -8694,8 +8703,12 @@ impl App {
                                     // THE MOB'S OWN ROW (the synced
                                     // sound variant's set the word
                                     // picks, the classic the honest
-                                    // default keeps)
-                                    mob.voice_event(crate::mob::VoiceSlot::Ambient),
+                                    // default keeps; the WOLF'S OWN
+                                    // FOUR-ARM selection the state
+                                    // speaks — the gate's draw the
+                                    // tick spent, the selection's
+                                    // roll the play's own arg walks)
+                                    mob.ambient_voice_event(),
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
                                 ));
@@ -17149,7 +17162,12 @@ impl App {
             // the id-seeded spawn law arms)
             if m.health > 0.0 && m.ambient_voice() {
                 groans.push((
-                    m.voice_event(crate::mob::VoiceSlot::Ambient),
+                    // THE AMBIENT'S OWN SELECTION (the wolf's four-arm
+                    // walk the state speaks — the gate's draw the
+                    // ambient_voice spent, the roll the play's own
+                    // arg walks; the other kinds the stateless word
+                    // keeps)
+                    m.ambient_voice_event(),
                     m.voice_pitch(),
                     ear_distance(ear, m.x, m.y, m.z),
                 ));

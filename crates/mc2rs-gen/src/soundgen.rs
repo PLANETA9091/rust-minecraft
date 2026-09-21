@@ -111,11 +111,16 @@ pub fn generate(bytes: &[u8]) -> Result<SoundData> {
 ///   TABLES OWE: the rows the voice tables speak the download walk
 ///   arms — an unfetched id the Rodio path's missing-file skip keeps
 ///   silent (the honest refusal the audio lane never breaks the frame
-///   with), the drawn wolf the barkless body the oggs' absence wore.
+///   with), the drawn wolf the barkless body the oggs' absence wore;
+/// - the wolf's THREE STATE VOICES (the getAmbientSound four-arm walk
+///   the client's `ambient_voice_event` selection speaks — the angry
+///   body's growl, the tamed-hurt whine, the idle pant; the ids the
+///   kind's flat ambient row never named, the state arms the oggs
+///   now answer).
 ///
 /// Every file rides the same sha1-verified asset-index fetch the music
 /// and block lanes speak.
-pub const MOB_VOICE_EVENTS: [&str; 8] = [
+pub const MOB_VOICE_EVENTS: [&str; 11] = [
     "entity.zombie.ambient",
     "entity.zombie.hurt",
     "entity.zombie.death",
@@ -124,6 +129,9 @@ pub const MOB_VOICE_EVENTS: [&str; 8] = [
     "entity.wolf.hurt",
     "entity.wolf.death",
     "entity.wolf.step",
+    "entity.wolf.growl",
+    "entity.wolf.whine",
+    "entity.wolf.pant",
 ];
 
 #[cfg(test)]
@@ -153,12 +161,13 @@ mod tests {
 
     /// THE MOB VOICE LANE'S OWN PIN (the fetch list the client's voice
     /// tables name — the zombie's four the FLAT fold speaks, the wolf's
-    /// four the CLASSIC default answers): the eight ids the download
-    /// walk admits, the order the two kinds' rows keep, no third kind
-    /// the list never draws (the undrawn body the honest absence wears
-    /// — the fetch the client's own tables alone define). The ids' real
-    /// sounds.json admission the client's asset-gated walk proves (the
-    /// runtime table the cache keeps — the ignored lane's own word).
+    /// four the CLASSIC default answers, the state trio the ambient
+    /// four-arm walk wears): the eleven ids the download walk admits,
+    /// the order the kinds' rows keep, no third kind the list never
+    /// draws (the undrawn body the honest absence wears — the fetch
+    /// the client's own tables alone define). The ids' real sounds.json
+    /// admission the client's asset-gated walk proves (the runtime
+    /// table the cache keeps — the ignored lane's own word).
     #[test]
     fn mob_voice_events_name_the_drawn_kinds_four_voices() {
         assert_eq!(
@@ -172,6 +181,9 @@ mod tests {
                 "entity.wolf.hurt",
                 "entity.wolf.death",
                 "entity.wolf.step",
+                "entity.wolf.growl",
+                "entity.wolf.whine",
+                "entity.wolf.pant",
             ]
         );
         // the two drawn kinds the list's rows pair — no duplicates, no
@@ -181,7 +193,7 @@ mod tests {
                 .and_then(|rest| rest.split('.').next())
                 .expect("every id the entity.<kind>.<voice> shape wears")
         }).collect();
-        assert_eq!(kinds, vec!["zombie", "zombie", "zombie", "zombie", "wolf", "wolf", "wolf", "wolf"]);
+        assert_eq!(kinds, vec!["zombie", "zombie", "zombie", "zombie", "wolf", "wolf", "wolf", "wolf", "wolf", "wolf", "wolf"]);
         let mut sorted = MOB_VOICE_EVENTS.to_vec();
         sorted.sort_unstable();
         let uniq = sorted.len();

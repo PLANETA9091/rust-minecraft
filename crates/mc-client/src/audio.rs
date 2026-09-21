@@ -764,12 +764,14 @@ mod tests {
         }
     }
 
-    /// Real-data check (NOT run on CI): the wolf's four voice events —
-    /// the 26.2 classic variant's ambient bark, the hurt, the death,
-    /// and the shared playStepSound footstep — resolve to the official
-    /// file counts and every file decodes (the mob-voice fetch the
-    /// generator speaks; the classic directory the step event's
-    /// variant-shared pool keeps).
+    /// Real-data check (NOT run on CI): the wolf's voice events — the
+    /// 26.2 classic variant's ambient bark, the hurt, the death, the
+    /// shared playStepSound footstep, AND the three state voices the
+    /// ambient four-arm selection speaks (the angry growl, the
+    /// tamed-hurt whine, the idle pant) — resolve to the official file
+    /// counts and every file decodes (the mob-voice fetch the generator
+    /// speaks; the classic directory the step event's variant-shared
+    /// pool keeps).
     #[test]
     #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
     fn real_wolf_voice_oggs_decode() {
@@ -781,11 +783,14 @@ mod tests {
             eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
             return;
         };
-        const EVENTS: [(&str, usize); 4] = [
+        const EVENTS: [(&str, usize); 7] = [
             ("entity.wolf.ambient", 3),
             ("entity.wolf.hurt", 3),
             ("entity.wolf.death", 1),
             ("entity.wolf.step", 5),
+            ("entity.wolf.growl", 3),
+            ("entity.wolf.whine", 1),
+            ("entity.wolf.pant", 1),
         ];
         for (id, want) in EVENTS {
             let files = discover_event_files(&root, id);

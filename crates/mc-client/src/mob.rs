@@ -1391,8 +1391,11 @@ impl MobKind {
             // own files keep; the variant lane the client's metadata
             // never reads, the classic default the sync's define arms).
             // The ogg mapping the fetch lane answers — the gen's
-            // MOB_VOICE_EVENTS the four ids' files download (the
-            // sha1-verified walk the Rodio path decodes)
+            // MOB_VOICE_EVENTS the seven ids' files download (the
+            // sha1-verified walk the Rodio path decodes; the AMBIENT
+            // row the four-arm selection's default arm is — the state
+            // trio the ambient_voice_event method speaks, the growl/
+            // whine/pant the angry/tamed-hurt/idle bodies wear)
             (MobKind::Wolf, VoiceSlot::Ambient) => "entity.wolf.ambient",
             (MobKind::Wolf, VoiceSlot::Hurt) => "entity.wolf.hurt",
             (MobKind::Wolf, VoiceSlot::Death) => "entity.wolf.death",
@@ -5603,6 +5606,36 @@ impl Zombie {
             .as_deref()
             .and_then(|v| farm_sound_variant_word(self.kind, v, self.is_baby(), slot))
             .unwrap_or_else(|| self.kind.voice_event(slot))
+    }
+
+    /// THE WOLF'S OWN AMBIENT SELECTION (javap `Wolf.getAmbientSound` —
+    /// the FOUR arms the raw disasm keeps, verbatim): the angry body
+    /// the growl returns FIRST — the isAngry arm's early areturn the
+    /// one-in-three roll never draws (the draw-order law the seeded
+    /// walks keep); else `nextInt(3) == 0` opens the state's own lane —
+    /// the tamed hurt body (`health < 20.0` the ldc_w CONSTANT the
+    /// bytecode keeps, NOT getMaxHealth) the whine wears, the wild or
+    /// healthy body the pant answers; the roll's miss the bark keeps
+    /// (the kind row the voice_event's own table answers). The other
+    /// kinds the stateless word keeps — no arm their rows read, no
+    /// draw the stream spends. THE CALL ORDER the vanilla shape owns:
+    /// the ambient gate's draw first (ambient_voice — Mob.baseTick's
+    /// own walk), the selection's roll second (getAmbientSound's arg),
+    /// the pitch's two draws last (getVoicePitch) — the tuple order
+    /// the caller's push speaks.
+    pub fn ambient_voice_event(&mut self) -> &'static str {
+        if self.kind == MobKind::Wolf {
+            if self.anger_ticks > 0 {
+                return "entity.wolf.growl";
+            }
+            if self.rng.next_int(3) == 0 {
+                if self.tamed && self.health < 20.0 {
+                    return "entity.wolf.whine";
+                }
+                return "entity.wolf.pant";
+            }
+        }
+        self.voice_event(VoiceSlot::Ambient)
     }
 
     /// THE MOB'S OWN STEP WORD (javap the playStepSound overrides the
@@ -15699,6 +15732,94 @@ mod tests {
         dying.kind = MobKind::Wolf;
         dying.health = 0.0;
         assert!(dying.death_loot(false).is_empty(), "the wolf drops nothing");
+    }
+
+    #[test]
+    fn the_wolf_ambient_voice_the_four_arms_speak() {
+        // javap `Wolf.getAmbientSound` — the FOUR arms the raw disasm
+        // keeps: isAngry -> growl (the early areturn the roll never
+        // draws); nextInt(3) == 0 -> (isTame && health < 20.0 ? whine :
+        // pant); else the kind row's bark. The client's own LCG the
+        // seeds drive: seed 0's next_int(3) = [0, 1, ...] (the roll arm
+        // FIRST, the miss SECOND), seed 1's = [2, ...] (the miss first).
+        // THE BARK ARM (seed 1 — the roll's miss the kind row wears):
+        let mut shy = Zombie::new(21, 8.0, 5.0, 8.0, 1);
+        shy.kind = MobKind::Wolf;
+        assert_eq!(
+            shy.ambient_voice_event(),
+            "entity.wolf.ambient",
+            "the miss the bark keeps"
+        );
+        // THE WHINE ARM (seed 0 — the roll opens; the tamed hurt body
+        // the ldc_w 20.0's own compare wears): the full-heal ceiling's
+        // own tamed body at 15.0 the whine speaks
+        let mut hurt = Zombie::new(22, 8.0, 5.0, 8.0, 0);
+        hurt.kind = MobKind::Wolf;
+        hurt.tamed = true;
+        hurt.health = 15.0;
+        assert_eq!(
+            hurt.ambient_voice_event(),
+            "entity.wolf.whine",
+            "the tamed hurt body the whine wears"
+        );
+        // THE PANT ARM — the WILD body (the isTame gate's false the
+        // whine never wears, the same roll the pant answers):
+        let mut wild = Zombie::new(23, 8.0, 5.0, 8.0, 0);
+        wild.kind = MobKind::Wolf;
+        wild.health = 15.0;
+        assert_eq!(
+            wild.ambient_voice_event(),
+            "entity.wolf.pant",
+            "the wild body the pant answers"
+        );
+        // THE PANT ARM — the TAMED HEALTHY body (40.0 the ceiling
+        // keeps, the 20.0 compare the whine refuses):
+        let mut fed = Zombie::new(24, 8.0, 5.0, 8.0, 0);
+        fed.kind = MobKind::Wolf;
+        fed.tamed = true;
+        fed.health = WOLF_TAMED_MAX_HEALTH;
+        assert_eq!(
+            fed.ambient_voice_event(),
+            "entity.wolf.pant",
+            "the healthy tamed body the pant answers"
+        );
+        // THE GROWL ARM + THE NO-DRAW LAW (the angry body the growl
+        // returns BEFORE the roll — seed 0's first draw the 0 word the
+        // growl must leave untouched, the SECOND call's own roll the
+        // same first draw speaks: a spent draw the 1 word the bark arm
+        // would wear): the tamed healthy body the pant the roll arm
+        // speaks again
+        let mut angry = Zombie::new(25, 8.0, 5.0, 8.0, 0);
+        angry.kind = MobKind::Wolf;
+        angry.tamed = true;
+        angry.health = WOLF_TAMED_MAX_HEALTH;
+        angry.anger_ticks = 100;
+        assert_eq!(
+            angry.ambient_voice_event(),
+            "entity.wolf.growl",
+            "the angry body the growl returns first"
+        );
+        angry.anger_ticks = 0;
+        assert_eq!(
+            angry.ambient_voice_event(),
+            "entity.wolf.pant",
+            "the roll the growl never drew — the first 0 the same arm speaks"
+        );
+        // THE STATELESS KINDS (no arm their rows read — the zombie's
+        // word the kind row keeps, the stream the clone law proves
+        // untouched):
+        let mut z = Zombie::new(26, 8.0, 5.0, 8.0, 0);
+        let before = z.rng.clone();
+        assert_eq!(z.ambient_voice_event(), "entity.zombie.ambient");
+        let (a, b) = (z.rng.next(), before.clone().next());
+        assert_eq!(a, b, "the stateless walk the stream never spends");
+        // THE WOLF'S STATELESS ROWS (the hurt/death words the state
+        // never bends — the kind table's own rows the kind voice keeps):
+        let mut w = Zombie::new(27, 8.0, 5.0, 8.0, 0);
+        w.kind = MobKind::Wolf;
+        w.tamed = true;
+        assert_eq!(w.voice_event(VoiceSlot::Hurt), "entity.wolf.hurt");
+        assert_eq!(w.voice_event(VoiceSlot::Death), "entity.wolf.death");
     }
 
     #[test]
