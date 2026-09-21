@@ -7513,6 +7513,10 @@ impl App {
                 dead: self.dead,
                 width: crate::body::WIDTH,
                             height: b.height(),
+                // THE BEGGOAL'S OWN GATE RAW MATERIAL (the main hand's
+                // stack the held word speaks — the wolves' own beg the
+                // interesting hand arms)
+                held_item_id: self.held_id(),
             });
             let day_time = (self.day_time_base + self.frame) as i64;
             // THE MAYFLY READ HOISTED (the accessor's whole-self borrow
@@ -8357,6 +8361,11 @@ impl App {
             // the drop lane speaks).
             if !self.world_is_network && !self.orbs.is_empty() {
                 {
+                    // THE HELD READ HOISTED (the whole-self borrow the
+                    // mut world's own field-split cannot ride — the
+                    // gate's own raw material the tick's head speaks
+                    // once)
+                    let held = self.held_id();
                     let world = self.offline_world.as_mut();
                     if let Some(world) = world {
                         let player = self.body.as_ref().map(|b| crate::mob::PlayerView {
@@ -8367,6 +8376,10 @@ impl App {
                             dead: self.dead,
                             width: crate::body::WIDTH,
                             height: b.height(),
+                            // the gate's own raw material the held word
+                            // speaks (the orbs' own pull never reads it
+                            // — the view the body's truth wears)
+                            held_item_id: held,
                         });
                         for o in self.orbs.iter_mut() {
                             o.tick(world, player.as_ref());
@@ -8597,6 +8610,11 @@ impl App {
                             dead: self.dead,
                             width: crate::body::WIDTH,
                             height: b.height(),
+                            // THE BEGGOAL'S OWN GATE RAW MATERIAL (the
+                            // main hand's stack the held word speaks —
+                            // the wolves' own beg the interesting hand
+                            // arms)
+                            held_item_id: self.held_id(),
                         });
                         // THE GOALS' OWN PRE-PASS (the scans the
                         // callers' moment answer before the ticks):

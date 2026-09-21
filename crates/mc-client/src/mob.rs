@@ -1881,6 +1881,42 @@ pub const LOOK_RANGE: f64 = 8.0;
 pub const LOOK_PROBABILITY: f32 = 0.02;
 /// `LookAtPlayerGoal`'s look clock (the bipush 40 pair).
 pub const LOOK_INTERVAL_TICKS: i32 = 40;
+/// `BegGoal`'s ctor float 8.0 — the beg ring (the
+/// `TargetingConditions.forNonCombat().range(8.0)` the ctor's own
+/// fload_2/f2d walk arms; the 3D distanceToSqr the 64 square gates).
+pub const BEG_LOOK_DISTANCE: f64 = 8.0;
+/// `BegGoal.start`'s own base (the ctor's first bipush 40 — the
+/// `40 + nextInt(40)` the adjustedTickDelay identity keeps).
+pub const BEG_LOOK_TIME_BASE: i32 = 40;
+/// `BegGoal.start`'s own roll bound (the ctor's second bipush 40 —
+/// the `nextInt(40)` the entity's own stream draws).
+pub const BEG_LOOK_TIME_ROLL: i32 = 40;
+/// `ItemTags.WOLF_FOOD`'s own values (the 26.2 tag json the jar keeps:
+/// the MEAT tag's eleven the wolf_food.json's first entry expands,
+/// the fish lane's six + the rabbit_stew the direct values speak).
+/// The `Wolf.isFood(stack)` the `stack.is(ItemTags.WOLF_FOOD)` the
+/// gate's second arm rides — the BONE the gate's own first arm keeps
+/// (the `stack.is(Items.BONE)` the ldc #BONE speaks).
+pub const WOLF_FOOD_ITEMS: [&str; 18] = [
+    "beef",
+    "chicken",
+    "cooked_beef",
+    "cooked_chicken",
+    "cooked_mutton",
+    "cooked_porkchop",
+    "cooked_rabbit",
+    "mutton",
+    "porkchop",
+    "rabbit",
+    "rotten_flesh",
+    "cod",
+    "cooked_cod",
+    "salmon",
+    "cooked_salmon",
+    "tropical_fish",
+    "pufferfish",
+    "rabbit_stew",
+];
 /// `LivingEntity.tickDeath` — the removal gate's bipush 20.
 pub const DEATH_DURATION_TICKS: i32 = 20;
 /// The hurt flash's own duration (LivingEntity.hurt's hurtTime = 10).
@@ -2850,6 +2886,15 @@ pub struct PlayerView {
     /// LivingEntity base speaks — position.y + bbHeight * 0.3333333333333333
     /// the arrow's arc rides; the crouch's 1.5 the caller's own law keeps)
     pub height: f64,
+    /// THE BEGGOAL'S OWN GATE RAW MATERIAL (the main hand's stack the
+    /// `playerHoldingInteresting` walk reads — the item's registry id
+    /// the caller's own held word passes, the BONE-or-WOLF_FOOD test
+    /// the gate's own hands loop keeps). The OFF HAND's loop arm the
+    /// client sim never wears — the offline body the one stack carries,
+    /// the second hand the empty word honest-skips (the loop's second
+    /// pass the empty-hand law never arms). `None` = the empty hand the
+    /// gate's false answer keeps.
+    pub held_item_id: Option<i32>,
 }
 
 /// THE WOLF'S PREY STAND-IN (the snapshot the pre-pass scan arms — the
@@ -2881,8 +2926,32 @@ impl PreyView {
             dead: false,
             width: self.width,
             height: self.height,
+            // the prey stand-in the stack never holds — the gate's own
+            // raw material the hunt's word never wears
+            held_item_id: None,
         }
     }
+}
+
+/// THE BEGGOAL'S OWN GATE (`playerHoldingInteresting` the 26.2
+/// bytecode speaks — the `InteractionHand.values()` loop the MAIN/OFF
+/// hands walk, the `stack.is(Items.BONE) || wolf.isFood(stack)` test
+/// each hand's stack answers, the `Wolf.isFood` the
+/// `stack.is(ItemTags.WOLF_FOOD)` the tag ride speaks). The client
+/// sim's hands the one stack carries — the main hand's id the caller
+/// passes, the OFF arm the empty body never wears (the loop's second
+/// pass the empty-hand law never arms). The name the registry's own
+/// order speaks — the id the `item_name` word resolves, the unknown
+/// id the false answer keeps (the gate's own false the loop's miss
+/// returns).
+fn player_holds_wolf_interest(held_item_id: Option<i32>) -> bool {
+    let Some(id) = held_item_id else {
+        return false;
+    };
+    let Some(name) = mc_registry::item_name(id) else {
+        return false;
+    };
+    name == "bone" || WOLF_FOOD_ITEMS.contains(&name)
 }
 
 /// THE MELEE'S OWN VICTIM WORD (the attack the branch's own site
@@ -3219,6 +3288,21 @@ pub struct Zombie {
     pub tamed: bool,
     pub ordered_to_sit: bool,
     pub in_sitting_pose: bool,
+    /// THE BEGGOAL'S OWN WORD (the DATA_INTERESTED_ID synched bit the
+    /// `setIsInterested` walk speaks — the beg goal's start/stop pair
+    /// the true/false writes keeps). THE RENDER STATE THE FIELD NEVER
+    /// CARRIES: the WolfRenderState the 26.2 jar keeps no interested
+    /// word and the WolfModel no interested arm — the visible beg IS
+    /// the head's own stare (the tick's setLookAt the head lanes the
+    /// player's own position aims), the flag the client sim's own AI
+    /// word wears (the wire's own mobs the fields never carry).
+    pub interested: bool,
+    /// THE BEGGOAL'S OWN CLOCK (the goal's private lookTime int — the
+    /// start's `40 + nextInt(40)` the adjustedTickDelay identity arms,
+    /// the tick's `--lookTime` the decrement walks, the canContinue's
+    /// `> 0` the running word reads; the stop's own law the zero keeps
+    /// — the zero crossing the stop speaks).
+    beg_look_time: i32,
     /// THE LAST DAMAGE SOURCE'S OWN WINDOW (the shouldPanic gate the
     /// `getLastDamageSource` 40-tick law keeps — the hurt stamp arms,
     /// the tick's own drain closes)
@@ -3418,6 +3502,8 @@ impl Zombie {
             tamed: false,
             ordered_to_sit: false,
             in_sitting_pose: false,
+            interested: false,
+            beg_look_time: 0,
             panic_memory_ticks: 0,
             look_ticks: 0,
             age_ticks: 0,
@@ -5030,6 +5116,57 @@ impl Zombie {
                 if let Some(p) = player.filter(|p| !p.dead) {
                     self.look_at(p.x, p.eye_y, p.z);
                 }
+            } else if self.beg_look_time > 0 {
+                // THE BEGGOAL'S OWN TICK (prio 9 — the wolf's own
+                // registerGoals the `addGoal(9, new BegGoal(this, 8.0F))`
+                // the dump keeps, the LOOK flag the lone EnumSet member
+                // the ctor holds). THE CANCONTINUE the bytecode's own
+                // four conjuncts wear: the player alive, the 3D
+                // distanceToSqr under the 8.0 square, the lookTime the
+                // > 0 word the branch's own gate wears, the interesting
+                // hand the re-read keeps — the swap-away the stop law
+                // answers. THE TICK: the setLookAt(player, 10.0F,
+                // getMaxHeadXRot()) the head's own walk rides — the
+                // 10.0 dyHeadRot speed and the 20/40 max the direct
+                // look_at word folds (the same fold the look-at-player
+                // lane's own walk keeps), the `--lookTime` the
+                // decrement walks. THE ZERO CROSSING the stop speaks
+                // (the setIsInterested(false) the GoalSelector's next
+                // canContinue the same word wears — the one-tick
+                // window the render never reads). THE PRIO-6 LOOK'S
+                // OWN ROLL the running beg stills — the look-at-player
+                // goal the SAME player the SAME look_at the head
+                // wears, the preempt the pixels never distinguish, the
+                // draws the stilling never spends (the repo's own
+                // conflict law the blocked goal never polls). THE
+                // CASCADE'S OWN SHAPE the clock freezes under — the
+                // hunt's own head the melee lane owns, the beg the
+                // target branch never reaches, the clock the hunt's
+                // tail never drains).
+                let continues = player
+                    .filter(|p| !p.dead && player_holds_wolf_interest(p.held_item_id))
+                    .map(|p| {
+                        let dx = p.x - self.x;
+                        let dy = p.y - self.y;
+                        let dz = p.z - self.z;
+                        dx * dx + dy * dy + dz * dz <= BEG_LOOK_DISTANCE * BEG_LOOK_DISTANCE
+                    })
+                    .unwrap_or(false);
+                if continues {
+                    if let Some(p) = player {
+                        self.look_at(p.x, p.eye_y, p.z);
+                    }
+                    self.beg_look_time -= 1;
+                    if self.beg_look_time == 0 {
+                        self.interested = false;
+                    }
+                } else {
+                    // THE STOP (the goal's own: setIsInterested(false)
+                    // + the player's null write — the clock the zero
+                    // keeps, the flag the false wears)
+                    self.interested = false;
+                    self.beg_look_time = 0;
+                }
             } else if self.rng.next() % LOOK_INTERVAL_TICKS as u64 == 0
                 && self.rng.next_f32() < LOOK_PROBABILITY
             {
@@ -5045,6 +5182,52 @@ impl Zombie {
                 // the RandomLookAround branch: a random head yaw holds
                 self.head_yaw_off = (self.rng.next_f64() * 2.0 - 1.0) as f32 * 75.0;
                 self.head_pitch = 0.0;
+            } else if self.kind == MobKind::Wolf {
+                // THE BEGGOAL'S OWN CANUSE (prio 9 — the poll the look
+                // lanes' miss reaches: the GoalSelector's priority
+                // order the chain's own shape keeps, the prio-6/7 look
+                // goals the canUse the draws spend FIRST, the beg the
+                // free gate the bottom answers — the poll the no-RNG
+                // gate the canUse's own bytecode keeps: the
+                // getNearestPlayer walk the player's truth reads, the
+                // playerHoldingInteresting the hands loop walks, no
+                // draw the gate's own tail spends). THE
+                // TARGETINGCONDITIONS.FORNONCOMBAT().RANGE(8.0) the
+                // walk wears: the player alive, the 3D distanceToSqr
+                // under the 64 square, the checkLineOfSight default
+                // the sensing walk arms (the clip_ray the anger lane's
+                // own shape keeps — the mob eye the player eye the ray
+                // walks), the interesting hand the gate's own loop
+                // reads. THE KIND GATE the wolf alone arms (the
+                // BegGoal the Wolf's registerGoals alone keeps — the
+                // other kinds the goal never wear).
+                if let Some(p) = player.filter(|p| !p.dead) {
+                    let dx = p.x - self.x;
+                    let dy = p.y - self.y;
+                    let dz = p.z - self.z;
+                    let in_ring =
+                        dx * dx + dy * dy + dz * dz <= BEG_LOOK_DISTANCE * BEG_LOOK_DISTANCE;
+                    let los = crate::body::clip_ray(
+                        world,
+                        crate::math::Vec3::new(
+                            self.x as f32,
+                            (self.y + self.kind.eye_height()) as f32,
+                            self.z as f32,
+                        ),
+                        crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
+                    )
+                    .is_none();
+                    if in_ring && los && player_holds_wolf_interest(p.held_item_id) {
+                        // THE START (the goal's own walk: the
+                        // setIsInterested(true) the flag's word speaks,
+                        // the `40 + nextInt(40)` the adjustedTickDelay
+                        // identity arms — the one draw the goal's own
+                        // walk spends)
+                        self.interested = true;
+                        self.beg_look_time =
+                            BEG_LOOK_TIME_BASE + self.rng.next_int(BEG_LOOK_TIME_ROLL as u64);
+                    }
+                }
             }
         }
 
@@ -7801,6 +7984,9 @@ mod tests {
             dead: false,
             width: crate::body::WIDTH,
             height: crate::body::STANDING_HEIGHT,
+            // the empty hand the tests' default keeps — the beg gate's
+            // own raw material the individual tests arm
+            held_item_id: None,
         }
     }
 
@@ -12308,6 +12494,7 @@ mod tests {
             dead: false,
             width: 0.6,
             height: crate::body::STANDING_HEIGHT,
+            held_item_id: None,
         };
         let _ = z.tick(&world, Some(&pv), NOON);
         assert_eq!(z.prev_x, 32.0, "the pre-move feet the head saved");
@@ -15920,6 +16107,220 @@ mod tests {
         assert!(
             mobs[0].avoid_target.is_none(),
             "the arrival the isDone law stops"
+        );
+    }
+
+    /// THE BEGGOAL'S OWN WALK (the wolf's own registerGoals prio 9 the
+    /// dump keeps — the canUse gate the interesting hand arms, the
+    /// start's `40 + nextInt(40)` the entity's own stream draws, the
+    /// tick's setLookAt the head's stare serves, the `--lookTime` the
+    /// decrement walks, the swap-away the stop law answers)
+    #[test]
+    fn the_beg_goal_the_interesting_hand_arms() {
+        let world = flat_world();
+        let bone_id = mc_registry::item_id_by_name("bone").expect("the bone the registry keeps");
+        // THE CANUSE (the TargetingConditions.forNonCombat().range(8.0)
+        // the getNearestPlayer walk wears: the 3D 9 < 64 square, the
+        // LOS open, the bone the gate's first arm names)
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 4);
+        wolf.kind = MobKind::Wolf;
+        let mut pv = player_at(11.0, 5.0, 8.0);
+        pv.held_item_id = Some(bone_id);
+        let _ = wolf.tick(&world, Some(&pv), NOON);
+        assert!(wolf.interested, "the bone the beg arms");
+        assert!(
+            wolf.beg_look_time >= BEG_LOOK_TIME_BASE
+                && wolf.beg_look_time < BEG_LOOK_TIME_BASE + BEG_LOOK_TIME_ROLL,
+            "the band the 40 + nextInt(40) keeps: {}",
+            wolf.beg_look_time
+        );
+        // THE START'S OWN HEAD (start() the look never sets — the
+        // tick's setLookAt the next GoalSelector walk serves)
+        assert_eq!(wolf.head_yaw_off, 0.0, "the start the head never turns");
+        // THE TICK (the setLookAt(player, 10.0F, getMaxHeadXRot()) the
+        // head's own walk serves): the east player the -75 clamp wears
+        // (the yaw offset the look_at law keeps), the taller eye the
+        // pitch looks up
+        let armed = wolf.beg_look_time;
+        let _ = wolf.tick(&world, Some(&pv), NOON);
+        assert!(wolf.interested, "the clock the continue keeps");
+        assert_eq!(wolf.beg_look_time, armed - 1, "the --lookTime the tick walks");
+        assert_eq!(wolf.head_yaw_off, -75.0, "the east stare the clamp wears");
+        assert!(wolf.head_pitch < 0.0, "the taller eye the pitch looks up");
+        // THE SWAP-AWAY (the interesting hand the re-read loses — the
+        // stop law the flag drops, the clock zeroes)
+        pv.held_item_id = None;
+        let _ = wolf.tick(&world, Some(&pv), NOON);
+        assert!(!wolf.interested, "the empty hand the stop speaks");
+        assert_eq!(wolf.beg_look_time, 0, "the stop's own law the zero keeps");
+        // THE RE-ARM (the bone's return the canUse re-answers — the
+        // goal's own cycle the gate's own truth re-opens)
+        pv.held_item_id = Some(bone_id);
+        let _ = wolf.tick(&world, Some(&pv), NOON);
+        assert!(wolf.interested, "the bone's return the beg re-arms");
+    }
+
+    /// THE BEGGOAL'S OWN GATES (the range the 64 square keeps, the LOS
+    /// the checkLineOfSight default arms, the non-interest stack the
+    /// hands loop refuses, the dead player the alive gate skips)
+    #[test]
+    fn the_beg_gate_the_ring_the_wall_and_the_hand_refuse() {
+        let bone_id = mc_registry::item_id_by_name("bone").expect("the bone the registry keeps");
+        // THE RING'S OWN EDGE (9 east — the 81 the 64 square refuses)
+        let world = flat_world();
+        let mut far = Zombie::new(1, 8.0, 5.0, 8.0, 4);
+        far.kind = MobKind::Wolf;
+        let mut pv = player_at(17.0, 5.0, 8.0);
+        pv.held_item_id = Some(bone_id);
+        let _ = far.tick(&world, Some(&pv), NOON);
+        assert!(
+            !far.interested && far.beg_look_time == 0,
+            "the 9-block ring the gate refuses"
+        );
+        // THE WALL (the checkLineOfSight default the sensing walk arms
+        // — the stone column the ray walks into)
+        let mut walled = flat_world();
+        walled.set(10, 5, 8, crate::world::STONE);
+        walled.set(10, 6, 8, crate::world::STONE);
+        let mut shy = Zombie::new(2, 8.0, 5.0, 8.0, 4);
+        shy.kind = MobKind::Wolf;
+        let mut close = player_at(11.0, 5.0, 8.0);
+        close.held_item_id = Some(bone_id);
+        let _ = shy.tick(&walled, Some(&close), NOON);
+        assert!(
+            !shy.interested && shy.beg_look_time == 0,
+            "the wall the LOS gate refuses"
+        );
+        // THE NON-INTEREST STACK (the iron sword the hands loop's two
+        // arms refuse — the bone's is() and the tag's is() both false)
+        let sword_id =
+            mc_registry::item_id_by_name("iron_sword").expect("the sword the registry keeps");
+        let mut armed = Zombie::new(3, 8.0, 5.0, 8.0, 4);
+        armed.kind = MobKind::Wolf;
+        let mut pv2 = player_at(11.0, 5.0, 8.0);
+        pv2.held_item_id = Some(sword_id);
+        let _ = armed.tick(&world, Some(&pv2), NOON);
+        assert!(
+            !armed.interested && armed.beg_look_time == 0,
+            "the sword the gate refuses"
+        );
+        // THE DEAD PLAYER (the isAlive gate the canUse walk keeps)
+        let mut quiet = Zombie::new(4, 8.0, 5.0, 8.0, 4);
+        quiet.kind = MobKind::Wolf;
+        let mut dead = player_at(11.0, 5.0, 8.0);
+        dead.held_item_id = Some(bone_id);
+        dead.dead = true;
+        let _ = quiet.tick(&world, Some(&dead), NOON);
+        assert!(
+            !quiet.interested && quiet.beg_look_time == 0,
+            "the dead player the gate refuses"
+        );
+    }
+
+    /// THE BEGGOAL'S OWN FOOD LANE (the WOLF_FOOD tag the
+    /// `Wolf.isFood` walk rides — the porkchop the MEAT tag's own word
+    /// speaks, the rabbit_stew the direct value keeps, the gate the
+    /// beg arms; the tag's own 18 values the json order pins)
+    #[test]
+    fn the_beg_food_lanes_the_tag_names() {
+        let world = flat_world();
+        // THE MEAT TAG'S OWN WORD (the porkchop the isFood arm answers)
+        let pork_id =
+            mc_registry::item_id_by_name("porkchop").expect("the porkchop the registry keeps");
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 4);
+        wolf.kind = MobKind::Wolf;
+        let mut pv = player_at(11.0, 5.0, 8.0);
+        pv.held_item_id = Some(pork_id);
+        let _ = wolf.tick(&world, Some(&pv), NOON);
+        assert!(wolf.interested, "the porkchop the food lane arms");
+        // THE TAG'S OWN VALUES (the wolf_food.json the jar keeps — the
+        // MEAT tag's eleven the first entry expands, the fish lane's
+        // six + the rabbit_stew the direct values speak)
+        assert_eq!(
+            WOLF_FOOD_ITEMS,
+            [
+                "beef",
+                "chicken",
+                "cooked_beef",
+                "cooked_chicken",
+                "cooked_mutton",
+                "cooked_porkchop",
+                "cooked_rabbit",
+                "mutton",
+                "porkchop",
+                "rabbit",
+                "rotten_flesh",
+                "cod",
+                "cooked_cod",
+                "salmon",
+                "cooked_salmon",
+                "tropical_fish",
+                "pufferfish",
+                "rabbit_stew",
+            ]
+        );
+        // THE GATE'S OWN RESOLUTION (the registry's own names the gate
+        // reads — every tagged name resolves, the bone the first arm
+        // keeps, the unknown id the false answer wears)
+        for name in WOLF_FOOD_ITEMS {
+            assert!(
+                mc_registry::item_id_by_name(name).is_some(),
+                "the tagged name {} the registry keeps",
+                name
+            );
+            assert!(player_holds_wolf_interest(mc_registry::item_id_by_name(name)));
+        }
+        assert!(player_holds_wolf_interest(mc_registry::item_id_by_name("bone")));
+        assert!(!player_holds_wolf_interest(None), "the empty hand refuses");
+        assert!(
+            !player_holds_wolf_interest(Some(999_999)),
+            "the unknown id the resolution refuses"
+        );
+    }
+
+    /// THE BEGGOAL'S OWN CONFLICTS (the prio-6 look's running word the
+    /// beg start blocks — the GoalSelector's priority order the chain's
+    /// own shape keeps; the stateless kinds the kind gate refuses; the
+    /// sitting body the beg LOOK lane keeps — the JUMP+MOVE pair the
+    /// sit goal holds the LOOK flag never conflicts)
+    #[test]
+    fn the_beg_priority_the_kinds_and_the_sit_keep() {
+        let world = flat_world();
+        let bone_id = mc_registry::item_id_by_name("bone").expect("the bone the registry keeps");
+        // THE PRIO-6 LOOK'S OWN RUNNING WORD (the look goal armed the
+        // beg's canUse never polls — the blocked goal the start never
+        // arms, the chain's own order the priority law keeps)
+        let mut looking = Zombie::new(1, 8.0, 5.0, 8.0, 4);
+        looking.kind = MobKind::Wolf;
+        looking.look_ticks = LOOK_INTERVAL_TICKS;
+        let mut pv = player_at(11.0, 5.0, 8.0);
+        pv.held_item_id = Some(bone_id);
+        let _ = looking.tick(&world, Some(&pv), NOON);
+        assert!(
+            !looking.interested && looking.beg_look_time == 0,
+            "the running look the beg start stills"
+        );
+        // THE STATELESS KINDS (the BegGoal the Wolf's registerGoals
+        // alone keeps — the zombie the bone-holder's stare never wears)
+        let mut z = Zombie::new(2, 8.0, 5.0, 8.0, 4);
+        let _ = z.tick(&world, Some(&pv), NOON);
+        assert!(
+            !z.interested && z.beg_look_time == 0,
+            "the zombie the kind gate refuses"
+        );
+        // THE SITTING BODY (the sit goal's JUMP+MOVE EnumSet the LOOK
+        // flag never blocks — the sitting wolf the beg keeps, the
+        // stroll the sit's own flags still)
+        let mut seated = Zombie::new(3, 8.0, 5.0, 8.0, 4);
+        seated.kind = MobKind::Wolf;
+        seated.ordered_to_sit = true;
+        let before = (seated.x, seated.z);
+        let _ = seated.tick(&world, Some(&pv), NOON);
+        assert!(seated.interested, "the sitting body the beg keeps");
+        assert_eq!(
+            (seated.x, seated.z),
+            before,
+            "the sit the feet never move"
         );
     }
 }
