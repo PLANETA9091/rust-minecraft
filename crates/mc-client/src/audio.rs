@@ -26,7 +26,6 @@ pub struct Track {
     pub sample_rate: u32,
     pub channels: usize,
     /// frames == samples.len() / channels (one frame = one sample per channel)
-    #[cfg_attr(not(test), expect(dead_code))]
     pub frames: u64,
     pub samples: Vec<f32>,
 }
@@ -360,6 +359,56 @@ pub fn apply_gain_and_pitch(track: &Track, volume: f32, pitch: f32) -> Track {
     }
 }
 
+/// The positioned voice's own stereo fold on the decoded samples (the
+/// lateral pan law `sound::lateral_pan` computes — the log's ` s` field
+/// the backend mirrors): the MONO track the two-speaker pair becomes, the
+/// per-ear gains the linear family's own slice keeps — the right source
+/// (+1.0) the left speaker silences, the center (0.0) both ears keep
+/// (OpenAL's own stereo rendering of a mono source, the front/back
+/// symmetry the no-HRTF pipeline speaks). The STEREO track the identity
+/// the stereo-direct rule keeps (OpenAL never positions a multi-channel
+/// source — the pan field cannot fold), the center voice the identity the
+/// no-op needs. Pure, deterministic, the length never moves.
+pub fn apply_pan(track: &Track, pan: f32) -> Track {
+    if pan == 0.0 || track.channels != 1 {
+        return track.clone();
+    }
+    let left = 1.0 - pan.max(0.0);
+    let right = 1.0 - (-pan).max(0.0);
+    let mut samples = Vec::with_capacity(track.samples.len() * 2);
+    for s in &track.samples {
+        samples.push(s * left);
+        samples.push(s * right);
+    }
+    Track {
+        sample_rate: track.sample_rate,
+        channels: 2,
+        frames: track.frames,
+        samples,
+    }
+}
+
+/// The log line's own parameter tail: `"v0.250000 p0.500000"` the plain
+/// lanes wear, `"... s+0.500000"` the panned voice's stereo tail rides —
+/// (volume, pitch, pan) the fold's triple answers, the defaults the
+/// identity values keep (1.0 / 1.0 / 0.0), the garbage the defaults
+/// never let break a voice.
+fn parse_voice_params(params: &str) -> (f32, f32, f32) {
+    let mut volume = 1.0;
+    let mut pitch = 1.0;
+    let mut pan = 0.0;
+    for (i, tok) in params.split_whitespace().enumerate() {
+        if i == 0 {
+            volume = tok.parse().unwrap_or(1.0);
+        } else if let Some(p) = tok.strip_prefix('p') {
+            pitch = p.parse().unwrap_or(1.0);
+        } else if let Some(s) = tok.strip_prefix('s') {
+            pan = s.parse().unwrap_or(0.0);
+        }
+    }
+    (volume, pitch, pan)
+}
+
 /// Menu audio player: owns the output backend + the discovered file paths,
 /// mirrors the deterministic `MusicScheduler` event log onto real music and
 /// the App UI-sound log onto real one-shots (ui.button.click). Lives for the
@@ -471,9 +520,11 @@ impl MenuMusic {
     }
 
     /// Mirror new block-sound events ("{event} @{tick} #{file} v{vol}
-    /// p{pitch}" — the block-sound lane's own log) onto the one-shot
+    /// p{pitch}" — the block-sound lane's own log, the positioned pan
+    /// lane's ` s{:+.6}` tail the stereo voices ride) onto the one-shot
     /// channel, the vanilla channel's gain + rate fold applied to the
-    /// decoded official .ogg. The path resolves on demand through the
+    /// decoded official .ogg and the lateral pan the mono file's
+    /// two-speaker split answers. The path resolves on demand through the
     /// generated table (hundreds of events, the log names only what
     /// plays); unreadable files are skipped — audio never breaks the
     /// client.
@@ -488,9 +539,7 @@ impl MenuMusic {
             else {
                 continue;
             };
-            let mut nums = params.split(" p");
-            let volume: f32 = nums.next().and_then(|s| s.parse().ok()).unwrap_or(1.0);
-            let pitch: f32 = nums.next().and_then(|s| s.parse().ok()).unwrap_or(1.0);
+            let (volume, pitch, pan) = parse_voice_params(params);
             let Some(path) = block_sound_file(Path::new("assets-cache/jar"), event, file_idx)
             else {
                 continue;
@@ -498,6 +547,7 @@ impl MenuMusic {
             match std::fs::read(&path).ok().as_deref().map(decode_audio) {
                 Some(Ok(t)) => {
                     let t = apply_gain_and_pitch(&t, volume, pitch);
+                    let t = apply_pan(&t, pan);
                     self.output.play_ui(t);
                 }
                 other => {
@@ -579,6 +629,75 @@ mod tests {
         assert!(o.playing());
         o.stop();
         assert!(!o.playing());
+    }
+
+    /// THE PARAM TAIL'S OWN WALK: the plain 2-token shape the block lanes
+    /// wear, the panned 3-token shape the stereo tail rides, the garbage
+    /// the identity defaults keep — the parse never lets a malformed line
+    /// break a voice.
+    #[test]
+    fn parse_voice_params_walks_the_shapes() {
+        // the plain pair the 4-field log lines carry
+        let (v, p, s) = parse_voice_params("0.250000 p0.500000");
+        assert_eq!(v, 0.25);
+        assert_eq!(p, 0.5);
+        assert_eq!(s, 0.0);
+        // the panned triple the positioned lane's tail wears (the signed
+        // pan the `{:+.6}` format speaks)
+        let (v, p, s) = parse_voice_params("0.750000 p1.000000 s+0.325000");
+        assert_eq!(v, 0.75);
+        assert_eq!(p, 1.0);
+        assert_eq!(s, 0.325);
+        let (_, _, s) = parse_voice_params("1.000000 p1.000000 s-0.500000");
+        assert_eq!(s, -0.5);
+        // the defaults the identity keeps — the empty tail and the
+        // garbage tokens never break the voice
+        let (v, p, s) = parse_voice_params("");
+        assert_eq!((v, p, s), (1.0, 1.0, 0.0));
+        let (v, p, s) = parse_voice_params("not-a-number pwhat swhatever");
+        assert_eq!((v, p, s), (1.0, 1.0, 0.0));
+    }
+
+    /// THE STEREO FOLD'S OWN WALK: the mono + pan the two-speaker pair
+    /// becomes (the per-ear gains the linear slice keeps), the center and
+    /// the stereo source the identity keeps, the length the fold never
+    /// moves.
+    #[test]
+    fn apply_pan_folds_the_mono_pair_and_keeps_the_identities() {
+        let mono = Track {
+            sample_rate: 22050,
+            channels: 1,
+            frames: 3,
+            samples: vec![1.0, 0.5, -0.25],
+        };
+        // the right-half pan: the left ear the linear slice halves, the
+        // right ear the full keeps
+        let panned = apply_pan(&mono, 0.5);
+        assert_eq!(panned.channels, 2);
+        assert_eq!(panned.frames, 3);
+        assert_eq!(panned.sample_rate, 22050);
+        assert_eq!(panned.samples, vec![0.5, 1.0, 0.25, 0.5, -0.125, -0.25]);
+        // the pure left (-1.0): the left ear full, the right ear silent
+        let left = apply_pan(&mono, -1.0);
+        assert_eq!(left.samples, vec![1.0, 0.0, 0.5, 0.0, -0.25, 0.0]);
+        // the pure right (+1.0): the left ear silent, the right ear full
+        let right = apply_pan(&mono, 1.0);
+        assert_eq!(right.samples, vec![0.0, 1.0, 0.0, 0.5, 0.0, -0.25]);
+        // the center the identity keeps: the mono track the mono stays
+        let center = apply_pan(&mono, 0.0);
+        assert_eq!(center.channels, 1);
+        assert_eq!(center.samples, mono.samples);
+        // the stereo source the stereo-direct rule keeps (OpenAL never
+        // positions a multi-channel source — the pan cannot fold)
+        let stereo = Track {
+            sample_rate: 22050,
+            channels: 2,
+            frames: 2,
+            samples: vec![1.0, 0.0, 0.0, 1.0],
+        };
+        let kept = apply_pan(&stereo, 0.5);
+        assert_eq!(kept.channels, 2);
+        assert_eq!(kept.samples, stereo.samples);
     }
 
     #[test]

@@ -9358,6 +9358,14 @@ impl App {
                         f64::from(cam.pos.z),
                     )
                 };
+                // the listener's own yaw the world camera's read answers
+                // (the body's current angles the camera's first arm
+                // keeps, the flight camera the deterministic scenes
+                // speak): the render radians' 0 = -Z convention the
+                // vanilla degrees' 0 = +Z pair answers — the +180° step
+                // the body's own camera conversion wears, inverted
+                // (body.camera(): cam.yaw = yaw.to_radians() + PI)
+                let yaw = self.world_camera().yaw.to_degrees() - 180.0;
                 let sounds = &mut self.sounds;
                 self.cave_mood.tick(
                     self.frame,
@@ -9365,6 +9373,7 @@ impl App {
                     px,
                     eye_y,
                     pz,
+                    yaw as f32,
                     sounds,
                 );
             }

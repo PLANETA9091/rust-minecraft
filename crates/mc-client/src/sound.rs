@@ -139,6 +139,47 @@ pub fn attenuate(volume: f32, dist: f64, max_distance: f64) -> f32 {
     (f64::from(volume) * linear).min(1.0) as f32
 }
 
+/// THE LATERAL PAN LAW (OpenAL's own stereo fold the positioned voices
+/// speak — the AL_POSITION source + the AL_ORIENTATION listener pair
+/// the real engine's `Listener` tick arms; the `Channel.linearAttenuation`
+/// source the distance law above speaks rides the same pipeline):
+///
+/// * the ear→source direction the listener's RIGHT axis answers: the
+///   vanilla yaw's own degrees the entity rotations speak (0 = +Z, the
+///   forward the `(-sin, cos)` fold wears — the same pair the boat
+///   paddle's `paddle_side_offset` and the eat aim's `-yaw * rad` ride),
+///   the right axis the yaw + 90° step wears — `(-cos, -sin)` on the
+///   (x, z) plane (facing south the west answers the right hand, the
+///   compass the vanilla map's own layout keeps);
+/// * the per-ear gains the LINEAR family the distance law keeps: the
+///   pure-side source (+1.0) the far speaker silences, the front and
+///   the behind (0.0) both ears keep — the vertical lift never pans
+///   (the horizontal axis the right vector wears, the straight-overhead
+///   source the center pair speaks);
+/// * the degenerate zero-length direction (the source INSIDE the ear)
+///   the honest center 0.0 keeps — the same arm the reach's no-NaN
+///   note wears;
+/// * the f32 rounding the [-1.0, 1.0] clamp never lets a hair past the
+///   pure sides.
+///
+/// The pan rides the log's ` s{:+.6}` field the backend's stereo fold
+/// answers (the mono file the two-speaker pair becomes, the gains the
+/// same linear law's per-ear slice keeps).
+pub fn lateral_pan(dx: f64, dy: f64, dz: f64, yaw_deg: f32) -> f32 {
+    let len2 = dx * dx + dy * dy + dz * dz;
+    if len2 == 0.0 {
+        return 0.0;
+    }
+    let inv = 1.0 / len2.sqrt();
+    let yaw = f64::from(yaw_deg).to_radians();
+    // the right axis (x, z): the yaw + 90° fold the forward's
+    // `(-sin, cos)` pair wears — facing south the west answers the
+    // right hand
+    let (rx, rz) = (-yaw.cos(), -yaw.sin());
+    let pan = (dx * inv * rx + dz * inv * rz) as f32;
+    pan.clamp(-1.0, 1.0)
+}
+
 /// The deterministic block-sound engine: the log the tests pin and the
 /// audio backend mirrors. The RNG is the music scheduler's own LCG (the
 /// same seed scramble, the same step constants) — the whole audio lane
@@ -523,6 +564,35 @@ impl BlockSounds {
         self.play_voice(tick, event, gain, pitch);
     }
 
+    /// THE POSITIONED VOICE'S STEREO FOLD (the lateral pan law the
+    /// `lateral_pan` doc speaks — the AL_POSITION + AL_ORIENTATION pair
+    /// the real engine's listener answers): the distance law's gain the
+    /// reach folds first, the pan the log's ` s{:+.6}` tail carries —
+    /// the backend's stereo fold the mono file's two-speaker split
+    /// plays. The CENTER voice (pan 0.0) the identity the plain
+    /// positioned lane keeps: the same 4-field shape the unmigrated
+    /// lanes wear, no field the fold's no-op never needs.
+    pub fn play_voice_at_pan(
+        &mut self,
+        tick: u64,
+        event: &str,
+        volume: f32,
+        pitch: f32,
+        dist: f64,
+        pan: f32,
+    ) {
+        if pan == 0.0 {
+            return self.play_voice_at(tick, event, volume, pitch, dist);
+        }
+        let gain = attenuate(volume, dist, voice_max_distance(volume));
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        self.events.push(format!(
+            "{event} @{tick} #{file} v{gain:.6} p{pitch:.6} s{pan:+.6}"
+        ));
+    }
+
     /// THE POSITIONED BLOCK LANE (the 2001 event's own walk the mob's
     /// bite rides — `LevelEventHandler.levelEvent` case 2001 the dig
     /// lane's completion speaks, the sheep's EatBlockGoal the same
@@ -586,9 +656,12 @@ pub const MOOD_SOUND_POSITION_OFFSET: f64 = 2.0;
 /// caller's world answers (the `world.light` grid the networked columns
 /// keep, the column walk the procedural scene's honest fallback speaks —
 /// the same pair the F3 debug lane's eye light reads), the eye anchor the
-/// body's own `x, y + eyeHeight(), z` walk keeps, and the one-shot the
-/// positioned lane logs (the reach — the play position's own distance
-/// from the ear — the linear gain fold the distance law speaks).
+/// body's own `x, y + eyeHeight(), z` walk keeps, the listener's own yaw
+/// the camera's read answers (the stereo pan the ray's lateral split
+/// speaks), and the one-shot the positioned lane logs (the reach — the
+/// play position's own distance from the ear — the linear gain fold the
+/// distance law speaks, the lateral pan the ray's right-axis split the
+/// `lateral_pan` law answers).
 pub struct CaveMood {
     rng: u64,
     moodiness: f32,
@@ -616,6 +689,7 @@ impl CaveMood {
 
     /// THE MACHINE'S OWN TICK (the lambda's walk, verbatim): one sample,
     /// one spend, the fire or the calm.
+    #[allow(clippy::too_many_arguments)]
     pub fn tick(
         &mut self,
         tick: u64,
@@ -623,6 +697,7 @@ impl CaveMood {
         px: f64,
         eye_y: f64,
         pz: f64,
+        yaw: f32,
         sounds: &mut BlockSounds,
     ) {
         // the sample extent's own range: `blockSearchExtent * 2 + 1` —
@@ -665,15 +740,17 @@ impl CaveMood {
             let dist = (dx * dx + dy * dy + dz * dz).sqrt();
             // the play position rides the ray `dir * (dist + 2.0)` past
             // the spot — the vanilla walk's own `player + dx / dist *
-            // (dist + 2.0)` triple (offsets 198-328). The one-shot lane
-            // speaks no panning yet: the position fold lands ONLY through
-            // the reach (the play position's own distance from the ear IS
-            // dist + 2.0 — the play position lies on the eye→spot ray), so
-            // the vanilla's dir/dist divide never runs here (no NaN the
-            // degenerate eye-cell sample could speak — reach 2.0 answers
-            // it honestly).
+            // (dist + 2.0)` triple (offsets 198-328). The play position
+            // lies ON the eye→spot ray, so the ray's own direction the
+            // stereo pan's split answers too (the same vector the
+            // vanilla's dir/dist divide walks — the listener's yaw the
+            // caller's camera read carries, the lateral split the
+            // `lateral_pan` law's right-axis fold speaks, the degenerate
+            // zero-length ray the honest center 0.0 keeps — no NaN the
+            // eye-cell sample could speak, reach 2.0 the floor answers).
             let reach = dist + MOOD_SOUND_POSITION_OFFSET;
-            sounds.play_voice_at(tick, MOOD_EVENT, 1.0, 1.0, reach);
+            let pan = lateral_pan(dx, dy, dz, yaw);
+            sounds.play_voice_at_pan(tick, MOOD_EVENT, 1.0, 1.0, reach, pan);
             self.moodiness = 0.0;
         } else {
             // the calm (offsets 352-361): the floor the zero keeps
@@ -1186,6 +1263,86 @@ mod tests {
         }
     }
 
+    /// THE LATERAL PAN LAW'S OWN WALK (the right-axis fold the
+    /// `lateral_pan` doc speaks): the cardinal faces the compass
+    /// answers, the diagonal the half-power split speaks, the vertical
+    /// lift and the degenerate zero-length ray the center keeps.
+    #[test]
+    fn the_lateral_pan_splits_the_listener_right_axis() {
+        // facing the vanilla south (yaw 0): the west source the right
+        // hand answers (+1.0), the east the left (-1.0), the south (in
+        // front) and the north (behind) both ears keep — the front/back
+        // symmetry the no-HRTF stereo fold speaks
+        assert!((lateral_pan(-2.0, 0.0, 0.0, 0.0) - 1.0).abs() < 1e-6);
+        assert!((lateral_pan(3.0, 0.0, 0.0, 0.0) + 1.0).abs() < 1e-6);
+        assert!(lateral_pan(0.0, 0.0, 5.0, 0.0).abs() < 1e-6);
+        assert!(lateral_pan(0.0, 0.0, -5.0, 0.0).abs() < 1e-6);
+        // facing the vanilla west (yaw 90): the north source the right
+        // hand answers (+1.0), the south the left
+        assert!((lateral_pan(0.0, 0.0, -4.0, 90.0) - 1.0).abs() < 1e-6);
+        assert!((lateral_pan(0.0, 0.0, 4.0, 90.0) + 1.0).abs() < 1e-6);
+        // the 45° diagonal the sqrt(0.5) lateral speaks (the 3D
+        // normalize + the horizontal right axis keeps)
+        let diag = lateral_pan(-1.0, 0.0, 1.0, 0.0);
+        assert!((diag - 0.5f32.sqrt()).abs() < 1e-5, "{diag}");
+        // the straight-overhead ray the center keeps (the right axis the
+        // horizontal plane wears — the vertical lift never pans)
+        assert!(lateral_pan(0.0, 7.0, 0.0, 0.0).abs() < 1e-6);
+        // the degenerate zero-length direction (the source INSIDE the
+        // ear) the honest center keeps — no NaN the fold ever speaks
+        assert!(lateral_pan(0.0, 0.0, 0.0, 123.0).abs() < 1e-6);
+        assert!(!lateral_pan(0.0, 0.0, 0.0, 0.0).is_nan());
+        // the horizontal length the inv fold cancels: the far west ray
+        // the same +1.0 the near one speaks
+        assert!((lateral_pan(-100.0, 0.0, 0.0, 0.0) - 1.0).abs() < 1e-6);
+        // the vertical offset the 3D normalize dilutes honestly: the
+        // above-side ray speaks the SMALLER lateral the geometry keeps
+        // (dx -100, dy 400 -> the lateral the len's own share answers)
+        let above_side = lateral_pan(-100.0, 400.0, 0.0, 0.0);
+        let want = (100.0f64 / (170_000.0f64).sqrt()) as f32;
+        assert!((above_side - want).abs() < 1e-5, "{above_side} vs {want}");
+    }
+
+    /// THE PAN LANE'S OWN LOG WALK: the center voice the identity the
+    /// plain positioned lane keeps (the same 4-field shape, the same
+    /// gain fold), the panned voice the ` s` tail carries — the same
+    /// reach fold the gain rides, the determinism the seeded pair keeps.
+    #[test]
+    fn the_pan_lane_logs_the_center_identity_and_the_stereo_tail() {
+        // the center voice: the identical line the plain lane speaks
+        let mut a = BlockSounds::new(11);
+        let mut b = BlockSounds::new(11);
+        a.play_voice_at(36, "entity.cow.ambient", 1.0, 1.0, 4.0);
+        b.play_voice_at_pan(36, "entity.cow.ambient", 1.0, 1.0, 4.0, 0.0);
+        assert_eq!(a.events, b.events, "the center the identity keeps");
+        assert_eq!(a.events.len(), 1);
+        assert!(!a.events[0].contains(" s"), "no tail the no-op needs");
+
+        // the panned voice: the ` s` tail rides, the gain the same reach
+        // fold speaks
+        let mut c = BlockSounds::new(11);
+        c.play_voice_at_pan(36, "entity.cow.ambient", 1.0, 1.0, 4.0, 0.5);
+        let gain = attenuate(1.0, 4.0, voice_max_distance(1.0));
+        let line = &c.events[0];
+        assert!(
+            line.contains(&format!(" v{gain:.6} p1.000000 s+0.500000")),
+            "the tail the pan law speaks: {line}"
+        );
+
+        // the negative side the signed tail carries, the file pick the
+        // same seed's own LCG draw answers (the prefix before the gain
+        // field the determinism pins)
+        let mut d = BlockSounds::new(11);
+        d.play_voice_at_pan(36, "entity.cow.ambient", 1.0, 1.0, 4.0, -0.25);
+        assert!(d.events[0].contains(" s-0.250000"), "{}", d.events[0]);
+        assert_eq!(
+            c.events[0].split(" v").next(),
+            d.events[0].split(" v").next(),
+            "the same event/tick/file the same seed speaks"
+        );
+    }
+
+
     /// THE MOOD'S OWN LAW WALK (the lambda's arithmetic the tests bank):
     /// the darkness banks 1/6000 a tick, the fire at 6000 dark ticks, the
     /// reset after, the daylight and the torches spend back, the floor
@@ -1210,7 +1367,7 @@ mod tests {
         // LEGACY_CAVE_SETTINGS keeps
         let mut fire_tick: Option<u64> = None;
         for i in 0..(MOOD_TICK_DELAY + 16) as u64 {
-            m.tick(i, &record, 10.3, 20.7, 30.9, &mut log);
+            m.tick(i, &record, 10.3, 20.7, 30.9, 0.0, &mut log);
             if !log.events.is_empty() {
                 fire_tick = Some(i);
                 break;
@@ -1239,10 +1396,23 @@ mod tests {
         let p: f32 = line
             .split(" p")
             .nth(1)
+            .and_then(|s| s.split(' ').next())
             .and_then(|s| s.parse().ok())
             .expect("the log carries the pitch");
         assert!((v - want_gain).abs() < 1e-6, "gain {v} vs reach {reach}");
         assert!((p - 1.0).abs() < 1e-6, "the pitch the 1.0 law keeps");
+        // the stereo tail the lateral pan law speaks: the listener faces
+        // the vanilla south (yaw 0.0), the ray's lateral split the same
+        // dx/dy/dz the reach fold walked answers — the .5-cell center vs
+        // the .3 eye keeps the ray's x reach OFF zero (dx = k - 9.8, the
+        // integer k the cell grid keeps), so the ` s` field the fire
+        // always wears here
+        let want_pan = lateral_pan(dx, dy, dz, 0.0);
+        assert!(want_pan != 0.0, "the test's own geometry never centers");
+        assert!(
+            line.ends_with(&format!(" s{want_pan:+.6}")),
+            "the lateral tail the ray's split speaks: {line}"
+        );
         // the reset: the next dark walk starts from zero again
         assert_eq!(m.moodiness(), 0.0);
     }
@@ -1258,7 +1428,7 @@ mod tests {
         let torch = |_: i32, _: i32, _: i32| (0u8, 2u8);
         let mut m = CaveMood::new(7);
         for i in 0..20_000u64 {
-            m.tick(i, &torch, 10.3, 20.7, 30.9, &mut log);
+            m.tick(i, &torch, 10.3, 20.7, 30.9, 0.0, &mut log);
         }
         assert!(log.events.is_empty(), "the torch never banks");
         assert_eq!(m.moodiness(), 0.0);
@@ -1267,7 +1437,7 @@ mod tests {
         let sky = |_: i32, _: i32, _: i32| (15u8, 0u8);
         let mut m = CaveMood::new(7);
         for i in 0..5_000u64 {
-            m.tick(i, &sky, 10.3, 20.7, 30.9, &mut log);
+            m.tick(i, &sky, 10.3, 20.7, 30.9, 0.0, &mut log);
         }
         assert_eq!(m.moodiness(), 0.0);
         // the block-1 sample spends NOTHING ((1-1)/6000 = 0) — the dim
@@ -1275,7 +1445,7 @@ mod tests {
         let dim = |_: i32, _: i32, _: i32| (0u8, 1u8);
         let mut m = CaveMood::new(7);
         for i in 0..5_999u64 {
-            m.tick(i, &dim, 10.3, 20.7, 30.9, &mut log);
+            m.tick(i, &dim, 10.3, 20.7, 30.9, 0.0, &mut log);
         }
         assert_eq!(m.moodiness(), 0.0);
         // the mixed world: the dark ticks bank 1/6000, the lit ticks
@@ -1290,7 +1460,7 @@ mod tests {
         };
         let mut m = CaveMood::new(7);
         for i in 0..6_000u64 {
-            m.tick(i, &world, 10.3, 20.7, 30.9, &mut log);
+            m.tick(i, &world, 10.3, 20.7, 30.9, 0.0, &mut log);
         }
         assert!(log.events.is_empty(), "the lit world never fires");
         assert!(m.moodiness() < 1.0);
@@ -1314,7 +1484,7 @@ mod tests {
                 (0u8, 0u8)
             };
             for i in 0..MOOD_TICK_DELAY {
-                m.tick(i as u64, &record, 100.5, 50.5, 100.5, &mut log);
+                m.tick(i as u64, &record, 100.5, 50.5, 100.5, 0.0, &mut log);
             }
         }
         let cells = seen.borrow();
