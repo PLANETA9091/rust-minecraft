@@ -976,6 +976,43 @@ mod tests {
         }
     }
 
+    /// Real-data check (NOT run on CI): the CAVE MOOD's own pool — the
+    /// `ambient.cave` event the LEGACY_CAVE_SETTINGS machine plays, the
+    /// 23 plain-string rows (`ambient/cave/cave1..23`) the 26.2
+    /// sounds.json banks, every file decodes (the fetch the generator's
+    /// AMBIENT_CAVE_EVENTS walk speaks; the same shape the mob-voice and
+    /// interaction walks wear).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn real_cave_mood_oggs_decode() {
+        let candidates = [
+            PathBuf::from("assets-cache/jar"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets-cache/jar"),
+        ];
+        let Some(root) = candidates.into_iter().find(|p| p.is_dir()) else {
+            eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
+            return;
+        };
+        let files = discover_event_files(&root, crate::sound::MOOD_EVENT);
+        assert_eq!(files.len(), 23, "the cave pool's 23 rows resolve");
+        for (key, path) in &files {
+            let bytes = std::fs::read(path).expect("read");
+            let (rate, frames) = probe_frames(&bytes)
+                .unwrap_or_else(|e| panic!("{key}: probe failed: {e}"));
+            let t =
+                decode_audio(&bytes).unwrap_or_else(|e| panic!("{key}: decode failed: {e}"));
+            assert_eq!(t.frames, frames, "{key}: probe and decode must agree");
+            // a cave ambience is the pool's own long breath — the bound
+            // the official durations keep, widened to 14s the pool's
+            // longest file speaks: cave19's drawn-out wind (13.335s —
+            // the moody cow's 3.5s the mob walk speaks is a VOICE bound,
+            // the cave pool the deeper answer wears)
+            let secs = frames as f64 / rate as f64;
+            assert!(secs > 0.0 && secs < 14.0, "{key}: got {secs:.3}s");
+            println!("  {key} <- {} ({frames} frames, {secs:.3}s)", path.display());
+        }
+    }
+
     #[test]
     fn sync_plays_and_stops_game_music() {
         // temp runtime root holding a sound file at EVERY official path the

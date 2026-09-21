@@ -5748,6 +5748,14 @@ pub struct App {
     /// table, the weighted official file pick, the event log the audio
     /// backend mirrors ("block.stone.hit @<tick> #<file> v<vol> p<pitch>").
     pub sounds: crate::sound::BlockSounds,
+    /// THE CAVE MOOD'S OWN MACHINE (sound.rs's `CaveMood`): the
+    /// ambient.cave lane the vanilla `BiomeAmbientSoundsHandler`'s mood
+    /// lambda speaks — the per-tick random dark-spot sample around the
+    /// eye, the moodiness accumulator the darkness banks 1/6000 a tick,
+    /// the fire at 1.0 the LEGACY_CAVE_SETTINGS ride (the 6000 the
+    /// tickDelay, the ±8 the extent, the 2.0 the play offset), the
+    /// positioned one-shot the log the backend mirrors.
+    pub cave_mood: crate::sound::CaveMood,
     /// THE SPRINT TRIGGER'S OWN STATE (26.2 LocalPlayer.aiStep's own
     /// law — the audited sprintTriggerTime field): the double-tap-W
     /// window the head decrement spends (`if > 0: --`, pcs 0-14), the
@@ -6995,6 +7003,7 @@ impl App {
             frame: 0,
             music: crate::music::MusicScheduler::new(seed),
             sounds: crate::sound::BlockSounds::new(seed),
+            cave_mood: crate::sound::CaveMood::new(seed),
             paused: false,
             world_quads: None,
             world_size: 0,
@@ -9321,6 +9330,43 @@ impl App {
                 }
                 self.mobs
                     .retain(|m| m.death_time < crate::mob::DEATH_DURATION_TICKS);
+            }
+            // THE CAVE MOOD TICK (the vanilla ambient-sound handler's own
+            // beat — the client level's per-tick walk, both worlds the
+            // client's level keeps): one random dark-spot sample around
+            // the eye, the moodiness accumulator the pitch dark banks
+            // 1/6000 a tick, the fire at 1.0 the LEGACY_CAVE_SETTINGS
+            // ride — the positioned one-shot the log the backend mirrors.
+            // The anchor the body's own eye keeps (the F3 lane's read —
+            // b.x, b.y + eyeHeight(), b.z), the deterministic scenes the
+            // flight camera's own eye answers; the light pair the world's
+            // own lane answers (the grid the networked columns keep, the
+            // column walk the procedural scene's fallback speaks — the
+            // same pair the debug eye light reads).
+            if let Some(world) = if self.world_is_network {
+                self.net_world.as_ref()
+            } else {
+                self.offline_world.as_ref()
+            } {
+                let (px, eye_y, pz) = if let Some(b) = self.body.as_ref() {
+                    (b.x, b.y + b.eye_height(), b.z)
+                } else {
+                    let cam = self.world_camera();
+                    (
+                        f64::from(cam.pos.x),
+                        f64::from(cam.pos.y),
+                        f64::from(cam.pos.z),
+                    )
+                };
+                let sounds = &mut self.sounds;
+                self.cave_mood.tick(
+                    self.frame,
+                    &|x, y, z| debug_eye_light(world, x, y, z),
+                    px,
+                    eye_y,
+                    pz,
+                    sounds,
+                );
             }
         }
     }

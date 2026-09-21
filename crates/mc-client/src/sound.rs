@@ -543,6 +543,152 @@ impl BlockSounds {
     }
 }
 
+/// THE CAVE MOOD'S OWN BANK (javap `AmbientMoodSettings.LEGACY_CAVE_SETTINGS`
+/// <clinit> offsets 11-29, the 26.2 jar): the record the world's
+/// AMBIENT_SOUNDS environment attribute answers — the sound event the
+/// `SoundEvents.AMBIENT_CAVE` constant holds, the 6000-tick darkness
+/// dividend (`sipush 6000`), the ±8 sample extent (`bipush 8`), the 2.0
+/// play offset (`ldc2_w 2.0`). No biome in the 26.2 jar overrides the
+/// attribute (the 66 worldgen biome jsons' `effects` carry colors only —
+/// zero `ambient_sound` rows), so the LEGACY settings ARE the live machine.
+pub const MOOD_EVENT: &str = "ambient.cave";
+pub const MOOD_TICK_DELAY: i64 = 6000;
+pub const MOOD_BLOCK_SEARCH_EXTENT: i32 = 8;
+pub const MOOD_SOUND_POSITION_OFFSET: f64 = 2.0;
+
+/// THE MOOD MACHINE (javap `BiomeAmbientSoundsHandler.lambda$tick$1`, the
+/// 26.2 jar — the tick() lambda the `AmbientSounds.mood()` ifPresent arm
+/// feeds, one walk per game tick):
+///
+/// * the SAMPLE: three `random.nextInt(extent * 2 + 1)` draws in the x,
+///   y, z order the bytecode speaks (offsets 1-86), each `player.<axis> +
+///   draw - extent`, `BlockPos.containing` the floor — ONE random cell
+///   around the eye per tick;
+/// * the ACCUMULATOR (`moodiness`): a sky-lit sample spends
+///   `sky / 15.0F * 0.001F` (offsets 105-120 — the daylight's own calm),
+///   a sky-dark sample spends `(blockLight - 1) / tickDelay` (offsets
+///   126-150) — the NEGATIVE spend the complete darkness answers (block
+///   0: `(0 - 1) / 6000`, the subtract of a negative the += 1/6000 the
+///   mood rides; block 1 spends nothing; block 2+ spends back), so the
+///   pitch-dark tick's walk banks 1/6000 toward the mood;
+/// * the FIRE (`moodiness >= 1.0F`, offsets 153-159): the sampled cell's
+///   center rides the eye→cell ray `soundPositionOffset` (2.0) PAST the
+///   spot (`SimpleSoundInstance.forAmbientMood(event, random, player +
+///   dir * (dist + 2.0))`, offsets 164-329), the one-shot the
+///   SoundSource.AMBIENT source keeps at volume 1.0 pitch 1.0 with the
+///   LINEAR attenuation (forAmbientMood's own fconst_1 pair — no pitch
+///   shake, the AbstractSoundInstance ctor's 1.0/1.0 defaults stand), and
+///   the moodiness resets to 0.0 (offsets 344-346);
+/// * the CALM (`moodiness < 1.0F`): `Math.max(moodiness, 0.0F)` (offsets
+///   352-361) — the lit world's spend never drives the mood negative.
+///
+/// THE CLIENT'S OWN WALK: the machine is pure — the light read the
+/// caller's world answers (the `world.light` grid the networked columns
+/// keep, the column walk the procedural scene's honest fallback speaks —
+/// the same pair the F3 debug lane's eye light reads), the eye anchor the
+/// body's own `x, y + eyeHeight(), z` walk keeps, and the one-shot the
+/// positioned lane logs (the reach — the play position's own distance
+/// from the ear — the linear gain fold the distance law speaks).
+pub struct CaveMood {
+    rng: u64,
+    moodiness: f32,
+}
+
+impl CaveMood {
+    pub fn new(seed: u64) -> Self {
+        Self {
+            // the mood's own stream tag (the machines' distinct scrambles
+            // keep the determinism pins' streams apart — the mob_rng's
+            // 0x5EED_10CA, the level ambient's 0x5EED_7E11, the engine's
+            // 0x5EED_C0FF_EE12_3456 all speak their own lanes)
+            rng: seed ^ 0x5EED_C4FE_C0DE_0001,
+            moodiness: 0.0,
+        }
+    }
+
+    fn next_rand(&mut self) -> u64 {
+        self.rng = self
+            .rng
+            .wrapping_mul(0x5851_F42D_4C95_7F2D)
+            .wrapping_add(0x1405_7B7E_F767_814F);
+        self.rng >> 16
+    }
+
+    /// THE MACHINE'S OWN TICK (the lambda's walk, verbatim): one sample,
+    /// one spend, the fire or the calm.
+    pub fn tick(
+        &mut self,
+        tick: u64,
+        light: &dyn Fn(i32, i32, i32) -> (u8, u8),
+        px: f64,
+        eye_y: f64,
+        pz: f64,
+        sounds: &mut BlockSounds,
+    ) {
+        // the sample extent's own range: `blockSearchExtent * 2 + 1` —
+        // the draws' bound the lambda's first arm speaks (offsets 0-8)
+        let range = (MOOD_BLOCK_SEARCH_EXTENT * 2 + 1) as u64;
+        let extent = f64::from(MOOD_BLOCK_SEARCH_EXTENT);
+        // the three draws, x the y the z order (offsets 9-86); the
+        // RandomSource.nextInt(bound) the engine's LCG modulo answers —
+        // the same shape every deterministic draw here wears
+        let sx = px + (self.next_rand() % range) as f64 - extent;
+        let sy = eye_y + (self.next_rand() % range) as f64 - extent;
+        let sz = pz + (self.next_rand() % range) as f64 - extent;
+        let bx = sx.floor() as i32;
+        let by = sy.floor() as i32;
+        let bz = sz.floor() as i32;
+        // the light pair the caller's world answers (the SKY then the
+        // BLOCK layer the getBrightness pair speaks)
+        let (sky, block) = light(bx, by, bz);
+        if sky > 0 {
+            // the daylight's own calm (offsets 105-120): the sky level's
+            // fifteenth * 0.001F
+            self.moodiness -= (f32::from(sky) / 15.0) * 0.001;
+        } else {
+            // the darkness' own bank (offsets 126-150): the block light's
+            // minus-one over the tick delay — block 0 banks 1/6000, block
+            // 1 spends nothing, block 2+ spends back
+            self.moodiness -= (f32::from(block) - 1.0) / MOOD_TICK_DELAY as f32;
+        }
+        if self.moodiness >= 1.0 {
+            // the fire (offsets 162-346): the cell center, the eye→cell
+            // ray walked 2.0 past the spot, the positioned one-shot —
+            // volume 1.0 pitch 1.0 (forAmbientMood's own fold), the reach
+            // the linear gain's own distance speaks
+            let cx = f64::from(bx) + 0.5;
+            let cy = f64::from(by) + 0.5;
+            let cz = f64::from(bz) + 0.5;
+            let dx = cx - px;
+            let dy = cy - eye_y;
+            let dz = cz - pz;
+            let dist = (dx * dx + dy * dy + dz * dz).sqrt();
+            // the play position rides the ray `dir * (dist + 2.0)` past
+            // the spot — the vanilla walk's own `player + dx / dist *
+            // (dist + 2.0)` triple (offsets 198-328). The one-shot lane
+            // speaks no panning yet: the position fold lands ONLY through
+            // the reach (the play position's own distance from the ear IS
+            // dist + 2.0 — the play position lies on the eye→spot ray), so
+            // the vanilla's dir/dist divide never runs here (no NaN the
+            // degenerate eye-cell sample could speak — reach 2.0 answers
+            // it honestly).
+            let reach = dist + MOOD_SOUND_POSITION_OFFSET;
+            sounds.play_voice_at(tick, MOOD_EVENT, 1.0, 1.0, reach);
+            self.moodiness = 0.0;
+        } else {
+            // the calm (offsets 352-361): the floor the zero keeps
+            self.moodiness = self.moodiness.max(0.0);
+        }
+    }
+
+    /// The accumulator's own read (the tests' honest window — the
+    /// `getMoodiness()` accessor the handler's own class speaks).
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn moodiness(&self) -> f32 {
+        self.moodiness
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1038,5 +1184,163 @@ mod tests {
                 .expect("the log carries the file index");
             assert!(file < ev.len, "file {file} inside {} files", ev.len);
         }
+    }
+
+    /// THE MOOD'S OWN LAW WALK (the lambda's arithmetic the tests bank):
+    /// the darkness banks 1/6000 a tick, the fire at 6000 dark ticks, the
+    /// reset after, the daylight and the torches spend back, the floor
+    /// the zero keeps.
+    #[test]
+    fn the_cave_mood_banks_the_darkness_and_fires_the_legacy_numbers() {
+        // THE COMPLETE DARKNESS: every sample (sky 0, block 0) banks
+        // +1/6000 — the fire lands on the walk the f32 arithmetic speaks,
+        // the spot the recorder keeps (the reach law's own honest pin
+        // rides the last sampled cell)
+        let seen = std::cell::RefCell::new((0i32, 0i32, 0i32));
+        let record = |x: i32, y: i32, z: i32| -> (u8, u8) {
+            *seen.borrow_mut() = (x, y, z);
+            (0u8, 0u8)
+        };
+        let mut m = CaveMood::new(7);
+        let mut log = BlockSounds::new(1);
+        // the fire tick: the strict f32 walk (the JVM's own IEEE binary32
+        // semantics — every intermediate a float) lands EXACTLY on the
+        // 6000th bank: f32(1/6000) * 6000 rounds back to 1.0, the >= 1.0
+        // arm speaks, the fire rides the 6000-tick tickDelay the
+        // LEGACY_CAVE_SETTINGS keeps
+        let mut fire_tick: Option<u64> = None;
+        for i in 0..(MOOD_TICK_DELAY + 16) as u64 {
+            m.tick(i, &record, 10.3, 20.7, 30.9, &mut log);
+            if !log.events.is_empty() {
+                fire_tick = Some(i);
+                break;
+            }
+            assert!(m.moodiness() < 1.0);
+            assert!(m.moodiness() >= 0.0, "the floor the zero keeps");
+        }
+        assert_eq!(fire_tick, Some(6000), "the strict f32 walk's own fire tick");
+        // the v/p pair the forAmbientMood's own fold speaks — pitch 1.0,
+        // the volume the linear gain's own reach fold (the fired spot the
+        // recorder kept: dist(center, eye) + 2.0, the 16 the armed max
+        // keeps, the floor the AL_MIN_GAIN zero speaks)
+        let (sx, sy, sz) = *seen.borrow();
+        let dx = f64::from(sx) + 0.5 - 10.3;
+        let dy = f64::from(sy) + 0.5 - 20.7;
+        let dz = f64::from(sz) + 0.5 - 30.9;
+        let reach = (dx * dx + dy * dy + dz * dz).sqrt() + MOOD_SOUND_POSITION_OFFSET;
+        let want_gain = attenuate(1.0, reach, voice_max_distance(1.0));
+        let line = &log.events[0];
+        let v: f32 = line
+            .split(" v")
+            .nth(1)
+            .and_then(|s| s.split(' ').next())
+            .and_then(|s| s.parse().ok())
+            .expect("the log carries the volume");
+        let p: f32 = line
+            .split(" p")
+            .nth(1)
+            .and_then(|s| s.parse().ok())
+            .expect("the log carries the pitch");
+        assert!((v - want_gain).abs() < 1e-6, "gain {v} vs reach {reach}");
+        assert!((p - 1.0).abs() < 1e-6, "the pitch the 1.0 law keeps");
+        // the reset: the next dark walk starts from zero again
+        assert_eq!(m.moodiness(), 0.0);
+    }
+
+    /// THE LIGHT'S OWN SPEND: a torch-lit sample (block 2+) and a
+    /// sky-lit sample both spend the mood DOWN — the pitch dark the only
+    /// banker.
+    #[test]
+    fn the_cave_mood_spends_the_light_back() {
+        let mut log = BlockSounds::new(1);
+        // the torch: block 2 spends 1/6000 a tick — the darkness' own
+        // rate mirrored, the mood never leaves the floor
+        let torch = |_: i32, _: i32, _: i32| (0u8, 2u8);
+        let mut m = CaveMood::new(7);
+        for i in 0..20_000u64 {
+            m.tick(i, &torch, 10.3, 20.7, 30.9, &mut log);
+        }
+        assert!(log.events.is_empty(), "the torch never banks");
+        assert_eq!(m.moodiness(), 0.0);
+        // the sky: a full-sky sample spends 15/15 * 0.001 = 0.001 a tick
+        // — the daylight's own calm, the floor the zero keeps
+        let sky = |_: i32, _: i32, _: i32| (15u8, 0u8);
+        let mut m = CaveMood::new(7);
+        for i in 0..5_000u64 {
+            m.tick(i, &sky, 10.3, 20.7, 30.9, &mut log);
+        }
+        assert_eq!(m.moodiness(), 0.0);
+        // the block-1 sample spends NOTHING ((1-1)/6000 = 0) — the dim
+        // glow neither banks nor spends
+        let dim = |_: i32, _: i32, _: i32| (0u8, 1u8);
+        let mut m = CaveMood::new(7);
+        for i in 0..5_999u64 {
+            m.tick(i, &dim, 10.3, 20.7, 30.9, &mut log);
+        }
+        assert_eq!(m.moodiness(), 0.0);
+        // the mixed world: the dark ticks bank 1/6000, the lit ticks
+        // spend 0.001 — the spend outruns the bank (one lit tick swallows
+        // six dark banks' worth), the mood never fires inside the walk
+        let world = |x: i32, _: i32, _: i32| {
+            if x % 2 == 0 {
+                (0u8, 0u8)
+            } else {
+                (15u8, 0u8)
+            }
+        };
+        let mut m = CaveMood::new(7);
+        for i in 0..6_000u64 {
+            m.tick(i, &world, 10.3, 20.7, 30.9, &mut log);
+        }
+        assert!(log.events.is_empty(), "the lit world never fires");
+        assert!(m.moodiness() < 1.0);
+    }
+
+    /// THE SAMPLE'S OWN WALK: the three draws ride [-extent, +extent]
+    /// around the anchor — the sampled cells the floor the containing
+    /// keeps, the eye anchor the body's own eye answers.
+    #[test]
+    fn the_cave_mood_samples_within_the_block_search_extent() {
+        let seen = std::cell::RefCell::new(Vec::new());
+        {
+            let seen_ref = &seen;
+            // the probe world rides the sample taps: the machine's own
+            // light closure records the sampled cells (the darkness the
+            // 6000-tick walk banks — one fire the record's tail keeps)
+            let mut m = CaveMood::new(31);
+            let mut log = BlockSounds::new(1);
+            let record = |x: i32, y: i32, z: i32| -> (u8, u8) {
+                seen_ref.borrow_mut().push((x, y, z));
+                (0u8, 0u8)
+            };
+            for i in 0..MOOD_TICK_DELAY {
+                m.tick(i as u64, &record, 100.5, 50.5, 100.5, &mut log);
+            }
+        }
+        let cells = seen.borrow();
+        assert_eq!(cells.len(), MOOD_TICK_DELAY as usize, "one sample a tick");
+        // the extents: every cell within ±8 of the anchor (the anchor
+        // rides the block centers — the containing floor the eye's own
+        // cell keeps, the draws' bound the 17 the extent*2+1 speaks)
+        for (x, y, z) in cells.iter() {
+            assert!(
+                (*x - 100).abs() <= MOOD_BLOCK_SEARCH_EXTENT as i32,
+                "x {x} outside the extent"
+            );
+            assert!(
+                (*y - 50).abs() <= MOOD_BLOCK_SEARCH_EXTENT as i32,
+                "y {y} outside the extent"
+            );
+            assert!(
+                (*z - 100).abs() <= MOOD_BLOCK_SEARCH_EXTENT as i32,
+                "z {z} outside the extent"
+            );
+        }
+        // the walk spreads (the draws' variety the 6000 samples speak —
+        // 4913 cells inside the box, a healthy share the walk visits)
+        let mut uniq = cells.clone();
+        uniq.sort();
+        uniq.dedup();
+        assert!(uniq.len() > 1000, "the walk visited {} cells", uniq.len());
     }
 }

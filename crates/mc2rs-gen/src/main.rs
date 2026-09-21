@@ -682,16 +682,16 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         v.dedup();
         v
     };
-    let (music_files, game_files, ui_sound_files, biome_sound_files, mob_sound_files, player_sound_files, interaction_sound_files) =
+    let (music_files, game_files, ui_sound_files, biome_sound_files, mob_sound_files, player_sound_files, interaction_sound_files, cave_mood_sound_files) =
         match &index {
             Some(i) => {
                 fetch_sound_events(agent, cache, i, &sounds_json, &biome_events, &workspace_root)
                     .unwrap_or_else(|e| {
                         eprintln!("      warning: game audio fetch failed ({e}); client falls back to silence");
-                        (0, 0, 0, 0, 0, 0, 0)
+                        (0, 0, 0, 0, 0, 0, 0, 0)
                     })
             }
-            None => (0, 0, 0, 0, 0, 0, 0),
+            None => (0, 0, 0, 0, 0, 0, 0, 0),
         };
     let pano_root = workspace_root.join("assets-cache/jar");
     let pano_names: Vec<(String, String)> = (0..6)
@@ -704,7 +704,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         .collect();
     uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
     println!(
-        "      glyphs: {} ({} textures) | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files | player voices: {} files | interaction sounds: {} files",
+        "      glyphs: {} ({} textures) | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files | player voices: {} files | interaction sounds: {} files | cave mood: {} files",
         font.glyphs.len(),
         font.textures.len(),
         ui.sprites.len(),
@@ -718,7 +718,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         biome_events.len(),
         mob_sound_files,
         player_sound_files,
-        interaction_sound_files
+        interaction_sound_files,
+        cave_mood_sound_files
     );
     println!(
         "      sky: day period {} ticks, {} moon phases, celestial textures {}x{}",
@@ -942,8 +943,9 @@ const PLAYER_XP_EVENTS: [&str; 1] = ["entity.experience_orb.pickup"];
 ///   speaks, v1.0 p1.0 the PLAYERS source).
 ///
 /// The honest skips the client's own tables keep: the `ambient.cave`
-/// the fixture list alone names (the live lane's absence the honest
-/// refusal keeps). Every file rides the same sha1-verified
+/// id the AMBIENT_CAVE_EVENTS lane answers now (the cave mood's own
+/// machine the client's `CaveMood` speaks — the fetch the same walk
+/// rides), none the walk keeps. Every file rides the same sha1-verified
 /// asset-index fetch the mob voices speak.
 const INTERACTION_EVENTS: [&str; 23] = [
     "entity.player.attack.crit",
@@ -971,15 +973,23 @@ const INTERACTION_EVENTS: [&str; 23] = [
     "item.golden_dandelion.unuse",
 ];
 
+/// THE CAVE MOOD'S OWN LANE (the ambient source's own event — the
+/// `SoundEvents.AMBIENT_CAVE` constant the LEGACY_CAVE_SETTINGS banks,
+/// the machine the client's `CaveMood` speaks): the 26.2 sounds.json's
+/// 23 plain-string rows (`ambient/cave/cave1..23`, the default volume
+/// weight attenuation the plain row keeps), the fetch the same
+/// sha1-verified asset-index walk answers.
+const AMBIENT_CAVE_EVENTS: [&str; 1] = ["ambient.cave"];
+
 /// Fetch the real menu music + in-game music + UI sound + biome music +
-/// mob voice + player voice + interaction sound .ogg files through the
-/// asset index. sounds.json names are relative to
+/// mob voice + player voice + interaction sound + cave mood .ogg files
+/// through the asset index. sounds.json names are relative to
 /// `assets/minecraft/sounds/` (extension optional — the vanilla sound
 /// engine appends `.ogg`); the asset index keys include the
 /// `minecraft/` prefix. Every file is sha1-verified against the index
 /// object. Returns (menu music, game music, ui sound, biome music, mob
-/// voice, player voice, interaction sound) files fetched (duplicates
-/// across events deduped).
+/// voice, player voice, interaction sound, cave mood) files fetched
+/// (duplicates across events deduped).
 fn fetch_sound_events(
     agent: &ureq::Agent,
     cache: &util::Cache,
@@ -987,7 +997,7 @@ fn fetch_sound_events(
     sounds: &soundgen::SoundData,
     biome_events: &[String],
     workspace_root: &Path,
-) -> Result<(usize, usize, usize, usize, usize, usize, usize)> {
+) -> Result<(usize, usize, usize, usize, usize, usize, usize, usize)> {
     // 26.2 ships one `music.menu` event with many weighted files (older
     // versions had per-track `music.menu.menu1` children) — match both.
     // The BLOCK family rides along (the interaction arc's own voices: the
@@ -1006,6 +1016,7 @@ fn fetch_sound_events(
             || PLAYER_AIR_EVENTS.contains(&id)
             || PLAYER_XP_EVENTS.contains(&id)
             || INTERACTION_EVENTS.contains(&id)
+            || AMBIENT_CAVE_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };
     let mut menu = 0usize;
@@ -1015,6 +1026,7 @@ fn fetch_sound_events(
     let mut mob = 0usize;
     let mut player = 0usize;
     let mut interaction = 0usize;
+    let mut cave_mood = 0usize;
     let mut seen = std::collections::BTreeSet::new();
     for ev in sounds.events.values().filter(|e| wanted(&e.id)) {
         let mut have = 0usize;
@@ -1077,13 +1089,17 @@ fn fetch_sound_events(
             // age-lock's pair) — the disjoint file sets the same
             // += shape
             interaction += have;
+        } else if AMBIENT_CAVE_EVENTS.contains(&ev.id.as_str()) {
+            // the cave mood's own voice (the 23-row ambient/cave pool
+            // the LEGACY_CAVE_SETTINGS machine plays) — the += shape
+            cave_mood += have;
         } else if biome_events.binary_search(&ev.id).is_ok() {
             biome += have;
         } else {
             ui = have;
         }
     }
-    Ok((menu, game, ui, biome, mob, player, interaction))
+    Ok((menu, game, ui, biome, mob, player, interaction, cave_mood))
 }
 
 /// The offline UI lane: re-emit `crates/mc-registry/src/generated/gui.rs`
