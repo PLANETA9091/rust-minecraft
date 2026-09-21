@@ -1,0 +1,57 @@
+class net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState
+
+=== <init>(Ljava/util/List;IIIILnet/minecraft/client/gui/navigation/ScreenRectangle;)V ===
+    18 invokestatic net/minecraft/client/renderer/state/gui/pip/PictureInPictureRenderState.getBounds(IIIILnet/minecraft/client/gui/navigation/ScreenRectangle;)Lnet/minecraft/client/gui/navigation/ScreenRectangle;  (loc2, loc3, loc4, loc5, loc6)
+    21 invokespecial net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.<init>(Ljava/util/List;IIIILnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenRectangle;)V  (loc1, loc2, loc3, loc4, loc5, loc6, PictureInPictureRenderState.getBounds(loc2, loc3, loc4, loc5, loc6))
+    24 return
+
+=== <init>(Ljava/util/List;IIIILnet/minecraft/client/gui/navigation/ScreenRectangle;Lnet/minecraft/client/gui/navigation/ScreenRectangle;)V ===
+     1 invokespecial java/lang/Record.<init>()V  ()
+     6 putfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.chartData = loc1
+    11 putfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.x0 = loc2
+    16 putfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.y0 = loc3
+    22 putfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.x1 = loc4
+    28 putfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.y1 = loc5
+    34 putfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.scissorArea = loc6
+    40 putfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.bounds = loc7
+    43 return
+
+=== bounds()Lnet/minecraft/client/gui/navigation/ScreenRectangle; ===
+     1 getfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.bounds  (loc0)
+     4 return loc0.bounds
+
+=== chartData()Ljava/util/List; ===
+     1 getfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.chartData  (loc0)
+     4 return loc0.chartData
+
+=== equals(Ljava/lang/Object;)Z ===
+     7 return loc1
+
+=== hashCode()I ===
+     6 return loc0
+
+=== scale()F ===
+     1 return 1.0
+
+=== scissorArea()Lnet/minecraft/client/gui/navigation/ScreenRectangle; ===
+     1 getfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.scissorArea  (loc0)
+     4 return loc0.scissorArea
+
+=== toString()Ljava/lang/String; ===
+     6 return loc0
+
+=== x0()I ===
+     1 getfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.x0  (loc0)
+     4 return loc0.x0
+
+=== x1()I ===
+     1 getfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.x1  (loc0)
+     4 return loc0.x1
+
+=== y0()I ===
+     1 getfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.y0  (loc0)
+     4 return loc0.y0
+
+=== y1()I ===
+     1 getfield net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.y1  (loc0)
+     4 return loc0.y1

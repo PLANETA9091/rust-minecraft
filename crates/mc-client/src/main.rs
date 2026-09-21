@@ -34,6 +34,7 @@ mod net_fixture;
 mod music;
 mod noise;
 mod png_io;
+mod profiler;
 mod raster;
 mod screens;
 mod sky;

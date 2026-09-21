@@ -1,0 +1,141 @@
+class net/minecraft/client/gui/components/debugchart/ProfilerPieChart
+
+=== <clinit>()V ===
+     9 invokestatic java/text/DecimalFormatSymbols.getInstance(Ljava/util/Locale;)Ljava/text/DecimalFormatSymbols;  (java/util/Locale.ROOT)
+    12 invokespecial java/text/DecimalFormat.<init>(Ljava/lang/String;Ljava/text/DecimalFormatSymbols;)V  ('##0.00', DecimalFormatSymbols.getInstance(java/util/Locale.ROOT))
+    18 return
+
+=== <init>(Lnet/minecraft/client/gui/Font;)V ===
+     1 invokespecial java/lang/Object.<init>()V  ()
+     7 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath = 'root'
+    12 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.bottomOffset = 0
+    17 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font = loc1
+    20 return
+
+=== extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V ===
+     1 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerPieChartResults  (loc0)
+     7 return
+     9 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerPieChartResults  (loc0)
+    13 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath  (loc0)
+    16 invokeinterface net/minecraft/util/profiling/ProfileResults.getTimes(Ljava/lang/String;)Ljava/util/List;  (loc0.profilerTreePath)
+    21 ?? opcode 0x4d
+    23 invokeinterface java/util/List.removeFirst()Ljava/lang/Object;  ()
+    31 ?? opcode 0x4e
+    33 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.guiWidth()I  ()
+    62 invokeinterface java/util/List.size()I  ()
+    68 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+    71 invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;  (loc0.font)
+    81 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.guiHeight()I  ()
+    85 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.bottomOffset  (loc0)
+   117 getfield net/minecraft/util/profiling/ResultField.globalPercentage  (loc3)
+   120 invokevirtual java/text/DecimalFormat.format(D)Ljava/lang/String;  (net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc3.globalPercentage)
+   131 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   136 invokevirtual net/minecraft/client/gui/Font.width(Ljava/lang/String;)I  (loc12=loc2.removeFirst().format(net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc3.globalPercentage))
+   142 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   147 invokevirtual net/minecraft/client/gui/Font.width(Ljava/lang/String;)I  ('[0] ')
+   168 getfield net/minecraft/util/profiling/ResultField.name  (loc3)
+   171 invokestatic net/minecraft/util/profiling/ProfileResults.demanglePath(Ljava/lang/String;)Ljava/lang/String;  (loc3.name)
+   186 invokevirtual net/minecraft/client/gui/components/debugchart/ProfilerPieChart.splitNodeName(Ljava/lang/String;II)Ljava/util/List;  (loc16=ProfileResults.demanglePath(loc3.name), loc15=arith, arith)
+   198 invokeinterface java/util/List.size()I  ()
+   206 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   209 invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;  (loc0.font)
+   238 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.fill(IIIII)V  (arith, arith, arith, arith, -1873784752)
+   260 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.profilerChart(Ljava/util/List;IIII)V  (loc2, loc5=arith, arith, loc6=arith, arith)
+   271 invokevirtual java/lang/String.equals(Ljava/lang/Object;)Z  (loc16=ProfileResults.demanglePath(loc3.name))
+   281 invokevirtual java/lang/String.equals(Ljava/lang/Object;)Z  (loc16=ProfileResults.demanglePath(loc3.name))
+   300 invokeinterface java/util/List.getFirst()Ljava/lang/Object;  ()
+   320 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   330 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V  (loc0.font, loc19=loc17=loc0.splitNodeName(loc16=ProfileResults.demanglePath(loc3.name), loc15=arith, arith).getFirst(), loc5=arith, loc18=arith, -1)
+   340 invokeinterface java/util/List.size()I  ()
+   350 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   357 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (loc21=1)
+   378 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   381 invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;  (loc0.font)
+   390 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V  (loc0.font, loc17=loc0.splitNodeName(loc16=ProfileResults.demanglePath(loc3.name), loc15=arith, arith).get(loc21=1), arith, arith, -1)
+   401 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   414 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V  (loc0.font, loc12=loc2.removeFirst().format(net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc3.globalPercentage), arith, loc18=arith, -1)
+   423 invokeinterface java/util/List.size()I  ()
+   434 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (loc21=0)
+   448 invokespecial java/lang/StringBuilder.<init>()V  ()
+   457 getfield net/minecraft/util/profiling/ResultField.name  (loc22=loc2.get(loc21=0))
+   460 invokevirtual java/lang/String.equals(Ljava/lang/Object;)Z  (loc22=loc2.get(loc21=0).name)
+   470 invokevirtual java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;  ('[?] ')
+   481 invokevirtual java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;  ('[')
+   488 invokevirtual java/lang/StringBuilder.append(I)Ljava/lang/StringBuilder;  (arith)
+   493 invokevirtual java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;  ('] ')
+   501 getfield net/minecraft/util/profiling/ResultField.name  (loc22=loc2.get(loc21=0))
+   504 invokevirtual java/lang/StringBuilder.append(Ljava/lang/String;)Ljava/lang/StringBuilder;  (loc22=loc2.get(loc21=0).name)
+   507 invokevirtual java/lang/StringBuilder.toString()Ljava/lang/String;  ()
+   517 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   520 invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;  (loc0.font)
+   532 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   543 invokevirtual net/minecraft/util/profiling/ResultField.getColor()I  ()
+   546 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V  (loc0.font, loc24=loc23=java/lang/StringBuilder().append(loc22=loc2.get(loc21=0).name).toString(), loc5=arith, loc25=arith, loc22=loc2.get(loc21=0).getColor())
+   554 getfield net/minecraft/util/profiling/ResultField.percentage  (loc22=loc2.get(loc21=0))
+   557 invokevirtual java/text/DecimalFormat.format(D)Ljava/lang/String;  (net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc22=loc2.get(loc21=0).percentage)
+   569 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   580 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   585 invokevirtual net/minecraft/client/gui/Font.width(Ljava/lang/String;)I  (loc24=loc19=loc17=loc0.splitNodeName(loc16=ProfileResults.demanglePath(loc3.name), loc15=arith, arith).getFirst().format(net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc22=loc2.get(loc21=0).percentage))
+   593 invokevirtual net/minecraft/util/profiling/ResultField.getColor()I  ()
+   596 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V  (loc0.font, loc24=loc19=loc17=loc0.splitNodeName(loc16=ProfileResults.demanglePath(loc3.name), loc15=arith, arith).getFirst().format(net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc22=loc2.get(loc21=0).percentage), arith, loc25=arith, loc22=loc2.get(loc21=0).getColor())
+   604 getfield net/minecraft/util/profiling/ResultField.globalPercentage  (loc22=loc2.get(loc21=0))
+   607 invokevirtual java/text/DecimalFormat.format(D)Ljava/lang/String;  (net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc22=loc2.get(loc21=0).globalPercentage)
+   619 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   627 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+   632 invokevirtual net/minecraft/client/gui/Font.width(Ljava/lang/String;)I  (loc24=loc0.profilerPieChartResults.getTimes(loc0.profilerTreePath).format(net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc22=loc2.get(loc21=0).globalPercentage))
+   640 invokevirtual net/minecraft/util/profiling/ResultField.getColor()I  ()
+   643 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.text(Lnet/minecraft/client/gui/Font;Ljava/lang/String;III)V  (loc0.font, loc24=loc0.profilerPieChartResults.getTimes(loc0.profilerTreePath).format(net/minecraft/client/gui/components/debugchart/ProfilerPieChart.PERCENTAGE_FORMAT, loc22=loc2.get(loc21=0).globalPercentage), arith, loc25=arith, loc22=loc2.get(loc21=0).getColor())
+   652 return
+
+=== profilerPieChartKeyPress(I)V ===
+     1 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerPieChartResults  (loc0)
+     7 return
+     9 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerPieChartResults  (loc0)
+    13 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath  (loc0)
+    16 invokeinterface net/minecraft/util/profiling/ProfileResults.getTimes(Ljava/lang/String;)Ljava/util/List;  (loc0.profilerTreePath)
+    21 ?? opcode 0x4d
+    23 invokeinterface java/util/List.isEmpty()Z  ()
+    31 return
+    34 invokeinterface java/util/List.remove(I)Ljava/lang/Object;  (0)
+    42 ?? opcode 0x4e
+    48 getfield net/minecraft/util/profiling/ResultField.name  (loc3)
+    51 invokevirtual java/lang/String.isEmpty()Z  ()
+    58 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath  (loc0)
+    63 invokevirtual java/lang/String.lastIndexOf(I)I  (30)
+    75 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath  (loc0)
+    81 invokevirtual java/lang/String.substring(II)Ljava/lang/String;  (0, loc4=loc0.profilerTreePath.lastIndexOf(30))
+    84 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath = loc0.profilerTreePath.substring(0, loc4=loc0.profilerTreePath.lastIndexOf(30))
+    95 invokeinterface java/util/List.size()I  ()
+   107 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (loc1=-1)
+   115 getfield net/minecraft/util/profiling/ResultField.name  (loc2.get(loc1=-1))
+   118 invokevirtual java/lang/String.equals(Ljava/lang/Object;)Z  (loc2.get(loc1=-1).name)
+   125 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath  (loc0)
+   128 invokevirtual java/lang/String.isEmpty()Z  ()
+   136 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath  (loc0)
+   144 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath = loc0.profilerTreePath
+   149 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath  (loc0)
+   154 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (loc1=-1)
+   162 getfield net/minecraft/util/profiling/ResultField.name  (loc2.get(loc1=-1))
+   170 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerTreePath = loc2.get(loc1=-1).name
+   173 return
+
+=== setBottomOffset(I)V ===
+     2 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.bottomOffset = loc1
+     5 return
+
+=== setPieChartResults(Lnet/minecraft/util/profiling/ProfileResults;)V ===
+     2 putfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.profilerPieChartResults = loc1
+     5 return
+
+=== splitNodeName(Ljava/lang/String;II)Ljava/util/List; ===
+     3 invokevirtual java/lang/String.split(Ljava/lang/String;)[Ljava/lang/String;  ('\\.')
+    12 invokespecial java/util/ArrayList.<init>()V  ()
+    72 getfield net/minecraft/client/gui/components/debugchart/ProfilerPieChart.font  (loc0)
+    77 invokevirtual net/minecraft/client/gui/Font.width(Ljava/lang/String;)I  (loc10=loc9=loc8=arr)
+    86 invokeinterface java/util/List.isEmpty()Z  ()
+   104 invokevirtual java/lang/String.isEmpty()Z  ()
+   114 invokeinterface java/util/List.add(Ljava/lang/Object;)Z  (loc9=loc8=arr)
+   130 invokeinterface java/util/List.add(Ljava/lang/Object;)Z  (loc6='')
+   155 invokevirtual java/lang/String.isEmpty()Z  ()
+   165 invokeinterface java/util/List.add(Ljava/lang/Object;)Z  (loc6=loc10=loc9=loc8=arr)
+   173 return loc5=java/util/ArrayList()

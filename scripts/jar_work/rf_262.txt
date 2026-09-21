@@ -1,0 +1,31 @@
+class net/minecraft/util/profiling/ResultField
+
+=== <init>(Ljava/lang/String;DDJ)V ===
+     1 invokespecial java/lang/Object.<init>()V  ()
+     6 putfield net/minecraft/util/profiling/ResultField.name = loc1
+    10 ?? opcode 0x28
+    11 putfield net/minecraft/util/profiling/ResultField.percentage = loc0
+    17 putfield net/minecraft/util/profiling/ResultField.globalPercentage = loc4
+    23 putfield net/minecraft/util/profiling/ResultField.count = loc6
+    26 return
+
+=== compareTo(Ljava/lang/Object;)I ===
+     5 invokevirtual net/minecraft/util/profiling/ResultField.compareTo(Lnet/minecraft/util/profiling/ResultField;)I  (loc1)
+     8 return loc0.compareTo(loc1)
+
+=== compareTo(Lnet/minecraft/util/profiling/ResultField;)I ===
+     1 getfield net/minecraft/util/profiling/ResultField.percentage  (loc1)
+     5 getfield net/minecraft/util/profiling/ResultField.percentage  (loc0)
+    13 return -1
+    15 getfield net/minecraft/util/profiling/ResultField.percentage  (loc1)
+    19 getfield net/minecraft/util/profiling/ResultField.percentage  (loc0)
+    27 return 1
+    29 getfield net/minecraft/util/profiling/ResultField.name  (loc1)
+    33 getfield net/minecraft/util/profiling/ResultField.name  (loc0)
+    36 invokevirtual java/lang/String.compareTo(Ljava/lang/String;)I  (loc0.name)
+    39 return loc1.name.compareTo(loc0.name)
+
+=== getColor()I ===
+     1 getfield net/minecraft/util/profiling/ResultField.name  (loc0)
+     4 invokevirtual java/lang/String.hashCode()I  ()
+    13 return arith

@@ -1171,6 +1171,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // rides the command channel (the worker echoes the wire AND
         // moves the store — the hand follows the keys)
         if !app.chat_open {
+            // THE PROFILER PIE'S OWN DIGIT (the handleDebugKeys'
+            // getDigit lane — the chart-open press the navigation
+            // consumes, the hotbar select the true-return swallow
+            // keeps; the Key0 the drill-UP lane speaks, the Key1..9
+            // the drill-DOWN rows answer)
+            if window.is_key_pressed(Key::Key0, minifb::KeyRepeat::No) {
+                app.on_profiler_chart_digit(0);
+            }
             for (i, key) in [
                 Key::Key1,
                 Key::Key2,
@@ -1186,7 +1194,9 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             .enumerate()
             {
                 if window.is_key_pressed(*key, minifb::KeyRepeat::No) {
-                    app.on_number_key(i);
+                    if !app.on_profiler_chart_digit(i as i32 + 1) {
+                        app.on_number_key(i);
+                    }
                 }
             }
         }
@@ -1383,10 +1393,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             // answers) the same gate reads: the raise arms the net
             // worker's ping monitor (the command the flag rides), the
             // ping chart the client's own RTT ring draws. The
-            // F3+1/4 chords the chart-less client keeps silent (no
-            // profiler pie, no lightmap viewer — the flags the
-            // all-false constants stay, the rows the honest hidden
-            // words wear)
+            // F3+1 PROFILER PIE the toggleProfilerChart lane banks
+            // (the F3+1 chord the chart's own flag flips); the F3+4
+            // chord the chart-less client keeps silent (no lightmap
+            // viewer — the flag the all-false constant stays, the
+            // row the honest hidden word wears)
+            if f3_down && window.is_key_pressed(Key::Key1, minifb::KeyRepeat::No) {
+                app.on_profiler_chart_key();
+            }
             if f3_down && window.is_key_pressed(Key::Key2, minifb::KeyRepeat::No) {
                 app.on_fps_charts_key();
             }
@@ -1505,6 +1519,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // logic runs 20 TPS like vanilla, never 3x fast with the render
         // rate), the sub-tick remainder rides THIS frame's render as
         // the partial tick (the body/mob/particle interpolation folds)
+        let t_input_end = std::time::Instant::now();
         let now = std::time::Instant::now();
         tick_acc_ms += (now - t_clock).as_secs_f64() * 1000.0;
         t_clock = now;
@@ -1514,6 +1529,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             app.update();
         }
         app.partial_tick = (rem / crate::screens::MILLIS_PER_TICK) as f32;
+        let t_tick_end = std::time::Instant::now();
         // dispatch newly requested server-list pings to worker threads
         for req in &app.net_requests[net_seen..] {
             let tx = net_tx.clone();
@@ -1749,7 +1765,29 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // vanilla gain + rate fold applied
         music.sync_block_sounds(&app.sounds.events);
         fb.clear(crate::headless::SKY_TOP, crate::headless::SKY_BOTTOM);
+        let t_render_start = std::time::Instant::now();
         app.render(&mut fb, &mut assets);
+        // THE PROFILER PIE'S OWN STAGE WALK (the client's own frame
+        // the vanilla profiler concept serves — the input / tick /
+        // render stages the loop's own boundaries name, the root
+        // the whole frame keeps, the unspecified remainder the
+        // getTimes walk's own cap law computes — the music / ping
+        // dispatch the named stages never claim. The ONE-frame-old
+        // word the render boundary keeps: the next frame's chart
+        // the completed walk reads)
+        {
+            let t_render_end = std::time::Instant::now();
+            let input_ns = (t_input_end - t_frame).as_nanos() as u64;
+            let tick_ns = (t_tick_end - t_input_end).as_nanos() as u64;
+            let render_ns = (t_render_end - t_render_start).as_nanos() as u64;
+            let root_ns = (t_render_end - t_frame).as_nanos() as u64;
+            app.live_profiler_updated(crate::profiler::ProfilerResults::new(vec![
+                ("root".to_string(), root_ns, 1),
+                ("root\u{1e}input".to_string(), input_ns, 1),
+                ("root\u{1e}tick".to_string(), tick_ns, 1),
+                ("root\u{1e}render".to_string(), render_ns, 1),
+            ]));
+        }
         // THE F2 GRAB'S OWN ANSWER (the Screenshot.grab walk the
         // request's flag answers — the "screenshots" dir the
         // timestamp name fills, the PNG the fresh frame's own bytes

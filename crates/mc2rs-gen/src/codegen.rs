@@ -312,11 +312,15 @@ pub fn extract_runtime_assets(
 /// — the `crit`, `bubble`, `poof`, `splash`, `lava`, `damage_indicator`,
 /// `heart` and `sweep_attack` particle types' own sources the dust lane
 /// sha1-verifies).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 29] = [
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 33] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     "assets/minecraft/textures/misc/underwater.png",
     "assets/minecraft/textures/entity/experience/experience_orb.png",
+    "assets/minecraft/textures/entity/spider/spider.png",
+    "assets/minecraft/textures/entity/wolf/wolf.png",
+    "assets/minecraft/textures/entity/wolf/wolf_baby.png",
+    "assets/minecraft/textures/entity/skeleton/skeleton.png",
     "assets/minecraft/textures/particle/critical_hit.png",
     "assets/minecraft/textures/particle/bubble.png",
     "assets/minecraft/textures/particle/generic_0.png",

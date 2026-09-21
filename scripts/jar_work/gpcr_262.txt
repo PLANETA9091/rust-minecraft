@@ -1,0 +1,79 @@
+class net/minecraft/client/gui/render/pip/GuiProfilerChartRenderer
+
+=== <init>()V ===
+     1 invokespecial net/minecraft/client/gui/render/pip/PictureInPictureRenderer.<init>()V  ()
+     4 return
+
+=== getRenderStateClass()Ljava/lang/Class; ===
+     2 return cp
+
+=== getTextureLabel()Ljava/lang/String; ===
+     2 return 'profiler chart'
+
+=== getTranslateY(II)F ===
+     4 return (arith / 2.0)
+
+=== lambda$renderToTexture$0(IIDDLcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V ===
+     7 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc6, 0.0, 0.0, 0.0)
+    13 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc0)
+    27 ?? opcode 0x28
+    33 ?? opcode 0x6b
+    36 ?? opcode 0x6f
+    37 ?? opcode 0x63
+    41 ?? opcode 0x6b
+    45 ?? opcode 0x6f
+    52 invokestatic net/minecraft/util/Mth.sin(D)F  (6.2831854820251465, arith)
+    63 invokestatic net/minecraft/util/Mth.cos(D)F  (arith, arith)
+    83 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc6, loc10=(Mth.sin(6.2831854820251465, arith) * 105.0), loc11=((Mth.cos(arith, arith) * 105.0) * 0.5), 0.0)
+    89 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc0)
+   101 return
+
+=== lambda$renderToTexture$1(IDDILcom/mojang/blaze3d/vertex/PoseStack$Pose;Lcom/mojang/blaze3d/vertex/VertexConsumer;)V ===
+     9 ?? opcode 0x29
+    13 ?? opcode 0x6b
+    16 ?? opcode 0x6f
+    17 ?? opcode 0x63
+    21 ?? opcode 0x6b
+    25 ?? opcode 0x6f
+    32 invokestatic net/minecraft/util/Mth.sin(D)F  (6.2831854820251465, arith)
+    43 invokestatic net/minecraft/util/Mth.cos(D)F  (arith, arith)
+    55 ?? opcode 0x29
+    61 ?? opcode 0x6b
+    64 ?? opcode 0x6f
+    65 ?? opcode 0x63
+    69 ?? opcode 0x6b
+    73 ?? opcode 0x6f
+    80 invokestatic net/minecraft/util/Mth.sin(D)F  (6.2831854820251465, arith)
+    91 invokestatic net/minecraft/util/Mth.cos(D)F  (arith, arith)
+   126 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc6, loc10=(Mth.sin(6.2831854820251465, arith) * 105.0), loc11=((Mth.cos(arith, arith) * 105.0) * 0.5), 0.0)
+   133 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc5)
+   151 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc6, loc10=(Mth.sin(6.2831854820251465, arith) * 105.0), (loc11=((Mth.cos(arith, arith) * 105.0) * 0.5) + 10.0), 0.0)
+   158 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc5)
+   176 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc6, loc13=(Mth.sin(6.2831854820251465, arith) * 105.0), (loc14=((Mth.cos(arith, arith) * 105.0) * 0.5) + 10.0), 0.0)
+   183 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc5)
+   198 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.addVertex(Lcom/mojang/blaze3d/vertex/PoseStack$Pose;FFF)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc6, loc13=(Mth.sin(6.2831854820251465, arith) * 105.0), loc14=((Mth.cos(arith, arith) * 105.0) * 0.5), 0.0)
+   205 invokeinterface com/mojang/blaze3d/vertex/VertexConsumer.setColor(I)Lcom/mojang/blaze3d/vertex/VertexConsumer;  (loc5)
+   217 return
+
+=== renderToTexture(Lnet/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V ===
+     8 invokevirtual com/mojang/blaze3d/vertex/PoseStack.translate(FFF)V  (0.0, -5.0, 0.0)
+    12 invokevirtual net/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState.chartData()Ljava/util/List;  ()
+    15 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+    24 invokeinterface java/util/Iterator.hasNext()Z  ()
+    34 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    46 getfield net/minecraft/util/profiling/ResultField.percentage  (loc7=loc6=loc1.chartData().iterator().next())
+    59 ?? opcode 0x63
+    67 ?? opcode 0x6f
+    68 invokestatic net/minecraft/util/Mth.floor(D)I  (loc8=loc7=loc6=loc1.chartData().iterator().next().percentage, 4.0)
+    77 invokevirtual net/minecraft/util/profiling/ResultField.getColor()I  ()
+    80 invokestatic net/minecraft/util/ARGB.opaque(I)I  (loc7=loc6=loc1.chartData().iterator().next().getColor())
+    89 invokestatic net/minecraft/util/ARGB.multiply(II)I  (loc13=ARGB.opaque(loc7=loc6=loc1.chartData().iterator().next().getColor()), -8355712)
+    96 invokestatic net/minecraft/client/renderer/rendertype/RenderTypes.debugTriangleFan()Lnet/minecraft/client/renderer/rendertype/RenderType;  ()
+   112 invokeinterface net/minecraft/client/renderer/SubmitNodeCollector.submitCustomGeometry(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V  (loc12=arith, loc10=loc4=loc8=loc7=loc6=loc1.chartData().iterator().next().percentage, loc8=loc7=loc6=loc1.chartData().iterator().next().percentage)
+   119 invokestatic net/minecraft/client/renderer/rendertype/RenderTypes.debugQuads()Lnet/minecraft/client/renderer/rendertype/RenderType;  ()
+   135 invokeinterface net/minecraft/client/renderer/SubmitNodeCollector.submitCustomGeometry(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;Lnet/minecraft/client/renderer/SubmitNodeCollector$CustomGeometryRenderer;)V  (loc10=loc4=loc8=loc7=loc6=loc1.chartData().iterator().next().percentage, loc8=loc7=loc6=loc1.chartData().iterator().next().percentage, loc14=ARGB.multiply(loc13=ARGB.opaque(loc7=loc6=loc1.chartData().iterator().next().getColor()), -8355712))
+   143 return
+
+=== renderToTexture(Lnet/minecraft/client/renderer/state/gui/pip/PictureInPictureRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V ===
+     7 invokevirtual net/minecraft/client/gui/render/pip/GuiProfilerChartRenderer.renderToTexture(Lnet/minecraft/client/renderer/state/gui/pip/GuiProfilerChartRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;)V  (loc1, loc2, loc3)
+    10 return

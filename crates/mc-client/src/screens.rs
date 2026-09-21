@@ -1672,6 +1672,199 @@ fn fps_argb_fill(c: i32) -> [f32; 4] {
 /// lines' ldc keeps — 0xFFFFFFFF the four-channel full word wears).
 const FPS_CHART_LINE: [f32; 4] = [1.0, 1.0, 1.0, 1.0];
 
+/// THE PROFILER PIE'S OWN BOTTOM OFFSET (the
+/// `profilerPieChart.setBottomOffset(tpsChart.getFullHeight())`
+/// ride the overlay's extract walk keeps — the 69 the TPS chart's
+/// own full height answers, the pie the chart column's top wears).
+const PROFILER_BOTTOM_OFFSET: i32 = 69;
+/// THE PIE CHART'S OWN HALF-WIDTH (the extractRenderState's
+/// `sipush 130` pair — the xLeft/xR2 the ±130 span keeps, the
+/// pie's own 105-radius the margin the half bounds).
+const PROFILER_CHART_HALF: i32 = 130;
+/// THE PIE'S OWN VERTICAL EXTENT WORD (the `bipush 62` the
+/// extraction rect's walk keeps — the center the `yTop - 62 - 5`
+/// pair the pip middle wears).
+const PROFILER_PIE_HALF_EXTENT: i32 = 62;
+/// THE PIE LEGEND'S OWN ROW STRIDE (the `bipush 9` the header and
+/// the legend rows both keep).
+const PROFILER_ROW_STRIDE: i32 = 9;
+/// THE SIDE COLOR'S OWN MULTIPLIER (the `ldc -8355712` =
+/// 0xFF808080 the `ARGB.multiply(color, ...)` extrusion keeps —
+/// the half-gray the coin edge wears).
+const PROFILER_SIDE_MULTIPLIER: i32 = -8355712;
+
+/// ONE PIE SLICE (the renderToTexture loop's own row — the start
+/// the cumulative running sum keeps, the span the row's own
+/// percentage speaks, the color the hash law answers).
+pub struct ProfilerPieSlice {
+    pub start_pct: f64,
+    pub span_pct: f64,
+    pub color: i32,
+}
+
+/// THE ARGB MULTIPLY (`ARGB.multiply(int,int)` — the per-channel
+/// floor division the vanilla impl keeps, the alpha the same law
+/// wears).
+fn argb_multiply(a: i32, b: i32) -> i32 {
+    let ua = a as u32;
+    let ub = b as u32;
+    let ch = |sa: u32, sb: u32| -> u32 { (sa * sb) / 255 };
+    let al = ch((ua >> 24) & 0xFF, (ub >> 24) & 0xFF);
+    let re = ch((ua >> 16) & 0xFF, (ub >> 16) & 0xFF);
+    let gr = ch((ua >> 8) & 0xFF, (ub >> 8) & 0xFF);
+    let bl = ch(ua & 0xFF, ub & 0xFF);
+    ((al << 24) | (re << 16) | (gr << 8) | bl) as i32
+}
+
+/// THE PERCENTAGE'S OWN WORD (the `DecimalFormat("##0.00", ROOT)`
+/// the PERCENTAGE_FORMAT clinit keeps — the two-decimal HALF_UP the
+/// java_round law speaks, the min-one-integer-digit shape the
+/// pattern's leading 0 wears).
+fn percentage_word(v: f64) -> String {
+    let t = java_round(v * 100.0);
+    format!("{}.{:02}", t / 100, t % 100)
+}
+
+/// THE PIE TOP FACE'S OWN SCANLINE RUNS (the fan lambda's sector —
+/// the rim vertices the `(sin(t)*105, cos(t)*105*0.5)` pair keeps,
+/// the angle the `t = atan2(dx/rx, dy/ry)` fold answers, the slice
+/// the `[start, start+span)` half-open test the wrap handling
+/// keeps — the returned `(x, y, w, slice_index)` runs the GUI's
+/// row fills wear).
+fn profiler_pie_top_runs(
+    cx: i32,
+    cy: i32,
+    slices: &[ProfilerPieSlice],
+) -> Vec<(i32, i32, i32, usize)> {
+    let rx = crate::profiler::PIE_RX;
+    let ry = crate::profiler::PIE_RY;
+    let two_pi = crate::profiler::TWO_PI;
+    // THE SLICE ANGLES (the radians the percent-of-100 walk keeps —
+    // the precomputed pair the per-pixel loop answers)
+    let angles: Vec<(f32, f32)> = slices
+        .iter()
+        .map(|s| {
+            let a0 = (s.start_pct as f64 * 6.2831854820251465 / 100.0)
+                .rem_euclid(6.2831854820251465_f64) as f32;
+            let span = (s.span_pct as f64 * 6.2831854820251465 / 100.0) as f32;
+            (a0, span)
+        })
+        .collect();
+    let mut out: Vec<(i32, i32, i32, usize)> = Vec::new();
+    let y_lo = cy - (ry.ceil() as i32) - 1;
+    let y_hi = cy + (ry.ceil() as i32) + 1;
+    for py in y_lo..=y_hi {
+        let dy = (py as f32 + 0.5 - cy as f32) / ry;
+        let dy2 = dy * dy;
+        if dy2 > 1.0 {
+            continue;
+        }
+        let mut run: Option<(i32, usize)> = None;
+        let x_lo = cx - (rx.ceil() as i32) - 1;
+        let x_hi = cx + (rx.ceil() as i32) + 1;
+        for px in x_lo..=x_hi {
+            let dx = (px as f32 + 0.5 - cx as f32) / rx;
+            let inside = if dx * dx + dy2 > 1.0 {
+                None
+            } else {
+                // THE ANGLE (the atan2 fold the vertex law answers —
+                // the sin-proportional dx the first arg keeps, the
+                // cos-proportional dy the second wears — the
+                // normalized [0, 2π) turn the wrap keeps)
+                let mut t = dx.atan2(dy);
+                if t < 0.0 {
+                    t += two_pi;
+                }
+                let mut hit = None;
+                for (si, (a0, span)) in angles.iter().enumerate() {
+                    let tn = if t < *a0 { t + two_pi } else { t };
+                    if tn < a0 + span {
+                        hit = Some(si);
+                        break;
+                    }
+                }
+                hit
+            };
+            match (inside, run) {
+                (Some(si), Some((_, cur))) if si == cur => {}
+                (Some(si), Some((sx, cur))) => {
+                    out.push((sx, py, px - sx, cur));
+                    run = Some((px, si));
+                }
+                (Some(si), None) => run = Some((px, si)),
+                (None, Some((sx, cur))) => {
+                    out.push((sx, py, px - sx, cur));
+                    run = None;
+                }
+                (None, None) => {}
+            }
+        }
+        if let Some((sx, cur)) = run.take() {
+            out.push((sx, py, x_hi + 1 - sx, cur));
+        }
+    }
+    out
+}
+
+/// THE PIE SIDE EXTRUSION'S OWN COLUMN FILLS (the side lambda's
+/// quads — the segment angles the `(start + span·i/steps)·2π/100`
+/// walk keeps (the f64 chain the d2f cast wears), the rim pair the
+/// `(sin·105, cos·105·0.5)` fold answers, the lower-half gate the
+/// `(yA+yB)/2 >= 0` fcmp keeps, the +10 depth the quad's own shift
+/// wears — the returned `(x, y_top, h, slice_index)` columns the
+/// GUI's fills wear).
+fn profiler_pie_side_fills(
+    cx: i32,
+    cy: i32,
+    slices: &[ProfilerPieSlice],
+) -> Vec<(i32, i32, i32, usize)> {
+    let rx = crate::profiler::PIE_RX;
+    let ry = crate::profiler::PIE_RY;
+    let two_pi = crate::profiler::TWO_PI as f64;
+    let depth = crate::profiler::PIE_SIDE_DEPTH as i32;
+    let mut out: Vec<(i32, i32, i32, usize)> = Vec::new();
+    for (si, s) in slices.iter().enumerate() {
+        if s.span_pct <= 0.0 {
+            continue;
+        }
+        // THE SEGMENT COUNT (the `Mth.floor(pct / 4.0) + 1` walk)
+        let steps = (s.span_pct / 4.0).floor() as i64 + 1;
+        for i in 1..=steps {
+            // THE ANGLES (the verbatim f64 chain the d2f cast wears)
+            let ta = ((s.start_pct + s.span_pct * i as f64 / steps as f64) * two_pi / 100.0)
+                as f32;
+            let tb = ((s.start_pct + s.span_pct * (i - 1) as f64 / steps as f64) * two_pi
+                / 100.0) as f32;
+            let xa = (ta as f64).sin() as f32 * rx;
+            let ya = (ta as f64).cos() as f32 * ry;
+            let xb = (tb as f64).sin() as f32 * rx;
+            let yb = (tb as f64).cos() as f32 * ry;
+            // THE LOWER-HALF GATE (the `(yA+yB)/2 >= 0` fcmp — the
+            // NaN the draw arm wears, the upper rim the skip keeps)
+            if (ya + yb) / 2.0 < 0.0 {
+                continue;
+            }
+            // THE COLUMN WALK (the quad the two verticals + the
+            // chord edges keep — the pixel-center range the
+            // [min, max] span answers, the top edge the linear
+            // interpolation speaks, the +10 the depth adds)
+            let x_min = ((cx as f32 + xa.min(xb)) - 0.5).ceil() as i32;
+            let x_max = ((cx as f32 + xa.max(xb)) - 0.5).floor() as i32;
+            for px in x_min..=x_max {
+                let span = xb - xa;
+                let u = if span.abs() > f32::EPSILON {
+                    (((px as f32 + 0.5 - cx as f32) - xa) / span).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+                let y_top = (cy as f32 + ya + u * (yb - ya)).floor() as i32;
+                out.push((px, y_top, depth, si));
+            }
+        }
+    }
+    out
+}
+
 /// THE RIDER'S YAW WALK (AbstractBoat.positionRider's own words — the
 /// drag `passenger.setYRot(getYRot() + deltaRotation)` the caller
 /// speaks, then clampRotation's `f = wrapDegrees(rider - boat)`,
@@ -6375,6 +6568,22 @@ pub struct App {
     /// F3+2 chord flips it, the raised state the bottom row's
     /// `visible` word and the chart draw's own gate both speak).
     pub fps_charts: bool,
+    /// THE PROFILER PIE'S OWN FLAG (javap DebugScreenOverlay's
+    /// renderProfilerChart — the toggleProfilerChart walk's own
+    /// field: the F3+1 chord flips it, the raise the
+    /// setOverlayVisible ride takes, the raised state the chart
+    /// draw's own gate speaks — the tree path the drill walk keeps,
+    /// the results the previous frame's stage walk banks).
+    pub profiler_chart: bool,
+    /// THE PIE'S OWN TREE PATH (the ProfilerPieChart ctor's 'root'
+    /// word the field keeps — the digit drill the walk navigates,
+    /// the separator the char-30 join rides).
+    pub profiler_tree_path: String,
+    /// THE PIE'S OWN RESULTS (the client's own frame-stage profile
+    /// the previous completed frame banks — the getTimes walk the
+    /// chart's own field reads, the one-frame-old word the render
+    /// boundary keeps honest).
+    pub profiler_results: Option<crate::profiler::ProfilerResults>,
     /// THE NETWORK CHARTS' OWN FLAG (javap DebugScreenOverlay's
     /// renderNetworkCharts — the toggleNetworkCharts walk's own
     /// field: the F3+3 chord flips it, the raise the setOverlayVisible
@@ -6892,6 +7101,9 @@ impl App {
             fps_window_start: None,
             fps_value: None,
             fps_charts: false,
+            profiler_chart: false,
+            profiler_tree_path: "root".to_string(),
+            profiler_results: None,
             network_charts: false,
             chunk_borders: false,
             hitboxes: false,
@@ -16124,6 +16336,86 @@ impl App {
         }
     }
 
+    /// THE F3+1 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
+    /// .toggleProfilerChart's bytecode walk — the law the chart
+    /// family's toggles bank mirrors verbatim:
+    /// `renderProfilerChart = !(isOverlayVisible &&
+    /// renderProfilerChart)` the flip keeps, the raise the
+    /// setOverlayVisible(true) forced-visible ride takes — the
+    /// chart family's other flags the walk never touches, the
+    /// tree path the ctor's 'root' word keeps through the toggle).
+    pub fn on_profiler_chart_key(&mut self) {
+        self.profiler_chart = !(self.debug_held && self.profiler_chart);
+        if self.profiler_chart {
+            self.debug_held = true;
+        }
+        self.debug_modifier_used = true;
+    }
+
+    /// THE PIE'S OWN DIGIT DRILL (javap ProfilerPieChart
+    /// .profilerPieChartKeyPress(I)'s bytecode walk, the
+    /// KeyboardHandler.handleDebugKeys' `showProfilerChart()` gate
+    /// the digit press the navigation consumes — the returned bool
+    /// the hotbar lane's own true-return swallow speaks): the
+    /// results the chart's own field keeps (the None the early
+    /// return wears), the getTimes list the tree path answers, the
+    /// `remove(0)` self row the header keeps. THE DIGIT 0 the
+    /// drill-UP lane speaks: the self name the empty gate keeps,
+    /// the `lastIndexOf(char30)` the parent slice answers (the
+    /// root-level self the no-separator word keeps — the path the
+    /// same word wears). THE DIGITS 1..9 the drill-DOWN lane
+    /// speaks: the index the `-1` walk keeps, the out-of-range and
+    /// the `unspecified` rows the honest refusals wear, the path
+    /// the separator concat the boot3+boot2 recipes chain (the
+    /// empty path the bare name answers).
+    pub fn on_profiler_chart_digit(&mut self, digit: i32) -> bool {
+        if !self.profiler_chart {
+            return false;
+        }
+        let Some(results) = self.profiler_results.as_ref() else {
+            return true;
+        };
+        let mut fields = results.get_times(&self.profiler_tree_path);
+        if fields.is_empty() {
+            return true;
+        }
+        let removed = fields.remove(0);
+        if digit == 0 {
+            // THE DRILL-UP (the self name the empty gate keeps, the
+            // separator the parent-path slice answers)
+            if removed.name.is_empty() {
+                return true;
+            }
+            if let Some(idx) = self.profiler_tree_path.rfind(crate::profiler::PATH_SEP) {
+                self.profiler_tree_path.truncate(idx);
+            }
+        } else {
+            // THE DRILL-DOWN (the -1 walk, the refusals the walk keeps)
+            let i = digit - 1;
+            if i < 0 || (i as usize) >= fields.len() {
+                return true;
+            }
+            if fields[i as usize].name == "unspecified" {
+                return true;
+            }
+            let name = fields[i as usize].name.clone();
+            if self.profiler_tree_path.is_empty() {
+                self.profiler_tree_path = name;
+            } else {
+                self.profiler_tree_path =
+                    format!("{}{}{}", self.profiler_tree_path, crate::profiler::PATH_SEP, name);
+            }
+        }
+        true
+    }
+
+    /// THE PIE'S OWN RESULTS LANDING (the window loop's completed
+    /// frame the stage walk banks — the one-frame-old word the
+    /// render boundary keeps, the chart the fresh walk re-reads).
+    pub fn live_profiler_updated(&mut self, results: crate::profiler::ProfilerResults) {
+        self.profiler_results = Some(results);
+    }
+
     /// THE F3+3 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
     /// .toggleNetworkCharts's bytecode walk — the law the fps lane
     /// banks mirrors verbatim: `renderNetworkCharts =
@@ -17053,6 +17345,13 @@ impl App {
             self.draw_bandwidth_chart(g, a, w, h);
             self.draw_ping_chart(g, a, w, h);
         }
+        // THE PROFILER PIE (the DSO extractRenderState's
+        // renderProfilerChart lane — the F3+1 chord's own chart the
+        // renderProfilerChart flag draws, the empty-results early
+        // return the chart's own null gate keeps)
+        if self.profiler_chart {
+            self.draw_profiler_pie(g, a, w, h);
+        }
     }
 
     /// THE FPS CHART'S OWN DRAW (javap FpsDebugChart + the
@@ -17430,6 +17729,144 @@ impl App {
         let tw = g.text_width(&word);
         g.fill(x + 1, h - 59, tw + 2, 9, DEBUG_BAND_BG);
         g.text(a, x + 2, h - 58, &word, DEBUG_TEXT, false);
+    }
+
+    /// THE PROFILER PIE'S OWN DRAW (javap 26.2 ProfilerPieChart
+    /// .extractRenderState + the pip pair GuiProfilerChartRenderer
+    /// .renderToTexture's audited walk — the strata the bytecode's
+    /// own order keeps: the translucent panel the `-1873784752`
+    /// fill paints FIRST (the same constant the F3 band wears), the
+    /// pie the children's slices draw (the cumulative
+    /// start→start+pct walk the renderToTexture loop keeps — the
+    /// top face the fan's sector answers, the side extrusion the
+    /// lower-rim `(yA+yB)/2 >= 0` gate the darkened color paints),
+    /// then the header + legend texts the white/color rows wear.
+    /// THE GEOMETRY the extractRenderState's own arithmetic speaks:
+    /// the xRight `guiWidth - 130 - 10` anchor, the xLeft/xR2 the
+    /// ±130 pair, the legend rows the `size() * 9` stride, the
+    /// yBottom `guiHeight - bottomOffset - 5` anchor (the
+    /// bottomOffset the setBottomOffset(tpsChart.getFullHeight())
+    /// ride's own 69 keeps), the pie center the `(xLeft + 130,
+    /// yTop - 62 - 5)` pair the pip rect's own middle wears, the
+    /// header the split lines the `lines-1` rows raise. THE
+    /// EXTRACTOR'S OWN 5-ARG TEXT the no-shadow chart family keeps.)
+    fn draw_profiler_pie(&self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        let Some(results) = self.profiler_results.as_ref() else {
+            return;
+        };
+        let fields = results.get_times(&self.profiler_tree_path);
+        if fields.is_empty() {
+            return;
+        }
+        let self_row = &fields[0];
+        let children = &fields[1..];
+        // THE GEOMETRY (the audited arithmetic verbatim)
+        let x_right = w - PROFILER_CHART_HALF - 10;
+        let x_left = x_right - PROFILER_CHART_HALF;
+        let x_r2 = x_right + PROFILER_CHART_HALF;
+        let rows_h = children.len() as i32 * PROFILER_ROW_STRIDE;
+        let y_bottom = h - PROFILER_BOTTOM_OFFSET - 5;
+        let y_top = y_bottom - rows_h;
+        let pie_cy = y_top - PROFILER_PIE_HALF_EXTENT - 5;
+        let pie_cx = x_right;
+        // THE HEADER'S OWN WORDS (the percentage format the
+        // `PERCENTAGE_FORMAT` walk keeps, the prefix width the
+        // `"[0] "` measure answers, the split widths the
+        // `xR2 - pctWidth - 5 - xLeft - prefixWidth` walk and the
+        // `-10` rest keep)
+        let demangled = crate::profiler::demangle_path(&self_row.name);
+        let pct_word = percentage_word(self_row.global_percentage);
+        let pct_w = g.text_width(&pct_word);
+        let prefix_w = g.text_width("[0] ");
+        let split_w = x_r2 - pct_w - 5 - x_left - prefix_w;
+        let lines =
+            crate::profiler::split_node_name(|s| g.text_width(s), &demangled, split_w, split_w - 10);
+        // THE TITLE (the root/unspecified the bare first line keeps,
+        // the rest the `"[0] "` prefix the concat recipe adds)
+        let mut title = String::new();
+        if demangled != "unspecified" && demangled != "root" {
+            title.push_str("[0] ");
+        }
+        if let Some(first) = lines.first() {
+            title.push_str(first);
+        }
+        let header_y = pie_cy - (lines.len() as i32 - 1) * PROFILER_ROW_STRIDE;
+        // THE PANEL (the `-1873784752` fill the F3 band's own
+        // constant keeps — the rect the header-top-5 to
+        // legend-bottom-5 span wears)
+        g.fill(
+            x_left - 5,
+            header_y - 5,
+            x_r2 + 5 - (x_left - 5),
+            y_bottom + 5 - (header_y - 5),
+            DEBUG_BAND_BG,
+        );
+        // THE SLICES (the children the cumulative walk serves — the
+        // start the running sum keeps, the span the row's own
+        // percentage speaks, the color the hash law answers)
+        let mut slices: Vec<ProfilerPieSlice> = Vec::new();
+        let mut running = 0.0f64;
+        for f in children {
+            slices.push(ProfilerPieSlice {
+                start_pct: running,
+                span_pct: f.percentage,
+                color: crate::profiler::result_field_color(&f.name),
+            });
+            running += f.percentage;
+        }
+        // THE TOP FACE (the fan's sector the scanline runs answer)
+        for (x, y, run_w, si) in profiler_pie_top_runs(pie_cx, pie_cy, &slices) {
+            g.fill(x, y, run_w, 1, fps_argb_fill(slices[si].color));
+        }
+        // THE SIDES (the darkened extrusion the lower rim wears —
+        // the `ARGB.multiply(color, -8355712)` the quad color keeps)
+        let side_color = |c: i32| fps_argb_fill(argb_multiply(c, PROFILER_SIDE_MULTIPLIER));
+        for (x, y, fill_h, si) in profiler_pie_side_fills(pie_cx, pie_cy, &slices) {
+            g.fill(x, y, 1, fill_h, side_color(slices[si].color));
+        }
+        // THE HEADER TEXTS (the title the left edge wears, the wrap
+        // lines the `+10 + prefixWidth` x the walk keeps, the
+        // percentage the `xR2 - pctWidth` anchor speaks)
+        g.text(a, x_left, header_y, &title, DEBUG_TEXT, false);
+        for (li, line) in lines.iter().enumerate().skip(1) {
+            g.text(
+                a,
+                x_left + 10 + prefix_w,
+                header_y + li as i32 * PROFILER_ROW_STRIDE,
+                line,
+                DEBUG_TEXT,
+                false,
+            );
+        }
+        g.text(a, x_r2 - pct_w, header_y, &pct_word, DEBUG_TEXT, false);
+        // THE LEGEND ROWS (the `"[i] "` prefix the unspecified row's
+        // `"[?] "` exception keeps, the raw name the append speaks,
+        // the row color the hash law answers, the two right-aligned
+        // percentage columns the `xR2 - 50 - w` and `xR2 - w` walks
+        // keep)
+        for (i, f) in children.iter().enumerate() {
+            let row_y = y_top + i as i32 * PROFILER_ROW_STRIDE;
+            let mut row_text = String::new();
+            if f.name == "unspecified" {
+                row_text.push_str("[?] ");
+            } else {
+                row_text.push_str(&format!("[{}] ", i + 1));
+            }
+            row_text.push_str(&f.name);
+            let color = hitbox_argb(crate::profiler::result_field_color(&f.name)).0;
+            g.text(a, x_left, row_y, &row_text, color, false);
+            let rel_word = percentage_word(f.percentage);
+            g.text(
+                a,
+                x_r2 - 50 - g.text_width(&rel_word),
+                row_y,
+                &rel_word,
+                color,
+                false,
+            );
+            let glob_word = percentage_word(f.global_percentage);
+            g.text(a, x_r2 - g.text_width(&glob_word), row_y, &glob_word, color, false);
+        }
     }
 
     /// THE LEFT COLUMN'S LINES (the 26.2 entries the jar's own string
@@ -53744,6 +54181,212 @@ cow_sound_variant: None,
         }
         assert!(app.sounds.events.is_empty(), "the dry world never splashes");
         assert_eq!(app.rain_sound_time, 0, "the dry tick resets the clock");
+    }
+
+    #[test]
+    fn the_profiler_toggle_the_audited_law_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE FRESH CLIENT (the renderProfilerChart all-false the
+        // ctor keeps)
+        assert!(!app.profiler_chart, "the fresh client the pie keeps silent");
+        assert_eq!(app.profiler_tree_path, "root", "the ctor's own word");
+        assert!(app.profiler_results.is_none(), "the no-results lane");
+        // THE RAISE (the `!(isOverlayVisible && flag)` flip — the
+        // closed state the raise answers, the setOverlayVisible ride
+        // the debug_held word speaks, the modifier the chord spends)
+        app.on_profiler_chart_key();
+        assert!(app.profiler_chart, "the chord the pie raises");
+        assert!(app.debug_held, "the raise the overlay forces visible");
+        assert!(app.debug_modifier_used, "the modifier the chord spends");
+        // THE OTHER FLAGS THE TOGGLE NEVER TOUCHES (the audited walk
+        // the chart family's own pair keeps)
+        assert!(!app.fps_charts, "the fps flag the walk never raises");
+        assert!(!app.network_charts, "the network flag the walk never raises");
+        // THE LOWER (the overlay-visible state the flip answers)
+        app.on_profiler_chart_key();
+        assert!(!app.profiler_chart, "the re-press the pie lowers");
+    }
+
+    #[test]
+    fn the_profiler_digit_the_drill_walk_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE CLOSED CHART (the digit the hotbar lane keeps — the
+        // false return the consumption never wears)
+        assert!(!app.on_profiler_chart_digit(1), "the closed chart never consumes");
+        // THE OPEN CHART, NO RESULTS (the consumed word the early
+        // return keeps — the panic the None gate avoids)
+        app.on_profiler_chart_key();
+        assert!(app.on_profiler_chart_digit(1), "the open chart consumes");
+        assert_eq!(app.profiler_tree_path, "root", "the no-results walk never moves");
+        // THE RESULTS LANDING (the hand-built frame the walk reads)
+        app.live_profiler_updated(crate::profiler::ProfilerResults::new(vec![
+            ("root".to_string(), 1000, 1),
+            ("root\u{1e}a".to_string(), 600, 1),
+            ("root\u{1e}b".to_string(), 300, 1),
+        ]));
+        // THE DRILL-DOWN (the digit 1 the row-1 name answers — the
+        // sorted list's head the `a` row wears, the separator the
+        // concat chains)
+        assert!(app.on_profiler_chart_digit(1));
+        assert_eq!(app.profiler_tree_path, "root\u{1e}a", "the digit 1 the row-1 keeps");
+        // THE OUT-OF-RANGE REFUSAL (the childless level the range
+        // gate keeps — the path the refusal never moves)
+        assert!(app.on_profiler_chart_digit(5));
+        assert_eq!(app.profiler_tree_path, "root\u{1e}a", "the out-of-range the path keeps");
+        // THE DRILL-UP (the digit 0 the parent slice answers — the
+        // separator the truncate cuts)
+        assert!(app.on_profiler_chart_digit(0));
+        assert_eq!(app.profiler_tree_path, "root", "the digit 0 the parent keeps");
+        // THE ROOT-LEVEL UP (the no-separator path the same word
+        // wears — the walk the no-move answer keeps)
+        assert!(app.on_profiler_chart_digit(0));
+        assert_eq!(app.profiler_tree_path, "root", "the root-level up the path keeps");
+        // THE UNSPECIFIED REFUSAL (the [?] row the drill never
+        // enters — the under-covered root the row names)
+        app.profiler_tree_path = "root".to_string();
+        app.live_profiler_updated(crate::profiler::ProfilerResults::new(vec![
+            ("root".to_string(), 1000, 1),
+            ("root\u{1e}a".to_string(), 600, 1),
+        ]));
+        assert!(app.on_profiler_chart_digit(2));
+        assert_eq!(app.profiler_tree_path, "root", "the [?] row the drill refuses");
+    }
+
+    #[test]
+    fn the_profiler_words_the_jar_format_keeps() {
+        // THE PERCENTAGE (the DecimalFormat("##0.00") HALF_UP law —
+        // the two decimals the whole values keep, the 0.125 the
+        // half-up "0.13" the Rust half-even never wears)
+        assert_eq!(percentage_word(100.0), "100.00");
+        assert_eq!(percentage_word(60.0), "60.00");
+        assert_eq!(percentage_word(12.5), "12.50");
+        assert_eq!(percentage_word(0.125), "0.13");
+        assert_eq!(percentage_word(0.0), "0.00");
+        // THE SIDE MULTIPLY (the ARGB.multiply floor law — the
+        // half-gray the channels' own /255 keeps)
+        assert_eq!(
+            argb_multiply(0xFF80FF40u32 as i32, -8355712),
+            0xFF408020u32 as i32
+        );
+        assert_eq!(
+            argb_multiply(0xFFFFFFFFu32 as i32, -8355712),
+            0xFF808080u32 as i32
+        );
+    }
+
+    #[test]
+    fn the_pie_runs_the_sector_law_speaks() {
+        // THE QUARTER SLICE (the [0, 25) span the down-right quadrant
+        // answers — the t = atan2(dx/rx, dy/ry) fold the vertex law
+        // keeps: t=0 the +Y rim, t=π/2 the +X rim)
+        let slices = vec![ProfilerPieSlice {
+            start_pct: 0.0,
+            span_pct: 25.0,
+            color: -1,
+        }];
+        let runs = profiler_pie_top_runs(500, 192, &slices);
+        assert!(!runs.is_empty(), "the sector the runs wear");
+        assert!(
+            runs.iter().all(|(x, y, _, _)| *x >= 500 && *y >= 192),
+            "the down-right quadrant the [0,25) slice keeps: {:?}",
+            &runs[..runs.len().min(4)]
+        );
+        assert!(
+            runs.iter().all(|(x, _, _, _)| *x < 500 + 106),
+            "the ellipse x the 105-radius bounds"
+        );
+        assert!(
+            runs.iter().all(|(_, y, _, _)| *y < 192 + 54),
+            "the ellipse y the 52.5-radius bounds"
+        );
+        // THE MIRRORED SLICE (the [75, 100) span the down-LEFT
+        // quadrant answers — the vertex law the left half of the
+        // sweep wears: t ∈ [3π/2, 2π) the sin-negative rim keeps)
+        let slices = vec![ProfilerPieSlice {
+            start_pct: 75.0,
+            span_pct: 25.0,
+            color: -1,
+        }];
+        let runs = profiler_pie_top_runs(500, 192, &slices);
+        assert!(
+            runs.iter().all(|(x, y, _, _)| *x < 500 && *y >= 192),
+            "the down-left quadrant the [75,100) slice keeps"
+        );
+        // THE CONSECUTIVE PAIR (the two slices the boundary the
+        // half-open test never double-covers — the total the pie's
+        // own area answers)
+        let slices = vec![
+            ProfilerPieSlice {
+                start_pct: 0.0,
+                span_pct: 25.0,
+                color: -1,
+            },
+            ProfilerPieSlice {
+                start_pct: 25.0,
+                span_pct: 25.0,
+                color: -2,
+            },
+        ];
+        let runs = profiler_pie_top_runs(500, 192, &slices);
+        let pixels: usize = runs.iter().map(|(_, _, w, _)| *w as usize).sum();
+        let quarter = runs
+            .iter()
+            .filter(|(_, _, _, si)| *si == 0)
+            .map(|(_, _, w, _)| *w as usize)
+            .sum::<usize>();
+        let second = pixels - quarter;
+        assert!(quarter > 1000, "the first slice the real area wears");
+        // the [25,50) slice = the UP-RIGHT quadrant (t ∈ [π/2, π) —
+        // the sin-positive, cos-negative rim the sweep keeps)
+        assert!(
+            runs.iter()
+                .filter(|(_, _, _, si)| *si == 1)
+                .all(|(x, _, _, _)| *x >= 500),
+            "the up-right quadrant the second slice keeps"
+        );
+        assert!(second > 1000, "the second slice the real area wears");
+    }
+
+    #[test]
+    fn the_pie_sides_the_lower_rim_law_speaks() {
+        // THE HALF SLICE (the [0, 50) span — the lower rim the
+        // `(yA+yB)/2 >= 0` gate draws (the t ∈ (0, π/2] rim the
+        // cos-positive half keeps), the upper rim the skip keeps)
+        let slices = vec![ProfilerPieSlice {
+            start_pct: 0.0,
+            span_pct: 50.0,
+            color: -1,
+        }];
+        let fills = profiler_pie_side_fills(500, 192, &slices);
+        assert!(!fills.is_empty(), "the lower rim the bands wear");
+        assert!(
+            fills.iter().all(|(_, y, h, _)| *y >= 192 && *h == 10),
+            "the +10 depth the lower rim keeps: {:?}",
+            &fills[..fills.len().min(4)]
+        );
+        // THE SECOND HALF SLICE (the [50, 100) span — the upper rim
+        // the gate keeps silent, the rim's own lower arc (the
+        // t-near-2π cos-positive tail) the same law draws — the
+        // bands the lower rim alone wears either way)
+        let slices = vec![ProfilerPieSlice {
+            start_pct: 50.0,
+            span_pct: 50.0,
+            color: -1,
+        }];
+        let fills = profiler_pie_side_fills(500, 192, &slices);
+        assert!(
+            fills.iter().all(|(_, y, h, _)| *y >= 192 && *h == 10),
+            "the lower rim alone the gate draws: {fills:?}"
+        );
+        // THE ZERO SLICE (the 0.00% row the no-segment answer keeps)
+        let slices = vec![ProfilerPieSlice {
+            start_pct: 0.0,
+            span_pct: 0.0,
+            color: -1,
+        }];
+        assert!(profiler_pie_side_fills(500, 192, &slices).is_empty());
     }
 }
 
