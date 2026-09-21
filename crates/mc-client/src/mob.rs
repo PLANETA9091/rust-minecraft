@@ -1391,11 +1391,11 @@ impl MobKind {
             // own files keep; the variant lane the client's metadata
             // never reads, the classic default the sync's define arms).
             // The ogg mapping the fetch lane answers — the gen's
-            // MOB_VOICE_EVENTS the seven ids' files download (the
-            // sha1-verified walk the Rodio path decodes; the AMBIENT
-            // row the four-arm selection's default arm is — the state
-            // trio the ambient_voice_event method speaks, the growl/
-            // whine/pant the angry/tamed-hurt/idle bodies wear)
+            // MOB_VOICE_EVENTS the eight kinds' rows' files download
+            // (the sha1-verified walk the Rodio path decodes; the
+            // AMBIENT row the four-arm selection's default arm is — the
+            // state trio the ambient_voice_event method speaks, the
+            // growl/whine/pant the angry/tamed-hurt/idle bodies wear)
             (MobKind::Wolf, VoiceSlot::Ambient) => "entity.wolf.ambient",
             (MobKind::Wolf, VoiceSlot::Hurt) => "entity.wolf.hurt",
             (MobKind::Wolf, VoiceSlot::Death) => "entity.wolf.death",

@@ -815,6 +815,98 @@ mod tests {
         }
     }
 
+    /// Real-data check (NOT run on CI): the SIX remaining drawn kinds'
+    /// voice events — the sheep's flat trio, the cow's classic and
+    /// moody quads, the pig's classic/big/baby rows (the eat and step
+    /// rows the sets speak), the chicken's classic/picky/baby rows, the
+    /// skeleton's and the spider's flat quads — the exact file counts
+    /// the 26.2 sounds.json banks and every file decodes (the mob-voice
+    /// fetch the generator's MOB_VOICE_EVENTS walk speaks; the same
+    /// shape the zombie and wolf walks wear).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn real_six_kind_voice_oggs_decode() {
+        let candidates = [
+            PathBuf::from("assets-cache/jar"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets-cache/jar"),
+        ];
+        let Some(root) = candidates.into_iter().find(|p| p.is_dir()) else {
+            eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
+            return;
+        };
+        const EVENTS: [(&str, usize); 44] = [
+            ("entity.sheep.ambient", 3),
+            ("entity.sheep.hurt", 3),
+            ("entity.sheep.death", 3),
+            ("entity.cow.ambient", 4),
+            ("entity.cow.hurt", 3),
+            ("entity.cow.death", 3),
+            ("entity.cow.step", 4),
+            ("entity.cow_moody.ambient", 9),
+            ("entity.cow_moody.hurt", 4),
+            ("entity.cow_moody.death", 2),
+            ("entity.cow_moody.step", 4),
+            ("entity.pig.ambient", 3),
+            ("entity.pig.hurt", 3),
+            ("entity.pig.death", 1),
+            ("entity.pig.step", 5),
+            ("entity.pig.eat", 2),
+            ("entity.pig_big.ambient", 9),
+            ("entity.pig_big.hurt", 3),
+            ("entity.pig_big.death", 1),
+            ("entity.pig_big.eat", 2),
+            ("entity.baby_pig.ambient", 6),
+            ("entity.baby_pig.hurt", 3),
+            ("entity.baby_pig.death", 1),
+            ("entity.baby_pig.step", 5),
+            ("entity.baby_pig.eat", 2),
+            ("entity.chicken.ambient", 3),
+            ("entity.chicken.hurt", 2),
+            ("entity.chicken.death", 2),
+            ("entity.chicken.step", 2),
+            ("entity.chicken_picky.ambient", 8),
+            ("entity.chicken_picky.hurt", 3),
+            ("entity.chicken_picky.death", 1),
+            ("entity.baby_chicken.ambient", 2),
+            ("entity.baby_chicken.hurt", 4),
+            ("entity.baby_chicken.death", 1),
+            ("entity.baby_chicken.step", 1),
+            ("entity.skeleton.ambient", 3),
+            ("entity.skeleton.hurt", 4),
+            ("entity.skeleton.death", 1),
+            ("entity.skeleton.step", 4),
+            ("entity.spider.ambient", 4),
+            ("entity.spider.hurt", 4),
+            ("entity.spider.death", 1),
+            ("entity.spider.step", 4),
+        ];
+        for (id, want) in EVENTS {
+            let files = discover_event_files(&root, id);
+            assert_eq!(
+                files.len(),
+                want,
+                "{id} must resolve to {want} real files: {files:?}"
+            );
+            for (key, path) in &files {
+                let bytes = std::fs::read(path).expect("read");
+                let (rate, frames) = probe_frames(&bytes)
+                    .unwrap_or_else(|e| panic!("{key}: probe failed: {e}"));
+                let t = decode_audio(&bytes)
+                    .unwrap_or_else(|e| panic!("{key}: decode failed: {e}"));
+                assert_eq!(t.frames, frames, "{key}: probe and decode must agree");
+                // a voice, an eat, or a footstep is short — the
+                // three-second sanity bound the zombie and wolf walks
+                // keep, widened to 3.5s the six-kind walk speaks: the
+                // longest sound the table banks is the moody cow's
+                // drawn-out moo (ambient5, 3.084s — the real blob the
+                // official row keeps, the bound the honesty names)
+                let secs = frames as f64 / rate as f64;
+                assert!(secs > 0.0 && secs < 3.5, "{key}: got {secs:.3}s");
+                println!("  {key} <- {} ({frames} frames, {secs:.3}s)", path.display());
+            }
+        }
+    }
+
     #[test]
     fn sync_plays_and_stops_game_music() {
         // temp runtime root holding a sound file at EVERY official path the
