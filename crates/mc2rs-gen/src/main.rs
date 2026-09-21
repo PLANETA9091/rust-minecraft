@@ -842,16 +842,11 @@ fn fetch_title_panorama(
 /// biome-music table, not this constant.
 const EXTRA_SOUND_EVENTS: [&str; 2] = ["ui.button.click", "music.game"];
 
-/// The mob voice lane's own events (the zombie's four voices — the
-/// ambient groan, the hurt, the death, and the playStepSound footstep
-/// the cadence lane speaks). Every file of every event rides the same
-/// sha1-verified asset-index fetch the music and block lanes speak.
-const MOB_VOICE_EVENTS: [&str; 4] = [
-    "entity.zombie.ambient",
-    "entity.zombie.hurt",
-    "entity.zombie.death",
-    "entity.zombie.step",
-];
+/// The mob voice lane's own events live beside the sound-parse law
+/// (`soundgen::MOB_VOICE_EVENTS` — the zombie's four voices and the
+/// wolf's four the client's `voice_event`/`step_voice` tables speak;
+/// the pin test the list's own home keeps).
+use soundgen::MOB_VOICE_EVENTS;
 
 /// The player's own water-step lane's events (Player.playStepSound's
 /// isInWater branch — the waterSwimSound the wading step and the drift
@@ -980,8 +975,9 @@ fn fetch_sound_events(
         } else if ev.id.starts_with("music.game") {
             game = have;
         } else if MOB_VOICE_EVENTS.contains(&ev.id.as_str()) {
-            // the four mob events speak DISJOINT file sets (say / hurt /
-            // death / step) — the biome lane's own += shape
+            // the eight mob events speak DISJOINT file sets (the two
+            // kinds' say / hurt / death / step rows) — the biome lane's
+            // own += shape
             mob += have;
         } else if PLAYER_SWIM_EVENTS.contains(&ev.id.as_str())
             || PLAYER_SPLASH_EVENTS.contains(&ev.id.as_str())

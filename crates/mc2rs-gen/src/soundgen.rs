@@ -96,6 +96,36 @@ pub fn generate(bytes: &[u8]) -> Result<SoundData> {
     Ok(data)
 }
 
+/// THE MOB VOICE LANE'S OWN EVENTS (the ids the download walk's `wanted`
+/// gate admits beside the block family — every file of every event the
+/// sha1-verified asset-index fetch copies into the runtime cache). Two
+/// drawn kinds the client's own tables speak:
+///
+/// - the zombie's four voices (the ambient groan, the hurt, the death,
+///   and the playStepSound footstep the cadence lane speaks — the FLAT
+///   fold the class's own override keeps);
+/// - the wolf's four voices (the 26.2 wolf_sound_variant's CLASSIC
+///   default the client's `voice_event`/`step_voice` tables name — the
+///   ambient bark, the hurt, the death, and the shared step event the
+///   variant directories' five files answer). THE FETCH THE CLIENT'S
+///   TABLES OWE: the rows the voice tables speak the download walk
+///   arms — an unfetched id the Rodio path's missing-file skip keeps
+///   silent (the honest refusal the audio lane never breaks the frame
+///   with), the drawn wolf the barkless body the oggs' absence wore.
+///
+/// Every file rides the same sha1-verified asset-index fetch the music
+/// and block lanes speak.
+pub const MOB_VOICE_EVENTS: [&str; 8] = [
+    "entity.zombie.ambient",
+    "entity.zombie.hurt",
+    "entity.zombie.death",
+    "entity.zombie.step",
+    "entity.wolf.ambient",
+    "entity.wolf.hurt",
+    "entity.wolf.death",
+    "entity.wolf.step",
+];
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -119,5 +149,43 @@ mod tests {
 
         let menu = data.events_with_prefix("music.menu.");
         assert_eq!(menu.len(), 1);
+    }
+
+    /// THE MOB VOICE LANE'S OWN PIN (the fetch list the client's voice
+    /// tables name — the zombie's four the FLAT fold speaks, the wolf's
+    /// four the CLASSIC default answers): the eight ids the download
+    /// walk admits, the order the two kinds' rows keep, no third kind
+    /// the list never draws (the undrawn body the honest absence wears
+    /// — the fetch the client's own tables alone define). The ids' real
+    /// sounds.json admission the client's asset-gated walk proves (the
+    /// runtime table the cache keeps — the ignored lane's own word).
+    #[test]
+    fn mob_voice_events_name_the_drawn_kinds_four_voices() {
+        assert_eq!(
+            MOB_VOICE_EVENTS,
+            [
+                "entity.zombie.ambient",
+                "entity.zombie.hurt",
+                "entity.zombie.death",
+                "entity.zombie.step",
+                "entity.wolf.ambient",
+                "entity.wolf.hurt",
+                "entity.wolf.death",
+                "entity.wolf.step",
+            ]
+        );
+        // the two drawn kinds the list's rows pair — no duplicates, no
+        // third kind's id the fetch never arms
+        let kinds: Vec<&str> = MOB_VOICE_EVENTS.iter().map(|id| {
+            id.strip_prefix("entity.")
+                .and_then(|rest| rest.split('.').next())
+                .expect("every id the entity.<kind>.<voice> shape wears")
+        }).collect();
+        assert_eq!(kinds, vec!["zombie", "zombie", "zombie", "zombie", "wolf", "wolf", "wolf", "wolf"]);
+        let mut sorted = MOB_VOICE_EVENTS.to_vec();
+        sorted.sort_unstable();
+        let uniq = sorted.len();
+        sorted.dedup();
+        assert_eq!(sorted.len(), uniq, "no duplicate ids the fetch would double-count");
     }
 }

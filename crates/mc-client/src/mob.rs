@@ -1390,9 +1390,9 @@ impl MobKind {
             // speaks — the ambient, the hurt, the death the variant's
             // own files keep; the variant lane the client's metadata
             // never reads, the classic default the sync's define arms).
-            // The audio table's own id list the rows never join yet —
-            // the table's unknown-id refusal the silent word wears (the
-            // variant-directories' ogg mapping the audio round owes)
+            // The ogg mapping the fetch lane answers — the gen's
+            // MOB_VOICE_EVENTS the four ids' files download (the
+            // sha1-verified walk the Rodio path decodes)
             (MobKind::Wolf, VoiceSlot::Ambient) => "entity.wolf.ambient",
             (MobKind::Wolf, VoiceSlot::Hurt) => "entity.wolf.hurt",
             (MobKind::Wolf, VoiceSlot::Death) => "entity.wolf.death",
