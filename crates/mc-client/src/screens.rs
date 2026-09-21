@@ -5012,6 +5012,19 @@ fn ear_distance(ear: Option<(f64, f64, f64)>, x: f64, y: f64, z: f64) -> f64 {
     }
 }
 
+/// THE EAR'S OWN STEREO SPLIT (the lateral pan law the `lateral_pan`
+/// doc speaks — the AL_POSITION + AL_ORIENTATION pair the real
+/// engine's listener answers): the ear→source direction the
+/// listener's own yaw answers. The `None` ear — no body the staging
+/// knows — the honest center 0.0 keeps (the same arm the distance's
+/// zero fold wears: no ear the stereo the pan lane never splits).
+fn ear_pan(ear: Option<(f64, f64, f64)>, yaw_deg: f32, x: f64, y: f64, z: f64) -> f32 {
+    match ear {
+        Some((ex, ey, ez)) => crate::sound::lateral_pan(x - ex, y - ey, z - ez, yaw_deg),
+        None => 0.0,
+    }
+}
+
 /// THE PLAYER'S OWN ATTACK BASE (javap `Player.createAttributes` 3-7 —
 /// the ATTACK_DAMAGE attribute the `dconst_1` base keeps: the vanilla
 /// 1.0 the fist's own floor speaks. The client's own scale the 2.0
@@ -7774,12 +7787,17 @@ impl App {
                                 pig.step_voice(Some(under))
                             {
                                 let ear = Some((b.x, b.y + b.eye_height(), b.z));
-                                self.sounds.play_voice_at(
+                                self.sounds.play_voice_at_pan(
                                     self.frame,
                                     event,
                                     volume,
                                     pitch,
                                     ear_distance(ear, pig.x, pig.y, pig.z),
+                                    // the body's own yaw the vanilla
+                                    // degrees the pan law speaks (the
+                                    // body's word the +180° fold the
+                                    // camera conversion wears)
+                                    ear_pan(ear, b.yaw, pig.x, pig.y, pig.z),
                                 );
                             }
                         }
@@ -7787,33 +7805,37 @@ impl App {
                     // THE RIDE'S OWN VOICES (the loop's own consumption
                     // the mirrored walk speaks — the KIND'S OWN ROW
                     // each event the voice table keeps, the distance
-                    // law the rider's own ear folds)
+                    // law the rider's own ear folds, the stereo tail
+                    // the body's own yaw the pan law speaks)
                     let ear = Some((b.x, b.y + b.eye_height(), b.z));
                     if ride_ambient {
-                        self.sounds.play_voice_at(
+                        self.sounds.play_voice_at_pan(
                             self.frame,
                             ride_words.expect("the ride tick named the words")[0],
                             1.0,
                             ride_pitch,
                             ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                            ear_pan(ear, b.yaw, ride_pose.0, ride_pose.1, ride_pose.2),
                         );
                     }
                     if ride_fire_hurt {
-                        self.sounds.play_voice_at(
+                        self.sounds.play_voice_at_pan(
                             self.frame,
                             ride_words.expect("the ride tick named the words")[1],
                             1.0,
                             ride_pitch,
                             ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                            ear_pan(ear, b.yaw, ride_pose.0, ride_pose.1, ride_pose.2),
                         );
                     }
                     if let Some(fizz_pitch) = ride_fizz {
-                        self.sounds.play_voice_at(
+                        self.sounds.play_voice_at_pan(
                             self.frame,
                             "entity.generic.extinguish_fire",
                             crate::mob::EXTINGUISH_VOLUME,
                             fizz_pitch,
                             ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                            ear_pan(ear, b.yaw, ride_pose.0, ride_pose.1, ride_pose.2),
                         );
                     }
                     if ride_fire_death {
@@ -7823,12 +7845,13 @@ impl App {
                         // body's smelt fold speaks, the saddle the
                         // custom drop rides, the drops the
                         // spawnAtLocation law pops at the feet)
-                        self.sounds.play_voice_at(
+                        self.sounds.play_voice_at_pan(
                             self.frame,
                             ride_words.expect("the ride tick named the words")[2],
                             1.0,
                             ride_pitch,
                             ear_distance(ear, ride_pose.0, ride_pose.1, ride_pose.2),
+                            ear_pan(ear, b.yaw, ride_pose.0, ride_pose.1, ride_pose.2),
                         );
                         for (item, count) in ride_loot {
                             let id = self.next_drop_id;
@@ -8580,10 +8603,14 @@ impl App {
                     .body
                     .as_ref()
                     .map(|b| (b.x, b.y + b.eye_height(), b.z));
-                let mut groans: Vec<(&'static str, f32, f64)> = Vec::new();
-                let mut mob_hurts: Vec<(&'static str, f32, f64)> = Vec::new();
+                // the listener's own yaw the stereo split rides (the
+                // same read the cave mood's tick wears — the pan law
+                // the mob voices' log tails now speak)
+                let yaw = self.listener_yaw();
+                let mut groans: Vec<(&'static str, f32, f64, f32)> = Vec::new();
+                let mut mob_hurts: Vec<(&'static str, f32, f64, f32)> = Vec::new();
                 let mut mob_kills: Vec<(&'static str, f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
-                let mut fizzes: Vec<(f32, f64)> = Vec::new();
+                let mut fizzes: Vec<(f32, f64, f32)> = Vec::new();
                 // THE HURTBY GOAL'S OWN ALERTS (the start()'s
                 // alertOthers walk the events queue — the same-kind
                 // box the sibling pass answers AFTER the loop the
@@ -8599,8 +8626,9 @@ impl App {
                 // the mob's own spot — the DISTANCE LAW the trio
                 // speaks, the fold the play_voice_at keeps; the
                 // (event, volume, pitch) the kind's own law answers —
-                // the zombie's flat override, the animals' block law)
-                let mut mob_steps: Vec<(&'static str, f32, f32, f64)> = Vec::new();
+                // the zombie's flat override, the animals' block law;
+                // the stereo tail the pan law's split wears)
+                let mut mob_steps: Vec<(&'static str, f32, f32, f64, f32)> = Vec::new();
                 // the egg lay's own beat (the CHICKEN_EGG voice + the
                 // egg item the caller spawns — the tuples the lay's
                 // pitch + the feet the event carries)
@@ -8738,6 +8766,7 @@ impl App {
                                     mob.ambient_voice_event(),
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
+                                    ear_pan(ear, yaw, mob.x, mob.y, mob.z),
                                 ));
                             }
                             if ev.fire_hurt {
@@ -8749,6 +8778,7 @@ impl App {
                                     mob.voice_event(crate::mob::VoiceSlot::Hurt),
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
+                                    ear_pan(ear, yaw, mob.x, mob.y, mob.z),
                                 ));
                             }
                             if ev.fire_death {
@@ -8776,6 +8806,7 @@ impl App {
                                 fizzes.push((
                                     pitch,
                                     ear_distance(ear, mob.x, mob.y, mob.z),
+                                    ear_pan(ear, yaw, mob.x, mob.y, mob.z),
                                 ));
                             }
                             if let Some(pitch) = ev.egg_laid {
@@ -8811,6 +8842,7 @@ impl App {
                                         volume,
                                         pitch,
                                         ear_distance(ear, mob.x, mob.y, mob.z),
+                                        ear_pan(ear, yaw, mob.x, mob.y, mob.z),
                                     ));
                                 }
                             }
@@ -8888,12 +8920,13 @@ impl App {
                 // skeleton's own spot)
                 for shot in arrow_shots {
                     self.arrows.push(crate::mob::Arrow::from_spawn(&shot));
-                    self.sounds.play_voice_at(
+                    self.sounds.play_voice_at_pan(
                         self.frame,
                         "entity.skeleton.shoot",
                         1.0,
                         shot.pitch,
                         ear_distance(ear, shot.x, shot.y, shot.z),
+                        ear_pan(ear, yaw, shot.x, shot.y, shot.z),
                     );
                 }
                 // THE RIDE'S OWN PASS (the jockey's caller-side walk —
@@ -9039,7 +9072,12 @@ impl App {
                     if mob.health <= 0.0 {
                         mob_kills.push((word, mx, my, mz, pitch, loot));
                     } else {
-                        mob_hurts.push((word, pitch, ear_distance(ear, mx, my, mz)));
+                        mob_hurts.push((
+                            word,
+                            pitch,
+                            ear_distance(ear, mx, my, mz),
+                            ear_pan(ear, yaw, mx, my, mz),
+                        ));
                     }
                 }
                 // THE ARROW'S OWN HITS (the player's hurt the onHitEntity
@@ -9063,12 +9101,13 @@ impl App {
                     ));
                 }
                 for (ax, ay, az, pitch) in arrow_block_hits {
-                    self.sounds.play_voice_at(
+                    self.sounds.play_voice_at_pan(
                         self.frame,
                         "entity.arrow.hit",
                         1.0,
                         pitch,
                         ear_distance(ear, ax, ay, az),
+                        ear_pan(ear, yaw, ax, ay, az),
                     );
                 }
                 // THE PLAYER'S OWN ARROWS (the mob hits the onHitEntity
@@ -9107,20 +9146,22 @@ impl App {
                     }
                     let died = mob.health <= 0.0;
                     if died {
-                        self.sounds.play_voice_at(
+                        self.sounds.play_voice_at_pan(
                             self.frame,
                             death_word,
                             1.0,
                             pitch,
                             ear_distance(ear, mx, my, mz),
+                            ear_pan(ear, yaw, mx, my, mz),
                         );
                     } else {
-                        self.sounds.play_voice_at(
+                        self.sounds.play_voice_at_pan(
                             self.frame,
                             mob_word,
                             1.0,
                             pitch,
                             ear_distance(ear, mx, my, mz),
+                            ear_pan(ear, yaw, mx, my, mz),
                         );
                     }
                     // THE DEATH LOOT (dropAllDeathLoot's own order —
@@ -9202,47 +9243,52 @@ impl App {
                         }
                     }
                 }
-                for (word, pitch, dist) in groans {
+                for (word, pitch, dist, pan) in groans {
                     // the ambient groan (makeSound's own call — the
                     // volume rides the base 1.0 folded by THE DISTANCE
                     // LAW the wire lane speaks, the pitch the law; the
                     // voice table the KIND'S own row keeps — the
                     // creature lane's own animals the zombie's row
-                    // never names)
-                    self.sounds.play_voice_at(self.frame, word, 1.0, pitch, dist);
+                    // never names; the stereo tail the pan law speaks)
+                    self.sounds
+                        .play_voice_at_pan(self.frame, word, 1.0, pitch, dist, pan);
                 }
-                for (word, pitch, dist) in mob_hurts {
+                for (word, pitch, dist, pan) in mob_hurts {
                     // the onFire hurt's own voice (the hurt pipeline's
                     // makeSound — the same law the fist's hit speaks,
                     // the fold the burn spot's own distance speaks;
                     // the KIND'S OWN ROW the table keeps)
-                    self.sounds.play_voice_at(self.frame, word, 1.0, pitch, dist);
+                    self.sounds
+                        .play_voice_at_pan(self.frame, word, 1.0, pitch, dist, pan);
                 }
-                for (pitch, dist) in fizzes {
+                for (pitch, dist, pan) in fizzes {
                     // the extinguish transition (javap
                     // playEntityOnFireExtinguishedSound — 0.7 volume,
                     // the 1.6 +- 0.4 pitch fold, the entity's own spot
                     // the DISTANCE LAW the trio speaks — the same fold
                     // the ambient/hurt/death voices ride)
-                    self.sounds.play_voice_at(
+                    self.sounds.play_voice_at_pan(
                         self.frame,
                         "entity.generic.extinguish_fire",
                         crate::mob::EXTINGUISH_VOLUME,
                         pitch,
                         dist,
+                        pan,
                     );
                 }
                 for (word, mx, my, mz, pitch, loot) in mob_kills {
                     // the death voice (the die() tail's makeSound — the
                     // pitch the entity's own law speaks, the gain the
                     // death spot's own distance folds; the MOB'S OWN
-                    // ROW the synced sound variant's set keeps)
-                    self.sounds.play_voice_at(
+                    // ROW the synced sound variant's set keeps; the
+                    // stereo tail the pan law speaks)
+                    self.sounds.play_voice_at_pan(
                         self.frame,
                         word,
                         1.0,
                         pitch,
                         ear_distance(ear, mx, my, mz),
+                        ear_pan(ear, yaw, mx, my, mz),
                     );
                     // the loot pops at the feet (spawnAtLocation's law,
                     // the pickup delay the default 10)
@@ -9265,12 +9311,13 @@ impl App {
                     // playSound walk speaks — the volume the 1.0F keeps,
                     // the pitch the entity's own stream drew, the gain
                     // the lay spot's own distance folds)
-                    self.sounds.play_voice_at(
+                    self.sounds.play_voice_at_pan(
                         self.frame,
                         "entity.chicken.egg",
                         1.0,
                         pitch,
                         ear_distance(ear, mx, my, mz),
+                        ear_pan(ear, yaw, mx, my, mz),
                     );
                     // THE GIFT'S OWN DROP (the dropFromGiftLootTable's
                     // temperate arm — the egg the count-1 entry the
@@ -9291,13 +9338,14 @@ impl App {
                         ));
                     }
                 }
-                for (event, volume, pitch, dist) in mob_steps {
+                for (event, volume, pitch, dist, pan) in mob_steps {
                     // the footstep (the kind's own voice — the zombie's
                     // flat 0.15F/1.0F override, the animals' block law
                     // the SoundType's own base speaks; the mob's own
                     // spot the DISTANCE LAW the trio speaks — the same
                     // fold the ambient/hurt/death voices ride)
-                    self.sounds.play_voice_at(self.frame, event, volume, pitch, dist);
+                    self.sounds
+                        .play_voice_at_pan(self.frame, event, volume, pitch, dist, pan);
                 }
                 // THE DEATH CLOCK'S REMOVAL (the tickDeath tail: the
                 // broadcast-60 tick discards the corpse) — and the
@@ -9359,13 +9407,9 @@ impl App {
                     )
                 };
                 // the listener's own yaw the world camera's read answers
-                // (the body's current angles the camera's first arm
-                // keeps, the flight camera the deterministic scenes
-                // speak): the render radians' 0 = -Z convention the
-                // vanilla degrees' 0 = +Z pair answers — the +180° step
-                // the body's own camera conversion wears, inverted
-                // (body.camera(): cam.yaw = yaw.to_radians() + PI)
-                let yaw = self.world_camera().yaw.to_degrees() - 180.0;
+                // (the method the pan law's callers share — the doc the
+                // +180° step's own conversion wears)
+                let yaw = self.listener_yaw();
                 let sounds = &mut self.sounds;
                 self.cave_mood.tick(
                     self.frame,
@@ -9872,11 +9916,13 @@ impl App {
         }
         // THE LISTENER'S OWN EAR (the SoundEngine's camera): the mob
         // voices' distance fold the wire lane speaks, the fist's own
-        // voices the same law answers
+        // voices the same law answers — the stereo tail the pan law's
+        // own yaw speaks
         let ear = self
             .body
             .as_ref()
             .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
         let Some(mob) = self.mobs.get_mut(i) else {
             return;
         };
@@ -9941,20 +9987,22 @@ impl App {
         // borrow lives)
         let target_xp = if died { Some(mob.base_xp_reward()) } else { None };
         if died {
-            self.sounds.play_voice_at(
+            self.sounds.play_voice_at_pan(
                 self.frame,
                 kind.voice_event(crate::mob::VoiceSlot::Death),
                 1.0,
                 pitch,
                 ear_distance(ear, mx, my, mz),
+                ear_pan(ear, yaw, mx, my, mz),
             );
         } else {
-            self.sounds.play_voice_at(
+            self.sounds.play_voice_at_pan(
                 self.frame,
                 kind.voice_event(crate::mob::VoiceSlot::Hurt),
                 1.0,
                 pitch,
                 ear_distance(ear, mx, my, mz),
+                ear_pan(ear, yaw, mx, my, mz),
             );
         }
         // THE DEATH LOOT (dropAllDeathLoot's own order: the roll rides
@@ -10068,12 +10116,13 @@ impl App {
             // speaks)
             for (j, nx, ny, nz, ndied, npitch, nkind) in outcomes {
                 if ndied {
-                    self.sounds.play_voice_at(
+                    self.sounds.play_voice_at_pan(
                         self.frame,
                         nkind.voice_event(crate::mob::VoiceSlot::Death),
                         1.0,
                         npitch,
                         ear_distance(ear, nx, ny, nz),
+                        ear_pan(ear, yaw, nx, ny, nz),
                     );
                     for (item, count) in self.mobs[j].death_loot(true) {
                         let id = self.next_drop_id;
@@ -10094,12 +10143,13 @@ impl App {
                     let nxp = self.mobs[j].base_xp_reward();
                     self.spawn_xp_orbs(nx, ny + 0.5, nz, nxp);
                 } else {
-                    self.sounds.play_voice_at(
+                    self.sounds.play_voice_at_pan(
                         self.frame,
                         nkind.voice_event(crate::mob::VoiceSlot::Hurt),
                         1.0,
                         npitch,
                         ear_distance(ear, nx, ny, nz),
+                        ear_pan(ear, yaw, nx, ny, nz),
                     );
                 }
             }
@@ -17183,17 +17233,21 @@ impl App {
     }
 
     pub fn tick_net_mobs(&mut self) {
-        let mut groans: Vec<(&'static str, f32, f64)> = Vec::new();
-        let mut hurts: Vec<(&'static str, f32, f64)> = Vec::new();
-        let mut deaths: Vec<(&'static str, f32, f64)> = Vec::new();
+        let mut groans: Vec<(&'static str, f32, f64, f32)> = Vec::new();
+        let mut hurts: Vec<(&'static str, f32, f64, f32)> = Vec::new();
+        let mut deaths: Vec<(&'static str, f32, f64, f32)> = Vec::new();
         // THE LISTENER'S OWN EAR (the SoundEngine's camera — the
         // body's standing/crouching eye the render's own walk speaks):
         // no body known the staging's ear sits at the source (the
-        // distance-zero arm the no-fold reads)
+        // distance-zero arm the no-fold reads — the stereo the
+        // honest center keeps)
         let ear = self
             .body
             .as_ref()
             .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        // the listener's own yaw the stereo split rides (the same read
+        // the offline lane's mob loop wears)
+        let yaw = self.listener_yaw();
         for m in &mut self.net_mobs {
             m.prev_x = m.x;
             m.prev_y = m.y;
@@ -17225,6 +17279,7 @@ impl App {
                         m.voice_event(crate::mob::VoiceSlot::Death),
                         m.voice_pitch(),
                         ear_distance(ear, m.x, m.y, m.z),
+                        ear_pan(ear, yaw, m.x, m.y, m.z),
                     ));
                 }
                 m.death_time += 1;
@@ -17243,6 +17298,7 @@ impl App {
                     m.ambient_voice_event(),
                     m.voice_pitch(),
                     ear_distance(ear, m.x, m.y, m.z),
+                    ear_pan(ear, yaw, m.x, m.y, m.z),
                 ));
             }
             // THE HURT VOICE at the arm's own value (the 10 the Hurt
@@ -17257,6 +17313,7 @@ impl App {
                     m.voice_event(crate::mob::VoiceSlot::Hurt),
                     m.voice_pitch(),
                     ear_distance(ear, m.x, m.y, m.z),
+                    ear_pan(ear, yaw, m.x, m.y, m.z),
                 ));
             }
             if m.hurt_time > 0 {
@@ -17268,15 +17325,19 @@ impl App {
         // post-loop speaks — the groans, then the hurts, then the
         // deaths; the volume the Mob.getSoundVolume default 1.0 arms
         // and THE DISTANCE LAW folds — the SoundEngine's linear
-        // channel gain the mob's own feet-to-ear walk speaks)
-        for (clip, pitch, dist) in groans {
-            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
+        // channel gain the mob's own feet-to-ear walk speaks; the
+        // stereo tail the pan law's split wears)
+        for (clip, pitch, dist, pan) in groans {
+            self.sounds
+                .play_voice_at_pan(self.frame, clip, 1.0, pitch, dist, pan);
         }
-        for (clip, pitch, dist) in hurts {
-            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
+        for (clip, pitch, dist, pan) in hurts {
+            self.sounds
+                .play_voice_at_pan(self.frame, clip, 1.0, pitch, dist, pan);
         }
-        for (clip, pitch, dist) in deaths {
-            self.sounds.play_voice_at(self.frame, clip, 1.0, pitch, dist);
+        for (clip, pitch, dist, pan) in deaths {
+            self.sounds
+                .play_voice_at_pan(self.frame, clip, 1.0, pitch, dist, pan);
         }
     }
 
@@ -21078,6 +21139,16 @@ impl App {
                 self.render_gamemode_switcher(&mut g, a, gw, gh);
             }
         }
+    }
+
+    /// THE LISTENER'S OWN YAW (the world camera's read the positioned
+    /// voices' pan law rides): the vanilla degrees the `lateral_pan`
+    /// fold speaks — the render radians' 0 = -Z convention the vanilla
+    /// degrees' 0 = +Z pair answers, the +180° step the body's own
+    /// camera conversion wears, inverted (body.camera(): cam.yaw =
+    /// yaw.to_radians() + PI).
+    fn listener_yaw(&self) -> f32 {
+        self.world_camera().yaw.to_degrees() - 180.0
     }
 
     /// The World screen camera. NETWORK world with a shipped pose: the
@@ -37789,6 +37860,123 @@ mod tests {
             "the douse's own fold (d = {d}, v = {expected:.6}): {:?}",
             app.sounds.events
         );
+    }
+
+    /// THE MOB VOICES' OWN STEREO (the lateral pan law the mob voices
+    /// now speak — the `ear_pan` walk the queues carry): the body
+    /// facing south (vanilla yaw 0 — the +Z forward the (-sin, cos)
+    /// fold wears), the burning zombie due EAST the left hand answers
+    /// (the right axis the (-cos, -sin) pair wears — facing south the
+    /// west the right), the hurt and the fizz lines the negative side
+    /// tail wear (the AI's own approach the pure -x line walks, the
+    /// SIGN the z's zero keeps); the FRONT zombie the center the
+    /// identity keeps (no ` s` field the no-op never needs — the same
+    /// 4-field shape the unmigrated lanes wear).
+    #[test]
+    fn the_mob_voices_split_the_right_axis() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y;
+        // the body ON the surface column, facing SOUTH (vanilla yaw 0)
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            surface as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        // the water cell the douse arm's bbox scan reads + the burning
+        // zombie due EAST (the z the body's own line keeps — the
+        // approach the AI walks is the pure -x line, the pan the pure
+        // lateral ray speaks)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c + 4, surface + 1, c, crate::world::WATER);
+        app.mobs.push(crate::mob::Zombie::new(
+            7,
+            c as f64 + 4.5,
+            surface as f64 + 1.62,
+            c as f64 + 0.5,
+            3,
+        ));
+        app.mobs[0].fire_ticks = 160;
+        app.update();
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.zombie.hurt ")),
+            "the fire's own hurt spoke: {:?}",
+            app.sounds.events
+        );
+        for e in app.sounds.events.iter() {
+            if e.starts_with("entity.zombie.hurt ")
+                || e.starts_with("entity.generic.extinguish_fire ")
+            {
+                assert!(
+                    e.contains(" s-"),
+                    "the east source the facing-south body's own left: {e}"
+                );
+                assert!(
+                    !e.contains(" s+"),
+                    "no right-ear voice the east source speaks: {e}"
+                );
+            }
+        }
+        // THE FRONT ZOMBIE'S OWN IDENTITY (the +z source the
+        // facing-south body's own nose speaks — the right axis the
+        // pure-front ray never answers, the pan the exact 0.0 the
+        // identity lane keeps): no voice line the ` s` field wears
+        let mut front = App::new(3);
+        front.enter_world();
+        let fsize = front.offline_world.as_ref().unwrap().size_blocks();
+        let fc = fsize / 2;
+        front.body = Some(crate::body::PlayerBody::new(
+            fc as f64 + 0.5,
+            surface as f64,
+            fc as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        front.mobs.push(crate::mob::Zombie::new(
+            8,
+            fc as f64 + 0.5,
+            surface as f64 + 1.62,
+            fc as f64 + 4.5,
+            3,
+        ));
+        front.mobs[0].fire_ticks = 160;
+        front.update();
+        if sounds_loaded() {
+            assert!(
+                front
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.zombie.hurt ")),
+                "the fire's own hurt spoke: {:?}",
+                front.sounds.events
+            );
+            assert!(
+                front
+                    .sounds
+                    .events
+                    .iter()
+                    .all(|e| !e.contains(" s")),
+                "the front voice the identity keeps: {:?}",
+                front.sounds.events
+            );
+        }
     }
 
     /// THE MOB STEP'S OWN DISTANCE LAW (the cadence's flat voice the
