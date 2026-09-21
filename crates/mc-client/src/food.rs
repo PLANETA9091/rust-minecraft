@@ -103,10 +103,26 @@ pub fn saturation_by_modifier(nutrition: i32, modifier: f32) -> f32 {
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Difficulty {
     Peaceful,
-    #[cfg_attr(not(test), expect(dead_code))]
     Easy,
     Normal,
     Hard,
+}
+
+impl Difficulty {
+    /// THE DIAL'S OWN VOCABULARY MAP (the level's
+    /// `crate::difficulty::Difficulty` the FoodData tick's ctx wears —
+    /// the same four arms the ids keep, the WorldOptions dial the
+    /// OFFLINE lane's own server speaks): the world's field the tick's
+    /// gates read — the peaceful bar the drop refuses, the hard bite
+    /// the last-heart gate ignores.
+    pub fn of(difficulty: crate::difficulty::Difficulty) -> Difficulty {
+        match difficulty {
+            crate::difficulty::Difficulty::Peaceful => Difficulty::Peaceful,
+            crate::difficulty::Difficulty::Easy => Difficulty::Easy,
+            crate::difficulty::Difficulty::Normal => Difficulty::Normal,
+            crate::difficulty::Difficulty::Hard => Difficulty::Hard,
+        }
+    }
 }
 
 /// One `FoodData.tick`'s outcome — the events the server's player

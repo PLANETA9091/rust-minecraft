@@ -5318,6 +5318,19 @@ pub enum ScreenKind {
     /// projection the belief feeds, the clicks the ServerboundContainer
     /// ClickPacket the chest's lane shares speak).
     Crafting,
+    /// THE WORLD OPTIONS' OWN DIAL (javap 26.2 WorldOptionsScreen +
+    /// DifficultyButtons — the OptionsScreen's in-world
+    /// `options.worldOptions.button` the header row opens): the
+    /// Difficulty CycleButton the DifficultyButtons.create walk keeps
+    /// (the `withValues(Difficulty.values())` array the 150x20 button
+    /// the `options.difficulty` label wears), the click the next value
+    /// the OFFLINE world's own dial answers — the integrated-server
+    /// lane the `ServerboundChangeDifficultyPacket` the vanilla client
+    /// sends the host's own server processes locally. THE LOCK LANE
+    /// the follow-up rides (the LockIconButton the ConfirmScreen +
+    /// ServerboundLockDifficultyPacket walk wears, the hardcore arm
+    /// the client's own worlds never wear).
+    WorldOptions,
     /// THE F3+F4 GAME MODE SWITCHER (javap 26.2 GameModeSwitcherScreen
     /// — the handleDebugKeys' keyDebugSwitchGameMode lane opens it, the
     /// open screen's own key walk serves the rest): the audited 125x75
@@ -8200,10 +8213,21 @@ impl App {
             // the server's own — the wire's Set Health speaks its
             // truth, the client folds nothing.
             if !self.world_is_network {
+                // THE DIAL'S OWN FEED (the level's getDifficulty read
+                // the FoodData tick's ctx wears — the stand-in server's
+                // own difficulty the WorldOptions dial turns, the
+                // peaceful bar the drop refuses, the hard bite the
+                // last-heart gate ignores; the absent world the default
+                // NORMAL word wears — the old hardcode's own value)
+                let dial = self
+                    .offline_world
+                    .as_ref()
+                    .map(|w| w.difficulty)
+                    .unwrap_or(crate::difficulty::Difficulty::Normal);
                 let ctx = crate::food::TickContext {
                     health: self.health,
                     max_health: MAX_HEALTH,
-                    difficulty: crate::food::Difficulty::Normal,
+                    difficulty: crate::food::Difficulty::of(dial),
                     natural_regen: true,
                 };
                 let events = self.food_data.tick(&ctx);
@@ -15086,6 +15110,31 @@ impl App {
                     self.options_return = if self.paused { ScreenKind::World } else { ScreenKind::Title };
                     self.open(ScreenKind::Options);
                 }
+                // THE WORLD OPTIONS' OWN WALK (the 26.2 OptionsScreen's
+                // in-world header row — the `worldOptions.button` the
+                // WorldOptionsScreen opens, the lastScreen chain the
+                // Done footer wears)
+                "worldoptions" => self.open(ScreenKind::WorldOptions),
+                // THE DONE FOOTER'S OWN RETURN (the
+                // WorldOptionsScreen.onClose walk — the lastScreen the
+                // Options screen wears, the chain the vanilla's own
+                // screens keep)
+                "wodone" => self.open(ScreenKind::Options),
+                // THE DIAL'S OWN TURN (the CycleButton's onValueChange
+                // walk — the click the NEXT value the values() order
+                // answers; the OFFLINE world the integrated-server
+                // lane IS: the `ServerboundChangeDifficultyPacket` the
+                // vanilla client sends the host's own server processes
+                // locally, the client's sim the same dial turn keeps —
+                // the F3's LD row and the food tick's gates the same
+                // field read. The NETWORKED world the inactive button
+                // the `hovered()` gate refuses — the vanilla arm's own
+                // hasSingleplayerServer walk the click never draws)
+                "difficulty" => {
+                    if let Some(world) = self.offline_world.as_mut() {
+                        world.difficulty = world.difficulty.next();
+                    }
+                }
                 "quit" => {}
                 "back" => {
                     let ret = self.options_return;
@@ -21324,6 +21373,7 @@ impl App {
             ScreenKind::Title => self.render_title(&mut g, a, w, h),
             ScreenKind::Servers => self.render_servers(&mut g, a, w, h),
             ScreenKind::Options => self.render_options(&mut g, a, w, h),
+            ScreenKind::WorldOptions => self.render_world_options(&mut g, a, w, h),
             ScreenKind::Connect => self.render_connect(&mut g, a, w, h),
             ScreenKind::Disconnect => self.render_disconnect(&mut g, a, w, h),
             ScreenKind::World => {
@@ -25916,12 +25966,111 @@ impl App {
         self.buttons.push(Button::new("opt_music", music, cx, h / 2 - 16, bw));
         let fov = format!("FOV: {}", 70);
         self.buttons.push(Button::new("opt_fov", fov, cx, h / 2 + 8, bw));
+        // THE IN-WORLD OPENER (javap the 26.2 OptionsScreen.init — the
+        // header row the `inWorld` flag gates: the FOV slider the
+        // `options.worldOptions.button` the ClientOptions entry rides,
+        // the WorldOptionsScreen the walk opens, the title screen the
+        // flag refuses): the client's own pause-options return the
+        // gate mirrors — the paused world the button wears, the title
+        // lane the same flag keeps silent.
+        if self.options_return == ScreenKind::World {
+            self.buttons.push(Button::new(
+                "worldoptions",
+                tr("options.worldOptions.button")
+                    .unwrap_or("World Options...")
+                    .to_string(),
+                cx,
+                h / 2 + 32,
+                bw,
+            ));
+        }
         self.buttons.push(Button::new(
             "back",
             tr("gui.done").unwrap_or("Done").to_string(),
             cx,
             h - 28,
             bw,
+        ));
+        for b in &self.buttons.clone() {
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE WORLD OPTIONS SCREEN'S OWN DIAL (javap the 26.2 jar the
+    /// `WorldOptionsScreen` + `DifficultyButtons` walks speak — the
+    /// OptionsScreen's in-world `options.worldOptions.button` the
+    /// header row opens): the Difficulty CycleButton the
+    /// `DifficultyButtons.create` walk banks — the
+    /// `withValues(Difficulty.values())` array the initial value the
+    /// `level.getDifficulty()` read wears, the `options.difficulty`
+    /// label the `: value` composition the CycleButton's own
+    /// displayString keeps (`Difficulty: Normal`), the 150-wide
+    /// button the create's own `create(0, 0, 150, 20)` banks. THE
+    /// ACTIVE ARMS the raw walk keeps: `!isDifficultyLocked &&
+    /// playerHasPermissionToChangeDifficulty` — the lock the client's
+    /// own worlds never wear (no hardcore lane, the levelData's flag
+    /// the client never arms), the permission the
+    /// `hasSingleplayerServer()` read answers: the OFFLINE world the
+    /// integrated-server lane IS, the NETWORKED world the button
+    /// INACTIVE the same arm keeps (the dial's turn the server's own
+    /// command lane wears — the wire lane the follow-up rides). THE
+    /// LOCK BUTTON the follow-up's own row (the LockIconButton the
+    /// ConfirmScreen + ServerboundLockDifficultyPacket walk wears);
+    /// the client's records the row the same follow-up banks.
+    fn render_world_options(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        // the same gradient backdrop the Options screen's own lane
+        // wears (the client's options screens the one house keeps)
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        g.text_centered(
+            a,
+            w / 2,
+            12,
+            tr("options.worldOptions.title").unwrap_or("World Options"),
+            WHITE,
+            true,
+        );
+        let cx = w / 2;
+        // THE DIAL'S OWN WORD (the label + value the CycleButton's
+        // displayString composition speaks): the world's own dial the
+        // OFFLINE lane reads, the networked world the wire's own
+        // difficulty packet the net lane never stores — the default
+        // word the absent lane honestly wears (the button the same
+        // world the inactive arm refuses).
+        let diff = self
+            .offline_world
+            .as_ref()
+            .map(|w| w.difficulty)
+            .unwrap_or(crate::difficulty::Difficulty::Normal);
+        let mut dial = Button::new(
+            "difficulty",
+            format!(
+                "{}: {}",
+                tr("options.difficulty").unwrap_or("Difficulty"),
+                diff.display_name()
+            ),
+            cx,
+            h / 2 - 16,
+            150,
+        );
+        // THE PERMISSION ARM (the create walk's `active` write — the
+        // `hasSingleplayerServer()` read the offline lane answers,
+        // the networked world the same read refuses)
+        dial.active = !self.world_is_network;
+        self.buttons.push(dial);
+        // THE DONE FOOTER (the footer's 200-wide button the
+        // HeaderAndFooterLayout walk keeps — the onClose the
+        // lastScreen chain wears: the Options screen the walk returns
+        // to)
+        self.buttons.push(Button::new(
+            "wodone",
+            tr("gui.done").unwrap_or("Done").to_string(),
+            cx,
+            h - 28,
+            200,
         ));
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
@@ -36598,6 +36747,178 @@ mod tests {
         app.on_click(back.x + back.w / 2, back.y + back.h / 2);
         assert_eq!(app.screen, ScreenKind::World);
         assert!(app.paused, "returning from options stays paused");
+    }
+
+    /// THE WORLD OPTIONS' OWN WALK (javap the 26.2 jar the
+    /// OptionsScreen + WorldOptionsScreen + DifficultyButtons walks
+    /// speak): the in-world opener the `options.worldOptions.button`
+    /// word wears, the dial the `Difficulty: <name>` composition the
+    /// CycleButton's own displayString keeps, the click the NEXT
+    /// value the values() order answers (the OFFLINE world's own
+    /// field the integrated-server lane stores), the Done footer the
+    /// lastScreen chain wears back to the Options screen, the title
+    /// lane the opener the inWorld gate refuses.
+    #[test]
+    fn the_world_options_screen_wears_the_dial() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().difficulty,
+            crate::difficulty::Difficulty::Normal,
+            "the new-world default the host's own dial speaks"
+        );
+        // THE TITLE LANE'S REFUSAL (the inWorld gate — the options
+        // return the title lane keeps, the opener the same flag
+        // never wears)
+        app.options_return = ScreenKind::Title;
+        app.open(ScreenKind::Options);
+        app.render_title_buttons_for_test();
+        assert!(
+            app.buttons.iter().all(|b| b.id != "worldoptions"),
+            "the title lane the opener refuses"
+        );
+        // THE PAUSE LANE'S OPENER (the pause → Options walk — the
+        // `options.worldOptions.button` the header row wears)
+        app.enter_world();
+        app.paused = true;
+        app.render_title_buttons_for_test();
+        let opt = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "options")
+            .expect("pauseoptions")
+            .clone();
+        app.on_click(opt.x + opt.w / 2, opt.y + opt.h / 2);
+        assert_eq!(app.screen, ScreenKind::Options);
+        app.render_title_buttons_for_test();
+        let opener = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "worldoptions")
+            .expect("worldoptions opener")
+            .clone();
+        assert_eq!(
+            opener.label, "World Options...",
+            "the `options.worldOptions.button` word the lang table speaks"
+        );
+        app.on_click(opener.x + opener.w / 2, opener.y + opener.h / 2);
+        assert_eq!(app.screen, ScreenKind::WorldOptions);
+        // THE DIAL'S OWN WORD (the label + value the CycleButton's
+        // displayString composition keeps — the 150-wide button the
+        // create walk banks)
+        app.render_title_buttons_for_test();
+        let dial = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "difficulty")
+            .expect("the dial")
+            .clone();
+        assert_eq!(dial.label, "Difficulty: Normal", "the new-world word");
+        assert!(dial.active, "the OFFLINE world the permission arm wears");
+        assert_eq!(dial.w, 150, "the create's own width");
+        // THE CYCLE (the click the next value the values() order
+        // answers — Normal → Hard, the wrap the four-turn walk rings
+        // home: Hard → Peaceful → Easy → Normal)
+        app.on_click(dial.x + dial.w / 2, dial.y + dial.h / 2);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().difficulty,
+            crate::difficulty::Difficulty::Hard,
+            "the first turn the values() order answers"
+        );
+        app.render_title_buttons_for_test();
+        let dial = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "difficulty")
+            .expect("the dial")
+            .clone();
+        assert_eq!(dial.label, "Difficulty: Hard", "the word the dial speaks");
+        for expected in [
+            crate::difficulty::Difficulty::Peaceful,
+            crate::difficulty::Difficulty::Easy,
+            crate::difficulty::Difficulty::Normal,
+        ] {
+            // the re-render the click walk's own clear answers — the
+            // buttons the render pushes, the click the fresh vec hits
+            app.render_title_buttons_for_test();
+            let dial = app
+                .buttons
+                .iter()
+                .find(|b| b.id == "difficulty")
+                .expect("the dial")
+                .clone();
+            app.on_click(dial.x + dial.w / 2, dial.y + dial.h / 2);
+            assert_eq!(
+                app.offline_world.as_ref().unwrap().difficulty,
+                expected,
+                "the wrap walk rides the values() order"
+            );
+        }
+        app.render_title_buttons_for_test();
+        let dial = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "difficulty")
+            .expect("the dial")
+            .clone();
+        assert_eq!(dial.label, "Difficulty: Normal", "the ring home's word");
+        // THE DONE CHAIN (the lastScreen walk — the WorldOptions
+        // screen the Options screen returns to, the Options screen
+        // the paused world keeps)
+        let done = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodone")
+            .expect("wodone")
+            .clone();
+        app.on_click(done.x + done.w / 2, done.y + done.h / 2);
+        assert_eq!(app.screen, ScreenKind::Options, "the chain's own hop");
+        app.render_title_buttons_for_test();
+        let back = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "back")
+            .expect("back")
+            .clone();
+        app.on_click(back.x + back.w / 2, back.y + back.h / 2);
+        assert_eq!(app.screen, ScreenKind::World);
+        assert!(app.paused, "the chain's return the pause keeps");
+    }
+
+    /// THE DIAL'S OWN GATES THE FOOD TICK WEARS (the FoodData tick's
+    /// ctx the level's own difficulty reads — the exhaustion fold the
+    /// PEACEFUL bar's drop refuses, the NORMAL arm the same fold the
+    /// bar drop answers): the OFFLINE world's own dial the stand-in
+    /// server's tick reads — the old hardcode the Normal word kept,
+    /// the WorldOptions dial's turn the same gates turn.
+    #[test]
+    fn the_food_tick_wears_the_worlds_own_dial() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE NORMAL ARM (the default dial — the fold the bar's drop
+        // answers: the saturation spent, the food walks down)
+        app.food_data.set_food_level(20);
+        app.food_data.set_saturation(0.0);
+        app.food_data.add_exhaustion(5.0);
+        app.update();
+        assert_eq!(
+            app.food_data.food_level(),
+            19,
+            "the NORMAL fold the bar's own drop keeps"
+        );
+        // THE PEACEFUL ARM (the dial's turn — the same fold the bar
+        // the peaceful refusal keeps)
+        app.offline_world.as_mut().unwrap().difficulty =
+            crate::difficulty::Difficulty::Peaceful;
+        app.food_data.set_food_level(20);
+        app.food_data.set_saturation(0.0);
+        app.food_data.add_exhaustion(5.0);
+        app.update();
+        assert_eq!(
+            app.food_data.food_level(),
+            20,
+            "the PEACEFUL arm the bar's own drop refuses"
+        );
     }
 
     #[test]

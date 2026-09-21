@@ -26,6 +26,45 @@ impl Difficulty {
     }
 }
 
+impl Difficulty {
+    /// THE VALUES-ORDER TABLE THE CLINIT KEEPS (the enum's own
+    /// declaration order — the `Difficulty.values()` array the
+    /// WorldOptionsScreen's CycleButton `withValues` walk banks
+    /// verbatim, the cycle the `next` step answers).
+    pub const VALUES: [Difficulty; 4] = [
+        Difficulty::Peaceful,
+        Difficulty::Easy,
+        Difficulty::Normal,
+        Difficulty::Hard,
+    ];
+
+    /// THE CYCLE BUTTON'S OWN STEP (javap the 26.2 jar the
+    /// `DifficultyButtons.create` walk speaks — the CycleButton the
+    /// `withValues(Difficulty.values())` array rides, the click the
+    /// NEXT value the enum's own declaration order answers, the tail
+    /// the wrap keeps): Peaceful -> Easy -> Normal -> Hard -> Peaceful.
+    pub fn next(self) -> Difficulty {
+        Self::VALUES
+            .iter()
+            .position(|&d| d == self)
+            .map(|i| Self::VALUES[(i + 1) % Self::VALUES.len()])
+            .unwrap_or(Difficulty::Normal)
+    }
+
+    /// THE EN_US WORDS THE CYCLE BUTTON DISPLAYS (the
+    /// `options.difficulty.*` keys the lang table keeps — the
+    /// `getDisplayName` component the vanilla CycleButton's own
+    /// `label: value` composition rides): Peaceful, Easy, Normal, Hard.
+    pub fn display_name(self) -> &'static str {
+        match self {
+            Difficulty::Peaceful => "Peaceful",
+            Difficulty::Easy => "Easy",
+            Difficulty::Normal => "Normal",
+            Difficulty::Hard => "Hard",
+        }
+    }
+}
+
 /// THE MOON'S OWN BRIGHTNESS PER PHASE (javap the 26.2 jar the
 /// `DimensionType.<clinit>` walk speaks — the 8-float array the
 /// `MOON_BRIGHTNESS_PER_PHASE` putstatic banks: full 1.0 the phase-0
@@ -231,5 +270,54 @@ mod tests {
             );
         }
         assert_eq!(MOON_BRIGHTNESS_PER_PHASE[4], 0.0);
+    }
+
+    /// THE CYCLE'S OWN WALK (javap the 26.2 jar the
+    /// `DifficultyButtons.create` + WorldOptionsScreen walks speak —
+    /// the `withValues(Difficulty.values())` array the CycleButton
+    /// rides, the click the next value the enum's own declaration
+    /// order answers): the VALUES table the clinit order banks (the
+    /// ids the getId bytes keep), the full cycle the tail's wrap
+    /// keeps, the display words the `options.difficulty.*` keys the
+    /// lang table speaks, the food vocabulary map the four arms the
+    /// FoodData ctx wears.
+    #[test]
+    fn the_difficulty_values_cycle_the_clinit_order() {
+        // THE VALUES TABLE (the declaration order — the ids the
+        // getId walk keeps: Peaceful 0, Easy 1, Normal 2, Hard 3)
+        assert_eq!(Difficulty::VALUES.len(), 4);
+        for (i, d) in Difficulty::VALUES.iter().enumerate() {
+            assert_eq!(d.id() as usize, i, "the id the ordinal banks");
+        }
+        // THE CYCLE (the click the +1 ordinal answers, the tail the
+        // Peaceful wrap keeps)
+        assert_eq!(Difficulty::Peaceful.next(), Difficulty::Easy);
+        assert_eq!(Difficulty::Easy.next(), Difficulty::Normal);
+        assert_eq!(Difficulty::Normal.next(), Difficulty::Hard);
+        assert_eq!(Difficulty::Hard.next(), Difficulty::Peaceful);
+        // the full walk the new-world default rides — four turns the
+        // dial rings home
+        let mut d = Difficulty::Normal;
+        for _ in 0..4 {
+            d = d.next();
+        }
+        assert_eq!(d, Difficulty::Normal, "the four-turn walk rings home");
+        // THE DISPLAY WORDS (the `options.difficulty.*` keys the en_us
+        // lang table keeps — the CycleButton's `Difficulty: <name>`
+        // composition the value slot wears)
+        assert_eq!(Difficulty::Peaceful.display_name(), "Peaceful");
+        assert_eq!(Difficulty::Easy.display_name(), "Easy");
+        assert_eq!(Difficulty::Normal.display_name(), "Normal");
+        assert_eq!(Difficulty::Hard.display_name(), "Hard");
+        // THE FOOD VOCABULARY MAP (the same four arms the FoodData
+        // tick's ctx wears — the dial's turn the gates read)
+        for (from, to) in [
+            (Difficulty::Peaceful, crate::food::Difficulty::Peaceful),
+            (Difficulty::Easy, crate::food::Difficulty::Easy),
+            (Difficulty::Normal, crate::food::Difficulty::Normal),
+            (Difficulty::Hard, crate::food::Difficulty::Hard),
+        ] {
+            assert_eq!(crate::food::Difficulty::of(from), to);
+        }
     }
 }
