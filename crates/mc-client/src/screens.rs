@@ -5025,6 +5025,19 @@ fn ear_pan(ear: Option<(f64, f64, f64)>, yaw_deg: f32, x: f64, y: f64, z: f64) -
     }
 }
 
+/// THE MOOD PERCENT'S OWN FOLD (javap `DebugEntrySoundMood.display` —
+/// the `Math.round(player.getCurrentMood() * 100.0F)` walk the row's
+/// third arg keeps): the JVM's own binary32 semantics the strict walk
+/// answers — the f32 multiply first, the +0.5 the same float width
+/// wears, the floor the int cast speaks; the ties the
+/// positive-infinity law rounds up (Math.round's own documented
+/// verdict). The moodiness's own [0, 1] domain the percent the F3 row
+/// wears — the accumulator's floor keeps the negative the fold never
+/// sees.
+fn mood_percent(moodiness: f32) -> i32 {
+    (moodiness * 100.0 + 0.5).floor() as i32
+}
+
 /// THE PLAYER'S OWN ATTACK BASE (javap `Player.createAttributes` 3-7 —
 /// the ATTACK_DAMAGE attribute the `dconst_1` base keeps: the vanilla
 /// 1.0 the fist's own floor speaks. The client's own scale the 2.0
@@ -18517,6 +18530,28 @@ impl App {
                 block
             ));
         }
+        // DebugEntrySoundMood — the row the vanilla entry's two-slot
+        // concat speaks (`\x01\x01` the bootstrap recipe banks):
+        // `getChannelDebugString() + String.format(Locale.ROOT,
+        // " (Mood %d%%)", Math.round(getCurrentMood() * 100.0F))`. The
+        // CHANNEL half the client's own backend keeps silent — no
+        // OpenAL static/streaming pools the used/max counts could read
+        // (the one-shot lane the events log rides, the music the
+        // single-track backend answers — the honest skip the
+        // no-opinion lanes wear, the pools the backend's own growth
+        // would ride) — the MOOD half the cave mood's own accumulator
+        // answers: the `getCurrentMood` walk the
+        // BiomeAmbientSoundsHandler's `getMoodiness` accessor speaks
+        // (the CaveMood machine the world tick drives, the same
+        // handler the vanilla player's ambient list banks), the fold
+        // the `mood_percent` law keeps. The player-null arm the
+        // vanilla entry answers (`if player == null return` — no line
+        // the handler-less client wears) this walk's own early return
+        // keeps: the body's presence the row's own gate wears.
+        lines.push(format!(
+            " (Mood {}%)",
+            mood_percent(self.cave_mood.moodiness())
+        ));
         lines
     }
 
@@ -27580,6 +27615,83 @@ mod tests {
                 "yaw {yaw}: {line}"
             );
         }
+    }
+
+    #[test]
+    fn the_mood_percent_folds_the_math_round_law() {
+        // THE FOLD'S OWN PINS (javap Math.round(F)I — the
+        // floor(x + 0.5f) half-up walk the f32 width keeps): the zero
+        // the fresh accumulator speaks, the sub-half the floor
+        // answers, the .5 tie the positive-infinity law rounds up,
+        // the hundred the fired machine's own ceiling wears (the
+        // 1.0f32 * 100 + 0.5 the floor's exact 100.5 wears — the int
+        // cast the floor answers)
+        assert_eq!(mood_percent(0.0), 0);
+        assert_eq!(mood_percent(0.004_9), 0);
+        assert_eq!(mood_percent(0.123_4), 12);
+        assert_eq!(mood_percent(0.5), 50);
+        // the .5-percent tie: 0.005f32 * 100.0f32 rounds the f32
+        // nearest the product speaks — 0.5 exactly (0.005f32 is
+        // 0.00499999988..., the f32 multiply the half it rounds to),
+        // the +0.5 the exact 1.0 wears, the floor the 1 speaks — the
+        // JVM's own Math.round verdict the same walk answers
+        assert_eq!(mood_percent(0.005), 1);
+        assert_eq!(mood_percent(0.999), 100);
+        assert_eq!(mood_percent(1.0), 100);
+    }
+
+    #[test]
+    fn the_f3_wears_the_cave_moods_own_row() {
+        // THE BODY-LESS ARM (the vanilla entry's null-player walk —
+        // `if player == null return` the line the handler-less client
+        // never speaks): the fresh App's left column ends before any
+        // mood row the body-less walk could wear
+        let mut app = App::new(3);
+        app.enter_world();
+        let bare = app.debug_lines();
+        assert!(
+            !bare.iter().any(|l| l.contains("Mood ")),
+            "{bare:?}"
+        );
+
+        // THE DRIVE (the complete-darkness walk the sound.rs fire walk
+        // keeps — every sample banks +1/6000, the f32 accumulation the
+        // honest walk rides): 3000 banks a half — the moodiness the
+        // accessor answers, the row the same value's fold wears. The
+        // two-field drive the disjoint borrows answer (the machine and
+        // the engine the same tick walks, the same split the world
+        // tick's own call site keeps).
+        app.spawn_offline_body();
+        let dark = |_x: i32, _y: i32, _z: i32| -> (u8, u8) { (0u8, 0u8) };
+        for i in 0..3000u64 {
+            app.cave_mood
+                .tick(i, &dark, 10.3, 20.7, 30.9, 0.0, &mut app.sounds);
+        }
+        let moodiness = app.cave_mood.moodiness();
+        // the bank's own bound: 3000/6000 the half the f32 walk keeps
+        // (the drift the tiny relative error wears — the fire's own
+        // 6000-bank exactness the same accumulator answers)
+        assert!(
+            moodiness > 0.49 && moodiness < 0.51,
+            "the 3000-bank half the walk keeps: {moodiness}"
+        );
+        let lines = app.debug_lines();
+        // THE PLACEMENT (the vanilla entry's own neighborhood — the
+        // light row the SoundMood's left column ride follows): the
+        // Client Light the light lane speaks, the mood row the next
+        // index wears
+        assert!(
+            lines[7].starts_with("Client Light: "),
+            "{}",
+            lines[7]
+        );
+        // THE ROW (the vanilla concat's mood half verbatim — the
+        // leading space the ldc keeps, the percent the fold answers):
+        // the exact word the half-machine speaks
+        assert_eq!(lines[8], format!(" (Mood {}%)", mood_percent(moodiness)));
+        assert_eq!(lines[8], " (Mood 50%)");
+        // the row the LAST line wears (the left column's own tail)
+        assert_eq!(lines.last().unwrap(), " (Mood 50%)");
     }
 
     #[test]

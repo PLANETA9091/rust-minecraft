@@ -784,9 +784,11 @@ impl CaveMood {
         }
     }
 
-    /// The accumulator's own read (the tests' honest window — the
-    /// `getMoodiness()` accessor the handler's own class speaks).
-    #[cfg_attr(not(test), expect(dead_code))]
+    /// The accumulator's own read (the F3's own window — the
+    /// `getMoodiness()` accessor the handler's own class speaks, the
+    /// DebugEntrySoundMood row the client's left column wears: the
+    /// `getCurrentMood` walk the vanilla player answers, the
+    /// `Math.round(moodiness * 100.0F)` percent the row's fold keeps).
     pub fn moodiness(&self) -> f32 {
         self.moodiness
     }

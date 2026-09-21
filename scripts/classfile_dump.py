@@ -36,6 +36,10 @@ class Reader:
 
 def fmt(v):
     if isinstance(v, float):
+        if v != v:  # NaN
+            return "NaN"
+        if v in (float('inf'), float('-inf')):
+            return repr(v)
         if v == int(v) and abs(v) < 1e15:
             return f"{int(v)}.0"
         return repr(v)
