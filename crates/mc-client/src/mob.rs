@@ -28,6 +28,17 @@
 //!   canUse re-check gates every 20 ticks, the resetAttackCooldown
 //!   refills 20), `canPerformAttack` = isTimeToAttack &&
 //!   isWithinMeleeAttackRange && hasLineOfSight.
+//! - `Wolf.registerGoals()` (the 26.2 dump the jar_work ledger keeps) —
+//!   targetSelector prio 4 `NearestAttackableTargetGoal(Player, 10,
+//!   mustSee=true, mustReach=false, the NeutralMob::isAngryAt selector
+//!   the bootstrap's bsm#0 binds)` the ANGER-ONLY player lane, prio 5
+//!   `NonTameRandomTargetGoal(Animal, mustSee=false, PREY_SELECTOR)`
+//!   the lambda$static$0 SHEEP/RABBIT/FOX word (the sheep the drawn
+//!   kinds answer), prio 7
+//!   `NearestAttackableTargetGoal(AbstractSkeleton, mustSee=false)`;
+//!   goalSelector prio 4 `LeapAtTargetGoal(this, 0.4)` + prio 5
+//!   `MeleeAttackGoal(this, 1.0, true)` the shared melee/leap laws
+//!   ride.
 //! - `ZombieAttackGoal.tick` — raiseArmTicks++; `raiseArmTicks >= 5 &&
 //!   getTicksUntilNextAttack() < getAttackInterval()/2` drives
 //!   `setAggressive(true)` (the raised-arms law the render state
@@ -1673,6 +1684,25 @@ pub const WOLF_EYE_HEIGHT: f64 = 0.68;
 /// promoted), MAX_HEALTH 8.0, ATTACK_DAMAGE 4.0.
 pub const WOLF_MOVEMENT_SPEED: f64 = 0.300_000_011_920_928_96;
 pub const WOLF_MAX_HEALTH: f32 = 8.0;
+/// `Wolf.createAttributes`' own ATTACK_DAMAGE 4.0 (the same chain the
+/// doc keeps — the bite the doHurtTarget walk deals)
+pub const WOLF_ATTACK_DAMAGE: f64 = 4.0;
+/// THE MOB BASE'S OWN FOLLOW RING (the `Mob.createMobAttributes`
+/// default 16.0 the skeleton's lane wears — NO FOLLOW_RANGE override
+/// the Wolf createAttributes chain makes, the TargetGoal's
+/// getFollowDistance the same attribute reads)
+pub const WOLF_FOLLOW_RANGE: f64 = 16.0;
+/// THE TARGET GOAL'S OWN SEARCH BOX'S Y (javap `TargetGoal.
+/// getTargetSearchArea` — the `getBoundingBox().inflate(distance,
+/// 10.0, distance)` the getEntitiesOfClass query keeps, the Y the
+/// horizontal pair never wears)
+pub const WOLF_TARGET_BOX_INFLATE_Y: f64 = 10.0;
+/// THE PERSISTENT ANGER'S OWN WINDOW (javap `Wolf.<clinit>` — the
+/// `TimeUtil.rangeOfSeconds(20, 39)` the bipush 20/39 pair keeps, the
+/// startPersistentAngerTimer sample the hurt's own anger arms; the
+/// [400, 780] tick window the between law keeps inclusive)
+pub const WOLF_ANGER_SECONDS_MIN: i32 = 20;
+pub const WOLF_ANGER_SECONDS_MAX: i32 = 39;
 /// THE AVOID GOAL'S OWN WORDS (javap `AbstractSkeleton.registerGoals`
 /// + `AvoidEntityGoal` the 26.2 bytecode keeps — the 346 round's
 /// audit the ledger banks): the goalSelector prio-3
@@ -1926,6 +1956,12 @@ pub const SPAWN_MAX_DIST: f64 = 48.0;
 #[derive(Debug, Clone, Copy, PartialEq, Default)]
 pub struct MobEvents {
     pub attack: Option<MobAttack>,
+    /// THE WOLF'S OWN BITE (the MeleeAttackGoal's doHurtTarget the
+    /// PREY answers — the (prey id, the attack) tuple the caller's own
+    /// pass hurts the mob slice by; the player lane the attack field
+    /// speaks, the mob-vs-mob lane this field carries — the
+    /// GoalSelector's one target the two lanes never speak together)
+    pub attack_prey: Option<(i32, MobAttack)>,
     /// THE HURTBY GOAL'S OWN START EVENT (the alertSameType the
     /// zombie's `.setAlertOthers(...)` arms — the start()'s
     /// `alertOthers()` walk the caller's sibling pass serves: the
@@ -2699,6 +2735,48 @@ pub struct PlayerView {
     pub height: f64,
 }
 
+/// THE WOLF'S PREY STAND-IN (the snapshot the pre-pass scan arms — the
+/// id the bite's delivery names, the live pos the refresh keeps, the
+/// eye the look walk aims, the box the reach law reads; the kind the
+/// prio walk's own lane word speaks)
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PreyView {
+    pub id: i32,
+    pub kind: MobKind,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub eye_y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+impl PreyView {
+    /// THE STAND-IN'S OWN VIEW (the PlayerView the melee branch reads —
+    /// the alive word the scan's own gate keeps, the dead bit the
+    /// stand-in never banks)
+    fn view(self) -> PlayerView {
+        PlayerView {
+            x: self.x,
+            y: self.y,
+            z: self.z,
+            eye_y: self.eye_y,
+            dead: false,
+            width: self.width,
+            height: self.height,
+        }
+    }
+}
+
+/// THE MELEE'S OWN VICTIM WORD (the attack the branch's own site
+/// delivers — the PLAYER the MobEvents.attack lane hurts, the PREY
+/// the mob-vs-mob lane the caller's own pass serves)
+#[derive(Debug, Clone, Copy, PartialEq)]
+enum MeleeVictim {
+    Player,
+    Prey(i32),
+}
+
 /// THE ZOMBIE — the fields the vanilla entity's own state speaks.
 pub struct Zombie {
     /// the entity id (the client's own counter — the wire ids stay the
@@ -2994,6 +3072,20 @@ pub struct Zombie {
     pub live_wolf_seen: Option<(i32, f64, f64, f64)>,
     pub avoid_threat: Option<(i32, f64, f64, f64)>,
     pub avoid_target: Option<(f64, f64, f64)>,
+    /// THE WOLF'S OWN PREY (the NonTameRandomTargetGoal/
+    /// NearestAttackableTargetGoal target the pre-pass scan arms — the
+    /// snapshot the melee branch reads, the None the animals' peace the
+    /// kind gate keeps)
+    pub hunt_target: Option<PreyView>,
+    /// THE PERSISTENT ANGER'S OWN CLOCK (the NeutralMob angerTime the
+    /// hurt's startPersistentAngerTimer roll arms, the tick's own drain
+    /// closes — the >0 word the prio-4 lane reads)
+    pub anger_ticks: i32,
+    /// THE ANGER LANE'S OWN RUN WORD + UNSEEN MEMORY (the mustSee gate
+    /// the TargetGoal continue walk keeps — the 60-tick window the
+    /// monster scan's law wears)
+    pub anger_target: bool,
+    pub anger_unseen_ticks: i32,
     /// THE LAST DAMAGE SOURCE'S OWN WINDOW (the shouldPanic gate the
     /// `getLastDamageSource` 40-tick law keeps — the hurt stamp arms,
     /// the tick's own drain closes)
@@ -3177,6 +3269,10 @@ impl Zombie {
             live_wolf_seen: None,
             avoid_threat: None,
             avoid_target: None,
+            hunt_target: None,
+            anger_ticks: 0,
+            anger_target: false,
+            anger_unseen_ticks: 0,
             panic_memory_ticks: 0,
             look_ticks: 0,
             age_ticks: 0,
@@ -3304,8 +3400,8 @@ impl Zombie {
     /// the LivingEntity variant the MeleeAttackGoal calls): the squared
     /// horizontal distance under `bbWidth*2*bbWidth*2 + target.width`
     /// — for the zombie: (0.6*2)² + 0.6 = 2.04.
-    fn within_melee_range(&self, p: &PlayerView) -> bool {
-        let reach2 = ZOMBIE_WIDTH * 2.0 * ZOMBIE_WIDTH * 2.0 + p.width;
+    fn within_melee_range_width(&self, p: &PlayerView, self_width: f64) -> bool {
+        let reach2 = self_width * 2.0 * self_width * 2.0 + p.width;
         self.dist2_xz(p) < reach2
     }
 
@@ -3351,6 +3447,18 @@ impl Zombie {
         if by_player {
             self.last_hurt_by_player = true;
             self.last_hurt_by_mob_timestamp = self.age_ticks;
+            // THE WOLF'S OWN ANGER (javap NeutralMob.startPersistentAngerTimer
+            // — the TimeUtil.rangeOfSeconds(20, 39) the clinit's bipush
+            // pair keeps, the [400, 780] tick window the between law
+            // samples, the attacker the setPersistentAngerTarget
+            // reference names; the prio-4 lane the >0 word reads, the
+            // tick's own drain closes)
+            if self.kind == MobKind::Wolf {
+                self.anger_ticks = self.rng.next_int_inclusive(
+                    WOLF_ANGER_SECONDS_MIN * 20,
+                    WOLF_ANGER_SECONDS_MAX * 20,
+                );
+            }
         }
     }
 
@@ -3437,6 +3545,12 @@ impl Zombie {
                 > LAST_HURT_BY_MOB_MEMORY_TICKS
         {
             self.last_hurt_by_player = false;
+        }
+        // THE PERSISTENT ANGER'S OWN DRAIN (the NeutralMob tick the
+        // angerTime decrement speaks — the >0 word the prio-4 lane
+        // reads, the forgiveness the zero crossing keeps)
+        if self.anger_ticks > 0 {
+            self.anger_ticks -= 1;
         }
         // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
         // death gate — the corpse keeps its clock but the dying refuse
@@ -3801,11 +3915,78 @@ impl Zombie {
                     None
                 }
             })
+            .map(|p| (*p, MeleeVictim::Player))
+        } else if self.kind == MobKind::Wolf {
+            // THE WOLF'S OWN TARGET LANES (javap the 26.2 registerGoals
+            // the round's dump keeps — targetSelector prio 4
+            // `NearestAttackableTargetGoal(Player, 10, mustSee=true,
+            // mustReach=false, the NeutralMob::isAngryAt selector the
+            // bootstrap's bsm#0 binds)`, prio 5
+            // `NonTameRandomTargetGoal(Animal, mustSee=false,
+            // PREY_SELECTOR)` the sheep the drawn kinds answer, prio 7
+            // `NearestAttackableTargetGoal(AbstractSkeleton,
+            // mustSee=false)`; the GoalSelector's own conflict law the
+            // prio order keeps — the anger lane the running goal the
+            // prey's canUse never reaches)
+            // THE ANGER LANE'S OWN WALK (the prio-4 mustSee law the
+            // monster scan's shape wears — the ring the FOLLOW_RANGE
+            // attribute keeps, the LOS the mustSee gate arms, the
+            // 60-tick unseen memory the continue counts)
+            if self.anger_ticks > 0 {
+                if let Some(p) = player.filter(|p| !p.dead) {
+                    let dx = p.x - self.x;
+                    let dz = p.z - self.z;
+                    let d2 = dx * dx + dz * dz;
+                    let in_range = d2 <= WOLF_FOLLOW_RANGE * WOLF_FOLLOW_RANGE;
+                    let los = crate::body::clip_ray(
+                        world,
+                        crate::math::Vec3::new(
+                            self.x as f32,
+                            (self.y + self.kind.eye_height()) as f32,
+                            self.z as f32,
+                        ),
+                        crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
+                    )
+                    .is_none();
+                    if self.anger_target {
+                        if los {
+                            self.anger_unseen_ticks = 0;
+                        } else {
+                            self.anger_unseen_ticks += 1;
+                        }
+                        if !in_range || self.anger_unseen_ticks > TARGET_UNSEEN_MEMORY_TICKS {
+                            self.anger_target = false;
+                        }
+                    } else if in_range && los {
+                        self.anger_target = true;
+                        self.anger_unseen_ticks = 0;
+                    }
+                } else {
+                    self.anger_target = false;
+                }
+            } else {
+                self.anger_target = false;
+                self.anger_unseen_ticks = 0;
+            }
+            // THE LANES' OWN WORD (the anger the prio-4 lane answers,
+            // the prey the scan-armed stand-in the melee branch reads —
+            // the stand-in the snapshot's own facts wear, the alive
+            // word the scan's own gate keeps)
+            if self.anger_target {
+                player
+                    .filter(|p| !p.dead)
+                    .map(|p| (*p, MeleeVictim::Player))
+            } else if let Some(prey) = self.hunt_target {
+                Some((prey.view(), MeleeVictim::Prey(prey.id)))
+            } else {
+                None
+            }
         } else {
             None
         };
 
-        if let Some(p) = target {
+        if let Some((p, victim)) = target {
+            let p = &p;
             // THE SPIDER'S OWN LEAP (javap `LeapAtTargetGoal` the 26.2
             // jar speaks — the Spider registerGoals' prio-3
             // `new LeapAtTargetGoal(this, 0.4F)` the ldc 0.4f the ctor
@@ -3820,7 +4001,14 @@ impl Zombie {
             // [4,16] band the dcmpg/dcmpl pair gates INCLUSIVE; the
             // onGround the hop's ground law keeps; the roll LAST — the
             // nextInt(3) draw the earlier gates' passing alone spends).
-            if self.kind == MobKind::Spider && !leap_holds && self.on_ground {
+            if (self.kind == MobKind::Spider || self.kind == MobKind::Wolf)
+                && !leap_holds
+                && self.on_ground
+            {
+                // (the WOLF'S own prio-4 `LeapAtTargetGoal(this, 0.4F)`
+                // the registerGoals dump keeps — the SAME yd the
+                // spider's ctor arg wears, the same walk the shared
+                // goal class answers)
                 let dx3 = p.x - self.x;
                 let dy3 = p.y - self.y;
                 let dz3 = p.z - self.z;
@@ -4026,7 +4214,19 @@ impl Zombie {
                     crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
                 )
                 .is_none();
-                if self.ticks_until_attack <= 0 && self.within_melee_range(p) && los {
+                // THE REACH LAW'S OWN WIDTH (the wolf's own bbWidth the
+                // sized(0.6, 0.85) law keeps — the same value the
+                // zombie's word wears, the melee reach the bbWidth pair
+                // answers)
+                let self_width = if self.kind == MobKind::Wolf {
+                    WOLF_WIDTH
+                } else {
+                    ZOMBIE_WIDTH
+                };
+                if self.ticks_until_attack <= 0
+                    && self.within_melee_range_width(p, self_width)
+                    && los
+                {
                     // doHurtTarget: the damage speaks the ATTACK_DAMAGE
                     // attribute — the base the createAttributes keeps PLUS
                     // the weapon's own modifier the attribute pipeline
@@ -4044,16 +4244,40 @@ impl Zombie {
                     // Spider.createAttributes makes)
                     let attack_base = if self.kind == MobKind::Spider {
                         SPIDER_ATTACK_DAMAGE
+                    } else if self.kind == MobKind::Wolf {
+                        // THE WOLF'S OWN FANGS (the createAttributes
+                        // chain's own ATTACK_DAMAGE 4.0 the dump keeps)
+                        WOLF_ATTACK_DAMAGE
                     } else {
                         ZOMBIE_ATTACK_DAMAGE
                     };
                     let (kx, kz) = (p.x - self.x, p.z - self.z);
-                    events.attack = Some(MobAttack {
-                        damage: attack_base
-                            + crate::screens::held_attack_addend(self.held_weapon),
-                        dir_x: kx,
-                        dir_z: kz,
-                    });
+                    let dmg = attack_base
+                        + crate::screens::held_attack_addend(self.held_weapon);
+                    // THE VICTIM'S OWN LANE (the player the
+                    // MobEvents.attack lane hurts, the prey the
+                    // mob-vs-mob lane the caller's own pass serves — the
+                    // GoalSelector's one target the two lanes never
+                    // speak together)
+                    match victim {
+                        MeleeVictim::Player => {
+                            events.attack = Some(MobAttack {
+                                damage: dmg,
+                                dir_x: kx,
+                                dir_z: kz,
+                            });
+                        }
+                        MeleeVictim::Prey(id) => {
+                            events.attack_prey = Some((
+                                id,
+                                MobAttack {
+                                    damage: dmg,
+                                    dir_x: kx,
+                                    dir_z: kz,
+                                },
+                            ));
+                        }
+                    }
                     self.swing.start();
                     self.ticks_until_attack = ATTACK_INTERVAL_TICKS;
                 }
@@ -6634,6 +6858,134 @@ pub fn arm_skeleton_wolf_avoid(mobs: &mut [Zombie]) -> usize {
     armed
 }
 
+/// THE WOLF'S OWN PREY SCAN (javap the 26.2 `Wolf.registerGoals` the
+/// round's dump keeps — the targetSelector the pre-pass answers before
+/// the ticks, the goals' own moment): every WOLF (`kind == Wolf`,
+/// `isAlive` the `health > 0.0` word, the dying body the goal's stop
+/// law clears) scans the PREY the two lanes keep — the prio-5 sheep
+/// (`NonTameRandomTargetGoal(Animal, mustSee=false, PREY_SELECTOR)` the
+/// lambda$static$0 SHEEP/RABBIT/FOX word speaks; the rabbit/fox the
+/// undrawn kinds the honest skip keeps) FIRST, the prio-7 skeleton
+/// (`NearestAttackableTargetGoal(AbstractSkeleton, mustSee=false)`) the
+/// sheep's absence arms — the GoalSelector's own conflict law the prio
+/// order answers, the ONE target the running goal wears. The canUse
+/// walk the randomInterval 0 every tick keeps (the iconst_0 the ctor
+/// speaks): the getEntitiesOfClass ring the
+/// `getBoundingBox().inflate(followRange, 10.0, followRange)` box + the
+/// `TargetingConditions.range(16.0)` squared law keep (the FOLLOW_RANGE
+/// the Mob base's own default 16.0 the wolf's createAttributes chain
+/// never overrides), the nearest the d2 fold picks, NO LOS the
+/// mustSee=false word refuses. The running goal's own refresh the
+/// canContinueToUse walk keeps (the alive + ring gates the continue
+/// law wears, the live pos the id refresh reads — the vanilla entity
+/// read the distanceToSqr speaks). The snapshot the [`PreyView`]
+/// carries — the id + the live pos + the eye + the box the melee
+/// branch's own stand-in wears. Returns the armed count (the caller's
+/// evidence).
+pub fn arm_wolf_hunters(mobs: &mut [Zombie]) -> usize {
+    // the prey's own snapshot (the getEntitiesOfClass the level query's
+    // stand-in keeps — the sheep + the skeleton the two lanes' own
+    // classes filter, the ALIVE gate the isAlive word keeps, the box
+    // the reach law reads)
+    let prey: Vec<PreyView> = mobs
+        .iter()
+        .filter(|m| m.health > 0.0 && m.death_time == 0)
+        .filter(|m| m.kind == MobKind::Sheep || m.kind == MobKind::Skeleton)
+        .map(|m| {
+            let (x0, y0, _, x1, y1, _) = m.box_for();
+            PreyView {
+                id: m.id,
+                kind: m.kind,
+                x: m.x,
+                y: m.y,
+                z: m.z,
+                eye_y: m.y + m.kind.eye_height(),
+                width: x1 - x0,
+                height: y1 - y0,
+            }
+        })
+        .collect();
+    let mut armed = 0;
+    for i in 0..mobs.len() {
+        if mobs[i].kind != MobKind::Wolf || mobs[i].health <= 0.0 || mobs[i].death_time > 0 {
+            mobs[i].hunt_target = None;
+            continue;
+        }
+        // THE RUNNING GOAL'S OWN REFRESH (the canContinueToUse walk —
+        // the alive + ring gates the continue law keeps, the live pos
+        // the id refresh reads; mustSee the iconst_0 keeps — NO LOS the
+        // false word refuses)
+        if let Some(current) = mobs[i].hunt_target {
+            if let Some(p) = prey.iter().find(|p| p.id == current.id) {
+                let dx = p.x - mobs[i].x;
+                let dy = p.y - mobs[i].y;
+                let dz = p.z - mobs[i].z;
+                let d2 = dx * dx + dy * dy + dz * dz;
+                if d2 <= WOLF_FOLLOW_RANGE * WOLF_FOLLOW_RANGE {
+                    mobs[i].hunt_target = Some(*p);
+                    armed += 1;
+                    continue;
+                }
+            }
+            mobs[i].hunt_target = None;
+        }
+        // THE CANUSE'S OWN SCAN (the prio order the conflict law keeps
+        // — the sheep the prio-5 lane answers, the skeleton the sheep's
+        // absence arms; the nearest the d2 fold picks, the box the
+        // getEntitiesOfClass query keeps)
+        let (sx0, sy0, sz0, sx1, sy1, sz1) = mobs[i].box_for();
+        let (minx, miny, minz) = (
+            sx0 - WOLF_FOLLOW_RANGE,
+            sy0 - WOLF_TARGET_BOX_INFLATE_Y,
+            sz0 - WOLF_FOLLOW_RANGE,
+        );
+        let (maxx, maxy, maxz) = (
+            sx1 + WOLF_FOLLOW_RANGE,
+            sy1 + WOLF_TARGET_BOX_INFLATE_Y,
+            sz1 + WOLF_FOLLOW_RANGE,
+        );
+        let (wx, wy, wz) = (mobs[i].x, mobs[i].y, mobs[i].z);
+        let nearest = |kind: MobKind| -> Option<PreyView> {
+            let mut best: Option<(PreyView, f64)> = None;
+            for p in prey.iter().filter(|p| p.kind == kind) {
+                let (px0, py0, pz0, px1, py1, pz1) = (
+                    p.x - p.width / 2.0,
+                    p.y,
+                    p.z - p.width / 2.0,
+                    p.x + p.width / 2.0,
+                    p.y + p.height,
+                    p.z + p.width / 2.0,
+                );
+                let box_hit = px0 <= maxx
+                    && px1 >= minx
+                    && py0 <= maxy
+                    && py1 >= miny
+                    && pz0 <= maxz
+                    && pz1 >= minz;
+                if !box_hit {
+                    continue;
+                }
+                let dx = p.x - wx;
+                let dy = p.y - wy;
+                let dz = p.z - wz;
+                let d2 = dx * dx + dy * dy + dz * dz;
+                if d2 > WOLF_FOLLOW_RANGE * WOLF_FOLLOW_RANGE {
+                    continue;
+                }
+                if best.is_none() || d2 < best.unwrap().1 {
+                    best = Some((*p, d2));
+                }
+            }
+            best.map(|(p, _)| p)
+        };
+        mobs[i].hunt_target = nearest(MobKind::Sheep).or_else(|| nearest(MobKind::Skeleton));
+        if mobs[i].hunt_target.is_some() {
+            armed += 1;
+        }
+    }
+    armed
+}
+
 /// THE FOLLOWPARENTGOAL'S OWN SCAN (javap `canUse` the followparentgoal
 /// dump keeps — the canUse walk the caller's pre-pass answers before
 /// the ticks, the goals' own moment): every BABY (`getAge() < 0` the
@@ -6961,9 +7313,9 @@ mod tests {
     fn the_melee_range_law_speaks_2_04() {
         let mut z = Zombie::new(1, 0.0, 0.0, 0.0, 7);
         // 1.4 blocks away: dist² 1.96 < 2.04 — inside the melee ring
-        assert!(z.within_melee_range(&player_at(1.4, 0.0, 0.0)));
+        assert!(z.within_melee_range_width(&player_at(1.4, 0.0, 0.0), ZOMBIE_WIDTH));
         // 1.44 blocks: dist² 2.0736 — outside it
-        assert!(!z.within_melee_range(&player_at(1.44, 0.0, 0.0)));
+        assert!(!z.within_melee_range_width(&player_at(1.44, 0.0, 0.0), ZOMBIE_WIDTH));
         // the law is horizontal-only (the y rides the box distance)
         let _ = &mut z;
     }
@@ -7342,6 +7694,170 @@ mod tests {
             }
         }
         assert!(raised, "the arms raise on the wind-up");
+    }
+
+    /// THE WOLF'S OWN PREY SCAN (the 26.2 targetSelector the round's
+    /// dump keeps): the prio-5 sheep the PREY_SELECTOR's own lane
+    /// answers, the prio-7 skeleton the sheep's absence arms, the
+    /// running goal the refresh keeps, the out-of-ring prey the drop
+    /// law loses, the dead wolf the scan never arms.
+    #[test]
+    fn the_wolf_hunt_the_prey_lanes_own_prio_speaks() {
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        let mut sheep = Zombie::new(2, 12.0, 5.0, 8.0, 8); // 4 east — in ring
+        sheep.kind = MobKind::Sheep;
+        let mut skeleton = Zombie::new(3, 8.0, 5.0, 14.0, 9); // 6 south — in ring
+        skeleton.kind = MobKind::Skeleton;
+        let mut mobs = vec![wolf, sheep, skeleton];
+        assert_eq!(arm_wolf_hunters(&mut mobs), 1);
+        let hunt = mobs[0].hunt_target.expect("the prey the lanes arm");
+        assert_eq!(hunt.id, 2, "the sheep the prio-5 lane answers");
+        assert_eq!(hunt.kind, MobKind::Sheep);
+        assert!(
+            (hunt.width - SHEEP_WIDTH).abs() < 1e-9,
+            "the box the reach law reads: {}",
+            hunt.width
+        );
+        // THE PRIO-7 LANE (the sheep's death the absence arms): the
+        // skeleton the dead sheep the re-scan answers
+        mobs[1].health = 0.0;
+        assert_eq!(arm_wolf_hunters(&mut mobs), 1);
+        let hunt = mobs[0].hunt_target.expect("the skeleton the absence arms");
+        assert_eq!(hunt.id, 3, "the skeleton the prio-7 lane answers");
+        assert_eq!(hunt.kind, MobKind::Skeleton);
+        // THE RING'S OWN DROP (the out-of-ring prey the continue law
+        // loses, the re-scan the empty ring refuses)
+        mobs[2].z = 8.0 + WOLF_FOLLOW_RANGE + 1.0;
+        assert_eq!(arm_wolf_hunters(&mut mobs), 0);
+        assert!(mobs[0].hunt_target.is_none());
+        // THE DEAD WOLF'S OWN SILENCE (the isAlive gate the scan keeps)
+        mobs[0].health = 0.0;
+        mobs[2].z = 14.0;
+        assert_eq!(arm_wolf_hunters(&mut mobs), 0);
+    }
+
+    /// THE WOLF'S OWN BITE (the prio-5 target the MeleeAttackGoal's
+    /// shared walk serves — the doHurtTarget the attack_prey lane
+    /// delivers, the damage the ATTACK_DAMAGE 4.0 keeps, the dir the
+    /// victim-minus-attacker form wears, the cooldown the 20 refill
+    /// arms, the second bite the walked cooldown answers)
+    #[test]
+    fn the_wolf_bite_the_prey_laws_speak() {
+        let world = flat_world();
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        wolf.on_ground = true;
+        // the sheep 1.0 east — INSIDE the melee ring ((0.6*2)² + 0.9 =
+        // 2.34), OUTSIDE the leap band's [4, 16] 3D square
+        wolf.hunt_target = Some(PreyView {
+            id: 2,
+            kind: MobKind::Sheep,
+            x: 9.0,
+            y: 5.0,
+            z: 8.0,
+            eye_y: 5.0 + MobKind::Sheep.eye_height(),
+            width: SHEEP_WIDTH,
+            height: SHEEP_HEIGHT,
+        });
+        let ev = wolf.tick(&world, None, NIGHT);
+        let (id, atk) = ev
+            .attack_prey
+            .expect("the bite the armed hunt speaks");
+        assert_eq!(id, 2, "the prey the tuple names");
+        assert!(
+            (atk.damage - WOLF_ATTACK_DAMAGE).abs() < 1e-9,
+            "damage {}",
+            atk.damage
+        );
+        assert!(
+            (atk.dir_x - 1.0).abs() < 1e-9 && atk.dir_z.abs() < 1e-9,
+            "the dir the victim-minus-attacker form wears: ({}, {})",
+            atk.dir_x,
+            atk.dir_z
+        );
+        assert_eq!(wolf.ticks_until_attack, ATTACK_INTERVAL_TICKS);
+        assert!(ev.attack.is_none(), "the prey lane the player event never speaks");
+        // THE SECOND BITE (the walked cooldown the refill answers — the
+        // 20 ticks the interval keeps)
+        let mut bites = 0;
+        for _ in 0..40 {
+            if wolf.tick(&world, None, NIGHT).attack_prey.is_some() {
+                bites += 1;
+                if bites == 1 {
+                    break;
+                }
+            }
+        }
+        assert_eq!(bites, 1, "the cooldown the walked interval re-arms");
+    }
+
+    /// THE WOLF'S OWN ANGER (the prio-4 lane the isAngryAt selector
+    /// arms — the bootstrap's NeutralMob.isAngryAt binding the dump
+    /// keeps): the player's hurt the [400, 780] window stamps, the
+    /// melee the player lane delivers, the prey lane the conflict law
+    /// never speaks, the by-mob dose the anger never arms.
+    #[test]
+    fn the_wolf_anger_the_prio4_lane_the_conflict_keeps() {
+        let world = flat_world();
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        wolf.on_ground = true;
+        wolf.hurt(2.0, true);
+        assert!(
+            wolf.anger_ticks >= WOLF_ANGER_SECONDS_MIN * 20
+                && wolf.anger_ticks <= WOLF_ANGER_SECONDS_MAX * 20,
+            "the window the rangeOfSeconds law keeps: {}",
+            wolf.anger_ticks
+        );
+        // the player 1.0 west — in ring, LOS clear, melee reach
+        let player = player_at(7.0, 5.0, 8.0);
+        let ev = wolf.tick(&world, Some(&player), NIGHT);
+        assert!(
+            ev.attack.is_some(),
+            "the anger lane the player melee speaks"
+        );
+        assert!(
+            ev.attack_prey.is_none(),
+            "the conflict the prio order keeps"
+        );
+        // THE BY-MOB DOSE (the fire's own word the anger never arms —
+        // the NeutralMob selector the player source alone answers)
+        let mut calm = Zombie::new(2, 8.0, 5.0, 8.0, 7);
+        calm.kind = MobKind::Wolf;
+        calm.hurt(2.0, false);
+        assert_eq!(calm.anger_ticks, 0);
+    }
+
+    /// THE ANGER'S OWN DRAIN (the tick the angerTime decrement speaks):
+    /// the expired window the prey lane resumes — the zero crossing the
+    /// forgiveness keeps, the same tick the hunt's own bite answers.
+    #[test]
+    fn the_anger_decay_the_prey_lane_resumes() {
+        let world = flat_world();
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        wolf.on_ground = true;
+        wolf.hurt(2.0, true);
+        wolf.anger_ticks = 1; // the drain the one-tick window keeps
+        wolf.hunt_target = Some(PreyView {
+            id: 2,
+            kind: MobKind::Sheep,
+            x: 9.0,
+            y: 5.0,
+            z: 8.0,
+            eye_y: 5.0 + MobKind::Sheep.eye_height(),
+            width: SHEEP_WIDTH,
+            height: SHEEP_HEIGHT,
+        });
+        let player = player_at(7.0, 5.0, 8.0);
+        let ev = wolf.tick(&world, Some(&player), NIGHT);
+        assert_eq!(wolf.anger_ticks, 0, "the drain the head's own walk spends");
+        assert!(
+            ev.attack_prey.is_some(),
+            "the expired anger the prey lane resumes"
+        );
+        assert!(ev.attack.is_none(), "the expired lane the player event never speaks");
     }
 
     /// THE ARMED HIT'S OWN PIN (the attribute pipeline the equipment

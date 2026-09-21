@@ -11,3 +11,4 @@ gen-report-tmp/
 # official jar the generator fetches: python3 scripts/classfile_dump.py
 # <client.jar> <class-slash-path> > scripts/<name>.txt
 scripts/*.txt
+tools/

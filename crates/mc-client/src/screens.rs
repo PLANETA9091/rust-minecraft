@@ -8512,6 +8512,10 @@ impl App {
                 // dealDefaultKnockback law speaks), the ambient groans
                 // draw their pitch from the entity's own stream.
                 let mut hit_events: Vec<(f64, f64, f64)> = Vec::new();
+                // THE WOLF'S OWN BITES (the events the mob ticks queued
+                // — the (prey id, damage, dir) tuples the caller's own
+                // pass hurts the mob slice by)
+                let mut bite_events: Vec<(i32, f64, f64, f64)> = Vec::new();
                 // THE SKELETON'S OWN SHOTS (the full-draw crossings the
                 // events carry — the arrows the caller's flight lane
                 // pushes, the shoot voice the draw's own pitch speaks)
@@ -8546,8 +8550,8 @@ impl App {
                     .as_ref()
                     .map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let mut groans: Vec<(&'static str, f32, f64)> = Vec::new();
-                let mut fire_hurts: Vec<(&'static str, f32, f64)> = Vec::new();
-                let mut fire_deaths: Vec<(&'static str, f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
+                let mut mob_hurts: Vec<(&'static str, f32, f64)> = Vec::new();
+                let mut mob_kills: Vec<(&'static str, f64, f64, f64, f32, Vec<(i32, i32)>)> = Vec::new();
                 let mut fizzes: Vec<(f32, f64)> = Vec::new();
                 // THE HURTBY GOAL'S OWN ALERTS (the start()'s
                 // alertOthers walk the events queue — the same-kind
@@ -8598,6 +8602,11 @@ impl App {
                         // prio-3 wolf flee the caller's pre-pass arms —
                         // the same moment the breed/follow scans keep)
                         crate::mob::arm_skeleton_wolf_avoid(&mut self.mobs);
+                        // THE WOLF'S OWN PREY SCAN (the targetSelector's
+                        // prio-5 sheep + prio-7 skeleton lanes the
+                        // caller's pre-pass arms — the same moment the
+                        // avoid's own scan keeps)
+                        crate::mob::arm_wolf_hunters(&mut self.mobs);
                         // THE RIDE'S OWN AUTHORITY (the ridden vehicle the
                         // ride branch's own tick spoke — the double tick
                         // the skip refuses: the vanilla order the
@@ -8660,6 +8669,9 @@ impl App {
                             if let Some(atk) = ev.attack {
                                 hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
                             }
+                            if let Some((prey_id, atk)) = ev.attack_prey {
+                                bite_events.push((prey_id, atk.damage, atk.dir_x, atk.dir_z));
+                            }
                             if let Some(shot) = ev.arrow_shot {
                                 arrow_shots.push(shot);
                             }
@@ -8682,7 +8694,7 @@ impl App {
                                 // hurt pipeline's makeSound speaks — the
                                 // mob's own table the zombie's row never
                                 // names for the animals)
-                                fire_hurts.push((
+                                mob_hurts.push((
                                     mob.voice_event(crate::mob::VoiceSlot::Hurt),
                                     mob.voice_pitch(),
                                     ear_distance(ear, mob.x, mob.y, mob.z),
@@ -8700,7 +8712,7 @@ impl App {
                                 // die() tail's makeSound speaks — the
                                 // animal's own table the zombie's groan
                                 // never plays for)
-                                fire_deaths.push((
+                                mob_kills.push((
                                     mob.voice_event(crate::mob::VoiceSlot::Death),
                                     mob.x,
                                     mob.y,
@@ -8915,6 +8927,52 @@ impl App {
                         }
                     }
                 }
+                // THE WOLF'S OWN BITES (the doHurtTarget the caller's
+                // own pass serves — the prey the id names the hurt
+                // pipeline walks, the knockback the attacker-minus-
+                // victim law pushes (MobAttack carries the
+                // victim-minus-attacker form, the flip the minus law
+                // keeps), the dying the hurt's own gate refuses; the
+                // kill the fire lane's own walk speaks — the death
+                // voice + the loot the player-kill gate CLOSED rolls,
+                // the bite the mob's own dose the vanilla law keeps)
+                for (prey_id, dmg, dir_x, dir_z) in bite_events {
+                    let Some(idx) = self.mobs.iter().position(|m| m.id == prey_id) else {
+                        continue;
+                    };
+                    let Some(mob) = self.mobs.get_mut(idx) else {
+                        continue;
+                    };
+                    if mob.death_time > 0 || mob.health <= 0.0 {
+                        continue;
+                    }
+                    mob.hurt(dmg, false);
+                    mob.knockback(
+                        crate::mob::KNOCKBACK_STRENGTH,
+                        -dir_x,
+                        -dir_z,
+                    );
+                    // THE KIND'S OWN ROW (the hurt/death sound the hurt
+                    // pipeline's makeSound speaks — captured while the
+                    // borrow lives, the voices the tail's vecs wear)
+                    let word = if mob.health <= 0.0 {
+                        mob.voice_event(crate::mob::VoiceSlot::Death)
+                    } else {
+                        mob.voice_event(crate::mob::VoiceSlot::Hurt)
+                    };
+                    let pitch = mob.voice_pitch();
+                    let (mx, my, mz) = (mob.x, mob.y, mob.z);
+                    let loot = if mob.health <= 0.0 {
+                        mob.death_loot(false)
+                    } else {
+                        Vec::new()
+                    };
+                    if mob.health <= 0.0 {
+                        mob_kills.push((word, mx, my, mz, pitch, loot));
+                    } else {
+                        mob_hurts.push((word, pitch, ear_distance(ear, mx, my, mz)));
+                    }
+                }
                 // THE ARROW'S OWN HITS (the player's hurt the onHitEntity
                 // damage answers — the punch-0 bow the knockback NEVER
                 // carries, the honest no-push the vanilla law keeps;
@@ -9064,7 +9122,7 @@ impl App {
                     // never names)
                     self.sounds.play_voice_at(self.frame, word, 1.0, pitch, dist);
                 }
-                for (word, pitch, dist) in fire_hurts {
+                for (word, pitch, dist) in mob_hurts {
                     // the onFire hurt's own voice (the hurt pipeline's
                     // makeSound — the same law the fist's hit speaks,
                     // the fold the burn spot's own distance speaks;
@@ -9085,7 +9143,7 @@ impl App {
                         dist,
                     );
                 }
-                for (word, mx, my, mz, pitch, loot) in fire_deaths {
+                for (word, mx, my, mz, pitch, loot) in mob_kills {
                     // the death voice (the die() tail's makeSound — the
                     // pitch the entity's own law speaks, the gain the
                     // death spot's own distance folds; the MOB'S OWN
@@ -37759,6 +37817,74 @@ mod tests {
                 "the animals' own fold ({v} <= 0.15): {line}"
             );
         }
+    }
+
+    /// THE WOLF'S OWN BITE THE CALLER'S PASS SERVES (the mob-vs-mob
+    /// hurt the offline frame walks — the sheep the bite's own dose
+    /// drops, the knockback the attacker-minus-victim law pushes, the
+    /// kill the death voice + the loot the player-kill gate CLOSED
+    /// rolls)
+    #[test]
+    fn the_wolf_bite_the_caller_pass_serves() {
+        let mut app = App::new(5);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y as f64;
+        let mut sheep = crate::mob::Zombie::new(
+            30,
+            c as f64 + 0.5,
+            surface,
+            c as f64 + 0.5,
+            31,
+        );
+        sheep.kind = crate::mob::MobKind::Sheep;
+        sheep.on_ground = true;
+        sheep.health = 2.0; // the bite the 4.0 dose the kill answers
+        let mut wolf =
+            crate::mob::Zombie::new(31, c as f64 + 1.5, surface, c as f64 + 0.5, 32);
+        wolf.kind = crate::mob::MobKind::Wolf;
+        wolf.on_ground = true;
+        app.mobs = vec![sheep, wolf];
+        let drops_before = app.drops.len();
+        app.update();
+        // THE BITE'S OWN DOSE (the kill the 2.0-health body answers —
+        // the hurt pipeline's armor law the 4.0 fang walks)
+        let sheep_after = app
+            .mobs
+            .iter()
+            .find(|m| m.id == 30)
+            .expect("the prey the slice keeps");
+        assert!(
+            sheep_after.health <= 0.0,
+            "the bite the kill answers: {}",
+            sheep_after.health
+        );
+        // THE KNOCKBACK (the attacker-minus-victim law pushes the prey
+        // AWAY from the wolf — the wolf east, the corpse the west ride
+        // wears)
+        assert!(
+            sheep_after.vx < 0.0,
+            "the knockback the minus law pushes: {}",
+            sheep_after.vx
+        );
+        // THE LOOT (the death_loot(false) roll the kill speaks — the
+        // drops the feet spawn, the player-kill gate CLOSED)
+        assert!(
+            app.drops.len() > drops_before,
+            "the loot the kill rolls"
+        );
+        // THE DEATH CLOCK (the next tick's own walk the corpse speaks)
+        app.update();
+        let sheep_after = app
+            .mobs
+            .iter()
+            .find(|m| m.id == 30)
+            .expect("the prey the slice keeps");
+        assert!(
+            sheep_after.death_time > 0,
+            "the death clock the corpse walks"
+        );
     }
 
     /// THE WIRE MOBS' HURT FLASH (javap LivingEntity's own hurt
