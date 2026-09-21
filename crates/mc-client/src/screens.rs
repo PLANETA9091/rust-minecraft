@@ -1335,7 +1335,12 @@ fn debug_chart_row(modifier: Option<&str>, key: &str, name: &str, visible: bool)
 /// visibility word the raised flag's own lane keeps — the F3+2
 /// toggle's real state the row re-speaks, the FPS chart the one
 /// chart the client's own frame ring draws.
-fn debug_bottom_lines(integrated: bool, fps_charts: bool, network_charts: bool) -> Vec<String> {
+fn debug_bottom_lines(
+    integrated: bool,
+    fps_charts: bool,
+    network_charts: bool,
+    lightmap_view: bool,
+) -> Vec<String> {
     let modifier = Some("F3");
     let profiler = debug_chart_row(modifier, "1", "Profiler", false);
     let fps = debug_chart_row(
@@ -1350,7 +1355,7 @@ fn debug_bottom_lines(integrated: bool, fps_charts: bool, network_charts: bool) 
         if integrated { "Ping" } else { "Bandwidth + Ping" },
         network_charts,
     );
-    let lightmap = debug_chart_row(modifier, "4", "Lightmap", false);
+    let lightmap = debug_chart_row(modifier, "4", "Lightmap", lightmap_view);
     let debug_options = debug_keybind_word(modifier, "F6");
     vec![
         String::new(),
@@ -1863,6 +1868,100 @@ fn profiler_pie_side_fills(
         }
     }
     out
+}
+
+/// THE LIGHTMAP VIEWER'S OWN UNIFORMS (the mesher's per-frame decode —
+/// the SAME expressions the render walk keeps, the viewer the live
+/// frame's state re-reads; the decode the shader's UBO layout names:
+/// the SkyFactor, the SkyLightColor, the AmbientColor, the
+/// BlockLightTint, the NightVision pair).
+struct LightmapUniforms {
+    sky_factor: f32,
+    sky_tint: [f32; 3],
+    ambient: [f32; 3],
+    block_tint: Option<[f32; 3]>,
+    night_vision: Option<[f32; 3]>,
+    night_vision_factor: f32,
+}
+
+/// THE UNIFORM DECODE (the mesher's own walk mirrored — the stated
+/// factor × the timeline's multiply track, the sky tint's ARGB
+/// multiply fold (None = the track verbatim), the ambient/block/night
+/// byte decodes the mesher's defaults wear).
+fn lightmap_uniforms(world: &crate::world::World) -> LightmapUniforms {
+    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+        * world
+            .day_tick
+            .map(crate::timeline::sky_light_factor)
+            .unwrap_or(1.0);
+    let sky_tint = match world.sky_light_color {
+        None => world
+            .day_tick
+            .map(crate::timeline::sky_light_color)
+            .unwrap_or([1.0; 3]),
+        Some(stated) => {
+            let track = world
+                .day_tick
+                .map(crate::timeline::sky_light_color_bytes)
+                .unwrap_or([255; 3]);
+            [
+                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+            ]
+        }
+    };
+    LightmapUniforms {
+        sky_factor,
+        sky_tint,
+        ambient: world.ambient_light.map_or([0.0f32; 3], |a| {
+            [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+        }),
+        block_tint: world.block_light_tint.map(|a| {
+            [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+        }),
+        night_vision: world.night_vision_color.map(|a| {
+            [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+        }),
+        night_vision_factor: world.night_vision_factor,
+    }
+}
+
+/// THE LIGHTMAP TEXTURE'S OWN GRID (the jar's own
+/// `shaders/core/lightmap.fsh` fragment walk — the source the 26.2
+/// GPU pass runs: the cell's texCoord the `floor(texCoord*16)/15`
+/// levels speak — U the BLOCK axis, V the SKY axis —, the combine
+/// the shader's own chain wears at the client's no-opinion state
+/// (the BrightnessFactor / DarknessScale / BossOverlay the identity
+/// floors keep). Row-major [sky * 16 + block].
+fn lightmap_grid(u: &LightmapUniforms) -> [[f32; 3]; 256] {
+    let mut grid = [[0.0f32; 3]; 256];
+    for sy in 0..16usize {
+        for bx in 0..16usize {
+            // THE RAW LEVELS (the combine's own 0..15 args the mesher's
+            // light bytes keep — the brightness ramp's internal /15 the
+            // shader's `floor(texCoord*16)/15` normalized form answers)
+            grid[sy * 16 + bx] = crate::mesher::lightmap_combine(
+                Some(sy as f32),
+                Some(bx as f32),
+                u.sky_factor,
+                u.sky_tint,
+                u.ambient,
+                u.block_tint,
+                u.night_vision,
+                u.night_vision_factor,
+            );
+        }
+    }
+    grid
+}
+
+/// THE VIEWER'S OWN PIXEL→CELL LAW (the blit's UV `(0.0, 1.0, 1.0,
+/// 0.0)` walk — the V-FLIP the box keeps: the TOP row the sky-15
+/// cell shows, the BOTTOM the sky-0 row wears; U the block axis
+/// runs left→right; the 16x16 grid the 4px nearest cells wear).
+fn lightmap_screen_cell(dx: i32, dy: i32) -> (usize, usize) {
+    ((dx / 4) as usize, (15 - dy / 4) as usize)
 }
 
 /// THE RIDER'S YAW WALK (AbstractBoat.positionRider's own words — the
@@ -6575,6 +6674,14 @@ pub struct App {
     /// draw's own gate speaks — the tree path the drill walk keeps,
     /// the results the previous frame's stage walk banks).
     pub profiler_chart: bool,
+    /// THE LIGHTMAP VIEW'S OWN FLAG (javap DebugScreenOverlay's
+    /// renderLightmapTexture — the toggleLightmapTexture walk's own
+    /// field: the F3+4 chord flips it, the raise the
+    /// setOverlayVisible ride takes AND zeroes the fps + network
+    /// chart flags (the audited mutual-exclusion putfield pair),
+    /// the raised state the bottom row's word and the viewer
+    /// draw's own gate both speak).
+    pub lightmap_view: bool,
     /// THE PIE'S OWN TREE PATH (the ProfilerPieChart ctor's 'root'
     /// word the field keeps — the digit drill the walk navigates,
     /// the separator the char-30 join rides).
@@ -7102,6 +7209,7 @@ impl App {
             fps_value: None,
             fps_charts: false,
             profiler_chart: false,
+            lightmap_view: false,
             profiler_tree_path: "root".to_string(),
             profiler_results: None,
             network_charts: false,
@@ -16416,6 +16524,25 @@ impl App {
         self.profiler_results = Some(results);
     }
 
+    /// THE F3+4 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
+    /// .toggleLightmapTexture's bytecode walk — the law the chart
+    /// family's toggles bank mirrors verbatim:
+    /// `renderLightmapTexture = !(isOverlayVisible &&
+    /// renderLightmapTexture)` the flip keeps, the raise the
+    /// setOverlayVisible(true) forced-visible ride takes AND zeroes
+    /// BOTH the fps and the network chart flags (the audited
+    /// putfield pair — the lightmap view the charts' own screen
+    /// corner excludes), the lowered state the flags never touch).
+    pub fn on_lightmap_view_key(&mut self) {
+        self.lightmap_view = !(self.debug_held && self.lightmap_view);
+        if self.lightmap_view {
+            self.debug_held = true;
+            self.fps_charts = false;
+            self.network_charts = false;
+        }
+        self.debug_modifier_used = true;
+    }
+
     /// THE F3+3 CHORD'S OWN TOGGLE (javap DebugScreenOverlay
     /// .toggleNetworkCharts's bytecode walk — the law the fps lane
     /// banks mirrors verbatim: `renderNetworkCharts =
@@ -17285,7 +17412,12 @@ impl App {
         // three chart-words rows the ONE extractLines(..., true)
         // call draws, the 9px stride the shared index walk owns)
         let mut lines = self.debug_lines();
-        lines.extend(debug_bottom_lines(false, self.fps_charts, self.network_charts));
+        lines.extend(debug_bottom_lines(
+            false,
+            self.fps_charts,
+            self.network_charts,
+            self.lightmap_view,
+        ));
         let (x, mut y) = (2i32, 2i32);
         for line in &lines {
             // the spacer's own law (the isNullOrEmpty gate the band
@@ -17351,6 +17483,14 @@ impl App {
         // return the chart's own null gate keeps)
         if self.profiler_chart {
             self.draw_profiler_pie(g, a, w, h);
+        }
+        // THE LIGHTMAP VIEW (the DSO extractRenderState's
+        // showLightmapTexture lane — the F3+4 chord's own texture the
+        // `isOverlayVisible && renderLightmapTexture` gate draws —
+        // the gate the overlay's own visibility arms — the corner
+        // box the live lightmap re-renders)
+        if self.lightmap_view {
+            self.draw_lightmap_view(g, a, w, h);
         }
     }
 
@@ -17765,7 +17905,18 @@ impl App {
         let x_left = x_right - PROFILER_CHART_HALF;
         let x_r2 = x_right + PROFILER_CHART_HALF;
         let rows_h = children.len() as i32 * PROFILER_ROW_STRIDE;
-        let y_bottom = h - PROFILER_BOTTOM_OFFSET - 5;
+        // THE BOTTOM OFFSET (the DSO extract walk's own setBottomOffset
+        // chain: the chart-less default `10` the first call banks, the
+        // fps branch the TPS chart's full height re-sets, the network
+        // branch the ping chart's own height — both the 69 the chart
+        // family's abstract full height answers)
+        let pie_bottom_offset = if self.fps_charts || (self.network_charts && self.world_is_network)
+        {
+            PROFILER_BOTTOM_OFFSET
+        } else {
+            10
+        };
+        let y_bottom = h - pie_bottom_offset - 5;
         let y_top = y_bottom - rows_h;
         let pie_cy = y_top - PROFILER_PIE_HALF_EXTENT - 5;
         let pie_cx = x_right;
@@ -17866,6 +18017,41 @@ impl App {
             );
             let glob_word = percentage_word(f.global_percentage);
             g.text(a, x_r2 - g.text_width(&glob_word), row_y, &glob_word, color, false);
+        }
+    }
+
+    /// THE LIGHTMAP VIEW'S OWN DRAW (javap DebugScreenOverlay
+    /// .extractRenderState's showLightmapTexture lane — the audited
+    /// walk the F3+4 flag serves: the `gameRenderer.levelLightmap()`
+    /// 16x16 texture the NEAREST sampler scales, the 64px box the
+    /// `guiWidth - 64 - 2` / `guiHeight - 64 - 2` anchor keeps (the
+    /// bottom-right corner the 2px margin wears), the 1px black
+    /// frame the `-16777216` fill paints around, the blit's UV
+    /// `(0.0, 1.0, 1.0, 0.0)` walk the V-FLIP keeps (the box's top
+    /// row the sky-15 cell shows). THE TEXTURE the client's own
+    /// lightmap shader math re-renders — the 26.2 GPU pass the
+    /// `lightmap.fsh` source runs, the combine the mesher's per-
+    /// vertex walk mirrors, the grid the live frame's uniforms wear).
+    fn draw_lightmap_view(&self, g: &mut Gui, _a: &mut GuiAssets, w: i32, h: i32) {
+        let Some(world) = self.active_world() else {
+            return;
+        };
+        let uniforms = lightmap_uniforms(world);
+        let grid = lightmap_grid(&uniforms);
+        // THE BOX (the audited anchor — the 2px margins the corner keeps)
+        let size = 64i32;
+        let x = w - size - 2;
+        let y = h - size - 2;
+        // THE BLACK FRAME (the `-16777216` fill the ±1 ring wears)
+        g.fill(x - 1, y - 1, size + 2, size + 2, [0.0, 0.0, 0.0, 1.0]);
+        // THE NEAREST BLIT (the 16x16 grid the 4px cells wear — the
+        // V-FLIP the pixel→cell law keeps)
+        for dy in 0..64i32 {
+            for dx in 0..64i32 {
+                let (bx, sy) = lightmap_screen_cell(dx, dy);
+                let c = grid[sy * 16 + bx];
+                g.fill(x + dx, y + dy, 1, 1, [c[0], c[1], c[2], 1.0]);
+            }
         }
     }
 
@@ -34976,7 +35162,7 @@ mod tests {
         // spends first, then the three rows the concat recipes bank;
         // the FPS row's word the REAL flag lane keeps — the all-false
         // boot the hidden word wears)
-        let block = debug_bottom_lines(false, false, false);
+        let block = debug_bottom_lines(false, false, false, false);
         assert_eq!(block.len(), 4);
         assert_eq!(block[0], "", "the spacer row the cursor still walks");
         assert_eq!(
@@ -34994,7 +35180,7 @@ mod tests {
         // slot's name the isLocalServer probe keeps — `Ping` the
         // local lane, `Bandwidth + Ping` the remote the client's own
         // honest lane wears)
-        let local = debug_bottom_lines(true, false, false);
+        let local = debug_bottom_lines(true, false, false, false);
         assert_eq!(
             local[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS + TPS hidden;"
@@ -35005,7 +35191,7 @@ mod tests {
         // the real renderFpsCharts state carries — the F3+2 toggle's
         // `visible` word the raised lane speaks, the row the jar's
         // own fold re-answers)
-        let raised = debug_bottom_lines(false, true, false);
+        let raised = debug_bottom_lines(false, true, false, false);
         assert_eq!(
             raised[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS visible;"
@@ -35098,7 +35284,7 @@ mod tests {
         // live flag carries — the visible word the raised lane wears)
         app.on_debug_modifier_released();
         assert!(app.debug_held);
-        let block = debug_bottom_lines(false, app.fps_charts, app.network_charts);
+        let block = debug_bottom_lines(false, app.fps_charts, app.network_charts, app.lightmap_view);
         assert_eq!(
             block[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS visible;"
@@ -35153,7 +35339,7 @@ mod tests {
         // THE ROW'S OWN RE-SPEAK (the bottom block's network row the
         // live flag carries — the visible word the raised lane wears,
         // the fps row's hidden word the zeroed flag keeps)
-        let block = debug_bottom_lines(false, app.fps_charts, app.network_charts);
+        let block = debug_bottom_lines(false, app.fps_charts, app.network_charts, app.lightmap_view);
         assert_eq!(
             block[1],
             "Debug charts: [F3+1] Profiler hidden; [F3+2] FPS hidden;"
@@ -35168,7 +35354,7 @@ mod tests {
             crate::world_view::ContainerCommand::NetworkCharts(false)
         ));
         assert_eq!(
-            debug_bottom_lines(false, app.fps_charts, app.network_charts)[2],
+            debug_bottom_lines(false, app.fps_charts, app.network_charts, app.lightmap_view)[2],
             "[F3+3] Bandwidth + Ping hidden; [F3+4] Lightmap hidden",
             "the lowered flag the hidden word wears"
         );
@@ -54387,6 +54573,107 @@ cow_sound_variant: None,
             color: -1,
         }];
         assert!(profiler_pie_side_fills(500, 192, &slices).is_empty());
+    }
+
+    #[test]
+    fn the_lightmap_toggle_the_mutual_exclusion_law_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE FRESH CLIENT (the renderLightmapTexture all-false the
+        // ctor keeps)
+        assert!(!app.lightmap_view, "the fresh client the view keeps silent");
+        // THE RAISE WITH THE FPS CHARTS UP (the audited putfield pair
+        // — the lightmap raise the fps AND network flags zeroes)
+        app.fps_charts = true;
+        app.network_charts = true;
+        app.on_lightmap_view_key();
+        assert!(app.lightmap_view, "the chord the view raises");
+        assert!(app.debug_held, "the raise the overlay forces visible");
+        assert!(!app.fps_charts, "the raise the fps flag zeroes");
+        assert!(!app.network_charts, "the raise the network flag zeroes");
+        assert!(app.debug_modifier_used, "the modifier the chord spends");
+        // THE LOWER (the flags the lowered walk never touches)
+        app.on_lightmap_view_key();
+        assert!(!app.lightmap_view, "the re-press the view lowers");
+    }
+
+    #[test]
+    fn the_lightmap_row_the_help_word_speaks() {
+        // THE HIDDEN WORD (the fresh client's row the hidden suffix
+        // keeps)
+        let rows = debug_bottom_lines(false, false, false, false);
+        assert!(
+            rows.iter().any(|r| r.contains("Lightmap") && r.contains("hidden")),
+            "the lightmap row the hidden word wears: {rows:?}"
+        );
+        // THE VISIBLE WORD (the raised flag's own lane the row re-speaks)
+        let rows = debug_bottom_lines(false, false, false, true);
+        assert!(
+            rows.iter().any(|r| r.contains("Lightmap") && r.contains("visible")),
+            "the lightmap row the visible word wears: {rows:?}"
+        );
+    }
+
+    #[test]
+    fn the_lightmap_grid_the_shader_law_speaks() {
+        // THE DAY UNIFORMS (the no-opinion world the defaults wear:
+        // the full-day sky factor, the white track, the black ambient,
+        // the default block tint the None carries)
+        let u = LightmapUniforms {
+            sky_factor: 1.0,
+            sky_tint: [1.0, 1.0, 1.0],
+            ambient: [0.0, 0.0, 0.0],
+            block_tint: None,
+            night_vision: None,
+            night_vision_factor: 0.0,
+        };
+        let grid = lightmap_grid(&u);
+        // THE DARK CORNER (the block-0 / sky-0 cell the black floor
+        // wears — both brightness ramps the zero level answers)
+        assert_eq!(grid[0], [0.0, 0.0, 0.0], "the (block0, sky0) cell");
+        // THE BRIGHT CORNER (the block-15 / sky-15 cell the clamped
+        // white wears — both terms the full level answers)
+        assert_eq!(grid[15 * 16 + 15], [1.0, 1.0, 1.0], "the (block15, sky15) cell");
+        // THE SKY-ONLY CELL (the block-0 / sky-1 cell the sky term's
+        // own brightness wears — the ramp the get_brightness walk
+        // keeps, the tint the white track passes)
+        let expect = crate::mesher::light_brightness(1.0);
+        assert_eq!(grid[1 * 16], [expect, expect, expect], "the (block0, sky1) cell");
+        // THE NIGHT SCALE (the moonlight factor the sky term scales —
+        // the block term the factor never touches)
+        let night = LightmapUniforms {
+            sky_factor: 0.26666668,
+            ..u
+        };
+        let grid = lightmap_grid(&night);
+        let expect = crate::mesher::light_brightness(15.0) * 0.26666668;
+        assert_eq!(grid[15 * 16], [expect, expect, expect], "the night (block0, sky15) cell");
+        assert_eq!(
+            grid[15],
+            crate::mesher::lightmap_combine(
+                Some(0.0),
+                Some(15.0),
+                0.26666668,
+                [1.0, 1.0, 1.0],
+                [0.0, 0.0, 0.0],
+                None,
+                None,
+                0.0
+            ),
+            "the night (block15, sky0) cell the block term alone wears"
+        );
+    }
+
+    #[test]
+    fn the_lightmap_cell_the_blit_flip_speaks() {
+        // THE V-FLIP (the blit's UV (0,1)-(1,0) walk — the top-left
+        // pixel the sky-15 cell shows, the bottom-right the sky-0 row
+        // wears, the block axis the left→right run keeps)
+        assert_eq!(lightmap_screen_cell(0, 0), (0, 15), "the top-left pixel");
+        assert_eq!(lightmap_screen_cell(63, 0), (15, 15), "the top-right pixel");
+        assert_eq!(lightmap_screen_cell(0, 63), (0, 0), "the bottom-left pixel");
+        assert_eq!(lightmap_screen_cell(63, 63), (15, 0), "the bottom-right pixel");
+        assert_eq!(lightmap_screen_cell(4, 0), (1, 15), "the second cell the 4px stride keeps");
     }
 }
 

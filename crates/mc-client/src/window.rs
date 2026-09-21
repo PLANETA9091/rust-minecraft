@@ -1395,9 +1395,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             // ping chart the client's own RTT ring draws. The
             // F3+1 PROFILER PIE the toggleProfilerChart lane banks
             // (the F3+1 chord the chart's own flag flips); the F3+4
-            // chord the chart-less client keeps silent (no lightmap
-            // viewer — the flag the all-false constant stays, the
-            // row the honest hidden word wears)
+            // LIGHTMAP VIEW the toggleLightmapTexture lane banks (the
+            // chord the corner box draws)
             if f3_down && window.is_key_pressed(Key::Key1, minifb::KeyRepeat::No) {
                 app.on_profiler_chart_key();
             }
@@ -1406,6 +1405,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             }
             if f3_down && window.is_key_pressed(Key::Key3, minifb::KeyRepeat::No) {
                 app.on_network_charts_key();
+            }
+            // THE F3+4 LIGHTMAP VIEW (the handleDebugKeys'
+            // keyDebugLightmapTexture lane — the toggleLightmapTexture
+            // walk the getDebugOverlay() answers): the raise the
+            // overlay forces visible AND zeroes the fps + network
+            // chart flags (the audited mutual-exclusion putfield pair)
+            if f3_down && window.is_key_pressed(Key::Key4, minifb::KeyRepeat::No) {
+                app.on_lightmap_view_key();
             }
             // THE F3+G CHUNK BORDERS (the debug-entry toggle the audited
             // refreshRendererList gate serves — the enabled entry the

@@ -292,7 +292,7 @@ fn night_vision_base(ambient: [f32; 3], tint: Option<[f32; 3]>, factor: f32) -> 
 /// never answered for is `None`, not zero; no layer at all is the legacy
 /// unshaded look.
 #[inline]
-fn lightmap_combine(
+pub(crate) fn lightmap_combine(
     sky: Option<f32>,
     block: Option<f32>,
     sky_factor: f32,
