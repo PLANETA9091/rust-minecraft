@@ -18614,6 +18614,55 @@ impl App {
             "Day #{}",
             day_time / crate::timeline::DAY_PERIOD_TICKS
         ));
+        // DebugEntrySpawnCounts — the row the entry's own walk wears
+        // (`'SC: \x01, \x01'` the makeConcatWithConstants recipe banks —
+        // the spawnable chunk count the first slot keeps, the category
+        // census the `', '` joining wears; the per-category word the
+        // `'\x01: \x01'` recipe speaks — the getDebugAbbreviation the
+        // first slot, the Object2IntMap.getInt the second, the default
+        // 0 the absent categories answer). THE GATES the raw walk
+        // opens: the camera null AND the `instanceof ServerLevel` arm
+        // the SERVER-side row keeps — the client's own mapping the
+        // offline/host world's lane is (the vanilla multiplayer F3 the
+        // ClientLevel silence wears), the `spawnState == null` arm the
+        // first-spawn-cycle silence mirrors (the fresh world the census
+        // the first tick computes). THE CENSUS the createState walk
+        // banks: the Mob instances alone the `instanceof Mob` check
+        // keeps (the items/orbs/projectiles the non-Mob skip never
+        // counts), the persistence arms the client's own sim never
+        // arms (no name-tag/persistence lane exists), the MISC skip
+        // the roster never wears. THE COUNT the
+        // getNaturalSpawnChunkCount walk answers — the
+        // FixedPlayerDistanceChunkTracker(8) size the chessboard chunk
+        // distance ≤ 8 the bipush-8 max keeps (the chunk graph the
+        // player's chunk the level-0 seed speaks).
+        if !self.world_is_network {
+            if let Some(world) = self.offline_world.as_ref() {
+                let (pcx, pcz) = ((b.x.floor() as i32) >> 4, (b.z.floor() as i32) >> 4);
+                let side = world.chunks_per_side as i32;
+                let mut spawnable = 0u32;
+                for cz in 0..side {
+                    for cx in 0..side {
+                        if (cx - pcx).abs().max((cz - pcz).abs()) <= 8 {
+                            spawnable += 1;
+                        }
+                    }
+                }
+                let mut counts = [0u32; crate::mob::MobCategory::ALL.len()];
+                for m in &self.mobs {
+                    counts[m.kind.mob_category() as usize] += 1;
+                }
+                let mut word = format!("SC: {spawnable}");
+                for cat in crate::mob::MobCategory::ALL {
+                    word.push_str(&format!(
+                        ", {}: {}",
+                        cat.debug_abbreviation(),
+                        counts[cat as usize]
+                    ));
+                }
+                lines.push(word);
+            }
+        }
         // DebugEntrySoundMood — the row the vanilla entry's two-slot
         // concat speaks (`\x01\x01` the bootstrap recipe banks):
         // `getChannelDebugString() + String.format(Locale.ROOT,
@@ -27781,11 +27830,22 @@ mod tests {
         // THE DAY ROW (the DebugEntryDayCount walk — the fresh world's
         // dawn clock the zero day speaks)
         assert_eq!(lines[9], "Day #0", "{}", lines[9]);
+        // THE SPAWN COUNTS ROW (the entry between DayCount and
+        // SoundMood the registration order banks — the fresh world's
+        // census the zero counts wears: the 5x5 grid the 25 spawnable
+        // chunks answers (every chunk the chessboard-8 radius keeps),
+        // no mobs the categories the default-0 getInt wears)
+        assert_eq!(
+            lines[10],
+            "SC: 25, MO: 0, C: 0, AM: 0, AX: 0, UWC: 0, WC: 0, WA: 0, MI: 0",
+            "{}",
+            lines[10]
+        );
         // THE ROW (the vanilla concat's mood half verbatim — the
         // leading space the ldc keeps, the percent the fold answers):
         // the exact word the half-machine speaks
-        assert_eq!(lines[10], format!(" (Mood {}%)", mood_percent(moodiness)));
-        assert_eq!(lines[10], " (Mood 50%)");
+        assert_eq!(lines[11], format!(" (Mood {}%)", mood_percent(moodiness)));
+        assert_eq!(lines[11], " (Mood 50%)");
         // the row the LAST line wears (the left column's own tail)
         assert_eq!(lines.last().unwrap(), " (Mood 50%)");
     }
@@ -27890,6 +27950,75 @@ mod tests {
             "the half-step the special wears: {}",
             lines[idx]
         );
+    }
+
+    #[test]
+    fn the_f3_spawn_counts_row_censuses_the_mobs() {
+        // THE CENSUS'S OWN WALK (NaturalSpawner.createState the Mob
+        // instances alone counts — the kind's own category the
+        // EntityTypes clinit pair banks, the joining the values() order
+        // wears): the fresh app the zero census keeps (the exact word
+        // the mood walk's own placement already pins), the pushed mobs
+        // the per-category counts arm
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the spawned body");
+            (b.x, b.y, b.z)
+        };
+        // THREE MONSTERS (the EntityTypes clinit's MONSTER arm — one
+        // zombie the sim's own ctor spawns, one skeleton and one spider
+        // the kind re-arm speaks) + ONE CREATURE (the sheep the
+        // CREATURE arm keeps)
+        let mut skeleton = crate::mob::Zombie::new(101, bx + 1.0, by, bz, 5);
+        skeleton.kind = crate::mob::MobKind::Skeleton;
+        let mut spider = crate::mob::Zombie::new(102, bx - 1.0, by, bz, 6);
+        spider.kind = crate::mob::MobKind::Spider;
+        let mut sheep = crate::mob::Zombie::new(103, bx + 2.0, by, bz, 7);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        app.mobs.push(crate::mob::Zombie::new(100, bx, by, bz, 4));
+        app.mobs.push(skeleton);
+        app.mobs.push(spider);
+        app.mobs.push(sheep);
+
+        let lines = app.debug_lines();
+        let idx = lines
+            .iter()
+            .position(|l| l.starts_with("SC: "))
+            .expect("the host world's own row");
+        // THE WORD (the census the kinds speak: MO 3 — the zombie, the
+        // skeleton, the spider — C 1 — the sheep — every other category
+        // the default-0 keeps; the spawnable count the 25 the whole
+        // 5x5 grid the chessboard-8 radius of the centered body wears)
+        assert_eq!(
+            lines[idx],
+            "SC: 25, MO: 3, C: 1, AM: 0, AX: 0, UWC: 0, WC: 0, WA: 0, MI: 0",
+            "{}",
+            lines[idx]
+        );
+        // THE PLACEMENT (the registration order — the row the Day
+        // row's right ride keeps)
+        assert!(lines[idx - 1].starts_with("Day #"), "{}", lines[idx - 1]);
+
+        // THE NON-MOB SKIP (the createState walk the items/orbs/
+        // projectiles never counts — the client's own drops the
+        // `instanceof Mob` check refuses; the drops lane the census
+        // never reads)
+        let before = lines[idx].clone();
+        app.drops
+            .push(crate::drops::ItemDrop::spawn_entity_loot(
+                901,
+                crate::world::STONE as i32,
+                1,
+                bx,
+                by + 1.0,
+                bz,
+                &mut app.mob_rng,
+            ));
+        let lines = app.debug_lines();
+        let idx = lines.iter().position(|l| l.starts_with("SC: ")).unwrap();
+        assert_eq!(lines[idx], before, "the drop the census never counts");
     }
 
     #[test]

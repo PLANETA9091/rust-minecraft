@@ -1149,6 +1149,73 @@ pub enum MobKind {
     Wolf,
 }
 
+/// THE MOB CATEGORY'S OWN CENSUS SLICE (javap the 26.2 jar the
+/// `MobCategory` enum speaks — the spawn-cap family the F3's
+/// SpawnCounts row wears). The variants the <clinit>'s own putstatic
+/// sequence banks, in the values() order the stream walk keeps:
+/// MONSTER, CREATURE, AMBIENT, AXOLOTLS, UNDERGROUND_WATER_CREATURE,
+/// WATER_CREATURE, WATER_AMBIENT, MISC.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum MobCategory {
+    Monster,
+    Creature,
+    Ambient,
+    Axolotls,
+    UndergroundWaterCreature,
+    WaterCreature,
+    WaterAmbient,
+    Misc,
+}
+
+impl MobCategory {
+    /// The values() order the <clinit>'s own putstatic sequence keeps —
+    /// the census word the join order wears.
+    pub const ALL: [MobCategory; 8] = [
+        MobCategory::Monster,
+        MobCategory::Creature,
+        MobCategory::Ambient,
+        MobCategory::Axolotls,
+        MobCategory::UndergroundWaterCreature,
+        MobCategory::WaterCreature,
+        MobCategory::WaterAmbient,
+        MobCategory::Misc,
+    ];
+
+    /// The `getDebugAbbreviation()` word the F3's SpawnCounts lambda
+    /// speaks — the per-category `'\x01: \x01'` concat's first slot:
+    /// the CP's own strings the fields bank (monster→'MO', creature→
+    /// 'C', ambient→'AM', axolotls→'AX', underground_water_creature→
+    /// 'UWC', water_creature→'WC', water_ambient→'WA', misc→'MI').
+    pub fn debug_abbreviation(self) -> &'static str {
+        match self {
+            MobCategory::Monster => "MO",
+            MobCategory::Creature => "C",
+            MobCategory::Ambient => "AM",
+            MobCategory::Axolotls => "AX",
+            MobCategory::UndergroundWaterCreature => "UWC",
+            MobCategory::WaterCreature => "WC",
+            MobCategory::WaterAmbient => "WA",
+            MobCategory::Misc => "MI",
+        }
+    }
+}
+
+impl MobKind {
+    /// THE ENTITY TYPES' OWN CATEGORY (javap the 26.2 jar the
+    /// `EntityTypes.<clinit>` walk speaks — the `MobCategory` arg the
+    /// `EntityType$Builder.of` call banks per registration: ZOMBIE/
+    /// SKELETON/SPIDER the MONSTER arm keeps, PIG/COW/SHEEP/CHICKEN/
+    /// WOLF the CREATURE arm answers — the Wolf's own CREATURE word
+    /// the 346 round's clinit audit already banked).
+    pub fn mob_category(self) -> MobCategory {
+        match self {
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => MobCategory::Monster,
+            MobKind::Pig | MobKind::Cow | MobKind::Sheep | MobKind::Chicken
+            | MobKind::Wolf => MobCategory::Creature,
+        }
+    }
+}
+
 impl MobKind {
     /// THE REGISTRY NAME'S OWN MAPPING (the entity_type table the
     /// client keeps). The honest default is the zombie — the lane's
@@ -7967,6 +8034,49 @@ pub fn pick_entity(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn the_mob_categories_wear_the_clinit_pairs() {
+        // THE VALUES() ORDER (the <clinit>'s own putstatic sequence the
+        // ALL table keeps)
+        assert_eq!(
+            MobCategory::ALL,
+            [
+                MobCategory::Monster,
+                MobCategory::Creature,
+                MobCategory::Ambient,
+                MobCategory::Axolotls,
+                MobCategory::UndergroundWaterCreature,
+                MobCategory::WaterCreature,
+                MobCategory::WaterAmbient,
+                MobCategory::Misc,
+            ]
+        );
+        // THE ABBREVIATIONS (the getDebugAbbreviation words the CP's
+        // own strings bank)
+        assert_eq!(MobCategory::Monster.debug_abbreviation(), "MO");
+        assert_eq!(MobCategory::Creature.debug_abbreviation(), "C");
+        assert_eq!(MobCategory::Ambient.debug_abbreviation(), "AM");
+        assert_eq!(MobCategory::Axolotls.debug_abbreviation(), "AX");
+        assert_eq!(
+            MobCategory::UndergroundWaterCreature.debug_abbreviation(),
+            "UWC"
+        );
+        assert_eq!(MobCategory::WaterCreature.debug_abbreviation(), "WC");
+        assert_eq!(MobCategory::WaterAmbient.debug_abbreviation(), "WA");
+        assert_eq!(MobCategory::Misc.debug_abbreviation(), "MI");
+        // THE ENTITY TYPES' OWN PAIRS (the EntityTypes.<clinit> walk the
+        // MobCategory arg the Builder.of call banks: the three monsters,
+        // the five farm/wild creatures)
+        assert_eq!(MobKind::Zombie.mob_category(), MobCategory::Monster);
+        assert_eq!(MobKind::Skeleton.mob_category(), MobCategory::Monster);
+        assert_eq!(MobKind::Spider.mob_category(), MobCategory::Monster);
+        assert_eq!(MobKind::Pig.mob_category(), MobCategory::Creature);
+        assert_eq!(MobKind::Cow.mob_category(), MobCategory::Creature);
+        assert_eq!(MobKind::Sheep.mob_category(), MobCategory::Creature);
+        assert_eq!(MobKind::Chicken.mob_category(), MobCategory::Creature);
+        assert_eq!(MobKind::Wolf.mob_category(), MobCategory::Creature);
+    }
 
     /// The tests' night tick — the MONSTERS_BURN track says false, so
     /// the legacy behaviors (the ambient draw cadence, the goal draws)
