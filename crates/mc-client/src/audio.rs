@@ -907,6 +907,73 @@ mod tests {
         }
     }
 
+    /// Real-data check (NOT run on CI): the INTERACTION lane's voice
+    /// events — the combat quartet, the vitals (the hurt pipeline, the
+    /// death broadcast, the fall pair), the eat/burp, the
+    /// levelup/pickup pair, the milk/saddle pair, the boat's two paddle
+    /// lanes, the tool trio, the age-lock's own pair — the exact file
+    /// counts the 26.2 sounds.json banks and every file decodes (the
+    /// fetch the generator's INTERACTION_EVENTS walk speaks; the same
+    /// shape the mob-voice walks wear).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn real_interaction_voice_oggs_decode() {
+        let candidates = [
+            PathBuf::from("assets-cache/jar"),
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("../../assets-cache/jar"),
+        ];
+        let Some(root) = candidates.into_iter().find(|p| p.is_dir()) else {
+            eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
+            return;
+        };
+        const EVENTS: [(&str, usize); 21] = [
+            ("entity.player.attack.crit", 3),
+            ("entity.player.attack.strong", 6),
+            ("entity.player.attack.sweep", 7),
+            ("entity.player.attack.weak", 4),
+            ("entity.player.hurt", 3),
+            ("entity.player.death", 3),
+            ("entity.player.big_fall", 1),
+            ("entity.player.small_fall", 1),
+            ("entity.generic.eat", 3),
+            ("entity.player.burp", 1),
+            ("entity.player.levelup", 1),
+            ("entity.item.pickup", 1),
+            ("entity.cow.milk", 3),
+            ("entity.pig.saddle", 1),
+            ("entity.boat.paddle_land", 6),
+            ("entity.boat.paddle_water", 8),
+            ("item.shovel.flatten", 4),
+            ("item.hoe.till", 4),
+            ("item.crop.plant", 12),
+            ("item.golden_dandelion.use", 1),
+            ("item.golden_dandelion.unuse", 1),
+        ];
+        for (id, want) in EVENTS {
+            let files = discover_event_files(&root, id);
+            assert_eq!(
+                files.len(),
+                want,
+                "{id} must resolve to {want} real files: {files:?}"
+            );
+            for (key, path) in &files {
+                let bytes = std::fs::read(path).expect("read");
+                let (rate, frames) = probe_frames(&bytes)
+                    .unwrap_or_else(|e| panic!("{key}: probe failed: {e}"));
+                let t = decode_audio(&bytes)
+                    .unwrap_or_else(|e| panic!("{key}: decode failed: {e}"));
+                assert_eq!(t.frames, frames, "{key}: probe and decode must agree");
+                // a hit, a paddle beat, a till, or a pickup blip is
+                // short (the longest interaction sound stays under
+                // three seconds — the levelup's chime the
+                // random/levelup file keeps the bound answers)
+                let secs = frames as f64 / rate as f64;
+                assert!(secs > 0.0 && secs < 3.0, "{key}: got {secs:.3}s");
+                println!("  {key} <- {} ({frames} frames, {secs:.3}s)", path.display());
+            }
+        }
+    }
+
     #[test]
     fn sync_plays_and_stops_game_music() {
         // temp runtime root holding a sound file at EVERY official path the

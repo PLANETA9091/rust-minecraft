@@ -682,16 +682,16 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         v.dedup();
         v
     };
-    let (music_files, game_files, ui_sound_files, biome_sound_files, mob_sound_files, player_sound_files) =
+    let (music_files, game_files, ui_sound_files, biome_sound_files, mob_sound_files, player_sound_files, interaction_sound_files) =
         match &index {
             Some(i) => {
                 fetch_sound_events(agent, cache, i, &sounds_json, &biome_events, &workspace_root)
                     .unwrap_or_else(|e| {
                         eprintln!("      warning: game audio fetch failed ({e}); client falls back to silence");
-                        (0, 0, 0, 0, 0, 0)
+                        (0, 0, 0, 0, 0, 0, 0)
                     })
             }
-            None => (0, 0, 0, 0, 0, 0),
+            None => (0, 0, 0, 0, 0, 0, 0),
         };
     let pano_root = workspace_root.join("assets-cache/jar");
     let pano_names: Vec<(String, String)> = (0..6)
@@ -704,7 +704,7 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         .collect();
     uigen::merge_from_disk(&mut ui, &pano_root, &pano_names, true)?;
     println!(
-        "      glyphs: {} ({} textures) | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files | player voices: {} files",
+        "      glyphs: {} ({} textures) | sprites: {} | sound events: {} | biomes: {} | panorama faces: {} | menu music: {} | game music: {} | ui sounds: {} | biome music: {} files / {} events | mob voices: {} files | player voices: {} files | interaction sounds: {} files",
         font.glyphs.len(),
         font.textures.len(),
         ui.sprites.len(),
@@ -717,7 +717,8 @@ fn generate(agent: &ureq::Agent, cache: &util::Cache, version: &str, out: &Path)
         biome_sound_files,
         biome_events.len(),
         mob_sound_files,
-        player_sound_files
+        player_sound_files,
+        interaction_sound_files
     );
     println!(
         "      sky: day period {} ticks, {} moon phases, celestial textures {}x{}",
@@ -898,13 +899,80 @@ const PLAYER_AIR_EVENTS: [&str; 2] = ["entity.player.hurt_drown", "ui.hud.bubble
 /// the same sha1-verified asset-index fetch the swim voice speaks.
 const PLAYER_XP_EVENTS: [&str; 1] = ["entity.experience_orb.pickup"];
 
+/// THE INTERACTION LANE'S OWN EVENTS (the ids the client's own
+/// interaction tables speak — the screens' combat/milk/saddle/boat/tool
+/// call sites and the sound engine's vitals lane — every file the
+/// sha1-verified asset-index fetch copies into the runtime cache, the
+/// same walk the mob voices and the player lanes ride). The client's
+/// own call sites the consumers prove:
+///
+/// - the combat quartet (`Player.attack`'s sweep/strong/weak/crit
+///   broadcast — the swing verdicts the screens' attack lane plays;
+///   entity/player/attack/{strong,sweep,weak,crit}*.ogg the official
+///   directories bank);
+/// - the vitals trio (sound.rs's hurt pipeline the
+///   `entity.player.hurt` damage/hit rows plays, the die() broadcast's
+///   `entity.player.death`, the fall-damage lane's big/small
+///   `entity.player.*_fall` rows);
+/// - the eat lane's table (the use-item hold the `entity.generic.eat`
+///   random/eat rows plays, the food-finish burp's `entity.player.burp`
+///   random/burp row);
+/// - the progression pair (the XP level's `entity.player.levelup`
+///   random/levelup row, the item take's `entity.item.pickup`
+///   random/pop row);
+/// - the mob-interaction pair (the milk bucket's `entity.cow.milk`
+///   entity/cow/milk rows, the saddle's `entity.pig.saddle` — the
+///   mob/horse/leather file the horse's own directory keeps, the
+///   26.2 sounds.json's cross-reference the honest path wears);
+/// - the boat's two paddle lanes (`entity.boat.paddle_land` /
+///   `paddle_water` — the EntityBoat's own paddle clock the water and
+///   the ground surfaces speak);
+/// - the tool trio (the hoe's `item.hoe.till`, the shovel's
+///   `item.shovel.flatten`, the planting's `item.crop.plant` — the
+///   twelve weighted crop rows the twelve sounds.json entries speak);
+/// - the age-lock's own pair (`item.golden_dandelion.use` /
+///   `unuse` — the setAgeLocked toggle the post-lock sound pick
+///   speaks, v1.0 p1.0 the PLAYERS source).
+///
+/// The honest skips the client's own tables keep: `entity.generic.drink`
+/// and `item.honey_bottle.drink` the drink lane's call sites never play
+/// yet (no consumer the client speaks, no files the fetch spends), the
+/// `ambient.cave` the fixture list alone names (the live lane's absence
+/// the honest refusal keeps). Every file rides the same sha1-verified
+/// asset-index fetch the mob voices speak.
+const INTERACTION_EVENTS: [&str; 21] = [
+    "entity.player.attack.crit",
+    "entity.player.attack.strong",
+    "entity.player.attack.sweep",
+    "entity.player.attack.weak",
+    "entity.player.hurt",
+    "entity.player.death",
+    "entity.player.big_fall",
+    "entity.player.small_fall",
+    "entity.generic.eat",
+    "entity.player.burp",
+    "entity.player.levelup",
+    "entity.item.pickup",
+    "entity.cow.milk",
+    "entity.pig.saddle",
+    "entity.boat.paddle_land",
+    "entity.boat.paddle_water",
+    "item.shovel.flatten",
+    "item.hoe.till",
+    "item.crop.plant",
+    "item.golden_dandelion.use",
+    "item.golden_dandelion.unuse",
+];
+
 /// Fetch the real menu music + in-game music + UI sound + biome music +
-/// mob voice + player voice .ogg files through the asset index. sounds.json names are
-/// relative to `assets/minecraft/sounds/` (extension optional — the vanilla
-/// sound engine appends `.ogg`); the asset index keys include the
+/// mob voice + player voice + interaction sound .ogg files through the
+/// asset index. sounds.json names are relative to
+/// `assets/minecraft/sounds/` (extension optional — the vanilla sound
+/// engine appends `.ogg`); the asset index keys include the
 /// `minecraft/` prefix. Every file is sha1-verified against the index
 /// object. Returns (menu music, game music, ui sound, biome music, mob
-/// voice, player voice) files fetched (duplicates across events deduped).
+/// voice, player voice, interaction sound) files fetched (duplicates
+/// across events deduped).
 fn fetch_sound_events(
     agent: &ureq::Agent,
     cache: &util::Cache,
@@ -912,7 +980,7 @@ fn fetch_sound_events(
     sounds: &soundgen::SoundData,
     biome_events: &[String],
     workspace_root: &Path,
-) -> Result<(usize, usize, usize, usize, usize, usize)> {
+) -> Result<(usize, usize, usize, usize, usize, usize, usize)> {
     // 26.2 ships one `music.menu` event with many weighted files (older
     // versions had per-track `music.menu.menu1` children) — match both.
     // The BLOCK family rides along (the interaction arc's own voices: the
@@ -930,6 +998,7 @@ fn fetch_sound_events(
             || PLAYER_FIRE_EVENTS.contains(&id)
             || PLAYER_AIR_EVENTS.contains(&id)
             || PLAYER_XP_EVENTS.contains(&id)
+            || INTERACTION_EVENTS.contains(&id)
             || biome_events.binary_search(&id.to_string()).is_ok()
     };
     let mut menu = 0usize;
@@ -938,6 +1007,7 @@ fn fetch_sound_events(
     let mut biome = 0usize;
     let mut mob = 0usize;
     let mut player = 0usize;
+    let mut interaction = 0usize;
     let mut seen = std::collections::BTreeSet::new();
     for ev in sounds.events.values().filter(|e| wanted(&e.id)) {
         let mut have = 0usize;
@@ -983,18 +1053,30 @@ fn fetch_sound_events(
         } else if PLAYER_SWIM_EVENTS.contains(&ev.id.as_str())
             || PLAYER_SPLASH_EVENTS.contains(&ev.id.as_str())
             || PLAYER_FIRE_EVENTS.contains(&ev.id.as_str())
+            || PLAYER_AIR_EVENTS.contains(&ev.id.as_str())
+            || PLAYER_XP_EVENTS.contains(&ev.id.as_str())
         {
             // the player's own voices (the swim + the two splash
-            // variants + the fire lane's three) — the disjoint file
-            // sets ride the biome lane's own += shape
+            // variants + the fire lane's three + the air lane's two
+            // + the xp pickup — the count arm the wanted arms' own
+            // shape mirrors, the air/xp ids the ui overwrite the
+            // quirk wore the honest count answers) — the disjoint
+            // file sets ride the biome lane's own += shape
             player += have;
+        } else if INTERACTION_EVENTS.contains(&ev.id.as_str()) {
+            // the interaction lane's own voices (the combat quartet,
+            // the vitals, the eat/burp, the levelup/pickup, the
+            // milk/saddle, the boat paddles, the tools, the
+            // age-lock's pair) — the disjoint file sets the same
+            // += shape
+            interaction += have;
         } else if biome_events.binary_search(&ev.id).is_ok() {
             biome += have;
         } else {
             ui = have;
         }
     }
-    Ok((menu, game, ui, biome, mob, player))
+    Ok((menu, game, ui, biome, mob, player, interaction))
 }
 
 /// The offline UI lane: re-emit `crates/mc-registry/src/generated/gui.rs`
