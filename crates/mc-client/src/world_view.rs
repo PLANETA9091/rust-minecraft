@@ -147,6 +147,15 @@ pub fn materialize(
         // no weather word ever arrived (every procedural/golden scene)
         rain_level: model.rain_level(),
         thunder_level: model.thunder_level(),
+        // THE HOST'S OWN DANGER DIAL the networked world never reads —
+        // the F3's LocalDifficulty row the `instanceof ServerLevel`
+        // gate keeps off the client level (the vanilla multiplayer F3
+        // the same silence wears); the field sits at the default
+        difficulty: crate::difficulty::Difficulty::Normal,
+        // THE CHUNKS' OWN DWELL CLOCK the networked world never carries
+        // — `None` = no opinion: the server's own server-side truth the
+        // wire never sends, the client's words never predict it
+        inhabited: None,
     };
     let side_i = side as i32;
     for gz in 0..side_i {

@@ -1028,6 +1028,8 @@ mod tests {
         World {
             chunks_per_side: 1,
             seed: 0,
+            difficulty: crate::difficulty::Difficulty::Normal,
+            inhabited: None,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             light: None,
             day_tick: None,

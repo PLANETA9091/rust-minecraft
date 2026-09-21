@@ -15,6 +15,7 @@ mod camera;
 mod colors;
 mod colormap;
 mod dig;
+mod difficulty;
 mod drops;
 mod eat;
 mod effects;

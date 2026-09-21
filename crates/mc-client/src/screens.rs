@@ -9404,6 +9404,23 @@ impl App {
                 self.mobs
                     .retain(|m| m.death_time < crate::mob::DEATH_DURATION_TICKS);
             }
+            // THE DWELL CLOCK'S OWN TICK (the 26.2 server walk the
+            // accumulator mirrors — the `tickSpawningChunk` lane the
+            // server's own per-tick walk keeps, the 128-block
+            // center-radius the chunk's `inhabitedTime` banks): the
+            // OFFLINE world the host's own server-side lane is (the
+            // vanilla multiplayer walk the client level never
+            // predicts — the networked world the no-opinion lane
+            // keeps), the body the player the law walks (the
+            // spectator the vanilla's own gate refuses; the camera
+            // flight the walk never counts — no player, no bank).
+            if !self.world_is_network {
+                if let (Some(b), Some(w)) =
+                    (self.body.as_ref(), self.offline_world.as_mut())
+                {
+                    w.tick_inhabited(b.x, b.z);
+                }
+            }
             // THE CAVE MOOD TICK (the vanilla ambient-sound handler's own
             // beat — the client level's per-tick walk, both worlds the
             // client's level keeps): one random dark-spot sample around
@@ -18529,6 +18546,58 @@ impl App {
                 sky,
                 block
             ));
+        }
+        // DebugEntryLocalDifficulty — the row the entry's own walk
+        // wears (`'Local Difficulty: %.2f // %.2f'` the two-arg
+        // String.format the CP's ldc banks — the effective difficulty
+        // the first float, the special multiplier the second). THE
+        // GATES the raw walk opens: the camera null the line's own
+        // return keeps, the camera CHUNK null the same return answers,
+        // the `instanceof ServerLevel` arm the SERVER-side walk keeps —
+        // the client's own mapping the offline/host world's lane is
+        // (the vanilla multiplayer F3 the ClientLevel silence wears,
+        // the networked world's rows never speak), the
+        // `isInsideBuildHeight(feetY)` the grid's own 0..CHUNK_Y law
+        // mirrors. THE INPUTS the jar's walk names: the
+        // `getOverworldClockTime()` total the day_time_base + frame
+        // clock rides (the same world clock the Day row wears), the
+        // `getInhabitedTime()` the chunk's own dwell bank keeps (the
+        // host world's accumulator the tick_inhabited walk drives),
+        // the `getMoonBrightness(pos)` the
+        // MOON_BRIGHTNESS_PER_PHASE[phase] table the sky's own
+        // moon_phase_at walk answers, the `getDifficulty()` the host's
+        // own dial keeps. The FOLD the DifficultyInstance walk speaks —
+        // the `calculateDifficulty` law the difficulty module's own
+        // fn banks, the special multiplier the getSpecialMultiplier's
+        // fcmp arms keep, the %.2f words the HALF_UP fold wears.
+        if !self.world_is_network {
+            if let (Some(world), Some(inhabited)) =
+                (world, world.and_then(|w| w.inhabited.as_ref()))
+            {
+                let feet_y = b.y.floor() as i32;
+                if feet_y >= 0 && feet_y < crate::world::CHUNK_Y as i32 {
+                    let (bcx, bcz) = ((b.x.floor() as i32) >> 4, (b.z.floor() as i32) >> 4);
+                    let side = world.chunks_per_side as i32;
+                    if bcx >= 0 && bcz >= 0 && bcx < side && bcz < side {
+                        let banked = inhabited[(bcx + bcz * side) as usize];
+                        let day_time = (self.day_time_base + self.frame) as i64;
+                        let moon_brightness = crate::difficulty::MOON_BRIGHTNESS_PER_PHASE
+                            [crate::sky::moon_phase_at(day_time) as usize];
+                        let effective = crate::difficulty::effective_difficulty(
+                            world.difficulty,
+                            day_time,
+                            banked,
+                            moon_brightness,
+                        );
+                        let special = crate::difficulty::special_multiplier(effective);
+                        lines.push(format!(
+                            "Local Difficulty: {} // {}",
+                            crate::difficulty::java_two_decimals(effective),
+                            crate::difficulty::java_two_decimals(special)
+                        ));
+                    }
+                }
+            }
         }
         // DebugEntryDayCount — `Day #<n>`: the row the entry's lambda
         // speaks (`'Day #\x01'` the makeConcatWithConstants recipe
@@ -27692,23 +27761,31 @@ mod tests {
         );
         let lines = app.debug_lines();
         // THE PLACEMENT (the vanilla entry's own neighborhood — the
-        // light row the ride follows, the DayCount entry the 26.2
-        // registration order wears between Light and SoundMood): the
-        // Client Light the light lane speaks, the Day row the next
-        // index wears, the mood row the one after answers
+        // light row the ride follows, the LocalDifficulty row the
+        // 26.2 registration order wears between Light and DayCount, the
+        // Day row the next index keeps, the mood row the one after
+        // answers)
         assert!(
             lines[7].starts_with("Client Light: "),
             "{}",
             lines[7]
         );
+        // THE LOCAL DIFFICULTY ROW (the entry between Light and Day
+        // the registration order banks — the fresh world's dawn the
+        // 1.50 base effective wears: the day ramp the negative clamp
+        // zeroes, the moon term the zeroed ramp's own ceiling keeps,
+        // the id-2 the 0.75 base multiplies; the special the below-2
+        // fcmpg arm keeps at 0.00 — the fresh world's inhabited bank
+        // the zero the same word wears)
+        assert_eq!(lines[8], "Local Difficulty: 1.50 // 0.00", "{}", lines[8]);
         // THE DAY ROW (the DebugEntryDayCount walk — the fresh world's
         // dawn clock the zero day speaks)
-        assert_eq!(lines[8], "Day #0", "{}", lines[8]);
+        assert_eq!(lines[9], "Day #0", "{}", lines[9]);
         // THE ROW (the vanilla concat's mood half verbatim — the
         // leading space the ldc keeps, the percent the fold answers):
         // the exact word the half-machine speaks
-        assert_eq!(lines[9], format!(" (Mood {}%)", mood_percent(moodiness)));
-        assert_eq!(lines[9], " (Mood 50%)");
+        assert_eq!(lines[10], format!(" (Mood {}%)", mood_percent(moodiness)));
+        assert_eq!(lines[10], " (Mood 50%)");
         // the row the LAST line wears (the left column's own tail)
         assert_eq!(lines.last().unwrap(), " (Mood 50%)");
     }
@@ -27726,16 +27803,93 @@ mod tests {
         app.day_time_base = 3 * crate::timeline::DAY_PERIOD_TICKS as u64 + 500;
         app.frame = 23_000;
         // the total (72_000 + 500 + 23_000) the 95_500 wears — the
-        // floor division the 3 days + 23_500 ticks the row speaks
-        assert_eq!(app.debug_lines()[8], "Day #3");
+        // floor division the 3 days + 23_500 ticks the row speaks (the
+        // index the LocalDifficulty row's own insertion the +1 shift
+        // wears — the row between Light and Day the vanilla order
+        // banks)
+        assert_eq!(app.debug_lines()[9], "Day #3");
         // the EXACT period boundary: the total the 4 full days the
         // count 4 wears (the next dawn the day rollover speaks)
         app.frame = 24_000;
-        assert_eq!(app.debug_lines()[8], "Day #4");
+        assert_eq!(app.debug_lines()[9], "Day #4");
         // the dawn's own zero: the fresh clock the day 0 keeps
         app.day_time_base = 0;
         app.frame = 0;
-        assert_eq!(app.debug_lines()[8], "Day #0");
+        assert_eq!(app.debug_lines()[9], "Day #0");
+    }
+
+    #[test]
+    fn the_f3_local_difficulty_row_folds_the_dwell_bank() {
+        // THE SERVER-SIDE GATE (the entry's `instanceof ServerLevel`
+        // walk — the networked world the vanilla multiplayer F3 keeps
+        // silent, the row the offline/host world alone wears): the
+        // networked world's rows never speak even with a body present
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.update();
+        // THE DRIVE (the host world's own accumulator — the
+        // tick_inhabited walk the world-tick lane rides): the first
+        // update the body's own chunk the +1 banks (the fresh world
+        // the zero bank wore before)
+        let banked = app
+            .offline_world
+            .as_ref()
+            .and_then(|w| w.inhabited.as_ref())
+            .expect("the host world's own lane");
+        assert!(
+            banked.iter().any(|t| *t >= 1),
+            "the world tick the dwell bank drives: {banked:?}"
+        );
+
+        // THE ROW (the entry's own walk — the clock the dawn keeps,
+        // the day ramp the negative clamp zeroes, the moon term the
+        // zeroed ramp's ceiling keeps, the inhabited bank the ramp's
+        // own 2.08e-7-per-tick wear (the 1/3600000 × 0.75 the NORMAL
+        // arm keeps): the id-2 the 1.5000004+ effective speaks — the
+        // %.2f HALF_UP the `1.50` word keeps; the special the below-2
+        // fcmpg arm the 0.00 keeps)
+        let lines = app.debug_lines();
+        let row = lines
+            .iter()
+            .find(|l| l.starts_with("Local Difficulty: "))
+            .expect("the host world's own row");
+        assert_eq!(row, "Local Difficulty: 1.50 // 0.00", "{}", row);
+
+        // THE PLACEMENT (the vanilla registration order — the row
+        // between the Client Light and the Day rows the 26.2 census
+        // banks)
+        let idx = lines.iter().position(|l| l.starts_with("Local Difficulty: ")).unwrap();
+        assert!(lines[idx - 1].starts_with("Client Light: "), "{}", lines[idx - 1]);
+        assert!(lines[idx + 1].starts_with("Day #"), "{}", lines[idx + 1]);
+
+        // THE DAWN'S OWN TAIL (the 72000+1440000 total the full day
+        // ramp wears — the base 0.75+0.25 = 1.0 the id-2 multiplies;
+        // the total the moon period's phase-7 span rides (168000 the
+        // 24000×7 answer) — the 0.75-brightness moon the
+        // clamp(0.1875, 0, 0.25) term speaks, the id-2 the 2.375+
+        // effective wears (the banked tick the tiny ramp adds): the
+        // %.2f HALF_UP the `2.38` word keeps; the special the
+        // (eff-2)/2 the `0.19` half-step answers)
+        app.day_time_base = 72000 + 1_440_000;
+        app.frame = 0;
+        let lines = app.debug_lines();
+        let idx = lines.iter().position(|l| l.starts_with("Local Difficulty: ")).unwrap();
+        // the banked tick the same walk keeps — the inhabited term the
+        // ramp's own span rides (the moon-0.75 span the 2.38 word
+        // wears — the word the exact f32 fold the half-up round banks)
+        assert!(
+            lines[idx].starts_with("Local Difficulty: 2.38"),
+            "the full-ramp word the row wears: {}",
+            lines[idx]
+        );
+        // the special multiplier the half-step speaks (the (eff-2)/2
+        // the 0.19 word keeps — the %.2f the fold answers)
+        assert!(
+            lines[idx].ends_with("// 0.19"),
+            "the half-step the special wears: {}",
+            lines[idx]
+        );
     }
 
     #[test]
@@ -36679,6 +36833,8 @@ mod tests {
                 world: crate::world::World {
                     chunks_per_side: 2,
                     seed: 0,
+                    difficulty: crate::difficulty::Difficulty::Normal,
+                    inhabited: None,
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -37115,6 +37271,8 @@ mod tests {
         app.net_world = Some(crate::world::World {
             chunks_per_side: 2,
             seed: 0,
+            difficulty: crate::difficulty::Difficulty::Normal,
+            inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -37177,6 +37335,8 @@ mod tests {
         app.net_world = Some(crate::world::World {
             chunks_per_side: 2,
             seed: 0,
+            difficulty: crate::difficulty::Difficulty::Normal,
+            inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -37241,6 +37401,8 @@ mod tests {
                 world: crate::world::World {
                     chunks_per_side: 2,
                     seed: 0,
+                    difficulty: crate::difficulty::Difficulty::Normal,
+                    inhabited: None,
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -37282,6 +37444,8 @@ mod tests {
         crate::world::World {
             chunks_per_side: side,
             seed,
+            difficulty: crate::difficulty::Difficulty::Normal,
+            inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 side * side
@@ -45087,6 +45251,8 @@ cow_sound_variant: None,
         app.net_world = Some(crate::world::World {
             chunks_per_side: 2,
             seed: 0,
+            difficulty: crate::difficulty::Difficulty::Normal,
+            inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4

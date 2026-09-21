@@ -200,6 +200,24 @@ fn sample_color_rgb(kf: &[(i32, [u8; 4])], t: i64, period: i32) -> [f32; 3] {
     [c[0], c[1], c[2]]
 }
 
+/// The moon's own phase at world tick `day_time` — the constant-held
+/// keyframe walk the full [`sample`] wears (the last phase keyframe at
+/// or before the moon-period tick answers, the 0 the dawn keeps). The
+/// F3's LocalDifficulty row the same phase reads (the
+/// `ServerLevel.getMoonBrightness` walk the
+/// `MOON_BRIGHTNESS_PER_PHASE[phase.index()]` faload speaks — the
+/// table the `difficulty` module's own const banks).
+pub fn moon_phase_at(day_time: i64) -> u8 {
+    let mt = day_time.rem_euclid(S::MOON_PERIOD_TICKS as i64);
+    let mut moon_phase = 0u8;
+    for (ticks, idx) in S::MOON_PHASE_KF.iter() {
+        if mt >= *ticks as i64 {
+            moon_phase = *idx;
+        }
+    }
+    moon_phase
+}
+
 /// Evaluate the whole official day-night cycle at world tick `day_time`.
 pub fn sample(day_time: i64) -> SkyState {
     let sun_deg = sample_f32(&S::SUN_ANGLE_KF, Some(S::SUN_ANGLE_BEZIER), day_time, S::DAY_PERIOD_TICKS);
@@ -227,13 +245,7 @@ pub fn sample(day_time: i64) -> SkyState {
         dim_fog[2] * fog_track[2],
     ];
     // Moon phase: constant-held keyframes over the 192000-tick moon period.
-    let mt = day_time.rem_euclid(S::MOON_PERIOD_TICKS as i64);
-    let mut moon_phase = 0u8;
-    for (ticks, idx) in S::MOON_PHASE_KF.iter() {
-        if mt >= *ticks as i64 {
-            moon_phase = *idx;
-        }
-    }
+    let moon_phase = moon_phase_at(day_time);
     // Cloud color: the dimension base multiplied by the official
     // visual/cloud_color track (modifier "multiply" == ARGB.multiply).
     let cloud_track = sample_color_rgba(&S::CLOUD_COLOR_KF, day_time, S::DAY_PERIOD_TICKS);

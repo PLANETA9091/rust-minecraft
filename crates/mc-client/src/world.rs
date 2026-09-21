@@ -354,6 +354,30 @@ pub struct World {
     /// the dry world the goldens render, the sun/moon at full alpha.
     pub rain_level: f32,
     pub thunder_level: f32,
+    /// THE HOST'S OWN DANGER DIAL (the `ServerLevel.getDifficulty()`
+    /// walk the F3's LocalDifficulty entry reads — the world's own
+    /// `Difficulty` the integrated-server default keeps: NORMAL, the
+    /// vanilla new-world screen's own default the host world banks).
+    /// The procedural world wears the default; the networked world's
+    /// synced-difficulty lane the F3's own `instanceof ServerLevel`
+    /// gate never reads (the client level the vanilla multiplayer F3
+    /// keeps silent — the row the offline/host world alone wears).
+    pub difficulty: crate::difficulty::Difficulty,
+    /// THE CHUNKS' OWN DWELL CLOCK (the `ChunkAccess.inhabitedTime`
+    /// field the `incrementInhabitedTime` walk banks — per chunk, the
+    /// ticks any player's been near). The 26.2 law the server walk
+    /// keeps (`ServerChunkCache.tickSpawningChunk` → `collectSpawningChunks`
+    /// → `anyPlayerCloseEnoughForSpawningInternal`):
+    /// every tick, every loaded chunk whose 2D center-distance-squared
+    /// to a non-spectator player is STRICTLY below 16384.0 (the 128-block
+    /// radius the ldc2_w banks — `euclideanDistanceSquared` the
+    /// (cx*16+8, cz*16+8) center walks) banks +1. `Some` for the
+    /// locally-generated world — the client IS the host, the
+    /// accumulator its own server-side lane (zeros at birth);
+    /// `None` for the networked world — the server's own truth the
+    /// wire never sends, the client's words never predict it (the
+    /// no-opinion convention every lane field keeps).
+    pub inhabited: Option<Vec<u64>>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -525,6 +549,8 @@ impl World {
             night_vision_factor: 0.0, // the procedural scene: no effect store, the golden floor
             rain_level: 0.0,  // the procedural scene: the dry world the goldens keep
             thunder_level: 0.0, // the procedural scene: no storm the clouds speak
+            difficulty: crate::difficulty::Difficulty::Normal, // the host's own new-world default
+            inhabited: Some(vec![0u64; chunks_per_side * chunks_per_side]), // the host world's own dwell clock
         };
         w.generate();
         w
@@ -555,6 +581,37 @@ impl World {
             let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
             let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
             self.chunks[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z] = id;
+        }
+    }
+
+    /// THE DWELL CLOCK'S OWN TICK (the 26.2 server walk the accumulator
+    /// mirrors — `ServerChunkCache.tickSpawningChunk` the
+    /// `incrementInhabitedTime(gameTimeDelta)` call banks, the
+    /// eligibility the `collectSpawningChunks` →
+    /// `anyPlayerCloseEnoughForSpawningInternal` pair speaks): one
+    /// game tick, every loaded chunk whose 2D chunk-center
+    /// distance-squared to the player is STRICTLY below 16384.0 (the
+    /// 128-block radius — `euclideanDistanceSquared` the
+    /// `(cx*16+8, cz*16+8)` center the `sectionToBlockCoord(pos, 8)`
+    /// walk keeps, the `dcmpg; ifge -> false` the strict `<` wears,
+    /// the spectator the vanilla's own gate refuses — the client's
+    /// body never spectates) banks +1. `None` = the no-opinion lane:
+    /// the networked world the walk never touches.
+    pub fn tick_inhabited(&mut self, px: f64, pz: f64) {
+        let Some(inhabited) = &mut self.inhabited else {
+            return;
+        };
+        let side = self.chunks_per_side as i32;
+        for cz in 0..side {
+            for cx in 0..side {
+                let center_x = (cx * CHUNK_X as i32 + 8) as f64;
+                let center_z = (cz * CHUNK_Z as i32 + 8) as f64;
+                let dx = center_x - px;
+                let dz = center_z - pz;
+                if dx * dx + dz * dz < 16384.0 {
+                    inhabited[(cx + cz * side) as usize] += 1;
+                }
+            }
         }
     }
 
@@ -1078,6 +1135,46 @@ mod tests {
             None,
             "no layer -> the baked look, bit for bit"
         );
+    }
+
+    #[test]
+    fn the_dwell_clock_banks_the_128_center_radius() {
+        // THE 26.2 SERVER WALK'S OWN LAW (anyPlayerCloseEnoughForSpawning
+        // → euclideanDistanceSquared < 16384.0 — the (cx*16+8) center
+        // the sectionToBlockCoord(pos, 8) walk keeps, the dcmpg the
+        // strict `<` wears): a 16x16 grid spreads the chunks past the
+        // radius, the body ON chunk (8,0)'s own center (136, 8) the
+        // banks the proximity speaks
+        let mut w = World::new(16, 42);
+        w.tick_inhabited(136.0, 8.0);
+        let banked = w.inhabited.as_ref().expect("the host world's own lane");
+        // the center chunk: distance 0, the +1 the tick banks
+        assert_eq!(banked[8], 1, "the body's own chunk the +1 banks");
+        // chunk (0,0)'s center (8, 8) sits EXACTLY 128 away — 16384.0
+        // the dcmpg arm refuses (the strict < the bytecode keeps, the
+        // boundary the exact f64 the no-dust walk answers)
+        assert_eq!(banked[0], 0, "the exact-128 chunk the strict law keeps");
+        // chunk (7,0)'s center (120, 8): 16 away — inside the radius
+        assert_eq!(banked[7], 1);
+        // chunk (8,1)'s center (136, 24): 16 away — inside
+        assert_eq!(banked[8 + 16], 1);
+        // chunk (0,1)'s center (8, 24): sqrt(128^2 + 16^2) — beyond
+        assert_eq!(banked[16], 0);
+        // the far corner (15,15)'s center (248, 248): beyond
+        assert_eq!(banked[15 + 15 * 16], 0);
+        // the SECOND tick banks again (the cumulative walk the
+        // incrementInhabitedTime banks)
+        w.tick_inhabited(136.0, 8.0);
+        let banked = w.inhabited.as_ref().unwrap();
+        assert_eq!(banked[8], 2);
+        assert_eq!(banked[0], 0);
+
+        // THE NONE LANE (the networked world's no-opinion — the walk
+        // the honest no-op keeps)
+        let mut net = World::new(2, 42);
+        net.inhabited = None;
+        net.tick_inhabited(8.0, 8.0);
+        assert!(net.inhabited.is_none());
     }
 
     /// A controlled flat world: one chunk, a stone slab at y=8, the
