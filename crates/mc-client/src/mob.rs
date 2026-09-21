@@ -1006,6 +1006,40 @@ pub enum MobInteract {
         /// the post-toggle `isAgeLocked()` — the sound pick's own word
         locked: bool,
     },
+    /// THE WOLF'S OWN TAME ARM (javap `Wolf.mobInteract` 328-369 —
+    /// the `!level().isClientSide && stack.is(Items.BONE) &&
+    /// !isAngry()` gate the untamed branch keeps, `stack.consume(1,
+    /// player)` the bone the press spends, `tryToTame(player)` the
+    /// walk rides, the SUCCESS_SERVER return — the SwingSource.SERVER
+    /// swing the verdict carries). Rides `success` = the tryToTame
+    /// roll's own word: `random.nextInt(3) == 0` the success arm
+    /// answers — `tame(player)` (setTame(true, true) + setOwner) +
+    /// `navigation.stop()` + `setTarget(null)` +
+    /// `setOrderedToSit(true)` + the HEART broadcast (byte 7) the
+    /// walk's own tail speaks, the failure arm the SMOKE broadcast
+    /// (byte 6) answers — `spawnTamingParticles(success)` the
+    /// handleEntityEvent walk keeps (SEVEN particles at
+    /// getRandomX(1.0)/getRandomY()+0.5/getRandomZ(1.0), the
+    /// nextGaussian * 0.02 velocities).
+    Tame {
+        /// the `nextInt(3) == 0` roll's own word
+        success: bool,
+    },
+    /// THE OWNER'S OWN SIT-TOGGLE (javap `Wolf.mobInteract` 259-324
+    /// — the isTame branch's own tail: the `super.mobInteract`
+    /// verdict the `!consumesAction()` gate reads, the
+    /// `isOwnedBy(player)` the owner word arms, then the toggle the
+    /// raw bytecode's own branchless fold speaks: `setOrderedToSit
+    /// (!isOrderedToSit())` + `jumping = false` + `navigation.stop()`
+    /// + `setTarget(null)`, the `SUCCESS.withoutItem()` return —
+    /// the CLIENT swing the SUCCESS constant carries). The offline
+    /// walk's single-player law the isOwnedBy gate folds (the tamed
+    /// body the local player alone owns); the food arm the super's
+    /// own consuming walk the match order keeps BEFORE the toggle
+    /// (the hungry-heal + the love the vanilla chain feeds first).
+    /// The `jumping = false` the client's no-jump-field law
+    /// honest-skips (the field the body's jump lane never carries).
+    SitToggle,
 }
 
 impl MobInteract {
@@ -1684,6 +1718,26 @@ pub const WOLF_EYE_HEIGHT: f64 = 0.68;
 /// promoted), MAX_HEALTH 8.0, ATTACK_DAMAGE 4.0.
 pub const WOLF_MOVEMENT_SPEED: f64 = 0.300_000_011_920_928_96;
 pub const WOLF_MAX_HEALTH: f32 = 8.0;
+/// THE TAMED WOLF'S OWN CEILING (javap `Wolf.applyTamingSideEffects`
+/// the 26.2 bytecode keeps: the isTame arm `getAttribute(MAX_HEALTH)
+/// .setBaseValue(40.0)` speaks AND `setHealth(40.0)` rides — the
+/// attribute rewrite + the FULL heal the tame() walk's own tail arms;
+/// the untamed arm the base 8.0 the createAttributes chain keeps, the
+/// re-write the offline world's no-untame law never rides)
+pub const WOLF_TAMED_MAX_HEALTH: f32 = 40.0;
+/// THE TAIL'S OWN WORDS (javap `Wolf.getTailAngle` the 26.2 bytecode
+/// keeps: the isAngry arm returns 1.539380431175232, the isTame arm
+/// the health fold `((0.55 - (max - health) / max * 0.4) * PI)` the
+/// fcmpg chain speaks, the WILD body the base 0.6283185482025146
+/// word wears — the createBodyLayer tail's own PartPose base)
+pub const WOLF_ANGRY_TAIL_ANGLE: f32 = 1.539_380_4;
+pub const WOLF_TAME_TAIL_BASE: f32 = 0.55;
+pub const WOLF_TAME_TAIL_SLOPE: f32 = 0.4;
+pub const WOLF_WILD_TAIL_ANGLE: f32 = 0.628_318_55;
+/// THE TAME ROLL'S OWN BOUND (javap `Wolf.tryToTame` — the
+/// `random.nextInt(3) == 0` the walk opens, the [0, 3) draw the
+/// success arm's own gate keeps: ONE chance in three the bone takes)
+pub const WOLF_TAME_ROLL: u64 = 3;
 /// `Wolf.createAttributes`' own ATTACK_DAMAGE 4.0 (the same chain the
 /// doc keeps — the bite the doHurtTarget walk deals)
 pub const WOLF_ATTACK_DAMAGE: f64 = 4.0;
@@ -3146,6 +3200,22 @@ pub struct Zombie {
     /// monster scan's law wears)
     pub anger_target: bool,
     pub anger_unseen_ticks: i32,
+    /// THE TAMABLE'S OWN WORDS (javap `TamableAnimal` the 26.2 jar
+    /// keeps — the `tamed` flag the DATA_FLAGS byte's own tame bit
+    /// wears, the `orderedToSit` the plain field the
+    /// setOrderedToSit walk speaks, the `inSittingPose` the synched
+    /// bit the SitWhenOrderedToGoal's start/stop pair arms: the
+    /// goal's running word the pose IS — `start() -> setInSittingPose
+    /// (true)`, `stop() -> setInSittingPose(false)`, the canUse the
+    /// `!isInSittingPose() && isOrderedToSit()` pair reads). THE
+    /// OWNER'S OWN REFERENCE the offline walk's single-player law
+    /// folds — the tamed body the LOCAL player alone tames (the
+    /// EntityReference the OPTIONAL_LIVING_ENTITY_REFERENCE syncer
+    /// carries, the single tamer the isOwnedBy walk answers); the
+    /// wire's own mobs the fields never carry.
+    pub tamed: bool,
+    pub ordered_to_sit: bool,
+    pub in_sitting_pose: bool,
     /// THE LAST DAMAGE SOURCE'S OWN WINDOW (the shouldPanic gate the
     /// `getLastDamageSource` 40-tick law keeps — the hurt stamp arms,
     /// the tick's own drain closes)
@@ -3342,6 +3412,9 @@ impl Zombie {
             anger_ticks: 0,
             anger_target: false,
             anger_unseen_ticks: 0,
+            tamed: false,
+            ordered_to_sit: false,
+            in_sitting_pose: false,
             panic_memory_ticks: 0,
             look_ticks: 0,
             age_ticks: 0,
@@ -3494,6 +3567,14 @@ impl Zombie {
         if self.death_time > 0 || self.health <= 0.0 {
             return false;
         }
+        // THE WOLF'S OWN STAND (javap `Wolf.hurtServer` 13 — the
+        // `setOrderedToSit(0)` the invulnerable gate's own tail keeps,
+        // BEFORE the super the walk rides: the dose the sit order
+        // cancels, the pose the goal's stop the NEXT tick's fold
+        // drops)
+        if self.kind == MobKind::Wolf && self.ordered_to_sit {
+            self.ordered_to_sit = false;
+        }
         let amount = amount as f32;
         // the ARMOR LAW (CombatRules.getDamageAfterAbsorb, the bare
         // weapon branch — no piercing item the fist speaks)
@@ -3538,8 +3619,13 @@ impl Zombie {
             // pair keeps, the [400, 780] tick window the between law
             // samples, the attacker the setPersistentAngerTarget
             // reference names; the prio-4 lane the >0 word reads, the
-            // tick's own drain closes)
-            if self.kind == MobKind::Wolf {
+            // tick's own drain closes. THE TAMED BODY the offline
+            // single-player law never arms — the only player the
+            // owner IS, the `considersEntityAsAlly` the
+            // TamableAnimal walk keeps, the owner's own dose the
+            // anger never rolls: the shouldAngerAt the ally gate
+            // refuses)
+            if self.kind == MobKind::Wolf && !self.tamed {
                 self.anger_ticks = self.rng.next_int_inclusive(
                     WOLF_ANGER_SECONDS_MIN * 20,
                     WOLF_ANGER_SECONDS_MAX * 20,
@@ -3740,6 +3826,27 @@ impl Zombie {
         // reads, the forgiveness the zero crossing keeps)
         if self.anger_ticks > 0 {
             self.anger_ticks -= 1;
+        }
+        // THE SIT GOAL'S OWN FOLD (javap `SitWhenOrderedToGoal` — the
+        // canUse `!isInSittingPose() && isOrderedToSit()` pair + the
+        // canContinueToUse `isOrderedToSit()` word + the
+        // start/stop setInSittingPose pair the goal's own walk keeps:
+        // the ORDERED body the goal runs (the pose the start arms),
+        // the stood-down body the goal stops (the pose the stop
+        // drops) — the running word the pose IS, the one-word fold
+        // the goal's own shape answers. THE JUMP+MOVE FLAGS the sit
+        // goal's own EnumSet holds — the lower-prio movement lanes
+        // (the stroll, the leap, the melee chase) the GoalSelector's
+        // conflict law stills while the goal runs; the LOOK lanes
+        // the pair never blocks — the look goals keep.
+        // THE STROLL'S OWN STOP the conflict law's tail keeps: the
+        // running goal the navigation stop the target's null write
+        // answers — the mid-stroll sit the next tick's walk drops).
+        if self.ordered_to_sit {
+            self.in_sitting_pose = true;
+            self.stroll_target = None;
+        } else {
+            self.in_sitting_pose = false;
         }
         // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
         // death gate — the corpse keeps its clock but the dying refuse
@@ -4202,6 +4309,12 @@ impl Zombie {
             if (self.kind == MobKind::Spider || self.kind == MobKind::Wolf)
                 && !leap_holds
                 && self.on_ground
+                // THE SIT GOAL'S OWN FLAGS (the JUMP+MOVE EnumSet the
+                // sit goal holds — the leap the GoalSelector's
+                // conflict law stills while the goal runs; the spider
+                // the sit word never wears — the field the false
+                // default keeps)
+                && !self.ordered_to_sit
             {
                 // (the WOLF'S own prio-4 `LeapAtTargetGoal(this, 0.4F)`
                 // the registerGoals dump keeps — the SAME yd the
@@ -4382,7 +4495,7 @@ impl Zombie {
                 // JUMP+MOVE pair never conflicts)
                 self.aggressive = false;
                 self.look_at(p.x, p.eye_y, p.z);
-            } else {
+            } else if !self.ordered_to_sit {
                 // ZOMBIEATTACKGOAL (prio 3): the canUse re-check rides the
                 // 20-tick gate; the goal's own tick runs every tick while
                 // the target lives in range.
@@ -4488,6 +4601,15 @@ impl Zombie {
                 // the goal's own start() zeroes the raise clock when the
                 // target changes — the fresh scan re-arms it (the stop()
                 // clears the aggressive flag on the way out)
+            } else {
+                // THE SIT GOAL'S OWN STOP LAW (the melee the
+                // JUMP+MOVE conflict stills — the same shape the
+                // leap's stop arm wears: the arms lower, the approach
+                // silent, the head the LOOK lane's own word keeps —
+                // the look-at-target the mob's own look control
+                // rides, the LOOK flag the sit pair never blocks)
+                self.aggressive = false;
+                self.look_at(p.x, p.eye_y, p.z);
             }
         } else {
             // the goal's stop(): the arms lower, the raise clock resets
@@ -4856,7 +4978,14 @@ impl Zombie {
                     // plain walk answers
                     self.move_speed_modifier = self.kind.stroll_speed();
                 }
-            } else if !leap_holds && self.rng.next() % STROLL_INTERVAL_TICKS as u64 == 0 {
+            } else if !leap_holds
+                // THE SIT GOAL'S OWN FLAGS (the JUMP+MOVE EnumSet the
+                // sit goal holds — the stroll the GoalSelector's
+                // conflict law stills BEFORE the canUse the gate runs:
+                // the interval roll the blocked goal never spends)
+                && !self.ordered_to_sit
+                && self.rng.next() % STROLL_INTERVAL_TICKS as u64 == 0
+            {
                 // THE WATER-AVOIDING PICK (javap
                 // `WaterAvoidingRandomStrollGoal.getPosition` the 26.2
                 // jar speaks): the in-water arm rides the 15/7 land
@@ -5551,6 +5680,25 @@ impl Zombie {
             "shears" if self.kind == MobKind::Sheep && self.ready_for_shearing() => {
                 MobInteract::Shear(self.shear(rng))
             }
+            // THE WOLF'S OWN TAME ARM (javap `Wolf.mobInteract` 328-369
+            // — the UNTAMED branch's own lane the chain's order keeps:
+            // `!level().isClientSide` the offline world's own server
+            // arm answers, `stack.is(Items.BONE)` the held stack the
+            // gate reads, `!isAngry()` the anger clock the word
+            // refuses — the angry body the bone never tames, the
+            // walk the PASS the super's tail returns). The
+            // tryToTame's own roll the walk runs (the `nextInt(3) ==
+            // 0` word the verdict carries); the bone's consume the
+            // caller's inventory walk speaks (the vanilla's
+            // `stack.consume(1, player)` the SUCCESS_SERVER arm
+            // rides); the ANGRY body the arm's own gate closes (the
+            // anger clock the >0 word speaks) — the walk the super's
+            // PASS the fall-through answers.
+            "bone" if self.kind == MobKind::Wolf && !self.tamed && self.anger_ticks == 0 => {
+                MobInteract::Tame {
+                    success: self.try_to_tame(rng),
+                }
+            }
             // THE ABSTRACTCOW'S OWN MILK ARM (the chain's own order the
             // subclass override keeps — the milk arm BEFORE the
             // Animal super's food walk, the baby the gate refuses):
@@ -5589,6 +5737,23 @@ impl Zombie {
             // the ZOMBIE the monster chain the AgeableMob super never
             // reaches, the kind gate the monster's own chain speaks)
             _ if self.can_use_golden_dandelion(held_item) => self.use_golden_dandelion(),
+            // THE OWNER'S OWN SIT-TOGGLE (javap `Wolf.mobInteract`
+            // 259-324 — the isTame branch's own tail the super's
+            // non-consuming miss arms: the food arm the match order
+            // keeps FIRST (the super's consuming walk), the
+            // dandelion the AgeableMob super's own lane the chain
+            // feeds, then the toggle the raw bytecode's own
+            // branchless fold speaks — `setOrderedToSit
+            // (!isOrderedToSit())` + `jumping = false` +
+            // `navigation.stop()` + `setTarget(null)`, the
+            // `SUCCESS.withoutItem()` return). The isOwnedBy gate the
+            // offline walk's single-player law folds (the tamed body
+            // the local player alone owns); the `jumping = false` the
+            // client's no-jump-field law honest-skips.
+            _ if self.kind == MobKind::Wolf && self.tamed => {
+                self.toggle_sit();
+                MobInteract::SitToggle
+            }
             // THE PIG'S OWN SADDLE ARM (the post-super arm the
             // bytecode order keeps — the super's non-consuming miss
             // the chain's tail falls to, the SADDLE slot's emptiness
@@ -5605,6 +5770,83 @@ impl Zombie {
             // food the monster's chain never reaches — the super's
             // own PASS the walk returns
             _ => MobInteract::Pass,
+        }
+    }
+
+    /// THE TAME WALK'S OWN ROLL (javap `Wolf.tryToTame` the 26.2
+    /// bytecode keeps verbatim — the `random.nextInt(3) == 0` the
+    /// walk opens: the SUCCESS arm `tame(player)` rides (the
+    /// TamableAnimal walk: `setTame(true, true)` the DATA_FLAGS bits
+    /// + `applyTamingSideEffects()` the tail the setter's own
+    /// apply-word arms — the MAX_HEALTH base 40.0 the rewrite speaks
+    /// AND `setHealth(40.0)` the full heal rides — then
+    /// `setOwner(player)` the reference the local player's own word
+    /// answers), `navigation.stop()` the stroll target's null write
+    /// keeps, `setTarget(null)` the hunt lane + the anger run word
+    /// the null write clears, `setOrderedToSit(true)` the sit order
+    /// arms — the HEART broadcast (byte 7) the success tail speaks;
+    /// the failure arm the SMOKE broadcast (byte 6) the else keeps).
+    /// The anger clock the setTarget(null) walk never clears (the
+    /// vanilla's own field law the prio-4 lane re-arms from); the
+    /// pose the SitWhenOrderedToGoal's start the NEXT tick's fold
+    /// arms (the goal's running word the pose IS).
+    pub fn try_to_tame(&mut self, rng: &mut Lcg) -> bool {
+        if rng.next_int(WOLF_TAME_ROLL) != 0 {
+            return false;
+        }
+        self.tamed = true;
+        // THE TAMING SIDE EFFECTS (javap `Wolf.applyTamingSideEffects`
+        // — the attribute base 40.0 the isTame arm rewrites, the
+        // setHealth(40.0) the full heal rides; the ceiling the tail
+        // fold's own max term reads)
+        self.health = WOLF_TAMED_MAX_HEALTH;
+        self.ordered_to_sit = true;
+        // THE NAVIGATION'S OWN STOP + THE TARGET'S OWN NULL (javap
+        // tryToTame 19-31 — the two calls the success arm's own tail
+        // keeps)
+        self.stroll_target = None;
+        self.hunt_target = None;
+        self.anger_target = false;
+        true
+    }
+
+    /// THE SIT-TOGGLE'S OWN WALK (javap `Wolf.mobInteract` 285-315 —
+    /// the branchless fold the raw bytecode keeps: `setOrderedToSit
+    /// (!isOrderedToSit())` the order flips, `jumping = false` the
+    /// no-jump-field law honest-skips, `navigation.stop()` the
+    /// stroll's null write keeps, `setTarget(null)` the hunt lane +
+    /// the anger run word the null write clears — the anger CLOCK
+    /// the walk never touches).
+    fn toggle_sit(&mut self) {
+        self.ordered_to_sit = !self.ordered_to_sit;
+        self.stroll_target = None;
+        self.hunt_target = None;
+        self.anger_target = false;
+    }
+
+    /// THE TAIL'S OWN WORD (javap `Wolf.getTailAngle` the 26.2
+    /// bytecode keeps verbatim: the isAngry arm the 1.539380431175232
+    /// return — the anger clock the >0 word reads, the WAG the yRot
+    /// fold's own gate stills; the isTame arm the health fold
+    /// `((0.55 - (max - health) / max) * 0.4) * PI)` the fcmpg chain
+    /// speaks — the max the TAMED ceiling 40.0 the
+    /// applyTamingSideEffects rewrite wears; the WILD body the
+    /// 0.6283185482025146 base word wears — the createBodyLayer
+    /// tail's own PartPose base). The render state the caller's own
+    /// extraction reads (the WolfRenderer's tailAngleF field the
+    /// entity-level word rides — BOTH models the adult AND the baby
+    /// the same state word wear).
+    pub fn tail_angle(&self) -> f32 {
+        if self.kind != MobKind::Wolf {
+            return WOLF_WILD_TAIL_ANGLE;
+        }
+        if self.anger_ticks > 0 {
+            WOLF_ANGRY_TAIL_ANGLE
+        } else if self.tamed {
+            let lost = (WOLF_TAMED_MAX_HEALTH - self.health) / WOLF_TAMED_MAX_HEALTH;
+            (WOLF_TAME_TAIL_BASE - lost * WOLF_TAME_TAIL_SLOPE) * std::f32::consts::PI
+        } else {
+            WOLF_WILD_TAIL_ANGLE
         }
     }
 
@@ -7210,7 +7452,21 @@ pub fn arm_wolf_hunters(mobs: &mut [Zombie]) -> usize {
             }
             best.map(|(p, _)| p)
         };
-        mobs[i].hunt_target = nearest(MobKind::Sheep).or_else(|| nearest(MobKind::Skeleton));
+        // THE PRIO LANES' OWN WORD (javap the targetSelector the
+        // round's dump keeps — the prio-5 NonTameRandomTargetGoal the
+        // NAME's own gate speaks: the TAMED body the prey lane the
+        // !isTame() word refuses, the prio-7 skeleton lane the tame
+        // body the same class serves — the NearestAttackableTargetGoal
+        // (AbstractSkeleton, mustSee=false) no tame gate wears. The
+        // prio order the conflict law keeps: the sheep the un-tamed
+        // wolf's FIRST lane answers, the skeleton the sheep's absence
+        // arms)
+        let prey_lane = if !mobs[i].tamed {
+            nearest(MobKind::Sheep)
+        } else {
+            None
+        };
+        mobs[i].hunt_target = prey_lane.or_else(|| nearest(MobKind::Skeleton));
         if mobs[i].hunt_target.is_some() {
             armed += 1;
         }
@@ -8322,6 +8578,223 @@ mod tests {
                 .contains(&wolf.anger_ticks),
             "the window the roll wears: {}",
             wolf.anger_ticks
+        );
+    }
+
+    /// THE WOLF'S OWN TAME WALK (javap `Wolf.mobInteract` 328-369 +
+    /// `tryToTame` verbatim): the bone the untamed calm body tames —
+    /// the `nextInt(3) == 0` roll the success arm speaks, the tame()
+    /// walk's own tail the fields arm (the tamed bit, the
+    /// applyTamingSideEffects 40.0 full heal, the sit order, the
+    /// navigation stop + the target null the two writes keep), the
+    /// failure arm the untamed body the verdict carries, the ANGRY
+    /// body the `!isAngry()` gate the bone never tames.
+    #[test]
+    fn the_tame_walk_the_bone_rolls_speak() {
+        // THE SUCCESS ROLL (seed 0 — the first draw mod 3 the 0 word
+        // speaks, the LCG the stream's own scramble carries)
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        wolf.health = 3.0; // the untamed dose the body carries
+        wolf.stroll_target = Some((8.5, 9.5));
+        wolf.hunt_target = Some(PreyView {
+            id: 2,
+            kind: MobKind::Sheep,
+            x: 9.0,
+            y: 5.0,
+            z: 8.0,
+            eye_y: 5.0 + MobKind::Sheep.eye_height(),
+            width: SHEEP_WIDTH,
+            height: SHEEP_HEIGHT,
+        });
+        let verdict = wolf.mob_interact("bone", &mut Lcg::new(0));
+        assert_eq!(
+            verdict,
+            MobInteract::Tame { success: true },
+            "the seed-0 roll the success arm speaks"
+        );
+        assert!(wolf.tamed, "setTame(true, true) the walk arms");
+        assert!(
+            (wolf.health - WOLF_TAMED_MAX_HEALTH).abs() < 1e-9,
+            "the applyTamingSideEffects the 40.0 full heal speaks: {}",
+            wolf.health
+        );
+        assert!(
+            wolf.ordered_to_sit,
+            "setOrderedToSit(true) the success tail arms"
+        );
+        assert!(
+            wolf.stroll_target.is_none(),
+            "navigation.stop() the stroll's null write keeps"
+        );
+        assert!(
+            wolf.hunt_target.is_none(),
+            "setTarget(null) the hunt lane clears"
+        );
+        // THE FAILURE ROLL (seed 1 — the draw the non-zero word
+        // speaks): the verdict the SMOKE word carries, the body the
+        // tame word never arms
+        let mut shy = Zombie::new(2, 8.0, 5.0, 8.0, 7);
+        shy.kind = MobKind::Wolf;
+        assert_eq!(
+            shy.mob_interact("bone", &mut Lcg::new(1)),
+            MobInteract::Tame { success: false },
+            "the seed-1 roll the failure arm speaks"
+        );
+        assert!(!shy.tamed, "the failed roll the tame bit never arms");
+        assert!(
+            !shy.ordered_to_sit,
+            "the failure the sit order never arms"
+        );
+        // THE ANGRY BODY THE BONE NEVER TAMES (the `!isAngry()` gate
+        // the untamed branch keeps — the PASS the super's tail
+        // speaks, the bone the walk never spends)
+        let mut angry = Zombie::new(3, 8.0, 5.0, 8.0, 7);
+        angry.kind = MobKind::Wolf;
+        angry.anger_ticks = 100;
+        assert_eq!(
+            angry.mob_interact("bone", &mut Lcg::new(0)),
+            MobInteract::Pass,
+            "the anger clock the tame gate closes"
+        );
+    }
+
+    /// THE OWNER'S OWN SIT-TOGGLE (javap `Wolf.mobInteract` 259-324
+    /// — the tamed body ANY held stack the toggle arms): the order
+    /// flips, the navigation + the hunt's null writes keep, the
+    /// tick's goal fold the pose IS (the running word the pose
+    /// speaks), the re-press the stand-down wears, the dose the
+    /// order cancels (the setOrderedToSit(0) the hurtServer's own
+    /// tail keeps).
+    #[test]
+    fn the_sit_toggle_the_owner_arm_speaks() {
+        let world = flat_world();
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        wolf.tamed = true;
+        wolf.stroll_target = Some((8.5, 9.5));
+        assert_eq!(
+            wolf.mob_interact("", &mut Lcg::new(1)),
+            MobInteract::SitToggle,
+            "the tamed body the empty hand the toggle arms"
+        );
+        assert!(wolf.ordered_to_sit, "the flip the order arms");
+        assert!(
+            wolf.stroll_target.is_none() && wolf.hunt_target.is_none(),
+            "the two null writes the toggle keeps"
+        );
+        // THE POSE (the SitWhenOrderedToGoal's start the NEXT tick's
+        // fold arms — the running word the pose IS)
+        wolf.tick(&world, None, NIGHT);
+        assert!(
+            wolf.in_sitting_pose,
+            "the goal's fold the sitting pose wears"
+        );
+        // THE STAND-DOWN (the second press the order drops, the pose
+        // the goal's stop the next fold clears)
+        assert_eq!(
+            wolf.mob_interact("", &mut Lcg::new(1)),
+            MobInteract::SitToggle,
+            "the re-press the same arm speaks"
+        );
+        assert!(!wolf.ordered_to_sit, "the flip the order drops");
+        wolf.tick(&world, None, NIGHT);
+        assert!(
+            !wolf.in_sitting_pose,
+            "the stood-down body the pose drops"
+        );
+        // THE DOSE THE ORDER CANCELS (hurtServer's own
+        // setOrderedToSit(0) the invulnerable gate's tail keeps)
+        wolf.ordered_to_sit = true;
+        wolf.hurt(2.0, true);
+        assert!(!wolf.ordered_to_sit, "the dose the sit order cancels");
+    }
+
+    /// THE TAIL'S OWN WORD (javap `Wolf.getTailAngle` the three arms
+    /// verbatim): the anger clock the 1.539380431175232 return
+    /// speaks, the tame body the health fold wears — the 40.0
+    /// ceiling the applyTamingSideEffects rewrite keeps — the wild
+    /// body the 0.6283185482025146 base word wears, the non-wolf
+    /// kind the same base the caller's kind gate keeps.
+    #[test]
+    fn the_tail_angle_the_three_arms_speak() {
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        assert!(
+            (wolf.tail_angle() - WOLF_WILD_TAIL_ANGLE).abs() < 1e-9,
+            "the wild body the base word wears: {}",
+            wolf.tail_angle()
+        );
+        // THE ANGRY ARM (the anger clock the >0 word reads)
+        wolf.anger_ticks = 1;
+        assert!(
+            (wolf.tail_angle() - WOLF_ANGRY_TAIL_ANGLE).abs() < 1e-9,
+            "the anger clock the angry return speaks: {}",
+            wolf.tail_angle()
+        );
+        wolf.anger_ticks = 0;
+        // THE TAME FOLD (the health the 40.0 ceiling folds — the
+        // full body the 0.55*PI base speaks, the half-lost body the
+        // (0.55 - 0.5*0.4) fold wears)
+        wolf.tamed = true;
+        wolf.health = WOLF_TAMED_MAX_HEALTH;
+        let full = WOLF_TAME_TAIL_BASE * std::f32::consts::PI;
+        assert!(
+            (wolf.tail_angle() - full).abs() < 1e-6,
+            "the full-health tame fold: {}",
+            wolf.tail_angle()
+        );
+        wolf.health = WOLF_TAMED_MAX_HEALTH * 0.5;
+        let half =
+            (WOLF_TAME_TAIL_BASE - 0.5 * WOLF_TAME_TAIL_SLOPE) * std::f32::consts::PI;
+        assert!(
+            (wolf.tail_angle() - half).abs() < 1e-6,
+            "the half-lost tame fold: {}",
+            wolf.tail_angle()
+        );
+        // THE NON-WOLF KIND (the caller's kind gate the base word
+        // keeps — the sheep the wild return wears)
+        let mut sheep = Zombie::new(2, 8.0, 5.0, 8.0, 7);
+        sheep.kind = MobKind::Sheep;
+        assert!(
+            (sheep.tail_angle() - WOLF_WILD_TAIL_ANGLE).abs() < 1e-9,
+            "the non-wolf kind the base word keeps"
+        );
+    }
+
+    /// THE PRIO LANES' OWN TAME GATE (javap the targetSelector the
+    /// 389 dump keeps — the prio-5 NonTameRandomTargetGoal the
+    /// !isTame() word wears, the prio-7 skeleton lane the tame body
+    /// the same class serves): the tamed wolf the sheep's lane
+    /// refuses, the skeleton the absence arms, the wild body the
+    /// sheep the first lane answers.
+    #[test]
+    fn the_hunt_lane_the_tamed_body_the_prey_refuses() {
+        let mut wolf = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        wolf.kind = MobKind::Wolf;
+        wolf.tamed = true;
+        let mut sheep = Zombie::new(2, 12.0, 5.0, 8.0, 8); // 4 east — in ring
+        sheep.kind = MobKind::Sheep;
+        let mut skeleton = Zombie::new(3, 8.0, 5.0, 14.0, 9); // 6 south — in ring
+        skeleton.kind = MobKind::Skeleton;
+        let mut mobs = vec![wolf, sheep, skeleton];
+        assert_eq!(arm_wolf_hunters(&mut mobs), 1);
+        let hunt = mobs[0]
+            .hunt_target
+            .expect("the tame body the skeleton lane serves");
+        assert_eq!(
+            hunt.kind, MobKind::Skeleton,
+            "the prey lane the isTame gate refuses"
+        );
+        // THE WILD BODY (the same scan the sheep's own prio answers —
+        // the skeleton the kill drops, the prey the re-scan arms)
+        mobs[0].tamed = false;
+        mobs[2].health = 0.0;
+        assert_eq!(arm_wolf_hunters(&mut mobs), 1);
+        assert_eq!(
+            mobs[0].hunt_target.as_ref().expect("the wild body arms").kind,
+            MobKind::Sheep,
+            "the un-tamed body the prey lane answers"
         );
     }
 

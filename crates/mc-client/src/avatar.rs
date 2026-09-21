@@ -3019,14 +3019,16 @@ fn build_spider_parts(state: &SpiderState) -> Vec<Part> {
 /// 26.2 `WolfModel.setupAnim` reads — the head pair rides the
 /// netHeadYaw/pitch words the quadruped's own state wears, the walk
 /// pair the WalkAnimationState feeds, the death clock the entity
-/// fold's own input. THE WILD WOLF's own tail: the state carries no
-/// tail-angle lane — the `Wolf.getTailAngle()` bytecode's OWN WILD
-/// word (0.6283185482025146, the non-angry non-tame return) the
-/// model bakes; the ANGRY word (1.539380431175232) and the TAME
-/// health-fold ((0.55 - lost/maxHealth * 0.4) * PI) the client's
-/// metadata lanes never read — the honest skip the doc keeps (the
-/// anger byte the wolf-specific synched-data id carries, the tame
-/// the owner the client never owns).
+/// fold's own input. THE TAIL'S OWN WORD the caller's extraction
+/// carries (javap `Wolf.getTailAngle` — the angry 1.539380431175232
+/// / the tamed health fold / the wild 0.6283185482025146 the three
+/// arms speak, the state the tailAngleF field the renderer's own
+/// extraction rides — BOTH models the same word wear). THE SIT + THE
+/// ANGER the tame machine's own words the tame lanes arm: the pose
+/// the SitWhenOrderedToGoal's running word, the anger the prio-4
+/// lane's clock — the WAG the setupAnim's own isAngry branch stills
+/// (`tail.yRot = 0` the ifne arm keeps), the legs the isSitting
+/// branch the setSittingPose walk swaps the swing folds for.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WolfState {
     pub yaw_deg: f32,
@@ -3035,15 +3037,35 @@ pub struct WolfState {
     pub walk_pos: f32,
     pub walk_speed: f32,
     pub death_time: f32,
+    /// the `getTailAngle()` word the caller's own extraction speaks
+    pub tail_angle: f32,
+    /// the `isInSittingPose()` word — the SitWhenOrderedToGoal's
+    /// running bit
+    pub sitting: bool,
+    /// the `isAngry()` word — the prio-4 lane's clock the >0 word
+    /// speaks; the wag the branch stills
+    pub angry: bool,
 }
 
-/// THE WILD WOLF'S OWN TAIL ANGLE (javap `Wolf.getTailAngle` the 26.2
-/// bytecode keeps: the isAngry arm returns 1.539380431175232, the
-/// isTame arm the health fold speaks, the WILD tail the base word
-/// wears — the SAME number the createBodyLayer's tail PartPose
-/// base xRot speaks, the setupAnim's override the value never
-/// moves for the wild body).
-pub const WILD_TAIL_ANGLE: f32 = 0.628_318_55;
+/// THE SIT POSE'S OWN WORDS (javap `WolfModel.setSittingPose` the 26.2
+/// bytecode keeps verbatim — the body `yF += 4.0 * ageScale` +
+/// `zF -= 2.0 * ageScale` + `xRotF = 0.7853981852531433` (PI/4, the
+/// putfield the base xRot REPLACES), the tail `yF += 9.0` +
+/// `zF -= 2.0`, the hind legs `yF += 6.699999809265137` +
+/// `zF -= 5.0` + `xRotF = 4.71238899230957` (3PI/2), the front legs
+/// `xRotF = 5.811946868896484` + the ±0.009999999776482582 x eps +
+/// `yF += 1.0` — the LEG SWINGS the isSitting branch's own else
+/// never runs, the tail xRot the tailAngleF the setupAnim's own tail
+/// line re-wears AFTER the pose).
+pub const WOLF_SIT_BODY_X_ROT: f32 = 0.785_398_2;
+pub const WOLF_SIT_LEG_HIND_X_ROT: f32 = 4.712_389;
+pub const WOLF_SIT_LEG_FRONT_X_ROT: f32 = 5.811_946_9;
+pub const WOLF_SIT_FRONT_LEG_X_EPS: f32 = 0.01;
+/// THE BABY'S OWN SIT CORRECTION (javap `BabyWolfModel.
+/// setSittingPose` the override keeps — the super's walk the body
+/// xRot `-= 1.5707963705062866` the tail subtracts: the sit value
+/// the PI/2 the negation answers).
+pub const BABY_WOLF_SIT_BODY_X_ROT_SUB: f32 = 1.570_796_4;
 
 /// The full adult wolf model — the 26.2 `AdultWolfModel.createBodyLayer`'s
 /// own numbers, bytecode-proven off the official jar (classfile_dump +
@@ -3126,12 +3148,24 @@ fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
     let f2 = state.walk_pos;
     let f3 = state.walk_speed;
     // THE WAG + THE LEG SWINGS (the four cos folds — the diagonal
-    // phases the ldc 3.1415927410125732 keeps)
-    let wag = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
-    let leg_rh = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
-    let leg_lh = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
-    let leg_rf = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
-    let leg_lf = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    // phases the ldc 3.1415927410125732 keeps). THE WAG the setupAnim's
+    // own isAngry branch stills (offsets 15-30: the `tail.yRot = 0`
+    // the ifne arm keeps — the angry body the wag the zero word
+    // wears). THE LEG SWINGS the isSitting branch's own else never
+    // runs (offsets 53-65: the sitting body setSittingPose rides, the
+    // swing folds the branch skips — the sit xRots the pose's own
+    // constants wear).
+    let (wag, leg_rh, leg_lh, leg_rf, leg_lf) = if state.angry {
+        (0.0, 0.0, 0.0, 0.0, 0.0)
+    } else {
+        (
+            mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3,
+        )
+    };
     let head_x = state.pitch_deg.to_radians();
     let head_y = state.head_yaw_off_deg.to_radians();
     // THE LEG BOXES (the right pair's `.mirror()` u-flip the builder
@@ -3142,6 +3176,46 @@ fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
         size: [2.0, 8.0, 2.0],
         inflate: 0.0,
         mirror,
+    };
+    // THE SIT POSE'S OWN PIVOT + ROT WORDS (javap `setSittingPose`
+    // verbatim — the ageScale the ADULT's own 1.0 the plain folds
+    // keep; the CHEST the walk's own field list never names — the
+    // upper_body the unmoved pivot the vanilla law keeps)
+    let (body_pivot, body_x_rot) = if state.sitting {
+        ([0.0, 18.0, 0.0], WOLF_SIT_BODY_X_ROT)
+    } else {
+        ([0.0, 14.0, 2.0], 1.570_796_4)
+    };
+    let (hind_pivot, hind_x_rot) = if state.sitting {
+        ([-2.5, 22.7, 2.0], WOLF_SIT_LEG_HIND_X_ROT)
+    } else {
+        ([-2.5, 16.0, 7.0], leg_rh)
+    };
+    let (hind_pivot_l, hind_x_rot_l) = if state.sitting {
+        ([0.5, 22.7, 2.0], WOLF_SIT_LEG_HIND_X_ROT)
+    } else {
+        ([0.5, 16.0, 7.0], leg_lh)
+    };
+    let (front_pivot_r, front_x_rot_r) = if state.sitting {
+        (
+            [-2.5 + WOLF_SIT_FRONT_LEG_X_EPS, 17.0, -4.0],
+            WOLF_SIT_LEG_FRONT_X_ROT,
+        )
+    } else {
+        ([-2.5, 16.0, -4.0], leg_rf)
+    };
+    let (front_pivot_l, front_x_rot_l) = if state.sitting {
+        (
+            [0.5 - WOLF_SIT_FRONT_LEG_X_EPS, 17.0, -4.0],
+            WOLF_SIT_LEG_FRONT_X_ROT,
+        )
+    } else {
+        ([0.5, 16.0, -4.0], leg_lf)
+    };
+    let tail_pivot = if state.sitting {
+        [-1.0, 21.0, 6.0]
+    } else {
+        [-1.0, 12.0, 8.0]
     };
     vec![
         // head (the look pair rides; the child real_head the four
@@ -3196,10 +3270,12 @@ fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // body (the 90-degree x-rot the ctor's PartPose speaks —
         // the barrel lies along the spine; the shake-off roll the
-        // no-wetness word zeroes)
+        // no-wetness word zeroes; the SIT the setSittingPose's own
+        // putfield the xRot REPLACES — PI/4 the sit word speaks —
+        // and the pivot the y+4/z-2 folds shift)
         Part {
-            pivot: [0.0, 14.0, 2.0],
-            x_rot: 1.570_796_4,
+            pivot: body_pivot,
+            x_rot: body_x_rot,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![Cube {
@@ -3226,10 +3302,11 @@ fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
             }],
             children: vec![],
         },
-        // right hind leg (the mirror u-flip; the plain phase)
+        // right hind leg (the mirror u-flip; the plain phase; the
+        // SIT the y+6.7/z-5 pivots + the 3PI/2 xRot the pose speaks)
         Part {
-            pivot: [-2.5, 16.0, 7.0],
-            x_rot: leg_rh,
+            pivot: hind_pivot,
+            x_rot: hind_x_rot,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![leg_cube(true)],
@@ -3237,8 +3314,8 @@ fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // left hind leg (the plain builder; the counter phase)
         Part {
-            pivot: [0.5, 16.0, 7.0],
-            x_rot: leg_lh,
+            pivot: hind_pivot_l,
+            x_rot: hind_x_rot_l,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![leg_cube(false)],
@@ -3246,8 +3323,8 @@ fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // right front leg (the mirror; the counter phase)
         Part {
-            pivot: [-2.5, 16.0, -4.0],
-            x_rot: leg_rf,
+            pivot: front_pivot_r,
+            x_rot: front_x_rot_r,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![leg_cube(true)],
@@ -3255,18 +3332,21 @@ fn build_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // left front leg (the plain; the plain phase)
         Part {
-            pivot: [0.5, 16.0, -4.0],
-            x_rot: leg_lf,
+            pivot: front_pivot_l,
+            x_rot: front_x_rot_l,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![leg_cube(false)],
             children: vec![],
         },
-        // tail (the wag yaws, the WILD angle the xRot wears; the
+        // tail (the wag yaws — the ANGRY branch the zero word wears;
+        // the xRot the STATE'S OWN tail angle the getTailAngle walk
+        // speaks — the angry/tame/wild arms the caller's extraction
+        // carries; the SIT the y+9/z-2 pivots the pose shifts — the
         // child real_tail the brush carries)
         Part {
-            pivot: [-1.0, 12.0, 8.0],
-            x_rot: WILD_TAIL_ANGLE,
+            pivot: tail_pivot,
+            x_rot: state.tail_angle,
             y_rot: wag,
             z_rot: 0.0,
             cubes: vec![],
@@ -3362,13 +3442,64 @@ impl BabyWolfModel {
 fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
     let f2 = state.walk_pos;
     let f3 = state.walk_speed;
-    let wag = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
-    let leg_rh = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
-    let leg_lh = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
-    let leg_rf = mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3;
-    let leg_lf = mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3;
+    // THE INHERITED ANIM (the BabyWolfModel extends WolfModel — no
+    // setupAnim override the class keeps: the wag the isAngry branch
+    // stills, the leg swings the isSitting branch's own else skips,
+    // the sit pose the OVERRIDDEN setSittingPose's own words wear —
+    // the super's folds the same constants ride, the body xRot the
+    // `-= 1.5707963705062866` the tail subtracts)
+    let (wag, leg_rh, leg_lh, leg_rf, leg_lf) = if state.angry {
+        (0.0, 0.0, 0.0, 0.0, 0.0)
+    } else {
+        (
+            mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98 + 3.141_592_7) * 1.399_999_98 * f3,
+            mth_cos(f2 * 0.666_199_98) * 1.399_999_98 * f3,
+        )
+    };
     let head_x = state.pitch_deg.to_radians();
     let head_y = state.head_yaw_off_deg.to_radians();
+    let (body_pivot, body_x_rot) = if state.sitting {
+        (
+            [0.0, 23.0, -2.0],
+            WOLF_SIT_BODY_X_ROT - BABY_WOLF_SIT_BODY_X_ROT_SUB,
+        )
+    } else {
+        ([0.0, 19.0, 0.0], 0.0)
+    };
+    let (hind_pivot, hind_x_rot) = if state.sitting {
+        ([-1.5, 27.7, -2.0], WOLF_SIT_LEG_HIND_X_ROT)
+    } else {
+        ([-1.5, 21.0, 3.0], leg_rh)
+    };
+    let (hind_pivot_l, hind_x_rot_l) = if state.sitting {
+        ([1.5, 27.7, -2.0], WOLF_SIT_LEG_HIND_X_ROT)
+    } else {
+        ([1.5, 21.0, 3.0], leg_lh)
+    };
+    let (front_pivot_r, front_x_rot_r) = if state.sitting {
+        (
+            [-1.5 + WOLF_SIT_FRONT_LEG_X_EPS, 22.0, -3.0],
+            WOLF_SIT_LEG_FRONT_X_ROT,
+        )
+    } else {
+        ([-1.5, 21.0, -3.0], leg_rf)
+    };
+    let (front_pivot_l, front_x_rot_l) = if state.sitting {
+        (
+            [1.5 - WOLF_SIT_FRONT_LEG_X_EPS, 22.0, -3.0],
+            WOLF_SIT_LEG_FRONT_X_ROT,
+        )
+    } else {
+        ([1.5, 21.0, -3.0], leg_lf)
+    };
+    let tail_pivot = if state.sitting {
+        [0.0, 28.0, 1.0]
+    } else {
+        [0.0, 19.0, 3.0]
+    };
     vec![
         // head (the deform skull + the muzzle; the two ears ride as
         // the children the pivots carry)
@@ -3426,8 +3557,8 @@ fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // body
         Part {
-            pivot: [0.0, 19.0, 0.0],
-            x_rot: 0.0,
+            pivot: body_pivot,
+            x_rot: body_x_rot,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![Cube {
@@ -3441,8 +3572,8 @@ fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // right hind leg (uv (0,22))
         Part {
-            pivot: [-1.5, 21.0, 3.0],
-            x_rot: leg_rh,
+            pivot: hind_pivot,
+            x_rot: hind_x_rot,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![Cube {
@@ -3456,8 +3587,8 @@ fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // left hind leg (uv (8,22))
         Part {
-            pivot: [1.5, 21.0, 3.0],
-            x_rot: leg_lh,
+            pivot: hind_pivot_l,
+            x_rot: hind_x_rot_l,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![Cube {
@@ -3471,8 +3602,8 @@ fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // right front leg (uv (0,0))
         Part {
-            pivot: [-1.5, 21.0, -3.0],
-            x_rot: leg_rf,
+            pivot: front_pivot_r,
+            x_rot: front_x_rot_r,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![Cube {
@@ -3486,8 +3617,8 @@ fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
         },
         // left front leg (uv (20,0))
         Part {
-            pivot: [1.5, 21.0, -3.0],
-            x_rot: leg_lf,
+            pivot: front_pivot_l,
+            x_rot: front_x_rot_l,
             y_rot: 0.0,
             z_rot: 0.0,
             cubes: vec![Cube {
@@ -3500,11 +3631,13 @@ fn build_baby_wolf_parts(state: &WolfState) -> Vec<Part> {
             children: vec![],
         },
         // tail (the base -0.5235999822616577 the INHERITED tailAngle
-        // override swallows — the wild word the xRot wears; the
-        // curled brush the tail_r1 child carries)
+        // override swallows — the STATE'S OWN angle the xRot wears,
+        // the same word the adult's tail carries; the curled brush
+        // the tail_r1 child carries; the SIT the y+9/z-2 pivots the
+        // inherited pose shifts)
         Part {
-            pivot: [0.0, 19.0, 3.0],
-            x_rot: WILD_TAIL_ANGLE,
+            pivot: tail_pivot,
+            x_rot: state.tail_angle,
             y_rot: wag,
             z_rot: 0.0,
             cubes: vec![],
@@ -9026,6 +9159,9 @@ mod tests {
             walk_pos: 0.0,
             walk_speed: 0.0,
             death_time: 0.0,
+            tail_angle: crate::mob::WOLF_WILD_TAIL_ANGLE,
+            sitting: false,
+            angry: false,
         };
         let quads = wolf.quads(&rest, feet, 0.0, 0.0);
         assert_eq!(quads.len(), 66, "11 cubes x 6 faces the bake speaks");
@@ -9067,6 +9203,9 @@ mod tests {
             walk_pos: 0.0,
             walk_speed: 0.0,
             death_time: 0.0,
+            tail_angle: crate::mob::WOLF_WILD_TAIL_ANGLE,
+            sitting: false,
+            angry: false,
         };
         let quads = baby.quads(&rest, feet, 0.0, 0.0);
         assert_eq!(quads.len(), 60, "10 cubes x 6 faces the bake speaks");

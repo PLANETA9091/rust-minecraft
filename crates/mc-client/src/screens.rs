@@ -13491,6 +13491,76 @@ impl App {
                         self.swing.start();
                         return true;
                     }
+                    if let crate::mob::MobInteract::Tame { success } = verdict {
+                        // THE WOLF'S OWN TAME WALK (javap
+                        // `Wolf.mobInteract` 328-369 — the SUCCESS_SERVER
+                        // verdict the SwingSource.SERVER swing starts;
+                        // the `stack.consume(1, player)` the bone the
+                        // press spends — the offline lane's own
+                        // inventory walk the milk/saddle arms keep, the
+                        // live store's word the server's stack truth
+                        // never predicts; the `broadcastEntityEvent`
+                        // byte 7 the HEART burst the success arm
+                        // speaks, byte 6 the SMOKE burst the failure
+                        // answers — both the SEVEN-particle walk the
+                        // spawnTamingParticles law keeps, the body's
+                        // own registration box the burst spreads
+                        // over). NO voice the tryToTame walk plays
+                        // (the vanilla's own tail the sound never
+                        // names — the honest skip the walk keeps).
+                        if self.live_held.is_some() {
+                            // THE WIRE'S OWN STORE (the server's stack
+                            // truth the client never predicts — the
+                            // voice+swing the client's own words)
+                        } else {
+                            let sel = self.selected_hotbar;
+                            let held_count = self.inventory.items[sel].1;
+                            if held_count > 1 {
+                                // THE TALLER STACK (the consume(1) the
+                                // shrink speaks, the shrunken stack the
+                                // hand keeps)
+                                self.inventory.items[sel].1 = held_count - 1;
+                            } else {
+                                // THE LAST ONE (the consume the hand
+                                // empties — the count 0 the empty lane
+                                // answers, nothing replaces)
+                                self.inventory.items[sel].1 = 0;
+                            }
+                        }
+                        let bbox = self.mobs[i].box_for();
+                        if success {
+                            // THE HEART BURST (byte 7 — the success arm
+                            // the same walk the event-18 love burst
+                            // wears)
+                            let burst =
+                                crate::particles::heart_burst(bbox, &mut self.mob_rng);
+                            self.particles.extend(burst);
+                        } else {
+                            // THE SMOKE BURST (byte 6 — the failure arm
+                            // the spawnTamingParticles walk answers)
+                            let burst = crate::particles::taming_smoke_burst(
+                                bbox,
+                                &mut self.mob_rng,
+                            );
+                            self.particles.extend(burst);
+                        }
+                        self.swing.start();
+                        return true;
+                    }
+                    if let crate::mob::MobInteract::SitToggle = verdict {
+                        // THE OWNER'S OWN SIT-TOGGLE WALK (javap
+                        // `Wolf.mobInteract` 318-324 — the toggle ran
+                        // inside the mob (the setOrderedToSit fold +
+                        // the navigation stop + the target null the
+                        // mob's own walk speaks), the
+                        // `SUCCESS.withoutItem()` return the CLIENT
+                        // swing starts — the arm the press answers;
+                        // NO consume (the empty-hand arm the toggle's
+                        // own gate reads), NO voice (the sit goal's
+                        // start/stop pair the sound never names))
+                        self.swing.start();
+                        return true;
+                    }
                     entity_pass = true;
                 } else {
                     // THE WIRE ARM (the 26.2's own gameMode.interact
@@ -22971,9 +23041,11 @@ impl App {
                     // dedicated baby mesh the field arms). The
                     // setupAnim's own words the state carries: the
                     // look pair, the walk pair, the death clock — the
-                    // tail angle the WILD word the model bakes (the
-                    // angry/tame lanes the metadata the client never
-                    // reads — the honest skip the doc keeps)
+                    // tail angle the getTailAngle word the entity's
+                    // own extraction speaks (the angry/tame/wild arms
+                    // the mob's tail_angle fn folds), the sit + the
+                    // anger the tame machine's own synched words the
+                    // state carries
                     let state = crate::avatar::WolfState {
                         yaw_deg: mob.yaw,
                         pitch_deg: head_pitch,
@@ -22981,6 +23053,9 @@ impl App {
                         walk_pos: mob.walk.position_at(self.partial_tick),
                         walk_speed: mob.walk.speed_at(self.partial_tick),
                         death_time: mob.death_time_at(self.partial_tick),
+                        tail_angle: mob.tail_angle(),
+                        sitting: mob.in_sitting_pose,
+                        angry: mob.anger_ticks > 0,
                     };
                     if mob.is_baby() {
                         let Some(baby) = baby_wolf_model else {
@@ -49039,6 +49114,131 @@ cow_sound_variant: None,
                     && p.age < p.lifetime),
             "the hearts the lifetime walk keeps"
         );
+    }
+
+    /// THE TAME MACHINE THE APP FRAME SPEAKS (the press the
+    /// Wolf.mobInteract walk rides end to end): the bone press the
+    /// verdict consumes — the stack the consume(1) shrinks, the
+    /// SEVEN the verdict's own burst wears (the success the HEART
+    /// arm, the failure the SMOKE arm — the kind the tame bit's own
+    /// word pairs), the SERVER swing the verdict starts; the tamed
+    /// body's own press the SIT toggle serves (no burst the toggle
+    /// never speaks, the tick's goal fold the pose IS).
+    #[test]
+    fn the_tame_machine_the_app_frame_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let mut wolf =
+            crate::mob::Zombie::new(7, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        wolf.kind = crate::mob::MobKind::Wolf;
+        app.mobs.push(wolf);
+        // THE BONE HAND (the held stack the tame arm's own gate reads)
+        let bone_id =
+            mc_registry::item_id_by_name("bone").expect("bone the table draws");
+        app.inventory.items[app.selected_hotbar] = (bone_id, 5);
+        app.offline_held_updated(Some("item/bone"));
+        // THE PRESS (the verdict the roll speaks — either arm the
+        // frame's own walk serves)
+        assert!(app.on_right_press(0, 0), "the tame walk consumed the press");
+        // THE STACK'S OWN SHRINK (the consume(1) the taller stack
+        // speaks — the offline lane's own inventory walk)
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (bone_id, 4),
+            "the bone the press spends"
+        );
+        // THE BURST (SEVEN the spawnTamingParticles count keeps — the
+        // kind the tame bit's own word pairs: the success the HEART,
+        // the failure the SMOKE, exactly one the verdict wears)
+        assert_eq!(
+            app.particles.len(),
+            7,
+            "the taming burst the count keeps"
+        );
+        let tamed = app.mobs[0].tamed;
+        let hearts = app
+            .particles
+            .iter()
+            .all(|p| matches!(p.kind, crate::particles::ParticleKind::Heart));
+        let smoke = app
+            .particles
+            .iter()
+            .all(|p| matches!(p.kind, crate::particles::ParticleKind::Smoke));
+        assert!(
+            hearts != smoke,
+            "exactly one burst kind the verdict speaks"
+        );
+        assert_eq!(
+            hearts, tamed,
+            "the success the HEART wears, the failure the SMOKE"
+        );
+        assert!(app.swing.swinging, "the SUCCESS_SERVER the swing starts");
+        // THE TAMED BODY'S OWN PRESS (the tame walk's own sit order
+        // the toggle re-flips — the SUCCESS the setOrderedToSit(true)
+        // armed, the second press the STAND-DOWN wears, the third the
+        // order re-arms; the pose the goal's fold the order IS)
+        app.particles.clear();
+        // THE RE-CENTER (the stroll the update may arm — the crosshair
+        // the body's own box the press re-picks)
+        app.mobs[0].x = c as f64 + 0.5;
+        app.mobs[0].z = c as f64 + 0.5;
+        if tamed {
+            assert!(
+                app.mobs[0].ordered_to_sit,
+                "the tame walk's own tail the order armed"
+            );
+            assert!(
+                app.on_right_press(0, 0),
+                "the stand-down consumed the press"
+            );
+            assert!(
+                app.particles.is_empty(),
+                "the toggle the burst never speaks"
+            );
+            assert!(
+                !app.mobs[0].ordered_to_sit,
+                "the re-press the order drops"
+            );
+            app.update();
+            assert!(
+                !app.mobs[0].in_sitting_pose,
+                "the stood-down body the pose drops"
+            );
+            // THE THIRD PRESS (the order the flip re-arms — the pose
+            // the next tick's fold wears; the body the crosshair's
+            // own column re-centers)
+            app.mobs[0].x = c as f64 + 0.5;
+            app.mobs[0].z = c as f64 + 0.5;
+            assert!(app.on_right_press(0, 0), "the re-arm consumed the press");
+            assert!(app.mobs[0].ordered_to_sit, "the order the press re-arms");
+            app.update();
+            assert!(
+                app.mobs[0].in_sitting_pose,
+                "the goal's fold the pose IS"
+            );
+        } else {
+            // the untamed body the SECOND bone the same walk re-rolls —
+            // the verdict whatever the stream speaks, the SEVEN the
+            // burst count keeps
+            let before = app.particles.len();
+            assert!(
+                app.on_right_press(0, 0),
+                "the second bone consumed the press"
+            );
+            assert_eq!(
+                app.particles.len() - before,
+                7,
+                "the re-rolled burst the count keeps"
+            );
+        }
     }
 
     #[test]

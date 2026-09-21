@@ -1363,6 +1363,39 @@ pub fn heart_burst(
     out
 }
 
+/// THE TAMING FAILURE'S OWN SMOKE (javap `TamableAnimal.
+/// spawnTamingParticles` the 26.2 bytecode keeps — the SMOKE arm the
+/// failure broadcast (byte 6) rides, the SAME geometry the HEART arm
+/// wears: SEVEN the loop's own count keeps, each at
+/// `getRandomX(1.0), getRandomY() + 0.5, getRandomZ(1.0)` the box
+/// reads, the `nextGaussian * 0.02` velocity pair the three draws
+/// speak, the ParticleTypes.SMOKE the small-smoke ctor the
+/// smoke_puff walk answers — the draw order the ctor chain's own
+/// shape keeps).
+pub fn taming_smoke_burst(
+    bbox: (f64, f64, f64, f64, f64, f64),
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(7);
+    for _ in 0..7 {
+        let d0 = rng.next_gaussian() * 0.02;
+        let d1 = rng.next_gaussian() * 0.02;
+        let d2 = rng.next_gaussian() * 0.02;
+        let rx = rng.next_f64() * 2.0 - 1.0;
+        let ry = rng.next_f64();
+        let rz = rng.next_f64() * 2.0 - 1.0;
+        let (bw, bh) = ((bbox.3 - bbox.0) * 0.5, bbox.4 - bbox.1);
+        let px = bbox.0 + bw + bw * rx;
+        let py = bbox.1 + bh * ry + 0.5;
+        let pz = bbox.2 + bw + bw * rz;
+        let r_base_life = rng.next_f32();
+        let r_size = rng.next_f32();
+        let r_tint = rng.next_f32();
+        out.push(smoke_puff(px, py, pz, d0, d1, d2, r_base_life, r_tint, r_size));
+    }
+    out
+}
+
 /// The aiStep ambient (javap `Animal.aiStep` verbatim: the `isInLove`
 /// gate ONE heart per tick — the decrement the same walk arms, the
 /// spawn the post-decrement gate `inLove > 0` keeps, so the last
