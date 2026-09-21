@@ -926,7 +926,7 @@ mod tests {
             eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
             return;
         };
-        const EVENTS: [(&str, usize); 21] = [
+        const EVENTS: [(&str, usize); 23] = [
             ("entity.player.attack.crit", 3),
             ("entity.player.attack.strong", 6),
             ("entity.player.attack.sweep", 7),
@@ -936,6 +936,8 @@ mod tests {
             ("entity.player.big_fall", 1),
             ("entity.player.small_fall", 1),
             ("entity.generic.eat", 3),
+            ("entity.generic.drink", 1),
+            ("item.honey_bottle.drink", 4),
             ("entity.player.burp", 1),
             ("entity.player.levelup", 1),
             ("entity.item.pickup", 1),

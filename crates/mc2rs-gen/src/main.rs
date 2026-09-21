@@ -916,7 +916,14 @@ const PLAYER_XP_EVENTS: [&str; 1] = ["entity.experience_orb.pickup"];
 ///   `entity.player.*_fall` rows);
 /// - the eat lane's table (the use-item hold the `entity.generic.eat`
 ///   random/eat rows plays, the food-finish burp's `entity.player.burp`
-///   random/burp row);
+///   random/burp row) AND the DRINK lane's own pair the eat.rs pipeline
+///   plays data-driven (the Consumable's def.sound field the registry's
+///   FOODS table fills — the milk bucket's and the potion's
+///   `entity.generic.drink` random/drink row, the honey bottle's
+///   `item.honey_bottle.drink` drink_honey rows; the id the screens'
+///   play site trims and voices — the literal the registry's generated
+///   table banks, the consumer walk the first pass the client's own
+///   sources alone read missed);
 /// - the progression pair (the XP level's `entity.player.levelup`
 ///   random/levelup row, the item take's `entity.item.pickup`
 ///   random/pop row);
@@ -934,13 +941,11 @@ const PLAYER_XP_EVENTS: [&str; 1] = ["entity.experience_orb.pickup"];
 ///   `unuse` — the setAgeLocked toggle the post-lock sound pick
 ///   speaks, v1.0 p1.0 the PLAYERS source).
 ///
-/// The honest skips the client's own tables keep: `entity.generic.drink`
-/// and `item.honey_bottle.drink` the drink lane's call sites never play
-/// yet (no consumer the client speaks, no files the fetch spends), the
-/// `ambient.cave` the fixture list alone names (the live lane's absence
-/// the honest refusal keeps). Every file rides the same sha1-verified
+/// The honest skips the client's own tables keep: the `ambient.cave`
+/// the fixture list alone names (the live lane's absence the honest
+/// refusal keeps). Every file rides the same sha1-verified
 /// asset-index fetch the mob voices speak.
-const INTERACTION_EVENTS: [&str; 21] = [
+const INTERACTION_EVENTS: [&str; 23] = [
     "entity.player.attack.crit",
     "entity.player.attack.strong",
     "entity.player.attack.sweep",
@@ -950,6 +955,8 @@ const INTERACTION_EVENTS: [&str; 21] = [
     "entity.player.big_fall",
     "entity.player.small_fall",
     "entity.generic.eat",
+    "entity.generic.drink",
+    "item.honey_bottle.drink",
     "entity.player.burp",
     "entity.player.levelup",
     "entity.item.pickup",
