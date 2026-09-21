@@ -5038,6 +5038,38 @@ fn mood_percent(moodiness: f32) -> i32 {
     (moodiness * 100.0 + 0.5).floor() as i32
 }
 
+/// THE SOUND CACHE MEGABYTES' OWN CEIL (javap `DebugEntrySoundCache.
+/// bytesToMegabytes` — the `l2d` widen the long-to-double lane keeps,
+/// the two `1024.0` ddivs the KiB-then-MiB chain speaks, the
+/// `Mth.ceilLong` the `(long) Math.ceil` cast banks — `Mth.ceilLong(D)`
+/// the `Math.ceil(D)` invoke + return the jar's own walk wears): the
+/// partial megabyte the NEXT MiB answers (1_048_575 bytes the ceil
+/// keeps at 1, the exact 2^20 the same word wears). The f64 width the
+/// whole fold keeps — the long param the widen never truncates, the
+/// division the binary64 exactness the 2^20 divisor's own power law
+/// speaks.
+fn bytes_to_megabytes(bytes: i64) -> i64 {
+    (bytes as f64 / 1024.0 / 1024.0).ceil() as i64
+}
+
+/// THE SOUND CACHE ROW'S OWN WORD (javap `DebugEntrySoundCache.display`
+/// — the `String.format(Locale.ROOT, "Sound cache: %d buffers, %d MiB",
+/// counter.totalCount(), bytesToMegabytes(counter.totalSize()))` walk
+/// the `addLine` hands over): the format string the CP's #33 utf8
+/// banks verbatim, the count the `Counter.totalCount` int keeps, the
+/// size the megabyte ceil answers. The entry's own bytecode NO gates
+/// speaks — `isAllowed` the return-1 always-true law wears, the
+/// display the `Minecraft.getInstance().getSoundManager()` direct read
+/// keeps (the camera/ServerLevel/body arms the SC/LD/mood rows wear
+/// this entry never opens — the multiplayer F3 the row still wears,
+/// the client's own sound manager any world's lane answers).
+fn sound_cache_line(total_count: i32, total_size: i64) -> String {
+    format!(
+        "Sound cache: {total_count} buffers, {} MiB",
+        bytes_to_megabytes(total_size)
+    )
+}
+
 /// THE PLAYER'S OWN ATTACK BASE (javap `Player.createAttributes` 3-7 —
 /// the ATTACK_DAMAGE attribute the `dconst_1` base keeps: the vanilla
 /// 1.0 the fist's own floor speaks. The client's own scale the 2.0
@@ -18685,6 +18717,30 @@ impl App {
             " (Mood {}%)",
             mood_percent(self.cave_mood.moodiness())
         ));
+        // DebugEntrySoundCache — the row the registration order wears
+        // the mood's RIGHT ride keeps (`DebugScreenEntries` clinit step
+        // 406 the mood's 391 left ride banks — the left column's own
+        // tail this row closes). THE WALK the raw bytecode speaks: the
+        // `new Counter` the `getSoundCacheDebugStats` hand-off rides,
+        // the `SoundManager → SoundEngine → SoundBufferLibrary.
+        // enumerate` chain the cache walk banks (`cache.forEach((id,
+        // future) -> buf = future.getNow(null); buf != null &&
+        // buf.isValid() → accountBuffer(id, buf.size(), buf.format()))`
+        // — the unresolved future the null skip keeps, the invalid
+        // buffer the same silence wears, the account the +1 count /
+        // +size bytes pair speaks), the word the two-arg format the
+        // `sound_cache_line` fold keeps. THE CACHE the client's own
+        // backend never fills: the static-buffer lane the
+        // `getCompleteBuffer` decode-and-hold walk banks — the
+        // client's one-shot lane decodes-and-drops instead (audio.rs's
+        // play walk the Rodio hand-off rides, no decoded-PCM pool the
+        // engine owns), the streaming music the cache never enters
+        // even in vanilla (`getStream` the separate lane keeps) — the
+        // empty cache the 0/0 word honestly answers (the count the
+        // same truth the events log's own lane never claims, the
+        // growth lane the backend's own pooling would ride).
+        let (cache_buffers, cache_bytes) = (0i32, 0i64);
+        lines.push(sound_cache_line(cache_buffers, cache_bytes));
         lines
     }
 
@@ -27846,8 +27902,87 @@ mod tests {
         // the exact word the half-machine speaks
         assert_eq!(lines[11], format!(" (Mood {}%)", mood_percent(moodiness)));
         assert_eq!(lines[11], " (Mood 50%)");
-        // the row the LAST line wears (the left column's own tail)
-        assert_eq!(lines.last().unwrap(), " (Mood 50%)");
+        // the row the SoundCache row's LEFT ride keeps (the 26.2
+        // registration order the mood's right neighbor the tail banks —
+        // the last-line word the cache row's own test pins)
+        assert_eq!(
+            lines[12],
+            "Sound cache: 0 buffers, 0 MiB",
+            "{}",
+            lines[12]
+        );
+    }
+
+    #[test]
+    fn the_sound_cache_megabytes_wear_the_ceil_law() {
+        // THE CEIL'S OWN LAW (javap `DebugEntrySoundCache.
+        // bytesToMegabytes` — the `l2d` + two `1024.0` ddivs the
+        // `Mth.ceilLong` cast banks): the partial megabyte the NEXT
+        // MiB answers, the exact boundary the same word keeps
+        assert_eq!(bytes_to_megabytes(0), 0);
+        assert_eq!(bytes_to_megabytes(1), 1);
+        assert_eq!(bytes_to_megabytes(1_048_575), 1);
+        assert_eq!(bytes_to_megabytes(1_048_576), 1);
+        assert_eq!(bytes_to_megabytes(1_048_577), 2);
+        assert_eq!(bytes_to_megabytes(2_097_152), 2);
+        assert_eq!(bytes_to_megabytes(5 * 1_048_576), 5);
+
+        // THE WORD (the display walk's `String.format(Locale.ROOT,
+        // "Sound cache: %d buffers, %d MiB", ...)` — the CP's #33
+        // utf8 verbatim, the count the first slot, the megabyte ceil
+        // the second): the empty cache the 0/0 word wears, the
+        // nonzero census the ceil's own answer rides
+        assert_eq!(sound_cache_line(0, 0), "Sound cache: 0 buffers, 0 MiB");
+        assert_eq!(
+            sound_cache_line(3, 3 * 1_048_576 + 5),
+            "Sound cache: 3 buffers, 4 MiB"
+        );
+    }
+
+    #[test]
+    fn the_f3_sound_cache_row_closes_the_registration_tail() {
+        // THE PLACEMENT (the DebugScreenEntries clinit's own order —
+        // SoundMood step 391 the left ride, SoundCache step 406 the
+        // right ride the left column's tail closes): the fresh
+        // offline world the row the mood's right neighbor wears, the
+        // LAST line the tail keeps, the empty cache the 0/0 word the
+        // one-shot backend honestly answers
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let lines = app.debug_lines();
+        let mood_idx = lines
+            .iter()
+            .position(|l| l.starts_with(" (Mood "))
+            .expect("the mood row the body wears");
+        assert_eq!(
+            lines[mood_idx + 1],
+            "Sound cache: 0 buffers, 0 MiB",
+            "{}",
+            lines[mood_idx + 1]
+        );
+        assert_eq!(lines.last().unwrap(), "Sound cache: 0 buffers, 0 MiB");
+
+        // THE NO-GATE LAW (the entry's own bytecode — `isAllowed`
+        // return-1, the display the `Minecraft.getInstance()` direct
+        // read: the camera/ServerLevel arms the SC/LD rows open this
+        // entry never keeps): the NETWORKED world the row still
+        // wears — the server-side gates the SC/LD rows the same walk
+        // refuses, the cache row the client's own sound manager any
+        // world's lane answers, the tail the same word closes
+        app.world_is_network = true;
+        let lines = app.debug_lines();
+        assert!(
+            !lines.iter().any(|l| l.starts_with("SC: ")),
+            "{lines:?}"
+        );
+        assert!(
+            !lines
+                .iter()
+                .any(|l| l.starts_with("Local Difficulty: ")),
+            "{lines:?}"
+        );
+        assert_eq!(lines.last().unwrap(), "Sound cache: 0 buffers, 0 MiB");
     }
 
     #[test]
