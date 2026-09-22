@@ -472,6 +472,61 @@ pub fn bonemeal_grow(id: u16, rng: &mut crate::drops::Lcg) -> Option<(u16, u8)> 
     Some((WHEAT + new_age as u16, increase))
 }
 
+/// THE HORIZONTAL PLANE'S OWN ENUM ORDER (Direction$Plane.HORIZONTAL —
+/// the faces array the shuffledCopy copies: NORTH, SOUTH, WEST, EAST
+/// the enum rows keep, the plane's own declaration order the
+/// stream().toList() walk wears).
+pub const HORIZONTAL_ENUM: [(i32, i32); 4] = [(0, -1), (0, 1), (-1, 0), (1, 0)];
+
+/// THE SUPPORTS_VEGETATION SUBSET (javap VegetationBlock.mayPlaceOn
+/// over the real 26.2 jar: the `below.is(BlockTags.SUPPORTS_VEGETATION)`
+/// read the canSurvive wears) — the honest rows the client's own
+/// palette names: the grass_block/dirt/farmland trio the tag's
+/// plains-relevant members answer, everything else the canSurvive
+/// refusal keeps.
+pub fn supports_vegetation(id: u16) -> bool {
+    matches!(id, GRASS | DIRT | FARMLAND)
+}
+
+/// THE SPREADABLE NEIGHBOUR WALK (javap
+/// BonemealableBlock.getSpreadableNeighbourPos over the real 26.2
+/// jar): the direction list's own order the caller wears, the FIRST
+/// `isEmptyBlock(nb) && state.canSurvive(level, nb)` neighbour the
+/// Optional.of answers — the canSurvive the below-cell read keeps
+/// (the SUPPORTS_VEGETATION subset the [`supports_vegetation`] law
+/// banks), the exhausted walk the Optional.empty speaks. NO draw the
+/// walk ever spends (the world reads alone the verdict rides).
+pub fn spreadable_neighbour(
+    world: &World,
+    x: i32,
+    y: i32,
+    z: i32,
+    dirs: &[(i32, i32); 4],
+) -> Option<(i32, i32, i32)> {
+    for (dx, dz) in dirs {
+        let (nx, nz) = (x + dx, z + dz);
+        if world.get(nx, y, nz) == AIR && supports_vegetation(world.get(nx, y - 1, nz)) {
+            return Some((nx, y, nz));
+        }
+    }
+    None
+}
+
+/// THE SHUFFLE'S OWN FISHER-YATES (javap Direction$Plane.shuffledCopy
+/// → Util.shuffledCopy → Util.shuffle over the real 26.2 jar): the
+/// faces array the copy wears, the descent `for i = size..2` the
+/// `swap(i-1, nextInt(i))` body keeps — the size-4 list the THREE
+/// draws spends (nextInt(4), nextInt(3), nextInt(2), that order),
+/// the shuffled order the performBonemeal's placement walk wears.
+pub fn shuffled_horizontal(rng: &mut crate::drops::Lcg) -> [(i32, i32); 4] {
+    let mut dirs = HORIZONTAL_ENUM;
+    for i in (2..=dirs.len()).rev() {
+        let j = rng.next_int(i as u64) as usize;
+        dirs.swap(i - 1, j);
+    }
+    dirs
+}
+
 /// THE GRASS BLOCK'S OWN BONE MEAL WALK — javap GrassBlock.
 /// performBonemeal over the real 26.2 jar: the 128-iteration spread
 /// the world's own tufts and blooms the right-press plants. THE WALK
@@ -489,13 +544,22 @@ pub fn bonemeal_grow(id: u16, rng: &mut crate::drops::Lcg) -> Option<(u16, u8)> 
 /// bytecode's `continue label48` jump keeps, the walk the partial
 /// steps never speaks). THE ROWS (the offsets' own order): the 1/10
 /// SHORT_GRASS row reads FIRST (the offsets 156-213 — the 1/10 draw
-/// the air check precedes) — the walked cell the tuft family wears,
-/// the draw the stream spends, the spread the BushBlock law plants:
-/// the first N/S/W/E neighbour the Direction$Plane.HORIZONTAL enum
-/// order keeps, the `isEmptyBlock` + the SUPPORTS_VEGETATION
-/// canSurvive pair (the grass/dirt/farmland subset the client's own
-/// palette names) the spread target gates, the `setBlockAndUpdate`
-/// short-grass default the lambda body wears; the AIR row (the
+/// the block-identity compare precedes: the walked cell the
+/// SHORT_GRASS block alone wears, the bush the sibling instance the
+/// compare refuses) — the fired row the walked tuft's own
+/// BonemealableBlock dispatch speaks (the offsets 197/213 the
+/// interface calls keep): the isValidBonemealTarget the
+/// hasSpreadableNeighbourPos presence wears (the enum order's own
+/// stream — NO draw the verdict spends), the performBonemeal the
+/// findSpreadableNeighbourPos walk banks — the shuffledCopy the
+/// Util.shuffle Fisher-Yates keeps (the size-4 faces the THREE draws
+/// spend: nextInt(4), nextInt(3), nextInt(2) — the swap(i-1, j) the
+/// i's descent wears), the FIRST valid neighbour the shuffled order
+/// plants (the `isEmptyBlock` + the SUPPORTS_VEGETATION canSurvive
+/// pair the grass/dirt/farmland subset the client's own palette
+/// names gates), the `setBlockAndUpdate` the walked block's own
+/// default the lambda body wears (the ONE placement the ifPresent
+/// speaks); the AIR row (the
 /// offsets 218-236) — the non-air cell the placement rows never see,
 /// the outside-height cell the isInsideBuildHeight refusal keeps;
 /// the 1/8 FLOWER row (the offset 238) — the tagged features the
@@ -545,19 +609,19 @@ pub fn bonemeal_grass_walk(
             continue;
         }
         let at = world.get(px, py, pz);
-        // THE 1/10 SHORT_GRASS ROW — the draw the air check precedes,
-        // the spread the first N/S/W/E neighbour the enum order wears
+        // THE 1/10 SHORT_GRASS ROW — the block-identity compare the
+        // draw precedes, the fired row the walked tuft's own
+        // BonemealableBlock dispatch wears: the isValidBonemealTarget
+        // the enum-order presence speaks (NO draw the verdict
+        // spends), the performBonemeal the shuffled order plants (the
+        // Fisher-Yates the three draws spends, the FIRST valid
+        // neighbour the shuffled order answers, the walked block's own
+        // default the lambda wears)
         if at == SHORT_GRASS && rng.next_int(10) == 0 {
-            // the Direction$Plane.HORIZONTAL stream's own order — the
-            // enum rows NORTH, SOUTH, WEST, EAST the plane keeps
-            const HORIZONTAL: [(i32, i32); 4] = [(0, -1), (0, 1), (-1, 0), (1, 0)];
-            for (dx, dz) in HORIZONTAL {
-                let (nx, nz) = (px + dx, pz + dz);
-                if world.get(nx, py, nz) == AIR
-                    && matches!(world.get(nx, py - 1, nz), GRASS | DIRT | FARMLAND)
-                {
-                    world.set(nx, py, nz, SHORT_GRASS);
-                    break;
+            if spreadable_neighbour(world, px, py, pz, &HORIZONTAL_ENUM).is_some() {
+                let dirs = shuffled_horizontal(rng);
+                if let Some((nx, ny, nz)) = spreadable_neighbour(world, px, py, pz, &dirs) {
+                    world.set(nx, ny, nz, at);
                 }
             }
         }
@@ -1759,8 +1823,9 @@ mod tests {
     /// alone speak on the air cells the grass-below gate answers, the
     /// full-cube cap the walk never speaks (the abort the whole
     /// i-iteration keeps), the height band the top rows refuse, the
-    /// spread the N/S/W/E order the stone-below refusal the first
-    /// valid neighbour keeps.
+    /// spread the shuffled order the stone-below refusal the
+    /// Fisher-Yates keeps (the walked tuft's own BonemealableBlock
+    /// dispatch the 1/10 row wears).
     #[test]
     fn the_bonemeal_grass_walk_wears_the_128_laws() {
         // THE FLAT PLAINS the walk's own gates wear: the stone body
@@ -1860,15 +1925,17 @@ mod tests {
         expect.set(c, top, c, GRASS);
         assert_eq!(w, expect, "the top-band origin the walk never speaks");
 
-        // THE SPREAD'S OWN ORDER LAW: the pre-placed tuft the 1/10 row
-        // reads, the north neighbour's below the stone refusal carries
-        // (the canSurvive the SUPPORTS_VEGETATION subset keeps — the
-        // walk's own below-gate the same cell refuses) — the N cell
-        // stays air across every seed, the first valid neighbour the
-        // south row answers (the Direction$Plane.HORIZONTAL enum order
-        // N/S/W/E keeps), the 64 seeds the 1/10 row fire
+        // THE SPREAD'S OWN SHUFFLE LAW: the pre-placed tuft the 1/10
+        // row reads, the north neighbour's below the stone refusal
+        // carries (the canSurvive the SUPPORTS_VEGETATION subset
+        // keeps — the walk's own below-gate the same cell refuses) —
+        // the N cell stays air across every seed, the shuffled order
+        // the placement wears (the Util.shuffle the three draws
+        // spends), the S/W/E cells the shuffle's own rotations speak
+        // across the 256 seeds, the 1/10 row the seeds fire
         let mut the_spread_fires = false;
-        for seed in 0..64u64 {
+        let (mut s_fires, mut w_fires, mut e_fires) = (false, false, false);
+        for seed in 0..256u64 {
             let (mut w, c, surface) = flat(seed);
             w.set(c, surface + 1, c, SHORT_GRASS);
             w.set(c, surface, c - 1, STONE);
@@ -1886,9 +1953,218 @@ mod tests {
             );
             if w.get(c, surface + 1, c + 1) == SHORT_GRASS {
                 the_spread_fires = true;
+                s_fires = true;
+            }
+            if w.get(c - 1, surface + 1, c) == SHORT_GRASS {
+                w_fires = true;
+            }
+            if w.get(c + 1, surface + 1, c) == SHORT_GRASS {
+                e_fires = true;
             }
         }
-        assert!(the_spread_fires, "the 1/10 row the 64 seeds fire");
+        assert!(the_spread_fires, "the 1/10 row the 256 seeds fire");
+        assert!(
+            s_fires && w_fires && e_fires,
+            "the shuffled order the S/W/E rotations speak across the seeds"
+        );
+    }
+
+    /// THE SPREAD'S OWN SHUFFLE LAW (javap BushBlock.performBonemeal →
+    /// BonemealableBlock.findSpreadableNeighbourPos →
+    /// Direction$Plane.shuffledCopy → Util.shuffledCopy → Util.shuffle
+    /// over the real 26.2 jar — the walked tuft's own
+    /// BonemealableBlock dispatch the grass walk's 1/10 row wears):
+    /// the gate the enum-order presence speaks (the N/S/W/E stream the
+    /// first-valid answer keeps, NO draw the verdict spends), the
+    /// Fisher-Yates the manual replay matches (the size-4 faces the
+    /// THREE draws spend — nextInt(4), nextInt(3), nextInt(2), the
+    /// swap(i-1, j) descent), the first valid neighbour the shuffled
+    /// order plants (the N refusal the order skips even when the
+    /// shuffle names it), the walk's own fired row the predicted cell
+    /// plants (the 1/10 draw + the three shuffle draws the same stream
+    /// spends), the walked BUSH the block-identity compare refuses
+    /// (the sibling instance the row never spreads — the ring the
+    /// below-stone refusals keep every later iteration aborted, the
+    /// world the walk never moves).
+    #[test]
+    fn the_walked_tufts_spread_wears_the_shuffle_law() {
+        // THE FLAT PLAINS the same harness the 128-walk test wears
+        let flat = |seed: u64| {
+            let mut w = World::new(1, seed);
+            let size = w.size_blocks();
+            let surface = CHUNK_Y as i32 / 2;
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..surface {
+                        w.set(x, y, z, STONE);
+                    }
+                    w.set(x, surface, z, GRASS);
+                    for y in (surface + 1)..CHUNK_Y as i32 {
+                        w.set(x, y, z, AIR);
+                    }
+                }
+            }
+            (w, size / 2, surface)
+        };
+
+        // THE GATE'S OWN ENUM ORDER: the N/S cells the stone-below
+        // refusals wear, the W cell the first-valid answer keeps — the
+        // enum order's own stream the presence check rides (the N/S/W/E
+        // rows the plane keeps, the stone-below N and S the walk skips)
+        let (mut w, c, surface) = flat(7);
+        w.set(c, surface + 1, c, SHORT_GRASS);
+        w.set(c, surface, c - 1, STONE);
+        w.set(c, surface, c + 1, STONE);
+        assert_eq!(
+            spreadable_neighbour(&w, c, surface + 1, c, &HORIZONTAL_ENUM),
+            Some((c - 1, surface + 1, c)),
+            "the N/S refusals the W row the enum order answers"
+        );
+        // THE EXHAUSTED GATE: the four below-stone refusals the None
+        // keeps — the isValidBonemealTarget PASS the empty walk speaks
+        for (dx, dz) in HORIZONTAL_ENUM {
+            w.set(c + dx, surface, c + dz, STONE);
+        }
+        assert_eq!(
+            spreadable_neighbour(&w, c, surface + 1, c, &HORIZONTAL_ENUM),
+            None,
+            "the four refusals the empty verdict keeps"
+        );
+
+        // THE FISHER-YATES THE MANUAL REPLAY MATCHES: the same seed the
+        // same three draws spends, the swap(i-1, j) descent the shuffle
+        // keeps, the shuffled order the helper answers
+        let mut expect = HORIZONTAL_ENUM;
+        let mut replay = crate::drops::Lcg::new(20250922);
+        for i in (2..=4usize).rev() {
+            let j = replay.next_int(i as u64) as usize;
+            expect.swap(i - 1, j);
+        }
+        assert_eq!(
+            shuffled_horizontal(&mut crate::drops::Lcg::new(20250922)),
+            expect,
+            "the three draws the swap descent wears"
+        );
+
+        // THE WALK'S OWN WIRING: the seed the 1/10 row's first draw
+        // fires AND the shuffled first-valid the W cell the enum
+        // order's S answer never wears (the discriminator the old law
+        // fails) — the ring the below-stone refusals keep every later
+        // iteration aborted (the walked cell's GRASS-below gate the
+        // ring refuses — the diagonal and the up steps the air belows
+        // answer), the DIRT-below S/W cells the spread's own
+        // SUPPORTS_VEGETATION subset alone answers, the walk's own run
+        // the predicted cell plants and the S cell the shuffle never
+        // names stays air
+        let mut found = false;
+        for seed in 0..4096u64 {
+            let mut probe = crate::drops::Lcg::new(seed);
+            if probe.next_int(10) != 0 {
+                continue;
+            }
+            let mut dirs = HORIZONTAL_ENUM;
+            for i in (2..=4usize).rev() {
+                let j = probe.next_int(i as u64) as usize;
+                dirs.swap(i - 1, j);
+            }
+            // the valid set the DIRT-below S/W cells wears (the N/E
+            // cells the stone-below refusals keep) — the first valid
+            // the shuffled order names the placement wears
+            let predicted = *dirs
+                .iter()
+                .find(|off| **off == (0, 1) || **off == (-1, 0))
+                .unwrap();
+            if predicted == (-1, 0) {
+                let (mut w, c, surface) = flat(seed);
+                w.set(c, surface + 1, c, SHORT_GRASS);
+                for dx in -1..=1 {
+                    for dz in -1..=1 {
+                        if dx != 0 || dz != 0 {
+                            w.set(c + dx, surface, c + dz, STONE);
+                        }
+                    }
+                }
+                w.set(c, surface, c + 1, DIRT); // the S row the subset answers
+                w.set(c - 1, surface, c, DIRT); // the W row the subset answers
+                bonemeal_grass_walk(&mut w, c, surface, c, &mut crate::drops::Lcg::new(seed));
+                assert_eq!(
+                    w.get(c - 1, surface + 1, c),
+                    SHORT_GRASS,
+                    "the shuffled first-valid the walk's own row plants"
+                );
+                found = true;
+                break;
+            }
+        }
+        assert!(found, "the shuffled first-valid the seeds never spoke");
+
+        // THE WALKED BUSH THE ROW NEVER SPREADS: the block-identity
+        // compare the sibling instance refuses (the 1/10 row the
+        // SHORT_GRASS block alone wears) — the ring the below-stone
+        // refusals keep every later iteration aborted (the diagonal
+        // and the up steps the air/stone belows answer), the bush cell
+        // the rows never speak, the world the walk never moves
+        let (mut w, c, surface) = flat(11);
+        w.set(c, surface + 1, c, BUSH);
+        for dx in -1..=1 {
+            for dz in -1..=1 {
+                if dx != 0 || dz != 0 {
+                    w.set(c + dx, surface, c + dz, STONE);
+                }
+            }
+        }
+        let expect = w.clone();
+        bonemeal_grass_walk(&mut w, c, surface, c, &mut crate::drops::Lcg::new(5));
+        assert_eq!(w, expect, "the walked bush the row never spreads");
+        // THE SAME RING THE TUFT ROW SPEAKS: the walked SHORT_GRASS
+        // the 1/10 row answers — the DIRT-below S cell the spread's own
+        // subset alone answers (the rest of the ring the walked
+        // GRASS-below gate aborts), the fired seed the ONE placement
+        // wears, the unfired seed the walk never speaks (the world's
+        // own delta the row's placement alone wears across the seeds)
+        let mut the_row_fires = false;
+        for seed in 0..64u64 {
+            let (mut w, c, surface) = flat(seed);
+            w.set(c, surface + 1, c, SHORT_GRASS);
+            for dx in -1..=1 {
+                for dz in -1..=1 {
+                    if dx != 0 || dz != 0 {
+                        w.set(c + dx, surface, c + dz, STONE);
+                    }
+                }
+            }
+            w.set(c, surface, c + 1, DIRT); // the S row the subset answers
+            let base = w.clone();
+            bonemeal_grass_walk(&mut w, c, surface, c, &mut crate::drops::Lcg::new(seed * 13 + 1));
+            assert_eq!(
+                w.get(c, surface + 1, c),
+                SHORT_GRASS,
+                "the pre-placed tuft the walk never removes"
+            );
+            let mut changed = 0;
+            for x in 0..w.size_blocks() {
+                for y in 0..CHUNK_Y as i32 {
+                    for z in 0..w.size_blocks() {
+                        if w.get(x, y, z) != base.get(x, y, z) {
+                            changed += 1;
+                        }
+                    }
+                }
+            }
+            assert!(
+                changed <= 1,
+                "the ring the row's ONE placement alone speaks — got {changed}"
+            );
+            if changed == 1 {
+                assert_eq!(
+                    w.get(c, surface + 1, c + 1),
+                    SHORT_GRASS,
+                    "the S cell the DIRT-below subset alone answers"
+                );
+                the_row_fires = true;
+            }
+        }
+        assert!(the_row_fires, "the ringed tuft row the 64 seeds fire");
     }
 
     /// THE SUPPORT TAG'S OWN SUBSET (javap VegetationBlock.mayPlaceOn
