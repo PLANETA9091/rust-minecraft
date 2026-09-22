@@ -128,6 +128,10 @@ fn solid(id: u16) -> bool {
         // — the `.noCollision()` rows the short_grass/bush chains
         // speak, the hull floats THROUGH the tufts)
         && !crate::world::is_tuft(id)
+        // THE DOUBLE PLANT FAMILY the pass keeps (the autopush-413
+        // round — the `.noCollision()` rows the tall_grass/large_fern
+        // chains speak, the hull floats THROUGH the pair)
+        && !crate::world::is_double_plant(id)
 }
 
 /// the strict intersect the block lane's own shape keeps (the AABB

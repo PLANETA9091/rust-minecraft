@@ -4643,9 +4643,13 @@ mod tests {
 
     #[test]
     fn name_of_matches_the_palette_order() {
-        // world.rs NAME_OF and the generated atlas KIND_NAMES describe the
-        // same ids in the same order — the compile-time mirror
-        assert_eq!(NAME_OF, mc_registry::generated::atlas::KIND_NAMES);
+        // world.rs NAME_OF and the generated atlas REGISTRY_NAMES describe
+        // the same ids in the same order — the compile-time mirror. The
+        // KIND_NAMES the RESOLVER's own word keeps (the half-kind suffixes
+        // the blockstate's half=upper variants ride); the REGISTRY_NAMES
+        // the dig/drop/sound lanes' word (the double plants' shared base
+        // rows both halves speak — the autopush-413 round).
+        assert_eq!(NAME_OF, mc_registry::generated::atlas::REGISTRY_NAMES);
     }
 
     #[test]

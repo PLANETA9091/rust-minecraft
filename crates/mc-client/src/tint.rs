@@ -220,14 +220,21 @@ pub fn slot_for(kind: u16, face: usize) -> Option<usize> {
     } else if kind == LEAF_LITTER && (face == 2 || face == 3) {
         // the flat model's only faces, both tintindex 0 -> the dry fold
         Some(DRY_SLOT)
-    } else if crate::world::is_tuft(kind) {
+    } else if crate::world::is_tuft(kind) || crate::world::is_double_plant(kind) {
         // THE GRASS TUFT'S OWN ROW (the autopush-412 round — the
         // audited BlockColors.createDefault() walk): the
         // `BlockTintSources.grass()` registration covers FERN/
         // SHORT_GRASS/POTTED_FERN/BUSH — the biome grass color
         // source (the GRASS_SLOT) on EVERY face of the tinted_cross
         // model (all four cross faces carry tintindex 0; the flat-stem
-        // resolution repeats the face over the six-face carrier)
+        // resolution repeats the face over the six-face carrier).
+        // THE DOUBLE PLANT'S OWN ROW (the autopush-413 round): the
+        // `BlockTintSources.doubleTallGrass()` registration covers
+        // TALL_GRASS/LARGE_FERN (the audited 2-aastore register row —
+        // the $2 source the same BiomeColors.getAverageGrassColor
+        // biome color answers, the UPPER half's pos.below() read the
+        // face_tint query's own below-shift wears) — the SAME
+        // GRASS_SLOT the tuft family keeps on every face
         Some(GRASS_SLOT)
     } else {
         // PALE_LEAVES lands here deliberately — no tint, exactly vanilla

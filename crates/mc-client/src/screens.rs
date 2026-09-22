@@ -20192,9 +20192,58 @@ impl App {
     /// destroyBlock) and the hold lane (continueDestroyBlock's
     /// completion) fold here — the singleplayer broadcast both speak.
     fn dig_break_effects(&mut self, kind: u16, pos: (i32, i32, i32)) {
+        // THE DOUBLE PLANT'S OWN PAIR LAW (javap DoublePlantBlock over
+        // the 26.2 jar — the autopush-413 round): the broken half the
+        // mate's removal wears — the UPPER's dig the
+        // preventDropFromBottomPart walk speaks (the below cell's
+        // `setBlock(Blocks.AIR.defaultBlockState(), 35)` the bytecode's
+        // own flag keeps + the `levelEvent(player, 2001, below, id)`
+        // break voice), the LOWER's dig the updateShape walk answers
+        // (the Y-neighbor read the silent removeBlock keeps — no
+        // voice, no loot). The mate the LOOT never rolls (the flag-35
+        // setBlock the dropResources walk refuses) — the broken cell
+        // alone rolls the generated row (the jar's two pools the
+        // identical hand-lane answer wears). The OFFLINE lane's own
+        // authority: the networked world's voxels are the server's
+        // (the mate's removal rides the server's own block updates).
+        let mate = if self.world_is_network {
+            None
+        } else {
+            crate::world::double_plant_mate(kind)
+        };
+        let mut mate_cell: Option<(i32, i32, i32)> = None;
+        if let (Some(world), Some(m)) = (self.offline_world.as_ref(), mate) {
+            let (mx, my, mz) = if crate::world::is_double_plant_upper(kind) {
+                (pos.0, pos.1 - 1, pos.2)
+            } else {
+                (pos.0, pos.1 + 1, pos.2)
+            };
+            if world.get(mx, my, mz) == m {
+                mate_cell = Some((mx, my, mz));
+            }
+        }
+        if let (Some(world), Some((mx, my, mz))) =
+            (self.offline_world.as_mut(), mate_cell)
+        {
+            world.set(mx, my, mz, crate::world::AIR);
+        }
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Break);
+        // THE UPPER'S OWN 2001 AT THE MATE (the preventDropFromBottomPart
+        // walk's levelEvent — the break voice the below cell wears when
+        // the UPPER half was the dug one; the LOWER's dig the silent
+        // updateShape keeps — the asymmetry the vanilla's own two arms
+        // speak). The debris burst the plant family never speaks (the
+        // particle row the TILE_NONE verdict keeps — the flowers'/tufts'
+        // own walk).
+        if mate_cell.is_some() && crate::world::is_double_plant_upper(kind) {
+            if let Some(m) = crate::world::double_plant_mate(kind) {
+                let mate_name = crate::world::NAME_OF[m as usize];
+                self.sounds
+                    .play(self.frame, mate_name, crate::sound::Lane::Break);
+            }
+        }
         // THE 2001 EVENT'S OWN BURST (javap
         // `LevelEventHandler` case 2001: the sound rides
         // FIRST, then `addDestroyBlockEffect` — the 4x4x4
@@ -20486,8 +20535,15 @@ impl App {
         // — the press the PASS verdict carries, the item lanes follow.
         // THE TUFT FAMILY the same law keeps (the autopush-412 round —
         // BushBlock is the short_grass/bush ctor class, the
-        // VegetationBlock base the same canSurvive wears).
-        if crate::world::is_flower(block) || crate::world::is_tuft(block) {
+        // VegetationBlock base the same canSurvive wears). THE DOUBLE
+        // PLANT the same law keeps (the autopush-413 round — the LOWER
+        // half the VegetationBlock fallback wears: the canSurvive's
+        // else arm the audited bytecode speaks; the placed kind is the
+        // LOWER — the item's own kind the placeable lookup answers).
+        if crate::world::is_flower(block)
+            || crate::world::is_tuft(block)
+            || crate::world::is_double_plant_lower(block)
+        {
             let below = self
                 .active_world()
                 .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
@@ -20500,11 +20556,61 @@ impl App {
                 return false;
             }
         }
+        // THE DOUBLE PLANT'S OWN UPPER-CELL GATE (javap
+        // DoublePlantBlock.getStateForPlacement over the 26.2 jar: the
+        // `getClickedPos().getY() < level.getMaxY()` read + the
+        // `level.getBlockState(pos.above()).canBeReplaced(context)`
+        // walk — the null refusal the else arm keeps): the placeAt
+        // pair never rides without the UPPER cell's give-way verdict
+        // (the air and the water the replaceable set keeps, the
+        // replaceable plants the family's own rows speak). The refusal
+        // the PASS carries — the item lane follows, nothing consumed.
+        if crate::world::is_double_plant(block) {
+            let above_free = self
+                .active_world()
+                .is_some_and(|w| {
+                    let above = w.get(cell.0, cell.1 + 1, cell.2);
+                    above == crate::world::AIR
+                        || above == crate::world::WATER
+                        || crate::world::is_replaceable(above)
+                });
+            if !above_free {
+                return false;
+            }
+        }
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            // THE DOUBLE PLANT'S OWN PAIR WALKS (the autopush-413
+            // round): the ORPHAN'S OWN CLEAR the placement-into wears
+            // (javap BlockState.updateNeighbourShapes -> the
+            // DoublePlantBlock.updateShape the Y-neighbor read keeps —
+            // the replaced half the mate's removal answers, the
+            // removeBlock the LOOT never rolls) rides BEFORE the set;
+            // the SETPLACEDBY walk the double-plant placement wears
+            // (javap setPlacedBy: the `pos.above()` setBlockAndUpdate
+            // the UPPER half's own state speaks) rides AFTER.
+            let replaced = world.get(cell.0, cell.1, cell.2);
+            if let Some(mate) = crate::world::double_plant_mate(replaced) {
+                let (mx, my, mz) = if crate::world::is_double_plant_upper(replaced) {
+                    (cell.0, cell.1 - 1, cell.2)
+                } else {
+                    (cell.0, cell.1 + 1, cell.2)
+                };
+                if world.get(mx, my, mz) == mate {
+                    world.set(mx, my, mz, crate::world::AIR);
+                }
+            }
             world.set(cell.0, cell.1, cell.2, block);
+            if crate::world::is_double_plant(block) {
+                if let Some(upper) = crate::world::double_plant_mate(block) {
+                    // the is_double_plant mate IS the upper half (the
+                    // LOWER kind the placement lane alone wears — the
+                    // placeAt walk's `pos.above()` cell)
+                    world.set(cell.0, cell.1 + 1, cell.2, upper);
+                }
+            }
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
             // THE SURVIVAL CONSUME (BlockItem.place's own shrink): the
             // held stack came from the inventory's selection — the count
@@ -49742,6 +49848,31 @@ cow_sound_variant: None,
         );
     }
 
+    /// THE CONTROLLED SCENE'S OWN CORRIDOR (the pick's block-clip
+    /// compare the vanilla law keeps — the plants the outline's
+    /// full-cube fold never passes): the body->target band the aim
+    /// corridor rides stays air (the terrain the seed's own surface
+    /// keeps, the DECOR the controlled walk clears — the tall grass
+    /// pair the decorate pass plants the controlled scenes never aim
+    /// through). The east-facing ring the seed_scene's own approach
+    /// answers — the corridor the facing's own row wears.
+    fn clear_the_aim_corridor(app: &mut App) {
+        let Some(world) = app.offline_world.as_mut() else {
+            return;
+        };
+        let Some(b) = app.body.as_ref() else {
+            return;
+        };
+        let bx = b.x.floor() as i32;
+        let bz = b.z.floor() as i32;
+        let spawn = app.spawn_y;
+        for dx in 0..=10 {
+            for dy in 0..=3 {
+                world.set(bx + dx, spawn + dy, bz, crate::world::AIR);
+            }
+        }
+    }
+
     #[test]
     fn the_crosshair_verdict_speaks_the_entity_reach_law() {
         // THE 26.2 ENTITY ARM (LocalPlayer.pick's own tail): the
@@ -49763,6 +49894,7 @@ cow_sound_variant: None,
             },
         )
         .unwrap();
+        clear_the_aim_corridor(&mut app);
         let aim_at_first = |app: &mut App| {
             let (tx, ty, tz) = {
                 let m = &app.mobs[0];
@@ -50609,6 +50741,238 @@ cow_sound_variant: None,
             Some(crate::world::BUSH),
             "the bush the placeable lookup names"
         );
+    }
+
+    #[test]
+    fn the_double_plant_placement_wears_the_two_cell_laws() {
+        // THE DOUBLE PLANT'S OWN PLACEMENT LAWS (javap DoublePlantBlock
+        // over the 26.2 jar — the autopush-413 round): the held
+        // tall_grass the grass cell PLACES THE PAIR (the LOWER the
+        // clicked cell wears, the UPPER the setPlacedBy walk's
+        // `pos.above()` cell keeps), the stone-below refusal the
+        // canSurvive gate speaks, the OCCUPIED-above refusal the
+        // getStateForPlacement's `above.canBeReplaced(context)` walk
+        // keeps, the placement-INTO the pair's replaceable rows wear
+        // (the clicked half gives way, the ORPHAN the mate's own clear
+        // removes), the dig lane's PAIR LAW the broken half answers
+        // (the mate the setBlock(35) walk clears, the LOOT the broken
+        // cell alone rolls).
+        // THE PAIR'S OWN PLACEMENT (the vertical walk — the grass
+        // surface the below-cell read answers, the air above the
+        // upper-cell gate keeps). The column the ray rides stays AIR
+        // (the natural decor the controlled walk keeps out)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/tall_grass"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for y in top..=top + 4 {
+                w.set(c, y, c, crate::world::AIR);
+            }
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the tall_grass on grass the placement consumes"
+        );
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::TALL_GRASS,
+            "the LOWER half the clicked cell wears"
+        );
+        assert_eq!(
+            w.get(c, top + 1, c),
+            crate::world::TALL_GRASS_UPPER,
+            "the UPPER half the setPlacedBy walk wears"
+        );
+
+        // THE OCCUPIED-ABOVE REFUSAL (the getStateForPlacement walk —
+        // the non-replaceable above cell the null refusal keeps): the
+        // leaves the pair's upper cell blocks, the horizontal ray the
+        // placement cell names from the SIDE (the vertical ray the
+        // leaves themselves would hit)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/tall_grass"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 1, top, c, crate::world::STONE); // the ray's own wall
+            w.set(c, top + 1, c, crate::world::LEAVES); // the blocked upper
+            for dx in -4..=0 {
+                w.set(c + dx, top, c, crate::world::AIR); // the ray's row
+            }
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                (c - 4) as f32 + 0.5,
+                top as f32 + 0.5,
+                c as f32 + 0.5,
+            ),
+            yaw: std::f32::consts::FRAC_PI_2, // facing +X (east)
+            pitch: 0.0,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the occupied above cell the upper gate refuses"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the refusal the PASS keeps — nothing placed"
+        );
+
+        // THE PLACEMENT-INTO'S OWN ORPHAN CLEAR (the updateShape walk —
+        // the replaced half the mate's removal answers): the standing
+        // pair the stone's placement breaks — the ray from above the
+        // UPPER half names (the replaceable clicked cell the placement
+        // target keeps), the stone the upper's own cell takes, the
+        // LOWER the orphan's own clear removes
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/stone"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::TALL_GRASS);
+            w.set(c, top + 1, c, crate::world::TALL_GRASS_UPPER);
+            for y in top + 2..=top + 4 {
+                w.set(c, y, c, crate::world::AIR);
+            }
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the placement into the pair's upper the press consumes"
+        );
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top + 1, c),
+            crate::world::STONE,
+            "the stone the clicked upper's cell wears"
+        );
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::AIR,
+            "the orphaned lower the mate's clear removes"
+        );
+
+        // THE DIG'S OWN PAIR LAW (the preventDropFromBottomPart walk —
+        // the UPPER's dig the below cell's removal speaks, the LOOT the
+        // broken cell alone rolls): the held hand digs the pair's
+        // upper, both cells take the air, the drop (when the 1/8 roll
+        // speaks) the wheat_seeds item wears
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::TALL_GRASS);
+            w.set(c, top + 1, c, crate::world::TALL_GRASS_UPPER);
+            for y in top + 2..=top + 6 {
+                w.set(c, y, c, crate::world::AIR);
+            }
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 6.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top + 1, c),
+            crate::world::AIR,
+            "the dug upper the dig lane clears"
+        );
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::AIR,
+            "the lower half the pair law's own removal keeps"
+        );
+        // the loot's own row (the generated table the dig lane rolls):
+        // the tall_grass/large_fern rows the pair's identical pools wear
+        for name in ["tall_grass", "large_fern"] {
+            let pools = mc_registry::generated::block_drops::drops(name)
+                .expect("the double plant's own loot row");
+            assert_eq!(pools.len(), 1, "the single pool the drop speaks");
+            assert_eq!(pools[0].entries.len(), 1, "the else arm's single entry");
+            assert_eq!(pools[0].entries[0].item, "wheat_seeds", "the seeds drop");
+            assert_eq!(pools[0].entries[0].chance, 0.125, "the 1/8 chance");
+        }
+        assert!(
+            app.drops.is_empty() || app.drops.len() == 1,
+            "the broken cell's own roll the only drop speaks"
+        );
+        for d in &app.drops {
+            assert_eq!(
+                d.item,
+                mc_registry::item_id_by_name("wheat_seeds").unwrap(),
+                "the seeds the hand lane rolls"
+            );
+        }
+
+        // THE LOWER'S OWN DIG (the horizontal ray the lower cell's side
+        // face names — the upper the ray never crosses): the pair law
+        // the ABOVE mate's silent removal wears (the updateShape walk)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::TALL_GRASS);
+            w.set(c, top + 1, c, crate::world::TALL_GRASS_UPPER);
+            // the ray's own row (the eye cell + the approach — the pair's
+            // lower cell the range never touches)
+            for dx in -4..=-1 {
+                w.set(c + dx, top, c, crate::world::AIR);
+            }
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                (c - 4) as f32 + 0.5,
+                top as f32 + 0.5,
+                c as f32 + 0.5,
+            ),
+            yaw: std::f32::consts::FRAC_PI_2, // facing +X (east)
+            pitch: 0.0,
+        });
+        app.on_press(0, 0);
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::AIR,
+            "the dug lower the dig lane clears"
+        );
+        assert_eq!(
+            w.get(c, top + 1, c),
+            crate::world::AIR,
+            "the upper half the pair law's own removal keeps"
+        );
+        // (the upper's dig the 2001 voice at the mate wears — the
+        // preventDropFromBottomPart levelEvent; the lower's dig the
+        // silent updateShape keeps — the two arms the vanilla's own
+        // asymmetry speaks)
     }
 
     #[test]
@@ -51754,6 +52118,7 @@ cow_sound_variant: None,
             },
         )
         .unwrap();
+        clear_the_aim_corridor(&mut app);
         let idx = 0;
         // the stage's own geometry: the target exactly 2.0 out along
         // the facing (full health — the swept lane's own survivor),
@@ -52491,6 +52856,7 @@ cow_sound_variant: None,
             },
         )
         .unwrap();
+        clear_the_aim_corridor(&mut app);
         let idx = 0;
         // aim at the zombie's mid height (the crit test's own walk)
         {
@@ -52598,6 +52964,7 @@ cow_sound_variant: None,
             },
         )
         .unwrap();
+        clear_the_aim_corridor(&mut app);
         let idx = 0;
         // aim at the zombie's mid height
         {

@@ -286,6 +286,10 @@ pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
         && !crate::world::is_wheat(id)
         && !crate::world::is_flower(id)
         && !crate::world::is_tuft(id)
+        // THE DOUBLE PLANT FAMILY the pass keeps (the autopush-413
+        // round — the `.noCollision()` rows the tall_grass/large_fern
+        // chains speak, the player walks the pair through)
+        && !crate::world::is_double_plant(id)
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape

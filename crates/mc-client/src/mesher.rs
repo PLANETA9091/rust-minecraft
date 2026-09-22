@@ -95,6 +95,11 @@ fn is_transparent(kind: u16) -> bool {
         // round — the tinted_cross planes non-occluding, no AO, the
         // noCollision + replaceable rows the Blocks clinit speaks)
         || crate::world::is_tuft(kind)
+        // THE DOUBLE PLANT FAMILY the same verdict keeps (the
+        // autopush-413 round — the tinted_cross planes per HALF, the
+        // noCollision + replaceable rows the Blocks clinit pc 17244/
+        // 17297 speaks, the two cells the pair wears)
+        || crate::world::is_double_plant(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -705,6 +710,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 if crate::world::is_wheat(id)
                     || crate::world::is_flower(id)
                     || crate::world::is_tuft(id)
+                    || crate::world::is_double_plant(id)
                 {
                     let tile = if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
@@ -718,7 +724,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         crate::colors::palette_color(id, 2)
                             .or_else(|| lut.and_then(|l| l.color(id, 2)))
                             .unwrap_or_else(|| default_color(id, 2))
-                    } else if crate::world::is_tuft(id) {
+                    } else if crate::world::is_tuft(id) || crate::world::is_double_plant(id) {
                         // THE TUFT'S OWN TINT CARRIER (the autopush-412
                         // round — the same shape the flat path and the
                         // cube path speak): the synced biome's grass
@@ -730,6 +736,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // audited BiomeColors.getAverageGrassColor
                         // walk — the block pos the source samples), the
                         // face-2 row the whole-cell verdict reads.
+                        // THE DOUBLE PLANT the same carrier keeps (the
+                        // autopush-413 round — the doubleTallGrass()
+                        // source the same biome color answers, the
+                        // UPPER half's pos.below() read the face_tint
+                        // query's own below-shift folds)
                         world
                             .face_tint(id, 2, wx, wy, wz)
                             .map(tint::unpack)
@@ -806,7 +817,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // cross geometry repeats, the tint the base carrier
                     // rides), the fold the baked plains look keeps
                     // no-op.
-                    if crate::world::is_flower(id) || crate::world::is_tuft(id) {
+                    if crate::world::is_flower(id)
+                        || crate::world::is_tuft(id)
+                        || crate::world::is_double_plant(id)
+                    {
                         let a = 0.8 / 16.0;
                         let b = 15.2 / 16.0;
                         let diagonals: [[(f32, f32); 2]; 2] = [
@@ -2492,6 +2506,94 @@ mod tests {
             crate::tint::slot_for(crate::world::SHORT_GRASS, 2),
             Some(crate::tint::GRASS_SLOT),
             "the tuft's grass source the slot walk answers"
+        );
+    }
+
+    #[test]
+    fn the_double_plant_cross_wears_the_half_tile_laws() {
+        // THE DOUBLE PLANT'S OWN CROSS (the autopush-413 round — the
+        // tinted_cross parent the tuft's own block/cross bake repeats,
+        // PER HALF): the tall_grass cell the same 4 quads wear (the two
+        // diagonal planes × the two windings, the corners the 0.8 inset
+        // keeps), the LOWER kind the tall_grass_bottom tile banks, the
+        // UPPER kind the tall_grass_top tile banks (the blockstate's
+        // half-keyed variants the atlas's own rows speak — the two
+        // sprites the pair wears), THE TINT the no-op rule keeps — the
+        // offline world's no-biome lane rides the identity (the baked
+        // plains pixels speak), the grass source the slot walk answers
+        // on every face (the audited doubleTallGrass register row).
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::TALL_GRASS);
+        put(&mut w, 8, 10, 8, crate::world::TALL_GRASS_UPPER);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let a = 0.8 / 16.0;
+        let b = 15.2 / 16.0;
+        let lower: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
+                    && quad.pts.iter().any(|p| p[1] == 10.0)
+            })
+            .collect();
+        let upper: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| (10.0..=11.0).contains(&p[1]))
+                    && quad.pts.iter().any(|p| p[1] == 11.0)
+            })
+            .collect();
+        assert_eq!(lower.len(), 4, "the two planes the two windings wear");
+        assert_eq!(upper.len(), 4, "the pair's upper the same bake wears");
+        let lower_tile = mc_registry::generated::atlas::FACE_TILES
+            [crate::world::TALL_GRASS as usize][2];
+        let upper_tile = mc_registry::generated::atlas::FACE_TILES
+            [crate::world::TALL_GRASS_UPPER as usize][2];
+        assert_ne!(
+            lower_tile, upper_tile,
+            "the half-keyed sprites the two tiles bank"
+        );
+        for quad in &lower {
+            for p in &quad.pts {
+                let (fx, fz) = (p[0] - 8.0, p[2] - 8.0);
+                assert!(
+                    (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
+                    "the x the diagonal corner inset keeps: {fx}"
+                );
+                assert!(
+                    (fz - a).abs() < 1e-6 || (fz - b).abs() < 1e-6,
+                    "the z the diagonal corner inset keeps: {fz}"
+                );
+            }
+            assert_eq!(quad.tile, lower_tile, "the lower half its own tile");
+        }
+        for quad in &upper {
+            assert_eq!(quad.tile, upper_tile, "the upper half its own tile");
+        }
+        // THE GRASS SOURCE'S OWN SLOTS (the audited register walk): the
+        // doubleTallGrass() source the TALL_GRASS/LARGE_FERN pair
+        // covers — the GRASS_SLOT on EVERY face both halves speak
+        for kind in [
+            crate::world::TALL_GRASS,
+            crate::world::TALL_GRASS_UPPER,
+            crate::world::LARGE_FERN,
+            crate::world::LARGE_FERN_UPPER,
+        ] {
+            for face in 0..6 {
+                assert_eq!(
+                    crate::tint::slot_for(kind, face),
+                    Some(crate::tint::GRASS_SLOT),
+                    "the double plant's grass source the slot walk answers ({kind}, {face})"
+                );
+            }
+        }
+        // THE BAKE'S OWN PIXELS (the generated tiles the plains look
+        // wears): the four masters the TINT_GRASS bake banked — the
+        // grayscale greens the tuft family's own tint speaks
+        assert_eq!(
+            mc_registry::generated::atlas::TINTS[crate::world::TALL_GRASS as usize][2],
+            0x91bd59,
+            "the plains constant the TINTS row keeps"
         );
     }
 

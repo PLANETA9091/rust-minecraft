@@ -67,6 +67,13 @@ DEFAULT_STATES = {
     # `unstable: false` row answers, the mined TNT the item the pool
     # drops)
     "tnt": {"unstable": "false"},
+    # the double-plant round's own read (javap DoublePlantBlock.<init>
+    # over the 26.2 jar: `registerDefaultState(this.stateDefinition.any()
+    # .setValue(HALF, DoubleBlockHalf.LOWER))` — the ctor's own lower
+    # half the register walk banks; the worldgen jsons' simple_state_
+    # providers the same `half=lower` state speaks)
+    "tall_grass": {"half": "lower"},
+    "large_fern": {"half": "lower"},
 }
 
 MISSING = object()
@@ -76,7 +83,7 @@ def base(cond):
     return cond["condition"].split(":")[-1]
 
 
-def cond_roll(c, defaults):
+def cond_roll(c, defaults, table_name=""):
     """A condition's hand-lane answer: True (definite pass), False
     (definite fail), or the roll chance the LCG must beat."""
     k = base(c)
@@ -89,11 +96,27 @@ def cond_roll(c, defaults):
         return c["chances"][0]  # the fortune-0 chance
     if k in ("random_chance", "random_chance_with_looting"):
         return c["chance"]  # the looting-0 base
+    if k == "location_check":
+        # THE DOUBLE PLANT'S OWN PAIR GATE (the 26.2 jar: the tall_grass
+        # and large_fern tables the ONLY block-loot location_check rows
+        # speak — each pool's offset predicate names the block's OWN
+        # pair mate: half=upper at offsetY +1, half=lower at -1). The
+        # dig lane's own truth: the pair STANDS at any diggable moment
+        # (the updateShape walk the lone half never leaves — the other
+        # half's removal breaks this one before a ray can target it),
+        # so the predicate naming the table's own block answers the
+        # definite pass. A location_check naming any OTHER block stays
+        # unresolvable (the honest False the lanes never speak).
+        pred = c.get("predicate") or {}
+        blocks = (pred.get("block") or {}).get("blocks", "")
+        if isinstance(blocks, str) and blocks.split(":")[-1] == table_name:
+            return True
+        return False
     if k == "any_of":
         # the OR answers in the BOOL domain only: a definite term wins, a
         # roll term is un-representable inside an AND (MISSING)
         for t in c["terms"]:
-            r = cond_roll(t, defaults)
+            r = cond_roll(t, defaults, table_name)
             if r is True:
                 return True
             if r is False or r is MISSING:
@@ -103,7 +126,7 @@ def cond_roll(c, defaults):
     if k == "all_of":
         chance = 1.0
         for t in c["terms"]:
-            r = cond_roll(t, defaults)
+            r = cond_roll(t, defaults, table_name)
             if r is MISSING or r is False:
                 return r
             if r is True:
@@ -111,7 +134,7 @@ def cond_roll(c, defaults):
             chance *= r
         return chance
     if k == "inverted":
-        inner = cond_roll(c["term"], defaults)
+        inner = cond_roll(c["term"], defaults, table_name)
         if inner is MISSING:
             return MISSING
         return not bool(inner)
@@ -133,12 +156,12 @@ def cond_roll(c, defaults):
     return MISSING
 
 
-def conditions_chance(conds, defaults):
+def conditions_chance(conds, defaults, table_name=""):
     """The AND of the conditions: None = the walk failed; (chance, won)
     where chance < 1.0 rides a roll."""
     chance = 1.0
     for c in conds:
-        r = cond_roll(c, defaults)
+        r = cond_roll(c, defaults, table_name)
         if r is False or r is MISSING:
             return None
         if r is True:
@@ -168,7 +191,7 @@ def count_of(entry):
     return (1, 1)
 
 
-def collect_entry(e, defaults, rows):
+def collect_entry(e, defaults, rows, table_name=""):
     """One entry into the pool's row list. Returns True when the walk is
     DEFINITELY done (a definite pass ended it)."""
     t = e.get("type", "")
@@ -182,13 +205,13 @@ def collect_entry(e, defaults, rows):
         for child in e.get("children", []):
             ct = child.get("type", "")
             if ct.endswith("alternatives"):
-                if collect_entry(child, defaults, rows):
+                if collect_entry(child, defaults, rows, table_name):
                     done = True
                     break
                 continue
             if not ct.endswith("item"):
                 continue
-            ch = conditions_chance(child.get("conditions", []), defaults)
+            ch = conditions_chance(child.get("conditions", []), defaults, table_name)
             if ch is None:
                 continue
             if ch >= 1.0:
@@ -199,7 +222,7 @@ def collect_entry(e, defaults, rows):
         return done
     if not t.endswith("item"):
         return False
-    ch = conditions_chance(e.get("conditions", []), defaults)
+    ch = conditions_chance(e.get("conditions", []), defaults, table_name)
     if ch is None:
         return False
     if ch >= 1.0:
@@ -231,12 +254,12 @@ def count_gated(entry, defaults):
     return (1, 1)
 
 
-def parse_table(doc, defaults):
+def parse_table(doc, defaults, table_name=""):
     pools = []
     for pool in doc.get("pools", []):
         pconds = pool.get("conditions", [])
         if pconds:
-            ok = conditions_chance(pconds, defaults)
+            ok = conditions_chance(pconds, defaults, table_name)
             if ok is None or ok is False or ok is MISSING:
                 continue
             if ok < 1.0:
@@ -251,7 +274,7 @@ def parse_table(doc, defaults):
             continue
         rows = []
         for e in entries:
-            if collect_entry(e, defaults, rows):
+            if collect_entry(e, defaults, rows, table_name):
                 break
         if rows:
             pools.append(rows)
@@ -268,7 +291,7 @@ def main():
     for n in tables:
         name = n.rsplit("/", 1)[1][:-5]
         doc = json.loads(z.read(n))
-        pools = parse_table(doc, DEFAULT_STATES.get(name, {}))
+        pools = parse_table(doc, DEFAULT_STATES.get(name, {}), name)
         rows.append((name, pools))
     rows.sort(key=lambda r: r[0])
 

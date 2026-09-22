@@ -8258,11 +8258,14 @@ fn blast_resistance(id: u16) -> Option<f32> {
         // instabreak() call alone makes, the 0.0 the defaults speak),
         // the GRASS TUFT FAMILY (the autopush-412 round — the
         // short_grass/bush chains the same instabreak() call wears,
-        // the 0.0 the ray marches through)
+        // the 0.0 the ray marches through), the DOUBLE PLANT FAMILY
+        // (the autopush-413 round — the tall_grass/large_fern chains
+        // the same instabreak() call wears, the shared NAME_OF row
+        // both halves answer)
         "wheat" | "wheat_stage1" | "wheat_stage2" | "wheat_stage3"
         | "wheat_stage4" | "wheat_stage5" | "wheat_stage6"
         | "wheat_stage7" | "leaf_litter" | "dandelion" | "poppy"
-        | "short_grass" | "bush" => 0.0,
+        | "short_grass" | "bush" | "tall_grass" | "large_fern" => 0.0,
         other => {
             debug_assert!(false, "unknown blast resistance for {other}");
             0.0

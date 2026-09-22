@@ -174,9 +174,39 @@ pub const POPPY: u16 = 40;
 /// lane never opens (the generated tables' own verdict — no drops).
 pub const SHORT_GRASS: u16 = 41;
 pub const BUSH: u16 = 42;
+/// THE PLAINS' OWN DOUBLE PLANT KINDS (the autopush-413 round — the
+/// atlas RUNTIME_PALETTE's 43..46 indices): the tall_grass the
+/// patch_tall_grass_2 placed feature's simple_state_provider wears, the
+/// large_fern the patch_large_fern's rarity-5 row keeps (javap the jar's
+/// worldgen json — the configured feature the `half=lower` state places,
+/// the SimpleBlockFeature's DoublePlantBlock arm the placeAt walk
+/// speaks: the LOWER cell the provider's state wears, the UPPER cell
+/// the `pos.above()` setBlock adds — the pair the TWO CELLS wear). The
+/// `_UPPER` kinds are the client's own HALF-KIND word: the blockstate's
+/// `half=upper` variant the atlas resolves (block/tall_grass_top —
+/// the upper half's own sprite), while the NAME_OF registry row keeps
+/// the BASE name (the dig row's instabreak, the drops' 1/8 wheat_seeds
+/// pool — the jar's two pools the IDENTICAL walk answers, the sounds'
+/// grass row both halves speak). The canSurvive law (javap
+/// DoublePlantBlock over the 26.2 jar): the UPPER half the below-cell
+/// read keeps (the same block at half=lower — the is() + getValue
+/// chain the bytecode speaks), the LOWER half the VegetationBlock
+/// fallback wears (the SUPPORTS_VEGETATION substrate the flowers'
+/// own law keeps). The dig lane's PAIR LAW: the broken half the
+/// mate's removal wears (the preventDropFromBottomPart walk the
+/// upper's dig speaks — setBlock(AIR, 35) + the levelEvent 2001 —
+/// the updateShape walk the lower's dig answers silently), the loot
+/// the BROKEN cell alone rolls (the setBlock(35) flag the mate's
+/// drop walk refuses). The `.replaceable()` rows the clinit pc
+/// 17244/17297 chains speak — the placement-into law the tuft
+/// family keeps, the pair the orphan's own clear wears.
+pub const TALL_GRASS: u16 = 43;
+pub const TALL_GRASS_UPPER: u16 = 44;
+pub const LARGE_FERN: u16 = 45;
+pub const LARGE_FERN_UPPER: u16 = 46;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 43] = [
+pub const NAME_OF: [&str; 47] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -185,6 +215,14 @@ pub const NAME_OF: [&str; 43] = [
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
     "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
     "dandelion", "poppy", "short_grass", "bush",
+    // THE DOUBLE PLANT'S SHARED ROWS: the upper kinds keep the BASE
+    // name — the dig row (instabreak 0.0), the drops table (the two
+    // pools the jar's identical walk answers), the sounds' grass row
+    // and the item id the pick lane grants BOTH halves speak (the
+    // blockstate's half property the atlas's own `_upper` palette
+    // name resolves — the registry lane the base block's row wears)
+    "tall_grass", "tall_grass",
+    "large_fern", "large_fern",
 ];
 
 /// The plains' own FLOWER FAMILY — the two cross kinds the decorate
@@ -216,7 +254,49 @@ pub fn is_tuft(id: u16) -> bool {
 /// arms speak (the air and the water the matches! keeps) — this fn
 /// is the PLANT family's verdict alone.
 pub fn is_replaceable(id: u16) -> bool {
-    is_tuft(id)
+    is_tuft(id) || is_double_plant(id)
+}
+
+/// The plains' own DOUBLE PLANT FAMILY — the two-cell kinds the
+/// decorate pass plants and the placeAt walk pairs (javap the Blocks
+/// clinit pc 17244/17297: the tall_grass/large_fern chains the
+/// `.replaceable()` row the tuft family wears, the offsetType(XZ) the
+/// XYZ tufts never keep). The mesher's non-cube family the same cross
+/// path meshes (the tintindex-0 faces the doubleTallGrass source
+/// answers), the collision/clip/solid lanes the noCollision law keeps.
+pub fn is_double_plant(id: u16) -> bool {
+    (TALL_GRASS..=LARGE_FERN_UPPER).contains(&id)
+}
+
+/// The LOWER HALF of the double-plant family — the cell the substrate
+/// carries (the VegetationBlock.canSurvive fallback the audited
+/// bytecode keeps), the kind the placeAt walk wears at the clicked
+/// cell.
+pub fn is_double_plant_lower(id: u16) -> bool {
+    id == TALL_GRASS || id == LARGE_FERN
+}
+
+/// The UPPER HALF — the cell the below read pairs (javap canSurvive:
+/// `below.is(this) && below.getValue(HALF) == LOWER` — the same-block
+/// chain the bytecode speaks), the kind the setPlacedBy walk wears at
+/// `pos.above()`.
+pub fn is_double_plant_upper(id: u16) -> bool {
+    id == TALL_GRASS_UPPER || id == LARGE_FERN_UPPER
+}
+
+/// THE PAIR'S OWN MATE — the opposite half's kind (`Some` the family
+/// alone answers): the TALL_GRASS pair (43 <-> 44) and the LARGE_FERN
+/// pair (45 <-> 46) the two-cell law swaps. The dig lane's
+/// preventDropFromBottomPart and the placement's orphan clear both
+/// read the verdict.
+pub fn double_plant_mate(id: u16) -> Option<u16> {
+    match id {
+        TALL_GRASS => Some(TALL_GRASS_UPPER),
+        TALL_GRASS_UPPER => Some(TALL_GRASS),
+        LARGE_FERN => Some(LARGE_FERN_UPPER),
+        LARGE_FERN_UPPER => Some(LARGE_FERN),
+        _ => None,
+    }
 }
 
 /// The crop's own AGE FAMILY — the wheat kinds the ladder wears
@@ -713,7 +793,22 @@ impl World {
     pub fn face_tint(&self, kind: u16, face: usize, wx: i32, wy: i32, wz: i32) -> Option<u32> {
         let layer = self.biomes.as_ref()?;
         let slot = tint::slot_for(kind, face)?;
-        let id = self.biome_id(layer, wx, wy, wz)?;
+        // THE DOUBLE PLANT'S OWN BELOW-SHIFT (javap
+        // BlockTintSources$2.colorInWorld over the 26.2 jar — the
+        // doubleTallGrass() source the audited walk keeps: the UPPER
+        // half's `BiomeColors.getAverageGrassColor(level, pos.below())`
+        // read the HALF compare speaks, the LOWER half's own-pos read
+        // the else arm wears — the biome color the LOWER cell's
+        // position samples for BOTH halves). The no-op rule the exact
+        // lanes keep: the offline no-biome lane and the same-biome
+        // verdict both ride the identity (the shifted query the same
+        // column's answer keeps).
+        let (qx, qy, qz) = if is_double_plant_upper(kind) {
+            (wx, wy - 1, wz)
+        } else {
+            (wx, wy, wz)
+        };
+        let id = self.biome_id(layer, qx, qy, qz)?;
         let t = layer.tints.get(id as usize)?;
         let c = t[slot]?;
         (c != atlas::TINTS[kind as usize][face]).then_some(c)
@@ -1177,6 +1272,42 @@ impl World {
                 }
             }
         }
+        // THE PLAINS' OWN TALL GRASS (the autopush-413 round — the
+        // patch_tall_grass_2 placed feature's honest stand-in — javap
+        // the jar's worldgen json the noise machinery the client's own
+        // hash lane never carries): every above-water grass column
+        // rolls (the tree roll's own hash precedent, the seed's own
+        // salt). The DENSITY the feature's own walk band: the
+        // noise_threshold_count (7 above / 0 below the -0.8 line) x the
+        // rarity-32 gate x the count-96 repeats over the trapezoid
+        // spread — the ~21 placements per 16x16 chunk the favorable
+        // band answers, the ~1/12 grass-column share the 256 columns
+        // wear. The pass runs BEFORE the tuft walk (the vanilla step-9
+        // row's own order — patch_tall_grass_2 the patch_bush/
+        // flower_plains/patch_grass_plain row's FIRST speak, the AIR
+        // gate the first-feature-wins order keeps). THE PAIR the
+        // placeAt walk wears (javap DoublePlantBlock.placeAt: the
+        // LOWER state the clicked cell setBlock speaks, the UPPER the
+        // `pos.above()` setBlock adds — both cells the AIR gate the
+        // feature's matching_block_tag predicate keeps).
+        for wx in 0..n {
+            for wz in 0..n {
+                let top = self.height(wx, wz);
+                if top <= WATER_LEVEL {
+                    continue; // the beach/water columns the patch never plants
+                }
+                if self.get(wx, top, wz) != GRASS {
+                    continue; // the canSurvive substrate the LOWER half demands
+                }
+                if hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F30) % 12 != 0 {
+                    continue;
+                }
+                if self.get(wx, top + 1, wz) == AIR && self.get(wx, top + 2, wz) == AIR {
+                    self.set(wx, top + 1, wz, TALL_GRASS);
+                    self.set(wx, top + 2, wz, TALL_GRASS_UPPER);
+                }
+            }
+        }
         // THE PLAINS' OWN GRASS TUFT (the autopush-412 round — the
         // patch_grass_plain + patch_bush placed features' honest
         // stand-in — javap the jar's worldgen json the noise machinery
@@ -1501,6 +1632,119 @@ mod tests {
             // two-chunk world — the honest sparse row
             assert!(short_grass >= 1, "the grass row alone still speaks");
         }
+    }
+
+    /// THE DOUBLE PLANT'S OWN DECORATE + REGISTRY LAWS (the autopush-413
+    /// round — the patch_tall_grass_2 placed feature's honest stand-in +
+    /// the audited family walks): the seed's replay the same world wears,
+    /// the tall grass the grass cells alone carry, the pair the TWO
+    /// cells wear (the LOWER the substrate answers, the UPPER the
+    /// below-read the placeAt law keeps), the ~1/12 band the
+    /// noise_threshold_count x rarity-32 x count-96 walk answers, the
+    /// first-feature-wins order the tuft/flower cells never cross, the
+    /// family fns the four kinds answer (the mate swap, the shared
+    /// NAME_OF row, the replaceable verdict, the placeable lookup the
+    /// LOWER kind alone wears).
+    #[test]
+    fn the_double_plant_patch_wears_the_decorate_law() {
+        // THE FAMILY'S OWN REGISTRY ROWS (the audited walks): the four
+        // kinds the range keeps, the mate the two pairs swap, the
+        // NAME_OF the BASE name both halves speak, the replaceable the
+        // clinit's `.replaceable()` rows answer, the placeable lookup
+        // the FIRST match keeps (the lower kind the placement lane
+        // wears)
+        assert!(is_double_plant(TALL_GRASS) && is_double_plant(TALL_GRASS_UPPER));
+        assert!(is_double_plant(LARGE_FERN) && is_double_plant(LARGE_FERN_UPPER));
+        assert!(!is_double_plant(SHORT_GRASS) && !is_double_plant(GRASS));
+        assert!(is_double_plant_lower(TALL_GRASS) && !is_double_plant_lower(TALL_GRASS_UPPER));
+        assert!(is_double_plant_upper(TALL_GRASS_UPPER) && !is_double_plant_upper(LARGE_FERN));
+        assert_eq!(double_plant_mate(TALL_GRASS), Some(TALL_GRASS_UPPER));
+        assert_eq!(double_plant_mate(TALL_GRASS_UPPER), Some(TALL_GRASS));
+        assert_eq!(double_plant_mate(LARGE_FERN), Some(LARGE_FERN_UPPER));
+        assert_eq!(double_plant_mate(LARGE_FERN_UPPER), Some(LARGE_FERN));
+        assert_eq!(double_plant_mate(DANDELION), None);
+        assert_eq!(NAME_OF[TALL_GRASS as usize], "tall_grass");
+        assert_eq!(NAME_OF[TALL_GRASS_UPPER as usize], "tall_grass", "the shared row");
+        assert_eq!(NAME_OF[LARGE_FERN as usize], "large_fern");
+        assert_eq!(NAME_OF[LARGE_FERN_UPPER as usize], "large_fern", "the shared row");
+        assert!(is_replaceable(TALL_GRASS) && is_replaceable(LARGE_FERN_UPPER));
+        assert!(!is_replaceable(DANDELION));
+        assert_eq!(
+            World::placeable_block("tall_grass"),
+            Some(TALL_GRASS),
+            "the first match the LOWER kind keeps"
+        );
+
+        let w = World::new(2, 42);
+        let replay = World::new(2, 42);
+        assert_eq!(w, replay, "the seed's replay the same world wears");
+        let mut lower_cells = 0;
+        let mut upper_cells = 0;
+        let mut grass_columns = 0;
+        for x in 0..w.size_blocks() {
+            for z in 0..w.size_blocks() {
+                for y in 0..w.size_blocks() {
+                    let id = w.get(x, y, z);
+                    if id == TALL_GRASS {
+                        // THE SUBSTRATE'S OWN GATE (the canSurvive
+                        // fallback the VegetationBlock base wears — the
+                        // below cell the grass block keeps)
+                        assert_eq!(
+                            w.get(x, y - 1, z),
+                            GRASS,
+                            "the lower half the grass cell alone wears"
+                        );
+                        // THE PAIR'S OWN READ (the placeAt walk — the
+                        // UPPER the `pos.above()` cell keeps)
+                        assert_eq!(
+                            w.get(x, y + 1, z),
+                            TALL_GRASS_UPPER,
+                            "the pair the two cells wear"
+                        );
+                        lower_cells += 1;
+                    } else if id == TALL_GRASS_UPPER {
+                        // THE UPPER'S OWN SUBSTRATE (the canSurvive's
+                        // upper arm: the below read the same block at
+                        // half=lower keeps)
+                        assert_eq!(
+                            w.get(x, y - 1, z),
+                            TALL_GRASS,
+                            "the upper half the lower's own cell pairs"
+                        );
+                        upper_cells += 1;
+                    }
+                    // THE FIRST-FEATURE-WINS ORDER (the vanilla step-9
+                    // row's own shape — the tall grass pass plants
+                    // BEFORE the tuft/flower walks, the taken cell the
+                    // later features' AIR gate refuses: a tuft/flower
+                    // column never wears the pair's cells)
+                    if (is_tuft(id) || is_flower(id)) && w.get(x, y - 1, z) == GRASS {
+                        assert_ne!(
+                            w.get(x, y + 1, z),
+                            TALL_GRASS_UPPER,
+                            "the pair's upper the tuft column never shares"
+                        );
+                    }
+                }
+                let top = w.height(x as i32, z as i32);
+                if top > WATER_LEVEL && w.get(x as i32, top, z as i32) == GRASS {
+                    grass_columns += 1;
+                }
+            }
+        }
+        assert_eq!(
+            lower_cells, upper_cells,
+            "the pair the two cells ALWAYS wears"
+        );
+        assert!(lower_cells >= 1, "the tall grass the patch plants");
+        // the density band (the ~2-chunk world's grass columns): the
+        // ~1/12 the noise_threshold_count x rarity-32 x count-96 walk
+        // answers
+        let share = lower_cells as f64 / grass_columns.max(1) as f64;
+        assert!(
+            (0.02..=0.25).contains(&share),
+            "the tall grass share the band keeps: {share} ({lower_cells}/{grass_columns})"
+        );
     }
 
     /// A controlled flat world: one chunk, a stone slab at y=8, the

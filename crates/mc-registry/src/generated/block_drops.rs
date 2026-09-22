@@ -1632,6 +1632,10 @@ pub static DROPS_LAPIS_ORE: [DropPool; 1] = [
     DropPool { entries: &[DropEntry { item: "lapis_lazuli", count_min: 4, count_max: 9, chance: 1.0 }] },
 ];
 
+pub static DROPS_LARGE_FERN: [DropPool; 1] = [
+    DropPool { entries: &[DropEntry { item: "wheat_seeds", count_min: 1, count_max: 1, chance: 0.125 }] },
+];
+
 pub static DROPS_LAVA_CAULDRON: [DropPool; 1] = [
     DropPool { entries: &[DropEntry { item: "cauldron", count_min: 1, count_max: 1, chance: 1.0 }] },
 ];
@@ -3354,6 +3358,10 @@ pub static DROPS_SULFUR_WALL: [DropPool; 1] = [
     DropPool { entries: &[DropEntry { item: "sulfur_wall", count_min: 1, count_max: 1, chance: 1.0 }] },
 ];
 
+pub static DROPS_TALL_GRASS: [DropPool; 1] = [
+    DropPool { entries: &[DropEntry { item: "wheat_seeds", count_min: 1, count_max: 1, chance: 0.125 }] },
+];
+
 pub static DROPS_TARGET: [DropPool; 1] = [
     DropPool { entries: &[DropEntry { item: "target", count_min: 1, count_max: 1, chance: 1.0 }] },
 ];
@@ -3913,7 +3921,7 @@ pub static DROPS_ZOMBIE_HEAD: [DropPool; 1] = [
 /// The block's hand-lane drop rows, sorted by name (the binary search's
 /// own demand). Blocks with no pools (the tool-gated table, the missing
 /// file — bedrock) drop nothing: the absence IS the vanilla's own.
-pub static BLOCK_DROPS: [(&str, &[DropPool]); 959] = [
+pub static BLOCK_DROPS: [(&str, &[DropPool]); 961] = [
     ("acacia_button", &DROPS_ACACIA_BUTTON),
     ("acacia_fence", &DROPS_ACACIA_FENCE),
     ("acacia_fence_gate", &DROPS_ACACIA_FENCE_GATE),
@@ -4314,6 +4322,7 @@ pub static BLOCK_DROPS: [(&str, &[DropPool]); 959] = [
     ("lantern", &DROPS_LANTERN),
     ("lapis_block", &DROPS_LAPIS_BLOCK),
     ("lapis_ore", &DROPS_LAPIS_ORE),
+    ("large_fern", &DROPS_LARGE_FERN),
     ("lava_cauldron", &DROPS_LAVA_CAULDRON),
     ("leaf_litter", &DROPS_LEAF_LITTER),
     ("lectern", &DROPS_LECTERN),
@@ -4734,6 +4743,7 @@ pub static BLOCK_DROPS: [(&str, &[DropPool]); 959] = [
     ("sulfur_spike", &DROPS_SULFUR_SPIKE),
     ("sulfur_stairs", &DROPS_SULFUR_STAIRS),
     ("sulfur_wall", &DROPS_SULFUR_WALL),
+    ("tall_grass", &DROPS_TALL_GRASS),
     ("target", &DROPS_TARGET),
     ("terracotta", &DROPS_TERRACOTTA),
     ("tinted_glass", &DROPS_TINTED_GLASS),

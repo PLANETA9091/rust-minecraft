@@ -106,7 +106,29 @@ use zip::ZipArchive;
 /// generated TINTS table carries the plains constant per (kind, face)
 /// (the no-op rule the client's fold keeps: the baked pixels and the
 /// resolved biome color agree at plains, the fold fires only off-plains).
-pub const RUNTIME_PALETTE: [&str; 43] = [
+/// tall_grass is kind 43, tall_grass_upper kind 44, large_fern kind 45
+/// and large_fern_upper kind 46 (the forty-fourth..forty-seventh
+/// entries, the autopush-413 round): the plains' own DOUBLE PLANTS
+/// (javap the jar's worldgen json — the patch_tall_grass_2 placed
+/// feature the plains step-9 list wears, the patch_large_fern the
+/// forest row keeps; the configured features' simple_state_providers
+/// place the `half=lower` state, the SimpleBlockFeature's
+/// DoublePlantBlock arm the placeAt walk speaks — the LOWER and the
+/// UPPER cell the pair wears). The `_upper` palette names are the
+/// client's own half-kind word (the blockstate's half=upper variant the
+/// resolver reads — the NAME_OF registry row the client's base name
+/// keeps: the dig/drop/sound lanes both halves speak the same block
+/// row). The model chain (blockstates/tall_grass.json half=lower ->
+/// block/tall_grass_bottom, half=upper -> block/tall_grass_top;
+/// large_fern the same chain's own rows) is the tuft's own tinted_cross
+/// bake per HALF: the two diagonal plane elements, `shade: false`,
+/// `ambientocclusion: false`, the tintindex-0 faces — vanilla's
+/// `BlockColors.createDefault()` registers `BlockTintSources.
+/// doubleTallGrass()` for TALL_GRASS + LARGE_FERN (the audited 2-aastore
+/// register row; the $2 source's colorInWorld the UPPER half's
+/// `pos.below()` read keeps) — so the four grayscale masters ride the
+/// TINT_GRASS bake exactly the short_grass row speaks.
+pub const RUNTIME_PALETTE: [&str; 47] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -115,6 +137,7 @@ pub const RUNTIME_PALETTE: [&str; 43] = [
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
     "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
     "dandelion", "poppy", "short_grass", "bush",
+    "tall_grass", "tall_grass_upper", "large_fern", "large_fern_upper",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -153,6 +176,15 @@ fn tint_for_texture(stem: &str) -> u32 {
         // register walk: FERN/SHORT_GRASS/POTTED_FERN/BUSH all ride
         // the biome grass color source)
         "short_grass" | "bush" => TINT_GRASS,
+        // THE DOUBLE PLANT'S OWN ROW (the autopush-413 round): the
+        // half-models' grayscale masters the BlockTintSources.
+        // doubleTallGrass() source tints in-world — the SAME
+        // TINT_GRASS the tuft row speaks (the audited register walk:
+        // the TALL_GRASS/LARGE_FERN pair the 2-aastore row keeps; the
+        // $2 source's colorInWorld the UPPER half's pos.below() read
+        // the client's own below-shift folds)
+        "tall_grass_bottom" | "tall_grass_top" | "large_fern_bottom"
+        | "large_fern_top" => TINT_GRASS,
         _ => 0,
     }
 }
@@ -538,6 +570,61 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, true));
             continue;
         }
+        if block == "tall_grass" || block == "tall_grass_upper" || block == "large_fern"
+            || block == "large_fern_upper"
+        {
+            // THE PLAINS' OWN DOUBLE PLANTS (the autopush-413 round, the
+            // official 26.2 jar): the blockstate is a HALF-KEYED variant
+            // map ("half=lower" -> block/tall_grass_bottom, "half=upper"
+            // -> block/tall_grass_top; large_fern the same chain's own
+            // rows) — the `_upper` palette name the half=upper variant
+            // resolves (the base name the half=lower row keeps). Each
+            // model's PARENT is block/tinted_cross: the tuft's own cross
+            // bake (the two diagonal plane elements, the 45° rotY +
+            // rescale fold, `shade: false` faces under model-level
+            // `ambientocclusion: false`) PLUS the tint — the faces carry
+            // `tintindex: 0`, the grayscale masters ride the TINT_GRASS
+            // bake (tint_for_texture's row) and the resolved faces
+            // record `tinted = true`. The texture stem resolves through
+            // the REAL chain (the variant's model ref -> the merged
+            // texture map's `cross` ref).
+            let base = block
+                .strip_suffix("_upper")
+                .unwrap_or(&block);
+            let half_key = if block.ends_with("_upper") {
+                "half=upper"
+            } else {
+                "half=lower"
+            };
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{base}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {base}: json parse"))?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(half_key))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate {base}: no {half_key} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {base}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("cross")
+                .with_context(|| format!("model {model_ref}: no cross texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            // the tinted_cross parent's own verdict — the faces carry
+            // tintindex 0, the master the TINT_GRASS bake wears
+            debug_assert!(tint_for_texture(&stem) == TINT_GRASS);
+            faces.push(resolve_flat_stem(&stem, true));
+            continue;
+        }
         faces.push(resolve_block(&mut archive, block)?);
     }
 
@@ -708,9 +795,11 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
          pub const TILE_NONE: u16 = u16::MAX;\n\
          pub const N_KINDS: usize = {};\n\
          pub const KIND_NAMES: [&str; N_KINDS] = {:?};\n\n\
+         pub const REGISTRY_NAMES: [&str; N_KINDS] = {:?};\n\n\
          pub const FACE_TILES: [[u16; 6]; N_KINDS] = [\n",
         RUNTIME_PALETTE.len(),
-        RUNTIME_PALETTE
+        RUNTIME_PALETTE,
+        registry_names()
     ));
     for ft in &face_tiles {
         src.push_str(&format!("    [{}, {}, {}, {}, {}, {}],\n", ft[0], ft[1], ft[2], ft[3], ft[4], ft[5]));
@@ -796,6 +885,7 @@ pub fn fallback_source(version: &str) -> String {
          pub const TILE_NONE: u16 = u16::MAX;\n\
          pub const N_KINDS: usize = {};\n\
          pub const KIND_NAMES: [&str; N_KINDS] = {:?};\n\
+         pub const REGISTRY_NAMES: [&str; N_KINDS] = {:?};\n\
          pub const FACE_TILES: [[u16; 6]; N_KINDS] = [[TILE_NONE; 6]; N_KINDS];\n\
          pub const TINTS: [[u32; 6]; N_KINDS] = [[0; 6]; N_KINDS];\n\
          pub static TILES: [&[u8]; 0] = [];\n\
@@ -804,8 +894,25 @@ pub fn fallback_source(version: &str) -> String {
          pub fn tile_rgba(idx: u16) -> &'static [u8] {{ TILES[idx as usize] }}\n\
          pub fn tile_name(idx: u16) -> &'static str {{ TILE_NAMES[idx as usize] }}\n",
         RUNTIME_PALETTE.len(),
-        RUNTIME_PALETTE
+        RUNTIME_PALETTE,
+        registry_names()
     )
+}
+
+/// THE REGISTRY NAME'S OWN WORD — the dig/drop/sound/item lanes' row
+/// both halves speak: the half-kind kinds the palette carries (the
+/// `_upper` suffix the blockstate's half=upper variant resolves) map
+/// to the BASE block name the jar's registry rows answer (the
+/// tall_grass/large_fern chains the instabreak + replaceable rows
+/// wear — the two loot pools the identical walk keeps, the grass
+/// sound row both halves speak). Every other kind the base name IS
+/// the palette name.
+fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
+    let mut names = [""; RUNTIME_PALETTE.len()];
+    for (i, name) in RUNTIME_PALETTE.iter().enumerate() {
+        names[i] = name.strip_suffix("_upper").unwrap_or(name);
+    }
+    names
 }
 
 #[cfg(test)]
