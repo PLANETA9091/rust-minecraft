@@ -11043,7 +11043,24 @@ impl App {
         // stale procedural mesh is also rebuilt — the guard keeps each
         // terrain source out of the other's screen)
         if self.world_is_network || self.world_quads.is_none() {
-            let world = crate::world::World::new(WORLD_CHUNKS, self.seed);
+            let mut world = crate::world::World::new(WORLD_CHUNKS, self.seed);
+            // THE OFFLINE LIGHT ENGINE'S OWN GRID (the deferred lane the
+            // torch rounds named): the sky column + the block flood the
+            // integrated-server fiction computes at the world's spawn —
+            // the shadows, the dark caves, the placed torch's own glow
+            // the mesher's smooth-lighting lane consumes (the wire
+            // world's same consumer).
+            world.relight();
+            // THE OVERWORLD'S OWN AMBIENT BASE: the integrated server's
+            // dimension the generated table answers (the jar's
+            // `visual/ambient_light_color` #0a0a0a — the lightmap's
+            // max(AmbientColor, ...) floor the shader speaks; the None
+            // black the raw procedural scene kept). The outdoor faces
+            // clamp at 1.0 whatever the base rides — the day look the
+            // goldens spoke holds bit for bit; the caves' floor the
+            // base lifts off the pitch black.
+            world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
+                .map(|d| d.ambient_light_color);
             self.world_size = world.size_blocks();
             self.spawn_y = top_solid_y(&world, self.world_size / 2, self.world_size / 2);
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
@@ -20204,7 +20221,12 @@ impl App {
     /// rhythm — the networked world's mesh is the server's refresh).
     pub fn remesh_offline(&mut self) {
         if !self.world_is_network {
-            if let Some(world) = self.offline_world.as_ref() {
+            if let Some(world) = self.offline_world.as_mut() {
+                // THE RELIGHT BEFORE THE RE-SPEAK: the edits the last
+                // tick set ride the light grid the same walk refreshes
+                // (the torch's flood, the dug cell's daylight) — the
+                // mesh the refreshed grid bakes.
+                world.relight();
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
         }
@@ -20656,6 +20678,7 @@ impl App {
                     world.set(cell.0, cell.1 + 1, cell.2, upper);
                 }
             }
+            world.relight(); // the placed torch's own flood the same re-speak bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
             // THE SURVIVAL CONSUME (BlockItem.place's own shrink): the
             // held stack came from the inventory's selection — the count
@@ -20743,6 +20766,7 @@ impl App {
         // edit)
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(hit.pos.0, hit.pos.1, hit.pos.2, result);
+            world.relight(); // the convert's own re-speak the refreshed grid bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
         Some(true)
@@ -20826,6 +20850,7 @@ impl App {
         // server's chunk refresh — no local edit)
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(cell.0, cell.1, cell.2, crate::world::WHEAT);
+            world.relight(); // the crop's own re-speak the refreshed grid bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
             // THE SURVIVAL CONSUME (BlockItem.place's own
             // ItemStack.consume(1)): the seeds' own stack rides down,
@@ -20902,6 +20927,7 @@ impl App {
             // edit)
             if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
                 world.set(hit.pos.0, hit.pos.1, hit.pos.2, kind);
+                world.relight(); // the grow's own re-speak the refreshed grid bakes
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
             // THE LEVEL EVENT'S OWN SLOT (the useOn walk's own order —
@@ -20947,6 +20973,7 @@ impl App {
                         hit.pos.2,
                         &mut self.crop_rng,
                     );
+                    world.relight(); // the spread's own re-speak the refreshed grid bakes
                     self.world_quads = Some(crate::mesher::mesh_world(world, None));
                 }
                 // THE LEVEL EVENT'S OWN SLOT (the useOn walk's second
@@ -21124,6 +21151,7 @@ impl App {
         // networked world's prime the server's own walk answers)
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::AIR);
+            world.relight(); // the prime's own re-speak the refreshed grid bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
         let id = self.next_mob_id;

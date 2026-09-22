@@ -1156,6 +1156,18 @@ impl World {
         w
     }
 
+    /// THE OFFLINE WORLD'S OWN RELIGHT — the light engine's grid the
+    /// world carries from the act that owns it ([`crate::light::compute`]
+    /// the sky column + the block flood walks) and re-walks after every
+    /// edit the mesh re-speaks. `World::new` itself keeps the honest
+    /// None (the raw procedural scene — the bare orbit lane's golden
+    /// contract): the WORLD SCREEN's construction and the offline edit
+    /// lanes call this before their remesh, the integrated-server
+    /// fiction the offline lane wears.
+    pub fn relight(&mut self) {
+        self.light = Some(crate::light::compute(self));
+    }
+
     pub fn size_blocks(&self) -> i32 {
         (self.chunks_per_side * CHUNK_X) as i32
     }
