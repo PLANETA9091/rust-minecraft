@@ -1,0 +1,340 @@
+=== serverTick (Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;)V ===
+    0 aload_0
+    1 aload_1
+    2 aload_2
+    3 invokevirtual #101  net/minecraft/world/level/BaseSpawner.isNearPlayer (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Z
+    6 ifeq #10
+    9 aload_1
+   10 invokevirtual #143  net/minecraft/server/level/ServerLevel.isSpawnerBlockEnabled ()Z
+   13 ifne #4
+   16 return
+   17 aload_0
+   18 getfield #11  net/minecraft/world/level/BaseSpawner.spawnDelay I
+   21 iconst_m1
+   22 if_icmpne #9
+   25 aload_0
+   26 aload_1
+   27 aload_2
+   28 invokevirtual #149  net/minecraft/world/level/BaseSpawner.delay (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+   31 aload_0
+   32 getfield #11  net/minecraft/world/level/BaseSpawner.spawnDelay I
+   35 ifle #14
+   38 aload_0
+   39 dup
+   40 getfield #11  net/minecraft/world/level/BaseSpawner.spawnDelay I
+   43 iconst_1
+   44 isub
+   45 putfield #11  net/minecraft/world/level/BaseSpawner.spawnDelay I
+   48 return
+   49 iconst_0
+   50 istore_3
+   51 aload_1
+   52 invokevirtual #153  net/minecraft/server/level/ServerLevel.getRandom ()Lnet/minecraft/util/RandomSource;
+   55 astore 4
+   57 aload_0
+   58 aload_1
+   59 aload 4
+   61 aload_2
+   62 invokevirtual #43  net/minecraft/world/level/BaseSpawner.getOrCreateNextSpawnData (Lnet/minecraft/world/level/Level;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/SpawnData;
+   65 astore 5
+   67 iconst_0
+   68 istore 6
+   70 iload 6
+   72 aload_0
+   73 getfield #31  net/minecraft/world/level/BaseSpawner.spawnCount I
+   76 if_icmpge #660
+   79 new #154  net/minecraft/util/ProblemReporter$ScopedCollector
+   82 dup
+   83 aload_0
+   84 invokedynamic #156
+   89 getstatic #160  net/minecraft/world/level/BaseSpawner.LOGGER Lorg/slf4j/Logger;
+   92 invokespecial #164  net/minecraft/util/ProblemReporter$ScopedCollector.<init> (Lnet/minecraft/util/ProblemReporter$PathElement;Lorg/slf4j/Logger;)V
+   95 astore 7
+   97 aload 7
+   99 aload_1
+  100 invokevirtual #167  net/minecraft/server/level/ServerLevel.registryAccess ()Lnet/minecraft/core/RegistryAccess;
+  103 aload 5
+  105 invokevirtual #47  net/minecraft/world/level/SpawnData.getEntityToSpawn ()Lnet/minecraft/nbt/CompoundTag;
+  108 invokestatic #171  net/minecraft/world/level/storage/TagValueInput.create (Lnet/minecraft/util/ProblemReporter;Lnet/minecraft/core/HolderLookup$Provider;Lnet/minecraft/nbt/CompoundTag;)Lnet/minecraft/world/level/storage/ValueInput;
+  111 astore 8
+  113 aload 8
+  115 invokestatic #177  net/minecraft/world/entity/EntityType.by (Lnet/minecraft/world/level/storage/ValueInput;)Ljava/util/Optional;
+  118 astore 9
+  120 aload 9
+  122 invokevirtual #183  java/util/Optional.isEmpty ()Z
+  125 ifeq #15
+  128 aload_0
+  129 aload_1
+  130 aload_2
+  131 invokevirtual #149  net/minecraft/world/level/BaseSpawner.delay (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+  134 aload 7
+  136 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  139 return
+  140 aload 8
+  142 ldc #191 = Pos
+  144 getstatic #193  net/minecraft/world/phys/Vec3.CODEC Lcom/mojang/serialization/Codec;
+  147 invokeinterface net/minecraft/world/level/storage/ValueInput.read (Ljava/lang/String;Lcom/mojang/serialization/Codec;)Ljava/util/Optional;
+  152 aload_0
+  153 aload_2
+  154 aload 4
+  156 invokedynamic #205
+  161 invokevirtual #208  java/util/Optional.orElseGet (Ljava/util/function/Supplier;)Ljava/lang/Object;
+  164 checkcast #194  net/minecraft/world/phys/Vec3
+  167 astore 10
+  169 aload_1
+  170 aload 9
+  172 invokevirtual #212  java/util/Optional.get ()Ljava/lang/Object;
+  175 checkcast #178  net/minecraft/world/entity/EntityType
+  178 aload 10
+  180 getfield #215  net/minecraft/world/phys/Vec3.x D
+  183 aload 10
+  185 getfield #218  net/minecraft/world/phys/Vec3.y D
+  188 aload 10
+  190 getfield #221  net/minecraft/world/phys/Vec3.z D
+  193 invokevirtual #224  net/minecraft/world/entity/EntityType.getSpawnAABB (DDD)Lnet/minecraft/world/phys/AABB;
+  196 invokevirtual #228  net/minecraft/server/level/ServerLevel.noCollision (Lnet/minecraft/world/phys/AABB;)Z
+  199 ifne #11
+  202 aload 7
+  204 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  207 goto #523
+  210 aload 10
+  212 invokestatic #232  net/minecraft/core/BlockPos.containing (Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+  215 astore 11
+  217 aload 5
+  219 invokevirtual #236  net/minecraft/world/level/SpawnData.getCustomSpawnRules ()Ljava/util/Optional;
+  222 invokevirtual #240  java/util/Optional.isPresent ()Z
+  225 ifeq #73
+  228 aload 9
+  230 invokevirtual #212  java/util/Optional.get ()Ljava/lang/Object;
+  233 checkcast #178  net/minecraft/world/entity/EntityType
+  236 invokevirtual #243  net/minecraft/world/entity/EntityType.getCategory ()Lnet/minecraft/world/entity/MobCategory;
+  239 invokevirtual #247  net/minecraft/world/entity/MobCategory.isFriendly ()Z
+  242 ifne #21
+  245 aload_1
+  246 invokevirtual #252  net/minecraft/server/level/ServerLevel.getDifficulty ()Lnet/minecraft/world/Difficulty;
+  249 getstatic #256  net/minecraft/world/Difficulty.PEACEFUL Lnet/minecraft/world/Difficulty;
+  252 if_acmpne #11
+  255 aload 7
+  257 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  260 goto #470
+  263 aload 5
+  265 invokevirtual #236  net/minecraft/world/level/SpawnData.getCustomSpawnRules ()Ljava/util/Optional;
+  268 invokevirtual #212  java/util/Optional.get ()Ljava/lang/Object;
+  271 checkcast #262  net/minecraft/world/level/SpawnData$CustomSpawnRules
+  274 astore 12
+  276 aload 12
+  278 aload 11
+  280 aload_1
+  281 invokevirtual #264  net/minecraft/world/level/SpawnData$CustomSpawnRules.isValidPosition (Lnet/minecraft/core/BlockPos;Lnet/minecraft/server/level/ServerLevel;)Z
+  284 ifne #11
+  287 aload 7
+  289 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  292 goto #438
+  295 goto #35
+  298 aload 9
+  300 invokevirtual #212  java/util/Optional.get ()Ljava/lang/Object;
+  303 checkcast #178  net/minecraft/world/entity/EntityType
+  306 aload_1
+  307 getstatic #268  net/minecraft/world/entity/EntitySpawnReason.SPAWNER Lnet/minecraft/world/entity/EntitySpawnReason;
+  310 aload 11
+  312 aload_1
+  313 invokevirtual #153  net/minecraft/server/level/ServerLevel.getRandom ()Lnet/minecraft/util/RandomSource;
+  316 invokestatic #274  net/minecraft/world/entity/SpawnPlacements.checkSpawnRules (Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Z
+  319 ifne #11
+  322 aload 7
+  324 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  327 goto #403
+  330 aload 8
+  332 aload_1
+  333 getstatic #268  net/minecraft/world/entity/EntitySpawnReason.SPAWNER Lnet/minecraft/world/entity/EntitySpawnReason;
+  336 aload 10
+  338 invokedynamic #280
+  343 invokestatic #284  net/minecraft/world/entity/EntityType.loadEntityRecursive (Lnet/minecraft/world/level/storage/ValueInput;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/world/entity/EntityProcessor;)Lnet/minecraft/world/entity/Entity;
+  346 astore 12
+  348 aload 12
+  350 ifnonnull #15
+  353 aload_0
+  354 aload_1
+  355 aload_2
+  356 invokevirtual #149  net/minecraft/world/level/BaseSpawner.delay (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+  359 aload 7
+  361 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  364 return
+  365 aload_1
+  366 aload 12
+  368 invokevirtual #288  java/lang/Object.getClass ()Ljava/lang/Class;
+  371 invokestatic #292  net/minecraft/world/level/entity/EntityTypeTest.forExactClass (Ljava/lang/Class;)Lnet/minecraft/world/level/entity/EntityTypeTest;
+  374 new #298  net/minecraft/world/phys/AABB
+  377 dup
+  378 aload_2
+  379 invokevirtual #81  net/minecraft/core/BlockPos.getX ()I
+  382 i2d
+  383 aload_2
+  384 invokevirtual #89  net/minecraft/core/BlockPos.getY ()I
+  387 i2d
+  388 aload_2
+  389 invokevirtual #92  net/minecraft/core/BlockPos.getZ ()I
+  392 i2d
+  393 aload_2
+  394 invokevirtual #81  net/minecraft/core/BlockPos.getX ()I
+  397 iconst_1
+  398 iadd
+  399 i2d
+  400 aload_2
+  401 invokevirtual #89  net/minecraft/core/BlockPos.getY ()I
+  404 iconst_1
+  405 iadd
+  406 i2d
+  407 aload_2
+  408 invokevirtual #92  net/minecraft/core/BlockPos.getZ ()I
+  411 iconst_1
+  412 iadd
+  413 i2d
+  414 invokespecial #300  net/minecraft/world/phys/AABB.<init> (DDDDDD)V
+  417 aload_0
+  418 getfield #40  net/minecraft/world/level/BaseSpawner.spawnRange I
+  421 i2d
+  422 invokevirtual #303  net/minecraft/world/phys/AABB.inflate (D)Lnet/minecraft/world/phys/AABB;
+  425 getstatic #307  net/minecraft/world/entity/EntitySelector.NO_SPECTATORS Ljava/util/function/Predicate;
+  428 invokevirtual #313  net/minecraft/server/level/ServerLevel.getEntities (Lnet/minecraft/world/level/entity/EntityTypeTest;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;
+  431 invokeinterface java/util/List.size ()I
+  436 istore 13
+  438 iload 13
+  440 aload_0
+  441 getfield #34  net/minecraft/world/level/BaseSpawner.maxNearbyEntities I
+  444 if_icmplt #15
+  447 aload_0
+  448 aload_1
+  449 aload_2
+  450 invokevirtual #149  net/minecraft/world/level/BaseSpawner.delay (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+  453 aload 7
+  455 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  458 return
+  459 aload 12
+  461 aload 12
+  463 invokevirtual #322  net/minecraft/world/entity/Entity.getX ()D
+  466 aload 12
+  468 invokevirtual #324  net/minecraft/world/entity/Entity.getY ()D
+  471 aload 12
+  473 invokevirtual #326  net/minecraft/world/entity/Entity.getZ ()D
+  476 aload 4
+  478 invokeinterface net/minecraft/util/RandomSource.nextFloat ()F
+  483 ldc_w #332 = ?
+  486 fmul
+  487 fconst_0
+  488 invokevirtual #333  net/minecraft/world/entity/Entity.snapTo (DDDFF)V
+  491 aload 12
+  493 instanceof #337  net/minecraft/world/entity/Mob
+  496 ifeq #141
+  499 aload 12
+  501 checkcast #337  net/minecraft/world/entity/Mob
+  504 astore 14
+  506 aload 5
+  508 invokevirtual #236  net/minecraft/world/level/SpawnData.getCustomSpawnRules ()Ljava/util/Optional;
+  511 invokevirtual #183  java/util/Optional.isEmpty ()Z
+  514 ifeq #23
+  517 aload 14
+  519 aload_1
+  520 getstatic #268  net/minecraft/world/entity/EntitySpawnReason.SPAWNER Lnet/minecraft/world/entity/EntitySpawnReason;
+  523 invokevirtual #339  net/minecraft/world/entity/Mob.checkSpawnRules (Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/entity/EntitySpawnReason;)Z
+  526 ifne #11
+  529 aload 7
+  531 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  534 goto #196
+  537 aload 14
+  539 aload_1
+  540 invokevirtual #342  net/minecraft/world/entity/Mob.checkSpawnObstruction (Lnet/minecraft/world/level/LevelReader;)Z
+  543 ifne #11
+  546 aload 7
+  548 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  551 goto #179
+  554 aload 5
+  556 invokevirtual #47  net/minecraft/world/level/SpawnData.getEntityToSpawn ()Lnet/minecraft/nbt/CompoundTag;
+  559 invokevirtual #346  net/minecraft/nbt/CompoundTag.size ()I
+  562 iconst_1
+  563 if_icmpne #23
+  566 aload 5
+  568 invokevirtual #47  net/minecraft/world/level/SpawnData.getEntityToSpawn ()Lnet/minecraft/nbt/CompoundTag;
+  571 ldc #55 = id
+  573 invokevirtual #347  net/minecraft/nbt/CompoundTag.getString (Ljava/lang/String;)Ljava/util/Optional;
+  576 invokevirtual #240  java/util/Optional.isPresent ()Z
+  579 ifeq #7
+  582 iconst_1
+  583 goto #4
+  586 iconst_0
+  587 istore 15
+  589 iload 15
+  591 ifeq #26
+  594 aload 12
+  596 checkcast #337  net/minecraft/world/entity/Mob
+  599 aload_1
+  600 aload_1
+  601 aload 12
+  603 invokevirtual #351  net/minecraft/world/entity/Entity.blockPosition ()Lnet/minecraft/core/BlockPos;
+  606 invokevirtual #355  net/minecraft/server/level/ServerLevel.getCurrentDifficultyAt (Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/DifficultyInstance;
+  609 getstatic #268  net/minecraft/world/entity/EntitySpawnReason.SPAWNER Lnet/minecraft/world/entity/EntitySpawnReason;
+  612 aconst_null
+  613 invokevirtual #359  net/minecraft/world/entity/Mob.finalizeSpawn (Lnet/minecraft/world/level/ServerLevelAccessor;Lnet/minecraft/world/DifficultyInstance;Lnet/minecraft/world/entity/EntitySpawnReason;Lnet/minecraft/world/entity/SpawnGroupData;)Lnet/minecraft/world/entity/SpawnGroupData;
+  616 pop
+  617 aload 5
+  619 invokevirtual #363  net/minecraft/world/level/SpawnData.getEquipment ()Ljava/util/Optional;
+  622 aload 14
+  624 dup
+  625 invokestatic #366  java/util/Objects.requireNonNull (Ljava/lang/Object;)Ljava/lang/Object;
+  628 pop
+  629 invokedynamic #372
+  634 invokevirtual #376  java/util/Optional.ifPresent (Ljava/util/function/Consumer;)V
+  637 aload_1
+  638 aload 12
+  640 invokevirtual #380  net/minecraft/server/level/ServerLevel.tryAddFreshEntityWithPassengers (Lnet/minecraft/world/entity/Entity;)Z
+  643 ifne #15
+  646 aload_0
+  647 aload_1
+  648 aload_2
+  649 invokevirtual #149  net/minecraft/world/level/BaseSpawner.delay (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+  652 aload 7
+  654 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  657 return
+  658 aload_1
+  659 sipush 2004
+  662 aload_2
+  663 iconst_0
+  664 invokevirtual #386  net/minecraft/server/level/ServerLevel.levelEvent (ILnet/minecraft/core/BlockPos;I)V
+  667 aload_1
+  668 aload 12
+  670 getstatic #390  net/minecraft/world/level/gameevent/GameEvent.ENTITY_PLACE Lnet/minecraft/core/Holder$Reference;
+  673 aload 11
+  675 invokevirtual #396  net/minecraft/server/level/ServerLevel.gameEvent (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+  678 aload 12
+  680 instanceof #337  net/minecraft/world/entity/Mob
+  683 ifeq #15
+  686 aload 12
+  688 checkcast #337  net/minecraft/world/entity/Mob
+  691 astore 14
+  693 aload 14
+  695 invokevirtual #400  net/minecraft/world/entity/Mob.spawnAnim ()V
+  698 iconst_1
+  699 istore_3
+  700 aload 7
+  702 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  705 goto #25
+  708 astore 8
+  710 aload 7
+  712 invokevirtual #188  net/minecraft/util/ProblemReporter$ScopedCollector.close ()V
+  715 goto #12
+  718 astore 9
+  720 aload 8
+  722 aload 9
+  724 invokevirtual #405  java/lang/Throwable.addSuppressed (Ljava/lang/Throwable;)V
+  727 aload 8
+  729 athrow
+  730 iinc 6 1
+  733 goto #64873
+  736 iload_3
+  737 ifeq #9
+  740 aload_0
+  741 aload_1
+  742 aload_2
+  743 invokevirtual #149  net/minecraft/world/level/BaseSpawner.delay (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+  746 return
+

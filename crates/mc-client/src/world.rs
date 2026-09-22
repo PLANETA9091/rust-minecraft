@@ -402,6 +402,58 @@ pub fn can_support_torch(below: u16) -> bool {
         && !is_torch(below)
 }
 
+/// THE COLLISION SHAPE'S OWN THREE (the vanilla `getCollisionShape`'s
+/// own answers over the client's palette — javap the 26.2 jar: the
+/// `BlockBehaviour.getCollisionShape` walk returns `hasCollision ?
+/// state.getShape(...) : Shapes.empty()`, the `Properties.noCollision()`
+/// flag the Blocks clinit rows speak — the AIR row's
+/// `.replaceable().noCollision()` chain, the water/lava rows' `.liquid()`
+/// pair, the cross-plant/tuft/double-plant/wheat/leaf-litter/torch rows'
+/// same flag — and the two column overrides the FarmlandBlock and
+/// DirtPathBlock SHAPE constants answer (`Block.column(16, 0, 15)`, the
+/// 15/16 band the clinit walk pins); the rest of the palette the
+/// default full-cube registration keeps).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CollisionShape {
+    /// The noCollision() family — the fluid, the cross plants, the
+    /// crops, the torch, the ground cover. The vanilla
+    /// `isUnobstructed`'s own shortcut answers on the empty shape
+    /// BEFORE any entity walk — the placement at the player's own cell
+    /// NEVER refuses them (the flower-at-your-feet law the cross
+    /// plants' rows speak).
+    Empty,
+    /// The column family (the farmland, the dirt path): the full 0..1
+    /// footprint under a 15/16-tall band — the `Block.column(16, 0, 15)`
+    /// the two SHAPE constants speak.
+    Column(u8),
+    /// The full-cube family — the default `Shapes.block()` registration
+    /// the collision the body's box intersects refuses.
+    Full,
+}
+
+/// The block's own COLLISION shape over the palette (the rows the
+/// enum's doc names — the placement's `isUnobstructed` walk consumes;
+/// the RAY lane's own generic predicate the visual shapes keep, the
+/// two lanes the vanilla's getShape/getCollisionShape split speaks).
+pub fn collision_shape(id: u16) -> CollisionShape {
+    if id == AIR
+        || id == WATER
+        || id == LAVA
+        || is_torch(id)
+        || is_flower(id)
+        || is_tuft(id)
+        || is_double_plant(id)
+        || is_wheat(id)
+        || id == LEAF_LITTER
+    {
+        CollisionShape::Empty
+    } else if id == FARMLAND || id == DIRT_PATH {
+        CollisionShape::Column(15)
+    } else {
+        CollisionShape::Full
+    }
+}
+
 /// THE PAIR'S OWN MATE — the opposite half's kind (`Some` the family
 /// alone answers): the TALL_GRASS pair (43 <-> 44) and the LARGE_FERN
 /// pair (45 <-> 46) the two-cell law swaps. The dig lane's
@@ -1854,6 +1906,42 @@ impl World {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    // THE COLLISION SHAPE'S OWN ROW LAW (the table the placement's
+    // obstruction walk consumes — the rows the enum's doc carries): the
+    // noCollision() family the EMPTY shape answers, the farmland/dirt
+    // path the 15/16 column, the full-cube registration the rest.
+    #[test]
+    fn the_collision_shape_rows_wear_the_no_collision_law() {
+        // THE EMPTY FAMILY: the fluids, the cross plants, the crops,
+        // the torch, the ground cover
+        for id in [
+            AIR, WATER, LAVA, TORCH, DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER,
+            ORANGE_TULIP, RED_TULIP, PINK_TULIP, WHITE_TULIP, SHORT_GRASS, BUSH, TALL_GRASS,
+            TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER, LEAF_LITTER, WHEAT, WHEAT_STAGE7,
+        ] {
+            assert_eq!(
+                collision_shape(id),
+                CollisionShape::Empty,
+                "the noCollision row {} wears",
+                NAME_OF[id as usize]
+            );
+        }
+        // THE COLUMN FAMILY: the farmland and the dirt path — the
+        // Block.column(16, 0, 15) the two SHAPE constants speak
+        assert_eq!(collision_shape(FARMLAND), CollisionShape::Column(15));
+        assert_eq!(collision_shape(DIRT_PATH), CollisionShape::Column(15));
+        // THE FULL-CUBE FAMILY: the default registration — the terrain,
+        // the foliage cubes, the machines
+        for id in [STONE, DIRT, GRASS, LOG, LEAVES, PALE_LEAVES, SAND, TNT, CRAFTING_TABLE] {
+            assert_eq!(
+                collision_shape(id),
+                CollisionShape::Full,
+                "the full-cube row {} wears",
+                NAME_OF[id as usize]
+            );
+        }
+    }
 
     /// One biome layer over a single chunk: every voxel resolved id 0,
     /// the tint table given.

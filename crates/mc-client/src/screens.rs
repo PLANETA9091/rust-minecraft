@@ -20434,6 +20434,55 @@ impl App {
         }
     }
 
+    /// THE PLACEMENT'S OWN OBSTRUCTION WALK (javap the 26.2 chain
+    /// verbatim: `BlockItem.canPlace` → `Level.isUnobstructed(state,
+    /// pos, ctx)` — the `state.getCollisionShape(...)` the walk reads
+    /// first, the EMPTY shape the shortcut answers BEFORE any entity
+    /// walk (the noCollision() family the placement at the player's own
+    /// cell NEVER refuses — the flower-at-your-feet law the cross
+    /// plants' rows speak) — the Column/Full box `move(pos)` the
+    /// `EntityGetter.isUnobstructed(null, shape)` walk tests against
+    /// EVERY collidable body's box: the `getEntities(null, bounds)` the
+    /// player's own box INCLUDES (the null the exclusion never carries)
+    /// and the mobs' boxes the same walk reads (the blocksBuilding
+    /// exemption the client's roster never sets, the
+    /// `Shapes.joinIsNotEmpty(shape, body, AND)` the strict-edge
+    /// intersect the refusal speaks). `true` = the placed shape the
+    /// body's box intersects — the canPlace refusal.
+    fn placement_obstructed(&self, block: u16, cell: (i32, i32, i32)) -> bool {
+        let shape = crate::world::collision_shape(block);
+        if shape == crate::world::CollisionShape::Empty {
+            return false;
+        }
+        let top = match shape {
+            crate::world::CollisionShape::Column(h) => h as f64 / 16.0,
+            _ => 1.0,
+        };
+        // THE PLACED BOX (the shape moved to the cell): the full
+        // 0..1 footprint, the shape's own height band
+        let (blo, bhi) = (cell.0 as f64, (cell.0 + 1) as f64);
+        let (tlo, thi) = (cell.1 as f64, cell.1 as f64 + top);
+        let (zlo, zhi) = (cell.2 as f64, (cell.2 + 1) as f64);
+        let overlaps = |(xlo, ylo, zlo2, xhi, yhi, zhi2): (f64, f64, f64, f64, f64, f64)| {
+            xlo < bhi && xhi > blo && ylo < thi && yhi > tlo && zlo2 < zhi && zhi2 > zlo
+        };
+        // the player's own body (the feet ±0.3, the height 1.8 — the
+        // body's own registration dims the walk's first candidate)
+        let eye = self.world_camera().pos;
+        let (fx, fy, fz) = (eye.x as f64, (eye.y - 1.62) as f64, eye.z as f64);
+        if overlaps((fx - 0.3, fy, fz - 0.3, fx + 0.3, fy + 1.8, fz + 0.3)) {
+            return true; // the vanilla refuses the placement into itself
+        }
+        // the mob roster's own boxes (the feet-anchored per-kind dims
+        // the box_for walk speaks — the ACTIVE world's lane the two
+        // rosters split)
+        if self.world_is_network {
+            self.net_mobs.iter().any(|m| overlaps(m.box_for()))
+        } else {
+            self.mobs.iter().any(|m| overlaps(m.box_for()))
+        }
+    }
+
     /// THE BLOCK-USE LANE — the vanilla startUseItem's block branch:
     /// the crosshair clip (the eye along the view direction, the
     /// BLOCK_INTERACTION_RANGE's 4.5), the useItemOn echo riding EVERY
@@ -20612,19 +20661,10 @@ impl App {
         if !replaceable {
             return false;
         }
-        // the entity law: the placed shape must not intersect the
-        // player's own bounding box (the feet ±0.3, the height 1.8 —
-        // the vanilla noCollision's own check, the strict edges)
-        let eye = self.world_camera().pos;
-        let feet = (eye.x as f64, (eye.y - 1.62) as f64, eye.z as f64);
-        let intersect = |pmin: f64, pmax: f64, clo: i32| {
-            (clo as f64) < pmax && ((clo + 1) as f64) > pmin
-        };
-        let hits_player = intersect(feet.0 - 0.3, feet.0 + 0.3, cell.0)
-            && intersect(feet.1, feet.1 + 1.8, cell.1)
-            && intersect(feet.2 - 0.3, feet.2 + 0.3, cell.2);
-        if hits_player {
-            return false; // the vanilla refuses the placement into itself
+        // THE ENTITY LAW'S OWN SHAPE (javap the 26.2 chain verbatim —
+        // the walk the [`App::placement_obstructed`] helper carries)
+        if self.placement_obstructed(block, cell) {
+            return false;
         }
         // THE PLANT'S OWN SURVIVAL LAW (javap VegetationBlock.canSurvive
         // the 26.2 jar speaks — the `mayPlaceOn(level.getBlockState(
@@ -43266,6 +43306,112 @@ cow_sound_variant: None,
             app.offline_world.as_ref().unwrap().get(c, top + 2, c),
             crate::world::AIR,
             "the refused cell stays air"
+        );
+    }
+
+    // THE FLOWER-AT-YOUR-FEET LAW (the canPlace chain's own split — the
+    // collision shape the obstruction walk reads): the SAME self-cell
+    // staging the dirt refusal wears — the FULL-cube dirt the refusal
+    // keeps, the DANDELION the noCollision() family's EMPTY shape
+    // answers (the isUnobstructed shortcut the entity walk never
+    // reaches) — the flower the player's own cell WEARS.
+    #[test]
+    fn the_placement_wears_the_flower_at_your_feet_law() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y; // the standing cell (the surface's top solid Y + 1)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top - 1, c),
+            crate::world::GRASS,
+            "the below cell the survival law's grass wears"
+        );
+        // THE EYE AT THE STANDING CELL'S OWN 1.62: the feet at top (the
+        // feet cell the placement cell the straight-down ray fills)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.62, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE FULL CUBE: the dirt the refusal keeps (the same law the
+        // block-use test pins, the obstruction walk's own verdict)
+        app.offline_held_updated(Some("item/dirt"));
+        assert!(
+            app.placement_obstructed(crate::world::DIRT, (c, top, c)),
+            "the dirt's full box the player's body intersects"
+        );
+        assert!(
+            !app.on_right_press(0, 0),
+            "the vanilla refuses the dirt at the feet cell"
+        );
+        // THE EMPTY SHAPE: the dandelion the shortcut answers — the
+        // placement at the player's own cell the walk NEVER refuses
+        app.offline_held_updated(Some("item/dandelion"));
+        assert!(
+            !app.placement_obstructed(crate::world::DANDELION, (c, top, c)),
+            "the dandelion's empty shape the walk never refuses"
+        );
+        assert!(app.on_right_press(0, 0), "the flower consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::DANDELION,
+            "the flower the player's own cell wears"
+        );
+    }
+
+    // THE OBSTRUCTION WALK'S OWN BODY LAW (the getEntities(null, bounds)
+    // the canPlace chain speaks): the mobs' feet-anchored boxes the
+    // placed shape's move collides with — the FULL cube the mob's cell
+    // refuses, the EMPTY shape never, the COLUMN's 15/16 band the mob's
+    // own height band intersects (the feet inside the cell), the body
+    // ABOVE the band the walk lets pass.
+    #[test]
+    fn the_obstruction_walk_refuses_the_mobs_box() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE MOB: the zombie's feet anchored at the standing cell's
+        // floor — its box (0.6 wide, 1.95 tall) fills the cell's own
+        // band; the camera parked far above keeps the player's box out
+        app.mobs.push(crate::mob::Zombie::new(
+            9,
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5,
+            3,
+        ));
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 40.0 + 1.62, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE FULL CUBE AT THE MOB'S CELL: the refusal
+        assert!(
+            app.placement_obstructed(crate::world::DIRT, (c, top, c)),
+            "the dirt's box the zombie's box intersects"
+        );
+        // THE EMPTY SHAPE: the torch the shortcut never refuses
+        assert!(
+            !app.placement_obstructed(crate::world::TORCH, (c, top, c)),
+            "the torch's empty shape never refuses"
+        );
+        // THE COLUMN'S BAND: the farmland's 15/16 the mob's feet band
+        // intersects (the feet at the cell's floor, the box [0, 0.9375])
+        assert!(
+            app.placement_obstructed(crate::world::FARMLAND, (c, top, c)),
+            "the column's band the zombie's feet intersects"
+        );
+        // THE BAND'S OWN EDGE: the mob's feet ON the column's own top
+        // (the 15/16 stand — 0.9375) — the strict-edge intersect the
+        // joinIsNotEmpty walk speaks: the body exactly ON the band the
+        // walk lets pass
+        app.mobs[0].y = top as f64 + 15.0 / 16.0;
+        assert!(
+            !app.placement_obstructed(crate::world::FARMLAND, (c, top, c)),
+            "the body on the band's edge the walk lets pass"
         );
     }
 
