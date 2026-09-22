@@ -8758,6 +8758,12 @@ impl App {
                 let mut discarded_ids: Vec<i32> = Vec::new();
                 let mut booms: Vec<(f64, f64, f64, f32)> = Vec::new();
                 let mut explosion_cells: Vec<(i32, i32, i32)> = Vec::new();
+                // THE BLAST'S OWN DROPS (javap `ServerExplosion.
+                // interactWithBlocks` the 26.2 jar speaks — the shuffled
+                // walk the loot roll serves, the collectors the pops
+                // answer): the caller's spawn lane the ItemEntities
+                // wear (the popResource law the ItemDrop::spawn keeps)
+                let mut explosion_drops: Vec<crate::mob::ExplosionDropStack> = Vec::new();
                 let mut blast_player: Option<crate::mob::ExplosionBlast> = None;
                 let mut blast_sources: Vec<(
                     i32,
@@ -8959,6 +8965,7 @@ impl App {
                                 booms.push((bx, by, bz, r));
                             }
                             explosion_cells.extend(ev.explosion_blocks.iter().copied());
+                            explosion_drops.extend(ev.explosion_drops.iter().copied());
                             if ev.blast_player.is_some() {
                                 blast_player = ev.blast_player;
                             }
@@ -9602,14 +9609,35 @@ impl App {
                 // the destruction the SILENT law wears: NO per-block
                 // dig voice, NO debris burst — the vanilla explosion
                 // the block the sound-less law removes, the drops the
-                // later round's own lane serves). The mutable borrow
-                // the same walk's own scope keeps.
+                // popResource walk the next block serves). The mutable
+                // borrow the same walk's own scope keeps.
                 if !explosion_cells.is_empty() {
                     if let Some(w) = self.offline_world.as_mut() {
                         for (bx, by, bz) in explosion_cells.iter().copied() {
                             w.set(bx, by, bz, crate::world::AIR);
                         }
                     }
+                }
+                // THE BLAST'S OWN POPS (javap `Block.popResource` the
+                // 26.2 jar speaks — the ItemEntity the collector's own
+                // cell centers, the ±0.25 nextDouble the jitter draws,
+                // the 0.125 lift the item height's half keeps, the
+                // default pickup delay the 10-tick law answers — the
+                // [`crate::drops::ItemDrop::spawn`] walk the whole law
+                // wears): the collectors the cleared cells' own loot
+                // the player's magnetism the next ticks collect
+                for d in explosion_drops.iter().copied() {
+                    let id = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn(
+                        id,
+                        d.item,
+                        d.count,
+                        d.bx,
+                        d.by,
+                        d.bz,
+                        &mut self.mob_rng,
+                    ));
                 }
                 for (word, pitch, dist, pan) in groans {
                     // the ambient groan (makeSound's own call — the
@@ -30448,6 +30476,12 @@ mod tests {
         let mut app = App::new(3);
         app.enter_world();
         app.spawn_offline_body();
+        // THE DAY CLOCK'S OWN PLATEAU (the frame == tick model the sky
+        // lane rides — the day_time_base the test pins into the flat day
+        // plateau 133..11867: the shown/hidden pair the SAME frame
+        // renders, the sky's dawn ramp the pinned clock never crosses,
+        // the diff the HUD layer ALONE answers)
+        app.day_time_base = 6000;
         let mut assets = GuiAssets::open(&root);
         let mut fb = crate::raster::Framebuf::new(640, 360);
         app.render(&mut fb, &mut assets);
@@ -30482,9 +30516,11 @@ mod tests {
             "the hidden HUD's bottom row the bare world answers: {hud_bottom_diff}"
         );
         // THE CROSSHAIR (the 15x15 the first-person frame paints, the
-        // hidden frame the world's own pixels keeps)
+        // hidden frame the world's own pixels keeps — the sprite's own
+        // 17-pixel alpha census the white cross answers, the idempotent
+        // render the HUD layer alone the diff speaks)
         let cross_diff = diff_count(&shown, &hidden, 640 / 2 - 7, 360 / 2 - 7, 15, 15);
-        assert!(cross_diff > 20, "the crosshair the bare frame skips: {cross_diff}");
+        assert!(cross_diff >= 15, "the crosshair the bare frame skips: {cross_diff}");
 
         // THE DEBUG OVERLAY'S OWN GATE (DebugScreenOverlay
         // .extractRenderState's `hud.isHidden() && gui.screen() == null`
@@ -36067,6 +36103,12 @@ mod tests {
         let Some(root) = root else { return };
         let mut app = App::new(3);
         app.enter_world();
+        // THE DAY CLOCK'S OWN PLATEAU (the frame == tick model the sky
+        // lane rides — the base the test pins into the flat day plateau
+        // 133..11867: the bare frame and the 201-tick aged frame the
+        // SAME flat sky sample, the byte-equality the fade's zero
+        // answers)
+        app.day_time_base = 6000;
         let mut assets = GuiAssets::open(&root);
         let mut fb = crate::raster::Framebuf::new(640, 360);
         app.render(&mut fb, &mut assets);
@@ -36079,13 +36121,17 @@ mod tests {
         let y = chat_line_y(360, 0);
         let hist_diff = diff_count(&bare, &fb.color, 2, y - 1, 200, 10);
         assert!(hist_diff > 40, "the chat line the band + text paints: {hist_diff}");
-        // THE 200-TICK AGE (the fade's zero the line skips — the bare
-        // world's own bytes return)
+        // THE 200-TICK AGE (the fade's zero the line skips — the band
+        // the bare world's own bytes return). The frame == tick model
+        // the sky/celestial lane rides moves the 201-tick frame's sky
+        // the band never contains — the band-level equality the chat
+        // line's own fade answers.
         app.frame += 201;
         app.render(&mut fb, &mut assets);
+        let aged_band = diff_count(&bare, &fb.color, 2, y - 1, 200, 10);
         assert_eq!(
-            bare, fb.color,
-            "the aged line the fade never draws — the bare world twice"
+            aged_band, 0,
+            "the aged line the fade never draws — the bare band returns"
         );
         app.frame -= 201;
         // THE FOCUSED INPUT (the ChatScreen's own layer — the band the

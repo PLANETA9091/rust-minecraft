@@ -2364,6 +2364,36 @@ pub struct MobEvents {
     /// law the hurt_by_mob walk keeps — the push the caller's own
     /// velocity add deals.
     pub blast_mobs: Vec<(i32, ExplosionBlast)>,
+    /// THE BLAST'S OWN ITEM DROPS (javap `ServerExplosion.
+    /// interactWithBlocks` + `BlockBehaviour.onExplosionHit` the 26.2
+    /// jar speaks — the shuffled toBlow walk the loot roll serves, the
+    /// collector the same-item merge caps, the Block.popResource the
+    /// caller's [`crate::drops::ItemDrop::spawn`] law answers): the
+    /// (block cell, item id, count) tuple per collector, the caller's
+    /// spawn lane the ItemEntities wear. The NO-TOOL law the EMPTY
+    /// ItemStack context keeps — the pickaxe gate the dig walk wears
+    /// the explosion never reads (the getDrops call the
+    /// canHarvestBlock lane never passes through).
+    pub explosion_drops: Vec<ExplosionDropStack>,
+}
+
+/// THE BLAST'S OWN COLLECTED STACK (javap `ServerExplosion.
+/// StackCollector` the 26.2 jar speaks — the (pos, stack) pair the
+/// addOrAppendStack merge banks, the popResource the pair's own spot
+/// answers): the block cell the collector wore when the merge appended
+/// it, the item the loot roll named, the count the 16-cap merge keeps.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ExplosionDropStack {
+    /// the collector's own block cell (the popResource the center
+    /// spreads — the caller's ItemDrop::spawn the ±0.25 law wears)
+    pub bx: i32,
+    pub by: i32,
+    pub bz: i32,
+    /// the rolled item (the wire item id the registry answers)
+    pub item: i32,
+    /// the merged count (the tryMerge the min(maxStackSize, 16) cap
+    /// keeps)
+    pub count: i32,
 }
 
 /// THE BLAST'S OWN PER-ENTITY WORD (javap `ServerExplosion.hurtEntities`
@@ -8097,6 +8127,23 @@ impl Zombie {
         }
         to_blow.sort_unstable();
         to_blow.dedup();
+        // THE SHUFFLE (javap `Util.shuffle` the 26.2 jar speaks — the
+        // Collections.shuffle walk `interactWithBlocks` the
+        // level-random keeps: the descending Fisher-Yates the
+        // `nextInt(i)` bound draws, the swap the (i-1, j) pair names).
+        // The destruction/drop order the shuffled walk wears — the
+        // sorted set the scan's dedup law built the shuffle erases.
+        // The level random the entity's own stream stands in (the
+        // per-ray intensity's own stand-in the scan keeps).
+        for i in (1..to_blow.len()).rev() {
+            let j = self.rng.next_int(i as u64) as usize;
+            to_blow.swap(i - 1, j);
+        }
+        // THE DROP WALK (javap `ServerExplosion.interactWithBlocks` +
+        // `BlockBehaviour.onExplosionHit` the 26.2 jar speaks — the
+        // shuffled set the loot roll serves, the collector the merge
+        // banks, the pops the walk's own tail emits)
+        events.explosion_drops = explosion_item_drops(&to_blow, radius, world, &mut self.rng);
         events.explosion_blocks = to_blow;
         events.explosion_at = Some((self.x, self.y, self.z, radius));
         // THE PLAYER'S OWN DOSE (the hurtEntities walk the query box's
@@ -8309,6 +8356,199 @@ pub fn explosion_blast_mobs(
         }
     }
     out
+}
+
+/// THE BLAST'S OWN DROP WALK (javap `ServerExplosion.
+/// interactWithBlocks` the 26.2 jar speaks — the SHUFFLED toBlow list
+/// the level-random walks, the `onExplosionHit` the per-block loot
+/// roll serves, the collector the same-item merge banks, the pops the
+/// second loop `Block.popResource`s). The walk's own laws:
+///
+/// THE LOOT ROLL (javap `ExplosionCondition.test` + `ApplyExplosionDecay.
+/// run` the 26.2 jar speaks — the raw `fcmpg`/`ifgt` pair the raw
+/// disasm answers): the EXPLOSION_RADIUS context the raw radius wears,
+/// the CONDITION's own `1.0F / f` fdiv the inverse speaks — the
+/// survives gate `nextFloat() <= 1.0F / radius` (the null radius the
+/// always-pass the `iconst_1` tail keeps), the DECAY the per-item walk
+/// the `for i in 0..count` loop rolls (`iinc loc7` the kept count).
+/// The count-1 form the survives gate alone wears, the counted form
+/// (set_count first) the decay alone wears — the unified walk the
+/// count answers: ONE draw for the count-1 stack, the per-item loop
+/// for the counted stack (the same distribution the two JSON forms
+/// speak, the draw count the same walk spends).
+///
+/// THE NO-TOOL LAW (javap `BlockBehaviour.onExplosionHit` the 26.2 jar
+/// speaks — the LootParams the TOOL `ItemStack.EMPTY` param wears, the
+/// getDrops call the canHarvestBlock lane never passes through): the
+/// pickaxe gate `DigState::correct_tool` the dig walk wears the
+/// explosion NEVER reads — the silk arm the match_tool condition
+/// refuses, the bare arm the survives gate answers (stone the
+/// cobblestone the flatten's no-silk row keeps).
+///
+/// THE WHEAT FAMILY (javap `data/.../wheat.json` the 26.2 jar speaks
+/// — the block-level `explosion_decay` function EVERY pool's stack
+/// wears, no survives_explosion anywhere): the family roll the
+/// [`crate::drops::roll_wheat_drops`] walk keeps, the decay the
+/// per-item pass answers (the mature grain + the bonus seeds, each
+/// unit the 1/radius gate rolls).
+///
+/// THE COLLECTOR MERGE (javap `addOrAppendStack` + `StackCollector.
+/// tryMerge` the 26.2 jar speaks — the earliest collector the
+/// same-item stack absorbs: `areMergable` the
+/// `collector.count + incoming.count <= incoming.maxStackSize` gate
+/// keeps (the block-item family the 64 max wears), the merge the
+/// `min(min(maxStackSize, 16) - collector.count, incoming.count)` cap
+/// answers, the shrink the leftover stack the next collector's
+/// absorbs wears, the unabsorbed remainder the NEW collector at its
+/// OWN cell appends).
+///
+/// THE POPS (javap `Block.popResource` the 26.2 jar speaks — the
+/// ItemEntity the block center spreads, the ±0.25 nextDouble the
+/// jitter draws, the item height's half the 0.125 lift keeps, the
+/// default pickup delay the 10-tick law answers): the caller's
+/// [`crate::drops::ItemDrop::spawn`] law the whole walk wears — the
+/// walk's own record the (cell, item, count) tuple keeps.
+pub fn explosion_item_drops(
+    to_blow: &[(i32, i32, i32)],
+    radius: f32,
+    world: &World,
+    rng: &mut Lcg,
+) -> Vec<ExplosionDropStack> {
+    // the survives/decay share (javap the CONDITION's own fdiv speaks —
+    // the raw radius the inverse answers)
+    let survive = 1.0f32 / radius;
+    let mut collectors: Vec<(i32, i32, i32, i32, i32)> = Vec::new();
+    for &(bx, by, bz) in to_blow {
+        let kind = world.get(bx, by, bz);
+        let rolled: Vec<(i32, i32)> = if crate::world::is_wheat(kind) {
+            // THE FAMILY'S OWN BLOCK DECAY (the wheat.json the top
+            // function wears — every pool's stack the per-item pass
+            // answers, no survives gate the pools ever read)
+            crate::drops::roll_wheat_drops(kind, rng)
+                .into_iter()
+                .filter_map(|(item, count)| {
+                    let kept = decay_blast_count(count, survive, rng);
+                    if kept > 0 {
+                        Some((item, kept))
+                    } else {
+                        None
+                    }
+                })
+                .collect()
+        } else {
+            let name = crate::world::NAME_OF[kind as usize];
+            // the table's own silence (the block the flatten never
+            // named — the air-family walk the honest empty answers)
+            let pools: &[mc_registry::generated::block_drops::DropPool] =
+                mc_registry::generated::block_drops::drops(name).unwrap_or(&[]);
+            let mut out = Vec::new();
+            for pool in pools {
+                for entry in pool.entries {
+                    // the chance gate (the flatten's own chance row —
+                    // the table_bonus/real_chance conditions the
+                    // EMPTY-tool walk answers bare)
+                    if entry.chance < 1.0 {
+                        let roll = rng.next_f32();
+                        if roll >= entry.chance {
+                            continue; // the case fails; the next row speaks
+                        }
+                    }
+                    // the count roll (the set_count function the flatten
+                    // bakes — the inclusive pair the dig walk draws)
+                    let count = rng.next_int_inclusive(entry.count_min, entry.count_max);
+                    // THE SURVIVE LAW: the count-1 stack the gate draw
+                    // answers, the counted stack the per-item decay rolls
+                    let kept = if count == 1 {
+                        if rng.next_f32() <= survive {
+                            1
+                        } else {
+                            0
+                        }
+                    } else {
+                        decay_blast_count(count, survive, rng)
+                    };
+                    if kept == 0 {
+                        // the entry's own silence — the alternatives'
+                        // next child the walk still answers (the leaves'
+                        // sapling refusal the stick row answers)
+                        continue;
+                    }
+                    if let Some(id) = mc_registry::item_id_by_name(entry.item) {
+                        out.push((id, kept));
+                    }
+                    break; // the pool spoke
+                }
+            }
+            out
+        };
+        for (item, count) in rolled {
+            merge_blast_stack(&mut collectors, item, count, (bx, by, bz));
+        }
+    }
+    collectors
+        .into_iter()
+        .map(|(bx, by, bz, item, count)| ExplosionDropStack {
+            bx,
+            by,
+            bz,
+            item,
+            count,
+        })
+        .collect()
+}
+
+/// THE DECAY'S OWN PER-ITEM LOOP (javap `ApplyExplosionDecay.run` the
+/// 26.2 jar speaks — the `for i in 0..count` walk the kept counter
+/// increments: each unit the `nextFloat() <= 1.0F / radius` draw
+/// answers, the setCount the kept total wears).
+fn decay_blast_count(count: i32, survive: f32, rng: &mut Lcg) -> i32 {
+    let mut kept = 0;
+    for _ in 0..count {
+        if rng.next_f32() <= survive {
+            kept += 1;
+        }
+    }
+    kept
+}
+
+/// THE COLLECTOR'S OWN MERGE (javap `addOrAppendStack` +
+/// `StackCollector.tryMerge` the 26.2 jar speaks — the earliest
+/// collector the same-item stack absorbs, the gate the
+/// `areMergable(count + remaining <= incoming.maxStackSize)` law keeps,
+/// the cap the `min(min(maxStackSize, 16) - collector.count,
+/// remaining)` merge answers, the shrink the leftover wears, the
+/// unabsorbed remainder the NEW collector at its OWN cell appends).
+fn merge_blast_stack(
+    collectors: &mut Vec<(i32, i32, i32, i32, i32)>,
+    item: i32,
+    count: i32,
+    pos: (i32, i32, i32),
+) {
+    // the incoming stack's own max (the block-item family the 64 max
+    // wears — the ItemStack.EMPTY-tool context the stackable items
+    // drops)
+    const MAX_STACK: i32 = 64;
+    const MERGE_CAP: i32 = 16;
+    let mut remaining = count;
+    if remaining <= 0 {
+        return;
+    }
+    for c in collectors.iter_mut() {
+        let (_, _, _, c_item, c_count) = *c;
+        // areMergable: same item + the total the incoming's max stack
+        // caps
+        if c_item == item && c_count + remaining <= MAX_STACK {
+            // the merge: the collector the min(min(max, 16) - count,
+            // remaining) cap fills, the shrink the leftover wears
+            let take = (MERGE_CAP - c_count).min(remaining);
+            c.4 += take;
+            remaining -= take;
+        }
+        if remaining == 0 {
+            return; // the stack the earlier collector empties
+        }
+    }
+    collectors.push((pos.0, pos.1, pos.2, item, remaining));
 }
 
 /// THE WOLF'S OWN PREY SCAN (javap the 26.2 `Wolf.registerGoals` the
@@ -9419,6 +9659,253 @@ mod tests {
         assert_eq!(doses.len(), 1, "the sibling the dose answers");
         assert_eq!(doses[0].0, 9, "the id the victim wears");
         assert!(doses[0].1.dose > 0.0, "the dose the seen share deals");
+    }
+
+    /// THE BLAST'S OWN DROPS (javap `ExplosionCondition.test` +
+    /// `ApplyExplosionDecay.run` the 26.2 jar speaks — the survives
+    /// gate the `nextFloat() <= 1.0F / radius` fcmpg/ifgt pair answers,
+    /// the decay the per-item loop the kept counter wears, the
+    /// NO-TOOL law the EMPTY ItemStack context keeps, the collector
+    /// the tryMerge cap banks, the pop the collector's own cell
+    /// speaks).
+    #[test]
+    fn the_explosion_drops_wear_the_survive_decay_laws() {
+        // THE NO-TOOL LAW (the pickaxe gate the dig walk wears the
+        // explosion never reads — the stone pad the bare hand never
+        // mines the blast the cobblestone the flatten's no-silk row
+        // keeps): the full explode_creeper event the drops the same
+        // record wears
+        let pad = flat_world();
+        let mut c = Zombie::new(1, 8.0, 5.0, 8.0, 13);
+        c.kind = MobKind::Creeper;
+        c.on_ground = true;
+        let close = player_at(10.0, 5.0, 8.0);
+        let mut ev = MobEvents::default();
+        c.explode_creeper(&pad, Some(&close), &mut ev);
+        assert!(
+            !ev.explosion_drops.is_empty(),
+            "the bowl the cobblestone drops answer"
+        );
+        let cobble = mc_registry::item_id_by_name("cobblestone")
+            .expect("the cobblestone item the registry answers");
+        for d in &ev.explosion_drops {
+            assert_eq!(d.item, cobble, "the blast the cobblestone keeps — NO tool gate");
+            assert!(d.count >= 1 && d.count <= 16, "the merge cap the count bounds");
+            // the collector's own cell (the bowl's solid block the
+            // scan named — the pop the same cell speaks)
+            assert_eq!(
+                pad.get(d.bx, d.by, d.bz),
+                block_id_of("stone"),
+                "the collector the scan's own cell wears"
+            );
+        }
+        // THE MERGE (javap `tryMerge` the 26.2 jar speaks — the same
+        // item the earliest collector absorbs, the min(maxStackSize,
+        // 16) cap the count bounds)
+        let total: i32 = ev.explosion_drops.iter().map(|d| d.count).sum();
+        assert!(total > 0, "the survivors the kept counts speak");
+        assert!(
+            ev.explosion_drops.iter().all(|d| d.count <= 16),
+            "the cap the stacks bound"
+        );
+        // THE SEED'S OWN REPLAY (the shuffled walk the same seed the
+        // same order wears — the level random the entity's own stream
+        // stands in)
+        let mut c2 = Zombie::new(1, 8.0, 5.0, 8.0, 13);
+        c2.kind = MobKind::Creeper;
+        c2.on_ground = true;
+        let mut ev2 = MobEvents::default();
+        c2.explode_creeper(&pad, Some(&close), &mut ev2);
+        assert_eq!(ev.explosion_drops, ev2.explosion_drops, "the seed replays");
+        assert_eq!(ev.explosion_blocks, ev2.explosion_blocks, "the shuffle replays");
+        // THE SHUFFLE'S OWN HOST (the walk the blocks event's own order
+        // wears — the first collector's cell the walk's own survivor
+        // hosts)
+        if !ev.explosion_drops.is_empty() {
+            let first = ev.explosion_drops[0];
+            ev.explosion_blocks
+                .iter()
+                .position(|&p| p == (first.bx, first.by, first.bz))
+                .expect("the collector the walk's own cell wears");
+        }
+        // THE SURVIVE LAW'S OWN SHARE (javap `ExplosionCondition.test`
+        // the 26.2 jar speaks — the raw radius the CONDITION's own
+        // fdiv inverts: 1/3 the creeper radius 3 answers, the sweep
+        // the hand share answers) — the DIRECT walk the hand-built
+        // set rolls: 90 dirt cells, the kept share the 1/3 band
+        // wears
+        let mut dirt_pad = World::new(1, 42);
+        for x in 0..dirt_pad.size_blocks() {
+            for z in 0..dirt_pad.size_blocks() {
+                for y in 0..2 {
+                    dirt_pad.set(x, y, z, block_id_of("dirt"));
+                }
+            }
+        }
+        let dirt_item = mc_registry::item_id_by_name("dirt").expect("the dirt item");
+        // the hand-built set (the 6×5 surface cells — 30 dirt blocks
+        // the walk rolls, each the count-1 survives gate draws)
+        let cells: Vec<(i32, i32, i32)> = (0..6)
+            .flat_map(|x| (0..5).map(move |z| (x, 1, z)))
+            .collect();
+        let mut kept_total = 0i64;
+        for seed in 0..200u64 {
+            let mut rng = Lcg::new(1_000 + seed);
+            let drops = explosion_item_drops(&cells, CREEPER_EXPLOSION_RADIUS, &dirt_pad, &mut rng);
+            for d in &drops {
+                assert_eq!(d.item, dirt_item, "the dirt the dirt item keeps");
+            }
+            kept_total += drops.iter().map(|d| d.count as i64).sum::<i64>();
+        }
+        // 200 explosions × 30 cells × 1/3 the survive share — the
+        // hand band the binomial's own spread answers (the ±5% band
+        // the 6000 draws' sigma 40 speaks wide)
+        let want = 200i64 * 30 / 3;
+        assert!(
+            (kept_total - want).abs() <= want / 4,
+            "the 1/3 survive share the sweep answers: {kept_total} vs {want}"
+        );
+        // THE MERGE'S OWN CAP (the radius-1 walk the survive share 1.0
+        // wears — EVERY cell keeps, the 30 survivors the 16+14 pair the
+        // deterministic chain wears: the cap the merge law's own bound
+        // answers, the seed's randomness the walk never rides)
+        let mut rng = Lcg::new(7);
+        let drops = explosion_item_drops(&cells, 1.0, &dirt_pad, &mut rng);
+        let merged: i32 = drops.iter().map(|d| d.count).sum();
+        assert_eq!(merged, 30, "the radius-1 walk every cell keeps");
+        assert_eq!(drops.len(), 2, "the merge the chain two collectors wears");
+        assert_eq!(drops[0].count, 16, "the first collector the cap fills");
+        assert_eq!(drops[1].count, 14, "the remainder the second collector wears");
+        // THE REDSTONE'S OWN DECAY (javap `ApplyExplosionDecay.run` the
+        // 26.2 jar speaks — the counted stack the per-item loop
+        // answers, NO survives gate the counted form ever reads: the
+        // 4..5 count the 1/3 decay the kept mean ~1.5 wears) — the
+        // direct walk the ore cells rolls
+        let mut ore_pad = World::new(1, 43);
+        for x in 0..ore_pad.size_blocks() {
+            for z in 0..ore_pad.size_blocks() {
+                ore_pad.set(x, 1, z, block_id_of("redstone_ore"));
+            }
+        }
+        let ore_cells: Vec<(i32, i32, i32)> = (0..5)
+            .flat_map(|x| (0..5).map(move |z| (x, 1, z)))
+            .collect();
+        let redstone = mc_registry::item_id_by_name("redstone").expect("the redstone item");
+        let mut kept_total = 0i64;
+        let mut stacks = 0i64;
+        for seed in 0..200u64 {
+            let mut rng = Lcg::new(9_000 + seed);
+            let drops = explosion_item_drops(&ore_cells, CREEPER_EXPLOSION_RADIUS, &ore_pad, &mut rng);
+            for d in &drops {
+                assert_eq!(d.item, redstone, "the ore the redstone item keeps");
+                // the collector the same-item cells merge — the kept
+                // per-cell the 0..5 decay answers, the stack the 16 cap
+                // bounds
+                assert!(d.count >= 1 && d.count <= 16, "the merge the kept bounds");
+                stacks += 1;
+                kept_total += d.count as i64;
+            }
+        }
+        // 25 cells × 200 seeds × 4.5 mean count × 1/3 decay — the
+        // same ±25% band the spread answers
+        let want = 25i64 * 200 * 3 / 2;
+        assert!(
+            (kept_total - want).abs() <= want / 3,
+            "the decay share the sweep answers: {kept_total} vs {want}"
+        );
+        assert!(stacks > 0, "the decayed stacks the survivors speak");
+        // THE WHEAT'S OWN BLOCK DECAY (javap wheat.json the top
+        // function speaks — the family roll the decay answers, the
+        // mature grain the seeds' bonus the same 1/3 gate wears)
+        let mut wheat_pad = World::new(1, 44);
+        wheat_pad.set(2, 1, 2, crate::world::WHEAT_STAGE7);
+        let wheat_cells = vec![(2, 1, 2)];
+        let wheat_item = mc_registry::item_id_by_name("wheat").expect("the wheat item");
+        let seeds_item = mc_registry::item_id_by_name("wheat_seeds").expect("the seeds item");
+        // the 50-seed sweep (the 1/3 decay the family stacks roll — the
+        // kept harvest SOME seed wears, the bounds the whole sweep
+        // keeps)
+        let mut grain_seen = false;
+        for seed in 0..50u64 {
+            let mut rng = Lcg::new(5 + seed);
+            let drops = explosion_item_drops(
+                &wheat_cells,
+                CREEPER_EXPLOSION_RADIUS,
+                &wheat_pad,
+                &mut rng,
+            );
+            let mut grain = 0i32;
+            let mut seeds = 0i32;
+            for d in &drops {
+                if d.item == wheat_item {
+                    grain += d.count;
+                } else if d.item == seeds_item {
+                    seeds += d.count;
+                } else {
+                    panic!("the wheat pad the family items keeps: item {}", d.item);
+                }
+            }
+            assert!(grain <= 1, "the grain the single stack keeps");
+            assert!(seeds <= 4, "the bonus the decay bounds");
+            assert!(drops.len() <= 2, "the family the two stacks keeps");
+            if grain == 1 {
+                grain_seen = true;
+            }
+        }
+        assert!(grain_seen, "the mature grain SOME seed the 1/3 gate keeps");
+    }
+
+    /// THE COLLECTOR'S OWN MERGE LAWS (javap `addOrAppendStack` +
+    /// `StackCollector.tryMerge` the 26.2 jar speaks — the earliest
+    /// collector the same-item stack absorbs, the gate the
+    /// `areMergable` max-stack pair keeps, the cap the
+    /// min(min(maxStackSize, 16) - count, remaining) merge answers,
+    /// the shrink the leftover wears, the different item the NEW
+    /// collector appends).
+    #[test]
+    fn the_blast_collectors_wear_the_merge_law() {
+        // THE APPEND'S OWN WHOLENESS (javap `addOrAppendStack` the 26.2
+        // jar speaks — the no-collector case the NEW collector with the
+        // WHOLE incoming appends: the StackCollector ctor the stack
+        // never caps, the 16 cap the MERGE step alone wears)
+        let mut collectors: Vec<(i32, i32, i32, i32, i32)> = Vec::new();
+        merge_blast_stack(&mut collectors, 1, 12, (0, 0, 0));
+        assert_eq!(collectors.len(), 1, "the fresh walk the whole stack appends");
+        assert_eq!(collectors[0], (0, 0, 0, 1, 12), "the append the count keeps");
+        // THE MERGE'S OWN CAP (the same-item incoming the earliest
+        // collector absorbs: the take the min(min(maxStackSize, 16) -
+        // count, remaining) answers — the 12-stack the 4 take fills,
+        // the 6 remainder the new collector at its OWN cell wears)
+        merge_blast_stack(&mut collectors, 1, 10, (3, 0, 3));
+        assert_eq!(collectors.len(), 2, "the remainder the new collector answers");
+        assert_eq!(collectors[0].4, 16, "the first collector the cap fills");
+        assert_eq!(collectors[1], (3, 0, 3, 1, 6), "the remainder the own cell wears");
+        // THE FULL CHAIN (the full collector the extra incoming never
+        // touches — the take the cap's own 0 answers, the whole
+        // remainder the next collector absorbs)
+        merge_blast_stack(&mut collectors, 1, 5, (9, 9, 9));
+        assert_eq!(collectors[0].4, 16, "the first the cap keeps");
+        assert_eq!(collectors[1].4, 11, "the second the take absorbs");
+        assert_eq!(collectors.len(), 2, "the absorbed stack no new collector wears");
+        // THE DIFFERENT ITEM (the same cell the new item the NEW
+        // collector wears — the merge the same item alone gates)
+        merge_blast_stack(&mut collectors, 2, 4, (0, 0, 0));
+        assert_eq!(collectors.len(), 3, "the different item the new collector answers");
+        assert_eq!(collectors[2], (0, 0, 0, 2, 4), "the cobble the own stack wears");
+        // THE GATE'S OWN REFUSAL (javap `areMergable` the 26.2 jar
+        // speaks — the total the incoming's max stack caps: 16 + 49 =
+        // 65 > 64 the gate refuses outright, the whole incoming the
+        // new collector wears)
+        let mut gate: Vec<(i32, i32, i32, i32, i32)> = vec![(5, 5, 5, 3, 16)];
+        merge_blast_stack(&mut gate, 3, 49, (7, 7, 7));
+        assert_eq!(gate.len(), 2, "the 65-total the gate refuses");
+        assert_eq!(gate[0].4, 16, "the earlier collector the refusal keeps");
+        assert_eq!(gate[1], (7, 7, 7, 3, 49), "the refused stack the own collector wears");
+        // THE ZERO'S OWN SILENCE (the decayed-to-zero stack the walk
+        // never forwards — the merge the empty stack never reads)
+        let mut none: Vec<(i32, i32, i32, i32, i32)> = Vec::new();
+        merge_blast_stack(&mut none, 4, 0, (1, 1, 1));
+        assert!(none.is_empty(), "the zero count the silence keeps");
     }
 
     /// THE CREEPER'S OWN BARE FANGS (javap `Creeper.doHurtTarget` the
