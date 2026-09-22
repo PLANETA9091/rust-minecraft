@@ -67,14 +67,23 @@ use zip::ZipArchive;
 /// crafting_table_front/side/top, the plain opaque cube the generic
 /// path meshes (the vanilla's facing rotation the generic fold keeps —
 /// the axis-aligned placement the offline world speaks).
-pub const RUNTIME_PALETTE: [&str; 38] = [
+/// tnt is kind 38 (the thirty-ninth entry, the autopush-410 round): the
+/// ignite arm's own target (javap TntBlock.useItemOn — the
+/// flint_and_steel/fire_charge held the prime walk speaks) and the
+/// blast's own chain seed (the exploded TNT cell the wasExploded walk
+/// answers). The model chain (blockstates/tnt.json -> block/tnt ->
+/// block/cube_bottom_top) resolves the element's six faces
+/// tnt_top/tnt_side/tnt_bottom, the plain opaque cube the generic path
+/// meshes; the vanilla `instabreak()` strength the blast resistance
+/// table speaks (0.0 — the ray marches through).
+pub const RUNTIME_PALETTE: [&str; 39] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
-    "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table",
+    "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

@@ -842,7 +842,7 @@ fn fetch_title_panorama(
 /// 32-file weighted soundtrack pool). Biome-referenced music events
 /// (`music.overworld.*`, `music.nether.*`, …) come in through the parsed
 /// biome-music table, not this constant.
-const EXTRA_SOUND_EVENTS: [&str; 3] = [
+const EXTRA_SOUND_EVENTS: [&str; 4] = [
     "ui.button.click",
     "music.game",
     // the explosion's own BOOM (the ClientPacketListener.
@@ -850,6 +850,12 @@ const EXTRA_SOUND_EVENTS: [&str; 3] = [
     // the 4.0F volume, the (1.0F + (r - r) * 0.2F) * 0.7F pitch the
     // two draws speak; the four random/explode clips the row banks)
     "entity.generic.explode",
+    // the primed TNT's own FUSE (javap `TntBlock.prime` the 26.2 jar
+    // speaks — the `playSound(null, tnt.getX(), tnt.getY(),
+    // tnt.getZ(), SoundEvents.TNT_PRIMED, SoundSource.BLOCKS, 1.0F,
+    // 1.0F)` the fconst pair keeps: the ignite arm's own opening voice
+    // the one fuse clip the row banks)
+    "entity.tnt.primed",
 ];
 
 /// The mob voice lane's own events live beside the sound-parse law

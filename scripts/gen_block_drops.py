@@ -61,6 +61,12 @@ DEFAULT_STATES = {
     "redstone_ore": {"lit": "false"},
     "pale_oak_leaves": {"distance": "7", "persistent": "false", "waterlogged": "false"},
     "leaf_litter": {"facing": "north", "segment_amount": "1"},
+    # the primed-TNT round's own read (javap TntBlock.<init> pc 5-23:
+    # `registerDefaultState(this.stateDefinition.any().setValue(UNSTABLE,
+    # false))` — the placed block's own state the loot condition's
+    # `unstable: false` row answers, the mined TNT the item the pool
+    # drops)
+    "tnt": {"unstable": "false"},
 }
 
 MISSING = object()
@@ -112,7 +118,13 @@ def cond_roll(c, defaults):
     if k == "block_state_property":
         props = c.get("properties", {})
         want = c.get("block", "").split(":")[-1]
-        d = defaults.get(want, {})
+        # THE DEFAULT STATE'S OWN RESOLUTION (the doc's own law — the
+        # condition names the block the table speaks, the props the
+        # DEFAULT_STATES row wears: `defaults.get(want)` here read the
+        # per-block props map by BLOCK NAME and always refused — the
+        # module table the honest lookup keeps, the placed TNT's
+        # `unstable: false` row the gate now answers)
+        d = DEFAULT_STATES.get(want, {})
         return all(d.get(pk) == pv for pk, pv in props.items())
     if k in ("weather_check", "time_check", "location_check", "entity_properties",
              "killed_by_player", "random_difficulty_chance"):

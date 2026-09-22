@@ -2375,6 +2375,16 @@ pub struct MobEvents {
     /// the explosion never reads (the getDrops call the
     /// canHarvestBlock lane never passes through).
     pub explosion_drops: Vec<ExplosionDropStack>,
+    /// THE CHAIN REACTION'S OWN QUEUE (javap `TntBlock.wasExploded`
+    /// the 26.2 jar speaks — the exploded TNT cell the onExplosionHit
+    /// tail answers: the PrimedTnt at (x+0.5, y, z+0.5) with the
+    /// `getRandomShortFuse(80, random)` fuse the
+    /// `nextInt(max(1, fuse/4)) + fuse/8` roll keeps — the 10..29
+    /// span the default 80 fuse wears). The (block cell, fuse) tuple
+    /// per exploded TNT cell, the caller's spawn lane the primed
+    /// entity wears. `dropFromExplosion` the constant-false law the
+    /// loot roll never opens — the TNT cell the chains ALONE speak.
+    pub explosion_tnt_chains: Vec<(i32, i32, i32, i32)>,
 }
 
 /// THE BLAST'S OWN COLLECTED STACK (javap `ServerExplosion.
@@ -8089,61 +8099,19 @@ impl Zombie {
         // field the client's mob struct never carries — the vanilla's
         // own post-explosion ticks the discard skips)
         let radius = CREEPER_EXPLOSION_RADIUS;
-        // THE RAY SCAN (the shell filter the 1352 surface rays keeps —
-        // the inner 14³ the filter's own silence never draws)
-        let mut to_blow: Vec<(i32, i32, i32)> = Vec::new();
-        for k in 0..16i32 {
-            for l in 0..16i32 {
-                for m in 0..16i32 {
-                    if k == 0 || k == 15 || l == 0 || l == 15 || m == 0 || m == 15 {
-                        let d0 = k as f64 / 15.0 * 2.0 - 1.0;
-                        let d1 = l as f64 / 15.0 * 2.0 - 1.0;
-                        let d2 = m as f64 / 15.0 * 2.0 - 1.0;
-                        let d3 = (d0 * d0 + d1 * d1 + d2 * d2).sqrt();
-                        let (d0, d1, d2) = (d0 / d3, d1 / d3, d2 / d3);
-                        let mut f = radius * (0.7 + self.rng.next_f32() * 0.6);
-                        let mut px = self.x;
-                        let mut py = self.y;
-                        let mut pz = self.z;
-                        while f > 0.0 {
-                            let bx = px.floor() as i32;
-                            let by = py.floor() as i32;
-                            let bz = pz.floor() as i32;
-                            let id = world.get(bx, by, bz);
-                            if let Some(res) = blast_resistance(id) {
-                                f -= (res + 0.3) * 0.3;
-                            }
-                            if f > 0.0 && id != crate::world::AIR {
-                                to_blow.push((bx, by, bz));
-                            }
-                            px += d0 * 0.3;
-                            py += d1 * 0.3;
-                            pz += d2 * 0.3;
-                            f -= 0.225_000_01;
-                        }
-                    }
-                }
-            }
-        }
-        to_blow.sort_unstable();
-        to_blow.dedup();
-        // THE SHUFFLE (javap `Util.shuffle` the 26.2 jar speaks — the
-        // Collections.shuffle walk `interactWithBlocks` the
-        // level-random keeps: the descending Fisher-Yates the
-        // `nextInt(i)` bound draws, the swap the (i-1, j) pair names).
-        // The destruction/drop order the shuffled walk wears — the
-        // sorted set the scan's dedup law built the shuffle erases.
-        // The level random the entity's own stream stands in (the
-        // per-ray intensity's own stand-in the scan keeps).
-        for i in (1..to_blow.len()).rev() {
-            let j = self.rng.next_int(i as u64) as usize;
-            to_blow.swap(i - 1, j);
-        }
+        // THE RAY SCAN + THE SHUFFLE (the shared walk the primed TNT's
+        // own blast wears — `explosion_to_blow` the 16³ grid, the
+        // sorted set's dedup, the Fisher-Yates the vanilla order speaks)
+        let to_blow = explosion_to_blow(world, self.x, self.y, self.z, radius, &mut self.rng);
         // THE DROP WALK (javap `ServerExplosion.interactWithBlocks` +
         // `BlockBehaviour.onExplosionHit` the 26.2 jar speaks — the
         // shuffled set the loot roll serves, the collector the merge
-        // banks, the pops the walk's own tail emits)
-        events.explosion_drops = explosion_item_drops(&to_blow, radius, world, &mut self.rng);
+        // banks, the pops the walk's own tail emits; the TNT cells the
+        // walk meets the chain-spawn branch the wasExploded law arms)
+        let (drops, tnt_chains) =
+            explosion_item_drops(&to_blow, radius, world, &mut self.rng);
+        events.explosion_drops = drops;
+        events.explosion_tnt_chains = tnt_chains;
         events.explosion_blocks = to_blow;
         events.explosion_at = Some((self.x, self.y, self.z, radius));
         // THE PLAYER'S OWN DOSE (the hurtEntities walk the query box's
@@ -8175,6 +8143,74 @@ impl Zombie {
     }
 }
 
+/// THE RAY SCAN + THE SHUFFLE — the shared toBlow walk (javap
+/// `ServerExplosion.calculateExplodedPositions` + `Util.shuffle` the
+/// 26.2 jar speaks): the 16³ grid the k/l/m loops keep, the
+/// `k == 0 || k == 15 || ...` shell the 1352 surface rays answer, the
+/// `(i / 15.0F * 2.0F - 1.0F)` triple the normalize law wears, the
+/// `radius * (0.7F + nextFloat() * 0.6F)` the per-ray intensity draw
+/// keeps (the LEVEL random the server's shared stream — the client
+/// sim the caller's own rng the honest stand-in spends), the 0.3F
+/// step the march speaks, the `(resistance + 0.3F) * 0.3F` the
+/// non-air decay answers, the `f -= 0.22500001F` the loop's own
+/// decrement keeps, the `f > 0` crossing the toBlow set banks. The
+/// MOB interaction the default shouldBlockExplode's own true keeps —
+/// every non-air cell the ray's positive f clears. The SHUFFLE the
+/// `interactWithBlocks` walk opens with — the descending Fisher-Yates
+/// the `nextInt(i)` bound draws, the swap the (i-1, j) pair names:
+/// the sorted set the scan's dedup law built the shuffle erases, the
+/// destruction/drop order the shuffled walk wears.
+pub fn explosion_to_blow(
+    world: &World,
+    cx: f64,
+    cy: f64,
+    cz: f64,
+    radius: f32,
+    rng: &mut Lcg,
+) -> Vec<(i32, i32, i32)> {
+    let mut to_blow: Vec<(i32, i32, i32)> = Vec::new();
+    for k in 0..16i32 {
+        for l in 0..16i32 {
+            for m in 0..16i32 {
+                if k == 0 || k == 15 || l == 0 || l == 15 || m == 0 || m == 15 {
+                    let d0 = k as f64 / 15.0 * 2.0 - 1.0;
+                    let d1 = l as f64 / 15.0 * 2.0 - 1.0;
+                    let d2 = m as f64 / 15.0 * 2.0 - 1.0;
+                    let d3 = (d0 * d0 + d1 * d1 + d2 * d2).sqrt();
+                    let (d0, d1, d2) = (d0 / d3, d1 / d3, d2 / d3);
+                    let mut f = radius * (0.7 + rng.next_f32() * 0.6);
+                    let mut px = cx;
+                    let mut py = cy;
+                    let mut pz = cz;
+                    while f > 0.0 {
+                        let bx = px.floor() as i32;
+                        let by = py.floor() as i32;
+                        let bz = pz.floor() as i32;
+                        let id = world.get(bx, by, bz);
+                        if let Some(res) = blast_resistance(id) {
+                            f -= (res + 0.3) * 0.3;
+                        }
+                        if f > 0.0 && id != crate::world::AIR {
+                            to_blow.push((bx, by, bz));
+                        }
+                        px += d0 * 0.3;
+                        py += d1 * 0.3;
+                        pz += d2 * 0.3;
+                        f -= 0.225_000_01;
+                    }
+                }
+            }
+        }
+    }
+    to_blow.sort_unstable();
+    to_blow.dedup();
+    for i in (1..to_blow.len()).rev() {
+        let j = rng.next_int(i as u64) as usize;
+        to_blow.swap(i - 1, j);
+    }
+    to_blow
+}
+
 /// THE BLAST'S OWN RESISTANCE TABLE (javap the 26.2 `Blocks` <clinit>
 /// the 26.2 jar's strength(F)/(FF) rows the scanner's walk pinned —
 /// the `(hardness, resistance)` pair the Properties builder keeps,
@@ -8197,6 +8233,12 @@ fn blast_resistance(id: u16) -> Option<f32> {
         "dirt_path" => 0.6499999761581421,
         "netherrack" => 0.4000000059604645,
         "crafting_table" => 2.5,
+        // the instabreak() row (javap Blocks clinit pc 5771-5783: the
+        // Properties.of().mapColor(FIRE).instabreak().sound(GRASS)
+        // .ignitedByLava() chain the TNT registration speaks — the
+        // strength(0.0F) the instabreak call wears, the blast the ray
+        // marches straight through)
+        "tnt" => 0.0,
         // the log helper's own strength(2.0) — Blocks.logProperties
         "oak_log" => 2.0,
         // the leaves helper's own strength(0.2) — Blocks.leavesProperties
@@ -8413,13 +8455,33 @@ pub fn explosion_item_drops(
     radius: f32,
     world: &World,
     rng: &mut Lcg,
-) -> Vec<ExplosionDropStack> {
+) -> (Vec<ExplosionDropStack>, Vec<(i32, i32, i32, i32)>) {
     // the survives/decay share (javap the CONDITION's own fdiv speaks —
     // the raw radius the inverse answers)
     let survive = 1.0f32 / radius;
     let mut collectors: Vec<(i32, i32, i32, i32, i32)> = Vec::new();
+    // THE CHAIN REACTION'S OWN QUEUE (javap `TntBlock.wasExploded` the
+    // 26.2 jar speaks — the exploded TNT cell the walk meets spawns
+    // the PrimedTnt at (x+0.5, y, z+0.5) with the SHORT FUSE the
+    // `getRandomShortFuse(80, random)` roll answers:
+    // `nextInt(max(1, fuse/4)) + fuse/8` — 80 → nextInt(20) + 10 = the
+    // 10..29 span). The spawn order the SHUFFLED walk wears — the
+    // onExplosionHit tail the wasExploded call the same per-cell pass
+    // speaks. The tuple: (bx, by, bz, fuse).
+    let mut tnt_chains: Vec<(i32, i32, i32, i32)> = Vec::new();
     for &(bx, by, bz) in to_blow {
         let kind = world.get(bx, by, bz);
+        // THE TNT CELL'S OWN BRANCH (javap `TntBlock.dropFromExplosion`
+        // the constant-false walk + `BlockBehaviour.onExplosionHit`'s
+        // tail the wasExploded call keeps — the loot roll the gate
+        // never opens, the setBlock(AIR) the caller's cleared-cell
+        // event the same law wears, the primed chain the spawn walk
+        // queues)
+        if crate::world::NAME_OF.get(kind as usize) == Some(&"tnt") {
+            let fuse = TNT_FUSE / 8 + rng.next_int((TNT_FUSE / 4) as u64) as i32;
+            tnt_chains.push((bx, by, bz, fuse));
+            continue;
+        }
         let rolled: Vec<(i32, i32)> = if crate::world::is_wheat(kind) {
             // THE FAMILY'S OWN BLOCK DECAY (the wheat.json the top
             // function wears — every pool's stack the per-item pass
@@ -8485,7 +8547,7 @@ pub fn explosion_item_drops(
             merge_blast_stack(&mut collectors, item, count, (bx, by, bz));
         }
     }
-    collectors
+    let drops = collectors
         .into_iter()
         .map(|(bx, by, bz, item, count)| ExplosionDropStack {
             bx,
@@ -8494,7 +8556,8 @@ pub fn explosion_item_drops(
             item,
             count,
         })
-        .collect()
+        .collect();
+    (drops, tnt_chains)
 }
 
 /// THE DECAY'S OWN PER-ITEM LOOP (javap `ApplyExplosionDecay.run` the
@@ -8549,6 +8612,261 @@ fn merge_blast_stack(
         }
     }
     collectors.push((pos.0, pos.1, pos.2, item, remaining));
+}
+
+/// THE PRIMED TNT'S OWN FUSE (javap `PrimedTnt.<init>` the 26.2 jar
+/// speaks — the `setFuse(80)` the bipush 80 keeps: the 4-second burn
+/// the tick's own decrement walks to zero).
+pub const TNT_FUSE: i32 = 80;
+/// THE PRIMED TNT'S OWN BLAST POWER (javap `PrimedTnt.<init>(EntityType,
+/// Level)` the 26.2 jar speaks — the `putfield explosionPower = 4.0`
+/// the ldc 4.0 keeps: the explode walk's radius the
+/// `Level.explode(..., this.explosionPower, false, TNT)` arg wears).
+pub const TNT_EXPLOSION_POWER: f32 = 4.0;
+/// THE TNT REGISTRATION'S OWN WORDS (javap `EntityTypes` clinit the
+/// 26.2 jar speaks — the EntityTypeIds.TNT block: the
+/// `sized(0.9800000190734863F, 0.9800000190734863F)` the two identical
+/// ldc pairs keep, the `eyeHeight(0.15000000596046448F)` the ldc_w
+/// names, the MISC category the MobCategory.getstatic speaks, the
+/// noLootTable + fireImmune pair the chain's own head banks,
+/// clientTrackingRange(10) + updateInterval(10) the bipush tails).
+pub const TNT_BB_WIDTH: f64 = 0.98;
+pub const TNT_BB_HEIGHT: f64 = 0.98;
+/// THE PRIMED TNT'S OWN GRAVITY (javap `PrimedTnt.getDefaultGravity`
+/// the 26.2 jar speaks — the `ldc2_w 0.04` the dreturn keeps; the
+/// applyGravity walk the vy the -0.04 step speaks).
+pub const TNT_GRAVITY: f64 = 0.04;
+/// THE PRIMED TNT'S OWN AIR DRAG (javap `Entity.getAirDrag` the base
+/// the 26.2 jar speaks — the `ldc_w 0.9800000190734863` the freturn
+/// keeps: the tick's `setDeltaMovement(getDeltaMovement().scale(
+/// getAirDrag()))` the whole velocity folds; the ON-GROUND arm the
+/// `multiply(0.7, -0.5, 0.7)` the three ldc2_w pairs keep).
+pub const TNT_AIR_DRAG: f64 = 0.98;
+pub const TNT_GROUND_FRICTION: f64 = 0.7;
+pub const TNT_GROUND_BOUNCE: f64 = -0.5;
+/// THE IGNITE'S OWN IMPULSE (javap the `PrimedTnt.<init>(Level, DDD,
+/// LivingEntity)` ctor the 26.2 jar speaks — the
+/// `level.getRandom().nextDouble() * 6.2831854820251465` angle the
+/// ldc2_w float-pi*2 keeps, the
+/// `setDeltaMovement(-Math.sin(d) * 0.02, 0.20000000298023224,
+/// -Math.cos(d) * 0.02)` the dneg/ldc2_w 0.02 pairs speak: the
+/// HORIZONTAL impulse the 0.02 law wears (the older 0.2 walks the
+/// 26.2 bytecode retires), the UP kick the plain 0.2 answers).
+pub const TNT_IGNITE_ANGLE_FULL_TURN: f64 = 6.2831854820251465;
+pub const TNT_IGNITE_HORIZONTAL: f64 = 0.02;
+pub const TNT_IGNITE_UP: f64 = 0.20000000298023224;
+
+/// THE PRIMED TNT'S OWN ENTITY (javap `PrimedTnt` the 26.2 jar speaks
+/// — the fuse machine the Entity base wears: the gravity the tick's
+/// own walk banks, the `move(MoverType.SELF, getDeltaMovement())` the
+/// collide walk serves, the air drag the whole velocity scales, the
+/// `onGround` arm the `multiply(0.7, -0.5, 0.7)` bounce answers, the
+/// `fuse = fuse - 1` the isub keeps, the `fuse <= 0` crossing the
+/// discard + explode tail serves). The ctor's own impulse the
+/// (-sin(d)*0.02, 0.2, -cos(d)*0.02) triple wears — the entity's own
+/// rng the level-random stand-in spends. The RENDER the TntRenderer
+/// walk serves: the block model at the entity spot, the white flash
+/// the `isLit(fuseRemaining)` parity arms, the swell the last-10-tick
+/// scale grows.
+#[derive(Clone)]
+pub struct PrimedTnt {
+    #[cfg_attr(not(test), expect(dead_code))] // the id lane — the tests' own pin keeps
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// THE RENDER'S OWN ANCHORS (the ctor's `xo = x` triple + the
+    /// tick-head's own ride — the frame the lerp walks BETWEEN).
+    pub xo: f64,
+    pub yo: f64,
+    pub zo: f64,
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    pub fuse: i32,
+    pub on_ground: bool,
+    pub dead: bool,
+    /// the entity's own stream (the ctor's angle draw + the explode
+    /// walk's ray/shuffle/drop draws the shared walk serves)
+    pub rng: Lcg,
+}
+
+impl PrimedTnt {
+    pub fn new(id: i32, x: f64, y: f64, z: f64, seed: u64) -> Self {
+        let mut rng = Lcg::new(seed);
+        // THE IGNITE'S OWN SPIN (javap the ctor's dloc walk speaks —
+        // the nextDouble * 2pi angle the uniform draw picks, the
+        // (-sin(d) * 0.02, 0.2, -cos(d) * 0.02) triple the
+        // setDeltaMovement wears)
+        let d = rng.next_f64() * TNT_IGNITE_ANGLE_FULL_TURN;
+        Self {
+            id,
+            x,
+            y,
+            z,
+            xo: x,
+            yo: y,
+            zo: z,
+            vx: -d.sin() * TNT_IGNITE_HORIZONTAL,
+            vy: TNT_IGNITE_UP,
+            vz: -d.cos() * TNT_IGNITE_HORIZONTAL,
+            fuse: TNT_FUSE,
+            on_ground: false,
+            dead: false,
+            rng,
+        }
+    }
+
+    /// THE REGISTRATION'S OWN BOX (javap `EntityTypes` clinit the
+    /// `sized(0.98, 0.98)` pair the collide walk's AABB wears — the
+    /// feet-center origin the Entity.move walk keeps).
+    pub fn box_(&self) -> (f64, f64, f64, f64, f64, f64) {
+        let hw = TNT_BB_WIDTH / 2.0;
+        (
+            self.x - hw,
+            self.y,
+            self.z - hw,
+            self.x + hw,
+            self.y + TNT_BB_HEIGHT,
+            self.z + hw,
+        )
+    }
+
+    /// THE RENDER'S OWN LERP WORD (javap `TntRenderer.extractRenderState`
+    /// the 26.2 jar speaks — the `fuseRemainingInTicks = getFuse() -
+    /// partialTick + 1.0F` the i2f/fsub/fadd triple keeps; the pose
+    /// the lerped position the xo/yo/zo anchors walk BETWEEN).
+    pub fn fuse_remaining_at(&self, partial_tick: f32) -> f32 {
+        self.fuse as f32 - partial_tick + 1.0
+    }
+
+    /// THE EXPLODE'S OWN SERVER WALK (javap `PrimedTnt.explode` the
+    /// 26.2 jar speaks — the gamerule gate the client sim never
+    /// refuses, the `ServerLevel.explode(this, this.usedPortal ? ... :
+    /// getDefaultDamageSource, null, getX(), getY(0.0625), getZ(),
+    /// this.explosionPower, false, ExplosionInteraction.TNT)` the ray
+    /// machine serves): the getY(0.0625) offset the
+    /// `position.y + bbHeight * 0.0625` fold answers (the
+    /// `Entity.getY(double)` walk the javap speaks), the 0.0625 the
+    /// ldc2_w keeps. The RAY SCAN + THE SHUFFLE + THE DROP WALK the
+    /// shared fns serve — the creeper's own blast the SAME walks
+    /// wear, the TNT cells the chain branch answers (the
+    /// wasExploded law), the player's dose the hurtEntities walk
+    /// deals, the mobs' doses the caller's own pass serves (the
+    /// source's own spot the event carries — NO living source the
+    /// retaliation never arms, the plain hurt the honest walk keeps).
+    pub fn explode_tnt(
+        &mut self,
+        world: &World,
+        player: Option<&PlayerView>,
+        events: &mut MobEvents,
+    ) {
+        let radius = TNT_EXPLOSION_POWER;
+        let cy = self.y + TNT_BB_HEIGHT * 0.0625;
+        let to_blow = explosion_to_blow(world, self.x, cy, self.z, radius, &mut self.rng);
+        let (drops, tnt_chains) =
+            explosion_item_drops(&to_blow, radius, world, &mut self.rng);
+        events.explosion_drops = drops;
+        events.explosion_tnt_chains = tnt_chains;
+        events.explosion_blocks = to_blow;
+        events.explosion_at = Some((self.x, cy, self.z, radius));
+        if let Some(p) = player.filter(|p| !p.dead) {
+            let bbox = (
+                p.x - p.width / 2.0,
+                p.y,
+                p.z - p.width / 2.0,
+                p.x + p.width / 2.0,
+                p.y + p.height,
+                p.z + p.width / 2.0,
+            );
+            events.blast_player = explosion_blast(
+                world,
+                (self.x, cy, self.z),
+                radius,
+                (p.x, p.eye_y as f64, p.z),
+                bbox,
+            );
+        }
+    }
+}
+
+impl PrimedTnt {
+    /// THE TICK'S OWN WALK (javap `PrimedTnt.tick` the 26.2 jar speaks):
+    /// the xo ride the baseTick fold keeps FIRST, the applyGravity the
+    /// `vy -= 0.04` step wears, the `move(SELF, getDeltaMovement())`
+    /// the collide walk serves, the drag the whole velocity scales,
+    /// the onGround arm the (0.7, -0.5, 0.7) multiply answers, the
+    /// `fuse = fuse - 1` the isub keeps, the `fuse <= 0` crossing the
+    /// `discard() + explode()` tail serves (the return the caller's
+    /// same-tick boom answers). The SMOKE the client-side walk adds —
+    /// `addParticle(SMOKE, getX(), getY() + 0.5, getZ(), 0, 0, 0)`
+    /// every fuse-tick the else branch keeps — the caller's particle
+    /// lane the same verdict rides.
+    pub fn tick(&mut self, world: &World) -> bool {
+        // the baseTick fold: the current pose becomes the previous
+        self.xo = self.x;
+        self.yo = self.y;
+        self.zo = self.z;
+        // applyGravity: the getDefaultGravity 0.04 the vy folds
+        self.vy -= TNT_GRAVITY;
+        // move(SELF, delta): the collide walk the box serves
+        let c = crate::body::collide(world, self.box_(), (self.vx, self.vy, self.vz));
+        self.x += c.dx;
+        self.y += c.dy;
+        self.z += c.dz;
+        if c.collided_x {
+            self.vx = 0.0;
+        }
+        if c.collided_z {
+            self.vz = 0.0;
+        }
+        self.on_ground = c.vertical_collision_below;
+        if c.collided_y {
+            self.vy = 0.0;
+        }
+        // the drag: the whole velocity the air drag scales
+        self.vx *= TNT_AIR_DRAG;
+        self.vy *= TNT_AIR_DRAG;
+        self.vz *= TNT_AIR_DRAG;
+        // the onGround arm: the (0.7, -0.5, 0.7) multiply
+        if self.on_ground {
+            self.vx *= TNT_GROUND_FRICTION;
+            self.vy *= TNT_GROUND_BOUNCE;
+            self.vz *= TNT_GROUND_FRICTION;
+        }
+        // the fuse: the isub the discard+explode tail serves
+        self.fuse -= 1;
+        if self.fuse <= 0 {
+            self.dead = true;
+            return true;
+        }
+        false
+    }
+}
+
+/// THE SWELL'S OWN LAST-TEN FOLD (javap `TntRenderer.getSwellAmount`
+/// the 26.2 jar speaks — the `f1 = 1.0F - f / 10.0F` the fsub keeps,
+/// the clamp(0,1) the Mth walk speaks, the `f1 *= f1` pair the TWO
+/// squarings answer, the `f1 * 0.3F` the fmul tail wears: the flash
+/// scale the last ten ticks grow to the 1.3 full).
+pub fn tnt_swell_amount(fuse_remaining: f32) -> f32 {
+    let mut f1 = 1.0 - fuse_remaining / 10.0;
+    f1 = f1.clamp(0.0, 1.0);
+    f1 *= f1;
+    f1 *= f1;
+    f1 * 0.3
+}
+
+/// THE FLASH'S OWN PARITY (javap `TntRenderer.isLit` the 26.2 jar
+/// speaks — the `f < 0` the fcmpg refusal keeps, the `(int)(f / 5.0F)
+/// % 2 == 0` the f2i/irem pair answers: the 5-tick decades the white
+/// flash alternates — 5 lit, 5 unlit, the last-10 window the swell
+/// scale grows through).
+pub fn tnt_is_lit(fuse_remaining: f32) -> bool {
+    if fuse_remaining < 0.0 {
+        return false;
+    }
+    (fuse_remaining / 5.0) as i32 % 2 == 0
 }
 
 /// THE WOLF'S OWN PREY SCAN (javap the 26.2 `Wolf.registerGoals` the
@@ -9751,7 +10069,7 @@ mod tests {
         let mut kept_total = 0i64;
         for seed in 0..200u64 {
             let mut rng = Lcg::new(1_000 + seed);
-            let drops = explosion_item_drops(&cells, CREEPER_EXPLOSION_RADIUS, &dirt_pad, &mut rng);
+            let (drops, _chains) = explosion_item_drops(&cells, CREEPER_EXPLOSION_RADIUS, &dirt_pad, &mut rng);
             for d in &drops {
                 assert_eq!(d.item, dirt_item, "the dirt the dirt item keeps");
             }
@@ -9770,7 +10088,7 @@ mod tests {
         // deterministic chain wears: the cap the merge law's own bound
         // answers, the seed's randomness the walk never rides)
         let mut rng = Lcg::new(7);
-        let drops = explosion_item_drops(&cells, 1.0, &dirt_pad, &mut rng);
+        let (drops, _chains) = explosion_item_drops(&cells, 1.0, &dirt_pad, &mut rng);
         let merged: i32 = drops.iter().map(|d| d.count).sum();
         assert_eq!(merged, 30, "the radius-1 walk every cell keeps");
         assert_eq!(drops.len(), 2, "the merge the chain two collectors wears");
@@ -9795,7 +10113,7 @@ mod tests {
         let mut stacks = 0i64;
         for seed in 0..200u64 {
             let mut rng = Lcg::new(9_000 + seed);
-            let drops = explosion_item_drops(&ore_cells, CREEPER_EXPLOSION_RADIUS, &ore_pad, &mut rng);
+            let (drops, _chains) = explosion_item_drops(&ore_cells, CREEPER_EXPLOSION_RADIUS, &ore_pad, &mut rng);
             for d in &drops {
                 assert_eq!(d.item, redstone, "the ore the redstone item keeps");
                 // the collector the same-item cells merge — the kept
@@ -9828,7 +10146,7 @@ mod tests {
         let mut grain_seen = false;
         for seed in 0..50u64 {
             let mut rng = Lcg::new(5 + seed);
-            let drops = explosion_item_drops(
+            let (drops, _chains) = explosion_item_drops(
                 &wheat_cells,
                 CREEPER_EXPLOSION_RADIUS,
                 &wheat_pad,
@@ -9906,6 +10224,241 @@ mod tests {
         let mut none: Vec<(i32, i32, i32, i32, i32)> = Vec::new();
         merge_blast_stack(&mut none, 4, 0, (1, 1, 1));
         assert!(none.is_empty(), "the zero count the silence keeps");
+    }
+
+    /// THE PRIMED TNT'S OWN FUSE + PHYSICS LAWS (javap `PrimedTnt` the
+    /// 26.2 jar speaks): the ctor's impulse the
+    /// `(-sin(d) * 0.02, 0.2, -cos(d) * 0.02)` triple keeps, the tick's
+    /// gravity/drag/bounce folds the walk banks, the fuse the isub
+    /// decrements, the `fuse <= 0` crossing the explode tail serves,
+    /// the render folds the TntRenderer walk wears.
+    #[test]
+    fn the_primed_tnt_wears_the_fuse_physics_laws() {
+        // THE CTOR'S OWN IMPULSE (the seeded replay the angle draw
+        // pins: the horizontal magnitude the 0.02 law keeps, the up
+        // kick the plain 0.2 answers)
+        let seed = 7u64;
+        let mut t = PrimedTnt::new(42, 3.0, 6.0, 4.0, seed);
+        let mut replay = Lcg::new(seed);
+        let d = replay.next_f64() * TNT_IGNITE_ANGLE_FULL_TURN;
+        assert_eq!(t.id, 42, "the id lane round-trips");
+        assert_eq!(t.fuse, TNT_FUSE, "the 80-tick fuse the ctor wears");
+        assert_eq!(t.vx, -d.sin() * TNT_IGNITE_HORIZONTAL, "the -sin·0.02 arm");
+        assert_eq!(t.vy, TNT_IGNITE_UP, "the 0.2 up kick");
+        assert_eq!(t.vz, -d.cos() * TNT_IGNITE_HORIZONTAL, "the -cos·0.02 arm");
+        assert_eq!((t.vx * t.vx + t.vz * t.vz).sqrt(), TNT_IGNITE_HORIZONTAL);
+        assert_eq!(
+            (t.xo, t.yo, t.zo),
+            (t.x, t.y, t.z),
+            "the ctor's xo ride the render lerp anchors"
+        );
+        // THE TICK'S OWN FOLDS (the open-air walk: gravity the vy
+        // folds, the move the clip speaks, the drag the whole velocity
+        // scales — the seed's replay the same arithmetic answers)
+        let mut air = World::new(1, 99);
+        for x in 0..air.size_blocks() {
+            for z in 0..air.size_blocks() {
+                for y in 0..air.size_blocks() {
+                    air.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let mut replay = Lcg::new(seed);
+        let _ = replay.next_f64(); // the ctor's angle draw
+        let mut vx = t.vx;
+        let mut vy = t.vy;
+        let mut vz = t.vz;
+        for _ in 0..3 {
+            let (px, py, pz) = (t.x, t.y, t.z);
+            let exp_vy_gravity = vy - TNT_GRAVITY;
+            // the open-air move: no collision the delta rides whole
+            let (nx, ny, nz) = (px + vx, py + exp_vy_gravity, pz + vz);
+            vx *= TNT_AIR_DRAG;
+            vy = exp_vy_gravity * TNT_AIR_DRAG;
+            vz *= TNT_AIR_DRAG;
+            t.tick(&air);
+            assert_eq!(t.xo, px, "the xo ride the pre-move pose keeps");
+            assert!(
+                (t.x - nx).abs() < 1e-9 && (t.y - ny).abs() < 1e-9 && (t.z - nz).abs() < 1e-9,
+                "the open-air move the delta rides whole"
+            );
+            assert_eq!(t.vx, vx, "the drag fold's own answer");
+            assert_eq!(t.vy, vy, "the gravity-then-drag order keeps");
+            assert_eq!(t.vz, vz, "the drag fold's own answer");
+        }
+        // THE FLOOR'S OWN ARM (the landing the on-ground multiply
+        // wears: the collide's zeroed vy the -0.5 fold keeps still)
+        let mut floored = World::new(1, 99);
+        for x in 0..floored.size_blocks() {
+            for z in 0..floored.size_blocks() {
+                for y in 0..floored.size_blocks() {
+                    if y < 4 {
+                        floored.set(x, y, z, crate::world::STONE);
+                    } else {
+                        floored.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        let mut t = PrimedTnt::new(1, 8.0, 4.0, 8.0, 7);
+        for _ in 0..200 {
+            t.tick(&floored);
+            assert!(
+                t.y >= 4.0,
+                "the floor the box never sinks through: y = {}",
+                t.y
+            );
+        }
+        assert!(t.on_ground, "the tnt lands on the floor");
+        let rest_y = t.y;
+        t.tick(&floored);
+        assert_eq!(t.y, rest_y, "the rest the drag + bounce keeps");
+        // THE FUSE'S OWN CROSSING (the 80-tick walk the isub decrements
+        // — the 79th tick the fuse-1 answer keeps, the 80th the
+        // explode tail serves)
+        let mut t = PrimedTnt::new(3, 8.0, 6.0, 8.0, 7);
+        let mut floor = World::new(1, 99);
+        for x in 0..floor.size_blocks() {
+            for z in 0..floor.size_blocks() {
+                for y in 0..4 {
+                    floor.set(x, y, z, crate::world::STONE);
+                }
+                for y in 4..floor.size_blocks() {
+                    floor.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        let mut booms = 0;
+        for i in 1..=80 {
+            let exploded = t.tick(&floor);
+            assert_eq!(
+                t.fuse,
+                TNT_FUSE - i,
+                "the fuse the isub decrements every tick"
+            );
+            if i < 80 {
+                assert!(!exploded, "the fuse burns tick {i}");
+            } else {
+                assert!(exploded, "the fuse-0 crossing the explode speaks");
+                assert!(t.dead, "the discard the same tail wears");
+                booms += 1;
+            }
+        }
+        assert_eq!(booms, 1, "one boom the 80-tick walk serves");
+        // THE RENDER'S OWN FOLDS (javap TntRenderer the 26.2 jar
+        // speaks — the fuseRemaining the `fuse - partial + 1.0` law
+        // keeps, the swell the ²²×0.3 fold answers, the flash the
+        // 5-tick parity arms)
+        let mut t = PrimedTnt::new(4, 0.0, 0.0, 0.0, 7);
+        t.fuse = 40;
+        assert_eq!(
+            t.fuse_remaining_at(0.25),
+            40.75,
+            "the fuseRemaining law the extract walk wears"
+        );
+        assert_eq!(tnt_swell_amount(10.0), 0.0, "the pre-window the scale keeps");
+        assert_eq!(
+            tnt_swell_amount(0.0),
+            0.3,
+            "the full fold the clamp's own 1.0 keeps"
+        );
+        assert_eq!(
+            tnt_swell_amount(-3.0),
+            0.3,
+            "the negative the same clamp answers"
+        );
+        assert_eq!(
+            tnt_swell_amount(5.0),
+            0.5f32 * 0.5 * 0.5 * 0.5 * 0.3,
+            "the f⁴ law the two squarings speak"
+        );
+        assert!(tnt_is_lit(0.0), "the zero decade the even parity lights");
+        assert!(tnt_is_lit(4.9), "the 0.98 decade the even parity lights");
+        assert!(!tnt_is_lit(5.0), "the 5-tick decade the odd parity keeps");
+        assert!(!tnt_is_lit(9.9), "the 1.98 decade the odd parity keeps");
+        assert!(tnt_is_lit(10.0), "the 2.0 decade the even parity lights");
+        assert!(!tnt_is_lit(-0.5), "the negative the fcmpg refusal keeps");
+    }
+
+    /// THE TNT CHAIN'S OWN SHORT FUSE (javap `TntBlock.wasExploded` +
+    /// `PrimedTnt.getRandomShortFuse` the 26.2 jar speaks — the
+    /// exploded TNT cell the loot roll NEVER opens (the
+    /// dropFromExplosion constant-false walk), the chain spawn the
+    /// `nextInt(max(1, fuse/4)) + fuse/8` roll answers — the 10..29
+    /// span the default 80 fuse wears).
+    #[test]
+    fn the_tnt_chain_wears_the_short_fuse_law() {
+        // the pad: a stone floor with ONE tnt block the surface wears
+        let tnt_id = block_id_of("tnt");
+        let mut world = World::new(1, 42);
+        for x in 0..world.size_blocks() {
+            for z in 0..world.size_blocks() {
+                for y in 5..world.size_blocks() {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+                for y in 0..5 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+            }
+        }
+        world.set(8, 5, 8, tnt_id);
+        // the blast ABOVE the pad — the ray scan the surface cells
+        // banks, the tnt cell the walk meets the chain branch answers
+        let center = (8.0, 6.0, 8.0);
+        let cobble = mc_registry::item_id_by_name("cobblestone")
+            .expect("the stone's own drop");
+        let tnt_item = mc_registry::item_id_by_name("tnt").expect("the tnt item");
+        for seed in 0..60u64 {
+            let mut rng = Lcg::new(400 + seed);
+            let to_blow = explosion_to_blow(&world, center.0, center.1, center.2, 4.0, &mut rng);
+            assert!(
+                to_blow.contains(&(8, 5, 8)),
+                "the ray scan the tnt cell banks (seed {seed})"
+            );
+            let (drops, chains) =
+                explosion_item_drops(&to_blow, 4.0, &world, &mut rng);
+            // THE NO-LOOT LAW (the dropFromExplosion constant-false
+            // walk — the tnt item the blast never rolls)
+            assert!(
+                !drops.iter().any(|d| d.item == tnt_item),
+                "the tnt cell the loot never rolls (seed {seed})"
+            );
+            // THE STONE'S OWN LOOT (the surrounding pad the cobble
+            // rolls — the chain branch the other cells never rides)
+            assert!(
+                drops.iter().any(|d| d.item == cobble),
+                "the stone pad the cobblestone keeps (seed {seed})"
+            );
+            // THE CHAIN'S OWN SHAPE (one spawn per tnt cell, the pos
+            // the block cell keeps, the fuse the 10..29 band wears)
+            assert_eq!(
+                chains.len(),
+                1,
+                "the one tnt cell one chain speaks (seed {seed})"
+            );
+            let (bx, by, bz, fuse) = chains[0];
+            assert_eq!((bx, by, bz), (8, 5, 8), "the chain pos the block cell wears");
+            assert!(
+                (10..=29).contains(&fuse),
+                "the short fuse the nextInt(20) + 10 band keeps: {fuse}"
+            );
+        }
+        // THE CHAIN'S OWN SEQUENCE (the zero-arg walk the same roll
+        // replays: the seed's own stream the span's own draw answers —
+        // the distribution the 2000-seed sweep bounds)
+        let mut min_seen = i32::MAX;
+        let mut max_seen = i32::MIN;
+        for seed in 0..2000u64 {
+            let mut rng = Lcg::new(900_000 + seed);
+            let fuse = TNT_FUSE / 8 + rng.next_int((TNT_FUSE / 4) as u64) as i32;
+            assert!((10..=29).contains(&fuse), "the band the law wears");
+            min_seen = min_seen.min(fuse);
+            max_seen = max_seen.max(fuse);
+        }
+        assert!(
+            min_seen <= 12 && max_seen >= 27,
+            "the sweep the band's own tails answers: {min_seen}..{max_seen}"
+        );
     }
 
     /// THE CREEPER'S OWN BARE FANGS (javap `Creeper.doHurtTarget` the

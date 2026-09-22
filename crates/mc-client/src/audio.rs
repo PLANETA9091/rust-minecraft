@@ -954,7 +954,7 @@ mod tests {
             eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
             return;
         };
-        const EVENTS: [(&str, usize); 48] = [
+        const EVENTS: [(&str, usize); 49] = [
             ("entity.sheep.ambient", 3),
             ("entity.sheep.hurt", 3),
             ("entity.sheep.death", 3),
@@ -1010,6 +1010,11 @@ mod tests {
             // generic event plays — the four random/explode clips the
             // row banks)
             ("entity.generic.explode", 4),
+            // the primed tnt's own fuse (the TntBlock.prime walk the
+            // ignite arm speaks — the random/fuse clip the single row
+            // banks, the creeper's own primed row the shared file
+            // wears)
+            ("entity.tnt.primed", 1),
         ];
         for (id, want) in EVENTS {
             let files = discover_event_files(&root, id);

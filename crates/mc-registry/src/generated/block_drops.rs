@@ -3366,6 +3366,10 @@ pub static DROPS_TINTED_GLASS: [DropPool; 1] = [
     DropPool { entries: &[DropEntry { item: "tinted_glass", count_min: 1, count_max: 1, chance: 1.0 }] },
 ];
 
+pub static DROPS_TNT: [DropPool; 1] = [
+    DropPool { entries: &[DropEntry { item: "tnt", count_min: 1, count_max: 1, chance: 1.0 }] },
+];
+
 pub static DROPS_TORCH: [DropPool; 1] = [
     DropPool { entries: &[DropEntry { item: "torch", count_min: 1, count_max: 1, chance: 1.0 }] },
 ];
@@ -3909,7 +3913,7 @@ pub static DROPS_ZOMBIE_HEAD: [DropPool; 1] = [
 /// The block's hand-lane drop rows, sorted by name (the binary search's
 /// own demand). Blocks with no pools (the tool-gated table, the missing
 /// file — bedrock) drop nothing: the absence IS the vanilla's own.
-pub static BLOCK_DROPS: [(&str, &[DropPool]); 958] = [
+pub static BLOCK_DROPS: [(&str, &[DropPool]); 959] = [
     ("acacia_button", &DROPS_ACACIA_BUTTON),
     ("acacia_fence", &DROPS_ACACIA_FENCE),
     ("acacia_fence_gate", &DROPS_ACACIA_FENCE_GATE),
@@ -4733,6 +4737,7 @@ pub static BLOCK_DROPS: [(&str, &[DropPool]); 958] = [
     ("target", &DROPS_TARGET),
     ("terracotta", &DROPS_TERRACOTTA),
     ("tinted_glass", &DROPS_TINTED_GLASS),
+    ("tnt", &DROPS_TNT),
     ("torch", &DROPS_TORCH),
     ("torchflower", &DROPS_TORCHFLOWER),
     ("torchflower_crop", &DROPS_TORCHFLOWER_CROP),

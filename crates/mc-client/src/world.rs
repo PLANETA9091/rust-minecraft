@@ -132,16 +132,28 @@ pub const WHEAT_STAGE7: u16 = 36;
 /// (`on_right_press_block_lane`'s interactive arm). The vanilla facing
 /// rotation the generic full-cube fold keeps axis-aligned.
 pub const CRAFTING_TABLE: u16 = 37;
+/// THE TNT BLOCK'S OWN KIND (the autopush-410 round — the atlas
+/// RUNTIME_PALETTE's 38 index): the placement arm's own product, the
+/// plain opaque cube the full-cube face walk meshes (tnt_top/side/
+/// bottom the block/cube_bottom_top model chain resolves), the ignite
+/// arm's own target (`on_right_press_block_lane`'s prime walk — the
+/// flint_and_steel/fire_charge held the TntBlock.useItemOn law
+/// speaks), and the BLAST'S OWN CHAIN SEED (the exploded TNT cell the
+/// wasExploded walk answers — the short-fuse PrimedTnt the ray
+/// machine's own queue wears). The vanilla `instabreak()` strength
+/// the blast resistance table speaks (0.0 — the ray marches through),
+/// the `.noCollision()`-less solid cube the collision walks stand on.
+pub const TNT: u16 = 38;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 38] = [
+pub const NAME_OF: [&str; 39] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
     "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves",
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
-    "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table",
+    "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
 ];
 
 /// The crop's own AGE FAMILY — the wheat kinds the ladder wears

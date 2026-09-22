@@ -6299,6 +6299,12 @@ pub struct App {
     /// hits. The offline lane's own `arrows` stay the client's
     /// authority — the two never mix.
     pub net_arrows: Vec<crate::mob::Arrow>,
+    /// THE PRIMED TNT LANE (the offline world's fuse machines — the
+    /// ignite arm's spawns the TntBlock.prime walk speaks, the chain
+    /// spawns the wasExploded law queues): the flight the
+    /// PrimedTnt tick's own laws ride, the boom the fuse crossing
+    /// serves. The headless scenes never spawn one: the goldens stay.
+    pub primed_tnts: Vec<crate::mob::PrimedTnt>,
     /// The spawner's clock (the client's own cadence the mob lane
     /// speaks) and the id counter (the entity ids the drops ride).
     pub spawn_clock: i64,
@@ -7250,6 +7256,7 @@ impl App {
             arrow_model: None,
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
+            primed_tnts: Vec::new(),
             spawn_clock: 0,
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
@@ -8757,6 +8764,11 @@ impl App {
                 let mut primed_hisses: Vec<(f64, f64, f64)> = Vec::new();
                 let mut discarded_ids: Vec<i32> = Vec::new();
                 let mut booms: Vec<(f64, f64, f64, f32)> = Vec::new();
+                // THE CHAIN REACTION'S OWN QUEUE (the wasExploded spawns
+                // the exploded TNT cells queue — the creeper's blast the
+                // mob loop fills, the tnt's own boom the primed lane
+                // extends, the spawns the post-loop walk wears)
+                let mut tnt_chain_spawns: Vec<(i32, i32, i32, i32)> = Vec::new();
                 let mut explosion_cells: Vec<(i32, i32, i32)> = Vec::new();
                 // THE BLAST'S OWN DROPS (javap `ServerExplosion.
                 // interactWithBlocks` the 26.2 jar speaks — the shuffled
@@ -8966,6 +8978,12 @@ impl App {
                             }
                             explosion_cells.extend(ev.explosion_blocks.iter().copied());
                             explosion_drops.extend(ev.explosion_drops.iter().copied());
+                            // THE CHAIN'S OWN QUEUE (the creeper's blast
+                            // the exploded TNT cells the wasExploded law
+                            // queues — the post-loop walk the spawns
+                            // serves)
+                            tnt_chain_spawns
+                                .extend(ev.explosion_tnt_chains.iter().copied());
                             if ev.blast_player.is_some() {
                                 blast_player = ev.blast_player;
                             }
@@ -9137,6 +9155,82 @@ impl App {
                             arrow_trails.append(&mut aev.trail);
                         }
                         self.arrows.retain(|a| !a.dead);
+                        // THE PRIMED TNT'S OWN TICK (javap `PrimedTnt.tick`
+                        // the 26.2 jar speaks — the fuse machines the
+                        // entity tick answers after the mobs' own pass:
+                        // the gravity + move + drag + bounce the walk
+                        // banks, the SMOKE the client-side else branch
+                        // adds, the `fuse <= 0` crossing the discard +
+                        // explode tail serves — the boom the same event
+                        // consumer the creeper's blast wears). The chain
+                        // spawns the POST-loop walk queues (the vanilla
+                        // addFreshEntity the next tick's own list keeps).
+                        let mut tnt_blasts: Vec<(f64, f64, f64, f32)> = Vec::new();
+                        let mut tnt_smokes: Vec<(f64, f64, f64)> = Vec::new();
+                        for t in self.primed_tnts.iter_mut() {
+                            let exploded = t.tick(world);
+                            if exploded {
+                                let mut ev = crate::mob::MobEvents::default();
+                                t.explode_tnt(world, player.as_ref(), &mut ev);
+                                if let Some((bx, by, bz, r)) = ev.explosion_at {
+                                    tnt_blasts.push((bx, by, bz, r));
+                                    booms.push((bx, by, bz, r));
+                                }
+                                explosion_cells
+                                    .extend(ev.explosion_blocks.iter().copied());
+                                explosion_drops
+                                    .extend(ev.explosion_drops.iter().copied());
+                                tnt_chain_spawns
+                                    .extend(ev.explosion_tnt_chains.iter().copied());
+                                if ev.blast_player.is_some() {
+                                    blast_player = ev.blast_player;
+                                }
+                            } else {
+                                // the client-side SMOKE (the addParticle
+                                // walk the else branch keeps — the
+                                // getY() + 0.5 lift, the zero velocity)
+                                tnt_smokes.push((t.x, t.y, t.z));
+                            }
+                        }
+                        self.primed_tnts.retain(|t| !t.dead);
+                        for (sx, sy, sz) in tnt_smokes {
+                            let puff = crate::particles::smoke_puff(
+                                sx,
+                                sy + 0.5,
+                                sz,
+                                0.0,
+                                0.0,
+                                0.0,
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                                self.level_ambient_rng.next_f32(),
+                            );
+                            self.particles.push(puff);
+                        }
+                        // THE CHAIN REACTION'S OWN SPAWNS (javap
+                        // `TntBlock.wasExploded` the 26.2 jar speaks —
+                        // the exploded TNT cell the PrimedTnt at
+                        // (x+0.5, y, z+0.5) the addFreshEntity walk
+                        // wears, the SHORT FUSE the getRandomShortFuse
+                        // roll keeps — the creeper's blast and the
+                        // tnt's own boom the same queue fills). The
+                        // spawns the NEXT tick's list the post-loop
+                        // moment answers (the vanilla's own entity
+                        // order — the fresh body the same-tick scan
+                        // never rides).
+                        for (bx, by, bz, fuse) in tnt_chain_spawns.iter().copied() {
+                            let id = self.next_mob_id;
+                            self.next_mob_id += 1;
+                            let mut t = crate::mob::PrimedTnt::new(
+                                id,
+                                bx as f64 + 0.5,
+                                by as f64,
+                                bz as f64 + 0.5,
+                                self.mob_rng.next(),
+                            );
+                            t.fuse = fuse;
+                            self.primed_tnts.push(t);
+                        }
                         // THE BLAST'S OWN SIBLING DOSES (the hurtEntities
                         // walk the mobs the query box answers — the
                         // world's immutable borrow the same block keeps,
@@ -9176,6 +9270,64 @@ impl App {
                                 mob.vy += blast.push_y;
                                 mob.vz += blast.push_z;
                                 mob.hurt_by_mob(blast.dose, *source_view);
+                                // THE KIND'S OWN ROW (the hurt/death sound
+                                // the hurt pipeline's makeSound speaks —
+                                // captured while the borrow lives, the
+                                // voices the tail's vecs wear)
+                                let word = if mob.health <= 0.0 {
+                                    mob.voice_event(crate::mob::VoiceSlot::Death)
+                                } else {
+                                    mob.voice_event(crate::mob::VoiceSlot::Hurt)
+                                };
+                                let pitch = mob.voice_pitch();
+                                let (mx, my, mz) = (mob.x, mob.y, mob.z);
+                                let loot = if mob.health <= 0.0 {
+                                    mob.death_loot(false)
+                                } else {
+                                    Vec::new()
+                                };
+                                if mob.health <= 0.0 {
+                                    mob_kills.push((word, mx, my, mz, pitch, loot));
+                                } else {
+                                    mob_hurts.push((
+                                        word,
+                                        pitch,
+                                        ear_distance(ear, mx, my, mz),
+                                        ear_pan(ear, yaw, mx, my, mz),
+                                    ));
+                                }
+                            }
+                        }
+                        // THE TNT BOOM'S OWN SIBLING DOSES (the same
+                        // hurtEntities walk the creeper's blast serves —
+                        // the doses the primed lane's blast spots answer:
+                        // the plain `hurt(dose, false)` the NO-LIVING-
+                        // SOURCE law keeps (javap the default damage
+                        // source's direct entity the PrimedTnt wears —
+                        // the LivingEntity cast the lastHurtByMob write
+                        // never passes, the retaliation never arms), the
+                        // push the velocity add speaks DIRECTLY, the
+                        // kill the death lane's own walk serves)
+                        for (bx, by, bz, r) in tnt_blasts.iter() {
+                            let doses = crate::mob::explosion_blast_mobs(
+                                world,
+                                (*bx, *by, *bz),
+                                *r,
+                                &self.mobs,
+                            );
+                            for (victim_id, blast) in doses {
+                                let Some(mob) =
+                                    self.mobs.iter_mut().find(|m| m.id == victim_id)
+                                else {
+                                    continue;
+                                };
+                                if mob.death_time > 0 || mob.health <= 0.0 {
+                                    continue;
+                                }
+                                mob.vx += blast.push_x;
+                                mob.vy += blast.push_y;
+                                mob.vz += blast.push_z;
+                                mob.hurt(blast.dose, false);
                                 // THE KIND'S OWN ROW (the hurt/death sound
                                 // the hurt pipeline's makeSound speaks —
                                 // captured while the borrow lives, the
@@ -20245,6 +20397,14 @@ impl App {
                     if let Some(grew) = self.on_right_press_bonemeal_arm(&hit) {
                         return grew;
                     }
+                } else if held == "flint_and_steel" || held == "fire_charge" {
+                    // THE TNT'S OWN PRIME ARM (javap TntBlock.useItemOn
+                    // the BLOCK-use walk the held igniter arms — the
+                    // non-TNT cell the PASS keeps, the placement lane
+                    // follows)
+                    if let Some(primed) = self.on_right_press_tnt_arm(&hit) {
+                        return primed;
+                    }
                 }
             }
         }
@@ -20543,6 +20703,90 @@ impl App {
                     self.inventory.items[sel] = (0, 0);
                 }
                 self.hotbar_slots = self.inventory.hotbar();
+            }
+        }
+        Some(true)
+    }
+
+    /// THE TNT'S OWN PRIME ARM (javap `TntBlock.useItemOn` +
+    /// `TntBlock.prime` the 26.2 jar speaks — the FLINT_AND_STEEL/
+    /// FIRE_CHARGE item gate the `ItemStack.is` pair keeps, the
+    /// `prime(level, pos, player)` walk the verdict arms: the
+    /// PrimedTnt at (x+0.5, y, z+0.5) the addFreshEntity wears, the
+    /// `playSound(null, ..., TNT_PRIMED, BLOCKS, 1.0F, 1.0F)` the
+    /// fconst pair speaks, the `setBlock(pos, AIR, 11)` the tail
+    /// keeps). The flint's `hurtAndBreak(1, ...)` the repo's item
+    /// vocabulary never tracks (the honest skip the carrot-on-a-stick
+    /// arm keeps), the fire_charge's `consume(1)` the offline stack
+    /// walk answers (the `--held-item` stand-in the shrink never
+    /// touches). The non-TNT cell the None keeps — the placement lane
+    /// follows (the vanilla's own PASS).
+    fn on_right_press_tnt_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
+        let held = self.held_id().and_then(mc_registry::item_name)?;
+        if held != "flint_and_steel" && held != "fire_charge" {
+            return None; // the item gate's own PASS — the placement follows
+        }
+        // one immutable look (the borrow the mutable prediction never
+        // crosses — the convert arm's own law)
+        let is_tnt = {
+            let world = self.active_world()?;
+            world.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::TNT
+        };
+        if !is_tnt {
+            return None;
+        }
+        // THE OFFLINE PREDICTION (the grow walk's own gate — the
+        // networked world's prime the server's own walk answers)
+        if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::AIR);
+            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        }
+        let id = self.next_mob_id;
+        self.next_mob_id += 1;
+        let tnt = crate::mob::PrimedTnt::new(
+            id,
+            hit.pos.0 as f64 + 0.5,
+            hit.pos.1 as f64,
+            hit.pos.2 as f64 + 0.5,
+            self.mob_rng.next(),
+        );
+        self.primed_tnts.push(tnt);
+        // THE PRIME'S OWN VOICE (the playSound law — the BLOCKS source
+        // the 1.0F/1.0F pair keeps, the stereo tail the distance law
+        // speaks)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let (tx, ty, tz) = (
+            hit.pos.0 as f64 + 0.5,
+            hit.pos.1 as f64,
+            hit.pos.2 as f64 + 0.5,
+        );
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "entity.tnt.primed",
+            1.0,
+            1.0,
+            ear_distance(ear, tx, ty, tz),
+            ear_pan(ear, yaw, tx, ty, tz),
+        );
+        // THE FIRE CHARGE'S OWN CONSUME (javap `useItemOn` pc 93-97 —
+        // the `stack.consume(1, player)` arm the non-flint branch
+        // keeps; the offline inventory the bone-meal walk's own shrink
+        // answers)
+        if held == "fire_charge" {
+            if let Some(id) = self.held_id() {
+                let sel = self.selected_hotbar;
+                let stack = self.inventory.items[sel];
+                if stack.1 > 0 && stack.0 == id {
+                    self.inventory.items[sel].1 -= 1;
+                    if self.inventory.items[sel].1 <= 0 {
+                        self.inventory.items[sel] = (0, 0);
+                    }
+                    self.hotbar_slots = self.inventory.hotbar();
+                }
             }
         }
         Some(true)
@@ -22019,6 +22263,9 @@ impl App {
         // tick feeds the flame feature's frame law)
         let render_day_time = (self.day_time_base + self.frame) as i64;
         self.render_mobs(fb, &ctx, &cam, render_day_time, a);
+        // THE PRIMED TNT'S OWN PASS (the entity pass's own lane — the
+        // fuse machines the block-model flash render wears)
+        self.render_tnts(fb, &ctx, &cam);
         self.render_arrows(fb, &ctx, &cam);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
@@ -22715,6 +22962,110 @@ impl App {
     /// texel pixel packs (0, 0, 0, 0.7) and the entity shader's
     /// `mix(overlay.rgb, color.rgb, overlay.a)` folds the model to
     /// 70% brightness while hurtTime > 0.
+    /// THE PRIMED TNT'S OWN PASS (javap `TntRenderer.submit` the 26.2
+    /// bytecode speaks — the entity pass the mobs' own lane rides):
+    /// the block model the `BlockModelResolver.update` walk serves (the
+    /// client's own `block/tnt` bake the derive walk speaks), the pose
+    /// the submit's own chain wears — `translate(0, 0.5, 0)`, the
+    /// `rotY(-90)` + `translate(-0.5, -0.5, 0.5)` + `rotY(90)` dance
+    /// the block re-centering keeps (the rot(-90)·rot(90) identity the
+    /// net fold answers: v + (-0.5, 0, -0.5)), the last-10-tick scale
+    /// the `getSwellAmount` fold grows. The FLASH the
+    /// `submitWhiteSolidBlock(..., isLit(fuseRemaining), ...)` walk
+    /// arms — the lit decades the whole block's white render speaks,
+    /// the closure the creeper's own flash law wears.
+    fn render_tnts(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        _cam: &crate::camera::Camera,
+    ) {
+        if self.primed_tnts.is_empty() {
+            return; // the deterministic scenes carry no fuse machines — the goldens stay
+        }
+        // THE MODEL'S OWN LAZY BAKE (the block/tnt chain the derive walk
+        // resolves — the cube_bottom_top faces the atlas tiles wear; a
+        // failed bake the honest nothing keeps)
+        let quads = mc_registry::element_quads::derive_model_inherited("minecraft:block/tnt");
+        let Some(quads) = quads else {
+            return;
+        };
+        // the face shade law (the Cull enum order the drops' own pass
+        // speaks)
+        let ground_shade = |d: mc_registry::element_quads::Direction| match d {
+            mc_registry::element_quads::Direction::Up => 1.0f32,
+            mc_registry::element_quads::Direction::Down => 0.5,
+            mc_registry::element_quads::Direction::North | mc_registry::element_quads::Direction::South => 0.8,
+            mc_registry::element_quads::Direction::West | mc_registry::element_quads::Direction::East => 0.6,
+        };
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        // THE FLASH'S OWN LANE (the lit decades the WHITE-SOLID pass the
+        // submit walk speaks — the second list the same split keeps, the
+        // unlit quads the normal lane wears)
+        let mut flashed: Vec<crate::raster::SampledQuad> = Vec::new();
+        for t in &self.primed_tnts {
+            // THE RENDER'S OWN LERP (the O pairs the frame walks
+            // BETWEEN — the mobs' own law)
+            let lx = (t.xo + (t.x - t.xo) * self.partial_tick as f64) as f32;
+            let ly = (t.yo + (t.y - t.yo) * self.partial_tick as f64) as f32;
+            let lz = (t.zo + (t.z - t.zo) * self.partial_tick as f64) as f32;
+            // THE FUSE'S OWN RENDER WORD (the extractRenderState walk —
+            // the flash + the scale the same fuseRemaining read serves)
+            let fuse_remaining = t.fuse_remaining_at(self.partial_tick);
+            let scale = if fuse_remaining < 10.0 {
+                1.0 + crate::mob::tnt_swell_amount(fuse_remaining)
+            } else {
+                1.0
+            };
+            let flash = crate::mob::tnt_is_lit(fuse_remaining);
+            // THE POSE'S OWN NET FOLD (the submit chain the doc speaks —
+            // s·v + s·(-0.5, -0.5, -0.5) + (0, 0.5, 0) the block-center
+            // pivot answers)
+            for q in &quads {
+                let sh = if q.shade {
+                    ground_shade(q.direction)
+                } else {
+                    1.0
+                };
+                let quad = crate::raster::SampledQuad {
+                    pts: q.vertices.map(|v| {
+                        [
+                            lx + scale * (v[0] - 0.5),
+                            ly + 0.5 + scale * (v[1] - 0.5),
+                            lz + scale * (v[2] - 0.5),
+                        ]
+                    }),
+                    uv: q.uvs,
+                    tex: q.texture,
+                    tint: [sh, sh, sh],
+                };
+                if flash {
+                    flashed.push(quad);
+                } else {
+                    sampled.push(quad);
+                }
+            }
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        // the unlit quads: the sample_uv walk the drops' own lane speaks
+        if !sampled.is_empty() {
+            fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+                match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                    mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Unknown => None,
+                }
+            });
+        }
+        // the lit quads: the WHITE-SOLID pass (the whole block's white
+        // render the flash decade speaks)
+        if !flashed.is_empty() {
+            fb.draw_sampled_quads(vp, &flashed, &mut |_tex, _u, _v| {
+                Some([255, 255, 255, 255])
+            });
+        }
+    }
+
     /// THE ARROWS' OWN PASS (javap `ArrowRenderer.submit` the 26.2
     /// bytecode speaks — the entity pass the mobs' own lane rides):
     /// the flight quads the ArrowModel's own chain bakes, the stuck
@@ -49898,6 +50249,128 @@ cow_sound_variant: None,
             app.offline_world.as_ref().unwrap().get(c, top, c),
             crate::world::DIRT,
             "the held dirt landed the block case speaks"
+        );
+    }
+
+    #[test]
+    fn the_tnt_prime_arm_wears_the_ignite_law() {
+        // THE BLOCK-USE'S OWN WALK (javap TntBlock.useItemOn +
+        // TntBlock.prime the 26.2 jar speaks): the held flint the item
+        // gate arms, the tnt cell the prime walk wears — the block the
+        // setBlock(AIR) clears, the PrimedTnt at (x+0.5, y, z+0.5) the
+        // addFreshEntity speaks, the TNT_PRIMED voice the 1.0F/1.0F
+        // pair plays, the press the CONSUME verdict carries.
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE SURFACE'S OWN SWAP (the ray the straight-down walk aims —
+        // the surface cell the tnt block wears, the top face the clip
+        // speaks)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::TNT);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        assert!(
+            app.on_right_press(0, 0),
+            "the prime walk the press consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top - 1, c),
+            crate::world::AIR,
+            "the setBlock(AIR) the prime tail keeps"
+        );
+        assert_eq!(app.primed_tnts.len(), 1, "the primed entity the spawn wears");
+        let t = &app.primed_tnts[0];
+        assert_eq!(
+            (t.x, t.y, t.z),
+            (c as f64 + 0.5, top as f64 - 1.0, c as f64 + 0.5),
+            "the (x+0.5, y, z+0.5) spot the prime law speaks"
+        );
+        assert_eq!(t.fuse, crate::mob::TNT_FUSE, "the 80-tick fuse the ctor wears");
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.tnt.primed @")),
+            "the TNT_PRIMED voice the prime walk plays"
+        );
+        assert!(
+            rx.try_recv().is_ok(),
+            "the UseItemOn echo the block press rides"
+        );
+        // THE NON-TNT CELL'S OWN PASS (the stone surface the flint's
+        // item gate refuses — the placement lane the non-block item
+        // never answers, the press the item lanes' PASS refuses)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the flint on stone the press never consumes"
+        );
+        assert!(
+            app.primed_tnts.is_empty(),
+            "no primed entity the non-tnt cell speaks"
+        );
+        // THE TNT ITEM'S OWN PLACEMENT (the non-igniter held the item
+        // gate refuses — the placement lane the tnt block item
+        // answers, the same cell the fresh block wears)
+        app.offline_held_updated(Some("item/tnt"));
+        assert!(
+            app.on_right_press(0, 0),
+            "the placement the tnt block item consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::TNT,
+            "the placed tnt the placement lane wears"
+        );
+        assert!(
+            app.primed_tnts.is_empty(),
+            "the placement the fuse machine never spawns"
+        );
+    }
+
+    #[test]
+    fn the_primed_tnt_tick_wears_the_boom_law() {
+        // THE FUSE MACHINE'S OWN TICK (javap PrimedTnt.tick the 26.2
+        // jar speaks — the `fuse <= 0` crossing the discard + explode
+        // tail serves): the boom the same event consumer the creeper's
+        // blast wears — the cells the silent law clears, the
+        // entity.generic.explode voice the handleExplosion walk plays,
+        // the entity the retain removes.
+        let mut app = App::new(3);
+        app.enter_world();
+        let mut t = crate::mob::PrimedTnt::new(9, 8.5, 6.0, 8.5, 7);
+        t.fuse = 1; // the crossing's own test seed — one tick to the boom
+        app.primed_tnts.push(t);
+        assert_eq!(app.primed_tnts[0].fuse, 1, "the test's own one-tick fuse");
+        app.update();
+        assert!(app.primed_tnts.is_empty(), "the discard the boom speaks");
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.generic.explode @")),
+            "the boom voice the consumer speaks"
         );
     }
 
