@@ -20422,17 +20422,43 @@ impl App {
             return false; // the PASS result — the item's use lane follows
         };
         let normal = crate::world::World::DIRECTION_NORMAL[hit.face as usize];
-        let cell = (
-            hit.pos.0 + normal.0,
-            hit.pos.1 + normal.1,
-            hit.pos.2 + normal.2,
-        );
+        // THE REPLACEABLE CLICKED CELL'S OWN LAW (javap BlockPlaceContext
+        // over the 26.2 jar — the ctor's `replaceClicked` read the
+        // clicked state's canBeReplaced walks, the `getClickedPos()` the
+        // `replaceClicked ? UseOnContext's clicked cell : relativePos`
+        // arms keep): the replaceable clicked cell the placement target
+        // KEEPS (the tuft gives way — the held block takes its cell),
+        // the non-replaceable the normal-offset cell rides. The flower
+        // rows never ride this arm (the NO-replaceable chains the
+        // clinit speaks) — the tuft family the autopush-412 round
+        // brings is the first consumer.
+        let clicked_replaceable = self
+            .active_world()
+            .is_some_and(|w| {
+                crate::world::is_replaceable(w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            });
+        let cell = if clicked_replaceable {
+            hit.pos
+        } else {
+            (
+                hit.pos.0 + normal.0,
+                hit.pos.1 + normal.1,
+                hit.pos.2 + normal.2,
+            )
+        };
         // the replaceable-cell law: the air and the fluid give way (the
-        // vanilla state.canBeReplaced's own set for our vocabulary)
+        // vanilla state.canBeReplaced's own set for our vocabulary) —
+        // the REPLACEABLE PLANT FAMILY the same law keeps (the tuft the
+        // placement-into answers; the target read rides even on the
+        // clicked-replaceable walk — the same cell the verdict keeps)
         let replaceable = matches!(
             self.active_world().map(|w| w.get(cell.0, cell.1, cell.2)),
             Some(crate::world::AIR) | Some(crate::world::WATER)
-        );
+        ) || self
+            .active_world()
+            .is_some_and(|w| {
+                crate::world::is_replaceable(w.get(cell.0, cell.1, cell.2))
+            });
         if !replaceable {
             return false;
         }
@@ -20450,7 +20476,7 @@ impl App {
         if hits_player {
             return false; // the vanilla refuses the placement into itself
         }
-        // THE FLOWER'S OWN SURVIVAL LAW (javap VegetationBlock.canSurvive
+        // THE PLANT'S OWN SURVIVAL LAW (javap VegetationBlock.canSurvive
         // the 26.2 jar speaks — the `mayPlaceOn(level.getBlockState(
         // pos.below()))` the below cell reads, the SUPPORTS_VEGETATION
         // tag the dirt/grass_blocks/farmland union resolves: the
@@ -20458,7 +20484,10 @@ impl App {
         // names — the podzol/coarse/mud/moss rows the vocabulary never
         // speaks). The refusal the placement's own canPlace gate keeps
         // — the press the PASS verdict carries, the item lanes follow.
-        if crate::world::is_flower(block) {
+        // THE TUFT FAMILY the same law keeps (the autopush-412 round —
+        // BushBlock is the short_grass/bush ctor class, the
+        // VegetationBlock base the same canSurvive wears).
+        if crate::world::is_flower(block) || crate::world::is_tuft(block) {
             let below = self
                 .active_world()
                 .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
@@ -50464,6 +50493,121 @@ cow_sound_variant: None,
             crate::world::World::placeable_block("dandelion"),
             Some(crate::world::DANDELION),
             "the flower the placeable lookup names"
+        );
+    }
+
+    #[test]
+    fn the_tuft_placement_wears_the_replaceable_laws() {
+        // THE REPLACEABLE PLANT'S OWN WALK (javap BlockPlaceContext +
+        // VegetationBlock.canSurvive the 26.2 jar speaks — the
+        // autopush-412 round): the held short_grass the grass cell
+        // places (the below cell the SUPPORTS_VEGETATION subset
+        // answers), the replaceable CLICKED cell the placement target
+        // keeps (the `replaceClicked` read the `getClickedPos` walk
+        // serves — the tuft gives way, the held block takes ITS cell,
+        // the offset pos the non-replaceable keeps), the stone-below
+        // refusal the canSurvive gate speaks, the loot rows the dig
+        // lane rolls (the short_grass 1/8 wheat_seeds chance the
+        // hand-lane keeps, the bush the shears-only gate never opens —
+        // no drops).
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/stone"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE TUFT'S OWN CLICK-TARGET WALK (the replaceable clicked cell
+        // the placement target keeps): a short_grass at the aim cell —
+        // the placement rides the stone INTO the tuft's cell, the
+        // normal-offset cell the law never touches (the vanilla
+        // BlockPlaceContext.getClickedPos walk)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::SHORT_GRASS);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the placement into the tuft the press consumes"
+        );
+        // the STONE kind's own id (the NAME_OF walk the placeable
+        // lookup speaks — the palette's second kind)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::STONE,
+            "the stone the tuft's own cell wears"
+        );
+        // THE TUFT'S OWN PLACEMENT ARM (the held short_grass the grass
+        // below-cell places — the SUPPORTS_VEGETATION subset answers)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/short_grass"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the short_grass on grass the placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::SHORT_GRASS,
+            "the placed tuft the placement lane wears"
+        );
+        // THE STONE'S OWN REFUSAL (the hit cell the stone surface keeps —
+        // the below-cell read the canSurvive gate refuses)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/short_grass"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::STONE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the short_grass on stone the canSurvive refusal keeps"
+        );
+        // THE LOOT'S OWN ROWS (the generated tables the dig lane rolls):
+        // the short_grass 1/8 wheat_seeds chance the alternatives' else
+        // arm keeps (the shears the hand lane never speaks), the bush
+        // the shears/silk gate the no-drop verdict keeps
+        let pools = mc_registry::generated::block_drops::drops("short_grass")
+            .expect("the short_grass's own loot row");
+        assert_eq!(pools.len(), 1, "the single pool the drop speaks");
+        assert_eq!(pools[0].entries.len(), 1, "the else arm's single entry");
+        assert_eq!(pools[0].entries[0].item, "wheat_seeds", "the seeds drop");
+        assert_eq!(pools[0].entries[0].chance, 0.125, "the 1/8 chance");
+        assert!(
+            mc_registry::generated::block_drops::drops("bush").is_none(),
+            "the bush's shears-only loot the hand lane never opens"
+        );
+        // THE PLACEABLE LOOKUP (the BlockItem the generic lane names)
+        assert_eq!(
+            crate::world::World::placeable_block("short_grass"),
+            Some(crate::world::SHORT_GRASS),
+            "the tuft the placeable lookup names"
+        );
+        assert_eq!(
+            crate::world::World::placeable_block("bush"),
+            Some(crate::world::BUSH),
+            "the bush the placeable lookup names"
         );
     }
 

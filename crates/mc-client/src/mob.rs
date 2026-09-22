@@ -8255,10 +8255,14 @@ fn blast_resistance(id: u16) -> Option<f32> {
         // the no-strength rows (the Properties defaults): wheat
         // (WHEAT_CROP's own arms), leaf_litter, the FLOWER FAMILY (the
         // autopush-411 round — the dandelion/poppy chains the
-        // instabreak() call alone makes, the 0.0 the defaults speak)
+        // instabreak() call alone makes, the 0.0 the defaults speak),
+        // the GRASS TUFT FAMILY (the autopush-412 round — the
+        // short_grass/bush chains the same instabreak() call wears,
+        // the 0.0 the ray marches through)
         "wheat" | "wheat_stage1" | "wheat_stage2" | "wheat_stage3"
         | "wheat_stage4" | "wheat_stage5" | "wheat_stage6"
-        | "wheat_stage7" | "leaf_litter" | "dandelion" | "poppy" => 0.0,
+        | "wheat_stage7" | "leaf_litter" | "dandelion" | "poppy"
+        | "short_grass" | "bush" => 0.0,
         other => {
             debug_assert!(false, "unknown blast resistance for {other}");
             0.0

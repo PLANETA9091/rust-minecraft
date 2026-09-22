@@ -276,12 +276,16 @@ pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     // round extends); the FLOWER FAMILY the same law keeps (the
     // autopush-411 round — the `.noCollision()` row the dandelion/
     // poppy Properties chains speak, the player walks the blooms
+    // through); the GRASS TUFT FAMILY the same law keeps (the
+    // autopush-412 round — the `.noCollision()` rows the
+    // short_grass/bush chains speak, the player walks the tufts
     // through)
     id != AIR
         && id != WATER
         && id != crate::world::LAVA
         && !crate::world::is_wheat(id)
         && !crate::world::is_flower(id)
+        && !crate::world::is_tuft(id)
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape

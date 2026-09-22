@@ -220,6 +220,15 @@ pub fn slot_for(kind: u16, face: usize) -> Option<usize> {
     } else if kind == LEAF_LITTER && (face == 2 || face == 3) {
         // the flat model's only faces, both tintindex 0 -> the dry fold
         Some(DRY_SLOT)
+    } else if crate::world::is_tuft(kind) {
+        // THE GRASS TUFT'S OWN ROW (the autopush-412 round — the
+        // audited BlockColors.createDefault() walk): the
+        // `BlockTintSources.grass()` registration covers FERN/
+        // SHORT_GRASS/POTTED_FERN/BUSH — the biome grass color
+        // source (the GRASS_SLOT) on EVERY face of the tinted_cross
+        // model (all four cross faces carry tintindex 0; the flat-stem
+        // resolution repeats the face over the six-face carrier)
+        Some(GRASS_SLOT)
     } else {
         // PALE_LEAVES lands here deliberately — no tint, exactly vanilla
         None
@@ -394,6 +403,16 @@ mod tests {
         assert_eq!(slot_for(LEAVES, 2), Some(FOLIAGE_SLOT));
         assert_eq!(slot_for(LEAVES, 4), Some(FOLIAGE_SLOT), "all leaf faces");
         assert_eq!(slot_for(STONE, 2), None, "untinted texture");
+        // THE GRASS TUFT'S OWN ROW (the autopush-412 round): the
+        // tinted_cross family rides the grass source on EVERY face —
+        // the audited register walk (SHORT_GRASS/BUSH the
+        // BlockTintSources.grass() row keeps, the model's four cross
+        // faces all tintindex 0)
+        assert_eq!(slot_for(crate::world::SHORT_GRASS, 2), Some(GRASS_SLOT));
+        assert_eq!(slot_for(crate::world::SHORT_GRASS, 0), Some(GRASS_SLOT), "all faces");
+        assert_eq!(slot_for(crate::world::SHORT_GRASS, 5), Some(GRASS_SLOT), "all faces");
+        assert_eq!(slot_for(crate::world::BUSH, 2), Some(GRASS_SLOT));
+        assert_eq!(slot_for(crate::world::BUSH, 4), Some(GRASS_SLOT), "all faces");
         // the AUDITED verdict: pale oak leaves have NO tint source in
         // vanilla's BlockColors — every face untinted, the pre-colored
         // texture renders as authored (despite the model's tintindex)

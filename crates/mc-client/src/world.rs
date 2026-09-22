@@ -156,9 +156,27 @@ pub const TNT: u16 = 38;
 /// honest subset the palette's grass_block/dirt/farmland rows name).
 pub const DANDELION: u16 = 39;
 pub const POPPY: u16 = 40;
+/// THE PLAINS' OWN GRASS TUFT KINDS (the autopush-412 round — the atlas
+/// RUNTIME_PALETTE's 41/42 indices): the short_grass the
+/// patch_grass_plain placed feature's simple_state_provider wears, the
+/// bush the patch_bush's rarity-4/count-24 row keeps (javap the jar's
+/// worldgen json — the two decorations the step-9 list the flowers'
+/// own siblings wear). The tinted_cross model's two diagonal planes the
+/// mesher's tuft path meshes (the block/cross bake PLUS the tint — the
+/// tintindex-0 faces the BlockTintSources.grass() source tints), the
+/// noCollision + instabreak + grass sound + REPLACEABLE rows the Blocks
+/// clinit's own chain keeps (pc 4318/4371 — the `.replaceable()` call
+/// the flower chains never make), the same VegetationBlock.canSurvive
+/// the SUPPORTS_VEGETATION law the placement arm answers (BushBlock is
+/// the short_grass/bush ctor class — the audited Blocks pool). The
+/// dig lane rolls the vanilla loot: the short_grass row the 1/8
+/// wheat_seeds chance wears, the bush the shears-only gate the hand
+/// lane never opens (the generated tables' own verdict — no drops).
+pub const SHORT_GRASS: u16 = 41;
+pub const BUSH: u16 = 42;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 41] = [
+pub const NAME_OF: [&str; 43] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -166,7 +184,7 @@ pub const NAME_OF: [&str; 41] = [
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
     "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
-    "dandelion", "poppy",
+    "dandelion", "poppy", "short_grass", "bush",
 ];
 
 /// The plains' own FLOWER FAMILY — the two cross kinds the decorate
@@ -174,6 +192,31 @@ pub const NAME_OF: [&str; 41] = [
 /// the collision/clip/solid lanes the noCollision law keeps).
 pub fn is_flower(id: u16) -> bool {
     (DANDELION..=POPPY).contains(&id)
+}
+
+/// The plains' own GRASS TUFT FAMILY — the two REPLACEABLE tinted
+/// cross kinds the decorate pass plants (javap the Blocks clinit's
+/// `.replaceable()` rows pc 4318/4371: the short_grass/bush chains the
+/// flower chains never speak). The mesher's non-cube family the same
+/// cross path meshes (the tintindex-0 faces the biome fold answers),
+/// the collision/clip/solid lanes the noCollision law keeps, the
+/// placement-into law the BlockPlaceContext walk serves — the
+/// replaceable clicked cell the placement target KEEPS (the audited
+/// `getClickedPos` walk: `replaceClicked` the clicked cell rides,
+/// the offset pos the non-replaceable keeps).
+pub fn is_tuft(id: u16) -> bool {
+    id == SHORT_GRASS || id == BUSH
+}
+
+/// THE REPLACEABLE PLANT LAW — the kinds the world's own placement
+/// walk reads as give-way cells (javap BlockState.canBeReplaced over
+/// the 26.2 jar: the `.replaceable()` Properties flag the
+/// short_grass/bush rows wear — the vanilla set the flowers' own
+/// NO-replaceable absence refuses). The fluids the caller's own
+/// arms speak (the air and the water the matches! keeps) — this fn
+/// is the PLANT family's verdict alone.
+pub fn is_replaceable(id: u16) -> bool {
+    is_tuft(id)
 }
 
 /// The crop's own AGE FAMILY — the wheat kinds the ladder wears
@@ -1134,6 +1177,40 @@ impl World {
                 }
             }
         }
+        // THE PLAINS' OWN GRASS TUFT (the autopush-412 round — the
+        // patch_grass_plain + patch_bush placed features' honest
+        // stand-in — javap the jar's worldgen json the noise machinery
+        // the client's own hash lane never carries): every above-water
+        // grass column rolls (the tree roll's own hash precedent, the
+        // seed's own salt). The DENSITY the two features' own walk
+        // bands: patch_grass_plain's noise_threshold_count (10 above /
+        // 5 below the -0.8 line) x the count-32 repeats over the
+        // random_offset spread — the ~1/3 grass-column coverage the
+        // vanilla plains look wears; patch_bush's rarity-4 gate x the
+        // count-24 spread — the ~1/43 the sparse rows keep. The pass
+        // runs BEFORE the flower walk (the AIR gate the first-feature-
+        // wins order keeps — the vanilla step-9 list's own shape).
+        for wx in 0..n {
+            for wz in 0..n {
+                let top = self.height(wx, wz);
+                if top <= WATER_LEVEL {
+                    continue; // the beach/water columns the patch never plants
+                }
+                if self.get(wx, top, wz) != GRASS {
+                    continue; // the canSurvive substrate the tuft family demands
+                }
+                let kind = if hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F20) % 43 == 0 {
+                    BUSH
+                } else if hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F21) % 3 == 0 {
+                    SHORT_GRASS
+                } else {
+                    continue;
+                };
+                if self.get(wx, top + 1, wz) == AIR {
+                    self.set(wx, top + 1, wz, kind);
+                }
+            }
+        }
         // THE PLAINS' OWN FLOWER PATCH (the flower_plain placed feature's
         // honest stand-in — javap the jar's worldgen json the noise
         // machinery the client's own hash lane never carries): every
@@ -1321,6 +1398,109 @@ mod tests {
         assert!(!is_flower(STONE));
         assert!(!is_flower(WHEAT));
         assert!(!is_flower(TNT));
+        // THE TUFT FAMILY the replaceable verdict answers (the
+        // autopush-412 round — the `.replaceable()` rows the
+        // short_grass/bush chains wear, the flower chains never do)
+        assert!(is_tuft(SHORT_GRASS));
+        assert!(is_tuft(BUSH));
+        assert!(!is_tuft(DANDELION));
+        assert!(!is_tuft(GRASS));
+        assert!(!is_tuft(WHEAT));
+        assert!(is_replaceable(SHORT_GRASS));
+        assert!(is_replaceable(BUSH));
+        assert!(!is_replaceable(AIR));
+        assert!(!is_replaceable(WATER));
+        assert!(!is_replaceable(DANDELION));
+    }
+
+    /// THE GRASS TUFT'S OWN DECORATE WALK (the autopush-412 round — the
+    /// patch_grass_plain + patch_bush placed features' honest stand-in
+    /// — javap the jar's worldgen json the noise machinery the client's
+    /// own hash lane never carries): the seed's replay the same world
+    /// wears, the tufts the grass cells alone carry (the beach/water
+    /// columns the patch never plants, the canSurvive substrate the
+    /// tuft family demands), the density the two features' own walk
+    /// bands keep (the ~1/3 grass-column coverage the
+    /// noise_threshold_count x count-32 spread answers, the ~1/43 the
+    /// bush's rarity-4 x count-24 row keeps), the AIR gate the
+    /// first-feature-wins order keeps (the trunk and the bloom the
+    /// cell never share), the kinds the two state providers name.
+    #[test]
+    fn the_tuft_patch_wears_the_decorate_law() {
+        let w = World::new(2, 42);
+        let replay = World::new(2, 42);
+        assert_eq!(w, replay, "the seed's replay the same world wears");
+        let mut short_grass = 0;
+        let mut bush = 0;
+        let mut grass_columns = 0;
+        for x in 0..w.size_blocks() {
+            for z in 0..w.size_blocks() {
+                for y in 0..w.size_blocks() {
+                    let id = w.get(x, y, z);
+                    if is_flower(id) && w.get(x, y - 1, z) == GRASS {
+                        // THE FIRST-FEATURE-WINS ORDER: the tuft pass
+                        // plants BEFORE the flower walk — a column both
+                        // rolls keep the tuft (the AIR gate the flower
+                        // walk's own refusal keeps)
+                        assert!(
+                            !is_tuft(w.get(x, y, z)),
+                            "the cell the two decorations never share"
+                        );
+                    }
+                    if !is_tuft(id) {
+                        continue;
+                    }
+                    assert!(id == SHORT_GRASS || id == BUSH, "the two kinds the roll picks");
+                    // THE SUPPORT'S OWN GATE (the below cell the grass
+                    // block keeps — the beach/water columns the patch
+                    // never plants, the canSurvive substrate the tuft
+                    // family demands)
+                    assert_eq!(
+                        w.get(x, y - 1, z),
+                        GRASS,
+                        "the tuft the grass cell alone wears"
+                    );
+                    assert!(y > WATER_LEVEL);
+                    // THE CELL'S OWN EXCLUSIVITY (the AIR gate — the
+                    // tuft never replaces the trunk or the bloom)
+                    if id == SHORT_GRASS {
+                        short_grass += 1;
+                    } else {
+                        bush += 1;
+                    }
+                }
+            }
+            for z in 0..w.size_blocks() {
+                // the grass-column census rides the same x pass (the
+                // top-surface read the decorate walk answers)
+                let top = w.height(x as i32, z as i32);
+                if top > WATER_LEVEL && w.get(x as i32, top, z as i32) == GRASS {
+                    grass_columns += 1;
+                }
+            }
+        }
+        // the density bands (the ~2-chunk world's grass columns): the
+        // short_grass ~1/3 the patch_grass_plain walk answers, the bush
+        // ~1/43 the patch_bush rarity keeps
+        let grass = short_grass + bush;
+        assert!(
+            grass >= 1,
+            "the tufts the patch plants: {short_grass}+{bush} over {grass_columns} columns"
+        );
+        assert!(
+            short_grass >= 1,
+            "the simple_state_provider's short_grass the dominant row keeps"
+        );
+        let share = short_grass as f64 / grass_columns.max(1) as f64;
+        assert!(
+            (0.05..=0.65).contains(&share),
+            "the short_grass share the band keeps: {share}"
+        );
+        if bush == 0 {
+            // the rarity-4 x count-24 walk may land zero tufts in a
+            // two-chunk world — the honest sparse row
+            assert!(short_grass >= 1, "the grass row alone still speaks");
+        }
     }
 
     /// A controlled flat world: one chunk, a stone slab at y=8, the

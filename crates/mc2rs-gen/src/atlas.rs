@@ -88,7 +88,25 @@ use zip::ZipArchive;
 /// + `ambientocclusion: false` — so resolve_block's full-cube six-face
 /// requirement cannot apply; the pre-colored masters render as authored
 /// (the faces carry NO tintindex).
-pub const RUNTIME_PALETTE: [&str; 41] = [
+/// short_grass is kind 41 and bush kind 42 (the forty-second/forty-third
+/// entries, the autopush-412 round): the plains' own GRASS TUFT (javap
+/// the jar's worldgen json — the patch_grass_plain placed feature the
+/// simple_state_provider's short_grass state wears, the patch_bush the
+/// rarity-4/count-24 bush row keeps — the two decorations the step-9
+/// list the flowers' own siblings wear) the decorate pass plants. The
+/// model chain (blockstates/short_grass.json -> block/short_grass ->
+/// block/tinted_cross; blockstates/bush.json -> block/bush -> the same
+/// parent) is the flowers' own cross bake plus the TINT: the tinted_cross
+/// parent's four faces ALL carry `tintindex: 0` — vanilla's
+/// `BlockColors.createDefault()` registers `BlockTintSources.grass()`
+/// (the `BiomeColors.getAverageGrassColor` source — the same source the
+/// grass_block top consumes) for FERN/SHORT_GRASS/POTTED_FERN/BUSH
+/// (the audited register walk) — so the grayscale masters ride the
+/// TINT_GRASS bake exactly the grass_block_top row speaks, and the
+/// generated TINTS table carries the plains constant per (kind, face)
+/// (the no-op rule the client's fold keeps: the baked pixels and the
+/// resolved biome color agree at plains, the fold fires only off-plains).
+pub const RUNTIME_PALETTE: [&str; 43] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -96,7 +114,7 @@ pub const RUNTIME_PALETTE: [&str; 41] = [
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
     "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
-    "dandelion", "poppy",
+    "dandelion", "poppy", "short_grass", "bush",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -128,6 +146,13 @@ fn tint_for_texture(stem: &str) -> u32 {
         "oak_leaves" => TINT_FOLIAGE,
         "water_still" => TINT_WATER,
         "leaf_litter" => TINT_DRY,
+        // THE GRASS TUFT'S OWN ROW (the autopush-412 round): the
+        // tinted_cross family's grayscale masters the
+        // BlockTintSources.grass() source tints in-world — the SAME
+        // TINT_GRASS the grass_block_top row speaks (the audited
+        // register walk: FERN/SHORT_GRASS/POTTED_FERN/BUSH all ride
+        // the biome grass color source)
+        "short_grass" | "bush" => TINT_GRASS,
         _ => 0,
     }
 }
@@ -467,6 +492,52 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block == "short_grass" || block == "bush" {
+            // THE PLAINS' OWN GRASS TUFT (the autopush-412 round, the
+            // official 26.2 jar): the blockstate is a single variant
+            // map ("") — the model ref -> block/short_grass (bush ->
+            // block/bush) whose PARENT is block/tinted_cross: the
+            // flowers' own block/cross bake (the two diagonal plane
+            // elements, the 45° rotY + rescale fold, `shade: false`
+            // faces under model-level `ambientocclusion: false`) PLUS
+            // the tint — the tinted_cross faces carry `tintindex: 0`
+            // (the audited model json), so the grayscale master rides
+            // the TINT_GRASS bake (tint_for_texture's row) and the
+            // resolved faces record `tinted = true` (the client's
+            // biome fold the no-op rule keeps). The texture stem
+            // resolves through the REAL chain (the blockstate
+            // variant's model ref -> the merged texture map's `cross`
+            // ref — short_grass -> block/short_grass, bush ->
+            // block/bush).
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(""))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate {block}: no empty-variant model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("cross")
+                .with_context(|| format!("model {model_ref}: no cross texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            // the tinted_cross parent's own verdict — the faces carry
+            // tintindex 0, the master the TINT_GRASS bake wears
+            debug_assert!(tint_for_texture(&stem) == TINT_GRASS);
+            faces.push(resolve_flat_stem(&stem, true));
+            continue;
+        }
         faces.push(resolve_block(&mut archive, block)?);
     }
 
@@ -792,6 +863,11 @@ mod tests {
         // plain opaque cube the full-cube face walk resolves (front/
         // side/top + the oak_planks down face the vanilla model speaks)
         assert_eq!(RUNTIME_PALETTE[37], "crafting_table");
+        // the grass tuft's own kinds (the autopush-412 round): the
+        // tinted-cross family the TINT_GRASS bake wears — the
+        // patch_grass_plain short_grass row and the patch_bush bush row
+        assert_eq!(RUNTIME_PALETTE[41], "short_grass");
+        assert_eq!(RUNTIME_PALETTE[42], "bush");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 
@@ -803,6 +879,11 @@ mod tests {
         // the dry analog (13th audit): the REAL dry_foliage grid at the
         // plains climate (0.8, 0.4) — probed 0xA37546 in the 12th-audit run
         assert_eq!(tint_for_texture("leaf_litter"), TINT_DRY);
+        // the grass tuft's own row (the autopush-412 round): the
+        // tinted_cross masters the BlockTintSources.grass() source
+        // tints — the SAME TINT_GRASS the grass_block_top row speaks
+        assert_eq!(tint_for_texture("short_grass"), TINT_GRASS);
+        assert_eq!(tint_for_texture("bush"), TINT_GRASS);
         assert_eq!(tint_for_texture("stone"), 0, "untinted texture");
         // the AUDITED verdict (12th audit): pale oak leaves carry NO tint —
         // vanilla's BlockColors.createDefault() registers no dryFoliage

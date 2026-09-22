@@ -124,6 +124,10 @@ fn solid(id: u16) -> bool {
         && id != LAVA
         && !crate::world::is_wheat(id)
         && !crate::world::is_flower(id)
+        // THE GRASS TUFT FAMILY the pass keeps (the autopush-412 round
+        // — the `.noCollision()` rows the short_grass/bush chains
+        // speak, the hull floats THROUGH the tufts)
+        && !crate::world::is_tuft(id)
 }
 
 /// the strict intersect the block lane's own shape keeps (the AABB

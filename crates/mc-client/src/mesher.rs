@@ -91,6 +91,10 @@ fn is_transparent(kind: u16) -> bool {
         // round — the cross planes non-occluding, no AO, the grass
         // under the bloom draws)
         || crate::world::is_flower(kind)
+        // THE GRASS TUFT FAMILY the same verdict keeps (the autopush-412
+        // round — the tinted_cross planes non-occluding, no AO, the
+        // noCollision + replaceable rows the Blocks clinit speaks)
+        || crate::world::is_tuft(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -698,7 +702,10 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // FACE_TILES row the stage's own wheat_stageN tile
                 // speaks (the growth walk's setBlock the re-mesh
                 // answers, the stage's pixels the ladder's art carries)
-                if crate::world::is_wheat(id) || crate::world::is_flower(id) {
+                if crate::world::is_wheat(id)
+                    || crate::world::is_flower(id)
+                    || crate::world::is_tuft(id)
+                {
                     let tile = if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
                     } else {
@@ -711,6 +718,22 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         crate::colors::palette_color(id, 2)
                             .or_else(|| lut.and_then(|l| l.color(id, 2)))
                             .unwrap_or_else(|| default_color(id, 2))
+                    } else if crate::world::is_tuft(id) {
+                        // THE TUFT'S OWN TINT CARRIER (the autopush-412
+                        // round — the same shape the flat path and the
+                        // cube path speak): the synced biome's grass
+                        // color when it differs from the baked plains
+                        // sample (the no-op rule — the offline world's
+                        // no-biome lane and the plains==baked verdict
+                        // both ride the identity), multiplied into the
+                        // vertex colors. One color per BLOCK (the
+                        // audited BiomeColors.getAverageGrassColor
+                        // walk — the block pos the source samples), the
+                        // face-2 row the whole-cell verdict reads.
+                        world
+                            .face_tint(id, 2, wx, wy, wz)
+                            .map(tint::unpack)
+                            .unwrap_or([1.0; 3])
                     } else {
                         [1.0; 3] // the tile's own pixels speak (no tintindex — pre-colored)
                     };
@@ -777,8 +800,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // no FACE_SHADE term, the cell light alone
                     // multiplies; the uv the full sprite rides (the
                     // mirrored side cancels the reversed walk — the
-                    // texture reads the same from both sides).
-                    if crate::world::is_flower(id) {
+                    // texture reads the same from both sides). THE TUFT
+                    // FAMILY the same bake keeps (the autopush-412
+                    // round — the tinted_cross parent the flowers' own
+                    // cross geometry repeats, the tint the base carrier
+                    // rides), the fold the baked plains look keeps
+                    // no-op.
+                    if crate::world::is_flower(id) || crate::world::is_tuft(id) {
                         let a = 0.8 / 16.0;
                         let b = 15.2 / 16.0;
                         let diagonals: [[(f32, f32); 2]; 2] = [
@@ -2392,6 +2420,79 @@ mod tests {
             .iter()
             .any(|other| other.pts.iter().rev().eq(p0.iter()));
         assert!(reversed, "the mirrored winding the pair keeps");
+    }
+
+    #[test]
+    fn the_tuft_cross_wears_the_tint_laws() {
+        // THE GRASS TUFT'S OWN CROSS (the autopush-412 round — the
+        // tinted_cross parent the flowers' own block/cross bake
+        // repeats): the tuft cell the same 4 quads wear (the two
+        // diagonal planes × the two windings, the corners the 0.8
+        // inset keeps, the uv the full sprite rides), the tile the
+        // tuft's own atlas row banks, THE TINT the no-op rule keeps —
+        // the offline world's no-biome lane rides the identity (the
+        // baked plains pixels speak), the synced plains verdict the
+        // baked constant equals (the fold never fires), the off-plains
+        // synced biome the fold answers (the vertex colors multiply).
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::SHORT_GRASS);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let a = 0.8 / 16.0;
+        let b = 15.2 / 16.0;
+        let tuft: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
+                    && quad.pts.iter().any(|p| p[1] == 10.0)
+            })
+            .collect();
+        assert_eq!(tuft.len(), 4, "the two planes the two windings wear");
+        for quad in &tuft {
+            for p in &quad.pts {
+                let (fx, fz) = (p[0] - 8.0, p[2] - 8.0);
+                assert!(
+                    (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
+                    "the x the diagonal corner inset keeps: {fx}"
+                );
+                assert!(
+                    (fz - a).abs() < 1e-6 || (fz - b).abs() < 1e-6,
+                    "the z the diagonal corner inset keeps: {fz}"
+                );
+                assert!(
+                    (fx - fz).abs() < 1e-6 || (fx + fz - 1.0).abs() < 1e-6,
+                    "the cross plane the diagonal runs: {fx} vs {fz}"
+                );
+            }
+            // the tile: the short_grass's own row (the atlas's 41st kind)
+            assert_eq!(
+                quad.tile,
+                mc_registry::generated::atlas::FACE_TILES[41][2]
+            );
+        }
+        // THE BUSH'S OWN ROW (the patch_bush kind the same cross bake
+        // wears — the 42nd kind the tile row banks)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, STONE);
+        put(&mut w2, 8, 9, 8, crate::world::BUSH);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        assert!(
+            q2.iter().any(|quad| quad.tile
+                == mc_registry::generated::atlas::FACE_TILES[42][2]),
+            "the bush's own tile the cross quads bank"
+        );
+        // THE TINT FOLD'S OWN VERDICT (the audited slot walk): the tuft
+        // kinds ride the grass source on every face — the synced
+        // off-plains biome the fold answers, the no-biome world the
+        // identity keeps (the folded quad's colors = the baked pixels'
+        // own light walk, byte-identical to the no-fold verdict)
+        let folded = crate::tint::unpack(0xBFB755);
+        assert!(folded != [1.0; 3], "the desert verdict the fold carries");
+        assert_eq!(
+            crate::tint::slot_for(crate::world::SHORT_GRASS, 2),
+            Some(crate::tint::GRASS_SLOT),
+            "the tuft's grass source the slot walk answers"
+        );
     }
 
     #[test]
