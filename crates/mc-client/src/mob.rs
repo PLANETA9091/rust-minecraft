@@ -9024,6 +9024,172 @@ pub fn tnt_is_lit(fuse_remaining: f32) -> bool {
     (fuse_remaining / 5.0) as i32 % 2 == 0
 }
 
+/// THE FALLING BLOCK'S OWN NUMBERS (javap the 26.2 jar — the
+/// FallingBlockEntity the Entity default gravity 0.04 the applyGravity
+/// fold keeps, the getAirDrag 0.98 the tick's tail scale wears, the
+/// EntityType.FALLING_BLOCK's `.sized(0.98F, 0.98F)` pair the AABB
+/// carries, the FallingBlock.getDelayAfterPlace the iconst_2 the
+/// schedule walk speaks, the landing fold the -0.5 y arm the onGround
+/// branch wears — the horizontal arms the zero delta the fresh fall
+/// carries never read, the friction 0.7 the honest absence keeps).
+pub const FALLING_BLOCK_GRAVITY: f64 = 0.04;
+pub const FALLING_BLOCK_AIR_DRAG: f64 = 0.98;
+pub const FALLING_BB_WIDTH: f64 = 0.98;
+pub const FALLING_BB_HEIGHT: f64 = 0.98;
+pub const FALLING_SCHEDULE_DELAY: u64 = 2;
+pub const FALLING_LANDING_BOUNCE: f64 = -0.5;
+
+/// THE ISFREE LAW (javap `FallingBlock.isFree` the 26.2 jar speaks —
+/// the isAir || FIRE || liquid() || canBeReplaced() chain the four
+/// invokes keep): the fall-through verdict the scheduled tick reads
+/// AND the landing cell's canBeReplaced(ctx) verdict the placement
+/// conjunct reads — the palette's own equivalence (the fire the honest
+/// absence keeps, the replaceable flag the tuft/double-plant rows
+/// wear, the liquids the water/lava pair the `.replaceable()` rows
+/// speak). The flowers and the torch the NO-replaceable absence keeps
+/// — the sand the crop cell the honest refusal wears (the vanilla
+/// quirk the wheat row the same law answers), the torch the falling
+/// body passes THROUGH (the Empty collision the entity never rests on)
+/// yet the landing REFUSES — the famous item-drop law the next walk
+/// serves.
+pub fn falling_free(id: u16) -> bool {
+    id == crate::world::AIR
+        || id == crate::world::WATER
+        || id == crate::world::LAVA
+        || crate::world::is_replaceable(id)
+}
+
+/// THE LANDING'S OWN ITEM (javap `spawnAtLocation(this.blockState
+/// .getBlock())` the drop branch speaks — the asItem() stack the loot
+/// table's flint roll never reads): the block's own name the wire item
+/// order indexes (the sand/gravel the falling family's own rows).
+pub fn falling_item_id(block: u16) -> Option<i32> {
+    let name = crate::world::NAME_OF[block as usize];
+    mc_registry::generated::item_order::ITEM_WIRE_ORDER
+        .iter()
+        .position(|n| *n == name)
+        .map(|i| i as i32)
+}
+
+/// THE RENDER'S OWN MODEL (the FallingBlockRenderer's blockstate walk —
+/// the carried kind's own block model the derive chain bakes).
+pub fn falling_model_id(block: u16) -> Option<&'static str> {
+    match block {
+        crate::world::SAND => Some("block/sand"),
+        crate::world::GRAVEL => Some("block/gravel"),
+        _ => None,
+    }
+}
+
+/// THE FALLING BLOCK ENTITY (javap `FallingBlockEntity` the 26.2 jar
+/// speaks — the fall factory the `(pos.getX() + 0.5, pos.getY(),
+/// pos.getZ() + 0.5)` pose keeps, the tick the gravity/move/drag/
+/// landing law wears). The horizontal delta the fresh fall never
+/// carries (the repo's lane no knockback speaks — the vy the whole
+/// motion answers).
+pub struct FallingBlock {
+    #[cfg_attr(not(test), expect(dead_code))] // the id lane — the tests' own pin keeps
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// THE RENDER'S OWN ANCHORS (the baseTick's `xo = x` triple — the
+    /// frame the lerp walks BETWEEN).
+    pub xo: f64,
+    pub yo: f64,
+    pub zo: f64,
+    pub vy: f64,
+    /// The carried block kind (the ctor's blockState — the landing
+    /// places it, the render's model walk reads it).
+    pub block: u16,
+    /// The `time` field (the ++time the tick's second step keeps — the
+    /// vanilla's own age clock the out-of-bounds drop the bounded world
+    /// never reads).
+    pub time: u32,
+    pub on_ground: bool,
+    pub dead: bool,
+    /// The landing verdict (the cell the entity rests in when the
+    /// onGround branch fires — the caller's placement/drop law serves).
+    pub landed: Option<(i32, i32, i32)>,
+}
+
+impl FallingBlock {
+    /// FallingBlockEntity.fall's own factory: the cell-center XZ pose,
+    /// the cell's own Y (the feet at the cell's bottom), the fresh
+    /// zero delta. The origin cell's AIR set the caller's own world
+    /// walk answers (the removeBlock the factory's first fruit).
+    pub fn new(id: i32, block: u16, bx: i32, by: i32, bz: i32) -> Self {
+        Self {
+            id,
+            x: bx as f64 + 0.5,
+            y: by as f64,
+            z: bz as f64 + 0.5,
+            xo: bx as f64 + 0.5,
+            yo: by as f64,
+            zo: bz as f64 + 0.5,
+            vy: 0.0,
+            block,
+            time: 0,
+            on_ground: false,
+            dead: false,
+            landed: None,
+        }
+    }
+
+    /// The AABB the collide walk serves (the `sized(0.98, 0.98)` pair —
+    /// the TNT's own box walk the same shape wears).
+    pub fn box_(&self) -> (f64, f64, f64, f64, f64, f64) {
+        let hw = FALLING_BB_WIDTH / 2.0;
+        (
+            self.x - hw,
+            self.y,
+            self.z - hw,
+            self.x + hw,
+            self.y + FALLING_BB_HEIGHT,
+            self.z + hw,
+        )
+    }
+
+    /// THE TICK'S OWN WALK (javap `FallingBlockEntity.tick` the 26.2
+    /// jar speaks): the baseTick fold FIRST (the xo ride), the `++time`
+    /// the iadd keeps, the applyGravity the `vy -= 0.04` step wears,
+    /// the `move(SELF, getDeltaMovement())` the collide walk serves,
+    /// the onGround branch the fallOn `(0.7, -0.5, 0.7)` fold answers
+    /// (the discard the same-tick landing moots — the honest order the
+    /// trace keeps), the tick's tail the getAirDrag 0.98 scale wears.
+    /// NO every-tick ground arm (the TNT's arm the falling walk never
+    /// shares — the fold the landing branch alone keeps), NO the water
+    /// splash's clip lane (the particles the deferred lane may wear).
+    /// Returns the landing verdict (true = the onGround branch fired —
+    /// the caller's placement/drop walk serves the cell).
+    pub fn tick(&mut self, world: &World) -> bool {
+        self.xo = self.x;
+        self.yo = self.y;
+        self.zo = self.z;
+        self.time += 1;
+        self.vy -= FALLING_BLOCK_GRAVITY;
+        let c = crate::body::collide(world, self.box_(), (0.0, self.vy, 0.0));
+        self.x += c.dx;
+        self.y += c.dy;
+        self.z += c.dz;
+        self.on_ground = c.vertical_collision_below;
+        if self.on_ground {
+            // the fallOn fold (the (0.7, -0.5, 0.7) triple — the
+            // horizontal arms the zero delta keeps, the y arm the
+            // bounce the discard moots)
+            self.vy *= FALLING_LANDING_BOUNCE;
+            self.dead = true;
+            self.landed = Some((
+                self.x.floor() as i32,
+                self.y.floor() as i32,
+                self.z.floor() as i32,
+            ));
+        }
+        self.vy *= FALLING_BLOCK_AIR_DRAG;
+        self.dead
+    }
+}
+
 /// THE WOLF'S OWN PREY SCAN (javap the 26.2 `Wolf.registerGoals` the
 /// round's dump keeps — the targetSelector the pre-pass answers before
 /// the ticks, the goals' own moment): every WOLF (`kind == Wolf`,
@@ -12411,6 +12577,64 @@ mod tests {
             crate::sky::sample(1_000).sun_angle.sin() < 0.0,
             "the old gate's sin the morning the monster arm rode"
         );
+    }
+
+    /// THE FALLING TICK'S OWN PHYSICS (javap the tick's own order — the
+    /// applyGravity the vy -= 0.04 step wears, the tail the getAirDrag
+    /// 0.98 scale keeps: the recurrence v_{n+1} = (v_n - 0.04) * 0.98
+    /// the mid-air body the honest floor never meets, the ++time the
+    /// tick's own clock keeps).
+    #[test]
+    fn the_falling_block_the_gravity_the_drag_recurrence_wears() {
+        let world = wide_flat_world();
+        let mut f = FallingBlock::new(1, crate::world::SAND, 10, 30, 10);
+        let mut expect = 0.0f64;
+        for n in 1..=10u32 {
+            expect = (expect - FALLING_BLOCK_GRAVITY) * FALLING_BLOCK_AIR_DRAG;
+            assert!(!f.tick(&world), "the free air the landing never meets");
+            assert!(
+                (f.vy - expect).abs() < 1e-9,
+                "tick {n} the recurrence the drag keeps"
+            );
+            assert_eq!(f.time, n, "the ++time the tick's own clock keeps");
+        }
+        // the fall's own descent (the ~2.2-block sum the ten ticks wear)
+        assert!(f.y < 30.0 && f.y > 26.0, "the descent the gravity wears");
+    }
+
+    /// THE ISFREE LAW'S OWN VERDICTS (the palette's own rows the fall
+    /// and the landing both read): the air/liquids/tufts the pass
+    /// keeps, the ground and the pile's own block the floor's hold
+    /// wears, the torch and the flowers the NO-replaceable refusal
+    /// keeps (the famous item-drop case the landing serves), the crop
+    /// the vanilla quirk keeps.
+    #[test]
+    fn the_falling_free_the_palette_rows_wear() {
+        assert!(falling_free(crate::world::AIR));
+        assert!(falling_free(crate::world::WATER));
+        assert!(falling_free(crate::world::LAVA));
+        assert!(
+            falling_free(crate::world::SHORT_GRASS),
+            "the tuft the replaceable flag keeps"
+        );
+        assert!(
+            falling_free(crate::world::TALL_GRASS),
+            "the double plant the same flag keeps"
+        );
+        assert!(!falling_free(crate::world::GRASS), "the ground the floor keeps");
+        assert!(
+            !falling_free(crate::world::SAND),
+            "the pile's own block the floor keeps"
+        );
+        assert!(
+            !falling_free(crate::world::TORCH),
+            "the torch the landing refuses — the item drop"
+        );
+        assert!(
+            !falling_free(crate::world::DANDELION),
+            "the flower the no-replaceable absence keeps"
+        );
+        assert!(!falling_free(crate::world::WHEAT), "the crop the vanilla quirk keeps");
     }
 
     /// THE SPIDER'S OWN DARKNESS GATE (javap `SpiderTargetGoal.canUse` —

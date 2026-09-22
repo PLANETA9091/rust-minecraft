@@ -376,6 +376,14 @@ pub fn is_torch(id: u16) -> bool {
     id == TORCH
 }
 
+/// THE FALLING FAMILY — the kinds the vanilla's FallingBlock registers
+/// (the sand/gravel pair the falling-block entity's own factory wears;
+/// the red sand/concrete powder/anvil the palette never banks — the
+/// honest absence the two members keep).
+pub fn is_falling_block(id: u16) -> bool {
+    id == SAND || id == GRAVEL
+}
+
 /// THE TORCH'S OWN SURVIVAL LAW — javap BaseTorchBlock.canSurvive
 /// over the 26.2 jar: the `canSupportCenter(level, pos.below(),
 /// Direction.UP)` delegate the bytecode's lone invokestatic speaks.

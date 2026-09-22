@@ -6342,6 +6342,14 @@ pub struct App {
     /// PrimedTnt tick's own laws ride, the boom the fuse crossing
     /// serves. The headless scenes never spawn one: the goldens stay.
     pub primed_tnts: Vec<crate::mob::PrimedTnt>,
+    /// THE FALLING BLOCKS' OWN BODIES (the FallingBlockEntity lane —
+    /// the conversion the scheduled tick spawns, the landing the
+    /// placement/drop walk serves).
+    pub falling_blocks: Vec<crate::mob::FallingBlock>,
+    /// THE FALLING SCHEDULER'S OWN QUEUE (the LevelTickScheduler
+    /// stand-in — the (cell, due-frame) pairs the shape-update/onPlace
+    /// walks arm, the set-dedup the vanilla's own scheduler keeps).
+    pub falling_checks: Vec<(i32, i32, i32, u64)>,
     /// The spawner's clock (the client's own cadence the mob lane
     /// speaks) and the id counter (the entity ids the drops ride).
     pub spawn_clock: i64,
@@ -7298,6 +7306,8 @@ impl App {
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
             primed_tnts: Vec::new(),
+            falling_blocks: Vec::new(),
+            falling_checks: Vec::new(),
             spawn_clock: 0,
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
@@ -8759,6 +8769,124 @@ impl App {
                         }
                     }
                 }
+                // THE FALLING BLOCKS' OWN LANE (javap FallingBlockEntity
+                // .tick the 26.2 jar speaks — the entity pass the
+                // gravity/move/drag law wears, the landing the
+                // placement/drop walk serves; the scheduled ticks the
+                // FallingBlock.tick law answers — the isFree(below) the
+                // conversion reads, the fall factory the (x+0.5, y,
+                // z+0.5) pose keeps, the above cell the shape-update
+                // schedule re-arms — the chain the column's own cascade
+                // wears). The fresh bodies the NEXT update's list the
+                // same answer the TNT chain's own order keeps.
+                if !self.falling_blocks.is_empty() {
+                    let mut landed: Vec<(u16, i32, i32, i32)> = Vec::new();
+                    if let Some(w) = self.offline_world.as_ref() {
+                        for f in self.falling_blocks.iter_mut() {
+                            if f.tick(w) {
+                                if let Some((bx, by, bz)) = f.landed {
+                                    landed.push((f.block, bx, by, bz));
+                                }
+                            }
+                        }
+                    }
+                    self.falling_blocks.retain(|f| !f.dead);
+                    let mut placed_cells: Vec<(i32, i32, i32)> = Vec::new();
+                    let mut drop_items: Vec<(u16, f64, f64, f64)> = Vec::new();
+                    if !landed.is_empty() {
+                        if let Some(w) = self.offline_world.as_mut() {
+                            for (kind, bx, by, bz) in landed.iter().copied() {
+                                // THE LANDING'S OWN CONJUNCT (javap the
+                                // onGround branch: the canBeReplaced
+                                // (into) the DirectionalPlaceContext walk
+                                // reads, the !isFree(below) the floor's
+                                // own hold keeps — the placement the
+                                // setBlock(3) walk wears)
+                                let into = w.get(bx, by, bz);
+                                if crate::mob::falling_free(into)
+                                    && !crate::mob::falling_free(w.get(bx, by - 1, bz))
+                                {
+                                    w.set(bx, by, bz, kind);
+                                    placed_cells.push((bx, by + 1, bz));
+                                } else {
+                                    // THE DROP BRANCH (the
+                                    // spawnAtLocation(block) walk — the
+                                    // asItem() stack the loot table's
+                                    // flint roll never reads — the torch
+                                    // case the famous law keeps)
+                                    drop_items.push((
+                                        kind,
+                                        bx as f64 + 0.5,
+                                        by as f64,
+                                        bz as f64 + 0.5,
+                                    ));
+                                }
+                            }
+                        }
+                    }
+                    for (bx, by, bz) in &placed_cells {
+                        self.schedule_falling_check(*bx, *by, *bz);
+                    }
+                    for (kind, x, y, z) in drop_items {
+                        if let Some(item) = crate::mob::falling_item_id(kind) {
+                            let id = self.next_drop_id;
+                            self.next_drop_id += 1;
+                            self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                id, item, 1, x, y, z, &mut self.mob_rng,
+                            ));
+                        }
+                    }
+                    if !placed_cells.is_empty() {
+                        self.remesh_offline();
+                    }
+                }
+                // THE FALLING'S OWN SCHEDULED TICKS (the
+                // LevelTickScheduler stand-in — the due cells the
+                // falling-kind validation keeps, the isFree(below) the
+                // FallingBlock.tick law reads, the conversion the cell's
+                // own AIR set + the entity spawn wears, the batched
+                // re-speak the crops' rhythm answers)
+                let due: Vec<(i32, i32, i32)> = {
+                    let now = self.frame;
+                    let mut due_cells = Vec::new();
+                    self.falling_checks.retain(|(x, y, z, at)| {
+                        if *at <= now {
+                            due_cells.push((*x, *y, *z));
+                            false
+                        } else {
+                            true
+                        }
+                    });
+                    due_cells
+                };
+                if !due.is_empty() {
+                    let mut converted: Vec<(u16, i32, i32, i32)> = Vec::new();
+                    if let Some(w) = self.offline_world.as_mut() {
+                        for (x, y, z) in &due {
+                            let kind = w.get(*x, *y, *z);
+                            if !crate::world::is_falling_block(kind) {
+                                continue;
+                            }
+                            if !crate::mob::falling_free(w.get(*x, *y - 1, *z)) {
+                                continue;
+                            }
+                            w.set(*x, *y, *z, crate::world::AIR);
+                            converted.push((kind, *x, *y, *z));
+                        }
+                    }
+                    for (kind, x, y, z) in &converted {
+                        let id = self.next_mob_id;
+                        self.next_mob_id += 1;
+                        self.falling_blocks
+                            .push(crate::mob::FallingBlock::new(id, *kind, *x, *y, *z));
+                        // THE CHAIN'S OWN RE-ARM (the shape-update
+                        // schedule the cell above the new air wears)
+                        self.schedule_falling_check(*x, *y + 1, *z);
+                    }
+                    if !converted.is_empty() {
+                        self.remesh_offline();
+                    }
+                }
                 // THE CROP'S OWN RANDOM TICKS (the ServerLevel walk the
                 // game's own clock keeps — randomTickSpeed=3 the
                 // three-picks-per-16³-section budget the gamerule's
@@ -9832,6 +9960,13 @@ impl App {
                         for (bx, by, bz) in explosion_cells.iter().copied() {
                             w.set(bx, by, bz, crate::world::AIR);
                         }
+                    }
+                    // THE CRATER'S OWN SCHEDULE (the shape-update walk
+                    // the blast's neighbor changes arm — the sand above
+                    // every cleared cell the 2-tick tick reads, the
+                    // cascade the column's own chain wears)
+                    for (bx, by, bz) in explosion_cells.iter().copied() {
+                        self.schedule_falling_check(bx, by + 1, bz);
                     }
                     // THE BLAST'S OWN RE-SPEAK: the crater the mesh
                     // wears THIS tick — the same batched rhythm the
@@ -20312,6 +20447,28 @@ impl App {
     /// grant refuses). The press lane (startDestroyBlock's own
     /// destroyBlock) and the hold lane (continueDestroyBlock's
     /// completion) fold here — the singleplayer broadcast both speak.
+    /// THE FALLING SCHEDULER'S OWN STAND-IN (the Level's
+    /// ScheduledTickAccess walk the FallingBlock.updateShape/onPlace
+    /// arms speak): the cell the 2-tick delay banks
+    /// (getDelayAfterPlace the iconst_2 keeps), the already-scheduled
+    /// cell the hasScheduledTick set-dedup keeps, the networked world
+    /// the SERVER's own scheduler answers (the offline lane's own
+    /// authority the block edits split).
+    pub fn schedule_falling_check(&mut self, x: i32, y: i32, z: i32) {
+        if self.world_is_network || self.offline_world.is_none() {
+            return;
+        }
+        if self
+            .falling_checks
+            .iter()
+            .any(|c| c.0 == x && c.1 == y && c.2 == z)
+        {
+            return;
+        }
+        self.falling_checks
+            .push((x, y, z, self.frame + crate::mob::FALLING_SCHEDULE_DELAY));
+    }
+
     fn dig_break_effects(&mut self, kind: u16, pos: (i32, i32, i32)) {
         // THE DOUBLE PLANT'S OWN PAIR LAW (javap DoublePlantBlock over
         // the 26.2 jar — the autopush-413 round): the broken half the
@@ -20347,6 +20504,16 @@ impl App {
             (self.offline_world.as_mut(), mate_cell)
         {
             world.set(mx, my, mz, crate::world::AIR);
+        }
+        // THE FALLING SUPPORT'S OWN SCHEDULE (the shape-update walk the
+        // dig's neighbor change arms — the dug cell's above the sand's
+        // own cell the schedule reads, the mate's own above the pair's
+        // removal keeps)
+        self.schedule_falling_check(pos.0, pos.1, pos.2);
+        self.schedule_falling_check(pos.0, pos.1 + 1, pos.2);
+        if let Some((mx, my, mz)) = mate_cell {
+            self.schedule_falling_check(mx, my, mz);
+            self.schedule_falling_check(mx, my + 1, mz);
         }
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
@@ -20757,6 +20924,13 @@ impl App {
                 return false;
             }
         }
+        // THE FALLING SUPPORT'S OWN SCHEDULE (the onPlace walk the
+        // placed block's own schedule arms — the sand the air-below
+        // cell the 2-tick tick reads, the above cell the shape
+        // update keeps; the fn's own offline guard the networked
+        // world's server-owned scheduler answers)
+        self.schedule_falling_check(cell.0, cell.1, cell.2);
+        self.schedule_falling_check(cell.0, cell.1 + 1, cell.2);
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
@@ -21265,6 +21439,10 @@ impl App {
             world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::AIR);
             world.relight(); // the prime's own re-speak the refreshed grid bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            // THE PRIME'S OWN SCHEDULE (the shape update the removed
+            // cell's above wears — the sand the TNT's cell held the
+            // 2-tick tick reads)
+            self.schedule_falling_check(hit.pos.0, hit.pos.1 + 1, hit.pos.2);
         }
         let id = self.next_mob_id;
         self.next_mob_id += 1;
@@ -22815,6 +22993,7 @@ impl App {
         // THE PRIMED TNT'S OWN PASS (the entity pass's own lane — the
         // fuse machines the block-model flash render wears)
         self.render_tnts(fb, &ctx, &cam);
+        self.render_falling_blocks(fb, &ctx, &cam);
         self.render_arrows(fb, &ctx, &cam);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
@@ -23616,6 +23795,70 @@ impl App {
         if !flashed.is_empty() {
             fb.draw_sampled_quads(vp, &flashed, &mut |_tex, _u, _v| {
                 Some([255, 255, 255, 255])
+            });
+        }
+    }
+
+    /// THE FALLING BLOCKS' OWN PASS (javap `FallingBlockRenderer.render`
+    /// the 26.2 jar speaks — the carried block's own model the derive
+    /// walk bakes, the pose the lerped position the xo/yo/zo anchors
+    /// walk BETWEEN, the block-center pivot the TNT's own net fold
+    /// wears, the flash the falling lane never arms): the sand/gravel
+    /// quads the entity's own pos rides.
+    fn render_falling_blocks(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        _cam: &crate::camera::Camera,
+    ) {
+        if self.falling_blocks.is_empty() {
+            return; // the deterministic scenes carry no falling bodies — the goldens stay
+        }
+        // the face shade law (the Cull enum order the TNT's own pass
+        // speaks)
+        let ground_shade = |d: mc_registry::element_quads::Direction| match d {
+            mc_registry::element_quads::Direction::Up => 1.0f32,
+            mc_registry::element_quads::Direction::Down => 0.5,
+            mc_registry::element_quads::Direction::North | mc_registry::element_quads::Direction::South => 0.8,
+            mc_registry::element_quads::Direction::West | mc_registry::element_quads::Direction::East => 0.6,
+        };
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for f in &self.falling_blocks {
+            let Some(model) = crate::mob::falling_model_id(f.block) else {
+                continue;
+            };
+            let Some(quads) = mc_registry::element_quads::derive_model_inherited(model) else {
+                continue;
+            };
+            let lx = (f.xo + (f.x - f.xo) * self.partial_tick as f64) as f32;
+            let ly = (f.yo + (f.y - f.yo) * self.partial_tick as f64) as f32;
+            let lz = (f.zo + (f.z - f.zo) * self.partial_tick as f64) as f32;
+            for q in &quads {
+                let sh = if q.shade {
+                    ground_shade(q.direction)
+                } else {
+                    1.0
+                };
+                sampled.push(crate::raster::SampledQuad {
+                    pts: q
+                        .vertices
+                        .map(|v| {
+                            [lx + v[0] - 0.5, ly + 0.5 + (v[1] - 0.5), lz + v[2] - 0.5]
+                        }),
+                    uv: q.uvs,
+                    tex: q.texture,
+                    tint: [sh, sh, sh],
+                });
+            }
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        if !sampled.is_empty() {
+            fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+                match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                    mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Unknown => None,
+                }
             });
         }
     }
@@ -46510,6 +46753,215 @@ cow_sound_variant: None,
         }
     }
 
+    /// THE FALLING TESTS' OWN FLOOR (the beat tests' platform the same
+    /// voxels wear — the stone 0..8, the grass 8, the air above)
+    fn falling_platform(app: &mut App) -> i32 {
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..8 {
+                        w.set(x, y, z, crate::world::STONE);
+                    }
+                    w.set(x, 8, z, crate::world::GRASS);
+                    for y in 9..size {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+        size
+    }
+
+    /// THE FALLING BLOCK'S OWN ROUND TRIP (dev-35 — the schedule the
+    /// dig's neighbor change stands in, the 2-tick delay the
+    /// getDelayAfterPlace law keeps, the conversion the fall factory
+    /// wears, the landing the placement conjunct serves: the block
+    /// re-forms on the floor the canBeReplaced(into) && !isFree(below)
+    /// pair answers)
+    #[test]
+    fn the_falling_block_the_schedule_the_fall_the_landing_wears() {
+        let mut app = App::new(9);
+        let size = falling_platform(&mut app);
+        let c = size / 2;
+        // THE SAND IN THE AIR (the below cell the honest free keeps)
+        app.offline_world.as_mut().unwrap().set(c, 10, c, crate::world::SAND);
+        app.schedule_falling_check(c, 10, c);
+        // THE 2-TICK DELAY (the first update the pending window keeps)
+        app.update();
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, 10, c),
+            crate::world::SAND,
+            "the first update the pending window keeps"
+        );
+        // THE CONVERSION (the due tick the fall factory wears)
+        for _ in 0..3 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, 10, c),
+            crate::world::AIR,
+            "the conversion the cell's own air wears"
+        );
+        assert_eq!(
+            app.falling_blocks.len(),
+            1,
+            "the fall factory the entity keeps"
+        );
+        assert!(
+            app.falling_blocks[0].id >= 1,
+            "the id lane the entity counter banks"
+        );
+        assert_eq!(
+            app.falling_blocks[0].block,
+            crate::world::SAND,
+            "the kind the carried state keeps"
+        );
+        // THE LANDING (the floor the placement conjunct answers)
+        for _ in 0..60 {
+            app.update();
+        }
+        assert!(
+            app.falling_blocks.is_empty(),
+            "the landed body the list retires"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, 9, c),
+            crate::world::SAND,
+            "the landing the block re-forms"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, 8, c),
+            crate::world::GRASS,
+            "the floor the support keeps"
+        );
+    }
+
+    /// THE FALLING'S OWN SUPPORT LAW (the isFree(below) the scheduled
+    /// tick reads — the floor-held sand the conversion refuses, the
+    /// schedule the honest consumed entry keeps)
+    #[test]
+    fn the_falling_block_the_support_the_conversion_refuses() {
+        let mut app = App::new(9);
+        let size = falling_platform(&mut app);
+        let c = size / 2;
+        // THE SAND ON THE FLOOR (the grass below the not-free hold keeps)
+        app.offline_world.as_mut().unwrap().set(c, 9, c, crate::world::SAND);
+        app.schedule_falling_check(c, 9, c);
+        for _ in 0..8 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, 9, c),
+            crate::world::SAND,
+            "the floor the sand holds"
+        );
+        assert!(
+            app.falling_blocks.is_empty(),
+            "the held block the entity never becomes"
+        );
+        assert!(
+            app.falling_checks.is_empty(),
+            "the due entry the honest consume keeps"
+        );
+    }
+
+    /// THE FALLING COLUMN'S OWN CHAIN (the conversion's above-cell
+    /// schedule the shape-update law re-arms — the column the cascade
+    /// wears, the re-stack the landing conjunct serves: the staggered
+    /// falls the bottom-up order the same physics keeps)
+    #[test]
+    fn the_falling_column_the_chain_the_collapse_wears() {
+        let mut app = App::new(9);
+        let size = falling_platform(&mut app);
+        let c = size / 2;
+        // THE COLUMN (the three sand the grass floor holds)
+        for y in 9..12 {
+            app.offline_world.as_mut().unwrap().set(c, y, c, crate::world::SAND);
+        }
+        // THE DIG'S OWN STAND-IN (the floor cell's removal the support
+        // lost wears — the schedule the neighbor change arms)
+        app.offline_world.as_mut().unwrap().set(c, 8, c, crate::world::AIR);
+        app.schedule_falling_check(c, 9, c);
+        // THE CASCADE (the each-own-schedule the chain wears — the
+        // bottom the fall's 7-tick reach never crosses inside the
+        // window: the three bodies the same physics keeps)
+        for _ in 0..8 {
+            app.update();
+        }
+        assert_eq!(
+            app.falling_blocks.len(),
+            3,
+            "the cascade the three bodies keeps"
+        );
+        // THE RE-STACK (the stone at 7 the floor the entities land on)
+        for _ in 0..120 {
+            app.update();
+        }
+        assert!(
+            app.falling_blocks.is_empty(),
+            "the landed bodies the list retires"
+        );
+        for y in 8..11 {
+            assert_eq!(
+                app.offline_world.as_ref().unwrap().get(c, y, c),
+                crate::world::SAND,
+                "the re-stack the y{y} cell wears"
+            );
+        }
+    }
+
+    /// THE FALLING'S OWN TORCH LAW (the torch the falling body passes
+    /// THROUGH — the Empty collision the entity never rests on — the
+    /// landing cell the torch's own kind keeps: the canBeReplaced
+    /// refusal the item drop branch serves, the torch the survival
+    /// keeps, the block the item the asItem() law speaks — the loot
+    /// table's flint roll the gravel walk never reads). The STATIC
+    /// sand the torch holds the isFree refusal keeps (the scheduled
+    /// tick the below's not-free verdict reads — the vanilla quirk the
+    /// higher column the own free-below fall wears): the test the
+    /// FALLING body's own path arms (the sand the three air cells
+    /// above the torch the conversion's free-below law admits).
+    #[test]
+    fn the_falling_block_the_torch_the_item_drop_wears() {
+        let mut app = App::new(9);
+        let size = falling_platform(&mut app);
+        let c = size / 2;
+        // THE TORCH UNDER THE FALL PATH (the floor-held torch the
+        // famous pair wears, the sand the air column above it the
+        // conversion's isFree law admits)
+        app.offline_world.as_mut().unwrap().set(c, 9, c, crate::world::TORCH);
+        app.offline_world.as_mut().unwrap().set(c, 12, c, crate::world::SAND);
+        // THE BODY'S OWN RETREAT (the drop's spawn cell the falling
+        // path's own floor keeps — the player's pickup arc the far
+        // pose never rides)
+        app.body = Some(crate::body::PlayerBody::new(5.0, 9.0, 5.0, 0.0, 0.0));
+        app.schedule_falling_check(c, 12, c);
+        for _ in 0..80 {
+            app.update();
+        }
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(w.get(c, 9, c), crate::world::TORCH, "the torch the survival keeps");
+        assert_eq!(w.get(c, 12, c), crate::world::AIR, "the sand the cell left");
+        assert_eq!(w.get(c, 8, c), crate::world::GRASS, "the floor untouched");
+        assert!(
+            app.falling_blocks.is_empty(),
+            "the broken body the list retires"
+        );
+        // THE ITEM DROP (the spawnAtLocation walk — the single stack
+        // the entity's own pose rides)
+        assert_eq!(app.drops.len(), 1, "the drop branch the item wears");
+        assert_eq!(
+            app.drops[0].item,
+            crate::mob::falling_item_id(crate::world::SAND).unwrap(),
+            "the sand item the wire order keeps"
+        );
+        assert_eq!(app.drops[0].count, 1, "the single stack the law spawns");
+    }
+
     /// THE NIGHT BEAT'S OWN PEACEFUL GATE (javap the 26.2 jar the
     /// `SpawnPlacements.checkSpawnRules` walk speaks): the PEACEFUL
     /// world the MONSTER spawn the gate refuses — 400 updates' worth
@@ -59917,6 +60369,7 @@ cow_sound_variant: None,
         assert_eq!(lightmap_screen_cell(4, 0), (1, 15), "the second cell the 4px stride keeps");
     }
 }
+
 
 
 
