@@ -152,6 +152,10 @@ pub fn materialize(
         // gate keeps off the client level (the vanilla multiplayer F3
         // the same silence wears); the field sits at the default
         difficulty: crate::difficulty::Difficulty::Normal,
+        // THE LOCK the networked world's wire lane never banks — the
+        // honest `false` the absent store wears (the dial + lock pair
+        // the permission arm keeps INACTIVE regardless)
+        difficulty_locked: false,
         // THE CHUNKS' OWN DWELL CLOCK the networked world never carries
         // — `None` = no opinion: the server's own server-side truth the
         // wire never sends, the client's words never predict it

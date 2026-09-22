@@ -4853,6 +4853,39 @@ impl Button {
     }
 }
 
+/// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon +
+/// `extractContents`' raw bytecode — the six `Icon` states the clinit
+/// banks, the selection the three arms speak): the DISABLED pair the
+/// `!active` arm wears FIRST (the `ifeq -> 20` walk — locked speaks
+/// `LOCKED_DISABLED`, unlocked `UNLOCKED_DISABLED`), the HIGHLIGHTED
+/// pair the `isHoveredOrFocused()` arm answers (locked
+/// `LOCKED_HOVER`, unlocked `UNLOCKED_HOVER`), the PLAIN pair the
+/// resting walk keeps (locked `LOCKED`, unlocked `UNLOCKED`). The
+/// sprite ids the Icon clinit's own ldc pairs bank — `widget/locked_button`,
+/// `widget/unlocked_button`, the `_highlighted` / `_disabled` suffixes
+/// the hover/disabled arms ride — the registry's 20x20 defs the
+/// `blitSprite(GUI_TEXTURED, icon.sprite, getX(), getY(), w, h)` walk
+/// covers the whole button with (no label, the icon IS the widget).
+pub(crate) fn lock_icon_sprite(locked: bool, active: bool, hovered: bool) -> &'static str {
+    if !active {
+        if locked {
+            "widget/locked_button_disabled"
+        } else {
+            "widget/unlocked_button_disabled"
+        }
+    } else if hovered {
+        if locked {
+            "widget/locked_button_highlighted"
+        } else {
+            "widget/unlocked_button_highlighted"
+        }
+    } else if locked {
+        "widget/locked_button"
+    } else {
+        "widget/unlocked_button"
+    }
+}
+
 /// Server list entry (name, MOTD with § codes, ping ms).
 #[derive(Debug, Clone)]
 pub struct ServerEntry {
@@ -5331,6 +5364,31 @@ pub enum ScreenKind {
     /// ServerboundLockDifficultyPacket walk wears, the hardcore arm
     /// the client's own worlds never wear).
     WorldOptions,
+    /// THE DIFFICULTY'S OWN LOCK QUESTION (javap 26.2 ConfirmScreen —
+    /// the DifficultyButtons record's lock onPress opens it: the
+    /// `lambda$create$1` walk's `new ConfirmScreen(answer ->
+    /// onLockCallback(answer, ...), translatable("difficulty.lock.title"),
+    /// translatable("difficulty.lock.question", difficulty.getDisplayName()))`
+    /// the raw bytecode banks). The vanilla screen's own walk the port
+    /// wears: the vertical LinearLayout the `alignHorizontallyCenter`
+    /// cells keep — the title StringWidget, the message the
+    /// `MultiLineTextWidget.setMaxWidth(width - 50).setMaxRows(15)
+    /// .setCentered(true)` walk wraps, the Yes/No button row the
+    /// horizontal `LinearLayout.horizontal().spacing(4)` +
+    /// `paddingTop(16)` pair banks (the default 150-wide Buttons the
+    /// `addButtons` walk adds), the whole column the
+    /// `FrameLayout.centerInRectangle` walk centers on the screen. THE
+    /// ANSWER the `onLockCallback` walk serves — the `setScreen(screen)`
+    /// BOTH answers wear FIRST (the WorldOptions screen the walk
+    /// returns to), the Yes the `ServerboundLockDifficultyPacket(true)`
+    /// send speaks (the OFFLINE world the integrated-server lane IS:
+    /// the sim's own lock flag stores), the lock + dial pair the
+    /// INACTIVE arm answers after. THE ESCAPE LAW the
+    /// `shouldCloseOnEsc() = false` walk keeps — the confirm screen
+    /// the on_escape walk's arms never wear, the Escape the silence
+    /// keeps (the vanilla's own modal discipline: the question the
+    /// buttons alone answer).
+    DifficultyLockConfirm,
     /// THE F3+F4 GAME MODE SWITCHER (javap 26.2 GameModeSwitcherScreen
     /// — the handleDebugKeys' keyDebugSwitchGameMode lane opens it, the
     /// open screen's own key walk serves the rest): the audited 125x75
@@ -15153,6 +15211,26 @@ impl App {
                 // Options screen wears, the chain the vanilla's own
                 // screens keep)
                 "wodone" => self.open(ScreenKind::Options),
+                // THE LOCK BUTTON'S OWN HAND-OFF (the lambda$create$1
+                // walk — the ConfirmScreen the lock's onPress opens,
+                // the title + question the en_us table speaks, the
+                // answer the onLockCallback lane wears)
+                "wodlock" => self.open(ScreenKind::DifficultyLockConfirm),
+                // THE ONLOCKCALLBACK WALK (the `setScreen(screen)` the
+                // BOTH answers wear FIRST — the WorldOptions screen the
+                // walk returns to; the YES the
+                // `ServerboundLockDifficultyPacket(true)` send speaks —
+                // the OFFLINE world the integrated-server lane IS: the
+                // sim's own lock flag stores, the dial + lock pair the
+                // INACTIVE arm answers after; the NO the same return
+                // the flag never touched keeps)
+                "wodlockyes" => {
+                    if let Some(world) = self.offline_world.as_mut() {
+                        world.difficulty_locked = true;
+                    }
+                    self.open(ScreenKind::WorldOptions);
+                }
+                "wodlockno" => self.open(ScreenKind::WorldOptions),
                 // THE DIAL'S OWN TURN (the CycleButton's onValueChange
                 // walk — the click the NEXT value the values() order
                 // answers; the OFFLINE world the integrated-server
@@ -21407,6 +21485,9 @@ impl App {
             ScreenKind::Servers => self.render_servers(&mut g, a, w, h),
             ScreenKind::Options => self.render_options(&mut g, a, w, h),
             ScreenKind::WorldOptions => self.render_world_options(&mut g, a, w, h),
+            ScreenKind::DifficultyLockConfirm => {
+                self.render_difficulty_lock_confirm(&mut g, a, w, h)
+            }
             ScreenKind::Connect => self.render_connect(&mut g, a, w, h),
             ScreenKind::Disconnect => self.render_disconnect(&mut g, a, w, h),
             ScreenKind::World => {
@@ -26076,8 +26157,28 @@ impl App {
         let diff = self
             .offline_world
             .as_ref()
-            .map(|w| w.difficulty)
+            .map(|world| world.difficulty)
             .unwrap_or(crate::difficulty::Difficulty::Normal);
+        // THE LOCK'S OWN READ (the `DifficultyButtons.isDifficultyLocked`
+        // walk — the `locked || hardcore` pair the client's own worlds
+        // the hardcore arm never wears: the flag alone speaks)
+        let locked = self
+            .offline_world
+            .as_ref()
+            .map(|world| world.difficulty_locked)
+            .unwrap_or(false);
+        // THE SHARED ACTIVE ARM (the create + refresh walks' own writes
+        // — `!lock.isLocked() && playerHasPermissionToChangeDifficulty()`
+        // BOTH actives keep: the `hasSingleplayerServer()` read the
+        // offline lane answers, the locked world both INACTIVE keeps)
+        let dial_active = !self.world_is_network && !locked;
+        // THE ROW THE CREATE WALK BANKS (the `EqualSpacingLayout(150, 0,
+        // HORIZONTAL)` the dial + lock children fill — the dial's
+        // `setWidth(dial.getWidth() - lock.getWidth())` walk the 130x20
+        // dial keeps, the 20x20 lock the row's right ride wears, the
+        // zero remaining space the flush pair answers)
+        let row_left = cx - 75;
+        let dial_y = h / 2 - 16;
         let mut dial = Button::new(
             "difficulty",
             format!(
@@ -26085,15 +26186,19 @@ impl App {
                 tr("options.difficulty").unwrap_or("Difficulty"),
                 diff.display_name()
             ),
-            cx,
-            h / 2 - 16,
-            150,
+            row_left + 65,
+            dial_y,
+            130,
         );
-        // THE PERMISSION ARM (the create walk's `active` write — the
-        // `hasSingleplayerServer()` read the offline lane answers,
-        // the networked world the same read refuses)
-        dial.active = !self.world_is_network;
+        dial.active = dial_active;
         self.buttons.push(dial);
+        // THE LOCK BUTTON'S OWN RECORD (the `new LockIconButton(0, 0,
+        // onPress)` the 20x20 button banks — the `setLocked(isDifficultyLocked)`
+        // walk the state keeps, the SAME active arm the create walk
+        // writes: `!isLocked() && permission`)
+        let mut lock = Button::new("wodlock", String::new(), row_left + 140, dial_y, 20);
+        lock.active = dial_active;
+        self.buttons.push(lock);
         // THE DONE FOOTER (the footer's 200-wide button the
         // HeaderAndFooterLayout walk keeps — the onClose the
         // lastScreen chain wears: the Options screen the walk returns
@@ -26104,6 +26209,96 @@ impl App {
             cx,
             h - 28,
             200,
+        ));
+        // THE LOCK'S OWN BLIT (the LockIconButton's extractContents
+        // walk — the icon the whole 20x20 button covers, NO label the
+        // vanilla widget wears: the standard button render the record
+        // skips, the state arms the lock_icon_sprite walk speaks — the
+        // `isHoveredOrFocused()` read the live cursor lane answers)
+        let (mx, my) = self.mouse_pos.unwrap_or((-1, -1));
+        for b in &self.buttons.clone() {
+            if b.id == "wodlock" {
+                let sprite = lock_icon_sprite(locked, b.active, b.hovered(mx, my));
+                g.sprite_at(a, sprite, b.x, b.y, b.w, b.h);
+                continue;
+            }
+            b.render(g, a, -1, -1);
+        }
+    }
+
+    /// THE DIFFICULTY'S OWN LOCK QUESTION (javap 26.2 ConfirmScreen —
+    /// the DifficultyButtons record's lock onPress opens it, the 3-arg
+    /// ctor the `gui.yes` / `gui.no` defaults keeps): the vertical
+    /// LinearLayout the centered cells keep — the title word the
+    /// `difficulty.lock.title` key speaks, the question the
+    /// `MultiLineTextWidget` walk wraps (`setMaxWidth(width - 50)` the
+    /// wrap's own bank, the centered rows the `setCentered(true)`
+    /// keeps, the 15-row ceiling the `setMaxRows(15)` banks), the
+    /// Yes/No pair the horizontal `spacing(4)` + `paddingTop(16)` row
+    /// banks (the default 150-wide Buttons the addButtons walk adds),
+    /// the whole column the `centerInRectangle` walk centers on the
+    /// screen.
+    fn render_difficulty_lock_confirm(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        // the same gradient backdrop the options house keeps (the
+        // ConfirmScreen the renderBackground's own lane rides — the
+        // options screens the one backdrop wear)
+        for y in 0..h {
+            let t = y as f32 / h.max(1) as f32;
+            let c = [0.10 + 0.04 * t, 0.10 + 0.04 * t, 0.13 + 0.05 * t];
+            g.fill(0, y, w, 1, [c[0], c[1], c[2], 1.0]);
+        }
+        let cx = w / 2;
+        // THE QUESTION'S OWN WORDS (the ctor's translatable pair — the
+        // title the `difficulty.lock.title` key keeps, the message the
+        // `difficulty.lock.question` key the difficulty's display name
+        // fills: the `%1$s` the `getDisplayName()` arg answers)
+        let diff = self
+            .offline_world
+            .as_ref()
+            .map(|world| world.difficulty)
+            .unwrap_or(crate::difficulty::Difficulty::Normal);
+        let title = tr("difficulty.lock.title").unwrap_or("Lock World Difficulty");
+        let question = tr("difficulty.lock.question")
+            .map(|fmt| fmt.replace("%1$s", diff.display_name()))
+            .unwrap_or_else(|| {
+                format!(
+                    "Are you sure you want to lock the difficulty of this world? This will set \
+                     this world to always be {}, and you will never be able to change that again.",
+                    diff.display_name()
+                )
+            });
+        // THE MESSAGE'S OWN WRAP (the MultiLineTextWidget walk — the
+        // `width - 50` max the wrap's bank keeps, the 9px rows the
+        // Font's line height speaks)
+        let lines = wrap_lines(g, &question, w - 50);
+        // THE COLUMN'S OWN CENTER (the arrangeElements +
+        // `FrameLayout.centerInRectangle` walk — title 9 + the message
+        // rows + the button row's `paddingTop(16)` + the 20px buttons,
+        // the whole column the screen's own center wears)
+        let msg_h = lines.len() as i32 * 9;
+        let col_h = 9 + msg_h + 16 + 20;
+        let col_y = (h - col_h) / 2;
+        g.text_centered(a, cx, col_y, title, WHITE, true);
+        for (i, line) in lines.iter().enumerate() {
+            g.text_centered(a, cx, col_y + 9 + i as i32 * 9, line, WHITE, true);
+        }
+        // THE BUTTON ROW (the horizontal LinearLayout `spacing(4)` —
+        // the 150-wide Yes/No pair the addButtons walk banks, the
+        // 304-wide row the screen's center keeps)
+        let row_y = col_y + 9 + msg_h + 16;
+        self.buttons.push(Button::new(
+            "wodlockyes",
+            tr("gui.yes").unwrap_or("Yes").to_string(),
+            cx - 77,
+            row_y,
+            150,
+        ));
+        self.buttons.push(Button::new(
+            "wodlockno",
+            tr("gui.no").unwrap_or("No").to_string(),
+            cx + 77,
+            row_y,
+            150,
         ));
         for b in &self.buttons.clone() {
             b.render(g, a, -1, -1);
@@ -36848,7 +37043,30 @@ mod tests {
             .clone();
         assert_eq!(dial.label, "Difficulty: Normal", "the new-world word");
         assert!(dial.active, "the OFFLINE world the permission arm wears");
-        assert_eq!(dial.w, 150, "the create's own width");
+        assert_eq!(
+            dial.w,
+            130,
+            "the create walk's own setWidth — the dial the lock's 20 rides (150 - 20 = 130, the row's left child)"
+        );
+        // THE LOCK ROW'S OWN PAIR (the EqualSpacingLayout(150, 0,
+        // HORIZONTAL) walk — the 20x20 lock the dial's right ride
+        // wears, the flush row the zero remaining space keeps: the
+        // dial's left edge + 130 the lock's own left edge answers)
+        let lock = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlock")
+            .expect("the lock button the create walk banks")
+            .clone();
+        assert_eq!(lock.w, 20, "the LockIconButton's own 20x20 shape");
+        assert_eq!(lock.h, 20, "the LockIconButton's own 20x20 shape");
+        assert!(lock.active, "the unlocked lock the shared active arm wears");
+        assert_eq!(
+            lock.x,
+            dial.x + 130,
+            "the flush row — the lock the dial's right ride keeps"
+        );
+        assert_eq!(lock.y, dial.y, "the row the same band keeps");
         // THE CYCLE (the click the next value the values() order
         // answers — Normal → Hard, the wrap the four-turn walk rings
         // home: Hard → Peaceful → Easy → Normal)
@@ -36951,6 +37169,269 @@ mod tests {
             app.food_data.food_level(),
             20,
             "the PEACEFUL arm the bar's own drop refuses"
+        );
+    }
+
+    /// THE LOCK ICON'S OWN STATE ARMS (javap 26.2 LockIconButton$Icon
+    /// + `extractContents`' raw bytecode — the six states the clinit
+    /// banks, the DISABLED arm the `!active` walk wears FIRST, the
+    /// HIGHLIGHTED arm the `isHoveredOrFocused()` walk answers, the
+    /// plain pair the resting walk keeps): the full 2x2x2 arm table
+    /// the selection fold speaks.
+    #[test]
+    fn the_lock_icon_wears_the_extract_contents_arms() {
+        // THE DISABLED PAIR (the `!active` arm — the ifeq -> 20 walk
+        // the state speak answers before the hover the read rides)
+        assert_eq!(
+            lock_icon_sprite(true, false, false),
+            "widget/locked_button_disabled",
+            "the locked-disabled pair the Icon clinit banks"
+        );
+        assert_eq!(
+            lock_icon_sprite(false, false, false),
+            "widget/unlocked_button_disabled",
+            "the unlocked-disabled pair the same walk keeps"
+        );
+        // the DISABLED arm the hover NEVER overrides (the arm order —
+        // the disabled read the hover's ifeq precedes)
+        assert_eq!(
+            lock_icon_sprite(true, false, true),
+            "widget/locked_button_disabled",
+            "the disabled arm the hover never overrides"
+        );
+        assert_eq!(
+            lock_icon_sprite(false, false, true),
+            "widget/unlocked_button_disabled",
+            "the same precedence the unlocked side keeps"
+        );
+        // THE HIGHLIGHTED PAIR (the active + hovered arm — the
+        // isHoveredOrFocused() walk)
+        assert_eq!(
+            lock_icon_sprite(true, true, true),
+            "widget/locked_button_highlighted",
+            "the locked-hover pair the active lock wears"
+        );
+        assert_eq!(
+            lock_icon_sprite(false, true, true),
+            "widget/unlocked_button_highlighted",
+            "the unlocked-hover pair the same walk answers"
+        );
+        // THE PLAIN PAIR (the active + resting walk)
+        assert_eq!(
+            lock_icon_sprite(true, true, false),
+            "widget/locked_button",
+            "the locked pair the resting active lock wears"
+        );
+        assert_eq!(
+            lock_icon_sprite(false, true, false),
+            "widget/unlocked_button",
+            "the unlocked pair the fresh WorldOptions screen wears"
+        );
+    }
+
+    /// THE LOCK QUESTION'S OWN SCREEN (javap 26.2 ConfirmScreen — the
+    /// 3-arg ctor the `gui.yes` / `gui.no` defaults keeps, the words
+    /// the en_us table banks, the layout the vertical LinearLayout's
+    /// centered cells speak, the ESCAPE the `shouldCloseOnEsc() =
+    /// false` walk refuses): the title + question the lock's onPress
+    /// opens, the 150-wide Yes/No pair the spacing(4) row banks, the
+    /// Escape the silence keeps.
+    #[test]
+    fn the_lock_confirm_screen_wears_the_vanilla_words() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE OPEN (the lock's onPress — the wodlock click the confirm
+        // screen opens)
+        app.open(ScreenKind::WorldOptions);
+        app.render_title_buttons_for_test();
+        let lock = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlock")
+            .expect("the lock")
+            .clone();
+        app.on_click(lock.x + lock.w / 2, lock.y + lock.h / 2);
+        assert_eq!(
+            app.screen,
+            ScreenKind::DifficultyLockConfirm,
+            "the confirm the lock's hand-off opens"
+        );
+        // THE TITLE + QUESTION (the ctor's translatable pair — the
+        // `difficulty.lock.title` word the title lane keeps, the
+        // `difficulty.lock.question` the display name fills)
+        app.render_title_buttons_for_test();
+        let yes = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlockyes")
+            .expect("the Yes button the addButtons walk banks")
+            .clone();
+        let no = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlockno")
+            .expect("the No button the same walk banks")
+            .clone();
+        assert_eq!(yes.label, "Yes", "the gui.yes word the 3-arg ctor banks");
+        assert_eq!(no.label, "No", "the gui.no word the same ctor keeps");
+        assert_eq!(yes.w, 150, "the default Button width the builder keeps");
+        assert_eq!(no.w, 150, "the same width the No side wears");
+        // THE SPACING(4) ROW (the horizontal LinearLayout walk — the
+        // 304-wide pair the 4px gap keeps: yes.x + 150 + 4 the no's
+        // own left edge answers)
+        assert_eq!(
+            no.x,
+            yes.x + 150 + 4,
+            "the spacing(4) row the addButtons walk banks"
+        );
+        // THE COLUMN'S OWN CENTER (the centerInRectangle walk — the
+        // 304-wide row the screen's own center keeps: the 320-wide
+        // test screen the yes left edge at 160 - 152 answers, the no
+        // right edge at 160 + 152 the same center brackets)
+        assert_eq!(yes.x, 320 / 2 - 152, "the row the screen's center keeps");
+        assert_eq!(
+            no.x + no.w,
+            320 / 2 + 152,
+            "the same center the row's right edge brackets"
+        );
+        // THE QUESTION'S OWN WORD (the `%1$s` the display name fills —
+        // the render's own walk the wrapped rows answer: the full
+        // word the lang table banks the screen's rows speak)
+        assert!(
+            tr("difficulty.lock.question")
+                .expect("the question the en_us table banks")
+                .contains("%1$s"),
+            "the positional slot the display name fills"
+        );
+        assert_eq!(
+            tr("difficulty.lock.title"),
+            Some("Lock World Difficulty"),
+            "the title word the lang table speaks"
+        );
+        // THE ESCAPE'S OWN REFUSAL (the shouldCloseOnEsc() = false walk
+        // — the confirm screen the on_escape arms never wear: the
+        // Escape the screen unchanged keeps)
+        app.on_escape();
+        assert_eq!(
+            app.screen,
+            ScreenKind::DifficultyLockConfirm,
+            "the Escape the modal discipline keeps — the buttons alone answer"
+        );
+    }
+
+    /// THE ONLOCKCALLBACK'S OWN WALK (javap 26.2 DifficultyButtons —
+    /// the `setScreen(screen)` BOTH answers wear FIRST, the Yes the
+    /// `ServerboundLockDifficultyPacket(true)` send speaks, the lock +
+    /// dial pair the INACTIVE arm answers after): the OFFLINE world
+    /// the integrated-server lane IS — the sim's own flag the confirm's
+    /// Yes arms, the locked dial the next click refuses, the No the
+    /// flag never touched keeps.
+    #[test]
+    fn the_on_lock_callback_walks_both_answers() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.open(ScreenKind::WorldOptions);
+        app.render_title_buttons_for_test();
+        let lock = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlock")
+            .expect("the lock")
+            .clone();
+        assert!(
+            !app.offline_world.as_ref().unwrap().difficulty_locked,
+            "the fresh world the flag never wears"
+        );
+        // THE NO ANSWER (the setScreen(screen) FIRST — the WorldOptions
+        // screen the walk returns to, the flag the walk never touches)
+        app.on_click(lock.x + lock.w / 2, lock.y + lock.h / 2);
+        assert_eq!(app.screen, ScreenKind::DifficultyLockConfirm);
+        app.render_title_buttons_for_test();
+        let no = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlockno")
+            .expect("the No")
+            .clone();
+        app.on_click(no.x + no.w / 2, no.y + no.h / 2);
+        assert_eq!(
+            app.screen,
+            ScreenKind::WorldOptions,
+            "the NO the same return the vanilla's setScreen(screen) walk keeps"
+        );
+        assert!(
+            !app.offline_world.as_ref().unwrap().difficulty_locked,
+            "the NO the flag never touched keeps"
+        );
+        // THE YES ANSWER (the ServerboundLockDifficultyPacket(true) the
+        // OFFLINE sim stores — the flag arms, the dial + lock pair the
+        // INACTIVE arm answers on the return's own re-render)
+        app.render_title_buttons_for_test();
+        let lock = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlock")
+            .expect("the lock")
+            .clone();
+        app.on_click(lock.x + lock.w / 2, lock.y + lock.h / 2);
+        app.render_title_buttons_for_test();
+        let yes = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlockyes")
+            .expect("the Yes")
+            .clone();
+        app.on_click(yes.x + yes.w / 2, yes.y + yes.h / 2);
+        assert_eq!(
+            app.screen,
+            ScreenKind::WorldOptions,
+            "the YES the same return wears"
+        );
+        assert!(
+            app.offline_world.as_ref().unwrap().difficulty_locked,
+            "the YES the lock flag the sim's own lane arms"
+        );
+        // THE INACTIVE ARM (the refresh walk's writes — BOTH buttons
+        // the locked world INACTIVE keeps: the lock's own isLocked()
+        // read, the dial the same `!locked && permission` arm wears)
+        app.render_title_buttons_for_test();
+        let lock = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlock")
+            .expect("the lock")
+            .clone();
+        let dial = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "difficulty")
+            .expect("the dial")
+            .clone();
+        assert!(
+            !lock.active,
+            "the locked lock the INACTIVE arm the refresh walk keeps"
+        );
+        assert!(
+            !dial.active,
+            "the locked dial the same arm answers (the create walk's own write)"
+        );
+        // THE LOCKED DIAL'S OWN REFUSAL (the inactive button the
+        // hovered() gate refuses — the click the dial's center the
+        // values() order NEVER rides)
+        let before = app.offline_world.as_ref().unwrap().difficulty;
+        app.on_click(dial.x + dial.w / 2, dial.y + dial.h / 2);
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().difficulty,
+            before,
+            "the locked dial the click refuses — the lock the vanilla's own promise keeps"
+        );
+        // THE LOCK'S OWN REFUSAL (the inactive lock the hand-off never
+        // wears — the confirm screen the second lock never opens)
+        app.on_click(lock.x + lock.w / 2, lock.y + lock.h / 2);
+        assert_eq!(
+            app.screen,
+            ScreenKind::WorldOptions,
+            "the locked lock the hand-off refuses"
         );
     }
 
@@ -37452,6 +37933,7 @@ mod tests {
                     chunks_per_side: 2,
                     seed: 0,
                     difficulty: crate::difficulty::Difficulty::Normal,
+                    difficulty_locked: false,
                     inhabited: None,
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -37890,6 +38372,7 @@ mod tests {
             chunks_per_side: 2,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Normal,
+            difficulty_locked: false,
             inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -37954,6 +38437,7 @@ mod tests {
             chunks_per_side: 2,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Normal,
+            difficulty_locked: false,
             inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -38020,6 +38504,7 @@ mod tests {
                     chunks_per_side: 2,
                     seed: 0,
                     difficulty: crate::difficulty::Difficulty::Normal,
+                    difficulty_locked: false,
                     inhabited: None,
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -38063,6 +38548,7 @@ mod tests {
             chunks_per_side: side,
             seed,
             difficulty: crate::difficulty::Difficulty::Normal,
+            difficulty_locked: false,
             inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -46012,6 +46498,7 @@ cow_sound_variant: None,
             chunks_per_side: 2,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Normal,
+            difficulty_locked: false,
             inhabited: None,
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];

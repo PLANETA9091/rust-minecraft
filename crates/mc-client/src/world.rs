@@ -363,6 +363,18 @@ pub struct World {
     /// gate never reads (the client level the vanilla multiplayer F3
     /// keeps silent — the row the offline/host world alone wears).
     pub difficulty: crate::difficulty::Difficulty,
+    /// THE DIFFICULTY'S OWN LOCK (the `LevelData.isDifficultyLocked()`
+    /// flag the `DifficultyButtons.isDifficultyLocked` walk reads —
+    /// `locked || hardcore` the raw bytecode keeps, the hardcore arm
+    /// the client's own worlds never wear): the lock button's own
+    /// state the `setLocked` walk stores, the dial + lock pair the
+    /// INACTIVE arm answers (the `!locked && permission` both actives
+    /// keep). The OFFLINE world the integrated-server lane IS — the
+    /// `ServerboundLockDifficultyPacket(true)` the onLockCallback walk
+    /// sends the sim stores here (the confirm's Yes the flag arms);
+    /// the NETWORKED world the wire's difficulty lane the net store
+    /// never banks — the absent lane the honest `false` wears.
+    pub difficulty_locked: bool,
     /// THE CHUNKS' OWN DWELL CLOCK (the `ChunkAccess.inhabitedTime`
     /// field the `incrementInhabitedTime` walk banks — per chunk, the
     /// ticks any player's been near). The 26.2 law the server walk
@@ -550,6 +562,7 @@ impl World {
             rain_level: 0.0,  // the procedural scene: the dry world the goldens keep
             thunder_level: 0.0, // the procedural scene: no storm the clouds speak
             difficulty: crate::difficulty::Difficulty::Normal, // the host's own new-world default
+            difficulty_locked: false, // the lock the confirm's Yes alone arms
             inhabited: Some(vec![0u64; chunks_per_side * chunks_per_side]), // the host world's own dwell clock
         };
         w.generate();
