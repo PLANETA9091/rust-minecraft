@@ -248,8 +248,31 @@ pub const WHITE_TULIP: u16 = 53;
 /// banks, the honest documented gap the offline render wears).
 pub const TORCH: u16 = 54;
 
+/// THE CONCRETE POWDER'S OWN KIND (javap the 26.2 jar's Blocks clinit —
+/// the `white_concrete_powder` row the ConcretePowderBlock ctor wears:
+/// the `new ConcretePowderBlock(BlockBehaviour.Properties.of()...,
+/// BuiltInRegistries.BLOCK.get(ResourceLocation.withDefaultNamespace(
+/// "white_concrete")))` walk the codec's `concrete` field speaks).
+/// The FALLING family's third member (the [`is_falling_block`] fn's
+/// growth — the falling body the powder's own conversion law arms:
+/// the water verdict the FallingBlockEntity.tick's instanceof walk
+/// reads, the solidify the shouldSolidify/touchesLiquid pair wears).
+/// The FULL cube the default registration keeps (the collision shape's
+/// own table the Full arm answers).
+pub const CONCRETE_POWDER: u16 = 55;
+
+/// THE CONCRETE'S OWN KIND (the powder's own target — javap
+/// ConcretePowderBlock: the `concrete` field the ctor's registry read
+/// banks, the `getConcrete().defaultBlockState()` the onLand and the
+/// updateShape conversions both speak; the color the powder's own
+/// pair keeps — the white row the white powder wears). The block is
+/// NOT a FallingBlock in vanilla (the ConcreteBlock extends Block —
+/// the falling family's [`is_falling_block`] verdict refuses it: the
+/// solidified block the support loss the gravity never wears).
+pub const CONCRETE: u16 = 56;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 55] = [
+pub const NAME_OF: [&str; 57] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -275,6 +298,12 @@ pub const NAME_OF: [&str; 55] = [
     "azure_bluet", "oxeye_daisy", "cornflower",
     "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
     "torch",
+    // THE CONCRETE PAIR'S OWN ROWS (the powder the falling family's
+    // third member wears, the concrete the conversion's own target
+    // speaks — the white variant the vanilla's own ctor pair banks,
+    // the names the item wire order's rows exactly keep: the
+    // placement lane's placeable lookup the reverse walk serves)
+    "white_concrete_powder", "white_concrete",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -378,10 +407,88 @@ pub fn is_torch(id: u16) -> bool {
 
 /// THE FALLING FAMILY — the kinds the vanilla's FallingBlock registers
 /// (the sand/gravel pair the falling-block entity's own factory wears;
-/// the red sand/concrete powder/anvil the palette never banks — the
-/// honest absence the two members keep).
+/// the white CONCRETE POWDER the palette's own growth banks — the
+/// ConcretePowderBlock extends FallingBlock the ctor's superclass
+/// speaks; the red sand/anvil the palette never banks — the honest
+/// absence the members keep. The SOLIDIFIED concrete the family
+/// refuses: ConcreteBlock extends Block — the conversion's own target
+/// the support loss the gravity never wears).
 pub fn is_falling_block(id: u16) -> bool {
-    id == SAND || id == GRAVEL
+    id == SAND || id == GRAVEL || id == CONCRETE_POWDER
+}
+
+/// THE CAN-SOLIDIFY LAW (javap `ConcretePowderBlock.canSolidify` over
+/// the 26.2 jar — the lone read the bytecode speaks: `return state.
+/// getFluidState().is(FluidTags.WATER)`): the state's OWN fluid the
+/// water tag answers. The client's kind-only palette the WATER kind
+/// alone wears (no waterlogged states exist — the lava the water tag
+/// never carries, the honest single-row verdict).
+pub fn concrete_can_solidify(id: u16) -> bool {
+    id == WATER
+}
+
+/// THE TOUCHES-LIQUID WALK (javap `ConcretePowderBlock.touchesLiquid`
+/// over the 26.2 jar — the raw disasm's own control flow keeps): the
+/// `boolean flag = false` + the `BlockPos.MutableBlockPos` scan the
+/// `Direction.values()` loop wears. THE DOWN ARM'S OWN GATE the
+/// loop-head read arms — `if (direction == DOWN && !canSolidify(
+/// level.getBlockState(mutable))) continue;` the mutable's PRE-offset
+/// cell (the pos's own state) the gate reads: the water own-cell the
+/// below scan admits, the powder's own cell the gate refuses (the
+/// vanilla's own famous asymmetry — the powder NEVER solidifies from
+/// the water BELOW it). The shared arm per direction: the
+/// `setWithOffset(pos, direction)` offset, the neighbor read, the
+/// `canSolidify(neighbor) && !neighbor.isFaceSturdy(level, pos,
+/// direction.getOpposite())` pair the flag arms — the FIRST armed
+/// neighbor the early verdict wears (the `flag = true; break;` walk
+/// the goto-return tail keeps). The water the never-sturdy verdict
+/// keeps (the Empty collision shape the [`collision_shape`] table
+/// speaks — the isFaceSturdy cache the liquid rows never fill); the
+/// opposite-direction word the arm's own argument keeps (DOWN→UP,
+/// UP→DOWN, NORTH→SOUTH, SOUTH→NORTH, WEST→EAST, EAST→WEST — the
+/// Direction.values() order the enum's declaration wears).
+pub fn concrete_touches_liquid(world: &World, x: i32, y: i32, z: i32) -> bool {
+    let own = world.get(x, y, z);
+    // THE DOWN ARM — the gate the own-cell read arms (the water own
+    // cell the below scan admits), the scan the below cell's own
+    // canSolidify + the never-sturdy pair wears (the sturdy read the
+    // UP-face argument the vanilla's `isFaceSturdy(level, pos, UP)`
+    // walk keeps)
+    if concrete_can_solidify(own) {
+        let below = world.get(x, y - 1, z);
+        if concrete_can_solidify(below) && !matches!(collision_shape(below), CollisionShape::Full) {
+            return true;
+        }
+    }
+    for (dx, dy, dz) in [
+        (0, 1, 0),   // UP — the sturdy read the DOWN face asks
+        (0, 0, -1),  // NORTH — the sturdy read the SOUTH face asks
+        (0, 0, 1),   // SOUTH — the sturdy read the NORTH face asks
+        (-1, 0, 0),  // WEST — the sturdy read the EAST face asks
+        (1, 0, 0),   // EAST — the sturdy read the WEST face asks
+    ] {
+        let neighbor = world.get(x + dx, y + dy, z + dz);
+        if concrete_can_solidify(neighbor)
+            && !matches!(collision_shape(neighbor), CollisionShape::Full)
+        {
+            return true;
+        }
+    }
+    false
+}
+
+/// THE SHOULD-SOLIDIFY LAW (javap `ConcretePowderBlock.shouldSolidify`
+/// over the 26.2 jar — the OR pair the bytecode's two invokes keep):
+/// `return canSolidify(state) || touchesLiquid(level, pos)` — the
+/// state arg the CALLER's pre-placement read carries (the
+/// getStateForPlacement's clicked-state walk and the onLand's
+/// captured `into` state the two callers speak — the arg the world's
+/// own current kind the onLand moment already replaced). The
+/// shouldSolidify's own verdict the getStateForPlacement arm (the
+/// powder placed into/touching water the CONCRETE state speaks) and
+/// the onLand conversion (the falling body's landing) both read.
+pub fn concrete_should_solidify(world: &World, x: i32, y: i32, z: i32, state: u16) -> bool {
+    concrete_can_solidify(state) || concrete_touches_liquid(world, x, y, z)
 }
 
 /// THE TORCH'S OWN SURVIVAL LAW — javap BaseTorchBlock.canSurvive
@@ -1675,6 +1782,28 @@ impl World {
         self.clip_by(origin, dir, reach, |id| id != AIR)
     }
 
+    /// THE FLUID-SOURCE CLIP (the `ClipContext.Fluid.SOURCE_ONLY` the
+    /// falling body's fast-fall walk speaks — javap FallingBlockEntity.
+    /// tick over the 26.2 jar: the `new ClipContext(new Vec3(xo, yo,
+    /// zo), position(), COLLIDER, SOURCE_ONLY, this)` ray pc 154-198
+    /// keeps): the ray stops at the collision shapes AND the SOURCE
+    /// fluids — the client's kind-only world the every-fluid-a-source
+    /// equivalence keeps (the flowing states the palette never banks),
+    /// the Empty-shape cells (the plants, the torch, the tufts) the
+    /// ray passes through, the water AND the lava the stop arms speak
+    /// (the caller's own FluidTags.WATER read the lava's hit refuses —
+    /// the post-check the tag's own verdict wears).
+    pub fn clip_fluid_source_only(
+        &self,
+        origin: (f64, f64, f64),
+        dir: (f64, f64, f64),
+        reach: f64,
+    ) -> Option<ClipHit> {
+        self.clip_by(origin, dir, reach, |id| {
+            id == WATER || id == LAVA || collision_shape(id) != CollisionShape::Empty
+        })
+    }
+
     /// The shared DDA walk (the clip's own traversal): the predicate
     /// decides the hit cells, everything else — the boundary math, the
     /// entry face, the exact location — the one walk both laws speak.
@@ -1983,6 +2112,69 @@ mod tests {
                 NAME_OF[id as usize]
             );
         }
+    }
+
+    /// THE CONCRETE'S OWN TOUCHES-LIQUID WALK (javap
+    /// ConcretePowderBlock.touchesLiquid over the 26.2 jar — the six
+    /// Direction.values() arms the raw disasm keeps): the SIDE water the
+    /// flag arms, the ABOVE water the same verdict speaks, THE DOWN
+    /// ARM'S OWN GATE the own-cell read arms — the powder's own cell the
+    /// below scan refuses (the vanilla's own famous asymmetry: the
+    /// powder NEVER solidifies from the water below it), the WATER
+    /// own-cell the gate admits (the placement-into-water moment the
+    /// touchesLiquid arm serves), the empty scan the verdict keeps.
+    #[test]
+    fn the_powder_the_touches_liquid_walk_wears() {
+        let mut world = World::new(1, 42);
+        let (x, y, z) = (10, 12, 10);
+        // THE EMPTY SCAN: the dry air the verdict keeps
+        assert!(
+            !concrete_touches_liquid(&world, x, y, z),
+            "the dry cell the walk refuses"
+        );
+        // THE SIDE WATER (the WEST arm — the Direction.values() order
+        // the shared arms wear): the never-sturdy water the flag arms
+        world.set(x - 1, y, z, WATER);
+        assert!(
+            concrete_touches_liquid(&world, x, y, z),
+            "the side water the arm speaks"
+        );
+        world.set(x - 1, y, z, AIR);
+        // THE ABOVE WATER (the UP arm — the sturdy read the DOWN-face
+        // argument the vanilla's own pair keeps)
+        world.set(x, y + 1, z, WATER);
+        assert!(
+            concrete_touches_liquid(&world, x, y, z),
+            "the above water the arm speaks"
+        );
+        world.set(x, y + 1, z, AIR);
+        // THE DOWN WATER ALONE: the powder's own cell the gate refuses —
+        // the below scan the walk never spends (the asymmetry the
+        // falling lane's own landing law keeps — the powder rests on
+        // the water the solidify the gravity answers instead)
+        world.set(x, y - 1, z, WATER);
+        assert!(
+            !concrete_touches_liquid(&world, x, y, z),
+            "the below water the DOWN gate refuses"
+        );
+        // THE WATER OWN-CELL: the gate ADMITS the below scan (the
+        // placement-into-water moment — the clicked cell the state the
+        // shouldSolidify's touchesLiquid arm reads)
+        world.set(x, y, z, WATER);
+        assert!(
+            concrete_touches_liquid(&world, x, y, z),
+            "the water own cell the gate admits"
+        );
+        world.set(x, y, z, AIR);
+        // THE STURDY PAIR'S OWN REFUSAL: the canSolidify(neighbor) arm
+        // the water's never-sturdy shape alone speaks — the stone
+        // neighbor the canSolidify read refuses (the water tag the
+        // solid kinds never carry)
+        world.set(x + 1, y, z, STONE);
+        assert!(
+            !concrete_touches_liquid(&world, x, y, z),
+            "the solid neighbor the canSolidify read refuses"
+        );
     }
 
     /// One biome layer over a single chunk: every voxel resolved id 0,

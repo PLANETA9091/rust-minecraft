@@ -9179,6 +9179,7 @@ pub fn falling_model_id(block: u16) -> Option<&'static str> {
     match block {
         crate::world::SAND => Some("block/sand"),
         crate::world::GRAVEL => Some("block/gravel"),
+        crate::world::CONCRETE_POWDER => Some("block/white_concrete_powder"),
         _ => None,
     }
 }
@@ -9204,6 +9205,13 @@ pub struct FallingBlock {
     /// The carried block kind (the ctor's blockState — the landing
     /// places it, the render's model walk reads it).
     pub block: u16,
+    /// THE CONVERT VERDICT (javap FallingBlockEntity.tick's local `i5`
+    /// — the own-cell FluidTags.WATER read pc 104-131 arms, the
+    /// fast-fall clip's water hit pc 142-241 arms AND re-points the
+    /// placement cell): the landing serve's break-clause kill (the
+    /// `!converts` conjunct pc 343-361 keeps) and the onLand
+    /// conversion (the CONCRETE state the serve wears) both read.
+    pub convert: bool,
     /// The `time` field (the ++time the tick's second step keeps — the
     /// vanilla's own age clock the out-of-bounds drop the bounded world
     /// never reads).
@@ -9231,6 +9239,7 @@ impl FallingBlock {
             zo: bz as f64 + 0.5,
             vy: 0.0,
             block,
+            convert: false,
             time: 0,
             on_ground: false,
             dead: false,
@@ -9256,14 +9265,30 @@ impl FallingBlock {
     /// jar speaks): the baseTick fold FIRST (the xo ride), the `++time`
     /// the iadd keeps, the applyGravity the `vy -= 0.04` step wears,
     /// the `move(SELF, getDeltaMovement())` the collide walk serves,
-    /// the onGround branch the fallOn `(0.7, -0.5, 0.7)` fold answers
-    /// (the discard the same-tick landing moots — the honest order the
-    /// trace keeps), the tick's tail the getAirDrag 0.98 scale wears.
-    /// NO every-tick ground arm (the TNT's arm the falling walk never
-    /// shares — the fold the landing branch alone keeps), NO the water
-    /// splash's clip lane (the particles the deferred lane may wear).
-    /// Returns the landing verdict (true = the onGround branch fired —
-    /// the caller's placement/drop walk serves the cell).
+    /// THE POWDER'S OWN VERDICT the instanceof walk pc 92-141 arms —
+    /// `blockState.getBlock() instanceof ConcretePowderBlock` the
+    /// i4 flag keeps, the own-cell `level.getFluidState(blockPosition())
+    /// .is(FluidTags.WATER)` read pc 104-131 the i5 convert verdict
+    /// arms — then the FAST-FALL CLIP pc 142-241: the `getDeltaMovement()
+    /// .lengthSqr() > 1.0` gate the move-clip walk the velocity answers,
+    /// the `ClipContext(new Vec3(xo, yo, zo), position(), COLLIDER,
+    /// SOURCE_ONLY, this)` ray the first water-source cell the path
+    /// crosses makes, the `astore_3` pc 237 the placement cell the hit
+    /// cell re-points (the body's own fast step the water cell the
+    /// feet never END in can SKIP — the clip the skipped cell catches).
+    /// The ARM pc 241-250: `!onGround() && !converts` the return keeps —
+    /// the landing fold fires on the ground OR the convert verdict (the
+    /// mid-water body the ground never meets the arm still speaks) —
+    /// the fallOn `(0.7, -0.5, 0.7)` fold answers (the discard the
+    /// same-tick landing moots — the honest order the trace keeps),
+    /// the tick's tail the getAirDrag 0.98 scale wears. NO every-tick
+    /// ground arm (the TNT's arm the falling walk never shares — the
+    /// fold the landing branch alone keeps), NO the water splash's
+    /// entry lane (the baseTick walk the falling body never runs — the
+    /// dev-36 audit's own verdict keeps). Returns the landing verdict
+    /// (true = the onGround/convert arm fired — the caller's
+    /// placement/conversion walk serves the cell; the convert flag the
+    /// [`FallingBlock::convert`] field carries).
     pub fn tick(&mut self, world: &World) -> bool {
         self.xo = self.x;
         self.yo = self.y;
@@ -9275,17 +9300,46 @@ impl FallingBlock {
         self.y += c.dy;
         self.z += c.dz;
         self.on_ground = c.vertical_collision_below;
-        if self.on_ground {
+        // THE POWDER'S OWN VERDICT (the instanceof walk — the sand and
+        // the gravel the flag never arms, the fluid reads the gate
+        // never spends)
+        self.convert = false;
+        let mut cell = (
+            self.x.floor() as i32,
+            self.y.floor() as i32,
+            self.z.floor() as i32,
+        );
+        let is_concrete = self.block == crate::world::CONCRETE_POWDER;
+        if is_concrete && world.get(cell.0, cell.1, cell.2) == crate::world::WATER {
+            self.convert = true;
+        }
+        // THE FAST-FALL CLIP (the lengthSqr gate the move-clip walk's
+        // delta answers — the collided body the vertical delta the
+        // floor's hold zeroes — and the ray the first water-source cell
+        // the path crosses makes; the clip's hit cell the placement
+        // walk re-points, the lava hit the WATER tag's own read refuses)
+        if is_concrete && c.dy * c.dy > 1.0 {
+            let dir = (self.x - self.xo, self.y - self.yo, self.z - self.zo);
+            if let Some(hit) = world.clip_fluid_source_only(
+                (self.xo, self.yo, self.zo),
+                dir,
+                (dir.0 * dir.0 + dir.1 * dir.1 + dir.2 * dir.2).sqrt(),
+            ) {
+                if world.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::WATER {
+                    cell = hit.pos;
+                    self.convert = true;
+                }
+            }
+        }
+        // THE ARM (the `!onGround() && !converts` return keeps — the
+        // ground OR the convert verdict fires)
+        if self.on_ground || self.convert {
             // the fallOn fold (the (0.7, -0.5, 0.7) triple — the
             // horizontal arms the zero delta keeps, the y arm the
             // bounce the discard moots)
             self.vy *= FALLING_LANDING_BOUNCE;
             self.dead = true;
-            self.landed = Some((
-                self.x.floor() as i32,
-                self.y.floor() as i32,
-                self.z.floor() as i32,
-            ));
+            self.landed = Some(cell);
         }
         self.vy *= FALLING_BLOCK_AIR_DRAG;
         self.dead
@@ -12908,6 +12962,131 @@ mod tests {
             "the flower the no-replaceable absence keeps"
         );
         assert!(!falling_free(crate::world::WHEAT), "the crop the vanilla quirk keeps");
+    }
+
+    /// THE POWDER'S OWN WATER VERDICT (javap FallingBlockEntity.tick pc
+    /// 92-131 over the 26.2 jar — the instanceof gate the sand/gravel
+    /// the fluid read never spends, the own-cell FluidTags.WATER read
+    /// the convert verdict arms, the `!onGround() && !converts` return
+    /// the mid-water arm keeps): the powder's slow fall the lake cell
+    /// the conversion speaks the tick the feet ENTER the water — the
+    /// ground the verdict never needs (the on_ground the false keeps),
+    /// the SAND the same lake the conversion never wears (the fall the
+    /// floor's hold serves — the SAME water cell the two landed
+    /// verdicts wear, the two walks the flags distinguish).
+    #[test]
+    fn the_powder_the_water_the_mid_fall_arm_wears() {
+        let mut world = wide_flat_world();
+        // THE LAKE CELL: the water atop the stone pad (the world's own
+        // stone 0..4, the surface top y = 5 — the water cell 5 the feet
+        // the slow steps enter)
+        world.set(10, 5, 10, crate::world::WATER);
+        world.set(20, 5, 20, crate::world::WATER);
+        // THE POWDER'S SLOW FALL from y=8: the nine ticks the air cells
+        // keep (the feet 8.0 -> 6.264 the cells 6+), the tenth tick the
+        // feet END in the water cell (5.884 — the cell 5 the read arms)
+        let mut f = FallingBlock::new(1, crate::world::CONCRETE_POWDER, 10, 8, 10);
+        for _ in 0..9 {
+            assert!(!f.tick(&world), "the air ticks the arm refuses");
+            assert!(!f.convert, "the air feet the verdict keeps");
+        }
+        assert!(
+            f.tick(&world),
+            "the water tick the mid-fall arm fires"
+        );
+        assert!(f.convert, "the water feet the conversion speaks");
+        assert_eq!(
+            f.landed,
+            Some((10, 5, 10)),
+            "the feet cell the landed verdict carries"
+        );
+        assert!(!f.on_ground, "the ground the mid-water arm never meets");
+        // THE SAND'S OWN SILENCE (the instanceof gate the fluid read
+        // never spends): the sand the same lake falls THROUGH the water
+        // cell to the stone floor, the convert verdict never arms, the
+        // on_ground the floor's hold speaks — the SAME landed cell the
+        // powder's mid-water arm wore, the flags the two walks
+        // distinguish
+        let mut s = FallingBlock::new(2, crate::world::SAND, 20, 8, 20);
+        for _ in 0..40 {
+            if s.tick(&world) {
+                break;
+            }
+        }
+        assert!(s.dead, "the floor the sand's own fall serves");
+        assert!(
+            !s.convert,
+            "the sand the instanceof gate the fluid read never spends"
+        );
+        assert!(s.on_ground, "the floor the sand's landing speaks");
+        assert_eq!(s.landed, Some((20, 5, 20)), "the floor the landing wears");
+    }
+
+    /// THE POWDER'S OWN FAST-FALL CLIP (javap FallingBlockEntity.tick pc
+    /// 142-241 over the 26.2 jar — the `getDeltaMovement().lengthSqr()
+    /// > 1.0` gate, the ClipContext(xo,yo,zo -> position(), COLLIDER,
+    /// SOURCE_ONLY) ray the first water-source cell the path crosses
+    /// makes, the astore_3 the placement cell the hit cell re-points):
+    /// the near-terminal body the water cell SKIPS (the tick's own
+    /// ~1.16 step the cell the feet never END in) — the clip the
+    /// skipped cell catches, the landed verdict the WATER cell the
+    /// feet cell is not (the concrete the ray's own cell wears), the
+    /// own-cell read the feet cell's air keeps (the clip the ONLY
+    /// verdict the conversion wears).
+    #[test]
+    fn the_powder_the_fast_fall_the_clip_the_skipped_cell_wears() {
+        let mut world = wide_flat_world();
+        // THE LONE WATER CELL at y=11: the body's 42-tick fall the free
+        // air keeps (the poses 40.0 -> 12.051 the feet cells 12+), the
+        // 43rd tick's ~1.16 step the cell SKIPS (the feet END in cell
+        // 10 — the air the own-cell read refuses)
+        world.set(10, 11, 10, crate::world::WATER);
+        let mut f = FallingBlock::new(1, crate::world::CONCRETE_POWDER, 10, 40, 10);
+        for _ in 0..42 {
+            assert!(!f.tick(&world), "the free air the fall keeps");
+            assert!(!f.convert, "the air feet the verdict keeps");
+        }
+        // THE CLIP'S OWN TICK: the displacement ~1.16 (the lengthSqr
+        // 1.348 the gate answers), the ray 12.051 -> 10.890 the cell 11
+        // the first water-source speaks
+        assert!(
+            f.tick(&world),
+            "the clip's water hit the mid-fall arm fires"
+        );
+        assert!(f.convert, "the clip the conversion wears");
+        assert_eq!(
+            f.landed,
+            Some((10, 11, 10)),
+            "the skipped cell the clip re-points"
+        );
+        assert!(
+            !f.on_ground,
+            "the ground the clip's arm never meets"
+        );
+    }
+
+    /// THE POWDER'S OWN DRY LANDING (the vanilla's own two-step the
+    /// convert verdict never arms — the powder the floor's hold the
+    /// POWDER state keeps, the solidify the water alone speaks): the
+    /// falling family's own landing conjunct the dry walk serves, the
+    /// convert flag the pristine false keeps.
+    #[test]
+    fn the_powder_the_dry_landing_the_powder_keeps() {
+        let world = wide_flat_world();
+        let mut f = FallingBlock::new(1, crate::world::CONCRETE_POWDER, 10, 9, 10);
+        for _ in 0..40 {
+            if f.tick(&world) {
+                break;
+            }
+        }
+        assert!(f.dead, "the floor the landing serves");
+        assert!(f.on_ground, "the dry landing the ground speaks");
+        assert!(!f.convert, "the dry floor the conversion never speaks");
+        assert_eq!(
+            f.landed,
+            Some((10, 5, 10)),
+            "the stone floor's top the landed cell keeps"
+        );
     }
 
     /// THE SPIDER'S OWN DARKNESS GATE (javap `SpiderTargetGoal.canUse` —

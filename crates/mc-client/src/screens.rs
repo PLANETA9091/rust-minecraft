@@ -8780,12 +8780,12 @@ impl App {
                 // wears). The fresh bodies the NEXT update's list the
                 // same answer the TNT chain's own order keeps.
                 if !self.falling_blocks.is_empty() {
-                    let mut landed: Vec<(u16, i32, i32, i32)> = Vec::new();
+                    let mut landed: Vec<(u16, i32, i32, i32, bool)> = Vec::new();
                     if let Some(w) = self.offline_world.as_ref() {
                         for f in self.falling_blocks.iter_mut() {
                             if f.tick(w) {
                                 if let Some((bx, by, bz)) = f.landed {
-                                    landed.push((f.block, bx, by, bz));
+                                    landed.push((f.block, bx, by, bz, f.convert));
                                 }
                             }
                         }
@@ -8795,19 +8795,36 @@ impl App {
                     let mut drop_items: Vec<(u16, f64, f64, f64)> = Vec::new();
                     if !landed.is_empty() {
                         if let Some(w) = self.offline_world.as_mut() {
-                            for (kind, bx, by, bz) in landed.iter().copied() {
+                            for (kind, bx, by, bz, convert) in landed.iter().copied() {
                                 // THE LANDING'S OWN CONJUNCT (javap the
                                 // onGround branch: the canBeReplaced
                                 // (into) the DirectionalPlaceContext walk
                                 // reads, the !isFree(below) the floor's
-                                // own hold keeps — the placement the
-                                // setBlock(3) walk wears)
-                                let into = w.get(bx, by, bz);
-                                if crate::mob::falling_free(into)
-                                    && !crate::mob::falling_free(w.get(bx, by - 1, bz))
-                                {
-                                    w.set(bx, by, bz, kind);
-                                    placed_cells.push((bx, by + 1, bz));
+                                // own hold keeps — THE BREAK CLAUSE'S OWN
+                                // LAW pc 329-361: `isFree(below) &&
+                                // (!isConcrete || !converts)` — the
+                                // convert verdict the below-free clause
+                                // kills, the water landing the drop
+                                // branch never speaks)
+                                let break_clause = crate::mob::falling_free(w.get(bx, by - 1, bz))
+                                    && (kind != crate::world::CONCRETE_POWDER || !convert);
+                                if crate::mob::falling_free(w.get(bx, by, bz)) && !break_clause {
+                                    // THE ONLAND'S OWN FOLD (javap pc
+                                    // 451-529: the setBlock(3) the
+                                    // placement wears, the Fallable.
+                                    // onLand walk the ConcretePowder-
+                                    // Block's shouldSolidify verdict
+                                    // answers — the powder the water
+                                    // landing the CONCRETE state speaks:
+                                    // the two setBlocks the same net
+                                    // state the fold keeps)
+                                    let placed = if convert {
+                                        crate::world::CONCRETE
+                                    } else {
+                                        kind
+                                    };
+                                    w.set(bx, by, bz, placed);
+                                    placed_cells.push((bx, by, bz));
                                 } else {
                                     // THE DROP BRANCH (the
                                     // spawnAtLocation(block) walk — the
@@ -8825,7 +8842,10 @@ impl App {
                         }
                     }
                     for (bx, by, bz) in &placed_cells {
-                        self.schedule_falling_check(*bx, *by, *bz);
+                        // THE LANDING'S OWN DISPATCH (the setBlock(3)
+                        // walk's blockUpdated broadcast — the landed
+                        // cell's own neighborhood the helper speaks)
+                        self.schedule_falling_check_block_update(*bx, *by, *bz);
                     }
                     for (kind, x, y, z) in drop_items {
                         if let Some(item) = crate::mob::falling_item_id(kind) {
@@ -8861,10 +8881,34 @@ impl App {
                 };
                 if !due.is_empty() {
                     let mut converted: Vec<(u16, i32, i32, i32)> = Vec::new();
+                    let mut solidified: Vec<(i32, i32, i32)> = Vec::new();
                     if let Some(w) = self.offline_world.as_mut() {
                         for (x, y, z) in &due {
                             let kind = w.get(*x, *y, *z);
                             if !crate::world::is_falling_block(kind) {
+                                continue;
+                            }
+                            // THE POWDER'S OWN UPDATE-SHAPE ARM (javap
+                            // ConcretePowderBlock.updateShape over the
+                            // 26.2 jar — the `if (touchesLiquid(level,
+                            // pos)) return concrete.defaultBlockState()`
+                            // early return the disasm keeps: the
+                            // conversion the schedule never keeps, the
+                            // super's own walk the else arm serves): the
+                            // scheduled cell the updateShape stand-in
+                            // reads (the 2-tick window the client's
+                            // static water the verdict never turns —
+                            // the fluid flow sim the honest absence
+                            // keeps), the CONCRETE swap the cell wears
+                            // (the solidified block the fall never
+                            // becomes — the falling family the
+                            // [`crate::world::is_falling_block`] law
+                            // refuses)
+                            if kind == crate::world::CONCRETE_POWDER
+                                && crate::world::concrete_touches_liquid(w, *x, *y, *z)
+                            {
+                                w.set(*x, *y, *z, crate::world::CONCRETE);
+                                solidified.push((*x, *y, *z));
                                 continue;
                             }
                             if !crate::mob::falling_free(w.get(*x, *y - 1, *z)) {
@@ -8874,16 +8918,24 @@ impl App {
                             converted.push((kind, *x, *y, *z));
                         }
                     }
+                    for (x, y, z) in &solidified {
+                        // THE CONVERSION'S OWN DISPATCH (the flag-3
+                        // setBlock walk's broadcast — the chain the
+                        // neighboring powder's own scan arms)
+                        self.schedule_falling_check_block_update(*x, *y, *z);
+                    }
                     for (kind, x, y, z) in &converted {
                         let id = self.next_mob_id;
                         self.next_mob_id += 1;
                         self.falling_blocks
                             .push(crate::mob::FallingBlock::new(id, *kind, *x, *y, *z));
-                        // THE CHAIN'S OWN RE-ARM (the shape-update
-                        // schedule the cell above the new air wears)
-                        self.schedule_falling_check(*x, *y + 1, *z);
+                        // THE CHAIN'S OWN RE-ARM (the fall factory's
+                        // removeBlock the block-update dispatch wears —
+                        // the air cell's own neighborhood the shape-
+                        // update law keeps)
+                        self.schedule_falling_check_block_update(*x, *y, *z);
                     }
-                    if !converted.is_empty() {
+                    if !converted.is_empty() || !solidified.is_empty() {
                         self.remesh_offline();
                     }
                 }
@@ -9977,12 +10029,12 @@ impl App {
                             w.set(bx, by, bz, crate::world::AIR);
                         }
                     }
-                    // THE CRATER'S OWN SCHEDULE (the shape-update walk
-                    // the blast's neighbor changes arm — the sand above
-                    // every cleared cell the 2-tick tick reads, the
+                    // THE CRATER'S OWN SCHEDULE (the block-update walk
+                    // the blast's neighbor changes arm — every cleared
+                    // cell the own dispatch the helper speaks, the
                     // cascade the column's own chain wears)
                     for (bx, by, bz) in explosion_cells.iter().copied() {
-                        self.schedule_falling_check(bx, by + 1, bz);
+                        self.schedule_falling_check_block_update(bx, by, bz);
                     }
                     // THE BLAST'S OWN RE-SPEAK: the crater the mesh
                     // wears THIS tick — the same batched rhythm the
@@ -20485,6 +20537,25 @@ impl App {
             .push((x, y, z, self.frame + crate::mob::FALLING_SCHEDULE_DELAY));
     }
 
+    /// THE BLOCK-UPDATE'S OWN DISPATCH (javap `Level.blockUpdated` over
+    /// the 26.2 jar — the flag-3 setBlock walk the changed cell's own
+    /// broadcast wears: the 6 neighbors' `updateShape` the walk speaks).
+    /// The falling family's schedule the dispatch's own stand-in keeps —
+    /// the sand the scheduled tick's isFree(below) walk reads, the
+    /// powder the updateShape's touchesLiquid scan the conversion arms —
+    /// the changed cell itself the onPlace schedule rides, the set-dedup
+    /// the queue bounded keeps, the due walk's falling-kind validation
+    /// the harmless extras consume.
+    pub fn schedule_falling_check_block_update(&mut self, x: i32, y: i32, z: i32) {
+        self.schedule_falling_check(x, y, z);
+        self.schedule_falling_check(x + 1, y, z);
+        self.schedule_falling_check(x - 1, y, z);
+        self.schedule_falling_check(x, y + 1, z);
+        self.schedule_falling_check(x, y - 1, z);
+        self.schedule_falling_check(x, y, z + 1);
+        self.schedule_falling_check(x, y, z - 1);
+    }
+
     fn dig_break_effects(&mut self, kind: u16, pos: (i32, i32, i32)) {
         // THE DOUBLE PLANT'S OWN PAIR LAW (javap DoublePlantBlock over
         // the 26.2 jar — the autopush-413 round): the broken half the
@@ -20521,15 +20592,13 @@ impl App {
         {
             world.set(mx, my, mz, crate::world::AIR);
         }
-        // THE FALLING SUPPORT'S OWN SCHEDULE (the shape-update walk the
-        // dig's neighbor change arms — the dug cell's above the sand's
-        // own cell the schedule reads, the mate's own above the pair's
-        // removal keeps)
-        self.schedule_falling_check(pos.0, pos.1, pos.2);
-        self.schedule_falling_check(pos.0, pos.1 + 1, pos.2);
+        // THE FALLING SUPPORT'S OWN SCHEDULE (the block-update walk the
+        // dig's neighbor change arms — the changed cell's own dispatch
+        // the 6 neighbors + the cell itself the helper speaks, the
+        // mate's own removal the same walk wears)
+        self.schedule_falling_check_block_update(pos.0, pos.1, pos.2);
         if let Some((mx, my, mz)) = mate_cell {
-            self.schedule_falling_check(mx, my, mz);
-            self.schedule_falling_check(mx, my + 1, mz);
+            self.schedule_falling_check_block_update(mx, my, mz);
         }
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
@@ -20848,6 +20917,33 @@ impl App {
                 hit.pos.2 + normal.2,
             )
         };
+        // THE POWDER'S OWN PLACEMENT VERDICT (javap BlockItem.place over
+        // the 26.2 jar — the getPlacementState walk the placement chain
+        // keeps BEFORE the canPlace gates: ConcretePowderBlock.
+        // getStateForPlacement's `shouldSolidify(level, ctx.getClickedPos(),
+        // level.getBlockState(ctx.getClickedPos()))` read answers the
+        // CONCRETE state — the canSolidify(state) OR the touchesLiquid
+        // walk the [`crate::world::concrete_should_solidify`] fn wears:
+        // the powder item into the water cell (the replaceable law the
+        // clicked/target cell keeps) the CONCRETE speaks, the dry cell
+        // beside the pool the same verdict wears, the vanilla's own
+        // color-pair law the white row answers). The placed kind the
+        // downstream gates, the set and the place voice all read.
+        let block = if block == crate::world::CONCRETE_POWDER {
+            let solidifies = self
+                .active_world()
+                .is_some_and(|w| {
+                    let state = w.get(cell.0, cell.1, cell.2);
+                    crate::world::concrete_should_solidify(w, cell.0, cell.1, cell.2, state)
+                });
+            if solidifies {
+                crate::world::CONCRETE
+            } else {
+                block
+            }
+        } else {
+            block
+        };
         // the replaceable-cell law: the air and the fluid give way (the
         // vanilla state.canBeReplaced's own set for our vocabulary) —
         // the REPLACEABLE PLANT FAMILY the same law keeps (the tuft the
@@ -20940,13 +21036,13 @@ impl App {
                 return false;
             }
         }
-        // THE FALLING SUPPORT'S OWN SCHEDULE (the onPlace walk the
-        // placed block's own schedule arms — the sand the air-below
-        // cell the 2-tick tick reads, the above cell the shape
-        // update keeps; the fn's own offline guard the networked
-        // world's server-owned scheduler answers)
-        self.schedule_falling_check(cell.0, cell.1, cell.2);
-        self.schedule_falling_check(cell.0, cell.1 + 1, cell.2);
+        // THE FALLING SUPPORT'S OWN SCHEDULE (the block-update walk the
+        // placement's setBlock speaks — the placed cell's own dispatch
+        // the helper wears, the sand the air-below cell the 2-tick tick
+        // reads, the above cell the shape update keeps; the fn's own
+        // offline guard the networked world's server-owned scheduler
+        // answers)
+        self.schedule_falling_check_block_update(cell.0, cell.1, cell.2);
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
@@ -21455,10 +21551,10 @@ impl App {
             world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::AIR);
             world.relight(); // the prime's own re-speak the refreshed grid bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
-            // THE PRIME'S OWN SCHEDULE (the shape update the removed
-            // cell's above wears — the sand the TNT's cell held the
-            // 2-tick tick reads)
-            self.schedule_falling_check(hit.pos.0, hit.pos.1 + 1, hit.pos.2);
+            // THE PRIME'S OWN SCHEDULE (the block-update walk the
+            // removed cell's own dispatch wears — the sand the TNT's
+            // cell held the 2-tick tick reads)
+            self.schedule_falling_check_block_update(hit.pos.0, hit.pos.1, hit.pos.2);
         }
         let id = self.next_mob_id;
         self.next_mob_id += 1;
@@ -46976,6 +47072,194 @@ cow_sound_variant: None,
             "the sand item the wire order keeps"
         );
         assert_eq!(app.drops[0].count, 1, "the single stack the law spawns");
+    }
+
+    /// THE POWDER'S OWN UPDATE-SHAPE ARM (javap ConcretePowderBlock.
+    /// updateShape over the 26.2 jar — the `if (touchesLiquid(level,
+    /// pos)) return concrete.defaultBlockState()` early return the
+    /// scheduled walk serves): the water ABOVE the scheduled powder the
+    /// CONCRETE swap speaks (the fall the solidified block never
+    /// becomes — the falling family the is_falling_block law refuses),
+    /// THE DOWN GATE the water-below-only case the conversion refuses
+    /// (the vanilla's own famous asymmetry — the below water the fall
+    /// walk serves instead: the water the free-below verdict the body
+    /// spawns).
+    #[test]
+    fn the_powder_the_schedule_the_solidify_the_fall_refuses() {
+        let mut app = App::new(9);
+        let size = falling_platform(&mut app);
+        let c = size / 2;
+        // THE WATER ABOVE: the scheduled powder the touchesLiquid walk
+        // answers — the CONCRETE the cell wears, no body, no fall
+        app.offline_world.as_mut().unwrap().set(c, 10, c, crate::world::CONCRETE_POWDER);
+        app.offline_world.as_mut().unwrap().set(c, 11, c, crate::world::WATER);
+        app.schedule_falling_check(c, 10, c);
+        for _ in 0..8 {
+            app.update();
+        }
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, 10, c),
+            crate::world::CONCRETE,
+            "the water above the conversion speaks"
+        );
+        assert!(
+            app.falling_blocks.is_empty(),
+            "the solidified block the fall never becomes"
+        );
+        // THE WATER BELOW ONLY: the DOWN gate the scheduled walk's own
+        // conversion refuses (the vanilla's own famous asymmetry — the
+        // below water the SOLIDIFY never speaks) — the fall walk the
+        // body spawns, and the BODY'S OWN mid-water verdict the pool
+        // cell the concrete wears (the scheduled walk the cell the
+        // powder kept — the AIR the fall factory left, the CONCRETE the
+        // body's own serve speaks)
+        let c2 = c + 2;
+        app.offline_world.as_mut().unwrap().set(c2, 12, c2, crate::world::CONCRETE_POWDER);
+        app.offline_world.as_mut().unwrap().set(c2, 11, c2, crate::world::WATER);
+        app.schedule_falling_check(c2, 12, c2);
+        for _ in 0..8 {
+            app.update();
+        }
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c2, 12, c2),
+            crate::world::AIR,
+            "the gate's refusal the fall speaks (the scheduled walk the powder never swapped)"
+        );
+        assert_eq!(
+            w.get(c2, 11, c2),
+            crate::world::CONCRETE,
+            "the body's own mid-water verdict the pool cell wears"
+        );
+        assert!(
+            app.falling_blocks.is_empty(),
+            "the converted body the list retires"
+        );
+    }
+
+    /// THE POWDER'S OWN LANDING SERVE (javap FallingBlockEntity.tick pc
+    /// 241-529 over the 26.2 jar — the onGround||converts arm the
+    /// mid-water verdict fires, the placement conjunct's break clause
+    /// `isFree(below) && (!isConcrete || !converts)` the convert
+    /// verdict kills, the setBlock(3) + the Fallable.onLand walk the
+    /// shouldSolidify verdict the CONCRETE state speaks): the powder
+    /// the pool's own cell the conversion wears — the CONCRETE the
+    /// water cell re-forms, the item drop the branch never speaks, the
+    /// schedule the landed cell's own dispatch re-arms.
+    #[test]
+    fn the_powder_the_landing_the_concrete_the_water_wears() {
+        let mut app = App::new(9);
+        let size = falling_platform(&mut app);
+        let c = size / 2;
+        // THE POOL CELL above the grass floor: the powder scheduled
+        // three cells above (the dry air the fall keeps — the DOWN
+        // gate the scheduled walk's own scan refuses, the body the
+        // fall spawns)
+        app.offline_world.as_mut().unwrap().set(c, 9, c, crate::world::WATER);
+        app.offline_world.as_mut().unwrap().set(c, 12, c, crate::world::CONCRETE_POWDER);
+        app.schedule_falling_check(c, 12, c);
+        for _ in 0..60 {
+            app.update();
+        }
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, 9, c),
+            crate::world::CONCRETE,
+            "the water cell the concrete re-forms"
+        );
+        assert_eq!(
+            w.get(c, 12, c),
+            crate::world::AIR,
+            "the origin cell the fall factory left"
+        );
+        assert!(
+            app.falling_blocks.is_empty(),
+            "the converted body the list retires"
+        );
+        assert_eq!(
+            app.drops.len(),
+            0,
+            "the break clause the drop branch never speaks"
+        );
+    }
+
+
+    /// THE POWDER'S OWN PLACEMENT VERDICT (javap BlockItem.place over
+    /// the 26.2 jar — the getPlacementState walk the placement chain
+    /// keeps before the canPlace gates: the shouldSolidify read the
+    /// clicked cell's own state answers): the powder item INTO the
+    /// water cell the CONCRETE places (the canSolidify arm — the
+    /// replaceable clicked cell the placement target keeps), the dry
+    /// cell the POWDER keeps, the cell BESIDE the pool the
+    /// touchesLiquid arm the same conversion wears.
+    #[test]
+    fn the_powder_the_placement_the_solidify_arm_wears() {
+        let mut app = App::new(3);
+        let size = falling_platform(&mut app);
+        let c = size / 2;
+        // THE CAMERA'S OWN AUTHORITY (the body the platform staged the
+        // world_camera's highest word speaks — the aim the offline
+        // camera drives: the body the arena drops, the deterministic
+        // scenes' own shape the press reads)
+        app.body = None;
+        app.offline_held_updated(Some("item/white_concrete_powder"));
+        // THE POOL: the two water cells atop the grass floor (the into
+        // aim converts the first, the beside aim reads the second)
+        app.offline_world.as_mut().unwrap().set(c + 1, 9, c + 1, crate::world::WATER);
+        app.offline_world.as_mut().unwrap().set(c + 1, 9, c + 2, crate::world::WATER);
+        // THE INTO-WATER AIM: the straight-down ray the water cell the
+        // Fluid-NONE clip passes through, the grass below the clicked
+        // cell speaks, the UP-face offset the water cell is — the
+        // canSolidify(the water state) the CONCRETE answers
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 1.5, 13.0, c as f32 + 1.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the placement consumed the press"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, 9, c + 1),
+            crate::world::CONCRETE,
+            "the water cell the concrete places"
+        );
+        // THE DRY AIM: the plain grass column the offset cell the air
+        // keeps — the powder the placement wears (the solidify verdict
+        // the dry cell refuses)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 5.5, 13.0, c as f32 + 5.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the dry placement consumed the press"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 5, 9, c + 5),
+            crate::world::CONCRETE_POWDER,
+            "the dry cell the powder keeps"
+        );
+        // THE BESIDE-WATER AIM: the offset cell the pool's own
+        // neighbor wears — the touchesLiquid arm the CONCRETE speaks
+        // (the empty target the state read refuses, the second pool
+        // cell the side water the scan arms)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 2.5, 13.0, c as f32 + 2.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the beside placement consumed the press"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 2, 9, c + 2),
+            crate::world::CONCRETE,
+            "the touching cell the conversion wears"
+        );
     }
 
     /// THE NIGHT BEAT'S OWN PEACEFUL GATE (javap the 26.2 jar the

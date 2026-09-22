@@ -199,6 +199,12 @@ pub fn default_color(kind: u16, face: usize) -> [f32; 3] {
     // flat fallback when the atlas is absent; the real pixels ride the
     // textured path's tile)
     let lava = [0.77, 0.36, 0.08];
+    // The concrete pair's own grays (the two textures' averages — the
+    // powder the lighter 225.7/227.5/227.8 row, the solidified the
+    // 207.1/213.1/214.1 darker one — the flat fallback when the atlas
+    // is absent; the real pixels ride the textured path's chain)
+    let white_concrete_powder = [0.89, 0.89, 0.89];
+    let white_concrete = [0.81, 0.84, 0.84];
     match kind {
         GRASS => match face {
             2 => top,
@@ -231,6 +237,8 @@ pub fn default_color(kind: u16, face: usize) -> [f32; 3] {
         EMERALD_ORE => emerald_ore,
         NETHERRACK => netherrack,
         LAVA => lava,
+        CONCRETE_POWDER => white_concrete_powder,
+        CONCRETE => white_concrete,
         _ => [1.0, 0.0, 1.0], // magenta = missing block (debug-friendly)
     }
 }
@@ -275,6 +283,12 @@ pub fn texture_stem(kind: u16, face: usize) -> Option<&'static str> {
         // the SECOND fluid member: the still strip the atlas crops to
         // its first frame (the water_still arm's own shape, tint-free)
         LAVA => Some("lava_still"),
+        // THE CONCRETE PAIR'S OWN ROWS (the falling family's third
+        // member and the conversion's own target — the white variant
+        // the vanilla's ctor pair banks, the stems the atlas's own
+        // rows keep)
+        CONCRETE_POWDER => Some("white_concrete_powder"),
+        CONCRETE => Some("white_concrete"),
         _ => None,
     }
 }

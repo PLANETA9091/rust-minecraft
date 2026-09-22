@@ -159,7 +159,23 @@ use zip::ZipArchive;
 /// resolve_block's full-cube finder keeps, every face the ONE
 /// block/torch texture answers (the single tile the whole kind
 /// samples, the per-quad UV windows the sub-sprite law carries).
-pub const RUNTIME_PALETTE: [&str; 55] = [
+/// white_concrete_powder is kind 55 (the fifty-sixth entry, the
+/// autopush-426 round): THE CONCRETE POWDER'S OWN MODEL CHAIN —
+/// the blockstate is a single variant map ("") -> block/white_concrete_
+/// powder -> block/cube_all (the parent chain the sand/gravel pair
+/// wears), the SIX faces ALL reference `#all` = block/white_concrete_
+/// powder — the full-cube resolve_block walk the plain stems answer.
+/// The FALLING family's third member (the ConcretePowderBlock ctor's
+/// superclass the javap walk speaks) — the falling body the carried
+/// kind's own block model renders, the water verdict the conversion
+/// arms (the client's own FallingBlockEntity.tick port).
+/// white_concrete is kind 56 (the fifty-seventh entry, the same round):
+/// the CONVERSION'S OWN TARGET — the `concrete` field the ctor's
+/// registry read banks, the getConcrete().defaultBlockState() the
+/// onLand and the updateShape conversions both speak; the SAME
+/// cube_all chain the powder's walk keeps (the color pair the
+/// vanilla's own two rows carry).
+pub const RUNTIME_PALETTE: [&str; 57] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -172,6 +188,7 @@ pub const RUNTIME_PALETTE: [&str; 55] = [
     "azure_bluet", "oxeye_daisy", "cornflower",
     "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
     "torch",
+    "white_concrete_powder", "white_concrete",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
