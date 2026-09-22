@@ -20274,11 +20274,14 @@ impl App {
     pub fn remesh_offline(&mut self) {
         if !self.world_is_network {
             if let Some(world) = self.offline_world.as_mut() {
-                // THE RELIGHT BEFORE THE RE-SPEAK: the edits the last
-                // tick set ride the light grid the same walk refreshes
-                // (the torch's flood, the dug cell's daylight) — the
-                // mesh the refreshed grid bakes.
-                world.relight();
+                // THE LIGHT GUARD BEFORE THE RE-SPEAK: the edits the last
+                // tick set the set walk's own incremental answer already
+                // kept current (the per-set removal/increase flood the
+                // vanilla LightEngine speaks) — the never-lit world the
+                // full compute lights once, the per-edit full recompute
+                // the remesh never pays again (the dig tick's own hitch
+                // the walk retires).
+                world.ensure_light_current();
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
         }
@@ -20770,7 +20773,7 @@ impl App {
                     world.set(cell.0, cell.1 + 1, cell.2, upper);
                 }
             }
-            world.relight(); // the placed torch's own flood the same re-speak bakes
+            world.ensure_light_current(); // the placed torch's own flood the set walk already spoke — the guard the never-lit world's compute keeps
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
             // THE SURVIVAL CONSUME (BlockItem.place's own shrink): the
             // held stack came from the inventory's selection — the count

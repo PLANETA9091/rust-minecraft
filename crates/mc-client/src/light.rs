@@ -40,7 +40,7 @@
 //! world's edge/ceiling keeps the honest `None` the grid's own
 //! conventions speak.
 
-use crate::world::{LightGrid, World, CHUNK_X, CHUNK_Y, CHUNK_Z};
+use crate::world::{LightGrid, World, CHUNK_X, CHUNK_Y, CHUNK_Z, LIGHT_UNKNOWN};
 
 /// The six flood directions: +X -X +Y -Y +Z -Z (the mesher's own
 /// NEIGHBOR order — the pair the two walks share).
@@ -233,6 +233,266 @@ pub fn compute(world: &World) -> LightGrid {
         }
     }
     grid
+}
+
+// ---------------------------------------------------------------------------
+// THE EDIT'S OWN INCREMENTAL WALK — the vanilla LightEngine's block-change
+// answer (the 26.2 jar's SkyLightEngine/BlockLightEngine checkBlock update
+// the one setBlock speaks), the two-queue removal/increase flood the FULL
+// recompute's per-edit cost retires.
+// ---------------------------------------------------------------------------
+
+/// The grid layer's own read at world-grid coordinates — `None` outside
+/// the world's extent (the flood's own wall, the compute walk's same
+/// bounds the chunk arithmetic speaks).
+fn layer_get(layer: &[Vec<u8>], side: usize, x: i32, y: i32, z: i32) -> Option<u8> {
+    if y < 0 || y >= CHUNK_Y as i32 {
+        return None;
+    }
+    let cx = x.div_euclid(CHUNK_X as i32);
+    let cz = z.div_euclid(CHUNK_Z as i32);
+    if cx < 0 || cz < 0 {
+        return None;
+    }
+    let s = side as i32;
+    if cx >= s || cz >= s {
+        return None;
+    }
+    let ci = (cx + cz * s) as usize;
+    let idx = x.rem_euclid(CHUNK_X as i32) as usize
+        + z.rem_euclid(CHUNK_Z as i32) as usize * CHUNK_X
+        + y as usize * CHUNK_X * CHUNK_Z;
+    Some(layer[ci][idx])
+}
+
+fn layer_set(layer: &mut [Vec<u8>], side: usize, x: i32, y: i32, z: i32, v: u8) {
+    let cx = x.div_euclid(CHUNK_X as i32);
+    let cz = z.div_euclid(CHUNK_Z as i32);
+    let s = side as i32;
+    if cx < 0 || cz < 0 || cx >= s || cz >= s || y < 0 || y >= CHUNK_Y as i32 {
+        return;
+    }
+    let ci = (cx + cz * s) as usize;
+    let idx = x.rem_euclid(CHUNK_X as i32) as usize
+        + z.rem_euclid(CHUNK_Z as i32) as usize * CHUNK_X
+        + y as usize * CHUNK_X * CHUNK_Z;
+    layer[ci][idx] = v;
+}
+
+/// The walk's own level read — the honest [`LIGHT_UNKNOWN`] the wire
+/// grid carries reads as `None` (the offline grid the full compute
+/// spoke never carries one; the guard the server-owned light keeps).
+fn level_at(layer: &[Vec<u8>], side: usize, x: i32, y: i32, z: i32) -> Option<u8> {
+    match layer_get(layer, side, x, y, z) {
+        None | Some(LIGHT_UNKNOWN) => None,
+        Some(v) => Some(v),
+    }
+}
+
+/// THE ONE CELL'S OWN LIGHT ANSWER — the grid the edit's voxel change
+/// wears, updated in place: the old light the removal BFS un-makes,
+/// the boundary + the new sources the increase BFS re-lights, the
+/// final grid the full [`compute`] would speak BIT FOR BIT (the
+/// equality law the randomized walk pins). The two channels walk the
+/// SAME shape the full compute keeps: the sky column's down free ride
+/// (the 15-through-opacity-0 edge, its removal the same law undoes),
+/// every other edge `level - max(1, opacity)`, the opaque wall the
+/// flood never enters; the block channel the emissive seed + the same
+/// max(1, opacity) edges, NO free ride.
+pub fn update_cell(world: &World, grid: &mut LightGrid, x: i32, y: i32, z: i32) {
+    let side = world.chunks_per_side;
+    let h = CHUNK_Y as i32;
+
+    // THE HONEST UNKNOWN'S OWN SKIP: the wire world's server-owned
+    // light the walk never rewrites.
+    if level_at(&grid.sky, side, x, y, z).is_none()
+        || level_at(&grid.block, side, x, y, z).is_none()
+    {
+        return;
+    }
+    let op_here = sky_opacity(world.get(x, y, z));
+
+    // ================= THE SKY CHANNEL =================
+    // THE REMOVAL PASS: the cell's old level seeds the darkening BFS —
+    // the neighbors the old level fed (< level) join zeroed, the
+    // boundary (the cells the edit never fed, >= level) the increase
+    // queue re-seeds, the DOWN FREE RIDE the same law undoes (the 15
+    // column the cell fed straight down the removal cascade speaks).
+    let mut dark: Vec<(i32, i32, i32, u8)> = Vec::new();
+    let mut bright: Vec<(i32, i32, i32)> = Vec::new();
+
+    let old_sky = level_at(&grid.sky, side, x, y, z).unwrap_or(0);
+    layer_set(&mut grid.sky, side, x, y, z, 0);
+    if old_sky > 0 {
+        dark.push((x, y, z, old_sky));
+    }
+    let mut head = 0;
+    while head < dark.len() {
+        let (cx, cy, cz, lv) = dark[head];
+        head += 1;
+        for &(dx, dy, dz) in &NEIGHBORS {
+            let (nx, ny, nz) = (cx + dx, cy + dy, cz + dz);
+            let Some(nl) = level_at(&grid.sky, side, nx, ny, nz) else {
+                continue;
+            };
+            if nl == 0 {
+                continue;
+            }
+            let op = sky_opacity(world.get(nx, ny, nz));
+            if op >= 15 {
+                continue;
+            }
+            if dy == -1 && lv == 15 && nl == 15 && op == 0 {
+                // THE DOWN FREE RIDE'S OWN UNDOING — the column below
+                // the cell the old 15 fed, the removal cascade walks.
+                layer_set(&mut grid.sky, side, nx, ny, nz, 0);
+                dark.push((nx, ny, nz, 15));
+            } else if nl < lv {
+                layer_set(&mut grid.sky, side, nx, ny, nz, 0);
+                dark.push((nx, ny, nz, nl));
+            } else {
+                bright.push((nx, ny, nz));
+            }
+        }
+    }
+
+    // THE RE-LIGHT SEEDS: the removal's boundary + the SIX neighbors
+    // the transparency's own change rides — the cliff face's new air
+    // cell the side's own 15 lights (the no-removal edit the dark pass
+    // never seeded), the ceiling cell the direct walk itself speaks.
+    if op_here < 15 {
+        for &(dx, dy, dz) in &NEIGHBORS {
+            let (nx, ny, nz) = (x + dx, y + dy, z + dz);
+            if level_at(&grid.sky, side, nx, ny, nz).is_some() {
+                bright.push((nx, ny, nz));
+            }
+        }
+        if y == h - 1 && op_here == 0 {
+            // THE COLUMN'S OWN CEILING CELL — the topmost transparent
+            // cell the direct 15 wears (the up-neighbor the lower
+            // cells' carrier speaks the rest).
+            layer_set(&mut grid.sky, side, x, y, z, 15);
+            bright.push((x, y, z));
+        }
+    }
+
+    // THE INCREASE PASS (the compute flood's own edges verbatim): the
+    // down free ride, the max(1, opacity) step, the strict-improvement
+    // gate — the monotone convergence the FIFO order keeps.
+    let mut head = 0;
+    while head < bright.len() {
+        let (cx, cy, cz) = bright[head];
+        head += 1;
+        let Some(level) = level_at(&grid.sky, side, cx, cy, cz) else {
+            continue;
+        };
+        if level == 0 {
+            continue;
+        }
+        for &(dx, dy, dz) in &NEIGHBORS {
+            let (nx, ny, nz) = (cx + dx, cy + dy, cz + dz);
+            let Some(cur) = level_at(&grid.sky, side, nx, ny, nz) else {
+                continue;
+            };
+            let op = sky_opacity(world.get(nx, ny, nz));
+            if op >= 15 {
+                continue;
+            }
+            let next = if dy == -1 && level == 15 && op == 0 {
+                15
+            } else {
+                level.saturating_sub(op.max(1))
+            };
+            if next > cur {
+                layer_set(&mut grid.sky, side, nx, ny, nz, next);
+                bright.push((nx, ny, nz));
+            }
+        }
+    }
+
+    // ================= THE BLOCK CHANNEL =================
+    // THE REMOVAL PASS: the same darkening walk, NO down free ride (the
+    // block light's own physics the compute flood keeps).
+    let mut dark: Vec<(i32, i32, i32, u8)> = Vec::new();
+    let mut bright: Vec<(i32, i32, i32)> = Vec::new();
+
+    let old_block = level_at(&grid.block, side, x, y, z).unwrap_or(0);
+    layer_set(&mut grid.block, side, x, y, z, 0);
+    if old_block > 0 {
+        dark.push((x, y, z, old_block));
+    }
+    let mut head = 0;
+    while head < dark.len() {
+        let (cx, cy, cz, lv) = dark[head];
+        head += 1;
+        for &(dx, dy, dz) in &NEIGHBORS {
+            let (nx, ny, nz) = (cx + dx, cy + dy, cz + dz);
+            let Some(nl) = level_at(&grid.block, side, nx, ny, nz) else {
+                continue;
+            };
+            if nl == 0 {
+                continue;
+            }
+            let op = sky_opacity(world.get(nx, ny, nz));
+            if op >= 15 {
+                continue;
+            }
+            if nl < lv {
+                layer_set(&mut grid.block, side, nx, ny, nz, 0);
+                dark.push((nx, ny, nz, nl));
+            } else {
+                bright.push((nx, ny, nz));
+            }
+        }
+    }
+
+    // THE SEEDS: the new emission the edited cell speaks (the placed
+    // torch's own 14, the lava's 15), the removal's boundary, the SIX
+    // neighbors the transparency's change rides (the cave wall's new
+    // air the torch's own flood lights — the opaque cell's edit the
+    // removal alone answers).
+    let e = emission(world.get(x, y, z));
+    layer_set(&mut grid.block, side, x, y, z, e);
+    if e > 0 {
+        bright.push((x, y, z));
+    }
+    if op_here < 15 {
+        for &(dx, dy, dz) in &NEIGHBORS {
+            let (nx, ny, nz) = (x + dx, y + dy, z + dz);
+            if level_at(&grid.block, side, nx, ny, nz).is_some() {
+                bright.push((nx, ny, nz));
+            }
+        }
+    }
+
+    // THE INCREASE PASS (the compute block flood's own edges — the
+    // max(1, opacity) step, no free ride).
+    let mut head = 0;
+    while head < bright.len() {
+        let (cx, cy, cz) = bright[head];
+        head += 1;
+        let Some(level) = level_at(&grid.block, side, cx, cy, cz) else {
+            continue;
+        };
+        if level == 0 {
+            continue;
+        }
+        for &(dx, dy, dz) in &NEIGHBORS {
+            let (nx, ny, nz) = (cx + dx, cy + dy, cz + dz);
+            let Some(cur) = level_at(&grid.block, side, nx, ny, nz) else {
+                continue;
+            };
+            let op = sky_opacity(world.get(nx, ny, nz));
+            if op >= 15 {
+                continue;
+            }
+            let next = level.saturating_sub(op.max(1));
+            if next > cur {
+                layer_set(&mut grid.block, side, nx, ny, nz, next);
+                bright.push((nx, ny, nz));
+            }
+        }
+    }
 }
 
 #[cfg(test)]
@@ -484,5 +744,276 @@ mod tests {
                 assert_ne!(v, LIGHT_UNKNOWN, "unknown block at chunk {ci}");
             }
         }
+    }
+
+    // ------------------------------------------------------------------
+    // THE EDIT'S OWN INCREMENTAL WALK — the laws the one-cell answer
+    // wears (the full compute the walk must speak BIT FOR BIT).
+    // ------------------------------------------------------------------
+
+    /// The walk's own EQUALITY HAMMER — the real terrain (the trees,
+    /// the water, the flowers, the cave mouths the generate rolls) the
+    /// randomized edit sequence rides, the grid after EVERY edit the
+    /// full compute would speak bit for bit. The set walk's own
+    /// incremental answer ([`update_cell`]) the placement/dig lanes
+    /// wear — the equality law the pixel goldens inherit.
+    #[test]
+    fn the_incremental_walk_the_full_compute_wears() {
+        const PALETTE: [u16; 12] = [
+            AIR, STONE, DIRT, WATER, LEAVES, PALE_LEAVES, LEAF_LITTER, LAVA, TORCH, DANDELION,
+            POPPY, SHORT_GRASS,
+        ];
+        for seed in [7u64, 1337, 90_210] {
+            let mut w = World::new(2, seed); // the 32x32 real terrain
+            w.relight();
+            let mut rng = crate::drops::Lcg::new(seed * 31 + 17);
+            for i in 0..80 {
+                let x = rng.next_int(32);
+                let y = rng.next_int(CHUNK_Y as u64);
+                let z = rng.next_int(32);
+                let id = PALETTE[rng.next_int(PALETTE.len() as u64) as usize];
+                w.set(x, y, z, id);
+                let expected = crate::light::compute(&w);
+                assert_eq!(
+                    w.light.as_ref().expect("the walk's grid"),
+                    &expected,
+                    "seed {seed} edit {i}: ({x},{y},{z}) -> {id} the walk the compute never splits"
+                );
+            }
+        }
+    }
+
+    /// THE PLACED ROOF'S OWN SHADOW — the stone slab the open field's
+    /// column wore mid-air: the cells below the direct 15 the removal
+    /// cascade un-makes (the DOWN FREE RIDE the removal law undoes),
+    /// the slab's rim the boundary re-flood speaks, the dig-back the
+    /// column the same walk restores. The full compute the grid after
+    /// every step never splits.
+    #[test]
+    fn the_placed_roof_the_shadow_the_removal_wears() {
+        let mut w = empty_world();
+        w.relight();
+        // THE PLACE: the slab lands mid-air, the shadow column below
+        // the removal speaks (the open field's 15s the slab's cell
+        // fed straight down).
+        w.set(8, 20, 8, STONE);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        // THE OPEN FIELD'S OWN ANSWER: the direct 15 the slab retired,
+        // the side-flood's 14 the rim's boundary speaks (the open
+        // columns the shaft's own cells lean on), the opaque cell the
+        // zero verdict keeps.
+        assert_eq!(light_at(&w, 8, 20, 8).0, Some(0), "the slab's own cell dark");
+        assert_eq!(light_at(&w, 8, 19, 8).0, Some(14), "the shaft the side-flood lights");
+        assert_eq!(light_at(&w, 8, 10, 8).0, Some(14), "the deep shaft the same flood keeps");
+        assert_eq!(light_at(&w, 8, 21, 8).0, Some(15), "the slab's own top open");
+        assert_eq!(light_at(&w, 9, 19, 8).0, Some(15), "the open column beside");
+        // THE DIG BACK: the slab leaves, the column the direct walk
+        // restores — the 15s the whole shaft speaks again.
+        w.set(8, 20, 8, AIR);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 8, 10, 8).0, Some(15), "the shaft's own daylight back");
+    }
+
+    /// THE CAVE TORCH'S OWN FLOOD — the sealed chamber the torch's
+    /// block light wears: the placed torch the emissive seed speaks
+    /// (the 14 the source cell carries, the falloff the walls ride),
+    /// the removal the darkening BFS un-makes, the never-lit world's
+    /// guard the full compute keeps (the honest None the set walk
+    /// never touches).
+    #[test]
+    fn the_cave_torch_the_incremental_flood_wears() {
+        let mut w = empty_world();
+        // THE SEALED CHAMBER: the stone shell the sky's own column
+        // never enters (the interior the dark the shell keeps).
+        for y in 3..8 {
+            for z in 3..10 {
+                for x in 3..10 {
+                    let shell = x == 3 || x == 9 || z == 3 || z == 9 || y == 3 || y == 7;
+                    w.set(x, y, z, if shell { STONE } else { AIR });
+                }
+            }
+        }
+        w.relight();
+        assert_eq!(light_at(&w, 6, 5, 6).0, Some(0), "the sealed interior dark");
+        // THE PLACE: the torch lands, the flood the seed speaks — the
+        // grid the full compute would speak bit for bit.
+        w.set(6, 5, 6, TORCH);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 6, 5, 6).1, Some(14), "the torch's own cell");
+        assert_eq!(light_at(&w, 8, 5, 6).1, Some(12), "the falloff two cells east");
+        assert_eq!(light_at(&w, 6, 5, 6).0, Some(0), "the sky the shell still blocks");
+        // THE BREAK: the torch leaves, the darkening BFS the flood
+        // un-makes — the chamber the dark the shell keeps again.
+        w.set(6, 5, 6, AIR);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 8, 5, 6).1, Some(0), "the stale glow gone");
+    }
+
+    /// THE CLIFF FACE'S OWN NEW AIR — the wall cell the set walk
+    /// transparent-izes where NO removal runs (the opaque cell's own
+    /// sky the dark pass never seeds): the side's own 15 the boundary
+    /// seeding lights (the 14 the one step down speaks), the grid the
+    /// full compute bit for bit keeps.
+    #[test]
+    fn the_cliff_face_the_new_air_the_boundary_lights() {
+        let mut w = empty_world();
+        // THE CLIFF: the stone half the open half's column never
+        // enters (the wall face the sky's own shadow wears).
+        for y in 0..20 {
+            for z in 0..16 {
+                for x in 8..16 {
+                    w.set(x, y, z, STONE);
+                }
+            }
+        }
+        w.relight();
+        assert_eq!(light_at(&w, 8, 10, 5).0, Some(0), "the wall's own cell dark");
+        // THE CARVE: the face cell leaves, no removal ran (the opaque
+        // cell carried nothing) — the side's open 15 the seed re-floods
+        // the one step down.
+        w.set(8, 10, 5, AIR);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 8, 10, 5).0, Some(14), "the face's own side-lit air");
+        assert_eq!(light_at(&w, 7, 10, 5).0, Some(15), "the open neighbor's column");
+    }
+
+    /// THE LAVA'S OWN EMISSION EDIT — the opaque emitter the both
+    /// channels wear: the placed lava the sky's own column AND the
+    /// block's own 15 the seeds speak, the stone the emission's flood
+    /// retires, the grid the full compute never splits.
+    #[test]
+    fn the_lava_the_emission_edit_wears() {
+        let mut w = empty_world();
+        w.relight();
+        // THE PLACE: the lava lands mid-air — the sky column STOPS at
+        // the opaque cell (the shadow below the column walk speaks)
+        // and the block 15 floods the neighbors the emissive seed
+        // lights.
+        w.set(4, 12, 4, LAVA);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 4, 12, 4).0, Some(0), "the opaque cell's own sky");
+        // the column STOPS at the lava — the direct 15 the cell below
+        // never wears, the side-flood's own 14 the open columns lean in
+        assert_eq!(light_at(&w, 4, 11, 4).0, Some(14), "the column the lava stops");
+        assert_eq!(light_at(&w, 4, 12, 4).1, Some(15), "the lava's own emission");
+        assert_eq!(light_at(&w, 6, 12, 4).1, Some(13), "the flood's own falloff");
+        // THE RETIRE: the stone takes the lava's cell — the emission's
+        // flood the removal un-makes, the sky the opaque verdict keeps.
+        w.set(4, 12, 4, STONE);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 6, 12, 4).1, Some(0), "the emission's flood gone");
+        assert_eq!(light_at(&w, 4, 12, 4).1, Some(0), "the stone's own cell dark");
+    }
+
+    /// THE WATER COLUMN'S OWN PARTIAL EDIT — the attenuator the
+    /// opacity-1 family wears: the placed water the column's 14 the
+    /// one-step-down flood speaks (the free ride the partial opacity
+    /// never rides), the dug-out the direct 15 the column restores,
+    /// the leaves the same law carries. The full compute the grid
+    /// after every edit bit for bit keeps.
+    #[test]
+    fn the_water_column_the_partial_edit_wears() {
+        let mut w = empty_world();
+        w.relight();
+        // THE PLACE: the water cell takes the open column's top — the
+        // column STOPS at the attenuator (the cell itself the flood's
+        // own 14 wears, the direct 15 the partial opacity never rides).
+        w.set(4, 20, 4, WATER);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 4, 20, 4).0, Some(14), "the water's own attenuated sky");
+        // THE BELOW: the side-flood's own 14 the open columns lean in
+        // (the water's own 13 the one step down speaks, the rim's 14
+        // the max verdict wears).
+        assert_eq!(light_at(&w, 4, 19, 4).0, Some(14), "the below the side-flood lights");
+        // THE DIG OUT: the water leaves, the direct column the free
+        // ride restores — the 15s the whole shaft speaks.
+        w.set(4, 20, 4, AIR);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 4, 20, 4).0, Some(15), "the direct column back");
+        assert_eq!(light_at(&w, 4, 19, 4).0, Some(15), "the free ride back");
+        // THE LEAVES: the canopy cell the same partial law wears.
+        w.set(4, 20, 4, LEAVES);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 4, 20, 4).0, Some(14), "the canopy's own shade");
+    }
+
+    /// THE CEILING CELL'S OWN DIRECT SEED — the world's topmost
+    /// transparent cell the up-neighbor never carries (the column's
+    /// own ceiling the direct walk seeds): the placed air the 15
+    /// speaks, the placed water the ceiling seed refuses (the partial
+    /// opacity the column walk stops at), the grid the full compute
+    /// bit for bit keeps.
+    #[test]
+    fn the_ceiling_cell_the_direct_seed_wears() {
+        let mut w = empty_world();
+        // THE CAP: the stone lid the whole world's top wears — every
+        // column the ceiling stops.
+        for z in 0..16 {
+            for x in 0..16 {
+                w.set(x, CHUNK_Y as i32 - 1, z, STONE);
+            }
+        }
+        w.relight();
+        let top = CHUNK_Y as i32 - 1;
+        assert_eq!(light_at(&w, 8, top, 8).0, Some(0), "the capped cell dark");
+        assert_eq!(light_at(&w, 8, top - 1, 8).0, Some(0), "the below the cap dark");
+        // THE CARVE: the ceiling cell leaves — the direct seed the
+        // topmost transparent cell speaks (the up-neighbor the lower
+        // cells' carrier), the free ride the column below floods.
+        w.set(8, top, 8, AIR);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 8, top, 8).0, Some(15), "the ceiling's own direct 15");
+        assert_eq!(light_at(&w, 8, top - 1, 8).0, Some(15), "the free ride below");
+        // THE WATER LID: the attenuator takes the ceiling cell — the
+        // direct seed the opacity refuses AND the old 15's own column
+        // the removal cascade un-makes (the free ride the top cell fed
+        // the whole shaft, the capped world's dark the flood restores).
+        w.set(8, top, 8, WATER);
+        let expected = crate::light::compute(&w);
+        assert_eq!(w.light.as_ref().expect("walked"), &expected);
+        assert_eq!(light_at(&w, 8, top, 8).0, Some(0), "the capped water no direct seed");
+        assert_eq!(light_at(&w, 8, top - 1, 8).0, Some(0), "the free ride the lid removed");
+    }
+
+    /// THE BATCH'S OWN TRENCH — the explosion-shaped multi-cell dig
+    /// the one tick wears: every per-set walk the compositionality the
+    /// full compute after EACH edit never splits (the lane's own
+    /// batched rhythm the per-set answer carries).
+    #[test]
+    fn the_batch_trench_the_per_edit_walk_wears() {
+        let mut w = empty_world();
+        // THE GROUND: the stone floor the trench digs into.
+        for z in 0..16 {
+            for x in 0..16 {
+                w.set(x, 0, z, STONE);
+                w.set(x, 1, z, STONE);
+            }
+        }
+        w.relight();
+        // THE TRENCH: the L-shaped dig the explosion lane's own batch
+        // wears — after EVERY set the grid the full compute keeps.
+        let cells = [(4, 1, 4), (5, 1, 4), (6, 1, 4), (6, 1, 5), (6, 0, 4), (4, 0, 4)];
+        for (i, (x, y, z)) in cells.iter().enumerate() {
+            w.set(*x, *y, *z, AIR);
+            let expected = crate::light::compute(&w);
+            assert_eq!(
+                w.light.as_ref().expect("walked"),
+                &expected,
+                "trench set {i} the walk the compute never splits"
+            );
+        }
+        assert_eq!(light_at(&w, 4, 1, 4).0, Some(15), "the trench's own daylight");
+        assert_eq!(light_at(&w, 6, 0, 4).0, Some(15), "the deep end the shaft lights");
     }
 }

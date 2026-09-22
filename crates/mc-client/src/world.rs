@@ -1210,14 +1210,28 @@ impl World {
 
     /// THE OFFLINE WORLD'S OWN RELIGHT — the light engine's grid the
     /// world carries from the act that owns it ([`crate::light::compute`]
-    /// the sky column + the block flood walks) and re-walks after every
-    /// edit the mesh re-speaks. `World::new` itself keeps the honest
-    /// None (the raw procedural scene — the bare orbit lane's golden
-    /// contract): the WORLD SCREEN's construction and the offline edit
-    /// lanes call this before their remesh, the integrated-server
-    /// fiction the offline lane wears.
+    /// the sky column + the block flood walks). `World::new` itself
+    /// keeps the honest None (the raw procedural scene — the bare orbit
+    /// lane's golden contract): the WORLD SCREEN's construction lights
+    /// the world once here, the edits after that the set walk's own
+    /// incremental answer keeps current ([`Self::ensure_light_current`]
+    /// the remesh's guard wears), the integrated-server fiction the
+    /// offline lane speaks.
     pub fn relight(&mut self) {
         self.light = Some(crate::light::compute(self));
+    }
+
+    /// THE REMESH'S OWN LIGHT GUARD — the grid the set walk's
+    /// incremental speak already keeps current rides as-is (the edit
+    /// lane's per-set answer [`crate::light::update_cell`] speaks); the
+    /// never-lit world the full compute lights once (the honest None
+    /// the raw procedural scene carries). The per-edit full recompute
+    /// the remesh used to pay the walk retires — the dig tick's own
+    /// hitch the incremental answer lifts.
+    pub fn ensure_light_current(&mut self) {
+        if self.light.is_none() {
+            self.relight();
+        }
     }
 
     pub fn size_blocks(&self) -> i32 {
@@ -1244,7 +1258,27 @@ impl World {
         if let Some(ci) = self.chunk_index(cx, cz) {
             let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
             let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
-            self.chunks[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z] = id;
+            let cell = lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z;
+            let old = self.chunks[ci][cell];
+            if old == id {
+                return; // THE SAME STATE'S OWN SILENCE — the no-op edit the walk never pays
+            }
+            self.chunks[ci][cell] = id;
+            // THE EDIT'S OWN INCREMENTAL LIGHT (the vanilla LightEngine's
+            // block-change answer — the 26.2 jar's checkBlock update the
+            // one setBlock speaks): the grid the world carries the walk
+            // updates in place, the two-queue removal/increase flood the
+            // one cell's edit wears — the full recompute the per-edit
+            // tick never pays again. The never-lit world keeps the
+            // honest None (the remesh's guard the full compute speaks
+            // once).
+            if self.light.is_some() {
+                let mut grid = self.light.take();
+                if let Some(grid) = grid.as_mut() {
+                    crate::light::update_cell(self, grid, wx, wy, wz);
+                }
+                self.light = grid;
+            }
         }
     }
 
