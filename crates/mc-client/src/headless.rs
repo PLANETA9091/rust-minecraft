@@ -1576,13 +1576,13 @@ pub fn render_gui_screen_opts(
         "world" => {
             app.enter_world();
             app.frame = frame;
-            if opts.net_day.is_some()
+            let net_scene = opts.net_day.is_some()
                 || opts.net_mobs > 0
                 || opts.net_pig.is_some()
                 || opts.net_cow.is_some()
                 || opts.net_sheep.is_some()
-                || opts.net_arrow.is_some()
-            {
+                || opts.net_arrow.is_some();
+            if net_scene {
                 // THE WIRE'S OWN LANE: the network world swaps in — the
                 // server's Set Time opinion re-bases the day clock, the
                 // wire mobs land through the REAL live_mobs_updated
@@ -2083,6 +2083,17 @@ cow_sound_variant: None,
                         }
                     }
             }
+            if !net_scene {
+                // THE NOON PIN (the day plateau's heart — tick 6000 the
+                // sun track's own zenith keyframe speaks): the day
+                // scenes' world the full-day fold keeps (the factor-1.0
+                // lightmap the fresh bake already wore) and the sky the
+                // noon tracks render — the honest day pin the OLD base
+                // 0 never was (the tick sat the timeline's dawn wrap,
+                // the sky the sunrise tint and the faint stars wore
+                // while the terrain baked the full-day fold).
+                app.day_time_base = 6000;
+            }
         }
         "worldnight" => {
             // Night world view (tick 14040 = ~20:00 in-game): full moon ~25
@@ -2096,10 +2107,16 @@ cow_sound_variant: None,
         "pause" => {
             app.enter_world();
             app.paused = true;
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders)
+            app.day_time_base = 6000;
             app.frame = frame;
         }
         "chest" => {
             app.open_chest();
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders)
+            app.day_time_base = 6000;
             app.frame = frame;
         }
         "inventory" => {
@@ -2113,6 +2130,9 @@ cow_sound_variant: None,
             stage_inventory_loadout(&mut app);
             app.hotbar_slots = app.inventory.hotbar();
             app.open_inventory();
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders)
+            app.day_time_base = 6000;
             app.frame = frame;
         }
         "crafting" => {
@@ -2129,6 +2149,9 @@ cow_sound_variant: None,
             app.table_grid[0] = (planks, 7);
             app.table_grid[3] = (planks, 7);
             app.refresh_table_result();
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders)
+            app.day_time_base = 6000;
             app.frame = frame;
         }
         other => anyhow::bail!(

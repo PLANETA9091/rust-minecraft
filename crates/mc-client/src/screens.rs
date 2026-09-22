@@ -1927,6 +1927,36 @@ fn lightmap_uniforms(world: &crate::world::World) -> LightmapUniforms {
     }
 }
 
+/// THE DAY BAKE'S OWN INPUT PAIR (the mesher's fold mirrored — the SAME
+/// expressions [`lightmap_uniforms`] speaks, quantized to the grain the
+/// re-bake law re-speaks the mesh at): the sky factor's 1/128 step
+/// (sub-1% brightness — the perceptible floor the vanilla-per-frame
+/// lightmap TEXTURE never needs and this baked fold's re-walk economy
+/// rides) and the moonlight tint's own byte space (the attribute fold's
+/// operand). The clockless world the full-day step and the white track
+/// keep — the exact pair the fresh world's mesh bakes.
+fn day_bake_inputs(world: &crate::world::World) -> (u32, [u8; 3]) {
+    let track = world.day_tick;
+    let factor =
+        world.sky_light_factor.unwrap_or(1.0) * track.map(crate::timeline::sky_light_factor).unwrap_or(1.0);
+    let tint = match world.sky_light_color {
+        None => track
+            .map(crate::timeline::sky_light_color_bytes)
+            .unwrap_or([255; 3]),
+        Some(stated) => {
+            let t = track
+                .map(crate::timeline::sky_light_color_bytes)
+                .unwrap_or([255; 3]);
+            [
+                ((stated[0] as u32 * t[0] as u32) / 255) as u8,
+                ((stated[1] as u32 * t[1] as u32) / 255) as u8,
+                ((stated[2] as u32 * t[2] as u32) / 255) as u8,
+            ]
+        }
+    };
+    ((factor * 128.0).round() as u32, tint)
+}
+
 /// THE LIGHTMAP TEXTURE'S OWN GRID (the jar's own
 /// `shaders/core/lightmap.fsh` fragment walk — the source the 26.2
 /// GPU pass runs: the cell's texCoord the `floor(texCoord*16)/15`
@@ -5851,6 +5881,13 @@ pub struct App {
     /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
     /// counter advances time 1 tick per frame like the vanilla clock).
     pub day_time_base: u64,
+    /// THE DAY BAKE'S OWN INPUT PAIR (the quantized sky-factor step + the
+    /// moonlight tint bytes the CURRENT offline mesh's lightmap fold
+    /// spoke — the day-varying pair the baked-lightmap architecture
+    /// re-speaks the mesh at). The render walk's step check compares it
+    /// against the clock's own pair each frame; the `None` the
+    /// pre-clock state keeps.
+    pub(crate) day_bake: Option<(u32, [u8; 3])>,
     /// THE FIXED CLOCK'S RENDER REMAINDER (vanilla `Minecraft.runTick`'s
     /// own partialTick): the fraction of the next 50ms tick the wall
     /// clock has already accrued when this frame renders — the windowed
@@ -7169,6 +7206,7 @@ impl App {
             live_inv_state_id: 0,
             live_inv_carried: (0, 0),
             day_time_base: 0,
+            day_bake: None,
             partial_tick: 1.0,
             end_flash: crate::end_flash::EndFlashState::new(),
             rain_sound_time: 0,
@@ -11074,6 +11112,10 @@ impl App {
             self.world_size = world.size_blocks();
             self.spawn_y = top_solid_y(&world, self.world_size / 2, self.world_size / 2);
             self.world_quads = Some(crate::mesher::mesh_world(&world, None));
+            // THE DAY BAKE'S OWN SEED (the clockless fold's pair — the
+            // fresh mesh the full-day step and the white track speak;
+            // the first render's step check the honest pair answers)
+            self.day_bake = Some(day_bake_inputs(&world));
             self.world_is_network = false;
             // the App OWNS the procedural voxels now (the block-use
             // lane's placement prediction edits them in place)
@@ -22561,6 +22603,30 @@ impl App {
         let n = self.world_size as f32;
         let cam = self.world_camera();
         let day_time = (self.day_time_base + self.frame) as i64;
+        // THE OFFLINE WORLD'S OWN DAY CLOCK (the integrated-server
+        // fiction the singleplayer's ClientLevel speaks): the procedural
+        // world's day_tick the app's own clock answers — the timeline's
+        // sky factor and moonlight tint the mesher's lightmap fold
+        // consumes (the wire world's day_tick the server's Set Time
+        // word keeps, untouched). THE DAY RE-BAKE (the sky-factor step):
+        // the lightmap fold bakes at mesh time — the pair's step the
+        // mesh re-walks (the plateaus' constant pair never re-walks, the
+        // ramps' drift the 1/128 step's grain bounds); the networked
+        // world's mesh the server's own refresh re-speaks (the honest
+        // no-op the gate keeps).
+        if !self.world_is_network {
+            if let Some(world) = self.offline_world.as_mut() {
+                world.day_tick = Some(day_time);
+            }
+            let current = self.offline_world.as_ref().map(day_bake_inputs);
+            if current.is_some() && self.day_bake != current {
+                if let Some(world) = self.offline_world.as_ref() {
+                    let quads = crate::mesher::mesh_world(world, None);
+                    self.world_quads = Some(quads);
+                }
+                self.day_bake = current;
+            }
+        }
         // the END sky's flash state ticks on the client's game-time clock
         // (vanilla ticks ClientLevel.endFlashState on the level's game
         // time); tick() is idempotent per tick, so the per-frame call is
@@ -53249,6 +53315,143 @@ cow_sound_variant: None,
             &fresh,
             "the crater the mesh the boom tick wears"
         );
+    }
+
+    // THE DAY BAKE'S OWN PAIR LAW (the helper the re-bake check reads —
+    // the SAME expressions the mesher's fold speaks, quantized to the
+    // re-walk's grain): the clockless world the full-day step and the
+    // white track keep, the noon plateau the same pair, the night
+    // plateau the 0.24 factor's 31st step and the #7a7aff moonlight
+    // bytes, the dusk ramp the interpolated pair.
+    #[test]
+    fn the_day_bake_inputs_wear_the_timeline_tracks() {
+        let mut w = crate::world::World::new(1, 0);
+        // THE CLOCKLESS BAKE: the fresh world's None the full-day pair
+        // keeps — the exact pair the enter_world seed banks
+        assert_eq!(day_bake_inputs(&w), (128, [255, 255, 255]));
+        // THE NOON PLATEAU: factor 1.0, the white track — the day
+        // goldens' own pair (the staged tick the day plateau keeps)
+        w.day_tick = Some(6_030);
+        assert_eq!(day_bake_inputs(&w), (128, [255, 255, 255]));
+        // THE NIGHT PLATEAU: the 0.24 factor's 31st step, the moonlight
+        // bytes (#7a7aff — the plateau the golden night tick wears)
+        w.day_tick = Some(18_000);
+        assert_eq!(day_bake_inputs(&w), (31, [122, 122, 255]));
+        // THE DUSK RAMP: the interpolated factor's step and the rounded
+        // moonlight-walk bytes (the 12205 tick the byte-sampler law pins)
+        w.day_tick = Some(12_205);
+        let (step, tint) = day_bake_inputs(&w);
+        assert_eq!(tint, [189, 189, 255], "the ramp's byte pair");
+        assert_eq!(
+            step,
+            (crate::timeline::sky_light_factor(12_205) * 128.0).round() as u32,
+            "the factor's own 1/128 step"
+        );
+    }
+
+    // THE OFFLINE CLOCK'S OWN WIRE + THE NIGHT RE-BAKE (the render
+    // walk's law): the app's clock the offline world's day_tick answers,
+    // the day plateau's pair the seed keeps — the mesh never re-walks —
+    // and the worldnight tick's step the re-bake answers (a fresh
+    // allocation wearing the moonlight pair, the terrain the 0.24 fold
+    // dims).
+    #[test]
+    fn the_offline_clock_rebakes_the_night_terrain() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let day_ptr = app.world_quads.as_ref().map(|q| q.as_ptr());
+        assert_eq!(
+            app.day_bake,
+            Some((128, [255, 255, 255])),
+            "the seed the clockless fold's pair banks"
+        );
+        // THE NOON RENDER: the day plateau's pair the seed already
+        // wears — the SAME allocation the plateau's no-op keeps
+        app.day_time_base = 6_000;
+        app.frame = 30;
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render_world_3d(&mut fb, &mut assets);
+        assert_eq!(app.day_bake, Some((128, [255, 255, 255])));
+        assert_eq!(
+            app.world_quads.as_ref().map(|q| q.as_ptr()),
+            day_ptr,
+            "the plateau never re-walks"
+        );
+        // THE CLOCK'S WIRE: the render walk's tick the offline world
+        // wears (the app's own clock — the integrated-server fiction)
+        assert_eq!(app.offline_world.as_ref().unwrap().day_tick, Some(6_030));
+        // THE NIGHT RENDER: the worldnight tick's step the re-bake
+        // answers — a fresh allocation, the moonlight pair banked
+        app.day_time_base = 14_010;
+        let mut fb2 = crate::raster::Framebuf::new(64, 64);
+        app.render_world_3d(&mut fb2, &mut assets);
+        assert_eq!(app.day_bake, Some((31, [122, 122, 255])));
+        assert_ne!(
+            app.world_quads.as_ref().map(|q| q.as_ptr()),
+            day_ptr,
+            "the step the mesh re-walks"
+        );
+        assert_eq!(app.offline_world.as_ref().unwrap().day_tick, Some(14_040));
+    }
+
+    // THE MESHER'S OWN NIGHT FOLD (the day_tick the mesh consumes): the
+    // same voxels re-meshed at the night tick wear the dimmer colors —
+    // the moonlight fold the sky term's 0.24 factor speaks, the block
+    // term the torch's own light keeps.
+    #[test]
+    fn the_mesh_bakes_the_clocks_night_fold() {
+        let mut w = crate::world::World::new(2, 42); // the REAL terrain
+        w.relight();
+        let day = crate::mesher::mesh_world(&w, None);
+        w.day_tick = Some(18_000);
+        let night = crate::mesher::mesh_world(&w, None);
+        assert_eq!(day.len(), night.len(), "the same voxels the same quads");
+        // THE FOLD'S OWN MONOTONE: every vertex the night fold dims or
+        // keeps (the sky term's 0.24 factor and the moonlight tint the
+        // white track never exceeds; the block term the night keeps)
+        let mut dimmed = 0usize;
+        for (d, n) in day.iter().zip(night.iter()) {
+            for (dc, nc) in d.colors.iter().zip(n.colors.iter()) {
+                for ch in 0..3 {
+                    assert!(
+                        nc[ch] <= dc[ch] + 1e-6,
+                        "the night fold never brightens: {nc:?} vs {dc:?}"
+                    );
+                }
+            }
+            if n.colors[0] != d.colors[0] {
+                dimmed += 1;
+            }
+        }
+        // THE OUTDOOR'S OWN DARK: the terrain's sunlit faces the 0.24
+        // fold dims — the sky-lit quads the night never keeps
+        assert!(dimmed > 0, "the moonlight fold the terrain wears");
+    }
+
+    // THE NET CLOCK'S OWN GUARD (the render walk's wiring the wire lane
+    // never touches): the networked world's day_tick the server's Set
+    // Time word keeps, the parked offline world's clock the net screen
+    // never wires.
+    #[test]
+    fn the_net_clocks_wire_the_server_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.world_is_network = true;
+        let mut net = crate::world::World::new(1, 0);
+        net.day_tick = Some(12_345); // the server's own Set Time word
+        app.net_world = Some(net);
+        app.day_time_base = 14_010;
+        app.frame = 30;
+        let mut fb = crate::raster::Framebuf::new(64, 64);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render_world_3d(&mut fb, &mut assets);
+        // THE SERVER'S WORD: the wire world's clock the Set Time value
+        // keeps — the app's own clock the wire lane never overwrites
+        assert_eq!(app.net_world.as_ref().unwrap().day_tick, Some(12_345));
+        // THE PARKED WORLD'S OWN SILENCE: the offline clock the guard
+        // never wires (the net screen the offline lane never speaks)
+        assert_eq!(app.offline_world.as_ref().unwrap().day_tick, None);
     }
 
     #[test]
