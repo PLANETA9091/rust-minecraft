@@ -8680,13 +8680,20 @@ impl App {
                 }
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
                 // stand-in): one attempt per SPAWN_CYCLE_TICKS, the
-                // night gate rides the sky lane's own celestial track
-                // (the sun below the horizon plane = sin(angle) < 0).
+                // night gate the mob goals' own word speaks — the
+                // vanilla isBrightOutside the skyDarken < 4 fold the
+                // FleeSun/RestrictSun canUse pair reads (javap the
+                // 26.2 jar, the ONE day/night vocabulary the goals and
+                // the beat both speak). The sun's sin sign the old
+                // stand-in wore the zenith-0 angle's wrong half armed:
+                // sin(angle) < 0 spans midnight->noon — the morning
+                // the monster lane rode, the evening dark (12_523 the
+                // darken's first tick) the creature lane rode, the
+                // vanilla dusk spawns the beat never offered.
                 self.spawn_clock += 1;
                 if self.spawn_clock % crate::mob::SPAWN_CYCLE_TICKS == 0 {
                     let day_time = (self.day_time_base + self.frame) as i64;
-                    let sun = crate::sky::sample(day_time).sun_angle;
-                    if sun.sin() < 0.0 {
+                    if !crate::mob::is_bright_outside(day_time) {
                         if let (Some(world), Some(b)) =
                             (self.offline_world.as_ref(), self.body.as_ref())
                         {
@@ -46394,8 +46401,8 @@ cow_sound_variant: None,
     }
 
     /// THE DAY BEAT'S OWN CREATURE ARM (the spawner's else arm the
-    /// sun's own sign arms — the pack the beat lands, the monster lane
-    /// the night gate keeps, the procedural world the animals now
+    /// bright-outside word arms — the pack the beat lands, the monster
+    /// lane the night word keeps, the procedural world the animals now
     /// graze).
     #[test]
     fn the_day_beat_walks_the_creatures() {
@@ -46419,10 +46426,10 @@ cow_sound_variant: None,
             }
         }
         app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
-        // THE DAY BAND (the sampler's own law — the sun the +0.1
-        // margin the horizon's f32 folds avoid)
+        // THE DAY BAND (the gate's own word — the darken's first
+        // bright tick the beat's creature arm keeps)
         let day_tick = (0..24_000i64)
-            .find(|t| crate::sky::sample(*t).sun_angle.sin() > 0.1)
+            .find(|t| crate::mob::is_bright_outside(*t))
             .expect("a day band the sky keeps");
         app.day_time_base = day_tick as u64;
         // THE BEAT (the spawn_clock the 40th update the % SPAWN_CYCLE
@@ -46439,6 +46446,63 @@ cow_sound_variant: None,
         assert!(
             !creatures.is_empty(),
             "the day beat the creatures land"
+        );
+        for m in &creatures {
+            assert_ne!(m.kind, crate::mob::MobKind::Zombie, "the friendly lane");
+            assert_eq!(m.y, 9.0, "the feet the platform's top keeps");
+        }
+    }
+
+    /// THE MORNING BEAT'S OWN CREATURE ARM (autopush-425 — the
+    /// discriminating flip the bright-outside word wears): the tick
+    /// 1_000 the sun's sin the OLD gate's MONSTER arm rode (sin(angle)
+    /// < 0 spans midnight->noon) yet the darken law the BRIGHT word
+    /// keeps — the morning the creature lane deserves the beat now
+    /// arms (the old gate the monster arm rode, the stage-3 light
+    /// mask the roster never filled).
+    #[test]
+    fn the_morning_beat_walks_the_creatures() {
+        let mut app = App::new(9);
+        app.enter_world();
+        // THE FLAT GRASS PLATFORM (the day beat's own voxels the test
+        // sets — the walk's every spot the platform keeps)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..8 {
+                        w.set(x, y, z, crate::world::STONE);
+                    }
+                    w.set(x, 8, z, crate::world::GRASS);
+                    for y in 9..size {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+        // THE MORNING TICK (the bright-outside word keeps — the old
+        // gate's sin the MONSTER arm the same tick rode)
+        assert!(
+            crate::mob::is_bright_outside(1_000),
+            "the morning the bright word keeps"
+        );
+        assert!(
+            crate::sky::sample(1_000).sun_angle.sin() < 0.0,
+            "the old gate's sin the morning the monster arm rode"
+        );
+        app.day_time_base = 1_000u64;
+        // THE BEAT (the day beat's own 400-update walk — the creature
+        // arm the whole window the bright word keeps)
+        for _ in 0..400 {
+            app.update();
+        }
+        let creatures: Vec<&crate::mob::Zombie> =
+            app.mobs.iter().filter(|m| !m.kind.is_monster()).collect();
+        assert!(
+            !creatures.is_empty(),
+            "the morning beat the creatures land"
         );
         for m in &creatures {
             assert_ne!(m.kind, crate::mob::MobKind::Zombie, "the friendly lane");
@@ -46476,10 +46540,10 @@ cow_sound_variant: None,
         app.offline_world.as_mut().unwrap().difficulty =
             crate::difficulty::Difficulty::Peaceful;
         app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
-        // THE NIGHT BAND (the sampler's own law — the sun the -0.1
-        // margin the horizon's f32 folds avoid)
+        // THE NIGHT BAND (the gate's own word — the darken's first
+        // dark tick the beat's monster arm keeps)
         let night_tick = (0..24_000i64)
-            .find(|t| crate::sky::sample(*t).sun_angle.sin() < -0.1)
+            .find(|t| !crate::mob::is_bright_outside(*t))
             .expect("a night band the sky keeps");
         app.day_time_base = night_tick as u64;
         for _ in 0..400 {
@@ -46511,9 +46575,8 @@ cow_sound_variant: None,
         }
         app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
         // THE TRACK'S OWN MIDNIGHT (the darken's plateau the gate's
-        // stage 3 subtracts — 18_500 the skyDarken 11 the sun's own
-        // negative sin the beat's arm rides; the sun sample's phase the
-        // track's midnight the both-lanes window keeps)
+        // stage 3 subtracts — 18_500 the skyDarken 11 the beat's
+        // monster arm the bright-outside word keeps)
         app.day_time_base = 18_500u64;
         // the beats the gate's own texture absorbs (the midnight
         // surface the raw 4 the uniform's upper half admits — the

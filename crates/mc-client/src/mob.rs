@@ -2167,6 +2167,21 @@ pub const FLEE_SUN_XZ_BOUND: u64 = 20;
 pub const FLEE_SUN_Y_BOUND: u64 = 6;
 pub const FLEE_SUN_SPEED_MODIFIER: f64 = 1.0;
 pub const BRIGHT_OUTSIDE_DARKEN_GATE: i32 = 4;
+
+/// `Level.isBrightOutside()`'s own law (javap the 26.2 jar — the
+/// `skyDarken < 4` the iconst_4 fold keeps): the ONE day/night word
+/// the FleeSun/RestrictSun canUse pair and the spawner's beat both
+/// speak. The sun's sin sign the beat's old stand-in wore the
+/// zenith-0 angle's wrong half armed — sin(angle) < 0 spans
+/// midnight->noon (the morning the monster lane rode, the evening
+/// dark the creature lane rode, the vanilla dusk spawns the beat
+/// never offered) — the darken track the honest word wears (the
+/// first dark tick 12_523, the first bright pre-dawn tick 23_478,
+/// the sky_light_level ramps' own f32 edges).
+pub fn is_bright_outside(day_time: i64) -> bool {
+    crate::timeline::sky_darken(day_time) < BRIGHT_OUTSIDE_DARKEN_GATE
+}
+
 /// THE SPIDER'S OWN CLIMB NUMBERS (javap the 26.2 jar — the travel
 /// folds the bytecode keeps): the climb-up delta (the
 /// handleRelativeFrictionAndCalculateMovement's ldc2_w 0.2d the
@@ -4627,7 +4642,7 @@ impl Zombie {
         // byte-level lane documents: the flag the lifecycle pins, the
         // pathing the straight-line walk never asks).
         self.avoid_sun = self.kind == MobKind::Skeleton
-            && crate::timeline::sky_darken(day_time) < BRIGHT_OUTSIDE_DARKEN_GATE
+            && is_bright_outside(day_time)
             && self.armor[3].is_none();
 
         // THE TARGET LANES' OWN WALK (the targetSelector the zombie's
@@ -5373,7 +5388,7 @@ impl Zombie {
                     self.stroll_target = None;
                 }
             } else if self.kind == MobKind::Skeleton
-                && crate::timeline::sky_darken(day_time) < BRIGHT_OUTSIDE_DARKEN_GATE
+                && is_bright_outside(day_time)
                 && self.fire_ticks > 0
                 && self.cell_can_see_sky(
                     world,
@@ -12352,6 +12367,49 @@ mod tests {
         assert_eq!(
             torch_spawned, 0,
             "the torch field the every-attempt refusal wears"
+        );
+    }
+
+    /// THE SPAWN BEAT THE BRIGHT-OUTSIDE WORD WEARS (autopush-425 —
+    /// the beat's day/night arm the mob goals' own fn speaks): the
+    /// darken track's own edges the arm windows keep, the sun's sin
+    /// sign the OLD stand-in wore the contrasts pin (the dusk the
+    /// creature arm rode, the pre-dawn and the morning the monster
+    /// arm rode — the wrong halves the darken law retires).
+    #[test]
+    fn the_spawn_beat_the_bright_outside_word_wears() {
+        // THE WINDOW EDGES (the sky_light_level ramps' own f32 law —
+        // the dusk the darken lands 4 at 12_523, the dawn it lifts at
+        // 23_478: the night the [12_523, 23_477] band the monster arm
+        // wears, the day the wrap's bright half the creature arm
+        // keeps — the ramps the mirrored values wear, the dusk's
+        // 0.73359215 the dawn's own 0.7335922 the boundary answers)
+        assert!(is_bright_outside(12_522), "the last bright dusk tick");
+        assert!(!is_bright_outside(12_523), "the first dark tick");
+        assert!(!is_bright_outside(23_477), "the last dark pre-dawn tick");
+        assert!(is_bright_outside(23_478), "the first bright pre-dawn tick");
+        assert!(is_bright_outside(6_000), "noon the creature arm keeps");
+        assert!(!is_bright_outside(18_000), "midnight the monster arm keeps");
+        // THE OLD WORD'S MIS-VERDICTS (the sin sign the stand-in wore
+        // — the contrasts the fix's own story carries): the dusk
+        // 12_600 the darken law the MONSTER arm keeps while the sun's
+        // sin the CREATURE arm the old gate rode; the pre-dawn 23_500
+        // and the morning 1_000 the bright word the CREATURE arm
+        // keeps while the sin the MONSTER arm the old gate rode
+        assert!(!is_bright_outside(12_600), "the dusk the monster arm wears");
+        assert!(
+            crate::sky::sample(12_600).sun_angle.sin() > 0.0,
+            "the old gate's sin the dusk the creature arm rode"
+        );
+        assert!(is_bright_outside(23_500), "the pre-dawn the creature arm keeps");
+        assert!(
+            crate::sky::sample(23_500).sun_angle.sin() < 0.0,
+            "the old gate's sin the pre-dawn the monster arm rode"
+        );
+        assert!(is_bright_outside(1_000), "the morning the creature arm keeps");
+        assert!(
+            crate::sky::sample(1_000).sun_angle.sin() < 0.0,
+            "the old gate's sin the morning the monster arm rode"
         );
     }
 
