@@ -1250,22 +1250,41 @@ impl PlayerBody {
 
     /// The ground under the moved box probe (the sneak edge-guard's
     /// `noCollision(box.move(dx, -maxUpStep, dz))` question): TRUE when
-    /// NOTHING collides with the box sunk by maxUpStep.
+    /// NOTHING collides with the box sunk by maxUpStep. THE CELL'S OWN
+    /// SLAB THE SHAPE TABLE ANSWERS (autopush-423 — the sunk box the
+    /// full-cell overlap the 1/16 window wore: the band cell's 15/16
+    /// top the sunk bottom rises past the full cube's own verdict
+    /// kept, the vanilla noCollision the collision shapes speak). The
+    /// probe the [`clip_axis`]'s own vocabulary NOW wears — the ONE
+    /// collision vocabulary the sneak guard and the sweep both speak:
+    /// the EMPTY rows the skip keeps, the COLUMN row's Y range the
+    /// band top speaks (`Block.column(16, 0, 15)` the SHAPE constants
+    /// carry), the X/Z footprint the full cell keeps, the strict edges
+    /// the vanilla AABB carries.
     fn no_floor_below(&self, world: &World, dx: f64, dz: f64) -> bool {
         let b = box_at(self.x + dx, self.y, self.z + dz, self.height());
         let sunk = (b.0, b.1 - MAX_UP_STEP, b.2, b.3, b.4 - MAX_UP_STEP, b.5);
-        // any solid cell intersecting the sunk box? (the overlap test —
-        // the strict edges the vanilla AABB carries)
+        // any solid cell's own slab intersecting the sunk box? (the
+        // strict edges the vanilla AABB carries)
         let (x0, y0, z0, x1, y1, z1) = sunk;
         let mut hit = false;
         for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
             for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
-                    if solid(world, cx, cy, cz)
-                        && (cx as f64) < x1
+                    let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                    if matches!(shape, crate::world::CollisionShape::Empty) {
+                        continue;
+                    }
+                    let (y_lo, y_hi) = match shape {
+                        crate::world::CollisionShape::Column(h) => {
+                            (cy as f64, cy as f64 + h as f64 / 16.0)
+                        }
+                        _ => (cy as f64, (cy + 1) as f64),
+                    };
+                    if (cx as f64) < x1
                         && ((cx + 1) as f64) > x0
-                        && (cy as f64) < y1
-                        && ((cy + 1) as f64) > y0
+                        && y_lo < y1
+                        && y_hi > y0
                         && (cz as f64) < z1
                         && ((cz + 1) as f64) > z0
                     {
@@ -2767,6 +2786,133 @@ mod tests {
         // reach past it — the vanilla law — but the FEET stay on the
         // cell: x - 0.3 < 8)
         assert!(b.x - WIDTH / 2.0 < 8.0, "the feet x {} stayed on the ledge", b.x);
+        assert!(b.on_ground, "never fell");
+    }
+
+    /// THE SUNK PROBE THE BAND SLAB THE TABLE WEARS (autopush-423 —
+    /// the 1/16 window the full-cell overlap kept the band's own top
+    /// retires): the sunk box's bottom risen past the COLUMN row's
+    /// 15/16 band the shape-aware probe the honest no-floor verdict
+    /// speaks — the full cube's own [cy, cy+1] the old walk counted
+    /// the vanilla noCollision's collision-shape law never asks. The
+    /// SAME geometry the full-cube cell the floor verdict keeps (the
+    /// refusal the BAND's own, never the geometry's), the band
+    /// STANDING body's own support the probe still counts (the sunk
+    /// bottom well inside the band the floor speaks), the DIRT PATH
+    /// row the same law wears.
+    #[test]
+    fn the_sunk_probe_the_band_slab_the_table_wears() {
+        // the farmland the y=0 layer holds (the stone the farm's own
+        // support wears), the air above
+        let mut w = flat_world();
+        w.set(4, 0, 4, crate::world::FARMLAND);
+        assert!(matches!(
+            crate::world::collision_shape(w.get(4, 0, 4)),
+            crate::world::CollisionShape::Column(15)
+        ));
+        // THE WINDOW: the body's feet in (cy + 1.5375, cy + 1.6) —
+        // the sunk bottom 0.95 past the band's 0.9375 top, under the
+        // full cube's 1.0. The shape-aware probe the NO-floor verdict
+        // speaks (the band top the sunk bottom refuses); the full-cell
+        // walk the old verdict kept would count the cube.
+        let b = PlayerBody::new(4.5, 1.55, 4.5, 0.0, 0.0);
+        assert!(
+            b.no_floor_below(&w, 0.0, 0.0),
+            "the band top the sunk bottom 0.95 refuses — no floor"
+        );
+        // THE FULL CUBE'S OWN VERDICT the same geometry keeps: the
+        // stone the band's place wears, the sunk bottom 0.95 the cube's
+        // [0, 1] the floor speaks — the refusal the BAND's own.
+        let w_full = flat_world();
+        let b_full = PlayerBody::new(4.5, 1.55, 4.5, 0.0, 0.0);
+        assert!(
+            !b_full.no_floor_below(&w_full, 0.0, 0.0),
+            "the full cube the same sunk bottom the floor keeps"
+        );
+        // THE BAND-STANDING BODY'S OWN SUPPORT the probe counts: the
+        // feet on the band top 0.9375, the sunk bottom 0.3375 well
+        // inside the band — the floor the sneak march along the field
+        // keeps.
+        let b_band = PlayerBody::new(4.5, 0.9375, 4.5, 0.0, 0.0);
+        assert!(
+            !b_band.no_floor_below(&w, 0.05, 0.0),
+            "the band the sunk bottom 0.3375 the floor speaks"
+        );
+        // THE DIRT PATH the same law wears.
+        let mut w_path = flat_world();
+        w_path.set(4, 0, 4, crate::world::DIRT_PATH);
+        let b_path = PlayerBody::new(4.5, 1.55, 4.5, 0.0, 0.0);
+        assert!(
+            b_path.no_floor_below(&w_path, 0.0, 0.0),
+            "the path band the same window refuses"
+        );
+    }
+
+    /// THE SNEAK MARCH THE FIELD THE BAND FLOOR KEEPS (autopush-423 —
+    /// the probe's shape vocabulary the march's own lane keeps): the
+    /// band-standing body sneaking ALONG the farmland field the guard
+    /// never bothers — the sunk box's bottom well inside the next
+    /// cell's band the floor verdict speaks, the march crosses the
+    /// cell boundary the full-cell walk always wore (the regression
+    /// guard the unification never breaks).
+    #[test]
+    fn the_sneak_march_the_field_the_band_floor_keeps() {
+        // the field: the farmland the y=1 layer holds (the stone the
+        // support below wears), the band tops at 1.9375
+        let mut w = flat_world();
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 1, z, crate::world::FARMLAND);
+            }
+        }
+        let mut b = PlayerBody::new(2.5, 1.9375, 8.0, 270.0, 0.0); // facing +x
+        settle(&mut b, &w);
+        assert!(b.on_ground, "the band the settle's ground keeps");
+        assert!((b.y - 1.9375).abs() < 1e-9, "the band top the feet wear");
+        b.want_crouch = true;
+        b.forward = 1.0;
+        for _ in 0..12 {
+            b.tick(&w, false);
+        }
+        // the march crossed the cell boundary 3.0 — the band the
+        // sunk box's own floor the guard never zeroed
+        assert!(b.x > 3.0, "the field march crossed: x={}", b.x);
+        assert!((b.y - 1.9375).abs() < 1e-9, "the band the feet never leave");
+        assert!(b.on_ground, "the march the ground keeps");
+    }
+
+    /// THE SNEAK NEVER WALKS OFF THE FIELD EDGE (autopush-423 — the
+    /// guard's shape-aware probe the band edge wears): the body
+    /// sneaking toward the farmland field's edge the guard backs off —
+    /// the stone one below the band-standing body's sunk bottom
+    /// refuses (the 15/16 drop the probe's own verdict speaks), the
+    /// band cells the march's floor the edge never crosses. The feet
+    /// stay on the field, the body never falls, the y the band top
+    /// keeps.
+    #[test]
+    fn the_sneak_never_walks_off_the_field_edge() {
+        // the field ends at x=8: the farmland the y=1 layer where
+        // x < 8, the bare stone the ground beyond (the band top's own
+        // 15/16 drop the edge speaks)
+        let mut w = flat_world();
+        for x in 0..8 {
+            for z in 0..16 {
+                w.set(x, 1, z, crate::world::FARMLAND);
+            }
+        }
+        let mut b = PlayerBody::new(7.0, 1.9375, 8.0, 270.0, 0.0); // facing the edge
+        settle(&mut b, &w);
+        assert!(b.on_ground);
+        b.want_crouch = true;
+        b.forward = 1.0;
+        for _ in 0..60 {
+            b.tick(&w, false);
+        }
+        // the body may hang its box over the edge but never LEAVE the
+        // field (the vanilla law the ledge test speaks — the FEET stay
+        // on the cell: x - 0.3 < 8)
+        assert!(b.x - WIDTH / 2.0 < 8.0, "the feet x {} stayed on the field", b.x);
+        assert!((b.y - 1.9375).abs() < 1e-9, "the band top the feet keep: y={}", b.y);
         assert!(b.on_ground, "never fell");
     }
 
