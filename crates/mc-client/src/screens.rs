@@ -9758,6 +9758,11 @@ impl App {
                             w.set(bx, by, bz, id);
                         }
                     }
+                    // THE BITE'S OWN RE-SPEAK: the eaten cell the mesh
+                    // wears THIS tick — the batched shape the crops arm
+                    // speaks (the batch the single re-speak answers),
+                    // the next-edit staleness the gap closes
+                    self.remesh_offline();
                 }
                 // THE BLAST'S OWN BLOCK CLEARS (javap
                 // `ServerExplosion.finalizeExplosion` the 26.2 jar
@@ -9773,6 +9778,11 @@ impl App {
                             w.set(bx, by, bz, crate::world::AIR);
                         }
                     }
+                    // THE BLAST'S OWN RE-SPEAK: the crater the mesh
+                    // wears THIS tick — the same batched rhythm the
+                    // bite lane wears, the silent clears the fresh
+                    // grid the quads re-bake
+                    self.remesh_offline();
                 }
                 // THE BLAST'S OWN POPS (javap `Block.popResource` the
                 // 26.2 jar speaks — the ItemEntity the collector's own
@@ -53138,6 +53148,106 @@ cow_sound_variant: None,
         assert!(
             entry.contains(&format!(" v{gain:.6} p0.800000")),
             "the fold + the distance law: {entry}"
+        );
+    }
+
+    #[test]
+    fn the_bite_remeshes_the_eaten_cell_this_tick() {
+        // THE BITE'S OWN RE-SPEAK (the eat-swaps lane's own freshness —
+        // the deferred staleness the prior rounds named): the eaten
+        // cell the mesh wears THIS tick — the batched shape the crops
+        // arm speaks (the batch the single re-speak answers), the
+        // next-edit staleness the gap closes. THE VERDICT: the quads
+        // the current voxels' own re-mesh answers verbatim — the grass
+        // the dirt's own tiles wear, the grid the relight refreshed
+        // bakes.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE PAD the bite reads: the below cell the GRASS arm's own
+        // law keeps (the staging's own surface word)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::GRASS);
+        let mut sheep =
+            crate::mob::Zombie::new(9, c as f64 + 0.5, top as f64, c as f64 + 0.5, 3);
+        sheep.kind = crate::mob::MobKind::Sheep;
+        app.mobs.push(sheep);
+        // THE STAGE: the goal's start walk the timer arms (the same
+        // window the graze's 2001 walk wears)
+        app.mobs[0].eat_animation_tick = crate::mob::EAT_ANIMATION_TICKS;
+        for _ in 0..36 {
+            app.update();
+        }
+        // THE SWAP: the grass block the dirt speaks
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top - 1, c),
+            crate::world::DIRT,
+            "the below arm's own swap landed"
+        );
+        // THE FRESH MESH: the quads the current voxels' own re-mesh
+        // answers — the bite the re-speak the swap tick already wore
+        // (the stale lane the next edit never needed)
+        let w = app.offline_world.as_ref().unwrap();
+        let fresh = crate::mesher::mesh_world(w, None);
+        assert_eq!(
+            app.world_quads.as_ref().unwrap(),
+            &fresh,
+            "the bite the mesh the swap tick wears"
+        );
+    }
+
+    #[test]
+    fn the_blast_remeshes_the_crater_this_tick() {
+        // THE BLAST'S OWN RE-SPEAK (the explosion lane's own freshness —
+        // the same deferred staleness the bite lane closes): the crater
+        // the mesh wears THIS tick — the silent clears the fresh grid
+        // the quads re-bake, the next-edit staleness the gap closes.
+        // THE VERDICT: the quads the crater's own re-mesh answers
+        // verbatim the boom tick keeps.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE PAD the blast reads: the stone cells the staged surface
+        // wears — the boom the pad's own cells clear (the spot the
+        // body's spawn lane never walks, the knockback the distance
+        // the six cells refuses)
+        let (px, pz) = (c + 6, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -1..=1 {
+                for dz in -1..=1 {
+                    w.set(px + dx, top - 1, pz + dz, crate::world::STONE);
+                }
+            }
+        }
+        app.remesh_offline(); // the staged pad the baseline mesh wears
+        let mut t =
+            crate::mob::PrimedTnt::new(9, px as f64 + 0.5, top as f64, pz as f64 + 0.5, 7);
+        t.fuse = 1; // the crossing's own test seed — one tick to the boom
+        app.primed_tnts.push(t);
+        app.update();
+        assert!(app.primed_tnts.is_empty(), "the discard the boom speaks");
+        // THE CRATER: the pad's center cell the blast clears (the
+        // radius the surface pad reads)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(px, top - 1, pz),
+            crate::world::AIR,
+            "the blast the pad's center clears"
+        );
+        // THE FRESH MESH: the quads the crater's own re-mesh answers —
+        // the boom the re-speak the blast tick already wore
+        let w = app.offline_world.as_ref().unwrap();
+        let fresh = crate::mesher::mesh_world(w, None);
+        assert_eq!(
+            app.world_quads.as_ref().unwrap(),
+            &fresh,
+            "the crater the mesh the boom tick wears"
         );
     }
 
