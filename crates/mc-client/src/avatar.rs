@@ -3024,10 +3024,13 @@ fn build_spider_parts(state: &SpiderState) -> Vec<Part> {
 /// renderer's own walk the swelling + isPowered pair alone sets) —
 /// the walk pair the WalkAnimationState feeds, the death clock the
 /// entity fold's own input): the creeper carries NO age lane (the
-/// Monster base is no AgeableMob — no baby model the kind keeps) and
-/// NO swelling lane this admission speaks (the swell machine's own
-/// round the scale fold serves — the zero swelling the 1.0 arms
-/// wear).
+/// Monster base is no AgeableMob — no baby model the kind keeps).
+/// THE SWELLING the render state's own field carries (javap
+/// `CreeperRenderer.extractRenderState` the 26.2 jar speaks — the
+/// `getSwelling(partialTick)` the swelling word banks, the
+/// `Mth.lerp(partialTick, oldSwell, swell) / maxSwell` the entity's
+/// own fold answers): the scale fold AND the white overlay the same
+/// word reads — the zero the plain body's 1.0 arms wear.
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct CreeperState {
     pub yaw_deg: f32,
@@ -3036,6 +3039,65 @@ pub struct CreeperState {
     pub walk_pos: f32,
     pub walk_speed: f32,
     pub death_time: f32,
+    pub swelling: f32,
+}
+
+/// THE SWELLING'S OWN SCALE FOLD (javap `CreeperRenderer.scale` the
+/// 26.2 jar speaks — the raw bytecode the four float constants pin:
+/// the `g = 1.0F + Mth.sin(f * 100.0F) * f * 0.01F` the wobble factor
+/// keeps (the f2d the Mth.sin's double arg wears), the clamp 0..1 the
+/// f2i-less arm answers, the TWO `f *= f` squarings the f⁴ law
+/// speaks — the 26.2 the older f² walks replaced, the
+/// 0.009999999776482582 / 0.4000000059604645 / 0.10000000149011612
+/// the ldc keeps — the `pose.scale((1.0 + f * 0.4F) * g, (1.0 + f *
+/// 0.1F) / g, (1.0 + f * 0.4F) * g)` the X/Y/Z triple answers).
+/// Returns the (x/z, y) pair the quad transform wears.
+pub fn creeper_swelling_scale(swelling: f32) -> (f32, f32) {
+    let f = swelling;
+    let g = 1.0 + ((f * 100.0) as f64).sin() as f32 * f * 0.009_999_999_776_482_582;
+    let f = f.clamp(0.0, 1.0);
+    let f = f * f;
+    let f = f * f;
+    let x = (1.0 + f * 0.400_000_005_960_464_5) * g;
+    let y = (1.0 + f * 0.100_000_001_490_116_12) / g;
+    (x, y)
+}
+
+/// THE WHITE OVERLAY'S OWN FLASH (javap
+/// `CreeperRenderer.getWhiteOverlayProgress` the 26.2 jar speaks —
+/// the `(int)(f * 10.0F) % 2 == 0 ? 0.0F : Mth.clamp(f, 0.5F, 1.0F)`
+/// the raw bytecode keeps: the even decade the silence wears, the odd
+/// the clamp's own band answers — the fuse's end the flash's own
+/// cadence quickens, the full-white the last decades wear). The
+/// progress > 0.0 the model's white render speaks (the overlay
+/// texture's own white row the whole model covers).
+pub fn creeper_white_overlay(swelling: f32) -> f32 {
+    let f = swelling;
+    if (f * 10.0) as i32 % 2 == 0 {
+        0.0
+    } else {
+        f.clamp(0.5, 1.0)
+    }
+}
+
+/// THE SWELLING'S OWN QUAD FOLD (the pose.scale walk's own chain the
+/// render pipeline wears — the translate-to-entity the pose's own
+/// origin keeps, the scale the model's local frame rides: the points
+/// the feet anchor scales — the x/z the X factor wears, the y the Y
+/// factor rides).
+pub fn apply_creeper_swelling(
+    quads: &mut [AvatarQuad],
+    feet: Vec3,
+    swelling: f32,
+) {
+    let (sx, sy) = creeper_swelling_scale(swelling);
+    for q in quads {
+        for pt in &mut q.pts {
+            pt[0] = feet.x + (pt[0] - feet.x) * sx;
+            pt[1] = feet.y + (pt[1] - feet.y) * sy;
+            pt[2] = feet.z + (pt[2] - feet.z) * sx;
+        }
+    }
 }
 
 /// The full creeper model — the 26.2 `CreeperModel.createBodyLayer`
@@ -7165,6 +7227,7 @@ mod tests {
             walk_pos: 0.0,
             walk_speed: 0.0,
             death_time: 0.0,
+            swelling: 0.0,
         };
         let quads = creeper.quads(&rest, feet, 0.0, 0.0);
         assert_eq!(quads.len(), 36, "6 parts x 6 faces the bake speaks");
@@ -7228,6 +7291,71 @@ mod tests {
         let dying = CreeperState { death_time: 5.0, ..rest };
         let die_quads = creeper.quads(&dying, feet, 0.0, 0.0);
         assert_ne!(pose_sum(&quads), pose_sum(&die_quads), "the death fold the body topples");
+    }
+
+    /// THE CREEPER'S OWN SWELL FOLD (javap `CreeperRenderer.scale` +
+    /// `getWhiteOverlayProgress` the 26.2 jar speaks — the f⁴ law the
+    /// raw bytecode's TWO squarings keeps, the g wobble the sin * 100
+    /// fold answers, the flash the odd decade's clamp speaks, the quad
+    /// transform the feet anchor the X/Y pair scales).
+    #[test]
+    fn the_creeper_renderer_wears_the_swell_fold() {
+        // THE SCALE (the zero the plain body's 1.0 keeps, the f⁴ the
+        // 26.2's two squarings speak — sw 0.5: f = 0.5⁴ = 0.0625, the
+        // x the (1.025) * g wears, the y the (1.00625) / g rides; the
+        // f² law the OLDER walks kept would read 0.25 — the g the
+        // same word keeps)
+        let (x0, y0) = creeper_swelling_scale(0.0);
+        assert_eq!(x0, 1.0, "the plain body the 1.0 keeps");
+        assert_eq!(y0, 1.0, "the plain body the 1.0 keeps");
+        let sw = 0.5f32;
+        let g = 1.0 + ((sw * 100.0) as f64).sin() as f32 * sw * 0.009_999_999_776_482_582;
+        let f4 = 0.5f32 * 0.5 * 0.5 * 0.5;
+        let (x1, y1) = creeper_swelling_scale(sw);
+        assert_eq!(x1, (1.0 + f4 * 0.400_000_005_960_464_5) * g, "the f⁴ x the raw consts keep");
+        assert_eq!(y1, (1.0 + f4 * 0.100_000_001_490_116_12) / g, "the f⁴ y the raw consts keep");
+        // the f⁴ DISTINCTION (the f² law the older versions wore would
+        // read 0.25 — the x the 0.1 apart the two laws speak)
+        let f2 = 0.25f32;
+        let x_old = (1.0 + f2 * 0.400_000_005_960_464_5) * g;
+        assert!((x1 - x_old).abs() > 0.05, "the f⁴ the older f² retires: {x1} vs {x_old}");
+        // THE FULL FUSE (sw 1.0: f = 1.0, the x the (1.0 + 0.4f32) * g
+        // the swell's own peak wears, the y the (1.0 + 0.1f32) / g the
+        // tall body's own word keeps — the g the sw's own sin rides,
+        // the f32 sums the literal 1.4 never equals, the same ops the
+        // java fold speaks)
+        let g1 = 1.0 + ((1.0f32 * 100.0) as f64).sin() as f32 * 1.0 * 0.009_999_999_776_482_582;
+        let (x2, y2) = creeper_swelling_scale(1.0);
+        assert_eq!(x2, (1.0 + 1.0f32 * 0.400_000_005_960_464_5) * g1, "the peak the swell wears");
+        assert_eq!(y2, (1.0 + 1.0f32 * 0.100_000_001_490_116_12) / g1, "the peak the swell wears");
+        // THE FLASH (the (int)(f * 10) % 2 law the raw bytecode keeps —
+        // the even decade the silence wears, the odd the clamp's own
+        // band answers, the peak's odd decade the full progress keeps)
+        assert_eq!(creeper_white_overlay(0.0), 0.0, "the rest the silence keeps");
+        assert_eq!(creeper_white_overlay(0.05), 0.0, "the 0-decade the silence keeps");
+        assert_eq!(creeper_white_overlay(0.1), 0.5, "the 1st decade the 0.5 floor wears");
+        assert_eq!(creeper_white_overlay(0.95), 0.95, "the 9th decade the full keeps");
+        // THE QUAD TRANSFORM (the feet anchor the X/Y pair scales —
+        // the crown the Y factor lifts, the ground's plane the anchor
+        // keeps)
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let mut quads = vec![AvatarQuad {
+            pts: [
+                [feet.x as f32, feet.y as f32, feet.z as f32],
+                [feet.x as f32 + 1.0, feet.y as f32, feet.z as f32],
+                [feet.x as f32, feet.y as f32 + 2.0, feet.z as f32],
+                [feet.x as f32 + 1.0, feet.y as f32 + 2.0, feet.z as f32],
+            ],
+            uv: [[0.0; 2]; 4],
+            shade: 1.0,
+        }];
+        let (sx, sy) = creeper_swelling_scale(1.0);
+        apply_creeper_swelling(&mut quads, feet, 1.0);
+        let q = &quads[0];
+        assert!((q.pts[0][0] - feet.x as f32).abs() < 1e-5, "the anchor keeps");
+        assert!((q.pts[1][0] - (feet.x as f32 + sx)).abs() < 1e-5, "the +1 x the sx scales");
+        assert!((q.pts[2][1] - (feet.y as f32 + 2.0 * sy)).abs() < 1e-5, "the +2 y the sy scales");
+        assert!((q.pts[3][2] - feet.z as f32).abs() < 1e-5, "the flat z the anchor keeps");
     }
 
     /// THE CREEPER LOADS — the real runtime cache (the generator's

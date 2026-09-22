@@ -8747,6 +8747,23 @@ impl App {
                 // keeps: the grass block the dirt speaks, the wool
                 // regrow the ate() walk already answered in-mob)
                 let mut eat_swaps: Vec<(i32, i32, i32, u16)> = Vec::new();
+                // THE SWELL MACHINE'S OWN EVENTS (the creeper's tick the
+                // out-edges queue — the primed hiss the beat speaks, the
+                // discard the blast's own removal keeps, the boom's spot
+                // the ray scan's voice ride, the cleared cells the
+                // silent law wears, the player's own dose the hurt lane
+                // answers, the (source id, boom) pair the siblings'
+                // doses the post-loop walk serves)
+                let mut primed_hisses: Vec<(f64, f64, f64)> = Vec::new();
+                let mut discarded_ids: Vec<i32> = Vec::new();
+                let mut booms: Vec<(f64, f64, f64, f32)> = Vec::new();
+                let mut explosion_cells: Vec<(i32, i32, i32)> = Vec::new();
+                let mut blast_player: Option<crate::mob::ExplosionBlast> = None;
+                let mut blast_sources: Vec<(
+                    i32,
+                    crate::mob::PreyView,
+                    (f64, f64, f64, f32),
+                )> = Vec::new();
                 // THE LISTENER'S OWN EAR (the SoundEngine's camera —
                 // the body's standing/crouching eye the render's own
                 // walk speaks): the mob voices' distance fold the wire
@@ -8923,6 +8940,28 @@ impl App {
                             if let Some(swap) = ev.eat_block {
                                 eat_swaps.push(swap);
                             }
+                            // THE SWELL MACHINE'S OWN QUEUE (the creeper's
+                            // out-edges the caller's lanes answer — the
+                            // primed hiss the voice lane speaks, the
+                            // discard the source's own snapshot the
+                            // sibling doses' attacker word names, the
+                            // boom + the cells the post-loop walk
+                            // applies, the player's dose the hurt lane
+                            // answers)
+                            if ev.primed {
+                                primed_hisses.push((mob.x, mob.y, mob.z));
+                            }
+                            if ev.discarded {
+                                discarded_ids.push(mob.id);
+                            }
+                            if let Some((bx, by, bz, r)) = ev.explosion_at {
+                                blast_sources.push((mob.id, crate::mob::mob_prey_view(mob), (bx, by, bz, r)));
+                                booms.push((bx, by, bz, r));
+                            }
+                            explosion_cells.extend(ev.explosion_blocks.iter().copied());
+                            if ev.blast_player.is_some() {
+                                blast_player = ev.blast_player;
+                            }
                             if ev.ambient {
                                 // THE PLAY'S OWN NULL GATE (javap
                                 // `Mob.playAmbientSound` — the
@@ -9091,6 +9130,73 @@ impl App {
                             arrow_trails.append(&mut aev.trail);
                         }
                         self.arrows.retain(|a| !a.dead);
+                        // THE BLAST'S OWN SIBLING DOSES (the hurtEntities
+                        // walk the mobs the query box answers — the
+                        // world's immutable borrow the same block keeps,
+                        // the doses the caller's own pass serves: the
+                        // hurt_by_mob the mob-source word arms (the
+                        // exploding creeper the snapshot the lastHurtByMob
+                        // write names), the push the velocity add speaks
+                        // DIRECTLY — the melee knockback's halve law the
+                        // blast never wears; the kill the death lane's
+                        // own walk speaks — the voice + the loot the
+                        // player-kill gate CLOSED rolls)
+                        for (_src_id, source_view, (bx, by, bz, r)) in blast_sources.iter() {
+                            let doses = crate::mob::explosion_blast_mobs(
+                                world,
+                                (*bx, *by, *bz),
+                                *r,
+                                &self.mobs,
+                            );
+                            for (victim_id, blast) in doses {
+                                // THE SOURCE'S OWN EXCLUSION (the
+                                // getEntities(source, box) the exploding
+                                // body the query's own arg skips — the
+                                // discard the same-tick removal the
+                                // doses' own lane never serves)
+                                if victim_id == *_src_id {
+                                    continue;
+                                }
+                                let Some(mob) =
+                                    self.mobs.iter_mut().find(|m| m.id == victim_id)
+                                else {
+                                    continue;
+                                };
+                                if mob.death_time > 0 || mob.health <= 0.0 {
+                                    continue;
+                                }
+                                mob.vx += blast.push_x;
+                                mob.vy += blast.push_y;
+                                mob.vz += blast.push_z;
+                                mob.hurt_by_mob(blast.dose, *source_view);
+                                // THE KIND'S OWN ROW (the hurt/death sound
+                                // the hurt pipeline's makeSound speaks —
+                                // captured while the borrow lives, the
+                                // voices the tail's vecs wear)
+                                let word = if mob.health <= 0.0 {
+                                    mob.voice_event(crate::mob::VoiceSlot::Death)
+                                } else {
+                                    mob.voice_event(crate::mob::VoiceSlot::Hurt)
+                                };
+                                let pitch = mob.voice_pitch();
+                                let (mx, my, mz) = (mob.x, mob.y, mob.z);
+                                let loot = if mob.health <= 0.0 {
+                                    mob.death_loot(false)
+                                } else {
+                                    Vec::new()
+                                };
+                                if mob.health <= 0.0 {
+                                    mob_kills.push((word, mx, my, mz, pitch, loot));
+                                } else {
+                                    mob_hurts.push((
+                                        word,
+                                        pitch,
+                                        ear_distance(ear, mx, my, mz),
+                                        ear_pan(ear, yaw, mx, my, mz),
+                                    ));
+                                }
+                            }
+                        }
                     }
                 }
                 // THE SHOT'S OWN SPAWNS (the events the mob ticks
@@ -9189,6 +9295,66 @@ impl App {
                             }
                         }
                     }
+                }
+                // THE BLAST'S OWN PLAYER DOSE (the hurtEntities walk the
+                // seen percent's share answers — the dose the hurt lane
+                // serves, the push the velocity add speaks DIRECTLY:
+                // `entity.push(dir.scale(strength))` the deltaMovement
+                // add the vanilla law keeps, the melee knockback's
+                // halve law the blast never wears)
+                if let Some(blast) = blast_player {
+                    if self.hurt(blast.dose as f32) {
+                        if let Some(b) = &mut self.body {
+                            b.vx += blast.push_x;
+                            b.vy += blast.push_y;
+                            b.vz += blast.push_z;
+                        }
+                    }
+                }
+                // THE BOOM'S OWN VOICE (javap `ClientPacketListener.
+                // handleExplosion` the 26.2 jar speaks — the
+                // playLocalSound walk the explosionSound row plays: the
+                // entity.generic.explode event the BLOCKS source wears,
+                // the 4.0F volume the ldc keeps, the
+                // `(1.0F + (nextFloat() - nextFloat()) * 0.2F) * 0.7F`
+                // pitch the client's own TWO draws speak — the
+                // mob_rng's stream the shared random the stand-in
+                // spends)
+                for (bx, by, bz, _r) in booms {
+                    let r1 = self.mob_rng.next_f32();
+                    let r2 = self.mob_rng.next_f32();
+                    let pitch = (1.0 + (r1 - r2) * 0.2) * 0.7;
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "entity.generic.explode",
+                        4.0,
+                        pitch,
+                        ear_distance(ear, bx, by, bz),
+                        ear_pan(ear, yaw, bx, by, bz),
+                    );
+                }
+                // THE PRIMED HISS'S OWN VOICE (javap `Creeper.tick` the
+                // playSound(SoundEvents.CREEPER_PRIMED, 1.0F, 0.5F) the
+                // fconst_1/ldc pair keeps — the entity's own voice the
+                // positioned lane speaks, the fuse's own opening word
+                // the rest crossing replays)
+                for (hx, hy, hz) in primed_hisses {
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "entity.creeper.primed",
+                        1.0,
+                        0.5,
+                        ear_distance(ear, hx, hy, hz),
+                        ear_pan(ear, yaw, hx, hy, hz),
+                    );
+                }
+                // THE CREEPER'S OWN DISCARD (javap `explodeCreeper` the
+                // discard() tail keeps — the body the removal speaks,
+                // the death_time topple the lane never wears, the loot
+                // roll the die() call the discard skips)
+                if !discarded_ids.is_empty() {
+                    self.mobs
+                        .retain(|m| !discarded_ids.contains(&m.id));
                 }
                 // THE WOLF'S OWN BITES (the doHurtTarget the caller's
                 // own pass serves — the prey the id names the hurt
@@ -9427,6 +9593,21 @@ impl App {
                                 self.particles.extend(burst);
                             }
                             w.set(bx, by, bz, id);
+                        }
+                    }
+                }
+                // THE BLAST'S OWN BLOCK CLEARS (javap
+                // `ServerExplosion.finalizeExplosion` the 26.2 jar
+                // speaks — the toBlow set the destroyBlock walk clears,
+                // the destruction the SILENT law wears: NO per-block
+                // dig voice, NO debris burst — the vanilla explosion
+                // the block the sound-less law removes, the drops the
+                // later round's own lane serves). The mutable borrow
+                // the same walk's own scope keeps.
+                if !explosion_cells.is_empty() {
+                    if let Some(w) = self.offline_world.as_mut() {
+                        for (bx, by, bz) in explosion_cells.iter().copied() {
+                            w.set(bx, by, bz, crate::world::AIR);
                         }
                     }
                 }
@@ -23659,12 +23840,15 @@ impl App {
                     // — the head rides the netHeadYaw/pitch words the
                     // quadruped's own state wears, the four legs the
                     // walk clock's diagonal phases swing; no age lane
-                    // the Monster chain never carries, the swelling the
-                    // zero-fold the plain body wears — the swell
-                    // machine's own round the scale serves)
+                    // the Monster chain never carries). THE SWELLING
+                    // the extractRenderState's own word carries — the
+                    // `getSwelling(partialTick)` the lerp/maxSwell fold
+                    // the mob's clocks speak: the scale fold AND the
+                    // white overlay the same word reads.
                     let Some(creeper) = creeper_model else {
                         continue; // the creeper skin failed its sha1 — this body stays unseen
                     };
+                    let swelling = mob.swelling_at(self.partial_tick);
                     let state = crate::avatar::CreeperState {
                         yaw_deg: mob.yaw,
                         pitch_deg: head_pitch,
@@ -23672,9 +23856,27 @@ impl App {
                         walk_pos: mob.walk.position_at(self.partial_tick),
                         walk_speed: mob.walk.speed_at(self.partial_tick),
                         death_time: mob.death_time_at(self.partial_tick),
+                        swelling,
                     };
-                    let quads = creeper.quads(&state, feet, cam.yaw, cam.pitch);
-                    (quads, Box::new(move |u, v| creeper.pixel(u, v)))
+                    let mut quads = creeper.quads(&state, feet, cam.yaw, cam.pitch);
+                    // THE SWELL'S OWN SCALE (the pose.scale walk the
+                    // vanilla's own chain wears — the points the feet
+                    // anchor scales, the f⁴ law the 26.2 bytecode
+                    // speaks)
+                    crate::avatar::apply_creeper_swelling(&mut quads, feet, swelling);
+                    // THE WHITE OVERLAY (the flash the
+                    // getWhiteOverlayProgress law arms — the odd decade
+                    // the whole model's white render speaks, the
+                    // overlay texture's own white row the skin the
+                    // closure replaces)
+                    let flash = crate::avatar::creeper_white_overlay(swelling) > 0.0;
+                    (quads, Box::new(move |u, v| {
+                        if flash {
+                            [255, 255, 255, 255]
+                        } else {
+                            creeper.pixel(u, v)
+                        }
+                    }))
                 }
                 crate::mob::MobKind::Wolf => {
                     // THE CANINE'S OWN PAIR (the WolfRenderer ctor's

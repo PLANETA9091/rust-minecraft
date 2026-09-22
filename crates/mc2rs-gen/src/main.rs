@@ -842,7 +842,15 @@ fn fetch_title_panorama(
 /// 32-file weighted soundtrack pool). Biome-referenced music events
 /// (`music.overworld.*`, `music.nether.*`, …) come in through the parsed
 /// biome-music table, not this constant.
-const EXTRA_SOUND_EVENTS: [&str; 2] = ["ui.button.click", "music.game"];
+const EXTRA_SOUND_EVENTS: [&str; 3] = [
+    "ui.button.click",
+    "music.game",
+    // the explosion's own BOOM (the ClientPacketListener.
+    // handleExplosion walk the entity.generic.explode event plays —
+    // the 4.0F volume, the (1.0F + (r - r) * 0.2F) * 0.7F pitch the
+    // two draws speak; the four random/explode clips the row banks)
+    "entity.generic.explode",
+];
 
 /// The mob voice lane's own events live beside the sound-parse law
 /// (`soundgen::MOB_VOICE_EVENTS` — the nine drawn kinds' voice rows the

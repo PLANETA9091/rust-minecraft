@@ -1876,6 +1876,28 @@ pub const CREEPER_STROLL_SPEED_MODIFIER: f64 = 0.8;
 /// chain the MOVEMENT_SPEED add ALONE makes, the RangedAttribute's
 /// registered default the Monster base's own word speaks.
 pub const CREEPER_MAX_HEALTH: f32 = 20.0;
+/// THE SWELL MACHINE'S OWN FUSE (javap `Creeper.<init>` the 26.2 jar
+/// speaks — the `putfield maxSwell = 30` the bipush 30 keeps; the
+/// `swell >= maxSwell` crossing the tick's own explode arm answers).
+pub const CREEPER_MAX_SWELL: i32 = 30;
+/// THE SWELLGOAL'S OWN START RING (javap `SwellGoal.canUse` the 26.2
+/// jar speaks — the `distanceToSqr(target) < 9.0` the ldc2_w 9.0 the
+/// dcmpg keeps: the 3-block flat ring the canUse's own arming wears,
+/// the swellDir > 0 disjunct the already-swelling continue serves).
+pub const CREEPER_SWELL_START_RING_SQR: f64 = 9.0;
+/// THE SWELLGOAL'S OWN CANCEL RING (javap `SwellGoal.tick` the 26.2
+/// jar speaks — the `distanceToSqr(target) > 49.0` the ldc2_w 49.0
+/// the dcmpl keeps: the 7-block flat ring the setSwellDir(-1) cancel
+/// answers — the fuse the 3..7 band never cancels, the LOS loss and
+/// the target's death the other two arms speak).
+pub const CREEPER_SWELL_CANCEL_RING_SQR: f64 = 49.0;
+/// THE CREEPER'S OWN BLAST RADIUS (javap `Creeper.<init>` the 26.2
+/// jar speaks — the `putfield explosionRadius = 3` the iconst_3
+/// keeps; the explodeCreeper walk the `(float)explosionRadius * f`
+/// the ServerLevel.explode arg speaks, the powered 2.0 multiplier the
+/// isPowered arm answers — the client's own worlds the lightning the
+/// honest skip never carries, the plain 1.0 the live law keeps).
+pub const CREEPER_EXPLOSION_RADIUS: f32 = 3.0;
 /// THE WOLF REGISTRATION'S OWN WORDS (javap `EntityTypes` clinit the
 /// 26.2 jar speaks — the EntityTypeIds.WOLF block: the
 /// `sized(0.6000000238418579F, 0.8500000238418579F)` the two ldc
@@ -2218,7 +2240,7 @@ pub const SPAWN_MAX_DIST: f64 = 48.0;
 /// What the zombie's tick wants the world to do — the Mob.aiStep's
 /// out-edges (the attack the player's hurt pipeline answers, the
 /// ambient voice the Mob.baseTick's own gate speaks).
-#[derive(Debug, Clone, Copy, PartialEq, Default)]
+#[derive(Debug, Clone, PartialEq, Default)]
 pub struct MobEvents {
     pub attack: Option<MobAttack>,
     /// THE WOLF'S OWN BITE (the MeleeAttackGoal's doHurtTarget the
@@ -2294,6 +2316,71 @@ pub struct MobEvents {
     /// speaks. The baby the gate refuses, the jockey the jockey-less
     /// lane never carries, the other kinds the fold never reads.
     pub egg_laid: Option<f32>,
+    /// THE PRIMED HISS'S OWN BEAT (javap `Creeper.tick` the 26.2 jar
+    /// speaks — the `i > 0 && this.swell == 0` crossing the
+    /// `playSound(SoundEvents.CREEPER_PRIMED, 1.0F, 0.5F)` the
+    /// fconst_1/ldc 0.5 pair arms: the fuse's own opening voice the
+    /// swell's rest crossing replays — the drain-to-zero the next
+    /// approach re-answers). The caller speaks the
+    /// entity.creeper.primed row the sounds.json banks.
+    pub primed: bool,
+    /// THE CREEPER'S OWN DISCARD (javap `explodeCreeper` the 26.2 jar
+    /// speaks — the `discard()` the RemovalReason.KILLED tail keeps:
+    /// the body the blast REMOVES, the death_time topple the lane
+    /// never wears, the loot roll the die() call the discard skips —
+    /// the exploded creeper the gunpowder the player-kill death the
+    /// alone rolls). The caller removes the mob same-tick.
+    pub discarded: bool,
+    /// THE BLAST'S OWN BLOCK SCAN (javap `ServerExplosion.
+    /// calculateExplodedPositions` the 26.2 jar speaks — the 16³ ray
+    /// walk the destroyed cells the toBlow set banks, the caller's
+    /// w.set(AIR) the silent destruction wears: NO per-block dig
+    /// voice, NO debris burst — the vanilla explosion the blocks the
+    /// sound-less law clears). The dedup the sorted set the ray
+    /// overlaps' law keeps.
+    pub explosion_blocks: Vec<(i32, i32, i32)>,
+    /// THE BOOM'S OWN SPOT (javap `Level.explode` the 26.2 jar speaks
+    /// — the explosion center the entity's own feet the
+    /// getX/getY/getZ triple names, the radius the
+    /// `(float)explosionRadius * f` the powered arm answers): the
+    /// caller plays the entity.generic.explode voice the
+    /// handleExplosion walk wears — the 4.0F volume, the
+    /// `(1.0F + (nextFloat() - nextFloat()) * 0.2F) * 0.7F` pitch the
+    /// client's own two draws speak.
+    pub explosion_at: Option<(f64, f64, f64, f32)>,
+    /// THE PLAYER'S OWN BLAST DOSE + PUSH (javap `ServerExplosion.
+    /// hurtEntities` the 26.2 jar speaks — the dose the
+    /// getEntityDamageAmount formula keeps, the push the
+    /// `getEyePosition().subtract(center).normalize().scale(d20)` the
+    /// entity.push walk deals): the caller's hurt lane the dose
+    /// serves, the body's delta the push adds DIRECTLY (the melee
+    /// knockback's halve law the blast never wears — the push the
+    /// vanilla's own add keeps).
+    pub blast_player: Option<ExplosionBlast>,
+    /// THE SIBLINGS' OWN BLAST DOSES (the same hurtEntities walk the
+    /// mobs the query box answers — the (victim id, dose, push) tuple
+    /// the caller's mob pass serves, the exploding creeper the
+    /// mob-source word the lastHurtByMob write names). The dose-only
+    /// law the hurt_by_mob walk keeps — the push the caller's own
+    /// velocity add deals.
+    pub blast_mobs: Vec<(i32, ExplosionBlast)>,
+}
+
+/// THE BLAST'S OWN PER-ENTITY WORD (javap `ServerExplosion.hurtEntities`
+/// + `ExplosionDamageCalculator.getEntityDamageAmount` the 26.2 jar
+/// speaks): the dose the `(f*f + f) / 2.0 * 7.0 * 2R + 1.0` formula
+/// keeps (f = `(1.0 - d / 2R) * seenPercent`, the d the
+/// distanceToSqr's sqrt the 2R radius*2 divisor names, the seen the
+/// getSeenPercent walk's clip-visible share speaks, the d2f tail the
+/// NO int truncation the 26.2 law wears), the push the
+/// `(1.0 - d / 2R) * seenPercent` the knockbackMultiplier 1.0 the
+/// default calculator answers.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ExplosionBlast {
+    pub dose: f64,
+    pub push_x: f64,
+    pub push_y: f64,
+    pub push_z: f64,
 }
 
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
@@ -3362,6 +3449,18 @@ pub struct Zombie {
     pub strafe_backwards: bool,
     /// the stroll's target (the navigation's own destination stand-in)
     stroll_target: Option<(f64, f64)>,
+    /// THE SWELL MACHINE'S OWN CLOCKS (javap `Creeper` the 26.2 jar
+    /// speaks — the `swell`/`oldSwell` int pair the tick's own walk
+    /// banks, the `swellDir` the DATA_SWELL_DIR synched word the
+    /// default -1 wears: the goal-less body the dir DRAINS, the
+    /// target ring the 1 the SwellGoal's tick speaks). The
+    /// swell_goal_running word the GoalSelector's own run law keeps —
+    /// the canUse verdict this tick wore, the MOVE flag the melee's
+    /// chase stills while it answers.
+    swell: i32,
+    old_swell: i32,
+    swell_dir: i32,
+    swell_goal_running: bool,
     /// THE FLEESUNGOAL'S OWN ARM (the goal's wantedX/Y/Z the
     /// setWantedPos walk banks — the hide cell's bottom center the
     /// straight-line stand-in steers to, the arrival the
@@ -3656,6 +3755,10 @@ impl Zombie {
             strafe_clockwise: false,
             strafe_backwards: false,
             stroll_target: None,
+            swell: 0,
+            old_swell: 0,
+            swell_dir: -1,
+            swell_goal_running: false,
             flee_sun_target: None,
             avoid_sun: false,
             climbing: false,
@@ -4074,6 +4177,35 @@ impl Zombie {
         // a new target)
         self.prev_head_yaw_off = self.head_yaw_off;
         self.prev_head_pitch = self.head_pitch;
+        // THE SWELL MACHINE'S OWN ARITHMETIC (javap `Creeper.tick` the
+        // 26.2 jar speaks — the fold the isAlive gate wraps FIRST, the
+        // super.tick() the goals' own walk serves AFTER: the one-tick
+        // lag the SwellGoal's dir the next arithmetic wears): the
+        // `oldSwell = swell` pair the head banks, the `i > 0 && swell
+        // == 0` crossing the PRIMED hiss arms (the playSound 1.0F/0.5F
+        // pair the caller's voice speaks), the `swell += i` the iadd
+        // keeps, the negative the zero clamp stills, the `swell >=
+        // maxSwell` crossing the explode arm serves — the `swell =
+        // maxSwell` pin the explodeCreeper's own tail wears.
+        if self.kind == MobKind::Creeper
+            && self.death_time == 0
+            && self.health > 0.0
+        {
+            self.old_swell = self.swell;
+            let i = self.swell_dir;
+            if i > 0 && self.swell == 0 {
+                events.primed = true;
+            }
+            self.swell = self.swell.saturating_add(i);
+            if self.swell < 0 {
+                self.swell = 0;
+            }
+            if self.swell >= CREEPER_MAX_SWELL {
+                self.swell = CREEPER_MAX_SWELL;
+                self.explode_creeper(world, player, &mut events);
+                events.discarded = true;
+            }
+        }
         // THE LAST-HURT-BY MEMORY'S OWN CLEAR (javap `LivingEntity.tick`
         // the walk bytecode 560-600 speaks — the dead attacker the null
         // write keeps, the `tickCount - lastHurtByMobTimestamp > 100`
@@ -4558,6 +4690,81 @@ impl Zombie {
             None
         };
 
+        // THE SWELLGOAL'S OWN LANE (javap `SwellGoal` the 26.2 jar
+        // speaks — the prio-2 goal the EnumSet.of(Flag.MOVE) the ctor
+        // banks: the canUse's own disjunct pair (`swellDir > 0 || the
+        // target ring 9.0`), the tick's own four arms the
+        // requiresUpdateEveryTick walk re-resolves (the target null or
+        // dead the -1 keeps, the 49.0 flat ring the cancel speaks, the
+        // line-of-sight loss the -1 answers, else the 1 the fuse
+        // wears), the start()'s navigation.stop() the armed walk's
+        // first tick keeps). THE RUN the GoalSelector's own law
+        // answers: the canUse verdict the MOVE flag the melee's chase
+        // AND the stroll stills while it answers — the head the LOOK
+        // lane's own word keeps (the look-at-target the ring's own
+        // eye the same walk rides). The goal the creeper kind alone
+        // fills — the registerGoals' `addGoal(2, new SwellGoal(this))`
+        // the dump speaks.
+        if self.kind == MobKind::Creeper {
+            // THE CANUSE'S OWN DISJUNCT (the target the mob's own
+            // getTarget answers — the sim's monster scan the player
+            // view arms; the target-less tick the dir > 0 disjunct the
+            // fuse's own continue serves, the goal's next-tick null
+            // arm the drain re-answers)
+            let target_view = target.as_ref().map(|(p, _)| *p);
+            let d3 = target_view.map(|p| {
+                let dx = p.x - self.x;
+                let dy = p.y - self.y;
+                let dz = p.z - self.z;
+                dx * dx + dy * dy + dz * dz
+            });
+            let runs = self.swell_dir > 0
+                || d3.map_or(false, |d| d < CREEPER_SWELL_START_RING_SQR);
+            let was_running = self.swell_goal_running;
+            self.swell_goal_running = runs;
+            if runs {
+                // THE START'S OWN NAVIGATION STOP (the armed goal's
+                // first tick the walk's silence wears — the mid-stroll
+                // target the null write drops)
+                if !was_running {
+                    self.stroll_target = None;
+                }
+                // THE TICK'S OWN FOUR ARMS (the canUse TRUE the run
+                // keeps — the null/dead target the -1 first arm, the
+                // 49.0 ring the cancel, the LOS the gate, the else the
+                // 1 the fuse wears)
+                self.swell_dir = match target_view {
+                    None => -1,
+                    Some(p) if p.dead => -1,
+                    Some(_p) if d3.unwrap_or(f64::MAX) > CREEPER_SWELL_CANCEL_RING_SQR => -1,
+                    Some(p) => {
+                        // THE SENSING'S OWN LINE (the eye-to-eye ray the
+                        // hasLineOfSight walk clips — the same walk the
+                        // melee branch's scan wears)
+                        let los = crate::body::clip_ray(
+                            world,
+                            crate::math::Vec3::new(
+                                self.x as f32,
+                                (self.y + self.kind.eye_height()) as f32,
+                                self.z as f32,
+                            ),
+                            crate::math::Vec3::new(p.x as f32, p.eye_y as f32, p.z as f32),
+                        )
+                        .is_none();
+                        if los {
+                            1
+                        } else {
+                            -1
+                        }
+                    }
+                };
+                // THE LOOK LANE (the MOVE flag the goal never blocks —
+                // the head the target's own eye the look walks)
+                if let Some(p) = target_view.filter(|p| !p.dead) {
+                    self.look_at(p.x, p.eye_y, p.z);
+                }
+            }
+        }
         if let Some((p, victim)) = target {
             let p = &p;
             // THE SPIDER'S OWN LEAP (javap `LeapAtTargetGoal` the 26.2
@@ -4763,6 +4970,15 @@ impl Zombie {
                 // JUMP+MOVE pair never conflicts)
                 self.aggressive = false;
                 self.look_at(p.x, p.eye_y, p.z);
+            } else if self.swell_goal_running && self.kind == MobKind::Creeper {
+                // THE SWELL RUN'S OWN STILL (the prio-2 goal the MOVE
+                // flag the prio-4 melee's start the GoalSelector's own
+                // conflict law steals — the MeleeAttackGoal.stop the
+                // preempt arms: the arms lower, the raise clock the
+                // frozen keeps, the chase the impulse's silence wears;
+                // the head the swell lane's own look word already
+                // rides)
+                self.aggressive = false;
             } else if !self.ordered_to_sit {
                 // ZOMBIEATTACKGOAL (prio 3): the canUse re-check rides the
                 // 20-tick gate; the goal's own tick runs every tick while
@@ -4821,15 +5037,7 @@ impl Zombie {
                     // (the 2.0 the add(ATTACK_DAMAGE) single-arg
                     // overload answers — no override the
                     // Spider.createAttributes makes)
-                    let attack_base = if self.kind == MobKind::Spider
-                        || self.kind == MobKind::Creeper
-                    {
-                        // the creeper's own bare word the same registered
-                        // default keeps (the Monster base's single-arg
-                        // add the Creeper.createAttributes chain never
-                        // overrides — the melee lane the swell machine's
-                        // own round serves, the table arm the honesty
-                        // wears)
+                    let attack_base = if self.kind == MobKind::Spider {
                         SPIDER_ATTACK_DAMAGE
                     } else if self.kind == MobKind::Wolf {
                         // THE WOLF'S OWN FANGS (the createAttributes
@@ -4838,35 +5046,47 @@ impl Zombie {
                     } else {
                         ZOMBIE_ATTACK_DAMAGE
                     };
-                    let (kx, kz) = (p.x - self.x, p.z - self.z);
-                    let dmg = attack_base
-                        + crate::screens::held_attack_addend(self.held_weapon);
-                    // THE VICTIM'S OWN LANE (the player the
-                    // MobEvents.attack lane hurts, the prey the
-                    // mob-vs-mob lane the caller's own pass serves — the
-                    // GoalSelector's one target the two lanes never
-                    // speak together)
-                    match victim {
-                        MeleeVictim::Player => {
-                            events.attack = Some(MobAttack {
-                                damage: dmg,
-                                dir_x: kx,
-                                dir_z: kz,
-                            });
-                        }
-                        MeleeVictim::Prey(id) => {
-                            events.attack_prey = Some((
-                                id,
-                                MobAttack {
+                    // THE CREEPER'S OWN BARE FANGS (javap `Creeper.
+                    // doHurtTarget` the 26.2 jar speaks — the override
+                    // the `return true` ALONE keeps: NO damage, NO
+                    // swing, the MeleeAttackGoal's resetAttackCooldown
+                    // the true answer still serves — the fangs the
+                    // touch the touch's cooldown spends, the blast the
+                    // dose the swell machine's own round deals). The
+                    // dose lane the explode machine's own walk answers.
+                    if self.kind == MobKind::Creeper {
+                        self.ticks_until_attack = ATTACK_INTERVAL_TICKS;
+                    } else {
+                        let (kx, kz) = (p.x - self.x, p.z - self.z);
+                        let dmg = attack_base
+                            + crate::screens::held_attack_addend(self.held_weapon);
+                        // THE VICTIM'S OWN LANE (the player the
+                        // MobEvents.attack lane hurts, the prey the
+                        // mob-vs-mob lane the caller's own pass serves — the
+                        // GoalSelector's one target the two lanes never
+                        // speak together)
+                        match victim {
+                            MeleeVictim::Player => {
+                                events.attack = Some(MobAttack {
                                     damage: dmg,
                                     dir_x: kx,
                                     dir_z: kz,
-                                },
-                            ));
+                                });
+                            }
+                            MeleeVictim::Prey(id) => {
+                                events.attack_prey = Some((
+                                    id,
+                                    MobAttack {
+                                        damage: dmg,
+                                        dir_x: kx,
+                                        dir_z: kz,
+                                    },
+                                ));
+                            }
                         }
+                        self.swing.start();
+                        self.ticks_until_attack = ATTACK_INTERVAL_TICKS;
                     }
-                    self.swing.start();
-                    self.ticks_until_attack = ATTACK_INTERVAL_TICKS;
                 }
                 // THE RAISED ARMS (ZombieAttackGoal.tick's own law: the
                 // raiseArmTicks gate 5, then the half-interval compare —
@@ -5457,6 +5677,15 @@ impl Zombie {
         // zombie's ground control rides its own attribute, the friction
         // correction the player's law speaks verbatim)
         let (x0, y0, z0) = (self.x, self.y, self.z);
+        // THE SWELL RUN'S OWN MOVE STILL (the prio-2 goal the MOVE flag
+        // the stroll's prio-5 arm the GoalSelector's own conflict law
+        // stills — the navigation.stop() the start's own walk armed,
+        // the fuse the walk's silence keeps: the planted body the
+        // swell's own shape wears, the motion lanes the goal's own run
+        // never arms)
+        if self.swell_goal_running && self.kind == MobKind::Creeper {
+            want_move = false;
+        }
         if want_move && (ix * ix + iz * iz) > 1e-7 {
             let friction = if self.on_ground {
                 BLOCK_FRICTION
@@ -7782,6 +8011,306 @@ pub fn refresh_hurt_by_mob_views(mobs: &mut [Zombie]) {
     }
 }
 
+impl Zombie {
+    /// THE RENDER'S OWN SWELLING WORD (javap `Creeper.getSwelling` the
+    /// 26.2 jar speaks — the `Mth.lerp(partialTick, oldSwell, swell) /
+    /// maxSwell` the extractRenderState's swelling field banks: the
+    /// render's interpolation the tick pair's own word wears).
+    pub fn swelling_at(&self, partial_tick: f32) -> f32 {
+        let o = self.old_swell as f32;
+        let c = self.swell as f32;
+        (o + (c - o) * partial_tick) / CREEPER_MAX_SWELL as f32
+    }
+
+    /// THE EXPLODE MACHINE'S OWN SERVER WALK (javap `Creeper.
+    /// explodeCreeper` the 26.2 jar speaks — the `dead = true` the
+    /// post-blast hurt's own gate keeps, the
+    /// `ServerLevel.explode(this, getX(), getY(), getZ(),
+    /// (float)explosionRadius * f, MOB)` the ray machine serves, the
+    /// spawnLingeringCloud the active-effects-empty law NEVER passes
+    /// (the plain creeper the effect-less body the gate refuses — the
+    /// honest skip the method's own isEmpty guard answers), the
+    /// triggerOnDeathMobEffects + discard the tail keeps: NO death
+    /// time, NO loot roll, NO death voice — the discard the
+    /// RemovalReason.KILLED path the die() call skips).
+    ///
+    /// THE RAY MACHINE (javap `ServerExplosion.
+    /// calculateExplodedPositions` the 26.2 jar speaks — the 16³ grid
+    /// the k/l/m loops keep, the `k == 0 || k == 15 || ...` shell the
+    /// 1352 surface rays answer, the `(i / 15.0F * 2.0F - 1.0F)` triple
+    /// the normalize law wears, the `radius * (0.7F + nextFloat() *
+    /// 0.6F)` the per-ray intensity draw keeps (the LEVEL random the
+    /// server's shared stream — the client sim the entity's own stream
+    /// the honest stand-in spends), the 0.3F step the march speaks, the
+    /// `(resistance + 0.3F) * 0.3F` the non-air decay answers, the
+    /// `f -= 0.22500001F` the loop's own decrement keeps, the `f > 0`
+    /// crossing the toBlow set banks). The MOB interaction the default
+    /// shouldBlockExplode's own true keeps — every non-air cell the
+    /// ray's positive f clears.
+    fn explode_creeper(
+        &mut self,
+        world: &World,
+        player: Option<&PlayerView>,
+        events: &mut MobEvents,
+    ) {
+        // THE DEAD FLAG the explodeCreeper's own putfield keeps — the
+        // client sim the discard the same-tick removal answers, the
+        // post-blast hurt the gate the removal makes moot (the flag
+        // field the client's mob struct never carries — the vanilla's
+        // own post-explosion ticks the discard skips)
+        let radius = CREEPER_EXPLOSION_RADIUS;
+        // THE RAY SCAN (the shell filter the 1352 surface rays keeps —
+        // the inner 14³ the filter's own silence never draws)
+        let mut to_blow: Vec<(i32, i32, i32)> = Vec::new();
+        for k in 0..16i32 {
+            for l in 0..16i32 {
+                for m in 0..16i32 {
+                    if k == 0 || k == 15 || l == 0 || l == 15 || m == 0 || m == 15 {
+                        let d0 = k as f64 / 15.0 * 2.0 - 1.0;
+                        let d1 = l as f64 / 15.0 * 2.0 - 1.0;
+                        let d2 = m as f64 / 15.0 * 2.0 - 1.0;
+                        let d3 = (d0 * d0 + d1 * d1 + d2 * d2).sqrt();
+                        let (d0, d1, d2) = (d0 / d3, d1 / d3, d2 / d3);
+                        let mut f = radius * (0.7 + self.rng.next_f32() * 0.6);
+                        let mut px = self.x;
+                        let mut py = self.y;
+                        let mut pz = self.z;
+                        while f > 0.0 {
+                            let bx = px.floor() as i32;
+                            let by = py.floor() as i32;
+                            let bz = pz.floor() as i32;
+                            let id = world.get(bx, by, bz);
+                            if let Some(res) = blast_resistance(id) {
+                                f -= (res + 0.3) * 0.3;
+                            }
+                            if f > 0.0 && id != crate::world::AIR {
+                                to_blow.push((bx, by, bz));
+                            }
+                            px += d0 * 0.3;
+                            py += d1 * 0.3;
+                            pz += d2 * 0.3;
+                            f -= 0.225_000_01;
+                        }
+                    }
+                }
+            }
+        }
+        to_blow.sort_unstable();
+        to_blow.dedup();
+        events.explosion_blocks = to_blow;
+        events.explosion_at = Some((self.x, self.y, self.z, radius));
+        // THE PLAYER'S OWN DOSE (the hurtEntities walk the query box's
+        // entities answers — the sim's own lane the player view the
+        // tick's param serves: the dose the getEntityDamageAmount
+        // formula keeps, the push the getEyePosition anchor the
+        // subtract-normalize walk deals, the dead body the canAttack
+        // word drops)
+        if let Some(p) = player.filter(|p| !p.dead) {
+            let bbox = (
+                p.x - p.width / 2.0,
+                p.y,
+                p.z - p.width / 2.0,
+                p.x + p.width / 2.0,
+                p.y + p.height,
+                p.z + p.width / 2.0,
+            );
+            events.blast_player = explosion_blast(
+                world,
+                (self.x, self.y, self.z),
+                radius,
+                (p.x, p.eye_y as f64, p.z),
+                bbox,
+            );
+        }
+        // THE SIBLINGS' OWN DOSES the caller's own pass serves — the
+        // explosion_blast_mobs fn the mobs slice the tick's signature
+        // never reaches, the center the event's own spot names.
+    }
+}
+
+/// THE BLAST'S OWN RESISTANCE TABLE (javap the 26.2 `Blocks` <clinit>
+/// the 26.2 jar's strength(F)/(FF) rows the scanner's walk pinned —
+/// the `(hardness, resistance)` pair the Properties builder keeps,
+/// the strength(F) single-arg BOTH the same value wears). The AIR the
+/// None keeps (no resistance the ray's march never decays), the
+/// liquids the 100.0 the ray's own death answers, the crop family and
+/// the leaf litter the NO strength call the Properties defaults speak
+/// (0.0 — the destroySpeed/explosionResistance fields the ctor never
+/// sets).
+fn blast_resistance(id: u16) -> Option<f32> {
+    let name = crate::world::NAME_OF.get(id as usize)?;
+    let r = match *name {
+        "air" => return None,
+        // the strength(F) single-arg rows
+        "dirt" => 0.5,
+        "grass_block" => 0.6000000238418579,
+        "sand" => 0.5,
+        "gravel" => 0.6000000238418579,
+        "farmland" => 0.6000000238418579,
+        "dirt_path" => 0.6499999761581421,
+        "netherrack" => 0.4000000059604645,
+        "crafting_table" => 2.5,
+        // the log helper's own strength(2.0) — Blocks.logProperties
+        "oak_log" => 2.0,
+        // the leaves helper's own strength(0.2) — Blocks.leavesProperties
+        "oak_leaves" | "pale_oak_leaves" => 0.20000000298023224,
+        // the strength(FF) rows
+        "stone" | "granite" | "diorite" | "andesite" => 6.0,
+        "deepslate" => 6.0,
+        "cobbled_deepslate" => 6.0,
+        "bedrock" => 3600000.0,
+        "coal_ore" | "copper_ore" | "iron_ore" | "gold_ore" | "redstone_ore"
+        | "lapis_ore" | "diamond_ore" | "emerald_ore" => 3.0,
+        // the liquid pair's own strength(100.0) rows
+        "water" | "lava" => 100.0,
+        // the no-strength rows (the Properties defaults): wheat
+        // (WHEAT_CROP's own arms), leaf_litter
+        "wheat" | "wheat_stage1" | "wheat_stage2" | "wheat_stage3"
+        | "wheat_stage4" | "wheat_stage5" | "wheat_stage6"
+        | "wheat_stage7" | "leaf_litter" => 0.0,
+        other => {
+            debug_assert!(false, "unknown blast resistance for {other}");
+            0.0
+        }
+    };
+    Some(r)
+}
+
+/// THE SEEN PERCENT'S OWN WALK (javap `ServerExplosion.getSeenPercent`
+/// the 26.2 jar speaks — the per-axis grid step the
+/// `1.0 / (size * 2.0 + 1.0)` triple keeps, the `(1.0 - floor(1.0 /
+/// step)) * step / 2.0` offset the sample's own centering wears, the
+/// double loops `0.0 ..= 1.0` the dcmpg arms speak, the
+/// `Mth.lerp(t, min, max) + offset` sample the clip ray walks, the
+/// MISS share the clip's own unblocked answer keeps). The `point` the
+/// explosion's center wears, the bbox the victim's own box answers.
+pub fn blast_seen_percent(
+    world: &World,
+    point: (f64, f64, f64),
+    bbox: (f64, f64, f64, f64, f64, f64),
+) -> f32 {
+    let (min_x, min_y, min_z, max_x, max_y, max_z) = bbox;
+    let dx = 1.0 / ((max_x - min_x) * 2.0 + 1.0);
+    let dy = 1.0 / ((max_y - min_y) * 2.0 + 1.0);
+    let dz = 1.0 / ((max_z - min_z) * 2.0 + 1.0);
+    let ox = (1.0 - (1.0 / dx).floor()) * dx / 2.0;
+    let oy = (1.0 - (1.0 / dy).floor()) * dy / 2.0;
+    let oz = (1.0 - (1.0 / dz).floor()) * dz / 2.0;
+    let mut seen = 0.0f64;
+    let mut total = 0.0f64;
+    let mut i = 0.0f64;
+    while i <= 1.0 {
+        let mut j = 0.0f64;
+        while j <= 1.0 {
+            let mut k = 0.0f64;
+            while k <= 1.0 {
+                let sx = min_x + (max_x - min_x) * i + ox;
+                let sy = min_y + (max_y - min_y) * j + oy;
+                let sz = min_z + (max_z - min_z) * k + oz;
+                let hit = crate::body::clip_ray(
+                    world,
+                    crate::math::Vec3::new(sx as f32, sy as f32, sz as f32),
+                    crate::math::Vec3::new(point.0 as f32, point.1 as f32, point.2 as f32),
+                );
+                if hit.is_none() {
+                    seen += 1.0;
+                }
+                total += 1.0;
+                k += dz;
+            }
+            j += dy;
+        }
+        i += dx;
+    }
+    if total == 0.0 {
+        0.0
+    } else {
+        (seen / total) as f32
+    }
+}
+
+/// THE BLAST DOSE'S OWN FORMULA (javap `ExplosionDamageCalculator.
+/// getEntityDamageAmount` the 26.2 jar speaks — the `2R` the radius *
+/// 2.0F keeps, the `d / 2R` the distanceToSqr's sqrt the divisor
+/// names, the `f = (1.0 - d / 2R) * seen` the local pair speaks, the
+/// `(f*f + f) / 2.0 * 7.0 * 2R + 1.0` the d2f tail keeps — NO int
+/// truncation the 26.2 law wears).
+fn explosion_dose(radius: f32, d_norm: f64, seen: f32) -> f64 {
+    let f1 = (radius * 2.0) as f64;
+    let f = (1.0 - d_norm) * seen as f64;
+    (f * f + f) / 2.0 * 7.0 * f1 + 1.0
+}
+
+/// THE BLAST'S OWN PER-ENTITY WALK (javap `ServerExplosion.hurtEntities`
+/// the 26.2 jar speaks — the `sqrt(distanceToSqr(center)) / (radius *
+/// 2.0F)` the normalized distance keeps, the `> 1.0` the early-out
+/// speaks, the `getEyePosition()` the push's own anchor the non-TNT
+/// law wears, the `subtract(center).normalize()` the push direction
+/// answers, the `(1.0 - d / 2R) * seen * knockbackMultiplier * (1.0 -
+/// knockbackResistance)` the scale formula the default calculator's
+/// 1.0/0.0 pair keeps). The dose the `getEntityDamageAmount` formula
+/// deals, the push the `entity.push(dir.scale(strength))` the direct
+/// velocity add speaks.
+fn explosion_blast(
+    world: &World,
+    center: (f64, f64, f64),
+    radius: f32,
+    eye: (f64, f64, f64),
+    bbox: (f64, f64, f64, f64, f64, f64),
+) -> Option<ExplosionBlast> {
+    let (cx, cy, cz) = center;
+    let ddx = eye.0 - cx;
+    let ddy = eye.1 - cy;
+    let ddz = eye.2 - cz;
+    let dist = (ddx * ddx + ddy * ddy + ddz * ddz).sqrt();
+    let d_norm = dist / (radius * 2.0) as f64;
+    if d_norm > 1.0 {
+        return None;
+    }
+    let seen = blast_seen_percent(world, center, bbox);
+    let dose = explosion_dose(radius, d_norm, seen);
+    let strength = (1.0 - d_norm) * seen as f64;
+    // THE PUSH'S OWN DIRECTION (the zero-length the normalize law
+    // guards — the center's own eye the zero vector the guard keeps)
+    let (nx, ny, nz) = if dist > 1.0e-9 {
+        (ddx / dist, ddy / dist, ddz / dist)
+    } else {
+        (0.0, 0.0, 0.0)
+    };
+    Some(ExplosionBlast {
+        dose,
+        push_x: nx * strength,
+        push_y: ny * strength,
+        push_z: nz * strength,
+    })
+}
+
+/// THE SIBLINGS' OWN BLAST DOSES (the hurtEntities walk the mobs the
+/// query box answers — the caller's own pass serves: the dose the
+/// hurt_by_mob lane deals (the exploding creeper the mob-source word
+/// the lastHurtByMob write names), the push the caller's velocity add
+/// speaks). The dead/dying siblings the canAttack word drops.
+pub fn explosion_blast_mobs(
+    world: &World,
+    center: (f64, f64, f64),
+    radius: f32,
+    mobs: &[Zombie],
+) -> Vec<(i32, ExplosionBlast)> {
+    let mut out = Vec::new();
+    for m in mobs {
+        if m.health <= 0.0 || m.death_time > 0 {
+            continue;
+        }
+        let (x0, y0, z0, x1, y1, z1) = m.box_for();
+        let bbox = (x0, y0, z0, x1, y1, z1);
+        let eye = (m.x, m.y + m.kind.eye_height(), m.z);
+        if let Some(blast) = explosion_blast(world, center, radius, eye, bbox) {
+            out.push((m.id, blast));
+        }
+    }
+    out
+}
+
 /// THE WOLF'S OWN PREY SCAN (javap the 26.2 `Wolf.registerGoals` the
 /// round's dump keeps — the targetSelector the pre-pass answers before
 /// the ticks, the goals' own moment): every WOLF (`kind == Wolf`,
@@ -8677,6 +9206,246 @@ mod tests {
         assert!((26..=41).contains(&pct(twos)), "twos {twos} the 1/3 band keeps");
     }
 
+    /// THE SWELL GOAL'S OWN RINGS (javap `SwellGoal` the 26.2 jar
+    /// speaks — the canUse's 9.0 square the arming answers, the tick's
+    /// 49.0 square the cancel speaks, the one-tick lag the arithmetic
+    /// the goals' BEFORE walk keeps, the primed hiss the rest
+    /// crossing replays, the drain the negative clamp stills).
+    #[test]
+    fn the_swell_goal_wears_the_ring_laws() {
+        let world = flat_world();
+        let mut c = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        c.kind = MobKind::Creeper;
+        c.on_ground = true;
+        // THE START RING (the 3-block square the canUse's own arming
+        // wears): 2.0 flat blocks — the dy 0 the flat ring rides
+        let close = player_at(10.0, 5.0, 8.0);
+        // THE ONE-TICK LAG (the first tick's arithmetic the -1 default
+        // drains — the swell never dips under the zero clamp, the
+        // goal's arm the dir the NEXT arithmetic wears): the primed
+        // hiss the SECOND tick speaks
+        let mut primed_ticks = Vec::new();
+        for t in 1..=3 {
+            let ev = c.tick(&world, Some(&close), NIGHT);
+            if ev.primed {
+                primed_ticks.push(t);
+            }
+        }
+        assert_eq!(primed_ticks, vec![2], "the hiss the lag's second tick wears");
+        // THE FUSE'S OWN CLIMB (the swell the lerp word speaks — 2
+        // increments the two wears wear)
+        assert_eq!(c.swelling_at(1.0), 2.0 / CREEPER_MAX_SWELL as f32);
+        // THE DRAIN (the target the null write the goal's own first arm
+        // keeps — the dir the -1 the tick speaks, the arithmetic the
+        // clamp drains: the fuse the target's own loss unwinds, the
+        // zero the negative clamp stills)
+        for _ in 0..5 {
+            c.tick(&world, None, NIGHT);
+        }
+        assert_eq!(c.swelling_at(1.0), 0.0, "the drain the zero clamp stills");
+        // THE RE-ARM'S OWN REPLAY (the drain-to-zero the rest crossing
+        // wears — the hiss the next approach replays)
+        let replayed = {
+            let mut fired = false;
+            for _ in 0..4 {
+                let ev = c.tick(&world, Some(&close), NIGHT);
+                if ev.primed {
+                    fired = true;
+                }
+            }
+            fired
+        };
+        assert!(replayed, "the hiss the re-approach replays");
+        // THE START RING'S OWN REFUSAL (the 3.2-block flat the 10.24
+        // square wears — the 9.0 square the canUse REFUSES: the first
+        // tick's goal the run word never arms, the dir the -1 keeps,
+        // no hiss the fuse never starts; the chase the melee's own
+        // ring the NEXT ticks walk — the vanilla's own approach the
+        // swell the 3-block ring arms once the body closes)
+        let mut fresh = Zombie::new(2, 8.0, 5.0, 8.0, 9);
+        fresh.kind = MobKind::Creeper;
+        fresh.on_ground = true;
+        let outside = player_at(11.2, 5.0, 8.0);
+        let ev = fresh.tick(&world, Some(&outside), NIGHT);
+        assert!(!ev.primed, "the outside ring the canUse refuses");
+        assert_eq!(
+            fresh.swelling_at(1.0),
+            0.0,
+            "the refused ring the fuse never climbs"
+        );
+        // THE BLAST'S OWN ARRIVAL (the fuse the 30 the tick walk
+        // speaks — the close ring the fuse walks, the explosion the
+        // maxSwell crossing answers: the discard the removal keeps,
+        // the blocks the pad's own bowl speaks, the boom the spot
+        // carries, the swell the pin keeps)
+        let mut dying = Zombie::new(3, 8.0, 5.0, 8.0, 11);
+        dying.kind = MobKind::Creeper;
+        dying.on_ground = true;
+        let mut exploded = false;
+        for _ in 0..60 {
+            let ev = dying.tick(&world, Some(&close), NIGHT);
+            if ev.discarded {
+                exploded = true;
+                assert_eq!(dying.swell, CREEPER_MAX_SWELL, "the pin the explode wears");
+                assert!(ev.explosion_at.is_some(), "the boom the blast carries");
+                let (bx, by, bz, r) = ev.explosion_at.unwrap();
+                assert_eq!((bx, by, bz), (8.0, 5.0, 8.0), "the feet the center keeps");
+                assert_eq!(r, CREEPER_EXPLOSION_RADIUS, "the radius the ctor keeps");
+                assert!(!ev.explosion_blocks.is_empty(), "the pad the bowl carves");
+                assert!(
+                    ev.explosion_blocks.len() <= 130,
+                    "the bowl the radius bounds: {}",
+                    ev.explosion_blocks.len()
+                );
+                break;
+            }
+        }
+        assert!(exploded, "the fuse the 30 ticks walk");
+    }
+
+    /// THE RAY MACHINE'S OWN LAWS (javap `ServerExplosion.
+    /// calculateExplodedPositions` the 26.2 jar speaks — the shell
+    /// filter the 1352 rays keeps, the resistance the decay the
+    /// `(res + 0.3) * 0.3` walk answers, the bedrock the 3600000 the
+    /// ray's own death wears, the determinism the seed the replay
+    /// keeps).
+    #[test]
+    fn the_explosion_rays_wear_the_vanilla_laws() {
+        // THE RESISTANCE TABLE (the 26.2 Blocks clinit's strength rows
+        // the scanner's walk pinned — the sampler the hand pins)
+        assert_eq!(blast_resistance(crate::world::AIR), None);
+        assert_eq!(blast_resistance(block_id_of("stone")), Some(6.0));
+        assert_eq!(blast_resistance(block_id_of("dirt")), Some(0.5));
+        assert_eq!(blast_resistance(block_id_of("grass_block")), Some(0.6));
+        assert_eq!(blast_resistance(block_id_of("oak_log")), Some(2.0));
+        assert_eq!(blast_resistance(block_id_of("oak_leaves")), Some(0.2));
+        assert_eq!(blast_resistance(block_id_of("water")), Some(100.0));
+        assert_eq!(blast_resistance(block_id_of("lava")), Some(100.0));
+        assert_eq!(blast_resistance(block_id_of("bedrock")), Some(3600000.0));
+        assert_eq!(blast_resistance(block_id_of("copper_ore")), Some(3.0));
+        assert_eq!(blast_resistance(block_id_of("crafting_table")), Some(2.5));
+        assert_eq!(blast_resistance(block_id_of("wheat")), Some(0.0));
+        assert_eq!(blast_resistance(block_id_of("leaf_litter")), Some(0.0));
+        // THE BEDROCK PAD'S OWN REFUSAL (the ray's own death the
+        // 3600000 decay speaks — no cell the blast ever clears)
+        let bedrock = bedrock_world();
+        let mut c = Zombie::new(1, 8.0, 5.0, 8.0, 13);
+        c.kind = MobKind::Creeper;
+        c.on_ground = true;
+        let close = player_at(10.0, 5.0, 8.0);
+        let mut ev = MobEvents::default();
+        c.explode_creeper(&bedrock, Some(&close), &mut ev);
+        assert!(
+            ev.explosion_blocks.is_empty(),
+            "the bedrock the rays refuse: {:?}",
+            ev.explosion_blocks
+        );
+        // THE STONE PAD'S OWN BOWL (the surface layer the ray's own
+        // decay carves — the solid cells the set names, the
+        // determinism the seed the replay keeps)
+        let pad = flat_world();
+        let mut a = Zombie::new(1, 8.0, 5.0, 8.0, 13);
+        a.kind = MobKind::Creeper;
+        a.on_ground = true;
+        let mut ev_a = MobEvents::default();
+        a.explode_creeper(&pad, Some(&close), &mut ev_a);
+        let mut b = Zombie::new(1, 8.0, 5.0, 8.0, 13);
+        b.kind = MobKind::Creeper;
+        b.on_ground = true;
+        let mut ev_b = MobEvents::default();
+        b.explode_creeper(&pad, Some(&close), &mut ev_b);
+        assert_eq!(ev_a.explosion_blocks, ev_b.explosion_blocks, "the seed replays");
+        for (bx, by, bz) in &ev_a.explosion_blocks {
+            assert_eq!(
+                pad.get(*bx, *by, *bz),
+                block_id_of("stone"),
+                "the solid cell the set names: ({bx}, {by}, {bz})"
+            );
+            assert!(*by < 5, "the bowl the surface layer carves");
+        }
+        // THE DOSE'S OWN FORMULA (javap `getEntityDamageAmount` the
+        // 26.2 jar speaks — the open-air seen the 1.0 keeps: the f =
+        // (1 - 2/6) the 2-block ring wears, the dose the (f*f + f) /
+        // 2 * 7 * 6 + 1 the hand value answers)
+        let open = flat_world();
+        let seen = blast_seen_percent(
+            &open,
+            (8.0, 8.0, 8.0),
+            (7.7, 7.7, 7.7, 8.3, 8.3, 8.3),
+        );
+        assert_eq!(seen, 1.0, "the open air the seen keeps");
+        let d_norm = 2.0 / (CREEPER_EXPLOSION_RADIUS * 2.0) as f64;
+        let dose = explosion_dose(CREEPER_EXPLOSION_RADIUS, d_norm, seen);
+        let f = 1.0 - d_norm;
+        let want = (f * f + f) / 2.0 * 7.0 * (CREEPER_EXPLOSION_RADIUS * 2.0) as f64 + 1.0;
+        assert_eq!(dose, want, "the formula the hand value keeps");
+        assert!((dose - 24.333333333333332).abs() < 1e-9, "the hand value {dose}");
+        // THE BLAST'S OWN PUSH (the eye-minus-center the direction
+        // wears, the (1 - d/2R) * seen the strength speaks)
+        let blast = explosion_blast(
+            &open,
+            (8.0, 8.0, 8.0),
+            CREEPER_EXPLOSION_RADIUS,
+            (10.0, 8.0, 8.0),
+            (9.7, 7.7, 7.7, 10.3, 8.3, 8.3),
+        )
+        .expect("the 2-block ring the dose answers");
+        assert!((blast.push_x - (1.0 - d_norm)).abs() < 1e-9, "the eastward push");
+        assert_eq!(blast.push_y, 0.0, "the level eye the flat push keeps");
+        // THE FAR RING'S OWN REFUSAL (the 2R the dose's own boundary
+        // wears — 7.0 blocks the 6-block radius*2 refuses)
+        let far = explosion_blast(
+            &open,
+            (8.0, 8.0, 8.0),
+            CREEPER_EXPLOSION_RADIUS,
+            (15.0, 8.0, 8.0),
+            (14.7, 7.7, 7.7, 15.3, 8.3, 8.3),
+        );
+        assert!(far.is_none(), "the 2R ring the dose refuses");
+        // THE SIBLINGS' OWN DOSES (the hurtEntities walk the mobs the
+        // query answers — the source the exclusion skips, the
+        // sibling the dose the seen share serves)
+        let mut sibs = Vec::new();
+        let mut s = Zombie::new(9, 10.0, 5.0, 8.0, 17);
+        s.kind = MobKind::Sheep;
+        s.on_ground = true;
+        sibs.push(s);
+        let doses = explosion_blast_mobs(
+            &open,
+            (8.0, 5.0, 8.0),
+            CREEPER_EXPLOSION_RADIUS,
+            &sibs,
+        );
+        assert_eq!(doses.len(), 1, "the sibling the dose answers");
+        assert_eq!(doses[0].0, 9, "the id the victim wears");
+        assert!(doses[0].1.dose > 0.0, "the dose the seen share deals");
+    }
+
+    /// THE CREEPER'S OWN BARE FANGS (javap `Creeper.doHurtTarget` the
+    /// 26.2 jar speaks — the override the `return true` ALONE keeps:
+    /// the melee ring the touch's cooldown spends, NO dose the
+    /// MobEvents.attack lane ever carries, the blast the swell
+    /// machine's own round deals).
+    #[test]
+    fn the_creeper_fangs_the_return_true_law_keeps() {
+        let world = flat_world();
+        let mut c = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        c.kind = MobKind::Creeper;
+        c.on_ground = true;
+        let close = player_at(9.0, 5.0, 8.0); // inside the melee ring
+        for _ in 0..400 {
+            let ev = c.tick(&world, Some(&close), NIGHT);
+            assert!(
+                ev.attack.is_none() && ev.attack_prey.is_none(),
+                "the bare fangs the dose never deals"
+            );
+            assert!(
+                !c.swing.swinging,
+                "the return-true the swing never starts"
+            );
+        }
+    }
+
     /// THE AMBIENT GATE'S OWN METHOD (the shared form the wire lane's
     /// tick rides): the law replayed by hand over the same seed — the
     /// clock starts at -80, one draw per tick, the draw under the
@@ -8721,6 +9490,33 @@ mod tests {
             }
         }
         world
+    }
+
+    /// A bedrock pad (the ray machine's own refusal arena — the
+    /// 3600000 resistance the ray's own death answers: no cell the
+    /// blast ever clears).
+    fn bedrock_world() -> World {
+        let mut world = World::new(1, 42);
+        for x in 0..world.size_blocks() {
+            for z in 0..world.size_blocks() {
+                for y in 5..world.size_blocks() {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+                for y in 0..5 {
+                    world.set(x, y, z, block_id_of("bedrock"));
+                }
+            }
+        }
+        world
+    }
+
+    /// The block id the palette word names (the test's own lookup —
+    /// the NAME_OF reverse walk the world's own placeable law keeps).
+    fn block_id_of(name: &str) -> u16 {
+        crate::world::NAME_OF
+            .iter()
+            .position(|n| *n == name)
+            .expect("palette word") as u16
     }
 
     /// A grass pad (the graze tests' own arena — the flat stone pad's

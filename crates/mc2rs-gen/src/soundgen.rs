@@ -130,11 +130,13 @@ pub fn generate(bytes: &[u8]) -> Result<SoundData> {
 ///   and Spider FLAT folds the `playSound(..., 0.15F, 1.0F)` walk
 ///   keeps — the ambient/hurt/death/step rows the 26.2 sounds.json
 ///   banks);
-/// - the creeper's own PAIR (the getHurtSound/getDeathSound getters
-///   the sounds.json's entity.creeper rows name — the say-clip set
-///   the hurt banks, the death the own file; NO ambient the
-///   getAmbientSound override never carries, the step the base block
-///   law the block-sound table serves).
+/// - the creeper's own PAIR + the primed hiss (the getHurtSound/
+///   getDeathSound getters the sounds.json's entity.creeper rows name
+///   — the say-clip set the hurt banks, the death the own file; NO
+///   ambient the getAmbientSound override never carries, the step the
+///   base block law the block-sound table serves; the PRIMED the
+///   Creeper.tick's own playSound(CREEPER_PRIMED, 1.0F, 0.5F) walk
+///   names — the random/fuse clip the row's single file speaks).
 ///
 /// THE FETCH THE CLIENT'S TABLES OWE: every row the client's own
 /// voice/step/variant/eat tables speak the download walk arms — an
@@ -143,7 +145,7 @@ pub fn generate(bytes: &[u8]) -> Result<SoundData> {
 /// drawn world the mute bodies the oggs' absence wore. Every file
 /// rides the same sha1-verified asset-index fetch the music and block
 /// lanes speak.
-pub const MOB_VOICE_EVENTS: [&str; 57] = [
+pub const MOB_VOICE_EVENTS: [&str; 58] = [
     "entity.zombie.ambient",
     "entity.zombie.hurt",
     "entity.zombie.death",
@@ -199,13 +201,16 @@ pub const MOB_VOICE_EVENTS: [&str; 57] = [
     "entity.spider.hurt",
     "entity.spider.death",
     "entity.spider.step",
-    // the creeper's own PAIR (the getHurtSound/getDeathSound rows the
-    // class's own getters speak — the say-clip set the hurt names, the
-    // death the own file answers; NO ambient the getAmbientSound
-    // override the class never carries, NO step the base block law
-    // the block-sound table serves)
+    // the creeper's own PAIR + the primed hiss (the getHurtSound/
+    // getDeathSound rows the class's own getters speak — the say-clip
+    // set the hurt names, the death the own file answers; NO ambient
+    // the getAmbientSound override the class never carries, NO step
+    // the base block law the block-sound table serves; the PRIMED the
+    // Creeper.tick's own playSound walk names — the fuse clip the
+    // row's single file speaks)
     "entity.creeper.hurt",
     "entity.creeper.death",
+    "entity.creeper.primed",
 ];
 
 #[cfg(test)]
@@ -310,10 +315,12 @@ mod tests {
                 "entity.spider.hurt",
                 "entity.spider.death",
                 "entity.spider.step",
-                // the creeper's own pair (the hurt the say-clip set, the
-                // death the own file — no ambient the getter never names)
+                // the creeper's own pair + the primed hiss (the hurt the
+                // say-clip set, the death the own file, the primed the
+                // fuse clip — no ambient the getter never names)
                 "entity.creeper.hurt",
                 "entity.creeper.death",
+                "entity.creeper.primed",
             ]
         );
         // the nine drawn kinds the list's rows pair — no duplicates,
@@ -350,7 +357,7 @@ mod tests {
             "chicken", "chicken", "chicken", "chicken",
             "skeleton", "skeleton", "skeleton", "skeleton",
             "spider", "spider", "spider", "spider",
-            "creeper", "creeper",
+            "creeper", "creeper", "creeper",
         ]);
         let mut sorted = MOB_VOICE_EVENTS.to_vec();
         sorted.sort_unstable();

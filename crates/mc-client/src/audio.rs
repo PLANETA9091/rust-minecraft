@@ -938,7 +938,8 @@ mod tests {
     /// voice events — the sheep's flat trio, the cow's classic and
     /// moody quads, the pig's classic/big/baby rows (the eat and step
     /// rows the sets speak), the chicken's classic/picky/baby rows, the
-    /// skeleton's and the spider's flat quads, the creeper's own pair —
+    /// skeleton's and the spider's flat quads, the creeper's own pair
+    /// + the primed hiss, the explosion's own boom —
     /// the exact file counts the 26.2 sounds.json banks and every file
     /// decodes (the mob-voice fetch the generator's MOB_VOICE_EVENTS
     /// walk speaks; the same shape the zombie and wolf walks wear).
@@ -953,7 +954,7 @@ mod tests {
             eprintln!("skipping: assets-cache/jar not present (run mc2rs-gen generate)");
             return;
         };
-        const EVENTS: [(&str, usize); 46] = [
+        const EVENTS: [(&str, usize); 48] = [
             ("entity.sheep.ambient", 3),
             ("entity.sheep.hurt", 3),
             ("entity.sheep.death", 3),
@@ -998,10 +999,17 @@ mod tests {
             ("entity.spider.hurt", 4),
             ("entity.spider.death", 1),
             ("entity.spider.step", 4),
-            // the creeper's own pair (the hurt the say1..4 set, the
-            // death the own file — the sounds.json rows the 26.2 banks)
+            // the creeper's own pair + the primed hiss (the hurt the
+            // say1..4 set, the death the own file, the primed the
+            // random/fuse clip the single row banks — the sounds.json
+            // rows the 26.2 banks)
             ("entity.creeper.hurt", 4),
             ("entity.creeper.death", 1),
+            ("entity.creeper.primed", 1),
+            // the explosion's own boom (the handleExplosion walk the
+            // generic event plays — the four random/explode clips the
+            // row banks)
+            ("entity.generic.explode", 4),
         ];
         for (id, want) in EVENTS {
             let files = discover_event_files(&root, id);
