@@ -155,12 +155,36 @@ pub fn smoke_lifetime(r: f32) -> u32 {
     life.max(1)
 }
 
+/// The flame's own lifetime law (javap `RisingParticle` ctor verbatim:
+/// the f64 fold the bytecode speaks — `ldc2_w 8.0; nextFloat; f2d;
+/// ldc2_w 0.8; dmul; ldc2_w 0.2; dadd; ddiv; d2i; iconst_4; iadd`) —
+/// `(int)(8.0 / (r * 0.8 + 0.2)) + 4` (the +4 the iconst tail adds).
+/// The f64 constants' own edges speak: r=0 draws 39.99999940… → 39 + 4
+/// = 43 (the 0.2f32 the f64 widens, the truncation the d2i speaks),
+/// r->1 draws 7.99999988… → 7 + 4 = 11 — the grid the nextFloat
+/// speaks never draws either edge draw (the [12, 43] band the stream
+/// holds, the f64 domain the smoke helper's f32 stand-in never
+/// leaves).
+pub fn flame_lifetime(r: f32) -> u32 {
+    let denom = r as f64 * f64::from(0.8f32) + f64::from(0.2f32);
+    (8.0f64 / denom) as u32 + 4
+}
+
 /// The lava drip's render-shrink law (javap `LavaParticle.getQuadSize`:
 /// `quadSize * (1 - t * t)` with `t = (age + partial) / lifetime`) —
 /// the blob thins quadratically to nothing at its death.
 pub fn lava_shrink(age: u32, lifetime: u32, partial: f32) -> f32 {
     let t = (age as f32 + partial) / lifetime.max(1) as f32;
     1.0 - t * t
+}
+
+/// The flame's render-shrink law (javap `FlameParticle.getQuadSize`
+/// verbatim: `quadSize * (1.0F - t * t * 0.5F)` with `t = (age +
+/// partial) / lifetime`) — the flame thins to HALF its birth quad at
+/// the death (the 0.5 fold the lava's own (1 - t*t) never keeps).
+pub fn flame_shrink(age: u32, lifetime: u32, partial: f32) -> f32 {
+    let t = (age as f32 + partial) / lifetime.max(1) as f32;
+    1.0 - t * t * 0.5
 }
 
 /// The three kinds this client speaks.
@@ -241,6 +265,19 @@ pub enum ParticleKind {
     /// WaterDropParticle tick's plain-field pull rides, the 0.98
     /// friction, no fluid gate — the droplet sinks its lifetime whole).
     CurrentDown,
+    /// `FlameParticle` — the torch's own flame (the `flame` type the
+    /// animateTick pair's second call speaks, the single
+    /// `minecraft:flame` sprite the 26.2 json's one-texture list
+    /// holds): the RisingParticle laws the ctor chain wears — the
+    /// 0.96 friction, the *0.01 velocity fold the addParticle's zero
+    /// args speak (the ctor spread the +0.1 yd bump the
+    /// normalization adds keeps — the rise the fold gives), the
+    /// ±0.05 position jitter, the 8/(r*0.8+0.2)+4 lifetime, the no
+    /// gravity the RisingParticle never arms, the OPAQUE layer the
+    /// getLayer override returns (the full-bright look the untinted
+    /// full sample keeps), the white tint the ctor defaults speak,
+    /// the (1 - t*t*0.5) half-thin the getQuadSize override wears.
+    Flame,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -383,6 +420,10 @@ impl Particle {
             // the smoke's own fast bloom (the BaseAshSmokeParticle's
             // getQuadSize override — the SAME 32x law the crit speaks)
             ParticleKind::Smoke => base * crit_grow(self.age, self.lifetime, 0.0),
+            // the flame's own half-thin (the FlameParticle.getQuadSize
+            // override — the (1 - t*t*0.5) fold the death walks to the
+            // HALF quad, the lava's own to-none never keeps it)
+            ParticleKind::Flame => base * flame_shrink(self.age, self.lifetime, 0.0),
             _ => base,
         }
     }
@@ -1167,6 +1208,110 @@ pub fn smoke_puff(x: f64, y: f64, z: f64, vx: f64, vy: f64, vz: f64, r_base: f32
         uo: 0.0,
         vo: 0.0,
         col: [grey, grey, grey],
+    }
+}
+
+/// The velocity chain the `Particle` 6-arg ctor speaks (javap
+/// verbatim over the 26.2 jar) — the fold BOTH the torch pair's
+/// members ride before their own scales: the three spread draws
+/// `(nextFloat * 2.0F - 1.0F) * 0.4F` (f32), the `d0 = (nextFloat +
+/// nextFloat + 1.0F) * 0.15F` pair (f32), then the f64 normalization
+/// `v = v / sqrt(xd² + yd² + zd²) * d0 * 0.4` with the `yd += 0.1`
+/// bump (the rise the smoke and the flame share). Draw order: the
+/// three spreads, then the d0 pair — five draws on the caller's
+/// stream. Returns the normalized (vx, vy, vz) pre-scale.
+fn ctor_spread_and_normalize(rng: &mut crate::drops::Lcg) -> (f64, f64, f64) {
+    let sx = (rng.next_f32() * 2.0 - 1.0) * 0.4;
+    let sy = (rng.next_f32() * 2.0 - 1.0) * 0.4;
+    let sz = (rng.next_f32() * 2.0 - 1.0) * 0.4;
+    let d0 = (rng.next_f32() + rng.next_f32() + 1.0) * 0.15;
+    let d1 = (sx as f64 * sx as f64 + sy as f64 * sy as f64 + sz as f64 * sz as f64).sqrt();
+    let vx = sx as f64 / d1 * d0 as f64 * f64::from(0.4f32);
+    let vy = sy as f64 / d1 * d0 as f64 * f64::from(0.4f32) + f64::from(0.1f32);
+    let vz = sz as f64 / d1 * d0 as f64 * f64::from(0.4f32);
+    (vx, vy, vz)
+}
+
+/// The torch's ambient SMOKE (javap `TorchBlock.animateTick`'s first
+/// addParticle verbatim: `ParticleTypes.SMOKE` at the (0.5, 0.7,
+/// 0.5) constant with the (0, 0, 0) velocity args) — the FULL ctor
+/// chain the call wears, the nine draws the stream consumes in the
+/// vanilla order: the dead base lifetime (the 3-arg ctor's
+/// `(int)(4.0 / (r * 0.9 + 0.1))` the BaseAshSmokeParticle ctor's own
+/// lifetime write overrides), the three spreads, the d0 pair, the
+/// size draw, the tint draw, the own lifetime draw. The velocity the
+/// chain gives rides the *0.1 scale the SmokeParticle ctor's xdScale
+/// args speak (f2d the f64 fold keeps) — the +0.1 yd bump the
+/// normalization added scales to the +0.01 rise, the gravity −0.1
+/// the BaseAshSmokeParticle passes pulls further up (`yd -= 0.04 *
+/// (-0.1)`), the 0.96 friction the ctor sets. The grey tint the
+/// r*0.3 draw carries, the 0.75 size fold, the 8..40 lifetime the
+/// smoke_puff helper speaks.
+pub fn torch_smoke(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the ash ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (vx, vy, vz) = ctor_spread_and_normalize(rng);
+    let scale = f64::from(0.1f32);
+    smoke_puff(
+        x,
+        y,
+        z,
+        vx * scale,
+        vy * scale,
+        vz * scale,
+        rng.next_f32(),
+        rng.next_f32(),
+        rng.next_f32(),
+    )
+}
+
+/// The torch's ambient FLAME (javap `TorchBlock.animateTick`'s second
+/// addParticle verbatim: `this.flameParticle` — the `flame` type the
+/// registration passes — at the same (0.5, 0.7, 0.5) constant, the
+/// same zero velocity) — the FULL ctor chain the call wears, the
+/// fifteen draws the stream consumes in the vanilla order: the dead
+/// sprite pick (the `SpriteSet.get(random)` the provider's arg speaks
+/// — nextInt(1) the one-texture list answers, always 0), the dead
+/// base lifetime (the RisingParticle ctor's own lifetime write
+/// overrides), the three spreads, the d0 pair, the size draw, the
+/// six jitter draws (`x += (nextFloat - nextFloat) * 0.05F` per axis,
+/// f32), the own lifetime draw (`(int)(8.0 / (r * 0.8 + 0.2)) + 4`).
+/// The velocity the chain gives rides the *0.01 fold the
+/// RisingParticle ctor speaks (`xd * 0.01D + xdArg`) — the flame's
+/// own drift, the +0.01 yd rise the bump scales to, the 0.96
+/// friction the ctor sets, the no gravity the RisingParticle never
+/// arms (the rise the fold alone gives), the white tint the ctor
+/// defaults speak, the OPAQUE layer the render lane keeps.
+pub fn torch_flame(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Particle {
+    // the dead sprite pick (nextInt(1) the one-element list answers)
+    let _dead_sprite = rng.next_int(1);
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the RisingParticle ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (vx, vy, vz) = ctor_spread_and_normalize(rng);
+    let quad = base_quad_size(rng.next_f32());
+    let fold = f64::from(0.01f32);
+    let jx = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    let jy = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    let jz = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    Particle {
+        kind: ParticleKind::Flame,
+        x: x + jx,
+        y: y + jy,
+        z: z + jz,
+        prev: None,
+        vx: vx * fold,
+        vy: vy * fold,
+        vz: vz * fold,
+        age: 0,
+        lifetime: flame_lifetime(rng.next_f32()),
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: quad,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
     }
 }
 
@@ -2543,5 +2688,176 @@ mod tests {
         // the count the caller's word speaks even over the void
         let forced = growth_burst((12, 21, 12), 15, 0.5, 1.0, true, &holed, &mut rng());
         assert_eq!(forced.len(), 15, "the forced lane never reads the ground");
+    }
+
+    #[test]
+    fn the_flame_lifetime_wears_the_rising_law() {
+        // (int)(8.0 / (r * 0.8 + 0.2)) + 4 — the f64 edges the fold
+        // speaks: r=0 -> 39.99999940… -> 39 + 4, r=1 -> 7.99999988…
+        // -> 7 + 4 (the pure fold's own edge), the midpoint 8/0.6 =
+        // 13.33 -> 13 + 4
+        assert_eq!(flame_lifetime(0.0), 43);
+        assert_eq!(flame_lifetime(1.0), 11);
+        assert_eq!(flame_lifetime(0.5), 17);
+        // every draw the stream speaks lands the grid band (the
+        // nextFloat's own [0, 1-2^-24] grid never draws the edges)
+        for _ in 0..4096 {
+            let life = flame_lifetime(rng().next_f32());
+            assert!(
+                (12..=43).contains(&life),
+                "the rising lifetime's own band: {life}"
+            );
+        }
+        // THE RENDER SHRINK (the getQuadSize override's (1 - t*t*0.5)
+        // fold): the birth quad whole, the death quad the HALF keeps
+        assert!((flame_shrink(0, 20, 0.0) - 1.0).abs() < 1e-6);
+        assert!((flame_shrink(20, 20, 0.0) - 0.5).abs() < 1e-6);
+        assert!((flame_shrink(10, 20, 0.0) - 0.875).abs() < 1e-6);
+    }
+
+    #[test]
+    fn the_torch_smoke_wears_the_ash_laws() {
+        // THE BIRTH (the addParticle pos the walk speaks — no jitter
+        // the ash ctor never arms): the smoke sits at the constant
+        let mut r = rng();
+        let p = torch_smoke(10.5, 20.7, 30.5, &mut r);
+        assert!(matches!(p.kind, ParticleKind::Smoke));
+        assert_eq!(p.x, 10.5, "the smoke's own birth x");
+        assert_eq!(p.y, 20.7, "the (y + 0.7) the constant speaks");
+        assert_eq!(p.z, 30.5, "the smoke's own birth z");
+        // THE LAWS (the BaseAshSmokeParticle chain): the grey tint
+        // the r*0.3 draw carries, the 0.75 size fold, the 8..40
+        // lifetime, the -0.1 gravity the rise rides, the 0.96
+        // friction the ctor sets
+        assert_eq!(p.gravity, -0.1);
+        assert_eq!(p.friction, 0.96);
+        assert!((8..=40).contains(&p.lifetime), "the ash lifetime: {}", p.lifetime);
+        assert!(
+            (0.075..0.15).contains(&p.quad_size),
+            "the 0.75 fold's own band: {}",
+            p.quad_size
+        );
+        assert!(
+            p.col.iter().all(|c| (0.0..0.3).contains(c)),
+            "the grey tint the r*0.3 keeps: {:?}",
+            p.col
+        );
+        // THE VELOCITY (the normalization fold the *0.1 scale wears):
+        // |unit| <= 1 -> |vx| <= 0.45*0.4*0.1 = 0.018, the vy band
+        // the +0.1 bump scales to [-0.008, 0.028) — the rise the
+        // fold and the gravity both give
+        assert!(p.vx.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vx);
+        assert!(p.vz.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vz);
+        assert!(
+            (-0.008..0.028).contains(&p.vy),
+            "the smoke's own rise band: {}",
+            p.vy
+        );
+        // THE DETERMINISM (the same seed the same chain answers)
+        let p2 = torch_smoke(10.5, 20.7, 30.5, &mut rng());
+        assert_eq!(
+            (p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+            (p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+            "the seeded chain replays"
+        );
+        // THE STREAM (the nine draws the chain consumes — the dead
+        // base lifetime, the three spreads, the d0 pair, the size,
+        // the tint, the own lifetime; the tenth draw differs)
+        let mut a = rng();
+        let _ = torch_smoke(0.0, 0.0, 0.0, &mut a);
+        let after_nine = a.next();
+        let mut b = rng();
+        for _ in 0..9 {
+            b.next();
+        }
+        assert_eq!(after_nine, b.next(), "the smoke chain's own nine draws");
+    }
+
+    #[test]
+    fn the_torch_flame_wears_the_rising_laws() {
+        // THE BIRTH (the addParticle pos + the ±0.05 jitter the
+        // RisingParticle ctor speaks — the f32 sub-mul the f2d wears)
+        let mut r = rng();
+        let p = torch_flame(10.5, 20.7, 30.5, &mut r);
+        assert!(matches!(p.kind, ParticleKind::Flame));
+        assert!(
+            (10.45..10.55).contains(&p.x),
+            "the x jitter's own band: {}",
+            p.x
+        );
+        assert!(
+            (20.65..20.75).contains(&p.y),
+            "the y jitter's own band: {}",
+            p.y
+        );
+        assert!(
+            (30.45..30.55).contains(&p.z),
+            "the z jitter's own band: {}",
+            p.z
+        );
+        // THE LAWS (the RisingParticle chain): the white tint the
+        // ctor defaults speak, the no gravity the rise never needs,
+        // the 0.96 friction, the 12..44 lifetime the +4 tail pins,
+        // the 0.1..0.2 quad the base ctor's own draw gives (no 0.75
+        // fold the flame never wears)
+        assert_eq!(p.col, [1.0, 1.0, 1.0]);
+        assert_eq!(p.gravity, 0.0, "the flame's own no-gravity law");
+        assert_eq!(p.friction, 0.96);
+        assert!((12..=43).contains(&p.lifetime), "the rising lifetime: {}", p.lifetime);
+        assert!(
+            (0.1..0.2).contains(&p.quad_size),
+            "the base size's own band: {}",
+            p.quad_size
+        );
+        // THE VELOCITY (the *0.01 fold the RisingParticle speaks):
+        // |vx| <= 0.45*0.4*0.01 = 0.0018, the vy band the +0.1 bump
+        // scales to [-0.0008, 0.0028) — the slow climb the vanilla
+        // flame rides
+        assert!(p.vx.abs() <= 0.0018 + 1e-12, "the flame drift: {}", p.vx);
+        assert!(p.vz.abs() <= 0.0018 + 1e-12, "the flame drift: {}", p.vz);
+        assert!(
+            (-0.0008..0.0028).contains(&p.vy),
+            "the flame's own climb band: {}",
+            p.vy
+        );
+        // THE DETERMINISM (the same seed the same chain answers)
+        let p2 = torch_flame(10.5, 20.7, 30.5, &mut rng());
+        assert_eq!(
+            (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+            (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+            "the seeded chain replays"
+        );
+        // THE STREAM (the fifteen draws the chain consumes — the dead
+        // sprite pick, the dead base lifetime, the three spreads, the
+        // d0 pair, the size, the six jitters, the own lifetime)
+        let mut a = rng();
+        let _ = torch_flame(0.0, 0.0, 0.0, &mut a);
+        let after_fifteen = a.next();
+        let mut b = rng();
+        for _ in 0..15 {
+            b.next();
+        }
+        assert_eq!(after_fifteen, b.next(), "the flame chain's own fifteen draws");
+    }
+
+    #[test]
+    fn the_spread_chain_spans_the_normalization_law() {
+        // THE NORMALIZATION (the d0*0.4 speed the ctor renormalizes
+        // to — d0 in [0.15, 0.45) -> the speed in [0.06, 0.18), the
+        // yd bump the +0.1 keeps): the pair's pre-scale magnitudes
+        // the bands hold across the stream — vy = unit_y * speed +
+        // 0.1 with |unit_y| <= 1 -> vy in (-0.08, 0.28)
+        for _ in 0..2048 {
+            let (vx, vy, vz) = ctor_spread_and_normalize(&mut rng());
+            let speed = (vx * vx + vy * vy + vz * vz).sqrt();
+            assert!(
+                (0.06..0.18).contains(&speed),
+                "the normalized speed's own band: {speed}"
+            );
+            assert!(
+                (-0.08..0.28).contains(&vy),
+                "the pre-scale yd's own band: {vy}"
+            );
+        }
     }
 }

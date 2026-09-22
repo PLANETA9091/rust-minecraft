@@ -5908,6 +5908,47 @@ impl LavaSprite {
     }
 }
 
+/// The PARTICLE LANE's torch flame sprite — the single 8x8 the `flame`
+/// particle type's sprite set holds (javap: the `particles/flame.json`
+/// the 26.2 jar speaks — ONE texture, `minecraft:flame`, the 8x8 the
+/// IHDR verifies; the `FlameParticle$Provider`'s `SpriteSet.get(random)`
+/// returns that one sprite whatever the draw, the nextInt(1) the
+/// one-element list answers), loaded and sha1-verified the same stream
+/// the lava sprite speaks. A missing or tampered file keeps the flames
+/// invisible (the honest absence the other lanes speak).
+pub struct FlameSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The flame texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const FLAME_SPRITE_SIDE: u32 = 8;
+
+impl FlameSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<FlameSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_FLAME_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_FLAME_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != FLAME_SPRITE_SIDE || h != FLAME_SPRITE_SIDE {
+            return None;
+        }
+        Some(FlameSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, FLAME_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, FLAME_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * FLAME_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's damage indicator sprite — the 8x8 the
 /// `damage` particle type's own set holds (javap: the jar's
 /// `particles/damage_indicator.json` lists ONE texture,

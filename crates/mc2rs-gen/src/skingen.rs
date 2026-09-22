@@ -145,6 +145,12 @@ pub const PARTICLE_SPLASH_JAR_PATHS: [&str; 4] = [
 /// `LavaParticle$Provider`'s `SpriteSet.get(random)` returns it
 /// whatever the draw).
 pub const PARTICLE_LAVA_JAR_PATH: &str = "assets/minecraft/textures/particle/lava.png";
+/// The torch flame's single sprite (javap: the `flame` particle type's
+/// sprite set — the jar's `particles/flame.json` lists ONE texture,
+/// `minecraft:flame`, the 8x8 the IHDR verifies; the
+/// `FlameParticle$Provider`'s `SpriteSet.get(random)` returns it
+/// whatever the draw — the nextInt(1) the one-element list speaks).
+pub const PARTICLE_FLAME_JAR_PATH: &str = "assets/minecraft/textures/particle/flame.png";
 /// The damage indicator's single sprite (javap: the `damage_indicator`
 /// particle type's sprite set — the jar's `particles/damage_indicator.json`
 /// lists ONE texture, `minecraft:damage`, the 8x8 the IHDR verifies; the
@@ -252,6 +258,9 @@ pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
     "particle/splash_3.png",
 ];
 pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
+/// The torch flame's runtime-cache path (the same textures/ prefix
+/// strip the other lanes speak).
+pub const PARTICLE_FLAME_RUNTIME_PATH: &str = "particle/flame.png";
 pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = "particle/damage.png";
 /// The heart's runtime-cache path (the same textures/ prefix strip the
 /// other lanes speak).
@@ -373,6 +382,9 @@ pub struct SkinData {
     /// sha1 of the lava drip's single 8x8 sprite (jar-verbatim
     /// integrity) — the pool's own drip's pixel source.
     pub particle_lava_png_sha1: String,
+    /// sha1 of the torch flame's single 8x8 sprite (jar-verbatim
+    /// integrity) — the animateTick pair's flame quad's pixel source.
+    pub particle_flame_png_sha1: String,
     /// sha1 of the damage indicator's single 8x8 sprite (jar-verbatim
     /// integrity) — the hit's own burst's pixel source.
     pub particle_damage_png_sha1: String,
@@ -734,6 +746,18 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         lw,
         lh
     );
+    // the torch flame's single sprite (the same shape check the lava
+    // speaks — the json's one-texture set the animateTick pair's
+    // flame quad banks)
+    let flame_bytes = read_entry(archive, PARTICLE_FLAME_JAR_PATH).context("read flame")?;
+    let particle_flame_png_sha1 = crate::util::sha1_hex(&flame_bytes);
+    let (fw, fh, _flame_rgba) = decode_rgba(&flame_bytes).context("decode flame")?;
+    anyhow::ensure!(
+        (fw, fh) == (8, 8),
+        "flame must be the 8x8 sprite, got {}x{}",
+        fw,
+        fh
+    );
     // the damage indicator's single sprite (the same shape check the
     // lava speaks — the json's one-texture set)
     let damage_bytes = read_entry(archive, PARTICLE_DAMAGE_JAR_PATH).context("read damage")?;
@@ -870,6 +894,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_poof_png_sha1s,
         particle_splash_png_sha1s,
         particle_lava_png_sha1,
+        particle_flame_png_sha1,
         particle_damage_png_sha1,
         particle_heart_png_sha1,
         particle_glint_png_sha1,
@@ -1254,6 +1279,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
         "pub const PARTICLE_LAVA_RUNTIME_PATH: &str = \"{PARTICLE_LAVA_RUNTIME_PATH}\";\n"
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_FLAME_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_flame_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_FLAME_RUNTIME_PATH: &str = \"{PARTICLE_FLAME_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_DAMAGE_PNG_SHA1: &str = \"{}\";\n",
         data.particle_damage_png_sha1
     ));
@@ -1471,6 +1503,8 @@ mod tests {
             splashes.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let lava = tiny_png();
         let expected_lava_sha1 = crate::util::sha1_hex(&lava);
+        let flame = tiny_png();
+        let expected_flame_sha1 = crate::util::sha1_hex(&flame);
         let sheep = sheep_png();
         let expected_sheep_sha1 = crate::util::sha1_hex(&sheep);
         let sheep_wool = sheep_png();
@@ -1588,6 +1622,7 @@ mod tests {
             (PARTICLE_SPLASH_JAR_PATHS[2], splashes[2].clone()),
             (PARTICLE_SPLASH_JAR_PATHS[3], splashes[3].clone()),
             (PARTICLE_LAVA_JAR_PATH, lava),
+            (PARTICLE_FLAME_JAR_PATH, flame),
             (PARTICLE_DAMAGE_JAR_PATH, damage),
             (PARTICLE_HEART_JAR_PATH, heart),
             (PARTICLE_GLINT_JAR_PATH, glint),
@@ -1679,6 +1714,10 @@ mod tests {
         assert_eq!(
             data.particle_lava_png_sha1, expected_lava_sha1,
             "the lava sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_flame_png_sha1, expected_flame_sha1,
+            "the flame sprite's own sha1"
         );
         assert_eq!(
             data.particle_damage_png_sha1, expected_damage_sha1,

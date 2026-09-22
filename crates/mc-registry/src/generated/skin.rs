@@ -261,6 +261,11 @@ pub const PARTICLE_SPLASH_PNG_SHA1S: [&str; 4] = ["52032e5f3820cf65c12515bffd2e1
 pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = ["particle/splash_0.png", "particle/splash_1.png", "particle/splash_2.png", "particle/splash_3.png"];
 pub const PARTICLE_LAVA_PNG_SHA1: &str = "20a3d96087bb1b4c620acd186757b84bdffc68e5";
 pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
+/// The torch flame's single 8x8 sprite (the `flame` particle type's
+/// one-texture set — the animateTick pair's flame quad's pixel
+/// source, the integrity sha1 the loader verifies before it draws).
+pub const PARTICLE_FLAME_PNG_SHA1: &str = "0e10e17949f6b7b997870ae22f3e0e489397d472";
+pub const PARTICLE_FLAME_RUNTIME_PATH: &str = "particle/flame.png";
 pub const PARTICLE_DAMAGE_PNG_SHA1: &str = "5fc56377777b2c95231d6ea1abdfd21353aa8f17";
 pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = "particle/damage.png";
 pub const PARTICLE_HEART_PNG_SHA1: &str = "b6fb397c7c07b911350d0a797224d1c0fc8d1d17";

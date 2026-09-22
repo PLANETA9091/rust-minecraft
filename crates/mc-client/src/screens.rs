@@ -6615,6 +6615,9 @@ pub struct App {
     /// The lava drip's single sprite (the same lazy load — the pool's
     /// own drip's pixel source).
     pub lava_sprite: Option<crate::avatar::LavaSprite>,
+    /// The torch flame's single sprite (the same lazy load — the
+    /// animateTick pair's flame quad's pixel source).
+    pub flame_sprite: Option<crate::avatar::FlameSprite>,
     /// The damage indicator's single sprite (the same lazy load — the
     /// hit's own burst's pixel source).
     pub damage_sprite: Option<crate::avatar::DamageSprite>,
@@ -7304,6 +7307,7 @@ impl App {
             bubble_sprite: None,
             splash_frames: None,
             lava_sprite: None,
+            flame_sprite: None,
             damage_sprite: None,
             sweep_frames: None,
             heart_sprite: None,
@@ -10861,6 +10865,30 @@ impl App {
                 let z = cz
                     + self.level_ambient_rng.next_int(r as u64)
                     - self.level_ambient_rng.next_int(r as u64);
+                let cell = w.get(x, y, z);
+                // THE BLOCK'S OWN ANIMATE TICK (the state's block the
+                // doAnimateTick walk calls FIRST — javap
+                // TorchBlock.animateTick verbatim: the SMOKE + the
+                // flame pair at the (0.5, 0.7, 0.5) constants, the
+                // zero velocity the addParticle args carry, the
+                // randomness the ctor chains hold — the nine-draw
+                // smoke, the fifteen-draw flame, the no gate the pair
+                // speaks: the sparsity the sampling itself gives) —
+                // the only arm the palette's blocks speak
+                if cell == crate::world::TORCH {
+                    out.push(crate::particles::torch_smoke(
+                        x as f64 + 0.5,
+                        y as f64 + 0.7,
+                        z as f64 + 0.5,
+                        &mut self.level_ambient_rng,
+                    ));
+                    out.push(crate::particles::torch_flame(
+                        x as f64 + 0.5,
+                        y as f64 + 0.7,
+                        z as f64 + 0.5,
+                        &mut self.level_ambient_rng,
+                    ));
+                }
                 // the fluid's own gate: the sampled cell IS the lava
                 // and the cell above IS the air (the isAir &&
                 // !isSolidRender pair the LavaFluid.animateTick
@@ -10870,7 +10898,6 @@ impl App {
                 // same doAnimateTick call walks (vanilla's own order:
                 // the blockstate's answer, then the fluid's — the
                 // WATER fluid's own answer is empty, no draws)
-                let cell = w.get(x, y, z);
                 if cell == crate::world::LAVA && w.get(x, y + 1, z) == crate::world::AIR {
                     // THE DRIP GATE (nextInt(100) == 0 on the thread-local
                     // stand-in): the addParticle's position
@@ -25352,6 +25379,10 @@ impl App {
             self.lava_sprite =
                 crate::avatar::LavaSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.flame_sprite.is_none() {
+            self.flame_sprite =
+                crate::avatar::FlameSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.damage_sprite.is_none() {
             self.damage_sprite =
                 crate::avatar::DamageSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -25382,6 +25413,7 @@ impl App {
         let mut bubble_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut splash_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut lava_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut flame_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut damage_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
@@ -25517,6 +25549,21 @@ impl App {
                         tint: p.col,
                     });
                 }
+                crate::particles::ParticleKind::Flame => {
+                    // the flame's own quad (the single flame sprite the
+                    // 26.2 json's one-texture list speaks — the full
+                    // sprite the quad samples, the white tint the ctor
+                    // defaults keep, the full-bright look the
+                    // FlameParticle.getLayer's OPAQUE answer speaks —
+                    // the untinted full sample the lava lane's honest
+                    // equivalent wears)
+                    flame_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_flame",
+                        tint: p.col,
+                    });
+                }
                 crate::particles::ParticleKind::Smoke => {
                     // the child's own quad (the generic frame the
                     // age's own walk speaks — the same
@@ -25637,6 +25684,13 @@ impl App {
         if let Some(lava) = &self.lava_sprite {
             fb.draw_sampled_quads(vp, &lava_quads, &mut |_tex, u, v| {
                 Some(lava.pixel(u, v))
+            });
+        }
+        // the flame group (the torch's own bright pixels — the full
+        // sprite the single-texture json speaks)
+        if let Some(flame) = &self.flame_sprite {
+            fb.draw_sampled_quads(vp, &flame_quads, &mut |_tex, u, v| {
+                Some(flame.pixel(u, v))
             });
         }
         // the damage group (the hit's own white stars — the full
@@ -53898,6 +53952,109 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.contains("bubble_column")),
             "no column voice the plain world keeps"
+        );
+    }
+
+    #[test]
+    fn the_torch_cells_spawn_the_ambient_pair() {
+        // THE TORCH'S OWN WORLD (every cell the 54 kind names — the
+        // sampler cannot miss): the walk answers the SMOKE + flame
+        // PAIR per in-bounds sample — the block arm the doAnimateTick
+        // walk calls before the fluid's own, the no gate the pair
+        // speaks (the sparsity the sampling itself gives)
+        let mut world = crate::world::World::new(1, 0);
+        world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+        for y in 0..48 {
+            for z in 0..16 {
+                for x in 0..16 {
+                    world.set(x, y, z, crate::world::TORCH);
+                }
+            }
+        }
+        let mut app = App::new(3);
+        app.offline_world = Some(world);
+        let out = app.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(!out.is_empty(), "the torch cells answer the walk");
+        assert_eq!(out.len() % 2, 0, "the pair the every-sample spawn speaks");
+        for pair in out.chunks(2) {
+            // THE ORDER (the animateTick call's own: the SMOKE first,
+            // the flame second)
+            assert!(
+                matches!(pair[0].kind, crate::particles::ParticleKind::Smoke),
+                "the pair's own smoke"
+            );
+            assert!(
+                matches!(pair[1].kind, crate::particles::ParticleKind::Flame),
+                "the pair's own flame"
+            );
+            // THE BIRTH (the (x+0.5, y+0.7, z+0.5) constants the
+            // addParticle args speak): the smoke sits at the exact
+            // cell fold (no jitter the ash chain never arms), the
+            // flame rides the ±0.05 jitter band around the same fold
+            assert_eq!(pair[0].x.fract(), 0.5, "the smoke's own x+0.5");
+            assert!((pair[0].y.fract() - 0.7).abs() < 1e-9, "the y+0.7 the constant keeps");
+            assert_eq!(pair[0].z.fract(), 0.5, "the smoke's own z+0.5");
+            assert!(
+                (pair[1].x - pair[0].x).abs() <= 0.05 + 1e-9,
+                "the flame's own x jitter: {}",
+                pair[1].x - pair[0].x
+            );
+            assert!(
+                (pair[1].y - pair[0].y).abs() <= 0.05 + 1e-9,
+                "the flame's own y jitter: {}",
+                pair[1].y - pair[0].y
+            );
+            assert!(
+                (pair[1].z - pair[0].z).abs() <= 0.05 + 1e-9,
+                "the flame's own z jitter: {}",
+                pair[1].z - pair[0].z
+            );
+            // THE LAWS (the pair's own chains the ctor folds keep)
+            assert_eq!(pair[0].gravity, -0.1, "the smoke's own rise");
+            assert_eq!(pair[1].gravity, 0.0, "the flame's own no-gravity");
+            assert!((8..=40).contains(&pair[0].lifetime), "the ash lifetime");
+            assert!((12..=43).contains(&pair[1].lifetime), "the rising lifetime");
+        }
+        // THE REPLAY (the seeded walk the same stamps speak)
+        let stamp_torch = |id: u16| -> crate::world::World {
+            let mut world = crate::world::World::new(1, 0);
+            world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+            for y in 0..48 {
+                for z in 0..16 {
+                    for x in 0..16 {
+                        world.set(x, y, z, id);
+                    }
+                }
+            }
+            world
+        };
+        let mut a = App::new(3);
+        a.offline_world = Some(stamp_torch(crate::world::TORCH));
+        let da: Vec<(u32, f64, f64, f64)> = a
+            .animate_tick_walk((8.0, 12.0, 8.0))
+            .iter()
+            .map(|p| (p.lifetime, p.x, p.y, p.z))
+            .collect();
+        let mut b = App::new(3);
+        b.offline_world = Some(stamp_torch(crate::world::TORCH));
+        let db: Vec<(u32, f64, f64, f64)> = b
+            .animate_tick_walk((8.0, 12.0, 8.0))
+            .iter()
+            .map(|p| (p.lifetime, p.x, p.y, p.z))
+            .collect();
+        assert_eq!(da, db, "the seeded walk replays");
+        // THE LAVA WORLD'S SILENCE (the block arm the torch alone
+        // wears — the all-lava stamp the drip lane owns spawns the
+        // gated drips only, no smoke/flame the torch kind never
+        // answers)
+        let mut lava_app = App::new(3);
+        lava_app.offline_world = Some(stamp_torch(crate::world::LAVA));
+        let lava_out = lava_app.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(
+            lava_out
+                .iter()
+                .all(|p| matches!(p.kind, crate::particles::ParticleKind::Lava)),
+            "the lava world the torch pair never speaks"
         );
     }
 
