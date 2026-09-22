@@ -21499,6 +21499,54 @@ impl App {
         }
     }
 
+    /// THE BLOCK-BREAK EFFECT'S OWN WIRE LANE (javap
+    /// `LevelEventHandler` case 2001 over the 26.2 jar — the sound
+    /// rides FIRST (the `isAir` gate the AIR state the voice never
+    /// plays: the `getBreakSound` row the `(v+1)/2, p*0.8` fold the
+    /// break lane's own math keeps), then `addDestroyBlockEffect` —
+    /// the 4x4x4 grid the full cube speaks, each debris riding the
+    /// block's own particle tile and the outward velocity; the
+    /// unbanked kinds the tile's own TILE_NONE verdict keeps — the
+    /// burst the atlas never finds, the sound the honest ride keeps).
+    /// The server's own digs the event broadcast: the voice lands at
+    /// the ear's own distance law, the burst the level ambient stream
+    /// draws — the world edit itself the server's block updates own
+    /// (the visual/sound pair the packet alone carries). The
+    /// world-visible split the offline dig lane keeps: no falling
+    /// schedule (the networked world the server's own scheduler
+    /// answers), no loot roll (the drops the server's own packets
+    /// speak).
+    pub fn live_break_events_updated(&mut self, events: Vec<crate::world_view::WireBreakEvent>) {
+        let yaw = self.listener_yaw();
+        for ev in events {
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            // THE VOICE (the case's own head — the isAir gate the AIR
+            // state the arm's resolved None keeps)
+            if let Some(name) = ev.sound_name {
+                let dist = ear_distance(ear, ev.x as f64, ev.y as f64, ev.z as f64);
+                let pan = ear_pan(ear, yaw, ev.x as f64, ev.y as f64, ev.z as f64);
+                self.sounds
+                    .play_lane_at_pan(self.frame, name, crate::sound::Lane::Break, dist, pan);
+            }
+            // THE BURST (addDestroyBlockEffect's own walk — the tile
+            // the palette kind banks, the TILE_NONE verdict the
+            // unbanked kinds and the air keep)
+            if let Some(kind) = ev.burst_kind {
+                let tile = particle_tile(kind);
+                if tile != mc_registry::generated::atlas::TILE_NONE {
+                    let burst = crate::particles::terrain_burst(
+                        tile,
+                        ev.x,
+                        ev.y,
+                        ev.z,
+                        &mut self.mob_rng,
+                    );
+                    self.particles.extend(burst);
+                }
+            }
+        }
+    }
+
     /// THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
     /// `--held-item` stand-in speaks no stack: the consume is the
     /// honest no-op it always was). The crop ladder's advance and the
@@ -44573,6 +44621,88 @@ cow_sound_variant: None,
             app.sounds.events.len() > before,
             "the voice the unconditional case still plays"
         );
+    }
+
+    /// THE BLOCK-BREAK EFFECT'S OWN WIRE SERVE (javap
+    /// `LevelEventHandler` case 2001 over the 26.2 jar — the sound the
+    /// break lane's own `(v+1)/2, p*0.8` fold plays FIRST, the
+    /// `addDestroyBlockEffect` burst the 4x4x4 grid speaks): the STONE
+    /// word the voice + the 64-debris burst both wear, the AIR word the
+    /// resolved-None arm BOTH lanes refuse (the isAir gate + the tile's
+    /// own verdict), the UNBANKED anvil the burst's own absence keeps
+    /// (the kind the palette never banks — the tile the atlas never
+    /// finds — while the sound the honest ride keeps), the empty
+    /// mailbox the no-op keeps.
+    #[test]
+    fn the_wire_break_event_the_voice_the_burst_wear() {
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STONE WORD (the state walk's own answers the arm carries)
+        app.live_break_events_updated(vec![crate::world_view::WireBreakEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+            sound_name: Some("stone"),
+            burst_kind: Some(crate::world::STONE),
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            64,
+            "the 4x4x4 grid the full cube speaks"
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.stone.break @")),
+                "the break voice the case's own head rides"
+            );
+        }
+        // THE AIR WORD: the resolved-None arm BOTH lanes refuse — no
+        // fresh voice, no fresh debris (the earlier burst the clear
+        // sweeps before the silent word lands)
+        app.particles.clear();
+        let before = app.sounds.events.len();
+        app.live_break_events_updated(vec![crate::world_view::WireBreakEvent {
+            x: 3,
+            y: 3,
+            z: 3,
+            sound_name: None,
+            burst_kind: Some(crate::world::AIR),
+        }]);
+        assert!(
+            app.particles.is_empty(),
+            "the air kind the tile's own verdict refuses"
+        );
+        assert_eq!(app.sounds.events.len(), before, "the None name no voice");
+        // THE UNBANKED KIND (the anvil the palette never banks): the
+        // burst the honest absence keeps, the sound the ride speaks
+        app.live_break_events_updated(vec![crate::world_view::WireBreakEvent {
+            x: 5,
+            y: 5,
+            z: 5,
+            sound_name: Some("anvil"),
+            burst_kind: None,
+        }]);
+        assert!(
+            app.particles.is_empty(),
+            "the unbanked kind the burst never finds"
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.anvil.break @")),
+                "the unbanked kind's voice the sound table's own row keeps"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let before_all = app.sounds.events.len();
+        app.live_break_events_updated(vec![]);
+        assert!(app.particles.is_empty());
+        assert_eq!(app.sounds.events.len(), before_all);
     }
 
     /// THE SHOVEL'S OWN FLATTEN ARM — the straight-down aim the vanilla

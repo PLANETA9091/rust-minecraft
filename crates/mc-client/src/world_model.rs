@@ -281,6 +281,18 @@ pub struct WorldModel {
     /// apply arm never enqueues — the honest silence the vanilla
     /// client's own unwalked cases keep.
     pub growth_events: Vec<GrowthEffectArm>,
+    /// THE BLOCK-BREAK EFFECT'S OWN MAILBOX (the Level Event packet's
+    /// second vocabulary word — [`mc_protocol::play::DESTROY_BLOCK_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 1561 speaks:
+    /// the server's own digs the event broadcast, the break sound + the
+    /// `addDestroyBlockEffect` burst the client's render lane folds).
+    /// The arms the state walk resolved (the name the sound table
+    /// speaks, the palette kind the burst tile reads — the resolution
+    /// the jar's `Block.stateById` + `isAir` + `getSoundType` walk
+    /// answers at the handler's own head). The GLOBAL route the arm
+    /// never enqueues (the `globalLevelEvent` switch the 2001 id never
+    /// carries — the positioned lane the case's own arm wears).
+    pub break_events: Vec<BreakEffectArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -426,6 +438,30 @@ pub struct GrowthEffectArm {
     /// The event's data word, verbatim (the particle count the render
     /// lane's own law folds — the server's `bipush 15`).
     pub data: i32,
+}
+
+/// One pending BLOCK-BREAK EFFECT arm — the Level Event packet's second
+/// vocabulary word the model resolved (see
+/// [`WorldModel::break_events`]). The state walk's answers ride, not
+/// the raw state id: `sound_name` the break voice's own word (the
+/// stripped registry name the sound table speaks — `None` the AIR
+/// state the `isAir` gate keeps, the sound the case never plays),
+/// `burst_kind` the debris burst's own tile source (the palette kind
+/// the state's block names — `None` the kinds the palette never
+/// banks: the tile the burst never finds, the sound the honest ride
+/// keeps). The anchor verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BreakEffectArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The break voice's own word (the stripped registry name — the
+    /// sound table's row the audio lane resolves; `None` the AIR
+    /// state's gate keeps).
+    pub sound_name: Option<&'static str>,
+    /// The burst's own palette kind (the particle tile the atlas
+    /// carries; `None` the unbanked kinds the burst never finds).
+    pub burst_kind: Option<u16>,
 }
 
 /// One pending ARROW position sync — the Entity Position Sync packet's
@@ -849,6 +885,7 @@ impl WorldModel {
             arrow_syncs: Vec::new(),
             world_sounds: Vec::new(),
             growth_events: Vec::new(),
+            break_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
             display_slots: std::collections::HashMap::new(),
             scores: std::collections::HashMap::new(),
@@ -992,6 +1029,14 @@ impl WorldModel {
     /// folds the particle burst from the anchor + the data word.
     pub fn drain_growth_events(&mut self) -> Vec<GrowthEffectArm> {
         std::mem::take(&mut self.growth_events)
+    }
+
+    /// The block-break effect's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 2001 words the
+    /// Level Event packet armed, the render lane's own law folds the
+    /// break voice + the debris burst from the resolved state.
+    pub fn drain_break_events(&mut self) -> Vec<BreakEffectArm> {
+        std::mem::take(&mut self.break_events)
     }
 
     /// The arrows' sync mailbox's own drain (the same walk the voices'
@@ -1179,6 +1224,10 @@ impl WorldModel {
                 // same walk — the old level's bone-meal words never
                 // burst again)
                 self.growth_events.clear();
+                // the block-break effect's mailbox dies with the level
+                // (the same walk — the old level's 2001 words never
+                // burst again)
+                self.break_events.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -1834,6 +1883,41 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         data: ev.data,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::DESTROY_BLOCK_EFFECT && !ev.global {
+                    // THE BLOCK-BREAK EFFECT'S OWN ARM (javap the case
+                    // offset 1561 — the positioned route the GLOBAL
+                    // switch never banks): the data word the GLOBAL
+                    // STATE id carries (`Block.stateById(data)` the
+                    // walk's own read — the null the `Blocks.AIR.
+                    // defaultBlockState()` fallback answers), the
+                    // resolution the registry's own ranges table speaks
+                    // (the state id → the block name → the palette kind).
+                    // The SOUND the `isAir` gate refuses (the AIR state
+                    // — the fallback included — the voice never plays),
+                    // the BURST the tile the palette kind banks (the
+                    // unbanked kinds the honest absence keeps — the
+                    // sound the ride keeps). The arm lands even for the
+                    // silent walks — the render lane's own gates the
+                    // no-ops wear, the vanilla's own shape the faithful
+                    // port keeps.
+                    let resolved =
+                        mc_registry::generated::block_ids::block_name_of(ev.data.max(0) as u32)
+                            .map(|full| full.strip_prefix("minecraft:").unwrap_or(full));
+                    let kind = resolved.and_then(|name| {
+                        crate::world::NAME_OF
+                            .iter()
+                            .position(|n| *n == name)
+                            .map(|i| i as u16)
+                    });
+                    let sound_name = resolved.filter(|n| *n != "air");
+                    self.break_events.push(BreakEffectArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        sound_name,
+                        burst_kind: kind,
                     });
                     true
                 } else {
@@ -5791,6 +5875,124 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.growth_events.is_empty(), "the mailbox dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_break_word_the_state_walk_arms() {
+        // THE BLOCK-BREAK EFFECT'S OWN ARM (javap the case offset 1561
+        // — the positioned route the GLOBAL switch never banks): the
+        // data word the GLOBAL STATE id carries (`Block.stateById` the
+        // registry ranges the resolution speaks), the SOUND the `isAir`
+        // gate refuses, the BURST the palette kind banks (the unbanked
+        // kinds the honest absence keeps), the drain ships the arms
+        // exactly once, and the Respawn recreates the level the
+        // mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the STONE state (the registry range's own head — the state id
+        // 1 the `Block.stateById` walk answers): the voice + the burst
+        // both speak
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DESTROY_BLOCK_EFFECT,
+            x: -40,
+            y: 12,
+            z: 77,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.break_events.len(), 1, "the arm rides");
+        assert_eq!(
+            m.break_events[0].sound_name,
+            Some("stone"),
+            "the stripped name the sound table speaks"
+        );
+        assert_eq!(
+            m.break_events[0].burst_kind,
+            Some(crate::world::STONE),
+            "the palette kind the burst tile reads"
+        );
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2001 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DESTROY_BLOCK_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 1,
+            global: true,
+        })));
+        assert_eq!(m.break_events.len(), 1, "the global word never arms");
+        // the AIR state (the state id 0 the table's own head): the
+        // voice the isAir gate keeps, the kind the palette's own head
+        // answers (the render lane's tile verdict the no-op keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DESTROY_BLOCK_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.break_events.len(), 2);
+        assert_eq!(
+            m.break_events[1].sound_name,
+            None,
+            "the air state the voice never plays"
+        );
+        assert_eq!(m.break_events[1].burst_kind, Some(crate::world::AIR));
+        // the OUT-OF-RANGE data the `Blocks.AIR.defaultBlockState()`
+        // fallback answers (the byId null the jar's own word keeps):
+        // both lanes the silent walk keeps
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DESTROY_BLOCK_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 999_999,
+            global: false,
+        })));
+        assert_eq!(m.break_events.len(), 3);
+        assert_eq!(m.break_events[2].sound_name, None);
+        assert_eq!(m.break_events[2].burst_kind, None);
+        // the UNBANKED kind (the anvil's range head the palette never
+        // banks): the sound the honest ride keeps, the burst the tile's
+        // own absence refuses
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DESTROY_BLOCK_EFFECT,
+            x: 4,
+            y: 5,
+            z: 6,
+            data: 11195,
+            global: false,
+        })));
+        assert_eq!(m.break_events.len(), 4);
+        assert_eq!(m.break_events[3].sound_name, Some("anvil"));
+        assert_eq!(
+            m.break_events[3].burst_kind,
+            None,
+            "the unbanked kind the burst never finds"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_break_events();
+        assert_eq!(drained.len(), 4, "the drain ships the whole mailbox");
+        assert!(m.break_events.is_empty(), "the mailbox spent");
+        assert!(m.drain_break_events().is_empty(), "the drained silence ships nothing");
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DESTROY_BLOCK_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.break_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(m.break_events.is_empty(), "the mailbox dies with the level");
     }
 
     #[test]

@@ -424,6 +424,13 @@ pub struct SnapshotView {
     /// own drain empties the mailbox after — each arm rides exactly one
     /// ship), the render lane's own law folds the particle burst.
     pub growth_events: Vec<WireGrowthEvent>,
+    /// The block-break effect's PENDING ARMS — the Level Event mailbox
+    /// the model resolved (the 2001 words the server's own digs
+    /// broadcast, [`mc_protocol::play::DESTROY_BLOCK_EFFECT`] the
+    /// vocabulary speaks): shipped once with the refresh that carried
+    /// them (the worker's own drain empties the mailbox after), the
+    /// render lane's own law folds the break voice + the debris burst.
+    pub break_events: Vec<WireBreakEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -468,6 +475,22 @@ pub struct WireGrowthEvent {
     pub y: i32,
     pub z: i32,
     pub data: i32,
+}
+
+/// One wire BLOCK-BREAK EFFECT arm — the Level Event packet's own
+/// landing (the 2001 words the server's own digs broadcast,
+/// [`mc_protocol::play::DESTROY_BLOCK_EFFECT`] the render lane
+/// speaks): the state walk's answers the model resolved — the break
+/// voice's own name (the audio lane's row lookup; `None` the AIR
+/// gate keeps) + the burst's own palette kind (the atlas tile's
+/// source; `None` the unbanked kinds keep), the anchor verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireBreakEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    pub sound_name: Option<&'static str>,
+    pub burst_kind: Option<u16>,
 }
 
 /// The DisplaySlot id the sidebar renders from (the
@@ -2257,6 +2280,9 @@ pub fn materialize_snapshot_view(
         // and no growth words (the join snapshot carries no bone-meal
         // traffic — the empty mailbox the render lane skips)
         growth_events: Vec::new(),
+        // and no break words (the join snapshot carries no 2001 traffic
+        // — the empty mailbox the render lane skips)
+        break_events: Vec::new(),
     }
 }
 
@@ -2609,6 +2635,22 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the block-break effect's own projection (the mailbox verbatim
+        // — the state walk's answers the arms carry, the anchor the
+        // render lane's own law reads): each 2001 word ships once with
+        // this view, the worker's drain empties the mailbox after
+        let break_events = self
+            .model
+            .break_events
+            .iter()
+            .map(|arm| WireBreakEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                sound_name: arm.sound_name,
+                burst_kind: arm.burst_kind,
+            })
+            .collect();
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
@@ -2691,6 +2733,10 @@ impl LiveView {
                 // the bone-meal words are the connection's own traffic,
                 // not the pose's
                 growth_events,
+                // the block-break effect's arms ride the pose-less arm
+                // too — the 2001 words are the connection's own traffic,
+                // not the pose's
+                break_events,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -2757,6 +2803,10 @@ impl LiveView {
             // bone-meal words follow the mailbox exactly like the
             // world's own voices do
             growth_events,
+            // the block-break effect's arms ride every refresh too —
+            // the 2001 words follow the mailbox exactly like the
+            // growth's own arms do
+            break_events,
         }
     }
 }

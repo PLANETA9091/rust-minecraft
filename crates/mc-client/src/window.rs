@@ -165,6 +165,7 @@ fn run_join(
                 Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
+                Vec<crate::world_view::WireBreakEvent>,
             ),
             String,
         >,
@@ -250,6 +251,7 @@ fn run_join(
             view.model.drain_world_sounds();
             view.model.drain_arrow_syncs();
             view.model.drain_growth_events();
+            view.model.drain_break_events();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -859,6 +861,7 @@ fn run_join(
                             view.model.drain_world_sounds();
                             view.model.drain_arrow_syncs();
                             view.model.drain_growth_events();
+                            view.model.drain_break_events();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -969,6 +972,14 @@ fn run_join(
                                     // render's own law folds, each arm
                                     // rides exactly one shipped refresh)
                                     upd.growth_events,
+                                    // the block-break effect's arms ride
+                                    // with them — the 2001 words the
+                                    // server's own digs broadcast stream
+                                    // to the break lane (the voice + the
+                                    // debris burst the render's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.break_events,
                                 )))
                                 .is_err()
                             {
@@ -1110,6 +1121,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
+                Vec<crate::world_view::WireBreakEvent>,
             ),
             String,
         >,
@@ -1652,6 +1664,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     mode_word,
                     abilities_word,
                     growth_events,
+                    break_events,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // THE GAME-MODE ECHO'S OWN BANK (the audited
@@ -1732,6 +1745,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // law folds — the happy sparkles the vanilla client
                     // answers the same packet with)
                     app.live_growth_events_updated(growth_events);
+                    // the block-break effect's lane beside the growth's:
+                    // the 2001 words the server's own digs broadcast land
+                    // at their own anchors (the break voice + the debris
+                    // burst the render lane's own law folds — the sound
+                    // + the 4x4x4 grid the vanilla client answers the
+                    // same packet with)
+                    app.live_break_events_updated(break_events);
                     // the scoreboard's lane beside the voices': the
                     // SIDEBAR slot's belief lands verbatim (the rows the
                     // projection sorted and capped — the HUD renders it

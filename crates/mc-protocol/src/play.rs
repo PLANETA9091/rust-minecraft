@@ -1184,6 +1184,17 @@ pub fn parse_block_update(payload: &[u8]) -> Result<(i32, i32, i32, u32)> {
 /// data)` delegate) renders.
 pub const GROWTH_EFFECT: i32 = 1505;
 
+/// THE BLOCK-BREAK EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_DESTROY_BLOCK`, the case
+/// `LevelEventHandler.levelEvent` offset 1561 speaks): the data word
+/// the GLOBAL STATE id carries (`Block.stateById(data)` the walk's
+/// own read — the break sound the `getSoundType` answer plays, the
+/// `addDestroyBlockEffect` burst the state's shape speaks), the
+/// server's own dig broadcasts the event on. The GLOBAL route the
+/// `globalLevelEvent` switch never banks (the 1023/1028/1038 trio the
+/// band alone carries — the positioned lane the case's own arm wears).
+pub const DESTROY_BLOCK_EFFECT: i32 = 2001;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10305,6 +10316,11 @@ mod tests {
     fn level_event_parses_the_int_long_int_bool_layout() {
         assert_eq!(clientbound::LEVEL_EVENT, 46, "level event (generated id)");
         assert_eq!(GROWTH_EFFECT, 1505, "the growth effect the useOn walk speaks");
+        assert_eq!(
+            DESTROY_BLOCK_EFFECT,
+            2001,
+            "the block-break effect the server's own dig broadcast speaks"
+        );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order
         let build = |effect: i32, x: i32, y: i32, z: i32, data: i32, global: bool| {
