@@ -270,6 +270,17 @@ pub struct WorldModel {
     /// MAILBOX like the voices' — the refresh ships each exactly
     /// once, the drain empties it, the dimension swap clears it.
     pub world_sounds: Vec<WorldVoiceArm>,
+    /// THE GROWTH EFFECT'S OWN MAILBOX (the Level Event packets the
+    /// bone-meal item's use broadcasts — [`mc_protocol::GROWTH_EFFECT`]
+    /// the vocabulary speaks): the arms in wire order, each the
+    /// event's anchor block + the data word the particle count's law
+    /// reads. A MAILBOX like the voices' — the refresh ships each
+    /// exactly once, the drain empties it, the dimension swap clears
+    /// it. An event id OUTSIDE the vocabulary (the mob-spawner flames,
+    /// the wither's broadcast, the rest of the constants class) the
+    /// apply arm never enqueues — the honest silence the vanilla
+    /// client's own unwalked cases keep.
+    pub growth_events: Vec<GrowthEffectArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -396,6 +407,25 @@ pub struct WorldVoiceArm {
     pub volume: f32,
     /// The pitch, verbatim from the packet.
     pub pitch: f32,
+}
+
+/// One pending GROWTH EFFECT arm — the Level Event packet's word the
+/// model keeps until the refresh ships it (see
+/// [`WorldModel::growth_events`]). The anchor and the data word ride
+/// verbatim (the block the effect speaks AT, the count law's input);
+/// the GLOBAL flag is deliberately absent — the growth effect is the
+/// POSITIONED lane's own word, the broadcast events the vocabulary
+/// never enqueues.
+#[derive(Debug, Clone, PartialEq)]
+pub struct GrowthEffectArm {
+    /// The event's anchor block, verbatim (the packet's packed LONG
+    /// decoded — the grass/crop cell the bone-meal walk spoke at).
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The event's data word, verbatim (the particle count the render
+    /// lane's own law folds — the server's `bipush 15`).
+    pub data: i32,
 }
 
 /// One pending ARROW position sync — the Entity Position Sync packet's
@@ -818,6 +848,7 @@ impl WorldModel {
             entity_sounds: Vec::new(),
             arrow_syncs: Vec::new(),
             world_sounds: Vec::new(),
+            growth_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
             display_slots: std::collections::HashMap::new(),
             scores: std::collections::HashMap::new(),
@@ -953,6 +984,14 @@ impl WorldModel {
     /// the gain from the arm's own spot.
     pub fn drain_world_sounds(&mut self) -> Vec<WorldVoiceArm> {
         std::mem::take(&mut self.world_sounds)
+    }
+
+    /// The growth effect's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the bone-meal
+    /// words the Level Event packet armed, the render lane's own law
+    /// folds the particle burst from the anchor + the data word.
+    pub fn drain_growth_events(&mut self) -> Vec<GrowthEffectArm> {
+        std::mem::take(&mut self.growth_events)
     }
 
     /// The arrows' sync mailbox's own drain (the same walk the voices'
@@ -1136,6 +1175,10 @@ impl WorldModel {
                 // the world sounds' mailbox dies with the level (the
                 // same walk — the old level's spots never speak again)
                 self.world_sounds.clear();
+                // the growth effect's mailbox dies with the level (the
+                // same walk — the old level's bone-meal words never
+                // burst again)
+                self.growth_events.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -1774,6 +1817,28 @@ impl WorldModel {
                     pitch: s.pitch,
                 });
                 true
+            }
+            PlayEvent::LevelEvent(ev) => {
+                // THE LEVEL EVENT'S OWN GATE (javap ClientPacketListener
+                // .handleLevelEvent → ClientLevel.levelEvent → the 26.2
+                // LevelEventHandler delegate): the vocabulary speaks the
+                // GROWTH EFFECT alone (`BoneMealItem.addGrowthParticles`
+                // the case at offset 2523 answers) — the anchor + the
+                // data word ride into the mailbox, the render lane's
+                // own law folds the burst. EVERY OTHER id the unwalked
+                // case keeps: the honest `false` (the event touched
+                // nothing this model speaks), never a guessed render.
+                if ev.effect == mc_protocol::GROWTH_EFFECT {
+                    self.growth_events.push(GrowthEffectArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
+                    });
+                    true
+                } else {
+                    false
+                }
             }
             PlayEvent::CombatKill(k) => {
                 if self.own_entity_id() == Some(k.player_id) {
@@ -5644,6 +5709,88 @@ mod tests {
         // the vitals ride the player (NOT cleared — the health the
         // server speaks crosses the dimension like the effects do)
         assert_eq!(m.health, Some(vitals), "the vitals ride the player");
+    }
+
+    #[test]
+    fn the_level_event_the_growth_word_the_mailbox_arms() {
+        // THE LEVEL EVENT'S OWN GATE (the vocabulary the render lane
+        // speaks): the GROWTH_EFFECT word the mailbox arms — the
+        // anchor + the data verbatim — every OTHER id the honest
+        // `false` keeps (the event touched nothing this model speaks),
+        // the drain ships the arms exactly once, and the Respawn
+        // recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the growth word arms (the bone-meal walk's own event)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::GROWTH_EFFECT,
+            x: 12,
+            y: 64,
+            z: -7,
+            data: 15,
+            global: false,
+        })));
+        assert_eq!(m.growth_events.len(), 1, "the arm rides");
+        assert_eq!(m.growth_events[0].x, 12);
+        assert_eq!(m.growth_events[0].y, 64);
+        assert_eq!(m.growth_events[0].z, -7);
+        assert_eq!(m.growth_events[0].data, 15, "the data word verbatim");
+        // a SECOND growth word rides in wire order (the bone meal the
+        // server's own broadcast pair speaks)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::GROWTH_EFFECT,
+            x: 3,
+            y: 70,
+            z: 9,
+            data: 15,
+            global: false,
+        })));
+        assert_eq!(m.growth_events.len(), 2, "the second arm rides after");
+        assert_eq!(m.growth_events[1].x, 3);
+        // an unknown effect id: the honest refusal — no arm, no state
+        // touched (the mob-spawner flames, the wither's broadcast, the
+        // rest of the constants class the vocabulary never speaks)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: 1030,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.growth_events.len(), 2, "the foreign word never arms");
+        // a foreign GLOBAL word the same refusal keeps
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: 1032,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.growth_events.len(), 2);
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_growth_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].data, 15);
+        assert!(m.growth_events.is_empty(), "the mailbox spent");
+        assert!(m.drain_growth_events().is_empty(), "the drained silence ships nothing");
+        // a fresh word after the drain arms again
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::GROWTH_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 15,
+            global: false,
+        })));
+        assert_eq!(m.growth_events.len(), 1, "the fresh word re-arms");
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(m.growth_events.is_empty(), "the mailbox dies with the level");
     }
 
     #[test]

@@ -95,6 +95,7 @@ pub mod clientbound {
         CB_ENTITY_POSITION_SYNC as ENTITY_POSITION_SYNC,
         CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK, CB_KEEP_ALIVE as KEEP_ALIVE,
         CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LIGHT_UPDATE as UPDATE_LIGHT,
+        CB_LEVEL_EVENT as LEVEL_EVENT,
         CB_LOGIN as LOGIN, CB_MOVE_ENTITY_POS as MOVE_ENTITY_POS,
         CB_MOVE_ENTITY_POS_ROT as MOVE_ENTITY_POS_ROT, CB_MOVE_ENTITY_ROT as MOVE_ENTITY_ROT,
         CB_PING as PING, CB_PONG_RESPONSE as PONG_RESPONSE,
@@ -1172,6 +1173,70 @@ pub fn parse_block_update(payload: &[u8]) -> Result<(i32, i32, i32, u32)> {
     );
     let (x, y, z) = decode_block_pos(packed);
     Ok((x, y, z, state as u32))
+}
+
+/// THE LEVEL EVENT'S OWN ID (the 26.2 `LevelEvent` constants class the
+/// client jar banks — the growth effect the bone-meal item's own use
+/// speaks): `BoneMealItem.useOn`'s walk (`javap`: `sipush 1505,
+/// aload_3, bipush 15` → `Level.levelEvent`) answers ONE number — the
+/// GROWTH_EFFECT word the client's own `LevelEventHandler.levelEvent`
+/// case (offset 2523: `BoneMealItem.addGrowthParticles(level, pos,
+/// data)` delegate) renders.
+pub const GROWTH_EFFECT: i32 = 1505;
+
+/// One Level Event (clientbound play, generated id 46 —
+/// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
+/// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
+/// `writeBoolean(globalEvent)` — the CLASSIC int-long-int-bool shape
+/// (no varints), the codec's own composite order.
+#[derive(Debug, Clone, PartialEq)]
+pub struct LevelEventPacket {
+    /// The event id (the `LevelEvent` constants' own word —
+    /// [`GROWTH_EFFECT`] the bone-meal walk answers).
+    pub effect: i32,
+    /// The event's anchor block (the `writeBlockPos` LONG the packed
+    /// layout carries — [`decode_block_pos`] the same walk resolves).
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The event's own data word (the growth effect's particle count
+    /// the server's `bipush 15` speaks; the handler passes it verbatim
+    /// — the old client's `0 → 15` fold the 26.2 walk no longer keeps).
+    pub data: i32,
+    /// The GLOBAL flag (the broadcast the coords ignore — the
+    /// wither's spawn, the end-dragon's defeat; the growth effect the
+    /// positioned lane speaks, the flag false).
+    pub global: bool,
+}
+
+/// Parse Level Event. javap of the 26.2 read ctor verbatim:
+/// `readInt()` → type, `readBlockPos()` → pos, `readInt()` → data,
+/// `readBoolean()` → globalEvent.
+pub fn parse_level_event(payload: &[u8]) -> Result<LevelEventPacket> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::LEVEL_EVENT,
+        "not a level event packet (0x{id:02X})"
+    );
+    let effect = read_i32(&mut c)?;
+    let packed = read_i64(&mut c)?;
+    let data = read_i32(&mut c)?;
+    let global = read_bool(&mut c)?;
+    anyhow::ensure!(
+        c.is_empty(),
+        "{} trailing bytes after the level event",
+        c.len()
+    );
+    let (x, y, z) = decode_block_pos(packed);
+    Ok(LevelEventPacket {
+        effect,
+        x,
+        y,
+        z,
+        data,
+        global,
+    })
 }
 
 /// Section Blocks Update (clientbound play, generated id 84 —
@@ -8287,6 +8352,11 @@ pub enum PlayEvent {
     /// Section Blocks Update: a batch of changes inside ONE section
     /// (the entries are section-relative + the global state id).
     SectionBlocks(SectionBlocks),
+    /// Level Event: the server's own world-effect word (the growth
+    /// effect the bone-meal item's use broadcasts — the client's
+    /// particle vocabulary the render lane answers). See
+    /// [`LevelEventPacket`].
+    LevelEvent(LevelEventPacket),
     /// Add Entity: something new exists in the world (a mob, a dropped
     /// item, a projectile) — the model's entity registry grows.
     Spawn(EntitySpawn),
@@ -8525,6 +8595,7 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::SECTION_BLOCKS_UPDATE => {
                 Ok(PlayEvent::SectionBlocks(parse_section_blocks(&pkt)?))
             }
+            clientbound::LEVEL_EVENT => Ok(PlayEvent::LevelEvent(parse_level_event(&pkt)?)),
             clientbound::ADD_ENTITY => Ok(PlayEvent::Spawn(parse_add_entity(&pkt)?)),
             clientbound::REMOVE_ENTITIES => {
                 Ok(PlayEvent::EntitiesRemoved(parse_remove_entities(&pkt)?))
@@ -10228,6 +10299,49 @@ mod tests {
         p3.extend_from_slice(&0i64.to_be_bytes());
         write_varint(&mut p3, -1);
         assert!(parse_block_update(&p3).is_err());
+    }
+
+    #[test]
+    fn level_event_parses_the_int_long_int_bool_layout() {
+        assert_eq!(clientbound::LEVEL_EVENT, 46, "level event (generated id)");
+        assert_eq!(GROWTH_EFFECT, 1505, "the growth effect the useOn walk speaks");
+        // hand-rolled wire: varint id, i32 BE effect, packed pos long,
+        // i32 BE data, bool global — the 26.2 write walk's own order
+        let build = |effect: i32, x: i32, y: i32, z: i32, data: i32, global: bool| {
+            let mut p = Vec::new();
+            write_varint(&mut p, clientbound::LEVEL_EVENT);
+            p.extend_from_slice(&effect.to_be_bytes());
+            p.extend_from_slice(&test_support::encode_block_pos(x, y, z).to_be_bytes());
+            p.extend_from_slice(&data.to_be_bytes());
+            p.push(global as u8);
+            p
+        };
+        // the bone-meal walk's own word: growth effect at the crop cell,
+        // data 15, positioned (the global flag false)
+        let ev = parse_level_event(&build(GROWTH_EFFECT, 12, 64, -7, 15, false)).unwrap();
+        assert_eq!(ev.effect, GROWTH_EFFECT);
+        assert_eq!((ev.x, ev.y, ev.z), (12, 64, -7), "the packed long sign-extends");
+        assert_eq!(ev.data, 15);
+        assert!(!ev.global);
+        // the negative-coord pair the sign-extension law keeps
+        let ev2 = parse_level_event(&build(GROWTH_EFFECT, -3, -60, 9, 15, false)).unwrap();
+        assert_eq!((ev2.x, ev2.y, ev2.z), (-3, -60, 9));
+        // a GLOBAL event rides the same shape (the flag the byte carries)
+        let ev3 = parse_level_event(&build(1032, 0, 0, 0, 0, true)).unwrap();
+        assert!(ev3.global);
+        // an unknown event id still parses — the honest word the
+        // consumer's vocabulary refuses (the render lane's own gate)
+        let ev4 = parse_level_event(&build(1030, 1, 2, 3, 4, false)).unwrap();
+        assert_eq!(ev4.effect, 1030);
+        // trailing bytes are drift
+        let mut p5 = build(GROWTH_EFFECT, 0, 0, 0, 15, false);
+        p5.push(0x00);
+        assert!(parse_level_event(&p5).is_err());
+        // a wrong packet id is refused
+        let mut p6 = Vec::new();
+        write_varint(&mut p6, clientbound::BLOCK_UPDATE);
+        p6.extend_from_slice(&1505i32.to_be_bytes());
+        assert!(parse_level_event(&p6).is_err());
     }
 
     #[test]

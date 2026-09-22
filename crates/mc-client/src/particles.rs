@@ -1438,6 +1438,73 @@ pub fn happy_villager_sparkle(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lc
     }
 }
 
+/// THE GROWTH BURST'S OWN WALK (javap `ParticleUtils.spawnParticles`
+/// verbatim — the LevelEventHandler's 1505 case the bone-meal item's
+/// own use speaks, the level event the client vocabulary now renders):
+/// `count` attempts, each ONE particle the three-draw walk arms —
+/// `xd = nextGaussian() * 0.02`, `yd = nextGaussian() * 0.02`,
+/// `zd = nextGaussian() * 0.02` (the literal 0.02 the ldc2_w speaks),
+/// then the anchor's own spread: `x = pos.x + (0.5 - dx) +
+/// nextDouble() * dx * 2.0`, `y = pos.y + nextDouble() * dy`,
+/// `z = pos.z + (0.5 - dx) + nextDouble() * dx * 2.0` (the `0.5 - dx`
+/// half-fold the dsub keeps, the `* 2.0` the second dmul speaks). THE
+/// GROUND GATE (the `force` flag false keeps): the containing cell's
+/// BELOW block (`BlockPos.containing(x, y, z).below()`) the walk
+/// reads — an AIR answer the attempt abandons (the `isAir` branch the
+/// ifne jump skips, no particle the skipped draw ever draws). THE
+/// VELOCITY'S OWN FOLD: the passed deltas ride the
+/// SuspendedTownParticle ctor's `* 0.02` walk (`javap`: the three
+/// putfield dmul pairs) — the effective drift the two folds keep
+/// (`nextGaussian() * 0.02 * 0.02`). The lifetime/size draws ride the
+/// [`happy_villager_sparkle`] law verbatim (the same
+/// `$HappyVillagerProvider` sprite the feed sparkle shares).
+///
+/// The caller's word: `anchor` the `getParticlePos` answer (the grass
+/// block's `pos.above()`, the crop's own cell), `count` the data word
+/// the event carried (the spreader's `data * 3`, the grower's plain
+/// `data`), `dx`/`dy` the spread pair (`3.0, 1.0` the spreader's wide
+/// band, `0.5, shape-max-Y` the grower's in-block fold), `force` the
+/// gate's flag (the grower's in-block lane `true`, the wide band
+/// `false`).
+pub fn growth_burst(
+    anchor: (i32, i32, i32),
+    count: usize,
+    dx: f64,
+    dy: f64,
+    force: bool,
+    world: &crate::world::World,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::new();
+    for _ in 0..count {
+        let vx = rng.next_gaussian() * 0.02;
+        let vy = rng.next_gaussian() * 0.02;
+        let vz = rng.next_gaussian() * 0.02;
+        let half = 0.5 - dx;
+        let px = anchor.0 as f64 + half + rng.next_f64() * dx * 2.0;
+        let py = anchor.1 as f64 + rng.next_f64() * dy;
+        let pz = anchor.2 as f64 + half + rng.next_f64() * dx * 2.0;
+        if !force {
+            // THE GROUND GATE (the force=false lane's own read): the
+            // containing cell's below block — an air answer the
+            // attempt abandons (the particle would float)
+            let cx = px.floor() as i32;
+            let cy = py.floor() as i32;
+            let cz = pz.floor() as i32;
+            if world.get(cx, cy - 1, cz) == crate::world::AIR {
+                continue;
+            }
+        }
+        let mut p = happy_villager_sparkle(px, py, pz, rng);
+        // the ctor's own velocity fold (the passed delta × 0.02)
+        p.vx = vx * 0.02;
+        p.vy = vy * 0.02;
+        p.vz = vz * 0.02;
+        out.push(p);
+    }
+    out
+}
+
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
 /// target's frozen position (the removed entity keeps its own), 3
 /// ticks of life, the 16-sample walk per tick.
@@ -2385,5 +2452,96 @@ mod tests {
         assert!(p.tick(), "the 16-tick life walks");
         assert_eq!(p.age, 15);
         assert!(!p.tick(), "the lifetime's removal speaks");
+    }
+
+    /// The law's own arena: the floor plane at `y` the gate reads, the
+    /// air above it the burst occupies (the generated terrain's own
+    /// hills the explicit carve overrides).
+    fn growth_arena(y: i32) -> crate::world::World {
+        let mut w = crate::world::World::new(3, 7);
+        for x in 2..22 {
+            for z in 2..22 {
+                w.set(x, y, z, crate::world::DIRT);
+                w.set(x, y + 1, z, crate::world::AIR);
+                w.set(x, y + 2, z, crate::world::AIR);
+            }
+        }
+        w
+    }
+
+    #[test]
+    fn the_growth_burst_wears_the_spawn_particles_law() {
+        // THE IN-BLOCK LANE (the grower's own walk — force=true): the
+        // count the caller's word speaks (the data verbatim), EVERY
+        // attempt lands (the forced lane never skips), the positions
+        // the block's own bounds keep (x/z the nextDouble lane, y the
+        // shape max-Y's band), the velocity the two 0.02 folds scale.
+        let w = growth_arena(20);
+        let burst = growth_burst((12, 21, 12), 15, 0.5, 1.0, true, &w, &mut rng());
+        assert_eq!(burst.len(), 15, "the forced lane never skips");
+        for p in &burst {
+            assert!((12.0..13.0).contains(&p.x), "x inside the block: {}", p.x);
+            assert!((21.0..22.0).contains(&p.y), "y inside the block: {}", p.y);
+            assert!((12.0..13.0).contains(&p.z), "z inside the block: {}", p.z);
+            assert_eq!(p.kind, ParticleKind::HappyVillager, "the glint sprite");
+            // the effective drift the two folds keep (the gaussian
+            // * 0.02 the spawn walk speaks, the * 0.02 the ctor adds):
+            // the 5-sigma tail the bound covers
+            assert!(p.vx.abs() < 0.0004 * 5.0 && p.vy.abs() < 0.0004 * 5.0
+                && p.vz.abs() < 0.0004 * 5.0, "the drift the folds keep");
+            assert!(p.lifetime >= 4 && p.lifetime <= 100, "the 20/(r*0.8+0.2) band");
+            assert!(p.friction == 0.99 && p.gravity == 0.0, "the sparkle's own tick law");
+        }
+        // the determinism the draw order keeps (the same seed the same
+        // burst — the gaussians, the doubles, the ctor draws)
+        let again = growth_burst((12, 21, 12), 15, 0.5, 1.0, true, &w, &mut rng());
+        for (a, b) in burst.iter().zip(again.iter()) {
+            assert_eq!((a.x, a.y, a.z), (b.x, b.y, b.z));
+            assert_eq!((a.vx, a.vy, a.vz), (b.vx, b.vy, b.vz));
+        }
+    }
+
+    #[test]
+    fn the_growth_spread_band_the_ground_gate_the_skips_keep() {
+        // THE WIDE LANE (the spreader's own walk — force=false): the
+        // band the half-fold opens — x in [x-2.5, x+3.5), y in
+        // [y, y+1) above the anchor — and the FULL floor the gate
+        // keeps alive (every attempt lands: the below block the
+        // DIRT answer speaks).
+        let w = growth_arena(20);
+        // the anchor rides the pos.above() arm the caller spoke: y=21
+        let wide = growth_burst((12, 21, 12), 45, 3.0, 1.0, false, &w, &mut rng());
+        assert_eq!(wide.len(), 45, "the solid floor the gate never skips");
+        for p in &wide {
+            assert!(
+                (9.5..15.5).contains(&p.x),
+                "x inside the [x-2.5, x+3.5) band: {}",
+                p.x
+            );
+            assert!((21.0..22.0).contains(&p.y), "y above the anchor: {}", p.y);
+            assert!((9.5..15.5).contains(&p.z), "z inside the band: {}", p.z);
+        }
+        // THE HOLE (the below cell the AIR answer keeps): the attempts
+        // over the void the gate abandons — fewer particles than the
+        // count, more than none (the rest of the floor stands), and
+        // the SAME seed the SAME skips speak (the determinism).
+        let mut holed = growth_arena(20);
+        for z in 10..15 {
+            holed.set(12, 20, z, crate::world::AIR); // the below column gone
+        }
+        let clipped = growth_burst((12, 21, 12), 45, 3.0, 1.0, false, &holed, &mut rng());
+        assert!(clipped.len() < 45, "the hole the skips speak: {}", clipped.len());
+        assert!(!clipped.is_empty(), "the standing floor still bursts");
+        let clipped_again =
+            growth_burst((12, 21, 12), 45, 3.0, 1.0, false, &holed, &mut rng());
+        assert_eq!(
+            clipped.len(),
+            clipped_again.len(),
+            "the same seed the same gate answers"
+        );
+        // the forced lane the hole ignores (the grower's own truth):
+        // the count the caller's word speaks even over the void
+        let forced = growth_burst((12, 21, 12), 15, 0.5, 1.0, true, &holed, &mut rng());
+        assert_eq!(forced.len(), 15, "the forced lane never reads the ground");
     }
 }

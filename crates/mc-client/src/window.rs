@@ -164,6 +164,7 @@ fn run_join(
                 Vec<[i64; 4]>,
                 Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
+                Vec<crate::world_view::WireGrowthEvent>,
             ),
             String,
         >,
@@ -248,6 +249,7 @@ fn run_join(
             view.model.drain_entity_sounds();
             view.model.drain_world_sounds();
             view.model.drain_arrow_syncs();
+            view.model.drain_growth_events();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -856,6 +858,7 @@ fn run_join(
                             view.model.drain_entity_sounds();
                             view.model.drain_world_sounds();
                             view.model.drain_arrow_syncs();
+                            view.model.drain_growth_events();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -959,6 +962,13 @@ fn run_join(
                                     // echo speaks)
                                     upd.mode_word,
                                     upd.abilities_word,
+                                    // the growth effect's arms ride with
+                                    // them — the bone-meal words the
+                                    // server's use broadcast stream to
+                                    // the particle lane (the burst the
+                                    // render's own law folds, each arm
+                                    // rides exactly one shipped refresh)
+                                    upd.growth_events,
                                 )))
                                 .is_err()
                             {
@@ -1099,6 +1109,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<[i64; 4]>,
                 Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
+                Vec<crate::world_view::WireGrowthEvent>,
             ),
             String,
         >,
@@ -1640,6 +1651,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     tick_samples,
                     mode_word,
                     abilities_word,
+                    growth_events,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // THE GAME-MODE ECHO'S OWN BANK (the audited
@@ -1714,6 +1726,12 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // land at their own positions (the ear's distance law
                     // the packet's own spot feeds — no entity lookup)
                     app.live_world_voices_updated(world_voices);
+                    // the growth effect's lane beside the world's: the
+                    // bone-meal words the server's use broadcast land at
+                    // their own anchors (the burst the render lane's own
+                    // law folds — the happy sparkles the vanilla client
+                    // answers the same packet with)
+                    app.live_growth_events_updated(growth_events);
                     // the scoreboard's lane beside the voices': the
                     // SIDEBAR slot's belief lands verbatim (the rows the
                     // projection sorted and capped — the HUD renders it

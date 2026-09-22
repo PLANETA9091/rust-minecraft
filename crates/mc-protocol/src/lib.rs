@@ -58,6 +58,7 @@ pub use play::{
     encode_player_input, encode_paddle_boat, parse_set_passengers,
     encode_player_abilities, encode_change_game_mode,
     HurtAnimation, PlayerCombatKill, EntitySoundPacket, WorldSoundPacket,
+    LevelEventPacket, GROWTH_EFFECT,
 };
 pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};

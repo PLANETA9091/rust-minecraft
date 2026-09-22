@@ -20859,6 +20859,16 @@ impl App {
                 world.set(hit.pos.0, hit.pos.1, hit.pos.2, kind);
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
+            // THE LEVEL EVENT'S OWN SLOT (the useOn walk's own order —
+            // the growCrop success the `levelEvent(1505, pos, 15)`
+            // follows, the shrink the offsets 85-87 keep after): the
+            // OFFLINE prediction renders the burst itself (the
+            // integrated server's own echo); the networked lane's echo
+            // rides the Level Event packet the server broadcasts (the
+            // same word never bursts twice)
+            if !self.world_is_network {
+                self.play_growth_effect(hit.pos.0, hit.pos.1, hit.pos.2, 15);
+            }
             self.consume_held_item();
             return Some(true);
         }
@@ -20894,11 +20904,129 @@ impl App {
                     );
                     self.world_quads = Some(crate::mesher::mesh_world(world, None));
                 }
+                // THE LEVEL EVENT'S OWN SLOT (the useOn walk's second
+                // arm — the same `levelEvent(1505, pos, 15)` word the
+                // spread walk's success speaks, the consume after): the
+                // OFFLINE lane the burst's own prediction wears, the
+                // networked echo the packet lane's own word keeps
+                if !self.world_is_network {
+                    self.play_growth_effect(hit.pos.0, hit.pos.1, hit.pos.2, 15);
+                }
                 self.consume_held_item();
                 return Some(true);
             }
         }
         None
+    }
+
+    /// THE GROWTH EFFECT'S OWN RENDER (javap the 26.2 chain verbatim:
+    /// `ClientLevel.levelEvent` → `LevelEventHandler.levelEvent` case
+    /// 1505 — `BoneMealItem.addGrowthParticles(level, pos, data)` +
+    /// `playLocalSound(pos, BONE_MEAL_USE, BLOCKS, 1.0F, 1.0F, false)`
+    /// — the level event the client vocabulary the prior rounds
+    /// honestly skipped now speaks). THE BLOCK'S OWN BRANCH (the
+    /// `addGrowthParticles` walk): the anchor cell's state the walk
+    /// reads first, the `instanceof BonemealableBlock` gate the
+    /// GROWER/NEIGHBOR_SPREADER pair answers —
+    /// (a) the CROP family (the wheat ladder the repo's vocabulary
+    ///     wears, `getType` = GROWER the interface default keeps): the
+    ///     particle anchor the `getParticlePos` default keeps (the crop
+    ///     cell itself), the in-block lane `spawnParticleInBlock(pos,
+    ///     data, HAPPY_VILLAGER)` — the count the data word verbatim,
+    ///     the spread pair `(0.5, shape max-Y)` the `CropBlock.SHAPES`
+    ///     law gives (`Block.column(16, 0, age*2+2)` — the max-Y the
+    ///     `(age * 2 + 2) / 16.0` fold answers), the FORCE flag the
+    ///     in-block walk always true;
+    /// (b) the GRASS BLOCK (`getType` = NEIGHBOR_SPREADER the override
+    ///     speaks): the anchor the `getParticlePos` default keeps (the
+    ///     `pos.above()` arm), the wide lane `spawnParticles(pos.above
+    ///     (), data * 3, 3.0, 1.0, false, HAPPY_VILLAGER)` — the `* 3`
+    ///     the imul keeps, the spread the ±(dx·2) band the half-fold
+    ///     opens, the ground gate the force=false lane reads;
+    /// (c) the WATER fall-through (the non-growable else branch the
+    ///     `is(Blocks.WATER)` gate keeps): the wide lane at the anchor
+    ///     itself (no `getParticlePos` the non-growable block never
+    ///     speaks), the same `data * 3` count;
+    /// (d) anything else the switch's default keeps: no burst, the
+    ///     sound still plays (the playLocalSound the case speaks
+    ///     unconditionally).
+    /// THE SOUND: `item.bone_meal.use` the 26.2 handler's own event —
+    /// the positioned lane the world voices' ear law speaks (volume
+    /// 1.0, pitch 1.0, the anchor the ear folds).
+    fn play_growth_effect(&mut self, x: i32, y: i32, z: i32, data: i32) {
+        // THE ANCHOR'S OWN STATE (the getBlockState read the walk
+        // opens — the field borrow ends before the particles land)
+        let world = if self.world_is_network {
+            self.net_world.as_ref()
+        } else {
+            self.offline_world.as_ref()
+        };
+        let Some(world) = world else {
+            return;
+        };
+        let cell = world.get(x, y, z);
+        // THE BLOCK'S OWN BRANCH (the instanceof + the Type switch)
+        if let Some(age) = crate::world::wheat_age(cell) {
+            // (a) THE GROWER LANE: the in-block burst, the shape's own
+            // max-Y the age ladder folds
+            let max_y = (age as f64 * 2.0 + 2.0) / 16.0;
+            let burst = crate::particles::growth_burst(
+                (x, y, z),
+                data.max(0) as usize,
+                0.5,
+                max_y,
+                true,
+                world,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        } else if cell == crate::world::GRASS || cell == crate::world::WATER {
+            // (b) THE NEIGHBOR_SPREADER LANE (the grass block — the
+            // anchor the pos.above() arm keeps) / (c) THE WATER
+            // FALL-THROUGH (the anchor itself — the non-growable block
+            // never speaks a particle pos): the wide burst, the `* 3`
+            // count the imul keeps, the ground gate the force=false
+            // lane reads (the water anchor's own below the gate reads
+            // the same way)
+            let anchor = if cell == crate::world::GRASS {
+                (x, y + 1, z)
+            } else {
+                (x, y, z)
+            };
+            let burst = crate::particles::growth_burst(
+                anchor,
+                (data.max(0) * 3) as usize,
+                3.0,
+                1.0,
+                false,
+                world,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        }
+        // THE SOUND (the playLocalSound the case speaks
+        // unconditionally — volume 1.0, pitch 1.0, the positioned lane)
+        let yaw = self.listener_yaw();
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let dist = ear_distance(ear, x as f64, y as f64, z as f64);
+        let pan = ear_pan(ear, yaw, x as f64, y as f64, z as f64);
+        self.sounds
+            .play_voice_at_pan(self.frame, "item.bone_meal.use", 1.0, 1.0, dist, pan);
+    }
+
+    /// THE GROWTH EFFECT'S OWN WIRE LANE (the Level Event mailbox's
+    /// landing — the arms the worker drained ride exactly one refresh):
+    /// each bone-meal word the server's use broadcast bursts at its own
+    /// anchor (the same walk the offline prediction's press speaks —
+    /// the vanilla client's own echo the integrated server never
+    /// doubles).
+    pub fn live_growth_events_updated(&mut self, events: Vec<crate::world_view::WireGrowthEvent>) {
+        for ev in events {
+            self.play_growth_effect(ev.x, ev.y, ev.z, ev.data);
+        }
     }
 
     /// THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
@@ -43523,6 +43651,225 @@ cow_sound_variant: None,
             app.inventory.items[app.selected_hotbar].1,
             4,
             "the refused walk the stack never shrinks"
+        );
+    }
+
+    #[test]
+    fn the_bone_meal_the_press_the_growth_burst_the_in_block_law_speaks() {
+        // THE GROWTH EFFECT'S OWN OFFLINE PREDICTION (javap the 26.2
+        // chain: useOn's `levelEvent(1505, pos, 15)` → the client's
+        // LevelEventHandler case → `BoneMealItem.addGrowthParticles`):
+        // the crop press the GROWER lane answers — the in-block burst,
+        // the count the data word verbatim (15), the positions the
+        // stage-2 shape's own max-Y band keeps (`(age*2+2)/16 = 6/16`),
+        // the useOn order the sound the shrink's slot BEFORE keeps.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface, c, crate::world::FARMLAND);
+            w.set(c, surface + 1, c, crate::world::WHEAT + 2); // the stage-2 crop
+        }
+        let bone_meal = mc_registry::item_id_by_name("bone_meal")
+            .expect("the bone_meal item row the registry carries");
+        app.inventory.items[app.selected_hotbar] = (bone_meal, 5);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 3.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.particles.is_empty(), "no burst before the press");
+        assert!(app.on_right_press(0, 0), "the grow consumed the press");
+        // THE IN-BLOCK BURST (the grower's own walk): 15 sparkles INSIDE
+        // the crop block, the y band the shape's max-Y keeps — the
+        // POST-GROWTH stage the client's own arrival order reads (the
+        // setBlock's update the levelEvent FOLLOWS on the wire — the
+        // stage-2 press the stage-3 shape answers, `(3*2+2)/16 = 0.5`)
+        assert_eq!(
+            app.particles.len(),
+            15,
+            "the grower's data-verbatim count"
+        );
+        let grown = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .get(c, surface + 1, c);
+        let grown_age = crate::world::wheat_age(grown)
+            .expect("the advanced crop the setBlock's own word speaks");
+        let max_y = (grown_age as f64 * 2.0 + 2.0) / 16.0;
+        for p in &app.particles {
+            assert_eq!(p.kind, crate::particles::ParticleKind::HappyVillager);
+            assert!((c as f64..(c + 1) as f64).contains(&p.x), "x in-block: {}", p.x);
+            assert!((c as f64..(c + 1) as f64).contains(&p.z), "z in-block: {}", p.z);
+            assert!(
+                ((surface + 1) as f64..(surface + 1) as f64 + max_y).contains(&p.y),
+                "y under the post-growth shape: {}",
+                p.y
+            );
+        }
+        // THE SOUND (the playLocalSound the case speaks unconditionally
+        // — the 26.2 handler's own BONE_MEAL_USE event, volume/pitch 1.0)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.bone_meal.use @")),
+            "the bone-meal voice the burst's own case plays"
+        );
+        // the stack the shrink rode (the event's slot the consume
+        // precedes — the useOn offsets the doc keeps)
+        assert_eq!(app.inventory.items[app.selected_hotbar].1, 4);
+    }
+
+    #[test]
+    fn the_bone_meal_the_grass_press_the_wide_burst_the_gate_speaks() {
+        // THE SPREADER'S OWN BURST (the grass press's wide lane —
+        // `spawnParticles(pos.above(), 15 * 3, 3.0, 1.0, false)`): the
+        // 45 attempts the imul keeps, the band the half-fold opens, the
+        // carved floor the ground gate keeps alive (every attempt's
+        // below block the GRASS answer speaks).
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            // the arena the gate reads: the solid floor plane, the air
+            // above (the burst's own 6-wide band the carve covers)
+            for x in (c - 6)..(c + 6) {
+                for z in (c - 6)..(c + 6) {
+                    w.set(x, surface, z, crate::world::GRASS);
+                    w.set(x, surface + 1, z, crate::world::AIR);
+                    w.set(x, surface + 2, z, crate::world::AIR);
+                }
+            }
+        }
+        let bone_meal = mc_registry::item_id_by_name("bone_meal")
+            .expect("the bone_meal item row the registry carries");
+        app.inventory.items[app.selected_hotbar] = (bone_meal, 5);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 3.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the spread consumed the press");
+        // THE WIDE BURST: 45 sparkles the data*3 law speaks, the band
+        // [c-2.5, c+3.5) the 0.5-3.0 half-fold opens, the y band the
+        // anchor's own +1 the pos.above() arm keeps
+        assert_eq!(
+            app.particles.len(),
+            45,
+            "the spreader's data*3 count the solid floor keeps whole"
+        );
+        for p in &app.particles {
+            assert!(
+                ((c as f64 - 2.5)..(c as f64 + 3.5)).contains(&p.x),
+                "x inside the spread band: {}",
+                p.x
+            );
+            assert!(
+                ((c as f64 - 2.5)..(c as f64 + 3.5)).contains(&p.z),
+                "z inside the spread band: {}",
+                p.z
+            );
+            assert!(
+                ((surface + 1) as f64..(surface + 2) as f64).contains(&p.y),
+                "y above the grass: {}",
+                p.y
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.bone_meal.use @")),
+            "the voice the wide lane's case plays"
+        );
+    }
+
+    #[test]
+    fn the_growth_event_the_wire_lane_the_burst_the_double_refuses() {
+        // THE WIRE LANE (the Level Event packet's own echo — the
+        // networked world the server's broadcast answers): the arms
+        // the live lane drains burst at their own anchors (the crop's
+        // in-block count, the grass's wide one), the press lane the
+        // networked world keeps SILENT (the echo the packet alone
+        // speaks — the same word never bursts twice), and a foreign
+        // anchor the default arm keeps (no burst, the sound still
+        // plays — the playLocalSound the case speaks unconditionally).
+        let mut app = App::new(2);
+        {
+            let mut w = crate::world::World::new(2, 11);
+            w.set(10, 25, 10, crate::world::FARMLAND);
+            w.set(10, 26, 10, crate::world::WHEAT + 2); // the stage-2 crop
+            app.net_world = Some(w);
+        }
+        app.world_is_network = true;
+        // THE WIRE ECHO (the crop word): the in-block burst the anchor's
+        // own cell speaks — the net world the reads ride
+        app.live_growth_events_updated(vec![crate::world_view::WireGrowthEvent {
+            x: 10,
+            y: 26,
+            z: 10,
+            data: 15,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            15,
+            "the wire echo's in-block burst the crop anchor speaks"
+        );
+        // the grass word: the wide burst
+        app.net_world = {
+            let mut w = crate::world::World::new(2, 11);
+            let surface = 26;
+            for x in 4..17 {
+                for z in 4..17 {
+                    w.set(x, surface, z, crate::world::GRASS);
+                    w.set(x, surface + 1, z, crate::world::AIR);
+                    w.set(x, surface + 2, z, crate::world::AIR);
+                }
+            }
+            Some(w)
+        };
+        app.live_growth_events_updated(vec![crate::world_view::WireGrowthEvent {
+            x: 10,
+            y: 26,
+            z: 10,
+            data: 15,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            60,
+            "the wire echo's wide burst rides after the crop word's own 15"
+        );
+        // THE FOREIGN ANCHOR (the stone cell the switch's default keeps):
+        // no burst — the sound still lands (the earlier bursts the
+        // clear sweeps before the fresh word lands)
+        app.particles.clear();
+        let before = app.sounds.events.len();
+        app.net_world = {
+            let mut w = crate::world::World::new(2, 11);
+            w.set(5, 5, 5, crate::world::STONE);
+            Some(w)
+        };
+        app.live_growth_events_updated(vec![crate::world_view::WireGrowthEvent {
+            x: 5,
+            y: 5,
+            z: 5,
+            data: 15,
+        }]);
+        assert!(
+            app.particles.is_empty(),
+            "the foreign anchor no burst speaks"
+        );
+        assert!(
+            app.sounds.events.len() > before,
+            "the voice the unconditional case still plays"
         );
     }
 

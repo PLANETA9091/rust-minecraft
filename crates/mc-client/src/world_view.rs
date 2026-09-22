@@ -417,6 +417,13 @@ pub struct SnapshotView {
     /// holds (the frame thread's installer the handlePlayerAbilities
     /// walk wears — the idempotent re-bank the newest word keeps).
     pub abilities_word: Option<mc_protocol::play::PlayerAbilitiesWord>,
+    /// The growth effect's PENDING ARMS — the Level Event mailbox the
+    /// model resolved (the bone-meal words the server's use broadcasts,
+    /// [`mc_protocol::play::GROWTH_EFFECT`] the vocabulary speaks):
+    /// shipped once with the refresh that carried them (the worker's
+    /// own drain empties the mailbox after — each arm rides exactly one
+    /// ship), the render lane's own law folds the particle burst.
+    pub growth_events: Vec<WireGrowthEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -448,6 +455,19 @@ pub struct WireWorldVoice {
     pub z: f64,
     pub volume: f32,
     pub pitch: f32,
+}
+
+/// One wire GROWTH EFFECT arm — the Level Event packet's own landing
+/// (the bone-meal words the `minecraft:level_event` traffic carries,
+/// [`mc_protocol::play::GROWTH_EFFECT`] the render lane speaks): the
+/// event's anchor block + the data word, verbatim (the count law's
+/// own inputs — the burst the render lane folds from them).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireGrowthEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    pub data: i32,
 }
 
 /// The DisplaySlot id the sidebar renders from (the
@@ -2234,6 +2254,9 @@ pub fn materialize_snapshot_view(
         // ClientboundPlayerAbilitiesPacket the play stream's own lane
         // banks (the login word the same stream speaks)
         abilities_word: None,
+        // and no growth words (the join snapshot carries no bone-meal
+        // traffic — the empty mailbox the render lane skips)
+        growth_events: Vec::new(),
     }
 }
 
@@ -2570,6 +2593,22 @@ impl LiveView {
                 })
             })
             .collect();
+        // the growth effect's own projection (the mailbox verbatim — the
+        // arms carry no name the projection would resolve, the anchor +
+        // the data word the render lane's own law reads): each bone-meal
+        // word ships once with this view, the worker's drain empties the
+        // mailbox after
+        let growth_events = self
+            .model
+            .growth_events
+            .iter()
+            .map(|arm| WireGrowthEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+            })
+            .collect();
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
@@ -2648,6 +2687,10 @@ impl LiveView {
                 // the abilities echo rides the pose-less arm too — the
                 // server's word the session's own truth
                 abilities_word: self.model.abilities_word().cloned(),
+                // the growth effect's arms ride the pose-less arm too —
+                // the bone-meal words are the connection's own traffic,
+                // not the pose's
+                growth_events,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -2710,6 +2753,10 @@ impl LiveView {
             // word the session's own truth (the idempotent re-bank the
             // newest word keeps)
             abilities_word: self.model.abilities_word().cloned(),
+            // the growth effect's arms ride every refresh too — the
+            // bone-meal words follow the mailbox exactly like the
+            // world's own voices do
+            growth_events,
         }
     }
 }
