@@ -2332,6 +2332,35 @@ pub fn is_dark_enough_to_spawn(world: &World, x: i32, y: i32, z: i32, rng: &mut 
     raw <= rng.next_int(MONSTER_SPAWN_LIGHT_TEST_SPAN as u64)
 }
 
+/// THE CREATURE SPOT'S OWN BRIGHTNESS CEILING (the 26.2 jar's own
+/// `Animal.isBrightEnoughToSpawn` answer: `getRawBrightness(pos, 0) >
+/// 8` — the FULL raw the darkness-0 arg answers, max(block, sky) the
+/// stored layers the night never subtracts — the surface the every-
+/// spot pass wears, the DAY AND THE NIGHT the same brightness keeps
+/// (the midnight surface the raw 15 the monster gate's max-local
+/// never shares), the deep shade the raw's own ceiling refuses — the
+/// 8-layer canopy the sky 7 the spot loses, the raw 8 the edge).
+pub const ANIMAL_SPAWN_RAW_BRIGHTNESS: i32 = 8;
+
+/// `Animal.checkAnimalSpawnRules` — the CREATURE SPOT'S OWN RULES the
+/// 26.2 bytecode speaks in the ONE source the pack loop and the law
+/// walks both ask: the below-cell the `#animals_spawnable_on` tag
+/// answers (the json's own single value — the grass block), the two
+/// free cells the head-room keeps, THE BRIGHTNESS GATE the raw > 8
+/// the live grid answers ([`spawn_cell_light`] the read, the fallback
+/// the column word the gridless world keeps — the RNG the gate never
+/// spends, the stream the spot's own verdict never moves).
+pub fn animal_spot_ok(world: &World, x: i32, y: i32, z: i32) -> bool {
+    if world.get(x, y - 1, z) != crate::world::GRASS
+        || crate::body::solid(world, x, y, z)
+        || crate::body::solid(world, x, y + 1, z)
+    {
+        return false;
+    }
+    let (sky, block) = spawn_cell_light(world, x, y, z);
+    (block as i32).max(sky as i32) > ANIMAL_SPAWN_RAW_BRIGHTNESS
+}
+
 /// What the zombie's tick wants the world to do — the Mob.aiStep's
 /// out-edges (the attack the player's hurt pipeline answers, the
 /// ambient voice the Mob.baseTick's own gate speaks).
@@ -7785,15 +7814,14 @@ pub fn try_spawn_creatures(
             if dx * dx + dz * dz <= 576.0 {
                 continue;
             }
-            // THE SPOT'S OWN RULES (checkAnimalSpawnRules: the below
-            // the ANIMALS_SPAWNABLE_ON tag the grass block answers,
-            // the two free cells the head-room keeps — the fixed y
-            // the spot never rescans, the slope the same honesty
-            // refuses)
-            if world.get(x, ay - 1, z) != crate::world::GRASS
-                || crate::body::solid(world, x, ay, z)
-                || crate::body::solid(world, x, ay + 1, z)
-            {
+            // THE SPOT'S OWN RULES ([`animal_spot_ok`] — the
+            // checkAnimalSpawnRules walk the ONE source speaks: the
+            // below the ANIMALS_SPAWNABLE_ON tag the grass block
+            // answers, the two free cells the head-room keeps, THE
+            // BRIGHTNESS GATE the raw > 8 the live grid answers — the
+            // fixed y the spot never rescans, the slope the same
+            // honesty refuses)
+            if !animal_spot_ok(world, x, ay, z) {
                 continue;
             }
             let id = *next_id;
@@ -18909,4 +18937,94 @@ mod tests {
             "the sit the feet never move"
         );
     }
+
+    /// THE CREATURE SPOT THE BRIGHTNESS GATE THE TAG WEARS (dev-34 —
+    /// the checkAnimalSpawnRules the ONE source pins): the grass-below
+    /// the tag's own single value keeps (the dirt the spot refuses),
+    /// the two free cells the head-room keeps, THE BRIGHTNESS GATE the
+    /// raw > 8 the live grid answers — the LIT MIDNIGHT surface the
+    /// raw 15 the every-spot pass wears (the darkness-0 arg the raw
+    /// law the monster gate's max-local never shares — the animals the
+    /// midnight surface the day's own brightness speak), the WIDE
+    /// canopy the horizontal seep the flood's own honesty carries (the
+    /// 17x17 the raw 7 the ceiling refuses, the 13x13 the raw 9 the
+    /// pass keeps), the RNG the gate never spends.
+    #[test]
+    fn the_creature_spot_the_brightness_gate_the_tag_wears() {
+        // the lit midnight world: the surface the raw 15 — the spot
+        // the every-law pass wears (the night the creature lane the
+        // brightness alone decides)
+        let mut world = jockey_flat_world();
+        world.day_tick = Some(18_000);
+        world.relight();
+        let (sky, block) = spawn_cell_light(&world, 40, 9, 40);
+        assert_eq!((sky, block), (15, 0), "the open surface the raw layers keep");
+        assert!(
+            animal_spot_ok(&world, 40, 9, 40),
+            "the midnight surface the raw 15 the creature spot admits"
+        );
+        // THE TAG: the dirt below the spot refuses
+        world.set(40, 8, 40, crate::world::DIRT);
+        assert!(
+            !animal_spot_ok(&world, 40, 9, 40),
+            "the dirt the tag's own single value refuses"
+        );
+        world.set(40, 8, 40, crate::world::GRASS);
+        // THE HEAD-ROOM: the wall at the feet the spot refuses
+        world.set(40, 9, 40, crate::world::STONE);
+        assert!(
+            !animal_spot_ok(&world, 40, 9, 40),
+            "the wall the head-room refuses"
+        );
+        world.set(40, 9, 40, crate::world::AIR);
+        // THE SHADE: the DEEP canopy the flood's own attenuation wears
+        // (the below-15 light the -1-per-step law the vanilla flood
+        // speaks — the vertical path the leaves' own layers the raw
+        // subtracts: 4 layers the raw 8 the ceiling refuses, the 3
+        // layers the raw 9 the pass keeps; the 17x17 width the
+        // horizontal seep the vertical's own verdict never lets win)
+        for dy in 0..4i32 {
+            for dx in -8i32..=8 {
+                for dz in -8i32..=8 {
+                    world.set(40 + dx, 12 + dy, 40 + dz, crate::world::LEAVES);
+                }
+            }
+        }
+        world.relight();
+        let (shade_sky, shade_block) = spawn_cell_light(&world, 40, 9, 40);
+        assert_eq!(
+            (shade_sky, shade_block),
+            (8, 0),
+            "the 4-layer canopy the flood's own 15-7 the grid keeps"
+        );
+        assert!(
+            !animal_spot_ok(&world, 40, 9, 40),
+            "the deep shade the raw ceiling refuses"
+        );
+        for dy in 0..4i32 {
+            for dx in -8i32..=8 {
+                for dz in -8i32..=8 {
+                    world.set(40 + dx, 12 + dy, 40 + dz, crate::world::AIR);
+                }
+            }
+        }
+        for dy in 0..3i32 {
+            for dx in -6i32..=6 {
+                for dz in -6i32..=6 {
+                    world.set(40 + dx, 12 + dy, 40 + dz, crate::world::LEAVES);
+                }
+            }
+        }
+        world.relight();
+        let (thin_sky, _) = spawn_cell_light(&world, 40, 9, 40);
+        assert_eq!(
+            thin_sky, 9,
+            "the 3-layer canopy the flood's own raw 9 the grid keeps"
+        );
+        assert!(
+            animal_spot_ok(&world, 40, 9, 40),
+            "the thin shade the raw 9 the spot admits"
+        );
+    }
+
 }
