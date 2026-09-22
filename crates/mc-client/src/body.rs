@@ -263,40 +263,29 @@ fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64)
     (x - h, y, z - h, x + h, y + height, z + h)
 }
 
-/// The solid predicate — the clip lane's own (the fluids never decide
-/// the hit, the air is the air). The drop lane's un-stuck and the
-/// item physics speak the same law. LAVA joins the fluids (the lava
-/// lane: the body wades INTO it, the fire laws answer). WHEAT passes
-/// (the 15th audit — the `.noCollision()` row the Blocks clinit
-/// speaks: the body walks THROUGH the crop, the vanilla's own law).
+/// THE SOLID PREDICATE THE SHAPE TABLE ITSELF ANSWERS (autopush-420 —
+/// the hand-list the families grew one round at a time the
+/// [`crate::world::collision_shape`] table retires: ONE source the
+/// placement's `isUnobstructed` walk and the physics walk BOTH speak,
+/// the divergence the two vocabularies never keep again — the hull
+/// lane's own visual predicate the vanilla getShape/getCollisionShape
+/// split still keeps). The EMPTY rows the body walks through — the
+/// air, the fluids (LAVA joins: the body wades INTO it, the fire laws
+/// answer), the whole AGE LADDER the farmer's field keeps, the
+/// FLOWER/TUFT/DOUBLE-PLANT families, the torch stick, and the LEAF
+/// LITTER row the unification GAINS (the ground cover the hand-list
+/// never carried — the vanilla `.noCollision()` row the table already
+/// banked, the player the cover walked through it kept). The COLUMN
+/// rows (the farmland, the dirt path) and the full-cube roster the
+/// solid verdict keeps — the 15/16 band the full-cell sweep the
+/// collision vocabulary absorbs (the documented simplification the
+/// farmland kind speaks). The drop lane's un-stuck and the item
+/// physics speak the same law.
 pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
-    let id = world.get(x, y, z);
-    // the whole AGE LADDER the pass keeps (the farmer walks through
-    // his field's every stage — the noCollision family the growth
-    // round extends); the FLOWER FAMILY the same law keeps (the
-    // autopush-411 round — the `.noCollision()` row the dandelion/
-    // poppy Properties chains speak, the player walks the blooms
-    // through); the GRASS TUFT FAMILY the same law keeps (the
-    // autopush-412 round — the `.noCollision()` rows the
-    // short_grass/bush chains speak, the player walks the tufts
-    // through)
-    id != AIR
-        && id != WATER
-        && id != crate::world::LAVA
-        && !crate::world::is_wheat(id)
-        && !crate::world::is_flower(id)
-        && !crate::world::is_tuft(id)
-        // THE DOUBLE PLANT FAMILY the pass keeps (the autopush-413
-        // round — the `.noCollision()` rows the tall_grass/large_fern
-        // chains speak, the player walks the pair through)
-        && !crate::world::is_double_plant(id)
-        // THE TORCH the pass keeps (the dev-32 round — javap
-        // BaseTorchBlock's clinit: `Block.column(4.0, 0.0, 10.0)` the
-        // getShape row returns, but the SHAPE is the CLIP/outline box
-        // alone — the Properties chain's `.noCollision()` row the
-        // generated blocks table banks, the player walks the stick
-        // through)
-        && !crate::world::is_torch(id)
+    !matches!(
+        crate::world::collision_shape(world.get(x, y, z)),
+        crate::world::CollisionShape::Empty
+    )
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape
@@ -2629,6 +2618,108 @@ mod tests {
             b2.tick(&w2, false);
         }
         assert!(b2.x < 5.0, "the stone wall the march stops at: x={}", b2.x);
+    }
+
+    /// THE PREDICATE THE TABLE ITSELF ANSWERS (autopush-420 — the
+    /// single-source law: the solid walk consumes the shape table the
+    /// placement's `isUnobstructed` walk already wears, the two walks
+    /// the divergence never keeps again). Every EMPTY row the
+    /// walk-through verdict keeps — the LEAF LITTER row the
+    /// unification GAINS (the ground cover the old hand-list SOLID
+    /// kept, the drift the table retires) — and the COLUMN and FULL
+    /// rows the solid verdict keeps.
+    #[test]
+    fn the_solid_predicate_wears_the_shape_table() {
+        let mut w = flat_world();
+        // THE EMPTY ROWS: the whole noCollision family the table
+        // banks — the probe rides the cell (1,1,1), each kind the
+        // verdict wears
+        for id in [
+            crate::world::WATER,
+            crate::world::LAVA,
+            crate::world::TORCH,
+            crate::world::DANDELION,
+            crate::world::POPPY,
+            crate::world::AZURE_BLUET,
+            crate::world::OXEYE_DAISY,
+            crate::world::CORNFLOWER,
+            crate::world::ORANGE_TULIP,
+            crate::world::RED_TULIP,
+            crate::world::PINK_TULIP,
+            crate::world::WHITE_TULIP,
+            crate::world::SHORT_GRASS,
+            crate::world::BUSH,
+            crate::world::TALL_GRASS,
+            crate::world::TALL_GRASS_UPPER,
+            crate::world::LARGE_FERN,
+            crate::world::LARGE_FERN_UPPER,
+            crate::world::LEAF_LITTER,
+            crate::world::WHEAT,
+            crate::world::WHEAT_STAGE7,
+        ] {
+            w.set(1, 1, 1, id);
+            assert!(
+                !solid(&w, 1, 1, 1),
+                "the empty row {} the walk-through keeps",
+                crate::world::NAME_OF[id as usize]
+            );
+        }
+        // THE COLUMN AND FULL ROWS: the solid verdict the collision
+        // keeps (the farmland/dirt path the 15/16 band the full-cell
+        // sweep absorbs, the roster the default registration wears)
+        for id in [
+            crate::world::FARMLAND,
+            crate::world::DIRT_PATH,
+            crate::world::STONE,
+            crate::world::GRASS,
+            crate::world::LOG,
+            crate::world::CRAFTING_TABLE,
+        ] {
+            w.set(1, 1, 1, id);
+            assert!(
+                solid(&w, 1, 1, 1),
+                "the solid row {} keeps",
+                crate::world::NAME_OF[id as usize]
+            );
+        }
+    }
+
+    /// THE GROUND COVER'S OWN WALK-THROUGH (autopush-420 — the leaf
+    /// litter row the shape-table unification gains): the litter cell
+    /// the body marches straight through AND the fall the floor's own
+    /// top wears — the cover never lifts the feet (the vanilla
+    /// `.noCollision()` row the table banks), the stone the march the
+    /// face stops (the contrast the collision law keeps).
+    #[test]
+    fn the_leaf_litter_never_blocks_the_body() {
+        // THE MARCH: the litter ON the floor the walk path holds, the
+        // body the cover cell straight through (the torch's own march
+        // the same lane speaks)
+        let mut w = flat_world();
+        w.set(5, 1, 5, crate::world::LEAF_LITTER);
+        assert!(!solid(&w, 5, 1, 5), "the litter the walk-through verdict keeps");
+        let mut b = PlayerBody::new(2.5, 1.0, 5.5, 270.0, 0.0); // facing +x
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(b.x > 5.5, "the litter cell the body walked through: x={}", b.x);
+        // THE FALL'S OWN LANDING: the body dropped onto the litter
+        // cell the FLOOR'S own top wears (y=1.0) — the cover the feet
+        // never lifts, the y=2.0 landing the old full-cube verdict
+        // spoke
+        let mut w2 = flat_world();
+        w2.set(5, 1, 5, crate::world::LEAF_LITTER);
+        let mut b2 = PlayerBody::new(5.5, 5.0, 5.5, 0.0, 0.0);
+        for _ in 0..60 {
+            b2.tick(&w2, false);
+        }
+        assert!(
+            (b2.y - 1.0).abs() < 1e-9,
+            "the fall the floor's top wears: y={}",
+            b2.y
+        );
     }
 
     #[test]
