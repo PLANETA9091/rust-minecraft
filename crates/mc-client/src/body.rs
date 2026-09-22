@@ -273,11 +273,15 @@ pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     let id = world.get(x, y, z);
     // the whole AGE LADDER the pass keeps (the farmer walks through
     // his field's every stage — the noCollision family the growth
-    // round extends)
+    // round extends); the FLOWER FAMILY the same law keeps (the
+    // autopush-411 round — the `.noCollision()` row the dandelion/
+    // poppy Properties chains speak, the player walks the blooms
+    // through)
     id != AIR
         && id != WATER
         && id != crate::world::LAVA
         && !crate::world::is_wheat(id)
+        && !crate::world::is_flower(id)
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape

@@ -20450,6 +20450,27 @@ impl App {
         if hits_player {
             return false; // the vanilla refuses the placement into itself
         }
+        // THE FLOWER'S OWN SURVIVAL LAW (javap VegetationBlock.canSurvive
+        // the 26.2 jar speaks — the `mayPlaceOn(level.getBlockState(
+        // pos.below()))` the below cell reads, the SUPPORTS_VEGETATION
+        // tag the dirt/grass_blocks/farmland union resolves: the
+        // client's own palette the grass_block/dirt/farmland subset
+        // names — the podzol/coarse/mud/moss rows the vocabulary never
+        // speaks). The refusal the placement's own canPlace gate keeps
+        // — the press the PASS verdict carries, the item lanes follow.
+        if crate::world::is_flower(block) {
+            let below = self
+                .active_world()
+                .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
+            if !matches!(
+                below,
+                Some(crate::world::GRASS)
+                    | Some(crate::world::DIRT)
+                    | Some(crate::world::FARMLAND)
+            ) {
+                return false;
+            }
+        }
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
@@ -50371,6 +50392,78 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.starts_with("entity.generic.explode @")),
             "the boom voice the consumer speaks"
+        );
+    }
+
+    #[test]
+    fn the_flower_placement_wears_the_can_survive_law() {
+        // THE SUPPORT TAG'S OWN WALK (javap VegetationBlock.canSurvive +
+        // mayPlaceOn the 26.2 jar speaks): the held dandelion the
+        // grass cell places (the below cell the SUPPORTS_VEGETATION
+        // subset answers), the stone cell the canSurvive refusal keeps
+        // (the press the PASS verdict carries), the mined bloom the
+        // item the loot row drops.
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/dandelion"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE GRASS SURFACE'S OWN SWAP (the hit cell the surface keeps —
+        // the below the canSurvive gate answers)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the dandelion on grass the placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::DANDELION,
+            "the placed bloom the placement lane wears"
+        );
+        // THE STONE'S OWN REFUSAL (the hit cell the stone surface keeps —
+        // the below-cell read the SUPPORTS_VEGETATION subset refuses)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/dandelion"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::STONE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the dandelion on stone the canSurvive refusal keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the placement cell the refusal guards"
+        );
+        // THE MINE'S OWN DROP (the loot row the dig lane rolls — the
+        // bloom the item the survives gate answers)
+        let pools = mc_registry::generated::block_drops::drops("dandelion")
+            .expect("the dandelion's own loot row");
+        assert_eq!(pools.len(), 1, "the single pool the drop speaks");
+        assert_eq!(pools[0].entries.len(), 1, "the self entry the pool keeps");
+        assert_eq!(pools[0].entries[0].item, "dandelion", "the self drop");
+        assert_eq!(pools[0].entries[0].chance, 1.0, "the definite pass");
+        // THE PLACEABLE LOOKUP (the BlockItem the generic lane names)
+        assert_eq!(
+            crate::world::World::placeable_block("dandelion"),
+            Some(crate::world::DANDELION),
+            "the flower the placeable lookup names"
         );
     }
 

@@ -119,7 +119,11 @@ impl Default for HullPhys {
 /// `.noCollision()` row the Blocks clinit speaks, the hull floats
 /// THROUGH the crop's every stage)
 fn solid(id: u16) -> bool {
-    id != AIR && id != WATER && id != LAVA && !crate::world::is_wheat(id)
+    id != AIR
+        && id != WATER
+        && id != LAVA
+        && !crate::world::is_wheat(id)
+        && !crate::world::is_flower(id)
 }
 
 /// the strict intersect the block lane's own shape keeps (the AABB

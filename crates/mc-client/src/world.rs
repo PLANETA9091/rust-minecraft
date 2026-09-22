@@ -144,9 +144,21 @@ pub const CRAFTING_TABLE: u16 = 37;
 /// the blast resistance table speaks (0.0 — the ray marches through),
 /// the `.noCollision()`-less solid cube the collision walks stand on.
 pub const TNT: u16 = 38;
+/// THE PLAINS' OWN FLOWER KINDS (the autopush-411 round — the atlas
+/// RUNTIME_PALETTE's 39/40 indices): the dandelion the flower_plain
+/// feature's default state wears, the poppy the high-chance third's own
+/// first row keeps (javap the jar's worldgen json — the
+/// noise_threshold_provider the 0.33333334 high_chance speaks). The
+/// cross model's two diagonal planes the mesher's flower path meshes
+/// (the block/cross bake — shade false, no AO), the noCollision +
+/// instabreak + grass sound rows the Blocks clinit's own chain keeps,
+/// the SUPPORTS_VEGETATION canSurvive the placement arm answers (the
+/// honest subset the palette's grass_block/dirt/farmland rows name).
+pub const DANDELION: u16 = 39;
+pub const POPPY: u16 = 40;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 39] = [
+pub const NAME_OF: [&str; 41] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -154,7 +166,15 @@ pub const NAME_OF: [&str; 39] = [
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
     "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
+    "dandelion", "poppy",
 ];
+
+/// The plains' own FLOWER FAMILY — the two cross kinds the decorate
+/// pass plants (the mesher's non-cube family the cross path meshes,
+/// the collision/clip/solid lanes the noCollision law keeps).
+pub fn is_flower(id: u16) -> bool {
+    (DANDELION..=POPPY).contains(&id)
+}
 
 /// The crop's own AGE FAMILY — the wheat kinds the ladder wears
 /// (WHEAT..=WHEAT_STAGE7, the ages 0..7 the blockstate property
@@ -1114,6 +1134,39 @@ impl World {
                 }
             }
         }
+        // THE PLAINS' OWN FLOWER PATCH (the flower_plain placed feature's
+        // honest stand-in — javap the jar's worldgen json the noise
+        // machinery the client's own hash lane never carries): every
+        // above-water grass column rolls (the tree roll's own hash
+        // precedent, the seed's own salt), the pass the trees AFTER
+        // walks (the trunk's own cell the AIR gate refuses — the flowers
+        // the canopy's shade never refuses, the vanilla's own under-tree
+        // blooms keep). The KIND the noise_threshold_provider's own
+        // word answers: the default dandelion, the 0.33333334
+        // high-chance third the poppy first row keeps (the azure
+        // bluet/oxeye daisy/cornflower/tulip rows the palette never
+        // names — the honest two-flower subset keeps).
+        for wx in 0..n {
+            for wz in 0..n {
+                let top = self.height(wx, wz);
+                if top <= WATER_LEVEL {
+                    continue; // the beach/water columns the patch never plants
+                }
+                let roll =
+                    hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F10) % 83;
+                if roll != 0 {
+                    continue;
+                }
+                let kind = if hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F11) % 3 == 0 {
+                    POPPY
+                } else {
+                    DANDELION
+                };
+                if self.get(wx, top + 1, wz) == AIR && self.get(wx, top, wz) == GRASS {
+                    self.set(wx, top + 1, wz, kind);
+                }
+            }
+        }
     }
 
     fn tree(&mut self, wx: i32, ground: i32, wz: i32) {
@@ -1185,6 +1238,7 @@ mod tests {
         assert_eq!(banked[8 + 16], 1);
         // chunk (0,1)'s center (8, 24): sqrt(128^2 + 16^2) — beyond
         assert_eq!(banked[16], 0);
+
         // the far corner (15,15)'s center (248, 248): beyond
         assert_eq!(banked[15 + 15 * 16], 0);
         // the SECOND tick banks again (the cumulative walk the
@@ -1200,6 +1254,73 @@ mod tests {
         net.inhabited = None;
         net.tick_inhabited(8.0, 8.0);
         assert!(net.inhabited.is_none());
+    }
+
+    /// THE PLAINS' OWN FLOWER PATCH (the flower_plain placed feature's
+    /// honest stand-in — the decorate pass the generate walk serves):
+    /// the deterministic seed replay the same world wears, the blooms
+    /// the grass cells ALONE carry (the beach/water columns the patch
+    /// never plants), the placement the AIR gate keeps (the trunk's own
+    /// cell the tree lanes never lose), the KIND the
+    /// noise_threshold_provider's own word answers — the default
+    /// dandelion, the 0.33333334 high-chance third the poppy row keeps.
+    #[test]
+    fn the_flower_patch_wears_the_decorate_law() {
+        let w = World::new(2, 42);
+        let replay = World::new(2, 42);
+        assert_eq!(w, replay, "the seed's replay the same world wears");
+        let mut dandelions = 0;
+        let mut poppies = 0;
+        for x in 0..w.size_blocks() {
+            for z in 0..w.size_blocks() {
+                for y in 0..w.size_blocks() {
+                    let id = w.get(x, y, z);
+                    if !is_flower(id) {
+                        continue;
+                    }
+                    assert!(
+                        id == DANDELION || id == POPPY,
+                        "the palette's own two kinds the roll picks"
+                    );
+                    // THE SUPPORT'S OWN GATE (the below cell the grass
+                    // block keeps — the beach/water columns the patch
+                    // never plants)
+                    assert_eq!(
+                        w.get(x, y - 1, z),
+                        GRASS,
+                        "the bloom the grass cell alone wears"
+                    );
+                    assert!(y > WATER_LEVEL);
+                    if id == DANDELION {
+                        dandelions += 1;
+                    } else {
+                        poppies += 1;
+                    }
+                }
+            }
+        }
+        // the density band (the ~2-chunk world's above-water grass
+        // columns × the 1/83 roll — the handful the patch answers)
+        assert!(
+            dandelions + poppies >= 1 && dandelions + poppies <= 12,
+            "the patch density the band keeps: {} blooms",
+            dandelions + poppies
+        );
+        assert!(dandelions >= 1, "the default state the noise provider wears");
+    }
+
+    /// THE SUPPORT TAG'S OWN SUBSET (javap VegetationBlock.mayPlaceOn
+    /// the SUPPORTS_VEGETATION tag read — the dirt/grass_blocks/
+    /// farmland union the palette's own rows name): the two flower
+    /// kinds the family fn answers, everything else refuses.
+    #[test]
+    fn the_support_tag_subset_wears_the_placeable_rows() {
+        assert!(is_flower(DANDELION));
+        assert!(is_flower(POPPY));
+        assert!(!is_flower(GRASS));
+        assert!(!is_flower(STONE));
+        assert!(!is_flower(WHEAT));
+        assert!(!is_flower(TNT));
     }
 
     /// A controlled flat world: one chunk, a stone slab at y=8, the

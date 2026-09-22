@@ -87,6 +87,10 @@ fn is_transparent(kind: u16) -> bool {
         // farmland's top face under ANY stage draws — the same
         // noCollision family the 15th audit and the growth round speak)
         || crate::world::is_wheat(kind)
+        // the FLOWER FAMILY the same verdict keeps (the autopush-411
+        // round — the cross planes non-occluding, no AO, the grass
+        // under the bloom draws)
+        || crate::world::is_flower(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -694,7 +698,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // FACE_TILES row the stage's own wheat_stageN tile
                 // speaks (the growth walk's setBlock the re-mesh
                 // answers, the stage's pixels the ladder's art carries)
-                if crate::world::is_wheat(id) {
+                if crate::world::is_wheat(id) || crate::world::is_flower(id) {
                     let tile = if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
                     } else {
@@ -763,6 +767,69 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // faces: the pair of cube-face directions its normal
                     // axis carries (x-planes: west+east; z-planes:
                     // north+south), the y extent the -1/16 shift keeps.
+                    // THE FLOWER PATH'S OWN CROSS (the autopush-411 round
+                    // — the block/cross bake the 45° rotY + rescale fold
+                    // speaks): the two diagonal planes the element's own
+                    // from/to inset keeps — (0.8, ·, 0.8) -> (15.2, ·,
+                    // 15.2) and its mirror — each emitting BOTH windings
+                    // (the raster culls one per view side, the vanilla's
+                    // own two faces per plane draw). `shade: false` —
+                    // no FACE_SHADE term, the cell light alone
+                    // multiplies; the uv the full sprite rides (the
+                    // mirrored side cancels the reversed walk — the
+                    // texture reads the same from both sides).
+                    if crate::world::is_flower(id) {
+                        let a = 0.8 / 16.0;
+                        let b = 15.2 / 16.0;
+                        let diagonals: [[(f32, f32); 2]; 2] = [
+                            [(a, a), (b, b)], // the first element's bake
+                            [(a, b), (b, a)], // the second element's mirror
+                        ];
+                        for &[(px0, pz0), (px1, pz1)] in &diagonals {
+                            for &rev in &[false, true] {
+                                let mut pts = [[0f32; 3]; 4];
+                                let mut colors = [[0f32; 3]; 4];
+                                let mut uvs = [[0f32; 2]; 4];
+                                let mut corners = [
+                                    (px0, 0.0f32, pz0, 0.0f32),
+                                    (px1, 0.0f32, pz1, 1.0f32),
+                                    (px1, 1.0f32, pz1, 1.0f32),
+                                    (px0, 1.0f32, pz0, 0.0f32),
+                                ];
+                                if rev {
+                                    corners.reverse();
+                                }
+                                for (i, &(fx, fy, fz, u)) in corners.iter().enumerate() {
+                                    pts[i] =
+                                        [wx as f32 + fx, wy as f32 + fy, wz as f32 + fz];
+                                    uvs[i] = [u, 1.0 - fy];
+                                    let lm = lightmap_combine(
+                                        cell_sky,
+                                        cell_block,
+                                        sky_factor,
+                                        sky_tint,
+                                        ambient,
+                                        block_tint,
+                                        night_vision,
+                                        world.night_vision_factor,
+                                    );
+                                    colors[i] = [
+                                        base[0] * lm[0],
+                                        base[1] * lm[1],
+                                        base[2] * lm[2],
+                                    ];
+                                }
+                                out.push(Quad {
+                                    pts,
+                                    colors,
+                                    uvs,
+                                    tile,
+                                    translucent: false,
+                                });
+                            }
+                        }
+                        continue;
+                    }
                     let planes: [(u8, f32, bool); 4] = [
                         (0, 4.0 / 16.0, false),
                         (0, 12.0 / 16.0, true),
@@ -2264,6 +2331,67 @@ mod tests {
         // top: u=x, v=z (north at texture top); bottom mirrors v
         assert_eq!(face_uv(2, [0.25, 1.0, 0.75]), [0.25, 0.75]);
         assert_eq!(face_uv(3, [0.25, 0.0, 0.75]), [0.25, 0.25]);
+    }
+
+    #[test]
+    fn the_flower_cross_wears_the_bake_law() {
+        // THE PLAINS' OWN CROSS (the autopush-411 round — the block/
+        // cross bake the 45° rotY + rescale fold speaks): the flower
+        // cell the 4 quads wear (the two diagonal planes × the two
+        // windings), the corners the from/to inset keeps, the uv the
+        // full sprite rides, the tile the flower's own atlas row banks.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::DANDELION);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let a = 0.8 / 16.0;
+        let b = 15.2 / 16.0;
+        let flower: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                // the vertical span (the stone's own top face at y=9 the
+                // any-10 filter never rides)
+                quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
+                    && quad.pts.iter().any(|p| p[1] == 10.0)
+            })
+            .collect();
+        assert_eq!(flower.len(), 4, "the two planes the two windings wear");
+        for quad in &flower {
+            for p in &quad.pts {
+                let (fx, fz) = (p[0] - 8.0, p[2] - 8.0);
+                assert!(
+                    (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
+                    "the x the diagonal corner inset keeps: {fx}"
+                );
+                assert!(
+                    (fz - a).abs() < 1e-6 || (fz - b).abs() < 1e-6,
+                    "the z the diagonal corner inset keeps: {fz}"
+                );
+                // THE DIAGONAL'S OWN PAIR (the plane A the (0.8, 0.8) ->
+                // (15.2, 15.2) walk keeps, the plane B the mirrored run
+                // answers — the rescale fold the 45° rotation undoes)
+                assert!(
+                    (fx - fz).abs() < 1e-6 || (fx + fz - 1.0).abs() < 1e-6,
+                    "the cross plane the diagonal runs: {fx} vs {fz}"
+                );
+            }
+            // the uv the full sprite (u spans 0..1, v spans 0..1)
+            let u_span = quad.uvs.iter().map(|c| c[0]).fold(f32::MIN, f32::max)
+                - quad.uvs.iter().map(|c| c[0]).fold(f32::MAX, f32::min);
+            let v_span = quad.uvs.iter().map(|c| c[1]).fold(f32::MIN, f32::max)
+                - quad.uvs.iter().map(|c| c[1]).fold(f32::MAX, f32::min);
+            assert!((u_span - 1.0).abs() < 1e-6, "the u the full span keeps");
+            assert!((v_span - 1.0).abs() < 1e-6, "the v the full span keeps");
+            // the tile: the dandelion's own row (the atlas's 39th kind)
+            assert_eq!(quad.tile, mc_registry::generated::atlas::FACE_TILES[39][2]);
+        }
+        // THE TWO WINDINGS' OWN PAIR (the reversed corner cycle the same
+        // points wears — the raster culls one per view side)
+        let p0: Vec<[f32; 3]> = flower[0].pts.to_vec();
+        let reversed = flower
+            .iter()
+            .any(|other| other.pts.iter().rev().eq(p0.iter()));
+        assert!(reversed, "the mirrored winding the pair keeps");
     }
 
     #[test]

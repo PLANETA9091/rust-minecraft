@@ -76,7 +76,19 @@ use zip::ZipArchive;
 /// tnt_top/tnt_side/tnt_bottom, the plain opaque cube the generic path
 /// meshes; the vanilla `instabreak()` strength the blast resistance
 /// table speaks (0.0 — the ray marches through).
-pub const RUNTIME_PALETTE: [&str; 39] = [
+/// dandelion is kind 39 and poppy kind 40 (the fortieth/forty-first
+/// entries, the autopush-411 round): the plains' own flower patch (javap
+/// the jar's worldgen json — the flower_plain placed feature the
+/// noise_threshold_provider wears, the default dandelion the
+/// high-chance poppy third keeps) the worldgen decorate pass plants.
+/// The model chain (blockstates/dandelion.json -> block/dandelion ->
+/// block/cross; blockstates/poppy.json -> block/poppy -> block/cross)
+/// resolves the `cross` texture ref — the two diagonal plane elements
+/// the cross model's own 45° rotY + rescale walk bakes, `shade: false`
+/// + `ambientocclusion: false` — so resolve_block's full-cube six-face
+/// requirement cannot apply; the pre-colored masters render as authored
+/// (the faces carry NO tintindex).
+pub const RUNTIME_PALETTE: [&str; 41] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -84,6 +96,7 @@ pub const RUNTIME_PALETTE: [&str; 39] = [
     "leaf_litter", "lava", "farmland", "dirt_path", "wheat",
     "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4",
     "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
+    "dandelion", "poppy",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -409,6 +422,44 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("crop")
                 .with_context(|| format!("model {model_ref}: no crop texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block == "dandelion" || block == "poppy" {
+            // THE PLAINS' OWN FLOWER PATCH (the autopush-411 round, the
+            // official 26.2 jar): the blockstate is a single variant
+            // map ("") — the model ref -> block/cross (the TWO diagonal
+            // plane elements the 45° rotY + rescale fold bakes, `shade:
+            // false` faces under model-level `ambientocclusion: false`),
+            // so resolve_block's full-cube six-face requirement cannot
+            // apply. The texture stem resolves through the REAL chain
+            // (the blockstate variant's model ref -> the merged texture
+            // map's `cross` ref — dandelion -> block/dandelion, poppy ->
+            // block/poppy), tinted = false (the faces carry NO tintindex
+            // — the pre-colored masters render as authored).
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{block}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {block}: json parse"))?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(""))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate {block}: no empty-variant model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("cross")
+                .with_context(|| format!("model {model_ref}: no cross texture ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")
