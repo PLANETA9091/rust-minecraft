@@ -1211,6 +1211,54 @@ pub fn smoke_puff(x: f64, y: f64, z: f64, vx: f64, vy: f64, vz: f64, r_base: f32
     }
 }
 
+/// The SHOOT-SMOKE particle's own spawn (javap
+/// `LevelEventHandler.shootParticles` case 2000's `addParticle` walk
+/// over the 26.2 jar — the `ParticleTypes.SMOKE` word the
+/// `SmokeParticle` provider answers with the `BaseAshSmokeParticle`
+/// ctor the full chain wears): the position the walk's own fold
+/// places (the caller's — the `dx*0.6 + 0.5 + dx*0.01` anchor plus
+/// the crosswise `(nextDouble - 0.5) * perpendicular * 0.5` jitter
+/// the facing decodes), the velocity `dir * d10 + gaussian * 0.01`
+/// the walk folds (the caller's), then the FULL ctor chain the
+/// provider's `1.0F` quadSizeMultiplier speaks — the dead base
+/// lifetime draw, the three spread draws, the d0 pair, the size
+/// draw, the tint draw, the own lifetime draw — the `xd = xd * 0.1 +
+/// xSpeed` fold the three `0.1F` xDist args and the speed args the
+/// BaseAshSmokeParticle body's own dmul/dadd pairs speak (the torch's
+/// zero args the same fold rides — the walk's own speed the add
+/// carries), the grey tint the `r * 0.3` draw, the `0.75 * 1.0` size
+/// fold, the 8..40 lifetime the smoke_puff helper speaks, the −0.1
+/// gravity the BaseAshSmokeParticle passes, the 0.96 friction.
+pub fn shoot_smoke_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the ash ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (sx, sy, sz) = ctor_spread_and_normalize(rng);
+    let r_base = rng.next_f32();
+    let r_tint = rng.next_f32();
+    let r_life = rng.next_f32();
+    let scale = f64::from(0.1f32);
+    smoke_puff(
+        x,
+        y,
+        z,
+        sx * scale + vx,
+        sy * scale + vy,
+        sz * scale + vz,
+        r_base,
+        r_tint,
+        r_life,
+    )
+}
+
 /// The velocity chain the `Particle` 6-arg ctor speaks (javap
 /// verbatim over the 26.2 jar) — the fold BOTH the torch pair's
 /// members ride before their own scales: the three spread draws

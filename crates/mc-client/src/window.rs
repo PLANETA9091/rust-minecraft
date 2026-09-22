@@ -166,6 +166,7 @@ fn run_join(
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
+                Vec<crate::world_view::WireShootSmokeEvent>,
             ),
             String,
         >,
@@ -252,6 +253,7 @@ fn run_join(
             view.model.drain_arrow_syncs();
             view.model.drain_growth_events();
             view.model.drain_break_events();
+            view.model.drain_shoot_smoke_events();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -862,6 +864,7 @@ fn run_join(
                             view.model.drain_arrow_syncs();
                             view.model.drain_growth_events();
                             view.model.drain_break_events();
+                            view.model.drain_shoot_smoke_events();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -980,6 +983,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.break_events,
+                                    // the shoot-smoke effect's arms ride
+                                    // with them — the 2000 words the
+                                    // server's own dispenser broadcasts
+                                    // stream to the smoke lane (the
+                                    // ten-puff walk the render's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.shoot_smoke_events,
                                 )))
                                 .is_err()
                             {
@@ -1122,6 +1133,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
+                Vec<crate::world_view::WireShootSmokeEvent>,
             ),
             String,
         >,
@@ -1665,6 +1677,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     abilities_word,
                     growth_events,
                     break_events,
+                    shoot_smoke_events,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // THE GAME-MODE ECHO'S OWN BANK (the audited
@@ -1752,6 +1765,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // + the 4x4x4 grid the vanilla client answers the
                     // same packet with)
                     app.live_break_events_updated(break_events);
+                    // the shoot-smoke effect's lane beside the break's:
+                    // the 2000 words the server's own dispenser
+                    // broadcasts land at their own anchors (the
+                    // ten-puff walk the render lane's own law folds —
+                    // the facing's smoke the vanilla client answers the
+                    // same packet with)
+                    app.live_shoot_smoke_events_updated(shoot_smoke_events);
                     // the scoreboard's lane beside the voices': the
                     // SIDEBAR slot's belief lands verbatim (the rows the
                     // projection sorted and capped — the HUD renders it

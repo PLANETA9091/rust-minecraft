@@ -1,0 +1,147 @@
+=== shootParticles (ILnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/particles/SimpleParticleType;)V ===
+    0 iload_1
+    1 invokestatic #813  net/minecraft/core/Direction.from3DDataValue (I)Lnet/minecraft/core/Direction;
+    4 astore 5
+    6 aload 5
+    8 invokevirtual #817  net/minecraft/core/Direction.getStepX ()I
+   11 istore 6
+   13 aload 5
+   15 invokevirtual #820  net/minecraft/core/Direction.getStepY ()I
+   18 istore 7
+   20 aload 5
+   22 invokevirtual #823  net/minecraft/core/Direction.getStepZ ()I
+   25 istore 8
+   27 iconst_0
+   28 istore 9
+   30 iload 9
+   32 bipush 10
+   34 if_icmpge #241
+   37 aload_3
+   38 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   43 ldc2_w #229 = 0.2
+   46 dmul
+   47 ldc2_w #278 = 0.01
+   50 dadd
+   51 dstore 10
+   53 aload_2
+   54 invokevirtual #191  net/minecraft/core/BlockPos.getX ()I
+   57 i2d
+   58 iload 6
+   60 i2d
+   61 ldc2_w #642 = 0.6
+   64 dmul
+   65 dadd
+   66 ldc2_w #197 = 0.5
+   69 dadd
+   70 iload 6
+   72 i2d
+   73 ldc2_w #278 = 0.01
+   76 dmul
+   77 dadd
+   78 aload_3
+   79 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   84 ldc2_w #197 = 0.5
+   87 dsub
+   88 iload 8
+   90 i2d
+   91 dmul
+   92 ldc2_w #197 = 0.5
+   95 dmul
+   96 dadd
+   97 dstore 12
+   99 aload_2
+  100 invokevirtual #199  net/minecraft/core/BlockPos.getY ()I
+  103 i2d
+  104 iload 7
+  106 i2d
+  107 ldc2_w #642 = 0.6
+  110 dmul
+  111 dadd
+  112 ldc2_w #197 = 0.5
+  115 dadd
+  116 iload 7
+  118 i2d
+  119 ldc2_w #278 = 0.01
+  122 dmul
+  123 dadd
+  124 aload_3
+  125 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+  130 ldc2_w #197 = 0.5
+  133 dsub
+  134 iload 7
+  136 i2d
+  137 dmul
+  138 ldc2_w #197 = 0.5
+  141 dmul
+  142 dadd
+  143 dstore 14
+  145 aload_2
+  146 invokevirtual #202  net/minecraft/core/BlockPos.getZ ()I
+  149 i2d
+  150 iload 8
+  152 i2d
+  153 ldc2_w #642 = 0.6
+  156 dmul
+  157 dadd
+  158 ldc2_w #197 = 0.5
+  161 dadd
+  162 iload 8
+  164 i2d
+  165 ldc2_w #278 = 0.01
+  168 dmul
+  169 dadd
+  170 aload_3
+  171 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+  176 ldc2_w #197 = 0.5
+  179 dsub
+  180 iload 6
+  182 i2d
+  183 dmul
+  184 ldc2_w #197 = 0.5
+  187 dmul
+  188 dadd
+  189 dstore 16
+  191 iload 6
+  193 i2d
+  194 dload 10
+  196 dmul
+  197 aload_3
+  198 invokeinterface net/minecraft/util/RandomSource.nextGaussian ()D
+  203 ldc2_w #278 = 0.01
+  206 dmul
+  207 dadd
+  208 dstore 18
+  210 iload 7
+  212 i2d
+  213 dload 10
+  215 dmul
+  216 aload_3
+  217 invokeinterface net/minecraft/util/RandomSource.nextGaussian ()D
+  222 ldc2_w #278 = 0.01
+  225 dmul
+  226 dadd
+  227 dstore 20
+  229 iload 8
+  231 i2d
+  232 dload 10
+  234 dmul
+  235 aload_3
+  236 invokeinterface net/minecraft/util/RandomSource.nextGaussian ()D
+  241 ldc2_w #278 = 0.01
+  244 dmul
+  245 dadd
+  246 dstore 22
+  248 aload_0
+  249 getfield #20  net/minecraft/client/renderer/LevelEventHandler.level Lnet/minecraft/client/multiplayer/ClientLevel;
+  252 aload 4
+  254 dload 12
+  256 dload 14
+  258 dload 16
+  260 dload 18
+  262 dload 20
+  264 dload 22
+  266 invokevirtual #231  net/minecraft/client/multiplayer/ClientLevel.addParticle (Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+  269 iinc 9 1
+  272 goto #65294
+  275 return
+

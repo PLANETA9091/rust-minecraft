@@ -293,6 +293,16 @@ pub struct WorldModel {
     /// never enqueues (the `globalLevelEvent` switch the 2001 id never
     /// carries — the positioned lane the case's own arm wears).
     pub break_events: Vec<BreakEffectArm>,
+    /// THE SHOOT-SMOKE EFFECT'S OWN MAILBOX (the Level Event packet's
+    /// third vocabulary word — [`mc_protocol::play::SHOOT_SMOKE_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 933 speaks:
+    /// the server's own dispenser the event broadcast, the ten smoke
+    /// puffs the `shootParticles` walk the facing fires). The arms the
+    /// anchor + the raw direction id carry — the facing fold the render
+    /// lane's own law speaks. The GLOBAL route the arm never enqueues
+    /// (the `globalLevelEvent` switch the 2000 id never carries — the
+    /// positioned lane the case's own arm wears).
+    pub shoot_smoke_events: Vec<ShootSmokeArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -462,6 +472,24 @@ pub struct BreakEffectArm {
     /// The burst's own palette kind (the particle tile the atlas
     /// carries; `None` the unbanked kinds the burst never finds).
     pub burst_kind: Option<u16>,
+}
+
+/// One pending SHOOT-SMOKE arm — the Level Event packet's third
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::shoot_smoke_events`]). The DATA word rides raw (the
+/// direction id the `Direction.from3DDataValue` fold resolves in the
+/// render lane — the same layering the growth arm's own data keeps:
+/// the model's mailbox is a transport, the facing fold the walk's own
+/// read speaks). The anchor verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ShootSmokeArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The direction id (the `get3DDataValue` word the dispenser's
+    /// facing speaks — 0..5 the `DOWN/UP/NORTH/SOUTH/WEST/EAST` band,
+    /// the out-of-range words the `abs(irem(data, 6))` fold rides).
+    pub data: i32,
 }
 
 /// One pending ARROW position sync — the Entity Position Sync packet's
@@ -886,6 +914,7 @@ impl WorldModel {
             world_sounds: Vec::new(),
             growth_events: Vec::new(),
             break_events: Vec::new(),
+            shoot_smoke_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
             display_slots: std::collections::HashMap::new(),
             scores: std::collections::HashMap::new(),
@@ -1037,6 +1066,14 @@ impl WorldModel {
     /// break voice + the debris burst from the resolved state.
     pub fn drain_break_events(&mut self) -> Vec<BreakEffectArm> {
         std::mem::take(&mut self.break_events)
+    }
+
+    /// The shoot-smoke effect's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 2000 words the
+    /// Level Event packet armed, the render lane's own law folds the
+    /// ten-puff smoke walk from the anchor + the direction id.
+    pub fn drain_shoot_smoke_events(&mut self) -> Vec<ShootSmokeArm> {
+        std::mem::take(&mut self.shoot_smoke_events)
     }
 
     /// The arrows' sync mailbox's own drain (the same walk the voices'
@@ -1228,6 +1265,10 @@ impl WorldModel {
                 // (the same walk — the old level's 2001 words never
                 // burst again)
                 self.break_events.clear();
+                // the shoot-smoke effect's mailbox dies with the level
+                // (the same walk — the old level's 2000 words never
+                // puff again)
+                self.shoot_smoke_events.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -1918,6 +1959,23 @@ impl WorldModel {
                         z: ev.z,
                         sound_name,
                         burst_kind: kind,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::SHOOT_SMOKE_EFFECT && !ev.global {
+                    // THE SHOOT-SMOKE EFFECT'S OWN ARM (javap the case
+                    // offset 933 — the positioned route the GLOBAL
+                    // switch never banks): the anchor + the raw
+                    // direction id the mailbox carries (the facing
+                    // fold the render lane's own law speaks — the
+                    // `shootParticles` walk the `Direction
+                    // .from3DDataValue(data)` read the case's own head
+                    // opens). No sound the case speaks — the ten-puff
+                    // burst the smoke lane's own stream alone carries.
+                    self.shoot_smoke_events.push(ShootSmokeArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
                     });
                     true
                 } else {
@@ -5993,6 +6051,89 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.break_events.is_empty(), "the mailbox dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_smoke_word_the_facing_rides() {
+        // THE SHOOT-SMOKE EFFECT'S OWN ARM (javap the case offset 933
+        // — the positioned route the GLOBAL switch never banks): the
+        // data word the DIRECTION id carries (`Direction
+        // .from3DDataValue` the render lane's own read), the anchor +
+        // the raw id the mailbox keeps verbatim (the facing fold the
+        // render lane's own law speaks), the drain ships the arms
+        // exactly once, and the Respawn recreates the level the
+        // mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the EAST-facing dispenser's own word (get3DDataValue 5 the
+        // `playDefaultAnimation` broadcast carries): the arm rides the
+        // raw id
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_SMOKE_EFFECT,
+            x: -40,
+            y: 12,
+            z: 77,
+            data: 5,
+            global: false,
+        })));
+        assert_eq!(m.shoot_smoke_events.len(), 1, "the arm rides");
+        assert_eq!(m.shoot_smoke_events[0].x, -40);
+        assert_eq!(m.shoot_smoke_events[0].y, 12);
+        assert_eq!(m.shoot_smoke_events[0].z, 77);
+        assert_eq!(
+            m.shoot_smoke_events[0].data, 5,
+            "the raw direction id the render lane folds"
+        );
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2000 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_SMOKE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 5,
+            global: true,
+        })));
+        assert_eq!(m.shoot_smoke_events.len(), 1, "the global word never arms");
+        // the second word arms beside the first (the mailbox keeps the
+        // wire order — the DOWN-facing puff the data-0 word carries)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_SMOKE_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.shoot_smoke_events.len(), 2);
+        assert_eq!(m.shoot_smoke_events[1].data, 0);
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_shoot_smoke_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert!(m.shoot_smoke_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_shoot_smoke_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_SMOKE_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 3,
+            global: false,
+        })));
+        assert_eq!(m.shoot_smoke_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.shoot_smoke_events.is_empty(),
+            "the mailbox dies with the level"
+        );
     }
 
     #[test]

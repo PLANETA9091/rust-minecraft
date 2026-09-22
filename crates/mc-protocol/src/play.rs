@@ -1195,6 +1195,21 @@ pub const GROWTH_EFFECT: i32 = 1505;
 /// band alone carries — the positioned lane the case's own arm wears).
 pub const DESTROY_BLOCK_EFFECT: i32 = 2001;
 
+/// THE SHOOT-SMOKE EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_SHOOT_SMOKE`, the case
+/// `LevelEventHandler.levelEvent` offset 933 speaks): the data word the
+/// DIRECTION id carries (`Direction.from3DDataValue(data)` the walk's own
+/// read — the 0..5 band the `DOWN/UP/NORTH/SOUTH/WEST/EAST` order keeps,
+/// the `abs(irem(data, 6))` fold the out-of-range words ride), the ten
+/// smoke puffs the `shootParticles` walk fires along the facing. The
+/// server's own dispenser speaks it — `DefaultDispenseItemBehavior
+/// .dispense`'s tail `playAnimation(source, FACING)` → `playDefault
+/// Animation`'s `sipush 2000, get3DDataValue` → `ServerLevel.levelEvent`
+/// walk the bytecode pins. The GLOBAL route the `globalLevelEvent` switch
+/// never banks (the 1023/1028/1038 trio the band alone carries — the
+/// positioned lane the case's own arm wears).
+pub const SHOOT_SMOKE_EFFECT: i32 = 2000;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10320,6 +10335,11 @@ mod tests {
             DESTROY_BLOCK_EFFECT,
             2001,
             "the block-break effect the server's own dig broadcast speaks"
+        );
+        assert_eq!(
+            SHOOT_SMOKE_EFFECT,
+            2000,
+            "the shoot-smoke effect the dispenser's own playAnimation speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

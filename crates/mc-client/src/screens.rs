@@ -21547,6 +21547,79 @@ impl App {
         }
     }
 
+    /// THE SHOOT-SMOKE EFFECT'S OWN WIRE LANE (javap `LevelEventHandler`
+    /// case 2000 over the 26.2 jar — the `shootParticles(data, pos,
+    /// level.getRandom(), ParticleTypes.SMOKE)` walk the case's own
+    /// body delegates to, the ten puffs the facing's own fold fires:
+    /// NO sound the case speaks — the smoke the level ambient stream
+    /// alone carries). The server's own dispenser the event broadcast:
+    /// the `DefaultDispenseItemBehavior.dispense` tail's
+    /// `playAnimation` (`sipush 2000, FACING.get3DDataValue` the
+    /// bytecode pins), the puffs the render lane's own law folds — the
+    /// world edit itself the server's block updates own.
+    pub fn live_shoot_smoke_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireShootSmokeEvent>,
+    ) {
+        for ev in events {
+            self.play_shoot_smoke(ev.x, ev.y, ev.z, ev.data);
+        }
+    }
+
+    /// THE SHOOT PARTICLES' OWN WALK (javap `shootParticles` verbatim):
+    /// the direction `Direction.from3DDataValue(data)` decodes (the
+    /// `abs(irem(data, 6))` fold the BY_3D_DATA band answers — 0 DOWN,
+    /// 1 UP, 2 NORTH, 3 SOUTH, 4 WEST, 5 EAST), the ten-puff loop the
+    /// `bipush 10` keeps: per puff the `d10 = nextDouble() * 0.2 +
+    /// 0.01` speed, the position `pos + 0.5 + dir*0.6 + dir*0.01 +
+    /// (nextDouble - 0.5) * crosswise * 0.5` (the X jitter the Z step
+    /// scales, the Y jitter the Y step's own, the Z jitter the X
+    /// step's — the vanilla's own asymmetry the bytecode's operand
+    /// reads pin), the velocity `dir * d10 + nextGaussian() * 0.01`,
+    /// then the SmokeParticle ctor chain the shoot_smoke_puff helper
+    /// folds (nine draws the chain consumes — the whole puff sixteen
+    /// draws the level ambient stream spends).
+    fn play_shoot_smoke(&mut self, x: i32, y: i32, z: i32, data: i32) {
+        const STEPS: [(f64, f64, f64); 6] = [
+            (0.0, -1.0, 0.0), // DOWN
+            (0.0, 1.0, 0.0),  // UP
+            (0.0, 0.0, -1.0), // NORTH
+            (0.0, 0.0, 1.0),  // SOUTH
+            (-1.0, 0.0, 0.0), // WEST
+            (1.0, 0.0, 0.0),  // EAST
+        ];
+        // THE FACING'S OWN DECODE (from3DDataValue: `BY_3D_DATA[abs
+        // (data % 6)]` — the irem the sign keeps, the abs the negative
+        // words fold)
+        let idx = (data % 6).unsigned_abs() as usize;
+        let (dx, dy, dz) = STEPS[idx];
+        for _ in 0..10 {
+            let d10 = self.level_ambient_rng.next_f64() * 0.2 + 0.01;
+            // THE POSITION FOLDS (the bytecode's own operand order —
+            // getX() + dx*0.6 FIRST, then the +0.5 center, then the
+            // +dx*0.01 step, the crosswise jitter the tail adds)
+            let px = f64::from(x) + dx * 0.6 + 0.5 + dx * 0.01
+                + (self.level_ambient_rng.next_f64() - 0.5) * dz * 0.5;
+            let py = f64::from(y) + dy * 0.6 + 0.5 + dy * 0.01
+                + (self.level_ambient_rng.next_f64() - 0.5) * dy * 0.5;
+            let pz = f64::from(z) + dz * 0.6 + 0.5 + dz * 0.01
+                + (self.level_ambient_rng.next_f64() - 0.5) * dx * 0.5;
+            let vx = dx * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
+            let vy = dy * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
+            let vz = dz * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
+            let puff = crate::particles::shoot_smoke_puff(
+                px,
+                py,
+                pz,
+                vx,
+                vy,
+                vz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(puff);
+        }
+    }
+
     /// THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
     /// `--held-item` stand-in speaks no stack: the consume is the
     /// honest no-op it always was). The crop ladder's advance and the
@@ -44703,6 +44776,118 @@ cow_sound_variant: None,
         app.live_break_events_updated(vec![]);
         assert!(app.particles.is_empty());
         assert_eq!(app.sounds.events.len(), before_all);
+    }
+
+    #[test]
+    fn the_wire_smoke_word_the_ten_puff_walk_wears() {
+        // THE SHOOT-SMOKE EFFECT'S OWN WIRE LANE (javap case 2000 →
+        // `shootParticles` over the 26.2 jar): the ten puffs the
+        // `bipush 10` loop fires, the SMOKE type the provider answers,
+        // the facing fold the position anchors speak, the velocity the
+        // `dir * d10 + gaussian * 0.01` fold gives, the ctor chain the
+        // BaseAshSmokeParticle laws wear — and NO sound the case
+        // speaks (the silence the smoke lane's own stream keeps).
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE EAST WORD (the dispenser's own facing — data 5 the
+        // `get3DDataValue` broadcast carries)
+        app.live_shoot_smoke_events_updated(vec![crate::world_view::WireShootSmokeEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+            data: 5,
+        }]);
+        assert_eq!(app.particles.len(), 10, "the bipush 10 the loop keeps");
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the SMOKE type the provider answers"
+            );
+        }
+        for p in &app.particles {
+            // the EAST anchor fold (the bytecode's own operand order —
+            // the jitter the zero Z step cancels: the px the anchor
+            // EXACTLY keeps, the py the zero Y step centers, the pz
+            // the X-step jitter spreads ±0.25)
+            assert!(
+                (p.x - (10.0 + 1.0 * 0.6 + 0.5 + 1.0 * 0.01)).abs() < 1e-9,
+                "the east anchor the facing fold places"
+            );
+            assert!(
+                (p.y - (20.0 + 0.0 * 0.6 + 0.5)).abs() < 1e-9,
+                "the center the zero Y step keeps"
+            );
+            assert!(
+                p.z > 10.0 + 0.5 - 0.25 - 1e-9 && p.z < 10.0 + 0.5 + 0.25,
+                "the crosswise jitter the X step scales"
+            );
+            // the velocity folds: the eastward shoot the dir*d10 term
+            // gives (d10 ∈ [0.01, 0.21] the +0.01 floor speaks), the
+            // side axes the gaussian whisper alone carries, the smoke
+            // rise the ash ctor's −0.1 gravity pulls
+            assert!(p.vx > 0.0, "the eastward shoot the dir*d10 fold gives");
+            assert!(
+                p.vy.abs() < 0.5 && p.vz.abs() < 0.5,
+                "the side axes the gaussian whisper carries"
+            );
+            assert!(
+                (p.gravity + 0.1).abs() < 1e-9,
+                "the −0.1 gravity the ash ctor passes"
+            );
+            assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction the ctor sets");
+            // the grey tint the r*0.3 draw (the shared grey the
+            // smoke_puff fold keeps — the [0, 0.3) band the draw gives)
+            assert_eq!(p.col[0], p.col[1], "the shared grey the tint fold keeps");
+            assert_eq!(p.col[1], p.col[2], "the shared grey the tint fold keeps");
+            assert!(p.col[0] < 0.3, "the r*0.3 scale the draw speaks");
+        }
+        // THE DOWN WORD (data 0): the vy the dir*d10 term PULLS (the
+        // downward shoot the facing's own step gives), the px/pz the
+        // zero X/Z steps center EXACTLY (the jitter the zero steps
+        // cancel), the py the dy*0.6 anchor below the cell keeps with
+        // the Y-step's own jitter spread (±0.25 the band speaks) and
+        // the dy*0.01 step the fold's own tail adds
+        app.particles.clear();
+        app.play_shoot_smoke(4, 5, 6, 0);
+        assert_eq!(app.particles.len(), 10, "the down word the same loop fires");
+        for p in &app.particles {
+            assert!(
+                (p.x - (4.0 + 0.0 * 0.6 + 0.5)).abs() < 1e-9,
+                "the center the zero X step keeps"
+            );
+            assert!(
+                (p.z - (6.0 + 0.0 * 0.6 + 0.5)).abs() < 1e-9,
+                "the center the zero Z step keeps"
+            );
+            assert!(
+                p.y > 5.0 - 0.6 + 0.5 - 0.01 - 0.25 && p.y < 5.0 - 0.6 + 0.5 - 0.01 + 0.25,
+                "the below anchor the DOWN fold places, the Y jitter spread rides"
+            );
+            assert!(p.vy < 0.0, "the downward shoot the dir*d10 fold gives");
+        }
+        // THE NEGATIVE WORD (data -5): the `abs(irem(data, 6))` fold
+        // the from3DDataValue walk answers — the same EAST facing the
+        // fold speaks (irem -5 % 6 = -5, abs = 5)
+        app.particles.clear();
+        app.play_shoot_smoke(0, 0, 0, -5);
+        assert_eq!(app.particles.len(), 10);
+        assert!(
+            (app.particles[0].x - (0.0 + 1.0 * 0.6 + 0.5 + 1.0 * 0.01)).abs() < 1e-9,
+            "the same east anchor the negative word folds to"
+        );
+        // THE OUT-OF-RANGE WORD (data 11): the fold answers 11 % 6 = 5
+        // — the same EAST (the vanilla's own modulo)
+        app.particles.clear();
+        app.play_shoot_smoke(3, 4, 5, 11);
+        assert_eq!(app.particles.len(), 10);
+        assert!(
+            (app.particles[0].x - (3.0 + 1.0 * 0.6 + 0.5 + 1.0 * 0.01)).abs() < 1e-9,
+            "the same east anchor the out-of-range word folds to"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_shoot_smoke_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 
     /// THE SHOVEL'S OWN FLATTEN ARM — the straight-down aim the vanilla
