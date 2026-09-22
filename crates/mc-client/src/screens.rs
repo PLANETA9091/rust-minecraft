@@ -8568,21 +8568,36 @@ impl App {
                             (self.offline_world.as_ref(), self.body.as_ref())
                         {
                             let (px, pz) = (b.x, b.z);
-                            // the disjoint field borrows (the checker's
-                            // own verdict — the mobs, the id counter
-                            // and the RNG split cleanly)
-                            let mobs = &mut self.mobs;
-                            let rng = &mut self.mob_rng;
-                            let next_id = &mut self.next_mob_id;
-                            crate::mob::try_spawn(
-                                mobs,
-                                next_id,
-                                px,
-                                pz,
-                                world,
-                                rng,
-                                true,
-                            );
+                            // THE PEACEFUL'S OWN SPAWN GATE (javap the 26.2
+                            // jar the `SpawnPlacements.checkSpawnRules` walk
+                            // speaks — the type the `isAllowedInPeaceful()`
+                            // read keeps, the difficulty the PEACEFUL acmp
+                            // answers: the MONSTER roster's types the
+                            // peaceful world REFUSES — the per-type
+                            // predicate the gate precedes never fires; the
+                            // CREATURE roster the same gate keeps (the
+                            // animals the peaceful world wears). The client's
+                            // monster lane the MONSTER kinds alone draws —
+                            // the lane-level gate the per-type law mirrors,
+                            // the attempt the gate refuses BEFORE the ring's
+                            // own randoms the honest silence keeps)
+                            if world.difficulty != crate::difficulty::Difficulty::Peaceful {
+                                // the disjoint field borrows (the checker's
+                                // own verdict — the mobs, the id counter
+                                // and the RNG split cleanly)
+                                let mobs = &mut self.mobs;
+                                let rng = &mut self.mob_rng;
+                                let next_id = &mut self.next_mob_id;
+                                crate::mob::try_spawn(
+                                    mobs,
+                                    next_id,
+                                    px,
+                                    pz,
+                                    world,
+                                    rng,
+                                    true,
+                                );
+                            }
                         }
                     } else {
                         // THE CREATURE'S OWN ATTEMPT (the day arm the
@@ -8712,6 +8727,24 @@ impl App {
                 {
                     let world = self.offline_world.as_ref();
                     if let Some(world) = world {
+                        // THE PEACEFUL'S OWN DESPAWN (javap the 26.2 jar the
+                        // `Mob.checkDespawn` walk speaks — the difficulty the
+                        // PEACEFUL acmp keeps, the type the
+                        // `isAllowedInPeaceful()` read answers: the MONSTER
+                        // roster the peaceful world DISCARDS — the plain
+                        // `discard()` removal the walk speaks, no death lane
+                        // (no clock, no poof cloud, no loot, no voice), the
+                        // CREATURE roster the same walk keeps (the animals
+                        // the peaceful world wears). The per-tick cadence the
+                        // vanilla walk wears — checkDespawn the Mob.baseTick
+                        // lane every tick rides; the NETWORKED world the
+                        // server's own lane keeps (the wire mobs the client
+                        // never prunes))
+                        if world.difficulty == crate::difficulty::Difficulty::Peaceful {
+                            self.mobs.retain(|m| {
+                                m.kind.mob_category() != crate::mob::MobCategory::Monster
+                            });
+                        }
                         let player = self.body.as_ref().map(|b| crate::mob::PlayerView {
                             x: b.x,
                             y: b.y,
@@ -44190,6 +44223,148 @@ cow_sound_variant: None,
             assert_ne!(m.kind, crate::mob::MobKind::Zombie, "the friendly lane");
             assert_eq!(m.y, 9.0, "the feet the platform's top keeps");
         }
+    }
+
+    /// THE NIGHT BEAT'S OWN PEACEFUL GATE (javap the 26.2 jar the
+    /// `SpawnPlacements.checkSpawnRules` walk speaks): the PEACEFUL
+    /// world the MONSTER spawn the gate refuses — 400 updates' worth
+    /// of night beats the roster NEVER fills (the ring's own randoms
+    /// the gate precedes, the honest silence the lane keeps); the
+    /// NORMAL world the same beats the monster lane answers (the
+    /// vanilla's own spawn the dial's other arms wear).
+    #[test]
+    fn the_night_beat_wears_the_peaceful_gate() {
+        // THE PEACEFUL ARM (the dial's own refusal)
+        let mut app = App::new(9);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..8 {
+                        w.set(x, y, z, crate::world::STONE);
+                    }
+                    w.set(x, 8, z, crate::world::GRASS);
+                    for y in 9..size {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        app.offline_world.as_mut().unwrap().difficulty =
+            crate::difficulty::Difficulty::Peaceful;
+        app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+        // THE NIGHT BAND (the sampler's own law — the sun the -0.1
+        // margin the horizon's f32 folds avoid)
+        let night_tick = (0..24_000i64)
+            .find(|t| crate::sky::sample(*t).sun_angle.sin() < -0.1)
+            .expect("a night band the sky keeps");
+        app.day_time_base = night_tick as u64;
+        for _ in 0..400 {
+            app.update();
+        }
+        assert!(
+            app.mobs.is_empty(),
+            "the PEACEFUL world the monster spawn the gate refuses ({} landed)",
+            app.mobs.len()
+        );
+        // THE NORMAL ARM (the same drive the default dial rides — the
+        // beats the monster lane answers, the spawn the gate only the
+        // peaceful arm refuses)
+        let mut app = App::new(9);
+        app.enter_world();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..8 {
+                        w.set(x, y, z, crate::world::STONE);
+                    }
+                    w.set(x, 8, z, crate::world::GRASS);
+                    for y in 9..size {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+        }
+        app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
+        app.day_time_base = night_tick as u64;
+        for _ in 0..400 {
+            app.update();
+        }
+        assert!(
+            !app.mobs.is_empty(),
+            "the NORMAL world the night beat the monster lane answers"
+        );
+    }
+
+    /// THE PEACEFUL'S OWN DISCARD (javap the 26.2 jar the
+    /// `Mob.checkDespawn` walk speaks): the PEACEFUL world the MONSTER
+    /// roster DISCARDS every tick — the plain removal the walk speaks
+    /// (no death clock, no poof cloud, no loot, no voice), the
+    /// CREATURE roster the same walk keeps (the animals the peaceful
+    /// world wears); the NORMAL world the same roster the walk never
+    /// touches.
+    #[test]
+    fn the_peaceful_discard_clears_the_monster_roster() {
+        let mut app = App::new(9);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let seed_pair = [
+            (crate::mob::MobKind::Zombie, 1),
+            (crate::mob::MobKind::Skeleton, 2),
+            (crate::mob::MobKind::Cow, 3),
+            (crate::mob::MobKind::Sheep, 4),
+        ];
+        for (kind, id) in seed_pair {
+            let mut m = crate::mob::Zombie::new(
+                id,
+                c as f64 + 0.5,
+                app.spawn_y as f64,
+                c as f64 + 0.5,
+                id as u64 * 7,
+            );
+            m.kind = kind;
+            app.mobs.push(m);
+        }
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            app.spawn_y as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        // THE NORMAL ARM (the default dial — the roster the walk
+        // never touches)
+        app.update();
+        assert_eq!(
+            app.mobs.len(),
+            4,
+            "the NORMAL world the roster the walk keeps"
+        );
+        // THE PEACEFUL ARM (the dial's turn — the MONSTER kinds the
+        // discard answers, the CREATURE kinds the same walk keeps)
+        app.offline_world.as_mut().unwrap().difficulty =
+            crate::difficulty::Difficulty::Peaceful;
+        app.update();
+        assert!(
+            app.mobs
+                .iter()
+                .all(|m| m.kind.mob_category() != crate::mob::MobCategory::Monster),
+            "the PEACEFUL walk the MONSTER kinds discards"
+        );
+        assert_eq!(app.mobs.len(), 2, "the CREATURE roster the walk keeps");
+        assert!(
+            app.mobs
+                .iter()
+                .any(|m| m.kind == crate::mob::MobKind::Cow)
+                && app
+                    .mobs
+                    .iter()
+                    .any(|m| m.kind == crate::mob::MobKind::Sheep),
+            "the cow and the sheep the peaceful world wears"
+        );
     }
 
     /// THE AMBIENT GROAN'S OWN KIND (the voice table the KIND's own
