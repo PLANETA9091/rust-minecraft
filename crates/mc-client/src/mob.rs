@@ -158,8 +158,9 @@
 //!   playlist [16..31, 0..15], fire_1 sequential).
 
 use crate::body::{
-    collide, WalkAnimationState, AIR_FRICTION, BLOCK_FRICTION, CUBE_SPEED_NUMERATOR, GRAVITY,
-    GROUND_DRAG, JUMP_POWER, VERTICAL_DRAG, WALK_BLEND, WALK_DISTANCE_SCALE,
+    collide_stepped, WalkAnimationState, AIR_FRICTION, BLOCK_FRICTION, CUBE_SPEED_NUMERATOR,
+    GRAVITY, GROUND_DRAG, JUMP_POWER, MAX_UP_STEP, VERTICAL_DRAG, WALK_BLEND,
+    WALK_DISTANCE_SCALE,
 };
 use crate::drops::Lcg;
 use crate::hand::SwingState;
@@ -5770,7 +5771,10 @@ impl Zombie {
             if self.kind == MobKind::Chicken && !self.on_ground && self.vy < 0.0 {
                 self.vy *= 0.6;
             }
-            collide(world, self.box_at(), (self.vx, self.vy, self.vz))
+            // THE STEP LADDER'S OWN CALL (the LivingEntity lane the
+            // player's law speaks — the STEP_HEIGHT's own 0.6 the mob
+            // walker wears, the pre-move ground flag the gate reads)
+            collide_stepped(world, self.box_at(), (self.vx, self.vy, self.vz), self.on_ground, MAX_UP_STEP)
         };
         self.x += col.dx;
         self.y += col.dy;

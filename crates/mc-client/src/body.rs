@@ -113,7 +113,14 @@ pub const CROUCH_EYE: f64 = 1.27;
 /// `eyeHeight += (f - eyeHeight) * 0.5` — the crouch eases over a few
 /// ticks, never snaps).
 pub const EYE_HEIGHT_BLEND: f64 = 0.5;
-pub const MAX_UP_STEP: f64 = 0.6; // the sneak edge-guard's probe depth
+/// The vanilla step the ladder and the sneak probe both speak
+/// (javap LivingEntity.maxUpStep — the Attributes.STEP_HEIGHT's own
+/// 0.6 default the getAttributeValue fold carries; the base Entity's
+/// own 0.0 the drops/TNT/xp orbs wear — their lanes never step). The
+/// ladder ([`collide_stepped`]) lifts the grounded body's horizontal
+/// move by this much across the colliders' own tops, the sneak
+/// edge-guard the same depth the sunk-box probe sinks.
+pub const MAX_UP_STEP: f64 = 0.6;
 pub const EDGE_STEP: f64 = 0.05; // the guard's own zeroing step
 pub const LOOK_SCALE: f64 = 0.15; // Entity.turn's degrees per unit
 pub const LOOK_GAIN: f64 = 8.0; // turnPlayer's post-cube gain
@@ -277,10 +284,11 @@ fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64)
 /// never carried — the vanilla `.noCollision()` row the table already
 /// banked, the player the cover walked through it kept). The COLUMN
 /// rows (the farmland, the dirt path) and the full-cube roster the
-/// solid verdict keeps — the 15/16 band the full-cell sweep the
-/// collision vocabulary absorbs (the documented simplification the
-/// farmland kind speaks). The drop lane's un-stuck and the item
-/// physics speak the same law.
+/// solid verdict keeps — the COLUMN rows' 15/16 BAND the sweep's own
+/// slabs wear ([`clip_axis`], autopush-421: the landing the band top
+/// speaks, the horizontal the band the strict overlap reads, the
+/// full-cell verdict the band retires). The drop lane's un-stuck and
+/// the item physics speak the same law.
 pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     !matches!(
         crate::world::collision_shape(world.get(x, y, z)),
@@ -332,20 +340,37 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
     for cx in xlo.floor() as i32..=(xhi - 1e-9).floor() as i32 {
         for cy in ylo.floor() as i32..=(yhi - 1e-9).floor() as i32 {
             for cz in zlo.floor() as i32..=(zhi - 1e-9).floor() as i32 {
-                if !solid(world, cx, cy, cz) {
+                // THE CELL'S OWN SHAPE THE TABLE ANSWERS (autopush-421 —
+                // the COLUMN rows' 15/16 band the full-cell sweep the
+                // prior round's walk named: `Block.column(16, 0, 15)`
+                // the FarmlandBlock/DirtPathBlock SHAPE constants speak,
+                // the cell's Y extent the band's own top wears). The
+                // EMPTY rows the walk-through skip keeps, the COLUMN
+                // row's Y range the band top speaks (the landing the
+                // 15/16 floor wears, the horizontal sweep the band the
+                // strict overlap reads), the X/Z footprint the full
+                // cell keeps, the full-cube roster the whole cell.
+                let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                if matches!(shape, crate::world::CollisionShape::Empty) {
                     continue;
                 }
-                // the cell's slabs on the other two axes must strictly
-                // overlap the box (the epsilon the vanilla's
-                // findIndex bounds carry)
-                let (c1lo, c1hi) = match axis {
-                    1 => (cx as f64, (cx + 1) as f64),
+                let (y_lo, y_hi) = match shape {
+                    crate::world::CollisionShape::Column(h) => {
+                        (cy as f64, cy as f64 + h as f64 / 16.0)
+                    }
                     _ => (cy as f64, (cy + 1) as f64),
                 };
+                // the cell's slabs on the other two axes must strictly
+                // overlap the box (the epsilon the vanilla's
+                // findIndex bounds carry) — the Y slab the shape's own
+                // band wears, the X/Z footprint the full cell keeps
+                let (c1lo, c1hi) = match axis {
+                    1 => (cx as f64, (cx + 1) as f64),
+                    _ => (y_lo, y_hi),
+                };
                 let (c2lo, c2hi) = match axis {
-                    1 => (cz as f64, (cz + 1) as f64),
-                    0 => (cz as f64, (cz + 1) as f64),
-                    _ => (cx as f64, (cx + 1) as f64),
+                    2 => (cx as f64, (cx + 1) as f64),
+                    _ => (cz as f64, (cz + 1) as f64),
                 };
                 if !(c1lo < a1hi - COLLISION_SKIN && c1hi > a1lo + COLLISION_SKIN) {
                     continue;
@@ -355,7 +380,7 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                 }
                 let (c_lo, c_hi) = match axis {
                     0 => (cx as f64, (cx + 1) as f64),
-                    1 => (cy as f64, (cy + 1) as f64),
+                    1 => (y_lo, y_hi),
                     _ => (cz as f64, (cz + 1) as f64),
                 };
                 let overlapping = bm < c_hi - COLLISION_EPSILON && bx > c_lo + COLLISION_EPSILON;
@@ -428,6 +453,161 @@ pub fn collide(world: &World, b: (f64, f64, f64, f64, f64, f64), mv: (f64, f64, 
         collided_y: axis_allowed[1] != mv.1,
         collided_z: axis_allowed[2] != mv.2,
     }
+}
+
+/// The axis-box shift the ladder's lanes speak (the AABB.move the
+/// vanilla walk carries).
+fn box_shift(
+    b: (f64, f64, f64, f64, f64, f64),
+    dx: f64,
+    dy: f64,
+    dz: f64,
+) -> (f64, f64, f64, f64, f64, f64) {
+    (
+        b.0 + dx,
+        b.1 + dy,
+        b.2 + dz,
+        b.3 + dx,
+        b.4 + dy,
+        b.5 + dz,
+    )
+}
+
+/// THE STEP LADDER (javap Entity.collide the 26.2 jar verbatim — the
+/// ladder the 26.2 refactor folded INTO the collide walk, the raw
+/// disassembly's own walk this round speaks): the first sweep's
+/// horizontal block the grounded (or falling) body the candidate
+/// heights the colliders' own Y break-points speak, the lowest
+/// strictly-further height the swept horizontal takes, the net Y the
+/// pre-lift fold answers. THE GATE (`maxUpStep() > 0 && (fall ||
+/// onGround) && (xBlocked || zBlocked)` — the bytecode's own order,
+/// pcs 126-154): the FALL lane (the request's dy the sweep clipped
+/// AND the request negative) pre-lifts the box by the kept dy (the
+/// body virtually lands, the horizontal the landed box sweeps — the
+/// staircase arc the run carries, the grounded walk's gravity clip
+/// the same lane's zero lift wears), the grounded-no-fall lane the
+/// box as-is keeps (the -1e-5 skirt the collider sweep the
+/// exact-height collection catches). THE HEIGHTS
+/// (collectCandidateStepUpHeights verbatim): every solid cell the
+/// swept region holds contributes its Y break-points — the cell's
+/// bottom and the shape table's own top (the COLUMN rows the 15/16
+/// band speak) — the below-feet coords the `< 0` skip keeps, the
+/// first sweep's kept dy the `==` gate skips (the floor's own top
+/// never a candidate), the `> maxUpStep` coords the cell's remaining
+/// break refuses; the set the ascending sort wears (the FloatArraySet
+/// law). THE SWEEP (the lowest winner's law): for each height
+/// ascending, the collide (the FULL requested horizontal, the height
+/// the Y delta wears — the axisStepOrder's Y-first lift the
+/// horizontal rides) whose horizontal strictly beats the first
+/// sweep's returns FIRST (`>` the dcmpl/ifle pair speaks, the
+/// ascending order the lowest climb keeps); the net dy the pre-lift
+/// fold speaks (`cand.subtract(0, aabb.minY - box.minY, 0)` — the
+/// fall lane's kept dy the fold carries back out, the grounded lane
+/// the zero fold keeps), the flags the honest final delta vs the
+/// request wears. THE FULL WALL the ladder never climbs (the 1.0
+/// cell's top the `> maxUpStep` gate refuses — the jump the wall's
+/// own answer), the 1/16 band the field edge the climb speaks, the
+/// 0.5 slab the step the same law carries. The base Entity's own 0.0
+/// step the drops/TNT/xp orbs never arm — the LivingEntity lanes
+/// (the player, the mobs) the 0.6 attribute the callers speak.
+pub fn collide_stepped(
+    world: &World,
+    b: (f64, f64, f64, f64, f64, f64),
+    mv: (f64, f64, f64),
+    on_ground: bool,
+    max_up_step: f64,
+) -> Collision {
+    let first = collide(world, b, mv);
+    if max_up_step <= 0.0 {
+        return first;
+    }
+    let x_blocked = first.dx != mv.0;
+    let z_blocked = first.dz != mv.2;
+    let falling = first.dy != mv.1 && mv.1 < 0.0;
+    if !(falling || on_ground) || (!x_blocked && !z_blocked) {
+        return first;
+    }
+    // the ladder's own box: the fall lane pre-lifts by the dy the
+    // first sweep kept (the landed box the horizontal sweeps), the
+    // grounded lane the box as-is wears
+    let lifted = if falling {
+        box_shift(b, 0.0, first.dy, 0.0)
+    } else {
+        b
+    };
+    // the collider sweep's region (the expandTowards union the vanilla
+    // walk carries: the requested horizontal drift, the maxUpStep of
+    // headroom; the grounded-no-fall lane the -1e-5 skirt adds — the
+    // exact-height floor the collection catches)
+    let (lx0, ly0, lz0, lx1, ly1, lz1) = lifted;
+    let skirt = if falling { 0.0 } else { 1e-5 };
+    let swept = (
+        lx0.min(lx0 + mv.0),
+        ly0 - skirt,
+        lz0.min(lz0 + mv.2),
+        lx1.max(lx1 + mv.0),
+        ly1 + max_up_step,
+        lz1.max(lz1 + mv.2),
+    );
+    // THE CANDIDATE HEIGHTS: every solid cell the region holds
+    // contributes its Y break-points (the cell's bottom, the shape
+    // table's own top — the COLUMN row the 15/16 band speaks), the
+    // below-feet and the kept-dy and the beyond-step coords the gates
+    // refuse, the dedup the ascending sort wears
+    let base_y = first.dy;
+    let mut heights: Vec<f64> = Vec::new();
+    for cx in swept.0.floor() as i32..=(swept.3 - 1e-9).floor() as i32 {
+        for cy in swept.1.floor() as i32..=(swept.4 - 1e-9).floor() as i32 {
+            for cz in swept.2.floor() as i32..=(swept.5 - 1e-9).floor() as i32 {
+                let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                if matches!(shape, crate::world::CollisionShape::Empty) {
+                    continue;
+                }
+                let top = match shape {
+                    crate::world::CollisionShape::Column(h) => h as f64 / 16.0,
+                    _ => 1.0,
+                };
+                for f in [cy as f64 - ly0, cy as f64 + top - ly0] {
+                    if f < 0.0 {
+                        continue;
+                    }
+                    if f == base_y {
+                        continue;
+                    }
+                    if f > max_up_step {
+                        break;
+                    }
+                    if !heights.contains(&f) {
+                        heights.push(f);
+                    }
+                }
+            }
+        }
+    }
+    heights.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
+    let best = first.dx * first.dx + first.dz * first.dz;
+    for h in heights {
+        let cand = collide(world, lifted, (mv.0, h, mv.2));
+        let cand_h = cand.dx * cand.dx + cand.dz * cand.dz;
+        if cand_h > best {
+            // the net delta the pre-lift fold answers (`aabb.minY -
+            // box.minY` the subtract speaks: the fall lane's kept dy
+            // the fold carries back out, the grounded lane the zero
+            // fold keeps) — the flags the final delta vs the request
+            let dy = cand.dy - (b.1 - lifted.1);
+            return Collision {
+                dx: cand.dx,
+                dy,
+                dz: cand.dz,
+                horizontal_collision: cand.dx != mv.0 || cand.dz != mv.2,
+                vertical_collision_below: mv.1 < 0.0 && dy != mv.1,
+                collided_x: cand.dx != mv.0,
+                collided_y: dy != mv.1,
+                collided_z: cand.dz != mv.2,
+            };
+        }
+    }
+    first
 }
 
 /// The movement wire's dispatch — sendPosition's own shape.
@@ -1442,7 +1622,10 @@ impl PlayerBody {
                 collided_z: false,
             }
         } else {
-            let col = collide(world, b, mv);
+            // THE STEP LADDER'S OWN CALL (the 26.2 collide's ladder the
+            // walk itself wears now — the pre-move ground flag the
+            // gate reads, the LivingEntity's own 0.6 the step speaks)
+            let col = collide_stepped(world, b, mv, self.on_ground, MAX_UP_STEP);
             self.x += col.dx;
             self.y += col.dy;
             self.z += col.dz;
@@ -2719,6 +2902,184 @@ mod tests {
             (b2.y - 1.0).abs() < 1e-9,
             "the fall the floor's top wears: y={}",
             b2.y
+        );
+    }
+
+    /// THE SWEEP'S OWN BAND VERDICTS (autopush-421 — the unit law the
+    /// ladder stands on): the fall onto the farmland cell the 15/16
+    /// floor clips (the full-cube y=2.0 verdict the band retires), the
+    /// SAME box's march the band cell frees (the strict overlap the
+    /// band's own top speaks) and the full cube the face stops (the
+    /// touching contact the zero allowed wears).
+    #[test]
+    fn the_sweep_the_band_verdicts_speak() {
+        let mut w = flat_world();
+        w.set(5, 1, 5, crate::world::FARMLAND);
+        // THE FALL: the box above the farm cell, the downward move the
+        // band top clips (the stone floor's own top the deeper gap
+        // never reaches)
+        let b = (5.1, 3.0, 5.1, 5.9, 4.8, 5.9);
+        let c = collide(&w, b, (0.0, -2.0, 0.0));
+        assert!(
+            (c.dy - (1.0 + 15.0 / 16.0 - 3.0)).abs() < 1e-9,
+            "the fall the band clips: dy={}",
+            c.dy
+        );
+        assert!(c.vertical_collision_below, "the band the ground flag arms");
+        // THE MARCH'S OWN PAIR — the same box, the same move: the band
+        // cell the strict overlap frees, the full cube the face stops
+        let walker = (6.0, 1.0 + 15.0 / 16.0, 5.1, 7.0, 1.0 + 15.0 / 16.0 + 1.8, 5.9);
+        w.set(7, 1, 5, crate::world::FARMLAND);
+        let free = collide(&w, walker, (0.3, 0.0, 0.0));
+        assert!(
+            (free.dx - 0.3).abs() < 1e-9,
+            "the band-level march the neighbor band frees: dx={}",
+            free.dx
+        );
+        w.set(7, 1, 5, crate::world::STONE);
+        let stopped = collide(&w, walker, (0.3, 0.0, 0.0));
+        assert!(
+            stopped.dx.abs() < 1e-9,
+            "the full cube the band-level march stops: dx={}",
+            stopped.dx
+        );
+    }
+
+    /// THE COLUMN BAND'S OWN LANDING (autopush-421 — the 15/16 band the
+    /// sweep's Y extent speaks): the body dropped onto the farmland
+    /// cell the BAND'S own top wears (y = 1 + 15/16) — the full-cube
+    /// y=2.0 landing the old verdict spoke the band retires; the dirt
+    /// path the same verdict wears; the stone the y=2.0 keeps (the
+    /// contrast the full-cube roster speaks).
+    #[test]
+    fn the_column_band_the_landing_wears() {
+        // THE FARMLAND: the band the landing speaks
+        let mut w = flat_world();
+        w.set(5, 1, 5, crate::world::FARMLAND);
+        let mut b = PlayerBody::new(5.5, 4.5, 5.5, 0.0, 0.0);
+        for _ in 0..60 {
+            b.tick(&w, false);
+        }
+        assert!(
+            (b.y - (1.0 + 15.0 / 16.0)).abs() < 1e-9,
+            "the farmland the band's own top wears: y={}",
+            b.y
+        );
+        assert!(b.on_ground, "the band the ground verdict arms");
+        // THE DIRT PATH the same band wears
+        let mut w2 = flat_world();
+        w2.set(5, 1, 5, crate::world::DIRT_PATH);
+        let mut b2 = PlayerBody::new(5.5, 4.5, 5.5, 0.0, 0.0);
+        for _ in 0..60 {
+            b2.tick(&w2, false);
+        }
+        assert!(
+            (b2.y - (1.0 + 15.0 / 16.0)).abs() < 1e-9,
+            "the path the band wears: y={}",
+            b2.y
+        );
+        // THE STONE the full-cube top keeps (the contrast)
+        let mut w3 = flat_world();
+        w3.set(5, 1, 5, crate::world::STONE);
+        let mut b3 = PlayerBody::new(5.5, 4.5, 5.5, 0.0, 0.0);
+        for _ in 0..60 {
+            b3.tick(&w3, false);
+        }
+        assert!(
+            (b3.y - 2.0).abs() < 1e-9,
+            "the stone the full top wears: y={}",
+            b3.y
+        );
+    }
+
+    /// THE FIELD EDGE THE STEP CLIMBS (autopush-421 — the ladder the
+    /// 26.2 collide's own candidate heights speak): the body ON the
+    /// farmland band marching into the dirt shelf the 1/16 rise the
+    /// step climbs (the feet the shelf's own top wears, the march the
+    /// face never stops, the jump never asked); the shelf the ground
+    /// verdict keeps (the step's net rise the honest flag arms).
+    #[test]
+    fn the_field_edge_the_step_climbs() {
+        // the farmland bed [3..5) the dirt shelf [5..14) speaks: the
+        // body starts ON the band (feet 1.9375), marches +x into the
+        // shelf whose top is the feet's own 1/16 rise
+        let mut w = flat_world();
+        for x in 3..5 {
+            w.set(x, 1, 5, crate::world::FARMLAND);
+        }
+        for x in 5..14 {
+            w.set(x, 1, 5, crate::world::DIRT);
+        }
+        let mut b = PlayerBody::new(3.5, 1.0 + 15.0 / 16.0, 5.5, 270.0, 0.0); // facing +x
+        settle(&mut b, &w);
+        assert!(
+            (b.y - (1.0 + 15.0 / 16.0)).abs() < 1e-9,
+            "the band the stance keeps: y={}",
+            b.y
+        );
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(b.x > 6.0, "the field edge the march crossed: x={}", b.x);
+        assert!(
+            (b.y - 2.0).abs() < 1e-9,
+            "the shelf top the step wears: y={}",
+            b.y
+        );
+        assert!(b.on_ground, "the shelf the ground verdict keeps");
+    }
+
+    /// THE FIELD MARCH THE BAND NEVER STICKS (autopush-421 — the
+    /// same-level walk the band's strict overlap frees): the body ON
+    /// the farm field marching across the cell boundaries the neighbors
+    /// never block (the feet the band's own top the c1hi the strict
+    /// skin reads) — the farm the walkable field the vanilla speaks,
+    /// the feet the ONE band height the whole march wears.
+    #[test]
+    fn the_field_march_the_band_never_sticks() {
+        let mut w = flat_world();
+        for x in 3..14 {
+            w.set(x, 1, 5, crate::world::FARMLAND);
+        }
+        let mut b = PlayerBody::new(3.5, 1.0 + 15.0 / 16.0, 5.5, 270.0, 0.0); // facing +x
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(
+            b.x > 6.0,
+            "the field the march crossed the boundaries: x={}",
+            b.x
+        );
+        assert!(
+            (b.y - (1.0 + 15.0 / 16.0)).abs() < 1e-9,
+            "the band the feet the whole march wears: y={}",
+            b.y
+        );
+    }
+
+    /// THE LADDER THE FULL WALL NEVER CLIMBS (autopush-421 — the
+    /// contrast the maxUpStep gate keeps): the 1.0 cell's top the `>
+    /// maxUpStep` gate refuses (no candidate the ladder arms) — the
+    /// march the face stops, the feet the floor keeps, the jump the
+    /// wall's own answer the field's 1/16 climb contrasts.
+    #[test]
+    fn the_ladder_the_full_wall_never_climbs() {
+        let mut w = flat_world();
+        w.set(5, 1, 5, crate::world::STONE);
+        let mut b = PlayerBody::new(2.5, 1.0, 5.5, 270.0, 0.0); // facing +x
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(b.x < 5.0, "the wall the march stops at: x={}", b.x);
+        assert!(
+            (b.y - 1.0).abs() < 1e-9,
+            "the feet the floor the wall keeps: y={}",
+            b.y
         );
     }
 
