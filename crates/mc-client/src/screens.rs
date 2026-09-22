@@ -6248,6 +6248,11 @@ pub struct App {
     /// while the other bodies keep drawing (the model's honesty is
     /// its own lane).
     pub spider_model: Option<crate::avatar::SpiderModel>,
+    /// THE CREEPER'S OWN BODY (the CreeperRenderer's bake — the
+    /// CreeperModel the CREEPER layer keeps), the sha1-verified load
+    /// the spider's field mirrors: the `None` the skin's absence
+    /// speaks, the body the honesty keeps unseen.
+    pub creeper_model: Option<crate::avatar::CreeperModel>,
     /// THE CANINE'S OWN LANES (the AgeableMobRenderer's pair the
     /// WolfRenderer ctor keeps — the adult the WOLF layer bakes, the
     /// baby the WOLF_BABY layer, the isBaby word the render arm picks).
@@ -7234,6 +7239,7 @@ impl App {
             baby_cow_cold_model: None,
             baby_cow_warm_model: None,
             spider_model: None,
+            creeper_model: None,
             wolf_model: None,
             baby_wolf_model: None,
             fire_strips: None,
@@ -8918,20 +8924,29 @@ impl App {
                                 eat_swaps.push(swap);
                             }
                             if ev.ambient {
-                                groans.push((
-                                    // THE MOB'S OWN ROW (the synced
-                                    // sound variant's set the word
-                                    // picks, the classic the honest
-                                    // default keeps; the WOLF'S OWN
-                                    // FOUR-ARM selection the state
-                                    // speaks — the gate's draw the
-                                    // tick spent, the selection's
-                                    // roll the play's own arg walks)
-                                    mob.ambient_voice_event(),
-                                    mob.voice_pitch(),
-                                    ear_distance(ear, mob.x, mob.y, mob.z),
-                                    ear_pan(ear, yaw, mob.x, mob.y, mob.z),
-                                ));
+                                // THE PLAY'S OWN NULL GATE (javap
+                                // `Mob.playAmbientSound` — the
+                                // getAmbientSound() word the local
+                                // `sound != null` the play gates: the
+                                // CREEPER the override never carries,
+                                // the None the silence wears — the
+                                // gate's draw the stream still spent)
+                                if let Some(word) = mob.ambient_voice_event() {
+                                    groans.push((
+                                        // THE MOB'S OWN ROW (the synced
+                                        // sound variant's set the word
+                                        // picks, the classic the honest
+                                        // default keeps; the WOLF'S OWN
+                                        // FOUR-ARM selection the state
+                                        // speaks — the gate's draw the
+                                        // tick spent, the selection's
+                                        // roll the play's own arg walks)
+                                        word,
+                                        mob.voice_pitch(),
+                                        ear_distance(ear, mob.x, mob.y, mob.z),
+                                        ear_pan(ear, yaw, mob.x, mob.y, mob.z),
+                                    ));
+                                }
                             }
                             if ev.fire_hurt {
                                 // THE KIND'S OWN ROW (the hurt sound the
@@ -17544,17 +17559,21 @@ impl App {
             // body's freezes; the draw rides the mob's own voice rng
             // the id-seeded spawn law arms)
             if m.health > 0.0 && m.ambient_voice() {
-                groans.push((
-                    // THE AMBIENT'S OWN SELECTION (the wolf's four-arm
-                    // walk the state speaks — the gate's draw the
-                    // ambient_voice spent, the roll the play's own
-                    // arg walks; the other kinds the stateless word
-                    // keeps)
-                    m.ambient_voice_event(),
-                    m.voice_pitch(),
-                    ear_distance(ear, m.x, m.y, m.z),
-                    ear_pan(ear, yaw, m.x, m.y, m.z),
-                ));
+                // THE AMBIENT'S OWN NULL GATE (javap `Mob.playAmbientSound`
+                // — the `sound != null` the play refuses: the CREEPER the
+                // override never carries, the None the silence wears — the
+                // gate's draw the stream still spent; the WOLF'S OWN
+                // FOUR-ARM selection the state speaks — the roll the
+                // play's own arg walks; the other kinds the stateless
+                // word keeps)
+                if let Some(word) = m.ambient_voice_event() {
+                    groans.push((
+                        word,
+                        m.voice_pitch(),
+                        ear_distance(ear, m.x, m.y, m.z),
+                        ear_pan(ear, yaw, m.x, m.y, m.z),
+                    ));
+                }
             }
             // THE HURT VOICE at the arm's own value (the 10 the Hurt
             // Animation packet ships — HURT_DURATION_TICKS the law
@@ -22848,6 +22867,12 @@ impl App {
             self.spider_model =
                 crate::avatar::SpiderModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE CREEPER LANE's own lazy load (the same honesty: a failed
+        // creeper skin keeps only the creepers unseen)
+        if self.creeper_model.is_none() {
+            self.creeper_model =
+                crate::avatar::CreeperModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // THE WOLF LANES' own lazy load (the same honesty: a failed
         // wolf skin keeps only the canines unseen — the adult and the
         // baby the two OWN shas the loads verify)
@@ -22908,6 +22933,7 @@ impl App {
         // the spider's honesty is ITS OWN lane: a failed spider skin
         // keeps only the arachnids unseen, the other bodies keep drawing
         let spider_model = self.spider_model.as_ref();
+        let creeper_model = self.creeper_model.as_ref();
         // the wolf lanes' honesty is THEIR OWN lane: a failed wolf
         // skin keeps only the canines unseen (the adult and the baby
         // the pair's own shas verify)
@@ -23627,6 +23653,29 @@ impl App {
                     let quads = spider.quads(&state, feet, cam.yaw, cam.pitch);
                     (quads, Box::new(move |u, v| spider.pixel(u, v)))
                 }
+                crate::mob::MobKind::Creeper => {
+                    // THE CREEPER'S OWN STATE (the 26.2 CreeperModel.
+                    // setupAnim reads the look pair + the walk pair ONLY
+                    // — the head rides the netHeadYaw/pitch words the
+                    // quadruped's own state wears, the four legs the
+                    // walk clock's diagonal phases swing; no age lane
+                    // the Monster chain never carries, the swelling the
+                    // zero-fold the plain body wears — the swell
+                    // machine's own round the scale serves)
+                    let Some(creeper) = creeper_model else {
+                        continue; // the creeper skin failed its sha1 — this body stays unseen
+                    };
+                    let state = crate::avatar::CreeperState {
+                        yaw_deg: mob.yaw,
+                        pitch_deg: head_pitch,
+                        head_yaw_off_deg: head_yaw,
+                        walk_pos: mob.walk.position_at(self.partial_tick),
+                        walk_speed: mob.walk.speed_at(self.partial_tick),
+                        death_time: mob.death_time_at(self.partial_tick),
+                    };
+                    let quads = creeper.quads(&state, feet, cam.yaw, cam.pitch);
+                    (quads, Box::new(move |u, v| creeper.pixel(u, v)))
+                }
                 crate::mob::MobKind::Wolf => {
                     // THE CANINE'S OWN PAIR (the WolfRenderer ctor's
                     // AgeableMobRenderer walk — the adult the WOLF
@@ -23700,6 +23749,10 @@ impl App {
                 crate::mob::MobKind::Spider => (
                     crate::mob::SPIDER_WIDTH as f32,
                     crate::mob::SPIDER_HEIGHT as f32,
+                ),
+                crate::mob::MobKind::Creeper => (
+                    crate::mob::CREEPER_WIDTH as f32,
+                    crate::mob::CREEPER_HEIGHT as f32,
                 ),
                 crate::mob::MobKind::Wolf => (
                     crate::mob::WOLF_WIDTH as f32,

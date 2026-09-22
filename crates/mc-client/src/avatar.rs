@@ -3016,6 +3016,191 @@ fn build_spider_parts(state: &SpiderState) -> Vec<Part> {
     ]
 }
 
+/// THE CREEPER'S POSE STATE (the LivingEntityRenderState fields the
+/// 26.2 `CreeperModel.setupAnim` reads — the head pair rides the
+/// SAME netHeadYaw/pitch words the quadruped's own state wears — the
+/// MobRenderer super's own extraction fills the render state's yRot/
+/// xRot the extractRenderState walk never overrides (the Creeper
+/// renderer's own walk the swelling + isPowered pair alone sets) —
+/// the walk pair the WalkAnimationState feeds, the death clock the
+/// entity fold's own input): the creeper carries NO age lane (the
+/// Monster base is no AgeableMob — no baby model the kind keeps) and
+/// NO swelling lane this admission speaks (the swell machine's own
+/// round the scale fold serves — the zero swelling the 1.0 arms
+/// wear).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CreeperState {
+    pub yaw_deg: f32,
+    pub pitch_deg: f32,
+    pub head_yaw_off_deg: f32,
+    pub walk_pos: f32,
+    pub walk_speed: f32,
+    pub death_time: f32,
+}
+
+/// The full creeper model — the 26.2 `CreeperModel.createBodyLayer`
+/// own numbers, bytecode-proven off the official jar (the
+/// createBodyLayer(CubeDeformation) walk + the setupAnim fold): the
+/// head 8x8x8 (uv 0,0) at pivot (0, 6, 0) — the box reaching -8 y
+/// the crown's own reach keeps — the body 8x12x4 (uv 16,16) at
+/// pivot (0, 6, 0), and the FOUR 4x6x4 legs (uv 0,16) at pivots
+/// (∓2, 18, ±4) the plain builder speaks,
+/// `LayerDefinition.create(mesh, 64, 32)`.
+pub struct CreeperModel {
+    rgba: Vec<u8>,
+}
+
+impl CreeperModel {
+    /// Load + sha1-verify the CREEPER's skin (the CreeperRenderer's
+    /// CREEPER_LOCATION — `textures/entity/creeper/creeper.png` the
+    /// clinit's withDefaultNamespace names). The `None` = the creeper
+    /// never renders (the same honesty the other bodies speak: the
+    /// renderer must not lie about its data).
+    pub fn load(root: &Path) -> Option<CreeperModel> {
+        let bytes = std::fs::read(root.join(skin::CREEPER_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::CREEPER_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 || rgba.len() != 64 * 32 * 4 {
+            return None;
+        }
+        Some(CreeperModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 64x32 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 63.999_9), v.clamp(0.0, 31.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the
+    /// creeper at `state` — the SAME entity chain fold the avatar
+    /// speaks (one law, every living model), the creeper's own parts
+    /// beneath.
+    pub fn quads(
+        &self,
+        state: &CreeperState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let parts = build_creeper_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, state.death_time, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 6);
+        let ident = Mat4::IDENT;
+        for part in &parts {
+            collect_part(part, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        }
+        out
+    }
+}
+
+/// THE CREEPER'S PARTS — the 26.2 `CreeperModel.setupAnim`'s own walk
+/// the bytecode folds verbatim: the head rides the look pair (the
+/// yRot/xRot * 0.01745329238474369 the two ldc keeps), and the four
+/// legs swing the quadruped walk the cos folds speak —
+/// `cos(walkAnimationPos * 0.6661999821662903 [+ PI]) *
+/// 1.399999976158142 * walkAnimationSpeed` — the right-hind and the
+/// left-front the PLAIN phase keep, the left-hind and the right-front
+/// the +3.1415927410125732 anti-phase ride (the diagonal gait the
+/// four putfield walks bank, the float consts the raw scan names).
+fn build_creeper_parts(state: &CreeperState) -> Vec<Part> {
+    let f2 = state.walk_pos * 0.666_199_98;
+    let f3 = state.walk_speed;
+    // THE LEG SWINGS (the four cos folds — the phases the raw walk
+    // keeps: right-hind plain, left-hind +PI, right-front +PI,
+    // left-front plain)
+    let leg_plain = mth_cos(f2) * 1.4 * f3;
+    let leg_anti = mth_cos(f2 + std::f32::consts::PI) * 1.4 * f3;
+    let head_x = state.pitch_deg.to_radians();
+    let head_y = state.head_yaw_off_deg.to_radians();
+    // THE LEG BOX (the one cube the four legs share — the
+    // `loc3` reuse the createBodyLayer walk speaks, the same
+    // texOffs(0,16) addBox(-2, 0, -2, 4, 6, 4) each pivot rides)
+    let leg_cube = Cube {
+        tex: (0.0, 16.0),
+        origin: [-2.0, 0.0, -2.0],
+        size: [4.0, 6.0, 4.0],
+        inflate: 0.0,
+        mirror: false,
+    };
+    vec![
+        // head (the look pair — the crown's cube the -8 reach wears)
+        Part {
+            pivot: [0.0, 6.0, 0.0],
+            x_rot: head_x,
+            y_rot: head_y,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-4.0, -8.0, -4.0],
+                size: [8.0, 8.0, 8.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // body (the zero-pose prism)
+        Part {
+            pivot: [0.0, 6.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![Cube {
+                tex: (16.0, 16.0),
+                origin: [-4.0, 0.0, -2.0],
+                size: [8.0, 12.0, 4.0],
+                inflate: 0.0,
+                mirror: false,
+            }],
+            children: vec![],
+        },
+        // right hind leg (the plain phase — the pivot (-2, 18, 4) the
+        // PartPose.offset keeps)
+        Part {
+            pivot: [-2.0, 18.0, 4.0],
+            x_rot: leg_plain,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube.clone()],
+            children: vec![],
+        },
+        // left hind leg (the +PI anti-phase — the pivot (2, 18, 4))
+        Part {
+            pivot: [2.0, 18.0, 4.0],
+            x_rot: leg_anti,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube.clone()],
+            children: vec![],
+        },
+        // right front leg (the +PI anti-phase — the pivot (-2, 18, -4))
+        Part {
+            pivot: [-2.0, 18.0, -4.0],
+            x_rot: leg_anti,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube.clone()],
+            children: vec![],
+        },
+        // left front leg (the plain phase — the pivot (2, 18, -4))
+        Part {
+            pivot: [2.0, 18.0, -4.0],
+            x_rot: leg_plain,
+            y_rot: 0.0,
+            z_rot: 0.0,
+            cubes: vec![leg_cube],
+            children: vec![],
+        },
+    ]
+}
+
 /// 26.2 `WolfModel.setupAnim` reads — the head pair rides the
 /// netHeadYaw/pitch words the quadruped's own state wears, the walk
 /// pair the WalkAnimationState feeds, the death clock the entity
@@ -6953,6 +7138,118 @@ mod tests {
         for y in 0..32 {
             for x in 0..64 {
                 if spider.pixel(x as f32, y as f32)[3] == 255 {
+                    opaque += 1;
+                }
+            }
+        }
+        assert!(opaque > 500, "the hide's texels the canvas keeps: {opaque}");
+    }
+
+    /// THE CREEPER MESH BAKES THE FOUR LEGS (javap CreeperModel's own
+    /// numbers): the 6 parts x 6 faces the bake speaks, the head's
+    /// crown at model y -2 (world 1.625 — the head box's -8 reach the
+    /// PartPose.offset(0, 6, 0) pivot wears), the legs' tips at model
+    /// 24 (the ground's own plane the 24px law keeps), the walk clock
+    /// the diagonal phases swing, the head's look the fangs' cube
+    /// turns, the death fold the body topples.
+    #[test]
+    fn the_creeper_mesh_bakes_the_four_legs() {
+        let creeper = CreeperModel {
+            rgba: vec![255u8; 64 * 32 * 4],
+        };
+        let feet = Vec3::new(10.0, 64.0, 20.0);
+        let rest = CreeperState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            death_time: 0.0,
+        };
+        let quads = creeper.quads(&rest, feet, 0.0, 0.0);
+        assert_eq!(quads.len(), 36, "6 parts x 6 faces the bake speaks");
+        let mut max_y = f32::MIN;
+        let mut min_y = f32::MAX;
+        for q in &quads {
+            for p in q.pts {
+                max_y = max_y.max(p[1]);
+                min_y = min_y.min(p[1]);
+            }
+        }
+        // the head's crown: model y -2 -> world (24 - (-2))/16 = 1.625
+        // (+ the entity fold's own 0.001 epsilon the top surface rides)
+        assert!(
+            (max_y - (feet.y as f32 + 1.626)).abs() < 1e-4,
+            "the crown rides the head box's -8 reach: {max_y}"
+        );
+        // the legs' tips at model y 24 — the ground's own plane (the
+        // zero walk the legs keep straight, the fold's 0.001 epsilon
+        // the bottom surface rides)
+        assert!(
+            (min_y - (feet.y as f32 + 0.001)).abs() < 1e-4,
+            "the legs' tips the ground's plane keeps: {min_y}"
+        );
+        // THE WALK CLOCK: the speed-1 stride the legs swing (the rest
+        // pose the speed zero keeps — the diagonal phases the sums
+        // differ)
+        let pose_sum = |qs: &[AvatarQuad]| -> f64 {
+            qs.iter()
+                .flat_map(|q| q.pts.iter().flatten())
+                .map(|v| *v as f64)
+                .sum()
+        };
+        let walking = CreeperState { walk_pos: 1.0, walk_speed: 1.0, ..rest };
+        let walk_quads = creeper.quads(&walking, feet, 0.0, 0.0);
+        assert_ne!(pose_sum(&quads), pose_sum(&walk_quads), "the walk clock the legs swing");
+        // THE HEAD'S LOOK: the yaw offset turns the crown's cube — the
+        // symmetric 8x8 prism the center-axis rotation the SUM law
+        // cancels (the corner radii the same squares keep), the X
+        // EXTENT the 30-degree turn widens (the max |x| the 4 -> 5.464
+        // the rotated corner reaches)
+        let looking = CreeperState { head_yaw_off_deg: 30.0, ..rest };
+        let look_quads = creeper.quads(&looking, feet, 0.0, 0.0);
+        let x_extent = |qs: &[AvatarQuad]| -> f32 {
+            let (mut lo, mut hi) = (f32::MAX, f32::MIN);
+            for q in qs {
+                for p in q.pts {
+                    lo = lo.min(p[0]);
+                    hi = hi.max(p[0]);
+                }
+            }
+            hi - lo
+        };
+        assert!(
+            x_extent(&look_quads) > x_extent(&quads) + 0.1,
+            "the head's look the crown turns: {} vs {}",
+            x_extent(&quads),
+            x_extent(&look_quads)
+        );
+        // THE DEATH FOLD: the topple the death clock speaks
+        let dying = CreeperState { death_time: 5.0, ..rest };
+        let die_quads = creeper.quads(&dying, feet, 0.0, 0.0);
+        assert_ne!(pose_sum(&quads), pose_sum(&die_quads), "the death fold the body topples");
+    }
+
+    /// THE CREEPER LOADS — the real runtime cache (the generator's
+    /// extraction) decodes the 64x32 skin the sha1 the generated table
+    /// pins (the CreeperRenderer's CREEPER_LOCATION).
+    #[test]
+    fn the_creeper_model_loads_sha1_verified() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let creeper = CreeperModel::load(&root).expect("the creeper loads from the runtime cache");
+        // the charged-green hide: the census the opaque rows keep
+        // (the body texels the 64x32 canvas paints)
+        let mut opaque = 0;
+        for y in 0..32 {
+            for x in 0..64 {
+                if creeper.pixel(x as f32, y as f32)[3] == 255 {
                     opaque += 1;
                 }
             }

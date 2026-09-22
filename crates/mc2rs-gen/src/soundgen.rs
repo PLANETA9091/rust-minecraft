@@ -129,7 +129,12 @@ pub fn generate(bytes: &[u8]) -> Result<SoundData> {
 /// - the skeleton's and the spider's flat quads (the AbstractSkeleton
 ///   and Spider FLAT folds the `playSound(..., 0.15F, 1.0F)` walk
 ///   keeps — the ambient/hurt/death/step rows the 26.2 sounds.json
-///   banks).
+///   banks);
+/// - the creeper's own PAIR (the getHurtSound/getDeathSound getters
+///   the sounds.json's entity.creeper rows name — the say-clip set
+///   the hurt banks, the death the own file; NO ambient the
+///   getAmbientSound override never carries, the step the base block
+///   law the block-sound table serves).
 ///
 /// THE FETCH THE CLIENT'S TABLES OWE: every row the client's own
 /// voice/step/variant/eat tables speak the download walk arms — an
@@ -138,7 +143,7 @@ pub fn generate(bytes: &[u8]) -> Result<SoundData> {
 /// drawn world the mute bodies the oggs' absence wore. Every file
 /// rides the same sha1-verified asset-index fetch the music and block
 /// lanes speak.
-pub const MOB_VOICE_EVENTS: [&str; 55] = [
+pub const MOB_VOICE_EVENTS: [&str; 57] = [
     "entity.zombie.ambient",
     "entity.zombie.hurt",
     "entity.zombie.death",
@@ -194,6 +199,13 @@ pub const MOB_VOICE_EVENTS: [&str; 55] = [
     "entity.spider.hurt",
     "entity.spider.death",
     "entity.spider.step",
+    // the creeper's own PAIR (the getHurtSound/getDeathSound rows the
+    // class's own getters speak — the say-clip set the hurt names, the
+    // death the own file answers; NO ambient the getAmbientSound
+    // override the class never carries, NO step the base block law
+    // the block-sound table serves)
+    "entity.creeper.hurt",
+    "entity.creeper.death",
 ];
 
 #[cfg(test)]
@@ -298,9 +310,13 @@ mod tests {
                 "entity.spider.hurt",
                 "entity.spider.death",
                 "entity.spider.step",
+                // the creeper's own pair (the hurt the say-clip set, the
+                // death the own file — no ambient the getter never names)
+                "entity.creeper.hurt",
+                "entity.creeper.death",
             ]
         );
-        // the eight drawn kinds the list's rows pair — no duplicates,
+        // the nine drawn kinds the list's rows pair — no duplicates,
         // no undrawn kind's id the fetch never arms; the variant and
         // baby ids the PARENT kind's own table rows ride (the
         // pig_big/baby_pig rows the PIG's sets bank, the picky/baby
@@ -334,6 +350,7 @@ mod tests {
             "chicken", "chicken", "chicken", "chicken",
             "skeleton", "skeleton", "skeleton", "skeleton",
             "spider", "spider", "spider", "spider",
+            "creeper", "creeper",
         ]);
         let mut sorted = MOB_VOICE_EVENTS.to_vec();
         sorted.sort_unstable();

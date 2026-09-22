@@ -190,6 +190,7 @@ pub const PARTICLE_SWEEP_JAR_PATHS: [&str; 8] = [
 /// emit pins), the runtime path the client's loader reads.
 pub const SKELETON_JAR_PATH: &str = "assets/minecraft/textures/entity/skeleton/skeleton.png";
 pub const SPIDER_JAR_PATH: &str = "assets/minecraft/textures/entity/spider/spider.png";
+pub const CREEPER_JAR_PATH: &str = "assets/minecraft/textures/entity/creeper/creeper.png";
 pub const CHICKEN_COLD_JAR_PATH: &str = "assets/minecraft/textures/entity/chicken/chicken_cold.png";
 pub const CHICKEN_COLD_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/chicken/chicken_cold_baby.png";
 pub const CHICKEN_WARM_JAR_PATH: &str = "assets/minecraft/textures/entity/chicken/chicken_warm.png";
@@ -211,6 +212,7 @@ pub const WOLF_BABY_JAR_PATH: &str = "assets/minecraft/textures/entity/wolf/wolf
 /// skins' lanes speak).
 pub const SKELETON_RUNTIME_PATH: &str = "entity/skeleton/skeleton.png";
 pub const SPIDER_RUNTIME_PATH: &str = "entity/spider/spider.png";
+pub const CREEPER_RUNTIME_PATH: &str = "entity/creeper/creeper.png";
 pub const CHICKEN_COLD_RUNTIME_PATH: &str = "entity/chicken/chicken_cold.png";
 pub const CHICKEN_COLD_BABY_RUNTIME_PATH: &str = "entity/chicken/chicken_cold_baby.png";
 pub const CHICKEN_WARM_RUNTIME_PATH: &str = "entity/chicken/chicken_warm.png";
@@ -388,6 +390,7 @@ pub struct SkinData {
     /// (each the OWN layout the model family's LayerDefinition keeps).
     pub skeleton_png_sha1: String,
     pub spider_png_sha1: String,
+    pub creeper_png_sha1: String,
     pub chicken_cold_png_sha1: String,
     pub chicken_cold_baby_png_sha1: String,
     pub chicken_warm_png_sha1: String,
@@ -786,7 +789,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
     // baby, the avian variants' 64x32 adult + 16x16 baby, the swine/
     // bovine variants' 64x64 adult + 32x32 baby (the dims the committed
     // ledger's doc rows speak).
-    let variant_reads: [(&str, (u32, u32)); 16] = [
+    let variant_reads: [(&str, (u32, u32)); 17] = [
         (SKELETON_JAR_PATH, (64, 32)),
         (SPIDER_JAR_PATH, (64, 32)),
         (CHICKEN_COLD_JAR_PATH, (64, 32)),
@@ -806,6 +809,10 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         (COW_WARM_BABY_JAR_PATH, (64, 64)),
         (WOLF_JAR_PATH, (64, 32)),
         (WOLF_BABY_JAR_PATH, (32, 32)),
+        // THE CREEPER'S OWN SKIN (the CreeperRenderer's CREEPER_LOCATION
+        // — the 64x32 layout the CreeperModel's own LayerDefinition
+        // keeps, the clinit's withDefaultNamespace the path names)
+        (CREEPER_JAR_PATH, (64, 32)),
     ];
     let mut variant_png_sha1s: Vec<String> = Vec::with_capacity(16);
     for (path, (ew, eh)) in &variant_reads {
@@ -835,6 +842,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
     let cow_warm_baby_png_sha1 = variant_png_sha1s[13].clone();
     let wolf_png_sha1 = variant_png_sha1s[14].clone();
     let wolf_baby_png_sha1 = variant_png_sha1s[15].clone();
+    let creeper_png_sha1 = variant_png_sha1s[16].clone();
     Ok(SkinData {
         png_sha1,
         rgba_sha1: crate::util::sha1_hex(&rgba),
@@ -868,6 +876,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_sweep_png_sha1s,
         skeleton_png_sha1,
         spider_png_sha1,
+        creeper_png_sha1,
         chicken_cold_png_sha1,
         chicken_cold_baby_png_sha1,
         chicken_warm_png_sha1,
@@ -978,6 +987,14 @@ pub fn emit(data: &SkinData) -> Result<String> {
     ));
     out.push_str(&format!(
         "pub const SPIDER_RUNTIME_PATH: &str = \"{SPIDER_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str("\n/// The CREEPER skin (the charged-green body's own), generated from the\n/// same jar: the source sha1 the creeper renderer verifies before\n/// drawing (javap: `CreeperRenderer`'s CREEPER_LOCATION — the\n/// `textures/entity/creeper/creeper.png` the clinit's\n/// withDefaultNamespace names, the CreeperModel's own\n/// `LayerDefinition.create(mesh, 64, 32)` the bytecode speaks — the\n/// half-height layout the four-leg chain unwraps).\n");
+    out.push_str(&format!(
+        "pub const CREEPER_PNG_SHA1: &str = \"{}\";\n",
+        data.creeper_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const CREEPER_RUNTIME_PATH: &str = \"{CREEPER_RUNTIME_PATH}\";\n"
     ));
     out.push_str("\n/// The PIG skin (the temperate variant the PigRenderer's variant\n/// table defaults to), generated from the same jar: the source sha1\n/// the pig renderer verifies before it draws (javap PigModel:\n/// `LayerDefinition.create(64, 64)` — the quadruped's own UV layout).\n");
     out.push_str(&format!(
@@ -1517,6 +1534,8 @@ mod tests {
         let expected_wolf_sha1 = crate::util::sha1_hex(&wolf);
         let wolf_baby = sweep_png();
         let expected_wolf_baby_sha1 = crate::util::sha1_hex(&wolf_baby);
+        let creeper = sheep_png();
+        let expected_creeper_sha1 = crate::util::sha1_hex(&creeper);
 
         let mut zip = zip_of(&[
             (WIDE_STEVE_JAR_PATH, png.clone()),
@@ -1549,6 +1568,7 @@ mod tests {
             (COW_WARM_BABY_JAR_PATH, cow_warm_baby),
             (WOLF_JAR_PATH, wolf),
             (WOLF_BABY_JAR_PATH, wolf_baby),
+            (CREEPER_JAR_PATH, creeper),
             (FIRE_0_JAR_PATH, strip.clone()),
             (FIRE_1_JAR_PATH, strip),
             (UNDERWATER_JAR_PATH, underwater),
@@ -1696,6 +1716,7 @@ mod tests {
         assert_eq!(data.cow_warm_baby_png_sha1, expected_cow_warm_baby_sha1, "the warm calf's own sha1");
         assert_eq!(data.wolf_png_sha1, expected_wolf_sha1, "the wolf's own sha1");
         assert_eq!(data.wolf_baby_png_sha1, expected_wolf_baby_sha1, "the wolf pup's own sha1");
+        assert_eq!(data.creeper_png_sha1, expected_creeper_sha1, "the creeper's own sha1");
 
         let emitted = emit(&data).unwrap();
         // THE VARIANT TABLE'S EMIT (the blocks land verbatim — the
@@ -1720,6 +1741,8 @@ mod tests {
         assert!(emitted.contains("pub const WOLF_RUNTIME_PATH: &str = \"entity/wolf/wolf.png\";"));
         assert!(emitted.contains(&format!("pub const WOLF_BABY_PNG_SHA1: &str = \"{expected_wolf_baby_sha1}\";")));
         assert!(emitted.contains("pub const WOLF_BABY_RUNTIME_PATH: &str = \"entity/wolf/wolf_baby.png\";"));
+        assert!(emitted.contains(&format!("pub const CREEPER_PNG_SHA1: &str = \"{expected_creeper_sha1}\";")));
+        assert!(emitted.contains("pub const CREEPER_RUNTIME_PATH: &str = \"entity/creeper/creeper.png\";"));
         assert!(emitted.contains(&format!("pub const SKIN_SIDE: u32 = 64;")));
         assert!(emitted.contains(&format!("pub const STEVE_WIDE_PNG_SHA1: &str = \"{expected_png_sha1}\";")));
         assert!(emitted.contains(&format!("pub const SLIM_ALEX_PNG_SHA1: &str = \"{expected_png_sha1}\";")));

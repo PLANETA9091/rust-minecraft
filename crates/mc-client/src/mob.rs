@@ -1147,6 +1147,30 @@ pub enum MobKind {
     /// hurt-driven flee the client never wears, the target half the
     /// prey lanes the round's own honest skip keeps.
     Wolf,
+    /// THE CREEPER (javap `CreeperModel.createBodyLayer` the 26.2
+    /// bytecode speaks — the head 8x8x8 texOffs(0,0) at pivot (0, 6,
+    /// 0), the body 8x12x4 texOffs(16,16) at pivot (0, 6, 0), the
+    /// FOUR 4x6x4 legs texOffs(0,16) at pivots (±2, 18, ±4) the
+    /// diagonal walk the setupAnim's cos folds swing
+    /// (`cos(pos * 0.6662 [+ PI]) * 1.4 * speed` — the right-hind
+    /// and the left-front the plain phase keep, the left-hind and
+    /// the right-front the +PI anti-phase ride),
+    /// `LayerDefinition.create(mesh, 64, 32)` the tail keeps — the
+    /// `CubeDeformation.NONE` the LayerDefinitions.createRoots' own
+    /// getstatic speaks). The registration's own words the
+    /// EntityTypes clinit pins (sized(0.6, 1.7), NO eyeHeight the
+    /// scalable default the 0.85 law answers, notInPeaceful, the
+    /// tracking 8), the `Creeper.createAttributes`' own add
+    /// (MOVEMENT_SPEED 0.25 — no MAX_HEALTH the registered default
+    /// 20.0 the Monster base speaks, the ATTACK_DAMAGE the
+    /// single-arg add's 2.0 the bare fangs deal), and the
+    /// `Creeper.registerGoals`' own machine the doc banks — the
+    /// Float/Swell/Avoid/Melee the FULL walk names, the SWELL lane
+    /// the explosion machine's own round serves (this body the
+    /// stroll/look/retaliate plain lanes wear), the gunpowder the
+    /// creeper.json's own pool drops, the NO ambient voice the
+    /// getAmbientSound override's absence speaks.
+    Creeper,
 }
 
 /// THE MOB CATEGORY'S OWN CENSUS SLICE (javap the 26.2 jar the
@@ -1209,7 +1233,9 @@ impl MobKind {
     /// the 346 round's clinit audit already banked).
     pub fn mob_category(self) -> MobCategory {
         match self {
-            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => MobCategory::Monster,
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => {
+                MobCategory::Monster
+            }
             MobKind::Pig | MobKind::Cow | MobKind::Sheep | MobKind::Chicken
             | MobKind::Wolf => MobCategory::Creature,
         }
@@ -1239,6 +1265,11 @@ impl MobKind {
             // kind retires — a server-spawned wolf the zombie fallback
             // wore, the canine body the wire name now draws)
             MobKind::Wolf
+        } else if name == "minecraft:creeper" {
+            // THE CREEPER'S OWN ADMISSION — the wire Add Entity's own
+            // name the kind's body draws (the entity/creeper/creeper
+            // skin the sha1 the generated table pins)
+            MobKind::Creeper
         } else {
             MobKind::Zombie
         }
@@ -1265,7 +1296,10 @@ impl MobKind {
     /// prio 1 the bare varargs ctor, SpiderTargetGoal prios 2/3 the
     /// darkness gate arms) the same branch rides.
     pub fn is_monster(self) -> bool {
-        matches!(self, MobKind::Zombie | MobKind::Skeleton | MobKind::Spider)
+        matches!(
+            self,
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper
+        )
     }
 
     /// THE UNDEAD'S OWN BRAND (javap `shouldBurnInDay` — the Mob base
@@ -1304,6 +1338,13 @@ impl MobKind {
             // the wolf's own explicit eyeHeight(0.6800000071525574F) —
             // the EntityTypeIds.WOLF block's ldc_w the 26.2 clinit keeps
             MobKind::Wolf => WOLF_EYE_HEIGHT,
+            // THE CREEPER'S SCALABLE DEFAULT — the EntityTypes clinit's
+            // own builder chain the eyeHeight(F) call NEVER makes (the
+            // registration region's sized/tracking/notInPeaceful the
+            // pc 1397-1405 walk names), the
+            // EntityDimensions.defaultEyeHeight's own f * 0.85 the pig's
+            // arm keeps: 1.7 * 0.85
+            MobKind::Creeper => CREEPER_HEIGHT * 0.85,
         }
     }
 
@@ -1325,6 +1366,14 @@ impl MobKind {
             // the wolf's own createAttributes MAX_HEALTH 8.0 — the
             // Animal.createAnimalAttributes chain's second add speaks
             MobKind::Wolf => WOLF_MAX_HEALTH,
+            // THE CREEPER'S REGISTERED DEFAULT — the
+            // Creeper.createAttributes chain the MOVEMENT_SPEED add
+            // ALONE makes (javap the 26.2 jar: the
+            // Monster.createMonsterAttributes() base + the add(SPEED,
+            // 0.25) the ldc2_w keeps, no MAX_HEALTH add the chain ever
+            // writes), the RangedAttribute's registered default 20.0
+            // the zombie's arm doc pins the base value both speak
+            MobKind::Creeper => CREEPER_MAX_HEALTH,
         }
     }
 
@@ -1342,7 +1391,7 @@ impl MobKind {
             // arms (the armadillo class the lambda names — no armadillo
             // this client draws, the goal the empty vocabulary
             // honest-skips) and NO panic goal the monster gate keeps
-            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => None,
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => None,
             MobKind::Sheep => Some(PANIC_SPEED_SHEEP),
             MobKind::Cow => Some(PANIC_SPEED_COW),
             MobKind::Pig => Some(PANIC_SPEED_PIG),
@@ -1373,6 +1422,11 @@ impl MobKind {
             // the Spider.createAttributes' own add(MOVEMENT_SPEED,
             // 0.30000001192092896) the ldc2_w keeps
             MobKind::Spider => SPIDER_MOVEMENT_SPEED,
+            // THE CREEPER'S OWN ADD (javap `Creeper.createAttributes`
+            // the 26.2 jar speaks — the add(Attributes.MOVEMENT_SPEED,
+            // 0.25d) the ldc2_w the builder chain keeps, the f64 0.25
+            // the byte walk banks)
+            MobKind::Creeper => CREEPER_MOVEMENT_SPEED,
             // the Wolf.createAttributes' own add(MOVEMENT_SPEED,
             // 0.30000001192092896) the same word the canine speaks
             MobKind::Wolf => WOLF_MOVEMENT_SPEED,
@@ -1391,8 +1445,13 @@ impl MobKind {
         match self {
             // the Spider's own registerGoals prio 5 — the
             // WaterAvoidingRandomStrollGoal(this, 0.8d) the ldc2_w
-            // #51 the bytecode keeps
+            // #51 the bytecode keeps; THE CREEPER the same 0.8 rides
+            // (the registerGoals' prio-5
+            // WaterAvoidingRandomStrollGoal(this, 0.8d) the identical
+            // double the bytecode keeps — the raw walk pc 111 the
+            // addGoal(5, ...) names)
             MobKind::Spider => SPIDER_STROLL_SPEED_MODIFIER,
+            MobKind::Creeper => CREEPER_STROLL_SPEED_MODIFIER,
             // the animals' own WaterAvoidingRandomStrollGoal(this,
             // 1.0d) the dconst_1 keeps, the zombie's and the
             // skeleton's own registerGoals the stroll goal never
@@ -1466,6 +1525,23 @@ impl MobKind {
             (MobKind::Wolf, VoiceSlot::Ambient) => "entity.wolf.ambient",
             (MobKind::Wolf, VoiceSlot::Hurt) => "entity.wolf.hurt",
             (MobKind::Wolf, VoiceSlot::Death) => "entity.wolf.death",
+            // THE CREEPER'S OWN PAIR (javap `Creeper.getHurtSound` /
+            // `getDeathSound` the 26.2 bytecode keeps — the
+            // SoundEvents.CREEPER_HURT / CREEPER_DEATH getstatics the
+            // raw walks name: the hurt the say-clip set the
+            // sounds.json's entity.creeper.hurt row banks (the
+            // mob/creeper/say1..4 files), the death the own file
+            // answers). THE AMBIENT THE CLASS NEVER SPEAKS — the
+            // getAmbientSound override the Creeper.class method table
+            // never carries (the raw dump names it not), the
+            // playAmbientSound's null gate the voice keeps SILENT —
+            // this arm the exhaustiveness alone keeps (the ambient
+            // path the Option's None answers first, the word never
+            // plays), the hurt row's say-clip set the honest fallback
+            // word wears.
+            (MobKind::Creeper, VoiceSlot::Ambient) => "entity.creeper.hurt",
+            (MobKind::Creeper, VoiceSlot::Hurt) => "entity.creeper.hurt",
+            (MobKind::Creeper, VoiceSlot::Death) => "entity.creeper.death",
         }
     }
 
@@ -1521,7 +1597,15 @@ impl MobKind {
             // 1.0` — no block state the voice reads, the classic
             // variant the entity.wolf.step name carries)
             MobKind::Wolf => Some(("entity.wolf.step", 0.15, 1.0)),
-            MobKind::Sheep => {
+            // THE SHEEP'S AND THE CREEPER'S BASE LAW — the playStepSound
+            // override NEITHER class carries (javap the 26.2 classfiles
+            // the method tables name it not — the sheep the base walk
+            // the earlier rounds kept, the creeper the same absence
+            // the raw dump speaks), the Entity.playStepSound(pos,
+            // state) base impl the block under the feet reads (the
+            // SoundType's own base the generated table carries, the
+            // Lane::Step fold the *0.15 walks)
+            MobKind::Sheep | MobKind::Creeper => {
                 use mc_registry::generated::block_sounds as bs;
                 let idx = bs::sound_index(under?)?;
                 let (volume, pitch) =
@@ -1771,6 +1855,27 @@ pub const SPIDER_STROLL_SPEED_MODIFIER: f64 = 0.8;
 /// keeps — the Monster base's own createMonsterAttributes the first
 /// link of the chain speaks).
 pub const SPIDER_MAX_HEALTH: f32 = 16.0;
+/// THE CREEPER REGISTRATION'S OWN WORDS (javap `EntityTypes` clinit
+/// the 26.2 jar speaks — the pc 1397-1405 builder block: the
+/// `sized(0.6000000238418579F, 1.7000000476837158F)` the two ldc
+/// pairs keep, NO eyeHeight(F) call the chain ever makes (the
+/// scalable default the kind's eye_height arm answers), the
+/// notInPeaceful() the chain's own gate ends, the MONSTER category
+/// the Builder.of names, the clientTrackingRange(8) the tail banks).
+pub const CREEPER_WIDTH: f64 = 0.6;
+pub const CREEPER_HEIGHT: f64 = 1.7;
+/// `Creeper.createAttributes` — MOVEMENT_SPEED 0.25 (the add the
+/// ldc2_w keeps, the f64 the builder chain banks).
+pub const CREEPER_MOVEMENT_SPEED: f64 = 0.25;
+/// THE CREEPER'S OWN STROLL WORD (javap `Creeper.registerGoals` the
+/// 26.2 jar speaks — the prio-5 `addGoal(5, new
+/// WaterAvoidingRandomStrollGoal(this, 0.8d))` the identical double
+/// the spider's own walk keeps).
+pub const CREEPER_STROLL_SPEED_MODIFIER: f64 = 0.8;
+/// THE CREEPER'S REGISTERED DEFAULT — the Creeper.createAttributes
+/// chain the MOVEMENT_SPEED add ALONE makes, the RangedAttribute's
+/// registered default the Monster base's own word speaks.
+pub const CREEPER_MAX_HEALTH: f32 = 20.0;
 /// THE WOLF REGISTRATION'S OWN WORDS (javap `EntityTypes` clinit the
 /// 26.2 jar speaks — the EntityTypeIds.WOLF block: the
 /// `sized(0.6000000238418579F, 0.8500000238418579F)` the two ldc
@@ -3627,6 +3732,11 @@ impl Zombie {
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
             MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
             MobKind::Spider => (SPIDER_WIDTH, SPIDER_HEIGHT),
+            // the creeper's own sized(0.6, 1.7) — the EntityTypes clinit
+            // block's ldc pair the 26.2 pc 1397 walk keeps (no
+            // getDefaultDimensions the Monster base is no AgeableMob,
+            // the baby arm the kind never speaks)
+            MobKind::Creeper => (CREEPER_WIDTH, CREEPER_HEIGHT),
             // the wolf's own sized(0.6, 0.85) — the EntityTypeIds.WOLF
             // block's ldc pair the 26.2 clinit keeps
             MobKind::Wolf => (WOLF_WIDTH, WOLF_HEIGHT),
@@ -3881,6 +3991,7 @@ impl Zombie {
         // own eye the pre-pass's live refresh wears)
         let follow_range = if self.kind == MobKind::Skeleton
             || self.kind == MobKind::Spider
+            || self.kind == MobKind::Creeper
         {
             SKELETON_FOLLOW_RANGE
         } else {
@@ -4263,6 +4374,7 @@ impl Zombie {
                 // makes)
                 let follow_range = if self.kind == MobKind::Skeleton
                     || self.kind == MobKind::Spider
+                    || self.kind == MobKind::Creeper
                 {
                     SKELETON_FOLLOW_RANGE
                 } else {
@@ -4709,7 +4821,15 @@ impl Zombie {
                     // (the 2.0 the add(ATTACK_DAMAGE) single-arg
                     // overload answers — no override the
                     // Spider.createAttributes makes)
-                    let attack_base = if self.kind == MobKind::Spider {
+                    let attack_base = if self.kind == MobKind::Spider
+                        || self.kind == MobKind::Creeper
+                    {
+                        // the creeper's own bare word the same registered
+                        // default keeps (the Monster base's single-arg
+                        // add the Creeper.createAttributes chain never
+                        // overrides — the melee lane the swell machine's
+                        // own round serves, the table arm the honesty
+                        // wears)
                         SPIDER_ATTACK_DAMAGE
                     } else if self.kind == MobKind::Wolf {
                         // THE WOLF'S OWN FANGS (the createAttributes
@@ -5872,20 +5992,31 @@ impl Zombie {
     /// the ambient gate's draw first (ambient_voice — Mob.baseTick's
     /// own walk), the selection's roll second (getAmbientSound's arg),
     /// the pitch's two draws last (getVoicePitch) — the tuple order
-    /// the caller's push speaks.
-    pub fn ambient_voice_event(&mut self) -> &'static str {
+    /// the caller's push speaks. THE CREEPER'S OWN SILENCE the Option
+    /// answers — the getAmbientSound override the Creeper.class
+    /// method table NEVER carries, the playAmbientSound's own null
+    /// gate (`sound != null` the ifnull the vanilla walk keeps) the
+    /// play REFUSES — the gate's draw the stream still spends, the
+    /// voice the None keeps silent (the vanilla's own law the
+    /// exhaustive table's unreachability mirrors).
+    pub fn ambient_voice_event(&mut self) -> Option<&'static str> {
         if self.kind == MobKind::Wolf {
             if self.anger_ticks > 0 {
-                return "entity.wolf.growl";
+                return Some("entity.wolf.growl");
             }
             if self.rng.next_int(3) == 0 {
                 if self.tamed && self.health < 20.0 {
-                    return "entity.wolf.whine";
+                    return Some("entity.wolf.whine");
                 }
-                return "entity.wolf.pant";
+                return Some("entity.wolf.pant");
             }
         }
-        self.voice_event(VoiceSlot::Ambient)
+        if self.kind == MobKind::Creeper {
+            // the getAmbientSound NULL — the playAmbientSound's own
+            // gate the play refuses, the word the None keeps
+            return None;
+        }
+        Some(self.voice_event(VoiceSlot::Ambient))
     }
 
     /// THE MOB'S OWN STEP WORD (javap the playStepSound overrides the
@@ -6213,7 +6344,7 @@ impl Zombie {
             // closed gate keeps — the vanilla isFood the TAME word
             // gates (the owner's hand the client never reads), the
             // wild body no food accepts
-            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => false,
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => false,
             MobKind::Wolf => false,
         }
     }
@@ -6403,7 +6534,7 @@ impl Zombie {
             }
             // the wolf the same lock keeps — the vanilla's zoo tag the
             // canine never names, the age-lock the kind refuses
-            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider => false,
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => false,
             MobKind::Wolf => false,
         }
     }
@@ -6722,6 +6853,27 @@ impl Zombie {
                 // speak — the canine's death nothing drops, the
                 // honest zero-word the pool keeps
             }
+            MobKind::Creeper => {
+                // creeper.json's own pools (the jar's
+                // data/minecraft/loot_table/entities/creeper.json the
+                // verbatim read): POOL 1 the GUNPOWDER uniform 0..2 —
+                // the set_count's own band the roll keeps (the
+                // looting ench_count_increase the client's enchant
+                // lane never arms, the id-only stack model the
+                // function honest-skips); POOL 2 the music discs the
+                // `entity_properties` attacker-is-#skeletons condition
+                // gates — the client's own combat model the mob-vs-mob
+                // kill attribution never speaks (the skeleton's arrows
+                // the player's lane aims, no mob-source kill the
+                // drops walk reads), the pool the honest skip keeps
+                // (the condition the vanilla server's own walk arms)
+                let count = self.rng.next_int_inclusive(0, 2);
+                if count > 0 {
+                    if let Some(item) = wire_id("gunpowder") {
+                        out.push((item, count));
+                    }
+                }
+            }
         }
         // THE EQUIPMENT'S OWN DROP (javap `Mob.dropCustomDeathLoot`
         // the 26.2 bytecode speaks — the walk the loot table's rows
@@ -6842,18 +6994,21 @@ pub fn try_spawn(
     // keeps — spider 100, zombie 90, zombie_villager 5, zombie_horse
     // 5, skeleton 100, creeper 100, slime 100, enderman 10, witch 5 —
     // the rows the client's renderer vocabulary ADMITS the spider, the
-    // zombie and the skeleton are (the creature lane's own precedent
-    // the roll mirrors), the total 290 the nextInt(290) draws, the
-    // vanilla list order the ranges keep: the SPIDER row FIRST (the
-    // [0, 100) range rides), the zombie the [100, 190) band answers,
-    // the skeleton the [190, 290) tail keeps)
-    let roll = rng.next_int(290);
+    // zombie, the skeleton AND THE CREEPER are (the creature lane's own
+    // precedent the roll mirrors), the total 390 the nextInt(390)
+    // draws, the vanilla list order the ranges keep: the SPIDER row
+    // FIRST (the [0, 100) range rides), the zombie the [100, 190) band
+    // answers, the skeleton the [190, 290) tail keeps, the creeper the
+    // [290, 390) end wears)
+    let roll = rng.next_int(390);
     let kind = if roll < 100 {
         MobKind::Spider
     } else if roll < 190 {
         MobKind::Zombie
-    } else {
+    } else if roll < 290 {
         MobKind::Skeleton
+    } else {
+        MobKind::Creeper
     };
     let id = *next_id;
     *next_id += 1;
@@ -8404,6 +8559,124 @@ mod tests {
         assert_ne!(entity_voice_seed(0), entity_voice_seed(1));
     }
 
+    /// THE CREEPER'S OWN TABLES (javap the 26.2 jar the registration
+    /// + the attributes + the getters the raw walks keep): the
+    /// Monster category the peaceful gates' own lane reads, the
+    /// scalable default eye (1.7 * 0.85 — the eyeHeight(F) call the
+    /// builder chain never makes), the registered-default health 20.0
+    /// (no MAX_HEALTH add the Creeper.createAttributes chain speaks),
+    /// the MOVEMENT_SPEED 0.25 add, the stroll's 0.8 modifier, the
+    /// sized(0.6, 1.7) box, the hurt/death voice pair, the step the
+    /// base block law keeps, the wire name the Add Entity ride, and
+    /// the NO ambient the getAmbientSound override's absence speaks —
+    /// the play's null gate the Option answers (the word never plays)
+    /// while the gate's own draw the stream still spends.
+    #[test]
+    fn the_creeper_tables_the_registration_words_wear() {
+        assert_eq!(MobKind::Creeper.mob_category(), MobCategory::Monster);
+        assert_eq!(
+            MobKind::Creeper.eye_height(),
+            CREEPER_HEIGHT * 0.85,
+            "the scalable default the pig's law wears"
+        );
+        assert_eq!(MobKind::Creeper.max_health(), CREEPER_MAX_HEALTH);
+        assert_eq!(MobKind::Creeper.max_health(), 20.0, "the registered default");
+        assert_eq!(MobKind::Creeper.movement_speed(), CREEPER_MOVEMENT_SPEED);
+        assert_eq!(MobKind::Creeper.movement_speed(), 0.25);
+        assert_eq!(MobKind::Creeper.stroll_speed(), CREEPER_STROLL_SPEED_MODIFIER);
+        assert_eq!(MobKind::Creeper.stroll_speed(), 0.8);
+        assert!(!MobKind::Creeper.should_burn_in_day(), "the Mob base's false the creeper keeps");
+        let mut c_food = Zombie::new(90, 0.0, 0.0, 0.0, 1);
+        c_food.kind = MobKind::Creeper;
+        assert!(!c_food.is_food("gunpowder"), "the monster's closed food gate");
+        assert_eq!(MobKind::from_wire_name("minecraft:creeper"), MobKind::Creeper);
+        // THE VOICE PAIR (the getters' own rows)
+        assert_eq!(MobKind::Creeper.voice_event(VoiceSlot::Hurt), "entity.creeper.hurt");
+        assert_eq!(MobKind::Creeper.voice_event(VoiceSlot::Death), "entity.creeper.death");
+        // THE STEP THE BASE LAW KEEPS (no playStepSound override — the
+        // block under the feet the sheep's arm answers)
+        let mut c = Zombie::new(91, 10.5, 5.0, 10.5, 7);
+        c.kind = MobKind::Creeper;
+        assert_eq!(
+            c.step_voice(Some("grass_block")).map(|(e, _, _)| e),
+            MobKind::Sheep.step_voice(Some("grass_block")).map(|(e, _, _)| e),
+            "the base block law the sheep's shape wears"
+        );
+        // THE AMBIENT'S OWN SILENCE (the getAmbientSound NULL — the
+        // playAmbientSound's own gate the play refuses): the word the
+        // None keeps, the draw the stream never spends (the getter the
+        // class never carries, no roll the null body asks)
+        let mut c = Zombie::new(92, 10.5, 5.0, 10.5, 7);
+        c.kind = MobKind::Creeper;
+        let before = c.rng.clone();
+        assert_eq!(c.ambient_voice_event(), None, "the null the silence wears");
+        let (a, b) = (c.rng.next(), before.clone().next());
+        assert_eq!(a, b, "the null arm the stream never spends");
+        // THE GATE'S OWN DRAW STILL RIDES (Mob.baseTick's law — the
+        // nextInt(1000) the ambient_voice walk spends under the
+        // climbing clock, the play the events.ambient flag the
+        // consumer's null gate filters): the FLAG the same cadence
+        // the zombie's own walk keeps — the voice the None keeps
+        // silent at the frame
+        let mut c = Zombie::new(93, 0.0, 0.0, 0.0, 7);
+        let world = ground_world();
+        let mut fires = 0;
+        for _ in 0..6000 {
+            if c.tick(&world, None, NIGHT).ambient {
+                fires += 1;
+            }
+        }
+        assert!((30..=70).contains(&fires), "ambient fires {fires} in 6000");
+    }
+
+    /// THE CREEPER'S OWN GUNPOWDER POOL (javap the jar's
+    /// data/minecraft/loot_table/entities/creeper.json the verbatim
+    /// read — the uniform 0..2 set_count the roll keeps): the death
+    /// the gunpowder drops, the count the 0..2 band rides, the
+    /// non-player kill the pool never gates (POOL 1 the condition
+    /// never reads), and the POOL 2 the skeleton-attacker condition
+    /// the client's own combat model honest-skips (no mob-vs-mob kill
+    /// attribution the drops walk reads — the music-disc pool the
+    /// vanilla server's own walk arms).
+    #[test]
+    fn the_creeper_drops_the_gunpowder_pool() {
+        let mut nothing = 0;
+        let mut ones = 0;
+        let mut twos = 0;
+        for seed in 0u64..2000 {
+            let mut c = Zombie::new(seed as i32 + 1, 10.5, 5.0, 10.5, seed * 7 + 1);
+            c.kind = MobKind::Creeper;
+            c.health = 0.0;
+            let loot = c.death_loot(false);
+            for (id, count) in &loot {
+                let name = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                    .get(*id as usize)
+                    .copied()
+                    .unwrap_or("?");
+                match name {
+                    "gunpowder" => {
+                        assert!((*count as i32) >= 1 && (*count as i32) <= 2);
+                        match count {
+                            1 => ones += 1,
+                            2 => twos += 1,
+                            _ => {}
+                        }
+                    }
+                    other => panic!("seed {seed} the loot the pool never names: {other}"),
+                }
+            }
+            if loot.is_empty() {
+                nothing += 1;
+            }
+        }
+        // the uniform 0..2 band: ~1/3 each of nothing/one/two (sigma
+        // ~1% over 2000 — the loose bands the flake never rides)
+        let pct = |n: u32| n * 100 / 2000;
+        assert!((26..=41).contains(&pct(nothing)), "nothing {nothing} the 1/3 band keeps");
+        assert!((26..=41).contains(&pct(ones)), "ones {ones} the 1/3 band keeps");
+        assert!((26..=41).contains(&pct(twos)), "twos {twos} the 1/3 band keeps");
+    }
+
     /// THE AMBIENT GATE'S OWN METHOD (the shared form the wire lane's
     /// tick rides): the law replayed by hand over the same seed — the
     /// clock starts at -80, one draw per tick, the draw under the
@@ -9709,7 +9982,7 @@ mod tests {
             let mut m = Lcg::new(seed);
             let _ang = m.next_f64();
             let _dist = m.next_f64();
-            let roll = m.next_int(290);
+            let roll = m.next_int(390);
             let _ctor_seed = m.next();
             let want = if roll < 100 {
                 // THE SPIDER's own finalizeSpawn — the NORMAL world the
@@ -9752,13 +10025,19 @@ mod tests {
                     None
                 };
                 zombie_want
-            } else {
+            } else if roll < 290 {
                 // THE SKELETON's own populate (javap
                 // `AbstractSkeleton.populateDefaultEquipmentSlots` —
                 // the super the no-draw base keeps, the
                 // setItemSlot(MAINHAND, Items.BOW) the unconditional
                 // word speaks — the [190, 290) band the roll keeps)
                 Some("bow")
+            } else {
+                // THE CREEPER's own finalizeSpawn — the draw-free lane
+                // the bare admission keeps (no equipment the populate
+                // arms, no baby the Monster chain never carries, the
+                // [290, 390) end the roll wears)
+                None
             };
             assert_eq!(
                 z.held_weapon, want,
@@ -9785,21 +10064,23 @@ mod tests {
     }
 
     /// THE PLAINS MONSTER TABLE'S OWN ROWS (the jar's worldgen json the
-    /// 26.2 keeps — spider 100, zombie 90, skeleton 100, the admitted
-    /// total 290 the NaturalSpawner's WeightedList.getRandom draws): the
-    /// night's own roll the three kinds split, the vanilla list order
-    /// the ranges keep (the SPIDER row FIRST — the [0, 100) range
-    /// rides — the zombie the [100, 190) band answers, the skeleton
-    /// the [190, 290) tail keeps), the skeleton's own populate the
+    /// 26.2 keeps — spider 100, zombie 90, skeleton 100, creeper 100,
+    /// the admitted total 390 the NaturalSpawner's WeightedList.getRandom
+    /// draws): the night's own roll the FOUR kinds split, the vanilla
+    /// list order the ranges keep (the SPIDER row FIRST — the [0, 100)
+    /// range rides — the zombie the [100, 190) band answers, the
+    /// skeleton the [190, 290) tail keeps, the creeper the [290, 390)
+    /// end wears), the skeleton's own populate the
     /// unconditional BOW the no-draw law keeps (javap
     /// `AbstractSkeleton.populateDefaultEquipmentSlots` — the super
     /// the Monster base keeps, the setItemSlot(MAINHAND,
     /// Items.BOW) the getstatic/invoke pair arms), the group-data
     /// baby/jockey rolls the skeleton's finalizeSpawn never carries —
     /// the spawned bone-bag the ADULT the bow the hand always wears —
-    /// and the SPIDER the same draw-free lane keeps (the NORMAL world
-    /// the HARD-gated effect arm never spends): the bare arachnid the
-    /// string pool alone answers at the death.
+    /// and the SPIDER and THE CREEPER the same draw-free lane keeps
+    /// (the NORMAL world the HARD-gated effect arm never spends): the
+    /// bare arachnid the string pool alone answers at the death, the
+    /// bare creeper the gunpowder pool.
     #[test]
     fn the_skeleton_rows_the_plains_table_names() {
         let world = jockey_flat_world();
@@ -9807,6 +10088,7 @@ mod tests {
         let mut zombies = 0;
         let mut skeletons = 0;
         let mut spiders = 0;
+        let mut creepers = 0;
         for seed in 0u64..600 {
             let mut mobs = Vec::new();
             let mut next_id = 1;
@@ -9848,7 +10130,24 @@ mod tests {
                         "the spider's own MAX_HEALTH the clinit keeps"
                     );
                 }
-                _ => panic!("the plains monster roll the three admitted kinds alone speak"),
+                MobKind::Creeper => {
+                    creepers += 1;
+                    // THE BARE CREEPER (the draw-free finalize the
+                    // NORMAL world keeps — no equipment the lane could
+                    // arm, no baby the Monster chain never carries, the
+                    // MAX_HEALTH 20.0 the registered default keeps)
+                    assert_eq!(
+                        z.held_weapon, None,
+                        "seed {seed} the creeper the no-draw lane keeps bare"
+                    );
+                    assert!(!z.is_baby(), "the creeper the baby lane never carries");
+                    assert!(z.vehicle.is_none(), "the jockey search the creeper never speaks");
+                    assert_eq!(
+                        z.health, CREEPER_MAX_HEALTH,
+                        "the creeper's own registered default the base speaks"
+                    );
+                }
+                _ => panic!("the plains monster roll the four admitted kinds alone speak"),
             }
             // the same seed the same body (the determinism the spawner keeps)
             let mut mobs = Vec::new();
@@ -9856,22 +10155,32 @@ mod tests {
             try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true);
             assert_eq!(mobs.pop().unwrap().kind, z.kind, "seed {seed} the replay the kind keeps");
         }
-        // the 100/90/100 split the spawned band arms (the flat world's
-        // own bounds the ring's far half refuses — the FRACTION the
-        // roll tracks: 0.345 the spider and the skeleton means, the
-        // zombie's 0.310, sigma ~2.7% over ~350 spawns — the loose
-        // bands the flake never rides)
-        let total = zombies + skeletons + spiders;
+        // the 100/90/100/100 split the spawned band arms (the flat
+        // world's own bounds the ring's far half refuses — the FRACTION
+        // the roll tracks: the ~0.26 the spider and the skeleton and
+        // the creeper means, the zombie's ~0.235, sigma ~2.3% over
+        // ~380 spawns — the loose bands the flake never rides)
+        let total = zombies + skeletons + spiders + creepers;
         let skel_pct = if total > 0 { skeletons * 100 / total } else { 0 };
         let spider_pct = if total > 0 { spiders * 100 / total } else { 0 };
+        let creeper_pct = if total > 0 { creepers * 100 / total } else { 0 };
+        let zombie_pct = if total > 0 { zombies * 100 / total } else { 0 };
         assert!(total > 200, "spawns {total} the band arms");
         assert!(
-            skel_pct > 26 && skel_pct < 44,
+            skel_pct > 19 && skel_pct < 34,
             "skeleton share {skel_pct}% the skeleton row the [190, 290) range rides"
         );
         assert!(
-            spider_pct > 26 && spider_pct < 44,
+            spider_pct > 19 && spider_pct < 34,
             "spider share {spider_pct}% the spider row the [0, 100) range rides"
+        );
+        assert!(
+            creeper_pct > 19 && creeper_pct < 34,
+            "creeper share {creeper_pct}% the creeper row the [290, 390) range rides"
+        );
+        assert!(
+            zombie_pct > 16 && zombie_pct < 31,
+            "zombie share {zombie_pct}% the zombie row the [100, 190) band rides"
         );
     }
 
@@ -11315,7 +11624,7 @@ mod tests {
         let dist = SPAWN_MIN_DIST + p.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
         let sx = ((32.0 + ang.cos() * dist).floor()) as i32;
         let sz = ((32.0 + ang.sin() * dist).floor()) as i32;
-        let roll = p.next_int(290);
+        let roll = p.next_int(390);
         let zombie = (100..190).contains(&roll);
         let _zombie_seed = p.next();
         let a = p.next_f32();
@@ -11958,6 +12267,7 @@ mod tests {
             MobKind::Zombie => (ZOMBIE_WIDTH, ZOMBIE_HEIGHT),
             MobKind::Skeleton => (SKELETON_WIDTH, SKELETON_HEIGHT),
             MobKind::Spider => (SPIDER_WIDTH, SPIDER_HEIGHT),
+            MobKind::Creeper => (CREEPER_WIDTH, CREEPER_HEIGHT),
             MobKind::Wolf => (WOLF_WIDTH, WOLF_HEIGHT),
         };
         for (k, m) in mobs.iter().enumerate() {
@@ -16044,7 +16354,7 @@ mod tests {
         shy.kind = MobKind::Wolf;
         assert_eq!(
             shy.ambient_voice_event(),
-            "entity.wolf.ambient",
+            Some("entity.wolf.ambient"),
             "the miss the bark keeps"
         );
         // THE WHINE ARM (seed 0 — the roll opens; the tamed hurt body
@@ -16056,7 +16366,7 @@ mod tests {
         hurt.health = 15.0;
         assert_eq!(
             hurt.ambient_voice_event(),
-            "entity.wolf.whine",
+            Some("entity.wolf.whine"),
             "the tamed hurt body the whine wears"
         );
         // THE PANT ARM — the WILD body (the isTame gate's false the
@@ -16066,7 +16376,7 @@ mod tests {
         wild.health = 15.0;
         assert_eq!(
             wild.ambient_voice_event(),
-            "entity.wolf.pant",
+            Some("entity.wolf.pant"),
             "the wild body the pant answers"
         );
         // THE PANT ARM — the TAMED HEALTHY body (40.0 the ceiling
@@ -16077,7 +16387,7 @@ mod tests {
         fed.health = WOLF_TAMED_MAX_HEALTH;
         assert_eq!(
             fed.ambient_voice_event(),
-            "entity.wolf.pant",
+            Some("entity.wolf.pant"),
             "the healthy tamed body the pant answers"
         );
         // THE GROWL ARM + THE NO-DRAW LAW (the angry body the growl
@@ -16093,13 +16403,13 @@ mod tests {
         angry.anger_ticks = 100;
         assert_eq!(
             angry.ambient_voice_event(),
-            "entity.wolf.growl",
+            Some("entity.wolf.growl"),
             "the angry body the growl returns first"
         );
         angry.anger_ticks = 0;
         assert_eq!(
             angry.ambient_voice_event(),
-            "entity.wolf.pant",
+            Some("entity.wolf.pant"),
             "the roll the growl never drew — the first 0 the same arm speaks"
         );
         // THE STATELESS KINDS (no arm their rows read — the zombie's
@@ -16107,7 +16417,7 @@ mod tests {
         // untouched):
         let mut z = Zombie::new(26, 8.0, 5.0, 8.0, 0);
         let before = z.rng.clone();
-        assert_eq!(z.ambient_voice_event(), "entity.zombie.ambient");
+        assert_eq!(z.ambient_voice_event(), Some("entity.zombie.ambient"));
         let (a, b) = (z.rng.next(), before.clone().next());
         assert_eq!(a, b, "the stateless walk the stream never spends");
         // THE WOLF'S STATELESS ROWS (the hurt/death words the state

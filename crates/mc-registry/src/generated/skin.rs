@@ -91,6 +91,16 @@ pub const SKELETON_RUNTIME_PATH: &str = "entity/skeleton/skeleton.png";
 pub const SPIDER_PNG_SHA1: &str = "587ae86f6c714ec429301fcfea1b3c2a45fbaf54";
 pub const SPIDER_RUNTIME_PATH: &str = "entity/spider/spider.png";
 
+/// The CREEPER skin (the charged-green body's own), generated from the
+/// same jar: the source sha1 the creeper renderer verifies before
+/// drawing (javap: `CreeperRenderer`'s CREEPER_LOCATION — the
+/// `textures/entity/creeper/creeper.png` the clinit's
+/// withDefaultNamespace names, the CreeperModel's own
+/// `LayerDefinition.create(mesh, 64, 32)` the bytecode speaks — the
+/// half-height layout the four-leg chain unwraps).
+pub const CREEPER_PNG_SHA1: &str = "97f4c6e40243dc37a44d269eeb3b8defc32e11ed";
+pub const CREEPER_RUNTIME_PATH: &str = "entity/creeper/creeper.png";
+
 /// The PIG skin (the temperate variant the PigRenderer's variant
 /// table defaults to), generated from the same jar: the source sha1
 /// the pig renderer verifies before it draws (javap PigModel:

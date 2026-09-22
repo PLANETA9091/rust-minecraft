@@ -845,7 +845,7 @@ fn fetch_title_panorama(
 const EXTRA_SOUND_EVENTS: [&str; 2] = ["ui.button.click", "music.game"];
 
 /// The mob voice lane's own events live beside the sound-parse law
-/// (`soundgen::MOB_VOICE_EVENTS` — the eight drawn kinds' voice rows the
+/// (`soundgen::MOB_VOICE_EVENTS` — the nine drawn kinds' voice rows the
 /// client's `voice_event`/`step_voice`/variant tables speak, the flat
 /// rows and the wolf state trio and the farm variant/baby/eat rows the
 /// full list banks; the pin test the list's own home keeps).
