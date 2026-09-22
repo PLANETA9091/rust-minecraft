@@ -299,6 +299,123 @@ pub fn double_plant_mate(id: u16) -> Option<u16> {
     }
 }
 
+/// THE PLANT'S OWN RENDER OFFSET — the per-block jitter the vanilla
+/// world wears (javap the 26.2 jar: the `BlockState.getOffset(pos)`
+/// walk the `BlockBehaviour$BlockStateBase.offsetFunction` field
+/// serves, the `Properties.offsetType(OffsetType)` switch the two
+/// lambda bodies speak — `lambda$offsetType$1` the XZ row, `lambda$
+/// offsetType$0` the XYZ row, the NONE row the null fn keeps). The
+/// kind rows the audited Properties chains bank: the flower family
+/// the offsetType(XZ) row wears (the dandelion/poppy chains pc
+/// 4836-4866 the autopush-411 audit keeps), the tuft family the
+/// offsetType(XYZ) row wears (the short_grass/bush chains pc
+/// 4318/4371 the autopush-412 audit keeps), the double-plant family
+/// the offsetType(XZ) row wears (the tall_grass/large_fern chains pc
+/// 17244/17297 the autopush-413 audit keeps — `offsetType(XZ) the
+/// XYZ tufts never keep`). Every other kind the vocabulary speaks
+/// (the cubes, the wheat ladder, the fluids) the NONE verdict keeps —
+/// the crop's four-plane cross the cell's own center holds.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PlantOffset {
+    None,
+    XZ,
+    XYZ,
+}
+
+/// The kind's own offset row (the `getOffsetType()` law the enum
+/// carries). The UPPER half its own cell answers — the seed the
+/// Y-ZERO law hashes (the lambda's `getSeed(getX(), 0, getZ())` walk
+/// the column speaks), so the pair's two cells the SAME offset wear
+/// and the two-cell plant the rigid pair rides.
+pub fn plant_offset_type(id: u16) -> PlantOffset {
+    if is_flower(id) || is_double_plant(id) {
+        PlantOffset::XZ
+    } else if is_tuft(id) {
+        PlantOffset::XYZ
+    } else {
+        PlantOffset::None
+    }
+}
+
+/// THE MTH.GETSEED LAW (javap `Mth.getSeed(III)J` — the 26.2 jar's
+/// own column hash the offset lambdas and the decoration rolls ride):
+/// `l = (long)(x * 3129871) ^ (z * 116129781L) ^ (long)y` — the X
+/// branch the INT multiply then i2l wears (the wrapping i32 product
+/// the bytecode's `imul; i2l` order keeps), the Z branch the LONG
+/// multiply wears (`i2l; lmul`) — then `l = l * l * 42317861L + l *
+/// 11L`, `return l >> 16` (the arithmetic shift the long keeps). The
+/// constants the jar's own pool banks: 3129871 (Mth #179),
+/// 116129781 (#180), 42317861 (#182), 11 (#184) — the classic values
+/// the decompile chain confirms.
+pub fn mth_get_seed(x: i32, y: i32, z: i32) -> i64 {
+    let mut l: i64 = ((x.wrapping_mul(3129871)) as i64)
+        ^ ((z as i64).wrapping_mul(116129781))
+        ^ (y as i64);
+    l = l
+        .wrapping_mul(l)
+        .wrapping_mul(42317861)
+        .wrapping_add(l.wrapping_mul(11));
+    l >> 16
+}
+
+/// The bit-slice fold (the lambdas' own light RNG — NO java.util.Random
+/// LCG the modern client carries: the bytecade's `land; l2f; fdiv`
+/// chain the 4-bit slice speaks): `k = (seed >> shift) & 15`, the
+/// slice the `l2f; ldc 15.0; fdiv; f2d` walk wears — the k/15.0f32
+/// division the FLOAT lane runs (the f64 promotion only after), the
+/// 16-level lattice the vanilla look keeps.
+fn offset_slice(seed: i64, shift: i32) -> f64 {
+    (((seed >> shift) & 15) as f32 / 15.0f32) as f64
+}
+
+/// The horizontal fold (both lambda bodies' x/z rows): `clamp((v -
+/// 0.5) * 0.5, -maxH, maxH)` — the `Mth.clamp(DDD)` call the
+/// `getMaxHorizontalOffset()` float the bounds ride (the fneg the
+/// min bound speaks), the default 0.25 the BlockBehaviour overrides
+/// never carry (our plant family the defaults wear — the clamp the
+/// ±0.25 lattice the slice already fits inside, the law kept for the
+/// tighter rows the vocabulary may yet speak).
+fn offset_h(seed: i64, shift: i32) -> f64 {
+    let max_h = 0.25f32 as f64;
+    let d = (offset_slice(seed, shift) - 0.5) * 0.5;
+    if d < -max_h {
+        -max_h
+    } else if d > max_h {
+        max_h
+    } else {
+        d
+    }
+}
+
+/// THE PLANT OFFSET LAW — the Vec3 the `OffsetFunction.evaluate`
+/// returns, the float triple the renderer's tesselate walk receives
+/// (javap ModelBlockRenderer: the `tesselateFlat(BlockQuadOutput, FFF,
+/// ...)` / `tesselateAmbientOcclusion(..., FFF, ...)` signatures the
+/// offset components carry, the indy `getOffset` capture the per-block
+/// lambda speaks). The XZ lambda: `(h(seed,0), 0.0, h(seed,8))` — the
+/// Y the ZERO keeps. The XYZ lambda: the same x/z rows plus the
+/// vertical `(v(seed,4) - 1.0) * maxV` — the dsub the [-1..0] band
+/// speaks (the tuft its own cell never lifts above, the vanilla's own
+/// grounded look keeps), the `getMaxVerticalOffset()` default 0.2f
+/// the f2d promotion wears exactly. The seed the Y-ZERO law hashes —
+/// the column the pair shares, the per-column determinism the world
+/// never re-rolls.
+pub fn plant_offset(id: u16, x: i32, _y: i32, z: i32) -> (f64, f64, f64) {
+    match plant_offset_type(id) {
+        PlantOffset::None => (0.0, 0.0, 0.0),
+        PlantOffset::XZ => {
+            let seed = mth_get_seed(x, 0, z);
+            (offset_h(seed, 0), 0.0, offset_h(seed, 8))
+        }
+        PlantOffset::XYZ => {
+            let seed = mth_get_seed(x, 0, z);
+            let max_v = 0.2f32 as f64;
+            let dy = (offset_slice(seed, 4) - 1.0) * max_v;
+            (offset_h(seed, 0), dy, offset_h(seed, 8))
+        }
+    }
+}
+
 /// The crop's own AGE FAMILY — the wheat kinds the ladder wears
 /// (WHEAT..=WHEAT_STAGE7, the ages 0..7 the blockstate property
 /// speaks). Every non-cube lane the WHEAT kind taught the whole
@@ -2322,5 +2439,133 @@ mod tests {
         // alone mutates — the setBlock's own pos the soil keeps)
         assert_eq!(w.get(0, 24, 0), FARMLAND);
         assert_eq!(w.get(15, 24, 15), FARMLAND);
+    }
+
+    #[test]
+    fn the_plant_offset_wears_the_bit_slice_laws() {
+        // THE PLANT'S OWN RENDER OFFSET (the dev-27 round — the javap
+        // 26.2 law the world.rs walk keeps): the seed the Mth.getSeed
+        // column hash wears, the offset the two lambda bodies speak,
+        // the NONE kinds the zero triple keeps, the pair the rigid
+        // column ride.
+
+        // THE SEED LAW'S OWN VECTORS (the ctypes i64 chain the audit
+        // cross-checks — the wrapping i32 X branch, the long Z branch,
+        // the l*l*42317861 + l*11 square, the >>16 arithmetic tail)
+        assert_eq!(mth_get_seed(8, 0, 8), -90_067_312_761_588);
+        assert_eq!(mth_get_seed(0, 0, 0), 0, "the origin the zero hash wears");
+        assert_eq!(mth_get_seed(1, 0, 0), 133_076_631_897_947);
+        assert_eq!(mth_get_seed(5, 0, 7), -115_421_699_722_986);
+        assert_eq!(mth_get_seed(12, 0, 3), 101_377_481_606_222);
+        // THE Y THE HASH ITSELF CARRIES — the getSeed(III) walk the
+        // `iload_1; i2l; lxor` chain speaks (the y the hash mixes);
+        // the Y-ZERO law lives at the OFFSET LAMBDA'S CALL SITE (the
+        // `getSeed(getX(), 0, getZ())` iconst_0 walk — plant_offset
+        // the same pass wears, the pair's rigid ride below proves)
+        assert_eq!(mth_get_seed(8, 9, 8), -79_511_424_355_496);
+        assert_eq!(mth_get_seed(8, 200, 8), -24_401_587_200_254);
+        // the i32-wrap branch the wide X wears (the imul; i2l order —
+        // the wrapping product the long Z branch never shares)
+        assert_eq!(mth_get_seed(1_048_576, 0, 1_048_576), 93_879_231_486_944);
+
+        // THE KIND ROWS (the audited Properties chains): the flowers
+        // and the double plants the XZ row wear, the tufts the XYZ
+        // row wear, every other kind the NONE verdict keeps
+        assert_eq!(plant_offset_type(DANDELION), PlantOffset::XZ);
+        assert_eq!(plant_offset_type(POPPY), PlantOffset::XZ);
+        assert_eq!(plant_offset_type(TALL_GRASS), PlantOffset::XZ);
+        assert_eq!(plant_offset_type(TALL_GRASS_UPPER), PlantOffset::XZ);
+        assert_eq!(plant_offset_type(LARGE_FERN), PlantOffset::XZ);
+        assert_eq!(plant_offset_type(LARGE_FERN_UPPER), PlantOffset::XZ);
+        assert_eq!(plant_offset_type(SHORT_GRASS), PlantOffset::XYZ);
+        assert_eq!(plant_offset_type(BUSH), PlantOffset::XYZ);
+        assert_eq!(plant_offset_type(GRASS), PlantOffset::None);
+        assert_eq!(plant_offset_type(STONE), PlantOffset::None);
+        assert_eq!(plant_offset_type(WHEAT), PlantOffset::None);
+        assert_eq!(plant_offset_type(WHEAT_STAGE7), PlantOffset::None);
+
+        // THE XZ LAMBDA'S OWN FOLD (the exact f32/f64 chain the
+        // literals embed — the slice k/15.0f32 the float division
+        // runs, the (v-0.5)*0.5 the double lane wears, the clamp the
+        // ±0.25 bounds keep): the flower cell at (8, 9, 8) the audit's
+        // own triple answers
+        let (dx, dy, dz) = plant_offset(DANDELION, 8, 9, 8);
+        assert_eq!(dx, 0.150_000_005_960_464_48);
+        assert_eq!(dy, 0.0, "the XZ row the zero Y keeps");
+        assert_eq!(dz, -0.083_333_328_366_279_6);
+        // the clamp's own boundary the origin cell speaks (k=0 ->
+        // (0-0.5)*0.5 = -0.25 the min bound equals) and the far
+        // column the max bound answers (the lattice the clamp fits)
+        let (dx0, _, dz0) = plant_offset(POPPY, 0, 5, 0);
+        assert_eq!(dx0, -0.25);
+        assert_eq!(dz0, -0.25);
+        let (dxm, _, _) = plant_offset(POPPY, 100, 5, -50);
+        assert_eq!(dxm, 0.25);
+
+        // THE XYZ LAMBDA'S OWN FOLD: the tuft the vertical band wears
+        // — (v-1.0) * 0.2f32 the grounded sink speaks, the [-maxV, 0]
+        // range the dsub keeps
+        let (dx, dy, dz) = plant_offset(SHORT_GRASS, 8, 9, 8);
+        assert_eq!(dx, 0.150_000_005_960_464_48, "the x the XZ rows share");
+        assert_eq!(dy, -0.200_000_002_980_232_24);
+        assert_eq!(dz, -0.083_333_328_366_279_6);
+        let (_, dy, _) = plant_offset(BUSH, 1, 3, 0);
+        assert_eq!(dy, -0.133_333_333_333_333_3);
+        // the tuft's y the seed's own slice wears — the same seed the
+        // Y-zero law hashes, the column's tufts the same sink speak
+        let (_, dy0, _) = plant_offset(SHORT_GRASS, 8, 0, 8);
+        let (_, dy1, _) = plant_offset(SHORT_GRASS, 8, 40, 8);
+        assert_eq!(dy0, dy1);
+
+        // THE PAIR'S OWN RIGID RIDE: the two-cell plant the SAME
+        // offset wears — the lower and the upper cell the column
+        // shares, the tall grass the two quads never tears
+        let lower = plant_offset(TALL_GRASS, 8, 9, 8);
+        let upper = plant_offset(TALL_GRASS_UPPER, 8, 10, 8);
+        assert_eq!(lower, upper, "the pair the rigid offset rides");
+
+        // THE DETERMINISM THE WORLD NEVER RE-ROLLS (the replay the
+        // same triple wears — the render the seed's own law keeps)
+        for (x, z) in [(3i32, 11i32), (-7, 4), (41, -19), (256, 256)] {
+            for kind in [DANDELION, SHORT_GRASS, TALL_GRASS, TALL_GRASS_UPPER] {
+                let a = plant_offset(kind, x, 9, z);
+                let b = plant_offset(kind, x, 9, z);
+                assert_eq!(a, b, "the replay the same offset wears ({kind} @ {x},{z})");
+                // the bounds the law keeps: x/z inside ±0.25, the y the
+                // XZ kinds the zero wear and the tufts the sink band
+                let (dx, dy, dz) = a;
+                assert!((-0.25..=0.25).contains(&dx), "the x the band keeps");
+                assert!((-0.25..=0.25).contains(&dz), "the z the band keeps");
+                if plant_offset_type(kind) == PlantOffset::XZ {
+                    assert_eq!(dy, 0.0);
+                } else {
+                    assert!((-0.200_000_002_980_232_24..=0.0).contains(&dy));
+                }
+            }
+        }
+
+        // THE LATTICE'S OWN SPREAD (the 16-level slice the vanilla
+        // look keeps — the offsets the sample the multiple levels
+        // speak, the degenerate zero-hash world the constant field
+        // never wears)
+        let mut levels = std::collections::HashSet::new();
+        for x in 0..64 {
+            let (dx, _, _) = plant_offset(TALL_GRASS, x, 9, x * 7 + 1);
+            levels.insert(
+                (dx / 0.5 * 15.0).round() as i64, // the k the slice answers
+            );
+        }
+        assert!(
+            levels.len() >= 8,
+            "the x offsets the lattice's levels speak: {levels:?}"
+        );
+
+        // THE NONE KINDS THE ZERO TRIPLE KEEPS (the cubes, the crop
+        // ladder, the fluids — the cross path the plants alone wear)
+        assert_eq!(plant_offset(STONE, 8, 9, 8), (0.0, 0.0, 0.0));
+        assert_eq!(plant_offset(WHEAT, 8, 9, 8), (0.0, 0.0, 0.0));
+        assert_eq!(plant_offset(WHEAT_STAGE7, 8, 9, 8), (0.0, 0.0, 0.0));
+        assert_eq!(plant_offset(GRASS, 8, 9, 8), (0.0, 0.0, 0.0));
+        assert_eq!(plant_offset(WATER, 8, 9, 8), (0.0, 0.0, 0.0));
     }
 }

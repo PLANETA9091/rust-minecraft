@@ -821,6 +821,17 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         || crate::world::is_tuft(id)
                         || crate::world::is_double_plant(id)
                     {
+                        // THE PLANT'S OWN RENDER OFFSET (the dev-27 round
+                        // — the javap 26.2 law the world.rs walk keeps):
+                        // the OffsetFunction's Vec3 the tesselate walk's
+                        // FFF triple carries, the model plane the offset
+                        // + inset fold rides (the innermost addition —
+                        // the section origin adds later, the vanilla's
+                        // own block-local bake keeps). The Y-ZERO seed
+                        // the pair's two cells shares — the rigid pair
+                        // the tall grass wears.
+                        let (dx, dy, dz) = crate::world::plant_offset(id, wx, wy, wz);
+                        let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
                         let a = 0.8 / 16.0;
                         let b = 15.2 / 16.0;
                         let diagonals: [[(f32, f32); 2]; 2] = [
@@ -842,8 +853,11 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     corners.reverse();
                                 }
                                 for (i, &(fx, fy, fz, u)) in corners.iter().enumerate() {
-                                    pts[i] =
-                                        [wx as f32 + fx, wy as f32 + fy, wz as f32 + fz];
+                                    pts[i] = [
+                                        wx as f32 + (fx + dx),
+                                        wy as f32 + (fy + dy),
+                                        wz as f32 + (fz + dz),
+                                    ];
                                     uvs[i] = [u, 1.0 - fy];
                                     let lm = lightmap_combine(
                                         cell_sky,
@@ -2382,17 +2396,25 @@ mod tests {
         // cell the 4 quads wear (the two diagonal planes × the two
         // windings), the corners the from/to inset keeps, the uv the
         // full sprite rides, the tile the flower's own atlas row banks.
+        // THE DEV-27 OFFSET: the corners the audited triple rides —
+        // the model-relative read the shift subtracts (the XZ row the
+        // dandelion cell wears, the exact literals the audit embeds).
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         put(&mut w, 8, 9, 8, crate::world::DANDELION);
         let q = mesh_chunk(&w, 0, 0, None);
         let a = 0.8 / 16.0;
         let b = 15.2 / 16.0;
+        let (dx, dy, dz) =
+            crate::world::plant_offset(crate::world::DANDELION, 8, 9, 8);
+        let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
+        assert_eq!((dx, dy, dz), (0.150_000_005_960_464_48f32, 0.0, -0.083_333_328_366_279_6f32));
         let flower: Vec<_> = q
             .iter()
             .filter(|quad| {
                 // the vertical span (the stone's own top face at y=9 the
-                // any-10 filter never rides)
+                // any-10 filter never rides) — the XZ row the Y the zero
+                // keeps, the span the unshifted bounds wear
                 quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
                     && quad.pts.iter().any(|p| p[1] == 10.0)
             })
@@ -2400,7 +2422,7 @@ mod tests {
         assert_eq!(flower.len(), 4, "the two planes the two windings wear");
         for quad in &flower {
             for p in &quad.pts {
-                let (fx, fz) = (p[0] - 8.0, p[2] - 8.0);
+                let (fx, fz) = (p[0] - 8.0 - dx, p[2] - 8.0 - dz);
                 assert!(
                     (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
                     "the x the diagonal corner inset keeps: {fx}"
@@ -2448,23 +2470,36 @@ mod tests {
         // baked plains pixels speak), the synced plains verdict the
         // baked constant equals (the fold never fires), the off-plains
         // synced biome the fold answers (the vertex colors multiply).
+        // THE DEV-27 OFFSET (the XYZ row): the tuft the vertical sink
+        // wears — the (v-1.0)*maxV band the dsub speaks, the span the
+        // shifted bounds keep, the model-relative read the shift
+        // subtracts.
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         put(&mut w, 8, 9, 8, crate::world::SHORT_GRASS);
         let q = mesh_chunk(&w, 0, 0, None);
         let a = 0.8 / 16.0;
         let b = 15.2 / 16.0;
+        let (dx, dy, dz) =
+            crate::world::plant_offset(crate::world::SHORT_GRASS, 8, 9, 8);
+        let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
+        assert_eq!((dx, dy, dz), (0.150_000_005_960_464_48f32, -0.200_000_002_980_232_24f32, -0.083_333_328_366_279_6f32));
+        // the shifted span the same corner walk computes (the fy+dy
+        // innermost addition the mesher speaks — the f32 the f64 law
+        // casts)
+        let bottom = 9.0f32 + (0.0 + dy);
+        let top = 9.0f32 + (1.0 + dy);
         let tuft: Vec<_> = q
             .iter()
             .filter(|quad| {
-                quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
-                    && quad.pts.iter().any(|p| p[1] == 10.0)
+                quad.pts.iter().all(|p| (bottom..=top).contains(&p[1]))
+                    && quad.pts.iter().any(|p| p[1] == top)
             })
             .collect();
         assert_eq!(tuft.len(), 4, "the two planes the two windings wear");
         for quad in &tuft {
             for p in &quad.pts {
-                let (fx, fz) = (p[0] - 8.0, p[2] - 8.0);
+                let (fx, fz) = (p[0] - 8.0 - dx, p[2] - 8.0 - dz);
                 assert!(
                     (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
                     "the x the diagonal corner inset keeps: {fx}"
@@ -2529,6 +2564,22 @@ mod tests {
         let q = mesh_chunk(&w, 0, 0, None);
         let a = 0.8 / 16.0;
         let b = 15.2 / 16.0;
+        // THE DEV-27 OFFSET: the XZ row the pair RIGIDLY rides — the
+        // seed the Y-zero law hashes, the two cells the same triple
+        // wear, the shift the model-relative reads subtract
+        let (dx, dy, dz) =
+            crate::world::plant_offset(crate::world::TALL_GRASS, 8, 9, 8);
+        let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
+        assert_eq!(dy, 0.0, "the XZ row the zero Y keeps");
+        assert_eq!(
+            (dx, dz),
+            {
+                let (ux, _uy, uz) =
+                    crate::world::plant_offset(crate::world::TALL_GRASS_UPPER, 8, 10, 8);
+                (ux as f32, uz as f32)
+            },
+            "the pair the rigid offset rides"
+        );
         let lower: Vec<_> = q
             .iter()
             .filter(|quad| {
@@ -2555,7 +2606,7 @@ mod tests {
         );
         for quad in &lower {
             for p in &quad.pts {
-                let (fx, fz) = (p[0] - 8.0, p[2] - 8.0);
+                let (fx, fz) = (p[0] - 8.0 - dx, p[2] - 8.0 - dz);
                 assert!(
                     (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
                     "the x the diagonal corner inset keeps: {fx}"
@@ -2568,6 +2619,19 @@ mod tests {
             assert_eq!(quad.tile, lower_tile, "the lower half its own tile");
         }
         for quad in &upper {
+            // THE UPPER'S OWN RIDE: the same triple the rigid pair
+            // wears — the shifted corners the same lattice keeps
+            for p in &quad.pts {
+                let (fx, fz) = (p[0] - 8.0 - dx, p[2] - 8.0 - dz);
+                assert!(
+                    (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
+                    "the upper's x the same inset keeps: {fx}"
+                );
+                assert!(
+                    (fz - a).abs() < 1e-6 || (fz - b).abs() < 1e-6,
+                    "the upper's z the same inset keeps: {fz}"
+                );
+            }
             assert_eq!(quad.tile, upper_tile, "the upper half its own tile");
         }
         // THE GRASS SOURCE'S OWN SLOTS (the audited register walk): the
