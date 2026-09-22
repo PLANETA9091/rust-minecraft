@@ -108,6 +108,7 @@ pub mod clientbound {
         CB_SET_TIME as SET_TIME,
         CB_GAME_EVENT as GAME_EVENT,
         CB_PLAYER_ABILITIES as PLAYER_ABILITIES,
+        CB_CHANGE_DIFFICULTY as CHANGE_DIFFICULTY,
         CB_UPDATE_MOB_EFFECT as UPDATE_MOB_EFFECT,
         CB_DEBUG_SAMPLE as DEBUG_SAMPLE,
         CB_SET_HEALTH as SET_HEALTH, CB_HURT_ANIMATION as HURT_ANIMATION,
@@ -6494,6 +6495,53 @@ pub struct TimeSync {
     pub clocks: Vec<ClockUpdate>,
 }
 
+/// Change Difficulty (clientbound play, generated id 10): the server's
+/// own level-data word — the danger dial the host set (or a remote
+/// admin's `/difficulty` turn) plus the LOCKED bit the difficulty lock
+/// speaks. javap of the 26.2 `ClientboundChangeDifficultyPacket` the
+/// record keeps: `Difficulty difficulty` + `boolean locked` (the
+/// record's own component pair, the `difficulty;locked` header the
+/// classfile banks), the STREAM_CODEC the clinit's composite walk
+/// banks — `Difficulty.STREAM_CODEC` (the `ByteBufCodecs.idMapper`
+/// family: the variant's id a VARINT, 0 Peaceful..3 Hard) +
+/// `ByteBufCodecs.BOOL` (the byte the `readBoolean` walk reads:
+/// nonzero true). The client's own handler the
+/// `ClientPacketListener.handleChangeDifficulty` walk keeps — the
+/// `levelData.setDifficulty(...)` + `levelData.setDifficultyLocked(...)`
+/// pair the store speaks, the open screen's `HasDifficultyReaction
+/// .onDifficultyChanged()` re-sync the tail wears.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ChangeDifficultyWord {
+    /// The dial's own id (the `Difficulty.STREAM_CODEC` idMapper's
+    /// VARINT — 0 Peaceful, 1 Easy, 2 Normal, 3 Hard). The strict
+    /// 0..=3 range the parse refuses past (the byIdOrThrow family's
+    /// own throw law — an unknown id the packet ERROR keeps).
+    pub difficulty: u8,
+    /// The LOCKED bit (the `ByteBufCodecs.BOOL` byte — `!= 0` true, the
+    /// readBoolean law verbatim): the locked world the difficulty
+    /// change the vanilla client's own buttons never wear.
+    pub locked: bool,
+}
+
+/// The Change Difficulty packet's own parse (javap the 26.2
+/// `ClientboundChangeDifficultyPacket` STREAM_CODEC composite walk —
+/// the id VARINT the idMapper reads, the BOOL byte the locked bit
+/// keeps): the packet id the header varint banks, the two-field body
+/// the record's component order wears.
+pub fn parse_change_difficulty(payload: &[u8]) -> Result<ChangeDifficultyWord> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::CHANGE_DIFFICULTY,
+        "not a change difficulty packet (0x{id:02X})"
+    );
+    let difficulty = read_varint(&mut c)?;
+    anyhow::ensure!(difficulty <= 3, "unknown difficulty id {difficulty}");
+    anyhow::ensure!(!c.is_empty(), "change difficulty truncated (no locked byte)");
+    let locked = read_u8(&mut c)?;
+    Ok(ChangeDifficultyWord { difficulty: difficulty as u8, locked: locked != 0 })
+}
+
 // ---------------------------------------------------------------------------
 // the mob-effect state's wire transport
 // ---------------------------------------------------------------------------
@@ -8203,6 +8251,14 @@ pub enum PlayEvent {
     /// walkingSpeed) the frame thread's installer wears. See
     /// [`PlayerAbilitiesWord`].
     PlayerAbilities(PlayerAbilitiesWord),
+    /// Change Difficulty: the server's own level-data word — the
+    /// danger dial's id (0 Peaceful..3 Hard, the VARINT the
+    /// `Difficulty.STREAM_CODEC` idMapper keeps) plus the LOCKED bit
+    /// the difficulty lock speaks. The store the client's own
+    /// `handleChangeDifficulty` walk banks — the levelData pair the
+    /// networked world's dial + lock wear. See
+    /// [`ChangeDifficultyWord`].
+    ChangeDifficulty(ChangeDifficultyWord),
     /// Keep-alive probe answered.
     KeepAlive(i64),
     /// Ping probe answered.
@@ -8413,6 +8469,9 @@ impl<S: Read + Write> PlaySession<S> {
             clientbound::RESPAWN => Ok(PlayEvent::Respawn(parse_respawn(&pkt)?)),
             clientbound::CHUNK_DATA => Ok(PlayEvent::Chunk(parse_chunk_data(&pkt)?)),
             clientbound::SET_TIME => Ok(PlayEvent::Time(parse_set_time(&pkt)?)),
+            clientbound::CHANGE_DIFFICULTY => {
+                Ok(PlayEvent::ChangeDifficulty(parse_change_difficulty(&pkt)?))
+            }
             clientbound::UPDATE_LIGHT => {
                 let (x, z, light) = parse_update_light(&pkt)?;
                 Ok(PlayEvent::Light { x, z, light })
@@ -9500,6 +9559,60 @@ mod tests {
         let mut w = Vec::new();
         write_varint(&mut w, clientbound::KEEP_ALIVE as i32);
         assert!(parse_game_event(&w).is_err(), "not a game event");
+    }
+
+    #[test]
+    fn change_difficulty_wire_word_the_composite_codec_pins() {
+        // THE PACKET ID: the generated table's runtime fact (the 26.2
+        // bootstrapped protocol dump) — `minecraft:change_difficulty`
+        // clientbound id 10.
+        assert_eq!(clientbound::CHANGE_DIFFICULTY, 10);
+        // THE WIRE SHAPE (javap the 26.2 STREAM_CODEC composite walk —
+        // the Difficulty.STREAM_CODEC idMapper's VARINT + the
+        // ByteBufCodecs.BOOL byte the record's component order keeps):
+        // the Hard dial (id 3) + the locked bit the lock lane speaks.
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CHANGE_DIFFICULTY as i32);
+        write_varint(&mut p, 3);
+        p.push(1);
+        let ev = parse_change_difficulty(&p).expect("the level-data word decodes");
+        assert_eq!(ev.difficulty, 3, "the Hard id the idMapper banks");
+        assert!(ev.locked, "the locked bit the BOOL byte keeps");
+        // THE UNLOCKED PAIR (the Normal dial, the byte the readBoolean
+        // `!= 0` law answers false on)
+        let mut u = Vec::new();
+        write_varint(&mut u, clientbound::CHANGE_DIFFICULTY as i32);
+        write_varint(&mut u, 2);
+        u.push(0);
+        let ev = parse_change_difficulty(&u).expect("the unlocked word decodes");
+        assert_eq!(ev.difficulty, 2, "the Normal id the same codec keeps");
+        assert!(!ev.locked, "the unlocked bit the zero byte wears");
+        // THE NONZERO BOOL the readBoolean law answers true (any
+        // nonzero byte the vanilla read keeps — the byte IS the flag)
+        let mut n = Vec::new();
+        write_varint(&mut n, clientbound::CHANGE_DIFFICULTY as i32);
+        write_varint(&mut n, 0);
+        n.push(0x7F);
+        let ev = parse_change_difficulty(&n).expect("the peaceful word decodes");
+        assert_eq!(ev.difficulty, 0, "the Peaceful id the table's head keeps");
+        assert!(ev.locked, "the nonzero byte the readBoolean law speaks true");
+        // THE UNKNOWN DIFFICULTY the strict gate refuses (the
+        // byIdOrThrow family's own throw law — id 4 is no variant)
+        let mut x = Vec::new();
+        write_varint(&mut x, clientbound::CHANGE_DIFFICULTY as i32);
+        write_varint(&mut x, 4);
+        x.push(0);
+        assert!(parse_change_difficulty(&x).is_err(), "id 4 no variant");
+        // THE TRUNCATED BODY the ensure keeps: the id + difficulty
+        // alone is not the packet — the BOOL byte the ctor demands
+        let mut t = Vec::new();
+        write_varint(&mut t, clientbound::CHANGE_DIFFICULTY as i32);
+        write_varint(&mut t, 1);
+        assert!(parse_change_difficulty(&t).is_err(), "the locked byte missing");
+        // THE WRONG ID the honest refusal keeps
+        let mut w = Vec::new();
+        write_varint(&mut w, clientbound::KEEP_ALIVE as i32);
+        assert!(parse_change_difficulty(&w).is_err(), "not a change difficulty");
     }
 
     #[test]

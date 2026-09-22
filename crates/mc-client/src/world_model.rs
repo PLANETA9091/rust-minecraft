@@ -148,6 +148,20 @@ pub struct WorldModel {
     /// the trio banks, the mayfly/instabuild/walking-speed words the
     /// model's own bank preserves).
     abilities_word: Option<mc_protocol::play::PlayerAbilitiesWord>,
+    /// THE DIFFICULTY'S OWN WIRE BANK (javap 26.2
+    /// `ClientPacketListener.handleChangeDifficulty` — the
+    /// ClientboundChangeDifficultyPacket the levelData pair stores:
+    /// `setDifficulty(packet.difficulty())` +
+    /// `setDifficultyLocked(packet.locked())`): the wire's own
+    /// `(difficulty id, locked)` pair `None` until the packet speaks
+    /// (the join's world the absent lane the default Normal word
+    /// wears — the vanilla ClientLevelData's own default), `Some`
+    /// the latest packet replaces. The RESPAWN the bank KEEPS: the
+    /// handleRespawn walk the new ClientLevelData the OLD one's
+    /// `getDifficulty()` ctor arg re-seats — the difficulty (and its
+    /// lock) the level swap carries across, the fresh packet the
+    /// server's later turn speaks.
+    wire_difficulty: Option<(u8, bool)>,
     /// The latest Set Time's clock states, keyed by order of arrival
     /// (a vanilla overworld server syncs its dimension's default
     /// clock). Multi-clock worlds need the WORLD_CLOCK registry names
@@ -788,6 +802,7 @@ impl WorldModel {
             thunder_level: 0.0,
             local_game_mode: None,
             abilities_word: None,
+            wire_difficulty: None,
             clocks: Vec::new(),
             columns: HashMap::new(),
             entities: HashMap::new(),
@@ -822,6 +837,15 @@ impl WorldModel {
     /// lane's projection rides both).
     pub fn entities(&self) -> impl Iterator<Item = (i32, &EntitySnapshot)> {
         self.entities.iter().map(|(id, e)| (*id, e))
+    }
+
+    /// THE DIFFICULTY'S OWN WIRE READ (the bank's own accessor — the
+    /// `ClientLevelData.getDifficulty()` + `isDifficultyLocked()` pair
+    /// the materialize walk and the WorldOptions dial's networked lane
+    /// read): `None` the absent packet the default Normal word wears,
+    /// `Some((id, locked))` the latest Change Difficulty packet keeps.
+    pub fn wire_difficulty(&self) -> Option<(u8, bool)> {
+        self.wire_difficulty
     }
 
     /// WHO CARRIES this entity right now (the inverse walk of the
@@ -1150,6 +1174,19 @@ impl WorldModel {
             PlayEvent::Time(ts) => {
                 self.game_time = ts.game_time;
                 self.clocks = ts.clocks;
+                true
+            }
+            PlayEvent::ChangeDifficulty(w) => {
+                // THE LEVELDATA'S OWN STORE (javap 26.2
+                // `ClientPacketListener.handleChangeDifficulty` — the
+                // `setDifficulty` + `setDifficultyLocked` pair the
+                // walk speaks; the open screen's HasDifficultyReaction
+                // re-sync the render's own re-read answers — the
+                // shipped refresh the WorldOptions dial's next frame
+                // wears). The RESPAWN the bank keeps (the handleRespawn
+                // walk the new ClientLevelData the OLD one's
+                // getDifficulty() ctor arg re-seats).
+                self.wire_difficulty = Some((w.difficulty, w.locked));
                 true
             }
             PlayEvent::Light { x, z, light } => {
@@ -2842,6 +2879,56 @@ mod tests {
         assert!(!m.apply(PlayEvent::UnloadChunk { x: 3, z: -2 }));
         // a disconnect is world-state neutral
         assert!(!m.apply(PlayEvent::Disconnected { reason: "bye".into() }));
+    }
+
+    /// THE DIFFICULTY'S OWN WIRE BANK (javap 26.2
+    /// `handleChangeDifficulty` — the levelData pair the packet's
+    /// arrival stores): the latest packet replaces, the absent lane
+    /// the honest None, the RESPAWN the bank KEEPS (the handleRespawn
+    /// walk the new ClientLevelData the OLD one's getDifficulty()
+    /// ctor arg re-seats — the difficulty the level swap carries).
+    #[test]
+    fn the_wire_difficulty_bank_wears_the_level_data_store() {
+        let mut m = WorldModel::new();
+        assert!(
+            m.wire_difficulty().is_none(),
+            "the absent packet the honest None keeps"
+        );
+        // the first packet lands (the join's own sync — the vanilla
+        // server the packet at play-state entry sends)
+        assert!(m.apply(PlayEvent::ChangeDifficulty(mc_protocol::play::ChangeDifficultyWord {
+            difficulty: 0,
+            locked: false,
+        })));
+        assert_eq!(
+            m.wire_difficulty(),
+            Some((0, false)),
+            "the Peaceful pair the setDifficulty + setDifficultyLocked walk stores"
+        );
+        // the latest packet replaces (the server's /difficulty turn —
+        // the same packet the change wears, the newest word the bank
+        // keeps)
+        assert!(m.apply(PlayEvent::ChangeDifficulty(
+            mc_protocol::play::ChangeDifficultyWord { difficulty: 3, locked: true }
+        )));
+        assert_eq!(
+            m.wire_difficulty(),
+            Some((3, true)),
+            "the Hard + locked pair the latest packet banks"
+        );
+        // THE RESPAWN THE BANK KEEPS (the handleRespawn walk the new
+        // ClientLevelData the OLD one's getDifficulty() ctor arg
+        // re-seats — the level swap the difficulty carries across)
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 1,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 60,
+        })));
+        assert_eq!(
+            m.wire_difficulty(),
+            Some((3, true)),
+            "the respawn the bank keeps — the new levelData the old dial wears"
+        );
     }
 
     #[test]

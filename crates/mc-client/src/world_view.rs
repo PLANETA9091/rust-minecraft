@@ -147,15 +147,29 @@ pub fn materialize(
         // no weather word ever arrived (every procedural/golden scene)
         rain_level: model.rain_level(),
         thunder_level: model.thunder_level(),
-        // THE HOST'S OWN DANGER DIAL the networked world never reads —
-        // the F3's LocalDifficulty row the `instanceof ServerLevel`
-        // gate keeps off the client level (the vanilla multiplayer F3
-        // the same silence wears); the field sits at the default
-        difficulty: crate::difficulty::Difficulty::Normal,
-        // THE LOCK the networked world's wire lane never banks — the
-        // honest `false` the absent store wears (the dial + lock pair
-        // the permission arm keeps INACTIVE regardless)
-        difficulty_locked: false,
+        // THE WIRE'S OWN DANGER DIAL rides the SAME snapshot (javap 26.2
+        // `ClientPacketListener.handleChangeDifficulty` — the
+        // ClientboundChangeDifficultyPacket the levelData pair stores):
+        // the model's wire bank maps through the idMapper's reverse walk
+        // (the byId table the codec keeps), the absent packet the
+        // DEFAULT Normal word wears (the vanilla ClientLevelData's own
+        // default). The F3's LocalDifficulty row the `instanceof
+        // ServerLevel` gate keeps off the client level regardless (the
+        // vanilla multiplayer F3 the same silence wears).
+        difficulty: model
+            .wire_difficulty()
+            .and_then(|(id, _)| crate::difficulty::Difficulty::of_id(id))
+            .unwrap_or(crate::difficulty::Difficulty::Normal),
+        // THE LOCK the wire's own bit wears (javap the same walk — the
+        // `setDifficultyLocked(packet.locked())` store): the absent
+        // packet the honest `false` keeps. The dial + lock pair the
+        // permission arm keeps INACTIVE for the networked world
+        // regardless (the hasSingleplayerServer() read the wire world
+        // never answers) — the lock's ICON the bit still speaks.
+        difficulty_locked: model
+            .wire_difficulty()
+            .map(|(_, locked)| locked)
+            .unwrap_or(false),
         // THE CHUNKS' OWN DWELL CLOCK the networked world never carries
         // — `None` = no opinion: the server's own server-side truth the
         // wire never sends, the client's words never predict it
@@ -5053,6 +5067,45 @@ mod tests {
         let real_world = materialize_snapshot_view(join_snapshot(), 5, runtime_mapper).world;
         assert_eq!(real_world.get(32, 0, 32), STONE, "stone through the generated table");
         assert_eq!(real_world.get(35, 1, 34), DIRT, "dirt through the generated table");
+    }
+
+    /// THE WIRE'S OWN DIAL THE MATERIALIZED WORLD WEARS (javap 26.2
+    /// `handleChangeDifficulty` — the levelData pair the packet banks,
+    /// the materialize walk the model's wire bank reads): the absent
+    /// packet the default Normal word wears, the packet's pair the
+    /// World's difficulty + lock answers (the idMapper's reverse walk
+    /// the of_id lane keeps).
+    #[test]
+    fn materialize_wears_the_wires_own_difficulty_dial() {
+        let mut model = WorldModel::new();
+        // the absent lane (no packet ever arrived — the join's world
+        // before the server's first sync): the vanilla ClientLevelData's
+        // own default NORMAL the honest word keeps
+        let world = materialize(&model, (0, 0), 1, 0, runtime_mapper);
+        assert_eq!(
+            world.difficulty,
+            crate::difficulty::Difficulty::Normal,
+            "the absent packet the default Normal word wears"
+        );
+        assert!(
+            !world.difficulty_locked,
+            "the absent packet the unlocked world keeps"
+        );
+        // the packet's pair lands (the server's Peaceful + locked word —
+        // the byId table's reverse walk the materialize speaks)
+        assert!(model.apply(PlayEvent::ChangeDifficulty(
+            mc_protocol::play::ChangeDifficultyWord { difficulty: 0, locked: true }
+        )));
+        let world = materialize(&model, (0, 0), 1, 0, runtime_mapper);
+        assert_eq!(
+            world.difficulty,
+            crate::difficulty::Difficulty::Peaceful,
+            "the wire's Peaceful id the of_id walk answers"
+        );
+        assert!(
+            world.difficulty_locked,
+            "the wire's locked bit the materialized World wears"
+        );
     }
 
     /// The join milestone shaped like the e2e mock's AND like a real

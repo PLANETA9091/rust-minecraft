@@ -26149,24 +26149,31 @@ impl App {
         );
         let cx = w / 2;
         // THE DIAL'S OWN WORD (the label + value the CycleButton's
-        // displayString composition speaks): the world's own dial the
-        // OFFLINE lane reads, the networked world the wire's own
-        // difficulty packet the net lane never stores — the default
-        // word the absent lane honestly wears (the button the same
-        // world the inactive arm refuses).
-        let diff = self
-            .offline_world
-            .as_ref()
-            .map(|world| world.difficulty)
-            .unwrap_or(crate::difficulty::Difficulty::Normal);
-        // THE LOCK'S OWN READ (the `DifficultyButtons.isDifficultyLocked`
-        // walk — the `locked || hardcore` pair the client's own worlds
-        // the hardcore arm never wears: the flag alone speaks)
-        let locked = self
-            .offline_world
-            .as_ref()
-            .map(|world| world.difficulty_locked)
-            .unwrap_or(false);
+        // displayString composition speaks): the world's own lane the
+        // read keeps — the OFFLINE world the sim's own field answers,
+        // the NETWORKED world the wire's own Change Difficulty store
+        // the materialized World wears (javap 26.2
+        // `handleChangeDifficulty` — the levelData pair the packet's
+        // arrival banks, the WorldOptions dial the CycleButton's
+        // displayString the same field speaks); the absent lane the
+        // default Normal word honestly wears.
+        let (diff, locked) = if self.world_is_network {
+            self.net_world
+                .as_ref()
+                .map(|world| (world.difficulty, world.difficulty_locked))
+                .unwrap_or((
+                    crate::difficulty::Difficulty::Normal,
+                    false,
+                ))
+        } else {
+            self.offline_world
+                .as_ref()
+                .map(|world| (world.difficulty, world.difficulty_locked))
+                .unwrap_or((
+                    crate::difficulty::Difficulty::Normal,
+                    false,
+                ))
+        };
         // THE SHARED ACTIVE ARM (the create + refresh walks' own writes
         // — `!lock.isLocked() && playerHasPermissionToChangeDifficulty()`
         // BOTH actives keep: the `hasSingleplayerServer()` read the
@@ -37432,6 +37439,94 @@ mod tests {
             app.screen,
             ScreenKind::WorldOptions,
             "the locked lock the hand-off refuses"
+        );
+    }
+
+    /// THE NETWORKED DIAL'S OWN WIRE WORD (javap 26.2
+    /// `handleChangeDifficulty` — the ClientboundChangeDifficultyPacket
+    /// the levelData pair stores, the materialize walk the networked
+    /// World wears, the WorldOptions dial the CycleButton's
+    /// displayString the same field speaks): the wire's Peaceful +
+    /// locked word the dial's label answers, the PERMISSION arm both
+    /// buttons INACTIVE keeps (the `hasSingleplayerServer()` read the
+    /// wire world never answers — the locked bit the lock's ICON
+    /// still speaks), the clicks the hovered() gate refuses.
+    #[test]
+    fn the_networked_dial_wears_the_wires_own_word() {
+        let mut app = App::new(3);
+        app.world_is_network = true;
+        // the wire's own pair the materialized World wears (the model's
+        // bank the refresh ships — the Peaceful + locked word the
+        // server's own dial keeps)
+        app.net_world = Some(crate::world::World {
+            chunks_per_side: 2,
+            seed: 0,
+            difficulty: crate::difficulty::Difficulty::Peaceful,
+            difficulty_locked: true,
+            inhabited: None,
+            chunks: vec![
+                vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
+                4
+            ],
+            light: None,
+            day_tick: None, // test scenes stay day
+            biomes: None, // test scenes carry no biome layer
+            variants: None, // test scenes carry no state variants
+            ambient_light: None, // no dimension opinion — the black bytecode default
+            block_light_tint: None, // no dimension opinion — the bytecode default tint
+            sky_light_factor: None, // no dimension opinion — the bytecode default 1.0
+            sky_light_color: None, // no dimension opinion — the -1 default's white identity
+            night_vision_color: None, // no dimension opinion — the #999999 default, factor 0.0
+            night_vision_factor: 0.0, // no effect store rides these scenes — the golden floor
+            rain_level: 0.0,  // the dry test world — no weather word rides
+            thunder_level: 0.0, // the dry test world — no storm speaks
+        });
+        app.open(ScreenKind::WorldOptions);
+        app.render_title_buttons_for_test();
+        // THE DIAL'S OWN WORD (the wire's Peaceful the displayString
+        // composition speaks — the absent Normal default retired)
+        let dial = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "difficulty")
+            .expect("the dial")
+            .clone();
+        assert_eq!(
+            dial.label, "Difficulty: Peaceful",
+            "the wire's own word the materialized World wears"
+        );
+        // THE PERMISSION ARM (the create walk's `!locked && permission`
+        // — the wire world the hasSingleplayerServer() read never
+        // answers: BOTH buttons INACTIVE regardless of the lock)
+        assert!(!dial.active, "the networked dial the permission arm keeps");
+        let lock = app
+            .buttons
+            .iter()
+            .find(|b| b.id == "wodlock")
+            .expect("the lock")
+            .clone();
+        assert!(!lock.active, "the networked lock the same arm keeps");
+        // THE LOCKED ICON THE DISABLED STATE WEARS (the extractContents
+        // walk — the !active arm FIRST, the locked bit the pair speaks)
+        assert_eq!(
+            lock_icon_sprite(true, lock.active, false),
+            "widget/locked_button_disabled",
+            "the locked-disabled icon the networked world's bit wears"
+        );
+        // THE CLICKS THE HOVERED() GATE REFUSES (the inactive buttons
+        // the on_click walk never passes — the dial's turn and the
+        // confirm's hand-off the wire world both refuse)
+        app.on_click(dial.x + dial.w / 2, dial.y + dial.h / 2);
+        assert_eq!(
+            app.net_world.as_ref().unwrap().difficulty,
+            crate::difficulty::Difficulty::Peaceful,
+            "the inactive dial the click refuses — the wire the truth owns"
+        );
+        app.on_click(lock.x + lock.w / 2, lock.y + lock.h / 2);
+        assert_eq!(
+            app.screen,
+            ScreenKind::WorldOptions,
+            "the networked lock the hand-off refuses — the confirm the offline lane alone opens"
         );
     }
 

@@ -24,6 +24,23 @@ impl Difficulty {
             Difficulty::Hard => 3,
         }
     }
+
+    /// THE WIRE ID'S OWN REVERSE WALK (the `Difficulty.STREAM_CODEC`'s
+    /// idMapper law — the VARINT the ClientboundChangeDifficultyPacket
+    /// carries the variant by: the `byId`/`BY_ID` table the codec's
+    /// own decoder reads, the unknown id the byIdOrThrow family's
+    /// throw keeps — the parse's strict 0..=3 gate the ERROR answers
+    /// before this walk ever rides). `None` the caller's own gate
+    /// wears (the honest default the absent lane keeps).
+    pub fn of_id(id: u8) -> Option<Difficulty> {
+        match id {
+            0 => Some(Difficulty::Peaceful),
+            1 => Some(Difficulty::Easy),
+            2 => Some(Difficulty::Normal),
+            3 => Some(Difficulty::Hard),
+            _ => None,
+        }
+    }
 }
 
 impl Difficulty {
