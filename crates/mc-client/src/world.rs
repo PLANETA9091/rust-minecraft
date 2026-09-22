@@ -236,8 +236,20 @@ pub const RED_TULIP: u16 = 51;
 pub const PINK_TULIP: u16 = 52;
 pub const WHITE_TULIP: u16 = 53;
 
+/// THE TORCH'S OWN KIND (the dev-32 round — javap the 26.2 jar's
+/// Blocks clinit: the TorchBlock Properties chain the
+/// `.noCollision().instabreak().sound(SoundType.WOOD).lightLevel(...)`
+/// rows the generated tables bank): the ONE-kind family the
+/// placement's canSurvive gate, the mesher's element lane and the
+/// body's passable set read. The noCollision row the walk-through
+/// verdict keeps; the lightLevel row the WIRE world's block-light
+/// grid answers (the server's own chunk light data lights the wire
+/// torch — the offline lane's own light engine the deferred round
+/// banks, the honest documented gap the offline render wears).
+pub const TORCH: u16 = 54;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 54] = [
+pub const NAME_OF: [&str; 55] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -262,6 +274,7 @@ pub const NAME_OF: [&str; 54] = [
     // speaks
     "azure_bluet", "oxeye_daisy", "cornflower",
     "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
+    "torch",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -351,6 +364,42 @@ pub fn is_double_plant_lower(id: u16) -> bool {
 /// `pos.above()`.
 pub fn is_double_plant_upper(id: u16) -> bool {
     id == TALL_GRASS_UPPER || id == LARGE_FERN_UPPER
+}
+
+/// THE TORCH'S OWN FAMILY — the ONE kind the placement's survival
+/// gate, the mesher's element lane, the body's passable set and the
+/// pick/dig/sound rows read (the family-fn shape the plant families
+/// wear, the single member the vanilla's TorchBlock/WallTorchBlock
+/// split keeps — the wall torch the separate block the palette never
+/// banks, the floor torch the item's own placement lands).
+pub fn is_torch(id: u16) -> bool {
+    id == TORCH
+}
+
+/// THE TORCH'S OWN SURVIVAL LAW — javap BaseTorchBlock.canSurvive
+/// over the 26.2 jar: the `canSupportCenter(level, pos.below(),
+/// Direction.UP)` delegate the bytecode's lone invokestatic speaks.
+/// canSupportCenter's two arms (javap Block.canSupportCenter): the
+/// below state's `is(BlockTags.UNSTABLE_BOTTOM_CENTER)` read answers
+/// FALSE first — the tag the jar's own json values as
+/// `["#minecraft:fence_gates"]`, the fence-gate family the palette
+/// never banks, the arm the vocabulary's honest no-op keeps — then
+/// the `isFaceSturdy(level, pos, UP, SupportType.CENTER)` verdict.
+/// The CENTER-support law over the client's palette: the below cell
+/// carries a FULL collision box — the body's passable set's
+/// negation (the air, the fluids, the noCollision plants and the
+/// torch itself the walk-through verdict refuses; the leaves the
+/// full-cube collision the sturdy answer keeps, the vanilla's own
+/// torch-on-leaves verdict the same law wears).
+pub fn can_support_torch(below: u16) -> bool {
+    below != AIR
+        && below != WATER
+        && below != LAVA
+        && !is_wheat(below)
+        && !is_flower(below)
+        && !is_tuft(below)
+        && !is_double_plant(below)
+        && !is_torch(below)
 }
 
 /// THE PAIR'S OWN MATE — the opposite half's kind (`Some` the family
@@ -2446,6 +2495,56 @@ mod tests {
         assert!(!is_replaceable(AIR));
         assert!(!is_replaceable(WATER));
         assert!(!is_replaceable(DANDELION));
+    }
+
+    /// THE TORCH'S OWN LAW WALKS (the dev-32 round): the kind's own
+    /// registry row, the survival gate the canSupportCenter verdict
+    /// keeps, the placeable lookup the item's own block answers, the
+    /// honest refusals the vanilla's own canSurvive speaks.
+    #[test]
+    fn the_torch_wears_the_survival_and_registry_laws() {
+        // THE KIND'S OWN ROWS: the palette id, the NAME_OF row, the
+        // generated atlas mirror (the KIND_NAMES row the regen
+        // re-binds), the family fn the ONE member keeps
+        assert_eq!(TORCH, 54);
+        assert_eq!(NAME_OF[TORCH as usize], "torch");
+        assert_eq!(
+            mc_registry::generated::atlas::KIND_NAMES[TORCH as usize],
+            "torch",
+            "the atlas mirror the regen re-binds"
+        );
+        assert!(is_torch(TORCH));
+        assert!(!is_torch(STONE) && !is_torch(AIR) && !is_torch(POPPY));
+        // THE REGISTRY'S OWN ITEM — the pick lane's id walk answers
+        assert_eq!(
+            mc_registry::item_id_by_name("torch").is_some(),
+            true,
+            "the torch item the craft chain grants"
+        );
+        // THE PLACEABLE LOOKUP: the item's own block the reverse walk
+        // answers, the torch NOT replaceable (the vanilla
+        // canBeReplaced absence — the torch cell never gives way)
+        assert_eq!(World::placeable_block("torch"), Some(TORCH));
+        assert!(!is_replaceable(TORCH));
+        // THE SURVIVAL LAW (javap BaseTorchBlock.canSurvive -> the
+        // canSupportCenter(below, UP) delegate): the full-cube
+        // collision cells the sturdy answer keeps — the ground, the
+        // sand, the farmland, the leaves (the vanilla's own
+        // torch-on-leaves verdict the full-cube law wears), the
+        // crafting table; the air, the fluids, the noCollision plants
+        // and the torch itself the walk-through verdict refuses
+        assert!(can_support_torch(STONE));
+        assert!(can_support_torch(GRASS));
+        assert!(can_support_torch(DIRT));
+        assert!(can_support_torch(SAND));
+        assert!(can_support_torch(FARMLAND));
+        assert!(can_support_torch(LEAVES));
+        assert!(can_support_torch(CRAFTING_TABLE));
+        assert!(!can_support_torch(AIR), "the floating torch never survives");
+        assert!(!can_support_torch(WATER) && !can_support_torch(LAVA));
+        assert!(!can_support_torch(WHEAT) && !can_support_torch(DANDELION));
+        assert!(!can_support_torch(SHORT_GRASS) && !can_support_torch(TALL_GRASS));
+        assert!(!can_support_torch(TORCH), "the torch the torch never supports");
     }
 
     /// THE GRASS TUFT'S OWN DECORATE WALK (the autopush-412 round — the

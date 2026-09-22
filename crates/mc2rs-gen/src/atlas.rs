@@ -148,7 +148,18 @@ use zip::ZipArchive;
 /// arm the client's hash lane never carries — the -0.8 valley the
 /// NormalNoise walk banks); the high_states rows the bonemeal fold's
 /// Util.getRandom pick and the decorate pass's stand-in wear.
-pub const RUNTIME_PALETTE: [&str; 54] = [
+/// torch is kind 54 (the fifty-fifth entry, the dev-32 round): THE
+/// TORCH'S OWN MODEL CHAIN — the blockstate is a single variant map
+/// ("") -> block/torch -> block/template_torch, the ONE ELEMENT box
+/// (from [7,0,7] to [9,10,9], `shade: false` faces under model-level
+/// `ambientocclusion: false` — the tesselateWithoutAO shape the crop
+/// family wears) whose SIX faces ALL reference `#torch` (javap the
+/// model json: down uv [7,13,9,15] with cullface down, up uv
+/// [7,6,9,8], the four sides uv [7,6,9,16]) — the all-six-faces row
+/// resolve_block's full-cube finder keeps, every face the ONE
+/// block/torch texture answers (the single tile the whole kind
+/// samples, the per-quad UV windows the sub-sprite law carries).
+pub const RUNTIME_PALETTE: [&str; 55] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -160,6 +171,7 @@ pub const RUNTIME_PALETTE: [&str; 54] = [
     "tall_grass", "tall_grass_upper", "large_fern", "large_fern_upper",
     "azure_bluet", "oxeye_daisy", "cornflower",
     "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
+    "torch",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

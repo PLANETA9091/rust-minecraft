@@ -20578,6 +20578,24 @@ impl App {
                 return false;
             }
         }
+        // THE TORCH'S OWN SURVIVAL GATE (the dev-32 round — javap
+        // BaseTorchBlock.canSurvive over the 26.2 jar: the
+        // `canSupportCenter(level, pos.below(), Direction.UP)` delegate
+        // the placement's own canPlace walk refuses through): the below
+        // cell the sturdy verdict reads (the canSupportCenter law the
+        // [`crate::world::can_support_torch`] walk keeps — the
+        // UNSTABLE_BOTTOM_CENTER tag the fence-gate family the palette
+        // never banks, the no-op the vocabulary wears), the floating
+        // torch the refusal keeps — the press the PASS carries, the
+        // item lanes follow, nothing consumed.
+        if crate::world::is_torch(block) {
+            let below = self
+                .active_world()
+                .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
+            if !below.is_some_and(crate::world::can_support_torch) {
+                return false;
+            }
+        }
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
@@ -23325,8 +23343,13 @@ impl App {
         }
         // THE MODEL'S OWN LAZY BAKE (the block/tnt chain the derive walk
         // resolves — the cube_bottom_top faces the atlas tiles wear; a
-        // failed bake the honest nothing keeps)
-        let quads = mc_registry::element_quads::derive_model_inherited("minecraft:block/tnt");
+        // failed bake the honest nothing keeps. THE UNPREFIXED ID the
+        // models table banks — the dev-32 round's own repair: the
+        // "minecraft:"-prefixed id the prior call passed the
+        // generated table's bare "block/tnt" row never matched, the
+        // None the honest nothing kept, the primed TNT the quads
+        // never rendered)
+        let quads = mc_registry::element_quads::derive_model_inherited("block/tnt");
         let Some(quads) = quads else {
             return;
         };
@@ -51233,6 +51256,91 @@ cow_sound_variant: None,
             Some(crate::world::BUSH),
             "the bush the placeable lookup names"
         );
+    }
+
+    /// THE TORCH'S OWN PLACEMENT WALK (the dev-32 round — javap
+    /// BaseTorchBlock.canSurvive the 26.2 jar the placement's own
+    /// canPlace gate refuses through): the held torch the ground's
+    /// above cell places (the normal-offset cell the non-replaceable
+    /// clicked law keeps, the below cell the canSupportCenter
+    /// delegate the survival gate reads), the floating torch the
+    /// refusal keeps (the below air the PASS verdict carries, nothing
+    /// consumed), the dig lane the generated rows rolls (the
+    /// instabreak row the 0.0 seconds answers, the torch drop the
+    /// self-entry speaks).
+    #[test]
+    fn the_torch_placement_wears_the_survival_laws() {
+        // THE GROUNDED PLACEMENT: the held torch aiming straight down
+        // — the hit the surface cell keeps (the non-replaceable the
+        // normal-offset cell rides), the torch the above cell lands
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/torch"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the torch on the ground the placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::TORCH,
+            "the placed torch the ground's above cell wears"
+        );
+        // THE FLOATING REFUSAL: a hovering stone at the carved air —
+        // the side aim the west face hits, the offset cell the stone's
+        // beside keeps, the below-air read the canSurvive gate refuses
+        // (the press the PASS carries — the torch never floats)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/torch"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE CARVED AIR the determinism keeps: the walk lane's own
+        // cells the carve empties (the terrain's own shape the center
+        // column the tests never trust)
+        let w = app.offline_world.as_mut().unwrap();
+        for dx in -1..=3 {
+            for dz in -1..=1 {
+                for dy in -3..=3 {
+                    w.set(c + dx, top + dy, c + dz, crate::world::AIR);
+                }
+            }
+        }
+        w.set(c + 2, top + 1, c, crate::world::STONE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 1.5, c as f32 + 0.5),
+            yaw: 270.0,
+            pitch: 0.0,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the floating torch the survival refusal keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 1, top + 1, c),
+            crate::world::AIR,
+            "the offset cell the refusal never fills"
+        );
+        // THE DIG LANE'S OWN GENERATED ROWS (the instabreak row the
+        // Properties chain banks, the torch drop the self-entry
+        // speaks — the broken torch the item pops)
+        let (secs, _) = mc_registry::generated::block_dig::dig_row("torch")
+            .expect("the torch's own dig row");
+        assert_eq!(secs, 0.0, "the instabreak the noCollision family wears");
+        let pools = mc_registry::generated::block_drops::drops("torch")
+            .expect("the torch's own loot row");
+        assert_eq!(pools.len(), 1, "the single pool the drop speaks");
+        assert_eq!(pools[0].entries[0].item, "torch", "the torch drops itself");
+        // THE PICK LANE'S OWN GRANT (the item id the name walk answers)
+        assert!(mc_registry::item_id_by_name("torch").is_some());
     }
 
     #[test]

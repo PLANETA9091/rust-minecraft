@@ -46,7 +46,7 @@ use crate::world::{
     BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
     COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
     GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
-    NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, STONE, WATER,
+    NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, STONE, TORCH, WATER,
 };
 use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -2897,6 +2897,13 @@ pub fn runtime_mapper(id: u32) -> u16 {
         // blockstate) needs state-property extraction: documented
         // follow-up.
         Some("minecraft:leaf_litter") => LEAF_LITTER,
+        // THE TORCH'S OWN ARM (the dev-32 round — the wire world's own
+        // torch the server's block updates place, the generated
+        // block_ids row the state id resolves): the stick the
+        // server's own light data lights (the chunk light sections
+        // the LightGrid block layer carries), the offline
+        // prediction's kind the same palette id keeps
+        Some("minecraft:torch") => TORCH,
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }
@@ -4624,6 +4631,12 @@ mod tests {
         assert_eq!(runtime_mapper(5_307), DIAMOND_ORE, "diamond_ore = global id 5307");
         assert_eq!(runtime_mapper(9_573), EMERALD_ORE, "emerald_ore = global id 9573");
         assert_eq!(runtime_mapper(6_997), NETHERRACK, "netherrack = global id 6997");
+        // THE TORCH'S OWN ARM (the dev-32 round — the floor torch's
+        // single state the generated table banks; the wall torch the
+        // separate block the honest AIR keeps — the wall-attach
+        // property the state lane never extracts)
+        assert_eq!(runtime_mapper(3_370), TORCH, "torch = global id 3370");
+        assert_eq!(runtime_mapper(3_371), AIR, "wall_torch the palette refuses");
         // the twelfth-audit kind: pale_oak_leaves (states 448..476) maps
         // and carries NO tint slot (the audited BlockColors verdict)
         assert_eq!(runtime_mapper(448), PALE_LEAVES, "pale_oak_leaves distance=0 persistent=true");

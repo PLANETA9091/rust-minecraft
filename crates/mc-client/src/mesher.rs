@@ -100,6 +100,10 @@ fn is_transparent(kind: u16) -> bool {
         // noCollision + replaceable rows the Blocks clinit pc 17244/
         // 17297 speaks, the two cells the pair wears)
         || crate::world::is_double_plant(kind)
+        // THE TORCH the same verdict keeps (the dev-32 round — the
+        // stick box the neighbors' faces draw against, the noCollision
+        // row the Properties chain speaks)
+        || crate::world::is_torch(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -935,6 +939,123 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE TORCH'S OWN ELEMENT LANE (the dev-32 round — javap
+                // the 26.2 jar: blockstates/torch.json's "" variant ->
+                // block/torch -> block/template_torch, the ONE element box
+                // from [7,0,7] to [9,10,9] the generated elements table
+                // banks, `shade: false` faces under model-level
+                // `ambientocclusion: false` — the tesselateWithoutAO shape
+                // the crop family wears: the CELL's own light every corner
+                // samples, no AO diagonals, no FACE_SHADE term). The quads
+                // the registry's derive walk bakes (the same chain the TNT
+                // render speaks — the faceinfo corners, the vanilla
+                // winding recalculation), positioned at the cell; the
+                // down face's `cullface: down` the below cell's opaque
+                // verdict culls (the same isSolidRender law the cube
+                // path's draw read speaks); the UVs the model's texel-space
+                // rows the derive walk keeps verbatim (down [7,13,9,15],
+                // up [7,6,9,8], the four sides [7,6,9,16]) — the /16 fold
+                // the tile's 0..1 space wears, the sub-sprite windows the
+                // stick's sides and the flame tip sample.
+                if crate::world::is_torch(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    // `shade: false` + the no-atlas boot's own default —
+                    // the tile's own pixels speak, the flat palette the
+                    // missing row keeps (the crop path's own verdict)
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    // THE DOWN CULL'S OWN READ — the below cell the
+                    // cullface verdict samples (the vanilla cullface law:
+                    // the neighbor's face the solid render answers)
+                    let below = world.get(wx, wy - 1, wz);
+                    for q in torch_model_quads() {
+                        if q.cullface == Some(mc_registry::element_quads::Direction::Down)
+                            && !is_transparent(below)
+                        {
+                            continue; // the stick's bottom the solid ground never shows
+                        }
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            // the texel-space uv the /16 fold normalizes
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                            );
+                            // `shade: false` — no FACE_SHADE term, the
+                            // lightmap alone multiplies
+                            colors[i] = [base[0] * lm[0], base[1] * lm[1], base[2] * lm[2]];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                        });
+                    }
+                    continue;
+                }
                 for face in 0..6usize {
                     let (dx, dy, dz) = NEIGHBOR[face];
                     let n = world.get(wx + dx, wy + dy, wz + dz);
@@ -1103,6 +1224,21 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
         }
     }
     out
+}
+
+/// THE TORCH'S OWN MODEL BAKE — the block/torch chain the registry's
+/// derive walk resolves (the same lane the primed TNT render speaks:
+/// the faceinfo corners, the vanilla UV rect rows, the winding
+/// recalculation). The one bake the OnceLock caches — the element
+/// data the generated tables bank, the failed derive the honest
+/// empty slice keeps (the stick the nothing renders).
+fn torch_model_quads() -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    QUADS.get_or_init(|| {
+        mc_registry::element_quads::derive_model_inherited("block/torch")
+            .unwrap_or_default()
+    })
 }
 
 /// Mesh the whole world in parallel.
@@ -2545,6 +2681,102 @@ mod tests {
         }
     }
 
+    /// THE TORCH'S OWN ELEMENT-LANE LAWS (the dev-32 round): the stick
+    /// box the template_torch element bakes — the SIX quads the derive
+    /// walk keeps, the down face the solid ground culls (the cullface
+    /// law the below cell's opaque verdict answers), the vertex bounds
+    /// the [7,0,7]-[9,10,9] box keeps, the uv windows the texel rows
+    /// /16 fold wears, the tile the kind's own atlas row banks, the
+    /// neighbors' faces the non-occluding verdict draws.
+    #[test]
+    fn the_torch_lane_wears_the_element_laws() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE GROUNDED TORCH: the stick on stone — five quads survive
+        // (the down face the below stone culls), the bounds the box
+        // keeps, the tile the torch row banks
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::TORCH);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let stick: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| (9.0..=9.7).contains(&p[1]))
+                    && quad.pts.iter().all(|p| {
+                        (8.0 + 7.0 / 16.0..=8.0 + 9.0 / 16.0).contains(&p[0])
+                    })
+            })
+            .collect();
+        assert_eq!(stick.len(), 5, "the six faces the culled bottom the five keeps");
+        let torch_tile = gen_atlas::FACE_TILES[crate::world::TORCH as usize][2];
+        assert_ne!(torch_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
+        for quad in &stick {
+            assert_eq!(quad.tile, torch_tile, "the torch's own tile row");
+            assert!(!quad.translucent, "the stick the opaque lane wears");
+            for p in &quad.pts {
+                let (fx, fy, fz) = (p[0] - 8.0, p[1] - 9.0, p[2] - 8.0);
+                assert!(
+                    (7.0 / 16.0..=9.0 / 16.0).contains(&fx)
+                        && (7.0 / 16.0..=9.0 / 16.0).contains(&fz)
+                        && (0.0..=10.0 / 16.0).contains(&fy),
+                    "the [7,0,7]-[9,10,9] box the corners keep: ({fx},{fy},{fz})"
+                );
+            }
+            for uv in &quad.uvs {
+                assert!(
+                    (0.0..=1.0).contains(&uv[0]) && (0.0..=1.0).contains(&uv[1]),
+                    "the /16 fold the tile space keeps: {uv:?}"
+                );
+            }
+        }
+        // THE DOWN CULL'S OWN ABSENCE — the floating torch (the honest
+        // canSurvive-fail cell the test meshes anyway) the SIX quads
+        // keep: the below air the cullface verdict never fires
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 9, 8, crate::world::TORCH);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let floating: Vec<_> = q2
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (9.0..=9.7).contains(&p[1])))
+            .collect();
+        assert_eq!(floating.len(), 6, "the below air the bottom face draws");
+        // THE SUB-SPRITE'S OWN WINDOW (the texel rows the derive walk
+        // keeps verbatim: the four sides [7,6,9,16] the /16 fold
+        // wears — u 7/16..9/16, v 6/16..1.0; the up face [7,6,9,8] —
+        // v 6/16..8/16): the side quads the narrower u band keeps
+        let side_band: Vec<_> = stick
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().any(|p| (p[1] - 9.0).abs() < 1e-6)
+                    && quad.pts.iter().any(|p| (p[1] - 9.0 - 10.0 / 16.0).abs() < 1e-6)
+            })
+            .collect();
+        assert_eq!(side_band.len(), 4, "the four sides the y extremes name");
+        for quad in &side_band {
+            for uv in &quad.uvs {
+                assert!(
+                    (7.0 / 16.0..=9.0 / 16.0).contains(&uv[0]),
+                    "the side's u the [7,9] window keeps: {uv:?}"
+                );
+            }
+        }
+        // THE NEIGHBORS' OWN FACES — the torch cell the solid block
+        // draws against (the non-occluding verdict the stick's
+        // noCollision row keeps): the stone's west face at the
+        // shared plane renders
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 9, 8, crate::world::TORCH);
+        put(&mut w3, 9, 9, 8, STONE);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        assert!(
+            q3.iter().any(|quad| {
+                quad.pts.iter().all(|p| (p[0] - 9.0).abs() < 1e-6)
+                    && quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
+            }),
+            "the stone's face the torch cell draws against"
+        );
+    }
+
     #[test]
     fn the_tuft_cross_wears_the_tint_laws() {
         // THE GRASS TUFT'S OWN CROSS (the autopush-412 round — the
@@ -2778,3 +3010,4 @@ mod tests {
         }
     }
 }
+

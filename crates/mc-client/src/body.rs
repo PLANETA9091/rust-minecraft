@@ -290,6 +290,13 @@ pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
         // round — the `.noCollision()` rows the tall_grass/large_fern
         // chains speak, the player walks the pair through)
         && !crate::world::is_double_plant(id)
+        // THE TORCH the pass keeps (the dev-32 round — javap
+        // BaseTorchBlock's clinit: `Block.column(4.0, 0.0, 10.0)` the
+        // getShape row returns, but the SHAPE is the CLIP/outline box
+        // alone — the Properties chain's `.noCollision()` row the
+        // generated blocks table banks, the player walks the stick
+        // through)
+        && !crate::world::is_torch(id)
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape
@@ -2589,6 +2596,39 @@ mod tests {
         // cell: x - 0.3 < 8)
         assert!(b.x - WIDTH / 2.0 < 8.0, "the feet x {} stayed on the ledge", b.x);
         assert!(b.on_ground, "never fell");
+    }
+
+    /// THE TORCH'S OWN WALK-THROUGH (the dev-32 round — the
+    /// noCollision row the BaseTorchBlock Properties chain speaks,
+    /// the solid() verdict the passable set keeps): the torch cell
+    /// the body marches straight through — the same march the stone
+    /// wall the face stops (the contrast the noCollision law keeps).
+    #[test]
+    fn the_torch_never_blocks_the_body() {
+        // the torch standing on the floor the walk path holds
+        let mut w = flat_world();
+        w.set(5, 1, 5, crate::world::TORCH);
+        assert!(!solid(&w, 5, 1, 5), "the torch the walk-through verdict keeps");
+        let mut b = PlayerBody::new(2.5, 1.0, 5.5, 270.0, 0.0); // facing +x
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(b.x > 5.5, "the torch cell the body walked through: x={}", b.x);
+        // THE STONE'S OWN CLIP — the same march the solid wall stops
+        // dead at the face (the law the torch's noCollision contrasts)
+        let mut w2 = flat_world();
+        w2.set(5, 1, 5, crate::world::STONE);
+        w2.set(5, 2, 5, crate::world::STONE);
+        assert!(solid(&w2, 5, 1, 5));
+        let mut b2 = PlayerBody::new(2.5, 1.0, 5.5, 270.0, 0.0);
+        settle(&mut b2, &w2);
+        b2.forward = 1.0;
+        for _ in 0..40 {
+            b2.tick(&w2, false);
+        }
+        assert!(b2.x < 5.0, "the stone wall the march stops at: x={}", b2.x);
     }
 
     #[test]
