@@ -1210,6 +1210,31 @@ pub const DESTROY_BLOCK_EFFECT: i32 = 2001;
 /// positioned lane the case's own arm wears).
 pub const SHOOT_SMOKE_EFFECT: i32 = 2000;
 
+/// THE SPLASH-POTION EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_SPELL_POTION_SPLASH`, the
+/// case `LevelEventHandler.levelEvent` offset 1199 speaks): the data
+/// word the POTION COLOR carries — the RGB the handler's own decode
+/// folds (`(data >> 16 & 255) / 255.0F` the red, `>> 8` the green,
+/// `>> 0` the blue — the ARGB bytes the `SpellParticleOption.create`
+/// walk re-packs). The case the 2007 word SHARES — the same arm both
+/// ids wear, the sprite set the `Effect`/`InstantEffect` type alone
+/// splits. The server's own splash-potion impacts speak it. The
+/// GLOBAL route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const SPLASH_POTION_EFFECT: i32 = 2002;
+
+/// THE INSTANT-SPLASH EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_INSTANT_POTION_SPLASH`, the
+/// same case offset 1199 the 2002 word shares): the data word the
+/// potion color carries exactly the 2002 walk's way, the `InstantEffect`
+/// particle type the `if_icmpne` branch alone answers (the `spell_N`
+/// sprite set the instant json lists — the `effect_N` set the regular
+/// splash rides). The server's own instant-health/damage splash
+/// impacts speak it. The GLOBAL route the `globalLevelEvent` switch
+/// never banks.
+pub const INSTANT_SPLASH_EFFECT: i32 = 2007;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10340,6 +10365,16 @@ mod tests {
             SHOOT_SMOKE_EFFECT,
             2000,
             "the shoot-smoke effect the dispenser's own playAnimation speaks"
+        );
+        assert_eq!(
+            SPLASH_POTION_EFFECT,
+            2002,
+            "the splash-potion effect the server's own potion impact speaks"
+        );
+        assert_eq!(
+            INSTANT_SPLASH_EFFECT,
+            2007,
+            "the instant-splash effect the same arm's branch speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

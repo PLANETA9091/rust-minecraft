@@ -167,6 +167,7 @@ fn run_join(
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
+                Vec<crate::world_view::WireSplashEvent>,
             ),
             String,
         >,
@@ -254,6 +255,7 @@ fn run_join(
             view.model.drain_growth_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
+            view.model.drain_splash_events();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -865,6 +867,7 @@ fn run_join(
                             view.model.drain_growth_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
+                            view.model.drain_splash_events();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -991,6 +994,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.shoot_smoke_events,
+                                    // the splash-potion effect's arms ride
+                                    // with them — the 2002/2007 words the
+                                    // server's own potion impacts broadcast
+                                    // stream to the splash lane (the shard
+                                    // burst + the spell ring + the glass
+                                    // voice the render's own law folds, each
+                                    // arm rides exactly one shipped refresh)
+                                    upd.splash_events,
                                 )))
                                 .is_err()
                             {
@@ -1134,6 +1145,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
+                Vec<crate::world_view::WireSplashEvent>,
             ),
             String,
         >,
@@ -1678,6 +1690,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     growth_events,
                     break_events,
                     shoot_smoke_events,
+                    splash_events,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // THE GAME-MODE ECHO'S OWN BANK (the audited
@@ -1772,6 +1785,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the facing's smoke the vanilla client answers the
                     // same packet with)
                     app.live_shoot_smoke_events_updated(shoot_smoke_events);
+                    // the splash-potion effect's lane beside the smoke's:
+                    // the 2002/2007 words the server's own potion impacts
+                    // broadcast land at their own anchors (the shard burst
+                    // + the spell ring + the glass voice the render lane's
+                    // own law folds — the potion's splash the vanilla
+                    // client answers the same packet with)
+                    app.live_splash_events_updated(splash_events);
                     // the scoreboard's lane beside the voices': the
                     // SIDEBAR slot's belief lands verbatim (the rows the
                     // projection sorted and capped — the HUD renders it

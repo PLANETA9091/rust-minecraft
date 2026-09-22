@@ -303,6 +303,19 @@ pub struct WorldModel {
     /// (the `globalLevelEvent` switch the 2000 id never carries — the
     /// positioned lane the case's own arm wears).
     pub shoot_smoke_events: Vec<ShootSmokeArm>,
+    /// THE SPLASH-POTION EFFECT'S OWN MAILBOX (the Level Event packet's
+    /// next vocabulary word — [`mc_protocol::play::SPLASH_POTION_EFFECT`]
+    /// and [`mc_protocol::play::INSTANT_SPLASH_EFFECT`] the case the
+    /// `LevelEventHandler.levelEvent` offset 1199 speaks, BOTH ids the
+    /// one arm wears): the server's own potion impacts the event
+    /// broadcast, the eight shard burst + the hundred-puff spell ring +
+    /// the glass-break voice the client's render lane folds). The arms
+    /// the anchor + the raw color word carry — the RGB decode the render
+    /// lane's own law speaks, the instant flag the sprite set's own
+    /// split answers. The GLOBAL route the arm never enqueues (the
+    /// `globalLevelEvent` switch the 2002/2007 ids never carry — the
+    /// positioned lane the case's own arm wears).
+    pub splash_events: Vec<SplashArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -490,6 +503,31 @@ pub struct ShootSmokeArm {
     /// facing speaks — 0..5 the `DOWN/UP/NORTH/SOUTH/WEST/EAST` band,
     /// the out-of-range words the `abs(irem(data, 6))` fold rides).
     pub data: i32,
+}
+
+/// One pending SPLASH-POTION arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::splash_events`]). The DATA word rides raw (the potion
+/// color the handler's own `(data >> 16 & 255) / 255.0F` decode
+/// resolves in the render lane — the same transport layering the
+/// smoke arm's direction id keeps), the instant flag the sprite set's
+/// own split answers (`2007` the `InstantEffect` word the arm's own
+/// `if_icmpne` branch matched — the model's one match the flag banks,
+/// the type fold the walk's own read speaks). The anchor verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SplashArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The potion color word (the ARGB bytes the server's own option
+    /// carries — the red the `>> 16` band, the green the `>> 8`, the
+    /// blue the `>> 0`, the alpha the vanilla's own 1.0F create
+    /// never reads).
+    pub data: i32,
+    /// The instant flag (the `InstantEffect` type the `if_icmpne 2007`
+    /// branch answers — the `spell_N` sprite set the flag's true arm
+    /// picks, the `effect_N` set the regular splash rides).
+    pub instant: bool,
 }
 
 /// One pending ARROW position sync — the Entity Position Sync packet's
@@ -915,6 +953,7 @@ impl WorldModel {
             growth_events: Vec::new(),
             break_events: Vec::new(),
             shoot_smoke_events: Vec::new(),
+            splash_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
             display_slots: std::collections::HashMap::new(),
             scores: std::collections::HashMap::new(),
@@ -1074,6 +1113,15 @@ impl WorldModel {
     /// ten-puff smoke walk from the anchor + the direction id.
     pub fn drain_shoot_smoke_events(&mut self) -> Vec<ShootSmokeArm> {
         std::mem::take(&mut self.shoot_smoke_events)
+    }
+
+    /// The splash-potion effect's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 2002/2007 words
+    /// the Level Event packet armed, the render lane's own law folds the
+    /// shard burst + the spell ring + the glass voice from the anchor +
+    /// the raw color word + the instant flag.
+    pub fn drain_splash_events(&mut self) -> Vec<SplashArm> {
+        std::mem::take(&mut self.splash_events)
     }
 
     /// The arrows' sync mailbox's own drain (the same walk the voices'
@@ -1269,6 +1317,10 @@ impl WorldModel {
                 // (the same walk — the old level's 2000 words never
                 // puff again)
                 self.shoot_smoke_events.clear();
+                // the splash-potion effect's mailbox dies with the level
+                // (the same walk — the old level's 2002/2007 words never
+                // burst again)
+                self.splash_events.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -1976,6 +2028,26 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         data: ev.data,
+                    });
+                    true
+                } else if (ev.effect == mc_protocol::SPLASH_POTION_EFFECT
+                    || ev.effect == mc_protocol::INSTANT_SPLASH_EFFECT)
+                    && !ev.global
+                {
+                    // THE SPLASH-POTION EFFECT'S OWN ARM (javap the case
+                    // offset 1199 — the positioned route the GLOBAL
+                    // switch never banks, BOTH ids the one arm wears):
+                    // the anchor + the raw color word the mailbox
+                    // carries (the RGB decode the render lane's own law
+                    // speaks), the instant flag the type's own split
+                    // banks (`2007` the `InstantEffect` word the arm's
+                    // own `if_icmpne` branch answers).
+                    self.splash_events.push(SplashArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
+                        instant: ev.effect == mc_protocol::INSTANT_SPLASH_EFFECT,
                     });
                     true
                 } else {
@@ -6132,6 +6204,103 @@ mod tests {
         })));
         assert!(
             m.shoot_smoke_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_splash_word_the_color_rides() {
+        // THE SPLASH-POTION EFFECT'S OWN ARM (javap the case offset
+        // 1199 — the positioned route the GLOBAL switch never banks,
+        // BOTH ids the one arm wears): the data word the raw color
+        // carries (the RGB decode the render lane's own law speaks),
+        // the instant flag the type's own split banks (the `2007` word
+        // the `if_icmpne` branch answers), the anchor verbatim, the
+        // drain ships the arms exactly once, and the Respawn recreates
+        // the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the regular splash's own word (the ARGB color the server's
+        // option carries — the red the >>16 band, the green the >>8,
+        // the blue the >>0): the arm rides the RAW word
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SPLASH_POTION_EFFECT,
+            x: -12,
+            y: 34,
+            z: -56,
+            data: 0x37FA_19D5,
+            global: false,
+        })));
+        assert_eq!(m.splash_events.len(), 1, "the arm rides");
+        assert_eq!(m.splash_events[0].x, -12);
+        assert_eq!(m.splash_events[0].y, 34);
+        assert_eq!(m.splash_events[0].z, -56);
+        assert_eq!(
+            m.splash_events[0].data, 0x37FA_19D5,
+            "the raw color word the render lane folds"
+        );
+        assert!(
+            !m.splash_events[0].instant,
+            "the regular splash the type split keeps"
+        );
+        // the instant word arms beside it — the SAME arm the one flag
+        // splits (the `InstantEffect` type the branch answers)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::INSTANT_SPLASH_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0x00FF_8800,
+            global: false,
+        })));
+        assert_eq!(m.splash_events.len(), 2);
+        assert!(m.splash_events[1].instant, "the instant word the flag banks");
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries —
+        // neither id the global route's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SPLASH_POTION_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0xFF,
+            global: true,
+        })));
+        assert!(
+            !m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: mc_protocol::INSTANT_SPLASH_EFFECT,
+                x: 0,
+                y: 0,
+                z: 0,
+                data: 0xFF,
+                global: true,
+            }))
+        );
+        assert_eq!(m.splash_events.len(), 2, "the global words never arm");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_splash_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert!(m.splash_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_splash_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SPLASH_POTION_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0x11_22_33,
+            global: false,
+        })));
+        assert_eq!(m.splash_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.splash_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

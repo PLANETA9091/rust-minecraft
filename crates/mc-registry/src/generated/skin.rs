@@ -275,6 +275,24 @@ pub const PARTICLE_GLINT_RUNTIME_PATH: &str = "particle/glint.png";
 pub const PARTICLE_SWEEP_PNG_SHA1S: [&str; 8] = ["8c7d923d146cad394c8caaf1a4badf68ca29753e", "ef57d3910c34c4d76e8baa6acd50e43d3da985bc", "bf99457c805323fb7733d11be2f9d61f03ff8ca4", "4785e75fc3f22d0452d42b8905f0fe6b3ec60f54", "f0d3509efe3e0f068eac9f0bc7dff0fce2758b17", "f0945f4c7e7dd0433d411ec31814ad6067f212c9", "8dfa2cdc7d0288f52a193ff70610628cee836c91", "276ae2fcc4d436e35ba8f61afb1adc7149b8eb4e"];
 pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = ["particle/sweep_0.png", "particle/sweep_1.png", "particle/sweep_2.png", "particle/sweep_3.png", "particle/sweep_4.png", "particle/sweep_5.png", "particle/sweep_6.png", "particle/sweep_7.png"];
 
+/// The SPLASH-POTION LANE's textures (the spell ring's two 8-frame
+/// 8x8 sprite sets + the debris burst's two 16x16 item sprites),
+/// generated from the same jar: the integrity sha1s the loaders
+/// verify before they draw (javap: the `effect` + `instant_effect`
+/// particle types' sprite sets — the `LevelEventHandler` case-2002
+/// arm's `SpellParticle` ring the `effect_N`/`spell_N` jsons list
+/// descending — and the `BreakingItemParticle` debris the
+/// `pickParticleMaterial` walk picks — the splash potion model's
+/// two layers the `random.nextInt(activeLayerCount)` fold answers).
+pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = ["f782a4bfd2bded4f7f5c94fa15e0de87750af10b", "4f2dc2f46fe815db94ea43b334222f6eb96480e2", "b587969617190f99d4dec2dac67e33b77a63dd89", "ac06ecc35509bd03df283ccce935d8a1a3ff03d8", "abbfd8f5ecdba717b71f62f7934d4ca732ab2e0d", "6031ce47a34cd157938fa52faefa36fa8e4128e3", "86df142aee00f055efaf11a6cbd4ac7a63998648", "09a6e761653a5be150977fd6e8b28fb46b4fb0e0"];
+pub const PARTICLE_EFFECT_RUNTIME_PATHS: [&str; 8] = ["particle/effect_0.png", "particle/effect_1.png", "particle/effect_2.png", "particle/effect_3.png", "particle/effect_4.png", "particle/effect_5.png", "particle/effect_6.png", "particle/effect_7.png"];
+pub const PARTICLE_SPELL_PNG_SHA1S: [&str; 8] = ["e06354bd73ca9bafc24d8062f3becf583169b0aa", "20d3e9cf2937ac02458a53e08c9a8a7ea098a387", "dd50e7c93443573ae8ed7c16925ae4a815118efb", "7e7acec2be9f57d6fb8d01760754a568f1fd4b64", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec"];
+pub const PARTICLE_SPELL_RUNTIME_PATHS: [&str; 8] = ["particle/spell_0.png", "particle/spell_1.png", "particle/spell_2.png", "particle/spell_3.png", "particle/spell_4.png", "particle/spell_5.png", "particle/spell_6.png", "particle/spell_7.png"];
+pub const ITEM_POTION_OVERLAY_PNG_SHA1: &str = "edacedcd307eb0a8655fe1140ac8c257b87ac712";
+pub const ITEM_POTION_OVERLAY_RUNTIME_PATH: &str = "item/potion_overlay.png";
+pub const ITEM_SPLASH_POTION_PNG_SHA1: &str = "a4f2fa447a949deb361c48efa95bba67d31434da";
+pub const ITEM_SPLASH_POTION_RUNTIME_PATH: &str = "item/splash_potion.png";
+
 /// The WOLF skin (the wild default the WolfRenderer's extractRenderState
 /// `wolf.getTexture()` answers — the variant table's PALE word the
 /// no-variant lane keeps), generated from the same jar: the source sha1

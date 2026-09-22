@@ -59,6 +59,7 @@ pub use play::{
     encode_player_abilities, encode_change_game_mode,
     HurtAnimation, PlayerCombatKill, EntitySoundPacket, WorldSoundPacket,
     LevelEventPacket, GROWTH_EFFECT, DESTROY_BLOCK_EFFECT, SHOOT_SMOKE_EFFECT,
+    SPLASH_POTION_EFFECT, INSTANT_SPLASH_EFFECT,
 };
 pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};

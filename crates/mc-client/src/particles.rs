@@ -278,6 +278,29 @@ pub enum ParticleKind {
     /// full sample keeps), the white tint the ctor defaults speak,
     /// the (1 - t*t*0.5) half-thin the getQuadSize override wears.
     Flame,
+    /// `SpellParticle` — the splash-potion ring's own colored puff (the
+    /// `effect`/`instant_effect` types the `LevelEventHandler` case-2002
+    /// arm's `SpellParticleOption.create(ParticleTypes.EFFECT|INSTANT_
+    /// EFFECT, r*f, g*f, b*f, d0)` walk speaks, the `instant` flag the
+    /// `if_icmpne 2007` branch answers): the frame the age's own walk
+    /// rides (`setSpriteFromAge` — the type's own json's descending
+    /// list the file fold speaks), the color tint the option's floats
+    /// carry (the ctor's `setColor` the provider walks), the −0.1
+    /// gravity the ctor passes (the rise `yd -= 0.04 * (-0.1)` gives),
+    /// the 0.96 friction, the 0.75 size fold, the 8..40 lifetime the
+    /// ctor's own write answers.
+    Spell { instant: bool },
+    /// `BreakingItemParticle` — the splash-potion debris burst's own
+    /// shard (the `ItemParticleOption(ParticleTypes.ITEM, SPLASH_
+    /// POTION)` walk the case-2002 arm's eight-fold loop speaks, the
+    /// layer the `pickParticleMaterial`'s `nextInt(activeLayerCount)`
+    /// fold picks — 0 the `potion_overlay` glass, 1 the `splash_potion`
+    /// liquid the model's own two layers keep): the quarter-region uv
+    /// walk the terrain dust shares (the uo/vo the ctor's own
+    /// `nextFloat() * 3.0` draws give), the gravity 1.0 the ctor
+    /// passes, the base 0.98 friction, the `/2` size fold, the base
+    /// lifetime the ctor never overrides.
+    PotionItem { layer: usize },
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -1257,6 +1280,191 @@ pub fn shoot_smoke_puff(
         r_tint,
         r_life,
     )
+}
+
+/// The spell ring's 8 frames per set (the `effect_0..7` and
+/// `spell_0..7` textures the two jsons speak).
+pub const SPELL_FRAME_COUNT: usize = 8;
+
+/// The spell puff's own lifetime (javap `SpellParticle.<init>`'s own
+/// write verbatim: `(int)(8.0 / (nextFloat() * 0.8F + 0.2F))` — the
+/// [8, 40] band the draw gives, the f64 domain the d-arith keeps: the
+/// edge r=0 answers 39.99999940 → 39, r→1 answers 7.99999988 → 7,
+/// the grid never draws either edge's byte-exact neighbor).
+pub fn spell_lifetime(r: f32) -> u32 {
+    (f64::from(8.0f32) / f64::from(r * 0.8f32 + 0.2f32)) as u32
+}
+
+/// The spell puff's birth velocity chain (javap the ctor chain
+/// verbatim): the super call's own args the STATIC random feeds —
+/// `0.5 - RANDOM.nextDouble()` the x/z inputs (the two draws the
+/// `SpellParticle.RANDOM` static stream spends, NOT the level's), the
+/// yd arg the caller's own walk passes — then the base ctor's spread +
+/// normalization the helper folds (the five draws the LEVEL stream
+/// keeps). Returns the pre-`yd *= 0.2` velocity triple.
+fn spell_birth_velocity(
+    jitter_x: f64,
+    jitter_y: f64,
+    jitter_z: f64,
+    rng: &mut crate::drops::Lcg,
+) -> (f64, f64, f64) {
+    ctor_spread_and_normalize_after(jitter_x, jitter_y, jitter_z, rng)
+}
+
+/// The base ctor's spread + normalization fold over EXPLICIT args (the
+/// same five draws and the same f64 math the
+/// `ctor_spread_and_normalize` helper speaks — the args the spell's
+/// own super call carries instead of the zeros the raw helper feeds).
+fn ctor_spread_and_normalize_after(
+    xd_arg: f64,
+    yd_arg: f64,
+    zd_arg: f64,
+    rng: &mut crate::drops::Lcg,
+) -> (f64, f64, f64) {
+    let sx = xd_arg + f64::from((rng.next_f32() * 2.0 - 1.0) * 0.4);
+    let sy = yd_arg + f64::from((rng.next_f32() * 2.0 - 1.0) * 0.4);
+    let sz = zd_arg + f64::from((rng.next_f32() * 2.0 - 1.0) * 0.4);
+    let d0 = (rng.next_f32() + rng.next_f32() + 1.0) * 0.15;
+    let d1 = (sx * sx + sy * sy + sz * sz).sqrt();
+    let vx = sx / d1 * d0 as f64 * f64::from(0.4f32);
+    let vy = sy / d1 * d0 as f64 * f64::from(0.4f32) + f64::from(0.1f32);
+    let vz = sz / d1 * d0 as f64 * f64::from(0.4f32);
+    (vx, vy, vz)
+}
+
+/// The BREAKING-POTION shard's own spawn (javap
+/// `BreakingItemParticle` over the 26.2 jar — the
+/// `ItemParticleOption(ParticleTypes.ITEM, Items.SPLASH_POTION)` the
+/// case-2002 arm's `bipush 8` loop speaks, the provider's
+/// `getSprite` walk the `pickParticleMaterial` fold answers): the
+/// nine draws the ctor chain consumes on the LEVEL stream in the
+/// vanilla order — the base lifetime (the LIVE one here, the shard
+/// ctor never overrides), the three spreads, the d0 pair (the
+/// `(0, 0, 0)` velocity args the 3-arg ctor passes the base), the
+/// size draw, then the uo/vo pair the 3-arg ctor's own `nextFloat()
+/// * 3.0F` adds — then the 7-arg ctor's `xd = xd * 0.1 + xSpeed`
+/// fold the wire velocity rides. The gravity 1.0, the `/2` size
+/// fold, the base 0.98 friction the shard keeps, the white tint the
+/// item sprite's own pixels wear.
+///
+/// The `layer` arg the caller folds (the `nextInt(activeLayerCount)`
+/// draw the `getSprite` walk spends BEFORE the ctor — the splash
+/// potion model's two layers): 0 the overlay glass, 1 the liquid.
+#[allow(clippy::too_many_arguments)]
+pub fn breaking_potion_shard(
+    x: f64,
+    y: f64,
+    z: f64,
+    layer: usize,
+    wire_vx: f64,
+    wire_vy: f64,
+    wire_vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    let life = base_lifetime(rng.next_f32());
+    let (sx, sy, sz) = ctor_spread_and_normalize(rng);
+    let r_size = rng.next_f32();
+    let uo = rng.next_f32() * 3.0;
+    let vo = rng.next_f32() * 3.0;
+    let scale = f64::from(0.1f32);
+    Particle {
+        kind: ParticleKind::PotionItem { layer },
+        x,
+        y,
+        z,
+        prev: None,
+        vx: sx * scale + wire_vx,
+        vy: sy * scale + wire_vy,
+        vz: sz * scale + wire_vz,
+        age: 0,
+        lifetime: life,
+        gravity: 1.0,
+        friction: 0.98,
+        quad_size: base_quad_size(r_size) / 2.0,
+        uo,
+        vo,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The SPELL-RING puff's own spawn (javap `SpellParticle` +
+/// `SpellParticle$InstantProvider.createParticle` over the 26.2 jar —
+/// the `SpellParticleOption.create(type, r*f, g*f, b*f, (float)d0)`
+/// the case-2002 arm's `bipush 100` loop speaks): the caller's own
+/// four draws (the `d0` radius, the `d1` angle, the `d3` rise, the
+/// `f` tint scale — the handler's loop body the bytecode orders)
+/// precede the ctor chain the LEVEL stream keeps — the dead base
+/// lifetime, the three spreads, the d0 pair, the size draw — then
+/// the OWN lifetime the ctor's write answers (the second live draw).
+/// The super call's x/z inputs ride the STATIC `SpellParticle.RANDOM`
+/// stream's `0.5 - nextDouble()` pair (the `jitter` arg — the
+/// separate stream the static field's own create() seeds, NOT the
+/// level's), the yd input the wire's own `d3` carries.
+///
+/// The setPower fold the provider's tail speaks (`xd *= power; yd =
+/// (yd - 0.1) * power + 0.1; zd *= power` — the power the option's
+/// own `(float)d0` word carries) rides AFTER the ctor's `yd *= 0.2`:
+/// the wire's x/z velocity words (the ring's own `d2`/`d4`) never
+/// reach the motion — the position offset alone they place, the
+/// zero-speed arm the bytecode keeps (both wire words 0.0 the
+/// `xd *= 0.1`/`zd *= 0.1` fold arms).
+#[allow(clippy::too_many_arguments)]
+pub fn spell_ring_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    instant: bool,
+    d0: f64,
+    wire_x_speed: f64,
+    wire_y_speed: f64,
+    wire_z_speed: f64,
+    col: [f32; 3],
+    rng: &mut crate::drops::Lcg,
+    jitter: &mut crate::drops::Lcg,
+) -> Particle {
+    // the super call's own x/z inputs — the STATIC stream's
+    // `0.5 - nextDouble()` pair the ctor's args evaluation draws
+    let jx = f64::from(0.5f32) - jitter.next_f64();
+    let jz = f64::from(0.5f32) - jitter.next_f64();
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the spell ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (mut vx, mut vy, mut vz) = spell_birth_velocity(jx, wire_y_speed, jz, rng);
+    let r_size = rng.next_f32();
+    // the ctor's own write (the second draw the override keeps)
+    let lifetime = spell_lifetime(rng.next_f32());
+    // the ctor's yd fold
+    vy *= f64::from(0.2f32);
+    // THE ZERO-SPEED ARM (the bytecode's own dcmp pair — the wire's
+    // x/z words both 0.0 the fold arms, the FIELDS it scales)
+    if wire_x_speed == 0.0 && wire_z_speed == 0.0 {
+        vx *= 0.1;
+        vz *= 0.1;
+    }
+    // THE SETPOWER FOLD (the provider's tail — the power the option's
+    // `(float)d0` word carries)
+    let power = d0 as f32;
+    vx *= f64::from(power);
+    vy = (vy - 0.1) * f64::from(power) + 0.1;
+    vz *= f64::from(power);
+    Particle {
+        kind: ParticleKind::Spell { instant },
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime,
+        gravity: -0.1,
+        friction: 0.96,
+        quad_size: base_quad_size(r_size) * 0.75,
+        uo: 0.0,
+        vo: 0.0,
+        col,
+    }
 }
 
 /// The velocity chain the `Particle` 6-arg ctor speaks (javap

@@ -188,6 +188,43 @@ pub const PARTICLE_SWEEP_JAR_PATHS: [&str; 8] = [
     "assets/minecraft/textures/particle/sweep_6.png",
     "assets/minecraft/textures/particle/sweep_7.png",
 ];
+/// The splash-potion ring's two 8-frame sets (javap: the `effect` +
+/// `instant_effect` particle types' sprite sets — the jar's
+/// `particles/effect.json` lists `minecraft:effect_7..0` and
+/// `particles/instant_effect.json` lists `minecraft:spell_7..0`, BOTH
+/// descending — the `LevelEventHandler` case-2002 arm's `SpellParticle`
+/// ring rides `setSpriteFromAge` over the list the type's own json
+/// speaks; each frame the 8x8 the IHDR verifies).
+pub const PARTICLE_EFFECT_JAR_PATHS: [&str; 8] = [
+    "assets/minecraft/textures/particle/effect_0.png",
+    "assets/minecraft/textures/particle/effect_1.png",
+    "assets/minecraft/textures/particle/effect_2.png",
+    "assets/minecraft/textures/particle/effect_3.png",
+    "assets/minecraft/textures/particle/effect_4.png",
+    "assets/minecraft/textures/particle/effect_5.png",
+    "assets/minecraft/textures/particle/effect_6.png",
+    "assets/minecraft/textures/particle/effect_7.png",
+];
+pub const PARTICLE_SPELL_JAR_PATHS: [&str; 8] = [
+    "assets/minecraft/textures/particle/spell_0.png",
+    "assets/minecraft/textures/particle/spell_1.png",
+    "assets/minecraft/textures/particle/spell_2.png",
+    "assets/minecraft/textures/particle/spell_3.png",
+    "assets/minecraft/textures/particle/spell_4.png",
+    "assets/minecraft/textures/particle/spell_5.png",
+    "assets/minecraft/textures/particle/spell_6.png",
+    "assets/minecraft/textures/particle/spell_7.png",
+];
+/// The splash-potion debris burst's two 16x16 item sprites (javap:
+/// the `BreakingItemParticle$ItemParticleProvider.getSprite` walk —
+/// `ItemModelResolver.updateForTopItem(GROUND)` then
+/// `ItemStackRenderState.pickParticleMaterial`'s
+/// `random.nextInt(activeLayerCount)` fold — the splash_potion model's
+/// TWO layers the `models/item/splash_potion.json` speaks, layer0 the
+/// `potion_overlay` glass, layer1 the `splash_potion` liquid, each the
+/// 16x16 the IHDR verifies).
+pub const ITEM_POTION_OVERLAY_JAR_PATH: &str = "assets/minecraft/textures/item/potion_overlay.png";
+pub const ITEM_SPLASH_POTION_JAR_PATH: &str = "assets/minecraft/textures/item/splash_potion.png";
 
 /// THE VARIANT TABLE'S JAR ENTRIES (the regen-gap closure): the skins
 /// the earlier rounds hand-added to the GENERATED file — the generator's
@@ -279,6 +316,33 @@ pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = [
     "particle/sweep_6.png",
     "particle/sweep_7.png",
 ];
+/// The splash-potion ring's runtime-cache paths (the same textures/
+/// prefix strip the other lanes speak — the FILE index the json's
+/// descending list folds).
+pub const PARTICLE_EFFECT_RUNTIME_PATHS: [&str; 8] = [
+    "particle/effect_0.png",
+    "particle/effect_1.png",
+    "particle/effect_2.png",
+    "particle/effect_3.png",
+    "particle/effect_4.png",
+    "particle/effect_5.png",
+    "particle/effect_6.png",
+    "particle/effect_7.png",
+];
+pub const PARTICLE_SPELL_RUNTIME_PATHS: [&str; 8] = [
+    "particle/spell_0.png",
+    "particle/spell_1.png",
+    "particle/spell_2.png",
+    "particle/spell_3.png",
+    "particle/spell_4.png",
+    "particle/spell_5.png",
+    "particle/spell_6.png",
+    "particle/spell_7.png",
+];
+/// The splash-potion debris burst's two item sprites (the same
+/// textures/ prefix strip the other lanes speak).
+pub const ITEM_POTION_OVERLAY_RUNTIME_PATH: &str = "item/potion_overlay.png";
+pub const ITEM_SPLASH_POTION_RUNTIME_PATH: &str = "item/splash_potion.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -396,6 +460,17 @@ pub struct SkinData {
     /// the sword's own swing's pixel sources (the 32x32 sweep frames
     /// the json's ascending list orders).
     pub particle_sweep_png_sha1s: [String; 8],
+    /// sha1s of the splash-potion ring's two 8-frame sets (jar-verbatim
+    /// integrity) — the spell ring's pixel sources (the 8x8 effect/spell
+    /// frames the two jsons' descending lists order).
+    pub particle_effect_png_sha1s: [String; 8],
+    pub particle_spell_png_sha1s: [String; 8],
+    /// sha1s of the splash-potion debris burst's two 16x16 item sprites
+    /// (jar-verbatim integrity) — the debris quad's pixel sources (the
+    /// splash_potion model's two layers the pickParticleMaterial walk
+    /// picks).
+    pub item_potion_overlay_png_sha1: String,
+    pub item_splash_potion_png_sha1: String,
     /// THE VARIANT TABLE'S SHA1S (jar-verbatim integrity): the skins
     /// the variant lanes verify before they draw — the thin/arachnid/
     /// canine pair + the 26.2 temperature variants' adult/baby rows
@@ -806,6 +881,57 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             sh
         );
     }
+    // the splash-potion ring's two 8-frame sets (the same shape check
+    // the poof walk speaks — the 8x8 the ring quads sample over their
+    // own lives, the type's own json the set rides)
+    let mut particle_effect_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_EFFECT_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read effect frame")?;
+        particle_effect_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (ew, eh, _effect_rgba) = decode_rgba(&bytes).context("decode effect frame")?;
+        anyhow::ensure!(
+            (ew, eh) == (8, 8),
+            "effect frames must be the 8x8 sprites, got {}x{}",
+            ew,
+            eh
+        );
+    }
+    let mut particle_spell_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_SPELL_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read spell frame")?;
+        particle_spell_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (pw, ph, _spell_rgba) = decode_rgba(&bytes).context("decode spell frame")?;
+        anyhow::ensure!(
+            (pw, ph) == (8, 8),
+            "spell frames must be the 8x8 sprites, got {}x{}",
+            pw,
+            ph
+        );
+    }
+    // the splash-potion debris burst's two 16x16 item sprites (the
+    // splash_potion model's two layers the pickParticleMaterial pick
+    // walks — the glass and the liquid the debris burst alternates)
+    let overlay_bytes =
+        read_entry(archive, ITEM_POTION_OVERLAY_JAR_PATH).context("read potion overlay")?;
+    let item_potion_overlay_png_sha1 = crate::util::sha1_hex(&overlay_bytes);
+    let (ow, oh, _overlay_rgba) = decode_rgba(&overlay_bytes).context("decode potion overlay")?;
+    anyhow::ensure!(
+        (ow, oh) == (16, 16),
+        "potion_overlay must be the 16x16 item sprite, got {}x{}",
+        ow,
+        oh
+    );
+    let splash_item_bytes =
+        read_entry(archive, ITEM_SPLASH_POTION_JAR_PATH).context("read splash potion item")?;
+    let item_splash_potion_png_sha1 = crate::util::sha1_hex(&splash_item_bytes);
+    let (iw, ih, _splash_item_rgba) = decode_rgba(&splash_item_bytes)
+        .context("decode splash potion item")?;
+    anyhow::ensure!(
+        (iw, ih) == (16, 16),
+        "splash_potion must be the 16x16 item sprite, got {}x{}",
+        iw,
+        ih
+    );
     // THE VARIANT TABLE READS (the regen-gap closure): each entry the
     // jar's own PNG carries, the sha1 the emit pins, the layout the
     // model family's LayerDefinition.create keeps — the thin humanoid's
@@ -899,6 +1025,10 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_heart_png_sha1,
         particle_glint_png_sha1,
         particle_sweep_png_sha1s,
+        particle_effect_png_sha1s,
+        particle_spell_png_sha1s,
+        item_potion_overlay_png_sha1,
+        item_splash_potion_png_sha1,
         skeleton_png_sha1,
         spider_png_sha1,
         creeper_png_sha1,
@@ -1321,6 +1451,52 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .collect::<Vec<_>>()
             .join(", ")
     ));
+    out.push_str(&format!(
+        "pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = [{}];\n",
+        data.particle_effect_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_EFFECT_RUNTIME_PATHS: [&str; 8] = [{}];\n",
+        PARTICLE_EFFECT_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SPELL_PNG_SHA1S: [&str; 8] = [{}];\n",
+        data.particle_spell_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SPELL_RUNTIME_PATHS: [&str; 8] = [{}];\n",
+        PARTICLE_SPELL_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const ITEM_POTION_OVERLAY_PNG_SHA1: &str = \"{}\";\n",
+        data.item_potion_overlay_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const ITEM_POTION_OVERLAY_RUNTIME_PATH: &str = \"{ITEM_POTION_OVERLAY_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const ITEM_SPLASH_POTION_PNG_SHA1: &str = \"{}\";\n",
+        data.item_splash_potion_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const ITEM_SPLASH_POTION_RUNTIME_PATH: &str = \"{ITEM_SPLASH_POTION_RUNTIME_PATH}\";\n"
+    ));
     out.push_str("\n/// The WOLF skin (the wild default the WolfRenderer's extractRenderState\n/// `wolf.getTexture()` answers — the variant table's PALE word the\n/// no-variant lane keeps), generated from the same jar: the source sha1\n/// the wolf renderer verifies before it draws (javap AdultWolfModel:\n/// the createBodyLayer mesh the `LayerDefinition.create(mesh, 64, 32)`\n/// layout unwraps — the head+ears+muzzle/body/upper_body/4-legs/tail\n/// chain the bytecode speaks).\n");
     out.push_str(&format!(
         "pub const WOLF_PNG_SHA1: &str = \"{}\";\n",
@@ -1442,6 +1618,25 @@ mod tests {
         out
     }
 
+    /// A 16x16 RGBA png — the item sprite shape (the splash-potion
+    /// debris burst's two layers), one lit texel so the decode is
+    /// non-trivial.
+    fn item_png() -> Vec<u8> {
+        let (w, h) = (16u32, 16u32);
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        let o = ((5 * w + 9) * 4) as usize;
+        rgba[o..o + 4].copy_from_slice(&[190, 60, 200, 255]);
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
     /// A 32x32 RGBA png — the sweep arc's frame shape, one lit texel so
     /// the decode is non-trivial.
     fn sweep_png() -> Vec<u8> {
@@ -1532,6 +1727,16 @@ mod tests {
         let sweeps = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
         let expected_sweep_sha1s: Vec<String> =
             sweeps.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let effects = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
+        let expected_effect_sha1s: Vec<String> =
+            effects.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let spells = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
+        let expected_spell_sha1s: Vec<String> =
+            spells.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let overlay = item_png();
+        let expected_overlay_sha1 = crate::util::sha1_hex(&overlay);
+        let splash_item = item_png();
+        let expected_splash_item_sha1 = crate::util::sha1_hex(&splash_item);
         // THE VARIANT TABLE'S SYNTHETICS (the dims the layout asserts
         // demand — the thin/arachnid/canine 64x32, the canine baby's
         // 32x32, the avian variants' 64x32 + 16x16, the swine/bovine
@@ -1634,6 +1839,24 @@ mod tests {
             (PARTICLE_SWEEP_JAR_PATHS[5], sweeps[5].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[6], sweeps[6].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[7], sweeps[7].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[0], effects[0].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[1], effects[1].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[2], effects[2].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[3], effects[3].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[4], effects[4].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[5], effects[5].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[6], effects[6].clone()),
+            (PARTICLE_EFFECT_JAR_PATHS[7], effects[7].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[0], spells[0].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[1], spells[1].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[2], spells[2].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[3], spells[3].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[4], spells[4].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[5], spells[5].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[6], spells[6].clone()),
+            (PARTICLE_SPELL_JAR_PATHS[7], spells[7].clone()),
+            (ITEM_POTION_OVERLAY_JAR_PATH, overlay),
+            (ITEM_SPLASH_POTION_JAR_PATH, splash_item),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -1735,6 +1958,24 @@ mod tests {
             data.particle_sweep_png_sha1s,
             expected_sweep_sha1s.as_slice(),
             "the sweep frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_effect_png_sha1s,
+            expected_effect_sha1s.as_slice(),
+            "the effect frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_spell_png_sha1s,
+            expected_spell_sha1s.as_slice(),
+            "the spell frames' own sha1s"
+        );
+        assert_eq!(
+            data.item_potion_overlay_png_sha1, expected_overlay_sha1,
+            "the potion overlay's own sha1"
+        );
+        assert_eq!(
+            data.item_splash_potion_png_sha1, expected_splash_item_sha1,
+            "the splash potion item's own sha1"
         );
         // THE VARIANT TABLE'S SHA1S (the regen-gap closure's own pins —
         // the generator reads the same jar rows the hand-added ledger
@@ -1855,6 +2096,22 @@ mod tests {
             );
             assert!(emitted.contains(&format!("\"particle/sweep_{i}.png\"")));
         }
+        for (i, sha) in expected_effect_sha1s.iter().enumerate() {
+            assert!(
+                emitted.contains(&format!("\"{sha}\"")),
+                "effect frame {i}'s sha1"
+            );
+            assert!(emitted.contains(&format!("\"particle/effect_{i}.png\"")));
+        }
+        for (i, sha) in expected_spell_sha1s.iter().enumerate() {
+            assert!(
+                emitted.contains(&format!("\"{sha}\"")),
+                "spell frame {i}'s sha1"
+            );
+            assert!(emitted.contains(&format!("\"particle/spell_{i}.png\"")));
+        }
+        assert!(emitted.contains("pub const ITEM_POTION_OVERLAY_PNG_SHA1"));
+        assert!(emitted.contains("pub const ITEM_SPLASH_POTION_PNG_SHA1"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_PX: [u16; 3] = [3, 12, 4];"));
         assert!(emitted.contains("pub const SLIM_ARM_BOX_ORIGIN_PX: [i16; 3] = [-2, -2, -2];"));
         // the six faces unfold from texOffs (40,16) with the box 4x12x4

@@ -6374,6 +6374,16 @@ pub struct App {
     /// speaks.
     pub ambient_rng: crate::drops::Lcg,
     pub level_ambient_rng: crate::drops::Lcg,
+    /// THE SPELL JITTER'S OWN STREAM (javap `SpellParticle.RANDOM` —
+    /// the `private static final RandomSource` the 26.2 class speaks:
+    /// `RandomSource.create()` the nanotime seed answers, the JVM-wide
+    /// stream the ctor's `0.5 - RANDOM.nextDouble()` super-arg pair
+    /// spends, NOT the level's own random). The repo's fixed-seed LCG
+    /// the honest stand-in wears — the vanilla stream the replay never
+    /// speaks, the two draws per ring puff the value bands the
+    /// [-0.5, 0.5] bias keeps, the LEVEL stream's own draw order the
+    /// separate stream never disturbs.
+    pub spell_jitter_rng: crate::drops::Lcg,
     /// `Player.attackStrengthTicker` — the charge clock the fist's
     /// damage law speaks (the delay = (1/ATTACK_SPEED 4.0)·20 = 5.0,
     /// the reset the onAttack call performs).
@@ -6677,6 +6687,14 @@ pub struct App {
     /// the happy_villager json's one-texture set speaks — the lazy
     /// load the crit/damage lanes speak)
     pub glint_sprite: Option<crate::avatar::GlintSprite>,
+    /// The splash-potion ring's TWO sprite sets (the same lazy load —
+    /// the `effect_N` set the regular splash rides, the `spell_N` set
+    /// the instant word answers).
+    pub effect_frames: Option<crate::avatar::SpellFrames>,
+    pub spell_frames: Option<crate::avatar::SpellFrames>,
+    /// The splash-potion debris' two item sprites (the same lazy load —
+    /// the glass and the liquid the shard burst alternates).
+    pub potion_sprites: Option<crate::avatar::PotionSprites>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -7314,6 +7332,7 @@ impl App {
             crop_rng: crate::drops::Lcg::new(0x5EED_C909),
             ambient_rng: crate::drops::Lcg::new(0x5EED_1ABA),
             level_ambient_rng: crate::drops::Lcg::new(0x5EED_7E11),
+            spell_jitter_rng: crate::drops::Lcg::new(0x5EED_570F),
             attack_ticker: 0,
             dig: crate::dig::DigState::new(),
             dig_held: false,
@@ -7360,6 +7379,9 @@ impl App {
             sweep_frames: None,
             heart_sprite: None,
             glint_sprite: None,
+            effect_frames: None,
+            spell_frames: None,
+            potion_sprites: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -21620,6 +21642,116 @@ impl App {
         }
     }
 
+    /// THE SPLASH-POTION EFFECT'S OWN WIRE LANE (javap `LevelEventHandler`
+    /// case 2002 — the same arm offset 1199 the 2007 word shares — over
+    /// the 26.2 jar): the server's own potion impacts the event
+    /// broadcast, the THREE walks the arm's body speaks — the eight
+    /// shard burst the `ItemParticleOption(ParticleTypes.ITEM, SPLASH_
+    /// POTION)` loop fires first, the hundred-puff colored ring the
+    /// `SpellParticleOption.create(type, r*f, g*f, b*f, (float)d0)`
+    /// loop answers, the glass voice the `playLocalSound` tail speaks.
+    pub fn live_splash_events_updated(&mut self, events: Vec<crate::world_view::WireSplashEvent>) {
+        for ev in events {
+            self.play_splash(ev.x, ev.y, ev.z, ev.data, ev.instant);
+        }
+    }
+
+    /// THE SPLASH WALK (javap the case-2002 arm verbatim): the anchor
+    /// `Vec3.atBottomCenterOf(pos)` the case's own head answers, the
+    /// color decode `(data >> 16 & 255) / 255.0F` (the `>> 8` green,
+    /// the `>> 0` blue), the `bipush 8` shard loop, the `bipush 100`
+    /// ring loop, the sound tail. THE SHARD (javap
+    /// `BreakingItemParticle` verbatim): the sprite pick the
+    /// `pickParticleMaterial`'s `nextInt(activeLayerCount)` fold
+    /// answers (the splash potion model's two layers the walk banks),
+    /// the velocity `(nextGaussian * 0.15, nextDouble * 0.2,
+    /// nextGaussian * 0.15)` the addParticle args speak, then the ctor
+    /// chain the shard helper folds. THE RING (javap `SpellParticle` +
+    /// `SpellParticle$InstantProvider` verbatim): per puff the `d0 =
+    /// nextDouble * 4.0` radius, the `d1 = nextDouble * PI * 2` angle,
+    /// the `d3 = 0.01 + nextDouble * 0.5` rise, the `f = 0.75 +
+    /// nextFloat * 0.25` tint scale, the spawn `(anchor + d2*0.1,
+    /// +0.3, + d4*0.1)` the cos/sin folds place, the color `(r*f, g*f,
+    /// b*f)` the option carries — the ctor chain the spell helper
+    /// folds (the static jitter stream the super-arg pair spends).
+    /// THE TAIL (javap the `playLocalSound` walk): the
+    /// `entity.splash_potion.break` voice at the anchor, NEUTRAL
+    /// source, volume 1.0, the `nextFloat * 0.1 + 0.9` pitch the
+    /// draw gives.
+    fn play_splash(&mut self, x: i32, y: i32, z: i32, data: i32, instant: bool) {
+        // THE ANCHOR (Vec3.atBottomCenterOf — the bottom face's center)
+        let ax = f64::from(x) + 0.5;
+        let ay = f64::from(y);
+        let az = f64::from(z) + 0.5;
+        // THE SHARD BURST (the `bipush 8` loop — the color decode the
+        // ring's own walk reads rides AFTER, the stream order the
+        // bytecode keeps)
+        for _ in 0..8 {
+            let wire_vx = self.level_ambient_rng.next_gaussian() * 0.15;
+            let wire_vy = self.level_ambient_rng.next_f64() * 0.2;
+            let wire_vz = self.level_ambient_rng.next_gaussian() * 0.15;
+            // THE SPRITE PICK (the `nextInt(activeLayerCount)` the
+            // pickParticleMaterial fold speaks — the two layers the
+            // splash potion model banks, the draw BEFORE the ctor)
+            let layer = self.level_ambient_rng.next_int(2) as usize;
+            let shard = crate::particles::breaking_potion_shard(
+                ax,
+                ay,
+                az,
+                layer,
+                wire_vx,
+                wire_vy,
+                wire_vz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(shard);
+        }
+        // THE COLOR DECODE (the three folds the ring's own head speaks)
+        let r = ((data >> 16) & 255) as f32 / 255.0;
+        let g = ((data >> 8) & 255) as f32 / 255.0;
+        let b = (data & 255) as f32 / 255.0;
+        // THE SPELL RING (the `bipush 100` loop)
+        for _ in 0..100 {
+            let d0 = self.level_ambient_rng.next_f64() * 4.0;
+            let d1 = self.level_ambient_rng.next_f64()
+                * std::f64::consts::PI
+                * 2.0;
+            let d3 = 0.01 + self.level_ambient_rng.next_f64() * 0.5;
+            let f = 0.75 + self.level_ambient_rng.next_f32() * 0.25;
+            let d2 = d1.cos() * d0;
+            let d4 = d1.sin() * d0;
+            let col = [r * f, g * f, b * f];
+            let puff = crate::particles::spell_ring_puff(
+                ax + d2 * 0.1,
+                ay + 0.3,
+                az + d4 * 0.1,
+                instant,
+                d0,
+                d2,
+                d3,
+                d4,
+                col,
+                &mut self.level_ambient_rng,
+                &mut self.spell_jitter_rng,
+            );
+            self.particles.push(puff);
+        }
+        // THE GLASS VOICE (the tail's playLocalSound — the pitch draw
+        // the stream's own order keeps, the NEUTRAL source the 1.0
+        // volume wears)
+        let pitch = self.level_ambient_rng.next_f32() * 0.1 + 0.9;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "entity.splash_potion.break",
+            1.0,
+            pitch,
+            ear_distance(ear, ax, ay, az),
+            ear_pan(ear, yaw, ax, ay, az),
+        );
+    }
+
     /// THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
     /// `--held-item` stand-in speaks no stack: the consume is the
     /// honest no-op it always was). The crop ladder's advance and the
@@ -26039,6 +26171,22 @@ impl App {
             self.glint_sprite =
                 crate::avatar::GlintSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.effect_frames.is_none() {
+            self.effect_frames = crate::avatar::SpellFrames::load(
+                std::path::Path::new("assets-cache/jar"),
+                false,
+            );
+        }
+        if self.spell_frames.is_none() {
+            self.spell_frames = crate::avatar::SpellFrames::load(
+                std::path::Path::new("assets-cache/jar"),
+                true,
+            );
+        }
+        if self.potion_sprites.is_none() {
+            self.potion_sprites =
+                crate::avatar::PotionSprites::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -26059,6 +26207,11 @@ impl App {
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut heart_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut glint_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        // THE SPLASH LANE'S GROUPS (the ring keyed by the instant flag
+        // + the frame file, the shards keyed by the item layer — the
+        // closure's own capture)
+        let mut spell_groups: Vec<(bool, usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        let mut shard_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             // THE RENDER FOLD (javap Particle.render's own lerp): the
@@ -26276,6 +26429,49 @@ impl App {
                         tint: p.col,
                     });
                 }
+                crate::particles::ParticleKind::Spell { instant } => {
+                    // the ring puff's own quad (the type's own frame
+                    // the age's walk speaks — the same
+                    // setSpriteFromAge chain the poof rides, the
+                    // json's descending order the file fold speaks,
+                    // the color tint the option's floats carry)
+                    let frame = crate::particles::poof_frame(p.age, p.lifetime);
+                    let file = crate::particles::generic_file_index(frame);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_spell",
+                        tint: p.col,
+                    };
+                    match spell_groups
+                        .iter_mut()
+                        .find(|(i, f, _)| *i == instant && *f == file)
+                    {
+                        Some((_, _, quads)) => quads.push(quad),
+                        None => spell_groups.push((instant, file, vec![quad])),
+                    }
+                }
+                crate::particles::ParticleKind::PotionItem { layer } => {
+                    // the shard's own quad (the item sprite's own
+                    // quarter walk — the SAME uo/vo fold the terrain
+                    // dust rides, the U edge MIRRORS, over the 16x16
+                    // item sprite's own space; the white tint the
+                    // item pixels wear whole)
+                    let ul = (p.uo + 1.0) / 4.0;
+                    let ur = p.uo / 4.0;
+                    let vt = p.vo / 4.0;
+                    let vb = (p.vo + 1.0) / 4.0;
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[ul, vb], [ur, vb], [ur, vt], [ul, vt]],
+                        tex: "particle_shard",
+                        tint: p.col,
+                    };
+                    match shard_groups.iter_mut().find(|(l, _)| *l == layer) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => shard_groups.push((layer, vec![quad])),
+                    }
+                }
             }
         }
         let vp = ctx.proj.mul(&ctx.view);
@@ -26374,6 +26570,39 @@ impl App {
             fb.draw_sampled_quads(vp, &glint_quads, &mut |_tex, u, v| {
                 Some(glint.pixel(u, v))
             });
+        }
+        // the spell ring groups (the two sets' own pixels — the frame
+        // file the age's own walk folds, the set the instant flag
+        // picks)
+        if let Some(frames) = &self.effect_frames {
+            for (instant, file, quads) in &spell_groups {
+                if *instant {
+                    continue;
+                }
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*file, u, v))
+                });
+            }
+        }
+        if let Some(frames) = &self.spell_frames {
+            for (instant, file, quads) in &spell_groups {
+                if !*instant {
+                    continue;
+                }
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*file, u, v))
+                });
+            }
+        }
+        // the shard groups (the two item layers' own pixels — the
+        // quarter region the uo/vo walk picks, the layer the sprite
+        // pick banks)
+        if let Some(sprites) = &self.potion_sprites {
+            for (layer, quads) in &shard_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(sprites.pixel(*layer, u, v))
+                });
+            }
         }
     }
 
@@ -44887,6 +45116,142 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_shoot_smoke_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_splash_word_the_three_walks_wear() {
+        // THE SPLASH-POTION EFFECT'S OWN WIRE LANE (javap case 2002 →
+        // the shared arm offset 1199 over the 26.2 jar): the eight
+        // shards the `bipush 8` loop fires at the bottom-center anchor,
+        // the hundred ring puffs the `bipush 100` loop answers with the
+        // color the data word carries, the glass voice the
+        // playLocalSound tail speaks — the three walks the one event
+        // wears, the stream the 117-draw order keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE REGULAR SPLASH (data 0xFF0000: the red channel the >>16
+        // band reads FULL, the green and the blue the decode keeps
+        // dark — the color the ring's own tint carries)
+        app.live_splash_events_updated(vec![crate::world_view::WireSplashEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+            data: 0xFF_0000,
+            instant: false,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            108,
+            "the eight shards + the hundred puffs the two loops speak"
+        );
+        // THE SHARDS (the first eight — the anchor the bottom-center
+        // walk keeps EXACTLY, the gravity 1.0 the shard ctor passes,
+        // the base 0.98 friction, the layer the sprite pick's two rows
+        // keep, the white tint the item pixels wear)
+        for p in &app.particles[..8] {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::PotionItem { .. }),
+                "the shard kind the item option answers"
+            );
+            assert!(
+                (p.x - 10.5).abs() < 1e-9 && (p.y - 20.0).abs() < 1e-9 && (p.z - 10.5).abs() < 1e-9,
+                "the bottom-center anchor the atBottomCenterOf walk keeps"
+            );
+            assert!(
+                (p.gravity - 1.0).abs() < 1e-9,
+                "the gravity 1.0 the shard ctor passes"
+            );
+            assert!(
+                (p.friction - 0.98).abs() < 1e-9,
+                "the base friction the shard keeps"
+            );
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::PotionItem { layer } if layer < 2),
+                "the layer pick the two-layer model's own band keeps"
+            );
+        }
+        // THE RING (the last hundred — the Spell kind the option's own
+        // type answers, the +0.3 lift the anchor's own fold gives, the
+        // 0.1-scaled radial offset the d2/d4 place, the color the
+        // f-scale fold carries)
+        for p in &app.particles[8..] {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Spell { instant: false }),
+                "the regular splash the Effect type keeps"
+            );
+            assert!(
+                (p.y - (20.0 + 0.3)).abs() < 1e-9,
+                "the +0.3 lift the ring's own fold gives"
+            );
+            assert!(
+                (p.x - 10.5).abs() <= 0.4 + 1e-9 && (p.z - 10.5).abs() <= 0.4 + 1e-9,
+                "the radial offset the d2*0.1/d4*0.1 band keeps"
+            );
+            assert!(
+                (p.gravity + 0.1).abs() < 1e-9,
+                "the −0.1 gravity the spell ctor passes"
+            );
+            assert!(
+                (p.friction - 0.96).abs() < 1e-9,
+                "the 0.96 friction the spell ctor sets"
+            );
+            // THE COLOR (the red channel the full band the decode
+            // reads — the f ∈ [0.75, 1.0) scale the loop's own draw
+            // gives, the green and the blue the dark decode keeps)
+            assert!(p.col[0] >= 0.75 && p.col[0] < 1.0, "the red the f-scale band keeps: {}", p.col[0]);
+            assert_eq!(p.col[1], 0.0, "the dark green the decode keeps");
+            assert_eq!(p.col[2], 0.0, "the dark blue the decode keeps");
+        }
+        // THE GLASS VOICE (the tail's playLocalSound — the pitch the
+        // 0.9..1.0 band the draw gives)
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.splash_potion.break @"))
+                .expect("the glass voice the tail speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                pitch >= 0.9 && pitch < 1.0,
+                "the pitch band the nextFloat * 0.1 + 0.9 fold gives: {pitch}"
+            );
+        }
+        // THE INSTANT WORD (the 2007 walk the same arm's branch
+        // answers — the Spell kind's own flag splits the sprite set)
+        app.particles.clear();
+        app.live_splash_events_updated(vec![crate::world_view::WireSplashEvent {
+            x: 4,
+            y: 5,
+            z: 6,
+            data: 0x00FF00,
+            instant: true,
+        }]);
+        assert_eq!(app.particles.len(), 108, "the same walk the instant word wears");
+        for p in &app.particles[8..] {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Spell { instant: true }),
+                "the instant flag the type split banks"
+            );
+            // the GREEN word (the green channel the >>8 band reads
+            // full — the f-scale band the same fold gives)
+            assert!(p.col[1] >= 0.75 && p.col[1] < 1.0, "the green the decode keeps");
+            assert_eq!(p.col[0], 0.0, "the dark red the decode keeps");
+        }
+        // THE DETERMINISM (the same walk replayed — the fixed-seed
+        // stream the replay speaks, the shards' anchor the EXACT fold
+        // keeps, the count the loops alone speak)
+        app.particles.clear();
+        app.play_splash(4, 5, 6, 0x00FF00, true);
+        assert_eq!(app.particles.len(), 108, "the replay the loops answer");
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_splash_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

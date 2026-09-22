@@ -438,6 +438,14 @@ pub struct SnapshotView {
     /// them (the worker's own drain empties the mailbox after), the
     /// render lane's own law folds the ten-puff smoke walk.
     pub shoot_smoke_events: Vec<WireShootSmokeEvent>,
+    /// The splash-potion effect's PENDING ARMS — the Level Event mailbox
+    /// the model kept (the 2002/2007 words the server's own potion
+    /// impacts broadcast, [`mc_protocol::play::SPLASH_POTION_EFFECT`] /
+    /// [`mc_protocol::play::INSTANT_SPLASH_EFFECT`] the vocabulary
+    /// speaks): shipped once with the refresh that carried them (the
+    /// worker's own drain empties the mailbox after), the render lane's
+    /// own law folds the shard burst + the spell ring + the glass voice.
+    pub splash_events: Vec<WireSplashEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -511,6 +519,22 @@ pub struct WireShootSmokeEvent {
     pub y: i32,
     pub z: i32,
     pub data: i32,
+}
+
+/// One wire SPLASH-POTION arm — the Level Event packet's own landing
+/// (the 2002/2007 words the server's own potion impacts broadcast,
+/// [`mc_protocol::play::SPLASH_POTION_EFFECT`] /
+/// [`mc_protocol::play::INSTANT_SPLASH_EFFECT`] the render lane
+/// speaks): the anchor + the raw color word + the instant flag,
+/// verbatim (the RGB decode's own inputs — the shard burst + the
+/// spell ring the render lane folds from them).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireSplashEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    pub data: i32,
+    pub instant: bool,
 }
 
 /// The DisplaySlot id the sidebar renders from (the
@@ -2306,6 +2330,9 @@ pub fn materialize_snapshot_view(
         // and no smoke words (the join snapshot carries no 2000 traffic
         // — the empty mailbox the render lane skips)
         shoot_smoke_events: Vec::new(),
+        // and no splash words (the join snapshot carries no 2002/2007
+        // traffic — the empty mailbox the render lane skips)
+        splash_events: Vec::new(),
     }
 }
 
@@ -2689,6 +2716,23 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the splash-potion effect's own projection (the mailbox verbatim
+        // — the anchor + the color word + the instant flag the arms
+        // carry, the render lane's own law reads): each 2002/2007 word
+        // ships once with this view, the worker's drain empties the
+        // mailbox after
+        let splash_events = self
+            .model
+            .splash_events
+            .iter()
+            .map(|arm| WireSplashEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+                instant: arm.instant,
+            })
+            .collect();
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
@@ -2779,6 +2823,10 @@ impl LiveView {
                 // too — the 2000 words are the connection's own
                 // traffic, not the pose's
                 shoot_smoke_events,
+                // the splash-potion effect's arms ride the pose-less
+                // arm too — the 2002/2007 words are the connection's
+                // own traffic, not the pose's
+                splash_events,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -2853,6 +2901,10 @@ impl LiveView {
             // the 2000 words follow the mailbox exactly like the
             // break's own arms do
             shoot_smoke_events,
+            // the splash-potion effect's arms ride every refresh too —
+            // the 2002/2007 words follow the mailbox exactly like the
+            // smoke's own arms do
+            splash_events,
         }
     }
 }

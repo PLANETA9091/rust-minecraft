@@ -6049,6 +6049,130 @@ pub struct SweepFrames {
 /// The sweep texture's own layout (the jar's 32x32 the IHDR speaks).
 pub const SWEEP_SPRITE_SIDE: u32 = 32;
 
+/// The PARTICLE LANE's splash-potion ring frames — the TWO 8-frame
+/// sprite sets the case-2002 arm's ring rides (javap: the `effect`
+/// particle type's own set the jar's `particles/effect.json` lists
+/// `effect_7..effect_0`, the `instant_effect` type's the
+/// `particles/instant_effect.json` lists `spell_7..spell_0`, BOTH
+/// descending — the `SpellParticle`'s `setSpriteFromAge` walk the
+/// frame fold answers, the set the `InstantProvider`'s shared lambda
+/// wires per type), each file loaded and sha1-verified the same
+/// stream the sweep frames speak. A missing or tampered frame keeps
+/// that set's ring invisible (the honest absence the other lanes
+/// speak).
+pub struct SpellFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The spell texture's own layout (the jar's 8x8 the IHDR speaks).
+pub const SPELL_SPRITE_SIDE: u32 = 8;
+
+impl SpellFrames {
+    /// Load the 8 frames of ONE set from the runtime cache root, verify
+    /// each sha1, decode, shape-check the 8x8 layout. The `instant`
+    /// flag picks the set: the `spell_N` files the instant json lists,
+    /// the `effect_N` files the regular splash rides.
+    pub fn load(root: &std::path::Path, instant: bool) -> Option<SpellFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SPELL_FRAME_COUNT);
+        for i in 0..crate::particles::SPELL_FRAME_COUNT {
+            let path = if instant {
+                skin::PARTICLE_SPELL_RUNTIME_PATHS[i]
+            } else {
+                skin::PARTICLE_EFFECT_RUNTIME_PATHS[i]
+            };
+            let sha1 = if instant {
+                skin::PARTICLE_SPELL_PNG_SHA1S[i]
+            } else {
+                skin::PARTICLE_EFFECT_PNG_SHA1S[i]
+            };
+            let bytes = std::fs::read(root.join(path)).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != sha1 {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != SPELL_SPRITE_SIDE || h != SPELL_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SpellFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..8 the ring
+    /// quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, SPELL_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SPELL_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SPELL_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
+/// The PARTICLE LANE's splash-potion debris sprites — the TWO 16x16
+/// item textures the case-2002 arm's shard burst alternates (javap:
+/// the `BreakingItemParticle$ItemParticleProvider.getSprite` walk's
+/// `ItemStackRenderState.pickParticleMaterial` fold —
+/// `layers[random.nextInt(activeLayerCount)]` over the splash_potion
+/// model's two layers, layer0 the `potion_overlay` glass, layer1 the
+/// `splash_potion` liquid the model's own stanza keeps), each file
+/// loaded and sha1-verified the same stream the spell frames speak.
+/// A missing or tampered sprite keeps the debris invisible.
+pub struct PotionSprites {
+    /// The model's two layers: 0 the glass outline, 1 the liquid.
+    pub layers: Vec<Vec<u8>>,
+}
+
+/// The item texture's own layout (the jar's 16x16 the IHDR speaks).
+pub const POTION_SPRITE_SIDE: u32 = 16;
+
+impl PotionSprites {
+    /// Load the two layers from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 16x16 layout.
+    pub fn load(root: &std::path::Path) -> Option<PotionSprites> {
+        let mut layers = Vec::with_capacity(2);
+        for (path, sha1) in [
+            (
+                skin::ITEM_POTION_OVERLAY_RUNTIME_PATH,
+                skin::ITEM_POTION_OVERLAY_PNG_SHA1,
+            ),
+            (
+                skin::ITEM_SPLASH_POTION_RUNTIME_PATH,
+                skin::ITEM_SPLASH_POTION_PNG_SHA1,
+            ),
+        ] {
+            let bytes = std::fs::read(root.join(path)).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != sha1 {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != POTION_SPRITE_SIDE || h != POTION_SPRITE_SIDE {
+                return None;
+            }
+            layers.push(rgba);
+        }
+        Some(PotionSprites { layers })
+    }
+
+    /// The layer pixel at (u, v) in TEXTURE UNITS (the 0..16 the
+    /// shard quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, layer: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.layers.get(layer) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, POTION_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, POTION_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * POTION_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 impl SweepFrames {
     /// Load the 8 frames from the runtime cache root, verify each
     /// sha1, decode, shape-check the 32x32 layout.
