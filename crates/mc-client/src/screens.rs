@@ -9022,8 +9022,10 @@ impl App {
                         // (no clock, no poof cloud, no loot, no voice), the
                         // CREATURE roster the same walk keeps (the animals
                         // the peaceful world wears). The per-tick cadence the
-                        // vanilla walk wears — checkDespawn the Mob.baseTick
-                        // lane every tick rides; the NETWORKED world the
+                        // vanilla walk wears — checkDespawn the ServerLevel
+                        // tick lambda arms every entity BEFORE the tick (the
+                        // lambda$tick$0 moment the 26.2 bytecode pins); the
+                        // NETWORKED world the
                         // server's own lane keeps (the wire mobs the client
                         // never prunes))
                         if world.difficulty == crate::difficulty::Difficulty::Peaceful {
@@ -9077,6 +9079,20 @@ impl App {
                         let ridden_id =
                             self.offline_ride.as_ref().map(|r| r.vehicle_id);
                         for mob in self.mobs.iter_mut() {
+                            // THE DESPAWN'S OWN MOMENT (javap `ServerLevel.
+                            // lambda$tick$0` the 26.2 jar speaks — the
+                            // per-entity walk the isRemoved/frozen gates
+                            // then `Entity.checkDespawn()` answers BEFORE
+                            // the tick: the discarded body the tick the
+                            // walk's own removal the caller's retain serves,
+                            // the quiet vanish the walk's own law keeps —
+                            // the distance arms the [`Zombie::check_despawn`]
+                            // doc's own bytecode pins, the roll the mob's
+                            // OWN random draws)
+                            if mob.check_despawn(player.as_ref()) {
+                                discarded_ids.push(mob.id);
+                                continue;
+                            }
                             if Some(mob.id) == ridden_id {
                                 continue;
                             }

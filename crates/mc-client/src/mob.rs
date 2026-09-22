@@ -2252,6 +2252,24 @@ pub const SPAWN_CYCLE_TICKS: i64 = 40;
 /// the near half the client renders honestly).
 pub const SPAWN_MIN_DIST: f64 = 24.0;
 pub const SPAWN_MAX_DIST: f64 = 48.0;
+/// THE DESPAWN'S OWN DISTANCES (javap `MobCategory` the 26.2 jar
+/// speaks — the `despawnDistance` field the EVERY-category ctor
+/// carries 128 (the MONSTER row's sipush 128 the clinit keeps), the
+/// `getNoDespawnDistance` accessor's `bipush 32` the FIXED constant
+/// keeps — no field, the two squares the `checkDespawn` walk's own
+/// `imul` folds: `i4 * i4` then `i2d` the double compare reads).
+pub const MOB_DESPAWN_DISTANCE: f64 = 128.0;
+pub const MOB_NO_DESPAWN_DISTANCE: f64 = 32.0;
+pub const MOB_DESPAWN_DISTANCE_SQR: f64 = MOB_DESPAWN_DISTANCE * MOB_DESPAWN_DISTANCE;
+pub const MOB_NO_DESPAWN_DISTANCE_SQR: f64 = MOB_NO_DESPAWN_DISTANCE * MOB_NO_DESPAWN_DISTANCE;
+/// THE DESPAWN'S OWN IDLE BAND (javap `Mob.checkDespawn` the walk's
+/// own sipush pair keeps — the `> 600` counter gate the 30-second idle
+/// window speaks, the `nextInt(800)` roll the 1/800 per-tick texture
+/// draws, the `removeWhenFarAway` default the `iconst_1` the Mob base
+/// returns — the persistence flags the repo's mobs never carry the
+/// honest default's own word).
+pub const MOB_DESPAWN_IDLE_TICKS: u32 = 600;
+pub const MOB_DESPAWN_IDLE_ROLL: u64 = 800;
 /// THE 26.2 JAR'S OWN OVERWORLD ANSWERS (the `data/minecraft/
 /// dimension_type/overworld.json` the codec defaults speak): the
 /// block-light CEILING the MONSTER lane never spawns past — ANY block
@@ -3757,6 +3775,16 @@ pub struct Zombie {
     /// `getLastDamageSource` 40-tick law keeps — the hurt stamp arms,
     /// the tick's own drain closes)
     pub panic_memory_ticks: i32,
+    /// THE DESPAWN'S OWN IDLE CLOCK (javap `Mob.noActionTime` the 26.2
+    /// jar speaks — the int the `serverAiStep` head `iinc` grows every
+    /// AI tick, the `hurtServer` walk's `iconst_0` write zeroes on the
+    /// every-dose arms, the `checkDespawn` walk the three moments own:
+    /// the persistent arm's zero, the within-32 reset the tail keeps,
+    /// the `> 600` gate the 1/800 roll's own band reads). The counter
+    /// the despawn's distance arms share the ONE field the world's
+    /// abandoned mobs grow, the player's own return the tail reset
+    /// clears.
+    pub no_action_time: u32,
     /// the look goal's remaining clock (the lookTime)
     look_ticks: i32,
     /// the age clock (the bob's ageInTicks, 20 tps)
@@ -3959,6 +3987,7 @@ impl Zombie {
             interested: false,
             beg_look_time: 0,
             panic_memory_ticks: 0,
+            no_action_time: 0,
             look_ticks: 0,
             age_ticks: 0,
             ambient_time: -AMBIENT_INTERVAL_TICKS,
@@ -4123,6 +4152,11 @@ impl Zombie {
         if self.kind == MobKind::Wolf && self.ordered_to_sit {
             self.ordered_to_sit = false;
         }
+        // THE HURT'S OWN IDLE RESET (javap `LivingEntity.hurtServer` the
+        // walk's `iconst_0` write keeps — pc 53-55 the sleeping stop's
+        // tail answers: the every-dose arm the counter zeroes, the
+        // attacked mob the despawn's own idle band never fills)
+        self.no_action_time = 0;
         let amount = amount as f32;
         // the ARMOR LAW (CombatRules.getDamageAfterAbsorb, the bare
         // weapon branch — no piercing item the fist speaks)
@@ -4334,6 +4368,66 @@ impl Zombie {
         if self.on_ground {
             self.vy = (self.vy / 2.0 + strength).min(0.4);
         }
+    }
+
+    /// THE DESPAWN'S OWN WALK (javap `Mob.checkDespawn` the 26.2 jar
+    /// speaks — the walk `ServerLevel`'s per-entity tick lambda arms
+    /// BEFORE the entity's own tick: `lambda$tick$0` the isRemoved and
+    /// frozen gates then `Entity.checkDespawn()` the empty default the
+    /// Mob's override answers). THE DISTANCE ARMS the walk wears:
+    /// (1) the FAR band `d0 > despawnDistance² && removeWhenFarAway(d0)`
+    /// the `discard()` speaks — the 128² the every-category field
+    /// carries, the remove-when-far the default `true` the repo's
+    /// non-persistent mobs wear (the persistence flags the field lane
+    /// the honest absence keeps); (2) the IDLE band `noActionTime > 600
+    /// && nextInt(800) == 0 && d0 > 32²` the same verdict wears — the
+    /// three gates the short-circuit order the bytecode's own
+    /// if_icmple/ifne/ifle chain keeps: the ROLL the counter's own gate
+    /// never spends, the DISTANCE the roll's verdict never spends; (3)
+    /// the tail's `d0 < 32² → noActionTime = 0` the near player's own
+    /// reset keeps — the counter the abandonment alone grows. THE
+    /// PEACEFUL arm the walk's head keeps the caller's own retain
+    /// already serves (the same walk's difficulty acmp the beat lane
+    /// splits — the monster kinds the peaceful world discards, the
+    /// creatures the isAllowedInPeaceful read keeps). THE NULL PLAYER
+    /// the walk's own `ifnull -> 189` return keeps — the counter the
+    /// absent player's arm never resets. Returns the discard verdict
+    /// (true = the caller's retain lane removes the body — the vanilla
+    /// `discard()` the quiet walk speaks: no death clock, no loot, no
+    /// voice).
+    pub fn check_despawn(&mut self, player: Option<&PlayerView>) -> bool {
+        let Some(p) = player else {
+            return false;
+        };
+        // THE DISTANCE FOLD (player.distanceToSqr(this) — the
+        // feet-to-feet x/y/z sum the Entity.distanceToSqr law speaks,
+        // the y term the vertical separation the band's own shape
+        // reads)
+        let (dx, dy, dz) = (self.x - p.x, self.y - p.y, self.z - p.z);
+        let d0 = dx * dx + dy * dy + dz * dz;
+        // THE FAR BAND (the 128² the imul fold speaks — the instant
+        // discard the removeWhenFarAway default's own word keeps)
+        if d0 > MOB_DESPAWN_DISTANCE_SQR {
+            return true;
+        }
+        // THE IDLE BAND (the counter's `> 600`, the mob's OWN random
+        // the nextInt(800) roll draws — the `this.random` the vanilla
+        // field carries, the draw the gate's short-circuit the
+        // fresh-counted mob never spends — then the `> 32²` the
+        // distance the roll's verdict never spends)
+        if self.no_action_time > MOB_DESPAWN_IDLE_TICKS
+            && self.rng.next_int(MOB_DESPAWN_IDLE_ROLL) == 0
+            && d0 > MOB_NO_DESPAWN_DISTANCE_SQR
+        {
+            return true;
+        }
+        // THE COUNTER'S OWN RESET (the walk's tail — the near player
+        // the idle clock never banks, the strict `<` the within-band
+        // edge the 1024.0 exact keeps out)
+        if d0 < MOB_NO_DESPAWN_DISTANCE_SQR {
+            self.no_action_time = 0;
+        }
+        false
     }
 
     /// THE AI + PHYSICS TICK (one game tick, the frame==tick law the
@@ -4605,6 +4699,14 @@ impl Zombie {
         }
         self.swing.tick();
         self.age_ticks = self.age_ticks.wrapping_add(1);
+
+        // THE SERVER AI STEP'S OWN HEAD (javap `Mob.serverAiStep` the
+        // 26.2 jar speaks — the `dup/getfield/iinc 1/putfield` walk the
+        // method's own first four bytes keep: the idle counter grows
+        // EVERY AI tick unconditionally, the checkDespawn walk's bands
+        // and the reset the counter's own readers the callers' moment
+        // answer)
+        self.no_action_time = self.no_action_time.wrapping_add(1);
 
         // THE LEAP GOAL'S OWN CONTINUE (javap `LeapAtTargetGoal
         // .canContinueToUse` — the `!onGround` word the landing's own
@@ -12576,6 +12678,177 @@ mod tests {
         assert!(
             crate::sky::sample(1_000).sun_angle.sin() < 0.0,
             "the old gate's sin the morning the monster arm rode"
+        );
+    }
+
+    /// THE DESPAWN THE DISTANCE ARMS THE COUNTER WEARS (dev-36 — the
+    /// `Mob.checkDespawn` walk the ServerLevel tick lambda arms BEFORE
+    /// the tick): the far band the 128² fold speaks, the idle band the
+    /// counter's own gate the roll's short-circuit wears, the tail's
+    /// within-32 reset the near player keeps, the strict edges the
+    /// double compares pin.
+    #[test]
+    fn the_despawn_the_distance_arms_the_counter_wear() {
+        // THE FAR BAND (d0 > 16384 the instant discard the
+        // removeWhenFarAway default keeps — the counter's state the
+        // arm never reads: the fresh-zero body AND the idle-counted
+        // one the same verdict wears)
+        let mut far = Zombie::new(1, 130.0, 0.0, 0.0, 7);
+        assert!(
+            far.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the 130-block ring the far band discards"
+        );
+        far.no_action_time = 601;
+        assert!(
+            far.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the far band the counter's state never reads"
+        );
+        // THE STRICT EDGE (d0 == 16384.0 the `>` refuses — the exact
+        // 128-block ring the walk keeps)
+        let mut edge = Zombie::new(2, MOB_DESPAWN_DISTANCE, 0.0, 0.0, 7);
+        edge.no_action_time = 601;
+        assert!(
+            !edge.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the exact 128 ring the strict compare keeps"
+        );
+        // THE Y TERM (the feet-to-feet fold the 3D sum speaks — the
+        // 200-block column the far band discards, the 100-block one
+        // the horizontal bands' own verdict keeps)
+        let mut above = Zombie::new(3, 0.0, 200.0, 0.0, 7);
+        assert!(
+            above.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the 200-block column the y term the far band discards"
+        );
+        let mut near_above = Zombie::new(4, 0.0, 100.0, 0.0, 7);
+        near_above.no_action_time = 0;
+        assert!(
+            !near_above.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the 100-block column the bands' verdicts keep (the counter fresh)"
+        );
+        // THE NULL PLAYER (the walk's ifnull return — the verdict false,
+        // the counter the absent player's arm never resets)
+        let mut alone = Zombie::new(5, 0.0, 0.0, 0.0, 7);
+        alone.no_action_time = 700;
+        assert!(
+            !alone.check_despawn(None),
+            "the absent player the walk's null return keeps"
+        );
+        assert_eq!(alone.no_action_time, 700, "the null arm the counter keeps");
+        // THE WITHIN-32 RESET (the walk's tail — the near player the
+        // idle clock never banks: the counter the zero the reset
+        // writes)
+        let mut near = Zombie::new(6, 10.0, 0.0, 0.0, 7);
+        near.no_action_time = 700;
+        assert!(
+            !near.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the near body the far band refuses, the idle band the fresh counter refuses"
+        );
+        assert_eq!(
+            near.no_action_time, 0,
+            "the within-32 fold the counter's own reset wears"
+        );
+        // THE EXACT-1024 EDGE (the idle band's `>` AND the reset's `<`
+        // BOTH refuse — the honest gap the strict pair the counter
+        // rides through: 32.0 east = 1024.0 exactly)
+        let mut band_edge = Zombie::new(7, MOB_NO_DESPAWN_DISTANCE, 0.0, 0.0, 7);
+        band_edge.no_action_time = 700;
+        assert!(
+            !band_edge.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the exact 32 ring both arms refuse"
+        );
+        assert_eq!(
+            band_edge.no_action_time, 700,
+            "the strict edges the counter rides through"
+        );
+        // THE HURT'S OWN RESET (the every-dose arm the counter zeroes
+        // — the attacked mob the idle band never fills)
+        let mut struck = Zombie::new(8, 10.0, 0.0, 0.0, 7);
+        struck.no_action_time = 700;
+        struck.hurt(1.0, true);
+        assert_eq!(struck.no_action_time, 0, "the dose the counter zeroes");
+        // THE SERVER AI STEP'S OWN HEAD (the ++ every tick the walk
+        // keeps — two ticks the counter's own climb speaks)
+        let world = ground_world();
+        let mut grown = Zombie::new(9, 10.0, 5.0, 10.0, 7);
+        grown.on_ground = true;
+        grown.tick(&world, None, NIGHT);
+        grown.tick(&world, None, NIGHT);
+        assert_eq!(grown.no_action_time, 2, "the AI ticks the counter grows");
+    }
+
+    /// THE DESPAWN THE IDLE ROLL THE MOB'S OWN STREAM WEARS (dev-36 —
+    /// the `nextInt(800)` roll the `this.random` field draws, the
+    /// short-circuit the fresh-counted mob's stream never spends, the
+    /// 1/800 texture the seed sweep speaks).
+    #[test]
+    fn the_despawn_the_idle_roll_the_own_stream_wears() {
+        // THE ROLL-0 SEED (the sweep the first hit finds — the mob's
+        // own LCG the 800-bound the first-zero seed speaks)
+        let mut roll_zero_seed = None;
+        for seed in 0..2400u64 {
+            let mut probe = Zombie::new(1, 40.0, 0.0, 0.0, seed);
+            probe.no_action_time = MOB_DESPAWN_IDLE_TICKS + 1;
+            if probe.check_despawn(Some(&player_at(0.0, 0.0, 0.0))) {
+                roll_zero_seed = Some(seed);
+                break;
+            }
+        }
+        let seed = roll_zero_seed.expect("the 1/800 texture the sweep lands");
+        // THE FIRED WALK (the counter 601 + the roll zero + the 40-block
+        // ring — the 1600.0 the idle band's own verdict wears) AND THE
+        // STREAM'S OWN CONSUMPTION (exactly ONE nextInt(800) the fired
+        // walk spent — the reference walk the same seed's own fold
+        // answers)
+        let mut fired = Zombie::new(2, 40.0, 0.0, 0.0, seed);
+        fired.no_action_time = MOB_DESPAWN_IDLE_TICKS + 1;
+        assert!(
+            fired.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the idle band the fired seed discards"
+        );
+        let mut reference = Zombie::new(3, 40.0, 0.0, 0.0, seed);
+        let drawn = reference.rng.next_int(MOB_DESPAWN_IDLE_ROLL);
+        assert_eq!(drawn, 0, "the seed the roll's own zero keeps");
+        assert_eq!(
+            fired.rng, reference.rng,
+            "the fired walk exactly ONE draw the mob's own stream spent"
+        );
+        // THE SHORT-CIRCUIT (the counter at the gate's own edge — the
+        // 600 the `>` refuses: NO draw the stream spends, the verdict
+        // false — the roll the fresh-counted mob never pays; the
+        // stream the PRISTINE walk's own state the compare answers)
+        let mut fresh = Zombie::new(4, 40.0, 0.0, 0.0, seed);
+        fresh.no_action_time = MOB_DESPAWN_IDLE_TICKS;
+        assert!(
+            !fresh.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the 600 counter the strict gate keeps"
+        );
+        let pristine = Zombie::new(5, 40.0, 0.0, 0.0, seed);
+        assert_eq!(
+            fresh.rng, pristine.rng,
+            "the gate the short-circuit keeps: the fresh-counted walk NO draw spends"
+        );
+        // THE DISTANCE'S OWN SHORT-CIRCUIT (the counter past the gate +
+        // the roll zero + the ring INSIDE 32 — the third arm the
+        // verdict refuses: the 30-block body the band keeps)
+        let mut inside = Zombie::new(6, 30.0, 0.0, 0.0, seed);
+        inside.no_action_time = MOB_DESPAWN_IDLE_TICKS + 1;
+        assert!(
+            !inside.check_despawn(Some(&player_at(0.0, 0.0, 0.0))),
+            "the 30-block ring the idle band's distance arm refuses"
+        );
+        // THE TEXTURE (the 2400-seed sweep the ~1/800 band speaks — the
+        // fired seeds the deterministic count the honest spread keeps)
+        let mut fired_count = 0;
+        for s in 0..2400u64 {
+            let mut probe = Zombie::new(1, 40.0, 0.0, 0.0, s);
+            probe.no_action_time = MOB_DESPAWN_IDLE_TICKS + 1;
+            if probe.check_despawn(Some(&player_at(0.0, 0.0, 0.0))) {
+                fired_count += 1;
+            }
+        }
+        assert!(
+            (1..=25).contains(&fired_count),
+            "the 2400-seed sweep the ~3 expected band keeps: {fired_count}"
         );
     }
 

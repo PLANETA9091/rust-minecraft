@@ -72,8 +72,10 @@ pub const LANDING_BOUNCE: f64 = -0.5;
 /// ItemDrop world carries ONE generator: the spawn spreads, the loot
 /// rolls and the pickup pitches draw from it in tick order.
 /// `Clone` the tests' own stream-position probes keep (the reference
-/// replay the clone's state rides).
-#[derive(Clone)]
+/// replay the clone's state rides). `PartialEq` the stream-state
+/// compares the despawn lane's short-circuit pins keep (the fired
+/// walk exactly-one-draw the reference fold answers).
+#[derive(Clone, PartialEq, Debug)]
 pub struct Lcg {
     state: u64,
     /// The Marsaglia polar method's cached pair (javap
