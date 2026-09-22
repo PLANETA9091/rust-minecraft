@@ -472,6 +472,125 @@ pub fn bonemeal_grow(id: u16, rng: &mut crate::drops::Lcg) -> Option<(u16, u8)> 
     Some((WHEAT + new_age as u16, increase))
 }
 
+/// THE GRASS BLOCK'S OWN BONE MEAL WALK — javap GrassBlock.
+/// performBonemeal over the real 26.2 jar: the 128-iteration spread
+/// the world's own tufts and blooms the right-press plants. THE WALK
+/// (the raw disassembly's offsets bank): the origin the clicked
+/// cell's `above()` speaks, the i-loop `0..128` the sipush wears, the
+/// inner j-loop `0..i/16` the offset chain FOUR draws ride — x
+/// `nextInt(3) - 1`, y `(nextInt(3) - 1) * nextInt(3) / 2` the
+/// truncating division speaks (the `-1 / 2 = 0` row the Java
+/// truncation keeps, the Rust `i32 /` the same toward-zero law), z
+/// `nextInt(3) - 1`; the gates the loop-abort law keeps — the below
+/// cell `is(this)` (the grass block alone wears) and the full-cube
+/// refusal the isCollisionShapeFullBlock verdict speaks (the
+/// [`crate::body::solid`] gate the repo's own collision vocabulary
+/// answers) — the abort the WHOLE i-iteration abandons (the
+/// bytecode's `continue label48` jump keeps, the walk the partial
+/// steps never speaks). THE ROWS (the offsets' own order): the 1/10
+/// SHORT_GRASS row reads FIRST (the offsets 156-213 — the 1/10 draw
+/// the air check precedes) — the walked cell the tuft family wears,
+/// the draw the stream spends, the spread the BushBlock law plants:
+/// the first N/S/W/E neighbour the Direction$Plane.HORIZONTAL enum
+/// order keeps, the `isEmptyBlock` + the SUPPORTS_VEGETATION
+/// canSurvive pair (the grass/dirt/farmland subset the client's own
+/// palette names) the spread target gates, the `setBlockAndUpdate`
+/// short-grass default the lambda body wears; the AIR row (the
+/// offsets 218-236) — the non-air cell the placement rows never see,
+/// the outside-height cell the isInsideBuildHeight refusal keeps;
+/// the 1/8 FLOWER row (the offset 238) — the tagged features the
+/// plains list wears (the `#can_spawn_from_bone_meal` tag the eight
+/// flower rows names, the biome's own list the flower_plains member
+/// alone answers — the pick's `nextInt(1)` the one draw speaks), the
+/// KIND the noise_threshold_provider's own word wears — the honest
+/// two-flower subset the decorate pass keeps (the default dandelion,
+/// the 0.33333334 high-chance third the poppy first row answers, the
+/// low-band tulip rows and the azure bluet/oxeye daisy/cornflower
+/// high rows the palette never names — the picks' own draws the
+/// skips consume, the stream the walk's shape keeps); the 7/8 GRASS
+/// row (the offset 315) — the GRASS_BONEMEAL placed feature the
+/// VegetationFeatures.GRASS simple_block wears, the SHORT_GRASS
+/// state the walk cell lands (the isEmpty filter the air gate
+/// re-speaks, the canSurvive the below-is-grass walk gate keeps).
+/// THE RNG: the caller's own crop stream the same source the age
+/// ladder wears (the repo's mod-law stand-in convention the
+/// [`crate::drops::Lcg::next_int`] speaks).
+pub fn bonemeal_grass_walk(
+    world: &mut World,
+    x: i32,
+    y: i32,
+    z: i32,
+    rng: &mut crate::drops::Lcg,
+) {
+    let (ox, oy, oz) = (x, y + 1, z);
+    for i in 0..128i32 {
+        let (mut px, mut py, mut pz) = (ox, oy, oz);
+        let mut walked = true;
+        for _ in 0..(i / 16) {
+            let dx = rng.next_int(3) - 1;
+            let dy = (rng.next_int(3) - 1) * rng.next_int(3) / 2;
+            let dz = rng.next_int(3) - 1;
+            px += dx;
+            py += dy;
+            pz += dz;
+            // THE WALK GATES: the below the grass block wears, the
+            // full cube the isCollisionShapeFullBlock refusal keeps —
+            // the abort the whole i-iteration abandons
+            if world.get(px, py - 1, pz) != GRASS || crate::body::solid(world, px, py, pz) {
+                walked = false;
+                break;
+            }
+        }
+        if !walked {
+            continue;
+        }
+        let at = world.get(px, py, pz);
+        // THE 1/10 SHORT_GRASS ROW — the draw the air check precedes,
+        // the spread the first N/S/W/E neighbour the enum order wears
+        if at == SHORT_GRASS && rng.next_int(10) == 0 {
+            // the Direction$Plane.HORIZONTAL stream's own order — the
+            // enum rows NORTH, SOUTH, WEST, EAST the plane keeps
+            const HORIZONTAL: [(i32, i32); 4] = [(0, -1), (0, 1), (-1, 0), (1, 0)];
+            for (dx, dz) in HORIZONTAL {
+                let (nx, nz) = (px + dx, pz + dz);
+                if world.get(nx, py, nz) == AIR
+                    && matches!(world.get(nx, py - 1, nz), GRASS | DIRT | FARMLAND)
+                {
+                    world.set(nx, py, nz, SHORT_GRASS);
+                    break;
+                }
+            }
+        }
+        // THE AIR ROW — the non-air cell the placement rows never see
+        if at != AIR {
+            continue;
+        }
+        // THE HEIGHT GATE — the isInsideBuildHeight band the vanilla
+        // refuses (the y<0 arm the walk's own below-gate aborts first,
+        // the top arm the outside set the honest no-op keeps)
+        if py < 0 || py >= CHUNK_Y as i32 {
+            continue;
+        }
+        // THE 1/8 FLOWER ROW vs THE 7/8 GRASS ROW (the tag pick the
+        // sole member answers, the two-flower subset the decorate
+        // pass's own fold wears)
+        if rng.next_int(8) == 0 {
+            let _feature = rng.next_int(1);
+            if rng.next_f32() < 0.33333334 {
+                if rng.next_int(4) == 0 {
+                    world.set(px, py, pz, POPPY);
+                } // else: the azure bluet/oxeye daisy/cornflower rows
+                // the palette never names — the pick's draw the skip
+                // consumes
+            } else {
+                world.set(px, py, pz, DANDELION);
+            }
+        } else {
+            world.set(px, py, pz, SHORT_GRASS);
+        }
+    }
+}
+
 /// THE GROWS_CROPS TAG (javap CropBlock.getGrowthSpeed: the 3x3
 /// below-scan's `state.is(BlockTags.GROWS_CROPS)` the tag walk
 /// speaks — NOT the older `is(Blocks.FARMLAND)` the symbolic fold
@@ -1632,6 +1751,144 @@ mod tests {
             dandelions + poppies
         );
         assert!(dandelions >= 1, "the default state the noise provider wears");
+    }
+
+    /// THE GRASS BLOCK'S OWN BONE MEAL WALK — the 128-law the pure fn
+    /// wears (javap the 26.2 GrassBlock.performBonemeal): the seed's
+    /// replay the same world wears, the placements the three kinds
+    /// alone speak on the air cells the grass-below gate answers, the
+    /// full-cube cap the walk never speaks (the abort the whole
+    /// i-iteration keeps), the height band the top rows refuse, the
+    /// spread the N/S/W/E order the stone-below refusal the first
+    /// valid neighbour keeps.
+    #[test]
+    fn the_bonemeal_grass_walk_wears_the_128_laws() {
+        // THE FLAT PLAINS the walk's own gates wear: the stone body
+        // the grass skin, every column the same law answers (the
+        // seed's own terrain the total fill overwrites — the walk's
+        // scenarios the controlled surface carries)
+        let flat = |seed: u64| {
+            let mut w = World::new(1, seed);
+            let size = w.size_blocks();
+            let surface = CHUNK_Y as i32 / 2;
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..surface {
+                        w.set(x, y, z, STONE);
+                    }
+                    w.set(x, surface, z, GRASS);
+                    for y in (surface + 1)..CHUNK_Y as i32 {
+                        w.set(x, y, z, AIR);
+                    }
+                }
+            }
+            (w, size / 2, surface)
+        };
+
+        // THE REPLAY: the seed's two runs the same world wears
+        let (mut a, c, surface) = flat(7);
+        let mut rng_a = crate::drops::Lcg::new(1234);
+        bonemeal_grass_walk(&mut a, c, surface, c, &mut rng_a);
+        let (mut b, _, _) = flat(7);
+        let mut rng_b = crate::drops::Lcg::new(1234);
+        bonemeal_grass_walk(&mut b, c, surface, c, &mut rng_b);
+        assert_eq!(a, b, "the seed's replay the same world wears");
+
+        // THE PLACEMENT BAND: every changed cell the three kinds alone
+        // speak, the placement the air cells alone wears, the below
+        // the walk's own grass gate keeps (the spread's dirt/farmland
+        // rows the flat world never speaks)
+        let (base, _, _) = flat(7);
+        let mut placed = 0;
+        for x in 0..a.size_blocks() {
+            for y in 0..CHUNK_Y as i32 {
+                for z in 0..a.size_blocks() {
+                    let (now, was) = (a.get(x, y, z), base.get(x, y, z));
+                    if now != was {
+                        assert!(
+                            now == SHORT_GRASS || now == DANDELION || now == POPPY,
+                            "the placement the three kinds alone speak — got {now}"
+                        );
+                        assert_eq!(was, AIR, "the placement the air cells alone wears");
+                        assert_eq!(
+                            a.get(x, y - 1, z),
+                            GRASS,
+                            "the planted cell the grass-below gate keeps"
+                        );
+                        placed += 1;
+                    }
+                }
+            }
+        }
+        assert!(placed >= 1, "the walk the origin cell alone plants");
+        // THE ORIGIN ROW: the origin-above cell the first 16 rows
+        // plant (the 7/8 grass row the 1/8 flower fold answers — the
+        // 1/32 skip the honest unbanked picks wear)
+        let origin = a.get(c, surface + 1, c);
+        assert!(
+            origin == SHORT_GRASS || origin == DANDELION || origin == POPPY || origin == AIR,
+            "the origin cell the placement band answers — got {origin}"
+        );
+
+        // THE FULL-CUBE ABORT: the stone cap the walk never speaks
+        // (the isCollisionShapeFullBlock refusal the air rows never
+        // cross), the above-cap cells the below-gate the partial
+        // walks refuse
+        let (mut w, c, surface) = flat(3);
+        w.set(c, surface + 1, c, STONE);
+        let mut rng = crate::drops::Lcg::new(99);
+        bonemeal_grass_walk(&mut w, c, surface, c, &mut rng);
+        assert_eq!(
+            w.get(c, surface + 1, c),
+            STONE,
+            "the stone cap the walk never speaks"
+        );
+        assert_eq!(
+            w.get(c, surface + 2, c),
+            AIR,
+            "the above-cap cell the below-gate refuses"
+        );
+
+        // THE HEIGHT BAND: the top-row grass the above-band the rows
+        // refuse (the isInsideBuildHeight the top arm keeps)
+        let (mut w, c, _) = flat(3);
+        let top = CHUNK_Y as i32 - 1;
+        w.set(c, top, c, GRASS);
+        let mut rng = crate::drops::Lcg::new(99);
+        bonemeal_grass_walk(&mut w, c, top, c, &mut rng);
+        let (mut expect, _, _) = flat(3);
+        expect.set(c, top, c, GRASS);
+        assert_eq!(w, expect, "the top-band origin the walk never speaks");
+
+        // THE SPREAD'S OWN ORDER LAW: the pre-placed tuft the 1/10 row
+        // reads, the north neighbour's below the stone refusal carries
+        // (the canSurvive the SUPPORTS_VEGETATION subset keeps — the
+        // walk's own below-gate the same cell refuses) — the N cell
+        // stays air across every seed, the first valid neighbour the
+        // south row answers (the Direction$Plane.HORIZONTAL enum order
+        // N/S/W/E keeps), the 64 seeds the 1/10 row fire
+        let mut the_spread_fires = false;
+        for seed in 0..64u64 {
+            let (mut w, c, surface) = flat(seed);
+            w.set(c, surface + 1, c, SHORT_GRASS);
+            w.set(c, surface, c - 1, STONE);
+            let mut rng = crate::drops::Lcg::new(seed * 31 + 7);
+            bonemeal_grass_walk(&mut w, c, surface, c, &mut rng);
+            assert_eq!(
+                w.get(c, surface + 1, c),
+                SHORT_GRASS,
+                "the pre-placed tuft the walk never removes"
+            );
+            assert_eq!(
+                w.get(c, surface + 1, c - 1),
+                AIR,
+                "the N cell the stone-below refusal the order law keeps"
+            );
+            if w.get(c, surface + 1, c + 1) == SHORT_GRASS {
+                the_spread_fires = true;
+            }
+        }
+        assert!(the_spread_fires, "the 1/10 row the 64 seeds fire");
     }
 
     /// THE SUPPORT TAG'S OWN SUBSET (javap VegetationBlock.mayPlaceOn

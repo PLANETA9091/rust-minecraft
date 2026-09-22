@@ -20816,7 +20816,14 @@ impl App {
     /// BonemealableBlock` the wheat family wears, the
     /// `isValidBonemealTarget` the mature PASS keeps — the fall-through
     /// the placement lane's bone_meal refusal the press never
-    /// consumes), the SUCCESS the press consumes. THE VERDICT'S OWN
+    /// consumes), the SUCCESS the press consumes. THE GRASS BLOCK'S
+    /// OWN SPREAD WALK the crop ladder's miss keeps (javap
+    /// GrassBlock the BonemealableBlock trio answers): the clicked
+    /// grass cell the growCrop flow's second arm wears, the
+    /// `isValidBonemealTarget` the above-air + inside-height pair
+    /// speaks, the `isBonemealSuccess` the constant true wears, the
+    /// `performBonemeal` the 128-row walk the pure law
+    /// [`crate::world::bonemeal_grass_walk`] banks. THE VERDICT'S OWN
     /// ORDER (the growCrop's offsets keep): the performBonemeal's
     /// setBlock FIRST, the stack's shrink(1) AFTER (the offsets 85-87
     /// the same order wears), the levelEvent(1505, pos, 15) the server
@@ -20830,7 +20837,10 @@ impl App {
     /// server's chunk refresh — no local edit). THE RNG: the vanilla's
     /// own level.getRandom() the same source the random tick walk
     /// wears — the repo's crop stream the same family keeps (the
-    /// getBonemealAgeIncrease the ONE draw spends).
+    /// getBonemealAgeIncrease the ONE draw spends; the grass walk's
+    /// draws the offline prediction alone spends — the networked lane
+    /// the server's own random wears, no draw the client's stream
+    /// spends).
     fn on_right_press_bonemeal_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
         // THE GROWCROP WALK (one immutable borrow — the mutable
         // prediction and the stream never cross)
@@ -20838,17 +20848,64 @@ impl App {
             let world = self.active_world()?;
             world.get(hit.pos.0, hit.pos.1, hit.pos.2)
         };
-        let (kind, _increase) = crate::world::bonemeal_grow(cell, &mut self.crop_rng)?;
-        // THE OFFLINE PREDICTION: the advanced crop lands in the App's
-        // own terrain and the mesh re-speaks (the networked world's
-        // grow rides the server's chunk refresh — no local edit)
-        if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
-            world.set(hit.pos.0, hit.pos.1, hit.pos.2, kind);
-            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        // THE CROP LADDER the wheat family wears (the age climb the
+        // ONE draw spends, the mature PASS the fall-through keeps)
+        if let Some((kind, _increase)) = crate::world::bonemeal_grow(cell, &mut self.crop_rng) {
+            // THE OFFLINE PREDICTION: the advanced crop lands in the
+            // App's own terrain and the mesh re-speaks (the networked
+            // world's grow rides the server's chunk refresh — no local
+            // edit)
+            if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, kind);
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            self.consume_held_item();
+            return Some(true);
         }
-        // THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
-        // `--held-item` stand-in speaks no stack: the consume is the
-        // honest no-op it always was)
+        // THE GRASS BLOCK'S OWN SPREAD WALK (the growCrop flow's
+        // second arm — the grass cell the BonemealableBlock trio
+        // wears): the isValidBonemealTarget the above-air +
+        // inside-height pair speaks (javap GrassBlock.isValidBonemeal
+        // Target: the `pos.above()` isAir + isInsideBuildHeight pair),
+        // the isBonemealSuccess the constant true wears — the press
+        // the verdict alone consumes, the walk's own placements the
+        // success never gates (the vanilla consumes the stack the
+        // walk's luck never speaks). THE OFFLINE PREDICTION the walk
+        // mutates; the networked world's grow rides the server's
+        // chunk refresh — no local edit, no draw the client's stream
+        // spends.
+        if cell == crate::world::GRASS {
+            let valid = {
+                let world = self.active_world()?;
+                let above = hit.pos.1 + 1;
+                above < crate::world::CHUNK_Y as i32
+                    && world.get(hit.pos.0, above, hit.pos.2) == crate::world::AIR
+            };
+            if valid {
+                if let (Some(world), false) =
+                    (self.offline_world.as_mut(), self.world_is_network)
+                {
+                    crate::world::bonemeal_grass_walk(
+                        world,
+                        hit.pos.0,
+                        hit.pos.1,
+                        hit.pos.2,
+                        &mut self.crop_rng,
+                    );
+                    self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                }
+                self.consume_held_item();
+                return Some(true);
+            }
+        }
+        None
+    }
+
+    /// THE STACK'S OWN SHRINK (growCrop's offsets 85-87 — the
+    /// `--held-item` stand-in speaks no stack: the consume is the
+    /// honest no-op it always was). The crop ladder's advance and the
+    /// grass block's spread walk the same consume ride.
+    fn consume_held_item(&mut self) {
         let id = self.held_id();
         let sel = self.selected_hotbar;
         if let Some(id) = id {
@@ -20861,7 +20918,6 @@ impl App {
                 self.hotbar_slots = self.inventory.hotbar();
             }
         }
-        Some(true)
     }
 
     /// THE TNT'S OWN PRIME ARM (javap `TntBlock.useItemOn` +
@@ -43378,6 +43434,95 @@ cow_sound_variant: None,
             app.inventory.items[app.selected_hotbar].1,
             4,
             "the refused grow the stack never shrinks"
+        );
+    }
+
+    /// THE BONE MEAL'S OWN GRASS WALK — the client arm the spread
+    /// row's press speaks (javap GrassBlock the BonemealableBlock
+    /// trio the growCrop flow's second arm wears): the held bone_meal
+    /// the air-topped grass looks up, the 128-row walk the origin
+    /// cell and the neighbours plant, the stack the shrink(1) rides,
+    /// the mesh re-spokes; the tuft-topped grass the
+    /// isValidBonemealTarget PASS keeps (the above-air arm the
+    /// vanilla refuses — the press never consumed, the stack the zero
+    /// draws never touch).
+    #[test]
+    fn the_bone_meal_the_grass_walk_the_plants_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the GRASS row keeps (the air-topped surface the
+        // isValidBonemealTarget's own pair demands)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface, c, crate::world::GRASS);
+            w.set(c, surface + 1, c, crate::world::AIR);
+            w.set(c, surface + 2, c, crate::world::AIR);
+        }
+        // THE STACK THE INVENTORY'S OWN SELECTION SPEAKS
+        let bone_meal = mc_registry::item_id_by_name("bone_meal")
+            .expect("the bone_meal item row the registry carries");
+        app.inventory.items[app.selected_hotbar] = (bone_meal, 5);
+        // THE AIM: the eye above the grass, the straight-down walk the
+        // grass cell the clip targets (the two air cells the ray rides)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 3.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let quads_before = app.world_quads.as_ref().unwrap().clone();
+        assert!(
+            app.on_right_press(0, 0),
+            "the grass walk consumed the press"
+        );
+        let origin = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .get(c, surface + 1, c);
+        assert!(
+            origin == crate::world::SHORT_GRASS
+                || origin == crate::world::DANDELION
+                || origin == crate::world::POPPY,
+            "the origin cell the walk's first rows plant — got {origin}"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar].1,
+            4,
+            "the stack the shrink(1) rode"
+        );
+        assert_ne!(
+            app.world_quads.as_ref().unwrap(),
+            &quads_before,
+            "the mesh re-spoke with the planted tufts"
+        );
+        // THE TUFT-TOPPED REFUSAL: the above-air arm the PASS keeps —
+        // the press never consumed, the tuft the walk never moves, the
+        // stack the zero draws never touch
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface + 1, c, crate::world::SHORT_GRASS);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 3.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the tuft-topped grass the isValidBonemealTarget PASS keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::SHORT_GRASS,
+            "the tuft the PASS never moves"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar].1,
+            4,
+            "the refused walk the stack never shrinks"
         );
     }
 
