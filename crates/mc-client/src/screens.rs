@@ -8668,6 +8668,16 @@ impl App {
                 self.tick_ride_yaw();
             }
             if !self.world_is_network {
+                // THE OFFLINE WORLD'S OWN DAY CLOCK (the simulation's
+                // own state — the vanilla level's dayTime the tick laws
+                // read: the spawn gate's skyDarken the
+                // isDarkEnoughToSpawn fold subtracts, the burn lane's
+                // raw the same darken wears; the render's own set the
+                // same value the lightmap fold consumes — the clock the
+                // SIMULATION carries, never the render alone)
+                if let Some(world) = self.offline_world.as_mut() {
+                    world.day_tick = Some((self.day_time_base + self.frame) as i64);
+                }
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
                 // stand-in): one attempt per SPAWN_CYCLE_TICKS, the
                 // night gate rides the sky lane's own celestial track
@@ -46500,8 +46510,15 @@ cow_sound_variant: None,
             }
         }
         app.body = Some(crate::body::PlayerBody::new(40.0, 9.0, 40.0, 0.0, 0.0));
-        app.day_time_base = night_tick as u64;
-        for _ in 0..400 {
+        // THE TRACK'S OWN MIDNIGHT (the darken's plateau the gate's
+        // stage 3 subtracts — 18_500 the skyDarken 11 the sun's own
+        // negative sin the beat's arm rides; the sun sample's phase the
+        // track's midnight the both-lanes window keeps)
+        app.day_time_base = 18_500u64;
+        // the beats the gate's own texture absorbs (the midnight
+        // surface the raw 4 the uniform's upper half admits — the
+        // 60-beat band the spawn the vanilla texture lands)
+        for _ in 0..2400 {
             app.update();
         }
         assert!(
@@ -49714,8 +49731,11 @@ cow_sound_variant: None,
     }
 
     /// THE MOB LANE'S WIRING (the offline tick's own authority): the
-    /// spawner's 40-tick beat under a forced night lands a zombie in
-    /// the ring, the crosshair's pick + the fist's charge law land
+    /// spawner's 40-tick beat under a forced night lands a monster in
+    /// the ring (the light gate's own texture the beats the band
+    /// absorbs — the midnight surface the raw 4 the uniform admits,
+    /// the vanilla isDarkEnoughToSpawn the spawn tick answers), the
+    /// crosshair's pick + the fist's charge law land
     /// through the attack lane, and the death clock's 20-tick walk
     /// discards the corpse through the same update loop.
     #[test]
@@ -49728,7 +49748,7 @@ cow_sound_variant: None,
         // celestial track — the sun below the horizon plane)
         app.day_time_base = 18000u64.saturating_sub(app.frame);
         let mut spawned_at = None;
-        for t in 0..1200u64 {
+        for t in 0..4800u64 {
             app.update();
             if !app.mobs.is_empty() {
                 spawned_at = Some(t);
@@ -49737,13 +49757,13 @@ cow_sound_variant: None,
         }
         assert!(
             spawned_at.is_some(),
-            "the night spawner never landed a zombie"
+            "the night spawner never landed a monster"
         );
         assert!(
             app.mobs
                 .iter()
-                .all(|m| m.health == crate::mob::ZOMBIE_MAX_HEALTH),
-            "the spawned zombie spawns healthy"
+                .all(|m| m.health == m.kind.max_health()),
+            "the spawned monster spawns with the own attribute"
         );
         // the combat phase's clean stage: the wandering crowd leaves
         app.mobs.clear();
@@ -49909,15 +49929,39 @@ cow_sound_variant: None,
         assert_eq!(app.xp.level, 0);
         assert!(app.xp.progress > 0.0, "the fill's fraction rides");
 
-        // THE REMOVAL: the death clock's 20-tick walk discards the
-        // corpse through the same update loop (the retain law)
-        app.mobs[idx].hurt(1000.0, true);
-        assert!(app.mobs[idx].health <= 0.0, "the finishing hit kills");
+        // THE REMOVAL: the death clock's 20-tick walk discards the corpse
+        // through the same update loop (the retain law) — the FRESH mob
+        // the walk's own witness wears (the spawner's own beats the
+        // gate's texture the night answers — the vec the walk never
+        // indexes blind, the first corpse's clock the orbs' flight
+        // already spent)
+        let mut z2 = crate::mob::Zombie::new(998, 0.0, 0.0, 0.0, 12);
+        {
+            let b = app.body.as_ref().unwrap();
+            let (bx2, bz2) = (b.x, b.z);
+            let wref = app.offline_world.as_ref().unwrap();
+            let size2 = wref.size_blocks();
+            let (sx2, sz2) = ((bx2 + 2.5).floor() as i32, bz2.floor() as i32);
+            let mut sy2 = 0;
+            for y in (0..size2).rev() {
+                if crate::body::solid(wref, sx2, y, sz2) {
+                    sy2 = y + 1;
+                    break;
+                }
+            }
+            z2.x = bx2 + 2.5;
+            z2.y = sy2 as f64;
+            z2.z = bz2 as f64;
+        }
+        app.mobs.push(z2);
+        let idx2 = app.mobs.len() - 1;
+        app.mobs[idx2].hurt(1000.0, true);
+        assert!(app.mobs[idx2].health <= 0.0, "the finishing hit kills");
         for _ in 0..25 {
             app.update();
         }
         assert!(
-            !app.mobs.iter().any(|m| m.id == 999),
+            !app.mobs.iter().any(|m| m.id == 998),
             "the corpse left the world"
         );
     }

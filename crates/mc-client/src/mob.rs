@@ -2237,6 +2237,100 @@ pub const SPAWN_CYCLE_TICKS: i64 = 40;
 /// the near half the client renders honestly).
 pub const SPAWN_MIN_DIST: f64 = 24.0;
 pub const SPAWN_MAX_DIST: f64 = 48.0;
+/// THE 26.2 JAR'S OWN OVERWORLD ANSWERS (the `data/minecraft/
+/// dimension_type/overworld.json` the codec defaults speak): the
+/// block-light CEILING the MONSTER lane never spawns past — ANY block
+/// light 1+ refuses (the torch's own radius the field protects, the
+/// 1.18 lighting rewrite's own law) — and the max-local test's UNIFORM
+/// span (0..=7 the draw `nextInt(8)` speaks, the
+/// `monster_spawn_light_test` uniform's min..max_inclusive pair).
+pub const MONSTER_SPAWN_BLOCK_LIGHT_LIMIT: i32 = 0;
+pub const MONSTER_SPAWN_LIGHT_TEST_SPAN: i32 = 8;
+/// THE THUNDER'S OWN DARKNESS (the storm branch's flat-10 the
+/// `getMaxLocalRawBrightness(pos, 10)` the isDarkEnoughToSpawn
+/// bytecode passes — the storm's own sky the night's 11-darken
+/// replaces with 10, the day's 0 the storm darkens to 10 — the
+/// famous thunder-day spawns the raw 5 the uniform test admits).
+pub const MONSTER_SPAWN_THUNDER_DARKNESS: i32 = 10;
+
+/// The spawn cell's own (sky, block) light read — the LIVE grid the
+/// incremental walk keeps current ([`crate::light::update_cell`] the
+/// per-edit answer speaks), the [`Zombie::cell_light`]'s own fallback
+/// law the gridless world wears: the sky the column word where the
+/// layer rides silent, the block the honest 0 (the unknown the
+/// brightness never claims).
+pub fn spawn_cell_light(world: &World, x: i32, y: i32, z: i32) -> (u8, u8) {
+    if let Some(grid) = &world.light {
+        let (s, b) = grid.cell(world.chunks_per_side, x, y, z);
+        let fallback = sky_column_word(world, x, y, z);
+        return (s.unwrap_or(fallback), b.unwrap_or(0));
+    }
+    (sky_column_word(world, x, y, z), 0)
+}
+
+/// The sky column word (the [`Zombie::sky_column`]'s own walk the free
+/// lane shares — the ONE source the method delegates to).
+pub fn sky_column_word(world: &World, ex: i32, ey: i32, ez: i32) -> u8 {
+    let mut light = 15u8;
+    let mut wy = ey + 1;
+    while wy < crate::world::CHUNK_Y as i32 {
+        let id = world.get(ex, wy, ez);
+        if id != crate::world::AIR {
+            if id == crate::world::WATER || id == crate::world::LEAVES {
+                light = light.saturating_sub(1);
+            } else {
+                return 0;
+            }
+        }
+        wy += 1;
+    }
+    light
+}
+
+/// `Monster.isDarkEnoughToSpawn(level, pos, random)` — THE MONSTER
+/// SPAWN'S OWN LIGHT GATE the 26.2 bytecode speaks in three stages the
+/// live grid answers (autopush-424 — the gate the spawn tick NOW
+/// reads, the incremental grid's freshness the v0.3.444 walk keeps):
+/// (1) THE SKY DRAW: `getBrightness(SKY, pos) > random.nextInt(32)`
+/// refuses — the RAW stored layer the night never dims (the 15 the
+/// open sky keeps even at midnight; the day/night the DARKEN the raw
+/// fold's subtracted half carries, never this layer) — the exposed
+/// surface the 17/32 pass texture wears; (2) THE BLOCK CEILING: the
+/// overworld's own limit 0 the dimension json speaks — ANY block
+/// light 1+ refuses, the torch law the field's own protection wears;
+/// (3) THE MAX-LOCAL TEST: `max(block, sky - darkness)` the
+/// raw-brightness engine speaks (the thunder's flat-10 the storm
+/// branch passes, the night's own skyDarken the timeline track keeps,
+/// the clockless world the full-day 0 the lightmap's own convention
+/// wears) against the uniform 0..=7 draw — the midnight surface the
+/// raw 4 the draw's upper half admits, the day surface the raw 15 the
+/// test NEVER admits (the day law the gate itself answers), the cave
+/// the raw 0 the every-draw pass wears. THE STREAM: the sky draw
+/// always consumed, the block stage never, the test draw only where
+/// both ceilings pass (the short-circuit the vanilla branches keep).
+pub fn is_dark_enough_to_spawn(world: &World, x: i32, y: i32, z: i32, rng: &mut Lcg) -> bool {
+    let (sky, block) = spawn_cell_light(world, x, y, z);
+    // STAGE 1 — the sky draw (the raw layer vs nextInt(32))
+    if sky as i32 > rng.next_int(32) {
+        return false;
+    }
+    // STAGE 2 — the block ceiling (the overworld's own 0)
+    if block as i32 > MONSTER_SPAWN_BLOCK_LIGHT_LIMIT {
+        return false;
+    }
+    // STAGE 3 — the max-local test (the thunder's flat-10 vs the
+    // timeline's own skyDarken, the uniform 0..=7 the sample draws)
+    let darken = if world.thunder_level > 0.0 {
+        MONSTER_SPAWN_THUNDER_DARKNESS
+    } else {
+        world
+            .day_tick
+            .map(crate::timeline::sky_darken)
+            .unwrap_or(0)
+    };
+    let raw = (block as i32).max(sky as i32 - darken).clamp(0, 15);
+    raw <= rng.next_int(MONSTER_SPAWN_LIGHT_TEST_SPAN as u64)
+}
 
 /// What the zombie's tick wants the world to do — the Mob.aiStep's
 /// out-edges (the attack the player's hurt pipeline answers, the
@@ -6040,20 +6134,7 @@ impl Zombie {
     /// air, one level lost per attenuating block (water/leaves speak
     /// opacity 1), zero under anything opaque.
     fn sky_column(&self, world: &World, ex: i32, ey: i32, ez: i32) -> u8 {
-        let mut light = 15u8;
-        let mut wy = ey + 1;
-        while wy < crate::world::CHUNK_Y as i32 {
-            let id = world.get(ex, wy, ez);
-            if id != crate::world::AIR {
-                if id == crate::world::WATER || id == crate::world::LEAVES {
-                    light = light.saturating_sub(1);
-                } else {
-                    return 0;
-                }
-            }
-            wy += 1;
-        }
-        light
+        sky_column_word(world, ex, ey, ez)
     }
 
     /// `LevelReader.getLightLevelDependentMagicValue(eye)` — the raw
@@ -7283,6 +7364,19 @@ pub fn try_spawn(
     } else {
         MobKind::Creeper
     };
+    // THE LIGHT GATE (javap `SpawnPlacements.checkSpawnRules` the
+    // `Monster::checkMonsterSpawnRules` row the MONSTER roster's types
+    // wear — the `isDarkEnoughToSpawn` three-stage law the live grid
+    // answers, [`is_dark_enough_to_spawn`] the bytecode's own order
+    // keeps: the kind draw precedes, the pack's mob creation follows,
+    // the refusal the entity and the id the vanilla walk never
+    // spends — the stream the sky draw's own consumption the honest
+    // texture rides). The torch-lit field the spawn NEVER admits, the
+    // midnight surface the vanilla's own probabilistic texture, the
+    // cave-dark cell the every-draw pass.
+    if !is_dark_enough_to_spawn(world, sx, fy, sz, rng) {
+        return false;
+    }
     let id = *next_id;
     *next_id += 1;
     let mut z = Zombie::new(
@@ -11684,7 +11778,11 @@ mod tests {
     /// refuses (night=false speaks nothing).
     #[test]
     fn the_spawner_lands_on_the_surface_with_head_room() {
-        let world = World::new(4, 42);
+        let mut world = World::new(4, 42);
+        // the midnight clock the gate's stage 3 wears (the spawn law
+        // the live lane answers — the world's own day_tick the app
+        // keeps, the timeline's skyDarken the raw fold subtracts)
+        world.day_tick = Some(18_000);
         let (px, pz) = (32.0, 32.0);
         let mut spawned = None;
         for seed in 0u64..64 {
@@ -11809,11 +11907,17 @@ mod tests {
     /// draws replays, the verdict the spawned zombie's own word pairs.
     #[test]
     fn the_spawn_the_weapon_the_natural_writes() {
-        let world = World::new(4, 42);
+        let mut world = jockey_flat_world();
+        // the midnight clock the gate's stage 3 wears — the FLAT world
+        // the uniform column the mirror's own replay speaks (the
+        // procedural terrain's canopy attenuation the ledger's law
+        // never needed)
+        world.day_tick = Some(18_000);
+        world.relight();
         let (px, pz) = (32.0, 32.0);
         let mut armed = 0;
         let mut pinned = 0;
-        for seed in 0u64..400 {
+        for seed in 0u64..800 {
             let mut mobs = Vec::new();
             let mut next_id = 1;
             let mut rng = Lcg::new(seed);
@@ -11837,6 +11941,18 @@ mod tests {
             let _ang = m.next_f64();
             let _dist = m.next_f64();
             let roll = m.next_int(390);
+            // THE GATE'S OWN DRAWS (the light gate the spawn law rides
+            // between the kind draw and the ctor seed — the sky
+            // nextInt(32) the always consumption, the uniform nextInt(8)
+            // the both-ceilings-pass consumption): the flat world's
+            // open column the sky 15 keeps (the stage-1 pass the
+            // draw ≥ 15 band wears), the midnight clock the raw 4 the
+            // upper-half uniform admits — the SPAWNED mob the gate's
+            // own pass the replay asserts
+            let gate32 = m.next_int(32);
+            assert!(gate32 >= 15, "the spawned seed the stage-1 pass speaks");
+            let gate8 = m.next_int(8);
+            assert!(gate8 >= 4, "the spawned seed the midnight uniform admits");
             let _ctor_seed = m.next();
             let want = if roll < 100 {
                 // THE SPIDER's own finalizeSpawn — the NORMAL world the
@@ -11904,15 +12020,24 @@ mod tests {
         // loose 1 the flake never rides)
         assert!(armed >= 1, "armed {armed} the gate the band arms");
         // the replay: the same seed the same word (the determinism the
-        // spawn law keeps)
+        // spawn law keeps) — the FIRST spawning seed the gate's own
+        // texture speaks (the refusals the stream the honest texture
+        // wears, the replay the spawned mob's word pairs)
+        let replay_seed = (0u64..)
+            .find(|&s| {
+                let mut mobs = Vec::new();
+                let mut next_id = 1;
+                try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(s), true)
+            })
+            .expect("a midnight attempt lands within the band");
         let mut mobs = Vec::new();
         let mut next_id = 1;
-        let mut rng = Lcg::new(7);
+        let mut rng = Lcg::new(replay_seed);
         try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true);
         let a = mobs[0].held_weapon;
         let mut mobs = Vec::new();
         let mut next_id = 1;
-        let mut rng = Lcg::new(7);
+        let mut rng = Lcg::new(replay_seed);
         try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true);
         assert_eq!(a, mobs[0].held_weapon, "the replay the word keeps");
     }
@@ -11937,13 +12062,16 @@ mod tests {
     /// bare creeper the gunpowder pool.
     #[test]
     fn the_skeleton_rows_the_plains_table_names() {
-        let world = jockey_flat_world();
+        let mut world = jockey_flat_world();
+        // the midnight clock the gate's stage 3 wears (the live lane's
+        // own law — the flat world's uniform column the sky 15 keeps)
+        world.day_tick = Some(18_000);
         let (px, pz) = (32.0, 32.0);
         let mut zombies = 0;
         let mut skeletons = 0;
         let mut spiders = 0;
         let mut creepers = 0;
-        for seed in 0u64..600 {
+        for seed in 0u64..2400 {
             let mut mobs = Vec::new();
             let mut next_id = 1;
             if !try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true) {
@@ -12010,10 +12138,14 @@ mod tests {
             assert_eq!(mobs.pop().unwrap().kind, z.kind, "seed {seed} the replay the kind keeps");
         }
         // the 100/90/100/100 split the spawned band arms (the flat
-        // world's own bounds the ring's far half refuses — the FRACTION
-        // the roll tracks: the ~0.26 the spider and the skeleton and
-        // the creeper means, the zombie's ~0.235, sigma ~2.3% over
-        // ~380 spawns — the loose bands the flake never rides)
+        // world's own bounds the ring's far half refuses, the GATE's
+        // own texture the midnight spawn rate wears — the sky 17/32
+        // and the uniform's upper half the ~0.17 per-seed rate speak —
+        // the FRACTION the roll tracks: the ~0.26 the spider and the
+        // skeleton and the creeper means, the zombie's ~0.235, sigma
+        // ~2.2% over ~400 spawns — the loose bands the flake never
+        // rides; the gate the roll-INDEPENDENT draw the kind shares
+        // never splits)
         let total = zombies + skeletons + spiders + creepers;
         let skel_pct = if total > 0 { skeletons * 100 / total } else { 0 };
         let spider_pct = if total > 0 { spiders * 100 / total } else { 0 };
@@ -12035,6 +12167,163 @@ mod tests {
         assert!(
             zombie_pct > 16 && zombie_pct < 31,
             "zombie share {zombie_pct}% the zombie row the [100, 190) band rides"
+        );
+    }
+
+    /// THE SPAWN GATE THE LIVE GRID THE THREE STAGES WEAR (autopush-424
+    /// — the 26.2 `isDarkEnoughToSpawn` law the direct walk pins): the
+    /// MIDNIGHT surface the raw 4 the probabilistic texture speaks
+    /// (both verdicts the seeds wear), the TORCH cell the block
+    /// ceiling's own every-seed refusal (the stage 2 the draw never
+    /// asks — the torch law the field's protection wears), the NOON
+    /// surface the raw 15 the uniform never admits (the day law the
+    /// gate alone answers), the THUNDER-NOON the storm's flat-10 the
+    /// raw 5 the upper band admits (the famous thunder-day spawns the
+    /// both-verdict texture wears where the dry noon refused all), the
+    /// CAVE cell the raw 0 the every-draw pass wears. The LIVE grid the
+    /// walk answers (the relight the initial compute, the set's own
+    /// incremental update the torch's emission the v0.3.444 walk
+    /// carries).
+    #[test]
+    fn the_spawn_gate_the_live_grid_the_three_stages_wear() {
+        // the flat GRASS world, lit, the midnight clock (darken 11)
+        let mut world = jockey_flat_world();
+        world.day_tick = Some(18_000);
+        world.relight();
+        // THE MIDNIGHT SURFACE: sky 15, block 0, raw 4 — the stage-1
+        // pass (17/32) then the uniform's upper half (4/8) — both
+        // verdicts the seeds speak
+        let mut passes = 0;
+        for seed in 0u64..256 {
+            let mut rng = Lcg::new(seed);
+            if is_dark_enough_to_spawn(&world, 32, 9, 32, &mut rng) {
+                passes += 1;
+            }
+        }
+        assert!(
+            passes > 0 && passes < 256,
+            "the midnight texture the {passes}/256 speaks"
+        );
+        // THE TORCH LAW: the torch on the cell the set walk's own
+        // incremental emission answers (the live grid the edit keeps
+        // current) — the block 14 the stage-2 ceiling refuses — EVERY
+        // seed (the stage 2 the draw never spends)
+        world.set(32, 9, 32, crate::world::TORCH);
+        let (sky, block) = spawn_cell_light(&world, 32, 9, 32);
+        assert_eq!(sky, 15, "the torch the sky column never dims");
+        assert_eq!(block, 14, "the torch's own emission the live grid speaks");
+        for seed in 0u64..64 {
+            let mut rng = Lcg::new(seed);
+            assert!(
+                !is_dark_enough_to_spawn(&world, 32, 9, 32, &mut rng),
+                "seed {seed} the torch the every-seed refusal wears"
+            );
+        }
+        // THE NOON LAW: the dry noon's darken 0 — the raw 15 the
+        // uniform never admits — EVERY seed refuses (the day spawns
+        // the gate alone the vanilla law answers)
+        let mut noon = jockey_flat_world();
+        noon.day_tick = Some(6_000);
+        noon.relight();
+        for seed in 0u64..64 {
+            let mut rng = Lcg::new(seed);
+            assert!(
+                !is_dark_enough_to_spawn(&noon, 32, 9, 32, &mut rng),
+                "seed {seed} the noon the every-seed refusal wears"
+            );
+        }
+        // THE THUNDER-DAY: the storm's flat-10 darkness the branch
+        // passes — the raw 5 the draw's upper band admits — the
+        // both-verdict texture where the dry noon refused all
+        noon.thunder_level = 1.0;
+        let mut storm_passes = 0;
+        for seed in 0u64..256 {
+            let mut rng = Lcg::new(seed);
+            if is_dark_enough_to_spawn(&noon, 32, 9, 32, &mut rng) {
+                storm_passes += 1;
+            }
+        }
+        assert!(
+            storm_passes > 0 && storm_passes < 256,
+            "the thunder-day texture the {storm_passes}/256 speaks"
+        );
+        // THE CAVE LAW: the sealed pocket UNDER the ground (the stone
+        // y 0..8 the jockey world wears, the one-cell pocket the carve
+        // opens) — the sky 0 the opaque ring the flood never reaches,
+        // the raw 0 the every-draw pass wears — EVERY seed admits
+        let mut cave = jockey_flat_world();
+        cave.day_tick = Some(18_000);
+        cave.set(32, 4, 32, crate::world::AIR);
+        cave.relight();
+        let (cave_sky, cave_block) = spawn_cell_light(&cave, 32, 4, 32);
+        assert_eq!(cave_sky, 0, "the stone ring the flood the grid keeps dark");
+        assert_eq!(cave_block, 0, "the cave the no-emitter dark keeps");
+        for seed in 0u64..64 {
+            let mut rng = Lcg::new(seed);
+            assert!(
+                is_dark_enough_to_spawn(&cave, 32, 4, 32, &mut rng),
+                "seed {seed} the cave the every-seed pass wears"
+            );
+        }
+    }
+
+    /// THE SPAWNER THE GATE THE NIGHT LAW WEARS (autopush-424 — the
+    /// gate through try_spawn's own walk): the NOON world the caller's
+    /// night arm rides (the client's beat the sun angle stands in) yet
+    /// the gate the raw 15 EVERY attempt refuses, the MIDNIGHT world
+    /// the same attempts the spawns speak (the gate's own texture the
+    /// seeds wear). The torch-lit field the spawner never fills — the
+    /// vanilla law the player's own torches the night protection
+    /// speaks.
+    #[test]
+    fn the_spawner_the_gate_the_night_law_wears() {
+        // the noon: every attempt the gate refuses
+        let mut noon = jockey_flat_world();
+        noon.day_tick = Some(6_000);
+        noon.relight();
+        for seed in 0u64..64 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            assert!(
+                !try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &noon, &mut Lcg::new(seed), true),
+                "seed {seed} the noon the every-attempt refusal wears"
+            );
+        }
+        // the midnight: the spawns the texture speaks
+        let mut midnight = jockey_flat_world();
+        midnight.day_tick = Some(18_000);
+        midnight.relight();
+        let mut spawned = 0;
+        for seed in 0u64..64 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            if try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &midnight, &mut Lcg::new(seed), true)
+            {
+                spawned += 1;
+            }
+        }
+        assert!(spawned > 0, "the midnight the {spawned}/64 spawns speak");
+        // THE TORCH FIELD: the same midnight world, the torch ON every
+        // attempt's own... the whole floor the torches light — the
+        // block ceiling the spawner never passes (every attempt
+        // refuses — the stage 2 the field's own protection wears)
+        for x in 0..16 {
+            for z in 0..16 {
+                midnight.set(x * 4, 9, z * 4, crate::world::TORCH);
+            }
+        }
+        let mut torch_spawned = 0;
+        for seed in 0u64..64 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            if try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &midnight, &mut Lcg::new(seed), true)
+            {
+                torch_spawned += 1;
+            }
+        }
+        assert_eq!(
+            torch_spawned, 0,
+            "the torch field the every-attempt refusal wears"
         );
     }
 
@@ -12359,6 +12648,10 @@ mod tests {
             }
         }
         let (px, pz) = (32.0, 32.0);
+        // the midnight clock the monster gate's stage 3 wears (the
+        // creature lane the clock never reads — the pack the same
+        // ground keeps)
+        world.day_tick = Some(18_000);
         // THE CREATURE PACK (try_spawn_creatures the kind's own max
         // each body wears — the pig the 10.0, the sheep the 8.0, the
         // chicken the 4.0, the cow the 10.0)
@@ -13479,7 +13772,17 @@ mod tests {
         let sx = ((32.0 + ang.cos() * dist).floor()) as i32;
         let sz = ((32.0 + ang.sin() * dist).floor()) as i32;
         let roll = p.next_int(390);
-        let zombie = (100..190).contains(&roll);
+        // THE GATE'S OWN DRAWS (the light gate the spawn law rides
+        // between the kind draw and the ctor seed — the sky nextInt(32)
+        // the always consumption, the uniform nextInt(8) the
+        // both-ceilings-pass consumption; the flat world's open column
+        // the sky 15 the stage-1 pass the draw ≥ 15 band wears, the
+        // midnight clock the raw 4 the upper half admits — the pass
+        // the walk's zombie flag folds)
+        let gate32 = p.next_int(32);
+        let gate8 = if gate32 >= 15 { p.next_int(8) } else { 0 };
+        let gate_passed = gate32 >= 15 && gate8 >= 4;
+        let zombie = (100..190).contains(&roll) && gate_passed;
         let _zombie_seed = p.next();
         let a = p.next_f32();
         let b = p.next_f32();
@@ -13495,7 +13798,10 @@ mod tests {
     /// keeps — the mirror the same seed replays.
     #[test]
     fn the_zombie_baby_roll_the_group_data_odds_keep() {
-        let world = jockey_flat_world();
+        let mut world = jockey_flat_world();
+        // the midnight clock the gate's stage 3 wears (the mirror's
+        // own replay the same raw 4 speaks)
+        world.day_tick = Some(18_000);
         let mut landed = false;
         for seed in 0u64..65536 {
             let (sx, sz, zombie, a, b, _c, _d, _triple) = jockey_mirror(seed);
@@ -13543,7 +13849,10 @@ mod tests {
     /// lane never spawns.
     #[test]
     fn the_jockey_search_the_box_the_found_hen_links() {
-        let world = jockey_flat_world();
+        let mut world = jockey_flat_world();
+        // the midnight clock the gate's stage 3 wears (the mirror's
+        // own replay the same raw 4 speaks)
+        world.day_tick = Some(18_000);
         let mut landed = false;
         for seed in 0u64..1_048_576 {
             let (_sx, _sz, zombie, a, b, _c, _d, _t) = jockey_mirror(seed);
@@ -13594,7 +13903,10 @@ mod tests {
     /// + `startRiding` + `addFreshEntity` the tail arms).
     #[test]
     fn the_jockey_spawn_the_hen_the_zombie_pose_keeps() {
-        let world = jockey_flat_world();
+        let mut world = jockey_flat_world();
+        // the midnight clock the gate's stage 3 wears (the mirror's
+        // own replay the same raw 4 speaks)
+        world.day_tick = Some(18_000);
         let mut landed = false;
         for seed in 0u64..1_048_576 {
             let (_sx, _sz, zombie, _a, _b, _c, _d, triple) = jockey_mirror(seed);
@@ -18598,4 +18910,3 @@ mod tests {
         );
     }
 }
-
