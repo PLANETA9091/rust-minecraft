@@ -8255,9 +8255,12 @@ fn blast_resistance(id: u16) -> Option<f32> {
         // the no-strength rows (the Properties defaults): wheat
         // (WHEAT_CROP's own arms), leaf_litter, the FLOWER FAMILY (the
         // autopush-411 round — the dandelion/poppy chains the
-        // instabreak() call alone makes, the 0.0 the defaults speak),
-        // the GRASS TUFT FAMILY (the autopush-412 round — the
-        // short_grass/bush chains the same instabreak() call wears,
+        // instabreak() call alone makes, the 0.0 the defaults speak;
+        // the provider's own successors the autopush-414 round banks —
+        // the azure_bluet/oxeye_daisy/cornflower high rows and the
+        // orange/red/pink/white tulip rows the same instabreak()
+        // call wears), the GRASS TUFT FAMILY (the autopush-412 round —
+        // the short_grass/bush chains the same instabreak() call wears,
         // the 0.0 the ray marches through), the DOUBLE PLANT FAMILY
         // (the autopush-413 round — the tall_grass/large_fern chains
         // the same instabreak() call wears, the shared NAME_OF row
@@ -8265,6 +8268,8 @@ fn blast_resistance(id: u16) -> Option<f32> {
         "wheat" | "wheat_stage1" | "wheat_stage2" | "wheat_stage3"
         | "wheat_stage4" | "wheat_stage5" | "wheat_stage6"
         | "wheat_stage7" | "leaf_litter" | "dandelion" | "poppy"
+        | "azure_bluet" | "oxeye_daisy" | "cornflower"
+        | "orange_tulip" | "red_tulip" | "pink_tulip" | "white_tulip"
         | "short_grass" | "bush" | "tall_grass" | "large_fern" => 0.0,
         other => {
             debug_assert!(false, "unknown blast resistance for {other}");

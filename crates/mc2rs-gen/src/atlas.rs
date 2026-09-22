@@ -116,8 +116,8 @@ use zip::ZipArchive;
 /// DoublePlantBlock arm the placeAt walk speaks — the LOWER and the
 /// UPPER cell the pair wears). The `_upper` palette names are the
 /// client's own half-kind word (the blockstate's half=upper variant the
-/// resolver reads — the NAME_OF registry row the client's base name
-/// keeps: the dig/drop/sound lanes both halves speak the same block
+/// resolver reads — the NAME_OF registry row keeps the BASE name: the
+/// dig/drop/sound lanes both halves speak the same block
 /// row). The model chain (blockstates/tall_grass.json half=lower ->
 /// block/tall_grass_bottom, half=upper -> block/tall_grass_top;
 /// large_fern the same chain's own rows) is the tuft's own tinted_cross
@@ -128,7 +128,27 @@ use zip::ZipArchive;
 /// register row; the $2 source's colorInWorld the UPPER half's
 /// `pos.below()` read keeps) — so the four grayscale masters ride the
 /// TINT_GRASS bake exactly the short_grass row speaks.
-pub const RUNTIME_PALETTE: [&str; 47] = [
+/// azure_bluet is kind 47, oxeye_daisy kind 48, cornflower kind 49,
+/// orange_tulip kind 50, red_tulip kind 51, pink_tulip kind 52 and
+/// white_tulip kind 53 (the forty-eighth..fifty-fourth entries, the
+/// autopush-414 round): the flower_plain NOISE THRESHOLD PROVIDER'S
+/// OWN FULL PALETTE (javap the jar's worldgen json — the
+/// configured feature's `high_states` the [poppy, azure_bluet,
+/// oxeye_daisy, cornflower] list wears, the `low_states` the
+/// [orange_tulip, red_tulip, pink_tulip, white_tulip] rows keep: the
+/// provider's own list order the indices bank — the kinds ride the
+/// provider's rows exactly the poppy first-row word the prior rounds
+/// kept). The model chain (blockstates/<flower>.json -> block/<flower>
+/// -> block/cross) is the dandelion's own cross bake PER KIND: the two
+/// diagonal plane elements, `shade: false` faces under model-level
+/// `ambientocclusion: false`, the pre-colored masters (the faces carry
+/// NO tintindex — vanilla's BlockColors registers no source for the
+/// flower family, the pixels render as authored). The low_states rows
+/// the noise port's own round plants (the provider's `d0 < threshold`
+/// arm the client's hash lane never carries — the -0.8 valley the
+/// NormalNoise walk banks); the high_states rows the bonemeal fold's
+/// Util.getRandom pick and the decorate pass's stand-in wear.
+pub const RUNTIME_PALETTE: [&str; 54] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -138,6 +158,8 @@ pub const RUNTIME_PALETTE: [&str; 47] = [
     "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt",
     "dandelion", "poppy", "short_grass", "bush",
     "tall_grass", "tall_grass_upper", "large_fern", "large_fern_upper",
+    "azure_bluet", "oxeye_daisy", "cornflower",
+    "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -486,18 +508,27 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
-        if block == "dandelion" || block == "poppy" {
+        if matches!(
+            block,
+            "dandelion" | "poppy" | "azure_bluet" | "oxeye_daisy" | "cornflower"
+                | "orange_tulip" | "red_tulip" | "pink_tulip" | "white_tulip"
+        ) {
             // THE PLAINS' OWN FLOWER PATCH (the autopush-411 round, the
-            // official 26.2 jar): the blockstate is a single variant
-            // map ("") — the model ref -> block/cross (the TWO diagonal
-            // plane elements the 45° rotY + rescale fold bakes, `shade:
-            // false` faces under model-level `ambientocclusion: false`),
-            // so resolve_block's full-cube six-face requirement cannot
-            // apply. The texture stem resolves through the REAL chain
-            // (the blockstate variant's model ref -> the merged texture
-            // map's `cross` ref — dandelion -> block/dandelion, poppy ->
-            // block/poppy), tinted = false (the faces carry NO tintindex
-            // — the pre-colored masters render as authored).
+            // official 26.2 jar; the FULL PALETTE the autopush-414
+            // round wears — the noise_threshold_provider's own
+            // high_states/low_states rows the RUNTIME_PALETTE banks):
+            // the blockstate is a single variant map ("") — the model
+            // ref -> block/cross (the TWO diagonal plane elements the
+            // 45° rotY + rescale fold bakes, `shade: false` faces under
+            // model-level `ambientocclusion: false`), so resolve_block's
+            // full-cube six-face requirement cannot apply. The texture
+            // stem resolves through the REAL chain (the blockstate
+            // variant's model ref -> the merged texture map's `cross`
+            // ref — dandelion -> block/dandelion, poppy ->
+            // block/poppy, each new flower its own block/<name> row),
+            // tinted = false (the faces carry NO tintindex — the
+            // pre-colored masters render as authored; the audited
+            // BlockColors register walk the flower family never covers).
             let bs_bytes = read_jar(
                 &mut archive,
                 &format!("assets/minecraft/blockstates/{block}.json"),
@@ -975,6 +1006,25 @@ mod tests {
         // patch_grass_plain short_grass row and the patch_bush bush row
         assert_eq!(RUNTIME_PALETTE[41], "short_grass");
         assert_eq!(RUNTIME_PALETTE[42], "bush");
+        // the double plants (the autopush-413 round): the half-keyed
+        // rows the placeAt pair wears
+        assert_eq!(RUNTIME_PALETTE[43], "tall_grass");
+        assert_eq!(RUNTIME_PALETTE[44], "tall_grass_upper");
+        assert_eq!(RUNTIME_PALETTE[45], "large_fern");
+        assert_eq!(RUNTIME_PALETTE[46], "large_fern_upper");
+        // the noise_threshold_provider's own full palette (the
+        // autopush-414 round): the high_states rows the [poppy,
+        // azure_bluet, oxeye_daisy, cornflower] list order keeps (the
+        // poppy first row the kind 40 already banks), the low_states
+        // the [orange_tulip, red_tulip, pink_tulip, white_tulip] rows
+        // — the provider's own json order the indices wear
+        assert_eq!(RUNTIME_PALETTE[47], "azure_bluet");
+        assert_eq!(RUNTIME_PALETTE[48], "oxeye_daisy");
+        assert_eq!(RUNTIME_PALETTE[49], "cornflower");
+        assert_eq!(RUNTIME_PALETTE[50], "orange_tulip");
+        assert_eq!(RUNTIME_PALETTE[51], "red_tulip");
+        assert_eq!(RUNTIME_PALETTE[52], "pink_tulip");
+        assert_eq!(RUNTIME_PALETTE[53], "white_tulip");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

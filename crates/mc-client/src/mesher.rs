@@ -2459,6 +2459,93 @@ mod tests {
     }
 
     #[test]
+    fn the_provider_flowers_wear_the_cross_tile_laws() {
+        // THE PROVIDER'S OWN SEVEN KINDS (the autopush-414 round — the
+        // noise_threshold_provider's own high_states/low_states rows the
+        // atlas banks): every new flower cell the same 4 quads wear (the
+        // two diagonal planes × the two windings, the corners the 0.8
+        // inset keeps, the uv the full sprite rides), the tile the
+        // kind's own atlas row banks (the blockstates/<flower>.json ->
+        // block/<flower> -> block/cross chain the resolved sprite
+        // speaks), the XZ offset the flower family's own render row
+        // carries (the dev-27 law the model-relative shift keeps).
+        let a = 0.8 / 16.0;
+        let b = 15.2 / 16.0;
+        for kind in [
+            crate::world::AZURE_BLUET,
+            crate::world::OXEYE_DAISY,
+            crate::world::CORNFLOWER,
+            crate::world::ORANGE_TULIP,
+            crate::world::RED_TULIP,
+            crate::world::PINK_TULIP,
+            crate::world::WHITE_TULIP,
+        ] {
+            let mut w = empty_world();
+            put(&mut w, 8, 8, 8, STONE);
+            put(&mut w, 8, 9, 8, kind);
+            let q = mesh_chunk(&w, 0, 0, None);
+            let (dx, dy, dz) = crate::world::plant_offset(kind, 8, 9, 8);
+            let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
+            assert_eq!(dy, 0.0, "the XZ row the y the zero keeps");
+            let flower: Vec<_> = q
+                .iter()
+                .filter(|quad| {
+                    quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
+                        && quad.pts.iter().any(|p| p[1] == 10.0)
+                })
+                .collect();
+            assert_eq!(
+                flower.len(),
+                4,
+                "the kind {kind} the two planes the two windings wear"
+            );
+            for quad in &flower {
+                for p in &quad.pts {
+                    let (fx, fz) = (p[0] - 8.0 - dx, p[2] - 8.0 - dz);
+                    assert!(
+                        (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
+                        "the x the diagonal corner inset keeps: {fx}"
+                    );
+                    assert!(
+                        (fz - a).abs() < 1e-6 || (fz - b).abs() < 1e-6,
+                        "the z the diagonal corner inset keeps: {fz}"
+                    );
+                }
+                // the tile: the kind's own atlas row (the resolved
+                // cross sprite the provider's list order banks)
+                assert_eq!(
+                    quad.tile,
+                    mc_registry::generated::atlas::FACE_TILES[kind as usize][2],
+                    "the kind {kind} the own tile banks"
+                );
+            }
+        }
+        // THE SEVEN TILES' OWN DISTINCT ROWS: each kind its own sprite
+        // index (the atlas rows the provider's one-kind-one-tile walk
+        // banks — the shared-tile collapse the family never wears)
+        let mut tiles = [
+            mc_registry::generated::atlas::FACE_TILES
+                [crate::world::AZURE_BLUET as usize][2],
+            mc_registry::generated::atlas::FACE_TILES
+                [crate::world::OXEYE_DAISY as usize][2],
+            mc_registry::generated::atlas::FACE_TILES
+                [crate::world::CORNFLOWER as usize][2],
+            mc_registry::generated::atlas::FACE_TILES
+                [crate::world::ORANGE_TULIP as usize][2],
+            mc_registry::generated::atlas::FACE_TILES
+                [crate::world::RED_TULIP as usize][2],
+            mc_registry::generated::atlas::FACE_TILES
+                [crate::world::PINK_TULIP as usize][2],
+            mc_registry::generated::atlas::FACE_TILES
+                [crate::world::WHITE_TULIP as usize][2],
+        ];
+        tiles.sort_unstable();
+        for pair in tiles.windows(2) {
+            assert_ne!(pair[0], pair[1], "the seven sprites the distinct rows keep");
+        }
+    }
+
+    #[test]
     fn the_tuft_cross_wears_the_tint_laws() {
         // THE GRASS TUFT'S OWN CROSS (the autopush-412 round — the
         // tinted_cross parent the flowers' own block/cross bake

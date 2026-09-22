@@ -204,9 +204,40 @@ pub const TALL_GRASS: u16 = 43;
 pub const TALL_GRASS_UPPER: u16 = 44;
 pub const LARGE_FERN: u16 = 45;
 pub const LARGE_FERN_UPPER: u16 = 46;
+/// THE FLOWER PROVIDER'S OWN FULL PALETTE (the autopush-414 round — the
+/// atlas RUNTIME_PALETTE's 47..53 indices): the flower_plain
+/// noise_threshold_provider's own high_states/low_states rows the jar's
+/// worldgen json banks — the high band the [poppy, azure_bluet,
+/// oxeye_daisy, cornflower] list wears (the poppy first row the kind 40
+/// already keeps, the provider's own list order the three successors
+/// bank), the low band the [orange_tulip, red_tulip, pink_tulip,
+/// white_tulip] rows answer (the provider's `d0 < threshold` arm the
+/// NormalNoise walk serves — the -0.8 valley the noise port's own round
+/// plants; the rows the vocabulary names, the band the hash lane never
+/// fires). The model chain (blockstates/<flower>.json -> block/<flower>
+/// -> block/cross) is the dandelion's own cross bake per kind — the two
+/// diagonal planes the mesher's flower path meshes, the pre-colored
+/// masters the no-tint row keeps (the audited BlockColors register walk
+/// the flower family never covers). The noCollision + instabreak +
+/// grass sound rows the Blocks clinit's own chains keep, the
+/// SUPPORTS_VEGETATION canSurvive the placement arm answers (the same
+/// grass_block/dirt/farmland subset the whole family wears), the
+/// offsetType(XZ) row the dandelion/poppy chains speak every kind
+/// carries.
+pub const AZURE_BLUET: u16 = 47;
+pub const OXEYE_DAISY: u16 = 48;
+pub const CORNFLOWER: u16 = 49;
+// THE LOW BAND'S OWN ROWS — the vocabulary the noise port's own round
+// plants (the provider's `d0 < threshold` arm the client's hash lane
+// never carries): the kind ids the atlas/lanes bank, the placement the
+// walk's own NormalNoise walk answers
+pub const ORANGE_TULIP: u16 = 50;
+pub const RED_TULIP: u16 = 51;
+pub const PINK_TULIP: u16 = 52;
+pub const WHITE_TULIP: u16 = 53;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 47] = [
+pub const NAME_OF: [&str; 54] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -223,13 +254,51 @@ pub const NAME_OF: [&str; 47] = [
     // name resolves — the registry lane the base block's row wears)
     "tall_grass", "tall_grass",
     "large_fern", "large_fern",
+    // THE PROVIDER'S OWN ROWS: the high_states successors and the
+    // low_states tulips the provider's own list order wears — the dig
+    // row (instabreak 0.0), the drops table (the self-entry the
+    // survives gate answers), the sounds' grass row and the item id the
+    // pick lane grants the same one-kind-one-row walk the dandelion
+    // speaks
+    "azure_bluet", "oxeye_daisy", "cornflower",
+    "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
 ];
 
-/// The plains' own FLOWER FAMILY — the two cross kinds the decorate
-/// pass plants (the mesher's non-cube family the cross path meshes,
-/// the collision/clip/solid lanes the noCollision law keeps).
+/// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
+/// plants (the dandelion/poppy pair the flower_plain feature's default
+/// and first high row wear; the provider's own successors the 47..53
+/// indices bank — the high band's azure_bluet/oxeye_daisy/cornflower
+/// rows and the low band's four tulips the noise port's own round
+/// plants). The mesher's non-cube family the cross path meshes, the
+/// collision/clip/solid lanes the noCollision law keeps.
 pub fn is_flower(id: u16) -> bool {
     (DANDELION..=POPPY).contains(&id)
+        || (AZURE_BLUET..=WHITE_TULIP).contains(&id)
+}
+
+/// THE HIGH STATES' OWN FAMILY — the poppy first row and the three
+/// successors the flower_plain provider's `high_states` list banks
+/// (javap the jar's worldgen json: the [poppy, azure_bluet,
+/// oxeye_daisy, cornflower] rows the Util.getRandom uniform pick
+/// wears). The ids are NOT contiguous (the tuft/double-plant kinds
+/// ride between) — the matches! set the provider's own list order
+/// keeps.
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn is_flower_high(id: u16) -> bool {
+    matches!(id, POPPY | AZURE_BLUET | OXEYE_DAISY | CORNFLOWER)
+}
+
+/// THE LOW STATES' OWN FAMILY — the four tulips the provider's
+/// `low_states` list banks (the [orange_tulip, red_tulip, pink_tulip,
+/// white_tulip] rows the `d0 < threshold` arm wears — the NormalNoise
+/// port's own round the walk plants, the -0.8 valley the client's
+/// hash lane never carries).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn is_flower_low(id: u16) -> bool {
+    matches!(
+        id,
+        ORANGE_TULIP | RED_TULIP | PINK_TULIP | WHITE_TULIP
+    )
 }
 
 /// The plains' own GRASS TUFT FAMILY — the two REPLACEABLE tinted
@@ -566,12 +635,15 @@ pub fn shuffled_horizontal(rng: &mut crate::drops::Lcg) -> [(i32, i32); 4] {
 /// plains list wears (the `#can_spawn_from_bone_meal` tag the eight
 /// flower rows names, the biome's own list the flower_plains member
 /// alone answers — the pick's `nextInt(1)` the one draw speaks), the
-/// KIND the noise_threshold_provider's own word wears — the honest
-/// two-flower subset the decorate pass keeps (the default dandelion,
-/// the 0.33333334 high-chance third the poppy first row answers, the
-/// low-band tulip rows and the azure bluet/oxeye daisy/cornflower
-/// high rows the palette never names — the picks' own draws the
-/// skips consume, the stream the walk's shape keeps); the 7/8 GRASS
+/// KIND the noise_threshold_provider's own word wears — the default
+/// dandelion the else arm plants, the 0.33333334 high-chance third
+/// the Util.getRandom pick answers (the `list.get(random.nextInt(
+/// list.size()))` uniform index the provider's own high_states list
+/// order wears — the poppy/azure_bluet/oxeye_daisy/cornflower rows the
+/// autopush-414 round banks; the low-band tulip rows the `d0 <
+/// threshold` arm the NormalNoise walk serves — the -0.8 valley the
+/// noise port's own round plants, the hash lane the walk never
+/// carries, the stream the walk's shape keeps); the 7/8 GRASS
 /// row (the offset 315) — the GRASS_BONEMEAL placed feature the
 /// VegetationFeatures.GRASS simple_block wears, the SHORT_GRASS
 /// state the walk cell lands (the isEmpty filter the air gate
@@ -636,16 +708,27 @@ pub fn bonemeal_grass_walk(
             continue;
         }
         // THE 1/8 FLOWER ROW vs THE 7/8 GRASS ROW (the tag pick the
-        // sole member answers, the two-flower subset the decorate
-        // pass's own fold wears)
+        // sole member answers, the provider's own high pick the fold
+        // wears)
         if rng.next_int(8) == 0 {
             let _feature = rng.next_int(1);
             if rng.next_f32() < 0.33333334 {
-                if rng.next_int(4) == 0 {
-                    world.set(px, py, pz, POPPY);
-                } // else: the azure bluet/oxeye daisy/cornflower rows
-                // the palette never names — the pick's draw the skip
-                // consumes
+                // THE HIGH BAND'S OWN PICK (javap Util.getRandom over
+                // the 26.2 jar: `list.get(random.nextInt(list.size()))`
+                // — the uniform index the provider's own high_states
+                // list order wears: poppy, azure_bluet, oxeye_daisy,
+                // cornflower — the autopush-414 round the rows plant)
+                world.set(
+                    px,
+                    py,
+                    pz,
+                    match rng.next_int(4) {
+                        1 => AZURE_BLUET,
+                        2 => OXEYE_DAISY,
+                        3 => CORNFLOWER,
+                        _ => POPPY,
+                    },
+                );
             } else {
                 world.set(px, py, pz, DANDELION);
             }
@@ -1650,10 +1733,14 @@ impl World {
         // walks (the trunk's own cell the AIR gate refuses — the flowers
         // the canopy's shade never refuses, the vanilla's own under-tree
         // blooms keep). The KIND the noise_threshold_provider's own
-        // word answers: the default dandelion, the 0.33333334
-        // high-chance third the poppy first row keeps (the azure
-        // bluet/oxeye daisy/cornflower/tulip rows the palette never
-        // names — the honest two-flower subset keeps).
+        // word answers: the default dandelion the else arm wears, the
+        // 0.33333334 high-chance third the Util.getRandom pick keeps —
+        // the second hash the uniform index stands in for (the
+        // provider's own high_states list order the rows wear: poppy,
+        // azure_bluet, oxeye_daisy, cornflower — the autopush-414 round
+        // banks; the low-band tulip rows the `d0 < threshold` arm the
+        // noise port's own round plants, the hash lane the walk never
+        // carries).
         for wx in 0..n {
             for wz in 0..n {
                 let top = self.height(wx, wz);
@@ -1666,7 +1753,12 @@ impl World {
                     continue;
                 }
                 let kind = if hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F11) % 3 == 0 {
-                    POPPY
+                    match hash2(wx as i64, wz as i64, self.seed ^ 0x5EED_F12) % 4 {
+                        1 => AZURE_BLUET,
+                        2 => OXEYE_DAISY,
+                        3 => CORNFLOWER,
+                        _ => POPPY,
+                    }
                 } else {
                     DANDELION
                 };
@@ -1771,14 +1863,16 @@ mod tests {
     /// never plants), the placement the AIR gate keeps (the trunk's own
     /// cell the tree lanes never lose), the KIND the
     /// noise_threshold_provider's own word answers — the default
-    /// dandelion, the 0.33333334 high-chance third the poppy row keeps.
+    /// dandelion, the 0.33333334 high-chance third the Util.getRandom
+    /// pick keeps (the provider's own four high rows the autopush-414
+    /// round banks; the tulip band the noise walk never plants).
     #[test]
     fn the_flower_patch_wears_the_decorate_law() {
         let w = World::new(2, 42);
         let replay = World::new(2, 42);
         assert_eq!(w, replay, "the seed's replay the same world wears");
+        let mut blooms = 0;
         let mut dandelions = 0;
-        let mut poppies = 0;
         for x in 0..w.size_blocks() {
             for z in 0..w.size_blocks() {
                 for y in 0..w.size_blocks() {
@@ -1787,8 +1881,8 @@ mod tests {
                         continue;
                     }
                     assert!(
-                        id == DANDELION || id == POPPY,
-                        "the palette's own two kinds the roll picks"
+                        id == DANDELION || is_flower_high(id),
+                        "the default + the four high rows the roll picks — got {id}"
                     );
                     // THE SUPPORT'S OWN GATE (the below cell the grass
                     // block keeps — the beach/water columns the patch
@@ -1801,25 +1895,180 @@ mod tests {
                     assert!(y > WATER_LEVEL);
                     if id == DANDELION {
                         dandelions += 1;
-                    } else {
-                        poppies += 1;
                     }
+                    blooms += 1;
                 }
             }
         }
         // the density band (the ~2-chunk world's above-water grass
         // columns × the 1/83 roll — the handful the patch answers)
         assert!(
-            dandelions + poppies >= 1 && dandelions + poppies <= 12,
+            blooms >= 1 && blooms <= 12,
             "the patch density the band keeps: {} blooms",
-            dandelions + poppies
+            blooms
         );
         assert!(dandelions >= 1, "the default state the noise provider wears");
     }
 
+    /// THE FLOWER PROVIDER'S OWN FULL PALETTE (the autopush-414 round —
+    /// javap the jar's worldgen json the noise_threshold_provider's own
+    /// lists bank): the family fns the provider's rows answer (the high
+    /// band the [poppy, azure_bluet, oxeye_daisy, cornflower] list
+    /// wears, the low band the four tulips, the ids the non-contiguous
+    /// rows the tuft/double-plant kinds ride between), the bonemeal
+    /// fold's Util.getRandom pick the four high rows plants across the
+    /// seed search (the discriminator the uniform index keeps), the
+    /// default dandelion the else arm keeps, the tulip band the walk
+    /// never plants (the `d0 < threshold` arm the NormalNoise walk
+    /// serves — the hash lane the low rows never fires), the decorate
+    /// pass the same four rows the stand-in index wears across seeds.
+    #[test]
+    fn the_flower_provider_wears_the_full_palette_laws() {
+        // THE FAMILY FN'S OWN ROWS: the nine flower kinds is_flower
+        // answers, the sibling families and the cubes it refuses
+        assert!(is_flower(DANDELION));
+        assert!(is_flower(POPPY));
+        for &id in &[AZURE_BLUET, OXEYE_DAISY, CORNFLOWER] {
+            assert!(is_flower(id), "the high row {id} the family wears");
+        }
+        for &id in &[ORANGE_TULIP, RED_TULIP, PINK_TULIP, WHITE_TULIP] {
+            assert!(is_flower(id), "the low row {id} the family wears");
+        }
+        assert!(!is_flower(GRASS));
+        assert!(!is_flower(STONE));
+        assert!(!is_flower(SHORT_GRASS));
+        assert!(!is_flower(TALL_GRASS));
+        assert!(!is_flower(TALL_GRASS_UPPER));
+        assert!(!is_flower(LARGE_FERN_UPPER));
+        // THE PROVIDER'S OWN LISTS: the high band the four rows the
+        // json order keeps, the low band the four tulips — the
+        // dandelion neither list's row (the default the else arm wears)
+        assert!(is_flower_high(POPPY));
+        assert!(is_flower_high(AZURE_BLUET));
+        assert!(is_flower_high(OXEYE_DAISY));
+        assert!(is_flower_high(CORNFLOWER));
+        assert!(!is_flower_high(DANDELION));
+        assert!(!is_flower_high(SHORT_GRASS), "the non-contiguous ids the ride between");
+        assert!(!is_flower_high(LARGE_FERN_UPPER));
+        assert!(is_flower_low(ORANGE_TULIP));
+        assert!(is_flower_low(RED_TULIP));
+        assert!(is_flower_low(PINK_TULIP));
+        assert!(is_flower_low(WHITE_TULIP));
+        assert!(!is_flower_low(POPPY));
+        assert!(!is_flower_low(CORNFLOWER));
+        // THE OFFSET'S OWN ROW: every new kind the XZ row the flower
+        // family carries (the offsetType(XZ) chains the clinit speaks)
+        for id in (AZURE_BLUET..=WHITE_TULIP).chain(std::iter::once(DANDELION)) {
+            assert_eq!(
+                plant_offset_type(id),
+                PlantOffset::XZ,
+                "the flower kind {id} the XZ row wears"
+            );
+        }
+        // THE PLACEMENT BAND ACROSS SEEDS: the bonemeal fold's high
+        // pick the four rows plants (the union the uniform index
+        // answers), every planted flower the allowed set keeps, the
+        // tulips the walk NEVER speaks (the low band the noise port's
+        // own round plants)
+        let flat = |seed: u64| {
+            let mut w = World::new(1, seed);
+            let size = w.size_blocks();
+            let surface = CHUNK_Y as i32 / 2;
+            for x in 0..size {
+                for z in 0..size {
+                    for y in 0..surface {
+                        w.set(x, y, z, STONE);
+                    }
+                    w.set(x, surface, z, GRASS);
+                    for y in (surface + 1)..CHUNK_Y as i32 {
+                        w.set(x, y, z, AIR);
+                    }
+                }
+            }
+            (w, size / 2, surface)
+        };
+        let mut high_rows_seen = [false; 4]; // poppy, azure, oxeye, cornflower
+        let mut dandelion_seen = false;
+        for seed in 0..64u64 {
+            let (mut w, c, surface) = flat(1000 + seed);
+            let mut rng = crate::drops::Lcg::new(9000 + seed);
+            bonemeal_grass_walk(&mut w, c, surface, c, &mut rng);
+            for x in 0..w.size_blocks() {
+                for y in 0..CHUNK_Y as i32 {
+                    for z in 0..w.size_blocks() {
+                        let id = w.get(x, y, z);
+                        if !is_flower(id) {
+                            continue;
+                        }
+                        if id == DANDELION {
+                            dandelion_seen = true;
+                        } else if is_flower_high(id) {
+                            let row = match id {
+                                POPPY => 0,
+                                AZURE_BLUET => 1,
+                                OXEYE_DAISY => 2,
+                                _ => 3,
+                            };
+                            high_rows_seen[row] = true;
+                        } else {
+                            panic!("the tulip band the walk never plants — got {id}");
+                        }
+                    }
+                }
+            }
+        }
+        assert!(
+            dandelion_seen,
+            "the default the else arm plants across seeds"
+        );
+        assert!(
+            high_rows_seen.iter().all(|&seen| seen),
+            "the four high rows the uniform pick wears across seeds: {high_rows_seen:?}"
+        );
+        // THE DECORATE PASS'S OWN STAND-IN: the same four rows the
+        // second hash's index wears across the seed search (the world's
+        // blooms the allowed set alone speaks, the union the four-way
+        // split answers)
+        let mut world_rows_seen = [false; 4];
+        let mut world_dandelion_seen = false;
+        for seed in 0..64u64 {
+            let w = World::new(2, 7000 + seed);
+            for x in 0..w.size_blocks() {
+                for z in 0..w.size_blocks() {
+                    for y in 0..w.size_blocks() {
+                        let id = w.get(x, y, z);
+                        if !is_flower(id) {
+                            continue;
+                        }
+                        if id == DANDELION {
+                            world_dandelion_seen = true;
+                        } else if is_flower_high(id) {
+                            let row = match id {
+                                POPPY => 0,
+                                AZURE_BLUET => 1,
+                                OXEYE_DAISY => 2,
+                                _ => 3,
+                            };
+                            world_rows_seen[row] = true;
+                        } else {
+                            panic!(
+                                "the world's blooms the tulip band never speaks — got {id}"
+                            );
+                        }
+                    }
+                }
+            }
+        }
+        assert!(world_dandelion_seen, "the default the worlds wear");
+        assert!(
+            world_rows_seen.iter().all(|&seen| seen),
+            "the four high rows the stand-in index wears across worlds: {world_rows_seen:?}"
+        );
+    }
+
     /// THE GRASS BLOCK'S OWN BONE MEAL WALK — the 128-law the pure fn
     /// wears (javap the 26.2 GrassBlock.performBonemeal): the seed's
-    /// replay the same world wears, the placements the three kinds
+    /// replay the same world wears, the placements the walk's own kinds
     /// alone speak on the air cells the grass-below gate answers, the
     /// full-cube cap the walk never speaks (the abort the whole
     /// i-iteration keeps), the height band the top rows refuse, the
@@ -1859,8 +2108,11 @@ mod tests {
         bonemeal_grass_walk(&mut b, c, surface, c, &mut rng_b);
         assert_eq!(a, b, "the seed's replay the same world wears");
 
-        // THE PLACEMENT BAND: every changed cell the three kinds alone
-        // speak, the placement the air cells alone wears, the below
+        // THE PLACEMENT BAND: every changed cell the walk's own kinds
+        // alone speak (the 7/8 grass row the short tuft wears, the 1/8
+        // flower fold the default dandelion + the provider's own four
+        // high rows answer — the tulip band the noise walk never
+        // plants), the placement the air cells alone wears, the below
         // the walk's own grass gate keeps (the spread's dirt/farmland
         // rows the flat world never speaks)
         let (base, _, _) = flat(7);
@@ -1871,8 +2123,10 @@ mod tests {
                     let (now, was) = (a.get(x, y, z), base.get(x, y, z));
                     if now != was {
                         assert!(
-                            now == SHORT_GRASS || now == DANDELION || now == POPPY,
-                            "the placement the three kinds alone speak — got {now}"
+                            now == SHORT_GRASS
+                                || now == DANDELION
+                                || is_flower_high(now),
+                            "the placement the walk's own kinds alone speak — got {now}"
                         );
                         assert_eq!(was, AIR, "the placement the air cells alone wears");
                         assert_eq!(
