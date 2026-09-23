@@ -352,6 +352,23 @@ pub struct WorldModel {
     /// 2011/2012 ids never carry — the positioned lane the cases' own
     /// arms wear).
     pub in_block_growth_events: Vec<InBlockGrowthArm>,
+    /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
+    /// Event packet's next vocabulary word —
+    /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
+    /// the `LevelEventHandler.levelEvent` offset 3893 speaks: the
+    /// server's own fireball the impact the word broadcasts, the
+    /// 200-puff dragon-breath pool the `PowerParticleOption
+    /// DRAGON_BREATH` walk fires — the cos/sin ring the `f6 =
+    /// nextFloat * 4.0F` power and the `f7 = nextFloat * 6.2831855F`
+    /// angle fold, the up-drift the `0.01 + nextDouble * 0.5` band
+    /// gives, the setPower fold the provider's own tail speaks). The
+    /// arms the anchor + the raw data word carry — the SOUND GATE the
+    /// render lane's own law reads (`data == 1` the
+    /// `DRAGON_FIREBALL_EXPLODE` voice arms, the silent word `-1` the
+    /// caller's own isSilent tail passes). The GLOBAL route the arm
+    /// never enqueues (the `globalLevelEvent` switch the 2006 id never
+    /// carries — the positioned lane the case's own arm wears).
+    pub dragon_fireball_splash_events: Vec<DragonFireballSplashArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -579,6 +596,27 @@ pub struct InBlockGrowthArm {
     pub z: i32,
     /// The particle count (the `data` word the bee's `bipush 15` and
     /// the egg-lay's own `bipush 15` speak).
+    pub data: i32,
+}
+
+/// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
+/// next vocabulary word the model keeps verbatim (see
+/// [`WorldModel::dragon_fireball_splash_events`]). The anchor verbatim
+/// (the fireball's own `blockPosition()` the impact broadcast), the
+/// DATA word rides raw — the SOUND GATE the render lane's own law
+/// reads (the `data == 1` word the non-silent fireball's explode
+/// voice arms, the `-1` the silent twin's `isSilent() ? -1 : 1` tail
+/// passes, the burst itself the gate's either arm fires). The 200
+/// puffs' own draws the render lane's stream keeps — the transport's
+/// honesty the raw word keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DragonFireballSplashArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The sound-gate word (the `isSilent() ? -1 : 1` the fireball's
+    /// own tail speaks — `1` the explode voice arms, `-1` the
+    /// particles-only arm keeps).
     pub data: i32,
 }
 
@@ -1047,6 +1085,7 @@ impl WorldModel {
             shoot_smoke_events: Vec::new(),
             white_smoke_events: Vec::new(),
             in_block_growth_events: Vec::new(),
+            dragon_fireball_splash_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -1222,6 +1261,15 @@ impl WorldModel {
     /// ride exactly one refresh).
     pub fn drain_in_block_growth_events(&mut self) -> Vec<InBlockGrowthArm> {
         std::mem::take(&mut self.in_block_growth_events)
+    }
+
+    /// The dragon-fireball splash effect's mailbox's own drain (the
+    /// same walk the voices' speak — each arm ships exactly once): the
+    /// 2006 words the Level Event packet armed, the render lane's own
+    /// law folds the 200-puff dragon-breath pool + the gated explode
+    /// voice from the anchor + the raw sound-gate word.
+    pub fn drain_dragon_fireball_splash_events(&mut self) -> Vec<DragonFireballSplashArm> {
+        std::mem::take(&mut self.dragon_fireball_splash_events)
     }
 
     /// The splash-potion effect's mailbox's own drain (the same walk the
@@ -1440,6 +1488,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 2011/2012
                 // words never burst again)
                 self.in_block_growth_events.clear();
+                // the dragon-fireball splash's mailbox dies with the
+                // level (the same walk — the old level's 2006 words
+                // never pool again)
+                self.dragon_fireball_splash_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -2231,6 +2283,24 @@ impl WorldModel {
                         z: ev.z,
                         data: ev.data,
                     });
+                    true
+                } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
+                    // THE DRAGON-FIREBALL SPLASH EFFECT'S OWN ARM (javap
+                    // the case offset 3893 — the positioned route the
+                    // GLOBAL switch never banks): the anchor + the raw
+                    // sound-gate word the mailbox carries (the 200-puff
+                    // `PowerParticleOption DRAGON_BREATH` walk the case
+                    // loop fires, the `data == 1` gate the explode
+                    // voice's own arm keeps — the silent word `-1` the
+                    // caller's own tail passes). The burst the render
+                    // lane's own stream carries.
+                    self.dragon_fireball_splash_events
+                        .push(DragonFireballSplashArm {
+                            x: ev.x,
+                            y: ev.y,
+                            z: ev.z,
+                            data: ev.data,
+                        });
                     true
                 } else {
                     false
@@ -6384,6 +6454,92 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.white_smoke_events.is_empty(), "the mailbox dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_dragon_word_the_sound_gate_wears() {
+        // THE DRAGON-FIREBALL SPLASH EFFECT'S OWN ARM (javap the case
+        // offset 3893 — the positioned route the GLOBAL switch never
+        // banks): the 200-puff `PowerParticleOption DRAGON_BREATH`
+        // walk the `sipush 200` loop fires, the data word the SOUND
+        // GATE carries (`isSilent() ? -1 : 1` the fireball's own tail
+        // speaks — the raw word the mailbox keeps verbatim, the gate
+        // the render lane's own law reads), the drain ships the arms
+        // exactly once, and the Respawn recreates the level the
+        // mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the non-silent fireball's own word (data 1 the explode
+        // voice's gate speaks): the arm rides the raw gate word
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT,
+            x: -12,
+            y: 64,
+            z: 300,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.dragon_fireball_splash_events.len(), 1, "the arm rides");
+        assert_eq!(m.dragon_fireball_splash_events[0].x, -12);
+        assert_eq!(m.dragon_fireball_splash_events[0].y, 64);
+        assert_eq!(m.dragon_fireball_splash_events[0].z, 300);
+        assert_eq!(
+            m.dragon_fireball_splash_events[0].data, 1,
+            "the raw sound-gate word the render lane reads"
+        );
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2006 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 1,
+            global: true,
+        })));
+        assert_eq!(m.dragon_fireball_splash_events.len(), 1, "the global word never arms");
+        // the second word arms beside the first (the mailbox keeps the
+        // wire order — the silent twin the isSilent tail's -1 carries)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: -1,
+            global: false,
+        })));
+        assert_eq!(m.dragon_fireball_splash_events.len(), 2);
+        assert_eq!(
+            m.dragon_fireball_splash_events[1].data, -1,
+            "the silent word the particles-only arm keeps"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_dragon_fireball_splash_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert!(m.dragon_fireball_splash_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_dragon_fireball_splash_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.dragon_fireball_splash_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.dragon_fireball_splash_events.is_empty(),
+            "the mailbox dies with the level"
+        );
     }
 
     #[test]

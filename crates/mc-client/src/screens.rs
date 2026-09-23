@@ -7608,6 +7608,10 @@ impl App {
             // the arc's own walk: the age-only override (no motion, no
             // gravity — the arc hangs the whole 4-tick life)
             crate::particles::ParticleKind::Sweep => p.tick_sweep(),
+            // the splash puff's own walk: the age-only override the
+            // dragon's law speaks (no gravity, no vy friction — the x/z
+            // lanes alone the 0.96 folds ride)
+            crate::particles::ParticleKind::DragonBreath => p.tick_dragon_breath(),
             // the drip's own walk: the base law + the smoke child's
             // gate (the roll rides the LEVEL random the parent's own
             // field speaks, the six floats ride the out-vec)
@@ -21746,6 +21750,89 @@ impl App {
         }
     }
 
+    /// THE DRAGON-FIREBALL SPLASH'S OWN WIRE LANE (javap
+    /// `LevelEventHandler` case 2006 — offset 3893 — over the 26.2
+    /// jar): the server's own fireball the impact the word broadcast
+    /// (`DragonFireball.onHit`'s tail the `sipush 2006, blockPosition(),
+    /// isSilent() ? -1 : 1` call the bytecode pins), the 200-puff
+    /// `PowerParticleOption DRAGON_BREATH` pool the `sipush 200` loop
+    /// fires — each puff the `f6 = nextFloat * 4.0F` power draw, the
+    /// `f7 = nextFloat * 6.2831855F` angle draw, the `d10 = 0.01 +
+    /// nextDouble * 0.5` up-drift draw, the cos/sin folds the
+    /// `(double)(Mth.cos((double)f7) * f6)` shape speaks, the spawn
+    /// `(x + d8 * 0.1, y + 0.3, z + d12 * 0.1)` the raw corner reads
+    /// place, the setPower fold the provider's own tail applies (the
+    /// `dragon_breath_splash_puff` ctor the draw chain the helper
+    /// folds). THE SOUND GATE (the tail's `if_icmpne 1`): the `data
+    /// == 1` word the non-silent fireball's explode voice arms — the
+    /// `DRAGON_FIREBALL_EXPLODE` event at the BLOCK CENTER the
+    /// `playLocalSound(BlockPos, ...)` walk resolves (`x + 0.5, y +
+    /// 0.5, z + 0.5`), the HOSTILE source the 1.0-volume walk wears,
+    /// the `nextFloat * 0.1F + 0.9F` pitch the draw gives — the
+    /// silent word `-1` the particles-only arm keeps.
+    pub fn live_dragon_fireball_splash_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireDragonFireballSplashEvent>,
+    ) {
+        for ev in events {
+            self.play_dragon_fireball_splash(ev.x, ev.y, ev.z, ev.data);
+        }
+    }
+
+    /// THE DRAGON-FIREBALL SPLASH WALK (javap the case-2006 arm
+    /// verbatim — the draw order the stream's own law keeps: the
+    /// 200-loop's three draws per puff, the ctor chain the helper
+    /// spends, the pitch draw the gate's own arm rides).
+    fn play_dragon_fireball_splash(&mut self, x: i32, y: i32, z: i32, data: i32) {
+        // THE BURST (the `sipush 200` loop — the raw corner reads the
+        // spawn folds place, NO bottom-center the 2002 word adds)
+        for _ in 0..200 {
+            // THE CASE'S OWN DRAWS (the f6/f7/d10 trio the bytecode's
+            // own order keeps — the power, the angle, the up-drift)
+            let f6 = self.level_ambient_rng.next_f32() * 4.0f32;
+            let f7 = self.level_ambient_rng.next_f32() * 6.2831855f32;
+            let d10 = 0.01f64 + self.level_ambient_rng.next_f64() * 0.5f64;
+            // THE COS/SIN FOLDS (the `(double)(Mth.cos((double)f7) *
+            // f6)` shape — the cos the f64 domain computes, the f32
+            // the narrow answers, the f6 the f32 multiply rides, the
+            // f64 the f2d widens)
+            let d8 = ((f7 as f64).cos() as f32 * f6) as f64;
+            let d12 = ((f7 as f64).sin() as f32 * f6) as f64;
+            let puff = crate::particles::dragon_breath_splash_puff(
+                f64::from(x) + d8 * 0.1,
+                f64::from(y) + 0.3,
+                f64::from(z) + d12 * 0.1,
+                f6,
+                d8,
+                d10,
+                d12,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(puff);
+        }
+        // THE SOUND GATE (the tail's `if_icmpne 1` — the silent word
+        // the particles-only arm keeps, the pitch draw the arm's own
+        // stream order spends)
+        if data == 1 {
+            let pitch = self.level_ambient_rng.next_f32() * 0.1 + 0.9;
+            // THE BLOCK CENTER (the playLocalSound(BlockPos, ...) walk's
+            // own resolve — the +0.5 trio the vanilla client answers)
+            let sx = f64::from(x) + 0.5;
+            let sy = f64::from(y) + 0.5;
+            let sz = f64::from(z) + 0.5;
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "entity.dragon_fireball.explode",
+                1.0,
+                pitch,
+                ear_distance(ear, sx, sy, sz),
+                ear_pan(ear, yaw, sx, sy, sz),
+            );
+        }
+    }
+
     /// THE MOB-SPAWN CLOUD'S OWN WIRE LANE (javap `LevelEventHandler`
     /// case 2004 — offset 1689 — over the 26.2 jar): the server's own
     /// spawner the event broadcast, the twenty SMOKE + FLAME pairs the
@@ -26357,6 +26444,9 @@ impl App {
         let mut flame_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut damage_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the dragon breath's own groups (the file-keyed frames the age
+        // walk rides — the generic pool the poof bank loads)
+        let mut dragon_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut heart_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut glint_quads: Vec<crate::raster::SampledQuad> = Vec::new();
@@ -26528,6 +26618,29 @@ impl App {
                         None => smoke_groups.push((file, vec![quad])),
                     }
                 }
+                crate::particles::ParticleKind::DragonBreath => {
+                    // the splash puff's own quad (the generic frame the
+                    // age's own walk speaks — the same setSpriteFromAge
+                    // chain the smoke lane rides, the dragon_breath
+                    // json's ASCENDING order the file fold speaks: the
+                    // list index 0 reads generic_5, the +5 offset the
+                    // file number keeps — the SAME generic pixels the
+                    // poof bank loads, the purple tint the ctor's own
+                    // ranges carry, the OPAQUE layer the getLayer
+                    // override returns)
+                    let frame = crate::particles::dragon_breath_frame(p.age, p.lifetime);
+                    let file = crate::particles::dragon_breath_file(frame);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_poof",
+                        tint: p.col,
+                    };
+                    match dragon_groups.iter_mut().find(|(f, _)| *f == file) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => dragon_groups.push((file, vec![quad])),
+                    }
+                }
                 crate::particles::ParticleKind::Sweep => {
                     // the arc's own quad (the 32x32 frame the age's
                     // own walk speaks — the same setSpriteFromAge
@@ -26694,6 +26807,16 @@ impl App {
         // order folds)
         if let Some(frames) = &self.poof_frames {
             for (file, quads) in &smoke_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*file, u, v))
+                });
+            }
+        }
+        // the dragon groups (the splash pool's own frame walk — the
+        // same generic pixels the poof bank loads, the json's
+        // ASCENDING order the +5 file offset keeps)
+        if let Some(frames) = &self.poof_frames {
+            for (file, quads) in &dragon_groups {
                 fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
                     Some(frames.pixel(*file, u, v))
                 });
@@ -45469,6 +45592,147 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_white_smoke_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_dragon_word_the_pool_walk_the_gate_wears() {
+        // THE DRAGON-FIREBALL SPLASH'S OWN WIRE LANE (javap case 2006
+        // → offset 3893 over the 26.2 jar): the 200-puff
+        // `PowerParticleOption DRAGON_BREATH` pool the `sipush 200`
+        // loop fires at the RAW corner folds the case's own args
+        // place, the setPower fold the provider's tail applies, the
+        // explode voice the data==1 gate arms at the BLOCK CENTER —
+        // the silent word the particles-only arm keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE NON-SILENT WORD (data 1 — the explode voice's gate
+        // speaks): the pool rides the raw corner reads
+        app.live_dragon_fireball_splash_events_updated(vec![
+            crate::world_view::WireDragonFireballSplashEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+                data: 1,
+            },
+        ]);
+        assert_eq!(
+            app.particles.len(),
+            200,
+            "the sipush 200 the pool loop keeps"
+        );
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::DragonBreath),
+                "the DRAGON_BREATH type the provider answers"
+            );
+            // THE RAW CORNER FOLDS (the getX() + d8 * 0.1 the case's
+            // own args speak — |d8| <= 4.0 the ±0.4 band keeps, the
+            // +0.3 lift the getY() fold gives, NO bottom-center the
+            // 2002 word adds)
+            assert!(
+                p.x >= 10.0 - 0.4 - 1e-9 && p.x <= 10.0 + 0.4 + 1e-9,
+                "the x the d8*0.1 band keeps: {}",
+                p.x
+            );
+            assert!(
+                (p.y - 20.3).abs() < 1e-9,
+                "the +0.3 the raw corner keeps: {}",
+                p.y
+            );
+            assert!(
+                p.z >= 10.0 - 0.4 - 1e-9 && p.z <= 10.0 + 0.4 + 1e-9,
+                "the z the d12*0.1 band keeps: {}",
+                p.z
+            );
+            // THE SET-POWER FOLD (the x/z the plain multiply, the y
+            // the `(v - 0.1) * p + 0.1` the base's own 0.1 floor
+            // keeps — the band the extremes fold: d10 ∈ [0.01, 0.51),
+            // p ∈ [0, 4) → vy ∈ (-0.26, 1.74), the NEGATIVE arm the
+            // small d10 × the big power answers)
+            assert!(
+                p.vy > -0.26 && p.vy < 1.74,
+                "the setPower fold's own band: {}",
+                p.vy
+            );
+            assert!(p.vx.abs() < 16.0 + 1e-9, "the power² band the x keeps: {}", p.vx);
+            assert!(p.vz.abs() < 16.0 + 1e-9, "the power² band the z keeps: {}", p.vz);
+            // THE CTOR LAWS (the no-gravity field the override's own
+            // tick keeps, the 0.96 friction, the lifetime the
+            // f64-domain fold's 20..100 band gives, the purple the
+            // ranges carry — the green the (0,0) range keeps)
+            assert!((p.gravity).abs() < 1e-9, "the no-gravity law");
+            assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction");
+            assert!(p.lifetime >= 20 && p.lifetime <= 100, "the band: {}", p.lifetime);
+            assert_eq!(p.col[1], 0.0, "the green the zero-width range keeps");
+        }
+        // THE GATE'S VOICE (the tail's playLocalSound — the pitch the
+        // 0.9..1.0 band the draw gives, the BLOCK CENTER the
+        // playLocalSound(BlockPos, ...) walk resolves)
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.dragon_fireball.explode @"))
+                .expect("the explode voice the gate speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                pitch >= 0.9 && pitch < 1.0,
+                "the pitch band the nextFloat * 0.1 + 0.9 fold gives: {pitch}"
+            );
+        }
+        // THE SILENT WORD (data -1 — the particles-only arm keeps:
+        // the SAME pool the gate's either arm fires, the voice the
+        // gate's own branch never arms)
+        app.particles.clear();
+        let voices_before = if sounds_loaded() {
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.dragon_fireball.explode @"))
+                .count()
+        } else {
+            0
+        };
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(77));
+        app.live_dragon_fireball_splash_events_updated(vec![
+            crate::world_view::WireDragonFireballSplashEvent {
+                x: 4,
+                y: 5,
+                z: 6,
+                data: -1,
+            },
+        ]);
+        assert_eq!(
+            app.particles.len(),
+            200,
+            "the silent word the same pool fires"
+        );
+        // the silence the gate's own branch keeps (no voice the arm
+        // never reaches — the stream the 200 x 9-draw chains alone
+        // spend)
+        let silent_stream = std::mem::replace(&mut app.level_ambient_rng, saved);
+        if sounds_loaded() {
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.dragon_fireball.explode @"))
+                .count();
+            assert_eq!(
+                voices_after, voices_before,
+                "the silent word the voice never arms"
+            );
+        }
+        let _ = silent_stream;
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_dragon_fireball_splash_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

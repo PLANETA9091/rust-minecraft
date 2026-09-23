@@ -1296,6 +1296,32 @@ pub const BEE_GROWTH_EFFECT: i32 = 2011;
 /// The GLOBAL route the `globalLevelEvent` switch never banks.
 pub const TURTLE_EGG_PLACEMENT_EFFECT: i32 = 2012;
 
+/// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_DRAGON_FIREBALL_SPLASH`, the case
+/// `LevelEventHandler.levelEvent` offset 3893 speaks): the data word
+/// the SOUND GATE carries — the `if_icmpne 1` branch the tail speaks
+/// (`data == 1` the `DRAGON_FIREBALL_EXPLODE` voice at the block
+/// center arms, the `SoundSource.HOSTILE` the 1.0-volume walk wears,
+/// the `nextFloat * 0.1F + 0.9F` pitch the draw gives; the silent
+/// word `-1` the particles-only arm keeps). The burst itself the
+/// `bipush 200` loop fires — each puff the `PowerParticleOption
+/// .create(ParticleTypes.DRAGON_BREATH, f6)` the `f6 = nextFloat *
+/// 4.0F` power arg carries, the `f7 = nextFloat * 6.2831855F` angle
+/// the cos/sin folds ride (`d8 = cos(f7) * f6` the x-velocity, the
+/// `d10 = 0.01 + nextDouble * 0.5` up-drift the y-velocity, the `d12
+/// = sin(f7) * f6` the z-velocity — the spawn `(x + d8 * 0.1, y +
+/// 0.3, z + d12 * 0.1)` the raw corner reads place), the provider's
+/// `setPower(f6)` the velocity fold speaks (`xd *= p`, the `yd = (yd
+/// - 0.1) * p + 0.1` the base's own 0.1 floor keeps). The server's
+/// own fireball speaks it — `DragonFireball.onHit`'s tail `sipush
+/// 2006, blockPosition(), isSilent() ? -1 : 1` the levelEvent call
+/// the bytecode pins (the impact the dragon's breath pool the
+/// AreaEffectCloud lands beside). The GLOBAL route the
+/// `globalLevelEvent` switch never banks (the 1023/1028/1038 trio the
+/// band alone carries — the positioned lane the case's own arm wears).
+pub const DRAGON_FIREBALL_SPLASH_EFFECT: i32 = 2006;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10456,6 +10482,11 @@ mod tests {
             TURTLE_EGG_PLACEMENT_EFFECT,
             2012,
             "the turtle-egg placement the egg-lay's own onPlace speaks"
+        );
+        assert_eq!(
+            DRAGON_FIREBALL_SPLASH_EFFECT,
+            2006,
+            "the dragon-fireball splash the fireball's own onHit speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

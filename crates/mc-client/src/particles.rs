@@ -301,6 +301,22 @@ pub enum ParticleKind {
     /// passes, the base 0.98 friction, the `/2` size fold, the base
     /// lifetime the ctor never overrides.
     PotionItem { layer: usize },
+    /// `DragonBreathParticle` — the dragon fireball's own splash puff
+    /// (the `dragon_breath` type the `LevelEventHandler` case-2006
+    /// arm's `PowerParticleOption.create(ParticleTypes.DRAGON_BREATH,
+    /// f6)` walk speaks): the three-frame walk the age's own ride
+    /// answers (`setSpriteFromAge` — the dragon_breath.json's
+    /// ASCENDING `generic_5/6/7` list the file fold speaks), the
+    /// purple tint the ctor's own ranges carry (the r/b the
+    /// `Mth.nextFloat` bands give, the green the (0,0) range keeps —
+    /// the draw the stream still spends), the no-gravity rise the
+    /// `setPower` fold's own 0.1 y-floor speaks, the 0.96 friction the
+    /// x/z lanes alone wear (the y-lane the tick's ground gate never
+    /// arms — the hasPhysics-false move the plain translate answers),
+    /// the 20..100 lifetime the f64-domain fold gives, the OPAQUE
+    /// layer the getLayer override returns, the growth the getQuadSize's
+    /// 32x clamp rides (the same law the crit star blooms by).
+    DragonBreath,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -323,6 +339,38 @@ pub const SWEEP_FRAME_COUNT: usize = 8;
 pub fn sweep_frame(age: u32, lifetime: u32) -> usize {
     ((age as usize * (SWEEP_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
         .min(SWEEP_FRAME_COUNT - 1)
+}
+
+/// The dragon breath's 3 frames (the `generic_5..generic_7` textures
+/// the 26.2 dragon_breath.json speaks — the same generic pool the
+/// smoke's 8-frame set banks, the json's ASCENDING list orders).
+pub const DRAGON_BREATH_FRAME_COUNT: usize = 3;
+
+/// The dragon breath's own frame law (javap `Particle.setSpriteFromAge`
+/// -> `MutableSpriteSet.get(age, lifetime)` verbatim:
+/// `sprites.get(age * (size - 1) / lifetime)` — 3 frames, the list
+/// index the walk gives).
+pub fn dragon_breath_frame(age: u32, lifetime: u32) -> usize {
+    ((age as usize * (DRAGON_BREATH_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
+        .min(DRAGON_BREATH_FRAME_COUNT - 1)
+}
+
+/// The dragon breath's render-file index (the json's ASCENDING list
+/// the file fold speaks — the smoke/poof jsons' DESCENDING order the
+/// `generic_file_index` fold mirrors; here the list index 0 reads
+/// `generic_5` directly, the file number the +5 offset keeps).
+pub fn dragon_breath_file(list_index: usize) -> usize {
+    5 + list_index
+}
+
+/// The dragon breath's own lifetime law (javap `DragonBreathParticle`
+/// ctor verbatim — the f64 DOMAIN the bytecode's own f2d order speaks:
+/// `nextFloat; f2d; dmul 0.8; dadd 0.2; ddiv 20.0; d2i` — the draw
+/// converts FIRST, the multiply-add the double domain keeps, the
+/// spell/smoke folds' f32-first arithmetic the one order's own
+/// difference wears): 20..100 ticks.
+pub fn dragon_breath_lifetime(r: f32) -> u32 {
+    (20.0f64 / (f64::from(r) * 0.8f64 + 0.2f64)) as u32
 }
 
 /// One particle — the vanilla `Particle` + `SingleQuadParticle` fields
@@ -443,6 +491,11 @@ impl Particle {
             // the smoke's own fast bloom (the BaseAshSmokeParticle's
             // getQuadSize override — the SAME 32x law the crit speaks)
             ParticleKind::Smoke => base * crit_grow(self.age, self.lifetime, 0.0),
+            // the dragon breath's own fast bloom (the
+            // DragonBreathParticle.getQuadSize override — the SAME 32x
+            // clamp law the crit speaks: `(age + f) / lifetime * 32.0F`
+            // the full size the first lifetime/32 ticks reach)
+            ParticleKind::DragonBreath => base * crit_grow(self.age, self.lifetime, 0.0),
             // the flame's own half-thin (the FlameParticle.getQuadSize
             // override — the (1 - t*t*0.5) fold the death walks to the
             // HALF quad, the lava's own to-none never keeps it)
@@ -502,6 +555,43 @@ impl Particle {
         if self.age >= self.lifetime {
             return false;
         }
+        true
+    }
+
+    /// The `DragonBreathParticle.tick` verbatim — the override the
+    /// base law never rides: the age walk + the removal (the same
+    /// gate the base speaks), the sprite walk (the frame the render's
+    /// own age read answers), then the ground gate the hasPhysics-
+    /// false move NEVER arms (`onGround` the collision walk's own
+    /// writer — the plain translate the field's writer never reaches:
+    /// the `yd = 0` + `hasHitGround = true` pair, the `+0.002`
+    /// up-drift branch, the y-friction tail — the branch trio the
+    /// death keeps dead, the bytecode's own shape the faithful port
+    /// documents), the move (the plain translate the hasPhysics=false
+    /// field answers), the y-stall speed-up (`if (y == yo) { xd *=
+    /// 1.1; zd *= 1.1; }` — the branch the `setPower` fold's own 0.1
+    /// y-floor never arms: the vy the 0.1 base keeps alive, the y the
+    /// every-tick move answers), the x/z friction lanes (the y-lane
+    /// the ground gate never arms — the vy the friction-free rise the
+    /// fold's floor speaks).
+    pub fn tick_dragon_breath(&mut self) -> bool {
+        self.tick_head();
+        self.age += 1;
+        if self.age >= self.lifetime {
+            return false;
+        }
+        // the ground gate never arms (the hasPhysics-false move the
+        // plain translate answers — onGround the writer never reaches,
+        // the hasHitGround trio the gate's own death keeps dead)
+        self.x += self.vx;
+        self.y += self.vy;
+        self.z += self.vz;
+        // the y == yo stall the vy's own 0.1 floor never fires (the
+        // move always answers a y-step)
+        self.vx *= self.friction;
+        self.vz *= self.friction;
+        // NO gravity lane, NO vy friction (the x/z lanes alone the
+        // override's own body speaks)
         true
     }
 
@@ -1337,6 +1427,73 @@ pub fn shoot_white_smoke_puff(
         uo: 0.0,
         vo: 0.0,
         col: [0.7294118, 0.69411766, 0.7607843],
+    }
+}
+
+/// The DRAGON-BREATH splash puff's own spawn (javap
+/// `DragonBreathParticle` + `$Provider.createParticle` over the 26.2
+/// jar): the ctor chain the case's own draw walk feeds — the dead
+/// base lifetime draw (the value the dragon ctor's own write
+/// overrides), the SingleQuadParticle's size draw (the 0.1..0.2 the
+/// ctor's `* 0.75` fold rides), THE TINT DRAWS the three
+/// `Mth.nextFloat` ranges speak (the red `0.7176470756530762..
+/// 0.8745098114013672` band, the green the `(0, 0)` range the draw
+/// the stream still spends, the blue `0.8235294222831726..
+/// 0.9764705896377563` band — the purple the fireball's splash
+/// nights wear), the lifetime the f64-domain fold answers (20..100 —
+/// the `dragon_breath_lifetime` helper the f2d order pins), the
+/// friction the ctor's own 0.96 write, the NO-gravity field the
+/// override's own tick keeps, the hasPhysics-false no-collision move
+/// the plain translate answers. THE SET-POWER FOLD (javap
+/// `Particle.setPower` verbatim — the provider's own tail
+/// `setPower(option.getPower())` the case's `f6 = nextFloat * 4.0F`
+/// arg rides): the x/z the plain `* p` multiply, the y the `(v -
+/// 0.1) * p + 0.1` the base's own 0.1 floor keeps — the up-drift the
+/// case's `0.01 + nextDouble * 0.5` arg rides. The case's own draws
+/// the caller's stream spends (the `f6`/`f7`/`d10` trio the walk's
+/// own order keeps) — the velocities arrive PRE-fold (the `d8/d10/
+/// d12` the case computed), the power fold the helper applies.
+pub fn dragon_breath_splash_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    power: f32,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the dragon ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    // the SingleQuadParticle's own size draw (the 0.1..0.2 the ctor's
+    // own ×0.75 fold rides)
+    let r_quad = rng.next_f32();
+    // THE TINT DRAWS (the three Mth.nextFloat ranges the ctor's own
+    // body speaks — the green's (0, 0) range the draw CONSUMES, the
+    // 0.0 the zero-width answer keeps)
+    let r = 0.7176470756530762f32 + rng.next_f32() * (0.8745098114013672f32 - 0.7176470756530762f32);
+    let _g_draw = rng.next_f32();
+    let b = 0.8235294222831726f32 + rng.next_f32() * (0.9764705896377563f32 - 0.8235294222831726f32);
+    let r_life = rng.next_f32();
+    Particle {
+        kind: ParticleKind::DragonBreath,
+        x,
+        y,
+        z,
+        prev: None,
+        // THE SET-POWER FOLD (the provider's own tail)
+        vx: vx * f64::from(power),
+        vy: (vy - 0.1) * f64::from(power) + 0.1,
+        vz: vz * f64::from(power),
+        age: 0,
+        lifetime: dragon_breath_lifetime(r_life),
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: base_quad_size(r_quad) * 0.75,
+        uo: 0.0,
+        vo: 0.0,
+        col: [r, 0.0, b],
     }
 }
 
@@ -3289,5 +3446,150 @@ mod tests {
                 "the pre-scale yd's own band: {vy}"
             );
         }
+    }
+
+    #[test]
+    fn the_dragon_breath_puff_the_power_fold_the_frames_wear() {
+        // THE DRAGON-BREATH SPLASH PUFF'S OWN SPAWN (javap
+        // `DragonBreathParticle` + `$Provider.createParticle` over the
+        // 26.2 jar — the case-2006 arm's own walk feeds): the draw
+        // chain the case's trio opens (the f6/f7/d10 the walk's own
+        // order keeps), the ctor chain the helper spends (the dead
+        // base lifetime, the size draw, the r/g/b tint draws the
+        // (0,0)-green consumes, the lifetime the f64-domain fold
+        // answers), the setPower fold the provider's tail applies.
+        let mut stream = crate::drops::Lcg::new(0xD2A6_10CA);
+        // THE CASE'S OWN DRAWS (the f6/f7/d10 trio the bytecode's own
+        // order keeps) + the cos/sin folds the narrow shape speaks
+        let f6 = stream.next_f32() * 4.0f32;
+        let f7 = stream.next_f32() * 6.2831855f32;
+        let d10 = 0.01f64 + stream.next_f64() * 0.5f64;
+        let d8 = ((f7 as f64).cos() as f32 * f6) as f64;
+        let d12 = ((f7 as f64).sin() as f32 * f6) as f64;
+        let p = dragon_breath_splash_puff(
+            10.0 + d8 * 0.1,
+            20.3,
+            30.0 + d12 * 0.1,
+            f6,
+            d8,
+            d10,
+            d12,
+            &mut stream,
+        );
+        assert!(matches!(p.kind, ParticleKind::DragonBreath));
+        // THE SET-POWER FOLD (javap `Particle.setPower` verbatim — the
+        // x/z the plain multiply, the y the `(v - 0.1) * p + 0.1` the
+        // base's own 0.1 floor keeps)
+        assert_eq!(p.vx, d8 * f64::from(f6), "the x the plain multiply rides");
+        assert_eq!(p.vy, (d10 - 0.1) * f64::from(f6) + 0.1, "the y the floor keeps");
+        assert_eq!(p.vz, d12 * f64::from(f6), "the z the plain multiply rides");
+        // THE SPAWN FOLD (the raw corner reads the case's own args
+        // place — the d8*0.1 the x speaks, the +0.3 the y keeps)
+        assert_eq!(p.x, 10.0 + d8 * 0.1);
+        assert_eq!(p.y, 20.3);
+        assert_eq!(p.z, 30.0 + d12 * 0.1);
+        // THE TINT LAW (the purple the ctor's own ranges carry — the
+        // r/b inside the Mth.nextFloat bands, the green the (0,0)
+        // range keeps, the draw the stream still spends)
+        assert!(
+            (0.7176470..=0.8745099).contains(&p.col[0]),
+            "the red band: {}",
+            p.col[0]
+        );
+        assert_eq!(p.col[1], 0.0, "the green the zero-width range keeps");
+        assert!(
+            (0.8235294..=0.9764706).contains(&p.col[2]),
+            "the blue band: {}",
+            p.col[2]
+        );
+        // THE LIFETIME LAW (the f64 domain the f2d order speaks — the
+        // edge r=0 answers 100, the r→1 arm 20, the f32-first folds'
+        // own difference the one order wears)
+        assert_eq!(dragon_breath_lifetime(0.0), 100, "the r=0 edge");
+        assert_eq!(dragon_breath_lifetime(0.9999999), 20, "the r→1 arm");
+        assert!((20..=100).contains(&p.lifetime), "the band: {}", p.lifetime);
+        // THE FIELDS (the no-gravity law the override's own tick
+        // keeps, the 0.96 friction, the 0.75 fold's own band)
+        assert_eq!(p.gravity, 0.0);
+        assert_eq!(p.friction, 0.96);
+        assert!(
+            (0.075..=0.15).contains(&p.quad_size),
+            "the 0.75 fold's own band: {}",
+            p.quad_size
+        );
+        // THE GROWTH (the 32x clamp law the crit speaks — the age-0
+        // bloom the clamp keeps at the point)
+        assert_eq!(p.half(), 0.0, "the age-0 bloom the 32x clamp answers");
+        // the pre-tick state the determinism + the tick walks read
+        let pre = (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size, p.col);
+        // THE TICK (the override the base law never rides): no
+        // gravity lane, the y the friction-free rise keeps, the x/z
+        // the 0.96 folds ride, the move the plain translate answers
+        let (x0, y0, z0, vx0, vy0, vz0) = (p.x, p.y, p.z, p.vx, p.vy, p.vz);
+        let mut t = p;
+        assert!(t.tick_dragon_breath(), "the age walk the lifetime gates");
+        assert_eq!(t.age, 1);
+        assert_eq!(t.vx, vx0 * 0.96, "the x friction the tick's own lane speaks");
+        assert_eq!(t.vy, vy0, "the y the friction-free rise keeps");
+        assert_eq!(t.vz, vz0 * 0.96, "the z friction the tick's own lane speaks");
+        assert_eq!(t.x, x0 + vx0, "the move the plain translate answers");
+        assert_eq!(t.y, y0 + vy0, "the move the plain translate answers");
+        assert_eq!(t.z, z0 + vz0, "the move the plain translate answers");
+        // the lifetime the removal walk answers (the 20..100 band's
+        // own edge — the age the removal's own tick reaches)
+        let mut dying =
+            dragon_breath_splash_puff(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, &mut stream);
+        dying.lifetime = 3;
+        assert!(dying.tick_dragon_breath());
+        assert!(dying.tick_dragon_breath());
+        assert!(!dying.tick_dragon_breath(), "the age the removal walk answers");
+        // THE FRAMES (the get law's list index, the json's ASCENDING
+        // order the +5 file offset keeps — the generic_5/6/7 the
+        // dragon_breath.json lists; the 3-frame walk the removal age
+        // NEVER renders — the index 2 the age >= lifetime arm alone
+        // reaches, the min clamp the honest shape keeps)
+        assert_eq!(dragon_breath_frame(0, 100), 0, "the age-0 index");
+        assert_eq!(dragon_breath_frame(50, 100), 1, "the mid-life index");
+        assert_eq!(dragon_breath_frame(99, 100), 1, "the last rendered index");
+        assert_eq!(dragon_breath_frame(100, 100), 2, "the clamp the removal never renders");
+        assert_eq!(dragon_breath_file(0), 5, "the list's own first file");
+        assert_eq!(dragon_breath_file(2), 7, "the list's own last file");
+        // THE DETERMINISM (the same seed the same chain answers)
+        let mut a = crate::drops::Lcg::new(0xD2A6_10CA);
+        let f6b = a.next_f32() * 4.0f32;
+        let f7b = a.next_f32() * 6.2831855f32;
+        let d10b = 0.01f64 + a.next_f64() * 0.5f64;
+        let d8b = ((f7b as f64).cos() as f32 * f6b) as f64;
+        let d12b = ((f7b as f64).sin() as f32 * f6b) as f64;
+        let p2 = dragon_breath_splash_puff(
+            10.0 + d8b * 0.1,
+            20.3,
+            30.0 + d12b * 0.1,
+            f6b,
+            d8b,
+            d10b,
+            d12b,
+            &mut a,
+        );
+        assert_eq!(
+            pre, (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size, p2.col),
+            "the seeded chain replays"
+        );
+        // THE STREAM (the nine draws the chain consumes — the f6/f7/
+        // d10 case trio, the dead base lifetime, the size, the three
+        // tint draws, the own lifetime; the tenth draw differs)
+        let mut a = crate::drops::Lcg::new(0xD2A6_10CA);
+        let f6c = a.next_f32() * 4.0f32;
+        let f7c = a.next_f32() * 6.2831855f32;
+        let d10c = 0.01f64 + a.next_f64() * 0.5f64;
+        let d8c = ((f7c as f64).cos() as f32 * f6c) as f64;
+        let d12c = ((f7c as f64).sin() as f32 * f6c) as f64;
+        let _ = dragon_breath_splash_puff(0.0, 0.0, 0.0, f6c, d8c, d10c, d12c, &mut a);
+        let after_nine = a.next();
+        let mut b = crate::drops::Lcg::new(0xD2A6_10CA);
+        for _ in 0..9 {
+            b.next();
+        }
+        assert_eq!(after_nine, b.next(), "the dragon chain's own nine draws");
     }
 }

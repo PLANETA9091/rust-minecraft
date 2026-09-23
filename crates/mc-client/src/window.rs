@@ -169,6 +169,7 @@ fn run_join(
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
+                Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -260,6 +261,7 @@ fn run_join(
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
+            view.model.drain_dragon_fireball_splash_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
@@ -875,6 +877,7 @@ fn run_join(
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
+                            view.model.drain_dragon_fireball_splash_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
                             if live_tx
@@ -1020,6 +1023,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.white_smoke_events,
+                                    // the dragon-fireball splash's arms ride
+                                    // beside the white's — the 2006 words
+                                    // the server's own fireball broadcast
+                                    // stream to the dragon lane (the
+                                    // 200-puff pool walk the render's own
+                                    // law folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.dragon_fireball_splash_events,
                                     // the splash-potion effect's arms ride
                                     // with them — the 2002/2007 words the
                                     // server's own potion impacts broadcast
@@ -1181,6 +1192,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
+                Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -1729,6 +1741,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
+                    dragon_fireball_splash_events,
                     splash_events,
                     mob_spawn_events,
                 )) => {
@@ -1839,6 +1852,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // puff the vanilla client answers the same packet
                     // with)
                     app.live_white_smoke_events_updated(white_smoke_events);
+                    // the dragon-fireball splash's lane beside the white's:
+                    // the 2006 words the server's own fireball broadcasts
+                    // land at their own anchors (the 200-puff pool walk the
+                    // render lane's own law folds — the gated explode voice
+                    // the sound gate's own word arms, the vanilla client
+                    // answers the same packet with)
+                    app.live_dragon_fireball_splash_events_updated(dragon_fireball_splash_events);
                     // the splash-potion effect's lane beside the smoke's:
                     // the 2002/2007 words the server's own potion impacts
                     // broadcast land at their own anchors (the shard burst
