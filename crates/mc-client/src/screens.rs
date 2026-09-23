@@ -21932,6 +21932,59 @@ impl App {
         );
     }
 
+    /// THE FIXED-VOICE WIRE LANE (javap `LevelEventHandler` cases
+    /// 1033/1034/1035/1049/1050 — offsets 680/700/660/796/816 — over
+    /// the 26.2 jar): the server's own chorus flowers, brewing stand
+    /// and crafter the shelf's voices broadcast, the ONE
+    /// `playLocalSound(pos, <voice>, BLOCKS, 1.0F, 1.0F, false)` walk
+    /// each case body spends — the voice alone the broadcast renders
+    /// (no particles the cases speak, no draw the fixed folds cost).
+    pub fn live_fixed_voice_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireFixedVoiceEvent>,
+    ) {
+        for ev in events {
+            self.play_fixed_voice(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE FIXED-VOICE WALK (javap the five case arms verbatim): the
+    /// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve
+    /// places (the +0.5 trio the vanilla client answers), the
+    /// `fconst_1` pair the volume/pitch each case carries (no
+    /// randoms the fixed folds speak — the level ambient stream the
+    /// walks never spend), the distance-delay flag false the
+    /// immediate voices keep. The voice word the packet's own effect
+    /// id — the sound key the official sounds.json table the
+    /// runtime cache keeps (the file pick the engine's own LCG
+    /// banks, NO new assets the shelf demands).
+    fn play_fixed_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the FIVE WORDS the model's own arm banks (the case ids the
+        // bytecode's own lookupswitch rows speak — the render lane's
+        // law folds the sound key from each)
+        let key = match voice {
+            mc_protocol::SOUND_CHORUS_GROW_EFFECT => "block.chorus_flower.grow",
+            mc_protocol::SOUND_CHORUS_DEATH_EFFECT => "block.chorus_flower.death",
+            mc_protocol::SOUND_BREWING_STAND_BREW_EFFECT => "block.brewing_stand.brew",
+            mc_protocol::SOUND_CRAFTER_CRAFT_EFFECT => "block.crafter.craft",
+            mc_protocol::SOUND_CRAFTER_FAIL_EFFECT => "block.crafter.fail",
+            _ => return, // the model's own arm the five words alone enqueues
+        };
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            1.0,
+            1.0,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE DRAGON BLOCK-BREAK WIRE LANE (javap `LevelEventHandler`
     /// case 2008 — offset 3440 — over the 26.2 jar): the server's
     /// own dragon the event broadcast, the ONE EXPLOSION puff the
@@ -46246,6 +46299,174 @@ cow_sound_variant: None,
             );
         } else {
             app.live_dispenser_dispense_events_updated(vec![]);
+        }
+    }
+
+    #[test]
+    fn the_wire_fixed_voice_words_the_center_voices_wear() {
+        // THE FIXED-VOICE SHELF'S OWN WIRE LANE (javap the cases
+        // 1033/1034/1035/1049/1050 → offsets 680/700/660/796/816 over
+        // the 26.2 jar): the FIVE `playLocalSound(pos, <voice>,
+        // BLOCKS, 1.0F, 1.0F, false)` walks the case bodies spend —
+        // each voice the fixed `fconst_1` pair carries, the BLOCK
+        // CENTER the playLocalSound(BlockPos, ...) resolve places, NO
+        // PARTICLES the cases speak (the voices alone the broadcasts
+        // render), the level ambient stream the fixed folds never
+        // spend.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the swap banks — no
+        // draw the fixed 1.0/1.0 folds cost, the `fconst_1` pairs the
+        // randoms never ride)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(4321));
+        let particles_before = app.particles.len();
+        // THE FIVE VOICES (each word the packet's own effect id — the
+        // sound key the official sounds.json table folds, one voice
+        // per arm)
+        let five = [
+            (mc_protocol::SOUND_CHORUS_GROW_EFFECT, "block.chorus_flower.grow"),
+            (mc_protocol::SOUND_CHORUS_DEATH_EFFECT, "block.chorus_flower.death"),
+            (mc_protocol::SOUND_BREWING_STAND_BREW_EFFECT, "block.brewing_stand.brew"),
+            (mc_protocol::SOUND_CRAFTER_CRAFT_EFFECT, "block.crafter.craft"),
+            (mc_protocol::SOUND_CRAFTER_FAIL_EFFECT, "block.crafter.fail"),
+        ];
+        app.live_fixed_voice_events_updated(
+            five.iter()
+                .map(|(effect, _)| crate::world_view::WireFixedVoiceEvent {
+                    x: 10,
+                    y: 20,
+                    z: 10,
+                    voice: *effect,
+                })
+                .collect(),
+        );
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        assert_eq!(
+            spent,
+            crate::drops::Lcg::new(4321),
+            "the fixed folds the ambient stream never spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "no particles the case bodies speak"
+        );
+        // THE VOICES (each case's own body its key speaks — the
+        // volume/pitch BOTH the fixed 1.0 the `fconst_1` pairs keep,
+        // the file picks the engine's own LCG banks)
+        if sounds_loaded() {
+            for (effect, key) in five {
+                let voices = app
+                    .sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with(&format!("{key} @")))
+                    .count();
+                assert_eq!(voices, 1, "the ONE playLocalSound case {effect} keeps ({key})");
+                let voice = app
+                    .sounds
+                    .events
+                    .iter()
+                    .find(|e| e.starts_with(&format!("{key} @")))
+                    .expect("the voice the case speaks");
+                let pitch: f32 = voice
+                    .split(" p")
+                    .nth(1)
+                    .and_then(|t| t[..6].parse().ok())
+                    .unwrap_or(0.0);
+                assert!(
+                    (pitch - 1.0).abs() < 1e-6,
+                    "the fixed pitch the fconst_1 keeps: {pitch}"
+                );
+                let volume: f32 = voice
+                    .split(" v")
+                    .nth(1)
+                    .and_then(|t| t[..6].parse().ok())
+                    .unwrap_or(0.0);
+                assert!(
+                    (volume - 1.0).abs() < 1e-6,
+                    "the fixed volume the fconst_1 keeps: {volume}"
+                );
+            }
+        }
+        // THE UNKNOWN WORD (the model's own arm the five ids alone
+        // enqueues — the defensive arm the honest walk never banks,
+        // the sound lane's silence keeps)
+        if sounds_loaded() {
+            let voices_before = app.sounds.events.len();
+            app.live_fixed_voice_events_updated(vec![
+                crate::world_view::WireFixedVoiceEvent {
+                    x: 1,
+                    y: 2,
+                    z: 3,
+                    voice: 4242,
+                },
+            ]);
+            assert_eq!(
+                app.sounds.events.len(),
+                voices_before,
+                "the unknown word the walk never banks"
+            );
+        } else {
+            app.live_fixed_voice_events_updated(vec![
+                crate::world_view::WireFixedVoiceEvent {
+                    x: 1,
+                    y: 2,
+                    z: 3,
+                    voice: 4242,
+                },
+            ]);
+        }
+        // THE SECOND ARM (the next broadcast the same walks wear —
+        // each word ships exactly one voice per arrival)
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.crafter.fail @"))
+                .count();
+            app.live_fixed_voice_events_updated(vec![
+                crate::world_view::WireFixedVoiceEvent {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    voice: mc_protocol::SOUND_CRAFTER_FAIL_EFFECT,
+                },
+            ]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.crafter.fail @"))
+                .count();
+            assert_eq!(
+                voices_after,
+                voices_before + 1,
+                "each arm exactly one voice the walk keeps"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.crafter.fail @"))
+                .count();
+            app.live_fixed_voice_events_updated(vec![]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.crafter.fail @"))
+                .count();
+            assert_eq!(
+                voices_after, voices_before,
+                "the empty mailbox ships nothing"
+            );
+        } else {
+            app.live_fixed_voice_events_updated(vec![]);
         }
     }
 

@@ -1387,6 +1387,94 @@ pub const DRAGON_BLOCK_BREAK_EFFECT: i32 = 2008;
 /// the positioned lane the case's own arm wears).
 pub const SOUND_DISPENSER_DISPENSE_EFFECT: i32 = 1000;
 
+/// THE CHORUS-FLOWER GROW VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_CHORUS_FLOWER_GROW`,
+/// the case `LevelEventHandler.levelEvent` offset 680 speaks): the
+/// ONE `playLocalSound(pos, CHORUS_FLOWER_GROW, BLOCKS, 1.0F, 1.0F,
+/// false)` walk the case body spends — the `fconst_1` pair the
+/// volume/pitch both carry (no randoms the fixed fold speaks), the
+/// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve places,
+/// the distance-delay flag false the immediate voice keeps, the data
+/// word the case's own body never reads (no `iload_3` the arm's
+/// bytecode speaks). NO particles the case speaks — the voice alone
+/// the broadcast renders. The server's own chorus flower speaks it —
+/// `ChorusFlowerBlock.placeGrownFlower`'s tail the `sipush 1033,
+/// aload_2 pos, iconst_0` levelEvent call the bytecode pins (the
+/// survived-growth word the flower's own spread broadcasts). The
+/// GLOBAL route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const SOUND_CHORUS_GROW_EFFECT: i32 = 1033;
+
+/// THE CHORUS-FLOWER DEATH VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_CHORUS_FLOWER_DEATH`,
+/// the case `LevelEventHandler.levelEvent` offset 700 speaks): the
+/// ONE `playLocalSound(pos, CHORUS_FLOWER_DEATH, BLOCKS, 1.0F, 1.0F,
+/// false)` walk the case body spends — the `fconst_1` pair the
+/// volume/pitch both carry, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps, the data word the case's own
+/// body never reads. NO particles the case speaks — the voice alone
+/// the broadcast renders. The server's own chorus flower speaks it —
+/// `ChorusFlowerBlock.placeDeadFlower`'s tail the `sipush 1034,
+/// aload_2 pos, iconst_0` levelEvent call the bytecode pins (the
+/// withered word the flower's own death broadcasts). The GLOBAL route
+/// the `globalLevelEvent` switch never banks — the positioned lane
+/// the case's own arm wears.
+pub const SOUND_CHORUS_DEATH_EFFECT: i32 = 1034;
+
+/// THE BREWING-STAND BREW VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_BREWING_STAND_BREW`,
+/// the case `LevelEventHandler.levelEvent` offset 660 speaks): the
+/// ONE `playLocalSound(pos, BREWING_STAND_BREW, BLOCKS, 1.0F, 1.0F,
+/// false)` walk the case body spends — the `fconst_1` pair the
+/// volume/pitch both carry, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps, the data word the case's own
+/// body never reads. NO particles the case speaks — the voice alone
+/// the broadcast renders. The server's own brewing stand speaks it —
+/// `BrewingStandBlockEntity.doBrew`'s tail the `sipush 1035,
+/// aload pos, iconst_0` levelEvent call the bytecode pins (the
+/// potion-complete word the stand's own brew broadcasts). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const SOUND_BREWING_STAND_BREW_EFFECT: i32 = 1035;
+
+/// THE CRAFTER CRAFT VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `SOUND_CRAFTER_CRAFT`, the case
+/// `LevelEventHandler.levelEvent` offset 796 speaks): the ONE
+/// `playLocalSound(pos, CRAFTER_CRAFT, BLOCKS, 1.0F, 1.0F, false)`
+/// walk the case body spends — the `fconst_1` pair the volume/pitch
+/// both carry, the BLOCK CENTER the `playLocalSound(BlockPos, ...)`
+/// resolve places, the distance-delay flag false the immediate voice
+/// keeps, the data word the case's own body never reads. NO particles
+/// the case speaks — the voice alone the broadcast renders. The
+/// server's own crafter speaks it — `CrafterBlock.dispenseItem`'s
+/// tail the `sipush 1049, aload pos, iconst_0` levelEvent call the
+/// bytecode pins (the crafted word the eject's own success
+/// broadcasts; the sibling `sipush 2010` the white-smoke lane's own
+/// word the same walk carries — the white lane's arms already bank).
+/// The GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_CRAFTER_CRAFT_EFFECT: i32 = 1049;
+
+/// THE CRAFTER FAIL VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `SOUND_CRAFTER_FAIL`, the case
+/// `LevelEventHandler.levelEvent` offset 816 speaks): the ONE
+/// `playLocalSound(pos, CRAFTER_FAIL, BLOCKS, 1.0F, 1.0F, false)`
+/// walk the case body spends — the `fconst_1` pair the volume/pitch
+/// both carry, the BLOCK CENTER the `playLocalSound(BlockPos, ...)`
+/// resolve places, the distance-delay flag false the immediate voice
+/// keeps, the data word the case's own body never reads. NO particles
+/// the case speaks — the voice alone the broadcast renders. The
+/// server's own crafter speaks it — `CrafterBlock.dispenseFrom`'s
+/// empty-slot arms the `sipush 1050, aload pos, iconst_0` levelEvent
+/// call the bytecode pins (the refused word the empty inventory's
+/// own craft attempt broadcasts, BOTH early-return tails the same
+/// walk carries). The GLOBAL route the `globalLevelEvent` switch
+/// never banks — the positioned lane the case's own arm wears.
+pub const SOUND_CRAFTER_FAIL_EFFECT: i32 = 1050;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10567,6 +10655,31 @@ mod tests {
             SOUND_DISPENSER_DISPENSE_EFFECT,
             1000,
             "the dispenser dispense voice the default behavior's own tail speaks"
+        );
+        assert_eq!(
+            SOUND_CHORUS_GROW_EFFECT,
+            1033,
+            "the chorus grow voice the flower's own placeGrownFlower speaks"
+        );
+        assert_eq!(
+            SOUND_CHORUS_DEATH_EFFECT,
+            1034,
+            "the chorus death voice the flower's own placeDeadFlower speaks"
+        );
+        assert_eq!(
+            SOUND_BREWING_STAND_BREW_EFFECT,
+            1035,
+            "the brewing voice the stand's own doBrew speaks"
+        );
+        assert_eq!(
+            SOUND_CRAFTER_CRAFT_EFFECT,
+            1049,
+            "the crafter craft voice the dispenseItem's own success speaks"
+        );
+        assert_eq!(
+            SOUND_CRAFTER_FAIL_EFFECT,
+            1050,
+            "the crafter fail voice the dispenseFrom's own empty slots speak"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

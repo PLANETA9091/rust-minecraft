@@ -409,6 +409,18 @@ pub struct WorldModel {
     /// never enqueues (the `globalLevelEvent` switch the 1000 id
     /// never carries — the positioned lane the case's own arm wears).
     pub dispenser_dispense_events: Vec<DispenserDispenseArm>,
+    /// THE FIXED-VOICE SHELF'S OWN MAILBOX (the FIVE 1.0/1.0 BLOCKS
+    /// cases the ONE arm shape wears — see [`FixedVoiceArm`]): the
+    /// chorus flower's grow/death pair (1033/1034), the brewing
+    /// stand's brew (1035), the crafter's craft/fail pair (1049/1050)
+    /// — the voices' arms the Level Event packet arms, each the
+    /// anchor + the packet's own voice word carries. The data word
+    /// the cases' own bodies never read (the arms the anchor + voice
+    /// alone carry), no particles the cases speak. The GLOBAL route
+    /// the arm never enqueues (the `globalLevelEvent` switch the
+    /// five ids never carry — the positioned lane the cases' own
+    /// arms wear).
+    pub fixed_voice_events: Vec<FixedVoiceArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -708,6 +720,43 @@ pub struct DispenserDispenseArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One pending FIXED-VOICE arm — the Level Event packet's sound
+/// shelf the model keeps verbatim (see
+/// [`WorldModel::fixed_voice_events`]). The FIVE 1.0/1.0 BLOCKS
+/// cases the ONE arm shape wears — the chorus flower's grow/death
+/// pair (`placeGrownFlower`/`placeDeadFlower`'s tails the
+/// `sipush 1033`/`sipush 1034` calls speak), the brewing stand's
+/// brew (`doBrew`'s tail the `sipush 1035` call speaks), the
+/// crafter's craft/fail pair (`dispenseItem`/`dispenseFrom`'s tails
+/// the `sipush 1049`/`sipush 1050` calls speak). The anchor
+/// verbatim (the caller's own BlockPos the voice broadcasts), the
+/// voice word the PACKET'S OWN effect id rides (the transport's
+/// honesty — nothing the wire never carried, the sound key the
+/// render lane's own law folds from it), the data word deliberately
+/// absent — the cases' own bodies never read it (no `iload_3` read
+/// the arms' bytecode speaks, the same transport honesty the
+/// dispenser arm keeps). NO particles the cases speak — the ONE
+/// `playLocalSound(pos, <voice>, BLOCKS, 1.0F, 1.0F, false)` walk
+/// each case body spends (the `fconst_1` pair the volume/pitch all
+/// five carry, the BLOCK CENTER the `playLocalSound(BlockPos, ...)`
+/// resolve places, the distance-delay flag false the immediate
+/// voices keep).
+#[derive(Debug, Clone, PartialEq)]
+pub struct FixedVoiceArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — one of the five
+    /// fixed-voice ids [`mc_protocol::SOUND_CHORUS_GROW_EFFECT`],
+    /// [`mc_protocol::SOUND_CHORUS_DEATH_EFFECT`],
+    /// [`mc_protocol::SOUND_BREWING_STAND_BREW_EFFECT`],
+    /// [`mc_protocol::SOUND_CRAFTER_CRAFT_EFFECT`],
+    /// [`mc_protocol::SOUND_CRAFTER_FAIL_EFFECT`] the model's own
+    /// arm banks; the sound key the render lane's law folds from
+    /// it).
+    pub voice: i32,
 }
 
 /// One pending SPLASH-POTION arm — the Level Event packet's next
@@ -1179,6 +1228,7 @@ impl WorldModel {
             water_evaporating_events: Vec::new(),
             dragon_block_break_events: Vec::new(),
             dispenser_dispense_events: Vec::new(),
+            fixed_voice_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -1392,6 +1442,17 @@ impl WorldModel {
     /// voice's own walk costs).
     pub fn drain_dispenser_dispense_events(&mut self) -> Vec<DispenserDispenseArm> {
         std::mem::take(&mut self.dispenser_dispense_events)
+    }
+
+    /// The fixed-voice shelf's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the
+    /// 1033/1034/1035/1049/1050 words the Level Event packet armed,
+    /// the render lane's own law folds the ONE `playLocalSound(pos,
+    /// <voice>, BLOCKS, 1.0F, 1.0F, false)` walk from the anchor + the
+    /// packet's own voice word (the data word the cases' own bodies
+    /// never read — no particles the voices' own walks cost).
+    pub fn drain_fixed_voice_events(&mut self) -> Vec<FixedVoiceArm> {
+        std::mem::take(&mut self.fixed_voice_events)
     }
 
     /// The splash-potion effect's mailbox's own drain (the same walk the
@@ -1626,6 +1687,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 1000 words
                 // never speak again)
                 self.dispenser_dispense_events.clear();
+                // the fixed-voice shelf's mailbox dies with the level
+                // (the same walk — the old level's 1033/1034/1035/1049/
+                // 1050 words never speak again)
+                self.fixed_voice_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -2487,6 +2552,33 @@ impl WorldModel {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
+                    });
+                    true
+                } else if matches!(
+                    ev.effect,
+                    mc_protocol::SOUND_CHORUS_GROW_EFFECT
+                        | mc_protocol::SOUND_CHORUS_DEATH_EFFECT
+                        | mc_protocol::SOUND_BREWING_STAND_BREW_EFFECT
+                        | mc_protocol::SOUND_CRAFTER_CRAFT_EFFECT
+                        | mc_protocol::SOUND_CRAFTER_FAIL_EFFECT
+                ) && !ev.global
+                {
+                    // THE FIXED-VOICE SHELF'S OWN ARM (javap the cases
+                    // offsets 680/700/660/796/816 — the positioned route
+                    // the GLOBAL switch never banks, ALL FIVE the ONE
+                    // `playLocalSound(pos, <voice>, BLOCKS, 1.0F, 1.0F,
+                    // false)` walk the case bodies spend — the `fconst_1`
+                    // pair the volume/pitch each carries, no randoms the
+                    // fixed folds speak; the data words the cases' own
+                    // bodies never read). The voice word the PACKET'S
+                    // OWN effect id rides (the transport's honesty — the
+                    // sound key the render lane's own law folds from
+                    // it), no particles the cases speak.
+                    self.fixed_voice_events.push(FixedVoiceArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
                     });
                     true
                 } else {
@@ -6971,6 +7063,126 @@ mod tests {
         })));
         assert!(
             m.dispenser_dispense_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_fixed_voice_words_the_one_arm_wears() {
+        // THE FIXED-VOICE SHELF'S OWN ARM (javap the cases offsets
+        // 680/700/660/796/816 — the positioned route the GLOBAL
+        // switch never banks, ALL FIVE the ONE `playLocalSound(pos,
+        // <voice>, BLOCKS, 1.0F, 1.0F, false)` walk the case bodies
+        // spend): the chorus flower's grow/death pair, the brewing
+        // stand's brew, the crafter's craft/fail pair the SAME
+        // mailbox arms — the voice word the PACKET'S OWN effect id
+        // rides (the transport's honesty — the sound key the render
+        // lane's own law folds from it), the data words the cases'
+        // own bodies never read, the drain ships the arms exactly
+        // once, and the Respawn recreates the level the mailbox
+        // dies with it.
+        let mut m = WorldModel::new();
+        // the five words (the callers' own tails the bytecode pins —
+        // ChorusFlowerBlock.placeGrownFlower's 1033, placeDeadFlower's
+        // 1034, BrewingStandBlockEntity.doBrew's 1035,
+        // CrafterBlock.dispenseItem's 1049, dispenseFrom's 1050; each
+        // the caller's own iconst_0 passes, the zeros the cases'
+        // bodies never read)
+        for (i, effect) in [
+            mc_protocol::SOUND_CHORUS_GROW_EFFECT,
+            mc_protocol::SOUND_CHORUS_DEATH_EFFECT,
+            mc_protocol::SOUND_BREWING_STAND_BREW_EFFECT,
+            mc_protocol::SOUND_CRAFTER_CRAFT_EFFECT,
+            mc_protocol::SOUND_CRAFTER_FAIL_EFFECT,
+        ]
+        .iter()
+        .enumerate()
+        {
+            let x = (i as i32) * 11 + 3;
+            assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: *effect,
+                x,
+                y: 64,
+                z: -77,
+                data: 0,
+                global: false,
+            })));
+        }
+        assert_eq!(m.fixed_voice_events.len(), 5, "the five words arm");
+        // the voice words ride verbatim (the packet's own ids — the
+        // sound keys the render lane's law folds from them)
+        assert_eq!(
+            m.fixed_voice_events[0].voice,
+            mc_protocol::SOUND_CHORUS_GROW_EFFECT,
+            "the chorus grow word rides"
+        );
+        assert_eq!(
+            m.fixed_voice_events[1].voice,
+            mc_protocol::SOUND_CHORUS_DEATH_EFFECT,
+            "the chorus death word rides"
+        );
+        assert_eq!(
+            m.fixed_voice_events[2].voice,
+            mc_protocol::SOUND_BREWING_STAND_BREW_EFFECT,
+            "the brew word rides"
+        );
+        assert_eq!(
+            m.fixed_voice_events[3].voice,
+            mc_protocol::SOUND_CRAFTER_CRAFT_EFFECT,
+            "the crafter craft word rides"
+        );
+        assert_eq!(
+            m.fixed_voice_events[4].voice,
+            mc_protocol::SOUND_CRAFTER_FAIL_EFFECT,
+            "the crafter fail word rides"
+        );
+        // the anchors ride verbatim (the callers' own BlockPos cells)
+        assert_eq!(m.fixed_voice_events[0].x, 3);
+        assert_eq!(m.fixed_voice_events[1].x, 14);
+        assert_eq!(m.fixed_voice_events[4].y, 64);
+        assert_eq!(m.fixed_voice_events[2].z, -77);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // five ids the positioned lane's own words)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_BREWING_STAND_BREW_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.fixed_voice_events.len(),
+            5,
+            "the global word never arms"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_fixed_voice_events();
+        assert_eq!(drained.len(), 5, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].voice, mc_protocol::SOUND_CHORUS_GROW_EFFECT, "the wire order the drain keeps");
+        assert!(m.fixed_voice_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_fixed_voice_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_CRAFTER_CRAFT_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.fixed_voice_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.fixed_voice_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

@@ -496,6 +496,13 @@ pub struct SnapshotView {
     /// after), the sound lane's own law folds the click voice at
     /// the block center.
     pub dispenser_dispense_events: Vec<WireDispenserDispenseEvent>,
+    /// THE FIXED-VOICE SHELF'S OWN WIRE ARMS (the
+    /// 1033/1034/1035/1049/1050 words the server's own chorus
+    /// flowers, brewing stand and crafter broadcast): shipped once
+    /// with the refresh that carried them (the worker's own drain
+    /// empties the mailbox after), the sound lane's own law folds
+    /// each voice at the block center.
+    pub fixed_voice_events: Vec<WireFixedVoiceEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -612,6 +619,25 @@ pub struct WireDispenserDispenseEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One wire FIXED-VOICE arm — the Level Event packet's sound shelf's
+/// own landing (the 1033/1034/1035/1049/1050 words the server's own
+/// chorus flowers, brewing stand and crafter broadcast,
+/// [`mc_protocol::play::SOUND_CHORUS_GROW_EFFECT`] and siblings the
+/// shelf speaks): the event's anchor block + the PACKET'S OWN voice
+/// word, verbatim (the ONE `playLocalSound(pos, <voice>, BLOCKS,
+/// 1.0F, 1.0F, false)` walk's own inputs — the voice the sound lane
+/// folds from the word; the data words the cases' own bodies never
+/// read, the transport never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireFixedVoiceEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — the sound key
+    /// the sound lane's own law folds from it).
+    pub voice: i32,
 }
 
 /// One wire BLOCK-BREAK EFFECT arm — the Level Event packet's own
@@ -2486,6 +2512,10 @@ pub fn materialize_snapshot_view(
         // and no dispenser words (the join snapshot carries no 1000
         // traffic — the empty mailbox the sound lane skips)
         dispenser_dispense_events: Vec::new(),
+        // and no fixed-voice words (the join snapshot carries no
+        // 1033/1034/1035/1049/1050 traffic — the empty mailbox the
+        // sound lane skips)
+        fixed_voice_events: Vec::new(),
         // and no break words (the join snapshot carries no 2001 traffic
         // — the empty mailbox the render lane skips)
         break_events: Vec::new(),
@@ -2925,6 +2955,22 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the fixed-voice shelf's own projection (the mailbox verbatim
+        // — the anchor + the packet's own voice word the arms carry,
+        // the sound lane's own law reads): each of the
+        // 1033/1034/1035/1049/1050 words ships once with this view,
+        // the worker's drain empties the mailbox after
+        let fixed_voice_events = self
+            .model
+            .fixed_voice_events
+            .iter()
+            .map(|arm| WireFixedVoiceEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                voice: arm.voice,
+            })
+            .collect();
         // the block-break effect's own projection (the mailbox verbatim
         // — the state walk's answers the arms carry, the anchor the
         // render lane's own law reads): each 2001 word ships once with
@@ -3104,6 +3150,10 @@ impl LiveView {
                 // arm too — the 1000 words are the connection's own
                 // traffic, not the pose's
                 dispenser_dispense_events,
+                // the fixed-voice shelf's arms ride the pose-less arm
+                // too — the 1033/1034/1035/1049/1050 words are the
+                // connection's own traffic, not the pose's
+                fixed_voice_events,
                 // the block-break effect's arms ride the pose-less arm
                 // too — the 2001 words are the connection's own traffic,
                 // not the pose's
@@ -3210,6 +3260,10 @@ impl LiveView {
             // too — the 1000 words follow the mailbox exactly like the
             // dragon's own arms do
             dispenser_dispense_events,
+            // the fixed-voice shelf's arms ride every refresh too —
+            // the 1033/1034/1035/1049/1050 words follow the mailbox
+            // exactly like the dispenser's own arms do
+            fixed_voice_events,
             // the block-break effect's arms ride every refresh too —
             // the 2001 words follow the mailbox exactly like the
             // growth's own arms do
