@@ -438,6 +438,10 @@ pub struct SnapshotView {
     /// them (the worker's own drain empties the mailbox after), the
     /// render lane's own law folds the ten-puff smoke walk.
     pub shoot_smoke_events: Vec<WireShootSmokeEvent>,
+    /// THE WHITE-SMOKE EFFECT'S OWN SHIPMENT (the 2010 words the
+    /// server's own crafter broadcasts — the sibling lane the smoke
+    /// shipment's own shape wears).
+    pub white_smoke_events: Vec<WireWhiteSmokeEvent>,
     /// The splash-potion effect's PENDING ARMS — the Level Event mailbox
     /// the model kept (the 2002/2007 words the server's own potion
     /// impacts broadcast, [`mc_protocol::play::SPLASH_POTION_EFFECT`] /
@@ -522,6 +526,20 @@ pub struct WireBreakEvent {
 /// inputs — the ten-puff smoke walk the render lane folds from them).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireShootSmokeEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    pub data: i32,
+}
+
+/// One wire WHITE-SMOKE arm — the Level Event packet's own landing
+/// (the 2010 words the server's own crafter broadcasts,
+/// [`mc_protocol::play::SHOOT_WHITE_SMOKE_EFFECT`] the render lane
+/// speaks): the anchor + the raw direction id, verbatim (the smoke
+/// wire's own shape — the ten-puff white walk the render lane folds
+/// from them).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireWhiteSmokeEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -2350,6 +2368,7 @@ pub fn materialize_snapshot_view(
         // and no smoke words (the join snapshot carries no 2000 traffic
         // — the empty mailbox the render lane skips)
         shoot_smoke_events: Vec::new(),
+        white_smoke_events: Vec::new(),
         // and no splash words (the join snapshot carries no 2002/2007
         // traffic — the empty mailbox the render lane skips)
         splash_events: Vec::new(),
@@ -2739,6 +2758,21 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the white-smoke effect's own projection (the mailbox verbatim
+        // — the anchor + the direction id the arms carry, the render
+        // lane's own law reads): each 2010 word ships once with this
+        // view, the worker's drain empties the mailbox after
+        let white_smoke_events = self
+            .model
+            .white_smoke_events
+            .iter()
+            .map(|arm| WireWhiteSmokeEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+            })
+            .collect();
         // the splash-potion effect's own projection (the mailbox verbatim
         // — the anchor + the color word + the instant flag the arms
         // carry, the render lane's own law reads): each 2002/2007 word
@@ -2860,6 +2894,10 @@ impl LiveView {
                 // too — the 2000 words are the connection's own
                 // traffic, not the pose's
                 shoot_smoke_events,
+                // the white-smoke effect's arms ride the pose-less arm
+                // too — the 2010 words are the connection's own
+                // traffic, not the pose's
+                white_smoke_events,
                 // the splash-potion effect's arms ride the pose-less
                 // arm too — the 2002/2007 words are the connection's
                 // own traffic, not the pose's
@@ -2942,6 +2980,10 @@ impl LiveView {
             // the 2000 words follow the mailbox exactly like the
             // break's own arms do
             shoot_smoke_events,
+            // the white-smoke effect's arms ride every refresh too —
+            // the 2010 words follow the mailbox exactly like the
+            // smoke's own arms do
+            white_smoke_events,
             // the splash-potion effect's arms ride every refresh too —
             // the 2002/2007 words follow the mailbox exactly like the
             // smoke's own arms do

@@ -167,6 +167,7 @@ fn run_join(
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
+                Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -256,6 +257,7 @@ fn run_join(
             view.model.drain_growth_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
+            view.model.drain_white_smoke_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
@@ -869,6 +871,7 @@ fn run_join(
                             view.model.drain_growth_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
+                            view.model.drain_white_smoke_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
                             if live_tx
@@ -997,6 +1000,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.shoot_smoke_events,
+                                    // the white-smoke effect's arms ride
+                                    // beside the smoke's — the 2010 words
+                                    // the server's own crafter broadcast
+                                    // stream to the white lane (the
+                                    // ten-puff walk the render's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.white_smoke_events,
                                     // the splash-potion effect's arms ride
                                     // with them — the 2002/2007 words the
                                     // server's own potion impacts broadcast
@@ -1156,6 +1167,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
+                Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -1702,6 +1714,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     growth_events,
                     break_events,
                     shoot_smoke_events,
+                    white_smoke_events,
                     splash_events,
                     mob_spawn_events,
                 )) => {
@@ -1798,6 +1811,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the facing's smoke the vanilla client answers the
                     // same packet with)
                     app.live_shoot_smoke_events_updated(shoot_smoke_events);
+                    // the white-smoke effect's lane beside the smoke's:
+                    // the 2010 words the server's own crafter broadcasts
+                    // land at their own anchors (the ten-puff walk the
+                    // render lane's own law folds — the facing's white
+                    // puff the vanilla client answers the same packet
+                    // with)
+                    app.live_white_smoke_events_updated(white_smoke_events);
                     // the splash-potion effect's lane beside the smoke's:
                     // the 2002/2007 words the server's own potion impacts
                     // broadcast land at their own anchors (the shard burst

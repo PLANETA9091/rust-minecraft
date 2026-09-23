@@ -1282,6 +1282,64 @@ pub fn shoot_smoke_puff(
     )
 }
 
+/// The SHOOT-WHITE-SMOKE particle's own spawn (javap
+/// `LevelEventHandler.shootParticles` case 2010's `addParticle` walk
+/// over the 26.2 jar — the `ParticleTypes.WHITE_SMOKE` word the
+/// `WhiteSmokeParticle` provider answers with the SAME
+/// `BaseAshSmokeParticle` ctor chain the smoke kind wears: the 26.2
+/// `SmokeParticle`/`WhiteSmokeParticle` ctor bytecodes the identical
+/// arg trios pin — the spreads `0.1F`³, the tint-scale arg `0.3F`
+/// dead, the lifetime base 8, the gravity `-0.1F`, the `iconst_1`
+/// hasPhysics): the FULL draw chain the smoke lane's own helper
+/// speaks (the dead base lifetime draw, the three spread draws, the
+/// size draw, THE TINT DRAW the stream still consumes, the own
+/// lifetime draw) — the ONE delta the ctor's tail speaks: the base's
+/// `nextFloat() * 0.3` grey the r/g/b putfield trio OVERRIDES with
+/// the constants the cp #12/#17/#21 decode (r 0.7294118, g
+/// 0.69411766, b 0.7607843 — the lavender-white the crafter's eject
+/// nights wear). The kind the smoke lane's own render arm carries —
+/// the generic frames the same law folds, the tint the quad's own
+/// `col` the render multiplies.
+pub fn shoot_white_smoke_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the ash ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (sx, sy, sz) = ctor_spread_and_normalize(rng);
+    let r_base = rng.next_f32();
+    // the base's own tint draw (the grey the smoke lane renders — the
+    // WHITE kind's r/g/b putfield trio the value overrides, the draw
+    // the stream still spends)
+    let _dead_tint = rng.next_f32();
+    let r_life = rng.next_f32();
+    let scale = f64::from(0.1f32);
+    Particle {
+        kind: ParticleKind::Smoke,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: sx * scale + vx,
+        vy: sy * scale + vy,
+        vz: sz * scale + vz,
+        age: 0,
+        lifetime: smoke_lifetime(r_life),
+        gravity: -0.1,
+        friction: 0.96,
+        quad_size: base_quad_size(r_base) * 0.75,
+        uo: 0.0,
+        vo: 0.0,
+        col: [0.7294118, 0.69411766, 0.7607843],
+    }
+}
+
 /// The spell ring's 8 frames per set (the `effect_0..7` and
 /// `spell_0..7` textures the two jsons speak).
 pub const SPELL_FRAME_COUNT: usize = 8;

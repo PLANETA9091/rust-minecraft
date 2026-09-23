@@ -1210,6 +1210,21 @@ pub const DESTROY_BLOCK_EFFECT: i32 = 2001;
 /// positioned lane the case's own arm wears).
 pub const SHOOT_SMOKE_EFFECT: i32 = 2000;
 
+/// THE WHITE-SMOKE EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_SHOOT_WHITE_SMOKE`, the
+/// case `LevelEventHandler.levelEvent` offset 919 speaks): the SAME
+/// `shootParticles` walk the 2000 word wears (the ten-puff loop the
+/// `Direction.from3DDataValue(data)` read the raw data carries), the
+/// `ParticleTypes.WHITE_SMOKE` `SimpleParticleType` the ONE arg's
+/// delta — the `WhiteSmokeParticle` ctor the base's own tint draw the
+/// r/g/b putfield trio overrides (the constants the cp #12/#17/#21
+/// decode). The server's own crafter the word broadcasts (`CrafterBlock`
+/// the jar's own sipush-2010 scan pins — the craft's eject the
+/// dispenser's grey puff the white twin wears). The GLOBAL route the
+/// `globalLevelEvent` switch never banks (the 1023/1028/1038 trio the
+/// band alone carries — the positioned lane the case's own arm wears).
+pub const SHOOT_WHITE_SMOKE_EFFECT: i32 = 2010;
+
 /// THE SPLASH-POTION EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
 /// class the client jar banks — `PARTICLES_SPELL_POTION_SPLASH`, the
 /// case `LevelEventHandler.levelEvent` offset 1199 speaks): the data
@@ -10379,6 +10394,11 @@ mod tests {
             SHOOT_SMOKE_EFFECT,
             2000,
             "the shoot-smoke effect the dispenser's own playAnimation speaks"
+        );
+        assert_eq!(
+            SHOOT_WHITE_SMOKE_EFFECT,
+            2010,
+            "the white-smoke effect the crafter's own eject speaks"
         );
         assert_eq!(
             SPLASH_POTION_EFFECT,

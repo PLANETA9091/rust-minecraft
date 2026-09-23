@@ -21642,6 +21642,73 @@ impl App {
         }
     }
 
+    /// THE WHITE-SMOKE CLOUD'S OWN WIRE LANE (javap `LevelEventHandler`
+    /// case 2010 — offset 919 — over the 26.2 jar): the server's own
+    /// crafter the event broadcast, the SAME `shootParticles` walk the
+    /// 2000 word wears (the ten-puff loop the facing decode the raw
+    /// direction id opens), the `ParticleTypes.WHITE_SMOKE` type the
+    /// one arg's delta — the puffs the WHITE kind's lavender-white the
+    /// `WhiteSmokeParticle` ctor's own constants carry.
+    pub fn live_white_smoke_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireWhiteSmokeEvent>,
+    ) {
+        for ev in events {
+            self.play_white_smoke(ev.x, ev.y, ev.z, ev.data);
+        }
+    }
+
+    /// THE WHITE-SMOKE WALK (javap the case-2010 arm verbatim — the
+    /// shared `shootParticles` helper the smoke lane's own walk
+    /// mirrors): the facing the `abs(irem(data, 6))` fold resolves,
+    /// the ten puffs the `bipush 10` loop keeps (the same position
+    /// folds the velocity the smoke lane's own walk speaks), the
+    /// `shoot_white_smoke_puff` ctor the tint override the constants
+    /// carry (the base's own tint draw the stream still spends — the
+    /// draw chain the smoke's own helper mirrors). No sound the case
+    /// speaks, no world edit the block updates own — the visual alone
+    /// the broadcast renders.
+    fn play_white_smoke(&mut self, x: i32, y: i32, z: i32, data: i32) {
+        const STEPS: [(f64, f64, f64); 6] = [
+            (0.0, -1.0, 0.0), // DOWN
+            (0.0, 1.0, 0.0),  // UP
+            (0.0, 0.0, -1.0), // NORTH
+            (0.0, 0.0, 1.0),  // SOUTH
+            (-1.0, 0.0, 0.0), // WEST
+            (1.0, 0.0, 0.0),  // EAST
+        ];
+        // THE FACING'S OWN DECODE (from3DDataValue: `BY_3D_DATA[abs
+        // (data % 6)]` — the irem the sign keeps, the abs the negative
+        // words fold)
+        let idx = (data % 6).unsigned_abs() as usize;
+        let (dx, dy, dz) = STEPS[idx];
+        for _ in 0..10 {
+            let d10 = self.level_ambient_rng.next_f64() * 0.2 + 0.01;
+            // THE POSITION FOLDS (the bytecode's own operand order —
+            // getX() + dx*0.6 FIRST, then the +0.5 center, then the
+            // +dx*0.01 step, the crosswise jitter the tail adds)
+            let px = f64::from(x) + dx * 0.6 + 0.5 + dx * 0.01
+                + (self.level_ambient_rng.next_f64() - 0.5) * dz * 0.5;
+            let py = f64::from(y) + dy * 0.6 + 0.5 + dy * 0.01
+                + (self.level_ambient_rng.next_f64() - 0.5) * dy * 0.5;
+            let pz = f64::from(z) + dz * 0.6 + 0.5 + dz * 0.01
+                + (self.level_ambient_rng.next_f64() - 0.5) * dx * 0.5;
+            let vx = dx * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
+            let vy = dy * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
+            let vz = dz * d10 + self.level_ambient_rng.next_gaussian() * 0.01;
+            let puff = crate::particles::shoot_white_smoke_puff(
+                px,
+                py,
+                pz,
+                vx,
+                vy,
+                vz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(puff);
+        }
+    }
+
     /// THE MOB-SPAWN CLOUD'S OWN WIRE LANE (javap `LevelEventHandler`
     /// case 2004 — offset 1689 — over the 26.2 jar): the server's own
     /// spawner the event broadcast, the twenty SMOKE + FLAME pairs the
@@ -45165,6 +45232,110 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_shoot_smoke_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_white_smoke_word_the_ten_puff_walk_wears() {
+        // THE WHITE-SMOKE EFFECT'S OWN WIRE LANE (javap case 2010 →
+        // offset 919 → the SAME `shootParticles` walk the 2000 word
+        // wears): the ten puffs the `bipush 10` loop fires, the
+        // WHITE_SMOKE type the provider answers — the ONE delta the
+        // `WhiteSmokeParticle` ctor's tail speaks: the lavender-white
+        // constants the r/g/b putfield trio overrides (the cp
+        // #12/#17/#21 decode), the base's own tint draw the stream
+        // still spends, the same physics the ash ctor's chain wears —
+        // and NO sound the case speaks (the silence the smoke lane's
+        // own stream keeps).
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE EAST WORD (the crafter's own facing — data 5 the
+        // `get3DDataValue` broadcast carries)
+        app.live_white_smoke_events_updated(vec![crate::world_view::WireWhiteSmokeEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+            data: 5,
+        }]);
+        assert_eq!(app.particles.len(), 10, "the bipush 10 the loop keeps");
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the smoke render path the white kind shares"
+            );
+            // THE ONE DELTA (the ctor's tint override — the constants
+            // the cp trio decodes, the grey the base's own draw the
+            // r/g/b putfield trio kills)
+            assert!((p.col[0] - 0.7294118).abs() < 1e-9, "the r the cp #12 keeps");
+            assert!((p.col[1] - 0.69411766).abs() < 1e-9, "the g the cp #17 keeps");
+            assert!((p.col[2] - 0.7607843).abs() < 1e-9, "the b the cp #21 keeps");
+            // the same anchor fold the east word's smoke walk speaks
+            assert!(
+                (p.x - (10.0 + 1.0 * 0.6 + 0.5 + 1.0 * 0.01)).abs() < 1e-9,
+                "the east anchor the facing fold places"
+            );
+            assert!(
+                (p.y - (20.0 + 0.5)).abs() < 1e-9,
+                "the center the zero Y step keeps"
+            );
+            assert!(
+                p.z > 10.0 + 0.5 - 0.25 - 1e-9 && p.z < 10.0 + 0.5 + 0.25,
+                "the crosswise jitter the X step scales"
+            );
+            assert!(p.vx > 0.0, "the eastward shoot the dir*d10 fold gives");
+            assert!(
+                (p.gravity + 0.1).abs() < 1e-9,
+                "the −0.1 gravity the ash ctor passes"
+            );
+            assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction the ctor sets");
+            // the lifetime band the base-8 fold gives (8..40 ticks the
+            // 8/(r*0.8+0.2) law speaks — the SAME band the smoke kind
+            // wears, the two ctors' identical bipush 8 the jar pins)
+            assert!(p.lifetime >= 8 && p.lifetime <= 40, "the base-8 band the fold speaks");
+        }
+        // THE DRAW-CHAIN LAW (the white chain the smoke chain's own
+        // count speaks — the two walks the IDENTICAL fresh streams
+        // replay, the post-walk states the same draw count keeps: the
+        // dead tint draw the white's override kills the exact position
+        // the smoke's own grey draw spends, the six f32s + the
+        // gaussians the shared chain per puff spends)
+        let mut smoke_stream = crate::drops::Lcg::new(31);
+        let mut white_stream = crate::drops::Lcg::new(31);
+        app.particles.clear();
+        let saved_rng = std::mem::replace(&mut app.level_ambient_rng, smoke_stream);
+        app.play_shoot_smoke(0, 0, 0, 5);
+        smoke_stream = app.level_ambient_rng;
+        app.level_ambient_rng = white_stream;
+        app.play_white_smoke(0, 0, 0, 5);
+        white_stream = app.level_ambient_rng;
+        app.level_ambient_rng = saved_rng;
+        assert_eq!(
+            smoke_stream.next(),
+            white_stream.next(),
+            "the same draw count the two chains keep"
+        );
+        // THE NEGATIVE WORD (data -5): the `abs(irem(data, 6))` fold
+        // the from3DDataValue walk answers — the same EAST facing the
+        // fold speaks (irem -5 % 6 = -5, abs = 5)
+        app.particles.clear();
+        app.play_white_smoke(0, 0, 0, -5);
+        assert_eq!(app.particles.len(), 10);
+        assert!(
+            (app.particles[0].x - (0.0 + 1.0 * 0.6 + 0.5 + 1.0 * 0.01)).abs() < 1e-9,
+            "the same east anchor the negative word folds to"
+        );
+        // THE OUT-OF-RANGE WORD (data 11): the fold answers 11 % 6 = 5
+        // — the same EAST (the vanilla's own modulo)
+        app.particles.clear();
+        app.play_white_smoke(3, 4, 5, 11);
+        assert_eq!(app.particles.len(), 10);
+        assert!(
+            (app.particles[0].x - (3.0 + 1.0 * 0.6 + 0.5 + 1.0 * 0.01)).abs() < 1e-9,
+            "the same east anchor the out-of-range word folds to"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_white_smoke_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

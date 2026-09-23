@@ -303,6 +303,17 @@ pub struct WorldModel {
     /// (the `globalLevelEvent` switch the 2000 id never carries — the
     /// positioned lane the case's own arm wears).
     pub shoot_smoke_events: Vec<ShootSmokeArm>,
+    /// THE WHITE-SMOKE EFFECT'S OWN MAILBOX (the Level Event packet's
+    /// sibling vocabulary word — [`mc_protocol::play::SHOOT_WHITE_SMOKE_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 919 speaks,
+    /// the 2000 word's own `shootParticles` walk the WHITE_SMOKE type
+    /// the one arg's delta wears): the server's own crafter the event
+    /// carries — the anchor + the raw direction id the arms carry (the
+    /// facing fold the render lane's own law speaks, the smoke arm's
+    /// own layering). The GLOBAL route the arm never enqueues (the
+    /// `globalLevelEvent` switch the 2010 id never carries — the
+    /// positioned lane the case's own arm wears).
+    pub white_smoke_events: Vec<WhiteSmokeArm>,
     /// THE SPLASH-POTION EFFECT'S OWN MAILBOX (the Level Event packet's
     /// next vocabulary word — [`mc_protocol::play::SPLASH_POTION_EFFECT`]
     /// and [`mc_protocol::play::INSTANT_SPLASH_EFFECT`] the case the
@@ -514,6 +525,26 @@ pub struct ShootSmokeArm {
     /// The direction id (the `get3DDataValue` word the dispenser's
     /// facing speaks — 0..5 the `DOWN/UP/NORTH/SOUTH/WEST/EAST` band,
     /// the out-of-range words the `abs(irem(data, 6))` fold rides).
+    pub data: i32,
+}
+
+/// One pending WHITE-SMOKE arm — the Level Event packet's sibling
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::white_smoke_events`]). The SAME shape the smoke arm
+/// wears (the 26.2 case the one `shootParticles` walk both ids call —
+/// the `ParticleTypes.WHITE_SMOKE` type the one arg's delta): the DATA
+/// word rides raw (the direction id the render lane's
+/// `Direction.from3DDataValue` fold resolves — the smoke arm's own
+/// layering), the anchor verbatim. The white puff's own tint the
+/// render lane's constants carry — the transport's honesty the raw
+/// word keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WhiteSmokeArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The direction id (the `get3DDataValue` word the crafter's
+    /// facing speaks — the smoke arm's own band the fold rides).
     pub data: i32,
 }
 
@@ -980,6 +1011,7 @@ impl WorldModel {
             growth_events: Vec::new(),
             break_events: Vec::new(),
             shoot_smoke_events: Vec::new(),
+            white_smoke_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -1141,6 +1173,13 @@ impl WorldModel {
     /// ten-puff smoke walk from the anchor + the direction id.
     pub fn drain_shoot_smoke_events(&mut self) -> Vec<ShootSmokeArm> {
         std::mem::take(&mut self.shoot_smoke_events)
+    }
+
+    /// The white-smoke effect's mailbox's own drain (the same walk the
+    /// smoke arm's drain speaks — the arms the shipped refresh's own
+    /// projection empties).
+    pub fn drain_white_smoke_events(&mut self) -> Vec<WhiteSmokeArm> {
+        std::mem::take(&mut self.white_smoke_events)
     }
 
     /// The splash-potion effect's mailbox's own drain (the same walk the
@@ -1354,6 +1393,7 @@ impl WorldModel {
                 // (the same walk — the old level's 2000 words never
                 // puff again)
                 self.shoot_smoke_events.clear();
+                self.white_smoke_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -2065,6 +2105,23 @@ impl WorldModel {
                     // opens). No sound the case speaks — the ten-puff
                     // burst the smoke lane's own stream alone carries.
                     self.shoot_smoke_events.push(ShootSmokeArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::SHOOT_WHITE_SMOKE_EFFECT && !ev.global {
+                    // THE WHITE-SMOKE EFFECT'S OWN ARM (javap the case
+                    // offset 919 — the positioned route the GLOBAL
+                    // switch never banks): the SAME `shootParticles`
+                    // walk the 2000 word wears (the ten-puff loop the
+                    // WHITE_SMOKE type the one arg's delta speaks), the
+                    // anchor + the raw direction id the mailbox carries
+                    // (the smoke arm's own layering). No sound the case
+                    // speaks — the ten-puff burst the white lane's own
+                    // stream alone carries.
+                    self.white_smoke_events.push(WhiteSmokeArm {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
@@ -6180,6 +6237,85 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.break_events.is_empty(), "the mailbox dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_white_smoke_word_the_facing_rides() {
+        // THE WHITE-SMOKE EFFECT'S OWN ARM (javap the case offset 919
+        // — the positioned route the GLOBAL switch never banks): the
+        // SAME `shootParticles` walk the 2000 word wears (the
+        // WHITE_SMOKE type the one arg's delta), the data word the
+        // DIRECTION id carries (`Direction.from3DDataValue` the render
+        // lane's own read), the anchor + the raw id the mailbox keeps
+        // verbatim, the drain ships the arms exactly once, and the
+        // Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the EAST-facing crafter's own word (get3DDataValue 5 the
+        // eject's broadcast carries): the arm rides the raw id
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_WHITE_SMOKE_EFFECT,
+            x: -40,
+            y: 12,
+            z: 77,
+            data: 5,
+            global: false,
+        })));
+        assert_eq!(m.white_smoke_events.len(), 1, "the arm rides");
+        assert_eq!(m.white_smoke_events[0].x, -40);
+        assert_eq!(m.white_smoke_events[0].y, 12);
+        assert_eq!(m.white_smoke_events[0].z, 77);
+        assert_eq!(
+            m.white_smoke_events[0].data, 5,
+            "the raw direction id the render lane folds"
+        );
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2010 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_WHITE_SMOKE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 5,
+            global: true,
+        })));
+        assert_eq!(m.white_smoke_events.len(), 1, "the global word never arms");
+        // the second word arms beside the first (the mailbox keeps the
+        // wire order — the DOWN-facing puff the data-0 word carries)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_WHITE_SMOKE_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.white_smoke_events.len(), 2);
+        assert_eq!(m.white_smoke_events[1].data, 0);
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_white_smoke_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert!(m.white_smoke_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_white_smoke_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SHOOT_WHITE_SMOKE_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 3,
+            global: false,
+        })));
+        assert_eq!(m.white_smoke_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(m.white_smoke_events.is_empty(), "the mailbox dies with the level");
     }
 
     #[test]
