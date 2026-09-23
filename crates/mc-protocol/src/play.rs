@@ -1367,6 +1367,26 @@ pub const WATER_EVAPORATING_EFFECT: i32 = 2009;
 /// the case's own arm wears).
 pub const DRAGON_BLOCK_BREAK_EFFECT: i32 = 2008;
 
+/// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
+/// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
+/// ONE `playLocalSound(pos, DISPENSER_DISPENSE, BLOCKS, 1.0F, 1.0F,
+/// false)` walk the case body spends — the `fconst_1` pair the
+/// volume/pitch both carry (no randoms the fixed fold speaks), the
+/// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve places,
+/// the distance-delay flag false the immediate voice keeps, the data
+/// word the case's own body never reads (no `iload_3` the arm's
+/// bytecode speaks). NO particles the case speaks — the voice alone
+/// the broadcast renders. The server's own dispenser speaks it —
+/// `DefaultDispenseItemBehavior.playDefaultSound`'s `sipush 1000,
+/// BlockSource.pos, iconst_0` the levelEvent call the bytecode pins
+/// (the default behavior's own eject the sound the walk's own tail
+/// broadcasts; the empty-slot `sipush 1001` FAIL word the sibling
+/// case answers). The GLOBAL route the `globalLevelEvent` switch
+/// never banks (the 1023/1028/1038 trio the band alone carries —
+/// the positioned lane the case's own arm wears).
+pub const SOUND_DISPENSER_DISPENSE_EFFECT: i32 = 1000;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10542,6 +10562,11 @@ mod tests {
             DRAGON_BLOCK_BREAK_EFFECT,
             2008,
             "the dragon block break the dragon's own checkWalls speaks"
+        );
+        assert_eq!(
+            SOUND_DISPENSER_DISPENSE_EFFECT,
+            1000,
+            "the dispenser dispense voice the default behavior's own tail speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

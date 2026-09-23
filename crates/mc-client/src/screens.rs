@@ -21893,6 +21893,45 @@ impl App {
         }
     }
 
+    /// THE DISPENSER-DISPENSE WIRE LANE (javap `LevelEventHandler`
+    /// case 1000 — offset 776 — over the 26.2 jar): the server's own
+    /// dispenser the eject's voice broadcasts, the ONE
+    /// `playLocalSound(pos, DISPENSER_DISPENSE, BLOCKS, 1.0F, 1.0F,
+    /// false)` walk the case body spends — the click voice alone the
+    /// broadcast renders (no particles the case speaks, no draw the
+    /// fixed fold costs).
+    pub fn live_dispenser_dispense_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireDispenserDispenseEvent>,
+    ) {
+        for ev in events {
+            self.play_dispenser_dispense(ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE DISPENSER-DISPENSE WALK (javap the case-1000 arm
+    /// verbatim — offset 776): the BLOCK CENTER the
+    /// `playLocalSound(BlockPos, ...)` resolve places (the +0.5
+    /// trio the vanilla client answers), the `fconst_1` pair the
+    /// volume/pitch both carry (no randoms the fixed fold speaks —
+    /// the level ambient stream the walk never spends), the
+    /// distance-delay flag false the immediate voice keeps.
+    fn play_dispenser_dispense(&mut self, x: i32, y: i32, z: i32) {
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "block.dispenser.dispense",
+            1.0,
+            1.0,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE DRAGON BLOCK-BREAK WIRE LANE (javap `LevelEventHandler`
     /// case 2008 — offset 3440 — over the 26.2 jar): the server's
     /// own dragon the event broadcast, the ONE EXPLOSION puff the
@@ -46085,6 +46124,129 @@ cow_sound_variant: None,
         app.particles.clear();
         app.live_dragon_block_break_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_dispenser_word_the_center_voice_wears() {
+        // THE DISPENSER-DISPENSE'S OWN WIRE LANE (javap case 1000 →
+        // offset 776 over the 26.2 jar): the ONE `playLocalSound(pos,
+        // DISPENSER_DISPENSE, BLOCKS, 1.0F, 1.0F, false)` walk the
+        // case body spends — the click voice the fixed `fconst_1`
+        // pair carries, the BLOCK CENTER the playLocalSound(BlockPos,
+        // ...) resolve places, NO PARTICLES the case speaks (the
+        // voice alone the broadcast renders), the level ambient
+        // stream the fixed fold never spends.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the swap banks — no
+        // draw the fixed 1.0/1.0 fold costs, the `fconst_1` pair the
+        // randoms never ride)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(1234));
+        let particles_before = app.particles.len();
+        app.live_dispenser_dispense_events_updated(vec![
+            crate::world_view::WireDispenserDispenseEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        assert_eq!(
+            spent,
+            crate::drops::Lcg::new(1234),
+            "the fixed fold the ambient stream never spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "no particles the case body speaks"
+        );
+        // THE VOICE (the case's own body the click speaks — the
+        // volume/pitch BOTH the fixed 1.0 the `fconst_1` pair keeps,
+        // the file pick the engine's own LCG banks)
+        if sounds_loaded() {
+            let voices = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.dispense @"))
+                .count();
+            assert_eq!(voices, 1, "the ONE playLocalSound the case body keeps");
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.dispenser.dispense @"))
+                .expect("the click voice the case speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.0).abs() < 1e-6,
+                "the fixed pitch the fconst_1 keeps: {pitch}"
+            );
+            let volume: f32 = voice
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 1.0).abs() < 1e-6,
+                "the fixed volume the fconst_1 keeps: {volume}"
+            );
+        }
+        // THE SECOND ARM (the next dispenser's eject the same walk
+        // wears — each word ships exactly one voice)
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.dispense @"))
+                .count();
+            app.live_dispenser_dispense_events_updated(vec![
+                crate::world_view::WireDispenserDispenseEvent {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                },
+            ]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.dispense @"))
+                .count();
+            assert_eq!(
+                voices_after,
+                voices_before + 1,
+                "each arm exactly one voice the walk keeps"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.dispense @"))
+                .count();
+            app.live_dispenser_dispense_events_updated(vec![]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.dispense @"))
+                .count();
+            assert_eq!(
+                voices_after, voices_before,
+                "the empty mailbox ships nothing"
+            );
+        } else {
+            app.live_dispenser_dispense_events_updated(vec![]);
+        }
     }
 
     #[test]

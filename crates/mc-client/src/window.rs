@@ -172,6 +172,7 @@ fn run_join(
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
+                Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -266,6 +267,7 @@ fn run_join(
             view.model.drain_dragon_fireball_splash_events();
             view.model.drain_water_evaporating_events();
             view.model.drain_dragon_block_break_events();
+            view.model.drain_dispenser_dispense_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
@@ -884,6 +886,7 @@ fn run_join(
                             view.model.drain_dragon_fireball_splash_events();
                             view.model.drain_water_evaporating_events();
                             view.model.drain_dragon_block_break_events();
+                            view.model.drain_dispenser_dispense_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
                             if live_tx
@@ -1046,6 +1049,14 @@ fn run_join(
                                     // rides exactly one shipped refresh)
                                     upd.water_evaporating_events,
                                     upd.dragon_block_break_events,
+                                    // the dispenser-dispense voice's arms
+                                    // ride beside the dragon's — the 1000
+                                    // words the server's own dispenser
+                                    // broadcasts stream to the sound lane
+                                    // (the click voice the render lane's own
+                                    // law folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.dispenser_dispense_events,
                                     // the splash-potion effect's arms ride
                                     // with them — the 2002/2007 words the
                                     // server's own potion impacts broadcast
@@ -1210,6 +1221,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
+                Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -1761,6 +1773,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     dragon_fireball_splash_events,
                     water_evaporating_events,
                     dragon_block_break_events,
+                    dispenser_dispense_events,
                     splash_events,
                     mob_spawn_events,
                 )) => {
@@ -1880,6 +1893,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     app.live_dragon_fireball_splash_events_updated(dragon_fireball_splash_events);
                     app.live_water_evaporating_events_updated(water_evaporating_events);
                     app.live_dragon_block_break_events_updated(dragon_block_break_events);
+                    // the dispenser-dispense voice's lane beside the
+                    // dragon's: the 1000 words the server's own dispenser
+                    // broadcasts land at their own anchors (the click
+                    // voice the sound lane's own law folds at the block
+                    // center — the fixed 1.0/1.0 pair the `fconst_1`
+                    // bytecode pair speaks, the vanilla client answers
+                    // the same packet with)
+                    app.live_dispenser_dispense_events_updated(dispenser_dispense_events);
                     // the splash-potion effect's lane beside the smoke's:
                     // the 2002/2007 words the server's own potion impacts
                     // broadcast land at their own anchors (the shard burst
