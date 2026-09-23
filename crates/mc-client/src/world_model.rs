@@ -316,6 +316,18 @@ pub struct WorldModel {
     /// `globalLevelEvent` switch the 2002/2007 ids never carry — the
     /// positioned lane the case's own arm wears).
     pub splash_events: Vec<SplashArm>,
+    /// THE MOB-SPAWN CLOUD'S OWN MAILBOX (the Level Event packet's next
+    /// vocabulary word — [`mc_protocol::play::MOB_SPAWN_EFFECT`] the
+    /// case the `LevelEventHandler.levelEvent` offset 1689 speaks:
+    /// the server's own spawner the event broadcast, the twenty
+    /// SMOKE + FLAME pairs the `bipush 20` loop fires at the full-block
+    /// jitter spots the `(nextDouble() - 0.5) * 2.0` fold places). The
+    /// arms the anchor carry — the data word the case NEVER reads (no
+    /// `iload_3` read the arm's own bytecode speaks, the arm's body the
+    /// anchor alone needs). The GLOBAL route the arm never enqueues
+    /// (the `globalLevelEvent` switch the 2004 id never carries — the
+    /// positioned lane the case's own arm wears).
+    pub mob_spawn_events: Vec<MobSpawnArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -528,6 +540,21 @@ pub struct SplashArm {
     /// branch answers — the `spell_N` sprite set the flag's true arm
     /// picks, the `effect_N` set the regular splash rides).
     pub instant: bool,
+}
+
+/// One pending MOB-SPAWN arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::mob_spawn_events`]). The DATA word the arm
+/// deliberately absent — the 26.2 case's raw walk never reads it
+/// (no `iload_3` the arm's own bytecode speaks, the zero the
+/// spawner's own tail passes the walk ignores), the twenty
+/// SMOKE + FLAME pairs the anchor alone places. The anchor
+/// verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MobSpawnArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One pending ARROW position sync — the Entity Position Sync packet's
@@ -954,6 +981,7 @@ impl WorldModel {
             break_events: Vec::new(),
             shoot_smoke_events: Vec::new(),
             splash_events: Vec::new(),
+            mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
             display_slots: std::collections::HashMap::new(),
             scores: std::collections::HashMap::new(),
@@ -1122,6 +1150,15 @@ impl WorldModel {
     /// the raw color word + the instant flag.
     pub fn drain_splash_events(&mut self) -> Vec<SplashArm> {
         std::mem::take(&mut self.splash_events)
+    }
+
+    /// The mob-spawn cloud's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 2004 words
+    /// the Level Event packet armed, the render lane's own law folds
+    /// the twenty SMOKE + FLAME pairs from the anchor alone (the data
+    /// word the case's own body never reads).
+    pub fn drain_mob_spawn_events(&mut self) -> Vec<MobSpawnArm> {
+        std::mem::take(&mut self.mob_spawn_events)
     }
 
     /// The arrows' sync mailbox's own drain (the same walk the voices'
@@ -1321,6 +1358,10 @@ impl WorldModel {
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
                 self.splash_events.clear();
+                // the mob-spawn cloud's mailbox dies with the level
+                // (the same walk — the old level's 2004 words never
+                // puff again)
+                self.mob_spawn_events.clear();
                 self.pin_dimension(&spawn.dimension);
                 true
             }
@@ -2048,6 +2089,22 @@ impl WorldModel {
                         z: ev.z,
                         data: ev.data,
                         instant: ev.effect == mc_protocol::INSTANT_SPLASH_EFFECT,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::MOB_SPAWN_EFFECT && !ev.global {
+                    // THE MOB-SPAWN CLOUD'S OWN ARM (javap the case
+                    // offset 1689 — the positioned route the GLOBAL
+                    // switch never banks): the anchor the mailbox
+                    // carries, the data word the case's own body NEVER
+                    // reads (no `iload_3` the arm's bytecode speaks —
+                    // the zero the spawner's own tail passes the walk
+                    // ignores). No sound the case speaks — the twenty
+                    // SMOKE + FLAME pairs the render lane's own stream
+                    // alone carries.
+                    self.mob_spawn_events.push(MobSpawnArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
                     });
                     true
                 } else {
@@ -6204,6 +6261,80 @@ mod tests {
         })));
         assert!(
             m.shoot_smoke_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_spawn_word_the_puff_rides() {
+        // THE MOB-SPAWN CLOUD'S OWN ARM (javap the case offset 1689 —
+        // the positioned route the GLOBAL switch never banks): the
+        // anchor the mailbox keeps verbatim, the data word the case's
+        // own body NEVER reads (no `iload_3` the arm's bytecode speaks
+        // — the arm the anchor alone carries)
+        let mut m = crate::world_model::WorldModel::new();
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::MOB_SPAWN_EFFECT,
+            x: -40,
+            y: 12,
+            z: 77,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.mob_spawn_events.len(), 1, "the arm rides");
+        assert_eq!(m.mob_spawn_events[0].x, -40);
+        assert_eq!(m.mob_spawn_events[0].y, 12);
+        assert_eq!(m.mob_spawn_events[0].z, 77);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2004 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::MOB_SPAWN_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.mob_spawn_events.len(), 1, "the global word never arms");
+        // the second word arms beside the first (the mailbox keeps the
+        // wire order — the data word the walk never reads, any value
+        // the same anchor-only arm speaks)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::MOB_SPAWN_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 9999,
+            global: false,
+        })));
+        assert_eq!(m.mob_spawn_events.len(), 2);
+        assert_eq!(m.mob_spawn_events[1].x, 1);
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_mob_spawn_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert!(m.mob_spawn_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_mob_spawn_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::MOB_SPAWN_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.mob_spawn_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.mob_spawn_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

@@ -446,6 +446,13 @@ pub struct SnapshotView {
     /// worker's own drain empties the mailbox after), the render lane's
     /// own law folds the shard burst + the spell ring + the glass voice.
     pub splash_events: Vec<WireSplashEvent>,
+    /// The mob-spawn cloud's PENDING ARMS — the Level Event mailbox the
+    /// model kept (the 2004 words the server's own spawner broadcasts,
+    /// [`mc_protocol::play::MOB_SPAWN_EFFECT`] the vocabulary speaks):
+    /// shipped once with the refresh that carried them (the worker's
+    /// own drain empties the mailbox after), the render lane's own law
+    /// folds the twenty SMOKE + FLAME pairs.
+    pub mob_spawn_events: Vec<WireMobSpawnEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -535,6 +542,19 @@ pub struct WireSplashEvent {
     pub z: i32,
     pub data: i32,
     pub instant: bool,
+}
+
+/// One wire MOB-SPAWN arm — the Level Event packet's own landing
+/// (the 2004 words the server's own spawner broadcasts,
+/// [`mc_protocol::play::MOB_SPAWN_EFFECT`] the render lane speaks):
+/// the anchor, verbatim (the data word the case's own body never
+/// reads — the twenty SMOKE + FLAME pairs the render lane folds from
+/// the anchor alone).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireMobSpawnEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// The DisplaySlot id the sidebar renders from (the
@@ -2333,6 +2353,9 @@ pub fn materialize_snapshot_view(
         // and no splash words (the join snapshot carries no 2002/2007
         // traffic — the empty mailbox the render lane skips)
         splash_events: Vec::new(),
+        // and no spawn words (the join snapshot carries no 2004
+        // traffic — the empty mailbox the render lane skips)
+        mob_spawn_events: Vec::new(),
     }
 }
 
@@ -2733,6 +2756,20 @@ impl LiveView {
                 instant: arm.instant,
             })
             .collect();
+        // the mob-spawn cloud's own projection (the mailbox verbatim
+        // — the anchor the arms carry, the render lane's own law
+        // reads): each 2004 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let mob_spawn_events = self
+            .model
+            .mob_spawn_events
+            .iter()
+            .map(|arm| WireMobSpawnEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the window-0 store's own projection rides every refresh —
         // the inventory screen follows the store exactly like the
         // hand and the HUD's row do (the pose-less arm included)
@@ -2827,6 +2864,10 @@ impl LiveView {
                 // arm too — the 2002/2007 words are the connection's
                 // own traffic, not the pose's
                 splash_events,
+                // the mob-spawn cloud's arms ride the pose-less arm
+                // too — the 2004 words are the connection's own
+                // traffic, not the pose's
+                mob_spawn_events,
             };
         };
         let origin = snapshot_window_origin(player, self.side);
@@ -2905,6 +2946,10 @@ impl LiveView {
             // the 2002/2007 words follow the mailbox exactly like the
             // smoke's own arms do
             splash_events,
+            // the mob-spawn cloud's arms ride every refresh too — the
+            // 2004 words follow the mailbox exactly like the splash's
+            // own arms do
+            mob_spawn_events,
         }
     }
 }

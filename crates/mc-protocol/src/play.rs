@@ -1235,6 +1235,20 @@ pub const SPLASH_POTION_EFFECT: i32 = 2002;
 /// never banks.
 pub const INSTANT_SPLASH_EFFECT: i32 = 2007;
 
+/// THE MOB-SPAWN CLOUD'S OWN ID (the 26.2 `LevelEvent` constants class
+/// the client jar banks — `PARTICLES_MOBBLOCK_SPAWN`, the case
+/// `LevelEventHandler.levelEvent` offset 1689 speaks): the server's
+/// own spawner the event broadcast — the `BaseSpawner` walk's
+/// `levelEvent(2004, pos, 0)` the spawn tail speaks — the twenty
+/// SMOKE + FLAME pairs the `bipush 20` loop fires, each pair AT THE
+/// SAME full-block jitter spot the `(nextDouble() - 0.5) * 2.0` fold
+/// places. The DATA word the case NEVER reads (the zero the spawner's
+/// own tail passes the walk's own body ignores — no `iload_3` read
+/// the arm's bytecode speaks). The GLOBAL route the `globalLevelEvent`
+/// switch never banks (the 1023/1028/1038 trio the band alone
+/// carries — the positioned lane the case's own arm wears).
+pub const MOB_SPAWN_EFFECT: i32 = 2004;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10375,6 +10389,11 @@ mod tests {
             INSTANT_SPLASH_EFFECT,
             2007,
             "the instant-splash effect the same arm's branch speaks"
+        );
+        assert_eq!(
+            MOB_SPAWN_EFFECT,
+            2004,
+            "the mob-spawn cloud the spawner's own broadcast speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

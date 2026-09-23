@@ -21642,6 +21642,55 @@ impl App {
         }
     }
 
+    /// THE MOB-SPAWN CLOUD'S OWN WIRE LANE (javap `LevelEventHandler`
+    /// case 2004 — offset 1689 — over the 26.2 jar): the server's own
+    /// spawner the event broadcast, the twenty SMOKE + FLAME pairs the
+    /// `bipush 20` loop fires — each pair AT THE SAME full-block jitter
+    /// spot, the zero velocity args the `dconst_0` trio speaks.
+    pub fn live_mob_spawn_events_updated(&mut self, events: Vec<crate::world_view::WireMobSpawnEvent>) {
+        for ev in events {
+            self.play_mob_spawn(ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE SPAWN WALK (javap the case-2004 arm verbatim): the
+    /// `(getX() + 0.5) + (nextDouble() - 0.5) * 2.0` position fold the
+    /// full-block span jitters (the ±1.0 band around the block's own
+    /// center — the whole cell the vanilla loop sweeps, the operand
+    /// order the bytecode's own dmul/dadd pairs keep), the three
+    /// nextDouble draws per iteration the px/py/pz order consumes,
+    /// then the SMOKE chain and the FLAME chain the SAME spot answers
+    /// (the zero speed args the smoke's `xd * 0.1 + 0.0` and the
+    /// flame's `xd * 0.01 + 0.0` folds ride — the exact zero-arg walks
+    /// the torch's ambient pair already banks). The data word the
+    /// walk never reads (the arm's own body the anchor alone needs).
+    fn play_mob_spawn(&mut self, x: i32, y: i32, z: i32) {
+        for _ in 0..20 {
+            // THE POSITION FOLDS (the bytecode's own operand order —
+            // the +0.5 center FIRST, then the (draw − 0.5) * 2.0 sweep)
+            let px = f64::from(x) + 0.5 + (self.level_ambient_rng.next_f64() - 0.5) * 2.0;
+            let py = f64::from(y) + 0.5 + (self.level_ambient_rng.next_f64() - 0.5) * 2.0;
+            let pz = f64::from(z) + 0.5 + (self.level_ambient_rng.next_f64() - 0.5) * 2.0;
+            // THE PAIR (the SMOKE addParticle first, the FLAME second —
+            // the case's own call order the stream's own draws keep,
+            // both AT the same spot the zero velocity args ride)
+            let smoke = crate::particles::torch_smoke(
+                px,
+                py,
+                pz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(smoke);
+            let flame = crate::particles::torch_flame(
+                px,
+                py,
+                pz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(flame);
+        }
+    }
+
     /// THE SPLASH-POTION EFFECT'S OWN WIRE LANE (javap `LevelEventHandler`
     /// case 2002 — the same arm offset 1199 the 2007 word shares — over
     /// the 26.2 jar): the server's own potion impacts the event
@@ -45116,6 +45165,107 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_shoot_smoke_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_spawn_word_the_forty_particle_walk_wears() {
+        // THE MOB-SPAWN CLOUD'S OWN WIRE LANE (javap case 2004 →
+        // offset 1689 over the 26.2 jar): the twenty SMOKE + FLAME
+        // pairs the `bipush 20` loop fires, each pair AT THE SAME
+        // full-block jitter spot the `(nextDouble() - 0.5) * 2.0` fold
+        // places, the zero velocity args the `dconst_0` trio speaks,
+        // the ctor chains the torch's ambient pair already banks.
+        let mut app = App::new(2);
+        app.enter_world();
+        app.live_mob_spawn_events_updated(vec![crate::world_view::WireMobSpawnEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            40,
+            "the bipush 20 the pair loop keeps (20 x SMOKE + FLAME)"
+        );
+        for i in 0..20 {
+            // THE PAIR ORDER (the SMOKE addParticle first, the FLAME
+            // second — the case's own call order the vec's own order
+            // keeps)
+            let smoke = &app.particles[i * 2];
+            let flame = &app.particles[i * 2 + 1];
+            assert!(
+                matches!(smoke.kind, crate::particles::ParticleKind::Smoke),
+                "the SMOKE type the provider answers first"
+            );
+            assert!(
+                matches!(flame.kind, crate::particles::ParticleKind::Flame),
+                "the FLAME type the provider answers second"
+            );
+            // THE PAIR'S OWN SPOT (the same px/py/pz the fold places —
+            // the flame's ctor jitter the ±0.05 band adds, the smoke's
+            // position the fold verbatim keeps)
+            assert!(
+                (smoke.x - flame.x).abs() < 0.06,
+                "the shared spot the pair's own fold keeps (the flame's ctor jitter alone)"
+            );
+            assert!(
+                (smoke.y - flame.y).abs() < 0.06,
+                "the shared spot the pair's own fold keeps"
+            );
+            assert!(
+                (smoke.z - flame.z).abs() < 0.06,
+                "the shared spot the pair's own fold keeps"
+            );
+            // THE FULL-BLOCK SWEEP (the ±1.0 band around the block's
+            // own center — the whole cell the vanilla loop sweeps)
+            for p in [smoke, flame] {
+                assert!(
+                    p.x > 9.5 && p.x < 11.5,
+                    "the X sweep the (draw - 0.5) * 2.0 fold gives"
+                );
+                assert!(
+                    p.y > 19.5 && p.y < 21.5,
+                    "the Y sweep the same fold gives"
+                );
+                assert!(
+                    p.z > 9.5 && p.z < 11.5,
+                    "the Z sweep the same fold gives"
+                );
+            }
+            // THE ZERO-ARG WALKS (the smoke's drift the ctor spread *
+            // 0.1 fold gives — tiny, with the +0.001 rise the bump
+            // scales to; the flame's the * 0.01 fold's own whisper)
+            assert!(smoke.vx.abs() < 0.02 && smoke.vz.abs() < 0.02, "the smoke's spread whisper the zero args keep");
+            assert!(smoke.vy > -0.009 && smoke.vy < 0.029, "the smoke's rise the +0.1 bump scales to (+0.01, the spread the band sweeps)");
+            assert!(flame.vx.abs() < 0.002 && flame.vz.abs() < 0.002, "the flame's spread whisper the zero args keep");
+            assert!(flame.vy > -0.0009 && flame.vy < 0.0029, "the flame's rise the +0.1 bump scales to (+0.001, the spread the band sweeps)");
+            // THE TWO WALKS' OWN LAWS (the smoke's −0.1 gravity the
+            // ash ctor passes, the flame's none the RisingParticle
+            // never arms; the 0.96 friction both ctors set)
+            assert!((smoke.gravity + 0.1).abs() < 1e-9, "the smoke's gravity the ash ctor passes");
+            assert!((flame.gravity).abs() < 1e-9, "the flame's no-gravity the RisingParticle keeps");
+            assert!((smoke.friction - 0.96).abs() < 1e-9);
+            assert!((flame.friction - 0.96).abs() < 1e-9);
+            // THE TINTS (the smoke's grey the r*0.3 draw, the flame's
+            // white the ctor defaults speak)
+            assert_eq!(smoke.col[0], smoke.col[1], "the smoke's shared grey");
+            assert_eq!(smoke.col[1], smoke.col[2], "the smoke's shared grey");
+            assert!(smoke.col[0] < 0.3, "the r*0.3 scale the draw speaks");
+            assert_eq!(flame.col[0], 1.0, "the flame's white the ctor speaks");
+            assert_eq!(flame.col[1], 1.0, "the flame's white the ctor speaks");
+            assert_eq!(flame.col[2], 1.0, "the flame's white the ctor speaks");
+        }
+        // THE DETERMINISM (the same walk replayed — the fixed-seed
+        // stream the replay speaks, the count the loops alone speak)
+        app.particles.clear();
+        app.play_mob_spawn(4, 5, 6);
+        assert_eq!(app.particles.len(), 40, "the replay the loop answers");
+        // THE DATA WORD THE WALK NEVER READS (the arm the anchor alone
+        // carries — the serve the mailbox's own verbatim keeps; the
+        // data the wire spoke never reaches the walk)
+        app.particles.clear();
+        app.live_mob_spawn_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

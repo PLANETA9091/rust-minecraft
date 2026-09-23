@@ -168,6 +168,7 @@ fn run_join(
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
+                Vec<crate::world_view::WireMobSpawnEvent>,
             ),
             String,
         >,
@@ -256,6 +257,7 @@ fn run_join(
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_splash_events();
+            view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
             let shipped = tx.send((
                 id,
@@ -868,6 +870,7 @@ fn run_join(
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_splash_events();
+                            view.model.drain_mob_spawn_events();
                             if live_tx
                                 .send(Ok((
                                     upd.world,
@@ -1002,6 +1005,14 @@ fn run_join(
                                     // voice the render's own law folds, each
                                     // arm rides exactly one shipped refresh)
                                     upd.splash_events,
+                                    // the spawn cloud's arms ride beside
+                                    // the splash's — the 2004 words the
+                                    // spawner's own broadcast streams to
+                                    // the spawn lane (the twenty SMOKE +
+                                    // FLAME pairs the render's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.mob_spawn_events,
                                 )))
                                 .is_err()
                             {
@@ -1146,6 +1157,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
+                Vec<crate::world_view::WireMobSpawnEvent>,
             ),
             String,
         >,
@@ -1691,6 +1703,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     break_events,
                     shoot_smoke_events,
                     splash_events,
+                    mob_spawn_events,
                 )) => {
                     app.live_view_updated(world, camera, biome, container);
                     // THE GAME-MODE ECHO'S OWN BANK (the audited
@@ -1792,6 +1805,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // own law folds — the potion's splash the vanilla
                     // client answers the same packet with)
                     app.live_splash_events_updated(splash_events);
+                    // the spawn cloud's lane beside the splash's: the
+                    // 2004 words the server's own spawner broadcasts land
+                    // at their own anchors (the twenty SMOKE + FLAME
+                    // pairs the render lane's own law folds — the
+                    // spawner's puff the vanilla client answers the same
+                    // packet with)
+                    app.live_mob_spawn_events_updated(mob_spawn_events);
                     // the scoreboard's lane beside the voices': the
                     // SIDEBAR slot's belief lands verbatim (the rows the
                     // projection sorted and capped — the HUD renders it
