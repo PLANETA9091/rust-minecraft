@@ -7445,11 +7445,57 @@ pub fn spawn_equipment(rng: &mut Lcg) -> Option<&'static str> {
         _ => "iron_shovel",
     })
 }
+/// THE PACK'S OWN SHAPE (the 26.2 plains rows the jar's worldgen json
+/// keeps — the four admitted monster rows spider/zombie/skeleton/
+/// creeper the 4..4 band all wear, the pack-size roll `minCount +
+/// nextInt(1 + maxCount - minCount)` the `+nextInt(1)` always-4
+/// answers — and the cluster cap the `Mob.getMaxSpawnClusterSize`
+/// iconst_4 base keeps, the `isMaxGroupSizeReached` iconst_0 the
+/// never-binding cap the honest no-op keeps).
+pub const MONSTER_PACK_MIN: i32 = 4;
+pub const MONSTER_PACK_MAX: i32 = 4;
+pub const MONSTER_CLUSTER_SIZE: i32 = 4;
 
-/// THE SPAWNER'S ATTEMPT — the MONSTER category's own surface law: a
-/// random ring point, the topmost solid's head-room read, the spawn
-/// lands on the surface (the light/night gate rides the caller — the
-/// client's sky lane owns the celestial clock).
+/// THE SPAWNER'S OWN PACK WALK (javap `NaturalSpawner.
+/// spawnCategoryForPosition` the 26.2 bytecode speaks end to end —
+/// the CREATURE lane's own pack walk [`try_spawn_creatures`] the
+/// same vocabulary already carries, the MONSTER lane the same law
+/// wears): a random ring anchor (the chunk's own random cell the
+/// `getRandomPosWithin` stand-in draws — the ang + the dist the
+/// single-attempt lane's own randoms keep), then the THREE WALKS the
+/// disasm's slot-12 loop speaks (`iconst_3` the walk bound keeps).
+/// EACH WALK re-seeds the anchor x/z (the disasm's slot 13/14 the
+/// walk body's own restore keeps), re-arms the group data (`aconst_
+/// null` the slot-17 the verdict's own death wears) and draws the
+/// PRE-KIND ATTEMPT BUDGET (`Mth.ceil(random.nextFloat() * 4.0F)` —
+/// the ldc #246 the 0..4 span draws, the zero budget the walk the
+/// kind draw never reaches refuses). EACH ATTEMPT rides the ±5
+/// RANDOM WALK (`nextInt(6) - nextInt(6)` per axis, the cumulative
+/// x/z the walk's own locals keep — offsets 112-166), the distance
+/// gate (`isRightDistanceToPlayerAndSpawnPoint`'s `d2 > 576.0` the
+/// dcmpg's strict arm keeps — the walked cell the anchor's own ring
+/// the jitter's drift re-checks), THE KIND'S OWN WEIGHTED DRAW (the
+/// once-per-walk `getRandomSpawnMobAt` the data slot-16 the null arm
+/// keeps — the 390 roll the plains table's admitted rows speak) and
+/// THE PACK-SIZE ROLL the budget's own slot OVERWRITES (offsets
+/// 295-323: `minCount + nextInt(1 + maxCount - minCount)` — the
+/// `istore 18` the same slot the pre-kind budget held, the loop
+/// bound the pack size the walk's own bytecode replaces). The spot's
+/// own rules ride the FIXED anchor y (the walk never rescans — the
+/// terrain step the below-cell refusal wears): the below cell solid,
+/// the two head cells free (the ON_GROUND fold the entity's own box
+/// keeps), the light gate the three-stage law the live grid answers.
+/// The spawn's own tail: the ctor seed, THE SNAP-TO'S OWN YAW
+/// (offsets 397-406: `nextFloat() * 360.0F` — the ldc #313 the
+/// random heading draws), the group-data walk the zombie lane keeps
+/// (the null arm the FIRST member's `getSpawnAsBabyOdds` draw arms —
+/// the Z return the one f32 the verdict spends — the shared `isBaby`
+/// verdict the later members read, the jockey roll B per baby
+/// member, the equipment gate the jockey block's tail rides) and
+/// THE CLUSTER'S OWN TAIL (offsets 468-478: `spawned >=
+/// getMaxSpawnClusterSize()` the return arms — the 4-mob ceiling the
+/// whole pack the walks the cap never passes). Returns the pack's
+/// own count — the empty night the 0 the honest silence keeps.
 pub fn try_spawn(
     mobs: &mut Vec<Zombie>,
     next_id: &mut i32,
@@ -7458,200 +7504,238 @@ pub fn try_spawn(
     world: &World,
     rng: &mut Lcg,
     night: bool,
-) -> bool {
+) -> usize {
     if !night || mobs.len() >= MONSTER_CAP {
-        return false;
+        return 0;
     }
+    // THE ANCHOR (the ring + the surface scan — the same draws the
+    // single-attempt lane kept, the chunk's own random cell the stand-in
+    // speaks; the anchor cell's own air the scan's construction keeps —
+    // the redstone-conductor refusal the vanilla's center read the
+    // scan's own answer carries)
     let ang = rng.next_f64() * std::f64::consts::TAU;
     let dist = SPAWN_MIN_DIST + rng.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
-    let sx = (px + ang.cos() * dist).floor() as i32;
-    let sz = (pz + ang.sin() * dist).floor() as i32;
-    // the topmost solid under the sky (the surface law's own scan)
-    let mut sy: Option<i32> = None;
+    let ax = (px + ang.cos() * dist).floor() as i32;
+    let az = (pz + ang.sin() * dist).floor() as i32;
+    let mut ay: Option<i32> = None;
     for y in (0..world.size_blocks()).rev() {
-        if crate::body::solid(world, sx, y, sz) {
-            sy = Some(y);
+        if crate::body::solid(world, ax, y, az) {
+            ay = Some(y + 1);
             break;
         }
     }
-    let Some(sy) = sy else {
-        return false;
+    let Some(fy) = ay else {
+        return 0;
     };
-    let fy = sy + 1;
-    // the head-room read (the spawn box must fit — the vanilla's own
-    // no-collision rule the spawn speaks)
-    for dy in 0..2 {
-        if crate::body::solid(world, sx, fy + dy, sz) {
-            return false;
-        }
-    }
-    // THE KIND'S OWN WEIGHTED DRAW (javap `NaturalSpawner.
-    // spawnCategoryForPosition` the 26.2 bytecode speaks the ORDER:
-    // the position draws the ring's own randoms keep, the distance
-    // check rides, THEN the `getRandomSpawnMobAt` walk —
-    // `mobsAt(...).getRandom(random)` the WeightedList's cumulative
-    // fold answers; the 26.2 plains table the jar's own worldgen json
-    // keeps — spider 100, zombie 90, zombie_villager 5, zombie_horse
-    // 5, skeleton 100, creeper 100, slime 100, enderman 10, witch 5 —
-    // the rows the client's renderer vocabulary ADMITS the spider, the
-    // zombie, the skeleton AND THE CREEPER are (the creature lane's own
-    // precedent the roll mirrors), the total 390 the nextInt(390)
-    // draws, the vanilla list order the ranges keep: the SPIDER row
-    // FIRST (the [0, 100) range rides), the zombie the [100, 190) band
-    // answers, the skeleton the [190, 290) tail keeps, the creeper the
-    // [290, 390) end wears)
-    let roll = rng.next_int(390);
-    let kind = if roll < 100 {
-        MobKind::Spider
-    } else if roll < 190 {
-        MobKind::Zombie
-    } else if roll < 290 {
-        MobKind::Skeleton
-    } else {
-        MobKind::Creeper
-    };
-    // THE LIGHT GATE (javap `SpawnPlacements.checkSpawnRules` the
-    // `Monster::checkMonsterSpawnRules` row the MONSTER roster's types
-    // wear — the `isDarkEnoughToSpawn` three-stage law the live grid
-    // answers, [`is_dark_enough_to_spawn`] the bytecode's own order
-    // keeps: the kind draw precedes, the pack's mob creation follows,
-    // the refusal the entity and the id the vanilla walk never
-    // spends — the stream the sky draw's own consumption the honest
-    // texture rides). The torch-lit field the spawn NEVER admits, the
-    // midnight surface the vanilla's own probabilistic texture, the
-    // cave-dark cell the every-draw pass.
-    if !is_dark_enough_to_spawn(world, sx, fy, sz, rng) {
-        return false;
-    }
-    let id = *next_id;
-    *next_id += 1;
-    let mut z = Zombie::new(
-        id,
-        sx as f64 + 0.5,
-        fy as f64,
-        sz as f64 + 0.5,
-        (*next_id as u64) << 16 ^ rng.next(),
-    );
-    z.kind = kind;
-    // THE HEALTH'S OWN ATTRIBUTE (javap the per-kind createAttributes
-    // chains the jars speak — the spider's own `add(MAX_HEALTH, 16.0)`
-    // the Spider clinit keeps, the other kinds the ctor's shared
-    // LivingEntity base 20.0 the lanes' existing word keeps)
-    z.health = kind.max_health();
-    // THE SKELETON'S OWN EQUIPMENT (javap `AbstractSkeleton.
-    // populateDefaultEquipmentSlots` the 26.2 bytecode speaks: the
-    // super's walk the Monster base keeps — NO draw — then the
-    // `setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW))`
-    // the getstatic/invoke pair arms UNCONDITIONALLY — no randoms the
-    // skeleton's own roll spends, the bow the hand always wears; the
-    // finalizeSpawn the populate call the reassessWeaponGoal follows
-    // speaks — the bow goal the mainhand item arms)
-    if kind == MobKind::Skeleton {
-        z.held_weapon = Some("bow");
-    }
-    // THE FINALIZE SPAWN'S OWN WALK (javap `Zombie.finalizeSpawn` the
-    // 26.2 bytecode speaks: the canPickUpLoot draw the client's lane
-    // never carries — no draw; the null group data the ctor `new
-    // ZombieGroupData(getSpawnAsBabyOdds(random), iconst_1)` arms —
-    // draw A the baby odds speaks; the isBabyZ setBaby(true) the
-    // -24000 the client's age word keeps; the canSpawnJockeyZ branch
-    // draw B `nextFloat() < 0.05` — the SEARCH the
-    // `getBoundingBox().inflate(5.0, 3.0, 5.0)` +
-    // ENTITY_NOT_BEING_RIDDEN scan keeps, `list.get(0)` the vec's own
-    // order answers, the found hull `setChickenJockey(true)` +
-    // `startRiding(chicken, false, false)` the link arms (NO setBaby —
-    // the bytecode never re-babies the found hen); the empty search
-    // the SECOND draw `nextFloat() < 0.05` keeps — the JOCKEY spawn
-    // `EntityTypes.CHICKEN.create(level, JOCKEY)` the zombie's own
-    // pose `snapTo(x, y, z, yRot, 0.0F)` rides, the chicken's own
-    // finalizeSpawn the AgeableMob group-data arm speaks (the
-    // `(true)` ctor the 0.05 chance carries, draw D the baby roll the
-    // same `< 0.05` window draws), `setChickenJockey(true)` +
-    // `startRiding` + `addFreshEntity` the tail arms; the canBreakDoors
-    // draw the client's lane never carries — no draw, the honest note
-    // the doc keeps; the EQUIPMENT draw the populateDefaultEquipmentSlots
-    // walk rides — the natural spawn's own roll the stream spends
-    // (the gate + the armed pick the spawn_equipment law keeps —
-    // offsets 329-333 the finalizeSpawn's own call order speaks: the
-    // jockey block's tail the roll follows). THE ZOMBIE'S OWN WALK THE
-    // KIND GATES (the Skeleton's own finalizeSpawn — javap
-    // `AbstractSkeleton.finalizeSpawn` — the group-data baby/jockey
-    // rolls the Monster super never carries: the baby draws the
-    // zombie's ZombieGroupData lane alone keeps, the skeleton the
-    // draws never spends).
-    if kind == MobKind::Zombie {
-        if rng.next_f32() < 0.05 {
-            z.set_age(BABY_START_AGE);
-            if rng.next_f32() < 0.05 {
-                let (zx0, zy0, zz0, zx1, zy1, zz1) = z.box_at();
-                let (bx0, by0, bz0, bx1, by1, bz1) = (
-                    zx0 - 5.0,
-                    zy0 - 3.0,
-                    zz0 - 5.0,
-                    zx1 + 5.0,
-                    zy1 + 3.0,
-                    zz1 + 5.0,
-                );
-                let found = mobs.iter_mut().find(|m| {
-                    m.kind == MobKind::Chicken
-                        && m.passenger.is_none()
-                        && {
-                            let (x0, y0, z0, x1, y1, z1) = m.box_at();
-                            x0 <= bx1
-                                && x1 >= bx0
-                                && y0 <= by1
-                                && y1 >= by0
-                                && z0 <= bz1
-                                && z1 >= bz0
-                        }
-                });
-                match found {
-                    Some(chicken) => {
-                        chicken.chicken_jockey = true;
-                        chicken.passenger = Some(z.id);
-                        z.vehicle = Some(chicken.id);
-                    }
+    let mut spawned: usize = 0;
+    // THE 3 WALKS (the disasm's slot-12 loop — each walk the anchor's
+    // own x/z re-seeds, the group data re-arms, the budget the pre-kind
+    // roll draws)
+    for _ in 0..3 {
+        let mut wx = ax;
+        let mut wz = az;
+        // THE GROUP DATA THE WALK RE-ARMS (the disasm's slot 17 the
+        // walk body's own aconst_null keeps — the verdict the walk's
+        // members share, the next walk the fresh draw arms)
+        let mut group_baby: Option<bool> = None;
+        // THE PRE-KIND BUDGET (offsets 82-97: `Mth.ceil(random.nextFloat()
+        // * 4.0F)` — the zero the walk's attempts the kind draw never
+        // reaches refuses)
+        let mut budget = (rng.next_f32() * 4.0).ceil() as i32;
+        // THE KIND THE WALK DRAWS ONCE (the data slot-16 the null arm
+        // keeps — the walk's members the same kind the pack wears)
+        let mut kind: Option<MobKind> = None;
+        let mut attempt = 0;
+        while attempt < budget {
+            // THE ±5 RANDOM WALK (offsets 112-166: `nextInt(6) -
+            // nextInt(6)` per axis, the cumulative x/z the walk's own
+            // locals keep — the four draws every attempt spends, the
+            // refusal the draws never refund)
+            wx += rng.next_int(6) - rng.next_int(6);
+            wz += rng.next_int(6) - rng.next_int(6);
+            // THE DISTANCE GATE (`isRightDistanceToPlayerAndSpawnPoint`'s
+            // `d2 > 576.0` the dcmpg's strict arm keeps — the walked
+            // cell the anchor's ring the jitter's drift re-checks, the
+            // creature lane's own fold the same word speaks)
+            let dx = wx as f64 + 0.5 - px;
+            let dz = wz as f64 + 0.5 - pz;
+            if dx * dx + dz * dz <= 576.0 {
+                attempt += 1;
+                continue;
+            }
+            // THE KIND'S OWN WEIGHTED DRAW + THE PACK-SIZE ROLL the
+            // budget's own slot overwrites (the once-per-walk data arm
+            // the null keeps; the 390 roll the plains table's admitted
+            // rows speak — spider [0,100), zombie [100,190), skeleton
+            // [190,290), creeper [290,390); the pack roll the four
+            // rows' 4..4 band the `+nextInt(1)` always-4 answers — the
+            // ONE draw the nextInt(1)'s own state advance spends)
+            let kind = match kind {
+                Some(k) => k,
+                None => {
+                    let roll = rng.next_int(390);
+                    let k = if roll < 100 {
+                        MobKind::Spider
+                    } else if roll < 190 {
+                        MobKind::Zombie
+                    } else if roll < 290 {
+                        MobKind::Skeleton
+                    } else {
+                        MobKind::Creeper
+                    };
+                    budget = MONSTER_PACK_MIN
+                        + rng.next_int((1 + MONSTER_PACK_MAX - MONSTER_PACK_MIN) as u64);
+                    kind = Some(k);
+                    k
+                }
+            };
+            // THE SPOT'S OWN RULES (isValidSpawnPostitionForType's
+            // ON_GROUND fold — the FIXED anchor y the walk never
+            // rescans: the below cell solid the face-sturdy law keeps,
+            // the two head cells the entity's own box the no-collision
+            // keeps, THE LIGHT GATE the three-stage law the live grid
+            // answers — the sky draw the always consumption, the test
+            // draw the both-ceilings-pass consumption)
+            if !crate::body::solid(world, wx, fy - 1, wz)
+                || crate::body::solid(world, wx, fy, wz)
+                || crate::body::solid(world, wx, fy + 1, wz)
+                || !is_dark_enough_to_spawn(world, wx, fy, wz, rng)
+            {
+                attempt += 1;
+                continue;
+            }
+            let id = *next_id;
+            *next_id += 1;
+            let mut mob = Zombie::new(
+                id,
+                wx as f64 + 0.5,
+                fy as f64,
+                wz as f64 + 0.5,
+                (*next_id as u64) << 16 ^ rng.next(),
+            );
+            mob.kind = kind;
+            // THE HEALTH'S OWN ATTRIBUTE (the per-kind createAttributes
+            // chains the jars speak — the spider's 16.0 the other kinds
+            // the shared 20.0 base keeps)
+            mob.health = kind.max_health();
+            // THE SKELETON'S OWN EQUIPMENT (the unconditional BOW the
+            // no-draw law keeps — the populate's own pair the hand
+            // always wears)
+            if kind == MobKind::Skeleton {
+                mob.held_weapon = Some("bow");
+            }
+            // THE SNAP-TO'S OWN YAW (offsets 397-406: `nextFloat() *
+            // 360.0F` — the random heading the snapTo's own draw
+            // speaks, the finalizeSpawn the call the yaw precedes)
+            mob.yaw = rng.next_f32() * 360.0;
+            // THE GROUP DATA'S OWN WALK (the zombie lane the
+            // finalizeSpawn law keeps): the null arm the FIRST member's
+            // `getSpawnAsBabyOdds` draw arms (the Z return the one f32
+            // the verdict spends), the shared verdict the later members
+            // read (the getfield isBaby the new draw never spends), the
+            // jockey roll B per baby member — the famous all-baby pack
+            // the vanilla group data's own texture speaks
+            if kind == MobKind::Zombie {
+                let baby = match group_baby {
+                    Some(b) => b,
                     None => {
-                        if rng.next_f32() < 0.05 {
-                            let cid = *next_id;
-                            *next_id += 1;
-                            let mut c = Zombie::new(
-                                cid,
-                                z.x,
-                                z.y,
-                                z.z,
-                                (*next_id as u64) << 16 ^ rng.next(),
-                            );
-                            c.kind = MobKind::Chicken;
-                            // THE JOCKEY'S OWN HEALTH (the chicken's
-                            // `add(MAX_HEALTH, 4.0)` the mount the
-                            // four hearts wears — the ctor's shared
-                            // 20.0 the avian word never keeps)
-                            c.health = MobKind::Chicken.max_health();
-                            c.yaw = z.yaw;
-                            if rng.next_f32() < 0.05 {
-                                c.set_age(BABY_START_AGE);
+                        let b = rng.next_f32() < 0.05;
+                        group_baby = Some(b);
+                        b
+                    }
+                };
+                if baby {
+                    mob.set_age(BABY_START_AGE);
+                    if rng.next_f32() < 0.05 {
+                        // THE JOCKEY'S OWN SEARCH (the inflate(5, 3, 5)
+                        // + ENTITY_NOT_BEING_RIDDEN scan, the found hull
+                        // `list.get(0)` the vec's own order keeps — NO
+                        // setBaby the bytecode never re-babies the found
+                        // hen, NO jockey hen the found lane never spawns)
+                        let (bx0, by0, bz0, bx1, by1, bz1) = mob.box_at();
+                        let (bx0, by0, bz0, bx1, by1, bz1) = (
+                            bx0 - 5.0,
+                            by0 - 3.0,
+                            bz0 - 5.0,
+                            bx1 + 5.0,
+                            by1 + 3.0,
+                            bz1 + 5.0,
+                        );
+                        let found = mobs.iter_mut().find(|m| {
+                            m.kind == MobKind::Chicken
+                                && m.passenger.is_none()
+                                && {
+                                    let (x0, y0, z0, x1, y1, z1) = m.box_at();
+                                    x0 <= bx1
+                                        && x1 >= bx0
+                                        && y0 <= by1
+                                        && y1 >= by0
+                                        && z0 <= bz1
+                                        && z1 >= bz0
+                                }
+                        });
+                        match found {
+                            Some(chicken) => {
+                                chicken.chicken_jockey = true;
+                                chicken.passenger = Some(mob.id);
+                                mob.vehicle = Some(chicken.id);
                             }
-                            c.chicken_jockey = true;
-                            c.passenger = Some(z.id);
-                            z.vehicle = Some(c.id);
-                            mobs.push(c);
+                            None => {
+                                // THE JOCKEY SPAWN'S OWN HEN (the
+                                // empty-search branch: the hen the
+                                // zombie's own pose the snapTo keeps, the
+                                // AgeableMob group-data draw D the hen's
+                                // childhood decides, the flag + the ride
+                                // link the tail arms)
+                                if rng.next_f32() < 0.05 {
+                                    let cid = *next_id;
+                                    *next_id += 1;
+                                    let mut c = Zombie::new(
+                                        cid,
+                                        mob.x,
+                                        mob.y,
+                                        mob.z,
+                                        (*next_id as u64) << 16 ^ rng.next(),
+                                    );
+                                    c.kind = MobKind::Chicken;
+                                    // THE JOCKEY'S OWN HEALTH (the
+                                    // chicken's 4.0 the mount the four
+                                    // hearts wears)
+                                    c.health = MobKind::Chicken.max_health();
+                                    c.yaw = mob.yaw;
+                                    if rng.next_f32() < 0.05 {
+                                        c.set_age(BABY_START_AGE);
+                                    }
+                                    c.chicken_jockey = true;
+                                    c.passenger = Some(mob.id);
+                                    mob.vehicle = Some(c.id);
+                                    mobs.push(c);
+                                }
+                            }
                         }
                     }
                 }
+                // THE EQUIPMENT'S OWN DRAW (the vanilla order the
+                // finalizeSpawn walk keeps — the jockey block's tail the
+                // roll follows; the gate + the armed pick the same stream
+                // the roll spends)
+                mob.held_weapon = spawn_equipment(rng);
             }
+            mobs.push(mob);
+            spawned += 1;
+            // THE CLUSTER'S OWN TAIL (offsets 468-478: `spawned >=
+            // getMaxSpawnClusterSize()` the return arms — the 4-mob
+            // ceiling the whole pack the walks the cap never passes)
+            if spawned >= MONSTER_CLUSTER_SIZE as usize {
+                return spawned;
+            }
+            // the group-size cap `isMaxGroupSizeReached` the Mob base's
+            // iconst_0 the never-binding cap keeps — the honest no-op
+            attempt += 1;
         }
-        // THE EQUIPMENT'S OWN DRAW (the vanilla order the finalizeSpawn
-        // walk keeps — the canBreakDoors skip the note above speaks, the
-        // gate + the armed pick the same stream the roll spends; the
-        // SKELETON's own populate the unconditional BOW the no-draw
-        // law keeps — the roll the zombie's lane alone spends)
-        z.held_weapon = spawn_equipment(rng);
     }
-    mobs.push(z);
-    true
+    spawned
 }
-
 /// THE RIDE'S OWN PASS — the jockey's caller-side walk (the per-mob
 /// tick's own head the caller's vec the pass answers): the rider's
 /// realized chase the MOUNT carries (the vanilla pair the rider's AI
@@ -12154,46 +12238,53 @@ mod tests {
             let mut mobs = Vec::new();
             let mut next_id = 1;
             let mut rng = Lcg::new(seed);
-            if try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true) {
+            if try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true) > 0 {
                 spawned = Some(mobs.pop().unwrap());
                 break;
             }
         }
         let z = spawned.expect("a night attempt lands within 64 seeds");
-        // the ring law: 24..48 blocks from the player
+        // the distance law: the walked cell the 576.0 gate's own strict
+        // arm re-checks (the anchor's ring the ±5 random walk the
+        // attempt's own draws drift — the gate the closer cell refuses,
+        // the upper band the walk's own reach the drift extends)
         let dx = z.x - px;
         let dz = z.z - pz;
         let d = (dx * dx + dz * dz).sqrt();
         assert!(
-            d >= SPAWN_MIN_DIST - 1.5 && d <= SPAWN_MAX_DIST + 1.5,
-            "ring distance {d}"
+            d >= SPAWN_MIN_DIST - 1.5,
+            "distance {d} the gate's own strict law keeps"
         );
-        // the surface law: the feet ride the topmost solid + 1
+        // the surface law: the feet ride the FIXED anchor y the walk
+        // never rescans — the below cell solid the face-sturdy law
+        // keeps (the walked column's own terrain the gate the step
+        // refusals wear)
         let (bx, bz) = (z.x.floor() as i32, z.z.floor() as i32);
-        let mut top = 0;
-        for y in (0..world.size_blocks()).rev() {
-            if crate::body::solid(&world, bx, y, bz) {
-                top = y;
-                break;
-            }
-        }
-        assert_eq!(z.y, top as f64 + 1.0, "the feet on the surface");
+        let feet = z.y as i32;
+        assert!(
+            crate::body::solid(&world, bx, feet - 1, bz),
+            "the below cell the surface's own solid wears"
+        );
         // the head-room law: two free cells above
-        assert!(!crate::body::solid(&world, bx, top + 1, bz));
-        assert!(!crate::body::solid(&world, bx, top + 2, bz));
+        assert!(!crate::body::solid(&world, bx, feet, bz));
+        assert!(!crate::body::solid(&world, bx, feet + 1, bz));
         // the day gate: night=false never spawns
         let mut mobs = Vec::new();
         let mut next_id = 1;
         let mut rng = Lcg::new(99);
-        assert!(!try_spawn(
-            &mut mobs,
-            &mut next_id,
-            px,
-            pz,
-            &world,
-            &mut rng,
-            false
-        ));
+        assert_eq!(
+            try_spawn(
+                &mut mobs,
+                &mut next_id,
+                px,
+                pz,
+                &world,
+                &mut rng,
+                false
+            ),
+            0,
+            "the day gate the pack never arms"
+        );
         assert!(mobs.is_empty());
     }
 
@@ -12265,12 +12356,196 @@ mod tests {
         assert!(shovel > spear * 2, "shovel {shovel} the 4:1 lead keeps");
     }
 
-    /// THE SPAWN'S OWN LEDGER the weapon writes (try_spawn the wire the
-    /// order pin keeps): the ang, the dist, the ctor seed, the baby A,
-    /// the jockey B, the empty-search's chicken C, the chicken baby D,
-    /// the EQUIPMENT gate the tail rides — the mirror walk the identical
-    /// draws replays, the verdict the spawned zombie's own word pairs.
+    /// THE PACK MIRROR'S OWN RNG SKELETON (the flat world the spot
+    /// gates the uniform pass keeps — the mirror the try_spawn's draw
+    /// order replays: the anchor's two f64s, per walk the budget f32,
+    /// per attempt the four nextInt(6)s + the distance gate + the
+    /// once-per-walk kind roll + the pack roll + the light gate's pair
+    /// + the spawn's ctor seed + the yaw + the zombie chain the group
+    /// data's null arm keeps + the equipment gate — the LAST spawn's
+    /// own word the ledger pairs).
+    fn pack_mirror_last_weapon(seed: u64, world: &World) -> Option<Option<&'static str>> {
+        let mut p = Lcg::new(seed);
+        let ang = p.next_f64() * std::f64::consts::TAU;
+        let dist = SPAWN_MIN_DIST + p.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
+        let ax = ((32.0 + ang.cos() * dist).floor()) as i32;
+        let az = ((32.0 + ang.sin() * dist).floor()) as i32;
+        // the anchor's own surface scan (the no-draw read the real walk
+        // speaks — the fixed y the walked cells attempt at)
+        let mut fy_opt: Option<i32> = None;
+        for y in (0..world.size_blocks()).rev() {
+            if crate::body::solid(world, ax, y, az) {
+                fy_opt = Some(y + 1);
+                break;
+            }
+        }
+        let fy = fy_opt?;
+        let mut last: Option<Option<&'static str>> = None;
+        let mut spawned = 0usize;
+        'walks: for _ in 0..3 {
+            let mut budget = (p.next_f32() * 4.0).ceil() as i32;
+            let mut group_baby: Option<bool> = None;
+            let mut kind: Option<i32> = None;
+            let mut attempt = 0;
+            let mut wx = ax;
+            let mut wz = az;
+            while attempt < budget {
+                wx += p.next_int(6) - p.next_int(6);
+                wz += p.next_int(6) - p.next_int(6);
+                let dx = wx as f64 + 0.5 - 32.0;
+                let dz = wz as f64 + 0.5 - 32.0;
+                if dx * dx + dz * dz <= 576.0 {
+                    attempt += 1;
+                    continue;
+                }
+                let roll = match kind {
+                    Some(r) => r,
+                    None => {
+                        let r = p.next_int(390);
+                        let _pack = p.next_int(1);
+                        budget = MONSTER_PACK_MIN;
+                        kind = Some(r);
+                        r
+                    }
+                };
+                // THE SPOT'S OWN SOLID CHECKS FIRST (the short-circuit
+                // the real walk's || chain keeps — the failed solid the
+                // light gate never reaches, the draws the refusal never
+                // spends — the out-of-bounds drift the honest silence
+                // wears)
+                if !crate::body::solid(world, wx, fy - 1, wz)
+                    || crate::body::solid(world, wx, fy, wz)
+                    || crate::body::solid(world, wx, fy + 1, wz)
+                {
+                    attempt += 1;
+                    continue;
+                }
+                // the light gate: the sky 15 the stage-1 pass, the raw 4
+                // the uniform's upper half admits
+                let gate32 = p.next_int(32);
+                if gate32 < 15 {
+                    attempt += 1;
+                    continue;
+                }
+                let gate8 = p.next_int(8);
+                if gate8 < 4 {
+                    attempt += 1;
+                    continue;
+                }
+                let _ctor_seed = p.next();
+                let _yaw = p.next_f32();
+                let want = if roll < 100 {
+                    // THE SPIDER's own finalizeSpawn — the NORMAL world
+                    // the HARD-gated effect arm never spends, the group
+                    // data no draw carries
+                    None
+                } else if roll < 190 {
+                    // THE ZOMBIE's own group-data walk — the null arm's
+                    // draw A the walk's members share, the jockey roll B
+                    // per baby member (the && short-circuit the missed
+                    // verdict the B draw never spends), the chicken gate
+                    // C the hen's ctor seed + the baby roll D the armed
+                    // arm spends, the equipment gate the tail rides
+                    let baby = match group_baby {
+                        Some(v) => v,
+                        None => {
+                            let v = p.next_f32() < 0.05;
+                            group_baby = Some(v);
+                            v
+                        }
+                    };
+                    if baby && p.next_f32() < 0.05 {
+                        if p.next_f32() < 0.05 {
+                            p.next();
+                            p.next_f32();
+                        }
+                    }
+                    if p.next_f32() < 0.01 {
+                        Some(match p.next_int(6) {
+                            0 => "iron_sword",
+                            1 => "iron_spear",
+                            _ => "iron_shovel",
+                        })
+                    } else {
+                        None
+                    }
+                } else if roll < 290 {
+                    // THE SKELETON's own populate — the unconditional BOW
+                    // the no-draw law keeps
+                    Some("bow")
+                } else {
+                    // THE CREEPER's own finalizeSpawn — the draw-free lane
+                    None
+                };
+                last = Some(want);
+                spawned += 1;
+                if spawned >= MONSTER_CLUSTER_SIZE as usize {
+                    break 'walks;
+                }
+                attempt += 1;
+            }
+        }
+        last
+    }
+
+    /// THE PACK'S OWN SHAPE the walk wears (javap spawnCategoryForPosition
+    /// the 26.2 bytecode speaks): ONE call the pack's own multiple mobs
+    /// spawns (the old single-attempt lane the one-body silence wore),
+    /// the once-per-walk KIND draw the walk's members the same kind
+    /// wears, the cluster cap the 4-mob ceiling the whole pack the
+    /// walks never pass, the walked cells the ±5 scatter the anchor's
+    /// own ring the gate's strict arm re-checks.
     #[test]
+    fn the_pack_the_walks_the_same_kind_the_cluster_cap_wears() {
+        let mut world = jockey_flat_world();
+        world.day_tick = Some(18_000);
+        world.relight();
+        let (px, pz) = (32.0, 32.0);
+        let mut landed = false;
+        for seed in 0u64..512 {
+            let mut mobs = Vec::new();
+            let mut next_id = 1;
+            let n = try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true);
+            if n < 2 {
+                continue;
+            }
+            // THE CLUSTER CAP the whole call never passes
+            assert!(n <= MONSTER_CLUSTER_SIZE as usize, "n {n} the cap keeps");
+            // THE ONCE-PER-WALK KIND the same walk's members wear — the
+            // pack the walk boundaries the kind groups split (up to the
+            // three kinds the three walks speak)
+            let mut kinds: Vec<MobKind> = mobs.iter().map(|m| m.kind).collect();
+            kinds.dedup_by(|a, b| a == b);
+            assert!(
+                kinds.len() <= 3,
+                "the walk groups the same-kind members keep (kinds {kinds:?})"
+            );
+            // the walked cells the 576.0 gate's own strict arm re-checks
+            for m in &mobs {
+                let dx = m.x - px;
+                let dz = m.z - pz;
+                assert!(
+                    dx * dx + dz * dz > 576.0,
+                    "the walked cell the gate's own strict law keeps"
+                );
+            }
+            landed = true;
+            break;
+        }
+        assert!(landed, "a multi-mob pack lands within 512 seeds");
+    }
+
+    /// THE SPAWN'S OWN LEDGER the weapon writes (try_spawn the pack
+    /// walk's own order pin keeps): the anchor's ring draws, the walk's
+    /// budget roll, the ±5 scatter, the once-per-walk KIND draw, the
+    /// pack roll, the gate's pair, the ctor seed, the yaw, the zombie
+    /// chain (the group data the walk's members share), the equipment
+    /// gate the zombie's tail rides — the mirror walk the identical
+    /// draws replays, the verdict the spawned pack's LAST mob's own
+    /// word pairs.
+    #[test]
+
+
     fn the_spawn_the_weapon_the_natural_writes() {
         let mut world = jockey_flat_world();
         // the midnight clock the gate's stage 3 wears — the FLAT world
@@ -12286,94 +12561,19 @@ mod tests {
             let mut mobs = Vec::new();
             let mut next_id = 1;
             let mut rng = Lcg::new(seed);
-            if !try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true) {
+            if try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true) == 0 {
                 continue;
             }
             let z = mobs.pop().unwrap();
             if z.held_weapon.is_some() {
                 armed += 1;
             }
-            // the mirror walk: the ring point, the KIND's own weighted
-            // draw (the 26.2 plains monster rows the NaturalSpawner
-            // order speaks), the ctor seed, the baby/jockey/chicken
-            // draws the zombie lane keeps (the skeleton's finalizeSpawn
-            // the group-data rolls never carries, the SPIDER's own
-            // walk the NORMAL world the effect arm never spends — no
-            // draw the lane asks), the equipment gate
-            // the zombie's tail rides (the skeleton's unconditional BOW
-            // the no-draw law keeps)
-            let mut m = Lcg::new(seed);
-            let _ang = m.next_f64();
-            let _dist = m.next_f64();
-            let roll = m.next_int(390);
-            // THE GATE'S OWN DRAWS (the light gate the spawn law rides
-            // between the kind draw and the ctor seed — the sky
-            // nextInt(32) the always consumption, the uniform nextInt(8)
-            // the both-ceilings-pass consumption): the flat world's
-            // open column the sky 15 keeps (the stage-1 pass the
-            // draw ≥ 15 band wears), the midnight clock the raw 4 the
-            // upper-half uniform admits — the SPAWNED mob the gate's
-            // own pass the replay asserts
-            let gate32 = m.next_int(32);
-            assert!(gate32 >= 15, "the spawned seed the stage-1 pass speaks");
-            let gate8 = m.next_int(8);
-            assert!(gate8 >= 4, "the spawned seed the midnight uniform admits");
-            let _ctor_seed = m.next();
-            let want = if roll < 100 {
-                // THE SPIDER's own finalizeSpawn — the NORMAL world the
-                // HARD-gated effect arm never spends, the group data no
-                // draw carries — the bare arachnid the string pool
-                // alone answers at the death
-                None
-            } else if roll < 190 {
-                // THE ZOMBIE's own group-data walk — draw A the baby
-                // odds, draw B the jockey search (the empty world's
-                // search the None arm keeps: the chicken spawn gate C,
-                // the chicken's own ctor seed the one next() the
-                // between arms, the baby roll D the armed gate
-                // consumes — the verdict the walk never branches, the
-                // D draw the C armed spends), the equipment gate the
-                // tail rides
-                let zombie_want = if m.next_f32() < 0.05 {
-                    if m.next_f32() < 0.05 {
-                        if m.next_f32() < 0.05 {
-                            m.next();
-                            m.next_f32();
-                        }
-                    }
-                    if m.next_f32() < 0.01 {
-                        Some(match m.next_int(6) {
-                            0 => "iron_sword",
-                            1 => "iron_spear",
-                            _ => "iron_shovel",
-                        })
-                    } else {
-                        None
-                    }
-                } else if m.next_f32() < 0.01 {
-                    Some(match m.next_int(6) {
-                        0 => "iron_sword",
-                        1 => "iron_spear",
-                        _ => "iron_shovel",
-                    })
-                } else {
-                    None
-                };
-                zombie_want
-            } else if roll < 290 {
-                // THE SKELETON's own populate (javap
-                // `AbstractSkeleton.populateDefaultEquipmentSlots` —
-                // the super the no-draw base keeps, the
-                // setItemSlot(MAINHAND, Items.BOW) the unconditional
-                // word speaks — the [190, 290) band the roll keeps)
-                Some("bow")
-            } else {
-                // THE CREEPER's own finalizeSpawn — the draw-free lane
-                // the bare admission keeps (no equipment the populate
-                // arms, no baby the Monster chain never carries, the
-                // [290, 390) end the roll wears)
-                None
-            };
+            // the mirror walk: the pack skeleton the identical draws
+            // replays (the flat world's own spot gates the mirror's own
+            // solid model replays) — the LAST spawn's own word the ledger
+            // pairs
+            let want = pack_mirror_last_weapon(seed, &world)
+                .expect("the spawned seed the mirror's own spawn replays");
             assert_eq!(
                 z.held_weapon, want,
                 "seed {seed} the weapon the ledger keeps"
@@ -12392,19 +12592,19 @@ mod tests {
             .find(|&s| {
                 let mut mobs = Vec::new();
                 let mut next_id = 1;
-                try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(s), true)
+                try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(s), true) > 0
             })
             .expect("a midnight attempt lands within the band");
         let mut mobs = Vec::new();
         let mut next_id = 1;
         let mut rng = Lcg::new(replay_seed);
         try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true);
-        let a = mobs[0].held_weapon;
+        let a = mobs.pop().unwrap().held_weapon;
         let mut mobs = Vec::new();
         let mut next_id = 1;
         let mut rng = Lcg::new(replay_seed);
         try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut rng, true);
-        assert_eq!(a, mobs[0].held_weapon, "the replay the word keeps");
+        assert_eq!(a, mobs.pop().unwrap().held_weapon, "the replay the word keeps");
     }
 
     /// THE PLAINS MONSTER TABLE'S OWN ROWS (the jar's worldgen json the
@@ -12414,13 +12614,15 @@ mod tests {
     /// list order the ranges keep (the SPIDER row FIRST — the [0, 100)
     /// range rides — the zombie the [100, 190) band answers, the
     /// skeleton the [190, 290) tail keeps, the creeper the [290, 390)
-    /// end wears), the skeleton's own populate the
-    /// unconditional BOW the no-draw law keeps (javap
+    /// end wears), the PACK WALK the once-per-walk draw the same roll
+    /// speaks (the walk's members the same kind the pack wears, the
+    /// cluster cap the 4-mob ceiling keeps), the skeleton's own populate
+    /// the unconditional BOW the no-draw law keeps (javap
     /// `AbstractSkeleton.populateDefaultEquipmentSlots` — the super
     /// the Monster base keeps, the setItemSlot(MAINHAND,
     /// Items.BOW) the getstatic/invoke pair arms), the group-data
     /// baby/jockey rolls the skeleton's finalizeSpawn never carries —
-    /// the spawned bone-bag the ADULT the bow the hand always wears —
+    /// the spawned bone-bags the ADULT the bow the hand always wear —
     /// and the SPIDER and THE CREEPER the same draw-free lane keeps
     /// (the NORMAL world the HARD-gated effect arm never spends): the
     /// bare arachnid the string pool alone answers at the death, the
@@ -12439,78 +12641,85 @@ mod tests {
         for seed in 0u64..2400 {
             let mut mobs = Vec::new();
             let mut next_id = 1;
-            if !try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true) {
+            if try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true) == 0 {
                 continue;
             }
-            let z = mobs.pop().unwrap();
-            match z.kind {
-                MobKind::Zombie => zombies += 1,
-                MobKind::Skeleton => {
-                    skeletons += 1;
-                    // THE BOW THE HAND ALWAYS WEARS (the populate's own
-                    // unconditional law the roll never splits)
-                    assert_eq!(
-                        z.held_weapon,
-                        Some("bow"),
-                        "seed {seed} the bow the skeleton's own populate arms"
-                    );
-                    // THE GROUP-DATA ROLLS THE SKELETON NEVER SPENDS —
-                    // no baby the ZombieGroupData lane could arm, no
-                    // jockey the chicken search could link
-                    assert!(!z.is_baby(), "the baby rolls the zombie lane alone keeps");
-                    assert!(z.vehicle.is_none(), "the jockey search the skeleton never speaks");
+            let kinds: Vec<MobKind> = mobs.iter().map(|m| m.kind).collect();
+            for z in &mobs {
+                match z.kind {
+                    MobKind::Zombie => zombies += 1,
+                    MobKind::Skeleton => {
+                        skeletons += 1;
+                        // THE BOW THE HAND ALWAYS WEARS (the populate's own
+                        // unconditional law the roll never splits)
+                        assert_eq!(
+                            z.held_weapon,
+                            Some("bow"),
+                            "seed {seed} the bow the skeleton's own populate arms"
+                        );
+                        // THE GROUP-DATA ROLLS THE SKELETON NEVER SPENDS —
+                        // no baby the ZombieGroupData lane could arm, no
+                        // jockey the chicken search could link
+                        assert!(!z.is_baby(), "the baby rolls the zombie lane alone keeps");
+                        assert!(z.vehicle.is_none(), "the jockey search the skeleton never speaks");
+                    }
+                    MobKind::Spider => {
+                        spiders += 1;
+                        // THE BARE ARACHNID (the draw-free finalize the
+                        // NORMAL world keeps — no equipment the lane
+                        // could arm, no baby the Monster chain never
+                        // carries, the MAX_HEALTH 16.0 the clinit keeps)
+                        assert_eq!(
+                            z.held_weapon, None,
+                            "seed {seed} the spider the no-draw lane keeps bare"
+                        );
+                        assert!(!z.is_baby(), "the spider the baby lane never carries");
+                        assert!(z.vehicle.is_none(), "the jockey search the spider never speaks");
+                        assert_eq!(
+                            z.health, SPIDER_MAX_HEALTH,
+                            "the spider's own MAX_HEALTH the clinit keeps"
+                        );
+                    }
+                    MobKind::Creeper => {
+                        creepers += 1;
+                        // THE BARE CREEPER (the draw-free finalize the
+                        // NORMAL world keeps — no equipment the lane could
+                        // arm, no baby the Monster chain never carries, the
+                        // MAX_HEALTH 20.0 the registered default keeps)
+                        assert_eq!(
+                            z.held_weapon, None,
+                            "seed {seed} the creeper the no-draw lane keeps bare"
+                        );
+                        assert!(!z.is_baby(), "the creeper the baby lane never carries");
+                        assert!(z.vehicle.is_none(), "the jockey search the creeper never speaks");
+                        assert_eq!(
+                            z.health, CREEPER_MAX_HEALTH,
+                            "the creeper's own registered default the base speaks"
+                        );
+                    }
+                    // THE JOCKEY'S OWN HEN the pack may carry (the empty
+                    // search's own spawn the rider's pose wears — not a
+                    // draw kind, the count the four admitted rows keep)
+                    MobKind::Chicken => {}
+                    _ => panic!("the plains monster roll the four admitted kinds alone speak"),
                 }
-                MobKind::Spider => {
-                    spiders += 1;
-                    // THE BARE ARACHNID (the draw-free finalize the
-                    // NORMAL world keeps — no equipment the lane
-                    // could arm, no baby the Monster chain never
-                    // carries, the MAX_HEALTH 16.0 the clinit keeps)
-                    assert_eq!(
-                        z.held_weapon, None,
-                        "seed {seed} the spider the no-draw lane keeps bare"
-                    );
-                    assert!(!z.is_baby(), "the spider the baby lane never carries");
-                    assert!(z.vehicle.is_none(), "the jockey search the spider never speaks");
-                    assert_eq!(
-                        z.health, SPIDER_MAX_HEALTH,
-                        "the spider's own MAX_HEALTH the clinit keeps"
-                    );
-                }
-                MobKind::Creeper => {
-                    creepers += 1;
-                    // THE BARE CREEPER (the draw-free finalize the
-                    // NORMAL world keeps — no equipment the lane could
-                    // arm, no baby the Monster chain never carries, the
-                    // MAX_HEALTH 20.0 the registered default keeps)
-                    assert_eq!(
-                        z.held_weapon, None,
-                        "seed {seed} the creeper the no-draw lane keeps bare"
-                    );
-                    assert!(!z.is_baby(), "the creeper the baby lane never carries");
-                    assert!(z.vehicle.is_none(), "the jockey search the creeper never speaks");
-                    assert_eq!(
-                        z.health, CREEPER_MAX_HEALTH,
-                        "the creeper's own registered default the base speaks"
-                    );
-                }
-                _ => panic!("the plains monster roll the four admitted kinds alone speak"),
             }
-            // the same seed the same body (the determinism the spawner keeps)
-            let mut mobs = Vec::new();
+            // the same seed the same pack (the determinism the spawner keeps)
+            let mut mobs2 = Vec::new();
             let mut next_id = 1;
-            try_spawn(&mut mobs, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true);
-            assert_eq!(mobs.pop().unwrap().kind, z.kind, "seed {seed} the replay the kind keeps");
+            try_spawn(&mut mobs2, &mut next_id, px, pz, &world, &mut Lcg::new(seed), true);
+            let kinds2: Vec<MobKind> = mobs2.iter().map(|m| m.kind).collect();
+            assert_eq!(kinds, kinds2, "seed {seed} the replay the pack keeps");
         }
         // the 100/90/100/100 split the spawned band arms (the flat
         // world's own bounds the ring's far half refuses, the GATE's
         // own texture the midnight spawn rate wears — the sky 17/32
-        // and the uniform's upper half the ~0.17 per-seed rate speak —
+        // and the uniform's upper half the per-attempt rate speak —
         // the FRACTION the roll tracks: the ~0.26 the spider and the
-        // skeleton and the creeper means, the zombie's ~0.235, sigma
-        // ~2.2% over ~400 spawns — the loose bands the flake never
-        // rides; the gate the roll-INDEPENDENT draw the kind shares
-        // never splits)
+        // skeleton and the creeper means, the zombie's ~0.235 — the
+        // pack walk the per-seed spawn count the same rolls multiply,
+        // the shares the roll-INDEPENDENT gate the kinds share never
+        // splits)
         let total = zombies + skeletons + spiders + creepers;
         let skel_pct = if total > 0 { skeletons * 100 / total } else { 0 };
         let spider_pct = if total > 0 { spiders * 100 / total } else { 0 };
@@ -12649,8 +12858,9 @@ mod tests {
         for seed in 0u64..64 {
             let mut mobs = Vec::new();
             let mut next_id = 1;
-            assert!(
-                !try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &noon, &mut Lcg::new(seed), true),
+            assert_eq!(
+                try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &noon, &mut Lcg::new(seed), true),
+                0,
                 "seed {seed} the noon the every-attempt refusal wears"
             );
         }
@@ -12663,6 +12873,7 @@ mod tests {
             let mut mobs = Vec::new();
             let mut next_id = 1;
             if try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &midnight, &mut Lcg::new(seed), true)
+                > 0
             {
                 spawned += 1;
             }
@@ -12682,6 +12893,7 @@ mod tests {
             let mut mobs = Vec::new();
             let mut next_id = 1;
             if try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &midnight, &mut Lcg::new(seed), true)
+                > 0
             {
                 torch_spawned += 1;
             }
@@ -13457,7 +13669,8 @@ mod tests {
                 &world,
                 &mut Lcg::new(seed),
                 true,
-            ) {
+            ) > 0
+            {
                 night_landed = Some(mobs);
                 break;
             }
@@ -14527,30 +14740,151 @@ mod tests {
     /// The A/B/C/D draws the ZOMBIE lane alone spends (the skeleton's
     /// finalizeSpawn the group-data rolls never carries). Returns the
     /// landed spot + the kind word + every draw the walk speaks.
-    fn jockey_mirror(seed: u64) -> (i32, i32, bool, f32, f32, f32, f32, bool) {
+    fn jockey_mirror(seed: u64, world: &World) -> (i32, i32, bool, f32, f32, f32, f32, bool) {
+        // THE PACK WALK'S OWN RNG SKELETON (the flat world the spot
+        // gates the mirror's own solid model replays — the draw order
+        // the try_spawn speaks: the anchor's two f64s, per walk the
+        // budget f32, per attempt the four nextInt(6)s + the distance
+        // gate + the once-per-walk kind roll + the pack roll + the
+        // spot's solid checks + the light gate's pair + the spawn's
+        // ctor seed + the yaw + the zombie chain + the equipment gate —
+        // the a/b/c/d the FIRST zombie's own chain wears, the group
+        // data's null arm the verdict the walk's members share)
         let mut p = Lcg::new(seed);
         let ang = p.next_f64() * std::f64::consts::TAU;
         let dist = SPAWN_MIN_DIST + p.next_f64() * (SPAWN_MAX_DIST - SPAWN_MIN_DIST);
         let sx = ((32.0 + ang.cos() * dist).floor()) as i32;
         let sz = ((32.0 + ang.sin() * dist).floor()) as i32;
-        let roll = p.next_int(390);
-        // THE GATE'S OWN DRAWS (the light gate the spawn law rides
-        // between the kind draw and the ctor seed — the sky nextInt(32)
-        // the always consumption, the uniform nextInt(8) the
-        // both-ceilings-pass consumption; the flat world's open column
-        // the sky 15 the stage-1 pass the draw ≥ 15 band wears, the
-        // midnight clock the raw 4 the upper half admits — the pass
-        // the walk's zombie flag folds)
-        let gate32 = p.next_int(32);
-        let gate8 = if gate32 >= 15 { p.next_int(8) } else { 0 };
-        let gate_passed = gate32 >= 15 && gate8 >= 4;
-        let zombie = (100..190).contains(&roll) && gate_passed;
-        let _zombie_seed = p.next();
-        let a = p.next_f32();
-        let b = p.next_f32();
-        let c = p.next_f32();
-        let _hen_seed = p.next();
-        let d = p.next_f32();
+        // the anchor's own surface scan (the no-draw read the real walk
+        // speaks — the fixed y the walked cells attempt at)
+        let mut fy_opt: Option<i32> = None;
+        for y in (0..world.size_blocks()).rev() {
+            if crate::body::solid(world, sx, y, sz) {
+                fy_opt = Some(y + 1);
+                break;
+            }
+        }
+        let fy = match fy_opt {
+            Some(v) => v,
+            None => return (sx, sz, false, 1.0, 1.0, 1.0, 1.0, false),
+        };
+        let mut a = 1.0f32;
+        let mut b = 1.0f32;
+        let mut c = 1.0f32;
+        let mut d = 1.0f32;
+        let mut zombie = false;
+        let mut spawned = 0usize;
+        'walks: for _ in 0..3 {
+            let mut budget = (p.next_f32() * 4.0).ceil() as i32;
+            let mut group_baby: Option<bool> = None;
+            let mut kind: Option<i32> = None;
+            let mut attempt = 0;
+            let mut wx = sx;
+            let mut wz = sz;
+            while attempt < budget {
+                wx += p.next_int(6) - p.next_int(6);
+                wz += p.next_int(6) - p.next_int(6);
+                let dx = wx as f64 + 0.5 - 32.0;
+                let dz = wz as f64 + 0.5 - 32.0;
+                if dx * dx + dz * dz <= 576.0 {
+                    attempt += 1;
+                    continue;
+                }
+                let roll = match kind {
+                    Some(r) => r,
+                    None => {
+                        let r = p.next_int(390);
+                        let _pack = p.next_int(1);
+                        budget = MONSTER_PACK_MIN;
+                        kind = Some(r);
+                        r
+                    }
+                };
+                // THE SPOT'S OWN SOLID CHECKS FIRST (the short-circuit
+                // the real walk's || chain keeps — the failed solid the
+                // light gate never reaches, the draws the refusal never
+                // spends — the out-of-bounds drift the honest silence
+                // wears)
+                if !crate::body::solid(world, wx, fy - 1, wz)
+                    || crate::body::solid(world, wx, fy, wz)
+                    || crate::body::solid(world, wx, fy + 1, wz)
+                {
+                    attempt += 1;
+                    continue;
+                }
+                // THE GATE'S OWN DRAWS (the light gate the spot rules
+                // ride between the kind draw and the ctor seed — the
+                // sky nextInt(32) the always consumption, the uniform
+                // nextInt(8) the both-ceilings-pass consumption; the
+                // flat world's open column the sky 15 the stage-1 pass
+                // the draw ≥ 15 band wears, the midnight clock the raw
+                // 4 the upper half admits)
+                let gate32 = p.next_int(32);
+                if gate32 < 15 {
+                    attempt += 1;
+                    continue;
+                }
+                let gate8 = p.next_int(8);
+                if gate8 < 4 {
+                    attempt += 1;
+                    continue;
+                }
+                let _ctor_seed = p.next();
+                let _yaw = p.next_f32();
+                if (100..190).contains(&roll) {
+                    // THE ZOMBIE'S OWN CHAIN (the group data the walk's
+                    // members share — the null arm's draw A the FIRST
+                    // zombie's verdict arms, the later members the
+                    // getfield read the new draw never spends; the
+                    // jockey roll B per baby member, the chicken gate C
+                    // the hen's ctor seed + the baby roll D the armed
+                    // arm spends, the equipment gate the tail rides)
+                    let baby = match group_baby {
+                        Some(v) => v,
+                        None => {
+                            let draw = p.next_f32();
+                            let v = draw < 0.05;
+                            group_baby = Some(v);
+                            if !zombie {
+                                a = draw;
+                            }
+                            v
+                        }
+                    };
+                    if baby {
+                        let draw_b = p.next_f32();
+                        if !zombie {
+                            b = draw_b;
+                        }
+                        if draw_b < 0.05 {
+                            let draw_c = p.next_f32();
+                            if !zombie {
+                                c = draw_c;
+                            }
+                            if draw_c < 0.05 {
+                                let _hen_seed = p.next();
+                                let draw_d = p.next_f32();
+                                if !zombie {
+                                    d = draw_d;
+                                }
+                            }
+                        }
+                    }
+                    // the equipment gate the zombie's tail rides
+                    if p.next_f32() < 0.01 {
+                        let _pick = p.next_int(6);
+                    }
+                    if !zombie {
+                        zombie = true;
+                    }
+                }
+                spawned += 1;
+                if spawned >= MONSTER_CLUSTER_SIZE as usize {
+                    break 'walks;
+                }
+                attempt += 1;
+            }
+        }
         (sx, sz, zombie, a, b, c, d, zombie && a < 0.05 && b < 0.05 && c < 0.05)
     }
 
@@ -14566,37 +14900,68 @@ mod tests {
         world.day_tick = Some(18_000);
         let mut landed = false;
         for seed in 0u64..65536 {
-            let (sx, sz, zombie, a, b, _c, _d, _triple) = jockey_mirror(seed);
+            let (_sx, _sz, zombie, a, b, _c, _d, _triple) = jockey_mirror(seed, &world);
             if !zombie || a >= 0.05 || b >= 0.05 {
                 continue; // the kind roll or the baby roll the walk keeps — the seed skips
             }
             let mut mobs = Vec::new();
             let mut next_id = 1;
-            if !try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) {
+            if try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) == 0 {
                 continue;
             }
             // the search the empty world refuses — the jockey spawn the
             // roll C decides; the mirror the same draws replays
-            let (_sx2, _sz2, _z2, _a2, _b2, c, d, _t) = jockey_mirror(seed);
-            let z = mobs.last().expect("the spawner pushed the body");
-            assert!(z.is_baby(), "the baby roll the age arms");
-            assert_eq!(z.age, BABY_START_AGE, "the baby the start age speaks");
+            let (_sx2, _sz2, _z2, _a2, _b2, c, d, _t) = jockey_mirror(seed, &world);
+            // THE SHARED VERDICT THE PACK WEARS (the group data the
+            // walk's members keep — the FIRST member's draw A the whole
+            // pack's baby word speaks, the later members the getfield
+            // read the new draw never spends — the famous all-baby pack
+            // the vanilla group data's own texture carries)
+            let pack: Vec<&Zombie> = mobs
+                .iter()
+                .filter(|m| m.kind == MobKind::Zombie)
+                .collect();
+            assert!(!pack.is_empty(), "the zombie the pack wears");
+            let z = pack[0];
             if c >= 0.05 {
-                assert!(z.vehicle.is_none(), "the missed spawn roll the walk keeps");
-                assert_eq!(mobs.len(), 1, "the walk-alone lane the lone body keeps");
+                // THE WALK-ALONE LANE (the missed C the hen never spawns)
+                for m in &pack {
+                    assert!(m.is_baby(), "the shared verdict every member wears");
+                    assert_eq!(m.age, BABY_START_AGE, "the baby the start age speaks");
+                    assert!(m.vehicle.is_none(), "the missed spawn roll the ride never links");
+                }
+                assert!(
+                    mobs.iter().all(|m| m.kind != MobKind::Chicken),
+                    "the missed C the hen never spawns"
+                );
             } else {
-                assert_eq!(mobs.len(), 2, "the jockey spawn the pair pushes");
-                assert_eq!(z.vehicle, Some(2), "the created hen the id order names");
-                let hen = &mobs[0];
-                assert!(hen.chicken_jockey, "the created hen the flag arms");
-                assert_eq!(hen.passenger, Some(1), "the rider's word the link keeps");
+                // THE HEN'S OWN PAIR (the created hen the FIRST zombie's
+                // own chain spawns — the later members the ridden hen
+                // the ENTITY_NOT_BEING_RIDDEN gate refuses, their
+                // searches the empty arm the C draws spend)
+                for m in &pack {
+                    assert!(m.is_baby(), "the shared verdict every member wears");
+                }
+                assert_eq!(z.age, BABY_START_AGE, "the baby the start age speaks");
+                let hen = mobs
+                    .iter()
+                    .find(|m| m.kind == MobKind::Chicken)
+                    .expect("the C-armed seed the hen spawns");
+                assert_eq!(hen.passenger, Some(z.id), "the rider's word the link keeps");
+                assert_eq!(z.vehicle, Some(hen.id), "the created hen the ride links");
                 assert_eq!(
                     hen.is_baby(),
                     d < 0.05,
                     "the AgeableMob group-data draw the hen's childhood decides"
                 );
             }
-            assert_eq!((z.x.floor() as i32, z.z.floor() as i32), (sx, sz), "the ring the spot lands");
+            // the walked cell the 576.0 gate's own strict arm re-checks
+            let dx = z.x - 32.0;
+            let dz = z.z - 32.0;
+            assert!(
+                dx * dx + dz * dz > 576.0,
+                "the walked cell the gate's own strict law keeps"
+            );
             landed = true;
             break;
         }
@@ -14617,18 +14982,22 @@ mod tests {
         world.day_tick = Some(18_000);
         let mut landed = false;
         for seed in 0u64..1_048_576 {
-            let (_sx, _sz, zombie, a, b, _c, _d, _t) = jockey_mirror(seed);
+            let (_sx, _sz, zombie, a, b, _c, _d, _t) = jockey_mirror(seed, &world);
             if !zombie || a >= 0.05 || b >= 0.05 {
                 continue;
             }
             // the DRY RUN the spot's own pose answers (the draws the
-            // mobs vec never shifts)
+            // mobs vec never shifts) — the FIRST zombie the search's
+            // own rider wears
             let mut dry: Vec<Zombie> = Vec::new();
             let mut next_id = 1;
-            if !try_spawn(&mut dry, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) {
+            if try_spawn(&mut dry, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) == 0 {
                 continue;
             }
-            let z0 = dry.last().unwrap();
+            let z0 = dry
+                .iter()
+                .find(|m| m.kind == MobKind::Zombie)
+                .expect("the zombie seed the pack wears");
             if z0.vehicle.is_some() {
                 continue; // the triple roll this seed walks — the search test skips
             }
@@ -14640,13 +15009,21 @@ mod tests {
             hen.kind = MobKind::Chicken;
             mobs.push(hen);
             let mut next_id = 1;
-            assert!(try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true));
-            assert_eq!(mobs.len(), 2, "the found lane the jockey hen never spawns");
-            let z = mobs.last().unwrap();
+            assert!(
+                try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) > 0,
+                "the found lane the pack the same seed spawns"
+            );
+            // the FIRST zombie the search's own rider wears (the later
+            // members the ridden hen the ENTITY_NOT_BEING_RIDDEN gate
+            // refuses — the found lane the jockey hen never spawns)
+            let z = mobs
+                .iter()
+                .find(|m| m.kind == MobKind::Zombie)
+                .expect("the zombie seed the pack wears");
             assert_eq!(z.vehicle, Some(50), "the found hull the ride links");
-            let hen = &mobs[0];
+            let hen = mobs.first().unwrap();
             assert!(hen.chicken_jockey, "the found hull the flag arms");
-            assert_eq!(hen.passenger, Some(1), "the rider's word the hen keeps");
+            assert_eq!(hen.passenger, Some(z.id), "the rider's word the hen keeps");
             assert!(
                 !hen.is_baby(),
                 "the bytecode never re-babies the found hen"
@@ -14671,19 +15048,26 @@ mod tests {
         world.day_tick = Some(18_000);
         let mut landed = false;
         for seed in 0u64..1_048_576 {
-            let (_sx, _sz, zombie, _a, _b, _c, _d, triple) = jockey_mirror(seed);
+            let (_sx, _sz, zombie, _a, _b, _c, _d, triple) = jockey_mirror(seed, &world);
             if !zombie || !triple {
                 continue;
             }
             let mut mobs = Vec::new();
             let mut next_id = 1;
-            if !try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) {
+            if try_spawn(&mut mobs, &mut next_id, 32.0, 32.0, &world, &mut Lcg::new(seed), true) == 0 {
                 continue;
             }
-            assert_eq!(mobs.len(), 2, "the jockey spawn the pair keeps");
-            let z = mobs.last().unwrap();
-            let hen = &mobs[0];
-            assert_eq!(hen.kind, MobKind::Chicken, "the created body the kind speaks");
+            // the FIRST zombie the empty search's own spawner wears —
+            // the hen the vec the rider's own pose precedes (the created
+            // body the addFreshEntity the rider ahead answers)
+            let z = mobs
+                .iter()
+                .find(|m| m.kind == MobKind::Zombie)
+                .expect("the zombie seed the pack wears");
+            let hen = mobs
+                .iter()
+                .find(|m| m.kind == MobKind::Chicken)
+                .expect("the triple roll the hen spawns");
             assert!(hen.chicken_jockey, "the jockey hen the flag arms");
             assert_eq!(z.vehicle, Some(hen.id), "the ride the link arms");
             assert_eq!(hen.passenger, Some(z.id), "the rider's word the hen keeps");
@@ -14693,7 +15077,10 @@ mod tests {
                 "the snapTo the zombie's own pose keeps"
             );
             assert_eq!(hen.yaw, z.yaw, "the snapTo the zombie's own yaw keeps");
-            assert_eq!(hen.id, 2, "the id the counter order speaks");
+            // THE ID'S OWN COUNTER ORDER (the zombie's id the counter
+            // draws first, the hen's the next — the earlier walks' own
+            // spawns the pack the absolute ids never pin)
+            assert_eq!(hen.id, z.id + 1, "the id the counter order speaks");
             landed = true;
             break;
         }
