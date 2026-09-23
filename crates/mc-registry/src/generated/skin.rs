@@ -275,6 +275,18 @@ pub const PARTICLE_GLINT_RUNTIME_PATH: &str = "particle/glint.png";
 pub const PARTICLE_SWEEP_PNG_SHA1S: [&str; 8] = ["8c7d923d146cad394c8caaf1a4badf68ca29753e", "ef57d3910c34c4d76e8baa6acd50e43d3da985bc", "bf99457c805323fb7733d11be2f9d61f03ff8ca4", "4785e75fc3f22d0452d42b8905f0fe6b3ec60f54", "f0d3509efe3e0f068eac9f0bc7dff0fce2758b17", "f0945f4c7e7dd0433d411ec31814ad6067f212c9", "8dfa2cdc7d0288f52a193ff70610628cee836c91", "276ae2fcc4d436e35ba8f61afb1adc7149b8eb4e"];
 pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = ["particle/sweep_0.png", "particle/sweep_1.png", "particle/sweep_2.png", "particle/sweep_3.png", "particle/sweep_4.png", "particle/sweep_5.png", "particle/sweep_6.png", "particle/sweep_7.png"];
 
+/// The EXPLOSION LANE's textures (the dragon's own block-break burst's
+/// 16-frame 32x32 sprite set), generated from the same jar: the
+/// integrity sha1s the loaders verify before they draw (javap: the
+/// `explosion` particle type's sprite set — the `LevelEventHandler`
+/// case-2008 arm's ONE `addParticle(EXPLOSION, x + 0.5, y + 0.5, z +
+/// 0.5, 0, 0, 0)` walk the dragon's own block-break broadcast feeds,
+/// the `HugeExplosionParticle` the provider spawns — the
+/// `explosion.json` lists `explosion_0..15` ASCENDING, the index the
+/// `MutableSpriteSet.get` walk reads IS the file index).
+pub const PARTICLE_EXPLOSION_PNG_SHA1S: [&str; 16] = ["d80ac7fdaaa384db7392583a23bc18a6ec2c0dc7", "861b1428acbda9f1618bd3590b538fe87cdbb7c2", "f725e3592e22e2a7035fb476eaf2ec2cd1f86026", "171bc9b0ce50725128ba9222956879a99505b509", "d8220085ed6ca9bb2bd6452e93ef941fa89f2fca", "e2a1560d1772ab3d56c8df4c42061d061ebf258d", "b6cd14e7708d4cb6c1fe48d68176b58da5d6cc6b", "42b587435c6a5f4afe35664fa23941bbb2b54040", "b3abda2e9f29b4a5c211233bfe8e4821d66f2290", "1142542085e8668afa510ae5764a46b2623cfe57", "c21bf369f965acff356abae829e7442a174040bc", "8eec57b05bf0c66725f2b2564cc95a17bfad29d4", "a463d003e77d1e53b20abe5b68e8f5204e5fb604", "5fd7ba88a60c4ddc415e4e2c4ec69e5865ef4885", "e797f3b4e99f7cd5d865ce10a36dda95681aa723", "f1f08855bb9dcb61730b5463609fa99645c51ed7"];
+pub const PARTICLE_EXPLOSION_RUNTIME_PATHS: [&str; 16] = ["particle/explosion_0.png", "particle/explosion_1.png", "particle/explosion_2.png", "particle/explosion_3.png", "particle/explosion_4.png", "particle/explosion_5.png", "particle/explosion_6.png", "particle/explosion_7.png", "particle/explosion_8.png", "particle/explosion_9.png", "particle/explosion_10.png", "particle/explosion_11.png", "particle/explosion_12.png", "particle/explosion_13.png", "particle/explosion_14.png", "particle/explosion_15.png"];
+
 /// The SPLASH-POTION LANE's textures (the spell ring's two 8-frame
 /// 8x8 sprite sets + the debris burst's two 16x16 item sprites),
 /// generated from the same jar: the integrity sha1s the loaders

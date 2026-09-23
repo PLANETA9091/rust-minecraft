@@ -6679,6 +6679,9 @@ pub struct App {
     /// The sweep arc's 8 frames (the same lazy load — the sword's own
     /// swing's pixel sources).
     pub sweep_frames: Option<crate::avatar::SweepFrames>,
+    /// The explosion burst's 16 frames (the same lazy load — the
+    /// dragon's own block-break burst's pixel sources).
+    pub explosion_frames: Option<crate::avatar::ExplosionFrames>,
     /// The heart's single sprite (the same lazy load — the love
     /// burst's own red pixel source, the event-18 arm and the aiStep
     /// ambient drip both ride).
@@ -7377,6 +7380,7 @@ impl App {
             flame_sprite: None,
             damage_sprite: None,
             sweep_frames: None,
+            explosion_frames: None,
             heart_sprite: None,
             glint_sprite: None,
             effect_frames: None,
@@ -7608,6 +7612,10 @@ impl App {
             // the arc's own walk: the age-only override (no motion, no
             // gravity — the arc hangs the whole 4-tick life)
             crate::particles::ParticleKind::Sweep => p.tick_sweep(),
+            // the burst's own walk: the age-only override the dragon's
+            // law speaks (no motion, no gravity, no friction — the
+            // stationary blast the whole 6..9-tick life wears)
+            crate::particles::ParticleKind::Explosion => p.tick_explosion(),
             // the splash puff's own walk: the age-only override the
             // dragon's law speaks (no gravity, no vy friction — the x/z
             // lanes alone the 0.96 folds ride)
@@ -21885,6 +21893,37 @@ impl App {
         }
     }
 
+    /// THE DRAGON BLOCK-BREAK WIRE LANE (javap `LevelEventHandler`
+    /// case 2008 — offset 3440 — over the 26.2 jar): the server's
+    /// own dragon the event broadcast, the ONE EXPLOSION puff the
+    /// block's own center fires.
+    pub fn live_dragon_block_break_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireDragonBlockBreakEvent>,
+    ) {
+        for ev in events {
+            self.play_dragon_block_break(ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE BURST WALK (javap the case-2008 arm verbatim): the ONE
+    /// `addParticle(EXPLOSION, x + 0.5, y + 0.5, z + 0.5, 0, 0, 0)`
+    /// the case body spends — the cp `#197` Double decode speaks the
+    /// 0.5 centers all three axes ride (NO draws the position costs,
+    /// the stationary fold the fixed constants keep), the zero
+    /// velocity trio the `dconst_0` answers, the data word the case
+    /// never reads, no sound the case speaks. The burst's own draws
+    /// the puff ctor spends (the `6 + nextInt(4)` lifetime, the grey
+    /// tint) — the block's own center the stationary blast the whole
+    /// brief life wears.
+    fn play_dragon_block_break(&mut self, x: i32, y: i32, z: i32) {
+        let px = f64::from(x) + 0.5;
+        let py = f64::from(y) + 0.5;
+        let pz = f64::from(z) + 0.5;
+        let puff = crate::particles::explosion_puff(px, py, pz, &mut self.level_ambient_rng);
+        self.particles.push(puff);
+    }
+
     /// THE MOB-SPAWN CLOUD'S OWN WIRE LANE (javap `LevelEventHandler`
     /// case 2004 — offset 1689 — over the 26.2 jar): the server's own
     /// spawner the event broadcast, the twenty SMOKE + FLAME pairs the
@@ -26455,6 +26494,10 @@ impl App {
             self.sweep_frames =
                 crate::avatar::SweepFrames::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.explosion_frames.is_none() {
+            self.explosion_frames =
+                crate::avatar::ExplosionFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.heart_sprite.is_none() {
             self.heart_sprite =
                 crate::avatar::HeartSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -26503,6 +26546,10 @@ impl App {
         // the age walk rides — the generic pool the poof bank loads)
         let mut cloud_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the dragon block-break's own groups (the frame-keyed frames
+        // the age walk rides — the explosion bank the dragon lane
+        // loads)
+        let mut explosion_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut heart_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut glint_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         // THE SPLASH LANE'S GROUPS (the ring keyed by the instant flag
@@ -26718,6 +26765,33 @@ impl App {
                         None => cloud_groups.push((file, vec![quad])),
                     }
                 }
+                crate::particles::ParticleKind::Explosion => {
+                    // the burst's own quad (the 32x32 frame the age's
+                    // own walk speaks — the same setSpriteFromAge
+                    // chain the sweep rides, the get law's
+                    // `age * (size - 1) / lifetime` the frames speak;
+                    // the json's ASCENDING order the frame index
+                    // reads directly, the grey tint the ctor's
+                    // nextFloat*0.6+0.4 draw carries, the OPAQUE
+                    // layer the getLayer override returns, the
+                    // stationary blast the block's own center keeps)
+                    let frame = crate::particles::explosion_frame(p.age, p.lifetime);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [
+                            [0.0, 32.0],
+                            [32.0, 32.0],
+                            [32.0, 0.0],
+                            [0.0, 0.0],
+                        ],
+                        tex: "particle_explosion",
+                        tint: p.col,
+                    };
+                    match explosion_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => explosion_groups.push((frame, vec![quad])),
+                    }
+                }
                 crate::particles::ParticleKind::Sweep => {
                     // the arc's own quad (the 32x32 frame the age's
                     // own walk speaks — the same setSpriteFromAge
@@ -26906,6 +26980,15 @@ impl App {
             for (file, quads) in &cloud_groups {
                 fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
                     Some(frames.pixel(*file, u, v))
+                });
+            }
+        }
+        // the explosion groups (the burst's own 32x32 pixels — the
+        // frames the json's ascending order holds)
+        if let Some(frames) = &self.explosion_frames {
+            for (frame, quads) in &explosion_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
                 });
             }
         }
@@ -45923,6 +46006,84 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_water_evaporating_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_dragon_word_the_center_burst_wears() {
+        // THE DRAGON BLOCK-BREAK'S OWN WIRE LANE (javap case 2008 →
+        // offset 3440 over the 26.2 jar): the ONE EXPLOSION puff the
+        // block's own center fires (the cp `#197` Double decode the
+        // 0.5 centers speak, the zero velocity trio the `dconst_0`
+        // answers, the stationary blast the whole 6..9-tick life
+        // wears), the grey tint the ctor's ONE draw carries — NO
+        // SOUND the case speaks (the block's own break voice the
+        // server's separate broadcasts own).
+        let mut app = App::new(2);
+        app.enter_world();
+        app.live_dragon_block_break_events_updated(vec![
+            crate::world_view::WireDragonBlockBreakEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+            },
+        ]);
+        assert_eq!(
+            app.particles.len(),
+            1,
+            "the ONE puff the case body keeps"
+        );
+        let p = &app.particles[0];
+        assert!(
+            matches!(p.kind, crate::particles::ParticleKind::Explosion),
+            "the EXPLOSION type the provider answers"
+        );
+        // THE CENTER FOLD (the cp Double the +0.5 the x/y/z keeps)
+        assert!((p.x - 10.5).abs() < 1e-9, "the x the 0.5 center keeps: {}", p.x);
+        assert!((p.y - 20.5).abs() < 1e-9, "the y the 0.5 center keeps: {}", p.y);
+        assert!((p.z - 10.5).abs() < 1e-9, "the z the 0.5 center keeps: {}", p.z);
+        // THE ZERO VELOCITY TRIO (the dconst_0 the case passes)
+        assert_eq!(p.vx, 0.0, "the zero vx");
+        assert_eq!(p.vy, 0.0, "the zero vy");
+        assert_eq!(p.vz, 0.0, "the zero vz");
+        // THE CTOR LAWS (the 6..9 band the nextInt(4) draw gives, the
+        // 2.0 quad the zero-speed fold keeps, the shared f11 the
+        // r/g/b trio keeps)
+        assert!(p.lifetime >= 6 && p.lifetime <= 9, "the band: {}", p.lifetime);
+        assert!((p.quad_size - 2.0).abs() < 1e-9, "the 2.0 quad");
+        assert_eq!(p.col[0], p.col[1], "the shared f11 the r/g keeps");
+        assert_eq!(p.col[1], p.col[2], "the shared f11 the g/b keeps");
+        assert!(
+            (0.4..=1.0).contains(&p.col[0]),
+            "the tint band the grey keeps: {}",
+            p.col[0]
+        );
+        // THE STATIONARY TICK (the app's own update the override's
+        // body speaks — the pose the block's own center keeps, the
+        // frame walk the ascending list rides)
+        let pre = (p.x, p.y, p.z);
+        app.update();
+        let p = &app.particles[0];
+        assert_eq!(
+            (p.x, p.y, p.z),
+            pre,
+            "the stationary blast the pose keeps"
+        );
+        // THE SILENCE (the case's own body the voice never speaks —
+        // no explode event the wire walk adds)
+        if sounds_loaded() {
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.contains("generic.explode")),
+                "the case's own silence the voice never shares"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_dragon_block_break_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

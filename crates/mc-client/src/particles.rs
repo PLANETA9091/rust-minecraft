@@ -337,6 +337,23 @@ pub enum ParticleKind {
     /// returns, the growth the getQuadSize's 32x clamp rides (the
     /// same law the crit star blooms by).
     Cloud,
+    /// `HugeExplosionParticle` — the dragon's own block-break burst
+    /// (the `explosion` type the `LevelEventHandler` case-2008 arm's
+    /// ONE `addParticle(EXPLOSION, x + 0.5, y + 0.5, z + 0.5, 0, 0,
+    /// 0)` walk speaks): the sixteen-frame walk the age's own ride
+    /// answers (`setSpriteFromAge` — the explosion.json's ASCENDING
+    /// `explosion_0..15` list the index IS the file), the tint the
+    /// ctor's ONE `nextFloat * 0.6 + 0.4` draw carries (the r/g/b
+    /// trio the shared f11 keeps — the grey the blast nights wear),
+    /// the stationary tick the override's own body speaks (the
+    /// prev-trio + the age walk + the removal gate — no motion the
+    /// zero velocity trio keeps, no friction lane, no gravity), the
+    /// 6..9 lifetime the `6 + nextInt(4)` draw gives, the quadSize
+    /// the ctor's own `2.0 * (1.0 - (float)xd * 0.5)` write answers
+    /// (the case's zero speed the 2.0 keeps), the OPAQUE layer the
+    /// getLayer override returns, the NO getQuadSize override the
+    /// base law keeps (the plain quad the whole life wears).
+    Explosion,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -365,6 +382,23 @@ pub fn sweep_frame(age: u32, lifetime: u32) -> usize {
 /// the 26.2 dragon_breath.json speaks — the same generic pool the
 /// smoke's 8-frame set banks, the json's ASCENDING list orders).
 pub const DRAGON_BREATH_FRAME_COUNT: usize = 3;
+
+/// The explosion burst's 16 frames (the `explosion_0..15` textures
+/// the jar speaks — the sprite set the json's ASCENDING list orders,
+/// the list index the frame law reads directly).
+pub const EXPLOSION_FRAME_COUNT: usize = 16;
+
+/// The explosion burst's own frame law (javap `Particle
+/// .setSpriteFromAge` -> `MutableSpriteSet.get(age, lifetime)`
+/// verbatim: `sprites.get(age * (size - 1) / lifetime)` — 16 frames,
+/// the 6..9-tick life walking the ascending list the json speaks;
+/// the min clamp the list.get's own bound speaks — the vanilla walk
+/// never fires it (the age walk removes the particle at the lifetime
+/// first), the Rust shape keeps it honest).
+pub fn explosion_frame(age: u32, lifetime: u32) -> usize {
+    ((age as usize * (EXPLOSION_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
+        .min(EXPLOSION_FRAME_COUNT - 1)
+}
 
 /// The dragon breath's own frame law (javap `Particle.setSpriteFromAge`
 /// -> `MutableSpriteSet.get(age, lifetime)` verbatim:
@@ -665,6 +699,23 @@ impl Particle {
                 self.y += (py - self.y) * 0.2;
                 self.vy += (pvy - self.vy) * 0.2;
             }
+        }
+        true
+    }
+
+    /// The `HugeExplosionParticle.tick` verbatim — the override the
+    /// base law never rides: the prev-trio the tick head saves, the
+    /// age walk (`age++` the dup_x1 body speaks), the removal gate
+    /// (`age >= lifetime` the remove() the branch arms) — and
+    /// NOTHING else (no motion the zero velocity keeps, no gravity
+    /// lane, no friction lane — the stationary burst the whole
+    /// 6..9-tick life stays at the block's own center, the sprite
+    /// walk the render's own age read answers).
+    pub fn tick_explosion(&mut self) -> bool {
+        self.tick_head();
+        self.age += 1;
+        if self.age >= self.lifetime {
+            return false;
         }
         true
     }
@@ -1616,6 +1667,68 @@ pub fn cloud_puff(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Partic
         gravity: 0.0,
         friction: 0.96,
         quad_size: base_quad_size(r_quad) * 1.875,
+        uo: 0.0,
+        vo: 0.0,
+        col: [tint, tint, tint],
+    }
+}
+
+/// The DRAGON BLOCK-BREAK burst's own spawn (javap
+/// `HugeExplosionParticle` + `$Provider.createParticle` over the
+/// 26.2 jar): the ctor chain the case's own draw walk feeds — the
+/// dead base lifetime draw (the value the explosion ctor's own
+/// lifetime write overrides), the SingleQuadParticle's size draw
+/// (the value the ctor's own `2.0F * (1.0F - (float)xd * 0.5F)`
+/// write overrides — the case's zero speed the 2.0 keeps), the
+/// `6 + nextInt(4)` lifetime draw the 6..9 band speaks, THE TINT
+/// DRAW the ctor's own body speaks (the ONE `nextFloat` the f11
+/// body spends — the `* 0.6F + 0.4F` fold the r/g/b putfield trio
+/// keeps, the grey the blast nights wear), the zero velocity the
+/// case's `dconst_0` trio passes (the provider drops the y/z speeds
+/// the walk never reads), the stationary tick the override's own
+/// body answers (the prev-trio + the age walk + the removal gate —
+/// no motion, no friction lane, no gravity the override never
+/// reads), the OPAQUE layer the getLayer override returns. The
+/// caller's own position the case's cp `#197` Double fold speaks —
+/// the 0.5 centers arrive PRE-folded.
+pub fn explosion_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the explosion ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    // the SingleQuadParticle's own size draw (the value the ctor's
+    // own quadSize write overrides — the case's zero speed the
+    // 2.0 fold keeps)
+    let _dead_quad = base_quad_size(rng.next_f32());
+    // THE LIFETIME DRAW (the `6 + nextInt(4)` the ctor's own write
+    // speaks — the 6..9 band the burst's brief nights wear)
+    let extra = rng.next_int(4);
+    // THE TINT DRAW (the ONE nextFloat the ctor's f11 body spends —
+    // the shared answer the r/g/b trio keeps)
+    let r_tint = rng.next_f32();
+    let tint = r_tint * 0.6f32 + 0.4f32;
+    Particle {
+        kind: ParticleKind::Explosion,
+        x,
+        y,
+        z,
+        prev: None,
+        // the zero velocity the case's dconst_0 trio passes
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        lifetime: 6 + extra.max(0) as u32,
+        gravity: 0.0,
+        // the vanilla field default the override never reads (the
+        // stationary walk the tick body keeps)
+        friction: 0.98,
+        // the ctor's own write — the case's zero speed the 2.0 keeps
+        quad_size: 2.0f32 * (1.0f32 - 0.0f32 * 0.5),
         uo: 0.0,
         vo: 0.0,
         col: [tint, tint, tint],
@@ -3841,5 +3954,95 @@ mod tests {
             b.next();
         }
         assert_eq!(after_six, b.next(), "the cloud chain's own six draws");
+    }
+
+    #[test]
+    fn the_explosion_puff_the_stationary_frames_wear() {
+        // THE DRAGON BLOCK-BREAK BURST'S OWN SPAWN (javap
+        // `HugeExplosionParticle` + `$Provider.createParticle` over
+        // the 26.2 jar — the case-2008 arm's own walk feeds): the
+        // draw chain the case's ZERO-arg call opens (the ctor chain
+        // the four draws — the dead base lifetime, the dead base
+        // quad size the ctor's own write overrides, the `6 +
+        // nextInt(4)` lifetime, THE ONE tint draw the shared f11
+        // keeps), the zero velocity the dconst_0 trio passes.
+        // THE FRAME EDGES (the get law the helper pins):
+        assert_eq!(explosion_frame(0, 6), 0, "the age-0 frame");
+        assert_eq!(explosion_frame(0, 9), 0, "the age-0 frame the long life keeps");
+        assert_eq!(explosion_frame(5, 6), 12, "the 5*15/6 the short life walks");
+        assert_eq!(explosion_frame(8, 9), 13, "the 8*15/9 the long life walks");
+        assert_eq!(explosion_frame(0, 0), 0, "the zero lifetime the clamp keeps");
+        // the seeded chain: the ctor's four draws (the case's own
+        // position folds the fixed constants keep — no draws ride)
+        let mut stream = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
+        let p = explosion_puff(-120.5, 64.5, 77.5, &mut stream);
+        let pre = (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size, p.col);
+        assert!(
+            matches!(p.kind, ParticleKind::Explosion),
+            "the EXPLOSION type the provider answers"
+        );
+        // THE ZERO VELOCITY TRIO (the dconst_0 the case passes — the
+        // provider drops the y/z speeds the walk never reads)
+        assert_eq!(p.vx, 0.0, "the zero vx");
+        assert_eq!(p.vy, 0.0, "the zero vy");
+        assert_eq!(p.vz, 0.0, "the zero vz");
+        // THE CTOR LAWS (the vanilla friction default the override
+        // never reads, the no-gravity field, the 6..9 band the
+        // nextInt(4) draw gives, the 2.0 quad the zero-speed fold
+        // keeps, the shared f11 the r/g/b trio keeps)
+        assert!((p.friction - 0.98).abs() < 1e-9, "the 0.98 field default");
+        assert!((p.gravity).abs() < 1e-9, "the no-gravity law");
+        assert!(p.lifetime >= 6 && p.lifetime <= 9, "the band: {}", p.lifetime);
+        assert!((p.quad_size - 2.0).abs() < 1e-9, "the 2.0 the zero speed keeps");
+        let expect_tint = p.col[0];
+        assert!(
+            (0.4..=1.0).contains(&expect_tint),
+            "the tint band the r*0.6+0.4 draw gives: {expect_tint}"
+        );
+        assert_eq!(p.col[1], expect_tint, "the shared f11 the g keeps");
+        assert_eq!(p.col[2], expect_tint, "the shared f11 the b keeps");
+        // THE STATIONARY TICK (the override's own body — the prev the
+        // head saves, the age walk, no motion the zero velocity and
+        // the override's own silence keep)
+        let mut t = explosion_puff(0.0, 0.0, 0.0, &mut stream);
+        t.lifetime = 100;
+        assert!(t.tick_explosion(), "the alive tick");
+        assert_eq!(
+            (t.x, t.y, t.z),
+            (0.0, 0.0, 0.0),
+            "the stationary walk the pose keeps"
+        );
+        assert_eq!(
+            t.prev,
+            Some((0.0, 0.0, 0.0)),
+            "the prev-trio the tick head saves"
+        );
+        // THE REMOVAL (the age walk the lifetime gates)
+        let mut dying = explosion_puff(0.0, 0.0, 0.0, &mut stream);
+        dying.lifetime = 2;
+        assert!(
+            dying.tick_explosion(),
+            "the first tick the alive gate answers"
+        );
+        assert!(!dying.tick_explosion(), "the age the removal walk answers");
+        // THE DETERMINISM (the same seed the same chain answers)
+        let mut a = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
+        let p2 = explosion_puff(-120.5, 64.5, 77.5, &mut a);
+        assert_eq!(
+            pre,
+            (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size, p2.col),
+            "the seeded chain replays"
+        );
+        // THE STREAM (the four draws the per-puff chain consumes —
+        // the dead base lifetime, the dead quad, the nextInt(4), the
+        // tint; the fifth draw differs)
+        let mut a = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
+        let _ = explosion_puff(0.0, 0.0, 0.0, &mut a);
+        let after_four = a.next();
+        let mut b = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
+        for _ in 0..4 {
+            b.next();
+        }
+        assert_eq!(after_four, b.next(), "the explosion chain's own four draws");
     }
 }

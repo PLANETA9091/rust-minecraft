@@ -188,6 +188,33 @@ pub const PARTICLE_SWEEP_JAR_PATHS: [&str; 8] = [
     "assets/minecraft/textures/particle/sweep_6.png",
     "assets/minecraft/textures/particle/sweep_7.png",
 ];
+/// The explosion's 16-frame set (javap: the `explosion` particle
+/// type's sprite set — the jar's `particles/explosion.json` lists
+/// SIXTEEN textures, `minecraft:explosion_0..15` in ASCENDING order —
+/// the index the `MutableSpriteSet.get` walk reads IS the file index,
+/// the same ascending fold the sweep json speaks; each frame the 32x32
+/// the IHDR verifies; the `HugeExplosionParticle`'s `setSpriteFromAge`
+/// rides the list the json speaks — the `LevelEventHandler` case-2008
+/// arm's ONE `addParticle(EXPLOSION, x + 0.5, y + 0.5, z + 0.5, 0, 0,
+/// 0)` walk the dragon's own block-break broadcast feeds).
+pub const PARTICLE_EXPLOSION_JAR_PATHS: [&str; 16] = [
+    "assets/minecraft/textures/particle/explosion_0.png",
+    "assets/minecraft/textures/particle/explosion_1.png",
+    "assets/minecraft/textures/particle/explosion_2.png",
+    "assets/minecraft/textures/particle/explosion_3.png",
+    "assets/minecraft/textures/particle/explosion_4.png",
+    "assets/minecraft/textures/particle/explosion_5.png",
+    "assets/minecraft/textures/particle/explosion_6.png",
+    "assets/minecraft/textures/particle/explosion_7.png",
+    "assets/minecraft/textures/particle/explosion_8.png",
+    "assets/minecraft/textures/particle/explosion_9.png",
+    "assets/minecraft/textures/particle/explosion_10.png",
+    "assets/minecraft/textures/particle/explosion_11.png",
+    "assets/minecraft/textures/particle/explosion_12.png",
+    "assets/minecraft/textures/particle/explosion_13.png",
+    "assets/minecraft/textures/particle/explosion_14.png",
+    "assets/minecraft/textures/particle/explosion_15.png",
+];
 /// The splash-potion ring's two 8-frame sets (javap: the `effect` +
 /// `instant_effect` particle types' sprite sets — the jar's
 /// `particles/effect.json` lists `minecraft:effect_7..0` and
@@ -315,6 +342,27 @@ pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = [
     "particle/sweep_5.png",
     "particle/sweep_6.png",
     "particle/sweep_7.png",
+];
+/// The explosion's runtime-cache paths (the same textures/ prefix
+/// strip the other lanes speak — the json's ASCENDING list IS the
+/// array order).
+pub const PARTICLE_EXPLOSION_RUNTIME_PATHS: [&str; 16] = [
+    "particle/explosion_0.png",
+    "particle/explosion_1.png",
+    "particle/explosion_2.png",
+    "particle/explosion_3.png",
+    "particle/explosion_4.png",
+    "particle/explosion_5.png",
+    "particle/explosion_6.png",
+    "particle/explosion_7.png",
+    "particle/explosion_8.png",
+    "particle/explosion_9.png",
+    "particle/explosion_10.png",
+    "particle/explosion_11.png",
+    "particle/explosion_12.png",
+    "particle/explosion_13.png",
+    "particle/explosion_14.png",
+    "particle/explosion_15.png",
 ];
 /// The splash-potion ring's runtime-cache paths (the same textures/
 /// prefix strip the other lanes speak — the FILE index the json's
@@ -460,6 +508,10 @@ pub struct SkinData {
     /// the sword's own swing's pixel sources (the 32x32 sweep frames
     /// the json's ascending list orders).
     pub particle_sweep_png_sha1s: [String; 8],
+    /// sha1s of the explosion's 16 frames (jar-verbatim integrity) —
+    /// the dragon's own block-break burst's pixel sources (the 32x32
+    /// explosion frames the json's ascending list orders).
+    pub particle_explosion_png_sha1s: [String; 16],
     /// sha1s of the splash-potion ring's two 8-frame sets (jar-verbatim
     /// integrity) — the spell ring's pixel sources (the 8x8 effect/spell
     /// frames the two jsons' descending lists order).
@@ -881,6 +933,20 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             sh
         );
     }
+    // the explosion's 16 frames (the same shape check the sweep walk
+    // speaks — the 32x32 the burst quad samples over its own life)
+    let mut particle_explosion_png_sha1s: [String; 16] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_EXPLOSION_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read explosion frame")?;
+        particle_explosion_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (ew, eh, _explosion_rgba) = decode_rgba(&bytes).context("decode explosion frame")?;
+        anyhow::ensure!(
+            (ew, eh) == (32, 32),
+            "explosion frames must be the 32x32 sprites, got {}x{}",
+            ew,
+            eh
+        );
+    }
     // the splash-potion ring's two 8-frame sets (the same shape check
     // the poof walk speaks — the 8x8 the ring quads sample over their
     // own lives, the type's own json the set rides)
@@ -1025,6 +1091,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_heart_png_sha1,
         particle_glint_png_sha1,
         particle_sweep_png_sha1s,
+        particle_explosion_png_sha1s,
         particle_effect_png_sha1s,
         particle_spell_png_sha1s,
         item_potion_overlay_png_sha1,
@@ -1452,6 +1519,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .join(", ")
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_EXPLOSION_PNG_SHA1S: [&str; 16] = [{}];\n",
+        data.particle_explosion_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_EXPLOSION_RUNTIME_PATHS: [&str; 16] = [{}];\n",
+        PARTICLE_EXPLOSION_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = [{}];\n",
         data.particle_effect_png_sha1s
             .iter()
@@ -1727,6 +1810,9 @@ mod tests {
         let sweeps = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
         let expected_sweep_sha1s: Vec<String> =
             sweeps.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let explosions = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
+        let expected_explosion_sha1s: Vec<String> =
+            explosions.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let effects = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
         let expected_effect_sha1s: Vec<String> =
             effects.iter().map(|p| crate::util::sha1_hex(p)).collect();
@@ -1839,6 +1925,22 @@ mod tests {
             (PARTICLE_SWEEP_JAR_PATHS[5], sweeps[5].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[6], sweeps[6].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[7], sweeps[7].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[0], explosions[0].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[1], explosions[1].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[2], explosions[2].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[3], explosions[3].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[4], explosions[4].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[5], explosions[5].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[6], explosions[6].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[7], explosions[7].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[8], explosions[8].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[9], explosions[9].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[10], explosions[10].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[11], explosions[11].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[12], explosions[12].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[13], explosions[13].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[14], explosions[14].clone()),
+            (PARTICLE_EXPLOSION_JAR_PATHS[15], explosions[15].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[0], effects[0].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[1], effects[1].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[2], effects[2].clone()),
@@ -1958,6 +2060,11 @@ mod tests {
             data.particle_sweep_png_sha1s,
             expected_sweep_sha1s.as_slice(),
             "the sweep frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_explosion_png_sha1s,
+            expected_explosion_sha1s.as_slice(),
+            "the explosion frames' own sha1s"
         );
         assert_eq!(
             data.particle_effect_png_sha1s,

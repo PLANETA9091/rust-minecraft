@@ -6208,6 +6208,63 @@ impl SweepFrames {
     }
 }
 
+/// The PARTICLE LANE's explosion frames — the dragon's own
+/// block-break burst's 16-frame sprite set (javap: the `explosion`
+/// particle type's own sprites, the jar's
+/// `textures/particle/explosion_0..15.png`, the `explosion.json`'s
+/// ASCENDING list the index law reads — the list index IS the file
+/// index, the same ascending fold the sweep json speaks; each frame
+/// the 32x32 the IHDR verifies, the `HugeExplosionParticle`'s
+/// `setSpriteFromAge` walk the `MutableSpriteSet.get` law
+/// `sprites.get(age * (size - 1) / lifetime)` speaks — the
+/// `LevelEventHandler` case-2008 arm's ONE
+/// `addParticle(EXPLOSION, x + 0.5, y + 0.5, z + 0.5, 0, 0, 0)` walk
+/// the burst feeds), each file loaded and sha1-verified the same
+/// stream the sweep frames speak. A missing or tampered frame keeps
+/// the burst invisible (the honest absence the other lanes speak).
+pub struct ExplosionFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The explosion texture's own layout (the jar's 32x32 the IHDR
+/// speaks).
+pub const EXPLOSION_SPRITE_SIDE: u32 = 32;
+
+impl ExplosionFrames {
+    /// Load the 16 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 32x32 layout.
+    pub fn load(root: &std::path::Path) -> Option<ExplosionFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::EXPLOSION_FRAME_COUNT);
+        for i in 0..crate::particles::EXPLOSION_FRAME_COUNT {
+            let bytes = std::fs::read(root.join(skin::PARTICLE_EXPLOSION_RUNTIME_PATHS[i]))
+                .ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_EXPLOSION_PNG_SHA1S[i] {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != EXPLOSION_SPRITE_SIDE || h != EXPLOSION_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(ExplosionFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..32 the
+    /// 32x32 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, EXPLOSION_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, EXPLOSION_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * EXPLOSION_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's splash droplet frames — the entry splash's
 /// second ring's 4-frame sprite set (javap: the `splash` particle
 /// type's own sprites, the jar's `textures/particle/splash_0..3.png`,

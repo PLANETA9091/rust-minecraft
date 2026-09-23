@@ -481,6 +481,13 @@ pub struct SnapshotView {
     /// after), the render lane's own law folds the eight-puff
     /// steam cloud.
     pub water_evaporating_events: Vec<WireWaterEvaporatingEvent>,
+    /// The 2008 words the refresh carries (the server's own dragon
+    /// broadcasts, [`mc_protocol::play::DRAGON_BLOCK_BREAK_EFFECT`]
+    /// the vocabulary speaks): shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after), the render lane's own law folds the one-puff
+    /// explosion burst.
+    pub dragon_block_break_events: Vec<WireDragonBlockBreakEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -565,6 +572,20 @@ pub struct WireDragonFireballSplashEvent {
 /// the transport never carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireWaterEvaporatingEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+}
+
+/// One wire DRAGON BLOCK-BREAK arm — the Level Event packet's own
+/// landing (the 2008 words the server's own dragon broadcasts,
+/// [`mc_protocol::play::DRAGON_BLOCK_BREAK_EFFECT`] the render lane
+/// speaks): the event's anchor block, verbatim (the ONE-puff walk's
+/// own input — the explosion burst the render lane folds from it;
+/// the data word the case's own body never reads, the transport
+/// never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireDragonBlockBreakEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -2436,6 +2457,9 @@ pub fn materialize_snapshot_view(
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
         water_evaporating_events: Vec::new(),
+        // and no dragon words (the join snapshot carries no 2008
+        // traffic — the empty mailbox the render lane skips)
+        dragon_block_break_events: Vec::new(),
         // and no break words (the join snapshot carries no 2001 traffic
         // — the empty mailbox the render lane skips)
         break_events: Vec::new(),
@@ -2847,6 +2871,20 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the dragon block-break effect's own projection (the mailbox
+        // verbatim — the anchor the arms carry, the render lane's own
+        // law reads): each 2008 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let dragon_block_break_events = self
+            .model
+            .dragon_block_break_events
+            .iter()
+            .map(|arm| WireDragonBlockBreakEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the block-break effect's own projection (the mailbox verbatim
         // — the state walk's answers the arms carry, the anchor the
         // render lane's own law reads): each 2001 word ships once with
@@ -3018,6 +3056,10 @@ impl LiveView {
                 // arm too — the 2009 words are the connection's own
                 // traffic, not the pose's
                 water_evaporating_events,
+                // the dragon block-break effect's arms ride the pose-less
+                // arm too — the 2008 words are the connection's own
+                // traffic, not the pose's
+                dragon_block_break_events,
                 // the block-break effect's arms ride the pose-less arm
                 // too — the 2001 words are the connection's own traffic,
                 // not the pose's
@@ -3116,6 +3158,10 @@ impl LiveView {
             // too — the 2009 words follow the mailbox exactly like the
             // dragon's own arms do
             water_evaporating_events,
+            // the dragon block-break effect's arms ride every refresh
+            // too — the 2008 words follow the mailbox exactly like the
+            // water's own arms do
+            dragon_block_break_events,
             // the block-break effect's arms ride every refresh too —
             // the 2001 words follow the mailbox exactly like the
             // growth's own arms do

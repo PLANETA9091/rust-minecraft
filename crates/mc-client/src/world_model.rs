@@ -382,6 +382,19 @@ pub struct WorldModel {
     /// `globalLevelEvent` switch the 2009 id never carries — the
     /// positioned lane the case's own arm wears).
     pub water_evaporating_events: Vec<WaterEvaporatingArm>,
+    /// THE DRAGON BLOCK-BREAK EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary word the model banks — the 2008
+    /// words the server's own dragon broadcasts, the
+    /// `LevelEventHandler.levelEvent` offset 3440 speaks: the ONE
+    /// `addParticle(EXPLOSION, x + 0.5, y + 0.5, z + 0.5, 0, 0, 0)`
+    /// walk the case body spends — the 0.5 centers the cp Double
+    /// decode speaks, the zero velocity trio the `dconst_0`
+    /// answers). The arms the anchor carry — the data word the
+    /// case's own body never reads (the same transport honesty the
+    /// mob-spawn arm keeps). The GLOBAL route the arm never enqueues
+    /// (the `globalLevelEvent` switch the 2008 id never carries —
+    /// the positioned lane the case's own arm wears).
+    pub dragon_block_break_events: Vec<DragonBlockBreakArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -643,6 +656,21 @@ pub struct DragonFireballSplashArm {
 /// puffs' own draws the render lane's stream keeps.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WaterEvaporatingArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+}
+
+/// One pending DRAGON BLOCK-BREAK arm — the Level Event packet's
+/// next vocabulary word the model keeps verbatim (see
+/// [`WorldModel::dragon_block_break_events`]). The anchor verbatim
+/// (the dragon's own scatter-drawn cell the `checkWalls` tail
+/// broadcasts), the DATA word deliberately absent — the case's own
+/// body never reads it (no `iload_3` read the arm's bytecode
+/// speaks, the same transport honesty the mob-spawn arm keeps). The
+/// ONE explosion puff's own draw the render lane's stream keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DragonBlockBreakArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -1115,6 +1143,7 @@ impl WorldModel {
             in_block_growth_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
+            dragon_block_break_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -1308,6 +1337,15 @@ impl WorldModel {
     /// data word the case's own body never reads).
     pub fn drain_water_evaporating_events(&mut self) -> Vec<WaterEvaporatingArm> {
         std::mem::take(&mut self.water_evaporating_events)
+    }
+
+    /// The dragon block-break effect's mailbox's own drain (the same
+    /// walk the voices' speak — each arm ships exactly once): the
+    /// 2008 words the Level Event packet armed, the render lane's own
+    /// law folds the ONE-EXPLOSION-puff walk from the anchor alone
+    /// (the data word the case's own body never reads).
+    pub fn drain_dragon_block_break_events(&mut self) -> Vec<DragonBlockBreakArm> {
+        std::mem::take(&mut self.dragon_block_break_events)
     }
 
     /// The splash-potion effect's mailbox's own drain (the same walk the
@@ -1534,6 +1572,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 2009 words
                 // never steam again)
                 self.water_evaporating_events.clear();
+                // the dragon block-break effect's mailbox dies with the
+                // level (the same walk — the old level's 2008 words
+                // never burst again)
+                self.dragon_block_break_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -2357,6 +2399,23 @@ impl WorldModel {
                     // render lane's own stream carries — no sound
                     // the case speaks.
                     self.water_evaporating_events.push(WaterEvaporatingArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::DRAGON_BLOCK_BREAK_EFFECT && !ev.global {
+                    // THE DRAGON BLOCK-BREAK EFFECT'S OWN ARM (javap
+                    // the case offset 3440 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries (the ONE `addParticle(EXPLOSION,
+                    // x + 0.5, y + 0.5, z + 0.5, 0, 0, 0)` walk the
+                    // case body spends — the 0.5 centers the cp Double
+                    // decode speaks, the zero velocity trio the
+                    // `dconst_0` answers; the data word the case's own
+                    // body never reads). The puff the render lane's
+                    // own stream carries — no sound the case speaks.
+                    self.dragon_block_break_events.push(DragonBlockBreakArm {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
@@ -6677,6 +6736,84 @@ mod tests {
         })));
         assert!(
             m.water_evaporating_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_dragon_word_the_anchor_wears() {
+        // THE DRAGON BLOCK-BREAK EFFECT'S OWN ARM (javap the case
+        // offset 3440 — the positioned route the GLOBAL switch never
+        // banks): the ONE-EXPLOSION-puff walk the case body spends,
+        // the data word the case's own body never reads (the arm the
+        // anchor alone carries — the transport honesty the mob-spawn
+        // arm keeps), the drain ships the arms exactly once, and the
+        // Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the dragon's own word (the scatter-drawn cell the
+        // checkWalls tail broadcasts — the data word the caller's own
+        // iconst_0 passes, the zero the case's body never reads)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_BLOCK_BREAK_EFFECT,
+            x: -120,
+            y: 64,
+            z: 77,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dragon_block_break_events.len(), 1, "the arm rides");
+        assert_eq!(m.dragon_block_break_events[0].x, -120);
+        assert_eq!(m.dragon_block_break_events[0].y, 64);
+        assert_eq!(m.dragon_block_break_events[0].z, 77);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2008 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_BLOCK_BREAK_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.dragon_block_break_events.len(), 1, "the global word never arms");
+        // the second word arms beside the first (the mailbox keeps
+        // the wire order — the next wall's sweep the same arm wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_BLOCK_BREAK_EFFECT,
+            x: 3,
+            y: 7,
+            z: 11,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dragon_block_break_events.len(), 2, "the wire order the mailbox keeps");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_dragon_block_break_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].x, -120, "the wire order the drain keeps");
+        assert!(m.dragon_block_break_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_dragon_block_break_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRAGON_BLOCK_BREAK_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dragon_block_break_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.dragon_block_break_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

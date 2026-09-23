@@ -1341,6 +1341,32 @@ pub const DRAGON_FIREBALL_SPLASH_EFFECT: i32 = 2006;
 /// wears).
 pub const WATER_EVAPORATING_EFFECT: i32 = 2009;
 
+/// THE DRAGON BLOCK-BREAK EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_DRAGON_BLOCK_BREAKING`, the case
+/// `LevelEventHandler.levelEvent` offset 3440 speaks): the ONE
+/// `addParticle(EXPLOSION, x + 0.5, y + 0.5, z + 0.5, 0, 0, 0)` walk
+/// the case body spends — the cp `#197` Double decode speaks the
+/// 0.5 centers all three axes ride, the zero velocity trio the
+/// `dconst_0` answers, the `HugeExplosionParticle` the provider
+/// spawns (the ctor chain the four draws spend — the dead base
+/// lifetime, the dead base quad size the ctor's own `2.0F * (1.0F -
+/// (float)xd * 0.5F)` write overrides, the `6 + nextInt(4)` lifetime
+/// the 6..9 band speaks, the ONE tint draw the `nextFloat * 0.6F +
+/// 0.4F` grey the r/g/b trio keeps), the 16-frame ASCENDING
+/// `explosion_0..15` sprite list the `explosion.json` banks — the
+/// index the `MutableSpriteSet.get` walk reads IS the file index.
+/// The server's own dragon speaks it — `EnderDragon.checkWalls`'s
+/// tail `sipush 2008, blockPosition, iconst_0` the levelEvent call
+/// the bytecode pins (the anchor the caller's own box-span scatter
+/// draws — the `nextInt(max - min + 1)` walk the removed block's
+/// cell re-arms, the client never re-draws it, the anchor the wire
+/// carries verbatim). NO sound the case body speaks. The GLOBAL
+/// route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const DRAGON_BLOCK_BREAK_EFFECT: i32 = 2008;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10511,6 +10537,11 @@ mod tests {
             WATER_EVAPORATING_EFFECT,
             2009,
             "the water evaporating the wet sponge's own onPlace speaks"
+        );
+        assert_eq!(
+            DRAGON_BLOCK_BREAK_EFFECT,
+            2008,
+            "the dragon block break the dragon's own checkWalls speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order
