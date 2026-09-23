@@ -473,6 +473,14 @@ pub struct SnapshotView {
     /// after), the render lane's own law folds the 200-puff pool + the
     /// gated explode voice.
     pub dragon_fireball_splash_events: Vec<WireDragonFireballSplashEvent>,
+    /// The water-evaporating effect's PENDING ARMS — the Level Event
+    /// mailbox the model kept (the 2009 words the server's own wet
+    /// sponge broadcasts, [`mc_protocol::play::WATER_EVAPORATING_EFFECT`]
+    /// the vocabulary speaks): shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after), the render lane's own law folds the eight-puff
+    /// steam cloud.
+    pub water_evaporating_events: Vec<WireWaterEvaporatingEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -546,6 +554,20 @@ pub struct WireDragonFireballSplashEvent {
     pub y: i32,
     pub z: i32,
     pub data: i32,
+}
+
+/// One wire WATER-EVAPORATING EFFECT arm — the Level Event packet's
+/// own landing (the 2009 words the server's own wet sponge
+/// broadcasts, [`mc_protocol::play::WATER_EVAPORATING_EFFECT`] the
+/// render lane speaks): the event's anchor block, verbatim (the
+/// eight-puff walk's own input — the steam cloud the render lane
+/// folds from it; the data word the case's own body never reads,
+/// the transport never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireWaterEvaporatingEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One wire BLOCK-BREAK EFFECT arm — the Level Event packet's own
@@ -2413,6 +2435,7 @@ pub fn materialize_snapshot_view(
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
+        water_evaporating_events: Vec::new(),
         // and no break words (the join snapshot carries no 2001 traffic
         // — the empty mailbox the render lane skips)
         break_events: Vec::new(),
@@ -2810,6 +2833,20 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the water-evaporating effect's own projection (the mailbox
+        // verbatim — the anchor the arms carry, the render lane's own
+        // law reads): each 2009 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let water_evaporating_events = self
+            .model
+            .water_evaporating_events
+            .iter()
+            .map(|arm| WireWaterEvaporatingEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the block-break effect's own projection (the mailbox verbatim
         // — the state walk's answers the arms carry, the anchor the
         // render lane's own law reads): each 2001 word ships once with
@@ -2977,6 +3014,10 @@ impl LiveView {
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
                 dragon_fireball_splash_events,
+                // the water-evaporating effect's arms ride the pose-less
+                // arm too — the 2009 words are the connection's own
+                // traffic, not the pose's
+                water_evaporating_events,
                 // the block-break effect's arms ride the pose-less arm
                 // too — the 2001 words are the connection's own traffic,
                 // not the pose's
@@ -3071,6 +3112,10 @@ impl LiveView {
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do
             dragon_fireball_splash_events,
+            // the water-evaporating effect's arms ride every refresh
+            // too — the 2009 words follow the mailbox exactly like the
+            // dragon's own arms do
+            water_evaporating_events,
             // the block-break effect's arms ride every refresh too —
             // the 2001 words follow the mailbox exactly like the
             // growth's own arms do

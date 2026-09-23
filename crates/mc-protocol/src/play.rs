@@ -1322,6 +1322,25 @@ pub const TURTLE_EGG_PLACEMENT_EFFECT: i32 = 2012;
 /// band alone carries — the positioned lane the case's own arm wears).
 pub const DRAGON_FIREBALL_SPLASH_EFFECT: i32 = 2006;
 
+/// THE WATER-EVAPORATING EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_WATER_EVAPORATING`, the case
+/// `LevelEventHandler.levelEvent` offset 4070 speaks): the `bipush 8`
+/// loop the eight CLOUD puffs fire — each puff the `addParticle
+/// (CLOUD, x + nextDouble(), y + 1.2, z + nextDouble(), 0, 0, 0)`
+/// walk the raw corner reads place (the x/z the nextDouble bands
+/// carry, the +1.2 lift the cp #637 Double decode speaks, the zero
+/// velocity trio the `dconst_0` answers). The server's own wet
+/// sponge speaks it — `WetSpongeBlock.onPlace`'s ultra-warm gate the
+/// nether's dry the word broadcasts (the FIRE_EXTINGUISH voice the
+/// server's own playSound carries, NOT the case's — no sound the
+/// case body speaks). The DATA word the case NEVER reads (no
+/// `iload_3` read the arm's bytecode speaks). The GLOBAL route the
+/// `globalLevelEvent` switch never banks (the 1023/1028/1038 trio
+/// the band alone carries — the positioned lane the case's own arm
+/// wears).
+pub const WATER_EVAPORATING_EFFECT: i32 = 2009;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10487,6 +10506,11 @@ mod tests {
             DRAGON_FIREBALL_SPLASH_EFFECT,
             2006,
             "the dragon-fireball splash the fireball's own onHit speaks"
+        );
+        assert_eq!(
+            WATER_EVAPORATING_EFFECT,
+            2009,
+            "the water evaporating the wet sponge's own onPlace speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

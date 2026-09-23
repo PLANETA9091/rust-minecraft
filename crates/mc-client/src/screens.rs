@@ -7612,6 +7612,15 @@ impl App {
             // dragon's law speaks (no gravity, no vy friction — the x/z
             // lanes alone the 0.96 folds ride)
             crate::particles::ParticleKind::DragonBreath => p.tick_dragon_breath(),
+            // the steam's own walk: the base law + the player-lift the
+            // override's tail speaks (the 2.0-range read the feet
+            // distance folds — the local body the nearest-player read
+            // arms, the 0.2 blends the pose eases toward the player's
+            // own level)
+            crate::particles::ParticleKind::Cloud => {
+                let player = self.body.as_ref().map(|b| (b.x, b.y, b.z, b.vy));
+                p.tick_cloud(player)
+            }
             // the drip's own walk: the base law + the smoke child's
             // gate (the roll rides the LEVEL random the parent's own
             // field speaks, the six floats ride the out-vec)
@@ -21833,6 +21842,49 @@ impl App {
         }
     }
 
+    /// THE WATER-EVAPORATING'S OWN WIRE LANE (javap
+    /// `LevelEventHandler` case 2009 — offset 4070 — over the 26.2
+    /// jar): the server's own wet sponge the ultra-warm dry the word
+    /// broadcasts (`WetSpongeBlock.onPlace`'s gate the nether's own
+    /// sizzle speaks), the eight CLOUD puffs the `bipush 8` loop
+    /// fires — each puff the `addParticle(CLOUD, x + nextDouble(), y
+    /// + 1.2, z + nextDouble(), 0, 0, 0)` walk the raw corner reads
+    /// place (the x/z the nextDouble bands carry, the +1.2 lift the
+    /// cp #637 Double decode speaks, the zero velocity trio the
+    /// `dconst_0` answers, the `cloud_puff` ctor the draw chain the
+    /// helper folds). NO SOUND the case speaks (the FIRE_EXTINGUISH
+    /// voice the server's own playSound carries — a separate
+    /// broadcast the sound packets own, NOT the case's), no world
+    /// edit the block updates own — the steam alone the broadcast
+    /// renders.
+    pub fn live_water_evaporating_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireWaterEvaporatingEvent>,
+    ) {
+        for ev in events {
+            self.play_water_evaporating(ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE WATER-EVAPORATING WALK (javap the case-2009 arm verbatim
+    /// — offset 4070): the eight puffs the `bipush 8` loop keeps,
+    /// the per-puff draw order the stream's own law keeps (the x
+    /// nextDouble FIRST, the z nextDouble SECOND — the +1.2 lift the
+    /// constant rides, the y the never-read draw the band's own
+    /// constant keeps).
+    fn play_water_evaporating(&mut self, x: i32, y: i32, z: i32) {
+        for _ in 0..8 {
+            // THE RAW CORNER FOLDS (the getX() + nextDouble() the
+            // case's own args speak — the x draw FIRST, the z draw
+            // SECOND, the +1.2 lift the cp Double decode keeps)
+            let px = f64::from(x) + self.level_ambient_rng.next_f64();
+            let pz = f64::from(z) + self.level_ambient_rng.next_f64();
+            let py = f64::from(y) + 1.2;
+            let puff = crate::particles::cloud_puff(px, py, pz, &mut self.level_ambient_rng);
+            self.particles.push(puff);
+        }
+    }
+
     /// THE MOB-SPAWN CLOUD'S OWN WIRE LANE (javap `LevelEventHandler`
     /// case 2004 — offset 1689 — over the 26.2 jar): the server's own
     /// spawner the event broadcast, the twenty SMOKE + FLAME pairs the
@@ -26447,6 +26499,9 @@ impl App {
         // the dragon breath's own groups (the file-keyed frames the age
         // walk rides — the generic pool the poof bank loads)
         let mut dragon_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the water evaporating's own groups (the file-keyed frames
+        // the age walk rides — the generic pool the poof bank loads)
+        let mut cloud_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut sweep_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut heart_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut glint_quads: Vec<crate::raster::SampledQuad> = Vec::new();
@@ -26641,6 +26696,28 @@ impl App {
                         None => dragon_groups.push((file, vec![quad])),
                     }
                 }
+                crate::particles::ParticleKind::Cloud => {
+                    // the steam's own quad (the generic frame the
+                    // age's own walk speaks — the same setSpriteFromAge
+                    // chain the poof rides, the cloud.json's DESCENDING
+                    // order the file fold speaks: the same law the
+                    // smoke lane wears — the SAME generic pixels the
+                    // poof bank loads, the near-white tint the ctor's
+                    // own draw carries, the TRANSLUCENT layer the
+                    // getLayer override returns)
+                    let frame = crate::particles::poof_frame(p.age, p.lifetime);
+                    let file = crate::particles::generic_file_index(frame);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_poof",
+                        tint: p.col,
+                    };
+                    match cloud_groups.iter_mut().find(|(f, _)| *f == file) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => cloud_groups.push((file, vec![quad])),
+                    }
+                }
                 crate::particles::ParticleKind::Sweep => {
                     // the arc's own quad (the 32x32 frame the age's
                     // own walk speaks — the same setSpriteFromAge
@@ -26817,6 +26894,16 @@ impl App {
         // ASCENDING order the +5 file offset keeps)
         if let Some(frames) = &self.poof_frames {
             for (file, quads) in &dragon_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*file, u, v))
+                });
+            }
+        }
+        // the cloud groups (the steam's own frame walk — the same
+        // generic pixels the poof bank loads, the cloud.json's
+        // DESCENDING order the file fold keeps)
+        if let Some(frames) = &self.poof_frames {
+            for (file, quads) in &cloud_groups {
                 fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
                     Some(frames.pixel(*file, u, v))
                 });
@@ -45733,6 +45820,109 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_dragon_fireball_splash_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_water_word_the_steam_walk_the_lift_wears() {
+        // THE WATER-EVAPORATING'S OWN WIRE LANE (javap case 2009 →
+        // offset 4070 over the 26.2 jar): the eight CLOUD puffs the
+        // `bipush 8` loop fires at the raw corner folds the case's
+        // own args place (the x/z the nextDouble bands carry, the
+        // +1.2 lift the cp Double decode speaks, the zero velocity
+        // trio the `dconst_0` answers), the near-white tint the
+        // ctor's ONE draw carries — NO SOUND the case speaks (the
+        // FIRE_EXTINGUISH voice the server's own playSound carries).
+        let mut app = App::new(2);
+        app.enter_world();
+        app.live_water_evaporating_events_updated(vec![
+            crate::world_view::WireWaterEvaporatingEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+            },
+        ]);
+        assert_eq!(
+            app.particles.len(),
+            8,
+            "the bipush 8 the steam loop keeps"
+        );
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Cloud),
+                "the CLOUD type the provider answers"
+            );
+            // THE RAW CORNER FOLDS (the getX() + nextDouble() the
+            // case's own args speak — the [10, 11) band the x/z keep,
+            // the +1.2 lift the y's constant rides)
+            assert!(
+                p.x >= 10.0 && p.x < 11.0,
+                "the x the nextDouble band keeps: {}",
+                p.x
+            );
+            assert!(
+                (p.y - 21.2).abs() < 1e-9,
+                "the +1.2 lift the cp Double keeps: {}",
+                p.y
+            );
+            assert!(
+                p.z >= 10.0 && p.z < 11.0,
+                "the z the nextDouble band keeps: {}",
+                p.z
+            );
+            // THE ZERO VELOCITY TRIO (the dconst_0 the case passes)
+            assert_eq!(p.vx, 0.0, "the zero vx");
+            assert_eq!(p.vy, 0.0, "the zero vy");
+            assert_eq!(p.vz, 0.0, "the zero vz");
+            // THE CTOR LAWS (the 0.96 friction, the no-gravity field,
+            // the 17..65 band the f64-domain fold gives, the shared
+            // f16 the r/g/b trio keeps)
+            assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction");
+            assert!((p.gravity).abs() < 1e-9, "the no-gravity law");
+            assert!(p.lifetime >= 17 && p.lifetime <= 65, "the band: {}", p.lifetime);
+            assert_eq!(p.col[0], p.col[1], "the shared f16 the r/g keeps");
+            assert_eq!(p.col[1], p.col[2], "the shared f16 the g/b keeps");
+        }
+        // THE STEAM'S OWN TICK (the lift the feet-level player never
+        // arms): the body ABOVE the puffs the y > fold keeps silent —
+        // the equality the strict > refuses, the pose the lift never
+        // moves
+        app.body = Some(crate::body::PlayerBody::new(10.0, 23.0, 10.0, 0.0, 0.0));
+        app.update();
+        for p in &app.particles {
+            assert!(
+                (p.y - 21.2).abs() < 1e-9,
+                "the above-feet player the lift never arms: {}",
+                p.y
+            );
+        }
+        // THE PLAYER BELOW (the body the feet-level read lowers — the
+        // 2.0 range the within-2 arms, the 0.2 blend the pose eases)
+        app.body = Some(crate::body::PlayerBody::new(10.0, 20.0, 10.0, 0.0, 0.0));
+        app.update();
+        for p in &app.particles {
+            assert!(
+                p.y < 21.2,
+                "the below-feet player the lift arms: {}",
+                p.y
+            );
+        }
+        // THE SILENCE (the FIRE_EXTINGUISH voice the server's own
+        // playSound carries, NOT the case's — no sound event the
+        // wire walk never speaks)
+        if sounds_loaded() {
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.contains("fire.extinguish")),
+                "the case's own silence the voice never shares"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_water_evaporating_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

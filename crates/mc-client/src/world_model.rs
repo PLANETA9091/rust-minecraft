@@ -369,6 +369,19 @@ pub struct WorldModel {
     /// never enqueues (the `globalLevelEvent` switch the 2006 id never
     /// carries — the positioned lane the case's own arm wears).
     pub dragon_fireball_splash_events: Vec<DragonFireballSplashArm>,
+    /// THE WATER-EVAPORATING EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary word the model banks — the 2009
+    /// words the server's own wet sponge broadcasts, the
+    /// `LevelEventHandler.levelEvent` offset 4070 speaks: the
+    /// eight-CLOUD-puff walk the `bipush 8` loop fires — the x/z the
+    /// nextDouble bands carry, the +1.2 lift the cp Double decode
+    /// speaks, the zero velocity trio the `dconst_0` answers). The
+    /// arms the anchor carry — the data word the case's own body
+    /// never reads (the same transport honesty the mob-spawn arm
+    /// keeps). The GLOBAL route the arm never enqueues (the
+    /// `globalLevelEvent` switch the 2009 id never carries — the
+    /// positioned lane the case's own arm wears).
+    pub water_evaporating_events: Vec<WaterEvaporatingArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -618,6 +631,21 @@ pub struct DragonFireballSplashArm {
     /// own tail speaks — `1` the explode voice arms, `-1` the
     /// particles-only arm keeps).
     pub data: i32,
+}
+
+/// One pending WATER-EVAPORATING arm — the Level Event packet's
+/// next vocabulary word the model keeps verbatim (see
+/// [`WorldModel::water_evaporating_events`]). The anchor verbatim
+/// (the wet sponge's own `blockPosition()` the dry broadcast), the
+/// DATA word deliberately absent — the case's own body never reads
+/// it (no `iload_3` read the arm's bytecode speaks, the same
+/// transport honesty the mob-spawn arm keeps). The eight cloud
+/// puffs' own draws the render lane's stream keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WaterEvaporatingArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One pending SPLASH-POTION arm — the Level Event packet's next
@@ -1086,6 +1114,7 @@ impl WorldModel {
             white_smoke_events: Vec::new(),
             in_block_growth_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
+            water_evaporating_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -1270,6 +1299,15 @@ impl WorldModel {
     /// voice from the anchor + the raw sound-gate word.
     pub fn drain_dragon_fireball_splash_events(&mut self) -> Vec<DragonFireballSplashArm> {
         std::mem::take(&mut self.dragon_fireball_splash_events)
+    }
+
+    /// The water-evaporating effect's mailbox's own drain (the same
+    /// walk the voices' speak — each arm ships exactly once): the
+    /// 2009 words the Level Event packet armed, the render lane's own
+    /// law folds the eight-CLOUD-puff walk from the anchor alone (the
+    /// data word the case's own body never reads).
+    pub fn drain_water_evaporating_events(&mut self) -> Vec<WaterEvaporatingArm> {
+        std::mem::take(&mut self.water_evaporating_events)
     }
 
     /// The splash-potion effect's mailbox's own drain (the same walk the
@@ -1492,6 +1530,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
                 self.dragon_fireball_splash_events.clear();
+                // the water-evaporating effect's mailbox dies with the
+                // level (the same walk — the old level's 2009 words
+                // never steam again)
+                self.water_evaporating_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -2301,6 +2343,24 @@ impl WorldModel {
                             z: ev.z,
                             data: ev.data,
                         });
+                    true
+                } else if ev.effect == mc_protocol::WATER_EVAPORATING_EFFECT && !ev.global {
+                    // THE WATER-EVAPORATING EFFECT'S OWN ARM (javap
+                    // the case offset 4070 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries (the eight-CLOUD-puff walk the
+                    // case's `bipush 8` loop fires — the x/z the
+                    // nextDouble bands carry, the +1.2 lift the cp
+                    // Double decode speaks, the zero velocity trio
+                    // the `dconst_0` answers; the data word the
+                    // case's own body never reads). The puffs the
+                    // render lane's own stream carries — no sound
+                    // the case speaks.
+                    self.water_evaporating_events.push(WaterEvaporatingArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                    });
                     true
                 } else {
                     false
@@ -6538,6 +6598,85 @@ mod tests {
         })));
         assert!(
             m.dragon_fireball_splash_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_water_word_the_anchor_wears() {
+        // THE WATER-EVAPORATING EFFECT'S OWN ARM (javap the case
+        // offset 4070 — the positioned route the GLOBAL switch never
+        // banks): the eight-CLOUD-puff walk the `bipush 8` loop
+        // fires, the data word the case's own body never reads (the
+        // arm the anchor alone carries — the transport honesty the
+        // mob-spawn arm keeps), the drain ships the arms exactly
+        // once, and the Respawn recreates the level the mailbox dies
+        // with it.
+        let mut m = WorldModel::new();
+        // the wet sponge's own word (the nether cell the ultra-warm
+        // dry broadcasts, the data word the caller's own tail passes
+        // — the zero the case's body never reads)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::WATER_EVAPORATING_EFFECT,
+            x: -5,
+            y: 31,
+            z: 900,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.water_evaporating_events.len(), 1, "the arm rides");
+        assert_eq!(m.water_evaporating_events[0].x, -5);
+        assert_eq!(m.water_evaporating_events[0].y, 31);
+        assert_eq!(m.water_evaporating_events[0].z, 900);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2009 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::WATER_EVAPORATING_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.water_evaporating_events.len(), 1, "the global word never arms");
+        // the second word arms beside the first (the mailbox keeps
+        // the wire order — the next sponge's dry the same arm wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::WATER_EVAPORATING_EFFECT,
+            x: 3,
+            y: 7,
+            z: 11,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.water_evaporating_events.len(), 2, "the wire order the mailbox keeps");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_water_evaporating_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].x, -5, "the wire order the drain keeps");
+        assert!(m.water_evaporating_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_water_evaporating_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::WATER_EVAPORATING_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.water_evaporating_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.water_evaporating_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

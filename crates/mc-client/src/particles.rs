@@ -317,6 +317,26 @@ pub enum ParticleKind {
     /// layer the getLayer override returns, the growth the getQuadSize's
     /// 32x clamp rides (the same law the crit star blooms by).
     DragonBreath,
+    /// `PlayerCloudParticle` — the water-evaporating steam's own puff
+    /// (the `cloud` type the `LevelEventHandler` case-2009 arm's
+    /// `addParticle(ParticleTypes.CLOUD, ...)` walk speaks): the
+    /// eight-frame walk the age's own ride answers
+    /// (`setSpriteFromAge` — the cloud.json's DESCENDING
+    /// `generic_7..0` list the file fold speaks — the same generic
+    /// pool the poof bank loads), the tint the ctor's ONE
+    /// `nextFloat * 0.3` draw carries (the r/g/b trio the shared
+    /// f16 keeps — the near-white the steam nights wear), the
+    /// no-gravity drift the zero velocity trio speaks, the 0.96
+    /// friction the all-three-axes lanes wear (the y-lane the base
+    /// tick's own body arms), the 17..65 lifetime the `8/(r*0.8+0.3)
+    /// × 2.5` fold gives, the hasPhysics-false no-collision move the
+    /// plain translate answers, the player-lift the tick override's
+    /// own tail speaks (the 2.0-range read the feet distance folds,
+    /// the 0.2 blends the pose and the vy ease toward the player's
+    /// own level), the TRANSLUCENT layer the getLayer override
+    /// returns, the growth the getQuadSize's 32x clamp rides (the
+    /// same law the crit star blooms by).
+    Cloud,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -371,6 +391,20 @@ pub fn dragon_breath_file(list_index: usize) -> usize {
 /// difference wears): 20..100 ticks.
 pub fn dragon_breath_lifetime(r: f32) -> u32 {
     (20.0f64 / (f64::from(r) * 0.8f64 + 0.2f64)) as u32
+}
+
+/// The cloud's own lifetime law (javap `PlayerCloudParticle` ctor
+/// verbatim — the f64 DOMAIN the bytecode's own f2d order speaks:
+/// `ldc2_w 8.0; nextFloat; f2d; ldc2_w 0.8; dmul; ldc2_w 0.3; dadd;
+/// ddiv; d2i` the base draw answers 7..26, then the `iload 17; i2f;
+/// ldc 2.5F; fmul; fconst_1; Math.max; f2i` tail the ×2.5 fold
+/// rides — the f64 0.3 offset the smoke folds' 0.2 the one
+/// constant's own difference wears): 17..65 ticks (the r=0 edge
+/// draws 8/0.3 = 26.67 → 26 × 2.5 = 65, the r→1 arm 8/1.1 = 7.27 →
+/// 7 × 2.5 = 17.5 → 17 — the max floor the band never fires).
+pub fn cloud_lifetime(r: f32) -> u32 {
+    let base = (8.0f64 / (f64::from(r) * 0.8f64 + 0.3f64)) as u32;
+    ((base as f32 * 2.5f32).max(1.0f32)) as u32
 }
 
 /// One particle — the vanilla `Particle` + `SingleQuadParticle` fields
@@ -496,6 +530,11 @@ impl Particle {
             // clamp law the crit speaks: `(age + f) / lifetime * 32.0F`
             // the full size the first lifetime/32 ticks reach)
             ParticleKind::DragonBreath => base * crit_grow(self.age, self.lifetime, 0.0),
+            // the cloud's own fast bloom (PlayerCloudParticle.getQuadSize
+            // override — the SAME 32x clamp law the crit speaks: the
+            // steam grows from a point inside the first lifetime/32
+            // ticks, the full quad the rest of the life keeps)
+            ParticleKind::Cloud => base * crit_grow(self.age, self.lifetime, 0.0),
             // the flame's own half-thin (the FlameParticle.getQuadSize
             // override — the (1 - t*t*0.5) fold the death walks to the
             // HALF quad, the lava's own to-none never keeps it)
@@ -592,6 +631,41 @@ impl Particle {
         self.vz *= self.friction;
         // NO gravity lane, NO vy friction (the x/z lanes alone the
         // override's own body speaks)
+        true
+    }
+
+    /// The `PlayerCloudParticle.tick` verbatim — the base law first
+    /// (the same walk the super tick speaks: the age walk, the gravity
+    /// lane the zero field keeps silent, the move the hasPhysics-false
+    /// field answers with the plain translate, the 0.96 friction the
+    /// all-three-axes body speaks), then the override's own tail: the
+    /// sprite walk the render's own age read answers, the nearest
+    /// player the 2.0-range read arms (the distance² the feet position
+    /// folds — the strict `<` the `e < distance * distance` gate
+    /// speaks), the puff ABOVE the player's feet the y > fold answers
+    /// — the pose the 0.2 blend eases toward the player's own level,
+    /// the vy the player's own rise the blend follows, the setPos the
+    /// tail's own write answers (the lift's own branch the only
+    /// writer — the fall-through the setPos never reaches). The
+    /// removed walk never re-arms (the `if (!removed)` gate the
+    /// override's own head keeps).
+    pub fn tick_cloud(&mut self, player: Option<(f64, f64, f64, f64)>) -> bool {
+        let alive = self.tick();
+        if !alive {
+            return false;
+        }
+        // THE LIFT (the override's own tail — the player read the
+        // caller's own world answers, the local body the single
+        // nearest-player read arms)
+        if let Some((px, py, pz, pvy)) = player {
+            let dx = px - self.x;
+            let dy = py - self.y;
+            let dz = pz - self.z;
+            if dx * dx + dy * dy + dz * dz < 4.0 && self.y > py {
+                self.y += (py - self.y) * 0.2;
+                self.vy += (pvy - self.vy) * 0.2;
+            }
+        }
         true
     }
 
@@ -1494,6 +1568,57 @@ pub fn dragon_breath_splash_puff(
         uo: 0.0,
         vo: 0.0,
         col: [r, 0.0, b],
+    }
+}
+
+/// The WATER-EVAPORATING steam puff's own spawn (javap
+/// `PlayerCloudParticle` + `$Provider.createParticle` over the 26.2
+/// jar): the ctor chain the case's own draw walk feeds — the dead
+/// base lifetime draw (the value the cloud ctor's own write
+/// overrides), the SingleQuadParticle's size draw (the 0.1..0.2 the
+/// ctor's `* 1.875` fold rides), THE TINT DRAW the ctor's own body
+/// speaks (the ONE `nextFloat` the f16 body spends — the shared
+/// `1.0F - r * 0.3F` the r/g/b putfield trio keeps, the near-white
+/// the steam nights wear), the lifetime the f64-domain fold answers
+/// (17..65 — the `cloud_lifetime` helper the ×2.5 tail pins), the
+/// friction the ctor's own 0.96 write, the no-gravity field the
+/// base tick's own lane keeps silent, the hasPhysics-false
+/// no-collision move the plain translate answers, the zero velocity
+/// the case's `dconst_0` trio passes (the ×0.1 fold the zero keeps
+/// zero, the + input the same). The caller's own position draws the
+/// case's stream spends (the x/z nextDouble pair the walk's own
+/// order keeps) — the pose arrives PRE-folded (the +1.2 lift the
+/// case's constant adds).
+pub fn cloud_puff(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the cloud ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    // the SingleQuadParticle's own size draw (the 0.1..0.2 the ctor's
+    // own ×1.875 fold rides)
+    let r_quad = rng.next_f32();
+    // THE TINT DRAW (the ONE nextFloat the ctor's f16 body spends —
+    // the shared answer the r/g/b trio keeps)
+    let r_tint = rng.next_f32();
+    let r_life = rng.next_f32();
+    let tint = 1.0f32 - r_tint * 0.30000001192092896f32;
+    Particle {
+        kind: ParticleKind::Cloud,
+        x,
+        y,
+        z,
+        prev: None,
+        // the zero velocity the case's dconst_0 trio passes
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        lifetime: cloud_lifetime(r_life),
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: base_quad_size(r_quad) * 1.875,
+        uo: 0.0,
+        vo: 0.0,
+        col: [tint, tint, tint],
     }
 }
 
@@ -3591,5 +3716,130 @@ mod tests {
             b.next();
         }
         assert_eq!(after_nine, b.next(), "the dragon chain's own nine draws");
+    }
+
+    #[test]
+    fn the_cloud_puff_the_lift_the_frames_wear() {
+        // THE WATER-EVAPORATING STEAM PUFF'S OWN SPAWN (javap
+        // `PlayerCloudParticle` + `$Provider.createParticle` over the
+        // 26.2 jar — the case-2009 arm's own walk feeds): the draw
+        // chain the case's x/z pair opens (the ctor chain the four
+        // draws — the dead base lifetime, the size, THE ONE tint
+        // draw the shared f16 keeps, the own lifetime the ×2.5 fold
+        // answers), the zero velocity the dconst_0 trio passes.
+        // THE LIFETIME EDGES (the f64-domain fold the helper pins):
+        assert_eq!(cloud_lifetime(0.0), 65, "the r=0 edge (8/0.3 → 26 × 2.5)");
+        assert_eq!(cloud_lifetime(0.9999999), 17, "the r→1 arm (8/1.1 → 7 × 2.5 → 17.5)");
+        // the seeded chain: the two case draws (x, z) then the ctor's
+        // four
+        let mut stream = crate::drops::Lcg::new(0xC10D_2009);
+        let rx = stream.next_f64();
+        let rz = stream.next_f64();
+        let p = cloud_puff(10.0 + rx, 21.2, 30.0 + rz, &mut stream);
+        let pre = (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size, p.col);
+        assert!(matches!(p.kind, ParticleKind::Cloud), "the CLOUD type");
+        // THE ZERO VELOCITY TRIO (the dconst_0 the case passes — the
+        // ×0.1 fold the zero keeps zero, the + input the same)
+        assert_eq!(p.vx, 0.0, "the zero vx");
+        assert_eq!(p.vy, 0.0, "the zero vy");
+        assert_eq!(p.vz, 0.0, "the zero vz");
+        // THE CTOR LAWS (the 0.96 friction the all-three-axes body
+        // speaks, the no-gravity field the base tick keeps silent,
+        // the ×1.875 fold the size ride answers, the shared f16 the
+        // r/g/b trio keeps)
+        assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction");
+        assert!((p.gravity).abs() < 1e-9, "the no-gravity law");
+        assert!(p.lifetime >= 17 && p.lifetime <= 65, "the band: {}", p.lifetime);
+        let expect_tint = p.col[0];
+        assert!(
+            (0.7..=1.0).contains(&expect_tint),
+            "the tint band the 1.0 - r*0.3 draw gives: {expect_tint}"
+        );
+        assert_eq!(p.col[1], expect_tint, "the shared f16 the g keeps");
+        assert_eq!(p.col[2], expect_tint, "the shared f16 the b keeps");
+        assert!(
+            p.quad_size > 0.1875 && p.quad_size < 0.375,
+            "the ×1.875 band the size ride gives: {}",
+            p.quad_size
+        );
+        // THE FRAMES (the cloud.json's DESCENDING list the file fold
+        // speaks — the same law the smoke lane wears, the 8 generic
+        // frames the poof bank loads)
+        assert_eq!(poof_frame(0, p.lifetime), 0, "the age-0 frame");
+        assert_eq!(generic_file_index(0), 7, "the list's own first file (generic_7)");
+        assert_eq!(generic_file_index(7), 0, "the list's own last file (generic_0)");
+        // THE TICK (the base law the zero velocity keeps put — the
+        // friction no-ops the zero rides, the no-player arm the
+        // Option keeps silent)
+        let mut t = cloud_puff(0.0, 0.0, 0.0, &mut stream);
+        t.lifetime = 100;
+        assert!(t.tick_cloud(None), "the alive tick");
+        assert_eq!(
+            (t.x, t.y, t.z),
+            (0.0, 0.0, 0.0),
+            "the zero velocity the put keeps"
+        );
+        // THE REMOVAL (the age walk the lifetime gates)
+        let mut dying = cloud_puff(0.0, 0.0, 0.0, &mut stream);
+        dying.lifetime = 2;
+        assert!(dying.tick_cloud(None), "the first tick the alive gate answers");
+        assert!(!dying.tick_cloud(None), "the age the removal walk answers");
+        // THE LIFT (the override's own tail): the player below the
+        // puff within 2.0 — the pose the 0.2 blend eases toward the
+        // feet, the vy the player's own rise the blend follows
+        let mut lifted = cloud_puff(0.0, 1.2, 0.0, &mut stream);
+        lifted.lifetime = 100;
+        assert!(lifted.tick_cloud(Some((0.0, 0.0, 0.0, 0.5))));
+        assert!(
+            (lifted.y - (1.2 + (0.0 - 1.2) * 0.2)).abs() < 1e-12,
+            "the 0.2 blend the pose eases: {}",
+            lifted.y
+        );
+        assert!(
+            (lifted.vy - (0.0 + (0.5 - 0.0) * 0.2)).abs() < 1e-12,
+            "the vy the blend follows: {}",
+            lifted.vy
+        );
+        // THE PLAYER ABOVE (the y > fold the lift never arms)
+        let mut above = cloud_puff(0.0, 1.2, 0.0, &mut stream);
+        above.lifetime = 100;
+        assert!(above.tick_cloud(Some((0.0, 2.0, 0.0, 0.0))));
+        assert!(
+            (above.y - 1.2).abs() < 1e-12,
+            "the player above the lift never arms: {}",
+            above.y
+        );
+        // THE RANGE GATE (the distance² the strict < keeps — the
+        // 2.0-beyond the read never arms)
+        let mut far = cloud_puff(0.0, 1.2, 0.0, &mut stream);
+        far.lifetime = 100;
+        assert!(far.tick_cloud(Some((2.1, 0.0, 0.0, 0.0))));
+        assert!(
+            (far.y - 1.2).abs() < 1e-12,
+            "the range gate the lift refuses"
+        );
+        // THE DETERMINISM (the same seed the same chain answers)
+        let mut a = crate::drops::Lcg::new(0xC10D_2009);
+        let rx2 = a.next_f64();
+        let rz2 = a.next_f64();
+        let p2 = cloud_puff(10.0 + rx2, 21.2, 30.0 + rz2, &mut a);
+        assert_eq!(
+            pre,
+            (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size, p2.col),
+            "the seeded chain replays"
+        );
+        // THE STREAM (the six draws the per-puff chain consumes — the
+        // x/z case pair, the dead base lifetime, the size, the tint,
+        // the own lifetime; the seventh draw differs)
+        let mut a = crate::drops::Lcg::new(0xC10D_2009);
+        let _ = a.next_f64();
+        let _ = a.next_f64();
+        let _ = cloud_puff(0.0, 0.0, 0.0, &mut a);
+        let after_six = a.next();
+        let mut b = crate::drops::Lcg::new(0xC10D_2009);
+        for _ in 0..6 {
+            b.next();
+        }
+        assert_eq!(after_six, b.next(), "the cloud chain's own six draws");
     }
 }
