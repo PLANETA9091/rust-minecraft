@@ -165,6 +165,7 @@ fn run_join(
                 Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
+                Vec<crate::world_view::WireInBlockGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -255,6 +256,7 @@ fn run_join(
             view.model.drain_world_sounds();
             view.model.drain_arrow_syncs();
             view.model.drain_growth_events();
+            view.model.drain_in_block_growth_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -869,6 +871,7 @@ fn run_join(
                             view.model.drain_world_sounds();
                             view.model.drain_arrow_syncs();
                             view.model.drain_growth_events();
+                            view.model.drain_in_block_growth_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -984,6 +987,15 @@ fn run_join(
                                     // render's own law folds, each arm
                                     // rides exactly one shipped refresh)
                                     upd.growth_events,
+                                    // the in-block growth effect's arms
+                                    // ride with them — the 2011/2012
+                                    // words the server's own pollinator
+                                    // and egg-lay broadcast stream to the
+                                    // particle lane (the shape read + the
+                                    // in-block burst the render's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.in_block_growth_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1165,6 +1177,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Option<u8>,
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
+                Vec<crate::world_view::WireInBlockGrowthEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -1712,6 +1725,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     mode_word,
                     abilities_word,
                     growth_events,
+                    in_block_growth_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -1797,6 +1811,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // law folds — the happy sparkles the vanilla client
                     // answers the same packet with)
                     app.live_growth_events_updated(growth_events);
+                    // the in-block growth effect's lane beside the
+                    // growth's: the 2011/2012 words the server's own
+                    // pollinator and egg-lay broadcast land at their own
+                    // anchors (the shape read + the in-block burst the
+                    // render lane's own law folds — the happy sparkles
+                    // the vanilla client answers the same packet with)
+                    app.live_in_block_growth_events_updated(in_block_growth_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

@@ -21521,6 +21521,43 @@ impl App {
         }
     }
 
+    /// THE IN-BLOCK GROWTH EFFECT'S OWN WIRE LANE (javap
+    /// `LevelEventHandler` cases 2546/2561 over the 26.2 jar — the bee's
+    /// growth word and the turtle egg's placement word the server's own
+    /// pollinator and egg-lay broadcast, the Level Event mailbox's
+    /// landing): each word the arms the worker drained ride exactly one
+    /// refresh — the anchor cell's own shape the `spawnParticleInBlock`
+    /// walk reads (the `isAir` gate the 1.0 answer keeps, the wheat
+    /// ladder the block's own shape folds), then the in-block burst the
+    /// [`crate::particles::in_block_growth_burst`] law places (the
+    /// count the data word carries — the bee's `bipush 15` the pollen's
+    /// own burst wears). No sound the cases speak — the happy sparkles
+    /// the in-block lane's own stream alone carries.
+    pub fn live_in_block_growth_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireInBlockGrowthEvent>,
+    ) {
+        for ev in events {
+            // THE ANCHOR'S OWN WORLD (the getBlockState read the shape
+            // walk opens — the field borrow ends before the burst lands)
+            let world = if self.world_is_network {
+                self.net_world.as_ref()
+            } else {
+                self.offline_world.as_ref()
+            };
+            let Some(world) = world else {
+                continue;
+            };
+            let burst = crate::particles::in_block_growth_burst(
+                (ev.x, ev.y, ev.z),
+                ev.data.max(0) as usize,
+                world,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE BLOCK-BREAK EFFECT'S OWN WIRE LANE (javap
     /// `LevelEventHandler` case 2001 over the 26.2 jar — the sound
     /// rides FIRST (the `isAir` gate the AIR state the voice never
@@ -45039,6 +45076,102 @@ cow_sound_variant: None,
             app.sounds.events.len() > before,
             "the voice the unconditional case still plays"
         );
+    }
+
+    #[test]
+    fn the_wire_in_block_word_the_shape_fold_the_silence_wears() {
+        // THE IN-BLOCK GROWTH EFFECT'S OWN WIRE LANE (javap the cases
+        // 2546/2561 — the bee's growth word and the turtle egg's
+        // placement word the server's own pollinator and egg-lay
+        // broadcast): the anchor cell's own shape the spawnParticleInBlock
+        // walk reads (the wheat ladder the stage's own Y-max folds, the
+        // air gate the 1.0 keeps), the count the data word carries (the
+        // callers' own bipush 15), the whole burst the net world's own
+        // reads place — and NO sound the cases speak (the silence the
+        // growth lane's unconditional voice never shares).
+        let mut app = App::new(2);
+        {
+            let mut w = crate::world::World::new(2, 11);
+            w.set(10, 25, 10, crate::world::FARMLAND);
+            w.set(10, 26, 10, crate::world::WHEAT + 3); // the stage-3 crop
+            app.net_world = Some(w);
+        }
+        app.world_is_network = true;
+        let before = app.sounds.events.len();
+        // THE CROP WORD (the pollinator's own broadcast — the count the
+        // bipush 15 the pollen's burst wears)
+        app.live_in_block_growth_events_updated(vec![crate::world_view::WireInBlockGrowthEvent {
+            x: 10,
+            y: 26,
+            z: 10,
+            data: 15,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            15,
+            "the in-block burst the stage-3 stalk's own shape speaks"
+        );
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::HappyVillager),
+                "the glint sprite the HAPPY_VILLAGER type answers"
+            );
+            // the stage-3 ladder the (3*2+2)/16 = 0.5 band keeps — the
+            // burst lives INSIDE the stalk's own half-height
+            assert!(
+                p.y >= 26.0 && p.y < 26.5,
+                "y inside the stalk's own band: {}",
+                p.y
+            );
+            assert!(
+                (10.0..11.0).contains(&p.x) && (10.0..11.0).contains(&p.z),
+                "the in-block x/z band the 0.5 pair folds"
+            );
+        }
+        // THE SILENCE (no sound the cases speak — the growth lane's
+        // unconditional voice the in-block lane never shares)
+        assert_eq!(
+            app.sounds.events.len(),
+            before,
+            "the in-block lane's own silence the jar keeps"
+        );
+        // THE AIR WORD (the egg-lay's own cell the isAir gate keeps):
+        // the dy 1.0 the full band speaks — the same count the walk
+        // still bursts (the turtle egg's placement the sand cell's air
+        // neighbours the same answer keeps)
+        app.particles.clear();
+        app.net_world = {
+            let mut w = crate::world::World::new(2, 11);
+            w.set(6, 5, 6, crate::world::SAND); // the cell below the burst
+            Some(w)
+        };
+        app.live_in_block_growth_events_updated(vec![crate::world_view::WireInBlockGrowthEvent {
+            x: 6,
+            y: 6,
+            z: 6,
+            data: 15,
+        }]);
+        assert_eq!(app.particles.len(), 15, "the air cell the 1.0 band keeps");
+        for p in &app.particles {
+            assert!(
+                (6.0..7.0).contains(&p.y),
+                "y inside the air cell's own band: {}",
+                p.y
+            );
+        }
+        // THE ZERO COUNT (the data word the 0 the max(0) fold keeps):
+        // the honest empty burst the negative words the same fold wears
+        app.particles.clear();
+        app.live_in_block_growth_events_updated(vec![crate::world_view::WireInBlockGrowthEvent {
+            x: 6,
+            y: 6,
+            z: 6,
+            data: 0,
+        }]);
+        assert!(app.particles.is_empty(), "the zero count no burst speaks");
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.live_in_block_growth_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 
     /// THE BLOCK-BREAK EFFECT'S OWN WIRE SERVE (javap

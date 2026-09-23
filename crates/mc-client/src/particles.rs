@@ -1964,6 +1964,37 @@ pub fn growth_burst(
     out
 }
 
+/// THE IN-BLOCK GROWTH BURST'S OWN WALK (javap
+/// `ParticleUtils.spawnParticleInBlock` over the real 26.2 jar — the
+/// LevelEventHandler's 2011/2012 cases the bee's growth word and the
+/// turtle egg's placement word speak): the anchor cell's own state
+/// the shape read opens — the `isAir` gate the `dconst_1` answer
+/// keeps (an air cell the 1.0 speaks), the block's own shape the
+/// Y-max fold rides (the wheat family the age ladder
+/// `(age * 2 + 2) / 16` the growth arm's own law wears — the same
+/// fold the 1505 case's grower lane keeps; the full cubes the
+/// vocabulary banks the 1.0 the shape's own Y-max speaks — the
+/// unbanked sub-cubes the honest stand-in keeps), then the
+/// [`growth_burst`] walk the IN-BLOCK FORCE LANE arms (`0.5` the
+/// spread pair's x, the shape's own Y the dy, `true` the force flag —
+/// the ground gate the force lane never reads: the burst lives INSIDE
+/// the anchor cell, the below-block read the vanilla delegate never
+/// speaks). The count the caller's own data word carries (the bee's
+/// `bipush 15`, the egg-lay's own `bipush 15`).
+pub fn in_block_growth_burst(
+    anchor: (i32, i32, i32),
+    count: usize,
+    world: &crate::world::World,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let cell = world.get(anchor.0, anchor.1, anchor.2);
+    let dy = match crate::world::wheat_age(cell) {
+        Some(age) => (age as f64 * 2.0 + 2.0) / 16.0,
+        None => 1.0,
+    };
+    growth_burst(anchor, count, 0.5, dy, true, world, rng)
+}
+
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
 /// target's frozen position (the removed entity keeps its own), 3
 /// ticks of life, the 16-sample walk per tick.
@@ -3002,6 +3033,91 @@ mod tests {
         // the count the caller's word speaks even over the void
         let forced = growth_burst((12, 21, 12), 15, 0.5, 1.0, true, &holed, &mut rng());
         assert_eq!(forced.len(), 15, "the forced lane never reads the ground");
+    }
+
+    #[test]
+    fn the_in_block_burst_the_shape_fold_the_force_lane_wears() {
+        // THE IN-BLOCK GROWTH BURST'S OWN WALK (javap
+        // `ParticleUtils.spawnParticleInBlock` over the 26.2 jar — the
+        // LevelEventHandler's 2011/2012 cases the bee's growth word and
+        // the turtle egg's placement word speak): the anchor cell's own
+        // state the shape read opens — the `isAir` gate the 1.0 answer
+        // keeps, the wheat ladder the block's own shape folds (the age
+        // ladder `(age * 2 + 2) / 16` the growth arm's own law wears) —
+        // then the burst the in-block force lane arms (the count the
+        // caller's data word carries, the x/z the [anchor, anchor+1)
+        // band the 0.5 spread pair folds, the ground gate the force
+        // lane never reads).
+        // THE AIR CELL (the `isAir` gate the dconst_1 answer keeps):
+        // the dy 1.0 the band [y, y+1) speaks
+        let w = growth_arena(20);
+        let burst = in_block_growth_burst((12, 21, 12), 15, &w, &mut rng());
+        assert_eq!(burst.len(), 15, "the bipush 15 the callers' own count wears");
+        for p in &burst {
+            assert_eq!(p.kind, ParticleKind::HappyVillager, "the glint sprite");
+            assert!(
+                (12.0..13.0).contains(&p.x),
+                "x inside the in-block band: {}",
+                p.x
+            );
+            assert!(
+                (21.0..22.0).contains(&p.y),
+                "y inside the air cell's own 1.0 band: {}",
+                p.y
+            );
+            assert!(
+                (12.0..13.0).contains(&p.z),
+                "z inside the in-block band: {}",
+                p.z
+            );
+        }
+        // THE WHEAT CELL (the age ladder the shape's own Y-max speaks):
+        // stage 3 the (3*2+2)/16 = 0.5 band keeps — the burst lives
+        // INSIDE the stalk's own half-height
+        let mut cropped = growth_arena(20);
+        cropped.set(12, 21, 12, crate::world::WHEAT + 3);
+        let in_crop = in_block_growth_burst((12, 21, 12), 15, &cropped, &mut rng());
+        assert_eq!(in_crop.len(), 15, "the in-block lane never skips");
+        for p in &in_crop {
+            assert!(
+                p.y >= 21.0 && p.y < 21.0 + 0.5,
+                "y inside the stage-3 stalk's own band: {}",
+                p.y
+            );
+            assert!(
+                (12.0..13.0).contains(&p.x) && (12.0..13.0).contains(&p.z),
+                "the x/z band the 0.5 pair folds keeps"
+            );
+        }
+        // THE FULL CUBE (the DIRT cell the shape's 1.0 Y-max keeps —
+        // the same answer the air gate wears)
+        let mut solid = growth_arena(20);
+        solid.set(12, 21, 12, crate::world::DIRT);
+        let in_solid = in_block_growth_burst((12, 21, 12), 15, &solid, &mut rng());
+        for p in &in_solid {
+            assert!(
+                (21.0..22.0).contains(&p.y),
+                "y inside the full cube's own 1.0 band: {}",
+                p.y
+            );
+        }
+        // THE FORCE LANE (the ground gate the delegate never reads):
+        // the below column gone the whole burst still lands — the
+        // in-block truth the vanilla walk keeps
+        let mut holed = growth_arena(20);
+        for z in 10..15 {
+            holed.set(12, 20, z, crate::world::AIR);
+        }
+        let floating = in_block_growth_burst((12, 21, 12), 15, &holed, &mut rng());
+        assert_eq!(floating.len(), 15, "the force lane never reads the ground");
+        // the determinism the draw order keeps (the same seed the same
+        // burst — the shape read draws nothing, the burst's own chain
+        // the gaussians the doubles the ctor draws)
+        let again = in_block_growth_burst((12, 21, 12), 15, &w, &mut rng());
+        for (a, b) in burst.iter().zip(again.iter()) {
+            assert_eq!((a.x, a.y, a.z), (b.x, b.y, b.z));
+            assert_eq!((a.vx, a.vy, a.vz), (b.vx, b.vy, b.vz));
+        }
     }
 
     #[test]

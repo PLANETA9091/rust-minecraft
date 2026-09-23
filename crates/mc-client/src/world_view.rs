@@ -457,6 +457,14 @@ pub struct SnapshotView {
     /// own drain empties the mailbox after), the render lane's own law
     /// folds the twenty SMOKE + FLAME pairs.
     pub mob_spawn_events: Vec<WireMobSpawnEvent>,
+    /// The in-block growth effect's PENDING ARMS — the Level Event
+    /// mailbox the model kept (the 2011/2012 words the server's own
+    /// pollinator and egg-lay broadcast, [`mc_protocol::play::BEE_GROWTH_EFFECT`]
+    /// / [`mc_protocol::play::TURTLE_EGG_PLACEMENT_EFFECT`] the
+    /// vocabulary speaks): shipped once with the refresh that carried
+    /// them (the worker's own drain empties the mailbox after), the
+    /// render lane's own law folds the shape read + the in-block burst.
+    pub in_block_growth_events: Vec<WireInBlockGrowthEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -497,6 +505,21 @@ pub struct WireWorldVoice {
 /// own inputs — the burst the render lane folds from them).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireGrowthEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    pub data: i32,
+}
+
+/// One wire IN-BLOCK GROWTH EFFECT arm — the Level Event packet's own
+/// landing (the 2011/2012 words the server's own pollinator and
+/// egg-lay broadcast, [`mc_protocol::play::BEE_GROWTH_EFFECT`] and
+/// [`mc_protocol::play::TURTLE_EGG_PLACEMENT_EFFECT`] the render lane
+/// speaks): the event's anchor block + the count word, verbatim (the
+/// shape read's own inputs — the in-block burst the render lane folds
+/// from them).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireInBlockGrowthEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -2362,6 +2385,9 @@ pub fn materialize_snapshot_view(
         // and no growth words (the join snapshot carries no bone-meal
         // traffic — the empty mailbox the render lane skips)
         growth_events: Vec::new(),
+        // and no in-block growth words (the join snapshot carries no
+        // 2011/2012 traffic — the empty mailbox the render lane skips)
+        in_block_growth_events: Vec::new(),
         // and no break words (the join snapshot carries no 2001 traffic
         // — the empty mailbox the render lane skips)
         break_events: Vec::new(),
@@ -2727,6 +2753,22 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the in-block growth effect's own projection (the mailbox
+        // verbatim — the anchor + the count word the arms carry, the
+        // shape read the render lane's own world state answers): each
+        // 2011/2012 word ships once with this view, the worker's drain
+        // empties the mailbox after
+        let in_block_growth_events = self
+            .model
+            .in_block_growth_events
+            .iter()
+            .map(|arm| WireInBlockGrowthEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+            })
+            .collect();
         // the block-break effect's own projection (the mailbox verbatim
         // — the state walk's answers the arms carry, the anchor the
         // render lane's own law reads): each 2001 word ships once with
@@ -2886,6 +2928,10 @@ impl LiveView {
                 // the bone-meal words are the connection's own traffic,
                 // not the pose's
                 growth_events,
+                // the in-block growth effect's arms ride the pose-less
+                // arm too — the 2011/2012 words are the connection's own
+                // traffic, not the pose's
+                in_block_growth_events,
                 // the block-break effect's arms ride the pose-less arm
                 // too — the 2001 words are the connection's own traffic,
                 // not the pose's
@@ -2972,6 +3018,10 @@ impl LiveView {
             // bone-meal words follow the mailbox exactly like the
             // world's own voices do
             growth_events,
+            // the in-block growth effect's arms ride every refresh too —
+            // the 2011/2012 words follow the mailbox exactly like the
+            // growth's own arms do
+            in_block_growth_events,
             // the block-break effect's arms ride every refresh too —
             // the 2001 words follow the mailbox exactly like the
             // growth's own arms do

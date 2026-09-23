@@ -1264,6 +1264,38 @@ pub const INSTANT_SPLASH_EFFECT: i32 = 2007;
 /// carries — the positioned lane the case's own arm wears).
 pub const MOB_SPAWN_EFFECT: i32 = 2004;
 
+/// THE BEE-GROWTH EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_BEE_GROWTH`, the case
+/// `LevelEventHandler.levelEvent` offset 2546 speaks): the data word
+/// the PARTICLE COUNT carries — the `ParticleUtils.spawnParticleInBlock
+/// (level, pos, data, HAPPY_VILLAGER)` delegate the case's own body
+/// speaks (the anchor cell's own state the shape read opens: the
+/// `isAir` gate the 1.0 answer keeps, the block's own shape the
+/// Y-max fold rides — then the `spawnParticles` walk the in-block
+/// force lane arms). The server's own pollinator speaks it —
+/// `Bee$BeeGrowCropGoal.tick`'s `sipush 2011, aload cropPos, bipush
+/// 15` the levelEvent call the bytecode pins (the count the bipush 15
+/// the pollen's own burst wears). No sound the case speaks — the
+/// happy-villager burst the in-block lane's own stream alone carries.
+/// The GLOBAL route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const BEE_GROWTH_EFFECT: i32 = 2011;
+
+/// THE TURTLE-EGG PLACEMENT EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_TURTLE_EGG_PLACEMENT`, the case
+/// `LevelEventHandler.levelEvent` offset 2561 speaks): the SAME
+/// `spawnParticleInBlock` walk the 2011 word wears (the one case body
+/// the two ids share — the `HAPPY_VILLAGER` type the both speak), the
+/// data word the count carries. The server's own egg-lay the word
+/// broadcasts — `TurtleEggBlock.onPlace`'s `sipush 2012, aload pos,
+/// bipush 15` the levelEvent call the bytecode pins (the gate checks
+/// the sand/site read the caller's own head keeps, the count the same
+/// bipush 15 the lay's own burst wears). No sound the case speaks.
+/// The GLOBAL route the `globalLevelEvent` switch never banks.
+pub const TURTLE_EGG_PLACEMENT_EFFECT: i32 = 2012;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -10414,6 +10446,16 @@ mod tests {
             MOB_SPAWN_EFFECT,
             2004,
             "the mob-spawn cloud the spawner's own broadcast speaks"
+        );
+        assert_eq!(
+            BEE_GROWTH_EFFECT,
+            2011,
+            "the bee-growth effect the pollinator's own tick speaks"
+        );
+        assert_eq!(
+            TURTLE_EGG_PLACEMENT_EFFECT,
+            2012,
+            "the turtle-egg placement the egg-lay's own onPlace speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

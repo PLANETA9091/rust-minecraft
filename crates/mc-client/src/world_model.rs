@@ -339,6 +339,19 @@ pub struct WorldModel {
     /// (the `globalLevelEvent` switch the 2004 id never carries — the
     /// positioned lane the case's own arm wears).
     pub mob_spawn_events: Vec<MobSpawnArm>,
+    /// THE IN-BLOCK GROWTH EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary words — [`mc_protocol::play::BEE_GROWTH_EFFECT`]
+    /// and [`mc_protocol::play::TURTLE_EGG_PLACEMENT_EFFECT`], the cases
+    /// the `LevelEventHandler.levelEvent` offsets 2546/2561 speak: the
+    /// server's own pollinator and the egg-lay the words broadcast, the
+    /// happy-villager in-block burst the `spawnParticleInBlock` walk
+    /// the delegate folds — the shape's Y-max read the render lane's
+    /// own world state answers). The arms the anchor + the count carry
+    /// (the data word the delegate's own arg rides). The GLOBAL route
+    /// the arm never enqueues (the `globalLevelEvent` switch the
+    /// 2011/2012 ids never carry — the positioned lane the cases' own
+    /// arms wear).
+    pub in_block_growth_events: Vec<InBlockGrowthArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -545,6 +558,27 @@ pub struct WhiteSmokeArm {
     pub z: i32,
     /// The direction id (the `get3DDataValue` word the crafter's
     /// facing speaks — the smoke arm's own band the fold rides).
+    pub data: i32,
+}
+
+/// One pending IN-BLOCK GROWTH arm — the Level Event packet's sibling
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::in_block_growth_events`]). The SAME shape the growth
+/// arm wears (the 26.2 cases 2546/2561 the ONE `spawnParticleInBlock`
+/// walk both ids call — the `PARTICLES_BEE_GROWTH` and
+/// `PARTICLES_TURTLE_EGG_PLACEMENT` words the bee's pollination and
+/// the egg-lay's own `onPlace` broadcast): the DATA word rides raw
+/// (the particle count the `spawnParticleInBlock` delegate's own
+/// arg), the anchor verbatim. The anchor cell's own shape read the
+/// render lane's world state folds — the transport's honesty the raw
+/// word keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct InBlockGrowthArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The particle count (the `data` word the bee's `bipush 15` and
+    /// the egg-lay's own `bipush 15` speak).
     pub data: i32,
 }
 
@@ -1012,6 +1046,7 @@ impl WorldModel {
             break_events: Vec::new(),
             shoot_smoke_events: Vec::new(),
             white_smoke_events: Vec::new(),
+            in_block_growth_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -1180,6 +1215,13 @@ impl WorldModel {
     /// projection empties).
     pub fn drain_white_smoke_events(&mut self) -> Vec<WhiteSmokeArm> {
         std::mem::take(&mut self.white_smoke_events)
+    }
+
+    /// The in-block growth effect's mailbox's own drain (the same walk
+    /// the growth arm's own drain speaks — the arms the worker drained
+    /// ride exactly one refresh).
+    pub fn drain_in_block_growth_events(&mut self) -> Vec<InBlockGrowthArm> {
+        std::mem::take(&mut self.in_block_growth_events)
     }
 
     /// The splash-potion effect's mailbox's own drain (the same walk the
@@ -1394,6 +1436,10 @@ impl WorldModel {
                 // puff again)
                 self.shoot_smoke_events.clear();
                 self.white_smoke_events.clear();
+                // the in-block growth effect's mailbox dies with the
+                // level (the same walk — the old level's 2011/2012
+                // words never burst again)
+                self.in_block_growth_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -2162,6 +2208,28 @@ impl WorldModel {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
+                    });
+                    true
+                } else if (ev.effect == mc_protocol::BEE_GROWTH_EFFECT
+                    || ev.effect == mc_protocol::TURTLE_EGG_PLACEMENT_EFFECT)
+                    && !ev.global
+                {
+                    // THE IN-BLOCK GROWTH EFFECT'S OWN ARM (javap the
+                    // cases offset 2546/2561 — the positioned route the
+                    // GLOBAL switch never banks, BOTH ids the one arm
+                    // wears): the SAME `spawnParticleInBlock` walk the
+                    // bee's growth word and the turtle egg's placement
+                    // word speak (the `HAPPY_VILLAGER` type the both
+                    // carry), the anchor + the count word the mailbox
+                    // carries (the shape's Y-max read the render lane's
+                    // own world state folds). No sound the cases speak —
+                    // the in-block burst the lane's own stream alone
+                    // carries.
+                    self.in_block_growth_events.push(InBlockGrowthArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
                     });
                     true
                 } else {
@@ -6316,6 +6384,99 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.white_smoke_events.is_empty(), "the mailbox dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_in_block_words_the_one_arm_wears() {
+        // THE IN-BLOCK GROWTH EFFECT'S OWN ARM (javap the cases offset
+        // 2546/2561 — the positioned route the GLOBAL switch never
+        // banks, BOTH ids the ONE `spawnParticleInBlock` walk shares):
+        // the bee's growth word and the turtle egg's placement word the
+        // SAME mailbox arms, the data word the count carries (the
+        // callers' own `bipush 15` the burst's arg rides), the drain
+        // ships the arms exactly once, and the Respawn recreates the
+        // level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the pollinator's own word (the crop cell the bee's grow walk
+        // broadcasts, the count the bipush 15 the pollen's burst wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::BEE_GROWTH_EFFECT,
+            x: -40,
+            y: 12,
+            z: 77,
+            data: 15,
+            global: false,
+        })));
+        assert_eq!(m.in_block_growth_events.len(), 1, "the arm rides");
+        assert_eq!(m.in_block_growth_events[0].x, -40);
+        assert_eq!(m.in_block_growth_events[0].y, 12);
+        assert_eq!(m.in_block_growth_events[0].z, 77);
+        assert_eq!(
+            m.in_block_growth_events[0].data, 15,
+            "the count word the delegate's own arg carries"
+        );
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2011 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::BEE_GROWTH_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 15,
+            global: true,
+        })));
+        assert_eq!(m.in_block_growth_events.len(), 1, "the global word never arms");
+        // the turtle egg's own word the SAME mailbox arms (the one case
+        // body the two ids share — the lay's `bipush 15` the count)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::TURTLE_EGG_PLACEMENT_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 15,
+            global: false,
+        })));
+        assert_eq!(m.in_block_growth_events.len(), 2, "the one arm both ids wear");
+        assert_eq!(m.in_block_growth_events[1].x, 1);
+        assert_eq!(m.in_block_growth_events[1].data, 15);
+        // the egg-lay's own GLOBAL word the arm refuses too
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::TURTLE_EGG_PLACEMENT_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 15,
+            global: true,
+        })));
+        assert_eq!(m.in_block_growth_events.len(), 2, "the global word never arms");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_in_block_growth_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert!(m.in_block_growth_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_in_block_growth_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::BEE_GROWTH_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 15,
+            global: false,
+        })));
+        assert_eq!(m.in_block_growth_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.in_block_growth_events.is_empty(),
+            "the mailbox dies with the level"
+        );
     }
 
     #[test]

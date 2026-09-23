@@ -60,6 +60,7 @@ pub use play::{
     HurtAnimation, PlayerCombatKill, EntitySoundPacket, WorldSoundPacket,
     LevelEventPacket, GROWTH_EFFECT, DESTROY_BLOCK_EFFECT, SHOOT_SMOKE_EFFECT,
     SHOOT_WHITE_SMOKE_EFFECT, SPLASH_POTION_EFFECT, INSTANT_SPLASH_EFFECT, MOB_SPAWN_EFFECT,
+    BEE_GROWTH_EFFECT, TURTLE_EGG_PLACEMENT_EFFECT,
 };
 pub use login::{connect_and_login, login, LoginOutcome};
 pub use status::{ping, PingResponse};
