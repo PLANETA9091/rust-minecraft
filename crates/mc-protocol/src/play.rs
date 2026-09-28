@@ -1571,6 +1571,55 @@ pub const DRIPSTONE_DRIP_EFFECT: i32 = 1504;
 /// the positioned lane the case's own arm wears).
 pub const SOUND_DISPENSER_DISPENSE_EFFECT: i32 = 1000;
 
+/// THE DISPENSER-FAIL VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_DISPENSER_FAIL`,
+/// the case `LevelEventHandler.levelEvent` offset 755 speaks): the
+/// ONE `playLocalSound(pos, DISPENSER_FAIL, BLOCKS, 1.0F, 1.2F,
+/// false)` walk the case body spends — the `fconst_1` volume the
+/// fixed fold keeps, the `ldc1 1.2` pitch the CP Float
+/// 1.2000000476837158 speaks (the FAILED eject's own raised voice —
+/// the pitch the pair's launch word shares), the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps, the data word the case's
+/// own body never reads (no `iload_3` the arm's bytecode speaks).
+/// NO particles the case speaks — the old fail-smoke burst the
+/// modern case never carries (the voice alone the broadcast
+/// renders). The server's own dispensers speak it —
+/// `DispenserBlock.dispenseFrom`'s fail branch and
+/// `DropperBlock.dispenseFrom`'s fail branch (the `sipush 1001,
+/// pos, iconst_0` levelEvent calls the bytecode pins), the optional
+/// behavior's own ternary (`OptionalDispenseItemBehavior.playSound`'
+/// `isSuccess` bit the `sipush 1000`/`sipush 1001` pair picks — the
+/// success word and the fail word the ONE method speaks). The GLOBAL
+/// route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const SOUND_DISPENSER_FAIL_EFFECT: i32 = 1001;
+
+/// THE DISPENSER-LAUNCH VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `SOUND_DISPENSER_PROJECTILE_LAUNCH`, the case
+/// `LevelEventHandler.levelEvent` offset 857 speaks): the ONE
+/// `playLocalSound(pos, DISPENSER_LAUNCH, BLOCKS, 1.0F, 1.2F,
+/// false)` walk the case body spends — the `fconst_1` volume the
+/// fixed fold keeps, the `ldc1 1.2` pitch the CP Float
+/// 1.2000000476837158 speaks (the fail word's own raised pitch the
+/// pair shares — the launch's bow voice the same band wears), the
+/// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve places,
+/// the distance-delay flag false the immediate voice keeps, the data
+/// word the case's own body never reads (no `iload_3` the arm's
+/// bytecode speaks). NO particles the case speaks — the voice alone
+/// the broadcast renders (the projectile's own entity the server
+/// spawns by the packet's own means, the voice the event alone
+/// carries). The server's own projectile behaviors speak it —
+/// `ProjectileDispenseBehavior.playSound`'s tail (the `sipush 1002,
+/// source.pos(), iconst_0` levelEvent call the bytecode pins — the
+/// `source.level()` resolve the invokevirtual chain keeps). The
+/// GLOBAL route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT: i32 = 1002;
+
 /// THE CHORUS-FLOWER GROW VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_CHORUS_FLOWER_GROW`,
 /// the case `LevelEventHandler.levelEvent` offset 680 speaks): the
@@ -10844,6 +10893,16 @@ mod tests {
             SOUND_DISPENSER_DISPENSE_EFFECT,
             1000,
             "the dispenser dispense voice the default behavior's own tail speaks"
+        );
+        assert_eq!(
+            SOUND_DISPENSER_FAIL_EFFECT,
+            1001,
+            "the dispenser fail voice the dispenseFrom fail branches speak"
+        );
+        assert_eq!(
+            SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT,
+            1002,
+            "the dispenser launch voice the projectile behavior's own tail speaks"
         );
         assert_eq!(
             SOUND_CHORUS_GROW_EFFECT,

@@ -22395,6 +22395,59 @@ impl App {
         );
     }
 
+    /// THE DISPENSER FAIL/LAUNCH WIRE LANE (javap `LevelEventHandler`
+    /// cases 1001/1002 — offsets 755/857 — over the 26.2 jar): the
+    /// server's own dispenser fail branches and projectile launches
+    /// the event broadcasts, the ONE `playLocalSound(pos, <voice>,
+    /// BLOCKS, 1.0F, 1.2F, false)` walk each case body spends — the
+    /// raised-pitch voices alone the broadcast renders (no particles
+    /// the cases speak, no draw the fixed folds cost).
+    pub fn live_dispenser_fail_launch_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireDispenserFailLaunchEvent>,
+    ) {
+        for ev in events {
+            self.play_dispenser_fail_launch(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE DISPENSER FAIL/LAUNCH WALK (javap the two case arms
+    /// verbatim — offsets 755/857): the BLOCK CENTER the
+    /// `playLocalSound(BlockPos, ...)` resolve places (the +0.5
+    /// trio the vanilla client answers), the `fconst_1` volume each
+    /// case carries, the `ldc1 1.2` pitch the CP Float
+    /// 1.2000000476837158 speaks (no randoms the fixed folds speak —
+    /// the level ambient stream the walks never spend), the
+    /// distance-delay flag false the immediate voices keep. The
+    /// voice word the packet's own effect id — the sound key the
+    /// official sounds.json table the runtime cache keeps (the fail's
+    /// click and the launch's bow the table banks, NO new assets the
+    /// pair demands).
+    fn play_dispenser_fail_launch(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the TWO WORDS the model's own arm banks (the case ids the
+        // bytecode's own lookupswitch rows speak — the render lane's
+        // law folds the sound key from each; the raised 1.2 pitch the
+        // pair shares the same fold carries)
+        let key = match voice {
+            mc_protocol::SOUND_DISPENSER_FAIL_EFFECT => "block.dispenser.fail",
+            mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT => "block.dispenser.launch",
+            _ => return, // the model's own arm the two words alone enqueues
+        };
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            1.0,
+            1.2,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE FIXED-VOICE WIRE LANE (javap `LevelEventHandler` cases
     /// 1033/1034/1035/1049/1050 — offsets 680/700/660/796/816 — over
     /// the 26.2 jar): the server's own chorus flowers, brewing stand
@@ -47819,6 +47872,155 @@ cow_sound_variant: None,
             );
         } else {
             app.live_dispenser_dispense_events_updated(vec![]);
+        }
+    }
+
+    #[test]
+    fn the_wire_dispenser_pair_the_pitched_voices_wear() {
+        // THE DISPENSER BAND'S OWN PITCHED PAIR (javap cases
+        // 1001/1002 → offsets 755/857 over the 26.2 jar): the ONE
+        // `playLocalSound(pos, <voice>, BLOCKS, 1.0F, 1.2F, false)`
+        // walk each case body spends — the fail's click and the
+        // launch's bow the fixed folds carry, the BLOCK CENTER the
+        // playLocalSound(BlockPos, ...) resolve places, NO PARTICLES
+        // the cases speak (the voices alone the broadcast renders),
+        // the level ambient stream the fixed folds never spend.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the swap banks — no
+        // draw the fixed 1.0/1.2 folds cost, the `fconst_1`/`ldc1`
+        // pair the randoms never ride)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(4321));
+        let particles_before = app.particles.len();
+        app.live_dispenser_fail_launch_events_updated(vec![
+            crate::world_view::WireDispenserFailLaunchEvent {
+                x: -3,
+                y: 64,
+                z: 77,
+                voice: mc_protocol::SOUND_DISPENSER_FAIL_EFFECT,
+            },
+            crate::world_view::WireDispenserFailLaunchEvent {
+                x: 5,
+                y: 30,
+                z: -9,
+                voice: mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        assert_eq!(
+            spent,
+            crate::drops::Lcg::new(4321),
+            "the fixed folds the ambient stream never spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "no particles the case bodies speak"
+        );
+        // THE VOICES (the cases' own bodies the raised 1.2 pitch
+        // speaks — the volume the `fconst_1` keeps, the pitch the
+        // `ldc1` CP Float carries, the file picks the engine's own
+        // LCG banks)
+        if sounds_loaded() {
+            let fail = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.dispenser.fail @"))
+                .expect("the fail voice the case-1001 body speaks");
+            let pitch: f32 = fail
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.2).abs() < 1e-6,
+                "the raised pitch the ldc1 keeps: {pitch}"
+            );
+            let volume: f32 = fail
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 1.0).abs() < 1e-6,
+                "the fixed volume the fconst_1 keeps: {volume}"
+            );
+            let launch = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.dispenser.launch @"))
+                .expect("the launch voice the case-1002 body speaks");
+            let pitch: f32 = launch
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.2).abs() < 1e-6,
+                "the raised pitch the pair shares: {pitch}"
+            );
+            let volume: f32 = launch
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 1.0).abs() < 1e-6,
+                "the fixed volume the pair keeps: {volume}"
+            );
+        }
+        // THE SECOND ARM (the next dispenser's fail the same walk
+        // wears — each word ships exactly one voice)
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.fail @"))
+                .count();
+            app.live_dispenser_fail_launch_events_updated(vec![
+                crate::world_view::WireDispenserFailLaunchEvent {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    voice: mc_protocol::SOUND_DISPENSER_FAIL_EFFECT,
+                },
+            ]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.fail @"))
+                .count();
+            assert_eq!(
+                voices_after,
+                voices_before + 1,
+                "each arm exactly one voice the walk keeps"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.fail @"))
+                .count();
+            app.live_dispenser_fail_launch_events_updated(vec![]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.dispenser.fail @"))
+                .count();
+            assert_eq!(
+                voices_after, voices_before,
+                "the empty mailbox ships nothing"
+            );
+        } else {
+            app.live_dispenser_fail_launch_events_updated(vec![]);
         }
     }
 

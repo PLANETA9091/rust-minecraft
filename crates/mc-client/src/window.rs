@@ -178,6 +178,7 @@ fn run_join(
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
+                Vec<crate::world_view::WireDispenserFailLaunchEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -279,6 +280,7 @@ fn run_join(
             view.model.drain_eye_of_ender_shatter_events();
             view.model.drain_dragon_block_break_events();
             view.model.drain_dispenser_dispense_events();
+            view.model.drain_dispenser_fail_launch_events();
             view.model.drain_fixed_voice_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
@@ -904,6 +906,7 @@ fn run_join(
                             view.model.drain_eye_of_ender_shatter_events();
                             view.model.drain_dragon_block_break_events();
                             view.model.drain_dispenser_dispense_events();
+                            view.model.drain_dispenser_fail_launch_events();
                             view.model.drain_fixed_voice_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
@@ -1117,6 +1120,16 @@ fn run_join(
                                     // law folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.dispenser_dispense_events,
+                                    // the dispenser band's pitched pair's
+                                    // arms ride beside the dispenser
+                                    // dispense's — the 1001/1002 words the
+                                    // server's own fail branches and
+                                    // projectile launches stream to the
+                                    // sound lane (the raised 1.2-pitch
+                                    // voices the render lane's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.dispenser_fail_launch_events,
                                     // the fixed-voice shelf's arms ride
                                     // beside the dispenser's — the
                                     // 1033/1034/1035/1049/1050 words the
@@ -1297,6 +1310,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
+                Vec<crate::world_view::WireDispenserFailLaunchEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -1855,6 +1869,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     eye_of_ender_shatter_events,
                     dragon_block_break_events,
                     dispenser_dispense_events,
+                    dispenser_fail_launch_events,
                     fixed_voice_events,
                     splash_events,
                     mob_spawn_events,
@@ -2026,6 +2041,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // bytecode pair speaks, the vanilla client answers
                     // the same packet with)
                     app.live_dispenser_dispense_events_updated(dispenser_dispense_events);
+                    // the dispenser band's pitched pair's lane beside the
+                    // dispenser dispense's: the 1001/1002 words the
+                    // server's own fail branches and projectile launches
+                    // broadcast land at their own anchors (the fail's
+                    // click and the launch's bow the sound lane's own law
+                    // folds at the block center — the fixed 1.0/1.2 pair
+                    // the `fconst_1`/`ldc1` bytecode pairs speak, the
+                    // vanilla client answers the same packets with)
+                    app.live_dispenser_fail_launch_events_updated(dispenser_fail_launch_events);
                     // the fixed-voice shelf's lane beside the
                     // dispenser's: the 1033/1034/1035/1049/1050 words the
                     // server's own chorus flowers, brewing stand and

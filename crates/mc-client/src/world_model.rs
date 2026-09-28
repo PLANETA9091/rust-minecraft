@@ -448,6 +448,12 @@ pub struct WorldModel {
     /// never enqueues (the `globalLevelEvent` switch the 1000 id
     /// never carries — the positioned lane the case's own arm wears).
     pub dispenser_dispense_events: Vec<DispenserDispenseArm>,
+    /// The dispenser band's own pitched-pair mailbox — the Level
+    /// Event packet's 1001/1002 words the model enqueues for the
+    /// render lane (see [`DispenserFailLaunchArm`]). The fail and the
+    /// launch the ONE mailbox arms (the sibling words the 1000
+    /// eject's own voice the dedicated shape above keeps).
+    pub dispenser_fail_launch_events: Vec<DispenserFailLaunchArm>,
     /// THE FIXED-VOICE SHELF'S OWN MAILBOX (the FIVE 1.0/1.0 BLOCKS
     /// cases the ONE arm shape wears — see [`FixedVoiceArm`]): the
     /// chorus flower's grow/death pair (1033/1034), the brewing
@@ -898,6 +904,40 @@ pub struct DispenserDispenseArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One pending DISPENSER FAIL/LAUNCH arm — the Level Event packet's
+/// pitched voice pair the model keeps verbatim (see
+/// [`WorldModel::dispenser_fail_launch_events`]). The TWO words the
+/// ONE arm shape wears — the dispenser's own fail voice (the empty-
+/// slot walk the `DispenserBlock.dispenseFrom` and
+/// `DropperBlock.dispenseFrom` fail branches broadcast, the optional
+/// behavior's own ternary the `isSuccess` bit picks) and the
+/// projectile launch's own voice (the `ProjectileDispenseBehavior
+/// .playSound` tail broadcasts). The anchor verbatim (the caller's
+/// own BlockPos the voice broadcasts), the VOICE WORD the PACKET'S
+/// OWN effect id rides (the transport's honesty — nothing the wire
+/// never carried, the sound key and the 1.2 pitch the render lane's
+/// own law folds from it), the data word deliberately absent — the
+/// cases' own bodies never read it (no `iload_3` read the arms'
+/// bytecode speaks, the same transport honesty the dispenser arm
+/// keeps). NO particles the cases speak — the ONE
+/// `playLocalSound(pos, <voice>, BLOCKS, 1.0F, 1.2F, false)` walk
+/// each case body spends (the `fconst_1` volume + the `ldc1 1.2`
+/// pitch the raised band both carry, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voices keep).
+#[derive(Debug, Clone, PartialEq)]
+pub struct DispenserFailLaunchArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — one of the two
+    /// pitched ids [`mc_protocol::SOUND_DISPENSER_FAIL_EFFECT`] /
+    /// [`mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT`] the
+    /// model's own arm banks; the sound key and the 1.2 pitch the
+    /// render lane's law folds from it).
+    pub voice: i32,
 }
 
 /// One pending FIXED-VOICE arm — the Level Event packet's sound
@@ -1411,6 +1451,7 @@ impl WorldModel {
             eye_of_ender_shatter_events: Vec::new(),
             dragon_block_break_events: Vec::new(),
             dispenser_dispense_events: Vec::new(),
+            dispenser_fail_launch_events: Vec::new(),
             fixed_voice_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
@@ -1720,6 +1761,13 @@ impl WorldModel {
         std::mem::take(&mut self.dispenser_dispense_events)
     }
 
+    /// The dispenser band's pitched pair's own drain — the render
+    /// lane takes the pending 1001/1002 arms each serve (the arms
+    /// ship exactly once the mailbox's own law keeps).
+    pub fn drain_dispenser_fail_launch_events(&mut self) -> Vec<DispenserFailLaunchArm> {
+        std::mem::take(&mut self.dispenser_fail_launch_events)
+    }
+
     /// The fixed-voice shelf's mailbox's own drain (the same walk the
     /// voices' speak — each arm ships exactly once): the
     /// 1033/1034/1035/1049/1050 words the Level Event packet armed,
@@ -1977,6 +2025,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 1000 words
                 // never speak again)
                 self.dispenser_dispense_events.clear();
+                // the dispenser band's pitched pair's mailbox dies with
+                // the level (the same walk — the old level's 1001/1002
+                // words never speak again)
+                self.dispenser_fail_launch_events.clear();
                 // the fixed-voice shelf's mailbox dies with the level
                 // (the same walk — the old level's 1033/1034/1035/1049/
                 // 1050 words never speak again)
@@ -2936,6 +2988,29 @@ impl WorldModel {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
+                    });
+                    true
+                } else if (ev.effect == mc_protocol::SOUND_DISPENSER_FAIL_EFFECT
+                    || ev.effect == mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT)
+                    && !ev.global
+                {
+                    // THE DISPENSER BAND'S OWN PITCHED PAIR (javap the
+                    // case offsets 755/857 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries, the VOICE WORD the packet's own
+                    // effect id rides (the sound key and the 1.2 pitch
+                    // the render lane's law folds from it — the fail's
+                    // block.dispenser.fail click, the launch's
+                    // block.dispenser.launch bow; the data word the
+                    // cases' own bodies never read). NO particles the
+                    // cases speak — the ONE raised-pitch voice walk
+                    // each case body spends, the render lane's own
+                    // sound walk answers.
+                    self.dispenser_fail_launch_events.push(DispenserFailLaunchArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
                     });
                     true
                 } else if matches!(
@@ -7528,6 +7603,114 @@ mod tests {
         })));
         assert!(
             m.dispenser_dispense_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_dispenser_pair_the_one_mailbox_arms() {
+        // THE DISPENSER BAND'S OWN PITCHED PAIR (javap the case
+        // offsets 755/857 over the 26.2 jar — the positioned route
+        // the GLOBAL switch never banks): the fail and the launch
+        // words the ONE mailbox arms, the voice word the packet's own
+        // effect id rides, the anchor verbatim, the DATA word the
+        // cases' own bodies never read (no particles the voice walks
+        // speak — the raised 1.2 pitch the render lane's own law
+        // folds).
+        let mut m = WorldModel::new();
+        for (i, effect) in [
+            mc_protocol::SOUND_DISPENSER_FAIL_EFFECT,
+            mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT,
+        ]
+        .iter()
+        .enumerate()
+        {
+            let x = (i as i32) * 7 + 3;
+            assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: *effect,
+                x,
+                y: 40,
+                z: -12,
+                data: 0,
+                global: false,
+            })));
+        }
+        assert_eq!(
+            m.dispenser_fail_launch_events.len(),
+            2,
+            "the two words arm"
+        );
+        // the voice words ride verbatim (the packet's own ids — the
+        // sound keys and the 1.2 pitch the render lane's law folds
+        // from them)
+        assert_eq!(
+            m.dispenser_fail_launch_events[0].voice,
+            mc_protocol::SOUND_DISPENSER_FAIL_EFFECT,
+            "the fail word rides"
+        );
+        assert_eq!(
+            m.dispenser_fail_launch_events[1].voice,
+            mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT,
+            "the launch word rides"
+        );
+        // the anchors ride verbatim (the callers' own BlockPos cells)
+        assert_eq!(m.dispenser_fail_launch_events[0].x, 3);
+        assert_eq!(m.dispenser_fail_launch_events[0].y, 40);
+        assert_eq!(m.dispenser_fail_launch_events[0].z, -12);
+        assert_eq!(m.dispenser_fail_launch_events[1].x, 10);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // two ids the positioned lane's own words)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_DISPENSER_FAIL_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.dispenser_fail_launch_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_dispenser_fail_launch_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(
+            drained[0].voice,
+            mc_protocol::SOUND_DISPENSER_FAIL_EFFECT,
+            "the wire order the drain keeps"
+        );
+        assert!(
+            m.dispenser_fail_launch_events.is_empty(),
+            "the mailbox spent"
+        );
+        assert!(
+            m.drain_dispenser_fail_launch_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.dispenser_fail_launch_events.len(),
+            1,
+            "the fresh word re-arms"
+        );
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.dispenser_fail_launch_events.is_empty(),
             "the mailbox dies with the level"
         );
     }
