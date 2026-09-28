@@ -23405,6 +23405,82 @@ impl App {
         }
     }
 
+    /// THE TRIAL-SPAWNER OMINOUS-ACTIVATE WIRE LANE (javap
+    /// `LevelEventHandler` case 3020 — offset 2069 — over the 26.2
+    /// jar): the server's own ominous flips the word broadcasts
+    /// (`TrialSpawner.applyOminous`'s `sipush 3020, aload_2,
+    /// iconst_1` the flip's own answer speaks, the bad-omen
+    /// transform's `sipush 3020, getEyePosition.containing,
+    /// iconst_0` the player-position event keeps), the Level Event
+    /// mailbox's landing: each word the arms the worker drained ride
+    /// exactly one refresh — the VOICE the case body plays FIRST
+    /// (the ONE `playLocalSound(pos, TRIAL_SPAWNER_OMINOUS_ACTIVATE,
+    /// BLOCKS, data != 0 ? 1.0F : 0.3F, (nf - nf) * 0.2F + 1.0F,
+    /// true)` walk — the `iload_3` + `ifne` pair the VOLUME GATE
+    /// answers, the only 3000-band case whose volume the wire arms;
+    /// the TWO pitch draws the family's [0.8, 1.2] band keeps, the
+    /// key the sounds.json row banks — the ominous_activate files
+    /// the runtime table holds), THEN the snowfall the case's middle
+    /// spends (the `addDetectPlayerParticles` walk with the case's
+    /// OWN `iconst_0` amount word — the 30-iteration bound the
+    /// min-free answer keeps, the wire's data the volume gate spent),
+    /// THEN the become-ominous burst the case tail spends (the
+    /// `addBecomeOminousParticles` walk verbatim — the twenty omen +
+    /// soul pairs the same args share, the static jitter stream the
+    /// super-arg pair spends).
+    pub fn live_trial_ominous_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireTrialOminousEvent>,
+    ) {
+        for ev in events {
+            // THE VOICE THE CASE BODY SPEAKS FIRST (the VOLUME GATE
+            // the `data != 0` ternary answers — the spawner flip the
+            // 1.0 arms, the bad-omen transform the 0.3 whisper keeps;
+            // the pitch pair the `(nf - nf) * 0.2F + 1.0F` fold
+            // answers, the block center the resolve places, the
+            // distance-delay flag TRUE the jar's own `iconst_1` pc
+            // 2112 keeps — the draws ride BEFORE the bursts the tail
+            // speaks)
+            let pitch = 1.0f32
+                + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * 0.2f32;
+            let sx = f64::from(ev.x) + 0.5;
+            let sy = f64::from(ev.y) + 0.5;
+            let sz = f64::from(ev.z) + 0.5;
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.trial_spawner.ominous_activate",
+                if ev.loud { 1.0 } else { 0.3 },
+                pitch,
+                ear_distance(ear, sx, sy, sz),
+                ear_pan(ear, yaw, sx, sy, sz),
+            );
+            // THE SNOWFALL (the `addDetectPlayerParticles` walk the
+            // case's own `iconst_0` amount word arms — the
+            // 30-iteration bound the min-free answer keeps, the level
+            // ambient stream the draws ride)
+            let snowfall = crate::particles::trial_detect_player_burst(
+                (ev.x, ev.y, ev.z),
+                0,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(snowfall);
+            // THE BECOME-OMINOUS BURST (the walk verbatim — the
+            // omen-first puff + soul pair the same position +
+            // velocity args share, the static jitter stream the
+            // super-arg pair spends)
+            let burst = crate::particles::become_ominous_burst(
+                ev.x,
+                ev.y,
+                ev.z,
+                &mut self.level_ambient_rng,
+                &mut self.spell_jitter_rng,
+            );
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -50871,6 +50947,235 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_vault_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_ominous_serve_the_volume_the_bursts_wear() {
+        // THE OMINOUS-ACTIVATE WIRE LANE'S OWN SERVE (javap the case
+        // offset 2069 — the voice the case body speaks FIRST (the
+        // volume gate the `data != 0` ternary arms — the ONLY
+        // 3000-band case whose volume the wire reads), the TWO pitch
+        // draws the family's [0.8, 1.2] band keeps, THEN the
+        // snowfall's 270-draw walk (the `iconst_0` amount word the
+        // case's OWN body carries — the 30-iteration bound the
+        // min-free answer keeps, the wire's data the volume gate
+        // spent), THEN the become-ominous burst's 580-draw walk (the
+        // twenty omen + soul pairs the omen-first order keeps — the
+        // static jitter stream the super-arg pair spends), the empty
+        // mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BODY AT THE ANCHOR (the ear the block center carries —
+        // the block's own +0.5 trio the resolve speaks, the dist-0
+        // ear the attenuation's own volume passthrough answers, the
+        // gain the gate's raw word speaks)
+        app.body = Some(crate::body::PlayerBody::new(
+            -40.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3020));
+        let before = app.particles.len();
+        app.live_trial_ominous_events_updated(vec![
+            crate::world_view::WireTrialOminousEvent {
+                x: -41,
+                y: 70,
+                z: 123,
+                loud: true,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT EIGHTY (the thirty-member snowfall + the fifty
+        // pairs the walks answer — the snowfall FIRST the case's own
+        // call order keeps, the omen puff the pair's own head wears,
+        // the soul flame the tail speaks)
+        let members = &app.particles[before..];
+        assert_eq!(members.len(), 30 + 40, "the walks' own members");
+        for p in &members[..30] {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Snowflake),
+                "the snowfall the 30-iteration bound arms"
+            );
+        }
+        for (i, p) in members[30..].iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    matches!(
+                        p.kind,
+                        crate::particles::ParticleKind::Spell { instant: false }
+                    ),
+                    "the omen first at pair {i}: {:?}",
+                    p.kind
+                );
+            } else {
+                assert!(
+                    matches!(
+                        p.kind,
+                        crate::particles::ParticleKind::SoulFlame
+                    ),
+                    "the soul flame second at pair {i}"
+                );
+            }
+        }
+        // THE EXACT DRAW WALK (the voice's TWO pitch draws FIRST +
+        // the snowfall's 30 x 9 chain + the burst's 20 x 29 chain —
+        // the SAME order the case body's own consumption answers; the
+        // static jitter stream the burst's forty-two draws ride)
+        let mut replay = crate::drops::Lcg::new(0x3020);
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        for _ in 0..30 {
+            // the detect walk's nine (the position pair + the height
+            // + the provider chain's six)
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            for _ in 0..6 {
+                let _ = replay.next_f32();
+            }
+        }
+        for _ in 0..20 {
+            // the become walk's six (the three nextDouble positions +
+            // the three nextGaussian velocities)
+            for _ in 0..3 {
+                let _ = replay.next_f64();
+            }
+            for _ in 0..3 {
+                let _ = replay.next_gaussian();
+            }
+            // the omen puff's eight level draws (the dead base
+            // lifetime + the five-draw spread + the size + the
+            // lifetime)
+            let _ = replay.next_f32();
+            for _ in 0..5 {
+                let _ = replay.next_f32();
+            }
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            // the flame chain's fifteen
+            let _ = replay.next_int(1);
+            let _ = replay.next_f32();
+            for _ in 0..5 {
+                let _ = replay.next_f32();
+            }
+            let _ = replay.next_f32();
+            for _ in 0..6 {
+                let _ = replay.next_f32();
+            }
+            let _ = replay.next_f32();
+        }
+        assert_eq!(
+            spent, replay,
+            "the case body's own exact stream the serve opens"
+        );
+        if sounds_loaded() {
+            // THE LOUD GATE (the dist-0 body the raw volume the gain
+            // speaks — the data-1 word the 1.0F arms)
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.trial_spawner.ominous_activate @"))
+                .expect("the ominous_activate voice the lane logs");
+            assert!(
+                line.contains(" v1.000000 p"),
+                "the volume gate's own 1.0F the loud word answers: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE WHISPER (the data-0 word the SAME serve answers — the
+        // 0.3F volume the gate keeps, the same 30+40 members the
+        // walks answer)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3021));
+        let before_quiet = app.particles.len();
+        app.live_trial_ominous_events_updated(vec![
+            crate::world_view::WireTrialOminousEvent {
+                x: -41,
+                y: 70,
+                z: 123,
+                loud: false,
+            },
+        ]);
+        let spent_quiet = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let quiet = &app.particles[before_quiet..];
+        assert_eq!(quiet.len(), 30 + 40, "the same members the whisper arms");
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .rev()
+                .find(|e| e.starts_with("block.trial_spawner.ominous_activate @"))
+                .expect("the whisper voice the lane logs");
+            assert!(
+                line.contains(" v0.300000 p"),
+                "the volume gate's own 0.3F the quiet word answers: {line}"
+            );
+        }
+        // THE EXACT DRAW WALK THE WHISPER KEEPS (the SAME stream the
+        // volume gate never changes — the pitch pair the same two
+        // draws spends)
+        let mut replay2 = crate::drops::Lcg::new(0x3021);
+        let _ = replay2.next_f32();
+        let _ = replay2.next_f32();
+        for _ in 0..30 {
+            for _ in 0..9 {
+                let _ = replay2.next_f32();
+            }
+        }
+        for _ in 0..20 {
+            for _ in 0..3 {
+                let _ = replay2.next_f64();
+            }
+            for _ in 0..3 {
+                let _ = replay2.next_gaussian();
+            }
+            // the omen puff's eight level draws
+            let _ = replay2.next_f32();
+            for _ in 0..5 {
+                let _ = replay2.next_f32();
+            }
+            let _ = replay2.next_f32();
+            let _ = replay2.next_f32();
+            // the flame chain's fifteen (the dead sprite pick the
+            // next_int call answers — the SAME call shape the serve
+            // keeps)
+            let _ = replay2.next_int(1);
+            let _ = replay2.next_f32();
+            for _ in 0..5 {
+                let _ = replay2.next_f32();
+            }
+            let _ = replay2.next_f32();
+            for _ in 0..6 {
+                let _ = replay2.next_f32();
+            }
+            let _ = replay2.next_f32();
+        }
+        assert_eq!(
+            spent_quiet, replay2,
+            "the whisper's own exact stream the same walks keep"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_trial_ominous_events_updated(vec![]);
         assert_eq!(
             app.particles.len(),
             settled,

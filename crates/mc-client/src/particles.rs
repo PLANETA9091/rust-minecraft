@@ -3350,6 +3350,118 @@ pub fn vault_deactivation_burst(
     out
 }
 
+/// The BECOME-OMINOUS puff's own spawn (javap `SpellParticle` + the
+/// plain `SpellParticle$Provider` verbatim over the 26.2 jar — the
+/// `TRIAL_OMEN` type the become walk's FIRST getstatic banks, the
+/// bootstrap arg the indy cp#253 resolves): the pass-through
+/// createParticle the provider speaks (NO setColor — the WHITE
+/// [1, 1, 1] tint the SingleQuadParticle defaults keep, NO power
+/// fold the potion ring's own tail spends), the ctor chain verbatim:
+/// the super-arg pair the STATIC `SpellParticle.RANDOM` stream
+/// spends (`0.5 - nextDouble()` twice — the x/z velocity args the
+/// walk's own gaussians NEVER ride, the static stream the separate
+/// Lcg answers), the base ctor's dead lifetime + five-draw
+/// spread+normalize fold (the walk's gaussian yd the ONLY arg the
+/// super call carries), the yd `* 0.2` field fold, the zero-args
+/// arm the dcmp pair guards (the ARGS the condition reads, the
+/// FIELDS the `* 0.1` fold scales), the size ×0.75 fold, the
+/// `(int)(8.0 / (nextFloat() * 0.8F + 0.2F))` lifetime. The
+/// isCloseToScopingPlayer alpha fade the render lane does not model
+/// (the client IS the scoping player — the fade-in the vanilla
+/// render speaks rides the alpha the quad sampler never banks; the
+/// golden frames' static scenes the lane never arms this kind in).
+fn become_ominous_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx_arg: f64,
+    vy_arg: f64,
+    vz_arg: f64,
+    rng: &mut crate::drops::Lcg,
+    jitter: &mut crate::drops::Lcg,
+) -> Particle {
+    // the super call's own x/z inputs — the STATIC stream's
+    // `0.5 - nextDouble()` pair the ctor's args evaluation draws
+    let jx = f64::from(0.5f32) - jitter.next_f64();
+    let jz = f64::from(0.5f32) - jitter.next_f64();
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the spell ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (mut vx, mut vy, mut vz) = ctor_spread_and_normalize_after(jx, vy_arg, jz, rng);
+    let r_size = rng.next_f32();
+    // the ctor's own write (the second draw the override keeps)
+    let lifetime = spell_lifetime(rng.next_f32());
+    // the ctor's yd fold
+    vy *= f64::from(0.2f32);
+    // THE ZERO-SPEED ARM (the bytecode's own dcmp pair — the ARGS the
+    // condition reads, the FIELDS the 0.1 fold scales)
+    if vx_arg == 0.0 && vz_arg == 0.0 {
+        vx *= 0.1;
+        vz *= 0.1;
+    }
+    Particle {
+        kind: ParticleKind::Spell { instant: false },
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime,
+        gravity: -0.1,
+        friction: 0.96,
+        quad_size: base_quad_size(r_size) * 0.75,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The trial-spawner's BECOME-OMINOUS BURST (javap
+/// `TrialSpawner.addBecomeOminousParticles` verbatim over the 26.2
+/// jar — len=167, the 3020 case's own tail invokestatic): the
+/// `bipush 20` loop the per-iteration walk spends: the THREE
+/// `nextDouble()` position draws (`pos.getX() + 0.5 +
+/// (nextDouble() - 0.5) * 2.0` per axis — the [−0.5, +1.5] band the
+/// 2.0F scale folds, the CENTER the +0.5 anchor places), the THREE
+/// `nextGaussian() * 0.02` velocity draws the dmul chain carries,
+/// and the TWO `Level.addParticle` calls the SAME position +
+/// velocity args share (the dload quartet both calls re-read): the
+/// TRIAL_OMEN puff FIRST (the `become_ominous_puff` chain — the
+/// static jitter stream the super-arg pair spends), the
+/// SOUL_FIRE_FLAME the second getstatic speaks (the `vault_flame`
+/// FULL-quad chain — the gaussian args the `xd * 0.01D + xdArg` fold
+/// rides). TWENTY-NINE level draws per iteration the stream
+/// consumes (6 walk + 8 puff + 15 flame, the TWO static draws the
+/// jitter stream answers each iteration), FORTY particles the burst
+/// answers (twenty omen + twenty soul, the omen-first order the
+/// case's own call pair keeps).
+pub fn become_ominous_burst(
+    x: i32,
+    y: i32,
+    z: i32,
+    rng: &mut crate::drops::Lcg,
+    jitter: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(40);
+    for _ in 0..20 {
+        let px = f64::from(x) + 0.5 + (rng.next_f64() - 0.5) * 2.0;
+        let py = f64::from(y) + 0.5 + (rng.next_f64() - 0.5) * 2.0;
+        let pz = f64::from(z) + 0.5 + (rng.next_f64() - 0.5) * 2.0;
+        let vx = rng.next_gaussian() * 0.02;
+        let vy = rng.next_gaussian() * 0.02;
+        let vz = rng.next_gaussian() * 0.02;
+        // the TRIAL_OMEN puff (the FIRST getstatic pc 123 banks)
+        out.push(become_ominous_puff(px, py, pz, vx, vy, vz, rng, jitter));
+        // the SOUL_FIRE_FLAME (the SECOND getstatic pc 142 speaks —
+        // the same position + velocity args the dload quartet rides)
+        out.push(vault_flame(px, py, pz, false, vx, vy, vz, rng));
+    }
+    out
+}
+
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s
 /// lambda verbatim) over one full-cube box: the box's extents
 /// `min(1.0, max - min)` (the cube's 1.0), the sections
@@ -7165,6 +7277,164 @@ mod tests {
             let _f = vault_flame(_px, _py, _pz, true, _ax, _ay, _az, &mut d);
         }
         assert_eq!(after_decay, d.next(), "the decay replay's own tail draw");
+    }
+
+    #[test]
+    fn the_ominous_burst_the_walk_the_args_wear() {
+        // THE BURST (javap `TrialSpawner.addBecomeOminousParticles`
+        // verbatim — the `bipush 20` loop the forty-particle answer
+        // wears: twenty TRIAL_OMEN puffs + twenty SOUL_FIRE_FLAME
+        // pairs, the OMEN FIRST the walk's own addParticle order
+        // keeps, the same position + velocity args both calls share)
+        let mut a = rng();
+        let mut j = crate::drops::Lcg::new(0xCAFE);
+        let burst = become_ominous_burst(3, 4, 5, &mut a, &mut j);
+        assert_eq!(burst.len(), 40, "the twenty pairs");
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    matches!(
+                        p.kind,
+                        ParticleKind::Spell { instant: false }
+                    ),
+                    "the omen first at pair {}: {:?}",
+                    i,
+                    p.kind
+                );
+            } else {
+                assert!(
+                    matches!(p.kind, ParticleKind::SoulFlame),
+                    "the soul flame second"
+                );
+            }
+        }
+        // THE BANDS (the walk's own folds): the omen's positions the
+        // `[x − 0.5, x + 1.5]` band the +0.5 anchor + the (nd − 0.5) ×
+        // 2.0 spread answers (NO position jitter the spell chain
+        // keeps — the args the ctor's own fields ride), the soul's
+        // positions the same band the ±0.05 jitter widens, the omen
+        // quad the ×0.75 fold the spell birth band keeps (the
+        // 0.1..0.2 plain band x 0.75), the soul the FULL quad the
+        // plain provider answers, the lifetimes the 8..40 spell band
+        // + the flame band the rising chain keeps
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    (2.5..4.5).contains(&p.x),
+                    "the omen x band at {}: {}",
+                    i,
+                    p.x
+                );
+                assert!(
+                    (3.5..5.5).contains(&p.y),
+                    "the omen y band at {}: {}",
+                    i,
+                    p.y
+                );
+                assert!(
+                    (4.5..6.5).contains(&p.z),
+                    "the omen z band at {}: {}",
+                    i,
+                    p.z
+                );
+                assert!(
+                    (0.075..0.15).contains(&p.quad_size),
+                    "the spell 0.75-fold band: {}",
+                    p.quad_size
+                );
+                assert!(
+                    (8..=40).contains(&p.lifetime),
+                    "the spell lifetime band: {}",
+                    p.lifetime
+                );
+                assert_eq!(
+                    p.gravity, -0.1,
+                    "the spell's own gravity the ctor pins"
+                );
+            } else {
+                assert!(
+                    (2.45..4.55).contains(&p.x),
+                    "the soul x band at {}: {}",
+                    i,
+                    p.x
+                );
+                assert!(
+                    (3.45..5.55).contains(&p.y),
+                    "the soul y band at {}: {}",
+                    i,
+                    p.y
+                );
+                assert!(
+                    (4.45..6.55).contains(&p.z),
+                    "the soul z band at {}: {}",
+                    i,
+                    p.z
+                );
+                assert!(
+                    (0.1..0.2).contains(&p.quad_size),
+                    "the soul FULL quad the plain provider keeps: {}",
+                    p.quad_size
+                );
+                assert_eq!(
+                    p.gravity, 0.0,
+                    "the flame's own no-gravity law the chain keeps"
+                );
+            }
+            assert_eq!(p.col, [1.0, 1.0, 1.0], "the white tint at pair {i}");
+            assert_eq!(p.friction, 0.96, "the 0.96 friction both chains keep");
+        }
+        // THE DETERMINISM (the same seeds the same chains answer)
+        let burst2 = become_ominous_burst(
+            3,
+            4,
+            5,
+            &mut rng(),
+            &mut crate::drops::Lcg::new(0xCAFE),
+        );
+        assert_eq!(burst.len(), burst2.len(), "the seeded chains replay");
+        for (p, p2) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+                "the seeded members replay"
+            );
+        }
+        // THE STREAM (the walk's own draw ORDER the manual replay
+        // pins verbatim: per iteration the THREE nextDouble position
+        // draws + the THREE nextGaussian velocity draws + the puff's
+        // EIGHT level draws (the dead base lifetime + the five-draw
+        // spread + the size + the lifetime — the TWO static draws the
+        // jitter stream answers) + the flame's FIFTEEN, the SAME
+        // order the burst's own chain keeps — any reorder the values'
+        // mismatch speaks; the NEXT draw the replay's tail answers)
+        let mut a2 = rng();
+        let mut j2 = crate::drops::Lcg::new(0xCAFE);
+        let mut manual: Vec<Particle> = Vec::with_capacity(40);
+        for _ in 0..20 {
+            let px = f64::from(3) + 0.5 + (a2.next_f64() - 0.5) * 2.0;
+            let py = f64::from(4) + 0.5 + (a2.next_f64() - 0.5) * 2.0;
+            let pz = f64::from(5) + 0.5 + (a2.next_f64() - 0.5) * 2.0;
+            let ax = a2.next_gaussian() * 0.02;
+            let ay = a2.next_gaussian() * 0.02;
+            let az = a2.next_gaussian() * 0.02;
+            manual.push(become_ominous_puff(px, py, pz, ax, ay, az, &mut a2, &mut j2));
+            manual.push(vault_flame(px, py, pz, false, ax, ay, az, &mut a2));
+        }
+        let after_walk = a2.next();
+        assert_eq!(
+            manual.len(),
+            burst.len(),
+            "the same forty the replay answers"
+        );
+        for (p, m) in burst.iter().zip(manual.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (m.x, m.y, m.z, m.vx, m.vy, m.vz, m.lifetime, m.quad_size),
+                "the draw-order replay pins the chain verbatim"
+            );
+            assert_eq!(p.kind, m.kind, "the kind the order keeps");
+        }
+        assert_eq!(after_walk, a.next(), "the walk's own exact draw count");
     }
 
     #[test]

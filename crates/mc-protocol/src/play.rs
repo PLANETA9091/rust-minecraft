@@ -1937,6 +1937,59 @@ pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT: i32 = 3013;
 /// the case's own arm wears.
 pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT: i32 = 3019;
 
+/// THE TRIAL-SPAWNER OMINOUS-ACTIVATE VOICE'S OWN ID (the 26.2
+/// `LevelEvent` constants class the client jar banks —
+/// `PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE`, the case
+/// `LevelEventHandler.levelEvent` offset 2069 speaks): the ONE
+/// `playLocalSound(pos, TRIAL_SPAWNER_OMINOUS_ACTIVATE, BLOCKS,
+/// data != 0 ? 1.0F : 0.3F, (nextFloat() - nextFloat()) * 0.2F +
+/// 1.0F, true)` walk the case body spends FIRST (pc 2069-2113 — the
+/// `iload_3` + `ifne` pair the VOLUME GATE answers, the non-zero
+/// data word the fconst_1 arms, the zero word the ldc2w 0.3F branch
+/// keeps — the ONLY 3000-band case whose volume the wire arms; the
+/// TWO pitch draws the same [0.8, 1.2] band the family's 0.2F scale
+/// gives, the distance-delay flag TRUE the jar's own `iconst_1` pc
+/// 2112 keeps), THEN the ONE `TrialSpawner.addDetectPlayerParticles(
+/// level, pos, random, 0, TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS)`
+/// walk the case's middle spends (pc 2116-2127 — the `iconst_0`
+/// amount arg the case's OWN word carries, NOT the wire's data the
+/// volume gate spends — the 30-iteration snowfall the min-free bound
+/// answers, the SAME OMINOUS snowflake the 3019 case's provider call
+/// site banks), THEN the ONE `TrialSpawner.addBecomeOminousParticles(
+/// level, pos, random)` walk the case tail spends (pc 2130-2137 —
+/// the amount-free signature the three-arg walk keeps). THE BECOME
+/// WALK the jar's own bytecodes pin (`addBecomeOminousParticles`,
+/// len=167): the `bipush 20` loop the iconst_0/if_icmpge pair
+/// answers, the per-iteration SIX draws — the THREE `nextDouble()`
+/// position spreads (`pos.getX() + 0.5 + (nextDouble() - 0.5) * 2.0`
+/// per axis, the [−0.5, +1.5] band the 2.0F scale folds), the THREE
+/// `nextGaussian() * 0.02` velocity draws the dmul chain carries —
+/// and the TWO `Level.addParticle` calls the SAME position +
+/// velocity args share (the dload quartet both calls re-read): the
+/// TRIAL_OMEN puff the first getstatic pc 123 banks, the
+/// SOUL_FIRE_FLAME the second pc 142 speaks (the omen-first order
+/// the case's own call pair keeps). THE PUFF the plain
+/// `SpellParticle$Provider` chain answers (the bootstrap arg
+/// `SpellParticle$Provider.<init>` the indy cp#253 resolves — NO
+/// setColor the pass-through createParticle spends, the WHITE
+/// [1, 1, 1] tint the SingleQuadParticle defaults keep): the
+/// super-arg pair the STATIC `SpellParticle.RANDOM` stream spends
+/// (`0.5 - nextDouble()` twice), the yd `* 0.2` fold the ctor's own
+/// write keeps, the quad ×0.75 fold, the `(int)(8.0 / (nextFloat() *
+/// 0.8F + 0.2F))` lifetime, the zero-args arm the dcmp pair guards.
+/// THE CALLERS the jar's own walks pin: `TrialSpawner.applyOminous`'s
+/// `sipush 3020, aload_2, iconst_1` levelEvent call the OMINOUS
+/// flip's own answer speaks (pc 25-31 — the data word 1 the VOLUME
+/// 1.0 arms, the spawner's own pos the aload_2 carries);
+/// `TrialSpawnerStateData.lambda$tryDetectPlayers$0`'s `sipush 3020,
+/// getEyePosition.containing, iconst_0` the bad-omen transform's own
+/// event speaks (pc 24-37 — the data word 0 the VOLUME 0.3 arms, the
+/// PLAYER'S EYE pos the anchor carries — both events the sequence
+/// fires, the second the applyOminous call beside it triggers). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT: i32 = 3020;
+
 /// THE TRIAL-SPAWNER EJECT-ITEM VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks —
 /// `PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM`, the case

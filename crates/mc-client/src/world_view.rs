@@ -520,6 +520,10 @@ pub struct SnapshotView {
     /// 3015/3016 words the arms ride — [`WireVaultEvent`] the render
     /// lane drains per refresh).
     pub vault_events: Vec<WireVaultEvent>,
+    /// The trial-spawner OMINOUS-ACTIVATE's own wire lane (the 3020
+    /// words the arms ride — [`WireTrialOminousEvent`] the render
+    /// lane drains per refresh).
+    pub trial_ominous_events: Vec<WireTrialOminousEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -930,6 +934,24 @@ pub struct WireVaultEvent {
     /// The flame-gate word (the `data != 0` ternary the case bodies
     /// read — the ominous vault the SOUL word arms).
     pub soul: bool,
+}
+
+/// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
+/// packet's own landing (the 2006 words the server's own fireball
+/// broadcast, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the
+/// render lane speaks): the event's anchor block + the sound-gate
+/// word, verbatim (the 200-puff pool's own inputs — the burst + the
+/// gated explode voice the render lane folds from them).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireTrialOminousEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The volume gate (the `iload_3` + `ifne` pair the case body
+    /// spends — `data != 0 ? 1.0F : 0.3F`, the spawner-position event
+    /// the iconst_1 word arms at FULL volume, the bad-omen transform's
+    /// player-position event the iconst_0 word keeps at the whisper).
+    pub loud: bool,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -3071,6 +3093,9 @@ pub fn materialize_snapshot_view(
         // and no vault words (the join snapshot carries no 3015/3016
         // traffic — the empty mailbox the render lane skips)
         vault_events: Vec::new(),
+        // and no ominous-activate words (the join snapshot carries no
+        // 3020 traffic — the empty mailbox the render lane skips)
+        trial_ominous_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3697,6 +3722,22 @@ impl LiveView {
                 soul: arm.soul,
             })
             .collect();
+        // the ominous-activate's own projection (the mailbox verbatim
+        // — the anchor + the volume-gate bit the arms carry, the
+        // render lane's own law reads): each 3020 word ships once
+        // with this view, the worker's drain empties the mailbox
+        // after
+        let trial_ominous_events = self
+            .model
+            .trial_ominous_events
+            .iter()
+            .map(|arm| WireTrialOminousEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                loud: arm.loud,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -4125,6 +4166,10 @@ impl LiveView {
                 // — the 3015/3016 words are the connection's own
                 // traffic, not the pose's
                 vault_events,
+                // the ominous-activate's arms ride the pose-less arm
+                // too — the 3020 words are the connection's own
+                // traffic, not the pose's
+                trial_ominous_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -4323,6 +4368,10 @@ impl LiveView {
             // 3015/3016 words follow the mailbox exactly like the
             // eject's own arms do
             vault_events,
+            // the ominous-activate's arms ride every refresh too —
+            // the 3020 words follow the mailbox exactly like the
+            // vault's own arms do
+            trial_ominous_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

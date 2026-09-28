@@ -179,6 +179,7 @@ fn run_join(
                 Vec<crate::world_view::WireDetectPlayerEvent>,
                 Vec<crate::world_view::WireTrialEjectEvent>,
                 Vec<crate::world_view::WireVaultEvent>,
+                Vec<crate::world_view::WireTrialOminousEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -297,6 +298,7 @@ fn run_join(
             view.model.drain_trial_detect_events();
             view.model.drain_trial_eject_events();
             view.model.drain_vault_events();
+            view.model.drain_trial_ominous_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -939,6 +941,7 @@ fn run_join(
                             view.model.drain_trial_detect_events();
                             view.model.drain_trial_eject_events();
                             view.model.drain_vault_events();
+                            view.model.drain_trial_ominous_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1192,6 +1195,13 @@ fn run_join(
                                     // walks wear — the 3015/3016 words
                                     // ride exactly one shipped refresh)
                                     upd.vault_events,
+                                    // the ominous-activate lane (the
+                                    // volume-gated voice + the snowfall +
+                                    // the become-ominous burst the case
+                                    // body's own order wears — the 3020
+                                    // words ride exactly one shipped
+                                    // refresh)
+                                    upd.trial_ominous_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1500,6 +1510,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireDetectPlayerEvent>,
                 Vec<crate::world_view::WireTrialEjectEvent>,
                 Vec<crate::world_view::WireVaultEvent>,
+                Vec<crate::world_view::WireTrialOminousEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -2075,6 +2086,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     trial_detect_events,
                     trial_eject_events,
                     vault_events,
+                    trial_ominous_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2287,6 +2299,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the case bodies' own draw order keeps — the
                     // vanilla client answers the same packet with)
                     app.live_vault_events_updated(vault_events);
+                    // the ominous-activate lane beside the vault's: the
+                    // 3020 words the server's own spawner broadcasts land
+                    // at their own anchors (the volume-gated voice + the
+                    // snowfall + the become-ominous burst the case
+                    // body's own order keeps — the vanilla client
+                    // answers the same packet with)
+                    app.live_trial_ominous_events_updated(trial_ominous_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

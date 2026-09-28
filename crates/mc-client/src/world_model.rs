@@ -491,6 +491,12 @@ pub struct WorldModel {
     /// 3015/3016 words the `VaultState$1/$2.onEnter` callers
     /// broadcast — [`VaultArm`] the render lane drains per refresh).
     pub vault_events: Vec<VaultArm>,
+    /// The trial-spawner OMINOUS-ACTIVATE's own mailbox (the 3020
+    /// word the `TrialSpawner.applyOminous` / the bad-omen transform
+    /// callers broadcast — [`OminousArm`] the render lane drains per
+    /// refresh: the volume-gated voice + the snowfall + the
+    /// become-ominous burst the case body's own order keeps).
+    pub trial_ominous_events: Vec<OminousArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -1213,6 +1219,27 @@ pub struct VaultArm {
     /// read — the ominous vault the SOUL word arms, the normal the
     /// SMALL word keeps).
     pub soul: bool,
+}
+
+/// One pending TRIAL-SPAWNER OMINOUS-ACTIVATE arm — the Level Event
+/// packet's own landing the model keeps verbatim (see
+/// [`WorldModel::trial_ominous_events`]). The anchor verbatim (the
+/// spawner's own block the `applyOminous` flip broadcasts, the
+/// PLAYER'S EYE pos the bad-omen transform's own event carries),
+/// the VOLUME GATE the data word arms (`data != 0 ? 1.0F : 0.3F` —
+/// the ONLY 3000-band case whose volume the wire reads: the
+/// spawner-position event the `iconst_1` data word fires at FULL
+/// volume, the player-position event the `iconst_0` word keeps at
+/// the whisper).
+#[derive(Debug, Clone, PartialEq)]
+pub struct OminousArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The volume gate (the `iload_3` + `ifne` pair the case body
+    /// spends — the non-zero data word the fconst_1 arms, the zero
+    /// word the 0.3F branch keeps).
+    pub loud: bool,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -2066,6 +2093,7 @@ impl WorldModel {
             trial_detect_events: Vec::new(),
             trial_eject_events: Vec::new(),
             vault_events: Vec::new(),
+            trial_ominous_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2351,6 +2379,15 @@ impl WorldModel {
     /// empties once, the same once-only law the eject drain keeps).
     pub fn drain_vault_events(&mut self) -> Vec<VaultArm> {
         std::mem::take(&mut self.vault_events)
+    }
+
+    /// The trial-spawner OMINOUS-ACTIVATE mailbox's own drain (the
+    /// same walk the siblings' speak — each arm ships exactly once):
+    /// the 3020 words the Level Event packet armed, the render
+    /// lane's own law folds (the volume-gated voice + the snowfall
+    /// + the become-ominous burst the case body's own order keeps).
+    pub fn drain_trial_ominous_events(&mut self) -> Vec<OminousArm> {
+        std::mem::take(&mut self.trial_ominous_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2792,6 +2829,10 @@ impl WorldModel {
                 // the level (the same walk — the old level's 3015/3016
                 // words never burst again)
                 self.vault_events.clear();
+                // the ominous-activate's mailbox dies with the level
+                // (the same walk — the old level's 3020 words never
+                // burst again)
+                self.trial_ominous_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3988,6 +4029,39 @@ impl WorldModel {
                         z: ev.z,
                         word: ev.effect,
                         soul: ev.data != 0,
+                    });
+                    true
+                } else if ev.effect
+                    == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT
+                    && !ev.global
+                {
+                    // THE TRIAL-SPAWNER OMINOUS-ACTIVATE'S OWN ARM
+                    // (javap the case offset 2069 — the positioned
+                    // route the GLOBAL switch never banks): the ONE
+                    // `playLocalSound(pos,
+                    // TRIAL_SPAWNER_OMINOUS_ACTIVATE, BLOCKS, data !=
+                    // 0 ? 1.0F : 0.3F, (nf - nf) * 0.2F + 1.0F, true)`
+                    // walk the case body spends FIRST (the iload_3 +
+                    // ifne pair the VOLUME GATE answers — the only
+                    // 3000-band case whose volume the wire arms), THEN
+                    // the ONE `addDetectPlayerParticles(level, pos,
+                    // random, 0, TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS)`
+                    // walk the case's middle spends (the `iconst_0`
+                    // amount arg the case's OWN word carries — the
+                    // wire's data the volume gate spends, NOT the
+                    // snowfall the 30-iteration bound arms), THEN the
+                    // ONE `addBecomeOminousParticles(level, pos,
+                    // random)` walk the case tail spends (the
+                    // omen-first puff + soul pair the same args
+                    // share). The VOLUME BIT the data word arms — the
+                    // same gate the callers' own words speak (the
+                    // `applyOminous` flip the iconst_1 arms, the
+                    // bad-omen transform the iconst_0 keeps).
+                    self.trial_ominous_events.push(OminousArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        loud: ev.data != 0,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -13006,6 +13080,121 @@ mod tests {
         })));
         assert!(
             m.vault_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_ominous_word_the_volume_arms() {
+        // THE OMINOUS-ACTIVATE WORD'S OWN ARM (javap the case 3020 —
+        // offset 2069 — the positioned route the GLOBAL switch never
+        // banks): the anchor the mailbox keeps, the DATA word the
+        // VOLUME GATE the case body READS (the `iload_3` + `ifne`
+        // pair the `data != 0 ? 1.0F : 0.3F` ternary answers — the
+        // ONLY 3000-band case whose volume the wire arms: the
+        // `applyOminous` flip the iconst_1 word fires at FULL volume,
+        // the bad-omen transform's player-position event the
+        // iconst_0 word keeps at the whisper), the drain ships the
+        // mailbox exactly once, and the Respawn recreates the level
+        // the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the flip's own word (the `applyOminous` call the
+        // `levelEvent(3020, pos, 1)` walk speaks — the data-1 word
+        // the LOUD gate arms)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT,
+            x: -41,
+            y: 70,
+            z: 123,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.trial_ominous_events.len(), 1, "the arm rides");
+        assert_eq!(m.trial_ominous_events[0].x, -41);
+        assert_eq!(m.trial_ominous_events[0].y, 70);
+        assert_eq!(m.trial_ominous_events[0].z, 123);
+        assert!(
+            m.trial_ominous_events[0].loud,
+            "the data-1 word the volume 1.0 arms"
+        );
+        // the transform's own word (the
+        // `lambda$tryDetectPlayers$0` call the
+        // `levelEvent(3020, eye_pos, 0)` walk speaks — the data-0
+        // word the 0.3F whisper arms, the anchor the eye pos keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT,
+            x: 4,
+            y: 65,
+            z: -20,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.trial_ominous_events.len(), 2, "the twin rides");
+        assert_eq!(m.trial_ominous_events[1].x, 4);
+        assert!(
+            !m.trial_ominous_events[1].loud,
+            "the data-0 word the whisper keeps"
+        );
+        // ANY non-zero data word the loud gate arms (the `ifne` the
+        // boolean test answers — the word itself the volume never
+        // scales, the 3 the flip's own data never wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 3,
+            global: false,
+        })));
+        assert_eq!(m.trial_ominous_events.len(), 3, "the third rides");
+        assert!(
+            m.trial_ominous_events[2].loud,
+            "the data-3 word the same loud gate arms"
+        );
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 1,
+            global: true,
+        })));
+        assert_eq!(
+            m.trial_ominous_events.len(),
+            3,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_trial_ominous_events();
+        assert_eq!(drained.len(), 3, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, -41, "the flip arm's anchor rides");
+        assert!(
+            !drained[1].loud,
+            "the transform's whisper word rides"
+        );
+        assert!(
+            m.trial_ominous_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.trial_ominous_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.trial_ominous_events.is_empty(),
             "the mailbox dies with the level"
         );
     }
