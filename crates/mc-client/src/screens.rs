@@ -23035,6 +23035,68 @@ impl App {
         );
     }
 
+    /// THE BRUSH-COMPLETE WIRE LANE (javap `LevelEventHandler` case
+    /// 3008 — offset 1629 — over the 26.2 jar): the server's own
+    /// brush completion the client NOW answers
+    /// (`BrushableBlockEntity.brushingCompleted`'s
+    /// `sipush 3008, getBlockPos, Block.getId(state)` levelEvent call
+    /// the bytecode pins — the drop content + the `turnsInto`
+    /// setBlock the server's own walk spends beside it), the Level
+    /// Event mailbox's landing: each word the arms the worker drained
+    /// ride exactly one refresh — the state id the model's own
+    /// `Block.stateById` decode resolves, the voice the `instanceof
+    /// BrushableBlock` verdict arms, the destroy burst the BOTH
+    /// branches reach (the 2001 sibling's own walk the case's tail
+    /// delegates to).
+    pub fn live_brush_complete_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireBrushCompleteEvent>,
+    ) {
+        let yaw = self.listener_yaw();
+        for ev in events {
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            // THE COMPLETED VOICE (the `instanceof BrushableBlock`
+            // verdict the model's resolved key arms — the ONE
+            // `playLocalSound(pos, getBrushCompletedSound(), PLAYERS,
+            // 1.0F, 1.0F, false)` walk the case body spends — the
+            // `fconst_1` pair the volume/pitch both carry, NO randoms
+            // the fixed fold speaks, the distance-delay flag false the
+            // immediate voice keeps; the non-brushable `ifeq` the
+            // silent arm keeps)
+            if let Some(key) = ev.brush_sound {
+                let sx = f64::from(ev.x) + 0.5;
+                let sy = f64::from(ev.y) + 0.5;
+                let sz = f64::from(ev.z) + 0.5;
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    key,
+                    1.0,
+                    1.0,
+                    ear_distance(ear, sx, sy, sz),
+                    ear_pan(ear, yaw, sx, sy, sz),
+                );
+            }
+            // THE DESTROY BURST (the `addDestroyBlockEffect(pos,
+            // blockstate)` walk the BOTH branches reach — the 2001
+            // sibling's own tile law the palette kind banks, the AIR
+            // state the method's own `isAir` gate the no-op keeps,
+            // the draw stream the same terrain ctor chain spends)
+            if let Some(kind) = ev.burst_kind {
+                let tile = particle_tile(kind);
+                if tile != mc_registry::generated::atlas::TILE_NONE {
+                    let burst = crate::particles::terrain_burst(
+                        tile,
+                        ev.x,
+                        ev.y,
+                        ev.z,
+                        &mut self.mob_rng,
+                    );
+                    self.particles.extend(burst);
+                }
+            }
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -49579,6 +49641,138 @@ cow_sound_variant: None,
                 .count(),
             voices,
             "the empty mailbox the voice never arms"
+        );
+    }
+
+    #[test]
+    fn the_brush_serve_the_voice_the_burst_wear() {
+        // THE BRUSH-COMPLETE SERVE'S OWN WIRE LANE (javap case 3008 →
+        // offset 1629 over the 26.2 jar): the state id the model's own
+        // resolution resolves, the completed voice the brushable
+        // verdict arms (the fixed 1.0/1.0 fold the `fconst_1` pair
+        // keeps — NO randoms the fixed voice spends), the destroy
+        // burst the BOTH branches reach (the 256 draws the 64-particle
+        // terrain walk spends — the four draws the ctor chain costs
+        // each), the non-brushable arm the voice never arms (the burst
+        // the kind banks), the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BRUSHABLE ARM (suspicious_sand's own key): the ONE voice
+        // the fixed fold speaks — the unbanked kind the burst never
+        // finds, NO particles the absence banks, NO draws the fixed
+        // voice and the absent burst never cost
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x6308));
+        let saved_mob = std::mem::replace(&mut app.mob_rng, crate::drops::Lcg::new(0x6309));
+        let before = app.particles.len();
+        app.live_brush_complete_events_updated(vec![
+            crate::world_view::WireBrushCompleteEvent {
+                x: 3,
+                y: 33,
+                z: -7,
+                brush_sound: Some("item.brush.brushing.sand"),
+                burst_kind: None,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        assert_eq!(
+            spent,
+            crate::drops::Lcg::new(0x6308),
+            "the fixed voice the ambient stream never spends"
+        );
+        let spent_mob = std::mem::replace(&mut app.mob_rng, saved_mob);
+        assert_eq!(
+            spent_mob,
+            crate::drops::Lcg::new(0x6309),
+            "the absent burst the terrain stream never spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            before,
+            "the unbanked kind the burst never banks"
+        );
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("item.brush.brushing.sand @"))
+                .expect("the completed voice the verdict arms");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.0).abs() < 1e-6,
+                "the fixed pitch the fconst_1 keeps: {pitch}"
+            );
+            let volume: f32 = voice
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 1.0).abs() < 1e-6,
+                "the fixed volume the fconst_1 keeps: {volume}"
+            );
+        }
+        // THE NON-BRUSHABLE ARM (the banked kind the burst fires
+        // with): the voice the verdict never arms — the 64-particle
+        // grid the terrain walk banks, the 256 draws the ctor chain
+        // spends (four per particle)
+        let saved_mob2 = std::mem::replace(&mut app.mob_rng, crate::drops::Lcg::new(0x6310));
+        let before2 = app.particles.len();
+        let voices_before = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("item.brush.brushing."))
+            .count();
+        app.live_brush_complete_events_updated(vec![
+            crate::world_view::WireBrushCompleteEvent {
+                x: -4,
+                y: 20,
+                z: 12,
+                brush_sound: None,
+                burst_kind: Some(7), // the sand tile the palette banks
+            },
+        ]);
+        let spent_mob2 = std::mem::replace(&mut app.mob_rng, saved_mob2);
+        let mut replay = crate::drops::Lcg::new(0x6310);
+        for _ in 0..64 {
+            let _ = replay.next_f32(); // the life draw
+            let _ = replay.next_f32(); // the size draw
+            let _ = replay.next_f32(); // the uo draw
+            let _ = replay.next_f32(); // the vo draw
+        }
+        assert_eq!(
+            spent_mob2, replay,
+            "the 256 draws the terrain walk exactly spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            before2 + 64,
+            "the 4x4x4 grid the full-cube burst banks"
+        );
+        if sounds_loaded() {
+            assert_eq!(
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.brush.brushing."))
+                    .count(),
+                voices_before,
+                "the non-brushable verdict the voice never arms"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_brush_complete_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
         );
     }
 

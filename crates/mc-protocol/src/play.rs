@@ -1643,6 +1643,41 @@ pub const PARTICLES_SCULK_CHARGE_EFFECT: i32 = 3006;
 /// never banks — the positioned lane the case's own arm wears.
 pub const PARTICLES_SCULK_SHRIEK_EFFECT: i32 = 3007;
 
+/// THE BRUSH-COMPLETE PARTICLE-AND-SOUND EFFECT'S OWN ID (the 26.2
+/// `LevelEvent` constants class the client jar banks —
+/// `PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE`, the case
+/// `LevelEventHandler.levelEvent` offset 1629 speaks): the DATA word
+/// the case READS — the `iload_3` the `Block.stateById(data)` state
+/// decode opens with (the brushable block's own state id the caller's
+/// `Block.getId(state)` walk carries). The body the TWO walks spend:
+/// the `instanceof BrushableBlock` verdict the ONE
+/// `playLocalSound(pos, brushable.getBrushCompletedSound(), PLAYERS,
+/// 1.0F, 1.0F, false)` voice arms (the `fconst_1` pair the volume/
+/// pitch both carry — no randoms the fixed fold speaks, the PLAYERS
+/// source the getstatic #336 row keeps, the distance-delay flag false
+/// the immediate voice keeps; the completed sound the 26.2
+/// unification banks — the Blocks lambdas' `new BrushableBlock`
+/// getstatic pair the SAME ref reads twice, suspicious_sand →
+/// `BRUSH_SAND`, suspicious_gravel → `BRUSH_GRAVEL`, the
+/// `item.brush.brushing.sand`/`item.brush.brushing.gravel` keys the
+/// sounds.json rows bank, the brushing1..4 files the table holds, NO
+/// new assets the lane demands) — then the
+/// `level.addDestroyBlockEffect(pos, blockstate)` burst the BOTH
+/// branches reach (the non-brushable `ifeq` lands beside the
+/// `aload_0` the burst's own head keeps — the 2001 sibling's own
+/// walk; the AIR state the `addDestroyBlockEffect` method's own
+/// `isAir` gate the no-op keeps, the `shouldSpawnTerrainParticles`
+/// verdict the default-true law speaks — the BARRIER and
+/// STRUCTURE_VOID exceptions the `noTerrainParticles` scan pins, the
+/// two the terrain banks never render). The caller the brush's own
+/// completion pins — `BrushableBlockEntity.brushingCompleted`'s
+/// `sipush 3008, getBlockPos, Block.getId(state)` levelEvent call the
+/// bytecode speaks (the drop content + the `turnsInto` setBlock the
+/// server's own walk spends beside it). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT: i32 = 3008;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -11245,6 +11280,11 @@ mod tests {
             PARTICLES_SCULK_SHRIEK_EFFECT,
             3007,
             "the sculk-shriek effect the shrieker's own reply walk speaks"
+        );
+        assert_eq!(
+            PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
+            3008,
+            "the brush-complete effect the brushable block entity's own completion speaks"
         );
         assert_eq!(
             ENDER_DRAGON_GROWL_EFFECT,

@@ -422,6 +422,14 @@ pub struct WorldModel {
     pub electric_spark_events: Vec<ElectricSparkArm>,
     pub sculk_charge_events: Vec<SculkChargeArm>,
     pub sculk_shriek_events: Vec<SculkShriekArm>,
+    /// THE BRUSH-COMPLETE EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary word —
+    /// [`mc_protocol::play::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 1629
+    /// speaks: the state id the `Block.stateById` decode opens with,
+    /// the brushable voice the `instanceof` verdict arms, the destroy
+    /// burst the BOTH branches reach — the 2001 sibling's own walk).
+    pub brush_complete_events: Vec<BrushCompleteArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -998,6 +1006,35 @@ pub struct SculkShriekArm {
     /// shrieker's own state carries — the muted arm the drowned
     /// block keeps).
     pub waterlogged: bool,
+}
+
+/// One pending BRUSH-COMPLETE arm — the Level Event packet's next
+/// vocabulary word the model keeps (see
+/// [`WorldModel::brush_complete_events`]). The DATA word the model
+/// RESOLVES (the `Block.stateById(data)` read the case's own decode
+/// opens with — the 2001 sibling's own resolution walk the registry's
+/// ranges table speaks): `brush_sound` the completed voice's own word
+/// (the 26.2 unification the Blocks lambdas' getstatic pair banks —
+/// suspicious_sand → `item.brush.brushing.sand`, suspicious_gravel →
+/// `item.brush.brushing.gravel`; `None` the non-brushable blocks the
+/// `instanceof` verdict keeps — the voice the case never plays),
+/// `burst_kind` the destroy burst's own tile source (the palette kind
+/// the state's block names — `None` the AIR state the
+/// `addDestroyBlockEffect` method's own `isAir` gate keeps and the
+/// kinds the palette never banks). The anchor verbatim.
+#[derive(Debug, Clone, PartialEq)]
+pub struct BrushCompleteArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The completed voice's own key (the brushable pair the 26.2
+    /// jar banks — `None` the non-brushable verdict keeps, the sound
+    /// the case never plays).
+    pub brush_sound: Option<&'static str>,
+    /// The destroy burst's own palette kind (the particle tile the
+    /// atlas carries; `None` the AIR gate and the unbanked kinds the
+    /// burst never finds).
+    pub burst_kind: Option<u16>,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1845,6 +1882,7 @@ impl WorldModel {
             electric_spark_events: Vec::new(),
             sculk_charge_events: Vec::new(),
             sculk_shriek_events: Vec::new(),
+            brush_complete_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2081,6 +2119,13 @@ impl WorldModel {
     /// other level-event lanes speak — see the electric-spark drain).
     pub fn drain_sculk_shriek_events(&mut self) -> Vec<SculkShriekArm> {
         std::mem::take(&mut self.sculk_shriek_events)
+    }
+
+    /// THE BRUSH-COMPLETE MAILBOX'S OWN DRAIN (the exactly-once ship
+    /// the other level-event lanes speak — see the sculk-shriek
+    /// drain).
+    pub fn drain_brush_complete_events(&mut self) -> Vec<BrushCompleteArm> {
+        std::mem::take(&mut self.brush_complete_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2498,6 +2543,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 3007 words
                 // never shriek again)
                 self.sculk_shriek_events.clear();
+                // the brush-complete effect's mailbox dies with the
+                // level (the same walk — the old level's 3008 words
+                // never voice again)
+                self.brush_complete_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3490,6 +3539,51 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         waterlogged,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT
+                    && !ev.global
+                {
+                    // THE BRUSH-COMPLETE EFFECT'S OWN ARM (javap the
+                    // case offset 1629 — the positioned route the
+                    // GLOBAL switch never banks): the DATA word the
+                    // arm RESOLVES — the `Block.stateById(data)` read
+                    // the case's own decode opens with (the 2001
+                    // sibling's own walk the registry's ranges table
+                    // speaks, the air fallback the name's absence
+                    // keeps). The voice the `instanceof BrushableBlock`
+                    // verdict arms (the 26.2 jar banks exactly TWO
+                    // instances — the suspicious pair the Blocks
+                    // lambdas' `new BrushableBlock` scan pins, the
+                    // completed sound the ctor's own getstatic pair
+                    // reads TWICE — the 26.2 unification the
+                    // `item.brush.brushing.sand` /
+                    // `item.brush.brushing.gravel` keys speak); the
+                    // non-brushable `ifeq` the silent arm keeps. The
+                    // burst the BOTH branches reach — the
+                    // `addDestroyBlockEffect` walk the 2001 sibling's
+                    // own tile law wears (the AIR state the method's
+                    // own `isAir` gate the no-op keeps).
+                    let resolved =
+                        mc_registry::generated::block_ids::block_name_of(ev.data.max(0) as u32)
+                            .map(|full| full.strip_prefix("minecraft:").unwrap_or(full));
+                    let kind = resolved.and_then(|name| {
+                        crate::world::NAME_OF
+                            .iter()
+                            .position(|n| *n == name)
+                            .map(|i| i as u16)
+                    });
+                    let brush_sound = match resolved {
+                        Some("suspicious_sand") => Some("item.brush.brushing.sand"),
+                        Some("suspicious_gravel") => Some("item.brush.brushing.gravel"),
+                        _ => None,
+                    };
+                    self.brush_complete_events.push(BrushCompleteArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        brush_sound,
+                        burst_kind: kind,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -11886,6 +11980,152 @@ mod tests {
         })));
         assert!(
             m.sculk_shriek_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_brush_word_the_state_arms() {
+        // THE BRUSH-COMPLETE EFFECT'S OWN ARM (javap the case offset
+        // 1629 — the positioned route the GLOBAL switch never banks):
+        // the data word the arm RESOLVES (the `Block.stateById(data)`
+        // read the case's own decode opens with — the registry's
+        // ranges table the walk speaks), the voice the brushable
+        // verdict arms (the 26.2 unification the suspicious pair's
+        // own keys carry), the destroy burst's kind the palette walk
+        // banks (the unbanked kinds the honest absence keeps), the
+        // drain ships the arms exactly once, and the Respawn
+        // recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the brush's own completion word (the
+        // BrushableBlockEntity.brushingCompleted call the
+        // `levelEvent(3008, pos, Block.getId(state))` walk speaks —
+        // the suspicious_sand dusted=0 state the 119 id carries): the
+        // arm rides, the voice key the 26.2 unification banks
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
+            x: 41,
+            y: 12,
+            z: -3,
+            data: 119,
+            global: false,
+        })));
+        assert_eq!(m.brush_complete_events.len(), 1, "the arm rides");
+        assert_eq!(m.brush_complete_events[0].x, 41);
+        assert_eq!(m.brush_complete_events[0].y, 12);
+        assert_eq!(m.brush_complete_events[0].z, -3);
+        assert_eq!(
+            m.brush_complete_events[0].brush_sound,
+            Some("item.brush.brushing.sand"),
+            "the suspicious_sand verdict the completed voice arms"
+        );
+        assert!(
+            m.brush_complete_events[0].burst_kind.is_none(),
+            "the unbanked kind the honest absence keeps"
+        );
+        // the gravel twin (the 125 id the dusted=0 state carries): the
+        // gravel word the same unification banks
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 125,
+            global: false,
+        })));
+        assert_eq!(m.brush_complete_events.len(), 2, "the twin rides");
+        assert_eq!(
+            m.brush_complete_events[1].brush_sound,
+            Some("item.brush.brushing.gravel"),
+            "the suspicious_gravel verdict the same verdict walk arms"
+        );
+        // the non-brushable block (the 118 id the sand state carries):
+        // the `instanceof` verdict the silent arm keeps — the burst's
+        // kind the palette walk banks (the tile the burst fires with)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
+            x: -5,
+            y: 60,
+            z: 100,
+            data: 118,
+            global: false,
+        })));
+        assert_eq!(m.brush_complete_events.len(), 3, "the plain word rides");
+        assert_eq!(
+            m.brush_complete_events[2].brush_sound,
+            None,
+            "the non-brushable verdict the voice never arms"
+        );
+        assert_eq!(
+            m.brush_complete_events[2].burst_kind,
+            Some(7),
+            "the sand tile the palette kind banks (the NAME_OF row)"
+        );
+        // the AIR verdict (the unknown id the stateById fallback
+        // keeps): the addDestroyBlockEffect method's own isAir gate
+        // the honest absence wears
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 4_000_000,
+            global: false,
+        })));
+        assert_eq!(m.brush_complete_events.len(), 4, "the air word rides");
+        assert_eq!(
+            m.brush_complete_events[3].brush_sound,
+            None,
+            "the air verdict the voice never arms"
+        );
+        assert!(
+            m.brush_complete_events[3].burst_kind.is_none(),
+            "the air verdict the burst never finds"
+        );
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 119,
+            global: true,
+        })));
+        assert_eq!(
+            m.brush_complete_events.len(),
+            4,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_brush_complete_events();
+        assert_eq!(drained.len(), 4, "the drain ships the mailbox");
+        assert_eq!(
+            drained[0].brush_sound,
+            Some("item.brush.brushing.sand"),
+            "the anchor's voice rides"
+        );
+        assert!(
+            m.brush_complete_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 125,
+            global: false,
+        })));
+        assert_eq!(m.brush_complete_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.brush_complete_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

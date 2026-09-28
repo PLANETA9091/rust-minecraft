@@ -496,6 +496,11 @@ pub struct SnapshotView {
     /// server's own shrieker broadcasts — the anchor + the waterlogged
     /// verdict the voice gate the render lane's law folds).
     pub sculk_shriek_events: Vec<WireSculkShriekEvent>,
+    /// The brush-complete effect's own wire arms (the 3008 words the
+    /// server's own brush completion broadcasts — the anchor + the
+    /// resolved voice key + the burst kind the render lane's own law
+    /// folds).
+    pub brush_complete_events: Vec<WireBrushCompleteEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -777,6 +782,28 @@ pub struct WireSculkShriekEvent {
     /// The voice gate's verdict (the waterlogged property the
     /// shrieker's own state carries).
     pub waterlogged: bool,
+}
+
+/// One wire BRUSH-COMPLETE arm — the Level Event packet's own landing
+/// (the 3008 words the server's own brush completion broadcasts,
+/// [`mc_protocol::play::PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT`]
+/// the render lane speaks): the event's anchor block VERBATIM, plus
+/// the model's own resolution the state-id decode banks — the voice
+/// key the `instanceof BrushableBlock` verdict arms (the 26.2
+/// unification the suspicious pair carries), the burst kind the
+/// 2001 sibling's own palette walk speaks (the AIR state and the
+/// unbanked kinds the None keeps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireBrushCompleteEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The completed voice's own key (the brushable pair the model's
+    /// verdict arms; `None` the non-brushable silence keeps).
+    pub brush_sound: Option<&'static str>,
+    /// The destroy burst's own palette kind (`None` the AIR gate and
+    /// the unbanked kinds the honest absence keeps).
+    pub burst_kind: Option<u16>,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -2898,6 +2925,9 @@ pub fn materialize_snapshot_view(
         // and no shriek words (the join snapshot carries no 3007
         // traffic — the empty mailbox the render lane skips)
         sculk_shriek_events: Vec::new(),
+        // and no brush words (the join snapshot carries no 3008
+        // traffic — the empty mailbox the render lane skips)
+        brush_complete_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3427,6 +3457,23 @@ impl LiveView {
                 waterlogged: arm.waterlogged,
             })
             .collect();
+        // the brush-complete effect's own projection (the mailbox
+        // verbatim — the anchor + the resolved voice key + the burst
+        // kind the arms carry, the render lane's own law folds): each
+        // 3008 word ships once with this view, the worker's drain
+        // empties the mailbox after
+        let brush_complete_events = self
+            .model
+            .brush_complete_events
+            .iter()
+            .map(|arm| WireBrushCompleteEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                brush_sound: arm.brush_sound,
+                burst_kind: arm.burst_kind,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3831,6 +3878,10 @@ impl LiveView {
                 // arm too — the 3007 words are the connection's own
                 // traffic, not the pose's
                 sculk_shriek_events,
+                // the brush-complete effect's arms ride the pose-less
+                // arm too — the 3008 words are the connection's own
+                // traffic, not the pose's
+                brush_complete_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -4005,6 +4056,10 @@ impl LiveView {
             // — the 3007 words follow the mailbox exactly like the
             // charge's own arms do
             sculk_shriek_events,
+            // the brush-complete effect's arms ride every refresh too
+            // — the 3008 words follow the mailbox exactly like the
+            // shriek's own arms do
+            brush_complete_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do
