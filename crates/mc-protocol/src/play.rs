@@ -1404,6 +1404,41 @@ pub const DRAGON_BLOCK_BREAK_EFFECT: i32 = 2008;
 /// case answers). The GLOBAL route the `globalLevelEvent` switch
 /// never banks (the 1023/1028/1038 trio the band alone carries —
 /// the positioned lane the case's own arm wears).
+/// THE COMPOSTER-FILL VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `COMPOSTER_FILL`, the case
+/// `LevelEventHandler.levelEvent` offset 3483 speaks): the ONE arm
+/// the `ComposterBlock.handleFill(level, pos, data != 0)` walk the
+/// case body spends — the FIRST 1500-band word whose DATA the case
+/// READS (the `iload_3` + `ifle` the success fold keeps — the bit
+/// the wire carries, the `data != 0` answer the boolean rides). The
+/// server's own composter speaks it — `ComposterBlock.useItemOn`'s
+/// tail the `sipush 1500, pos, blockstate1 != blockstate ? 1 : 0`
+/// levelEvent call the bytecode pins (the state-changed ternary the
+/// success bit carries — the insert's accept the 1 speaks, the
+/// chance-fail the 0). The handleFill walk the jar's own dump pins:
+/// the ONE `playLocalSound(pos, success ? COMPOSTER_FILL_SUCCESS :
+/// COMPOSTER_FILL, BLOCKS, 1.0F, 1.0F, false)` walk FIRST (the
+/// `fconst_1` pair the volume/pitch both carry, no randoms the fixed
+/// fold speaks), then the `bipush 10` loop the ten COMPOSTER puffs
+/// fire — the THREE `nextGaussian() * 0.02` velocity draws the
+/// addParticle args carry first, the position floats next (the `x +
+/// 0.1875 + 0.625 * nextFloat()` the cp `#469` Double 0.1875 × the
+/// `#471` Double 0.625 folds keep, the `y + d0 + nextFloat() * (1.0
+/// - d0)` the shape fold answers — `d0 = shape.max(Axis.Y, 0.5,
+/// 0.5) + 0.03125` the cp `#465` Double speaks: the 26.2 shape
+/// lambda `cube − column(12, clamp(1 + level*2, 2, 16), 16)` the
+/// center-xz audit folds — the rim top 1.0 every live level keeps,
+/// the +0.03125 the constant rides, the level-8 empty slice the
+/// insertion law never arms). The COMPOSTER particle the
+/// `SuspendedTownParticle$ComposterFillProvider` spawns (the ctor
+/// chain the seven draws spend — the one-frame glint pick, the three
+/// dead tint draws the setColor(1,1,1) override keeps, the size, the
+/// dead base lifetime, the `3 + nextInt(5)` lifetime the 3..7 band
+/// gives). The GLOBAL route the `globalLevelEvent` switch never
+/// banks (the 1023/1028/1038 trio the band alone carries — the
+/// positioned lane the case's own arm wears).
+pub const COMPOSTER_FILL_EFFECT: i32 = 1500;
+
 /// THE LAVA-FIZZ VOICE'S OWN ID (the 26.2 `LevelEvent` constants
 /// class the client jar banks — `LAVA_FIZZ`, the case
 /// `LevelEventHandler.levelEvent` offset 3522 speaks): the pitched
@@ -10773,6 +10808,11 @@ mod tests {
             SOUND_CRAFTER_FAIL_EFFECT,
             1050,
             "the crafter fail voice the dispenseFrom's own empty slots speak"
+        );
+        assert_eq!(
+            COMPOSTER_FILL_EFFECT,
+            1500,
+            "the composter fill voice the useItemOn's own tail speaks"
         );
         assert_eq!(
             LAVA_FIZZ_EFFECT,

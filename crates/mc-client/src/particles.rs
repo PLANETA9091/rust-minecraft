@@ -2572,6 +2572,83 @@ pub fn happy_villager_sparkle(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lc
     }
 }
 
+/// THE COMPOSTER-FILL PUFF'S OWN SPAWN (javap
+/// `SuspendedTownParticle$ComposterFillProvider.createParticle` +
+/// the `SuspendedTownParticle` ctor over the 26.2 jar — the
+/// `ParticleTypes.COMPOSTER` word the `ComposterBlock.handleFill`
+/// case-1500 arm's `bipush 10` loop speaks): the FULL provider chain
+/// the SEVEN draws the stream spends in the vanilla order — the
+/// one-frame glint pick FIRST (`SpriteSet.get(random)` the
+/// composter.json's one-texture set consumes — the nextInt(1) the
+/// draw the pick always lands, the SAME glint bank the feed
+/// sparkle's kind renders), the THREE dead tint draws next (the
+/// base ctor's `nextFloat() * 0.1 + 0.2` the r/g/b trio spends —
+/// the `setColor(1.0, 1.0, 1.0)` putfield trio the values override,
+/// the draws the stream still keeps — the same dead-tint law the
+/// white smoke lane speaks), the size draw (`quadSize = 0.02 * (nf
+/// * 0.6 + 0.5)` the setSize + the getQuadSize draw the chain
+/// gives), the dead base lifetime (`20.0 / (nf * 0.8 + 0.2)` the
+/// ctor's own write — the `setLifetime(3 + nextInt(5))` the
+/// provider's override replaces, the 3..7 band the `iconst_3` +
+/// `iconst_5` the bytecode pins). The velocity the `* 0.02` ctor
+/// fold speaks (the case's own `nextGaussian() * 0.02` args the
+/// fold scales twice — the effective drift the `* 0.0004` the two
+/// folds keep, the same law the growth burst's ride wears). The
+/// white tint, the 0.99 friction the tick's own walk keeps, the
+/// zero gravity, the OPAQUE layer the getLayer override returns —
+/// the kind the glint bank's own render arm carries.
+pub fn composter_fill_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the one-frame glint pick (the SpriteSet.get(random) draw —
+    // nextInt(1) the one-entry list consumes, the pick always lands 0)
+    let _glint_pick = rng.next_int(1);
+    // the three dead tint draws (the base ctor's r/g/b trio — the
+    // setColor(1,1,1) override the values keep, the draws the
+    // stream still spends)
+    let _dead_r = rng.next_f32();
+    let _dead_g = rng.next_f32();
+    let _dead_b = rng.next_f32();
+    // the size draw (the 0.02 * (nf * 0.6 + 0.5) fold the ctor's
+    // own write speaks)
+    let quad_size = 0.02 * (rng.next_f32() * 0.6 + 0.5);
+    // the dead base lifetime (the 20.0 / (nf * 0.8 + 0.2) fold the
+    // ctor's own write keeps — the setLifetime the value replaces)
+    let _dead_base_life = (20.0 / (rng.next_f32() as f64 * 0.8 + 0.2)) as u32;
+    // the own lifetime (the setLifetime(3 + nextInt(5)) the
+    // provider's override speaks — the 3..7 band the iconst_3 +
+    // iconst_5 pins)
+    let lifetime = (3 + rng.next_int(5)) as u32;
+    // the velocity the * 0.02 ctor fold speaks (the case's own
+    // gaussian trio the fold scales — the effective drift the two
+    // folds keep)
+    let scale = 0.02;
+    Particle {
+        kind: ParticleKind::HappyVillager,
+        x,
+        y,
+        z,
+        vx: vx * scale,
+        vy: vy * scale,
+        vz: vz * scale,
+        prev: None,
+        age: 0,
+        lifetime,
+        gravity: 0.0,
+        friction: 0.99,
+        quad_size,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
 /// THE GROWTH BURST'S OWN WALK (javap `ParticleUtils.spawnParticles`
 /// verbatim — the LevelEventHandler's 1505 case the bone-meal item's
 /// own use speaks, the level event the client vocabulary now renders):
@@ -3939,6 +4016,60 @@ mod tests {
             b.next();
         }
         assert_eq!(after_nine, b.next(), "the large smoke chain's own nine draws");
+    }
+
+    #[test]
+    fn the_composter_puff_the_seven_draws_the_lifetime_wears() {
+        // THE BIRTH (the addParticle pos the handleFill loop speaks —
+        // the interior corner the case's own folds place, the
+        // gaussian trio the velocity args carry): the puff sits at
+        // the caller's own fold
+        let mut r = rng();
+        let p = composter_fill_puff(12.3, 41.2, -21.7, 1.0, 2.0, -1.0, &mut r);
+        assert!(matches!(p.kind, ParticleKind::HappyVillager));
+        assert_eq!(p.x, 12.3, "the caller's own birth x");
+        assert_eq!(p.y, 41.2, "the caller's own birth y");
+        assert_eq!(p.z, -21.7, "the caller's own birth z");
+        // THE LAWS (the ComposterFillProvider chain): the white tint
+        // the setColor(1,1,1) override keeps, the 0.02 × (nf * 0.6 +
+        // 0.5) size band, the 3..7 lifetime the setLifetime(3 +
+        // nextInt(5)) override gives, the zero gravity, the 0.99
+        // friction the tick's own walk keeps
+        assert_eq!(p.col, [1.0, 1.0, 1.0], "the white the override keeps");
+        assert!(
+            (0.01..0.022).contains(&p.quad_size),
+            "the size band: {}",
+            p.quad_size
+        );
+        assert!((3..=7).contains(&p.lifetime), "the 3..7 band: {}", p.lifetime);
+        assert!(p.gravity.abs() < 1e-9, "the no-gravity law");
+        assert!((p.friction - 0.99).abs() < 1e-9, "the 0.99 friction");
+        // THE VELOCITY (the * 0.02 ctor fold the passed args the
+        // gaussian's own * 0.02 the case carries — the effective
+        // drift the two folds keep: 1.0 → 0.02, 2.0 → 0.04, -1.0 →
+        // -0.02)
+        assert!((p.vx - 0.02).abs() < 1e-12, "the x fold: {}", p.vx);
+        assert!((p.vy - 0.04).abs() < 1e-12, "the y fold: {}", p.vy);
+        assert!((p.vz + 0.02).abs() < 1e-12, "the z fold: {}", p.vz);
+        // THE DETERMINISM (the same seed the same chain answers)
+        let p2 = composter_fill_puff(12.3, 41.2, -21.7, 1.0, 2.0, -1.0, &mut rng());
+        assert_eq!(
+            (p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+            (p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+            "the seeded chain replays"
+        );
+        // THE STREAM (the seven draws the chain consumes — the
+        // one-frame glint pick, the three dead tints, the size, the
+        // dead base lifetime, the own nextInt(5); the eighth draw
+        // differs)
+        let mut a = rng();
+        let _ = composter_fill_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &mut a);
+        let after_seven = a.next();
+        let mut b = rng();
+        for _ in 0..7 {
+            b.next();
+        }
+        assert_eq!(after_seven, b.next(), "the composter chain's own seven draws");
     }
 
     #[test]

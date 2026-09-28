@@ -481,6 +481,14 @@ pub struct SnapshotView {
     /// after), the render lane's own law folds the eight-puff
     /// steam cloud.
     pub water_evaporating_events: Vec<WireWaterEvaporatingEvent>,
+    /// The 1500 words the refresh carries (the server's own composter
+    /// broadcasts, [`mc_protocol::play::COMPOSTER_FILL_EFFECT`] the
+    /// vocabulary speaks): shipped once with the refresh that carried
+    /// them (the worker's own drain empties the mailbox after), the
+    /// success bit the case's own read folds — the voice pick and the
+    /// ten-puff walk the render lane's law folds from the anchor and
+    /// the bit.
+    pub composter_fill_events: Vec<WireComposterFillEvent>,
     /// The 1501/1502 words the refresh carries (the server's own
     /// lava and torch broadcasts,
     /// [`mc_protocol::play::LAVA_FIZZ_EFFECT`] /
@@ -606,6 +614,22 @@ pub struct WireWaterEvaporatingEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One wire COMPOSTER-FILL arm — the Level Event packet's own fill
+/// broadcast (the 1500 words the server's own composter broadcasts,
+/// [`mc_protocol::play::COMPOSTER_FILL_EFFECT`] the render lane
+/// speaks): the event's anchor block, verbatim, the DATA word the
+/// wire carries — the case's own read folds the success bit from it
+/// (`data != 0` the handleFill boolean answers — the voice pick the
+/// render lane's law folds).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireComposterFillEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The data word (the success bit the case's own read folds).
+    pub data: i32,
 }
 
 /// One wire SMOKE-VOICE arm — the Level Event packet's own pitched
@@ -2556,6 +2580,9 @@ pub fn materialize_snapshot_view(
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
         water_evaporating_events: Vec::new(),
+        // and no composter words (the join snapshot carries no 1500
+        // traffic — the empty mailbox the render lane skips)
+        composter_fill_events: Vec::new(),
         // and no smoke words (the join snapshot carries no 1501/1502
         // traffic — the empty mailbox the render lane skips)
         smoke_voice_events: Vec::new(),
@@ -2983,6 +3010,22 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the composter-fill lane's own projection (the mailbox
+        // verbatim — the anchor and the data bit the arms carry, the
+        // render lane's own law reads): each 1500 word ships once
+        // with this view, the worker's drain empties the mailbox
+        // after
+        let composter_fill_events = self
+            .model
+            .composter_fill_events
+            .iter()
+            .map(|arm| WireComposterFillEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+            })
+            .collect();
         // the pitched-smoke band's own projection (the mailbox
         // verbatim — the anchor and the voice word the arms carry,
         // the render lane's own law reads): each 1501/1502 word
@@ -3228,6 +3271,10 @@ impl LiveView {
                 // arm too — the 2009 words are the connection's own
                 // traffic, not the pose's
                 water_evaporating_events,
+                // the composter-fill arms ride the pose-less arm too —
+                // the 1500 words are the connection's own traffic, not
+                // the pose's
+                composter_fill_events,
                 // the pitched-smoke band's arms ride the pose-less arm
                 // too — the 1501/1502 words are the connection's own
                 // traffic, not the pose's
@@ -3346,6 +3393,10 @@ impl LiveView {
             // too — the 2009 words follow the mailbox exactly like the
             // dragon's own arms do
             water_evaporating_events,
+            // the composter-fill arms ride every refresh too — the
+            // 1500 words follow the mailbox exactly like the water's
+            // own arms do
+            composter_fill_events,
             // the pitched-smoke band's arms ride every refresh too —
             // the 1501/1502 words follow the mailbox exactly like the
             // water's own arms do

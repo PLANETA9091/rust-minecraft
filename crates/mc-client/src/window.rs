@@ -171,6 +171,7 @@ fn run_join(
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
+                Vec<crate::world_view::WireComposterFillEvent>,
                 Vec<crate::world_view::WireSmokeVoiceEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
@@ -269,6 +270,7 @@ fn run_join(
             view.model.drain_white_smoke_events();
             view.model.drain_dragon_fireball_splash_events();
             view.model.drain_water_evaporating_events();
+            view.model.drain_composter_fill_events();
             view.model.drain_smoke_voice_events();
             view.model.drain_eye_of_ender_shatter_events();
             view.model.drain_dragon_block_break_events();
@@ -891,6 +893,7 @@ fn run_join(
                             view.model.drain_white_smoke_events();
                             view.model.drain_dragon_fireball_splash_events();
                             view.model.drain_water_evaporating_events();
+                            view.model.drain_composter_fill_events();
                             view.model.drain_smoke_voice_events();
                             view.model.drain_eye_of_ender_shatter_events();
                             view.model.drain_dragon_block_break_events();
@@ -1057,6 +1060,14 @@ fn run_join(
                                     // render's own law folds, each arm
                                     // rides exactly one shipped refresh)
                                     upd.water_evaporating_events,
+                                    // the composter-fill arms ride beside
+                                    // the water's — the 1500 words the
+                                    // server's own composter broadcasts
+                                    // stream to the fill lane (the voice
+                                    // + ten-puff walk the render's own
+                                    // law folds, each arm rides exactly
+                                    // one shipped refresh)
+                                    upd.composter_fill_events,
                                     // the pitched-smoke band's arms ride
                                     // beside the water's — the 1501/1502
                                     // words the server's own lava and
@@ -1256,6 +1267,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
+                Vec<crate::world_view::WireComposterFillEvent>,
                 Vec<crate::world_view::WireSmokeVoiceEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
@@ -1811,6 +1823,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     white_smoke_events,
                     dragon_fireball_splash_events,
                     water_evaporating_events,
+                    composter_fill_events,
                     smoke_voice_events,
                     eye_of_ender_shatter_events,
                     dragon_block_break_events,
@@ -1934,6 +1947,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // answers the same packet with)
                     app.live_dragon_fireball_splash_events_updated(dragon_fireball_splash_events);
                     app.live_water_evaporating_events_updated(water_evaporating_events);
+                    // the composter-fill lane beside the water's: the
+                    // 1500 words the server's own composter broadcasts
+                    // land at their own anchors (the success bit the
+                    // case's own read folds — the voice pick the ternary
+                    // speaks, the ten COMPOSTER puffs the loop keeps,
+                    // the vanilla client answers the same packet with)
+                    app.live_composter_fill_events_updated(composter_fill_events);
                     // the pitched-smoke band's lane beside the water's:
                     // the 1501/1502 words the server's own lava and
                     // torch broadcasts land at their own anchors (the

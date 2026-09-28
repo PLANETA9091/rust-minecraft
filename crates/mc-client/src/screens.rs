@@ -21904,6 +21904,97 @@ impl App {
         }
     }
 
+    /// THE COMPOSTER-FILL WIRE LANE (javap `LevelEventHandler` case
+    /// 1500 — offset 3483 — over the 26.2 jar): the server's own
+    /// composter the fill broadcast, the ONE arm the case body
+    /// spends — the `ComposterBlock.handleFill(level, pos, data !=
+    /// 0)` walk the success bit rides (the FIRST 1500-band word
+    /// whose data the case reads). NO world edit the block updates
+    /// own — the voice and the ten puffs alone the broadcast renders.
+    pub fn live_composter_fill_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireComposterFillEvent>,
+    ) {
+        for ev in events {
+            self.play_composter_fill(ev.x, ev.y, ev.z, ev.data != 0);
+        }
+    }
+
+    /// THE COMPOSTER-FILL WALK (javap `ComposterBlock.handleFill`
+    /// verbatim): the voice the case's own head speaks (the success
+    /// ternary the data bit picks — the `block.composter.fill_
+    /// success` answer the accepted insert wears, the
+    /// `block.composter.fill` the chance-fail keeps; the `fconst_1`
+    /// pair the volume/pitch both carry, no randoms the fixed fold
+    /// speaks), then the `bipush 10` loop the ten COMPOSTER puffs
+    /// fire — the THREE `nextGaussian() * 0.02` velocity draws the
+    /// addParticle args carry first (the d4/d5/d6 the loop body's
+    /// own stores keep), the position floats next (the `x + 0.1875
+    /// + 0.625 * nextFloat()` the cp `#469`/`#471` Doubles keep —
+    /// the f2d the f64 domain speaks, the interior band
+    /// [0.1875, 0.8125) the fold gives; the `y + d0 + nextFloat()
+    /// * (1.0 - d0)` the shape fold answers — `d0 = shape.max(
+    /// Axis.Y, 0.5, 0.5) + 0.03125` the 26.2 shape lambda `cube −
+    /// column(12, clamp(1 + level*2, 2, 16), 16)` the center-xz
+    /// audit folds: the rim top 1.0 every live level keeps, the
+    /// `d0 = 1.03125` the constant rides, the y band [1.0, 1.03125]
+    /// the puffs hover at). The provider's own seven draws the
+    /// puffs' ctor spends last (the glint pick, the three dead
+    /// tints, the size, the dead base lifetime, the 3..7 own
+    /// lifetime — the chain the [`crate::particles::
+    /// composter_fill_puff`] law pins).
+    fn play_composter_fill(&mut self, x: i32, y: i32, z: i32, success: bool) {
+        // THE VOICE (the success ternary the handleFill's own head
+        // speaks — the data bit the pick rides, the BLOCK CENTER the
+        // `playLocalSound(BlockPos, ...)` resolve places, the
+        // distance-delay flag false the immediate voice keeps)
+        let key = if success {
+            "block.composter.fill_success"
+        } else {
+            "block.composter.fill"
+        };
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            1.0,
+            1.0,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+        // THE TEN PUFFS (the `bipush 10` loop — the THREE gaussian
+        // velocity draws the addParticle args carry first, the
+        // position floats the f2d domain keeps, the provider's own
+        // seven draws the ctor spends)
+        for _ in 0..10 {
+            let vx = self.level_ambient_rng.next_gaussian() * 0.02;
+            let vy = self.level_ambient_rng.next_gaussian() * 0.02;
+            let vz = self.level_ambient_rng.next_gaussian() * 0.02;
+            // THE SHAPE FOLD (the d0 = 1.03125 the rim-top
+            // derivation keeps — the interior band the x/z folds
+            // give, the y band the puffs hover at)
+            let px = f64::from(x) + 0.1875 + f64::from(self.level_ambient_rng.next_f32()) * 0.625;
+            let py = f64::from(y)
+                + 1.03125
+                + f64::from(self.level_ambient_rng.next_f32()) * (1.0 - 1.03125);
+            let pz = f64::from(z) + 0.1875 + f64::from(self.level_ambient_rng.next_f32()) * 0.625;
+            let puff = crate::particles::composter_fill_puff(
+                px,
+                py,
+                pz,
+                vx,
+                vy,
+                vz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(puff);
+        }
+    }
+
     /// THE PITCHED-SMOKE WIRE LANE (javap `LevelEventHandler` cases
     /// 1501/1502 — offsets 3522/3628 — over the 26.2 jar): the
     /// server's own lava and redstone torch the voices broadcast,
@@ -46618,6 +46709,152 @@ cow_sound_variant: None,
         assert!(app.sounds.events.is_empty(), "the unknown word never voices");
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.live_smoke_voice_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_composter_word_the_fill_walk_the_puffs_wear() {
+        // THE COMPOSTER-FILL'S OWN WIRE LANE (javap case 1500 →
+        // offset 3483 over the 26.2 jar): the success ternary the
+        // data bit picks (the handleFill voice the case's own head
+        // speaks), the `bipush 10` loop the ten COMPOSTER puffs fire
+        // — the THREE gaussian velocity draws the args carry first,
+        // the interior position floats the f2d domain keeps, the
+        // provider's own seven draws the ctor spends.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the assignment banks —
+        // the whole walk the seeded stream replays)
+        app.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1500);
+        app.live_composter_fill_events_updated(vec![crate::world_view::WireComposterFillEvent {
+            x: 12,
+            y: 40,
+            z: -21,
+            data: 1,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            10,
+            "the bipush 10 the fill loop keeps"
+        );
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::HappyVillager),
+                "the COMPOSTER type the glint bank carries"
+            );
+            // THE INTERIOR FOLDS (the x + 0.1875 + 0.625 * nf the
+            // case's own args speak — the [12.1875, 12.8125) band the
+            // x/z keep, the y band the d0 = 1.03125 shape fold keeps —
+            // the puffs hover at the rim top [41.0, 41.03125])
+            assert!(
+                p.x >= 12.1875 && p.x < 12.8125,
+                "the x the interior band keeps: {}",
+                p.x
+            );
+            assert!(
+                p.y >= 41.0 && p.y <= 41.03125,
+                "the y the rim-top band keeps: {}",
+                p.y
+            );
+            assert!(
+                p.z >= -20.8125 && p.z < -20.1875,
+                "the z the interior band keeps: {}",
+                p.z
+            );
+            // THE VELOCITY (the gaussian trio the * 0.02 × 0.02 the
+            // two folds keep — the drift the practical band gives)
+            assert!(p.vx.abs() < 0.005, "the drift band: {}", p.vx);
+            assert!(p.vy.abs() < 0.005, "the drift band: {}", p.vy);
+            assert!(p.vz.abs() < 0.005, "the drift band: {}", p.vz);
+            // THE CTOR LAWS (the white tint, the 3..7 lifetime, the
+            // size band, the 0.99 friction, the no-gravity field)
+            assert_eq!(p.col, [1.0, 1.0, 1.0], "the white the override keeps");
+            assert!(p.lifetime >= 3 && p.lifetime <= 7, "the band: {}", p.lifetime);
+            assert!(
+                (0.01..0.022).contains(&p.quad_size),
+                "the size band: {}",
+                p.quad_size
+            );
+            assert!((p.friction - 0.99).abs() < 1e-9, "the 0.99 friction");
+            assert!(p.gravity.abs() < 1e-9, "the no-gravity law");
+        }
+        // THE SUCCESS VOICE (the ternary's accept arm the data=1 bit
+        // picks — the fill_success key the official table speaks, the
+        // 1.0/1.0 pair the fconst_1 bytecode keeps)
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.composter.fill_success "))
+                .expect("the success voice the accept bit picks");
+            let pitch: f32 = voice
+                .rsplit(" p")
+                .next()
+                .and_then(|s| s.split(' ').next())
+                .and_then(|s| s.parse().ok())
+                .expect("the logged pitch the walk carries");
+            assert!((pitch - 1.0).abs() < 1e-6, "the fixed pitch: {}", pitch);
+        }
+        // THE DETERMINISM (the same seed the same walk answers)
+        let replay = {
+            let mut app2 = App::new(2);
+            app2.enter_world();
+            app2.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1500);
+            app2.live_composter_fill_events_updated(vec![crate::world_view::WireComposterFillEvent {
+                x: 12,
+                y: 40,
+                z: -21,
+                data: 1,
+            }]);
+            app2.particles
+                .iter()
+                .map(|p| (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size))
+                .collect::<Vec<_>>()
+        };
+        let original = app
+            .particles
+            .iter()
+            .map(|p| (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size))
+            .collect::<Vec<_>>();
+        assert_eq!(original, replay, "the seeded chain replays");
+        // THE FAIL WALK (the data=0 bit the ternary's chance-fail arm
+        // picks — the plain fill key the voice wears, the ten puffs
+        // the loop still fires)
+        app.particles.clear();
+        app.sounds.events.clear();
+        app.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1500);
+        app.live_composter_fill_events_updated(vec![crate::world_view::WireComposterFillEvent {
+            x: 12,
+            y: 40,
+            z: -21,
+            data: 0,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            10,
+            "the bipush 10 the fail walk keeps"
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.composter.fill ")),
+                "the fail voice the bit picks"
+            );
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.contains("fill_success")),
+                "the fail walk the success voice never shares"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_composter_fill_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

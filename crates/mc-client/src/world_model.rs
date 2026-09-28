@@ -382,6 +382,10 @@ pub struct WorldModel {
     /// `globalLevelEvent` switch the 2009 id never carries — the
     /// positioned lane the case's own arm wears).
     pub water_evaporating_events: Vec<WaterEvaporatingArm>,
+    /// The composter-fill lane's own mailbox — the Level Event
+    /// packet's 1500 words the model enqueues for the render lane
+    /// (see [`ComposterFillArm`]).
+    pub composter_fill_events: Vec<ComposterFillArm>,
     /// The pitched-smoke band's own mailbox — the Level Event
     /// packet's 1501/1502 words the model enqueues for the render
     /// lane (see [`SmokeVoiceArm`]).
@@ -704,6 +708,27 @@ pub struct WaterEvaporatingArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One pending COMPOSTER-FILL arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::composter_fill_events`]). The anchor verbatim (the
+/// composter's own cell the fill broadcast), the DATA word the arm
+/// BANKS — the case's own body READS it (the `iload_3` + `ifle`
+/// the success fold keeps: `data != 0` the boolean the handleFill
+/// walk answers — the insert's accept the 1 speaks, the chance-fail
+/// the 0; the same data-bit transport the smoke splash's color
+/// word wears — the wire's own word the arm banks verbatim, the
+/// voice pick the render lane's law folds from it). The ten
+/// COMPOSTER puffs' own draws the render lane's stream keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ComposterFillArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The data word (the success bit the case's own read folds —
+    /// the `data != 0` the handleFill boolean answers).
+    pub data: i32,
 }
 
 /// One pending SMOKE-VOICE arm — the Level Event packet's pitched
@@ -1294,6 +1319,7 @@ impl WorldModel {
             in_block_growth_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
+            composter_fill_events: Vec::new(),
             smoke_voice_events: Vec::new(),
             eye_of_ender_shatter_events: Vec::new(),
             dragon_block_break_events: Vec::new(),
@@ -1492,6 +1518,13 @@ impl WorldModel {
     /// data word the case's own body never reads).
     pub fn drain_water_evaporating_events(&mut self) -> Vec<WaterEvaporatingArm> {
         std::mem::take(&mut self.water_evaporating_events)
+    }
+
+    /// The composter-fill lane's own drain — the render lane takes
+    /// the pending 1500 arms each serve (the arms ship exactly once
+    /// the mailbox's own law keeps).
+    pub fn drain_composter_fill_events(&mut self) -> Vec<ComposterFillArm> {
+        std::mem::take(&mut self.composter_fill_events)
     }
 
     /// The pitched-smoke band's own drain — the render lane takes
@@ -1765,6 +1798,7 @@ impl WorldModel {
                 // level (the same walk — the old level's 2009 words
                 // never steam again)
                 self.water_evaporating_events.clear();
+                self.composter_fill_events.clear();
                 self.smoke_voice_events.clear();
                 // the eye-of-ender shatter's mailbox dies with the
                 // level (the same walk — the old level's 2003 words
@@ -2608,6 +2642,25 @@ impl WorldModel {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::COMPOSTER_FILL_EFFECT && !ev.global {
+                    // THE COMPOSTER-FILL EFFECT'S OWN ARM (javap the
+                    // case offset 3483 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries, the DATA word the arm BANKS —
+                    // the case's own body READS it (the `iload_3` +
+                    // `ifle` the success fold keeps, the
+                    // `handleFill(level, pos, data != 0)` walk the
+                    // boolean rides — the voice pick the render
+                    // lane's law folds from the bit). The ten
+                    // COMPOSTER puffs the render lane's own stream
+                    // carries.
+                    self.composter_fill_events.push(ComposterFillArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
                     });
                     true
                 } else if (ev.effect == mc_protocol::LAVA_FIZZ_EFFECT
@@ -7497,6 +7550,92 @@ mod tests {
         })));
         assert!(
             m.smoke_voice_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_composter_word_the_data_bit_wears() {
+        // THE COMPOSTER-FILL'S OWN ARM (javap the case offset 3483 —
+        // the positioned route the GLOBAL switch never banks): the
+        // word the ONE mailbox arms, the DATA word the arm BANKS —
+        // the case's own body READS it (the `iload_3` + `ifle` the
+        // success fold keeps, the `handleFill(level, pos, data != 0)`
+        // walk the boolean rides — the caller's own state-changed
+        // ternary the bit carries), the drain ships the arm exactly
+        // once, and the Respawn recreates the level the mailbox dies
+        // with it.
+        let mut m = WorldModel::new();
+        // the caller's own tail (ComposterBlock.useItemOn's
+        // `sipush 1500, pos, blockstate1 != blockstate ? 1 : 0` the
+        // bytecode pins — the accept the 1 speaks)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::COMPOSTER_FILL_EFFECT,
+            x: 12,
+            y: 40,
+            z: -21,
+            data: 1,
+            global: false,
+        })));
+        // the chance-fail the 0 keeps — the SAME mailbox arms, the
+        // bit the arm banks verbatim
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::COMPOSTER_FILL_EFFECT,
+            x: -3,
+            y: 65,
+            z: 700,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.composter_fill_events.len(), 2, "the two words arm");
+        // the success bits ride verbatim (the case's own read folds
+        // the booleans — the voice pick the render lane's law folds
+        // from them)
+        assert_eq!(m.composter_fill_events[0].data, 1, "the accept bit rides");
+        assert_eq!(m.composter_fill_events[1].data, 0, "the fail bit rides");
+        // the anchors ride verbatim (the callers' own BlockPos cells)
+        assert_eq!(m.composter_fill_events[0].x, 12);
+        assert_eq!(m.composter_fill_events[0].y, 40);
+        assert_eq!(m.composter_fill_events[0].z, -21);
+        assert_eq!(m.composter_fill_events[1].x, -3);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 1500 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::COMPOSTER_FILL_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 1,
+            global: true,
+        })));
+        assert_eq!(m.composter_fill_events.len(), 2, "the global word never arms");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_composter_fill_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].data, 1, "the wire order the drain keeps");
+        assert!(m.composter_fill_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_composter_fill_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::COMPOSTER_FILL_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.composter_fill_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.composter_fill_events.is_empty(),
             "the mailbox dies with the level"
         );
     }
