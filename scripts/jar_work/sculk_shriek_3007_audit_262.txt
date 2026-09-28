@@ -1,0 +1,78 @@
+=== LevelEventHandler.levelEvent case 3007 PARTICLES_SCULK_SHRIEK (offset 3193) — 26.2 jar audit ===
+
+VANILLA CONSTANT: PARTICLES_SCULK_SHRIEK = 3007 (net/minecraft/world/level/block/LevelEvent).
+DATA WORD: NEVER READ (no iload_3 — the case body opens iconst_0 istore 5, the
+  same transport honesty the dispenser/gateway arms keep).
+CALLER (pinned): SculkShriekerBlockEntity.shriek(ServerLevel, Entity) —
+    45: aload_1; 46: sipush 3007; 49: aload_3 (pos); 50: iconst_0; 51: levelEvent(I;BlockPos;I)V
+  (the shriek walk also sets shrieking=true flag 2, schedules a 90-tick block tick,
+  and fires the SHRIEK game event — the level event is the client's visual half).
+
+CASE LAW:
+  for i in 0..10:                                          (3196 if_icmpge 10)
+    addParticle(new ShriekParticleOption(i * 5),           (3213 imul 5 — DELAY ticks 0,5,..,45)
+      pos.x + 0.5, pos.y + SculkShriekerBlock.TOP_Y, pos.z + 0.5,
+      0.0, 0.0, 0.0)                                       (dconst_0 trio)
+  state = level.getBlockState(pos)                          (3262)
+  waterlogged = state.hasProperty(WATERLOGGED) && state.getValue(WATERLOGGED)   (3272/3283)
+  if (!waterlogged):                                        (3302 ifne → skip)
+    playLocalSound(                                         (3360 — the DDD coords overload)
+      pos.x + 0.5, pos.y + TOP_Y, pos.z + 0.5,
+      SCULK_SHRIEKER_SHRIEK, BLOCKS,
+      2.0F,                                                 (fconst_2 volume)
+      0.6F + nextFloat() * 0.4F,                            (3345 #602=0.6, #137=0.4)
+      false)
+
+TOP_Y = SculkShriekerBlock.TOP_Y = SHAPE_COLLISION.max(Axis.Y) where
+  SHAPE_COLLISION = Shapes.column(16.0, 0.0, 8.0) — the bottom-half block
+  (0..8 units of the 0..16 grid) → max(Y) = 8/16 = 0.5. THE SHRIEK HEIGHT = +0.5.
+
+SOUND: SCULK_SHRIEKER_SHRIEK key = "block.sculk_shrieker.shriek"
+  (sounds.json: block/sculk_shrieker/shriek1..3). Volume 2.0F the armed max.
+
+=== ShriekParticleOption ===
+  record(int delay); STREAM_CODEC = VAR_INT composite (the delay the wire carries
+  for PARTICLE packets — the level-event lane builds it CLIENT-SIDE from i*5).
+
+=== ShriekParticle (client, super SingleQuadParticle) ===
+  ctor(level, x, y, z, delay, sprite): super(level, x, y, z, 0, 0, 0, sprite)
+    quadSize = 0.85F                    (ldc #7 — DIRECT putfield, no scale(), NO random)
+    delay = option delay                (the sleep the tick answers)
+    lifetime = 30                       (bipush 30 — FIXED)
+    gravity = 0.0F
+    xd = 0.0; yd = 0.1; zd = 0.0        (ldc2_w #28 = 0.1 — THE RISE)
+  (the base ctor's draws STILL SPEND — the dead base lifetime + the size draw —
+  the values the putfields override)
+  Provider.createParticle: spriteSet.get(random) FIRST (the SpriteSet.get law:
+    sprites.get(random.nextInt(size)) — BitRandomSource.nextInt(1) for the ONE
+    sprite: power-of-2 arm (1 * next(31)) >>> 31 — THE DRAW SPENDS, returns 0),
+    then new ShriekParticle(...), setAlpha(1.0F). Per particle: THREE draws
+    (sprite-pick int + dead life + dead size), NO position/speed draws.
+  tick(): if delay > 0 { delay--; return; } — the sleep: NO age walk, NO physics;
+    else super.tick() (the base law: age++, gravity 0, move yd, friction 0.98).
+  getQuadSize(partial): quadSize * clamp(((age + partial) / 30) * 0.75F, 0, 1)
+    (#39 = 0.75 — the growth caps at 0.85 * 0.75 = 0.6375, the clamp never fires).
+  extract(): if delay > 0 return (invisible while asleep);
+    alpha = 1 - clamp((age + partial)/30, 0, 1)  — THE FADE;
+    TWO quads: quad1 = rotationX(-1.0471999645233154)  (-60°);
+    quad2 = rotationYXZ(-3.1415927410125732, 1.0471999645233154, 0)  (-180°, +60°, 0)
+    — the crossed tilted pair (quad1's top leans AWAY, quad2's top TOWARD the
+    viewer, the screen-x mirrored — rotationYXZ(-π, 60°, 0) on (x, y, 0) maps to
+    (-x, 0.5y, 0.866y) camera-space; rotationX(-60°) maps to (x, 0.5y, -0.866y)).
+  getLightCoords: withBlock(super, 15) fullbright; getLayer: TRANSLUCENT.
+  SPRITE: particles/shriek.json → minecraft:shriek (ONE texture,
+  textures/particle/shriek.png — 13x13 the IHDR speaks, the odd size the lane
+  verifies).
+
+=== OUR RENDERER'S HONEST EQUIVALENT (the 446 round's doc) ===
+  the billboard raster carries no quaternion machinery — the two tilted quads
+  ride the (right, up, away = right × up) basis: quad1 corners
+  (right*sx + up*(syp*0.5) + away*(syp*-0.866)) * half, quad2 mirrors the
+  screen-x (the same cos/sin pair the rotationYXZ twin speaks); the alpha fade
+  the raster never carries — the brightness dim (tint = 1 - t) the cooling-drip
+  fade's own lane keeps.
+
+Audit artifacts: levelEvent_262_full.txt (case 3193..3365), shriek_particle_262.txt,
+sculk_probe.py (the shrieker caller scan), BitRandomSource.nextInt power-of-2 law
+(the draw the single-sprite pick spends — the 446 round's own correction the
+bound<=1 early-out myth never banked).

@@ -1591,6 +1591,32 @@ pub const ELECTRIC_SPARK_EFFECT: i32 = 3002;
 /// lane the case's own arm wears.
 pub const PARTICLES_SCULK_CHARGE_EFFECT: i32 = 3006;
 
+/// THE SCULK-SHRIEK PARTICLE EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `PARTICLES_SCULK_SHRIEK`,
+/// the case `LevelEventHandler.levelEvent` offset 3193 speaks): the
+/// DATA word the case's own body NEVER READS (no `iload_3` the arm's
+/// bytecode speaks — the transport honesty the dispenser/gateway arms
+/// keep). The body the TWO walks spends: the TEN
+/// `addParticle(new ShriekParticleOption(i * 5), pos.x + 0.5, pos.y +
+/// TOP_Y, pos.z + 0.5, 0, 0, 0)` walks the `i < 10` loop banks (the
+/// delay 0, 5, .., 45 ticks the option carries, the shriek height the
+/// `SculkShriekerBlock.TOP_Y` = 0.5 constant rides — the bottom-half
+/// collision shape's own max the clinit answers) — then the
+/// WATERLOGGED-GATED voice the `hasProperty(WATERLOGGED) &&
+/// getValue(WATERLOGGED)` pair arms (the silent twin the drowned
+/// shrieker keeps): the ONE `playLocalSound(pos.x + 0.5, pos.y +
+/// TOP_Y, pos.z + 0.5, SCULK_SHRIEKER_SHRIEK, BLOCKS, 2.0F, 0.6F +
+/// nextFloat() * 0.4F, false)` walk the DDD coords overload speaks
+/// (`block.sculk_shrieker.shriek` key the sounds.json row banks — the
+/// shriek1..3 files the table holds, the 2.0F volume the armed max
+/// keeps). THE CALLER the shrieker's own reply pins —
+/// `SculkShriekerBlockEntity.shriek`'s `sipush 3007, pos, iconst_0`
+/// levelEvent call the bytecode speaks (the shrieking flag + the
+/// 90-tick block tick + the SHRIEK game event the server's own walk
+/// spends beside it). The GLOBAL route the `globalLevelEvent` switch
+/// never banks — the positioned lane the case's own arm wears.
+pub const PARTICLES_SCULK_SHRIEK_EFFECT: i32 = 3007;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -11188,6 +11214,11 @@ mod tests {
             PARTICLES_SCULK_CHARGE_EFFECT,
             3006,
             "the sculk-charge effect the spreader's own decay walk speaks"
+        );
+        assert_eq!(
+            PARTICLES_SCULK_SHRIEK_EFFECT,
+            3007,
+            "the sculk-shriek effect the shrieker's own reply walk speaks"
         );
         assert_eq!(
             SPLASH_POTION_EFFECT,

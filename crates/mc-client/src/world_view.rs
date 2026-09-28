@@ -487,6 +487,10 @@ pub struct SnapshotView {
     /// the branch split the render lane's own law folds).
     pub electric_spark_events: Vec<WireElectricSparkEvent>,
     pub sculk_charge_events: Vec<WireSculkChargeEvent>,
+    /// The sculk-shriek effect's own wire arms (the 3007 words the
+    /// server's own shrieker broadcasts — the anchor + the waterlogged
+    /// verdict the voice gate the render lane's law folds).
+    pub sculk_shriek_events: Vec<WireSculkShriekEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -736,6 +740,23 @@ pub struct WireSculkChargeEvent {
     pub data: i32,
     /// The pop arm's full-block verdict (the model's own state read).
     pub full_block: bool,
+}
+
+/// One wire SCULK-SHRIEK arm — the Level Event packet's own landing
+/// (the 3007 words the server's own shrieker broadcasts,
+/// [`mc_protocol::play::PARTICLES_SCULK_SHRIEK_EFFECT`] the render
+/// lane speaks): the event's anchor block VERBATIM, the data word
+/// deliberately absent (the case's own body never reads it), plus the
+/// voice gate's waterlogged verdict the model's own state read banks
+/// — the muted arm the drowned shrieker keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireSculkShriekEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice gate's verdict (the waterlogged property the
+    /// shrieker's own state carries).
+    pub waterlogged: bool,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -2851,6 +2872,9 @@ pub fn materialize_snapshot_view(
         // and no sculk words (the join snapshot carries no 3006
         // traffic — the empty mailbox the render lane skips)
         sculk_charge_events: Vec::new(),
+        // and no shriek words (the join snapshot carries no 3007
+        // traffic — the empty mailbox the render lane skips)
+        sculk_shriek_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3349,6 +3373,22 @@ impl LiveView {
                 full_block: arm.full_block,
             })
             .collect();
+        // the sculk-shriek effect's own projection (the mailbox
+        // verbatim — the anchor + the waterlogged verdict the arms
+        // carry, the voice gate the render lane's law folds): each
+        // 3007 word ships once with this view, the worker's drain
+        // empties the mailbox after
+        let sculk_shriek_events = self
+            .model
+            .sculk_shriek_events
+            .iter()
+            .map(|arm| WireSculkShriekEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                waterlogged: arm.waterlogged,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3745,6 +3785,10 @@ impl LiveView {
                 // arm too — the 3006 words are the connection's own
                 // traffic, not the pose's
                 sculk_charge_events,
+                // the sculk-shriek effect's arms ride the pose-less
+                // arm too — the 3007 words are the connection's own
+                // traffic, not the pose's
+                sculk_shriek_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -3911,6 +3955,10 @@ impl LiveView {
             // — the 3006 words follow the mailbox exactly like the
             // spark's own arms do
             sculk_charge_events,
+            // the sculk-shriek effect's arms ride every refresh too
+            // — the 3007 words follow the mailbox exactly like the
+            // charge's own arms do
+            sculk_shriek_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

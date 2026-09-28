@@ -406,6 +406,7 @@ pub struct WorldModel {
     /// case's own arm wears).
     pub electric_spark_events: Vec<ElectricSparkArm>,
     pub sculk_charge_events: Vec<SculkChargeArm>,
+    pub sculk_shriek_events: Vec<SculkShriekArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -942,6 +943,30 @@ pub struct SculkChargeArm {
     /// full arm vs the 20/±0.25 non-full arm the count/spread pair
     /// banks).
     pub full_block: bool,
+}
+
+/// One pending SCULK-SHRIEK arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (the 3007 word the
+/// server's own shrieker broadcasts,
+/// [`mc_protocol::play::PARTICLES_SCULK_SHRIEK_EFFECT`] the render
+/// lane speaks): the event's anchor block VERBATIM, the data word
+/// deliberately absent — the case's own body never reads it (no
+/// `iload_3` the arm's bytecode speaks, the same transport honesty
+/// the dispenser/gateway arms keep). The waterlogged verdict the
+/// ARM's own read banks (the `hasProperty(WATERLOGGED) &&
+/// getValue(WATERLOGGED)` pair the case's voice gate speaks — the
+/// model's own `block()` + the registry's props walk answer, the
+/// drowned shrieker the silent arm keeps) — the voice the render
+/// lane's law folds from it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SculkShriekArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice gate's verdict (the waterlogged property the
+    /// shrieker's own state carries — the muted arm the drowned
+    /// block keeps).
+    pub waterlogged: bool,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1787,6 +1812,7 @@ impl WorldModel {
             gateway_spawn_events: Vec::new(),
             electric_spark_events: Vec::new(),
             sculk_charge_events: Vec::new(),
+            sculk_shriek_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2010,6 +2036,12 @@ impl WorldModel {
     /// other level-event lanes speak — see the electric-spark drain).
     pub fn drain_sculk_charge_events(&mut self) -> Vec<SculkChargeArm> {
         std::mem::take(&mut self.sculk_charge_events)
+    }
+
+    /// THE SCULK-SHRIEK MAILBOX'S OWN DRAIN (the exactly-once ship the
+    /// other level-event lanes speak — see the electric-spark drain).
+    pub fn drain_sculk_shriek_events(&mut self) -> Vec<SculkShriekArm> {
+        std::mem::take(&mut self.sculk_shriek_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2419,6 +2451,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 3006 words
                 // never pulse again)
                 self.sculk_charge_events.clear();
+                // the sculk-shriek effect's mailbox dies with the
+                // level (the same walk — the old level's 3007 words
+                // never shriek again)
+                self.sculk_shriek_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3366,6 +3402,32 @@ impl WorldModel {
                         z: ev.z,
                         data: ev.data,
                         full_block,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::PARTICLES_SCULK_SHRIEK_EFFECT && !ev.global {
+                    // THE SCULK-SHRIEK EFFECT'S OWN ARM (javap the case
+                    // offset 3193 — the positioned route the GLOBAL
+                    // switch never banks): the anchor VERBATIM, the
+                    // data word deliberately absent (no `iload_3` the
+                    // case's own body speaks). The voice gate's
+                    // waterlogged verdict the state read the case's
+                    // own `hasProperty && getValue` pair speaks — the
+                    // model's own `block()` + the registry's props
+                    // walk answer (the non-shrieker block the
+                    // property's absence keeps, the absent cell the
+                    // dry arm answers — the voice the gate arms).
+                    let waterlogged = self
+                        .block(ev.x, ev.y, ev.z)
+                        .and_then(|state| {
+                            mc_registry::generated::block_ids::props_of(state)
+                                .map(|props| props.split(',').any(|kv| kv == "waterlogged=true"))
+                        })
+                        .unwrap_or(false);
+                    self.sculk_shriek_events.push(SculkShriekArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        waterlogged,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -11620,6 +11682,79 @@ mod tests {
             crate::weather::precipitation(frozen, 0, 64, 0, 63),
             crate::weather::Precipitation::Rain,
             "the fallback climate's patchwork RAINS at the warm patch"
+        );
+    }
+    #[test]
+    fn the_level_event_the_shriek_word_the_gate_wears() {
+        // THE SCULK-SHRIEK EFFECT'S OWN ARM (javap the case offset
+        // 3193 — the positioned route the GLOBAL switch never banks):
+        // the anchor verbatim, the data word deliberately absent (no
+        // iload_3 the case's own body speaks), the voice gate's
+        // waterlogged verdict the state read banks (the absent cell
+        // the dry arm answers — the voice the gate arms), the drain
+        // ships the arms exactly once, and the Respawn recreates the
+        // level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the shrieker's own reply word (the SculkShriekerBlockEntity
+        // .shriek call the `levelEvent(3007, pos, 0)` walk speaks):
+        // the arm rides, the data word the mailbox never carries
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCULK_SHRIEK_EFFECT,
+            x: 12,
+            y: 70,
+            z: -8,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.sculk_shriek_events.len(), 1, "the arm rides");
+        assert_eq!(m.sculk_shriek_events[0].x, 12);
+        assert_eq!(m.sculk_shriek_events[0].y, 70);
+        assert_eq!(m.sculk_shriek_events[0].z, -8);
+        assert!(
+            !m.sculk_shriek_events[0].waterlogged,
+            "the absent cell the dry arm answers"
+        );
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCULK_SHRIEK_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.sculk_shriek_events.len(),
+            1,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_sculk_shriek_events();
+        assert_eq!(drained.len(), 1, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, 12, "the anchor rides");
+        assert!(
+            m.sculk_shriek_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCULK_SHRIEK_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.sculk_shriek_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.sculk_shriek_events.is_empty(),
+            "the mailbox dies with the level"
         );
     }
 }

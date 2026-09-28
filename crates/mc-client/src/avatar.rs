@@ -6077,6 +6077,54 @@ pub struct GlowSprite {
     pub rgba: Vec<u8>,
 }
 
+/// The PARTICLE LANE's sculk shriek sprite — the LevelEvent-3007
+/// arm's ten-delayed ring's single sprite (javap: the `shriek`
+/// particle type's own texture, the jar's
+/// `textures/particle/shriek.png`, the `SpriteSet.get(random)` pick
+/// the Provider speaks — the `BitRandomSource.nextInt(1)` draw the
+/// power-of-2 arm still spends), loaded and sha1-verified the same
+/// stream the glow sprite speaks. A missing or tampered file keeps
+/// the shriek rings invisible (the honest absence the other lanes
+/// speak).
+pub struct ShriekSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The shriek texture's own layout (the jar's 13x13 the IHDR speaks —
+/// the odd size the lane verifies).
+pub const SHRIEK_SPRITE_SIDE: u32 = 13;
+
+impl ShriekSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 13x13 layout.
+    pub fn load(root: &std::path::Path) -> Option<ShriekSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_SHRIEK_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_SHRIEK_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != SHRIEK_SPRITE_SIDE || h != SHRIEK_SPRITE_SIDE {
+            return None;
+        }
+        Some(ShriekSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..13 the
+    /// 13x13 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, SHRIEK_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SHRIEK_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SHRIEK_SPRITE_SIDE as usize + x) * 4;
+        [
+            self.rgba[o],
+            self.rgba[o + 1],
+            self.rgba[o + 2],
+            self.rgba[o + 3],
+        ]
+    }
+}
+
 /// The glow texture's own layout (the jar's 8x8 the IHDR speaks).
 pub const GLOW_SPRITE_SIDE: u32 = 8;
 

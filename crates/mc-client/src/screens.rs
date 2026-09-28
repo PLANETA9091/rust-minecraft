@@ -6755,6 +6755,10 @@ pub struct App {
     /// LevelEvent-3006 pop arm's own burst pixels the lane draws;
     /// the missing file the honest absence keeps)
     pub sculk_pop_frames: Option<crate::avatar::SculkPopFrames>,
+    /// The sculk shriek's single sprite (the lazy load — the
+    /// LevelEvent-3007 arm's own ring pixels the lane draws; the
+    /// missing file the honest absence keeps)
+    pub shriek_sprite: Option<crate::avatar::ShriekSprite>,
     /// The splash-potion ring's TWO sprite sets (the same lazy load —
     /// the `effect_N` set the regular splash rides, the `spell_N` set
     /// the instant word answers).
@@ -7459,6 +7463,7 @@ impl App {
             glow_sprite: None,
             sculk_charge_frames: None,
             sculk_pop_frames: None,
+            shriek_sprite: None,
             effect_frames: None,
             spell_frames: None,
             potion_sprites: None,
@@ -7748,6 +7753,11 @@ impl App {
                 p.tick_dripstone_fall(bubble_world, &mut drip_land_spawns)
             }
             crate::particles::ParticleKind::DripstoneLand => p.tick_dripstone_land(),
+            // the shriek's own sleep walk (javap ShriekParticle.tick —
+            // the `delay > 0` gate the countdown rides: NO age walk,
+            // NO physics the asleep ticks never spend — the just-tick
+            // base law the awake arm keeps)
+            crate::particles::ParticleKind::SculkShriek { .. } => p.tick_shriek(),
             _ => p.tick(),
         });
         // THE SMOKE CHILDREN LAND AFTER THE TICK LOOP (the vanilla
@@ -22912,6 +22922,63 @@ impl App {
         );
     }
 
+    /// THE SCULK-SHRIEK WIRE LANE (javap `LevelEventHandler` case
+    /// 3007 — offset 3193 — over the 26.2 jar): the server's own
+    /// shrieker the client NOW answers (the data word the case's own
+    /// body NEVER reads — no draw the transport's silence keeps).
+    /// THE RING the ten `ShriekParticleOption(i * 5)` walks speak —
+    /// the staggered launch the delays 0, 5, .., 45 ride, the shriek
+    /// height `TOP_Y` = 0.5 the ring rides, the provider chain the
+    /// sprite-pick + the two dead base draws each member spends (the
+    /// level ambient stream the order keeps). THE WATERLOGGED-GATED
+    /// VOICE the arm's own verdict arms (the drowned shrieker the
+    /// silent arm keeps): the ONE `playLocalSound(x + 0.5, y + 0.5, z
+    /// + 0.5, SCULK_SHRIEKER_SHRIEK, BLOCKS, 2.0F, 0.6F +
+    /// nextFloat() * 0.4F, false)` walk the DDD coords overload
+    /// speaks — the pitch draw the gate's pass arm alone spends (the
+    /// `block.sculk_shrieker.shriek` key the sounds.json row banks,
+    /// the 2.0F volume the armed max keeps).
+    pub fn live_sculk_shriek_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireSculkShriekEvent>,
+    ) {
+        for ev in events {
+            // THE RING (the ten delayed shrieks the same stream the
+            // case's own walk order keeps — BEFORE the voice the
+            // bytecodes pin)
+            let ring =
+                crate::particles::sculk_shriek_ring((ev.x, ev.y, ev.z), &mut self.level_ambient_rng);
+            self.particles.extend(ring);
+            // THE WATERLOGGED-GATED VOICE (the model's verdict the
+            // muted arm keeps — the pitch draw the pass arm alone
+            // spends)
+            if !ev.waterlogged {
+                let pitch = 0.6 + self.level_ambient_rng.next_f32() * 0.4;
+                self.play_sculk_shriek(ev.x, ev.y, ev.z, 2.0, pitch);
+            }
+        }
+    }
+
+    /// THE SCULK-SHRIEK VOICE WALK (the case's own DDD
+    /// `playLocalSound` shape): the SHRIEK HEIGHT the voice rides at
+    /// (the `pos.y + TOP_Y` = +0.5 the ring's own plane keeps), the
+    /// distance-delay flag false the immediate voice keeps.
+    fn play_sculk_shriek(&mut self, x: i32, y: i32, z: i32, volume: f32, pitch: f32) {
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "block.sculk_shrieker.shriek",
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -27756,6 +27823,10 @@ impl App {
             self.sculk_pop_frames =
                 crate::avatar::SculkPopFrames::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.shriek_sprite.is_none() {
+            self.shriek_sprite =
+                crate::avatar::ShriekSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.glint_sprite.is_none() {
             self.glint_sprite =
                 crate::avatar::GlintSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -27825,6 +27896,10 @@ impl App {
         // the sculk pop's own groups (the frame-keyed frames the age
         // walk rides — the LevelEvent-3006 pop arm's 16x16 set)
         let mut sculk_pop_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the sculk shriek's own quads (the single 13x13 sprite the
+        // LevelEvent-3007 arm's ten-delayed ring samples — the TWO
+        // tilted quads the crossed-rings look wears)
+        let mut shriek_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         // THE SPLASH LANE'S GROUPS (the ring keyed by the instant flag
         // + the frame file, the shards keyed by the item layer — the
         // closure's own capture)
@@ -27932,6 +28007,83 @@ impl App {
                         Some((_, quads)) => quads.push(quad),
                         None => sculk_pop_groups.push((frame, vec![quad])),
                     }
+                }
+                crate::particles::ParticleKind::SculkShriek { delay } => {
+                    // THE SLEEP the render skips (javap the extract
+                    // walk's own `delay > 0` early return — the asleep
+                    // ring members the lane never draws)
+                    if delay > 0 {
+                        continue;
+                    }
+                    // THE CROSSED-RINGS PAIR (javap the two
+                    // extractRotatedQuad walks verbatim — the
+                    // rotationX(-60°) / rotationYXZ(-180°, 60°, 0)
+                    // quaternions the camera-space corner maps speak:
+                    // (x, y, 0) → (x, 0.5y, ∓0.866y) the pair rides —
+                    // the (right, up, away = right × up) basis the
+                    // billboard raster's honest equivalent keeps, the
+                    // second quad the mirrored screen-x the yaw-π twin
+                    // wears). THE FADE the `1 - t` alpha law speaks —
+                    // the brightness dim the tint's own fold answers
+                    // (the raster's alpha lane never carries, the
+                    // cooling-drip fade's own lane the dim keeps), the
+                    // growth the half() law rides, the fullbright look
+                    // the withBlock(15) override speaks, the
+                    // TRANSLUCENT layer, the single 13x13 sprite the
+                    // one-texture json banks
+                    let half = p.half();
+                    let dim = crate::particles::shriek_fade(
+                        p.age,
+                        p.lifetime,
+                        self.partial_tick,
+                    );
+                    let tint = [dim, dim, dim];
+                    // the away axis (right × up — the orthonormal third
+                    // the basis keeps)
+                    let away = [
+                        right[1] * up[2] - right[2] * up[1],
+                        right[2] * up[0] - right[0] * up[2],
+                        right[0] * up[1] - right[1] * up[0],
+                    ];
+                    let tilted = |sx: f32, syp: f32, mirror: bool, sign: f32| {
+                        let x = if mirror { -sx } else { sx };
+                        [
+                            lx as f32 + (right[0] * x + up[0] * syp * 0.5 + away[0] * syp * sign)
+                                * half,
+                            ly as f32 + (right[1] * x + up[1] * syp * 0.5 + away[1] * syp * sign)
+                                * half,
+                            lz as f32 + (right[2] * x + up[2] * syp * 0.5 + away[2] * syp * sign)
+                                * half,
+                        ]
+                    };
+                    let uv = [[0.0, 13.0], [13.0, 13.0], [13.0, 0.0], [0.0, 0.0]];
+                    // quad1 (rotationX(-60°) — the top leans away)
+                    let q1 = crate::raster::SampledQuad {
+                        pts: [
+                            tilted(-1.0, -1.0, false, 0.866_025_4),
+                            tilted(1.0, -1.0, false, 0.866_025_4),
+                            tilted(1.0, 1.0, false, 0.866_025_4),
+                            tilted(-1.0, 1.0, false, 0.866_025_4),
+                        ],
+                        uv,
+                        tex: "particle_shriek",
+                        tint,
+                    };
+                    // quad2 (rotationYXZ(-180°, 60°, 0) — the mirrored
+                    // screen-x, the top leans toward)
+                    let q2 = crate::raster::SampledQuad {
+                        pts: [
+                            tilted(-1.0, -1.0, true, -0.866_025_4),
+                            tilted(1.0, -1.0, true, -0.866_025_4),
+                            tilted(1.0, 1.0, true, -0.866_025_4),
+                            tilted(-1.0, 1.0, true, -0.866_025_4),
+                        ],
+                        uv,
+                        tex: "particle_shriek",
+                        tint,
+                    };
+                    shriek_quads.push(q1);
+                    shriek_quads.push(q2);
                 }
                 crate::particles::ParticleKind::Terrain { tile } => {
                     // the quarter law over the tile's 0..1 (the U edge
@@ -28491,6 +28643,14 @@ impl App {
                     Some(frames.pixel(*frame, u, v))
                 });
             }
+        }
+        // the shriek quads (the ring's own 13x13 pixels — the single
+        // sprite the one-texture json banks, the crossed pair the
+        // tilted quads wear)
+        if let Some(shriek) = &self.shriek_sprite {
+            fb.draw_sampled_quads(vp, &shriek_quads, &mut |_tex, u, v| {
+                Some(shriek.pixel(u, v))
+            });
         }
         // the spell ring groups (the two sets' own pixels — the frame
         // file the age's own walk folds, the set the instant flag
@@ -49141,6 +49301,122 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_sculk_charge_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_shriek_serve_the_ring_the_gate_wears() {
+        // THE SCULK-SHRIEK SERVE'S OWN WIRE LANE (javap case 3007 →
+        // offset 3193 over the 26.2 jar): the data word the case's
+        // own body never reads, the ring the ten delayed members
+        // speak (the 30 draws the provider chain spends — 3 per
+        // member), the waterlogged-gated voice the arm's verdict
+        // arms (the pitch draw the pass arm alone spends, the 2.0F
+        // volume the armed max keeps), the empty mailbox the no-op
+        // keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE DRY ARM (waterlogged = false): the ring + the voice the
+        // gate arms — the 30 ring draws + the ONE pitch draw the walk
+        // spends
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x5C03));
+        let before = app.particles.len();
+        app.live_sculk_shriek_events_updated(vec![
+            crate::world_view::WireSculkShriekEvent {
+                x: 9,
+                y: 65,
+                z: -3,
+                waterlogged: false,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let mut replay = crate::drops::Lcg::new(0x5C03);
+        for _ in 0..10 {
+            let _ = replay.next_int(1);
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+        }
+        let _ = replay.next_f32(); // the voice's own pitch draw
+        assert_eq!(spent, replay, "the 31 draws the walk exactly spends");
+        assert_eq!(
+            app.particles.len(),
+            before + 10,
+            "the ten members the ring banks"
+        );
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.sculk_shrieker.shriek @"))
+                .expect("the shriek voice the dry arm speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (0.6..1.0).contains(&pitch),
+                "the 0.6 + r * 0.4 band the voice keeps: {pitch}"
+            );
+        }
+        // THE DROWNED ARM (waterlogged = true): the ring the silence
+        // keeps — the voice the gate never arms, the 30 draws the
+        // ring alone spends
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x5C04));
+        let before2 = app.particles.len();
+        let voices_before = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.sculk_shrieker.shriek @"))
+            .count();
+        app.live_sculk_shriek_events_updated(vec![
+            crate::world_view::WireSculkShriekEvent {
+                x: 1,
+                y: 2,
+                z: 3,
+                waterlogged: true,
+            },
+        ]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        assert_eq!(
+            spent2,
+            {
+                let mut r = crate::drops::Lcg::new(0x5C04);
+                for _ in 0..10 {
+                    let _ = r.next_int(1);
+                    let _ = r.next_f32();
+                    let _ = r.next_f32();
+                }
+                r
+            },
+            "the muted arm the pitch draw never spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            before2 + 10,
+            "the ring the drowned arm still banks"
+        );
+        if sounds_loaded() {
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.sculk_shrieker.shriek @"))
+                .count();
+            assert_eq!(
+                voices_after, voices_before,
+                "the drowned shrieker the voice never arms"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_sculk_shriek_events_updated(vec![]);
         assert_eq!(
             app.particles.len(),
             settled,

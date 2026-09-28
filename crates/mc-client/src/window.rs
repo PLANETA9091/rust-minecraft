@@ -171,6 +171,7 @@ fn run_join(
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireElectricSparkEvent>,
                 Vec<crate::world_view::WireSculkChargeEvent>,
+                Vec<crate::world_view::WireSculkShriekEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -281,6 +282,7 @@ fn run_join(
             view.model.drain_gateway_spawn_events();
             view.model.drain_electric_spark_events();
             view.model.drain_sculk_charge_events();
+            view.model.drain_sculk_shriek_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -915,6 +917,7 @@ fn run_join(
                             view.model.drain_gateway_spawn_events();
                             view.model.drain_electric_spark_events();
                             view.model.drain_sculk_charge_events();
+                            view.model.drain_sculk_shriek_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1099,6 +1102,15 @@ fn run_join(
                                     // banks, each arm rides exactly one
                                     // shipped refresh)
                                     upd.sculk_charge_events,
+                                    // the sculk-shriek effect's arms ride
+                                    // with them — the 3007 words the
+                                    // server's own shrieker broadcasts
+                                    // stream to the shriek lane (the
+                                    // ten-delayed ring the case body
+                                    // speaks, the waterlogged verdict the
+                                    // voice gate banks, each arm rides
+                                    // exactly one shipped refresh)
+                                    upd.sculk_shriek_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1399,6 +1411,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireElectricSparkEvent>,
                 Vec<crate::world_view::WireSculkChargeEvent>,
+                Vec<crate::world_view::WireSculkShriekEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -1966,6 +1979,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     gateway_spawn_events,
                     electric_spark_events,
                     sculk_charge_events,
+                    sculk_shriek_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2116,6 +2130,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // verdict the state read banks, the vanilla client
                     // answers the same packet with)
                     app.live_sculk_charge_events_updated(sculk_charge_events);
+                    // the sculk-shriek effect's lane beside the
+                    // charge's: the 3007 words the server's own
+                    // shrieker broadcasts land at their own anchors
+                    // (the ten-delayed ring the case body speaks — the
+                    // staggered launch the i*5 delays ride, the
+                    // waterlogged gate the muted arm keeps — the
+                    // vanilla client answers the same packet with)
+                    app.live_sculk_shriek_events_updated(sculk_shriek_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

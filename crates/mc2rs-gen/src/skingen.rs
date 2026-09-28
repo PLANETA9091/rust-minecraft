@@ -216,6 +216,14 @@ pub const PARTICLE_SCULK_POP_JAR_PATHS: [&str; 4] = [
     "assets/minecraft/textures/particle/sculk_charge_pop_2.png",
     "assets/minecraft/textures/particle/sculk_charge_pop_3.png",
 ];
+/// The sculk shriek's single sprite (javap: the `shriek` particle
+/// type's sprite set — the jar's `particles/shriek.json` lists ONE
+/// texture, `minecraft:shriek` — the `SpriteSet.get(random)` pick the
+/// Provider speaks, the `BitRandomSource.nextInt(1)` draw the
+/// power-of-2 arm still spends; the 13x13 the IHDR verifies — the odd
+/// size the lane checks; the `ShriekParticle`'s render the
+/// LevelEvent-3007 arm's ten-delayed ring feeds).
+pub const PARTICLE_SHRIEK_JAR_PATH: &str = "assets/minecraft/textures/particle/shriek.png";
 /// The sweep attack's 8-frame arc (javap: the `sweep_attack` particle
 /// type's sprite set — the jar's `particles/sweep_attack.json` lists
 /// EIGHT textures, `minecraft:sweep_0..7` in ASCENDING order — the
@@ -445,6 +453,9 @@ pub const PARTICLE_SCULK_POP_RUNTIME_PATHS: [&str; 4] = [
     "particle/sculk_charge_pop_2.png",
     "particle/sculk_charge_pop_3.png",
 ];
+/// The sculk shriek's runtime-cache path (the same textures/ prefix
+/// strip the other lanes speak).
+pub const PARTICLE_SHRIEK_RUNTIME_PATH: &str = "particle/shriek.png";
 /// The splash-potion ring's runtime-cache paths (the same textures/
 /// prefix strip the other lanes speak — the FILE index the json's
 /// descending list folds).
@@ -616,6 +627,10 @@ pub struct SkinData {
     /// sources (the 16x16 sculk_charge_pop frames the json's ascending
     /// list orders).
     pub particle_sculk_pop_png_sha1s: [String; 4],
+    /// sha1 of the sculk shriek's single sprite (jar-verbatim
+    /// integrity) — the LevelEvent-3007 arm's ten-delayed ring's pixel
+    /// source (the 13x13 shriek sprite the one-texture json keeps).
+    pub particle_shriek_png_sha1: String,
     /// sha1s of the splash-potion ring's two 8-frame sets (jar-verbatim
     /// integrity) — the spell ring's pixel sources (the 8x8 effect/spell
     /// frames the two jsons' descending lists order).
@@ -1123,6 +1138,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             ph
         );
     }
+    // the sculk shriek's single sprite (the same shape check the glint
+    // walk speaks — the 13x13 the case-3007 ring quads sample)
+    let shriek_bytes = read_entry(archive, PARTICLE_SHRIEK_JAR_PATH).context("read shriek")?;
+    let particle_shriek_png_sha1 = crate::util::sha1_hex(&shriek_bytes);
+    let (kw, kh, _shriek_rgba) = decode_rgba(&shriek_bytes).context("decode shriek")?;
+    anyhow::ensure!(
+        (kw, kh) == (13, 13),
+        "shriek must be the 13x13 sprite, got {}x{}",
+        kw,
+        kh
+    );
     // the splash-potion ring's two 8-frame sets (the same shape check
     // the poof walk speaks — the 8x8 the ring quads sample over their
     // own lives, the type's own json the set rides)
@@ -1286,6 +1312,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_explosion_png_sha1s,
         particle_sculk_charge_png_sha1s,
         particle_sculk_pop_png_sha1s,
+        particle_shriek_png_sha1,
         particle_effect_png_sha1s,
         particle_spell_png_sha1s,
         item_potion_overlay_png_sha1,
@@ -1790,6 +1817,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .join(", ")
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_SHRIEK_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_shriek_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SHRIEK_RUNTIME_PATH: &str = \"{PARTICLE_SHRIEK_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = [{}];\n",
         data.particle_effect_png_sha1s
             .iter()
@@ -1963,6 +1997,25 @@ mod tests {
         out
     }
 
+    /// A 13x13 RGBA png — the shriek sprite's odd shape (the jar's
+    /// own IHDR the lane verifies), one lit texel so the decode is
+    /// non-trivial.
+    fn shriek_png() -> Vec<u8> {
+        let (w, h) = (13u32, 13u32);
+        let mut rgba = vec![0u8; (w * h * 4) as usize];
+        let o = ((3 * w + 6) * 4) as usize;
+        rgba[o..o + 4].copy_from_slice(&[120, 220, 160, 255]);
+        let mut out = Vec::new();
+        {
+            let mut enc = png::Encoder::new(&mut out, w, h);
+            enc.set_color(png::ColorType::Rgba);
+            enc.set_depth(png::BitDepth::Eight);
+            let mut wr = enc.write_header().unwrap();
+            wr.write_image_data(&rgba).unwrap();
+        }
+        out
+    }
+
     /// A 16x16 RGBA png — the item sprite shape (the splash-potion
     /// debris burst's two layers), one lit texel so the decode is
     /// non-trivial.
@@ -2089,6 +2142,8 @@ mod tests {
         let sculk_pops = [item_png(), item_png(), item_png(), item_png()];
         let expected_sculk_pop_sha1s: Vec<String> =
             sculk_pops.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let shriek = shriek_png();
+        let expected_shriek_sha1 = crate::util::sha1_hex(&shriek);
         let effects = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
         let expected_effect_sha1s: Vec<String> =
             effects.iter().map(|p| crate::util::sha1_hex(p)).collect();
@@ -2234,6 +2289,7 @@ mod tests {
             (PARTICLE_SCULK_POP_JAR_PATHS[1], sculk_pops[1].clone()),
             (PARTICLE_SCULK_POP_JAR_PATHS[2], sculk_pops[2].clone()),
             (PARTICLE_SCULK_POP_JAR_PATHS[3], sculk_pops[3].clone()),
+            (PARTICLE_SHRIEK_JAR_PATH, shriek),
             (PARTICLE_EFFECT_JAR_PATHS[0], effects[0].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[1], effects[1].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[2], effects[2].clone()),
@@ -2385,6 +2441,10 @@ mod tests {
             data.particle_sculk_pop_png_sha1s,
             expected_sculk_pop_sha1s.as_slice(),
             "the sculk pop frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_shriek_png_sha1, expected_shriek_sha1,
+            "the shriek sprite's own sha1"
         );
         assert_eq!(
             data.particle_effect_png_sha1s,

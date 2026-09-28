@@ -474,6 +474,31 @@ pub enum ParticleKind {
     /// gives, the ±0.07 cube speeds the caller's trio verbatim
     /// carries.
     SculkChargePop,
+    /// `ShriekParticle` — the LevelEvent-3007 arm's own ring (the
+    /// single 13x13 `shriek` sprite the one-texture json keeps, the
+    /// `SpriteSet.get(random)` pick the Provider speaks — the
+    /// `BitRandomSource.nextInt(1)` draw the power-of-2 arm still
+    /// spends): the DELAY the option carries (0, 5, .., 45 ticks —
+    /// the ten-ring's staggered launch the i*5 fold gives) the sleep
+    /// walk rides (NO age, NO physics the delay guards keep — the
+    /// render skips the asleep the same way), the 30-tick life the
+    /// ctor's `bipush 30` write carries, the 0.1 rise the `yd`
+    /// write speaks (the base 0.98 friction the decay rides), the
+    /// 0.85 quadSize the ctor's DIRECT putfield keeps (no random —
+    /// the growth the `getQuadSize`'s `* 0.75` clamp law gives),
+    /// the alpha fade the `1 - t` extract speaks (the brightness
+    /// dim the renderer's honest stand-in wears), the fullbright
+    /// look the `getLightCoords` withBlock(15) override speaks, the
+    /// TRANSLUCENT layer, the TWO tilted quads the crossed-rings
+    /// look wears (the rotationX(-60°) / rotationYXZ(-180°, 60°, 0)
+    /// pair the camera-space quaternion maths speaks — the
+    /// (right, up, away) basis tilt the billboard raster's honest
+    /// equivalent keeps).
+    SculkShriek {
+        /// The option's own delay (the ticks the sleep walk counts
+        /// down — 0, 5, .., 45 the i*5 fold gives).
+        delay: u32,
+    },
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -547,6 +572,27 @@ pub fn sculk_charge_frame(age: u32, lifetime: u32) -> usize {
 pub fn sculk_pop_frame(age: u32, lifetime: u32) -> usize {
     ((age as usize * (SCULK_POP_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
         .min(SCULK_POP_FRAME_COUNT - 1)
+}
+
+/// The shriek's own lifetime (javap the ctor's `bipush 30` write —
+/// FIXED, no draw the 30-tick band speaks).
+pub const SCULK_SHRIEK_LIFETIME: u32 = 30;
+
+/// The shriek's own growth law (javap `ShriekParticle.getQuadSize`
+/// verbatim: `quadSize * clamp(((age + partial) / lifetime) * 0.75F,
+/// 0, 1)` — the ring grows from NOTHING to the `0.85 * 0.75 =
+/// 0.6375` cap the 30 ticks speak, the clamp never fires).
+pub fn shriek_grow(age: u32, lifetime: u32, partial: f32) -> f32 {
+    let t = (age as f32 + partial) / lifetime.max(1) as f32;
+    (t * 0.75).clamp(0.0, 1.0)
+}
+
+/// The shriek's own fade law (javap the `extract` walk's alpha
+/// verbatim: `1 - clamp((age + partial) / lifetime, 0, 1)` — the ring
+/// dims the whole 30-tick life; the raster's alpha lane never
+/// carries — the brightness dim the tint's own fold answers).
+pub fn shriek_fade(age: u32, lifetime: u32, partial: f32) -> f32 {
+    1.0 - ((age as f32 + partial) / lifetime.max(1) as f32).clamp(0.0, 1.0)
 }
 
 /// The dragon breath's own frame law (javap `Particle.setSpriteFromAge`
@@ -727,8 +773,29 @@ impl Particle {
             // same way the crit's bloom does: the quad starts a point,
             // the full size the life's end reaches)
             ParticleKind::Portal { .. } => base * portal_grow(self.age as f32 / self.lifetime.max(1) as f32),
+            // the shriek's own growth (javap ShriekParticle.getQuadSize
+            // — the `* 0.75` clamp law the 30-tick life rides: the ring
+            // grows from a point to the 0.6375 cap, the partial rides
+            // 0.0 the same way the crit's bloom does)
+            ParticleKind::SculkShriek { .. } => {
+                base * shriek_grow(self.age, self.lifetime, 0.0)
+            }
             _ => base,
         }
+    }
+
+    /// The `ShriekParticle.tick` verbatim (javap over the 26.2 jar) —
+    /// the `delay > 0` gate the sleep walk rides: the countdown the
+    /// kind's own delay field carries (NO age walk, NO physics the
+    /// asleep ticks never spend), the base law the awake arm keeps.
+    pub fn tick_shriek(&mut self) -> bool {
+        if let ParticleKind::SculkShriek { delay } = &mut self.kind {
+            if *delay > 0 {
+                *delay -= 1;
+                return true;
+            }
+        }
+        self.tick()
     }
 
     /// The `BubbleParticle.tick` verbatim — the bubble rides NONE of
@@ -3939,6 +4006,66 @@ pub fn sculk_charge_pops(
     out
 }
 
+/// The sculk-shriek ring walk (javap `LevelEventHandler` case 3007 —
+/// offset 3193 — over the 26.2 jar): the data word the case's own
+/// body NEVER reads (no `iload_3` the transport honesty keeps), the
+/// TEN `addParticle(new ShriekParticleOption(i * 5), pos.x + 0.5,
+/// pos.y + TOP_Y, pos.z + 0.5, 0, 0, 0)` walks the `i < 10` loop
+/// banks — the delay 0, 5, .., 45 ticks the staggered launch rides,
+/// the shriek height `TOP_Y` = 0.5 the bottom-half collision shape's
+/// max keeps. THE PROVIDER CHAIN each ring member spends (javap
+/// `ShriekParticle$Provider.createParticle` + the base ctor over the
+/// 26.2 jar): the `SpriteSet.get(random)` sprite pick FIRST (the
+/// `BitRandomSource.nextInt(1)` power-of-2 arm the single-sprite set
+/// keeps — the draw SPENDS, the value the one-sprite list ignores),
+/// then the base ctor's dead life + dead size draws (the values the
+/// ctor's own putfields override — 0.85 quadSize, 30 lifetime), NO
+/// position/speed draws the zero trio keeps. THE RISE the ctor's
+/// `yd = 0.1` write carries (the base 0.98 friction the decay
+/// rides, the gravity 0.0F the plain float keeps), the 30-tick life
+/// the fixed write speaks, the sleep the delay walk answers (NO age,
+/// NO physics the asleep ticks never spend). The muted voice the
+/// render lane's own serve banks beside the ring (the waterlogged
+/// gate the arm's own state read folds).
+pub fn sculk_shriek_ring(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) -> Vec<Particle> {
+    let mut out = Vec::new();
+    let px = anchor.0 as f64 + 0.5;
+    let py = anchor.1 as f64 + 0.5;
+    let pz = anchor.2 as f64 + 0.5;
+    for i in 0..10u32 {
+        let delay = i * 5;
+        // THE SPRITE PICK (the `SpriteSet.get(random)` law — the
+        // `nextInt(1)` power-of-2 arm the draw spends, the value the
+        // one-sprite list ignores)
+        let _sprite_pick = rng.next_int(1);
+        // THE BASE CTOR'S OWN DRAWS (the dead life + the dead size —
+        // the values the ctor's putfields override)
+        let r_life = rng.next_f32();
+        let r_size = rng.next_f32();
+        let _dead_base_life = base_lifetime(r_life);
+        let _dead_size = base_quad_size(r_size);
+        out.push(Particle {
+            kind: ParticleKind::SculkShriek { delay },
+            x: px,
+            y: py,
+            z: pz,
+            prev: None,
+            vx: 0.0,
+            vy: 0.1,
+            vz: 0.0,
+            age: 0,
+            lifetime: SCULK_SHRIEK_LIFETIME,
+            gravity: 0.0,
+            friction: 0.98,
+            quad_size: 0.85,
+            uo: 0.0,
+            vo: 0.0,
+            col: [1.0, 1.0, 1.0],
+        });
+    }
+    out
+}
+
 /// The Direction enum's own ordinal (the values() array index the
 /// `MultifaceBlock.unpack` bit law reads — DOWN 0, UP 1, NORTH 2,
 /// SOUTH 3, WEST 4, EAST 5).
@@ -6481,5 +6608,87 @@ mod tests {
         assert_eq!(sculk_charge_frame(19, 19), 6);
         assert_eq!(sculk_pop_frame(0, 9), 0);
         assert_eq!(sculk_pop_frame(9, 9), 3);
+    }
+    #[test]
+    fn the_shriek_ring_the_delays_the_draws_wear() {
+        // THE SHRIEK RING'S OWN LAW (javap the case 3007 ring + the
+        // ShriekParticle providers over the 26.2 jar): the ten
+        // members the i*5 delays stagger, the block-top anchor the
+        // +0.5 trio rides, the 0.1 rise the yd write carries, the 30
+        // -tick life the fixed write speaks, the 0.85 quad the
+        // direct putfield keeps, the THREE draws per member the
+        // provider chain spends (the sprite pick the nextInt(1)
+        // power-of-2 arm spends, the two dead base draws the
+        // putfields override), the growth + fade laws the clamps
+        // keep, the seeded chain replays.
+        let seed = 0x5C01_3007u64 ^ 0xC1A5;
+        let mut r = crate::drops::Lcg::new(seed);
+        let ring = sculk_shriek_ring((7, 70, 3), &mut r);
+        assert_eq!(ring.len(), 10, "the ten members the i<10 loop banks");
+        for (i, p) in ring.iter().enumerate() {
+            assert!(
+                matches!(p.kind, ParticleKind::SculkShriek { delay } if delay == (i as u32) * 5),
+                "the i*5 delay the staggered launch speaks: {}",
+                i
+            );
+            assert_eq!((p.x, p.y, p.z), (7.5, 70.5, 3.5), "the block-top anchor rides");
+            assert_eq!((p.vx, p.vy, p.vz), (0.0, 0.1, 0.0), "the rise the yd write carries");
+            assert_eq!(p.lifetime, 30, "the 30-tick life the fixed write speaks");
+            assert_eq!(p.quad_size, 0.85, "the direct putfield the quad keeps");
+            assert_eq!(p.gravity, 0.0);
+            assert_eq!(p.friction, 0.98);
+            assert_eq!(p.col, [1.0, 1.0, 1.0]);
+        }
+        // THE DRAW COUNT (the 30 draws the provider chain spends — 3
+        // per member)
+        let mut replay = crate::drops::Lcg::new(seed);
+        for _ in 0..10 {
+            let _ = replay.next_int(1);
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+        }
+        assert_eq!(r, replay, "the 30 draws the walk exactly spends");
+        // THE GROWTH + FADE LAWS (the clamps the getQuadSize/extract
+        // walks keep)
+        assert_eq!(shriek_grow(0, 30, 0.0), 0.0, "the ring starts a point");
+        assert_eq!(shriek_grow(30, 30, 0.0), 0.75, "the 0.75 cap the growth never exceeds");
+        assert_eq!(shriek_fade(0, 30, 0.0), 1.0, "the fade starts whole");
+        assert_eq!(shriek_fade(30, 30, 0.0), 0.0, "the fade ends dark");
+        // THE SLEEP (the delay walk the countdown rides — the awake
+        // arm the base law keeps; the second seeded walk the sleeper
+        // banks — the first the replay's own ten keeps)
+        let mut r_sleep = crate::drops::Lcg::new(seed);
+        let mut sleeper_ring = sculk_shriek_ring((7, 70, 3), &mut r_sleep);
+        let mut sleeper = sleeper_ring.pop().expect("the last member the 45-delay sleeper banks");
+        let age_before = sleeper.age;
+        let sleep_ticks = match sleeper.kind {
+            ParticleKind::SculkShriek { delay } => delay,
+            _ => unreachable!(),
+        };
+        assert_eq!(sleep_ticks, 45, "the last member the 45-delay banks");
+        for _ in 0..sleep_ticks {
+            assert!(sleeper.tick_shriek(), "the asleep member the removal never fires");
+        }
+        assert_eq!(sleeper.age, age_before, "the sleep the age walk never spends");
+        assert!(
+            matches!(sleeper.kind, ParticleKind::SculkShriek { delay: 0 }),
+            "the countdown the delay reaches zero"
+        );
+        // the awake arm the base law walks (the age advances, the
+        // rise decays the 0.98 friction speaks)
+        assert!(sleeper.tick_shriek());
+        assert_eq!(sleeper.age, age_before + 1);
+        assert!(sleeper.y < 70.5 + 0.1 + 1e-12 && sleeper.y > 70.5, "the rise rode the tick");
+        // THE SEEDED CHAIN REPLAYS
+        let mut a = crate::drops::Lcg::new(seed);
+        let ring_a = sculk_shriek_ring((7, 70, 3), &mut a);
+        assert_eq!(ring.len(), ring_a.len());
+        for (x, y) in ring.iter().zip(ring_a.iter()) {
+            assert_eq!(
+                (x.x, x.y, x.z, x.vx, x.vy, x.vz, x.lifetime, x.quad_size),
+                (y.x, y.y, y.z, y.vx, y.vy, y.vz, y.lifetime, y.quad_size),
+                "the seeded chain replays"
+            );
+        }
     }
 }
