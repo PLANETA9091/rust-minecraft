@@ -506,6 +506,14 @@ pub struct SnapshotView {
     /// after), the render lane's own law folds the frame fill — the
     /// fixed voice and the sixteen SMOKE puffs the case body walks.
     pub end_portal_frame_fill_events: Vec<WireEndPortalFrameFillEvent>,
+    /// The 1504 words the refresh carries (the server's own
+    /// fluid-transfer walks broadcast,
+    /// [`mc_protocol::play::DRIPSTONE_DRIP_EFFECT`] the vocabulary
+    /// speaks): shipped once with the refresh that carried them (the
+    /// worker's own drain empties the mailbox after), the render
+    /// lane's own law folds the hang drop — the position folds and
+    /// the drop's own type the resolution banks.
+    pub dripstone_drip_events: Vec<WireDripstoneDripEvent>,
     /// The 2003 words the refresh carries (the server's own ender
     /// signal broadcasts, [`mc_protocol::play::EYE_OF_ENDER_SHATTER_EFFECT`]
     /// the vocabulary speaks): shipped once with the refresh that
@@ -686,6 +694,21 @@ pub struct WireEndPortalFrameFillEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One wire DRIPSTONE-DRIP arm — the Level Event packet's own
+/// landing (the 1504 words the server's own fluid-transfer walks
+/// broadcast, [`mc_protocol::play::DRIPSTONE_DRIP_EFFECT`] the
+/// render lane speaks): the event's anchor block + the drop's own
+/// type the model's own chunk-store resolution banks verbatim (the
+/// cells the stalactite gate refused the wire never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireDripstoneDripEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The drop's own type (the lava bit the resolution banks).
+    pub lava: bool,
 }
 
 /// One wire DRAGON BLOCK-BREAK arm — the Level Event packet's own
@@ -2609,6 +2632,9 @@ pub fn materialize_snapshot_view(
         // traffic — the empty mailbox the render lane skips)
         smoke_voice_events: Vec::new(),
         end_portal_frame_fill_events: Vec::new(),
+        // and no drip words (the join snapshot carries no 1504
+        // traffic — the empty mailbox the render lane skips)
+        dripstone_drip_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2008
         // traffic — the empty mailbox the render lane skips)
         dragon_block_break_events: Vec::new(),
@@ -3079,6 +3105,21 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the dripstone-drip's own projection (the mailbox verbatim —
+        // the anchor + the lava bit the arms carry, the render lane's
+        // own law reads): each 1504 word ships once with this view,
+        // the worker's drain empties the mailbox after
+        let dripstone_drip_events = self
+            .model
+            .dripstone_drip_events
+            .iter()
+            .map(|arm| WireDripstoneDripEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                lava: arm.lava,
+            })
+            .collect();
         // the eye-of-ender shatter's own projection (the mailbox
         // verbatim — the anchor the arms carry, the render lane's own
         // law reads): each 2003 word ships once with this view, the
@@ -3320,6 +3361,10 @@ impl LiveView {
                 // arm too — the 1503 words are the connection's own
                 // traffic, not the pose's
                 end_portal_frame_fill_events,
+                // the dripstone-drip's arms ride the pose-less arm
+                // too — the 1504 words are the connection's own
+                // traffic, not the pose's
+                dripstone_drip_events,
                 // the dragon block-break effect's arms ride the pose-less
                 // arm too — the 2008 words are the connection's own
                 // traffic, not the pose's
@@ -3446,6 +3491,10 @@ impl LiveView {
             // — the 1503 words follow the mailbox exactly like the
             // water's own arms do
             end_portal_frame_fill_events,
+            // the dripstone-drip's arms ride every refresh too — the
+            // 1504 words follow the mailbox exactly like the water's
+            // own arms do
+            dripstone_drip_events,
             // the dragon block-break effect's arms ride every refresh
             // too — the 2008 words follow the mailbox exactly like the
             // water's own arms do

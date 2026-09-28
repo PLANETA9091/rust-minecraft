@@ -174,6 +174,7 @@ fn run_join(
                 Vec<crate::world_view::WireComposterFillEvent>,
                 Vec<crate::world_view::WireSmokeVoiceEvent>,
                 Vec<crate::world_view::WireEndPortalFrameFillEvent>,
+                Vec<crate::world_view::WireDripstoneDripEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
@@ -274,6 +275,7 @@ fn run_join(
             view.model.drain_composter_fill_events();
             view.model.drain_smoke_voice_events();
             view.model.drain_end_portal_frame_fill_events();
+            view.model.drain_dripstone_drip_events();
             view.model.drain_eye_of_ender_shatter_events();
             view.model.drain_dragon_block_break_events();
             view.model.drain_dispenser_dispense_events();
@@ -898,6 +900,7 @@ fn run_join(
                             view.model.drain_composter_fill_events();
                             view.model.drain_smoke_voice_events();
                             view.model.drain_end_portal_frame_fill_events();
+                            view.model.drain_dripstone_drip_events();
                             view.model.drain_eye_of_ender_shatter_events();
                             view.model.drain_dragon_block_break_events();
                             view.model.drain_dispenser_dispense_events();
@@ -1089,6 +1092,14 @@ fn run_join(
                                     // law folds, each arm rides exactly
                                     // one shipped refresh)
                                     upd.end_portal_frame_fill_events,
+                                    // the dripstone-drip's arms ride beside
+                                    // the frame fill's — the 1504 words
+                                    // the server's own fluid-transfer walks
+                                    // stream to the drip lane (the hang
+                                    // drop's spawn walk the render's own
+                                    // law folds, each arm rides exactly
+                                    // one shipped refresh)
+                                    upd.dripstone_drip_events,
                                     // the eye-of-ender shatter's arms ride
                                     // beside the water's — the 2003 words
                                     // the server's own ender signal
@@ -1282,6 +1293,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireComposterFillEvent>,
                 Vec<crate::world_view::WireSmokeVoiceEvent>,
                 Vec<crate::world_view::WireEndPortalFrameFillEvent>,
+                Vec<crate::world_view::WireDripstoneDripEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
@@ -1839,6 +1851,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     composter_fill_events,
                     smoke_voice_events,
                     end_portal_frame_fill_events,
+                    dripstone_drip_events,
                     eye_of_ender_shatter_events,
                     dragon_block_break_events,
                     dispenser_dispense_events,
@@ -1988,6 +2001,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     app.live_end_portal_frame_fill_events_updated(
                         end_portal_frame_fill_events,
                     );
+                    // the dripstone-drip's lane beside the frame fill's:
+                    // the 1504 words the server's own fluid-transfer
+                    // walks broadcast land at their own anchors (the
+                    // stalactite gate the model's own resolution spoke —
+                    // the refused cells the lane never saw — the hang
+                    // drop the position folds place, the vanilla client
+                    // answers the same packet with)
+                    app.live_dripstone_drip_events_updated(dripstone_drip_events);
                     // the eye-of-ender shatter's lane beside the water's:
                     // the 2003 words the server's own ender signal
                     // broadcasts land at their own anchors (the shard

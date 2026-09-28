@@ -214,6 +214,27 @@ pub enum ParticleKind {
     /// draw gives, the full block light the getLightCoords override
     /// speaks, the shrink the (1 - t²) fold rides).
     Lava,
+    /// `DripParticle$DripHangParticle` — the dripstone drip's own hang
+    /// drop (the LevelEvent-1504 walk's spawn — the `drip_hang` sprite
+    /// the one-texture jsons keep, the 40-tick countdown the
+    /// preMoveUpdate wears, the ×0.02 damping the postMoveUpdate
+    /// speaks, the raw 0.0012 gravity the ×0.02 fold gives; the lava
+    /// bit rides the CoolingDripHangParticle's own fade — the r/g/b
+    /// the `40 − lifetime` fold speaks).
+    DripstoneHang { lava: bool },
+    /// `DripParticle$DripstoneFallAndLandParticle` — the fall the
+    /// hang's expiry spawns (the `drip_fall` sprite, the
+    /// `64.0 / (r × 0.8 + 0.2)` lifetime the FallAndLand ctor draws,
+    /// the raw 0.06 gravity the base ctor keeps, the ×0.98 damping;
+    /// the landing the world-read fold answers — the splash the water
+    /// keeps, the land splat the lava spawns).
+    DripstoneFall { lava: bool },
+    /// `DripParticle$DripLandParticle` — the lava fall's own landing
+    /// splat (the LANDING_LAVA option the fall's postMoveUpdate
+    /// spawns, the `drip_land` sprite, the `16.0 / (r × 0.8 + 0.2)`
+    /// lifetime the ctor draws, the cooling-end tint the provider
+    /// keeps, the resting pose the collision fold pins).
+    DripstoneLand,
     /// `SmokeParticle` — the drip's own child (the SMOKE type the
     /// LavaParticle.tick's draw speaks, the BaseAshSmokeParticle laws:
     /// the rise the −0.1 gravity gives, the grey tint the r*0.3 draw,
@@ -869,6 +890,272 @@ impl Particle {
             smoke_out.push((self.x, self.y, self.z, self.vx, self.vy, self.vz));
         }
         true
+    }
+
+    /// THE DRIPSTONE HANG'S OWN WALK (javap `DripHangParticle` +
+    /// `CoolingDripHangParticle` verbatim): the lava's cooling fade
+    /// the preMove head folds FIRST (the r/g/b the `40 − lifetime`
+    /// speak — g = 16/(fade+16), b = 4/(fade+8), r the constant 1.0
+    /// keeps; the water drop the static provider tint (0.2, 0.3,
+    /// 1.0) wears), then the countdown the base preMoveUpdate keeps
+    /// (`--lifetime <= 0` → remove + the FALLING option the carried
+    /// motion rides into `fall_out`), the RAW gravity lane the
+    /// DripParticle.tick's own `yd -= gravity` keeps (the 0.0012 the
+    /// DripHang's ×0.02 fold gives — NO 0.04 scale the base Particle
+    /// law wears), the move (the collision lane sleeps — the drift
+    /// the damping kills, the hang's honest absence), the ×0.02
+    /// damping the postMoveUpdate's trio keeps.
+    pub fn tick_dripstone_hang(
+        &mut self,
+        fall_out: &mut Vec<(f64, f64, f64, f64, f64, f64, bool)>,
+    ) -> bool {
+        self.tick_head();
+        // THE COOLING FADE (the CoolingDripHangParticle's preMove
+        // head — the water drop the static tint keeps)
+        if let ParticleKind::DripstoneHang { lava } = &self.kind {
+            if *lava {
+                let fade = 40 - self.lifetime;
+                self.col = [
+                    1.0,
+                    16.0 / (fade as f32 + 16.0),
+                    4.0 / (fade as f32 + 8.0),
+                ];
+            }
+        }
+        // THE COUNTDOWN (the preMoveUpdate's own `--lifetime <= 0`
+        // walk — the expiry REMOVES and spawns the falling option)
+        self.lifetime -= 1;
+        if self.lifetime == 0 {
+            let lava = matches!(&self.kind, ParticleKind::DripstoneHang { lava: true });
+            fall_out.push((self.x, self.y, self.z, self.vx, self.vy, self.vz, lava));
+            return false;
+        }
+        // THE RAW GRAVITY (the DripParticle.tick's own `yd -= gravity`
+        // — no 0.04 scale)
+        self.vy -= self.gravity;
+        // THE MOVE (the collision lane sleeps — the damped drift the
+        // hang's own absence keeps)
+        self.x += self.vx;
+        self.y += self.vy;
+        self.z += self.vz;
+        // THE DAMPING (the postMoveUpdate's ×0.02 trio)
+        self.vx *= self.friction;
+        self.vy *= self.friction;
+        self.vz *= self.friction;
+        true
+    }
+
+    /// THE DRIPSTONE FALL'S OWN WALK (javap `DripParticle.tick` +
+    /// `FallAndLandParticle.postMoveUpdate` verbatim): the countdown
+    /// the base preMoveUpdate keeps (the fall CAN time out — the
+    /// silence the honest expiry speaks), the raw 0.06 gravity, the
+    /// move + the LANDING the client's world-read fold answers (the
+    /// vanilla move()'s own clip — the cell the drop ENTERS below its
+    /// birth cell the solid check speaks; the birth cell the check
+    /// never re-fires — the drop starts BELOW the tip's own collision
+    /// shape the 0.25 fold keeps), the landing → remove + the LAND
+    /// walk into `land_out` (the splash the water keeps, the
+    /// LANDING_LAVA splat the lava spawns), the ×0.98 damping.
+    pub fn tick_dripstone_fall(
+        &mut self,
+        world: Option<&crate::world::World>,
+        land_out: &mut Vec<(f64, f64, f64, bool)>,
+    ) -> bool {
+        self.tick_head();
+        // THE COUNTDOWN (the base preMoveUpdate's own walk)
+        self.lifetime -= 1;
+        if self.lifetime == 0 {
+            return false;
+        }
+        // THE RAW GRAVITY
+        self.vy -= self.gravity;
+        // THE MOVE + THE COLLISION FOLD (the cell-boundary walk the
+        // vanilla clip keeps — the crossed cells the solid check
+        // answers)
+        let cur_cell = self.y.floor() as i32;
+        let ny = self.y + self.vy;
+        let entered = ny.floor() as i32;
+        let cx = self.x.floor() as i32;
+        let cz = self.z.floor() as i32;
+        let is_solid = |wy: i32| -> bool {
+            world
+                .map(|w| w.get(cx, wy, cz) != crate::world::AIR)
+                .unwrap_or(false)
+        };
+        self.x += self.vx;
+        self.z += self.vz;
+        if entered < cur_cell {
+            // THE CROSSED CELLS (the boundary walk the clip keeps —
+            // the first solid cell the landing answers at its top)
+            let mut landed: Option<f64> = None;
+            for wy in (entered..cur_cell).rev() {
+                if is_solid(wy) {
+                    landed = Some((wy + 1) as f64);
+                    break;
+                }
+            }
+            if let Some(boundary) = landed {
+                let lava = matches!(&self.kind, ParticleKind::DripstoneFall { lava: true });
+                land_out.push((self.x, boundary, self.z, lava));
+                return false;
+            }
+        }
+        self.y = ny;
+        // THE DAMPING (the base tick tail's ×0.98 trio)
+        self.vx *= self.friction;
+        self.vy *= self.friction;
+        self.vz *= self.friction;
+        true
+    }
+
+    /// THE DRIPSTONE LAND'S OWN WALK (javap `DripParticle.tick` over
+    /// the resting splat — the countdown, the collision fold the
+    /// vanilla onGround clip keeps: the pose PINNED at the boundary
+    /// the client's honest fold speaks, the ×0.98 damping the motion
+    /// fields keep).
+    pub fn tick_dripstone_land(&mut self) -> bool {
+        self.tick_head();
+        self.lifetime -= 1;
+        if self.lifetime == 0 {
+            return false;
+        }
+        // THE RESTING FOLD (the vanilla onGround clip the constant y
+        // keeps — the splat the boundary holds, the damping the
+        // residual motion fields carry)
+        self.vx *= self.friction;
+        self.vy *= self.friction;
+        self.vz *= self.friction;
+        true
+    }
+}
+
+/// THE DRIPSTONE OFFSET FOLD (javap `BlockBehaviour$Properties
+/// .lambda$offsetType$1` verbatim — the XZ offsetter the
+/// speleothem's own offsetType answers): the 4-bit draw the seed's
+/// own lanes keep (`seed & 15` the x, `seed >> 8 & 15` the z), the
+/// `/ 15.0F − 0.5 × 0.5` fold the f32→f64 walk keeps, the clamp the
+/// `±maxHorizontalOffset` answers (the speleothem's own 0.125 the
+/// `SHAPE_BASE.min(X)` speaks — the tighter bound the plants'
+/// default 0.25 never reaches). The seed the [`crate::world
+/// ::mth_get_seed`] law hashes.
+pub fn dripstone_offset(bit: i64, max_off: f32) -> f64 {
+    let v = (bit as f32) / 15.0f32;
+    let v = f64::from(v);
+    let v = (v - 0.5) * 0.5;
+    v.clamp(f64::from(-max_off), f64::from(max_off))
+}
+
+/// The dripstone drip's HANG drop ctor (javap
+/// `DripParticle$DripstoneWaterHangProvider` + `DripstoneLavaHangProvider`
+/// verbatim): the ZERO speed trio the addParticle args carry, the
+/// `setSize(0.01F, 0.01F)` the quadSize 0.01 folds, the lifetime the
+/// DripHang's own `bipush 40` keeps, the gravity the base 0.06 × the
+/// DripHang's 0.02 fold gives (0.0012 — the RAW lane the
+/// DripParticle.tick keeps), the water tint the setColor(0.2F, 0.3F,
+/// 1.0F) override speaks, the lava tint the CoolingDripHang's own
+/// fade answers (r = 1.0, g = 16/(fade+16), b = 4/(fade+8) — at the
+/// birth the fade is 0: (1.0, 1.0, 0.5)). The SPRITE PICK the ambient
+/// stream's own draw carries (`SpriteSet.get(random)` — the
+/// nextInt(1) the one-element list answers); the level random the
+/// ctor draws and the pick's draw the same merged stream keeps.
+pub fn dripstone_drip_hang(
+    x: f64,
+    y: f64,
+    z: f64,
+    lava: bool,
+    r_sprite: f32,
+) -> Particle {
+    let _ = r_sprite; // the one-element pick the roll never splits
+    Particle {
+        kind: ParticleKind::DripstoneHang { lava },
+        x,
+        y,
+        z,
+        prev: None,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        lifetime: 40,
+        gravity: 0.0012,
+        friction: 0.02,
+        quad_size: 0.01,
+        uo: 0.0,
+        vo: 0.0,
+        col: if lava { [1.0, 1.0, 0.5] } else { [0.2, 0.3, 1.0] },
+    }
+}
+
+/// The dripstone drip's FALL drop ctor (javap
+/// `DripParticle$DripstoneWaterFallProvider` + `DripstoneLavaFallProvider`
+/// verbatim): the `lifetime = (int)(64.0 / (r × 0.8 + 0.2))` the
+/// FallAndLand ctor draws (80..=320), the gravity the base 0.06
+/// keeps, the ×0.98 friction the base tick tail speaks, the water
+/// tint the setColor(0.2F, 0.3F, 1.0F) keeps, the lava tint the
+/// setColor(1.0F, 0.2857143F, 0.08333333F) — the cooling fade's END
+/// state the constants speak. The draws: the sprite pick FIRST (the
+/// provider's createParticle evaluates the sprite before the ctor
+/// runs), then the lifetime float.
+pub fn dripstone_drip_fall(
+    x: f64,
+    y: f64,
+    z: f64,
+    lava: bool,
+    r_sprite: f32,
+    r_life: f32,
+) -> Particle {
+    let _ = r_sprite; // the one-element pick the roll never splits
+    Particle {
+        kind: ParticleKind::DripstoneFall { lava },
+        x,
+        y,
+        z,
+        prev: None,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        lifetime: (64.0f32 / (r_life * 0.8 + 0.2)) as u32,
+        gravity: 0.06,
+        friction: 0.98,
+        quad_size: 0.01,
+        uo: 0.0,
+        vo: 0.0,
+        col: if lava {
+            [1.0, 0.2857143, 0.083333336]
+        } else {
+            [0.2, 0.3, 1.0]
+        },
+    }
+}
+
+/// The dripstone drip's LAND splat ctor (javap
+/// `DripParticle$LavaLandProvider` → `DripLandParticle` verbatim —
+/// the LANDING_LAVA option the lava fall's landing spawns): the
+/// `lifetime = (int)(16.0 / (r × 0.8 + 0.2))` the DripLand ctor
+/// draws (16..=80), the gravity the base 0.06 keeps, the tint the
+/// setColor(1.0F, 0.2857143F, 0.08333333F) — the same cooling-end
+/// pair the fall keeps. The draws: the sprite pick FIRST, then the
+/// lifetime float.
+pub fn dripstone_drip_land(x: f64, y: f64, z: f64, r_sprite: f32, r_life: f32) -> Particle {
+    let _ = r_sprite; // the one-element pick the roll never splits
+    Particle {
+        kind: ParticleKind::DripstoneLand,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        lifetime: (16.0f32 / (r_life * 0.8 + 0.2)) as u32,
+        gravity: 0.06,
+        friction: 0.98,
+        quad_size: 0.01,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 0.2857143, 0.083333336],
     }
 }
 

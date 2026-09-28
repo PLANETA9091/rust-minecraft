@@ -261,9 +261,12 @@ pub const PARTICLE_SPLASH_PNG_SHA1S: [&str; 4] = ["52032e5f3820cf65c12515bffd2e1
 pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = ["particle/splash_0.png", "particle/splash_1.png", "particle/splash_2.png", "particle/splash_3.png"];
 pub const PARTICLE_LAVA_PNG_SHA1: &str = "20a3d96087bb1b4c620acd186757b84bdffc68e5";
 pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
-/// The torch flame's single 8x8 sprite (the `flame` particle type's
-/// one-texture set — the animateTick pair's flame quad's pixel
-/// source, the integrity sha1 the loader verifies before it draws).
+pub const PARTICLE_DRIP_HANG_PNG_SHA1: &str = "6db9f70a8361314722be1a493e1d05f0342bcd27";
+pub const PARTICLE_DRIP_HANG_RUNTIME_PATH: &str = "particle/drip_hang.png";
+pub const PARTICLE_DRIP_FALL_PNG_SHA1: &str = "83cd8ba6482ad80e3611c69d3dec1c9ea0917451";
+pub const PARTICLE_DRIP_FALL_RUNTIME_PATH: &str = "particle/drip_fall.png";
+pub const PARTICLE_DRIP_LAND_PNG_SHA1: &str = "20ba070bf13195e6f0e48097876adbb23bef9953";
+pub const PARTICLE_DRIP_LAND_RUNTIME_PATH: &str = "particle/drip_land.png";
 pub const PARTICLE_FLAME_PNG_SHA1: &str = "0e10e17949f6b7b997870ae22f3e0e489397d472";
 pub const PARTICLE_FLAME_RUNTIME_PATH: &str = "particle/flame.png";
 pub const PARTICLE_DAMAGE_PNG_SHA1: &str = "5fc56377777b2c95231d6ea1abdfd21353aa8f17";
@@ -274,28 +277,8 @@ pub const PARTICLE_GLINT_PNG_SHA1: &str = "1ecd0e75fb6baa092f277178545b9aa49a755
 pub const PARTICLE_GLINT_RUNTIME_PATH: &str = "particle/glint.png";
 pub const PARTICLE_SWEEP_PNG_SHA1S: [&str; 8] = ["8c7d923d146cad394c8caaf1a4badf68ca29753e", "ef57d3910c34c4d76e8baa6acd50e43d3da985bc", "bf99457c805323fb7733d11be2f9d61f03ff8ca4", "4785e75fc3f22d0452d42b8905f0fe6b3ec60f54", "f0d3509efe3e0f068eac9f0bc7dff0fce2758b17", "f0945f4c7e7dd0433d411ec31814ad6067f212c9", "8dfa2cdc7d0288f52a193ff70610628cee836c91", "276ae2fcc4d436e35ba8f61afb1adc7149b8eb4e"];
 pub const PARTICLE_SWEEP_RUNTIME_PATHS: [&str; 8] = ["particle/sweep_0.png", "particle/sweep_1.png", "particle/sweep_2.png", "particle/sweep_3.png", "particle/sweep_4.png", "particle/sweep_5.png", "particle/sweep_6.png", "particle/sweep_7.png"];
-
-/// The EXPLOSION LANE's textures (the dragon's own block-break burst's
-/// 16-frame 32x32 sprite set), generated from the same jar: the
-/// integrity sha1s the loaders verify before they draw (javap: the
-/// `explosion` particle type's sprite set — the `LevelEventHandler`
-/// case-2008 arm's ONE `addParticle(EXPLOSION, x + 0.5, y + 0.5, z +
-/// 0.5, 0, 0, 0)` walk the dragon's own block-break broadcast feeds,
-/// the `HugeExplosionParticle` the provider spawns — the
-/// `explosion.json` lists `explosion_0..15` ASCENDING, the index the
-/// `MutableSpriteSet.get` walk reads IS the file index).
 pub const PARTICLE_EXPLOSION_PNG_SHA1S: [&str; 16] = ["d80ac7fdaaa384db7392583a23bc18a6ec2c0dc7", "861b1428acbda9f1618bd3590b538fe87cdbb7c2", "f725e3592e22e2a7035fb476eaf2ec2cd1f86026", "171bc9b0ce50725128ba9222956879a99505b509", "d8220085ed6ca9bb2bd6452e93ef941fa89f2fca", "e2a1560d1772ab3d56c8df4c42061d061ebf258d", "b6cd14e7708d4cb6c1fe48d68176b58da5d6cc6b", "42b587435c6a5f4afe35664fa23941bbb2b54040", "b3abda2e9f29b4a5c211233bfe8e4821d66f2290", "1142542085e8668afa510ae5764a46b2623cfe57", "c21bf369f965acff356abae829e7442a174040bc", "8eec57b05bf0c66725f2b2564cc95a17bfad29d4", "a463d003e77d1e53b20abe5b68e8f5204e5fb604", "5fd7ba88a60c4ddc415e4e2c4ec69e5865ef4885", "e797f3b4e99f7cd5d865ce10a36dda95681aa723", "f1f08855bb9dcb61730b5463609fa99645c51ed7"];
 pub const PARTICLE_EXPLOSION_RUNTIME_PATHS: [&str; 16] = ["particle/explosion_0.png", "particle/explosion_1.png", "particle/explosion_2.png", "particle/explosion_3.png", "particle/explosion_4.png", "particle/explosion_5.png", "particle/explosion_6.png", "particle/explosion_7.png", "particle/explosion_8.png", "particle/explosion_9.png", "particle/explosion_10.png", "particle/explosion_11.png", "particle/explosion_12.png", "particle/explosion_13.png", "particle/explosion_14.png", "particle/explosion_15.png"];
-
-/// The SPLASH-POTION LANE's textures (the spell ring's two 8-frame
-/// 8x8 sprite sets + the debris burst's two 16x16 item sprites),
-/// generated from the same jar: the integrity sha1s the loaders
-/// verify before they draw (javap: the `effect` + `instant_effect`
-/// particle types' sprite sets — the `LevelEventHandler` case-2002
-/// arm's `SpellParticle` ring the `effect_N`/`spell_N` jsons list
-/// descending — and the `BreakingItemParticle` debris the
-/// `pickParticleMaterial` walk picks — the splash potion model's
-/// two layers the `random.nextInt(activeLayerCount)` fold answers).
 pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = ["f782a4bfd2bded4f7f5c94fa15e0de87750af10b", "4f2dc2f46fe815db94ea43b334222f6eb96480e2", "b587969617190f99d4dec2dac67e33b77a63dd89", "ac06ecc35509bd03df283ccce935d8a1a3ff03d8", "abbfd8f5ecdba717b71f62f7934d4ca732ab2e0d", "6031ce47a34cd157938fa52faefa36fa8e4128e3", "86df142aee00f055efaf11a6cbd4ac7a63998648", "09a6e761653a5be150977fd6e8b28fb46b4fb0e0"];
 pub const PARTICLE_EFFECT_RUNTIME_PATHS: [&str; 8] = ["particle/effect_0.png", "particle/effect_1.png", "particle/effect_2.png", "particle/effect_3.png", "particle/effect_4.png", "particle/effect_5.png", "particle/effect_6.png", "particle/effect_7.png"];
 pub const PARTICLE_SPELL_PNG_SHA1S: [&str; 8] = ["e06354bd73ca9bafc24d8062f3becf583169b0aa", "20d3e9cf2937ac02458a53e08c9a8a7ea098a387", "dd50e7c93443573ae8ed7c16925ae4a815118efb", "7e7acec2be9f57d6fb8d01760754a568f1fd4b64", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec"];

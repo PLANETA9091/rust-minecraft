@@ -145,6 +145,14 @@ pub const PARTICLE_SPLASH_JAR_PATHS: [&str; 4] = [
 /// `LavaParticle$Provider`'s `SpriteSet.get(random)` returns it
 /// whatever the draw).
 pub const PARTICLE_LAVA_JAR_PATH: &str = "assets/minecraft/textures/particle/lava.png";
+/// The dripstone drip family's single sprites (javap: the
+/// `dripping_dripstone_water` / `dripping_dripstone_lava` /
+/// `falling_dripstone_*` / `landing_lava` particle jsons the 26.2 jar
+/// speaks — the DripstoneWater/LavaHangProvider's `SpriteSet.get`
+/// one-element lists, the 8x8s the IHDR verifies).
+pub const PARTICLE_DRIP_HANG_JAR_PATH: &str = "assets/minecraft/textures/particle/drip_hang.png";
+pub const PARTICLE_DRIP_FALL_JAR_PATH: &str = "assets/minecraft/textures/particle/drip_fall.png";
+pub const PARTICLE_DRIP_LAND_JAR_PATH: &str = "assets/minecraft/textures/particle/drip_land.png";
 /// The torch flame's single sprite (javap: the `flame` particle type's
 /// sprite set — the jar's `particles/flame.json` lists ONE texture,
 /// `minecraft:flame`, the 8x8 the IHDR verifies; the
@@ -327,6 +335,16 @@ pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
     "particle/splash_3.png",
 ];
 pub const PARTICLE_LAVA_RUNTIME_PATH: &str = "particle/lava.png";
+/// The dripstone drip family's runtime-cache paths (the LevelEvent
+/// 1504 wire lane's pixel sources — the `dripping_dripstone_water` /
+/// `dripping_dripstone_lava` / `falling_dripstone_water` /
+/// `falling_dripstone_lava` / `landing_lava` particle jsons the 26.2
+/// jar speaks ALL name these three sprites: the hang drop the tip
+/// holds, the fall drop the expiry spawns, the land splat the landing
+/// keeps — the same textures/ prefix strip the other lanes speak).
+pub const PARTICLE_DRIP_HANG_RUNTIME_PATH: &str = "particle/drip_hang.png";
+pub const PARTICLE_DRIP_FALL_RUNTIME_PATH: &str = "particle/drip_fall.png";
+pub const PARTICLE_DRIP_LAND_RUNTIME_PATH: &str = "particle/drip_land.png";
 /// The torch flame's runtime-cache path (the same textures/ prefix
 /// strip the other lanes speak).
 pub const PARTICLE_FLAME_RUNTIME_PATH: &str = "particle/flame.png";
@@ -502,6 +520,12 @@ pub struct SkinData {
     /// sha1 of the lava drip's single 8x8 sprite (jar-verbatim
     /// integrity) — the pool's own drip's pixel source.
     pub particle_lava_png_sha1: String,
+    /// sha1s of the dripstone drip family's single 8x8 sprites
+    /// (jar-verbatim integrity) — the LevelEvent-1504 wire lane's
+    /// hang / fall / land pixel sources.
+    pub particle_drip_hang_png_sha1: String,
+    pub particle_drip_fall_png_sha1: String,
+    pub particle_drip_land_png_sha1: String,
     /// sha1 of the torch flame's single 8x8 sprite (jar-verbatim
     /// integrity) — the animateTick pair's flame quad's pixel source.
     pub particle_flame_png_sha1: String,
@@ -885,6 +909,35 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         lw,
         lh
     );
+    // the dripstone drip family's single sprites (the same shape check
+    // the lava speaks — the 1504 lane's three one-texture jsons)
+    let drip_hang_bytes = read_entry(archive, PARTICLE_DRIP_HANG_JAR_PATH).context("read drip_hang")?;
+    let particle_drip_hang_png_sha1 = crate::util::sha1_hex(&drip_hang_bytes);
+    let (dhw, dhh, _drip_hang_rgba) = decode_rgba(&drip_hang_bytes).context("decode drip_hang")?;
+    anyhow::ensure!(
+        (dhw, dhh) == (8, 8),
+        "drip_hang must be the 8x8 sprite, got {}x{}",
+        dhw,
+        dhh
+    );
+    let drip_fall_bytes = read_entry(archive, PARTICLE_DRIP_FALL_JAR_PATH).context("read drip_fall")?;
+    let particle_drip_fall_png_sha1 = crate::util::sha1_hex(&drip_fall_bytes);
+    let (dfw, dfh, _drip_fall_rgba) = decode_rgba(&drip_fall_bytes).context("decode drip_fall")?;
+    anyhow::ensure!(
+        (dfw, dfh) == (8, 8),
+        "drip_fall must be the 8x8 sprite, got {}x{}",
+        dfw,
+        dfh
+    );
+    let drip_land_bytes = read_entry(archive, PARTICLE_DRIP_LAND_JAR_PATH).context("read drip_land")?;
+    let particle_drip_land_png_sha1 = crate::util::sha1_hex(&drip_land_bytes);
+    let (dlw, dlh, _drip_land_rgba) = decode_rgba(&drip_land_bytes).context("decode drip_land")?;
+    anyhow::ensure!(
+        (dlw, dlh) == (8, 8),
+        "drip_land must be the 8x8 sprite, got {}x{}",
+        dlw,
+        dlh
+    );
     // the torch flame's single sprite (the same shape check the lava
     // speaks — the json's one-texture set the animateTick pair's
     // flame quad banks)
@@ -1110,6 +1163,9 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_poof_png_sha1s,
         particle_splash_png_sha1s,
         particle_lava_png_sha1,
+        particle_drip_hang_png_sha1,
+        particle_drip_fall_png_sha1,
+        particle_drip_land_png_sha1,
         particle_flame_png_sha1,
         particle_damage_png_sha1,
         particle_heart_png_sha1,
@@ -1501,6 +1557,27 @@ pub fn emit(data: &SkinData) -> Result<String> {
         "pub const PARTICLE_LAVA_RUNTIME_PATH: &str = \"{PARTICLE_LAVA_RUNTIME_PATH}\";\n"
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_DRIP_HANG_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_drip_hang_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_DRIP_HANG_RUNTIME_PATH: &str = \"{PARTICLE_DRIP_HANG_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_DRIP_FALL_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_drip_fall_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_DRIP_FALL_RUNTIME_PATH: &str = \"{PARTICLE_DRIP_FALL_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_DRIP_LAND_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_drip_land_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_DRIP_LAND_RUNTIME_PATH: &str = \"{PARTICLE_DRIP_LAND_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_FLAME_PNG_SHA1: &str = \"{}\";\n",
         data.particle_flame_png_sha1
     ));
@@ -1813,6 +1890,12 @@ mod tests {
             splashes.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let lava = tiny_png();
         let expected_lava_sha1 = crate::util::sha1_hex(&lava);
+        let drip_hang = tiny_png();
+        let expected_drip_hang_sha1 = crate::util::sha1_hex(&drip_hang);
+        let drip_fall = tiny_png();
+        let expected_drip_fall_sha1 = crate::util::sha1_hex(&drip_fall);
+        let drip_land = tiny_png();
+        let expected_drip_land_sha1 = crate::util::sha1_hex(&drip_land);
         let flame = tiny_png();
         let expected_flame_sha1 = crate::util::sha1_hex(&flame);
         let sheep = sheep_png();
@@ -1947,6 +2030,9 @@ mod tests {
             (PARTICLE_SPLASH_JAR_PATHS[2], splashes[2].clone()),
             (PARTICLE_SPLASH_JAR_PATHS[3], splashes[3].clone()),
             (PARTICLE_LAVA_JAR_PATH, lava),
+            (PARTICLE_DRIP_HANG_JAR_PATH, drip_hang),
+            (PARTICLE_DRIP_FALL_JAR_PATH, drip_fall),
+            (PARTICLE_DRIP_LAND_JAR_PATH, drip_land),
             (PARTICLE_FLAME_JAR_PATH, flame),
             (PARTICLE_DAMAGE_JAR_PATH, damage),
             (PARTICLE_HEART_JAR_PATH, heart),
@@ -2074,6 +2160,18 @@ mod tests {
         assert_eq!(
             data.particle_lava_png_sha1, expected_lava_sha1,
             "the lava sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_drip_hang_png_sha1, expected_drip_hang_sha1,
+            "the drip-hang sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_drip_fall_png_sha1, expected_drip_fall_sha1,
+            "the drip-fall sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_drip_land_png_sha1, expected_drip_land_sha1,
+            "the drip-land sprite's own sha1"
         );
         assert_eq!(
             data.particle_flame_png_sha1, expected_flame_sha1,

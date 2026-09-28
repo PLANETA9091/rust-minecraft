@@ -5875,6 +5875,120 @@ impl BubbleSprite {
 /// sha1-verified the same stream the bubble sprite speaks. A missing
 /// or tampered file keeps the drips invisible (the honest absence the
 /// other lanes speak).
+pub struct DripHangSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The drip-hang sprite's own layout (the jar's 8x8 the IHDR speaks).
+pub const DRIP_HANG_SPRITE_SIDE: u32 = 8;
+
+impl DripHangSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<DripHangSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_DRIP_HANG_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_DRIP_HANG_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != DRIP_HANG_SPRITE_SIDE || h != DRIP_HANG_SPRITE_SIDE {
+            return None;
+        }
+        Some(DripHangSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, DRIP_HANG_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, DRIP_HANG_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * DRIP_HANG_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
+/// The PARTICLE LANE's drip-fall sprite — the single 8x8 the
+/// `falling_dripstone_water` / `falling_dripstone_lava` particle
+/// types' sprite sets hold (javap: the jsons the 26.2 jar speaks —
+/// ONE texture each, `minecraft:drip_fall`), loaded and
+/// sha1-verified the same stream the drip-hang sprite speaks. A
+/// missing or tampered file keeps the falls invisible.
+pub struct DripFallSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The drip-fall sprite's own layout (the jar's 8x8 the IHDR speaks).
+pub const DRIP_FALL_SPRITE_SIDE: u32 = 8;
+
+impl DripFallSprite {
+    /// Load from the runtime cache root, verify the generated sha1,
+    /// decode, and shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<DripFallSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_DRIP_FALL_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_DRIP_FALL_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != DRIP_FALL_SPRITE_SIDE || h != DRIP_FALL_SPRITE_SIDE {
+            return None;
+        }
+        Some(DripFallSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS, nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, DRIP_FALL_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, DRIP_FALL_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * DRIP_FALL_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
+/// The PARTICLE LANE's drip-land sprite — the single 8x8 the
+/// `landing_lava` particle type's sprite set holds (javap: the json
+/// the 26.2 jar speaks — ONE texture, `minecraft:drip_land`), loaded
+/// and sha1-verified the same stream the drip-fall sprite speaks. A
+/// missing or tampered file keeps the land splats invisible.
+pub struct DripLandSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The drip-land sprite's own layout (the jar's 8x8 the IHDR speaks).
+pub const DRIP_LAND_SPRITE_SIDE: u32 = 8;
+
+impl DripLandSprite {
+    /// Load from the runtime cache root, verify the generated sha1,
+    /// decode, and shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<DripLandSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_DRIP_LAND_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_DRIP_LAND_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != DRIP_LAND_SPRITE_SIDE || h != DRIP_LAND_SPRITE_SIDE {
+            return None;
+        }
+        Some(DripLandSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS, nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, DRIP_LAND_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, DRIP_LAND_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * DRIP_LAND_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
+/// The PARTICLE LANE's torch flame sprite — the single 8x8 the `flame`
+/// particle type's sprite set holds (javap: the `particles/flame.json`
+/// the 26.2 jar speaks — ONE texture, `minecraft:flame`, the 8x8 the
+/// IHDR verifies; the `FlameParticle$Provider`'s `SpriteSet.get(random)`
+/// returns that one sprite whatever the draw, the nextInt(1) the
+/// one-element list answers), loaded and sha1-verified the same stream
+/// the lava sprite speaks. A missing or tampered file keeps the flames
+/// invisible (the honest absence the other lanes speak).
 pub struct LavaSprite {
     pub rgba: Vec<u8>,
 }

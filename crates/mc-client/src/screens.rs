@@ -6670,6 +6670,11 @@ pub struct App {
     /// The lava drip's single sprite (the same lazy load — the pool's
     /// own drip's pixel source).
     pub lava_sprite: Option<crate::avatar::LavaSprite>,
+    /// The dripstone drip family's sprites (the same lazy load — the
+    /// LevelEvent-1504 wire lane's hang / fall / land pixel sources).
+    pub drip_hang_sprite: Option<crate::avatar::DripHangSprite>,
+    pub drip_fall_sprite: Option<crate::avatar::DripFallSprite>,
+    pub drip_land_sprite: Option<crate::avatar::DripLandSprite>,
     /// The torch flame's single sprite (the same lazy load — the
     /// animateTick pair's flame quad's pixel source).
     pub flame_sprite: Option<crate::avatar::FlameSprite>,
@@ -7381,6 +7386,9 @@ impl App {
             bubble_sprite: None,
             splash_frames: None,
             lava_sprite: None,
+            drip_hang_sprite: None,
+            drip_fall_sprite: None,
+            drip_land_sprite: None,
             flame_sprite: None,
             damage_sprite: None,
             sweep_frames: None,
@@ -7581,6 +7589,11 @@ impl App {
         // retain closure needs: the level stream the gate rolls ride,
         // the out-vec the children land in — pushed AFTER the loop)
         let mut smoke_spawns: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
+        // the dripstone lane's own out-vecs (the hang's expiry the fall
+        // spawn fills, the fall's landing the land walk fills — pushed
+        // AFTER the loop the vanilla queue order keeps)
+        let mut drip_fall_spawns: Vec<(f64, f64, f64, f64, f64, f64, bool)> = Vec::new();
+        let mut drip_land_spawns: Vec<(f64, f64, f64, bool)> = Vec::new();
         let level_rng = &mut self.level_ambient_rng;
         self.particles.retain_mut(|p| match p.kind {
             crate::particles::ParticleKind::Bubble => {
@@ -7646,6 +7659,18 @@ impl App {
             crate::particles::ParticleKind::Lava => {
                 p.tick_lava(level_rng, &mut smoke_spawns)
             }
+            // the dripstone family's own walks (the LevelEvent-1504
+            // chain: the hang's expiry the fall spawns, the fall's
+            // landing the land walk answers — the solid check the
+            // ACTIVE world's own read keeps, the same world the
+            // bubble's fluid read borrows)
+            crate::particles::ParticleKind::DripstoneHang { .. } => {
+                p.tick_dripstone_hang(&mut drip_fall_spawns)
+            }
+            crate::particles::ParticleKind::DripstoneFall { .. } => {
+                p.tick_dripstone_fall(bubble_world, &mut drip_land_spawns)
+            }
+            crate::particles::ParticleKind::DripstoneLand => p.tick_dripstone_land(),
             _ => p.tick(),
         });
         // THE SMOKE CHILDREN LAND AFTER THE TICK LOOP (the vanilla
@@ -7661,6 +7686,41 @@ impl App {
                 self.level_ambient_rng.next_f32(),
             );
             self.particles.push(child);
+        }
+        // THE DRIPSTONE FALLS LAND AFTER THE LOOP (the hang's expiry
+        // queue — the falling option the two draws ride: the sprite
+        // pick FIRST, then the lifetime float the FallAndLand ctor
+        // draws)
+        for (px, py, pz, pvx, pvy, pvz, lava) in drip_fall_spawns {
+            let r_sprite = self.level_ambient_rng.next_f32();
+            let r_life = self.level_ambient_rng.next_f32();
+            let drop = crate::particles::dripstone_drip_fall(
+                px, py, pz, lava, r_sprite, r_life,
+            );
+            let _ = (pvx, pvy, pvz);
+            self.particles.push(drop);
+        }
+        // THE DRIPSTONE LANDINGS LAND AFTER THE LOOP (the fall's
+        // postMoveUpdate queue — the water's SPLASH the three draws
+        // ride (the frame pick, the yd float, the lifetime float), the
+        // lava's LANDING_LAVA the two draws keep (the sprite pick, the
+        // lifetime float))
+        for (px, boundary, pz, lava) in drip_land_spawns {
+            if lava {
+                let r_sprite = self.level_ambient_rng.next_f32();
+                let r_life = self.level_ambient_rng.next_f32();
+                let splat =
+                    crate::particles::dripstone_drip_land(px, boundary, pz, r_sprite, r_life);
+                self.particles.push(splat);
+            } else {
+                let r_frame = self.level_ambient_rng.next_f32();
+                let r_yd = self.level_ambient_rng.next_f32();
+                let r_life = self.level_ambient_rng.next_f32();
+                let droplet = crate::particles::splash(
+                    px, boundary, pz, 0.0, 0.0, 0.0, r_yd, r_life, r_frame,
+                );
+                self.particles.push(droplet);
+            }
         }
         for i in (0..self.crit_emitters.len()).rev() {
             // THE TARGET'S OWN LIST (the offline lane first, the wire's
@@ -22168,6 +22228,58 @@ impl App {
         }
     }
 
+    /// THE DRIPSTONE-DRIP WIRE LANE (javap `LevelEventHandler` case
+    /// 1504 — offset 3503 — over the 26.2 jar): the server's own
+    /// fluid-transfer walks the drip word broadcast, the ONE
+    /// `PointedDripstoneBlock.spawnDripParticle(level, pos,
+    /// level.getBlockState(pos))` walk the case body spends. The
+    /// stalactite gate the model's own resolution already spoke — the
+    /// refused cells the lane never saw (the arms the mailbox carries
+    /// ARE the vanilla's rendered walks), the drop's own type the
+    /// resolution's lava bit banks. NO sound the case speaks — the
+    /// drop the render lane's own stream alone carries.
+    pub fn live_dripstone_drip_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireDripstoneDripEvent>,
+    ) {
+        for ev in events {
+            self.play_dripstone_drip(ev.x, ev.y, ev.z, ev.lava);
+        }
+    }
+
+    /// THE DRIPSTONE-DRIP WALK (javap the case-1504 body →
+    /// `spawnDripParticle(level, pos, state, fluid, fluidPos)` — the
+    /// 4-arg walk the 26.2 jar pins): the OFFSET the
+    /// `state.getOffset(pos)` read folds (the XZ offsetter's 4-bit
+    /// draws — `Mth.getSeed(x, 0, z)` the seed law speaks, the
+    /// `(bit / 15.0F − 0.5) × 0.5` fold the f32→f64 walk keeps, the
+    /// ±0.125 clamp the speleothem's own maxHorizontalOffset answers),
+    /// the position the 4-arg walk's own dstore rows place (`x + 0.5 +
+    /// offset.x`, the `y + 0.3125 − 0.0625` lift the
+    /// `STALACTITE_DRIP_START_PIXEL − 1/16` fold keeps — the +0.25 the
+    /// tip's own point answers, `z + 0.5 + offset.z`, the zero speed
+    /// trio), the HANG drop the addParticle walk spawns. The sprite
+    /// pick the ambient stream's own draw carries (the nextInt(1) the
+    /// one-element list answers) — the drop's own type the lava bit
+    /// banks.
+    fn play_dripstone_drip(&mut self, x: i32, y: i32, z: i32, lava: bool) {
+        // THE OFFSET (the `state.getOffset(pos)` read the XZ
+        // offsetter answers — the seed the `Mth.getSeed(x, 0, z)` law
+        // speaks, the 4-bit draws the ±0.125 clamp carries)
+        let seed = crate::world::mth_get_seed(x, 0, z);
+        let off_x = crate::particles::dripstone_offset(seed & 15, 0.125);
+        let off_z = crate::particles::dripstone_offset((seed >> 8) & 15, 0.125);
+        let px = f64::from(x) + 0.5 + off_x;
+        let py = f64::from(y) + 0.25;
+        let pz = f64::from(z) + 0.5 + off_z;
+        // THE HANG DROP (the addParticle walk's own spawn — the
+        // sprite pick the ambient stream's first draw carries)
+        let r_sprite = self.level_ambient_rng.next_f32();
+        let drop =
+            crate::particles::dripstone_drip_hang(px, py, pz, lava, r_sprite);
+        self.particles.push(drop);
+    }
+
     /// THE EYE-OF-ENDER SHATTER WIRE LANE (javap `LevelEventHandler`
     /// case 2003 — offset 947 — over the 26.2 jar): the server's own
     /// ender signal the landing tail broadcasts, the TWO walks the
@@ -26925,6 +27037,18 @@ impl App {
             self.lava_sprite =
                 crate::avatar::LavaSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.drip_hang_sprite.is_none() {
+            self.drip_hang_sprite =
+                crate::avatar::DripHangSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.drip_fall_sprite.is_none() {
+            self.drip_fall_sprite =
+                crate::avatar::DripFallSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.drip_land_sprite.is_none() {
+            self.drip_land_sprite =
+                crate::avatar::DripLandSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.flame_sprite.is_none() {
             self.flame_sprite =
                 crate::avatar::FlameSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -26983,6 +27107,11 @@ impl App {
         let mut bubble_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut splash_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut lava_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        // the dripstone family's own quads (the LevelEvent-1504 lane's
+        // three sprites the wire lane draws)
+        let mut drip_hang_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut drip_fall_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut drip_land_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut flame_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut damage_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
@@ -27137,6 +27266,41 @@ impl App {
                         pts,
                         uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
                         tex: "particle_lava",
+                        tint: p.col,
+                    });
+                }
+                crate::particles::ParticleKind::DripstoneHang { .. } => {
+                    // the hang drop's own quad (the single drip_hang
+                    // sprite the one-texture jsons speak — the full
+                    // sprite the quad samples, the drop's own tint the
+                    // ctor's walk carries — the water's static blue,
+                    // the lava's cooling fade)
+                    drip_hang_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_drip_hang",
+                        tint: p.col,
+                    });
+                }
+                crate::particles::ParticleKind::DripstoneFall { .. } => {
+                    // the fall drop's own quad (the single drip_fall
+                    // sprite the one-texture jsons speak — the tint the
+                    // ctor's own constants carry)
+                    drip_fall_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_drip_fall",
+                        tint: p.col,
+                    });
+                }
+                crate::particles::ParticleKind::DripstoneLand => {
+                    // the land splat's own quad (the single drip_land
+                    // sprite the landing_lava json speaks — the cooling-
+                    // end tint the ctor keeps)
+                    drip_land_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_drip_land",
                         tint: p.col,
                     });
                 }
@@ -27426,6 +27590,23 @@ impl App {
         if let Some(lava) = &self.lava_sprite {
             fb.draw_sampled_quads(vp, &lava_quads, &mut |_tex, u, v| {
                 Some(lava.pixel(u, v))
+            });
+        }
+        // the dripstone family's groups (the 1504 lane's own sprites —
+        // the hang / fall / land pixels the wire lane draws)
+        if let Some(s) = &self.drip_hang_sprite {
+            fb.draw_sampled_quads(vp, &drip_hang_quads, &mut |_tex, u, v| {
+                Some(s.pixel(u, v))
+            });
+        }
+        if let Some(s) = &self.drip_fall_sprite {
+            fb.draw_sampled_quads(vp, &drip_fall_quads, &mut |_tex, u, v| {
+                Some(s.pixel(u, v))
+            });
+        }
+        if let Some(s) = &self.drip_land_sprite {
+            fb.draw_sampled_quads(vp, &drip_land_quads, &mut |_tex, u, v| {
+                Some(s.pixel(u, v))
             });
         }
         // the flame group (the torch's own bright pixels — the full
@@ -46958,6 +47139,212 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_end_portal_frame_fill_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_drip_word_the_hang_walk_the_chain_wears() {
+        // THE DRIPSTONE-DRIP'S OWN WIRE LANE (javap case 1504 →
+        // offset 3503 → the 4-arg spawnDripParticle over the 26.2
+        // jar): the OFFSET the getOffset read folds (the seed law's
+        // own 4-bit draws the ±0.125 clamp carries), the +0.25 lift
+        // the tip's own point keeps, the HANG drop the one draw
+        // spawns — the chain the walks answer: the hang's 40-tick
+        // countdown the expiry rides, the fall the gravity walks, the
+        // landing the world-read fold answers.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the assignment banks —
+        // the whole walk the seeded stream replays)
+        app.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1504);
+        app.live_dripstone_drip_events_updated(vec![
+            crate::world_view::WireDripstoneDripEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+                lava: false,
+            },
+        ]);
+        assert_eq!(app.particles.len(), 1, "the one hang drop the walk spawns");
+        let p = &app.particles[0];
+        assert!(
+            matches!(
+                p.kind,
+                crate::particles::ParticleKind::DripstoneHang { lava: false }
+            ),
+            "the water drop the lava bit keeps"
+        );
+        // THE OFFSET FOLD (the seed the `Mth.getSeed(x, 0, z)` law
+        // hashes — the exact folds the offsetter keeps)
+        let seed = crate::world::mth_get_seed(10, 0, 10);
+        let want_x = 10.5 + crate::particles::dripstone_offset(seed & 15, 0.125);
+        let want_z = 10.5 + crate::particles::dripstone_offset((seed >> 8) & 15, 0.125);
+        assert!((p.x - want_x).abs() < 1e-12, "the x the offset fold keeps: {}", p.x);
+        assert!((p.z - want_z).abs() < 1e-12, "the z the offset fold keeps: {}", p.z);
+        // THE CLAMP BAND (the ±0.125 the speleothem's own max keeps —
+        // whatever the seed's own slice)
+        assert!(
+            (10.375..=10.625).contains(&p.x) && (10.375..=10.625).contains(&p.z),
+            "the ±0.125 clamp the lattice keeps: {} {}",
+            p.x,
+            p.z
+        );
+        // THE LIFT (the y the +0.25 fold the tip's own point answers —
+        // 0.3125 − 0.0625 the STALACTITE_DRIP_START_PIXEL walk keeps)
+        assert!((p.y - 20.25).abs() < 1e-12, "the +0.25 lift: {}", p.y);
+        // THE CTOR LAWS (the 40-tick lifetime, the raw 0.0012 gravity
+        // the ×0.02 fold gives, the ×0.02 damping the postMoveUpdate
+        // keeps, the quadSize 0.01, the water tint the setColor
+        // (0.2F, 0.3F, 1.0F) override speaks)
+        assert_eq!(p.lifetime, 40, "the bipush 40 the DripHang keeps");
+        assert!((p.gravity - 0.0012).abs() < 1e-12, "the 0.06 × 0.02 fold");
+        assert!((p.friction - 0.02).abs() < 1e-12, "the damping trio");
+        assert!((p.quad_size - 0.01).abs() < 1e-9, "the 0.01 bb the base ctor keeps");
+        assert_eq!(p.col, [0.2, 0.3, 1.0], "the water tint");
+        assert_eq!(p.vx, 0.0, "the zero speed trio the dconst_0 keeps");
+        // THE STREAM'S OWN ORDER (the walk spends exactly ONE raw draw
+        // — the sprite pick the nextInt(1) answers, nothing the fixed
+        // walks spend)
+        let advanced = {
+            let mut l = crate::drops::Lcg::new(0xC10D_1504);
+            l.next();
+            l.next()
+        };
+        assert_eq!(
+            app.level_ambient_rng.next(),
+            advanced,
+            "the one-draw spawn the sprite pick keeps"
+        );
+        // THE SPAWN POSE BANKED (the fresh spawn the determinism check
+        // replays — the walk section below mutates the particle, the
+        // banked pose the replay compares)
+        let original = app
+            .particles
+            .iter()
+            .map(|p| (p.x, p.y, p.z, p.col))
+            .collect::<Vec<_>>();
+        // THE HANG'S OWN CHAIN (the countdown walk 39 ticks keep —
+        // the 40th the expiry speaks: the fall spawn the carried
+        // motion rides)
+        let mut falls: Vec<(f64, f64, f64, f64, f64, f64, bool)> = Vec::new();
+        for _ in 0..39 {
+            assert!(
+                app.particles[0].tick_dripstone_hang(&mut falls),
+                "the countdown the 39 ticks keep"
+            );
+            assert!(falls.is_empty(), "the living hang the expiry never speaks");
+        }
+        // THE LAVA FADE (the cooling walk the g/b folds speak — the
+        // water drop the static tint keeps through the ticks)
+        assert_eq!(app.particles[0].col, [0.2, 0.3, 1.0], "the static tint rides");
+        assert!(
+            !app.particles[0].tick_dripstone_hang(&mut falls),
+            "the 40th tick the expiry speaks"
+        );
+        assert_eq!(falls.len(), 1, "the fall spawn the carried motion rides");
+        let (fx, fy, fz, fvxn, fvyn, fvzn, flava) = falls[0];
+        assert_eq!(fx, app.particles[0].x, "the spawn pose the expiry keeps");
+        assert_eq!(fy, app.particles[0].y);
+        assert_eq!(fz, app.particles[0].z);
+        assert!(!flava, "the water drop the bit keeps");
+        let _ = (fvxn, fvyn, fvzn);
+        // THE FALL SPAWN (the two draws the provider keeps — the
+        // sprite pick, then the lifetime float) + THE CTOR LAWS
+        let r_sprite = app.level_ambient_rng.next_f32();
+        let r_life = app.level_ambient_rng.next_f32();
+        let fall = crate::particles::dripstone_drip_fall(fx, fy, fz, false, r_sprite, r_life);
+        assert!(matches!(
+            fall.kind,
+            crate::particles::ParticleKind::DripstoneFall { lava: false }
+        ));
+        assert_eq!(fall.lifetime, (64.0f32 / (r_life * 0.8 + 0.2)) as u32, "the 64/(r×0.8+0.2) fold");
+        assert!((fall.gravity - 0.06).abs() < 1e-12, "the raw 0.06 the base ctor keeps");
+        assert!((fall.friction - 0.98).abs() < 1e-12, "the ×0.98 damping");
+        assert_eq!(fall.col, [0.2, 0.3, 1.0], "the water tint the provider keeps");
+        // THE LAVA VARIANTS (the fall's cooling-end tint the constants
+        // keep, the land splat's own walk)
+        let fall_lava = crate::particles::dripstone_drip_fall(0.0, 0.0, 0.0, true, 0.0, 0.5);
+        assert_eq!(
+            fall_lava.col,
+            [1.0, 0.2857143, 0.083333336],
+            "the cooling-end tint the lava fall keeps"
+        );
+        // THE FALL'S OWN LANDING (the world-read fold — the solid cell
+        // the drop enters the landing answers, the boundary the splat
+        // keeps)
+        let mut w = crate::world::World::new(1, 7);
+        w.set(0, 10, 0, crate::world::STONE);
+        let mut land_out: Vec<(f64, f64, f64, bool)> = Vec::new();
+        let mut dropper = crate::particles::dripstone_drip_fall(0.5, 12.9, 0.5, false, 0.0, 0.5);
+        // the drop walks the air cells down to the floor at y 10
+        for _ in 0..64 {
+            if !dropper.tick_dripstone_fall(Some(&w), &mut land_out) {
+                break;
+            }
+        }
+        assert_eq!(land_out.len(), 1, "the landing the solid cell speaks");
+        let (lx, lboundary, lz, llava) = land_out[0];
+        assert!((lboundary - 11.0).abs() < 1e-12, "the boundary the cell top keeps: {}", lboundary);
+        assert!((lx - 0.5).abs() < 1e-9 && (lz - 0.5).abs() < 1e-9, "the column the drop keeps");
+        assert!(!llava, "the water drop the splash answers");
+        // THE LAND WALKS (the water's SPLASH the three draws keep, the
+        // lava's LANDING_LAVA the two)
+        let splash = crate::particles::splash(
+            lx, lboundary, lz, 0.0, 0.0, 0.0,
+            app.level_ambient_rng.next_f32(),
+            app.level_ambient_rng.next_f32(),
+            app.level_ambient_rng.next_f32(),
+        );
+        assert!(matches!(splash.kind, crate::particles::ParticleKind::Splash { .. }));
+        let lava_splat = crate::particles::dripstone_drip_land(
+            lx, lboundary, lz,
+            app.level_ambient_rng.next_f32(),
+            app.level_ambient_rng.next_f32(),
+        );
+        assert!(matches!(
+            lava_splat.kind,
+            crate::particles::ParticleKind::DripstoneLand
+        ));
+        assert_eq!(
+            lava_splat.col,
+            [1.0, 0.2857143, 0.083333336],
+            "the cooling-end tint the land keeps"
+        );
+        // THE LAND'S OWN REST (the pinned pose the collision fold
+        // keeps — the splat the boundary holds)
+        let y0 = lava_splat.y;
+        let mut splat = lava_splat;
+        for _ in 0..8 {
+            assert!(splat.tick_dripstone_land(), "the splat the 16..=80 life keeps");
+            assert_eq!(splat.y, y0, "the pose the resting fold pins");
+        }
+        // THE SEED LAW'S OWN PIN (the known hash the walk replays —
+        // the x-multiply overflow the i32 lane keeps)
+        assert_eq!(crate::world::mth_get_seed(0, 0, 0), 0, "the zero column the zero seed keeps");
+        // THE DETERMINISM (the same seed the same folds answer — the
+        // banked spawn pose the replay compares)
+        let again = {
+            let mut app2 = App::new(2);
+            app2.enter_world();
+            app2.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1504);
+            app2.live_dripstone_drip_events_updated(vec![
+                crate::world_view::WireDripstoneDripEvent {
+                    x: 10,
+                    y: 20,
+                    z: 10,
+                    lava: false,
+                },
+            ]);
+            app2
+                .particles
+                .iter()
+                .map(|p| (p.x, p.y, p.z, p.col))
+                .collect::<Vec<_>>()
+        };
+        assert_eq!(again, original, "the seeded chain replays");
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_dripstone_drip_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

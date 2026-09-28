@@ -397,6 +397,15 @@ pub struct WorldModel {
     /// never carries — the positioned lane the case's own arm
     /// wears).
     pub end_portal_frame_fill_events: Vec<EndPortalFrameFillArm>,
+    /// The dripstone-drip's own mailbox — the Level Event packet's
+    /// 1504 words the model enqueues for the render lane (see
+    /// [`DripstoneDripArm`]). The cells the stalactite gate or the
+    /// root walk refuses the mailbox never carries — the vanilla's
+    /// own empty the honest silence keeps. The GLOBAL route the arm
+    /// never enqueues (the `globalLevelEvent` switch the 1504 id
+    /// never carries — the positioned lane the case's own arm
+    /// wears).
+    pub dripstone_drip_events: Vec<DripstoneDripArm>,
     /// THE EYE-OF-ENDER SHATTER'S OWN MAILBOX (the Level Event
     /// packet's next vocabulary word the model banks — the 2003
     /// words the server's own ender signal broadcasts, the
@@ -790,6 +799,54 @@ pub struct EndPortalFrameFillArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One pending DRIPSTONE-DRIP arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::dripstone_drip_events`]). The anchor verbatim (the
+/// tip cell the server's own `findTip` walk broadcasts), the DATA
+/// word deliberately absent — the case's own body never reads it (no
+/// `iload_3` read the arm's bytecode speaks, the same transport
+/// honesty the portal-frame arm keeps). The DROP'S OWN TYPE the
+/// resolution banks — the case's own world read the model's chunk
+/// store answers (the stalactite gate the state props speak, the
+/// up-walk the root finds, the fluid-above pick the lava bit folds);
+/// the cells the gate or the walk refuses the arm NEVER banks — the
+/// vanilla's own empty the honest silence keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DripstoneDripArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The drop's own type (the lava bit — the fluid-above-root read
+    /// the resolution keeps; `false` the water drop answers — the
+    /// `DEFAULT_DRIPSTONE_PARTICLE` default included).
+    pub lava: bool,
+}
+
+/// THE STALACTITE'S OWN BLOCK READ (the state id → the
+/// `pointed_dripstone` name the registry's own ranges table speaks).
+fn is_pointed_dripstone(state_id: u32) -> bool {
+    mc_registry::generated::block_ids::block_name_of(state_id)
+        == Some("minecraft:pointed_dripstone")
+}
+
+/// THE DOWN-TIP'S OWN PROP READ (the `vertical_direction=down` the
+/// state's own property run speaks — the stalactite gate's own law;
+/// the waterlogged cell the same tip direction keeps — the continue
+/// predicate the waterlog never breaks).
+fn is_dripstone_down(state_id: u32) -> bool {
+    is_pointed_dripstone(state_id)
+        && mc_registry::generated::block_ids::props_of(state_id)
+            .map(|props| props.contains("vertical_direction=down"))
+            .unwrap_or(false)
+}
+
+/// THE LAVA FLUID'S OWN STATE READ (the `minecraft:lava` block the
+/// fluid-above pick speaks — the water / waterlogged / mud / air
+/// cells the water drop answers).
+fn is_lava_state(state_id: u32) -> bool {
+    mc_registry::generated::block_ids::block_name_of(state_id) == Some("minecraft:lava")
 }
 
 /// One pending EYE-OF-ENDER SHATTER arm — the Level Event packet's
@@ -1350,6 +1407,7 @@ impl WorldModel {
             composter_fill_events: Vec::new(),
             smoke_voice_events: Vec::new(),
             end_portal_frame_fill_events: Vec::new(),
+            dripstone_drip_events: Vec::new(),
             eye_of_ender_shatter_events: Vec::new(),
             dragon_block_break_events: Vec::new(),
             dispenser_dispense_events: Vec::new(),
@@ -1570,6 +1628,67 @@ impl WorldModel {
     /// alone (the data word the case's own body never reads).
     pub fn drain_end_portal_frame_fill_events(&mut self) -> Vec<EndPortalFrameFillArm> {
         std::mem::take(&mut self.end_portal_frame_fill_events)
+    }
+
+    /// The dripstone-drip's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 1504 words
+    /// the Level Event packet armed, the render lane's own law folds
+    /// the hang drop's spawn walk from the anchor + the lava bit the
+    /// resolution banks.
+    pub fn drain_dripstone_drip_events(&mut self) -> Vec<DripstoneDripArm> {
+        std::mem::take(&mut self.dripstone_drip_events)
+    }
+
+    /// THE DRIPSTONE-DRIP'S OWN RESOLUTION (javap
+    /// `PointedDripstoneBlock.spawnDripParticle` →
+    /// `getFluidAboveStalactite` → `findRootBlock` over the 26.2
+    /// jar — the case's own client-side world read the model's
+    /// chunk store answers): the stalactite gate FIRST (the
+    /// `isStalactite` read — the `pointed_dripstone` block the
+    /// `vertical_direction=down` tip keeps — anything else the
+    /// `Optional.empty()` the no-render answer speaks), then the
+    /// ≤10-step up-walk (`findBlockVertical`'s own loop — the first
+    /// non-dripstone cell the STOP predicate answers, the
+    /// dripstone-pointing-up cell the continue-predicate refuses,
+    /// the depth cap the empty keeps), then the fluid ABOVE the
+    /// root the drip pick reads (`minecraft:lava` → the lava drop;
+    /// `minecraft:water` / `waterlogged=true` / `minecraft:mud` /
+    /// everything else → the water drop — the
+    /// `DEFAULT_DRIPSTONE_PARTICLE` default the EMPTY branch
+    /// answers, the mud's own WATER-forcing the outcome's
+    /// equivalence keeps).
+    fn resolve_dripstone_drip(&self, x: i32, y: i32, z: i32) -> Option<DripstoneDripArm> {
+        // THE STALACTITE GATE (the case's own
+        // `level.getBlockState(pos)` read the state props speak)
+        let tip_state = self.block(x, y, z)?;
+        if !is_dripstone_down(tip_state) {
+            return None;
+        }
+        // THE ROOT WALK (the ≤10-step up-walk — the first
+        // non-dripstone cell the STOP answers)
+        let mut root_y = y;
+        for _ in 0..10 {
+            root_y += 1;
+            let sid = self.block(x, root_y, z)?;
+            if !is_pointed_dripstone(sid) {
+                // THE STOP FIRES (the root IS this cell — the
+                // fluid ABOVE it the drip pick reads)
+                let lava = self
+                    .block(x, root_y + 1, z)
+                    .map(is_lava_state)
+                    .unwrap_or(false);
+                return Some(DripstoneDripArm { x, y, z, lava });
+            }
+            // the chain's own cell — the continue predicate the
+            // down-tip keeps (a dripstone pointing UP breaks the
+            // chain the vanilla empty answers)
+            if !is_dripstone_down(sid) {
+                return None;
+            }
+        }
+        // THE DEPTH CAP (the walk's 11th cell never tested — the
+        // vanilla empty the no-render answer keeps)
+        None
     }
 
     /// The eye-of-ender shatter's mailbox's own drain (the same walk
@@ -1842,6 +1961,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 1503 words
                 // never fill again)
                 self.end_portal_frame_fill_events.clear();
+                // the dripstone-drip's mailbox dies with the level (the
+                // same walk — the old level's 1504 words never drip
+                // again)
+                self.dripstone_drip_events.clear();
                 // the eye-of-ender shatter's mailbox dies with the
                 // level (the same walk — the old level's 2003 words
                 // never shatter again)
@@ -2741,6 +2864,23 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                     });
+                    true
+                } else if ev.effect == mc_protocol::DRIPSTONE_DRIP_EFFECT && !ev.global {
+                    // THE DRIPSTONE-DRIP'S OWN ARM (javap the case
+                    // offset 3503 — the positioned route the GLOBAL
+                    // switch never banks): the case's own state read
+                    // the model's chunk store answers — the
+                    // stalactite gate the state props speak, the
+                    // up-walk the root finds, the fluid-above pick
+                    // the drop's own type folds. The cells the gate
+                    // or the walk refuses the mailbox NEVER banks —
+                    // the vanilla's own empty the honest silence
+                    // keeps. The data word the case never reads. No
+                    // sound the case speaks — the drop the render
+                    // lane's own stream alone carries.
+                    if let Some(arm) = self.resolve_dripstone_drip(ev.x, ev.y, ev.z) {
+                        self.dripstone_drip_events.push(arm);
+                    }
                     true
                 } else if ev.effect == mc_protocol::EYE_OF_ENDER_SHATTER_EFFECT && !ev.global {
                     // THE EYE-OF-ENDER SHATTER'S OWN ARM (javap the
@@ -7702,6 +7842,152 @@ mod tests {
         })));
         assert!(
             m.end_portal_frame_fill_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_drip_word_the_stalactite_gate_wears() {
+        // THE DRIPSTONE-DRIP'S OWN ARM (javap the case offset 3503 —
+        // the positioned route the GLOBAL switch never banks): the
+        // case's own state read the model's chunk store answers — the
+        // stalactite gate the state props speak, the up-walk the root
+        // finds, the fluid-above pick the lava bit folds. The refused
+        // cells the mailbox NEVER banks — the vanilla's own empty the
+        // honest silence keeps.
+        let mut m = WorldModel::new();
+        m.min_y = Some(-64);
+        let col = ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![
+                parse_section_buffer(&air_section()),
+                parse_section_buffer(&air_section()),
+                parse_section_buffer(&air_section()),
+            ],
+            light: ChunkLight::default(),
+        };
+        m.apply(PlayEvent::Chunk(col));
+        // THE ONE-BLOCK CHAIN (the tip 30216 = thickness=tip,
+        // vertical_direction=down at world y -50; the stone ceiling
+        // state 1 at -48; the WATER source state 86 at -47): the root
+        // walk -49.. the first non-dripstone cell the STOP answers
+        let tip = 30216u32;
+        let stone = 1u32;
+        let water = 86u32;
+        assert!(m.apply(PlayEvent::SectionBlocks(mc_protocol::play::SectionBlocks {
+            sx: 0,
+            sy: -4,
+            sz: 0,
+            blocks: vec![(5, 14, 3, tip)],
+        })));
+        assert!(m.apply(PlayEvent::SectionBlocks(mc_protocol::play::SectionBlocks {
+            sx: 0,
+            sy: -3,
+            sz: 0,
+            blocks: vec![(5, 0, 3, stone), (5, 1, 3, water)],
+        })));
+        // the state ids landed
+        assert_eq!(m.block(5, -50, 3), Some(tip));
+        assert_eq!(m.block(5, -48, 3), Some(stone));
+        assert_eq!(m.block(5, -47, 3), Some(water));
+        // THE DRIP WORD (the caller's own broadcast —
+        // maybeTransferFluid's tip cell the packet carries)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRIPSTONE_DRIP_EFFECT,
+            x: 5,
+            y: -50,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dripstone_drip_events.len(), 1, "the stalactite arms");
+        assert_eq!(m.dripstone_drip_events[0].x, 5);
+        assert_eq!(m.dripstone_drip_events[0].y, -50);
+        assert_eq!(m.dripstone_drip_events[0].z, 3);
+        assert!(!m.dripstone_drip_events[0].lava, "the water source answers");
+        // THE LAVA PICK (the LAVA source state 102 above the root —
+        // the 1-block chain at (7, -30, 4) the same law keeps)
+        let lava = 102u32;
+        assert!(m.apply(PlayEvent::SectionBlocks(mc_protocol::play::SectionBlocks {
+            sx: 0,
+            sy: -2,
+            sz: 0,
+            blocks: vec![(7, 2, 4, tip), (7, 3, 4, stone), (7, 4, 4, lava)],
+        })));
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRIPSTONE_DRIP_EFFECT,
+            x: 7,
+            y: -30,
+            z: 4,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dripstone_drip_events.len(), 2, "the second arm rides");
+        assert!(m.dripstone_drip_events[1].lava, "the lava source the bit speaks");
+        // THE GATE REFUSES (the AIR cell the stalactite read fails —
+        // the up-pointing tip 30214 the same refusal keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRIPSTONE_DRIP_EFFECT,
+            x: 9,
+            y: -50,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dripstone_drip_events.len(), 2, "the air cell never arms");
+        assert!(m.apply(PlayEvent::SectionBlocks(mc_protocol::play::SectionBlocks {
+            sx: 0,
+            sy: -4,
+            sz: 0,
+            blocks: vec![(9, 14, 3, 30214)],
+        })));
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRIPSTONE_DRIP_EFFECT,
+            x: 9,
+            y: -50,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dripstone_drip_events.len(), 2, "the up-tip never arms");
+        // THE GLOBAL ROUTE the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRIPSTONE_DRIP_EFFECT,
+            x: 5,
+            y: -50,
+            z: 3,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.dripstone_drip_events.len(), 2, "the global word never arms");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_dripstone_drip_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert!(!drained[0].lava, "the wire order the drain keeps");
+        assert!(m.dripstone_drip_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_dripstone_drip_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::DRIPSTONE_DRIP_EFFECT,
+            x: 5,
+            y: -50,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dripstone_drip_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.dripstone_drip_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

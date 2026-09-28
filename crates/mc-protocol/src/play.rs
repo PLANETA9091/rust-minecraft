@@ -1518,6 +1518,39 @@ pub const REDSTONE_TORCH_BURNOUT_EFFECT: i32 = 1502;
 /// wears).
 pub const END_PORTAL_FRAME_FILL_EFFECT: i32 = 1503;
 
+/// THE DRIPSTONE-DRIP EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `DRIPSTONE_DRIP`, the case
+/// `LevelEventHandler.levelEvent` offset 3503 speaks): the ONE
+/// `PointedDripstoneBlock.spawnDripParticle(level, pos,
+/// level.getBlockState(pos))` walk the case body spends — the data
+/// word the case never reads, NO sound the case speaks. The spawn
+/// walk's own law the 26.2 jar pins: the `getFluidAboveStalactite`
+/// gate FIRST (the `isStalactite` state read — the
+/// `vertical_direction=down` tip the stalactite keeps; the up-walk
+/// `findBlockVertical` the chain's root finds — the first
+/// non-dripstone cell the ≤10-step walk answers, the state's own
+/// `TIP_DIRECTION == down` continue-predicate), the fluid ABOVE the
+/// root the drip pick reads (`minecraft:mud` → WATER, `minecraft:lava`
+/// → LAVA, `minecraft:water` / `waterlogged=true` → WATER, else EMPTY
+/// → the `DEFAULT_DRIPSTONE_PARTICLE` attribute the
+/// `DRIPPING_DRIPSTONE_WATER` default answers); the position folds the
+/// 4-arg spawn walk keeps (`state.getOffset(pos)` — the XZ offsetter
+/// `Mth.getSeed(x, 0, z)`'s 4-bit draws the ±maxHorizontalOffset
+/// clamp carries — the speleothem's own 0.125 the `SHAPE_BASE.min(X)`
+/// speaks — then `x + 0.5 + offset.x`, the `y + STALACTITE_DRIP_START_PIXEL −
+/// 0.0625` lift the `SHAPE_TIP_DOWN.min(Y)` fold keeps — 0.3125 −
+/// 0.0625 = the +0.25 the tip's own point answers, `z + 0.5 +
+/// offset.z`, the zero speed trio the `dconst_0` rows keep). The
+/// server's own fluid-transfer walk speaks it —
+/// `PointedDripstoneBlock.maybeTransferFluid`'s TWO `sipush 1504,
+/// tipPos, iconst_0` levelEvent calls the bytecode pins (the
+/// mud-to-clay branch and the cauldron branch BOTH broadcast at the
+/// `findTip` cell the walk keeps — the fluid precondition the server
+/// walk guarantees). The GLOBAL route the `globalLevelEvent` switch
+/// never banks (the 1023/1028/1038 trio the band alone carries — the
+/// positioned lane the case's own arm wears).
+pub const DRIPSTONE_DRIP_EFFECT: i32 = 1504;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -10856,6 +10889,11 @@ mod tests {
             END_PORTAL_FRAME_FILL_EFFECT,
             1503,
             "the portal-frame fill the eye's own useOn tail speaks"
+        );
+        assert_eq!(
+            DRIPSTONE_DRIP_EFFECT,
+            1504,
+            "the dripstone drip the fluid-transfer's own tails speak"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order
