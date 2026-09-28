@@ -668,6 +668,15 @@ pub struct WorldModel {
     /// `globalLevelEvent` switch the eleven ids never carry — the
     /// positioned lane the cases' own arms wear).
     pub pitch_draw_voice_events: Vec<PitchDrawVoiceArm>,
+    /// THE NEUTRAL-VOICE SHELF'S OWN MAILBOX (the ONE 0.05F NEUTRAL
+    /// case the shelf opens with — see [`NeutralVoiceArm`]): the bat's
+    /// liftoff word (1025) the Level Event packet arms, the anchor +
+    /// the packet's own voice word carries. The data word the case's
+    /// own body never reads (the arm the anchor + voice alone
+    /// carries), no particles the case speaks. The GLOBAL route the
+    /// arm never enqueues (the `globalLevelEvent` switch the id never
+    /// carries — the positioned lane the case's own arm wears).
+    pub neutral_voice_events: Vec<NeutralVoiceArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -1670,7 +1679,7 @@ pub struct FixedVoiceArm {
 
 /// One pending HOSTILE-VOICE arm — the Level Event packet's mob
 /// voice shelf the model keeps verbatim (see
-/// [`WorldModel::hostile_voice_events`]). The THIRTEEN mob/projectile
+/// [`WorldModel::hostile_voice_events`]). The FOURTEEN mob/projectile
 /// cases the ONE arm shape wears — the zombie's door-attack pair
 /// (`BreakDoorGoal.tick`'s one-in-twenty gate the `sipush 1019` call
 /// speaks), the iron-door attack (the dedicated server's own lane —
@@ -1695,7 +1704,10 @@ pub struct FixedVoiceArm {
 /// server's own lane — the client jar the caller site doesn't
 /// carry), the drowned conversion (`Zombie.doUnderWaterConversion`
 /// the `sipush 1040` call speaks), the husk conversion
-/// (`Husk.doUnderWaterConversion` the `sipush 1041` call speaks).
+/// (`Husk.doUnderWaterConversion` the `sipush 1041` call speaks) —
+/// and the conversion word the skeleton's freeze arms: the stray
+/// swap (`Skeleton`'s `doFreezeConversion` lambda the `sipush 1048`
+/// call speaks — the SAME form the drowned/husk siblings keep).
 /// The anchor verbatim, the voice
 /// word the PACKET'S OWN effect id rides (the same transport honesty
 /// the fixed-voice arm keeps), the data word deliberately absent —
@@ -1726,7 +1738,8 @@ pub struct HostileVoiceArm {
     /// [`mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT`],
     /// [`mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT`],
     /// [`mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT`],
-    /// [`mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT`] the model's
+    /// [`mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT`],
+    /// [`mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT`] the model's
     /// own arm banks; the sound key + the volume the render lane's
     /// law folds from it).
     pub voice: i32,
@@ -1783,6 +1796,33 @@ pub struct PitchDrawVoiceArm {
     /// [`mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT`] the model's
     /// own arm banks; the sound key + the volume the render lane's
     /// law folds from it).
+    pub voice: i32,
+}
+
+/// One pending NEUTRAL-VOICE arm — the Level Event packet's own-shelf
+/// voice word the model keeps verbatim (see
+/// [`WorldModel::neutral_voice_events`]). The ONE case the shelf
+/// opens with — the bat's liftoff (`Bat.customServerAiStep`'s
+/// rest-to-flight tails the `sipush 1025` calls speak — the TWO call
+/// sites the bytecode pins). The anchor verbatim, the voice word the
+/// PACKET'S OWN effect id rides (the same transport honesty the
+/// sibling shelves keep), the data word deliberately absent — the
+/// case's own body never reads it. NO particles the case speaks —
+/// the ONE `playLocalSound(pos, BAT_TAKEOFF, NEUTRAL, 0.05F, (nf -
+/// nf) * 0.2F + 1.0F, false)` walk the case body spends (the TWO
+/// pitch draws the [0.8, 1.2] band the 0.2F scale gives — the SAME
+/// chain the hostile shelf keeps, the NEUTRAL source the bat's own
+/// channel names, the `ldc2_w` 0.05F volume the wingbeat's own
+/// whisper keeps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct NeutralVoiceArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — the bat liftoff
+    /// [`mc_protocol::SOUND_BAT_LIFTOFF_EFFECT`] the model's own arm
+    /// banks; the sound key + the volume the render lane's law folds
+    /// from it).
     pub voice: i32,
 }
 
@@ -2282,6 +2322,7 @@ impl WorldModel {
             fixed_voice_events: Vec::new(),
             hostile_voice_events: Vec::new(),
             pitch_draw_voice_events: Vec::new(),
+            neutral_voice_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -2762,6 +2803,18 @@ impl WorldModel {
         std::mem::take(&mut self.pitch_draw_voice_events)
     }
 
+    /// The neutral-voice shelf's mailbox's own drain (the same walk
+    /// the voices' speak — each arm ships exactly once): the 1025
+    /// word the Level Event packet armed, the render lane's own law
+    /// folds the ONE `playLocalSound(pos, <voice>, NEUTRAL, <vol>,
+    /// (nf - nf) * 0.2F + 1.0F, false)` walk from the anchor + the
+    /// packet's own voice word (the TWO pitch draws the [0.8, 1.2]
+    /// band the 0.2F scale gives — the data word the case's own body
+    /// never read — no particles the voice's own walk costs).
+    pub fn drain_neutral_voice_events(&mut self) -> Vec<NeutralVoiceArm> {
+        std::mem::take(&mut self.neutral_voice_events)
+    }
+
     /// The splash-potion effect's mailbox's own drain (the same walk the
     /// voices' speak — each arm ships exactly once): the 2002/2007 words
     /// the Level Event packet armed, the render lane's own law folds the
@@ -3096,6 +3149,10 @@ impl WorldModel {
                 // level (the same walk — the old level's anvil/drip
                 // voices never speak again)
                 self.pitch_draw_voice_events.clear();
+                // the neutral-voice shelf's mailbox dies with the
+                // level (the same walk — the old level's bat liftoff
+                // never speaks again)
+                self.neutral_voice_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -4602,13 +4659,14 @@ impl WorldModel {
                         | mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT
                         | mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT
                         | mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT
+                        | mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT
                 ) && !ev.global
                 {
                     // THE HOSTILE-VOICE SHELF'S OWN ARM (javap the cases
                     // offsets 4573/4693/4653/4613 + the projectile
                     // quartet 4447/4531/4489/4733 + the zombie-flock
                     // batch 4773/4813/4853/4893/4933 — the positioned
-                    // route the GLOBAL switch never banks, ALL THIRTEEN
+                    // route the GLOBAL switch never banks, ALL FOURTEEN
                     // the ONE `playLocalSound(pos, <voice>, HOSTILE,
                     // <vol>, (nf - nf) * 0.2F + 1.0F, false)` walk the
                     // case bodies spend — the TWO pitch draws the
@@ -4663,6 +4721,30 @@ impl WorldModel {
                     // honesty — the sound key the render lane's own law
                     // folds from it), no particles the cases speak.
                     self.pitch_draw_voice_events.push(PitchDrawVoiceArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
+                    });
+                    true
+                } else if matches!(ev.effect, mc_protocol::SOUND_BAT_LIFTOFF_EFFECT)
+                    && !ev.global
+                {
+                    // THE NEUTRAL-VOICE SHELF'S OWN ARM (javap the case
+                    // offset 4973 — the positioned route the GLOBAL
+                    // switch never banks, the ONE
+                    // `playLocalSound(pos, BAT_TAKEOFF, NEUTRAL, 0.05F,
+                    // (nf - nf) * 0.2F + 1.0F, false)` walk the case
+                    // body spends — the TWO pitch draws the [0.8, 1.2]
+                    // band the hostile shelf's chain keeps, the
+                    // `ldc2_w` 0.05F volume the wingbeat's own whisper
+                    // keeps, the NEUTRAL source the bat's own channel
+                    // names; the data word the case's own body never
+                    // reads). The voice word the PACKET'S OWN effect
+                    // id rides (the transport's honesty — the sound
+                    // key the render lane's own law folds from it), no
+                    // particles the case speaks.
+                    self.neutral_voice_events.push(NeutralVoiceArm {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
@@ -10728,6 +10810,148 @@ mod tests {
             m.pitch_draw_voice_events.is_empty(),
             "the mailbox dies with the level"
         );
+    }
+
+    #[test]
+    fn the_level_event_the_stray_and_bat_words_the_shelves_wear() {
+        // THE CONVERSION + NEUTRAL ROUND'S OWN ARMS (javap the cases
+        // offsets 5307 + 4973 — the positioned route the GLOBAL switch
+        // never banks): the skeleton's stray swap the HOSTILE-VOICE
+        // shelf's FOURTEENTH word arms (the SAME
+        // `playLocalSound(pos, SKELETON_CONVERTED_TO_STRAY, HOSTILE,
+        // 2.0F, (nf - nf) * 0.2F + 1.0F, false)` walk the flock's
+        // conversion words spend), the bat's liftoff the NEUTRAL-VOICE
+        // shelf opens with (the ONE
+        // `playLocalSound(pos, BAT_TAKEOFF, NEUTRAL, 0.05F, (nf - nf)
+        // * 0.2F + 1.0F, false)` walk the case body spends — the
+        // wingbeat whisper the ldc2_w keeps). The voice words the
+        // PACKETS' OWN effect ids ride, the data words the cases' own
+        // bodies never read, the drains ship the arms exactly once,
+        // and the Respawn recreates the level both mailboxes die with
+        // it.
+        let mut m = WorldModel::new();
+        // THE STRAY SWAP (Skeleton.doFreezeConversion's lambda tail
+        // the bytecode pins — the freeze timer's completion the
+        // caller's own iconst_0 passes, the zero the case's body
+        // never reads)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT,
+            x: -3,
+            y: 71,
+            z: 44,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.hostile_voice_events.len(),
+            1,
+            "the stray word the HOSTILE shelf arms"
+        );
+        assert_eq!(
+            m.hostile_voice_events[0].voice,
+            mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT,
+            "the stray word rides verbatim"
+        );
+        // ANY data word the data-free arm answers the same
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT,
+            x: 9,
+            y: 9,
+            z: 9,
+            data: 3,
+            global: false,
+        })));
+        assert_eq!(m.hostile_voice_events.len(), 2, "the data word never arms");
+        // the GLOBAL route the arm never banks
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.hostile_voice_events.len(), 2, "the global word never arms");
+        // THE BAT LIFTOFF (Bat.customServerAiStep's rest-to-flight
+        // tails the TWO sipush sites pin — the wingbeat the wake-up
+        // arms)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_BAT_LIFTOFF_EFFECT,
+            x: 12,
+            y: 33,
+            z: -8,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.neutral_voice_events.len(),
+            1,
+            "the bat word the NEUTRAL shelf arms"
+        );
+        assert_eq!(
+            m.neutral_voice_events[0].voice,
+            mc_protocol::SOUND_BAT_LIFTOFF_EFFECT,
+            "the bat word rides verbatim"
+        );
+        assert_eq!(m.neutral_voice_events[0].y, 33, "the anchor rides");
+        // ANY data word the data-free arm answers the same
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_BAT_LIFTOFF_EFFECT,
+            x: 1,
+            y: 1,
+            z: 1,
+            data: 44,
+            global: false,
+        })));
+        assert_eq!(m.neutral_voice_events.len(), 2, "the data word never arms");
+        // the GLOBAL route the arm never banks
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_BAT_LIFTOFF_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.neutral_voice_events.len(), 2, "the global word never arms");
+        // the drains ship the mailboxes exactly once
+        let stray_drained = m.drain_hostile_voice_events();
+        assert_eq!(stray_drained.len(), 2, "the hostile drain ships the shelf");
+        assert_eq!(
+            stray_drained[0].voice,
+            mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT
+        );
+        let bat_drained = m.drain_neutral_voice_events();
+        assert_eq!(bat_drained.len(), 2, "the neutral drain ships the shelf");
+        assert_eq!(bat_drained[1].voice, mc_protocol::SOUND_BAT_LIFTOFF_EFFECT);
+        assert!(m.hostile_voice_events.is_empty(), "the hostile shelf spent");
+        assert!(m.neutral_voice_events.is_empty(), "the neutral shelf spent");
+        // the fresh words re-arm beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_BAT_LIFTOFF_EFFECT,
+            x: 4,
+            y: 5,
+            z: 6,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.hostile_voice_events.len(), 1, "the fresh stray re-arms");
+        assert_eq!(m.neutral_voice_events.len(), 1, "the fresh bat re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(m.hostile_voice_events.is_empty(), "the shelf dies with the level");
+        assert!(m.neutral_voice_events.is_empty(), "the shelf dies with the level");
     }
 
     #[test]

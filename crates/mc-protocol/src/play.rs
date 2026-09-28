@@ -3050,6 +3050,43 @@ pub const SOUND_DRIP_WATER_INTO_CAULDRON_EFFECT: i32 = 1047;
 /// positioned lane the case's own arm wears.
 pub const SOUND_SULFUR_SPIKE_LAND_EFFECT: i32 = 1052;
 
+/// THE SKELETON-TO-STRAY VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_SKELETON_TO_STRAY` — the case
+/// `LevelEventHandler.levelEvent` offset 5307 speaks): the ONE
+/// `playLocalSound(pos, SKELETON_CONVERTED_TO_STRAY, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the hostile-voice shelf's arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles) — the
+/// conversion word the zombie-flock batch's own form keeps. The
+/// server's own freeze speaks it — `Skeleton`'s
+/// `doFreezeConversion` lambda's finalize tail (`sipush 1048, pos,
+/// iconst_0` the levelEvent call the bytecode pins — the stray swap
+/// the freeze timer's completion fires, the sibling drowned/husk
+/// conversions the same form the flock keeps). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_SKELETON_TO_STRAY_EFFECT: i32 = 1048;
+
+/// THE BAT-LIFTOFF VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class row `SOUND_BAT_LIFTOFF` — the case `LevelEventHandler.
+/// levelEvent` offset 4973 speaks): the ONE `playLocalSound(pos,
+/// BAT_TAKEOFF, NEUTRAL, 0.05F, (nextFloat() - nextFloat()) * 0.2F +
+/// 1.0F, false)` walk the case body spends — the TWO-draw pitch law
+/// the hostile shelf's chain keeps but the NEUTRAL source the bat's
+/// own channel names (the own-shelf word the flocks leave — the
+/// neutral-voice shelf this constant opens), the `ldc2_w` 0.05F
+/// volume the wingbeat's own whisper keeps (the reach the
+/// max(volume, 1.0) * 16 fold still turns into 16 blocks — the 1.0
+/// floor the fold speaks), the immediate flag, the data word never
+/// read, NO particles. The server's own bats speak it —
+/// `Bat.customServerAiStep`'s rest-to-flight tails (`sipush 1025,
+/// pos, iconst_0` the TWO levelEvent call sites the bytecode pins —
+/// the liftoff walk the wake-up arms). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_BAT_LIFTOFF_EFFECT: i32 = 1025;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,

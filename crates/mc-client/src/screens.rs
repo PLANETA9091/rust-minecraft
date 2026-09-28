@@ -23764,7 +23764,7 @@ impl App {
         }
     }
 
-    /// THE HOSTILE-VOICE WALK (javap the thirteen case arms verbatim):
+    /// THE HOSTILE-VOICE WALK (javap the fourteen case arms verbatim):
     /// the BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve
     /// places (the +0.5 trio the vanilla client answers), the VOLUME
     /// the per-word constant each case carries (the `ldc2_w` 10.0F
@@ -23780,7 +23780,7 @@ impl App {
     /// sounds.json table the runtime cache keeps (the file pick the
     /// engine's own LCG banks, NO new assets the shelf demands).
     fn play_hostile_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
-        // the THIRTEEN WORDS the model's own arm banks (the case ids
+        // the FOURTEEN WORDS the model's own arm banks (the case ids
         // the bytecode's own lookupswitch rows speak — the render
         // lane's law folds the sound key + the volume constant from
         // each)
@@ -23798,7 +23798,8 @@ impl App {
             mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT => ("entity.zombie_villager.converted", 2.0),
             mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT => ("entity.zombie.converted_to_drowned", 2.0),
             mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT => ("entity.husk.converted_to_zombie", 2.0),
-            _ => return, // the model's own arm the thirteen words alone enqueues
+            mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT => ("entity.skeleton.converted_to_stray", 2.0),
+            _ => return, // the model's own arm the fourteen words alone enqueues
         };
         // the pitch pair the case body's own draws keep (the
         // fsub/fmul/fadd chain the [0.8, 1.2] band answers)
@@ -23888,6 +23889,63 @@ impl App {
         // the SINGLE pitch draw the case body's own fmul/fadd chain
         // keeps (the [0.9, 1.0] band the 0.1F scale answers)
         let pitch = 0.9f32 + self.level_ambient_rng.next_f32() * 0.1f32;
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
+    /// THE NEUTRAL-VOICE WIRE LANE (javap `LevelEventHandler` case
+    /// 1025 — offset 4973 — over the 26.2 jar): the server's own bats
+    /// the shelf's voice broadcast, the ONE `playLocalSound(pos,
+    /// BAT_TAKEOFF, NEUTRAL, 0.05F, (nextFloat() - nextFloat()) *
+    /// 0.2F + 1.0F, false)` walk the case body spends — the voice
+    /// alone the broadcast renders (no particles the case speaks, the
+    /// pitch pair the only draws the walk costs).
+    pub fn live_neutral_voice_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireNeutralVoiceEvent>,
+    ) {
+        for ev in events {
+            self.play_neutral_voice(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE NEUTRAL-VOICE WALK (javap the case arm verbatim): the
+    /// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve
+    /// places (the +0.5 trio the vanilla client answers), the
+    /// `ldc2_w` 0.05F volume the wingbeat's own whisper keeps (the
+    /// reach the max(volume, 1.0) * 16 fold still turns into 16
+    /// blocks — the 1.0 floor the fold speaks), the pitch the TWO
+    /// draws the SAME fsub/fmul/fadd chain the hostile shelf's walk
+    /// answers (`(nf - nf) * 0.2F + 1.0F` — the [0.8, 1.2] band the
+    /// 0.2F scale gives, the level ambient stream the draws ride),
+    /// the distance-delay flag false the immediate voice keeps, the
+    /// NEUTRAL source the bat's own channel names. The voice word the
+    /// packet's own effect id — the sound key the official
+    /// sounds.json table the runtime cache keeps (the file pick the
+    /// engine's own LCG banks, NO new assets the shelf demands).
+    fn play_neutral_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the ONE WORD the model's own arm banks (the case id the
+        // bytecode's own lookupswitch row speaks — the render lane's
+        // law folds the sound key + the volume constant from it)
+        let (key, volume) = match voice {
+            mc_protocol::SOUND_BAT_LIFTOFF_EFFECT => ("entity.bat.takeoff", 0.05),
+            _ => return, // the model's own arm the one word alone enqueues
+        };
+        // the pitch pair the case body's own draws keep (the SAME
+        // fsub/fmul/fadd chain the hostile shelf's law answers)
+        let pitch = 1.0f32
+            + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * 0.2f32;
         let sx = f64::from(x) + 0.5;
         let sy = f64::from(y) + 0.5;
         let sz = f64::from(z) + 0.5;
@@ -52428,7 +52486,7 @@ cow_sound_variant: None,
             }
         }
         // THE UNBANKED WORD: the arm the render never voices (the
-        // model's own arm the thirteen words alone enqueues — the
+        // model's own arm the fourteen words alone enqueues — the
         // early return the unknown word answers consumes NO voice,
         // NO draw)
         let voices_before_unknown = app.sounds.events.len();
@@ -52639,6 +52697,152 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let voices_before = app.sounds.events.len();
         app.live_pitch_draw_voice_events_updated(vec![]);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_voice_serve_the_stray_and_bat_the_volume_wear() {
+        // THE CONVERSION + NEUTRAL ROUND'S OWN SERVE (javap the cases
+        // offsets 5307 + 4973 the same walks verbatim): the stray
+        // swap the `fconst_2` 2.0F the flock's reach wears — the
+        // dist-24 ear the v0.500000 gain speaks (2 x (1 - 24/32) =
+        // 0.5 — the door-shelf shape the flock shares), the bat's
+        // liftoff the `ldc2_w` 0.05F the wingbeat's own whisper keeps
+        // (the reach the max(volume, 1.0) * 16 fold still turns into
+        // 16 blocks — the 1.0 floor — the dist-8 ear the v0.025000
+        // gain speaks: 0.05 x (1 - 8/16)), the TWO pitch draws the
+        // [0.8, 1.2] band each serve answers, the keys the runtime
+        // table resolves (the converted-to-stray + the bat takeoff
+        // the official sounds.json rows bank), the unknown word no
+        // voice no draw the early return keeps, the empty mailbox the
+        // no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BODY 24 BLOCKS OFF (the flock's ear the stray's own
+        // reach answers)
+        app.body = Some(crate::body::PlayerBody::new(
+            -16.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x1048));
+        // THE STRAY SWAP (the 2.0F the flock's own form wears — the
+        // freeze-completion tail the Skeleton lambda fires)
+        app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+            x: -41,
+            y: 70,
+            z: 123,
+            voice: mc_protocol::SOUND_SKELETON_TO_STRAY_EFFECT,
+        }]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT TWO DRAWS (the pitch pair the case body's own
+        // fsub/fmul/fadd chain answers)
+        let mut replay = crate::drops::Lcg::new(0x1048);
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        assert_eq!(spent, replay, "the case body's own exact stream");
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.skeleton.converted_to_stray @"))
+                .expect("the stray voice the lane logs");
+            assert!(
+                line.contains(" v0.500000 p"),
+                "the fconst_2's own doubled reach the dist-24 ear speaks: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE BODY 8 BLOCKS OFF (the wingbeat ear the 0.05F whisper
+        // answers — the 1.0-floor reach the 16-block band keeps)
+        app.body = Some(crate::body::PlayerBody::new(
+            -32.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x1025));
+        // THE BAT LIFTOFF (the 0.05F the ldc2_w speaks — the wingbeat
+        // the wake-up tail fires)
+        app.live_neutral_voice_events_updated(vec![crate::world_view::WireNeutralVoiceEvent {
+            x: -41,
+            y: 70,
+            z: 123,
+            voice: mc_protocol::SOUND_BAT_LIFTOFF_EFFECT,
+        }]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT TWO DRAWS (the SAME chain the hostile law keeps)
+        let mut replay = crate::drops::Lcg::new(0x1025);
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        assert_eq!(spent, replay, "the wingbeat's own exact stream");
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.bat.takeoff @"))
+                .expect("the bat voice the lane logs");
+            assert!(
+                line.contains(" v0.025000 p"),
+                "the 0.05F whisper the dist-8 ear speaks: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE UNBANKED WORD: the arm the render never voices (the
+        // model's own arm the one word alone enqueues — the early
+        // return the unknown word answers consumes NO voice, NO draw)
+        let voices_before_unknown = app.sounds.events.len();
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xBEEF));
+        app.live_neutral_voice_events_updated(vec![crate::world_view::WireNeutralVoiceEvent {
+            x: 1,
+            y: 2,
+            z: 3,
+            voice: 4242,
+        }]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before_unknown,
+            "the unknown word no voice ever banks"
+        );
+        assert_eq!(
+            spent2,
+            crate::drops::Lcg::new(0xBEEF),
+            "the unknown word no draw the early return keeps"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let voices_before = app.sounds.events.len();
+        app.live_neutral_voice_events_updated(vec![]);
         assert_eq!(
             app.sounds.events.len(),
             voices_before,

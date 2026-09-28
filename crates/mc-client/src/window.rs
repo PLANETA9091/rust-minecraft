@@ -200,6 +200,7 @@ fn run_join(
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireHostileVoiceEvent>,
                 Vec<crate::world_view::WirePitchDrawVoiceEvent>,
+                Vec<crate::world_view::WireNeutralVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -322,6 +323,7 @@ fn run_join(
             view.model.drain_fixed_voice_events();
             view.model.drain_hostile_voice_events();
             view.model.drain_pitch_draw_voice_events();
+            view.model.drain_neutral_voice_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
@@ -968,6 +970,7 @@ fn run_join(
                             view.model.drain_fixed_voice_events();
             view.model.drain_hostile_voice_events();
             view.model.drain_pitch_draw_voice_events();
+            view.model.drain_neutral_voice_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
                             if live_tx
@@ -1363,6 +1366,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.pitch_draw_voice_events,
+                                    // the neutral-voice shelf's arm rides
+                                    // beside the gentle band's — the 1025
+                                    // word the server's own bats broadcast
+                                    // streams to the sound lane (the
+                                    // wingbeat whisper the render lane's
+                                    // own law folds, each arm rides
+                                    // exactly one shipped refresh)
+                                    upd.neutral_voice_events,
                                     // the splash-potion effect's arms ride
                                     // with them — the 2002/2007 words the
                                     // server's own potion impacts broadcast
@@ -1555,6 +1566,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireHostileVoiceEvent>,
                 Vec<crate::world_view::WirePitchDrawVoiceEvent>,
+                Vec<crate::world_view::WireNeutralVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -2134,6 +2146,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     fixed_voice_events,
                     hostile_voice_events,
                     pitch_draw_voice_events,
+                    neutral_voice_events,
                     splash_events,
                     mob_spawn_events,
                 )) => {
@@ -2486,6 +2499,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the 0.1F scale speaks, the vanilla client answers
                     // the same packet with)
                     app.live_pitch_draw_voice_events_updated(pitch_draw_voice_events);
+                    // the neutral-voice shelf's lane beside the gentle
+                    // band's: the 1025 word the server's own bats
+                    // broadcast lands at its own anchor (the wingbeat
+                    // whisper the pitch pair keeps — the 0.05F volume
+                    // the ldc2_w speaks, the vanilla client answers the
+                    // same packet with)
+                    app.live_neutral_voice_events_updated(neutral_voice_events);
                     // the splash-potion effect's lane beside the smoke's:
                     // the 2002/2007 words the server's own potion impacts
                     // broadcast land at their own anchors (the shard burst

@@ -650,6 +650,12 @@ pub struct SnapshotView {
     /// own drain empties the mailbox after), the sound lane's own law
     /// folds each voice at the block center.
     pub pitch_draw_voice_events: Vec<WirePitchDrawVoiceEvent>,
+    /// THE NEUTRAL-VOICE SHELF'S OWN WIRE ARMS (the 1025 bat-liftoff
+    /// word the server's own bats broadcast): shipped once with the
+    /// refresh that carried them (the worker's own drain empties the
+    /// mailbox after), the sound lane's own law folds the voice at
+    /// the block center.
+    pub neutral_voice_events: Vec<WireNeutralVoiceEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -1260,6 +1266,24 @@ pub struct WireHostileVoiceEvent {
 /// the transport never carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WirePitchDrawVoiceEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — the sound key
+    /// the sound lane's own law folds from it).
+    pub voice: i32,
+}
+
+/// One wire NEUTRAL-VOICE arm — the Level Event packet's own landing
+/// (the 1025 bat-liftoff word the server's own bats broadcast,
+/// [`mc_protocol::SOUND_BAT_LIFTOFF_EFFECT`] the render lane speaks):
+/// the event's anchor block + the raw voice word, verbatim (the ONE
+/// `playLocalSound(pos, BAT_TAKEOFF, NEUTRAL, 0.05F, (nf - nf) *
+/// 0.2F + 1.0F, false)` walk's own inputs — the 0.05F volume + the
+/// pitch pair the sound lane folds from the word; the data word the
+/// case's own body never reads, the transport never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireNeutralVoiceEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -3217,6 +3241,9 @@ pub fn materialize_snapshot_view(
         // and no one-draw pitch words (the join snapshot carries no
         // anvil/drip traffic — the empty mailbox the sound lane skips)
         pitch_draw_voice_events: Vec::new(),
+        // and no neutral-voice words (the join snapshot carries no
+        // 1025 traffic — the empty mailbox the sound lane skips)
+        neutral_voice_events: Vec::new(),
         // and no break words (the join snapshot carries no 2001 traffic
         // — the empty mailbox the render lane skips)
         break_events: Vec::new(),
@@ -4082,6 +4109,22 @@ impl LiveView {
                 voice: arm.voice,
             })
             .collect();
+        // the neutral-voice shelf's own projection (the mailbox
+        // verbatim — the anchor + the packet's own voice word the arms
+        // carry, the sound lane's own law reads): the 1025 word ships
+        // once with this view, the worker's drain empties the mailbox
+        // after
+        let neutral_voice_events = self
+            .model
+            .neutral_voice_events
+            .iter()
+            .map(|arm| WireNeutralVoiceEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                voice: arm.voice,
+            })
+            .collect();
         // the block-break effect's own projection (the mailbox verbatim
         // — the state walk's answers the arms carry, the anchor the
         // render lane's own law reads): each 2001 word ships once with
@@ -4369,6 +4412,10 @@ impl LiveView {
                 // arm too — the anvil/drip words are the connection's
                 // own traffic, not the pose's
                 pitch_draw_voice_events,
+                // the neutral-voice shelf's arms ride the pose-less arm
+                // too — the bat's word is the connection's own traffic,
+                // not the pose's
+                neutral_voice_events,
                 // the block-break effect's arms ride the pose-less arm
                 // too — the 2001 words are the connection's own traffic,
                 // not the pose's
@@ -4583,6 +4630,10 @@ impl LiveView {
             // the anvil/drip words follow the mailbox exactly like the
             // hostile voices' own arms do
             pitch_draw_voice_events,
+            // the neutral-voice shelf's arms ride every refresh too —
+            // the bat's word follows the mailbox exactly like the
+            // gentle voices' own arms do
+            neutral_voice_events,
             // the block-break effect's arms ride every refresh too —
             // the 2001 words follow the mailbox exactly like the
             // growth's own arms do
