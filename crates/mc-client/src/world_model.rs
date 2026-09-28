@@ -390,6 +390,13 @@ pub struct WorldModel {
     /// packet's 1501/1502 words the model enqueues for the render
     /// lane (see [`SmokeVoiceArm`]).
     pub smoke_voice_events: Vec<SmokeVoiceArm>,
+    /// The end-portal-frame fill's own mailbox — the Level Event
+    /// packet's 1503 words the model enqueues for the render lane
+    /// (see [`EndPortalFrameFillArm`]). The GLOBAL route the arm
+    /// never enqueues (the `globalLevelEvent` switch the 1503 id
+    /// never carries — the positioned lane the case's own arm
+    /// wears).
+    pub end_portal_frame_fill_events: Vec<EndPortalFrameFillArm>,
     /// THE EYE-OF-ENDER SHATTER'S OWN MAILBOX (the Level Event
     /// packet's next vocabulary word the model banks — the 2003
     /// words the server's own ender signal broadcasts, the
@@ -762,6 +769,27 @@ pub struct SmokeVoiceArm {
     /// own arm banks; the sound key and the puff walk the render
     /// lane's law folds from it).
     pub voice: i32,
+}
+
+/// One pending END-PORTAL-FRAME FILL arm — the Level Event packet's
+/// next vocabulary word the model keeps verbatim (see
+/// [`WorldModel::end_portal_frame_fill_events`]). The anchor
+/// verbatim (the frame's own cell the eye-placement tail
+/// broadcasts), the DATA word deliberately absent — the case's own
+/// body never reads it (no `iload_3` read the arm's bytecode
+/// speaks, the same transport honesty the smoke-voice arm keeps).
+/// The FIXED voice the case body spends FIRST (the `1.0F` pair the
+/// `fconst_1` folds keep — the END_PORTAL_FRAME_FILL word the
+/// render lane's own law folds from it), the sixteen SMOKE puffs
+/// the `bipush 16` loop after speaks (the 0.3125..0.6875 xz band
+/// the `(5.0 + nextDouble() × 6.0) / 16.0` folds keep, the +0.8125
+/// lift the frame's own top the constant rides — the puffs the
+/// render lane's own stream carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct EndPortalFrameFillArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One pending EYE-OF-ENDER SHATTER arm — the Level Event packet's
@@ -1321,6 +1349,7 @@ impl WorldModel {
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
             smoke_voice_events: Vec::new(),
+            end_portal_frame_fill_events: Vec::new(),
             eye_of_ender_shatter_events: Vec::new(),
             dragon_block_break_events: Vec::new(),
             dispenser_dispense_events: Vec::new(),
@@ -1532,6 +1561,15 @@ impl WorldModel {
     /// once the mailbox's own law keeps).
     pub fn drain_smoke_voice_events(&mut self) -> Vec<SmokeVoiceArm> {
         std::mem::take(&mut self.smoke_voice_events)
+    }
+
+    /// The end-portal-frame fill's mailbox's own drain (the same walk
+    /// the voices' speak — each arm ships exactly once): the 1503
+    /// words the Level Event packet armed, the render lane's own law
+    /// folds the fixed voice + the sixteen-puff walk from the anchor
+    /// alone (the data word the case's own body never reads).
+    pub fn drain_end_portal_frame_fill_events(&mut self) -> Vec<EndPortalFrameFillArm> {
+        std::mem::take(&mut self.end_portal_frame_fill_events)
     }
 
     /// The eye-of-ender shatter's mailbox's own drain (the same walk
@@ -1800,6 +1838,10 @@ impl WorldModel {
                 self.water_evaporating_events.clear();
                 self.composter_fill_events.clear();
                 self.smoke_voice_events.clear();
+                // the end-portal-frame fill's mailbox dies with the
+                // level (the same walk — the old level's 1503 words
+                // never fill again)
+                self.end_portal_frame_fill_events.clear();
                 // the eye-of-ender shatter's mailbox dies with the
                 // level (the same walk — the old level's 2003 words
                 // never shatter again)
@@ -2681,6 +2723,23 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         voice: ev.effect,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::END_PORTAL_FRAME_FILL_EFFECT && !ev.global {
+                    // THE END-PORTAL-FRAME FILL'S OWN ARM (javap the
+                    // case offset 3773 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries (the FIXED voice the case body
+                    // spends FIRST — the END_PORTAL_FRAME_FILL word
+                    // the `fconst_1` pair the 1.0/1.0 keeps — then the
+                    // `bipush 16` loop the sixteen SMOKE puffs fire;
+                    // the data word the case's own body never reads).
+                    // The fill the render lane's own stream carries —
+                    // no world edit the block updates own.
+                    self.end_portal_frame_fill_events.push(EndPortalFrameFillArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
                     });
                     true
                 } else if ev.effect == mc_protocol::EYE_OF_ENDER_SHATTER_EFFECT && !ev.global {
@@ -7550,6 +7609,99 @@ mod tests {
         })));
         assert!(
             m.smoke_voice_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_portal_frame_word_the_anchor_wears() {
+        // THE END-PORTAL-FRAME FILL'S OWN ARM (javap the case offset
+        // 3773 — the positioned route the GLOBAL switch never banks):
+        // the word the ONE mailbox arms, the DATA word the arm never
+        // carries (no `iload_3` read the case's own bytecode speaks —
+        // the same transport honesty the smoke-voice arm keeps), the
+        // drain ships the arms exactly once, and the Respawn recreates
+        // the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the caller's own tail (EnderEyeItem.useOn's `sipush 1503,
+        // pos, iconst_0` the bytecode pins — the eye the slot
+        // consumes, the shrink(1) walk the broadcast follows)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::END_PORTAL_FRAME_FILL_EFFECT,
+            x: 40,
+            y: 48,
+            z: 1,
+            data: 0,
+            global: false,
+        })));
+        // a second placement the same mailbox arms (the caller's other
+        // frame cell — the anchor each arm banks verbatim)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::END_PORTAL_FRAME_FILL_EFFECT,
+            x: -3,
+            y: 49,
+            z: 12,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.end_portal_frame_fill_events.len(),
+            2,
+            "the two words arm"
+        );
+        // the anchors ride verbatim (the callers' own BlockPos cells)
+        assert_eq!(m.end_portal_frame_fill_events[0].x, 40);
+        assert_eq!(m.end_portal_frame_fill_events[0].y, 48);
+        assert_eq!(m.end_portal_frame_fill_events[0].z, 1);
+        assert_eq!(m.end_portal_frame_fill_events[1].x, -3);
+        assert_eq!(m.end_portal_frame_fill_events[1].y, 49);
+        assert_eq!(m.end_portal_frame_fill_events[1].z, 12);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 1503 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::END_PORTAL_FRAME_FILL_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.end_portal_frame_fill_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_end_portal_frame_fill_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].x, 40, "the wire order the drain keeps");
+        assert!(m.end_portal_frame_fill_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_end_portal_frame_fill_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::END_PORTAL_FRAME_FILL_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.end_portal_frame_fill_events.len(),
+            1,
+            "the fresh word re-arms"
+        );
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_end".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.end_portal_frame_fill_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

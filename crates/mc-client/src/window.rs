@@ -173,6 +173,7 @@ fn run_join(
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireComposterFillEvent>,
                 Vec<crate::world_view::WireSmokeVoiceEvent>,
+                Vec<crate::world_view::WireEndPortalFrameFillEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
@@ -272,6 +273,7 @@ fn run_join(
             view.model.drain_water_evaporating_events();
             view.model.drain_composter_fill_events();
             view.model.drain_smoke_voice_events();
+            view.model.drain_end_portal_frame_fill_events();
             view.model.drain_eye_of_ender_shatter_events();
             view.model.drain_dragon_block_break_events();
             view.model.drain_dispenser_dispense_events();
@@ -895,6 +897,7 @@ fn run_join(
                             view.model.drain_water_evaporating_events();
                             view.model.drain_composter_fill_events();
                             view.model.drain_smoke_voice_events();
+                            view.model.drain_end_portal_frame_fill_events();
                             view.model.drain_eye_of_ender_shatter_events();
                             view.model.drain_dragon_block_break_events();
                             view.model.drain_dispenser_dispense_events();
@@ -1077,6 +1080,15 @@ fn run_join(
                                     // arm rides exactly one shipped
                                     // refresh)
                                     upd.smoke_voice_events,
+                                    // the end-portal-frame fill's arms
+                                    // ride beside the pitched smoke's —
+                                    // the 1503 words the server's own
+                                    // ender-eye placements stream to the
+                                    // fill lane (the fixed voice + the
+                                    // sixteen-puff walk the render's own
+                                    // law folds, each arm rides exactly
+                                    // one shipped refresh)
+                                    upd.end_portal_frame_fill_events,
                                     // the eye-of-ender shatter's arms ride
                                     // beside the water's — the 2003 words
                                     // the server's own ender signal
@@ -1269,6 +1281,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireComposterFillEvent>,
                 Vec<crate::world_view::WireSmokeVoiceEvent>,
+                Vec<crate::world_view::WireEndPortalFrameFillEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
@@ -1825,6 +1838,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     water_evaporating_events,
                     composter_fill_events,
                     smoke_voice_events,
+                    end_portal_frame_fill_events,
                     eye_of_ender_shatter_events,
                     dragon_block_break_events,
                     dispenser_dispense_events,
@@ -1963,6 +1977,17 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // 0.2..0.8 corner bands, the vanilla client answers
                     // the same packet with)
                     app.live_smoke_voice_events_updated(smoke_voice_events);
+                    // the end-portal-frame fill's lane beside the
+                    // pitched smoke's: the 1503 words the server's own
+                    // ender-eye placements broadcast land at their own
+                    // anchors (the fixed voice the `fconst_1` pair
+                    // speaks, the sixteen SMOKE puffs the 0.3125..0.6875
+                    // xz band the (5.0 + rnd × 6.0) / 16.0 folds keep at
+                    // the +0.8125 lift — the vanilla client answers the
+                    // same packet with)
+                    app.live_end_portal_frame_fill_events_updated(
+                        end_portal_frame_fill_events,
+                    );
                     // the eye-of-ender shatter's lane beside the water's:
                     // the 2003 words the server's own ender signal
                     // broadcasts land at their own anchors (the shard

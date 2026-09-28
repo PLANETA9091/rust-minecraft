@@ -1490,6 +1490,34 @@ pub const LAVA_FIZZ_EFFECT: i32 = 1501;
 /// positioned lane the case's own arm wears).
 pub const REDSTONE_TORCH_BURNOUT_EFFECT: i32 = 1502;
 
+/// THE END-PORTAL-FRAME FILL EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_END_PORTAL_FRAME_FILL`, the case
+/// `LevelEventHandler.levelEvent` offset 3773 speaks): the FIXED
+/// voice the case body spends FIRST — the ONE
+/// `playLocalSound(pos, END_PORTAL_FRAME_FILL, BLOCKS, 1.0F, 1.0F,
+/// false)` walk the `fconst_1` pair the volume/pitch both carry (no
+/// randoms the fixed fold speaks, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps) — then the `bipush 16` loop
+/// the sixteen SMOKE puffs fire (`addParticle(SMOKE, x + (5.0 +
+/// nextDouble() * 6.0) / 16.0, y + 0.8125, z + (5.0 + nextDouble() *
+/// 6.0) / 16.0, 0, 0, 0)` — the x draw FIRST, the z draw SECOND, the
+/// `#246` Double 5.0 × the `#647` Double 6.0 × the `#649` Double
+/// 16.0 folds the 0.3125..0.6875 band keeps, the `#651` Double
+/// 0.8125 lift the frame's own top the constant rides, the zero
+/// velocity trio the `dconst_0` answers). The server's own
+/// ender-eye placement speaks it — `EnderEyeItem.useOn`'s tail the
+/// `sipush 1503, pos, iconst_0` levelEvent call the bytecode pins
+/// (the eye the slot consumes — `shrink(1)` the walk keeps — the
+/// portal-completion scan `getOrCreatePortalShape().find(...)` the
+/// same tail answers; the data word the case's own body never reads
+/// — no `iload_3` the arm's bytecode speaks). The GLOBAL route the
+/// `globalLevelEvent` switch never banks (the 1023/1028/1038 trio
+/// the band alone carries — the positioned lane the case's own arm
+/// wears).
+pub const END_PORTAL_FRAME_FILL_EFFECT: i32 = 1503;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -10823,6 +10851,11 @@ mod tests {
             REDSTONE_TORCH_BURNOUT_EFFECT,
             1502,
             "the torch burnout voice the tick's own tail speaks"
+        );
+        assert_eq!(
+            END_PORTAL_FRAME_FILL_EFFECT,
+            1503,
+            "the portal-frame fill the eye's own useOn tail speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

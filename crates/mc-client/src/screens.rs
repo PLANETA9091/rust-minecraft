@@ -22100,6 +22100,74 @@ impl App {
         }
     }
 
+    /// THE END-PORTAL-FRAME FILL WIRE LANE (javap `LevelEventHandler`
+    /// case 1503 — offset 3773 — over the 26.2 jar): the server's own
+    /// ender-eye placements the frame-fill word broadcasts, the TWO
+    /// walks the case body speaks — the FIXED voice the ONE
+    /// `playLocalSound(pos, END_PORTAL_FRAME_FILL, BLOCKS, 1.0F,
+    /// 1.0F, false)` walk spends FIRST, then the `bipush 16` loop the
+    /// sixteen SMOKE puffs fire. NO world edit the block updates own
+    /// — the voice and the puffs alone the broadcast renders.
+    pub fn live_end_portal_frame_fill_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireEndPortalFrameFillEvent>,
+    ) {
+        for ev in events {
+            self.play_end_portal_frame_fill(ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE END-PORTAL-FRAME FILL WALK (javap the case-1503 body
+    /// verbatim — offset 3773): the FIXED voice the `fconst_1` pair
+    /// the volume/pitch both carry (no randoms the fixed fold speaks
+    /// — the level ambient stream the voice never spends), the BLOCK
+    /// CENTER the `playLocalSound(BlockPos, ...)` resolve places, the
+    /// distance-delay flag false the immediate voice keeps. The
+    /// sixteen-puff loop the position folds speak — the x draw FIRST,
+    /// the z draw SECOND (the `(5.0 + nextDouble() × 6.0) / 16.0` fold
+    /// the `#246`/`#647`/`#649` cp trio keeps: the 0.3125..0.6875
+    /// band the frame's own eye slot hovers over), the +0.8125 lift
+    /// the `#651` Double the frame's top answers, the zero velocity
+    /// trio the `dconst_0` rows keep — the SAME plain-SMOKE draw
+    /// chain the burnout's five puffs wear (the provider's own ctor
+    /// consumes).
+    fn play_end_portal_frame_fill(&mut self, x: i32, y: i32, z: i32) {
+        // THE FIXED VOICE (the case body's own FIRST walk — the
+        // `fconst_1` pair the 1.0/1.0 keeps)
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "block.end_portal_frame.fill",
+            1.0,
+            1.0,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+        // THE SIXTEEN SMOKE PUFFS (the `bipush 16` loop the case body
+        // answers — the x draw FIRST, the z draw SECOND, the y the
+        // never-drawn band the +0.8125 constant rides, the zero speed
+        // trio the dconst_0 rows keep)
+        for _ in 0..16 {
+            let px = f64::from(x) + (5.0 + self.level_ambient_rng.next_f64() * 6.0) / 16.0;
+            let py = f64::from(y) + 0.8125;
+            let pz = f64::from(z) + (5.0 + self.level_ambient_rng.next_f64() * 6.0) / 16.0;
+            let puff = crate::particles::shoot_smoke_puff(
+                px,
+                py,
+                pz,
+                0.0,
+                0.0,
+                0.0,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(puff);
+        }
+    }
+
     /// THE EYE-OF-ENDER SHATTER WIRE LANE (javap `LevelEventHandler`
     /// case 2003 — offset 947 — over the 26.2 jar): the server's own
     /// ender signal the landing tail broadcasts, the TWO walks the
@@ -46709,6 +46777,187 @@ cow_sound_variant: None,
         assert!(app.sounds.events.is_empty(), "the unknown word never voices");
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.live_smoke_voice_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_portal_frame_word_the_fill_walk_the_puffs_wear() {
+        // THE END-PORTAL-FRAME FILL'S OWN WIRE LANE (javap case 1503
+        // → offset 3773 over the 26.2 jar): the FIXED voice the case
+        // body spends FIRST (the `fconst_1` pair the 1.0/1.0 keeps —
+        // no randoms the voice never spends), then the `bipush 16`
+        // loop the sixteen SMOKE puffs fire — the x draw FIRST, the z
+        // draw SECOND, the +0.8125 lift the frame's top the constant
+        // rides, the zero speed trio the dconst_0 rows keep.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the assignment banks —
+        // the whole walk the seeded stream replays)
+        app.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1503);
+        app.live_end_portal_frame_fill_events_updated(vec![
+            crate::world_view::WireEndPortalFrameFillEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+            },
+        ]);
+        assert_eq!(
+            app.particles.len(),
+            16,
+            "the bipush 16 the fill loop keeps"
+        );
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the SMOKE type the provider answers"
+            );
+            // THE POSITION FOLDS (the `(5.0 + nextDouble() × 6.0) /
+            // 16.0` the cp trio #246/#647/#649 keeps — the
+            // 0.3125..0.6875 band the frame's eye slot hovers over,
+            // the +0.8125 lift the y's constant rides)
+            assert!(
+                p.x >= 10.3125 && p.x < 10.6875,
+                "the x the 5/16..11/16 band keeps: {}",
+                p.x
+            );
+            assert!(
+                (p.y - 20.8125).abs() < 1e-9,
+                "the +0.8125 lift the cp Double keeps: {}",
+                p.y
+            );
+            assert!(
+                p.z >= 10.3125 && p.z < 10.6875,
+                "the z the 5/16..11/16 band keeps: {}",
+                p.z
+            );
+            // THE VELOCITY (the zero SPEED trio the dconst_0 passes —
+            // the chain's own spread the *0.1 scale carries: |vx|,
+            // |vz| <= 0.018, the vy band the +0.1 bump scales to
+            // [-0.008, 0.028) — the rise the fold and the gravity
+            // both give)
+            assert!(p.vx.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vx);
+            assert!(p.vz.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vz);
+            assert!(
+                (-0.008..0.028).contains(&p.vy),
+                "the smoke's own rise band: {}",
+                p.vy
+            );
+            // THE CTOR LAWS (the 0.96 friction, the −0.1 gravity the
+            // rise rides, the 8..40 band the smoke fold gives, the
+            // grey tint the r*0.3 keeps, the plain ×0.75 fold the 1.0
+            // provider keeps)
+            assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction");
+            assert!((p.gravity + 0.1).abs() < 1e-9, "the ash gravity");
+            assert!(p.lifetime >= 8 && p.lifetime <= 40, "the band: {}", p.lifetime);
+            assert_eq!(p.col[0], p.col[1], "the grey the r/g keeps");
+            assert_eq!(p.col[1], p.col[2], "the grey the g/b keeps");
+            assert!(
+                (0.075..0.15).contains(&p.quad_size),
+                "the plain 0.75 fold's own band: {}",
+                p.quad_size
+            );
+        }
+        // THE FIXED VOICE (the case body's own FIRST walk — the fill
+        // key the official table speaks, the 1.0 pair the `fconst_1`
+        // folds keep, the eyeplace files the sounds.json row banks)
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.end_portal_frame.fill "))
+                .expect("the fill voice the case body speaks");
+            let pitch: f32 = voice
+                .rsplit(" p")
+                .next()
+                .and_then(|s| s.split(' ').next())
+                .and_then(|s| s.parse::<f32>().ok())
+                .expect("the logged pitch the walk carries");
+            assert!(
+                (pitch - 1.0).abs() < 1e-6,
+                "the fconst_1 pitch the fixed fold keeps: {}",
+                pitch
+            );
+            let gain: f32 = voice
+                .rsplit(" v")
+                .next()
+                .and_then(|s| s.split(' ').next())
+                .and_then(|s| s.parse().ok())
+                .expect("the logged gain the walk carries");
+            assert!(
+                gain <= 1.0 + 1e-6 && gain > 0.0,
+                "the 1.0 volume the attenuation folds: {}",
+                gain
+            );
+        }
+        // THE STREAM'S OWN ORDER (the fixed voice the walk's zero
+        // draws keep — 16 × (2 corner + 9 ctor) = 176 raw draws the
+        // whole walk spends, no more no less)
+        let advanced = {
+            let mut l = crate::drops::Lcg::new(0xC10D_1503);
+            for _ in 0..176 {
+                l.next();
+            }
+            l.next()
+        };
+        assert_eq!(
+            app.level_ambient_rng.next(),
+            advanced,
+            "the voice-then-puffs order the fill's own count keeps"
+        );
+        // THE DETERMINISM (the same seed the same puffs answer — the
+        // x/z bands the seeded chain replays)
+        let again = {
+            let mut app2 = App::new(2);
+            app2.enter_world();
+            app2.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1503);
+            app2.live_end_portal_frame_fill_events_updated(vec![
+                crate::world_view::WireEndPortalFrameFillEvent {
+                    x: 10,
+                    y: 20,
+                    z: 10,
+                },
+            ]);
+            app2
+                .particles
+                .iter()
+                .map(|p| (p.x, p.y, p.z))
+                .collect::<Vec<_>>()
+        };
+        let original = app
+            .particles
+            .iter()
+            .map(|p| (p.x, p.y, p.z))
+            .collect::<Vec<_>>();
+        assert_eq!(again, original, "the seeded chain replays");
+        // THE SECOND ARM (the other frame cell the same walk answers
+        // — the anchor's own cell the bands shift to)
+        app.particles.clear();
+        app.sounds.events.clear();
+        app.live_end_portal_frame_fill_events_updated(vec![
+            crate::world_view::WireEndPortalFrameFillEvent {
+                x: -4,
+                y: 30,
+                z: 7,
+            },
+        ]);
+        assert_eq!(app.particles.len(), 16, "the fresh word re-walks");
+        assert!(
+            app.particles.iter().all(|p| (p.y - 30.8125).abs() < 1e-9),
+            "the new anchor's own lift the y keeps"
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.end_portal_frame.fill ")),
+                "the fill voice the fresh arm speaks"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_end_portal_frame_fill_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

@@ -498,6 +498,14 @@ pub struct SnapshotView {
     /// after), the render lane's own law folds the pitched voice and
     /// the smoke puffs from the word the arm rides.
     pub smoke_voice_events: Vec<WireSmokeVoiceEvent>,
+    /// The 1503 words the refresh carries (the server's own
+    /// ender-eye placements broadcast,
+    /// [`mc_protocol::play::END_PORTAL_FRAME_FILL_EFFECT`] the
+    /// vocabulary speaks): shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after), the render lane's own law folds the frame fill — the
+    /// fixed voice and the sixteen SMOKE puffs the case body walks.
+    pub end_portal_frame_fill_events: Vec<WireEndPortalFrameFillEvent>,
     /// The 2003 words the refresh carries (the server's own ender
     /// signal broadcasts, [`mc_protocol::play::EYE_OF_ENDER_SHATTER_EFFECT`]
     /// the vocabulary speaks): shipped once with the refresh that
@@ -661,6 +669,20 @@ pub struct WireSmokeVoiceEvent {
 /// never reads, the transport never carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireEyeOfEnderShatterEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+}
+
+/// One wire END-PORTAL-FRAME FILL arm — the Level Event packet's own
+/// landing (the 1503 words the server's own ender-eye placements
+/// broadcast, [`mc_protocol::play::END_PORTAL_FRAME_FILL_EFFECT`]
+/// the render lane speaks): the event's anchor block, verbatim (the
+/// fixed voice and the sixteen-puff walk's own input — the frame
+/// fill the render lane folds from it; the data word the case's own
+/// body never reads, the transport never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireEndPortalFrameFillEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -2586,6 +2608,7 @@ pub fn materialize_snapshot_view(
         // and no smoke words (the join snapshot carries no 1501/1502
         // traffic — the empty mailbox the render lane skips)
         smoke_voice_events: Vec::new(),
+        end_portal_frame_fill_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2008
         // traffic — the empty mailbox the render lane skips)
         dragon_block_break_events: Vec::new(),
@@ -3042,6 +3065,20 @@ impl LiveView {
                 voice: arm.voice,
             })
             .collect();
+        // the end-portal-frame fill's own projection (the mailbox
+        // verbatim — the anchor the arms carry, the render lane's own
+        // law reads): each 1503 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let end_portal_frame_fill_events = self
+            .model
+            .end_portal_frame_fill_events
+            .iter()
+            .map(|arm| WireEndPortalFrameFillEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the eye-of-ender shatter's own projection (the mailbox
         // verbatim — the anchor the arms carry, the render lane's own
         // law reads): each 2003 word ships once with this view, the
@@ -3279,6 +3316,10 @@ impl LiveView {
                 // too — the 1501/1502 words are the connection's own
                 // traffic, not the pose's
                 smoke_voice_events,
+                // the end-portal-frame fill's arms ride the pose-less
+                // arm too — the 1503 words are the connection's own
+                // traffic, not the pose's
+                end_portal_frame_fill_events,
                 // the dragon block-break effect's arms ride the pose-less
                 // arm too — the 2008 words are the connection's own
                 // traffic, not the pose's
@@ -3401,6 +3442,10 @@ impl LiveView {
             // the 1501/1502 words follow the mailbox exactly like the
             // water's own arms do
             smoke_voice_events,
+            // the end-portal-frame fill's arms ride every refresh too
+            // — the 1503 words follow the mailbox exactly like the
+            // water's own arms do
+            end_portal_frame_fill_events,
             // the dragon block-break effect's arms ride every refresh
             // too — the 2008 words follow the mailbox exactly like the
             // water's own arms do
