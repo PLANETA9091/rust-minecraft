@@ -654,6 +654,20 @@ pub struct WorldModel {
     /// the four ids never carry — the positioned lane the cases' own
     /// arms wear).
     pub hostile_voice_events: Vec<HostileVoiceArm>,
+    /// THE ONE-DRAW PITCH SHELF'S OWN MAILBOX (the ELEVEN gentle-pitch
+    /// cases the ONE arm shape wears — see [`PitchDrawVoiceArm`]): the
+    /// anvil trio's broken/used/land (1029/1030/1031), the phantom's
+    /// bite (1039), the grindstone's use (1042), the lectern's page
+    /// turn (1043), the smithing table's use (1044), the dripstone
+    /// landing + the lava/water-into-cauldron drips (1045/1046/1047)
+    /// and the sulfur spike's landing (1052) — the voices' arms the
+    /// Level Event packet arms, each the anchor + the packet's own
+    /// voice word carries. The data word the cases' own bodies never
+    /// read (the arms the anchor + voice alone carry), no particles
+    /// the cases speak. The GLOBAL route the arm never enqueues (the
+    /// `globalLevelEvent` switch the eleven ids never carry — the
+    /// positioned lane the cases' own arms wear).
+    pub pitch_draw_voice_events: Vec<PitchDrawVoiceArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -1718,6 +1732,60 @@ pub struct HostileVoiceArm {
     pub voice: i32,
 }
 
+/// One pending ONE-DRAW PITCH voice arm — the Level Event packet's
+/// gentle-pitch voice shelf the model keeps verbatim (see
+/// [`WorldModel::pitch_draw_voice_events`]). The ELEVEN sound-only
+/// cases the ONE arm shape wears — the anvil trio (the broken
+/// `AnvilBlock.onBrokenAfterFall` + `AnvilMenu`'s onTake lambda the
+/// `sipush 1029` calls speak, the used `AnvilMenu`'s onTake lambda
+/// the `sipush 1030` call speaks, the land `AnvilBlock.onLand` the
+/// `sipush 1031` call speaks), the phantom's bite (the dedicated
+/// server's own lane — the client jar the caller site doesn't
+/// carry), the grindstone's use (the dedicated server's own lane —
+/// the same honest gap), the lectern's page turn
+/// (`LecternBlock.signalPageChange` the `sipush 1043` call speaks),
+/// the smithing table's use (`SmithingMenu`'s onTake lambda the
+/// `sipush 1044` call speaks), the dripstone landing
+/// (`PointedDripstoneBlock.getStalactiteLandingSound` the `sipush
+/// 1045` call speaks), the lava/water-into-cauldron drips
+/// (`CauldronBlock` + `LayeredCauldronBlock.receiveStalactiteDrip`
+/// the `sipush 1046/1047` calls speak) and the sulfur spike's
+/// landing (`SulfurSpikeBlock.getStalactiteLandingSound` the
+/// `sipush 1052` call speaks). The anchor verbatim, the voice word
+/// the PACKET'S OWN effect id rides (the same transport honesty the
+/// hostile shelf keeps), the data word deliberately absent — the
+/// cases' own bodies never read it. NO particles the cases speak —
+/// the ONE `playLocalSound(pos, <voice>, <source>, <vol>, nf *
+/// 0.1F + 0.9F, false)` walk each case body spends (the ONE pitch
+/// draw the [0.9, 1.0] band the 0.1F scale gives — NOT the hostile
+/// shelf's TWO-draw chain, the per-word VOLUME + SOURCE the render
+/// lane's own law folds — the 1.0F the broken/used/grindstone/page/
+/// smithing five carry, the 0.3F the land + the phantom's bite
+/// keep, the 2.0F the dripstone/cauldron/sulfur quartet keeps; the
+/// BLOCKS source the ten block voices wear, the HOSTILE the
+/// phantom's own channel names).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PitchDrawVoiceArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — one of the
+    /// eleven gentle-pitch ids [`mc_protocol::SOUND_ANVIL_BROKEN_EFFECT`],
+    /// [`mc_protocol::SOUND_ANVIL_USED_EFFECT`],
+    /// [`mc_protocol::SOUND_ANVIL_LAND_EFFECT`],
+    /// [`mc_protocol::SOUND_PHANTOM_BITE_EFFECT`],
+    /// [`mc_protocol::SOUND_GRINDSTONE_USED_EFFECT`],
+    /// [`mc_protocol::SOUND_PAGE_TURN_EFFECT`],
+    /// [`mc_protocol::SOUND_SMITHING_TABLE_USED_EFFECT`],
+    /// [`mc_protocol::SOUND_POINTED_DRIPSTONE_LAND_EFFECT`],
+    /// [`mc_protocol::SOUND_DRIP_LAVA_INTO_CAULDRON_EFFECT`],
+    /// [`mc_protocol::SOUND_DRIP_WATER_INTO_CAULDRON_EFFECT`],
+    /// [`mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT`] the model's
+    /// own arm banks; the sound key + the volume the render lane's
+    /// law folds from it).
+    pub voice: i32,
+}
+
 /// One pending SPLASH-POTION arm — the Level Event packet's next
 /// vocabulary word the model keeps verbatim (see
 /// [`WorldModel::splash_events`]). The DATA word rides raw (the potion
@@ -2213,6 +2281,7 @@ impl WorldModel {
             jukebox_events: Vec::new(),
             fixed_voice_events: Vec::new(),
             hostile_voice_events: Vec::new(),
+            pitch_draw_voice_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -2680,6 +2749,19 @@ impl WorldModel {
         std::mem::take(&mut self.hostile_voice_events)
     }
 
+    /// The one-draw pitch shelf's mailbox's own drain (the same walk
+    /// the voices' speak — each arm ships exactly once): the
+    /// 1029/1030/1031/1039/1042/1043/1044/1045/1046/1047/1052 words
+    /// the Level Event packet armed, the render lane's own law folds
+    /// the ONE `playLocalSound(pos, <voice>, <source>, <vol>, nf *
+    /// 0.1F + 0.9F, false)` walk from the anchor + the packet's own
+    /// voice word (the single pitch draw the gentle [0.9, 1.0] band
+    /// the 0.1F scale gives — the data word the cases' own bodies
+    /// never read — no particles the voices' own walks cost).
+    pub fn drain_pitch_draw_voice_events(&mut self) -> Vec<PitchDrawVoiceArm> {
+        std::mem::take(&mut self.pitch_draw_voice_events)
+    }
+
     /// The splash-potion effect's mailbox's own drain (the same walk the
     /// voices' speak — each arm ships exactly once): the 2002/2007 words
     /// the Level Event packet armed, the render lane's own law folds the
@@ -3010,6 +3092,10 @@ impl WorldModel {
                 // (the same walk — the old level's door/wither voices
                 // never speak again)
                 self.hostile_voice_events.clear();
+                // the one-draw pitch shelf's mailbox dies with the
+                // level (the same walk — the old level's anvil/drip
+                // voices never speak again)
+                self.pitch_draw_voice_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -4535,6 +4621,48 @@ impl WorldModel {
                     // the sound key the render lane's own law folds
                     // from it), no particles the cases speak.
                     self.hostile_voice_events.push(HostileVoiceArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
+                    });
+                    true
+                } else if matches!(
+                    ev.effect,
+                    mc_protocol::SOUND_ANVIL_BROKEN_EFFECT
+                        | mc_protocol::SOUND_ANVIL_USED_EFFECT
+                        | mc_protocol::SOUND_ANVIL_LAND_EFFECT
+                        | mc_protocol::SOUND_PHANTOM_BITE_EFFECT
+                        | mc_protocol::SOUND_GRINDSTONE_USED_EFFECT
+                        | mc_protocol::SOUND_PAGE_TURN_EFFECT
+                        | mc_protocol::SOUND_SMITHING_TABLE_USED_EFFECT
+                        | mc_protocol::SOUND_POINTED_DRIPSTONE_LAND_EFFECT
+                        | mc_protocol::SOUND_DRIP_LAVA_INTO_CAULDRON_EFFECT
+                        | mc_protocol::SOUND_DRIP_WATER_INTO_CAULDRON_EFFECT
+                        | mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT
+                ) && !ev.global
+                {
+                    // THE ONE-DRAW PITCH SHELF'S OWN ARM (javap the
+                    // cases offsets 4231/4265/4333/4369/5015/5049/
+                    // 4299/5205/5239/5273/5347 — the positioned route
+                    // the GLOBAL switch never banks, ALL ELEVEN the
+                    // ONE `playLocalSound(pos, <voice>, <source>,
+                    // <vol>, nf * 0.1F + 0.9F, false)` walk the case
+                    // bodies spend — the ONE pitch draw the [0.9, 1.0]
+                    // band the 0.1F scale gives (NOT the hostile
+                    // shelf's TWO-draw chain the sibling shelf keeps),
+                    // the VOLUME + SOURCE the per-word constants the
+                    // render lane folds (1.0 the anvil
+                    // broken/used + grindstone/page/smithing five,
+                    // 0.3 the anvil land + the phantom's bite, 2.0 the
+                    // dripstone/cauldron/sulfur quartet; the BLOCKS
+                    // the ten block voices wear, the HOSTILE the
+                    // phantom's channel names); the data words the
+                    // cases' own bodies never read). The voice word
+                    // the PACKET'S OWN effect id rides (the transport's
+                    // honesty — the sound key the render lane's own law
+                    // folds from it), no particles the cases speak.
+                    self.pitch_draw_voice_events.push(PitchDrawVoiceArm {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
@@ -8459,10 +8587,13 @@ mod tests {
         assert_eq!(m.growth_events.len(), 2, "the second arm rides after");
         assert_eq!(m.growth_events[1].x, 3);
         // an unknown effect id: the honest refusal — no arm, no state
-        // touched (the mob-spawner flames, the wither's broadcast, the
-        // rest of the constants class the vocabulary never speaks)
+        // touched (the wither-boss spawn, the dragon's death, the rest
+        // of the constants class the vocabulary never speaks — the
+        // anvil-use word 1030 the one-draw pitch shelf's own round
+        // banked, the unknown example the genuinely unbanked dragon
+        // death keeps)
         assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
-            effect: 1030,
+            effect: 1028,
             x: 0,
             y: 0,
             z: 0,
@@ -10470,6 +10601,131 @@ mod tests {
         })));
         assert!(
             m.hostile_voice_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_gentle_pitch_words_the_one_arm_wears() {
+        // THE ONE-DRAW PITCH SHELF'S OWN ARM (javap the cases offsets
+        // 4231/4265/4333/4369/5015/5049/4299/5205/5239/5273/5347 —
+        // the positioned route the GLOBAL switch never banks, ALL
+        // ELEVEN the ONE `playLocalSound(pos, <voice>, <source>,
+        // <vol>, nf * 0.1F + 0.9F, false)` walk the case bodies
+        // spend): the anvil trio (broken/used/land), the phantom's
+        // bite, the grindstone's use, the page turn, the smithing
+        // table's use, the dripstone landing + the lava/water
+        // cauldron drips, the sulfur spike's landing the SAME mailbox
+        // arms — the voice word the PACKET'S OWN effect id rides (the
+        // transport's honesty — the sound key the render lane's own
+        // law folds from it), the data words the cases' own bodies
+        // never read, the drain ships the arms exactly once, and the
+        // Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the eleven words (the callers' own tails the bytecode pins —
+        // AnvilMenu's onTake lambda + AnvilBlock.onBrokenAfterFall
+        // 1029, the onTake lambda's use tail 1030, AnvilBlock.onLand
+        // 1031, the dedicated server's phantom lane 1039, the
+        // dedicated server's grindstone lane 1042,
+        // LecternBlock.signalPageChange 1043, SmithingMenu's onTake
+        // lambda 1044, PointedDripstoneBlock.getStalactiteLandingSound
+        // 1045, CauldronBlock.receiveStalactiteDrip 1046, the
+        // CauldronBlock + LayeredCauldronBlock receive walks 1047,
+        // SulfurSpikeBlock.getStalactiteLandingSound 1052; each the
+        // caller's own iconst_0 passes, the zeros the cases' bodies
+        // never read)
+        let words = [
+            mc_protocol::SOUND_ANVIL_BROKEN_EFFECT,
+            mc_protocol::SOUND_ANVIL_USED_EFFECT,
+            mc_protocol::SOUND_ANVIL_LAND_EFFECT,
+            mc_protocol::SOUND_PHANTOM_BITE_EFFECT,
+            mc_protocol::SOUND_GRINDSTONE_USED_EFFECT,
+            mc_protocol::SOUND_PAGE_TURN_EFFECT,
+            mc_protocol::SOUND_SMITHING_TABLE_USED_EFFECT,
+            mc_protocol::SOUND_POINTED_DRIPSTONE_LAND_EFFECT,
+            mc_protocol::SOUND_DRIP_LAVA_INTO_CAULDRON_EFFECT,
+            mc_protocol::SOUND_DRIP_WATER_INTO_CAULDRON_EFFECT,
+            mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT,
+        ];
+        for (i, effect) in words.iter().enumerate() {
+            assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: *effect,
+                x: -7 + i as i32,
+                y: 64,
+                z: 77,
+                data: 0,
+                global: false,
+            })));
+        }
+        assert_eq!(
+            m.pitch_draw_voice_events.len(),
+            11,
+            "the eleven words the one mailbox arms"
+        );
+        assert_eq!(
+            m.pitch_draw_voice_events[0].voice,
+            mc_protocol::SOUND_ANVIL_BROKEN_EFFECT,
+            "the anvil-broken word rides verbatim"
+        );
+        assert_eq!(
+            m.pitch_draw_voice_events[10].voice,
+            mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT,
+            "the sulfur-spike word rides verbatim"
+        );
+        assert_eq!(m.pitch_draw_voice_events[5].x, -2, "the anchor rides");
+        // ANY data word the data-free arm answers the same (the
+        // cases' bodies never read the word — the non-zero the same
+        // push wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_PAGE_TURN_EFFECT,
+            x: 9,
+            y: 9,
+            z: 9,
+            data: 7,
+            global: false,
+        })));
+        assert_eq!(
+            m.pitch_draw_voice_events.len(),
+            12,
+            "the data word never arms"
+        );
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the cases' own bodies wear — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_ANVIL_LAND_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.pitch_draw_voice_events.len(),
+            12,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_pitch_draw_voice_events();
+        assert_eq!(drained.len(), 12, "the drain ships the mailbox");
+        assert_eq!(drained[3].voice, mc_protocol::SOUND_PHANTOM_BITE_EFFECT);
+        assert!(m.pitch_draw_voice_events.is_empty(), "the drained mailbox stays empty");
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.pitch_draw_voice_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.pitch_draw_voice_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

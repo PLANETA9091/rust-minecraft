@@ -23819,6 +23819,90 @@ impl App {
         );
     }
 
+    /// THE ONE-DRAW PITCH WIRE LANE (javap `LevelEventHandler` cases
+    /// 1029/1030/1031 — offsets 4231/4265/4333 — the phantom's bite
+    /// 1039 — offset 4369 — the grindstone 1042 — offset 5015 — the
+    /// page turn 1043 — offset 5049 — the smithing table 1044 —
+    /// offset 4299 — the dripstone/cauldron landing + drips
+    /// 1045/1046/1047 — offsets 5205/5239/5273 — and the sulfur
+    /// spike's landing 1052 — offset 5347 — over the 26.2 jar): the
+    /// server's own anvils, phantom, grindstone, lectern, smithing
+    /// tables, cauldrons and falling blocks the shelf's voices
+    /// broadcast, the ONE `playLocalSound(pos, <voice>, <source>,
+    /// <vol>, nextFloat() * 0.1F + 0.9F, false)` walk each case body
+    /// spends — the voice alone the broadcast renders (no particles
+    /// the cases speak, the single draw the gentle folds cost).
+    pub fn live_pitch_draw_voice_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WirePitchDrawVoiceEvent>,
+    ) {
+        for ev in events {
+            self.play_pitch_draw_voice(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE ONE-DRAW PITCH WALK (javap the eleven case arms verbatim):
+    /// the BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve
+    /// places (the +0.5 trio the vanilla client answers), the VOLUME
+    /// the per-word constant each case carries (the `fconst_1` 1.0F
+    /// the anvil broken/used + the grindstone/page/smithing five
+    /// wear, the `ldc2_w` 0.3F the anvil land + the phantom's bite
+    /// keep, the `fconst_2` 2.0F the dripstone/cauldron/sulfur
+    /// quartet keeps), the pitch the SINGLE draw the fmul/fadd chain
+    /// answers (`nextFloat() * 0.1F + 0.9F` — the [0.9, 1.0] band the
+    /// 0.1F scale gives, NOT the hostile shelf's two-draw chain the
+    /// sibling walk spends, the level ambient stream the draw rides),
+    /// the distance-delay flag false the immediate voices keep, the
+    /// BLOCKS source the ten block voices wear (the HOSTILE the
+    /// phantom's own channel names — the source the channel's own
+    /// doc carries, the engine's fold the key + volume answer). The
+    /// voice word the packet's own effect id — the sound key the
+    /// official sounds.json table the runtime cache keeps (the file
+    /// pick the engine's own LCG banks, NO new assets the shelf
+    /// demands).
+    fn play_pitch_draw_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the ELEVEN WORDS the model's own arm banks (the case ids
+        // the bytecode's own lookupswitch rows speak — the render
+        // lane's law folds the sound key + the volume constant from
+        // each)
+        let (key, volume) = match voice {
+            mc_protocol::SOUND_ANVIL_BROKEN_EFFECT => ("block.anvil.destroy", 1.0),
+            mc_protocol::SOUND_ANVIL_USED_EFFECT => ("block.anvil.use", 1.0),
+            mc_protocol::SOUND_ANVIL_LAND_EFFECT => ("block.anvil.land", 0.3),
+            mc_protocol::SOUND_PHANTOM_BITE_EFFECT => ("entity.phantom.bite", 0.3),
+            mc_protocol::SOUND_GRINDSTONE_USED_EFFECT => ("block.grindstone.use", 1.0),
+            mc_protocol::SOUND_PAGE_TURN_EFFECT => ("item.book.page_turn", 1.0),
+            mc_protocol::SOUND_SMITHING_TABLE_USED_EFFECT => ("block.smithing_table.use", 1.0),
+            mc_protocol::SOUND_POINTED_DRIPSTONE_LAND_EFFECT => {
+                ("block.pointed_dripstone.land", 2.0)
+            }
+            mc_protocol::SOUND_DRIP_LAVA_INTO_CAULDRON_EFFECT => {
+                ("block.pointed_dripstone.drip_lava_into_cauldron", 2.0)
+            }
+            mc_protocol::SOUND_DRIP_WATER_INTO_CAULDRON_EFFECT => {
+                ("block.pointed_dripstone.drip_water_into_cauldron", 2.0)
+            }
+            mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT => ("block.sulfur_spike.land", 2.0),
+            _ => return, // the model's own arm the eleven words alone enqueues
+        };
+        // the SINGLE pitch draw the case body's own fmul/fadd chain
+        // keeps (the [0.9, 1.0] band the 0.1F scale answers)
+        let pitch = 0.9f32 + self.level_ambient_rng.next_f32() * 0.1f32;
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE DRAGON BLOCK-BREAK WIRE LANE (javap `LevelEventHandler`
     /// case 2008 — offset 3440 — over the 26.2 jar): the server's
     /// own dragon the event broadcast, the ONE EXPLOSION puff the
@@ -52369,6 +52453,192 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let voices_before = app.sounds.events.len();
         app.live_hostile_voice_events_updated(vec![]);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_pitch_draw_serve_the_gentle_band_the_volume_wear() {
+        // THE ONE-DRAW PITCH SHELF'S OWN SERVE (javap the eleven case
+        // arms the same walk verbatim): the SINGLE nextFloat draw the
+        // `nf * 0.1F + 0.9F` chain answers — the [0.9, 1.0] band the
+        // 0.1F scale gives (NOT the hostile shelf's two-draw stream),
+        // the per-word volume the cases' own constants keep (the
+        // `fconst_1` 1.0F five, the `ldc2_w` 0.3F the land + the
+        // phantom's bite, the `fconst_2` 2.0F the dripstone/cauldron/
+        // sulfur quartet), the reach the `Math.max(getVolume(), 1.0F)
+        // * 16.0F` fold speaks (16 for the 1.0 + the 0.3 — the fold's
+        // own floor — 32 for the 2.0), the keys the runtime table
+        // resolves (the eleven official sounds.json rows bank), the
+        // unknown word no voice no draw the early return keeps, the
+        // empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BODY 24 BLOCKS OFF (the 2.0-volume ear the fold's own
+        // doubled reach answers: 2 x (1 - 24/32) = 0.5 the linear
+        // keeps — the sulfur spike's landing the dist-24 ear speaks)
+        app.body = Some(crate::body::PlayerBody::new(
+            -16.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x461));
+        // THE SULFUR SPIKE'S OWN LANDING (the 2.0F the fconst_2's own
+        // reach wears — the SulfurSpikeBlock landing word the
+        // getStalactiteLandingSound walk fires)
+        app.live_pitch_draw_voice_events_updated(vec![crate::world_view::WirePitchDrawVoiceEvent {
+            x: -41,
+            y: 70,
+            z: 123,
+            voice: mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT,
+        }]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT ONE DRAW (the pitch the case body's own fmul/fadd
+        // chain answers — the single draw the gentle law keeps)
+        let mut replay = crate::drops::Lcg::new(0x461);
+        let _ = replay.next_f32();
+        assert_eq!(spent, replay, "the case body's own exact stream");
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.sulfur_spike.land @"))
+                .expect("the sulfur-spike voice the lane logs");
+            assert!(
+                line.contains(" v0.500000 p"),
+                "the fconst_2's own doubled reach the dist-24 ear speaks: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.9..=1.0).contains(&pitch),
+                "the 0.1F-scale gentle pitch band: {}",
+                pitch
+            );
+        }
+        // THE ELEVEN WORDS (the same walk each word's own key wears —
+        // the body now EIGHT blocks off: the 1.0-volume words the
+        // 0.5 gain the linear speaks (1 x (1 - 8/16)), the 0.3-volume
+        // words the 0.15 gain (0.3 x (1 - 8/16) — the fold's own
+        // floor the reach keeps at 16), the 2.0-volume words the
+        // AL_MAX_GAIN clamp keeps at 1.000000 (2 x (1 - 8/32) = 1.5
+        // the ceiling answers); each serve the ONE draw the stream
+        // replays)
+        app.body = Some(crate::body::PlayerBody::new(
+            -32.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let words: [(i32, &str, f32); 11] = [
+            (mc_protocol::SOUND_ANVIL_BROKEN_EFFECT, "block.anvil.destroy", 0.5),
+            (mc_protocol::SOUND_ANVIL_USED_EFFECT, "block.anvil.use", 0.5),
+            (mc_protocol::SOUND_ANVIL_LAND_EFFECT, "block.anvil.land", 0.15),
+            (mc_protocol::SOUND_PHANTOM_BITE_EFFECT, "entity.phantom.bite", 0.15),
+            (mc_protocol::SOUND_GRINDSTONE_USED_EFFECT, "block.grindstone.use", 0.5),
+            (mc_protocol::SOUND_PAGE_TURN_EFFECT, "item.book.page_turn", 0.5),
+            (
+                mc_protocol::SOUND_SMITHING_TABLE_USED_EFFECT,
+                "block.smithing_table.use",
+                0.5,
+            ),
+            (
+                mc_protocol::SOUND_POINTED_DRIPSTONE_LAND_EFFECT,
+                "block.pointed_dripstone.land",
+                1.0,
+            ),
+            (
+                mc_protocol::SOUND_DRIP_LAVA_INTO_CAULDRON_EFFECT,
+                "block.pointed_dripstone.drip_lava_into_cauldron",
+                1.0,
+            ),
+            (
+                mc_protocol::SOUND_DRIP_WATER_INTO_CAULDRON_EFFECT,
+                "block.pointed_dripstone.drip_water_into_cauldron",
+                1.0,
+            ),
+            (
+                mc_protocol::SOUND_SULFUR_SPIKE_LAND_EFFECT,
+                "block.sulfur_spike.land",
+                1.0,
+            ),
+        ];
+        for (i, (word, key, want_gain)) in words.iter().enumerate() {
+            let saved_i = std::mem::replace(
+                &mut app.level_ambient_rng,
+                crate::drops::Lcg::new(0x461 + i as u64),
+            );
+            let voices_before_i = app.sounds.events.len();
+            app.live_pitch_draw_voice_events_updated(vec![crate::world_view::WirePitchDrawVoiceEvent {
+                x: -41,
+                y: 70,
+                z: 123,
+                voice: *word,
+            }]);
+            let spent_i = std::mem::replace(&mut app.level_ambient_rng, saved_i);
+            // THE EXACT ONE DRAW (the single nextFloat the case body's
+            // own gentle law answers — never the hostile pair)
+            let mut replay_i = crate::drops::Lcg::new(0x461 + i as u64);
+            let _ = replay_i.next_f32();
+            assert_eq!(spent_i, replay_i, "the one-draw law word {word}");
+            if sounds_loaded() {
+                assert_eq!(
+                    app.sounds.events.len(),
+                    voices_before_i + 1,
+                    "each arm exactly one voice the walk keeps"
+                );
+                let line = app
+                    .sounds
+                    .events
+                    .last()
+                    .expect("the gentle voice the lane logs");
+                assert!(
+                    line.starts_with(key),
+                    "the gentle key the word folds: {line}"
+                );
+                assert!(
+                    line.contains(&format!(" v{want_gain:.6} p")),
+                    "the {want_gain:.6} gain the dist-8 ear speaks: {line}"
+                );
+            }
+        }
+        // THE UNBANKED WORD: the arm the render never voices (the
+        // model's own arm the eleven words alone enqueues — the early
+        // return the unknown word answers consumes NO voice, NO draw)
+        let voices_before_unknown = app.sounds.events.len();
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xBEEF));
+        app.live_pitch_draw_voice_events_updated(vec![crate::world_view::WirePitchDrawVoiceEvent {
+            x: 1,
+            y: 2,
+            z: 3,
+            voice: 4242,
+        }]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before_unknown,
+            "the unknown word no voice ever banks"
+        );
+        assert_eq!(
+            spent2,
+            crate::drops::Lcg::new(0xBEEF),
+            "the unknown word no draw the early return keeps"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let voices_before = app.sounds.events.len();
+        app.live_pitch_draw_voice_events_updated(vec![]);
         assert_eq!(
             app.sounds.events.len(),
             voices_before,

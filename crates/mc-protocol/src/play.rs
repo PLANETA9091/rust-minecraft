@@ -2882,6 +2882,174 @@ pub const SOUND_ZOMBIE_TO_DROWNED_EFFECT: i32 = 1040;
 /// banks — the positioned lane the case's own arm wears.
 pub const SOUND_HUSK_TO_ZOMBIE_EFFECT: i32 = 1041;
 
+/// THE ANVIL-BROKEN VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class row `SOUND_ANVIL_BROKEN` — the case `LevelEventHandler.
+/// levelEvent` offset 4231 speaks): the ONE `playLocalSound(pos,
+/// ANVIL_DESTROY, BLOCKS, 1.0F, nextFloat() * 0.1F + 0.9F, false)`
+/// walk the case body spends — the ONE-DRAW PITCH law the shelf's
+/// family wears (the gentle [0.9, 1.0] band the 0.1F scale gives,
+/// NOT the hostile shelf's TWO-draw chain), the BLOCKS source, the
+/// immediate flag, the data word never read, NO particles. The
+/// server's own anvils speak it — `AnvilBlock.onBrokenAfterFall`'s
+/// shatter tail (`sipush 1029, pos, iconst_0` the levelEvent call
+/// the bytecode pins) and `AnvilMenu`'s `onTake` lambda's consumed
+/// tail the same word fires. The GLOBAL route the `globalLevelEvent`
+/// switch never banks — the positioned lane the case's own arm wears.
+pub const SOUND_ANVIL_BROKEN_EFFECT: i32 = 1029;
+
+/// THE ANVIL-USED VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class row `SOUND_ANVIL_USED` — the case `LevelEventHandler.
+/// levelEvent` offset 4265 speaks): the ONE `playLocalSound(pos,
+/// ANVIL_USE, BLOCKS, 1.0F, nextFloat() * 0.1F + 0.9F, false)` walk
+/// the case body spends — the SAME one-draw pitch law the shelf's
+/// family wears, the BLOCKS source, the immediate flag, the data
+/// word never read, NO particles. The server's own smithing speaks
+/// it — `AnvilMenu`'s `onTake` lambda's result tail (`sipush 1030,
+/// pos, iconst_0` the levelEvent call the bytecode pins — the take
+/// walk the repair/cost fires). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_ANVIL_USED_EFFECT: i32 = 1030;
+
+/// THE ANVIL-LAND VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class row `SOUND_ANVIL_LAND` — the case `LevelEventHandler.
+/// levelEvent` offset 4333 speaks): the ONE `playLocalSound(pos,
+/// ANVIL_LAND, BLOCKS, 0.3F, nextFloat() * 0.1F + 0.9F, false)` walk
+/// the case body spends — the SAME one-draw pitch law the shelf's
+/// family wears, the `ldc2_w` 0.3F volume the landing's own whisper
+/// keeps (the reach the max(volume, 1.0) * 16 fold still turns into
+/// 16 blocks — the 1.0 floor the fold speaks), the BLOCKS source,
+/// the immediate flag, the data word never read, NO particles. The
+/// server's own falling blocks speak it — `AnvilBlock.onLand`'s
+/// landing tail (`sipush 1031, pos, iconst_0` the levelEvent call
+/// the bytecode pins). The GLOBAL route the `globalLevelEvent`
+/// switch never banks — the positioned lane the case's own arm wears.
+pub const SOUND_ANVIL_LAND_EFFECT: i32 = 1031;
+
+/// THE PHANTOM-BITE VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class row `SOUND_PHANTOM_BITE` — the case `LevelEventHandler.
+/// levelEvent` offset 4369 speaks): the ONE `playLocalSound(pos,
+/// PHANTOM_BITE, HOSTILE, 0.3F, nextFloat() * 0.1F + 0.9F, false)`
+/// walk the case body spends — the SAME one-draw pitch law the
+/// shelf's family wears, the HOSTILE source the phantom's own
+/// channel names (the ONE outlier the shelf's BLOCKS neighbors
+/// keep), the `ldc2_w` 0.3F volume, the immediate flag, the data
+/// word never read, NO particles. THE CLIENT JAR'S OWN BYTECODE NO
+/// CALLER CARRIES — the bite word the dedicated-server lane speaks
+/// (the phantom's own AI the server-side walk fires; the same honest
+/// gap the iron-door sibling 1020 and the conversion sibling 1027
+/// wear — the positioned case the client's own switch still banks,
+/// the wire packet the same shape the model's arm answers). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_PHANTOM_BITE_EFFECT: i32 = 1039;
+
+/// THE GRINDSTONE-USED VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_GRINDSTONE_USED` — the case
+/// `LevelEventHandler.levelEvent` offset 5015 speaks): the ONE
+/// `playLocalSound(pos, GRINDSTONE_USE, BLOCKS, 1.0F, nextFloat() *
+/// 0.1F + 0.9F, false)` walk the case body spends — the SAME
+/// one-draw pitch law the shelf's family wears, the BLOCKS source,
+/// the immediate flag, the data word never read, NO particles. THE
+/// CLIENT JAR'S OWN BYTECODE NO CALLER CARRIES — the grind word the
+/// dedicated-server lane speaks (the menu's own take walk the server
+/// fires; the same honest gap the iron-door sibling 1020 wears — the
+/// positioned case the client's own switch still banks, the wire
+/// packet the same shape the model's arm answers). The GLOBAL route
+/// the `globalLevelEvent` switch never banks — the positioned lane
+/// the case's own arm wears.
+pub const SOUND_GRINDSTONE_USED_EFFECT: i32 = 1042;
+
+/// THE PAGE-TURN VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class row `SOUND_PAGE_TURN` — the case `LevelEventHandler.
+/// levelEvent` offset 5049 speaks): the ONE `playLocalSound(pos,
+/// BOOK_PAGE_TURN, BLOCKS, 1.0F, nextFloat() * 0.1F + 0.9F, false)`
+/// walk the case body spends — the SAME one-draw pitch law the
+/// shelf's family wears, the BLOCKS source, the immediate flag, the
+/// data word never read, NO particles. The server's own lecterns
+/// speak it — `LecternBlock.signalPageChange`'s page tail (`sipush
+/// 1043, pos, iconst_0` the levelEvent call the bytecode pins). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_PAGE_TURN_EFFECT: i32 = 1043;
+
+/// THE SMITHING-TABLE-USED VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_SMITHING_TABLE_USED` — the case
+/// `LevelEventHandler.levelEvent` offset 4299 speaks): the ONE
+/// `playLocalSound(pos, SMITHING_TABLE_USE, BLOCKS, 1.0F,
+/// nextFloat() * 0.1F + 0.9F, false)` walk the case body spends —
+/// the SAME one-draw pitch law the shelf's family wears, the BLOCKS
+/// source, the immediate flag, the data word never read, NO
+/// particles. The server's own smithing speaks it — `SmithingMenu`'s
+/// `onTake` lambda's result tail (`sipush 1044, pos, iconst_0` the
+/// levelEvent call the bytecode pins). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_SMITHING_TABLE_USED_EFFECT: i32 = 1044;
+
+/// THE DRIPSTONE-LAND VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_POINTED_DRIPSTONE_LAND` — the case
+/// `LevelEventHandler.levelEvent` offset 5205 speaks): the ONE
+/// `playLocalSound(pos, POINTED_DRIPSTONE_LAND, BLOCKS, 2.0F,
+/// nextFloat() * 0.1F + 0.9F, false)` walk the case body spends —
+/// the SAME one-draw pitch law the shelf's family wears, the
+/// `fconst_2` 2.0F volume the stalactite's own doubled gain keeps
+/// (the reach the max(volume, 1.0) * 16 fold turns into 32 blocks),
+/// the BLOCKS source, the immediate flag, the data word never read,
+/// NO particles. The server's own falling drips speak it —
+/// `PointedDripstoneBlock.getStalactiteLandingSound`'s word the
+/// landing walk fires (`sipush 1045` the bytecode pins). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const SOUND_POINTED_DRIPSTONE_LAND_EFFECT: i32 = 1045;
+
+/// THE LAVA-INTO-CAULDRON DRIP VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_DRIP_LAVA_INTO_CAULDRON` — the case
+/// `LevelEventHandler.levelEvent` offset 5239 speaks): the ONE
+/// `playLocalSound(pos, POINTED_DRIPSTONE_DRIP_LAVA_INTO_CAULDRON,
+/// BLOCKS, 2.0F, nextFloat() * 0.1F + 0.9F, false)` walk the case
+/// body spends — the SAME one-draw pitch law the shelf's family
+/// wears, the `fconst_2` 2.0F volume, the BLOCKS source, the
+/// immediate flag, the data word never read, NO particles. The
+/// server's own cauldrons speak it —
+/// `CauldronBlock.receiveStalactiteDrip`'s lava tail (`sipush 1046,
+/// pos, iconst_0` the levelEvent call the bytecode pins). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const SOUND_DRIP_LAVA_INTO_CAULDRON_EFFECT: i32 = 1046;
+
+/// THE WATER-INTO-CAULDRON DRIP VOICE'S OWN ID (the 26.2
+/// `LevelEvent` constants class row `SOUND_DRIP_WATER_INTO_CAULDRON`
+/// — the case `LevelEventHandler.levelEvent` offset 5273 speaks):
+/// the ONE `playLocalSound(pos,
+/// POINTED_DRIPSTONE_DRIP_WATER_INTO_CAULDRON, BLOCKS, 2.0F,
+/// nextFloat() * 0.1F + 0.9F, false)` walk the case body spends —
+/// the SAME one-draw pitch law the shelf's family wears, the
+/// `fconst_2` 2.0F volume, the BLOCKS source, the immediate flag,
+/// the data word never read, NO particles. The server's own
+/// cauldrons speak it — `CauldronBlock.receiveStalactiteDrip` AND
+/// `LayeredCauldronBlock.receiveStalactiteDrip`'s water tails
+/// (`sipush 1047, pos, iconst_0` the levelEvent calls the bytecode
+/// pins — the TWO receive walks the same word fires). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const SOUND_DRIP_WATER_INTO_CAULDRON_EFFECT: i32 = 1047;
+
+/// THE SULFUR-SPIKE-LAND VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_SULFUR_SPIKE_LAND` — the case
+/// `LevelEventHandler.levelEvent` offset 5347 speaks): the ONE
+/// `playLocalSound(pos, SULFUR_SPIKE_LAND, BLOCKS, 2.0F, nextFloat()
+/// * 0.1F + 0.9F, false)` walk the case body spends — the SAME
+/// one-draw pitch law the shelf's family wears, the `fconst_2` 2.0F
+/// volume, the BLOCKS source, the immediate flag, the data word
+/// never read, NO particles. The server's own falling sulfur spikes
+/// speak it — `SulfurSpikeBlock.getStalactiteLandingSound`'s word
+/// the landing walk fires (`sipush 1052` the bytecode pins — the
+/// 26.2 drop's own block the dripstone sibling's walk mirrors). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_SULFUR_SPIKE_LAND_EFFECT: i32 = 1052;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,

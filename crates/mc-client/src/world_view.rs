@@ -642,6 +642,14 @@ pub struct SnapshotView {
     /// arms ride — [`WireHostileVoiceEvent`] the render lane drains
     /// per refresh).
     pub hostile_voice_events: Vec<WireHostileVoiceEvent>,
+    /// THE ONE-DRAW PITCH SHELF'S OWN WIRE ARMS (the
+    /// 1029/1030/1031/1039/1042/1043/1044/1045/1046/1047/1052 words
+    /// the server's own anvils, phantom, grindstone, lectern,
+    /// smithing tables, cauldrons and falling blocks broadcast):
+    /// shipped once with the refresh that carried them (the worker's
+    /// own drain empties the mailbox after), the sound lane's own law
+    /// folds each voice at the block center.
+    pub pitch_draw_voice_events: Vec<WirePitchDrawVoiceEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -1228,6 +1236,30 @@ pub struct WireFixedVoiceEvent {
 /// transport never carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireHostileVoiceEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — the sound key
+    /// the sound lane's own law folds from it).
+    pub voice: i32,
+}
+
+/// One wire ONE-DRAW PITCH arm — the Level Event packet's own
+/// landing (the gentle-pitch words the server's own anvils, lectern,
+/// smithing tables, cauldrons and falling blocks broadcast — the
+/// 1029/1030/1031 anvil trio + 1039 the phantom's bite + 1042 the
+/// grindstone's use + 1043 the page turn + 1044 the smithing table's
+/// use + 1045/1046/1047 the dripstone/cauldron landing + drips +
+/// 1052 the sulfur spike's landing, the eleven
+/// [`mc_protocol::SOUND_ANVIL_BROKEN_EFFECT`]-family ids the render
+/// lane speaks): the event's anchor block + the raw voice word,
+/// verbatim (the ONE `playLocalSound(pos, <voice>, <source>, <vol>,
+/// nf * 0.1F + 0.9F, false)` walk's own inputs — the per-word
+/// volume + source + the single pitch draw the sound lane folds
+/// from the word; the data words the cases' own bodies never read,
+/// the transport never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WirePitchDrawVoiceEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -3182,6 +3214,9 @@ pub fn materialize_snapshot_view(
         // sound lane skips)
         fixed_voice_events: Vec::new(),
         hostile_voice_events: Vec::new(),
+        // and no one-draw pitch words (the join snapshot carries no
+        // anvil/drip traffic — the empty mailbox the sound lane skips)
+        pitch_draw_voice_events: Vec::new(),
         // and no break words (the join snapshot carries no 2001 traffic
         // — the empty mailbox the render lane skips)
         break_events: Vec::new(),
@@ -4030,6 +4065,23 @@ impl LiveView {
                 voice: arm.voice,
             })
             .collect();
+        // the one-draw pitch shelf's own projection (the mailbox
+        // verbatim — the anchor + the packet's own voice word the arms
+        // carry, the sound lane's own law reads): each of the
+        // 1029/1030/1031/1039/1042/1043/1044/1045/1046/1047/1052
+        // words ships once with this view, the worker's drain empties
+        // the mailbox after
+        let pitch_draw_voice_events = self
+            .model
+            .pitch_draw_voice_events
+            .iter()
+            .map(|arm| WirePitchDrawVoiceEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                voice: arm.voice,
+            })
+            .collect();
         // the block-break effect's own projection (the mailbox verbatim
         // — the state walk's answers the arms carry, the anchor the
         // render lane's own law reads): each 2001 word ships once with
@@ -4313,6 +4365,10 @@ impl LiveView {
                 // too — the 1019/1020/1021/1022 words are the
                 // connection's own traffic, not the pose's
                 hostile_voice_events,
+                // the one-draw pitch shelf's arms ride the pose-less
+                // arm too — the anvil/drip words are the connection's
+                // own traffic, not the pose's
+                pitch_draw_voice_events,
                 // the block-break effect's arms ride the pose-less arm
                 // too — the 2001 words are the connection's own traffic,
                 // not the pose's
@@ -4523,6 +4579,10 @@ impl LiveView {
             // the 1019/1020/1021/1022 words follow the mailbox exactly
             // like the fixed voices' own arms do
             hostile_voice_events,
+            // the one-draw pitch shelf's arms ride every refresh too —
+            // the anvil/drip words follow the mailbox exactly like the
+            // hostile voices' own arms do
+            pitch_draw_voice_events,
             // the block-break effect's arms ride every refresh too —
             // the 2001 words follow the mailbox exactly like the
             // growth's own arms do

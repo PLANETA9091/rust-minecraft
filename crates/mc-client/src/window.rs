@@ -199,6 +199,7 @@ fn run_join(
                 Vec<crate::world_view::WireJukeboxEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireHostileVoiceEvent>,
+                Vec<crate::world_view::WirePitchDrawVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -320,6 +321,7 @@ fn run_join(
             view.model.drain_jukebox_events();
             view.model.drain_fixed_voice_events();
             view.model.drain_hostile_voice_events();
+            view.model.drain_pitch_draw_voice_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
@@ -965,6 +967,7 @@ fn run_join(
                             view.model.drain_jukebox_events();
                             view.model.drain_fixed_voice_events();
             view.model.drain_hostile_voice_events();
+            view.model.drain_pitch_draw_voice_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
                             if live_tx
@@ -1347,6 +1350,19 @@ fn run_join(
                                     // shipped refresh)
                                     upd.fixed_voice_events,
                                     upd.hostile_voice_events,
+                                    // the one-draw pitch shelf's arms ride
+                                    // beside the hostile's — the
+                                    // 1029/1030/1031/1039/1042/1043/1044/
+                                    // 1045/1046/1047/1052 words the
+                                    // server's own anvils, phantom,
+                                    // grindstone, lectern, smithing
+                                    // tables, cauldrons and falling
+                                    // blocks broadcast stream to the
+                                    // sound lane (the eleven gentle-pitch
+                                    // voices the render lane's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.pitch_draw_voice_events,
                                     // the splash-potion effect's arms ride
                                     // with them — the 2002/2007 words the
                                     // server's own potion impacts broadcast
@@ -1538,6 +1554,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireJukeboxEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireHostileVoiceEvent>,
+                Vec<crate::world_view::WirePitchDrawVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -2116,6 +2133,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     jukebox_events,
                     fixed_voice_events,
                     hostile_voice_events,
+                    pitch_draw_voice_events,
                     splash_events,
                     mob_spawn_events,
                 )) => {
@@ -2458,6 +2476,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // case bodies' own walk keeps — the vanilla client
                     // answers the same packet with)
                     app.live_hostile_voice_events_updated(hostile_voice_events);
+                    // the one-draw pitch shelf's lane beside the hostile
+                    // voices': the 1029/1030/1031/1039/1042/1043/1044/
+                    // 1045/1046/1047/1052 words the server's own anvils,
+                    // phantom, grindstone, lectern, smithing tables,
+                    // cauldrons and falling blocks broadcast land at
+                    // their own anchors (the gentle-pitch voices the
+                    // single nextFloat draw keeps — the [0.9, 1.0] band
+                    // the 0.1F scale speaks, the vanilla client answers
+                    // the same packet with)
+                    app.live_pitch_draw_voice_events_updated(pitch_draw_voice_events);
                     // the splash-potion effect's lane beside the smoke's:
                     // the 2002/2007 words the server's own potion impacts
                     // broadcast land at their own anchors (the shard burst
