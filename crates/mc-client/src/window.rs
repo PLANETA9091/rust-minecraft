@@ -166,6 +166,7 @@ fn run_join(
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireInBlockGrowthEvent>,
+                Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -269,6 +270,7 @@ fn run_join(
             view.model.drain_arrow_syncs();
             view.model.drain_growth_events();
             view.model.drain_in_block_growth_events();
+            view.model.drain_smash_attack_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -896,6 +898,7 @@ fn run_join(
                             view.model.drain_arrow_syncs();
                             view.model.drain_growth_events();
                             view.model.drain_in_block_growth_events();
+                            view.model.drain_smash_attack_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1032,6 +1035,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.in_block_growth_events,
+                                    // the smash-attack effect's arms ride
+                                    // beside them — the 2013 words the
+                                    // server's own mace broadcasts stream
+                                    // to the smash lane (the state gate +
+                                    // the dust-pillar burst the render's
+                                    // own law folds, each arm rides
+                                    // exactly one shipped refresh)
+                                    upd.smash_attack_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1310,6 +1321,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Option<mc_protocol::play::PlayerAbilitiesWord>,
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireInBlockGrowthEvent>,
+                Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -1870,6 +1882,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     abilities_word,
                     growth_events,
                     in_block_growth_events,
+                    smash_attack_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -1974,6 +1987,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // render lane's own law folds — the happy sparkles
                     // the vanilla client answers the same packet with)
                     app.live_in_block_growth_events_updated(in_block_growth_events);
+                    // the smash-attack effect's lane beside the growth's:
+                    // the 2013 words the server's own mace broadcasts
+                    // land at their own anchors (the anchor cell's own
+                    // state the gate read answers — the air and the
+                    // moving piston the null verdict keeps — the
+                    // dust-pillar burst the two loops the thirds and
+                    // two-thirds bounds keep, the vanilla client answers
+                    // the same packet with)
+                    app.live_smash_attack_events_updated(smash_attack_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

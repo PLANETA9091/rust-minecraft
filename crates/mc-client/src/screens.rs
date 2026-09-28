@@ -21650,6 +21650,63 @@ impl App {
         }
     }
 
+    /// THE SMASH-ATTACK EFFECT'S OWN WIRE LANE (javap
+    /// `LevelEventHandler` case 2656 over the 26.2 jar — the mace's own
+    /// smash word the server's `MaceItem.knockback` head broadcasts
+    /// (`sipush 2013, target.getOnPos(), sipush 750` the levelEvent
+    /// call speaks), the Level Event mailbox's landing): each word the
+    /// arms the worker drained ride exactly one refresh — the anchor
+    /// cell's own state the `createTerrainParticle` gate read answers
+    /// (the AIR and MOVING_PISTON verdicts the null keeps — the
+    /// `shouldSpawnTerrainParticles` property the common terrain
+    /// speaks, the unbanked kinds the break lane's TILE_NONE verdict
+    /// keeps), then the dust-pillar burst the
+    /// [`crate::particles::smash_attack_burst`] law places (the two
+    /// loops the count's own thirds and two-thirds keep — the in-block
+    /// jitter, the 3.5-radius ring, the provider's speed/lifetime
+    /// overrides the walk's own doc rows pin). No sound the case
+    /// speaks — the pillar dust the lane's own stream alone carries.
+    pub fn live_smash_attack_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireSmashAttackEvent>,
+    ) {
+        for ev in events {
+            // THE ANCHOR'S OWN WORLD (the getBlockState read the gate
+            // opens — the field borrow ends before the burst lands)
+            let world = if self.world_is_network {
+                self.net_world.as_ref()
+            } else {
+                self.offline_world.as_ref()
+            };
+            let Some(world) = world else {
+                continue;
+            };
+            // THE GATE (javap `createTerrainParticle`: the air state the
+            // null keeps, the moving-piston family the same verdict
+            // rides, the unbanked kinds the atlas never finds)
+            let cell = world.get(ev.x, ev.y, ev.z);
+            let tile = if cell == crate::world::AIR
+                || (2309..2321).contains(&cell)
+            {
+                None
+            } else {
+                let t = particle_tile(cell);
+                if t == mc_registry::generated::atlas::TILE_NONE {
+                    None
+                } else {
+                    Some(t)
+                }
+            };
+            let burst = crate::particles::smash_attack_burst(
+                (ev.x, ev.y, ev.z),
+                ev.data.max(0) as usize,
+                tile,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE BLOCK-BREAK EFFECT'S OWN WIRE LANE (javap
     /// `LevelEventHandler` case 2001 over the 26.2 jar — the sound
     /// rides FIRST (the `isAir` gate the AIR state the voice never

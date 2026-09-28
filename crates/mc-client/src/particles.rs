@@ -3034,6 +3034,124 @@ pub fn in_block_growth_burst(
     growth_burst(anchor, count, 0.5, dy, true, world, rng)
 }
 
+/// THE SMASH-ATTACK BURST'S OWN WALK (javap `ParticleUtils
+/// .spawnSmashAttackParticles` over the real 26.2 jar — the
+/// LevelEventHandler's 2013 case the mace's own knockback broadcasts):
+/// the anchor fold `Vec3.atCenterOf(pos).add(0.0, 0.5, 0.0)` the
+/// block's own TOP FACE carries (the y the never-drawn band keeps —
+/// every particle hovers the anchor cell's own +1.0 plane), then the
+/// TWO loops the bytecode pins: the in-block loop `(float)i <
+/// (float)count / 3.0F` (the `nextDouble() / 2.0` x/z offsets the
+/// in-block jitter keeps, the `* 0.2` speed trio the provider's own
+/// override discards) and the RING loop `(float)i < (float)count /
+/// 1.5F` (`3.5 * Math.cos(i)` / `3.5 * Math.sin(i)` the radius walk —
+/// the index the RADIAN arg keeps, the vanilla's own unnormalized
+/// spiral — the `* 0.05` trio the same override discards). Per
+/// particle the terrain ctor chain the house fold replays (the life /
+/// size / uo / vo draws the per-particle stream the vanilla keeps —
+/// the one stream the replay folds), then the provider's own
+/// overrides: `setParticleSpeed(nextDouble() / 30.0, ySpeed +
+/// nextDouble() / 2.0, nextDouble() / 30.0)` (the caller's x/z speeds
+/// the override DISCARDS, the y the `+ next/2` upward bias keeps) and
+/// `setLifetime(20 + nextInt(20))` (the 20..39 band the base ctor's
+/// own draw overrides). The `tile: Option<u16>` the caller's state
+/// read carries — the AIR / MOVING_PISTON verdicts the
+/// `createTerrainParticle` gate keeps and the unbanked kinds the
+/// break lane's TILE_NONE verdict keeps all ride `None`: the caller's
+/// own loop draws alone spend (the vanilla truth the level stream
+/// never skips), the burst the lane never speaks.
+pub fn smash_attack_burst(
+    anchor: (i32, i32, i32),
+    count: usize,
+    tile: Option<u16>,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::new();
+    let cx = anchor.0 as f64 + 0.5;
+    let cy = anchor.1 as f64 + 1.0;
+    let cz = anchor.2 as f64 + 0.5;
+    // the in-block loop (the count's own third)
+    let mut i: i64 = 0;
+    while (i as f32) < count as f32 / 3.0 {
+        let ox = rng.next_f64() / 2.0;
+        let oz = rng.next_f64() / 2.0;
+        let d3 = rng.next_f64() * 0.2;
+        let d4 = rng.next_f64() * 0.2;
+        let d5 = rng.next_f64() * 0.2;
+        if let Some(tile) = tile {
+            let r_life = rng.next_f32();
+            let r_size = rng.next_f32();
+            let r_uo = rng.next_f32();
+            let r_vo = rng.next_f32();
+            let sx = rng.next_f64() / 30.0;
+            let sy = rng.next_f64() / 2.0;
+            let sz = rng.next_f64() / 30.0;
+            let r_life2 = rng.next_int(20);
+            let mut p = terrain(
+                tile,
+                cx + ox,
+                cy,
+                cz + oz,
+                d3,
+                d4,
+                d5,
+                r_life,
+                r_size,
+                r_uo,
+                r_vo,
+            );
+            // the provider's own override (the caller's x/z speeds the
+            // discard rides, the y the +next/2 bias keeps)
+            p.vx = sx;
+            p.vy = d4 + sy;
+            p.vz = sz;
+            p.lifetime = 20 + r_life2.max(0) as u32;
+            out.push(p);
+        }
+        i += 1;
+    }
+    // the ring loop (the count's own two-thirds — the index the
+    // radian arg keeps)
+    let mut j: i64 = 0;
+    while (j as f32) < count as f32 / 1.5 {
+        let ox = rng.next_f64() / 2.0;
+        let oz = rng.next_f64() / 2.0;
+        let d3 = rng.next_f64() * 0.05;
+        let d4 = rng.next_f64() * 0.05;
+        let d5 = rng.next_f64() * 0.05;
+        if let Some(tile) = tile {
+            let r_life = rng.next_f32();
+            let r_size = rng.next_f32();
+            let r_uo = rng.next_f32();
+            let r_vo = rng.next_f32();
+            let sx = rng.next_f64() / 30.0;
+            let sy = rng.next_f64() / 2.0;
+            let sz = rng.next_f64() / 30.0;
+            let r_life2 = rng.next_int(20);
+            let mut p = terrain(
+                tile,
+                cx + 3.5 * (j as f64).cos() + ox,
+                cy,
+                cz + 3.5 * (j as f64).sin() + oz,
+                d3,
+                d4,
+                d5,
+                r_life,
+                r_size,
+                r_uo,
+                r_vo,
+            );
+            p.vx = sx;
+            p.vy = d4 + sy;
+            p.vz = sz;
+            p.lifetime = 20 + r_life2.max(0) as u32;
+            out.push(p);
+        }
+        j += 1;
+    }
+    out
+}
+
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
 /// target's frozen position (the removed entity keeps its own), 3
 /// ticks of life, the 16-sample walk per tick.
@@ -3210,6 +3328,81 @@ mod tests {
         assert!((last.x - 10.875).abs() < 1e-9);
         // the terrain kind rides the caller's tile
         assert_eq!(first.kind, ParticleKind::Terrain { tile: 7 });
+    }
+
+    #[test]
+    fn the_smash_burst_walks_the_two_loops_the_overrides_wear() {
+        // THE SMASH-ATTACK BURST'S OWN LAW (javap
+        // `ParticleUtils.spawnSmashAttackParticles` + the
+        // DustPillarProvider's own overrides): the two loops the
+        // count's own thirds and two-thirds keep, the anchor fold the
+        // +1.0 top-face plane speaks, the provider's speed/lifetime
+        // overrides the walk pins, the dead draws ride, the seeded
+        // chain replays, the gate-less caller (None) the draws alone
+        // spend.
+        let mut r = rng();
+        let burst = smash_attack_burst((10, 20, 30), 750, Some(7), &mut r);
+        // the loop bounds: 750/3 = 250 in-block + 750/1.5 = 500 ring
+        assert_eq!(burst.len(), 750);
+        // the anchor fold: the first particle's own spot (the in-block
+        // jitter the +next/2 offset gives — the x/z bands [0.5, 1.0),
+        // the y the +1.0 plane the never-drawn band keeps)
+        let first = &burst[0];
+        assert!((first.y - 21.0).abs() < 1e-9);
+        assert!(first.x >= 10.5 && first.x < 11.0);
+        assert!(first.z >= 30.5 && first.z < 31.0);
+        // the terrain kind rides the caller's tile, the gravity the
+        // ctor keeps
+        assert_eq!(first.kind, ParticleKind::Terrain { tile: 7 });
+        assert!((first.gravity - 1.0).abs() < 1e-6);
+        // the provider's own overrides: the x/z speeds the /30 fold
+        // gives (the tiny band [0, 1/30)), the y the caller's speed +
+        // the /2 bias (the caller's speed the *0.2 draw carries)
+        assert!(first.vx >= 0.0 && first.vx < 1.0 / 30.0);
+        assert!(first.vz >= 0.0 && first.vz < 1.0 / 30.0);
+        assert!(first.vy >= 0.0 && first.vy < 0.2 + 0.5);
+        // the lifetime the 20 + nextInt(20) band keeps
+        assert!(first.lifetime >= 20 && first.lifetime < 40);
+        // the ring loop's own spots: the 3.5-radius circle around the
+        // anchor center (the index the radian arg keeps — the first
+        // ring particle rides cos(0) = 1.0, sin(0) = 0.0 plus its own
+        // jitter)
+        let ring = &burst[250];
+        assert!(ring.x >= 10.5 + 3.5 && ring.x < 10.5 + 3.5 + 0.5 + 1e-9);
+        assert!(ring.z >= 30.5 && ring.z < 31.0);
+        assert!((ring.y - 21.0).abs() < 1e-9);
+        // the ring speeds the *0.05 draws carry (the y the +next/2
+        // bias keeps — the near-zero band)
+        assert!(ring.vy >= 0.0 && ring.vy < 0.05 + 0.5);
+        // the second in-block particle's spot replays the seeded chain
+        // (the draws the one stream spends)
+        let mut r2 = rng();
+        let burst2 = smash_attack_burst((10, 20, 30), 750, Some(7), &mut r2);
+        assert_eq!(burst.len(), burst2.len());
+        for (a, b) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (a.x, a.y, a.z, a.vx, a.vy, a.vz, a.lifetime),
+                (b.x, b.y, b.z, b.vx, b.vy, b.vz, b.lifetime),
+                "the seeded chain replays"
+            );
+            assert_eq!(&a.kind, &b.kind, "the kind the chain replays");
+        }
+        // the gate-less caller (None): no burst, the loop draws alone
+        // spend (the vanilla truth the level stream never skips)
+        let mut r3 = rng();
+        let none = smash_attack_burst((10, 20, 30), 750, None, &mut r3);
+        assert!(none.is_empty(), "the null verdict the burst never speaks");
+        // the count the loop bounds wear: the zero word the silence
+        // keeps, the small counts the floor band keeps (1 -> the
+        // in-block loop alone)
+        let mut r4 = rng();
+        assert!(smash_attack_burst((0, 0, 0), 0, Some(7), &mut r4).is_empty());
+        let mut r5 = rng();
+        assert_eq!(
+            smash_attack_burst((0, 0, 0), 3, Some(7), &mut r5).len(),
+            1 + 2,
+            "the third and the two-thirds the small counts keep"
+        );
     }
 
     #[test]

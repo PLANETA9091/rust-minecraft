@@ -465,6 +465,14 @@ pub struct SnapshotView {
     /// them (the worker's own drain empties the mailbox after), the
     /// render lane's own law folds the shape read + the in-block burst.
     pub in_block_growth_events: Vec<WireInBlockGrowthEvent>,
+    /// The smash-attack effect's PENDING ARMS — the Level Event
+    /// mailbox the model kept (the 2013 words the server's own mace
+    /// broadcasts, [`mc_protocol::play::SMASH_ATTACK_EFFECT`] the
+    /// vocabulary speaks): shipped once with the refresh that carried
+    /// them (the worker's own drain empties the mailbox after), the
+    /// render lane's own law folds the state gate + the dust-pillar
+    /// burst.
+    pub smash_attack_events: Vec<WireSmashAttackEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -615,6 +623,20 @@ pub struct WireGrowthEvent {
 /// from them).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireInBlockGrowthEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    pub data: i32,
+}
+
+/// One wire SMASH-ATTACK EFFECT arm — the Level Event packet's own
+/// landing (the 2013 words the server's own mace broadcasts,
+/// [`mc_protocol::play::SMASH_ATTACK_EFFECT`] the render lane speaks):
+/// the event's anchor block + the count word, verbatim (the state
+/// gate's and the two loops' own inputs — the dust-pillar burst the
+/// render lane folds from them).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireSmashAttackEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -2677,6 +2699,9 @@ pub fn materialize_snapshot_view(
         // and no in-block growth words (the join snapshot carries no
         // 2011/2012 traffic — the empty mailbox the render lane skips)
         in_block_growth_events: Vec::new(),
+        // and no smash words (the join snapshot carries no 2013
+        // traffic — the empty mailbox the render lane skips)
+        smash_attack_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3089,6 +3114,22 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the smash-attack effect's own projection (the mailbox
+        // verbatim — the anchor + the count word the arms carry, the
+        // state gate the render lane's own world store answers): each
+        // 2013 word ships once with this view, the worker's drain
+        // empties the mailbox after
+        let smash_attack_events = self
+            .model
+            .smash_attack_events
+            .iter()
+            .map(|arm| WireSmashAttackEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3433,6 +3474,10 @@ impl LiveView {
                 // arm too — the 2011/2012 words are the connection's own
                 // traffic, not the pose's
                 in_block_growth_events,
+                // the smash-attack effect's arms ride the pose-less arm
+                // too — the 2013 words are the connection's own traffic,
+                // not the pose's
+                smash_attack_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -3571,6 +3616,10 @@ impl LiveView {
             // the 2011/2012 words follow the mailbox exactly like the
             // growth's own arms do
             in_block_growth_events,
+            // the smash-attack effect's arms ride every refresh too —
+            // the 2013 words follow the mailbox exactly like the
+            // growth's own arms do
+            smash_attack_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

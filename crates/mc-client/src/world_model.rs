@@ -352,6 +352,18 @@ pub struct WorldModel {
     /// 2011/2012 ids never carry — the positioned lane the cases' own
     /// arms wear).
     pub in_block_growth_events: Vec<InBlockGrowthArm>,
+    /// THE SMASH-ATTACK EFFECT'S OWN MAILBOX (the Level Event packet's
+    /// next vocabulary word — [`mc_protocol::play::SMASH_ATTACK_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 2656 speaks:
+    /// the server's own mace smash the word broadcasts, the dust-pillar
+    /// burst the `ParticleUtils.spawnSmashAttackParticles` walk folds —
+    /// the anchor cell's own state the render lane's own world store
+    /// answers, the two loops the in-block + ring walks wear). The arms
+    /// the anchor + the count carry (the data word the mace's own
+    /// `sipush 750` rides). The GLOBAL route the arm never enqueues
+    /// (the `globalLevelEvent` switch the 2013 id never carries — the
+    /// positioned lane the case's own arm wears).
+    pub smash_attack_events: Vec<SmashAttackArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -700,6 +712,28 @@ pub struct InBlockGrowthArm {
     pub z: i32,
     /// The particle count (the `data` word the bee's `bipush 15` and
     /// the egg-lay's own `bipush 15` speak).
+    pub data: i32,
+}
+
+/// One pending SMASH-ATTACK arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::smash_attack_events`]). The anchor verbatim (the
+/// mace's own `target.getOnPos()` the knockback's head broadcasts),
+/// the DATA word rides raw — the PARTICLE COUNT the render lane's own
+/// law folds (the two loops the `count / 3.0F` and `count / 1.5F`
+/// bounds speak, the `sipush 750` the mace's own tail passes). The
+/// anchor cell's own state the render lane's world store reads (the
+/// AIR / MOVING_PISTON verdicts the `createTerrainParticle` gate
+/// keeps — the dust-pillar burst the surviving states speak). The
+/// transport's honesty the raw word keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SmashAttackArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The particle count (the `data` word the mace's own `sipush 750`
+    /// speaks — the two loops' bounds the count's own thirds and
+    /// two-thirds carry).
     pub data: i32,
 }
 
@@ -1483,6 +1517,7 @@ impl WorldModel {
             shoot_smoke_events: Vec::new(),
             white_smoke_events: Vec::new(),
             in_block_growth_events: Vec::new(),
+            smash_attack_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -1670,6 +1705,13 @@ impl WorldModel {
     /// ride exactly one refresh).
     pub fn drain_in_block_growth_events(&mut self) -> Vec<InBlockGrowthArm> {
         std::mem::take(&mut self.in_block_growth_events)
+    }
+
+    /// The smash-attack effect's mailbox's own drain (the same walk the
+    /// growth arm's own drain speaks — the arms the worker drained ride
+    /// exactly one refresh).
+    pub fn drain_smash_attack_events(&mut self) -> Vec<SmashAttackArm> {
+        std::mem::take(&mut self.smash_attack_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2044,6 +2086,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 2011/2012
                 // words never burst again)
                 self.in_block_growth_events.clear();
+                // the smash-attack effect's mailbox dies with the level
+                // (the same walk — the old level's 2013 words never
+                // smash again)
+                self.smash_attack_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -2872,6 +2918,26 @@ impl WorldModel {
                     // the in-block burst the lane's own stream alone
                     // carries.
                     self.in_block_growth_events.push(InBlockGrowthArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::SMASH_ATTACK_EFFECT && !ev.global {
+                    // THE SMASH-ATTACK EFFECT'S OWN ARM (javap the case
+                    // offset 2656 — the positioned route the GLOBAL
+                    // switch never banks): the anchor + the count word
+                    // the mailbox carries (the `spawnSmashAttack
+                    // Particles(level, pos, data)` delegate the case's
+                    // ONE invokestatic speaks, the mace's own `sipush
+                    // 750` the count rides). The anchor cell's own state
+                    // the render lane's world store folds (the AIR /
+                    // MOVING_PISTON verdicts the createTerrainParticle
+                    // gate keeps). No sound the case speaks — the
+                    // dust-pillar burst the lane's own stream alone
+                    // carries.
+                    self.smash_attack_events.push(SmashAttackArm {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
@@ -8517,6 +8583,76 @@ mod tests {
         })));
         assert!(
             m.in_block_growth_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_smash_word_the_count_wears() {
+        // THE SMASH-ATTACK EFFECT'S OWN ARM (javap the case offset
+        // 2656 — the positioned route the GLOBAL switch never banks):
+        // the mace's own smash word the ONE mailbox arms, the data
+        // word the count carries (the caller's own `sipush 750` the
+        // two loops' bounds ride), the drain ships the arms exactly
+        // once, and the Respawn recreates the level the mailbox dies
+        // with it.
+        let mut m = WorldModel::new();
+        // the mace's own word (the target's own `getOnPos()` cell the
+        // knockback's head broadcasts, the count the sipush 750 the
+        // dust-pillar burst wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SMASH_ATTACK_EFFECT,
+            x: -12,
+            y: 64,
+            z: 300,
+            data: 750,
+            global: false,
+        })));
+        assert_eq!(m.smash_attack_events.len(), 1, "the arm rides");
+        assert_eq!(m.smash_attack_events[0].x, -12);
+        assert_eq!(m.smash_attack_events[0].y, 64);
+        assert_eq!(m.smash_attack_events[0].z, 300);
+        assert_eq!(
+            m.smash_attack_events[0].data, 750,
+            "the count word the two loops' own bounds carry"
+        );
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // 2013 id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SMASH_ATTACK_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 750,
+            global: true,
+        })));
+        assert_eq!(m.smash_attack_events.len(), 1, "the global word never arms");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_smash_attack_events();
+        assert_eq!(drained.len(), 1, "the drain ships the whole mailbox");
+        assert!(m.smash_attack_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_smash_attack_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SMASH_ATTACK_EFFECT,
+            x: 4,
+            y: 5,
+            z: 6,
+            data: 750,
+            global: false,
+        })));
+        assert_eq!(m.smash_attack_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.smash_attack_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

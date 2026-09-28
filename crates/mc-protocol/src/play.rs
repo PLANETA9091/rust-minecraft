@@ -1315,6 +1315,41 @@ pub const BEE_GROWTH_EFFECT: i32 = 2011;
 /// The GLOBAL route the `globalLevelEvent` switch never banks.
 pub const TURTLE_EGG_PLACEMENT_EFFECT: i32 = 2012;
 
+/// THE SMASH-ATTACK EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_SMASH_ATTACK`, the case
+/// `LevelEventHandler.levelEvent` offset 2656 speaks): the data word
+/// the PARTICLE COUNT carries — the `ParticleUtils.spawnSmashAttack
+/// Particles(level, pos, data)` delegate the case's own body speaks
+/// (the ONE `invokestatic` walk the 12-byte case keeps). The helper
+/// the two loops the bytecode pins: the `vec3 = Vec3.atCenterOf(pos)
+/// .add(0.0, 0.5, 0.0)` anchor fold (the block's own TOP FACE the +0.5
+/// lift speaks — the y the never-drawn band keeps), the
+/// `BlockParticleOption(ParticleTypes.DUST_PILLAR, level.getBlockState
+/// (pos))` the anchor cell's own state carries, then the in-block
+/// loop `(float)i < (float)count / 3.0F` (`nextDouble() / 2.0` the
+/// x/z offsets, the `* 0.2` the dead speed trio) and the RING loop
+/// `(float)i < (float)count / 1.5F` (`3.5 * Math.cos(i)` /
+/// `3.5 * Math.sin(i)` the radius walk, the `* 0.05` the dead speed
+/// trio). The particle the `TerrainParticle.DustPillarProvider` spawns
+/// — the `createTerrainParticle` factory the AIR / MOVING_PISTON /
+/// `shouldSpawnTerrainParticles() == false` states the null verdict
+/// keeps, then the provider's own overrides: `setParticleSpeed
+/// (nextDouble() / 30.0, ySpeed + nextDouble() / 2.0,
+/// nextDouble() / 30.0)` (the caller's x/z speeds the override
+/// discards, the y the `+ next/2` upward bias keeps) and
+/// `setLifetime(20 + nextInt(20))` (the 20..39 band the base ctor's
+/// own lifetime draw overrides). The server's own MACE the word
+/// broadcasts — `MaceItem.knockback`'s head `sipush 2013,
+/// target.getOnPos(), sipush 750` the levelEvent call the bytecode
+/// pins (the count the `sipush 750` the smash's own burst wears, the
+/// chain `MaceItem.hurtEnemy`'s `canSmashAttack` gate → `knockback`
+/// offset 181 speaks), the 3.5-inflate knockback sweep the SAME
+/// method's tail carries. No sound the case speaks. The GLOBAL route
+/// the `globalLevelEvent` switch never banks (the 1023/1028/1038 trio
+/// the band alone carries — the positioned lane the case's own arm
+/// wears).
+pub const SMASH_ATTACK_EFFECT: i32 = 2013;
+
 /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks —
 /// `PARTICLES_DRAGON_FIREBALL_SPLASH`, the case
@@ -10901,6 +10936,11 @@ mod tests {
             TURTLE_EGG_PLACEMENT_EFFECT,
             2012,
             "the turtle-egg placement the egg-lay's own onPlace speaks"
+        );
+        assert_eq!(
+            SMASH_ATTACK_EFFECT,
+            2013,
+            "the smash-attack burst the mace knockback's own head speaks"
         );
         assert_eq!(
             DRAGON_FIREBALL_SPLASH_EFFECT,
