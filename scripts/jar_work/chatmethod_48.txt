@@ -1,0 +1,29 @@
+class net/minecraft/client/gui/components/ChatComponent$ChatMethod
+
+=== $values()[Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod; ===
+     9 ?? opcode 0x53
+    15 ?? opcode 0x53
+    16 return net/minecraft/client/gui/components/ChatComponent$ChatMethod.COMMAND
+
+=== <clinit>()V ===
+     9 invokespecial net/minecraft/client/gui/components/ChatComponent$ChatMethod$1.<init>(Ljava/lang/String;ILjava/lang/String;)V  ('MESSAGE', 0, '')
+    24 invokespecial net/minecraft/client/gui/components/ChatComponent$ChatMethod$2.<init>(Ljava/lang/String;ILjava/lang/String;)V  ('COMMAND', 1, '/')
+    30 invokestatic net/minecraft/client/gui/components/ChatComponent$ChatMethod.$values()[Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;  ()
+    36 return
+
+=== <init>(Ljava/lang/String;ILjava/lang/String;)V ===
+     3 invokespecial java/lang/Enum.<init>(Ljava/lang/String;I)V  (loc1, loc2)
+     8 putfield net/minecraft/client/gui/components/ChatComponent$ChatMethod.prefix = loc3
+    11 return
+
+=== prefix()Ljava/lang/String; ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent$ChatMethod.prefix  (loc0)
+     4 return loc0.prefix
+
+=== valueOf(Ljava/lang/String;)Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod; ===
+     3 invokestatic java/lang/Enum.valueOf(Ljava/lang/Class;Ljava/lang/String;)Ljava/lang/Enum;  (cp, loc0)
+     9 return Enum.valueOf(cp, loc0)
+
+=== values()[Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod; ===
+     3 invokevirtual [Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;.clone()Ljava/lang/Object;  ()
+     9 return net/minecraft/client/gui/components/ChatComponent$ChatMethod.$VALUES.clone()

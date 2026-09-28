@@ -1809,11 +1809,28 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             if window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No) {
                 app.on_chat_tab_key();
             }
-        } else if app.screen == crate::screens::ScreenKind::World
-            && !app.paused
-            && window.is_key_pressed(Key::T, minifb::KeyRepeat::No)
-        {
-            app.on_chat_key();
+        } else if app.screen == crate::screens::ScreenKind::World && !app.paused {
+            // THE T KEY'S MESSAGE OPEN (the same lane the walk keeps —
+            // the fresh open the '' prefix wears)
+            if window.is_key_pressed(Key::T, minifb::KeyRepeat::No) {
+                app.on_chat_key();
+            }
+            // THE SLASH KEY'S COMMAND OPEN (javap Gui.handleKeybinds
+            // pcs 185-198 — the keyCommand lane the 26.2 chat-open
+            // walk the GUI method serves, the
+            // `openChatScreen(ChatMethod.COMMAND)` tail the
+            // consumeClick rising edge speaks: the createScreen fold
+            // the `ctor.create(prefix(), false)` arm answers — the
+            // ChatMethod clinit's `('COMMAND', 1, '/')` word the input
+            // wears BEFORE any keystroke, the MESSAGE method's ''
+            // prefix the T lane's open keeps. minifb has no edge API,
+            // the press is read per frame; the closed chat the
+            // same-frame char drain keeps honest — the input
+            // callback's '/' the gate drops, the prefix the command
+            // lane alone carries)
+            if window.is_key_pressed(Key::Slash, minifb::KeyRepeat::No) {
+                app.on_command_key();
+            }
         }
         if in_world && app.body.is_none() && !app.world_is_network {
             app.spawn_offline_body();

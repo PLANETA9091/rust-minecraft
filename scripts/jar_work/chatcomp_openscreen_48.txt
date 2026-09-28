@@ -1,0 +1,8 @@
+class net/minecraft/client/gui/components/ChatComponent
+
+=== openScreen(Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;Lnet/minecraft/client/gui/screens/ChatScreen$ChatConstructor;)V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    10 invokevirtual net/minecraft/client/gui/components/ChatComponent.createScreen(Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;Lnet/minecraft/client/gui/screens/ChatScreen$ChatConstructor;)Lnet/minecraft/client/gui/screens/ChatScreen;  (loc1, loc2)
+    13 invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V  (loc0.createScreen(loc1, loc2))
+    16 return

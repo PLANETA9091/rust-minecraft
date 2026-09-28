@@ -17256,6 +17256,39 @@ impl App {
         self.refresh_command_suggestions();
     }
 
+    /// THE COMMAND KEY'S OWN OPEN (javap Gui.handleKeybinds pcs 185-198 —
+    /// the keyCommand lane the 26.2 chat-open walk the GUI method serves —
+    /// the chat keys the Minecraft.handleKeybinds never wore, the Gui's
+    /// own method the jar's field scan pins, scripts/jar_work/
+    /// gui_chat_keys_48.txt): the `keyCommand.consumeClick()` rising edge
+    /// the `openChatScreen(ChatComponent$ChatMethod.COMMAND)` walk speaks —
+    /// the ChatComponent.openScreen's createScreen fold the METHOD PREFIX
+    /// answers (scripts/jar_work/chatcomp_openscreen_48.txt): the
+    /// non-restorable open the `ctor.create(method.prefix(), false)` arm
+    /// carries, the ChatMethod clinit's `('COMMAND', 1, '/')` word the
+    /// prefix field wears (scripts/jar_work/chatmethod_48.txt) — the
+    /// input the '/' carries BEFORE any keystroke, the MESSAGE method's
+    /// '' prefix the [`Self::on_chat_key`] open keeps. The draft/history
+    /// walks the same fresh open answers (the scratch draft the clear
+    /// keeps, the history pos the end re-arms), the suggestions the
+    /// onEdited refresh speaks — the '/'-prefixed input the LOCAL parse
+    /// answers (the tree's root literals the bare slash names), the
+    /// offline world the live-only gate keeps silent. The closed chat
+    /// the same-frame char drain keeps honest — the input callback's
+    /// '/' the on_chat_char gate drops, the prefix the command lane
+    /// alone carries (no doubling the fresh open wears).
+    pub fn on_command_key(&mut self) {
+        self.chat_open = true;
+        self.chat_input.clear();
+        self.chat_input.push('/');
+        self.chat_draft.clear();
+        self.chat_history_pos = self.recent_chat.len();
+        // the fresh open the clear walk answers — the old suggestions
+        // the screen never keeps (the vanilla init's fresh walk); the
+        // '/' prefix the refresh reads the command rows speak
+        self.refresh_command_suggestions();
+    }
+
     /// THE CHAT SCREEN'S OWN CLOSE (javap onClose's walk — the Escape
     /// the screen answers, the draft the discard keeps: the input the
     /// empty value the next open wears).
@@ -35817,6 +35850,108 @@ mod tests {
         assert!(
             app.recent_chat.last().map(String::as_str) == Some("/time set day"),
             "the history the typed word keeps"
+        );
+    }
+
+    /// THE COMMAND KEY'S OWN OPEN WALK (the on_command_key lane the
+    /// slash key speaks — the ChatMethod.COMMAND prefix the fresh open
+    /// wears BEFORE any keystroke, the suggestions the '/'-prefixed
+    /// input the LOCAL parse answers, the narrowed type-ahead the same
+    /// walk re-answers, the close the fresh-open law keeps).
+    #[test]
+    fn the_command_key_the_prefix_open_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_tree(test_tree());
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // THE OPEN (the '/' prefix the input wears — no keystroke the
+        // walk spends, the draft/history walks the fresh open answers)
+        app.on_command_key();
+        assert!(app.chat_open, "the command key the screen opens");
+        assert_eq!(app.chat_input, "/", "the COMMAND prefix the input wears");
+        assert!(app.chat_draft.is_empty(), "the scratch draft the clear keeps");
+        assert_eq!(
+            app.chat_history_pos,
+            app.recent_chat.len(),
+            "the history pos the end re-arms"
+        );
+        // THE BARE SLASH (the root's own children the local parse
+        // answers — the same rows the typed '/' walk speaks, the range
+        // [1,0) the prefix-length law keeps)
+        assert_eq!(
+            app.chat_suggestions
+                .iter()
+                .map(|m| m.text.as_str())
+                .collect::<Vec<_>>(),
+            vec!["tick", "time", "tp"],
+            "the bare slash the root's own children answer"
+        );
+        assert_eq!(app.chat_suggestion_range, (1, 0));
+        assert_eq!(app.chat_suggestion_original, "/");
+        // THE TYPE-AHEAD (the 't' the narrowed sort answers — the
+        // prefix the typed tail rides)
+        app.on_chat_char('t');
+        assert_eq!(
+            app.chat_suggestions
+                .iter()
+                .map(|m| m.text.as_str())
+                .collect::<Vec<_>>(),
+            vec!["tick", "time", "tp"]
+        );
+        assert_eq!(app.chat_input, "/t", "the char the prefix rides");
+        // THE CLOSE (the fresh-open law the Escape walk keeps — the
+        // suggestions the screen never keeps, the input the empty
+        // value the next open wears)
+        app.close_chat();
+        assert!(!app.chat_open, "the close the screen folds");
+        assert_eq!(
+            app.chat_input, "",
+            "the close the input clears"
+        );
+        assert!(
+            app.chat_suggestions.is_empty(),
+            "the close the suggestions forgets"
+        );
+    }
+
+    /// THE COMMAND KEY'S OWN GATES (the live-only + closed-char laws
+    /// the prefix open answers: the tree-less offline world the
+    /// suggestions keep silent, the closed chat the input callback's
+    /// '/' the gate drops — the prefix the command lane ALONE carries,
+    /// no doubling the fresh open wears).
+    #[test]
+    fn the_command_prefix_the_closed_char_and_offline_gates_keep() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE OFFLINE OPEN (no live clicks the gate reads — the input
+        // the '/' wears, the suggestions the live-only law keeps
+        // silent, no pending id the gate waits on)
+        app.on_command_key();
+        assert!(app.chat_open, "the offline world the screen still opens");
+        assert_eq!(app.chat_input, "/");
+        assert!(
+            app.chat_suggestions.is_empty(),
+            "the offline world the suggestions keep silent"
+        );
+        assert!(
+            app.chat_suggestion_pending.is_none(),
+            "the offline world no id waits on"
+        );
+        app.close_chat();
+        // THE CLOSED-CHAR GATE (the input callback's '/' the closed
+        // screen keeps silent — the queue's same-frame char the drain
+        // answers, the chat the gate never opens)
+        app.on_chat_char('/');
+        assert!(!app.chat_open, "the char the gate never opens");
+        assert_eq!(app.chat_input, "", "the silent gate the input never wears");
+        // THE NO-DOUBLING WALK (the reopen the command lane speaks —
+        // the prefix the lane ALONE carries: the dropped callback char
+        // the input never doubles)
+        app.on_command_key();
+        assert_eq!(
+            app.chat_input, "/",
+            "the prefix the command lane alone carries"
         );
     }
 

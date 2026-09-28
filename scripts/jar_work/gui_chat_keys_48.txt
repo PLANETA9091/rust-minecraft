@@ -1,0 +1,43 @@
+=== Gui methods referencing chat-open keys ===
+  handleKeybinds()V -> ['keyAdvancements', 'keyChat', 'keyCommand', 'keySocialInteractions']
+
+=== handleKeybinds()V ===
+     1 getfield net/minecraft/client/gui/Gui.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+     7 ?? opcode 0x4c
+     9 getfield net/minecraft/client/Options.keyToggleGui  (loc1)
+    12 invokevirtual net/minecraft/client/KeyMapping.consumeClick()Z  ()
+    19 getfield net/minecraft/client/gui/Gui.hud  (loc0)
+    22 invokevirtual net/minecraft/client/gui/Hud.toggle()V  ()
+    29 getfield net/minecraft/client/Options.keyAdvancements  (loc1)
+    32 invokevirtual net/minecraft/client/KeyMapping.consumeClick()Z  ()
+    44 getfield net/minecraft/client/gui/Gui.minecraft  (loc0)
+    47 getfield net/minecraft/client/Minecraft.player  (loc0.minecraft)
+    50 getfield net/minecraft/client/player/LocalPlayer.connection  (loc0.minecraft.player)
+    53 invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.getAdvancements()Lnet/minecraft/client/multiplayer/ClientAdvancements;  ()
+    56 invokespecial net/minecraft/client/gui/screens/advancements/AdvancementsScreen.<init>(Lnet/minecraft/client/multiplayer/ClientAdvancements;)V  (loc0.minecraft.player.connection.getAdvancements())
+    59 invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V  (net/minecraft/client/gui/screens/advancements/AdvancementsScreen(loc0.minecraft.player.connection.getAdvancements()))
+    66 getfield net/minecraft/client/Options.keySocialInteractions  (loc1)
+    69 invokevirtual net/minecraft/client/KeyMapping.consumeClick()Z  ()
+    76 getfield net/minecraft/client/gui/Gui.minecraft  (loc0)
+    79 invokevirtual net/minecraft/client/Minecraft.isMultiplayerServer()Z  ()
+    92 getfield net/minecraft/client/gui/Gui.chatListener  (loc0)
+    98 invokevirtual net/minecraft/client/multiplayer/chat/ChatListener.handleOverlay(Lnet/minecraft/network/chat/Component;)V  (net/minecraft/client/gui/Gui.SOCIAL_INTERACTIONS_NOT_AVAILABLE)
+   102 getfield net/minecraft/client/gui/Gui.minecraft  (loc0)
+   105 invokevirtual net/minecraft/client/Minecraft.getNarrator()Lnet/minecraft/client/GameNarrator;  ()
+   111 invokevirtual net/minecraft/client/GameNarrator.saySystemNow(Lnet/minecraft/network/chat/Component;)V  (net/minecraft/client/gui/Gui.SOCIAL_INTERACTIONS_NOT_AVAILABLE)
+   118 getfield net/minecraft/client/gui/Gui.socialInteractionsToast  (loc0)
+   125 getfield net/minecraft/client/gui/Gui.socialInteractionsToast  (loc0)
+   128 invokevirtual net/minecraft/client/gui/components/toasts/TutorialToast.hide()V  ()
+   133 putfield net/minecraft/client/gui/Gui.socialInteractionsToast = null
+   141 invokespecial net/minecraft/client/gui/screens/social/SocialInteractionsScreen.<init>()V  ()
+   144 invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V  (net/minecraft/client/gui/screens/social/SocialInteractionsScreen())
+   151 getfield net/minecraft/client/Options.keyChat  (loc1)
+   154 invokevirtual net/minecraft/client/KeyMapping.consumeClick()Z  ()
+   164 invokevirtual net/minecraft/client/gui/Gui.openChatScreen(Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;)V  (net/minecraft/client/gui/components/ChatComponent$ChatMethod.MESSAGE)
+   171 getfield net/minecraft/client/gui/Gui.screen  (loc0)
+   178 getfield net/minecraft/client/gui/Gui.overlay  (loc0)
+   185 getfield net/minecraft/client/Options.keyCommand  (loc1)
+   188 invokevirtual net/minecraft/client/KeyMapping.consumeClick()Z  ()
+   198 invokevirtual net/minecraft/client/gui/Gui.openChatScreen(Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;)V  (net/minecraft/client/gui/components/ChatComponent$ChatMethod.COMMAND)
+   201 return
