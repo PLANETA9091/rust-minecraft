@@ -505,6 +505,7 @@ pub struct SnapshotView {
     /// server's own sniffer egg placement broadcasts — the anchor the
     /// render lane's own law folds the six-face crack burst from).
     pub egg_crack_events: Vec<WireEggCrackEvent>,
+    pub trial_detect_events: Vec<WireDetectPlayerEvent>,
     /// The trial-spawner spawn effect's own wire arms (the 3011 words
     /// the server's own trial spawners broadcast — the anchor + the
     /// flame-flavor word the render lane's own law folds the
@@ -827,6 +828,26 @@ pub struct WireEggCrackEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One wire TRIAL-SPAWNER DETECT-PLAYER arm — the Level Event
+/// packet's own landing (the 3013 words the server's own trial
+/// spawner detectors broadcast,
+/// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT`]
+/// the render lane speaks): the event's anchor block + the amount
+/// word, verbatim (the DATA word the walk's own tail READS — the
+/// `iload_3` the `addDetectPlayerParticles` amount arg carries, the
+/// `30 + min(amount, 10) * 5` snowfall the min arm caps). The
+/// snowfall's own draws the render lane's stream folds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireDetectPlayerEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The amount word (the wire's `iload_3` the case reads verbatim
+    /// — the detected player count the caller's set size gives, the
+    /// 10-cap the walk's own min arm keeps).
+    pub amount: i32,
 }
 
 /// One wire TRIAL-SPAWNER SPAWN EFFECT arm — the Level Event
@@ -2980,6 +3001,10 @@ pub fn materialize_snapshot_view(
         // and no trial-spawner words (the join snapshot carries no
         // 3011 traffic — the empty mailbox the render lane skips)
         trial_spawn_events: Vec::new(),
+        // and no trial-spawner detect-player words (the join snapshot
+        // carries no 3013 traffic — the empty mailbox the render lane
+        // skips)
+        trial_detect_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3541,6 +3566,22 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the trial-spawner detect-player's own projection (the
+        // mailbox verbatim — the anchor and the amount word the arms
+        // carry, the render lane's own law reads): each 3013 word
+        // ships once with this view, the worker's drain empties the
+        // mailbox after
+        let trial_detect_events = self
+            .model
+            .trial_detect_events
+            .iter()
+            .map(|arm| WireDetectPlayerEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                amount: arm.amount,
+            })
+            .collect();
         // the trial-spawner spawn's own projection (the mailbox
         // verbatim — the anchor and the flame-flavor word the arms
         // carry, the render lane's own law reads): each 3011 word
@@ -3970,6 +4011,10 @@ impl LiveView {
                 // too — the 3009 words are the connection's own
                 // traffic, not the pose's
                 egg_crack_events,
+                // the trial-spawner detect-player's arms ride the
+                // pose-less arm too — the 3013 words are the
+                // connection's own traffic, not the pose's
+                trial_detect_events,
                 // the trial-spawner spawn's arms ride the pose-less
                 // arm too — the 3011 words are the connection's own
                 // traffic, not the pose's
@@ -4156,6 +4201,10 @@ impl LiveView {
             // the 3009 words follow the mailbox exactly like the
             // brush's own arms do
             egg_crack_events,
+            // the trial-spawner detect-player's arms ride every
+            // refresh too — the 3013 words follow the mailbox exactly
+            // like the egg's own arms do
+            trial_detect_events,
             // the trial-spawner spawn's arms ride every refresh too
             // — the 3011 words follow the mailbox exactly like the
             // egg's own arms do

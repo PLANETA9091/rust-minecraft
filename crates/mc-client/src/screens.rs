@@ -7760,6 +7760,12 @@ impl App {
             // NO physics the asleep ticks never spend — the just-tick
             // base law the awake arm keeps)
             crate::particles::ParticleKind::SculkShriek { .. } => p.tick_shriek(),
+            // the snowflake's own walk (javap SnowflakeParticle.tick —
+            // the base law the super call keeps, the damping tail the
+            // override speaks: xd *0.95, yd *0.9, zd *0.95 — the
+            // flake slows each tick, the vertical axis's stronger 0.9
+            // the fall damps)
+            crate::particles::ParticleKind::Snowflake => p.tick_snowflake(),
             _ => p.tick(),
         });
         // THE SMOKE CHILDREN LAND AFTER THE TICK LOOP (the vanilla
@@ -23212,6 +23218,62 @@ impl App {
         }
     }
 
+    /// THE TRIAL-SPAWNER DETECT-PLAYER WIRE LANE (javap
+    /// `LevelEventHandler` case 3013 — offset 1961 — over the 26.2
+    /// jar): the server's own trial spawner detectors the word
+    /// broadcast (`TrialSpawnerStateData.tryDetectPlayers`'
+    /// `levelEvent(isOminous() ? 3019 : 3013, pos,
+    /// detectedPlayers.size())` the levelEvent call pins — the data
+    /// word the detected player count carries), the Level Event
+    /// mailbox's landing: each word the arms the worker drained ride
+    /// exactly one refresh — the VOICE the case body plays FIRST
+    /// (the ONE `playLocalSound(pos, TRIAL_SPAWNER_DETECTED_PLAYER,
+    /// BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, true)` walk — the TWO
+    /// pitch draws the voice's own pair keeps, the key the sounds.json
+    /// row banks — the detect_player1..3 files the runtime table
+    /// holds), then the `addDetectPlayerParticles` snowfall the walk's own
+    /// tail answers (the `30 + min(amount, 10) * 5` loop the min arm
+    /// caps, the NINE draws the per-iteration chain spends — the
+    /// level ambient stream the draws ride).
+    pub fn live_trial_detect_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireDetectPlayerEvent>,
+    ) {
+        for ev in events {
+            // THE VOICE THE CASE BODY SPEAKS FIRST (the pitch pair
+            // the `(nf - nf) * 0.2F + 1.0F` fold answers, the block
+            // center the resolve places, the distance-delay flag the
+            // jar's own `iconst_1` pc 1994 keeps — the draws ride
+            // BEFORE the snowfall the tail speaks)
+            let pitch = 1.0f32
+                + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * 0.2f32;
+            let sx = f64::from(ev.x) + 0.5;
+            let sy = f64::from(ev.y) + 0.5;
+            let sz = f64::from(ev.z) + 0.5;
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.trial_spawner.detect_player",
+                1.0,
+                pitch,
+                ear_distance(ear, sx, sy, sz),
+                ear_pan(ear, yaw, sx, sy, sz),
+            );
+            // THE SNOWFALL (the `addDetectPlayerParticles` walk
+            // verbatim — the `30 + min(amount, 10) * 5` iterations,
+            // the three nextFloat position draws + the six-draw
+            // provider chain the per-iteration order keeps, the
+            // level ambient stream the draws ride)
+            let burst = crate::particles::trial_detect_player_burst(
+                (ev.x, ev.y, ev.z),
+                ev.amount,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -28342,7 +28404,7 @@ impl App {
                         None => terrain_groups.push((tile, vec![quad])),
                     }
                 }
-                crate::particles::ParticleKind::Poof => {
+                crate::particles::ParticleKind::Poof | crate::particles::ParticleKind::Snowflake => {
                     let frame = crate::particles::poof_frame(p.age, p.lifetime);
                     let quad = crate::raster::SampledQuad {
                         pts,
@@ -28354,7 +28416,11 @@ impl App {
                     // speaks: list index 0 reads generic_7 (the dense
                     // puff the decode counts 29/64), index 7 the wisp
                     // — the cloud pops dense and dissolves, not the
-                    // reverse walk the file order would speak
+                    // reverse walk the file order would speak. The
+                    // flake the SAME law rides (the snowflake.json
+                    // list the generic_7..generic_0 pair shares, the
+                    // setSpriteFromAge walk the same frame picks —
+                    // the near-white tint the ctor's constants carry)
                     let file = crate::particles::generic_file_index(frame);
                     match poof_groups.iter_mut().find(|(f, _)| *f == file) {
                         Some((_, quads)) => quads.push(quad),
@@ -50175,6 +50241,92 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_trial_spawn_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_detect_serve_the_voice_the_snowfall_wear() {
+        // THE DETECT-PLAYER SERVE'S OWN WIRE LANE (javap case 3013 →
+        // offset 1961 over the 26.2 jar): the amount word the walk
+        // reads (the `addDetectPlayerParticles` amount arg the
+        // detected player count carries), the voice the case body
+        // plays FIRST (the TWO pitch draws the `(nf - nf) * 0.2F +
+        // 1.0F` fold answers — the [0.8, 1.2] band the scale 0.2F
+        // gives, the key the sounds.json row banks — the
+        // detect_player1..3 files the runtime table holds), the
+        // snowfall the walk's tail answers (the `30 + min(1, 10) * 5`
+        // = 35 iterations, the NINE draws the per-iteration chain
+        // spends: the three nextFloat positions + the six-draw
+        // provider chain), the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3013));
+        let before = app.particles.len();
+        app.live_trial_detect_events_updated(vec![
+            crate::world_view::WireDetectPlayerEvent {
+                x: -12,
+                y: 44,
+                z: 88,
+                amount: 1,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT SNOWFALL (the 35 members the loop bound arms —
+        // every member the Snowflake kind the provider chain answers,
+        // the near-white bluish tint the setColor constants keep)
+        let snowfall = &app.particles[before..];
+        assert_eq!(snowfall.len(), 35, "the 35-member snowfall");
+        for p in snowfall {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Snowflake),
+                "the snowflake kind the chain arms"
+            );
+            assert_eq!(
+                p.col,
+                [0.923, 0.964, 0.999],
+                "the bluish-white the override keeps"
+            );
+        }
+        // THE EXACT DRAW COUNT (the 2 voice draws the pitch pair FIRST
+        // keeps + the thirty-five nine-draw iterations — the next draw
+        // after the walk differs from the fresh stream's same-index
+        // draw)
+        let mut replay = crate::drops::Lcg::new(0x3013);
+        for _ in 0..(2 + 35 * 9) {
+            let _ = replay.next();
+        }
+        assert_eq!(
+            spent, replay,
+            "the {} draws the detect walk exactly spends",
+            2 + 35 * 9
+        );
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.trial_spawner.detect_player @"))
+                .expect("the detect-player voice the lane logs");
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_trial_detect_events_updated(vec![]);
         assert_eq!(
             app.particles.len(),
             settled,

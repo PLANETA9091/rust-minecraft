@@ -1839,6 +1839,60 @@ pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT: i32 = 3012;
 /// case's own arm wears.
 pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT: i32 = 3021;
 
+/// THE TRIAL-SPAWNER DETECT-PLAYER VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER`, the case
+/// `LevelEventHandler.levelEvent` offset 1961 speaks): the ONE
+/// `playLocalSound(pos, TRIAL_SPAWNER_DETECTED_PLAYER, BLOCKS, 1.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, true)` walk the case
+/// body spends FIRST (pc 1961-1995 — the fconst_1 volume the fixed
+/// fold keeps, the TWO pitch draws the fsub/fmul/fadd chain answers,
+/// the SAME [0.8, 1.2] band the 0.2F scale gives, the BLOCK CENTER
+/// the `playLocalSound(BlockPos, ...)` resolve places, the
+/// distance-delay flag TRUE the jar's own `iconst_1` keeps — pc 1994,
+/// the same flag the 3012/3021 twins' fresh byte audits pin), THEN
+/// the ONE `TrialSpawner.addDetectPlayerParticles(level, pos, random,
+/// data, ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER)` walk the case
+/// tail spends (pc 1998-2012 — the `iload_3` the amount arg carries:
+/// the DATA word the particle COUNT answers). THE WALK the jar's own
+/// bytecodes pin (`addDetectPlayerParticles`, len=126): the loop
+/// bound `30 + Math.min(amount, 10) * 5` the bipush 30/bipush 10/imul
+/// trio speaks, the per-iteration THREE `nextFloat()` draws the
+/// position pair + the height carry (`dx = (nf * 2.0F - 1.0F) *
+/// 0.65D`, `dz` the same shape, `py = pos.getY() + 0.1 + nf * 0.8D`
+/// — the ±0.65 spread the dmul 0.65 folds, the 0.1..0.9 band the
+/// height fold keeps, the ZERO velocity the dconst_0 trio speaks —
+/// the `addParticle(type, px, py, pz, 0, 0, 0)` call the walk's own
+/// tail answers). THE SNOWFLAKE the `SnowflakeParticle` chain wears:
+/// the provider `setColor(0.923F, 0.964F, 0.999F)` the near-white
+/// bluish tint speaks (NO draw the three ldc1 constants spend), the
+/// ctor's SIX draws the bytecodes pin — the THREE velocity spreads
+/// `xd += (nf * 2.0F - 1.0F) * 0.05F` (pc 34-55 per axis, x→y→z the
+/// order keeps), the size `0.1F * (nf * nf * 1.0F + 1.0F)` the TWO
+/// draws' product speaks (pc 106-133 — the [0.1, 0.2] band the pair
+/// gives, the `base_quad_size` law's own twin the different fold
+/// arms: the PRODUCT the two draws speak, not the `r * 0.5 + 0.5`
+/// mirror), the lifetime `(int)(16.0 / (nextFloat() * 0.8D + 0.2D))
+/// + 2` the f2d-widened draw answers (pc 136-161 — the 18..81 band
+/// the denom band keeps, the +2 the iconst tail adds), the sprite
+/// the `setSpriteFromAge` walk picks (the snowflake.json list the
+/// EIGHT generic_0..7 frames banks — the SAME descending list the
+/// poof/smoke jsons speak, the SAME `get(age, lifetime)` frame law
+/// the render lane carries, NO new assets the bank demands — the
+/// generic rows the runtime cache already holds). The tick's own
+/// damping the tail speaks: `xd *= 0.95, yd *= 0.9, zd *= 0.95` —
+/// the gravity 0.225 the ctor's field keeps, the friction 1.0F the
+/// base law's own no-op arms. THE CALLER the detector's own walk
+/// pins — `TrialSpawnerStateData.tryDetectPlayers`'s
+/// `levelEvent(isOminous() ? 3019 : 3013, pos, detectedPlayers.size())`
+/// levelEvent call the bytecode speaks (pc 230-261 — the OMINOUS
+/// twin the 3019 word answers, the amount the DETECTED PLAYER COUNT
+/// the set's size carries, the 40-tick `nextMobSpawnsAt` gate the
+/// sibling walk rides beside). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT: i32 = 3013;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the

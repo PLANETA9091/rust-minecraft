@@ -452,6 +452,18 @@ pub struct WorldModel {
     /// forty-particle burst's own draws the render lane's stream
     /// keeps.
     pub trial_spawn_events: Vec<TrialSpawnArm>,
+    /// THE TRIAL-SPAWNER DETECT-PLAYER EFFECT'S OWN MAILBOX (the
+    /// Level Event packet's next vocabulary word —
+    /// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 1961
+    /// speaks: the ONE `playLocalSound(pos, TRIAL_SPAWNER_DETECTED_PLAYER,
+    /// BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, true)` walk the voice
+    /// spends FIRST, then the `TrialSpawner.addDetectPlayerParticles`
+    /// walk the `30 + min(data, 10) * 5` snowfall answers — the DATA
+    /// word the amount arg carries, the detected player count the
+    /// caller's set size gives). The snowfall's own draws the render
+    /// lane's stream keeps.
+    pub trial_detect_events: Vec<DetectPlayerArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -1102,6 +1114,26 @@ pub struct TrialSpawnArm {
     /// 3012 the spawn-mob voice twin — the voice the render lane's
     /// own law plays beside the burst).
     pub word: i32,
+}
+
+/// One pending TRIAL-SPAWNER DETECT-PLAYER arm — the Level Event
+/// packet's own landing the model keeps verbatim (see
+/// [`WorldModel::trial_detect_events`]). The anchor verbatim (the
+/// spawner's own block the `TrialSpawnerStateData.tryDetectPlayers`
+/// broadcast), the DATA word the walk's own tail READS (the
+/// `iload_3` the `addDetectPlayerParticles` amount arg carries — the
+/// detected player count the caller's set size gives, the
+/// `30 + min(amount, 10) * 5` loop bound the min arm caps). The
+/// snowfall's own draws the render lane's stream folds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DetectPlayerArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The amount word (the wire's `iload_3` the case reads verbatim
+    /// — the `detectedPlayers.size()` count the caller passes, the
+    /// 10-cap the walk's own min arm keeps).
+    pub amount: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1952,6 +1984,7 @@ impl WorldModel {
             brush_complete_events: Vec::new(),
             egg_crack_events: Vec::new(),
             trial_spawn_events: Vec::new(),
+            trial_detect_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2212,6 +2245,15 @@ impl WorldModel {
     /// flame-flavor word.
     pub fn drain_trial_spawn_events(&mut self) -> Vec<TrialSpawnArm> {
         std::mem::take(&mut self.trial_spawn_events)
+    }
+
+    /// The trial-spawner detect-player effect's mailbox's own drain
+    /// (the same walk the siblings' speak — each arm ships exactly
+    /// once): the 3013 words the Level Event packet armed, the render
+    /// lane's own law folds (the voice + the snowfall the render's
+    /// own stream keeps).
+    pub fn drain_trial_detect_events(&mut self) -> Vec<DetectPlayerArm> {
+        std::mem::take(&mut self.trial_detect_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2641,6 +2683,10 @@ impl WorldModel {
                 // (the same walk — the old level's 3011 words never
                 // burst again)
                 self.trial_spawn_events.clear();
+                // the trial-spawner detect-player's mailbox dies with
+                // the level (the same walk — the old level's 3013
+                // words never snow again)
+                self.trial_detect_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3748,6 +3794,32 @@ impl WorldModel {
                         z: ev.z,
                         data: ev.data,
                         word: ev.effect,
+                    });
+                    true
+                } else if ev.effect
+                    == mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT
+                    && !ev.global
+                {
+                    // THE TRIAL-SPAWNER DETECT-PLAYER VOICE'S OWN ARM
+                    // (javap the case offset 1961 — the positioned
+                    // route the GLOBAL switch never banks): the ONE
+                    // `playLocalSound(pos, TRIAL_SPAWNER_DETECTED_PLAYER,
+                    // BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, true)` walk
+                    // the case body spends FIRST (the TWO pitch draws
+                    // the voice's own arm keeps — the distance-delay
+                    // flag TRUE the jar's own `iconst_1` pins, pc 1994),
+                    // THEN the `addDetectPlayerParticles(level, pos,
+                    // random, data, TRIAL_SPAWNER_DETECTED_PLAYER)` walk
+                    // the case tail spends — the DATA word the amount
+                    // arg carries (the `30 + min(amount, 10) * 5`
+                    // snowfall the min arm caps), the own mailbox the
+                    // walk's different shape banks (the spawn family's
+                    // flame burst the sibling mailbox keeps).
+                    self.trial_detect_events.push(DetectPlayerArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        amount: ev.data,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -12525,6 +12597,96 @@ mod tests {
         })));
         assert!(
             m.trial_spawn_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_detect_word_the_amount_arms() {
+        // THE DETECT-PLAYER WORD'S OWN ARM (javap the case 3013 —
+        // offset 1961 — the positioned route the GLOBAL switch never
+        // banks): the anchor + the AMOUNT word the case's own body
+        // READS (the `iload_3` the `addDetectPlayerParticles` amount
+        // arg carries — the detected player count the wire carries
+        // verbatim), the drain ships the mailbox exactly once, and
+        // the Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the detector's own word (the TrialSpawnerStateData
+        // .tryDetectPlayers call the `levelEvent(3013, pos,
+        // detectedPlayers.size())` walk speaks — the single player
+        // detection the set's size-1 answer carries): the arm rides,
+        // the anchor + the amount the mailbox keeps
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT,
+            x: -41,
+            y: 70,
+            z: 123,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.trial_detect_events.len(), 1, "the arm rides");
+        assert_eq!(m.trial_detect_events[0].x, -41);
+        assert_eq!(m.trial_detect_events[0].y, 70);
+        assert_eq!(m.trial_detect_events[0].z, 123);
+        assert_eq!(
+            m.trial_detect_events[0].amount, 1,
+            "the amount word rides"
+        );
+        // the four-player detection (the same lane the bigger
+        // co-op party banks — the amount the set's size carries)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT,
+            x: 5,
+            y: -5,
+            z: 500,
+            data: 4,
+            global: false,
+        })));
+        assert_eq!(m.trial_detect_events.len(), 2, "the twin rides");
+        assert_eq!(
+            m.trial_detect_events[1].amount, 4,
+            "the bigger count rides"
+        );
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 1,
+            global: true,
+        })));
+        assert_eq!(
+            m.trial_detect_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_trial_detect_events();
+        assert_eq!(drained.len(), 2, "the drain ships the mailbox");
+        assert_eq!(drained[1].amount, 4, "the twin's amount rides");
+        assert!(
+            m.trial_detect_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.trial_detect_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.trial_detect_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

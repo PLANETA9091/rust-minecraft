@@ -283,6 +283,22 @@ pub enum ParticleKind {
     /// shares the quad samples whole, the OPAQUE layer the getLayer
     /// override returns).
     EggCrack,
+    /// `SnowflakeParticle` the trial spawner's own detection spark
+    /// (the `trial_spawner_detect_player` type the
+    /// `TrialSpawner.addDetectPlayerParticles` walk spawns — javap
+    /// verbatim: the lifetime the `(int)(16.0 / (nextFloat() * 0.8 +
+    /// 0.2)) + 2` fold answers [18, 81], the quadSize the
+    /// `0.1F * (nextFloat() * nextFloat() * 1.0F + 1.0F)` two-draw
+    /// product gives [0.1, 0.2] — the base law's own twin the
+    /// DIFFERENT fold arms — the velocity spread the three
+    /// `(nf * 2 - 1) * 0.05` draws the ctor speaks, the gravity the
+    /// 0.225 field keeps, the friction the 1.0F no-op arms, the
+    /// tick's own damping the tail speaks (xd *0.95, yd *0.9,
+    /// zd *0.95), the near-white bluish tint the provider's
+    /// `setColor(0.923, 0.964, 0.999)` override — the SAME eight
+    /// generic frames the poof bank shares the snowflake.json list
+    /// samples, the OPAQUE layer the getLayer override returns).
+    Snowflake,
     /// `BubbleColumnUpParticle` — the upward column's own bubble (the
     /// `bubble_column_up` type the column's animateTick spawns two of,
     /// the same `minecraft:bubble` sprite the swim bubble rides, the
@@ -831,6 +847,23 @@ impl Particle {
             }
         }
         self.tick()
+    }
+
+    /// The `SnowflakeParticle.tick` verbatim (javap over the 26.2
+    /// jar) — the base law the super call keeps (the gravity 0.225
+    /// the ctor's field speaks, the friction 1.0F the base law's own
+    /// no-op arms), then the damping tail the override speaks:
+    /// `xd *= 0.95, yd *= 0.9, zd *= 0.95` — the flake slows each
+    /// tick, the vertical axis's stronger 0.9 the fall damps.
+    pub fn tick_snowflake(&mut self) -> bool {
+        let alive = self.tick();
+        if !alive {
+            return false;
+        }
+        self.vx *= 0.95;
+        self.vy *= 0.9;
+        self.vz *= 0.95;
+        true
     }
 
     /// The `BubbleParticle.tick` verbatim — the bubble rides NONE of
@@ -3455,6 +3488,98 @@ pub fn egg_crack_faces(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) -> 
                 col: [1.0, 1.0, 1.0],
             });
         }
+    }
+    out
+}
+
+/// THE SNOWFLAKE'S OWN LIFETIME LAW (javap `SnowflakeParticle` ctor
+/// pc 136-161 over the 26.2 jar): `(int)(16.0 / (nextFloat() * 0.8D +
+/// 0.2D)) + 2` — the same f64 fold the lava drip speaks, the +2 the
+/// iconst tail adds. The f64 domain's own edges speak: r=0 draws
+/// 79.99999940… → 79 + 2 = 81, r->1 draws 15.99999988… → 15 + 2 = 17
+/// — the grid the nextFloat speaks never draws the exact edge, the
+/// [18, 81] band the stream holds.
+pub fn snowflake_lifetime(r: f32) -> u32 {
+    let denom = r as f64 * f64::from(0.8f32) + f64::from(0.2f32);
+    (16.0f64 / denom) as u32 + 2
+}
+
+/// THE SNOWFLAKE'S OWN SIZE LAW (javap `SnowflakeParticle` ctor
+/// pc 106-133 verbatim): `0.1F * (nextFloat() * nextFloat() * 1.0F +
+/// 1.0F)` — the TWO draws' PRODUCT the fold speaks, the base law's
+/// own twin the DIFFERENT shape arms (`base_quad_size` folds
+/// `r * 0.5 + 0.5`, one draw; the flake's product never reaches the
+/// same middles the mirror would — the [0.1, 0.2] band the pair
+/// gives).
+pub fn snowflake_quad_size(r1: f32, r2: f32) -> f32 {
+    0.1 * (r1 * r2 * 1.0 + 1.0)
+}
+
+/// THE TRIAL DETECT-PLAYER BURST'S OWN WALK (javap
+/// `TrialSpawner.addDetectPlayerParticles` — len=126 — over the 26.2
+/// jar, the `LevelEventHandler` case 3013's tail the voice rides
+/// after): the loop bound `30 + Math.min(amount, 10) * 5` the bipush
+/// 30/bipush 10/imul trio speaks (the DATA word the amount arg
+/// carries — the detected player count the caller's set size gives,
+/// the 10-cap the min arm keeps), the per-iteration THREE
+/// `nextFloat()` draws the position pair + the height carry —
+/// `dx = (nf * 2.0F - 1.0F) * 0.65D` and `dz` the same shape (the
+/// ±0.65 spread the dmul 0.65 folds), `py = pos.getY() + 0.1 + nf *
+/// 0.8D` (the 0.1..0.9 band the height fold keeps), the ZERO
+/// velocity the `dconst_0` trio speaks. THE SNOWFLAKE CHAIN the
+/// provider's own walks bank: the THREE velocity spreads
+/// `(nf * 2 - 1) * 0.05` the ctor pc 34-55 speaks (x→y→z the order
+/// keeps), the size `0.1 * (nf * nf + 1.0)` the TWO draws' product
+/// answers, the lifetime the `(16.0 / (nf * 0.8 + 0.2)) + 2` fold
+/// arms — NINE draws per iteration the walk exactly spends (three
+/// position + three velocity + two size + one life), the near-white
+/// bluish tint the `setColor(0.923, 0.964, 0.999)` constants carry
+/// (NO draw the trio spends), the gravity 0.225 the ctor's field
+/// keeps, the friction 1.0F the base law's own no-op arms, the OPAQUE
+/// layer the flake's own render bank carries.
+pub fn trial_detect_player_burst(
+    anchor: (i32, i32, i32),
+    amount: i32,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::new();
+    let iterations = 30 + amount.min(10) * 5;
+    for _ in 0..iterations {
+        // THE POSITION PAIR + THE HEIGHT (the three nextFloat draws
+        // the walk's own order keeps — dx, dz, then the height)
+        let dx = (rng.next_f32() * 2.0 - 1.0) as f64 * 0.65;
+        let dz = (rng.next_f32() * 2.0 - 1.0) as f64 * 0.65;
+        let px = f64::from(anchor.0) + 0.5 + dx;
+        let py = f64::from(anchor.1) + 0.1 + f64::from(rng.next_f32()) * 0.8;
+        let pz = f64::from(anchor.2) + 0.5 + dz;
+        // THE PROVIDER CHAIN (the six draws the ctor's bytecodes pin
+        // — the velocity spreads x→y→z, the size's two-draw product,
+        // the lifetime's f64 fold)
+        let vx = (rng.next_f32() * 2.0 - 1.0) as f64 * 0.05;
+        let vy = (rng.next_f32() * 2.0 - 1.0) as f64 * 0.05;
+        let vz = (rng.next_f32() * 2.0 - 1.0) as f64 * 0.05;
+        let r1 = rng.next_f32();
+        let r2 = rng.next_f32();
+        let quad_size = snowflake_quad_size(r1, r2);
+        let lifetime = snowflake_lifetime(rng.next_f32());
+        out.push(Particle {
+            kind: ParticleKind::Snowflake,
+            x: px,
+            y: py,
+            z: pz,
+            vx,
+            vy,
+            vz,
+            prev: None,
+            age: 0,
+            lifetime,
+            gravity: 0.225,
+            friction: 1.0,
+            quad_size,
+            uo: 0.0,
+            vo: 0.0,
+            col: [0.923, 0.964, 0.999],
+        });
     }
     out
 }
@@ -6135,6 +6260,111 @@ mod tests {
         let after_walk = a.next();
         let mut b = rng();
         for _ in 0..(6 + n * 9) {
+            b.next();
+        }
+        assert_eq!(after_walk, b.next(), "the walk's own exact draw count");
+    }
+
+    #[test]
+    fn the_snowflake_burst_the_amounts_the_draws_wear() {
+        // THE DETECT-PLAYER WALK (javap `TrialSpawner
+        // .addDetectPlayerParticles` verbatim — the `30 + min(amount,
+        // 10) * 5` loop bound the min arm caps, the per-iteration
+        // THREE nextFloat position draws + the six-draw provider
+        // chain the order pins: dx, dz, height, then the velocity
+        // spreads x→y→z, the size's two-draw product, the lifetime's
+        // f64 fold).
+        let mut r = rng();
+        let burst = trial_detect_player_burst((10, 20, 30), 1, &mut r);
+        // THE COUNT (the 30 + min(1, 10) * 5 = 35 the bound arms)
+        assert_eq!(burst.len(), 35, "the amount-1 snowfall");
+        // THE CAP (the min(10) arm the bound speaks — amount 77 rides
+        // the same 80-member pool the amount 10 arms)
+        assert_eq!(
+            trial_detect_player_burst((0, 0, 0), 77, &mut rng()).len(),
+            80,
+            "the 10-cap the min arm keeps"
+        );
+        assert_eq!(
+            trial_detect_player_burst((0, 0, 0), 0, &mut rng()).len(),
+            30,
+            "the amount-0 floor"
+        );
+        for p in &burst {
+            // THE LAWS (the SnowflakeParticle chain): the near-white
+            // bluish tint the setColor(0.923, 0.964, 0.999) constants
+            // keep, the size the two-draw product fold answers, the
+            // lifetime the `(16.0 / (nf * 0.8 + 0.2)) + 2` fold gives
+            // (the 18..81 band the denom band keeps), the 0.225
+            // gravity the ctor's field keeps, the 1.0 friction the
+            // base law's own no-op arms
+            assert!(matches!(p.kind, ParticleKind::Snowflake));
+            assert_eq!(
+                p.col,
+                [0.923, 0.964, 0.999],
+                "the bluish-white the override keeps"
+            );
+            assert!(
+                (0.1..0.2).contains(&p.quad_size),
+                "the product size band: {}",
+                p.quad_size
+            );
+            assert!(
+                (18..=81).contains(&p.lifetime),
+                "the 18..81 band: {}",
+                p.lifetime
+            );
+            assert!(
+                (p.gravity - 0.225).abs() < 1e-9,
+                "the 0.225 gravity"
+            );
+            assert!(
+                (p.friction - 1.0).abs() < 1e-9,
+                "the 1.0 friction"
+            );
+            // THE POSITION BANDS (the center + the ±0.65 spread the
+            // dmul 0.65 folds — x and z the pair shares, the height
+            // the 0.1..0.9 band the nf * 0.8 fold keeps)
+            assert!(
+                (9.85..11.15).contains(&p.x),
+                "the x band: {}",
+                p.x
+            );
+            assert!(
+                (20.1..20.9).contains(&p.y),
+                "the y band: {}",
+                p.y
+            );
+            assert!(
+                (29.85..31.15).contains(&p.z),
+                "the z band: {}",
+                p.z
+            );
+            // THE VELOCITY BANDS (the ±0.05 spreads the ctor's three
+            // draws give — the ZERO wire velocity the dconst_0 trio
+            // speaks, the spread the whole drift carries)
+            assert!(p.vx.abs() <= 0.05, "the x spread: {}", p.vx);
+            assert!(p.vy.abs() <= 0.05, "the y spread: {}", p.vy);
+            assert!(p.vz.abs() <= 0.05, "the z spread: {}", p.vz);
+        }
+        // THE DETERMINISM (the same seed the same chain answers)
+        let burst2 = trial_detect_player_burst((10, 20, 30), 1, &mut rng());
+        assert_eq!(burst.len(), burst2.len(), "the seeded chain replays");
+        for (p, p2) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+                "the seeded members replay"
+            );
+        }
+        // THE STREAM (the exact draw chain the walk consumes: the
+        // per-iteration NINE — three position + three velocity + two
+        // size + one life; the NEXT draw differs)
+        let mut a = rng();
+        let _ = trial_detect_player_burst((10, 20, 30), 1, &mut a);
+        let after_walk = a.next();
+        let mut b = rng();
+        for _ in 0..(35 * 9) {
             b.next();
         }
         assert_eq!(after_walk, b.next(), "the walk's own exact draw count");
