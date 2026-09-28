@@ -1421,6 +1421,77 @@ pub const WATER_EVAPORATING_EFFECT: i32 = 2009;
 /// the case's own arm wears).
 pub const DRAGON_BLOCK_BREAK_EFFECT: i32 = 2008;
 
+/// THE WAX-ON PARTICLES-AND-SOUND EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_AND_SOUND_WAX_ON`? the vanilla names the field
+/// `SOUND_WAX_ON`-family constant the decode names — the case
+/// `LevelEventHandler.levelEvent` offset 3366 speaks): the TWO walks
+/// the case body spends — the ONE
+/// `ParticleUtils.spawnParticlesOnBlockFaces(level, pos,
+/// ParticleTypes.WAX_ON, UniformInt.of(3, 5))` walk FIRST (the
+/// six-face loop `Direction.values()` answers — the DOWN/UP/NORTH/
+/// SOUTH/WEST/EAST order the enum's own `values()` row keeps, the
+/// per-face `3 + nextInt(3)` count the `randomBetweenInclusive` law
+/// speaks, the per-particle position `center + axis * 0.55` /
+/// `nextDouble(-0.5, 0.5)` pair the face-aligned law folds, the
+/// velocity the `getRandomSpeedRanges` supplier's three
+/// `nextDouble(-0.5, 0.5)` draws carry), then the ONE
+/// `playLocalSound(pos, HONEYCOMB_WAX_ON, BLOCKS, 1.0F, 1.0F, false)`
+/// walk the fixed fold speaks (the `item.honeycomb.wax_on` key the
+/// jar's own SoundEvents class bytes carry — the 9-row weighted list
+/// the sounds.json banks). The GlowParticle the
+/// `GlowParticle$WaxOnProvider` spawns — the tint the ctor's own
+/// `setColor(0.91F, 0.55F, 0.08F)` trio banks, the speed folds the
+/// caller's velocity halves speak (`xSpeed * 0.01F / 2.0F`, the y the
+/// plain `* 0.01F` keeps — NO face-axis gate the provider's own
+/// multiply chain wears), the `nextInt(30) + 10` lifetime the 10..39
+/// band speaks. The server's own honeycomb speaks it —
+/// `HoneycombItem.lambda$useOn$0`'s `sipush 3003, aload_2, iconst_0`
+/// levelEvent call the bytecode pins (the sign branch
+/// `tryApplyToSign` the same word's own second caller keeps). The
+/// GLOBAL route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const PARTICLES_AND_SOUND_WAX_ON_EFFECT: i32 = 3003;
+
+/// THE WAX-OFF PARTICLES EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `PARTICLES_WAX_OFF`, the
+/// case `LevelEventHandler.levelEvent` offset 3402 speaks): the ONE
+/// `ParticleUtils.spawnParticlesOnBlockFaces(level, pos,
+/// ParticleTypes.WAX_OFF, UniformInt.of(3, 5))` walk the case body
+/// spends (the SAME six-face law the wax-on word wears — the counts,
+/// the position pair, the velocity supplier the one helper keeps), NO
+/// sound the case body speaks. The GlowParticle the
+/// `GlowParticle$WaxOffProvider` spawns — the tint the ctor's own
+/// `setColor(1.0F, 0.9F, 1.0F)` trio banks, the speed folds the
+/// wax-on provider's own halves law speaks. The server's own axe
+/// speaks it — `AxeItem.evaluateNewBlockState`'s `AXE_WAX_OFF` branch
+/// `sipush 3004, ... spawnSoundAndParticle` the bytecode pins (the
+/// scrape word the SAME method's own sibling branch banks). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const PARTICLES_WAX_OFF_EFFECT: i32 = 3004;
+
+/// THE SCRAPE PARTICLES EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `PARTICLES_SCRAPE`, the
+/// case `LevelEventHandler.levelEvent` offset 3421 speaks): the ONE
+/// `ParticleUtils.spawnParticlesOnBlockFaces(level, pos,
+/// ParticleTypes.SCRAPE, UniformInt.of(3, 5))` walk the case body
+/// spends (the SAME six-face law the wax pair wears), NO sound the
+/// case body speaks. The GlowParticle the
+/// `GlowParticle$ScrapeProvider` spawns — the tint the ctor's own
+/// `nextBoolean()` gate picks (the TRUE arm the
+/// `setColor(0.29F, 0.58F, 0.51F)` teal speaks, the FALSE arm the
+/// `setColor(0.43F, 0.77F, 0.62F)` lighter twin keeps — the bit the
+/// `nextLong() & 1` law reads), the speed folds the PLAIN `* 0.01F`
+/// trio the wax pair's `/ 2.0F` halves the one constant's own
+/// difference carries. The server's own axe speaks it —
+/// `AxeItem.evaluateNewBlockState`'s `AXE_SCRAPE` branch `sipush
+/// 3005, ... spawnSoundAndParticle` the bytecode pins. The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const PARTICLES_SCRAPE_EFFECT: i32 = 3005;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -10988,6 +11059,21 @@ mod tests {
             SHOOT_WHITE_SMOKE_EFFECT,
             2010,
             "the white-smoke effect the crafter's own eject speaks"
+        );
+        assert_eq!(
+            PARTICLES_AND_SOUND_WAX_ON_EFFECT,
+            3003,
+            "the wax-on effect the honeycomb's own useOn speaks"
+        );
+        assert_eq!(
+            PARTICLES_WAX_OFF_EFFECT,
+            3004,
+            "the wax-off effect the axe's own scrape walk speaks"
+        );
+        assert_eq!(
+            PARTICLES_SCRAPE_EFFECT,
+            3005,
+            "the scrape effect the axe's own oxide walk speaks"
         );
         assert_eq!(
             SPLASH_POTION_EFFECT,

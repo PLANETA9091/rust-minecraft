@@ -364,6 +364,19 @@ pub struct WorldModel {
     /// (the `globalLevelEvent` switch the 2013 id never carries — the
     /// positioned lane the case's own arm wears).
     pub smash_attack_events: Vec<SmashAttackArm>,
+    /// THE WAX TRIO'S OWN MAILBOX (the Level Event packet's own next
+    /// vocabulary word — [`mc_protocol::play::PARTICLES_AND_SOUND_WAX_ON_EFFECT`]
+    /// + [`mc_protocol::play::PARTICLES_WAX_OFF_EFFECT`] +
+    /// [`mc_protocol::play::PARTICLES_SCRAPE_EFFECT`] the THREE cases
+    /// the `LevelEventHandler.levelEvent` offsets 3366/3402/3421
+    /// speak: the ONE `spawnParticlesOnBlockFaces` delegate each
+    /// case's own body spends — the 3003 word the wax-on voice's tail
+    /// banks). The arms the anchor + the WORD carry (the word the
+    /// render lane's own law folds — the tint rows, the speed folds,
+    /// the voice the 3003 word alone speaks). The GLOBAL route the arm
+    /// never enqueues (the `globalLevelEvent` switch the 3000-band ids
+    /// never carries — the positioned lane the cases' own arms wear).
+    pub wax_events: Vec<WaxArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -749,6 +762,25 @@ pub struct SmashAttackArm {
     /// speaks — the two loops' bounds the count's own thirds and
     /// two-thirds carry).
     pub data: i32,
+}
+
+/// One pending WAX arm — the Level Event packet's own landing (the
+/// 3003/3004/3005 words the server's own honeycomb and axe broadcast,
+/// [`mc_protocol::play::PARTICLES_AND_SOUND_WAX_ON_EFFECT`] the trio's
+/// head the render lane speaks): the event's anchor block + the WORD
+/// itself, verbatim (the faces burst's own inputs — the tint rows,
+/// the speed folds and the 3003 voice the render lane's own law folds
+/// from the word the transport carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WaxArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The Level Event word itself (the 3003/3004/3005 ids the
+    /// honeycomb's and axe's own `sipush` calls ride — the tint rows
+    /// and the speed folds the render lane's own law reads, the
+    /// 3003 voice the word alone arms).
+    pub word: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1590,6 +1622,7 @@ impl WorldModel {
             white_smoke_events: Vec::new(),
             in_block_growth_events: Vec::new(),
             smash_attack_events: Vec::new(),
+            wax_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -1786,6 +1819,13 @@ impl WorldModel {
     /// exactly one refresh).
     pub fn drain_smash_attack_events(&mut self) -> Vec<SmashAttackArm> {
         std::mem::take(&mut self.smash_attack_events)
+    }
+
+    /// The wax trio's mailbox's own drain (the same walk the smash
+    /// arm's own drain speaks — the arms the worker drained ride
+    /// exactly one refresh).
+    pub fn drain_wax_events(&mut self) -> Vec<WaxArm> {
+        std::mem::take(&mut self.wax_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2179,6 +2219,10 @@ impl WorldModel {
                 // (the same walk — the old level's 2013 words never
                 // smash again)
                 self.smash_attack_events.clear();
+                // the wax trio's mailbox dies with the level (the same
+                // walk — the old level's 3003/3004/3005 words never
+                // wax again)
+                self.wax_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3039,6 +3083,27 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         data: ev.data,
+                    });
+                    true
+                } else if (ev.effect == mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT
+                    || ev.effect == mc_protocol::PARTICLES_WAX_OFF_EFFECT
+                    || ev.effect == mc_protocol::PARTICLES_SCRAPE_EFFECT)
+                    && !ev.global
+                {
+                    // THE WAX TRIO'S OWN ARM (javap the case offsets
+                    // 3366/3402/3421 — the positioned route the GLOBAL
+                    // switch never banks): the anchor + the WORD the
+                    // mailbox carries (the `spawnParticlesOnBlockFaces`
+                    // delegate each case's own ONE invokestatic speaks,
+                    // the 3003 case the wax-on voice's own tail keeps).
+                    // The tint rows and the speed folds the render
+                    // lane's own law reads from the word the transport
+                    // honesty keeps.
+                    self.wax_events.push(WaxArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        word: ev.effect,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -7489,6 +7554,100 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.white_smoke_events.is_empty(), "the mailbox dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_wax_words_the_one_mailbox_arms() {
+        // THE WAX TRIO'S OWN ARM (javap the case offsets
+        // 3366/3402/3421 — the positioned route the GLOBAL switch
+        // never banks): the THREE words the ONE mailbox arms, the
+        // word rides verbatim (the tint rows and the speed folds the
+        // render lane's own law reads), the drain ships the arms
+        // exactly once, and the Respawn recreates the level the
+        // mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the honeycomb's own word (the useOn walk the lambda's
+        // sipush speaks): the arm rides the word itself
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT,
+            x: -4,
+            y: 64,
+            z: 100,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.wax_events.len(), 1, "the arm rides");
+        assert_eq!(m.wax_events[0].x, -4);
+        assert_eq!(m.wax_events[0].y, 64);
+        assert_eq!(m.wax_events[0].z, 100);
+        assert_eq!(
+            m.wax_events[0].word,
+            mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT,
+            "the word the render lane's own law folds"
+        );
+        // the axe's own pair (the evaluateNewBlockState branches the
+        // sipush 3004 / sipush 3005 calls speak): both words the SAME
+        // mailbox arms — the wire order the arms keep
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_WAX_OFF_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCRAPE_EFFECT,
+            x: 5,
+            y: 6,
+            z: 7,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.wax_events.len(), 3, "the trio the one mailbox arms");
+        assert_eq!(m.wax_events[1].word, mc_protocol::PARTICLES_WAX_OFF_EFFECT);
+        assert_eq!(m.wax_events[2].word, mc_protocol::PARTICLES_SCRAPE_EFFECT);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 3000-band ids never carries — the positioned
+        // lane the cases' own arms wear)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCRAPE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.wax_events.len(), 3, "the global words never arm");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_wax_events();
+        assert_eq!(drained.len(), 3, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].word, mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT);
+        assert!(m.wax_events.is_empty(), "the drained mailbox stays empty");
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_WAX_OFF_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.wax_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(m.wax_events.is_empty(), "the mailbox dies with the level");
     }
 
     #[test]

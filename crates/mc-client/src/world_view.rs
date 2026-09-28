@@ -473,6 +473,10 @@ pub struct SnapshotView {
     /// render lane's own law folds the state gate + the dust-pillar
     /// burst.
     pub smash_attack_events: Vec<WireSmashAttackEvent>,
+    /// The wax trio's own wire arms (the 3003/3004/3005 words the
+    /// server's own honeycomb and axe broadcast — the anchor + the
+    /// word the render lane's own law folds).
+    pub wax_events: Vec<WireWaxEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -655,6 +659,20 @@ pub struct WireSmashAttackEvent {
     pub y: i32,
     pub z: i32,
     pub data: i32,
+}
+
+/// One wire WAX arm — the Level Event packet's own landing (the
+/// 3003/3004/3005 words the server's own honeycomb and axe broadcast,
+/// [`mc_protocol::play::PARTICLES_AND_SOUND_WAX_ON_EFFECT`] the trio's
+/// head the render lane speaks): the event's anchor block + the WORD
+/// itself, verbatim (the faces burst's own inputs — the tint rows,
+/// the speed folds and the 3003 voice the render lane folds from it).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireWaxEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    pub word: i32,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -2757,6 +2775,10 @@ pub fn materialize_snapshot_view(
         // and no smash words (the join snapshot carries no 2013
         // traffic — the empty mailbox the render lane skips)
         smash_attack_events: Vec::new(),
+        // and no wax words (the join snapshot carries no
+        // 3003/3004/3005 traffic — the empty mailbox the render lane
+        // skips)
+        wax_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3191,6 +3213,22 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the wax trio's own projection (the mailbox verbatim — the
+        // anchor + the word the arms carry, the tint rows and the
+        // speed folds the render lane's own law reads): each
+        // 3003/3004/3005 word ships once with this view, the worker's
+        // drain empties the mailbox after
+        let wax_events = self
+            .model
+            .wax_events
+            .iter()
+            .map(|arm| WireWaxEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                word: arm.word,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3571,6 +3609,10 @@ impl LiveView {
                 // too — the 2013 words are the connection's own traffic,
                 // not the pose's
                 smash_attack_events,
+                // the wax trio's arms ride the pose-less arm too — the
+                // 3003/3004/3005 words are the connection's own
+                // traffic, not the pose's
+                wax_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -3721,6 +3763,10 @@ impl LiveView {
             // the 2013 words follow the mailbox exactly like the
             // growth's own arms do
             smash_attack_events,
+            // the wax trio's arms ride every refresh too — the
+            // 3003/3004/3005 words follow the mailbox exactly like the
+            // smash's own arms do
+            wax_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

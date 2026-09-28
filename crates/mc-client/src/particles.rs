@@ -418,6 +418,15 @@ pub enum ParticleKind {
     /// — the single layer the `nextInt(1)` pick draws, the draw the
     /// stream still spends), the white tint the item pixels wear.
     EyeItem,
+    /// `GlowParticle` — the wax trio's own puff (the single `glow`
+    /// sprite the `wax_on` / `wax_off` / `scrape` jsons' one-texture
+    /// sets keep, the provider tints the ctor's own `setColor` rows
+    /// speak — the wax-on amber, the wax-off white, the scrape's
+    /// nextBoolean teal pair — the 0.96 friction the ctor's own
+    /// putfield keeps, the physics-free fly the `hasPhysics = false`
+    /// write rides, the OPAQUE layer the `getLayer` override returns,
+    /// the 10..39 lifetime the `nextInt(30) + 10` band carries).
+    Glow,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -3152,6 +3161,186 @@ pub fn smash_attack_burst(
     out
 }
 
+/// The wax trio's own GlowParticle ctor (javap `GlowParticle.<init>` +
+/// `$WaxOnProvider` / `$WaxOffProvider` / `$ScrapeProvider`
+/// `.createParticle` verbatim): the base ctor's lifetime draw runs
+/// DEAD (the provider's `setLifetime(nextInt(30) + 10)` write
+/// overrides), the SingleQuadParticle size draw the ×0.75 fold keeps,
+/// the 0.96 friction the ctor's own putfield speaks, the physics-free
+/// fly the `hasPhysics = false` write rides, the gravity the base
+/// default 0.0 keeps. NO spread draws the zero-speed ctor args speak
+/// (the providers pass `dconst_0` x3 — the setParticleSpeed walk the
+/// provider's own multiply chain keeps). The caller folds the tint
+/// (the `setColor` rows — the scrape's `nextBoolean()` gate the
+/// caller's own draw spends) and the 10..39 lifetime — the draw
+/// ORDER the caller's walk keeps.
+pub fn glow_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    col: [f32; 3],
+    r_life: f32,
+    r_base: f32,
+    lifetime: u32,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the provider's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(r_life);
+    Particle {
+        kind: ParticleKind::Glow,
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime,
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: base_quad_size(r_base) * 0.75,
+        uo: 0.0,
+        vo: 0.0,
+        col,
+    }
+}
+
+/// The wax trio's own faces walk (javap `ParticleUtils
+/// .spawnParticlesOnBlockFaces` -> `spawnParticlesOnBlockFace` ->
+/// `spawnParticleOnFace` + the `getRandomSpeedRanges` supplier
+/// verbatim — the `LevelEventHandler` 3003/3004/3005 cases' ONE
+/// delegate each speaks): the SIX faces the `Direction.values()`
+/// order keeps (DOWN, UP, NORTH, SOUTH, WEST, EAST), the per-face
+/// count `3 + nextInt(3)` the `UniformInt.of(3, 5)` sample law speaks
+/// (`randomBetweenInclusive`: `nextInt(max - min + 1) + min`), the
+/// per-particle velocity supplier's THREE `Mth.nextDouble(-0.5, 0.5)`
+/// draws first, then the position pair — the face axis rides
+/// `center + axis * 0.55`, the perpendicular pair draws (exactly two
+/// per face), then the provider chain: the dead base lifetime, the
+/// size draw, the scrape's tint gate (`nextBoolean` the bit law
+/// reads), the `nextInt(30) + 10` lifetime. The velocity the
+/// face-aligned component alone keeps (the perpendicular pair the
+/// `sx != 0 ? vel.x : 0.0` ternary trio zeroes), the provider's speed
+/// folds the caller's velocity carries (`xSpeed * 0.01F / 2.0F` the
+/// wax pair's halves law speaks, the PLAIN `* 0.01F` the scrape
+/// keeps — the one constant's own difference the bytecodes pin).
+/// NO sound the walker speaks — the 3003 voice the render lane's own
+/// serve banks beside the burst.
+pub fn wax_faces_burst(
+    anchor: (i32, i32, i32),
+    word: i32,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::new();
+    // THE MODEL'S OWN ARM the three words alone banks — the unknown
+    // word the switch's own silence keeps (no draws the neither-case
+    // ever spends)
+    if word != mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT
+        && word != mc_protocol::PARTICLES_WAX_OFF_EFFECT
+        && word != mc_protocol::PARTICLES_SCRAPE_EFFECT
+    {
+        return out;
+    }
+    let cx = anchor.0 as f64 + 0.5;
+    let cy = anchor.1 as f64 + 0.5;
+    let cz = anchor.2 as f64 + 0.5;
+    // Direction.values()'s own order (the enum's wire the switch's
+    // own array keep — DOWN, UP, NORTH, SOUTH, WEST, EAST)
+    let faces: [(i32, i32, i32); 6] = [
+        (0, -1, 0),
+        (0, 1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ];
+    for &(sx, sy, sz) in &faces {
+        // the per-face count (the IntProvider.sample the block face
+        // walk spends once per face — `randomBetweenInclusive(3, 5)`)
+        let count = 3 + rng.next_int(3).max(0);
+        for _ in 0..count {
+            // THE VELOCITY SUPPLIER (getRandomSpeedRanges verbatim:
+            // `new Vec3(nextDouble(-0.5, 0.5), ...)`) — the three
+            // draws the supplier's own ctor args keep)
+            let vx = rng.next_f64_between(-0.5, 0.5);
+            let vy = rng.next_f64_between(-0.5, 0.5);
+            let vz = rng.next_f64_between(-0.5, 0.5);
+            // THE POSITION PAIR (spawnParticleOnFace verbatim: the
+            // face axis rides `center + axis * 0.55`, the
+            // perpendicular pair the `Mth.nextDouble(-0.5, 0.5)`
+            // draws — exactly two per face)
+            let px = cx
+                + if sx != 0 {
+                    f64::from(sx) * 0.55
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            let py = cy
+                + if sy != 0 {
+                    f64::from(sy) * 0.55
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            let pz = cz
+                + if sz != 0 {
+                    f64::from(sz) * 0.55
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            // THE FACE-ALIGNED VELOCITY (the ternary trio the
+            // velocity walk keeps — the face axis's component rides,
+            // the perpendicular pair zeroes)
+            let x_speed = if sx != 0 { vx } else { 0.0 };
+            let y_speed = if sy != 0 { vy } else { 0.0 };
+            let z_speed = if sz != 0 { vz } else { 0.0 };
+            // THE PROVIDER CHAIN (the draws the createParticle walk
+            // spends — the base ctor pair, the scrape's tint gate,
+            // the lifetime draw)
+            let r_life = rng.next_f32();
+            let r_base = rng.next_f32();
+            let (col, halves) = match word {
+                mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT => ([0.91, 0.55, 0.08], true),
+                mc_protocol::PARTICLES_WAX_OFF_EFFECT => ([1.0, 0.9, 1.0], true),
+                mc_protocol::PARTICLES_SCRAPE_EFFECT => {
+                    // the tint gate (javap: `nextBoolean(); ifeq` —
+                    // the TRUE arm the teal speaks, the FALSE the
+                    // lighter twin keeps)
+                    let teal = rng.next_int(2) == 1;
+                    (
+                        if teal {
+                            [0.29, 0.58, 0.51]
+                        } else {
+                            [0.43, 0.77, 0.62]
+                        },
+                        false,
+                    )
+                }
+                _ => unreachable!("the model's own arm the three words alone banks"),
+            };
+            let lifetime = 10 + rng.next_int(30).max(0) as u32;
+            // the provider's own speed folds (the wax pair's halves
+            // law, the scrape's plain trio)
+            let (fx, fy, fz) = if halves {
+                (
+                    (x_speed * 0.01) / 2.0,
+                    y_speed * 0.01,
+                    (z_speed * 0.01) / 2.0,
+                )
+            } else {
+                (x_speed * 0.01, y_speed * 0.01, z_speed * 0.01)
+            };
+            out.push(glow_puff(
+                px, py, pz, fx, fy, fz, col, r_life, r_base, lifetime,
+            ));
+        }
+    }
+    out
+}
+
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
 /// target's frozen position (the removed entity keeps its own), 3
 /// ticks of life, the 16-sample walk per tick.
@@ -3403,6 +3592,191 @@ mod tests {
             1 + 2,
             "the third and the two-thirds the small counts keep"
         );
+    }
+
+    #[test]
+    fn the_wax_faces_walk_the_six_faces_the_folds_wear() {
+        // THE WAX TRIO'S OWN LAW (javap `ParticleUtils
+        // .spawnParticlesOnBlockFaces` -> `spawnParticleOnFace` + the
+        // `getRandomSpeedRanges` supplier + the GlowParticle
+        // providers): the six faces the Direction.values() order
+        // keeps, the per-face `3 + nextInt(3)` counts, the position
+        // pair (the face axis's * 0.55 plane, the perpendicular
+        // pair's draws), the face-aligned velocity, the provider
+        // folds (the halves law the wax pair speaks, the plain trio
+        // the scrape keeps), the tints the setColor rows bank, the
+        // 10..39 lifetime, the seeded chain replays.
+        let seed = 0x5EED_3003;
+        let mut r = crate::drops::Lcg::new(seed);
+        let burst = wax_faces_burst((10, 20, 30), mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT, &mut r);
+        // the count law: six faces x (3..=5) puffs
+        assert!(burst.len() >= 18 && burst.len() <= 30);
+        // the six face planes: each face's own group — the DOWN face
+        // rides cy - 0.55, the UP cy + 0.55, the NORTH cz - 0.55, the
+        // SOUTH cz + 0.55, the WEST cx - 0.55, the EAST cx + 0.55;
+        // the perpendicular pair draws (the [c - 0.5, c + 0.5) bands),
+        // the counts the 3..=5 band keeps, the groups tile the whole
+        // burst in the values() order
+        let cx = 10.5;
+        let cy = 20.5;
+        let cz = 30.5;
+        for p in &burst {
+            // per-particle provider facts (the GlowParticle ctor law)
+            assert_eq!(p.kind, ParticleKind::Glow);
+            assert!(p.lifetime >= 10 && p.lifetime < 40, "the nextInt(30) + 10 band");
+            assert!((p.friction - 0.96).abs() < 1e-6);
+            assert!(p.gravity.abs() < 1e-9, "the base default the zero keeps");
+            assert!(p.quad_size >= 0.1 * 0.75 && p.quad_size <= 0.2 * 0.75 + 1e-9);
+            // the wax-on tint the setColor row banks
+            assert_eq!(p.col, [0.91, 0.55, 0.08]);
+        }
+        // the face groups: DOWN (y = cy - 0.55) FIRST, then UP, NORTH,
+        // SOUTH, WEST, EAST — each group's perpendicular pair inside
+        // the draw bands, each group's count 3..=5
+        let mut i = 0usize;
+        // DOWN group
+        let down: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.y - (cy - 0.55)).abs() < 1e-9)
+            .collect();
+        assert!(down.len() >= 3 && down.len() <= 5);
+        for p in &down {
+            assert!(p.x > cx - 0.5 && p.x < cx + 0.5);
+            assert!(p.z > cz - 0.5 && p.z < cz + 0.5);
+            // the face-aligned velocity: the DOWN face's own axis the
+            // y component keeps, the perpendicular pair zeroes
+            assert_eq!(p.vx, 0.0, "the perpendicular pair the ternary zeroes");
+            assert_eq!(p.vz, 0.0);
+            assert!(p.vy.abs() <= 0.5 * 0.01);
+            // the wax pair's y fold the PLAIN * 0.01 speaks (no / 2)
+            assert!(p.vy.abs() <= 0.005 + 1e-12);
+        }
+        i += down.len();
+        // UP group
+        let up: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.y - (cy + 0.55)).abs() < 1e-9)
+            .collect();
+        assert!(up.len() >= 3 && up.len() <= 5);
+        for p in &up {
+            assert_eq!(p.vx, 0.0);
+            assert_eq!(p.vz, 0.0);
+            assert!(p.vy.abs() <= 0.005 + 1e-12);
+        }
+        i += up.len();
+        // NORTH group (z = cz - 0.55)
+        let north: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.z - (cz - 0.55)).abs() < 1e-9)
+            .collect();
+        assert!(north.len() >= 3 && north.len() <= 5);
+        for p in &north {
+            assert_eq!(p.vx, 0.0);
+            assert_eq!(p.vy, 0.0);
+            assert!(p.vz.abs() <= 0.005 + 1e-12);
+            assert!(p.x > cx - 0.5 && p.x < cx + 0.5);
+            assert!(p.y > cy - 0.5 && p.y < cy + 0.5);
+        }
+        i += north.len();
+        // SOUTH group (z = cz + 0.55)
+        let south: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.z - (cz + 0.55)).abs() < 1e-9)
+            .collect();
+        assert!(south.len() >= 3 && south.len() <= 5);
+        i += south.len();
+        // WEST group (x = cx - 0.55): the halves law the x fold speaks
+        let west: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.x - (cx - 0.55)).abs() < 1e-9)
+            .collect();
+        assert!(west.len() >= 3 && west.len() <= 5);
+        for p in &west {
+            assert_eq!(p.vy, 0.0);
+            assert_eq!(p.vz, 0.0);
+            // the wax pair's x fold: (xSpeed * 0.01) / 2.0 — the
+            // halves band the / 2 keeps
+            assert!(p.vx.abs() <= 0.005 / 2.0 + 1e-15);
+            assert!(p.z > cz - 0.5 && p.z < cz + 0.5);
+            assert!(p.y > cy - 0.5 && p.y < cy + 0.5);
+        }
+        i += west.len();
+        // EAST group (x = cx + 0.55) — the burst's tail
+        let east: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.x - (cx + 0.55)).abs() < 1e-9)
+            .collect();
+        assert!(east.len() >= 3 && east.len() <= 5);
+        i += east.len();
+        assert_eq!(i, burst.len(), "the six groups tile the whole burst");
+        // the seeded chain replays
+        let mut r2 = crate::drops::Lcg::new(seed);
+        let burst2 =
+            wax_faces_burst((10, 20, 30), mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT, &mut r2);
+        assert_eq!(burst.len(), burst2.len());
+        for (a, b) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (a.x, a.y, a.z, a.vx, a.vy, a.vz, a.lifetime, a.quad_size),
+                (b.x, b.y, b.z, b.vx, b.vy, b.vz, b.lifetime, b.quad_size),
+                "the seeded chain replays"
+            );
+        }
+        // THE WAX-OFF TINT (the same walk, the white twin's row)
+        let mut r3 = crate::drops::Lcg::new(seed);
+        let off =
+            wax_faces_burst((10, 20, 30), mc_protocol::PARTICLES_WAX_OFF_EFFECT, &mut r3);
+        assert_eq!(off.len(), burst.len(), "the count stream the word never shifts");
+        for p in &off {
+            assert_eq!(p.col, [1.0, 0.9, 1.0]);
+        }
+        // THE SCRAPE TINT GATE (the nextBoolean pair — every puff
+        // rides one of the two rows, the speed fold the PLAIN trio
+        // keeps: the west face's x band the no-halves speak)
+        let mut r4 = crate::drops::Lcg::new(seed);
+        let scrape =
+            wax_faces_burst((10, 20, 30), mc_protocol::PARTICLES_SCRAPE_EFFECT, &mut r4);
+        // the scrape stream the extra nextBoolean draw per particle
+        // spends — the counts the stream's own shift re-draws (the
+        // band the six faces keep)
+        assert!(scrape.len() >= 18 && scrape.len() <= 30);
+        for p in &scrape {
+            assert!(
+                p.col == [0.29, 0.58, 0.51] || p.col == [0.43, 0.77, 0.62],
+                "the tint gate the two rows keep"
+            );
+        }
+        // the scrape's west-face x band the no-halves fold widens
+        let mut i2 = 0usize;
+        let down2: Vec<_> = scrape
+            .iter()
+            .take_while(|p| (p.y - (cy - 0.55)).abs() < 1e-9)
+            .collect();
+        i2 += down2.len();
+        let up2: Vec<_> = scrape[i2..]
+            .iter()
+            .take_while(|p| (p.y - (cy + 0.55)).abs() < 1e-9)
+            .collect();
+        i2 += up2.len();
+        let north2: Vec<_> = scrape[i2..]
+            .iter()
+            .take_while(|p| (p.z - (cz - 0.55)).abs() < 1e-9)
+            .collect();
+        i2 += north2.len();
+        let south2: Vec<_> = scrape[i2..]
+            .iter()
+            .take_while(|p| (p.z - (cz + 0.55)).abs() < 1e-9)
+            .collect();
+        i2 += south2.len();
+        let west2: Vec<_> = scrape[i2..]
+            .iter()
+            .take_while(|p| (p.x - (cx - 0.55)).abs() < 1e-9)
+            .collect();
+        for p in &west2 {
+            assert!(p.vx.abs() <= 0.005 + 1e-15, "the plain trio the no-halves keeps");
+        }
+        // THE UNKNOWN WORD the silence keeps (no burst, no draws)
+        let mut r5 = crate::drops::Lcg::new(seed);
+        assert!(wax_faces_burst((1, 2, 3), 3006, &mut r5).is_empty());
     }
 
     #[test]

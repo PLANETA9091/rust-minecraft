@@ -179,6 +179,14 @@ pub const PARTICLE_HEART_JAR_PATH: &str = "assets/minecraft/textures/particle/he
 /// returns it whatever the draw — the feed sparkles the
 /// `AgeableMob.aiStep`'s forcedAgeTimer walk spawns).
 pub const PARTICLE_GLINT_JAR_PATH: &str = "assets/minecraft/textures/particle/glint.png";
+/// The wax trio's single sprite (javap: the `wax_on` / `wax_off` /
+/// `scrape` particle types' sprite sets — the three jsons the 26.2 jar
+/// banks ALL list ONE texture, `minecraft:glow`, the 8x8 the IHDR
+/// verifies; the `GlowParticle$WaxOnProvider` / `$WaxOffProvider` /
+/// `$ScrapeProvider` `SpriteSet.get(random)` calls return it whatever
+/// the draw — the LevelEvent 3003/3004/3005 arms' own particle the
+/// `GlowParticle` class speaks).
+pub const PARTICLE_GLOW_JAR_PATH: &str = "assets/minecraft/textures/particle/glow.png";
 /// The sweep attack's 8-frame arc (javap: the `sweep_attack` particle
 /// type's sprite set — the jar's `particles/sweep_attack.json` lists
 /// EIGHT textures, `minecraft:sweep_0..7` in ASCENDING order — the
@@ -353,6 +361,7 @@ pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = "particle/damage.png";
 /// other lanes speak).
 pub const PARTICLE_HEART_RUNTIME_PATH: &str = "particle/heart.png";
 pub const PARTICLE_GLINT_RUNTIME_PATH: &str = "particle/glint.png";
+pub const PARTICLE_GLOW_RUNTIME_PATH: &str = "particle/glow.png";
 /// The sweep arc's runtime-cache paths (the same textures/ prefix
 /// strip the other lanes speak — the json's ascending list IS the
 /// array order).
@@ -536,6 +545,11 @@ pub struct SkinData {
     /// sha1 of the happy villager's single 8x8 sprite (jar-verbatim
     /// integrity) — the feed sparkle's own green pixel source.
     pub particle_glint_png_sha1: String,
+    /// sha1 of the wax trio's single 8x8 sprite (jar-verbatim
+    /// integrity) — the wax_on/wax_off/scrape arms' own GlowParticle
+    /// pixel source (the three jsons' one-texture `minecraft:glow`
+    /// sets the decode pins).
+    pub particle_glow_png_sha1: String,
     /// sha1s of the sweep arc's 8 frames (jar-verbatim integrity) —
     /// the sword's own swing's pixel sources (the 32x32 sweep frames
     /// the json's ascending list orders).
@@ -984,6 +998,18 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         gw2,
         gh2
     );
+    // the wax trio's single sprite (the same shape check the glint
+    // speaks — the wax_on/wax_off/scrape jsons' one-texture set, the
+    // LevelEvent band's GlowParticle the three arms bank)
+    let glow_bytes = read_entry(archive, PARTICLE_GLOW_JAR_PATH).context("read glow")?;
+    let particle_glow_png_sha1 = crate::util::sha1_hex(&glow_bytes);
+    let (gw3, gh3, _glow_rgba) = decode_rgba(&glow_bytes).context("decode glow")?;
+    anyhow::ensure!(
+        (gw3, gh3) == (8, 8),
+        "glow must be the 8x8 sprite, got {}x{}",
+        gw3,
+        gh3
+    );
     // the sweep arc's 8 frames (the same shape check the poof walk
     // speaks — the 32x32 the arc quad samples over its own life)
     let mut particle_sweep_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
@@ -1170,6 +1196,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_damage_png_sha1,
         particle_heart_png_sha1,
         particle_glint_png_sha1,
+        particle_glow_png_sha1,
         particle_sweep_png_sha1s,
         particle_explosion_png_sha1s,
         particle_effect_png_sha1s,
@@ -1605,6 +1632,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
         "pub const PARTICLE_GLINT_RUNTIME_PATH: &str = \"{PARTICLE_GLINT_RUNTIME_PATH}\";\n"
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_GLOW_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_glow_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_GLOW_RUNTIME_PATH: &str = \"{PARTICLE_GLOW_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_SWEEP_PNG_SHA1S: [&str; 8] = [{}];\n",
         data.particle_sweep_png_sha1s
             .iter()
@@ -1922,6 +1956,8 @@ mod tests {
         let expected_heart_sha1 = crate::util::sha1_hex(&heart);
         let glint = tiny_png();
         let expected_glint_sha1 = crate::util::sha1_hex(&glint);
+        let glow = tiny_png();
+        let expected_glow_sha1 = crate::util::sha1_hex(&glow);
         let sweeps = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
         let expected_sweep_sha1s: Vec<String> =
             sweeps.iter().map(|p| crate::util::sha1_hex(p)).collect();
@@ -2037,6 +2073,7 @@ mod tests {
             (PARTICLE_DAMAGE_JAR_PATH, damage),
             (PARTICLE_HEART_JAR_PATH, heart),
             (PARTICLE_GLINT_JAR_PATH, glint),
+            (PARTICLE_GLOW_JAR_PATH, glow),
             (PARTICLE_SWEEP_JAR_PATHS[0], sweeps[0].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[1], sweeps[1].clone()),
             (PARTICLE_SWEEP_JAR_PATHS[2], sweeps[2].clone()),
@@ -2188,6 +2225,10 @@ mod tests {
         assert_eq!(
             data.particle_glint_png_sha1, expected_glint_sha1,
             "the glint sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_glow_png_sha1, expected_glow_sha1,
+            "the wax trio's own sprite sha1"
         );
         assert_eq!(
             data.particle_sweep_png_sha1s,

@@ -6743,6 +6743,10 @@ pub struct App {
     /// the happy_villager json's one-texture set speaks — the lazy
     /// load the crit/damage lanes speak)
     pub glint_sprite: Option<crate::avatar::GlintSprite>,
+    /// The wax trio's single glow sprite (the lazy load — the
+    /// wax_on/wax_off/scrape arms' own puff pixels the LevelEvent lane
+    /// draws; the missing file the honest absence keeps)
+    pub glow_sprite: Option<crate::avatar::GlowSprite>,
     /// The splash-potion ring's TWO sprite sets (the same lazy load —
     /// the `effect_N` set the regular splash rides, the `spell_N` set
     /// the instant word answers).
@@ -7444,6 +7448,7 @@ impl App {
             explosion_frames: None,
             heart_sprite: None,
             glint_sprite: None,
+            glow_sprite: None,
             effect_frames: None,
             spell_frames: None,
             potion_sprites: None,
@@ -22635,6 +22640,50 @@ impl App {
         );
     }
 
+    /// THE WAX TRIO'S WIRE LANE (javap `LevelEventHandler` cases
+    /// 3003/3004/3005 — offsets 3366/3402/3421 — over the 26.2 jar):
+    /// the server's own honeycomb and axe the burst words broadcast
+    /// (`HoneycombItem.lambda$useOn$0`'s `sipush 3003` and
+    /// `AxeItem.evaluateNewBlockState`'s `sipush 3004` / `sipush 3005`
+    /// levelEvent calls the bytecode pins), the Level Event mailbox's
+    /// landing: each word the arms the worker drained ride exactly
+    /// one refresh — the faces burst the render lane's own law folds
+    /// (the six-face walk the one helper speaks), the 3003 voice the
+    /// burst's tail banks (the `item.honeycomb.wax_on` key the
+    /// fixed 1.0/1.0 fold speaks).
+    pub fn live_wax_events_updated(&mut self, events: Vec<crate::world_view::WireWaxEvent>) {
+        let yaw = self.listener_yaw();
+        for ev in events {
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            // THE BURST (spawnParticlesOnBlockFaces's own walk — the
+            // six faces the values() order keeps, the provider chain
+            // the draws spend)
+            let burst = crate::particles::wax_faces_burst(
+                (ev.x, ev.y, ev.z),
+                ev.word,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+            // THE VOICE (the 3003 case's own tail — the ONE
+            // `playLocalSound(pos, HONEYCOMB_WAX_ON, BLOCKS, 1.0F,
+            // 1.0F, false)` walk the fixed fold speaks; the 3004/3005
+            // cases the silence keeps)
+            if ev.word == mc_protocol::PARTICLES_AND_SOUND_WAX_ON_EFFECT {
+                let sx = f64::from(ev.x) + 0.5;
+                let sy = f64::from(ev.y) + 0.5;
+                let sz = f64::from(ev.z) + 0.5;
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    "item.honeycomb.wax_on",
+                    1.0,
+                    1.0,
+                    ear_distance(ear, sx, sy, sz),
+                    ear_pan(ear, yaw, sx, sy, sz),
+                );
+            }
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -27467,6 +27516,10 @@ impl App {
             self.heart_sprite =
                 crate::avatar::HeartSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.glow_sprite.is_none() {
+            self.glow_sprite =
+                crate::avatar::GlowSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.glint_sprite.is_none() {
             self.glint_sprite =
                 crate::avatar::GlintSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -27526,6 +27579,10 @@ impl App {
         let mut explosion_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut heart_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut glint_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        // the wax trio's own quads (the single glow sprite the three
+        // arms' puffs sample — the OPAQUE lane the flame draw's own
+        // group shape keeps)
+        let mut glow_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         // THE SPLASH LANE'S GROUPS (the ring keyed by the instant flag
         // + the frame file, the shards keyed by the item layer — the
         // closure's own capture)
@@ -27564,6 +27621,21 @@ impl App {
                 corner(-1.0, 1.0),
             ];
             match p.kind {
+                crate::particles::ParticleKind::Glow => {
+                    // the wax trio's own quad (the single glow sprite
+                    // the three jsons' one-texture sets keep — the
+                    // full sprite the quad samples, the provider tint
+                    // the ctor's own setColor rows carry, the OPAQUE
+                    // layer the getLayer override returns, the
+                    // addSmoothBlockEmission emission the render's
+                    // ambient stream honest-equivalent keeps)
+                    glow_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_glow",
+                        tint: p.col,
+                    });
+                }
                 crate::particles::ParticleKind::Terrain { tile } => {
                     // the quarter law over the tile's 0..1 (the U edge
                     // mirrors — getU0 rides the LEFT corners); the uv
@@ -28083,6 +28155,14 @@ impl App {
         if let Some(glint) = &self.glint_sprite {
             fb.draw_sampled_quads(vp, &glint_quads, &mut |_tex, u, v| {
                 Some(glint.pixel(u, v))
+            });
+        }
+        // the wax trio's group (the glow sprite's own pixels — the
+        // full sprite the three one-texture jsons speak, the OPAQUE
+        // lane the flame draw's own shape keeps)
+        if let Some(glow) = &self.glow_sprite {
+            fb.draw_sampled_quads(vp, &glow_quads, &mut |_tex, u, v| {
+                Some(glow.pixel(u, v))
             });
         }
         // the spell ring groups (the two sets' own pixels — the frame

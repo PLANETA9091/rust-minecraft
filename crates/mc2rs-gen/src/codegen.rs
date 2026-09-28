@@ -305,14 +305,16 @@ pub fn extract_runtime_assets(
 /// source, `textures/misc/underwater.png`), the XP orb's sprite
 /// sheet beside those (`textures/entity/experience/experience_orb.png`
 /// — the award orbs' 64x64 icon grid), and the PARTICLE LANE's
-/// twenty-three sprites beside those (the crit star's 8x8, the drown
+/// twenty-four sprites beside those (the crit star's 8x8, the drown
 /// bubble's 8x8 + the poof cloud's 8 8x8 generic frames + the splash
 /// droplet's 4 8x8 frames + the lava drip's 8x8 + the damage
 /// indicator's 8x8 + the heart's 8x8 + the sweep arc's 8 32x32 frames
-/// — the `crit`, `bubble`, `poof`, `splash`, `lava`, `damage_indicator`,
-/// `heart` and `sweep_attack` particle types' own sources the dust lane
+/// + the wax trio's 8x8 glow sprite — the `crit`, `bubble`, `poof`,
+/// `splash`, `lava`, `damage_indicator`,
+/// `heart`, `sweep_attack`, `wax_on`, `wax_off` and `scrape` particle
+/// types' own sources the dust lane
 /// sha1-verifies).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 34] = [
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 35] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     "assets/minecraft/textures/misc/underwater.png",
@@ -347,4 +349,5 @@ const RUNTIME_TEXTURE_JAR_PATHS: [&str; 34] = [
     "assets/minecraft/textures/particle/sweep_5.png",
     "assets/minecraft/textures/particle/sweep_6.png",
     "assets/minecraft/textures/particle/sweep_7.png",
+    "assets/minecraft/textures/particle/glow.png",
 ];
