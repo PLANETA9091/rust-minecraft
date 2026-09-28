@@ -405,6 +405,7 @@ pub struct WorldModel {
     /// the 3000-band ids never carries — the positioned lane the
     /// case's own arm wears).
     pub electric_spark_events: Vec<ElectricSparkArm>,
+    pub sculk_charge_events: Vec<SculkChargeArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -850,6 +851,97 @@ pub struct ElectricSparkArm {
     /// `0..3` arm the along-axis walk banks, the negative/overflow
     /// arm the faces walk keeps).
     pub data: i32,
+}
+
+/// The vanilla-collision verdict the client's own registry
+/// approximation keeps (javap `BlockState.isCollisionShapeFullBlock`
+/// — the FULL-CUBE collision shape the pop arm's count/spread split
+/// reads — over the 26.2 jar): the exact Shapes table the jar's
+/// collision data carries is a payload our registry never banks, so
+/// the verdict walks the block NAME's own families — the non-full
+/// families the vanilla collision rows exclude (the multiface
+/// overlays, the partial geometry, the flat plates, the no-collision
+/// plants), the full-cube DEFAULT the terrain majority keeps. The
+/// caller-common rows the spreader's own decay speaks: `sculk` →
+/// full (the 40-pop arm), `sculk_vein` → non-full (the 20-pop arm).
+pub fn collision_full_block(name: &str) -> bool {
+    let bare = name.strip_prefix("minecraft:").unwrap_or(name);
+    const NON_FULL_SUFFIXES: [&str; 26] = [
+        "_slab",
+        "_stairs",
+        "_carpet",
+        "_pressure_plate",
+        "_button",
+        "_fence",
+        "_fence_gate",
+        "_wall",
+        "_door",
+        "_trapdoor",
+        "_sign",
+        "_banner",
+        "_torch",
+        "_lantern",
+        "_rail",
+        "_pane",
+        "_bed",
+        "_sapling",
+        "_hanging_sign",
+        "_candle",
+        "_candle_cake",
+        "_coral_fan",
+        "_coral_wall_fan",
+        "_piston",
+        "_head",
+        "_skull",
+    ];
+    const NON_FULL_NAMES: [&str; 14] = [
+        "sculk_vein",
+        "ladder",
+        "lever",
+        "pointed_dripstone",
+        "amethyst_cluster",
+        "light",
+        "cobweb",
+        "conduit",
+        "scaffolding",
+        "snow_layer",
+        "farmland",
+        "dirt_path",
+        "cactus",
+        "repeater",
+    ];
+    !NON_FULL_SUFFIXES.iter().any(|f| bare.ends_with(f))
+        && !NON_FULL_NAMES.contains(&bare)
+}
+
+/// One pending SCULK-CHARGE arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (the 3006 word the
+/// server's own spreader broadcasts,
+/// [`mc_protocol::play::PARTICLES_SCULK_CHARGE_EFFECT`] the render
+/// lane speaks): the event's anchor block + the DATA word, verbatim —
+/// the DATA word the case's own body SPLITS (the `data >> 6` count
+/// the sound gate and the face walk ride, the `data & 63` byte the
+/// face split keeps — the branch the render lane's own law folds
+/// from the raw word the transport carries). The full-block verdict
+/// the ARM's own read banks (the `isCollisionShapeFullBlock` state
+/// read the case's pop arm spends — the model's own `block()` walk
+/// answers, the [`collision_full_block`] approximation the name's
+/// families speak) — the count/spread pair the pop walk rides.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SculkChargeArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The packed data word (the `data >> 6` count and the `data &
+    /// 63` face byte the case's own decode splits — the pop arm the
+    /// count <= 0 words ride, the vanilla caller's data 0 the spread
+    /// arm banks).
+    pub data: i32,
+    /// The pop arm's full-block verdict (the state read the case's
+    /// own `isCollisionShapeFullBlock` walk speaks — the 40/±0.45
+    /// full arm vs the 20/±0.25 non-full arm the count/spread pair
+    /// banks).
+    pub full_block: bool,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1694,6 +1786,7 @@ impl WorldModel {
             wax_events: Vec::new(),
             gateway_spawn_events: Vec::new(),
             electric_spark_events: Vec::new(),
+            sculk_charge_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -1911,6 +2004,12 @@ impl WorldModel {
     /// ride exactly one refresh).
     pub fn drain_electric_spark_events(&mut self) -> Vec<ElectricSparkArm> {
         std::mem::take(&mut self.electric_spark_events)
+    }
+
+    /// THE SCULK-CHARGE MAILBOX'S OWN DRAIN (the exactly-once ship the
+    /// other level-event lanes speak — see the electric-spark drain).
+    pub fn drain_sculk_charge_events(&mut self) -> Vec<SculkChargeArm> {
+        std::mem::take(&mut self.sculk_charge_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2316,6 +2415,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 3002 words
                 // never spark again)
                 self.electric_spark_events.clear();
+                // the sculk-charge effect's mailbox dies with the
+                // level (the same walk — the old level's 3006 words
+                // never pulse again)
+                self.sculk_charge_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3235,6 +3338,34 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         data: ev.data,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::PARTICLES_SCULK_CHARGE_EFFECT && !ev.global {
+                    // THE SCULK-CHARGE EFFECT'S OWN ARM (javap the
+                    // case offset 2668 — the positioned route the
+                    // GLOBAL switch never banks): the anchor + the
+                    // DATA word the mailbox carries verbatim (the
+                    // `data >> 6` count and the `data & 63` face
+                    // byte the case's own decode splits — the pop
+                    // arm the count <= 0 words ride, the vanilla
+                    // caller's data 0 the spread arm banks). The
+                    // pop arm's full-block verdict the state read
+                    // the case's own `isCollisionShapeFullBlock`
+                    // walk speaks — the model's own `block()` walk
+                    // answers, the name-based approximation the
+                    // registry's collision honesty keeps (the
+                    // absent cell the full-cube majority keeps).
+                    let full_block = self
+                        .block(ev.x, ev.y, ev.z)
+                        .and_then(mc_registry::generated::block_ids::block_name_of)
+                        .map(collision_full_block)
+                        .unwrap_or(true);
+                    self.sculk_charge_events.push(SculkChargeArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
+                        full_block,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -7937,6 +8068,118 @@ mod tests {
             m.electric_spark_events.is_empty(),
             "the mailbox dies with the level"
         );
+    }
+
+    #[test]
+    fn the_level_event_the_sculk_word_the_data_split_wears() {
+        // THE SCULK-CHARGE EFFECT'S OWN ARM (javap the case offset
+        // 2668 — the positioned route the GLOBAL switch never banks):
+        // the anchor + the DATA word the mailbox carries verbatim (the
+        // `data >> 6` count and the `data & 63` face byte the case's
+        // own decode splits — the pop arm the count <= 0 words ride),
+        // the pop arm's full-block verdict the state read banks, the
+        // drain ships the arms exactly once, and the Respawn recreates
+        // the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the spreader's own decay word (the updateCursors call the
+        // `levelEvent(3006, pos, 0)` walk speaks): the arm rides with
+        // the raw data word the pop arm reads
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCULK_CHARGE_EFFECT,
+            x: 12,
+            y: 70,
+            z: -8,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.sculk_charge_events.len(), 1, "the arm rides");
+        assert_eq!(m.sculk_charge_events[0].x, 12);
+        assert_eq!(m.sculk_charge_events[0].y, 70);
+        assert_eq!(m.sculk_charge_events[0].z, -8);
+        assert_eq!(
+            m.sculk_charge_events[0].data, 0,
+            "the data word the pop arm reads"
+        );
+        // the absent cell the full-cube majority keeps (the block read
+        // the unloaded column never answers)
+        assert!(m.sculk_charge_events[0].full_block, "the absent cell stays full");
+        // the packed word rides verbatim too (the count>0 arm the face
+        // walk banks — the raw word the case's own split keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCULK_CHARGE_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: (4 << 6) | 6,
+            global: false,
+        })));
+        assert_eq!(m.sculk_charge_events.len(), 2, "the packed word re-arms");
+        assert_eq!(m.sculk_charge_events[1].data, (4 << 6) | 6);
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCULK_CHARGE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.sculk_charge_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_sculk_charge_events();
+        assert_eq!(drained.len(), 2, "the drain ships the mailbox");
+        assert_eq!(drained[0].data, 0, "the pop word rides");
+        assert_eq!(drained[1].data, (4 << 6) | 6, "the packed word rides");
+        assert!(
+            m.sculk_charge_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_SCULK_CHARGE_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.sculk_charge_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.sculk_charge_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_collision_verdict_the_name_families_speak() {
+        // THE FULL-BLOCK VERDICT'S OWN LAW (the registry
+        // approximation the pop arm's state read keeps): the
+        // caller-common rows the spreader's decay speaks — the sculk
+        // block the full-cube majority keeps, the sculk vein the
+        // multiface overlay's non-full arm banks — the partial
+        // families the suffix rows exclude, the bare names the exact
+        // table banks.
+        assert!(collision_full_block("minecraft:sculk"));
+        assert!(collision_full_block("minecraft:stone"));
+        assert!(collision_full_block("minecraft:dirt"));
+        assert!(collision_full_block("minecraft:deepslate"));
+        assert!(!collision_full_block("minecraft:sculk_vein"));
+        assert!(!collision_full_block("minecraft:oak_slab"));
+        assert!(!collision_full_block("minecraft:stone_stairs"));
+        assert!(!collision_full_block("minecraft:snow_layer"));
+        assert!(!collision_full_block("minecraft:farmland"));
+        assert!(!collision_full_block("minecraft:cactus"));
+        assert!(collision_full_block("sculk"), "the bare name rides");
     }
 
     #[test]

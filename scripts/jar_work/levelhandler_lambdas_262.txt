@@ -1,0 +1,25 @@
+=== lambda$levelEvent$1(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Holder$Reference;)V max_stack=3 max_locals=3 ===
+      0: aload_0 
+      1: aload_2 
+      2: aload_1 
+      3: invokevirtual #11.playJukeboxSong:(Lnet/minecraft/core/Holder;Lnet/minecraft/core/BlockPos;)V
+      6: return 
+
+=== lambda$levelEvent$0(Lnet/minecraft/util/RandomSource;)Lnet/minecraft/world/phys/Vec3; max_stack=11 max_locals=1 ===
+      0: new net/minecraft/world/phys/Vec3
+      3: dup 
+      4: aload_0 
+      5: ldc2_w #914
+      8: ldc2_w #916
+     11: invokestatic #508.nextDouble:(Lnet/minecraft/util/RandomSource;DD)D
+     14: aload_0 
+     15: ldc2_w #914
+     18: ldc2_w #916
+     21: invokestatic #508.nextDouble:(Lnet/minecraft/util/RandomSource;DD)D
+     24: aload_0 
+     25: ldc2_w #914
+     28: ldc2_w #916
+     31: invokestatic #508.nextDouble:(Lnet/minecraft/util/RandomSource;DD)D
+     34: invokespecial #43.<init>:(DDD)V
+     37: areturn 
+

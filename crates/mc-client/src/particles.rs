@@ -445,6 +445,35 @@ pub enum ParticleKind {
     /// write rides, the OPAQUE layer the `getLayer` override returns,
     /// the 10..39 lifetime the `nextInt(30) + 10` band carries).
     Glow,
+    /// `SculkChargeParticle` — the LevelEvent-3006 face walk's own
+    /// pulse (the 7-frame `sculk_charge_0..6` set the json's
+    /// ASCENDING list orders, the `setSpriteFromAge` walk the age
+    /// law rides): the static roll the options carry — π for the
+    /// DOWN face the all-faces arm picks, π for the UP face the
+    /// unpack arm keeps, 0 otherwise — the quad the renderer flips
+    /// half a turn when `flipped` rides (`flipped: bool` the kind
+    /// folds from the roll), the 1.5x scale the ctor's own write
+    /// carries, the 0.96 friction, the physics-free fly, the
+    /// fullbright look the `getLightCoords` withBlock(15) override
+    /// speaks, the TRANSLUCENT layer the `getLayer` override
+    /// returns, the 8..19 lifetime the provider's `nextInt(12) + 8`
+    /// draw gives, the VERBATIM caller speed the provider's own
+    /// `setParticleSpeed` keeps (no multiply chain — the tiny
+    /// ±0.005 supplier draws the speed already carries).
+    SculkCharge {
+        /// The options roll's own fold (`roll != 0.0` — the π
+        /// faces the quad's half-turn uv walk rides).
+        flipped: bool,
+    },
+    /// `SculkChargePopParticle` — the LevelEvent-3006 pop arm's own
+    /// cube burst (the 4-frame `sculk_charge_pop_0..3` set the
+    /// json's ASCENDING list orders, the same `setSpriteFromAge`
+    /// law): the 1.0 scale the ctor keeps, the 0.96 friction, the
+    /// physics-free fly, the fullbright look, the TRANSLUCENT layer,
+    /// the 6..9 lifetime the provider's `nextInt(4) + 6` draw
+    /// gives, the ±0.07 cube speeds the caller's trio verbatim
+    /// carries.
+    SculkChargePop,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -489,6 +518,35 @@ pub const EXPLOSION_FRAME_COUNT: usize = 16;
 pub fn explosion_frame(age: u32, lifetime: u32) -> usize {
     ((age as usize * (EXPLOSION_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
         .min(EXPLOSION_FRAME_COUNT - 1)
+}
+
+/// The sculk charge's 7 frames (the `sculk_charge_0..6` textures the
+/// jar speaks — the sprite set the json's ASCENDING list orders, the
+/// list index the frame law reads directly).
+pub const SCULK_CHARGE_FRAME_COUNT: usize = 7;
+
+/// The sculk charge pop's 4 frames (the `sculk_charge_pop_0..3`
+/// textures the jar speaks — the sprite set the json's ASCENDING list
+/// orders, the list index the frame law reads directly).
+pub const SCULK_POP_FRAME_COUNT: usize = 4;
+
+/// The sculk charge's own frame law (javap `Particle.setSpriteFromAge`
+/// -> `MutableSpriteSet.get(age, lifetime)` verbatim:
+/// `sprites.get(age * (size - 1) / lifetime)` — 7 frames, the 8..19
+/// tick life walking the ascending list the json speaks; the min
+/// clamp the list.get's own bound speaks — the vanilla walk never
+/// fires it (the age walk removes the particle at the lifetime
+/// first), the Rust shape keeps it honest).
+pub fn sculk_charge_frame(age: u32, lifetime: u32) -> usize {
+    ((age as usize * (SCULK_CHARGE_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
+        .min(SCULK_CHARGE_FRAME_COUNT - 1)
+}
+
+/// The sculk pop's own frame law (the same `MutableSpriteSet.get`
+/// walk — 4 frames, the 6..9 tick life walking the ascending list).
+pub fn sculk_pop_frame(age: u32, lifetime: u32) -> usize {
+    ((age as usize * (SCULK_POP_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
+        .min(SCULK_POP_FRAME_COUNT - 1)
 }
 
 /// The dragon breath's own frame law (javap `Particle.setSpriteFromAge`
@@ -3327,8 +3385,9 @@ pub fn glow_puff(
 /// per face), then the provider chain: the dead base lifetime, the
 /// size draw, the scrape's tint gate (`nextBoolean` the bit law
 /// reads), the `nextInt(30) + 10` lifetime. The velocity the
-/// face-aligned component alone keeps (the perpendicular pair the
-/// `sx != 0 ? vel.x : 0.0` ternary trio zeroes), the provider's speed
+/// IN-PLANE pair keeps (the face-normal axis's component the `sx !=
+/// 0 → dconst_0` ifne arm zeroes — the 445 round's re-audit banked
+/// the flip the earlier walk inverted), the provider's speed
 /// folds the caller's velocity carries (`xSpeed * 0.01F / 2.0F` the
 /// wax pair's halves law speaks, the PLAIN `* 0.01F` the scrape
 /// keeps — the one constant's own difference the bytecodes pin).
@@ -3395,12 +3454,14 @@ pub fn wax_faces_burst(
                 } else {
                     rng.next_f64_between(-0.5, 0.5)
                 };
-            // THE FACE-ALIGNED VELOCITY (the ternary trio the
-            // velocity walk keeps — the face axis's component rides,
-            // the perpendicular pair zeroes)
-            let x_speed = if sx != 0 { vx } else { 0.0 };
-            let y_speed = if sy != 0 { vy } else { 0.0 };
-            let z_speed = if sz != 0 { vz } else { 0.0 };
+            // THE IN-PLANE VELOCITY (the ternary trio the jar's own
+            // ifne arms speak — the 445 round's re-audit banks: the
+            // face-normal axis's component ZEROES (`131: iload 8;
+            // ifne → 142: dconst_0`), the in-plane pair keeps the
+            // supplier's draws — the pulse slides ALONG the face)
+            let x_speed = if sx == 0 { vx } else { 0.0 };
+            let y_speed = if sy == 0 { vy } else { 0.0 };
+            let z_speed = if sz == 0 { vz } else { 0.0 };
             // THE PROVIDER CHAIN (the draws the createParticle walk
             // spends — the base ctor pair, the scrape's tint gate,
             // the lifetime draw)
@@ -3464,9 +3525,11 @@ pub fn wax_faces_burst(
 /// `dconst_0` silence keeps). THE FACES WALK (the negative/overflow
 /// arm): the SAME geometry the wax burst wears (the six
 /// `Direction.values()` faces, the `3 + nextInt(3)` per-face count,
-/// the face-axis `* 0.55` position pair, the face-aligned velocity
-/// the ternary trio zeroes, the supplier's three
-/// `Mth.nextDouble(-0.5, 0.5)` draws). THE PROVIDER CHAIN both arms
+/// the face-axis `* 0.55` position pair, the IN-PLANE velocity the
+/// ifne arm zeroes on the face-normal axis — the 445 round's
+/// re-audit banked the flip the earlier walk inverted, the
+/// supplier's three `Mth.nextDouble(-0.5, 0.5)` draws). THE PROVIDER
+/// CHAIN both arms
 /// share (javap `GlowParticle$ElectricSparkProvider.createParticle`
 /// verbatim): the dead base lifetime draw, the SingleQuadParticle
 /// size draw (the ×0.75 fold the GlowParticle's own ctor keeps),
@@ -3581,17 +3644,318 @@ pub fn electric_spark_burst(
                     } else {
                         rng.next_f64_between(-0.5, 0.5)
                     };
-                // THE FACE-ALIGNED VELOCITY (the ternary trio the
-                // velocity walk keeps — the face axis's component
-                // rides, the perpendicular pair zeroes)
-                let x_speed = if sx != 0 { vx } else { 0.0 };
-                let y_speed = if sy != 0 { vy } else { 0.0 };
-                let z_speed = if sz != 0 { vz } else { 0.0 };
+                // THE IN-PLANE VELOCITY (the ternary trio the jar's
+                // own ifne arms speak — the 445 round's re-audit
+                // banks: the face-normal axis's component ZEROES
+                // (`131: iload 8; ifne → 142: dconst_0`), the
+                // in-plane pair keeps the supplier's draws — the
+                // pulse slides ALONG the face)
+                let x_speed = if sx == 0 { vx } else { 0.0 };
+                let y_speed = if sy == 0 { vy } else { 0.0 };
+                let z_speed = if sz == 0 { vz } else { 0.0 };
                 out.push(spark(px, py, pz, x_speed, y_speed, z_speed, rng));
             }
         }
     }
     out
+}
+
+/// One sculk-charge pulse (javap `SculkChargeParticle` ctor +
+/// `$Provider.createParticle` verbatim): the base ctor's own draws
+/// the stream keeps (the dead base lifetime the provider's write
+/// overrides, the quad size the `scale(1.5F)` fold rides), the
+/// provider's VERBATIM speed (the `setParticleSpeed(xs, ys, zs)`
+/// call carries the caller's velocity unmultiplied — the tiny
+/// supplier draws the ±0.005 bounds already speak), the static roll
+/// the options' π|0 the `flipped` fold banks, the `nextInt(12) + 8`
+/// lifetime the 8..19 band speaks, the 0.96 friction the ctor's own
+/// putfield keeps, the white tint the ctor never speaks (no
+/// `setColor` row the class bytes carry — the fullbright look the
+/// `getLightCoords` withBlock(15) override answers, the honest
+/// untinted full sample the lane draws).
+fn sculk_charge_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    flipped: bool,
+    r_life: f32,
+    r_size: f32,
+    lifetime: u32,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the provider's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(r_life);
+    Particle {
+        kind: ParticleKind::SculkCharge { flipped },
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime,
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: base_quad_size(r_size) * 1.5,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// One sculk-charge pop (javap `SculkChargePopParticle` ctor +
+/// `$Provider.createParticle` verbatim): the same base-ctor draw
+/// pair, the VERBATIM ±0.07 cube speed the caller's trio carries,
+/// the `nextInt(4) + 6` lifetime the 6..9 band speaks, the 0.96
+/// friction, the white tint, the fullbright look.
+fn sculk_pop_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    r_life: f32,
+    r_size: f32,
+    lifetime: u32,
+) -> Particle {
+    let _dead_base_life = base_lifetime(r_life);
+    Particle {
+        kind: ParticleKind::SculkChargePop,
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime,
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: base_quad_size(r_size),
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The sculk-charge face walk (javap `LevelEventHandler` case 3006 —
+/// offset 2668 — the count > 0 arm over the 26.2 jar): the DATA word
+/// the case's own `data >> 6` count the caller decodes, the
+/// `packed = data & 63` byte the face split rides — the ZERO arm the
+/// SIX `Direction.values()` faces walks (the DOWN face the π roll
+/// picks, the axis spans 0.65 Y / 0.57 X-Z the case's own doubles
+/// keep), the NON-ZERO arm the `MultifaceBlock.unpack` ordinal-order
+/// set walks (the UP face the π roll picks, the 0.35 span the flat
+/// 0.35 double keeps). THE PER-FACE COUNT the
+/// `UniformInt.of(0, count).sample` law speaks
+/// (`randomBetweenInclusive`: `nextInt(count + 1)`, the draw the
+/// count >= 1 arm always spends), the per-particle walk the
+/// `spawnParticlesOnBlockFace` → `spawnParticleOnFace` chain pins:
+/// the supplier's THREE `Mth.nextDouble(-0.005, 0.005)` draws first,
+/// then the position pair — the face axis rides `center + axis *
+/// span` (deterministic, NO draw), the perpendicular pair the
+/// `Mth.nextDouble(-0.5, 0.5)` draws (exactly two, X→Y→Z axis
+/// order) — then the provider chain (the base ctor's dead life +
+/// size draws, the `nextInt(12)` lifetime). THE VELOCITY the
+/// `spawnParticleOnFace` ternary trio keeps: the face-normal axis's
+/// component ZEROES (the `sx != 0 → dconst_0` arm the bytecode
+/// speaks), the in-plane pair keeps the supplier's draws — the
+/// pulse slides ALONG the face the way the jar's own ifne arms.
+/// NO sound the walker speaks — the gated voice the render lane's
+/// own serve banks beside the burst.
+pub fn sculk_charge_faces(
+    anchor: (i32, i32, i32),
+    count: i32,
+    packed_faces: i32,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::new();
+    if count <= 0 {
+        // the caller's own arm split (the `ifle` the case opens the
+        // face walk with — the count <= 0 words the pop arm answers,
+        // the faces walk never spends)
+        return out;
+    }
+    let cx = anchor.0 as f64 + 0.5;
+    let cy = anchor.1 as f64 + 0.5;
+    let cz = anchor.2 as f64 + 0.5;
+    // Direction.values()'s own order (the enum's wire the switch's
+    // own array keep — DOWN, UP, NORTH, SOUTH, WEST, EAST)
+    let faces: [(i32, i32, i32); 6] = [
+        (0, -1, 0),
+        (0, 1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ];
+    for &(sx, sy, sz) in &faces {
+        // the unpack arm's own filter (the EnumSet the
+        // `MultifaceBlock.unpack` builds — bit i = the ordinal i's
+        // face, the iteration order the enum order keeps; the ZERO
+        // byte the filter never arms)
+        if packed_faces != 0 && (packed_faces & (1 << face_ordinal(sx, sy, sz))) == 0 {
+            continue;
+        }
+        // THE ROLL (the options' own pick — the zero arm the DOWN
+        // face's π keeps, the unpack arm the UP face's π; the span
+        // the same split rides)
+        let down_face = sx == 0 && sy == -1 && sz == 0;
+        let up_face = sx == 0 && sy == 1 && sz == 0;
+        let flipped = if packed_faces == 0 {
+            down_face
+        } else {
+            up_face
+        };
+        let span: f64 = if packed_faces == 0 {
+            if sy != 0 {
+                0.65
+            } else {
+                0.57
+            }
+        } else {
+            0.35
+        };
+        // THE PER-FACE COUNT (UniformInt.of(0, count).sample — the
+        // `nextInt(count + 1)` law the randomBetweenInclusive speaks)
+        let per_face = rng.next_int_inclusive(0, count);
+        for _ in 0..per_face.max(0) {
+            // THE VELOCITY SUPPLIER (the `lambda$levelEvent$0`
+            // verbatim — the THREE `Mth.nextDouble(-0.005, 0.005)`
+            // draws the Vec3 ctor args keep, drawn WHOLE the
+            // ternary's own zeroing never refunds)
+            let vx = rng.next_f64_between(-0.005, 0.005);
+            let vy = rng.next_f64_between(-0.005, 0.005);
+            let vz = rng.next_f64_between(-0.005, 0.005);
+            // THE POSITION PAIR (spawnParticleOnFace verbatim: the
+            // face axis rides `center + axis * span` — the
+            // deterministic arm NO draw spends — the perpendicular
+            // pair the `Mth.nextDouble(-0.5, 0.5)` draws, X→Y→Z the
+            // axis order keeps)
+            let px = cx
+                + if sx != 0 {
+                    f64::from(sx) * span
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            let py = cy
+                + if sy != 0 {
+                    f64::from(sy) * span
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            let pz = cz
+                + if sz != 0 {
+                    f64::from(sz) * span
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            // THE IN-PLANE VELOCITY (the ternary trio the jar's own
+            // ifne arms speak: the face-normal axis's component
+            // ZEROES, the in-plane pair keeps the supplier's draws)
+            let x_speed = if sx == 0 { vx } else { 0.0 };
+            let y_speed = if sy == 0 { vy } else { 0.0 };
+            let z_speed = if sz == 0 { vz } else { 0.0 };
+            // THE PROVIDER CHAIN (the base ctor's dead life + size
+            // draws, the `nextInt(12) + 8` lifetime the 8..19 band
+            // carries)
+            let r_life = rng.next_f32();
+            let r_size = rng.next_f32();
+            let lifetime = 8 + rng.next_int(12).max(0);
+            out.push(sculk_charge_puff(
+                px,
+                py,
+                pz,
+                x_speed,
+                y_speed,
+                z_speed,
+                flipped,
+                r_life,
+                r_size,
+                lifetime as u32,
+            ));
+        }
+    }
+    out
+}
+
+/// The sculk-charge pop walk (javap `LevelEventHandler` case 3006 —
+/// offset 2668 — the count <= 0 arm, THE VANILLA-CALLER ARM the
+/// `SculkSpreader.updateCursors` `charge <= 0` gate feeds with the
+/// data 0 word): the ONE fixed voice the serve's own walk banks, the
+/// cube burst the `isCollisionShapeFullBlock` split keeps — the FULL
+/// block the 40-pop / ±0.45-spread arm answers, the non-full the
+/// 20-pop / ±0.25 arm keeps. THE PER-POP WALK the case's own loop
+/// pins: the `2.0F * nextFloat() - 1.0F` trio (dx, dy, dz — the
+/// axis order the bytecodes keep), the position trio `pos + 0.5 +
+/// d * spread`, the speed trio `d * 0.07F`, then the provider chain
+/// (the base ctor's dead life + size draws, the `nextInt(4) + 6`
+/// lifetime the 6..9 band carries). The full-block verdict the
+/// model's own arm carries (the state read the `block()` walk
+/// answers — the collision law the client's registry approximation
+/// keeps, see `world_model::collision_full_block`).
+pub fn sculk_charge_pops(
+    anchor: (i32, i32, i32),
+    full_block: bool,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::new();
+    let (count, spread): (i32, f64) = if full_block { (40, 0.45) } else { (20, 0.25) };
+    let cx = anchor.0 as f64 + 0.5;
+    let cy = anchor.1 as f64 + 0.5;
+    let cz = anchor.2 as f64 + 0.5;
+    for _ in 0..count {
+        // THE CUBE TRIO (the `2.0F * nextFloat() - 1.0F` draws — the
+        // position AND speed fold both read, the axis order the
+        // bytecodes keep)
+        let dx = 2.0 * f64::from(rng.next_f32()) - 1.0;
+        let dy = 2.0 * f64::from(rng.next_f32()) - 1.0;
+        let dz = 2.0 * f64::from(rng.next_f32()) - 1.0;
+        // THE PROVIDER CHAIN (the base ctor's dead life + size
+        // draws, the `nextInt(4) + 6` lifetime the 6..9 band
+        // carries)
+        let r_life = rng.next_f32();
+        let r_size = rng.next_f32();
+        let lifetime = 6 + rng.next_int(4).max(0);
+        out.push(sculk_pop_puff(
+            cx + dx * spread,
+            cy + dy * spread,
+            cz + dz * spread,
+            dx * 0.07,
+            dy * 0.07,
+            dz * 0.07,
+            r_life,
+            r_size,
+            lifetime as u32,
+        ));
+    }
+    out
+}
+
+/// The Direction enum's own ordinal (the values() array index the
+/// `MultifaceBlock.unpack` bit law reads — DOWN 0, UP 1, NORTH 2,
+/// SOUTH 3, WEST 4, EAST 5).
+fn face_ordinal(sx: i32, sy: i32, sz: i32) -> u32 {
+    if sy < 0 {
+        0
+    } else if sy > 0 {
+        1
+    } else if sz < 0 {
+        2
+    } else if sz > 0 {
+        3
+    } else if sx < 0 {
+        4
+    } else {
+        5
+    }
 }
 
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
@@ -3855,7 +4219,8 @@ mod tests {
         // providers): the six faces the Direction.values() order
         // keeps, the per-face `3 + nextInt(3)` counts, the position
         // pair (the face axis's * 0.55 plane, the perpendicular
-        // pair's draws), the face-aligned velocity, the provider
+        // pair's draws), the in-plane velocity (the face-normal axis
+        // zeroes), the provider
         // folds (the halves law the wax pair speaks, the plain trio
         // the scrape keeps), the tints the setColor rows bank, the
         // 10..39 lifetime, the seeded chain replays.
@@ -3896,13 +4261,13 @@ mod tests {
         for p in &down {
             assert!(p.x > cx - 0.5 && p.x < cx + 0.5);
             assert!(p.z > cz - 0.5 && p.z < cz + 0.5);
-            // the face-aligned velocity: the DOWN face's own axis the
-            // y component keeps, the perpendicular pair zeroes
-            assert_eq!(p.vx, 0.0, "the perpendicular pair the ternary zeroes");
-            assert_eq!(p.vz, 0.0);
-            assert!(p.vy.abs() <= 0.5 * 0.01);
-            // the wax pair's y fold the PLAIN * 0.01 speaks (no / 2)
-            assert!(p.vy.abs() <= 0.005 + 1e-12);
+            // the in-plane velocity: the DOWN face's own axis the
+            // ternary zeroes, the in-plane pair keeps the supplier's
+            // draws (the 445 round's re-audit banked the flip)
+            assert_eq!(p.vy, 0.0, "the face-normal axis the ifne zeroes");
+            // the wax pair's halves law the x/z folds speak
+            assert!(p.vx.abs() <= 0.005 / 2.0 + 1e-15);
+            assert!(p.vz.abs() <= 0.005 / 2.0 + 1e-15);
         }
         i += down.len();
         // UP group
@@ -3912,9 +4277,9 @@ mod tests {
             .collect();
         assert!(up.len() >= 3 && up.len() <= 5);
         for p in &up {
-            assert_eq!(p.vx, 0.0);
-            assert_eq!(p.vz, 0.0);
-            assert!(p.vy.abs() <= 0.005 + 1e-12);
+            assert_eq!(p.vy, 0.0, "the face-normal axis the ifne zeroes");
+            assert!(p.vx.abs() <= 0.005 / 2.0 + 1e-15);
+            assert!(p.vz.abs() <= 0.005 / 2.0 + 1e-15);
         }
         i += up.len();
         // NORTH group (z = cz - 0.55)
@@ -3924,9 +4289,9 @@ mod tests {
             .collect();
         assert!(north.len() >= 3 && north.len() <= 5);
         for p in &north {
-            assert_eq!(p.vx, 0.0);
-            assert_eq!(p.vy, 0.0);
-            assert!(p.vz.abs() <= 0.005 + 1e-12);
+            assert_eq!(p.vz, 0.0, "the face-normal axis the ifne zeroes");
+            assert!(p.vx.abs() <= 0.005 / 2.0 + 1e-15);
+            assert!(p.vy.abs() <= 0.005 + 1e-12);
             assert!(p.x > cx - 0.5 && p.x < cx + 0.5);
             assert!(p.y > cy - 0.5 && p.y < cy + 0.5);
         }
@@ -3945,11 +4310,10 @@ mod tests {
             .collect();
         assert!(west.len() >= 3 && west.len() <= 5);
         for p in &west {
-            assert_eq!(p.vy, 0.0);
-            assert_eq!(p.vz, 0.0);
-            // the wax pair's x fold: (xSpeed * 0.01) / 2.0 — the
-            // halves band the / 2 keeps
-            assert!(p.vx.abs() <= 0.005 / 2.0 + 1e-15);
+            assert_eq!(p.vx, 0.0, "the face-normal axis the ifne zeroes");
+            // the wax pair's halves law the z fold speaks
+            assert!(p.vz.abs() <= 0.005 / 2.0 + 1e-15);
+            assert!(p.vy.abs() <= 0.005 + 1e-12);
             assert!(p.z > cz - 0.5 && p.z < cz + 0.5);
             assert!(p.y > cy - 0.5 && p.y < cy + 0.5);
         }
@@ -5925,5 +6289,197 @@ mod tests {
                 "the seeded chain replays"
             );
         }
+    }
+
+    #[test]
+    fn the_sculk_charge_walk_the_faces_the_rolls_wear() {
+        // THE SCULK CHARGE'S OWN FACE LAW (javap the case 3006 count>0
+        // arm + `spawnParticlesOnBlockFace` -> `spawnParticleOnFace` +
+        // the `lambda$levelEvent$0` supplier + the SculkChargeParticle
+        // providers over the 26.2 jar): the six faces the
+        // Direction.values() order keeps (the zero packed byte the
+        // filter never arms), the per-face `nextInt(count + 1)`
+        // counts, the supplier's three ±0.005 draws, the position
+        // pair (the face axis's span plane — 0.65 Y / 0.57 X-Z — the
+        // perpendicular pair's ±0.5 draws), the IN-PLANE velocity
+        // (the face-normal axis zeroes), the π roll the DOWN face's
+        // flip wears, the 8..19 lifetime, the 1.5x size, the seeded
+        // chain replays.
+        let seed = 0x5C01_3006u64 ^ 0xC1A5;
+        let mut r = crate::drops::Lcg::new(seed);
+        let burst = sculk_charge_faces((7, 70, 3), 4, 0, &mut r);
+        assert!(
+            !burst.is_empty(),
+            "the zero-count faces the law always arms"
+        );
+        let (cx, cy, cz) = (7.5f64, 70.5f64, 3.5f64);
+        let mut i = 0usize;
+        let mut seen_down_flip = false;
+        // DOWN group (y = cy - 0.65)
+        let down: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.y - (cy - 0.65)).abs() < 1e-9)
+            .collect();
+        assert!(!down.is_empty());
+        for p in &down {
+            assert_eq!(p.vy, 0.0, "the face-normal axis the ifne zeroes");
+            assert!(p.vx.abs() <= 0.005 + 1e-12, "the supplier's ±0.005 bound");
+            assert!(p.vz.abs() <= 0.005 + 1e-12);
+            assert!(p.x > cx - 0.5 && p.x < cx + 0.5, "the ±0.5 perpendicular draw");
+            assert!(p.z > cz - 0.5 && p.z < cz + 0.5);
+            assert!(
+                matches!(p.kind, ParticleKind::SculkCharge { flipped: true }),
+                "the DOWN face the π roll flips"
+            );
+            seen_down_flip = true;
+            assert!(p.quad_size > 0.0);
+        }
+        assert!(seen_down_flip);
+        i += down.len();
+        // UP group (y = cy + 0.65, NO flip the zero byte's arm keeps)
+        let up: Vec<_> = burst[i..]
+            .iter()
+            .take_while(|p| (p.y - (cy + 0.65)).abs() < 1e-9)
+            .collect();
+        assert!(!up.is_empty());
+        for p in &up {
+            assert_eq!(p.vy, 0.0);
+            assert!(
+                matches!(p.kind, ParticleKind::SculkCharge { flipped: false }),
+                "the UP face the zero byte's arm never flips"
+            );
+        }
+        i += up.len();
+        // the X-Z spans the 0.57 faces keep (N/S/W/E planes)
+        let mut seen_nswe = 0usize;
+        for off in [-0.57, 0.57] {
+            let g: Vec<_> = burst[i..]
+                .iter()
+                .take_while(|p| (p.z - (cz + off)).abs() < 1e-9)
+                .collect();
+            if !g.is_empty() {
+                seen_nswe += 1;
+                for p in &g {
+                    assert_eq!(p.vz, 0.0, "the Z faces the normal zeroes");
+                }
+                i += g.len();
+            }
+        }
+        for off in [-0.57, 0.57] {
+            let g: Vec<_> = burst[i..]
+                .iter()
+                .take_while(|p| (p.x - (cx + off)).abs() < 1e-9)
+                .collect();
+            if !g.is_empty() {
+                seen_nswe += 1;
+                for p in &g {
+                    assert_eq!(p.vx, 0.0, "the X faces the normal zeroes");
+                }
+                i += g.len();
+            }
+        }
+        assert_eq!(seen_nswe, 4, "the four side faces the 0.57 spans keep");
+        assert_eq!(i, burst.len(), "the six groups tile the whole burst");
+        for p in &burst {
+            assert!(
+                (8..=19).contains(&p.lifetime),
+                "the 8..19 band the nextInt(12) + 8 speaks: {}",
+                p.lifetime
+            );
+        }
+        // THE UNPACK ARM (packed = UP|NORTH = (1<<1)|(1<<2) = 6): the
+        // UP face the π roll flips, the NORTH face the 0.35 span
+        // keeps, the other four the filter refuses
+        let mut r2 = crate::drops::Lcg::new(seed ^ 0x5A1);
+        let unpacked = sculk_charge_faces((7, 70, 3), 2, 6, &mut r2);
+        for p in &unpacked {
+            let on_up = (p.y - (cy + 0.35)).abs() < 1e-9;
+            let on_north = (p.z - (cz - 0.35)).abs() < 1e-9;
+            assert!(
+                on_up || on_north,
+                "the unpack arm the ordinal bits alone keeps"
+            );
+            if on_up {
+                assert!(
+                    matches!(p.kind, ParticleKind::SculkCharge { flipped: true }),
+                    "the UP face the unpack arm's π keeps"
+                );
+            } else {
+                assert!(p.vz == 0.0);
+                assert!((p.x - cx).abs() <= 0.5);
+                assert!((p.y - cy).abs() <= 0.5);
+            }
+        }
+        // THE COUNT <= 0 SPLIT (the `ifle` the face walk opens with —
+        // the pop arm the caller answers, the faces walk never spends)
+        let mut r3 = crate::drops::Lcg::new(0x5C01_0000);
+        let _ = r3.next_f32();
+        let before = r3.clone();
+        assert!(sculk_charge_faces((0, 0, 0), 0, 0, &mut r3).is_empty());
+        assert_eq!(r3, before, "the empty arm the draws never spends");
+        // THE SEEDED CHAIN REPLAYS
+        let mut a = crate::drops::Lcg::new(seed);
+        let burst_a = sculk_charge_faces((7, 70, 3), 4, 0, &mut a);
+        assert_eq!(burst.len(), burst_a.len());
+        for (x, y) in burst.iter().zip(burst_a.iter()) {
+            assert_eq!(
+                (x.x, x.y, x.z, x.vx, x.vy, x.vz, x.lifetime, x.quad_size),
+                (y.x, y.y, y.z, y.vx, y.vy, y.vz, y.lifetime, y.quad_size),
+                "the seeded chain replays"
+            );
+        }
+    }
+
+    #[test]
+    fn the_sculk_pops_the_cube_the_count_bands_wear() {
+        // THE POP ARM'S OWN LAW (javap the case 3006 count<=0 arm over
+        // the 26.2 jar — the vanilla-caller arm the spreader's decay
+        // feeds): the FULL block the 40-pop / ±0.45 arm answers, the
+        // non-full the 20-pop / ±0.25 keeps; the per-pop trio the
+        // 2.0F*nextFloat()-1.0F draws speak, the position + speed
+        // folds the spread and 0.07 constants ride, the 6..9
+        // lifetime the nextInt(4)+6 band carries, the seeded chain
+        // replays.
+        let seed = 0x3006_7001u64 ^ 0xC1A5;
+        // THE FULL ARM (40 pops, ±0.45)
+        let mut r = crate::drops::Lcg::new(seed);
+        let full = sculk_charge_pops((0, -3, 0), true, &mut r);
+        assert_eq!(full.len(), 40, "the full block the 40-pop arm speaks");
+        for p in &full {
+            assert!(matches!(p.kind, ParticleKind::SculkChargePop));
+            assert!((p.x - 0.5).abs() <= 0.45 + 1e-9);
+            assert!((p.y + 2.5).abs() <= 0.45 + 1e-9);
+            assert!((p.z - 0.5).abs() <= 0.45 + 1e-9);
+            assert!(p.vx.abs() <= 0.07 + 1e-12);
+            assert!(p.vy.abs() <= 0.07 + 1e-12);
+            assert!(p.vz.abs() <= 0.07 + 1e-12);
+            assert!((6..=9).contains(&p.lifetime), "the 6..9 band: {}", p.lifetime);
+            assert!(p.quad_size > 0.0);
+        }
+        // THE NON-FULL ARM (20 pops, ±0.25)
+        let mut r2 = crate::drops::Lcg::new(seed ^ 0x77);
+        let small = sculk_charge_pops((0, -3, 0), false, &mut r2);
+        assert_eq!(small.len(), 20, "the non-full block the 20-pop arm keeps");
+        for p in &small {
+            assert!((p.x - 0.5).abs() <= 0.25 + 1e-9);
+            assert!((p.z - 0.5).abs() <= 0.25 + 1e-9);
+        }
+        // THE SEEDED CHAIN REPLAYS
+        let mut a = crate::drops::Lcg::new(seed);
+        let full_a = sculk_charge_pops((0, -3, 0), true, &mut a);
+        assert_eq!(full.len(), full_a.len());
+        for (x, y) in full.iter().zip(full_a.iter()) {
+            assert_eq!(
+                (x.x, x.y, x.z, x.vx, x.vy, x.vz, x.lifetime, x.quad_size),
+                (y.x, y.y, y.z, y.vx, y.vy, y.vz, y.lifetime, y.quad_size),
+                "the seeded chain replays"
+            );
+        }
+        // THE FRAME LAWS (the ascending lists the setSpriteFromAge walk
+        // rides — 7 charge frames, 4 pop frames)
+        assert_eq!(sculk_charge_frame(0, 19), 0);
+        assert_eq!(sculk_charge_frame(19, 19), 6);
+        assert_eq!(sculk_pop_frame(0, 9), 0);
+        assert_eq!(sculk_pop_frame(9, 9), 3);
     }
 }

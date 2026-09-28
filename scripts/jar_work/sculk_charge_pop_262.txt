@@ -1,0 +1,127 @@
+=== <init>(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/particle/SpriteSet;)V max_stack=15 max_locals=15 ===
+      0: aload_0 
+      1: aload_1 
+      2: dload_2 
+      3: dload 4
+      5: dload 6
+      7: dload 8
+      9: dload 10
+     11: dload 12
+     13: aload 14
+     15: invokeinterface #2.first:()Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;
+     20: invokespecial #8.<init>:(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V
+     23: aload_0 
+     24: ldc #13
+     26: putfield #15.friction:F
+     29: aload_0 
+     30: aload 14
+     32: putfield #15.sprites:Lnet/minecraft/client/particle/SpriteSet;
+     35: aload_0 
+     36: fconst_1 
+     37: invokevirtual #15.scale:(F)Lnet/minecraft/client/particle/Particle;
+     40: pop 
+     41: aload_0 
+     42: iconst_0 
+     43: putfield #15.hasPhysics:Z
+     46: aload_0 
+     47: aload 14
+     49: invokevirtual #15.setSpriteFromAge:(Lnet/minecraft/client/particle/SpriteSet;)V
+     52: return 
+
+=== getLightCoords(F)I max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: fload_1 
+      2: invokespecial #8.getLightCoords:(F)I
+      5: bipush 15
+      7: invokestatic #43.withBlock:(II)I
+     10: ireturn 
+
+=== getLayer()Lnet/minecraft/client/particle/SingleQuadParticle$Layer; max_stack=1 max_locals=1 ===
+      0: getstatic #49.TRANSLUCENT:Lnet/minecraft/client/particle/SingleQuadParticle$Layer;
+      3: areturn 
+
+=== tick()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: invokespecial #8.tick:()V
+      4: aload_0 
+      5: aload_0 
+      6: getfield #15.sprites:Lnet/minecraft/client/particle/SpriteSet;
+      9: invokevirtual #15.setSpriteFromAge:(Lnet/minecraft/client/particle/SpriteSet;)V
+     12: return 
+
+=== <init>(Lnet/minecraft/client/particle/SpriteSet;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.sprite:Lnet/minecraft/client/particle/SpriteSet;
+      9: return 
+
+=== createParticle(Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle; max_stack=16 max_locals=17 ===
+      0: new net/minecraft/client/particle/SculkChargePopParticle
+      3: dup 
+      4: aload_2 
+      5: dload_3 
+      6: dload 5
+      8: dload 7
+     10: dload 9
+     12: dload 11
+     14: dload 13
+     16: aload_0 
+     17: getfield #8.sprite:Lnet/minecraft/client/particle/SpriteSet;
+     20: invokespecial #13.<init>:(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/particle/SpriteSet;)V
+     23: astore 16
+     25: aload 16
+     27: fconst_1 
+     28: invokevirtual #13.setAlpha:(F)V
+     31: aload 16
+     33: dload 9
+     35: dload 11
+     37: dload 13
+     39: invokevirtual #13.setParticleSpeed:(DDD)V
+     42: aload 16
+     44: aload 15
+     46: iconst_4 
+     47: invokeinterface #27.nextInt:(I)I
+     52: bipush 6
+     54: iadd 
+     55: invokevirtual #13.setLifetime:(I)V
+     58: aload 16
+     60: areturn 
+
+=== toString()Ljava/lang/String; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #42
+      6: areturn 
+
+=== hashCode()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #46
+      6: ireturn 
+
+=== equals(Ljava/lang/Object;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokedynamic #50
+      7: ireturn 
+
+=== sprite()Lnet/minecraft/client/particle/SpriteSet; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.sprite:Lnet/minecraft/client/particle/SpriteSet;
+      4: areturn 
+
+=== createParticle(Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle; max_stack=16 max_locals=16 ===
+      0: aload_0 
+      1: aload_1 
+      2: checkcast net/minecraft/core/particles/SimpleParticleType
+      5: aload_2 
+      6: dload_3 
+      7: dload 5
+      9: dload 7
+     11: dload 9
+     13: dload 11
+     15: dload 13
+     17: aload 15
+     19: invokevirtual #8.createParticle:(Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle;
+     22: areturn 
+

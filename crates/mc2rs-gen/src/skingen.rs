@@ -187,6 +187,35 @@ pub const PARTICLE_GLINT_JAR_PATH: &str = "assets/minecraft/textures/particle/gl
 /// the draw — the LevelEvent 3003/3004/3005 arms' own particle the
 /// `GlowParticle` class speaks).
 pub const PARTICLE_GLOW_JAR_PATH: &str = "assets/minecraft/textures/particle/glow.png";
+/// The sculk charge's 7-frame set (javap: the `sculk_charge` particle
+/// type's sprite set — the jar's `particles/sculk_charge.json` lists
+/// SEVEN textures, `minecraft:sculk_charge_0..6` in ASCENDING order —
+/// the index the `MutableSpriteSet.get` walk reads IS the file index;
+/// each frame the 16x16 the IHDR verifies; the `SculkChargeParticle`'s
+/// `setSpriteFromAge` rides the list the json speaks — the
+/// `LevelEventHandler` case-3006 arm's face walk the
+/// `SculkChargeParticleOptions(roll)` options feed).
+pub const PARTICLE_SCULK_CHARGE_JAR_PATHS: [&str; 7] = [
+    "assets/minecraft/textures/particle/sculk_charge_0.png",
+    "assets/minecraft/textures/particle/sculk_charge_1.png",
+    "assets/minecraft/textures/particle/sculk_charge_2.png",
+    "assets/minecraft/textures/particle/sculk_charge_3.png",
+    "assets/minecraft/textures/particle/sculk_charge_4.png",
+    "assets/minecraft/textures/particle/sculk_charge_5.png",
+    "assets/minecraft/textures/particle/sculk_charge_6.png",
+];
+/// The sculk charge pop's 4-frame set (javap: the `sculk_charge_pop`
+/// particle type's sprite set — the jar's `particles/sculk_charge_pop
+/// .json` lists FOUR textures, `minecraft:sculk_charge_pop_0..3` in
+/// ASCENDING order; each frame the 16x16 the IHDR verifies; the
+/// `SculkChargePopParticle`'s `setSpriteFromAge` rides the list — the
+/// case-3006 pop arm's cube burst the spreader's own decay feeds).
+pub const PARTICLE_SCULK_POP_JAR_PATHS: [&str; 4] = [
+    "assets/minecraft/textures/particle/sculk_charge_pop_0.png",
+    "assets/minecraft/textures/particle/sculk_charge_pop_1.png",
+    "assets/minecraft/textures/particle/sculk_charge_pop_2.png",
+    "assets/minecraft/textures/particle/sculk_charge_pop_3.png",
+];
 /// The sweep attack's 8-frame arc (javap: the `sweep_attack` particle
 /// type's sprite set — the jar's `particles/sweep_attack.json` lists
 /// EIGHT textures, `minecraft:sweep_0..7` in ASCENDING order — the
@@ -396,6 +425,26 @@ pub const PARTICLE_EXPLOSION_RUNTIME_PATHS: [&str; 16] = [
     "particle/explosion_14.png",
     "particle/explosion_15.png",
 ];
+/// The sculk charge's runtime-cache paths (the same textures/
+/// prefix strip the other lanes speak — the json's ASCENDING list
+/// the index folds).
+pub const PARTICLE_SCULK_CHARGE_RUNTIME_PATHS: [&str; 7] = [
+    "particle/sculk_charge_0.png",
+    "particle/sculk_charge_1.png",
+    "particle/sculk_charge_2.png",
+    "particle/sculk_charge_3.png",
+    "particle/sculk_charge_4.png",
+    "particle/sculk_charge_5.png",
+    "particle/sculk_charge_6.png",
+];
+/// The sculk charge pop's runtime-cache paths (the same strip — the
+/// json's ASCENDING list the index folds).
+pub const PARTICLE_SCULK_POP_RUNTIME_PATHS: [&str; 4] = [
+    "particle/sculk_charge_pop_0.png",
+    "particle/sculk_charge_pop_1.png",
+    "particle/sculk_charge_pop_2.png",
+    "particle/sculk_charge_pop_3.png",
+];
 /// The splash-potion ring's runtime-cache paths (the same textures/
 /// prefix strip the other lanes speak — the FILE index the json's
 /// descending list folds).
@@ -558,6 +607,15 @@ pub struct SkinData {
     /// the dragon's own block-break burst's pixel sources (the 32x32
     /// explosion frames the json's ascending list orders).
     pub particle_explosion_png_sha1s: [String; 16],
+    /// sha1s of the sculk charge's 7 frames (jar-verbatim integrity) —
+    /// the LevelEvent-3006 face walk's pixel sources (the 8x8
+    /// sculk_charge frames the json's ascending list orders).
+    pub particle_sculk_charge_png_sha1s: [String; 7],
+    /// sha1s of the sculk charge pop's 4 frames (jar-verbatim
+    /// integrity) — the LevelEvent-3006 pop arm's cube burst's pixel
+    /// sources (the 16x16 sculk_charge_pop frames the json's ascending
+    /// list orders).
+    pub particle_sculk_pop_png_sha1s: [String; 4],
     /// sha1s of the splash-potion ring's two 8-frame sets (jar-verbatim
     /// integrity) — the spell ring's pixel sources (the 8x8 effect/spell
     /// frames the two jsons' descending lists order).
@@ -1038,6 +1096,33 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             eh
         );
     }
+    // the sculk charge's 7 frames + the pop's 4 (the same shape check
+    // the glint walk speaks — the 8x8 the case-3006 quads sample over
+    // their own lives, the two jsons' ASCENDING lists the sets ride)
+    let mut particle_sculk_charge_png_sha1s: [String; 7] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_SCULK_CHARGE_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read sculk charge frame")?;
+        particle_sculk_charge_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (cw, ch, _sculk_rgba) = decode_rgba(&bytes).context("decode sculk charge frame")?;
+        anyhow::ensure!(
+            (cw, ch) == (16, 16),
+            "sculk charge frames must be the 16x16 sprites, got {}x{}",
+            cw,
+            ch
+        );
+    }
+    let mut particle_sculk_pop_png_sha1s: [String; 4] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_SCULK_POP_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read sculk pop frame")?;
+        particle_sculk_pop_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (pw, ph, _sculk_rgba) = decode_rgba(&bytes).context("decode sculk pop frame")?;
+        anyhow::ensure!(
+            (pw, ph) == (16, 16),
+            "sculk pop frames must be the 16x16 sprites, got {}x{}",
+            pw,
+            ph
+        );
+    }
     // the splash-potion ring's two 8-frame sets (the same shape check
     // the poof walk speaks — the 8x8 the ring quads sample over their
     // own lives, the type's own json the set rides)
@@ -1199,6 +1284,8 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_glow_png_sha1,
         particle_sweep_png_sha1s,
         particle_explosion_png_sha1s,
+        particle_sculk_charge_png_sha1s,
+        particle_sculk_pop_png_sha1s,
         particle_effect_png_sha1s,
         particle_spell_png_sha1s,
         item_potion_overlay_png_sha1,
@@ -1671,6 +1758,38 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .join(", ")
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_SCULK_CHARGE_PNG_SHA1S: [&str; 7] = [{}];\n",
+        data.particle_sculk_charge_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SCULK_CHARGE_RUNTIME_PATHS: [&str; 7] = [{}];\n",
+        PARTICLE_SCULK_CHARGE_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SCULK_POP_PNG_SHA1S: [&str; 4] = [{}];\n",
+        data.particle_sculk_pop_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SCULK_POP_RUNTIME_PATHS: [&str; 4] = [{}];\n",
+        PARTICLE_SCULK_POP_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = [{}];\n",
         data.particle_effect_png_sha1s
             .iter()
@@ -1964,6 +2083,12 @@ mod tests {
         let explosions = [sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png(), sweep_png()];
         let expected_explosion_sha1s: Vec<String> =
             explosions.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let sculks = [item_png(), item_png(), item_png(), item_png(), item_png(), item_png(), item_png()];
+        let expected_sculk_charge_sha1s: Vec<String> =
+            sculks.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let sculk_pops = [item_png(), item_png(), item_png(), item_png()];
+        let expected_sculk_pop_sha1s: Vec<String> =
+            sculk_pops.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let effects = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
         let expected_effect_sha1s: Vec<String> =
             effects.iter().map(|p| crate::util::sha1_hex(p)).collect();
@@ -2098,6 +2223,17 @@ mod tests {
             (PARTICLE_EXPLOSION_JAR_PATHS[13], explosions[13].clone()),
             (PARTICLE_EXPLOSION_JAR_PATHS[14], explosions[14].clone()),
             (PARTICLE_EXPLOSION_JAR_PATHS[15], explosions[15].clone()),
+            (PARTICLE_SCULK_CHARGE_JAR_PATHS[0], sculks[0].clone()),
+            (PARTICLE_SCULK_CHARGE_JAR_PATHS[1], sculks[1].clone()),
+            (PARTICLE_SCULK_CHARGE_JAR_PATHS[2], sculks[2].clone()),
+            (PARTICLE_SCULK_CHARGE_JAR_PATHS[3], sculks[3].clone()),
+            (PARTICLE_SCULK_CHARGE_JAR_PATHS[4], sculks[4].clone()),
+            (PARTICLE_SCULK_CHARGE_JAR_PATHS[5], sculks[5].clone()),
+            (PARTICLE_SCULK_CHARGE_JAR_PATHS[6], sculks[6].clone()),
+            (PARTICLE_SCULK_POP_JAR_PATHS[0], sculk_pops[0].clone()),
+            (PARTICLE_SCULK_POP_JAR_PATHS[1], sculk_pops[1].clone()),
+            (PARTICLE_SCULK_POP_JAR_PATHS[2], sculk_pops[2].clone()),
+            (PARTICLE_SCULK_POP_JAR_PATHS[3], sculk_pops[3].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[0], effects[0].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[1], effects[1].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[2], effects[2].clone()),
@@ -2239,6 +2375,16 @@ mod tests {
             data.particle_explosion_png_sha1s,
             expected_explosion_sha1s.as_slice(),
             "the explosion frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_sculk_charge_png_sha1s,
+            expected_sculk_charge_sha1s.as_slice(),
+            "the sculk charge frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_sculk_pop_png_sha1s,
+            expected_sculk_pop_sha1s.as_slice(),
+            "the sculk pop frames' own sha1s"
         );
         assert_eq!(
             data.particle_effect_png_sha1s,

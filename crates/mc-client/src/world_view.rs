@@ -486,6 +486,7 @@ pub struct SnapshotView {
     /// server's own lightning broadcasts — the anchor + the data word
     /// the branch split the render lane's own law folds).
     pub electric_spark_events: Vec<WireElectricSparkEvent>,
+    pub sculk_charge_events: Vec<WireSculkChargeEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -714,6 +715,27 @@ pub struct WireElectricSparkEvent {
     pub z: i32,
     /// The axis-table word (the case's own `iload_3` read).
     pub data: i32,
+}
+
+/// One wire SCULK-CHARGE arm — the Level Event packet's own landing
+/// (the 3006 words the server's own spreader broadcasts,
+/// [`mc_protocol::play::PARTICLES_SCULK_CHARGE_EFFECT`] the render
+/// lane speaks): the event's anchor block + the DATA word, verbatim
+/// (the `data >> 6` count and the `data & 63` face byte the case's
+/// own decode splits — the pop arm the count <= 0 words ride), plus
+/// the pop arm's full-block verdict the model's own state read banks
+/// (the `isCollisionShapeFullBlock` law the name-based approximation
+/// speaks) — the 40/±0.45 vs 20/±0.25 pair the pop walk rides.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireSculkChargeEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The packed data word (the count and face byte the case's own
+    /// decode splits).
+    pub data: i32,
+    /// The pop arm's full-block verdict (the model's own state read).
+    pub full_block: bool,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -2826,6 +2848,9 @@ pub fn materialize_snapshot_view(
         // and no spark words (the join snapshot carries no 3002
         // traffic — the empty mailbox the render lane skips)
         electric_spark_events: Vec::new(),
+        // and no sculk words (the join snapshot carries no 3006
+        // traffic — the empty mailbox the render lane skips)
+        sculk_charge_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3307,6 +3332,23 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the sculk-charge effect's own projection (the mailbox
+        // verbatim — the anchor + the packed data word + the full-block
+        // verdict the arms carry, the render lane's own law reads):
+        // each 3006 word ships once with this view, the worker's drain
+        // empties the mailbox after
+        let sculk_charge_events = self
+            .model
+            .sculk_charge_events
+            .iter()
+            .map(|arm| WireSculkChargeEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+                full_block: arm.full_block,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3699,6 +3741,10 @@ impl LiveView {
                 // arm too — the 3002 words are the connection's own
                 // traffic, not the pose's
                 electric_spark_events,
+                // the sculk-charge effect's arms ride the pose-less
+                // arm too — the 3006 words are the connection's own
+                // traffic, not the pose's
+                sculk_charge_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -3861,6 +3907,10 @@ impl LiveView {
             // — the 3002 words follow the mailbox exactly like the
             // gateway's own arms do
             electric_spark_events,
+            // the sculk-charge effect's arms ride every refresh too
+            // — the 3006 words follow the mailbox exactly like the
+            // spark's own arms do
+            sculk_charge_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

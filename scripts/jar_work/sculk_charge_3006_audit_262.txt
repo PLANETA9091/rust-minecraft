@@ -1,0 +1,103 @@
+=== LevelEventHandler.levelEvent case 3006 PARTICLES_SCULK_CHARGE (offset 2668) — 26.2 jar audit ===
+
+VANILLA CONSTANT: PARTICLES_SCULK_CHARGE = 3006 (net/minecraft/world/level/block/LevelEvent).
+CALLER (the ONLY vanilla caller): SculkSpreader.updateCursors —
+    96: aload 9; getfield #55.charge:I; 101: ifgt start+122
+    104: aload_1; 105: sipush 3006; 108: aload 9; invokevirtual getPos; 113: iconst_0
+    114: invokeinterface LevelAccessor.levelEvent(I;BlockPos;I)V
+  → data = 0 when the cursor's charge is spent. The count>0 face-walk is the
+  case's own bytecodes — the wire band plugins/older servers may speak.
+
+CASE LAW (data → var3):
+  count = data >> 6                                    (2668 ishr)
+  if count > 0:                                        (2674 ifle → 2987)
+    // probability-gated sound
+    if random.nextFloat() < 0.3F + count * 0.1F        (2679 fcmpg/ifge #380=0.3 #294=0.1)
+      volume = 0.15F + 0.02F * count * count * nextFloat()   (2701..2724 #488=0.15 #489=0.02)
+      pitch  = 0.4F  + 0.3F * count * nextFloat()            (2726..2744 #137=0.4 #380=0.3)
+      playLocalSound(pos, SCULK_BLOCK_CHARGE, BLOCKS, volume, pitch, false)
+      // SCULK_BLOCK_CHARGE key = "block.sculk.charge" (SoundEvents clinit #7045;
+      // sounds.json: block/sculk/charge1..5)
+    // particles (always)
+    packedFaces = (byte)(data & 63)                    (2765 iand 63 i2b)
+    countProvider = UniformInt.of(0, count)            (2772)
+    float dead = 0.005F                                 (2780 #493 — stored, read only via the lambda's literal)
+    supplier = () -> new Vec3(Mth.nextDouble(r, -0.005, 0.005), x3)   (2785 indy #494 → lambda$levelEvent$0; #914=-0.005 #916=0.005)
+    if packedFaces == 0:                               (2794 ifne → 2899)
+      for face in Direction.values():                  (DOWN UP NORTH SOUTH WEST EAST)
+        roll = face == DOWN ? 3.1415927F : 0.0F        (2826/#510 = PI)
+        span = face.axis == Y ? 0.65 : 0.57            (2854/#519, 2860/#521)
+        ParticleUtils.spawnParticlesOnBlockFace(level, pos, new SculkChargeParticleOptions(roll), countProvider, face, supplier, span)
+    else:
+      for face in MultifaceBlock.unpack(packedFaces):  (2901 — EnumSet, ordinal order)
+        roll = face == UP ? 3.1415927F : 0.0F          (2935/#510)
+        ParticleUtils.spawnParticlesOnBlockFace(..., roll options, countProvider, face, supplier, 0.35)   (2950/#556)
+    → return                                            (2896/2984 → 3190)
+  else (count <= 0, THE VANILLA-CALLER ARM):
+    playLocalSound(pos, SCULK_BLOCK_CHARGE, BLOCKS, 1.0F, 1.0F, false)   (2987)
+    full = level.getBlockState(pos).isCollisionShapeFullBlock(level, pos)   (3009/3017)
+    n      = full ? 40 : 20                             (3027/3032)
+    spread = full ? 0.45F : 0.25F                       (3041/#565=0.45, 3047/#139=0.25)
+    speed  = 0.07F                                      (3054/#566)
+    for i in 0..n:                                      (3056 loop)
+      dx = 2.0F * nextFloat() - 1.0F; dy = ...; dz = ...   (three draws, x→y→z)
+      addParticle(SCULK_CHARGE_POP,
+        pos.x + 0.5 + dx*spread, pos.y + 0.5 + dy*spread, pos.z + 0.5 + dz*spread,
+        dx*0.07F, dy*0.07F, dz*0.07F)
+
+=== ParticleUtils.spawnParticlesOnBlockFace (singular, span param) ===
+  n = countProvider.sample(random)   // once per face
+  for i in 0..n:
+    speed = supplier.get()           // THREE draws first
+    spawnParticleOnFace(level, pos, face, options, speed, span)
+
+=== ParticleUtils.spawnParticleOnFace (the position/velocity law) ===
+  center = Vec3.atCenterOf(pos)      // +0.5 trio
+  sx = face.getStepX(); sy = getStepY(); sz = getStepZ()
+  // per axis (X at 30..61, Y at 63..94, Z at 96..127):
+  p.x = center.x + (sx != 0 ? sx * span : Mth.nextDouble(r, -0.5, 0.5))   (#48=-0.5 #50=0.5)
+  // velocity (129..175):
+  v.x = sx != 0 ? 0.0 : speed.x()    // THE NORMAL AXIS ZEROES, the in-plane pair keeps
+  v.y = sy != 0 ? 0.0 : speed.y()
+  v.z = sz != 0 ? 0.0 : speed.z()
+  addParticle(options, p.x, p.y, p.z, v.x, v.y, v.z)
+  // draw order per particle: supplier's 3 nextDouble, then the TWO perpendicular
+  // position nextDoubles (X→Y→Z axis order; the aligned axis draws nothing)
+  // ⚠ LATENT-BUG FIX this round banks: the wax/electric faces walks had the
+  // ternary INVERTED (normal kept, in-plane zeroed) — the jar's ifne speaks
+  // dconst_0 on the aligned axis (131: iload 8; ifne → 142: dconst_0), the
+  // position law's own structure (37: ifne → the span arm) cross-pins it.
+
+=== MultifaceBlock.unpack(byte) ===
+  EnumSet.noneOf(Direction.class); for dir in Direction.values():
+    if (packed & (1 << dir.ordinal())) != 0: set.add(dir)
+  → iteration order = Direction.values() ordinal order (DOWN UP N S W E)
+
+=== SculkChargeParticle (client) ===
+  ctor(level, x,y,z, xs,ys,zs, sprites): super(..., sprites.first())
+    friction 0.96 (#13), scale(1.5) (#24), hasPhysics false, setSpriteFromAge
+  Provider.createParticle(options, level, x..z, xs..zs, random):
+    new SculkChargeParticle(level, x,y,z, xs,ys,zs, spriteSet)
+    setAlpha(1.0F); setParticleSpeed(xs, ys, zs)   // VERBATIM — no provider multiply
+    oRoll = roll = options.roll()                   // static roll, no spin
+    setLifetime(random.nextInt(12) + 8)             // 8..19 ticks — ONE draw
+  tick: super.tick() + setSpriteFromAge (frame = age*(7-1)/lifetime)
+  getLightCoords: withBlock(super, 15) — fullbright; getLayer: TRANSLUCENT
+  sprites: particles/sculk_charge.json → minecraft:sculk_charge_0..6 (7 frames, 8x8)
+
+=== SculkChargePopParticle (client) ===
+  ctor: same shape — friction 0.96, scale(1.0), hasPhysics false, sprite by age
+  Provider: new + setAlpha(1.0) + setParticleSpeed(xs,ys,zs) verbatim
+    + setLifetime(random.nextInt(4) + 6)            // 6..9 ticks — ONE draw
+  fullbright (withBlock 15), TRANSLUCENT
+  sprites: particles/sculk_charge_pop.json → minecraft:sculk_charge_pop_0..3 (4 frames, 8x8)
+
+=== SculkChargeParticleOptions ===
+  record(float roll); STREAM_CODEC = FLOAT composite (the roll the network carries
+  for PARTICLE packets — the level-event lane constructs it CLIENT-SIDE from the
+  case's own roll constants, the wire word stays the raw data int).
+
+Audit artifacts: levelEvent_262_full.txt (case 2668..3192), sculk_spreader_updatecursors_262.txt,
+sculk_charge_particle_262.txt, sculk_charge_pop_262.txt, particleutils_262.txt (spawnParticleOnFace),
+soundevents_clinit_262.txt (#7045 = "block.sculk.charge"), levelhandler_lambdas_262.txt
+(lambda$levelEvent$0: three Mth.nextDouble(random, -0.005, 0.005)).

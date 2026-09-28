@@ -1559,6 +1559,38 @@ pub const END_GATEWAY_SPAWN_EFFECT: i32 = 3000;
 /// wears.
 pub const ELECTRIC_SPARK_EFFECT: i32 = 3002;
 
+/// THE SCULK-CHARGE PARTICLE EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `PARTICLES_SCULK_CHARGE`,
+/// the case `LevelEventHandler.levelEvent` offset 2668 speaks): the
+/// DATA word the case's own body SPLITS (`iload_3` the decode opens
+/// with): the `data >> 6` count the sound gate and the face walk
+/// ride — the count > 0 arm the probability-gated
+/// `playLocalSound(pos, SCULK_BLOCK_CHARGE, BLOCKS, 0.15F + 0.02F *
+/// count * count * nextFloat(), 0.4F + 0.3F * count * nextFloat(),
+/// false)` walk spends (`block.sculk.charge` the SoundEvents clinit
+/// #7045 bytes carry, the gate `nextFloat() < 0.3F + count * 0.1F`
+/// the fcmpg/ifge pair keeps) plus the per-face sculk-charge burst
+/// the `ParticleUtils.spawnParticlesOnBlockFace` delegates bank (the
+/// `packed = data & 63` byte the zero arm's SIX
+/// `Direction.values()` faces keeps — the DOWN face's π roll the
+/// `SculkChargeParticleOptions` rides, the 0.65/0.57 axis spans —
+/// the unpack arm the `MultifaceBlock.unpack` ordinal-order set
+/// walks, the UP face's π roll, the 0.35 span) — while the
+/// count <= 0 arm the ONE fixed
+/// `playLocalSound(pos, SCULK_BLOCK_CHARGE, BLOCKS, 1.0F, 1.0F,
+/// false)` voice + the sculk-charge-pop cube burst the
+/// `isCollisionShapeFullBlock` split keeps (40 pops at ±0.45 over a
+/// full block, 20 at ±0.25 otherwise, the `2.0F * nextFloat() -
+/// 1.0F` trio the ±0.07 speeds ride). THE CALLER the spreader's own
+/// decay pins — `SculkSpreader.updateCursors`' `charge <= 0` gate
+/// the `sipush 3006, cursor.getPos(), iconst_0` levelEvent call the
+/// bytecode speaks (the data 0 word the pop arm rides — the ONLY
+/// vanilla caller the 26.2 jar banks; the count>0 face walk the
+/// plugins/older servers' word the wire band keeps). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const PARTICLES_SCULK_CHARGE_EFFECT: i32 = 3006;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -11151,6 +11183,11 @@ mod tests {
             ELECTRIC_SPARK_EFFECT,
             3002,
             "the electric-spark effect the lightning's own copper clean speaks"
+        );
+        assert_eq!(
+            PARTICLES_SCULK_CHARGE_EFFECT,
+            3006,
+            "the sculk-charge effect the spreader's own decay walk speaks"
         );
         assert_eq!(
             SPLASH_POTION_EFFECT,

@@ -1,0 +1,204 @@
+=== <init>(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/particle/SpriteSet;)V max_stack=15 max_locals=15 ===
+      0: aload_0 
+      1: aload_1 
+      2: dload_2 
+      3: dload 4
+      5: dload 6
+      7: dload 8
+      9: dload 10
+     11: dload 12
+     13: aload 14
+     15: invokeinterface #2.first:()Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;
+     20: invokespecial #8.<init>:(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V
+     23: aload_0 
+     24: ldc #13
+     26: putfield #15.friction:F
+     29: aload_0 
+     30: aload 14
+     32: putfield #15.sprites:Lnet/minecraft/client/particle/SpriteSet;
+     35: aload_0 
+     36: ldc #24
+     38: invokevirtual #15.scale:(F)Lnet/minecraft/client/particle/Particle;
+     41: pop 
+     42: aload_0 
+     43: iconst_0 
+     44: putfield #15.hasPhysics:Z
+     47: aload_0 
+     48: aload 14
+     50: invokevirtual #15.setSpriteFromAge:(Lnet/minecraft/client/particle/SpriteSet;)V
+     53: return 
+
+=== getLightCoords(F)I max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: fload_1 
+      2: invokespecial #8.getLightCoords:(F)I
+      5: bipush 15
+      7: invokestatic #44.withBlock:(II)I
+     10: ireturn 
+
+=== getLayer()Lnet/minecraft/client/particle/SingleQuadParticle$Layer; max_stack=1 max_locals=1 ===
+      0: getstatic #50.TRANSLUCENT:Lnet/minecraft/client/particle/SingleQuadParticle$Layer;
+      3: areturn 
+
+=== tick()V max_stack=2 max_locals=1 ===
+      0: aload_0 
+      1: invokespecial #8.tick:()V
+      4: aload_0 
+      5: aload_0 
+      6: getfield #15.sprites:Lnet/minecraft/client/particle/SpriteSet;
+      9: invokevirtual #15.setSpriteFromAge:(Lnet/minecraft/client/particle/SpriteSet;)V
+     12: return 
+
+=== <init>(Lnet/minecraft/client/particle/SpriteSet;)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.sprite:Lnet/minecraft/client/particle/SpriteSet;
+      9: return 
+
+=== createParticle(Lnet/minecraft/core/particles/SculkChargeParticleOptions;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle; max_stack=16 max_locals=17 ===
+      0: new net/minecraft/client/particle/SculkChargeParticle
+      3: dup 
+      4: aload_2 
+      5: dload_3 
+      6: dload 5
+      8: dload 7
+     10: dload 9
+     12: dload 11
+     14: dload 13
+     16: aload_0 
+     17: getfield #8.sprite:Lnet/minecraft/client/particle/SpriteSet;
+     20: invokespecial #13.<init>:(Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/particle/SpriteSet;)V
+     23: astore 16
+     25: aload 16
+     27: fconst_1 
+     28: invokevirtual #13.setAlpha:(F)V
+     31: aload 16
+     33: dload 9
+     35: dload 11
+     37: dload 13
+     39: invokevirtual #13.setParticleSpeed:(DDD)V
+     42: aload 16
+     44: aload_1 
+     45: invokevirtual #27.roll:()F
+     48: putfield #13.oRoll:F
+     51: aload 16
+     53: aload_1 
+     54: invokevirtual #27.roll:()F
+     57: putfield #13.roll:F
+     60: aload 16
+     62: aload 15
+     64: bipush 12
+     66: invokeinterface #39.nextInt:(I)I
+     71: bipush 8
+     73: iadd 
+     74: invokevirtual #13.setLifetime:(I)V
+     77: aload 16
+     79: areturn 
+
+=== toString()Ljava/lang/String; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #52
+      6: areturn 
+
+=== hashCode()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #56
+      6: ireturn 
+
+=== equals(Ljava/lang/Object;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokedynamic #60
+      7: ireturn 
+
+=== sprite()Lnet/minecraft/client/particle/SpriteSet; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.sprite:Lnet/minecraft/client/particle/SpriteSet;
+      4: areturn 
+
+=== createParticle(Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle; max_stack=16 max_locals=16 ===
+      0: aload_0 
+      1: aload_1 
+      2: checkcast net/minecraft/core/particles/SculkChargeParticleOptions
+      5: aload_2 
+      6: dload_3 
+      7: dload 5
+      9: dload 7
+     11: dload 9
+     13: dload 11
+     15: dload 13
+     17: aload 15
+     19: invokevirtual #8.createParticle:(Lnet/minecraft/core/particles/SculkChargeParticleOptions;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle;
+     22: areturn 
+
+=== <init>(F)V max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: fload_1 
+      6: putfield #8.roll:F
+      9: return 
+
+=== getType()Lnet/minecraft/core/particles/ParticleType; max_stack=1 max_locals=1 ===
+      0: getstatic #14.SCULK_CHARGE:Lnet/minecraft/core/particles/ParticleType;
+      3: areturn 
+
+=== toString()Ljava/lang/String; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #19
+      6: areturn 
+
+=== hashCode()I max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: invokedynamic #23
+      6: ireturn 
+
+=== equals(Ljava/lang/Object;)Z max_stack=2 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokedynamic #27
+      7: ireturn 
+
+=== roll()F max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.roll:F
+      4: freturn 
+
+=== lambda$static$2(Lnet/minecraft/core/particles/SculkChargeParticleOptions;)Ljava/lang/Float; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.roll:F
+      4: invokestatic #32.valueOf:(F)Ljava/lang/Float;
+      7: areturn 
+
+=== lambda$static$0(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App; max_stack=3 max_locals=1 ===
+      0: aload_0 
+      1: getstatic #38.FLOAT:Lcom/mojang/serialization/codecs/PrimitiveCodec;
+      4: ldc #43
+      6: invokeinterface #45.fieldOf:(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;
+     11: invokedynamic #50
+     16: invokevirtual #55.forGetter:(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;
+     19: invokevirtual #61.group:(Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P1;
+     22: aload_0 
+     23: invokedynamic #66
+     28: invokevirtual #68.apply:(Lcom/mojang/datafixers/kinds/Applicative;Ljava/util/function/Function;)Lcom/mojang/datafixers/kinds/App;
+     31: areturn 
+
+=== lambda$static$1(Lnet/minecraft/core/particles/SculkChargeParticleOptions;)Ljava/lang/Float; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.roll:F
+      4: invokestatic #32.valueOf:(F)Ljava/lang/Float;
+      7: areturn 
+
+=== <clinit>()V max_stack=3 max_locals=0 ===
+      0: invokedynamic #72
+      5: invokestatic #74.mapCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+      8: putstatic #8.CODEC:Lcom/mojang/serialization/MapCodec;
+     11: getstatic #84.FLOAT:Lnet/minecraft/network/codec/StreamCodec;
+     14: invokedynamic #88
+     19: invokedynamic #66
+     24: invokestatic #90.composite:(Lnet/minecraft/network/codec/StreamCodec;Ljava/util/function/Function;Ljava/util/function/Function;)Lnet/minecraft/network/codec/StreamCodec;
+     27: putstatic #8.STREAM_CODEC:Lnet/minecraft/network/codec/StreamCodec;
+     30: return 
+

@@ -1,0 +1,190 @@
+=== <init>(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/gameevent/PositionSource;)V max_stack=2 max_locals=3 ===
+      0: aload_0 
+      1: invokespecial #2.<init>:()V
+      4: aload_0 
+      5: aload_1 
+      6: putfield #8.blockState:Lnet/minecraft/world/level/block/state/BlockState;
+      9: aload_0 
+     10: aload_2 
+     11: putfield #8.positionSource:Lnet/minecraft/world/level/gameevent/PositionSource;
+     14: aload_0 
+     15: invokestatic #18.createLevelSpreader:()Lnet/minecraft/world/level/block/SculkSpreader;
+     18: putfield #8.sculkSpreader:Lnet/minecraft/world/level/block/SculkSpreader;
+     21: return 
+
+=== getListenerSource()Lnet/minecraft/world/level/gameevent/PositionSource; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.positionSource:Lnet/minecraft/world/level/gameevent/PositionSource;
+      4: areturn 
+
+=== getListenerRadius()I max_stack=1 max_locals=1 ===
+      0: bipush 8
+      2: ireturn 
+
+=== getDeliveryMode()Lnet/minecraft/world/level/gameevent/GameEventListener$DeliveryMode; max_stack=1 max_locals=1 ===
+      0: getstatic #28.BY_DISTANCE:Lnet/minecraft/world/level/gameevent/GameEventListener$DeliveryMode;
+      3: areturn 
+
+=== handleGameEvent(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/Holder;Lnet/minecraft/world/level/gameevent/GameEvent$Context;Lnet/minecraft/world/phys/Vec3;)Z max_stack=5 max_locals=8 ===
+      0: aload_2 
+      1: getstatic #34.ENTITY_DIE:Lnet/minecraft/core/Holder$Reference;
+      4: invokeinterface #40.is:(Lnet/minecraft/core/Holder;)Z
+      9: ifeq start+139
+     12: aload_3 
+     13: invokevirtual #46.sourceEntity:()Lnet/minecraft/world/entity/Entity;
+     16: astore 6
+     18: aload 6
+     20: instanceof net/minecraft/world/entity/LivingEntity
+     23: ifeq start+139
+     26: aload 6
+     28: checkcast net/minecraft/world/entity/LivingEntity
+     31: astore 5
+     33: aload 5
+     35: invokevirtual #51.wasExperienceConsumed:()Z
+     38: ifne start+137
+     41: aload 5
+     43: invokevirtual #51.getLastDamageSource:()Lnet/minecraft/world/damagesource/DamageSource;
+     46: astore 6
+     48: aload 5
+     50: aload_1 
+     51: aload 6
+     53: invokedynamic #61
+     58: invokestatic #66.map:(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;
+     61: checkcast net/minecraft/world/entity/Entity
+     64: invokevirtual #51.getExperienceReward:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;)I
+     67: istore 7
+     69: aload 5
+     71: invokevirtual #51.shouldDropExperience:()Z
+     74: ifeq start+112
+     77: iload 7
+     79: ifle start+112
+     82: aload_0 
+     83: getfield #8.sculkSpreader:Lnet/minecraft/world/level/block/SculkSpreader;
+     86: aload 4
+     88: getstatic #81.UP:Lnet/minecraft/core/Direction;
+     91: ldc2_w #86
+     94: invokevirtual #89.relative:(Lnet/minecraft/core/Direction;D)Lnet/minecraft/world/phys/Vec3;
+     97: invokestatic #95.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+    100: iload 7
+    102: invokevirtual #18.addCursors:(Lnet/minecraft/core/BlockPos;I)V
+    105: aload_0 
+    106: aload_1 
+    107: aload 5
+    109: invokevirtual #8.tryAwardItSpreadsAdvancement:(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;)V
+    112: aload 5
+    114: invokevirtual #51.skipDropExperience:()V
+    117: aload_0 
+    118: getfield #8.positionSource:Lnet/minecraft/world/level/gameevent/PositionSource;
+    121: aload_1 
+    122: invokeinterface #112.getPosition:(Lnet/minecraft/world/level/Level;)Ljava/util/Optional;
+    127: aload_0 
+    128: aload_1 
+    129: invokedynamic #117
+    134: invokevirtual #122.ifPresent:(Ljava/util/function/Consumer;)V
+    137: iconst_1 
+    138: ireturn 
+    139: iconst_0 
+    140: ireturn 
+
+=== getSculkSpreader()Lnet/minecraft/world/level/block/SculkSpreader; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #8.sculkSpreader:Lnet/minecraft/world/level/block/SculkSpreader;
+      4: areturn 
+
+=== bloom(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)V max_stack=17 max_locals=5 ===
+      0: aload_1 
+      1: aload_2 
+      2: aload_3 
+      3: getstatic #128.PULSE:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+      6: iconst_1 
+      7: invokestatic #134.valueOf:(Z)Ljava/lang/Boolean;
+     10: invokevirtual #140.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     13: checkcast net/minecraft/world/level/block/state/BlockState
+     16: iconst_3 
+     17: invokevirtual #148.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+     20: pop 
+     21: aload_1 
+     22: aload_2 
+     23: aload_3 
+     24: invokevirtual #140.getBlock:()Lnet/minecraft/world/level/block/Block;
+     27: bipush 8
+     29: invokevirtual #148.scheduleTick:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/Block;I)V
+     32: aload_1 
+     33: getstatic #162.SCULK_SOUL:Lnet/minecraft/core/particles/SimpleParticleType;
+     36: aload_2 
+     37: invokevirtual #95.getX:()I
+     40: i2d 
+     41: ldc2_w #86
+     44: dadd 
+     45: aload_2 
+     46: invokevirtual #95.getY:()I
+     49: i2d 
+     50: ldc2_w #174
+     53: dadd 
+     54: aload_2 
+     55: invokevirtual #95.getZ:()I
+     58: i2d 
+     59: ldc2_w #86
+     62: dadd 
+     63: iconst_2 
+     64: ldc2_w #179
+     67: dconst_0 
+     68: ldc2_w #179
+     71: dconst_0 
+     72: invokevirtual #148.sendParticles:(Lnet/minecraft/core/particles/ParticleOptions;DDDIDDDD)I
+     75: pop 
+     76: aload_1 
+     77: aconst_null 
+     78: aload_2 
+     79: getstatic #186.SCULK_CATALYST_BLOOM:Lnet/minecraft/sounds/SoundEvent;
+     82: getstatic #192.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+     85: fconst_2 
+     86: ldc #197
+     88: aload 4
+     90: invokeinterface #199.nextFloat:()F
+     95: ldc #204
+     97: fmul 
+     98: fadd 
+     99: invokevirtual #148.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    102: return 
+
+=== tryAwardItSpreadsAdvancement(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;)V max_stack=4 max_locals=6 ===
+      0: aload_2 
+      1: invokevirtual #51.getLastHurtByMob:()Lnet/minecraft/world/entity/LivingEntity;
+      4: astore_3 
+      5: aload_3 
+      6: instanceof net/minecraft/server/level/ServerPlayer
+      9: ifeq start+54
+     12: aload_3 
+     13: checkcast net/minecraft/server/level/ServerPlayer
+     16: astore 4
+     18: aload_2 
+     19: invokevirtual #51.getLastDamageSource:()Lnet/minecraft/world/damagesource/DamageSource;
+     22: ifnonnull start+37
+     25: aload_1 
+     26: invokevirtual #216.damageSources:()Lnet/minecraft/world/damagesource/DamageSources;
+     29: aload 4
+     31: invokevirtual #222.playerAttack:(Lnet/minecraft/world/entity/player/Player;)Lnet/minecraft/world/damagesource/DamageSource;
+     34: goto start+41
+     37: aload_2 
+     38: invokevirtual #51.getLastDamageSource:()Lnet/minecraft/world/damagesource/DamageSource;
+     41: astore 5
+     43: getstatic #228.KILL_MOB_NEAR_SCULK_CATALYST:Lnet/minecraft/advancements/triggers/KilledTrigger;
+     46: aload 4
+     48: aload_2 
+     49: aload 5
+     51: invokevirtual #234.trigger:(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)V
+     54: return 
+
+=== lambda$handleGameEvent$0(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;)V max_stack=5 max_locals=3 ===
+      0: aload_0 
+      1: aload_1 
+      2: aload_2 
+      3: invokestatic #95.containing:(Lnet/minecraft/core/Position;)Lnet/minecraft/core/BlockPos;
+      6: aload_0 
+      7: getfield #8.blockState:Lnet/minecraft/world/level/block/state/BlockState;
+     10: aload_1 
+     11: invokevirtual #148.getRandom:()Lnet/minecraft/util/RandomSource;
+     14: invokevirtual #8.bloom:(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/util/RandomSource;)V
+     17: return 
+

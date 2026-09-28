@@ -6747,6 +6747,14 @@ pub struct App {
     /// wax_on/wax_off/scrape arms' own puff pixels the LevelEvent lane
     /// draws; the missing file the honest absence keeps)
     pub glow_sprite: Option<crate::avatar::GlowSprite>,
+    /// The sculk charge's 7-frame set (the lazy load — the
+    /// LevelEvent-3006 face walk's own pulse pixels the lane draws;
+    /// the missing file the honest absence keeps)
+    pub sculk_charge_frames: Option<crate::avatar::SculkChargeFrames>,
+    /// The sculk charge pop's 4-frame set (the lazy load — the
+    /// LevelEvent-3006 pop arm's own burst pixels the lane draws;
+    /// the missing file the honest absence keeps)
+    pub sculk_pop_frames: Option<crate::avatar::SculkPopFrames>,
     /// The splash-potion ring's TWO sprite sets (the same lazy load —
     /// the `effect_N` set the regular splash rides, the `spell_N` set
     /// the instant word answers).
@@ -7449,6 +7457,8 @@ impl App {
             heart_sprite: None,
             glint_sprite: None,
             glow_sprite: None,
+            sculk_charge_frames: None,
+            sculk_pop_frames: None,
             effect_frames: None,
             spell_frames: None,
             potion_sprites: None,
@@ -22818,6 +22828,90 @@ impl App {
         }
     }
 
+    /// THE SCULK-CHARGE WIRE LANE (javap `LevelEventHandler` case
+    /// 3006 — offset 2668 — over the 26.2 jar): the server's own
+    /// spreader the client NOW answers (the data word the case's own
+    /// body SPLITS — the `data >> 6` count the decode opens with).
+    /// The count > 0 arm the probability-gated voice + the face walk
+    /// keeps (the gate `nextFloat() < 0.3F + count * 0.1F` the
+    /// fcmpg/ifge pair speaks, the volume `0.15F + 0.02F * count *
+    /// count * nextFloat()` the volume draw FIRST, the pitch `0.4F +
+    /// 0.3F * count * nextFloat()` the pitch draw SECOND — the draw
+    /// order the bytecodes pin; the face walk the six faces or the
+    /// unpacked set the `data & 63` byte arms — the walk the stream
+    /// the same level ambient rng rides), the count <= 0 arm (THE
+    /// VANILLA-CALLER ARM the spreader's own decay feeds) the ONE
+    /// fixed `1.0F`/`1.0F` voice + the pop cube burst the
+    /// full-block verdict the model's arm carried splits (40 at
+    /// ±0.45, 20 at ±0.25). The `block.sculk.charge` key the
+    /// SoundEvents clinit #7045 bytes carry — the sounds.json row
+    /// the table banks, NO new assets the lane demands.
+    pub fn live_sculk_charge_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireSculkChargeEvent>,
+    ) {
+        for ev in events {
+            let count = ev.data >> 6;
+            if count > 0 {
+                // THE GATED VOICE (the probability the charge count
+                // raises — the gate draw FIRST, then the volume and
+                // pitch draws the branch body only spends when the
+                // gate passes)
+                if self.level_ambient_rng.next_f32() < 0.3 + count as f32 * 0.1 {
+                    let volume = 0.15
+                        + count as f32
+                            * count as f32
+                            * self.level_ambient_rng.next_f32()
+                            * 0.02;
+                    let pitch = 0.4 + count as f32 * self.level_ambient_rng.next_f32() * 0.3;
+                    self.play_sculk_charge(ev.x, ev.y, ev.z, volume, pitch);
+                }
+                // THE FACE WALK (the packed byte the arms split — the
+                // walk the same stream the voice rode continues)
+                let burst = crate::particles::sculk_charge_faces(
+                    (ev.x, ev.y, ev.z),
+                    count,
+                    ev.data & 63,
+                    &mut self.level_ambient_rng,
+                );
+                self.particles.extend(burst);
+            } else {
+                // THE POP ARM (the vanilla caller's own data 0 word —
+                // the fixed voice the bytecodes' fconst_1 pair
+                // speaks, the cube burst the full-block verdict
+                // splits)
+                self.play_sculk_charge(ev.x, ev.y, ev.z, 1.0, 1.0);
+                let pops = crate::particles::sculk_charge_pops(
+                    (ev.x, ev.y, ev.z),
+                    ev.full_block,
+                    &mut self.level_ambient_rng,
+                );
+                self.particles.extend(pops);
+            }
+        }
+    }
+
+    /// THE SCULK-CHARGE VOICE WALK (the case's own
+    /// `playLocalSound(pos, SCULK_BLOCK_CHARGE, BLOCKS, v, p, false)`
+    /// shape the two arms speak): the BLOCK CENTER the
+    /// `playLocalSound(BlockPos, ...)` resolve places, the
+    /// distance-delay flag false the immediate voice keeps.
+    fn play_sculk_charge(&mut self, x: i32, y: i32, z: i32, volume: f32, pitch: f32) {
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "block.sculk.charge",
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -27654,6 +27748,14 @@ impl App {
             self.glow_sprite =
                 crate::avatar::GlowSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.sculk_charge_frames.is_none() {
+            self.sculk_charge_frames =
+                crate::avatar::SculkChargeFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
+        if self.sculk_pop_frames.is_none() {
+            self.sculk_pop_frames =
+                crate::avatar::SculkPopFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.glint_sprite.is_none() {
             self.glint_sprite =
                 crate::avatar::GlintSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -27717,6 +27819,12 @@ impl App {
         // arms' puffs sample — the OPAQUE lane the flame draw's own
         // group shape keeps)
         let mut glow_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        // the sculk charge's own groups (the frame-keyed frames the
+        // age walk rides — the LevelEvent-3006 face walk's 16x16 set)
+        let mut sculk_charge_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the sculk pop's own groups (the frame-keyed frames the age
+        // walk rides — the LevelEvent-3006 pop arm's 16x16 set)
+        let mut sculk_pop_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         // THE SPLASH LANE'S GROUPS (the ring keyed by the instant flag
         // + the frame file, the shards keyed by the item layer — the
         // closure's own capture)
@@ -27769,6 +27877,61 @@ impl App {
                         tex: "particle_glow",
                         tint: p.col,
                     });
+                }
+                crate::particles::ParticleKind::SculkCharge { flipped } => {
+                    // the sculk pulse's own quad (the 16x16 frame the
+                    // age's own walk speaks — the same
+                    // setSpriteFromAge chain the explosion rides, the
+                    // get law's `age * (size - 1) / lifetime` the
+                    // frames speak, the json's ASCENDING order the
+                    // frame index reads directly): the static roll the
+                    // options' π carries the UV's half-turn walk rides
+                    // (the corners BL/BR/TR/TL swap the diagonal — the
+                    // `flipped` fold the kind banks), the white tint
+                    // the ctor never speaks, the fullbright look the
+                    // getLightCoords withBlock(15) override speaks
+                    // (the untinted full sample the lane's honest
+                    // equivalent), the TRANSLUCENT layer the
+                    // getLayer override returns
+                    let frame = crate::particles::sculk_charge_frame(p.age, p.lifetime);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: if flipped {
+                            // the π roll's own half-turn (the corners'
+                            // diagonal swap the rotation speaks)
+                            [
+                                [16.0, 0.0],
+                                [0.0, 0.0],
+                                [0.0, 16.0],
+                                [16.0, 16.0],
+                            ]
+                        } else {
+                            [[0.0, 16.0], [16.0, 16.0], [16.0, 0.0], [0.0, 0.0]]
+                        },
+                        tex: "particle_sculk_charge",
+                        tint: p.col,
+                    };
+                    match sculk_charge_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => sculk_charge_groups.push((frame, vec![quad])),
+                    }
+                }
+                crate::particles::ParticleKind::SculkChargePop => {
+                    // the pop's own quad (the 16x16 frame the age's
+                    // own walk speaks — the 4-frame set the json's
+                    // ascending list orders, the white tint, the
+                    // fullbright look, the TRANSLUCENT layer)
+                    let frame = crate::particles::sculk_pop_frame(p.age, p.lifetime);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 16.0], [16.0, 16.0], [16.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_sculk_charge_pop",
+                        tint: p.col,
+                    };
+                    match sculk_pop_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => sculk_pop_groups.push((frame, vec![quad])),
+                    }
                 }
                 crate::particles::ParticleKind::Terrain { tile } => {
                     // the quarter law over the tile's 0..1 (the U edge
@@ -28309,6 +28472,25 @@ impl App {
             fb.draw_sampled_quads(vp, &glow_quads, &mut |_tex, u, v| {
                 Some(glow.pixel(u, v))
             });
+        }
+        // the sculk charge groups (the pulse's own 16x16 pixels — the
+        // frames the json's ascending order holds, the age walk the
+        // setSpriteFromAge chain speaks)
+        if let Some(frames) = &self.sculk_charge_frames {
+            for (frame, quads) in &sculk_charge_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
+                });
+            }
+        }
+        // the sculk pop groups (the burst's own 16x16 pixels — the
+        // frames the json's ascending order holds)
+        if let Some(frames) = &self.sculk_pop_frames {
+            for (frame, quads) in &sculk_pop_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
+                });
+            }
         }
         // the spell ring groups (the two sets' own pixels — the frame
         // file the age's own walk folds, the set the instant flag
@@ -48858,6 +49040,110 @@ cow_sound_variant: None,
         assert_eq!(
             app.particles.len(),
             particles_before,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_sculk_serve_the_gate_the_voices_wear() {
+        // THE SCULK-CHARGE SERVE'S OWN WIRE LANE (javap case 3006 →
+        // offset 2668 over the 26.2 jar): the data word the case's own
+        // split reads — the count <= 0 arm (THE VANILLA-CALLER ARM the
+        // spreader's decay feeds) the ONE fixed 1.0F/1.0F voice + the
+        // pop cube burst the full-block verdict splits, the count > 0
+        // arm the probability-gated voice + the face walk keeps, the
+        // draw order the bytecodes pin (the gate FIRST, the volume,
+        // the pitch, then the face walk's own chain).
+        let mut app = App::new(2);
+        app.enter_world();
+        let particles_before = app.particles.len();
+        // THE POP ARM (data == 0, the spreader's own word): the fixed
+        // voice the fconst_1 pair speaks, the 40-pop burst the full
+        // block answers — the 240 draws the walk spends (per pop the
+        // cube trio + the dead life + the size + the lifetime int)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x5C01));
+        app.live_sculk_charge_events_updated(vec![
+            crate::world_view::WireSculkChargeEvent {
+                x: 9,
+                y: 65,
+                z: -3,
+                data: 0,
+                full_block: true,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let mut replay = crate::drops::Lcg::new(0x5C01);
+        for _ in 0..40 {
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_int(4);
+        }
+        assert_eq!(spent, replay, "the pop arm's own draws the walk spends");
+        assert_eq!(
+            app.particles.len(),
+            particles_before + 40,
+            "the 40 pops the full-block arm speaks"
+        );
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.sculk.charge @"))
+                .expect("the fixed voice the pop arm speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.0).abs() < 1e-6,
+                "the 1.0 pitch the fconst_1 pair keeps: {pitch}"
+            );
+        }
+        // THE GATED ARM (data = 4 << 6, the count>0 face walk): the
+        // gate the first draw arms, the volume/pitch pair the pass
+        // arm spends, the face walk the same stream continues — the
+        // burst size the seeded replay answers
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x5C02));
+        let burst_before = app.particles.len();
+        app.live_sculk_charge_events_updated(vec![
+            crate::world_view::WireSculkChargeEvent {
+                x: 9,
+                y: 65,
+                z: -3,
+                data: 4 << 6,
+                full_block: true,
+            },
+        ]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        let mut replay2 = crate::drops::Lcg::new(0x5C02);
+        let mut expected = 0usize;
+        if replay2.next_f32() < 0.3 + 4.0 * 0.1 {
+            let _ = replay2.next_f32();
+            let _ = replay2.next_f32();
+            expected += 0; // the voice spends no particle lane
+        }
+        let burst = crate::particles::sculk_charge_faces((9, 65, -3), 4, 0, &mut replay2);
+        expected += burst.len();
+        assert_eq!(
+            spent2, replay2,
+            "the gate + volume + pitch + face draws the order keeps"
+        );
+        assert_eq!(
+            app.particles.len(),
+            burst_before + expected,
+            "the burst the seeded replay answers"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_sculk_charge_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
             "the empty mailbox ships nothing"
         );
     }

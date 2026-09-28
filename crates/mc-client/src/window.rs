@@ -170,6 +170,7 @@ fn run_join(
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireElectricSparkEvent>,
+                Vec<crate::world_view::WireSculkChargeEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -279,6 +280,7 @@ fn run_join(
             view.model.drain_wax_events();
             view.model.drain_gateway_spawn_events();
             view.model.drain_electric_spark_events();
+            view.model.drain_sculk_charge_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -912,6 +914,7 @@ fn run_join(
                             view.model.drain_wax_events();
                             view.model.drain_gateway_spawn_events();
                             view.model.drain_electric_spark_events();
+                            view.model.drain_sculk_charge_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1087,6 +1090,15 @@ fn run_join(
                                     // rides exactly one shipped
                                     // refresh)
                                     upd.electric_spark_events,
+                                    // the sculk-charge effect's arms ride
+                                    // with them — the 3006 words the
+                                    // server's own spreader broadcasts
+                                    // stream to the sculk lane (the pop
+                                    // arm the count <= 0 words ride, the
+                                    // full-block verdict the state read
+                                    // banks, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.sculk_charge_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1386,6 +1398,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireElectricSparkEvent>,
+                Vec<crate::world_view::WireSculkChargeEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -1952,6 +1965,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     wax_events,
                     gateway_spawn_events,
                     electric_spark_events,
+                    sculk_charge_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2093,6 +2107,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the pair shares, the vanilla client answers the
                     // same packet with)
                     app.live_electric_spark_events_updated(electric_spark_events);
+                    // the sculk-charge effect's lane beside the spark's:
+                    // the 3006 words the server's own spreader broadcasts
+                    // land at their own anchors (the data word's own
+                    // split the case body speaks — the pop arm the
+                    // count <= 0 words ride, the gated voice + the face
+                    // walk the count > 0 words keep, the full-block
+                    // verdict the state read banks, the vanilla client
+                    // answers the same packet with)
+                    app.live_sculk_charge_events_updated(sculk_charge_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

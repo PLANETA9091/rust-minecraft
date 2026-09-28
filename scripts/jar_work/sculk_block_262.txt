@@ -1,0 +1,722 @@
+=== codec()Lcom/mojang/serialization/MapCodec; max_stack=1 max_locals=1 ===
+      0: getstatic #2.CODEC:Lcom/mojang/serialization/MapCodec;
+      3: areturn 
+
+=== <init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V max_stack=3 max_locals=2 ===
+      0: aload_0 
+      1: iconst_1 
+      2: invokestatic #8.of:(I)Lnet/minecraft/util/valueproviders/ConstantInt;
+      5: aload_1 
+      6: invokespecial #14.<init>:(Lnet/minecraft/util/valueproviders/IntProvider;Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+      9: return 
+
+=== attemptUseCharge(Lnet/minecraft/world/level/block/SculkSpreader$ChargeCursor;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/block/SculkSpreader;Z)I max_stack=7 max_locals=13 ===
+      0: aload_1 
+      1: invokevirtual #20.getCharge:()I
+      4: istore 7
+      6: iload 7
+      8: ifeq start+26
+     11: aload 4
+     13: aload 5
+     15: invokevirtual #26.chargeDecayRate:()I
+     18: invokeinterface #31.nextInt:(I)I
+     23: ifeq start+29
+     26: iload 7
+     28: ireturn 
+     29: aload_1 
+     30: invokevirtual #20.getPos:()Lnet/minecraft/core/BlockPos;
+     33: astore 8
+     35: aload 8
+     37: aload_3 
+     38: aload 5
+     40: invokevirtual #26.noGrowthRadius:()I
+     43: i2d 
+     44: invokevirtual #44.closerThan:(Lnet/minecraft/core/Vec3i;D)Z
+     47: istore 9
+     49: iload 9
+     51: ifne start+63
+     54: aload_2 
+     55: aload 8
+     57: invokestatic #2.canPlaceGrowth:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;)Z
+     60: ifne start+104
+     63: aload 4
+     65: aload 5
+     67: invokevirtual #26.additionalDecayRate:()I
+     70: invokeinterface #31.nextInt:(I)I
+     75: ifeq start+81
+     78: iload 7
+     80: ireturn 
+     81: iload 7
+     83: iload 9
+     85: ifeq start+92
+     88: iconst_1 
+     89: goto start+102
+     92: aload 5
+     94: aload 8
+     96: aload_3 
+     97: iload 7
+     99: invokestatic #2.getDecayPenalty:(Lnet/minecraft/world/level/block/SculkSpreader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;I)I
+    102: isub 
+    103: ireturn 
+    104: aload 5
+    106: invokevirtual #26.growthSpawnCost:()I
+    109: istore 10
+    111: aload 4
+    113: iload 10
+    115: invokeinterface #31.nextInt:(I)I
+    120: iload 7
+    122: if_icmpge start+182
+    125: aload 8
+    127: invokevirtual #44.above:()Lnet/minecraft/core/BlockPos;
+    130: astore 11
+    132: aload_0 
+    133: aload_2 
+    134: aload 11
+    136: aload 4
+    138: aload 5
+    140: invokevirtual #26.isWorldGeneration:()Z
+    143: invokevirtual #2.getRandomGrowthState:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Z)Lnet/minecraft/world/level/block/state/BlockState;
+    146: astore 12
+    148: aload_2 
+    149: aload 11
+    151: aload 12
+    153: iconst_3 
+    154: invokeinterface #77.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+    159: pop 
+    160: aload_2 
+    161: aconst_null 
+    162: aload 8
+    164: aload 12
+    166: invokevirtual #83.getSoundType:()Lnet/minecraft/world/level/block/SoundType;
+    169: invokevirtual #89.getPlaceSound:()Lnet/minecraft/sounds/SoundEvent;
+    172: getstatic #95.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    175: fconst_1 
+    176: fconst_1 
+    177: invokeinterface #77.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    182: iconst_0 
+    183: iload 7
+    185: iload 10
+    187: isub 
+    188: invokestatic #105.max:(II)I
+    191: ireturn 
+
+=== getDecayPenalty(Lnet/minecraft/world/level/block/SculkSpreader;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;I)I max_stack=3 max_locals=8 ===
+      0: aload_0 
+      1: invokevirtual #26.noGrowthRadius:()I
+      4: istore 4
+      6: aload_1 
+      7: aload_2 
+      8: invokevirtual #44.distSqr:(Lnet/minecraft/core/Vec3i;)D
+     11: invokestatic #105.sqrt:(D)D
+     14: d2f 
+     15: iload 4
+     17: i2f 
+     18: fsub 
+     19: invokestatic #119.square:(F)F
+     22: fstore 5
+     24: bipush 24
+     26: iload 4
+     28: isub 
+     29: invokestatic #119.square:(I)I
+     32: istore 6
+     34: fconst_1 
+     35: fload 5
+     37: iload 6
+     39: i2f 
+     40: fdiv 
+     41: invokestatic #105.min:(FF)F
+     44: fstore 7
+     46: iconst_1 
+     47: iload_3 
+     48: i2f 
+     49: fload 7
+     51: fmul 
+     52: ldc #130
+     54: fmul 
+     55: f2i 
+     56: invokestatic #105.max:(II)I
+     59: ireturn 
+
+=== getRandomGrowthState(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Z)Lnet/minecraft/world/level/block/state/BlockState; max_stack=3 max_locals=6 ===
+      0: aload_3 
+      1: bipush 11
+      3: invokeinterface #31.nextInt:(I)I
+      8: ifne start+36
+     11: getstatic #132.SCULK_SHRIEKER:Lnet/minecraft/world/level/block/Block;
+     14: invokevirtual #74.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+     17: getstatic #142.CAN_SUMMON:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+     20: iload 4
+     22: invokestatic #148.valueOf:(Z)Ljava/lang/Boolean;
+     25: invokevirtual #83.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     28: checkcast net/minecraft/world/level/block/state/BlockState
+     31: astore 5
+     33: goto start+44
+     36: getstatic #132.SCULK_SENSOR:Lnet/minecraft/world/level/block/Block;
+     39: invokevirtual #74.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+     42: astore 5
+     44: aload 5
+     46: getstatic #161.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+     49: invokevirtual #83.hasProperty:(Lnet/minecraft/world/level/block/state/properties/Property;)Z
+     52: ifeq start+84
+     55: aload_1 
+     56: aload_2 
+     57: invokeinterface #77.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+     62: invokevirtual #174.isEmpty:()Z
+     65: ifne start+84
+     68: aload 5
+     70: getstatic #161.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+     73: iconst_1 
+     74: invokestatic #148.valueOf:(Z)Ljava/lang/Boolean;
+     77: invokevirtual #83.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     80: checkcast net/minecraft/world/level/block/state/BlockState
+     83: areturn 
+     84: aload 5
+     86: areturn 
+
+=== canPlaceGrowth(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;)Z max_stack=5 max_locals=7 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokevirtual #44.above:()Lnet/minecraft/core/BlockPos;
+      5: invokeinterface #77.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     10: astore_2 
+     11: aload_2 
+     12: invokevirtual #83.isAir:()Z
+     15: ifne start+43
+     18: aload_2 
+     19: getstatic #132.WATER:Lnet/minecraft/world/level/block/Block;
+     22: invokevirtual #83.is:(Ljava/lang/Object;)Z
+     25: ifeq start+41
+     28: aload_2 
+     29: invokevirtual #83.getFluidState:()Lnet/minecraft/world/level/material/FluidState;
+     32: getstatic #196.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+     35: invokevirtual #174.is:(Ljava/lang/Object;)Z
+     38: ifne start+43
+     41: iconst_0 
+     42: ireturn 
+     43: iconst_0 
+     44: istore_3 
+     45: aload_1 
+     46: bipush 252
+     48: iconst_0 
+     49: bipush 252
+     51: invokevirtual #44.offset:(III)Lnet/minecraft/core/BlockPos;
+     54: aload_1 
+     55: iconst_4 
+     56: iconst_2 
+     57: iconst_4 
+     58: invokevirtual #44.offset:(III)Lnet/minecraft/core/BlockPos;
+     61: invokestatic #44.betweenClosed:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;)Ljava/lang/Iterable;
+     64: invokeinterface #210.iterator:()Ljava/util/Iterator;
+     69: astore 4
+     71: aload 4
+     73: invokeinterface #216.hasNext:()Z
+     78: ifeq start+138
+     81: aload 4
+     83: invokeinterface #216.next:()Ljava/lang/Object;
+     88: checkcast net/minecraft/core/BlockPos
+     91: astore 5
+     93: aload_0 
+     94: aload 5
+     96: invokeinterface #77.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    101: astore 6
+    103: aload 6
+    105: getstatic #132.SCULK_SENSOR:Lnet/minecraft/world/level/block/Block;
+    108: invokevirtual #83.is:(Ljava/lang/Object;)Z
+    111: ifne start+125
+    114: aload 6
+    116: getstatic #132.SCULK_SHRIEKER:Lnet/minecraft/world/level/block/Block;
+    119: invokevirtual #83.is:(Ljava/lang/Object;)Z
+    122: ifeq start+128
+    125: iinc #769
+    128: iload_3 
+    129: iconst_2 
+    130: if_icmple start+135
+    133: iconst_0 
+    134: ireturn 
+    135: goto start+71
+    138: iconst_1 
+    139: ireturn 
+
+=== canChangeBlockStateOnSpread()Z max_stack=1 max_locals=1 ===
+      0: iconst_0 
+      1: ireturn 
+
+=== <clinit>()V max_stack=1 max_locals=0 ===
+      0: invokedynamic #224
+      5: invokestatic #2.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+      8: putstatic #2.CODEC:Lcom/mojang/serialization/MapCodec;
+     11: return 
+
+=== codec()Lcom/mojang/serialization/MapCodec; max_stack=1 max_locals=1 ===
+      0: getstatic #2.CODEC:Lcom/mojang/serialization/MapCodec;
+      3: areturn 
+
+=== <init>(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V max_stack=10 max_locals=2 ===
+      0: aload_0 
+      1: aload_1 
+      2: invokespecial #8.<init>:(Lnet/minecraft/world/level/block/state/BlockBehaviour$Properties;)V
+      5: aload_0 
+      6: new net/minecraft/world/level/block/MultifaceSpreader
+      9: dup 
+     10: new net/minecraft/world/level/block/SculkVeinBlock$SculkVeinSpreaderConfig
+     13: dup 
+     14: aload_0 
+     15: getstatic #13.DEFAULT_SPREAD_ORDER:[Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType;
+     18: invokespecial #15.<init>:(Lnet/minecraft/world/level/block/SculkVeinBlock;[Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType;)V
+     21: invokespecial #13.<init>:(Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadConfig;)V
+     24: putfield #2.veinSpreader:Lnet/minecraft/world/level/block/MultifaceSpreader;
+     27: aload_0 
+     28: new net/minecraft/world/level/block/MultifaceSpreader
+     31: dup 
+     32: new net/minecraft/world/level/block/SculkVeinBlock$SculkVeinSpreaderConfig
+     35: dup 
+     36: aload_0 
+     37: iconst_1 
+     38: anewarray net/minecraft/world/level/block/MultifaceSpreader$SpreadType
+     41: dup 
+     42: iconst_0 
+     43: getstatic #31.SAME_POSITION:Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType;
+     46: aastore 
+     47: invokespecial #15.<init>:(Lnet/minecraft/world/level/block/SculkVeinBlock;[Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType;)V
+     50: invokespecial #13.<init>:(Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadConfig;)V
+     53: putfield #2.sameSpaceSpreader:Lnet/minecraft/world/level/block/MultifaceSpreader;
+     56: return 
+
+=== getSpreader()Lnet/minecraft/world/level/block/MultifaceSpreader; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #2.veinSpreader:Lnet/minecraft/world/level/block/MultifaceSpreader;
+      4: areturn 
+
+=== getSameSpaceSpreader()Lnet/minecraft/world/level/block/MultifaceSpreader; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #2.sameSpaceSpreader:Lnet/minecraft/world/level/block/MultifaceSpreader;
+      4: areturn 
+
+=== regrow(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Ljava/util/Collection;)Z max_stack=4 max_locals=8 ===
+      0: iconst_0 
+      1: istore 4
+      3: getstatic #41.SCULK_VEIN:Lnet/minecraft/world/level/block/Block;
+      6: invokevirtual #47.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+      9: astore 5
+     11: aload_3 
+     12: invokeinterface #53.iterator:()Ljava/util/Iterator;
+     17: astore 6
+     19: aload 6
+     21: invokeinterface #59.hasNext:()Z
+     26: ifeq start+76
+     29: aload 6
+     31: invokeinterface #59.next:()Ljava/lang/Object;
+     36: checkcast net/minecraft/core/Direction
+     39: astore 7
+     41: aload_0 
+     42: aload_1 
+     43: aload 7
+     45: invokestatic #2.canAttachTo:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+     48: ifeq start+73
+     51: aload 5
+     53: aload 7
+     55: invokestatic #2.getFaceProperty:(Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+     58: iconst_1 
+     59: invokestatic #79.valueOf:(Z)Ljava/lang/Boolean;
+     62: invokevirtual #85.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     65: checkcast net/minecraft/world/level/block/state/BlockState
+     68: astore 5
+     70: iconst_1 
+     71: istore 4
+     73: goto start+19
+     76: iload 4
+     78: ifne start+83
+     81: iconst_0 
+     82: ireturn 
+     83: aload_2 
+     84: invokevirtual #85.getFluidState:()Lnet/minecraft/world/level/material/FluidState;
+     87: invokevirtual #95.isEmpty:()Z
+     90: ifne start+110
+     93: aload 5
+     95: getstatic #100.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+     98: iconst_1 
+     99: invokestatic #79.valueOf:(Z)Ljava/lang/Boolean;
+    102: invokevirtual #85.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+    105: checkcast net/minecraft/world/level/block/state/BlockState
+    108: astore 5
+    110: aload_0 
+    111: aload_1 
+    112: aload 5
+    114: iconst_3 
+    115: invokeinterface #106.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+    120: pop 
+    121: iconst_1 
+    122: ireturn 
+
+=== onDischarged(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V max_stack=5 max_locals=10 ===
+      0: aload_2 
+      1: aload_0 
+      2: invokevirtual #85.is:(Ljava/lang/Object;)Z
+      5: ifne start+9
+      8: return 
+      9: getstatic #2.DIRECTIONS:[Lnet/minecraft/core/Direction;
+     12: astore 5
+     14: aload 5
+     16: arraylength 
+     17: istore 6
+     19: iconst_0 
+     20: istore 7
+     22: iload 7
+     24: iload 6
+     26: if_icmpge start+99
+     29: aload 5
+     31: iload 7
+     33: aaload 
+     34: astore 8
+     36: aload 8
+     38: invokestatic #2.getFaceProperty:(Lnet/minecraft/core/Direction;)Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+     41: astore 9
+     43: aload_2 
+     44: aload 9
+     46: invokevirtual #85.getValue:(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+     49: checkcast java/lang/Boolean
+     52: invokevirtual #79.booleanValue:()Z
+     55: ifeq start+93
+     58: aload_1 
+     59: aload_3 
+     60: aload 8
+     62: invokevirtual #127.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+     65: invokeinterface #106.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     70: getstatic #41.SCULK:Lnet/minecraft/world/level/block/Block;
+     73: invokevirtual #85.is:(Ljava/lang/Object;)Z
+     76: ifeq start+93
+     79: aload_2 
+     80: aload 9
+     82: iconst_0 
+     83: invokestatic #79.valueOf:(Z)Ljava/lang/Boolean;
+     86: invokevirtual #85.setValue:(Lnet/minecraft/world/level/block/state/properties/Property;Ljava/lang/Comparable;)Ljava/lang/Object;
+     89: checkcast net/minecraft/world/level/block/state/BlockState
+     92: astore_2 
+     93: iinc #1793
+     96: goto start+22
+     99: aload_2 
+    100: invokestatic #2.hasAnyFace:(Lnet/minecraft/world/level/block/state/BlockState;)Z
+    103: ifne start+136
+    106: aload_1 
+    107: aload_3 
+    108: invokeinterface #106.getFluidState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/material/FluidState;
+    113: astore 5
+    115: aload 5
+    117: invokevirtual #95.isEmpty:()Z
+    120: ifeq start+129
+    123: getstatic #41.AIR:Lnet/minecraft/world/level/block/Block;
+    126: goto start+132
+    129: getstatic #41.WATER:Lnet/minecraft/world/level/block/Block;
+    132: invokevirtual #47.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+    135: astore_2 
+    136: aload_1 
+    137: aload_3 
+    138: aload_2 
+    139: iconst_3 
+    140: invokeinterface #106.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+    145: pop 
+    146: aload_0 
+    147: aload_1 
+    148: aload_2 
+    149: aload_3 
+    150: aload 4
+    152: invokespecial #153.onDischarged:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+    155: return 
+
+=== attemptUseCharge(Lnet/minecraft/world/level/block/SculkSpreader$ChargeCursor;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/block/SculkSpreader;Z)I max_stack=5 max_locals=7 ===
+      0: iload 6
+      2: ifeq start+28
+      5: aload_0 
+      6: aload 5
+      8: aload_2 
+      9: aload_1 
+     10: invokevirtual #159.getPos:()Lnet/minecraft/core/BlockPos;
+     13: aload 4
+     15: invokevirtual #2.attemptPlaceSculk:(Lnet/minecraft/world/level/block/SculkSpreader;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Z
+     18: ifeq start+28
+     21: aload_1 
+     22: invokevirtual #159.getCharge:()I
+     25: iconst_1 
+     26: isub 
+     27: ireturn 
+     28: aload 4
+     30: aload 5
+     32: invokevirtual #173.chargeDecayRate:()I
+     35: invokeinterface #178.nextInt:(I)I
+     40: ifne start+57
+     43: aload_1 
+     44: invokevirtual #159.getCharge:()I
+     47: i2f 
+     48: ldc #183
+     50: fmul 
+     51: invokestatic #185.floor:(F)I
+     54: goto start+61
+     57: aload_1 
+     58: invokevirtual #159.getCharge:()I
+     61: ireturn 
+
+=== attemptPlaceSculk(Lnet/minecraft/world/level/block/SculkSpreader;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Z max_stack=7 max_locals=19 ===
+      0: aload_2 
+      1: aload_3 
+      2: invokeinterface #106.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+      7: astore 5
+      9: aload_1 
+     10: invokevirtual #173.replaceableBlocks:()Lnet/minecraft/tags/TagKey;
+     13: astore 6
+     15: aload 4
+     17: invokestatic #68.allShuffled:(Lnet/minecraft/util/RandomSource;)Ljava/util/Collection;
+     20: invokeinterface #53.iterator:()Ljava/util/Iterator;
+     25: astore 7
+     27: aload 7
+     29: invokeinterface #59.hasNext:()Z
+     34: ifeq start+249
+     37: aload 7
+     39: invokeinterface #59.next:()Ljava/lang/Object;
+     44: checkcast net/minecraft/core/Direction
+     47: astore 8
+     49: aload 5
+     51: aload 8
+     53: invokestatic #2.hasFace:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+     56: ifne start+62
+     59: goto start+27
+     62: aload_3 
+     63: aload 8
+     65: invokevirtual #127.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+     68: astore 9
+     70: aload_2 
+     71: aload 9
+     73: invokeinterface #106.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     78: astore 10
+     80: aload 10
+     82: aload 6
+     84: invokevirtual #85.is:(Lnet/minecraft/tags/TagKey;)Z
+     87: ifne start+93
+     90: goto start+27
+     93: getstatic #41.SCULK:Lnet/minecraft/world/level/block/Block;
+     96: invokevirtual #47.defaultBlockState:()Lnet/minecraft/world/level/block/state/BlockState;
+     99: astore 11
+    101: aload_2 
+    102: aload 9
+    104: aload 11
+    106: iconst_3 
+    107: invokeinterface #106.setBlock:(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;I)Z
+    112: pop 
+    113: aload 10
+    115: aload 11
+    117: aload_2 
+    118: aload 9
+    120: invokestatic #47.pushEntitiesUp:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    123: pop 
+    124: aload_2 
+    125: aconst_null 
+    126: aload 9
+    128: getstatic #210.SCULK_BLOCK_SPREAD:Lnet/minecraft/sounds/SoundEvent;
+    131: getstatic #216.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    134: fconst_1 
+    135: fconst_1 
+    136: invokeinterface #106.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    141: aload_0 
+    142: getfield #2.veinSpreader:Lnet/minecraft/world/level/block/MultifaceSpreader;
+    145: aload 11
+    147: aload_2 
+    148: aload 9
+    150: aload_1 
+    151: invokevirtual #173.isWorldGeneration:()Z
+    154: invokevirtual #13.spreadAll:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Z)J
+    157: pop2 
+    158: aload 8
+    160: invokevirtual #68.getOpposite:()Lnet/minecraft/core/Direction;
+    163: astore 12
+    165: getstatic #2.DIRECTIONS:[Lnet/minecraft/core/Direction;
+    168: astore 13
+    170: aload 13
+    172: arraylength 
+    173: istore 14
+    175: iconst_0 
+    176: istore 15
+    178: iload 15
+    180: iload 14
+    182: if_icmpge start+247
+    185: aload 13
+    187: iload 15
+    189: aaload 
+    190: astore 16
+    192: aload 16
+    194: aload 12
+    196: if_acmpne start+202
+    199: goto start+241
+    202: aload 9
+    204: aload 16
+    206: invokevirtual #127.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+    209: astore 17
+    211: aload_2 
+    212: aload 17
+    214: invokeinterface #106.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    219: astore 18
+    221: aload 18
+    223: aload_0 
+    224: invokevirtual #85.is:(Ljava/lang/Object;)Z
+    227: ifeq start+241
+    230: aload_0 
+    231: aload_2 
+    232: aload 18
+    234: aload 17
+    236: aload 4
+    238: invokevirtual #2.onDischarged:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+    241: iinc #3841
+    244: goto start+178
+    247: iconst_1 
+    248: ireturn 
+    249: iconst_0 
+    250: ireturn 
+
+=== hasSubstrateAccess(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;)Z max_stack=3 max_locals=7 ===
+      0: aload_1 
+      1: getstatic #41.SCULK_VEIN:Lnet/minecraft/world/level/block/Block;
+      4: invokevirtual #85.is:(Ljava/lang/Object;)Z
+      7: ifne start+12
+     10: iconst_0 
+     11: ireturn 
+     12: getstatic #2.DIRECTIONS:[Lnet/minecraft/core/Direction;
+     15: astore_3 
+     16: aload_3 
+     17: arraylength 
+     18: istore 4
+     20: iconst_0 
+     21: istore 5
+     23: iload 5
+     25: iload 4
+     27: if_icmpge start+74
+     30: aload_3 
+     31: iload 5
+     33: aaload 
+     34: astore 6
+     36: aload_1 
+     37: aload 6
+     39: invokestatic #2.hasFace:(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/Direction;)Z
+     42: ifeq start+68
+     45: aload_0 
+     46: aload_2 
+     47: aload 6
+     49: invokevirtual #127.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+     52: invokeinterface #106.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     57: getstatic #238.SCULK_REPLACEABLE:Lnet/minecraft/tags/TagKey;
+     60: invokevirtual #85.is:(Lnet/minecraft/tags/TagKey;)Z
+     63: ifeq start+68
+     66: iconst_1 
+     67: ireturn 
+     68: iinc #1281
+     71: goto start+23
+     74: iconst_0 
+     75: ireturn 
+
+=== <clinit>()V max_stack=1 max_locals=0 ===
+      0: invokedynamic #243
+      5: invokestatic #2.simpleCodec:(Ljava/util/function/Function;)Lcom/mojang/serialization/MapCodec;
+      8: putstatic #2.CODEC:Lcom/mojang/serialization/MapCodec;
+     11: return 
+
+=== <init>(Lnet/minecraft/world/level/block/SculkVeinBlock;[Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType;)V max_stack=2 max_locals=3 ===
+      0: aload_1 
+      1: dup 
+      2: invokestatic #2.requireNonNull:(Ljava/lang/Object;)Ljava/lang/Object;
+      5: pop 
+      6: pop 
+      7: aload_0 
+      8: aload_1 
+      9: invokespecial #8.<init>:(Lnet/minecraft/world/level/block/MultifaceBlock;)V
+     12: aload_0 
+     13: aload_2 
+     14: putfield #14.spreadTypes:[Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType;
+     17: return 
+
+=== stateCanBeReplaced(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/block/state/BlockState;)Z max_stack=6 max_locals=8 ===
+      0: aload_1 
+      1: aload_3 
+      2: aload 4
+      4: invokevirtual #20.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+      7: invokeinterface #26.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     12: astore 6
+     14: aload 6
+     16: getstatic #32.SCULK:Lnet/minecraft/world/level/block/Block;
+     19: invokevirtual #38.is:(Ljava/lang/Object;)Z
+     22: ifne start+47
+     25: aload 6
+     27: getstatic #32.SCULK_CATALYST:Lnet/minecraft/world/level/block/Block;
+     30: invokevirtual #38.is:(Ljava/lang/Object;)Z
+     33: ifne start+47
+     36: aload 6
+     38: getstatic #32.MOVING_PISTON:Lnet/minecraft/world/level/block/Block;
+     41: invokevirtual #38.is:(Ljava/lang/Object;)Z
+     44: ifeq start+49
+     47: iconst_0 
+     48: ireturn 
+     49: aload_2 
+     50: aload_3 
+     51: invokevirtual #20.distManhattan:(Lnet/minecraft/core/Vec3i;)I
+     54: iconst_2 
+     55: if_icmpne start+90
+     58: aload_2 
+     59: aload 4
+     61: invokevirtual #54.getOpposite:()Lnet/minecraft/core/Direction;
+     64: invokevirtual #20.relative:(Lnet/minecraft/core/Direction;)Lnet/minecraft/core/BlockPos;
+     67: astore 7
+     69: aload_1 
+     70: aload 7
+     72: invokeinterface #26.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     77: aload_1 
+     78: aload 7
+     80: aload 4
+     82: invokevirtual #38.isFaceSturdy:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;)Z
+     85: ifeq start+90
+     88: iconst_0 
+     89: ireturn 
+     90: aload 5
+     92: invokevirtual #38.getFluidState:()Lnet/minecraft/world/level/material/FluidState;
+     95: astore 7
+     97: aload 7
+     99: invokevirtual #68.isEmpty:()Z
+    102: ifne start+118
+    105: aload 7
+    107: getstatic #74.WATER:Lnet/minecraft/world/level/material/FlowingFluid;
+    110: invokevirtual #68.is:(Ljava/lang/Object;)Z
+    113: ifne start+118
+    116: iconst_0 
+    117: ireturn 
+    118: aload 5
+    120: getstatic #81.FIRE:Lnet/minecraft/tags/TagKey;
+    123: invokevirtual #38.is:(Lnet/minecraft/tags/TagKey;)Z
+    126: ifeq start+131
+    129: iconst_0 
+    130: ireturn 
+    131: aload 5
+    133: invokevirtual #38.canBeReplaced:()Z
+    136: ifne start+153
+    139: aload_0 
+    140: aload_1 
+    141: aload_2 
+    142: aload_3 
+    143: aload 4
+    145: aload 5
+    147: invokespecial #8.stateCanBeReplaced:(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Direction;Lnet/minecraft/world/level/block/state/BlockState;)Z
+    150: ifeq start+157
+    153: iconst_1 
+    154: goto start+158
+    157: iconst_0 
+    158: ireturn 
+
+=== getSpreadTypes()[Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType; max_stack=1 max_locals=1 ===
+      0: aload_0 
+      1: getfield #14.spreadTypes:[Lnet/minecraft/world/level/block/MultifaceSpreader$SpreadType;
+      4: areturn 
+
+=== isOtherBlockValidAsSource(Lnet/minecraft/world/level/block/state/BlockState;)Z max_stack=2 max_locals=2 ===
+      0: aload_1 
+      1: getstatic #32.SCULK_VEIN:Lnet/minecraft/world/level/block/Block;
+      4: invokevirtual #38.is:(Ljava/lang/Object;)Z
+      7: ifne start+14
+     10: iconst_1 
+     11: goto start+15
+     14: iconst_0 
+     15: ireturn 
+

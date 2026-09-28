@@ -6425,6 +6425,109 @@ pub struct ExplosionFrames {
     pub frames: Vec<Vec<u8>>,
 }
 
+/// The PARTICLE LANE's sculk charge frames — the LevelEvent-3006 face
+/// walk's 7-frame sprite set (javap: the `sculk_charge` particle
+/// type's own sprites, the jar's
+/// `textures/particle/sculk_charge_0..6.png`, the
+/// `SculkChargeParticle`'s `setSpriteFromAge` walk the age law rides),
+/// each file loaded and sha1-verified the same stream the explosion
+/// frames speak. A missing or tampered frame keeps the sculk pulses
+/// invisible (the honest absence the other lanes speak).
+pub struct SculkChargeFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The sculk charge texture's own layout (the jar's 16x16 the IHDR
+/// speaks).
+pub const SCULK_CHARGE_SPRITE_SIDE: u32 = 16;
+
+impl SculkChargeFrames {
+    /// Load the 7 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 16x16 layout.
+    pub fn load(root: &std::path::Path) -> Option<SculkChargeFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SCULK_CHARGE_FRAME_COUNT);
+        for i in 0..crate::particles::SCULK_CHARGE_FRAME_COUNT {
+            let bytes =
+                std::fs::read(root.join(skin::PARTICLE_SCULK_CHARGE_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes))
+                != skin::PARTICLE_SCULK_CHARGE_PNG_SHA1S[i]
+            {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != SCULK_CHARGE_SPRITE_SIDE || h != SCULK_CHARGE_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SculkChargeFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..16 the
+    /// 16x16 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, SCULK_CHARGE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SCULK_CHARGE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SCULK_CHARGE_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
+/// The PARTICLE LANE's sculk charge pop frames — the LevelEvent-3006
+/// pop arm's 4-frame sprite set (javap: the `sculk_charge_pop`
+/// particle type's own sprites, the jar's
+/// `textures/particle/sculk_charge_pop_0..3.png`, the
+/// `SculkChargePopParticle`'s `setSpriteFromAge` walk the age law
+/// rides), each file loaded and sha1-verified the same stream the
+/// charge frames speak. A missing or tampered frame keeps the pops
+/// invisible (the honest absence the other lanes speak).
+pub struct SculkPopFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The sculk pop texture's own layout (the jar's 16x16 the IHDR
+/// speaks).
+pub const SCULK_POP_SPRITE_SIDE: u32 = 16;
+
+impl SculkPopFrames {
+    /// Load the 4 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 16x16 layout.
+    pub fn load(root: &std::path::Path) -> Option<SculkPopFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SCULK_POP_FRAME_COUNT);
+        for i in 0..crate::particles::SCULK_POP_FRAME_COUNT {
+            let bytes = std::fs::read(root.join(skin::PARTICLE_SCULK_POP_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_SCULK_POP_PNG_SHA1S[i] {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != SCULK_POP_SPRITE_SIDE || h != SCULK_POP_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SculkPopFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..16 the
+    /// 16x16 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, SCULK_POP_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SCULK_POP_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SCULK_POP_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The explosion texture's own layout (the jar's 32x32 the IHDR
 /// speaks).
 pub const EXPLOSION_SPRITE_SIDE: u32 = 32;

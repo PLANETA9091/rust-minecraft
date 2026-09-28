@@ -1,0 +1,146 @@
+=== update(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/block/SculkSpreader;Z)V max_stack=8 max_locals=9 ===
+      0: aload_0 
+      1: aload_1 
+      2: aload_2 
+      3: aload 4
+      5: getfield #1.isWorldGeneration:Z
+      8: invokevirtual #10.shouldUpdate:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Z)Z
+     11: ifne start+15
+     14: return 
+     15: aload_0 
+     16: getfield #10.updateDelay:I
+     19: ifle start+33
+     22: aload_0 
+     23: dup 
+     24: getfield #10.updateDelay:I
+     27: iconst_1 
+     28: isub 
+     29: putfield #10.updateDelay:I
+     32: return 
+     33: aload_1 
+     34: aload_0 
+     35: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+     38: invokeinterface #65.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+     43: astore 6
+     45: aload 6
+     47: invokestatic #10.getBlockBehaviour:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/SculkBehaviour;
+     50: astore 7
+     52: iload 5
+     54: ifeq start+131
+     57: aload 7
+     59: aload_1 
+     60: aload_0 
+     61: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+     64: aload 6
+     66: aload_0 
+     67: getfield #10.facings:Ljava/util/Set;
+     70: aload 4
+     72: invokevirtual #1.isWorldGeneration:()Z
+     75: invokeinterface #78.attemptSpreadVein:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Ljava/util/Collection;Z)Z
+     80: ifeq start+131
+     83: aload 7
+     85: invokeinterface #78.canChangeBlockStateOnSpread:()Z
+     90: ifeq start+112
+     93: aload_1 
+     94: aload_0 
+     95: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+     98: invokeinterface #65.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    103: astore 6
+    105: aload 6
+    107: invokestatic #10.getBlockBehaviour:(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/SculkBehaviour;
+    110: astore 7
+    112: aload_1 
+    113: aconst_null 
+    114: aload_0 
+    115: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+    118: getstatic #87.SCULK_BLOCK_SPREAD:Lnet/minecraft/sounds/SoundEvent;
+    121: getstatic #93.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    124: fconst_1 
+    125: fconst_1 
+    126: invokeinterface #65.playSound:(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FF)V
+    131: aload_0 
+    132: aload 7
+    134: aload_0 
+    135: aload_1 
+    136: aload_2 
+    137: aload_3 
+    138: aload 4
+    140: iload 5
+    142: invokeinterface #78.attemptUseCharge:(Lnet/minecraft/world/level/block/SculkSpreader$ChargeCursor;Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/block/SculkSpreader;Z)I
+    147: putfield #10.charge:I
+    150: aload_0 
+    151: getfield #10.charge:I
+    154: ifgt start+173
+    157: aload 7
+    159: aload_1 
+    160: aload 6
+    162: aload_0 
+    163: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+    166: aload_3 
+    167: invokeinterface #78.onDischarged:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+    172: return 
+    173: aload_1 
+    174: aload_0 
+    175: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+    178: aload_3 
+    179: invokestatic #10.getValidMovementPos:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)Lnet/minecraft/core/BlockPos;
+    182: astore 8
+    184: aload 8
+    186: ifnull start+272
+    189: aload 7
+    191: aload_1 
+    192: aload 6
+    194: aload_0 
+    195: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+    198: aload_3 
+    199: invokeinterface #78.onDischarged:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+    204: aload_0 
+    205: aload 8
+    207: invokevirtual #45.immutable:()Lnet/minecraft/core/BlockPos;
+    210: putfield #10.pos:Lnet/minecraft/core/BlockPos;
+    213: aload 4
+    215: invokevirtual #1.isWorldGeneration:()Z
+    218: ifeq start+262
+    221: aload_0 
+    222: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+    225: new net/minecraft/core/Vec3i
+    228: dup 
+    229: aload_2 
+    230: invokevirtual #45.getX:()I
+    233: aload_0 
+    234: getfield #10.pos:Lnet/minecraft/core/BlockPos;
+    237: invokevirtual #45.getY:()I
+    240: aload_2 
+    241: invokevirtual #45.getZ:()I
+    244: invokespecial #118.<init>:(III)V
+    247: ldc2_w #133
+    250: invokevirtual #45.closerThan:(Lnet/minecraft/core/Vec3i;D)Z
+    253: ifne start+262
+    256: aload_0 
+    257: iconst_0 
+    258: putfield #10.charge:I
+    261: return 
+    262: aload_1 
+    263: aload 8
+    265: invokeinterface #65.getBlockState:(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+    270: astore 6
+    272: aload 6
+    274: invokevirtual #140.getBlock:()Lnet/minecraft/world/level/block/Block;
+    277: instanceof net/minecraft/world/level/block/SculkBehaviour
+    280: ifeq start+292
+    283: aload_0 
+    284: aload 6
+    286: invokestatic #146.availableFaces:(Lnet/minecraft/world/level/block/state/BlockState;)Ljava/util/Set;
+    289: putfield #10.facings:Ljava/util/Set;
+    292: aload_0 
+    293: aload 7
+    295: aload_0 
+    296: getfield #10.decayDelay:I
+    299: invokeinterface #78.updateDecayDelay:(I)I
+    304: putfield #10.decayDelay:I
+    307: aload_0 
+    308: aload 7
+    310: invokeinterface #78.getSculkSpreadDelay:()B
+    315: putfield #10.updateDelay:I
+    318: return 
+

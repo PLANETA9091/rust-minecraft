@@ -1,0 +1,180 @@
+=== updateCursors(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Z)V max_stack=6 max_locals=16 ===
+      0: aload_0 
+      1: getfield #11.cursors:Ljava/util/List;
+      4: invokeinterface #49.isEmpty:()Z
+      9: ifeq start+13
+     12: return 
+     13: new java/util/ArrayList
+     16: dup 
+     17: invokespecial #7.<init>:()V
+     20: astore 5
+     22: new java/util/HashMap
+     25: dup 
+     26: invokespecial #177.<init>:()V
+     29: astore 6
+     31: new it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap
+     34: dup 
+     35: invokespecial #180.<init>:()V
+     38: astore 7
+     40: aload_0 
+     41: getfield #11.cursors:Ljava/util/List;
+     44: invokeinterface #49.iterator:()Ljava/util/Iterator;
+     49: astore 8
+     51: aload 8
+     53: invokeinterface #188.hasNext:()Z
+     58: ifeq start+262
+     61: aload 8
+     63: invokeinterface #188.next:()Ljava/lang/Object;
+     68: checkcast net/minecraft/world/level/block/SculkSpreader$ChargeCursor
+     71: astore 9
+     73: aload 9
+     75: aload_2 
+     76: invokevirtual #55.isPosUnreasonable:(Lnet/minecraft/core/BlockPos;)Z
+     79: ifeq start+85
+     82: goto start+51
+     85: aload 9
+     87: aload_1 
+     88: aload_2 
+     89: aload_3 
+     90: aload_0 
+     91: iload 4
+     93: invokevirtual #55.update:(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/level/block/SculkSpreader;Z)V
+     96: aload 9
+     98: getfield #55.charge:I
+    101: ifgt start+122
+    104: aload_1 
+    105: sipush 3006
+    108: aload 9
+    110: invokevirtual #55.getPos:()Lnet/minecraft/core/BlockPos;
+    113: iconst_0 
+    114: invokeinterface #214.levelEvent:(ILnet/minecraft/core/BlockPos;I)V
+    119: goto start+51
+    122: aload 9
+    124: invokevirtual #55.getPos:()Lnet/minecraft/core/BlockPos;
+    127: astore 10
+    129: aload 7
+    131: aload 10
+    133: aload 9
+    135: invokedynamic #219
+    140: invokeinterface #223.computeInt:(Ljava/lang/Object;Ljava/util/function/BiFunction;)I
+    145: pop 
+    146: aload 6
+    148: aload 10
+    150: invokeinterface #229.get:(Ljava/lang/Object;)Ljava/lang/Object;
+    155: checkcast net/minecraft/world/level/block/SculkSpreader$ChargeCursor
+    158: astore 11
+    160: aload 11
+    162: ifnonnull start+190
+    165: aload 6
+    167: aload 10
+    169: aload 9
+    171: invokeinterface #229.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    176: pop 
+    177: aload 5
+    179: aload 9
+    181: invokeinterface #49.add:(Ljava/lang/Object;)Z
+    186: pop 
+    187: goto start+51
+    190: aload_0 
+    191: invokevirtual #11.isWorldGeneration:()Z
+    194: ifne start+224
+    197: aload 9
+    199: getfield #55.charge:I
+    202: aload 11
+    204: getfield #55.charge:I
+    207: iadd 
+    208: sipush 1000
+    211: if_icmpgt start+224
+    214: aload 11
+    216: aload 9
+    218: invokevirtual #55.mergeWith:(Lnet/minecraft/world/level/block/SculkSpreader$ChargeCursor;)V
+    221: goto start+51
+    224: aload 5
+    226: aload 9
+    228: invokeinterface #49.add:(Ljava/lang/Object;)Z
+    233: pop 
+    234: aload 9
+    236: getfield #55.charge:I
+    239: aload 11
+    241: getfield #55.charge:I
+    244: if_icmpge start+259
+    247: aload 6
+    249: aload 10
+    251: aload 9
+    253: invokeinterface #229.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+    258: pop 
+    259: goto start+51
+    262: aload 7
+    264: invokeinterface #223.object2IntEntrySet:()Lit/unimi/dsi/fastutil/objects/ObjectSet;
+    269: invokeinterface #247.iterator:()Lit/unimi/dsi/fastutil/objects/ObjectIterator;
+    274: astore 8
+    276: aload 8
+    278: invokeinterface #188.hasNext:()Z
+    283: ifeq start+403
+    286: aload 8
+    288: invokeinterface #188.next:()Ljava/lang/Object;
+    293: checkcast it/unimi/dsi/fastutil/objects/Object2IntMap$Entry
+    296: astore 9
+    298: aload 9
+    300: invokeinterface #251.getKey:()Ljava/lang/Object;
+    305: checkcast net/minecraft/core/BlockPos
+    308: astore 10
+    310: aload 9
+    312: invokeinterface #251.getIntValue:()I
+    317: istore 11
+    319: aload 6
+    321: aload 10
+    323: invokeinterface #229.get:(Ljava/lang/Object;)Ljava/lang/Object;
+    328: checkcast net/minecraft/world/level/block/SculkSpreader$ChargeCursor
+    331: astore 12
+    333: aload 12
+    335: ifnonnull start+342
+    338: aconst_null 
+    339: goto start+347
+    342: aload 12
+    344: invokevirtual #55.getFacingData:()Ljava/util/Set;
+    347: astore 13
+    349: iload 11
+    351: ifle start+400
+    354: aload 13
+    356: ifnull start+400
+    359: iload 11
+    361: i2d 
+    362: invokestatic #154.log1p:(D)D
+    365: ldc2_w #269
+    368: ddiv 
+    369: d2i 
+    370: iconst_1 
+    371: iadd 
+    372: istore 14
+    374: iload 14
+    376: bipush 6
+    378: ishl 
+    379: aload 13
+    381: invokestatic #272.pack:(Ljava/util/Collection;)B
+    384: iadd 
+    385: istore 15
+    387: aload_1 
+    388: sipush 3006
+    391: aload 10
+    393: iload 15
+    395: invokeinterface #214.levelEvent:(ILnet/minecraft/core/BlockPos;I)V
+    400: goto start+276
+    403: aload_0 
+    404: aload 5
+    406: putfield #11.cursors:Ljava/util/List;
+    409: return 
+
+=== lambda$updateCursors$0(Lnet/minecraft/world/level/block/SculkSpreader$ChargeCursor;Lnet/minecraft/core/BlockPos;Ljava/lang/Integer;)Ljava/lang/Integer; max_stack=2 max_locals=3 ===
+      0: aload_2 
+      1: ifnonnull start+8
+      4: iconst_0 
+      5: goto start+12
+      8: aload_2 
+      9: invokevirtual #123.intValue:()I
+     12: aload_0 
+     13: getfield #55.charge:I
+     16: iadd 
+     17: invokestatic #123.valueOf:(I)Ljava/lang/Integer;
+     20: areturn 
+
