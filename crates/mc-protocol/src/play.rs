@@ -2631,6 +2631,90 @@ pub const SOUND_CRAFTER_CRAFT_EFFECT: i32 = 1049;
 /// never banks — the positioned lane the case's own arm wears.
 pub const SOUND_CRAFTER_FAIL_EFFECT: i32 = 1050;
 
+/// THE GHAST WARNING VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `GHAST_WARN`, the case
+/// `LevelEventHandler.levelEvent` offset 4447 speaks): the ONE
+/// `playLocalSound(pos, GHAST_WARN, HOSTILE, 10.0F, (nextFloat() -
+/// nextFloat()) * 0.2F + 1.0F, false)` walk the case body spends —
+/// the `ldc2_w` volume the LOUD gain the ghast's own fame carries
+/// (the 10.0F the max(volume, 1.0) * 16 fold turns into the 160-block
+/// reach — the warn the whole render distance hears), the TWO pitch
+/// draws the fsub/fmul/fadd chain answers, the [0.8, 1.2] band the
+/// 0.2F scale gives, the HOSTILE source the mob's own channel names,
+/// the BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve
+/// places, the distance-delay flag false the immediate voice keeps,
+/// the data word the case's own body never reads. NO particles the
+/// case speaks — the voice alone the broadcast renders. The server's
+/// own ghast speaks it — `Ghast$GhastShootFireballGoal.tick`'s
+/// charge-timer gate the `chargeTime == 10` branch arms (`sipush
+/// 1015, aconst_null, ghast.blockPosition(), iconst_0` the
+/// `Level.levelEvent(Entity, I, BlockPos, I)` overload call the
+/// bytecode pins pc 81-95 — the `isSilent()` guard the same gate
+/// keeps, the fireball's own charge the ten-tick warmup counts). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_GHAST_WARNING_EFFECT: i32 = 1015;
+
+/// THE GHAST FIREBALL VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `GHAST_SHOOT`, the case
+/// `LevelEventHandler.levelEvent` offset 4531 speaks): the ONE
+/// `playLocalSound(pos, GHAST_SHOOT, HOSTILE, 10.0F, (nextFloat() -
+/// nextFloat()) * 0.2F + 1.0F, false)` walk the case body spends —
+/// the SAME shape the warn sibling's arm wears (the `ldc2_w` 10.0F
+/// volume, the TWO pitch draws, the HOSTILE source, the immediate
+/// flag, the data word never read, NO particles). The server's own
+/// ghast speaks it — `Ghast$GhastShootFireballGoal.tick`'s
+/// charge-timer completion the `chargeTime == 20` branch arms
+/// (`sipush 1016, aconst_null, ghast.blockPosition(), iconst_0` the
+/// `Level.levelEvent(Entity, I, BlockPos, I)` overload call the
+/// bytecode pins pc 219-236 — the `isSilent()` guard the same gate
+/// keeps, the fireball spawn the SAME completion tail fires). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_GHAST_FIREBALL_EFFECT: i32 = 1016;
+
+/// THE DRAGON FIREBALL VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `ENDER_DRAGON_SHOOT`, the
+/// case `LevelEventHandler.levelEvent` offset 4489 speaks): the ONE
+/// `playLocalSound(pos, ENDER_DRAGON_SHOOT, HOSTILE, 10.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the ghast siblings' arms wear (the
+/// `ldc2_w` 10.0F volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own dragon speaks it —
+/// `DragonStrafePlayerPhase.doServerTick`'s strafe-fire walk the
+/// `DragonFireball` spawn arms (`sipush 1017, aconst_null,
+/// dragon.blockPosition(), iconst_0` the
+/// `ServerLevel.levelEvent(Entity, I, BlockPos, I)` overload call
+/// the bytecode pins pc 533-544 — the fireball ctor the SAME tail
+/// beside it fires, the player-strafe aim the shot's own direction
+/// carries). The GLOBAL route the `globalLevelEvent` switch never
+/// banks — the positioned lane the case's own arm wears.
+pub const SOUND_DRAGON_FIREBALL_EFFECT: i32 = 1017;
+
+/// THE BLAZE FIREBALL VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `BLAZE_SHOOT`, the case
+/// `LevelEventHandler.levelEvent` offset 4733 speaks): the ONE
+/// `playLocalSound(pos, BLAZE_SHOOT, HOSTILE, 2.0F, (nextFloat() -
+/// nextFloat()) * 0.2F + 1.0F, false)` walk the case body spends —
+/// the `fconst_2` volume the DOUBLED gain the door-voice shelf's own
+/// shape keeps (NOT the 10.0F the ghast/dragon trio carries), the
+/// TWO pitch draws the fsub/fmul/fadd chain answers, the [0.8, 1.2]
+/// band the 0.2F scale gives, the HOSTILE source the mob's own
+/// channel names, the BLOCK CENTER the `playLocalSound(BlockPos,
+/// ...)` resolve places, the distance-delay flag false the immediate
+/// voice keeps, the data word the case's own body never reads. NO
+/// particles the case speaks — the voice alone the broadcast
+/// renders. The server's own blaze speaks it —
+/// `Blaze$BlazeAttackGoal.tick`'s fireball walk the charge-step gate
+/// arms (`sipush 1018, aconst_null, blaze.blockPosition(),
+/// iconst_0` the `Level.levelEvent(Entity, I, BlockPos, I)` overload
+/// call the bytecode pins pc 317-328 — the three-fireball burst the
+/// SAME tail beside it charges). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_BLAZE_FIREBALL_EFFECT: i32 = 1018;
+
 /// THE ZOMBIE WOODEN-DOOR VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_ZOMBIE_WOODEN_DOOR`,
 /// the case `LevelEventHandler.levelEvent` offset 4573 speaks): the

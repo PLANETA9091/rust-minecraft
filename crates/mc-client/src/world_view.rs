@@ -638,8 +638,9 @@ pub struct SnapshotView {
     /// each voice at the block center.
     pub fixed_voice_events: Vec<WireFixedVoiceEvent>,
     /// The hostile-voice shelf's own wire lane (the 1019/1020/1021/
-    /// 1022 words the arms ride — [`WireHostileVoiceEvent`] the
-    /// render lane drains per refresh).
+    /// 1022 words + the projectile quartet 1015/1016/1017/1018 the
+    /// arms ride — [`WireHostileVoiceEvent`] the render lane drains
+    /// per refresh).
     pub hostile_voice_events: Vec<WireHostileVoiceEvent>,
 }
 
@@ -1214,14 +1215,15 @@ pub struct WireFixedVoiceEvent {
 
 /// One wire HOSTILE-VOICE arm — the Level Event packet's own landing
 /// (the 1019/1020/1021/1022 words the server's own door-break goal
-/// and wither broadcast, the four
+/// and wither broadcast plus the projectile quartet 1015/1016/1017/
+/// 1018 the ghast/dragon/blaze walks fire, the eight
 /// [`mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT`]-family ids the
 /// render lane speaks): the event's anchor block + the raw voice
 /// word, verbatim (the ONE `playLocalSound(pos, <voice>, HOSTILE,
-/// 2.0F, (nf - nf) * 0.2F + 1.0F, false)` walk's own inputs — the
-/// doubled gain + the pitch pair the sound lane folds from the word;
-/// the data words the cases' own bodies never read, the transport
-/// never carries).
+/// <vol>, (nf - nf) * 0.2F + 1.0F, false)` walk's own inputs — the
+/// per-word volume + the pitch pair the sound lane folds from the
+/// word; the data words the cases' own bodies never read, the
+/// transport never carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireHostileVoiceEvent {
     pub x: i32,
@@ -4013,8 +4015,8 @@ impl LiveView {
         // the hostile-voice shelf's own projection (the mailbox
         // verbatim — the anchor + the packet's own voice word the arms
         // carry, the sound lane's own law reads): each of the
-        // 1019/1020/1021/1022 words ships once with this view, the
-        // worker's drain empties the mailbox after
+        // 1015/1016/1017/1018/1019/1020/1021/1022 words ships once
+        // with this view, the worker's drain empties the mailbox after
         let hostile_voice_events = self
             .model
             .hostile_voice_events
