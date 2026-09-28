@@ -1184,6 +1184,25 @@ pub fn parse_block_update(payload: &[u8]) -> Result<(i32, i32, i32, u32)> {
 /// data)` delegate) renders.
 pub const GROWTH_EFFECT: i32 = 1505;
 
+/// THE EYE-OF-ENDER SHATTER'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_EYE_OF_ENDER_DEATH`, the
+/// case `LevelEventHandler.levelEvent` offset 947 speaks): the server's
+/// own eye-of-ender landing the broadcast — the `EyeOfEnder.tick`'s
+/// landing tail `levelEvent(2003, blockPosition(), 0)` the jar's own
+/// sipush scan pins (byte 7678 the one site the class carries, BOTH
+/// landing branches the tail follows — the survive branch's
+/// `addFreshEntity` drop and the death branch's
+/// `playSound(ENDER_EYE_DEATH)` + `discard()` walk the shatter word
+/// rides). The case's own body the TWO walks speak — the `bipush 8`
+/// shard loop the `ItemParticleOption(ParticleTypes.ITEM,
+/// Items.ENDER_EYE)` fires, the PORTAL ring the `(Math.PI * 2)`
+/// half-circle walk answers — and the DATA word the case NEVER reads
+/// (the zero the landing tail passes the walk's own body ignores — no
+/// `iload_3` read the arm's bytecode speaks). The GLOBAL route the
+/// `globalLevelEvent` switch never banks (the 1023/1028/1038 trio the
+/// band alone carries — the positioned lane the case's own arm wears).
+pub const EYE_OF_ENDER_SHATTER_EFFECT: i32 = 2003;
+
 /// THE BLOCK-BREAK EFFECT'S OWN ID (the 26.2 `LevelEvent` constants
 /// class the client jar banks — `PARTICLES_DESTROY_BLOCK`, the case
 /// `LevelEventHandler.levelEvent` offset 1561 speaks): the data word
@@ -10596,6 +10615,11 @@ mod tests {
     fn level_event_parses_the_int_long_int_bool_layout() {
         assert_eq!(clientbound::LEVEL_EVENT, 46, "level event (generated id)");
         assert_eq!(GROWTH_EFFECT, 1505, "the growth effect the useOn walk speaks");
+        assert_eq!(
+            EYE_OF_ENDER_SHATTER_EFFECT,
+            2003,
+            "the eye-of-ender shatter the landing tail broadcasts"
+        );
         assert_eq!(
             DESTROY_BLOCK_EFFECT,
             2001,

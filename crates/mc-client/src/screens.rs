@@ -6698,6 +6698,10 @@ pub struct App {
     /// The splash-potion debris' two item sprites (the same lazy load —
     /// the glass and the liquid the shard burst alternates).
     pub potion_sprites: Option<crate::avatar::PotionSprites>,
+    /// The eye-of-ender shatter's own item sprite (the same lazy load
+    /// — the `item/ender_eye.png` layer0 the eye's single-layer model
+    /// keeps, the shard burst's own pixels).
+    pub eye_sprites: Option<crate::avatar::EyeSprites>,
     pub hurt_time: i32,
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
@@ -7386,6 +7390,7 @@ impl App {
             effect_frames: None,
             spell_frames: None,
             potion_sprites: None,
+            eye_sprites: None,
             next_drop_id: 1,
             orbs: Vec::new(),
             next_orb_id: 1,
@@ -7620,6 +7625,12 @@ impl App {
             // dragon's law speaks (no gravity, no vy friction — the x/z
             // lanes alone the 0.96 folds ride)
             crate::particles::ParticleKind::DragonBreath => p.tick_dragon_breath(),
+            // the portal ring's own walk: the swirl the override's own
+            // body speaks (the position Start + velocity × the
+            // `1 − (2t² − t)` blend the recompute answers, the y-lift
+            // `(1 − t)` the loc2 copy rides — no friction lane the
+            // recompute never folds)
+            crate::particles::ParticleKind::Portal { .. } => p.tick_portal(),
             // the steam's own walk: the base law + the player-lift the
             // override's tail speaks (the 2.0-range read the feet
             // distance folds — the local body the nearest-player read
@@ -21893,6 +21904,82 @@ impl App {
         }
     }
 
+    /// THE EYE-OF-ENDER SHATTER WIRE LANE (javap `LevelEventHandler`
+    /// case 2003 — offset 947 — over the 26.2 jar): the server's own
+    /// ender signal the landing tail broadcasts, the TWO walks the
+    /// case body speaks — the eight shard burst the
+    /// `ItemParticleOption(ParticleTypes.ITEM, Items.ENDER_EYE)` loop
+    /// fires first, the portal ring the `(Math.PI * 2)` half-circle
+    /// walk answers (the TWO puffs per step the ring's own body
+    /// spends). NO SOUND the case speaks (the ENDER_EYE_DEATH voice
+    /// the server's own playSound carries on the death branch, NOT
+    /// the case's), no world edit the block updates own — the
+    /// shatter alone the broadcast renders.
+    pub fn live_eye_of_ender_shatter_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
+    ) {
+        for ev in events {
+            self.play_eye_of_ender_shatter(ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE EYE-OF-ENDER SHATTER WALK (javap the case-2003 arm
+    /// verbatim — offset 947): the anchor folds the case's own head
+    /// speaks (the `x + 0.5` / raw `y` / `z + 0.5` the i2d + ldc 0.5
+    /// decode keeps), the `bipush 8` shard loop (the gauss ×0.15 /
+    /// double ×0.2 velocity trio the addParticle args order — the
+    /// x-gauss FIRST, the y-double SECOND, the z-gauss THIRD), the
+    /// ring the `d = 0.0; d < 2π; d += 2π/40` half-circle walk keeps
+    /// (the cos/sin ×5 positions the `y − 0.4` lift wears, the TWO
+    /// PORTAL puffs per step the ×−5 and ×−7 velocity words answer —
+    /// the 40 steps the 0.15707963267948966 constant draws, the
+    /// exact `Math.PI / 20` the cp decode pins).
+    fn play_eye_of_ender_shatter(&mut self, x: i32, y: i32, z: i32) {
+        // THE ANCHOR (the case's own head — the +0.5 x/z centers the
+        // i2d + ldc2_w 0.5 folds speak, the raw y the plain dstore
+        // keeps)
+        let ax = f64::from(x) + 0.5;
+        let ay = f64::from(y);
+        let az = f64::from(z) + 0.5;
+        // THE SHARD BURST (the `bipush 8` loop — the velocity trio
+        // the addParticle args' own order keeps)
+        for _ in 0..8 {
+            let wire_vx = self.level_ambient_rng.next_gaussian() * 0.15;
+            let wire_vy = self.level_ambient_rng.next_f64() * 0.2;
+            let wire_vz = self.level_ambient_rng.next_gaussian() * 0.15;
+            let shard = crate::particles::breaking_eye_shard(
+                ax,
+                ay,
+                az,
+                wire_vx,
+                wire_vy,
+                wire_vz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(shard);
+        }
+        // THE PORTAL RING (the `d = 0.0; d < 6.283185307179586;
+        // d += 0.15707963267948966` walk — the TWO puffs per step the
+        // ×−5 and ×−7 velocity words answer, the exact 2π/40 step
+        // the cp constants pin)
+        let mut d = 0.0f64;
+        while d < 6.283185307179586f64 {
+            let px = ax + d.cos() * 5.0;
+            let py = ay - 0.4;
+            let pz = az + d.sin() * 5.0;
+            let (vx, vz) = (d.cos() * -5.0, d.sin() * -5.0);
+            let puff_a =
+                crate::particles::portal_ring_puff(px, py, pz, vx, 0.0, vz, &mut self.level_ambient_rng);
+            self.particles.push(puff_a);
+            let (vx7, vz7) = (d.cos() * -7.0, d.sin() * -7.0);
+            let puff_b =
+                crate::particles::portal_ring_puff(px, py, pz, vx7, 0.0, vz7, &mut self.level_ambient_rng);
+            self.particles.push(puff_b);
+            d += 0.15707963267948966f64;
+        }
+    }
+
     /// THE DISPENSER-DISPENSE WIRE LANE (javap `LevelEventHandler`
     /// case 1000 — offset 776 — over the 26.2 jar): the server's own
     /// dispenser the eject's voice broadcasts, the ONE
@@ -26614,6 +26701,10 @@ impl App {
             self.potion_sprites =
                 crate::avatar::PotionSprites::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.eye_sprites.is_none() {
+            self.eye_sprites =
+                crate::avatar::EyeSprites::load(std::path::Path::new("assets-cache/jar"));
+        }
         let sy = cam.yaw.sin();
         let cy = cam.yaw.cos();
         let sp = cam.pitch.sin();
@@ -26649,6 +26740,12 @@ impl App {
         // closure's own capture)
         let mut spell_groups: Vec<(bool, usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut shard_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the eye-of-ender shatter's own groups (the portal ring keyed
+        // by the random frame file the birth pick banks — the generic
+        // pool the poof loads — and the eye shards one group, the
+        // single sprite the eye's own model keeps)
+        let mut portal_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        let mut eye_shard_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             // THE RENDER FOLD (javap Particle.render's own lerp): the
@@ -26981,6 +27078,42 @@ impl App {
                         None => shard_groups.push((layer, vec![quad])),
                     }
                 }
+                crate::particles::ParticleKind::Portal { frame, .. } => {
+                    // the ring puff's own quad (the random STATIC frame
+                    // the birth pick banks — the ascending portal.json
+                    // the file index IS the frame, the SAME generic
+                    // pixels the poof bank loads, the purple tint the
+                    // ctor's own draw chain carries, the OPAQUE layer
+                    // the getLayer override returns, the growth the
+                    // half() arm's 1 − (1 − t)² fold speaks)
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_poof",
+                        tint: p.col,
+                    };
+                    match portal_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => portal_groups.push((frame, vec![quad])),
+                    }
+                }
+                crate::particles::ParticleKind::EyeItem => {
+                    // the shard's own quad (the item sprite's own
+                    // quarter walk — the SAME uo/vo fold the terrain
+                    // dust rides, the U edge MIRRORS, over the 16x16
+                    // item sprite's own space; the white tint the
+                    // item pixels wear whole)
+                    let ul = (p.uo + 1.0) / 4.0;
+                    let ur = p.uo / 4.0;
+                    let vt = p.vo / 4.0;
+                    let vb = (p.vo + 1.0) / 4.0;
+                    eye_shard_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[ul, vb], [ur, vb], [ur, vt], [ul, vt]],
+                        tex: "particle_eye_shard",
+                        tint: p.col,
+                    });
+                }
             }
         }
         let vp = ctx.proj.mul(&ctx.view);
@@ -27141,6 +27274,23 @@ impl App {
                     Some(sprites.pixel(*layer, u, v))
                 });
             }
+        }
+        // the portal ring's groups (the random frame's own pixels —
+        // the ascending portal.json the file index IS the frame, the
+        // SAME generic bank the poof loads)
+        if let Some(frames) = &self.poof_frames {
+            for (frame, quads) in &portal_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
+                });
+            }
+        }
+        // the eye shard group (the ender eye sprite's own pixels —
+        // the single layer the eye's own model keeps)
+        if let Some(sprites) = &self.eye_sprites {
+            fb.draw_sampled_quads(vp, &eye_shard_quads, &mut |_tex, u, v| {
+                Some(sprites.pixel(u, v))
+            });
         }
     }
 
@@ -46098,6 +46248,133 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_water_evaporating_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_eye_word_the_shatter_walk_the_ring_wears() {
+        // THE EYE-OF-ENDER SHATTER'S OWN WIRE LANE (javap case 2003 →
+        // offset 947 over the 26.2 jar): the `bipush 8` shard burst
+        // the `ItemParticleOption(ParticleTypes.ITEM, Items.ENDER_
+        // EYE)` loop fires first, the PORTAL ring the `(Math.PI * 2)`
+        // half-circle walk answers — the TWO puffs per step the ×−5
+        // and ×−7 velocity words spend, the 40 steps the 2π/40
+        // constant draws — NO SOUND the case speaks.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the assignment banks — the
+        // whole walk the seeded stream replays)
+        app.level_ambient_rng = crate::drops::Lcg::new(0xC10D_2003);
+        app.live_eye_of_ender_shatter_events_updated(vec![
+            crate::world_view::WireEyeOfEnderShatterEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+            },
+        ]);
+        // THE BURST COUNT (the 8 shards + the 40-step ring's TWO
+        // puffs per step the 80 the half-circle keeps)
+        assert_eq!(app.particles.len(), 8 + 80, "the 8 + 80 puffs the case body keeps");
+        // THE SHARDS (the BreakingItemParticle walk the eye's own
+        // item sprite wears — the anchor position the case's own
+        // head places, the velocity trio the gauss×0.15 / double×0.2
+        // bands give)
+        let shards = &app.particles[..8];
+        for s in shards {
+            assert!(
+                matches!(s.kind, crate::particles::ParticleKind::EyeItem),
+                "the ITEM type the eye wears"
+            );
+            assert!((s.x - 10.5).abs() < 1e-9, "the x the +0.5 center keeps: {}", s.x);
+            assert!((s.y - 20.0).abs() < 1e-9, "the raw y the plain dstore keeps: {}", s.y);
+            assert!((s.z - 10.5).abs() < 1e-9, "the z the +0.5 center keeps: {}", s.z);
+            assert!(
+                s.vx.abs() < 0.5 && s.vz.abs() < 0.5,
+                "the gauss band the ×0.15 fold gives: {} / {}",
+                s.vx,
+                s.vz
+            );
+            assert!(s.vy >= 0.0 && s.vy < 0.2, "the double band the ×0.2 fold gives: {}", s.vy);
+            assert!((s.gravity - 1.0).abs() < 1e-9, "the gravity 1.0 the shard keeps");
+        }
+        // THE RING (the 40-step walk's own law — the cos/sin ×5
+        // positions the `y − 0.4` lift wears, the ×−5 / ×−7 velocity
+        // pairs the two puffs per step answer, the purple tint the
+        // ctor's own draw chain keeps)
+        let ring = &app.particles[8..];
+        let steps = ring.len() / 2;
+        assert_eq!(steps, 40, "the 40 steps the half-circle draws");
+        for (i, pair) in ring.chunks(2).enumerate() {
+            let d = (i as f64) * 0.15707963267948966f64;
+            let (expect_px, expect_pz) = (10.5 + d.cos() * 5.0, 10.5 + d.sin() * 5.0);
+            for (vel, puff) in [(-5.0f64, &pair[0]), (-7.0f64, &pair[1])] {
+                assert!(
+                    matches!(puff.kind, crate::particles::ParticleKind::Portal { .. }),
+                    "the PORTAL type the ring wears"
+                );
+                assert!(
+                    (puff.x - expect_px).abs() < 1e-9,
+                    "the cos ×5 position the ring keeps: {} vs {}",
+                    puff.x,
+                    expect_px
+                );
+                assert!((puff.y - 19.6).abs() < 1e-9, "the y the −0.4 lift keeps: {}", puff.y);
+                assert!(
+                    (puff.z - expect_pz).abs() < 1e-9,
+                    "the sin ×5 position the ring keeps: {} vs {}",
+                    puff.z,
+                    expect_pz
+                );
+                assert!(
+                    (puff.vx - d.cos() * vel).abs() < 1e-9,
+                    "the cos ×{} velocity the ring's own word keeps: {}",
+                    vel,
+                    puff.vx
+                );
+                assert!((puff.vy).abs() < 1e-9, "the zero vy the ring carries");
+                assert!(
+                    (puff.vz - d.sin() * vel).abs() < 1e-9,
+                    "the sin ×{} velocity the ring's own word keeps: {}",
+                    vel,
+                    puff.vz
+                );
+                assert!(puff.lifetime >= 40 && puff.lifetime <= 49, "the lifetime band: {}", puff.lifetime);
+                // THE PURPLE (the r·0.9 / g·0.3 / b trio — the b the
+                // strongest the ring's own look keeps)
+                assert!(puff.col[2] >= puff.col[0] && puff.col[0] > puff.col[1], "the tint order the purple keeps");
+            }
+        }
+        // THE DETERMINISM (the same seed the same chain answers — the
+        // 8 × 10 shard draws + the 80 × 4 ring draws the walk spends)
+        let a = crate::drops::Lcg::new(0xC10D_2003);
+        let mut app2 = App::new(2);
+        app2.enter_world();
+        app2.level_ambient_rng = a;
+        app2.live_eye_of_ender_shatter_events_updated(vec![
+            crate::world_view::WireEyeOfEnderShatterEvent {
+                x: 10,
+                y: 20,
+                z: 10,
+            },
+        ]);
+        for (pa, pb) in app.particles.iter().zip(app2.particles.iter()) {
+            assert_eq!(
+                (pa.x, pa.y, pa.z, pa.vx, pa.vy, pa.vz, pa.lifetime, pa.quad_size, pa.col),
+                (pb.x, pb.y, pb.z, pb.vx, pb.vy, pb.vz, pb.lifetime, pb.quad_size, pb.col),
+                "the seeded chain replays"
+            );
+        }
+        // THE SILENCE (the ENDER_EYE_DEATH voice the server's own
+        // playSound carries on the death branch, NOT the case's)
+        if sounds_loaded() {
+            assert!(
+                !app.sounds.events.iter().any(|e| e.contains("ender_eye")),
+                "the case's own silence the voice never shares"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.particles.clear();
+        app.live_eye_of_ender_shatter_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 

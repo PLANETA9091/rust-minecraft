@@ -188,7 +188,7 @@ pub fn flame_shrink(age: u32, lifetime: u32, partial: f32) -> f32 {
 }
 
 /// The three kinds this client speaks.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum ParticleKind {
     /// `TerrainParticle` — the block's own particle tile (the
     /// `particle_tile` table's kind, the atlas tile id).
@@ -354,6 +354,49 @@ pub enum ParticleKind {
     /// getLayer override returns, the NO getQuadSize override the
     /// base law keeps (the plain quad the whole life wears).
     Explosion,
+    /// `PortalParticle` — the eye-of-ender landing's own ring (the
+    /// `portal` type the `LevelEventHandler` case-2003 arm's ring
+    /// walk speaks): the RANDOM STATIC frame the provider's
+    /// `SpriteSet.get(random)` pick answers (the `nextInt(8)` draw
+    /// the eight generic frames consume — the portal.json's
+    /// ASCENDING `generic_0..7` list the file index IS the draw, NO
+    /// setSpriteFromAge the class never speaks), the tint the ctor's
+    /// own draw chain carries (the `f = nextFloat * 0.6 + 0.4` the
+    /// r `* 0.9` / g `* 0.3` / b plain putfield trio keeps — the
+    /// purple the ring nights wear), the 40..49 lifetime the
+    /// `(int)(nextFloat * 10.0) + 40` draw gives, the swirl the tick
+    /// override's own body speaks (the position Start + velocity ×
+    /// the `1 − (2t² − t)` blend the f1 fold answers, the y-lift
+    /// `(1 − t)` the loc2 copy rides — the friction field the
+    /// recompute never reads), the OPAQUE layer the getLayer
+    /// override returns, the growth the getQuadSize override's
+    /// `1 − (1 − t)²` fold answers (the ring swells as it pulls
+    /// in). The Start the variant carries (the ctor's own
+    /// xStart/yStart/zStart write — the recompute the swirl's
+    /// exact-from-Start law demands).
+    Portal {
+        /// The SpriteSet.get(random) pick (the nextInt(8) draw's
+        /// answer — the ascending json the file index IS).
+        frame: usize,
+        /// The swirl's own Start (the ctor's xStart/yStart/zStart —
+        /// the ring position the addParticle args place).
+        sx: f64,
+        sy: f64,
+        sz: f64,
+    },
+    /// `BreakingItemParticle` the ENDER_EYE shard wears — the
+    /// eye-of-ender landing's own debris (the `ItemParticleOption(
+    /// ParticleTypes.ITEM, Items.ENDER_EYE)` walk the case-2003
+    /// arm's `bipush 8` loop speaks, the SAME class the splash
+    /// potion's shard rides — the quarter-region uv walk the terrain
+    /// dust shares, the uo/vo the ctor's own `nextFloat() * 3.0`
+    /// draws give, the gravity 1.0 the ctor passes, the base 0.98
+    /// friction, the `/2` size fold, the base lifetime the ctor
+    /// never overrides): the ONE sprite the eye's own model keeps
+    /// (the `item/ender_eye.png` layer0 the generated stanza speaks
+    /// — the single layer the `nextInt(1)` pick draws, the draw the
+    /// stream still spends), the white tint the item pixels wear.
+    EyeItem,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -573,6 +616,11 @@ impl Particle {
             // override — the (1 - t*t*0.5) fold the death walks to the
             // HALF quad, the lava's own to-none never keeps it)
             ParticleKind::Flame => base * flame_shrink(self.age, self.lifetime, 0.0),
+            // the portal ring's own swell (the PortalParticle.getQuadSize
+            // override — the 1 − (1 − t)² fold the partial rides 0.0 the
+            // same way the crit's bloom does: the quad starts a point,
+            // the full size the life's end reaches)
+            ParticleKind::Portal { .. } => base * portal_grow(self.age as f32 / self.lifetime.max(1) as f32),
             _ => base,
         }
     }
@@ -717,6 +765,38 @@ impl Particle {
         if self.age >= self.lifetime {
             return false;
         }
+        true
+    }
+
+    /// The `PortalParticle.tick` verbatim — the swirl the override's
+    /// own body speaks: the prev-trio the tick head saves, the age
+    /// walk (`age++` the dup_x1 body speaks — the NEW age the t read
+    /// answers), the removal gate (`age >= lifetime` the remove()
+    /// branch arms) — then the RECOMPUTE the Start law keeps: the
+    /// blend `1 − (2t² − t)` the f1 fold answers, the position
+    /// `Start + velocity * blend` the x/z lanes carry, the y-lift
+    /// `(1 − t)` the loc2 copy adds (the ring rides UP as it pulls
+    /// in). The friction field the recompute never reads (the
+    /// hasPhysics-false plain-translate law the base tick keeps is
+    /// the override's own silence — no spread, no ground gate).
+    pub fn tick_portal(&mut self) -> bool {
+        self.tick_head();
+        self.age += 1;
+        if self.age >= self.lifetime {
+            return false;
+        }
+        let (sx, sy, sz) = match self.kind {
+            ParticleKind::Portal { sx, sy, sz, .. } => (sx, sy, sz),
+            _ => (self.x, self.y, self.z),
+        };
+        // THE SWIRL (the tick's own folds — the NEW age the t read
+        // speaks, the blend the f1 fold answers, the y-lift the
+        // loc2 copy adds)
+        let t = self.age as f32 / self.lifetime as f32;
+        let blend = f64::from(portal_swirl_blend(t));
+        self.x = sx + self.vx * blend;
+        self.y = sy + self.vy * blend + f64::from(1.0f32 - t);
+        self.z = sz + self.vz * blend;
         true
     }
 
@@ -1838,6 +1918,144 @@ pub fn breaking_potion_shard(
         vo,
         col: [1.0, 1.0, 1.0],
     }
+}
+
+/// The ENDER-EYE debris shard's own spawn (javap `BreakingItemParticle`
+/// over the 26.2 jar — the `ItemParticleOption(ParticleTypes.ITEM,
+/// Items.ENDER_EYE)` the case-2003 arm's `bipush 8` loop speaks): the
+/// SAME class and the SAME draw chain the splash potion's shard rides
+/// (the nine draws the ctor chain consumes on the LEVEL stream in the
+/// vanilla order — the base lifetime, the three spreads, the d0 pair,
+/// the size draw, the uo/vo pair — then the 7-arg ctor's
+/// `xd = xd * 0.1 + xSpeed` fold the wire velocity rides, the gravity
+/// 1.0, the `/2` size fold, the base 0.98 friction). The ONE sprite
+/// the eye's own model keeps: the provider's `getSprite` walk the
+/// `pickParticleMaterial`'s `nextInt(activeLayerCount)` fold answers —
+/// activeLayerCount 1 the single-layer stanza banks — the draw the
+/// caller's stream STILL spends (the zero answer the bound-1 pick
+/// keeps, the stream the alignment law guards).
+#[allow(clippy::too_many_arguments)]
+pub fn breaking_eye_shard(
+    x: f64,
+    y: f64,
+    z: f64,
+    wire_vx: f64,
+    wire_vy: f64,
+    wire_vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // THE SPRITE PICK (the `nextInt(1)` the single-layer model's
+    // activeLayerCount speaks — the draw the stream spends, the zero
+    // answer the pick keeps)
+    let _layer = rng.next_int(1);
+    let life = base_lifetime(rng.next_f32());
+    let (sx, sy, sz) = ctor_spread_and_normalize(rng);
+    let r_size = rng.next_f32();
+    let uo = rng.next_f32() * 3.0;
+    let vo = rng.next_f32() * 3.0;
+    let scale = f64::from(0.1f32);
+    Particle {
+        kind: ParticleKind::EyeItem,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: sx * scale + wire_vx,
+        vy: sy * scale + wire_vy,
+        vz: sz * scale + wire_vz,
+        age: 0,
+        lifetime: life,
+        gravity: 1.0,
+        friction: 0.98,
+        quad_size: base_quad_size(r_size) / 2.0,
+        uo,
+        vo,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The portal ring puff's own spawn (javap `PortalParticle` +
+/// `$Provider.createParticle` over the 26.2 jar — the
+/// `addParticle(ParticleTypes.PORTAL, ...)` the case-2003 arm's ring
+/// walk fires): the provider's own `SpriteSet.get(random)` pick the
+/// `nextInt(8)` draw answers FIRST (the random STATIC frame the
+/// ascending portal.json keeps — no setSpriteFromAge the class never
+/// speaks), then the ctor's own three draws — the quadSize the
+/// `0.1F * (nextFloat * 0.2F + 0.5F)` write answers (NOT the base's
+/// own `* 0.5 * 2.0` chain the single particle class folds), the tint
+/// draw the `f = nextFloat * 0.6F + 0.4F` body spends (the r `* 0.9`
+/// / g `* 0.3` / b plain putfield trio the purple keeps), the
+/// lifetime the `(int)(nextFloat * 10.0F) + 40` write gives. The
+/// velocity the addParticle args carry VERBATIM (the ctor's plain
+/// field stores — no spread, no scale the recompute-from-Start swirl
+/// never folds), the Start the ctor's own xStart/yStart/zStart write
+/// keeps (the exact positions the swirl recompute demands). The base
+/// friction field the vanilla default keeps (the tick override the
+/// field never reads).
+#[allow(clippy::too_many_arguments)]
+pub fn portal_ring_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // THE FRAME PICK (the provider's SpriteSet.get(random) — the
+    // nextInt(8) draw the eight-frame set consumes)
+    let frame = rng.next_int(8) as usize;
+    // THE SIZE DRAW (the ctor's own write — the 0.05..0.07 band the
+    // 0.1 × (r·0.2 + 0.5) fold gives)
+    let r_quad = rng.next_f32();
+    // THE TINT DRAW (the ONE nextFloat the ctor's f15 body spends —
+    // the f = r·0.6 + 0.4 the r/g/b trio re-reads)
+    let r_tint = rng.next_f32();
+    // THE LIFETIME DRAW (the (int)(r · 10.0) + 40 write — the
+    // 40..49 band the ring's long nights wear)
+    let r_life = rng.next_f32();
+    let tint = r_tint * 0.6f32 + 0.4f32;
+    Particle {
+        kind: ParticleKind::Portal { frame, sx: x, sy: y, sz: z },
+        x,
+        y,
+        z,
+        prev: None,
+        // the verbatim velocity args the ctor's plain stores keep
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime: (r_life * 10.0f32) as u32 + 40,
+        gravity: 0.0,
+        // the vanilla field default the swirl's recompute never reads
+        friction: 0.98,
+        quad_size: 0.1f32 * (r_quad * 0.2f32 + 0.5f32),
+        uo: 0.0,
+        vo: 0.0,
+        col: [tint * 0.9f32, tint * 0.3f32, tint],
+    }
+}
+
+/// The `PortalParticle.tick`'s own blend (javap the tick body's f1
+/// fold verbatim: `t = (float)age / (float)lifetime` the NEW age the
+/// putfield-first order keeps, then `f1 = -t + (t * t) * 2.0F` the
+/// dadd fold speaks, then `f1 = 1.0F - f1` — the 1 − 2t² + t curve
+/// the ring's pull-in rides: the blend opens at 1.0 (the birth
+/// position Start + full velocity), holds ~1.0 through the middle
+/// swing, closes at 0.0 (the particle lands ON its Start)).
+pub fn portal_swirl_blend(t: f32) -> f32 {
+    1.0f32 - (-t + (t * t) * 2.0f32)
+}
+
+/// The `PortalParticle.getQuadSize` override's own fold (javap
+/// verbatim: `t = ((float)age + partial) / (float)lifetime`, `f =
+/// 1.0F - t`, `f *= f`, `f = 1.0F - f` — the 1 − (1 − t)² growth the
+/// ring swells by: the quad starts a point, reaches the full size at
+/// the life's end, the pull-in the swirl's own closing rides).
+pub fn portal_grow(t: f32) -> f32 {
+    let f = 1.0f32 - t;
+    1.0f32 - f * f
 }
 
 /// The SPELL-RING puff's own spawn (javap `SpellParticle` +
@@ -3954,6 +4172,131 @@ mod tests {
             b.next();
         }
         assert_eq!(after_six, b.next(), "the cloud chain's own six draws");
+    }
+
+    #[test]
+    fn the_portal_ring_puff_the_swirl_the_grow_wear() {
+        // THE EYE-OF-ENDER LANDING'S OWN RING (javap `PortalParticle`
+        // + `$Provider.createParticle` over the 26.2 jar — the
+        // case-2003 arm's own walk feeds): the four draws the
+        // per-puff chain consumes (the frame pick the SpriteSet.get
+        // law answers FIRST, the size, THE ONE tint draw the f15
+        // body spends, the lifetime the +40 write answers), the
+        // verbatim velocity the ctor's plain stores keep, the swirl
+        // the exact-from-Start recompute speaks, the growth the
+        // getQuadSize fold gives. THE EYE SHARD (javap
+        // `BreakingItemParticle` — the SAME chain the splash shard
+        // rides, the bound-1 pick the stream still spends).
+        // THE BLEND EDGES (the f1 fold the tick body pins):
+        assert!((portal_swirl_blend(0.0) - 1.0).abs() < 1e-6, "the t=0 blend (the birth rides the full velocity)");
+        assert!((portal_swirl_blend(0.5) - 1.0).abs() < 1e-6, "the mid swing the blend holds (1 - (0.5 - 0.5))");
+        assert!((portal_swirl_blend(1.0)).abs() < 1e-6, "the t=1 blend (the particle lands ON its Start)");
+        // THE GROW EDGES (the getQuadSize override's own fold):
+        assert!((portal_grow(0.0)).abs() < 1e-6, "the quad starts a point");
+        assert!((portal_grow(1.0) - 1.0).abs() < 1e-6, "the full size the life's end reaches");
+        assert!((portal_grow(0.5) - 0.75).abs() < 1e-6, "the mid growth (1 - 0.25)");
+        // THE RING PUFF (the seeded chain — the frame pick, the size,
+        // the tint, the lifetime: the four draws the ctor chain
+        // consumes)
+        let mut stream = crate::drops::Lcg::new(0xC10D_2003);
+        let p = portal_ring_puff(10.0, 20.0, 30.0, -5.0, 0.0, 0.0, &mut stream);
+        assert!(
+            matches!(p.kind, ParticleKind::Portal { sx: 10.0, sy: 20.0, sz: 30.0, .. }),
+            "the Start the variant carries (the ctor's xStart/yStart/zStart)"
+        );
+        assert!((p.vx - -5.0).abs() < 1e-9, "the verbatim vx the ctor stores");
+        assert!((p.vy).abs() < 1e-9, "the verbatim vy (the zero the ring carries)");
+        assert!((p.vz).abs() < 1e-9, "the verbatim vz");
+        // THE CTOR LAWS (the 40..49 lifetime the +40 write gives, the
+        // 0.05..0.07 band the 0.1 × (r·0.2 + 0.5) fold gives, the
+        // purple the r·0.9 / g·0.3 / b trio keeps — the b the tint
+        // itself, the r/g the SAME draw's folds re-read)
+        assert!((40..=49).contains(&p.lifetime), "the lifetime band: {}", p.lifetime);
+        assert!(
+            p.quad_size > 0.05 && p.quad_size < 0.07,
+            "the ring's own size band: {}",
+            p.quad_size
+        );
+        let b = p.col[2];
+        assert!((0.4..=1.0).contains(&b), "the tint band the r*0.6+0.4 draw gives: {b}");
+        assert!((p.col[0] - b * 0.9).abs() < 1e-6, "the r the ×0.9 fold keeps");
+        assert!((p.col[1] - b * 0.3).abs() < 1e-6, "the g the ×0.3 fold keeps");
+        // THE FRICTION FIELD (the vanilla default the swirl never
+        // reads — the recompute the field's own silence keeps)
+        assert!((p.friction - 0.98).abs() < 1e-9, "the dead field the base default keeps");
+        // THE SWIRL (the tick's own recompute — the position
+        // Start + velocity × blend, the y-lift (1 − t) the loc2 copy
+        // adds: the first tick the blend 1−(2t²−t) at t=1/lifetime
+        // folds, the pull-in the exact law keeps)
+        let mut t = portal_ring_puff(10.0, 20.0, 30.0, -5.0, 0.0, 0.0, &mut stream);
+        t.lifetime = 100;
+        assert!(t.tick_portal(), "the alive tick");
+        let t1 = 1.0f32 / 100.0f32;
+        let blend1 = portal_swirl_blend(t1);
+        assert!(
+            (t.x - (10.0 + -5.0 * f64::from(blend1))).abs() < 1e-9,
+            "the x the Start + vx × blend law keeps: {}",
+            t.x
+        );
+        assert!(
+            (t.y - (20.0 + 0.0 + f64::from(1.0f32 - t1))).abs() < 1e-9,
+            "the y the lift (1 − t) the loc2 copy adds: {}",
+            t.y
+        );
+        assert!((t.z - 30.0).abs() < 1e-9, "the z the zero vz the Start keeps");
+        // the mid-life swing (the age 50 the blend ~1 the half point
+        // answers, the position the Start's neighborhood keeps)
+        let mut mid = portal_ring_puff(10.0, 20.0, 30.0, -5.0, 0.0, 0.0, &mut stream);
+        mid.lifetime = 100;
+        for _ in 0..50 {
+            mid.tick_portal();
+        }
+        assert!(
+            (mid.x - (10.0 + -5.0 * f64::from(portal_swirl_blend(0.5)))).abs() < 1e-9,
+            "the mid swing the exact-from-Start law keeps: {}",
+            mid.x
+        );
+        // THE REMOVAL (the age walk the lifetime gates — the removal
+        // tick the swirl never walks)
+        let mut dying = portal_ring_puff(0.0, 0.0, 0.0, 1.0, 0.0, 0.0, &mut stream);
+        dying.lifetime = 2;
+        assert!(dying.tick_portal(), "the first tick the alive gate answers");
+        assert!(!dying.tick_portal(), "the age the removal walk answers");
+        // THE EYE SHARD (the SAME chain the splash shard rides — the
+        // bound-1 pick the stream spends FIRST, the nine draws the
+        // ctor chain consumes, the gravity 1.0, the /2 size fold, the
+        // white tint the item pixels wear)
+        let mut shard_stream = crate::drops::Lcg::new(0xC10D_2004);
+        let s = breaking_eye_shard(1.0, 2.0, 3.0, 0.05, 0.02, -0.05, &mut shard_stream);
+        assert!(matches!(s.kind, ParticleKind::EyeItem), "the ITEM type the eye wears");
+        assert!((s.gravity - 1.0).abs() < 1e-9, "the gravity 1.0 the ctor passes");
+        assert!((s.friction - 0.98).abs() < 1e-9, "the base 0.98 friction");
+        assert_eq!(s.col, [1.0, 1.0, 1.0], "the white tint the item pixels wear");
+        assert!(
+            s.quad_size > 0.05 && s.quad_size < 0.1,
+            "the /2 fold the base band halves: {}",
+            s.quad_size
+        );
+        assert!((s.vx - 0.05).abs() < 1.0, "the wire velocity the ctor's fold rides");
+        // the shard's own draw count (the bound-1 pick + the nine
+        // draws the ctor chain consumes — the next draw the tenth
+        // after)
+        let mut a = crate::drops::Lcg::new(0xC10D_2004);
+        let _ = breaking_eye_shard(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &mut a);
+        let after_ten = a.next();
+        let mut b = crate::drops::Lcg::new(0xC10D_2004);
+        for _ in 0..10 {
+            b.next();
+        }
+        assert_eq!(after_ten, b.next(), "the shard chain's own ten draws");
+        // THE DETERMINISM (the same seed the same chain answers)
+        let mut a = crate::drops::Lcg::new(0xC10D_2003);
+        let p2 = portal_ring_puff(10.0, 20.0, 30.0, -5.0, 0.0, 0.0, &mut a);
+        assert_eq!(
+            (p2.x, p2.y, p2.z, p2.lifetime, p2.quad_size, p2.col),
+            (p.x, p.y, p.z, p.lifetime, p.quad_size, p.col),
+            "the seeded chain replays"
+        );
     }
 
     #[test]

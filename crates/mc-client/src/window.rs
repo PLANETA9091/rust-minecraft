@@ -171,6 +171,7 @@ fn run_join(
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
+                Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
@@ -267,6 +268,7 @@ fn run_join(
             view.model.drain_white_smoke_events();
             view.model.drain_dragon_fireball_splash_events();
             view.model.drain_water_evaporating_events();
+            view.model.drain_eye_of_ender_shatter_events();
             view.model.drain_dragon_block_break_events();
             view.model.drain_dispenser_dispense_events();
             view.model.drain_fixed_voice_events();
@@ -887,6 +889,7 @@ fn run_join(
                             view.model.drain_white_smoke_events();
                             view.model.drain_dragon_fireball_splash_events();
                             view.model.drain_water_evaporating_events();
+                            view.model.drain_eye_of_ender_shatter_events();
                             view.model.drain_dragon_block_break_events();
                             view.model.drain_dispenser_dispense_events();
                             view.model.drain_fixed_voice_events();
@@ -1051,6 +1054,14 @@ fn run_join(
                                     // render's own law folds, each arm
                                     // rides exactly one shipped refresh)
                                     upd.water_evaporating_events,
+                                    // the eye-of-ender shatter's arms ride
+                                    // beside the water's — the 2003 words
+                                    // the server's own ender signal
+                                    // broadcasts stream to the shatter lane
+                                    // (the shard loop + portal ring walk the
+                                    // render's own law folds, each arm
+                                    // rides exactly one shipped refresh)
+                                    upd.eye_of_ender_shatter_events,
                                     upd.dragon_block_break_events,
                                     // the dispenser-dispense voice's arms
                                     // ride beside the dragon's — the 1000
@@ -1233,6 +1244,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
+                Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
@@ -1786,6 +1798,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     white_smoke_events,
                     dragon_fireball_splash_events,
                     water_evaporating_events,
+                    eye_of_ender_shatter_events,
                     dragon_block_break_events,
                     dispenser_dispense_events,
                     fixed_voice_events,
@@ -1907,6 +1920,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // answers the same packet with)
                     app.live_dragon_fireball_splash_events_updated(dragon_fireball_splash_events);
                     app.live_water_evaporating_events_updated(water_evaporating_events);
+                    // the eye-of-ender shatter's lane beside the water's:
+                    // the 2003 words the server's own ender signal
+                    // broadcasts land at their own anchors (the shard
+                    // loop + portal ring walk the render lane's own law
+                    // folds at the block center — the two puffs per step
+                    // the ring's own body speaks, the vanilla client
+                    // answers the same packet with)
+                    app.live_eye_of_ender_shatter_events_updated(eye_of_ender_shatter_events);
                     app.live_dragon_block_break_events_updated(dragon_block_break_events);
                     // the dispenser-dispense voice's lane beside the
                     // dragon's: the 1000 words the server's own dispenser

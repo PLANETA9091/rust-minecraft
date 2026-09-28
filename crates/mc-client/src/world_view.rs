@@ -481,6 +481,13 @@ pub struct SnapshotView {
     /// after), the render lane's own law folds the eight-puff
     /// steam cloud.
     pub water_evaporating_events: Vec<WireWaterEvaporatingEvent>,
+    /// The 2003 words the refresh carries (the server's own ender
+    /// signal broadcasts, [`mc_protocol::play::EYE_OF_ENDER_SHATTER_EFFECT`]
+    /// the vocabulary speaks): shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after), the render lane's own law folds the shatter burst —
+    /// the shard loop and the portal ring the case body walks.
+    pub eye_of_ender_shatter_events: Vec<WireEyeOfEnderShatterEvent>,
     /// The 2008 words the refresh carries (the server's own dragon
     /// broadcasts, [`mc_protocol::play::DRAGON_BLOCK_BREAK_EFFECT`]
     /// the vocabulary speaks): shipped once with the refresh that
@@ -587,6 +594,20 @@ pub struct WireDragonFireballSplashEvent {
 /// the transport never carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireWaterEvaporatingEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+}
+
+/// One wire EYE-OF-ENDER SHATTER arm — the Level Event packet's own
+/// landing (the 2003 words the server's own ender signal
+/// broadcasts, [`mc_protocol::play::EYE_OF_ENDER_SHATTER_EFFECT`]
+/// the render lane speaks): the event's anchor block, verbatim (the
+/// shard loop and the portal ring's own input — the shatter burst
+/// the render lane folds from it; the data word the case's own body
+/// never reads, the transport never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireEyeOfEnderShatterEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -2509,6 +2530,9 @@ pub fn materialize_snapshot_view(
         // and no dragon words (the join snapshot carries no 2008
         // traffic — the empty mailbox the render lane skips)
         dragon_block_break_events: Vec::new(),
+        // and no eye words (the join snapshot carries no 2003
+        // traffic — the empty mailbox the render lane skips)
+        eye_of_ender_shatter_events: Vec::new(),
         // and no dispenser words (the join snapshot carries no 1000
         // traffic — the empty mailbox the sound lane skips)
         dispenser_dispense_events: Vec::new(),
@@ -2927,6 +2951,20 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the eye-of-ender shatter's own projection (the mailbox
+        // verbatim — the anchor the arms carry, the render lane's own
+        // law reads): each 2003 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let eye_of_ender_shatter_events = self
+            .model
+            .eye_of_ender_shatter_events
+            .iter()
+            .map(|arm| WireEyeOfEnderShatterEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the dragon block-break effect's own projection (the mailbox
         // verbatim — the anchor the arms carry, the render lane's own
         // law reads): each 2008 word ships once with this view, the
@@ -3146,6 +3184,10 @@ impl LiveView {
                 // arm too — the 2008 words are the connection's own
                 // traffic, not the pose's
                 dragon_block_break_events,
+                // the eye-of-ender shatter's arms ride the pose-less arm
+                // too — the 2003 words are the connection's own traffic,
+                // not the pose's
+                eye_of_ender_shatter_events,
                 // the dispenser-dispense voice's arms ride the pose-less
                 // arm too — the 1000 words are the connection's own
                 // traffic, not the pose's
@@ -3256,6 +3298,10 @@ impl LiveView {
             // too — the 2008 words follow the mailbox exactly like the
             // water's own arms do
             dragon_block_break_events,
+            // the eye-of-ender shatter's arms ride every refresh too —
+            // the 2003 words follow the mailbox exactly like the
+            // water's own arms do
+            eye_of_ender_shatter_events,
             // the dispenser-dispense voice's arms ride every refresh
             // too — the 1000 words follow the mailbox exactly like the
             // dragon's own arms do

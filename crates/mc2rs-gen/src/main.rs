@@ -328,6 +328,20 @@ enum Cmd {
         #[arg(long, default_value = ".")]
         out: String,
     },
+    /// The runtime cache's own emit (assets-cache/gen/font.bin +
+    /// textures.bin) from a LOCAL client jar — the derived cache the
+    /// loaders parse, the environment-recovery lane the sandbox wipes
+    /// demand: no source writes, no network, no java.
+    Cache {
+        #[arg(long)]
+        version: String,
+        /// Path to the official client jar (e.g. .mc2rs/classpath/client.jar).
+        #[arg(long)]
+        jar: String,
+        /// Workspace root (contains crates/).
+        #[arg(long, default_value = ".")]
+        out: String,
+    },
     /// Re-emit mc-registry/src/generated/worldgen.rs (biomes + the built-in
     /// dimension_type/timeline/timeline-tag registry tables) from a LOCAL
     /// client jar — the offline half of the worldgen arc: no network, no java.
@@ -518,6 +532,16 @@ fn main() -> Result<()> {
             let root = std::path::PathBuf::from(&out);
             let path = write_textures(&root, &bytes, &version)?;
             println!("textures ({version}): {}", path.display());
+        }
+        Cmd::Cache { version, jar, out } => {
+            let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
+            let root = std::path::PathBuf::from(&out);
+            let (font_path, tex_path) = write_runtime_cache(&root, &bytes, &version)?;
+            println!(
+                "cache ({version}): {} + {}",
+                font_path.display(),
+                tex_path.display()
+            );
         }
         Cmd::ItemModels { version, jar, out } => {
             let bytes = std::fs::read(&jar).with_context(|| format!("read jar {jar}"))?;
@@ -1438,4 +1462,27 @@ fn civil_from_days(z: i64) -> (i64, u32, u32) {
     let d = (doy - (153 * mp + 2) / 5 + 1) as u32;
     let m = if mp < 10 { mp + 3 } else { mp - 9 } as u32;
     (if m <= 2 { y + 1 } else { y }, m, d)
+}
+
+/// The runtime cache's own emit (the environment-recovery lane): the
+/// font.bin + textures.bin the loaders parse, written from a LOCAL jar
+/// with NO source-file writes — the wiped-sandbox restore the clone's
+/// fresh checkout demands (the derived cache the generate pipeline
+/// writes as its side-effect, the loaders' only pixel/glyph source).
+fn write_runtime_cache(
+    workspace_root: &Path,
+    jar_bytes: &[u8],
+    _version: &str,
+) -> Result<(std::path::PathBuf, std::path::PathBuf)> {
+    let mut zip =
+        zip::ZipArchive::new(std::io::Cursor::new(jar_bytes)).context("open client jar as zip")?;
+    let font = fontgen::generate(&mut zip)?;
+    let textures = texturesgen::generate(&mut zip)?;
+    let cache_dir = workspace_root.join("assets-cache/gen");
+    std::fs::create_dir_all(&cache_dir)?;
+    let font_path = cache_dir.join("font.bin");
+    std::fs::write(&font_path, fontgen::emit_cache(&font)?)?;
+    let tex_path = cache_dir.join("textures.bin");
+    std::fs::write(&tex_path, texturesgen::emit_cache(&textures)?)?;
+    Ok((font_path, tex_path))
 }

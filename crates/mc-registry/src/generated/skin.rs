@@ -304,6 +304,8 @@ pub const ITEM_POTION_OVERLAY_PNG_SHA1: &str = "edacedcd307eb0a8655fe1140ac8c257
 pub const ITEM_POTION_OVERLAY_RUNTIME_PATH: &str = "item/potion_overlay.png";
 pub const ITEM_SPLASH_POTION_PNG_SHA1: &str = "a4f2fa447a949deb361c48efa95bba67d31434da";
 pub const ITEM_SPLASH_POTION_RUNTIME_PATH: &str = "item/splash_potion.png";
+pub const ITEM_ENDER_EYE_PNG_SHA1: &str = "c4b613c0e74c9068e87bab2d27c646aa6b0ccffe";
+pub const ITEM_ENDER_EYE_RUNTIME_PATH: &str = "item/ender_eye.png";
 
 /// The WOLF skin (the wild default the WolfRenderer's extractRenderState
 /// `wolf.getTexture()` answers — the variant table's PALE word the

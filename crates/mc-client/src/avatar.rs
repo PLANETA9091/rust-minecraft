@@ -6173,6 +6173,48 @@ impl PotionSprites {
     }
 }
 
+/// The PARTICLE LANE's eye-of-ender shatter sprite — the ONE 16x16
+/// item texture the case-2003 arm's shard burst wears (javap: the
+/// `BreakingItemParticle`'s own render the `ItemParticleOption(
+/// ParticleTypes.ITEM, Items.ENDER_EYE)` walk feeds — the eye's own
+/// model the generated `item/ender_eye` stanza keeps, the single
+/// layer0 the `item/generated` parent speaks, the `pickParticleMaterial`'s
+/// `nextInt(1)` pick the walk's draw still spends), the file loaded
+/// and sha1-verified the same stream the potion sprites speak. A
+/// missing or tampered sprite keeps the debris invisible.
+pub struct EyeSprites {
+    /// The eye's own sprite pixels (the 16x16 RGBA the decode keeps).
+    pub sprite: Vec<u8>,
+}
+
+/// The eye texture's own layout (the jar's 16x16 the IHDR speaks).
+pub const EYE_SPRITE_SIDE: u32 = 16;
+
+impl EyeSprites {
+    /// Load the sprite from the runtime cache root, verify the sha1,
+    /// decode, shape-check the 16x16 layout.
+    pub fn load(root: &std::path::Path) -> Option<EyeSprites> {
+        let bytes = std::fs::read(root.join(skin::ITEM_ENDER_EYE_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::ITEM_ENDER_EYE_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != EYE_SPRITE_SIDE || h != EYE_SPRITE_SIDE {
+            return None;
+        }
+        Some(EyeSprites { sprite: rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..16 the
+    /// shard quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, EYE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, EYE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * EYE_SPRITE_SIDE as usize + x) * 4;
+        [self.sprite[o], self.sprite[o + 1], self.sprite[o + 2], self.sprite[o + 3]]
+    }
+}
+
 impl SweepFrames {
     /// Load the 8 frames from the runtime cache root, verify each
     /// sha1, decode, shape-check the 32x32 layout.

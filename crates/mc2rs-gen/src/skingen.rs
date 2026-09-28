@@ -252,6 +252,11 @@ pub const PARTICLE_SPELL_JAR_PATHS: [&str; 8] = [
 /// 16x16 the IHDR verifies).
 pub const ITEM_POTION_OVERLAY_JAR_PATH: &str = "assets/minecraft/textures/item/potion_overlay.png";
 pub const ITEM_SPLASH_POTION_JAR_PATH: &str = "assets/minecraft/textures/item/splash_potion.png";
+/// The eye-of-ender shatter's own debris sprite (the 16x16 the eye's
+/// single-layer `item/ender_eye` model keeps — the layer0 the
+/// `item/generated` parent speaks, the one sprite the case-2003
+/// shard burst wears).
+pub const ITEM_ENDER_EYE_JAR_PATH: &str = "assets/minecraft/textures/item/ender_eye.png";
 
 /// THE VARIANT TABLE'S JAR ENTRIES (the regen-gap closure): the skins
 /// the earlier rounds hand-added to the GENERATED file — the generator's
@@ -391,6 +396,9 @@ pub const PARTICLE_SPELL_RUNTIME_PATHS: [&str; 8] = [
 /// textures/ prefix strip the other lanes speak).
 pub const ITEM_POTION_OVERLAY_RUNTIME_PATH: &str = "item/potion_overlay.png";
 pub const ITEM_SPLASH_POTION_RUNTIME_PATH: &str = "item/splash_potion.png";
+/// The eye-of-ender shatter's own debris sprite (the same
+/// textures/ prefix strip the other lanes speak).
+pub const ITEM_ENDER_EYE_RUNTIME_PATH: &str = "item/ender_eye.png";
 /// Where the client reads the skin at runtime (under the runtime asset root).
 pub const RUNTIME_PATH: &str = "entity/player/wide/steve.png";
 pub const SLIM_RUNTIME_PATH: &str = "entity/player/slim/alex.png";
@@ -523,6 +531,10 @@ pub struct SkinData {
     /// picks).
     pub item_potion_overlay_png_sha1: String,
     pub item_splash_potion_png_sha1: String,
+    /// sha1 of the eye-of-ender shatter's own 16x16 debris sprite
+    /// (jar-verbatim integrity) — the debris quad's pixel source (the
+    /// eye's single-layer model the pickParticleMaterial walk picks).
+    pub item_ender_eye_png_sha1: String,
     /// THE VARIANT TABLE'S SHA1S (jar-verbatim integrity): the skins
     /// the variant lanes verify before they draw — the thin/arachnid/
     /// canine pair + the 26.2 temperature variants' adult/baby rows
@@ -990,6 +1002,18 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
     let splash_item_bytes =
         read_entry(archive, ITEM_SPLASH_POTION_JAR_PATH).context("read splash potion item")?;
     let item_splash_potion_png_sha1 = crate::util::sha1_hex(&splash_item_bytes);
+    // the eye-of-ender shatter's own 16x16 debris sprite (the eye's
+    // single-layer item model the case-2003 shard burst wears)
+    let eye_item_bytes =
+        read_entry(archive, ITEM_ENDER_EYE_JAR_PATH).context("read ender eye item")?;
+    let item_ender_eye_png_sha1 = crate::util::sha1_hex(&eye_item_bytes);
+    let (ew, eh, _eye_item_rgba) = decode_rgba(&eye_item_bytes).context("decode ender eye item")?;
+    anyhow::ensure!(
+        (ew, eh) == (16, 16),
+        "ender_eye must be the 16x16 item sprite, got {}x{}",
+        ew,
+        eh
+    );
     let (iw, ih, _splash_item_rgba) = decode_rgba(&splash_item_bytes)
         .context("decode splash potion item")?;
     anyhow::ensure!(
@@ -1096,6 +1120,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_spell_png_sha1s,
         item_potion_overlay_png_sha1,
         item_splash_potion_png_sha1,
+        item_ender_eye_png_sha1,
         skeleton_png_sha1,
         spider_png_sha1,
         creeper_png_sha1,
@@ -1580,6 +1605,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const ITEM_SPLASH_POTION_RUNTIME_PATH: &str = \"{ITEM_SPLASH_POTION_RUNTIME_PATH}\";\n"
     ));
+    out.push_str(&format!(
+        "pub const ITEM_ENDER_EYE_PNG_SHA1: &str = \"{}\";\n",
+        data.item_ender_eye_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const ITEM_ENDER_EYE_RUNTIME_PATH: &str = \"{ITEM_ENDER_EYE_RUNTIME_PATH}\";\n"
+    ));
     out.push_str("\n/// The WOLF skin (the wild default the WolfRenderer's extractRenderState\n/// `wolf.getTexture()` answers — the variant table's PALE word the\n/// no-variant lane keeps), generated from the same jar: the source sha1\n/// the wolf renderer verifies before it draws (javap AdultWolfModel:\n/// the createBodyLayer mesh the `LayerDefinition.create(mesh, 64, 32)`\n/// layout unwraps — the head+ears+muzzle/body/upper_body/4-legs/tail\n/// chain the bytecode speaks).\n");
     out.push_str(&format!(
         "pub const WOLF_PNG_SHA1: &str = \"{}\";\n",
@@ -1823,6 +1855,8 @@ mod tests {
         let expected_overlay_sha1 = crate::util::sha1_hex(&overlay);
         let splash_item = item_png();
         let expected_splash_item_sha1 = crate::util::sha1_hex(&splash_item);
+        let eye_item = item_png();
+        let expected_eye_item_sha1 = crate::util::sha1_hex(&eye_item);
         // THE VARIANT TABLE'S SYNTHETICS (the dims the layout asserts
         // demand — the thin/arachnid/canine 64x32, the canine baby's
         // 32x32, the avian variants' 64x32 + 16x16, the swine/bovine
@@ -1959,6 +1993,7 @@ mod tests {
             (PARTICLE_SPELL_JAR_PATHS[7], spells[7].clone()),
             (ITEM_POTION_OVERLAY_JAR_PATH, overlay),
             (ITEM_SPLASH_POTION_JAR_PATH, splash_item),
+            (ITEM_ENDER_EYE_JAR_PATH, eye_item),
         ]);
         let data = generate(&mut zip).unwrap();
         assert_eq!(data.side, 64);
@@ -2083,6 +2118,10 @@ mod tests {
         assert_eq!(
             data.item_splash_potion_png_sha1, expected_splash_item_sha1,
             "the splash potion item's own sha1"
+        );
+        assert_eq!(
+            data.item_ender_eye_png_sha1, expected_eye_item_sha1,
+            "the ender eye item's own sha1"
         );
         // THE VARIANT TABLE'S SHA1S (the regen-gap closure's own pins —
         // the generator reads the same jar rows the hand-added ledger
