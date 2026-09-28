@@ -180,6 +180,7 @@ fn run_join(
                 Vec<crate::world_view::WireTrialEjectEvent>,
                 Vec<crate::world_view::WireVaultEvent>,
                 Vec<crate::world_view::WireTrialOminousEvent>,
+                Vec<crate::world_view::WireCobwebEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -299,6 +300,7 @@ fn run_join(
             view.model.drain_trial_eject_events();
             view.model.drain_vault_events();
             view.model.drain_trial_ominous_events();
+            view.model.drain_cobweb_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -942,6 +944,7 @@ fn run_join(
                             view.model.drain_trial_eject_events();
                             view.model.drain_vault_events();
                             view.model.drain_trial_ominous_events();
+            view.model.drain_cobweb_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1202,6 +1205,7 @@ fn run_join(
                                     // words ride exactly one shipped
                                     // refresh)
                                     upd.trial_ominous_events,
+                                    upd.cobweb_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1511,6 +1515,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireTrialEjectEvent>,
                 Vec<crate::world_view::WireVaultEvent>,
                 Vec<crate::world_view::WireTrialOminousEvent>,
+                Vec<crate::world_view::WireCobwebEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -2087,6 +2092,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     trial_eject_events,
                     vault_events,
                     trial_ominous_events,
+                    cobweb_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2306,6 +2312,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // body's own order keeps — the vanilla client
                     // answers the same packet with)
                     app.live_trial_ominous_events_updated(trial_ominous_events);
+                    // the cobweb-spawn's lane beside the ominous's: the
+                    // 3018 words the server's own weaving effect
+                    // broadcasts land at their own anchors (the ten-puff
+                    // POOF burst + the COBWEB_PLACE voice the case
+                    // body's own order keeps — the vanilla client
+                    // answers the same packet with)
+                    app.live_cobweb_events_updated(cobweb_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

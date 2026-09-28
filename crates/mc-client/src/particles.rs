@@ -3462,6 +3462,55 @@ pub fn become_ominous_burst(
     out
 }
 
+/// THE COBWEB-SPAWN BURST'S OWN WALK (javap `LevelEventHandler` case
+/// 3018 — offset 2367 — verbatim): the `bipush 10` loop the
+/// ten-member answer wears — NOT the family's twenty the trial
+/// loops carry. Per iteration the SIX level draws the case's own
+/// order keeps: the THREE `nextGaussian() * 0.02` velocity draws
+/// FIRST (the `dstore 6/8/10` trio the velocity args carry), THEN
+/// the THREE `nextDouble()` position draws the `addParticle` arg
+/// walk interleaves — `pos.getX() + nextDouble()` per axis, the
+/// `[0, 1)` CORNER band the bare nextDouble keeps (NO +0.5 center
+/// the family's other walks carry, NO spread scale the dmul never
+/// arms — the raw corner-anchored cube the vanilla client answers).
+/// The ONE `addParticle(POOF, ...)` call the same six args share;
+/// the POOF provider chain's own EIGHT draws the ctor bank rides
+/// (the base lifetime float, the THREE jitter floats the raw
+/// gaussians widen, the grey float, the size's TWO, the lifetime
+/// float — the death-cloud round's own law). The caller's word:
+/// `anchor` the PLACED cobweb's own cell (the
+/// `WeavingMobEffect.spawnCobwebsRandomlyAround` loop the per-block
+/// event fires after the `setBlock(COBWEB, 3)` walk).
+pub fn cobweb_spawn_burst(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(10);
+    for _ in 0..10 {
+        // the THREE GAUSSIAN VELOCITY DRAWS FIRST (the dstore trio
+        // the case body's own pc 2377-2414 order keeps)
+        let vx = rng.next_gaussian() * 0.02;
+        let vy = rng.next_gaussian() * 0.02;
+        let vz = rng.next_gaussian() * 0.02;
+        // the THREE POSITION DRAWS the arg walk interleaves (the
+        // corner band the bare nextDouble keeps — pos + [0, 1))
+        let px = f64::from(anchor.0) + rng.next_f64();
+        let py = f64::from(anchor.1) + rng.next_f64();
+        let pz = f64::from(anchor.2) + rng.next_f64();
+        // the POOF provider chain's own eight draws (the death
+        // cloud's ctor bank the same provider wears)
+        let r_base_life = rng.next_f32();
+        let r_jx = rng.next_f32();
+        let r_jy = rng.next_f32();
+        let r_jz = rng.next_f32();
+        let r_grey = rng.next_f32();
+        let r_s1 = rng.next_f32();
+        let r_s2 = rng.next_f32();
+        let r_life = rng.next_f32();
+        out.push(poof(
+            px, py, pz, vx, vy, vz, r_base_life, r_jx, r_jy, r_jz, r_grey, r_s1, r_s2, r_life,
+        ));
+    }
+    out
+}
+
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s
 /// lambda verbatim) over one full-cube box: the box's extents
 /// `min(1.0, max - min)` (the cube's 1.0), the sections
@@ -7425,6 +7474,140 @@ mod tests {
             manual.len(),
             burst.len(),
             "the same forty the replay answers"
+        );
+        for (p, m) in burst.iter().zip(manual.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (m.x, m.y, m.z, m.vx, m.vy, m.vz, m.lifetime, m.quad_size),
+                "the draw-order replay pins the chain verbatim"
+            );
+            assert_eq!(p.kind, m.kind, "the kind the order keeps");
+        }
+        assert_eq!(after_walk, a.next(), "the walk's own exact draw count");
+    }
+
+    #[test]
+    fn the_cobweb_burst_the_walk_the_draws_wear() {
+        // THE BURST (javap the LevelEventHandler case 3018 — offset
+        // 2367 — verbatim: the `bipush 10` loop the ten-member answer
+        // wears — NOT the family's twenty — the POOF kind the
+        // getstatic arms, the corner-anchored cube the bare
+        // nextDouble keeps)
+        let mut a = rng();
+        let burst = cobweb_spawn_burst((7, 8, 9), &mut a);
+        assert_eq!(burst.len(), 10, "the ten-iteration bound");
+        for p in &burst {
+            assert!(
+                matches!(p.kind, ParticleKind::Poof),
+                "the POOF the case's own getstatic arms: {:?}",
+                p.kind
+            );
+        }
+        // THE BANDS (the walk's own folds): the positions the [x, x+1)
+        // corner band the bare nextDouble keeps — NO +0.5 center the
+        // family's other walks carry, NO spread scale the dmul never
+        // arms; the velocities the gaussians' * 0.02 fold rides (the
+        // ctor's ±0.05 jitter the f32 pairs widen — the [−0.08, 0.08]
+        // band the jitter's own band the gaussians' tail carries);
+        // the grey the `nf * 0.3 + 0.7` band speaks, the quad the
+        // `0.1 * (nf * nf * 6 + 1)` band keeps, the lifetime the
+        // `16.0 / (nf * 0.8 + 0.2) + 2` walk answers, the -0.1
+        // gravity + the 0.9 friction the ctor law pins
+        for (i, p) in burst.iter().enumerate() {
+            assert!(
+                (7.0..8.0).contains(&p.x),
+                "the corner x band at {}: {}",
+                i,
+                p.x
+            );
+            assert!(
+                (8.0..9.0).contains(&p.y),
+                "the corner y band at {}: {}",
+                i,
+                p.y
+            );
+            assert!(
+                (9.0..10.0).contains(&p.z),
+                "the corner z band at {}: {}",
+                i,
+                p.z
+            );
+            assert!(
+                p.vx.abs() < 0.5 && p.vy.abs() < 0.5 && p.vz.abs() < 0.5,
+                "the gaussian*0.02 + ±0.05 jitter sanity band at {}: {} {} {}",
+                i,
+                p.vx,
+                p.vy,
+                p.vz
+            );
+            assert!(
+                (0.7..1.0).contains(&p.col[0])
+                    && (0.7..1.0).contains(&p.col[1])
+                    && (0.7..1.0).contains(&p.col[2]),
+                "the grey tint band at {}: {:?}",
+                i,
+                p.col
+            );
+            assert!(
+                (0.1..0.7).contains(&p.quad_size),
+                "the poof quad band at {}: {}",
+                i,
+                p.quad_size
+            );
+            assert!(
+                (18..=82).contains(&p.lifetime),
+                "the poof lifetime band at {}: {}",
+                i,
+                p.lifetime
+            );
+            assert_eq!(p.gravity, -0.1, "the poof's own gravity the ctor pins");
+            assert_eq!(p.friction, 0.9, "the poof's own friction the ctor pins");
+        }
+        // THE DETERMINISM (the same seed the same chain answers)
+        let burst2 = cobweb_spawn_burst((7, 8, 9), &mut rng());
+        assert_eq!(burst.len(), burst2.len(), "the seeded chain replays");
+        for (p, p2) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+                "the seeded members replay"
+            );
+        }
+        // THE STREAM (the walk's own draw ORDER the manual replay
+        // pins verbatim: per iteration the THREE nextGaussian
+        // velocity draws FIRST (the dstore trio the case body's own
+        // pc 2377-2414 order keeps) + the THREE nextDouble position
+        // draws the arg walk interleaves + the POOF chain's own EIGHT
+        // (the base lifetime + the THREE jitters + the grey + the
+        // size's TWO + the lifetime) — any reorder the values'
+        // mismatch speaks; the NEXT draw the replay's tail answers)
+        let mut a2 = rng();
+        let mut manual: Vec<Particle> = Vec::with_capacity(10);
+        for _ in 0..10 {
+            let vx = a2.next_gaussian() * 0.02;
+            let vy = a2.next_gaussian() * 0.02;
+            let vz = a2.next_gaussian() * 0.02;
+            let px = f64::from(7) + a2.next_f64();
+            let py = f64::from(8) + a2.next_f64();
+            let pz = f64::from(9) + a2.next_f64();
+            let r_base_life = a2.next_f32();
+            let r_jx = a2.next_f32();
+            let r_jy = a2.next_f32();
+            let r_jz = a2.next_f32();
+            let r_grey = a2.next_f32();
+            let r_s1 = a2.next_f32();
+            let r_s2 = a2.next_f32();
+            let r_life = a2.next_f32();
+            manual.push(poof(
+                px, py, pz, vx, vy, vz, r_base_life, r_jx, r_jy, r_jz, r_grey, r_s1, r_s2,
+                r_life,
+            ));
+        }
+        let after_walk = a2.next();
+        assert_eq!(
+            manual.len(),
+            burst.len(),
+            "the same ten the replay answers"
         );
         for (p, m) in burst.iter().zip(manual.iter()) {
             assert_eq!(

@@ -497,6 +497,16 @@ pub struct WorldModel {
     /// refresh: the volume-gated voice + the snowfall + the
     /// become-ominous burst the case body's own order keeps).
     pub trial_ominous_events: Vec<OminousArm>,
+    /// THE COBWEB-SPAWN WORD'S OWN MAILBOX (the Level Event packet's
+    /// next vocabulary word —
+    /// [`mc_protocol::play::PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 2367
+    /// speaks: the weaving effect's own death walk the placed
+    /// cobweb's cell broadcasts, the ten-puff POOF walk + the
+    /// COBWEB_PLACE voice the case body's own order keeps). The
+    /// arms the anchor carries — NO data field the arm keeps (the
+    /// case body never reads the word).
+    pub cobweb_events: Vec<CobwebArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -1240,6 +1250,23 @@ pub struct OminousArm {
     /// spends — the non-zero data word the fconst_1 arms, the zero
     /// word the 0.3F branch keeps).
     pub loud: bool,
+}
+
+/// One pending COBWEB-SPAWN arm — the Level Event packet's own
+/// landing the model keeps verbatim (see
+/// [`WorldModel::cobweb_events`]). The anchor verbatim (the PLACED
+/// cobweb's own cell the weaving effect's death loop broadcasts —
+/// ONE event per placed block the
+/// `WeavingMobEffect.spawnCobwebsRandomlyAround` walk fires after
+/// the `setBlock(COBWEB, 3)` step). NO data field the arm carries —
+/// the case body never reads the `iload_3` word (the `iconst_0` the
+/// caller's own tail passes the case discards), the same
+/// data-free law the eject pair's own arms bank.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CobwebArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -2094,6 +2121,7 @@ impl WorldModel {
             trial_eject_events: Vec::new(),
             vault_events: Vec::new(),
             trial_ominous_events: Vec::new(),
+            cobweb_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2388,6 +2416,13 @@ impl WorldModel {
     /// + the become-ominous burst the case body's own order keeps).
     pub fn drain_trial_ominous_events(&mut self) -> Vec<OminousArm> {
         std::mem::take(&mut self.trial_ominous_events)
+    }
+
+    /// The cobweb-spawn word's mailbox's own drain (the ten-puff
+    /// burst + the COBWEB_PLACE voice the render lane's own law
+    /// folds — the case body's own order keeps).
+    pub fn drain_cobweb_events(&mut self) -> Vec<CobwebArm> {
+        std::mem::take(&mut self.cobweb_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2833,6 +2868,10 @@ impl WorldModel {
                 // (the same walk — the old level's 3020 words never
                 // burst again)
                 self.trial_ominous_events.clear();
+                // the cobweb-spawn's mailbox dies with the level (the
+                // same walk — the old level's 3018 words never burst
+                // again)
+                self.cobweb_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -4062,6 +4101,27 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         loud: ev.data != 0,
+                    });
+                    true
+                } else if ev.effect
+                    == mc_protocol::PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT
+                    && !ev.global
+                {
+                    // THE COBWEB-SPAWN WORD'S OWN ARM (javap the case
+                    // offset 2367 — the positioned route the GLOBAL
+                    // switch never banks): the anchor the mailbox
+                    // carries, NO data field the arm keeps (the case
+                    // body never reads the `iload_3` word — the
+                    // `iconst_0` the weaving effect's own tail passes
+                    // the case discards). The ten-puff POOF walk + the
+                    // COBWEB_PLACE voice the render lane's own law
+                    // folds (the burst FIRST the case body's own order
+                    // keeps, the voice tail the playLocalSound walk
+                    // speaks).
+                    self.cobweb_events.push(CobwebArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -13195,6 +13255,87 @@ mod tests {
         })));
         assert!(
             m.trial_ominous_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_cobweb_word_the_data_ignores() {
+        // THE COBWEB-SPAWN WORD'S OWN ARM (javap the case 3018 —
+        // offset 2367 — the positioned route the GLOBAL switch never
+        // banks): the anchor the mailbox keeps, the DATA word the
+        // case body NEVER READS (no `iload_3` the whole arm speaks —
+        // the `iconst_0` the weaving effect's own tail passes the
+        // case discards, ANY wire word the data-free arm answers the
+        // same), the drain ships the mailbox exactly once, and the
+        // Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the weaving effect's own word (the
+        // `spawnCobwebsRandomlyAround` loop the `levelEvent(3018,
+        // pos, 0)` walk speaks per PLACED cobweb — the data-0 word
+        // the iconst_0 carries)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT,
+            x: -41,
+            y: 70,
+            z: 123,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.cobweb_events.len(), 1, "the arm rides");
+        assert_eq!(m.cobweb_events[0].x, -41);
+        assert_eq!(m.cobweb_events[0].y, 70);
+        assert_eq!(m.cobweb_events[0].z, 123);
+        // ANY data word the data-free arm answers the same (the case
+        // body never reads the word — the non-zero the same push
+        // wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT,
+            x: 4,
+            y: 65,
+            z: -20,
+            data: 7,
+            global: false,
+        })));
+        assert_eq!(m.cobweb_events.len(), 2, "the data word never arms");
+        assert_eq!(m.cobweb_events[1].x, 4);
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.cobweb_events.len(), 2, "the global word never arms");
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_cobweb_events();
+        assert_eq!(drained.len(), 2, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, -41, "the weaving arm's anchor rides");
+        assert_eq!(drained[1].z, -20, "the second arm's anchor rides");
+        assert!(
+            m.cobweb_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.cobweb_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.cobweb_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

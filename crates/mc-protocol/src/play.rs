@@ -1990,6 +1990,53 @@ pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT: i32 = 3019;
 /// positioned lane the case's own arm wears.
 pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_OMINOUS_ACTIVATE_EFFECT: i32 = 3020;
 
+/// THE COBWEB-SPAWN WORD'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `ANIMATION_SPAWN_COBWEB`, the case
+/// `LevelEventHandler.levelEvent` offset 2367 speaks): the ONE
+/// `bipush 10` loop the case body spends FIRST (the `iconst_0` +
+/// `istore 5` + `if_icmpge 10` trio the ten-iteration bound answers —
+/// NOT the family's twenty the bipush 20 loop carries), the
+/// per-iteration SIX level draws the walk's own order keeps — the
+/// THREE `nextGaussian()` velocity draws FIRST (pc 2377-2414, the
+/// `* 0.02` dmul trio the ldc2_w 0.02 answers, the `dstore 6/8/10`
+/// trio the velocity args carry), THEN the THREE `nextDouble()`
+/// position draws the `addParticle` arg walk interleaves (pc
+/// 2423-2461 — `pos.getX() + nextDouble()` per axis the dadd trio
+/// speaks, the `[0, 1)` corner band the bare nextDouble keeps — NO
+/// +0.5 center the family's other walks carry, NO spread scale the
+/// dmul never arms), the ONE `ClientLevel.addParticle(POOF, x, y, z,
+/// vx, vy, vz)` call the SAME six args share (pc 2468 — the
+/// `ParticleTypes.POOF` getstatic the provider chain answers). THE
+/// PROVIDER the POOF bank's own chain wears (the `ExplosionParticle`
+/// ctor the death-cloud round pins — the EIGHT draws per member: the
+/// base lifetime float the super's law overrides, the THREE jitter
+/// floats the `(nf * 2 - 1) * 0.05` fold adds to the walk's raw
+/// gaussians, the grey float the `nf * 0.3 + 0.7` band speaks, the
+/// size's TWO floats the product fold carries, the lifetime float
+/// the `16.0 / (nf * 0.8 + 0.2) + 2` walk answers). THEN the ONE
+/// `playLocalSound(pos, COBWEB_PLACE, BLOCKS, 1.0F, (nextFloat() -
+/// nextFloat()) * 0.2F + 1.0F, true)` walk the case tail spends (pc
+/// 2477-2514 — the fconst_1 volume the fixed fold keeps, the TWO
+/// pitch draws the fsub/fmul/fadd chain answers, the SAME [0.8, 1.2]
+/// band the 0.2F scale gives, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag TRUE the jar's own `iconst_1` pc 2510 keeps). The DATA word
+/// the case body NEVER reads (no `iload_3` the whole arm speaks —
+/// the `iconst_0` data the caller's own tail passes the case
+/// discards). THE CALLER the weaving effect's own death walk pins —
+/// `WeavingMobEffect.spawnCobwebsRandomlyAround`'s `sipush 3018,
+/// aload 7, iconst_0` levelEvent call the bytecode speaks (pc
+/// 182-189 — the `setBlock(pos, COBWEB.defaultBlockState(), 3)` walk
+/// beside it fires, ONE event per PLACED cobweb the loop answers:
+/// the `maxCobwebs` amplifier bound theToIntFunction arms, the
+/// `BlockPos.randomInCube(random, 15, pos, 1)` candidates the
+/// `canBeReplaced` + `isFaceSturdy(UP)` gate filters, the
+/// `LivingEntity.getRandom()` stream the draws ride, the
+/// `onMobRemoved` KILLED-reason + `MOB_GRIEFING` gamerule the entry
+/// walk arms). The GLOBAL route the `globalLevelEvent` switch never
+/// banks — the positioned lane the case's own arm wears.
+pub const PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT: i32 = 3018;
+
 /// THE TRIAL-SPAWNER EJECT-ITEM VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks —
 /// `PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM`, the case

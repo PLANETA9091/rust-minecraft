@@ -524,6 +524,10 @@ pub struct SnapshotView {
     /// words the arms ride — [`WireTrialOminousEvent`] the render
     /// lane drains per refresh).
     pub trial_ominous_events: Vec<WireTrialOminousEvent>,
+    /// The cobweb-spawn word's own wire lane (the 3018 words the
+    /// arms ride — [`WireCobwebEvent`] the render lane drains per
+    /// refresh).
+    pub cobweb_events: Vec<WireCobwebEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -952,6 +956,21 @@ pub struct WireTrialOminousEvent {
     /// the iconst_1 word arms at FULL volume, the bad-omen transform's
     /// player-position event the iconst_0 word keeps at the whisper).
     pub loud: bool,
+}
+
+/// One wire COBWEB-SPAWN arm — the Level Event packet's own landing
+/// (the 3018 words the server's own weaving effect broadcasts,
+/// [`mc_protocol::play::PARTICLES_AND_SOUND_SPAWN_COBWEB_EFFECT`] the
+/// render lane speaks): the event's anchor block (the PLACED
+/// cobweb's own cell the death loop names), verbatim (the ten-puff
+/// POOF walk + the COBWEB_PLACE voice the render lane folds from it;
+/// the data word the case's own body never reads, NO data field the
+/// wire arm keeps — the eject pair's own law).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireCobwebEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -3096,6 +3115,7 @@ pub fn materialize_snapshot_view(
         // and no ominous-activate words (the join snapshot carries no
         // 3020 traffic — the empty mailbox the render lane skips)
         trial_ominous_events: Vec::new(),
+        cobweb_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3738,6 +3758,20 @@ impl LiveView {
                 loud: arm.loud,
             })
             .collect();
+        // the cobweb-spawn's own projection (the mailbox verbatim —
+        // the anchor the arms carry, the render lane's own law
+        // reads): each 3018 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let cobweb_events = self
+            .model
+            .cobweb_events
+            .iter()
+            .map(|arm| WireCobwebEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -4170,6 +4204,10 @@ impl LiveView {
                 // too — the 3020 words are the connection's own
                 // traffic, not the pose's
                 trial_ominous_events,
+                // the cobweb-spawn's arms ride the pose-less arm too
+                // — the 3018 words are the connection's own traffic,
+                // not the pose's
+                cobweb_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -4372,6 +4410,10 @@ impl LiveView {
             // the 3020 words follow the mailbox exactly like the
             // vault's own arms do
             trial_ominous_events,
+            // the cobweb-spawn's arms ride every refresh too — the
+            // 3018 words follow the mailbox exactly like the
+            // ominous's own arms do
+            cobweb_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

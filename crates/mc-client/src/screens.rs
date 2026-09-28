@@ -23499,6 +23499,59 @@ impl App {
         }
     }
 
+    /// THE COBWEB-SPAWN WIRE LANE (javap `LevelEventHandler` case
+    /// 3018 — offset 2367 — over the 26.2 jar): the server's own
+    /// weaving effect the death loop broadcasts
+    /// (`WeavingMobEffect.spawnCobwebsRandomlyAround`'s `sipush 3018,
+    /// aload 7, iconst_0` the levelEvent call the bytecode pins — ONE
+    /// event per PLACED cobweb the `setBlock(COBWEB, 3)` walk fires
+    /// after), the Level Event mailbox's landing: each word the arms
+    /// the worker drained ride exactly one refresh — the ten-puff
+    /// POOF burst the case body speaks FIRST (the `[0, 1)` corner
+    /// band the bare nextDouble keeps — NO +0.5 center the family's
+    /// other walks carry), the COBWEB_PLACE voice the tail answers
+    /// (the `block.cobweb.place` key the sounds.json row banks — the
+    /// break1..6 files the place word speaks, NO new assets the lane
+    /// demands).
+    pub fn live_cobweb_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireCobwebEvent>,
+    ) {
+        for ev in events {
+            // THE BURST THE CASE BODY SPEAKS FIRST (the `bipush 10`
+            // loop the ten-member answer wears — the THREE
+            // nextGaussian velocity draws the dstore trio keeps, the
+            // THREE nextDouble position draws the corner band arms,
+            // the POOF provider chain's own eight draws the ctor bank
+            // rides)
+            let burst =
+                crate::particles::cobweb_spawn_burst((ev.x, ev.y, ev.z), &mut self.level_ambient_rng);
+            self.particles.extend(burst);
+            // THE VOICE THE CASE TAIL SPEAKS (the BLOCK CENTER the
+            // `playLocalSound(BlockPos, ...)` resolve places, the
+            // fconst_1 volume the fixed fold keeps, the pitch pair the
+            // `(nf - nf) * 0.2F + 1.0F` fold answers — the [0.8, 1.2]
+            // band the 0.2F scale gives, the distance-delay flag TRUE
+            // the jar's own `iconst_1` pc 2510 keeps — the draws ride
+            // AFTER the burst the body's own order keeps)
+            let pitch = 1.0f32
+                + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * 0.2f32;
+            let sx = f64::from(ev.x) + 0.5;
+            let sy = f64::from(ev.y) + 0.5;
+            let sz = f64::from(ev.z) + 0.5;
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.cobweb.place",
+                1.0,
+                pitch,
+                ear_distance(ear, sx, sy, sz),
+                ear_pan(ear, yaw, sx, sy, sz),
+            );
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WALK (javap the two case branches
     /// verbatim): the BLOCK CENTER the `playLocalSound(BlockPos, ...)`
     /// resolve places (the +0.5 trio the vanilla client answers),
@@ -51183,6 +51236,138 @@ cow_sound_variant: None,
         );
     }
 
+    #[test]
+    fn the_cobweb_serve_the_burst_the_voice_wear() {
+        // THE COBWEB-SPAWN WIRE LANE'S OWN SERVE (javap the case
+        // offset 2367 — the burst the case body speaks FIRST (the
+        // `bipush 10` loop the ten-member answer wears — the corner
+        // band the bare nextDouble keeps), the TWO pitch draws the
+        // voice tail answers, the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BODY AT THE ANCHOR (the ear the block center carries —
+        // the block's own +0.5 trio the resolve speaks, the dist-0
+        // ear the attenuation's own volume passthrough answers, the
+        // gain the fconst_1's raw word speaks)
+        app.body = Some(crate::body::PlayerBody::new(
+            11.5,
+            40.5 - crate::body::STANDING_EYE,
+            -19.5,
+            0.0,
+            0.0,
+        ));
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3018));
+        let before = app.particles.len();
+        app.live_cobweb_events_updated(vec![crate::world_view::WireCobwebEvent {
+            x: 11,
+            y: 40,
+            z: -20,
+        }]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT TEN (the ten-member burst the walk's own bound
+        // answers — the POOF kinds the getstatic arms, the corner
+        // band the bare nextDouble keeps: [11, 12) x [40, 41) x
+        // [-20, -19))
+        let members = &app.particles[before..];
+        assert_eq!(members.len(), 10, "the walk's own members");
+        for (i, p) in members.iter().enumerate() {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Poof),
+                "the POOF the case's own getstatic arms at {i}: {:?}",
+                p.kind
+            );
+            assert!(
+                (11.0..12.0).contains(&p.x)
+                    && (40.0..41.0).contains(&p.y)
+                    && (-20.0..-19.0).contains(&p.z),
+                "the corner band at {i}: {} {} {}",
+                p.x,
+                p.y,
+                p.z
+            );
+        }
+        // THE EXACT DRAW WALK (the burst's 10 x 14 chain FIRST + the
+        // voice's TWO pitch draws AFTER — the SAME order the case
+        // body's own consumption answers)
+        let mut replay = crate::drops::Lcg::new(0x3018);
+        for _ in 0..10 {
+            // the walk's six level draws (the THREE gaussians FIRST —
+            // the dstore trio the case body's own order keeps — the
+            // THREE nextDoubles the arg walk interleaves)
+            for _ in 0..3 {
+                let _ = replay.next_gaussian();
+            }
+            for _ in 0..3 {
+                let _ = replay.next_f64();
+            }
+            // the POOF chain's eight (the base lifetime + the THREE
+            // jitters + the grey + the size's TWO + the lifetime)
+            for _ in 0..8 {
+                let _ = replay.next_f32();
+            }
+        }
+        // the voice's TWO pitch draws (the `(nf - nf) * 0.2F + 1.0F`
+        // fold the case tail answers — AFTER the burst the body's own
+        // order keeps)
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        assert_eq!(
+            spent, replay,
+            "the case body's own exact stream the serve opens"
+        );
+        if sounds_loaded() {
+            // THE VOICE (the dist-0 body the raw volume the gain
+            // speaks — the fconst_1 the place word arms)
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.cobweb.place @"))
+                .expect("the cobweb place voice the lane logs");
+            assert!(
+                line.contains(" v1.000000 p"),
+                "the fconst_1's own volume the place word answers: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE SECOND ARM (the same walks the loop answers — ONE event
+        // per PLACED cobweb the weaving effect's own death walk fires)
+        let before2 = app.particles.len();
+        app.live_cobweb_events_updated(vec![crate::world_view::WireCobwebEvent {
+            x: 0,
+            y: 0,
+            z: 0,
+        }]);
+        let members2 = &app.particles[before2..];
+        assert_eq!(members2.len(), 10, "the second arm's own ten");
+        if sounds_loaded() {
+            app.sounds
+                .events
+                .iter()
+                .rev()
+                .find(|e| e.starts_with("block.cobweb.place @"))
+                .expect("the second voice the lane logs");
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_cobweb_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
 
     #[test]
     fn the_wire_jukebox_words_the_record_and_line_wear() {
