@@ -2791,6 +2791,97 @@ pub const SOUND_ZOMBIE_DOOR_CRASH_EFFECT: i32 = 1021;
 /// banks — the positioned lane the case's own arm wears.
 pub const SOUND_WITHER_BLOCK_BREAK_EFFECT: i32 = 1022;
 
+/// THE WITHER BOSS-SHOOT VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_WITHER_BOSS_SHOOT` — the case
+/// `LevelEventHandler.levelEvent` offset 4773 speaks): the ONE
+/// `playLocalSound(pos, WITHER_SHOOT, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the hostile-voice shelf's arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own wither speaks it — `WitherBoss.performRangedAttack`
+/// `(IDDDZ)`'s launch tail the `!isSilent()` gate arms
+/// (`aconst_null, sipush 1024, blockPosition(), iconst_0` the
+/// `levelEvent(Entity, I, BlockPos, I)` overload call the bytecode
+/// pins code pc 12-20 — the wither's OWN block position the anchor
+/// is, the sibling `1023` WITHER-SPAWN word the `globalLevelEvent`
+/// lane the positioned switch never carries). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_WITHER_BOSS_SHOOT_EFFECT: i32 = 1024;
+
+/// THE ZOMBIE INFECT VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_ZOMBIE_INFECTED` — the case
+/// `LevelEventHandler.levelEvent` offset 4813 speaks): the ONE
+/// `playLocalSound(pos, ZOMBIE_INFECT, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the hostile-voice shelf's arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own zombify speaks it — `Zombie`'s
+/// `convertVillagerToZombieVillager` lambda's finalize tail the
+/// `!isSilent()` gate arms (`aconst_null, sipush 1026,
+/// blockPosition(), iconst_0` the `levelEvent(Entity, I, BlockPos,
+/// I)` overload call the bytecode pins pc 80-89 — the zombie's OWN
+/// block position the anchor is, the villager-data + gossip +
+/// trade-offer copies the SAME tail before it carries). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const SOUND_ZOMBIE_INFECTED_EFFECT: i32 = 1026;
+
+/// THE ZOMBIE-VILLAGER CONVERTED VOICE'S OWN ID (the 26.2
+/// `LevelEvent` constants class row `SOUND_ZOMBIE_CONVERTED` — the
+/// case `LevelEventHandler.levelEvent` offset 4853 speaks): the ONE
+/// `playLocalSound(pos, ZOMBIE_VILLAGER_CONVERTED, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the hostile-voice shelf's arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// CLIENT JAR'S OWN BYTECODE NO CALLER CARRIES — the conversion-
+/// complete word the dedicated-server lane speaks (the same honest
+/// gap the iron-door sibling `1020` wears — the positioned case the
+/// client's own switch still banks, the wire packet the same shape
+/// the model's arm answers). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_ZOMBIE_CONVERTED_EFFECT: i32 = 1027;
+
+/// THE ZOMBIE-TO-DROWNED VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_ZOMBIE_TO_DROWNED` — the case
+/// `LevelEventHandler.levelEvent` offset 4893 speaks): the ONE
+/// `playLocalSound(pos, ZOMBIE_CONVERTED_TO_DROWNED, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the hostile-voice shelf's arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own drowning speaks it — `Zombie.doUnderWaterConversion`'s
+/// tail the `!isSilent()` gate arms AFTER the drowned convert
+/// (`aconst_null, sipush 1040, blockPosition(), iconst_0` the
+/// `levelEvent(Entity, I, BlockPos, I)` overload call the bytecode
+/// pins pc 16-25 — the zombie's OWN block position the anchor is,
+/// the `convertToZombieType(DROWNED)` walk the SAME tail before it
+/// completes). The GLOBAL route the `globalLevelEvent` switch never
+/// banks — the positioned lane the case's own arm wears.
+pub const SOUND_ZOMBIE_TO_DROWNED_EFFECT: i32 = 1040;
+
+/// THE HUSK-TO-ZOMBIE VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_HUSK_TO_ZOMBIE` — the case
+/// `LevelEventHandler.levelEvent` offset 4933 speaks): the ONE
+/// `playLocalSound(pos, HUSK_CONVERTED_TO_ZOMBIE, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the hostile-voice shelf's arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own husk speaks it — `Husk.doUnderWaterConversion`'s
+/// tail the `!isSilent()` gate arms AFTER the zombie convert
+/// (`aconst_null, sipush 1041, blockPosition(), iconst_0` the
+/// `levelEvent(Entity, I, BlockPos, I)` overload call the bytecode
+/// pins pc 16-25 — the husk's OWN block position the anchor is,
+/// the `convertToZombieType(ZOMBIE)` walk the SAME tail before it
+/// completes). The GLOBAL route the `globalLevelEvent` switch never
+/// banks — the positioned lane the case's own arm wears.
+pub const SOUND_HUSK_TO_ZOMBIE_EFFECT: i32 = 1041;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,

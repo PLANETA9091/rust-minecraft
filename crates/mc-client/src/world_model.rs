@@ -1656,7 +1656,7 @@ pub struct FixedVoiceArm {
 
 /// One pending HOSTILE-VOICE arm — the Level Event packet's mob
 /// voice shelf the model keeps verbatim (see
-/// [`WorldModel::hostile_voice_events`]). The EIGHT mob/projectile
+/// [`WorldModel::hostile_voice_events`]). The THIRTEEN mob/projectile
 /// cases the ONE arm shape wears — the zombie's door-attack pair
 /// (`BreakDoorGoal.tick`'s one-in-twenty gate the `sipush 1019` call
 /// speaks), the iron-door attack (the dedicated server's own lane —
@@ -1664,7 +1664,7 @@ pub struct FixedVoiceArm {
 /// completion (`BreakDoorGoal.tick`'s `removeBlock` tail the
 /// `sipush 1021` call speaks), the wither's block-break
 /// (`WitherBoss.customServerAiStep`'s destroyed-blocks tail the
-/// `levelEvent(Entity, 1022, ...)` overload speaks), and the
+/// `levelEvent(Entity, 1022, ...)` overload speaks), the
 /// projectile quartet the round's own walk banks — the ghast's
 /// charge-warn (`GhastShootFireballGoal.tick`'s `chargeTime == 10`
 /// gate the `sipush 1015` call speaks), the ghast's fireball shot
@@ -1672,7 +1672,17 @@ pub struct FixedVoiceArm {
 /// speaks), the dragon's strafe fireball
 /// (`DragonStrafePlayerPhase.doServerTick` the `sipush 1017` call
 /// speaks), the blaze's fireball burst (`Blaze$BlazeAttackGoal.tick`
-/// the `sipush 1018` call speaks). The anchor verbatim, the voice
+/// the `sipush 1018` call speaks) — and the zombie-flock batch this
+/// round banks: the wither boss's own shoot
+/// (`WitherBoss.performRangedAttack`'s `!isSilent()` tail the
+/// `sipush 1024` call speaks), the zombify-villager voice
+/// (`Zombie`'s conversion lambda the `sipush 1026` call speaks),
+/// the zombie-villager conversion completion (the dedicated
+/// server's own lane — the client jar the caller site doesn't
+/// carry), the drowned conversion (`Zombie.doUnderWaterConversion`
+/// the `sipush 1040` call speaks), the husk conversion
+/// (`Husk.doUnderWaterConversion` the `sipush 1041` call speaks).
+/// The anchor verbatim, the voice
 /// word the PACKET'S OWN effect id rides (the same transport honesty
 /// the fixed-voice arm keeps), the data word deliberately absent —
 /// the cases' own bodies never read it. NO particles the cases
@@ -1689,15 +1699,20 @@ pub struct HostileVoiceArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
-    /// The voice word (the packet's own effect id — one of the eight
-    /// hostile-voice ids [`mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT`],
+    /// The voice word (the packet's own effect id — one of the
+    /// thirteen hostile-voice ids [`mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT`],
     /// [`mc_protocol::SOUND_ZOMBIE_IRON_DOOR_EFFECT`],
     /// [`mc_protocol::SOUND_ZOMBIE_DOOR_CRASH_EFFECT`],
     /// [`mc_protocol::SOUND_WITHER_BLOCK_BREAK_EFFECT`],
     /// [`mc_protocol::SOUND_GHAST_WARNING_EFFECT`],
     /// [`mc_protocol::SOUND_GHAST_FIREBALL_EFFECT`],
     /// [`mc_protocol::SOUND_DRAGON_FIREBALL_EFFECT`],
-    /// [`mc_protocol::SOUND_BLAZE_FIREBALL_EFFECT`] the model's
+    /// [`mc_protocol::SOUND_BLAZE_FIREBALL_EFFECT`],
+    /// [`mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT`],
+    /// [`mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT`],
+    /// [`mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT`],
+    /// [`mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT`],
+    /// [`mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT`] the model's
     /// own arm banks; the sound key + the volume the render lane's
     /// law folds from it).
     pub voice: i32,
@@ -4496,23 +4511,29 @@ impl WorldModel {
                         | mc_protocol::SOUND_GHAST_FIREBALL_EFFECT
                         | mc_protocol::SOUND_DRAGON_FIREBALL_EFFECT
                         | mc_protocol::SOUND_BLAZE_FIREBALL_EFFECT
+                        | mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT
+                        | mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT
+                        | mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT
+                        | mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT
+                        | mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT
                 ) && !ev.global
                 {
                     // THE HOSTILE-VOICE SHELF'S OWN ARM (javap the cases
                     // offsets 4573/4693/4653/4613 + the projectile
-                    // quartet 4447/4531/4489/4733 — the positioned route
-                    // the GLOBAL switch never banks, ALL EIGHT the ONE
-                    // `playLocalSound(pos, <voice>, HOSTILE, <vol>, (nf
-                    // - nf) * 0.2F + 1.0F, false)` walk the case bodies
-                    // spend — the TWO pitch draws the [0.8, 1.2] band
-                    // the 0.2F scale gives, the VOLUME the per-word
-                    // constant the render lane folds (the 10.0F the
-                    // loud trio carries, the `fconst_2` 2.0F the rest
-                    // keep); the data words the cases' own bodies never
-                    // read). The voice word the PACKET'S OWN effect id
-                    // rides (the transport's honesty — the sound key
-                    // the render lane's own law folds from it), no
-                    // particles the cases speak.
+                    // quartet 4447/4531/4489/4733 + the zombie-flock
+                    // batch 4773/4813/4853/4893/4933 — the positioned
+                    // route the GLOBAL switch never banks, ALL THIRTEEN
+                    // the ONE `playLocalSound(pos, <voice>, HOSTILE,
+                    // <vol>, (nf - nf) * 0.2F + 1.0F, false)` walk the
+                    // case bodies spend — the TWO pitch draws the
+                    // [0.8, 1.2] band the 0.2F scale gives, the VOLUME
+                    // the per-word constant the render lane folds (the
+                    // 10.0F the loud trio carries, the `fconst_2` 2.0F
+                    // the rest keep); the data words the cases' own
+                    // bodies never read). The voice word the PACKET'S
+                    // OWN effect id rides (the transport's honesty —
+                    // the sound key the render lane's own law folds
+                    // from it), no particles the cases speak.
                     self.hostile_voice_events.push(HostileVoiceArm {
                         x: ev.x,
                         y: ev.y,
@@ -10311,6 +10332,126 @@ mod tests {
         // the fresh word re-arms beside the Respawn's own death walk
         assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
             effect: mc_protocol::SOUND_GHAST_WARNING_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.hostile_voice_events.len(),
+            1,
+            "the fresh word re-arms"
+        );
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.hostile_voice_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_zombie_flock_words_the_one_arm_wears() {
+        // THE ZOMBIE-FLOCK BATCH'S OWN ARM (javap the cases offsets
+        // 4773/4813/4853/4893/4933 — the positioned route the GLOBAL
+        // switch never banks, ALL FIVE the ONE `playLocalSound(pos,
+        // <voice>, HOSTILE, 2.0F, (nf - nf) * 0.2F + 1.0F, false)`
+        // walk the case bodies spend): the wither boss's own shoot,
+        // the zombify-villager voice, the zombie-villager conversion
+        // completion, the drowned conversion, the husk conversion —
+        // the SAME mailbox the door shelf's + projectile quartet's
+        // arms bank (the THIRTEEN-word shelf the batch grows), the
+        // voice word the PACKET'S OWN effect id rides (the
+        // transport's honesty — the sound key the render lane's own
+        // law folds from it), the data words the cases' own bodies
+        // never read, the drain ships the arms exactly once, and the
+        // Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the five words (the callers' own tails the bytecode pins —
+        // WitherBoss.performRangedAttack's !isSilent launch tail
+        // 1024, Zombie's convertVillagerToZombieVillager lambda tail
+        // 1026, the dedicated server's conversion-complete lane
+        // 1027, Zombie.doUnderWaterConversion's post-convert tail
+        // 1040, Husk.doUnderWaterConversion's post-convert tail
+        // 1041; each the caller's own aconst_null + iconst_0
+        // passes, the zeros the cases' bodies never read)
+        for (i, effect) in [
+            mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT,
+            mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT,
+            mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT,
+            mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT,
+            mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT,
+        ]
+        .iter()
+        .enumerate()
+        {
+            assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: *effect,
+                x: -11 + i as i32,
+                y: 33,
+                z: 444,
+                data: 0,
+                global: false,
+            })));
+        }
+        assert_eq!(
+            m.hostile_voice_events.len(),
+            5,
+            "the five words the one mailbox arms"
+        );
+        assert_eq!(
+            m.hostile_voice_events[0].voice,
+            mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT,
+            "the wither-shoot word rides verbatim"
+        );
+        assert_eq!(
+            m.hostile_voice_events[4].voice,
+            mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT,
+            "the husk word rides verbatim"
+        );
+        assert_eq!(m.hostile_voice_events[2].x, -9, "the anchor rides");
+        // ANY data word the data-free arm answers the same (the
+        // cases' bodies never read the word — the non-zero the same
+        // push wears)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT,
+            x: 9,
+            y: 9,
+            z: 9,
+            data: 3,
+            global: false,
+        })));
+        assert_eq!(m.hostile_voice_events.len(), 6, "the data word never arms");
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the cases' own bodies wear — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.hostile_voice_events.len(),
+            6,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_hostile_voice_events();
+        assert_eq!(drained.len(), 6, "the drain ships the mailbox");
+        assert_eq!(drained[1].voice, mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT);
+        assert!(
+            m.hostile_voice_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT,
             x: 1,
             y: 2,
             z: 3,

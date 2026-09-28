@@ -23764,7 +23764,7 @@ impl App {
         }
     }
 
-    /// THE HOSTILE-VOICE WALK (javap the eight case arms verbatim):
+    /// THE HOSTILE-VOICE WALK (javap the thirteen case arms verbatim):
     /// the BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve
     /// places (the +0.5 trio the vanilla client answers), the VOLUME
     /// the per-word constant each case carries (the `ldc2_w` 10.0F
@@ -23780,9 +23780,10 @@ impl App {
     /// sounds.json table the runtime cache keeps (the file pick the
     /// engine's own LCG banks, NO new assets the shelf demands).
     fn play_hostile_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
-        // the EIGHT WORDS the model's own arm banks (the case ids the
-        // bytecode's own lookupswitch rows speak — the render lane's
-        // law folds the sound key + the volume constant from each)
+        // the THIRTEEN WORDS the model's own arm banks (the case ids
+        // the bytecode's own lookupswitch rows speak — the render
+        // lane's law folds the sound key + the volume constant from
+        // each)
         let (key, volume) = match voice {
             mc_protocol::SOUND_GHAST_WARNING_EFFECT => ("entity.ghast.warn", 10.0),
             mc_protocol::SOUND_GHAST_FIREBALL_EFFECT => ("entity.ghast.shoot", 10.0),
@@ -23792,7 +23793,12 @@ impl App {
             mc_protocol::SOUND_ZOMBIE_IRON_DOOR_EFFECT => ("entity.zombie.attack_iron_door", 2.0),
             mc_protocol::SOUND_ZOMBIE_DOOR_CRASH_EFFECT => ("entity.zombie.break_wooden_door", 2.0),
             mc_protocol::SOUND_WITHER_BLOCK_BREAK_EFFECT => ("entity.wither.break_block", 2.0),
-            _ => return, // the model's own arm the eight words alone enqueues
+            mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT => ("entity.wither.shoot", 2.0),
+            mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT => ("entity.zombie.infect", 2.0),
+            mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT => ("entity.zombie_villager.converted", 2.0),
+            mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT => ("entity.zombie.converted_to_drowned", 2.0),
+            mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT => ("entity.husk.converted_to_zombie", 2.0),
+            _ => return, // the model's own arm the thirteen words alone enqueues
         };
         // the pitch pair the case body's own draws keep (the
         // fsub/fmul/fadd chain the [0.8, 1.2] band answers)
@@ -52192,6 +52198,155 @@ cow_sound_variant: None,
         // THE UNBANKED WORD: the arm the render never voices (the
         // model's own arm the eight words alone enqueues — the early
         // return the unknown word answers consumes NO voice, NO draw)
+        let voices_before_unknown = app.sounds.events.len();
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xBEEF));
+        app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+            x: 1,
+            y: 2,
+            z: 3,
+            voice: 4242,
+        }]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before_unknown,
+            "the unknown word no voice ever banks"
+        );
+        assert_eq!(
+            spent2,
+            crate::drops::Lcg::new(0xBEEF),
+            "the unknown word no draw the early return keeps"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let voices_before = app.sounds.events.len();
+        app.live_hostile_voice_events_updated(vec![]);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_hostile_voice_serve_the_zombie_flock_the_volume_wear() {
+        // THE ZOMBIE-FLOCK BATCH'S OWN SERVE (javap the cases
+        // offsets 4773/4813/4853/4893/4933 the same walk verbatim):
+        // the `fconst_2` 2.0F the five words carry — the reach the
+        // `Math.max(getVolume(), 1.0F) * 16.0F` fold turns into 32
+        // blocks, the dist-24 ear the v0.500000 gain speaks
+        // (2 x (1 - 24/32) = 0.5 — the door-shelf shape the batch
+        // shares), the TWO pitch draws the [0.8, 1.2] band each
+        // serve answers, the keys the runtime table resolves (the
+        // wither shoot + the zombie infect + the villager conversion
+        // + the drowned + the husk the official sounds.json rows
+        // bank), the unknown word no voice no draw the early return
+        // keeps, the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BODY 24 BLOCKS OFF (the door-shelf ear the batch's own
+        // reach answers: the 2.0-volume max distance the fold speaks
+        // is 32.0 blocks — 2 x (1 - 24/32) = 0.5 the linear keeps)
+        app.body = Some(crate::body::PlayerBody::new(
+            -16.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x1024));
+        // THE WITHER BOSS'S OWN SHOOT (the 2.0F the flock's reach
+        // wears — the launch tail the performRangedAttack walk fires)
+        app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+            x: -41,
+            y: 70,
+            z: 123,
+            voice: mc_protocol::SOUND_WITHER_BOSS_SHOOT_EFFECT,
+        }]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT TWO DRAWS (the pitch pair the case body's own
+        // fsub/fmul/fadd chain answers)
+        let mut replay = crate::drops::Lcg::new(0x1024);
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        assert_eq!(spent, replay, "the case body's own exact stream");
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.wither.shoot @"))
+                .expect("the wither-shoot voice the lane logs");
+            assert!(
+                line.contains(" v0.500000 p"),
+                "the fconst_2's own doubled reach the dist-24 ear speaks: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE FOUR SIBLINGS (the same walk each word's own key wears
+        // — the zombie infect, the villager conversion, the drowned,
+        // the husk the flock banks; the dist-24 ear the 2.0 volume
+        // the 0.5 gain the linear speaks)
+        for (word, key) in [
+            (
+                mc_protocol::SOUND_ZOMBIE_INFECTED_EFFECT,
+                "entity.zombie.infect",
+            ),
+            (
+                mc_protocol::SOUND_ZOMBIE_CONVERTED_EFFECT,
+                "entity.zombie_villager.converted",
+            ),
+            (
+                mc_protocol::SOUND_ZOMBIE_TO_DROWNED_EFFECT,
+                "entity.zombie.converted_to_drowned",
+            ),
+            (
+                mc_protocol::SOUND_HUSK_TO_ZOMBIE_EFFECT,
+                "entity.husk.converted_to_zombie",
+            ),
+        ] {
+            let before_voices = app.sounds.events.len();
+            app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+                x: -41,
+                y: 70,
+                z: 123,
+                voice: word,
+            }]);
+            if sounds_loaded() {
+                assert_eq!(
+                    app.sounds.events.len(),
+                    before_voices + 1,
+                    "each arm exactly one voice the walk keeps"
+                );
+                let line = app
+                    .sounds
+                    .events
+                    .last()
+                    .expect("the sibling voice the lane logs");
+                assert!(
+                    line.starts_with(key),
+                    "the sibling key the word folds: {line}"
+                );
+                assert!(
+                    line.contains(" v0.500000 p"),
+                    "the flock's own doubled gain the dist-24 ear keeps: {line}"
+                );
+            }
+        }
+        // THE UNBANKED WORD: the arm the render never voices (the
+        // model's own arm the thirteen words alone enqueues — the
+        // early return the unknown word answers consumes NO voice,
+        // NO draw)
         let voices_before_unknown = app.sounds.events.len();
         let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xBEEF));
         app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {

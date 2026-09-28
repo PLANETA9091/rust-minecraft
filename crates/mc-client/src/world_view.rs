@@ -1216,7 +1216,9 @@ pub struct WireFixedVoiceEvent {
 /// One wire HOSTILE-VOICE arm — the Level Event packet's own landing
 /// (the 1019/1020/1021/1022 words the server's own door-break goal
 /// and wither broadcast plus the projectile quartet 1015/1016/1017/
-/// 1018 the ghast/dragon/blaze walks fire, the eight
+/// 1018 the ghast/dragon/blaze walks fire and the zombie-flock batch
+/// 1024/1026/1027/1040/1041 the wither/zombie/husk walks fire, the
+/// thirteen
 /// [`mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT`]-family ids the
 /// render lane speaks): the event's anchor block + the raw voice
 /// word, verbatim (the ONE `playLocalSound(pos, <voice>, HOSTILE,
