@@ -1,0 +1,29 @@
+=== <init> (Ljava/lang/String;ILnet/minecraft/core/particles/SimpleParticleType;)V ===
+    0 aload_0
+    1 aload_1
+    2 iload_2
+    3 invokespecial #25  java/lang/Enum.<init> (Ljava/lang/String;I)V
+    6 aload_0
+    7 aload_3
+    8 putfield #29  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.particleType Lnet/minecraft/core/particles/SimpleParticleType;
+   11 return
+
+=== <clinit> ()V ===
+    0 new #1  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle
+    3 dup
+    4 ldc #41 = NORMAL
+    6 iconst_0
+    7 getstatic #42  net/minecraft/core/particles/ParticleTypes.FLAME Lnet/minecraft/core/particles/SimpleParticleType;
+   10 invokespecial #47  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.<init> (Ljava/lang/String;ILnet/minecraft/core/particles/SimpleParticleType;)V
+   13 putstatic #3  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.NORMAL Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   16 new #1  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle
+   19 dup
+   20 ldc #50 = OMINOUS
+   22 iconst_1
+   23 getstatic #51  net/minecraft/core/particles/ParticleTypes.SOUL_FIRE_FLAME Lnet/minecraft/core/particles/SimpleParticleType;
+   26 invokespecial #47  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.<init> (Ljava/lang/String;ILnet/minecraft/core/particles/SimpleParticleType;)V
+   29 putstatic #7  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.OMINOUS Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   32 invokestatic #54  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.$values ()[Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   35 putstatic #10  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.$VALUES [Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   38 return
+

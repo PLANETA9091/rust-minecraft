@@ -159,6 +159,14 @@ pub const PARTICLE_DRIP_LAND_JAR_PATH: &str = "assets/minecraft/textures/particl
 /// `FlameParticle$Provider`'s `SpriteSet.get(random)` returns it
 /// whatever the draw — the nextInt(1) the one-element list speaks).
 pub const PARTICLE_FLAME_JAR_PATH: &str = "assets/minecraft/textures/particle/flame.png";
+/// The soul fire flame's single sprite (javap: the `soul_fire_flame`
+/// particle type's sprite set — the jar's `particles/soul_fire_flame.json`
+/// lists ONE texture, `minecraft:soul_fire_flame`, the 8x8 the IHDR
+/// verifies; the `FlameParticle$SmallFlameProvider`'s `SpriteSet.get(random)`
+/// returns it whatever the draw — the nextInt(1) the one-element list
+/// speaks, the scale(0.5F) tail the class share keeps).
+pub const PARTICLE_SOUL_FIRE_FLAME_JAR_PATH: &str =
+    "assets/minecraft/textures/particle/soul_fire_flame.png";
 /// The damage indicator's single sprite (javap: the `damage_indicator`
 /// particle type's sprite set — the jar's `particles/damage_indicator.json`
 /// lists ONE texture, `minecraft:damage`, the 8x8 the IHDR verifies; the
@@ -393,6 +401,10 @@ pub const PARTICLE_DRIP_LAND_RUNTIME_PATH: &str = "particle/drip_land.png";
 /// The torch flame's runtime-cache path (the same textures/ prefix
 /// strip the other lanes speak).
 pub const PARTICLE_FLAME_RUNTIME_PATH: &str = "particle/flame.png";
+/// The soul fire flame's runtime-cache path (the same textures/ prefix
+/// strip the other lanes speak) — the trial spawner's OMINOUS flame
+/// quad's pixel source (the 3011 walk's decoded soul twin).
+pub const PARTICLE_SOUL_FIRE_FLAME_RUNTIME_PATH: &str = "particle/soul_fire_flame.png";
 pub const PARTICLE_DAMAGE_RUNTIME_PATH: &str = "particle/damage.png";
 /// The heart's runtime-cache path (the same textures/ prefix strip the
 /// other lanes speak).
@@ -598,6 +610,10 @@ pub struct SkinData {
     /// sha1 of the torch flame's single 8x8 sprite (jar-verbatim
     /// integrity) — the animateTick pair's flame quad's pixel source.
     pub particle_flame_png_sha1: String,
+    /// sha1 of the soul fire flame's single 8x8 sprite (jar-verbatim
+    /// integrity) — the trial spawner's OMINOUS flame quad's pixel
+    /// source (the 3011 walk's decoded soul twin).
+    pub particle_soul_fire_flame_png_sha1: String,
     /// sha1 of the damage indicator's single 8x8 sprite (jar-verbatim
     /// integrity) — the hit's own burst's pixel source.
     pub particle_damage_png_sha1: String,
@@ -1037,6 +1053,20 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         fw,
         fh
     );
+    // the soul fire flame's single sprite (the same shape check the
+    // torch flame speaks — the json's one-texture set the 3011 walk's
+    // OMINOUS flame banks)
+    let soul_flame_bytes = read_entry(archive, PARTICLE_SOUL_FIRE_FLAME_JAR_PATH)
+        .context("read soul fire flame")?;
+    let particle_soul_fire_flame_png_sha1 = crate::util::sha1_hex(&soul_flame_bytes);
+    let (sfw, sfh, _soul_flame_rgba) = decode_rgba(&soul_flame_bytes)
+        .context("decode soul fire flame")?;
+    anyhow::ensure!(
+        (sfw, sfh) == (8, 8),
+        "soul fire flame must be the 8x8 sprite, got {}x{}",
+        sfw,
+        sfh
+    );
     // the damage indicator's single sprite (the same shape check the
     // lava speaks — the json's one-texture set)
     let damage_bytes = read_entry(archive, PARTICLE_DAMAGE_JAR_PATH).context("read damage")?;
@@ -1304,6 +1334,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_drip_fall_png_sha1,
         particle_drip_land_png_sha1,
         particle_flame_png_sha1,
+        particle_soul_fire_flame_png_sha1,
         particle_damage_png_sha1,
         particle_heart_png_sha1,
         particle_glint_png_sha1,
@@ -1726,6 +1757,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
         "pub const PARTICLE_FLAME_RUNTIME_PATH: &str = \"{PARTICLE_FLAME_RUNTIME_PATH}\";\n"
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_SOUL_FIRE_FLAME_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_soul_fire_flame_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SOUL_FIRE_FLAME_RUNTIME_PATH: &str = \"{PARTICLE_SOUL_FIRE_FLAME_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_DAMAGE_PNG_SHA1: &str = \"{}\";\n",
         data.particle_damage_png_sha1
     ));
@@ -2096,6 +2134,8 @@ mod tests {
             splashes.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let lava = tiny_png();
         let expected_lava_sha1 = crate::util::sha1_hex(&lava);
+        let soul_flame = tiny_png();
+        let expected_soul_flame_sha1 = crate::util::sha1_hex(&soul_flame);
         let drip_hang = tiny_png();
         let expected_drip_hang_sha1 = crate::util::sha1_hex(&drip_hang);
         let drip_fall = tiny_png();
@@ -2250,6 +2290,7 @@ mod tests {
             (PARTICLE_DRIP_FALL_JAR_PATH, drip_fall),
             (PARTICLE_DRIP_LAND_JAR_PATH, drip_land),
             (PARTICLE_FLAME_JAR_PATH, flame),
+            (PARTICLE_SOUL_FIRE_FLAME_JAR_PATH, soul_flame),
             (PARTICLE_DAMAGE_JAR_PATH, damage),
             (PARTICLE_HEART_JAR_PATH, heart),
             (PARTICLE_GLINT_JAR_PATH, glint),
@@ -2405,6 +2446,10 @@ mod tests {
         assert_eq!(
             data.particle_flame_png_sha1, expected_flame_sha1,
             "the flame sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_soul_fire_flame_png_sha1, expected_soul_flame_sha1,
+            "the soul fire flame sprite's own sha1"
         );
         assert_eq!(
             data.particle_damage_png_sha1, expected_damage_sha1,

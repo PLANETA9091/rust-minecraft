@@ -1,0 +1,101 @@
+# skip com/mojang/blaze3d/Blaze3D.class: unknown opcode 0xaf at 3
+# skip com/mojang/blaze3d/GLFWErrorCapture.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/GLFWErrorScope.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/PrimitiveTopology.class: index out of range
+# skip com/mojang/blaze3d/TracyBootstrap.class: index out of range
+# skip com/mojang/blaze3d/TracyFrameCapture.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/audio/AbstractDeviceTracker.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/audio/Library$1.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/audio/Library$CountingChannelPool.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/audio/Library.class: unknown opcode 0xad at 63
+# skip com/mojang/blaze3d/buffers/GpuBuffer$Usage.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/buffers/GpuBuffer.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/buffers/GpuBufferSlice$MappedView.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/buffers/GpuBufferSlice.class: unknown opcode 0xad at 4
+# skip com/mojang/blaze3d/buffers/GpuFence.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/font/GlyphBitmap.class: unknown opcode 0xae at 6
+# skip com/mojang/blaze3d/font/GlyphInfo.class: unknown opcode 0xae at 21
+# skip com/mojang/blaze3d/font/GlyphProvider$Conditional.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/font/GlyphProvider.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/font/SpaceProvider$Definition.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/font/SpaceProvider.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/font/TrueTypeGlyphProvider$Glyph$1.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/font/TrueTypeGlyphProvider$Glyph.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/font/TrueTypeGlyphProvider.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/framegraph/FrameGraphBuilder$Handle.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/framegraph/FrameGraphBuilder$Inspector$1.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/framegraph/FrameGraphBuilder$Pass.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlBackend.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlBuffer$Direct$1.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlCommandEncoder.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlConst.class: index out of range
+# skip com/mojang/blaze3d/opengl/GlDevice.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlFence.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/opengl/GlProgram.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlQueryPool.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlRenderPass.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/opengl/GlRenderPipeline.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlShaderModule.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/opengl/GlStateManager.class: unknown opcode 0xad at 8
+# skip com/mojang/blaze3d/opengl/GlSurface.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlTexture.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlTextureView.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/GlTransientMemory$Fallback$GlAllocation.class: unknown opcode 0xad at 4
+# skip com/mojang/blaze3d/opengl/GlTransientMemory$PersistentMapping$GlAllocation.class: unknown opcode 0xad at 4
+# skip com/mojang/blaze3d/opengl/GlTransientMemory$PersistentMapping$Rotation.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/opengl/GlTransientMemory.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/Uniform$Sampler.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/Uniform$Ubo.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/opengl/Uniform$Utb.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/opengl/Uniform.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/pipeline/ColorTargetState$WriteMask.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/pipeline/DepthStencilState.class: unknown opcode 0xae at 4
+# skip com/mojang/blaze3d/platform/FramerateLimitTracker.class: index out of range
+# skip com/mojang/blaze3d/platform/GLX.class: unknown opcode 0xad at 8
+# skip com/mojang/blaze3d/platform/InputConstants$Value.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/platform/Lighting.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/platform/MacosUtil.class: unknown opcode 0xad at 16
+# skip com/mojang/blaze3d/platform/Monitor.class: unknown opcode 0xad at 4
+# skip com/mojang/blaze3d/platform/MonitorManager.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/platform/NativeImage$Format.class: index out of range
+# skip com/mojang/blaze3d/platform/NativeImage.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/platform/Window.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/resource/CrossFrameResourcePool$ResourceEntry.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/resource/CrossFrameResourcePool.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/resource/GraphicsResourceAllocator$1.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/resource/RenderTargetDescriptor.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/systems/DeviceInfo.class: unknown opcode 0xae at 4
+# skip com/mojang/blaze3d/systems/DeviceLimits.class: unknown opcode 0xad at 4
+# skip com/mojang/blaze3d/systems/GpuDevice.class: unknown opcode 0xad at 9
+# skip com/mojang/blaze3d/systems/GpuQuery.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/systems/GpuQueryPool.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/systems/GpuSurface.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/systems/GpuSurfaceBackend.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/systems/RenderPass.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/systems/RenderSystem$AutoStorageIndexBuffer.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/systems/TimerQuery.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/textures/GpuSampler.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/textures/GpuTexture$Usage.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/textures/GpuTexture.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/textures/GpuTextureView.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/util/TransientBlockAllocator$Allocation.class: unknown opcode 0xad at 4
+# skip com/mojang/blaze3d/util/TransientBlockAllocator$Allocator$1.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/util/TransientBlockAllocator.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/BufferBuilder.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/ByteBufferBuilder$Result.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/ByteBufferBuilder.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/CompactVectorArray.class: unknown opcode 0xae at 10
+# skip com/mojang/blaze3d/vertex/MeshData.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/vertex/QuadInstance.class: index out of range
+# skip com/mojang/blaze3d/vertex/SheetedDecalTextureGenerator.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/StagingBuffer$BufferHandle.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/StagingBuffer$Uploader.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/StagingBuffer.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/TlsfAllocator$Allocation.class: unknown opcode 0xad at 7
+# skip com/mojang/blaze3d/vertex/TlsfAllocator$Block.class: unknown opcode 0xad at 8
+# skip com/mojang/blaze3d/vertex/TlsfAllocator.class: unknown opcode 0xad at 13
+# skip com/mojang/blaze3d/vertex/UberGpuBuffer$StagedAllocationEntry.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vertex/UberGpuBuffer.class: unpack requires a buffer of 2 bytes
+# skip com/mojang/blaze3d/vertex/VertexSorting.class: unknown opcode 0xae at 5
+# skip com/mojang/blaze3d/vulkan/DestructionQueue.class: unpack requires a buffer of 4 bytes
+# skip com/mojang/blaze3d/vulkan/VulkanBackend.class: unpack requires a buffer of 4 bytes

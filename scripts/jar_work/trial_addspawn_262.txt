@@ -1,0 +1,67 @@
+=== addSpawnParticles (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/particles/SimpleParticleType;)V ===
+    0 iconst_0
+    1 istore 4
+    3 iload 4
+    5 bipush 20
+    7 if_icmpge #117
+   10 aload_1
+   11 invokevirtual #662  net/minecraft/core/BlockPos.getX ()I
+   14 i2d
+   15 ldc2_w #665 = 0.5
+   18 dadd
+   19 aload_2
+   20 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   25 ldc2_w #665 = 0.5
+   28 dsub
+   29 ldc2_w #670 = 2.0
+   32 dmul
+   33 dadd
+   34 dstore 5
+   36 aload_1
+   37 invokevirtual #672  net/minecraft/core/BlockPos.getY ()I
+   40 i2d
+   41 ldc2_w #665 = 0.5
+   44 dadd
+   45 aload_2
+   46 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   51 ldc2_w #665 = 0.5
+   54 dsub
+   55 ldc2_w #670 = 2.0
+   58 dmul
+   59 dadd
+   60 dstore 7
+   62 aload_1
+   63 invokevirtual #675  net/minecraft/core/BlockPos.getZ ()I
+   66 i2d
+   67 ldc2_w #665 = 0.5
+   70 dadd
+   71 aload_2
+   72 invokeinterface net/minecraft/util/RandomSource.nextDouble ()D
+   77 ldc2_w #665 = 0.5
+   80 dsub
+   81 ldc2_w #670 = 2.0
+   84 dmul
+   85 dadd
+   86 dstore 9
+   88 aload_0
+   89 getstatic #678  net/minecraft/core/particles/ParticleTypes.SMOKE Lnet/minecraft/core/particles/SimpleParticleType;
+   92 dload 5
+   94 dload 7
+   96 dload 9
+   98 dconst_0
+   99 dconst_0
+  100 dconst_0
+  101 invokevirtual #684  net/minecraft/world/level/Level.addParticle (Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+  104 aload_0
+  105 aload_3
+  106 dload 5
+  108 dload 7
+  110 dload 9
+  112 dconst_0
+  113 dconst_0
+  114 dconst_0
+  115 invokevirtual #684  net/minecraft/world/level/Level.addParticle (Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+  118 iinc 4 1
+  121 goto #65418
+  124 return
+

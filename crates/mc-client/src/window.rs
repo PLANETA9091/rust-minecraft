@@ -175,6 +175,7 @@ fn run_join(
                 Vec<crate::world_view::WireSculkShriekEvent>,
                 Vec<crate::world_view::WireBrushCompleteEvent>,
                 Vec<crate::world_view::WireEggCrackEvent>,
+                Vec<crate::world_view::WireTrialSpawnEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -289,6 +290,7 @@ fn run_join(
             view.model.drain_sculk_shriek_events();
             view.model.drain_brush_complete_events();
             view.model.drain_egg_crack_events();
+            view.model.drain_trial_spawn_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -927,6 +929,7 @@ fn run_join(
                             view.model.drain_sculk_shriek_events();
                             view.model.drain_brush_complete_events();
                             view.model.drain_egg_crack_events();
+                            view.model.drain_trial_spawn_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1148,6 +1151,15 @@ fn run_join(
                                     // each arm rides exactly one
                                     // shipped refresh)
                                     upd.egg_crack_events,
+                                    // the trial-spawner spawn's arms ride
+                                    // with them — the 3011 words the
+                                    // server's own trial spawners
+                                    // broadcast stream to the burst lane
+                                    // (the forty-particle walk the
+                                    // spawner's own mob spawn speaks,
+                                    // each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.trial_spawn_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1452,6 +1464,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireSculkShriekEvent>,
                 Vec<crate::world_view::WireBrushCompleteEvent>,
                 Vec<crate::world_view::WireEggCrackEvent>,
+                Vec<crate::world_view::WireTrialSpawnEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -2023,6 +2036,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     sculk_shriek_events,
                     brush_complete_events,
                     egg_crack_events,
+                    trial_spawn_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2204,6 +2218,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // `UniformInt.of(3, 6)` counts the faces answer,
                     // the vanilla client answers the same packet with)
                     app.live_egg_crack_events_updated(egg_crack_events);
+                    // the trial-spawner spawn's lane beside the egg's:
+                    // the 3011 words the server's own trial spawners
+                    // broadcast land at their own anchors (the
+                    // forty-particle burst the
+                    // `TrialSpawner.addSpawnParticles` walk wears — the
+                    // `bipush 20` loop the SMOKE + flame pairs answer,
+                    // the vanilla client answers the same packet with)
+                    app.live_trial_spawn_events_updated(trial_spawn_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

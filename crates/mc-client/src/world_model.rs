@@ -439,6 +439,19 @@ pub struct WorldModel {
     /// word the case's own body never reads, the burst the sniffer
     /// egg's own placement arms).
     pub egg_crack_events: Vec<EggCrackArm>,
+    /// THE TRIAL-SPAWNER SPAWN EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary word —
+    /// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT`] the
+    /// case the `LevelEventHandler.levelEvent` offset 1827 speaks: the
+    /// ONE `TrialSpawner.addSpawnParticles(level, pos, random,
+    /// FlameParticle.decode(data).particleType)` walk the `bipush 20`
+    /// loop answers — the DATA word the case's own body READS (the
+    /// `iload_3` the decode opens with — the flame-flavor id the wire
+    /// carries, `0` the NORMAL flame / `1` the OMINOUS soul twin the
+    /// caller's `isOminous ? OMINOUS : NORMAL` pick speaks)). The
+    /// forty-particle burst's own draws the render lane's stream
+    /// keeps.
+    pub trial_spawn_events: Vec<TrialSpawnArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -1059,6 +1072,29 @@ pub struct EggCrackArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One pending TRIAL-SPAWNER SPAWN arm — the Level Event packet's
+/// next vocabulary word the model keeps verbatim (see
+/// [`WorldModel::trial_spawn_events`]). The anchor verbatim (the
+/// spawner's own block the `TrialSpawner.spawnMob` broadcast), the
+/// DATA word the case's own body READS (the `iload_3` the
+/// `TrialSpawner$FlameParticle.decode(I)` decode opens with — the
+/// flame-flavor id the wire carries verbatim, `0` the NORMAL flame,
+/// `1` the OMINOUS soul twin, the out-of-range words the jar's own
+/// NORMAL fallback the `> len || < 0` guard keeps — the `id == len`
+/// edge the vanilla `values[2]` crash wears, the honest arm the
+/// NORMAL intent answers). The forty-particle burst's own draws the
+/// render lane's stream folds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TrialSpawnArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The decoded flame-flavor id (the wire's `iload_3` word the
+    /// case reads verbatim — `0` NORMAL / `1` OMINOUS the encode
+    /// ordinals give).
+    pub data: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1908,6 +1944,7 @@ impl WorldModel {
             sculk_shriek_events: Vec::new(),
             brush_complete_events: Vec::new(),
             egg_crack_events: Vec::new(),
+            trial_spawn_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2159,6 +2196,15 @@ impl WorldModel {
     /// the six-face crack burst from the anchor.
     pub fn drain_egg_crack_events(&mut self) -> Vec<EggCrackArm> {
         std::mem::take(&mut self.egg_crack_events)
+    }
+
+    /// The trial-spawner spawn effect's mailbox's own drain (the same
+    /// walk the voices' speak — each arm ships exactly once): the 3011
+    /// words the Level Event packet armed, the render lane's own law
+    /// folds the forty-particle burst from the anchor + the decoded
+    /// flame-flavor word.
+    pub fn drain_trial_spawn_events(&mut self) -> Vec<TrialSpawnArm> {
+        std::mem::take(&mut self.trial_spawn_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2584,6 +2630,10 @@ impl WorldModel {
                 // (the same walk — the old level's 3009 words never
                 // crack again)
                 self.egg_crack_events.clear();
+                // the trial-spawner spawn's mailbox dies with the level
+                // (the same walk — the old level's 3011 words never
+                // burst again)
+                self.trial_spawn_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3638,6 +3688,27 @@ impl WorldModel {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT && !ev.global {
+                    // THE TRIAL-SPAWNER SPAWN EFFECT'S OWN ARM (javap
+                    // the case offset 1827 — the positioned route the
+                    // GLOBAL switch never banks): the anchor + the DATA
+                    // word the case's own body READS (the `iload_3` the
+                    // `TrialSpawner$FlameParticle.decode(I)` decode
+                    // opens with — the flame-flavor id the wire carries
+                    // verbatim, `0` the NORMAL flame / `1` the OMINOUS
+                    // soul twin the caller's `isOminous ? OMINOUS :
+                    // NORMAL` pick speaks). The forty-particle burst the
+                    // render lane's own stream carries (the
+                    // `TrialSpawner.addSpawnParticles` walk the case
+                    // body delegates to — the `bipush 20` loop the
+                    // SMOKE + flame pairs answer).
+                    self.trial_spawn_events.push(TrialSpawnArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -12265,6 +12336,93 @@ mod tests {
         })));
         assert!(
             m.egg_crack_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_trial_word_the_flame_decodes() {
+        // THE TRIAL-SPAWNER SPAWN EFFECT'S OWN ARM (javap the case
+        // offset 1827 — the positioned route the GLOBAL switch never
+        // banks): the anchor + the DATA word the case's own body
+        // READS (the `iload_3` the `FlameParticle.decode(I)` decode
+        // opens with — the flame-flavor id the wire carries
+        // verbatim), the drain ships the mailbox exactly once, and
+        // the Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the spawner's own mob-spawn word (the TrialSpawner.spawnMob
+        // call the `levelEvent(3011, pos, flame.encode())` walk
+        // speaks — the `isOminous ? OMINOUS : NORMAL` pick the
+        // getstatic pair arms): the arm rides, the anchor + the data
+        // the mailbox keeps
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT,
+            x: -41,
+            y: 70,
+            z: 123,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.trial_spawn_events.len(), 1, "the arm rides");
+        assert_eq!(m.trial_spawn_events[0].x, -41);
+        assert_eq!(m.trial_spawn_events[0].y, 70);
+        assert_eq!(m.trial_spawn_events[0].z, 123);
+        assert_eq!(m.trial_spawn_events[0].data, 0, "the flame word rides");
+        // the OMINOUS word (the same lane the ominous spawner banks —
+        // the encode 1 the SOUL_FIRE_FLAME flame gives)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT,
+            x: 5,
+            y: -5,
+            z: 500,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.trial_spawn_events.len(), 2, "the twin rides");
+        assert_eq!(
+            m.trial_spawn_events[1].data, 1,
+            "the OMINOUS word rides"
+        );
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.trial_spawn_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_trial_spawn_events();
+        assert_eq!(drained.len(), 2, "the drain ships the mailbox");
+        assert_eq!(drained[1].data, 1, "the twin's flame word rides");
+        assert!(
+            m.trial_spawn_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.trial_spawn_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.trial_spawn_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

@@ -6726,6 +6726,7 @@ pub struct App {
     /// The torch flame's single sprite (the same lazy load — the
     /// animateTick pair's flame quad's pixel source).
     pub flame_sprite: Option<crate::avatar::FlameSprite>,
+    pub soul_flame_sprite: Option<crate::avatar::SoulFlameSprite>,
     /// The damage indicator's single sprite (the same lazy load — the
     /// hit's own burst's pixel source).
     pub damage_sprite: Option<crate::avatar::DamageSprite>,
@@ -7455,6 +7456,7 @@ impl App {
             drip_fall_sprite: None,
             drip_land_sprite: None,
             flame_sprite: None,
+            soul_flame_sprite: None,
             damage_sprite: None,
             sweep_frames: None,
             explosion_frames: None,
@@ -23133,6 +23135,38 @@ impl App {
         }
     }
 
+    /// THE TRIAL-SPAWNER SPAWN WIRE LANE (javap `LevelEventHandler`
+    /// case 3011 — offset 1827 — over the 26.2 jar): the server's own
+    /// trial spawners the mob-spawn word broadcasts (`TrialSpawner
+    /// .spawnMob`'s `sipush 3011, pos, FlameParticle.encode()` the
+    /// levelEvent call pins), the Level Event mailbox's landing: each
+    /// word the arms the worker drained ride exactly one refresh —
+    /// the data word the case's own decode reads (the flame-flavor id
+    /// the `FlameParticle.decode(I)` walk banks), the forty-particle
+    /// burst the walk speaks, NO sound the case plays (the 3012 twin
+    /// the voice lane banks — the next rounds' word).
+    pub fn live_trial_spawn_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireTrialSpawnEvent>,
+    ) {
+        for ev in events {
+            // THE FORTY-PARTICLE BURST (the `TrialSpawner
+            // .addSpawnParticles` walk verbatim — the `bipush 20`
+            // loop, the THREE nextDouble position draws per iteration
+            // the SMOKE + flame pair shares, the provider chains the
+            // zero velocity args keep — the level ambient stream the
+            // draws ride)
+            let burst = crate::particles::trial_spawner_spawn_burst(
+                ev.x,
+                ev.y,
+                ev.z,
+                ev.data,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -27949,6 +27983,10 @@ impl App {
             self.flame_sprite =
                 crate::avatar::FlameSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.soul_flame_sprite.is_none() {
+            self.soul_flame_sprite =
+                crate::avatar::SoulFlameSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.damage_sprite.is_none() {
             self.damage_sprite =
                 crate::avatar::DamageSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -28025,6 +28063,7 @@ impl App {
         let mut drip_fall_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut drip_land_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut flame_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut soul_flame_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut damage_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         let mut smoke_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         // the dragon breath's own groups (the file-keyed frames the age
@@ -28392,6 +28431,23 @@ impl App {
                         tint: p.col,
                     });
                 }
+                crate::particles::ParticleKind::SoulFlame => {
+                    // the soul flame's own quad (the single
+                    // soul_fire_flame sprite the 26.2 json's
+                    // one-texture list speaks — the SAME class the
+                    // plain flame wears, the ONLY deltas the
+                    // SmallFlameProvider carries: the blue pixels the
+                    // soul sprite banks + the scale(0.5F) half the
+                    // birth quad keeps — the full sprite the quad
+                    // samples, the white tint the ctor defaults keep,
+                    // the OPAQUE layer the class's own answer speaks)
+                    soul_flame_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_soul_flame",
+                        tint: p.col,
+                    });
+                }
                 crate::particles::ParticleKind::Smoke => {
                     // the child's own quad (the generic frame the
                     // age's own walk speaks — the same
@@ -28700,6 +28756,14 @@ impl App {
         if let Some(flame) = &self.flame_sprite {
             fb.draw_sampled_quads(vp, &flame_quads, &mut |_tex, u, v| {
                 Some(flame.pixel(u, v))
+            });
+        }
+        // the soul flame group (the trial spawner's OMINOUS pixels —
+        // the full sprite the single-texture json speaks, the SAME
+        // class the plain flame's own pass keeps)
+        if let Some(soul) = &self.soul_flame_sprite {
+            fb.draw_sampled_quads(vp, &soul_flame_quads, &mut |_tex, u, v| {
+                Some(soul.pixel(u, v))
             });
         }
         // the damage group (the hit's own white stars — the full
@@ -49868,6 +49932,92 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_egg_crack_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_trial_serve_the_burst_the_kinds_wear() {
+        // THE TRIAL-SPAWNER SERVE'S OWN WIRE LANE (javap case 3011 →
+        // offset 1827 over the 26.2 jar): the data word the decode
+        // reads (the `FlameParticle.decode(I)` walk the case body
+        // opens with), the forty-particle burst the
+        // `TrialSpawner.addSpawnParticles` walk speaks (the twenty
+        // SMOKE + flame pairs the `bipush 20` loop answers — the
+        // twenty-seven draws the per-iteration chain spends: the
+        // three nextDouble positions + the smoke's nine + the
+        // flame's fifteen), the level-ambient stream the draws ride,
+        // the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3011));
+        let before = app.particles.len();
+        app.live_trial_spawn_events_updated(vec![
+            crate::world_view::WireTrialSpawnEvent {
+                x: 12,
+                y: 70,
+                z: -44,
+                data: 0,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT FORTY (the twenty pairs the loop answers — the
+        // even members the SMOKE companion, the odd members the
+        // flame)
+        let burst = &app.particles[before..];
+        assert_eq!(burst.len(), 40, "the twenty pairs the serve banks");
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                    "pair {i} smoke first"
+                );
+            } else {
+                assert!(
+                    matches!(p.kind, crate::particles::ParticleKind::Flame),
+                    "pair {i} flame"
+                );
+            }
+        }
+        // THE EXACT DRAW COUNT (the twenty-seven the per-iteration
+        // chain exactly spends — the next draw after the walk differs
+        // from the fresh stream's same-index draw)
+        let mut replay = crate::drops::Lcg::new(0x3011);
+        for _ in 0..(40 * 27 / 2) {
+            let _ = replay.next();
+        }
+        assert_eq!(
+            spent, replay,
+            "the {} draws the add-spawn walk exactly spends",
+            40 * 27 / 2
+        );
+        // THE OMINOUS WORD (the decode 1 the SoulFlame kind + the
+        // half-quad the scale(0.5F) tail keeps)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x640B));
+        let before_soul = app.particles.len();
+        app.live_trial_spawn_events_updated(vec![
+            crate::world_view::WireTrialSpawnEvent {
+                x: -8,
+                y: 34,
+                z: 90,
+                data: 1,
+            },
+        ]);
+        let _ = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let soul_burst = &app.particles[before_soul..];
+        assert_eq!(soul_burst.len(), 40, "the ominous word's own forty");
+        let soul = soul_burst
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SoulFlame))
+            .count();
+        assert_eq!(soul, 20, "the decoded soul twin the render lane arms");
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_trial_spawn_events_updated(vec![]);
         assert_eq!(
             app.particles.len(),
             settled,

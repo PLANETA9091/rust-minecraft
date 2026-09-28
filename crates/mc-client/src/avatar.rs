@@ -6063,6 +6063,50 @@ impl FlameSprite {
     }
 }
 
+/// The PARTICLE LANE's soul fire flame sprite — the single 8x8 the
+/// `soul_fire_flame` particle type's sprite set holds (javap: the
+/// `particles/soul_fire_flame.json` the 26.2 jar speaks — ONE
+/// texture, `minecraft:soul_fire_flame`, the 8x8 the IHDR verifies;
+/// the `FlameParticle$SmallFlameProvider`'s `SpriteSet.get(random)`
+/// returns that one sprite whatever the draw, the nextInt(1) the
+/// one-element list answers, the scale(0.5F) tail the class share
+/// keeps), loaded and sha1-verified the same stream the torch flame
+/// sprite speaks. A missing or tampered file keeps the soul flames
+/// invisible (the honest absence the other lanes speak).
+pub struct SoulFlameSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The soul flame texture's own layout (the jar's 8x8 the IHDR
+/// speaks).
+pub const SOUL_FLAME_SPRITE_SIDE: u32 = 8;
+
+impl SoulFlameSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<SoulFlameSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_SOUL_FIRE_FLAME_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_SOUL_FIRE_FLAME_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != SOUL_FLAME_SPRITE_SIDE || h != SOUL_FLAME_SPRITE_SIDE {
+            return None;
+        }
+        Some(SoulFlameSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..8 the
+    /// particle quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, SOUL_FLAME_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SOUL_FLAME_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SOUL_FLAME_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's wax-trio sprite — the 8x8 the `wax_on` /
 /// `wax_off` / `scrape` particle types' own sets hold (javap: the
 /// three jsons the 26.2 jar banks ALL list ONE texture,

@@ -315,7 +315,7 @@ pub fn extract_runtime_assets(
 /// `heart`, `sweep_attack`, `wax_on`, `wax_off`, `scrape`,
 /// `sculk_charge` and `sculk_charge_pop` particle types' own sources
 /// the dust lane sha1-verifies).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 47] = [
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 48] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     "assets/minecraft/textures/misc/underwater.png",
@@ -351,6 +351,7 @@ const RUNTIME_TEXTURE_JAR_PATHS: [&str; 47] = [
     "assets/minecraft/textures/particle/sweep_6.png",
     "assets/minecraft/textures/particle/sweep_7.png",
     "assets/minecraft/textures/particle/glow.png",
+    "assets/minecraft/textures/particle/soul_fire_flame.png",
     "assets/minecraft/textures/particle/sculk_charge_0.png",
     "assets/minecraft/textures/particle/sculk_charge_1.png",
     "assets/minecraft/textures/particle/sculk_charge_2.png",

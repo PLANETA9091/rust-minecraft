@@ -1,0 +1,34 @@
+=== createParticle (Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle; ===
+    0 new #13  net/minecraft/client/particle/FlameParticle
+    3 dup
+    4 aload_2
+    5 dload_3
+    6 dload 5
+    8 dload 7
+   10 dload 9
+   12 dload 11
+   14 dload 13
+   16 aload_0
+   17 getfield #7  net/minecraft/client/particle/FlameParticle$Provider.sprite Lnet/minecraft/client/particle/SpriteSet;
+   20 aload 15
+   22 invokeinterface net/minecraft/client/particle/SpriteSet.get (Lnet/minecraft/util/RandomSource;)Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;
+   27 invokespecial #21  net/minecraft/client/particle/FlameParticle.<init> (Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V
+   30 astore 16
+   32 aload 16
+   34 areturn
+
+=== createParticle (Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle; ===
+    0 aload_0
+    1 aload_1
+    2 checkcast #24  net/minecraft/core/particles/SimpleParticleType
+    5 aload_2
+    6 dload_3
+    7 dload 5
+    9 dload 7
+   11 dload 9
+   13 dload 11
+   15 dload 13
+   17 aload 15
+   19 invokevirtual #26  net/minecraft/client/particle/FlameParticle$Provider.createParticle (Lnet/minecraft/core/particles/SimpleParticleType;Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/util/RandomSource;)Lnet/minecraft/client/particle/Particle;
+   22 areturn
+

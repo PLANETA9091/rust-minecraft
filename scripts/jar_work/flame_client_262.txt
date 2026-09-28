@@ -1,0 +1,40 @@
+=== <init> (Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V ===
+    0 aload_0
+    1 aload_1
+    2 dload_2
+    3 dload 4
+    5 dload 6
+    7 dload 8
+    9 dload 10
+   11 dload 12
+   13 aload 14
+   15 invokespecial #1  net/minecraft/client/particle/RisingParticle.<init> (Lnet/minecraft/client/multiplayer/ClientLevel;DDDDDDLnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V
+   18 return
+
+=== getLayer ()Lnet/minecraft/client/particle/SingleQuadParticle$Layer; ===
+    0 getstatic #7  net/minecraft/client/particle/SingleQuadParticle$Layer.OPAQUE Lnet/minecraft/client/particle/SingleQuadParticle$Layer;
+    3 areturn
+
+=== getQuadSize (F)F ===
+    0 aload_0
+    1 getfield #33  net/minecraft/client/particle/FlameParticle.age I
+    4 i2f
+    5 fload_1
+    6 fadd
+    7 aload_0
+    8 getfield #37  net/minecraft/client/particle/FlameParticle.lifetime I
+   11 i2f
+   12 fdiv
+   13 fstore_2
+   14 aload_0
+   15 getfield #40  net/minecraft/client/particle/FlameParticle.quadSize F
+   18 fconst_1
+   19 fload_2
+   20 fload_2
+   21 fmul
+   22 ldc #44 = ?
+   24 fmul
+   25 fsub
+   26 fmul
+   27 freturn
+

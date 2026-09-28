@@ -1,0 +1,22 @@
+=== values ()[Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle; ===
+    0 getstatic #10  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.$VALUES [Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+    3 invokevirtual #14  [Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;.clone ()Ljava/lang/Object;
+    6 checkcast #15  [Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+    9 areturn
+
+=== decode (I)Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle; ===
+    0 invokestatic #33  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.values ()[Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+    3 astore_1
+    4 iload_0
+    5 aload_1
+    6 arraylength
+    7 if_icmpgt #7
+   10 iload_0
+   11 ifge #7
+   14 getstatic #3  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.NORMAL Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   17 areturn
+   18 aload_1
+   19 iload_0
+   20 aaload
+   21 areturn
+

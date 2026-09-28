@@ -1716,6 +1716,69 @@ pub const PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT: i32 = 3008;
 /// banks — the positioned lane the case's own arm wears.
 pub const PARTICLES_EGG_CRACK_EFFECT: i32 = 3009;
 
+/// THE TRIAL-SPAWNER SPAWN PARTICLE EFFECT'S OWN ID (the 26.2
+/// `LevelEvent` constants class the client jar banks —
+/// `PARTICLES_TRIAL_SPAWNER_SPAWN`, the case
+/// `LevelEventHandler.levelEvent` offset 1827 speaks): the DATA word
+/// the case's own body READS (the `iload_3` the
+/// `TrialSpawner$FlameParticle.decode(I)` decode opens with — the
+/// flame-flavor id the wire carries, NOT a block-state id the 2001
+/// sibling resolves). The decode the jar's own bytecodes pin (pc
+/// 0-21, len=22): `values()` first, then `id > values.length` →
+/// NORMAL, `id >= 0` → `values[id]`, the fall-through the negative
+/// words keep — so `0` decodes NORMAL (the `ParticleTypes.FLAME`
+/// the clinit's first constant banks) and `1` decodes OMINOUS (the
+/// `ParticleTypes.SOUL_FIRE_FLAME` the second banks — the 26.2 enum
+/// the OMINOUS name speaks, NOT the 1.20 SHA twin the older banks
+/// keep). The `id == values.length` edge the `>` guard NEVER banks —
+/// the vanilla walk the `values[2]` ArrayIndexOutOfBounds crash
+/// wears; the honest Rust arm the NORMAL answer the jar's own intent
+/// keeps (the server never speaks a 2 — the `isOminous ? OMINOUS :
+/// NORMAL` caller the spawnMob walk pins, the encode the ordinals
+/// 0/1 alone give). The body the ONE walk spends: the
+/// `TrialSpawner.addSpawnParticles(level, pos, random,
+/// FlameParticle.decode(data).particleType)` static the case body's
+/// own invokestatic speaks — the `bipush 20` loop verbatim (pc 0-121,
+/// len=124): the THREE `RandomSource.nextDouble()` draws per
+/// iteration the position triple carries (`pos.getX() + 0.5 +
+/// (nextDouble() - 0.5) * 2.0` per axis — the ±1.0 spread the dsub
+/// `0.5` and dmul `2.0` constants fold), the ZERO velocity the
+/// `dconst_0` trio speaks, then TWO `Level.addParticle` calls share
+/// the SAME position (the SMOKE companion the `getstatic
+/// ParticleTypes.SMOKE` always fires + the decoded flame type the
+/// `aload 4` arg passes). NO sound the case speaks — the particle
+/// pair alone the broadcast renders (the SOUND twins the sibling
+/// words bank: 3012 the TRIAL_SPAWNER_SPAWN_MOB voice
+/// `playLocalSound(pos, ..., BLOCKS, 1.0F, (nf - nf) * ldc + 1.0F)`
+/// rides, 3021 the SPAWN_ITEM twin — the pair the SAME decode +
+/// addSpawnParticles walk beside the voice spends). The client
+/// chains the providers' own walks bank: the SMOKE companion the
+/// `SmokeParticle` ctor chain wears (the NINE draws the torch-smoke
+/// bank pins — the dead base lifetime, the five-draw
+/// spread+normalize pair, the size, the tint, the own lifetime, the
+/// *0.1 velocity scale the ctor's xdScale args speak), the flame the
+/// `FlameParticle$Provider` chain wears (the sprite pick
+/// `SpriteSet.get(random)` the one-texture `flame.json` list
+/// answers — the draw the pick always spends — then the
+/// RisingParticle FIFTEEN-draw chain the torch-flame bank pins: the
+/// dead base lifetime, the spread+normalize pair, the size, the SIX
+/// jitter draws, the own lifetime, the *0.01 velocity fold the ctor
+/// speaks), the OMINOUS twin the `FlameParticle$SmallFlameProvider`
+/// chain wears — the SAME class the plain provider arms (the bare
+/// RisingParticle ctor the getLayer's OPAQUE answer speaks, the
+/// (1 - t²·0.5) shrink the getQuadSize override keeps) with the
+/// soul_fire_flame sprite the one-texture json banks + the ONE
+/// `scale(0.5F)` tail the cp #24 Float fold speaks (the quadSize
+/// the half-fold keeps, NO draw the scale ever spends). The caller
+/// the spawner's own mob spawn pins — `TrialSpawner.spawnMob`'s
+/// `sipush 3011, aload_2, FlameParticle.encode()` levelEvent call
+/// the bytecode speaks (pc 473-483; the 3012 twin at pc 486-497 the
+/// spawnPos anchor carries — the `isOminous ? OMINOUS : NORMAL`
+/// flame the getstatic pair picks, the encode the ordinal's own
+/// int gives). The GLOBAL route the `globalLevelEvent` switch never
+/// banks — the positioned lane the case's own arm wears.
+pub const PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT: i32 = 3011;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -11328,6 +11391,11 @@ mod tests {
             PARTICLES_EGG_CRACK_EFFECT,
             3009,
             "the egg-crack effect the sniffer egg's own placement speaks"
+        );
+        assert_eq!(
+            PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT,
+            3011,
+            "the trial-spawner spawn effect the spawner's own mob spawn speaks"
         );
         assert_eq!(
             ENDER_DRAGON_GROWL_EFFECT,

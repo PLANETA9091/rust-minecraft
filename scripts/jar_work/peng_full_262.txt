@@ -1,0 +1,28 @@
+=== <init> (max_stack=3 max_locals=3 len=54) ===
+      0 aload_0
+      1 invokespecial  java/lang/Object.<init>()V
+      4 aload_0
+      5 invokestatic  com/google/common/collect/Maps.newIdentityHashMap()Ljava/util/IdentityHashMap;
+      8 putfield  net/minecraft/client/particle/ParticleEngine.particles:Ljava/util/Map;
+     11 aload_0
+     12 invokestatic  com/google/common/collect/Queues.newArrayDeque()Ljava/util/ArrayDeque;
+     15 putfield  net/minecraft/client/particle/ParticleEngine.trackingEmitters:Ljava/util/Queue;
+     18 aload_0
+     19 invokestatic  com/google/common/collect/Queues.newArrayDeque()Ljava/util/ArrayDeque;
+     22 putfield  net/minecraft/client/particle/ParticleEngine.particlesToAdd:Ljava/util/Queue;
+     25 aload_0
+     26 new  it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap
+     29 dup
+     30 invokespecial  it/unimi/dsi/fastutil/objects/Object2IntOpenHashMap.<init>()V
+     33 putfield  net/minecraft/client/particle/ParticleEngine.trackedParticleCounts:Lit/unimi/dsi/fastutil/objects/Object2IntOpenHashMap;
+     36 aload_0
+     37 invokestatic  net/minecraft/util/RandomSource.create()Lnet/minecraft/util/RandomSource;
+     40 putfield  net/minecraft/client/particle/ParticleEngine.random:Lnet/minecraft/util/RandomSource;
+     43 aload_0
+     44 aload_1
+     45 putfield  net/minecraft/client/particle/ParticleEngine.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+     48 aload_0
+     49 aload_2
+     50 putfield  net/minecraft/client/particle/ParticleEngine.resourceManager:Lnet/minecraft/client/particle/ParticleResources;
+     53 return
+
