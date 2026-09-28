@@ -3087,6 +3087,66 @@ pub const SOUND_SKELETON_TO_STRAY_EFFECT: i32 = 1048;
 /// case's own arm wears.
 pub const SOUND_BAT_LIFTOFF_EFFECT: i32 = 1025;
 
+/// THE WIND-CHARGE SHOOT VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class row `SOUND_WIND_CHARGE_SHOOT` — the case
+/// `LevelEventHandler.levelEvent` offset 878 speaks): the ONE
+/// `playLocalSound(pos, WIND_CHARGE_THROW, BLOCKS, 0.5F, 0.4F /
+/// (nextFloat() * 0.4F + 0.8F), false)` walk the case body spends —
+/// the FDIV pitch law the fdiv opcode's own operand order answers
+/// (the numerator the pc-891 `ldc1 0.4` push carries, the
+/// denominator the `nf * 0.4F + 0.8F` chain the pc-893..910 walk
+/// spends — the pitch band `(1/3, 0.5]` the [0.8, 1.2) denominator
+/// gives, NOT the handoff's remembered `(nf * 0.4 + 0.8) / 0.5`
+/// form the honest stack walk CORRECTS), the `ldc1 0.5` volume the
+/// pc-889 push carries (the reach the max(volume, 1.0) * 16 fold
+/// turns into 16 blocks), the BLOCKS source the case's own
+/// `getstatic` row picks, the ONE pitch draw the level ambient
+/// stream answers, the immediate flag, the data word never read, NO
+/// particles. The voice the jar's OWN constant pool resolves —
+/// `WIND_CHARGE_THROW` (the SoundEvents field the case body's own
+/// `getstatic` names; the key `entity.wind_charge.throw` the
+/// official sounds.json row banks — the
+/// mob/wind_charge/throw1..3 files, NO new assets the lane demands).
+/// The server's own dispenser speaks it — `WindChargeItem
+/// .createDispenseConfig`'s `.overrideDispenseEvent(1051)` word the
+/// dispense config builder chains (the sipush the bytecode pins —
+/// the SAME overrideDispenseEvent family the firework's 1004 word
+/// keeps, the dispenser-shot wind charge the broadcast arms). The
+/// GLOBAL route the `globalLevelEvent` switch never banks (the
+/// 1023/1028/1038 trio the band alone carries — the positioned lane
+/// the case's own arm wears).
+pub const SOUND_WIND_CHARGE_SHOOT_EFFECT: i32 = 1051;
+
+/// THE PORTAL-TRAVEL VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class row `SOUND_PORTAL_TRAVEL` — the case
+/// `LevelEventHandler.levelEvent` offset 720 speaks): the ONE
+/// `minecraft.getSoundManager().play(SimpleSoundInstance
+/// .forLocalAmbience(PORTAL_TRAVEL, nextFloat() * 0.4F + 0.8F,
+/// 0.25F))` walk the case body spends — the LOCAL-AMBIENCE lane the
+/// SoundManager-direct resolve opens (NOT the positioned
+/// `playLocalSound` walk the whole shelf's siblings spend — the
+/// anchor word the case body never reads, the data word the same
+/// silence keeps, the sound the LISTENER the local instance rides
+/// plays: no distance attenuation, no pan), the pitch the ONE draw
+/// the `nf * 0.4F + 0.8F` chain answers (the [0.8, 1.2) band the
+/// 0.4F scale gives — the denominator shape the wind-charge fdiv
+/// law keeps WITHOUT the division), the `ldc1 0.25` volume the
+/// whisper gain speaks (the dist-0 ear the attenuate's own 0.25
+/// ceiling answers — the local lane the fold never attenuates), NO
+/// particles. The voice the jar's OWN constant pool resolves —
+/// `PORTAL_TRAVEL` (the SoundEvents field the case body's own
+/// `getstatic` names; the key `block.portal.travel` the official
+/// sounds.json row banks — the portal/trigger file, NO new assets
+/// the lane demands). The server's own teleports speak it —
+/// `TeleportTransition.playPortalSound`'s ServerPlayer gate
+/// (`new ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false)`
+/// the bytecode pins — the BlockPos.ZERO anchor the case's own
+/// anchor-less walk makes honest, the positioned route the
+/// global=false word rides). The GLOBAL route the `globalLevelEvent`
+/// switch never banks (the 1023/1028/1038 trio the band alone
+/// carries — the positioned route the caller's own iconst_0 keeps).
+pub const SOUND_PORTAL_TRAVEL_EFFECT: i32 = 1032;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
@@ -12362,6 +12422,16 @@ mod tests {
             SOUND_STOP_JUKEBOX_SONG_EFFECT,
             1011,
             "the jukebox-stop voice the tracked-record case speaks"
+        );
+        assert_eq!(
+            SOUND_WIND_CHARGE_SHOOT_EFFECT,
+            1051,
+            "the wind-charge shoot voice the dispense config's own override speaks"
+        );
+        assert_eq!(
+            SOUND_PORTAL_TRAVEL_EFFECT,
+            1032,
+            "the portal-travel voice the teleport transition's own packet speaks"
         );
         assert_eq!(
             SOUND_CHORUS_GROW_EFFECT,

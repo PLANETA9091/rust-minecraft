@@ -1,0 +1,2191 @@
+=== levelEvent (max_stack=16 max_locals=24 len=5379) ===
+      0 aload_0
+      1 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+      4 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.getRandom()Lnet/minecraft/util/RandomSource;
+      7 astore [4]
+      9 iload_1
+     10 lookupswitch default->5378 1000->776 1001->755 1002->857 1004->836 1009->4137 1010->4405 1011->4439 1015->4447 1016->4531 1017->4489 1018->4733 1019->4573 1020->4693 1021->4653 1022->4613 1024->4773 1025->4973 1026->4813 1027->4853 1029->4231 1030->4265 1031->4333 1032->720 1033->680 1034->700 1035->660 1039->4369 1040->4893 1041->4933 1042->5015 1043->5049 1044->4299 1045->5205 1046->5239 1047->5273 1048->5307 1049->796 1050->816 1051->878 1052->5347 1500->3483 1501->3522 1502->3628 1503->3773 1504->3503 1505->2517 2000->933 2001->1561 2002->1199 2003->947 2004->1689 2006->3893 2007->1199 2008->3440 2009->4070 2010->919 2011->2546 2012->2561 2013->2656 3000->5083 3001->5170 3002->2596 3003->3366 3004->3402 3005->3421 3006->2668 3007->3193 3008->1629 3009->2576 3011->1827 3012->1847 3013->1961 3014->2143 3015->2206 3016->2306 3017->2193 3018->2367 3019->2015 3020->2069 3021->1904
+    660 aload_0
+    661 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    664 aload_2
+    665 getstatic  net/minecraft/sounds/SoundEvents.BREWING_STAND_BREW:Lnet/minecraft/sounds/SoundEvent;
+    668 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    671 fconst_1
+    672 fconst_1
+    673 iconst_0
+    674 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    677 goto  -> 5378
+    680 aload_0
+    681 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    684 aload_2
+    685 getstatic  net/minecraft/sounds/SoundEvents.CHORUS_FLOWER_GROW:Lnet/minecraft/sounds/SoundEvent;
+    688 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    691 fconst_1
+    692 fconst_1
+    693 iconst_0
+    694 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    697 goto  -> 5378
+    700 aload_0
+    701 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    704 aload_2
+    705 getstatic  net/minecraft/sounds/SoundEvents.CHORUS_FLOWER_DEATH:Lnet/minecraft/sounds/SoundEvent;
+    708 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    711 fconst_1
+    712 fconst_1
+    713 iconst_0
+    714 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    717 goto  -> 5378
+    720 aload_0
+    721 getfield  net/minecraft/client/renderer/LevelEventHandler.minecraft:Lnet/minecraft/client/Minecraft;
+    724 invokevirtual  net/minecraft/client/Minecraft.getSoundManager()Lnet/minecraft/client/sounds/SoundManager;
+    727 getstatic  net/minecraft/sounds/SoundEvents.PORTAL_TRAVEL:Lnet/minecraft/sounds/SoundEvent;
+    730 aload [4]
+    732 invokeinterface [0, 131, 1, 0]
+    737 ldc1  = 0.4000000059604645
+    739 fmul
+    740 ldc1  = 0.800000011920929
+    742 fadd
+    743 ldc1  = 0.25
+    745 invokestatic  net/minecraft/client/resources/sounds/SimpleSoundInstance.forLocalAmbience(Lnet/minecraft/sounds/SoundEvent;FF)Lnet/minecraft/client/resources/sounds/SimpleSoundInstance;
+    748 invokevirtual  net/minecraft/client/sounds/SoundManager.play(Lnet/minecraft/client/resources/sounds/SoundInstance;)Lnet/minecraft/client/sounds/SoundEngine$PlayResult;
+    751 pop
+    752 goto  -> 5378
+    755 aload_0
+    756 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    759 aload_2
+    760 getstatic  net/minecraft/sounds/SoundEvents.DISPENSER_FAIL:Lnet/minecraft/sounds/SoundEvent;
+    763 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    766 fconst_1
+    767 ldc1  = 1.2000000476837158
+    769 iconst_0
+    770 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    773 goto  -> 5378
+    776 aload_0
+    777 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    780 aload_2
+    781 getstatic  net/minecraft/sounds/SoundEvents.DISPENSER_DISPENSE:Lnet/minecraft/sounds/SoundEvent;
+    784 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    787 fconst_1
+    788 fconst_1
+    789 iconst_0
+    790 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    793 goto  -> 5378
+    796 aload_0
+    797 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    800 aload_2
+    801 getstatic  net/minecraft/sounds/SoundEvents.CRAFTER_CRAFT:Lnet/minecraft/sounds/SoundEvent;
+    804 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    807 fconst_1
+    808 fconst_1
+    809 iconst_0
+    810 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    813 goto  -> 5378
+    816 aload_0
+    817 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    820 aload_2
+    821 getstatic  net/minecraft/sounds/SoundEvents.CRAFTER_FAIL:Lnet/minecraft/sounds/SoundEvent;
+    824 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    827 fconst_1
+    828 fconst_1
+    829 iconst_0
+    830 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    833 goto  -> 5378
+    836 aload_0
+    837 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    840 aload_2
+    841 getstatic  net/minecraft/sounds/SoundEvents.FIREWORK_ROCKET_SHOOT:Lnet/minecraft/sounds/SoundEvent;
+    844 getstatic  net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+    847 fconst_1
+    848 ldc1  = 1.2000000476837158
+    850 iconst_0
+    851 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    854 goto  -> 5378
+    857 aload_0
+    858 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    861 aload_2
+    862 getstatic  net/minecraft/sounds/SoundEvents.DISPENSER_LAUNCH:Lnet/minecraft/sounds/SoundEvent;
+    865 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    868 fconst_1
+    869 ldc1  = 1.2000000476837158
+    871 iconst_0
+    872 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    875 goto  -> 5378
+    878 aload_0
+    879 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    882 aload_2
+    883 getstatic  net/minecraft/sounds/SoundEvents.WIND_CHARGE_THROW:Lnet/minecraft/sounds/SoundEvent;
+    886 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+    889 ldc1  = 0.5
+    891 ldc1  = 0.4000000059604645
+    893 aload_0
+    894 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+    897 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.getRandom()Lnet/minecraft/util/RandomSource;
+    900 invokeinterface [0, 131, 1, 0]
+    905 ldc1  = 0.4000000059604645
+    907 fmul
+    908 ldc1  = 0.800000011920929
+    910 fadd
+    911 fdiv
+    912 iconst_0
+    913 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+    916 goto  -> 5378
+    919 aload_0
+    920 iload_3
+    921 aload_2
+    922 aload [4]
+    924 getstatic  net/minecraft/core/particles/ParticleTypes.WHITE_SMOKE:Lnet/minecraft/core/particles/SimpleParticleType;
+    927 invokevirtual  net/minecraft/client/renderer/LevelEventHandler.shootParticles(ILnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/particles/SimpleParticleType;)V
+    930 goto  -> 5378
+    933 aload_0
+    934 iload_3
+    935 aload_2
+    936 aload [4]
+    938 getstatic  net/minecraft/core/particles/ParticleTypes.SMOKE:Lnet/minecraft/core/particles/SimpleParticleType;
+    941 invokevirtual  net/minecraft/client/renderer/LevelEventHandler.shootParticles(ILnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/particles/SimpleParticleType;)V
+    944 goto  -> 5378
+    947 aload_2
+    948 invokevirtual  net/minecraft/core/BlockPos.getX()I
+    951 i2d
+    952 ldc2w  = 0.5
+    955 dadd
+    956 dstore [5]
+    958 aload_2
+    959 invokevirtual  net/minecraft/core/BlockPos.getY()I
+    962 i2d
+    963 dstore [7]
+    965 aload_2
+    966 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+    969 i2d
+    970 ldc2w  = 0.5
+    973 dadd
+    974 dstore [9]
+    976 new  net/minecraft/core/particles/ItemParticleOption
+    979 dup
+    980 getstatic  net/minecraft/core/particles/ParticleTypes.ITEM:Lnet/minecraft/core/particles/ParticleType;
+    983 getstatic  net/minecraft/world/item/Items.ENDER_EYE:Lnet/minecraft/world/item/Item;
+    986 invokespecial  net/minecraft/core/particles/ItemParticleOption.<init>(Lnet/minecraft/core/particles/ParticleType;Lnet/minecraft/world/item/Item;)V
+    989 astore [11]
+    991 iconst_0
+    992 istore [12]
+    994 iload [12]
+    996 bipush [8]
+    998 if_icmpge  -> 1055
+   1001 aload_0
+   1002 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1005 aload [11]
+   1007 dload [5]
+   1009 dload [7]
+   1011 dload [9]
+   1013 aload [4]
+   1015 invokeinterface [0, 220, 1, 0]
+   1020 ldc2w  = 0.15
+   1023 dmul
+   1024 aload [4]
+   1026 invokeinterface [0, 226, 1, 0]
+   1031 ldc2w  = 0.2
+   1034 dmul
+   1035 aload [4]
+   1037 invokeinterface [0, 220, 1, 0]
+   1042 ldc2w  = 0.15
+   1045 dmul
+   1046 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   1049 iinc [12, 1]
+   1052 goto  -> 994
+   1055 dconst_0
+   1056 dstore [12]
+   1058 dload [12]
+   1060 ldc2w  = 6.283185307179586
+   1063 fcmpg
+   1064 ifge  -> 1196
+   1067 aload_0
+   1068 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1071 getstatic  net/minecraft/core/particles/ParticleTypes.PORTAL:Lnet/minecraft/core/particles/SimpleParticleType;
+   1074 dload [5]
+   1076 dload [12]
+   1078 invokestatic  java/lang/Math.cos(D)D
+   1081 ldc2w  = 5.0
+   1084 dmul
+   1085 dadd
+   1086 dload [7]
+   1088 ldc2w  = 0.4
+   1091 dsub
+   1092 dload [9]
+   1094 dload [12]
+   1096 invokestatic  java/lang/Math.sin(D)D
+   1099 ldc2w  = 5.0
+   1102 dmul
+   1103 dadd
+   1104 dload [12]
+   1106 invokestatic  java/lang/Math.cos(D)D
+   1109 ldc2w  = -5.0
+   1112 dmul
+   1113 dconst_0
+   1114 dload [12]
+   1116 invokestatic  java/lang/Math.sin(D)D
+   1119 ldc2w  = -5.0
+   1122 dmul
+   1123 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   1126 aload_0
+   1127 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1130 getstatic  net/minecraft/core/particles/ParticleTypes.PORTAL:Lnet/minecraft/core/particles/SimpleParticleType;
+   1133 dload [5]
+   1135 dload [12]
+   1137 invokestatic  java/lang/Math.cos(D)D
+   1140 ldc2w  = 5.0
+   1143 dmul
+   1144 dadd
+   1145 dload [7]
+   1147 ldc2w  = 0.4
+   1150 dsub
+   1151 dload [9]
+   1153 dload [12]
+   1155 invokestatic  java/lang/Math.sin(D)D
+   1158 ldc2w  = 5.0
+   1161 dmul
+   1162 dadd
+   1163 dload [12]
+   1165 invokestatic  java/lang/Math.cos(D)D
+   1168 ldc2w  = -7.0
+   1171 dmul
+   1172 dconst_0
+   1173 dload [12]
+   1175 invokestatic  java/lang/Math.sin(D)D
+   1178 ldc2w  = -7.0
+   1181 dmul
+   1182 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   1185 dload [12]
+   1187 ldc2w  = 0.15707963267948966
+   1190 dadd
+   1191 dstore [12]
+   1193 goto  -> 1058
+   1196 goto  -> 5378
+   1199 aload_2
+   1200 invokestatic  net/minecraft/world/phys/Vec3.atBottomCenterOf(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/world/phys/Vec3;
+   1203 astore [5]
+   1205 new  net/minecraft/core/particles/ItemParticleOption
+   1208 dup
+   1209 getstatic  net/minecraft/core/particles/ParticleTypes.ITEM:Lnet/minecraft/core/particles/ParticleType;
+   1212 getstatic  net/minecraft/world/item/Items.SPLASH_POTION:Lnet/minecraft/world/item/Item;
+   1215 invokespecial  net/minecraft/core/particles/ItemParticleOption.<init>(Lnet/minecraft/core/particles/ParticleType;Lnet/minecraft/world/item/Item;)V
+   1218 astore [6]
+   1220 iconst_0
+   1221 istore [7]
+   1223 iload [7]
+   1225 bipush [8]
+   1227 if_icmpge  -> 1293
+   1230 aload_0
+   1231 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1234 aload [6]
+   1236 aload [5]
+   1238 getfield  net/minecraft/world/phys/Vec3.x:D
+   1241 aload [5]
+   1243 getfield  net/minecraft/world/phys/Vec3.y:D
+   1246 aload [5]
+   1248 getfield  net/minecraft/world/phys/Vec3.z:D
+   1251 aload [4]
+   1253 invokeinterface [0, 220, 1, 0]
+   1258 ldc2w  = 0.15
+   1261 dmul
+   1262 aload [4]
+   1264 invokeinterface [0, 226, 1, 0]
+   1269 ldc2w  = 0.2
+   1272 dmul
+   1273 aload [4]
+   1275 invokeinterface [0, 220, 1, 0]
+   1280 ldc2w  = 0.15
+   1283 dmul
+   1284 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   1287 iinc [7, 1]
+   1290 goto  -> 1223
+   1293 iload_3
+   1294 bipush [16]
+   1296 ishr
+   1297 sipush [0, 255]
+   1300 iand
+   1301 i2f
+   1302 ldc2w  = 255.0
+   1305 fdiv
+   1306 fstore [7]
+   1308 iload_3
+   1309 bipush [8]
+   1311 ishr
+   1312 sipush [0, 255]
+   1315 iand
+   1316 i2f
+   1317 ldc2w  = 255.0
+   1320 fdiv
+   1321 fstore [8]
+   1323 iload_3
+   1324 iconst_0
+   1325 ishr
+   1326 sipush [0, 255]
+   1329 iand
+   1330 i2f
+   1331 ldc2w  = 255.0
+   1334 fdiv
+   1335 fstore [9]
+   1337 iload_1
+   1338 sipush [7, 215]
+   1341 if_icmpne  -> 1350
+   1344 getstatic  net/minecraft/core/particles/ParticleTypes.INSTANT_EFFECT:Lnet/minecraft/core/particles/ParticleType;
+   1347 goto  -> 1353
+   1350 getstatic  net/minecraft/core/particles/ParticleTypes.EFFECT:Lnet/minecraft/core/particles/ParticleType;
+   1353 astore [10]
+   1355 iconst_0
+   1356 istore [11]
+   1358 iload [11]
+   1360 bipush [100]
+   1362 if_icmpge  -> 1527
+   1365 aload [4]
+   1367 invokeinterface [0, 226, 1, 0]
+   1372 ldc2w  = 4.0
+   1375 dmul
+   1376 dstore [12]
+   1378 aload [4]
+   1380 invokeinterface [0, 226, 1, 0]
+   1385 ldc2w  = 3.141592653589793
+   1388 dmul
+   1389 ldc2w  = 2.0
+   1392 dmul
+   1393 dstore [14]
+   1395 dload [14]
+   1397 invokestatic  java/lang/Math.cos(D)D
+   1400 dload [12]
+   1402 dmul
+   1403 dstore [16]
+   1405 ldc2w  = 0.01
+   1408 aload [4]
+   1410 invokeinterface [0, 226, 1, 0]
+   1415 ldc2w  = 0.5
+   1418 dmul
+   1419 dadd
+   1420 dstore [18]
+   1422 dload [14]
+   1424 invokestatic  java/lang/Math.sin(D)D
+   1427 dload [12]
+   1429 dmul
+   1430 dstore [20]
+   1432 ldc2w  = 0.75
+   1435 aload [4]
+   1437 invokeinterface [0, 131, 1, 0]
+   1442 ldc1  = 0.25
+   1444 fmul
+   1445 fadd
+   1446 fstore [22]
+   1448 aload [10]
+   1450 fload [7]
+   1452 fload [22]
+   1454 fmul
+   1455 fload [8]
+   1457 fload [22]
+   1459 fmul
+   1460 fload [9]
+   1462 fload [22]
+   1464 fmul
+   1465 dload [12]
+   1467 d2f
+   1468 invokestatic  net/minecraft/core/particles/SpellParticleOption.create(Lnet/minecraft/core/particles/ParticleType;FFFF)Lnet/minecraft/core/particles/SpellParticleOption;
+   1471 astore [23]
+   1473 aload_0
+   1474 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1477 aload [23]
+   1479 aload [5]
+   1481 getfield  net/minecraft/world/phys/Vec3.x:D
+   1484 dload [16]
+   1486 ldc2w  = 0.1
+   1489 dmul
+   1490 dadd
+   1491 aload [5]
+   1493 getfield  net/minecraft/world/phys/Vec3.y:D
+   1496 ldc2w  = 0.3
+   1499 dadd
+   1500 aload [5]
+   1502 getfield  net/minecraft/world/phys/Vec3.z:D
+   1505 dload [20]
+   1507 ldc2w  = 0.1
+   1510 dmul
+   1511 dadd
+   1512 dload [16]
+   1514 dload [18]
+   1516 dload [20]
+   1518 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   1521 iinc [11, 1]
+   1524 goto  -> 1358
+   1527 aload_0
+   1528 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1531 aload_2
+   1532 getstatic  net/minecraft/sounds/SoundEvents.SPLASH_POTION_BREAK:Lnet/minecraft/sounds/SoundEvent;
+   1535 getstatic  net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+   1538 fconst_1
+   1539 aload [4]
+   1541 invokeinterface [0, 131, 1, 0]
+   1546 ldc2w  = 0.10000000149011612
+   1549 fmul
+   1550 ldc2w  = 0.8999999761581421
+   1553 fadd
+   1554 iconst_0
+   1555 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   1558 goto  -> 5378
+   1561 iload_3
+   1562 invokestatic  net/minecraft/world/level/block/Block.stateById(I)Lnet/minecraft/world/level/block/state/BlockState;
+   1565 astore [5]
+   1567 aload [5]
+   1569 invokevirtual  net/minecraft/world/level/block/state/BlockState.isAir()Z
+   1572 ifne  -> 1616
+   1575 aload [5]
+   1577 invokevirtual  net/minecraft/world/level/block/state/BlockState.getSoundType()Lnet/minecraft/world/level/block/SoundType;
+   1580 astore [6]
+   1582 aload_0
+   1583 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1586 aload_2
+   1587 aload [6]
+   1589 invokevirtual  net/minecraft/world/level/block/SoundType.getBreakSound()Lnet/minecraft/sounds/SoundEvent;
+   1592 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   1595 aload [6]
+   1597 invokevirtual  net/minecraft/world/level/block/SoundType.getVolume()F
+   1600 fconst_1
+   1601 fadd
+   1602 fconst_2
+   1603 fdiv
+   1604 aload [6]
+   1606 invokevirtual  net/minecraft/world/level/block/SoundType.getPitch()F
+   1609 ldc1  = 0.800000011920929
+   1611 fmul
+   1612 iconst_0
+   1613 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   1616 aload_0
+   1617 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1620 aload_2
+   1621 aload [5]
+   1623 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addDestroyBlockEffect(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+   1626 goto  -> 5378
+   1629 iload_3
+   1630 invokestatic  net/minecraft/world/level/block/Block.stateById(I)Lnet/minecraft/world/level/block/state/BlockState;
+   1633 astore [5]
+   1635 aload [5]
+   1637 invokevirtual  net/minecraft/world/level/block/state/BlockState.getBlock()Lnet/minecraft/world/level/block/Block;
+   1640 astore [7]
+   1642 aload [7]
+   1644 instanceof  net/minecraft/world/level/block/BrushableBlock
+   1647 ifeq  -> 1676
+   1650 aload [7]
+   1652 checkcast  net/minecraft/world/level/block/BrushableBlock
+   1655 astore [6]
+   1657 aload_0
+   1658 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1661 aload_2
+   1662 aload [6]
+   1664 invokevirtual  net/minecraft/world/level/block/BrushableBlock.getBrushCompletedSound()Lnet/minecraft/sounds/SoundEvent;
+   1667 getstatic  net/minecraft/sounds/SoundSource.PLAYERS:Lnet/minecraft/sounds/SoundSource;
+   1670 fconst_1
+   1671 fconst_1
+   1672 iconst_0
+   1673 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   1676 aload_0
+   1677 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1680 aload_2
+   1681 aload [5]
+   1683 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addDestroyBlockEffect(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+   1686 goto  -> 5378
+   1689 iconst_0
+   1690 istore [5]
+   1692 iload [5]
+   1694 bipush [20]
+   1696 if_icmpge  -> 1824
+   1699 aload_2
+   1700 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   1703 i2d
+   1704 ldc2w  = 0.5
+   1707 dadd
+   1708 aload [4]
+   1710 invokeinterface [0, 226, 1, 0]
+   1715 ldc2w  = 0.5
+   1718 dsub
+   1719 ldc2w  = 2.0
+   1722 dmul
+   1723 dadd
+   1724 dstore [6]
+   1726 aload_2
+   1727 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   1730 i2d
+   1731 ldc2w  = 0.5
+   1734 dadd
+   1735 aload [4]
+   1737 invokeinterface [0, 226, 1, 0]
+   1742 ldc2w  = 0.5
+   1745 dsub
+   1746 ldc2w  = 2.0
+   1749 dmul
+   1750 dadd
+   1751 dstore [8]
+   1753 aload_2
+   1754 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   1757 i2d
+   1758 ldc2w  = 0.5
+   1761 dadd
+   1762 aload [4]
+   1764 invokeinterface [0, 226, 1, 0]
+   1769 ldc2w  = 0.5
+   1772 dsub
+   1773 ldc2w  = 2.0
+   1776 dmul
+   1777 dadd
+   1778 dstore [10]
+   1780 aload_0
+   1781 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1784 getstatic  net/minecraft/core/particles/ParticleTypes.SMOKE:Lnet/minecraft/core/particles/SimpleParticleType;
+   1787 dload [6]
+   1789 dload [8]
+   1791 dload [10]
+   1793 dconst_0
+   1794 dconst_0
+   1795 dconst_0
+   1796 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   1799 aload_0
+   1800 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1803 getstatic  net/minecraft/core/particles/ParticleTypes.FLAME:Lnet/minecraft/core/particles/SimpleParticleType;
+   1806 dload [6]
+   1808 dload [8]
+   1810 dload [10]
+   1812 dconst_0
+   1813 dconst_0
+   1814 dconst_0
+   1815 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   1818 iinc [5, 1]
+   1821 goto  -> 1692
+   1824 goto  -> 5378
+   1827 aload_0
+   1828 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1831 aload_2
+   1832 aload [4]
+   1834 iload_3
+   1835 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.decode(I)Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   1838 getfield  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.particleType:Lnet/minecraft/core/particles/SimpleParticleType;
+   1841 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addSpawnParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/particles/SimpleParticleType;)V
+   1844 goto  -> 5378
+   1847 aload_0
+   1848 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1851 aload_2
+   1852 getstatic  net/minecraft/sounds/SoundEvents.TRIAL_SPAWNER_SPAWN_MOB:Lnet/minecraft/sounds/SoundEvent;
+   1855 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   1858 fconst_1
+   1859 aload [4]
+   1861 invokeinterface [0, 131, 1, 0]
+   1866 aload [4]
+   1868 invokeinterface [0, 131, 1, 0]
+   1873 fsub
+   1874 ldc2w  = 0.20000000298023224
+   1877 fmul
+   1878 fconst_1
+   1879 fadd
+   1880 iconst_1
+   1881 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   1884 aload_0
+   1885 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1888 aload_2
+   1889 aload [4]
+   1891 iload_3
+   1892 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.decode(I)Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   1895 getfield  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.particleType:Lnet/minecraft/core/particles/SimpleParticleType;
+   1898 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addSpawnParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/particles/SimpleParticleType;)V
+   1901 goto  -> 5378
+   1904 aload_0
+   1905 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1908 aload_2
+   1909 getstatic  net/minecraft/sounds/SoundEvents.TRIAL_SPAWNER_SPAWN_ITEM:Lnet/minecraft/sounds/SoundEvent;
+   1912 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   1915 fconst_1
+   1916 aload [4]
+   1918 invokeinterface [0, 131, 1, 0]
+   1923 aload [4]
+   1925 invokeinterface [0, 131, 1, 0]
+   1930 fsub
+   1931 ldc2w  = 0.20000000298023224
+   1934 fmul
+   1935 fconst_1
+   1936 fadd
+   1937 iconst_1
+   1938 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   1941 aload_0
+   1942 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1945 aload_2
+   1946 aload [4]
+   1948 iload_3
+   1949 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.decode(I)Lnet/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle;
+   1952 getfield  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner$FlameParticle.particleType:Lnet/minecraft/core/particles/SimpleParticleType;
+   1955 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addSpawnParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/particles/SimpleParticleType;)V
+   1958 goto  -> 5378
+   1961 aload_0
+   1962 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   1965 aload_2
+   1966 getstatic  net/minecraft/sounds/SoundEvents.TRIAL_SPAWNER_DETECT_PLAYER:Lnet/minecraft/sounds/SoundEvent;
+   1969 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   1972 fconst_1
+   1973 aload [4]
+   1975 invokeinterface [0, 131, 1, 0]
+   1980 aload [4]
+   1982 invokeinterface [0, 131, 1, 0]
+   1987 fsub
+   1988 ldc2w  = 0.20000000298023224
+   1991 fmul
+   1992 fconst_1
+   1993 fadd
+   1994 iconst_1
+   1995 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   1998 aload_0
+   1999 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2002 aload_2
+   2003 aload [4]
+   2005 iload_3
+   2006 getstatic  net/minecraft/core/particles/ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER:Lnet/minecraft/core/particles/SimpleParticleType;
+   2009 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addDetectPlayerParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;ILnet/minecraft/core/particles/ParticleOptions;)V
+   2012 goto  -> 5378
+   2015 aload_0
+   2016 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2019 aload_2
+   2020 getstatic  net/minecraft/sounds/SoundEvents.TRIAL_SPAWNER_DETECT_PLAYER:Lnet/minecraft/sounds/SoundEvent;
+   2023 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2026 fconst_1
+   2027 aload [4]
+   2029 invokeinterface [0, 131, 1, 0]
+   2034 aload [4]
+   2036 invokeinterface [0, 131, 1, 0]
+   2041 fsub
+   2042 ldc2w  = 0.20000000298023224
+   2045 fmul
+   2046 fconst_1
+   2047 fadd
+   2048 iconst_1
+   2049 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2052 aload_0
+   2053 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2056 aload_2
+   2057 aload [4]
+   2059 iload_3
+   2060 getstatic  net/minecraft/core/particles/ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS:Lnet/minecraft/core/particles/SimpleParticleType;
+   2063 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addDetectPlayerParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;ILnet/minecraft/core/particles/ParticleOptions;)V
+   2066 goto  -> 5378
+   2069 aload_0
+   2070 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2073 aload_2
+   2074 getstatic  net/minecraft/sounds/SoundEvents.TRIAL_SPAWNER_OMINOUS_ACTIVATE:Lnet/minecraft/sounds/SoundEvent;
+   2077 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2080 iload_3
+   2081 ifne  -> 2090
+   2084 ldc2w  = 0.30000001192092896
+   2087 goto  -> 2091
+   2090 fconst_1
+   2091 aload [4]
+   2093 invokeinterface [0, 131, 1, 0]
+   2098 aload [4]
+   2100 invokeinterface [0, 131, 1, 0]
+   2105 fsub
+   2106 ldc2w  = 0.20000000298023224
+   2109 fmul
+   2110 fconst_1
+   2111 fadd
+   2112 iconst_1
+   2113 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2116 aload_0
+   2117 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2120 aload_2
+   2121 aload [4]
+   2123 iconst_0
+   2124 getstatic  net/minecraft/core/particles/ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS:Lnet/minecraft/core/particles/SimpleParticleType;
+   2127 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addDetectPlayerParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;ILnet/minecraft/core/particles/ParticleOptions;)V
+   2130 aload_0
+   2131 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2134 aload_2
+   2135 aload [4]
+   2137 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addBecomeOminousParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+   2140 goto  -> 5378
+   2143 aload_0
+   2144 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2147 aload_2
+   2148 getstatic  net/minecraft/sounds/SoundEvents.TRIAL_SPAWNER_EJECT_ITEM:Lnet/minecraft/sounds/SoundEvent;
+   2151 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2154 fconst_1
+   2155 aload [4]
+   2157 invokeinterface [0, 131, 1, 0]
+   2162 aload [4]
+   2164 invokeinterface [0, 131, 1, 0]
+   2169 fsub
+   2170 ldc2w  = 0.20000000298023224
+   2173 fmul
+   2174 fconst_1
+   2175 fadd
+   2176 iconst_1
+   2177 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2180 aload_0
+   2181 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2184 aload_2
+   2185 aload [4]
+   2187 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addEjectItemParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+   2190 goto  -> 5378
+   2193 aload_0
+   2194 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2197 aload_2
+   2198 aload [4]
+   2200 invokestatic  net/minecraft/world/level/block/entity/trialspawner/TrialSpawner.addEjectItemParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/util/RandomSource;)V
+   2203 goto  -> 5378
+   2206 aload_0
+   2207 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2210 aload_2
+   2211 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.getBlockEntity(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/entity/BlockEntity;
+   2214 astore [6]
+   2216 aload [6]
+   2218 instanceof  net/minecraft/world/level/block/entity/vault/VaultBlockEntity
+   2221 ifeq  -> 2303
+   2224 aload [6]
+   2226 checkcast  net/minecraft/world/level/block/entity/vault/VaultBlockEntity
+   2229 astore [5]
+   2231 aload_0
+   2232 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2235 aload [5]
+   2237 invokevirtual  net/minecraft/world/level/block/entity/vault/VaultBlockEntity.getBlockPos()Lnet/minecraft/core/BlockPos;
+   2240 aload [5]
+   2242 invokevirtual  net/minecraft/world/level/block/entity/vault/VaultBlockEntity.getBlockState()Lnet/minecraft/world/level/block/state/BlockState;
+   2245 aload [5]
+   2247 invokevirtual  net/minecraft/world/level/block/entity/vault/VaultBlockEntity.getSharedData()Lnet/minecraft/world/level/block/entity/vault/VaultSharedData;
+   2250 iload_3
+   2251 ifne  -> 2260
+   2254 getstatic  net/minecraft/core/particles/ParticleTypes.SMALL_FLAME:Lnet/minecraft/core/particles/SimpleParticleType;
+   2257 goto  -> 2263
+   2260 getstatic  net/minecraft/core/particles/ParticleTypes.SOUL_FIRE_FLAME:Lnet/minecraft/core/particles/SimpleParticleType;
+   2263 invokestatic  net/minecraft/world/level/block/entity/vault/VaultBlockEntity$Client.emitActivationParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/block/entity/vault/VaultSharedData;Lnet/minecraft/core/particles/ParticleOptions;)V
+   2266 aload_0
+   2267 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2270 aload_2
+   2271 getstatic  net/minecraft/sounds/SoundEvents.VAULT_ACTIVATE:Lnet/minecraft/sounds/SoundEvent;
+   2274 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2277 fconst_1
+   2278 aload [4]
+   2280 invokeinterface [0, 131, 1, 0]
+   2285 aload [4]
+   2287 invokeinterface [0, 131, 1, 0]
+   2292 fsub
+   2293 ldc2w  = 0.20000000298023224
+   2296 fmul
+   2297 fconst_1
+   2298 fadd
+   2299 iconst_1
+   2300 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2303 goto  -> 5378
+   2306 aload_0
+   2307 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2310 aload_2
+   2311 iload_3
+   2312 ifne  -> 2321
+   2315 getstatic  net/minecraft/core/particles/ParticleTypes.SMALL_FLAME:Lnet/minecraft/core/particles/SimpleParticleType;
+   2318 goto  -> 2324
+   2321 getstatic  net/minecraft/core/particles/ParticleTypes.SOUL_FIRE_FLAME:Lnet/minecraft/core/particles/SimpleParticleType;
+   2324 invokestatic  net/minecraft/world/level/block/entity/vault/VaultBlockEntity$Client.emitDeactivationParticles(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;)V
+   2327 aload_0
+   2328 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2331 aload_2
+   2332 getstatic  net/minecraft/sounds/SoundEvents.VAULT_DEACTIVATE:Lnet/minecraft/sounds/SoundEvent;
+   2335 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2338 fconst_1
+   2339 aload [4]
+   2341 invokeinterface [0, 131, 1, 0]
+   2346 aload [4]
+   2348 invokeinterface [0, 131, 1, 0]
+   2353 fsub
+   2354 ldc2w  = 0.20000000298023224
+   2357 fmul
+   2358 fconst_1
+   2359 fadd
+   2360 iconst_1
+   2361 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2364 goto  -> 5378
+   2367 iconst_0
+   2368 istore [5]
+   2370 iload [5]
+   2372 bipush [10]
+   2374 if_icmpge  -> 2477
+   2377 aload [4]
+   2379 invokeinterface [0, 220, 1, 0]
+   2384 ldc2w  = 0.02
+   2387 dmul
+   2388 dstore [6]
+   2390 aload [4]
+   2392 invokeinterface [0, 220, 1, 0]
+   2397 ldc2w  = 0.02
+   2400 dmul
+   2401 dstore [8]
+   2403 aload [4]
+   2405 invokeinterface [0, 220, 1, 0]
+   2410 ldc2w  = 0.02
+   2413 dmul
+   2414 dstore [10]
+   2416 aload_0
+   2417 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2420 getstatic  net/minecraft/core/particles/ParticleTypes.POOF:Lnet/minecraft/core/particles/SimpleParticleType;
+   2423 aload_2
+   2424 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   2427 i2d
+   2428 aload [4]
+   2430 invokeinterface [0, 226, 1, 0]
+   2435 dadd
+   2436 aload_2
+   2437 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   2440 i2d
+   2441 aload [4]
+   2443 invokeinterface [0, 226, 1, 0]
+   2448 dadd
+   2449 aload_2
+   2450 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   2453 i2d
+   2454 aload [4]
+   2456 invokeinterface [0, 226, 1, 0]
+   2461 dadd
+   2462 dload [6]
+   2464 dload [8]
+   2466 dload [10]
+   2468 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   2471 iinc [5, 1]
+   2474 goto  -> 2370
+   2477 aload_0
+   2478 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2481 aload_2
+   2482 getstatic  net/minecraft/sounds/SoundEvents.COBWEB_PLACE:Lnet/minecraft/sounds/SoundEvent;
+   2485 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2488 fconst_1
+   2489 aload [4]
+   2491 invokeinterface [0, 131, 1, 0]
+   2496 aload [4]
+   2498 invokeinterface [0, 131, 1, 0]
+   2503 fsub
+   2504 ldc2w  = 0.20000000298023224
+   2507 fmul
+   2508 fconst_1
+   2509 fadd
+   2510 iconst_1
+   2511 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2514 goto  -> 5378
+   2517 aload_0
+   2518 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2521 aload_2
+   2522 iload_3
+   2523 invokestatic  net/minecraft/world/item/BoneMealItem.addGrowthParticles(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;I)V
+   2526 aload_0
+   2527 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2530 aload_2
+   2531 getstatic  net/minecraft/sounds/SoundEvents.BONE_MEAL_USE:Lnet/minecraft/sounds/SoundEvent;
+   2534 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2537 fconst_1
+   2538 fconst_1
+   2539 iconst_0
+   2540 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2543 goto  -> 5378
+   2546 aload_0
+   2547 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2550 aload_2
+   2551 iload_3
+   2552 getstatic  net/minecraft/core/particles/ParticleTypes.HAPPY_VILLAGER:Lnet/minecraft/core/particles/SimpleParticleType;
+   2555 invokestatic  net/minecraft/util/ParticleUtils.spawnParticleInBlock(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;ILnet/minecraft/core/particles/ParticleOptions;)V
+   2558 goto  -> 5378
+   2561 aload_0
+   2562 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2565 aload_2
+   2566 iload_3
+   2567 getstatic  net/minecraft/core/particles/ParticleTypes.HAPPY_VILLAGER:Lnet/minecraft/core/particles/SimpleParticleType;
+   2570 invokestatic  net/minecraft/util/ParticleUtils.spawnParticleInBlock(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;ILnet/minecraft/core/particles/ParticleOptions;)V
+   2573 goto  -> 5378
+   2576 aload_0
+   2577 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2580 aload_2
+   2581 getstatic  net/minecraft/core/particles/ParticleTypes.EGG_CRACK:Lnet/minecraft/core/particles/SimpleParticleType;
+   2584 iconst_3
+   2585 bipush [6]
+   2587 invokestatic  net/minecraft/util/valueproviders/UniformInt.of(II)Lnet/minecraft/util/valueproviders/UniformInt;
+   2590 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesOnBlockFaces(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/IntProvider;)V
+   2593 goto  -> 5378
+   2596 iload_3
+   2597 iflt  -> 2637
+   2600 iload_3
+   2601 getstatic  net/minecraft/core/Direction$Axis.VALUES:[Lnet/minecraft/core/Direction$Axis;
+   2604 arraylength
+   2605 if_icmpge  -> 2637
+   2608 getstatic  net/minecraft/core/Direction$Axis.VALUES:[Lnet/minecraft/core/Direction$Axis;
+   2611 iload_3
+   2612 ?0x32
+   2613 aload_0
+   2614 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2617 aload_2
+   2618 ldc2w  = 0.125
+   2621 getstatic  net/minecraft/core/particles/ParticleTypes.ELECTRIC_SPARK:Lnet/minecraft/core/particles/SimpleParticleType;
+   2624 bipush [10]
+   2626 bipush [19]
+   2628 invokestatic  net/minecraft/util/valueproviders/UniformInt.of(II)Lnet/minecraft/util/valueproviders/UniformInt;
+   2631 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesAlongAxis(Lnet/minecraft/core/Direction$Axis;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;DLnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/UniformInt;)V
+   2634 goto  -> 5378
+   2637 aload_0
+   2638 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2641 aload_2
+   2642 getstatic  net/minecraft/core/particles/ParticleTypes.ELECTRIC_SPARK:Lnet/minecraft/core/particles/SimpleParticleType;
+   2645 iconst_3
+   2646 iconst_5
+   2647 invokestatic  net/minecraft/util/valueproviders/UniformInt.of(II)Lnet/minecraft/util/valueproviders/UniformInt;
+   2650 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesOnBlockFaces(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/IntProvider;)V
+   2653 goto  -> 5378
+   2656 aload_0
+   2657 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2660 aload_2
+   2661 iload_3
+   2662 invokestatic  net/minecraft/util/ParticleUtils.spawnSmashAttackParticles(Lnet/minecraft/world/level/LevelAccessor;Lnet/minecraft/core/BlockPos;I)V
+   2665 goto  -> 5378
+   2668 iload_3
+   2669 bipush [6]
+   2671 ishr
+   2672 istore [5]
+   2674 iload [5]
+   2676 ifle  -> 2987
+   2679 aload [4]
+   2681 invokeinterface [0, 131, 1, 0]
+   2686 ldc2w  = 0.30000001192092896
+   2689 iload [5]
+   2691 i2f
+   2692 ldc2w  = 0.10000000149011612
+   2695 fmul
+   2696 fadd
+   2697 lcmp
+   2698 ifge  -> 2765
+   2701 ldc2w  = 0.15000000596046448
+   2704 ldc2w  = 0.019999999552965164
+   2707 iload [5]
+   2709 i2f
+   2710 fmul
+   2711 iload [5]
+   2713 i2f
+   2714 fmul
+   2715 aload [4]
+   2717 invokeinterface [0, 131, 1, 0]
+   2722 fmul
+   2723 fadd
+   2724 fstore [6]
+   2726 ldc1  = 0.4000000059604645
+   2728 ldc2w  = 0.30000001192092896
+   2731 iload [5]
+   2733 i2f
+   2734 fmul
+   2735 aload [4]
+   2737 invokeinterface [0, 131, 1, 0]
+   2742 fmul
+   2743 fadd
+   2744 fstore [7]
+   2746 aload_0
+   2747 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2750 aload_2
+   2751 getstatic  net/minecraft/sounds/SoundEvents.SCULK_BLOCK_CHARGE:Lnet/minecraft/sounds/SoundEvent;
+   2754 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2757 fload [6]
+   2759 fload [7]
+   2761 iconst_0
+   2762 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   2765 iload_3
+   2766 bipush [63]
+   2768 iand
+   2769 i2b
+   2770 istore [6]
+   2772 iconst_0
+   2773 iload [5]
+   2775 invokestatic  net/minecraft/util/valueproviders/UniformInt.of(II)Lnet/minecraft/util/valueproviders/UniformInt;
+   2778 astore [7]
+   2780 ldc2w  = 0.004999999888241291
+   2783 fstore [8]
+   2785 aload [4]
+   2787 invokedynamic [1, 238, 0, 0]
+   2792 astore [9]
+   2794 iload [6]
+   2796 ifne  -> 2899
+   2799 invokestatic  net/minecraft/core/Direction.values()[Lnet/minecraft/core/Direction;
+   2802 astore [10]
+   2804 aload [10]
+   2806 arraylength
+   2807 istore [11]
+   2809 iconst_0
+   2810 istore [12]
+   2812 iload [12]
+   2814 iload [11]
+   2816 if_icmpge  -> 2896
+   2819 aload [10]
+   2821 iload [12]
+   2823 ?0x32
+   2824 astore [13]
+   2826 aload [13]
+   2828 getstatic  net/minecraft/core/Direction.DOWN:Lnet/minecraft/core/Direction;
+   2831 if_acmpne  -> 2840
+   2834 ldc2w  = 3.1415927410125732
+   2837 goto  -> 2841
+   2840 fconst_0
+   2841 fstore [14]
+   2843 aload [13]
+   2845 invokevirtual  net/minecraft/core/Direction.getAxis()Lnet/minecraft/core/Direction$Axis;
+   2848 getstatic  net/minecraft/core/Direction$Axis.Y:Lnet/minecraft/core/Direction$Axis;
+   2851 if_acmpne  -> 2860
+   2854 ldc2w  = 0.65
+   2857 goto  -> 2863
+   2860 ldc2w  = 0.57
+   2863 dstore [15]
+   2865 aload_0
+   2866 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2869 aload_2
+   2870 new  net/minecraft/core/particles/SculkChargeParticleOptions
+   2873 dup
+   2874 fload [14]
+   2876 invokespecial  net/minecraft/core/particles/SculkChargeParticleOptions.<init>(F)V
+   2879 aload [7]
+   2881 aload [13]
+   2883 aload [9]
+   2885 dload [15]
+   2887 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesOnBlockFace(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/IntProvider;Lnet/minecraft/core/Direction;Ljava/util/function/Supplier;D)V
+   2890 iinc [12, 1]
+   2893 goto  -> 2812
+   2896 goto  -> 2984
+   2899 iload [6]
+   2901 invokestatic  net/minecraft/world/level/block/MultifaceBlock.unpack(B)Ljava/util/Set;
+   2904 invokeinterface [2, 26, 1, 0]
+   2909 astore [10]
+   2911 aload [10]
+   2913 invokeinterface [2, 32, 1, 0]
+   2918 ifeq  -> 2984
+   2921 aload [10]
+   2923 invokeinterface [2, 37, 1, 0]
+   2928 checkcast  net/minecraft/core/Direction
+   2931 astore [11]
+   2933 aload [11]
+   2935 getstatic  net/minecraft/core/Direction.UP:Lnet/minecraft/core/Direction;
+   2938 if_acmpne  -> 2947
+   2941 ldc2w  = 3.1415927410125732
+   2944 goto  -> 2948
+   2947 fconst_0
+   2948 fstore [12]
+   2950 ldc2w  = 0.35
+   2953 dstore [13]
+   2955 aload_0
+   2956 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2959 aload_2
+   2960 new  net/minecraft/core/particles/SculkChargeParticleOptions
+   2963 dup
+   2964 fload [12]
+   2966 invokespecial  net/minecraft/core/particles/SculkChargeParticleOptions.<init>(F)V
+   2969 aload [7]
+   2971 aload [11]
+   2973 aload [9]
+   2975 ldc2w  = 0.35
+   2978 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesOnBlockFace(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/IntProvider;Lnet/minecraft/core/Direction;Ljava/util/function/Supplier;D)V
+   2981 goto  -> 2911
+   2984 goto  -> 3190
+   2987 aload_0
+   2988 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   2991 aload_2
+   2992 getstatic  net/minecraft/sounds/SoundEvents.SCULK_BLOCK_CHARGE:Lnet/minecraft/sounds/SoundEvent;
+   2995 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   2998 fconst_1
+   2999 fconst_1
+   3000 iconst_0
+   3001 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   3004 aload_0
+   3005 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3008 aload_2
+   3009 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   3012 aload_0
+   3013 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3016 aload_2
+   3017 invokevirtual  net/minecraft/world/level/block/state/BlockState.isCollisionShapeFullBlock(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Z
+   3020 istore [6]
+   3022 iload [6]
+   3024 ifeq  -> 3032
+   3027 bipush [40]
+   3029 goto  -> 3034
+   3032 bipush [20]
+   3034 istore [7]
+   3036 iload [6]
+   3038 ifeq  -> 3047
+   3041 ldc2w  = 0.44999998807907104
+   3044 goto  -> 3049
+   3047 ldc1  = 0.25
+   3049 fstore [8]
+   3051 ldc2w  = 0.07000000029802322
+   3054 fstore [9]
+   3056 iconst_0
+   3057 istore [10]
+   3059 iload [10]
+   3061 iload [7]
+   3063 if_icmpge  -> 3190
+   3066 fconst_2
+   3067 aload [4]
+   3069 invokeinterface [0, 131, 1, 0]
+   3074 fmul
+   3075 fconst_1
+   3076 fsub
+   3077 fstore [11]
+   3079 fconst_2
+   3080 aload [4]
+   3082 invokeinterface [0, 131, 1, 0]
+   3087 fmul
+   3088 fconst_1
+   3089 fsub
+   3090 fstore [12]
+   3092 fconst_2
+   3093 aload [4]
+   3095 invokeinterface [0, 131, 1, 0]
+   3100 fmul
+   3101 fconst_1
+   3102 fsub
+   3103 fstore [13]
+   3105 aload_0
+   3106 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3109 getstatic  net/minecraft/core/particles/ParticleTypes.SCULK_CHARGE_POP:Lnet/minecraft/core/particles/SimpleParticleType;
+   3112 aload_2
+   3113 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3116 i2d
+   3117 ldc2w  = 0.5
+   3120 dadd
+   3121 fload [11]
+   3123 fload [8]
+   3125 fmul
+   3126 f2d
+   3127 dadd
+   3128 aload_2
+   3129 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3132 i2d
+   3133 ldc2w  = 0.5
+   3136 dadd
+   3137 fload [12]
+   3139 fload [8]
+   3141 fmul
+   3142 f2d
+   3143 dadd
+   3144 aload_2
+   3145 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   3148 i2d
+   3149 ldc2w  = 0.5
+   3152 dadd
+   3153 fload [13]
+   3155 fload [8]
+   3157 fmul
+   3158 f2d
+   3159 dadd
+   3160 fload [11]
+   3162 ldc2w  = 0.07000000029802322
+   3165 fmul
+   3166 f2d
+   3167 fload [12]
+   3169 ldc2w  = 0.07000000029802322
+   3172 fmul
+   3173 f2d
+   3174 fload [13]
+   3176 ldc2w  = 0.07000000029802322
+   3179 fmul
+   3180 f2d
+   3181 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   3184 iinc [10, 1]
+   3187 goto  -> 3059
+   3190 goto  -> 5378
+   3193 iconst_0
+   3194 istore [5]
+   3196 iload [5]
+   3198 bipush [10]
+   3200 if_icmpge  -> 3257
+   3203 aload_0
+   3204 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3207 new  net/minecraft/core/particles/ShriekParticleOption
+   3210 dup
+   3211 iload [5]
+   3213 iconst_5
+   3214 imul
+   3215 invokespecial  net/minecraft/core/particles/ShriekParticleOption.<init>(I)V
+   3218 aload_2
+   3219 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3222 i2d
+   3223 ldc2w  = 0.5
+   3226 dadd
+   3227 aload_2
+   3228 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3231 i2d
+   3232 getstatic  net/minecraft/world/level/block/SculkShriekerBlock.TOP_Y:D
+   3235 dadd
+   3236 aload_2
+   3237 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   3240 i2d
+   3241 ldc2w  = 0.5
+   3244 dadd
+   3245 dconst_0
+   3246 dconst_0
+   3247 dconst_0
+   3248 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   3251 iinc [5, 1]
+   3254 goto  -> 3196
+   3257 aload_0
+   3258 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3261 aload_2
+   3262 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   3265 astore [5]
+   3267 aload [5]
+   3269 getstatic  net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   3272 invokevirtual  net/minecraft/world/level/block/state/BlockState.hasProperty(Lnet/minecraft/world/level/block/state/properties/Property;)Z
+   3275 ifeq  -> 3299
+   3278 aload [5]
+   3280 getstatic  net/minecraft/world/level/block/state/properties/BlockStateProperties.WATERLOGGED:Lnet/minecraft/world/level/block/state/properties/BooleanProperty;
+   3283 invokevirtual  net/minecraft/world/level/block/state/BlockState.getValue(Lnet/minecraft/world/level/block/state/properties/Property;)Ljava/lang/Comparable;
+   3286 checkcast  java/lang/Boolean
+   3289 invokevirtual  java/lang/Boolean.booleanValue()Z
+   3292 ifeq  -> 3299
+   3295 iconst_1
+   3296 goto  -> 3300
+   3299 iconst_0
+   3300 istore [6]
+   3302 iload [6]
+   3304 ifne  -> 3363
+   3307 aload_0
+   3308 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3311 aload_2
+   3312 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3315 i2d
+   3316 ldc2w  = 0.5
+   3319 dadd
+   3320 aload_2
+   3321 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3324 i2d
+   3325 getstatic  net/minecraft/world/level/block/SculkShriekerBlock.TOP_Y:D
+   3328 dadd
+   3329 aload_2
+   3330 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   3333 i2d
+   3334 ldc2w  = 0.5
+   3337 dadd
+   3338 getstatic  net/minecraft/sounds/SoundEvents.SCULK_SHRIEKER_SHRIEK:Lnet/minecraft/sounds/SoundEvent;
+   3341 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   3344 fconst_2
+   3345 ldc2w  = 0.6000000238418579
+   3348 aload [4]
+   3350 invokeinterface [0, 131, 1, 0]
+   3355 ldc1  = 0.4000000059604645
+   3357 fmul
+   3358 fadd
+   3359 iconst_0
+   3360 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   3363 goto  -> 5378
+   3366 aload_0
+   3367 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3370 aload_2
+   3371 getstatic  net/minecraft/core/particles/ParticleTypes.WAX_ON:Lnet/minecraft/core/particles/SimpleParticleType;
+   3374 iconst_3
+   3375 iconst_5
+   3376 invokestatic  net/minecraft/util/valueproviders/UniformInt.of(II)Lnet/minecraft/util/valueproviders/UniformInt;
+   3379 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesOnBlockFaces(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/IntProvider;)V
+   3382 aload_0
+   3383 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3386 aload_2
+   3387 getstatic  net/minecraft/sounds/SoundEvents.HONEYCOMB_WAX_ON:Lnet/minecraft/sounds/SoundEvent;
+   3390 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   3393 fconst_1
+   3394 fconst_1
+   3395 iconst_0
+   3396 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   3399 goto  -> 5378
+   3402 aload_0
+   3403 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3406 aload_2
+   3407 getstatic  net/minecraft/core/particles/ParticleTypes.WAX_OFF:Lnet/minecraft/core/particles/SimpleParticleType;
+   3410 iconst_3
+   3411 iconst_5
+   3412 invokestatic  net/minecraft/util/valueproviders/UniformInt.of(II)Lnet/minecraft/util/valueproviders/UniformInt;
+   3415 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesOnBlockFaces(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/IntProvider;)V
+   3418 goto  -> 5378
+   3421 aload_0
+   3422 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3425 aload_2
+   3426 getstatic  net/minecraft/core/particles/ParticleTypes.SCRAPE:Lnet/minecraft/core/particles/SimpleParticleType;
+   3429 iconst_3
+   3430 iconst_5
+   3431 invokestatic  net/minecraft/util/valueproviders/UniformInt.of(II)Lnet/minecraft/util/valueproviders/UniformInt;
+   3434 invokestatic  net/minecraft/util/ParticleUtils.spawnParticlesOnBlockFaces(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/util/valueproviders/IntProvider;)V
+   3437 goto  -> 5378
+   3440 aload_0
+   3441 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3444 getstatic  net/minecraft/core/particles/ParticleTypes.EXPLOSION:Lnet/minecraft/core/particles/SimpleParticleType;
+   3447 aload_2
+   3448 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3451 i2d
+   3452 ldc2w  = 0.5
+   3455 dadd
+   3456 aload_2
+   3457 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3460 i2d
+   3461 ldc2w  = 0.5
+   3464 dadd
+   3465 aload_2
+   3466 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   3469 i2d
+   3470 ldc2w  = 0.5
+   3473 dadd
+   3474 dconst_0
+   3475 dconst_0
+   3476 dconst_0
+   3477 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   3480 goto  -> 5378
+   3483 aload_0
+   3484 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3487 aload_2
+   3488 iload_3
+   3489 ifle  -> 3496
+   3492 iconst_1
+   3493 goto  -> 3497
+   3496 iconst_0
+   3497 invokestatic  net/minecraft/world/level/block/ComposterBlock.handleFill(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Z)V
+   3500 goto  -> 5378
+   3503 aload_0
+   3504 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3507 aload_2
+   3508 aload_0
+   3509 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3512 aload_2
+   3513 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;
+   3516 invokestatic  net/minecraft/world/level/block/PointedDripstoneBlock.spawnDripParticle(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V
+   3519 goto  -> 5378
+   3522 aload_0
+   3523 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3526 aload_2
+   3527 getstatic  net/minecraft/sounds/SoundEvents.LAVA_EXTINGUISH:Lnet/minecraft/sounds/SoundEvent;
+   3530 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   3533 ldc1  = 0.5
+   3535 ldc2w  = 2.5999999046325684
+   3538 aload [4]
+   3540 invokeinterface [0, 131, 1, 0]
+   3545 aload [4]
+   3547 invokeinterface [0, 131, 1, 0]
+   3552 fsub
+   3553 ldc1  = 0.800000011920929
+   3555 fmul
+   3556 fadd
+   3557 iconst_0
+   3558 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   3561 iconst_0
+   3562 istore [5]
+   3564 iload [5]
+   3566 bipush [8]
+   3568 if_icmpge  -> 3625
+   3571 aload_0
+   3572 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3575 getstatic  net/minecraft/core/particles/ParticleTypes.LARGE_SMOKE:Lnet/minecraft/core/particles/SimpleParticleType;
+   3578 aload_2
+   3579 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3582 i2d
+   3583 aload [4]
+   3585 invokeinterface [0, 226, 1, 0]
+   3590 dadd
+   3591 aload_2
+   3592 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3595 i2d
+   3596 ldc2w  = 1.2
+   3599 dadd
+   3600 aload_2
+   3601 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   3604 i2d
+   3605 aload [4]
+   3607 invokeinterface [0, 226, 1, 0]
+   3612 dadd
+   3613 dconst_0
+   3614 dconst_0
+   3615 dconst_0
+   3616 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   3619 iinc [5, 1]
+   3622 goto  -> 3564
+   3625 goto  -> 5378
+   3628 aload_0
+   3629 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3632 aload_2
+   3633 getstatic  net/minecraft/sounds/SoundEvents.REDSTONE_TORCH_BURNOUT:Lnet/minecraft/sounds/SoundEvent;
+   3636 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   3639 ldc1  = 0.5
+   3641 ldc2w  = 2.5999999046325684
+   3644 aload [4]
+   3646 invokeinterface [0, 131, 1, 0]
+   3651 aload [4]
+   3653 invokeinterface [0, 131, 1, 0]
+   3658 fsub
+   3659 ldc1  = 0.800000011920929
+   3661 fmul
+   3662 fadd
+   3663 iconst_0
+   3664 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   3667 iconst_0
+   3668 istore [5]
+   3670 iload [5]
+   3672 iconst_5
+   3673 if_icmpge  -> 3770
+   3676 aload_2
+   3677 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3680 i2d
+   3681 aload [4]
+   3683 invokeinterface [0, 226, 1, 0]
+   3688 ldc2w  = 0.6
+   3691 dmul
+   3692 dadd
+   3693 ldc2w  = 0.2
+   3696 dadd
+   3697 dstore [6]
+   3699 aload_2
+   3700 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3703 i2d
+   3704 aload [4]
+   3706 invokeinterface [0, 226, 1, 0]
+   3711 ldc2w  = 0.6
+   3714 dmul
+   3715 dadd
+   3716 ldc2w  = 0.2
+   3719 dadd
+   3720 dstore [8]
+   3722 aload_2
+   3723 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   3726 i2d
+   3727 aload [4]
+   3729 invokeinterface [0, 226, 1, 0]
+   3734 ldc2w  = 0.6
+   3737 dmul
+   3738 dadd
+   3739 ldc2w  = 0.2
+   3742 dadd
+   3743 dstore [10]
+   3745 aload_0
+   3746 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3749 getstatic  net/minecraft/core/particles/ParticleTypes.SMOKE:Lnet/minecraft/core/particles/SimpleParticleType;
+   3752 dload [6]
+   3754 dload [8]
+   3756 dload [10]
+   3758 dconst_0
+   3759 dconst_0
+   3760 dconst_0
+   3761 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   3764 iinc [5, 1]
+   3767 goto  -> 3670
+   3770 goto  -> 5378
+   3773 aload_0
+   3774 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3777 aload_2
+   3778 getstatic  net/minecraft/sounds/SoundEvents.END_PORTAL_FRAME_FILL:Lnet/minecraft/sounds/SoundEvent;
+   3781 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   3784 fconst_1
+   3785 fconst_1
+   3786 iconst_0
+   3787 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   3790 iconst_0
+   3791 istore [5]
+   3793 iload [5]
+   3795 bipush [16]
+   3797 if_icmpge  -> 3890
+   3800 aload_2
+   3801 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3804 i2d
+   3805 ldc2w  = 5.0
+   3808 aload [4]
+   3810 invokeinterface [0, 226, 1, 0]
+   3815 ldc2w  = 6.0
+   3818 dmul
+   3819 dadd
+   3820 ldc2w  = 16.0
+   3823 ddiv
+   3824 dadd
+   3825 dstore [6]
+   3827 aload_2
+   3828 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3831 i2d
+   3832 ldc2w  = 0.8125
+   3835 dadd
+   3836 dstore [8]
+   3838 aload_2
+   3839 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   3842 i2d
+   3843 ldc2w  = 5.0
+   3846 aload [4]
+   3848 invokeinterface [0, 226, 1, 0]
+   3853 ldc2w  = 6.0
+   3856 dmul
+   3857 dadd
+   3858 ldc2w  = 16.0
+   3861 ddiv
+   3862 dadd
+   3863 dstore [10]
+   3865 aload_0
+   3866 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3869 getstatic  net/minecraft/core/particles/ParticleTypes.SMOKE:Lnet/minecraft/core/particles/SimpleParticleType;
+   3872 dload [6]
+   3874 dload [8]
+   3876 dload [10]
+   3878 dconst_0
+   3879 dconst_0
+   3880 dconst_0
+   3881 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   3884 iinc [5, 1]
+   3887 goto  -> 3793
+   3890 goto  -> 5378
+   3893 iconst_0
+   3894 istore [5]
+   3896 iload [5]
+   3898 sipush [0, 200]
+   3901 if_icmpge  -> 4031
+   3904 aload [4]
+   3906 invokeinterface [0, 131, 1, 0]
+   3911 ldc2w  = 4.0
+   3914 fmul
+   3915 fstore [6]
+   3917 aload [4]
+   3919 invokeinterface [0, 131, 1, 0]
+   3924 ldc2w  = 6.2831854820251465
+   3927 fmul
+   3928 fstore [7]
+   3930 fload [7]
+   3932 f2d
+   3933 invokestatic  net/minecraft/util/Mth.cos(D)F
+   3936 fload [6]
+   3938 fmul
+   3939 f2d
+   3940 dstore [8]
+   3942 ldc2w  = 0.01
+   3945 aload [4]
+   3947 invokeinterface [0, 226, 1, 0]
+   3952 ldc2w  = 0.5
+   3955 dmul
+   3956 dadd
+   3957 dstore [10]
+   3959 fload [7]
+   3961 f2d
+   3962 invokestatic  net/minecraft/util/Mth.sin(D)F
+   3965 fload [6]
+   3967 fmul
+   3968 f2d
+   3969 dstore [12]
+   3971 aload_0
+   3972 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   3975 getstatic  net/minecraft/core/particles/ParticleTypes.DRAGON_BREATH:Lnet/minecraft/core/particles/ParticleType;
+   3978 fload [6]
+   3980 invokestatic  net/minecraft/core/particles/PowerParticleOption.create(Lnet/minecraft/core/particles/ParticleType;F)Lnet/minecraft/core/particles/PowerParticleOption;
+   3983 aload_2
+   3984 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   3987 i2d
+   3988 dload [8]
+   3990 ldc2w  = 0.1
+   3993 dmul
+   3994 dadd
+   3995 aload_2
+   3996 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   3999 i2d
+   4000 ldc2w  = 0.3
+   4003 dadd
+   4004 aload_2
+   4005 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   4008 i2d
+   4009 dload [12]
+   4011 ldc2w  = 0.1
+   4014 dmul
+   4015 dadd
+   4016 dload [8]
+   4018 dload [10]
+   4020 dload [12]
+   4022 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   4025 iinc [5, 1]
+   4028 goto  -> 3896
+   4031 iload_3
+   4032 iconst_1
+   4033 if_icmpne  -> 5378
+   4036 aload_0
+   4037 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4040 aload_2
+   4041 getstatic  net/minecraft/sounds/SoundEvents.DRAGON_FIREBALL_EXPLODE:Lnet/minecraft/sounds/SoundEvent;
+   4044 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4047 fconst_1
+   4048 aload [4]
+   4050 invokeinterface [0, 131, 1, 0]
+   4055 ldc2w  = 0.10000000149011612
+   4058 fmul
+   4059 ldc2w  = 0.8999999761581421
+   4062 fadd
+   4063 iconst_0
+   4064 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4067 goto  -> 5378
+   4070 iconst_0
+   4071 istore [5]
+   4073 iload [5]
+   4075 bipush [8]
+   4077 if_icmpge  -> 4134
+   4080 aload_0
+   4081 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4084 getstatic  net/minecraft/core/particles/ParticleTypes.CLOUD:Lnet/minecraft/core/particles/SimpleParticleType;
+   4087 aload_2
+   4088 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   4091 i2d
+   4092 aload [4]
+   4094 invokeinterface [0, 226, 1, 0]
+   4099 dadd
+   4100 aload_2
+   4101 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   4104 i2d
+   4105 ldc2w  = 1.2
+   4108 dadd
+   4109 aload_2
+   4110 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   4113 i2d
+   4114 aload [4]
+   4116 invokeinterface [0, 226, 1, 0]
+   4121 dadd
+   4122 dconst_0
+   4123 dconst_0
+   4124 dconst_0
+   4125 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V
+   4128 iinc [5, 1]
+   4131 goto  -> 4073
+   4134 goto  -> 5378
+   4137 iload_3
+   4138 ifne  -> 4183
+   4141 aload_0
+   4142 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4145 aload_2
+   4146 getstatic  net/minecraft/sounds/SoundEvents.FIRE_EXTINGUISH:Lnet/minecraft/sounds/SoundEvent;
+   4149 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   4152 ldc1  = 0.5
+   4154 ldc2w  = 2.5999999046325684
+   4157 aload [4]
+   4159 invokeinterface [0, 131, 1, 0]
+   4164 aload [4]
+   4166 invokeinterface [0, 131, 1, 0]
+   4171 fsub
+   4172 ldc1  = 0.800000011920929
+   4174 fmul
+   4175 fadd
+   4176 iconst_0
+   4177 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4180 goto  -> 5378
+   4183 iload_3
+   4184 iconst_1
+   4185 if_icmpne  -> 5378
+   4188 aload_0
+   4189 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4192 aload_2
+   4193 getstatic  net/minecraft/sounds/SoundEvents.GENERIC_EXTINGUISH_FIRE:Lnet/minecraft/sounds/SoundEvent;
+   4196 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   4199 ldc2w  = 0.699999988079071
+   4202 ldc2w  = 1.600000023841858
+   4205 aload [4]
+   4207 invokeinterface [0, 131, 1, 0]
+   4212 aload [4]
+   4214 invokeinterface [0, 131, 1, 0]
+   4219 fsub
+   4220 ldc1  = 0.4000000059604645
+   4222 fmul
+   4223 fadd
+   4224 iconst_0
+   4225 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4228 goto  -> 5378
+   4231 aload_0
+   4232 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4235 aload_2
+   4236 getstatic  net/minecraft/sounds/SoundEvents.ANVIL_DESTROY:Lnet/minecraft/sounds/SoundEvent;
+   4239 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   4242 fconst_1
+   4243 aload [4]
+   4245 invokeinterface [0, 131, 1, 0]
+   4250 ldc2w  = 0.10000000149011612
+   4253 fmul
+   4254 ldc2w  = 0.8999999761581421
+   4257 fadd
+   4258 iconst_0
+   4259 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4262 goto  -> 5378
+   4265 aload_0
+   4266 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4269 aload_2
+   4270 getstatic  net/minecraft/sounds/SoundEvents.ANVIL_USE:Lnet/minecraft/sounds/SoundEvent;
+   4273 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   4276 fconst_1
+   4277 aload [4]
+   4279 invokeinterface [0, 131, 1, 0]
+   4284 ldc2w  = 0.10000000149011612
+   4287 fmul
+   4288 ldc2w  = 0.8999999761581421
+   4291 fadd
+   4292 iconst_0
+   4293 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4296 goto  -> 5378
+   4299 aload_0
+   4300 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4303 aload_2
+   4304 getstatic  net/minecraft/sounds/SoundEvents.SMITHING_TABLE_USE:Lnet/minecraft/sounds/SoundEvent;
+   4307 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   4310 fconst_1
+   4311 aload [4]
+   4313 invokeinterface [0, 131, 1, 0]
+   4318 ldc2w  = 0.10000000149011612
+   4321 fmul
+   4322 ldc2w  = 0.8999999761581421
+   4325 fadd
+   4326 iconst_0
+   4327 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4330 goto  -> 5378
+   4333 aload_0
+   4334 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4337 aload_2
+   4338 getstatic  net/minecraft/sounds/SoundEvents.ANVIL_LAND:Lnet/minecraft/sounds/SoundEvent;
+   4341 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   4344 ldc2w  = 0.30000001192092896
+   4347 aload [4]
+   4349 invokeinterface [0, 131, 1, 0]
+   4354 ldc2w  = 0.10000000149011612
+   4357 fmul
+   4358 ldc2w  = 0.8999999761581421
+   4361 fadd
+   4362 iconst_0
+   4363 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4366 goto  -> 5378
+   4369 aload_0
+   4370 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4373 aload_2
+   4374 getstatic  net/minecraft/sounds/SoundEvents.PHANTOM_BITE:Lnet/minecraft/sounds/SoundEvent;
+   4377 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4380 ldc2w  = 0.30000001192092896
+   4383 aload [4]
+   4385 invokeinterface [0, 131, 1, 0]
+   4390 ldc2w  = 0.10000000149011612
+   4393 fmul
+   4394 ldc2w  = 0.8999999761581421
+   4397 fadd
+   4398 iconst_0
+   4399 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4402 goto  -> 5378
+   4405 aload_0
+   4406 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4409 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.registryAccess()Lnet/minecraft/core/RegistryAccess;
+   4412 getstatic  net/minecraft/core/registries/Registries.JUKEBOX_SONG:Lnet/minecraft/resources/ResourceKey;
+   4415 invokeinterface [2, 197, 2, 0]
+   4420 iload_3
+   4421 invokeinterface [2, 203, 2, 0]
+   4426 aload_0
+   4427 aload_2
+   4428 invokedynamic [2, 208, 0, 0]
+   4433 invokevirtual  java/util/Optional.ifPresent(Ljava/util/function/Consumer;)V
+   4436 goto  -> 5378
+   4439 aload_0
+   4440 aload_2
+   4441 invokevirtual  net/minecraft/client/renderer/LevelEventHandler.stopJukeboxSongAndNotifyNearby(Lnet/minecraft/core/BlockPos;)V
+   4444 goto  -> 5378
+   4447 aload_0
+   4448 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4451 aload_2
+   4452 getstatic  net/minecraft/sounds/SoundEvents.GHAST_WARN:Lnet/minecraft/sounds/SoundEvent;
+   4455 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4458 ldc2w  = 10.0
+   4461 aload [4]
+   4463 invokeinterface [0, 131, 1, 0]
+   4468 aload [4]
+   4470 invokeinterface [0, 131, 1, 0]
+   4475 fsub
+   4476 ldc2w  = 0.20000000298023224
+   4479 fmul
+   4480 fconst_1
+   4481 fadd
+   4482 iconst_0
+   4483 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4486 goto  -> 5378
+   4489 aload_0
+   4490 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4493 aload_2
+   4494 getstatic  net/minecraft/sounds/SoundEvents.ENDER_DRAGON_SHOOT:Lnet/minecraft/sounds/SoundEvent;
+   4497 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4500 ldc2w  = 10.0
+   4503 aload [4]
+   4505 invokeinterface [0, 131, 1, 0]
+   4510 aload [4]
+   4512 invokeinterface [0, 131, 1, 0]
+   4517 fsub
+   4518 ldc2w  = 0.20000000298023224
+   4521 fmul
+   4522 fconst_1
+   4523 fadd
+   4524 iconst_0
+   4525 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4528 goto  -> 5378
+   4531 aload_0
+   4532 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4535 aload_2
+   4536 getstatic  net/minecraft/sounds/SoundEvents.GHAST_SHOOT:Lnet/minecraft/sounds/SoundEvent;
+   4539 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4542 ldc2w  = 10.0
+   4545 aload [4]
+   4547 invokeinterface [0, 131, 1, 0]
+   4552 aload [4]
+   4554 invokeinterface [0, 131, 1, 0]
+   4559 fsub
+   4560 ldc2w  = 0.20000000298023224
+   4563 fmul
+   4564 fconst_1
+   4565 fadd
+   4566 iconst_0
+   4567 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4570 goto  -> 5378
+   4573 aload_0
+   4574 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4577 aload_2
+   4578 getstatic  net/minecraft/sounds/SoundEvents.ZOMBIE_ATTACK_WOODEN_DOOR:Lnet/minecraft/sounds/SoundEvent;
+   4581 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4584 fconst_2
+   4585 aload [4]
+   4587 invokeinterface [0, 131, 1, 0]
+   4592 aload [4]
+   4594 invokeinterface [0, 131, 1, 0]
+   4599 fsub
+   4600 ldc2w  = 0.20000000298023224
+   4603 fmul
+   4604 fconst_1
+   4605 fadd
+   4606 iconst_0
+   4607 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4610 goto  -> 5378
+   4613 aload_0
+   4614 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4617 aload_2
+   4618 getstatic  net/minecraft/sounds/SoundEvents.WITHER_BREAK_BLOCK:Lnet/minecraft/sounds/SoundEvent;
+   4621 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4624 fconst_2
+   4625 aload [4]
+   4627 invokeinterface [0, 131, 1, 0]
+   4632 aload [4]
+   4634 invokeinterface [0, 131, 1, 0]
+   4639 fsub
+   4640 ldc2w  = 0.20000000298023224
+   4643 fmul
+   4644 fconst_1
+   4645 fadd
+   4646 iconst_0
+   4647 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4650 goto  -> 5378
+   4653 aload_0
+   4654 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4657 aload_2
+   4658 getstatic  net/minecraft/sounds/SoundEvents.ZOMBIE_BREAK_WOODEN_DOOR:Lnet/minecraft/sounds/SoundEvent;
+   4661 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4664 fconst_2
+   4665 aload [4]
+   4667 invokeinterface [0, 131, 1, 0]
+   4672 aload [4]
+   4674 invokeinterface [0, 131, 1, 0]
+   4679 fsub
+   4680 ldc2w  = 0.20000000298023224
+   4683 fmul
+   4684 fconst_1
+   4685 fadd
+   4686 iconst_0
+   4687 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4690 goto  -> 5378
+   4693 aload_0
+   4694 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4697 aload_2
+   4698 getstatic  net/minecraft/sounds/SoundEvents.ZOMBIE_ATTACK_IRON_DOOR:Lnet/minecraft/sounds/SoundEvent;
+   4701 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4704 fconst_2
+   4705 aload [4]
+   4707 invokeinterface [0, 131, 1, 0]
+   4712 aload [4]
+   4714 invokeinterface [0, 131, 1, 0]
+   4719 fsub
+   4720 ldc2w  = 0.20000000298023224
+   4723 fmul
+   4724 fconst_1
+   4725 fadd
+   4726 iconst_0
+   4727 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4730 goto  -> 5378
+   4733 aload_0
+   4734 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4737 aload_2
+   4738 getstatic  net/minecraft/sounds/SoundEvents.BLAZE_SHOOT:Lnet/minecraft/sounds/SoundEvent;
+   4741 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4744 fconst_2
+   4745 aload [4]
+   4747 invokeinterface [0, 131, 1, 0]
+   4752 aload [4]
+   4754 invokeinterface [0, 131, 1, 0]
+   4759 fsub
+   4760 ldc2w  = 0.20000000298023224
+   4763 fmul
+   4764 fconst_1
+   4765 fadd
+   4766 iconst_0
+   4767 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4770 goto  -> 5378
+   4773 aload_0
+   4774 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4777 aload_2
+   4778 getstatic  net/minecraft/sounds/SoundEvents.WITHER_SHOOT:Lnet/minecraft/sounds/SoundEvent;
+   4781 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4784 fconst_2
+   4785 aload [4]
+   4787 invokeinterface [0, 131, 1, 0]
+   4792 aload [4]
+   4794 invokeinterface [0, 131, 1, 0]
+   4799 fsub
+   4800 ldc2w  = 0.20000000298023224
+   4803 fmul
+   4804 fconst_1
+   4805 fadd
+   4806 iconst_0
+   4807 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4810 goto  -> 5378
+   4813 aload_0
+   4814 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4817 aload_2
+   4818 getstatic  net/minecraft/sounds/SoundEvents.ZOMBIE_INFECT:Lnet/minecraft/sounds/SoundEvent;
+   4821 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4824 fconst_2
+   4825 aload [4]
+   4827 invokeinterface [0, 131, 1, 0]
+   4832 aload [4]
+   4834 invokeinterface [0, 131, 1, 0]
+   4839 fsub
+   4840 ldc2w  = 0.20000000298023224
+   4843 fmul
+   4844 fconst_1
+   4845 fadd
+   4846 iconst_0
+   4847 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4850 goto  -> 5378
+   4853 aload_0
+   4854 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4857 aload_2
+   4858 getstatic  net/minecraft/sounds/SoundEvents.ZOMBIE_VILLAGER_CONVERTED:Lnet/minecraft/sounds/SoundEvent;
+   4861 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4864 fconst_2
+   4865 aload [4]
+   4867 invokeinterface [0, 131, 1, 0]
+   4872 aload [4]
+   4874 invokeinterface [0, 131, 1, 0]
+   4879 fsub
+   4880 ldc2w  = 0.20000000298023224
+   4883 fmul
+   4884 fconst_1
+   4885 fadd
+   4886 iconst_0
+   4887 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4890 goto  -> 5378
+   4893 aload_0
+   4894 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4897 aload_2
+   4898 getstatic  net/minecraft/sounds/SoundEvents.ZOMBIE_CONVERTED_TO_DROWNED:Lnet/minecraft/sounds/SoundEvent;
+   4901 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4904 fconst_2
+   4905 aload [4]
+   4907 invokeinterface [0, 131, 1, 0]
+   4912 aload [4]
+   4914 invokeinterface [0, 131, 1, 0]
+   4919 fsub
+   4920 ldc2w  = 0.20000000298023224
+   4923 fmul
+   4924 fconst_1
+   4925 fadd
+   4926 iconst_0
+   4927 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4930 goto  -> 5378
+   4933 aload_0
+   4934 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4937 aload_2
+   4938 getstatic  net/minecraft/sounds/SoundEvents.HUSK_CONVERTED_TO_ZOMBIE:Lnet/minecraft/sounds/SoundEvent;
+   4941 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   4944 fconst_2
+   4945 aload [4]
+   4947 invokeinterface [0, 131, 1, 0]
+   4952 aload [4]
+   4954 invokeinterface [0, 131, 1, 0]
+   4959 fsub
+   4960 ldc2w  = 0.20000000298023224
+   4963 fmul
+   4964 fconst_1
+   4965 fadd
+   4966 iconst_0
+   4967 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   4970 goto  -> 5378
+   4973 aload_0
+   4974 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   4977 aload_2
+   4978 getstatic  net/minecraft/sounds/SoundEvents.BAT_TAKEOFF:Lnet/minecraft/sounds/SoundEvent;
+   4981 getstatic  net/minecraft/sounds/SoundSource.NEUTRAL:Lnet/minecraft/sounds/SoundSource;
+   4984 ldc2w  = 0.05000000074505806
+   4987 aload [4]
+   4989 invokeinterface [0, 131, 1, 0]
+   4994 aload [4]
+   4996 invokeinterface [0, 131, 1, 0]
+   5001 fsub
+   5002 ldc2w  = 0.20000000298023224
+   5005 fmul
+   5006 fconst_1
+   5007 fadd
+   5008 iconst_0
+   5009 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5012 goto  -> 5378
+   5015 aload_0
+   5016 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5019 aload_2
+   5020 getstatic  net/minecraft/sounds/SoundEvents.GRINDSTONE_USE:Lnet/minecraft/sounds/SoundEvent;
+   5023 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   5026 fconst_1
+   5027 aload [4]
+   5029 invokeinterface [0, 131, 1, 0]
+   5034 ldc2w  = 0.10000000149011612
+   5037 fmul
+   5038 ldc2w  = 0.8999999761581421
+   5041 fadd
+   5042 iconst_0
+   5043 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5046 goto  -> 5378
+   5049 aload_0
+   5050 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5053 aload_2
+   5054 getstatic  net/minecraft/sounds/SoundEvents.BOOK_PAGE_TURN:Lnet/minecraft/sounds/SoundEvent;
+   5057 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   5060 fconst_1
+   5061 aload [4]
+   5063 invokeinterface [0, 131, 1, 0]
+   5068 ldc2w  = 0.10000000149011612
+   5071 fmul
+   5072 ldc2w  = 0.8999999761581421
+   5075 fadd
+   5076 iconst_0
+   5077 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5080 goto  -> 5378
+   5083 aload_0
+   5084 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5087 getstatic  net/minecraft/core/particles/ParticleTypes.EXPLOSION_EMITTER:Lnet/minecraft/core/particles/SimpleParticleType;
+   5090 iconst_1
+   5091 aload_2
+   5092 invokevirtual  net/minecraft/core/BlockPos.getX()I
+   5095 i2d
+   5096 ldc2w  = 0.5
+   5099 dadd
+   5100 aload_2
+   5101 invokevirtual  net/minecraft/core/BlockPos.getY()I
+   5104 i2d
+   5105 ldc2w  = 0.5
+   5108 dadd
+   5109 aload_2
+   5110 invokevirtual  net/minecraft/core/BlockPos.getZ()I
+   5113 i2d
+   5114 ldc2w  = 0.5
+   5117 dadd
+   5118 dconst_0
+   5119 dconst_0
+   5120 dconst_0
+   5121 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.addAlwaysVisibleParticle(Lnet/minecraft/core/particles/ParticleOptions;ZDDDDDD)V
+   5124 aload_0
+   5125 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5128 aload_2
+   5129 getstatic  net/minecraft/sounds/SoundEvents.END_GATEWAY_SPAWN:Lnet/minecraft/sounds/SoundEvent;
+   5132 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   5135 ldc2w  = 10.0
+   5138 fconst_1
+   5139 aload [4]
+   5141 invokeinterface [0, 131, 1, 0]
+   5146 aload [4]
+   5148 invokeinterface [0, 131, 1, 0]
+   5153 fsub
+   5154 ldc2w  = 0.20000000298023224
+   5157 fmul
+   5158 fadd
+   5159 ldc2w  = 0.699999988079071
+   5162 fmul
+   5163 iconst_0
+   5164 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5167 goto  -> 5378
+   5170 aload_0
+   5171 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5174 aload_2
+   5175 getstatic  net/minecraft/sounds/SoundEvents.ENDER_DRAGON_GROWL:Lnet/minecraft/sounds/SoundEvent;
+   5178 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   5181 ldc2w  = 64.0
+   5184 ldc1  = 0.800000011920929
+   5186 aload [4]
+   5188 invokeinterface [0, 131, 1, 0]
+   5193 ldc2w  = 0.30000001192092896
+   5196 fmul
+   5197 fadd
+   5198 iconst_0
+   5199 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5202 goto  -> 5378
+   5205 aload_0
+   5206 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5209 aload_2
+   5210 getstatic  net/minecraft/sounds/SoundEvents.POINTED_DRIPSTONE_LAND:Lnet/minecraft/sounds/SoundEvent;
+   5213 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   5216 fconst_2
+   5217 aload [4]
+   5219 invokeinterface [0, 131, 1, 0]
+   5224 ldc2w  = 0.10000000149011612
+   5227 fmul
+   5228 ldc2w  = 0.8999999761581421
+   5231 fadd
+   5232 iconst_0
+   5233 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5236 goto  -> 5378
+   5239 aload_0
+   5240 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5243 aload_2
+   5244 getstatic  net/minecraft/sounds/SoundEvents.POINTED_DRIPSTONE_DRIP_LAVA_INTO_CAULDRON:Lnet/minecraft/sounds/SoundEvent;
+   5247 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   5250 fconst_2
+   5251 aload [4]
+   5253 invokeinterface [0, 131, 1, 0]
+   5258 ldc2w  = 0.10000000149011612
+   5261 fmul
+   5262 ldc2w  = 0.8999999761581421
+   5265 fadd
+   5266 iconst_0
+   5267 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5270 goto  -> 5378
+   5273 aload_0
+   5274 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5277 aload_2
+   5278 getstatic  net/minecraft/sounds/SoundEvents.POINTED_DRIPSTONE_DRIP_WATER_INTO_CAULDRON:Lnet/minecraft/sounds/SoundEvent;
+   5281 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   5284 fconst_2
+   5285 aload [4]
+   5287 invokeinterface [0, 131, 1, 0]
+   5292 ldc2w  = 0.10000000149011612
+   5295 fmul
+   5296 ldc2w  = 0.8999999761581421
+   5299 fadd
+   5300 iconst_0
+   5301 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5304 goto  -> 5378
+   5307 aload_0
+   5308 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5311 aload_2
+   5312 getstatic  net/minecraft/sounds/SoundEvents.SKELETON_CONVERTED_TO_STRAY:Lnet/minecraft/sounds/SoundEvent;
+   5315 getstatic  net/minecraft/sounds/SoundSource.HOSTILE:Lnet/minecraft/sounds/SoundSource;
+   5318 fconst_2
+   5319 aload [4]
+   5321 invokeinterface [0, 131, 1, 0]
+   5326 aload [4]
+   5328 invokeinterface [0, 131, 1, 0]
+   5333 fsub
+   5334 ldc2w  = 0.20000000298023224
+   5337 fmul
+   5338 fconst_1
+   5339 fadd
+   5340 iconst_0
+   5341 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5344 goto  -> 5378
+   5347 aload_0
+   5348 getfield  net/minecraft/client/renderer/LevelEventHandler.level:Lnet/minecraft/client/multiplayer/ClientLevel;
+   5351 aload_2
+   5352 getstatic  net/minecraft/sounds/SoundEvents.SULFUR_SPIKE_LAND:Lnet/minecraft/sounds/SoundEvent;
+   5355 getstatic  net/minecraft/sounds/SoundSource.BLOCKS:Lnet/minecraft/sounds/SoundSource;
+   5358 fconst_2
+   5359 aload [4]
+   5361 invokeinterface [0, 131, 1, 0]
+   5366 ldc2w  = 0.10000000149011612
+   5369 fmul
+   5370 ldc2w  = 0.8999999761581421
+   5373 fadd
+   5374 iconst_0
+   5375 invokevirtual  net/minecraft/client/multiplayer/ClientLevel.playLocalSound(Lnet/minecraft/core/BlockPos;Lnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V
+   5378 return
+

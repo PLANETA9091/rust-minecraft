@@ -656,6 +656,19 @@ pub struct SnapshotView {
     /// mailbox after), the sound lane's own law folds the voice at
     /// the block center.
     pub neutral_voice_events: Vec<WireNeutralVoiceEvent>,
+    /// THE WIND-CHARGE-SHOOT LANE'S OWN WIRE ARMS (the 1051 word the
+    /// server's own dispensers broadcast): shipped once with the
+    /// refresh that carried them (the worker's own drain empties the
+    /// mailbox after), the sound lane's own law folds the fdiv-pitched
+    /// voice at the block center.
+    pub wind_charge_shoot_events: Vec<WireWindChargeShootEvent>,
+    /// THE PORTAL-TRAVEL LANE'S OWN WIRE ARMS (the 1032 word the
+    /// server's own teleports broadcast): shipped once with the
+    /// refresh that carried them (the worker's own drain empties the
+    /// mailbox after), the sound lane's own law folds the local
+    /// ambience the arm count answers — the empty arm the
+    /// listener-ride the case's own walk keeps.
+    pub portal_travel_events: Vec<WirePortalTravelEvent>,
 }
 
 /// One wire mob's played voice — the Entity Sound packet's own
@@ -1291,6 +1304,37 @@ pub struct WireNeutralVoiceEvent {
     /// the sound lane's own law folds from it).
     pub voice: i32,
 }
+
+/// One wire WIND-CHARGE-SHOOT arm — the Level Event packet's own
+/// landing (the 1051 word the server's own dispensers broadcast,
+/// [`mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT`] the render lane
+/// speaks): the event's anchor block + the raw voice word, verbatim
+/// (the ONE `playLocalSound(pos, WIND_CHARGE_THROW, BLOCKS, 0.5F,
+/// 0.4F / (nf * 0.4F + 0.8F), false)` walk's own inputs — the fdiv
+/// pitch + the 0.5F volume the sound lane folds from the word; the
+/// data word the case's own body never reads, the transport never
+/// carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireWindChargeShootEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — the sound key
+    /// the sound lane's own law folds from it).
+    pub voice: i32,
+}
+
+/// One wire PORTAL-TRAVEL arm — the Level Event packet's own
+/// LOCAL-AMBIENCE landing (the 1032 word the server's own teleports
+/// broadcast, [`mc_protocol::SOUND_PORTAL_TRAVEL_EFFECT`] the render
+/// lane speaks): the case body speaks to the SoundManager DIRECTLY
+/// (the `forLocalAmbience(PORTAL_TRAVEL, nf * 0.4F + 0.8F, 0.25F)`
+/// instance the LISTENER rides) — so the event NOTHING carries (the
+/// anchor + data words the case's own body never reads, the
+/// BlockPos.ZERO anchor the caller passes the empty shape's honesty
+/// keeps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WirePortalTravelEvent {}
 
 /// One wire BLOCK-BREAK EFFECT arm — the Level Event packet's own
 /// landing (the 2001 words the server's own digs broadcast,
@@ -3244,6 +3288,12 @@ pub fn materialize_snapshot_view(
         // and no neutral-voice words (the join snapshot carries no
         // 1025 traffic — the empty mailbox the sound lane skips)
         neutral_voice_events: Vec::new(),
+        // and no wind-charge-shoot words (the join snapshot carries no
+        // 1051 traffic — the empty mailbox the sound lane skips)
+        wind_charge_shoot_events: Vec::new(),
+        // and no portal-travel words (the join snapshot carries no
+        // 1032 traffic — the empty mailbox the sound lane skips)
+        portal_travel_events: Vec::new(),
         // and no break words (the join snapshot carries no 2001 traffic
         // — the empty mailbox the render lane skips)
         break_events: Vec::new(),
@@ -4125,6 +4175,33 @@ impl LiveView {
                 voice: arm.voice,
             })
             .collect();
+        // the wind-charge-shoot lane's own projection (the mailbox
+        // verbatim — the anchor + the packet's own voice word the arms
+        // carry, the sound lane's own law reads): the 1051 word ships
+        // once with this view, the worker's drain empties the mailbox
+        // after
+        let wind_charge_shoot_events = self
+            .model
+            .wind_charge_shoot_events
+            .iter()
+            .map(|arm| WireWindChargeShootEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                voice: arm.voice,
+            })
+            .collect();
+        // the portal-travel lane's own projection (the mailbox
+        // verbatim — the EMPTY arms the local lane carries, the
+        // count the sound lane's own law reads): the 1032 word ships
+        // once with this view, the worker's drain empties the mailbox
+        // after
+        let portal_travel_events = self
+            .model
+            .portal_travel_events
+            .iter()
+            .map(|_arm| WirePortalTravelEvent {})
+            .collect();
         // the block-break effect's own projection (the mailbox verbatim
         // — the state walk's answers the arms carry, the anchor the
         // render lane's own law reads): each 2001 word ships once with
@@ -4416,6 +4493,14 @@ impl LiveView {
                 // too — the bat's word is the connection's own traffic,
                 // not the pose's
                 neutral_voice_events,
+                // the wind-charge-shoot lane's arms ride the pose-less
+                // arm too — the 1051 word is the connection's own
+                // traffic, not the pose's
+                wind_charge_shoot_events,
+                // the portal-travel lane's arms ride the pose-less arm
+                // too — the 1032 word is the connection's own traffic,
+                // not the pose's
+                portal_travel_events,
                 // the block-break effect's arms ride the pose-less arm
                 // too — the 2001 words are the connection's own traffic,
                 // not the pose's
@@ -4634,6 +4719,14 @@ impl LiveView {
             // the bat's word follows the mailbox exactly like the
             // gentle voices' own arms do
             neutral_voice_events,
+            // the wind-charge-shoot lane's arms ride every refresh too
+            // — the 1051 word follows the mailbox exactly like the
+            // firework's own arm does
+            wind_charge_shoot_events,
+            // the portal-travel lane's arms ride every refresh too —
+            // the 1032 word follows the mailbox exactly like the
+            // wind-charge's own arm does
+            portal_travel_events,
             // the block-break effect's arms ride every refresh too —
             // the 2001 words follow the mailbox exactly like the
             // growth's own arms do

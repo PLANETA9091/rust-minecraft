@@ -201,6 +201,8 @@ fn run_join(
                 Vec<crate::world_view::WireHostileVoiceEvent>,
                 Vec<crate::world_view::WirePitchDrawVoiceEvent>,
                 Vec<crate::world_view::WireNeutralVoiceEvent>,
+                Vec<crate::world_view::WireWindChargeShootEvent>,
+                Vec<crate::world_view::WirePortalTravelEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -324,6 +326,8 @@ fn run_join(
             view.model.drain_hostile_voice_events();
             view.model.drain_pitch_draw_voice_events();
             view.model.drain_neutral_voice_events();
+            view.model.drain_wind_charge_shoot_events();
+            view.model.drain_portal_travel_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
@@ -971,6 +975,8 @@ fn run_join(
             view.model.drain_hostile_voice_events();
             view.model.drain_pitch_draw_voice_events();
             view.model.drain_neutral_voice_events();
+            view.model.drain_wind_charge_shoot_events();
+            view.model.drain_portal_travel_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
                             if live_tx
@@ -1374,6 +1380,23 @@ fn run_join(
                                     // own law folds, each arm rides
                                     // exactly one shipped refresh)
                                     upd.neutral_voice_events,
+                                    // the wind-charge-shoot lane's arm
+                                    // rides beside the neutral shelf's —
+                                    // the 1051 word the server's own
+                                    // dispensers broadcast streams to the
+                                    // sound lane (the fdiv-pitched throw
+                                    // voice the render lane's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.wind_charge_shoot_events,
+                                    // the portal-travel lane's arm rides
+                                    // beside the wind-charge's — the 1032
+                                    // word the server's own teleports
+                                    // broadcast streams to the sound lane
+                                    // (the local ambience the render
+                                    // lane's own law folds, each arm
+                                    // rides exactly one shipped refresh)
+                                    upd.portal_travel_events,
                                     // the splash-potion effect's arms ride
                                     // with them — the 2002/2007 words the
                                     // server's own potion impacts broadcast
@@ -1567,6 +1590,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireHostileVoiceEvent>,
                 Vec<crate::world_view::WirePitchDrawVoiceEvent>,
                 Vec<crate::world_view::WireNeutralVoiceEvent>,
+                Vec<crate::world_view::WireWindChargeShootEvent>,
+                Vec<crate::world_view::WirePortalTravelEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -2147,6 +2172,8 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     hostile_voice_events,
                     pitch_draw_voice_events,
                     neutral_voice_events,
+                    wind_charge_shoot_events,
+                    portal_travel_events,
                     splash_events,
                     mob_spawn_events,
                 )) => {
@@ -2506,6 +2533,20 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the ldc2_w speaks, the vanilla client answers the
                     // same packet with)
                     app.live_neutral_voice_events_updated(neutral_voice_events);
+                    // the wind-charge-shoot lane beside the neutral
+                    // shelf's: the 1051 word the server's own dispensers
+                    // broadcast lands at its own anchor (the fdiv-pitched
+                    // throw voice the 0.4F/(nf*0.4F+0.8F) law keeps — the
+                    // 0.5F volume the ldc speaks, the vanilla client
+                    // answers the same packet with)
+                    app.live_wind_charge_shoot_events_updated(wind_charge_shoot_events);
+                    // the portal-travel lane beside the wind-charge's:
+                    // the 1032 word the server's own teleports broadcast
+                    // lands (the local ambience the listener ride keeps —
+                    // the 0.25F volume the ldc speaks, the pitch draw the
+                    // 0.4F scale gives, the vanilla client answers the
+                    // same packet with)
+                    app.live_portal_travel_events_updated(portal_travel_events);
                     // the splash-potion effect's lane beside the smoke's:
                     // the 2002/2007 words the server's own potion impacts
                     // broadcast land at their own anchors (the shard burst

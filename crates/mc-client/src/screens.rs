@@ -23961,6 +23961,117 @@ impl App {
         );
     }
 
+    /// THE WIND-CHARGE-SHOOT WIRE LANE (javap `LevelEventHandler`
+    /// case 1051 — offset 878 — over the 26.2 jar): the server's own
+    /// dispenser-shot wind charges the event broadcasts
+    /// (`WindChargeItem.createDispenseConfig`'s
+    /// `.overrideDispenseEvent(1051)` word the dispense config
+    /// builder chains — the SAME family the firework's 1004 word
+    /// keeps), the Level Event mailbox's landing: each word the arms
+    /// the worker drained ride exactly one refresh — the fdiv-pitched
+    /// throw voice the case body speaks (no particles the case
+    /// speaks, the ONE pitch draw the walk costs).
+    pub fn live_wind_charge_shoot_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireWindChargeShootEvent>,
+    ) {
+        for ev in events {
+            self.play_wind_charge_throw(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE WIND-CHARGE-THROW WALK (javap the case-1051 arm verbatim —
+    /// offset 878): the BLOCK CENTER the `playLocalSound(BlockPos,
+    /// ...)` resolve places (the +0.5 trio the vanilla client
+    /// answers), the `ldc1 0.5` volume the pc-889 push carries (the
+    /// reach the max(volume, 1.0) * 16 fold turns into 16 blocks),
+    /// the pitch the FDIV law the fdiv opcode's own operand order
+    /// answers — the numerator the pc-891 `ldc1 0.4` push carries,
+    /// the denominator the `nf * 0.4F + 0.8F` chain the pc-893..910
+    /// walk spends (`0.4F / (nextFloat() * 0.4F + 0.8F)` — the
+    /// (1/3, 0.5] band the [0.8, 1.2) denominator gives, NOT the
+    /// handoff's remembered `(nf * 0.4 + 0.8) / 0.5` form the honest
+    /// stack walk CORRECTS), the level ambient stream the ONE draw
+    /// rides, the distance-delay flag false the immediate voice
+    /// keeps, the BLOCKS source the case's own `getstatic` row picks.
+    /// The voice word the packet's own effect id — the sound key the
+    /// official sounds.json table the runtime cache keeps (the
+    /// `entity.wind_charge.throw` voice the table banks — the
+    /// mob/wind_charge/throw1..3 files, NO new assets the lane
+    /// demands).
+    fn play_wind_charge_throw(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the ONE WORD the model's own arm banks (the case id the
+        // bytecode's own lookupswitch row speaks — the render lane's
+        // law folds the sound key + the volume constant from it)
+        let (key, volume) = match voice {
+            mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT => ("entity.wind_charge.throw", 0.5),
+            _ => return, // the model's own arm the one word alone enqueues
+        };
+        // the FDIV pitch the case body's own operand order keeps (the
+        // numerator the pc-891 push carries, the denominator the
+        // nf * 0.4F + 0.8F chain the pc-893..910 walk spends)
+        let pitch = 0.4f32 / (self.level_ambient_rng.next_f32() * 0.4f32 + 0.8f32);
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
+    /// THE PORTAL-TRAVEL WIRE LANE (javap `LevelEventHandler` case
+    /// 1032 — offset 720 — over the 26.2 jar): the server's own
+    /// teleports the event broadcasts (`TeleportTransition
+    /// .playPortalSound`'s `ClientboundLevelEventPacket(1032,
+    /// BlockPos.ZERO, 0, false)` the bytecode pins), the Level Event
+    /// mailbox's landing: each word the arms the worker drained ride
+    /// exactly one refresh — the LOCAL ambience the case body speaks
+    /// (no particles the case speaks, the ONE pitch draw the walk
+    /// costs).
+    pub fn live_portal_travel_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WirePortalTravelEvent>,
+    ) {
+        for _ev in events {
+            self.play_portal_travel();
+        }
+    }
+
+    /// THE PORTAL-TRAVEL WALK (javap the case-1032 arm verbatim —
+    /// offset 720): the LOCAL-AMBIENCE lane the SoundManager-direct
+    /// resolve opens — `minecraft.getSoundManager().play(
+    /// SimpleSoundInstance.forLocalAmbience(PORTAL_TRAVEL, nf * 0.4F
+    /// + 0.8F, 0.25F))` the case body spends — the sound the LISTENER
+    /// the local instance rides plays (NOT the positioned
+    /// `playLocalSound` walk the shelf's siblings spend: no anchor,
+    /// no distance attenuation, no pan — the dist-0/pan-0 pair the
+    /// fold answers), the pitch the ONE draw the `nf * 0.4F + 0.8F`
+    /// chain answers (the [0.8, 1.2) band the 0.4F scale gives), the
+    /// `ldc1 0.25` volume the whisper gain keeps (the dist-0 ear the
+    /// attenuate's own 0.25 answer speaks), the anchor + data words
+    /// the case's own body never reads (the BlockPos.ZERO anchor the
+    /// caller passes the empty walk's honesty keeps). The sound key
+    /// the official sounds.json table the runtime cache keeps (the
+    /// `block.portal.travel` voice the table banks — the
+    /// portal/trigger file, NO new assets the lane demands).
+    fn play_portal_travel(&mut self) {
+        // the pitch draw the case body's own chain keeps (the
+        // [0.8, 1.2) band the 0.4F scale gives)
+        let pitch = self.level_ambient_rng.next_f32() * 0.4f32 + 0.8f32;
+        // THE LISTENER RIDE (the local instance the vanilla walk
+        // plays): no anchor, no attenuation (the dist-0 ear the gain
+        // the 0.25 volume itself keeps), no pan (the plain positioned
+        // lane the pan-0 identity answers)
+        self.sounds.play_voice_at_pan(self.frame, "block.portal.travel", 0.25, pitch, 0.0, 0.0);
+    }
+
     /// THE DRAGON BLOCK-BREAK WIRE LANE (javap `LevelEventHandler`
     /// case 2008 — offset 3440 — over the 26.2 jar): the server's
     /// own dragon the event broadcast, the ONE EXPLOSION puff the
@@ -52847,6 +52958,151 @@ cow_sound_variant: None,
             app.sounds.events.len(),
             voices_before,
             "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_wind_and_portal_serve_the_fdiv_and_local_laws() {
+        // THE WIND + PORTAL ROUND'S OWN SERVE (javap the cases offsets
+        // 878 + 720 the same walks verbatim): the wind-charge shot the
+        // `ldc1 0.5` volume the fdiv law wears — the dist-8 ear the
+        // v0.250000 gain speaks (0.5 x (1 - 8/16) — the 16-block reach
+        // the max(volume, 1.0) fold keeps), the ONE pitch draw the
+        // `0.4F / (nf * 0.4F + 0.8F)` chain answers (the (1/3, 0.5]
+        // band the [0.8, 1.2) denominator gives), the portal travel
+        // the LOCAL ambience the listener ride keeps (the dist-0 ear
+        // the v0.250000 gain the 0.25 volume itself speaks, the ONE
+        // pitch draw the [0.8, 1.2) band the 0.4F scale gives, the
+        // panless lane the local instance answers), the keys the
+        // runtime table resolves (the wind-charge throw + the portal
+        // travel the official sounds.json rows bank), the unknown word
+        // no voice no draw the early return keeps, the empty mailbox
+        // the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BODY 8 BLOCKS OFF (the dispenser ear the wind charge's
+        // own reach answers)
+        app.body = Some(crate::body::PlayerBody::new(
+            -32.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x1051));
+        // THE WIND-CHARGE SHOT (the 0.5F the pc-889 push wears — the
+        // dispenser shot the override fires)
+        app.live_wind_charge_shoot_events_updated(vec![
+            crate::world_view::WireWindChargeShootEvent {
+                x: -41,
+                y: 70,
+                z: 123,
+                voice: mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT ONE DRAW (the pitch the case body's own fdiv chain
+        // answers)
+        let mut replay = crate::drops::Lcg::new(0x1051);
+        let _ = replay.next_f32();
+        assert_eq!(spent, replay, "the case body's own exact stream");
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.wind_charge.throw @"))
+                .expect("the wind voice the lane logs");
+            assert!(
+                line.contains(" v0.250000 p"),
+                "the 0.5F volume the dist-8 ear speaks: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.3333..=0.5).contains(&pitch),
+                "the fdiv law's own pitch band: {}",
+                pitch
+            );
+        }
+        // THE PORTAL TRAVEL (the LOCAL ambience the listener ride
+        // keeps — the dist-0/pan-0 pair the fold answers, the body
+        // position the local lane never reads)
+        app.body = None;
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x1032));
+        app.live_portal_travel_events_updated(vec![crate::world_view::WirePortalTravelEvent {}]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT ONE DRAW (the pitch the case body's own fmul/fadd
+        // chain answers)
+        let mut replay = crate::drops::Lcg::new(0x1032);
+        let _ = replay.next_f32();
+        assert_eq!(spent, replay, "the local lane's own exact stream");
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.portal.travel @"))
+                .expect("the portal voice the lane logs");
+            assert!(
+                line.contains(" v0.250000 p"),
+                "the 0.25F volume the dist-0 ear the local lane speaks: {line}"
+            );
+            assert!(
+                !line.contains(" s"),
+                "the local ambience the panless lane keeps (no stereo split): {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.4F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE UNBANKED WORD: the arm the render never voices (the
+        // model's own arm the one word alone enqueues — the early
+        // return the unknown word answers consumes NO voice, NO draw)
+        let voices_before_unknown = app.sounds.events.len();
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xBEEF));
+        app.live_wind_charge_shoot_events_updated(vec![
+            crate::world_view::WireWindChargeShootEvent {
+                x: 1,
+                y: 2,
+                z: 3,
+                voice: 4242,
+            },
+        ]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before_unknown,
+            "the unknown word no voice ever banks"
+        );
+        assert_eq!(
+            spent2,
+            crate::drops::Lcg::new(0xBEEF),
+            "the unknown word no draw the early return keeps"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps (both
+        // lanes the empty vec answers with nothing)
+        let voices_before = app.sounds.events.len();
+        app.live_wind_charge_shoot_events_updated(vec![]);
+        app.live_portal_travel_events_updated(vec![]);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before,
+            "the empty mailboxes ship nothing"
         );
     }
 

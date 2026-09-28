@@ -677,6 +677,22 @@ pub struct WorldModel {
     /// arm never enqueues (the `globalLevelEvent` switch the id never
     /// carries — the positioned lane the case's own arm wears).
     pub neutral_voice_events: Vec<NeutralVoiceArm>,
+    /// THE WIND-CHARGE-SHOOT MAILBOX — the Level Event packet's 1051
+    /// word the model enqueues for the render lane (see
+    /// [`WindChargeShootArm`]). The dispenser's own wind-charge shot
+    /// the server broadcasts (the `.overrideDispenseEvent(1051)` word
+    /// the dispense config banks — the SAME family the firework's
+    /// 1004 word keeps), the arm the anchor + the ONE fdiv-pitched
+    /// voice carries.
+    pub wind_charge_shoot_events: Vec<WindChargeShootArm>,
+    /// THE PORTAL-TRAVEL MAILBOX — the Level Event packet's 1032 word
+    /// the model enqueues for the render lane (see
+    /// [`PortalTravelArm`]). The teleport's own local ambience the
+    /// server broadcasts (`TeleportTransition.playPortalSound` the
+    /// caller), the arm NOTHING carries — the case body speaks to the
+    /// SoundManager directly (the LISTENER the local instance rides),
+    /// the anchor + data words the case's own body never reads.
+    pub portal_travel_events: Vec<PortalTravelArm>,
     /// THE SCOREBOARD'S OWN BELIEF (the wire trio's store — Set
     /// Objective / Set Display Objective / Set Score + the sibling
     /// Reset Score): the objectives by name, the display slots by id
@@ -1826,6 +1842,45 @@ pub struct NeutralVoiceArm {
     pub voice: i32,
 }
 
+/// One pending WIND-CHARGE-SHOOT arm — the Level Event packet's next
+/// voice word the model keeps verbatim (see
+/// [`WorldModel::wind_charge_shoot_events`]). THE DISPENSER'S OWN
+/// WIND CHARGE the server broadcasts (the `.overrideDispenseEvent(
+/// 1051)` word the dispense config banks, the SAME family the
+/// firework's 1004 word keeps): the anchor verbatim, the voice word
+/// rides raw — the FDIV pitch law the case's own fdiv opcode keeps
+/// (`0.4F / (nextFloat() * 0.4F + 0.8F)` the stack walk answers, the
+/// 0.5F volume, the BLOCKS source) the render lane folds from the
+/// word, the data word the case's own body never reads (the
+/// transport's honesty the raw word keeps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WindChargeShootArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id —
+    /// [`mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT`] the model's
+    /// own arm banks; the sound key + the volume the render lane's
+    /// law folds from it).
+    pub voice: i32,
+}
+
+/// One pending PORTAL-TRAVEL arm — the Level Event packet's own
+/// LOCAL-AMBIENCE landing (see
+/// [`WorldModel::portal_travel_events`]). THE TELEPORT'S OWN VOICE
+/// the server broadcasts (`TeleportTransition.playPortalSound`'s
+/// `ClientboundLevelEventPacket(1032, BlockPos.ZERO, 0, false)` the
+/// bytecode pins): the case body speaks to the SoundManager DIRECTLY
+/// — the `SimpleSoundInstance.forLocalAmbience(PORTAL_TRAVEL, nf *
+/// 0.4F + 0.8F, 0.25F)` walk the instance rides the LISTENER plays —
+/// so the anchor and data words the case never reads (the
+/// BlockPos.ZERO anchor the caller passes the empty arm's honesty
+/// keeps): the arm carries NOTHING — the voice + the pitch draw +
+/// the volume the render lane's own law folds (the no-fields shape
+/// the local lane's own walk speaks).
+#[derive(Debug, Clone, PartialEq)]
+pub struct PortalTravelArm {}
+
 /// One pending SPLASH-POTION arm — the Level Event packet's next
 /// vocabulary word the model keeps verbatim (see
 /// [`WorldModel::splash_events`]). The DATA word rides raw (the potion
@@ -2323,6 +2378,8 @@ impl WorldModel {
             hostile_voice_events: Vec::new(),
             pitch_draw_voice_events: Vec::new(),
             neutral_voice_events: Vec::new(),
+            wind_charge_shoot_events: Vec::new(),
+            portal_travel_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
             objectives: std::collections::HashMap::new(),
@@ -2815,6 +2872,22 @@ impl WorldModel {
         std::mem::take(&mut self.neutral_voice_events)
     }
 
+    /// The wind-charge-shoot mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 1051 word
+    /// the Level Event packet armed, the render lane's own law folds
+    /// the fdiv-pitched throw voice from the anchor + the raw word.
+    pub fn drain_wind_charge_shoot_events(&mut self) -> Vec<WindChargeShootArm> {
+        std::mem::take(&mut self.wind_charge_shoot_events)
+    }
+
+    /// The portal-travel mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 1032 word
+    /// the Level Event packet armed, the render lane's own law folds
+    /// the local ambience the empty arm's count answers.
+    pub fn drain_portal_travel_events(&mut self) -> Vec<PortalTravelArm> {
+        std::mem::take(&mut self.portal_travel_events)
+    }
+
     /// The splash-potion effect's mailbox's own drain (the same walk the
     /// voices' speak — each arm ships exactly once): the 2002/2007 words
     /// the Level Event packet armed, the render lane's own law folds the
@@ -3153,6 +3226,14 @@ impl WorldModel {
                 // level (the same walk — the old level's bat liftoff
                 // never speaks again)
                 self.neutral_voice_events.clear();
+                // the wind-charge-shoot mailbox dies with the level
+                // (the same walk — the old level's dispenser-shot
+                // wind charges never speak again)
+                self.wind_charge_shoot_events.clear();
+                // the portal-travel mailbox dies with the level (the
+                // same walk — the old level's teleports never speak
+                // again)
+                self.portal_travel_events.clear();
                 // the splash-potion effect's mailbox dies with the level
                 // (the same walk — the old level's 2002/2007 words never
                 // burst again)
@@ -4750,6 +4831,50 @@ impl WorldModel {
                         z: ev.z,
                         voice: ev.effect,
                     });
+                    true
+                } else if matches!(ev.effect, mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT)
+                    && !ev.global
+                {
+                    // THE WIND-CHARGE-SHOOT MAILBOX'S OWN ARM (javap the
+                    // case offset 878 — the positioned route the GLOBAL
+                    // switch never banks, the ONE `playLocalSound(pos,
+                    // WIND_CHARGE_THROW, BLOCKS, 0.5F, 0.4F / (nf * 0.4F
+                    // + 0.8F), false)` walk the case body spends — the
+                    // FDIV pitch the fdiv opcode's own operand order
+                    // answers (the pc-891 numerator, the pc-893..910
+                    // denominator chain — the (1/3, 0.5] band the
+                    // [0.8, 1.2) denominator gives), the `ldc1 0.5F`
+                    // volume the pc-889 push keeps, the BLOCKS source,
+                    // the ONE pitch draw the level ambient stream
+                    // answers; the data word the case's own body never
+                    // reads). The voice word the PACKET'S OWN effect id
+                    // rides (the transport's honesty — the sound key
+                    // the render lane's own law folds from it), no
+                    // particles the case speaks.
+                    self.wind_charge_shoot_events.push(WindChargeShootArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
+                    });
+                    true
+                } else if matches!(ev.effect, mc_protocol::SOUND_PORTAL_TRAVEL_EFFECT)
+                    && !ev.global
+                {
+                    // THE PORTAL-TRAVEL MAILBOX'S OWN ARM (javap the
+                    // case offset 720 — the positioned route the
+                    // caller's own global=false word rides, the GLOBAL
+                    // switch never banks, the ONE
+                    // `getSoundManager().play(forLocalAmbience(
+                    // PORTAL_TRAVEL, nf * 0.4F + 0.8F, 0.25F))` walk
+                    // the case body spends — the LOCAL-AMBIENCE lane
+                    // the SoundManager-direct resolve opens, the ONE
+                    // pitch draw the [0.8, 1.2) band the 0.4F scale
+                    // gives, the 0.25F volume the whisper gain keeps;
+                    // the anchor + data words the case's own body
+                    // never reads — the BlockPos.ZERO anchor the
+                    // caller passes the empty arm's honesty keeps).
+                    self.portal_travel_events.push(PortalTravelArm {});
                     true
                 } else {
                     false
@@ -10952,6 +11077,174 @@ mod tests {
         })));
         assert!(m.hostile_voice_events.is_empty(), "the shelf dies with the level");
         assert!(m.neutral_voice_events.is_empty(), "the shelf dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_wind_and_portal_words_the_lanes_wear() {
+        // THE WIND + PORTAL ROUND'S OWN ARMS (javap the cases offsets
+        // 878 + 720 — the positioned route the GLOBAL switch never
+        // banks): the dispenser's wind-charge shot the WIND-CHARGE
+        // lane arms (the ONE `playLocalSound(pos, WIND_CHARGE_THROW,
+        // BLOCKS, 0.5F, 0.4F / (nf * 0.4F + 0.8F), false)` walk the
+        // case body spends — the `.overrideDispenseEvent(1051)` word
+        // the dispense config banks, the SAME family the firework's
+        // 1004 word keeps), the teleport's portal voice the
+        // PORTAL-TRAVEL lane arms (the ONE `getSoundManager().play(
+        // forLocalAmbience(PORTAL_TRAVEL, nf * 0.4F + 0.8F, 0.25F))`
+        // walk the case body spends — the LOCAL-AMBIENCE lane the
+        // SoundManager-direct resolve opens, the anchor + data words
+        // the case never reads). The voice words the PACKETS' OWN
+        // effect ids ride, the drains ship the arms exactly once, and
+        // the Respawn recreates the level both mailboxes die with it.
+        let mut m = WorldModel::new();
+        // THE WIND-CHARGE SHOT (WindChargeItem.createDispenseConfig's
+        // override the bytecode pins — the dispenser shot the word
+        // arms, the zero the case's body never reads)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT,
+            x: -7,
+            y: 64,
+            z: 210,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.wind_charge_shoot_events.len(),
+            1,
+            "the wind word the WIND-CHARGE lane arms"
+        );
+        assert_eq!(
+            m.wind_charge_shoot_events[0].voice,
+            mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT,
+            "the wind word rides verbatim"
+        );
+        assert_eq!(m.wind_charge_shoot_events[0].z, 210, "the anchor rides");
+        // ANY data word the data-free arm answers the same
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT,
+            x: 9,
+            y: 9,
+            z: 9,
+            data: 7,
+            global: false,
+        })));
+        assert_eq!(
+            m.wind_charge_shoot_events.len(),
+            2,
+            "the data word never arms"
+        );
+        // the GLOBAL route the arm never banks
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.wind_charge_shoot_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // THE PORTAL TRAVEL (TeleportTransition.playPortalSound's
+        // packet the bytecode pins — the BlockPos.ZERO anchor the
+        // caller passes the empty arm's honesty keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_PORTAL_TRAVEL_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.portal_travel_events.len(),
+            1,
+            "the portal word the PORTAL lane arms"
+        );
+        // ANY data word the empty arm answers the same (the case
+        // never reads the data — the honest silence the arm keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_PORTAL_TRAVEL_EFFECT,
+            x: 55,
+            y: 66,
+            z: 77,
+            data: 999,
+            global: false,
+        })));
+        assert_eq!(
+            m.portal_travel_events.len(),
+            2,
+            "the anchor + data words never arm"
+        );
+        // the GLOBAL route the arm never banks
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_PORTAL_TRAVEL_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.portal_travel_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drains ship the mailboxes exactly once
+        let wind_drained = m.drain_wind_charge_shoot_events();
+        assert_eq!(wind_drained.len(), 2, "the wind drain ships the lane");
+        assert_eq!(
+            wind_drained[0].voice,
+            mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT
+        );
+        let portal_drained = m.drain_portal_travel_events();
+        assert_eq!(portal_drained.len(), 2, "the portal drain ships the lane");
+        assert!(
+            m.wind_charge_shoot_events.is_empty(),
+            "the wind lane spent"
+        );
+        assert!(
+            m.portal_travel_events.is_empty(),
+            "the portal lane spent"
+        );
+        // the fresh words re-arm beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_WIND_CHARGE_SHOOT_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 0,
+            global: false,
+        })));
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_PORTAL_TRAVEL_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.wind_charge_shoot_events.len(), 1, "the fresh wind re-arms");
+        assert_eq!(
+            m.portal_travel_events.len(),
+            1,
+            "the fresh portal re-arms"
+        );
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.wind_charge_shoot_events.is_empty(),
+            "the lane dies with the level"
+        );
+        assert!(
+            m.portal_travel_events.is_empty(),
+            "the lane dies with the level"
+        );
     }
 
     #[test]
