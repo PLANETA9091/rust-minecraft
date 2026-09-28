@@ -168,6 +168,7 @@ fn run_join(
                 Vec<crate::world_view::WireInBlockGrowthEvent>,
                 Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
+                Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -275,6 +276,7 @@ fn run_join(
             view.model.drain_in_block_growth_events();
             view.model.drain_smash_attack_events();
             view.model.drain_wax_events();
+            view.model.drain_gateway_spawn_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -906,6 +908,7 @@ fn run_join(
                             view.model.drain_in_block_growth_events();
                             view.model.drain_smash_attack_events();
                             view.model.drain_wax_events();
+                            view.model.drain_gateway_spawn_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1061,6 +1064,16 @@ fn run_join(
                                     // folds, each arm rides exactly
                                     // one shipped refresh)
                                     upd.wax_events,
+                                    // the gateway-spawn effect's arms
+                                    // ride beside them — the 3000
+                                    // words the server's own dragon
+                                    // fight broadcasts stream to the
+                                    // gateway lane (the emitter seed +
+                                    // the 10.0-volume voice the
+                                    // render's own law folds, each arm
+                                    // rides exactly one shipped
+                                    // refresh)
+                                    upd.gateway_spawn_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1358,6 +1371,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireInBlockGrowthEvent>,
                 Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
+                Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -1922,6 +1936,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     in_block_growth_events,
                     smash_attack_events,
                     wax_events,
+                    gateway_spawn_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2044,6 +2059,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the 3003 voice the burst's tail banks, the
                     // vanilla client answers the same packet with)
                     app.live_wax_events_updated(wax_events);
+                    // the gateway-spawn effect's lane beside the wax's:
+                    // the 3000 words the server's own dragon fight
+                    // broadcasts land at their own anchors (the
+                    // invisible seed the 8-tick / 6-child emitter walk
+                    // banks — the 16-frame explosion bank the children
+                    // ride — plus the `block.end_gateway.spawn`
+                    // 10.0-volume voice the random pitch chain carries,
+                    // the vanilla client answers the same packet with)
+                    app.live_gateway_spawn_events_updated(gateway_spawn_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

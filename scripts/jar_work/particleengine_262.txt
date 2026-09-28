@@ -1,0 +1,54 @@
+=== <init> (Lnet/minecraft/client/multiplayer/ClientLevel;Lnet/minecraft/client/particle/ParticleResources;)V ===
+  (disasm error: 0)
+
+=== createTrackingEmitter (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/particles/ParticleOptions;)V ===
+  (disasm error: 0)
+
+=== createTrackingEmitter (Lnet/minecraft/world/entity/Entity;Lnet/minecraft/core/particles/ParticleOptions;I)V ===
+  (disasm error: 0)
+
+=== createParticle (Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)Lnet/minecraft/client/particle/Particle; ===
+  (disasm error: 0)
+
+=== makeParticle (Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)Lnet/minecraft/client/particle/Particle; ===
+  (disasm error: 0)
+
+=== add (Lnet/minecraft/client/particle/Particle;)V ===
+  (disasm error: 10795)
+
+=== tick ()V ===
+  (disasm error: 10795)
+
+=== createParticleGroup (Lnet/minecraft/client/particle/ParticleRenderType;)Lnet/minecraft/client/particle/ParticleGroup; ===
+  (disasm error: 10795)
+
+=== updateCount (Lnet/minecraft/core/particles/ParticleLimit;I)V ===
+  (disasm error: 10795)
+
+=== extract (Lnet/minecraft/client/renderer/state/level/ParticlesRenderState;Lnet/minecraft/client/renderer/culling/Frustum;Lnet/minecraft/client/Camera;F)V ===
+  (disasm error: 10795)
+
+=== setLevel (Lnet/minecraft/client/multiplayer/ClientLevel;)V ===
+  (disasm error: 0)
+
+=== countParticles ()Ljava/lang/String; ===
+  (disasm error: 16385)
+
+=== hasSpaceInParticleLimit (Lnet/minecraft/core/particles/ParticleLimit;)Z ===
+  (disasm error: 16385)
+
+=== clearParticles ()V ===
+  (disasm error: unpack_from requires a buffer of at least 452 bytes for unpacking 4 bytes at offset 448 (actual buffer size is 448))
+
+=== getRandom ()Lnet/minecraft/util/RandomSource; ===
+  (disasm error: unpack_from requires a buffer of at least 344 bytes for unpacking 4 bytes at offset 340 (actual buffer size is 341))
+
+=== lambda$tick$1 (Lnet/minecraft/core/particles/ParticleLimit;)V ===
+  (disasm error: 0)
+
+=== lambda$tick$0 (Lnet/minecraft/client/particle/ParticleRenderType;Lnet/minecraft/client/particle/ParticleGroup;)V ===
+  (disasm error: 0)
+
+=== <clinit> ()V ===
+  (disasm error: unpack_from requires a buffer of at least 108 bytes for unpacking 4 bytes at offset 104 (actual buffer size is 104))
+

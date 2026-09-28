@@ -1,0 +1,990 @@
+class net/minecraft/world/entity/boss/enderdragon/EnderDragon
+
+=== <clinit>()V ===
+     0 invokestatic com/mojang/logging/LogUtils.getLogger()Lorg/slf4j/Logger;  ()
+    11 invokestatic net/minecraft/network/syncher/SynchedEntityData.defineId(Ljava/lang/Class;Lnet/minecraft/network/syncher/EntityDataSerializer;)Lnet/minecraft/network/syncher/EntityDataAccessor;  (cp, net/minecraft/network/syncher/EntityDataSerializers.INT)
+    17 invokestatic net/minecraft/world/entity/ai/targeting/TargetingConditions.forCombat()Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;  ()
+    23 invokevirtual net/minecraft/world/entity/ai/targeting/TargetingConditions.range(D)Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;  (TargetingConditions.forCombat(), 64.0)
+    29 return
+
+=== <init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V ===
+     5 invokespecial net/minecraft/world/entity/Mob.<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V  (net/minecraft/world/entity/EntityTypes.ENDER_DRAGON, loc2)
+    13 invokespecial net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.<init>()V  ()
+    16 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory = net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory()
+    21 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime = 0
+    28 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.fightOrigin = net/minecraft/core/BlockPos.ZERO
+    34 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.growlTime = 100
+    43 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes = arr
+    51 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency = loc0
+    59 invokespecial net/minecraft/world/level/pathfinder/BinaryHeap.<init>()V  ()
+    62 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.openSet = net/minecraft/world/level/pathfinder/BinaryHeap()
+    75 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'head', 1.0, 1.0)
+    78 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.head = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'head', 1.0, 1.0)
+    93 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'neck', 3.0, 3.0)
+    96 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.neck = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'neck', 3.0, 3.0)
+   111 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'body', 5.0, 3.0)
+   114 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'body', 5.0, 3.0)
+   127 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'tail', 2.0, 2.0)
+   130 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail1 = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'tail', 2.0, 2.0)
+   143 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'tail', 2.0, 2.0)
+   146 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail2 = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'tail', 2.0, 2.0)
+   159 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'tail', 2.0, 2.0)
+   162 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail3 = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'tail', 2.0, 2.0)
+   176 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'wing', 4.0, 2.0)
+   179 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing1 = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'wing', 4.0, 2.0)
+   193 invokespecial net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;Ljava/lang/String;FF)V  (loc0, 'wing', 4.0, 2.0)
+   196 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing2 = net/minecraft/world/entity/boss/enderdragon/EnderDragonPart(loc0, 'wing', 4.0, 2.0)
+   208 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.head  (loc0)
+   211 ?? opcode 0x53
+   215 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.neck  (loc0)
+   218 ?? opcode 0x53
+   222 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0)
+   225 ?? opcode 0x53
+   229 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail1  (loc0)
+   232 ?? opcode 0x53
+   236 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail2  (loc0)
+   239 ?? opcode 0x53
+   243 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail3  (loc0)
+   246 ?? opcode 0x53
+   251 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing1  (loc0)
+   254 ?? opcode 0x53
+   259 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing2  (loc0)
+   262 ?? opcode 0x53
+   263 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities = loc0.wing2
+   268 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getMaxHealth()F  ()
+   271 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setHealth(F)V  (loc0.getMaxHealth())
+   276 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.noPhysics = 1
+   285 invokespecial net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.<init>(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V  (loc0)
+   288 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager = net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager(loc0)
+   291 return
+
+=== addAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueOutput;)V ===
+     2 invokespecial net/minecraft/world/entity/Mob.addAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueOutput;)V  (loc1)
+    10 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+    13 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+    16 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.getPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;  ()
+    21 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.getId()I  ()
+    24 invokeinterface net/minecraft/world/level/storage/ValueOutput.putInt(Ljava/lang/String;I)V  ('DragonPhase', loc0.phaseManager.getCurrentPhase().getPhase().getId())
+    34 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0)
+    37 invokeinterface net/minecraft/world/level/storage/ValueOutput.putInt(Ljava/lang/String;I)V  ('DragonDeathTime', loc0.dragonDeathTime)
+    47 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.sittingDamageReceived  (loc0)
+    50 invokeinterface net/minecraft/world/level/storage/ValueOutput.putFloat(Ljava/lang/String;F)V  ('sitting_damage_received', loc0.sittingDamageReceived)
+    55 return
+
+=== addEffect(Lnet/minecraft/world/effect/MobEffectInstance;Lnet/minecraft/world/entity/Entity;)Z ===
+     1 return 0
+
+=== aiStep()V ===
+     1 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.processFlappingMovement()V  ()
+     5 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+     8 invokevirtual net/minecraft/world/level/Level.isClientSide()Z  ()
+    16 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getHealth()F  ()
+    19 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setHealth(F)V  (loc0.getHealth())
+    23 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.isSilent()Z  ()
+    30 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+    33 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+    36 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+    46 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.growlTime  (loc0)
+    52 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.growlTime = arith
+    59 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+    63 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+    67 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+    71 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+    78 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getSoundSource()Lnet/minecraft/sounds/SoundSource;  ()
+    87 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+    90 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+   100 invokevirtual net/minecraft/world/level/Level.playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (?, ?, loc0.level(), loc0.getX(), loc0.getY(), loc0.getZ(), net/minecraft/sounds/SoundEvents.ENDER_DRAGON_GROWL, loc0.getSoundSource(), 2.5, (0.800000011920929 + (loc0.random.nextFloat() * 0.30000001192092896)), 0)
+   108 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+   114 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (200)
+   120 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.growlTime = arith
+   124 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+   131 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   134 ?? opcode 0x4d
+   146 ?? opcode 0x4c
+   148 invokevirtual net/minecraft/server/level/ServerLevel.getDragonFight()Lnet/minecraft/world/level/dimension/end/EnderDragonFight;  ()
+   151 ?? opcode 0x4d
+   157 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getUUID()Ljava/util/UUID;  ()
+   161 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID()Ljava/util/UUID;  ()
+   164 invokevirtual java/util/UUID.equals(Ljava/lang/Object;)Z  (loc2.dragonUUID())
+   172 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight = loc2
+   177 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime  (loc0)
+   180 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.oFlapTime = loc0.flapTime
+   184 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.isDeadOrDying()Z  ()
+   191 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+   194 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+   209 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+   212 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+   226 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   229 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+   244 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   251 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+   256 ?? opcode 0x63
+   258 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+   264 ?? opcode 0x63
+   267 ?? opcode 0x63
+   269 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+   274 ?? opcode 0x63
+   278 invokevirtual net/minecraft/world/level/Level.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0), loc0=((loc0.random.nextFloat() - 0.5) * 4.0).level(), net/minecraft/core/particles/ParticleTypes.EXPLOSION, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).getX(), arith, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).getY(), 2.0, arith, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).getZ(), arith, 0.0, 0.0, 0.0)
+   281 return
+   283 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.checkCrystals()V  ()
+   287 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+   290 ?? opcode 0x4c
+   295 invokevirtual net/minecraft/world/phys/Vec3.horizontalDistance()D  ()
+   312 getfield net/minecraft/world/phys/Vec3.y  (loc1=((loc0=((loc0.random.nextFloat() - 0.5) * 4.0).random.nextFloat() - 0.5) * 8.0))
+   315 invokestatic java/lang/Math.pow(DD)D  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0).getDeltaMovement(), loc0=(0.20000000298023224 / ((arith * 10.0) + 1.0)), 2.0, loc1=((loc0=((loc0.random.nextFloat() - 0.5) * 4.0).random.nextFloat() - 0.5) * 8.0).y)
+   322 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0=(loc1.getDragonFight() * arith))
+   325 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+   328 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+   338 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime  (loc0=(loc1.getDragonFight() * arith))
+   345 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime = (loc0=(loc1.getDragonFight() * arith).flapTime + 0.10000000149011612)
+   352 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.inWall  (loc0=(loc1.getDragonFight() * arith))
+   360 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime  (loc0=(loc1.getDragonFight() * arith))
+   369 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime = (loc0=(loc1.getDragonFight() * arith).flapTime + (loc0=(loc1.getDragonFight() * arith) * 0.5))
+   377 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime  (loc0=(loc1.getDragonFight() * arith))
+   382 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime = (loc0=(loc1.getDragonFight() * arith).flapTime + loc0=(loc1.getDragonFight() * arith))
+   387 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+   390 invokestatic net/minecraft/util/Mth.wrapDegrees(F)F  (loc0=(loc1.getDragonFight() * arith).getYRot())
+   393 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setYRot(F)V  (Mth.wrapDegrees(loc0=(loc1.getDragonFight() * arith).getYRot()))
+   397 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.isNoAi()Z  ()
+   407 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime = 0.5
+   410 return
+   412 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory  (loc0=(loc1.getDragonFight() * arith))
+   416 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+   420 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+   423 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.record(DF)V  (loc0=(loc1.getDragonFight() * arith).flightHistory, loc0=(loc1.getDragonFight() * arith).getY(), loc0=(loc1.getDragonFight() * arith).getYRot())
+   427 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   445 ?? opcode 0x4e
+   450 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.interpolation  (loc0=(loc1.getDragonFight() * arith))
+   453 invokevirtual net/minecraft/world/entity/InterpolationHandler.interpolate()V  ()
+   457 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0=(loc1.getDragonFight() * arith))
+   460 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+   463 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.doClientTick()V  ()
+   472 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0=(loc1.getDragonFight() * arith))
+   475 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+   483 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.doServerTick(Lnet/minecraft/server/level/ServerLevel;)V  (loc3=((loc0.random.nextFloat() - 0.5) * 8.0))
+   489 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0=(loc1.getDragonFight() * arith))
+   492 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+   501 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0=(loc1.getDragonFight() * arith))
+   504 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+   512 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.doServerTick(Lnet/minecraft/server/level/ServerLevel;)V  (loc3=((loc0.random.nextFloat() - 0.5) * 8.0))
+   519 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.getFlyTargetLocation()Lnet/minecraft/world/phys/Vec3;  ()
+   533 getfield net/minecraft/world/phys/Vec3.x  (loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation())
+   537 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+   540 ?? opcode 0x67
+   545 getfield net/minecraft/world/phys/Vec3.y  (loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation())
+   549 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+   552 ?? opcode 0x67
+   557 getfield net/minecraft/world/phys/Vec3.z  (loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation())
+   561 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+   564 ?? opcode 0x67
+   571 ?? opcode 0x6b
+   576 ?? opcode 0x6b
+   577 ?? opcode 0x63
+   582 ?? opcode 0x6b
+   583 ?? opcode 0x63
+   588 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.getFlySpeed()F  ()
+   599 ?? opcode 0x6b
+   604 ?? opcode 0x6b
+   605 ?? opcode 0x63
+   606 invokestatic java/lang/Math.sqrt(D)D  (loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc10=loc0=(loc1.getDragonFight() * arith).getZ())
+   622 ?? opcode 0x6f
+   625 ?? opcode 0x76
+   630 invokestatic net/minecraft/util/Mth.clamp(DDD)D  (loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc8=loc0=(loc1.getDragonFight() * arith).getY(), loc15=Math.sqrt(loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc10=loc0=(loc1.getDragonFight() * arith).getZ()), arith, arith)
+   637 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+   646 ?? opcode 0x6b
+   648 invokevirtual net/minecraft/world/phys/Vec3.add(DDD)Lnet/minecraft/world/phys/Vec3;  (loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).getDeltaMovement(), 0.0, loc8=Mth.clamp(loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc8=loc0=(loc1.getDragonFight() * arith).getY(), loc15=Math.sqrt(loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc10=loc0=(loc1.getDragonFight() * arith).getZ()), arith, arith), 0.01, 0.0)
+   651 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V  (loc8=Mth.clamp(loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc8=loc0=(loc1.getDragonFight() * arith).getY(), loc15=Math.sqrt(loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc10=loc0=(loc1.getDragonFight() * arith).getZ()), arith, arith).add(loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).getDeltaMovement(), 0.0, loc8=Mth.clamp(loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc8=loc0=(loc1.getDragonFight() * arith).getY(), loc15=Math.sqrt(loc10=loc0=(loc1.getDragonFight() * arith).getZ(), loc10=loc0=(loc1.getDragonFight() * arith).getZ()), arith, arith), 0.01, 0.0))
+   656 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+   659 invokestatic net/minecraft/util/Mth.wrapDegrees(F)F  (loc0=(loc1.getDragonFight() * arith).getYRot())
+   662 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setYRot(F)V  (Mth.wrapDegrees(loc0=(loc1.getDragonFight() * arith).getYRot()))
+   668 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+   672 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+   676 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+   679 invokevirtual net/minecraft/world/phys/Vec3.subtract(DDD)Lnet/minecraft/world/phys/Vec3;  (loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation(), loc0=(loc1.getDragonFight() * arith).getX(), loc0=(loc1.getDragonFight() * arith).getY(), loc0=(loc1.getDragonFight() * arith).getZ())
+   682 invokevirtual net/minecraft/world/phys/Vec3.normalize()Lnet/minecraft/world/phys/Vec3;  ()
+   692 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+   700 invokestatic net/minecraft/util/Mth.sin(D)F  (new net/minecraft/world/phys/Vec3, arith)
+   705 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+   708 getfield net/minecraft/world/phys/Vec3.y  (loc0=(loc1.getDragonFight() * arith).getDeltaMovement())
+   712 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+   720 invokestatic net/minecraft/util/Mth.cos(D)F  (loc0=(loc1.getDragonFight() * arith).getDeltaMovement().y, arith)
+   723 ?? opcode 0x76
+   725 invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V  (loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase(), loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation().x, loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation().y, new net/minecraft/world/phys/Vec3, arith, arith)
+   728 invokevirtual net/minecraft/world/phys/Vec3.normalize()Lnet/minecraft/world/phys/Vec3;  ()
+   737 invokevirtual net/minecraft/world/phys/Vec3.dot(Lnet/minecraft/world/phys/Vec3;)D  (loc17=loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation().z.subtract(loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc5=loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getFlyTargetLocation(), loc0=(loc1.getDragonFight() * arith).getX(), loc0=(loc1.getDragonFight() * arith).getY(), loc0=(loc1.getDragonFight() * arith).getZ()).normalize())
+   750 invokestatic java/lang/Math.max(FF)F  (((arith + 0.5) / 1.5), 0.0)
+   757 invokestatic java/lang/Math.abs(D)D  (loc2, loc6=loc0=(loc1.getDragonFight() * arith).getX())
+   769 invokestatic java/lang/Math.abs(D)D  (?, loc10=loc0=(loc1.getDragonFight() * arith).getZ())
+   786 invokestatic net/minecraft/util/Mth.atan2(DD)D  (?, 180.0, loc6=loc0=(loc1.getDragonFight() * arith).getX(), loc10=loc0=(loc1.getDragonFight() * arith).getZ())
+   796 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+   800 invokestatic net/minecraft/util/Mth.wrapDegrees(F)F  (((? - (arith * 57.2957763671875)) - loc0=(loc1.getDragonFight() * arith).getYRot()))
+   809 invokestatic net/minecraft/util/Mth.clamp(FFF)F  (Mth.wrapDegrees(((? - (arith * 57.2957763671875)) - loc0=(loc1.getDragonFight() * arith).getYRot())), -50.0, 50.0)
+   816 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yRotA  (loc0=(loc1.getDragonFight() * arith))
+   822 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yRotA = (loc0=(loc1.getDragonFight() * arith).yRotA * 0.800000011920929)
+   827 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yRotA  (loc0=(loc1.getDragonFight() * arith))
+   834 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.getTurnSpeed()F  ()
+   841 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yRotA = (loc0=(loc1.getDragonFight() * arith).yRotA + (loc20=Mth.clamp(Mth.wrapDegrees(((? - (arith * 57.2957763671875)) - loc0=(loc1.getDragonFight() * arith).getYRot())), -50.0, 50.0) * loc4=loc0=(loc1.getDragonFight() * arith).phaseManager.getCurrentPhase().getTurnSpeed()))
+   846 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+   850 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yRotA  (loc0=(loc1.getDragonFight() * arith))
+   858 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setYRot(F)V  ((loc0=(loc1.getDragonFight() * arith).getYRot() + (loc0=(loc1.getDragonFight() * arith).yRotA * 0.10000000149011612)))
+   867 ?? opcode 0x63
+   868 ?? opcode 0x6f
+   901 invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V  ((0.05999999865889549 * ((loc19=Math.max(((arith + 0.5) / 1.5), 0.0) * loc20=1.0) + (1.0 - loc20=1.0))), new net/minecraft/world/phys/Vec3, new net/minecraft/world/phys/Vec3, 0.0, 0.0, -1.0)
+   904 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.moveRelative(FLnet/minecraft/world/phys/Vec3;)V  (2.0, loc12=loc10=loc0=(loc1.getDragonFight() * arith).getZ())
+   908 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.inWall  (loc0=(loc1.getDragonFight() * arith))
+   919 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+   925 invokevirtual net/minecraft/world/phys/Vec3.scale(D)Lnet/minecraft/world/phys/Vec3;  (loc0=(loc1.getDragonFight() * arith).getDeltaMovement(), 0.800000011920929)
+   928 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V  (loc0=(loc1.getDragonFight() * arith), net/minecraft/world/entity/MoverType.SELF.scale(loc0=(loc1.getDragonFight() * arith).getDeltaMovement(), 0.800000011920929))
+   939 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+   942 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V  (net/minecraft/world/entity/MoverType.SELF, loc0=(loc1.getDragonFight() * arith).getDeltaMovement())
+   946 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+   949 invokevirtual net/minecraft/world/phys/Vec3.normalize()Lnet/minecraft/world/phys/Vec3;  ()
+   964 invokevirtual net/minecraft/world/phys/Vec3.dot(Lnet/minecraft/world/phys/Vec3;)D  (loc18=loc0=(loc1.getDragonFight() * arith).normalize())
+   968 ?? opcode 0x63
+   969 ?? opcode 0x6b
+   973 ?? opcode 0x6f
+   974 ?? opcode 0x63
+   979 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+   989 invokevirtual net/minecraft/world/phys/Vec3.multiply(DDD)Lnet/minecraft/world/phys/Vec3;  (1.0, loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).getDeltaMovement(), loc23=2.0, 0.9100000262260437, loc23=2.0)
+   992 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setDeltaMovement(Lnet/minecraft/world/phys/Vec3;)V  (loc22=loc0=(loc1.getDragonFight() * arith).getDeltaMovement().normalize().dot(loc18=loc0=(loc1.getDragonFight() * arith).normalize()).multiply(1.0, loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).getDeltaMovement(), loc23=2.0, 0.9100000262260437, loc23=2.0))
+   996 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   999 invokevirtual net/minecraft/world/level/Level.isClientSide()Z  ()
+  1006 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.applyEffectsFromBlocks()V  ()
+  1011 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+  1014 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yBodyRot = loc0=(loc1.getDragonFight() * arith).getYRot()
+  1018 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1025 ?? opcode 0x4e
+  1032 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1047 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1053 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getX()D  ()
+  1057 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1063 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getY()D  ()
+  1067 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1073 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getZ()D  ()
+  1076 invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V  (loc4=0, new net/minecraft/world/phys/Vec3, new net/minecraft/world/phys/Vec3, arr.getX(), arr.getY(), arr.getZ())
+  1079 ?? opcode 0x53
+  1087 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory  (loc0=(loc1.getDragonFight() * arith))
+  1091 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.get(I)Lnet/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample;  (5)
+  1094 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.y()D  ()
+  1098 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory  (loc0=(loc1.getDragonFight() * arith))
+  1103 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.get(I)Lnet/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample;  (10)
+  1106 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.y()D  ()
+  1109 ?? opcode 0x67
+  1124 invokestatic net/minecraft/util/Mth.cos(D)F  (loc0=(loc1.getDragonFight() * arith).flightHistory.get(5).y(), arith)
+  1132 invokestatic net/minecraft/util/Mth.sin(D)F  (0.8, arith)
+  1138 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+  1150 invokestatic net/minecraft/util/Mth.sin(D)F  (?, arith)
+  1158 invokestatic net/minecraft/util/Mth.cos(D)F  (?, arith)
+  1165 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0=(loc1.getDragonFight() * arith))
+  1178 ?? opcode 0x76
+  1184 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.tickPart(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;DDD)V  (?, ?, loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).body, arith, 0.0, arith)
+  1189 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing1  (loc0=(loc1.getDragonFight() * arith))
+  1209 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.tickPart(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;DDD)V  (?, ?, loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing1, arith, 2.0, arith)
+  1214 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing2  (loc0=(loc1.getDragonFight() * arith))
+  1234 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.tickPart(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;DDD)V  (?, ?, loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing2, arith, 2.0, arith)
+  1238 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+  1259 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.hurtTime  (loc0=(loc1.getDragonFight() * arith))
+  1272 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing1  (loc0=(loc1.getDragonFight() * arith))
+  1275 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+  1287 invokevirtual net/minecraft/world/phys/AABB.inflate(DDD)Lnet/minecraft/world/phys/AABB;  (loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing1.getBoundingBox(), 4.0, 2.0, 4.0)
+  1295 invokevirtual net/minecraft/world/phys/AABB.move(DDD)Lnet/minecraft/world/phys/AABB;  (?, loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().inflate(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing1.getBoundingBox(), 4.0, 2.0, 4.0), 0.0, -2.0, 0.0)
+  1301 invokevirtual net/minecraft/server/level/ServerLevel.getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;  (?, ?.move(?, loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().inflate(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing1.getBoundingBox(), 4.0, 2.0, 4.0), 0.0, -2.0, 0.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR)
+  1304 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.knockBack(Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V  (?, ?.getEntities(?, ?.move(?, loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().inflate(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing1.getBoundingBox(), 4.0, 2.0, 4.0), 0.0, -2.0, 0.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR))
+  1314 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.wing2  (loc0=(loc1.getDragonFight() * arith))
+  1317 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+  1329 invokevirtual net/minecraft/world/phys/AABB.inflate(DDD)Lnet/minecraft/world/phys/AABB;  (loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing2.getBoundingBox(), 4.0, 2.0, 4.0)
+  1337 invokevirtual net/minecraft/world/phys/AABB.move(DDD)Lnet/minecraft/world/phys/AABB;  (?, loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().inflate(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing2.getBoundingBox(), 4.0, 2.0, 4.0), 0.0, -2.0, 0.0)
+  1343 invokevirtual net/minecraft/server/level/ServerLevel.getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;  (?, ?.move(?, loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().inflate(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing2.getBoundingBox(), 4.0, 2.0, 4.0), 0.0, -2.0, 0.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR)
+  1346 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.knockBack(Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V  (?, ?.getEntities(?, ?.move(?, loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().inflate(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).wing2.getBoundingBox(), 4.0, 2.0, 4.0), 0.0, -2.0, 0.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR))
+  1356 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.head  (loc0=(loc1.getDragonFight() * arith))
+  1359 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+  1363 invokevirtual net/minecraft/world/phys/AABB.inflate(D)Lnet/minecraft/world/phys/AABB;  (loc0=(loc1.getDragonFight() * arith).head.getBoundingBox(), 1.0)
+  1369 invokevirtual net/minecraft/server/level/ServerLevel.getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;  (loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith).inflate(loc0=(loc1.getDragonFight() * arith).head.getBoundingBox(), 1.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR)
+  1372 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.hurt(Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V  (loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().getEntities(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith).inflate(loc0=(loc1.getDragonFight() * arith).head.getBoundingBox(), 1.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR))
+  1382 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.neck  (loc0=(loc1.getDragonFight() * arith))
+  1385 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+  1389 invokevirtual net/minecraft/world/phys/AABB.inflate(D)Lnet/minecraft/world/phys/AABB;  (loc0=(loc1.getDragonFight() * arith).neck.getBoundingBox(), 1.0)
+  1395 invokevirtual net/minecraft/server/level/ServerLevel.getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;  (loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith).inflate(loc0=(loc1.getDragonFight() * arith).neck.getBoundingBox(), 1.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR)
+  1398 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.hurt(Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V  (loc0=(loc1.getDragonFight() * arith), loc10=loc11=loc0=(loc1.getDragonFight() * arith).level().getEntities(loc10=loc11=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith).inflate(loc0=(loc1.getDragonFight() * arith).neck.getBoundingBox(), 1.0), net/minecraft/world/entity/EntitySelector.NO_CREATIVE_OR_SPECTATOR))
+  1402 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+  1410 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yRotA  (loc0=(loc1.getDragonFight() * arith))
+  1419 invokestatic net/minecraft/util/Mth.sin(D)F  (?, arith)
+  1425 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+  1433 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.yRotA  (loc0=(loc1.getDragonFight() * arith))
+  1442 invokestatic net/minecraft/util/Mth.cos(D)F  (?, arith)
+  1448 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getHeadYOffset()F  ()
+  1455 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.head  (loc0=(loc1.getDragonFight() * arith))
+  1480 ?? opcode 0x76
+  1489 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.tickPart(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;DDD)V  (?, ?, loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).head, arith, arith, arith)
+  1494 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.neck  (loc0=(loc1.getDragonFight() * arith))
+  1519 ?? opcode 0x76
+  1528 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.tickPart(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;DDD)V  (?, ?, loc0=(loc1.getDragonFight() * arith), loc0=(loc1.getDragonFight() * arith).neck, arith, arith, arith)
+  1532 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory  (loc0=(loc1.getDragonFight() * arith))
+  1536 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.get(I)Lnet/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample;  (5)
+  1559 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail1  (loc0=(loc1.getDragonFight() * arith))
+  1571 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail2  (loc0=(loc1.getDragonFight() * arith))
+  1583 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tail3  (loc0=(loc1.getDragonFight() * arith))
+  1589 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory  (loc0=(loc1.getDragonFight() * arith))
+  1599 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.get(I)Lnet/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample;  (arith)
+  1605 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getYRot()F  ()
+  1615 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.yRot()F  ()
+  1620 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.yRot()F  ()
+  1625 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.rotWrap(D)F  (loc0=(loc1.getDragonFight() * arith), arith)
+  1638 invokestatic net/minecraft/util/Mth.sin(D)F  (?, arith)
+  1646 invokestatic net/minecraft/util/Mth.cos(D)F  (?, arith)
+  1680 ?? opcode 0x76
+  1687 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.y()D  ()
+  1692 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.y()D  ()
+  1695 ?? opcode 0x67
+  1706 ?? opcode 0x67
+  1710 ?? opcode 0x63
+  1727 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.tickPart(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;DDD)V  (loc15=loc0=(loc1.getDragonFight() * arith).tail3, arith, loc16=loc0=(loc1.getDragonFight() * arith).flightHistory.get(arith).y(), loc13=loc0=(loc1.getDragonFight() * arith).flightHistory.get(5).y(), arith, 1.5, arith)
+  1737 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+  1762 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.head  (loc0=(loc1.getDragonFight() * arith))
+  1765 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+  1768 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.checkWalls(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/AABB;)Z  (loc14=loc15=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith).head.getBoundingBox())
+  1775 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.neck  (loc0=(loc1.getDragonFight() * arith))
+  1778 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+  1781 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.checkWalls(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/AABB;)Z  (loc14=loc15=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith).neck.getBoundingBox())
+  1789 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0=(loc1.getDragonFight() * arith))
+  1792 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+  1795 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.checkWalls(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/AABB;)Z  (loc14=loc15=loc0=(loc1.getDragonFight() * arith).level(), loc0=(loc1.getDragonFight() * arith).body.getBoundingBox())
+  1799 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.inWall = arith
+  1803 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0=(loc1.getDragonFight() * arith))
+  1810 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0=(loc1.getDragonFight() * arith))
+  1814 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.updateDragon(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V  (loc0=(loc1.getDragonFight() * arith))
+  1823 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1831 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1841 getfield net/minecraft/world/phys/Vec3.x  (arr)
+  1844 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.xo = arr.x
+  1848 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1858 getfield net/minecraft/world/phys/Vec3.y  (arr)
+  1861 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.yo = arr.y
+  1865 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1875 getfield net/minecraft/world/phys/Vec3.z  (arr)
+  1878 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.zo = arr.z
+  1882 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1892 getfield net/minecraft/world/phys/Vec3.x  (arr)
+  1895 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.xOld = arr.x
+  1899 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1909 getfield net/minecraft/world/phys/Vec3.y  (arr)
+  1912 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.yOld = arr.y
+  1916 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=(loc1.getDragonFight() * arith))
+  1926 getfield net/minecraft/world/phys/Vec3.z  (arr)
+  1929 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.zOld = arr.z
+  1938 return
+
+=== canAttack(Lnet/minecraft/world/entity/LivingEntity;)Z ===
+     1 invokevirtual net/minecraft/world/entity/LivingEntity.canBeSeenAsEnemy()Z  ()
+     4 return loc1.canBeSeenAsEnemy()
+
+=== canRide(Lnet/minecraft/world/entity/Entity;)Z ===
+     1 return 0
+
+=== canUsePortal(Z)Z ===
+     1 return 0
+
+=== checkCrystals()V ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nearestCrystal  (loc0)
+     8 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nearestCrystal  (loc0)
+    11 invokevirtual net/minecraft/world/entity/boss/enderdragon/EndCrystal.isRemoved()Z  ()
+    19 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nearestCrystal = null
+    26 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.tickCount  (loc0)
+    36 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getHealth()F  ()
+    40 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getMaxHealth()F  ()
+    49 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getHealth()F  ()
+    54 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setHealth(F)V  ((loc0.getHealth() + 1.0))
+    58 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+    63 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (10)
+    72 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+    79 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+    85 invokevirtual net/minecraft/world/phys/AABB.inflate(D)Lnet/minecraft/world/phys/AABB;  (loc0.getBoundingBox(), 32.0)
+    88 invokevirtual net/minecraft/world/level/Level.getEntitiesOfClass(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;  (loc0.level(), cp.inflate(loc0.getBoundingBox(), 32.0))
+    91 ?? opcode 0x4c
+    93 ?? opcode 0x4d
+    99 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+   108 invokeinterface java/util/Iterator.hasNext()Z  ()
+   118 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+   131 invokevirtual net/minecraft/world/entity/boss/enderdragon/EndCrystal.distanceToSqr(Lnet/minecraft/world/entity/Entity;)D  (loc0)
+   138 ?? opcode 0x29
+   148 ?? opcode 0x4d
+   154 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nearestCrystal = loc2
+   157 return
+
+=== checkDespawn()V ===
+     0 return
+
+=== checkWalls(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/AABB;)Z ===
+     1 getfield net/minecraft/world/phys/AABB.minX  (loc2)
+     4 invokestatic net/minecraft/util/Mth.floor(D)I  (?, loc2.minX)
+     9 getfield net/minecraft/world/phys/AABB.minY  (loc2)
+    12 invokestatic net/minecraft/util/Mth.floor(D)I  (?, loc2.minY)
+    18 getfield net/minecraft/world/phys/AABB.minZ  (loc2)
+    21 invokestatic net/minecraft/util/Mth.floor(D)I  (?, loc2.minZ)
+    27 getfield net/minecraft/world/phys/AABB.maxX  (loc2)
+    30 invokestatic net/minecraft/util/Mth.floor(D)I  (?, loc2.maxX)
+    36 getfield net/minecraft/world/phys/AABB.maxY  (loc2)
+    39 invokestatic net/minecraft/util/Mth.floor(D)I  (?, loc2.maxY)
+    45 getfield net/minecraft/world/phys/AABB.maxZ  (loc2)
+    48 invokestatic net/minecraft/util/Mth.floor(D)I  (?, loc2.maxZ)
+   101 invokespecial net/minecraft/core/BlockPos.<init>(III)V  (loc11=loc3=Mth.floor(?, loc2.minX), loc12=loc4=Mth.floor(?, loc2.minY), loc13=loc5=Mth.floor(?, loc2.minZ))
+   109 invokevirtual net/minecraft/server/level/ServerLevel.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc14=net/minecraft/core/BlockPos(loc11=loc3=Mth.floor(?, loc2.minX), loc12=loc4=Mth.floor(?, loc2.minY), loc13=loc5=Mth.floor(?, loc2.minZ)))
+   116 invokevirtual net/minecraft/world/level/block/state/BlockState.isAir()Z  ()
+   127 invokevirtual net/minecraft/world/level/block/state/BlockState.is(Lnet/minecraft/tags/TagKey;)Z  (net/minecraft/tags/BlockTags.DRAGON_TRANSPARENT)
+   137 invokevirtual net/minecraft/server/level/ServerLevel.getGameRules()Lnet/minecraft/world/level/gamerules/GameRules;  ()
+   143 invokevirtual net/minecraft/world/level/gamerules/GameRules.get(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;  (net/minecraft/world/level/gamerules/GameRules.MOB_GRIEFING)
+   149 invokevirtual java/lang/Boolean.booleanValue()Z  ()
+   160 invokevirtual net/minecraft/world/level/block/state/BlockState.is(Lnet/minecraft/tags/TagKey;)Z  (net/minecraft/tags/BlockTags.DRAGON_IMMUNE)
+   176 invokevirtual net/minecraft/server/level/ServerLevel.removeBlock(Lnet/minecraft/core/BlockPos;Z)Z  (loc14=net/minecraft/core/BlockPos(loc11=loc3=Mth.floor(?, loc2.minX), loc12=loc4=Mth.floor(?, loc2.minY), loc13=loc5=Mth.floor(?, loc2.minZ)), 0)
+   223 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+   232 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (arith)
+   241 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+   251 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (arith)
+   260 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+   270 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (arith)
+   276 invokespecial net/minecraft/core/BlockPos.<init>(III)V  (arith, arith, arith)
+   288 invokevirtual net/minecraft/server/level/ServerLevel.levelEvent(ILnet/minecraft/core/BlockPos;I)V  (2008, loc11=net/minecraft/core/BlockPos(arith, arith, arith), 0)
+   293 return loc9=1
+
+=== createAttributes()Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder; ===
+     0 invokestatic net/minecraft/world/entity/Mob.createMobAttributes()Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;  ()
+     9 invokevirtual net/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder.add(Lnet/minecraft/core/Holder;D)Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;  (Mob.createMobAttributes(), net/minecraft/world/entity/ai/attributes/Attributes.MAX_HEALTH, 200.0)
+    18 invokevirtual net/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder.add(Lnet/minecraft/core/Holder;D)Lnet/minecraft/world/entity/ai/attributes/AttributeSupplier$Builder;  (?.add(Mob.createMobAttributes(), net/minecraft/world/entity/ai/attributes/Attributes.MAX_HEALTH, 200.0), net/minecraft/world/entity/ai/attributes/Attributes.CAMERA_DISTANCE, 16.0)
+    21 return ?.add(?.add(Mob.createMobAttributes(), net/minecraft/world/entity/ai/attributes/Attributes.MAX_HEALTH, 200.0), net/minecraft/world/entity/ai/attributes/Attributes.CAMERA_DISTANCE, 16.0)
+
+=== defineSynchedData(Lnet/minecraft/network/syncher/SynchedEntityData$Builder;)V ===
+     2 invokespecial net/minecraft/world/entity/Mob.defineSynchedData(Lnet/minecraft/network/syncher/SynchedEntityData$Builder;)V  (loc1)
+    12 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.getId()I  ()
+    15 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.HOVERING.getId())
+    18 invokevirtual net/minecraft/network/syncher/SynchedEntityData$Builder.define(Lnet/minecraft/network/syncher/EntityDataAccessor;Ljava/lang/Object;)Lnet/minecraft/network/syncher/SynchedEntityData$Builder;  (net/minecraft/world/entity/boss/enderdragon/EnderDragon.DATA_PHASE, Integer.valueOf(net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.HOVERING.getId()))
+    22 return
+
+=== findClosestNode()I ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+    43 invokestatic net/minecraft/util/Mth.cos(D)F  (60.0, arith)
+    47 invokestatic net/minecraft/util/Mth.floor(F)I  ((? * Mth.cos(60.0, arith)))
+    68 invokestatic net/minecraft/util/Mth.sin(D)F  (60.0, arith)
+    72 invokestatic net/minecraft/util/Mth.floor(F)I  ((? * Mth.sin(60.0, arith)))
+   105 invokestatic net/minecraft/util/Mth.cos(D)F  (40.0, arith)
+   109 invokestatic net/minecraft/util/Mth.floor(F)I  ((? * Mth.cos(40.0, arith)))
+   130 invokestatic net/minecraft/util/Mth.sin(D)F  (40.0, arith)
+   134 invokestatic net/minecraft/util/Mth.floor(F)I  ((? * Mth.sin(40.0, arith)))
+   164 invokestatic net/minecraft/util/Mth.cos(D)F  (20.0, arith)
+   168 invokestatic net/minecraft/util/Mth.floor(F)I  ((? * Mth.cos(20.0, arith)))
+   189 invokestatic net/minecraft/util/Mth.sin(D)F  (20.0, arith)
+   193 invokestatic net/minecraft/util/Mth.floor(F)I  ((? * Mth.sin(20.0, arith)))
+   201 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   216 invokespecial net/minecraft/core/BlockPos.<init>(III)V  (loc4=Mth.floor((? * Mth.cos(20.0, arith))), 0, loc5=Mth.floor((? * Mth.sin(20.0, arith))))
+   219 invokevirtual net/minecraft/world/level/Level.getHeightmapPos(Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING_NO_LEAVES, net/minecraft/core/BlockPos(loc4=Mth.floor((? * Mth.cos(20.0, arith))), 0, loc5=Mth.floor((? * Mth.sin(20.0, arith)))))
+   222 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+   227 invokestatic java/lang/Math.max(II)I  (73, arith)
+   233 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+   247 invokespecial net/minecraft/world/level/pathfinder/Node.<init>(III)V  (loc4=Mth.floor((? * Mth.cos(20.0, arith))), loc6=Math.max(73, arith), loc5=Mth.floor((? * Mth.sin(20.0, arith))))
+   250 ?? opcode 0x53
+   258 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   265 ?? opcode 0x4f
+   267 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   274 ?? opcode 0x4f
+   276 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   283 ?? opcode 0x4f
+   285 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   292 ?? opcode 0x4f
+   294 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   301 ?? opcode 0x4f
+   303 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   310 ?? opcode 0x4f
+   312 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   320 ?? opcode 0x4f
+   322 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   330 ?? opcode 0x4f
+   332 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   340 ?? opcode 0x4f
+   342 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   350 ?? opcode 0x4f
+   352 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   360 ?? opcode 0x4f
+   362 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   370 ?? opcode 0x4f
+   372 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   380 ?? opcode 0x4f
+   382 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   390 ?? opcode 0x4f
+   392 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   400 ?? opcode 0x4f
+   402 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   410 ?? opcode 0x4f
+   412 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   420 ?? opcode 0x4f
+   422 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   430 ?? opcode 0x4f
+   432 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   440 ?? opcode 0x4f
+   442 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   450 ?? opcode 0x4f
+   452 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   460 ?? opcode 0x4f
+   462 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   470 ?? opcode 0x4f
+   472 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   480 ?? opcode 0x4f
+   482 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   490 ?? opcode 0x4f
+   493 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+   497 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+   501 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+   504 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.findClosestNode(DDD)I  (23, 8257536, loc0, loc0.getX(), loc0.getY(), loc0.getZ())
+   507 return loc0.nodeAdjacency.findClosestNode(23, 8257536, loc0, loc0.getX(), loc0.getY(), loc0.getZ())
+
+=== findClosestNode(DDD)I ===
+    13 invokestatic net/minecraft/util/Mth.floor(D)I  (new net/minecraft/world/level/pathfinder/Node, loc3)
+    16 ?? opcode 0x29
+    17 invokestatic net/minecraft/util/Mth.floor(D)I  (new net/minecraft/world/level/pathfinder/Node, Mth.floor(new net/minecraft/world/level/pathfinder/Node, loc3))
+    22 invokestatic net/minecraft/util/Mth.floor(D)I  (Mth.floor(new net/minecraft/world/level/pathfinder/Node, Mth.floor(new net/minecraft/world/level/pathfinder/Node, loc3)), loc5)
+    25 invokespecial net/minecraft/world/level/pathfinder/Node.<init>(III)V  (?, ?, Mth.floor(Mth.floor(new net/minecraft/world/level/pathfinder/Node, Mth.floor(new net/minecraft/world/level/pathfinder/Node, loc3)), loc5))
+    34 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+    41 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+    44 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.aliveCrystals()I  ()
+    66 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+    76 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+    84 invokevirtual net/minecraft/world/level/pathfinder/Node.distanceToSqr(Lnet/minecraft/world/level/pathfinder/Node;)F  (loc9=?)
+   113 return loc8=loc11=loc10=12
+
+=== findPath(IILnet/minecraft/world/level/pathfinder/Node;)Lnet/minecraft/world/level/pathfinder/Path; ===
+    11 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+    22 putfield net/minecraft/world/level/pathfinder/Node.closed = 0
+    28 putfield net/minecraft/world/level/pathfinder/Node.f = 0.0
+    34 putfield net/minecraft/world/level/pathfinder/Node.g = 0.0
+    40 putfield net/minecraft/world/level/pathfinder/Node.h = 0.0
+    46 putfield net/minecraft/world/level/pathfinder/Node.cameFrom = null
+    52 putfield net/minecraft/world/level/pathfinder/Node.heapIdx = -1
+    62 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+    70 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+    80 putfield net/minecraft/world/level/pathfinder/Node.g = 0.0
+    89 invokevirtual net/minecraft/world/level/pathfinder/Node.distanceTo(Lnet/minecraft/world/level/pathfinder/Node;)F  (loc5=arr)
+    92 putfield net/minecraft/world/level/pathfinder/Node.h = loc4=arr.distanceTo(loc5=arr)
+    99 getfield net/minecraft/world/level/pathfinder/Node.h  (loc4=arr)
+   102 putfield net/minecraft/world/level/pathfinder/Node.f = loc4=arr.h
+   106 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.openSet  (loc0)
+   109 invokevirtual net/minecraft/world/level/pathfinder/BinaryHeap.clear()V  ()
+   113 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.openSet  (loc0)
+   118 invokevirtual net/minecraft/world/level/pathfinder/BinaryHeap.insert(Lnet/minecraft/world/level/pathfinder/Node;)Lnet/minecraft/world/level/pathfinder/Node;  (loc4=arr)
+   130 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+   137 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+   140 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.aliveCrystals()I  ()
+   151 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.openSet  (loc0)
+   154 invokevirtual net/minecraft/world/level/pathfinder/BinaryHeap.isEmpty()Z  ()
+   161 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.openSet  (loc0)
+   164 invokevirtual net/minecraft/world/level/pathfinder/BinaryHeap.pop()Lnet/minecraft/world/level/pathfinder/Node;  ()
+   173 invokevirtual net/minecraft/world/level/pathfinder/Node.equals(Ljava/lang/Object;)Z  (loc5=arr)
+   186 putfield net/minecraft/world/level/pathfinder/Node.cameFrom = loc5=arr
+   197 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.reconstructPath(Lnet/minecraft/world/level/pathfinder/Node;Lnet/minecraft/world/level/pathfinder/Node;)Lnet/minecraft/world/level/pathfinder/Path;  (loc4=arr, loc5=loc3)
+   200 return loc0.reconstructPath(loc4=arr, loc5=loc3)
+   205 invokevirtual net/minecraft/world/level/pathfinder/Node.distanceTo(Lnet/minecraft/world/level/pathfinder/Node;)F  (loc5=loc3)
+   212 invokevirtual net/minecraft/world/level/pathfinder/Node.distanceTo(Lnet/minecraft/world/level/pathfinder/Node;)F  (loc5=loc3)
+   226 putfield net/minecraft/world/level/pathfinder/Node.closed = 1
+   243 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+   279 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodeAdjacency  (loc0)
+   288 ?? opcode 0x78
+   294 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nodes  (loc0)
+   304 getfield net/minecraft/world/level/pathfinder/Node.closed  (loc11=arr)
+   315 getfield net/minecraft/world/level/pathfinder/Node.g  (loc8=loc0.openSet.pop())
+   322 invokevirtual net/minecraft/world/level/pathfinder/Node.distanceTo(Lnet/minecraft/world/level/pathfinder/Node;)F  (loc11=arr)
+   330 invokevirtual net/minecraft/world/level/pathfinder/Node.inOpenSet()Z  ()
+   340 getfield net/minecraft/world/level/pathfinder/Node.g  (loc11=arr)
+   351 putfield net/minecraft/world/level/pathfinder/Node.cameFrom = loc8=loc0.openSet.pop()
+   358 putfield net/minecraft/world/level/pathfinder/Node.g = loc12=(loc8=loc0.openSet.pop().g + loc8=loc0.openSet.pop().distanceTo(loc11=arr))
+   367 invokevirtual net/minecraft/world/level/pathfinder/Node.distanceTo(Lnet/minecraft/world/level/pathfinder/Node;)F  (loc5=loc3)
+   370 putfield net/minecraft/world/level/pathfinder/Node.h = loc11=arr.distanceTo(loc5=loc3)
+   375 invokevirtual net/minecraft/world/level/pathfinder/Node.inOpenSet()Z  ()
+   382 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.openSet  (loc0)
+   389 getfield net/minecraft/world/level/pathfinder/Node.g  (loc11=arr)
+   394 getfield net/minecraft/world/level/pathfinder/Node.h  (loc11=arr)
+   398 invokevirtual net/minecraft/world/level/pathfinder/BinaryHeap.changeCost(Lnet/minecraft/world/level/pathfinder/Node;F)V  (loc11=arr, (loc11=arr.g + loc11=arr.h))
+   408 getfield net/minecraft/world/level/pathfinder/Node.g  (loc11=arr)
+   413 getfield net/minecraft/world/level/pathfinder/Node.h  (loc11=arr)
+   417 putfield net/minecraft/world/level/pathfinder/Node.f = (loc11=arr.g + loc11=arr.h)
+   421 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.openSet  (loc0)
+   426 invokevirtual net/minecraft/world/level/pathfinder/BinaryHeap.insert(Lnet/minecraft/world/level/pathfinder/Node;)Lnet/minecraft/world/level/pathfinder/Node;  (loc11=arr)
+   447 return null
+   455 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (loc1)
+   459 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (loc2)
+   462 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V  ('Failed to find path from {} to {}', Integer.valueOf(loc1), Integer.valueOf(loc2))
+   474 putfield net/minecraft/world/level/pathfinder/Node.cameFrom = loc6=loc8=loc0.openSet.pop()
+   485 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.reconstructPath(Lnet/minecraft/world/level/pathfinder/Node;Lnet/minecraft/world/level/pathfinder/Node;)Lnet/minecraft/world/level/pathfinder/Path;  (loc4=arr, loc6=loc3)
+   488 return loc0.reconstructPath(loc4=arr, loc6=loc3)
+
+=== getAmbientSound()Lnet/minecraft/sounds/SoundEvent; ===
+     3 return net/minecraft/sounds/SoundEvents.ENDER_DRAGON_AMBIENT
+
+=== getDragonFight()Lnet/minecraft/world/level/dimension/end/EnderDragonFight; ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+     4 return loc0.dragonFight
+
+=== getFightOrigin()Lnet/minecraft/core/BlockPos; ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.fightOrigin  (loc0)
+     4 return loc0.fightOrigin
+
+=== getHeadLookVector(F)Lnet/minecraft/world/phys/Vec3; ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+     4 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+     7 ?? opcode 0x4d
+     9 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.getPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;  ()
+    14 ?? opcode 0x4e
+    30 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+    37 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.fightOrigin  (loc0)
+    40 invokestatic net/minecraft/world/level/levelgen/feature/EndPodiumFeature.getLocation(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (loc0.fightOrigin)
+    43 invokevirtual net/minecraft/world/level/Level.getHeightmapPos(Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING_NO_LEAVES, EndPodiumFeature.getLocation(loc0.fightOrigin))
+    51 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.position()Lnet/minecraft/world/phys/Vec3;  ()
+    54 invokevirtual net/minecraft/core/BlockPos.distToCenterSqr(Lnet/minecraft/core/Position;)D  (loc0.position())
+    57 invokestatic java/lang/Math.sqrt(D)D  (loc2.getPhase(), loc5=loc0.level().getHeightmapPos(net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING_NO_LEAVES, EndPodiumFeature.getLocation(loc0.fightOrigin)).distToCenterSqr(loc0.position()))
+    65 invokestatic java/lang/Math.max(FF)F  ((arith / 4.0), 1.0)
+    79 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getXRot()F  ()
+    92 ?? opcode 0x76
+   100 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setXRot(F)V  (((loc7=(6.0 / loc6=Math.max((arith / 4.0), 1.0)) * 1.5) * 5.0))
+   105 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getViewVector(F)Lnet/minecraft/world/phys/Vec3;  (loc3)
+   113 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setXRot(F)V  (loc8=loc0.getXRot())
+   120 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+   129 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getXRot()F  ()
+   143 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setXRot(F)V  (-45.0)
+   148 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getViewVector(F)Lnet/minecraft/world/phys/Vec3;  (loc3)
+   156 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setXRot(F)V  (loc5=loc0.getXRot())
+   164 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getViewVector(F)Lnet/minecraft/world/phys/Vec3;  (loc3)
+   171 return loc4=loc0.getViewVector(loc3)
+
+=== getHeadYOffset()F ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+     4 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+     7 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+    18 return -1.0
+    20 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory  (loc0)
+    24 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.get(I)Lnet/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample;  (5)
+    27 ?? opcode 0x4c
+    29 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flightHistory  (loc0)
+    33 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory.get(I)Lnet/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample;  (0)
+    36 ?? opcode 0x4d
+    38 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.y()D  ()
+    42 invokevirtual net/minecraft/world/entity/boss/enderdragon/DragonFlightHistory$Sample.y()D  ()
+    45 ?? opcode 0x67
+    47 return arith
+
+=== getHurtSound(Lnet/minecraft/world/damagesource/DamageSource;)Lnet/minecraft/sounds/SoundEvent; ===
+     3 return net/minecraft/sounds/SoundEvents.ENDER_DRAGON_HURT
+
+=== getPhaseManager()Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager; ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+     4 return loc0.phaseManager
+
+=== getSoundSource()Lnet/minecraft/sounds/SoundSource; ===
+     3 return net/minecraft/sounds/SoundSource.HOSTILE
+
+=== getSoundVolume()F ===
+     2 return 5.0
+
+=== getSubEntities()[Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart; ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0)
+     4 return loc0.subEntities
+
+=== handleKillingBlow()V ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+     4 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+     7 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+    17 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setHealth(F)V  (1.0)
+    21 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+    27 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.setPhase(Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;)V  (net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.DYING)
+    30 return
+
+=== hurt(Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V ===
+     1 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+     6 ?? opcode 0x4e
+     8 invokeinterface java/util/Iterator.hasNext()Z  ()
+    17 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    36 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.damageSources()Lnet/minecraft/world/damagesource/DamageSources;  ()
+    40 invokevirtual net/minecraft/world/damagesource/DamageSources.mobAttack(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/damagesource/DamageSource;  (loc0)
+    53 invokevirtual net/minecraft/world/entity/Entity.hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z  (loc1, loc5=loc0.damageSources().mobAttack(loc0), 10.0)
+    62 invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.doPostAttackEffects(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)V  (loc1, loc4=loc3.next(), loc5=loc0.damageSources().mobAttack(loc0))
+    68 return
+
+=== hurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;Lnet/minecraft/world/damagesource/DamageSource;F)Z ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+     4 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+     7 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.getPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;  ()
+    19 return 0
+    21 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+    24 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+    30 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.onHurt(Lnet/minecraft/world/damagesource/DamageSource;F)F  (loc3, loc4)
+    39 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.head  (loc0)
+    53 invokestatic java/lang/Math.min(FF)F  (loc4=loc0.phaseManager.getCurrentPhase().onHurt(loc3, loc4), 1.0)
+    69 return 0
+    71 invokevirtual net/minecraft/world/damagesource/DamageSource.getEntity()Lnet/minecraft/world/entity/Entity;  ()
+    84 invokevirtual net/minecraft/world/damagesource/DamageSource.is(Lnet/minecraft/tags/TagKey;)Z  (net/minecraft/tags/DamageTypeTags.ALWAYS_HURTS_ENDER_DRAGONS)
+    91 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getHealth()F  ()
+   101 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.reallyHurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)V  (loc1, loc3, loc4=((loc4=loc0.phaseManager.getCurrentPhase().onHurt(loc3, loc4) / 4.0) + Math.min(loc4=loc0.phaseManager.getCurrentPhase().onHurt(loc3, loc4), 1.0)))
+   105 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+   108 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+   111 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+   121 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.sittingDamageReceived  (loc0)
+   128 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getHealth()F  ()
+   132 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.sittingDamageReceived = ((loc0.sittingDamageReceived + loc5=loc0.getHealth()) - loc0.getHealth())
+   136 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.sittingDamageReceived  (loc0)
+   143 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getMaxHealth()F  ()
+   153 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.sittingDamageReceived = 0.0
+   157 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+   163 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.setPhase(Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;)V  (net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.TAKEOFF)
+   167 return 1
+
+=== hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z ===
+     3 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0)
+     8 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.hurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;Lnet/minecraft/world/damagesource/DamageSource;F)Z  (loc1, loc0.body, loc2, loc1)
+    11 return loc0.hurt(loc1, loc0.body, loc2, loc1)
+
+=== isFlapping()Z ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.flapTime  (loc0)
+     8 invokestatic net/minecraft/util/Mth.cos(D)F  (?, arith)
+    13 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.oFlapTime  (loc0)
+    20 invokestatic net/minecraft/util/Mth.cos(D)F  (?, arith)
+    43 return 0
+
+=== isPickable()Z ===
+     1 return 0
+
+=== kill(Lnet/minecraft/server/level/ServerLevel;)V ===
+     4 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.remove(Lnet/minecraft/world/entity/Entity$RemovalReason;)V  (net/minecraft/world/entity/Entity$RemovalReason.KILLED)
+    11 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.gameEvent(Lnet/minecraft/core/Holder;)V  (net/minecraft/world/level/gameevent/GameEvent.ENTITY_DIE)
+    15 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+    22 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+    26 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.updateDragon(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V  (loc0)
+    30 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+    34 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDragonKilled(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V  (loc0)
+    37 return
+
+=== knockBack(Lnet/minecraft/server/level/ServerLevel;Ljava/util/List;)V ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0)
+     4 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+     7 getfield net/minecraft/world/phys/AABB.minX  (loc0.body.getBoundingBox())
+    11 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0)
+    14 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+    17 getfield net/minecraft/world/phys/AABB.maxX  (loc0.body.getBoundingBox())
+    20 ?? opcode 0x63
+    24 ?? opcode 0x6f
+    27 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0)
+    30 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+    33 getfield net/minecraft/world/phys/AABB.minZ  (loc0.body.getBoundingBox())
+    37 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.body  (loc0)
+    40 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.getBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+    43 getfield net/minecraft/world/phys/AABB.maxZ  (loc0.body.getBoundingBox())
+    46 ?? opcode 0x63
+    50 ?? opcode 0x6f
+    54 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+    63 invokeinterface java/util/Iterator.hasNext()Z  ()
+    73 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+   100 invokevirtual net/minecraft/world/entity/Entity.getX()D  ()
+   103 ?? opcode 0x29
+   104 ?? opcode 0x67
+   109 invokevirtual net/minecraft/world/entity/Entity.getZ()D  ()
+   114 ?? opcode 0x67
+   121 ?? opcode 0x6b
+   126 ?? opcode 0x6b
+   127 ?? opcode 0x63
+   131 invokestatic java/lang/Math.max(DD)D  (loc10=loc8=loc7=loc2.iterator().next().getX(), loc12=loc5=2.0, loc12=loc5=2.0, 0.1)
+   142 ?? opcode 0x6f
+   146 ?? opcode 0x6b
+   154 ?? opcode 0x6f
+   158 ?? opcode 0x6b
+   159 invokevirtual net/minecraft/world/entity/Entity.push(DDD)V  (loc14=Math.max(loc10=loc8=loc7=loc2.iterator().next().getX(), loc12=loc5=2.0, loc12=loc5=2.0, 0.1), 4.0, 0.20000000298023224, loc12=loc5=2.0, loc14=Math.max(loc10=loc8=loc7=loc2.iterator().next().getX(), loc12=loc5=2.0, loc12=loc5=2.0, 0.1), 4.0)
+   163 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+   166 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+   169 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+   179 invokevirtual net/minecraft/world/entity/LivingEntity.getLastHurtByMobTimestamp()I  ()
+   184 getfield net/minecraft/world/entity/Entity.tickCount  (loc8=loc7=loc2.iterator().next())
+   193 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.damageSources()Lnet/minecraft/world/damagesource/DamageSources;  ()
+   197 invokevirtual net/minecraft/world/damagesource/DamageSources.mobAttack(Lnet/minecraft/world/entity/LivingEntity;)Lnet/minecraft/world/damagesource/DamageSource;  (loc0)
+   209 invokevirtual net/minecraft/world/entity/Entity.hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z  (loc1, loc16=loc0.damageSources().mobAttack(loc0), 5.0)
+   218 invokestatic net/minecraft/world/item/enchantment/EnchantmentHelper.doPostAttackEffects(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;)V  (loc1, loc8=loc7=loc2.iterator().next(), loc16=loc0.damageSources().mobAttack(loc0))
+   224 return
+
+=== knockback(DDDLnet/minecraft/world/damagesource/DamageSource;F)V ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+     4 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+     7 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.isSitting()Z  ()
+    15 return
+    18 ?? opcode 0x29
+    25 invokespecial net/minecraft/world/entity/Mob.knockback(DDDLnet/minecraft/world/damagesource/DamageSource;F)V  (?, ?, ?, loc0, loc3, loc5, loc7, loc8)
+    28 return
+
+=== lambda$readAdditionalSaveData$0(Ljava/lang/Integer;)V ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+     5 invokevirtual java/lang/Integer.intValue()I  ()
+     8 invokestatic net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.getById(I)Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;  (loc1.intValue())
+    11 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.setPhase(Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;)V  (EnderDragonPhase.getById(loc1.intValue()))
+    14 return
+
+=== onCrystalDestroyed(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/boss/enderdragon/EndCrystal;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/damagesource/DamageSource;)V ===
+     2 invokevirtual net/minecraft/world/damagesource/DamageSource.getEntity()Lnet/minecraft/world/entity/Entity;  ()
+    34 invokevirtual net/minecraft/core/BlockPos.getX()I  ()
+    39 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+    44 invokevirtual net/minecraft/core/BlockPos.getZ()I  ()
+    48 invokevirtual net/minecraft/server/level/ServerLevel.getNearestPlayer(Lnet/minecraft/world/entity/ai/targeting/TargetingConditions;DDD)Lnet/minecraft/world/entity/player/Player;  (?, ?, loc1, net/minecraft/world/entity/boss/enderdragon/EnderDragon.CRYSTAL_DESTROY_TARGETING, arith, arith, arith)
+    55 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.nearestCrystal  (loc0)
+    64 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.head  (loc0)
+    68 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.damageSources()Lnet/minecraft/world/damagesource/DamageSources;  ()
+    74 invokevirtual net/minecraft/world/damagesource/DamageSources.explosion(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/entity/Entity;)Lnet/minecraft/world/damagesource/DamageSource;  (loc2, loc5=?.getNearestPlayer(?, ?, loc1, net/minecraft/world/entity/boss/enderdragon/EnderDragon.CRYSTAL_DESTROY_TARGETING, arith, arith, arith))
+    80 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.hurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;Lnet/minecraft/world/damagesource/DamageSource;F)Z  (loc1, loc0.head, loc0.damageSources().explosion(loc2, loc5=?.getNearestPlayer(?, ?, loc1, net/minecraft/world/entity/boss/enderdragon/EnderDragon.CRYSTAL_DESTROY_TARGETING, arith, arith, arith)), 10.0)
+    85 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+    88 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.getCurrentPhase()Lnet/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance;  ()
+    97 invokeinterface net/minecraft/world/entity/boss/enderdragon/phases/DragonPhaseInstance.onCrystalDestroyed(Lnet/minecraft/world/entity/boss/enderdragon/EndCrystal;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/entity/player/Player;)V  (loc2, loc3, loc4, loc5=?.getNearestPlayer(?, ?, loc1, net/minecraft/world/entity/boss/enderdragon/EnderDragon.CRYSTAL_DESTROY_TARGETING, arith, arith, arith))
+   102 return
+
+=== onFlap()V ===
+     1 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+     4 invokevirtual net/minecraft/world/level/Level.isClientSide()Z  ()
+    11 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.isSilent()Z  ()
+    18 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+    22 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+    26 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+    30 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+    37 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getSoundSource()Lnet/minecraft/sounds/SoundSource;  ()
+    45 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+    48 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+    58 invokevirtual net/minecraft/world/level/Level.playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (?, ?, loc0.level(), loc0.getX(), loc0.getY(), loc0.getZ(), net/minecraft/sounds/SoundEvents.ENDER_DRAGON_FLAP, loc0.getSoundSource(), 5.0, (0.800000011920929 + (loc0.random.nextFloat() * 0.30000001192092896)), 0)
+    61 return
+
+=== onSyncedDataUpdated(Lnet/minecraft/network/syncher/EntityDataAccessor;)V ===
+     4 invokevirtual net/minecraft/network/syncher/EntityDataAccessor.equals(Ljava/lang/Object;)Z  (loc1)
+    11 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+    14 invokevirtual net/minecraft/world/level/Level.isClientSide()Z  ()
+    21 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.phaseManager  (loc0)
+    25 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getEntityData()Lnet/minecraft/network/syncher/SynchedEntityData;  ()
+    31 invokevirtual net/minecraft/network/syncher/SynchedEntityData.get(Lnet/minecraft/network/syncher/EntityDataAccessor;)Ljava/lang/Object;  (net/minecraft/world/entity/boss/enderdragon/EnderDragon.DATA_PHASE)
+    37 invokevirtual java/lang/Integer.intValue()I  ()
+    40 invokestatic net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.getById(I)Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;  (loc0.getEntityData().get(net/minecraft/world/entity/boss/enderdragon/EnderDragon.DATA_PHASE).intValue())
+    43 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.setPhase(Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;)V  (EnderDragonPhase.getById(loc0.getEntityData().get(net/minecraft/world/entity/boss/enderdragon/EnderDragon.DATA_PHASE).intValue()))
+    48 invokespecial net/minecraft/world/entity/Mob.onSyncedDataUpdated(Lnet/minecraft/network/syncher/EntityDataAccessor;)V  (loc1)
+    51 return
+
+=== readAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueInput;)V ===
+     2 invokespecial net/minecraft/world/entity/Mob.readAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueInput;)V  (loc1)
+     9 invokeinterface net/minecraft/world/level/storage/ValueInput.getInt(Ljava/lang/String;)Ljava/util/Optional;  ('DragonPhase')
+    20 invokevirtual java/util/Optional.ifPresent(Ljava/util/function/Consumer;)V  (loc0)
+    29 invokeinterface net/minecraft/world/level/storage/ValueInput.getIntOr(Ljava/lang/String;I)I  ('DragonDeathTime', 0)
+    34 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime = loc1.getIntOr('DragonDeathTime', 0)
+    43 invokeinterface net/minecraft/world/level/storage/ValueInput.getFloatOr(Ljava/lang/String;F)F  ('sitting_damage_received', 0.0)
+    48 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.sittingDamageReceived = loc1.getFloatOr('sitting_damage_received', 0.0)
+    51 return
+
+=== reallyHurt(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)V ===
+     4 invokespecial net/minecraft/world/entity/Mob.hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z  (loc1, loc2, loc1)
+     8 return
+
+=== reconstructPath(Lnet/minecraft/world/level/pathfinder/Node;Lnet/minecraft/world/level/pathfinder/Node;)Lnet/minecraft/world/level/pathfinder/Path; ===
+     0 invokestatic com/google/common/collect/Lists.newArrayList()Ljava/util/ArrayList;  ()
+     3 ?? opcode 0x4e
+    11 invokeinterface java/util/List.add(ILjava/lang/Object;)V  (0, loc4=loc2)
+    18 getfield net/minecraft/world/level/pathfinder/Node.cameFrom  (loc4=loc2)
+    26 getfield net/minecraft/world/level/pathfinder/Node.cameFrom  (loc4=loc2)
+    35 invokeinterface java/util/List.add(ILjava/lang/Object;)V  (0, loc4=loc4=loc2.cameFrom)
+    53 getfield net/minecraft/world/level/pathfinder/Node.x  (loc2)
+    57 getfield net/minecraft/world/level/pathfinder/Node.y  (loc2)
+    61 getfield net/minecraft/world/level/pathfinder/Node.z  (loc2)
+    64 invokespecial net/minecraft/core/BlockPos.<init>(III)V  (loc2.x, loc2.y, loc2.z)
+    68 invokespecial net/minecraft/world/level/pathfinder/Path.<init>(Ljava/util/List;Lnet/minecraft/core/BlockPos;Z)V  (loc3, net/minecraft/core/BlockPos(loc2.x, loc2.y, loc2.z), 1)
+    71 return net/minecraft/world/level/pathfinder/Path(loc3, net/minecraft/core/BlockPos(loc2.x, loc2.y, loc2.z), 1)
+
+=== recreateFromPacket(Lnet/minecraft/network/protocol/game/ClientboundAddEntityPacket;)V ===
+     2 invokespecial net/minecraft/world/entity/Mob.recreateFromPacket(Lnet/minecraft/network/protocol/game/ClientboundAddEntityPacket;)V  (loc1)
+     6 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getSubEntities()[Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;  ()
+     9 ?? opcode 0x4d
+    23 invokevirtual net/minecraft/network/protocol/game/ClientboundAddEntityPacket.getId()I  ()
+    29 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.setId(I)V  (arith)
+    38 return
+
+=== rotWrap(D)F ===
+     1 invokestatic net/minecraft/util/Mth.wrapDegrees(D)D  (?, loc3)
+     5 return arith
+
+=== sanitizeScale(F)F ===
+     1 return 1.0
+
+=== setDragonFight(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)V ===
+     2 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight = loc1
+     5 return
+
+=== setFightOrigin(Lnet/minecraft/core/BlockPos;)V ===
+     2 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.fightOrigin = loc1
+     5 return
+
+=== tickDeath()V ===
+     1 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+     8 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0)
+    12 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.updateDragon(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V  (loc0)
+    17 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0)
+    22 putfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime = arith
+    26 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0)
+    36 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0)
+    46 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+    49 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+    64 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0)
+    67 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+    81 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.random  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+    84 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+    99 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   106 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+   111 ?? opcode 0x63
+   113 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+   119 ?? opcode 0x63
+   122 ?? opcode 0x63
+   124 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+   129 ?? opcode 0x63
+   133 invokevirtual net/minecraft/world/level/Level.addParticle(Lnet/minecraft/core/particles/ParticleOptions;DDDDDD)V  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0), loc0=((loc0.random.nextFloat() - 0.5) * 4.0).level(), net/minecraft/core/particles/ParticleTypes.EXPLOSION_EMITTER, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).getX(), arith, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).getY(), 2.0, arith, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).getZ(), arith, 0.0, 0.0, 0.0)
+   141 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   148 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   151 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon()Z  ()
+   162 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   165 ?? opcode 0x4e
+   177 ?? opcode 0x4d
+   179 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   189 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   198 invokevirtual net/minecraft/server/level/ServerLevel.getGameRules()Lnet/minecraft/world/level/gamerules/GameRules;  ()
+   204 invokevirtual net/minecraft/world/level/gamerules/GameRules.get(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;  (net/minecraft/world/level/gamerules/GameRules.MOB_DROPS)
+   210 invokevirtual java/lang/Boolean.booleanValue()Z  ()
+   218 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.position()Lnet/minecraft/world/phys/Vec3;  ()
+   227 invokestatic net/minecraft/util/Mth.floor(F)I  ((arith * 0.07999999821186066))
+   230 invokestatic net/minecraft/world/entity/ExperienceOrb.award(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;I)V  (loc2, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).position(), Mth.floor((arith * 0.07999999821186066)))
+   234 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   242 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.isSilent()Z  ()
+   253 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.blockPosition()Lnet/minecraft/core/BlockPos;  ()
+   257 invokevirtual net/minecraft/server/level/ServerLevel.globalLevelEvent(ILnet/minecraft/core/BlockPos;I)V  (1028, loc0=((loc0.random.nextFloat() - 0.5) * 4.0).blockPosition(), 0)
+   269 invokespecial net/minecraft/world/phys/Vec3.<init>(DDD)V  (loc3=((loc0.random.nextFloat() - 0.5) * 8.0), new net/minecraft/world/phys/Vec3, new net/minecraft/world/phys/Vec3, 0.0, 0.10000000149011612, 0.0)
+   272 ?? opcode 0x4d
+   278 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.move(Lnet/minecraft/world/entity/MoverType;Lnet/minecraft/world/phys/Vec3;)V  (net/minecraft/world/entity/MoverType.SELF, loc2)
+   282 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.subEntities  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   285 ?? opcode 0x4e
+   308 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.setOldPosAndRot()V  ()
+   315 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.position()Lnet/minecraft/world/phys/Vec3;  ()
+   319 invokevirtual net/minecraft/world/phys/Vec3.add(Lnet/minecraft/world/phys/Vec3;)Lnet/minecraft/world/phys/Vec3;  (loc2)
+   322 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.setPos(Lnet/minecraft/world/phys/Vec3;)V  (loc6=arr.position().add(loc2))
+   332 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonDeathTime  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   342 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.level()Lnet/minecraft/world/level/Level;  ()
+   360 ?? opcode 0x4e
+   362 invokevirtual net/minecraft/server/level/ServerLevel.getGameRules()Lnet/minecraft/world/level/gamerules/GameRules;  ()
+   368 invokevirtual net/minecraft/world/level/gamerules/GameRules.get(Lnet/minecraft/world/level/gamerules/GameRule;)Ljava/lang/Object;  (net/minecraft/world/level/gamerules/GameRules.MOB_DROPS)
+   374 invokevirtual java/lang/Boolean.booleanValue()Z  ()
+   382 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.position()Lnet/minecraft/world/phys/Vec3;  ()
+   391 invokestatic net/minecraft/util/Mth.floor(F)I  ((arith * 0.20000000298023224))
+   394 invokestatic net/minecraft/world/entity/ExperienceOrb.award(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/phys/Vec3;I)V  (loc3=((loc0.random.nextFloat() - 0.5) * 8.0), loc0=((loc0.random.nextFloat() - 0.5) * 4.0).position(), Mth.floor((arith * 0.20000000298023224)))
+   398 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   405 getfield net/minecraft/world/entity/boss/enderdragon/EnderDragon.dragonFight  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   409 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDragonKilled(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V  (loc0=((loc0.random.nextFloat() - 0.5) * 4.0))
+   416 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.remove(Lnet/minecraft/world/entity/Entity$RemovalReason;)V  (net/minecraft/world/entity/Entity$RemovalReason.KILLED)
+   423 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.gameEvent(Lnet/minecraft/core/Holder;)V  (net/minecraft/world/level/gameevent/GameEvent.ENTITY_DIE)
+   426 return
+
+=== tickPart(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragonPart;DDD)V ===
+     2 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getX()D  ()
+     5 ?? opcode 0x28
+     6 ?? opcode 0x63
+     8 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getY()D  ()
+    13 ?? opcode 0x63
+    15 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getZ()D  ()
+    20 ?? opcode 0x63
+    21 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragonPart.setPos(DDD)V  (loc1, loc0.getX(), loc0.getY(), loc4, loc0.getZ(), loc6)
+    24 return

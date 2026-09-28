@@ -1492,6 +1492,41 @@ pub const PARTICLES_WAX_OFF_EFFECT: i32 = 3004;
 /// lane the case's own arm wears.
 pub const PARTICLES_SCRAPE_EFFECT: i32 = 3005;
 
+/// THE END-GATEWAY-SPAWN EXPLOSION-AND-VOICE EFFECT'S OWN ID (the 26.2
+/// `LevelEvent` constants class the client jar banks —
+/// `END_GATEWAY_SPAWN`, the case `LevelEventHandler.levelEvent` offset
+/// 5083 speaks): the TWO walks the case body spends — the ONE
+/// `addAlwaysVisibleParticle(ParticleTypes.EXPLOSION_EMITTER, true,
+/// pos.x + 0.5, pos.y + 0.5, pos.z + 0.5, 0.0, 0.0, 0.0)` walk FIRST
+/// (the `dconst_0` velocity trio the seed's own spawn keeps, the
+/// `+0.5` block-center pair the cp `#197` Double fold speaks, the
+/// force flag true the always-visible lane wears — the emitter the
+/// distance cull never hides), then the ONE
+/// `playLocalSound(pos, END_GATEWAY_SPAWN, BLOCKS, 10.0F, pitch,
+/// false)` walk the randoms carry (the `ldc_w 10.0F` volume the cp
+/// `#737` Float speaks, the pitch the `0.7F * (1.0F + (nextFloat() -
+/// nextFloat()) * 0.2F)` chain the cps `#682`/`#360` bank — the
+/// [0.56, 0.84] band the two-draw difference rides, the BLOCK CENTER
+/// the `playLocalSound(BlockPos, ...)` resolve places, the
+/// distance-delay flag false the immediate voice keeps, the data
+/// word the case's own body never reads — no `iload_3` the arm's
+/// bytecode speaks). The SEED the emitter option spawns —
+/// `HugeExplosionSeedParticle` the `NoRenderParticle` subclass keeps
+/// (the 8-tick countdown the ctor's `lifetime = 8` write speaks, the
+/// per-tick SIX `ParticleTypes.EXPLOSION` children the tick's
+/// `i < 6` loop banks — each child the `(r - r) * 4.0` triple-offset
+/// draw pair carries, the child's own size input the seed's
+/// `(float)age / (float)lifetime` walk feeds — the
+/// `HugeExplosionParticle`'s `2.0F * (1.0F - xa * 0.5F)` quadSize law
+/// the shrink rides), the 16-frame explosion bank the
+/// `explosion.json`'s ascending list holds. The server's own dragon
+/// fight speaks it — `EnderDragonFight.spawnNewGateway`'s
+/// `ServerLevel.levelEvent(3000, pos, 0)` call the bytecode pins
+/// (the dragon's death the new gateway the walk celebrates). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const END_GATEWAY_SPAWN_EFFECT: i32 = 3000;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -11074,6 +11109,11 @@ mod tests {
             PARTICLES_SCRAPE_EFFECT,
             3005,
             "the scrape effect the axe's own oxide walk speaks"
+        );
+        assert_eq!(
+            END_GATEWAY_SPAWN_EFFECT,
+            3000,
+            "the gateway-spawn effect the dragon fight's own gateway walk speaks"
         );
         assert_eq!(
             SPLASH_POTION_EFFECT,

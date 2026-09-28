@@ -7643,6 +7643,11 @@ impl App {
         // retain closure needs: the level stream the gate rolls ride,
         // the out-vec the children land in — pushed AFTER the loop)
         let mut smoke_spawns: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
+        // the gateway seed's own out-vec (the emitter's per-tick
+        // children — the six rows the seed's tick banks, each the
+        // (x, y, z, size_speed) row the child ctor's own size law
+        // reads)
+        let mut gateway_children: Vec<(f64, f64, f64, f32)> = Vec::new();
         // the dripstone lane's own out-vecs (the hang's expiry the fall
         // spawn fills, the fall's landing the land walk fills — pushed
         // AFTER the loop the vanilla queue order keeps)
@@ -7688,6 +7693,14 @@ impl App {
             // law speaks (no motion, no gravity, no friction — the
             // stationary blast the whole 6..9-tick life wears)
             crate::particles::ParticleKind::Explosion => p.tick_explosion(),
+            // the gateway seed's own walk: the invisible engine's
+            // six-children loop (the (r - r) * 4.0 offsets the out-vec
+            // banks, the size input the age walk feeds, the removal
+            // the age == lifetime gate answers — the death tick the
+            // last six still spawns)
+            crate::particles::ParticleKind::ExplosionSeed => {
+                p.tick_explosion_seed(level_rng, &mut gateway_children)
+            }
             // the splash puff's own walk: the age-only override the
             // dragon's law speaks (no gravity, no vy friction — the x/z
             // lanes alone the 0.96 folds ride)
@@ -7738,6 +7751,24 @@ impl App {
                 self.level_ambient_rng.next_f32(),
                 self.level_ambient_rng.next_f32(),
                 self.level_ambient_rng.next_f32(),
+            );
+            self.particles.push(child);
+        }
+        // THE GATEWAY CHILDREN LAND AFTER THE TICK LOOP (the vanilla
+        // queue order: the seed's addParticle queues the child, the
+        // engine ticks it from the NEXT tick — the render still sees
+        // it this frame). The child's ctor draws ride the LEVEL
+        // random: the dead base lifetime, the dead base quad, the
+        // 6..9 lifetime, the grey tint — the size input the seed's
+        // own age/lifetime walk carried (the children's shrink the
+        // `2.0 * (1.0 - xa * 0.5)` law rides).
+        for (px, py, pz, size_speed) in gateway_children {
+            let child = crate::particles::explosion_puff(
+                px,
+                py,
+                pz,
+                size_speed,
+                &mut self.level_ambient_rng,
             );
             self.particles.push(child);
         }
@@ -22684,6 +22715,71 @@ impl App {
         }
     }
 
+    /// THE GATEWAY-SPAWN WIRE LANE (javap `LevelEventHandler` case
+    /// 3000 — offset 5083 — over the 26.2 jar): the server's own
+    /// dragon fight the new-gateway word broadcasts
+    /// (`EnderDragonFight.spawnNewGateway`'s
+    /// `ServerLevel.levelEvent(3000, pos, 0)` call the bytecode
+    /// pins), the Level Event mailbox's landing: each word the arms
+    /// the worker drained ride exactly one refresh — the TWO walks
+    /// the case's own body spends: the ONE
+    /// `addAlwaysVisibleParticle(EXPLOSION_EMITTER, true, x + 0.5, y
+    /// + 0.5, z + 0.5, 0, 0, 0)` walk the invisible seed banks (the
+    /// 8-tick / 6-child emitter walk the children the 16-frame
+    /// explosion bank rides — the child's size input the seed's own
+    /// `age / lifetime` walk carries, the `2.0 * (1.0 - xa * 0.5)`
+    /// quadSize law the children's shrink answers), then the ONE
+    /// `playLocalSound(pos, END_GATEWAY_SPAWN, BLOCKS, 10.0F, pitch,
+    /// false)` walk the randoms carry (the `ldc_w 10.0F` volume the
+    /// 160-block reach the armed max speaks, the pitch the
+    /// `0.7F * (1.0F + (nextFloat() - nextFloat()) * 0.2F)` chain
+    /// the two-draw difference rides — the level stream the rolls
+    /// spend, the [0.56, 0.84] band the fold gives, the `fconst_1` /
+    /// `ldc_w` pair the bytecode order pins: r1 FIRST, r2 second).
+    pub fn live_gateway_spawn_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireGatewaySpawnEvent>,
+    ) {
+        let yaw = self.listener_yaw();
+        for ev in events {
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            // THE SEED (the emitter's own spawn walk — the
+            // `+0.5` block-center fold the case's cp `#197` Double
+            // speaks, the zero velocity trio the
+            // `dconst_0` keeps, the force flag the always-visible
+            // lane wears; the 8-tick countdown the seed's own ctor
+            // write banks, the six children per tick the tick loop
+            // answers)
+            let seed = crate::particles::gateway_explosion_seed(
+                f64::from(ev.x) + 0.5,
+                f64::from(ev.y) + 0.5,
+                f64::from(ev.z) + 0.5,
+            );
+            self.particles.push(seed);
+            // THE VOICE (the 3000 case's own tail — the ONE
+            // `playLocalSound(pos, END_GATEWAY_SPAWN, BLOCKS, 10.0F,
+            // pitch, false)` walk the case body spends: the volume
+            // the cp `#737` Float banks, the pitch the cp
+            // `#682`/`#360` chain folds — the two nextFloat draws
+            // the LEVEL stream rides, r1 minus r2 the fsub order
+            // keeps)
+            let r1 = self.level_ambient_rng.next_f32();
+            let r2 = self.level_ambient_rng.next_f32();
+            let pitch = 0.7f32 * (1.0f32 + (r1 - r2) * 0.2f32);
+            let sx = f64::from(ev.x) + 0.5;
+            let sy = f64::from(ev.y) + 0.5;
+            let sz = f64::from(ev.z) + 0.5;
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.end_gateway.spawn",
+                10.0,
+                pitch,
+                ear_distance(ear, sx, sy, sz),
+                ear_pan(ear, yaw, sx, sy, sz),
+            );
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -22922,7 +23018,7 @@ impl App {
         let px = f64::from(x) + 0.5;
         let py = f64::from(y) + 0.5;
         let pz = f64::from(z) + 0.5;
-        let puff = crate::particles::explosion_puff(px, py, pz, &mut self.level_ambient_rng);
+        let puff = crate::particles::explosion_puff(px, py, pz, 0.0, &mut self.level_ambient_rng);
         self.particles.push(puff);
     }
 
@@ -28011,6 +28107,17 @@ impl App {
                         tex: "particle_eye_shard",
                         tint: p.col,
                     });
+                }
+                crate::particles::ParticleKind::ExplosionSeed => {
+                    // THE INVISIBLE ENGINE (javap
+                    // `HugeExplosionSeedParticle` — the
+                    // `NoRenderParticle` subclass the seed's own class
+                    // bytes keep): NOTHING the render lanes bank — the
+                    // seed renders no quad, the children the tick
+                    // walk spawns do the visible work (the honest
+                    // absence the vanilla render pipeline answers —
+                    // the NoRenderParticle.render the base's own
+                    // return-early keeps)
                 }
             }
         }

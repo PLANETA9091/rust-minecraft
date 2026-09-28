@@ -375,6 +375,24 @@ pub enum ParticleKind {
     /// getLayer override returns, the NO getQuadSize override the
     /// base law keeps (the plain quad the whole life wears).
     Explosion,
+    /// `HugeExplosionSeedParticle` — the gateway spawn's own
+    /// invisible engine (the `explosion_emitter` option the
+    /// `LevelEventHandler` case-3000 arm's ONE
+    /// `addAlwaysVisibleParticle(EXPLOSION_EMITTER, true, x + 0.5, y
+    /// + 0.5, z + 0.5, 0, 0, 0)` walk speaks): the `NoRenderParticle`
+    /// subclass the seed's own class bytes keep — NOTHING the quad
+    /// lanes bank (the honest absence the render match speaks), the
+    /// 8-tick countdown the ctor's `lifetime = 8` write carries, the
+    /// per-tick SIX `ParticleTypes.EXPLOSION` children the tick's
+    /// `i < 6` loop banks (each child the `(nextDouble -
+    /// nextDouble) * 4.0` triple-offset pair the seed's own random
+    /// draws carries, the child's size input the
+    /// `(float)age / (float)lifetime` walk feeds — the
+    /// `HugeExplosionParticle`'s `2.0F * (1.0F - xa * 0.5F)` quadSize
+    /// law the children's shrink rides), the removal the `age ==
+    /// lifetime` gate answers (the 48-child burst the eight ticks
+    /// spend, the last six the death tick still spawns).
+    ExplosionSeed,
     /// `PortalParticle` — the eye-of-ender landing's own ring (the
     /// `portal` type the `LevelEventHandler` case-2003 arm's ring
     /// walk speaks): the RANDOM STATIC frame the provider's
@@ -796,6 +814,52 @@ impl Particle {
             return false;
         }
         true
+    }
+
+    /// The `HugeExplosionSeedParticle.tick` verbatim (javap over the
+    /// 26.2 jar): the SIX-CHILDREN loop the `i < 6` bound keeps —
+    /// each tick the seed spawns six `ParticleTypes.EXPLOSION`
+    /// children, the child's own position the
+    /// `(nextDouble() - nextDouble()) * 4.0` triple-offset pair the
+    /// seed's own random draws carries (the six draws the shared
+    /// stream spends, IN THE caller's out-vec order), the child's
+    /// own size input the `(float)age / (float)lifetime` walk feeds
+    /// (the `HugeExplosionParticle`'s `2.0F * (1.0F - xa * 0.5F)`
+    /// quadSize law the children's shrink rides — the full 2.0 quad
+    /// the birth tick keeps, the 1.125 the seventh tick banks),
+    /// THEN the age walk (the children the death tick still spawns
+    /// — the removal the `age == lifetime` gate answers, the
+    /// `if_icmpne` branch the bytecode pins). The children ride the
+    /// caller's out-vec as `(x, y, z, size_speed)` rows — the
+    /// landing walk the queue order keeps (the ctor draws the
+    /// landing's own stream spends, AFTER the tick loop the smoke
+    /// lane's own walk answers). Returns false the removal tick the
+    /// vanilla remove() speaks. NO prev-trio the NoRender walk
+    /// saves — the seed never renders, the lerp lane never reads
+    /// it.
+    pub fn tick_explosion_seed(
+        &mut self,
+        rng: &mut crate::drops::Lcg,
+        out: &mut Vec<(f64, f64, f64, f32)>,
+    ) -> bool {
+        // the child's size input (the `(float)age / (float)lifetime`
+        // walk — the dload/i2f/i2f/fdiv chain the bytecode pins, the
+        // value BEFORE the age walk runs)
+        let size_speed = self.age as f32 / self.lifetime.max(1) as f32;
+        // the six-child loop (the `i < 6` bound the bytecode pins —
+        // each child the three (r - r) * 4.0 pairs the seed's own
+        // random draws carry)
+        for _ in 0..6 {
+            let cx = self.x + (rng.next_f64() - rng.next_f64()) * 4.0;
+            let cy = self.y + (rng.next_f64() - rng.next_f64()) * 4.0;
+            let cz = self.z + (rng.next_f64() - rng.next_f64()) * 4.0;
+            out.push((cx, cy, cz, size_speed));
+        }
+        // the age walk rides AFTER the children (the death tick the
+        // last six still spawns — the if_icmpne gate the removal
+        // answers)
+        self.age += 1;
+        self.age != self.lifetime
     }
 
     /// The `PortalParticle.tick` verbatim — the swirl the override's
@@ -2128,11 +2192,17 @@ pub fn cloud_puff(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Partic
 /// no motion, no friction lane, no gravity the override never
 /// reads), the OPAQUE layer the getLayer override returns. The
 /// caller's own position the case's cp `#197` Double fold speaks —
-/// the 0.5 centers arrive PRE-folded.
+/// the 0.5 centers arrive PRE-folded. The `size_speed` word the
+/// provider's own fourth double keeps (the `dload 8` the ctor's
+/// d2f fold reads — the dragon case's zero the 2.0 full quad
+/// answers, the gateway seed's `age / lifetime` walk the children's
+/// shrink rides — the `2.0 * (1.0 - xa * 0.5)` law the write
+/// speaks).
 pub fn explosion_puff(
     x: f64,
     y: f64,
     z: f64,
+    size_speed: f32,
     rng: &mut crate::drops::Lcg,
 ) -> Particle {
     // the dead base lifetime (the draw the stream keeps, the value
@@ -2165,11 +2235,45 @@ pub fn explosion_puff(
         // the vanilla field default the override never reads (the
         // stationary walk the tick body keeps)
         friction: 0.98,
-        // the ctor's own write — the case's zero speed the 2.0 keeps
-        quad_size: 2.0f32 * (1.0f32 - 0.0f32 * 0.5),
+        // the ctor's own write — the `size_speed` word the shrink
+        // rides (the zero the 2.0 full quad answers)
+        quad_size: 2.0f32 * (1.0f32 - size_speed * 0.5f32),
         uo: 0.0,
         vo: 0.0,
         col: [tint, tint, tint],
+    }
+}
+
+/// The gateway spawn's own invisible seed — the
+/// `HugeExplosionSeedParticle.<init>` verbatim (javap over the 26.2
+/// jar): the `NoRenderParticle` base the x/y/z pose rides (the zero
+/// velocity trio the seed's own addAlwaysVisibleParticle call
+/// carries, the NOTHING the quad lanes bank), the 8-tick countdown
+/// the ctor's own `lifetime = 8` write keeps. The render match the
+/// honest absence speaks — the seed renders NOTHING, the children
+/// the tick walk spawns do the visible work.
+pub fn gateway_explosion_seed(x: f64, y: f64, z: f64) -> Particle {
+    Particle {
+        kind: ParticleKind::ExplosionSeed,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        // the ctor's own write — the 48-child burst the eight
+        // ticks spend
+        lifetime: 8,
+        gravity: 0.0,
+        // the vanilla field default the NoRender walk never reads
+        friction: 0.98,
+        // the invisible engine — no quad the lanes bank
+        quad_size: 0.0,
+        uo: 0.0,
+        vo: 0.0,
+        col: [0.0, 0.0, 0.0],
     }
 }
 
@@ -5428,7 +5532,7 @@ mod tests {
         // the seeded chain: the ctor's four draws (the case's own
         // position folds the fixed constants keep — no draws ride)
         let mut stream = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
-        let p = explosion_puff(-120.5, 64.5, 77.5, &mut stream);
+        let p = explosion_puff(-120.5, 64.5, 77.5, 0.0, &mut stream);
         let pre = (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size, p.col);
         assert!(
             matches!(p.kind, ParticleKind::Explosion),
@@ -5457,7 +5561,7 @@ mod tests {
         // THE STATIONARY TICK (the override's own body — the prev the
         // head saves, the age walk, no motion the zero velocity and
         // the override's own silence keep)
-        let mut t = explosion_puff(0.0, 0.0, 0.0, &mut stream);
+        let mut t = explosion_puff(0.0, 0.0, 0.0, 0.0, &mut stream);
         t.lifetime = 100;
         assert!(t.tick_explosion(), "the alive tick");
         assert_eq!(
@@ -5471,7 +5575,7 @@ mod tests {
             "the prev-trio the tick head saves"
         );
         // THE REMOVAL (the age walk the lifetime gates)
-        let mut dying = explosion_puff(0.0, 0.0, 0.0, &mut stream);
+        let mut dying = explosion_puff(0.0, 0.0, 0.0, 0.0, &mut stream);
         dying.lifetime = 2;
         assert!(
             dying.tick_explosion(),
@@ -5480,7 +5584,7 @@ mod tests {
         assert!(!dying.tick_explosion(), "the age the removal walk answers");
         // THE DETERMINISM (the same seed the same chain answers)
         let mut a = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
-        let p2 = explosion_puff(-120.5, 64.5, 77.5, &mut a);
+        let p2 = explosion_puff(-120.5, 64.5, 77.5, 0.0, &mut a);
         assert_eq!(
             pre,
             (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size, p2.col),
@@ -5490,12 +5594,97 @@ mod tests {
         // the dead base lifetime, the dead quad, the nextInt(4), the
         // tint; the fifth draw differs)
         let mut a = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
-        let _ = explosion_puff(0.0, 0.0, 0.0, &mut a);
+        let _ = explosion_puff(0.0, 0.0, 0.0, 0.0, &mut a);
         let after_four = a.next();
         let mut b = crate::drops::Lcg::new(0xD2A6_2008u64 ^ 0xC1A5);
         for _ in 0..4 {
             b.next();
         }
         assert_eq!(after_four, b.next(), "the explosion chain's own four draws");
+    }
+
+    #[test]
+    fn the_gateway_seed_the_six_children_the_shrink_wears() {
+        // THE GATEWAY SEED'S OWN LAW (javap `HugeExplosionSeedParticle`
+        // over the 26.2 jar): the invisible NoRender engine the
+        // 8-tick countdown banks, the SIX children the per-tick loop
+        // spawns (the (r - r) * 4.0 triple-offset pair each carries,
+        // the size input the seed's own age/lifetime walk feeds), the
+        // removal the age == lifetime gate answers — the 48-child
+        // burst the eight ticks spend, the death tick the last six
+        // still spawns.
+        let seed = gateway_explosion_seed(-4.5, 64.5, 100.5);
+        assert!(
+            matches!(seed.kind, ParticleKind::ExplosionSeed),
+            "the seed kind the invisible engine banks"
+        );
+        assert_eq!((seed.x, seed.y, seed.z), (-4.5, 64.5, 100.5));
+        assert_eq!(seed.lifetime, 8, "the ctor's own countdown write");
+        assert_eq!(seed.age, 0, "the birth tick the zero keeps");
+        assert_eq!(seed.quad_size, 0.0, "the invisible engine no quad banks");
+        // THE SIX-CHILD WALK (the per-tick loop the `i < 6` bound
+        // keeps): the first tick rides the size input 0.0 (the full
+        // 2.0 quad the children's ctor folds), the offsets the ±4.0
+        // band the (r - r) * 4.0 pair gives
+        let mut seed2 = gateway_explosion_seed(100.0, 100.0, 100.0);
+        let mut stream = crate::drops::Lcg::new(0x3000_3000u64 ^ 0xC1A5);
+        let mut out: Vec<(f64, f64, f64, f32)> = Vec::new();
+        assert!(seed2.tick_explosion_seed(&mut stream, &mut out), "tick 1 alive");
+        assert_eq!(out.len(), 6, "the six children the first tick banks");
+        for (cx, cy, cz, ss) in &out {
+            assert!(
+                (96.0..=104.0).contains(cx)
+                    && (96.0..=104.0).contains(cy)
+                    && (96.0..=104.0).contains(cz),
+                "the offset the ±4.0 band answers: {cx} {cy} {cz}"
+            );
+            assert_eq!(*ss, 0.0, "the birth tick's size input the zero keeps");
+        }
+        // THE WALK TO THE DEATH TICK (the age walk feeds the size
+        // input — the `2.0 * (1.0 - xa * 0.5)` law the children's
+        // ctor rides): seven alive ticks the first seven answers, the
+        // eighth the false the removal walk speaks — the death tick
+        // the last six children STILL spawn (the size input the 7/8
+        // the age walk banks). The whole burst the eight ticks spend:
+        // the 48 children the six-per-tick loop gives.
+        let mut ticks_alive = 1;
+        let mut total_children = out.len();
+        let mut death_children: Option<Vec<(f64, f64, f64, f32)>> = None;
+        for _ in 1..8 {
+            let mut out2: Vec<(f64, f64, f64, f32)> = Vec::new();
+            if seed2.tick_explosion_seed(&mut stream, &mut out2) {
+                ticks_alive += 1;
+                total_children += out2.len();
+            } else {
+                total_children += out2.len();
+                death_children = Some(out2);
+                break;
+            }
+        }
+        assert_eq!(ticks_alive, 7, "the seven alive ticks the countdown walks");
+        assert_eq!(total_children, 48, "the 48-child burst the eight ticks spend");
+        let death = death_children.expect("the death tick the eighth walk answers");
+        assert_eq!(death.len(), 6, "the death tick the last six still spawns");
+        assert!((death[0].3 - 0.875).abs() < 1e-6, "the 7/8 size input");
+        // THE SHRINK'S OWN FOLD (the `2.0 * (1.0 - xa * 0.5)` law the
+        // child ctor rides): the 0.875 input the 1.125 quad answers,
+        // the zero input the 2.0 full quad keeps
+        let mut a = crate::drops::Lcg::new(0x3000_3000u64 ^ 0xC1A5);
+        let child = explosion_puff(0.0, 0.0, 0.0, 0.875, &mut a);
+        assert!((child.quad_size - 1.125).abs() < 1e-6, "the shrink the law folds");
+        let mut b = crate::drops::Lcg::new(0x3000_3000u64 ^ 0xC1A5);
+        let full = explosion_puff(0.0, 0.0, 0.0, 0.0, &mut b);
+        assert!((full.quad_size - 2.0).abs() < 1e-6, "the full quad the zero keeps");
+        // THE DETERMINISM (the same seed the same six-offset chain
+        // replays)
+        let mut a = crate::drops::Lcg::new(0x3000_3000u64 ^ 0xC1A5);
+        let mut seed_a = gateway_explosion_seed(100.0, 100.0, 100.0);
+        let mut out_a: Vec<(f64, f64, f64, f32)> = Vec::new();
+        seed_a.tick_explosion_seed(&mut a, &mut out_a);
+        let mut b = crate::drops::Lcg::new(0x3000_3000u64 ^ 0xC1A5);
+        let mut seed_b = gateway_explosion_seed(100.0, 100.0, 100.0);
+        let mut out_b: Vec<(f64, f64, f64, f32)> = Vec::new();
+        seed_b.tick_explosion_seed(&mut b, &mut out_b);
+        assert_eq!(out_a, out_b, "the seeded chain replays");
     }
 }

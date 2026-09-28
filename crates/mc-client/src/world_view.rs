@@ -477,6 +477,11 @@ pub struct SnapshotView {
     /// server's own honeycomb and axe broadcast — the anchor + the
     /// word the render lane's own law folds).
     pub wax_events: Vec<WireWaxEvent>,
+    /// The gateway-spawn effect's own wire arms (the 3000 words the
+    /// server's own dragon fight broadcast — the anchor the render
+    /// lane's own law folds, the seed + the voice the emitter walk
+    /// banks).
+    pub gateway_spawn_events: Vec<WireGatewaySpawnEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -673,6 +678,21 @@ pub struct WireWaxEvent {
     pub y: i32,
     pub z: i32,
     pub word: i32,
+}
+
+/// One wire GATEWAY-SPAWN arm — the Level Event packet's own landing
+/// (the 3000 words the server's own dragon fight broadcasts,
+/// [`mc_protocol::play::END_GATEWAY_SPAWN_EFFECT`] the render
+/// lane speaks): the event's anchor block, verbatim (the invisible
+/// seed's own cell — the 8-tick / 6-child emitter walk the
+/// `explosion_emitter` option spawns, the `block.end_gateway.spawn`
+/// 10.0-volume voice the random pitch chain carries, both the render
+/// lane's own law folds from the anchor the transport carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireGatewaySpawnEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -2779,6 +2799,9 @@ pub fn materialize_snapshot_view(
         // 3003/3004/3005 traffic — the empty mailbox the render lane
         // skips)
         wax_events: Vec::new(),
+        // and no gateway words (the join snapshot carries no 3000
+        // traffic — the empty mailbox the render lane skips)
+        gateway_spawn_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3229,6 +3252,21 @@ impl LiveView {
                 word: arm.word,
             })
             .collect();
+        // the gateway-spawn effect's own projection (the mailbox
+        // verbatim — the anchor the arms carry, the seed + the voice
+        // the render lane's own law reads): each 3000 word ships once
+        // with this view, the worker's drain empties the mailbox
+        // after
+        let gateway_spawn_events = self
+            .model
+            .gateway_spawn_events
+            .iter()
+            .map(|arm| WireGatewaySpawnEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3613,6 +3651,10 @@ impl LiveView {
                 // 3003/3004/3005 words are the connection's own
                 // traffic, not the pose's
                 wax_events,
+                // the gateway-spawn effect's arms ride the pose-less
+                // arm too — the 3000 words are the connection's own
+                // traffic, not the pose's
+                gateway_spawn_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -3767,6 +3809,10 @@ impl LiveView {
             // 3003/3004/3005 words follow the mailbox exactly like the
             // smash's own arms do
             wax_events,
+            // the gateway-spawn effect's arms ride every refresh too
+            // — the 3000 words follow the mailbox exactly like the
+            // wax's own arms do
+            gateway_spawn_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

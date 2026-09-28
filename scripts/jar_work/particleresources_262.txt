@@ -1,0 +1,45 @@
+=== <init> ()V ===
+  (disasm error: unpack_from requires a buffer of at least 6872 bytes for unpacking 4 bytes at offset 6868 (actual buffer size is 6868))
+
+=== onReload (Ljava/lang/Runnable;)V ===
+  (disasm error: unpack_from requires a buffer of at least 6772 bytes for unpacking 4 bytes at offset 6768 (actual buffer size is 6769))
+
+=== registerProviders ()V ===
+  (disasm error: unpack_from requires a buffer of at least 6684 bytes for unpacking 4 bytes at offset 6680 (actual buffer size is 6682))
+
+=== register (Lnet/minecraft/core/particles/ParticleType;Lnet/minecraft/client/particle/ParticleProvider;)V ===
+  (disasm error: unpack_from requires a buffer of at least 4592 bytes for unpacking 4 bytes at offset 4588 (actual buffer size is 4588))
+
+=== register (Lnet/minecraft/core/particles/ParticleType;Lnet/minecraft/client/particle/ParticleResources$SpriteParticleRegistration;)V ===
+  (disasm error: unpack_from requires a buffer of at least 4440 bytes for unpacking 4 bytes at offset 4436 (actual buffer size is 4436))
+
+=== reload (Lnet/minecraft/server/packs/resources/PreparableReloadListener$SharedState;Ljava/util/concurrent/Executor;Lnet/minecraft/server/packs/resources/PreparableReloadListener$PreparationBarrier;Ljava/util/concurrent/Executor;)Ljava/util/concurrent/CompletableFuture; ===
+  (disasm error: unpack_from requires a buffer of at least 4236 bytes for unpacking 4 bytes at offset 4232 (actual buffer size is 4232))
+
+=== loadParticleDescription (Lnet/minecraft/resources/Identifier;Lnet/minecraft/server/packs/resources/Resource;)Ljava/util/Optional; ===
+  (disasm error: 0)
+
+=== getProviders ()Lit/unimi/dsi/fastutil/ints/Int2ObjectMap; ===
+  (disasm error: unpack_from requires a buffer of at least 3532 bytes for unpacking 4 bytes at offset 3528 (actual buffer size is 3528))
+
+=== lambda$reload$4 (Ljava/util/concurrent/CompletableFuture;Ljava/util/concurrent/CompletableFuture;Ljava/lang/Void;)V ===
+  (disasm error: 0)
+
+=== lambda$reload$5 (Lnet/minecraft/client/renderer/texture/SpriteLoader$Preparations;Ljava/util/Set;Lnet/minecraft/client/renderer/texture/TextureAtlasSprite;Lnet/minecraft/client/particle/ParticleResources$1ParticleDefinition;)V ===
+  (disasm error: unpack_from requires a buffer of at least 3076 bytes for unpacking 4 bytes at offset 3072 (actual buffer size is 3075))
+
+=== lambda$reload$1 (Ljava/util/concurrent/Executor;Ljava/util/Map;)Ljava/util/concurrent/CompletionStage; ===
+  (disasm error: unpack_from requires a buffer of at least 2656 bytes for unpacking 4 bytes at offset 2652 (actual buffer size is 2655))
+
+=== lambda$reload$2 (Ljava/util/List;Ljava/util/concurrent/Executor;Lnet/minecraft/resources/Identifier;Lnet/minecraft/server/packs/resources/Resource;)V ===
+  (disasm error: unpack_from requires a buffer of at least 2512 bytes for unpacking 4 bytes at offset 2508 (actual buffer size is 2510))
+
+=== lambda$reload$3 (Lnet/minecraft/resources/Identifier;Lnet/minecraft/server/packs/resources/Resource;)Lnet/minecraft/client/particle/ParticleResources$1ParticleDefinition; ===
+  (disasm error: unpack_from requires a buffer of at least 2368 bytes for unpacking 4 bytes at offset 2364 (actual buffer size is 2365))
+
+=== lambda$reload$0 (Lnet/minecraft/server/packs/resources/ResourceManager;)Ljava/util/Map; ===
+  (disasm error: unpack_from requires a buffer of at least 2276 bytes for unpacking 4 bytes at offset 2272 (actual buffer size is 2274))
+
+=== <clinit> ()V ===
+  (disasm error: 0)
+

@@ -1,0 +1,743 @@
+class net/minecraft/world/level/dimension/end/EnderDragonFight
+
+=== <clinit>()V ===
+     0 invokestatic com/mojang/logging/LogUtils.getLogger()Lorg/slf4j/Logger;  ()
+     9 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('entity.minecraft.ender_dragon')
+    20 invokestatic com/mojang/serialization/codecs/RecordCodecBuilder.create(Ljava/util/function/Function;)Lcom/mojang/serialization/Codec;  (?)
+    33 invokestatic net/minecraft/resources/Identifier.withDefaultNamespace(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;  ('ender_dragon_fight')
+    47 invokespecial net/minecraft/world/level/saveddata/SavedDataType.<init>(Lnet/minecraft/resources/Identifier;Ljava/util/function/Supplier;Lcom/mojang/serialization/Codec;Lnet/minecraft/util/datafix/DataFixTypes;)V  (new net/minecraft/world/level/saveddata/SavedDataType, Identifier.withDefaultNamespace('ender_dragon_fight'), net/minecraft/world/level/dimension/end/EnderDragonFight.CODEC, net/minecraft/util/datafix/DataFixTypes.SAVED_DATA_ENDER_DRAGON_FIGHT)
+    53 return
+
+=== <init>(ZZZLjava/util/Optional;ILjava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/List;)V ===
+     1 invokespecial net/minecraft/world/level/saveddata/SavedData.<init>()V  ()
+     5 invokestatic net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.start()Lnet/minecraft/world/level/block/state/pattern/BlockPatternBuilder;  ()
+    17 ?? opcode 0x53
+    22 ?? opcode 0x53
+    27 ?? opcode 0x53
+    32 ?? opcode 0x53
+    37 ?? opcode 0x53
+    42 ?? opcode 0x53
+    48 ?? opcode 0x53
+    49 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.aisle([Ljava/lang/String;)Lnet/minecraft/world/level/block/state/pattern/BlockPatternBuilder;  ('       ')
+    61 ?? opcode 0x53
+    66 ?? opcode 0x53
+    71 ?? opcode 0x53
+    76 ?? opcode 0x53
+    81 ?? opcode 0x53
+    86 ?? opcode 0x53
+    92 ?? opcode 0x53
+    93 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.aisle([Ljava/lang/String;)Lnet/minecraft/world/level/block/state/pattern/BlockPatternBuilder;  ('       ')
+   105 ?? opcode 0x53
+   110 ?? opcode 0x53
+   115 ?? opcode 0x53
+   120 ?? opcode 0x53
+   125 ?? opcode 0x53
+   130 ?? opcode 0x53
+   136 ?? opcode 0x53
+   137 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.aisle([Ljava/lang/String;)Lnet/minecraft/world/level/block/state/pattern/BlockPatternBuilder;  ('       ')
+   149 ?? opcode 0x53
+   154 ?? opcode 0x53
+   159 ?? opcode 0x53
+   164 ?? opcode 0x53
+   169 ?? opcode 0x53
+   174 ?? opcode 0x53
+   180 ?? opcode 0x53
+   181 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.aisle([Ljava/lang/String;)Lnet/minecraft/world/level/block/state/pattern/BlockPatternBuilder;  ('  ###  ')
+   193 ?? opcode 0x53
+   198 ?? opcode 0x53
+   203 ?? opcode 0x53
+   208 ?? opcode 0x53
+   213 ?? opcode 0x53
+   218 ?? opcode 0x53
+   224 ?? opcode 0x53
+   225 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.aisle([Ljava/lang/String;)Lnet/minecraft/world/level/block/state/pattern/BlockPatternBuilder;  ('       ')
+   233 invokestatic net/minecraft/world/level/block/state/predicate/BlockPredicate.forBlock(Lnet/minecraft/world/level/block/Block;)Lnet/minecraft/world/level/block/state/predicate/BlockPredicate;  (net/minecraft/world/level/block/Blocks.BEDROCK)
+   236 invokestatic net/minecraft/world/level/block/state/pattern/BlockInWorld.hasState(Ljava/util/function/Predicate;)Ljava/util/function/Predicate;  (BlockPredicate.forBlock(net/minecraft/world/level/block/Blocks.BEDROCK))
+   239 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.where(CLjava/util/function/Predicate;)Lnet/minecraft/world/level/block/state/pattern/BlockPatternBuilder;  (35, BlockInWorld.hasState(BlockPredicate.forBlock(net/minecraft/world/level/block/Blocks.BEDROCK)))
+   242 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPatternBuilder.build()Lnet/minecraft/world/level/block/state/pattern/BlockPattern;  ()
+   245 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalPattern = 6.aisle('       ').where(35, BlockInWorld.hasState(BlockPredicate.forBlock(net/minecraft/world/level/block/Blocks.BEDROCK))).build()
+   251 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceLastPlayerScan = 21
+   256 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.skipArenaLoadedCheck = 0
+   261 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.needsStateScanning = loc1
+   268 invokevirtual java/util/Optional.orElse(Ljava/lang/Object;)Ljava/lang/Object;  (null)
+   274 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID = loc6.orElse(null)
+   279 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled = loc2
+   284 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon = loc3
+   291 invokevirtual java/util/Optional.orElse(Ljava/lang/Object;)Ljava/lang/Object;  (null)
+   297 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage = loc4.orElse(null)
+   303 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnTime = loc5
+   310 invokevirtual java/util/Optional.orElse(Ljava/lang/Object;)Ljava/lang/Object;  (null)
+   316 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation = loc7.orElse(null)
+   326 invokespecial it/unimi/dsi/fastutil/objects/ObjectArrayList.<init>(Ljava/util/Collection;)V  (loc8)
+   329 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways = it/unimi/dsi/fastutil/objects/ObjectArrayList(loc8)
+   335 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnCrystals = loc9
+   338 return
+
+=== abortRespawnSequence()V ===
+     6 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;)V  ('Aborting respawn sequence')
+    13 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage = null
+    18 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnTime = 0
+    22 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.resetSpikeCrystals()V  ()
+    27 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.spawnExitPortal(Z)V  (1)
+    31 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+    34 return
+
+=== aliveCrystals()I ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.aliveCrystals  (loc0)
+     4 return loc0.aliveCrystals
+
+=== createDefault()Lnet/minecraft/world/level/dimension/end/EnderDragonFight; ===
+     7 invokestatic java/util/Optional.empty()Ljava/util/Optional;  ()
+    11 invokestatic java/util/Optional.empty()Ljava/util/Optional;  ()
+    14 invokestatic java/util/Optional.empty()Ljava/util/Optional;  ()
+    21 invokespecial it/unimi/dsi/fastutil/objects/ObjectArrayList.<init>()V  ()
+    24 invokestatic java/util/List.of()Ljava/util/List;  ()
+    27 invokespecial net/minecraft/world/level/dimension/end/EnderDragonFight.<init>(ZZZLjava/util/Optional;ILjava/util/Optional;Ljava/util/Optional;Ljava/util/List;Ljava/util/List;)V  (1, 0, 0, Optional.empty(), 0, Optional.empty(), Optional.empty(), it/unimi/dsi/fastutil/objects/ObjectArrayList(), List.of())
+    30 return net/minecraft/world/level/dimension/end/EnderDragonFight(1, 0, 0, Optional.empty(), 0, Optional.empty(), Optional.empty(), it/unimi/dsi/fastutil/objects/ObjectArrayList(), List.of())
+
+=== createNewDragon()Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+     9 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    12 invokevirtual net/minecraft/core/BlockPos.getX()I  ()
+    19 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    22 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+    27 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    30 invokevirtual net/minecraft/core/BlockPos.getZ()I  ()
+    33 invokespecial net/minecraft/core/BlockPos.<init>(III)V  (loc0.origin.getX(), arith, loc0.origin.getZ())
+    36 invokevirtual net/minecraft/server/level/ServerLevel.getChunkAt(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/chunk/LevelChunk;  (net/minecraft/core/BlockPos(loc0.origin.getX(), arith, loc0.origin.getZ()))
+    44 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    50 invokevirtual net/minecraft/world/entity/EntityType.create(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/EntitySpawnReason;)Lnet/minecraft/world/entity/Entity;  (loc0.level, net/minecraft/world/entity/EntitySpawnReason.EVENT)
+    56 ?? opcode 0x4c
+    63 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setDragonFight(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)V  (loc0)
+    68 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    71 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.setFightOrigin(Lnet/minecraft/core/BlockPos;)V  (loc0.origin)
+    75 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getPhaseManager()Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager;  ()
+    81 invokevirtual net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhaseManager.setPhase(Lnet/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase;)V  (net/minecraft/world/entity/boss/enderdragon/phases/EnderDragonPhase.HOLDING_PATTERN)
+    86 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    89 invokevirtual net/minecraft/core/BlockPos.getX()I  ()
+    97 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+   100 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+   106 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+   109 invokevirtual net/minecraft/core/BlockPos.getZ()I  ()
+   114 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   117 invokevirtual net/minecraft/server/level/ServerLevel.getRandom()Lnet/minecraft/util/RandomSource;  ()
+   120 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+   130 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.snapTo(DDDFF)V  (?, net/minecraft/world/entity/EntityTypes.ENDER_DRAGON.create(loc0.level, net/minecraft/world/entity/EntitySpawnReason.EVENT), loc1, arith, arith, arith, (loc0.level.getRandom().nextFloat() * 360.0), 0.0)
+   134 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   138 invokevirtual net/minecraft/server/level/ServerLevel.addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z  (loc1)
+   144 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getUUID()Ljava/util/UUID;  ()
+   147 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID = loc1.getUUID()
+   151 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   155 return loc1
+
+=== dragonUUID()Ljava/util/UUID; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID  (loc0)
+     4 return loc0.dragonUUID
+
+=== findExitPortal()Lnet/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+     4 invokestatic net/minecraft/world/level/ChunkPos.containing(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/ChunkPos;  (loc0.origin)
+     7 ?? opcode 0x4c
+    11 invokevirtual net/minecraft/world/level/ChunkPos.x()I  ()
+    20 invokevirtual net/minecraft/world/level/ChunkPos.x()I  ()
+    30 invokevirtual net/minecraft/world/level/ChunkPos.z()I  ()
+    39 invokevirtual net/minecraft/world/level/ChunkPos.z()I  ()
+    47 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    52 invokevirtual net/minecraft/server/level/ServerLevel.getChunk(II)Lnet/minecraft/world/level/chunk/LevelChunk;  (loc2=arith, loc3=arith)
+    59 invokevirtual net/minecraft/world/level/chunk/LevelChunk.getBlockEntities()Ljava/util/Map;  ()
+    62 invokeinterface java/util/Map.values()Ljava/util/Collection;  ()
+    67 invokeinterface java/util/Collection.iterator()Ljava/util/Iterator;  ()
+    76 invokeinterface java/util/Iterator.hasNext()Z  ()
+    86 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+   105 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalPattern  (loc0)
+   109 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   114 invokevirtual net/minecraft/world/level/block/entity/BlockEntity.getBlockPos()Lnet/minecraft/core/BlockPos;  ()
+   117 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern.find(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch;  (loc0.level, loc6=loc5=loc4=loc0.level.getChunk(loc2=arith, loc3=arith).getBlockEntities().values().iterator().next().getBlockPos())
+   132 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch.getBlock(III)Lnet/minecraft/world/level/block/state/pattern/BlockInWorld;  (3, 3, 3)
+   135 invokevirtual net/minecraft/world/level/block/state/pattern/BlockInWorld.getPos()Lnet/minecraft/core/BlockPos;  ()
+   141 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+   150 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation = loc8=loc7=loc0.exitPortalPattern.find(loc0.level, loc6=loc5=loc4=loc0.level.getChunk(loc2=arith, loc3=arith).getBlockEntities().values().iterator().next().getBlockPos()).getBlock(3, 3, 3).getPos()
+   154 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   159 return loc7=loc0.exitPortalPattern.find(loc0.level, loc6=loc5=loc4=loc0.level.getChunk(loc2=arith, loc3=arith).getBlockEntities().values().iterator().next().getBlockPos())
+   176 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+   179 invokestatic net/minecraft/world/level/levelgen/feature/EndPodiumFeature.getLocation(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (loc0.origin)
+   182 ?? opcode 0x4d
+   184 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   191 invokevirtual net/minecraft/server/level/ServerLevel.getHeightmapPos(Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING, loc2=arith)
+   194 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+   204 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   207 invokevirtual net/minecraft/server/level/ServerLevel.getMinY()I  ()
+   214 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalPattern  (loc0)
+   218 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   226 invokevirtual net/minecraft/core/BlockPos.getX()I  ()
+   232 invokevirtual net/minecraft/core/BlockPos.getZ()I  ()
+   235 invokespecial net/minecraft/core/BlockPos.<init>(III)V  (loc2=arith.getX(), loc4=loc3=loc0.level.getHeightmapPos(net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING, loc2=arith).getY(), loc2=arith.getZ())
+   238 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern.find(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch;  (loc0.level, net/minecraft/core/BlockPos(loc2=arith.getX(), loc4=loc3=loc0.level.getHeightmapPos(net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING, loc2=arith).getY(), loc2=arith.getZ()))
+   249 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+   261 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch.getBlock(III)Lnet/minecraft/world/level/block/state/pattern/BlockInWorld;  (3, 3, 3)
+   264 invokevirtual net/minecraft/world/level/block/state/pattern/BlockInWorld.getPos()Lnet/minecraft/core/BlockPos;  ()
+   267 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation = loc5=loc0.exitPortalPattern.find(loc0.level, net/minecraft/core/BlockPos(loc2=arith.getX(), loc4=loc3=loc0.level.getHeightmapPos(net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING, loc2=arith).getY(), loc2=arith.getZ())).getBlock(3, 3, 3).getPos()
+   271 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   276 return loc5=loc0.exitPortalPattern.find(loc0.level, net/minecraft/core/BlockPos(loc2=arith.getX(), loc4=loc3=loc0.level.getHeightmapPos(net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING, loc2=arith).getY(), loc2=arith.getZ()))
+   284 return null
+
+=== findOrCreateDragon()V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+     4 invokevirtual net/minecraft/server/level/ServerLevel.getDragons()Ljava/util/List;  ()
+     7 ?? opcode 0x4c
+     9 invokeinterface java/util/List.isEmpty()Z  ()
+    23 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;)V  ("Haven't seen the dragon, respawning it")
+    29 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.createNewDragon()Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;  ()
+    42 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;)V  ("Haven't seen our dragon, but found another one to use.")
+    50 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (0)
+    58 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getUUID()Ljava/util/UUID;  ()
+    61 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID = loc1.get(0).getUUID()
+    65 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+    68 return
+
+=== hasActiveExitPortal()Z ===
+    19 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    24 invokevirtual net/minecraft/server/level/ServerLevel.getChunk(II)Lnet/minecraft/world/level/chunk/LevelChunk;  (loc1=-8, loc2=-8)
+    27 ?? opcode 0x4e
+    29 invokevirtual net/minecraft/world/level/chunk/LevelChunk.getBlockEntities()Ljava/util/Map;  ()
+    32 invokeinterface java/util/Map.values()Ljava/util/Collection;  ()
+    37 invokeinterface java/util/Collection.iterator()Ljava/util/Iterator;  ()
+    46 invokeinterface java/util/Iterator.hasNext()Z  ()
+    56 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    75 return 1
+    92 return 0
+
+=== hasPreviouslyKilledDragon()Z ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon  (loc0)
+     4 return loc0.hasPreviouslyKilledDragon
+
+=== init(Lnet/minecraft/server/level/ServerLevel;JLnet/minecraft/core/BlockPos;)V ===
+     2 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.level = loc1
+     8 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin = loc4
+    17 invokevirtual net/minecraft/server/level/ServerLevel.getRandom()Lnet/minecraft/util/RandomSource;  ()
+    20 invokestatic net/minecraft/util/Mth.createInsecureUUID(Lnet/minecraft/util/RandomSource;)Ljava/util/UUID;  (loc1.getRandom())
+    32 invokespecial net/minecraft/server/level/ServerBossEvent.<init>(Ljava/util/UUID;Lnet/minecraft/network/chat/Component;Lnet/minecraft/world/BossEvent$BossBarColor;Lnet/minecraft/world/BossEvent$BossBarOverlay;)V  (Mth.createInsecureUUID(loc1.getRandom()), net/minecraft/world/level/dimension/end/EnderDragonFight.EVENT_DISPLAY_NAME, net/minecraft/world/BossEvent$BossBarColor.PINK, net/minecraft/world/BossEvent$BossBarOverlay.PROGRESS)
+    35 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent = net/minecraft/server/level/ServerBossEvent(Mth.createInsecureUUID(loc1.getRandom()), net/minecraft/world/level/dimension/end/EnderDragonFight.EVENT_DISPLAY_NAME, net/minecraft/world/BossEvent$BossBarColor.PINK, net/minecraft/world/BossEvent$BossBarOverlay.PROGRESS)
+    39 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    43 invokevirtual net/minecraft/server/level/ServerBossEvent.setPlayBossMusic(Z)Lnet/minecraft/world/BossEvent;  (1)
+    47 invokevirtual net/minecraft/world/BossEvent.setCreateWorldFog(Z)Lnet/minecraft/world/BossEvent;  (1)
+    57 invokevirtual net/minecraft/core/BlockPos.getX()I  ()
+    66 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+    73 invokevirtual net/minecraft/core/BlockPos.getZ()I  ()
+    80 invokestatic net/minecraft/world/entity/EntitySelector.withinDistance(DDDD)Ljava/util/function/Predicate;  (loc0, loc0, loc0, net/minecraft/world/entity/EntitySelector.ENTITY_STILL_ALIVE, arith, arith, arith, 192.0)
+    83 invokeinterface java/util/function/Predicate.and(Ljava/util/function/Predicate;)Ljava/util/function/Predicate;  (EntitySelector.withinDistance(loc0, loc0, loc0, net/minecraft/world/entity/EntitySelector.ENTITY_STILL_ALIVE, arith, arith, arith, 192.0))
+    88 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.validPlayer = loc0.and(EntitySelector.withinDistance(loc0, loc0, loc0, net/minecraft/world/entity/EntitySelector.ENTITY_STILL_ALIVE, arith, arith, arith, 192.0))
+    92 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways  (loc0)
+    95 invokeinterface java/util/List.isEmpty()Z  ()
+   108 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (0)
+   113 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (20)
+   116 invokestatic com/google/common/collect/Range.closedOpen(Ljava/lang/Comparable;Ljava/lang/Comparable;)Lcom/google/common/collect/Range;  (Integer.valueOf(0), Integer.valueOf(20))
+   119 invokestatic com/google/common/collect/DiscreteDomain.integers()Lcom/google/common/collect/DiscreteDomain;  ()
+   122 invokestatic com/google/common/collect/ContiguousSet.create(Lcom/google/common/collect/Range;Lcom/google/common/collect/DiscreteDomain;)Lcom/google/common/collect/ContiguousSet;  (Range.closedOpen(Integer.valueOf(0), Integer.valueOf(20)), DiscreteDomain.integers())
+   125 invokespecial it/unimi/dsi/fastutil/objects/ObjectArrayList.<init>(Ljava/util/Collection;)V  (ContiguousSet.create(Range.closedOpen(Integer.valueOf(0), Integer.valueOf(20)), DiscreteDomain.integers()))
+   133 invokestatic net/minecraft/util/RandomSource.createThreadLocalInstance(J)Lnet/minecraft/util/RandomSource;  (loc5=it/unimi/dsi/fastutil/objects/ObjectArrayList(ContiguousSet.create(Range.closedOpen(Integer.valueOf(0), Integer.valueOf(20)), DiscreteDomain.integers())), loc0)
+   136 invokestatic net/minecraft/util/Util.shuffle(Ljava/util/List;Lnet/minecraft/util/RandomSource;)V  (?, RandomSource.createThreadLocalInstance(loc5=it/unimi/dsi/fastutil/objects/ObjectArrayList(ContiguousSet.create(Range.closedOpen(Integer.valueOf(0), Integer.valueOf(20)), DiscreteDomain.integers())), loc0))
+   140 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways  (loc0)
+   145 invokeinterface java/util/List.addAll(Ljava/util/Collection;)Z  (loc5=it/unimi/dsi/fastutil/objects/ObjectArrayList(ContiguousSet.create(Range.closedOpen(Integer.valueOf(0), Integer.valueOf(20)), DiscreteDomain.integers())))
+   152 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   155 return
+
+=== isArenaLoaded()Z ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.skipArenaLoadedCheck  (loc0)
+     8 return 1
+    10 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    13 invokestatic net/minecraft/world/level/ChunkPos.containing(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/ChunkPos;  (loc0.origin)
+    16 ?? opcode 0x4c
+    20 invokevirtual net/minecraft/world/level/ChunkPos.x()I  ()
+    29 invokevirtual net/minecraft/world/level/ChunkPos.x()I  ()
+    39 invokevirtual net/minecraft/world/level/ChunkPos.z()I  ()
+    48 invokevirtual net/minecraft/world/level/ChunkPos.z()I  ()
+    56 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    65 invokevirtual net/minecraft/server/level/ServerLevel.getChunk(IILnet/minecraft/world/level/chunk/status/ChunkStatus;Z)Lnet/minecraft/world/level/chunk/ChunkAccess;  (loc2=arith, loc3=arith, net/minecraft/world/level/chunk/status/ChunkStatus.FULL, 0)
+    89 return 0
+    92 invokevirtual net/minecraft/world/level/chunk/LevelChunk.getFullStatus()Lnet/minecraft/server/level/FullChunkStatus;  ()
+   102 invokevirtual net/minecraft/server/level/FullChunkStatus.isOrAfter(Lnet/minecraft/server/level/FullChunkStatus;)Z  (net/minecraft/server/level/FullChunkStatus.BLOCK_TICKING)
+   109 return 0
+   124 invokestatic net/minecraft/world/level/ChunkPos.rangeClosed(Lnet/minecraft/world/level/ChunkPos;I)Ljava/util/stream/Stream;  (loc1, 1)
+   133 invokeinterface java/util/stream/Stream.allMatch(Ljava/util/function/Predicate;)Z  (loc0)
+   142 return 0
+   144 return 1
+
+=== lambda$isArenaLoaded$0(Lnet/minecraft/world/level/ChunkPos;)Z ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+     5 invokevirtual net/minecraft/world/level/ChunkPos.pack()J  ()
+     8 invokevirtual net/minecraft/server/level/ServerLevel.areEntitiesLoaded(J)Z  (loc0.level, loc1.pack())
+    11 return ?.areEntitiesLoaded(loc0.level, loc1.pack())
+
+=== lambda$onCrystalDestroyed$0(Lnet/minecraft/world/entity/boss/enderdragon/EndCrystal;Lnet/minecraft/world/entity/EntityReference;)Z ===
+     2 invokevirtual net/minecraft/world/entity/EntityReference.matches(Lnet/minecraft/world/level/entity/UniquelyIdentifyable;)Z  (loc0)
+     5 return loc1.matches(loc0)
+
+=== lambda$spawnNewGateway$0(Lnet/minecraft/core/Registry;)Ljava/util/Optional; ===
+     4 invokeinterface net/minecraft/core/Registry.get(Lnet/minecraft/resources/ResourceKey;)Ljava/util/Optional;  (net/minecraft/data/worldgen/features/EndFeatures.END_GATEWAY_DELAYED)
+     9 return loc0.get(net/minecraft/data/worldgen/features/EndFeatures.END_GATEWAY_DELAYED)
+
+=== lambda$spawnNewGateway$1(Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/Holder$Reference;)V ===
+     1 invokevirtual net/minecraft/core/Holder$Reference.value()Ljava/lang/Object;  ()
+     8 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    12 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    15 invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource()Lnet/minecraft/server/level/ServerChunkCache;  ()
+    18 invokevirtual net/minecraft/server/level/ServerChunkCache.getGenerator()Lnet/minecraft/world/level/chunk/ChunkGenerator;  ()
+    21 invokestatic net/minecraft/util/RandomSource.create()Lnet/minecraft/util/RandomSource;  ()
+    25 invokevirtual net/minecraft/world/level/levelgen/feature/ConfiguredFeature.place(Lnet/minecraft/world/level/WorldGenLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Z  (loc0.level, loc0.level.getChunkSource().getGenerator(), RandomSource.create(), loc1)
+    29 return
+
+=== lambda$static$0(Lcom/mojang/serialization/codecs/RecordCodecBuilder$Instance;)Lcom/mojang/datafixers/kinds/App; ===
+     8 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (1)
+    11 invokestatic net/minecraft/util/ExtraCodecs.optionalAlwaysPresentFieldOf(Lcom/mojang/serialization/Codec;Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;  (com/mojang/serialization/Codec.BOOL, 'needs_state_scanning', Boolean.valueOf(1))
+    19 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'needs_state_scanning', Boolean.valueOf(1)))
+    29 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (0)
+    32 invokestatic net/minecraft/util/ExtraCodecs.optionalAlwaysPresentFieldOf(Lcom/mojang/serialization/Codec;Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;  (com/mojang/serialization/Codec.BOOL, 'dragon_killed', Boolean.valueOf(0))
+    40 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'dragon_killed', Boolean.valueOf(0)))
+    50 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (0)
+    53 invokestatic net/minecraft/util/ExtraCodecs.optionalAlwaysPresentFieldOf(Lcom/mojang/serialization/Codec;Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;  (com/mojang/serialization/Codec.BOOL, 'previously_killed', Boolean.valueOf(0))
+    61 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'previously_killed', Boolean.valueOf(0)))
+    70 invokeinterface com/mojang/serialization/Codec.optionalFieldOf(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;  ('respawn_stage')
+    80 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (net/minecraft/world/level/dimension/end/DragonRespawnStage.CODEC.optionalFieldOf('respawn_stage'))
+    90 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (0)
+    93 invokestatic net/minecraft/util/ExtraCodecs.optionalAlwaysPresentFieldOf(Lcom/mojang/serialization/Codec;Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;  (com/mojang/serialization/Codec.INT, 'respawn_time', Integer.valueOf(0))
+   101 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.INT, 'respawn_time', Integer.valueOf(0)))
+   110 invokeinterface com/mojang/serialization/Codec.lenientOptionalFieldOf(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;  ('dragon_uuid')
+   120 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (net/minecraft/core/UUIDUtil.CODEC.lenientOptionalFieldOf('dragon_uuid'))
+   129 invokeinterface com/mojang/serialization/Codec.lenientOptionalFieldOf(Ljava/lang/String;)Lcom/mojang/serialization/MapCodec;  ('exit_portal_location')
+   139 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (net/minecraft/core/BlockPos.CODEC.lenientOptionalFieldOf('exit_portal_location'))
+   145 invokestatic com/mojang/serialization/Codec.list(Lcom/mojang/serialization/Codec;)Lcom/mojang/serialization/Codec;  (com/mojang/serialization/Codec.INT)
+   155 invokespecial java/util/ArrayList.<init>()V  ()
+   158 invokeinterface com/mojang/serialization/Codec.lenientOptionalFieldOf(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;  ('gateways', java/util/ArrayList())
+   168 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (Codec.list(com/mojang/serialization/Codec.INT).lenientOptionalFieldOf('gateways', java/util/ArrayList()))
+   171 invokestatic net/minecraft/world/entity/EntityReference.codec()Lcom/mojang/serialization/Codec;  ()
+   174 invokestatic com/mojang/serialization/Codec.list(Lcom/mojang/serialization/Codec;)Lcom/mojang/serialization/Codec;  (EntityReference.codec())
+   180 invokestatic java/util/List.of()Ljava/util/List;  ()
+   183 invokeinterface com/mojang/serialization/Codec.optionalFieldOf(Ljava/lang/String;Ljava/lang/Object;)Lcom/mojang/serialization/MapCodec;  ('respawn_crystals', List.of())
+   193 invokevirtual com/mojang/serialization/MapCodec.forGetter(Ljava/util/function/Function;)Lcom/mojang/serialization/codecs/RecordCodecBuilder;  (Codec.list(EntityReference.codec()).optionalFieldOf('respawn_crystals', List.of()))
+   196 invokevirtual com/mojang/serialization/codecs/RecordCodecBuilder$Instance.group(Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;Lcom/mojang/datafixers/kinds/App;)Lcom/mojang/datafixers/Products$P9;  (?, ?, ?, ?, ?, ?, ?, ?, loc0.forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'needs_state_scanning', Boolean.valueOf(1))).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'dragon_killed', Boolean.valueOf(0))).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'previously_killed', Boolean.valueOf(0))).forGetter(net/minecraft/world/level/dimension/end/DragonRespawnStage.CODEC.optionalFieldOf('respawn_stage')).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.INT, 'respawn_time', Integer.valueOf(0))).forGetter(net/minecraft/core/UUIDUtil.CODEC.lenientOptionalFieldOf('dragon_uuid')).forGetter(net/minecraft/core/BlockPos.CODEC.lenientOptionalFieldOf('exit_portal_location')).forGetter(Codec.list(com/mojang/serialization/Codec.INT).lenientOptionalFieldOf('gateways', java/util/ArrayList())).forGetter(Codec.list(EntityReference.codec()).optionalFieldOf('respawn_crystals', List.of())))
+   205 invokevirtual com/mojang/datafixers/Products$P9.apply(Lcom/mojang/datafixers/kinds/Applicative;Lcom/mojang/datafixers/util/Function9;)Lcom/mojang/datafixers/kinds/App;  (?.group(?, ?, ?, ?, ?, ?, ?, ?, loc0.forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'needs_state_scanning', Boolean.valueOf(1))).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'dragon_killed', Boolean.valueOf(0))).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'previously_killed', Boolean.valueOf(0))).forGetter(net/minecraft/world/level/dimension/end/DragonRespawnStage.CODEC.optionalFieldOf('respawn_stage')).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.INT, 'respawn_time', Integer.valueOf(0))).forGetter(net/minecraft/core/UUIDUtil.CODEC.lenientOptionalFieldOf('dragon_uuid')).forGetter(net/minecraft/core/BlockPos.CODEC.lenientOptionalFieldOf('exit_portal_location')).forGetter(Codec.list(com/mojang/serialization/Codec.INT).lenientOptionalFieldOf('gateways', java/util/ArrayList())).forGetter(Codec.list(EntityReference.codec()).optionalFieldOf('respawn_crystals', List.of()))), loc0)
+   208 return ?.apply(?.group(?, ?, ?, ?, ?, ?, ?, ?, loc0.forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'needs_state_scanning', Boolean.valueOf(1))).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'dragon_killed', Boolean.valueOf(0))).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.BOOL, 'previously_killed', Boolean.valueOf(0))).forGetter(net/minecraft/world/level/dimension/end/DragonRespawnStage.CODEC.optionalFieldOf('respawn_stage')).forGetter(ExtraCodecs.optionalAlwaysPresentFieldOf(com/mojang/serialization/Codec.INT, 'respawn_time', Integer.valueOf(0))).forGetter(net/minecraft/core/UUIDUtil.CODEC.lenientOptionalFieldOf('dragon_uuid')).forGetter(net/minecraft/core/BlockPos.CODEC.lenientOptionalFieldOf('exit_portal_location')).forGetter(Codec.list(com/mojang/serialization/Codec.INT).lenientOptionalFieldOf('gateways', java/util/ArrayList())).forGetter(Codec.list(EntityReference.codec()).optionalFieldOf('respawn_crystals', List.of()))), loc0)
+
+=== lambda$static$1(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/lang/Boolean; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.needsStateScanning  (loc0)
+     4 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (loc0.needsStateScanning)
+     7 return Boolean.valueOf(loc0.needsStateScanning)
+
+=== lambda$static$2(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/lang/Boolean; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled  (loc0)
+     4 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (loc0.dragonKilled)
+     7 return Boolean.valueOf(loc0.dragonKilled)
+
+=== lambda$static$3(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/lang/Boolean; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon  (loc0)
+     4 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (loc0.hasPreviouslyKilledDragon)
+     7 return Boolean.valueOf(loc0.hasPreviouslyKilledDragon)
+
+=== lambda$static$4(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/util/Optional; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage  (loc0)
+     4 invokestatic java/util/Optional.ofNullable(Ljava/lang/Object;)Ljava/util/Optional;  (loc0.respawnStage)
+     7 return Optional.ofNullable(loc0.respawnStage)
+
+=== lambda$static$5(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/lang/Integer; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnTime  (loc0)
+     4 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (loc0.respawnTime)
+     7 return Integer.valueOf(loc0.respawnTime)
+
+=== lambda$static$6(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/util/Optional; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID  (loc0)
+     4 invokestatic java/util/Optional.ofNullable(Ljava/lang/Object;)Ljava/util/Optional;  (loc0.dragonUUID)
+     7 return Optional.ofNullable(loc0.dragonUUID)
+
+=== lambda$static$7(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/util/Optional; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+     4 invokestatic java/util/Optional.ofNullable(Ljava/lang/Object;)Ljava/util/Optional;  (loc0.exitPortalLocation)
+     7 return Optional.ofNullable(loc0.exitPortalLocation)
+
+=== lambda$static$8(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/util/List; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways  (loc0)
+     4 return loc0.gateways
+
+=== lambda$static$9(Lnet/minecraft/world/level/dimension/end/EnderDragonFight;)Ljava/util/List; ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnCrystals  (loc0)
+     4 return loc0.respawnCrystals
+
+=== lambda$tick$0(Lnet/minecraft/world/entity/EntityReference;)Lnet/minecraft/world/entity/boss/enderdragon/EndCrystal; ===
+     2 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+     8 invokevirtual net/minecraft/world/entity/EntityReference.getEntity(Lnet/minecraft/world/level/Level;Ljava/lang/Class;)Lnet/minecraft/world/level/entity/UniquelyIdentifyable;  (loc0.level, cp)
+    14 return loc1.getEntity(loc0.level, cp)
+
+=== onCrystalDestroyed(Lnet/minecraft/world/entity/boss/enderdragon/EndCrystal;Lnet/minecraft/world/damagesource/DamageSource;)V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage  (loc0)
+     8 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnCrystals  (loc0)
+    11 invokeinterface java/util/List.stream()Ljava/util/stream/Stream;  ()
+    22 invokeinterface java/util/stream/Stream.anyMatch(Ljava/util/function/Predicate;)Z  (loc1)
+    31 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.abortRespawnSequence()V  ()
+    38 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.updateCrystalCount()V  ()
+    42 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    46 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID  (loc0)
+    49 invokevirtual net/minecraft/server/level/ServerLevel.getEntity(Ljava/util/UUID;)Lnet/minecraft/world/entity/Entity;  (loc0.dragonUUID)
+    52 ?? opcode 0x4e
+    69 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    74 invokevirtual net/minecraft/world/entity/boss/enderdragon/EndCrystal.blockPosition()Lnet/minecraft/core/BlockPos;  ()
+    78 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.onCrystalDestroyed(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/boss/enderdragon/EndCrystal;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/damagesource/DamageSource;)V  (loc0.level, loc1, loc1.blockPosition(), loc2)
+    81 return
+
+=== removeAllGateways()V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways  (loc0)
+     4 invokeinterface java/util/List.clear()V  ()
+    10 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+    13 return
+
+=== resetSpikeCrystals()V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+     4 invokestatic net/minecraft/world/level/levelgen/feature/EndSpikeFeature.getSpikesForLevel(Lnet/minecraft/world/level/WorldGenLevel;)Ljava/util/List;  (loc0.level)
+     7 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+    12 ?? opcode 0x4c
+    14 invokeinterface java/util/Iterator.hasNext()Z  ()
+    23 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    31 ?? opcode 0x4d
+    33 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    40 invokevirtual net/minecraft/world/level/levelgen/feature/EndSpikeFeature$EndSpike.getTopBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+    43 invokevirtual net/minecraft/server/level/ServerLevel.getEntitiesOfClass(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;  (cp, loc2.getTopBoundingBox())
+    46 ?? opcode 0x4e
+    48 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+    57 invokeinterface java/util/Iterator.hasNext()Z  ()
+    67 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    80 invokevirtual net/minecraft/world/entity/boss/enderdragon/EndCrystal.setInvulnerable(Z)V  (0)
+    86 invokevirtual net/minecraft/world/entity/boss/enderdragon/EndCrystal.setBeamTarget(Lnet/minecraft/core/BlockPos;)V  (null)
+    95 return
+
+=== respawnDragon(Ljava/util/List;)V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled  (loc0)
+     8 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage  (loc0)
+    15 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.findExitPortal()Lnet/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch;  ()
+    18 ?? opcode 0x4d
+    27 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalPattern  (loc0)
+    30 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern.getWidth()I  ()
+    42 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalPattern  (loc0)
+    45 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern.getHeight()I  ()
+    57 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalPattern  (loc0)
+    60 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern.getDepth()I  ()
+    72 invokevirtual net/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch.getBlock(III)Lnet/minecraft/world/level/block/state/pattern/BlockInWorld;  (loc3=0, loc4=0, loc5=0)
+    79 invokevirtual net/minecraft/world/level/block/state/pattern/BlockInWorld.getState()Lnet/minecraft/world/level/block/state/BlockState;  ()
+    85 invokevirtual net/minecraft/world/level/block/state/BlockState.is(Ljava/lang/Object;)Z  (net/minecraft/world/level/block/Blocks.BEDROCK)
+    93 invokevirtual net/minecraft/world/level/block/state/pattern/BlockInWorld.getState()Lnet/minecraft/world/level/block/state/BlockState;  ()
+    99 invokevirtual net/minecraft/world/level/block/state/BlockState.is(Ljava/lang/Object;)Z  (net/minecraft/world/level/block/Blocks.END_PORTAL)
+   106 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   111 invokevirtual net/minecraft/world/level/block/state/pattern/BlockInWorld.getPos()Lnet/minecraft/core/BlockPos;  ()
+   117 invokevirtual net/minecraft/world/level/block/Block.defaultBlockState()Lnet/minecraft/world/level/block/state/BlockState;  ()
+   120 invokevirtual net/minecraft/server/level/ServerLevel.setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z  (loc6=loc2.getBlock(loc3=0, loc4=0, loc5=0).getPos(), net/minecraft/world/level/block/Blocks.END_STONE.defaultBlockState())
+   143 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.findExitPortal()Lnet/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch;  ()
+   146 ?? opcode 0x4d
+   154 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage = net/minecraft/world/level/dimension/end/DragonRespawnStage.START
+   159 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnTime = 0
+   164 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.spawnExitPortal(Z)V  (0)
+   169 invokeinterface java/util/List.stream()Ljava/util/stream/Stream;  ()
+   179 invokeinterface java/util/stream/Stream.map(Ljava/util/function/Function;)Ljava/util/stream/Stream;  (loc1.stream())
+   184 invokeinterface java/util/stream/Stream.toList()Ljava/util/List;  ()
+   189 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnCrystals = loc0.map(loc1.stream()).toList()
+   193 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   196 return
+
+=== scanState()V ===
+     6 invokeinterface org/slf4j/Logger.info(Ljava/lang/String;)V  ('Scanning for legacy world dragon fight...')
+    12 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.hasActiveExitPortal()Z  ()
+    26 invokeinterface org/slf4j/Logger.info(Ljava/lang/String;)V  ('Found that the dragon has been killed in this world already.')
+    33 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon = 1
+    45 invokeinterface org/slf4j/Logger.info(Ljava/lang/String;)V  ('Found that the dragon has not yet been killed in this world.')
+    52 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon = 0
+    56 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.findExitPortal()Lnet/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch;  ()
+    64 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.spawnExitPortal(Z)V  (0)
+    68 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    71 invokevirtual net/minecraft/server/level/ServerLevel.getDragons()Ljava/util/List;  ()
+    74 ?? opcode 0x4d
+    76 invokeinterface java/util/List.isEmpty()Z  ()
+    86 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled = 1
+    94 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (0)
+   102 ?? opcode 0x4e
+   105 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getUUID()Ljava/util/UUID;  ()
+   108 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID = loc3.getUUID()
+   118 invokeinterface org/slf4j/Logger.info(Ljava/lang/String;Ljava/lang/Object;)V  ("Found that there's a dragon still alive ({})", loc3)
+   125 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled = 0
+   138 invokeinterface org/slf4j/Logger.info(Ljava/lang/String;)V  ("But we didn't have a portal, let's remove it.")
+   144 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.discard()V  ()
+   149 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID = null
+   153 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon  (loc0)
+   160 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled  (loc0)
+   168 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled = 0
+   172 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   175 return
+
+=== setDragonKilled(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V ===
+     1 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getUUID()Ljava/util/UUID;  ()
+     5 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID  (loc0)
+     8 invokevirtual java/util/UUID.equals(Ljava/lang/Object;)Z  (loc0.dragonUUID)
+    15 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    19 invokevirtual net/minecraft/server/level/ServerBossEvent.setProgress(F)V  (0.0)
+    23 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    27 invokevirtual net/minecraft/server/level/ServerBossEvent.setVisible(Z)V  (0)
+    32 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.spawnExitPortal(Z)V  (1)
+    36 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.spawnNewGateway()V  ()
+    40 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon  (loc0)
+    47 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    51 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    58 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    61 invokestatic net/minecraft/world/level/levelgen/feature/EndPodiumFeature.getLocation(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (loc0.origin)
+    64 invokevirtual net/minecraft/server/level/ServerLevel.getHeightmapPos(Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING, EndPodiumFeature.getLocation(loc0.origin))
+    70 invokevirtual net/minecraft/world/level/block/Block.defaultBlockState()Lnet/minecraft/world/level/block/state/BlockState;  ()
+    73 invokevirtual net/minecraft/server/level/ServerLevel.setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z  (loc0.level.getHeightmapPos(net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING, EndPodiumFeature.getLocation(loc0.origin)), net/minecraft/world/level/block/Blocks.DRAGON_EGG.defaultBlockState())
+    79 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.hasPreviouslyKilledDragon = 1
+    84 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled = 1
+    88 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+    91 return
+
+=== setRespawnStage(Lnet/minecraft/world/level/dimension/end/DragonRespawnStage;)V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage  (loc0)
+    14 invokespecial java/lang/IllegalStateException.<init>(Ljava/lang/String;)V  ("Dragon respawn isn't in progress, can't skip ahead in the animation.")
+    20 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnTime = 0
+    32 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage = null
+    37 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled = 0
+    41 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.createNewDragon()Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;  ()
+    44 ?? opcode 0x4d
+    50 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    53 invokevirtual net/minecraft/server/level/ServerBossEvent.getPlayers()Ljava/util/Collection;  ()
+    56 invokeinterface java/util/Collection.iterator()Ljava/util/Iterator;  ()
+    61 ?? opcode 0x4e
+    63 invokeinterface java/util/Iterator.hasNext()Z  ()
+    72 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    88 invokevirtual net/minecraft/advancements/triggers/SummonedEntityTrigger.trigger(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/entity/Entity;)V  (loc4=loc3.next(), loc2)
+    99 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage = loc1
+   103 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   106 return
+
+=== skipArenaLoadedCheck()V ===
+     2 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.skipArenaLoadedCheck = 1
+     5 return
+
+=== spawnExitPortal(Z)V ===
+     5 invokespecial net/minecraft/world/level/levelgen/feature/EndPodiumFeature.<init>(Z)V  (loc1)
+     8 ?? opcode 0x4d
+    10 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+    18 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    25 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.origin  (loc0)
+    28 invokestatic net/minecraft/world/level/levelgen/feature/EndPodiumFeature.getLocation(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (loc0.origin)
+    31 invokevirtual net/minecraft/server/level/ServerLevel.getHeightmapPos(Lnet/minecraft/world/level/levelgen/Heightmap$Types;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/core/BlockPos;  (net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING_NO_LEAVES, EndPodiumFeature.getLocation(loc0.origin))
+    34 invokevirtual net/minecraft/core/BlockPos.below()Lnet/minecraft/core/BlockPos;  ()
+    37 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation = loc0.level.getHeightmapPos(net/minecraft/world/level/levelgen/Heightmap$Types.MOTION_BLOCKING_NO_LEAVES, EndPodiumFeature.getLocation(loc0.origin)).below()
+    41 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    45 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+    48 invokevirtual net/minecraft/server/level/ServerLevel.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc0.exitPortalLocation)
+    54 invokevirtual net/minecraft/world/level/block/state/BlockState.is(Ljava/lang/Object;)Z  (net/minecraft/world/level/block/Blocks.BEDROCK)
+    61 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+    64 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+    74 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+    77 invokevirtual net/minecraft/core/BlockPos.below()Lnet/minecraft/core/BlockPos;  ()
+    80 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation = loc0.exitPortalLocation.below()
+    88 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+    92 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    95 invokevirtual net/minecraft/server/level/ServerLevel.getMinY()I  ()
+   101 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+   104 invokevirtual net/minecraft/core/BlockPos.getY()I  ()
+   107 invokestatic java/lang/Math.max(II)I  (arith, loc0.exitPortalLocation.getY())
+   110 invokevirtual net/minecraft/core/BlockPos.atY(I)Lnet/minecraft/core/BlockPos;  (Math.max(arith, loc0.exitPortalLocation.getY()))
+   113 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation = loc0.exitPortalLocation.atY(Math.max(arith, loc0.exitPortalLocation.getY()))
+   117 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   125 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   129 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   132 invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource()Lnet/minecraft/server/level/ServerChunkCache;  ()
+   135 invokevirtual net/minecraft/server/level/ServerChunkCache.getGenerator()Lnet/minecraft/world/level/chunk/ChunkGenerator;  ()
+   138 invokestatic net/minecraft/util/RandomSource.create()Lnet/minecraft/util/RandomSource;  ()
+   142 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+   145 invokevirtual net/minecraft/world/level/levelgen/feature/EndPodiumFeature.place(Lnet/minecraft/world/level/levelgen/feature/configurations/FeatureConfiguration;Lnet/minecraft/world/level/WorldGenLevel;Lnet/minecraft/world/level/chunk/ChunkGenerator;Lnet/minecraft/util/RandomSource;Lnet/minecraft/core/BlockPos;)Z  (net/minecraft/world/level/levelgen/feature/configurations/FeatureConfiguration.NONE, loc0.level, loc0.level.getChunkSource().getGenerator(), RandomSource.create(), loc0.exitPortalLocation)
+   154 invokestatic net/minecraft/util/Mth.positiveCeilDiv(II)I  (4, 16)
+   159 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   162 invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource()Lnet/minecraft/server/level/ServerChunkCache;  ()
+   165 getfield net/minecraft/server/level/ServerChunkCache.chunkMap  (loc0.level.getChunkSource())
+   169 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+   172 invokestatic net/minecraft/world/level/ChunkPos.containing(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/ChunkPos;  (loc0.exitPortalLocation)
+   176 invokevirtual net/minecraft/server/level/ChunkMap.waitForLightBeforeSending(Lnet/minecraft/world/level/ChunkPos;I)V  (ChunkPos.containing(loc0.exitPortalLocation), loc3=Mth.positiveCeilDiv(4, 16))
+   179 return
+
+=== spawnNewGateway()V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways  (loc0)
+     4 invokeinterface java/util/List.isEmpty()Z  ()
+    12 return
+    14 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways  (loc0)
+    18 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.gateways  (loc0)
+    21 invokeinterface java/util/List.size()I  ()
+    28 invokeinterface java/util/List.remove(I)Ljava/lang/Object;  (arith)
+    36 invokevirtual java/lang/Integer.intValue()I  ()
+    54 ?? opcode 0x6b
+    55 ?? opcode 0x63
+    56 ?? opcode 0x6b
+    57 invokestatic java/lang/Math.cos(D)D  (0.15707963267948966, arith)
+    60 ?? opcode 0x6b
+    61 invokestatic net/minecraft/util/Mth.floor(D)I  (-3.141592653589793, Math.cos(0.15707963267948966, arith))
+    79 ?? opcode 0x6b
+    80 ?? opcode 0x63
+    81 ?? opcode 0x6b
+    82 invokestatic java/lang/Math.sin(D)D  (0.15707963267948966, arith)
+    85 ?? opcode 0x6b
+    86 invokestatic net/minecraft/util/Mth.floor(D)I  (-3.141592653589793, Math.sin(0.15707963267948966, arith))
+    99 invokespecial net/minecraft/core/BlockPos.<init>(III)V  (loc2=Mth.floor(-3.141592653589793, Math.cos(0.15707963267948966, arith)), 75, loc3=Mth.floor(-3.141592653589793, Math.sin(0.15707963267948966, arith)))
+   102 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.spawnNewGateway(Lnet/minecraft/core/BlockPos;)V  (net/minecraft/core/BlockPos(loc2=Mth.floor(-3.141592653589793, Math.cos(0.15707963267948966, arith)), 75, loc3=Mth.floor(-3.141592653589793, Math.sin(0.15707963267948966, arith))))
+   106 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   109 return
+
+=== spawnNewGateway(Lnet/minecraft/core/BlockPos;)V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+     9 invokevirtual net/minecraft/server/level/ServerLevel.levelEvent(ILnet/minecraft/core/BlockPos;I)V  (3000, loc1, 0)
+    13 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    16 invokevirtual net/minecraft/server/level/ServerLevel.registryAccess()Lnet/minecraft/core/RegistryAccess;  ()
+    22 invokeinterface net/minecraft/core/RegistryAccess.lookup(Lnet/minecraft/resources/ResourceKey;)Ljava/util/Optional;  (net/minecraft/core/registries/Registries.CONFIGURED_FEATURE)
+    32 invokevirtual java/util/Optional.flatMap(Ljava/util/function/Function;)Ljava/util/Optional;  (loc0.level.registryAccess().lookup(net/minecraft/core/registries/Registries.CONFIGURED_FEATURE))
+    42 invokevirtual java/util/Optional.ifPresent(Ljava/util/function/Consumer;)V  (loc1)
+    45 return
+
+=== tick()V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+     5 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled  (loc0)
+    16 invokevirtual net/minecraft/server/level/ServerBossEvent.setVisible(Z)V  (0)
+    21 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceLastPlayerScan  (loc0)
+    27 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceLastPlayerScan = arith
+    36 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.updatePlayers()V  ()
+    41 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceLastPlayerScan = 0
+    45 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    48 invokevirtual net/minecraft/server/level/ServerBossEvent.getPlayers()Ljava/util/Collection;  ()
+    51 invokeinterface java/util/Collection.isEmpty()Z  ()
+    60 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    63 invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource()Lnet/minecraft/server/level/ServerChunkCache;  ()
+    75 invokespecial net/minecraft/world/level/ChunkPos.<init>(II)V  (0, 0)
+    80 invokevirtual net/minecraft/server/level/ServerChunkCache.addTicketWithRadius(Lnet/minecraft/server/level/TicketType;Lnet/minecraft/world/level/ChunkPos;I)V  (net/minecraft/server/level/TicketType.DRAGON, net/minecraft/world/level/ChunkPos(0, 0), 9)
+    84 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.isArenaLoaded()Z  ()
+    90 return
+    92 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.needsStateScanning  (loc0)
+    99 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.scanState()V  ()
+   104 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.needsStateScanning = 0
+   108 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   112 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage  (loc0)
+   119 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnCrystals  (loc0)
+   122 invokeinterface java/util/List.stream()Ljava/util/stream/Stream;  ()
+   133 invokeinterface java/util/stream/Stream.map(Ljava/util/function/Function;)Ljava/util/stream/Stream;  (loc0)
+   143 invokeinterface java/util/stream/Stream.filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;  (loc0.respawnCrystals.stream().map(loc0))
+   148 invokeinterface java/util/stream/Stream.toList()Ljava/util/List;  ()
+   153 ?? opcode 0x4c
+   155 invokeinterface java/util/List.isEmpty()Z  ()
+   164 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.abortRespawnSequence()V  ()
+   167 return
+   169 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage  (loc0)
+   173 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   180 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnTime  (loc0)
+   186 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnTime = arith
+   189 invokevirtual net/minecraft/world/level/dimension/end/DragonRespawnStage.tick(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/dimension/end/EnderDragonFight;Ljava/util/List;I)V  (loc0, loc1, loc0.respawnTime, loc0)
+   193 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.setDirty()V  ()
+   197 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled  (loc0)
+   204 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID  (loc0)
+   212 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceDragonSeen  (loc0)
+   218 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceDragonSeen = arith
+   228 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.findOrCreateDragon()V  ()
+   233 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceDragonSeen = 0
+   238 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceCrystalsScanned  (loc0)
+   244 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceCrystalsScanned = arith
+   253 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.updateCrystalCount()V  ()
+   258 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceCrystalsScanned = 0
+   265 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   268 invokevirtual net/minecraft/server/level/ServerLevel.getChunkSource()Lnet/minecraft/server/level/ServerChunkCache;  ()
+   280 invokespecial net/minecraft/world/level/ChunkPos.<init>(II)V  (0, 0)
+   285 invokevirtual net/minecraft/server/level/ServerChunkCache.removeTicketWithRadius(Lnet/minecraft/server/level/TicketType;Lnet/minecraft/world/level/ChunkPos;I)V  (net/minecraft/server/level/TicketType.DRAGON, net/minecraft/world/level/ChunkPos(0, 0), 9)
+   288 return
+
+=== tryRespawn()V ===
+     1 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonKilled  (loc0)
+     8 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.respawnStage  (loc0)
+    15 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+    18 ?? opcode 0x4c
+    29 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;)V  ('Tried to respawn, but need to find the portal first.')
+    35 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.findExitPortal()Lnet/minecraft/world/level/block/state/pattern/BlockPattern$BlockPatternMatch;  ()
+    38 ?? opcode 0x4d
+    49 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;)V  ("Couldn't find a portal, so we made one.")
+    56 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.spawnExitPortal(Z)V  (1)
+    68 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;)V  ('Found the exit portal & saved its location for next time.')
+    74 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.exitPortalLocation  (loc0)
+    77 ?? opcode 0x4c
+    78 invokestatic com/google/common/collect/Lists.newArrayList()Ljava/util/ArrayList;  ()
+    81 ?? opcode 0x4d
+    84 invokevirtual net/minecraft/core/BlockPos.above(I)Lnet/minecraft/core/BlockPos;  (1)
+    87 ?? opcode 0x4e
+    91 invokevirtual net/minecraft/core/Direction$Plane.iterator()Ljava/util/Iterator;  ()
+    98 invokeinterface java/util/Iterator.hasNext()Z  ()
+   108 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+   119 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+   133 invokevirtual net/minecraft/core/BlockPos.relative(Lnet/minecraft/core/Direction;I)Lnet/minecraft/core/BlockPos;  (loc5=loc4=net/minecraft/core/Direction$Plane.HORIZONTAL.iterator().next(), 3)
+   136 invokespecial net/minecraft/world/phys/AABB.<init>(Lnet/minecraft/core/BlockPos;)V  (loc3.relative(loc5=loc4=net/minecraft/core/Direction$Plane.HORIZONTAL.iterator().next(), 3))
+   139 invokevirtual net/minecraft/server/level/ServerLevel.getEntitiesOfClass(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;  (cp, net/minecraft/world/phys/AABB(loc3.relative(loc5=loc4=net/minecraft/core/Direction$Plane.HORIZONTAL.iterator().next(), 3)))
+   146 invokeinterface java/util/List.isEmpty()Z  ()
+   154 return
+   158 invokeinterface java/util/List.addAll(Ljava/util/Collection;)Z  (loc6=loc0.level.getEntitiesOfClass(cp, net/minecraft/world/phys/AABB(loc3.relative(loc5=loc4=net/minecraft/core/Direction$Plane.HORIZONTAL.iterator().next(), 3))))
+   173 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;)V  ('Found all crystals, respawning dragon.')
+   180 invokevirtual net/minecraft/world/level/dimension/end/EnderDragonFight.respawnDragon(Ljava/util/List;)V  (loc2)
+   183 return
+
+=== updateCrystalCount()V ===
+     2 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceCrystalsScanned = 0
+     7 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.aliveCrystals = 0
+    11 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    14 invokestatic net/minecraft/world/level/levelgen/feature/EndSpikeFeature.getSpikesForLevel(Lnet/minecraft/world/level/WorldGenLevel;)Ljava/util/List;  (loc0.level)
+    17 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+    22 ?? opcode 0x4c
+    24 invokeinterface java/util/Iterator.hasNext()Z  ()
+    33 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    41 ?? opcode 0x4d
+    44 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.aliveCrystals  (loc0)
+    48 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+    55 invokevirtual net/minecraft/world/level/levelgen/feature/EndSpikeFeature$EndSpike.getTopBoundingBox()Lnet/minecraft/world/phys/AABB;  ()
+    58 invokevirtual net/minecraft/server/level/ServerLevel.getEntitiesOfClass(Ljava/lang/Class;Lnet/minecraft/world/phys/AABB;)Ljava/util/List;  (cp, loc2.getTopBoundingBox())
+    61 invokeinterface java/util/List.size()I  ()
+    67 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.aliveCrystals = arith
+    80 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.aliveCrystals  (loc0)
+    83 invokestatic java/lang/Integer.valueOf(I)Ljava/lang/Integer;  (loc0.aliveCrystals)
+    86 invokeinterface org/slf4j/Logger.debug(Ljava/lang/String;Ljava/lang/Object;)V  ('Found {} end crystals still alive', Integer.valueOf(loc0.aliveCrystals))
+    91 return
+
+=== updateDragon(Lnet/minecraft/world/entity/boss/enderdragon/EnderDragon;)V ===
+     1 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getUUID()Ljava/util/UUID;  ()
+     5 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonUUID  (loc0)
+     8 invokevirtual java/util/UUID.equals(Ljava/lang/Object;)Z  (loc0.dragonUUID)
+    15 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    19 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getHealth()F  ()
+    23 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getMaxHealth()F  ()
+    27 invokevirtual net/minecraft/server/level/ServerBossEvent.setProgress(F)V  ((loc1.getHealth() / loc1.getMaxHealth()))
+    32 putfield net/minecraft/world/level/dimension/end/EnderDragonFight.ticksSinceDragonSeen = 0
+    36 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.hasCustomName()Z  ()
+    43 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    47 invokevirtual net/minecraft/world/entity/boss/enderdragon/EnderDragon.getDisplayName()Lnet/minecraft/network/chat/Component;  ()
+    50 invokevirtual net/minecraft/server/level/ServerBossEvent.setName(Lnet/minecraft/network/chat/Component;)V  (loc1.getDisplayName())
+    53 return
+
+=== updatePlayers()V ===
+     0 invokestatic com/google/common/collect/Sets.newHashSet()Ljava/util/HashSet;  ()
+     3 ?? opcode 0x4c
+     5 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.level  (loc0)
+     9 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.validPlayer  (loc0)
+    12 invokevirtual net/minecraft/server/level/ServerLevel.getPlayers(Ljava/util/function/Predicate;)Ljava/util/List;  (loc0.validPlayer)
+    15 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+    20 ?? opcode 0x4d
+    22 invokeinterface java/util/Iterator.hasNext()Z  ()
+    31 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    39 ?? opcode 0x4e
+    41 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    45 invokevirtual net/minecraft/server/level/ServerBossEvent.addPlayer(Lnet/minecraft/server/level/ServerPlayer;)V  (loc3)
+    50 invokeinterface java/util/Set.add(Ljava/lang/Object;)Z  (loc3)
+    60 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+    63 invokevirtual net/minecraft/server/level/ServerBossEvent.getPlayers()Ljava/util/Collection;  ()
+    66 invokestatic com/google/common/collect/Sets.newHashSet(Ljava/lang/Iterable;)Ljava/util/HashSet;  (loc0.dragonEvent.getPlayers())
+    69 ?? opcode 0x4d
+    72 invokeinterface java/util/Set.removeAll(Ljava/util/Collection;)Z  (loc1)
+    79 invokeinterface java/util/Set.iterator()Ljava/util/Iterator;  ()
+    84 ?? opcode 0x4e
+    86 invokeinterface java/util/Iterator.hasNext()Z  ()
+    95 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+   106 getfield net/minecraft/world/level/dimension/end/EnderDragonFight.dragonEvent  (loc0)
+   111 invokevirtual net/minecraft/server/level/ServerBossEvent.removePlayer(Lnet/minecraft/server/level/ServerPlayer;)V  (loc4=loc3.next())
+   117 return

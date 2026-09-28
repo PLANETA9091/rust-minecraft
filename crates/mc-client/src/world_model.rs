@@ -377,6 +377,21 @@ pub struct WorldModel {
     /// never enqueues (the `globalLevelEvent` switch the 3000-band ids
     /// never carries — the positioned lane the cases' own arms wear).
     pub wax_events: Vec<WaxArm>,
+    /// THE GATEWAY-SPAWN EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary word the model banks — the 3000 words
+    /// the server's own dragon fight broadcasts, the
+    /// `LevelEventHandler.levelEvent` offset 5083 speaks: the ONE
+    /// `addAlwaysVisibleParticle(EXPLOSION_EMITTER, true, x + 0.5, y
+    /// + 0.5, z + 0.5, 0, 0, 0)` walk the case's own body spends —
+    /// the emitter seed the invisible walk banks — then the ONE
+    /// `playLocalSound(pos, END_GATEWAY_SPAWN, BLOCKS, 10.0F, pitch,
+    /// false)` walk the randoms carry). The arms the anchor alone
+    /// carry (the seed + the voice the render lane's own law folds —
+    /// the 8-tick / 6-child emitter walk, the random pitch chain the
+    /// 0.7×(1+(r−r)×0.2) band speaks). The GLOBAL route the arm never
+    /// enqueues (the `globalLevelEvent` switch the 3000 id never
+    /// carries — the positioned lane the case's own arm wears).
+    pub gateway_spawn_events: Vec<GatewaySpawnArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -781,6 +796,25 @@ pub struct WaxArm {
     /// and the speed folds the render lane's own law reads, the
     /// 3003 voice the word alone arms).
     pub word: i32,
+}
+
+/// One pending GATEWAY-SPAWN arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (the 3000 word the
+/// server's own dragon fight broadcasts,
+/// [`mc_protocol::play::END_GATEWAY_SPAWN_EFFECT`] the render lane
+/// speaks): the event's anchor block verbatim (the new gateway's own
+/// cell the `spawnNewGateway` broadcast), the data word deliberately
+/// absent — the case's own body never reads it (no `iload_3` the
+/// arm's bytecode speaks, the same transport honesty the dispenser
+/// arm keeps). The seed + the voice the render lane's own law folds
+/// (the 8-tick / 6-child emitter walk the invisible seed banks, the
+/// `block.end_gateway.spawn` 10.0-volume voice the random pitch
+/// chain carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct GatewaySpawnArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1623,6 +1657,7 @@ impl WorldModel {
             in_block_growth_events: Vec::new(),
             smash_attack_events: Vec::new(),
             wax_events: Vec::new(),
+            gateway_spawn_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -1826,6 +1861,13 @@ impl WorldModel {
     /// exactly one refresh).
     pub fn drain_wax_events(&mut self) -> Vec<WaxArm> {
         std::mem::take(&mut self.wax_events)
+    }
+
+    /// The gateway-spawn effect's mailbox's own drain (the same walk
+    /// the wax trio's own drain speaks — the arms the worker drained
+    /// ride exactly one refresh).
+    pub fn drain_gateway_spawn_events(&mut self) -> Vec<GatewaySpawnArm> {
+        std::mem::take(&mut self.gateway_spawn_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2223,6 +2265,10 @@ impl WorldModel {
                 // walk — the old level's 3003/3004/3005 words never
                 // wax again)
                 self.wax_events.clear();
+                // the gateway-spawn effect's mailbox dies with the
+                // level (the same walk — the old level's 3000 words
+                // never spawn a gateway again)
+                self.gateway_spawn_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3104,6 +3150,27 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         word: ev.effect,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::END_GATEWAY_SPAWN_EFFECT && !ev.global {
+                    // THE GATEWAY-SPAWN EFFECT'S OWN ARM (javap the
+                    // case offset 5083 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries verbatim (the TWO walks the
+                    // case's own body spends — the ONE
+                    // `addAlwaysVisibleParticle(EXPLOSION_EMITTER,
+                    // true, x + 0.5, y + 0.5, z + 0.5, 0, 0, 0)` walk
+                    // the emitter seed the invisible engine banks,
+                    // then the ONE `playLocalSound(pos,
+                    // END_GATEWAY_SPAWN, BLOCKS, 10.0F, pitch, false)`
+                    // walk the random pitch chain carries — the seed
+                    // + the voice the render lane's own law folds from
+                    // the anchor alone, the data word the case's own
+                    // body never reads).
+                    self.gateway_spawn_events.push(GatewaySpawnArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -7648,6 +7715,76 @@ mod tests {
             portal_cooldown: 0,
         })));
         assert!(m.wax_events.is_empty(), "the mailbox dies with the level");
+    }
+
+    #[test]
+    fn the_level_event_the_gateway_word_the_one_seed_banks() {
+        // THE GATEWAY-SPAWN EFFECT'S OWN ARM (javap the case offset
+        // 5083 — the positioned route the GLOBAL switch never banks):
+        // the anchor the mailbox rides verbatim (the TWO walks the
+        // case's own body spends — the emitter seed the
+        // `addAlwaysVisibleParticle` walk banks, the 10.0-volume
+        // voice the random pitch chain carries — the render lane's
+        // own law folds from the anchor alone), the drain ships the
+        // arms exactly once, and the Respawn recreates the level the
+        // mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the dragon fight's own word (the spawnNewGateway call the
+        // `levelEvent(3000, pos, 0)` walk speaks): the arm rides
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::END_GATEWAY_SPAWN_EFFECT,
+            x: -4,
+            y: 64,
+            z: 100,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.gateway_spawn_events.len(), 1, "the arm rides");
+        assert_eq!(m.gateway_spawn_events[0].x, -4);
+        assert_eq!(m.gateway_spawn_events[0].y, 64);
+        assert_eq!(m.gateway_spawn_events[0].z, 100);
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::END_GATEWAY_SPAWN_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.gateway_spawn_events.len(),
+            1,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_gateway_spawn_events();
+        assert_eq!(drained.len(), 1, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, -4, "the anchor the render lane folds");
+        assert!(
+            m.gateway_spawn_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::END_GATEWAY_SPAWN_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.gateway_spawn_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.gateway_spawn_events.is_empty(),
+            "the mailbox dies with the level"
+        );
     }
 
     #[test]
