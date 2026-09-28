@@ -171,6 +171,7 @@ fn run_join(
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
+                Vec<crate::world_view::WireSmokeVoiceEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
@@ -268,6 +269,7 @@ fn run_join(
             view.model.drain_white_smoke_events();
             view.model.drain_dragon_fireball_splash_events();
             view.model.drain_water_evaporating_events();
+            view.model.drain_smoke_voice_events();
             view.model.drain_eye_of_ender_shatter_events();
             view.model.drain_dragon_block_break_events();
             view.model.drain_dispenser_dispense_events();
@@ -889,6 +891,7 @@ fn run_join(
                             view.model.drain_white_smoke_events();
                             view.model.drain_dragon_fireball_splash_events();
                             view.model.drain_water_evaporating_events();
+                            view.model.drain_smoke_voice_events();
                             view.model.drain_eye_of_ender_shatter_events();
                             view.model.drain_dragon_block_break_events();
                             view.model.drain_dispenser_dispense_events();
@@ -1054,6 +1057,15 @@ fn run_join(
                                     // render's own law folds, each arm
                                     // rides exactly one shipped refresh)
                                     upd.water_evaporating_events,
+                                    // the pitched-smoke band's arms ride
+                                    // beside the water's — the 1501/1502
+                                    // words the server's own lava and
+                                    // torch broadcasts stream to the
+                                    // smoke lane (the voice + puffs walk
+                                    // the render's own law folds, each
+                                    // arm rides exactly one shipped
+                                    // refresh)
+                                    upd.smoke_voice_events,
                                     // the eye-of-ender shatter's arms ride
                                     // beside the water's — the 2003 words
                                     // the server's own ender signal
@@ -1244,6 +1256,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
+                Vec<crate::world_view::WireSmokeVoiceEvent>,
                 Vec<crate::world_view::WireEyeOfEnderShatterEvent>,
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
@@ -1798,6 +1811,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     white_smoke_events,
                     dragon_fireball_splash_events,
                     water_evaporating_events,
+                    smoke_voice_events,
                     eye_of_ender_shatter_events,
                     dragon_block_break_events,
                     dispenser_dispense_events,
@@ -1920,6 +1934,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // answers the same packet with)
                     app.live_dragon_fireball_splash_events_updated(dragon_fireball_splash_events);
                     app.live_water_evaporating_events_updated(water_evaporating_events);
+                    // the pitched-smoke band's lane beside the water's:
+                    // the 1501/1502 words the server's own lava and
+                    // torch broadcasts land at their own anchors (the
+                    // pitched voice the cp folds speak, the smoke puffs
+                    // the loops keep — the fizz's eight LARGE_SMOKE at
+                    // the +1.2 lift, the burnout's five SMOKE at the
+                    // 0.2..0.8 corner bands, the vanilla client answers
+                    // the same packet with)
+                    app.live_smoke_voice_events_updated(smoke_voice_events);
                     // the eye-of-ender shatter's lane beside the water's:
                     // the 2003 words the server's own ender signal
                     // broadcasts land at their own anchors (the shard

@@ -382,6 +382,10 @@ pub struct WorldModel {
     /// `globalLevelEvent` switch the 2009 id never carries — the
     /// positioned lane the case's own arm wears).
     pub water_evaporating_events: Vec<WaterEvaporatingArm>,
+    /// The pitched-smoke band's own mailbox — the Level Event
+    /// packet's 1501/1502 words the model enqueues for the render
+    /// lane (see [`SmokeVoiceArm`]).
+    pub smoke_voice_events: Vec<SmokeVoiceArm>,
     /// THE EYE-OF-ENDER SHATTER'S OWN MAILBOX (the Level Event
     /// packet's next vocabulary word the model banks — the 2003
     /// words the server's own ender signal broadcasts, the
@@ -700,6 +704,39 @@ pub struct WaterEvaporatingArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One pending SMOKE-VOICE arm — the Level Event packet's pitched
+/// smoke band the model keeps verbatim (see
+/// [`WorldModel::smoke_voice_events`]). The TWO words the ONE arm
+/// shape wears — the lava's own fizz (the water-meets-lava walk the
+/// `LavaFluid.fizz` tail broadcasts) and the redstone torch's own
+/// burnout (the `LIT`-false walk the `RedstoneTorchBlock.tick` tail
+/// broadcasts). The anchor verbatim (the caller's own BlockPos the
+/// voice broadcasts), the VOICE WORD the PACKET'S OWN effect id
+/// rides (the transport's honesty — nothing the wire never carried,
+/// the sound key and the puff walk the render lane's own law folds
+/// from it), the data word deliberately absent — the cases' own
+/// bodies never read it (no `iload_3` read the arms' bytecode
+/// speaks, the same transport honesty the fixed-voice arm keeps).
+/// The pitched voice each case body spends FIRST (the `0.5F` volume
+/// the cp `#177` Float keeps, the `2.6F + (nf - nf) × 0.8F` pitch
+/// the TWO nextFloat draws carry — the draws the render lane's own
+/// stream spends), the smoke puffs the loops after speak (the
+/// fizz's eight LARGE_SMOKE at the +1.2 lift, the burnout's five
+/// SMOKE at the 0.2..0.8 corner bands — the puffs the render lane's
+/// own stream carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SmokeVoiceArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — one of the two
+    /// pitched-smoke ids [`mc_protocol::LAVA_FIZZ_EFFECT`] /
+    /// [`mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT`] the model's
+    /// own arm banks; the sound key and the puff walk the render
+    /// lane's law folds from it).
+    pub voice: i32,
 }
 
 /// One pending EYE-OF-ENDER SHATTER arm — the Level Event packet's
@@ -1257,6 +1294,7 @@ impl WorldModel {
             in_block_growth_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
+            smoke_voice_events: Vec::new(),
             eye_of_ender_shatter_events: Vec::new(),
             dragon_block_break_events: Vec::new(),
             dispenser_dispense_events: Vec::new(),
@@ -1454,6 +1492,13 @@ impl WorldModel {
     /// data word the case's own body never reads).
     pub fn drain_water_evaporating_events(&mut self) -> Vec<WaterEvaporatingArm> {
         std::mem::take(&mut self.water_evaporating_events)
+    }
+
+    /// The pitched-smoke band's own drain — the render lane takes
+    /// the pending 1501/1502 arms each serve (the arms ship exactly
+    /// once the mailbox's own law keeps).
+    pub fn drain_smoke_voice_events(&mut self) -> Vec<SmokeVoiceArm> {
+        std::mem::take(&mut self.smoke_voice_events)
     }
 
     /// The eye-of-ender shatter's mailbox's own drain (the same walk
@@ -1720,6 +1765,7 @@ impl WorldModel {
                 // level (the same walk — the old level's 2009 words
                 // never steam again)
                 self.water_evaporating_events.clear();
+                self.smoke_voice_events.clear();
                 // the eye-of-ender shatter's mailbox dies with the
                 // level (the same walk — the old level's 2003 words
                 // never shatter again)
@@ -2562,6 +2608,26 @@ impl WorldModel {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
+                    });
+                    true
+                } else if (ev.effect == mc_protocol::LAVA_FIZZ_EFFECT
+                    || ev.effect == mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT)
+                    && !ev.global
+                {
+                    // THE PITCHED-SMOKE BAND'S OWN ARM (javap the case
+                    // offsets 3522/3628 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries, the VOICE WORD the packet's own
+                    // effect id rides (the sound key and the puff walk
+                    // the render lane's law folds from it — the fizz's
+                    // LAVA_EXTINGUISH + eight LARGE_SMOKE, the
+                    // burnout's REDSTONE_TORCH_BURNOUT + five SMOKE;
+                    // the data word the cases' own bodies never read).
+                    self.smoke_voice_events.push(SmokeVoiceArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
                     });
                     true
                 } else if ev.effect == mc_protocol::EYE_OF_ENDER_SHATTER_EFFECT && !ev.global {
@@ -7330,6 +7396,107 @@ mod tests {
         })));
         assert!(
             m.fixed_voice_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_smoke_words_the_one_arm_wears() {
+        // THE PITCHED-SMOKE BAND'S OWN ARM (javap the cases offsets
+        // 3522/3628 — the positioned route the GLOBAL switch never
+        // banks, BOTH words the ONE mailbox arms): the lava's own
+        // fizz (the water-meets-lava walk the `LavaFluid.fizz` tail
+        // broadcasts) and the redstone torch's own burnout (the
+        // `LIT`-false walk the `RedstoneTorchBlock.tick` tail
+        // broadcasts) — the voice word the PACKET'S OWN effect id
+        // rides (the transport's honesty — the sound key and the
+        // puff walk the render lane's own law folds from it), the
+        // data words the cases' own bodies never read, the drain
+        // ships the arms exactly once, and the Respawn recreates the
+        // level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the two words (the callers' own tails the bytecode pins —
+        // LavaFluid.fizz's sipush 1501, RedstoneTorchBlock.tick's
+        // sipush 1502; each the caller's own iconst_0 passes, the
+        // zeros the cases' bodies never read)
+        for (i, effect) in [
+            mc_protocol::LAVA_FIZZ_EFFECT,
+            mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
+        ]
+        .iter()
+        .enumerate()
+        {
+            let x = (i as i32) * 13 - 5;
+            assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: *effect,
+                x,
+                y: 31,
+                z: 900,
+                data: 0,
+                global: false,
+            })));
+        }
+        assert_eq!(m.smoke_voice_events.len(), 2, "the two words arm");
+        // the voice words ride verbatim (the packet's own ids — the
+        // sound keys and the puff walks the render lane's law folds
+        // from them)
+        assert_eq!(
+            m.smoke_voice_events[0].voice,
+            mc_protocol::LAVA_FIZZ_EFFECT,
+            "the fizz word rides"
+        );
+        assert_eq!(
+            m.smoke_voice_events[1].voice,
+            mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
+            "the burnout word rides"
+        );
+        // the anchors ride verbatim (the callers' own BlockPos cells)
+        assert_eq!(m.smoke_voice_events[0].x, -5);
+        assert_eq!(m.smoke_voice_events[0].y, 31);
+        assert_eq!(m.smoke_voice_events[0].z, 900);
+        assert_eq!(m.smoke_voice_events[1].x, 8);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // two ids the positioned lane's own words)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::LAVA_FIZZ_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.smoke_voice_events.len(), 2, "the global word never arms");
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_smoke_voice_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(
+            drained[0].voice,
+            mc_protocol::LAVA_FIZZ_EFFECT,
+            "the wire order the drain keeps"
+        );
+        assert!(m.smoke_voice_events.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_smoke_voice_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.smoke_voice_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.smoke_voice_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

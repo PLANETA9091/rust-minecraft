@@ -1404,6 +1404,75 @@ pub const DRAGON_BLOCK_BREAK_EFFECT: i32 = 2008;
 /// case answers). The GLOBAL route the `globalLevelEvent` switch
 /// never banks (the 1023/1028/1038 trio the band alone carries —
 /// the positioned lane the case's own arm wears).
+/// THE LAVA-FIZZ VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `LAVA_FIZZ`, the case
+/// `LevelEventHandler.levelEvent` offset 3522 speaks): the pitched
+/// fizz voice the case body spends FIRST — the ONE
+/// `playLocalSound(pos, LAVA_EXTINGUISH, BLOCKS, 0.5F, 2.6F +
+/// (random.nextFloat() - random.nextFloat()) * 0.8F, false)` walk
+/// the cp decodes pin (the volume `#177` Float 0.5 the fixed fold
+/// keeps, the base `#633` Float 2.6 the pitch constant rides, the
+/// scale `#138` Float 0.8 the TWO nextFloat draws carry — the FIRST
+/// minus the SECOND the fsub order speaks, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps) — then the `bipush 8` loop
+/// the eight LARGE_SMOKE puffs fire (`addParticle(LARGE_SMOKE,
+/// x + nextDouble(), y + 1.2, z + nextDouble(), 0, 0, 0)` — the x
+/// draw FIRST, the z draw SECOND, the +1.2 lift the cp `#637` Double
+/// decode speaks, the zero velocity trio the `dconst_0` answers).
+/// The server's own lava speaks it — `LavaFluid.fizz`'s tail the
+/// `sipush 1501, pos, iconst_0` levelEvent call the bytecode pins
+/// (the water-meets-lava walk's own broadcast; the data word the
+/// case's own body never reads — no `iload_3` the arm's bytecode
+/// speaks). The GLOBAL route the `globalLevelEvent` switch never
+/// banks (the 1023/1028/1038 trio the band alone carries — the
+/// positioned lane the case's own arm wears).
+pub const LAVA_FIZZ_EFFECT: i32 = 1501;
+
+/// THE REDSTONE-TORCH BURNOUT VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `REDSTONE_TORCH_BURNOUT`, the case
+/// `LevelEventHandler.levelEvent` offset 3628 speaks): the pitched
+/// burnout voice the case body spends FIRST — the ONE
+/// `playLocalSound(pos, REDSTONE_TORCH_BURNOUT, BLOCKS, 0.5F, 2.6F +
+/// (random.nextFloat() - random.nextFloat()) * 0.8F, false)` walk
+/// the SAME cp trio the fizz voice keeps (the volume `#177` Float
+/// 0.5, the base `#633` Float 2.6, the scale `#138` Float 0.8 the
+/// TWO nextFloat draws carry — the first minus the second the fsub
+/// order speaks) — then the `iconst_5` loop the five SMOKE puffs
+/// fire (`addParticle(SMOKE, x + nextDouble() * 0.6 + 0.2, y +
+/// nextDouble() * 0.6 + 0.2, z + nextDouble() * 0.6 + 0.2, 0, 0,
+/// 0)` — the x/y/z draw order the three dstore rows speak, the
+/// `#642` Double 0.6 × the `#229` Double 0.2 shifts the
+/// 0.2..0.8 corner bands keep, the zero velocity trio the
+/// `dconst_0` answers). The server's own torch speaks it —
+/// `RedstoneTorchBlock.tick`'s tail the `sipush 1502, pos,
+/// iconst_0` levelEvent call the bytecode pins (the `LIT` false
+/// setBlock walk the burnout broadcast follows; the data word the
+/// case's own body never reads — no `iload_3` the arm's bytecode
+/// speaks). The GLOBAL route the `globalLevelEvent` switch never
+/// banks (the 1023/1028/1038 trio the band alone carries — the
+/// positioned lane the case's own arm wears).
+pub const REDSTONE_TORCH_BURNOUT_EFFECT: i32 = 1502;
+
+/// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
+/// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
+/// ONE `playLocalSound(pos, DISPENSER_DISPENSE, BLOCKS, 1.0F, 1.0F,
+/// false)` walk the case body spends — the `fconst_1` pair the
+/// volume/pitch both carry (no randoms the fixed fold speaks), the
+/// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve places,
+/// the distance-delay flag false the immediate voice keeps, the data
+/// word the case's own body never reads (no `iload_3` the arm's
+/// bytecode speaks). NO particles the case speaks — the voice alone
+/// the broadcast renders. The server's own dispenser speaks it —
+/// `DefaultDispenseItemBehavior.playDefaultSound`'s `sipush 1000,
+/// BlockSource.pos, iconst_0` the levelEvent call the bytecode pins
+/// (the default behavior's own eject the sound the walk's own tail
+/// broadcasts; the empty-slot `sipush 1001` FAIL word the sibling
+/// case answers). The GLOBAL route the `globalLevelEvent` switch
+/// never banks (the 1023/1028/1038 trio the band alone carries —
+/// the positioned lane the case's own arm wears).
 pub const SOUND_DISPENSER_DISPENSE_EFFECT: i32 = 1000;
 
 /// THE CHORUS-FLOWER GROW VOICE'S OWN ID (the 26.2 `LevelEvent`
@@ -10704,6 +10773,16 @@ mod tests {
             SOUND_CRAFTER_FAIL_EFFECT,
             1050,
             "the crafter fail voice the dispenseFrom's own empty slots speak"
+        );
+        assert_eq!(
+            LAVA_FIZZ_EFFECT,
+            1501,
+            "the lava fizz voice the fluid's own fizz tail speaks"
+        );
+        assert_eq!(
+            REDSTONE_TORCH_BURNOUT_EFFECT,
+            1502,
+            "the torch burnout voice the tick's own tail speaks"
         );
         // hand-rolled wire: varint id, i32 BE effect, packed pos long,
         // i32 BE data, bool global — the 26.2 write walk's own order

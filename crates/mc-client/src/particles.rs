@@ -1635,6 +1635,68 @@ pub fn shoot_white_smoke_puff(
     }
 }
 
+/// The LARGE-SMOKE puff's own spawn (javap `LargeSmokeParticle` +
+/// `$Provider.createParticle` over the 26.2 jar — the
+/// `ParticleTypes.LARGE_SMOKE` word the `LevelEventHandler` case-1501
+/// arm's `bipush 8` loop speaks): the SAME `SmokeParticle` ctor chain
+/// the plain smoke kind wears — the `LargeSmokeParticle` class the
+/// bytecodes pin is the `SmokeParticle` subclass whose ONLY delta the
+/// ctor's own arg speaks (the `2.5F` quadSizeMultiplier the plain
+/// provider's `1.0F` the one constant's own difference carries — the
+/// 26.2 `<init>` dumps pin: `super(level, x, y, z, xs, ys, zs,
+/// spreads 0.1F³, multiplier, sprites, 0.3F, 8, -0.1F, 1)` both
+/// classes speak, the 2.5 the Large passes) — the FULL draw chain the
+/// smoke lane's own helper speaks (the dead base lifetime draw, the
+/// three spread draws + the d0 pair, the size draw, the tint draw,
+/// the own lifetime draw — the NINE draws the torch lane's doc
+/// pins), the size fold the multiplier DOUBLES (`quadSize *= 0.75F ×
+/// 2.5F` the ×1.875 the plain smoke's ×0.75 the one constant's own
+/// difference wears — the puffs the lava's fizz nights grow). The
+/// grey tint the `r * 0.3` draw carries, the 8..40 lifetime the
+/// smoke fold speaks, the −0.1 gravity the rise rides, the 0.96
+/// friction, the 8-frame DESCENDING `generic_7..0` pool the
+/// `large_smoke.json` banks VERBATIM — the SAME texture list the
+/// smoke.json speaks (the two jsons' identical rows the decode pins,
+/// NO new textures the lane demands), the render bank the smoke
+/// kind's own arm carries.
+pub fn large_smoke_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the ash ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (sx, sy, sz) = ctor_spread_and_normalize(rng);
+    let r_base = rng.next_f32();
+    let r_tint = rng.next_f32();
+    let r_life = rng.next_f32();
+    let scale = f64::from(0.1f32);
+    let grey = r_tint * 0.3;
+    Particle {
+        kind: ParticleKind::Smoke,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: sx * scale + vx,
+        vy: sy * scale + vy,
+        vz: sz * scale + vz,
+        age: 0,
+        lifetime: smoke_lifetime(r_life),
+        gravity: -0.1,
+        friction: 0.96,
+        quad_size: base_quad_size(r_base) * 0.75 * 2.5,
+        uo: 0.0,
+        vo: 0.0,
+        col: [grey, grey, grey],
+    }
+}
+
 /// The DRAGON-BREATH splash puff's own spawn (javap
 /// `DragonBreathParticle` + `$Provider.createParticle` over the 26.2
 /// jar): the ctor chain the case's own draw walk feeds — the dead
@@ -3814,6 +3876,69 @@ mod tests {
             b.next();
         }
         assert_eq!(after_nine, b.next(), "the smoke chain's own nine draws");
+    }
+
+    #[test]
+    fn the_large_smoke_puff_the_draws_the_size_wears() {
+        // THE BIRTH (the addParticle pos the case-1501 walk speaks —
+        // the (x + nd, y + 1.2, z + nd) folds the caller places, the
+        // zero velocity trio the `dconst_0` answers): the puff sits
+        // at the caller's own corner
+        let mut r = rng();
+        let p = large_smoke_puff(11.3, 21.2, 32.7, 0.0, 0.0, 0.0, &mut r);
+        assert!(matches!(p.kind, ParticleKind::Smoke));
+        assert_eq!(p.x, 11.3, "the caller's own birth x");
+        assert_eq!(p.y, 21.2, "the caller's own birth y — the +1.2 lift the walk keeps");
+        assert_eq!(p.z, 32.7, "the caller's own birth z");
+        // THE LAWS (the SAME BaseAshSmokeParticle chain the plain
+        // smoke wears — the LargeSmokeParticle subclass the ONE
+        // multiplier constant speaks): the grey tint the r*0.3 draw
+        // carries, the 0.75 × 2.5 = 1.875 size fold the plain's
+        // 0.75 the one constant's own difference wears, the 8..40
+        // lifetime, the -0.1 gravity the rise rides, the 0.96
+        // friction the ctor sets
+        assert_eq!(p.gravity, -0.1);
+        assert_eq!(p.friction, 0.96);
+        assert!((8..=40).contains(&p.lifetime), "the ash lifetime: {}", p.lifetime);
+        assert!(
+            (0.1875..0.375).contains(&p.quad_size),
+            "the 0.75 × 2.5 fold's own band: {}",
+            p.quad_size
+        );
+        assert!(
+            p.col.iter().all(|c| (0.0..0.3).contains(c)),
+            "the grey tint the r*0.3 keeps: {:?}",
+            p.col
+        );
+        // THE VELOCITY (the zero trio the case passes — the chain's
+        // own spread the *0.1 scale carries): |vx| <= 0.018, the vy
+        // band the +0.1 bump scales to [-0.008, 0.028) — the rise
+        // the fold and the gravity both give
+        assert!(p.vx.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vx);
+        assert!(p.vz.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vz);
+        assert!(
+            (-0.008..0.028).contains(&p.vy),
+            "the smoke's own rise band: {}",
+            p.vy
+        );
+        // THE DETERMINISM (the same seed the same chain answers)
+        let p2 = large_smoke_puff(11.3, 21.2, 32.7, 0.0, 0.0, 0.0, &mut rng());
+        assert_eq!(
+            (p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+            (p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+            "the seeded chain replays"
+        );
+        // THE STREAM (the nine draws the chain consumes — the dead
+        // base lifetime, the three spreads, the d0 pair, the size,
+        // the tint, the own lifetime; the tenth draw differs)
+        let mut a = rng();
+        let _ = large_smoke_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &mut a);
+        let after_nine = a.next();
+        let mut b = rng();
+        for _ in 0..9 {
+            b.next();
+        }
+        assert_eq!(after_nine, b.next(), "the large smoke chain's own nine draws");
     }
 
     #[test]

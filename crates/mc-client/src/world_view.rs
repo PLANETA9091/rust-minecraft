@@ -481,6 +481,15 @@ pub struct SnapshotView {
     /// after), the render lane's own law folds the eight-puff
     /// steam cloud.
     pub water_evaporating_events: Vec<WireWaterEvaporatingEvent>,
+    /// The 1501/1502 words the refresh carries (the server's own
+    /// lava and torch broadcasts,
+    /// [`mc_protocol::play::LAVA_FIZZ_EFFECT`] /
+    /// [`mc_protocol::play::REDSTONE_TORCH_BURNOUT_EFFECT`] the
+    /// vocabulary speaks): shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after), the render lane's own law folds the pitched voice and
+    /// the smoke puffs from the word the arm rides.
+    pub smoke_voice_events: Vec<WireSmokeVoiceEvent>,
     /// The 2003 words the refresh carries (the server's own ender
     /// signal broadcasts, [`mc_protocol::play::EYE_OF_ENDER_SHATTER_EFFECT`]
     /// the vocabulary speaks): shipped once with the refresh that
@@ -597,6 +606,26 @@ pub struct WireWaterEvaporatingEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One wire SMOKE-VOICE arm — the Level Event packet's own pitched
+/// smoke band (the 1501/1502 words the server's own lava and torch
+/// broadcasts, [`mc_protocol::play::LAVA_FIZZ_EFFECT`] /
+/// [`mc_protocol::play::REDSTONE_TORCH_BURNOUT_EFFECT`] the render
+/// lane speaks): the event's anchor block, verbatim (the voice's
+/// and the puffs' own input — the fizz's steam and the burnout's
+/// smoke the render lane folds from it), the VOICE WORD the
+/// packet's own effect id rides (the sound key and the puff walk
+/// the render lane's law folds from it; the data word the cases'
+/// own bodies never read, the transport never carries).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireSmokeVoiceEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — one of the two
+    /// pitched-smoke ids the model's own arm banks).
+    pub voice: i32,
 }
 
 /// One wire EYE-OF-ENDER SHATTER arm — the Level Event packet's own
@@ -2527,6 +2556,9 @@ pub fn materialize_snapshot_view(
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
         water_evaporating_events: Vec::new(),
+        // and no smoke words (the join snapshot carries no 1501/1502
+        // traffic — the empty mailbox the render lane skips)
+        smoke_voice_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2008
         // traffic — the empty mailbox the render lane skips)
         dragon_block_break_events: Vec::new(),
@@ -2951,6 +2983,22 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the pitched-smoke band's own projection (the mailbox
+        // verbatim — the anchor and the voice word the arms carry,
+        // the render lane's own law reads): each 1501/1502 word
+        // ships once with this view, the worker's drain empties the
+        // mailbox after
+        let smoke_voice_events = self
+            .model
+            .smoke_voice_events
+            .iter()
+            .map(|arm| WireSmokeVoiceEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                voice: arm.voice,
+            })
+            .collect();
         // the eye-of-ender shatter's own projection (the mailbox
         // verbatim — the anchor the arms carry, the render lane's own
         // law reads): each 2003 word ships once with this view, the
@@ -3180,6 +3228,10 @@ impl LiveView {
                 // arm too — the 2009 words are the connection's own
                 // traffic, not the pose's
                 water_evaporating_events,
+                // the pitched-smoke band's arms ride the pose-less arm
+                // too — the 1501/1502 words are the connection's own
+                // traffic, not the pose's
+                smoke_voice_events,
                 // the dragon block-break effect's arms ride the pose-less
                 // arm too — the 2008 words are the connection's own
                 // traffic, not the pose's
@@ -3294,6 +3346,10 @@ impl LiveView {
             // too — the 2009 words follow the mailbox exactly like the
             // dragon's own arms do
             water_evaporating_events,
+            // the pitched-smoke band's arms ride every refresh too —
+            // the 1501/1502 words follow the mailbox exactly like the
+            // water's own arms do
+            smoke_voice_events,
             // the dragon block-break effect's arms ride every refresh
             // too — the 2008 words follow the mailbox exactly like the
             // water's own arms do

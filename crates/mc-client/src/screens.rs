@@ -21904,6 +21904,111 @@ impl App {
         }
     }
 
+    /// THE PITCHED-SMOKE WIRE LANE (javap `LevelEventHandler` cases
+    /// 1501/1502 — offsets 3522/3628 — over the 26.2 jar): the
+    /// server's own lava and redstone torch the voices broadcast,
+    /// the TWO walks the case bodies speak — the pitched voice each
+    /// body spends FIRST (the ONE `playLocalSound(pos, <voice>,
+    /// BLOCKS, 0.5F, 2.6F + (nf - nf) × 0.8F, false)` walk the cp
+    /// trio `#177`/`#633`/`#138` decodes — the TWO nextFloat draws
+    /// the fold carries, the FIRST minus the SECOND the fsub order
+    /// speaks), then the smoke puffs the loops answer (the fizz's
+    /// `bipush 8` LARGE_SMOKE loop, the burnout's `iconst_5` SMOKE
+    /// loop). NO world edit the block updates own — the voices and
+    /// the puffs alone the broadcasts render.
+    pub fn live_smoke_voice_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireSmokeVoiceEvent>,
+    ) {
+        for ev in events {
+            self.play_smoke_voice(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE PITCHED-SMOKE WALK (javap the two case bodies verbatim):
+    /// the voice word the packet's own effect id — the sound key and
+    /// the puff walk the official table + the case bodies fold from
+    /// it. The pitch draws ride the level ambient stream BEFORE the
+    /// puffs' own draws (the case body's own order — the sound call
+    /// the loop follows). The fizz's puffs the raw corner folds
+    /// place (the x draw FIRST, the z draw SECOND, the +1.2 lift the
+    /// cp `#637` Double keeps — the y the never-drawn band the
+    /// constant rides), the burnout's puffs the shifted corner bands
+    /// (the x/y/z draw order the three dstore rows speak, the
+    /// `nextDouble() × 0.6 + 0.2` the 0.2..0.8 band keeps). The
+    /// LARGE_SMOKE the ×1.875 size fold the 2.5 multiplier speaks,
+    /// the SMOKE the plain ×0.75 the 1.0 provider keeps — the SAME
+    /// draw chain both chains wear (the nine draws the provider's
+    /// own ctor consumes).
+    fn play_smoke_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the TWO WORDS the model's own arm banks (the case ids the
+        // bytecode's own lookupswitch rows speak — the render lane's
+        // law folds the sound key and the puff walk from each)
+        let (key, large) = match voice {
+            mc_protocol::LAVA_FIZZ_EFFECT => ("block.lava.extinguish", true),
+            mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT => ("block.redstone_torch.burnout", false),
+            _ => return, // the model's own arm the two words alone enqueues
+        };
+        // THE PITCHED VOICE (the case body's own FIRST walk — the
+        // `0.5F` volume the cp `#177` keeps, the pitch the TWO
+        // nextFloat draws the fold carries — the first minus the
+        // second the fsub order speaks, the ×0.8 scale the `#138`
+        // keeps, the 2.6 base the `#633` rides; the BLOCK CENTER the
+        // `playLocalSound(BlockPos, ...)` resolve places, the
+        // distance-delay flag false the immediate voice keeps)
+        let pitch = 2.6f32
+            + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * 0.8f32;
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            0.5,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+        // THE SMOKE PUFFS (the loops the case bodies answer — the
+        // voice's own draws the puffs' follow, the position folds the
+        // addParticle args' own order keeps)
+        if large {
+            for _ in 0..8 {
+                let px = f64::from(x) + self.level_ambient_rng.next_f64();
+                let pz = f64::from(z) + self.level_ambient_rng.next_f64();
+                let py = f64::from(y) + 1.2;
+                let puff = crate::particles::large_smoke_puff(
+                    px,
+                    py,
+                    pz,
+                    0.0,
+                    0.0,
+                    0.0,
+                    &mut self.level_ambient_rng,
+                );
+                self.particles.push(puff);
+            }
+        } else {
+            for _ in 0..5 {
+                let px = f64::from(x) + self.level_ambient_rng.next_f64() * 0.6 + 0.2;
+                let py = f64::from(y) + self.level_ambient_rng.next_f64() * 0.6 + 0.2;
+                let pz = f64::from(z) + self.level_ambient_rng.next_f64() * 0.6 + 0.2;
+                let puff = crate::particles::shoot_smoke_puff(
+                    px,
+                    py,
+                    pz,
+                    0.0,
+                    0.0,
+                    0.0,
+                    &mut self.level_ambient_rng,
+                );
+                self.particles.push(puff);
+            }
+        }
+    }
+
     /// THE EYE-OF-ENDER SHATTER WIRE LANE (javap `LevelEventHandler`
     /// case 2003 — offset 947 — over the 26.2 jar): the server's own
     /// ender signal the landing tail broadcasts, the TWO walks the
@@ -46248,6 +46353,271 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.particles.clear();
         app.live_water_evaporating_events_updated(vec![]);
+        assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
+    }
+
+    #[test]
+    fn the_wire_smoke_words_the_voice_walk_the_puffs_wear() {
+        // THE PITCHED-SMOKE BAND'S OWN WIRE LANE (javap cases
+        // 1501/1502 → offsets 3522/3628 over the 26.2 jar): the
+        // pitched voice each case body spends FIRST (the `0.5F`
+        // volume the cp `#177` keeps, the `2.6F + (nf - nf) × 0.8F`
+        // pitch the TWO nextFloat draws carry), then the puffs the
+        // loops answer — the fizz's `bipush 8` LARGE_SMOKE at the
+        // raw corner folds (+1.2 the y lift), the burnout's
+        // `iconst_5` SMOKE at the shifted 0.2..0.8 corner bands.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the assignment banks —
+        // the whole walk the seeded stream replays)
+        app.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1501);
+        app.live_smoke_voice_events_updated(vec![crate::world_view::WireSmokeVoiceEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+            voice: mc_protocol::LAVA_FIZZ_EFFECT,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            8,
+            "the bipush 8 the fizz loop keeps"
+        );
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the LARGE_SMOKE type the smoke render bank carries"
+            );
+            // THE RAW CORNER FOLDS (the getX() + nextDouble() the
+            // case's own args speak — the [10, 11) band the x/z keep,
+            // the +1.2 lift the y's constant rides)
+            assert!(
+                p.x >= 10.0 && p.x < 11.0,
+                "the x the nextDouble band keeps: {}",
+                p.x
+            );
+            assert!(
+                (p.y - 21.2).abs() < 1e-9,
+                "the +1.2 lift the cp Double keeps: {}",
+                p.y
+            );
+            assert!(
+                p.z >= 10.0 && p.z < 11.0,
+                "the z the nextDouble band keeps: {}",
+                p.z
+            );
+            // THE VELOCITY (the zero SPEED trio the dconst_0 passes —
+            // the chain's own spread the *0.1 scale carries: |vx|,
+            // |vz| <= 0.018, the vy band the +0.1 bump scales to
+            // [-0.008, 0.028) — the rise the fold and the gravity
+            // both give)
+            assert!(p.vx.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vx);
+            assert!(p.vz.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vz);
+            assert!(
+                (-0.008..0.028).contains(&p.vy),
+                "the smoke's own rise band: {}",
+                p.vy
+            );
+            // THE CTOR LAWS (the 0.96 friction, the −0.1 gravity the
+            // rise rides, the 8..40 band the smoke fold gives, the
+            // grey tint the r*0.3 keeps, the ×1.875 size fold the 2.5
+            // multiplier speaks — the plain smoke's ×0.75 the one
+            // constant's own difference wears)
+            assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction");
+            assert!((p.gravity + 0.1).abs() < 1e-9, "the ash gravity");
+            assert!(p.lifetime >= 8 && p.lifetime <= 40, "the band: {}", p.lifetime);
+            assert_eq!(p.col[0], p.col[1], "the grey the r/g keeps");
+            assert_eq!(p.col[1], p.col[2], "the grey the g/b keeps");
+            assert!(
+                (0.1875..0.375).contains(&p.quad_size),
+                "the 0.75 × 2.5 fold's own band: {}",
+                p.quad_size
+            );
+        }
+        // THE PITCHED VOICE (the case body's own FIRST walk — the
+        // fizz key the official table speaks, the 0.5 volume the cp
+        // Float keeps, the pitch band the fold gives [1.8, 3.4])
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.lava.extinguish "))
+                .expect("the fizz voice the case body speaks");
+            let pitch: f32 = voice
+                .rsplit(" p")
+                .next()
+                .and_then(|s| s.split(' ').next())
+                .and_then(|s| s.parse::<f32>().ok())
+                .expect("the logged pitch the walk carries");
+            assert!(
+                (1.8..=3.4).contains(&pitch),
+                "the 2.6 ± 0.8×(nf−nf) band the fold keeps: {}",
+                pitch
+            );
+            // THE GAIN (the 0.5 volume the attenuate folds — the
+            // close ear the 0.5 verbatim keeps, the distance the
+            // reach never amplifies)
+            let gain: f32 = voice
+                .rsplit(" v")
+                .next()
+                .and_then(|s| s.split(' ').next())
+                .and_then(|s| s.parse().ok())
+                .expect("the logged gain the walk carries");
+            assert!(
+                gain <= 0.5 + 1e-6 && gain > 0.0,
+                "the 0.5 volume the attenuation folds: {}",
+                gain
+            );
+        }
+        // THE STREAM'S OWN ORDER (the voice's TWO pitch draws the
+        // puffs' own follow — 2 + 8 × (2 corner + 9 ctor) = 90 raw
+        // draws the whole walk spends, no more no less)
+        let advanced = {
+            let mut l = crate::drops::Lcg::new(0xC10D_1501);
+            for _ in 0..90 {
+                l.next();
+            }
+            l.next()
+        };
+        assert_eq!(
+            app.level_ambient_rng.next(),
+            advanced,
+            "the voice-then-puffs order the stream's own count keeps"
+        );
+        // THE DETERMINISM (the same seed the same pitch answers)
+        if sounds_loaded() {
+            let pitch_first = {
+                let mut app2 = App::new(2);
+                app2.enter_world();
+                app2.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1501);
+                app2.live_smoke_voice_events_updated(vec![crate::world_view::WireSmokeVoiceEvent {
+                    x: 10,
+                    y: 20,
+                    z: 10,
+                    voice: mc_protocol::LAVA_FIZZ_EFFECT,
+                }]);
+                app2.sounds
+                    .events
+                    .iter()
+                    .find(|e| e.starts_with("block.lava.extinguish "))
+                    .expect("the fizz voice the replay speaks")
+                    .to_string()
+            };
+            let pitch_again = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.lava.extinguish "))
+                .expect("the fizz voice the original speaks")
+                .to_string();
+            assert_eq!(pitch_first, pitch_again, "the seeded chain replays");
+        }
+        // THE BURNOUT'S OWN WALK (the `iconst_5` loop the shifted
+        // corner bands keep — the x/y/z draw order the three dstore
+        // rows speak, the nextDouble() × 0.6 + 0.2 the 0.2..0.8 band
+        // carries, the plain SMOKE the ×0.75 fold the 1.0 provider
+        // keeps)
+        app.particles.clear();
+        app.sounds.events.clear();
+        app.level_ambient_rng = crate::drops::Lcg::new(0xC10D_1502);
+        app.live_smoke_voice_events_updated(vec![crate::world_view::WireSmokeVoiceEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+            voice: mc_protocol::REDSTONE_TORCH_BURNOUT_EFFECT,
+        }]);
+        assert_eq!(
+            app.particles.len(),
+            5,
+            "the iconst_5 the burnout loop keeps"
+        );
+        for p in &app.particles {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the SMOKE type the provider answers"
+            );
+            assert!(
+                p.x >= 10.2 && p.x < 10.8,
+                "the x the shifted band keeps: {}",
+                p.x
+            );
+            assert!(
+                p.y >= 20.2 && p.y < 20.8,
+                "the y the shifted band keeps: {}",
+                p.y
+            );
+            assert!(
+                p.z >= 10.2 && p.z < 10.8,
+                "the z the shifted band keeps: {}",
+                p.z
+            );
+            // THE VELOCITY (the zero speed trio the chain's own
+            // spread carries — the same drift bands the fizz's puffs
+            // wear)
+            assert!(p.vx.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vx);
+            assert!(p.vz.abs() <= 0.018 + 1e-9, "the drift band: {}", p.vz);
+            assert!(
+                (-0.008..0.028).contains(&p.vy),
+                "the smoke's own rise band: {}",
+                p.vy
+            );
+            assert!((p.friction - 0.96).abs() < 1e-9, "the 0.96 friction");
+            assert!((p.gravity + 0.1).abs() < 1e-9, "the ash gravity");
+            assert!(p.lifetime >= 8 && p.lifetime <= 40, "the band: {}", p.lifetime);
+            assert!(
+                (0.075..0.15).contains(&p.quad_size),
+                "the plain 0.75 fold's own band: {}",
+                p.quad_size
+            );
+        }
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.redstone_torch.burnout ")),
+                "the burnout voice the case body speaks"
+            );
+        }
+        // THE BURNOUT'S OWN STREAM (2 + 5 × (3 corner + 9 ctor) = 62
+        // raw draws the whole walk spends)
+        let advanced = {
+            let mut l = crate::drops::Lcg::new(0xC10D_1502);
+            for _ in 0..62 {
+                l.next();
+            }
+            l.next()
+        };
+        assert_eq!(
+            app.level_ambient_rng.next(),
+            advanced,
+            "the voice-then-puffs order the burnout's own count keeps"
+        );
+        // THE CROSS-WORD SILENCE (each arm exactly one voice — the
+        // fizz word never speaks the burnout key, the burnout never
+        // the fizz's)
+        assert!(
+            !app
+                .sounds
+                .events
+                .iter()
+                .any(|e| e.contains("block.lava.extinguish")),
+            "the burnout walk the fizz voice never shares"
+        );
+        // THE UNKNOWN WORD: the walk the model's own two words alone
+        // bank — anything else the render never answers
+        app.particles.clear();
+        app.sounds.events.clear();
+        app.live_smoke_voice_events_updated(vec![crate::world_view::WireSmokeVoiceEvent {
+            x: 10,
+            y: 20,
+            z: 10,
+            voice: 1503,
+        }]);
+        assert!(app.particles.is_empty(), "the unknown word never puffs");
+        assert!(app.sounds.events.is_empty(), "the unknown word never voices");
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.live_smoke_voice_events_updated(vec![]);
         assert!(app.particles.is_empty(), "the empty mailbox ships nothing");
     }
 
