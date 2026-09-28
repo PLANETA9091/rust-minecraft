@@ -17180,7 +17180,9 @@ mod tests {
     }
 
     /// THE SPARKLE'S OWN PARTICLE (javap `SuspendedTownParticle` + the
-    /// `$HappyVillagerProvider` verbatim: the lifetime the `20.0 /
+    /// `$HappyVillagerProvider` verbatim — the FOUR-draw chain the
+    /// autopush-451 correction banks: the glint pick + the dead tint
+    /// + the size + the lifetime): the lifetime the `20.0 /
     /// (nf * 0.8 + 0.2)` fold answers [20, 100], the size the `0.02 *
     /// (nf * 0.6 + 0.5)` draw answers [0.01, 0.022], the zero velocity
     /// the aiStep's own (0, 0, 0) the ctor's `* 0.02` fold keeps, the

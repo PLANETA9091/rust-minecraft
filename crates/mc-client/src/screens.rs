@@ -9394,9 +9394,11 @@ impl App {
                                 // THE FEED SPARKLE'S OWN RIDE (the
                                 // aiStep's `% 4` cadence the event
                                 // carries — the level random the
-                                // lifetime/size draws speak, the
-                                // mob_rng the heart lanes' own stand-in
-                                // keeps)
+                                // FOUR-draw chain the glint pick +
+                                // dead tint + size + lifetime the
+                                // autopush-451 correction banks
+                                // speaks, the mob_rng the heart
+                                // lanes' own stand-in keeps)
                                 self.particles.push(crate::particles::happy_villager_sparkle(
                                     sx, sy, sz, &mut self.mob_rng,
                                 ));

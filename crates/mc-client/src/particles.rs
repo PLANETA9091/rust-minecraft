@@ -3081,14 +3081,38 @@ pub fn heart_ambient(
 /// THE FEED SPARKLE (javap `SuspendedTownParticle` + the
 /// `$HappyVillagerProvider` verbatim: the position the aiStep's own
 /// `getRandomX(1.0) / getRandomY() + 0.5 / getRandomZ(1.0)` walk
-/// carried (the caller's word), the lifetime the `20.0 / (nf * 0.8 +
-/// 0.2)` fold answers, the size the `0.02 * (nf * 0.6 + 0.5)` draw
-/// gives, the zero velocity the ctor's `* 0.02` fold keeps whole,
-/// the friction the tick's own `* 0.99` speaks, the white tint the
-/// glint texture's own green passes).
+/// carried (the caller's word), the FOUR-draw provider chain the
+/// bytecodes pin — the one-frame glint pick FIRST (the
+/// `SpriteSet.get(random)` the happy_villager.json's one-texture set
+/// consumes — the nextInt(1) the draw the pick always lands, the
+/// SAME glint bank the composter puff's kind renders), the dead tint
+/// draw NEXT (the base ctor's ONE `nextFloat() * 0.1 + 0.2` — the
+/// fstore [15] the r/g/b putfield trio all loads, the
+/// `setColor(1.0F, 1.0F, 1.0F)` the VALUE overrides, the draw the
+/// stream still spends; THE CORRECTION the autopush-451 re-audit
+/// banks — the prior reading spent TWO draws (life + size), the
+/// glint pick and the dead tint the jar's own chain never skips),
+/// the size draw (`0.02 * (nf * 0.6 + 0.5)` the ctor's own write
+/// gives), the lifetime LAST (`20.0 / (nf * 0.8 + 0.2)` the ctor's
+/// own write answers — the provider NO setLifetime speaks, the fold
+/// the particle's REAL life keeps, the 21..100 band the denom band
+/// wears). The zero velocity the aiStep's own (0, 0, 0) the ctor's
+/// `* 0.02` fold keeps whole, the friction the tick's own `* 0.99`
+/// speaks, the white tint the glint texture's own green passes.
 pub fn happy_villager_sparkle(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Particle {
-    let lifetime = (20.0 / (rng.next_f32() as f64 * 0.8 + 0.2)) as u32;
+    // the one-frame glint pick (the SpriteSet.get(random) draw —
+    // nextInt(1) the one-entry list consumes, the pick always lands 0)
+    let _glint_pick = rng.next_int(1);
+    // the dead tint draw (the base ctor's ONE nextFloat — the fstore
+    // [15] the r/g/b putfield trio all loads; the setColor(1,1,1)
+    // override the VALUE keeps, the draw the stream still spends)
+    let _dead_tint = rng.next_f32();
+    // the size draw (the 0.02 * (nf * 0.6 + 0.5) fold the ctor's
+    // own write speaks)
     let quad_size = 0.02 * (rng.next_f32() * 0.6 + 0.5);
+    // the lifetime (the ctor's own 20.0 / (nf * 0.8 + 0.2) write —
+    // the provider NO setLifetime speaks, the fold the REAL life keeps)
+    let lifetime = (20.0 / (rng.next_f32() as f64 * 0.8 + 0.2)) as u32;
     Particle {
         kind: ParticleKind::HappyVillager,
         x,
@@ -3319,9 +3343,11 @@ pub fn egg_crack_faces(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) -> 
 /// VELOCITY'S OWN FOLD: the passed deltas ride the
 /// SuspendedTownParticle ctor's `* 0.02` walk (`javap`: the three
 /// putfield dmul pairs) — the effective drift the two folds keep
-/// (`nextGaussian() * 0.02 * 0.02`). The lifetime/size draws ride the
-/// [`happy_villager_sparkle`] law verbatim (the same
-/// `$HappyVillagerProvider` sprite the feed sparkle shares).
+/// (`nextGaussian() * 0.02 * 0.02`). The FOUR-draw provider chain
+/// (the glint pick, the dead tint, the size, the lifetime — THE
+/// CORRECTION the autopush-451 re-audit banks, the same
+/// [`happy_villager_sparkle`] law the feed sparkle shares) the
+/// `$HappyVillagerProvider` sprite's own walk rides.
 ///
 /// The caller's word: `anchor` the `getParticlePos` answer (the grass
 /// block's `pos.above()`, the crop's own cell), `count` the data word
@@ -5799,6 +5825,71 @@ mod tests {
             b.next();
         }
         assert_eq!(after_five, b.next(), "the composter chain's own five draws");
+    }
+
+    #[test]
+    fn the_sparkle_the_four_draws_the_glint_the_dead_tint_wear() {
+        // THE PROVIDER CHAIN (javap `$HappyVillagerProvider
+        // .createParticle` verbatim — THE CORRECTION the autopush-451
+        // re-audit banks): the FOUR draws the chain spends in the
+        // vanilla order — the one-frame glint pick (pc 22 the
+        // invokeinterface the SpriteSet.get(random) walk speaks — the
+        // nextInt(1) the draw the pick always lands), the ONE dead
+        // tint the base ctor's fstore [15] the r/g/b putfield trio
+        // loads (the setColor(1,1,1) the VALUE overrides, the draw
+        // the stream still spends), the size, the lifetime (the
+        // provider NO setLifetime speaks — the ctor's own write the
+        // REAL life keeps). The prior reading spent TWO draws (life +
+        // size) — the glint pick and the dead tint the jar's own
+        // chain never skips.
+        let mut r = rng();
+        let p = happy_villager_sparkle(1.5, 5.6, 2.5, &mut r);
+        assert!(matches!(p.kind, ParticleKind::HappyVillager));
+        assert_eq!(p.col, [1.0, 1.0, 1.0], "the white the override keeps");
+        assert!(
+            (0.01..0.022).contains(&p.quad_size),
+            "the size band: {}",
+            p.quad_size
+        );
+        assert!(
+            (20..=100).contains(&p.lifetime),
+            "the lifetime the ctor's own fold keeps: {}",
+            p.lifetime
+        );
+        assert_eq!(p.vx, 0.0, "the zero drift the aiStep's (0,0,0) keeps");
+        // THE STREAM (the four draws the chain consumes — the glint
+        // pick, the dead tint, the size, the lifetime; the fifth draw
+        // differs)
+        let mut a = rng();
+        let _ = happy_villager_sparkle(0.0, 0.0, 0.0, &mut a);
+        let after_four = a.next();
+        let mut b = rng();
+        for _ in 0..4 {
+            b.next();
+        }
+        assert_eq!(after_four, b.next(), "the sparkle chain's own four draws");
+        // THE SIBLING LAW (the growth burst's per-particle chain the
+        // SAME provider shape rides — the caller's 3 gaussians + the
+        // 3 position doubles, then the provider's four): the seeded
+        // replay the burst's own stream answers.
+        let w = growth_arena(20);
+        let mut a = rng();
+        let burst = growth_burst((12, 21, 12), 1, 0.5, 1.0, true, &w, &mut a);
+        assert_eq!(burst.len(), 1, "the forced lane the single attempt lands");
+        let after_burst = a.next();
+        let mut b = rng();
+        let vx = b.next_gaussian();
+        let _vy = b.next_gaussian();
+        let _vz = b.next_gaussian();
+        let _px = b.next_f64();
+        let _py = b.next_f64();
+        let _pz = b.next_f64();
+        let _glint = b.next_int(1);
+        let _tint = b.next_f32();
+        let _size = b.next_f32();
+        let _life = b.next_f32();
+        assert_eq!(after_burst, b.next(), "the burst's own provider four");
+        assert_eq!(burst[0].vx, vx * 0.02 * 0.02, "the two-fold drift");
     }
 
     #[test]
