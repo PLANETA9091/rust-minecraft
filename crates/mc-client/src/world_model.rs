@@ -480,6 +480,13 @@ pub struct WorldModel {
     /// anchor + the data word carries (the voice pick the case's own
     /// two-branch fold keeps).
     pub fire_extinguish_events: Vec<FireExtinguishArm>,
+    /// THE JUKEBOX MAILBOX — the Level Event packet's 1010/1011 words
+    /// the model enqueues for the render lane (see [`JukeboxArm`]).
+    /// The play word's data the model's own synced jukebox_song table
+    /// resolves (the song's NAME the arm carries — the same law the
+    /// entity voices' sound names keep), the stop word the tracked
+    /// record's own silence rides.
+    pub jukebox_events: Vec<JukeboxArm>,
     /// THE FIXED-VOICE SHELF'S OWN MAILBOX (the FIVE 1.0/1.0 BLOCKS
     /// cases the ONE arm shape wears — see [`FixedVoiceArm`]): the
     /// chorus flower's grow/death pair (1033/1034), the brewing
@@ -1046,6 +1053,40 @@ pub struct FireExtinguishArm {
     pub data: i32,
 }
 
+/// One pending JUKEBOX arm — the Level Event packet's play/stop pair
+/// the model keeps until the refresh ships it (see
+/// [`WorldModel::jukebox_events`]). THE PLAY WORD (1010 —
+/// `SOUND_PLAY_JUKEBOX_SONG`) the case's own registry resolve arms:
+/// the data word the `registryAccess()` + `Registries.JUKEBOX_SONG`
+/// walk reads, the song's NAME the model's own synced table answers
+/// (`None` when the word lies outside it — the honest no-voice the
+/// `Optional.ifPresent` gate keeps), the arm the anchor + the
+/// resolved name carries. THE STOP WORD (1011 —
+/// `SOUND_STOP_JUKEBOX_SONG`) the tracked record's own silence rides:
+/// the `stopJukeboxSongAndNotifyNearby(pos)` walk the case body
+/// spends, the data word the case's own body never reads (no
+/// `iload_3` the arm's bytecode speaks — the song field the None
+/// keeps). The per-entity notify tail the jar's own hook keeps EMPTY
+/// (`0: return` the 26.2 bytecode speaks — the entity query the walk
+/// spends, nothing the sweep banks).
+#[derive(Debug, Clone, PartialEq)]
+pub struct JukeboxArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id —
+    /// [`mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT`] or
+    /// [`mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT`] the model's own
+    /// arm banks; the play/stop law the render lane folds from it).
+    pub voice: i32,
+    /// The song's NAME — the play word's registry resolve the model's
+    /// synced jukebox_song table answers (`minecraft:cat` the render
+    /// lane's own `music_disc.cat` fold speaks); `None` when the data
+    /// word lies outside the table or the case never reads it (the
+    /// stop word's own body).
+    pub song: Option<String>,
+}
+
 /// One pending FIXED-VOICE arm — the Level Event packet's sound
 /// shelf the model keeps verbatim (see
 /// [`WorldModel::fixed_voice_events`]). The FIVE 1.0/1.0 BLOCKS
@@ -1561,6 +1602,7 @@ impl WorldModel {
             dispenser_fail_launch_events: Vec::new(),
             firework_shoot_events: Vec::new(),
             fire_extinguish_events: Vec::new(),
+            jukebox_events: Vec::new(),
             fixed_voice_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
@@ -1897,6 +1939,15 @@ impl WorldModel {
         std::mem::take(&mut self.fire_extinguish_events)
     }
 
+    /// The jukebox mailbox's own drain (the same walk the voices'
+    /// speak — each arm ships exactly once): the 1010/1011 words the
+    /// Level Event packet armed, the render lane's own law folds the
+    /// record's start/stop + the now-playing line from the anchor +
+    /// the resolved song name.
+    pub fn drain_jukebox_events(&mut self) -> Vec<JukeboxArm> {
+        std::mem::take(&mut self.jukebox_events)
+    }
+
     /// The fixed-voice shelf's mailbox's own drain (the same walk the
     /// voices' speak — each arm ships exactly once): the
     /// 1033/1034/1035/1049/1050 words the Level Event packet armed,
@@ -2170,6 +2221,10 @@ impl WorldModel {
                 // same walk — the old level's 1009 words never hiss
                 // again)
                 self.fire_extinguish_events.clear();
+                // the jukebox mailbox dies with the level (the same
+                // walk — the old level's 1010/1011 words never play
+                // again)
+                self.jukebox_events.clear();
                 // the fixed-voice shelf's mailbox dies with the level
                 // (the same walk — the old level's 1033/1034/1035/1049/
                 // 1050 words never speak again)
@@ -3216,6 +3271,36 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         data: ev.data,
+                    });
+                    true
+                } else if (ev.effect == mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT
+                    || ev.effect == mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT)
+                    && !ev.global
+                {
+                    // THE JUKEBOX PAIR'S OWN ARM (javap the case offsets
+                    // 4405/4439 — the positioned route the GLOBAL switch
+                    // never banks): the play word's data the model's own
+                    // synced jukebox_song table resolves (the song's
+                    // NAME the arm carries — the `Optional.ifPresent`
+                    // gate the resolve answers, the outside-table word
+                    // the None keeps), the stop word the tracked
+                    // record's own silence rides (the data the case's
+                    // own body never reads). The per-entity notify tail
+                    // the jar's own hook keeps EMPTY (`0: return` the
+                    // 26.2 bytecode speaks).
+                    let song = if ev.effect == mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT {
+                        usize::try_from(ev.data)
+                            .ok()
+                            .and_then(|i| self.registry.jukebox_songs.get(i).cloned())
+                    } else {
+                        None
+                    };
+                    self.jukebox_events.push(JukeboxArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
+                        song,
                     });
                     true
                 } else if matches!(
@@ -4564,6 +4649,7 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
@@ -5086,6 +5172,7 @@ mod tests {
         m.current_dimension = Some("minecraft:overworld".into());
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![
                 DimensionTypeEntry {
@@ -5179,6 +5266,7 @@ mod tests {
         // would wrongly take it); the tag names ids 1..=3 only
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
@@ -5474,6 +5562,7 @@ mod tests {
             chunks: vec![col],
             registry: RegistryData {
                 command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
                 chat_types: Vec::new(),
                 dimension_types: vec![DimensionTypeEntry {
                     name: "minecraft:overworld".to_string(),
@@ -5568,6 +5657,7 @@ mod tests {
             chunks: vec![],
             registry: RegistryData {
                 command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
                 chat_types: Vec::new(),
                 dimension_types: names
                     .iter()
@@ -5681,6 +5771,7 @@ mod tests {
             chunks: vec![],
             registry: RegistryData {
                 command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
                 chat_types: Vec::new(),
                 dimension_types: names
                     .iter()
@@ -5736,6 +5827,7 @@ mod tests {
         let mut m = WorldModel::new();
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![
                 DimensionTypeEntry { name: "minecraft:overworld".into(), min_y: -64, height: 384, default_clock: Some("minecraft:overworld".into()) , timelines: None, ambient_light_color: None, skybox: None, fog_start_distance: None, fog_end_distance: None, cloud_fog_end_distance: None, block_light_tint: None, sky_light_color: None, sky_light_factor: None, night_vision_color: None },
@@ -8116,6 +8208,154 @@ mod tests {
     }
 
     #[test]
+    fn the_level_event_the_jukebox_words_the_one_mailbox_arms() {
+        // THE JUKEBOX PAIR'S OWN MAILBOX (javap the case offsets
+        // 4405/4439 over the 26.2 jar — the positioned route the
+        // GLOBAL switch never banks): the 1010 word's data the
+        // model's synced jukebox_song table resolves (the song's NAME
+        // the arm carries — the `Optional.ifPresent` gate the resolve
+        // keeps), the 1011 word the tracked record's own silence
+        // rides (the data the case's own body never reads — the song
+        // field the None keeps).
+        let mut m = WorldModel::new();
+        // the synced table the configuration phase banks (the
+        // arrival-order ids the wire speaks — the first three the
+        // test's own roster keeps)
+        m.registry.jukebox_songs = vec![
+            "minecraft:13".to_string(),
+            "minecraft:cat".to_string(),
+            "minecraft:blocks".to_string(),
+        ];
+        // the jukebox's play word (the case-1010 arm the song resolve
+        // opens — the data 1 the cat row picks)
+        assert!(
+            m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+                x: 20,
+                y: 64,
+                z: -4,
+                data: 1,
+                global: false,
+            })));
+        assert_eq!(m.jukebox_events.len(), 1, "the play word arms");
+        assert_eq!(m.jukebox_events[0].x, 20);
+        assert_eq!(m.jukebox_events[0].y, 64);
+        assert_eq!(m.jukebox_events[0].z, -4);
+        assert_eq!(
+            m.jukebox_events[0].voice,
+            mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+            "the packet's own effect id rides"
+        );
+        assert_eq!(
+            m.jukebox_events[0].song.as_deref(),
+            Some("minecraft:cat"),
+            "the synced table the resolve answers"
+        );
+        // the word outside the table the resolve's empty arm keeps
+        // (the `Optional.ifPresent` gate — the mailbox still carries
+        // the arm, the render lane's own gate the no-op answers)
+        assert!(
+            m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+                x: 1,
+                y: 2,
+                z: 3,
+                data: 99,
+                global: false,
+            })));
+        assert_eq!(m.jukebox_events.len(), 2, "the outside-table word arms");
+        assert!(
+            m.jukebox_events[1].song.is_none(),
+            "the empty resolve the None keeps"
+        );
+        // the stop word the tracked record's own silence rides (the
+        // data the case's own body never reads — no resolve the arm
+        // speaks)
+        assert!(
+            m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT,
+                x: 20,
+                y: 64,
+                z: -4,
+                data: 0,
+                global: false,
+            })));
+        assert_eq!(m.jukebox_events.len(), 3, "the stop word arms");
+        assert_eq!(
+            m.jukebox_events[2].voice,
+            mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT,
+            "the stop word rides"
+        );
+        assert!(
+            m.jukebox_events[2].song.is_none(),
+            "the never-read data the None keeps"
+        );
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // ids the positioned lane's own words)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.jukebox_events.len(),
+            3,
+            "the global words never arm"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_jukebox_events();
+        assert_eq!(drained.len(), 3, "the drain ships the whole mailbox");
+        assert_eq!(
+            drained[0].song.as_deref(),
+            Some("minecraft:cat"),
+            "the wire order the drain keeps"
+        );
+        assert!(
+            m.jukebox_events.is_empty(),
+            "the mailbox spent"
+        );
+        assert!(
+            m.drain_jukebox_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 2,
+            global: false,
+        })));
+        assert_eq!(
+            m.jukebox_events.len(),
+            1,
+            "the fresh word re-arms"
+        );
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.jukebox_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
     fn the_level_event_the_fixed_voice_words_the_one_arm_wears() {
         // THE FIXED-VOICE SHELF'S OWN ARM (javap the cases offsets
         // 680/700/660/796/816 — the positioned route the GLOBAL
@@ -9634,6 +9874,7 @@ mod tests {
         // where it differs from the built-in
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
@@ -9766,6 +10007,7 @@ mod tests {
         // states the nether's none)
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
@@ -9857,6 +10099,7 @@ mod tests {
         // the synced truth wins: a custom server's own stated pair
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:the_nether".into(),
@@ -9935,6 +10178,7 @@ mod tests {
         // the synced truth wins: a custom server's own stated FLOAT
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:the_nether".into(),
@@ -10005,6 +10249,7 @@ mod tests {
         // the synced truth wins: a custom server's own stated rgb_color
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:the_nether".into(),
@@ -10093,6 +10338,7 @@ mod tests {
         // curve — noon 0.5 x 1.0, midnight 0.5 x 0.24 = 0.12
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
@@ -10194,6 +10440,7 @@ mod tests {
         // the synced truth wins: a custom server's own stated rgb_color
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),
@@ -10285,6 +10532,7 @@ mod tests {
         // the synced truth wins: a custom server's own stated rgb_color
         m.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![DimensionTypeEntry {
                 name: "minecraft:overworld".into(),

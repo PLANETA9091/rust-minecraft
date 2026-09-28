@@ -1712,6 +1712,54 @@ pub const FIREWORK_ROCKET_SHOOT_EFFECT: i32 = 1004;
 /// arm wears).
 pub const SOUND_EXTINGUISH_FIRE_EFFECT: i32 = 1009;
 
+/// THE JUKEBOX-PLAY VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `SOUND_PLAY_JUKEBOX_SONG`, the case
+/// `LevelEventHandler.levelEvent` offset 4405 speaks): the DATA word
+/// the case READS (`iload_3` the arm's bytecode speaks — the jukebox
+/// song's synced-registry id the `registryAccess()` +
+/// `Registries.JUKEBOX_SONG` resolve carries, the `Optional.ifPresent`
+/// gate the case body spends) — the present arm the ONE
+/// `playJukeboxSong(song, pos)` walk speaks: the PREVIOUS record at
+/// the anchor the `stopJukeboxSong(pos)` fold ends first (the
+/// `playingJukeboxSongs` map's own remove — the `SoundManager.stop`
+/// the non-null gate keeps), then the ONE
+/// `SimpleSoundInstance.forJukeboxSong(song.value().soundEvent(),
+/// Vec3.atCenterOf(pos))` walk banks — the `SoundSource.RECORDS`
+/// source the static row picks, the `ldc 4.0` volume the CP Float
+/// speaks, the `fconst_1` pitch the fixed fold keeps, the unseeded
+/// random the createUnseededRandom walk spends, the looping false /
+/// delay 0 pair the iconst_0 pair keeps, the LINEAR attenuation the
+/// static row answers — then `playingJukeboxSongs.put(pos, instance)`
+/// + `SoundManager.play` the map-and-voice pair speaks, the
+/// `Hud.setNowPlaying(song.description())` the HUD walk banks (the
+/// `record.nowPlaying` format the description arg fills, the
+/// `setOverlayMessage(component, true)` animated-color arm the
+/// `iconst_1` keeps — the 60-tick overlay life the bipush 60
+/// speaks), and `notifyNearbyEntities(level, pos, true)` the tail
+/// walk spends (the `AABB(pos).inflate(3.0)` sweep the entities the
+/// `getEntitiesOfClass(LivingEntity.class, ...)` query answers — the
+/// per-entity `setRecordPlayingNearby(pos, true)` call the jar's own
+/// hook keeps EMPTY, `0: return` the 26.2 bytecode speaks). The
+/// absent arm (the data word outside the synced table) the
+/// `Optional.ifPresent` gate answers with NOTHING — no stop, no
+/// play, no line the empty resolve keeps.
+pub const SOUND_PLAY_JUKEBOX_SONG_EFFECT: i32 = 1010;
+
+/// THE JUKEBOX-STOP VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `SOUND_STOP_JUKEBOX_SONG`, the case
+/// `LevelEventHandler.levelEvent` offset 4439 speaks): the ONE
+/// `stopJukeboxSongAndNotifyNearby(pos)` walk the case body spends —
+/// the `stopJukeboxSong(pos)` fold the tracked record ends (the
+/// `playingJukeboxSongs` map's own remove — the `SoundManager.stop`
+/// the non-null gate keeps, the absent record the silent arm keeps)
+/// + `notifyNearbyEntities(level, pos, false)` the tail walk spends
+/// (the same sweep the play arm's tail speaks — the per-entity hook
+/// the jar keeps EMPTY, `0: return` the 26.2 bytecode speaks). The
+/// data word the case's own body never reads (no `iload_3` the arm's
+/// bytecode speaks). NO particles the case speaks — the stopped
+/// record the silence itself renders.
+pub const SOUND_STOP_JUKEBOX_SONG_EFFECT: i32 = 1011;
+
 /// THE CHORUS-FLOWER GROW VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_CHORUS_FLOWER_GROW`,
 /// the case `LevelEventHandler.levelEvent` offset 680 speaks): the
@@ -11010,6 +11058,16 @@ mod tests {
             SOUND_EXTINGUISH_FIRE_EFFECT,
             1009,
             "the fire-extinguish voice the fire block's own break speaks"
+        );
+        assert_eq!(
+            SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+            1010,
+            "the jukebox-play voice the registry-resolve case speaks"
+        );
+        assert_eq!(
+            SOUND_STOP_JUKEBOX_SONG_EFFECT,
+            1011,
+            "the jukebox-stop voice the tracked-record case speaks"
         );
         assert_eq!(
             SOUND_CHORUS_GROW_EFFECT,

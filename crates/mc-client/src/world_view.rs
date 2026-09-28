@@ -568,6 +568,13 @@ pub struct SnapshotView {
     /// after), the sound lane's own law folds the data-picked pitched
     /// voice at the block center.
     pub fire_extinguish_events: Vec<WireFireExtinguishEvent>,
+    /// THE JUKEBOX WIRE ARMS (the 1010/1011 words the server's own
+    /// jukeboxes broadcast): shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after), the sound lane's own law folds the record's start/stop
+    /// + the now-playing line from the anchor + the resolved song
+    /// name.
+    pub jukebox_events: Vec<WireJukeboxEvent>,
     /// THE FIXED-VOICE SHELF'S OWN WIRE ARMS (the
     /// 1033/1034/1035/1049/1050 words the server's own chorus
     /// flowers, brewing stand and crafter broadcast): shipped once
@@ -839,6 +846,31 @@ pub struct WireFireExtinguishEvent {
     /// The voice-pick word (the case's own two-branch fold — the
     /// `data == 0` / `data == 1` guard pair the branch voices keep).
     pub data: i32,
+}
+
+/// One wire JUKEBOX arm — the Level Event packet's play/stop pair's
+/// own landing (the 1010/1011 words the server's own jukeboxes
+/// broadcast, [`mc_protocol::play::SOUND_PLAY_JUKEBOX_SONG_EFFECT`]
+/// and [`mc_protocol::play::SOUND_STOP_JUKEBOX_SONG_EFFECT`] the
+/// sound lane speaks): the event's anchor block + the PACKET'S OWN
+/// voice word + the song's NAME the model's synced jukebox_song
+/// table resolved (the play word's registry resolve — the record's
+/// sound key and the now-playing description the render lane folds
+/// from it; the stop word the None keeps, the tracked record's own
+/// silence the render answers).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireJukeboxEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id — the play/stop
+    /// law the sound lane's own fold picks).
+    pub voice: i32,
+    /// The song's NAME — the play word's registry resolve the
+    /// model's synced table answers; `None` when the data word lies
+    /// outside it or the case never reads it (the stop word's own
+    /// body).
+    pub song: Option<String>,
 }
 
 /// One wire FIXED-VOICE arm — the Level Event packet's sound shelf's
@@ -2755,6 +2787,9 @@ pub fn materialize_snapshot_view(
         // and no fire-extinguish words (the join snapshot carries no
         // 1009 traffic — the empty mailbox the sound lane skips)
         fire_extinguish_events: Vec::new(),
+        // and no jukebox words (the join snapshot carries no
+        // 1010/1011 traffic — the empty mailbox the record lane skips)
+        jukebox_events: Vec::new(),
         // and no fixed-voice words (the join snapshot carries no
         // 1033/1034/1035/1049/1050 traffic — the empty mailbox the
         // sound lane skips)
@@ -3336,6 +3371,23 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the jukebox pair's own projection (the mailbox verbatim —
+        // the anchor + the packet's own voice word + the resolved
+        // song name the arms carry, the sound lane's own law reads):
+        // each 1010/1011 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let jukebox_events = self
+            .model
+            .jukebox_events
+            .iter()
+            .map(|arm| WireJukeboxEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                voice: arm.voice,
+                song: arm.song.clone(),
+            })
+            .collect();
         // the fixed-voice shelf's own projection (the mailbox verbatim
         // — the anchor + the packet's own voice word the arms carry,
         // the sound lane's own law reads): each of the
@@ -3567,6 +3619,10 @@ impl LiveView {
                 // arm too — the 1009 words are the connection's own
                 // traffic, not the pose's
                 fire_extinguish_events,
+                // the jukebox pair's arms ride the pose-less arm too —
+                // the 1010/1011 words are the connection's own traffic,
+                // not the pose's
+                jukebox_events,
                 // the fixed-voice shelf's arms ride the pose-less arm
                 // too — the 1033/1034/1035/1049/1050 words are the
                 // connection's own traffic, not the pose's
@@ -3713,6 +3769,10 @@ impl LiveView {
             // — the 1009 words follow the mailbox exactly like the
             // firework's own arms do
             fire_extinguish_events,
+            // the jukebox pair's arms ride every refresh too — the
+            // 1010/1011 words follow the mailbox exactly like the
+            // dispenser's own arms do
+            jukebox_events,
             // the fixed-voice shelf's arms ride every refresh too —
             // the 1033/1034/1035/1049/1050 words follow the mailbox
             // exactly like the dispenser's own arms do
@@ -5973,6 +6033,7 @@ mod tests {
         snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),
@@ -6167,6 +6228,7 @@ mod tests {
         snap.info.current_dimension = "minecraft:overworld".to_string();
         snap.registry = RegistryData {
             command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
             chat_types: Vec::new(),
             dimension_types: vec![mc_protocol::DimensionTypeEntry {
                 name: "minecraft:overworld".to_string(),

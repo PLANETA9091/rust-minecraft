@@ -182,6 +182,7 @@ fn run_join(
                 Vec<crate::world_view::WireDispenserFailLaunchEvent>,
                 Vec<crate::world_view::WireFireworkShootEvent>,
                 Vec<crate::world_view::WireFireExtinguishEvent>,
+                Vec<crate::world_view::WireJukeboxEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -287,6 +288,7 @@ fn run_join(
             view.model.drain_dispenser_fail_launch_events();
             view.model.drain_firework_shoot_events();
             view.model.drain_fire_extinguish_events();
+            view.model.drain_jukebox_events();
             view.model.drain_fixed_voice_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
@@ -916,6 +918,7 @@ fn run_join(
                             view.model.drain_dispenser_fail_launch_events();
                             view.model.drain_firework_shoot_events();
                             view.model.drain_fire_extinguish_events();
+                            view.model.drain_jukebox_events();
                             view.model.drain_fixed_voice_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
@@ -1164,6 +1167,15 @@ fn run_join(
                                     // render's own law folds, each arm
                                     // rides exactly one shipped refresh)
                                     upd.fire_extinguish_events,
+                                    // the jukebox pair's arms ride beside
+                                    // them — the 1010/1011 words the
+                                    // server's own jukeboxes broadcast
+                                    // stream to the record lane (the
+                                    // tracked record's start/stop + the
+                                    // now-playing line the render's own
+                                    // law folds, each arm rides exactly
+                                    // one shipped refresh)
+                                    upd.jukebox_events,
                                     // the fixed-voice shelf's arms ride
                                     // beside the dispenser's — the
                                     // 1033/1034/1035/1049/1050 words the
@@ -1348,6 +1360,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireDispenserFailLaunchEvent>,
                 Vec<crate::world_view::WireFireworkShootEvent>,
                 Vec<crate::world_view::WireFireExtinguishEvent>,
+                Vec<crate::world_view::WireJukeboxEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -1910,6 +1923,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     dispenser_fail_launch_events,
                     firework_shoot_events,
                     fire_extinguish_events,
+                    jukebox_events,
                     fixed_voice_events,
                     splash_events,
                     mob_spawn_events,
@@ -2117,6 +2131,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // 0.7F/1.6±0.4 the branch bodies speak, the vanilla
                     // client answers the same packet with)
                     app.live_fire_extinguish_events_updated(fire_extinguish_events);
+                    // the jukebox pair's lane beside the extinguish
+                    // voice's: the 1010/1011 words the server's own
+                    // jukeboxes broadcast land at their own anchors (the
+                    // tracked record's start/stop + the now-playing line
+                    // the render lane's own law folds at the block
+                    // center — the RECORDS 4.0/1.0 pair the
+                    // forJukeboxSong walk speaks, the vanilla client
+                    // answers the same packets with)
+                    app.live_jukebox_events_updated(jukebox_events);
                     // the fixed-voice shelf's lane beside the
                     // dispenser's: the 1033/1034/1035/1049/1050 words the
                     // server's own chorus flowers, brewing stand and

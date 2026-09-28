@@ -189,6 +189,15 @@ pub struct BlockSounds {
     /// one entry per played one-shot:
     /// `"{event} @{tick} #{file} v{volume} p{pitch}"`
     pub events: Vec<String>,
+    /// THE JUKEBOX'S OWN BANK (javap `LevelEventHandler.playingJukeboxSongs`
+    /// — the `Map<BlockPos, SoundInstance>` the play/stop pair keeps):
+    /// the records' live instances, one per playing anchor cell — the
+    /// play walk's own first fold removes the anchor's previous record
+    /// (the `stopJukeboxSong(pos)` the `playJukeboxSong` walk spends),
+    /// the stop walk's removal ends it (the `SoundManager.stop` the
+    /// non-null gate keeps). The event key rides the value — the stop
+    /// log line's own identity.
+    pub records: Vec<((i32, i32, i32), String)>,
 }
 
 impl BlockSounds {
@@ -196,6 +205,7 @@ impl BlockSounds {
         Self {
             rng: seed ^ 0x5EED_C0FF_EE12_3456,
             events: Vec::new(),
+            records: Vec::new(),
         }
     }
 
@@ -636,6 +646,67 @@ impl BlockSounds {
         self.events.push(format!(
             "{event} @{tick} #{file} v{gain:.6} p{pitch:.6} s{pan:+.6}"
         ));
+    }
+
+    /// THE RECORD LANE'S OWN STOP (javap `LevelEventHandler.stopJukeboxSong`
+    /// — the `playingJukeboxSongs` map's own remove the play/stop pair
+    /// keeps): the anchor's banked record the removal ends — the
+    /// `SoundManager.stop(instance)` the non-null gate keeps (the
+    /// absent record the silent arm keeps, no line the nothing speaks)
+    /// — the stopped instance's event key the log's own identity
+    /// carries. The play walk's own first fold spends the SAME walk
+    /// (the `playJukeboxSong` body the pair's law opens with), so the
+    /// engine's one walk answers both callers.
+    pub fn stop_record_at(&mut self, tick: u64, x: i32, y: i32, z: i32) {
+        let key = (x, y, z);
+        if let Some(pos) = self.records.iter().position(|(k, _)| *k == key) {
+            let (_, event) = self.records.remove(pos);
+            self.events.push(format!("{event} @{tick} stopped"));
+        }
+    }
+
+    /// THE RECORD LANE'S OWN PLAY (javap `LevelEventHandler.playJukeboxSong`
+    /// — the `SimpleSoundInstance.forJukeboxSong` walk the case-1010
+    /// arm's present branch speaks): the anchor's previous record the
+    /// `stopJukeboxSong(pos)` fold ends FIRST (the same walk the stop
+    /// arm answers), then the ONE record instance banks — the
+    /// `SoundSource.RECORDS` source the static row picks, the `ldc
+    /// 4.0` volume the CP Float speaks (the armed max the play walk's
+    /// own `Math.max(v, 1.0F) * getAttenuationDistance()` fold — the
+    /// 64-block reach the 4.0F volume answers), the `fconst_1` pitch
+    /// the fixed fold keeps — and the log line the positioned lanes'
+    /// own shape wears (the engine's LCG the file pick spends). The
+    /// `playingJukeboxSongs.put(pos, instance)` + `SoundManager.play`
+    /// pair the map-and-voice walk answers.
+    pub fn start_record_at(
+        &mut self,
+        tick: u64,
+        event: &str,
+        volume: f32,
+        pitch: f32,
+        dist: f64,
+        pan: f32,
+        x: i32,
+        y: i32,
+        z: i32,
+    ) {
+        // the play arm's own first fold (stopJukeboxSong the
+        // playJukeboxSong walk spends before the new instance banks)
+        self.stop_record_at(tick, x, y, z);
+        let gain = attenuate(volume, dist, voice_max_distance(volume));
+        let Some(file) = self.pick_file(event) else {
+            return;
+        };
+        if pan == 0.0 {
+            self.events.push(format!(
+                "{event} @{tick} #{file} v{gain:.6} p{pitch:.6}"
+            ));
+        } else {
+            self.events.push(format!(
+                "{event} @{tick} #{file} v{gain:.6} p{pitch:.6} s{pan:+.6}"
+            ));
+        }
+        self.records.push(((x, y, z), event.to_string()));
     }
 }
 

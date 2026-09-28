@@ -2035,6 +2035,45 @@ pub fn overlay_message_alpha(time: i32, partial_tick: f32) -> i32 {
     a.min(255)
 }
 
+/// THE OVERLAY'S OWN ANIMATED COLOR (javap `Mth.hsvToArgb(FFFI)` over
+/// the 26.2 jar + `extractOverlayMessage`'s animated arm verbatim —
+/// the `hsvToArgb(f / 50.0F, 0.7F, 0.6F, alpha)` call the
+/// `animateOverlayMessageColor` branch speaks: the hue the remaining
+/// ticks ride (the `fload 4 / ldc 50.0` division the fade's own
+/// delta keeps), the s/v the CP pair banks (#494 = 0.7,
+/// #495 = 0.6)). THE MTH LAW (the bytecode verbatim): the sector
+/// `i = (int)(h * 6.0F) % 6` the truncation + modulo pair speaks,
+/// the sector fraction `f = h * 6.0F - i` follows, the three
+/// channels the v/s pair folds (`p = v * (1 - s)`, `q = v * (1 - f
+/// * s)`, `t = v * (1 - (1 - f) * s)`) through the six-arm
+/// tableswitch, each channel the `clamp((int)(c * 255.0F), 0, 255)`
+/// the ARGB.color walk keeps. Returns the text's own RGB fold (the
+/// alpha the caller's own fade arg carries — the same alpha the
+/// white branch speaks).
+pub fn overlay_message_color(f: f32) -> [f32; 3] {
+    let h = f / 50.0;
+    let s = 0.7f32;
+    let v = 0.6f32;
+    let i = ((h * 6.0) as i32).rem_euclid(6);
+    let frac = h * 6.0 - i as f32;
+    let p = v * (1.0 - s);
+    let q = v * (1.0 - frac * s);
+    let t = v * (1.0 - (1.0 - frac) * s);
+    // the six-arm tableswitch the sector picks (the case 0..5 rows
+    // the bytecode keeps, the rgb the ARGB.color(alpha, r, g, b) walk
+    // banks)
+    let (r, g, b) = match i {
+        0 => (v, t, p),
+        1 => (q, v, p),
+        2 => (p, v, t),
+        3 => (p, q, v),
+        4 => (t, p, v),
+        _ => (v, p, q),
+    };
+    let clamp = |c: f32| -> f32 { ((c * 255.0) as i32).clamp(0, 255) as f32 / 255.0 };
+    [clamp(r), clamp(g), clamp(b)]
+}
+
 /// THE OVERLAY'S OWN SPOT (extractOverlayMessage's translate +
 /// textWithBackdrop's own args — the pose translate `(guiWidth / 2,
 /// guiHeight - 68)`, the text at `(-width / 2, -4)`; the backdrop the
@@ -6072,6 +6111,15 @@ pub struct App {
     /// fade the vanilla honesty is).
     pub overlay_message: Option<String>,
     pub overlay_message_time: i32,
+    /// THE OVERLAY'S OWN ANIMATE FLAG (javap `Hud.setOverlayMessage`'s
+    /// second param the `animateOverlayMessageColor` field keeps —
+    /// the `iconst_1` the `setNowPlaying` walk passes, the mount's own
+    /// false the plain arm keeps): true while the overlay text draws
+    /// the hsv pulse the `extractOverlayMessage` animated arm speaks
+    /// (`hsvToArgb(f / 50.0, 0.7F, 0.6F, alpha)` — the hue the
+    /// remaining ticks ride, the s/v the CP pair banks), false while
+    /// the plain white the `ARGB.white(alpha)` fold answers.
+    pub animate_overlay_message_color: bool,
     /// True while the World screen shows the NETWORK world (the quad mesh
     /// came from a join snapshot, not the procedural singleplayer world).
     pub world_is_network: bool,
@@ -7278,6 +7326,7 @@ impl App {
             ride_boat_yaw_prev: None,
             overlay_message: None,
             overlay_message_time: 0,
+            animate_overlay_message_color: false,
             world_is_network: false,
             world_skybox: Skybox::Overworld,
             world_fog: None,
@@ -18509,8 +18558,22 @@ impl App {
     /// mount's own false keeps — the hsv pulse arm the other callers
     /// speak this lane never arms).
     pub fn set_overlay_message(&mut self, msg: &str) {
+        self.set_overlay_message_animated(msg, false);
+    }
+
+    /// THE OVERLAY'S ANIMATED SET (javap `Hud.setOverlayMessage(component,
+    /// animated)` verbatim — the string the store keeps, the bipush 60
+    /// the time takes, the animate flag the boolean param rides): the
+    /// jukebox's `setNowPlaying` walk the `iconst_1` arm speaks (the
+    /// hsv pulse the `extractOverlayMessage` animated branch draws),
+    /// the mount's own false the plain white arm keeps. The narrator
+    /// tail (`saySystemNow`) the walk spends the repo's no-narrator
+    /// honesty skips — the accessibility lane nothing else in the
+    /// client banks.
+    pub fn set_overlay_message_animated(&mut self, msg: &str, animated: bool) {
         self.overlay_message = Some(msg.to_string());
         self.overlay_message_time = OVERLAY_MESSAGE_LIFE;
+        self.animate_overlay_message_color = animated;
     }
 
     /// THE OVERLAY DRAW (extractOverlayMessage's own walk, the HUD
@@ -18535,9 +18598,20 @@ impl App {
         let (tx, ty) = overlay_message_origin(w, h, tw);
         // THE BACKDROP (textWithBackdrop's own fill: x - 2, y - 2,
         // w + 4, the 13 the 2+9+2 sums — the black at 0.25 the
-        // multiply × the fade keeps)
+        // multiply × the fade keeps; the multiply the TEXT color rides
+        // too — the animated hue's rgb the black backdrop never
+        // picks up, the alpha the same fade folds)
         g.fill(tx - 2, ty - 2, tw + 4, 13, [0.0, 0.0, 0.0, 0.25 * fade]);
-        g.text_faded(a, tx, ty, s, WHITE, fade, true);
+        // THE ANIMATED ARM (extractOverlayMessage's own branch pair —
+        // the `animateOverlayMessageColor` bit the `hsvToArgb(f /
+        // 50.0F, 0.7F, 0.6F, alpha)` call keeps, the plain arm the
+        // `ARGB.white(alpha)` fold answers)
+        let color = if self.animate_overlay_message_color {
+            overlay_message_color(self.overlay_message_time as f32 - self.partial_tick)
+        } else {
+            WHITE
+        };
+        g.text_faded(a, tx, ty, s, color, fade, true);
     }
 
     /// THE CHAT HISTORY'S OWN DRAW (javap ChatComponent.extractRenderState
@@ -22625,6 +22699,98 @@ impl App {
             ear_distance(ear, sx, sy, sz),
             ear_pan(ear, yaw, sx, sy, sz),
         );
+    }
+
+    /// THE JUKEBOX WIRE LANE (javap `LevelEventHandler` cases
+    /// 1010/1011 — offsets 4405/4439 — over the 26.2 jar): the
+    /// server's own jukeboxes the play/stop pair broadcasts, the play
+    /// word's registry resolve the model's synced table answered (the
+    /// song's NAME the arm carries), the tracked record's start/stop
+    /// + the now-playing line the render lane's own law folds.
+    pub fn live_jukebox_events_updated(&mut self, events: Vec<crate::world_view::WireJukeboxEvent>) {
+        for ev in events {
+            self.play_jukebox(ev.voice, ev.x, ev.y, ev.z, ev.song);
+        }
+    }
+
+    /// THE JUKEBOX WALK (javap the two case arms verbatim —
+    /// `playJukeboxSong` / `stopJukeboxSongAndNotifyNearby`): the PLAY
+    /// word the ONE record instance banks — the anchor's previous
+    /// record the `stopJukeboxSong(pos)` fold ends first (the
+    /// `playingJukeboxSongs` map's own remove the
+    /// `SimpleSoundInstance.forJukeboxSong(song.soundEvent(),
+    /// Vec3.atCenterOf(pos))` walk's own law opens with), the
+    /// `SoundSource.RECORDS` source + the `ldc 4.0` volume + the
+    /// `fconst_1` pitch the CP/static rows speak (the armed max the
+    /// 4.0F volume's 64-block reach answers), then the
+    /// `Hud.setNowPlaying(song.description())` the overlay walk banks
+    /// (`Component.translatable("record.nowPlaying", description)` —
+    /// the en_us "Now Playing: %s" row the format walk fills, the
+    /// description's `jukebox_song.minecraft.<name>` translate key the
+    /// en_us table answers — the `setOverlayMessage(component, true)`
+    /// animated-color arm the `iconst_1` keeps). The STOP word the
+    /// tracked record's own silence rides (the same
+    /// `stopJukeboxSong(pos)` fold, the tail's notify walk the jar's
+    /// own empty hook answers). THE OPTIONAL'S OWN GATE the resolve
+    /// keeps: the play word whose song name lies outside the synced
+    /// table the `Optional.ifPresent`'s empty arm answers with
+    /// NOTHING (no stop, no play, no line).
+    fn play_jukebox(&mut self, voice: i32, x: i32, y: i32, z: i32, song: Option<String>) {
+        match voice {
+            mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT => {
+                // THE OPTIONAL'S OWN GATE (the `ifPresent` arm the
+                // resolve keeps)
+                let Some(song) = song else {
+                    return;
+                };
+                let bare = song.strip_prefix("minecraft:").unwrap_or(&song);
+                // THE RECORD INSTANCE (the `forJukeboxSong` walk's own
+                // sound event — the vanilla rows the jar's own jsons
+                // bank, the `music_disc.<name>` fold the 22/22 scan
+                // pins)
+                let event = format!("music_disc.{bare}");
+                let sx = f64::from(x) + 0.5;
+                let sy = f64::from(y) + 0.5;
+                let sz = f64::from(z) + 0.5;
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                self.sounds.start_record_at(
+                    self.frame,
+                    &event,
+                    4.0,
+                    1.0,
+                    ear_distance(ear, sx, sy, sz),
+                    ear_pan(ear, yaw, sx, sy, sz),
+                    x,
+                    y,
+                    z,
+                );
+                // THE NOW-PLAYING LINE (the `Hud.setNowPlaying` walk —
+                // the description's own translate key the en_us table
+                // answers, the missing key the getOrDefault law the
+                // format walk keeps; the `record.nowPlaying` format the
+                // description arg fills)
+                let desc_key = format!("jukebox_song.minecraft.{bare}");
+                let desc = tr(&desc_key).unwrap_or(&desc_key);
+                let line = format_chat_decoration("record.nowPlaying", &[desc]);
+                self.set_overlay_message_animated(&line, true);
+                // THE NEARBY TAIL (the `notifyNearbyEntities(level, pos,
+                // true)` walk the case body spends): the
+                // `getEntitiesOfClass(LivingEntity.class, ...)`
+                // `AABB(pos).inflate(3.0)` sweep the jar's own
+                // per-entity `setRecordPlayingNearby` hook keeps EMPTY
+                // (`0: return` the 26.2 bytecode speaks) — the query
+                // the walk spends, nothing the sweep banks.
+            }
+            mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT => {
+                // THE STOP WALK (`stopJukeboxSongAndNotifyNearby(pos)`
+                // — the tracked record's removal the non-null gate
+                // keeps, the tail's notify walk the same empty hook
+                // answers)
+                self.sounds.stop_record_at(self.frame, x, y, z);
+            }
+            _ => {} // the model's own arm the two words alone enqueues
+        }
     }
 
     /// THE FIXED-VOICE WIRE LANE (javap `LevelEventHandler` cases
@@ -48464,6 +48630,252 @@ cow_sound_variant: None,
         );
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         app.live_fire_extinguish_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_wire_jukebox_words_the_record_and_line_wear() {
+        // THE JUKEBOX PAIR'S OWN WIRE LANE (javap the cases
+        // 1010/1011 → offsets 4405/4439 over the 26.2 jar): the play
+        // word the ONE record instance banks (the `forJukeboxSong`
+        // walk — the RECORDS 4.0/1.0 pair, the anchor's previous
+        // record the `stopJukeboxSong` fold ends first), the
+        // now-playing line the `setNowPlaying` walk banks (the
+        // "Now Playing: %s" format the en_us table answers, the
+        // animated color the `iconst_1` arm keeps), the stop word the
+        // tracked record's own silence rides, the empty resolve the
+        // `Optional.ifPresent` gate answers with NOTHING.
+        let mut app = App::new(2);
+        app.enter_world();
+        let particles_before = app.particles.len();
+        // THE PLAY WORD: the record instance banks + the line rides
+        app.live_jukebox_events_updated(vec![
+            crate::world_view::WireJukeboxEvent {
+                x: 4,
+                y: 60,
+                z: -2,
+                voice: mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+                song: Some("minecraft:cat".to_string()),
+            },
+        ]);
+        if sounds_loaded() {
+            // the record line the positioned lanes' own shape wears
+            // (the gain the 4.0F volume's own fold speaks — the armed
+            // max the 64-block reach the `Math.max(v, 1.0F) *
+            // getAttenuationDistance()` walk keeps)
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("music_disc.cat @"))
+                .expect("the record's own play the lane logs");
+            let volume: f32 = line
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 4.0).abs() < 1e-6 || volume <= 1.0,
+                "the 4.0 volume's gain the distance law folds: {volume}"
+            );
+            // the record banks (the `playingJukeboxSongs.put` walk)
+            assert_eq!(
+                app.sounds.records.len(),
+                1,
+                "the one record instance the play walk banks"
+            );
+            assert_eq!(
+                app.sounds.records[0],
+                ((4, 60, -2), "music_disc.cat".to_string()),
+                "the anchor + the event key the bank keeps"
+            );
+        }
+        // THE NOW-PLAYING LINE (the `record.nowPlaying` format the
+        // description arg fills — the en_us rows the table answers)
+        let msg = app.overlay_message.as_deref().unwrap_or("");
+        assert!(
+            msg == "Now Playing: C418 - cat"
+                || msg.starts_with("Now Playing: ")
+                || msg == "record.nowPlayingjukebox_song.minecraft.cat"
+                || msg.contains("cat"),
+            "the now-playing line the overlay banks: {msg}"
+        );
+        assert!(
+            app.animate_overlay_message_color,
+            "the animated color the iconst_1 arm keeps"
+        );
+        assert_eq!(
+            app.overlay_message_time,
+            crate::screens::OVERLAY_MESSAGE_LIFE,
+            "the 60-tick life the bipush keeps"
+        );
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "no particles the case bodies speak"
+        );
+        // THE SECOND PLAY AT THE SAME ANCHOR: the previous record the
+        // play walk's own first fold ends (the stopJukeboxSong walk
+        // the playJukeboxSong body spends) — the bank holds ONE
+        if sounds_loaded() {
+            let stops_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.ends_with(" stopped"))
+                .count();
+            app.live_jukebox_events_updated(vec![
+                crate::world_view::WireJukeboxEvent {
+                    x: 4,
+                    y: 60,
+                    z: -2,
+                    voice: mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+                    song: Some("minecraft:blocks".to_string()),
+                },
+            ]);
+            assert_eq!(
+                app.sounds.records.len(),
+                1,
+                "the second play the first record's death keeps"
+            );
+            assert_eq!(
+                app.sounds.records[0].1, "music_disc.blocks",
+                "the new instance the bank holds"
+            );
+            let stops_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.ends_with(" stopped"))
+                .count();
+            assert_eq!(
+                stops_after,
+                stops_before + 1,
+                "the first fold's stop the log speaks"
+            );
+        }
+        // THE STOP WORD: the tracked record's removal the non-null
+        // gate keeps (the log line the stop speaks)
+        if sounds_loaded() {
+            app.live_jukebox_events_updated(vec![
+                crate::world_view::WireJukeboxEvent {
+                    x: 4,
+                    y: 60,
+                    z: -2,
+                    voice: mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT,
+                    song: None,
+                },
+            ]);
+            assert!(
+                app.sounds.records.is_empty(),
+                "the stop walk the tracked record ends"
+            );
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("music_disc.blocks @") && e.ends_with(" stopped")),
+                "the stopped record the log carries"
+            );
+            // the stop at an anchor with no record the silent arm
+            // keeps (the non-null gate — no line the nothing speaks)
+            let stops_before = app.sounds.events.len();
+            app.live_jukebox_events_updated(vec![
+                crate::world_view::WireJukeboxEvent {
+                    x: 99,
+                    y: 99,
+                    z: 99,
+                    voice: mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT,
+                    song: None,
+                },
+            ]);
+            assert_eq!(
+                app.sounds.events.len(),
+                stops_before,
+                "the absent record the silent arm keeps"
+            );
+        } else {
+            // the no-cache boot: the walks still answer (the gate the
+            // pick_file None keeps)
+            app.live_jukebox_events_updated(vec![
+                crate::world_view::WireJukeboxEvent {
+                    x: 4,
+                    y: 60,
+                    z: -2,
+                    voice: mc_protocol::SOUND_STOP_JUKEBOX_SONG_EFFECT,
+                    song: None,
+                },
+            ]);
+        }
+        // THE EMPTY RESOLVE: the play word whose song the table never
+        // named the `Optional.ifPresent` gate answers with NOTHING (no
+        // record, no line the gate never walks)
+        if sounds_loaded() {
+            let plays_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.contains("music_disc."))
+                .count();
+            let msgs_before = app.overlay_message.is_some();
+            app.live_jukebox_events_updated(vec![
+                crate::world_view::WireJukeboxEvent {
+                    x: 4,
+                    y: 60,
+                    z: -2,
+                    voice: mc_protocol::SOUND_PLAY_JUKEBOX_SONG_EFFECT,
+                    song: None,
+                },
+            ]);
+            assert_eq!(
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.contains("music_disc."))
+                    .count(),
+                plays_before,
+                "the empty resolve the play never spends"
+            );
+            assert_eq!(
+                app.overlay_message.is_some(),
+                msgs_before,
+                "the empty resolve the line never banks"
+            );
+        }
+        // the hsv law's own walk (javap `Mth.hsvToArgb` the six-arm
+        // tableswitch keeps): h = 0.0 the case-0 arm the v/p/t
+        // channels answer (the muted red the 0.7 saturation speaks —
+        // the g/b pair the SAME p channel the f=0 fraction keeps),
+        // h = 0.2 the case-1 arm the interpolated q the r picks
+        let red = overlay_message_color(0.0);
+        assert!(
+            (red[0] - 0.6).abs() < 1e-6
+                && red[1] < red[0]
+                && red[2] < red[0]
+                && (red[1] - red[2]).abs() < 1e-6,
+            "the case-0 muted red the v/p pair speaks: {red:?}"
+        );
+        let amber = overlay_message_color(10.0);
+        assert!(
+            (amber[1] - 0.6).abs() < 1e-6
+                && amber[2] < amber[1]
+                && amber[0] > amber[2]
+                && amber[0] < amber[1],
+            "the case-1 sector the q interpolation keeps: {amber:?}"
+        );
+        // the unknown word the walk never spends (the model's own arm
+        // the two words alone enqueues)
+        app.live_jukebox_events_updated(vec![crate::world_view::WireJukeboxEvent {
+            x: 0,
+            y: 0,
+            z: 0,
+            voice: 999,
+            song: None,
+        }]);
         assert_eq!(
             app.particles.len(),
             particles_before,

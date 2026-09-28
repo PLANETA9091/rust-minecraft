@@ -520,6 +520,20 @@ pub struct RegistryData {
     /// skip-sync state: the built-in registration order
     /// (`play::builtin_command_argument_type_name`) answers.
     pub command_argument_types: Vec<String>,
+    /// The `minecraft:jukebox_song` entries in ARRIVAL ORDER — the id
+    /// table the Level Event packet's jukebox-play word (1010) resolves
+    /// its data varint through (javap: the case's `registryAccess()` +
+    /// `Registries.JUKEBOX_SONG` resolve — the `Optional.ifPresent` gate
+    /// the data word the resolve answers). Names only: the element
+    /// payloads (the JukeboxSong codec's sound_event / description /
+    /// length_in_seconds / comparator_output — the server's own jsons
+    /// the codec consumes) are walked past — the vanilla 22 rows the
+    /// jar's `data/minecraft/jukebox_song/` bank all carry
+    /// `sound_event = "minecraft:music_disc.<name>"`, so the render
+    /// lane's own name fold (`music_disc.<name>`) answers the record's
+    /// sound key and the `jukebox_song.minecraft.<name>` description
+    /// key the en_us table banks.
+    pub jukebox_songs: Vec<String>,
 }
 
 impl RegistryData {
@@ -1011,6 +1025,22 @@ pub fn parse_registry_data(payload: &[u8]) -> Result<RegistryData> {
             // (the holder's direct lane carries the range, the registry
             // element rides nothing decodable)
             out.sound_events.push(entry_id);
+            if present {
+                crate::play::skip_network_nbt(&mut c)
+                    .with_context(|| format!("skip {registry_name} entry nbt"))?;
+            }
+            continue;
+        }
+        if registry_name == "minecraft:jukebox_song" {
+            // same arrival-order id table (the Level Event packet's
+            // jukebox-play word (1010) resolves its data varint through
+            // it — the record lane reads the NAME, `minecraft:cat` the
+            // render lane's own `music_disc.cat` fold speaks); the
+            // element payloads (the JukeboxSong codec's sound_event /
+            // description / length_in_seconds / comparator_output) are
+            // walked past — the vanilla rows the name fold answers (see
+            // [`RegistryData::jukebox_songs`])
+            out.jukebox_songs.push(entry_id);
             if present {
                 crate::play::skip_network_nbt(&mut c)
                     .with_context(|| format!("skip {registry_name} entry nbt"))?;
