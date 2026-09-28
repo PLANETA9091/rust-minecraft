@@ -454,6 +454,13 @@ pub struct WorldModel {
     /// launch the ONE mailbox arms (the sibling words the 1000
     /// eject's own voice the dedicated shape above keeps).
     pub dispenser_fail_launch_events: Vec<DispenserFailLaunchArm>,
+    /// THE FIREWORK-SHOOT MAILBOX — the Level Event packet's 1004
+    /// word the model enqueues for the render lane (see
+    /// [`FireworkShootArm`]). The firework rocket's own dispense
+    /// voice the server's own dispenser broadcasts (the
+    /// `.overrideDispenseEvent(1004)` word the dispense config
+    /// banks), the arm the ONE pitched voice carries.
+    pub firework_shoot_events: Vec<FireworkShootArm>,
     /// THE FIXED-VOICE SHELF'S OWN MAILBOX (the FIVE 1.0/1.0 BLOCKS
     /// cases the ONE arm shape wears — see [`FixedVoiceArm`]): the
     /// chorus flower's grow/death pair (1033/1034), the brewing
@@ -937,6 +944,40 @@ pub struct DispenserFailLaunchArm {
     /// [`mc_protocol::SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT`] the
     /// model's own arm banks; the sound key and the 1.2 pitch the
     /// render lane's law folds from it).
+    pub voice: i32,
+}
+
+/// One pending FIREWORK-SHOOT arm — the Level Event packet's next
+/// pitched voice the model keeps verbatim (see
+/// [`WorldModel::firework_shoot_events`]). THE FIREWORK ROCKET'S OWN
+/// DISPENSE WORD the server's own dispenser broadcasts (the
+/// `FireworkRocketItem.createDispenseConfig`'s
+/// `.overrideDispenseEvent(1004)` the builder chain pins,
+/// `ProjectileDispenseBehavior.playSound`'s tail the broadcast
+/// spends): the anchor verbatim (the dispenser's own BlockPos the
+/// voice resolves at), the voice word the PACKET'S OWN effect id
+/// rides (the transport's honesty — nothing the wire never carried,
+/// the sound key and the 1.2 pitch the render lane's own law folds
+/// from it), the data word deliberately absent — the case's own body
+/// never reads it (no `iload_3` read the arm's bytecode speaks, the
+/// same transport honesty the dispenser pair's arm keeps). NO
+/// particles the case speaks — the ONE `playLocalSound(pos,
+/// FIREWORK_ROCKET_SHOOT, NEUTRAL, 1.0F, 1.2F, false)` walk the case
+/// body spends (the `fconst_1` volume + the `ldc1 1.2` pitch the
+/// raised band both carry, the NEUTRAL source the case's own
+/// `getstatic` row picks — the dispenser pair's BLOCKS words the
+/// sibling rows keep, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps).
+#[derive(Debug, Clone, PartialEq)]
+pub struct FireworkShootArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice word (the packet's own effect id —
+    /// [`mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT`] the model's own
+    /// arm banks; the sound key and the 1.2 pitch the render lane's
+    /// law folds from it).
     pub voice: i32,
 }
 
@@ -1452,6 +1493,7 @@ impl WorldModel {
             dragon_block_break_events: Vec::new(),
             dispenser_dispense_events: Vec::new(),
             dispenser_fail_launch_events: Vec::new(),
+            firework_shoot_events: Vec::new(),
             fixed_voice_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
@@ -1768,6 +1810,13 @@ impl WorldModel {
         std::mem::take(&mut self.dispenser_fail_launch_events)
     }
 
+    /// The firework-shoot mailbox's own drain — the render lane takes
+    /// the pending 1004 arms each serve (the arms ship exactly once
+    /// the mailbox's own law keeps).
+    pub fn drain_firework_shoot_events(&mut self) -> Vec<FireworkShootArm> {
+        std::mem::take(&mut self.firework_shoot_events)
+    }
+
     /// The fixed-voice shelf's mailbox's own drain (the same walk the
     /// voices' speak — each arm ships exactly once): the
     /// 1033/1034/1035/1049/1050 words the Level Event packet armed,
@@ -2029,6 +2078,10 @@ impl WorldModel {
                 // the level (the same walk — the old level's 1001/1002
                 // words never speak again)
                 self.dispenser_fail_launch_events.clear();
+                // the firework-shoot mailbox dies with the level (the
+                // same walk — the old level's 1004 words never speak
+                // again)
+                self.firework_shoot_events.clear();
                 // the fixed-voice shelf's mailbox dies with the level
                 // (the same walk — the old level's 1033/1034/1035/1049/
                 // 1050 words never speak again)
@@ -3007,6 +3060,27 @@ impl WorldModel {
                     // each case body spends, the render lane's own
                     // sound walk answers.
                     self.dispenser_fail_launch_events.push(DispenserFailLaunchArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        voice: ev.effect,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT && !ev.global {
+                    // THE FIREWORK-SHOOT VOICE'S OWN ARM (javap the case
+                    // offset 836 — the positioned route the GLOBAL
+                    // switch never banks): the anchor the mailbox
+                    // carries, the VOICE WORD the packet's own effect
+                    // id rides (the sound key and the 1.2 pitch the
+                    // render lane's law folds from it — the
+                    // entity.firework_rocket.shoot voice the sounds.json
+                    // table banks; the data word the case's own body
+                    // never reads). NO particles the case speaks — the
+                    // ONE `playLocalSound(pos, FIREWORK_ROCKET_SHOOT,
+                    // NEUTRAL, 1.0F, 1.2F, false)` raised-pitch voice
+                    // walk the case body spends, the render lane's own
+                    // sound walk answers.
+                    self.firework_shoot_events.push(FireworkShootArm {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
@@ -7711,6 +7785,99 @@ mod tests {
         })));
         assert!(
             m.dispenser_fail_launch_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_firework_word_the_one_mailbox_arms() {
+        // THE FIREWORK-SHOOT VOICE'S OWN MAILBOX (javap the case
+        // offset 836 over the 26.2 jar — the positioned route the
+        // GLOBAL switch never banks): the 1004 word the ONE mailbox
+        // arms, the voice word the packet's own effect id rides, the
+        // anchor verbatim, the DATA word the case's own body never
+        // reads (no particles the voice walk speaks — the raised 1.2
+        // pitch the render lane's own law folds).
+        let mut m = WorldModel::new();
+        assert!(
+            m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT,
+                x: 3,
+                y: 40,
+                z: -12,
+                data: 0,
+                global: false,
+            })));
+        assert_eq!(
+            m.firework_shoot_events.len(),
+            1,
+            "the word arms"
+        );
+        // the voice word rides verbatim (the packet's own id — the
+        // sound key and the 1.2 pitch the render lane's law folds
+        // from it)
+        assert_eq!(
+            m.firework_shoot_events[0].voice,
+            mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT,
+            "the firework word rides"
+        );
+        // the anchor rides verbatim (the caller's own BlockPos cell)
+        assert_eq!(m.firework_shoot_events[0].x, 3);
+        assert_eq!(m.firework_shoot_events[0].y, 40);
+        assert_eq!(m.firework_shoot_events[0].z, -12);
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.firework_shoot_events.len(),
+            1,
+            "the global word never arms"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_firework_shoot_events();
+        assert_eq!(drained.len(), 1, "the drain ships the whole mailbox");
+        assert_eq!(
+            drained[0].voice,
+            mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT,
+            "the wire order the drain keeps"
+        );
+        assert!(
+            m.firework_shoot_events.is_empty(),
+            "the mailbox spent"
+        );
+        assert!(
+            m.drain_firework_shoot_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.firework_shoot_events.len(),
+            1,
+            "the fresh word re-arms"
+        );
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.firework_shoot_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

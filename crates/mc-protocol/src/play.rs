@@ -1620,6 +1620,34 @@ pub const SOUND_DISPENSER_FAIL_EFFECT: i32 = 1001;
 /// the case's own arm wears).
 pub const SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT: i32 = 1002;
 
+/// THE FIREWORK-ROCKET SHOOT VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_FIREWORK_SHOOT`
+/// the ConstantValue attribute the decode pins, the case
+/// `LevelEventHandler.levelEvent` offset 836 speaks): the ONE
+/// `playLocalSound(pos, FIREWORK_ROCKET_SHOOT, NEUTRAL, 1.0F, 1.2F,
+/// false)` walk the case body spends — the `fconst_1` volume the
+/// fixed fold keeps, the `ldc1 1.2` pitch the CP Float
+/// 1.2000000476837158 speaks (the dispenser band's own raised pitch
+/// the sibling words share), the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps, the data word the case's
+/// own body never reads (no `iload_3` the arm's bytecode speaks).
+/// NO particles the case speaks — the voice alone the broadcast
+/// renders. The source the NEUTRAL shelf the `getstatic` row picks
+/// (the dispenser pair's BLOCKS words the sibling rows keep — the
+/// one `getstatic` the case's own bytecode names). The server's own
+/// firework rockets speak it — `FireworkRocketItem.createDispenseConfig`'s
+/// builder chain the `.overrideDispenseEvent(1004)` word pins
+/// (`positionFunction(...).uncertainty(1.0F).power(0.5F)` the chain
+/// the bytecode keeps), `ProjectileDispenseBehavior.playSound`'s
+/// tail the word broadcasts (`levelEvent(dispenseConfig
+/// .overrideDispenseEvent().orElse(1000), source.pos(), 0)` the
+/// invokevirtual chain speaks — the firework's own dispense the
+/// overridden word rides). The GLOBAL route the `globalLevelEvent`
+/// switch never banks (the 1023/1028/1038 trio the band alone
+/// carries — the positioned lane the case's own arm wears).
+pub const FIREWORK_ROCKET_SHOOT_EFFECT: i32 = 1004;
+
 /// THE CHORUS-FLOWER GROW VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_CHORUS_FLOWER_GROW`,
 /// the case `LevelEventHandler.levelEvent` offset 680 speaks): the
@@ -10903,6 +10931,11 @@ mod tests {
             SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT,
             1002,
             "the dispenser launch voice the projectile behavior's own tail speaks"
+        );
+        assert_eq!(
+            FIREWORK_ROCKET_SHOOT_EFFECT,
+            1004,
+            "the firework shoot voice the dispense config's own override speaks"
         );
         assert_eq!(
             SOUND_CHORUS_GROW_EFFECT,

@@ -179,6 +179,7 @@ fn run_join(
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireDispenserFailLaunchEvent>,
+                Vec<crate::world_view::WireFireworkShootEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -281,6 +282,7 @@ fn run_join(
             view.model.drain_dragon_block_break_events();
             view.model.drain_dispenser_dispense_events();
             view.model.drain_dispenser_fail_launch_events();
+            view.model.drain_firework_shoot_events();
             view.model.drain_fixed_voice_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
@@ -907,6 +909,7 @@ fn run_join(
                             view.model.drain_dragon_block_break_events();
                             view.model.drain_dispenser_dispense_events();
                             view.model.drain_dispenser_fail_launch_events();
+                            view.model.drain_firework_shoot_events();
                             view.model.drain_fixed_voice_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
@@ -1130,6 +1133,15 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.dispenser_fail_launch_events,
+                                    // the firework-shoot's arms ride
+                                    // beside the dispenser pair's — the
+                                    // 1004 words the server's own
+                                    // firework-rocket dispense streams to
+                                    // the sound lane (the raised 1.2-pitch
+                                    // voice the render lane's own law
+                                    // folds, each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.firework_shoot_events,
                                     // the fixed-voice shelf's arms ride
                                     // beside the dispenser's — the
                                     // 1033/1034/1035/1049/1050 words the
@@ -1311,6 +1323,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireDragonBlockBreakEvent>,
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireDispenserFailLaunchEvent>,
+                Vec<crate::world_view::WireFireworkShootEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -1870,6 +1883,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     dragon_block_break_events,
                     dispenser_dispense_events,
                     dispenser_fail_launch_events,
+                    firework_shoot_events,
                     fixed_voice_events,
                     splash_events,
                     mob_spawn_events,
@@ -2050,6 +2064,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the `fconst_1`/`ldc1` bytecode pairs speak, the
                     // vanilla client answers the same packets with)
                     app.live_dispenser_fail_launch_events_updated(dispenser_fail_launch_events);
+                    // the firework-shoot's lane beside the dispenser
+                    // pair's: the 1004 words the server's own
+                    // firework-rocket dispense broadcasts land at their
+                    // own anchors (the raised-pitch voice the sound
+                    // lane's own law folds at the block center — the
+                    // fixed 1.0/1.2 pair the `fconst_1`/`ldc1` bytecode
+                    // pairs speak, the vanilla client answers the same
+                    // packet with)
+                    app.live_firework_shoot_events_updated(firework_shoot_events);
                     // the fixed-voice shelf's lane beside the
                     // dispenser's: the 1033/1034/1035/1049/1050 words the
                     // server's own chorus flowers, brewing stand and

@@ -22448,6 +22448,62 @@ impl App {
         );
     }
 
+    /// THE FIREWORK-SHOOT WIRE LANE (javap `LevelEventHandler` case
+    /// 1004 — offset 836 — over the 26.2 jar): the server's own
+    /// firework-rocket dispense the voice broadcasts, the ONE
+    /// `playLocalSound(pos, FIREWORK_ROCKET_SHOOT, NEUTRAL, 1.0F,
+    /// 1.2F, false)` walk the case body spends — the raised-pitch
+    /// voice alone the broadcast renders (no particles the case
+    /// speaks, no draw the fixed folds cost).
+    pub fn live_firework_shoot_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireFireworkShootEvent>,
+    ) {
+        for ev in events {
+            self.play_firework_shoot(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE FIREWORK-SHOOT WALK (javap the case-1004 arm verbatim —
+    /// offset 836): the BLOCK CENTER the `playLocalSound(BlockPos,
+    /// ...)` resolve places (the +0.5 trio the vanilla client
+    /// answers), the `fconst_1` volume the case carries, the `ldc1
+    /// 1.2` pitch the CP Float 1.2000000476837158 speaks (no randoms
+    /// the fixed fold speaks — the level ambient stream the walk never
+    /// spends), the distance-delay flag false the immediate voice
+    /// keeps. The voice word the packet's own effect id — the sound
+    /// key the official sounds.json table the runtime cache keeps
+    /// (the entity.firework_rocket.shoot voice the table banks — the
+    /// random/bow file the dispenser launch's own word speaks too, NO
+    /// new assets the lane demands). The NEUTRAL source the case's
+    /// own `getstatic` row picks (the source the vanilla client folds
+    /// into its sound-category sliders — the playback walk the voice
+    /// alone carries, the positioned lane's own resolve the block
+    /// center speaks).
+    fn play_firework_shoot(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the ONE WORD the model's own arm banks (the case id the
+        // bytecode's own lookupswitch row speaks — the render lane's
+        // law folds the sound key from it; the raised 1.2 pitch the
+        // same fold carries)
+        let key = match voice {
+            mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT => "entity.firework_rocket.shoot",
+            _ => return, // the model's own arm the one word alone enqueues
+        };
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            1.0,
+            1.2,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE FIXED-VOICE WIRE LANE (javap `LevelEventHandler` cases
     /// 1033/1034/1035/1049/1050 — offsets 680/700/660/796/816 — over
     /// the 26.2 jar): the server's own chorus flowers, brewing stand
@@ -48021,6 +48077,125 @@ cow_sound_variant: None,
             );
         } else {
             app.live_dispenser_fail_launch_events_updated(vec![]);
+        }
+    }
+
+    #[test]
+    fn the_wire_firework_word_the_raised_voice_wears() {
+        // THE FIREWORK-SHOOT VOICE'S OWN WIRE LANE (javap case 1004 →
+        // offset 836 over the 26.2 jar): the ONE `playLocalSound(pos,
+        // FIREWORK_ROCKET_SHOOT, NEUTRAL, 1.0F, 1.2F, false)` walk the
+        // case body spends — the raised pitch the fixed folds carry,
+        // the BLOCK CENTER the playLocalSound(BlockPos, ...) resolve
+        // places, NO PARTICLES the case speaks (the voice alone the
+        // broadcast renders), the level ambient stream the fixed folds
+        // never spend.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE STREAM'S OWN PIN (the fresh LCG the swap banks — no
+        // draw the fixed 1.0/1.2 folds cost, the `fconst_1`/`ldc1`
+        // pair the randoms never ride)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(4321));
+        let particles_before = app.particles.len();
+        app.live_firework_shoot_events_updated(vec![
+            crate::world_view::WireFireworkShootEvent {
+                x: -3,
+                y: 64,
+                z: 77,
+                voice: mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        assert_eq!(
+            spent,
+            crate::drops::Lcg::new(4321),
+            "the fixed folds the ambient stream never spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "no particles the case body speaks"
+        );
+        // THE VOICE (the case's own body the raised 1.2 pitch
+        // speaks — the volume the `fconst_1` keeps, the pitch the
+        // `ldc1` CP Float carries, the file picks the engine's own
+        // LCG banks)
+        if sounds_loaded() {
+            let shoot = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.firework_rocket.shoot @"))
+                .expect("the shoot voice the case-1004 body speaks");
+            let pitch: f32 = shoot
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.2).abs() < 1e-6,
+                "the raised pitch the ldc1 keeps: {pitch}"
+            );
+            let volume: f32 = shoot
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 1.0).abs() < 1e-6,
+                "the fixed volume the fconst_1 keeps: {volume}"
+            );
+        }
+        // THE SECOND ARM (the next dispenser's firework the same walk
+        // wears — each word ships exactly one voice)
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.firework_rocket.shoot @"))
+                .count();
+            app.live_firework_shoot_events_updated(vec![
+                crate::world_view::WireFireworkShootEvent {
+                    x: 0,
+                    y: 0,
+                    z: 0,
+                    voice: mc_protocol::FIREWORK_ROCKET_SHOOT_EFFECT,
+                },
+            ]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.firework_rocket.shoot @"))
+                .count();
+            assert_eq!(
+                voices_after,
+                voices_before + 1,
+                "each arm exactly one voice the walk keeps"
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        if sounds_loaded() {
+            let voices_before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.firework_rocket.shoot @"))
+                .count();
+            app.live_firework_shoot_events_updated(vec![]);
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.firework_rocket.shoot @"))
+                .count();
+            assert_eq!(
+                voices_after, voices_before,
+                "the empty mailbox ships nothing"
+            );
+        } else {
+            app.live_firework_shoot_events_updated(vec![]);
         }
     }
 
