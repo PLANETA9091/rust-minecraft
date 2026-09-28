@@ -1784,12 +1784,14 @@ pub const PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT: i32 = 3011;
 /// `PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB`, the case
 /// `LevelEventHandler.levelEvent` offset 1847 speaks): the ONE
 /// `playLocalSound(pos, TRIAL_SPAWNER_SPAWN_MOB, BLOCKS, 1.0F,
-/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, true)` walk the case
 /// body spends FIRST (the `fconst_1` volume the fixed fold keeps, the
 /// TWO pitch draws the fsub/fmul/fadd chain answers — the scale the
 /// cp #360 Float 0.2F banks, the [0.8, 1.2] band the pair gives, the
 /// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve places,
-/// the distance-delay flag false the immediate voice keeps), THEN the
+/// the distance-delay flag TRUE the jar's own `iconst_1` keeps —
+/// pc 1880, the `false` the round-453 handoff spoke the fresh byte
+/// audit corrects), THEN the
 /// SAME `TrialSpawner$FlameParticle.decode(data)` +
 /// `TrialSpawner.addSpawnParticles` walk the 3011 sibling's own tail
 /// spends (pc 1884-1898 — the identical iload_3 decode, the identical
@@ -1806,6 +1808,36 @@ pub const PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT: i32 = 3011;
 /// `globalLevelEvent` switch never banks — the positioned lane the
 /// case's own arm wears.
 pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT: i32 = 3012;
+
+/// THE TRIAL-SPAWNER SPAWN-ITEM VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM`, the case
+/// `LevelEventHandler.levelEvent` offset 1904 speaks): the ONE
+/// `playLocalSound(pos, TRIAL_SPAWNER_SPAWN_ITEM, BLOCKS, 1.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, true)` walk the case
+/// body spends FIRST (pc 1904-1938 — the `fconst_1` volume the fixed
+/// fold keeps, the TWO pitch draws the fsub/fmul/fadd chain answers,
+/// the SAME [0.8, 1.2] band the 0.2F scale gives, the BLOCK CENTER
+/// the `playLocalSound(BlockPos, ...)` resolve places, the
+/// distance-delay flag TRUE the jar's own `iconst_1` keeps — pc 1937,
+/// the same flag the 3012 twin's fresh byte audit pins), THEN the
+/// SAME `TrialSpawner$FlameParticle.decode(data)` +
+/// `TrialSpawner.addSpawnParticles` walk the 3011/3012 siblings' own
+/// tail spends (pc 1941-1958 — the identical iload_3 decode the
+/// `particleType` getfield answers, the identical `bipush 20` loop
+/// the SMOKE + flame pairs speak — the same 540 draws the burst
+/// alone consumes beside the voice's own two). The
+/// `block.trial_spawner.spawn_item` key the sounds.json row banks
+/// (the spawn_item1..3 files the runtime table holds, NO new assets
+/// the lane demands). The caller the OMINOUS item spawner's own
+/// eject pins — `OminousItemSpawner.spawnItem`'s
+/// `sipush 3021, blockPosition(), iconst_1` levelEvent call the
+/// bytecode speaks (pc 95-104 — the spawner ENTITY's own block the
+/// anchor resolves, the data word 1 the `iconst_1` operand carries,
+/// the OMINOUS flame flavor the decode arms). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT: i32 = 3021;
 
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,

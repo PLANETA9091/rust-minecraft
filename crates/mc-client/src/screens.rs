@@ -23136,29 +23136,40 @@ impl App {
     }
 
     /// THE TRIAL-SPAWNER SPAWN WIRE LANE (javap `LevelEventHandler`
-    /// cases 3011/3012 — offsets 1827/1847 — over the 26.2 jar): the
-    /// server's own trial spawners the mob-spawn words broadcast
-    /// (`TrialSpawner.spawnMob`'s `sipush 3011/3012` the levelEvent
-    /// calls pin), the Level Event mailbox's landing: each word the
-    /// arms the worker drained ride exactly one refresh — the data
-    /// word the case's own decode reads (the flame-flavor id the
-    /// `FlameParticle.decode(I)` walk banks), the forty-particle
-    /// burst the walk speaks, the VOICE the 3012 word plays FIRST
-    /// (the case body's own draw order — the pitch draws ride before
-    /// the burst the tail answers), the 3011 word the silence keeps
+    /// cases 3011/3012/3021 — offsets 1827/1847/1904 — over the 26.2
+    /// jar): the server's own trial spawners the mob-spawn words
+    /// broadcast (`TrialSpawner.spawnMob`'s `sipush 3011/3012` the
+    /// levelEvent calls pin), the OMINOUS item spawner the spawn-item
+    /// voice broadcasts (`OminousItemSpawner.spawnItem`'s
+    /// `sipush 3021, blockPosition(), iconst_1` the levelEvent call
+    /// pins — the data word 1 the OMINOUS flame the decode arms), the
+    /// Level Event mailbox's landing: each word the arms the worker
+    /// drained ride exactly one refresh — the data word the case's own
+    /// decode reads (the flame-flavor id the `FlameParticle.decode(I)`
+    /// walk banks), the forty-particle burst the walk speaks, the
+    /// VOICE the 3012/3021 word plays FIRST (the case bodies' own draw
+    /// order — the pitch draws ride before the burst the tail
+    /// answers; the key the word picks: spawn_mob the 3012 word,
+    /// spawn_item the 3021 word), the 3011 word the silence keeps
     /// (the burst alone the particle word plays).
     pub fn live_trial_spawn_events_updated(
         &mut self,
         events: Vec<crate::world_view::WireTrialSpawnEvent>,
     ) {
         for ev in events {
-            // THE VOICE THE FAMILY'S WORD SPEAKS (the 3012 case body's
-            // own `playLocalSound` walk — the fixed 1.0 volume, the
-            // TWO pitch draws the `(nf - nf) * 0.2F + 1.0F` fold
+            // THE VOICE THE FAMILY'S WORD SPEAKS (the 3012/3021 case
+            // bodies' own `playLocalSound` walk — the fixed 1.0 volume,
+            // the TWO pitch draws the `(nf - nf) * 0.2F + 1.0F` fold
             // answers, the block center the resolve places, the
-            // immediate voice the false flag keeps — the draws ride
-            // BEFORE the burst the tail speaks)
-            if ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT {
+            // distance-delay flag the jar's own `iconst_1` pair keeps —
+            // pc 1880 and pc 1937 — the draws ride BEFORE the burst the
+            // tail speaks; the key the word picks: the spawn-mob voice
+            // the 3012 word speaks, the spawn-item voice the 3021 word
+            // answers — the mirror twin the OminousItemSpawner's own
+            // eject broadcasts)
+            if ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT
+                || ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT
+            {
                 let pitch = 1.0f32
                     + (self.level_ambient_rng.next_f32()
                         - self.level_ambient_rng.next_f32())
@@ -23168,9 +23179,16 @@ impl App {
                 let sz = f64::from(ev.z) + 0.5;
                 let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let yaw = self.listener_yaw();
+                let key = if ev.word
+                    == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT
+                {
+                    "block.trial_spawner.spawn_mob"
+                } else {
+                    "block.trial_spawner.spawn_item"
+                };
                 self.sounds.play_voice_at_pan(
                     self.frame,
-                    "block.trial_spawner.spawn_mob",
+                    key,
                     1.0,
                     pitch,
                     ear_distance(ear, sx, sy, sz),
@@ -50081,6 +50099,67 @@ cow_sound_variant: None,
                 .iter()
                 .find(|e| e.starts_with("block.trial_spawner.spawn_mob @"))
                 .expect("the spawn-mob voice the lane logs");
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE SPAWN-ITEM VOICE TWIN (the 3021 word the SAME burst rides
+        // beside — the OminousItemSpawner.spawnItem call the
+        // `levelEvent(3021, blockPosition(), 1)` walk speaks, the data
+        // word 1 the OMINOUS soul flavor the decode arms: the twenty
+        // SoulFlame pairs the burst banks — the case body's own draw
+        // order the pitch pair FIRST keeps: TWO draws the voice spends,
+        // THEN the forty-particle walk's 540 — the [0.8, 1.2] band the
+        // scale 0.2F fold gives, the key the sounds.json row banks —
+        // the spawn_item1..3 files the runtime table holds, the voice
+        // the log banks)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3021));
+        let before_item = app.particles.len();
+        app.live_trial_spawn_events_updated(vec![
+            crate::world_view::WireTrialSpawnEvent {
+                x: -19,
+                y: 52,
+                z: 61,
+                data: 1,
+                word:
+                    mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let item_burst = &app.particles[before_item..];
+        assert_eq!(item_burst.len(), 40, "the spawn-item twin's own forty");
+        let soul = item_burst
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SoulFlame))
+            .count();
+        assert_eq!(
+            soul, 20,
+            "the OMINOUS word the caller's iconst_1 banks"
+        );
+        let mut replay = crate::drops::Lcg::new(0x3021);
+        for _ in 0..(2 + 40 * 27 / 2) {
+            let _ = replay.next();
+        }
+        assert_eq!(
+            spent, replay,
+            "the {} draws the spawn-item twin exactly spends",
+            2 + 40 * 27 / 2
+        );
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.trial_spawner.spawn_item @"))
+                .expect("the spawn-item voice the lane logs");
             let pitch: f32 = line
                 .split(" p")
                 .nth(1)

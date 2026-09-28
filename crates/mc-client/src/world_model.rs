@@ -3719,23 +3719,29 @@ impl WorldModel {
                         word: ev.effect,
                     });
                     true
-                } else if ev.effect
+                } else if (ev.effect
                     == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT
+                    || ev.effect
+                        == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT)
                     && !ev.global
                 {
-                    // THE TRIAL-SPAWNER SPAWN-MOB VOICE'S OWN ARM (javap
-                    // the case offset 1847 — the positioned route the
-                    // GLOBAL switch never banks): the ONE
-                    // `playLocalSound(pos, TRIAL_SPAWNER_SPAWN_MOB,
-                    // BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, false)` walk
-                    // the case body spends FIRST (the TWO pitch draws
-                    // the voice's own arm keeps), THEN the SAME
+                    // THE TRIAL-SPAWNER VOICE FAMILY'S OWN ARM (javap
+                    // the case offsets 1847/1904 — the positioned route
+                    // the GLOBAL switch never banks): the ONE
+                    // `playLocalSound(pos, TRIAL_SPAWNER_SPAWN_MOB |
+                    // TRIAL_SPAWNER_SPAWN_ITEM, BLOCKS, 1.0F,
+                    // (nf - nf) * 0.2F + 1.0F, true)` walk the case
+                    // bodies spend FIRST (the TWO pitch draws the
+                    // voice's own arm keeps — the distance-delay flag
+                    // TRUE the jar's own `iconst_1` pair pins, pc 1880
+                    // and pc 1937), THEN the SAME
                     // `FlameParticle.decode(data)` +
                     // `TrialSpawner.addSpawnParticles` walk the 3011
                     // sibling's own tail spends — the same mailbox the
-                    // wax trio's own one-mailbox law banks (the WORD the
-                    // arm carries the render lane's own law reads — the
-                    // voice the 3012 word plays beside the burst).
+                    // wax trio's own one-mailbox law banks (the WORD
+                    // the arm carries the render lane's own law reads —
+                    // the voice the 3012/3021 word plays beside the
+                    // burst).
                     self.trial_spawn_events.push(TrialSpawnArm {
                         x: ev.x,
                         y: ev.y,
@@ -12439,6 +12445,28 @@ mod tests {
             "the spawn-mob word rides"
         );
         assert_eq!(m.trial_spawn_events[2].z, -77, "the twin's anchor rides");
+        // the SPAWN-ITEM TWIN (the 3021 word the SAME mailbox banks —
+        // the OminousItemSpawner.spawnItem call the `levelEvent(3021,
+        // blockPosition(), 1)` walk speaks — the data word 1 the
+        // caller's iconst_1 carries, the OMINOUS flavor the decode arms)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT,
+            x: -3,
+            y: 41,
+            z: 77,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.trial_spawn_events.len(), 4, "the spawn-item twin rides");
+        assert_eq!(
+            m.trial_spawn_events[3].word,
+            mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT,
+            "the spawn-item word rides"
+        );
+        assert_eq!(
+            m.trial_spawn_events[3].data, 1,
+            "the OMINOUS word the caller's iconst_1 banks"
+        );
         // the GLOBAL route the arm never banks (the positioned lane
         // the case's own body wears — the broadcast the anchor keeps)
         assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
@@ -12449,19 +12477,32 @@ mod tests {
             data: 0,
             global: true,
         })));
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 1,
+            global: true,
+        })));
         assert_eq!(
             m.trial_spawn_events.len(),
-            3,
-            "the global word never arms"
+            4,
+            "the global words never arm"
         );
         // the drain ships the mailbox exactly once
         let drained = m.drain_trial_spawn_events();
-        assert_eq!(drained.len(), 3, "the drain ships the mailbox");
+        assert_eq!(drained.len(), 4, "the drain ships the mailbox");
         assert_eq!(drained[1].data, 1, "the twin's flame word rides");
         assert_eq!(
             drained[2].word,
             mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT,
             "the voice twin's word rides"
+        );
+        assert_eq!(
+            drained[3].word,
+            mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT,
+            "the spawn-item twin's word rides"
         );
         assert!(
             m.trial_spawn_events.is_empty(),
