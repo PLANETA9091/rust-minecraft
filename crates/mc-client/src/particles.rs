@@ -3114,26 +3114,30 @@ pub fn happy_villager_sparkle(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lc
 /// the `SuspendedTownParticle` ctor over the 26.2 jar — the
 /// `ParticleTypes.COMPOSTER` word the `ComposterBlock.handleFill`
 /// case-1500 arm's `bipush 10` loop speaks): the FULL provider chain
-/// the SEVEN draws the stream spends in the vanilla order — the
+/// the FIVE draws the stream spends in the vanilla order — the
 /// one-frame glint pick FIRST (`SpriteSet.get(random)` the
 /// composter.json's one-texture set consumes — the nextInt(1) the
 /// draw the pick always lands, the SAME glint bank the feed
-/// sparkle's kind renders), the THREE dead tint draws next (the
-/// base ctor's `nextFloat() * 0.1 + 0.2` the r/g/b trio spends —
-/// the `setColor(1.0, 1.0, 1.0)` putfield trio the values override,
-/// the draws the stream still keeps — the same dead-tint law the
-/// white smoke lane speaks), the size draw (`quadSize = 0.02 * (nf
-/// * 0.6 + 0.5)` the setSize + the getQuadSize draw the chain
-/// gives), the dead base lifetime (`20.0 / (nf * 0.8 + 0.2)` the
-/// ctor's own write — the `setLifetime(3 + nextInt(5))` the
-/// provider's override replaces, the 3..7 band the `iconst_3` +
-/// `iconst_5` the bytecode pins). The velocity the `* 0.02` ctor
-/// fold speaks (the case's own `nextGaussian() * 0.02` args the
-/// fold scales twice — the effective drift the `* 0.0004` the two
-/// folds keep, the same law the growth burst's ride wears). The
-/// white tint, the 0.99 friction the tick's own walk keeps, the
-/// zero gravity, the OPAQUE layer the getLayer override returns —
-/// the kind the glint bank's own render arm carries.
+/// sparkle's kind renders), the dead tint draw NEXT (the base
+/// ctor's `nextFloat() * 0.1 + 0.2` — the ONE invoke the bytecodes
+/// spend, the `fstore [15]` the r/g/b putfield trio all loads —
+/// the `setColor(1.0F, 1.0F, 1.0F)` putfield trio the VALUE
+/// overrides, the draw the stream still keeps; THE CORRECTION the
+/// autopush-450 re-audit banks — the prior reading counted THREE
+/// dead tints, the jar's own shared-local shape speaks ONE, the
+/// fload [15] the three putfields keep), the size draw
+/// (`quadSize = 0.02 * (nf * 0.6 + 0.5)` the setSize + the
+/// getQuadSize draw the chain gives), the dead base lifetime
+/// (`20.0 / (nf * 0.8 + 0.2)` the ctor's own write — the
+/// `setLifetime(3 + nextInt(5))` the provider's override replaces,
+/// the 3..7 band the `iconst_3` + `iconst_5` the bytecode pins).
+/// The velocity the `* 0.02` ctor fold speaks (the case's own
+/// `nextGaussian() * 0.02` args the fold scales twice — the
+/// effective drift the `* 0.0004` the two folds keep, the same law
+/// the growth burst's ride wears). The white tint, the 0.99
+/// friction the tick's own walk keeps, the zero gravity, the
+/// OPAQUE layer the getLayer override returns — the kind the glint
+/// bank's own render arm carries.
 pub fn composter_fill_puff(
     x: f64,
     y: f64,
@@ -3146,12 +3150,10 @@ pub fn composter_fill_puff(
     // the one-frame glint pick (the SpriteSet.get(random) draw —
     // nextInt(1) the one-entry list consumes, the pick always lands 0)
     let _glint_pick = rng.next_int(1);
-    // the three dead tint draws (the base ctor's r/g/b trio — the
-    // setColor(1,1,1) override the values keep, the draws the
-    // stream still spends)
-    let _dead_r = rng.next_f32();
-    let _dead_g = rng.next_f32();
-    let _dead_b = rng.next_f32();
+    // the dead tint draw (the base ctor's ONE nextFloat — the fstore
+    // [15] the r/g/b putfield trio all loads; the setColor(1,1,1)
+    // override the VALUE keeps, the draw the stream still spends)
+    let _dead_tint = rng.next_f32();
     // the size draw (the 0.02 * (nf * 0.6 + 0.5) fold the ctor's
     // own write speaks)
     let quad_size = 0.02 * (rng.next_f32() * 0.6 + 0.5);
@@ -5743,7 +5745,7 @@ mod tests {
     }
 
     #[test]
-    fn the_composter_puff_the_seven_draws_the_lifetime_wears() {
+    fn the_composter_puff_the_five_draws_the_lifetime_wears() {
         // THE BIRTH (the addParticle pos the handleFill loop speaks —
         // the interior corner the case's own folds place, the
         // gaussian trio the velocity args carry): the puff sits at
@@ -5782,18 +5784,21 @@ mod tests {
             (p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
             "the seeded chain replays"
         );
-        // THE STREAM (the seven draws the chain consumes — the
-        // one-frame glint pick, the three dead tints, the size, the
-        // dead base lifetime, the own nextInt(5); the eighth draw
-        // differs)
+        // THE STREAM (the five draws the chain consumes — the
+        // one-frame glint pick, the ONE dead tint the ctor's fstore
+        // [15] the r/g/b trio shares, the size, the dead base
+        // lifetime, the own nextInt(5); the sixth draw differs; THE
+        // CORRECTION the autopush-450 re-audit banks — the prior
+        // seven-draw reading spent two phantom tints the jar's own
+        // shared-local shape never draws)
         let mut a = rng();
         let _ = composter_fill_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, &mut a);
-        let after_seven = a.next();
+        let after_five = a.next();
         let mut b = rng();
-        for _ in 0..7 {
+        for _ in 0..5 {
             b.next();
         }
-        assert_eq!(after_seven, b.next(), "the composter chain's own seven draws");
+        assert_eq!(after_five, b.next(), "the composter chain's own five draws");
     }
 
     #[test]

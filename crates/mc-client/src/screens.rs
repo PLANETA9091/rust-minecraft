@@ -22185,11 +22185,13 @@ impl App {
     /// column(12, clamp(1 + level*2, 2, 16), 16)` the center-xz
     /// audit folds: the rim top 1.0 every live level keeps, the
     /// `d0 = 1.03125` the constant rides, the y band [1.0, 1.03125]
-    /// the puffs hover at). The provider's own seven draws the
-    /// puffs' ctor spends last (the glint pick, the three dead
-    /// tints, the size, the dead base lifetime, the 3..7 own
-    /// lifetime — the chain the [`crate::particles::
-    /// composter_fill_puff`] law pins).
+    /// the puffs hover at). The provider's own five draws the
+    /// puffs' ctor spends last (the glint pick, the ONE dead tint
+    /// the fstore [15] the r/g/b trio shares, the size, the dead
+    /// base lifetime, the 3..7 own lifetime — the chain the
+    /// [`crate::particles::composter_fill_puff`] law pins; the
+    /// autopush-450 correction the two phantom tints the prior
+    /// reading spent the shared-local shape never draws).
     fn play_composter_fill(&mut self, x: i32, y: i32, z: i32, success: bool) {
         // THE VOICE (the success ternary the handleFill's own head
         // speaks — the data bit the pick rides, the BLOCK CENTER the
@@ -22216,7 +22218,8 @@ impl App {
         // THE TEN PUFFS (the `bipush 10` loop — the THREE gaussian
         // velocity draws the addParticle args carry first, the
         // position floats the f2d domain keeps, the provider's own
-        // seven draws the ctor spends)
+        // five draws the ctor spends — the autopush-450 correction
+        // the shared fstore [15] tint the bytecodes speak)
         for _ in 0..10 {
             let vx = self.level_ambient_rng.next_gaussian() * 0.02;
             let vy = self.level_ambient_rng.next_gaussian() * 0.02;
@@ -48472,7 +48475,9 @@ cow_sound_variant: None,
         // speaks), the `bipush 10` loop the ten COMPOSTER puffs fire
         // — the THREE gaussian velocity draws the args carry first,
         // the interior position floats the f2d domain keeps, the
-        // provider's own seven draws the ctor spends.
+        // provider's own five draws the ctor spends (the autopush-450
+        // correction — the shared fstore [15] tint the bytecodes
+        // speak).
         let mut app = App::new(2);
         app.enter_world();
         // THE STREAM'S OWN PIN (the fresh LCG the assignment banks —
