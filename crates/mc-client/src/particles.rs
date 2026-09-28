@@ -271,6 +271,18 @@ pub enum ParticleKind {
     /// own green the quad samples whole, the OPAQUE layer the
     /// getLayer override returns).
     HappyVillager,
+    /// `SuspendedTownParticle` the egg crack's own white (the
+    /// `egg_crack` type the sniffer egg's own placement broadcasts —
+    /// javap verbatim: the lifetime the `20.0 / (nextFloat() * 0.8 +
+    /// 0.2)` fold answers [20, 100], the quadSize the `setSize(0.02,
+    /// 0.02)` x the `* (nextFloat() * 0.6 + 0.5)` draw gives, the
+    /// drift the supplier's ±0.5 draws the `* 0.02` ctor fold keeps,
+    /// the friction the tick's own `* 0.99` speaks (no gravity the
+    /// law never arms), the white tint the provider's `setColor(1, 1,
+    /// 1)` override — the SAME glint sprite the happy-villager bank
+    /// shares the quad samples whole, the OPAQUE layer the getLayer
+    /// override returns).
+    EggCrack,
     /// `BubbleColumnUpParticle` — the upward column's own bubble (the
     /// `bubble_column_up` type the column's animateTick spawns two of,
     /// the same `minecraft:bubble` sprite the swim bubble rides, the
@@ -3174,6 +3186,120 @@ pub fn composter_fill_puff(
     }
 }
 
+/// THE EGG-CRACK FACES WALK (javap `LevelEventHandler` case 3009 —
+/// offset 2576 — plus `ParticleUtils.spawnParticlesOnBlockFaces` +
+/// `spawnParticleOnFace` + `getRandomSpeedRanges` + the
+/// `SuspendedTownParticle$EggCrackProvider.createParticle` chain over
+/// the 26.2 jar): the ONE walk the case body spends — the SIX
+/// `Direction.values()` faces the enum's own order banks (DOWN, UP,
+/// NORTH, SOUTH, WEST, EAST), each face the
+/// `UniformInt.of(3, 6).sample` count arms (the `3 + nextInt(4)` band
+/// the randomBetweenInclusive law speaks — ONE draw the power-of-2
+/// fold spends). THE PER-PARTICLE WALK the chain's own order pins:
+/// the supplier FIRST (the `getRandomSpeedRanges` verbatim — the
+/// THREE `Mth.nextDouble(-0.5, 0.5)` draws the Vec3 ctor args carry,
+/// drawn WHOLE the ternary's own zeroing never refunds), the
+/// position pair NEXT (the face axis rides `center + axis * 0.55`
+/// — the deterministic arm NO draw spends — the perpendicular pair
+/// the `Mth.nextDouble(-0.5, 0.5)` draws, X→Y→Z the axis order
+/// keeps), the provider chain LAST (the glint pick the egg_crack
+/// json's one-texture set consumes — the `nextInt(1)` the draw the
+/// pick always lands, the dead tint draw the base ctor's r/g/b trio
+/// shares ONE — the fstore [15] the bytecode pins, the setColor(1,
+/// 1, 1) putfield trio the values override, the size draw the
+/// `0.02 * (nf * 0.6 + 0.5)` fold the ctor's own write speaks, the
+/// lifetime draw the `20.0 / (nf * 0.8 + 0.2)` fold answers — the
+/// provider NO setLifetime speaks, the 21..100 band the fold keeps).
+/// The velocity the IN-PLANE pair alone keeps (the ternary trio the
+/// jar's own ifne arms speak: the face-normal axis's component
+/// ZEROES), the `* 0.02` ctor fold the drift damps, the white tint,
+/// the 0.99 friction the tick's own walk keeps, the zero gravity,
+/// the OPAQUE layer the glint bank's own render arm carries.
+pub fn egg_crack_faces(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) -> Vec<Particle> {
+    let mut out = Vec::new();
+    let cx = anchor.0 as f64 + 0.5;
+    let cy = anchor.1 as f64 + 0.5;
+    let cz = anchor.2 as f64 + 0.5;
+    // Direction.values()'s own order (the enum's wire the switch's
+    // own array keep — DOWN, UP, NORTH, SOUTH, WEST, EAST)
+    let faces: [(i32, i32, i32); 6] = [
+        (0, -1, 0),
+        (0, 1, 0),
+        (0, 0, -1),
+        (0, 0, 1),
+        (-1, 0, 0),
+        (1, 0, 0),
+    ];
+    for &(sx, sy, sz) in &faces {
+        // THE PER-FACE COUNT (UniformInt.of(3, 6).sample — the
+        // `3 + nextInt(4)` band the randomBetweenInclusive speaks)
+        let per_face = 3 + rng.next_int(4).max(0);
+        for _ in 0..per_face {
+            // THE VELOCITY SUPPLIER (the `getRandomSpeedRanges`
+            // verbatim — the THREE `Mth.nextDouble(-0.5, 0.5)` draws
+            // the Vec3 ctor args keep, drawn WHOLE the ternary's own
+            // zeroing never refunds)
+            let vx = rng.next_f64_between(-0.5, 0.5);
+            let vy = rng.next_f64_between(-0.5, 0.5);
+            let vz = rng.next_f64_between(-0.5, 0.5);
+            // THE POSITION PAIR (spawnParticleOnFace verbatim: the
+            // face axis rides `center + axis * 0.55` — the
+            // deterministic arm NO draw spends — the perpendicular
+            // pair the `Mth.nextDouble(-0.5, 0.5)` draws, X→Y→Z the
+            // axis order keeps)
+            let px = cx
+                + if sx != 0 {
+                    f64::from(sx) * 0.55
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            let py = cy
+                + if sy != 0 {
+                    f64::from(sy) * 0.55
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            let pz = cz
+                + if sz != 0 {
+                    f64::from(sz) * 0.55
+                } else {
+                    rng.next_f64_between(-0.5, 0.5)
+                };
+            // THE PROVIDER CHAIN (the glint pick, the dead tint draw
+            // the trio shares one, the size draw, the lifetime draw —
+            // the provider NO setLifetime speaks)
+            let _glint_pick = rng.next_int(1);
+            let _dead_tint = rng.next_f32();
+            let quad_size = 0.02 * (rng.next_f32() * 0.6 + 0.5);
+            let lifetime = (20.0 / (rng.next_f32() as f64 * 0.8 + 0.2)) as u32;
+            // THE IN-PLANE VELOCITY (the ternary trio the jar's own
+            // ifne arms speak: the face-normal axis's component
+            // ZEROES, the in-plane pair keeps the supplier's draws —
+            // the `* 0.02` ctor fold the drift damps)
+            let scale = 0.02;
+            out.push(Particle {
+                kind: ParticleKind::EggCrack,
+                x: px,
+                y: py,
+                z: pz,
+                vx: if sx == 0 { vx * scale } else { 0.0 },
+                vy: if sy == 0 { vy * scale } else { 0.0 },
+                vz: if sz == 0 { vz * scale } else { 0.0 },
+                prev: None,
+                age: 0,
+                lifetime,
+                gravity: 0.0,
+                friction: 0.99,
+                quad_size,
+                uo: 0.0,
+                vo: 0.0,
+                col: [1.0, 1.0, 1.0],
+            });
+        }
+    }
+    out
+}
+
 /// THE GROWTH BURST'S OWN WALK (javap `ParticleUtils.spawnParticles`
 /// verbatim — the LevelEventHandler's 1505 case the bone-meal item's
 /// own use speaks, the level event the client vocabulary now renders):
@@ -5668,6 +5794,121 @@ mod tests {
             b.next();
         }
         assert_eq!(after_seven, b.next(), "the composter chain's own seven draws");
+    }
+
+    #[test]
+    fn the_egg_crack_faces_the_six_faces_the_draws_wear() {
+        // THE FACES WALK (javap the case 3009 chain verbatim): the six
+        // faces the enum's own order banks, the per-face count the
+        // `3 + nextInt(4)` band arms, the per-particle chain the
+        // supplier-trio → position-pair → provider-chain order pins.
+        let mut r = rng();
+        let burst = egg_crack_faces((10, 20, 30), &mut r);
+        // THE BANDS (the 6 faces x 3..6 the UniformInt.of(3, 6)
+        // count speaks)
+        assert!(
+            (18..=36).contains(&burst.len()),
+            "the 18..36 band: {}",
+            burst.len()
+        );
+        for p in &burst {
+            // THE LAWS (the EggCrackProvider chain): the white tint
+            // the setColor(1,1,1) override keeps, the 0.02 x (nf * 0.6
+            // + 0.5) size band, the lifetime the ctor's own
+            // `20.0 / (nf * 0.8 + 0.2)` fold answers (the provider NO
+            // setLifetime speaks — the 21..100 band the denom band
+            // keeps), the zero gravity, the 0.99 friction the tick's
+            // own walk keeps
+            assert!(matches!(p.kind, ParticleKind::EggCrack));
+            assert_eq!(p.col, [1.0, 1.0, 1.0], "the white the override keeps");
+            assert!(
+                (0.01..0.022).contains(&p.quad_size),
+                "the size band: {}",
+                p.quad_size
+            );
+            assert!(
+                (21..=100).contains(&p.lifetime),
+                "the 21..100 band: {}",
+                p.lifetime
+            );
+            assert!(p.gravity.abs() < 1e-9, "the no-gravity law");
+            assert!((p.friction - 0.99).abs() < 1e-9, "the 0.99 friction");
+            // THE POSITION BANDS (the anchor center ± the face axis's
+            // 0.55 arm or the perpendicular ±0.5 pair — the widest arm
+            // the 0.55 band speaks)
+            assert!(
+                (9.95..=11.05).contains(&p.x),
+                "the x band: {}",
+                p.x
+            );
+            assert!(
+                (19.95..=21.05).contains(&p.y),
+                "the y band: {}",
+                p.y
+            );
+            assert!(
+                (29.95..=31.05).contains(&p.z),
+                "the z band: {}",
+                p.z
+            );
+            // THE VELOCITY BANDS (the in-plane pair the supplier's
+            // ±0.5 draws the `* 0.02` ctor fold damps — the aligned
+            // axis's component the ternary's own zeroing keeps)
+            assert!(p.vx.abs() <= 0.01, "the x drift: {}", p.vx);
+            assert!(p.vy.abs() <= 0.01, "the y drift: {}", p.vy);
+            assert!(p.vz.abs() <= 0.01, "the z drift: {}", p.vz);
+        }
+        // THE SURFACE ARMS (the face-axis particles ride the exact
+        // 0.55 arm — a DOWN-face member's y the cy - 0.55 fold gives
+        // (cy = 20.5 the +0.5 center keeps), its vy the zeroing keeps)
+        let down: Vec<&Particle> = burst
+            .iter()
+            .filter(|p| (p.y - (20.5 - 0.55)).abs() < 1e-9)
+            .collect();
+        let up: Vec<&Particle> = burst
+            .iter()
+            .filter(|p| (p.y - (20.5 + 0.55)).abs() < 1e-9)
+            .collect();
+        let north: Vec<&Particle> = burst
+            .iter()
+            .filter(|p| (p.z - (30.5 - 0.55)).abs() < 1e-9)
+            .collect();
+        assert!(
+            !down.is_empty() && !up.is_empty() && !north.is_empty(),
+            "the face-axis arms the walk answers: down {} up {} north {}",
+            down.len(),
+            up.len(),
+            north.len()
+        );
+        for p in down.iter().chain(up.iter()) {
+            assert!(p.vy.abs() < 1e-9, "the aligned y the zeroing keeps");
+        }
+        for p in &north {
+            assert!(p.vz.abs() < 1e-9, "the aligned z the zeroing keeps");
+        }
+        // THE DETERMINISM (the same seed the same chain answers)
+        let burst2 = egg_crack_faces((10, 20, 30), &mut rng());
+        assert_eq!(burst.len(), burst2.len(), "the seeded chain replays");
+        for (p, p2) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+                "the seeded members replay"
+            );
+        }
+        // THE STREAM (the exact draw chain the walk consumes: the six
+        // count draws + the per-particle nine — the supplier trio +
+        // the position pair + the glint pick + the dead tint + the
+        // size + the lifetime; the NEXT draw differs)
+        let n = burst.len();
+        let mut a = rng();
+        let _ = egg_crack_faces((10, 20, 30), &mut a);
+        let after_walk = a.next();
+        let mut b = rng();
+        for _ in 0..(6 + n * 9) {
+            b.next();
+        }
+        assert_eq!(after_walk, b.next(), "the walk's own exact draw count");
     }
 
     #[test]

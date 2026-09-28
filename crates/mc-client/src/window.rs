@@ -174,6 +174,7 @@ fn run_join(
                 Vec<crate::world_view::WireSculkChargeEvent>,
                 Vec<crate::world_view::WireSculkShriekEvent>,
                 Vec<crate::world_view::WireBrushCompleteEvent>,
+                Vec<crate::world_view::WireEggCrackEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -287,6 +288,7 @@ fn run_join(
             view.model.drain_sculk_charge_events();
             view.model.drain_sculk_shriek_events();
             view.model.drain_brush_complete_events();
+            view.model.drain_egg_crack_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -924,6 +926,7 @@ fn run_join(
                             view.model.drain_sculk_charge_events();
                             view.model.drain_sculk_shriek_events();
                             view.model.drain_brush_complete_events();
+                            view.model.drain_egg_crack_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1136,6 +1139,15 @@ fn run_join(
                                     // walk speaks, each arm rides
                                     // exactly one shipped refresh)
                                     upd.brush_complete_events,
+                                    // the egg-crack effect's arms ride
+                                    // with them — the 3009 words the
+                                    // server's own sniffer egg
+                                    // placement broadcasts stream to
+                                    // the crack lane (the six-face
+                                    // burst the faces walk speaks,
+                                    // each arm rides exactly one
+                                    // shipped refresh)
+                                    upd.egg_crack_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1439,6 +1451,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireSculkChargeEvent>,
                 Vec<crate::world_view::WireSculkShriekEvent>,
                 Vec<crate::world_view::WireBrushCompleteEvent>,
+                Vec<crate::world_view::WireEggCrackEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -2009,6 +2022,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     sculk_charge_events,
                     sculk_shriek_events,
                     brush_complete_events,
+                    egg_crack_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2182,6 +2196,14 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // the destroy burst the both-branches walk wears,
                     // the vanilla client answers the same packet with)
                     app.live_brush_complete_events_updated(brush_complete_events);
+                    // the egg-crack effect's lane beside the brush's:
+                    // the 3009 words the server's own sniffer egg
+                    // placement broadcasts land at their own anchors
+                    // (the six-face crack burst the
+                    // `spawnParticlesOnBlockFaces` walk wears — the
+                    // `UniformInt.of(3, 6)` counts the faces answer,
+                    // the vanilla client answers the same packet with)
+                    app.live_egg_crack_events_updated(egg_crack_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

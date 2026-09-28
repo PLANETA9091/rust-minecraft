@@ -501,6 +501,10 @@ pub struct SnapshotView {
     /// resolved voice key + the burst kind the render lane's own law
     /// folds).
     pub brush_complete_events: Vec<WireBrushCompleteEvent>,
+    /// The egg-crack effect's own wire arms (the 3009 words the
+    /// server's own sniffer egg placement broadcasts — the anchor the
+    /// render lane's own law folds the six-face crack burst from).
+    pub egg_crack_events: Vec<WireEggCrackEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -804,6 +808,20 @@ pub struct WireBrushCompleteEvent {
     /// The destroy burst's own palette kind (`None` the AIR gate and
     /// the unbanked kinds the honest absence keeps).
     pub burst_kind: Option<u16>,
+}
+
+/// One wire EGG-CRACK arm — the Level Event packet's own landing
+/// (the 3009 words the server's own sniffer egg placement broadcasts,
+/// [`mc_protocol::play::PARTICLES_EGG_CRACK_EFFECT`] the render lane
+/// speaks): the event's anchor block VERBATIM, the data word
+/// deliberately absent (the case's own body never reads it — no draw
+/// the transport's silence keeps). The six-face crack burst's own
+/// draws the render lane's stream folds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireEggCrackEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -2928,6 +2946,9 @@ pub fn materialize_snapshot_view(
         // and no brush words (the join snapshot carries no 3008
         // traffic — the empty mailbox the render lane skips)
         brush_complete_events: Vec::new(),
+        // and no egg words (the join snapshot carries no 3009
+        // traffic — the empty mailbox the render lane skips)
+        egg_crack_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3474,6 +3495,21 @@ impl LiveView {
                 burst_kind: arm.burst_kind,
             })
             .collect();
+        // the egg-crack effect's own projection (the mailbox
+        // verbatim — the anchor the arms carry, the six-face crack
+        // burst the render lane's own law folds): each 3009 word
+        // ships once with this view, the worker's drain empties the
+        // mailbox after
+        let egg_crack_events = self
+            .model
+            .egg_crack_events
+            .iter()
+            .map(|arm| WireEggCrackEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3882,6 +3918,10 @@ impl LiveView {
                 // arm too — the 3008 words are the connection's own
                 // traffic, not the pose's
                 brush_complete_events,
+                // the egg-crack effect's arms ride the pose-less arm
+                // too — the 3009 words are the connection's own
+                // traffic, not the pose's
+                egg_crack_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -4060,6 +4100,10 @@ impl LiveView {
             // — the 3008 words follow the mailbox exactly like the
             // shriek's own arms do
             brush_complete_events,
+            // the egg-crack effect's arms ride every refresh too —
+            // the 3009 words follow the mailbox exactly like the
+            // brush's own arms do
+            egg_crack_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

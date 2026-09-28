@@ -23097,6 +23097,37 @@ impl App {
         }
     }
 
+    /// THE EGG-CRACK WIRE LANE (javap `LevelEventHandler` case 3009 —
+    /// offset 2576 — over the 26.2 jar): the server's own sniffer egg
+    /// the client NOW answers (`SnifferEggBlock.onPlace`'s
+    /// `sipush 3009, aload_3, iconst_0` levelEvent call the bytecode
+    /// pins — the hatch-boost verdict the `hatchBoost` tag walk
+    /// arms), the Level Event mailbox's landing: each word the arms
+    /// the worker drained ride exactly one refresh — the data word
+    /// the case's own body never reads, the ONE
+    /// `spawnParticlesOnBlockFaces(level, pos, EGG_CRACK,
+    /// UniformInt.of(3, 6))` walk the six faces answer. The draw
+    /// stream the level ambient rng rides (the case body's own
+    /// random the walk order keeps), the provider chain the glint
+    /// bank's own white the render arm carries.
+    pub fn live_egg_crack_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireEggCrackEvent>,
+    ) {
+        for ev in events {
+            // THE SIX-FACE BURST (the `spawnParticlesOnBlockFaces`
+            // walk verbatim — the per-face counts the
+            // `3 + nextInt(4)` band arms, the supplier trio + the
+            // position pair + the provider chain the per-particle
+            // order keeps — the level ambient stream the draws ride)
+            let burst = crate::particles::egg_crack_faces(
+                (ev.x, ev.y, ev.z),
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -28487,12 +28518,14 @@ impl App {
                         tint: p.col,
                     });
                 }
-                crate::particles::ParticleKind::HappyVillager => {
-                    // the feed sparkle's own quad (the single glint
-                    // sprite the happy_villager json's one-texture set
-                    // speaks — the full sprite the quad samples, the
-                    // white tint the provider's setColor(1,1,1) keeps,
-                    // the OPAQUE layer the getLayer override speaks)
+                crate::particles::ParticleKind::HappyVillager
+                | crate::particles::ParticleKind::EggCrack => {
+                    // the feed sparkle's + the egg crack's own quad
+                    // (the single glint sprite the happy_villager and
+                    // egg_crack jsons' one-texture sets speak — the
+                    // full sprite the quad samples, the white tint
+                    // the providers' setColor(1,1,1) pair keeps, the
+                    // OPAQUE layer the getLayer override speaks)
                     glint_quads.push(crate::raster::SampledQuad {
                         pts,
                         uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
@@ -49769,6 +49802,65 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_brush_complete_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_egg_serve_the_faces_the_draws_wear() {
+        // THE EGG-CRACK SERVE'S OWN WIRE LANE (javap case 3009 →
+        // offset 2576 over the 26.2 jar): the data word the arm never
+        // carries, the six-face burst the `spawnParticlesOnBlockFaces`
+        // walk speaks (the 18..36 band the `UniformInt.of(3, 6)`
+        // counts answer — the nine draws the per-particle chain
+        // spends: the supplier trio + the position pair + the glint
+        // pick + the dead tint + the size + the lifetime), the
+        // level-ambient stream the draws ride, the empty mailbox the
+        // no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x6409));
+        let before = app.particles.len();
+        app.live_egg_crack_events_updated(vec![
+            crate::world_view::WireEggCrackEvent {
+                x: 12,
+                y: 70,
+                z: -44,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        assert!(
+            app.particles.len() > before,
+            "the six-face burst the serve banks"
+        );
+        // THE EXACT DRAW COUNT (the six count draws + the per-particle
+        // nine the chain exactly spends — the next draw after the walk
+        // differs from the fresh stream's same-index draw)
+        let n = app.particles.len() - before;
+        let mut replay = crate::drops::Lcg::new(0x6409);
+        for _ in 0..(6 + n * 9) {
+            let _ = replay.next();
+        }
+        assert_eq!(
+            spent, replay,
+            "the {} draws the faces walk exactly spends",
+            6 + n * 9
+        );
+        // THE GLINT BANK (the kind the render arm's own tile law
+        // wears — the burst's members the EggCrack kind carries)
+        assert!(
+            app.particles[before..]
+                .iter()
+                .all(|p| matches!(p.kind, crate::particles::ParticleKind::EggCrack)),
+            "the burst's members the crack kind banks"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_egg_crack_events_updated(vec![]);
         assert_eq!(
             app.particles.len(),
             settled,

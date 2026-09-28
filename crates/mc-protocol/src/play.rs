@@ -1678,6 +1678,44 @@ pub const PARTICLES_SCULK_SHRIEK_EFFECT: i32 = 3007;
 /// case's own arm wears.
 pub const PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT: i32 = 3008;
 
+/// THE EGG-CRACK PARTICLE EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `PARTICLES_EGG_CRACK`, the
+/// case `LevelEventHandler.levelEvent` offset 2576 speaks): the DATA
+/// word the case's own body NEVER reads (no `iload_3` the arm's
+/// bytecode speaks, the same transport honesty the shrieker/growl
+/// arms keep — the caller's `iconst_0` the wire carries the case
+/// discards). The body the ONE walk spends: the
+/// `ParticleUtils.spawnParticlesOnBlockFaces(level, pos,
+/// ParticleTypes.EGG_CRACK, UniformInt.of(3, 6))` burst the six
+/// `Direction.values()` faces answer (the per-face count the
+/// `3 + nextInt(4)` band the IntProvider's sample speaks, the
+/// supplier the `getRandomSpeedRanges` walk banks — the THREE
+/// `Mth.nextDouble(-0.5, 0.5)` velocity draws the Vec3 ctor args
+/// carry, the face-axis position the `center + step * 0.55`
+/// deterministic arm rides, the perpendicular pair the
+/// `Mth.nextDouble(-0.5, 0.5)` draws keep, the velocity the IN-PLANE
+/// pair alone keeps the aligned axis's own `dconst_0` zeroing). NO
+/// sound the case speaks — the crack burst alone the broadcast
+/// renders. The particle the `SuspendedTownParticle$EggCrackProvider`
+/// chain arms: the glint sprite pick the egg_crack.json's
+/// one-texture set consumes (`minecraft:glint`, the SAME 8x8
+/// particle/glint.png the happy-villager bank shares — NO new assets
+/// the lane demands), the THREE dead draws the ctor spends (the tint
+/// the `setColor(1.0F, 1.0F, 1.0F)` putfield trio overrides, the
+/// base lifetime the ctor's own write keeps — the provider NO
+/// setLifetime speaks), the white tint the override banks, the 0.99
+/// friction the tick's own walk keeps, the no gravity the base law
+/// never arms. THE CALLER the sniffer's own nest pins —
+/// `SnifferEggBlock.onPlace`'s `sipush 3009, aload_3, iconst_0`
+/// levelEvent call the bytecode speaks (the hatch-boost verdict the
+/// `hatchBoost` tag walk arms — the moss bed the egg's own hatch the
+/// boost rides; the thrown egg's own crack the ENTITY event the
+/// `ThrownEgg.onHit`'s `broadcastEntityEvent(this, (byte) 3)` walk
+/// carries, the level-event word the sniffer's own placement
+/// broadcasts). The GLOBAL route the `globalLevelEvent` switch never
+/// banks — the positioned lane the case's own arm wears.
+pub const PARTICLES_EGG_CRACK_EFFECT: i32 = 3009;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -11285,6 +11323,11 @@ mod tests {
             PARTICLES_AND_SOUND_BRUSH_BLOCK_COMPLETE_EFFECT,
             3008,
             "the brush-complete effect the brushable block entity's own completion speaks"
+        );
+        assert_eq!(
+            PARTICLES_EGG_CRACK_EFFECT,
+            3009,
+            "the egg-crack effect the sniffer egg's own placement speaks"
         );
         assert_eq!(
             ENDER_DRAGON_GROWL_EFFECT,

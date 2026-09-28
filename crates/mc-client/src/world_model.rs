@@ -430,6 +430,15 @@ pub struct WorldModel {
     /// the brushable voice the `instanceof` verdict arms, the destroy
     /// burst the BOTH branches reach — the 2001 sibling's own walk).
     pub brush_complete_events: Vec<BrushCompleteArm>,
+    /// THE EGG-CRACK EFFECT'S OWN MAILBOX (the Level Event packet's
+    /// next vocabulary word —
+    /// [`mc_protocol::play::PARTICLES_EGG_CRACK_EFFECT`] the case the
+    /// `LevelEventHandler.levelEvent` offset 2576 speaks: the ONE
+    /// `spawnParticlesOnBlockFaces(level, pos, EGG_CRACK,
+    /// UniformInt.of(3, 6))` walk the six faces answer — the data
+    /// word the case's own body never reads, the burst the sniffer
+    /// egg's own placement arms).
+    pub egg_crack_events: Vec<EggCrackArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -1035,6 +1044,21 @@ pub struct BrushCompleteArm {
     /// atlas carries; `None` the AIR gate and the unbanked kinds the
     /// burst never finds).
     pub burst_kind: Option<u16>,
+}
+
+/// One pending EGG-CRACK arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (see
+/// [`WorldModel::egg_crack_events`]). The anchor verbatim (the
+/// sniffer egg's own placement cell the `SnifferEggBlock.onPlace`
+/// broadcast), the DATA word deliberately absent — the case's own
+/// body never reads it (no `iload_3` read the arm's bytecode speaks,
+/// the same transport honesty the shrieker/growl arms keep). The
+/// six-face crack burst's own draws the render lane's stream keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct EggCrackArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1883,6 +1907,7 @@ impl WorldModel {
             sculk_charge_events: Vec::new(),
             sculk_shriek_events: Vec::new(),
             brush_complete_events: Vec::new(),
+            egg_crack_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2126,6 +2151,14 @@ impl WorldModel {
     /// drain).
     pub fn drain_brush_complete_events(&mut self) -> Vec<BrushCompleteArm> {
         std::mem::take(&mut self.brush_complete_events)
+    }
+
+    /// The egg-crack effect's mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once): the 3009 words
+    /// the Level Event packet armed, the render lane's own law folds
+    /// the six-face crack burst from the anchor.
+    pub fn drain_egg_crack_events(&mut self) -> Vec<EggCrackArm> {
+        std::mem::take(&mut self.egg_crack_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2547,6 +2580,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 3008 words
                 // never voice again)
                 self.brush_complete_events.clear();
+                // the egg-crack effect's mailbox dies with the level
+                // (the same walk — the old level's 3009 words never
+                // crack again)
+                self.egg_crack_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3584,6 +3621,23 @@ impl WorldModel {
                         z: ev.z,
                         brush_sound,
                         burst_kind: kind,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::PARTICLES_EGG_CRACK_EFFECT && !ev.global {
+                    // THE EGG-CRACK EFFECT'S OWN ARM (javap the case
+                    // offset 2576 — the positioned route the GLOBAL
+                    // switch never banks): the anchor VERBATIM, the
+                    // data word deliberately absent (no `iload_3` the
+                    // case's own body speaks — the caller's
+                    // `iconst_0` the wire carries the case discards).
+                    // The six-face crack burst the render lane's own
+                    // law folds (the `spawnParticlesOnBlockFaces`
+                    // walk the case body delegates to — the
+                    // `UniformInt.of(3, 6)` counts the faces answer).
+                    self.egg_crack_events.push(EggCrackArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -12126,6 +12180,91 @@ mod tests {
         })));
         assert!(
             m.brush_complete_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_egg_word_the_faces_arms() {
+        // THE EGG-CRACK EFFECT'S OWN ARM (javap the case offset 2576
+        // — the positioned route the GLOBAL switch never banks): the
+        // anchor rides VERBATIM, the data word deliberately absent
+        // (the case's own body never reads it — no `iload_3` the
+        // arm's bytecode speaks, the same transport honesty the
+        // shrieker/growl arms keep), the drain ships the mailbox
+        // exactly once, and the Respawn recreates the level the
+        // mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the sniffer egg's own placement word (the
+        // SnifferEggBlock.onPlace call the `levelEvent(3009, pos, 0)`
+        // walk speaks — the hatch-boost verdict the moss bed arms):
+        // the arm rides, the anchor the mailbox keeps
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_EGG_CRACK_EFFECT,
+            x: -41,
+            y: 70,
+            z: 123,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.egg_crack_events.len(), 1, "the arm rides");
+        assert_eq!(m.egg_crack_events[0].x, -41);
+        assert_eq!(m.egg_crack_events[0].y, 70);
+        assert_eq!(m.egg_crack_events[0].z, 123);
+        // the caller's own data 0 word rides the wire the case
+        // discards — the arm's honesty the absence keeps (the struct
+        // carries no data field the compiler's own shape speaks)
+        // the twin word (the same lane the plugins' broadcast banks)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_EGG_CRACK_EFFECT,
+            x: 5,
+            y: -5,
+            z: 500,
+            data: 77,
+            global: false,
+        })));
+        assert_eq!(m.egg_crack_events.len(), 2, "the twin rides");
+        assert_eq!(m.egg_crack_events[1].z, 500, "the twin's anchor rides");
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_EGG_CRACK_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.egg_crack_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_egg_crack_events();
+        assert_eq!(drained.len(), 2, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, -41, "the anchor rides");
+        assert!(
+            m.egg_crack_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_EGG_CRACK_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.egg_crack_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.egg_crack_events.is_empty(),
             "the mailbox dies with the level"
         );
     }
