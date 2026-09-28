@@ -3445,6 +3445,155 @@ pub fn wax_faces_burst(
     out
 }
 
+/// The electric-spark walk (javap `LevelEventHandler` case 3002 —
+/// offset 2596 — over the 26.2 jar + `ParticleUtils
+/// .spawnParticlesAlongAxis` verbatim): the DATA word the case's own
+/// `iload_3` read splits — the `0..3` arm the
+/// `Direction.Axis.VALUES[data]` pick banks (the X/Y/Z ordinals the
+/// enum's own array keeps), the `data < 0 || data >= 3` arm the
+/// faces walk the wax trio's own six-face law wears. THE ALONG-AXIS
+/// WALK (the 0..3 arm): the count `10 + nextInt(10)` the
+/// `UniformInt.of(10, 19).sample` law speaks
+/// (`randomBetweenInclusive`), the per-child position trio the
+/// `Mth.nextDouble(-1.0, 1.0)` draws carry — the CHOSEN axis the
+/// `* 0.5` half-span multiplier rides (the `if_acmpne`/`0.5` pair
+/// the bytecodes pin), the perpendicular pair the `* 0.125` edge
+/// distance keeps (the `ldc2_w 0.125` the case's own call site
+/// banks) — then the velocity trio the CHOSEN axis alone draws (the
+/// `Mth.nextDouble(-1.0, 1.0)` the gated arms spend, the others the
+/// `dconst_0` silence keeps). THE FACES WALK (the negative/overflow
+/// arm): the SAME geometry the wax burst wears (the six
+/// `Direction.values()` faces, the `3 + nextInt(3)` per-face count,
+/// the face-axis `* 0.55` position pair, the face-aligned velocity
+/// the ternary trio zeroes, the supplier's three
+/// `Mth.nextDouble(-0.5, 0.5)` draws). THE PROVIDER CHAIN both arms
+/// share (javap `GlowParticle$ElectricSparkProvider.createParticle`
+/// verbatim): the dead base lifetime draw, the SingleQuadParticle
+/// size draw (the ×0.75 fold the GlowParticle's own ctor keeps),
+/// the tint the `setColor(1.0F, 0.9F, 1.0F)` trio banks (NO draw —
+/// the wax-off twin's own constants the pair shares), the speed the
+/// `setParticleSpeed(xa * 0.25, ya * 0.25, za * 0.25)` multiply
+/// chain folds, the `nextInt(2) + 2` lifetime the 2..3 band speaks.
+/// NO sound the case speaks — the sparks alone the burst renders.
+pub fn electric_spark_burst(
+    anchor: (i32, i32, i32),
+    data: i32,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::new();
+    let cx = anchor.0 as f64 + 0.5;
+    let cy = anchor.1 as f64 + 0.5;
+    let cz = anchor.2 as f64 + 0.5;
+    // the provider chain's own draws + fold (the createParticle walk
+    // both arms spend — the closure keeps the draw ORDER the
+    // caller's walk banks: base life, size, lifetime)
+    let spark = |px: f64,
+                     py: f64,
+                     pz: f64,
+                     sx: f64,
+                     sy: f64,
+                     sz: f64,
+                     rng: &mut crate::drops::Lcg|
+     -> Particle {
+        let r_life = rng.next_f32();
+        let r_base = rng.next_f32();
+        let lifetime = 2 + rng.next_int(2).max(0);
+        glow_puff(
+            px,
+            py,
+            pz,
+            sx * 0.25,
+            sy * 0.25,
+            sz * 0.25,
+            [1.0, 0.9, 1.0],
+            r_life,
+            r_base,
+            lifetime as u32,
+        )
+    };
+    if (0..3).contains(&data) {
+        // THE ALONG-AXIS WALK (the `Direction.Axis.VALUES[data]`
+        // arm — X=0, Y=1, Z=2 the enum's own array order keeps)
+        let bx = data == 0;
+        let by = data == 1;
+        let bz = data == 2;
+        // THE COUNT (UniformInt.of(10, 19).sample — the
+        // `10 + nextInt(10)` law the randomBetweenInclusive speaks)
+        let count = 10 + rng.next_int(10).max(0);
+        for _ in 0..count {
+            // THE POSITION TRIO (the `Mth.nextDouble(-1.0, 1.0)`
+            // draws — the chosen axis the `* 0.5` half-span rides,
+            // the others the `* 0.125` edge distance keeps)
+            let px = cx + rng.next_f64_between(-1.0, 1.0) * if bx { 0.5 } else { 0.125 };
+            let py = cy + rng.next_f64_between(-1.0, 1.0) * if by { 0.5 } else { 0.125 };
+            let pz = cz + rng.next_f64_between(-1.0, 1.0) * if bz { 0.5 } else { 0.125 };
+            // THE VELOCITY TRIO (the chosen axis alone the
+            // `Mth.nextDouble(-1.0, 1.0)` draw rides — the others
+            // the `dconst_0` silence keeps, NO draw)
+            let vx = if bx { rng.next_f64_between(-1.0, 1.0) } else { 0.0 };
+            let vy = if by { rng.next_f64_between(-1.0, 1.0) } else { 0.0 };
+            let vz = if bz { rng.next_f64_between(-1.0, 1.0) } else { 0.0 };
+            out.push(spark(px, py, pz, vx, vy, vz, rng));
+        }
+    } else {
+        // THE FACES WALK (the SAME law the wax burst wears — the
+        // `spawnParticlesOnBlockFaces` delegate the negative and
+        // overflow words arm)
+        // Direction.values()'s own order (DOWN, UP, NORTH, SOUTH,
+        // WEST, EAST)
+        let faces: [(i32, i32, i32); 6] = [
+            (0, -1, 0),
+            (0, 1, 0),
+            (0, 0, -1),
+            (0, 0, 1),
+            (-1, 0, 0),
+            (1, 0, 0),
+        ];
+        for &(sx, sy, sz) in &faces {
+            // the per-face count (the UniformInt.of(3, 5).sample
+            // law the block face walk spends once per face)
+            let count = 3 + rng.next_int(3).max(0);
+            for _ in 0..count {
+                // THE VELOCITY SUPPLIER (getRandomSpeedRanges
+                // verbatim: the three `Mth.nextDouble(-0.5, 0.5)`
+                // draws the Vec3 ctor args keep)
+                let vx = rng.next_f64_between(-0.5, 0.5);
+                let vy = rng.next_f64_between(-0.5, 0.5);
+                let vz = rng.next_f64_between(-0.5, 0.5);
+                // THE POSITION PAIR (spawnParticleOnFace verbatim:
+                // the face axis rides `center + axis * 0.55`, the
+                // perpendicular pair draws — exactly two per face)
+                let px = cx
+                    + if sx != 0 {
+                        f64::from(sx) * 0.55
+                    } else {
+                        rng.next_f64_between(-0.5, 0.5)
+                    };
+                let py = cy
+                    + if sy != 0 {
+                        f64::from(sy) * 0.55
+                    } else {
+                        rng.next_f64_between(-0.5, 0.5)
+                    };
+                let pz = cz
+                    + if sz != 0 {
+                        f64::from(sz) * 0.55
+                    } else {
+                        rng.next_f64_between(-0.5, 0.5)
+                    };
+                // THE FACE-ALIGNED VELOCITY (the ternary trio the
+                // velocity walk keeps — the face axis's component
+                // rides, the perpendicular pair zeroes)
+                let x_speed = if sx != 0 { vx } else { 0.0 };
+                let y_speed = if sy != 0 { vy } else { 0.0 };
+                let z_speed = if sz != 0 { vz } else { 0.0 };
+                out.push(spark(px, py, pz, x_speed, y_speed, z_speed, rng));
+            }
+        }
+    }
+    out
+}
+
 /// The crit's own emitter (javap `TrackingEmitter` verbatim): the
 /// target's frozen position (the removed entity keeps its own), 3
 /// ticks of life, the 16-sample walk per tick.
@@ -5686,5 +5835,95 @@ mod tests {
         let mut out_b: Vec<(f64, f64, f64, f32)> = Vec::new();
         seed_b.tick_explosion_seed(&mut b, &mut out_b);
         assert_eq!(out_a, out_b, "the seeded chain replays");
+    }
+
+    #[test]
+    fn the_electric_spark_walk_the_two_branches_the_data_arms() {
+        // THE ELECTRIC-SPARK'S OWN WALK (javap the case 3002 body +
+        // `spawnParticlesAlongAxis` + the ElectricSparkProvider over
+        // the 26.2 jar): the DATA word the branch split reads — the
+        // 0..3 arm the along-axis walk banks, the negative/overflow
+        // arm the faces walk keeps; the provider chain the glow
+        // pair's own laws wear.
+        // THE ALONG-AXIS ARM (data=0 → X): the count the 10..19 band
+        // speaks, the X-sliver the ±0.5/±0.125 multipliers keep — the
+        // Y/Z positions the edge band answers, the X the half-span
+        // one; the X velocity the only nonzero the draw gives
+        let mut r = crate::drops::Lcg::new(0x3002_3002u64 ^ 0xC1A5);
+        let burst = electric_spark_burst((10, 20, 30), 0, &mut r);
+        assert!(
+            (10..=19).contains(&burst.len()),
+            "the UniformInt.of(10,19) count the axis walk banks: {}",
+            burst.len()
+        );
+        for p in &burst {
+            assert!(matches!(p.kind, ParticleKind::Glow), "the spark the Glow pair banks");
+            assert_eq!(p.col, [1.0, 0.9, 1.0], "the white-pink the provider tints");
+            assert!((2..=3).contains(&p.lifetime), "the nextInt(2)+2 band");
+            assert!(
+                (10.5 - 0.5..=10.5 + 0.5).contains(&p.x),
+                "the X half-span the chosen axis rides: {}",
+                p.x
+            );
+            assert!(
+                (20.5 - 0.125..=20.5 + 0.125).contains(&p.y),
+                "the Y edge band the other axis keeps: {}",
+                p.y
+            );
+            assert!(
+                (30.5 - 0.125..=30.5 + 0.125).contains(&p.z),
+                "the Z edge band the other axis keeps: {}",
+                p.z
+            );
+            assert_eq!(p.vy, 0.0, "the Y velocity the dconst_0 keeps");
+            assert_eq!(p.vz, 0.0, "the Z velocity the dconst_0 keeps");
+            assert!(
+                p.vx.abs() <= 0.25,
+                "the X velocity the *0.25 fold answers: {}",
+                p.vx
+            );
+            assert_eq!(p.friction, 0.96, "the GlowParticle's own friction");
+        }
+        // THE FACES ARM (data=-1, the lightning's own word): the
+        // 18..30 band the six-face law speaks, the face planes the
+        // 0.55 offsets keep
+        let mut r = crate::drops::Lcg::new(0x3002_3001u64 ^ 0xC1A5);
+        let faces = electric_spark_burst((10, 20, 30), -1, &mut r);
+        assert!(
+            (18..=30).contains(&faces.len()),
+            "the six-face count band the faces walk banks: {}",
+            faces.len()
+        );
+        let mut seen_face_plane = false;
+        for p in &faces {
+            assert!(matches!(p.kind, ParticleKind::Glow));
+            assert_eq!(p.col, [1.0, 0.9, 1.0], "the white-pink the provider tints");
+            // the face plane: one axis rides the ±0.55 offset over
+            // the block CENTER (the 10.5/20.5/30.5 the anchor's own
+            // +0.5 fold keeps)
+            if (p.x - 10.5 - 0.55).abs() < 1e-9
+                || (p.x - 10.5 + 0.55).abs() < 1e-9
+                || (p.y - 20.5 - 0.55).abs() < 1e-9
+                || (p.y - 20.5 + 0.55).abs() < 1e-9
+                || (p.z - 30.5 - 0.55).abs() < 1e-9
+                || (p.z - 30.5 + 0.55).abs() < 1e-9
+            {
+                seen_face_plane = true;
+            }
+        }
+        assert!(seen_face_plane, "the face plane the 0.55 offsets keep");
+        // THE DETERMINISM (the same seed the same branch replays)
+        let mut a = crate::drops::Lcg::new(0x3002_3002u64 ^ 0xC1A5);
+        let burst_a = electric_spark_burst((10, 20, 30), 0, &mut a);
+        let mut b = crate::drops::Lcg::new(0x3002_3002u64 ^ 0xC1A5);
+        let burst_b = electric_spark_burst((10, 20, 30), 0, &mut b);
+        assert_eq!(burst_a.len(), burst_b.len(), "the same count the seed gives");
+        for (pa, pb) in burst_a.iter().zip(burst_b.iter()) {
+            assert_eq!(
+                (pa.x, pa.y, pa.z, pa.vx, pa.vy, pa.vz, pa.lifetime),
+                (pb.x, pb.y, pb.z, pb.vx, pb.vy, pb.vz, pb.lifetime),
+                "the seeded chain replays"
+            );
+        }
     }
 }

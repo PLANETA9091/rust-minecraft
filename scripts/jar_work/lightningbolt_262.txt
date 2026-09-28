@@ -1,0 +1,277 @@
+class net/minecraft/world/entity/LightningBolt
+
+=== <init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V ===
+     3 invokespecial net/minecraft/world/entity/Entity.<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;)V  (loc1, loc2)
+     7 invokestatic com/google/common/collect/Sets.newHashSet()Ljava/util/HashSet;  ()
+    10 putfield net/minecraft/world/entity/LightningBolt.hitEntities = Sets.newHashSet()
+    15 putfield net/minecraft/world/entity/LightningBolt.life = 2
+    20 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+    23 invokeinterface net/minecraft/util/RandomSource.nextLong()J  ()
+    28 putfield net/minecraft/world/entity/LightningBolt.seed = loc0.random.nextLong()
+    33 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+    37 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (3)
+    44 putfield net/minecraft/world/entity/LightningBolt.flashes = arith
+    47 return
+
+=== addAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueOutput;)V ===
+     0 return
+
+=== clearCopperOnLightningStrike(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V ===
+     2 invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc1)
+     5 ?? opcode 0x4d
+     9 invokeinterface java/util/function/Supplier.get()Ljava/lang/Object;  ()
+    18 invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock()Lnet/minecraft/world/level/block/Block;  ()
+    21 invokeinterface com/google/common/collect/BiMap.get(Ljava/lang/Object;)Ljava/lang/Object;  (loc2.getBlock())
+    36 invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock()Lnet/minecraft/world/level/block/Block;  ()
+    53 return
+    63 invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc1)
+    66 invokestatic net/minecraft/world/level/block/WeatheringCopper.getFirst(Lnet/minecraft/world/level/block/state/BlockState;)Lnet/minecraft/world/level/block/state/BlockState;  (loc0.getBlockState(loc1))
+    69 invokevirtual net/minecraft/world/level/Level.setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z  (loc1, WeatheringCopper.getFirst(loc0.getBlockState(loc1)))
+    74 invokevirtual net/minecraft/core/BlockPos.mutable()Lnet/minecraft/core/BlockPos$MutableBlockPos;  ()
+    80 invokevirtual net/minecraft/world/level/Level.getRandom()Lnet/minecraft/util/RandomSource;  ()
+    88 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (3)
+   111 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (8)
+   126 invokestatic net/minecraft/world/entity/LightningBolt.randomWalkCleaningCopper(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;I)V  (loc0, loc1, loc5=loc1.mutable(), loc9=arith)
+   135 return
+
+=== defineSynchedData(Lnet/minecraft/network/syncher/SynchedEntityData$Builder;)V ===
+     0 return
+
+=== getBlocksSetOnFire()I ===
+     1 getfield net/minecraft/world/entity/LightningBolt.blocksSetOnFire  (loc0)
+     4 return loc0.blocksSetOnFire
+
+=== getCause()Lnet/minecraft/server/level/ServerPlayer; ===
+     1 getfield net/minecraft/world/entity/LightningBolt.cause  (loc0)
+     4 return loc0.cause
+
+=== getHitEntities()Ljava/util/stream/Stream; ===
+     1 getfield net/minecraft/world/entity/LightningBolt.hitEntities  (loc0)
+     4 invokeinterface java/util/Set.stream()Ljava/util/stream/Stream;  ()
+    14 invokeinterface java/util/stream/Stream.filter(Ljava/util/function/Predicate;)Ljava/util/stream/Stream;  (loc0.hitEntities.stream())
+    19 return ?.filter(loc0.hitEntities.stream())
+
+=== getSoundSource()Lnet/minecraft/sounds/SoundSource; ===
+     3 return net/minecraft/sounds/SoundSource.WEATHER
+
+=== getStrikePosition()Lnet/minecraft/core/BlockPos; ===
+     1 invokevirtual net/minecraft/world/entity/LightningBolt.position()Lnet/minecraft/world/phys/Vec3;  ()
+     4 ?? opcode 0x4c
+     6 getfield net/minecraft/world/phys/Vec3.x  (loc1)
+    10 getfield net/minecraft/world/phys/Vec3.y  (loc1)
+    16 ?? opcode 0x67
+    18 getfield net/minecraft/world/phys/Vec3.z  (loc1)
+    21 invokestatic net/minecraft/core/BlockPos.containing(DDD)Lnet/minecraft/core/BlockPos;  (?, loc0.position(), loc1.x, loc1.y, 1e-06, loc1.z)
+    24 return BlockPos.containing(?, loc0.position(), loc1.x, loc1.y, 1e-06, loc1.z)
+
+=== hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z ===
+     1 return 0
+
+=== lambda$randomStepCleaningCopper$0(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)V ===
+     3 invokevirtual net/minecraft/world/level/Level.setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z  (loc1, loc2)
+     7 return
+
+=== lambda$tick$0(Lnet/minecraft/world/entity/Entity;)Z ===
+     1 invokevirtual net/minecraft/world/entity/Entity.isAlive()Z  ()
+     8 getfield net/minecraft/world/entity/LightningBolt.hitEntities  (loc0)
+    12 invokeinterface java/util/Set.contains(Ljava/lang/Object;)Z  (loc1)
+    25 return 0
+
+=== lambda$tick$1(Lnet/minecraft/server/level/ServerPlayer;)Z ===
+     2 invokevirtual net/minecraft/server/level/ServerPlayer.distanceTo(Lnet/minecraft/world/entity/Entity;)F  (loc0)
+    17 return 0
+
+=== powerLightningRod()V ===
+     1 invokevirtual net/minecraft/world/entity/LightningBolt.getStrikePosition()Lnet/minecraft/core/BlockPos;  ()
+     4 ?? opcode 0x4c
+     6 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+    10 invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc1)
+    13 ?? opcode 0x4d
+    15 invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock()Lnet/minecraft/world/level/block/Block;  ()
+    33 ?? opcode 0x4e
+    37 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+    41 invokevirtual net/minecraft/world/level/block/LightningRodBlock.onLightningStrike(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V  (loc2, loc0.level(), loc1)
+    44 return
+
+=== randomStepCleaningCopper(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Ljava/util/Optional; ===
+     1 invokevirtual net/minecraft/world/level/Level.getRandom()Lnet/minecraft/util/RandomSource;  ()
+     8 invokestatic net/minecraft/core/BlockPos.randomInCube(Lnet/minecraft/util/RandomSource;ILnet/minecraft/core/BlockPos;I)Ljava/lang/Iterable;  (loc0.getRandom(), 10, loc1, 1)
+    11 invokeinterface java/lang/Iterable.iterator()Ljava/util/Iterator;  ()
+    16 ?? opcode 0x4d
+    18 invokeinterface java/util/Iterator.hasNext()Z  ()
+    27 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    35 ?? opcode 0x4e
+    38 invokevirtual net/minecraft/world/level/Level.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc3)
+    45 invokevirtual net/minecraft/world/level/block/state/BlockState.getBlock()Lnet/minecraft/world/level/block/Block;  ()
+    56 invokestatic net/minecraft/world/level/block/WeatheringCopper.getPrevious(Lnet/minecraft/world/level/block/state/BlockState;)Ljava/util/Optional;  (loc4=loc0.getBlockState(loc3))
+    66 invokevirtual java/util/Optional.ifPresent(Ljava/util/function/Consumer;)V  (loc3)
+    75 invokevirtual net/minecraft/world/level/Level.levelEvent(ILnet/minecraft/core/BlockPos;I)V  (3002, loc3, -1)
+    79 invokestatic java/util/Optional.of(Ljava/lang/Object;)Ljava/util/Optional;  (loc3)
+    82 return Optional.of(loc3)
+    86 invokestatic java/util/Optional.empty()Ljava/util/Optional;  ()
+    89 return Optional.empty()
+
+=== randomWalkCleaningCopper(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;Lnet/minecraft/core/BlockPos$MutableBlockPos;I)V ===
+     2 invokevirtual net/minecraft/core/BlockPos$MutableBlockPos.set(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos$MutableBlockPos;  (loc1)
+    17 invokestatic net/minecraft/world/entity/LightningBolt.randomStepCleaningCopper(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)Ljava/util/Optional;  (loc0, loc2)
+    24 invokevirtual java/util/Optional.isEmpty()Z  ()
+    36 invokevirtual java/util/Optional.get()Ljava/lang/Object;  ()
+    42 invokevirtual net/minecraft/core/BlockPos$MutableBlockPos.set(Lnet/minecraft/core/Vec3i;)Lnet/minecraft/core/BlockPos$MutableBlockPos;  (loc5=LightningBolt.randomStepCleaningCopper(loc0, loc2).get())
+    52 return
+
+=== readAdditionalSaveData(Lnet/minecraft/world/level/storage/ValueInput;)V ===
+     0 return
+
+=== setCause(Lnet/minecraft/server/level/ServerPlayer;)V ===
+     2 putfield net/minecraft/world/entity/LightningBolt.cause = loc1
+     5 return
+
+=== setVisualOnly(Z)V ===
+     2 putfield net/minecraft/world/entity/LightningBolt.visualOnly = loc1
+     5 return
+
+=== shouldRenderAtSqrDistance(D)Z ===
+     3 invokestatic net/minecraft/world/entity/LightningBolt.getViewScale()D  ()
+     6 ?? opcode 0x6b
+     9 ?? opcode 0x29
+    10 ?? opcode 0x29
+    11 ?? opcode 0x6b
+    21 return 0
+
+=== spawnFire(I)V ===
+     1 getfield net/minecraft/world/entity/LightningBolt.visualOnly  (loc0)
+     8 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+    11 ?? opcode 0x4e
+    23 ?? opcode 0x4d
+    27 return
+    29 invokevirtual net/minecraft/world/entity/LightningBolt.blockPosition()Lnet/minecraft/core/BlockPos;  ()
+    32 ?? opcode 0x4e
+    35 invokevirtual net/minecraft/server/level/ServerLevel.canSpreadFireAround(Lnet/minecraft/core/BlockPos;)Z  (loc3)
+    41 return
+    44 invokestatic net/minecraft/world/level/block/BaseFireBlock.getState(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc2, loc3)
+    51 invokevirtual net/minecraft/server/level/ServerLevel.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc3)
+    54 invokevirtual net/minecraft/world/level/block/state/BlockState.isAir()Z  ()
+    64 invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z  (loc2, loc3)
+    74 invokevirtual net/minecraft/server/level/ServerLevel.setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z  (loc3, loc4=BaseFireBlock.getState(loc2, loc3))
+    80 getfield net/minecraft/world/entity/LightningBolt.blocksSetOnFire  (loc0)
+    85 putfield net/minecraft/world/entity/LightningBolt.blocksSetOnFire = arith
+    99 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+   103 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (3)
+   111 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+   115 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (3)
+   123 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+   127 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (3)
+   134 invokevirtual net/minecraft/core/BlockPos.offset(III)Lnet/minecraft/core/BlockPos;  (arith, arith, arith)
+   142 invokestatic net/minecraft/world/level/block/BaseFireBlock.getState(Lnet/minecraft/world/level/BlockGetter;Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc2, loc6=loc3.offset(arith, arith, arith))
+   150 invokevirtual net/minecraft/server/level/ServerLevel.getBlockState(Lnet/minecraft/core/BlockPos;)Lnet/minecraft/world/level/block/state/BlockState;  (loc6=loc3.offset(arith, arith, arith))
+   153 invokevirtual net/minecraft/world/level/block/state/BlockState.isAir()Z  ()
+   164 invokevirtual net/minecraft/world/level/block/state/BlockState.canSurvive(Lnet/minecraft/world/level/LevelReader;Lnet/minecraft/core/BlockPos;)Z  (loc2, loc6=loc3.offset(arith, arith, arith))
+   175 invokevirtual net/minecraft/server/level/ServerLevel.setBlockAndUpdate(Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/state/BlockState;)Z  (loc6=loc3.offset(arith, arith, arith), loc4=BaseFireBlock.getState(loc2, loc6=loc3.offset(arith, arith, arith)))
+   181 getfield net/minecraft/world/entity/LightningBolt.blocksSetOnFire  (loc0)
+   186 putfield net/minecraft/world/entity/LightningBolt.blocksSetOnFire = arith
+   195 return
+
+=== tick()V ===
+     1 invokespecial net/minecraft/world/entity/Entity.tick()V  ()
+     5 getfield net/minecraft/world/entity/LightningBolt.life  (loc0)
+    13 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+    16 invokevirtual net/minecraft/world/level/Level.isClientSide()Z  ()
+    23 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+    27 invokevirtual net/minecraft/world/entity/LightningBolt.getX()D  ()
+    31 invokevirtual net/minecraft/world/entity/LightningBolt.getY()D  ()
+    35 invokevirtual net/minecraft/world/entity/LightningBolt.getZ()D  ()
+    49 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+    52 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+    62 invokevirtual net/minecraft/world/level/Level.playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (?, ?, loc0.level(), loc0.getX(), loc0.getY(), loc0.getZ(), net/minecraft/sounds/SoundEvents.LIGHTNING_BOLT_THUNDER, net/minecraft/sounds/SoundSource.WEATHER, 10000.0, (0.800000011920929 + (loc0.random.nextFloat() * 0.20000000298023224)), 0)
+    66 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+    70 invokevirtual net/minecraft/world/entity/LightningBolt.getX()D  ()
+    74 invokevirtual net/minecraft/world/entity/LightningBolt.getY()D  ()
+    78 invokevirtual net/minecraft/world/entity/LightningBolt.getZ()D  ()
+    91 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+    94 invokeinterface net/minecraft/util/RandomSource.nextFloat()F  ()
+   104 invokevirtual net/minecraft/world/level/Level.playLocalSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZ)V  (?, ?, loc0.level(), loc0.getX(), loc0.getY(), loc0.getZ(), net/minecraft/sounds/SoundEvents.LIGHTNING_BOLT_IMPACT, net/minecraft/sounds/SoundSource.WEATHER, 2.0, (0.5 + (loc0.random.nextFloat() * 0.20000000298023224)), 0)
+   111 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   114 invokevirtual net/minecraft/world/level/Level.getDifficulty()Lnet/minecraft/world/Difficulty;  ()
+   117 ?? opcode 0x4c
+   134 invokevirtual net/minecraft/world/entity/LightningBolt.spawnFire(I)V  (4)
+   138 invokevirtual net/minecraft/world/entity/LightningBolt.powerLightningRod()V  ()
+   142 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   146 invokevirtual net/minecraft/world/entity/LightningBolt.getStrikePosition()Lnet/minecraft/core/BlockPos;  ()
+   149 invokestatic net/minecraft/world/entity/LightningBolt.clearCopperOnLightningStrike(Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V  (loc0.level(), loc0.getStrikePosition())
+   156 invokevirtual net/minecraft/world/entity/LightningBolt.gameEvent(Lnet/minecraft/core/Holder;)V  (net/minecraft/world/level/gameevent/GameEvent.LIGHTNING_STRIKE)
+   161 getfield net/minecraft/world/entity/LightningBolt.life  (loc0)
+   166 putfield net/minecraft/world/entity/LightningBolt.life = arith
+   170 getfield net/minecraft/world/entity/LightningBolt.life  (loc0)
+   177 getfield net/minecraft/world/entity/LightningBolt.flashes  (loc0)
+   184 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   194 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   203 invokevirtual net/minecraft/world/entity/LightningBolt.getX()D  ()
+   209 ?? opcode 0x67
+   211 invokevirtual net/minecraft/world/entity/LightningBolt.getY()D  ()
+   217 ?? opcode 0x67
+   219 invokevirtual net/minecraft/world/entity/LightningBolt.getZ()D  ()
+   225 ?? opcode 0x67
+   227 invokevirtual net/minecraft/world/entity/LightningBolt.getX()D  ()
+   233 ?? opcode 0x63
+   235 invokevirtual net/minecraft/world/entity/LightningBolt.getY()D  ()
+   241 ?? opcode 0x63
+   245 ?? opcode 0x63
+   247 invokevirtual net/minecraft/world/entity/LightningBolt.getZ()D  ()
+   253 ?? opcode 0x63
+   254 invokespecial net/minecraft/world/phys/AABB.<init>(DDDDDD)V  (15.0, loc0.getY(), 15.0, loc0.getZ(), 15.0, loc0.getX(), 15.0, loc0.getY(), 6.0, 15.0, loc0.getZ(), 15.0)
+   263 invokevirtual net/minecraft/world/level/Level.getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;  (new net/minecraft/world/phys/AABB, new net/minecraft/world/phys/AABB, loc0)
+   266 ?? opcode 0x4c
+   268 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   280 invokevirtual net/minecraft/server/level/ServerLevel.getPlayers(Ljava/util/function/Predicate;)Ljava/util/List;  (loc0)
+   283 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+   288 ?? opcode 0x4d
+   290 invokeinterface java/util/Iterator.hasNext()Z  ()
+   299 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+   307 ?? opcode 0x4e
+   314 invokevirtual net/minecraft/advancements/triggers/LightningStrikeTrigger.trigger(Lnet/minecraft/server/level/ServerPlayer;Lnet/minecraft/world/entity/LightningBolt;Ljava/util/List;)V  (loc3, loc0, loc1)
+   321 invokevirtual net/minecraft/world/entity/LightningBolt.discard()V  ()
+   328 getfield net/minecraft/world/entity/LightningBolt.life  (loc0)
+   332 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+   337 invokeinterface net/minecraft/util/RandomSource.nextInt(I)I  (10)
+   348 getfield net/minecraft/world/entity/LightningBolt.flashes  (loc0)
+   353 putfield net/minecraft/world/entity/LightningBolt.flashes = arith
+   358 putfield net/minecraft/world/entity/LightningBolt.life = 1
+   363 getfield net/minecraft/world/entity/LightningBolt.random  (loc0)
+   366 invokeinterface net/minecraft/util/RandomSource.nextLong()J  ()
+   371 putfield net/minecraft/world/entity/LightningBolt.seed = loc0.random.nextLong()
+   376 invokevirtual net/minecraft/world/entity/LightningBolt.spawnFire(I)V  (0)
+   380 getfield net/minecraft/world/entity/LightningBolt.life  (loc0)
+   387 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   397 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   401 invokevirtual net/minecraft/world/level/Level.setSkyFlashTime(I)V  (2)
+   408 getfield net/minecraft/world/entity/LightningBolt.visualOnly  (loc0)
+   415 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   424 invokevirtual net/minecraft/world/entity/LightningBolt.getX()D  ()
+   430 ?? opcode 0x67
+   432 invokevirtual net/minecraft/world/entity/LightningBolt.getY()D  ()
+   438 ?? opcode 0x67
+   440 invokevirtual net/minecraft/world/entity/LightningBolt.getZ()D  ()
+   446 ?? opcode 0x67
+   448 invokevirtual net/minecraft/world/entity/LightningBolt.getX()D  ()
+   454 ?? opcode 0x63
+   456 invokevirtual net/minecraft/world/entity/LightningBolt.getY()D  ()
+   462 ?? opcode 0x63
+   466 ?? opcode 0x63
+   468 invokevirtual net/minecraft/world/entity/LightningBolt.getZ()D  ()
+   474 ?? opcode 0x63
+   475 invokespecial net/minecraft/world/phys/AABB.<init>(DDDDDD)V  (3.0, loc0.getY(), 3.0, loc0.getZ(), 3.0, loc0.getX(), 3.0, loc0.getY(), 6.0, 3.0, loc0.getZ(), 3.0)
+   483 invokevirtual net/minecraft/world/level/Level.getEntities(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/phys/AABB;Ljava/util/function/Predicate;)Ljava/util/List;  (loc0, new net/minecraft/world/phys/AABB, new net/minecraft/world/phys/AABB)
+   486 ?? opcode 0x4c
+   488 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+   493 ?? opcode 0x4d
+   495 invokeinterface java/util/Iterator.hasNext()Z  ()
+   504 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+   512 ?? opcode 0x4e
+   515 invokevirtual net/minecraft/world/entity/LightningBolt.level()Lnet/minecraft/world/level/Level;  ()
+   522 invokevirtual net/minecraft/world/entity/Entity.thunderHit(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/entity/LightningBolt;)V  (loc0.level(), loc0)
+   529 getfield net/minecraft/world/entity/LightningBolt.hitEntities  (loc0)
+   533 invokeinterface java/util/Set.addAll(Ljava/util/Collection;)Z  (loc1)
+   540 getfield net/minecraft/world/entity/LightningBolt.cause  (loc0)
+   550 getfield net/minecraft/world/entity/LightningBolt.cause  (loc0)
+   554 invokevirtual net/minecraft/advancements/triggers/ChanneledLightningTrigger.trigger(Lnet/minecraft/server/level/ServerPlayer;Ljava/util/Collection;)V  (loc0.cause, loc1)
+   557 return

@@ -482,6 +482,10 @@ pub struct SnapshotView {
     /// lane's own law folds, the seed + the voice the emitter walk
     /// banks).
     pub gateway_spawn_events: Vec<WireGatewaySpawnEvent>,
+    /// The electric-spark effect's own wire arms (the 3002 words the
+    /// server's own lightning broadcasts — the anchor + the data word
+    /// the branch split the render lane's own law folds).
+    pub electric_spark_events: Vec<WireElectricSparkEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -693,6 +697,23 @@ pub struct WireGatewaySpawnEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One wire ELECTRIC-SPARK arm — the Level Event packet's own landing
+/// (the 3002 words the server's own lightning broadcasts,
+/// [`mc_protocol::play::ELECTRIC_SPARK_EFFECT`] the render lane
+/// speaks): the event's anchor block + the DATA word, verbatim (the
+/// branch split the render lane's own law folds — the `0..3` arm the
+/// along-axis walk banks, the negative/overflow arm the faces walk
+/// keeps; the sparks the glow sprite pair shares). NO sound the case
+/// speaks.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireElectricSparkEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The axis-table word (the case's own `iload_3` read).
+    pub data: i32,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -2802,6 +2823,9 @@ pub fn materialize_snapshot_view(
         // and no gateway words (the join snapshot carries no 3000
         // traffic — the empty mailbox the render lane skips)
         gateway_spawn_events: Vec::new(),
+        // and no spark words (the join snapshot carries no 3002
+        // traffic — the empty mailbox the render lane skips)
+        electric_spark_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3267,6 +3291,22 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the electric-spark effect's own projection (the mailbox
+        // verbatim — the anchor + the data word the arms carry, the
+        // branch split the render lane's own law reads): each 3002
+        // word ships once with this view, the worker's drain empties
+        // the mailbox after
+        let electric_spark_events = self
+            .model
+            .electric_spark_events
+            .iter()
+            .map(|arm| WireElectricSparkEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -3655,6 +3695,10 @@ impl LiveView {
                 // arm too — the 3000 words are the connection's own
                 // traffic, not the pose's
                 gateway_spawn_events,
+                // the electric-spark effect's arms ride the pose-less
+                // arm too — the 3002 words are the connection's own
+                // traffic, not the pose's
+                electric_spark_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -3813,6 +3857,10 @@ impl LiveView {
             // — the 3000 words follow the mailbox exactly like the
             // wax's own arms do
             gateway_spawn_events,
+            // the electric-spark effect's arms ride every refresh too
+            // — the 3002 words follow the mailbox exactly like the
+            // gateway's own arms do
+            electric_spark_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

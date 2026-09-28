@@ -1527,6 +1527,38 @@ pub const PARTICLES_SCRAPE_EFFECT: i32 = 3005;
 /// positioned lane the case's own arm wears.
 pub const END_GATEWAY_SPAWN_EFFECT: i32 = 3000;
 
+/// THE ELECTRIC-SPARK PARTICLES EFFECT'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `ELECTRIC_SPARK`, the case
+/// `LevelEventHandler.levelEvent` offset 2596 speaks): the DATA word
+/// the case's own body reads (`iload_3` the arm's bytecode opens with
+/// — the axis table's own index) and the TWO branches the decode
+/// splits: the `0..3` arm the `Direction.Axis.VALUES[data]` pick
+/// banks — the ONE `ParticleUtils.spawnParticlesAlongAxis(axis,
+/// level, pos, 0.125, ParticleTypes.ELECTRIC_SPARK, UniformInt.of(10,
+/// 19))` walk the `ldc2_w 0.125` edge distance and the count provider
+/// speak — while the `data < 0 || data >= 3` arm the ONE
+/// `ParticleUtils.spawnParticlesOnBlockFaces(level, pos,
+/// ParticleTypes.ELECTRIC_SPARK, UniformInt.of(3, 5))` walk the same
+/// six-face law the wax trio wears. The sparks the
+/// `GlowParticle$ElectricSparkProvider` spawns — the tint the ctor's
+/// own `setColor(1.0F, 0.9F, 1.0F)` trio banks (the wax-off twin's
+/// own white-pink the pair shares), the speed the provider's own
+/// `setParticleSpeed(xa * 0.25, ya * 0.25, za * 0.25)` multiply chain
+/// carries, the `nextInt(2) + 2` lifetime the 2..3 band speaks, the
+/// friction 0.96 / quadSize x0.75 / hasPhysics false the
+/// GlowParticle's own ctor keeps, the `minecraft:glow` sprite the
+/// electric_spark.json's one-texture set banks (the wax trio's own
+/// 8x8 glow.png the atlas pair shares). NO sound the case body
+/// speaks — the sparks alone the broadcast renders. The server's own
+/// lightning speaks it — `LightningBolt.randomStepCleaningCopper`'s
+/// `levelEvent(3002, pos, -1)` call the bytecode pins (the copper
+/// cleaning walk the data −1 word rides — the faces branch the
+/// negative word arms; the axis branch the 0..2 words arm the case's
+/// own bytecodes keep). The GLOBAL route the `globalLevelEvent`
+/// switch never banks — the positioned lane the case's own arm
+/// wears.
+pub const ELECTRIC_SPARK_EFFECT: i32 = 3002;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
@@ -11114,6 +11146,11 @@ mod tests {
             END_GATEWAY_SPAWN_EFFECT,
             3000,
             "the gateway-spawn effect the dragon fight's own gateway walk speaks"
+        );
+        assert_eq!(
+            ELECTRIC_SPARK_EFFECT,
+            3002,
+            "the electric-spark effect the lightning's own copper clean speaks"
         );
         assert_eq!(
             SPLASH_POTION_EFFECT,

@@ -392,6 +392,19 @@ pub struct WorldModel {
     /// enqueues (the `globalLevelEvent` switch the 3000 id never
     /// carries — the positioned lane the case's own arm wears).
     pub gateway_spawn_events: Vec<GatewaySpawnArm>,
+    /// THE ELECTRIC-SPARK EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary word the model banks — the 3002 words
+    /// the server's own lightning broadcasts, the
+    /// `LevelEventHandler.levelEvent` offset 2596 speaks: the DATA
+    /// word the case's own body reads — the `0..3` arm the
+    /// `spawnParticlesAlongAxis` walk banks, the negative/overflow
+    /// arm the `spawnParticlesOnBlockFaces` walk keeps). The arms the
+    /// anchor + the raw data word carry (the branch split the render
+    /// lane's own law folds). NO sound the case speaks. The GLOBAL
+    /// route the arm never enqueues (the `globalLevelEvent` switch
+    /// the 3000-band ids never carries — the positioned lane the
+    /// case's own arm wears).
+    pub electric_spark_events: Vec<ElectricSparkArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -815,6 +828,28 @@ pub struct GatewaySpawnArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
+}
+
+/// One pending ELECTRIC-SPARK arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (the 3002 word the
+/// server's own lightning broadcasts,
+/// [`mc_protocol::play::ELECTRIC_SPARK_EFFECT`] the render lane
+/// speaks): the event's anchor block + the DATA word, verbatim — the
+/// DATA word the case's own body READS (the `iload_3` the axis-table
+/// decode opens with — the `0..3` arm the along-axis walk banks, the
+/// negative/overflow arm the faces walk keeps — the branch split the
+/// render lane's own law folds from the raw word the transport
+/// carries). NO sound the case speaks — the sparks alone the burst
+/// renders.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ElectricSparkArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The axis-table word (the case's own `iload_3` read — the
+    /// `0..3` arm the along-axis walk banks, the negative/overflow
+    /// arm the faces walk keeps).
+    pub data: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1658,6 +1693,7 @@ impl WorldModel {
             smash_attack_events: Vec::new(),
             wax_events: Vec::new(),
             gateway_spawn_events: Vec::new(),
+            electric_spark_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -1868,6 +1904,13 @@ impl WorldModel {
     /// ride exactly one refresh).
     pub fn drain_gateway_spawn_events(&mut self) -> Vec<GatewaySpawnArm> {
         std::mem::take(&mut self.gateway_spawn_events)
+    }
+
+    /// The electric-spark effect's mailbox's own drain (the same walk
+    /// the gateway's own drain speaks — the arms the worker drained
+    /// ride exactly one refresh).
+    pub fn drain_electric_spark_events(&mut self) -> Vec<ElectricSparkArm> {
+        std::mem::take(&mut self.electric_spark_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2269,6 +2312,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 3000 words
                 // never spawn a gateway again)
                 self.gateway_spawn_events.clear();
+                // the electric-spark effect's mailbox dies with the
+                // level (the same walk — the old level's 3002 words
+                // never spark again)
+                self.electric_spark_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3171,6 +3218,23 @@ impl WorldModel {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::ELECTRIC_SPARK_EFFECT && !ev.global {
+                    // THE ELECTRIC-SPARK EFFECT'S OWN ARM (javap the
+                    // case offset 2596 — the positioned route the
+                    // GLOBAL switch never banks): the anchor + the
+                    // DATA word the mailbox carries verbatim (the
+                    // `iload_3` read the case's own body opens with —
+                    // the `0..3` arm the along-axis walk banks, the
+                    // negative/overflow arm the faces walk keeps, the
+                    // branch split the render lane's own law folds
+                    // from the raw word). NO sound the case speaks.
+                    self.electric_spark_events.push(ElectricSparkArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -7783,6 +7847,94 @@ mod tests {
         })));
         assert!(
             m.gateway_spawn_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_spark_word_the_data_arms() {
+        // THE ELECTRIC-SPARK EFFECT'S OWN ARM (javap the case offset
+        // 2596 — the positioned route the GLOBAL switch never banks):
+        // the anchor + the DATA word the mailbox carries verbatim (the
+        // `iload_3` read the case's own body opens with — the 0..3 arm
+        // the along-axis walk banks, the negative/overflow arm the
+        // faces walk keeps, the branch split the render lane's own law
+        // folds), the drain ships the arms exactly once, and the
+        // Respawn recreates the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the lightning's own word (the randomStepCleaningCopper call
+        // the `levelEvent(3002, pos, -1)` walk speaks): the arm rides
+        // with the raw data word the faces branch arms
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::ELECTRIC_SPARK_EFFECT,
+            x: 12,
+            y: 70,
+            z: -8,
+            data: -1,
+            global: false,
+        })));
+        assert_eq!(m.electric_spark_events.len(), 1, "the arm rides");
+        assert_eq!(m.electric_spark_events[0].x, 12);
+        assert_eq!(m.electric_spark_events[0].y, 70);
+        assert_eq!(m.electric_spark_events[0].z, -8);
+        assert_eq!(
+            m.electric_spark_events[0].data, -1,
+            "the data word the branch split reads"
+        );
+        // the axis words ride verbatim too (the 0..2 arm the
+        // along-axis walk banks — the DATA word the case's own read
+        // keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::ELECTRIC_SPARK_EFFECT,
+            x: 1,
+            y: 2,
+            z: 3,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.electric_spark_events.len(), 2, "the axis word re-arms");
+        assert_eq!(m.electric_spark_events[1].data, 1);
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::ELECTRIC_SPARK_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: -1,
+            global: true,
+        })));
+        assert_eq!(
+            m.electric_spark_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_electric_spark_events();
+        assert_eq!(drained.len(), 2, "the drain ships the mailbox");
+        assert_eq!(drained[0].data, -1, "the faces word rides");
+        assert_eq!(drained[1].data, 1, "the axis word rides");
+        assert!(
+            m.electric_spark_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::ELECTRIC_SPARK_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 2,
+            global: false,
+        })));
+        assert_eq!(m.electric_spark_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.electric_spark_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

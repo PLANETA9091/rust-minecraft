@@ -22780,6 +22780,44 @@ impl App {
         }
     }
 
+    /// THE ELECTRIC-SPARK WIRE LANE (javap `LevelEventHandler` case
+    /// 3002 — offset 2596 — over the 26.2 jar): the server's own
+    /// lightning the copper-cleaning word broadcasts
+    /// (`LightningBolt.randomStepCleaningCopper`'s
+    /// `levelEvent(3002, pos, -1)` call the bytecode pins), the Level
+    /// Event mailbox's landing: each word the arms the worker
+    /// drained ride exactly one refresh — the DATA word the case's
+    /// own body reads (the `iload_3` the decode opens with), the
+    /// branch split the burst walk answers: the `0..3` arm the
+    /// along-axis walk banks (the `spawnParticlesAlongAxis` delegate
+    /// the `UniformInt.of(10, 19)` count speaks), the negative/
+    /// overflow arm the faces walk keeps (the
+    /// `spawnParticlesOnBlockFaces` delegate the `UniformInt.of(3,
+    /// 5)` count speaks — the same six-face law the wax trio wears).
+    /// The sparks the `GlowParticle$ElectricSparkProvider` spawns —
+    /// the glow sprite the pair shares, the `setColor(1.0F, 0.9F,
+    /// 1.0F)` white-pink the wax-off twin's own constants keep, the
+    /// `* 0.25` speed folds the provider's own multiply chain
+    /// carries, the `nextInt(2) + 2` lifetime the 2..3 band speaks.
+    /// NO sound the case body speaks — the sparks alone the burst
+    /// renders.
+    pub fn live_electric_spark_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireElectricSparkEvent>,
+    ) {
+        for ev in events {
+            // THE BURST (the axis/faces branch split the raw data
+            // word arms — the level ambient stream the draws ride,
+            // the provider chain the spark closure spends)
+            let burst = crate::particles::electric_spark_burst(
+                (ev.x, ev.y, ev.z),
+                ev.data,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock

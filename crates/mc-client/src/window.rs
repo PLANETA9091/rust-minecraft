@@ -169,6 +169,7 @@ fn run_join(
                 Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
+                Vec<crate::world_view::WireElectricSparkEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -277,6 +278,7 @@ fn run_join(
             view.model.drain_smash_attack_events();
             view.model.drain_wax_events();
             view.model.drain_gateway_spawn_events();
+            view.model.drain_electric_spark_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -909,6 +911,7 @@ fn run_join(
                             view.model.drain_smash_attack_events();
                             view.model.drain_wax_events();
                             view.model.drain_gateway_spawn_events();
+                            view.model.drain_electric_spark_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1074,6 +1077,16 @@ fn run_join(
                                     // rides exactly one shipped
                                     // refresh)
                                     upd.gateway_spawn_events,
+                                    // the electric-spark effect's arms
+                                    // ride beside them — the 3002
+                                    // words the server's own lightning
+                                    // broadcasts stream to the spark
+                                    // lane (the axis/faces branch split
+                                    // the data word arms, the glow
+                                    // sprite the pair shares, each arm
+                                    // rides exactly one shipped
+                                    // refresh)
+                                    upd.electric_spark_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1372,6 +1385,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
+                Vec<crate::world_view::WireElectricSparkEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -1937,6 +1951,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     smash_attack_events,
                     wax_events,
                     gateway_spawn_events,
+                    electric_spark_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2068,6 +2083,16 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // 10.0-volume voice the random pitch chain carries,
                     // the vanilla client answers the same packet with)
                     app.live_gateway_spawn_events_updated(gateway_spawn_events);
+                    // the electric-spark effect's lane beside the
+                    // gateway's: the 3002 words the server's own
+                    // lightning broadcasts land at their own anchors
+                    // (the axis/faces branch split the data word arms
+                    // — the along-axis 10..19 walk the 0..2 words
+                    // bank, the six-face 3..5-per-face walk the
+                    // negative/overflow words keep — the glow sprite
+                    // the pair shares, the vanilla client answers the
+                    // same packet with)
+                    app.live_electric_spark_events_updated(electric_spark_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris
