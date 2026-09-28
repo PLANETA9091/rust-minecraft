@@ -23136,20 +23136,47 @@ impl App {
     }
 
     /// THE TRIAL-SPAWNER SPAWN WIRE LANE (javap `LevelEventHandler`
-    /// case 3011 — offset 1827 — over the 26.2 jar): the server's own
-    /// trial spawners the mob-spawn word broadcasts (`TrialSpawner
-    /// .spawnMob`'s `sipush 3011, pos, FlameParticle.encode()` the
-    /// levelEvent call pins), the Level Event mailbox's landing: each
-    /// word the arms the worker drained ride exactly one refresh —
-    /// the data word the case's own decode reads (the flame-flavor id
-    /// the `FlameParticle.decode(I)` walk banks), the forty-particle
-    /// burst the walk speaks, NO sound the case plays (the 3012 twin
-    /// the voice lane banks — the next rounds' word).
+    /// cases 3011/3012 — offsets 1827/1847 — over the 26.2 jar): the
+    /// server's own trial spawners the mob-spawn words broadcast
+    /// (`TrialSpawner.spawnMob`'s `sipush 3011/3012` the levelEvent
+    /// calls pin), the Level Event mailbox's landing: each word the
+    /// arms the worker drained ride exactly one refresh — the data
+    /// word the case's own decode reads (the flame-flavor id the
+    /// `FlameParticle.decode(I)` walk banks), the forty-particle
+    /// burst the walk speaks, the VOICE the 3012 word plays FIRST
+    /// (the case body's own draw order — the pitch draws ride before
+    /// the burst the tail answers), the 3011 word the silence keeps
+    /// (the burst alone the particle word plays).
     pub fn live_trial_spawn_events_updated(
         &mut self,
         events: Vec<crate::world_view::WireTrialSpawnEvent>,
     ) {
         for ev in events {
+            // THE VOICE THE FAMILY'S WORD SPEAKS (the 3012 case body's
+            // own `playLocalSound` walk — the fixed 1.0 volume, the
+            // TWO pitch draws the `(nf - nf) * 0.2F + 1.0F` fold
+            // answers, the block center the resolve places, the
+            // immediate voice the false flag keeps — the draws ride
+            // BEFORE the burst the tail speaks)
+            if ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT {
+                let pitch = 1.0f32
+                    + (self.level_ambient_rng.next_f32()
+                        - self.level_ambient_rng.next_f32())
+                        * 0.2f32;
+                let sx = f64::from(ev.x) + 0.5;
+                let sy = f64::from(ev.y) + 0.5;
+                let sz = f64::from(ev.z) + 0.5;
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    "block.trial_spawner.spawn_mob",
+                    1.0,
+                    pitch,
+                    ear_distance(ear, sx, sy, sz),
+                    ear_pan(ear, yaw, sx, sy, sz),
+                );
+            }
             // THE FORTY-PARTICLE BURST (the `TrialSpawner
             // .addSpawnParticles` walk verbatim — the `bipush 20`
             // loop, the THREE nextDouble position draws per iteration
@@ -49962,6 +49989,7 @@ cow_sound_variant: None,
                 y: 70,
                 z: -44,
                 data: 0,
+                word: mc_protocol::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT,
             },
         ]);
         let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
@@ -50005,6 +50033,7 @@ cow_sound_variant: None,
                 y: 34,
                 z: 90,
                 data: 1,
+                word: mc_protocol::PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT,
             },
         ]);
         let _ = std::mem::replace(&mut app.level_ambient_rng, saved);
@@ -50015,6 +50044,55 @@ cow_sound_variant: None,
             .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SoulFlame))
             .count();
         assert_eq!(soul, 20, "the decoded soul twin the render lane arms");
+        // THE SPAWN-MOB VOICE TWIN (the 3012 word the SAME burst rides
+        // beside — the case body's own draw order the pitch pair FIRST
+        // keeps: TWO draws the voice spends, THEN the forty-particle
+        // walk's 540 — the [0.8, 1.2] band the scale 0.2F fold gives,
+        // the key the sounds.json row banks — the spawn1..4 files the
+        // runtime table holds, the voice the log banks)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3012));
+        let before_voice = app.particles.len();
+        app.live_trial_spawn_events_updated(vec![
+            crate::world_view::WireTrialSpawnEvent {
+                x: 33,
+                y: 41,
+                z: -7,
+                data: 0,
+                word:
+                    mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let voice_burst = &app.particles[before_voice..];
+        assert_eq!(voice_burst.len(), 40, "the voice twin's own forty");
+        let mut replay = crate::drops::Lcg::new(0x3012);
+        for _ in 0..(2 + 40 * 27 / 2) {
+            let _ = replay.next();
+        }
+        assert_eq!(
+            spent, replay,
+            "the {} draws the voice twin exactly spends",
+            2 + 40 * 27 / 2
+        );
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.trial_spawner.spawn_mob @"))
+                .expect("the spawn-mob voice the lane logs");
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_trial_spawn_events_updated(vec![]);

@@ -1779,6 +1779,34 @@ pub const PARTICLES_EGG_CRACK_EFFECT: i32 = 3009;
 /// banks — the positioned lane the case's own arm wears.
 pub const PARTICLES_TRIAL_SPAWNER_SPAWN_EFFECT: i32 = 3011;
 
+/// THE TRIAL-SPAWNER SPAWN-MOB VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB`, the case
+/// `LevelEventHandler.levelEvent` offset 1847 speaks): the ONE
+/// `playLocalSound(pos, TRIAL_SPAWNER_SPAWN_MOB, BLOCKS, 1.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends FIRST (the `fconst_1` volume the fixed fold keeps, the
+/// TWO pitch draws the fsub/fmul/fadd chain answers — the scale the
+/// cp #360 Float 0.2F banks, the [0.8, 1.2] band the pair gives, the
+/// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve places,
+/// the distance-delay flag false the immediate voice keeps), THEN the
+/// SAME `TrialSpawner$FlameParticle.decode(data)` +
+/// `TrialSpawner.addSpawnParticles` walk the 3011 sibling's own tail
+/// spends (pc 1884-1898 — the identical iload_3 decode, the identical
+/// `bipush 20` loop the SMOKE + flame pairs answer, the same draws
+/// the burst alone consumes beside the voice's own two). The
+/// `block.trial_spawner.spawn_mob` key the sounds.json row banks (the
+/// spawn1..4 files the table holds, NO new assets the lane demands).
+/// The caller the spawner's own mob spawn pins —
+/// `TrialSpawner.spawnMob`'s `sipush 3012, aload 9, FlameParticle
+/// .encode()` levelEvent call the bytecode speaks (pc 486-497 — the
+/// spawnPos anchor the twin carries, the SAME `isOminous ? OMINOUS :
+/// NORMAL` flame the getstatic pair picks; the 3011 particle word
+/// rides the pos anchor beside it). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_MOB_EFFECT: i32 = 3012;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the

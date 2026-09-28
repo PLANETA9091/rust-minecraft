@@ -836,7 +836,9 @@ pub struct WireEggCrackEvent {
 /// flame-flavor word, verbatim (the DATA word the case's own body
 /// READS — the `iload_3` the `FlameParticle.decode(I)` decode opens
 /// with, `0` the NORMAL flame / `1` the OMINOUS soul twin the
-/// render lane's own law folds from them).
+/// render lane's own law folds from them). The WORD the family
+/// shares rides beside them (the wax trio's own one-mailbox law —
+/// 3011 the burst alone, 3012 the spawn-mob voice beside it).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireTrialSpawnEvent {
     pub x: i32,
@@ -845,6 +847,9 @@ pub struct WireTrialSpawnEvent {
     /// The flame-flavor id (the wire's `iload_3` word the case reads
     /// verbatim — `0` NORMAL / `1` OMINOUS the encode ordinals give).
     pub data: i32,
+    /// The vocabulary word the arm rides (3011 the particle word,
+    /// 3012 the spawn-mob voice twin).
+    pub word: i32,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -3550,6 +3555,7 @@ impl LiveView {
                 y: arm.y,
                 z: arm.z,
                 data: arm.data,
+                word: arm.word,
             })
             .collect();
         // the dragon-fireball splash effect's own projection (the
