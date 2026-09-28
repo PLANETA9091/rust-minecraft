@@ -23745,6 +23745,66 @@ impl App {
         );
     }
 
+    /// THE HOSTILE-VOICE WIRE LANE (javap `LevelEventHandler` cases
+    /// 1019/1020/1021/1022 — offsets 4573/4693/4653/4613 — over the
+    /// 26.2 jar): the server's own door-break goal and wither the
+    /// shelf's voices broadcast, the ONE `playLocalSound(pos,
+    /// <voice>, HOSTILE, 2.0F, (nextFloat() - nextFloat()) * 0.2F +
+    /// 1.0F, false)` walk each case body spends — the voice alone
+    /// the broadcast renders (no particles the cases speak, no draw
+    /// the walks cost beside the pitch pair).
+    pub fn live_hostile_voice_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireHostileVoiceEvent>,
+    ) {
+        for ev in events {
+            self.play_hostile_voice(ev.voice, ev.x, ev.y, ev.z);
+        }
+    }
+
+    /// THE HOSTILE-VOICE WALK (javap the four case arms verbatim):
+    /// the BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve
+    /// places (the +0.5 trio the vanilla client answers), the
+    /// `fconst_2` volume the DOUBLED gain each case carries (2.0F —
+    /// the mob's own loudness the wire speaks), the pitch the TWO
+    /// draws the fsub/fmul/fadd chain answers (`(nf - nf) * 0.2F +
+    /// 1.0F` — the [0.8, 1.2] band the 0.2F scale gives, the level
+    /// ambient stream the draws ride), the distance-delay flag false
+    /// the immediate voices keep, the HOSTILE source the mob's own
+    /// channel names. The voice word the packet's own effect id —
+    /// the sound key the official sounds.json table the runtime
+    /// cache keeps (the file pick the engine's own LCG banks, NO new
+    /// assets the shelf demands).
+    fn play_hostile_voice(&mut self, voice: i32, x: i32, y: i32, z: i32) {
+        // the FOUR WORDS the model's own arm banks (the case ids the
+        // bytecode's own lookupswitch rows speak — the render lane's
+        // law folds the sound key from each)
+        let key = match voice {
+            mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT => "entity.zombie.attack_wooden_door",
+            mc_protocol::SOUND_ZOMBIE_IRON_DOOR_EFFECT => "entity.zombie.attack_iron_door",
+            mc_protocol::SOUND_ZOMBIE_DOOR_CRASH_EFFECT => "entity.zombie.break_wooden_door",
+            mc_protocol::SOUND_WITHER_BLOCK_BREAK_EFFECT => "entity.wither.break_block",
+            _ => return, // the model's own arm the four words alone enqueues
+        };
+        // the pitch pair the case body's own draws keep (the
+        // fsub/fmul/fadd chain the [0.8, 1.2] band answers)
+        let pitch = 1.0f32
+            + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * 0.2f32;
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            2.0,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE DRAGON BLOCK-BREAK WIRE LANE (javap `LevelEventHandler`
     /// case 2008 — offset 3440 — over the 26.2 jar): the server's
     /// own dragon the event broadcast, the ONE EXPLOSION puff the
@@ -51781,6 +51841,182 @@ cow_sound_variant: None,
         } else {
             app.live_fixed_voice_events_updated(vec![]);
         }
+    }
+
+    #[test]
+    fn the_hostile_voice_serve_the_volume_the_pitch_wear() {
+        // THE HOSTILE-VOICE SHELF'S OWN SERVE (javap the cases
+        // 1019/1020/1021/1022 — offsets 4573/4693/4653/4613 — the ONE
+        // `playLocalSound(pos, <voice>, HOSTILE, 2.0F, (nf - nf) *
+        // 0.2F + 1.0F, false)` walk each body spends: the fconst_2
+        // volume the DOUBLED gain keeps, the TWO pitch draws the
+        // [0.8, 1.2] band the 0.2F scale gives, the four sound keys
+        // the runtime table resolves, no particles the voice-only
+        // shelf speaks, the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE BODY 24 BLOCKS OFF (the ear the doubled reach's own
+        // linear answers — a 2.0-volume voice's max distance the
+        // `Math.max(getVolume(), 1.0F) * 16.0F` fold speaks: 32.0
+        // blocks the fconst_2 doubles, the gain the linear keeps at
+        // 2.0 x (1 - 24/32) = 0.5 — a 1.0-volume voice the SAME
+        // distance the zero gain kills)
+        app.body = Some(crate::body::PlayerBody::new(
+            -16.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x1019));
+        let before = app.particles.len();
+        app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+            x: -41,
+            y: 70,
+            z: 123,
+            voice: mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT,
+        }]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE VOICE-ONLY SHELF (no particles the cases speak)
+        assert_eq!(app.particles.len(), before, "the voice alone renders");
+        // THE EXACT TWO DRAWS (the pitch pair the case body's own
+        // fsub/fmul/fadd chain answers)
+        let mut replay = crate::drops::Lcg::new(0x1019);
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        assert_eq!(spent, replay, "the case body's own exact stream");
+        if sounds_loaded() {
+            // THE DOUBLED REACH (the dist-24 ear the 0.5 gain the
+            // fconst_2's own linear speaks — the 32-block max the
+            // 2.0-volume fold arms)
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.zombie.attack_wooden_door @"))
+                .expect("the wooden-door voice the lane logs");
+            assert!(
+                line.contains(" v0.500000 p"),
+                "the fconst_2's own doubled reach the dist-24 ear speaks: {line}"
+            );
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE DIST-0 CEILING (the ear at the block center the
+        // attenuation's own clamp keeps — the doubled gain the
+        // AL_MAX_GAIN 1.0 ceiling caps at FULL loudness the vanilla
+        // engine's own gain law speaks)
+        app.body = Some(crate::body::PlayerBody::new(
+            -40.5,
+            70.5 - crate::body::STANDING_EYE,
+            123.5,
+            0.0,
+            0.0,
+        ));
+        app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+            x: -41,
+            y: 70,
+            z: 123,
+            voice: mc_protocol::SOUND_ZOMBIE_WOODEN_DOOR_EFFECT,
+        }]);
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .rev()
+                .find(|e| e.starts_with("entity.zombie.attack_wooden_door @"))
+                .expect("the dist-0 voice the lane logs");
+            assert!(
+                line.contains(" v1.000000 p"),
+                "the doubled gain's own ceiling the dist-0 ear keeps: {line}"
+            );
+        }
+        // THE THREE SIBLINGS (the same walk each word's own key
+        // wears — the iron-door attack, the door crash, the wither's
+        // block-break the shelf banks)
+        for (word, key) in [
+            (
+                mc_protocol::SOUND_ZOMBIE_IRON_DOOR_EFFECT,
+                "entity.zombie.attack_iron_door",
+            ),
+            (
+                mc_protocol::SOUND_ZOMBIE_DOOR_CRASH_EFFECT,
+                "entity.zombie.break_wooden_door",
+            ),
+            (
+                mc_protocol::SOUND_WITHER_BLOCK_BREAK_EFFECT,
+                "entity.wither.break_block",
+            ),
+        ] {
+            let before_voices = app.sounds.events.len();
+            app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+                x: -41,
+                y: 70,
+                z: 123,
+                voice: word,
+            }]);
+            if sounds_loaded() {
+                assert_eq!(
+                    app.sounds.events.len(),
+                    before_voices + 1,
+                    "each arm exactly one voice the walk keeps"
+                );
+                let line = app
+                    .sounds
+                    .events
+                    .last()
+                    .expect("the sibling voice the lane logs");
+                assert!(
+                    line.starts_with(key),
+                    "the sibling key the word folds: {line}"
+                );
+                assert!(
+                    line.contains(" v1.000000 p"),
+                    "the doubled gain's own ceiling every sibling keeps: {line}"
+                );
+            }
+        }
+        // THE UNBANKED WORD: the arm the render never voices (the
+        // model's own arm the four words alone enqueues — the early
+        // return the unknown word answers consumes NO voice, NO draw)
+        let voices_before_unknown = app.sounds.events.len();
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xBEEF));
+        app.live_hostile_voice_events_updated(vec![crate::world_view::WireHostileVoiceEvent {
+            x: 1,
+            y: 2,
+            z: 3,
+            voice: 4242,
+        }]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before_unknown,
+            "the unknown word no voice ever banks"
+        );
+        assert_eq!(
+            spent2,
+            crate::drops::Lcg::new(0xBEEF),
+            "the unknown word no draw the early return keeps"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let voices_before = app.sounds.events.len();
+        app.live_hostile_voice_events_updated(vec![]);
+        assert_eq!(
+            app.sounds.events.len(),
+            voices_before,
+            "the empty mailbox ships nothing"
+        );
     }
 
     #[test]

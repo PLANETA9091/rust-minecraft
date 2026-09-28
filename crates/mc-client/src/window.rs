@@ -198,6 +198,7 @@ fn run_join(
                 Vec<crate::world_view::WireFireExtinguishEvent>,
                 Vec<crate::world_view::WireJukeboxEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
+                Vec<crate::world_view::WireHostileVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -318,6 +319,7 @@ fn run_join(
             view.model.drain_fire_extinguish_events();
             view.model.drain_jukebox_events();
             view.model.drain_fixed_voice_events();
+            view.model.drain_hostile_voice_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
             let spawn_biome = first.biome.clone();
@@ -962,6 +964,7 @@ fn run_join(
                             view.model.drain_fire_extinguish_events();
                             view.model.drain_jukebox_events();
                             view.model.drain_fixed_voice_events();
+            view.model.drain_hostile_voice_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
                             if live_tx
@@ -1343,6 +1346,7 @@ fn run_join(
                                     // law folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.fixed_voice_events,
+                                    upd.hostile_voice_events,
                                     // the splash-potion effect's arms ride
                                     // with them — the 2002/2007 words the
                                     // server's own potion impacts broadcast
@@ -1533,6 +1537,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireFireExtinguishEvent>,
                 Vec<crate::world_view::WireJukeboxEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
+                Vec<crate::world_view::WireHostileVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
             ),
@@ -2110,6 +2115,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     fire_extinguish_events,
                     jukebox_events,
                     fixed_voice_events,
+                    hostile_voice_events,
                     splash_events,
                     mob_spawn_events,
                 )) => {
@@ -2445,6 +2451,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // `fconst_1` bytecode pairs speak, the vanilla client
                     // answers the same packets with)
                     app.live_fixed_voice_events_updated(fixed_voice_events);
+                    // the hostile-voice shelf's lane beside the fixed
+                    // voices': the 1019/1020/1021/1022 words the server's
+                    // own door-break goal and wither broadcast land at
+                    // their own anchors (the doubled-gain voices the
+                    // case bodies' own walk keeps — the vanilla client
+                    // answers the same packet with)
+                    app.live_hostile_voice_events_updated(hostile_voice_events);
                     // the splash-potion effect's lane beside the smoke's:
                     // the 2002/2007 words the server's own potion impacts
                     // broadcast land at their own anchors (the shard burst

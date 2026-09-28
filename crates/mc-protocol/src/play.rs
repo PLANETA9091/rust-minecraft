@@ -2631,6 +2631,82 @@ pub const SOUND_CRAFTER_CRAFT_EFFECT: i32 = 1049;
 /// never banks — the positioned lane the case's own arm wears.
 pub const SOUND_CRAFTER_FAIL_EFFECT: i32 = 1050;
 
+/// THE ZOMBIE WOODEN-DOOR VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_ZOMBIE_WOODEN_DOOR`,
+/// the case `LevelEventHandler.levelEvent` offset 4573 speaks): the
+/// ONE `playLocalSound(pos, ZOMBIE_ATTACK_WOODEN_DOOR, HOSTILE,
+/// 2.0F, (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the
+/// case body spends — the `fconst_2` volume the DOUBLED gain the
+/// mob's own loudness keeps, the TWO pitch draws the fsub/fmul/fadd
+/// chain answers, the [0.8, 1.2] band the 0.2F scale gives, the
+/// HOSTILE source the mob's own channel names, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps, the data word the case's own
+/// body never reads. NO particles the case speaks — the voice alone
+/// the broadcast renders. The server's own door-break goal speaks it
+/// — `BreakDoorGoal.tick`'s one-in-twenty gate the `nextInt(20) ==
+/// 0` branch answers (`sipush 1019, aload doorPos, iconst_0` the
+/// levelEvent call the bytecode pins pc 25-36 — the
+/// `mob.swing(usedItemHand)` walk beside it fires, the
+/// `getUsedItemHand` resolve the swing's own arm carries). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_ZOMBIE_WOODEN_DOOR_EFFECT: i32 = 1019;
+
+/// THE ZOMBIE IRON-DOOR VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_ZOMBIE_IRON_DOOR`,
+/// the case `LevelEventHandler.levelEvent` offset 4693 speaks): the
+/// ONE `playLocalSound(pos, ZOMBIE_ATTACK_IRON_DOOR, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the wooden-door sibling's arm wears
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own iron-door attack the caller lane fires — the client
+/// jar's own walks the `sipush 1020` levelEvent site don't carry
+/// (the dedicated server's zombie-AI lane ships it; the positioned
+/// case the client's own switch answers the same packet with). The
+/// GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const SOUND_ZOMBIE_IRON_DOOR_EFFECT: i32 = 1020;
+
+/// THE ZOMBIE DOOR-CRASH VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_ZOMBIE_DOOR_CRASH`,
+/// the case `LevelEventHandler.levelEvent` offset 4653 speaks): the
+/// ONE `playLocalSound(pos, ZOMBIE_BREAK_WOODEN_DOOR, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the door-attack siblings' arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own door-break goal speaks it — `BreakDoorGoal.tick`'s
+/// completion tail the `removeBlock(doorPos, false)` walk fires
+/// FIRST (`sipush 1021, aload doorPos, iconst_0` the levelEvent call
+/// the bytecode pins pc 175-183 — the `2001` destroy-particle word
+/// the SAME tail beside it broadcasts with the `Block.getId(state)`
+/// data the destroy lane already banks). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const SOUND_ZOMBIE_DOOR_CRASH_EFFECT: i32 = 1021;
+
+/// THE WITHER BLOCK-BREAK VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_WITHER_BLOCK_BREAK`,
+/// the case `LevelEventHandler.levelEvent` offset 4613 speaks): the
+/// ONE `playLocalSound(pos, WITHER_BREAK_BLOCK, HOSTILE, 2.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, false)` walk the case
+/// body spends — the SAME shape the door-attack siblings' arms wear
+/// (the `fconst_2` volume, the TWO pitch draws, the HOSTILE source,
+/// the immediate flag, the data word never read, NO particles). The
+/// server's own wither speaks it — `WitherBoss.customServerAiStep`'s
+/// destroyed-blocks tail the `destroyBlock` loop's success flag
+/// arms (`levelEvent(null, 1022, blockPosition(), iconst_0)` the
+/// `ServerLevel.levelEvent(Entity, I, BlockPos, I)` overload call
+/// the bytecode pins pc 698-708 — the Entity overload the
+/// visibility filter keeps, the positioned packet the same wire
+/// rides; the sibling `1023` WITHER-SPAWN word the `globalLevelEvent`
+/// walk pc 65-73 speaks the GLOBAL lane the positioned switch never
+/// carries). The GLOBAL route the `globalLevelEvent` switch never
+/// banks — the positioned lane the case's own arm wears.
+pub const SOUND_WITHER_BLOCK_BREAK_EFFECT: i32 = 1022;
+
 /// One Level Event (clientbound play, generated id 46 —
 /// `minecraft:level_event`). javap of the 26.2 write walk verbatim:
 /// `writeInt(type)`, `writeBlockPos(pos)`, `writeInt(data)`,
