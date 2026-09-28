@@ -1527,6 +1527,32 @@ pub const PARTICLES_SCRAPE_EFFECT: i32 = 3005;
 /// positioned lane the case's own arm wears.
 pub const END_GATEWAY_SPAWN_EFFECT: i32 = 3000;
 
+/// THE ENDER-DRAGON GROWL VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `ENDER_DRAGON_GROWL`, the
+/// case `LevelEventHandler.levelEvent` offset 5170 speaks): the ONE
+/// `playLocalSound(pos, ENDER_DRAGON_GROWL, HOSTILE, 64.0F, pitch,
+/// false)` walk the case body spends — the `ldc_w 64.0F` volume the
+/// cp `#797` Float speaks (the 1024-block reach the armed max keeps
+/// — the vanilla attenuation law `volume * 16` folds), the pitch the
+/// `0.8F + nextFloat() * 0.3F` chain the cps `#138`/`#380` bank (the
+/// ONE draw the `invokeinterface RandomSource.nextFloat` walk spends,
+/// the [0.8, 1.1] band the fold gives), the HOSTILE source the
+/// `getstatic #86` row keeps, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag false the immediate voice keeps, the data word the case's own
+/// body never reads (no `iload_3` the arm's bytecode speaks — the
+/// transport honesty the dispenser/gateway arms keep). NO particles
+/// the case speaks — the voice alone the broadcast renders. NO
+/// vanilla caller the 26.2 jar banks — `EnderDragonFight` carries no
+/// `sipush 3001` walk (the dragon's own growl the CLIENT-SIDE
+/// `aiStep` arm answers instead: `playLocalSound(DDD, ENDER_DRAGON_GROWL,
+/// getSoundSource(), 2.5F, 0.8F + nextFloat() * 0.3F, false)` at the
+/// dragon's own position every `nextInt(200)` ticks — the wire word
+/// the plugins/older servers' broadcast the lane keeps). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const ENDER_DRAGON_GROWL_EFFECT: i32 = 3001;
+
 /// THE ELECTRIC-SPARK PARTICLES EFFECT'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `ELECTRIC_SPARK`, the case
 /// `LevelEventHandler.levelEvent` offset 2596 speaks): the DATA word
@@ -11219,6 +11245,11 @@ mod tests {
             PARTICLES_SCULK_SHRIEK_EFFECT,
             3007,
             "the sculk-shriek effect the shrieker's own reply walk speaks"
+        );
+        assert_eq!(
+            ENDER_DRAGON_GROWL_EFFECT,
+            3001,
+            "the ender-dragon growl effect the plugins' broadcast keeps"
         );
         assert_eq!(
             SPLASH_POTION_EFFECT,

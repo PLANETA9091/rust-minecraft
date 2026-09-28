@@ -392,6 +392,21 @@ pub struct WorldModel {
     /// enqueues (the `globalLevelEvent` switch the 3000 id never
     /// carries — the positioned lane the case's own arm wears).
     pub gateway_spawn_events: Vec<GatewaySpawnArm>,
+    /// THE ENDER-DRAGON GROWL EFFECT'S OWN MAILBOX (the Level Event
+    /// packet's next vocabulary word the model banks — the 3001 words
+    /// the plugins/older servers broadcast, the
+    /// `LevelEventHandler.levelEvent` offset 5170 speaks: the ONE
+    /// `playLocalSound(pos, ENDER_DRAGON_GROWL, HOSTILE, 64.0F,
+    /// 0.8F + nextFloat() * 0.3F, false)` walk the case body spends —
+    /// the voice alone the broadcast renders, NO particles the case
+    /// speaks, the data word the case's own body never reads). The
+    /// arms the anchor alone carry (the ONE pitch draw + the 64.0F
+    /// volume the render lane's own law folds — the 1024-block reach
+    /// the attenuation law `volume * 16` speaks). The GLOBAL route
+    /// the arm never enqueues (the `globalLevelEvent` switch the
+    /// 3000-band ids never carries — the positioned lane the case's
+    /// own arm wears).
+    pub dragon_growl_events: Vec<DragonGrowlArm>,
     /// THE ELECTRIC-SPARK EFFECT'S OWN MAILBOX (the Level Event
     /// packet's next vocabulary word the model banks — the 3002 words
     /// the server's own lightning broadcasts, the
@@ -827,6 +842,22 @@ pub struct WaxArm {
 /// chain carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct GatewaySpawnArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+}
+
+/// One pending ENDER-DRAGON GROWL arm — the Level Event packet's next
+/// vocabulary word the model keeps verbatim (the 3001 word the
+/// plugins/older servers broadcast,
+/// [`mc_protocol::play::ENDER_DRAGON_GROWL_EFFECT`] the render lane
+/// speaks): the event's anchor block VERBATIM, the data word
+/// deliberately absent — the case's own body never reads it (no
+/// `iload_3` the arm's bytecode speaks, the same transport honesty
+/// the dispenser/gateway arms keep). The ONE pitch draw + the 64.0F
+/// volume the render lane's own law folds from the anchor alone.
+#[derive(Debug, Clone, PartialEq)]
+pub struct DragonGrowlArm {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -1810,6 +1841,7 @@ impl WorldModel {
             smash_attack_events: Vec::new(),
             wax_events: Vec::new(),
             gateway_spawn_events: Vec::new(),
+            dragon_growl_events: Vec::new(),
             electric_spark_events: Vec::new(),
             sculk_charge_events: Vec::new(),
             sculk_shriek_events: Vec::new(),
@@ -2023,6 +2055,13 @@ impl WorldModel {
     /// ride exactly one refresh).
     pub fn drain_gateway_spawn_events(&mut self) -> Vec<GatewaySpawnArm> {
         std::mem::take(&mut self.gateway_spawn_events)
+    }
+
+    /// The ender-dragon growl effect's mailbox's own drain (the same
+    /// walk the sibling lanes speak — the arms the refresh ships
+    /// exactly once, the drained mailbox the empty vec keeps).
+    pub fn drain_dragon_growl_events(&mut self) -> Vec<DragonGrowlArm> {
+        std::mem::take(&mut self.dragon_growl_events)
     }
 
     /// The electric-spark effect's mailbox's own drain (the same walk
@@ -2443,6 +2482,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 3000 words
                 // never spawn a gateway again)
                 self.gateway_spawn_events.clear();
+                // the ender-dragon growl effect's mailbox dies with
+                // the level (the same walk — the old level's 3001
+                // words never growl again)
+                self.dragon_growl_events.clear();
                 // the electric-spark effect's mailbox dies with the
                 // level (the same walk — the old level's 3002 words
                 // never spark again)
@@ -3354,6 +3397,25 @@ impl WorldModel {
                     // the anchor alone, the data word the case's own
                     // body never reads).
                     self.gateway_spawn_events.push(GatewaySpawnArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::ENDER_DRAGON_GROWL_EFFECT && !ev.global {
+                    // THE ENDER-DRAGON GROWL EFFECT'S OWN ARM (javap
+                    // the case offset 5170 — the positioned route the
+                    // GLOBAL switch never banks): the anchor the
+                    // mailbox carries verbatim (the ONE
+                    // `playLocalSound(pos, ENDER_DRAGON_GROWL,
+                    // HOSTILE, 64.0F, 0.8F + nextFloat() * 0.3F,
+                    // false)` walk the case body spends — the voice
+                    // alone the broadcast renders, NO particles the
+                    // case speaks, the data word the case's own body
+                    // never reads). The ONE pitch draw + the 64.0F
+                    // volume the render lane's own law folds from the
+                    // anchor alone.
+                    self.dragon_growl_events.push(DragonGrowlArm {
                         x: ev.x,
                         y: ev.y,
                         z: ev.z,
@@ -8040,6 +8102,76 @@ mod tests {
         })));
         assert!(
             m.gateway_spawn_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_growl_word_the_one_voice_arms() {
+        // THE ENDER-DRAGON GROWL EFFECT'S OWN ARM (javap the case
+        // offset 5170 — the positioned route the GLOBAL switch never
+        // banks): the anchor the mailbox rides verbatim (the ONE
+        // `playLocalSound(pos, ENDER_DRAGON_GROWL, HOSTILE, 64.0F,
+        // 0.8F + nextFloat() * 0.3F, false)` walk the case body
+        // spends — the voice alone the broadcast renders, the data
+        // word the case's own body never reads), the drain ships the
+        // arms exactly once, and the Respawn recreates the level the
+        // mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the plugins' own word (the broadcast the wire lane keeps —
+        // no vanilla caller the 26.2 jar banks): the arm rides
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::ENDER_DRAGON_GROWL_EFFECT,
+            x: 41,
+            y: 70,
+            z: -9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dragon_growl_events.len(), 1, "the arm rides");
+        assert_eq!(m.dragon_growl_events[0].x, 41);
+        assert_eq!(m.dragon_growl_events[0].y, 70);
+        assert_eq!(m.dragon_growl_events[0].z, -9);
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::ENDER_DRAGON_GROWL_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.dragon_growl_events.len(),
+            1,
+            "the global word never arms"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_dragon_growl_events();
+        assert_eq!(drained.len(), 1, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, 41, "the anchor the render lane folds");
+        assert!(
+            m.dragon_growl_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::ENDER_DRAGON_GROWL_EFFECT,
+            x: -2,
+            y: 64,
+            z: 5,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.dragon_growl_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.dragon_growl_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

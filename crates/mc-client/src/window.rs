@@ -169,6 +169,7 @@ fn run_join(
                 Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
+                Vec<crate::world_view::WireDragonGrowlEvent>,
                 Vec<crate::world_view::WireElectricSparkEvent>,
                 Vec<crate::world_view::WireSculkChargeEvent>,
                 Vec<crate::world_view::WireSculkShriekEvent>,
@@ -280,6 +281,7 @@ fn run_join(
             view.model.drain_smash_attack_events();
             view.model.drain_wax_events();
             view.model.drain_gateway_spawn_events();
+            view.model.drain_dragon_growl_events();
             view.model.drain_electric_spark_events();
             view.model.drain_sculk_charge_events();
             view.model.drain_sculk_shriek_events();
@@ -915,6 +917,7 @@ fn run_join(
                             view.model.drain_smash_attack_events();
                             view.model.drain_wax_events();
                             view.model.drain_gateway_spawn_events();
+                            view.model.drain_dragon_growl_events();
                             view.model.drain_electric_spark_events();
                             view.model.drain_sculk_charge_events();
                             view.model.drain_sculk_shriek_events();
@@ -1083,6 +1086,15 @@ fn run_join(
                                     // rides exactly one shipped
                                     // refresh)
                                     upd.gateway_spawn_events,
+                                    // the ender-dragon growl effect's
+                                    // arms ride beside them — the 3001
+                                    // words the plugins/older servers
+                                    // broadcast stream to the growl
+                                    // lane (the ONE 64.0-volume voice
+                                    // the render's own law folds, each
+                                    // arm rides exactly one shipped
+                                    // refresh)
+                                    upd.dragon_growl_events,
                                     // the electric-spark effect's arms
                                     // ride beside them — the 3002
                                     // words the server's own lightning
@@ -1409,6 +1421,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireSmashAttackEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
+                Vec<crate::world_view::WireDragonGrowlEvent>,
                 Vec<crate::world_view::WireElectricSparkEvent>,
                 Vec<crate::world_view::WireSculkChargeEvent>,
                 Vec<crate::world_view::WireSculkShriekEvent>,
@@ -1977,6 +1990,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     smash_attack_events,
                     wax_events,
                     gateway_spawn_events,
+                    dragon_growl_events,
                     electric_spark_events,
                     sculk_charge_events,
                     sculk_shriek_events,
@@ -2111,6 +2125,13 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // 10.0-volume voice the random pitch chain carries,
                     // the vanilla client answers the same packet with)
                     app.live_gateway_spawn_events_updated(gateway_spawn_events);
+                    // the ender-dragon growl effect's lane beside the
+                    // gateway's: the 3001 words the plugins/older
+                    // servers broadcast land at their own anchors (the
+                    // ONE `entity.ender_dragon.growl` 64.0-volume voice
+                    // the pitch band [0.8, 1.1] keeps — the vanilla
+                    // client answers the same packet with)
+                    app.live_dragon_growl_events_updated(dragon_growl_events);
                     // the electric-spark effect's lane beside the
                     // gateway's: the 3002 words the server's own
                     // lightning broadcasts land at their own anchors

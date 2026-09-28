@@ -22800,6 +22800,62 @@ impl App {
         }
     }
 
+    /// THE ENDER-DRAGON GROWL WIRE LANE (javap `LevelEventHandler`
+    /// case 3001 — offset 5170 — over the 26.2 jar): the plugins'
+    /// and older servers' own growl word the client NOW answers (NO
+    /// vanilla caller the 26.2 jar banks — the dragon's own growl the
+    /// client-side `aiStep` arm answers instead, at the dragon's own
+    /// position, volume 2.5F, every `nextInt(200)` ticks — the wire
+    /// word the broadcast the lane keeps). The Level Event mailbox's
+    /// landing: each word the arms the worker drained ride exactly
+    /// one refresh — the ONE
+    /// `playLocalSound(pos, ENDER_DRAGON_GROWL, HOSTILE, 64.0F,
+    /// 0.8F + nextFloat() * 0.3F, false)` walk the case body spends
+    /// (the `ldc_w 64.0F` volume the cp `#797` Float speaks — the
+    /// 1024-block reach the attenuation law `volume * 16` folds, the
+    /// ONE pitch draw the `invokeinterface RandomSource.nextFloat`
+    /// walk spends — the [0.8, 1.1] band the fold gives, the
+    /// `entity.ender_dragon.growl` key the sounds.json row banks —
+    /// the growl1..4 files the table holds, NO new assets the lane
+    /// demands), the data word the case's own body never reads. NO
+    /// particles the case speaks — the voice alone the broadcast
+    /// renders.
+    pub fn live_dragon_growl_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireDragonGrowlEvent>,
+    ) {
+        for ev in events {
+            // THE ONE PITCH DRAW (the case's own
+            // `0.8F + nextFloat() * 0.3F` chain — the [0.8, 1.1]
+            // band the fold gives)
+            let pitch = 0.8 + self.level_ambient_rng.next_f32() * 0.3;
+            self.play_dragon_growl(ev.x, ev.y, ev.z, 64.0, pitch);
+        }
+    }
+
+    /// THE ENDER-DRAGON GROWL VOICE WALK (the case's own
+    /// `playLocalSound(BlockPos, ENDER_DRAGON_GROWL, HOSTILE, 64.0F,
+    /// pitch, false)` shape): the BLOCK CENTER the
+    /// `playLocalSound(BlockPos, ...)` resolve places, the distance-
+    /// delay flag false the immediate voice keeps, the HOSTILE
+    /// source the engine's gain law never folds (the volume the
+    /// 64.0F armed max carries).
+    fn play_dragon_growl(&mut self, x: i32, y: i32, z: i32, volume: f32, pitch: f32) {
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "entity.ender_dragon.growl",
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE ELECTRIC-SPARK WIRE LANE (javap `LevelEventHandler` case
     /// 3002 — offset 2596 — over the 26.2 jar): the server's own
     /// lightning the copper-cleaning word broadcasts
@@ -49421,6 +49477,108 @@ cow_sound_variant: None,
             app.particles.len(),
             settled,
             "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_growl_serve_the_one_draw_the_1024_reach_wears() {
+        // THE ENDER-DRAGON GROWL SERVE'S OWN WIRE LANE (javap case
+        // 3001 → offset 5170 over the 26.2 jar): the data word the
+        // case's own body never reads, the ONE voice the case body
+        // speaks (the ONE pitch draw the walk spends — the
+        // [0.8, 1.1] band the fold gives — the 64.0F volume the
+        // armed max keeps), the NO-particles law the sound-only case
+        // keeps, the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE VOICE ARM: the ONE pitch draw + the ONE voice the walk
+        // spends — the particles the sound-only case never banks
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x6301));
+        let before = app.particles.len();
+        app.live_dragon_growl_events_updated(vec![
+            crate::world_view::WireDragonGrowlEvent {
+                x: 41,
+                y: 70,
+                z: -9,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let mut replay = crate::drops::Lcg::new(0x6301);
+        let _ = replay.next_f32(); // the voice's own pitch draw
+        assert_eq!(spent, replay, "the ONE draw the walk exactly spends");
+        assert_eq!(
+            app.particles.len(),
+            before,
+            "the sound-only case the particles never banks"
+        );
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.ender_dragon.growl @"))
+                .expect("the growl voice the wire arm speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (0.8..1.1).contains(&pitch),
+                "the 0.8 + r * 0.3 band the voice keeps: {pitch}"
+            );
+        }
+        // THE SECOND WORD: the fresh draw + the fresh voice the same
+        // walk rides (the two words the two voices the arm ships)
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x6302));
+        let voices_before = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.ender_dragon.growl @"))
+            .count();
+        app.live_dragon_growl_events_updated(vec![
+            crate::world_view::WireDragonGrowlEvent {
+                x: -2,
+                y: 64,
+                z: 5,
+            },
+        ]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        let mut replay2 = crate::drops::Lcg::new(0x6302);
+        let _ = replay2.next_f32();
+        assert_eq!(spent2, replay2, "the fresh word the ONE draw rides");
+        if sounds_loaded() {
+            let voices_after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.ender_dragon.growl @"))
+                .count();
+            assert_eq!(voices_after, voices_before + 1, "the voice ships");
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        let voices = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("entity.ender_dragon.growl @"))
+            .count();
+        app.live_dragon_growl_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+        assert_eq!(
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.ender_dragon.growl @"))
+                .count(),
+            voices,
+            "the empty mailbox the voice never arms"
         );
     }
 

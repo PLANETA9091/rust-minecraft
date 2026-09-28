@@ -482,6 +482,11 @@ pub struct SnapshotView {
     /// lane's own law folds, the seed + the voice the emitter walk
     /// banks).
     pub gateway_spawn_events: Vec<WireGatewaySpawnEvent>,
+    /// The ender-dragon growl effect's own wire arms (the 3001 words
+    /// the plugins/older servers broadcast — the anchor the render
+    /// lane's own law folds, the ONE 64.0-volume voice the pitch band
+    /// [0.8, 1.1] keeps).
+    pub dragon_growl_events: Vec<WireDragonGrowlEvent>,
     /// The electric-spark effect's own wire arms (the 3002 words the
     /// server's own lightning broadcasts — the anchor + the data word
     /// the branch split the render lane's own law folds).
@@ -699,6 +704,21 @@ pub struct WireWaxEvent {
 /// lane's own law folds from the anchor the transport carries).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireGatewaySpawnEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+}
+
+/// One wire ENDER-DRAGON GROWL arm — the Level Event packet's own
+/// landing (the 3001 words the plugins/older servers broadcast,
+/// [`mc_protocol::play::ENDER_DRAGON_GROWL_EFFECT`] the render lane
+/// speaks): the event's anchor block, verbatim (the voice's own cell
+/// — the ONE `entity.ender_dragon.growl` 64.0-volume voice the pitch
+/// band [0.8, 1.1] carries, the render lane's own law folds from the
+/// anchor the transport carries, the data word the case's own body
+/// never reads).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireDragonGrowlEvent {
     pub x: i32,
     pub y: i32,
     pub z: i32,
@@ -2866,6 +2886,9 @@ pub fn materialize_snapshot_view(
         // and no gateway words (the join snapshot carries no 3000
         // traffic — the empty mailbox the render lane skips)
         gateway_spawn_events: Vec::new(),
+        // and no growl words (the join snapshot carries no 3001
+        // traffic — the empty mailbox the render lane skips)
+        dragon_growl_events: Vec::new(),
         // and no spark words (the join snapshot carries no 3002
         // traffic — the empty mailbox the render lane skips)
         electric_spark_events: Vec::new(),
@@ -3340,6 +3363,21 @@ impl LiveView {
                 z: arm.z,
             })
             .collect();
+        // the ender-dragon growl effect's own projection (the mailbox
+        // verbatim — the anchor the arms carry, the ONE 64.0-volume
+        // voice the render lane's law reads): each 3001 word ships
+        // once with this view, the worker's drain empties the mailbox
+        // after
+        let dragon_growl_events = self
+            .model
+            .dragon_growl_events
+            .iter()
+            .map(|arm| WireDragonGrowlEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the electric-spark effect's own projection (the mailbox
         // verbatim — the anchor + the data word the arms carry, the
         // branch split the render lane's own law reads): each 3002
@@ -3777,6 +3815,10 @@ impl LiveView {
                 // arm too — the 3000 words are the connection's own
                 // traffic, not the pose's
                 gateway_spawn_events,
+                // the ender-dragon growl effect's arms ride the
+                // pose-less arm too — the 3001 words are the
+                // connection's own traffic, not the pose's
+                dragon_growl_events,
                 // the electric-spark effect's arms ride the pose-less
                 // arm too — the 3002 words are the connection's own
                 // traffic, not the pose's
@@ -3947,6 +3989,10 @@ impl LiveView {
             // — the 3000 words follow the mailbox exactly like the
             // wax's own arms do
             gateway_spawn_events,
+            // the ender-dragon growl effect's arms ride every refresh
+            // too — the 3001 words follow the mailbox exactly like the
+            // gateway's own arms do
+            dragon_growl_events,
             // the electric-spark effect's arms ride every refresh too
             // — the 3002 words follow the mailbox exactly like the
             // gateway's own arms do
