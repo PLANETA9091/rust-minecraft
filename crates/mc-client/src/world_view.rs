@@ -834,10 +834,14 @@ pub struct WireEggCrackEvent {
 /// packet's own landing (the 3013 words the server's own trial
 /// spawner detectors broadcast,
 /// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT`]
-/// the render lane speaks): the event's anchor block + the amount
-/// word, verbatim (the DATA word the walk's own tail READS — the
-/// `iload_3` the `addDetectPlayerParticles` amount arg carries, the
-/// `30 + min(amount, 10) * 5` snowfall the min arm caps). The
+/// the render lane speaks — the OMINOUS twin
+/// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT`]
+/// the SAME mailbox arms: the particle TYPES the pair registers ride
+/// the identical `SnowflakeParticle$Provider` call site, no render
+/// delta the twin's wire speaks): the event's anchor block + the
+/// amount word, verbatim (the DATA word the walk's own tail READS —
+/// the `iload_3` the `addDetectPlayerParticles` amount arg carries,
+/// the `30 + min(amount, 10) * 5` snowfall the min arm caps). The
 /// snowfall's own draws the render lane's stream folds.
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireDetectPlayerEvent {

@@ -50324,6 +50324,45 @@ cow_sound_variant: None,
                 pitch
             );
         }
+        // THE OMINOUS TWIN (the 3019 word the SAME serve answers — the
+        // `isOminous()` branch the caller's sipush pair picks, the
+        // SAME voice event the bytecodes pin, the SAME snowfall walk:
+        // amount 2 → 40 iterations, the 2 + 360-draw replay the twin
+        // exactly spends, the SAME bluish-white Snowflake kinds the
+        // identical provider call site banks)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3019));
+        let before_om = app.particles.len();
+        app.live_trial_detect_events_updated(vec![
+            crate::world_view::WireDetectPlayerEvent {
+                x: 5,
+                y: 66,
+                z: -50,
+                amount: 2,
+            },
+        ]);
+        let spent_om = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let om_snow = &app.particles[before_om..];
+        assert_eq!(om_snow.len(), 40, "the ominous word's own forty");
+        for p in om_snow {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Snowflake),
+                "the same snowflake kind the twin arms"
+            );
+            assert_eq!(
+                p.col,
+                [0.923, 0.964, 0.999],
+                "the bluish-white the identical provider keeps"
+            );
+        }
+        let mut replay_om = crate::drops::Lcg::new(0x3019);
+        for _ in 0..(2 + 40 * 9) {
+            let _ = replay_om.next();
+        }
+        assert_eq!(
+            spent_om, replay_om,
+            "the {} draws the ominous twin exactly spends",
+            2 + 40 * 9
+        );
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_trial_detect_events_updated(vec![]);

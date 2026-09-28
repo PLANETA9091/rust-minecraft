@@ -455,13 +455,18 @@ pub struct WorldModel {
     /// THE TRIAL-SPAWNER DETECT-PLAYER EFFECT'S OWN MAILBOX (the
     /// Level Event packet's next vocabulary word —
     /// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT`]
-    /// the case the `LevelEventHandler.levelEvent` offset 1961
-    /// speaks: the ONE `playLocalSound(pos, TRIAL_SPAWNER_DETECTED_PLAYER,
-    /// BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, true)` walk the voice
-    /// spends FIRST, then the `TrialSpawner.addDetectPlayerParticles`
-    /// walk the `30 + min(data, 10) * 5` snowfall answers — the DATA
-    /// word the amount arg carries, the detected player count the
-    /// caller's set size gives). The snowfall's own draws the render
+    /// the case the `LevelEventHandler.levelEvent` offset 1961 speaks,
+    /// the OMINOUS twin
+    /// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT`]
+    /// offset 2015 banks): the ONE `playLocalSound(pos,
+    /// TRIAL_SPAWNER_DETECTED_PLAYER, BLOCKS, 1.0F, (nf - nf) * 0.2F +
+    /// 1.0F, true)` walk the voice spends FIRST, then the
+    /// `TrialSpawner.addDetectPlayerParticles` walk the
+    /// `30 + min(data, 10) * 5` snowfall answers — the DATA word the
+    /// amount arg carries, the detected player count the caller's set
+    /// size gives; the particle TYPES the pair registers ride the
+    /// IDENTICAL SnowflakeParticle$Provider call site, the twin words
+    /// the SAME mailbox arm. The snowfall's own draws the render
     /// lane's stream keeps.
     pub trial_detect_events: Vec<DetectPlayerArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
@@ -3796,25 +3801,31 @@ impl WorldModel {
                         word: ev.effect,
                     });
                     true
-                } else if ev.effect
+                } else if (ev.effect
                     == mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT
+                    || ev.effect
+                        == mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT)
                     && !ev.global
                 {
-                    // THE TRIAL-SPAWNER DETECT-PLAYER VOICE'S OWN ARM
-                    // (javap the case offset 1961 — the positioned
-                    // route the GLOBAL switch never banks): the ONE
-                    // `playLocalSound(pos, TRIAL_SPAWNER_DETECTED_PLAYER,
-                    // BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, true)` walk
-                    // the case body spends FIRST (the TWO pitch draws
-                    // the voice's own arm keeps — the distance-delay
-                    // flag TRUE the jar's own `iconst_1` pins, pc 1994),
-                    // THEN the `addDetectPlayerParticles(level, pos,
-                    // random, data, TRIAL_SPAWNER_DETECTED_PLAYER)` walk
-                    // the case tail spends — the DATA word the amount
-                    // arg carries (the `30 + min(amount, 10) * 5`
-                    // snowfall the min arm caps), the own mailbox the
-                    // walk's different shape banks (the spawn family's
-                    // flame burst the sibling mailbox keeps).
+                    // THE TRIAL-SPAWNER DETECT-PLAYER VOICE FAMILY'S OWN
+                    // ARM (javap the case offsets 1961/2015 — the
+                    // positioned route the GLOBAL switch never banks):
+                    // the ONE `playLocalSound(pos,
+                    // TRIAL_SPAWNER_DETECTED_PLAYER, BLOCKS, 1.0F,
+                    // (nf - nf) * 0.2F + 1.0F, true)` walk BOTH case
+                    // bodies spend FIRST (the SAME voice event the
+                    // getstatic pair speaks, the TWO pitch draws each
+                    // case's own arm keeps — the distance-delay flag
+                    // TRUE the jar's own `iconst_1` pair pins, pc 1994
+                    // and pc 2048), THEN the SAME
+                    // `addDetectPlayerParticles` walk the tails spend —
+                    // the particle TYPES the pair registers ride the
+                    // IDENTICAL `SnowflakeParticle$Provider` call site
+                    // (the `ParticleResources.registerProviders` walk
+                    // the invokedynamic bytes pin), the render delta
+                    // the wire never speaks — the SAME mailbox the
+                    // twin words arm (the amount the walk's own
+                    // `30 + min(amount, 10) * 5` bound caps).
                     self.trial_detect_events.push(DetectPlayerArm {
                         x: ev.x,
                         y: ev.y,
@@ -12670,6 +12681,41 @@ mod tests {
             m.trial_detect_events.is_empty(),
             "the drained mailbox stays empty"
         );
+        // the OMINOUS TWIN (the 3019 word the SAME mailbox banks — the
+        // `isOminous()` branch the tryDetectPlayers call's sipush pair
+        // picks, the SAME voice event + the SAME snowfall walk the
+        // bytecodes pin — the identical provider call site the
+        // ParticleResources registration speaks, no render delta the
+        // twin's wire carries)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT,
+            x: 60,
+            y: 11,
+            z: -60,
+            data: 2,
+            global: false,
+        })));
+        assert_eq!(m.trial_detect_events.len(), 1, "the ominous twin rides");
+        assert_eq!(m.trial_detect_events[0].x, 60);
+        assert_eq!(
+            m.trial_detect_events[0].amount, 2,
+            "the ominous word's own amount rides"
+        );
+        // the OMINOUS GLOBAL route the arm never banks (the positioned
+        // lane the case's own body wears)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 1,
+            global: true,
+        })));
+        assert_eq!(
+            m.trial_detect_events.len(),
+            1,
+            "the ominous global word never arms"
+        );
         // the fresh word re-arms beside the Respawn's own death walk
         assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
             effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT,
@@ -12679,7 +12725,7 @@ mod tests {
             data: 1,
             global: false,
         })));
-        assert_eq!(m.trial_detect_events.len(), 1, "the fresh word re-arms");
+        assert_eq!(m.trial_detect_events.len(), 2, "the fresh word re-arms");
         assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
             dimension_type_id: 0,
             dimension: "minecraft:overworld".to_string(),

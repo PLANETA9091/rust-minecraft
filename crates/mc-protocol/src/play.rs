@@ -1893,6 +1893,42 @@ pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_SPAWN_ITEM_EFFECT: i32 = 3021;
 /// case's own arm wears.
 pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT: i32 = 3013;
 
+/// THE TRIAL-SPAWNER DETECT-PLAYER VOICE'S OMINOUS TWIN'S OWN ID (the
+/// 26.2 `LevelEvent` constants class the client jar banks —
+/// `PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS`, the case
+/// `LevelEventHandler.levelEvent` offset 2015 speaks): the ONE
+/// `playLocalSound(pos, TRIAL_SPAWNER_DETECTED_PLAYER, BLOCKS, 1.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, true)` walk the case
+/// body spends FIRST (pc 2015-2049 — the SAME voice event the 3013
+/// sibling's getstatic speaks, the TWO pitch draws the same chain
+/// answers, the distance-delay flag TRUE the jar's own `iconst_1`
+/// keeps — pc 2048), THEN the SAME
+/// `TrialSpawner.addDetectPlayerParticles(level, pos, random, data,
+/// ParticleTypes.TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS)` walk the
+/// 3013 sibling's tail spends (pc 2052-2066 — the identical iload_3
+/// amount arg, the identical `30 + Math.min(amount, 10) * 5` loop
+/// the bipush trio speaks, the same NINE draws the per-iteration
+/// chain spends). THE SNOWFLAKE the SAME provider chain wears — the
+/// `ParticleResources.registerProviders` walk the jar's own
+/// bytecodes pin: BOTH `TRIAL_SPAWNER_DETECTED_PLAYER` and
+/// `TRIAL_SPAWNER_DETECTED_PLAYER_OMINOUS` ride the IDENTICAL
+/// invokedynamic call site (the raw operand bytes `02 13 00 00` the
+/// pc 1417/1429 pair speaks — the one CallSite spec the lambda
+/// metafactory answers), the `SnowflakeParticle$Provider.<init>`
+/// methodref cp#1262 the bootstrap arg carries — the OMINOUS word
+/// the SAME bluish-white snowflake bank answers (the 0.923/0.964/
+/// 0.999 tint the provider's own constants keep, the generic_0..7
+/// frames the same snowflake.json list holds, NO render delta the
+/// twin's wire speaks). THE CALLER the detector's own branch pins —
+/// `TrialSpawnerStateData.tryDetectPlayers`'s
+/// `levelEvent(isOminous() ? 3019 : 3013, pos,
+/// detectedPlayers.size())` levelEvent call the bytecode speaks
+/// (pc 230-261 — the `isOminous()` verdict the sipush pair picks,
+/// the SAME amount word the set's size carries). The GLOBAL route
+/// the `globalLevelEvent` switch never banks — the positioned lane
+/// the case's own arm wears.
+pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT: i32 = 3019;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the
