@@ -23274,6 +23274,68 @@ impl App {
         }
     }
 
+    /// THE TRIAL-SPAWNER EJECT-ITEM WIRE LANE (javap
+    /// `LevelEventHandler` cases 3014/3017 — offsets 2143/2193 — over
+    /// the 26.2 jar): the server's own trial spawner ejects + vault
+    /// broadcasts the words carry (`TrialSpawner.ejectReward`'s
+    /// `sipush 3014, aload_2, iconst_0` levelEvent call the bytecode
+    /// pins, `VaultState.ejectResultItem`'s `sipush 3017, aload_1,
+    /// iconst_0` the vault's own answer — the data word both bodies
+    /// never read), the Level Event mailbox's landing: each word the
+    /// arms the worker drained ride exactly one refresh — the VOICE
+    /// the 3014 case body plays FIRST (the ONE `playLocalSound(pos,
+    /// TRIAL_SPAWNER_EJECT_ITEM, BLOCKS, 1.0F, (nf - nf) * 0.2F +
+    /// 1.0F, true)` walk — the TWO pitch draws the voice's own pair
+    /// keeps, the key the sounds.json row banks — the eject_item
+    /// files the runtime table holds; the 3017 word the silence the
+    /// case's own twelve bytes keep), then the `addEjectItemParticles`
+    /// burst BOTH bodies answer (the `bipush 20` loop, the three
+    /// nextDouble position draws + the three nextGaussian * 0.02
+    /// velocity draws the per-iteration order keeps, the
+    /// SMALL_FLAME (the zd * 0.25 fold) + SMOKE pairs the provider
+    /// chains carry — the level ambient stream the draws ride).
+    pub fn live_trial_eject_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireTrialEjectEvent>,
+    ) {
+        for ev in events {
+            // THE VOICE THE 3014 WORD SPEAKS FIRST (the pitch pair the
+            // `(nf - nf) * 0.2F + 1.0F` fold answers, the block center
+            // the resolve places, the distance-delay flag the jar's own
+            // `iconst_1` pc 2176 keeps — the draws ride BEFORE the
+            // burst the tail speaks; the silent twin the draws never
+            // spends)
+            if ev.word == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT {
+                let pitch = 1.0f32
+                    + (self.level_ambient_rng.next_f32()
+                        - self.level_ambient_rng.next_f32())
+                        * 0.2f32;
+                let sx = f64::from(ev.x) + 0.5;
+                let sy = f64::from(ev.y) + 0.5;
+                let sz = f64::from(ev.z) + 0.5;
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    "block.trial_spawner.eject_item",
+                    1.0,
+                    pitch,
+                    ear_distance(ear, sx, sy, sz),
+                    ear_pan(ear, yaw, sx, sy, sz),
+                );
+            }
+            // THE FORTY-PARTICLE BURST (the `TrialSpawner
+            // .addEjectItemParticles` walk verbatim — the `bipush 20`
+            // loop, the three nextDouble position draws + the three
+            // nextGaussian velocity draws per iteration the
+            // SMALL_FLAME (the zd * 0.25 fold) + SMOKE pairs share,
+            // the level ambient stream the draws ride)
+            let burst =
+                crate::particles::trial_eject_item_burst(ev.x, ev.y, ev.z, &mut self.level_ambient_rng);
+            self.particles.extend(burst);
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -28546,16 +28608,35 @@ impl App {
                     // the soul flame's own quad (the single
                     // soul_fire_flame sprite the 26.2 json's
                     // one-texture list speaks — the SAME class the
-                    // plain flame wears, the ONLY deltas the
-                    // SmallFlameProvider carries: the blue pixels the
-                    // soul sprite banks + the scale(0.5F) half the
-                    // birth quad keeps — the full sprite the quad
-                    // samples, the white tint the ctor defaults keep,
-                    // the OPAQUE layer the class's own answer speaks)
+                    // plain flame wears, the SAME plain provider the
+                    // CORRECTIVE BYTE AUDIT banks: the blue pixels the
+                    // soul sprite banks the ONLY delta the twin
+                    // carries — the FULL quad the plain provider keeps,
+                    // the full sprite the quad samples, the white tint
+                    // the ctor defaults keep, the OPAQUE layer the
+                    // class's own answer speaks)
                     soul_flame_quads.push(crate::raster::SampledQuad {
                         pts,
                         uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
                         tex: "particle_soul_flame",
+                        tint: p.col,
+                    });
+                }
+                crate::particles::ParticleKind::SmallFlame => {
+                    // the small flame's own quad (the SAME flame sprite
+                    // the small_flame.json's one-texture list banks —
+                    // `minecraft:flame` the SAME pixels the plain flame
+                    // holds — the ONLY delta the SmallFlameProvider's
+                    // ONE scale(0.5F) tail carries: the half quad the
+                    // birth size keeps — the full sprite the quad
+                    // samples, the white tint the ctor defaults keep,
+                    // the OPAQUE layer the class's own answer speaks;
+                    // the SAME tex row the flame lane rides — the
+                    // renderer's quad-size field the pts already carry)
+                    flame_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_flame",
                         tint: p.col,
                     });
                 }
@@ -50108,7 +50189,8 @@ cow_sound_variant: None,
             40 * 27 / 2
         );
         // THE OMINOUS WORD (the decode 1 the SoulFlame kind + the
-        // half-quad the scale(0.5F) tail keeps)
+        // FULL quad the plain Provider registration keeps — the
+        // corrective byte audit the raw invokedynamic operands bank)
         let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x640B));
         let before_soul = app.particles.len();
         app.live_trial_spawn_events_updated(vec![
@@ -50372,6 +50454,177 @@ cow_sound_variant: None,
             "the empty mailbox ships nothing"
         );
     }
+
+    #[test]
+    fn the_eject_serve_the_voice_the_burst_wear() {
+        // THE EJECT SERVE'S OWN WIRE LANE (javap cases 3014/3017 →
+        // offsets 2143/2193 over the 26.2 jar): the VOICE the 3014
+        // case body plays FIRST (the TWO pitch draws the `(nf - nf) *
+        // 0.2F + 1.0F` fold answers — the [0.8, 1.2] band the scale
+        // 0.2F gives, the key the sounds.json row banks — the
+        // eject_item files the runtime table holds), the burst BOTH
+        // bodies answer (the `bipush 20` loop the forty-particle
+        // answer wears: the twenty SMALL_FLAME (the zd * 0.25 fold) +
+        // SMOKE pairs the per-iteration order keeps — the six walk
+        // draws (three nextDouble positions + three nextGaussian
+        // velocities, the polar-method rejection loop the variable
+        // next() count wears) + the flame's fifteen + the smoke's
+        // nine), the 3017 word the silence the case's own twelve
+        // bytes keep, the empty mailbox the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3014));
+        let before = app.particles.len();
+        app.live_trial_eject_events_updated(vec![
+            crate::world_view::WireTrialEjectEvent {
+                x: -12,
+                y: 44,
+                z: 88,
+                word: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT FORTY (the twenty pairs the loop answers — the
+        // even members the SMALL_FLAME companion, the odd members the
+        // smoke)
+        let burst = &app.particles[before..];
+        assert_eq!(burst.len(), 40, "the twenty pairs the serve banks");
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    matches!(p.kind, crate::particles::ParticleKind::SmallFlame),
+                    "pair {i} small flame first"
+                );
+                assert!(
+                    (0.05..0.11).contains(&p.quad_size),
+                    "the scale(0.5F) half the birth band keeps: {}",
+                    p.quad_size
+                );
+            } else {
+                assert!(matches!(p.kind, crate::particles::ParticleKind::Smoke));
+            }
+        }
+        // THE EXACT DRAW WALK (the voice's TWO draws FIRST + the
+        // twenty-iteration chain the raw replay pins verbatim: per
+        // iteration the three nextDouble positions + the three
+        // nextGaussian velocities + the flame chain's fifteen (the
+        // dead sprite pick, the dead base lifetime, the spread trio,
+        // the d0 pair, the size, the six jitters, the own lifetime) +
+        // the smoke chain's nine (the dead base lifetime, the spread
+        // trio + d0 pair, the size, the tint, the own lifetime) — the
+        // SAME stream the walk's own consumption answers, the state
+        // equality the exact order banks)
+        let mut replay = crate::drops::Lcg::new(0x3014);
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        for _ in 0..20 {
+            let _ = replay.next_f64();
+            let _ = replay.next_f64();
+            let _ = replay.next_f64();
+            let _ = replay.next_gaussian();
+            let _ = replay.next_gaussian();
+            let _ = replay.next_gaussian();
+            // the flame chain's fifteen
+            let _ = replay.next_int(1);
+            let _ = replay.next_f32();
+            for _ in 0..5 {
+                let _ = replay.next_f32();
+            }
+            let _ = replay.next_f32();
+            for _ in 0..6 {
+                let _ = replay.next_f32();
+            }
+            let _ = replay.next_f32();
+            // the smoke chain's nine
+            let _ = replay.next_f32();
+            for _ in 0..8 {
+                let _ = replay.next_f32();
+            }
+        }
+        assert_eq!(
+            spent, replay,
+            "the walk's own exact stream the voice pair opens"
+        );
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.trial_spawner.eject_item @"))
+                .expect("the eject-item voice the lane logs");
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE SILENT TWIN (the 3017 word the SAME serve answers — the
+        // vault's own eject the caller's iconst_0 pins: NO pitch pair
+        // the twelve-byte case keeps, the burst the same walk answers)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3017));
+        let before_silent = app.particles.len();
+        app.live_trial_eject_events_updated(vec![
+            crate::world_view::WireTrialEjectEvent {
+                x: 5,
+                y: 66,
+                z: -50,
+                word: mc_protocol::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            },
+        ]);
+        let spent_silent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let silent_burst = &app.particles[before_silent..];
+        assert_eq!(silent_burst.len(), 40, "the silent twin's own forty");
+        let small = silent_burst
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SmallFlame))
+            .count();
+        assert_eq!(small, 20, "the same SMALL_FLAME pairs the twin arms");
+        let mut replay_silent = crate::drops::Lcg::new(0x3017);
+        for _ in 0..20 {
+            let _ = replay_silent.next_f64();
+            let _ = replay_silent.next_f64();
+            let _ = replay_silent.next_f64();
+            let _ = replay_silent.next_gaussian();
+            let _ = replay_silent.next_gaussian();
+            let _ = replay_silent.next_gaussian();
+            // the flame chain's fifteen
+            let _ = replay_silent.next_int(1);
+            let _ = replay_silent.next_f32();
+            for _ in 0..5 {
+                let _ = replay_silent.next_f32();
+            }
+            let _ = replay_silent.next_f32();
+            for _ in 0..6 {
+                let _ = replay_silent.next_f32();
+            }
+            let _ = replay_silent.next_f32();
+            // the smoke chain's nine
+            let _ = replay_silent.next_f32();
+            for _ in 0..8 {
+                let _ = replay_silent.next_f32();
+            }
+        }
+        assert_eq!(
+            spent_silent, replay_silent,
+            "the burst-only stream the silence keeps"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_trial_eject_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
+
 
     #[test]
     fn the_wire_jukebox_words_the_record_and_line_wear() {

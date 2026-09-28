@@ -327,23 +327,50 @@ pub enum ParticleKind {
     /// full sample keeps), the white tint the ctor defaults speak,
     /// the (1 - t*t*0.5) half-thin the getQuadSize override wears.
     Flame,
-    /// `FlameParticle` the SOUL FIRE provider arms — the SAME class
-    /// the `flame` type wears (the bare RisingParticle ctor the
+    /// `FlameParticle` the PLAIN provider arms — the SAME class the
+    /// `flame` type wears (the bare RisingParticle ctor the
     /// `getLayer`'s OPAQUE answer speaks, the (1 - t*t*0.5) shrink
     /// the getQuadSize override keeps, the white tint the ctor
     /// defaults speak, the 0.96 friction, the no gravity, the
-    /// *0.01 velocity fold) — the ONLY deltas the
-    /// `FlameParticle$SmallFlameProvider` tail carries: the
-    /// `soul_fire_flame` sprite the one-texture json banks (the
-    /// blue pixels the `minecraft:soul_fire_flame` texture holds),
-    /// the ONE `scale(0.5F)` call the provider's own tail speaks
-    /// (the cp #24 Float fold — the quadSize the half-fold keeps,
-    /// NO draw the scale ever spends). The `soul_fire_flame` type
-    /// the 3011 walk's OMINOUS flame rides (the
-    /// `TrialSpawner$FlameParticle.OMINOUS` constant the clinit's
-    /// second banks — the decoded `particleType` the
-    /// `addSpawnParticles` arg passes).
+    /// *0.01 velocity fold) — the ONLY delta the registration
+    /// carries: the `soul_fire_flame` sprite the one-texture json
+    /// banks (the blue pixels the `minecraft:soul_fire_flame`
+    /// texture holds). THE CORRECTIVE BYTE AUDIT the fresh
+    /// `ParticleResources.registerProviders` dump banks: the
+    /// `SOUL_FIRE_FLAME` type rides the IDENTICAL invokedynamic call
+    /// site the plain `FLAME` type rides (indy cp#125 — the
+    /// bootstrap arg cp#1085 the `FlameParticle$Provider.<init>`
+    /// methodref answers), the FULL quad the plain provider keeps —
+    /// NO scale the provider's own walk spends (the half-quad
+    /// claim the round-454 docs spoke the raw operands correct; the
+    /// `scale(0.5F)` tail belongs to `FlameParticle
+    /// $SmallFlameProvider` — the `SMALL_FLAME` type's OWN provider,
+    /// indy cp#447 — the SmallFlame kind the eject walk's flame
+    /// answers). The `soul_fire_flame` type the 3011 walk's OMINOUS
+    /// flame rides (the `TrialSpawner$FlameParticle.OMINOUS`
+    /// constant the clinit's second banks — the decoded
+    /// `particleType` the `addSpawnParticles` arg passes).
     SoulFlame,
+    /// `FlameParticle` the SMALL provider arms — the SAME class the
+    /// plain `flame` type wears (the bare RisingParticle ctor the
+    /// `getLayer`'s OPAQUE answer speaks, the (1 - t*t*0.5) shrink
+    /// the getQuadSize override keeps, the white tint the ctor
+    /// defaults speak, the 0.96 friction, the no gravity, the
+    /// *0.01 velocity fold the `xd = xd * 0.01D + xdArg` add the
+    /// ctor's own pc 26-66 speaks — the ARG velocities the
+    /// addParticle args carry enter FULL scale) — the ONE delta the
+    /// `FlameParticle$SmallFlameProvider` tail carries: the
+    /// `scale(0.5F)` call the ldc1 0.5 + invokevirtual pair pc
+    /// 34-36 speaks (the quadSize the half-fold keeps, NO draw the
+    /// scale ever spends); the sprite the `small_flame.json` list
+    /// banks — `minecraft:flame` the SAME pixels the plain flame
+    /// holds, NO new assets the kind demands. The `small_flame`
+    /// type the 3014/3017 eject walk's flame rides (the
+    /// `TrialSpawner.addEjectItemParticles` walk's first getstatic
+    /// the `zd * 0.25` fold speaks) — the candle/vault flame the
+    /// SAME registration answers (indy cp#447, the bootstrap arg
+    /// cp#1349 the SmallFlameProvider methodref carries).
+    SmallFlame,
     /// `SpellParticle` — the splash-potion ring's own colored puff (the
     /// `effect`/`instant_effect` types the `LevelEventHandler` case-2002
     /// arm's `SpellParticleOption.create(ParticleTypes.EFFECT|INSTANT_
@@ -815,10 +842,14 @@ impl Particle {
             ParticleKind::Flame => base * flame_shrink(self.age, self.lifetime, 0.0),
             // the soul flame's own half-thin (the SAME
             // FlameParticle.getQuadSize override the plain flame wears
-            // — the SmallFlameProvider's scale(0.5) the quadSize's own
-            // birth fold already keeps, the shrink law the class share
-            // speaks)
+            // — the FULL quad the plain Provider registration keeps,
+            // the shrink law the class share speaks)
             ParticleKind::SoulFlame => base * flame_shrink(self.age, self.lifetime, 0.0),
+            // the small flame's own half-thin (the SAME
+            // FlameParticle.getQuadSize override the plain flame wears
+            // — the scale(0.5F) half the SmallFlameProvider's birth
+            // quad keeps, the shrink law the class share speaks)
+            ParticleKind::SmallFlame => base * flame_shrink(self.age, self.lifetime, 0.0),
             // the portal ring's own swell (the PortalParticle.getQuadSize
             // override — the 1 − (1 − t)² fold the partial rides 0.0 the
             // same way the crit's bloom does: the quad starts a point,
@@ -2902,21 +2933,27 @@ pub fn torch_flame(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Parti
 /// verbatim — the decoded flame type the `FlameParticle.decode(data)
 /// .particleType` arg carries, at the walk's own position with the
 /// `dconst_0` trio the zero velocity args speak): the FULL chain the
-/// provider wears — the plain `FlameParticle$Provider` chain the
-/// NORMAL word (data 0, the `ParticleTypes.FLAME` the clinit's first
-/// constant banks) answers, the `FlameParticle$SmallFlameProvider`
-/// chain the OMINOUS word (data 1, the `ParticleTypes.SOUL_FIRE_FLAME`
-/// the second banks) answers with the ONE `scale(0.5F)` tail the cp
-/// #24 Float fold speaks. The chain the torch_flame bank pins (the
-/// FIFTEEN draws in the vanilla order: the dead sprite pick —
-/// `SpriteSet.get(random)` the one-texture json answers, nextInt(1)
-/// the draw the pick always spends — the dead base lifetime, the
-/// three spread draws, the d0 pair, the size draw, the six jitter
-/// draws, the own lifetime), the *0.01 velocity fold the ctor's own
-/// walk keeps (the +0.01 yd rise the bump scales to), the 0.96
-/// friction, the no gravity, the white tint, the quadSize the
-/// OMINOUS word's half-fold keeps (the `scale(0.5F)` the provider's
-/// tail speaks — NO draw the scale ever spends).
+/// provider wears — the plain `FlameParticle$Provider` chain BOTH
+/// words wear (the CORRECTIVE BYTE AUDIT the fresh
+/// `registerProviders` dump banks: the OMINOUS word — data 1, the
+/// `ParticleTypes.SOUL_FIRE_FLAME` the clinit's second banks — rides
+/// the IDENTICAL invokedynamic call site the NORMAL word — data 0,
+/// `ParticleTypes.FLAME` — rides, indy cp#125 the bootstrap arg
+/// cp#1085 the `FlameParticle$Provider.<init>` methodref answers;
+/// the half-quad claim the round-454 docs spoke the raw operands
+/// correct — the `scale(0.5F)` tail belongs to
+/// `FlameParticle$SmallFlameProvider`, the `SMALL_FLAME` type's OWN
+/// provider the eject walk's flame answers). The chain the
+/// torch_flame bank pins (the FIFTEEN draws in the vanilla order:
+/// the dead sprite pick — `SpriteSet.get(random)` the one-texture
+/// json answers, nextInt(1) the draw the pick always spends — the
+/// dead base lifetime, the three spread draws, the d0 pair, the
+/// size draw, the six jitter draws, the own lifetime), the *0.01
+/// velocity fold the ctor's own walk keeps (the +0.01 yd rise the
+/// bump scales to; the ZERO args the spawn walk's dconst_0 trio
+/// passes the fold's arg half keeps), the 0.96 friction, the no
+/// gravity, the white tint, the quadSize the FULL birth band the
+/// plain provider keeps (NO scale the provider's own walk spends).
 fn trial_flame(
     x: f64,
     y: f64,
@@ -2952,7 +2989,7 @@ fn trial_flame(
         lifetime: flame_lifetime(rng.next_f32()),
         gravity: 0.0,
         friction: 0.96,
-        quad_size: if soul { quad * 0.5 } else { quad },
+        quad_size: quad,
         uo: 0.0,
         vo: 0.0,
         col: [1.0, 1.0, 1.0],
@@ -3003,6 +3040,142 @@ pub fn trial_spawner_spawn_burst(
         out.push(torch_smoke(px, py, pz, rng));
         // the decoded flame (the same position, the zero velocity)
         out.push(trial_flame(px, py, pz, soul, rng));
+    }
+    out
+}
+
+/// The eject walk's own SMALL FLAME (javap
+/// `TrialSpawner.addEjectItemParticles`'s first `Level.addParticle`
+/// verbatim — the `ParticleTypes.SMALL_FLAME` getstatic the pc 111
+/// banks, at the walk's own position with the walk's own velocity
+/// args): the FULL `FlameParticle` ctor chain the plain provider
+/// wears (the FIFTEEN draws the torch-flame bank pins in the
+/// vanilla order: the dead sprite pick — `SpriteSet.get(random)` the
+/// one-texture `small_flame.json` list answers, nextInt(1) the draw
+/// the pick always spends — the dead base lifetime, the three
+/// spread draws, the d0 pair, the size draw, the six jitter draws,
+/// the own lifetime), the `FlameParticle$SmallFlameProvider`'s ONE
+/// `scale(0.5F)` tail the birth quad halves (the cp#447
+/// registration the fresh audit pins, NO draw the scale ever
+/// spends), the `xd = xd * 0.01D + xdArg` fold the RisingParticle
+/// ctor's own pc 26-66 speaks — the WALK'S OWN ARG velocities the
+/// addParticle args carry enter FULL scale (`ax, ay, az` the
+/// gaussian * 0.02 trio gives; the flame's arg z the `0.25 dmul`
+/// pc 126-129 folds — the quarter-pull the fold speaks), the 0.96
+/// friction, the no gravity, the white tint, the OPAQUE layer.
+fn eject_flame(
+    x: f64,
+    y: f64,
+    z: f64,
+    ax: f64,
+    ay: f64,
+    az: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead sprite pick (nextInt(1) the one-element list answers)
+    let _dead_sprite = rng.next_int(1);
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the RisingParticle ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (vx, vy, vz) = ctor_spread_and_normalize(rng);
+    let quad = base_quad_size(rng.next_f32()) * 0.5;
+    let fold = f64::from(0.01f32);
+    let jx = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    let jy = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    let jz = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    Particle {
+        kind: ParticleKind::SmallFlame,
+        x: x + jx,
+        y: y + jy,
+        z: z + jz,
+        prev: None,
+        vx: vx * fold + ax,
+        vy: vy * fold + ay,
+        vz: vz * fold + az * 0.25,
+        age: 0,
+        lifetime: flame_lifetime(rng.next_f32()),
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: quad,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The eject walk's own SMOKE (javap
+/// `TrialSpawner.addEjectItemParticles`'s second `Level.addParticle`
+/// verbatim — the `ParticleTypes.SMOKE` getstatic the pc 134 banks,
+/// at the walk's own position with the walk's own velocity args the
+/// RAW scale the pair rides): the SAME `SmokeParticle` ctor chain
+/// the torch_smoke bank pins (the NINE draws — the dead base
+/// lifetime, the five-draw spread+normalize pair, the size, the
+/// tint, the own lifetime — the *0.1 velocity scale the
+/// BaseAshSmokeParticle's xdScale args speak), the WALK'S OWN ARG
+/// velocities the addParticle args carry enter FULL scale (the
+/// `arg + spread * 0.1` fold the ash ctor's own walk speaks — the
+/// +0.01 yd bump the normalization added keeps its place beside the
+/// arg), the grey tint the r*0.3 draw carries, the 0.75 size fold,
+/// the 8..40 lifetime the smoke_puff helper speaks.
+fn eject_smoke(
+    x: f64,
+    y: f64,
+    z: f64,
+    ax: f64,
+    ay: f64,
+    az: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the ash ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (vx, vy, vz) = ctor_spread_and_normalize(rng);
+    let scale = f64::from(0.1f32);
+    smoke_puff(
+        x,
+        y,
+        z,
+        vx * scale + ax,
+        vy * scale + ay,
+        vz * scale + az,
+        rng.next_f32(),
+        rng.next_f32(),
+        rng.next_f32(),
+    )
+}
+
+/// The trial spawner's own EJECT BURST (javap
+/// `TrialSpawner.addEjectItemParticles` verbatim over the 26.2 jar —
+/// the `bipush 20` loop the iconst_0/if_icmpge pair answers
+/// (len=159), the per-iteration SIX draws the walk itself spends:
+/// the THREE `nextDouble()` position spreads (`pos.getX() + 0.4 +
+/// nextDouble() * 0.2` per axis — the +0.4 anchor the ldc2w 0.4
+/// carries, the [0.4, 0.6] band the dmul 0.2 folds), the THREE
+/// `nextGaussian()` velocity draws (`* 0.02` per axis the dmul
+/// 0.02 trio speaks), then the TWO `Level.addParticle` calls share
+/// the SAME position + velocity args — the SMALL_FLAME the first
+/// getstatic pc 111 banks (the zd arg the `0.25 dmul` fold scales),
+/// the SMOKE the pc 134 banks (the raw args). The provider chains
+/// the fresh audit banks: the flame the `eject_flame` chain (the
+/// FIFTEEN draws + the scale(0.5F) half-quad), the smoke the
+/// `eject_smoke` chain (the NINE draws + the arg velocities). THIRTY
+/// draws per iteration the stream consumes, FORTY particles the
+/// burst answers (twenty small flames + twenty smoke), NO sound the
+/// walk speaks (the 3014 voice word the case body's own playLocalSound
+/// lane banks — the sound twin the 3017 silent word never arms).
+pub fn trial_eject_item_burst(x: i32, y: i32, z: i32, rng: &mut crate::drops::Lcg) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(40);
+    for _ in 0..20 {
+        let px = f64::from(x) + 0.4 + rng.next_f64() * 0.2;
+        let py = f64::from(y) + 0.4 + rng.next_f64() * 0.2;
+        let pz = f64::from(z) + 0.4 + rng.next_f64() * 0.2;
+        let ax = rng.next_gaussian() * 0.02;
+        let ay = rng.next_gaussian() * 0.02;
+        let az = rng.next_gaussian() * 0.02;
+        // the SMALL_FLAME companion (the zd * 0.25 fold the walk speaks)
+        out.push(eject_flame(px, py, pz, ax, ay, az, rng));
+        // the SMOKE companion (the raw args the pair rides)
+        out.push(eject_smoke(px, py, pz, ax, ay, az, rng));
     }
     out
 }
@@ -6456,10 +6629,14 @@ mod tests {
             assert!(smoke.vy >= 0.0, "the rise the +0.1 bump keeps");
         }
         // THE DECODE (the jar's own guard verbatim: `1` the OMINOUS
-        // word the SoulFlame kind + the half-quad the scale(0.5F)
-        // tail keeps, `0` and the out-of-range `2`/`77`/`-1` the
-        // NORMAL flame answer — the values[2] edge the vanilla crash
-        // wears, the honest arm the NORMAL intent keeps)
+        // word the SoulFlame kind + the FULL quad the plain Provider
+        // registration keeps (the CORRECTIVE BYTE AUDIT the fresh
+        // registerProviders dump banks — SOUL_FIRE_FLAME rides the
+        // IDENTICAL indy the NORMAL word rides, NO scale the
+        // provider's own walk spends), `0` and the out-of-range
+        // `2`/`77`/`-1` the NORMAL flame answer — the values[2] edge
+        // the vanilla crash wears, the honest arm the NORMAL intent
+        // keeps)
         for (data, want_soul) in [(1, true), (0, false), (2, false), (77, false), (-1, false)] {
             let b = trial_spawner_spawn_burst(0, 0, 0, data, &mut rng());
             let soul_count = b
@@ -6473,13 +6650,13 @@ mod tests {
             assert_eq!(soul_count, if want_soul { 20 } else { 0 }, "data {data}");
             assert_eq!(flame_count, if want_soul { 0 } else { 20 }, "data {data}");
             if want_soul {
-                // the scale(0.5F) half the plain twin's size halves —
-                // the birth band the base_quad_size * 0.5 fold
-                // answers (the 0.1..0.22 plain band x 0.5)
+                // the FULL birth band the plain provider keeps — the
+                // base_quad_size law's own [0.1, 0.22] band the twin
+                // answers verbatim (the blue sprite the only delta)
                 for p in b.iter().filter(|p| matches!(p.kind, ParticleKind::SoulFlame)) {
                     assert!(
-                        (0.05..0.11).contains(&p.quad_size),
-                        "the soul half-quad: {}",
+                        (0.1..0.22).contains(&p.quad_size),
+                        "the soul full-quad: {}",
                         p.quad_size
                     );
                 }
@@ -6511,6 +6688,111 @@ mod tests {
             b.next();
         }
         assert_eq!(after_walk, b.next(), "the walk's own exact draw count");
+    }
+
+    #[test]
+    fn the_eject_burst_the_walk_the_args_wear() {
+        // THE BURST (the `bipush 20` loop the forty-particle answer
+        // wears: twenty SMALL_FLAME + twenty SMOKE pairs, the flame
+        // FIRST the walk's own addParticle order keeps)
+        let burst = trial_eject_item_burst(3, 4, 5, &mut rng());
+        assert_eq!(burst.len(), 40, "the twenty pairs");
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    matches!(p.kind, ParticleKind::SmallFlame),
+                    "the flame first at pair {}: {:?}",
+                    i,
+                    p.kind
+                );
+            } else {
+                assert!(matches!(p.kind, ParticleKind::Smoke), "the smoke second");
+            }
+        }
+        // THE BANDS (the walk's own folds): the positions the
+        // `[0.4, 0.6]` band the +0.4 anchor + the 0.2 dmul answer
+        // (the ±0.05 jitter the ctor adds), the flames the scale(0.5F)
+        // half the birth band keeps (the 0.1..0.22 plain band x 0.5),
+        // the smoke the plain band verbatim, the velocities the arg
+        // halves the folds keep (the flame's z the * 0.25 quarter-pull)
+        for (i, p) in burst.iter().enumerate() {
+            assert!(
+                (3.35..3.65).contains(&p.x),
+                "the x band at {}: {}",
+                i,
+                p.x
+            );
+            assert!(
+                (5.35..5.65).contains(&p.z),
+                "the z band at {}: {}",
+                i,
+                p.z
+            );
+            if i % 2 == 0 {
+                assert!(
+                    (0.05..0.11).contains(&p.quad_size),
+                    "the small half-quad: {}",
+                    p.quad_size
+                );
+            } else {
+                assert!(
+                    (0.075..0.15).contains(&p.quad_size),
+                    "the smoke 0.75-fold band: {}",
+                    p.quad_size
+                );
+            }
+        }
+        // THE DETERMINISM (the same seed the same chain answers)
+        let burst2 = trial_eject_item_burst(3, 4, 5, &mut rng());
+        assert_eq!(burst.len(), burst2.len(), "the seeded chain replays");
+        for (p, p2) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+                "the seeded members replay"
+            );
+        }
+        // THE STREAM (the walk's own draw ORDER the manual replay
+        // pins verbatim: per iteration the THREE nextDouble position
+        // draws + the THREE nextGaussian velocity draws (the
+        // polar-method rejection loop the variable next() count wears
+        // — the stream the count itself rides) + the flame's FIFTEEN
+        // + the smoke's NINE, the SAME order the burst's own chain
+        // keeps — any reorder the values' mismatch speaks; the NEXT
+        // draw the replay's tail answers)
+        let mut a = rng();
+        let mut manual: Vec<Particle> = Vec::with_capacity(40);
+        for _ in 0..20 {
+            let px = f64::from(3) + 0.4 + a.next_f64() * 0.2;
+            let py = f64::from(4) + 0.4 + a.next_f64() * 0.2;
+            let pz = f64::from(5) + 0.4 + a.next_f64() * 0.2;
+            let ax = a.next_gaussian() * 0.02;
+            let ay = a.next_gaussian() * 0.02;
+            let az = a.next_gaussian() * 0.02;
+            manual.push(eject_flame(px, py, pz, ax, ay, az, &mut a));
+            manual.push(eject_smoke(px, py, pz, ax, ay, az, &mut a));
+        }
+        let after_walk = a.next();
+        assert_eq!(manual.len(), burst.len(), "the same forty the replay answers");
+        for (p, m) in burst.iter().zip(manual.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (m.x, m.y, m.z, m.vx, m.vy, m.vz, m.lifetime, m.quad_size),
+                "the walk's own exact draw order"
+            );
+        }
+        let mut b = rng();
+        for _ in 0..20 {
+            let _px = f64::from(3) + 0.4 + b.next_f64() * 0.2;
+            let _py = f64::from(4) + 0.4 + b.next_f64() * 0.2;
+            let _pz = f64::from(5) + 0.4 + b.next_f64() * 0.2;
+            let _ax = b.next_gaussian() * 0.02;
+            let _ay = b.next_gaussian() * 0.02;
+            let _az = b.next_gaussian() * 0.02;
+            let _f = eject_flame(_px, _py, _pz, _ax, _ay, _az, &mut b);
+            let _s = eject_smoke(_px, _py, _pz, _ax, _ay, _az, &mut b);
+        }
+        assert_eq!(after_walk, b.next(), "the replay's own tail draw");
     }
 
     #[test]

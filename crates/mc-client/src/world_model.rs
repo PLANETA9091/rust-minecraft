@@ -469,6 +469,24 @@ pub struct WorldModel {
     /// the SAME mailbox arm. The snowfall's own draws the render
     /// lane's stream keeps.
     pub trial_detect_events: Vec<DetectPlayerArm>,
+    /// THE TRIAL-SPAWNER EJECT-ITEM FAMILY'S OWN MAILBOX (the Level
+    /// Event packet's next vocabulary words —
+    /// [`mc_protocol::play::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT`]
+    /// the case the `LevelEventHandler.levelEvent` offset 2143
+    /// speaks, the SILENT twin
+    /// [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT`]
+    /// offset 2193 banks): the ONE `playLocalSound(pos,
+    /// TRIAL_SPAWNER_EJECT_ITEM, BLOCKS, 1.0F, (nf - nf) * 0.2F +
+    /// 1.0F, true)` walk the voice word spends FIRST, then the
+    /// `TrialSpawner.addEjectItemParticles` walk BOTH bodies spend —
+    /// the `bipush 20` loop the six-draw per-iteration chain answers
+    /// (the three nextDouble position spreads the +0.4/0.2 band
+    /// carries, the three nextGaussian * 0.02 velocity draws), the
+    /// forty-particle burst the SMALL_FLAME (the zd * 0.25 fold) +
+    /// SMOKE pairs answer; the DATA word both case bodies never
+    /// read, the WORD the family shares the arm carries. The
+    /// burst's own draws the render lane's stream keeps.
+    pub trial_eject_events: Vec<TrialEjectArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -1139,6 +1157,29 @@ pub struct DetectPlayerArm {
     /// — the `detectedPlayers.size()` count the caller passes, the
     /// 10-cap the walk's own min arm keeps).
     pub amount: i32,
+}
+
+/// One pending TRIAL-SPAWNER EJECT-ITEM arm — the Level Event
+/// packet's own landing the model keeps verbatim (see
+/// [`WorldModel::trial_eject_events`]). The anchor verbatim (the
+/// spawner's own block the `TrialSpawner.ejectReward` / the vault's
+/// `VaultState.ejectResultItem` broadcast), the DATA word
+/// deliberately absent — both case bodies never read it (no
+/// `iload_3` read the 2143/2193 byte ranges speak, the `iconst_0`
+/// the callers' own tails pass the case discards). The WORD the
+/// family shares rides beside them (the 3014 voice word the
+/// eject_item voice banks, the 3017 silent twin the burst alone
+/// answers). The forty-particle burst's own draws the render
+/// lane's stream folds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TrialEjectArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The vocabulary word the arm rides (3014 the voice word, 3017
+    /// the silent twin — the voice the render lane's own law plays
+    /// beside the burst).
+    pub word: i32,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -1990,6 +2031,7 @@ impl WorldModel {
             egg_crack_events: Vec::new(),
             trial_spawn_events: Vec::new(),
             trial_detect_events: Vec::new(),
+            trial_eject_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2259,6 +2301,15 @@ impl WorldModel {
     /// own stream keeps).
     pub fn drain_trial_detect_events(&mut self) -> Vec<DetectPlayerArm> {
         std::mem::take(&mut self.trial_detect_events)
+    }
+
+    /// The trial-spawner eject family's mailbox's own drain (the
+    /// same walk the siblings' speak — each arm ships exactly once):
+    /// the 3014/3017 words the Level Event packet armed, the render
+    /// lane's own law folds (the voice the 3014 word banks + the
+    /// eject burst the render's own stream keeps).
+    pub fn drain_trial_eject_events(&mut self) -> Vec<TrialEjectArm> {
+        std::mem::take(&mut self.trial_eject_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2692,6 +2743,10 @@ impl WorldModel {
                 // the level (the same walk — the old level's 3013
                 // words never snow again)
                 self.trial_detect_events.clear();
+                // the trial-spawner eject's mailbox dies with the
+                // level (the same walk — the old level's 3014/3017
+                // words never burst again)
+                self.trial_eject_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3831,6 +3886,35 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         amount: ev.data,
+                    });
+                    true
+                } else if (ev.effect
+                    == mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT
+                    || ev.effect == mc_protocol::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT)
+                    && !ev.global
+                {
+                    // THE TRIAL-SPAWNER EJECT FAMILY'S OWN ARM (javap
+                    // the case offsets 2143/2193 — the positioned route
+                    // the GLOBAL switch never banks): the ONE
+                    // `playLocalSound(pos, TRIAL_SPAWNER_EJECT_ITEM,
+                    // BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, true)` walk
+                    // the voice word spends FIRST (the TWO pitch draws
+                    // the 3014 case's own arm keeps — the distance-delay
+                    // flag TRUE the jar's own `iconst_1` pc 2176 pins),
+                    // THEN the SAME `TrialSpawner.addEjectItemParticles`
+                    // walk BOTH bodies spend (pc 2180-2187 and pc
+                    // 2193-2200 — the identical `bipush 20` loop the
+                    // six-draw per-iteration chain answers, the
+                    // forty-particle burst the SMALL_FLAME (the zd *
+                    // 0.25 fold) + SMOKE pairs answer); the DATA word
+                    // both bodies never read (no `iload_3` the byte
+                    // ranges speak), the WORD the family shares the arm
+                    // carries — the same mailbox the twin words arm.
+                    self.trial_eject_events.push(TrialEjectArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        word: ev.effect,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -12608,6 +12692,121 @@ mod tests {
         })));
         assert!(
             m.trial_spawn_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_eject_words_the_family_arms() {
+        // THE TRIAL-SPAWNER EJECT FAMILY'S OWN ARM (javap the case
+        // offsets 2143/2193 — the positioned route the GLOBAL switch
+        // never banks): the anchor the mailbox keeps, the DATA word
+        // both case bodies never read (the arm carries no data — the
+        // transport honesty the wire's own iconst_0 keeps), the drain
+        // ships the mailbox exactly once, and the Respawn recreates
+        // the level the mailbox dies with it.
+        let mut m = WorldModel::new();
+        // the spawner's own eject word (the TrialSpawner.ejectReward
+        // call the `levelEvent(3014, pos, 0)` walk speaks — the voice
+        // word the eject_item voice banks)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            x: -41,
+            y: 70,
+            z: 123,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.trial_eject_events.len(), 1, "the arm rides");
+        assert_eq!(m.trial_eject_events[0].x, -41);
+        assert_eq!(m.trial_eject_events[0].y, 70);
+        assert_eq!(m.trial_eject_events[0].z, 123);
+        assert_eq!(
+            m.trial_eject_events[0].word,
+            mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            "the voice word rides"
+        );
+        // the VAULT'S OWN SILENT TWIN (the VaultState.ejectResultItem
+        // call the `levelEvent(3017, pos, 0)` walk speaks — the same
+        // mailbox the burst-only word arms)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            x: 5,
+            y: -5,
+            z: 500,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.trial_eject_events.len(), 2, "the silent twin rides");
+        assert_eq!(
+            m.trial_eject_events[1].word,
+            mc_protocol::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            "the silent word rides"
+        );
+        // the data word the case bodies never read — the arm carries
+        // no data the wire's non-zero word cannot change
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            x: 9,
+            y: 65,
+            z: -77,
+            data: 77,
+            global: false,
+        })));
+        assert_eq!(m.trial_eject_events.len(), 3, "the data-free arm rides");
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.trial_eject_events.len(),
+            3,
+            "the global words never arm"
+        );
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_trial_eject_events();
+        assert_eq!(drained.len(), 3, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, -41, "the voice arm's anchor rides");
+        assert_eq!(
+            drained[1].word,
+            mc_protocol::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            "the silent twin's word rides"
+        );
+        assert!(
+            m.trial_eject_events.is_empty(),
+            "the drained mailbox stays empty"
+        );
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.trial_eject_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.trial_eject_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

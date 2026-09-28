@@ -177,6 +177,7 @@ fn run_join(
                 Vec<crate::world_view::WireEggCrackEvent>,
                 Vec<crate::world_view::WireTrialSpawnEvent>,
                 Vec<crate::world_view::WireDetectPlayerEvent>,
+                Vec<crate::world_view::WireTrialEjectEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -293,6 +294,7 @@ fn run_join(
             view.model.drain_egg_crack_events();
             view.model.drain_trial_spawn_events();
             view.model.drain_trial_detect_events();
+            view.model.drain_trial_eject_events();
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
@@ -933,6 +935,7 @@ fn run_join(
                             view.model.drain_egg_crack_events();
                             view.model.drain_trial_spawn_events();
                             view.model.drain_trial_detect_events();
+                            view.model.drain_trial_eject_events();
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
@@ -1172,6 +1175,15 @@ fn run_join(
                                     // arms, each arm rides exactly one
                                     // shipped refresh)
                                     upd.trial_detect_events,
+                                    // the trial-spawner eject family's
+                                    // arms ride with them — the 3014/3017
+                                    // words the server's own spawner
+                                    // ejects + vaults broadcast stream to
+                                    // the eject lane (the forty-particle
+                                    // walk the `addEjectItemParticles`
+                                    // tail speaks, each arm rides exactly
+                                    // one shipped refresh)
+                                    upd.trial_eject_events,
                                     // the block-break effect's arms ride
                                     // with them — the 2001 words the
                                     // server's own digs broadcast stream
@@ -1478,6 +1490,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireEggCrackEvent>,
                 Vec<crate::world_view::WireTrialSpawnEvent>,
                 Vec<crate::world_view::WireDetectPlayerEvent>,
+                Vec<crate::world_view::WireTrialEjectEvent>,
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
@@ -2051,6 +2064,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     egg_crack_events,
                     trial_spawn_events,
                     trial_detect_events,
+                    trial_eject_events,
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
@@ -2248,6 +2262,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // detected player count arms, the vanilla client
                     // answers the same packet with)
                     app.live_trial_detect_events_updated(trial_detect_events);
+                    // the trial-spawner eject family's lane beside the
+                    // detect's: the 3014/3017 words the server's own
+                    // spawner ejects + vaults broadcast land at their
+                    // own anchors (the voice the 3014 word banks + the
+                    // forty-particle burst the `addEjectItemParticles`
+                    // walk wears — the `bipush 20` loop the SMALL_FLAME
+                    // + SMOKE pairs answer, the vanilla client answers
+                    // the same packet with)
+                    app.live_trial_eject_events_updated(trial_eject_events);
                     // the block-break effect's lane beside the growth's:
                     // the 2001 words the server's own digs broadcast land
                     // at their own anchors (the break voice + the debris

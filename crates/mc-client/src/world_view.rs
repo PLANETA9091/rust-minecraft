@@ -511,6 +511,11 @@ pub struct SnapshotView {
     /// flame-flavor word the render lane's own law folds the
     /// forty-particle burst from).
     pub trial_spawn_events: Vec<WireTrialSpawnEvent>,
+    /// the trial-spawner eject family's own projection (the mailbox
+    /// verbatim — the anchor + the family word the arms carry, the
+    /// render lane's own law reads): each 3014/3017 word ships once
+    /// with this view, the worker's drain empties the mailbox after
+    pub trial_eject_events: Vec<WireTrialEjectEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -874,6 +879,27 @@ pub struct WireTrialSpawnEvent {
     pub data: i32,
     /// The vocabulary word the arm rides (3011 the particle word,
     /// 3012 the spawn-mob voice twin).
+    pub word: i32,
+}
+
+/// One wire TRIAL-SPAWNER EJECT-ITEM arm — the Level Event packet's
+/// own landing (the 3014/3017 words the server's own trial spawners
+/// and vaults broadcast,
+/// [`mc_protocol::play::PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT`]
+/// + [`mc_protocol::play::PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT`]
+/// the render lane speaks): the event's anchor block + the family
+/// word, verbatim (the DATA word both case bodies never read — no
+/// `iload_3` the 2143/2193 byte ranges speak, the transport never
+/// carries it). The WORD the arm rides (3014 the voice word, 3017
+/// the silent twin) — the eject burst's own draws the render lane's
+/// stream folds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireTrialEjectEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The vocabulary word the arm rides (3014 the voice word, 3017
+    /// the silent twin).
     pub word: i32,
 }
 
@@ -3009,6 +3035,10 @@ pub fn materialize_snapshot_view(
         // carries no 3013 traffic — the empty mailbox the render lane
         // skips)
         trial_detect_events: Vec::new(),
+        // and no trial-spawner eject words (the join snapshot carries
+        // no 3014/3017 traffic — the empty mailbox the render lane
+        // skips)
+        trial_eject_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3603,6 +3633,21 @@ impl LiveView {
                 word: arm.word,
             })
             .collect();
+        // the trial-spawner eject family's own projection (the mailbox
+        // verbatim — the anchor + the family word the arms carry, the
+        // render lane's own law reads): each 3014/3017 word ships once
+        // with this view, the worker's drain empties the mailbox after
+        let trial_eject_events = self
+            .model
+            .trial_eject_events
+            .iter()
+            .map(|arm| WireTrialEjectEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                word: arm.word,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -4023,6 +4068,10 @@ impl LiveView {
                 // arm too — the 3011 words are the connection's own
                 // traffic, not the pose's
                 trial_spawn_events,
+                // the trial-spawner eject's arms ride the pose-less
+                // arm too — the 3014/3017 words are the connection's
+                // own traffic, not the pose's
+                trial_eject_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -4213,6 +4262,10 @@ impl LiveView {
             // — the 3011 words follow the mailbox exactly like the
             // egg's own arms do
             trial_spawn_events,
+            // the trial-spawner eject's arms ride every refresh too
+            // — the 3014/3017 words follow the mailbox exactly like
+            // the egg's own arms do
+            trial_eject_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

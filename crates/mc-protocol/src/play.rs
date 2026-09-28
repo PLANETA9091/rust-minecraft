@@ -1763,13 +1763,21 @@ pub const PARTICLES_EGG_CRACK_EFFECT: i32 = 3009;
 /// RisingParticle FIFTEEN-draw chain the torch-flame bank pins: the
 /// dead base lifetime, the spread+normalize pair, the size, the SIX
 /// jitter draws, the own lifetime, the *0.01 velocity fold the ctor
-/// speaks), the OMINOUS twin the `FlameParticle$SmallFlameProvider`
-/// chain wears — the SAME class the plain provider arms (the bare
-/// RisingParticle ctor the getLayer's OPAQUE answer speaks, the
-/// (1 - t²·0.5) shrink the getQuadSize override keeps) with the
-/// soul_fire_flame sprite the one-texture json banks + the ONE
-/// `scale(0.5F)` tail the cp #24 Float fold speaks (the quadSize
-/// the half-fold keeps, NO draw the scale ever spends). The caller
+/// speaks), the OMINOUS twin the SAME `FlameParticle$Provider` chain
+/// wears — the CORRECTIVE BYTE AUDIT the fresh `registerProviders`
+/// dump banks (the round-454 handoff's SmallFlameProvider claim the
+/// raw invokedynamic operands correct): BOTH `FLAME` (pc 581) and
+/// `SOUL_FIRE_FLAME` (pc 653) ride the IDENTICAL invokedynamic call
+/// site cp#125 (the dedup the identical lambda shapes speak — the
+/// bootstrap arg cp#1085 the `FlameParticle$Provider.<init>`
+/// methodref answers), the FULL quad the plain provider keeps (NO
+/// scale the provider's own walk spends — the blue pixels the
+/// soul_fire_flame sprite banks the ONLY delta the twin speaks; the
+/// `scale(0.5F)` half the `FlameParticle$SmallFlameProvider` tail
+/// carries belongs to the `SMALL_FLAME` type — indy cp#447, the
+/// bootstrap arg cp#1349 the SmallFlameProvider methodref answers —
+/// the candle/vault flame the OTHER registration rides, the eject
+/// walk's own flame the 3014/3017 words bank). The caller
 /// the spawner's own mob spawn pins — `TrialSpawner.spawnMob`'s
 /// `sipush 3011, aload_2, FlameParticle.encode()` levelEvent call
 /// the bytecode speaks (pc 473-483; the 3012 twin at pc 486-497 the
@@ -1928,6 +1936,80 @@ pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_EFFECT: i32 = 3013;
 /// the `globalLevelEvent` switch never banks — the positioned lane
 /// the case's own arm wears.
 pub const PARTICLES_TRIAL_SPAWNER_DETECT_PLAYER_OMINOUS_EFFECT: i32 = 3019;
+
+/// THE TRIAL-SPAWNER EJECT-ITEM VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM`, the case
+/// `LevelEventHandler.levelEvent` offset 2143 speaks): the ONE
+/// `playLocalSound(pos, TRIAL_SPAWNER_EJECT_ITEM, BLOCKS, 1.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, true)` walk the case
+/// body spends FIRST (pc 2143-2177 — the fconst_1 volume the fixed
+/// fold keeps, the TWO pitch draws the fsub/fmul/fadd chain answers,
+/// the SAME [0.8, 1.2] band the 0.2F scale gives, the BLOCK CENTER
+/// the `playLocalSound(BlockPos, ...)` resolve places, the
+/// distance-delay flag TRUE the jar's own `iconst_1` keeps — pc
+/// 2176), THEN the ONE `TrialSpawner.addEjectItemParticles(level,
+/// pos, random)` walk the case tail spends (pc 2180-2187 — NO data
+/// arg the walk's own signature carries, the `iload_3` word the
+/// case body never READS). THE WALK the jar's own bytecodes pin
+/// (`addEjectItemParticles`, len=159): the `bipush 20` loop the
+/// iconst_0/if_icmpge pair answers, the per-iteration SIX draws —
+/// the THREE `nextDouble()` position spreads (`pos.getX() + 0.4 +
+/// nextDouble() * 0.2` per axis, the +0.4 anchor the ldc2w 0.4
+/// carries, the [0.4, 0.6] band the dmul 0.2 folds), the THREE
+/// `nextGaussian()` velocity draws (`* 0.02` per axis the dmul 0.02
+/// trio speaks). The TWO `Level.addParticle` calls the SAME
+/// position + velocity args share: the SMALL_FLAME the getstatic
+/// pc 111 banks (the zd arg the `0.25 dmul` fold scales — the
+/// flame's own quarter-pull the fold speaks), the SMOKE the pc 134
+/// banks (the raw args the pair rides). The PROVIDER chain the
+/// fresh audit banks: `SMALL_FLAME` the `FlameParticle
+/// $SmallFlameProvider` chain wears (indy cp#447 — the SAME class
+/// the plain provider arms with the ONE `scale(0.5F)` tail the ldc1
+/// 0.5 + invokevirtual scale pair pc 34-36 speaks, the flame sprite
+/// the one-texture `small_flame.json` list banks — `minecraft:flame`
+/// the SAME pixels the plain flame holds, NO new assets the lane
+/// demands; the ctor's FIFTEEN draws the torch-flame bank pins —
+/// the arg velocities the `xd = xd * 0.01D + xdArg` fold ADDS, the
+/// RisingParticle ctor pc 26-66 speaks), the SMOKE the
+/// `SmokeParticle` ctor chain wears (the NINE draws the torch-smoke
+/// bank pins, the arg velocities the BaseAshSmokeParticle
+/// `arg + spread * 0.1` fold adds). THE CALLER the spawner's own
+/// item eject pins — `TrialSpawner.ejectReward`'s
+/// `sipush 3014, aload_2 (pos), iconst_0` levelEvent call the
+/// bytecode speaks (pc 101-107 — the loot-table eject the
+/// `DefaultDispenseItemBehavior.spawnItem` walk beside it fires,
+/// the data word 0 the iconst_0 carries — the case body never
+/// reads it; the SILENT sibling banks: 3017 the eject-particles
+/// word the vault's own eject answers). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT: i32 = 3014;
+
+/// THE TRIAL-SPAWNER EJECT-ITEM PARTICLES' OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_TRIAL_SPAWNER_EJECT_ITEM`, the case
+/// `LevelEventHandler.levelEvent` offset 2193 speaks): the TWELVE
+/// BYTES the case body spends — the ONE `TrialSpawner
+/// .addEjectItemParticles(level, pos, random)` invokestatic walk
+/// alone (pc 2193-2200, the goto the tail answers), NO voice the
+/// case speaks, NO data word the `iload_3` read the body ever makes
+/// (the silent twin the 3014 voice word banks — the SAME walk the
+/// eject burst answers, the 600 draws the twenty-iteration chain
+/// consumes). THE CALLER the vault's own reward eject pins —
+/// `VaultState.ejectResultItem`'s `sipush 3017, aload_1 (pos),
+/// iconst_0` levelEvent call the bytecode speaks (pc 23-28 — the
+/// `DefaultDispenseItemBehavior.spawnItem` walk beside it fires,
+/// the data word 0 the iconst_0 carries; the vault's own eject
+/// VOICE the `playSound(null, pos, VAULT_EJECT_ITEM, BLOCKS, 0.8F,
+/// 0.4F + f3)` DIRECT call the same body spends — pc 34-48 — the
+/// sound-packet lane the level-event lane never carries, NO voice
+/// the 3017 word itself speaks). The 3013/3019 detect pair's own
+/// silent-vs-voice law the eject family mirrors (the one-invoke
+/// arm the 3017 case's own size keeps). The GLOBAL route the
+/// `globalLevelEvent` switch never banks — the positioned lane the
+/// case's own arm wears.
+pub const PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT: i32 = 3017;
 
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
