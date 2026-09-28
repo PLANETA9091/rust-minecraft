@@ -2011,6 +2011,99 @@ pub const PARTICLES_AND_SOUND_TRIAL_SPAWNER_EJECT_ITEM_EFFECT: i32 = 3014;
 /// case's own arm wears.
 pub const PARTICLES_TRIAL_SPAWNER_EJECT_ITEM_EFFECT: i32 = 3017;
 
+/// THE VAULT ACTIVATE VOICE'S OWN ID (the 26.2 `LevelEvent` constants
+/// class the client jar banks — `PARTICLES_AND_SOUND_VAULT_ACTIVATE`,
+/// the case `LevelEventHandler.levelEvent` offset 2206 speaks): the
+/// BLOCK-ENTITY GATE the case body spends FIRST — the ONE
+/// `level.getBlockEntity(pos) instanceof VaultBlockEntity` walk the
+/// `ifeq -> 2303` tail answers (the non-vault anchor the whole arm
+/// skips — NO burst the failed gate ever fires, NO voice it speaks),
+/// THEN the ONE `VaultBlockEntity$Client.emitActivationParticles(
+/// level, vault.getBlockPos(), vault.getBlockState(),
+/// vault.getSharedData(), data != 0 ? SOUL_FIRE_FLAME : SMALL_FLAME)`
+/// walk the gate's own body spends (pc 2231-2263 — the `iload_3` +
+/// `ifne` pair the flame gate answers, the SOUL word the ominous
+/// data carries, the SMALL word the normal data keeps; the BLOCK
+/// ENTITY'S OWN pos the `getBlockPos` resolve places — NOT the event
+/// pos the `aload_2` banks), THEN the ONE `playLocalSound(pos,
+/// VAULT_ACTIVATE, BLOCKS, 1.0F, (nextFloat() - nextFloat()) * 0.2F
+/// + 1.0F, true)` walk the case tail spends (pc 2266-2300 — the TWO
+/// pitch draws the fsub/fmul/fadd chain answers, the SAME [0.8, 1.2]
+/// band the 0.2F scale gives, the BLOCK CENTER the
+/// `playLocalSound(BlockPos, ...)` resolve places, the distance-delay
+/// flag TRUE the `iconst_1` pc 2299 keeps). THE WALK the jar's own
+/// bytecodes pin (`emitActivationParticles`, len=87): the connection
+/// tail FIRST — `emitConnectionParticlesForNearbyPlayers(level, pos,
+/// state, sharedData)` the pc 4 invokestatic spends (the
+/// `getConnectedPlayers()` set the `isEmpty()` early-return answers —
+/// the client's own BE sync the set carries, the EMPTY set the
+/// no-op's own return speaks), THEN the `bipush 20` loop the
+/// iconst_0/if_icmpge pair spends — the THREE `Mth.nextDouble(random,
+/// ...)` position draws the `randomPosInsideCage(pos, random)` walk
+/// carries per iteration (the [0.1, 0.9] x/z bands + the [0.25,
+/// 0.75] y band the ldc2w quartet speaks — the `min + nextDouble() *
+/// (max - min)` fold the Mth's own walk answers), the TWO
+/// `Level.addParticle` calls the SAME position + the ZERO velocity
+/// args share (the `dconst_0` trio both calls speak) — the SMOKE the
+/// first getstatic pc 32 banks, the flame ARG the second `aload [4]`
+/// carries (the gate's own pick). The chains the providers' own
+/// walks bank: the SMOKE the `SmokeParticle` ctor chain (the NINE
+/// draws, the `arg + spread * 0.1` fold the zero args keep), the
+/// SMALL_FLAME the `FlameParticle$SmallFlameProvider` chain (the
+/// FIFTEEN draws + the `scale(0.5F)` half-quad, the `xd * 0.01D +
+/// xdArg` fold the zero args keep), the SOUL_FIRE_FLAME the plain
+/// `FlameParticle$Provider` chain (the FULL quad the identical indy
+/// call site cp#125 banks — the corrective audit the eject round
+/// pinned). THE CALLER the vault's own activation pins —
+/// `VaultState$2.onEnter` (the ACTIVE state's own onEnter)'s
+/// `sipush 3015, pos, z ? 1 : 0` levelEvent call the bytecode pins
+/// (pc 17-32 — the display-item cycle the
+/// `cycleDisplayItemFromLootTable` walk beside it fires, the data
+/// word the ominous gate's own ternary passes — the boolean arg the
+/// onEnter signature carries the `iload [5]` + `ifeq` pair answers).
+/// The GLOBAL route the `globalLevelEvent` switch never banks — the
+/// positioned lane the case's own arm wears.
+pub const PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT: i32 = 3015;
+
+/// THE VAULT DEACTIVATE VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks —
+/// `PARTICLES_AND_SOUND_VAULT_DEACTIVATE`, the case
+/// `LevelEventHandler.levelEvent` offset 2306 speaks): NO block-entity
+/// gate the case body spends — the ONE
+/// `VaultBlockEntity$Client.emitDeactivationParticles(level, pos,
+/// data != 0 ? SOUL_FIRE_FLAME : SMALL_FLAME)` walk the body spends
+/// FIRST (pc 2306-2324 — the `iload_3` + `ifne` pair the SAME flame
+/// gate the 3015 sibling keeps, the EVENT pos the `aload_2` carries —
+/// no `getBlockEntity` walk the twelve-instruction head answers),
+/// THEN the ONE `playLocalSound(pos, VAULT_DEACTIVATE, BLOCKS, 1.0F,
+/// (nextFloat() - nextFloat()) * 0.2F + 1.0F, true)` walk the case
+/// tail spends (pc 2327-2361 — the SAME pitch chain the 3015 voice
+/// keeps, the SAME [0.8, 1.2] band the 0.2F scale gives, the
+/// distance-delay flag TRUE the `iconst_1` pc 2360 keeps). THE WALK
+/// the jar's own bytecodes pin (`emitDeactivationParticles`, len=103):
+/// the `bipush 20` loop the iconst_0/if_icmpge pair spends — the
+/// THREE `Mth.nextDouble(random, 0.4, 0.6)` position draws the
+/// `randomPosCenterOfCage(pos, random)` walk carries per iteration
+/// (the [0.4, 0.6] band the ldc2w trio speaks — the cage CENTER the
+/// tight band keeps), the THREE `nextGaussian() * 0.02` velocity
+/// draws the `new Vec3(...)` ctor carries (the `dmul 0.02` trio the
+/// eject walk's own shape answers), the ONE `Level.addParticle`
+/// call the flame ARG spends (NO smoke companion the activation's
+/// own pair keeps). The chain the providers' own walks bank: the
+/// SMALL_FLAME the `FlameParticle$SmallFlameProvider` chain (the
+/// FIFTEEN draws + the `scale(0.5F)` half-quad, the `xd * 0.01D +
+/// xdArg` fold the gaussian args ride at FULL scale), the
+/// SOUL_FIRE_FLAME the plain `FlameParticle$Provider` chain (the
+/// FULL quad the identical indy call site banks). THE CALLER the
+/// vault's own deactivation pins — `VaultState$1.onEnter` (the
+/// INACTIVE state's own onEnter)'s `sipush 3016, pos, z ? 1 : 0`
+/// levelEvent call the bytecode pins (pc 8-23 — the EMPTY display
+/// item the `setDisplayItem` walk beside it resets, the data word
+/// the SAME ominous ternary the 3015 caller passes). The GLOBAL
+/// route the `globalLevelEvent` switch never banks — the positioned
+/// lane the case's own arm wears.
+pub const PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT: i32 = 3016;
+
 /// THE DISPENSER-DISPENSE VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_DISPENSER_DISPENSE`,
 /// the case `LevelEventHandler.levelEvent` offset 776 speaks): the

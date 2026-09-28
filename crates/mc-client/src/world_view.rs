@@ -516,6 +516,10 @@ pub struct SnapshotView {
     /// render lane's own law reads): each 3014/3017 word ships once
     /// with this view, the worker's drain empties the mailbox after
     pub trial_eject_events: Vec<WireTrialEjectEvent>,
+    /// The vault activate/deactivate family's own wire lane (the
+    /// 3015/3016 words the arms ride — [`WireVaultEvent`] the render
+    /// lane drains per refresh).
+    pub vault_events: Vec<WireVaultEvent>,
     /// The dragon-fireball splash effect's PENDING ARMS — the Level
     /// Event mailbox the model kept (the 2006 words the server's own
     /// fireball broadcasts, [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`]
@@ -901,6 +905,31 @@ pub struct WireTrialEjectEvent {
     /// The vocabulary word the arm rides (3014 the voice word, 3017
     /// the silent twin).
     pub word: i32,
+}
+
+/// One wire VAULT ACTIVATE/DEACTIVATE arm — the Level Event packet's
+/// own landing (the 3015/3016 words the server's own vaults
+/// broadcast,
+/// [`mc_protocol::play::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT`]
+/// + [`mc_protocol::play::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT`]
+/// the render lane speaks): the event's anchor block + the family
+/// word + the flame-gate bit, verbatim (the DATA word both case
+/// bodies READ — the `data != 0 ? SOUL_FIRE_FLAME : SMALL_FLAME`
+/// ternary the `iload_3` + `ifne` pair keeps, the ominous vault the
+/// soul word arms). The WORD the arm rides (3015 the activate
+/// voice, 3016 the deactivate voice — both the case tails speak) —
+/// the bursts' own draws the render lane's stream folds.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireVaultEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The vocabulary word the arm rides (3015 the activate voice,
+    /// 3016 the deactivate voice).
+    pub word: i32,
+    /// The flame-gate word (the `data != 0` ternary the case bodies
+    /// read — the ominous vault the SOUL word arms).
+    pub soul: bool,
 }
 
 /// One wire DRAGON-FIREBALL SPLASH EFFECT arm — the Level Event
@@ -3039,6 +3068,9 @@ pub fn materialize_snapshot_view(
         // no 3014/3017 traffic — the empty mailbox the render lane
         // skips)
         trial_eject_events: Vec::new(),
+        // and no vault words (the join snapshot carries no 3015/3016
+        // traffic — the empty mailbox the render lane skips)
+        vault_events: Vec::new(),
         // and no dragon words (the join snapshot carries no 2006
         // traffic — the empty mailbox the render lane skips)
         dragon_fireball_splash_events: Vec::new(),
@@ -3648,6 +3680,23 @@ impl LiveView {
                 word: arm.word,
             })
             .collect();
+        // the vault activate/deactivate family's own projection (the
+        // mailbox verbatim — the anchor + the family word + the
+        // flame-gate bit the arms carry, the render lane's own law
+        // reads): each 3015/3016 word ships once with this view, the
+        // worker's drain empties the mailbox after
+        let vault_events = self
+            .model
+            .vault_events
+            .iter()
+            .map(|arm| WireVaultEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                word: arm.word,
+                soul: arm.soul,
+            })
+            .collect();
         // the dragon-fireball splash effect's own projection (the
         // mailbox verbatim — the anchor + the sound-gate word the arms
         // carry, the render lane's own law reads): each 2006 word
@@ -4072,6 +4121,10 @@ impl LiveView {
                 // arm too — the 3014/3017 words are the connection's
                 // own traffic, not the pose's
                 trial_eject_events,
+                // the vault family's arms ride the pose-less arm too
+                // — the 3015/3016 words are the connection's own
+                // traffic, not the pose's
+                vault_events,
                 // the dragon-fireball splash's arms ride the pose-less
                 // arm too — the 2006 words are the connection's own
                 // traffic, not the pose's
@@ -4266,6 +4319,10 @@ impl LiveView {
             // — the 3014/3017 words follow the mailbox exactly like
             // the egg's own arms do
             trial_eject_events,
+            // the vault family's arms ride every refresh too — the
+            // 3015/3016 words follow the mailbox exactly like the
+            // eject's own arms do
+            vault_events,
             // the dragon-fireball splash's arms ride every refresh too
             // — the 2006 words follow the mailbox exactly like the
             // growth's own arms do

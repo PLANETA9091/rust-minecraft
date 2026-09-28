@@ -3180,6 +3180,176 @@ pub fn trial_eject_item_burst(x: i32, y: i32, z: i32, rng: &mut crate::drops::Lc
     out
 }
 
+/// The vault walk's own FLAME (javap the `VaultBlockEntity$Client`
+/// walks' flame `Level.addParticle` verbatim — the gate arg the
+/// 3015/3016 case bodies pass, `data != 0 ? SOUL_FIRE_FLAME :
+/// SMALL_FLAME` the `iload_3` + `ifne` pair answers): the chain the
+/// provider registry banks — the SMALL_FLAME the
+/// `FlameParticle$SmallFlameProvider` chain wears (the FIFTEEN draws
+/// + the `scale(0.5F)` half-quad, the `xd = xd * 0.01D + xdArg` fold
+/// the arg velocities ride at FULL scale — NO `0.25` z-fold the
+/// eject walk's own arg-scaling keeps, the vault walks' raw args the
+/// bytecodes never scale), the SOUL_FIRE_FLAME the plain
+/// `FlameParticle$Provider` chain wears (the FULL quad the identical
+/// indy call site the corrective audit banks, the SAME fifteen
+/// draws). The zero-arg activation the fold's arg half keeps (the
+/// `dconst_0` trio the walk's own addParticle args speak), the
+/// gaussian deactivation the `* 0.02` args the `new Vec3` ctor
+/// carries ride the same fold.
+fn vault_flame(
+    x: f64,
+    y: f64,
+    z: f64,
+    small: bool,
+    ax: f64,
+    ay: f64,
+    az: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the dead sprite pick (nextInt(1) the one-element list answers)
+    let _dead_sprite = rng.next_int(1);
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the RisingParticle ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (vx, vy, vz) = ctor_spread_and_normalize(rng);
+    let quad = if small {
+        base_quad_size(rng.next_f32()) * 0.5
+    } else {
+        base_quad_size(rng.next_f32())
+    };
+    let fold = f64::from(0.01f32);
+    let jx = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    let jy = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    let jz = ((rng.next_f32() - rng.next_f32()) * 0.05f32) as f64;
+    Particle {
+        kind: if small {
+            ParticleKind::SmallFlame
+        } else {
+            ParticleKind::SoulFlame
+        },
+        x: x + jx,
+        y: y + jy,
+        z: z + jz,
+        prev: None,
+        vx: vx * fold + ax,
+        vy: vy * fold + ay,
+        vz: vz * fold + az,
+        age: 0,
+        lifetime: flame_lifetime(rng.next_f32()),
+        gravity: 0.0,
+        friction: 0.96,
+        quad_size: quad,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The vault walk's own SMOKE (javap `VaultBlockEntity$Client
+/// .emitActivationParticles`'s first `Level.addParticle` verbatim —
+/// the `ParticleTypes.SMOKE` getstatic pc 32 banks, at the cage
+/// position the `randomPosInsideCage` walk gives with the ZERO
+/// velocity args the `dconst_0` trio speaks): the SAME `SmokeParticle`
+/// ctor chain the eject smoke bank pins (the NINE draws — the dead
+/// base lifetime, the five-draw spread+normalize pair, the size, the
+/// tint, the own lifetime — the `arg + spread * 0.1` fold the zero
+/// args keep), the grey tint the r*0.3 draw carries, the 0.75 size
+/// fold, the 8..40 lifetime the smoke_puff helper speaks.
+fn vault_smoke(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Particle {
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the ash ctor's own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    let (vx, vy, vz) = ctor_spread_and_normalize(rng);
+    let scale = f64::from(0.1f32);
+    smoke_puff(
+        x,
+        y,
+        z,
+        vx * scale,
+        vy * scale,
+        vz * scale,
+        rng.next_f32(),
+        rng.next_f32(),
+        rng.next_f32(),
+    )
+}
+
+/// The vault's own ACTIVATION BURST (javap
+/// `VaultBlockEntity$Client.emitActivationParticles` verbatim over
+/// the 26.2 jar — len=87, the 3015 case's own invokestatic): the
+/// connection tail the client's own BE state answers (the
+/// `getConnectedPlayers()` set the `isEmpty()` early-return speaks —
+/// the client's BE-less registry the EMPTY set the no-op's own
+/// return banks, NO draws the tail ever spends), the `bipush 20`
+/// loop the per-iteration walk spends: the THREE `Mth.nextDouble`
+/// position draws the `randomPosInsideCage(pos, random)` walk
+/// carries (the x/z bands `0.1 + nd * 0.8`, the y band
+/// `0.25 + nd * 0.5` — the [0.1, 0.9] + [0.25, 0.75] cages the
+/// ldc2w quartet speaks), the TWO `Level.addParticle` calls share
+/// the SAME position with the ZERO velocity args — the SMOKE the
+/// first getstatic pc 32 banks, the flame ARG the second `aload [4]`
+/// carries (the gate's own pick the caller passes). The chains the
+/// providers' own walks bank: the smoke the `vault_smoke` chain
+/// (the NINE draws), the flame the `vault_flame` chain (the FIFTEEN
+/// draws + the gate's own half-or-full quad). TWENTY-SEVEN draws per
+/// iteration the stream consumes, FORTY particles the burst answers
+/// (twenty smoke + twenty flame, the smoke the pair's FIRST member
+/// the walk's own call order keeps — the eject walk's flame-first
+/// order the vault's own walk MIRRORS).
+pub fn vault_activation_burst(
+    x: i32,
+    y: i32,
+    z: i32,
+    small: bool,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(40);
+    for _ in 0..20 {
+        let px = f64::from(x) + 0.1 + rng.next_f64() * 0.8;
+        let py = f64::from(y) + 0.25 + rng.next_f64() * 0.5;
+        let pz = f64::from(z) + 0.1 + rng.next_f64() * 0.8;
+        // the SMOKE companion (the zero args the dconst_0 trio speaks)
+        out.push(vault_smoke(px, py, pz, rng));
+        // the flame ARG (the gate's own pick, the zero args the pair rides)
+        out.push(vault_flame(px, py, pz, small, 0.0, 0.0, 0.0, rng));
+    }
+    out
+}
+
+/// The vault's own DEACTIVATION BURST (javap
+/// `VaultBlockEntity$Client.emitDeactivationParticles` verbatim over
+/// the 26.2 jar — len=103, the 3016 case's own invokestatic): the
+/// `bipush 20` loop the per-iteration walk spends: the THREE
+/// `Mth.nextDouble(random, 0.4, 0.6)` position draws the
+/// `randomPosCenterOfCage(pos, random)` walk carries (the
+/// `0.4 + nd * 0.2` band the cage CENTER the tight span keeps), the
+/// THREE `nextGaussian() * 0.02` velocity draws the `new Vec3(...)`
+/// ctor carries, the ONE `Level.addParticle` call the flame ARG
+/// spends (NO smoke companion the activation's own pair keeps). The
+/// flame the `vault_flame` chain wears (the FIFTEEN draws + the
+/// gate's own half-or-full quad, the gaussian args the `xd * 0.01D +
+/// xdArg` fold rides at FULL scale). TWENTY-ONE draws per iteration
+/// the stream consumes, TWENTY particles the burst answers.
+pub fn vault_deactivation_burst(
+    x: i32,
+    y: i32,
+    z: i32,
+    small: bool,
+    rng: &mut crate::drops::Lcg,
+) -> Vec<Particle> {
+    let mut out = Vec::with_capacity(20);
+    for _ in 0..20 {
+        let px = f64::from(x) + 0.4 + rng.next_f64() * 0.2;
+        let py = f64::from(y) + 0.4 + rng.next_f64() * 0.2;
+        let pz = f64::from(z) + 0.4 + rng.next_f64() * 0.2;
+        let ax = rng.next_gaussian() * 0.02;
+        let ay = rng.next_gaussian() * 0.02;
+        let az = rng.next_gaussian() * 0.02;
+        out.push(vault_flame(px, py, pz, small, ax, ay, az, rng));
+    }
+    out
+}
+
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s
 /// lambda verbatim) over one full-cube box: the box's extents
 /// `min(1.0, max - min)` (the cube's 1.0), the sections
@@ -6793,6 +6963,208 @@ mod tests {
             let _s = eject_smoke(_px, _py, _pz, _ax, _ay, _az, &mut b);
         }
         assert_eq!(after_walk, b.next(), "the replay's own tail draw");
+    }
+
+    #[test]
+    fn the_vault_bursts_the_cage_walks_the_args_wear() {
+        // THE ACTIVATION BURST (the `emitActivationParticles` walk
+        // verbatim: the `bipush 20` loop, the cage bands the
+        // `randomPosInsideCage` walk speaks, the SMOKE FIRST the
+        // walk's own addParticle order keeps — the eject walk's
+        // flame-first order the vault's own call pair MIRRORS)
+        let burst = vault_activation_burst(3, 4, 5, true, &mut rng());
+        assert_eq!(burst.len(), 40, "the twenty pairs");
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    matches!(p.kind, ParticleKind::Smoke),
+                    "the smoke first at pair {}: {:?}",
+                    i,
+                    p.kind
+                );
+            } else {
+                assert!(
+                    matches!(p.kind, ParticleKind::SmallFlame),
+                    "the small flame second"
+                );
+            }
+        }
+        // THE BANDS (the `randomPosInsideCage` folds: the x/z bands
+        // the `0.1 + nd * 0.8` pair answers, the y band the
+        // `0.25 + nd * 0.5` fold keeps — the ±0.05 jitter the ctor
+        // adds; the flames the scale(0.5F) half the birth band keeps)
+        for (i, p) in burst.iter().enumerate() {
+            assert!(
+                (3.05..3.95).contains(&p.x),
+                "the x cage band at {}: {}",
+                i,
+                p.x
+            );
+            assert!(
+                (4.20..4.80).contains(&p.y),
+                "the y cage band at {}: {}",
+                i,
+                p.y
+            );
+            assert!(
+                (5.05..5.95).contains(&p.z),
+                "the z cage band at {}: {}",
+                i,
+                p.z
+            );
+            if i % 2 == 1 {
+                assert!(
+                    (0.05..0.11).contains(&p.quad_size),
+                    "the small half-quad: {}",
+                    p.quad_size
+                );
+            }
+        }
+        // THE ZERO ARGS (the `dconst_0` trio the walk's own
+        // addParticle velocity slots speak — the flame the spread
+        // * 0.01 fold alone keeps, the smoke the spread * 0.1 the
+        // ash ctor speaks)
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 1 {
+                assert!(
+                    p.vx.abs() < 0.05 && p.vy.abs() < 0.05 && p.vz.abs() < 0.05,
+                    "the zero-arg flame the spread fold alone keeps: {} {} {}",
+                    p.vx,
+                    p.vy,
+                    p.vz
+                );
+            } else {
+                assert!(
+                    p.vx.abs() < 0.15 && p.vy.abs() < 0.15 && p.vz.abs() < 0.15,
+                    "the zero-arg smoke the spread fold alone keeps"
+                );
+            }
+        }
+        // THE SOUL GATE (the `data != 0 ? SOUL_FIRE_FLAME :
+        // SMALL_FLAME` ternary the case body reads — the ominous
+        // vault the FULL-quad soul word the plain provider banks)
+        let soul = vault_activation_burst(3, 4, 5, false, &mut rng());
+        let souls = soul
+            .iter()
+            .filter(|p| matches!(p.kind, ParticleKind::SoulFlame))
+            .count();
+        assert_eq!(souls, 20, "the soul word the ominous gate arms");
+        for p in soul.iter().filter(|p| matches!(p.kind, ParticleKind::SoulFlame)) {
+            assert!(
+                (0.1..0.22).contains(&p.quad_size),
+                "the full quad the plain provider keeps: {}",
+                p.quad_size
+            );
+        }
+        // THE DEACTIVATION BURST (the `emitDeactivationParticles`
+        // walk verbatim: the center bands the `randomPosCenterOfCage`
+        // walk speaks, the ONE flame the smoke-free pair keeps, the
+        // gaussian args the * 0.02 fold the Vec3 ctor carries)
+        let decay = vault_deactivation_burst(15, 16, 17, true, &mut rng());
+        assert_eq!(decay.len(), 20, "the twenty flames");
+        for (i, p) in decay.iter().enumerate() {
+            assert!(
+                matches!(p.kind, ParticleKind::SmallFlame),
+                "the flame alone at {}: {:?}",
+                i,
+                p.kind
+            );
+            assert!(
+                (15.35..15.65).contains(&p.x),
+                "the x center band at {}: {}",
+                i,
+                p.x
+            );
+            assert!(
+                (16.35..16.65).contains(&p.y),
+                "the y center band at {}: {}",
+                i,
+                p.y
+            );
+            assert!(
+                (17.35..17.65).contains(&p.z),
+                "the z center band at {}: {}",
+                i,
+                p.z
+            );
+            assert!(
+                (0.05..0.11).contains(&p.quad_size),
+                "the small half-quad the deactivation keeps: {}",
+                p.quad_size
+            );
+            assert!(
+                p.vx.abs() < 0.15 && p.vy.abs() < 0.15 && p.vz.abs() < 0.15,
+                "the gaussian args the 0.02 scale keeps: {} {} {}",
+                p.vx,
+                p.vy,
+                p.vz
+            );
+        }
+        // THE DETERMINISM (the same seed the same chain answers)
+        let burst2 = vault_activation_burst(3, 4, 5, true, &mut rng());
+        for (p, p2) in burst.iter().zip(burst2.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (p2.x, p2.y, p2.z, p2.vx, p2.vy, p2.vz, p2.lifetime, p2.quad_size),
+                "the seeded members replay"
+            );
+        }
+        // THE STREAM (the walk's own draw ORDER the manual replay
+        // pins verbatim: per iteration the THREE nextDouble position
+        // draws + the smoke's NINE + the flame's FIFTEEN — the
+        // smoke-first order the activation's own call pair keeps)
+        let mut a = rng();
+        let mut manual: Vec<Particle> = Vec::with_capacity(40);
+        for _ in 0..20 {
+            let px = f64::from(3) + 0.1 + a.next_f64() * 0.8;
+            let py = f64::from(4) + 0.25 + a.next_f64() * 0.5;
+            let pz = f64::from(5) + 0.1 + a.next_f64() * 0.8;
+            manual.push(vault_smoke(px, py, pz, &mut a));
+            manual.push(vault_flame(px, py, pz, true, 0.0, 0.0, 0.0, &mut a));
+        }
+        let after_walk = a.next();
+        for (p, m) in burst.iter().zip(manual.iter()) {
+            assert_eq!(
+                (p.x, p.y, p.z, p.vx, p.vy, p.vz, p.lifetime, p.quad_size),
+                (m.x, m.y, m.z, m.vx, m.vy, m.vz, m.lifetime, m.quad_size),
+                "the walk's own exact draw order"
+            );
+        }
+        let mut b = rng();
+        for _ in 0..20 {
+            let _px = f64::from(3) + 0.1 + b.next_f64() * 0.8;
+            let _py = f64::from(4) + 0.25 + b.next_f64() * 0.5;
+            let _pz = f64::from(5) + 0.1 + b.next_f64() * 0.8;
+            let _s = vault_smoke(_px, _py, _pz, &mut b);
+            let _f = vault_flame(_px, _py, _pz, true, 0.0, 0.0, 0.0, &mut b);
+        }
+        assert_eq!(after_walk, b.next(), "the replay's own tail draw");
+        // THE DEACTIVATION'S OWN STREAM (the THREE nextDouble center
+        // draws + the THREE nextGaussian velocity draws + the flame's
+        // FIFTEEN — the one-particle order the walk keeps)
+        let mut c = rng();
+        let mut manual_decay: Vec<Particle> = Vec::with_capacity(20);
+        for _ in 0..20 {
+            let px = f64::from(15) + 0.4 + c.next_f64() * 0.2;
+            let py = f64::from(16) + 0.4 + c.next_f64() * 0.2;
+            let pz = f64::from(17) + 0.4 + c.next_f64() * 0.2;
+            let ax = c.next_gaussian() * 0.02;
+            let ay = c.next_gaussian() * 0.02;
+            let az = c.next_gaussian() * 0.02;
+            manual_decay.push(vault_flame(px, py, pz, true, ax, ay, az, &mut c));
+        }
+        let after_decay = c.next();
+        let mut d = rng();
+        for _ in 0..20 {
+            let _px = f64::from(15) + 0.4 + d.next_f64() * 0.2;
+            let _py = f64::from(16) + 0.4 + d.next_f64() * 0.2;
+            let _pz = f64::from(17) + 0.4 + d.next_f64() * 0.2;
+            let _ax = d.next_gaussian() * 0.02;
+            let _ay = d.next_gaussian() * 0.02;
+            let _az = d.next_gaussian() * 0.02;
+            let _f = vault_flame(_px, _py, _pz, true, _ax, _ay, _az, &mut d);
+        }
+        assert_eq!(after_decay, d.next(), "the decay replay's own tail draw");
     }
 
     #[test]

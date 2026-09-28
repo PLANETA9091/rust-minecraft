@@ -487,6 +487,10 @@ pub struct WorldModel {
     /// read, the WORD the family shares the arm carries. The
     /// burst's own draws the render lane's stream keeps.
     pub trial_eject_events: Vec<TrialEjectArm>,
+    /// The vault activate/deactivate family's own mailbox (the
+    /// 3015/3016 words the `VaultState$1/$2.onEnter` callers
+    /// broadcast — [`VaultArm`] the render lane drains per refresh).
+    pub vault_events: Vec<VaultArm>,
     /// THE DRAGON-FIREBALL SPLASH EFFECT'S OWN MAILBOX (the Level
     /// Event packet's next vocabulary word —
     /// [`mc_protocol::play::DRAGON_FIREBALL_SPLASH_EFFECT`] the case
@@ -1180,6 +1184,35 @@ pub struct TrialEjectArm {
     /// the silent twin — the voice the render lane's own law plays
     /// beside the burst).
     pub word: i32,
+}
+
+/// One pending VAULT ACTIVATE/DEACTIVATE arm — the Level Event
+/// packet's own landing the model keeps verbatim (see
+/// [`WorldModel::vault_events`]). The anchor verbatim (the vault's
+/// own block the `VaultState$1/$2.onEnter` broadcasts — the ACTIVE
+/// state's activation the 3015 word speaks, the INACTIVE state's
+/// deactivation the 3016 word answers), the DATA word the flame
+/// GATE the render lane's own law reads (the `data != 0 ?
+/// SOUL_FIRE_FLAME : SMALL_FLAME` ternary the `iload_3` + `ifne`
+/// pair both case bodies keep — the ominous vault the soul word
+/// arms, the normal vault the small word keeps). The WORD the
+/// family shares rides beside it (3015 the activate voice, 3016 the
+/// deactivate voice — both the case tails speak). The bursts' own
+/// draws the render lane's stream folds (the activation the
+/// forty-particle cage walk, the deactivation the twenty-particle
+/// center walk the walks' own bytecounts keep).
+#[derive(Debug, Clone, PartialEq)]
+pub struct VaultArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The vocabulary word the arm rides (3015 the activate word,
+    /// 3016 the deactivate word — both the case tails voice).
+    pub word: i32,
+    /// The flame-gate word (the `data != 0` ternary the case bodies
+    /// read — the ominous vault the SOUL word arms, the normal the
+    /// SMALL word keeps).
+    pub soul: bool,
 }
 
 /// One pending DRAGON-FIREBALL SPLASH arm — the Level Event packet's
@@ -2032,6 +2065,7 @@ impl WorldModel {
             trial_spawn_events: Vec::new(),
             trial_detect_events: Vec::new(),
             trial_eject_events: Vec::new(),
+            vault_events: Vec::new(),
             dragon_fireball_splash_events: Vec::new(),
             water_evaporating_events: Vec::new(),
             composter_fill_events: Vec::new(),
@@ -2310,6 +2344,13 @@ impl WorldModel {
     /// eject burst the render's own stream keeps).
     pub fn drain_trial_eject_events(&mut self) -> Vec<TrialEjectArm> {
         std::mem::take(&mut self.trial_eject_events)
+    }
+
+    /// THE VAULT FAMILY'S OWN DRAIN (the 3015/3016 words the arms
+    /// ride — [`WorldModel::vault_events`] the mailbox the drain
+    /// empties once, the same once-only law the eject drain keeps).
+    pub fn drain_vault_events(&mut self) -> Vec<VaultArm> {
+        std::mem::take(&mut self.vault_events)
     }
 
     /// The dragon-fireball splash effect's mailbox's own drain (the
@@ -2747,6 +2788,10 @@ impl WorldModel {
                 // level (the same walk — the old level's 3014/3017
                 // words never burst again)
                 self.trial_eject_events.clear();
+                // the vault activate/deactivate's mailbox dies with
+                // the level (the same walk — the old level's 3015/3016
+                // words never burst again)
+                self.vault_events.clear();
                 // the dragon-fireball splash's mailbox dies with the
                 // level (the same walk — the old level's 2006 words
                 // never pool again)
@@ -3915,6 +3960,34 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         word: ev.effect,
+                    });
+                    true
+                } else if (ev.effect == mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT
+                    || ev.effect == mc_protocol::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT)
+                    && !ev.global
+                {
+                    // THE VAULT ACTIVATE/DEACTIVATE FAMILY'S OWN ARM
+                    // (javap the case offsets 2206/2306 — the
+                    // positioned route the GLOBAL switch never banks):
+                    // the `iload_3` + `ifne` pair BOTH bodies spend —
+                    // the flame gate the data word answers (the
+                    // `data != 0 ? SOUL_FIRE_FLAME : SMALL_FLAME`
+                    // ternary, the ominous vault the soul word arms);
+                    // the voices the case tails speak (the
+                    // `playLocalSound(pos, VAULT_ACTIVATE/VAULT_DEACTIVATE,
+                    // BLOCKS, 1.0F, (nf - nf) * 0.2F + 1.0F, true)`
+                    // walks — the TWO pitch draws each keeps); the
+                    // 3015 case's block-entity gate the client's own
+                    // BE-less registry the wire's promise answers (the
+                    // server's own vault the broadcast implies — the
+                    // activation burst + voice the gate's pass fires);
+                    // the same mailbox the twin words arm.
+                    self.vault_events.push(VaultArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        word: ev.effect,
+                        soul: ev.data != 0,
                     });
                     true
                 } else if ev.effect == mc_protocol::DRAGON_FIREBALL_SPLASH_EFFECT && !ev.global {
@@ -12807,6 +12880,132 @@ mod tests {
         })));
         assert!(
             m.trial_eject_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_vault_words_the_gate_arms() {
+        // THE VAULT ACTIVATE/DEACTIVATE FAMILY'S OWN ARM (javap the
+        // case offsets 2206/2306 — the positioned route the GLOBAL
+        // switch never banks): the anchor the mailbox keeps, the DATA
+        // word the flame GATE both case bodies READ (the
+        // `data != 0 ? SOUL_FIRE_FLAME : SMALL_FLAME` ternary the
+        // `iload_3` + `ifne` pair answers — the ominous vault the
+        // soul word arms), the drain ships the mailbox exactly once,
+        // and the Respawn recreates the level the mailbox dies with
+        // it.
+        let mut m = WorldModel::new();
+        // the vault's own activation word (the VaultState$2.onEnter
+        // call the `levelEvent(3015, pos, z ? 1 : 0)` walk speaks —
+        // the normal vault the data-0 word the SMALL gate keeps)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT,
+            x: -41,
+            y: 70,
+            z: 123,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.vault_events.len(), 1, "the arm rides");
+        assert_eq!(m.vault_events[0].x, -41);
+        assert_eq!(m.vault_events[0].y, 70);
+        assert_eq!(m.vault_events[0].z, 123);
+        assert_eq!(
+            m.vault_events[0].word,
+            mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT,
+            "the activate word rides"
+        );
+        assert!(!m.vault_events[0].soul, "the data-0 word the small gate keeps");
+        // the OMINOUS vault (the same activation word the data-1
+        // ternary arms — the SOUL word the gate's own pick answers)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT,
+            x: 5,
+            y: -5,
+            z: 500,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.vault_events.len(), 2, "the ominous twin rides");
+        assert!(m.vault_events[1].soul, "the data-1 word the soul gate arms");
+        // the vault's own deactivation word (the VaultState$1.onEnter
+        // call the `levelEvent(3016, pos, z ? 1 : 0)` walk speaks —
+        // the same mailbox the deactivate word arms, the ominous data
+        // the same gate reads)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT,
+            x: 9,
+            y: 65,
+            z: -77,
+            data: 1,
+            global: false,
+        })));
+        assert_eq!(m.vault_events.len(), 3, "the deactivate word rides");
+        assert_eq!(
+            m.vault_events[2].word,
+            mc_protocol::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT,
+            "the deactivate word rides"
+        );
+        assert!(m.vault_events[2].soul, "the ominous deactivate the soul keeps");
+        // the non-ominous deactivate (the data-0 word the small gate
+        // keeps — the gate the wire's every word reads)
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT,
+            x: 3,
+            y: 33,
+            z: 333,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.vault_events.len(), 4, "the fourth arm rides");
+        assert!(!m.vault_events[3].soul, "the data-0 word the small gate keeps");
+        // the GLOBAL route the arm never banks (the positioned lane
+        // the case's own body wears — the broadcast the anchor keeps)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(m.vault_events.len(), 4, "the global words never arm");
+        // the drain ships the mailbox exactly once
+        let drained = m.drain_vault_events();
+        assert_eq!(drained.len(), 4, "the drain ships the mailbox");
+        assert_eq!(drained[0].x, -41, "the activate arm's anchor rides");
+        assert_eq!(
+            drained[2].word,
+            mc_protocol::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT,
+            "the deactivate word rides"
+        );
+        assert!(m.vault_events.is_empty(), "the drained mailbox stays empty");
+        // the fresh word re-arms beside the Respawn's own death walk
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(m.vault_events.len(), 1, "the fresh word re-arms");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.vault_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

@@ -23336,6 +23336,75 @@ impl App {
         }
     }
 
+    /// THE VAULT WIRE LANE (javap `LevelEventHandler` cases
+    /// 3015/3016 — offsets 2206/2306 — over the 26.2 jar): the
+    /// server's own vaults the activate/deactivate pair broadcasts
+    /// (`VaultState$2/$1.onEnter`'s `sipush 3015/3016, pos,
+    /// z ? 1 : 0` levelEvent calls the bytecodes pin), the Level
+    /// Event mailbox's landing: each word the arms the worker
+    /// drained ride exactly one refresh — the flame GATE the data
+    /// word answers (the `data != 0 ? SOUL_FIRE_FLAME : SMALL_FLAME`
+    /// ternary both case bodies read — the ominous vault the soul
+    /// word arms), the BURST the case body speaks FIRST (the
+    /// activation's cage walk + the deactivation's center walk the
+    /// emit invocations bank — the voice the case tail speaks
+    /// AFTER, the draw order the eject family's own lane MIRRORS).
+    pub fn live_vault_events_updated(&mut self, events: Vec<crate::world_view::WireVaultEvent>) {
+        for ev in events {
+            // THE BURST FIRST (the case body's own emit invocation
+            // the voice tail answers — the 3015 cage walk the
+            // `emitActivationParticles` bank pins, the 3016 center
+            // walk the `emitDeactivationParticles` one carries; the
+            // connection tail the client's own BE state answers, the
+            // EMPTY set the no-op's early-return keeps)
+            let small = !ev.soul;
+            let burst = if ev.word == mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT {
+                crate::particles::vault_activation_burst(
+                    ev.x,
+                    ev.y,
+                    ev.z,
+                    small,
+                    &mut self.level_ambient_rng,
+                )
+            } else {
+                crate::particles::vault_deactivation_burst(
+                    ev.x,
+                    ev.y,
+                    ev.z,
+                    small,
+                    &mut self.level_ambient_rng,
+                )
+            };
+            self.particles.extend(burst);
+            // THE VOICE THE CASE TAIL SPEAKS (the TWO pitch draws the
+            // `(nf - nf) * 0.2F + 1.0F` fold answers — the [0.8, 1.2]
+            // band the 0.2F scale gives, the block center the resolve
+            // places, the distance-delay flag TRUE the `iconst_1`
+            // pc 2299/2360 pair keeps — the draws ride AFTER the burst
+            // the emit invocation banks)
+            let key = if ev.word == mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT {
+                "block.vault.activate"
+            } else {
+                "block.vault.deactivate"
+            };
+            let pitch = 1.0f32
+                + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32()) * 0.2f32;
+            let sx = f64::from(ev.x) + 0.5;
+            let sy = f64::from(ev.y) + 0.5;
+            let sz = f64::from(ev.z) + 0.5;
+            let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                key,
+                1.0,
+                pitch,
+                ear_distance(ear, sx, sy, sz),
+                ear_pan(ear, yaw, sx, sy, sz),
+            );
+        }
+    }
+
     /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
     /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
     /// the extinguish voice broadcasts (`BaseFireBlock
@@ -50618,6 +50687,190 @@ cow_sound_variant: None,
         // THE EMPTY MAILBOX: the no-op the drained silence keeps
         let settled = app.particles.len();
         app.live_trial_eject_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            settled,
+            "the empty mailbox ships nothing"
+        );
+    }
+
+    #[test]
+    fn the_vault_serve_the_bursts_the_voices_wear() {
+        // THE VAULT WIRE LANE'S OWN SERVE (javap the case offsets
+        // 2206/2306 — the burst the case body speaks FIRST, the voice
+        // the case tail answers: the activation's 540-draw cage walk
+        // (the twenty-seven-draw iteration chain the smoke-first pair
+        // wears — the three nextDouble positions + the smoke's nine +
+        // the flame's fifteen) + the deactivation's 420-draw center
+        // walk (the twenty-one-draw iteration the one flame keeps),
+        // the TWO pitch draws the voice tail spends AFTER, the
+        // ominous gates the souls the kinds answer, the empty mailbox
+        // the no-op keeps.
+        let mut app = App::new(2);
+        app.enter_world();
+        let saved =
+            std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3015));
+        let before = app.particles.len();
+        app.live_vault_events_updated(vec![crate::world_view::WireVaultEvent {
+            x: -12,
+            y: 44,
+            z: 88,
+            word: mc_protocol::PARTICLES_AND_SOUND_VAULT_ACTIVATE_EFFECT,
+            soul: false,
+        }]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // THE EXACT FORTY (the twenty pairs the loop answers — the
+        // even members the SMOKE companion the walk's own call order
+        // keeps FIRST, the odd members the small flame the gate's
+        // data-0 pick answers)
+        let burst = &app.particles[before..];
+        assert_eq!(burst.len(), 40, "the twenty pairs the serve banks");
+        for (i, p) in burst.iter().enumerate() {
+            if i % 2 == 0 {
+                assert!(
+                    matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                    "pair {i} smoke first"
+                );
+            } else {
+                assert!(
+                    matches!(p.kind, crate::particles::ParticleKind::SmallFlame),
+                    "pair {i} small flame second"
+                );
+                assert!(
+                    (0.05..0.11).contains(&p.quad_size),
+                    "the scale(0.5F) half the birth band keeps: {}",
+                    p.quad_size
+                );
+            }
+        }
+        // THE EXACT DRAW WALK (the burst's twenty-iteration chain
+        // FIRST + the voice's TWO draws the tail answers — the burst
+        // BEFORE the voice the case body's own order keeps: per
+        // iteration the three nextDouble positions + the smoke
+        // chain's nine + the flame chain's fifteen, then the pitch
+        // pair — the SAME stream the walk's own consumption answers)
+        let mut replay = crate::drops::Lcg::new(0x3015);
+        for _ in 0..20 {
+            let _ = replay.next_f64();
+            let _ = replay.next_f64();
+            let _ = replay.next_f64();
+            // the smoke chain's nine
+            let _ = replay.next_f32();
+            for _ in 0..8 {
+                let _ = replay.next_f32();
+            }
+            // the flame chain's fifteen
+            let _ = replay.next_int(1);
+            let _ = replay.next_f32();
+            for _ in 0..5 {
+                let _ = replay.next_f32();
+            }
+            let _ = replay.next_f32();
+            for _ in 0..6 {
+                let _ = replay.next_f32();
+            }
+            let _ = replay.next_f32();
+        }
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        assert_eq!(
+            spent, replay,
+            "the walk's own exact stream the burst opens"
+        );
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.vault.activate @"))
+                .expect("the vault activate voice the lane logs");
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE OMINOUS DEACTIVATION (the 3016 word the SAME serve
+        // answers — the soul gate the data-1 word arms, the
+        // twenty-flame center walk the one-particle loop keeps, the
+        // deactivate voice the case tail speaks)
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0x3016));
+        let before_decay = app.particles.len();
+        app.live_vault_events_updated(vec![crate::world_view::WireVaultEvent {
+            x: 5,
+            y: 66,
+            z: -50,
+            word: mc_protocol::PARTICLES_AND_SOUND_VAULT_DEACTIVATE_EFFECT,
+            soul: true,
+        }]);
+        let spent_decay = std::mem::replace(&mut app.level_ambient_rng, saved);
+        let decay = &app.particles[before_decay..];
+        assert_eq!(decay.len(), 20, "the twenty flames the twin banks");
+        for p in decay.iter() {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::SoulFlame),
+                "the soul word the ominous gate arms"
+            );
+            assert!(
+                (0.1..0.22).contains(&p.quad_size),
+                "the full quad the plain provider keeps: {}",
+                p.quad_size
+            );
+        }
+        let mut replay_decay = crate::drops::Lcg::new(0x3016);
+        for _ in 0..20 {
+            let _ = replay_decay.next_f64();
+            let _ = replay_decay.next_f64();
+            let _ = replay_decay.next_f64();
+            let _ = replay_decay.next_gaussian();
+            let _ = replay_decay.next_gaussian();
+            let _ = replay_decay.next_gaussian();
+            // the flame chain's fifteen
+            let _ = replay_decay.next_int(1);
+            let _ = replay_decay.next_f32();
+            for _ in 0..5 {
+                let _ = replay_decay.next_f32();
+            }
+            let _ = replay_decay.next_f32();
+            for _ in 0..6 {
+                let _ = replay_decay.next_f32();
+            }
+            let _ = replay_decay.next_f32();
+        }
+        let _ = replay_decay.next_f32();
+        let _ = replay_decay.next_f32();
+        assert_eq!(
+            spent_decay, replay_decay,
+            "the center walk's own stream the tail voice closes"
+        );
+        if sounds_loaded() {
+            let line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.vault.deactivate @"))
+                .expect("the vault deactivate voice the lane logs");
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|s| s.split_whitespace().next())
+                .and_then(|s| s.parse().ok())
+                .expect("the pitch the log carries");
+            assert!(
+                (0.8..=1.2).contains(&pitch),
+                "the 0.2F-scale pitch band: {}",
+                pitch
+            );
+        }
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        let settled = app.particles.len();
+        app.live_vault_events_updated(vec![]);
         assert_eq!(
             app.particles.len(),
             settled,
