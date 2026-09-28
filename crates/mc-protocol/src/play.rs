@@ -1683,6 +1683,35 @@ pub const SOUND_DISPENSER_PROJECTILE_LAUNCH_EFFECT: i32 = 1002;
 /// carries — the positioned lane the case's own arm wears).
 pub const FIREWORK_ROCKET_SHOOT_EFFECT: i32 = 1004;
 
+/// THE FIRE-EXTINGUISH VOICE'S OWN ID (the 26.2 `LevelEvent`
+/// constants class the client jar banks — `SOUND_EXTINGUISH_FIRE`,
+/// the case `LevelEventHandler.levelEvent` offset 4137 speaks): the
+/// DATA word the case READS — the TWO-branch fold the `iload_3`
+/// pairs keep (`data == 0` the ONE `playLocalSound(pos,
+/// FIRE_EXTINGUISH, BLOCKS, 0.5F, 2.6F + (nextFloat() - nextFloat())
+/// * 0.8F, false)` walk the head branch speaks, `data == 1` the ONE
+/// `playLocalSound(pos, GENERIC_EXTINGUISH_FIRE, BLOCKS, 0.7F, 1.6F
+/// + (nextFloat() - nextFloat()) * 0.4F, false)` walk the tail
+/// branch speaks — the pitch draws the first-minus-second the fsub
+/// order spends, the volume the `ldc` pair each branch carries, the
+/// BLOCK CENTER the `playLocalSound(BlockPos, ...)` resolve places,
+/// the distance-delay flag false the immediate voices keep); the
+/// words the neither branch answers the case's own silence keeps —
+/// no voice the pair of `ifne`/`if_icmpne` guards speaks). NO
+/// particles the case speaks — the voice alone the broadcast
+/// renders. The sound keys the official sounds.json table banks
+/// (`block.fire.extinguish` → random/fizz, `entity.generic.
+/// extinguish_fire` → random/fizz — the SAME file the pitched-smoke
+/// band's fizz word speaks, NO new assets the lane demands). The
+/// server's own fire the word broadcasts — `BaseFireBlock
+/// .playerWillDestroy`'s `isClientSide` guard the `sipush 1009,
+/// aload pos, iconst_0` levelEvent call the bytecode pins (the
+/// broken-fire word the extinguish voice wears). The GLOBAL route
+/// the `globalLevelEvent` switch never banks (the 1023/1028/1038
+/// trio the band alone carries — the positioned lane the case's own
+/// arm wears).
+pub const SOUND_EXTINGUISH_FIRE_EFFECT: i32 = 1009;
+
 /// THE CHORUS-FLOWER GROW VOICE'S OWN ID (the 26.2 `LevelEvent`
 /// constants class the client jar banks — `SOUND_CHORUS_FLOWER_GROW`,
 /// the case `LevelEventHandler.levelEvent` offset 680 speaks): the
@@ -10976,6 +11005,11 @@ mod tests {
             FIREWORK_ROCKET_SHOOT_EFFECT,
             1004,
             "the firework shoot voice the dispense config's own override speaks"
+        );
+        assert_eq!(
+            SOUND_EXTINGUISH_FIRE_EFFECT,
+            1009,
+            "the fire-extinguish voice the fire block's own break speaks"
         );
         assert_eq!(
             SOUND_CHORUS_GROW_EFFECT,

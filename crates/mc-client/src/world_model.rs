@@ -473,6 +473,13 @@ pub struct WorldModel {
     /// `.overrideDispenseEvent(1004)` word the dispense config
     /// banks), the arm the ONE pitched voice carries.
     pub firework_shoot_events: Vec<FireworkShootArm>,
+    /// THE FIRE-EXTINGUISH MAILBOX — the Level Event packet's 1009
+    /// word the model enqueues for the render lane (see
+    /// [`FireExtinguishArm`]). The fire block's own extinguish voice
+    /// the server's own `playerWillDestroy` broadcasts, the arm the
+    /// anchor + the data word carries (the voice pick the case's own
+    /// two-branch fold keeps).
+    pub fire_extinguish_events: Vec<FireExtinguishArm>,
     /// THE FIXED-VOICE SHELF'S OWN MAILBOX (the FIVE 1.0/1.0 BLOCKS
     /// cases the ONE arm shape wears — see [`FixedVoiceArm`]): the
     /// chorus flower's grow/death pair (1033/1034), the brewing
@@ -1015,6 +1022,30 @@ pub struct FireworkShootArm {
     pub voice: i32,
 }
 
+/// One pending FIRE-EXTINGUISH arm — the Level Event packet's next
+/// pitched voice the model keeps verbatim (see
+/// [`WorldModel::fire_extinguish_events`]). THE FIRE BLOCK'S OWN
+/// EXTINGUISH WORD the server's own `BaseFireBlock.playerWillDestroy`
+/// broadcasts (the `isClientSide` guard the `sipush 1009, aload pos,
+/// iconst_0` levelEvent call the bytecode pins): the anchor verbatim,
+/// the DATA word rides raw — the VOICE PICK the case's own
+/// two-branch fold keeps (`data == 0` the `block.fire.extinguish`
+/// voice at the 0.5F volume the head branch speaks, `data == 1` the
+/// `entity.generic.extinguish_fire` voice at the 0.7F volume the
+/// tail branch keeps, the other words the case's own silence keeps —
+/// the pitch draws the branch's own body alone spends). The
+/// transport's honesty the raw word keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FireExtinguishArm {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice-pick word (the case's own two-branch fold — the
+    /// `iload_3` + `ifne`/`if_icmpne` guards the branch pair speaks;
+    /// the data the packet's own body reads).
+    pub data: i32,
+}
+
 /// One pending FIXED-VOICE arm — the Level Event packet's sound
 /// shelf the model keeps verbatim (see
 /// [`WorldModel::fixed_voice_events`]). The FIVE 1.0/1.0 BLOCKS
@@ -1529,6 +1560,7 @@ impl WorldModel {
             dispenser_dispense_events: Vec::new(),
             dispenser_fail_launch_events: Vec::new(),
             firework_shoot_events: Vec::new(),
+            fire_extinguish_events: Vec::new(),
             fixed_voice_events: Vec::new(),
             splash_events: Vec::new(),
             mob_spawn_events: Vec::new(),
@@ -1859,6 +1891,12 @@ impl WorldModel {
         std::mem::take(&mut self.firework_shoot_events)
     }
 
+    /// The fire-extinguish mailbox's own drain (the same walk the
+    /// voices' speak — each arm ships exactly once).
+    pub fn drain_fire_extinguish_events(&mut self) -> Vec<FireExtinguishArm> {
+        std::mem::take(&mut self.fire_extinguish_events)
+    }
+
     /// The fixed-voice shelf's mailbox's own drain (the same walk the
     /// voices' speak — each arm ships exactly once): the
     /// 1033/1034/1035/1049/1050 words the Level Event packet armed,
@@ -2128,6 +2166,10 @@ impl WorldModel {
                 // same walk — the old level's 1004 words never speak
                 // again)
                 self.firework_shoot_events.clear();
+                // the fire-extinguish mailbox dies with the level (the
+                // same walk — the old level's 1009 words never hiss
+                // again)
+                self.fire_extinguish_events.clear();
                 // the fixed-voice shelf's mailbox dies with the level
                 // (the same walk — the old level's 1033/1034/1035/1049/
                 // 1050 words never speak again)
@@ -3151,6 +3193,29 @@ impl WorldModel {
                         y: ev.y,
                         z: ev.z,
                         voice: ev.effect,
+                    });
+                    true
+                } else if ev.effect == mc_protocol::SOUND_EXTINGUISH_FIRE_EFFECT
+                    && !ev.global
+                {
+                    // THE FIRE-EXTINGUISH VOICE'S OWN ARM (javap the
+                    // case offset 4137 — the positioned route the
+                    // GLOBAL switch never banks): the anchor + the raw
+                    // data word the mailbox carries (the voice pick the
+                    // case's own two-branch fold keeps — the `iload_3`
+                    // + `ifne`/`if_icmpne` guards the branch pair
+                    // speaks, the `block.fire.extinguish` / `entity.
+                    // generic.extinguish_fire` keys the sounds.json
+                    // table banks). NO particles the case speaks — the
+                    // ONE pitched `playLocalSound(pos, <voice>, BLOCKS,
+                    // <volume>, <pitch>, false)` walk the branch's own
+                    // body spends, the render lane's own sound walk
+                    // answers.
+                    self.fire_extinguish_events.push(FireExtinguishArm {
+                        x: ev.x,
+                        y: ev.y,
+                        z: ev.z,
+                        data: ev.data,
                     });
                     true
                 } else if matches!(
@@ -7944,6 +8009,108 @@ mod tests {
         })));
         assert!(
             m.firework_shoot_events.is_empty(),
+            "the mailbox dies with the level"
+        );
+    }
+
+    #[test]
+    fn the_level_event_the_extinguish_word_the_pick_wears() {
+        // THE FIRE-EXTINGUISH VOICE'S OWN MAILBOX (javap the case
+        // offset 4137 over the 26.2 jar — the positioned route the
+        // GLOBAL switch never banks): the 1009 word the ONE mailbox
+        // arms, the data word rides raw (the voice pick the case's
+        // own two-branch fold keeps — the `block.fire.extinguish` /
+        // `entity.generic.extinguish_fire` keys the sounds.json table
+        // banks), the anchor verbatim (the caller's own BlockPos
+        // cell), no particles the voice walk speaks.
+        let mut m = WorldModel::new();
+        // the fire block's own word (the `playerWillDestroy` cell the
+        // broken fire broadcasts, the data the 0 the head branch
+        // picks)
+        assert!(
+            m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: mc_protocol::SOUND_EXTINGUISH_FIRE_EFFECT,
+                x: 5,
+                y: 61,
+                z: -8,
+                data: 0,
+                global: false,
+            })));
+        assert_eq!(
+            m.fire_extinguish_events.len(),
+            1,
+            "the word arms"
+        );
+        // the anchor rides verbatim
+        assert_eq!(m.fire_extinguish_events[0].x, 5);
+        assert_eq!(m.fire_extinguish_events[0].y, 61);
+        assert_eq!(m.fire_extinguish_events[0].z, -8);
+        assert_eq!(
+            m.fire_extinguish_events[0].data, 0,
+            "the head-branch word the pick rides"
+        );
+        // the second word the same mailbox arms (the tail branch's
+        // own data the pick keeps)
+        assert!(
+            m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+                effect: mc_protocol::SOUND_EXTINGUISH_FIRE_EFFECT,
+                x: 12,
+                y: 70,
+                z: 4,
+                data: 1,
+                global: false,
+            })));
+        assert_eq!(m.fire_extinguish_events.len(), 2, "the second arm rides");
+        assert_eq!(m.fire_extinguish_events[1].data, 1, "the tail-branch word");
+        // the GLOBAL route the arm refuses (the `globalLevelEvent`
+        // switch the 1023/1028/1038 trio the band alone carries — the
+        // id the positioned lane's own word)
+        assert!(!m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_EXTINGUISH_FIRE_EFFECT,
+            x: 0,
+            y: 0,
+            z: 0,
+            data: 0,
+            global: true,
+        })));
+        assert_eq!(
+            m.fire_extinguish_events.len(),
+            2,
+            "the global word never arms"
+        );
+        // the drain ships the whole mailbox exactly once
+        let drained = m.drain_fire_extinguish_events();
+        assert_eq!(drained.len(), 2, "the drain ships the whole mailbox");
+        assert_eq!(drained[0].data, 0, "the wire order the drain keeps");
+        assert!(
+            m.fire_extinguish_events.is_empty(),
+            "the mailbox spent"
+        );
+        assert!(
+            m.drain_fire_extinguish_events().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // the Respawn recreates the level: the mailbox dies with it
+        assert!(m.apply(PlayEvent::LevelEvent(mc_protocol::LevelEventPacket {
+            effect: mc_protocol::SOUND_EXTINGUISH_FIRE_EFFECT,
+            x: 7,
+            y: 8,
+            z: 9,
+            data: 0,
+            global: false,
+        })));
+        assert_eq!(
+            m.fire_extinguish_events.len(),
+            1,
+            "the fresh word re-arms"
+        );
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:the_nether".to_string(),
+            portal_cooldown: 0,
+        })));
+        assert!(
+            m.fire_extinguish_events.is_empty(),
             "the mailbox dies with the level"
         );
     }

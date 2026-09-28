@@ -181,6 +181,7 @@ fn run_join(
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireDispenserFailLaunchEvent>,
                 Vec<crate::world_view::WireFireworkShootEvent>,
+                Vec<crate::world_view::WireFireExtinguishEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -285,6 +286,7 @@ fn run_join(
             view.model.drain_dispenser_dispense_events();
             view.model.drain_dispenser_fail_launch_events();
             view.model.drain_firework_shoot_events();
+            view.model.drain_fire_extinguish_events();
             view.model.drain_fixed_voice_events();
             view.model.drain_splash_events();
             view.model.drain_mob_spawn_events();
@@ -913,6 +915,7 @@ fn run_join(
                             view.model.drain_dispenser_dispense_events();
                             view.model.drain_dispenser_fail_launch_events();
                             view.model.drain_firework_shoot_events();
+                            view.model.drain_fire_extinguish_events();
                             view.model.drain_fixed_voice_events();
                             view.model.drain_splash_events();
                             view.model.drain_mob_spawn_events();
@@ -1153,6 +1156,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.firework_shoot_events,
+                                    // the fire-extinguish voice's arms
+                                    // ride beside them — the 1009 words
+                                    // the server's own fire broadcasts
+                                    // stream to the extinguish lane (the
+                                    // data-picked pitched voice the
+                                    // render's own law folds, each arm
+                                    // rides exactly one shipped refresh)
+                                    upd.fire_extinguish_events,
                                     // the fixed-voice shelf's arms ride
                                     // beside the dispenser's — the
                                     // 1033/1034/1035/1049/1050 words the
@@ -1336,6 +1347,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                 Vec<crate::world_view::WireDispenserDispenseEvent>,
                 Vec<crate::world_view::WireDispenserFailLaunchEvent>,
                 Vec<crate::world_view::WireFireworkShootEvent>,
+                Vec<crate::world_view::WireFireExtinguishEvent>,
                 Vec<crate::world_view::WireFixedVoiceEvent>,
                 Vec<crate::world_view::WireSplashEvent>,
                 Vec<crate::world_view::WireMobSpawnEvent>,
@@ -1897,6 +1909,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     dispenser_dispense_events,
                     dispenser_fail_launch_events,
                     firework_shoot_events,
+                    fire_extinguish_events,
                     fixed_voice_events,
                     splash_events,
                     mob_spawn_events,
@@ -2095,6 +2108,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
                     // pairs speak, the vanilla client answers the same
                     // packet with)
                     app.live_firework_shoot_events_updated(firework_shoot_events);
+                    // the fire-extinguish voice's lane beside the
+                    // firework's: the 1009 words the server's own fire
+                    // broadcasts land at their own anchors (the
+                    // data-picked pitched voice the sound lane's own law
+                    // folds at the block center — the head branch's
+                    // 0.5F/2.6±0.8 hiss and the tail branch's
+                    // 0.7F/1.6±0.4 the branch bodies speak, the vanilla
+                    // client answers the same packet with)
+                    app.live_fire_extinguish_events_updated(fire_extinguish_events);
                     // the fixed-voice shelf's lane beside the
                     // dispenser's: the 1033/1034/1035/1049/1050 words the
                     // server's own chorus flowers, brewing stand and

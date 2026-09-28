@@ -561,6 +561,13 @@ pub struct SnapshotView {
     /// after), the sound lane's own law folds the raised-pitch voice
     /// at the block center.
     pub firework_shoot_events: Vec<WireFireworkShootEvent>,
+    /// THE FIRE-EXTINGUISH WIRE ARMS (the 1009 words the server's own
+    /// fire broadcasts, [`mc_protocol::play::SOUND_EXTINGUISH_FIRE_EFFECT`]
+    /// the vocabulary speaks): shipped once with the refresh that
+    /// carried them (the worker's own drain empties the mailbox
+    /// after), the sound lane's own law folds the data-picked pitched
+    /// voice at the block center.
+    pub fire_extinguish_events: Vec<WireFireExtinguishEvent>,
     /// THE FIXED-VOICE SHELF'S OWN WIRE ARMS (the
     /// 1033/1034/1035/1049/1050 words the server's own chorus
     /// flowers, brewing stand and crafter broadcast): shipped once
@@ -816,6 +823,22 @@ pub struct WireFireworkShootEvent {
     /// The voice word (the packet's own effect id — the sound key
     /// and the 1.2 pitch the sound lane's own law folds from it).
     pub voice: i32,
+}
+
+/// One wire FIRE-EXTINGUISH arm — the Level Event packet's own
+/// landing (the 1009 words the server's own fire broadcasts,
+/// [`mc_protocol::play::SOUND_EXTINGUISH_FIRE_EFFECT`] the sound lane
+/// speaks): the event's anchor block + the voice-pick word, verbatim
+/// (the two-branch fold's own inputs — the data-picked pitched voice
+/// the sound lane folds from them).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireFireExtinguishEvent {
+    pub x: i32,
+    pub y: i32,
+    pub z: i32,
+    /// The voice-pick word (the case's own two-branch fold — the
+    /// `data == 0` / `data == 1` guard pair the branch voices keep).
+    pub data: i32,
 }
 
 /// One wire FIXED-VOICE arm — the Level Event packet's sound shelf's
@@ -2729,6 +2752,9 @@ pub fn materialize_snapshot_view(
         // 1001/1002 traffic — the empty mailbox the sound lane skips)
         dispenser_fail_launch_events: Vec::new(),
         firework_shoot_events: Vec::new(),
+        // and no fire-extinguish words (the join snapshot carries no
+        // 1009 traffic — the empty mailbox the sound lane skips)
+        fire_extinguish_events: Vec::new(),
         // and no fixed-voice words (the join snapshot carries no
         // 1033/1034/1035/1049/1050 traffic — the empty mailbox the
         // sound lane skips)
@@ -3295,6 +3321,21 @@ impl LiveView {
                 voice: arm.voice,
             })
             .collect();
+        // the fire-extinguish voice's own projection (the mailbox
+        // verbatim — the anchor + the voice-pick word the arms carry,
+        // the sound lane's own law reads): each 1009 word ships once
+        // with this view, the worker's drain empties the mailbox after
+        let fire_extinguish_events = self
+            .model
+            .fire_extinguish_events
+            .iter()
+            .map(|arm| WireFireExtinguishEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                data: arm.data,
+            })
+            .collect();
         // the fixed-voice shelf's own projection (the mailbox verbatim
         // — the anchor + the packet's own voice word the arms carry,
         // the sound lane's own law reads): each of the
@@ -3522,6 +3563,10 @@ impl LiveView {
                 // — the 1004 words are the connection's own traffic,
                 // not the pose's
                 firework_shoot_events,
+                // the fire-extinguish voice's arms ride the pose-less
+                // arm too — the 1009 words are the connection's own
+                // traffic, not the pose's
+                fire_extinguish_events,
                 // the fixed-voice shelf's arms ride the pose-less arm
                 // too — the 1033/1034/1035/1049/1050 words are the
                 // connection's own traffic, not the pose's
@@ -3664,6 +3709,10 @@ impl LiveView {
             // 1004 words follow the mailbox exactly like the
             // dispenser's own arms do
             firework_shoot_events,
+            // the fire-extinguish voice's arms ride every refresh too
+            // — the 1009 words follow the mailbox exactly like the
+            // firework's own arms do
+            fire_extinguish_events,
             // the fixed-voice shelf's arms ride every refresh too —
             // the 1033/1034/1035/1049/1050 words follow the mailbox
             // exactly like the dispenser's own arms do

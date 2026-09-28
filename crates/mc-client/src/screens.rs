@@ -22561,6 +22561,72 @@ impl App {
         );
     }
 
+    /// THE FIRE-EXTINGUISH WIRE LANE (javap `LevelEventHandler` case
+    /// 1009 — offset 4137 — over the 26.2 jar): the server's own fire
+    /// the extinguish voice broadcasts (`BaseFireBlock
+    /// .playerWillDestroy`'s `sipush 1009, aload pos, iconst_0` the
+    /// levelEvent call the bytecode pins), the Level Event mailbox's
+    /// landing: each word the arms the worker drained ride exactly
+    /// one refresh — the data word the case's own two-branch fold
+    /// reads (the voice the pick picks, the silence the other words
+    /// keep).
+    pub fn live_fire_extinguish_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireFireExtinguishEvent>,
+    ) {
+        for ev in events {
+            self.play_fire_extinguish(ev.x, ev.y, ev.z, ev.data);
+        }
+    }
+
+    /// THE FIRE-EXTINGUISH WALK (javap the two case branches
+    /// verbatim): the BLOCK CENTER the `playLocalSound(BlockPos, ...)`
+    /// resolve places (the +0.5 trio the vanilla client answers),
+    /// the `data == 0` branch the ONE `playLocalSound(pos,
+    /// FIRE_EXTINGUISH, BLOCKS, 0.5F, 2.6F + (nextFloat() -
+    /// nextFloat()) * 0.8F, false)` walk speaks (the `block.fire.
+    /// extinguish` key the sounds.json table banks — the random/fizz
+    /// file the pitched-smoke band's fizz word speaks too, NO new
+    /// assets the lane demands), the `data == 1` branch the ONE
+    /// `playLocalSound(pos, GENERIC_EXTINGUISH_FIRE, BLOCKS, 0.7F,
+    /// 1.6F + (nextFloat() - nextFloat()) * 0.4F, false)` walk keeps
+    /// (the `entity.generic.extinguish_fire` key the same table
+    /// banks). The pitch draws the first-minus-second the fsub order
+    /// spends (the branch's own body alone — the silent words the
+    /// neither-branch answer the draws never spend), the
+    /// distance-delay flag false the immediate voices keep, no
+    /// particles the case speaks.
+    fn play_fire_extinguish(&mut self, x: i32, y: i32, z: i32, data: i32) {
+        // the TWO BRANCHES the case's own guards speak (the
+        // `iload_3` + `ifne`/`if_icmpne` pair the bytecode keeps —
+        // the other words the case's own silence answers, no draws
+        // the neither-branch ever spends)
+        let (key, volume, pitch_scale, pitch_base) = match data {
+            0 => ("block.fire.extinguish", 0.5f32, 0.8f32, 2.6f32),
+            1 => ("entity.generic.extinguish_fire", 0.7f32, 0.4f32, 1.6f32),
+            _ => return,
+        };
+        // THE PITCHED VOICE (the branch body's own draw pair — the
+        // first minus the second the fsub order speaks, the scale
+        // and base the branch's own ldc pair keeps)
+        let pitch = pitch_base
+            + (self.level_ambient_rng.next_f32() - self.level_ambient_rng.next_f32())
+                * pitch_scale;
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE FIXED-VOICE WIRE LANE (javap `LevelEventHandler` cases
     /// 1033/1034/1035/1049/1050 — offsets 680/700/660/796/816 — over
     /// the 26.2 jar): the server's own chorus flowers, brewing stand
@@ -48254,6 +48320,155 @@ cow_sound_variant: None,
         } else {
             app.live_firework_shoot_events_updated(vec![]);
         }
+    }
+
+    #[test]
+    fn the_wire_extinguish_word_the_pitched_voices_wear() {
+        // THE FIRE-EXTINGUISH VOICE'S OWN WIRE LANE (javap case 1009 →
+        // offset 4137 over the 26.2 jar): the data word the case's own
+        // two-branch fold reads — the head branch the ONE
+        // `playLocalSound(pos, FIRE_EXTINGUISH, BLOCKS, 0.5F, 2.6F +
+        // (r - r) * 0.8F, false)` walk speaks, the tail branch the ONE
+        // `playLocalSound(pos, GENERIC_EXTINGUISH_FIRE, BLOCKS, 0.7F,
+        // 1.6F + (r - r) * 0.4F, false)` walk keeps, the other words
+        // the case's own silence answers (no voice, no draw the
+        // neither-branch ever spends), NO PARTICLES the case speaks.
+        let mut app = App::new(2);
+        app.enter_world();
+        // THE HEAD BRANCH (data == 0): the block.fire.extinguish voice
+        // the 0.5F volume the branch's own ldc keeps, the pitch the
+        // 2.6 + (r1 - r2) * 0.8 fold carries — the TWO draws the
+        // branch body alone spends
+        let saved = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xE0E1));
+        let particles_before = app.particles.len();
+        app.live_fire_extinguish_events_updated(vec![
+            crate::world_view::WireFireExtinguishEvent {
+                x: 9,
+                y: 65,
+                z: -3,
+                data: 0,
+            },
+        ]);
+        let spent = std::mem::replace(&mut app.level_ambient_rng, saved);
+        // the exact two-draw replay (the branch's own body the only
+        // spender — the engine's own stream the voice's file pick
+        // banks)
+        let mut replay = crate::drops::Lcg::new(0xE0E1);
+        let _ = replay.next_f32();
+        let _ = replay.next_f32();
+        assert_eq!(
+            spent, replay,
+            "the branch's own two draws the walk spends"
+        );
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "no particles the case body speaks"
+        );
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.fire.extinguish @"))
+                .expect("the head-branch voice the data-0 pick speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 2.6).abs() < 0.8,
+                "the 2.6 ± 0.8 band the head branch keeps: {pitch}"
+            );
+            let volume: f32 = voice
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 0.5).abs() < 1e-6,
+                "the 0.5 volume the head branch keeps: {volume}"
+            );
+        }
+        // THE TAIL BRANCH (data == 1): the
+        // entity.generic.extinguish_fire voice the 0.7F volume the
+        // branch keeps, the 1.6 ± 0.4 band the same fold speaks
+        if sounds_loaded() {
+            let before = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.generic.extinguish_fire @"))
+                .count();
+            app.live_fire_extinguish_events_updated(vec![
+                crate::world_view::WireFireExtinguishEvent {
+                    x: 1,
+                    y: 2,
+                    z: 3,
+                    data: 1,
+                },
+            ]);
+            let after = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.generic.extinguish_fire @"))
+                .count();
+            assert_eq!(
+                after,
+                before + 1,
+                "the tail branch exactly one voice the walk keeps"
+            );
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("entity.generic.extinguish_fire @"))
+                .expect("the tail-branch voice the data-1 pick speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.6).abs() < 0.4,
+                "the 1.6 ± 0.4 band the tail branch keeps: {pitch}"
+            );
+            let volume: f32 = voice
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (volume - 0.7).abs() < 1e-6,
+                "the 0.7 volume the tail branch keeps: {volume}"
+            );
+        }
+        // THE SILENT WORD (the neither branch the case's own guards
+        // keep — no voice, no draw the word ever spends)
+        let saved2 = std::mem::replace(&mut app.level_ambient_rng, crate::drops::Lcg::new(0xE0E2));
+        app.live_fire_extinguish_events_updated(vec![
+            crate::world_view::WireFireExtinguishEvent {
+                x: 0,
+                y: 0,
+                z: 0,
+                data: 7,
+            },
+        ]);
+        let spent2 = std::mem::replace(&mut app.level_ambient_rng, saved2);
+        assert_eq!(
+            spent2,
+            crate::drops::Lcg::new(0xE0E2),
+            "the silent word the draws never spends"
+        );
+        // THE EMPTY MAILBOX: the no-op the drained silence keeps
+        app.live_fire_extinguish_events_updated(vec![]);
+        assert_eq!(
+            app.particles.len(),
+            particles_before,
+            "the empty mailbox ships nothing"
+        );
     }
 
     #[test]
