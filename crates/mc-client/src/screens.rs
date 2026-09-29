@@ -14939,13 +14939,16 @@ impl App {
             // THE OFF-HAND'S OWN TURN (the vanilla startUseItem's own
             // for-each-hand walk: the MAIN hand's PASS/FAIL the OFF
             // hand's useItem answers — the shield in the off hand the
-            // RMB the blocking pose wears). The SPECIAL using defs only
-            // (the shield, the trident — the single-state payloads the
-            // use clock's no-op-reload law never re-bakes): the LAYER
-            // pulling states (the bow, the crossbow) ride the main
-            // payload lane — the offhand pull a later walk. The wire
-            // echo the OFF_HAND ordinal speaks (the packet's own hand
-            // field the vanilla ServerboundUseItemPacket carries).
+            // RMB the blocking pose wears, the food the off hand the
+            // hungry body the hold arms). The SPECIAL using defs (the
+            // shield, the trident — the single-state payloads the use
+            // clock's no-op-reload law never re-bakes) the first arm
+            // speaks, the EAT lane the consumable's own arm follows;
+            // the LAYER pulling states (the bow, the crossbow) ride
+            // the main payload lane — the offhand pull a later walk.
+            // The wire echo the OFF_HAND ordinal speaks (the packet's
+            // own hand field the vanilla ServerboundUseItemPacket
+            // carries).
             let (off_id, off_count) = self.offhand_stack();
             if off_count > 0 {
                 if let Some(off_def) = mc_registry::item_using_def(off_id) {
@@ -14985,6 +14988,46 @@ impl App {
                         }
                         return true;
                     }
+                }
+                // THE OFFHAND'S OWN EAT LANE (the vanilla use()'s
+                // consumable arm the OFF hand's turn answers — the same
+                // canConsume gate the main lane wears: the FOOD-less
+                // consumable consumes unconditionally, the FOOD's own
+                // lane speaks canEat(canAlwaysEat); the full bar the
+                // FAIL keeps — the OFF turn the LAST turn, its FAIL
+                // the press's own silence). The hold the OFF hand
+                // wears (the vanilla usedItemHand's own record), the
+                // LEFT lane the pose's side*-1 fold renders, the wire
+                // the OFF_HAND ordinal speaks.
+                if let Some(def) = self.food_def_of(off_id) {
+                    let consumes = !def.has_food()
+                        || crate::eat::can_eat(
+                            def.can_always_eat,
+                            false,
+                            self.food_data.needs_food(),
+                        );
+                    if !consumes {
+                        return false; // the canConsume's own FAIL
+                    }
+                    self.using_item = None; // one use at a time
+                    let mut eat = crate::eat::EatActive::start(off_id, def);
+                    if let Some(e) = eat.as_mut() {
+                        e.hand = UseHand::Off;
+                    }
+                    self.eating = eat;
+                    // the wire echo: the OFF-hand use-item click (the
+                    // packet's own hand field the server's truth reads)
+                    let (yaw, pitch) =
+                        crate::world_view::wire_angles(&self.world_camera());
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ =
+                            sink.send(crate::world_view::ContainerCommand::UseItem {
+                                yaw,
+                                pitch,
+                                hand: 1,
+                            });
+                    }
+                    return true;
                 }
             }
         }
@@ -25576,11 +25619,25 @@ impl App {
         // bottles): a single stack BECOMES the remainder, a larger
         // stack shrinks and the remainder rides the inventory's own
         // add. The `--held-item` stand-in (no stack) stays the honest
-        // no-op.
+        // no-op. THE HAND'S OWN SLOT (the vanilla usedItemHand read —
+        // the consume the USED stack's lane answers: the MAIN the
+        // hotbar's selected slot, the OFF the offhand's own pair the
+        // F-swap's trade banks).
         if !self.world_is_network {
             let sel = self.selected_hotbar;
-            let stack = self.inventory.items[sel];
+            let stack = if eat.hand == UseHand::Main {
+                self.inventory.items[sel]
+            } else {
+                self.inventory.offhand[0]
+            };
             if stack.1 > 0 && stack.0 == eat.item {
+                // the slot borrow the hand's own lane names (the
+                // mutable fold the SAME walk answers both hands)
+                let slot = if eat.hand == UseHand::Main {
+                    &mut self.inventory.items[sel]
+                } else {
+                    &mut self.inventory.offhand[0]
+                };
                 match eat.use_remainder {
                     Some(rem_name) => {
                         let rem_id = mc_registry::item_id_by_name(
@@ -25588,9 +25645,9 @@ impl App {
                         )
                         .unwrap_or(0);
                         if stack.1 == 1 {
-                            self.inventory.items[sel] = (rem_id, 1);
+                            *slot = (rem_id, 1);
                         } else {
-                            self.inventory.items[sel].1 -= 1;
+                            slot.1 -= 1;
                             let leftover = self.inventory.add(sel, rem_id, 1);
                             if leftover > 0 {
                                 // the full inventory's honesty: the
@@ -25603,13 +25660,15 @@ impl App {
                         }
                     }
                     None => {
-                        self.inventory.items[sel].1 -= 1;
-                        if self.inventory.items[sel].1 <= 0 {
-                            self.inventory.items[sel] = (0, 0);
+                        slot.1 -= 1;
+                        if slot.1 <= 0 {
+                            *slot = (0, 0);
                         }
                     }
                 }
-                self.hotbar_slots = self.inventory.hotbar();
+                if eat.hand == UseHand::Main {
+                    self.hotbar_slots = self.inventory.hotbar();
+                }
             }
         }
         self.eating = None;
@@ -26467,17 +26526,32 @@ impl App {
         }
         // vanilla submitArmWithItem: a non-empty main hand draws the ITEM
         // instead of the arm; the empty hand draws the arm. Exactly one of
-        // the two per frame. The EAT POSE rides the item's draw (the
-        // consumable's hold: the pull-in + the bite bob + the rotations —
-        // the remaining the pose reads at the frame's own partial_tick)
-        let eat_pose = self.eating.as_ref().map(|eat| {
-            crate::eat::apply_eat_transform(
-                eat.remaining(),
-                self.partial_tick,
-                eat.total,
-                1.0, // the main hand's side (the right-handed view)
-            )
-        });
+        // the two per frame. THE EAT POSE'S OWN HAND (the vanilla
+        // getUsedItemHand read — the pose the USED hand's lane alone
+        // wears: the MAIN the +1 side's anchor chain, the OFF the
+        // side*-1 fold the LEFT lane carries — the applyEatTransform
+        // the remaining the frame's own partial_tick reads)
+        let eating = self.eating.as_ref();
+        let eat_pose = eating
+            .filter(|eat| eat.hand == UseHand::Main)
+            .map(|eat| {
+                crate::eat::apply_eat_transform(
+                    eat.remaining(),
+                    self.partial_tick,
+                    eat.total,
+                    1.0, // the main hand's side (the right-handed view)
+                )
+            });
+        let eat_pose_off = eating
+            .filter(|eat| eat.hand == UseHand::Off)
+            .map(|eat| {
+                crate::eat::apply_eat_transform(
+                    eat.remaining(),
+                    self.partial_tick,
+                    eat.total,
+                    -1.0, // the OFF hand's own side*-1 fold
+                )
+            });
         // THE HAND PASSES' OWN SCREEN GATE (the vanilla renderItemInHand
         // walk the screen==null verdict guards — the container screens
         // the world beneath the dimmed panel renders, the HANDS the
@@ -26505,7 +26579,7 @@ impl App {
                     fb,
                     ctx.proj,
                     self.swing.get_attack_anim(self.partial_tick),
-                    None,
+                    eat_pose_off,
                     -1.0,
                 );
             } else if let Some(arm) = &self.arm {
@@ -37464,6 +37538,179 @@ mod tests {
         // stale restore, no panic (the honest no-op the release keeps)
         app.on_right_release();
         assert_eq!(app.offhand_held_loaded, Some(sword), "the sword the lane keeps");
+    }
+
+    /// THE OFFHAND'S OWN EAT ARC (the vanilla use()'s consumable arm
+    /// the OFF hand's turn answers — the empty main the MAIN turn
+    /// skips, the offhand's apple the hungry body the hold arms: the
+    /// EatActive the OFF hand wears (the usedItemHand record), the
+    /// 32-tick hold the same clock walks, the completion the FoodData
+    /// fold speaks, and the CONSUME the USED stack's own slot answers
+    /// — the offhand's stack the shrink wears, the hotbar's stacks the
+    /// arc never touches).
+    #[test]
+    fn the_offhand_food_the_eat_arc_consumes_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let apple = mc_registry::item_id_by_name("apple").unwrap();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        app.inventory.offhand[0] = (apple, 3);
+        // the NON-food main (the sword's use the PASS keeps — the main
+        // turn the fall-through verdict speaks, the OFF turn answers)
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        // the camera the sky reads (the block lane the miss keeps —
+        // the dev-52 tests' own determinism the walk wears)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // the hungry body: the bar under 20 (the canEat's own gate)
+        app.food_data.set_food_level(10);
+        app.food_data.set_saturation(0.0);
+        // THE PRESS (the main's sword the PASS verdict speaks — the
+        // OFF turn the eat arms)
+        assert!(app.on_right_press(0, 0), "the offhand food the hold arms");
+        let eat = app.eating.as_ref().expect("the hold opened");
+        assert_eq!(eat.hand, UseHand::Off, "the OFF hand the eat wears");
+        assert_eq!(eat.item, apple, "the offhand's own stack the hold rides");
+        assert!(app.using_item.is_none(), "one use at a time");
+        // THE FULL ARC (the 32 ticks the completion folds)
+        for _ in 0..32 {
+            app.update();
+        }
+        assert!(app.eating.is_none(), "the hold completed");
+        assert_eq!(app.food_data.food_level(), 14, "the FoodData the fold feeds");
+        // THE CONSUME THE USED STACK'S SLOT ANSWERS (the offhand's
+        // stack 3 -> 2, the main's sword the arc never touches)
+        assert_eq!(app.inventory.offhand[0], (apple, 2), "the OFF consume");
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar], (sword, 1),
+            "the main lane's stack untouched"
+        );
+    }
+
+    /// THE OFFHAND'S OWN GATES (the canConsume verdict the OFF turn's
+    /// last-word law keeps — the full bar the plain food the press's
+    /// silence answers; the food in BOTH hands the hungry body the
+    /// MAIN turn consumes first — the hand-order the vanilla walk
+    /// speaks, the offhand's stack the main's eat never touches).
+    #[test]
+    fn the_offhand_food_the_gates_keep() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let bread = mc_registry::item_id_by_name("bread").unwrap();
+        let apple = mc_registry::item_id_by_name("apple").unwrap();
+        app.inventory.offhand[0] = (bread, 1);
+        // the camera the sky reads (the block lane the miss keeps)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE FULL BAR (needs_food false, canAlwaysEat false — the
+        // canConsume FAIL the OFF turn answers, the press silent)
+        assert!(
+            !app.on_right_press(0, 0),
+            "the full bar the plain food refuses"
+        );
+        assert!(app.eating.is_none(), "the FAIL the lane keeps silent");
+        // THE FOOD IN BOTH HANDS (the MAIN turn consumes first — the
+        // main's apple the hold opens, the offhand's bread the walk
+        // never reaches)
+        app.inventory.items[app.selected_hotbar] = (apple, 1);
+        app.food_data.set_food_level(10);
+        assert!(app.on_right_press(0, 0), "the main's food consumes first");
+        let eat = app.eating.as_ref().expect("the main hold opened");
+        assert_eq!(eat.hand, UseHand::Main, "the MAIN hand the eat wears");
+        assert_eq!(eat.item, apple, "the main's own stack the hold rides");
+        assert_eq!(
+            app.inventory.offhand[0], (bread, 1),
+            "the offhand's stack untouched"
+        );
+    }
+
+    /// THE OFFHAND EAT'S OWN WIRE (the live lane — the OFF_HAND
+    /// ordinal the use-item echo speaks: the empty main the MAIN turn
+    /// skips, the offhand's apple the echo's hand byte 1 carries, the
+    /// camera's angles the vanilla degrees wear).
+    #[test]
+    fn the_offhand_food_the_wire_hand_speaks() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // the empty main + the offhand's apple + the hungry belief
+        app.live_inv_slots[45] = (wire("apple"), 3);
+        app.offhand_held_refreshed();
+        app.food_data.set_food_level(10);
+        assert!(app.on_right_press(0, 0), "the offhand food the hold arms");
+        let eat = app.eating.as_ref().expect("the hold opened");
+        assert_eq!(eat.hand, UseHand::Off);
+        match rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::UseItem { hand, .. } => {
+                assert_eq!(hand, 1, "the OFF_HAND ordinal the wire speaks");
+            }
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+    }
+
+    /// THE OFFHAND DRINK'S OWN REMAINDER (the milk bucket's arc — the
+    /// single stack BECOMES the remainder: the milk consumed, the
+    /// bucket the offhand's own slot keeps — the USE_REMAINDER's
+    /// return the USED hand's lane answers).
+    #[test]
+    fn the_offhand_drink_the_remainder_returns_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let milk = mc_registry::item_id_by_name("milk_bucket").unwrap();
+        let bucket = mc_registry::item_id_by_name("bucket").unwrap();
+        let bread = mc_registry::item_id_by_name("bread").unwrap();
+        app.inventory.offhand[0] = (milk, 1);
+        app.inventory.items[app.selected_hotbar] = (bread, 2);
+        // the camera the sky reads (the block lane the miss keeps)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // the FOOD-less consumable (the nutrition -1 the canConsume's
+        // unconditional arm wears — the milk's own def the registry's
+        // rows speak): the drink the hold opens regardless of the bar
+        assert!(app.on_right_press(0, 0), "the milk the hold opens");
+        let eat = app.eating.as_ref().expect("the hold opened");
+        assert_eq!(eat.hand, UseHand::Off, "the OFF hand the drink wears");
+        assert!(!eat.has_food(), "the milk the FOOD-less lane rides");
+        let total = eat.total;
+        for _ in 0..total {
+            app.update();
+        }
+        assert!(app.eating.is_none(), "the drink completed");
+        // THE REMAINDER (the single stack BECOMES the remainder — the
+        // bucket the offhand's own slot keeps)
+        assert_eq!(
+            app.inventory.offhand[0], (bucket, 1),
+            "the bucket the remainder keeps"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar], (bread, 2),
+            "the main lane's stack untouched"
+        );
     }
 
     /// A hand-built Brigadier graph mirroring the real servers' own:

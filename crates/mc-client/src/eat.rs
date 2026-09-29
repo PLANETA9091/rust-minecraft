@@ -59,6 +59,7 @@
 //!   30)`.
 
 use mc_registry::generated::foods::{FoodDef, DEFAULT_CONSUME_SECONDS};
+use crate::screens::UseHand;
 
 /// `Consumable`'s own chew-burst piece count (javap ItemStack.onUseTick:
 /// `emitParticlesAndSounds(random, entity, stack, 5)`).
@@ -342,6 +343,11 @@ pub struct EatActive {
     pub saturation: f32,
     pub can_always_eat: bool,
     pub use_remainder: Option<&'static str>,
+    /// THE HAND THE EAT RIDES (the vanilla LivingEntity.usedItemHand —
+    /// startUsingItem's own record: the render's getUsedItemHand read
+    /// the pose's side speaks, the OFF hand the LEFT lane's side*-1
+    /// fold wears; the consume the USED stack's own slot answers).
+    pub hand: UseHand,
 }
 
 /// The animation the pose/sound lane reads (the registry enum's
@@ -381,6 +387,10 @@ impl EatActive {
             saturation: def.saturation,
             can_always_eat: def.can_always_eat,
             use_remainder: def.use_remainder,
+            // the MAIN hand the default wears (the useItem's hand-0
+            // call the main lane speaks — the OFF arm the field
+            // re-assigns before the store)
+            hand: UseHand::Main,
         })
     }
 
