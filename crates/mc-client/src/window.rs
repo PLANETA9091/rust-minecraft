@@ -1631,11 +1631,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
             app.on_chat_char(c);
         }
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
-            // THE ESCAPE'S OWN ROUTE (the ChatScreen's onClose law —
-            // the open chat the draft-discard close answers, the
-            // world the pause lane keeps)
+            // THE ESCAPE'S OWN ROUTE (the ChatScreen.keyPressed law —
+            // the open chat the on_chat_escape walk answers: the
+            // untouched restored draft the FIRST ESC clears (the
+            // isDraft arm's setValue("") — the screen the open keeps),
+            // the edited/fresh input the close_chat walk answers, the
+            // draft bank the removed()'s save lane carries; the world
+            // the pause lane keeps)
             if app.chat_open {
-                app.close_chat();
+                app.on_chat_escape();
             } else {
                 app.on_escape();
             }

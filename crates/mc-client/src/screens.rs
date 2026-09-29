@@ -6884,6 +6884,20 @@ pub struct App {
     /// moveInHistory walk, `chat_history_pos` the offset from the
     /// newest speaks, `chat_draft` the isDraft value the walk
     /// preserves).
+    /// THE LATEST DRAFT'S OWN BANK (javap ChatComponent.latestDraft —
+    /// the `Draft(text, chatMethod)` record the close walk saves: the
+    /// ESC close the non-blank input the saveAsDraft lane banks, the
+    /// method the `startsWith("/")` walk names (true the COMMAND lane,
+    /// false the MESSAGE one), the DONE submit the discardDraft walk
+    /// drops). The reopen the createScreen fold answers — the MESSAGE
+    /// method's isDraftRestorable any draft keeps, the COMMAND method's
+    /// own $2 walk the chatMethod equality speaks (the message drafts
+    /// the '/'-open never restores). `chat_input_is_draft` the
+    /// ChatScreen.isDraft field the restored open wears — the untouched
+    /// draft the ESC-clear arm reads, the FIRST edit the onEdited walk
+    /// drops (the responder the every keystroke/history-nav fires).
+    pub chat_latest_draft: Option<(String, bool)>,
+    pub chat_input_is_draft: bool,
     pub chat_open: bool,
     pub chat_input: String,
     pub chat_messages: Vec<(String, u32)>,
@@ -7503,6 +7517,8 @@ impl App {
             entity_type_tags: Vec::new(),
             tab_held: false,
             hud_hidden: false,
+            chat_latest_draft: None,
+            chat_input_is_draft: false,
             chat_open: false,
             chat_input: String::new(),
             chat_messages: Vec::new(),
@@ -17245,14 +17261,34 @@ impl App {
     /// `openChatScreen(ChatMethod.MESSAGE)` walk answers): the
     /// ChatScreen the world opens (the draft the open preserves —
     /// the isDraft law the ChatScreen.init's historyPos reset keeps,
-    /// the input the empty value the fresh EditBox wears).
+    /// the input the empty value the fresh EditBox wears). THE DRAFT
+    /// RESTORE the createScreen fold answers (scripts/jar_work/
+    /// chatcomp_full_49.txt): the `latestDraft != null` gate the
+    /// MESSAGE method's isDraftRestorable ALWAYS answers (the $1
+    /// anonymous walk's `iconst_1` — the full-disasm banks), the
+    /// restorable open the `ctor.create(draft.text(), true)` arm
+    /// carries — the '/'-drafts the T-open restores too (the text
+    /// the command method keeps, the MESSAGE screen the same input
+    /// wears), the isDraft purity the `true` arg speaks (the
+    /// untouched draft the ESC-clear arm reads).
     pub fn on_chat_key(&mut self) {
         self.chat_open = true;
-        self.chat_input.clear();
-        self.chat_draft.clear();
         self.chat_history_pos = self.recent_chat.len();
+        // THE DRAFT'S OWN RESTORE (the createScreen restorable arm —
+        // the MESSAGE method any draft keeps, the text the input
+        // wears, the purity flag the true arg banks)
+        if let Some((text, _)) = self.chat_latest_draft.clone() {
+            self.chat_input = text;
+            self.chat_input_is_draft = true;
+        } else {
+            self.chat_input.clear();
+            self.chat_input_is_draft = false;
+        }
+        self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
-        // the screen never keeps (the vanilla init's fresh walk)
+        // the screen never keeps (the vanilla init's fresh walk); the
+        // '/'-draft restore the same refresh answers (the command rows
+        // the slash input speaks)
         self.refresh_command_suggestions();
     }
 
@@ -17279,26 +17315,104 @@ impl App {
     /// alone carries (no doubling the fresh open wears).
     pub fn on_command_key(&mut self) {
         self.chat_open = true;
-        self.chat_input.clear();
-        self.chat_input.push('/');
-        self.chat_draft.clear();
         self.chat_history_pos = self.recent_chat.len();
+        // THE DRAFT'S OWN COMMAND RESTORE (the createScreen fold the
+        // COMMAND method's $2 walk answers — the isDraftRestorable
+        // the `draft.chatMethod == COMMAND` equality speaks, the
+        // message drafts the '/'-open never restores: the prefix arm
+        // the bare '/' fresh open carries). The restored command
+        // draft the isDraft purity wears (the true arg).
+        let command_draft = self
+            .chat_latest_draft
+            .clone()
+            .filter(|(_, is_command)| *is_command)
+            .map(|(text, _)| text);
+        match command_draft {
+            Some(text) => {
+                self.chat_input = text;
+                self.chat_input_is_draft = true;
+            }
+            None => {
+                self.chat_input.clear();
+                self.chat_input.push('/');
+                self.chat_input_is_draft = false;
+            }
+        }
+        self.chat_draft.clear();
         // the fresh open the clear walk answers — the old suggestions
         // the screen never keeps (the vanilla init's fresh walk); the
         // '/' prefix the refresh reads the command rows speak
         self.refresh_command_suggestions();
     }
 
-    /// THE CHAT SCREEN'S OWN CLOSE (javap onClose's walk — the Escape
-    /// the screen answers, the draft the discard keeps: the input the
-    /// empty value the next open wears).
+    /// THE CHAT SCREEN'S OWN CLOSE (javap removed()'s full walk —
+    /// scripts/jar_work/chatscreen_49.txt the full-disasm banks:
+    /// the `shouldDiscardDraft() || isBlank(initial)` gate the
+    /// discardDraft arm answers, the `!isDraft` else-arm the
+    /// saveAsDraft walk carries). THE EXIT LAW the shouldDiscardDraft
+    /// fold speaks: the DONE submit always discards, the INTERRUPTED
+    /// close keeps, the INTENTIONAL ESC the saveChatDrafts option
+    /// gates — the default ON the save lane answers (the option our
+    /// client's own defaults the vanilla truth wears). THE SAVE WALK
+    /// the saveAsDraft's own fold carries: the method the
+    /// `startsWith("/")` branch names — the '/'-prefixed text the
+    /// COMMAND draft banks, the bare words the MESSAGE one, the RAW
+    /// input the trim never touches. The untouched restored draft
+    /// (isDraft) the skip-save keeps — the banked text the SAME
+    /// record the field already wears (the re-save the no-op the
+    /// purity gate skips); the edited text the isDraft-drop the
+    /// onEdited walk answered saves back. The blank close the
+    /// discardDraft walk keeps — the whitespace-only input the
+    /// StringUtils.isBlank law banks no draft.
     pub fn close_chat(&mut self) {
+        // the purity flag the close consumes (the next open the fresh
+        // walk arms)
+        let was_untouched_draft = self.chat_input_is_draft;
         self.chat_open = false;
-        self.chat_input.clear();
+        self.chat_input_is_draft = false;
         self.chat_history_pos = self.recent_chat.len();
+        // the initial the input's raw value keeps (the removed walk's
+        // `initial = input.getValue()` — the trim the submit alone
+        // answers)
+        let text = std::mem::take(&mut self.chat_input);
+        if text.trim().is_empty() {
+            // the blank close the discard arm keeps (the shouldDiscard
+            // || isBlank gate — the bank the fresh-open law clears)
+            self.chat_latest_draft = None;
+        } else if !was_untouched_draft {
+            // the save lane (the !isDraft else-arm): the method the
+            // startsWith("/") walk names, the raw text the record wears
+            let is_command = text.starts_with('/');
+            self.chat_latest_draft = Some((text, is_command));
+        }
+        // the untouched-draft close the field's OWN record keeps (the
+        // skip-save the purity gate answers — the bank unchanged)
         // the close the clear walk answers (the vanilla removed()'s own
         // suggestions hide — the next open the fresh list speaks)
         self.refresh_command_suggestions();
+    }
+
+    /// THE ESCAPE'S OWN ROUTE (javap ChatScreen.keyPressed's isDraft
+    /// arm — scripts/jar_work/chatscreen_49.txt: the `isDraft && ESC`
+    /// rising edge the `input.setValue("")` walk answers BEFORE the
+    /// Screen.keyPressed close chain — the untouched restored draft
+    /// the FIRST ESC clears, the screen the open stays, the SECOND
+    /// ESC the normal close answers). The edited/fresh input the
+    /// close lane directly answers (the close_chat walk the draft
+    /// bank saves), the open chat the consumption always keeps (the
+    /// keyPressed's own return law).
+    pub fn on_chat_escape(&mut self) -> bool {
+        if self.chat_input_is_draft {
+            // the first ESC the untouched draft clears (the setValue("")
+            // walk — the responder the onEdited isDraft drop fires, the
+            // suggestions the fresh refresh answers)
+            self.chat_input.clear();
+            self.chat_input_is_draft = false;
+            self.refresh_command_suggestions();
+            return true;
+        }
+        self.close_chat();
+        true
     }
 
     /// THE EDITBOX'S OWN CHAR (the window's input callback the
@@ -17310,10 +17424,14 @@ impl App {
         }
         if self.chat_input.chars().count() < 256 {
             self.chat_input.push(c);
+            // THE RESPONDER'S OWN WALK (the EditBox.setResponder lane —
+            // the edit the suggestions refresh answers, the isDraft
+            // purity the onEdited walk drops — the restored draft the
+            // FIRST keystroke disclaims, the ESC close the save lane
+            // re-answers)
+            self.chat_input_is_draft = false;
         }
-        // THE RESPONDER'S OWN WALK (the EditBox.setResponder lane — the
-        // edit the suggestions refresh answers, the '/'-typed text the
-        // ask-server request rides)
+        // '/'-typed text the ask-server request rides
         self.refresh_command_suggestions();
     }
 
@@ -17324,6 +17442,9 @@ impl App {
             return;
         }
         self.chat_input.pop();
+        // the edit the responder fires (the isDraft purity the same
+        // onEdited walk drops)
+        self.chat_input_is_draft = false;
         self.refresh_command_suggestions();
     }
 
@@ -17361,6 +17482,10 @@ impl App {
         } else {
             self.recent_chat[self.chat_history_pos].clone()
         };
+        // the recall the EditBox.setValue walk answers — the responder
+        // the onEdited isDraft drop fires (the restored draft the
+        // history nav disclaims, the jar's own setValue chain)
+        self.chat_input_is_draft = false;
         self.refresh_command_suggestions();
     }
 
@@ -17711,7 +17836,10 @@ impl App {
     /// isConfirmation arm — the `handleChatInput(input, true)` the
     /// normalizeChatMessage trim keeps: the empty the silent close
     /// answers, the non-empty `addRecentChat` + the send lane rides).
-    /// The LIVE world the wire honestly answers (the vanilla
+    /// THE DRAFT the DONE exit answers — the shouldDiscardDraft's
+    /// own DONE lane the discardDraft walk keeps (the sent message
+    /// the bank never wears, the next open the fresh empty box
+    /// carries). The LIVE world the wire honestly answers (the vanilla
     /// `ClientPacketListener.sendChat`/`sendCommand` walk — the
     /// ServerboundChatPacket / the 26.2's bare-utf command packet the
     /// command channel carries): the LOCAL echo the send skips — the
@@ -17727,6 +17855,10 @@ impl App {
         }
         let normalized = self.chat_input.trim().to_string();
         self.close_chat();
+        // THE DONE EXIT the discard keeps (the removed walk's
+        // shouldDiscardDraft lane — the close_chat save the same walk
+        // discards, the bank the fresh-open law clears)
+        self.chat_latest_draft = None;
         if normalized.is_empty() {
             return;
         }
@@ -35952,6 +36084,255 @@ mod tests {
         assert_eq!(
             app.chat_input, "/",
             "the prefix the command lane alone carries"
+        );
+    }
+
+    /// THE DRAFT BANK'S OWN WALK (javap ChatComponent.saveAsDraft +
+    /// ChatScreen.removed + createScreen — scripts/jar_work/
+    /// chatcomp_full_49.txt + chatscreen_49.txt the full-disasm banks):
+    /// the ESC close the non-blank input the saveAsDraft lane banks
+    /// (the method the startsWith("/") walk names), the reopen the
+    /// MESSAGE method's isDraftRestorable the `iconst_1` arm answers,
+    /// the restored draft the isDraft purity wears, the FIRST edit the
+    /// onEdited drop answers (the edited text the next close saves
+    /// back), the whitespace-only close the isBlank discard keeps.
+    #[test]
+    fn the_esc_close_the_draft_bank_and_restore_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE TYPE + ESC CLOSE (the save lane — the !isDraft else-arm
+        // the raw text banks, the MESSAGE method the bare word wears)
+        app.on_chat_key();
+        assert!(!app.chat_input_is_draft, "the fresh open the purity never wears");
+        for c in "hello world".chars() {
+            app.on_chat_char(c);
+        }
+        app.close_chat();
+        assert!(!app.chat_open);
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("hello world".to_string(), false)),
+            "the close the message draft banks"
+        );
+        // THE RESTORED OPEN (the createScreen restorable arm — the text
+        // the input wears, the isDraft purity the true arg banks)
+        app.on_chat_key();
+        assert!(app.chat_open);
+        assert_eq!(app.chat_input, "hello world", "the draft the reopen restores");
+        assert!(
+            app.chat_input_is_draft,
+            "the restored draft the purity wears"
+        );
+        // THE FIRST EDIT (the onEdited walk — the purity the keystroke
+        // drops, the edited text the next close's save lane answers)
+        app.on_chat_char('x');
+        assert!(
+            !app.chat_input_is_draft,
+            "the edit the purity drops"
+        );
+        app.close_chat();
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("hello worldx".to_string(), false)),
+            "the edited close the save lane banks"
+        );
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "hello worldx");
+        // THE BLANK CLOSE (the isBlank law — the whitespace-only input
+        // the discard arm keeps, the bank the fresh-open law clears)
+        while !app.chat_input.is_empty() {
+            app.on_chat_backspace();
+        }
+        assert!(!app.chat_input_is_draft, "the emptied box the purity never wears");
+        app.close_chat();
+        assert_eq!(
+            app.chat_latest_draft, None,
+            "the blank close the bank discards"
+        );
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "", "the fresh open the empty box wears");
+        assert!(!app.chat_input_is_draft);
+    }
+
+    /// THE COMMAND DRAFT'S OWN METHOD LANES (the createScreen fold the
+    /// ChatMethod's $1/$2 bodies answer — scripts/jar_work/
+    /// chatcomp_full_49.txt + the full-disasm isDraftRestorable walks:
+    /// the MESSAGE method ANY draft keeps, the COMMAND method the
+    /// `draft.chatMethod == COMMAND` equality speaks — the message
+    /// drafts the '/'-open never restores, the prefix arm the bare
+    /// '/' carries; the '/'-draft the T-open restores too, the text
+    /// the command method keeps).
+    #[test]
+    fn the_command_draft_the_method_lanes_keep() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE COMMAND DRAFT BANKS (the '/'-open's own prefix the body
+        // rides — the typed chars the bare word wears, the close the
+        // COMMAND method banks)
+        app.on_command_key();
+        for c in "time set day".chars() {
+            app.on_chat_char(c);
+        }
+        app.close_chat();
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("/time set day".to_string(), true)),
+            "the slash close the command draft banks"
+        );
+        // THE SLASH REOPEN (the $2 equality arm — the command draft the
+        // COMMAND lane restores, the purity the true arg wears)
+        app.on_command_key();
+        assert_eq!(app.chat_input, "/time set day", "the command draft restores");
+        assert!(app.chat_input_is_draft, "the restored open the purity wears");
+        // THE UNTOUCHED CLOSE (the skip-save arm — the banked record
+        // the SAME text the purity gate keeps, the re-save the no-op)
+        app.close_chat();
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("/time set day".to_string(), true)),
+            "the untouched close the record keeps"
+        );
+        // THE T-OPEN (the $1 arm — the MESSAGE method ANY draft keeps:
+        // the '/'-draft the message lane restores, no extra prefix)
+        app.on_chat_key();
+        assert_eq!(
+            app.chat_input, "/time set day",
+            "the message lane the command draft restores"
+        );
+        assert!(app.chat_input_is_draft);
+        // THE EDIT FLIPS THE METHOD (the onEdited drop the next close
+        // answers — the slash-less edit... the slash RIDES: the text
+        // still starts with '/', the COMMAND method the startsWith
+        // walk keeps)
+        app.on_chat_backspace();
+        assert_eq!(app.chat_input, "/time set da");
+        app.close_chat();
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("/time set da".to_string(), true)),
+            "the startsWith walk the command method keeps"
+        );
+        // THE MESSAGE DRAFT THE SLASH LANE NEVER RESTORES (the $2
+        // equality arm — the message draft the prefix arm answers:
+        // the bare '/' the fresh open wears, the purity the false).
+        // The T-open the '/time set da' draft restores — the clear
+        // walk the box empties (the edit the purity drops), the bare
+        // words the fresh text wears)
+        app.on_chat_key();
+        while !app.chat_input.is_empty() {
+            app.on_chat_backspace();
+        }
+        for c in "just words".chars() {
+            app.on_chat_char(c);
+        }
+        app.close_chat();
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("just words".to_string(), false)),
+            "the bare close the message draft banks"
+        );
+        app.on_command_key();
+        assert_eq!(
+            app.chat_input, "/",
+            "the message draft the slash lane never restores"
+        );
+        assert!(
+            !app.chat_input_is_draft,
+            "the prefix arm the purity never banks"
+        );
+        // THE MESSAGE DRAFT THE T LANE RESTORES (the $1 arm)
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "just words");
+        assert!(app.chat_input_is_draft);
+    }
+
+    /// THE SUBMIT'S OWN DONE DISCARD (javap removed()'s
+    /// shouldDiscardDraft walk — the DONE exit ALWAYS discards: the
+    /// sent message the bank never wears, the next open the fresh
+    /// empty box carries; the empty submit the same DONE lane keeps).
+    #[test]
+    fn the_submit_the_done_discard_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE SENT MESSAGE (the DONE exit — the close's save the same
+        // walk discards)
+        app.on_chat_key();
+        for c in "hi there".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_submit();
+        assert!(!app.chat_open);
+        assert_eq!(
+            app.chat_latest_draft, None,
+            "the submit the DONE discard keeps"
+        );
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "", "the next open the fresh box wears");
+        assert!(!app.chat_input_is_draft);
+        // THE EMPTY SUBMIT (the normalize's empty the silent close
+        // answers — the same DONE discard the blank law keeps)
+        app.on_chat_submit();
+        assert!(!app.chat_open);
+        assert_eq!(app.chat_latest_draft, None);
+    }
+
+    /// THE UNTOUCHED DRAFT'S OWN ESC-CLEAR (javap ChatScreen.keyPressed's
+    /// isDraft arm — scripts/jar_work/chatscreen_49.txt: the FIRST ESC
+    /// the `input.setValue("")` walk answers, the screen the OPEN
+    /// stays, the purity the isDraft=0 drop wears; the SECOND ESC the
+    /// close lane answers (the blank the discard keeps, the bank the
+    /// fresh-open law clears); the typed words the edited close
+    /// re-banks — the real client's two-step dismiss the same walk
+    /// plays).
+    #[test]
+    fn the_untouched_draft_the_esc_clear_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_chat_key();
+        for c in "banked".chars() {
+            app.on_chat_char(c);
+        }
+        app.close_chat();
+        // THE RESTORED OPEN + THE FIRST ESC (the isDraft arm — the
+        // input the empty value wears, the screen the open stays, the
+        // bank the untouched record keeps)
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "banked");
+        assert!(app.chat_input_is_draft);
+        let consumed = app.on_chat_escape();
+        assert!(consumed, "the chat ESC the consumption keeps");
+        assert!(app.chat_open, "the first ESC the screen keeps");
+        assert_eq!(app.chat_input, "", "the first ESC the box clears");
+        assert!(!app.chat_input_is_draft, "the clear the purity drops");
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("banked".to_string(), false)),
+            "the first ESC the bank never touches"
+        );
+        // THE TYPED WORDS + THE SECOND ESC (the edited close the save
+        // lane answers — the new text the bank re-wears)
+        for c in "new".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_escape();
+        assert!(!app.chat_open, "the second ESC the close answers");
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("new".to_string(), false)),
+            "the edited close the save lane banks"
+        );
+        // THE REOPEN (the restored draft the same two-step plays)
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "new");
+        assert!(app.chat_input_is_draft);
+        app.on_chat_escape();
+        assert!(app.chat_open, "the restored draft the first ESC keeps");
+        assert_eq!(app.chat_input, "");
+        app.on_chat_escape();
+        assert!(!app.chat_open, "the cleared box the second ESC closes");
+        assert_eq!(
+            app.chat_latest_draft, None,
+            "the blank close the discard keeps"
         );
     }
 

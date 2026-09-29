@@ -1,0 +1,24 @@
+class net/minecraft/client/gui/components/ChatComponent$Draft
+
+=== <init>(Ljava/lang/String;Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;)V ===
+     1 invokespecial java/lang/Record.<init>()V  ()
+     6 putfield net/minecraft/client/gui/components/ChatComponent$Draft.text = loc1
+    11 putfield net/minecraft/client/gui/components/ChatComponent$Draft.chatMethod = loc2
+    14 return
+
+=== chatMethod()Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod; ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent$Draft.chatMethod  (loc0)
+     4 return loc0.chatMethod
+
+=== equals(Ljava/lang/Object;)Z ===
+     7 return loc1
+
+=== hashCode()I ===
+     6 return loc0
+
+=== text()Ljava/lang/String; ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent$Draft.text  (loc0)
+     4 return loc0.text
+
+=== toString()Ljava/lang/String; ===
+     6 return loc0

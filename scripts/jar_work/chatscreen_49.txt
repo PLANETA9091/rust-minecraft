@@ -1,0 +1,407 @@
+class net/minecraft/client/gui/screens/ChatScreen
+
+=== <clinit>()V ===
+     3 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat_screen.usage')
+    12 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat_screen.restricted.narration')
+    18 return
+
+=== <init>(Ljava/lang/String;Z)V ===
+     4 invokespecial net/minecraft/client/gui/screens/ChatScreen.<init>(Ljava/lang/String;ZZ)V  (loc1, loc2, 1)
+     7 return
+
+=== <init>(Ljava/lang/String;ZZ)V ===
+     3 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat_screen.title')
+     6 invokespecial net/minecraft/client/gui/screens/Screen.<init>(Lnet/minecraft/network/chat/Component;)V  (Component.translatable('chat_screen.title'))
+    12 putfield net/minecraft/client/gui/screens/ChatScreen.historyBuffer = ''
+    17 putfield net/minecraft/client/gui/screens/ChatScreen.historyPos = -1
+    24 putfield net/minecraft/client/gui/screens/ChatScreen.displayMode = net/minecraft/client/gui/components/ChatComponent$DisplayMode.FOREGROUND
+    31 putfield net/minecraft/client/gui/screens/ChatScreen.exitReason = net/minecraft/client/gui/screens/ChatScreen$ExitReason.INTERRUPTED
+    36 putfield net/minecraft/client/gui/screens/ChatScreen.closeOnSubmit = loc3
+    41 putfield net/minecraft/client/gui/screens/ChatScreen.initial = loc1
+    46 putfield net/minecraft/client/gui/screens/ChatScreen.isDraft = loc2
+    49 return
+
+=== extractBackground(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V ===
+     0 return
+
+=== extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V ===
+     3 getfield net/minecraft/client/gui/screens/ChatScreen.height  (loc0)
+    10 getfield net/minecraft/client/gui/screens/ChatScreen.width  (loc0)
+    16 getfield net/minecraft/client/gui/screens/ChatScreen.height  (loc0)
+    22 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    25 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+    31 invokevirtual net/minecraft/client/Options.getBackgroundColor(I)I  (-2147483648)
+    34 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.fill(IIIII)V  (2, arith, arith, arith, loc0.minecraft.options.getBackgroundColor(-2147483648))
+    38 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    41 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    44 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    47 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    52 getfield net/minecraft/client/gui/screens/ChatScreen.font  (loc0)
+    56 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    59 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    62 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    65 invokevirtual net/minecraft/client/gui/Hud.getGuiTicks()I  ()
+    71 getfield net/minecraft/client/gui/screens/ChatScreen.displayMode  (loc0)
+    75 invokevirtual net/minecraft/client/gui/screens/ChatScreen.insertionClickMode()Z  ()
+    78 invokevirtual net/minecraft/client/gui/components/ChatComponent.extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/gui/Font;IIILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;Z)V  (loc1, loc0.font, loc0.minecraft.gui.hud.getGuiTicks(), loc2, loc3, loc0.displayMode, loc0.insertionClickMode())
+    87 invokespecial net/minecraft/client/gui/screens/Screen.extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;IIF)V  (loc1, loc2, loc3, loc4)
+    91 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+    97 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;II)V  (loc1, loc2, loc3)
+   100 return
+
+=== formatChat(Ljava/lang/String;I)Lnet/minecraft/util/FormattedCharSequence; ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.isDraft  (loc0)
+    14 invokevirtual net/minecraft/network/chat/Style.withColor(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/Style;  (net/minecraft/ChatFormatting.GRAY)
+    18 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (1)
+    21 invokevirtual net/minecraft/network/chat/Style.withItalic(Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Style;  (Boolean.valueOf(1))
+    24 invokestatic net/minecraft/util/FormattedCharSequence.forward(Ljava/lang/String;Lnet/minecraft/network/chat/Style;)Lnet/minecraft/util/FormattedCharSequence;  (loc1, net/minecraft/network/chat/Style.EMPTY.withColor(net/minecraft/ChatFormatting.GRAY).withItalic(Boolean.valueOf(1)))
+    27 return FormattedCharSequence.forward(loc1, net/minecraft/network/chat/Style.EMPTY.withColor(net/minecraft/ChatFormatting.GRAY).withItalic(Boolean.valueOf(1)))
+    29 return null
+
+=== handleChatInput(Ljava/lang/String;Z)V ===
+     2 invokevirtual net/minecraft/client/gui/screens/ChatScreen.normalizeChatMessage(Ljava/lang/String;)Ljava/lang/String;  (loc1)
+     5 ?? opcode 0x4c
+     7 invokevirtual java/lang/String.isEmpty()Z  ()
+    13 return
+    19 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    22 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    25 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    28 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    32 invokevirtual net/minecraft/client/gui/components/ChatComponent.addRecentChat(Ljava/lang/String;)V  (loc1)
+    39 invokevirtual java/lang/String.startsWith(Ljava/lang/String;)Z  ('/')
+    46 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    49 getfield net/minecraft/client/Minecraft.player  (loc0.minecraft)
+    52 getfield net/minecraft/client/player/LocalPlayer.connection  (loc0.minecraft.player)
+    57 invokevirtual java/lang/String.substring(I)Ljava/lang/String;  (1)
+    60 invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.sendCommand(Ljava/lang/String;)V  (loc1.substring(1))
+    67 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    70 getfield net/minecraft/client/Minecraft.player  (loc0.minecraft)
+    73 getfield net/minecraft/client/player/LocalPlayer.connection  (loc0.minecraft.player)
+    77 invokevirtual net/minecraft/client/multiplayer/ClientPacketListener.sendChat(Ljava/lang/String;)V  (loc1)
+    80 return
+
+=== handleComponentClicked(Lnet/minecraft/network/chat/Style;Z)Z ===
+     1 invokevirtual net/minecraft/network/chat/Style.getClickEvent()Lnet/minecraft/network/chat/ClickEvent;  ()
+     4 ?? opcode 0x4e
+    10 invokevirtual net/minecraft/network/chat/Style.getInsertion()Ljava/lang/String;  ()
+    18 invokevirtual net/minecraft/network/chat/Style.getInsertion()Ljava/lang/String;  ()
+    22 invokevirtual net/minecraft/client/gui/screens/ChatScreen.insertText(Ljava/lang/String;Z)V  (loc1.getInsertion(), 0)
+    34 invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;  (loc3)
+    89 invokevirtual net/minecraft/network/chat/ClickEvent$Custom.id()Lnet/minecraft/resources/Identifier;  ()
+    95 invokevirtual net/minecraft/resources/Identifier.equals(Ljava/lang/Object;)Z  (net/minecraft/client/gui/components/ChatComponent.QUEUE_EXPAND_ID)
+   108 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   111 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   114 invokevirtual net/minecraft/client/gui/Gui.chatListener()Lnet/minecraft/client/multiplayer/chat/ChatListener;  ()
+   121 invokevirtual net/minecraft/client/multiplayer/chat/ChatListener.queueSize()J  ()
+   131 invokevirtual net/minecraft/client/multiplayer/chat/ChatListener.acceptNextDelayedMessage()V  ()
+   146 invokevirtual net/minecraft/network/chat/ClickEvent$Custom.id()Lnet/minecraft/resources/Identifier;  ()
+   152 invokevirtual net/minecraft/resources/Identifier.equals(Ljava/lang/Object;)Z  (net/minecraft/client/gui/components/ChatComponent.GO_TO_RESTRICTIONS_SCREEN)
+   165 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   168 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   177 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   180 getfield net/minecraft/client/Minecraft.player  (loc0.minecraft)
+   183 invokevirtual net/minecraft/client/player/LocalPlayer.chatAbilities()Lnet/minecraft/client/multiplayer/chat/ChatAbilities;  ()
+   186 invokespecial net/minecraft/client/gui/screens/multiplayer/RestrictionsScreen.<init>(Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/multiplayer/chat/ChatAbilities;)V  (loc0, loc0.minecraft.player.chatAbilities())
+   189 invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V  (net/minecraft/client/gui/screens/multiplayer/RestrictionsScreen(loc0, loc0.minecraft.player.chatAbilities()))
+   197 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   201 invokestatic net/minecraft/client/gui/screens/ChatScreen.defaultHandleGameClickEvent(Lnet/minecraft/network/chat/ClickEvent;Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/gui/screens/Screen;)V  (loc3, loc0.minecraft, loc0)
+   208 return 1
+   210 return 0
+
+=== init()V ===
+     2 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+     5 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+     8 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    11 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    14 invokevirtual net/minecraft/client/gui/components/ChatComponent.getRecentChat()Lnet/minecraft/util/ArrayListDeque;  ()
+    17 invokevirtual net/minecraft/util/ArrayListDeque.size()I  ()
+    20 putfield net/minecraft/client/gui/screens/ChatScreen.historyPos = loc0.minecraft.gui.hud.getChat().getRecentChat().size()
+    30 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    33 getfield net/minecraft/client/Minecraft.fontFilterFishy  (loc0.minecraft)
+    38 getfield net/minecraft/client/gui/screens/ChatScreen.height  (loc0)
+    45 getfield net/minecraft/client/gui/screens/ChatScreen.width  (loc0)
+    54 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat.editBox')
+    57 invokespecial net/minecraft/client/gui/screens/ChatScreen$1.<init>(Lnet/minecraft/client/gui/screens/ChatScreen;Lnet/minecraft/client/gui/Font;IIIILnet/minecraft/network/chat/Component;)V  (loc0, loc0.minecraft.fontFilterFishy, 4, arith, arith, 12, Component.translatable('chat.editBox'))
+    60 putfield net/minecraft/client/gui/screens/ChatScreen.input = net/minecraft/client/gui/screens/ChatScreen$1(loc0, loc0.minecraft.fontFilterFishy, 4, arith, arith, 12, Component.translatable('chat.editBox'))
+    64 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    70 invokevirtual net/minecraft/client/gui/components/EditBox.setMaxLength(I)V  (256)
+    74 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    78 invokevirtual net/minecraft/client/gui/components/EditBox.setBordered(Z)V  (0)
+    82 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    86 getfield net/minecraft/client/gui/screens/ChatScreen.initial  (loc0)
+    89 invokevirtual net/minecraft/client/gui/components/EditBox.setValue(Ljava/lang/String;)V  (loc0.initial)
+    93 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+   102 invokevirtual net/minecraft/client/gui/components/EditBox.setResponder(Ljava/util/function/Consumer;)V  (loc0)
+   106 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+   115 invokevirtual net/minecraft/client/gui/components/EditBox.addFormatter(Lnet/minecraft/client/gui/components/EditBox$TextFormatter;)V  (loc0)
+   119 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+   123 invokevirtual net/minecraft/client/gui/components/EditBox.setCanLoseFocus(Z)V  (0)
+   128 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+   131 invokevirtual net/minecraft/client/gui/screens/ChatScreen.addRenderableWidget(Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;  (loc0.input)
+   141 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   146 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+   150 getfield net/minecraft/client/gui/screens/ChatScreen.font  (loc0)
+   161 invokespecial net/minecraft/client/gui/components/CommandSuggestions.<init>(Lnet/minecraft/client/Minecraft;Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/client/gui/components/EditBox;Lnet/minecraft/client/gui/Font;ZZIIZI)V  (loc0.minecraft, loc0, loc0.input, loc0.font, 0, 0, 1, 10, 1, -805306368)
+   164 putfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions = net/minecraft/client/gui/components/CommandSuggestions(loc0.minecraft, loc0, loc0.input, loc0.font, 0, 0, 1, 10, 1, -805306368)
+   168 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+   172 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.setAllowHiding(Z)V  (0)
+   176 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+   180 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.setAllowSuggestions(Z)V  (0)
+   184 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   187 getfield net/minecraft/client/Minecraft.player  (loc0.minecraft)
+   190 invokevirtual net/minecraft/client/player/LocalPlayer.chatAbilities()Lnet/minecraft/client/multiplayer/chat/ChatAbilities;  ()
+   193 ?? opcode 0x4c
+   196 invokevirtual net/minecraft/client/multiplayer/chat/ChatAbilities.hasAnyRestrictions()Z  ()
+   211 putfield net/minecraft/client/gui/screens/ChatScreen.displayMode = net/minecraft/client/gui/components/ChatComponent$DisplayMode.FOREGROUND
+   215 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+   219 invokevirtual net/minecraft/client/multiplayer/chat/ChatAbilities.canSendMessages()Z  ()
+   223 invokevirtual net/minecraft/client/multiplayer/chat/ChatAbilities.canSendCommands()Z  ()
+   226 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.setRestrictions(ZZ)V  (loc1.canSendMessages(), loc1.canSendCommands())
+   230 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+   233 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.updateCommandInfo()V  ()
+   236 return
+
+=== insertText(Ljava/lang/String;Z)V ===
+     5 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+     9 invokevirtual net/minecraft/client/gui/components/EditBox.setValue(Ljava/lang/String;)V  (loc1)
+    16 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    20 invokevirtual net/minecraft/client/gui/components/EditBox.insertText(Ljava/lang/String;)V  (loc1)
+    23 return
+
+=== insertionClickMode()Z ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+     4 invokevirtual net/minecraft/client/Minecraft.hasShiftDown()Z  ()
+     7 return loc0.minecraft.hasShiftDown()
+
+=== isAllowedInPortal()Z ===
+     1 return 1
+
+=== isPauseScreen()Z ===
+     1 return 0
+
+=== keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+     5 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z  (loc1)
+    12 return 1
+    14 getfield net/minecraft/client/gui/screens/ChatScreen.isDraft  (loc0)
+    21 invokevirtual net/minecraft/client/input/KeyEvent.key()I  ()
+    31 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    36 invokevirtual net/minecraft/client/gui/components/EditBox.setValue(Ljava/lang/String;)V  ('')
+    41 putfield net/minecraft/client/gui/screens/ChatScreen.isDraft = 0
+    45 return 1
+    48 invokespecial net/minecraft/client/gui/screens/Screen.keyPressed(Lnet/minecraft/client/input/KeyEvent;)Z  (loc1)
+    55 return 1
+    57 invokevirtual net/minecraft/client/input/KeyEvent.isConfirmation()Z  ()
+    64 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+    67 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.hasAllowedInput()Z  ()
+    74 return 1
+    77 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    80 invokevirtual net/minecraft/client/gui/components/EditBox.getValue()Ljava/lang/String;  ()
+    84 invokevirtual net/minecraft/client/gui/screens/ChatScreen.handleChatInput(Ljava/lang/String;Z)V  (loc0.input.getValue(), 1)
+    88 getfield net/minecraft/client/gui/screens/ChatScreen.closeOnSubmit  (loc0)
+    98 putfield net/minecraft/client/gui/screens/ChatScreen.exitReason = net/minecraft/client/gui/screens/ChatScreen$ExitReason.DONE
+   102 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   105 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   109 invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V  (null)
+   116 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+   121 invokevirtual net/minecraft/client/gui/components/EditBox.setValue(Ljava/lang/String;)V  ('')
+   125 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   128 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   131 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+   134 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+   137 invokevirtual net/minecraft/client/gui/components/ChatComponent.resetChatScroll()V  ()
+   141 return 1
+   143 invokevirtual net/minecraft/client/input/KeyEvent.key()I  ()
+   178 invokevirtual net/minecraft/client/gui/screens/ChatScreen.moveInHistory(I)V  (-1)
+   186 invokevirtual net/minecraft/client/gui/screens/ChatScreen.moveInHistory(I)V  (1)
+   193 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   196 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   199 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+   202 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+   206 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   209 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   212 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+   215 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+   218 invokevirtual net/minecraft/client/gui/components/ChatComponent.getLinesPerPage()I  ()
+   223 invokevirtual net/minecraft/client/gui/components/ChatComponent.scrollChat(I)V  (arith)
+   230 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   233 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   236 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+   239 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+   243 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+   246 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   249 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+   252 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+   255 invokevirtual net/minecraft/client/gui/components/ChatComponent.getLinesPerPage()I  ()
+   261 invokevirtual net/minecraft/client/gui/components/ChatComponent.scrollChat(I)V  (arith)
+   268 return 0
+   270 return 1
+
+=== mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+     5 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;)Z  (loc1)
+    12 return 1
+    14 invokevirtual net/minecraft/client/input/MouseButtonEvent.button()I  ()
+    21 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    24 invokevirtual net/minecraft/client/Minecraft.getWindow()Lcom/mojang/blaze3d/platform/Window;  ()
+    27 invokevirtual com/mojang/blaze3d/platform/Window.getGuiScaledHeight()I  ()
+    36 invokevirtual net/minecraft/client/gui/screens/ChatScreen.getFont()Lnet/minecraft/client/gui/Font;  ()
+    40 invokevirtual net/minecraft/client/input/MouseButtonEvent.x()D  ()
+    45 invokevirtual net/minecraft/client/input/MouseButtonEvent.y()D  ()
+    49 invokespecial net/minecraft/client/gui/ActiveTextCollector$ClickableStyleFinder.<init>(Lnet/minecraft/client/gui/Font;II)V  (loc0.getFont(), arith, arith)
+    53 invokevirtual net/minecraft/client/gui/screens/ChatScreen.insertionClickMode()Z  ()
+    56 invokevirtual net/minecraft/client/gui/ActiveTextCollector$ClickableStyleFinder.includeInsertions(Z)Lnet/minecraft/client/gui/ActiveTextCollector$ClickableStyleFinder;  (loc0.insertionClickMode())
+    62 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    65 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    68 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    71 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    78 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    81 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    84 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    87 invokevirtual net/minecraft/client/gui/Hud.getGuiTicks()I  ()
+    91 getfield net/minecraft/client/gui/screens/ChatScreen.displayMode  (loc0)
+    94 invokevirtual net/minecraft/client/gui/components/ChatComponent.captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V  (loc4=net/minecraft/client/gui/ActiveTextCollector$ClickableStyleFinder(loc0.getFont(), arith, arith).includeInsertions(loc0.insertionClickMode()), loc3=loc0.minecraft.getWindow().getGuiScaledHeight(), loc0.minecraft.gui.hud.getGuiTicks(), loc0.displayMode)
+    99 invokevirtual net/minecraft/client/gui/ActiveTextCollector$ClickableStyleFinder.result()Lnet/minecraft/network/chat/Style;  ()
+   113 invokevirtual net/minecraft/client/gui/screens/ChatScreen.insertionClickMode()Z  ()
+   116 invokevirtual net/minecraft/client/gui/screens/ChatScreen.handleComponentClicked(Lnet/minecraft/network/chat/Style;Z)Z  (loc5=loc4=net/minecraft/client/gui/ActiveTextCollector$ClickableStyleFinder(loc0.getFont(), arith, arith).includeInsertions(loc0.insertionClickMode()).result(), loc0.insertionClickMode())
+   124 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+   127 invokevirtual net/minecraft/client/gui/components/EditBox.getValue()Ljava/lang/String;  ()
+   130 putfield net/minecraft/client/gui/screens/ChatScreen.initial = loc0.input.getValue()
+   134 return 1
+   138 invokespecial net/minecraft/client/gui/screens/Screen.mouseClicked(Lnet/minecraft/client/input/MouseButtonEvent;Z)Z  (loc1, loc2)
+   141 return loc0.mouseClicked(loc1, loc2)
+
+=== mouseScrolled(DDDD)Z ===
+     6 invokestatic net/minecraft/util/Mth.clamp(DDD)D  (?, ?, ?, loc7, -1.0, 1.0)
+    12 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+    17 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.mouseScrolled(D)Z  (loc0.commandSuggestions, loc7=Mth.clamp(?, ?, ?, loc7, -1.0, 1.0))
+    24 return 1
+    26 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    29 invokevirtual net/minecraft/client/Minecraft.hasShiftDown()Z  ()
+    40 ?? opcode 0x6b
+    44 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    47 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    50 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    53 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    59 invokevirtual net/minecraft/client/gui/components/ChatComponent.scrollChat(I)V  (arith)
+    63 return 1
+
+=== moveInHistory(I)V ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.historyPos  (loc0)
+     8 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    11 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    14 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    17 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    20 invokevirtual net/minecraft/client/gui/components/ChatComponent.getRecentChat()Lnet/minecraft/util/ArrayListDeque;  ()
+    23 invokevirtual net/minecraft/util/ArrayListDeque.size()I  ()
+    30 invokestatic net/minecraft/util/Mth.clamp(III)I  (loc2=arith, 0, loc3=loc0.minecraft.gui.hud.getChat().getRecentChat().size())
+    36 getfield net/minecraft/client/gui/screens/ChatScreen.historyPos  (loc0)
+    42 return
+    50 putfield net/minecraft/client/gui/screens/ChatScreen.historyPos = loc3=loc0.minecraft.gui.hud.getChat().getRecentChat().size()
+    54 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    58 getfield net/minecraft/client/gui/screens/ChatScreen.historyBuffer  (loc0)
+    61 invokevirtual net/minecraft/client/gui/components/EditBox.setValue(Ljava/lang/String;)V  (loc0.historyBuffer)
+    64 return
+    66 getfield net/minecraft/client/gui/screens/ChatScreen.historyPos  (loc0)
+    75 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    78 invokevirtual net/minecraft/client/gui/components/EditBox.getValue()Ljava/lang/String;  ()
+    81 putfield net/minecraft/client/gui/screens/ChatScreen.historyBuffer = loc0.input.getValue()
+    85 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    89 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    92 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    95 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    98 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+   101 invokevirtual net/minecraft/client/gui/components/ChatComponent.getRecentChat()Lnet/minecraft/util/ArrayListDeque;  ()
+   105 invokevirtual net/minecraft/util/ArrayListDeque.get(I)Ljava/lang/Object;  (loc2=Mth.clamp(loc2=arith, 0, loc3=loc0.minecraft.gui.hud.getChat().getRecentChat().size()))
+   111 invokevirtual net/minecraft/client/gui/components/EditBox.setValue(Ljava/lang/String;)V  (loc0.minecraft.gui.hud.getChat().getRecentChat().get(loc2=Mth.clamp(loc2=arith, 0, loc3=loc0.minecraft.gui.hud.getChat().getRecentChat().size())))
+   115 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+   119 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.setAllowSuggestions(Z)V  (0)
+   124 putfield net/minecraft/client/gui/screens/ChatScreen.historyPos = loc2=Mth.clamp(loc2=arith, 0, loc3=loc0.minecraft.gui.hud.getChat().getRecentChat().size())
+   127 return
+
+=== normalizeChatMessage(Ljava/lang/String;)Ljava/lang/String; ===
+     1 invokevirtual java/lang/String.trim()Ljava/lang/String;  ()
+     4 invokestatic org/apache/commons/lang3/StringUtils.normalizeSpace(Ljava/lang/String;)Ljava/lang/String;  (loc1.trim())
+     7 invokestatic net/minecraft/util/StringUtil.trimChatMessage(Ljava/lang/String;)Ljava/lang/String;  (StringUtils.normalizeSpace(loc1.trim()))
+    10 return StringUtil.trimChatMessage(StringUtils.normalizeSpace(loc1.trim()))
+
+=== onClose()V ===
+     4 putfield net/minecraft/client/gui/screens/ChatScreen.exitReason = net/minecraft/client/gui/screens/ChatScreen$ExitReason.INTENTIONAL
+     8 invokespecial net/minecraft/client/gui/screens/Screen.onClose()V  ()
+    11 return
+
+=== onEdited(Ljava/lang/String;)V ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+     5 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.setAllowSuggestions(Z)V  (1)
+     9 getfield net/minecraft/client/gui/screens/ChatScreen.commandSuggestions  (loc0)
+    12 invokevirtual net/minecraft/client/gui/components/CommandSuggestions.updateCommandInfo()V  ()
+    17 putfield net/minecraft/client/gui/screens/ChatScreen.isDraft = 0
+    20 return
+
+=== removed()V ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+     7 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    10 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    13 invokevirtual net/minecraft/client/gui/components/ChatComponent.resetChatScroll()V  ()
+    18 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    21 invokevirtual net/minecraft/client/gui/components/EditBox.getValue()Ljava/lang/String;  ()
+    24 putfield net/minecraft/client/gui/screens/ChatScreen.initial = loc0.input.getValue()
+    28 invokevirtual net/minecraft/client/gui/screens/ChatScreen.shouldDiscardDraft()Z  ()
+    35 getfield net/minecraft/client/gui/screens/ChatScreen.initial  (loc0)
+    38 invokestatic org/apache/commons/lang3/StringUtils.isBlank(Ljava/lang/CharSequence;)Z  (loc0.initial)
+    45 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    48 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    51 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    54 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    57 invokevirtual net/minecraft/client/gui/components/ChatComponent.discardDraft()V  ()
+    64 getfield net/minecraft/client/gui/screens/ChatScreen.isDraft  (loc0)
+    71 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    74 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    77 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    80 invokevirtual net/minecraft/client/gui/Hud.getChat()Lnet/minecraft/client/gui/components/ChatComponent;  ()
+    84 getfield net/minecraft/client/gui/screens/ChatScreen.initial  (loc0)
+    87 invokevirtual net/minecraft/client/gui/components/ChatComponent.saveAsDraft(Ljava/lang/String;)V  (loc0.initial)
+    90 return
+
+=== resize(II)V ===
+     2 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+     5 invokevirtual net/minecraft/client/gui/components/EditBox.getValue()Ljava/lang/String;  ()
+     8 putfield net/minecraft/client/gui/screens/ChatScreen.initial = loc0.input.getValue()
+    14 invokevirtual net/minecraft/client/gui/screens/ChatScreen.init(II)V  (loc1, loc2)
+    17 return
+
+=== setInitialFocus()V ===
+     2 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+     5 invokevirtual net/minecraft/client/gui/screens/ChatScreen.setInitialFocus(Lnet/minecraft/client/gui/components/events/GuiEventListener;)V  (loc0.input)
+     8 return
+
+=== shouldDiscardDraft()Z ===
+     1 getfield net/minecraft/client/gui/screens/ChatScreen.exitReason  (loc0)
+    11 getfield net/minecraft/client/gui/screens/ChatScreen.exitReason  (loc0)
+    21 getfield net/minecraft/client/gui/screens/ChatScreen.minecraft  (loc0)
+    24 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+    27 invokevirtual net/minecraft/client/Options.saveChatDrafts()Lnet/minecraft/client/OptionInstance;  ()
+    30 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+    36 invokevirtual java/lang/Boolean.booleanValue()Z  ()
+    47 return 0
+
+=== updateNarrationState(Lnet/minecraft/client/gui/narration/NarrationElementOutput;)V ===
+     5 invokevirtual net/minecraft/client/gui/screens/ChatScreen.getTitle()Lnet/minecraft/network/chat/Component;  ()
+     8 invokeinterface net/minecraft/client/gui/narration/NarrationElementOutput.add(Lnet/minecraft/client/gui/narration/NarratedElementType;Lnet/minecraft/network/chat/Component;)V  (net/minecraft/client/gui/narration/NarratedElementType.TITLE, loc0.getTitle())
+    14 getfield net/minecraft/client/gui/screens/ChatScreen.displayMode  (loc0)
+    17 getfield net/minecraft/client/gui/components/ChatComponent$DisplayMode.showRestrictedPrompt  (loc0.displayMode)
+    36 ?? opcode 0x53
+    42 ?? opcode 0x53
+    43 invokestatic net/minecraft/network/chat/CommonComponents.joinForNarration([Lnet/minecraft/network/chat/Component;)Lnet/minecraft/network/chat/MutableComponent;  (net/minecraft/client/gui/screens/ChatScreen.RESTRICTED_NARRATION_TEXT)
+    46 invokeinterface net/minecraft/client/gui/narration/NarrationElementOutput.add(Lnet/minecraft/client/gui/narration/NarratedElementType;Lnet/minecraft/network/chat/Component;)V  (1, CommonComponents.joinForNarration(net/minecraft/client/gui/screens/ChatScreen.RESTRICTED_NARRATION_TEXT))
+    61 invokeinterface net/minecraft/client/gui/narration/NarrationElementOutput.add(Lnet/minecraft/client/gui/narration/NarratedElementType;Lnet/minecraft/network/chat/Component;)V  (net/minecraft/client/gui/narration/NarratedElementType.USAGE, net/minecraft/client/gui/screens/ChatScreen.USAGE_TEXT)
+    67 getfield net/minecraft/client/gui/screens/ChatScreen.input  (loc0)
+    70 invokevirtual net/minecraft/client/gui/components/EditBox.getValue()Ljava/lang/String;  ()
+    73 ?? opcode 0x4d
+    75 invokevirtual java/lang/String.isEmpty()Z  ()
+    82 invokeinterface net/minecraft/client/gui/narration/NarrationElementOutput.nest()Lnet/minecraft/client/gui/narration/NarrationElementOutput;  ()
+   100 ?? opcode 0x53
+   101 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;  (0, loc2)
+   104 invokeinterface net/minecraft/client/gui/narration/NarrationElementOutput.add(Lnet/minecraft/client/gui/narration/NarratedElementType;Lnet/minecraft/network/chat/Component;)V  (arr, Component.translatable(0, loc2))
+   109 return

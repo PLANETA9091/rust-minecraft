@@ -1,0 +1,524 @@
+class net/minecraft/client/gui/components/ChatComponent
+
+=== <clinit>()V ===
+     0 invokestatic com/mojang/logging/LogUtils.getLogger()Lorg/slf4j/Logger;  ()
+     9 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat.deleted_marker')
+    21 ?? opcode 0x53
+    27 ?? opcode 0x53
+    28 invokevirtual net/minecraft/network/chat/MutableComponent.withStyle([Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/MutableComponent;  (net/minecraft/ChatFormatting.ITALIC)
+    37 invokestatic net/minecraft/resources/Identifier.withDefaultNamespace(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;  ('internal/expand_chat_queue')
+    53 invokestatic java/util/Optional.empty()Ljava/util/Optional;  ()
+    56 invokespecial net/minecraft/network/chat/ClickEvent$Custom.<init>(Lnet/minecraft/resources/Identifier;Ljava/util/Optional;)V  (net/minecraft/client/gui/components/ChatComponent.QUEUE_EXPAND_ID, Optional.empty())
+    59 invokevirtual net/minecraft/network/chat/Style.withClickEvent(Lnet/minecraft/network/chat/ClickEvent;)Lnet/minecraft/network/chat/Style;  (net/minecraft/network/chat/ClickEvent$Custom(net/minecraft/client/gui/components/ChatComponent.QUEUE_EXPAND_ID, Optional.empty()))
+    69 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat.queue.tooltip')
+    72 invokespecial net/minecraft/network/chat/HoverEvent$ShowText.<init>(Lnet/minecraft/network/chat/Component;)V  (Component.translatable('chat.queue.tooltip'))
+    75 invokevirtual net/minecraft/network/chat/Style.withHoverEvent(Lnet/minecraft/network/chat/HoverEvent;)Lnet/minecraft/network/chat/Style;  (net/minecraft/network/chat/HoverEvent$ShowText(Component.translatable('chat.queue.tooltip')))
+    84 invokestatic net/minecraft/resources/Identifier.withDefaultNamespace(Ljava/lang/String;)Lnet/minecraft/resources/Identifier;  ('internal/go_to_restrictions_screen')
+    93 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat_screen.restricted')
+   102 invokevirtual net/minecraft/network/chat/Style.withColor(Lnet/minecraft/ChatFormatting;)Lnet/minecraft/network/chat/Style;  (net/minecraft/ChatFormatting.RED)
+   106 invokestatic java/lang/Boolean.valueOf(Z)Ljava/lang/Boolean;  (1)
+   109 invokevirtual net/minecraft/network/chat/Style.withUnderlined(Ljava/lang/Boolean;)Lnet/minecraft/network/chat/Style;  (Boolean.valueOf(1))
+   119 invokestatic java/util/Optional.empty()Ljava/util/Optional;  ()
+   122 invokespecial net/minecraft/network/chat/ClickEvent$Custom.<init>(Lnet/minecraft/resources/Identifier;Ljava/util/Optional;)V  (net/minecraft/client/gui/components/ChatComponent.GO_TO_RESTRICTIONS_SCREEN, Optional.empty())
+   125 invokevirtual net/minecraft/network/chat/Style.withClickEvent(Lnet/minecraft/network/chat/ClickEvent;)Lnet/minecraft/network/chat/Style;  (net/minecraft/network/chat/ClickEvent$Custom(net/minecraft/client/gui/components/ChatComponent.GO_TO_RESTRICTIONS_SCREEN, Optional.empty()))
+   128 invokevirtual net/minecraft/network/chat/MutableComponent.withStyle(Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/MutableComponent;  (net/minecraft/network/chat/Style.EMPTY.withColor(net/minecraft/ChatFormatting.RED).withUnderlined(Boolean.valueOf(1)).withClickEvent(net/minecraft/network/chat/ClickEvent$Custom(net/minecraft/client/gui/components/ChatComponent.GO_TO_RESTRICTIONS_SCREEN, Optional.empty())))
+   147 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;)Lnet/minecraft/network/chat/MutableComponent;  ('chat_screen.restricted')
+   150 invokespecial net/minecraft/network/chat/HoverEvent$ShowText.<init>(Lnet/minecraft/network/chat/Component;)V  (Component.translatable('chat_screen.restricted'))
+   153 invokevirtual net/minecraft/network/chat/Style.withHoverEvent(Lnet/minecraft/network/chat/HoverEvent;)Lnet/minecraft/network/chat/Style;  (net/minecraft/network/chat/HoverEvent$ShowText(Component.translatable('chat_screen.restricted')))
+   156 invokestatic net/minecraft/network/chat/ComponentUtils.mergeStyles(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/Component;  (net/minecraft/client/gui/components/ChatComponent.RESTRICTED_CHAT_MESSAGE, net/minecraft/network/chat/Style.EMPTY.withHoverEvent(net/minecraft/network/chat/HoverEvent$ShowText(Component.translatable('chat_screen.restricted'))))
+   162 return
+
+=== <init>(Lnet/minecraft/client/Minecraft;)V ===
+     1 invokespecial java/lang/Object.<init>()V  ()
+    11 invokespecial net/minecraft/util/ArrayListDeque.<init>(I)V  (100)
+    14 putfield net/minecraft/client/gui/components/ChatComponent.recentChat = net/minecraft/util/ArrayListDeque(100)
+    18 invokestatic com/google/common/collect/Lists.newArrayList()Ljava/util/ArrayList;  ()
+    21 putfield net/minecraft/client/gui/components/ChatComponent.allMessages = Lists.newArrayList()
+    25 invokestatic com/google/common/collect/Lists.newArrayList()Ljava/util/ArrayList;  ()
+    28 putfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages = Lists.newArrayList()
+    36 invokespecial java/util/ArrayList.<init>()V  ()
+    39 putfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue = java/util/ArrayList()
+    48 putfield net/minecraft/client/gui/components/ChatComponent.visibleMessageFilter = loc0
+    53 putfield net/minecraft/client/gui/components/ChatComponent.minecraft = loc1
+    62 getfield net/minecraft/client/Minecraft.gameDirectory  (loc1)
+    65 invokevirtual java/io/File.toPath()Ljava/nio/file/Path;  ()
+    68 invokespecial net/minecraft/client/CommandHistory.<init>(Ljava/nio/file/Path;)V  (loc1.gameDirectory.toPath())
+    71 putfield net/minecraft/client/gui/components/ChatComponent.commandHistory = net/minecraft/client/CommandHistory(loc1.gameDirectory.toPath())
+    75 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    79 getfield net/minecraft/client/gui/components/ChatComponent.commandHistory  (loc0)
+    82 invokevirtual net/minecraft/client/CommandHistory.history()Ljava/util/Collection;  ()
+    85 invokevirtual net/minecraft/util/ArrayListDeque.addAll(Ljava/util/Collection;)Z  (loc0.commandHistory.history())
+    89 return
+
+=== addClientSystemMessage(Lnet/minecraft/network/chat/Component;)V ===
+     6 invokestatic net/minecraft/client/multiplayer/chat/GuiMessageTag.systemSinglePlayer()Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;  ()
+     9 invokevirtual net/minecraft/client/gui/components/ChatComponent.addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V  (loc1, null, net/minecraft/client/multiplayer/chat/GuiMessageSource.SYSTEM_CLIENT, GuiMessageTag.systemSinglePlayer())
+    12 return
+
+=== addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V ===
+     5 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     8 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    11 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    14 invokevirtual net/minecraft/client/gui/Hud.getGuiTicks()I  ()
+    22 invokespecial net/minecraft/client/multiplayer/chat/GuiMessage.<init>(ILnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V  (loc0.minecraft.gui.hud.getGuiTicks(), loc1, loc2, loc3, loc4)
+    28 getfield net/minecraft/client/gui/components/ChatComponent.visibleMessageFilter  (loc0)
+    33 invokeinterface java/util/function/Predicate.test(Ljava/lang/Object;)Z  (loc5=net/minecraft/client/multiplayer/chat/GuiMessage(loc0.minecraft.gui.hud.getGuiTicks(), loc1, loc2, loc3, loc4))
+    44 invokevirtual net/minecraft/client/gui/components/ChatComponent.logChatMessage(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)V  (loc5=net/minecraft/client/multiplayer/chat/GuiMessage(loc0.minecraft.gui.hud.getGuiTicks(), loc1, loc2, loc3, loc4))
+    50 invokevirtual net/minecraft/client/gui/components/ChatComponent.addMessageToDisplayQueue(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)V  (loc5=net/minecraft/client/multiplayer/chat/GuiMessage(loc0.minecraft.gui.hud.getGuiTicks(), loc1, loc2, loc3, loc4))
+    56 invokevirtual net/minecraft/client/gui/components/ChatComponent.addMessageToQueue(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)V  (loc5=net/minecraft/client/multiplayer/chat/GuiMessage(loc0.minecraft.gui.hud.getGuiTicks(), loc1, loc2, loc3, loc4))
+    59 return
+
+=== addMessageToDisplayQueue(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)V ===
+     1 invokevirtual net/minecraft/client/gui/components/ChatComponent.getWidth()I  ()
+     6 invokevirtual net/minecraft/client/gui/components/ChatComponent.getScale()D  ()
+     9 ?? opcode 0x6f
+    10 invokestatic net/minecraft/util/Mth.floor(D)I  (arith, loc0.getScale())
+    16 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+    19 getfield net/minecraft/client/Minecraft.font  (loc0.minecraft)
+    23 invokevirtual net/minecraft/client/multiplayer/chat/GuiMessage.splitLines(Lnet/minecraft/client/gui/Font;I)Ljava/util/List;  (loc0.minecraft.font, loc2=Mth.floor(arith, loc0.getScale()))
+    26 ?? opcode 0x4e
+    28 invokevirtual net/minecraft/client/gui/components/ChatComponent.isChatFocused()Z  ()
+    39 invokeinterface java/util/List.size()I  ()
+    50 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (loc5=0)
+    66 getfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos  (loc0)
+    74 putfield net/minecraft/client/gui/components/ChatComponent.newMessageSinceScroll = 1
+    79 invokevirtual net/minecraft/client/gui/components/ChatComponent.scrollChat(I)V  (1)
+    85 invokeinterface java/util/List.size()I  ()
+   103 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+   115 invokespecial net/minecraft/client/multiplayer/chat/GuiMessage$Line.<init>(Lnet/minecraft/client/multiplayer/chat/GuiMessage;Lnet/minecraft/util/FormattedCharSequence;Z)V  (loc1, loc6=loc3.get(loc5=0), loc7=0)
+   118 invokeinterface java/util/List.addFirst(Ljava/lang/Object;)V  (net/minecraft/client/multiplayer/chat/GuiMessage$Line(loc1, loc6=loc3.get(loc5=0), loc7=0))
+   130 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+   133 invokeinterface java/util/List.size()I  ()
+   144 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+   147 invokeinterface java/util/List.removeLast()Ljava/lang/Object;  ()
+   156 return
+
+=== addMessageToQueue(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+     5 invokeinterface java/util/List.addFirst(Ljava/lang/Object;)V  (loc1)
+    11 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+    14 invokeinterface java/util/List.size()I  ()
+    25 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+    28 invokeinterface java/util/List.removeLast()Ljava/lang/Object;  ()
+    37 return
+
+=== addPlayerMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V ===
+     7 invokevirtual net/minecraft/client/gui/components/ChatComponent.addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V  (loc1, loc2, net/minecraft/client/multiplayer/chat/GuiMessageSource.PLAYER, loc3)
+    10 return
+
+=== addRecentChat(Ljava/lang/String;)V ===
+     2 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+     5 invokevirtual net/minecraft/util/ArrayListDeque.peekLast()Ljava/lang/Object;  ()
+     8 invokevirtual java/lang/String.equals(Ljava/lang/Object;)Z  (loc0.recentChat.peekLast())
+    15 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    18 invokevirtual net/minecraft/util/ArrayListDeque.size()I  ()
+    27 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    30 invokevirtual net/minecraft/util/ArrayListDeque.removeFirst()Ljava/lang/Object;  ()
+    35 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    39 invokevirtual net/minecraft/util/ArrayListDeque.addLast(Ljava/lang/Object;)V  (loc1)
+    46 invokevirtual java/lang/String.startsWith(Ljava/lang/String;)Z  ('/')
+    53 getfield net/minecraft/client/gui/components/ChatComponent.commandHistory  (loc0)
+    57 invokevirtual net/minecraft/client/CommandHistory.addCommand(Ljava/lang/String;)V  (loc1)
+    60 return
+
+=== addServerSystemMessage(Lnet/minecraft/network/chat/Component;)V ===
+     6 invokestatic net/minecraft/client/multiplayer/chat/GuiMessageTag.systemSinglePlayer()Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;  ()
+     9 invokevirtual net/minecraft/client/gui/components/ChatComponent.addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V  (loc1, null, net/minecraft/client/multiplayer/chat/GuiMessageSource.SYSTEM_SERVER, GuiMessageTag.systemSinglePlayer())
+    12 return
+
+=== captureClickableText(Lnet/minecraft/client/gui/ActiveTextCollector;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V ===
+     6 invokespecial net/minecraft/client/gui/components/ChatComponent$ClickableTextOnlyGraphicsAccess.<init>(Lnet/minecraft/client/gui/ActiveTextCollector;)V  (loc1)
+    13 invokevirtual net/minecraft/client/gui/components/ChatComponent.extractRenderState(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V  (net/minecraft/client/gui/components/ChatComponent$ClickableTextOnlyGraphicsAccess(loc1), loc2, loc3, loc4)
+    16 return
+
+=== clearMessages(Z)V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+     7 invokevirtual net/minecraft/client/gui/Gui.chatListener()Lnet/minecraft/client/multiplayer/chat/ChatListener;  ()
+    10 invokevirtual net/minecraft/client/multiplayer/chat/ChatListener.flushQueue()V  ()
+    14 getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue  (loc0)
+    17 invokeinterface java/util/List.clear()V  ()
+    23 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+    26 invokeinterface java/util/List.clear()V  ()
+    32 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+    35 invokeinterface java/util/List.clear()V  ()
+    45 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    48 invokevirtual net/minecraft/util/ArrayListDeque.clear()V  ()
+    52 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    56 getfield net/minecraft/client/gui/components/ChatComponent.commandHistory  (loc0)
+    59 invokevirtual net/minecraft/client/CommandHistory.history()Ljava/util/Collection;  ()
+    62 invokevirtual net/minecraft/util/ArrayListDeque.addAll(Ljava/util/Collection;)Z  (loc0.commandHistory.history())
+    66 return
+
+=== createDeletedMarker(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)Lnet/minecraft/client/multiplayer/chat/GuiMessage; ===
+     5 invokevirtual net/minecraft/client/multiplayer/chat/GuiMessage.addedTime()I  ()
+    15 invokestatic net/minecraft/client/multiplayer/chat/GuiMessageTag.system()Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;  ()
+    18 invokespecial net/minecraft/client/multiplayer/chat/GuiMessage.<init>(ILnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/multiplayer/chat/GuiMessageSource;Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;)V  (loc0.addedTime(), net/minecraft/client/gui/components/ChatComponent.DELETED_CHAT_MESSAGE, null, net/minecraft/client/multiplayer/chat/GuiMessageSource.SYSTEM_SERVER, GuiMessageTag.system())
+    21 return net/minecraft/client/multiplayer/chat/GuiMessage(loc0.addedTime(), net/minecraft/client/gui/components/ChatComponent.DELETED_CHAT_MESSAGE, null, net/minecraft/client/multiplayer/chat/GuiMessageSource.SYSTEM_SERVER, GuiMessageTag.system())
+
+=== createScreen(Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;Lnet/minecraft/client/gui/screens/ChatScreen$ChatConstructor;)Lnet/minecraft/client/gui/screens/ChatScreen; ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.latestDraft  (loc0)
+     9 getfield net/minecraft/client/gui/components/ChatComponent.latestDraft  (loc0)
+    12 invokevirtual net/minecraft/client/gui/components/ChatComponent$ChatMethod.isDraftRestorable(Lnet/minecraft/client/gui/components/ChatComponent$Draft;)Z  (loc0.latestDraft)
+    20 getfield net/minecraft/client/gui/components/ChatComponent.latestDraft  (loc0)
+    23 invokevirtual net/minecraft/client/gui/components/ChatComponent$Draft.text()Ljava/lang/String;  ()
+    27 invokeinterface net/minecraft/client/gui/screens/ChatScreen$ChatConstructor.create(Ljava/lang/String;Z)Lnet/minecraft/client/gui/screens/ChatScreen;  (loc0.latestDraft.text(), 1)
+    32 return loc2.create(loc0.latestDraft.text(), 1)
+    35 invokevirtual net/minecraft/client/gui/components/ChatComponent$ChatMethod.prefix()Ljava/lang/String;  ()
+    39 invokeinterface net/minecraft/client/gui/screens/ChatScreen$ChatConstructor.create(Ljava/lang/String;Z)Lnet/minecraft/client/gui/screens/ChatScreen;  (loc1.prefix(), 0)
+    44 return loc2.create(loc1.prefix(), 0)
+
+=== defaultUnfocusedPct()D ===
+    11 invokestatic net/minecraft/client/gui/components/ChatComponent.getHeight(D)I  (70.0, 1.0)
+    18 ?? opcode 0x6f
+    19 return arith
+
+=== deleteMessage(Lnet/minecraft/network/chat/MessageSignature;)V ===
+     2 invokevirtual net/minecraft/client/gui/components/ChatComponent.deleteMessageOrDelay(Lnet/minecraft/network/chat/MessageSignature;)Lnet/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion;  (loc1)
+     5 ?? opcode 0x4d
+    11 getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue  (loc0)
+    15 invokeinterface java/util/List.add(Ljava/lang/Object;)Z  (loc2)
+    21 return
+
+=== deleteMessageOrDelay(Lnet/minecraft/network/chat/MessageSignature;)Lnet/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion; ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+     7 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    10 invokevirtual net/minecraft/client/gui/Hud.getGuiTicks()I  ()
+    15 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+    18 invokeinterface java/util/List.listIterator()Ljava/util/ListIterator;  ()
+    23 ?? opcode 0x4e
+    25 invokeinterface java/util/ListIterator.hasNext()Z  ()
+    34 invokeinterface java/util/ListIterator.next()Ljava/lang/Object;  ()
+    47 invokevirtual net/minecraft/client/multiplayer/chat/GuiMessage.signature()Lnet/minecraft/network/chat/MessageSignature;  ()
+    50 invokevirtual net/minecraft/network/chat/MessageSignature.equals(Ljava/lang/Object;)Z  (loc4=loc3.next().signature())
+    58 invokevirtual net/minecraft/client/multiplayer/chat/GuiMessage.addedTime()I  ()
+    75 invokestatic net/minecraft/client/gui/components/ChatComponent.createDeletedMarker(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)Lnet/minecraft/client/multiplayer/chat/GuiMessage;  (loc4=loc3.next())
+    78 invokeinterface java/util/ListIterator.set(Ljava/lang/Object;)V  (ChatComponent.createDeletedMarker(loc4=loc3.next()))
+    84 invokevirtual net/minecraft/client/gui/components/ChatComponent.refreshTrimmedMessages()V  ()
+    88 return null
+    96 invokespecial net/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion.<init>(Lnet/minecraft/network/chat/MessageSignature;I)V  (loc1, loc5=arith)
+    99 return net/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion(loc1, loc5=arith)
+   104 return null
+
+=== discardDraft()V ===
+     2 putfield net/minecraft/client/gui/components/ChatComponent.latestDraft = null
+     5 return
+
+=== extractRenderState(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/gui/Font;IIILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;Z)V ===
+     1 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.pose()Lorg/joml/Matrix3x2fStack;  ()
+     4 invokevirtual org/joml/Matrix3x2fStack.pushMatrix()Lorg/joml/Matrix3x2fStack;  ()
+    11 getfield net/minecraft/client/gui/components/ChatComponent$DisplayMode.foreground  (loc6)
+    29 invokespecial net/minecraft/client/gui/components/ChatComponent$DrawingFocusedGraphicsAccess.<init>(Lnet/minecraft/client/gui/GuiGraphicsExtractor;Lnet/minecraft/client/gui/Font;IIZ)V  (loc1, loc2, loc4, loc5, loc7)
+    40 invokespecial net/minecraft/client/gui/components/ChatComponent$DrawingBackgroundGraphicsAccess.<init>(Lnet/minecraft/client/gui/GuiGraphicsExtractor;)V  (loc1)
+    44 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.guiHeight()I  ()
+    50 invokevirtual net/minecraft/client/gui/components/ChatComponent.extractRenderState(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V  (net/minecraft/client/gui/components/ChatComponent$DrawingBackgroundGraphicsAccess(loc1), loc1.guiHeight(), loc3, loc6)
+    54 invokevirtual net/minecraft/client/gui/GuiGraphicsExtractor.pose()Lorg/joml/Matrix3x2fStack;  ()
+    57 invokevirtual org/joml/Matrix3x2fStack.popMatrix()Lorg/joml/Matrix3x2fStack;  ()
+    61 return
+
+=== extractRenderState(Lnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IILnet/minecraft/client/gui/components/ChatComponent$DisplayMode;)V ===
+     2 getfield net/minecraft/client/gui/components/ChatComponent$DisplayMode.foreground  (loc4)
+     9 getfield net/minecraft/client/gui/components/ChatComponent$DisplayMode.showRestrictedPrompt  (loc4)
+    15 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+    18 invokeinterface java/util/List.size()I  ()
+    35 return
+    36 invokestatic net/minecraft/util/profiling/Profiler.get()Lnet/minecraft/util/profiling/ProfilerFiller;  ()
+    45 invokeinterface net/minecraft/util/profiling/ProfilerFiller.push(Ljava/lang/String;)V  ('chat')
+    51 invokevirtual net/minecraft/client/gui/components/ChatComponent.getScale()D  ()
+    58 invokevirtual net/minecraft/client/gui/components/ChatComponent.getWidth()I  ()
+    65 invokestatic net/minecraft/util/Mth.ceil(F)I  ((arith / loc9=arith))
+    78 invokestatic net/minecraft/util/Mth.floor(F)I  ((arith / loc9=arith))
+    84 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+    87 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+    90 invokevirtual net/minecraft/client/Options.chatOpacity()Lnet/minecraft/client/OptionInstance;  ()
+    93 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+    99 invokevirtual java/lang/Double.floatValue()F  ()
+   111 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+   114 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+   117 invokevirtual net/minecraft/client/Options.textBackgroundOpacity()Lnet/minecraft/client/OptionInstance;  ()
+   120 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+   126 invokevirtual java/lang/Double.floatValue()F  ()
+   132 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+   135 getfield net/minecraft/client/Minecraft.font  (loc0.minecraft)
+   138 invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;  (loc0.minecraft.font)
+   151 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+   154 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+   157 invokevirtual net/minecraft/client/Options.chatLineSpacing()Lnet/minecraft/client/OptionInstance;  ()
+   160 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+   166 invokevirtual java/lang/Double.doubleValue()D  ()
+   177 ?? opcode 0x63
+   178 ?? opcode 0x6b
+   188 ?? opcode 0x63
+   189 ?? opcode 0x6b
+   195 ?? opcode 0x6b
+   196 ?? opcode 0x67
+   197 invokestatic java/lang/Math.round(D)J  (4.0, loc16=loc0.minecraft.options.chatLineSpacing().get().doubleValue())
+   204 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+   207 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+   210 invokevirtual net/minecraft/client/gui/Gui.chatListener()Lnet/minecraft/client/multiplayer/chat/ChatListener;  ()
+   213 invokevirtual net/minecraft/client/multiplayer/chat/ChatListener.queueSize()J  ()
+   230 invokestatic net/minecraft/client/gui/components/ChatComponent$AlphaCalculator.timeBased(I)Lnet/minecraft/client/gui/components/ChatComponent$AlphaCalculator;  (loc3)
+   243 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.updatePose(Ljava/util/function/Consumer;)V  (loc9=arith)
+   265 invokevirtual net/minecraft/client/gui/components/ChatComponent.forEachLine(Lnet/minecraft/client/gui/components/ChatComponent$AlphaCalculator;Lnet/minecraft/client/gui/components/ChatComponent$LineConsumer;)I  (loc10=Mth.ceil((arith / loc9=arith)), loc13=loc0.minecraft.options.textBackgroundOpacity().get().floatValue())
+   305 invokestatic net/minecraft/util/ARGB.black(F)I  (loc13=loc0.minecraft.options.textBackgroundOpacity().get().floatValue())
+   308 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.fill(IIIII)V  (-2, loc11=Mth.floor((arith / loc9=arith)), arith, arith, ARGB.black(loc13=loc0.minecraft.options.textBackgroundOpacity().get().floatValue()))
+   336 invokestatic net/minecraft/util/ARGB.black(F)I  (loc13=loc0.minecraft.options.textBackgroundOpacity().get().floatValue())
+   339 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.fill(IIIII)V  (-2, loc24=arith, arith, arith, ARGB.black(loc13=loc0.minecraft.options.textBackgroundOpacity().get().floatValue()))
+   363 invokespecial net/minecraft/client/gui/components/ChatComponent$1.<init>(Lnet/minecraft/client/gui/components/ChatComponent;IIILnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;FI)V  (loc0, loc11=Mth.floor((arith / loc9=arith)), loc18=1.0, loc19=arith, loc1, loc12=((loc0.minecraft.options.chatOpacity().get().floatValue() * 0.8999999761581421) + 0.10000000149011612), loc14=9)
+   366 invokevirtual net/minecraft/client/gui/components/ChatComponent.forEachLine(Lnet/minecraft/client/gui/components/ChatComponent$AlphaCalculator;Lnet/minecraft/client/gui/components/ChatComponent$LineConsumer;)I  (loc22=ChatComponent$AlphaCalculator.timeBased(loc3), net/minecraft/client/gui/components/ChatComponent$1(loc0, loc11=Mth.floor((arith / loc9=arith)), loc18=1.0, loc19=arith, loc1, loc12=((loc0.minecraft.options.chatOpacity().get().floatValue() * 0.8999999761581421) + 0.10000000149011612), loc14=9))
+   395 invokestatic java/lang/Long.valueOf(J)Ljava/lang/Long;  (0, loc20=loc0.minecraft.gui.chatListener().queueSize())
+   398 ?? opcode 0x53
+   399 invokestatic net/minecraft/network/chat/Component.translatable(Ljava/lang/String;[Ljava/lang/Object;)Lnet/minecraft/network/chat/MutableComponent;  (arr, Long.valueOf(0, loc20=loc0.minecraft.gui.chatListener().queueSize()))
+   405 invokevirtual net/minecraft/network/chat/MutableComponent.setStyle(Lnet/minecraft/network/chat/Style;)Lnet/minecraft/network/chat/MutableComponent;  (net/minecraft/client/gui/components/ChatComponent.QUEUE_EXPAND_TEXT_STYLE)
+   424 invokeinterface net/minecraft/network/chat/Component.getVisualOrderText()Lnet/minecraft/util/FormattedCharSequence;  ()
+   429 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.handleMessage(IFLnet/minecraft/util/FormattedCharSequence;)Z  (arith, (0.5 * loc12=((loc0.minecraft.options.chatOpacity().get().floatValue() * 0.8999999761581421) + 0.10000000149011612)), loc26=Component.translatable(arr, Long.valueOf(0, loc20=loc0.minecraft.gui.chatListener().queueSize())).setStyle(net/minecraft/client/gui/components/ChatComponent.QUEUE_EXPAND_TEXT_STYLE).getVisualOrderText())
+   441 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+   444 getfield net/minecraft/client/Minecraft.font  (loc0.minecraft)
+   450 invokevirtual net/minecraft/client/gui/Font.width(Lnet/minecraft/network/chat/FormattedText;)I  (net/minecraft/client/gui/components/ChatComponent.RESTRICTED_CHAT_MESSAGE)
+   466 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+   469 getfield net/minecraft/client/Minecraft.font  (loc0.minecraft)
+   474 invokestatic net/minecraft/client/gui/components/ComponentRenderUtils.clipText(Lnet/minecraft/network/chat/Component;Lnet/minecraft/client/gui/Font;I)Lnet/minecraft/util/FormattedCharSequence;  (net/minecraft/client/gui/components/ChatComponent.RESTRICTED_CHAT_MESSAGE_WITH_HOVER, loc0.minecraft.font, loc10=Mth.ceil((arith / loc9=arith)))
+   483 invokeinterface net/minecraft/network/chat/Component.getVisualOrderText()Lnet/minecraft/util/FormattedCharSequence;  ()
+   505 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.handleMessage(IFLnet/minecraft/util/FormattedCharSequence;)Z  (arith, loc12=((loc0.minecraft.options.chatOpacity().get().floatValue() * 0.8999999761581421) + 0.10000000149011612), loc26=net/minecraft/client/gui/components/ChatComponent.RESTRICTED_CHAT_MESSAGE.getVisualOrderText())
+   536 getfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos  (loc0)
+   583 getfield net/minecraft/client/gui/components/ChatComponent.newMessageSinceScroll  (loc0)
+   626 invokestatic net/minecraft/util/ARGB.color(II)I  (loc29=96, loc30=3355562)
+   629 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.fill(IIIII)V  (13382451, loc1, arith, arith, ARGB.color(loc29=96, loc30=3355562))
+   657 invokestatic net/minecraft/util/ARGB.color(II)I  (loc29=96, 13421772)
+   660 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.fill(IIIII)V  ('chat.queue', loc1, arith, arith, ARGB.color(loc29=96, 13421772))
+   667 invokeinterface net/minecraft/util/profiling/ProfilerFiller.pop()V  ()
+   672 return
+
+=== forEachLine(Lnet/minecraft/client/gui/components/ChatComponent$AlphaCalculator;Lnet/minecraft/client/gui/components/ChatComponent$LineConsumer;)I ===
+     1 invokevirtual net/minecraft/client/gui/components/ChatComponent.getLinesPerPage()I  ()
+     9 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+    12 invokeinterface java/util/List.size()I  ()
+    18 getfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos  (loc0)
+    23 invokestatic java/lang/Math.min(II)I  (arith, loc3=loc0.getLinesPerPage())
+    38 getfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos  (loc0)
+    45 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+    50 invokeinterface java/util/List.get(I)Ljava/lang/Object;  (loc6=arith)
+    63 invokeinterface net/minecraft/client/gui/components/ChatComponent$AlphaCalculator.calculate(Lnet/minecraft/client/multiplayer/chat/GuiMessage$Line;)F  (loc7=loc0.trimmedMessages.get(loc6=arith))
+    88 invokeinterface net/minecraft/client/gui/components/ChatComponent$LineConsumer.accept(Lnet/minecraft/client/multiplayer/chat/GuiMessage$Line;IF)V  (loc7=loc0.trimmedMessages.get(loc6=arith), loc5=arith, loc8=loc1.calculate(loc7=loc0.trimmedMessages.get(loc6=arith)))
+   101 return loc4=1
+
+=== getHeight()I ===
+     1 invokevirtual net/minecraft/client/gui/components/ChatComponent.isChatFocused()Z  ()
+     8 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+    11 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+    14 invokevirtual net/minecraft/client/Options.chatHeightFocused()Lnet/minecraft/client/OptionInstance;  ()
+    17 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+    27 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+    30 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+    33 invokevirtual net/minecraft/client/Options.chatHeightUnfocused()Lnet/minecraft/client/OptionInstance;  ()
+    36 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+    42 invokevirtual java/lang/Double.doubleValue()D  ()
+    45 invokestatic net/minecraft/client/gui/components/ChatComponent.getHeight(D)I  (loc0.minecraft.options.chatHeightFocused().get(), loc0.minecraft.options.chatHeightUnfocused().get().doubleValue())
+    48 return ChatComponent.getHeight(loc0.minecraft.options.chatHeightFocused().get(), loc0.minecraft.options.chatHeightUnfocused().get().doubleValue())
+
+=== getHeight(D)I ===
+    11 ?? opcode 0x6b
+    15 ?? opcode 0x63
+    16 invokestatic net/minecraft/util/Mth.floor(D)I  (160.0, 20.0)
+    19 return Mth.floor(160.0, 20.0)
+
+=== getLineHeight()I ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.font  (loc0.minecraft)
+     7 invokestatic java/util/Objects.requireNonNull(Ljava/lang/Object;)Ljava/lang/Object;  (loc0.minecraft.font)
+    15 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+    18 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+    21 invokevirtual net/minecraft/client/Options.chatLineSpacing()Lnet/minecraft/client/OptionInstance;  ()
+    24 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+    30 invokevirtual java/lang/Double.doubleValue()D  ()
+    34 ?? opcode 0x63
+    35 ?? opcode 0x6b
+    37 return 1.0
+
+=== getLinesPerPage()I ===
+     1 invokevirtual net/minecraft/client/gui/components/ChatComponent.getHeight()I  ()
+     5 invokevirtual net/minecraft/client/gui/components/ChatComponent.getLineHeight()I  ()
+     9 return arith
+
+=== getRecentChat()Lnet/minecraft/util/ArrayListDeque; ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+     4 return loc0.recentChat
+
+=== getScale()D ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+     7 invokevirtual net/minecraft/client/Options.chatScale()Lnet/minecraft/client/OptionInstance;  ()
+    10 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+    16 invokevirtual java/lang/Double.doubleValue()D  ()
+    19 return loc0.minecraft.options.chatScale().get().doubleValue()
+
+=== getWidth()I ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.options  (loc0.minecraft)
+     7 invokevirtual net/minecraft/client/Options.chatWidth()Lnet/minecraft/client/OptionInstance;  ()
+    10 invokevirtual net/minecraft/client/OptionInstance.get()Ljava/lang/Object;  ()
+    16 invokevirtual java/lang/Double.doubleValue()D  ()
+    19 invokestatic net/minecraft/client/gui/components/ChatComponent.getWidth(D)I  (?, loc0.minecraft.options.chatWidth().get().doubleValue())
+    22 return ChatComponent.getWidth(?, loc0.minecraft.options.chatWidth().get().doubleValue())
+
+=== getWidth(D)I ===
+    11 ?? opcode 0x6b
+    15 ?? opcode 0x63
+    16 invokestatic net/minecraft/util/Mth.floor(D)I  (280.0, 40.0)
+    19 return Mth.floor(280.0, 40.0)
+
+=== isChatFocused()Z ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+     7 invokevirtual net/minecraft/client/gui/Gui.screen()Lnet/minecraft/client/gui/screens/Screen;  ()
+    13 return ?
+
+=== lambda$extractRenderState$0(FLorg/joml/Matrix3x2f;)V ===
+     3 invokevirtual org/joml/Matrix3x2f.scale(FF)Lorg/joml/Matrix3x2f;  (loc2, loc2)
+    12 invokevirtual org/joml/Matrix3x2f.translate(FF)Lorg/joml/Matrix3x2f;  (4.0, 0.0)
+    16 return
+
+=== lambda$extractRenderState$1(IILnet/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess;IFLnet/minecraft/client/multiplayer/chat/GuiMessage$Line;IF)V ===
+    31 invokestatic net/minecraft/util/ARGB.black(F)I  ((loc7 * loc4))
+    34 invokeinterface net/minecraft/client/gui/components/ChatComponent$ChatGraphicsAccess.fill(IIIII)V  (-4, loc9=arith, arith, loc8=arith, ARGB.black((loc7 * loc4)))
+    39 return
+
+=== lambda$new$0(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)Z ===
+     1 return 1
+
+=== lambda$processMessageDeletionQueue$0(ILnet/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion;)Z ===
+     2 invokevirtual net/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion.deletableAfter()I  ()
+    10 invokevirtual net/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion.signature()Lnet/minecraft/network/chat/MessageSignature;  ()
+    13 invokevirtual net/minecraft/client/gui/components/ChatComponent.deleteMessageOrDelay(Lnet/minecraft/network/chat/MessageSignature;)Lnet/minecraft/client/gui/components/ChatComponent$DelayedMessageDeletion;  (loc2.signature())
+    24 return 0
+    26 return 0
+
+=== logChatMessage(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)V ===
+     1 invokevirtual net/minecraft/client/multiplayer/chat/GuiMessage.content()Lnet/minecraft/network/chat/Component;  ()
+     4 invokeinterface net/minecraft/network/chat/Component.getString()Ljava/lang/String;  ()
+    15 invokevirtual java/lang/String.replaceAll(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;  ('\r', '\\\\r')
+    24 invokevirtual java/lang/String.replaceAll(Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;  ('\n', '\\\\n')
+    27 ?? opcode 0x4d
+    29 invokevirtual net/minecraft/client/multiplayer/chat/GuiMessage.tag()Lnet/minecraft/client/multiplayer/chat/GuiMessageTag;  ()
+    37 invokestatic net/minecraft/Optionull.map(Ljava/lang/Object;Ljava/util/function/Function;)Ljava/lang/Object;  (loc1.content().getString().replaceAll('\r', '\\\\r').replaceAll('\n', '\\\\n'), loc1.tag())
+    43 ?? opcode 0x4e
+    56 invokeinterface org/slf4j/Logger.info(Ljava/lang/String;Ljava/lang/Object;Ljava/lang/Object;)V  ('[{}] [CHAT] {}', loc3, loc2)
+    71 invokeinterface org/slf4j/Logger.info(Ljava/lang/String;Ljava/lang/Object;)V  ('[CHAT] {}', loc2)
+    76 return
+
+=== openScreen(Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;Lnet/minecraft/client/gui/screens/ChatScreen$ChatConstructor;)V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+    10 invokevirtual net/minecraft/client/gui/components/ChatComponent.createScreen(Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;Lnet/minecraft/client/gui/screens/ChatScreen$ChatConstructor;)Lnet/minecraft/client/gui/screens/ChatScreen;  (loc1, loc2)
+    13 invokevirtual net/minecraft/client/gui/Gui.setScreen(Lnet/minecraft/client/gui/screens/Screen;)V  (loc0.createScreen(loc1, loc2))
+    16 return
+
+=== preserveCurrentChatScreen()V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+     7 invokevirtual net/minecraft/client/gui/Gui.screen()Lnet/minecraft/client/gui/screens/Screen;  ()
+    10 ?? opcode 0x4d
+    22 ?? opcode 0x4c
+    25 putfield net/minecraft/client/gui/components/ChatComponent.preservedScreen = loc1
+    28 return
+
+=== processMessageDeletionQueue()V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.minecraft  (loc0)
+     4 getfield net/minecraft/client/Minecraft.gui  (loc0.minecraft)
+     7 getfield net/minecraft/client/gui/Gui.hud  (loc0.minecraft.gui)
+    10 invokevirtual net/minecraft/client/gui/Hud.getGuiTicks()I  ()
+    15 getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue  (loc0)
+    25 invokeinterface java/util/List.removeIf(Ljava/util/function/Predicate;)Z  (loc1=loc0.minecraft.gui.hud.getGuiTicks())
+    31 return
+
+=== refreshTrimmedMessages()V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+     4 invokeinterface java/util/List.clear()V  ()
+    10 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+    13 invokestatic com/google/common/collect/Lists.reverse(Ljava/util/List;)Ljava/util/List;  (loc0.allMessages)
+    16 invokeinterface java/util/List.iterator()Ljava/util/Iterator;  ()
+    21 ?? opcode 0x4c
+    23 invokeinterface java/util/Iterator.hasNext()Z  ()
+    32 invokeinterface java/util/Iterator.next()Ljava/lang/Object;  ()
+    40 ?? opcode 0x4d
+    42 getfield net/minecraft/client/gui/components/ChatComponent.visibleMessageFilter  (loc0)
+    46 invokeinterface java/util/function/Predicate.test(Ljava/lang/Object;)Z  (loc2)
+    56 invokevirtual net/minecraft/client/gui/components/ChatComponent.addMessageToDisplayQueue(Lnet/minecraft/client/multiplayer/chat/GuiMessage;)V  (loc2)
+    62 return
+
+=== rescaleChat()V ===
+     1 invokevirtual net/minecraft/client/gui/components/ChatComponent.resetChatScroll()V  ()
+     5 invokevirtual net/minecraft/client/gui/components/ChatComponent.refreshTrimmedMessages()V  ()
+     8 return
+
+=== resetChatScroll()V ===
+     2 putfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos = 0
+     7 putfield net/minecraft/client/gui/components/ChatComponent.newMessageSinceScroll = 0
+    10 return
+
+=== restoreChatScreen()Lnet/minecraft/client/gui/screens/ChatScreen; ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.preservedScreen  (loc0)
+     4 ?? opcode 0x4c
+     7 putfield net/minecraft/client/gui/components/ChatComponent.preservedScreen = null
+    11 return loc1
+
+=== restoreState(Lnet/minecraft/client/gui/components/ChatComponent$State;)V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+     4 invokevirtual net/minecraft/util/ArrayListDeque.clear()V  ()
+     8 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    12 getfield net/minecraft/client/gui/components/ChatComponent$State.history  (loc1)
+    15 invokevirtual net/minecraft/util/ArrayListDeque.addAll(Ljava/util/Collection;)Z  (loc1.history)
+    20 getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue  (loc0)
+    23 invokeinterface java/util/List.clear()V  ()
+    29 getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue  (loc0)
+    33 getfield net/minecraft/client/gui/components/ChatComponent$State.delayedMessageDeletions  (loc1)
+    36 invokeinterface java/util/List.addAll(Ljava/util/Collection;)Z  (loc1.delayedMessageDeletions)
+    43 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+    46 invokeinterface java/util/List.clear()V  ()
+    52 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+    56 getfield net/minecraft/client/gui/components/ChatComponent$State.messages  (loc1)
+    59 invokeinterface java/util/List.addAll(Ljava/util/Collection;)Z  (loc1.messages)
+    66 invokevirtual net/minecraft/client/gui/components/ChatComponent.refreshTrimmedMessages()V  ()
+    69 return
+
+=== saveAsDraft(Ljava/lang/String;)V ===
+     4 invokevirtual java/lang/String.startsWith(Ljava/lang/String;)Z  ('/')
+    27 invokespecial net/minecraft/client/gui/components/ChatComponent$Draft.<init>(Ljava/lang/String;Lnet/minecraft/client/gui/components/ChatComponent$ChatMethod;)V  (net/minecraft/client/gui/components/ChatComponent$ChatMethod.COMMAND, net/minecraft/client/gui/components/ChatComponent$ChatMethod.MESSAGE)
+    30 putfield net/minecraft/client/gui/components/ChatComponent.latestDraft = new net/minecraft/client/gui/components/ChatComponent$Draft
+    33 return
+
+=== scrollChat(I)V ===
+     2 getfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos  (loc0)
+     7 putfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos = arith
+    11 getfield net/minecraft/client/gui/components/ChatComponent.trimmedMessages  (loc0)
+    14 invokeinterface java/util/List.size()I  ()
+    21 getfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos  (loc0)
+    26 invokevirtual net/minecraft/client/gui/components/ChatComponent.getLinesPerPage()I  ()
+    36 invokevirtual net/minecraft/client/gui/components/ChatComponent.getLinesPerPage()I  ()
+    40 putfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos = arith
+    44 getfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos  (loc0)
+    52 putfield net/minecraft/client/gui/components/ChatComponent.chatScrollbarPos = 0
+    57 putfield net/minecraft/client/gui/components/ChatComponent.newMessageSinceScroll = 0
+    60 return
+
+=== setVisibleMessageFilter(Ljava/util/function/Predicate;)V ===
+     2 putfield net/minecraft/client/gui/components/ChatComponent.visibleMessageFilter = loc1
+     6 invokevirtual net/minecraft/client/gui/components/ChatComponent.refreshTrimmedMessages()V  ()
+     9 return
+
+=== storeState()Lnet/minecraft/client/gui/components/ChatComponent$State; ===
+     5 getfield net/minecraft/client/gui/components/ChatComponent.allMessages  (loc0)
+     8 invokestatic java/util/List.copyOf(Ljava/util/Collection;)Ljava/util/List;  (loc0.allMessages)
+    12 getfield net/minecraft/client/gui/components/ChatComponent.recentChat  (loc0)
+    15 invokestatic java/util/List.copyOf(Ljava/util/Collection;)Ljava/util/List;  (loc0.recentChat)
+    19 getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue  (loc0)
+    22 invokestatic java/util/List.copyOf(Ljava/util/Collection;)Ljava/util/List;  (loc0.messageDeletionQueue)
+    25 invokespecial net/minecraft/client/gui/components/ChatComponent$State.<init>(Ljava/util/List;Ljava/util/List;Ljava/util/List;)V  (List.copyOf(loc0.allMessages), List.copyOf(loc0.recentChat), List.copyOf(loc0.messageDeletionQueue))
+    28 return net/minecraft/client/gui/components/ChatComponent$State(List.copyOf(loc0.allMessages), List.copyOf(loc0.recentChat), List.copyOf(loc0.messageDeletionQueue))
+
+=== tick()V ===
+     1 getfield net/minecraft/client/gui/components/ChatComponent.messageDeletionQueue  (loc0)
+     4 invokeinterface java/util/List.isEmpty()Z  ()
+    13 invokevirtual net/minecraft/client/gui/components/ChatComponent.processMessageDeletionQueue()V  ()
+    16 return
