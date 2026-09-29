@@ -109,6 +109,16 @@ struct Cli {
     /// hold nothing in the offhand.
     #[arg(long)]
     offhand_item: Option<String>,
+    /// The saveChatDrafts option's OFF arm (the vanilla OptionInstance
+    /// the ChatScreen's INTENTIONAL close reads — scripts/jar_work/
+    /// chatscreen_49.txt the shouldDiscardDraft fold): the ESC close
+    /// the draft bank NEVER banks (the discardDraft arm), the
+    /// INTERRUPTED replacement close the law the option never gates
+    /// keeps (the death/chest takeover the draft always banks), the
+    /// DONE submit the always-discard wears. The default (no flag)
+    /// the vanilla truth carries — the ESC close the draft saves.
+    #[arg(long)]
+    no_save_chat_drafts: bool,
     /// The held stack's CHARGED_PROJECTILES component state (the
     /// deterministic stand-in for the loaded crossbow's own component):
     /// `arrow` or `rocket`. Requires `--held-item item/crossbow` — the
@@ -563,6 +573,7 @@ fn main() -> Result<()> {
                 cli.height,
                 cli.held_item.as_deref(),
                 cli.offhand_item.as_deref(),
+                !cli.no_save_chat_drafts,
             ) {
                 Ok(()) => return Ok(()),
                 Err(e) => eprintln!("gui mode unavailable ({e}); falling back to headless"),

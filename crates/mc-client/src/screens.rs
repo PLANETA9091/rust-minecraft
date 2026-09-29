@@ -6917,6 +6917,17 @@ pub struct App {
     pub recent_chat: Vec<String>,
     pub chat_history_pos: usize,
     pub chat_draft: String,
+    /// THE SAVE-DRAFTS OPTION'S OWN GATE (the vanilla
+    /// `Options.saveChatDrafts()` OptionInstance — the default ON the
+    /// vanilla truth wears): the INTENTIONAL (ESC) close the option
+    /// ALONE gates — the OFF the removed()'s shouldDiscardDraft TRUE
+    /// arm answers (the bank the discardDraft walk clears, the typed
+    /// text the ESC close never banks); the INTERRUPTED close the
+    /// option NEVER gates (the dev-53 law — the draft the replacement
+    /// close always banks), the DONE submit the always-discard keeps
+    /// (scripts/jar_work/chatscreen_49.txt the shouldDiscardDraft pcs
+    /// 1-47 fold).
+    pub chat_save_drafts: bool,
     /// THE COMMAND SUGGESTIONS' OWN STATE (javap CommandSuggestions +
     /// SuggestionsList — the ChatScreen's typing lane): `chat_suggestions`
     /// the current reply's rows (the
@@ -7549,6 +7560,7 @@ impl App {
             chat_input: String::new(),
             chat_messages: Vec::new(),
             recent_chat: Vec::new(),
+            chat_save_drafts: true,
             chat_history_pos: 0,
             chat_draft: String::new(),
             chat_suggestions: Vec::new(),
@@ -17600,15 +17612,44 @@ impl App {
         }
     }
 
+    /// THE INTENTIONAL CLOSE'S OWN VERDICT (javap ChatScreen.onClose
+    /// pc 4 — the ESC close the `exitReason = INTENTIONAL` re-assign
+    /// wears, the Screen.onClose chain the setScreen(null) → removed()
+    /// walk answers): the shouldDiscardDraft fold's option arm — the
+    /// `!saveChatDrafts.get()` read the verdict names, the option the
+    /// INTENTIONAL lane ALONE gates. The ON default the save lane
+    /// answers (the same removed() walk the INTERRUPTED verdict
+    /// shares — the ESC-ON close the draft banks); the OFF the
+    /// shouldDiscardDraft TRUE arm speaks — the discardDraft walk the
+    /// bank clears REGARDLESS of the text (the typed words the ESC
+    /// close never banks), the chat the same close walk folds. The
+    /// DONE submit and the INTERRUPTED replacement the same verdict
+    /// never wear (the always-discard the submit keeps, the
+    /// always-save the replacement keeps — the option law's own pair).
+    pub fn close_chat_intentional(&mut self) {
+        if self.chat_open {
+            // the shared removed() walk (the close_chat fold — the
+            // blank arm, the save lane, the untouched-draft skip)
+            self.close_chat();
+            if !self.chat_save_drafts {
+                // the shouldDiscardDraft TRUE arm — the discardDraft
+                // walk the bank clears (the option's OFF verdict the
+                // ESC close alone wears)
+                self.chat_latest_draft = None;
+            }
+        }
+    }
+
     /// THE ESCAPE'S OWN ROUTE (javap ChatScreen.keyPressed's isDraft
     /// arm — scripts/jar_work/chatscreen_49.txt: the `isDraft && ESC`
     /// rising edge the `input.setValue("")` walk answers BEFORE the
     /// Screen.keyPressed close chain — the untouched restored draft
     /// the FIRST ESC clears, the screen the open stays, the SECOND
     /// ESC the normal close answers). The edited/fresh input the
-    /// close lane directly answers (the close_chat walk the draft
-    /// bank saves), the open chat the consumption always keeps (the
-    /// keyPressed's own return law).
+    /// INTENTIONAL close lane answers (the onClose verdict the
+    /// exitReason re-assign wears — the close_chat_intentional walk
+    /// the option's gate reads), the open chat the consumption always
+    /// keeps (the keyPressed's own return law).
     pub fn on_chat_escape(&mut self) -> bool {
         if self.chat_input_is_draft {
             // the first ESC the untouched draft clears (the setValue("")
@@ -17619,7 +17660,9 @@ impl App {
             self.refresh_command_suggestions();
             return true;
         }
-        self.close_chat();
+        // the close the INTENTIONAL verdict speaks (the option's gate
+        // the save/discard fork answers)
+        self.close_chat_intentional();
         true
     }
 
@@ -36910,6 +36953,90 @@ mod tests {
             app.chat_latest_draft,
             Some(("wire words".to_string(), false)),
             "the combat kill's interrupted close the draft banks"
+        );
+    }
+
+    /// THE OPTION'S OWN OFF ARM (the vanilla saveChatDrafts
+    /// OptionInstance the shouldDiscardDraft's INTENTIONAL arm reads —
+    /// the OFF the ESC close the discardDraft walk speaks: the bank
+    /// the typed text REGARDLESS clears, the reopen the fresh box
+    /// wears; the ON default the save lane keeps — the same removed()
+    /// walk the verdicts fork).
+    #[test]
+    fn the_option_off_the_esc_close_discards_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE OFF OPTION + THE TYPED ESC CLOSE (the INTENTIONAL
+        // verdict's TRUE arm — the bank the discardDraft clears)
+        app.chat_save_drafts = false;
+        app.on_chat_key();
+        for c in "forgotten".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_escape();
+        assert!(!app.chat_open, "the ESC close the screen folds");
+        assert_eq!(
+            app.chat_latest_draft, None,
+            "the OFF verdict the bank discards"
+        );
+        // THE REOPEN (the fresh box the discard law wears — no restore)
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "", "the reopen the fresh box wears");
+        assert!(!app.chat_input_is_draft);
+        // THE ON DEFAULT + THE SAME WALK (the save lane the option's
+        // ON verdict answers — the SAME removed() walk the fork)
+        app.close_chat();
+        app.chat_save_drafts = true;
+        app.on_chat_key();
+        for c in "remembered".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_escape();
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("remembered".to_string(), false)),
+            "the ON verdict the save lane banks"
+        );
+    }
+
+    /// THE OPTION'S OWN INTERRUPTED IMMUNITY (the dev-53 law the OFF
+    /// option never touches — the shouldDiscardDraft's INTERRUPTED
+    /// arm the FALSE keeps REGARDLESS of the option: the death close
+    /// the draft banks even when the ESC close would discard; the
+    /// option the INTENTIONAL lane ALONE gates).
+    #[test]
+    fn the_option_off_the_interrupted_still_banks_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.chat_save_drafts = false;
+        app.on_chat_key();
+        for c in "survives".chars() {
+            app.on_chat_char(c);
+        }
+        // THE DEATH (the INTERRUPTED verdict — the option the lane
+        // never reads, the draft the replacement close banks)
+        app.actually_hurt(100.0);
+        assert!(app.dead && !app.chat_open);
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("survives".to_string(), false)),
+            "the INTERRUPTED lane the option never gates"
+        );
+        // THE SUBMIT'S OWN DONE (the always-discard the option never
+        // touches — the OFF arm the DONE verdict never reads; the
+        // restored draft the first ESC clears, the fresh words the
+        // submit sends)
+        app.respawn();
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "survives", "the bank the restore wears");
+        app.on_chat_escape();
+        for c in "sent".chars() {
+            app.on_chat_char(c);
+        }
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_latest_draft, None,
+            "the DONE verdict the always-discard keeps"
         );
     }
 

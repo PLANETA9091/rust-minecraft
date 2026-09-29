@@ -1468,6 +1468,7 @@ pub fn run_gui_app(
     height: usize,
     held_item: Option<&str>,
     offhand_item: Option<&str>,
+    save_chat_drafts: bool,
 ) -> anyhow::Result<()> {
     use crate::gui::GuiAssets;
     use crate::screens::App;
@@ -1481,6 +1482,11 @@ pub fn run_gui_app(
     let mut app = App::new(seed);
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);
+    // THE SAVE-DRAFTS OPTION'S OWN SEED (the --no-save-chat-drafts flag
+    // the vanilla OptionInstance's OFF arm wears — the ESC close the
+    // discardDraft walk the INTENTIONAL verdict speaks, the INTERRUPTED
+    // close the option never gates)
+    app.chat_save_drafts = save_chat_drafts;
     // menu music: decode the real official .ogg tracks (fetched by mc2rs-gen
     // through the asset index), feed the scheduler real lengths and play the
     // schedule through the best output backend (rodio when built with
