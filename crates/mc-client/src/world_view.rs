@@ -2178,7 +2178,7 @@ pub enum ContainerCommand {
     /// The right-mouse USE (the vanilla gameMode.useItem's own lane):
     /// the camera's angles converted to the vanilla wire degrees
     /// ([`wire_angles`]), the MAIN_HAND ordinal the worker speaks.
-    UseItem { yaw: f32, pitch: f32 },
+    UseItem { yaw: f32, pitch: f32, hand: u8 },
     /// The use ON A BLOCK (the vanilla gameMode.useItemOn's own lane —
     /// the block half of the use arc): the client clip's hit (the hit
     /// voxel, the entry face's Direction ordinal, the cursor floats the

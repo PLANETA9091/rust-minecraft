@@ -521,15 +521,21 @@ fn run_join(
                             // to move.
                             session.pick_item_from_block(pos, include_data)
                         }
-                        crate::world_view::ContainerCommand::UseItem { yaw, pitch } => {
+                        crate::world_view::ContainerCommand::UseItem {
+                            yaw,
+                            pitch,
+                            hand,
+                        } => {
                             // THE USE ARC's wire echo (the vanilla
-                            // gameMode.useItem's own shape): the MAIN_HAND
-                            // ordinal, the prediction sequence counter
-                            // (each prediction speaks the next number —
-                            // the startPrediction shape), the camera's
-                            // angles in the vanilla degrees
+                            // gameMode.useItem's own shape): the hand
+                            // ordinal the use wore (the MAIN 0, the OFF
+                            // 1 — the packet's own field), the prediction
+                            // sequence counter (each prediction speaks
+                            // the next number — the startPrediction
+                            // shape), the camera's angles in the vanilla
+                            // degrees
                             use_sequence += 1;
-                            session.use_item(0, use_sequence, yaw, pitch)
+                            session.use_item(hand, use_sequence, yaw, pitch)
                         }
                         crate::world_view::ContainerCommand::UseItemOn {
                             pos,

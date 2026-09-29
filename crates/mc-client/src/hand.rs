@@ -610,10 +610,17 @@ pub fn load_special_item_ctx(id: i32, ctx: usize) -> Option<HeldItem> {
 /// unknown id, a non-special using lane or a broken stanza binds
 /// NOTHING (the caller renders the bare arm) — never a half-render.
 pub fn load_special_using_item(id: i32) -> Option<HeldItem> {
-    match mc_registry::display::special_item_using_quads(
-        id,
-        mc_registry::display::FIRSTPERSON_RIGHTHAND,
-    ) {
+    load_special_using_item_ctx(id, mc_registry::display::FIRSTPERSON_RIGHTHAND)
+}
+
+/// The ctx-general USING-branch SPECIAL loader (the offhand shield's
+/// own lane — the same blocking base through the display context the
+/// caller names: the FIRSTPERSON_LEFTHAND the off hand wears). The
+/// same honest law: an unknown id, a non-special using lane or a
+/// broken stanza binds NOTHING (the caller renders the bare arm) —
+/// never a half-render.
+pub fn load_special_using_item_ctx(id: i32, ctx: usize) -> Option<HeldItem> {
+    match mc_registry::display::special_item_using_quads(id, ctx) {
         Some(Ok(quads)) => Some(HeldItem { quads }),
         Some(Err(_)) => None,
         None => None,

@@ -7132,14 +7132,24 @@ pub struct App {
     pub spawn_pose: Option<(f64, f64, f64, f32, f32)>,
 }
 
+/// The hand the use rides — the vanilla InteractionHand's own pair
+/// (the MAIN ordinal the wire's 0 speaks, the OFF the 1: the
+/// ServerboundUseItemPacket's own hand field the encode carries).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum UseHand {
+    Main,
+    Off,
+}
+
 /// One active USE — the vanilla LocalPlayer's own using fields (the
-/// used item, the elapsed ticks). `state` is the client's reload key:
-/// the using branch's selected state index.
+/// used item, the elapsed ticks, the HAND the use wears). `state` is
+/// the client's reload key: the using branch's selected state index.
 #[derive(Debug, Clone, PartialEq)]
 pub struct UseActive {
     pub item: i32,
     pub ticks: u32,
     pub state: usize,
+    pub hand: UseHand,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -14900,129 +14910,209 @@ impl App {
             // the item lane reads the UNIFIED held id (the networked
             // store's selection, the offline `--held-item` stand-in —
             // the offline client's use animations are the vanilla's own
-            // singleplayer behavior)
-            if let Some(id) = self.held_id() {
-                // THE BOAT'S OWN USE WALK (javap BoatItem.use — the held
-                // hull's spawn arc the item's use() speaks): the
-                // Fluid-ANY POV clip, the eye-inside gate, the
-                // noCollision fold, the verdict the lanes' own order
-                // keeps. The None the item lanes' fall-through keeps (a
-                // PASS — the vanilla's own order), the Some the press's
-                // own verdict speaks.
-                if let Some(consumed) = self.on_right_press_boat_lane(id) {
-                    return consumed;
-                }
-                // THE CARROT-ON-A-STICK'S OWN USE (the 26.2's data-driven
-                // item walk the ride speaks): the ridden pig the vehicle
-                // answers — the ItemBasedSteering.boost the window arms
-                // (the nextInt(841)+140 the RandomSource keeps), the
-                // CONSUME the swing speaks (the hurtAndBreak durability
-                // the repo's item vocabulary never speaks — the honest
-                // skip the shears arm keeps); the re-press the boosting
-                // bit refuses (the false the PASS keeps), the un-ridden
-                // press the PASS the walk returns
-                if let Some(name) = mc_registry::item_name(id) {
-                    if name == "carrot_on_a_stick" {
-                        let vid = self.offline_ride.as_ref().map(|r| r.vehicle_id);
-                        let boosted = if let Some(vid) = vid {
-                            let Some(mob) = self
-                                .mobs
-                                .iter_mut()
-                                .find(|m| m.id == vid && m.kind == crate::mob::MobKind::Pig)
-                            else {
-                                return false;
-                            };
-                            mob.boost(&mut self.mob_rng)
-                        } else {
-                            false
-                        };
-                        if boosted {
-                            self.swing.start();
-                            return true;
+            // singleplayer behavior). The walk the vanilla hand-order
+            // speaks: the MAIN turn's true verdict returns the press,
+            // the PASS/FAIL the OFF hand's own turn answers below.
+            if self.on_right_press_main_item_lane() {
+                return true;
+            }
+            // THE OFF-HAND'S OWN TURN (the vanilla startUseItem's own
+            // for-each-hand walk: the MAIN hand's PASS/FAIL the OFF
+            // hand's useItem answers — the shield in the off hand the
+            // RMB the blocking pose wears). The SPECIAL using defs only
+            // (the shield, the trident — the single-state payloads the
+            // use clock's no-op-reload law never re-bakes): the LAYER
+            // pulling states (the bow, the crossbow) ride the main
+            // payload lane — the offhand pull a later walk. The wire
+            // echo the OFF_HAND ordinal speaks (the packet's own hand
+            // field the vanilla ServerboundUseItemPacket carries).
+            let (off_id, off_count) = self.offhand_stack();
+            if off_count > 0 {
+                if let Some(off_def) = mc_registry::item_using_def(off_id) {
+                    if mc_registry::special_item_renderer(off_id).is_some() {
+                        let state = mc_registry::using_state_index(off_def, 0.0);
+                        self.using_item = Some(UseActive {
+                            item: off_id,
+                            ticks: 0,
+                            state,
+                            hand: UseHand::Off,
+                        });
+                        // the offhand payload re-bakes through the LEFT
+                        // lane (the using-branch special the left context
+                        // wears — the same honest law: a broken stanza
+                        // binds NOTHING, the bare left arm)
+                        self.offhand_held_loaded = Some(off_id);
+                        if let Some(mc_registry::UsingStateRender::Special(_)) =
+                            mc_registry::item_using_state(off_id, state)
+                        {
+                            self.held_offhand =
+                                crate::hand::load_special_using_item_ctx(
+                                    off_id,
+                                    mc_registry::display::FIRSTPERSON_LEFTHAND,
+                                );
                         }
-                        return false;
+                        // the wire echo: the camera's angles in the vanilla
+                        // degrees, the OFF_HAND ordinal
+                        let (yaw, pitch) =
+                            crate::world_view::wire_angles(&self.world_camera());
+                        if let Some(sink) = self.live_clicks.as_ref() {
+                            let _ =
+                                sink.send(crate::world_view::ContainerCommand::UseItem {
+                                    yaw,
+                                    pitch,
+                                    hand: 1,
+                                });
+                        }
+                        return true;
                     }
-                }
-                // THE EAT LANE FIRST (the vanilla startUseItem's own
-                // order — the item's use() speaks: the CONSUMABLE's
-                // startConsuming opens the hold; the pull lanes ride
-                // after): the canConsume gate — a FOOD-less consumable
-                // (the potion) consumes unconditionally, the FOOD's
-                // own lane speaks `canEat(canAlwaysEat)`.
-                if let Some(def) = self.food_def_of(id) {
-                    let consumes = !def.has_food()
-                        || crate::eat::can_eat(
-                            def.can_always_eat,
-                            false,
-                            self.food_data.needs_food(),
-                        );
-                    if !consumes {
-                        return false; // the canConsume's own FAIL
-                    }
-                    self.using_item = None; // one use at a time
-                    self.eating = crate::eat::EatActive::start(id, def);
-                    // the wire echo: the eat's use-item click (the
-                    // networked lane's own command the pull lane rides)
-                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-                    if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                            yaw,
-                            pitch,
-                        });
-                    }
-                    return true;
-                }
-                // THE LOADED CROSSBOW: the instant shot — the use
-                // consumes the charge (vanilla's CONSUME branch), the
-                // resting render returns to the plain crossbow, and
-                // the wire echo rides (the shot is a use-item click)
-                if self.held_charge.is_some() && mc_registry::item_charge_def(id).is_some() {
-                    self.held_charge = None;
-                    self.load_held_payload(id, None);
-                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-                    if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                            yaw,
-                            pitch,
-                        });
-                    }
-                    return true;
-                }
-                // THE BOW'S OWN USE GATE (javap `BowItem.use` the 26.2
-                // bytecode speaks: `canShoot = !getProjectile(stack).
-                // isEmpty(); if (hasInfiniteMaterials() || canShoot)
-                // startUsingItem → CONSUME; else FAIL` — the empty
-                // quiver the draw never starts, the survival conjunct
-                // the offline arc keeps). The OFFLINE lane's own
-                // inventory the scan answers — the LIVE session's
-                // store the worker owns (the server's own verdict the
-                // echo answers, no local belief the gate refuses).
-                if self.live_clicks.is_none()
-                    && !self.world_is_network
-                    && self.held_word_of(id) == Some("bow")
-                    && self.inventory_arrow_slot().is_none()
-                {
-                    return false; // the FAIL the empty quiver speaks
-                }
-                if let Some(def) = mc_registry::item_using_def(id) {
-                    let state = mc_registry::using_state_index(def, 0.0);
-                    self.using_item = Some(UseActive { item: id, ticks: 0, state });
-                    self.load_held_payload(id, Some(state));
-                    // the wire echo: the camera's angles in the vanilla
-                    // degrees (the snapshot conversion's own inverse)
-                    let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
-                    if let Some(sink) = self.live_clicks.as_ref() {
-                        let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
-                            yaw,
-                            pitch,
-                        });
-                    }
-                    return true;
                 }
             }
         }
         false
     }
+
+    /// THE MAIN-HAND'S OWN ITEM LANE (the vanilla startUseItem's hand-0
+    /// turn — the unified held id's use walk the lanes' own order keeps:
+    /// the boat's spawn, the carrot stick's boost, the eat's consumable,
+    /// the loaded crossbow's shot, the bow's quiver gate, the using
+    /// census). The verdict the vanilla hand-order speaks: `true` = a
+    /// use consumed (the press returns — the off hand never runs),
+    /// `false` = the PASS/FAIL verdict the OFF hand's own turn answers.
+    fn on_right_press_main_item_lane(&mut self) -> bool {
+    // the item lane reads the UNIFIED held id (the networked
+    // store's selection, the offline `--held-item` stand-in —
+    // the offline client's use animations are the vanilla's own
+    // singleplayer behavior)
+    if let Some(id) = self.held_id() {
+        // THE BOAT'S OWN USE WALK (javap BoatItem.use — the held
+        // hull's spawn arc the item's use() speaks): the
+        // Fluid-ANY POV clip, the eye-inside gate, the
+        // noCollision fold, the verdict the lanes' own order
+        // keeps. The None the item lanes' fall-through keeps (a
+        // PASS — the vanilla's own order), the Some the press's
+        // own verdict speaks.
+        if let Some(consumed) = self.on_right_press_boat_lane(id) {
+            return consumed;
+        }
+        // THE CARROT-ON-A-STICK'S OWN USE (the 26.2's data-driven
+        // item walk the ride speaks): the ridden pig the vehicle
+        // answers — the ItemBasedSteering.boost the window arms
+        // (the nextInt(841)+140 the RandomSource keeps), the
+        // CONSUME the swing speaks (the hurtAndBreak durability
+        // the repo's item vocabulary never speaks — the honest
+        // skip the shears arm keeps); the re-press the boosting
+        // bit refuses (the false the PASS keeps), the un-ridden
+        // press the PASS the walk returns
+        if let Some(name) = mc_registry::item_name(id) {
+            if name == "carrot_on_a_stick" {
+                let vid = self.offline_ride.as_ref().map(|r| r.vehicle_id);
+                let boosted = if let Some(vid) = vid {
+                    let Some(mob) = self
+                        .mobs
+                        .iter_mut()
+                        .find(|m| m.id == vid && m.kind == crate::mob::MobKind::Pig)
+                    else {
+                        return false;
+                    };
+                    mob.boost(&mut self.mob_rng)
+                } else {
+                    false
+                };
+                if boosted {
+                    self.swing.start();
+                    return true;
+                }
+                return false;
+            }
+        }
+        // THE EAT LANE FIRST (the vanilla startUseItem's own
+        // order — the item's use() speaks: the CONSUMABLE's
+        // startConsuming opens the hold; the pull lanes ride
+        // after): the canConsume gate — a FOOD-less consumable
+        // (the potion) consumes unconditionally, the FOOD's
+        // own lane speaks `canEat(canAlwaysEat)`.
+        if let Some(def) = self.food_def_of(id) {
+            let consumes = !def.has_food()
+                || crate::eat::can_eat(
+                    def.can_always_eat,
+                    false,
+                    self.food_data.needs_food(),
+                );
+            if !consumes {
+                return false; // the canConsume's own FAIL
+            }
+            self.using_item = None; // one use at a time
+            self.eating = crate::eat::EatActive::start(id, def);
+            // the wire echo: the eat's use-item click (the
+            // networked lane's own command the pull lane rides)
+            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
+            }
+            return true;
+        }
+        // THE LOADED CROSSBOW: the instant shot — the use
+        // consumes the charge (vanilla's CONSUME branch), the
+        // resting render returns to the plain crossbow, and
+        // the wire echo rides (the shot is a use-item click)
+        if self.held_charge.is_some() && mc_registry::item_charge_def(id).is_some() {
+            self.held_charge = None;
+            self.load_held_payload(id, None);
+            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
+            }
+            return true;
+        }
+        // THE BOW'S OWN USE GATE (javap `BowItem.use` the 26.2
+        // bytecode speaks: `canShoot = !getProjectile(stack).
+        // isEmpty(); if (hasInfiniteMaterials() || canShoot)
+        // startUsingItem → CONSUME; else FAIL` — the empty
+        // quiver the draw never starts, the survival conjunct
+        // the offline arc keeps). The OFFLINE lane's own
+        // inventory the scan answers — the LIVE session's
+        // store the worker owns (the server's own verdict the
+        // echo answers, no local belief the gate refuses).
+        if self.live_clicks.is_none()
+            && !self.world_is_network
+            && self.held_word_of(id) == Some("bow")
+            && self.inventory_arrow_slot().is_none()
+        {
+            return false; // the FAIL the empty quiver speaks
+        }
+        if let Some(def) = mc_registry::item_using_def(id) {
+            let state = mc_registry::using_state_index(def, 0.0);
+            self.using_item = Some(UseActive {
+                    item: id,
+                    ticks: 0,
+                    state,
+                    hand: UseHand::Main,
+                });
+            self.load_held_payload(id, Some(state));
+            // the wire echo: the camera's angles in the vanilla
+            // degrees (the snapshot conversion's own inverse)
+            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
+            }
+            return true;
+        }
+    }
+        false
+    }
+
 
     /// The RIGHT press's falling edge (the vanilla rightClickStop's own
     /// shape): the active use ends, the held item returns to the
@@ -15131,7 +15221,14 @@ impl App {
                 }
             }
         }
-        self.load_held_payload(active.item, None);
+        // THE RESTORE the hand the use wore (the OFF lane's own payload
+        // the LEFT context keeps, the MAIN the right — the stack the
+        // use cannot outlive, the active's own item the restore names)
+        if active.hand == UseHand::Off {
+            self.load_offhand_payload_from_id(Some(active.item));
+        } else {
+            self.load_held_payload(active.item, None);
+        }
         if let Some(sink) = self.live_clicks.as_ref() {
             let _ = sink.send(crate::world_view::ContainerCommand::ReleaseUse);
         }
@@ -25000,7 +25097,7 @@ impl App {
         let (yaw, pitch) = crate::world_view::wire_angles(&cam);
         if self.world_is_network {
             if let Some(sink) = self.live_clicks.as_ref() {
-                let _ = sink.send(crate::world_view::ContainerCommand::UseItem { yaw, pitch });
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem { yaw, pitch, hand: 0 });
             }
             self.swing.start();
             return Some(true);
@@ -25145,6 +25242,16 @@ impl App {
             return;
         }
         self.offhand_held_loaded = id;
+        // the item changed: the offhand use ends (the vanilla
+        // releaseUsingItem on the item switch — the hold cannot
+        // outlive its own stack — the main lane's own live_held law
+        // the second reload key wears)
+        if matches!(
+            self.using_item.as_ref().map(|u| u.hand),
+            Some(UseHand::Off)
+        ) {
+            self.using_item = None;
+        }
         self.load_offhand_payload_from_id(id);
     }
 
@@ -36717,6 +36824,220 @@ mod tests {
         assert_eq!(app.offhand_held_loaded, Some(bow));
     }
 
+    /// THE OFF-HAND'S OWN RMB (the vanilla for-each-hand walk the second
+    /// turn speaks: the sword's PASS the offhand shield's CONSUME answers
+    /// — the blocking payload re-bakes through the LEFT lane, the use
+    /// the OFF hand rides, the release the resting shield returns).
+    #[test]
+    fn the_offhand_shield_the_rmb_raises_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let shield = mc_registry::item_id_by_name("shield").unwrap();
+        // the spawn band's air (the terrain's own tops never reach) —
+        // the level look the block lane never clips
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // the sword the stand-in route bakes (the payload the reload
+        // walk loads — the gameplay inventory the press's own gate
+        // reads through the same unified id)
+        app.offline_held_updated(Some("iron_sword"));
+        let main_rest = app.held_item.as_ref().expect("the sword loads");
+        let main_rest_centroid = main_rest.centroid();
+        app.inventory.offhand[0] = (shield, 1);
+        app.offhand_held_refreshed();
+        let resting = app.held_offhand.as_ref().expect("the resting shield loads");
+        let rest_centroid = resting.centroid();
+        // THE PRESS: the sword's PASS the offhand's turn answers
+        assert!(app.on_right_press(0, 0), "the offhand the use arms");
+        let active = app.using_item.as_ref().expect("the use rides");
+        assert_eq!(active.hand, UseHand::Off, "the OFF hand the use wears");
+        assert_eq!(active.item, shield, "the shield the use carries");
+        let blocking = app.held_offhand.as_ref().expect("the blocking payload");
+        let block_centroid = blocking.centroid();
+        assert!(
+            (block_centroid[0] - rest_centroid[0]).abs() > 0.01
+                || (block_centroid[1] - rest_centroid[1]).abs() > 0.01,
+            "the blocking stanza MOVES the offhand ({rest_centroid:?} -> {block_centroid:?})"
+        );
+        // THE MAIN HAND UNTOUCHED (the sword the resting lane keeps —
+        // the main payload the offhand's use never re-bakes)
+        let main_now = app.held_item.as_ref().expect("the sword the main lane keeps");
+        let main_now_centroid = main_now.centroid();
+        assert!(
+            (main_now_centroid[0] - main_rest_centroid[0]).abs() < 1e-4
+                && (main_now_centroid[1] - main_rest_centroid[1]).abs() < 1e-4,
+            "the main rest pose the offhand's use never moves"
+        );
+        // THE HOLD: the single-state law the ticks never churn (no
+        // reload — the pose the hold keeps)
+        for _ in 0..10 {
+            app.update();
+        }
+        assert!(app.is_using(), "the hold the use keeps");
+        // THE RELEASE: the resting shield returns
+        app.on_right_release();
+        assert!(!app.is_using(), "the release the use ends");
+        let back = app.held_offhand.as_ref().expect("the rest returns");
+        let back_centroid = back.centroid();
+        assert!(
+            (back_centroid[0] - rest_centroid[0]).abs() < 1e-4
+                && (back_centroid[1] - rest_centroid[1]).abs() < 1e-4,
+            "the rest pose the release returns"
+        );
+    }
+
+    /// THE MAIN HAND FIRST (the vanilla hand-order law: the MAIN
+    /// shield's CONSUME the press returns — the off hand the walk never
+    /// reaches, one use at a time the using field's own law keeps).
+    #[test]
+    fn the_offhand_the_main_consumes_first_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let shield = mc_registry::item_id_by_name("shield").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        app.offline_held_updated(Some("shield"));
+        app.inventory.offhand[0] = (shield, 1);
+        app.offhand_held_refreshed();
+        let main_rest = app.held_item.as_ref().expect("the main shield loads");
+        let main_rest_centroid = main_rest.centroid();
+        let off_rest = app.held_offhand.as_ref().expect("the off shield loads");
+        let off_rest_centroid = off_rest.centroid();
+        assert!(app.on_right_press(0, 0), "the main shield the use arms");
+        let active = app.using_item.as_ref().expect("the use rides");
+        assert_eq!(active.hand, UseHand::Main, "the MAIN turn the order speaks");
+        let main_block = app.held_item.as_ref().expect("the main blocking");
+        let main_block_centroid = main_block.centroid();
+        assert!(
+            (main_block_centroid[0] - main_rest_centroid[0]).abs() > 0.01
+                || (main_block_centroid[1] - main_rest_centroid[1]).abs() > 0.01,
+            "the main shield the blocking pose wears"
+        );
+        let off_now = app.held_offhand.as_ref().expect("the off keeps");
+        let off_now_centroid = off_now.centroid();
+        assert!(
+            (off_now_centroid[0] - off_rest_centroid[0]).abs() < 1e-4
+                && (off_now_centroid[1] - off_rest_centroid[1]).abs() < 1e-4,
+            "the offhand the rest keeps — the MAIN turn the walk consumed"
+        );
+        app.on_right_release();
+        assert!(!app.is_using());
+    }
+
+    /// THE MAIN HAND'S OWN FAIL THE OFFHAND ANSWERS (the vanilla
+    /// consumesAction law: the full food's canEat FAIL the walk keeps
+    /// walking — the OFF hand's shield the turn speaks, the eat lane
+    /// silent, the OFF_HAND ordinal the wire rides).
+    #[test]
+    fn the_offhand_the_main_fail_falls_through_keeps() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // the FULL food bar the canEat gate refuses (needs_food false)
+        app.live_held_updated(Some((wire("cooked_beef"), 1)));
+        app.live_inv_slots[45] = (wire("shield"), 1);
+        app.offhand_held_refreshed();
+        assert!(app.on_right_press(0, 0), "the offhand the FAIL answers");
+        assert!(app.eating.is_none(), "the eat the FAIL keeps silent");
+        let active = app.using_item.as_ref().expect("the offhand use rides");
+        assert_eq!(active.hand, UseHand::Off, "the OFF turn the fall-through arms");
+        match rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::UseItem { yaw, pitch, hand } => {
+                assert_eq!(hand, 1, "the OFF_HAND ordinal the wire speaks");
+                assert_eq!(yaw, -90.0, "the vanilla yRot");
+                assert!((pitch - 4.583).abs() < 0.01, "the vanilla xRot");
+            }
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+    }
+
+    /// THE EMPTY MAIN'S OWN HAND-ORDER (the vanilla walk the empty
+    /// stack skips: the MAIN useItem never runs, the OFF hand's shield
+    /// the use arms — the wire the OFF_HAND ordinal carries).
+    #[test]
+    fn the_live_offhand_the_wire_hand_speaks() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // the empty main (no live_held, no offline stack) the MAIN turn
+        // skips — the OFF hand's shield the first use arms
+        app.live_inv_slots[45] = (wire("shield"), 1);
+        app.offhand_held_refreshed();
+        assert!(app.on_right_press(0, 0), "the offhand the empty main arms");
+        let active = app.using_item.as_ref().expect("the use rides");
+        assert_eq!(active.hand, UseHand::Off);
+        match rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::UseItem { hand, .. } => {
+                assert_eq!(hand, 1, "the OFF_HAND ordinal");
+            }
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+    }
+
+    /// THE USE THE STACK OUTLIVES NOT (the vanilla releaseUsingItem on
+    /// the item switch — the offhand reload key the id change speaks,
+    /// the OFF use ends, the new stack the LEFT lane bakes).
+    #[test]
+    fn the_offhand_use_the_stack_outlives_not_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        let shield = mc_registry::item_id_by_name("shield").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.live_inv_slots[45] = (shield, 1);
+        app.offhand_held_refreshed();
+        assert!(app.on_right_press(0, 0), "the offhand the use arms");
+        assert_eq!(app.using_item.as_ref().unwrap().hand, UseHand::Off);
+        // THE STACK CHANGE: the store's slot the refresh walks — the
+        // switch the OFF use ends (the hold cannot outlive its stack)
+        app.live_inv_slots[45] = (sword, 1);
+        app.offhand_held_refreshed();
+        assert!(app.using_item.is_none(), "the switch the use ends");
+        assert_eq!(app.offhand_held_loaded, Some(sword), "the sword the lane bakes");
+        // the release after the switch: the use already gone — no
+        // stale restore, no panic (the honest no-op the release keeps)
+        app.on_right_release();
+        assert_eq!(app.offhand_held_loaded, Some(sword), "the sword the lane keeps");
+    }
+
     /// A hand-built Brigadier graph mirroring the real servers' own:
     /// root(0) → time(1) → set(3)/query(4); tp(2) redirect→teleport(5)
     /// → the targets argument(7); tick(6). The structure the local
@@ -47737,9 +48058,10 @@ cow_sound_variant: None,
         // the use echo rode the command channel: the camera's angles in
         // the vanilla degrees (the flight camera faces east — yaw −90)
         match click_rx.try_recv().expect("the use echo rode the lane") {
-            ContainerCommand::UseItem { yaw, pitch } => {
+            ContainerCommand::UseItem { yaw, pitch, hand } => {
                 assert_eq!(yaw, -90.0, "the vanilla yRot");
                 assert!((pitch - 4.583).abs() < 0.01, "the vanilla xRot");
+                assert_eq!(hand, 0, "the MAIN_HAND ordinal the wire speaks");
             }
             other => panic!("expected a UseItem echo, got {other:?}"),
         }
@@ -54789,7 +55111,7 @@ cow_sound_variant: None,
         });
         assert!(app.on_right_press(0, 0), "the boat use consumed the press");
         match click_rx.try_recv().expect("the use-item echo rode the lane") {
-            ContainerCommand::UseItem { yaw, pitch } => {
+            ContainerCommand::UseItem { yaw, pitch, .. } => {
                 // the wire's angles in the vanilla degrees (the
                 // conversion's own fold — the float words the tolerance
                 // keeps)
