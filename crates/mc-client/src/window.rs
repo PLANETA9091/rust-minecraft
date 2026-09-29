@@ -610,6 +610,14 @@ fn run_join(
                             view.model.swap_offhand();
                             session.swap_offhand()
                         }
+                        crate::world_view::ContainerCommand::Stab => {
+                            // THE STAB (the vanilla startAttack's piercing
+                            // branch echo): the PIERCING_WEAPON stack's left
+                            // press the packet ALONE wires (no store
+                            // mutation — the stab speaks no slot change, the
+                            // server's own sim the damage answers)
+                            session.stab()
+                        }
                         crate::world_view::ContainerCommand::DigAction {
                             action,
                             pos,

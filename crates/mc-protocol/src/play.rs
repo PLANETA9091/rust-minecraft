@@ -7614,6 +7614,27 @@ pub fn encode_player_action_swap() -> Vec<u8> {
     p
 }
 
+/// The STAB wire — the 26.2 piercing weapon's own attack action (the
+/// jar's own Action clinit pins STAB at 7 — the ordinal band's tail).
+/// THE TRIGGER (javap MultiPlayerGameMode.piercingAttack + Minecraft
+/// .startAttack pcs 154-184 — the dump's own walk): the LEFT press's
+/// main-hand stack the PIERCING_WEAPON component carries speaks the
+/// STAB Player Action INSTEAD of the hit walk — the 3-arg ctor's
+/// (STAB, BlockPos.ZERO, Direction.DOWN) shape the swap lane wears,
+/// the sequence the startPrediction counter never rides (the same
+/// iconst_0 the swap/release lanes bank). The client's own tail: the
+/// LocalPlayer.onAttack (the ticker reset), the MAIN_HAND swing, the
+/// component's own attack sound (1.0/1.0).
+pub fn encode_player_action_stab() -> Vec<u8> {
+    let mut p = Vec::with_capacity(9);
+    write_varint(&mut p, serverbound::PLAYER_ACTION);
+    write_varint(&mut p, 7); // Action.STAB's ordinal
+    p.extend_from_slice(&0i64.to_be_bytes()); // BlockPos.ZERO
+    p.push(0); // Direction.DOWN's 3D data value
+    write_varint(&mut p, 0); // the 3-arg ctor's own sequence
+    p
+}
+
 /// The DIG wire — the destroy arc's own actions through the SAME
 /// ServerboundPlayerActionPacket (generated id 41, `minecraft:player_action`).
 /// THE ACTIONS (javap of the real 26.2 enum's static init, the ordinal
@@ -10801,6 +10822,17 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_player_action_swap())
             .context("send swap offhand")
+    }
+
+    /// The STAB (the vanilla startAttack's piercing branch echo —
+    /// [`encode_player_action_stab`] the wire law speaks: the
+    /// PIERCING_WEAPON stack's left press the STAB action at
+    /// BlockPos.ZERO / Direction.DOWN answers, the hit walk the branch
+    /// never reaches).
+    pub fn stab(&mut self) -> Result<()> {
+        self.conn
+            .send_packet(&encode_player_action_stab())
+            .context("send stab")
     }
 
     /// The arm SWING (the vanilla LocalPlayer.swing's echo — the attack
@@ -16094,6 +16126,26 @@ mod tests {
                 0x00, // the 3-arg ctor's own sequence
             ],
             "the swap's own constants — the keySwapOffhand ctor's arguments"
+        );
+    }
+
+    /// The STAB lane's serverbound echo — the 26.2 piercing weapon's
+    /// own attack action (javap MultiPlayerGameMode.piercingAttack +
+    /// Minecraft.startAttack's PIERCING_WEAPON branch, the Action
+    /// clinit's ordinal band the STAB 7 tail carries). The hex is the
+    /// same 3-arg ctor's composition the swap lane wears — the
+    /// sequence the startPrediction counter never rides.
+    #[test]
+    fn the_stab_lane_speaks_the_javap_wire() {
+        assert_eq!(
+            encode_player_action_stab(),
+            vec![
+                0x29, 0x07, // STAB's ordinal
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BlockPos.ZERO
+                0x00, // Direction.DOWN
+                0x00, // the 3-arg ctor's own sequence
+            ],
+            "the stab's own constants — the piercingAttack ctor's arguments"
         );
     }
 

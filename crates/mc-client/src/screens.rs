@@ -10570,6 +10570,35 @@ impl App {
         if self.using_item.is_some() {
             return; // the vanilla isHandsBusy gate
         }
+        // THE PIERCING WEAPON'S OWN STAB (the 26.2 startAttack's own
+        // branch — Minecraft.startAttack pcs 154-184 + the
+        // MultiPlayerGameMode.piercingAttack walk the dump banks: the
+        // main-hand stack the PIERCING_WEAPON component carries (the
+        // seven spears the registry's own item set speaks) the press
+        // the STAB Player Action answers INSTEAD of the hit walk — the
+        // packet the gameMode send rides, the swing the MAIN_HAND call
+        // carries, the ticker the LocalPlayer.onAttack's
+        // resetOnlyAttackStrengthTicker resets, the whoosh the
+        // component's own attack sound wears (1.0/1.0 — the wooden
+        // spear's own SPEAR_WOOD_ATTACK the properties lane names))
+        let main_id = self.held_id().unwrap_or(0);
+        if mc_registry::item_name(main_id)
+            .is_some_and(|name| name.ends_with("_spear"))
+        {
+            self.swing.start();
+            self.attack_ticker = 0;
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::Stab);
+            }
+            let name = mc_registry::item_name(main_id).unwrap_or("");
+            let event = if name == "wooden_spear" {
+                "item.spear_wood.attack"
+            } else {
+                "item.spear.attack"
+            };
+            self.sounds.play_voice(self.frame, event, 1.0, 1.0);
+            return;
+        }
         // THE ENTITY PICK (the vanilla raycastHitResult's own law —
         // the BLOCK clip first at the 4.5 range, the ENTITY ray within
         // the max(4.5, 3.0) search sphere, and the entity wins only
@@ -37666,6 +37695,106 @@ mod tests {
             }
             other => panic!("expected a UseItem echo, got {other:?}"),
         }
+    }
+
+    /// THE SPEAR'S OWN STAB (the 26.2 startAttack's piercing branch —
+    /// the main-hand spear the left press the STAB Player Action
+    /// answers INSTEAD of the hit walk: the swing the MAIN_HAND call
+    /// carries, the ticker the onAttack's reset resets, the wire the
+    /// Stab command rides, and the DIG the branch never arms — the
+    /// block lane the hit walk serves the press never reaches).
+    #[test]
+    fn the_spear_left_press_the_stab_speaks_keeps() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the camera the sky reads (the block lane the miss keeps —
+        // the stab branch's own verdict the press alone answers)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // THE SPEAR PRESS (the stab branch the hit walk replaces)
+        app.attack_ticker = 4;
+        app.on_attack();
+        assert!(app.swing.swinging, "the stab the swing carries");
+        assert_eq!(
+            app.attack_ticker, 0,
+            "the onAttack's ticker reset the branch rides"
+        );
+        assert!(
+            !app.dig.is_destroying,
+            "the dig the stab branch never arms"
+        );
+        match rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::Stab => {}
+            other => panic!("expected a Stab echo, got {other:?}"),
+        }
+        // THE SWORD PRESS (the hit walk answers — the dig the miss
+        // lane arms, no Stab the channel carries)
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.on_attack();
+        assert!(
+            !app.dig.is_destroying,
+            "the sky-miss the dig never arms either"
+        );
+        // the miss lane's own Swing echo may ride — the STAB never does
+        match rx.try_recv() {
+            Ok(ContainerCommand::Stab) => {
+                panic!("the sword's press the Stab never sends")
+            }
+            Ok(_) => {}
+            Err(_) => {}
+        }
+    }
+
+    /// THE SPEAR'S OWN DIG REFUSAL (the block-aimed press the stab
+    /// branch owns — the crosshair ON a block face the dig the stab
+    /// never arms: the 26.2 branch the hit walk replaces, the spear
+    /// the mining tool never wears).
+    #[test]
+    fn the_spear_the_block_aim_the_dig_never_arms() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("diamond_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the camera the ground reads (the block lane the clip arms —
+        // a NORMAL stack the dig would arm here)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (top + 4) as f32, c as f32 + 0.5),
+            yaw: 180.0,
+            pitch: 80.0,
+        });
+        // THE SWORD SANITY (the same aim the dig arms — the walk's own
+        // normal verdict the counter-case pins)
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.on_attack();
+        assert!(app.dig.is_destroying, "the sword the dig arms");
+        app.dig = crate::dig::DigState::default();
+        // THE SPEAR PRESS (the stab branch the dig refuses)
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.on_attack();
+        assert!(
+            !app.dig.is_destroying,
+            "the spear the dig never arms — the stab owns the press"
+        );
     }
 
     /// THE OFFHAND DRINK'S OWN REMAINDER (the milk bucket's arc — the

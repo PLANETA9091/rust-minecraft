@@ -2203,6 +2203,12 @@ pub enum ContainerCommand {
     /// slots, the server's slot echo the wholesale replace answers),
     /// the wire the packet alone rides.
     SwapOffhand,
+    /// THE STAB's wire half (the vanilla startAttack's piercing branch —
+    /// the ServerboundPlayerActionPacket's STAB action at BlockPos.ZERO /
+    /// Direction.DOWN, the 3-arg ctor's sequence 0). The PIERCING_WEAPON
+    /// stack's left press the hit walk never reaches — the packet, the
+    /// swing, the ticker reset, the whoosh the branch's own tail speaks.
+    Stab,
     /// The movement wire (the body's sendPosition dispatch): one of the
     /// four ServerboundMovePlayer packets the tick named. The body's
     /// own bookkeeping decides WHICH (the 2.0E-4 law, the 20-tick
