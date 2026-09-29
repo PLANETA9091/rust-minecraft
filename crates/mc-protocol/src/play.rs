@@ -7589,6 +7589,31 @@ pub fn encode_player_action_release(sequence: i32) -> Vec<u8> {
     p
 }
 
+/// The OFFHAND SWAP wire — the F key's own echo (the vanilla
+/// `Minecraft.handleKeybinds`'s keySwapOffhand arm, scripts/jar_work/
+/// handlekeybinds_48.txt pcs 375-414: the `Options.keySwapOffhand
+/// .consumeClick()` rising edge the `player.isSpectator()` verdict
+/// gates, the packet send the lane speaks — NO local prediction the
+/// walk carries). THE WIRE: the SAME ServerboundPlayerActionPacket the
+/// dig/release arcs ride (generated id 41, `minecraft:player_action`)
+/// — the action as a VarInt (the SWAP_ITEM_WITH_OFFHAND ordinal the
+/// 26.2 Action clinit pins at 6: START_DESTROY_BLOCK 0, ABORT 1, STOP
+/// 2, DROP_ALL_ITEMS 3, DROP_ITEM 4, RELEASE_USE_ITEM 5,
+/// SWAP_ITEM_WITH_OFFHAND 6, STAB 7), the BlockPos as a BE i64 (the
+/// swap's BlockPos.ZERO = 0), the direction as a single byte (the
+/// swap's Direction.DOWN = 0), the sequence as a VarInt — the 3-ARG
+/// ctor's iconst_0 (the swap the startPrediction counter never
+/// speaks, the zero the release lane's doc already pins).
+pub fn encode_player_action_swap() -> Vec<u8> {
+    let mut p = Vec::with_capacity(9);
+    write_varint(&mut p, serverbound::PLAYER_ACTION);
+    write_varint(&mut p, 6); // Action.SWAP_ITEM_WITH_OFFHAND's ordinal
+    p.extend_from_slice(&0i64.to_be_bytes()); // BlockPos.ZERO
+    p.push(0); // Direction.DOWN's 3D data value
+    write_varint(&mut p, 0); // the 3-arg ctor's own sequence
+    p
+}
+
 /// The DIG wire — the destroy arc's own actions through the SAME
 /// ServerboundPlayerActionPacket (generated id 41, `minecraft:player_action`).
 /// THE ACTIONS (javap of the real 26.2 enum's static init, the ordinal
@@ -10765,6 +10790,17 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_player_action(action, pos.0, pos.1, pos.2, face, sequence))
             .context("send player action")
+    }
+
+    /// The OFFHAND SWAP (the vanilla handleKeybinds's keySwapOffhand
+    /// echo — [`encode_player_action_swap`] the wire law speaks: the
+    /// SWAP_ITEM_WITH_OFFHAND action at BlockPos.ZERO / Direction.DOWN,
+    /// the 3-arg ctor's sequence 0 — the swap the prediction counter
+    /// never rides).
+    pub fn swap_offhand(&mut self) -> Result<()> {
+        self.conn
+            .send_packet(&encode_player_action_swap())
+            .context("send swap offhand")
     }
 
     /// The arm SWING (the vanilla LocalPlayer.swing's echo — the attack
@@ -16036,6 +16072,29 @@ mod tests {
             "MAIN_HAND's own beat"
         );
         assert_eq!(encode_swing(1), vec![0x3F, 0x01], "the off-hand ordinal");
+    }
+
+    /// THE OFFHAND SWAP's wire — the F key's own Player Action (the
+    /// 26.2 handleKeybinds's keySwapOffhand arm, scripts/jar_work/
+    /// handlekeybinds_48.txt pcs 375-414: the packet the lane sends at
+    /// BlockPos.ZERO / Direction.DOWN, the 3-arg ctor's sequence 0).
+    /// The hex is the real class's own composition — the action VarInt
+    /// (the SWAP_ITEM_WITH_OFFHAND ordinal the 26.2 Action clinit pins
+    /// at 6: START 0, ABORT 1, STOP 2, DROP_ALL 3, DROP_ITEM 4,
+    /// RELEASE 5, SWAP 6, STAB 7), the ZERO pos, the DOWN byte, the
+    /// zero sequence.
+    #[test]
+    fn the_swap_offhand_lane_speaks_the_javap_wire() {
+        assert_eq!(
+            encode_player_action_swap(),
+            vec![
+                0x29, 0x06, // SWAP_ITEM_WITH_OFFHAND's ordinal
+                0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, // BlockPos.ZERO
+                0x00, // Direction.DOWN
+                0x00, // the 3-arg ctor's own sequence
+            ],
+            "the swap's own constants — the keySwapOffhand ctor's arguments"
+        );
     }
 
     /// The ATTACK lane's serverbound echo — the 26.2's dedicated

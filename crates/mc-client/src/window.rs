@@ -593,6 +593,17 @@ fn run_join(
                             on_ground,
                             horizontal_collision,
                         } => session.move_player_status_only(on_ground, horizontal_collision),
+                        crate::world_view::ContainerCommand::SwapOffhand => {
+                            // THE OFFHAND SWAP (the vanilla handleKeybinds's
+                            // keySwapOffhand echo): the store's slots the SAME
+                            // prediction the selection lane speaks (the worker
+                            // moves its own store — the hand follows through the
+                            // store's own projection), the packet the 3-arg
+                            // ctor's sequence-0 walk rides (the SWAP_ITEM_WITH_
+                            // OFFHAND action at BlockPos.ZERO / Direction.DOWN)
+                            view.model.swap_offhand();
+                            session.swap_offhand()
+                        }
                         crate::world_view::ContainerCommand::DigAction {
                             action,
                             pos,
@@ -1664,6 +1675,15 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
         // gate never did)
         if !app.chat_open && window.is_key_pressed(Key::Q, minifb::KeyRepeat::No) {
             app.on_inventory_drop_key(window.is_key_down(Key::LeftCtrl));
+        }
+        // THE F KEY'S OWN LANE (the vanilla handleKeybinds's
+        // keySwapOffhand arm — scripts/jar_work/handlekeybinds_48.txt
+        // pcs 375-414: the rising edge the spectator verdict gates, the
+        // SWAP_ITEM_WITH_OFFHAND packet the wire speaks; the world-
+        // screen/death gates the App's own verdict keeps — the swap the
+        // container screens never read)
+        if !app.chat_open && window.is_key_pressed(Key::F, minifb::KeyRepeat::No) {
+            app.on_swap_offhand_key();
         }
         // the number keys' hotbar selection (the vanilla keyPress's own
         // lane): 1..9 move the selection, the live session's belief

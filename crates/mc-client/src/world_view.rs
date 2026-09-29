@@ -2195,6 +2195,14 @@ pub enum ContainerCommand {
     /// The use RELEASE (the vanilla gameMode.releaseUsingItem's own
     /// echo — the RELEASE_USE_ITEM action at BlockPos.ZERO / DOWN).
     ReleaseUse,
+    /// THE OFFHAND SWAP's wire half (the vanilla handleKeybinds's
+    /// keySwapOffhand lane — the ServerboundPlayerActionPacket's
+    /// SWAP_ITEM_WITH_OFFHAND action at BlockPos.ZERO / Direction.DOWN,
+    /// the 3-arg ctor's sequence 0). The local swap the SAME store
+    /// prediction the selection lane speaks (the worker moves its own
+    /// slots, the server's slot echo the wholesale replace answers),
+    /// the wire the packet alone rides.
+    SwapOffhand,
     /// The movement wire (the body's sendPosition dispatch): one of the
     /// four ServerboundMovePlayer packets the tick named. The body's
     /// own bookkeeping decides WHICH (the 2.0E-4 law, the 20-tick

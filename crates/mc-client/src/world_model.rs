@@ -2982,6 +2982,38 @@ impl WorldModel {
         }
     }
 
+    /// THE OFFHAND SWAP'S STORE HALF (the vanilla handleKeybinds's
+    /// keySwapOffhand lane's own prediction — the worker-side store the
+    /// SelectHotbar arm's `view.model.select_hotbar` walk moves, the
+    /// same in-place contract the click lanes keep): the selected
+    /// hotbar slot (the window numbering's 36 + selection) and the
+    /// offhand (45) the ONE trade answers. The store the server's next
+    /// slot sync replaces wholesale — the swap the sync's arrival
+    /// never double-trades (the absolute set-slot the same values
+    /// re-wears). A slot past the store's current end the growth law
+    /// speaks (the empty stacks the retention line keeps) — the
+    /// unspoken offhand trades as the empty it is.
+    pub fn swap_offhand(&mut self) -> bool {
+        let sel = 36 + self.inventory.selected;
+        if self.inventory.selected >= 9 {
+            return false;
+        }
+        // the growth the store's own law keeps (the slot the wire never
+        // legitimately past-menu addresses — the swap reads BOTH sides)
+        let need = 46.max(sel + 1);
+        if self.inventory.slots.len() < need {
+            self.inventory
+                .slots
+                .resize_with(need, || ItemStack {
+                    count: 0,
+                    item_id: 0,
+                    patch: ComponentPatch::default(),
+                });
+        }
+        self.inventory.slots.swap(sel, 45);
+        true
+    }
+
     /// The LOCAL player's active mob-effect state, by the effect's
     /// registry id.
     pub fn mob_effect(&self, effect_id: i32) -> Option<&MobEffectState> {
@@ -5984,6 +6016,65 @@ mod tests {
         assert!(!m.apply(PlayEvent::UnloadChunk { x: 3, z: -2 }));
         // a disconnect is world-state neutral
         assert!(!m.apply(PlayEvent::Disconnected { reason: "bye".into() }));
+    }
+
+    /// THE OFFHAND SWAP'S STORE HALF (the keySwapOffhand lane's own
+    /// prediction — the worker-side store the SelectHotbar arm's walk
+    /// moves, the same in-place contract): the selected hotbar slot
+    /// (36 + selection) and the offhand (45) the ONE trade answers,
+    /// the sparse store the growth law answers (the unspoken slots the
+    /// empty stacks the retention line keeps), the state id the swap
+    /// never touches (the revision the server's own to bump).
+    #[test]
+    fn the_offhand_swap_trades_the_store_slots() {
+        let mut m = WorldModel::new();
+        let stack = |id: i32, count: i32| ItemStack {
+            count,
+            item_id: id,
+            patch: ComponentPatch::default(),
+        };
+        m.inventory.selected = 2;
+        // THE SPARSE STORE (slot 0 the sync spoke — the swap slots the
+        // growth law answers, the unspoken offhand the empty it is)
+        m.inventory.slots = vec![stack(926, 1)];
+        assert!(m.swap_offhand());
+        assert_eq!(
+            m.inventory.slots.len(),
+            46,
+            "the growth the swap's own reads keep"
+        );
+        assert_eq!(
+            (m.inventory.slots[38].item_id, m.inventory.slots[38].count),
+            (0, 0),
+            "the unspoken hand slot the empty trades"
+        );
+        assert_eq!(
+            (m.inventory.slots[45].item_id, m.inventory.slots[45].count),
+            (0, 0),
+            "the unspoken offhand the empty trades"
+        );
+        // THE TRADE (the held stack the offhand keeps, the offhand the
+        // hand wears)
+        m.inventory.slots[38] = stack(926, 1);
+        m.inventory.slots[45] = stack(938, 1);
+        assert!(m.swap_offhand());
+        assert_eq!(
+            m.inventory.slots[38].item_id, 938,
+            "the offhand the hand wears"
+        );
+        assert_eq!(
+            m.inventory.slots[45].item_id, 926,
+            "the hand the offhand keeps"
+        );
+        assert_eq!(
+            m.inventory.state_id, 0,
+            "the revision the swap never bumps"
+        );
+        // THE RE-SWAP (the one trade re-answers — the F key the
+        // repeated press re-trades)
+        assert!(m.swap_offhand());
+        assert_eq!(m.inventory.slots[38].item_id, 926);
+        assert_eq!(m.inventory.slots[45].item_id, 938);
     }
 
     /// THE DIFFICULTY'S OWN WIRE BANK (javap 26.2

@@ -15227,6 +15227,62 @@ impl App {
         }
     }
 
+    /// THE F KEY'S OWN LANE (javap Minecraft.handleKeybinds's
+    /// keySwapOffhand arm — scripts/jar_work/handlekeybinds_48.txt pcs
+    /// 375-414: the `Options.keySwapOffhand.consumeClick()` rising edge
+    /// the `player.isSpectator()` verdict gates, the
+    /// `ServerboundPlayerActionPacket(SWAP_ITEM_WITH_OFFHAND,
+    /// BlockPos.ZERO, Direction.DOWN)` send the lane speaks — the
+    /// ordinal the 26.2 Action clinit pins at 6, the 3-arg ctor's
+    /// sequence 0). THE GATES the world-screen walk keeps: the swap
+    /// the container screens never read (the handleKeybinds lane the
+    /// screen==null verdict guards), the death the modal keeps, the
+    /// spectator the jar's own verdict skips. THE LOCAL SWAP the click
+    /// lanes' own belief contract carries — the TWO slots the ONE
+    /// trade answers: the live store's window-0 belief (the hotbar row
+    /// 36..45, the offhand 45), the offline gameplay inventory's
+    /// selected stack (the items 0..8, the offhand array's own slot).
+    /// The projections the SAME-frame reads answer: the live hand the
+    /// `live_held_updated` reload walks (the id change the reload key
+    /// speaks), the offline hand the held_id/load walk, the HUD rows
+    /// the next frame's own projection.
+    pub fn on_swap_offhand_key(&mut self) {
+        // THE WORLD SCREEN'S OWN GATE (the container screens the key
+        // never reads, the death the modal keeps)
+        if self.screen != ScreenKind::World || self.dead {
+            return;
+        }
+        // THE SPECTATOR GATE (the jar lane's own isSpectator verdict)
+        if self.game_mode == GameMode::Spectator {
+            return;
+        }
+        let is_live = self.live_clicks.is_some();
+        if is_live {
+            // THE LIVE LANE: the belief swaps in place (the click
+            // lanes' own contract — the server's next sync replaces it
+            // wholesale, the absolute set-slot the same values re-wears)
+            let sel = 36 + self.selected_hotbar;
+            self.live_inv_slots.swap(sel, 45);
+            // the hand's reload the id change speaks (the reload key
+            // the store projection rides)
+            let held = Some(self.live_inv_slots[sel]);
+            self.live_held_updated(held);
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::SwapOffhand);
+            }
+        } else {
+            // THE OFFLINE LANE: the gameplay inventory IS the truth —
+            // the selected hotbar stack and the offhand the one trade
+            // answers, the hand the held walk reloads
+            let sel = self.selected_hotbar;
+            let hand = self.inventory.items[sel];
+            self.inventory.items[sel] = self.inventory.offhand[0];
+            self.inventory.offhand[0] = hand;
+            let id = self.held_id();
+            self.load_held_payload_from_id(id);
+        }
+    }
+
     /// THE SCROLL WHEEL'S HOTBAR CYCLE (the 26.2 `MouseHandler.onScroll`'s
     /// own walk — the screen-null arm the spectator gate keeps for the
     /// survival player). The chain the bytecode speaks: the FOLD first
@@ -36334,6 +36390,160 @@ mod tests {
             app.chat_latest_draft, None,
             "the blank close the discard keeps"
         );
+    }
+
+    /// THE F KEY'S OWN OFFHAND TRADE (javap handleKeybinds's
+    /// keySwapOffhand arm — scripts/jar_work/handlekeybinds_48.txt pcs
+    /// 375-414 — the OFFLINE lane: the selected hotbar stack and the
+    /// offhand the ONE trade answers, the hand's projection the held
+    /// reload walk answers, the empty trade the honest bare arm keeps).
+    #[test]
+    fn the_f_key_the_offhand_swap_trades() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        let shield = mc_registry::item_id_by_name("shield").unwrap();
+        app.inventory.items[0] = (sword, 1);
+        app.inventory.offhand[0] = (shield, 1);
+        assert_eq!(app.held_id(), Some(sword), "the hand the selection speaks");
+        // THE TRADE (the selected stack the offhand keeps, the offhand
+        // the hand wears — the held model the reload walk answers)
+        app.on_swap_offhand_key();
+        assert_eq!(
+            app.inventory.items[0],
+            (shield, 1),
+            "the offhand the hand wears"
+        );
+        assert_eq!(
+            app.inventory.offhand[0],
+            (sword, 1),
+            "the hand the offhand keeps"
+        );
+        assert_eq!(
+            app.held_id(),
+            Some(shield),
+            "the hand's projection the trade follows"
+        );
+        // THE RE-SWAP (the one trade re-answers — the repeated press
+        // the same walk plays)
+        app.on_swap_offhand_key();
+        assert_eq!(app.inventory.items[0], (sword, 1));
+        assert_eq!(app.inventory.offhand[0], (shield, 1));
+        // THE EMPTY HAND'S OWN TRADE (the empty selection the offhand
+        // the hand WEARS — the shield the offhand slot keeps, the
+        // empty the trade banks)
+        app.selected_hotbar = 4;
+        app.on_swap_offhand_key();
+        assert_eq!(
+            app.inventory.items[4],
+            (shield, 1),
+            "the offhand the empty hand wears"
+        );
+        assert_eq!(
+            app.inventory.offhand[0],
+            (0, 0),
+            "the empty the trade banks"
+        );
+        assert_eq!(
+            app.held_id(),
+            Some(shield),
+            "the shield the hand's projection wears"
+        );
+    }
+
+    /// THE F KEY'S OWN GATES (the jar lane's own verdicts the walk
+    /// keeps: the container screens the handleKeybinds's screen==null
+    /// guard never passes, the spectator the isSpectator verdict
+    /// skips, the death the modal keeps — the inventory the gates
+    /// never trade).
+    #[test]
+    fn the_f_key_the_gates_keep() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        let shield = mc_registry::item_id_by_name("shield").unwrap();
+        app.inventory.items[0] = (sword, 1);
+        app.inventory.offhand[0] = (shield, 1);
+        // THE CONTAINER GATE (the inventory screen the key never reads)
+        app.open_inventory();
+        app.on_swap_offhand_key();
+        assert_eq!(
+            app.inventory.items[0],
+            (sword, 1),
+            "the container gate the trade keeps"
+        );
+        app.close_inventory();
+        // THE SPECTATOR GATE (the jar lane's own isSpectator verdict —
+        // the swap the spectator mode never answers)
+        app.game_mode = GameMode::Spectator;
+        app.on_swap_offhand_key();
+        assert_eq!(
+            app.inventory.items[0],
+            (sword, 1),
+            "the spectator the swap skips"
+        );
+        app.game_mode = GameMode::Survival;
+        // THE DEATH GATE (the DeathScreen modal the world keys keep)
+        app.dead = true;
+        app.on_swap_offhand_key();
+        assert_eq!(
+            app.inventory.items[0],
+            (sword, 1),
+            "the death the modal keeps"
+        );
+        app.dead = false;
+        // THE SURVIVOR's OWN TRADE (the gates open — the one trade the
+        // lane answers)
+        app.on_swap_offhand_key();
+        assert_eq!(
+            app.inventory.items[0],
+            (shield, 1),
+            "the survivor the trade answers"
+        );
+        assert_eq!(app.inventory.offhand[0], (sword, 1));
+    }
+
+    /// THE LIVE F KEY'S OWN STORE AND WIRE (the live lane: the window-0
+    /// belief the same in-place contract keeps — the hotbar row 36..45
+    /// and the offhand 45 the ONE trade answers, the hand's reload the
+    /// id change speaks, the SwapOffhand command the worker's packet
+    /// send rides).
+    #[test]
+    fn the_live_f_key_the_store_and_wire_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        let shield = mc_registry::item_id_by_name("shield").unwrap();
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // THE WIRE-0 BELIEF (the hotbar row's slot 0 the sync spoke,
+        // the offhand 45 the sync spoke — the full store's shape)
+        app.live_inv_slots[36] = (sword, 1);
+        app.live_inv_slots[45] = (shield, 1);
+        app.live_held_updated(Some((sword, 1)));
+        assert_eq!(app.live_held, Some(sword), "the hand the selection wears");
+        // THE TRADE (the belief the in-place contract swaps, the hand
+        // the reload walk answers, the command the channel rides)
+        app.on_swap_offhand_key();
+        assert_eq!(
+            app.live_inv_slots[36],
+            (shield, 1),
+            "the offhand the hand wears"
+        );
+        assert_eq!(
+            app.live_inv_slots[45],
+            (sword, 1),
+            "the hand the offhand keeps"
+        );
+        assert_eq!(
+            app.live_held,
+            Some(shield),
+            "the hand's reload the id change speaks"
+        );
+        match rx.try_recv().expect("the command rode the channel") {
+            crate::world_view::ContainerCommand::SwapOffhand => {}
+            other => panic!("the wrong command rode the channel: {other:?}"),
+        }
     }
 
     /// A hand-built Brigadier graph mirroring the real servers' own:
