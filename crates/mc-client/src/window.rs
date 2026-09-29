@@ -1846,7 +1846,12 @@ pub fn run_gui_app(
             if window.is_key_pressed(Key::Tab, minifb::KeyRepeat::No) {
                 app.on_chat_tab_key();
             }
-        } else if app.screen == crate::screens::ScreenKind::World && !app.paused {
+        } else if app.screen == crate::screens::ScreenKind::World && !app.paused && !app.dead {
+            // THE DEATH SCREEN'S OWN MODAL (the vanilla screen!=null
+            // verdict — the DeathScreen the input OWNS, the
+            // handleKeybinds lane never runs: T// the chat over the
+            // death overlay never opens, the draft the death's
+            // INTERRUPTED close already banks)
             // THE T KEY'S MESSAGE OPEN (the same lane the walk keeps —
             // the fresh open the '' prefix wears)
             if window.is_key_pressed(Key::T, minifb::KeyRepeat::No) {

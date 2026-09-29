@@ -11323,6 +11323,14 @@ impl App {
     }
 
     pub fn open(&mut self, kind: ScreenKind) {
+        // THE SETSCREEN'S OWN REMOVED WALK (the vanilla Minecraft.setScreen
+        // lane — the NEW screen's install the OLD screen's removed()
+        // answers first, the ChatScreen's exit verdict the ctor's
+        // INTERRUPTED default wears: any takeover — the server's chest
+        // open, the title return — the open chat's INTERRUPTED close
+        // speaks, the typed text the draft bank survives scripts/
+        // jar_work/chatscreen_49.txt the shouldDiscardDraft fold)
+        self.close_chat_interrupted();
         // THE BUNDLE CONTENTS' OWN LIFECYCLE (the map's window-scoped
         // rows): any container switch resets the fold's stale
         // remainder, and the ROWS follow the window's ownership — a
@@ -17559,6 +17567,37 @@ impl App {
         // the close the clear walk answers (the vanilla removed()'s own
         // suggestions hide — the next open the fresh list speaks)
         self.refresh_command_suggestions();
+    }
+
+    /// THE INTERRUPTED CLOSE'S OWN LANE (javap ChatScreen's own exit
+    /// verdict — scripts/jar_work/chatscreen_49.txt the ctor's
+    /// `exitReason = ExitReason.INTERRUPTED` DEFAULT wears: the screen
+    /// OPENS armed for the interrupted exit, the verdict the explicit
+    /// lanes alone re-assign — the submit's DONE (keyPressed pc 98),
+    /// the ESC close's INTENTIONAL (onClose pc 4); the SCREEN
+    /// REPLACEMENT the default keeps — the vanilla setScreen's own
+    /// `removed()` call the death/chest/title takeover speaks with the
+    /// verdict still INTERRUPTED). THE SHOULD-DISCARD WALK the same
+    /// disasm pins (shouldDiscardDraft pcs 1-47): the DONE verdict the
+    /// TRUE return answers, the INTENTIONAL the `!saveChatDrafts.get()`
+    /// option arm carries, the INTERRUPTED the FALSE keeps — the
+    /// option the INTERRUPTED lane NEVER gates, the draft the
+    /// replacement close saves exactly like the ESC-ON close (the
+    /// default-ON option the INTENTIONAL verdict the same false
+    /// returns — the two lanes the ONE removed() walk shares: the
+    /// blank the discardDraft arm, the non-blank !isDraft the
+    /// saveAsDraft lane, the untouched restored draft the bank keeps).
+    /// THE TAKEOVERS THE VANILLA WALK SERVES: the death screen's own
+    /// setScreen (handlePlayerCombatKill), the server's container open,
+    /// the title return — each the old ChatScreen's removed() runs,
+    /// the typed text the draft bank the interruption never burns.
+    pub fn close_chat_interrupted(&mut self) {
+        if self.chat_open {
+            // the shared removed() walk — the verdict the INTERRUPTED
+            // law names (the save lane the ESC-ON default equals, the
+            // comment above the shouldDiscardDraft fold pins)
+            self.close_chat();
+        }
     }
 
     /// THE ESCAPE'S OWN ROUTE (javap ChatScreen.keyPressed's isDraft
@@ -25291,6 +25330,15 @@ impl App {
         self.hurt_yaw = health.hurt_yaw;
         self.death_message = health.death_message.clone();
         self.dead = self.death_message.is_some() || (self.dead && self.health <= 0.0);
+        // THE COMBAT KILL'S OWN SCREEN (handlePlayerCombatKill's
+        // setScreen(new DeathScreen) the death packet ALONE speaks —
+        // the alive health packets the same walk never runs: the open
+        // chat the kill crossing alone folds, the INTERRUPTED default
+        // the draft bank saves, the respawn's T the restored text
+        // restores)
+        if self.death_message.is_some() {
+            self.close_chat_interrupted();
+        }
         // THE EFFECTS' MIRROR (the model's own-effect store's snapshot —
         // the wire's Update/Remove Mob Effect packets' filtered truth;
         // the store's add/update laws ride the same code the offline
@@ -25670,6 +25718,13 @@ impl App {
             .set_absorption(self.effects.absorption() - health_share);
         if self.health <= 0.0 && !self.dead {
             self.dead = true;
+            // THE DEATH SCREEN'S OWN TAKEOVER (the vanilla death's own
+            // setScreen(new DeathScreen) — the open ChatScreen the
+            // replacement's removed() answers, the exit verdict the
+            // ctor's INTERRUPTED default wears: the typed text the
+            // draft bank the interruption saves, the chat the death
+            // overlay the input never rides)
+            self.close_chat_interrupted();
             // THE DEATH'S OWN DISMOUNT (the ServerPlayer's removal the
             // vanilla death speaks — the passenger entity discarded,
             // the fresh respawn the seat never inherits): the ride
@@ -36609,6 +36664,252 @@ mod tests {
         assert_eq!(
             app.chat_latest_draft, None,
             "the blank close the discard keeps"
+        );
+    }
+
+    /// THE INTERRUPTED DEATH'S OWN DRAFT BANK (javap ChatScreen's exit
+    /// verdict — scripts/jar_work/chatscreen_49.txt the ctor's
+    /// `exitReason = INTERRUPTED` default wears: the death screen's
+    /// own setScreen the old ChatScreen's removed() answers with the
+    /// verdict still INTERRUPTED, the shouldDiscardDraft the FALSE
+    /// keeps — the typed text the saveAsDraft lane banks exactly like
+    /// the ESC-ON close, the respawn's T the restored draft wears).
+    #[test]
+    fn the_interrupted_death_the_draft_banks_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE MID-TYPE DEATH (the chat the open stays, the words the
+        // input rides, the fatal dose the death screen opens)
+        app.on_chat_key();
+        for c in "see you".chars() {
+            app.on_chat_char(c);
+        }
+        assert!(app.chat_open);
+        app.actually_hurt(100.0);
+        // THE INTERRUPTED WALK (the close the save lane banks — the
+        // method the startsWith walk names, the chat the death overlay
+        // the input never shares)
+        assert!(app.dead, "the dose the death arms");
+        assert!(
+            !app.chat_open,
+            "the death the chat screen folds (the setScreen removed walk)"
+        );
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("see you".to_string(), false)),
+            "the INTERRUPTED verdict the draft banks"
+        );
+        assert_eq!(app.chat_input, "", "the removed walk the box folds");
+        // THE RESPAWN'S OWN RESTORE (the next T the restorable open
+        // answers — the banked draft the isDraft purity wears)
+        app.respawn();
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "see you", "the reopen the draft restores");
+        assert!(app.chat_input_is_draft, "the restored draft the purity wears");
+    }
+
+    /// THE INTERRUPTED BLANK'S OWN DISCARD (the removed() walk's
+    /// isBlank arm — the whitespace-only input the discardDraft lane
+    /// keeps, the bank the fresh-open law clears: the interrupted
+    /// close the blank draft NEVER banks).
+    #[test]
+    fn the_interrupted_the_blank_discards_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE BANKED PAST (the earlier close the draft wears — the
+        // blank interruption the record CLEARS, the isBlank arm)
+        app.on_chat_key();
+        for c in "old".chars() {
+            app.on_chat_char(c);
+        }
+        app.close_chat();
+        assert!(app.chat_latest_draft.is_some());
+        // THE WHITESPACE OPEN + THE DEATH (the restored draft the
+        // first ESC clears — the untouched-draft dismiss the box
+        // empties, the typed spaces the BLANK input wear, the isBlank
+        // arm the discard keeps)
+        app.on_chat_key();
+        assert!(app.chat_input_is_draft, "the restore the purity wears");
+        app.on_chat_escape();
+        assert!(app.chat_open, "the first ESC the screen keeps");
+        for c in "   ".chars() {
+            app.on_chat_char(c);
+        }
+        app.actually_hurt(100.0);
+        assert!(app.dead);
+        assert!(!app.chat_open);
+        assert_eq!(
+            app.chat_latest_draft, None,
+            "the isBlank walk the discard keeps"
+        );
+    }
+
+    /// THE INTERRUPTED UNTOUCHED DRAFT'S OWN BANK-KEEP (the removed()
+    /// walk's !isDraft gate — the restored draft the death replaces
+    /// BEFORE any keystroke: the skip-save the SAME banked record
+    /// keeps, the purity the close consumed, the reopen the same text
+    /// the isDraft walk restores again).
+    #[test]
+    fn the_interrupted_the_untouched_draft_keeps_its_bank() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_chat_key();
+        for c in "banked".chars() {
+            app.on_chat_char(c);
+        }
+        app.close_chat();
+        // THE RESTORED OPEN (the isDraft purity) + THE DEATH (the
+        // untouched draft the skip-save keeps — the bank unchanged)
+        app.on_chat_key();
+        assert!(app.chat_input_is_draft);
+        app.actually_hurt(100.0);
+        assert!(app.dead);
+        assert!(!app.chat_open);
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("banked".to_string(), false)),
+            "the skip-save the banked record keeps"
+        );
+        // THE REOPEN (the same draft the isDraft walk restores)
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "banked");
+        assert!(app.chat_input_is_draft);
+    }
+
+    /// THE DEATH SCREEN'S OWN MODAL (the vanilla screen!=null verdict —
+    /// the DeathScreen the input OWNS: the ESC walk the on_escape's
+    /// death gate keeps paused-never (the Respawn/Title buttons the
+    /// only exits), the window's T// routing the same modal law wears
+    /// (the !app.dead gate the handleKeybinds lane keeps — the chat
+    /// over the death overlay never opens); the respawn the world
+    /// lanes restore).
+    #[test]
+    fn the_death_screen_the_modal_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.actually_hurt(100.0);
+        assert!(app.dead && !app.chat_open);
+        // THE DEAD ESC (the on_escape death gate — the pause the modal
+        // never arms, the screen the World keeps)
+        app.on_escape();
+        assert!(
+            !app.paused,
+            "the death screen the ESC never pauses"
+        );
+        assert_eq!(app.screen, ScreenKind::World);
+        // THE RESPAWN'S OWN RESTORE (the ESC the pause lane answers
+        // again — the world the keys own)
+        app.respawn();
+        app.on_escape();
+        assert!(app.paused, "the respawn the ESC pause restores");
+        app.paused = false;
+    }
+
+    /// THE COMMAND DRAFT'S OWN INTERRUPTED BANK (the same removed()
+    /// walk the '/'-prefixed input the COMMAND method banks — the
+    /// startsWith walk the method names, the slash reopen the command
+    /// draft restores: the death mid-command the text never burns).
+    #[test]
+    fn the_interrupted_the_command_draft_banks_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_command_key();
+        assert_eq!(app.chat_input, "/", "the prefix the command lane wears");
+        for c in "tp 1 2 3".chars() {
+            app.on_chat_char(c);
+        }
+        app.actually_hurt(100.0);
+        assert!(app.dead && !app.chat_open);
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("/tp 1 2 3".to_string(), true)),
+            "the startsWith walk the COMMAND draft banks"
+        );
+        // THE SLASH REOPEN (the $2 arm — the command draft the command
+        // lane restores, the purity wears)
+        app.respawn();
+        app.on_command_key();
+        assert_eq!(app.chat_input, "/tp 1 2 3");
+        assert!(app.chat_input_is_draft);
+    }
+
+    /// THE SCREEN TAKEOVER'S OWN INTERRUPTED WALK (the vanilla
+    /// setScreen's removed() lane the open() hook serves — the
+    /// server-driven chest open the open chat REPLACES: the typed
+    /// text the draft bank the interruption saves, the container
+    /// screen the typing lane never shares, the close the world the
+    /// chat keeps folded).
+    #[test]
+    fn the_open_takeover_the_interrupted_walk_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_chat_key();
+        for c in "still here".chars() {
+            app.on_chat_char(c);
+        }
+        // THE TAKEOVER (the chest screen the chat replaces — the old
+        // ChatScreen's removed() the INTERRUPTED default wears)
+        app.open(ScreenKind::Chest);
+        assert!(!app.chat_open, "the takeover the chat folds");
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("still here".to_string(), false)),
+            "the interrupted takeover the draft banks"
+        );
+        // THE REOPEN (the world back the draft restores)
+        app.open(ScreenKind::World);
+        app.on_chat_key();
+        assert_eq!(app.chat_input, "still here");
+        assert!(app.chat_input_is_draft);
+    }
+
+    /// THE COMBAT KILL'S OWN INTERRUPTED WALK (the wire lane —
+    /// handlePlayerCombatKill's setScreen(new DeathScreen) the
+    /// live_health_updated hook serves: the death message's arrival
+    /// the open chat's removed() answers, the INTERRUPTED default the
+    /// draft bank saves; the alive health packet the open chat the
+    /// same hook never touches — the close the death crossing alone
+    /// speaks).
+    #[test]
+    fn the_combat_kill_the_wire_walk_banks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.on_chat_key();
+        for c in "wire words".chars() {
+            app.on_chat_char(c);
+        }
+        // THE ALIVE PACKET (the hook the open chat never touches — the
+        // close the death crossing alone answers)
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 6.0,
+            food: 20,
+            saturation: 0.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: None,
+            effects: Vec::new(),
+        });
+        assert!(
+            app.chat_open,
+            "the alive packet the chat screen keeps"
+        );
+        // THE KILL (the death message the setScreen speaks — the
+        // removed() walk the draft banks)
+        app.live_health_updated(crate::world_view::HealthView {
+            health: 0.0,
+            food: 20,
+            saturation: 0.0,
+            hurt_time: 0,
+            hurt_yaw: 0.0,
+            death_message: Some("fell from a high place".to_string()),
+            effects: Vec::new(),
+        });
+        assert!(app.dead, "the kill the death arms");
+        assert!(!app.chat_open, "the kill the chat screen folds");
+        assert_eq!(
+            app.chat_latest_draft,
+            Some(("wire words".to_string(), false)),
+            "the combat kill's interrupted close the draft banks"
         );
     }
 
