@@ -1456,7 +1456,13 @@ fn run_join(
 /// `held_item` seeds the OFFLINE held stack (the `--held-item` model id's
 /// own route into the interaction domain — the hand renders the stack and
 /// the press lanes speak it; the offline singleplayer's own behavior).
-pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&str>) -> anyhow::Result<()> {
+pub fn run_gui_app(
+    seed: u64,
+    width: usize,
+    height: usize,
+    held_item: Option<&str>,
+    offhand_item: Option<&str>,
+) -> anyhow::Result<()> {
     use crate::gui::GuiAssets;
     use crate::screens::App;
 
@@ -1468,6 +1474,7 @@ pub fn run_gui_app(seed: u64, width: usize, height: usize, held_item: Option<&st
     )?;
     let mut app = App::new(seed);
     app.offline_held_updated(held_item);
+    app.offline_offhand_updated(offhand_item);
     // menu music: decode the real official .ogg tracks (fetched by mc2rs-gen
     // through the asset index), feed the scheduler real lengths and play the
     // schedule through the best output backend (rodio when built with

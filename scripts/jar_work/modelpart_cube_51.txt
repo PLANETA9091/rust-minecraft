@@ -1,0 +1,3 @@
+class net/minecraft/client/model/geom/ModelPart$Cube
+
+=== <init>(IIFFFFFFFFFZFFLjava/util/Set;)V ===

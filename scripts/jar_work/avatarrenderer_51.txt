@@ -1,0 +1,379 @@
+class net/minecraft/client/renderer/entity/player/AvatarRenderer
+
+=== <init>(Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;Z)V ===
+    20 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.bakeLayer(Lnet/minecraft/client/model/geom/ModelLayerLocation;)Lnet/minecraft/client/model/geom/ModelPart;  (net/minecraft/client/model/geom/ModelLayers.PLAYER)
+    24 invokespecial net/minecraft/client/model/player/PlayerModel.<init>(Lnet/minecraft/client/model/geom/ModelPart;Z)V  (net/minecraft/client/model/geom/ModelLayers.PLAYER_SLIM.bakeLayer(net/minecraft/client/model/geom/ModelLayers.PLAYER), loc2)
+    29 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.<init>(Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;Lnet/minecraft/client/model/EntityModel;F)V  (new net/minecraft/client/model/player/PlayerModel, new net/minecraft/client/model/player/PlayerModel, 0.5)
+    52 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet()Lnet/minecraft/client/model/geom/EntityModelSet;  ()
+    61 invokestatic net/minecraft/client/renderer/entity/ArmorModelSet.bake(Lnet/minecraft/client/renderer/entity/ArmorModelSet;Lnet/minecraft/client/model/geom/EntityModelSet;Ljava/util/function/Function;)Lnet/minecraft/client/renderer/entity/ArmorModelSet;  (net/minecraft/client/model/geom/ModelLayers.PLAYER_ARMOR, loc1.getModelSet(), loc2)
+    65 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getEquipmentRenderer()Lnet/minecraft/client/renderer/entity/layers/EquipmentLayerRenderer;  ()
+    68 invokespecial net/minecraft/client/renderer/entity/layers/HumanoidArmorLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/renderer/entity/ArmorModelSet;Lnet/minecraft/client/renderer/entity/layers/EquipmentLayerRenderer;)V  (net/minecraft/client/model/geom/ModelLayers.PLAYER_SLIM_ARMOR, ArmorModelSet.bake(net/minecraft/client/model/geom/ModelLayers.PLAYER_ARMOR, loc1.getModelSet(), loc2), loc1.getEquipmentRenderer())
+    71 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (new net/minecraft/client/renderer/entity/layers/HumanoidArmorLayer)
+    81 invokespecial net/minecraft/client/renderer/entity/layers/PlayerItemInHandLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;)V  (loc0)
+    84 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/PlayerItemInHandLayer(loc0))
+    95 invokespecial net/minecraft/client/renderer/entity/layers/ArrowLayer.<init>(Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;)V  (loc0, loc1)
+    98 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/ArrowLayer(loc0, loc1))
+   109 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet()Lnet/minecraft/client/model/geom/EntityModelSet;  ()
+   112 invokespecial net/minecraft/client/renderer/entity/layers/Deadmau5EarsLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;)V  (loc0, loc1.getModelSet())
+   115 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/Deadmau5EarsLayer(loc0, loc1.getModelSet()))
+   126 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet()Lnet/minecraft/client/model/geom/EntityModelSet;  ()
+   130 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getEquipmentAssets()Lnet/minecraft/client/resources/model/EquipmentAssetManager;  ()
+   133 invokespecial net/minecraft/client/renderer/entity/layers/CapeLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;Lnet/minecraft/client/resources/model/EquipmentAssetManager;)V  (loc0, loc1.getModelSet(), loc1.getEquipmentAssets())
+   136 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/CapeLayer(loc0, loc1.getModelSet(), loc1.getEquipmentAssets()))
+   147 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet()Lnet/minecraft/client/model/geom/EntityModelSet;  ()
+   151 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getPlayerSkinRenderCache()Lnet/minecraft/client/renderer/PlayerSkinRenderCache;  ()
+   154 invokespecial net/minecraft/client/renderer/entity/layers/CustomHeadLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;Lnet/minecraft/client/renderer/PlayerSkinRenderCache;)V  (loc0, loc1.getModelSet(), loc1.getPlayerSkinRenderCache())
+   157 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/CustomHeadLayer(loc0, loc1.getModelSet(), loc1.getPlayerSkinRenderCache()))
+   168 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet()Lnet/minecraft/client/model/geom/EntityModelSet;  ()
+   172 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getEquipmentRenderer()Lnet/minecraft/client/renderer/entity/layers/EquipmentLayerRenderer;  ()
+   175 invokespecial net/minecraft/client/renderer/entity/layers/WingsLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;Lnet/minecraft/client/renderer/entity/layers/EquipmentLayerRenderer;)V  (loc0, loc1.getModelSet(), loc1.getEquipmentRenderer())
+   178 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/WingsLayer(loc0, loc1.getModelSet(), loc1.getEquipmentRenderer()))
+   189 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet()Lnet/minecraft/client/model/geom/EntityModelSet;  ()
+   192 invokespecial net/minecraft/client/renderer/entity/layers/ParrotOnShoulderLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;)V  (loc0, loc1.getModelSet())
+   195 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/ParrotOnShoulderLayer(loc0, loc1.getModelSet()))
+   206 invokevirtual net/minecraft/client/renderer/entity/EntityRendererProvider$Context.getModelSet()Lnet/minecraft/client/model/geom/EntityModelSet;  ()
+   209 invokespecial net/minecraft/client/renderer/entity/layers/SpinAttackEffectLayer.<init>(Lnet/minecraft/client/renderer/entity/RenderLayerParent;Lnet/minecraft/client/model/geom/EntityModelSet;)V  (loc0, loc1.getModelSet())
+   212 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/SpinAttackEffectLayer(loc0, loc1.getModelSet()))
+   223 invokespecial net/minecraft/client/renderer/entity/layers/BeeStingerLayer.<init>(Lnet/minecraft/client/renderer/entity/LivingEntityRenderer;Lnet/minecraft/client/renderer/entity/EntityRendererProvider$Context;)V  (loc0, loc1)
+   226 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.addLayer(Lnet/minecraft/client/renderer/entity/layers/RenderLayer;)Z  (net/minecraft/client/renderer/entity/layers/BeeStingerLayer(loc0, loc1))
+   230 return
+
+=== createRenderState()Lnet/minecraft/client/renderer/entity/state/AvatarRenderState; ===
+     4 invokespecial net/minecraft/client/renderer/entity/state/AvatarRenderState.<init>()V  ()
+     7 return net/minecraft/client/renderer/entity/state/AvatarRenderState()
+
+=== createRenderState()Lnet/minecraft/client/renderer/entity/state/EntityRenderState; ===
+     1 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.createRenderState()Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;  ()
+     4 return loc0.createRenderState()
+
+=== extractCapeState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V ===
+     4 invokeinterface net/minecraft/client/entity/ClientAvatarEntity.avatarState()Lnet/minecraft/client/entity/ClientAvatarState;  ()
+    14 invokevirtual net/minecraft/client/entity/ClientAvatarState.getInterpolatedCloakX(F)D  (loc1)
+    20 getfield net/minecraft/world/entity/Avatar.xo  (loc1)
+    24 invokevirtual net/minecraft/world/entity/Avatar.getX()D  ()
+    27 invokestatic net/minecraft/util/Mth.lerp(DDD)D  (?, ?, loc4=loc1.avatarState().getInterpolatedCloakX(loc1), arith, loc1.xo, loc1.getX())
+    30 ?? opcode 0x67
+    36 invokevirtual net/minecraft/client/entity/ClientAvatarState.getInterpolatedCloakY(F)D  (loc1)
+    42 getfield net/minecraft/world/entity/Avatar.yo  (loc1)
+    46 invokevirtual net/minecraft/world/entity/Avatar.getY()D  ()
+    49 invokestatic net/minecraft/util/Mth.lerp(DDD)D  (?, ?, loc4=loc1.avatarState().getInterpolatedCloakY(loc1), arith, loc1.yo, loc1.getY())
+    52 ?? opcode 0x67
+    58 invokevirtual net/minecraft/client/entity/ClientAvatarState.getInterpolatedCloakZ(F)D  (loc1)
+    64 getfield net/minecraft/world/entity/Avatar.zo  (loc1)
+    68 invokevirtual net/minecraft/world/entity/Avatar.getZ()D  ()
+    71 invokestatic net/minecraft/util/Mth.lerp(DDD)D  (?, ?, loc4=loc1.avatarState().getInterpolatedCloakZ(loc1), arith, loc1.zo, loc1.getZ())
+    74 ?? opcode 0x67
+    79 getfield net/minecraft/world/entity/Avatar.yBodyRotO  (loc1)
+    83 getfield net/minecraft/world/entity/Avatar.yBodyRot  (loc1)
+    86 invokestatic net/minecraft/util/Mth.rotLerp(FFF)F  (loc1, loc1.yBodyRotO, loc1.yBodyRot)
+    98 invokestatic net/minecraft/util/Mth.sin(D)F  (?, arith)
+   111 invokestatic net/minecraft/util/Mth.cos(D)F  (?, arith)
+   114 ?? opcode 0x76
+   126 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeFlap = (arith * 10.0)
+   131 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeFlap  (loc2)
+   140 invokestatic net/minecraft/util/Mth.clamp(FFF)F  (loc2.capeFlap, -6.0, 32.0)
+   143 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeFlap = Mth.clamp(loc2.capeFlap, -6.0, 32.0)
+   151 ?? opcode 0x6b
+   156 ?? opcode 0x6b
+   157 ?? opcode 0x63
+   163 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean = (arith * 100.0)
+   168 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean  (loc2)
+   173 invokevirtual net/minecraft/client/renderer/entity/state/AvatarRenderState.fallFlyingScale()F  ()
+   178 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean = (loc2.capeLean * (1.0 - loc2.fallFlyingScale()))
+   183 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean  (loc2)
+   190 invokestatic net/minecraft/util/Mth.clamp(FFF)F  (loc2.capeLean, 0.0, 150.0)
+   193 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean = Mth.clamp(loc2.capeLean, 0.0, 150.0)
+   201 ?? opcode 0x6b
+   206 ?? opcode 0x6b
+   207 ?? opcode 0x67
+   213 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean2 = (arith * 100.0)
+   218 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean2  (loc2)
+   227 invokestatic net/minecraft/util/Mth.clamp(FFF)F  (loc2.capeLean2, -20.0, 20.0)
+   230 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeLean2 = Mth.clamp(loc2.capeLean2, -20.0, 20.0)
+   236 invokevirtual net/minecraft/client/entity/ClientAvatarState.getInterpolatedBob(F)F  (loc1)
+   244 invokevirtual net/minecraft/client/entity/ClientAvatarState.getInterpolatedWalkDistance(F)F  (loc1)
+   251 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeFlap  (loc2)
+   261 invokestatic net/minecraft/util/Mth.sin(D)F  (loc2.capeFlap, arith)
+   272 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.capeFlap = (loc2 + ((Mth.sin(loc2.capeFlap, arith) * 32.0) * loc16=loc4=loc1.avatarState().getInterpolatedBob(loc1)))
+   275 return
+
+=== extractFlightData(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V ===
+     2 invokevirtual net/minecraft/world/entity/Avatar.getFallFlyingTicks()I  ()
+     8 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.fallFlyingTimeInTicks = (arith + loc1)
+    13 invokevirtual net/minecraft/world/entity/Avatar.getViewVector(F)Lnet/minecraft/world/phys/Vec3;  (loc1)
+    22 invokeinterface net/minecraft/client/entity/ClientAvatarEntity.avatarState()Lnet/minecraft/client/entity/ClientAvatarState;  ()
+    27 invokevirtual net/minecraft/client/entity/ClientAvatarState.deltaMovementOnPreviousTick()Lnet/minecraft/world/phys/Vec3;  ()
+    31 invokevirtual net/minecraft/world/entity/Avatar.getDeltaMovement()Lnet/minecraft/world/phys/Vec3;  ()
+    36 invokevirtual net/minecraft/world/phys/Vec3.lerp(Lnet/minecraft/world/phys/Vec3;D)Lnet/minecraft/world/phys/Vec3;  (loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith)
+    43 invokevirtual net/minecraft/world/phys/Vec3.horizontalDistanceSqr()D  ()
+    55 invokevirtual net/minecraft/world/phys/Vec3.horizontalDistanceSqr()D  ()
+    67 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.shouldApplyFlyingYRot = 1
+    72 invokevirtual net/minecraft/world/phys/Vec3.horizontal()Lnet/minecraft/world/phys/Vec3;  ()
+    75 invokevirtual net/minecraft/world/phys/Vec3.normalize()Lnet/minecraft/world/phys/Vec3;  ()
+    80 invokevirtual net/minecraft/world/phys/Vec3.horizontal()Lnet/minecraft/world/phys/Vec3;  ()
+    83 invokevirtual net/minecraft/world/phys/Vec3.normalize()Lnet/minecraft/world/phys/Vec3;  ()
+    86 invokevirtual net/minecraft/world/phys/Vec3.dot(Lnet/minecraft/world/phys/Vec3;)D  (loc4=loc1.getViewVector(loc1).horizontal().normalize())
+    93 getfield net/minecraft/world/phys/Vec3.x  (loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith))
+    98 getfield net/minecraft/world/phys/Vec3.z  (loc4=loc1.getViewVector(loc1))
+   101 ?? opcode 0x6b
+   104 getfield net/minecraft/world/phys/Vec3.z  (loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith))
+   109 getfield net/minecraft/world/phys/Vec3.x  (loc4=loc1.getViewVector(loc1))
+   112 ?? opcode 0x6b
+   113 ?? opcode 0x67
+   119 invokestatic java/lang/Math.signum(D)D  (loc2, loc8=loc4=loc1.getViewVector(loc1).x)
+   125 invokestatic java/lang/Math.abs(D)D  (1.0, loc6=loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith).horizontal().normalize().dot(loc4=loc1.getViewVector(loc1).horizontal().normalize()))
+   128 invokestatic java/lang/Math.min(DD)D  (loc4=loc1.getViewVector(loc1).z, loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith).z, Math.signum(loc2, loc8=loc4=loc1.getViewVector(loc1).x), Math.abs(1.0, loc6=loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith).horizontal().normalize().dot(loc4=loc1.getViewVector(loc1).horizontal().normalize())))
+   131 invokestatic java/lang/Math.acos(D)D  (loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith).x, Math.min(loc4=loc1.getViewVector(loc1).z, loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith).z, Math.signum(loc2, loc8=loc4=loc1.getViewVector(loc1).x), Math.abs(1.0, loc6=loc5=loc2.lerp(loc1.avatarState().deltaMovementOnPreviousTick(), loc1.getDeltaMovement(), arith).horizontal().normalize().dot(loc4=loc1.getViewVector(loc1).horizontal().normalize()))))
+   134 ?? opcode 0x6b
+   136 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.flyingYRot = arith
+   144 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.shouldApplyFlyingYRot = 0
+   149 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.flyingYRot = 0.0
+   152 return
+
+=== extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V ===
+     4 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V  (loc1, loc2, loc1)
+    11 getfield net/minecraft/client/renderer/entity/player/AvatarRenderer.itemModelResolver  (loc0)
+    14 invokestatic net/minecraft/client/renderer/entity/HumanoidMobRenderer.extractHumanoidRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;FLnet/minecraft/client/renderer/item/ItemModelResolver;)V  (loc1, loc2, loc1, loc0.itemModelResolver)
+    22 invokestatic net/minecraft/client/renderer/entity/player/AvatarRenderer.getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/entity/HumanoidArm;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;  (loc1, net/minecraft/world/entity/HumanoidArm.LEFT)
+    25 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.leftArmPose = AvatarRenderer.getArmPose(loc1, net/minecraft/world/entity/HumanoidArm.LEFT)
+    33 invokestatic net/minecraft/client/renderer/entity/player/AvatarRenderer.getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/entity/HumanoidArm;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;  (loc1, net/minecraft/world/entity/HumanoidArm.RIGHT)
+    36 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.rightArmPose = AvatarRenderer.getArmPose(loc1, net/minecraft/world/entity/HumanoidArm.RIGHT)
+    44 invokeinterface net/minecraft/client/entity/ClientAvatarEntity.getSkin()Lnet/minecraft/world/entity/player/PlayerSkin;  ()
+    49 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.skin = loc1.getSkin()
+    54 invokevirtual net/minecraft/world/entity/Avatar.getArrowCount()I  ()
+    57 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.arrowCount = loc1.getArrowCount()
+    62 invokevirtual net/minecraft/world/entity/Avatar.getStingerCount()I  ()
+    65 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.stingerCount = loc1.getStingerCount()
+    70 invokevirtual net/minecraft/world/entity/Avatar.isSpectator()Z  ()
+    73 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isSpectator = loc1.isSpectator()
+    81 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.HAT)
+    84 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showHat = loc1.isModelPartShown(net/minecraft/world/entity/player/PlayerModelPart.HAT)
+    92 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.JACKET)
+    95 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showJacket = loc1.isModelPartShown(net/minecraft/world/entity/player/PlayerModelPart.JACKET)
+   103 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.LEFT_PANTS_LEG)
+   106 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showLeftPants = loc1.isModelPartShown(net/minecraft/world/entity/player/PlayerModelPart.LEFT_PANTS_LEG)
+   114 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.RIGHT_PANTS_LEG)
+   117 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showRightPants = loc1.isModelPartShown(net/minecraft/world/entity/player/PlayerModelPart.RIGHT_PANTS_LEG)
+   125 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.LEFT_SLEEVE)
+   128 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showLeftSleeve = loc1.isModelPartShown(net/minecraft/world/entity/player/PlayerModelPart.LEFT_SLEEVE)
+   136 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.RIGHT_SLEEVE)
+   139 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showRightSleeve = loc1.isModelPartShown(net/minecraft/world/entity/player/PlayerModelPart.RIGHT_SLEEVE)
+   147 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.CAPE)
+   150 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showCape = loc1.isModelPartShown(net/minecraft/world/entity/player/PlayerModelPart.CAPE)
+   157 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.extractFlightData(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V  (loc1, loc2, loc1)
+   164 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.extractCapeState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V  (loc1, loc2, loc1)
+   173 invokeinterface net/minecraft/client/entity/ClientAvatarEntity.getParrotVariantOnShoulder(Z)Lnet/minecraft/world/entity/animal/parrot/Parrot$Variant;  (1)
+   178 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.parrotOnLeftShoulder = loc1.getParrotVariantOnShoulder(1)
+   187 invokeinterface net/minecraft/client/entity/ClientAvatarEntity.getParrotVariantOnShoulder(Z)Lnet/minecraft/world/entity/animal/parrot/Parrot$Variant;  (0)
+   192 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.parrotOnRightShoulder = loc1.getParrotVariantOnShoulder(0)
+   197 invokevirtual net/minecraft/world/entity/Avatar.getId()I  ()
+   200 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.id = loc1.getId()
+   208 invokeinterface net/minecraft/client/entity/ClientAvatarEntity.showExtraEars()Z  ()
+   213 putfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showExtraEars = loc1.showExtraEars()
+   217 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.heldOnHead  (loc2)
+   220 invokevirtual net/minecraft/client/renderer/item/ItemStackRenderState.clear()V  ()
+   224 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isUsingItem  (loc2)
+   232 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.useItemHand  (loc2)
+   235 invokevirtual net/minecraft/world/entity/Avatar.getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;  (loc2.useItemHand)
+   245 invokevirtual net/minecraft/world/item/ItemStack.is(Ljava/lang/Object;)Z  (net/minecraft/world/item/Items.SPYGLASS)
+   252 getfield net/minecraft/client/renderer/entity/player/AvatarRenderer.itemModelResolver  (loc0)
+   256 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.heldOnHead  (loc2)
+   265 invokevirtual net/minecraft/client/renderer/item/ItemModelResolver.updateForLiving(Lnet/minecraft/client/renderer/item/ItemStackRenderState;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/world/entity/LivingEntity;)V  (loc2.heldOnHead, loc4=loc1.getItemInHand(loc2.useItemHand), net/minecraft/world/item/ItemDisplayContext.HEAD, loc1)
+   268 return
+
+=== extractRenderState(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/client/renderer/entity/state/EntityRenderState;F)V ===
+    10 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V  (loc1, loc2, loc1)
+    13 return
+
+=== extractRenderState(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;F)V ===
+    10 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.extractRenderState(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;F)V  (loc1, loc2, loc1)
+    13 return
+
+=== getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/entity/HumanoidArm;)Lnet/minecraft/client/model/HumanoidModel$ArmPose; ===
+     4 invokevirtual net/minecraft/world/entity/Avatar.getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;  (net/minecraft/world/InteractionHand.MAIN_HAND)
+     7 ?? opcode 0x4d
+    12 invokevirtual net/minecraft/world/entity/Avatar.getItemInHand(Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/item/ItemStack;  (net/minecraft/world/InteractionHand.OFF_HAND)
+    15 ?? opcode 0x4e
+    21 invokestatic net/minecraft/client/renderer/entity/player/AvatarRenderer.getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;  (loc0, loc2, net/minecraft/world/InteractionHand.MAIN_HAND)
+    31 invokestatic net/minecraft/client/renderer/entity/player/AvatarRenderer.getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/client/model/HumanoidModel$ArmPose;  (loc0, loc3, net/minecraft/world/InteractionHand.OFF_HAND)
+    38 invokevirtual net/minecraft/client/model/HumanoidModel$ArmPose.isTwoHanded()Z  ()
+    45 invokevirtual net/minecraft/world/item/ItemStack.isEmpty()Z  ()
+    63 invokevirtual net/minecraft/world/entity/Avatar.getMainArm()Lnet/minecraft/world/entity/HumanoidArm;  ()
+    72 return loc4=AvatarRenderer.getArmPose(loc0, loc2, net/minecraft/world/InteractionHand.MAIN_HAND)
+    75 return loc5=net/minecraft/client/model/HumanoidModel$ArmPose.ITEM
+
+=== getArmPose(Lnet/minecraft/world/entity/Avatar;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/client/model/HumanoidModel$ArmPose; ===
+     1 invokevirtual net/minecraft/world/item/ItemStack.isEmpty()Z  ()
+    10 return net/minecraft/client/model/HumanoidModel$ArmPose.EMPTY
+    12 getfield net/minecraft/world/entity/Avatar.swinging  (loc0)
+    22 invokevirtual net/minecraft/world/item/ItemStack.is(Ljava/lang/Object;)Z  (net/minecraft/world/item/Items.CROSSBOW)
+    29 invokestatic net/minecraft/world/item/CrossbowItem.isCharged(Lnet/minecraft/world/item/ItemStack;)Z  (loc1)
+    38 return net/minecraft/client/model/HumanoidModel$ArmPose.CROSSBOW_HOLD
+    40 invokevirtual net/minecraft/world/entity/Avatar.getUsedItemHand()Lnet/minecraft/world/InteractionHand;  ()
+    48 invokevirtual net/minecraft/world/entity/Avatar.getUseItemRemainingTicks()I  ()
+    55 invokevirtual net/minecraft/world/item/ItemStack.getUseAnimation()Lnet/minecraft/world/item/ItemUseAnimation;  ()
+    58 ?? opcode 0x4e
+    69 return net/minecraft/client/model/HumanoidModel$ArmPose.BLOCK
+    80 return net/minecraft/client/model/HumanoidModel$ArmPose.BOW_AND_ARROW
+    91 return net/minecraft/client/model/HumanoidModel$ArmPose.THROW_TRIDENT
+   102 return net/minecraft/client/model/HumanoidModel$ArmPose.CROSSBOW_CHARGE
+   113 return net/minecraft/client/model/HumanoidModel$ArmPose.SPYGLASS
+   124 return net/minecraft/client/model/HumanoidModel$ArmPose.TOOT_HORN
+   135 return net/minecraft/client/model/HumanoidModel$ArmPose.BRUSH
+   146 return net/minecraft/client/model/HumanoidModel$ArmPose.SPEAR
+   151 invokevirtual net/minecraft/world/item/ItemStack.get(Lnet/minecraft/core/component/DataComponentType;)Ljava/lang/Object;  (net/minecraft/core/component/DataComponents.SWING_ANIMATION)
+   157 ?? opcode 0x4e
+   163 invokevirtual net/minecraft/world/item/component/SwingAnimation.type()Lnet/minecraft/world/item/SwingAnimationType;  ()
+   173 getfield net/minecraft/world/entity/Avatar.swinging  (loc0)
+   182 return net/minecraft/client/model/HumanoidModel$ArmPose.SPEAR
+   187 invokevirtual net/minecraft/world/item/ItemStack.is(Lnet/minecraft/tags/TagKey;)Z  (net/minecraft/tags/ItemTags.SPEARS)
+   196 return net/minecraft/client/model/HumanoidModel$ArmPose.SPEAR
+   200 return net/minecraft/client/model/HumanoidModel$ArmPose.ITEM
+
+=== getRenderOffset(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/world/phys/Vec3; ===
+     2 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.getRenderOffset(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;)Lnet/minecraft/world/phys/Vec3;  (loc1)
+     5 ?? opcode 0x4d
+     7 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isCrouching  (loc1)
+    16 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.scale  (loc1)
+    26 ?? opcode 0x6f
+    28 invokevirtual net/minecraft/world/phys/Vec3.add(DDD)Lnet/minecraft/world/phys/Vec3;  (loc0.getRenderOffset(loc1), loc2, 0.0, arith, 16.0, 0.0)
+    31 return ?.add(loc0.getRenderOffset(loc1), loc2, 0.0, arith, 16.0, 0.0)
+    33 return loc2
+
+=== getRenderOffset(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;)Lnet/minecraft/world/phys/Vec3; ===
+     5 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.getRenderOffset(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/world/phys/Vec3;  (loc1)
+     8 return loc0.getRenderOffset(loc1)
+
+=== getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier; ===
+     1 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.skin  (loc1)
+     4 invokevirtual net/minecraft/world/entity/player/PlayerSkin.body()Lnet/minecraft/core/ClientAsset$Texture;  ()
+     7 invokeinterface net/minecraft/core/ClientAsset$Texture.texturePath()Lnet/minecraft/resources/Identifier;  ()
+    12 return loc1.skin.body().texturePath()
+
+=== getTextureLocation(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;)Lnet/minecraft/resources/Identifier; ===
+     5 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.getTextureLocation(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Lnet/minecraft/resources/Identifier;  (loc1)
+     8 return loc0.getTextureLocation(loc1)
+
+=== isEntityUpsideDown(Lnet/minecraft/world/entity/Avatar;)Z ===
+     4 invokevirtual net/minecraft/world/entity/Avatar.isModelPartShown(Lnet/minecraft/world/entity/player/PlayerModelPart;)Z  (net/minecraft/world/entity/player/PlayerModelPart.CAPE)
+    21 ?? opcode 0x4d
+    23 invokestatic net/minecraft/client/renderer/entity/player/AvatarRenderer.isPlayerUpsideDown(Lnet/minecraft/world/entity/player/Player;)Z  (loc2)
+    26 return AvatarRenderer.isPlayerUpsideDown(loc2)
+    29 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.isEntityUpsideDown(Lnet/minecraft/world/entity/LivingEntity;)Z  (loc1)
+    32 return loc0.isEntityUpsideDown(loc1)
+    34 return 0
+
+=== isEntityUpsideDown(Lnet/minecraft/world/entity/LivingEntity;)Z ===
+     5 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.isEntityUpsideDown(Lnet/minecraft/world/entity/Avatar;)Z  (loc1)
+     8 return loc0.isEntityUpsideDown(loc1)
+
+=== isPlayerUpsideDown(Lnet/minecraft/world/entity/player/Player;)Z ===
+     1 invokevirtual net/minecraft/world/entity/player/Player.getGameProfile()Lcom/mojang/authlib/GameProfile;  ()
+     4 invokevirtual com/mojang/authlib/GameProfile.name()Ljava/lang/String;  ()
+     7 invokestatic net/minecraft/client/renderer/entity/player/AvatarRenderer.isUpsideDownName(Ljava/lang/String;)Z  (loc0.getGameProfile().name())
+    10 return AvatarRenderer.isUpsideDownName(loc0.getGameProfile().name())
+
+=== lambda$new$0(ZLnet/minecraft/client/model/geom/ModelPart;)Lnet/minecraft/client/model/player/PlayerModel; ===
+     6 invokespecial net/minecraft/client/model/player/PlayerModel.<init>(Lnet/minecraft/client/model/geom/ModelPart;Z)V  (loc1, loc0)
+     9 return net/minecraft/client/model/player/PlayerModel(loc1, loc0)
+
+=== renderHand(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;Lnet/minecraft/client/model/geom/ModelPart;Z)V ===
+     1 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.getModel()Lnet/minecraft/client/model/EntityModel;  ()
+    11 invokevirtual net/minecraft/client/model/geom/ModelPart.resetPose()V  ()
+    17 putfield net/minecraft/client/model/geom/ModelPart.visible = 1
+    22 getfield net/minecraft/client/model/player/PlayerModel.leftSleeve  (loc7=loc0.getModel())
+    27 putfield net/minecraft/client/model/geom/ModelPart.visible = loc6
+    32 getfield net/minecraft/client/model/player/PlayerModel.rightSleeve  (loc7=loc0.getModel())
+    37 putfield net/minecraft/client/model/geom/ModelPart.visible = loc6
+    42 getfield net/minecraft/client/model/player/PlayerModel.leftArm  (loc7=loc0.getModel())
+    48 putfield net/minecraft/client/model/geom/ModelPart.zRot = -0.10000000149011612
+    53 getfield net/minecraft/client/model/player/PlayerModel.rightArm  (loc7=loc0.getModel())
+    59 putfield net/minecraft/client/model/geom/ModelPart.zRot = 0.10000000149011612
+    68 invokestatic net/minecraft/client/renderer/rendertype/RenderTypes.entityTranslucent(Lnet/minecraft/resources/Identifier;)Lnet/minecraft/client/renderer/rendertype/RenderType;  (loc4)
+    76 invokeinterface net/minecraft/client/renderer/SubmitNodeCollector.submitModelPart(Lnet/minecraft/client/model/geom/ModelPart;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/rendertype/RenderType;IILnet/minecraft/client/renderer/texture/TextureAtlasSprite;)V  (loc5, loc1, RenderTypes.entityTranslucent(loc4), loc3, net/minecraft/client/renderer/texture/OverlayTexture.NO_OVERLAY, null)
+    81 return
+
+=== renderLeftHand(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;Z)V ===
+     7 getfield net/minecraft/client/renderer/entity/player/AvatarRenderer.model  (loc0)
+    13 getfield net/minecraft/client/model/player/PlayerModel.leftArm  (loc0.model)
+    18 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.renderHand(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;Lnet/minecraft/client/model/geom/ModelPart;Z)V  (loc1, loc2, loc3, loc4, loc0.model.leftArm, loc5)
+    21 return
+
+=== renderRightHand(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;Z)V ===
+     7 getfield net/minecraft/client/renderer/entity/player/AvatarRenderer.model  (loc0)
+    13 getfield net/minecraft/client/model/player/PlayerModel.rightArm  (loc0.model)
+    18 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.renderHand(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;ILnet/minecraft/resources/Identifier;Lnet/minecraft/client/model/geom/ModelPart;Z)V  (loc1, loc2, loc3, loc4, loc0.model.rightArm, loc5)
+    21 return
+
+=== scale(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V ===
+    14 invokevirtual com/mojang/blaze3d/vertex/PoseStack.scale(FFF)V  (0.9375, 0.9375, 0.9375)
+    17 return
+
+=== scale(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V ===
+     6 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.scale(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;)V  (loc1, loc2)
+     9 return
+
+=== setupRotations(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;FF)V ===
+     1 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.swimAmount  (loc1)
+     7 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.xRot  (loc1)
+    13 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isFallFlying  (loc1)
+    25 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.setupRotations(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;FF)V  (loc1, loc2, loc1, loc4)
+    29 invokevirtual net/minecraft/client/renderer/entity/state/AvatarRenderState.fallFlyingScale()F  ()
+    35 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isAutoSpinAttack  (loc1)
+    54 invokeinterface com/mojang/math/Axis.rotationDegrees(F)Lorg/joml/Quaternionf;  ((loc7=loc1.fallFlyingScale() * (-90.0 - loc6=loc1.xRot)))
+    59 invokevirtual com/mojang/blaze3d/vertex/PoseStack.mulPose(Lorg/joml/Quaternionfc;)V  (com/mojang/math/Axis.XP.rotationDegrees((loc7=loc1.fallFlyingScale() * (-90.0 - loc6=loc1.xRot))))
+    63 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.shouldApplyFlyingYRot  (loc1)
+    74 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.flyingYRot  (loc1)
+    77 invokeinterface com/mojang/math/Axis.rotation(F)Lorg/joml/Quaternionf;  (loc1.flyingYRot)
+    82 invokevirtual com/mojang/blaze3d/vertex/PoseStack.mulPose(Lorg/joml/Quaternionfc;)V  (com/mojang/math/Axis.YP.rotation(loc1.flyingYRot))
+   101 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.setupRotations(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;FF)V  (loc1, loc2, loc1, loc4)
+   105 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isInWater  (loc1)
+   130 invokestatic net/minecraft/util/Mth.lerp(FFF)F  (loc5=loc1.swimAmount, 0.0, loc7=-90.0)
+   141 invokeinterface com/mojang/math/Axis.rotationDegrees(F)Lorg/joml/Quaternionf;  (loc8=Mth.lerp(loc5=loc1.swimAmount, 0.0, loc7=-90.0))
+   146 invokevirtual com/mojang/blaze3d/vertex/PoseStack.mulPose(Lorg/joml/Quaternionfc;)V  (com/mojang/math/Axis.XP.rotationDegrees(loc8=Mth.lerp(loc5=loc1.swimAmount, 0.0, loc7=-90.0)))
+   150 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isVisuallySwimming  (loc1)
+   164 invokevirtual com/mojang/blaze3d/vertex/PoseStack.translate(FFF)V  (0.0, -1.0, 0.30000001192092896)
+   176 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.setupRotations(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;FF)V  (loc1, loc2, loc1, loc4)
+   179 return
+
+=== setupRotations(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;FF)V ===
+     9 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.setupRotations(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;FF)V  (loc1, loc2, loc1, loc4)
+    12 return
+
+=== shouldRenderLayers(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Z ===
+     1 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isSpectator  (loc1)
+    12 return 0
+
+=== shouldRenderLayers(Lnet/minecraft/client/renderer/entity/state/LivingEntityRenderState;)Z ===
+     5 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.shouldRenderLayers(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)Z  (loc1)
+     8 return loc0.shouldRenderLayers(loc1)
+
+=== shouldShowName(Lnet/minecraft/world/entity/Avatar;D)Z ===
+     2 ?? opcode 0x28
+     3 invokespecial net/minecraft/client/renderer/entity/LivingEntityRenderer.shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z  (?, loc0, loc1)
+    10 invokevirtual net/minecraft/world/entity/Avatar.shouldShowName()Z  ()
+    17 invokevirtual net/minecraft/world/entity/Avatar.hasCustomName()Z  ()
+    25 getfield net/minecraft/client/renderer/entity/player/AvatarRenderer.entityRenderDispatcher  (loc0)
+    28 getfield net/minecraft/client/renderer/entity/EntityRenderDispatcher.crosshairPickEntity  (loc0.entityRenderDispatcher)
+    39 return 0
+
+=== shouldShowName(Lnet/minecraft/world/entity/Entity;D)Z ===
+     5 ?? opcode 0x28
+     6 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.shouldShowName(Lnet/minecraft/world/entity/Avatar;D)Z  (?, loc0, loc1)
+     9 return ?.shouldShowName(?, loc0, loc1)
+
+=== shouldShowName(Lnet/minecraft/world/entity/LivingEntity;D)Z ===
+     5 ?? opcode 0x28
+     6 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.shouldShowName(Lnet/minecraft/world/entity/Avatar;D)Z  (?, loc0, loc1)
+     9 return ?.shouldShowName(?, loc0, loc1)
+
+=== submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V ===
+     1 invokevirtual com/mojang/blaze3d/vertex/PoseStack.pushPose()V  ()
+     5 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showExtraEars  (loc1)
+    27 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;I)V  (loc1, loc2, loc3, loc4, loc5=0)
+    31 invokevirtual com/mojang/blaze3d/vertex/PoseStack.popPose()V  ()
+    34 return
+
+=== submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V ===
+     9 invokevirtual net/minecraft/client/renderer/entity/player/AvatarRenderer.submitNameDisplay(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/renderer/state/level/CameraRenderState;)V  (loc1, loc2, loc3, loc4)
+    12 return

@@ -61,7 +61,13 @@ check gui_world_held_320x180.png "$OUT/r.png"
 "$BIN" --screen world --width 320 --height 180 --ui-frame 30 \
   --held-item item/iron_sword --swing-progress 0.5 --out "$OUT/r.png" >/dev/null 2>&1
 check gui_world_held_swing_320x180.png "$OUT/r.png"
+# the dual-wield variant (dev-51: the offhand lane's own golden — the
+# sword the main hand wears, the shield the offhand carries, the two
+# submitArmWithItem lanes the one frame renders)
+"$BIN" --screen world --width 320 --height 180 --ui-frame 30 \
+  --held-item item/iron_sword --offhand-item item/shield --out "$OUT/r.png" >/dev/null 2>&1
+check gui_world_dual_320x180.png "$OUT/r.png"
 
 echo "----"
-echo "matrix: $pass passed / $fail failed / 13 total"
+echo "matrix: $pass passed / $fail failed / 14 total"
 [ "$fail" = "0" ]

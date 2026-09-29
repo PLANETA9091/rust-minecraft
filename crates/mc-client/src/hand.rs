@@ -125,8 +125,20 @@ impl ArmModel {
     /// and draws the arm in view space under the world's projection (same
     /// fov — vanilla's hand fov follows the world's).
     pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
+        self.draw_side(fb, proj, swing, false);
+    }
+
+    /// The hand pass on EITHER side (the submitArmWithItem walk's own
+    /// two-lane shape — the OFF_HAND call the renderPlayerArm walk
+    /// answers with the side*-1 fold): `left = true` draws the Player
+    /// Model's OWN left arm (the texOffs (32, 48) rebuild, the +5
+    /// pivot, the cp #689 zRot -0.1 — the bare offhand the empty
+    /// offhand slot wears). Clears depth and draws in view space under
+    /// the world's projection (same fov — vanilla's hand fov follows
+    /// the world's).
+    pub fn draw_side(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32, left: bool) {
         fb.clear_depth();
-        let quads = build_quads_kind_at(self.kind, swing, 0.0);
+        let quads = build_arm_quads_at(self.kind, swing, 0.0, left);
         fb.draw_hand_quads(proj, &quads, &self.rgba, skin::SKIN_SIDE as usize);
     }
 }
@@ -258,14 +270,23 @@ fn decode_rgba(bytes: &[u8]) -> anyhow::Result<(u32, u32, Vec<u8>)> {
 }
 
 /// The rest-pose transform (see the module docs for the bytecode source).
-/// `side` is +1 for the RIGHT main hand (the default offline player's).
-/// `swing` is the attack animation progress (`getAttackAnim`, 0 = rest),
-/// `equip` the equip animation progress (0 — no item switching exists).
-/// Both are the float params of `ItemInHandRenderer.renderPlayerArm` (the
-/// javap decode: slot 5 = swing, slot 4 = equip); at rest every swing term
+/// `side` is +1 for the RIGHT main hand, -1 for the LEFT offhand (the
+/// 26.2 renderPlayerArm walk factors the arm's own ±1 through EVERY
+/// term — scripts/jar_work/handrenderer_51.txt pcs 106-277: the
+/// `loc8=-1.0 *` fold the LEFT walk carries verbatim). `swing` is the
+/// attack animation progress (`getAttackAnim`, 0 = rest), `equip` the
+/// equip animation progress (0 — no item switching exists). Both are
+/// the float params of `ItemInHandRenderer.renderPlayerArm` (the javap
+/// decode: slot 5 = swing, slot 4 = equip); at rest every swing term
 /// collapses to exactly zero, so this IS the rest pose bit-for-bit.
-fn arm_transform(swing: f32, equip: f32) -> Mat4 {
-    let side = 1.0f32;
+/// THE TAIL (the translateToHand + renderHand walk — scripts/jar_work/
+/// playermodel_51.txt + avatarrenderer_51.txt: the PlayerModel's OWN
+/// arm parts the player model rebuilds, the root + part
+/// translateAndRotate pair, the renderHand's cp-pinned zRot constants
+/// — leftArm -0.1 = cp #689, rightArm +0.1 = cp #693): the pivot the
+/// arm side speaks (right -5/16, left +5/16 — the PartPose.offset the
+/// createMesh walk pins), the zRot the side's own constant wears.
+fn arm_transform(swing: f32, equip: f32, side: f32) -> Mat4 {
     let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
     let deg = |d: f32| d.to_radians();
     let [f10, f11, f12, f13, f14] = swing_terms(swing);
@@ -279,9 +300,13 @@ fn arm_transform(swing: f32, equip: f32) -> Mat4 {
         .mul(&Mat4::rot_x(deg(200.0)))
         .mul(&Mat4::rot_y(deg(side * -135.0)))
         .mul(&t(side * 5.6, 0.0, 0.0))
-        // the PlayerModel right_arm part: pivot (-5, 2, 0)/16, zRot 0.1 rad
-        .mul(&t(-5.0 / 16.0, 2.0 / 16.0, 0.0))
-        .mul(&Mat4::rot_z(0.1))
+        // the PlayerModel's own arm part: the pivot the side speaks
+        // (right (-5, 2, 0), left (+5, 2, 0) — the createMesh walk's
+        // PartPose.offset pair), the zRot the renderHand constants
+        // wear (right +0.1 = cp #693, left -0.1 = cp #689 — the s=±1
+        // idle bob the avatar law banks)
+        .mul(&t(side * -5.0 / 16.0, 2.0 / 16.0, 0.0))
+        .mul(&Mat4::rot_z(side * 0.1))
 }
 
 /// The five swing terms of `renderPlayerArm` — f10..f14 exactly as the
@@ -345,13 +370,44 @@ fn build_quads_kind(kind: ArmKind) -> Vec<HandQuad> {
 /// extents); texOffs, the unwrap layout and the transform chain are
 /// shared, so the wide path performs the same arithmetic it always did.
 fn build_quads_kind_at(kind: ArmKind, swing: f32, equip: f32) -> Vec<HandQuad> {
-    let (u0, v0) = skin::ARM_TEX_OFFS;
-    let (origin, box_px) = arm_box(kind);
+    build_arm_quads_at(kind, swing, equip, false)
+}
+
+/// The LEFT arm's own cube — javap PlayerModel.createMesh (scripts/
+/// jar_work/playermodel_51.txt): the player model REBUILDS the
+/// HumanoidModel's arms without the mirror flag — texOffs (32, 48) for
+/// BOTH kinds, the wide box (-1, -2, -2, 4, 12, 4), the slim box
+/// (-1, -2, -2, 3, 12, 4), the pivot (+5, 2, 0) the PartPose.offset
+/// pins. renderHand's own zRot constants (cp #689) dress the tail.
+fn left_arm_box(kind: ArmKind) -> ([f32; 3], [f32; 3]) {
+    let [w, h, d] = match kind {
+        ArmKind::Wide => skin::ARM_BOX_PX,
+        ArmKind::Slim => skin::SLIM_ARM_BOX_PX,
+    };
+    ([-1.0, -2.0, -2.0], [w as f32, h as f32, d as f32])
+}
+
+/// The LEFT arm's texOffs (the PlayerModel's own rebuild — the shared
+/// (32, 48) band the createMesh walk pins for both kinds).
+const LEFT_ARM_TEX_OFFS: (u32, u32) = (32, 48);
+
+/// The six hand quads of ONE arm at an arbitrary progress, EITHER side
+/// — the same `ModelPart$Cube` face table (the corner k takes the
+/// Polygon ctor's fixed rect corner; the UV mapping the right arm's
+/// golden-verified decode carries, the mirror the PlayerModel's own
+/// rebuild never arms). `side` = -1 builds the offhand's left arm: the
+/// box the createMesh left_arm walk speaks, the texOffs (32, 48), the
+/// transform the side*-1 fold wears (the renderPlayerArm walk's own
+/// `loc8=-1.0 *` terms).
+fn build_arm_quads_at(kind: ArmKind, swing: f32, equip: f32, left: bool) -> Vec<HandQuad> {
+    let (u0, v0) = if left { LEFT_ARM_TEX_OFFS } else { (skin::ARM_TEX_OFFS.0 as u32, skin::ARM_TEX_OFFS.1 as u32) };
+    let (origin, box_px) = if left { left_arm_box(kind) } else { arm_box(kind) };
+    let side = if left { -1.0f32 } else { 1.0f32 };
     let [x0, y0, z0] = origin;
     let [w, h, d] = box_px;
     let (u0, v0) = (u0 as f32, v0 as f32);
     let (x1, y1, z1) = (x0 + w, y0 + h, z0 + d);
-    let m = arm_transform(swing, equip);
+    let m = arm_transform(swing, equip, side);
     let px = |p: [f32; 3]| {
         let q = m.transform_point(crate::math::Vec3::new(p[0] / 16.0, p[1] / 16.0, p[2] / 16.0));
         [q[0], q[1], q[2]]
@@ -455,6 +511,17 @@ pub fn load_item(model_id: &str) -> Option<HeldItem> {
     }
 }
 
+/// The ctx-general single-path loader (the load_item walk's own
+/// shape, the display context the caller names).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn load_item_ctx(model_id: &str, ctx: usize) -> Option<HeldItem> {
+    match mc_registry::display::posed_item_layer_quads(model_id, None, ctx) {
+        Some(Ok(quads)) => Some(HeldItem { quads }),
+        Some(Err(_)) => None,
+        None => None,
+    }
+}
+
 /// Load the posed quads of one RESTING-HAND layer list — the vanilla
 /// `ItemStackRenderState` arc's own shape: every layer renders through
 /// its `LayerRenderState` (the local transform on the raw bake vertices,
@@ -482,6 +549,27 @@ pub fn load_item_layers(layers: &[mc_registry::ItemModelLayer]) -> Option<HeldIt
     Some(HeldItem { quads })
 }
 
+/// The ctx-general layers loader (the resting-hand layers on EITHER
+/// side — the display stanza the context names, the left-hand mirror
+/// the registry's own left-hand walk applies).
+pub fn load_item_layers_ctx(
+    layers: &[mc_registry::ItemModelLayer],
+    ctx: usize,
+) -> Option<HeldItem> {
+    if layers.is_empty() {
+        return None;
+    }
+    let mut quads = Vec::new();
+    for layer in layers {
+        match mc_registry::display::posed_item_layer_quads(layer.model, layer.transform, ctx) {
+            Some(Ok(mut q)) => quads.append(&mut q),
+            Some(Err(_)) => return None,
+            None => return None,
+        }
+    }
+    Some(HeldItem { quads })
+}
+
 /// Load the posed quads of one SPECIAL renderer item by its WIRE id —
 /// the 63 block-entity / entity-model items (shield, trident, the
 /// chests, the shulker boxes, the banners, the heads, the conduit, the
@@ -498,6 +586,18 @@ pub fn load_special_item(id: i32) -> Option<HeldItem> {
     ) {
         Some(Ok(quads)) => Some(HeldItem { quads }),
         // a broken display stanza binds nothing (vanilla warns + drops)
+        Some(Err(_)) => None,
+        None => None,
+    }
+}
+
+/// The ctx-general SPECIAL loader (the offhand shield's own lane —
+/// the same block-entity bake on the display context the caller
+/// names). `None` = unknown id or a broken base stanza — the bare
+/// left arm, never a half-render.
+pub fn load_special_item_ctx(id: i32, ctx: usize) -> Option<HeldItem> {
+    match mc_registry::display::special_item_quads(id, ctx) {
+        Some(Ok(quads)) => Some(HeldItem { quads }),
         Some(Err(_)) => None,
         None => None,
     }
@@ -538,8 +638,7 @@ pub fn load_charge_item(id: i32, kind: mc_registry::ChargeKind) -> Option<HeldIt
 /// only non-trivial terms are the attack transform's rotY(side*45deg) ..
 /// rotY(side*-45deg) pair — vanilla composes them every frame, so we do
 /// too (op-for-op; not collapsed to identity).
-fn item_hand_anchor(swing: f32, equip: f32) -> Mat4 {
-    let side = 1.0f32;
+fn item_hand_anchor(swing: f32, equip: f32, side: f32) -> Mat4 {
     let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
     let deg = |d: f32| d.to_radians();
     // applyItemArmTransform
@@ -621,18 +720,20 @@ impl HeldItem {
     /// applyEatTransform folds over the item-arm transform chain).
     #[cfg_attr(not(test), expect(dead_code))]
     fn sampled(&self, swing: f32) -> Vec<crate::raster::SampledQuad<'_>> {
-        self.sampled_with_pose(swing, None)
+        self.sampled_with_pose(swing, None, 1.0)
     }
 
-    /// The sampled variant with the eat pose (the consumable's own
-    /// first-person law — the pull-in + the bite bob + the three
-    /// rotations, the eat module's verbatim fold).
+    /// The sampled variant with the eat pose and the hand side (the
+    /// consumable's own first-person law — the pull-in + the bite bob +
+    /// the three rotations, the eat module's verbatim fold; the side
+    /// the anchor chain carries, -1 the offhand's).
     fn sampled_with_pose(
         &self,
         swing: f32,
         eat: Option<crate::eat::EatPose>,
+        side: f32,
     ) -> Vec<crate::raster::SampledQuad<'_>> {
-        let anchor = item_hand_anchor(swing, 0.0);
+        let anchor = item_hand_anchor(swing, 0.0, side);
         let m = match eat {
             None => anchor,
             Some(p) => anchor
@@ -667,7 +768,7 @@ impl HeldItem {
 
     /// The draw with the eat pose (the consumable's hold: the item
     /// lifts to the mouth and wobbles — the applyEatTransform's own
-    /// law; `None` keeps the rest pose).
+    /// law; `None` keeps the rest pose). The MAIN hand's side.
     pub fn draw_with_pose(
         &self,
         fb: &mut crate::raster::Framebuf,
@@ -675,8 +776,26 @@ impl HeldItem {
         swing: f32,
         eat: Option<crate::eat::EatPose>,
     ) {
+        self.draw_with_pose_side(fb, proj, swing, eat, 1.0);
+    }
+
+    /// The draw on EITHER hand (the submitArmWithItem walk's own
+    /// two-lane shape — scripts/jar_work/handrenderer_51.txt: the
+    /// OFF_HAND call the same walk answers with the side*-1 fold, the
+    /// item quads themselves the FIRST_PERSON_LEFT_HAND display
+    /// context poses — the registry's own left-hand mirror). `side`
+    /// = -1 renders the offhand item; the eat pose the MAIN hand's
+    /// lane only rides.
+    pub fn draw_with_pose_side(
+        &self,
+        fb: &mut crate::raster::Framebuf,
+        proj: Mat4,
+        swing: f32,
+        eat: Option<crate::eat::EatPose>,
+        side: f32,
+    ) {
         fb.clear_depth();
-        let quads = self.sampled_with_pose(swing, eat);
+        let quads = self.sampled_with_pose(swing, eat, side);
         fb.draw_sampled_quads(proj, &quads, &mut |tex, u, v| {
             match sprite_uv::sample_uv(tex, u, v) {
                 Sample::Pixel(c) => Some(c),
@@ -1113,6 +1232,104 @@ mod held_tests {
         assert!(load_item_layers(&[]).is_none(), "nothing to load");
     }
 
+    /// The LEFT arm's own unwrap — javap PlayerModel.createMesh (scripts/
+    /// jar_work/playermodel_51.txt): the player model's left arm the
+    /// texOffs (32, 48) band wears (the HumanoidModel's mirror() pair the
+    /// rebuild replaces), the box (-1, -2, -2, 4, 12, 4). The same
+    /// fixed corner->rect mapping the right arm's golden-verified decode
+    /// carries.
+    #[test]
+    fn the_left_arm_carries_the_player_model_unwrap() {
+        let quads = build_arm_quads_at(ArmKind::Wide, 0.0, 0.0, true);
+        assert_eq!(quads.len(), 6);
+        // the (32, 48) band's own six rects (d=4, w=4, h=12)
+        let expected_uv: [[[f32; 2]; 4]; 6] = [
+            [[40.0, 48.0], [36.0, 48.0], [36.0, 52.0], [40.0, 52.0]], // DOWN
+            [[44.0, 52.0], [40.0, 52.0], [40.0, 48.0], [44.0, 48.0]], // UP (v-flipped)
+            [[36.0, 52.0], [32.0, 52.0], [32.0, 64.0], [36.0, 64.0]], // WEST (outer)
+            [[40.0, 52.0], [36.0, 52.0], [36.0, 64.0], [40.0, 64.0]], // NORTH
+            [[44.0, 52.0], [40.0, 52.0], [40.0, 64.0], [44.0, 64.0]], // EAST (inner)
+            [[48.0, 52.0], [44.0, 52.0], [44.0, 64.0], [48.0, 64.0]], // SOUTH
+        ];
+        for (q, e) in quads.iter().zip(expected_uv) {
+            for (c, ec) in q.uv.iter().zip(e) {
+                assert_eq!(*c, ec, "the left arm's uv corner must be the (32, 48) one");
+            }
+        }
+    }
+
+    /// The LEFT arm's rest pose (the renderPlayerArm walk's own LEFT
+    /// lane — scripts/jar_work/handrenderer_51.txt the `loc8=-1.0 *`
+    /// terms): every corner in front of the camera, in the BOTTOM-LEFT
+    /// half of view space (the mirror of the right arm's own law).
+    #[test]
+    fn the_left_arm_rests_in_the_bottom_left() {
+        let quads = build_arm_quads_at(ArmKind::Wide, 0.0, 0.0, true);
+        for q in &quads {
+            let mut centroid = [0f32; 3];
+            for p in &q.pts {
+                assert!(p.iter().all(|v| v.is_finite()), "corner must be finite");
+                assert!(p[2] < -0.05, "the arm is in front of the camera");
+                centroid = [
+                    centroid[0] + p[0] / 4.0,
+                    centroid[1] + p[1] / 4.0,
+                    centroid[2] + p[2] / 4.0,
+                ];
+            }
+            assert!(centroid[0] < 0.0, "left of center (the offhand's own side)");
+            assert!(centroid[1] < 0.0, "below center");
+        }
+    }
+
+    /// The anchor chain's own x-mirror symmetry (the side*-1 fold the
+    /// 26.2 walk carries: the LEFT chain the RIGHT one's mirror is —
+    /// the M∘chain(+1)∘M = chain(-1) law the side-factored terms speak;
+    /// the rot_x(200°) the x-flip's own fixed point keeps). The left
+    /// anchor applied to the mirrored point equals the mirrored right
+    /// result — the two hands the one walk renders.
+    #[test]
+    fn the_offhand_anchor_mirrors_the_main_anchor() {
+        let right = item_hand_anchor(0.0, 0.0, 1.0);
+        let left = item_hand_anchor(0.0, 0.0, -1.0);
+        let mirror = |p: [f32; 3]| [-p[0], p[1], p[2]];
+        for p in [[0.5f32, -0.3f32, -0.7f32], [-1.2f32, 2.0f32, 0.4f32], [0.0f32, 0.0f32, 0.0f32]] {
+            let mp = mirror(p);
+            let via_left = left.transform_point(crate::math::Vec3::new(mp[0], mp[1], mp[2]));
+            let via_right = right.transform_point(crate::math::Vec3::new(p[0], p[1], p[2]));
+            let mirrored_right = mirror([via_right[0], via_right[1], via_right[2]]);
+            for k in 0..3 {
+                assert!(
+                    (via_left[k] - mirrored_right[k]).abs() < 1e-4,
+                    "the left anchor the right one's mirror is: axis {k}"
+                );
+            }
+        }
+    }
+
+    /// The OFFHAND ITEM's own lane (the FIRST_PERSON_LEFT_HAND display
+    /// context the registry's left-hand mirror applies, the side*-1
+    /// anchor the draw rides): the sword's left quads rest in the
+    /// bottom-left half of view space — the vanilla dual-wield look.
+    #[test]
+    fn the_offhand_item_rests_in_the_bottom_left() {
+        let item = load_item_ctx("item/iron_sword", mc_registry::display::FIRSTPERSON_LEFTHAND)
+            .expect("the left-hand sword bakes");
+        let m = item_hand_anchor(0.0, 0.0, -1.0);
+        let mut mean_y = 0.0f32;
+        let mut n = 0.0f32;
+        for q in &item.quads {
+            for v in &q.vertices {
+                let p = m.transform_point(crate::math::Vec3::new(v[0], v[1], v[2]));
+                assert!(p.iter().all(|c| c.is_finite()), "finite corners");
+                assert!(p[2] < 0.0, "in front of the camera: {p:?}");
+                mean_y += p[1];
+                n += 1.0;
+                assert!(p[0] < 0.0 || p[0].abs() < 0.35, "left of the view's center: {p:?}");
+            }
+        }
+        assert!(mean_y / n < 0.0, "the bulk below center");
+    }
+
     #[test]
     fn the_anchored_item_rests_in_the_bottom_right() {
         // the anchor chain (applyItemArmTransform + the at-rest swing
@@ -1120,7 +1337,7 @@ mod held_tests {
         // center; the BULK sits below center (the blade tip quads may
         // cross the horizontal midline — the vanilla held-sword look)
         let item = load_item("item/iron_sword").expect("iron_sword loads");
-        let m = item_hand_anchor(0.0, 0.0);
+        let m = item_hand_anchor(0.0, 0.0, 1.0);
         let mut mean_y = 0.0f32;
         for q in &item.quads {
             let mut centroid = [0f32; 3];

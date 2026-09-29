@@ -6196,6 +6196,19 @@ pub struct App {
     /// unified held id; the OFFLINE stand-in for the store's selected
     /// hotbar stack). `None` = the empty selection.
     pub offline_held: Option<i32>,
+    /// THE OFFHAND'S OWN FIRST-PERSON LANE (javap submitArmWithItem's
+    /// OFF_HAND call — scripts/jar_work/handrenderer_51.txt pcs
+    /// 197-268: the second submitArmWithItem the submitHandsWithItems
+    /// tail speaks, the OFF_HAND stack its own walk answers — the
+    /// empty offhand the bare LEFT arm renders, the non-empty one the
+    /// FIRST_PERSON_LEFT_HAND-posed item the side*-1 anchor carries).
+    /// `held_offhand` the loaded payload (the id-change reload key
+    /// `offhand_held_loaded` guards — the same law `live_held` wears);
+    /// `offline_offhand` the `--offhand-item` stand-in (the offline
+    /// scenes' own vocabulary — the gameplay offhand slot it backs).
+    pub held_offhand: Option<crate::hand::HeldItem>,
+    pub offhand_held_loaded: Option<i32>,
+    pub offline_offhand: Option<i32>,
     /// The OFFLINE world screen's own camera pose — the look-control
     /// lane's seam (the net side rides the teleport's net_camera; the
     /// offline side's pose lands HERE, the flight camera stays the
@@ -7373,6 +7386,9 @@ impl App {
             held_charge: None,
             offline_world: None,
             offline_held: None,
+            held_offhand: None,
+            offhand_held_loaded: None,
+            offline_offhand: None,
             offline_camera: None,
             body: None,
             perspective: crate::camera::CameraType::FirstPerson,
@@ -20738,6 +20754,21 @@ impl App {
         self.load_held_payload_from_id(id);
     }
 
+    /// The OFFLINE offhand stand-in's own route (the `--offhand-item`
+    /// model id — the offline_offhand field the offhand_stack walk
+    /// reads, the payload the LEFT display context loads, the reload
+    /// key the id pre-arms so the draw pass's lazy refresh never
+    /// re-bakes). The offline scenes' own vocabulary — the gameplay
+    /// offhand slot it backs.
+    pub fn offline_offhand_updated(&mut self, model: Option<&str>) {
+        let id = model
+            .and_then(|m| m.strip_prefix("item/").or(Some(m)))
+            .and_then(mc_registry::item_id_by_name);
+        self.offline_offhand = id;
+        self.offhand_held_loaded = id;
+        self.load_offhand_payload_from_id(id);
+    }
+
     /// The unified held id — the networked store's selection first, the
     /// offline `--held-item` stand-in second (the lanes are exclusive:
     /// a live session clears the offline stand-in's authority by owning
@@ -25062,6 +25093,61 @@ impl App {
         });
     }
 
+    /// The offhand stack's own belief (the OFF_HAND lane's source —
+    /// the window-0 store's slot 45 the live lane wears, the gameplay
+    /// inventory's offhand slot the offline lane wears, the
+    /// `--offhand-item` stand-in the empty gameplay slot backs).
+    fn offhand_stack(&self) -> (i32, i32) {
+        if self.live_clicks.is_some() {
+            return self.live_inv_slots[45];
+        }
+        let slot = self.inventory.offhand[0];
+        if slot.1 > 0 {
+            return slot;
+        }
+        match self.offline_offhand {
+            Some(id) => (id, 1),
+            None => (0, 0),
+        }
+    }
+
+    /// The offhand payload by wire id (the load_held_payload walk's
+    /// own resolution — the 63 SPECIAL renderer payloads first, then
+    /// the resting-hand layer tables — through the FIRST_PERSON_LEFT_
+    /// HAND display context the left lane wears).
+    fn load_offhand_payload_from_id(&mut self, id: Option<i32>) {
+        self.held_offhand = id.and_then(|id| {
+            if mc_registry::special_item_renderer(id).is_some() {
+                return crate::hand::load_special_item_ctx(
+                    id,
+                    mc_registry::display::FIRSTPERSON_LEFTHAND,
+                );
+            }
+            mc_registry::item_model_layers(id)
+                .and_then(|layers| {
+                    crate::hand::load_item_layers_ctx(
+                        &layers,
+                        mc_registry::display::FIRSTPERSON_LEFTHAND,
+                    )
+                })
+        });
+    }
+
+    /// The offhand's reload walk (the live_held_updated law's own
+    /// id-change key — the model loads on change, the refresh cadence
+    /// never re-bakes; the emptiness drops to the bare left arm). The
+    /// FIRST-PERSON draw pass calls this lazily — the swap's own
+    /// belief mutation the SAME frame's projection answers.
+    pub fn offhand_held_refreshed(&mut self) {
+        let (id, count) = self.offhand_stack();
+        let id = if count > 0 { Some(id) } else { None };
+        if self.offhand_held_loaded == id {
+            return;
+        }
+        self.offhand_held_loaded = id;
+        self.load_offhand_payload_from_id(id);
+    }
+
     /// Whether a use is active (the vanilla isUsingItem's own query —
     /// the tests' honest probe).
     #[cfg_attr(not(test), expect(dead_code))]
@@ -26187,11 +26273,38 @@ impl App {
                 1.0, // the main hand's side (the right-handed view)
             )
         });
-        if self.perspective.is_first_person() {
+        // THE HAND PASSES' OWN SCREEN GATE (the vanilla renderItemInHand
+        // walk the screen==null verdict guards — the container screens
+        // the world beneath the dimmed panel renders, the HANDS the
+        // gate never draws: the main-hand lane the pre-existing walk
+        // carries, the offhand lane the same verdict keeps)
+        if self.perspective.is_first_person() && self.screen == ScreenKind::World {
             if let Some(item) = &self.held_item {
                 item.draw_with_pose(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick), eat_pose);
             } else if let Some(arm) = &self.arm {
                 arm.draw(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick));
+            }
+            // THE OFFHAND LANE (javap submitArmWithItem's OFF_HAND call
+            // — scripts/jar_work/handrenderer_51.txt pcs 197-268: the
+            // SECOND submitArmWithItem the submitHandsWithItems tail
+            // speaks AFTER the main-hand one, the offhand stack its own
+            // walk answers: the empty offhand the bare LEFT arm renders
+            // (renderPlayerArm's LEFT lane — the PlayerModel's own
+            // texOffs (32, 48) rebuild, the cp #689 zRot -0.1), the
+            // non-empty one the FIRST_PERSON_LEFT_HAND-posed item the
+            // side*-1 anchor carries). The reload the same-frame belief
+            // answers — the F swap's own mutation the next frame wears.
+            self.offhand_held_refreshed();
+            if let Some(item) = &self.held_offhand {
+                item.draw_with_pose_side(
+                    fb,
+                    ctx.proj,
+                    self.swing.get_attack_anim(self.partial_tick),
+                    None,
+                    -1.0,
+                );
+            } else if let Some(arm) = &self.arm {
+                arm.draw_side(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick), true);
             }
         }
         // THE SCREEN EFFECT OVERLAYS (the vanilla ScreenEffectRenderer
@@ -36544,6 +36657,64 @@ mod tests {
             crate::world_view::ContainerCommand::SwapOffhand => {}
             other => panic!("the wrong command rode the channel: {other:?}"),
         }
+    }
+
+    /// THE OFFHAND LANE'S OWN RELOAD (the OFF_HAND call's client half —
+    /// the lazy refresh the first-person pass speaks: the id-change key
+    /// the same law `live_held` wears, the gameplay offhand slot the
+    /// offline lane reads, the F swap's own mutation the SAME frame's
+    /// projection answers; the `--offhand-item` stand-in the empty
+    /// gameplay slot backs).
+    #[test]
+    fn the_offhand_lane_the_reload_and_swap_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        let shield = mc_registry::item_id_by_name("shield").unwrap();
+        // THE EMPTY OFFHAND (the bare LEFT arm the draw lane renders —
+        // no payload, no reload key)
+        app.offhand_held_refreshed();
+        assert!(app.held_offhand.is_none(), "the empty offhand the bare arm wears");
+        assert_eq!(app.offhand_held_loaded, None);
+        // THE SHIELD LANDS (the gameplay offhand slot the pickup walk
+        // arms — the refresh the payload loads)
+        app.inventory.offhand[0] = (shield, 1);
+        app.offhand_held_refreshed();
+        assert!(app.held_offhand.is_some(), "the shield the left lane bakes");
+        assert_eq!(app.offhand_held_loaded, Some(shield));
+        // THE CADENCE (the unchanged id the key keeps — no re-bake)
+        app.offhand_held_refreshed();
+        assert_eq!(app.offhand_held_loaded, Some(shield));
+        // THE F SWAP (the shield the hand wears, the sword the offhand
+        // keeps — the next refresh the new id bakes)
+        app.inventory.items[0] = (sword, 1);
+        app.on_swap_offhand_key();
+        assert_eq!(app.inventory.offhand[0], (sword, 1));
+        app.offhand_held_refreshed();
+        assert_eq!(app.offhand_held_loaded, Some(sword));
+        assert!(app.held_offhand.is_some());
+        // THE STAND-IN (the --offhand-item vocabulary the empty gameplay
+        // slot backs — the offline scenes' own lane)
+        app.inventory.offhand[0] = (0, 0);
+        app.offline_offhand_updated(Some("item/shield"));
+        assert_eq!(app.offhand_stack(), (shield, 1));
+        assert_eq!(app.offhand_held_loaded, Some(shield));
+    }
+
+    /// THE LIVE OFFHAND'S OWN BELIEF (the window-0 store's slot 45 the
+    /// offhand lane reads — the server's slot echo the belief updates,
+    /// the refresh the same id-change key keeps).
+    #[test]
+    fn the_live_offhand_the_store_belief_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let bow = mc_registry::item_id_by_name("bow").unwrap();
+        let (tx, _rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.live_inv_slots[45] = (bow, 1);
+        app.offhand_held_refreshed();
+        assert!(app.held_offhand.is_some(), "the live offhand the left lane bakes");
+        assert_eq!(app.offhand_held_loaded, Some(bow));
     }
 
     /// A hand-built Brigadier graph mirroring the real servers' own:

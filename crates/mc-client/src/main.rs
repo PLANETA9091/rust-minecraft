@@ -100,6 +100,15 @@ struct Cli {
     /// scenes hold nothing, so the pixel goldens never see this.
     #[arg(long)]
     held_item: Option<String>,
+    /// Hold an item in the OFFHAND on the GUI world screens (the model
+    /// id, e.g. `item/shield`) — the deterministic stand-in for the
+    /// offhand slot; the item rides the FIRST_PERSON_LEFT_HAND display
+    /// context (the side*-1 anchor — the vanilla submitArmWithItem's
+    /// OFF_HAND branch). The empty lane draws the bare LEFT arm (the
+    /// PlayerModel's own texOffs (32, 48) rebuild) — the default scenes
+    /// hold nothing in the offhand.
+    #[arg(long)]
+    offhand_item: Option<String>,
     /// The held stack's CHARGED_PROJECTILES component state (the
     /// deterministic stand-in for the loaded crossbow's own component):
     /// `arrow` or `rocket`. Requires `--held-item item/crossbow` — the
@@ -516,6 +525,7 @@ fn main() -> Result<()> {
             cli.width,
             cli.height,
             cli.held_item.as_deref(),
+            cli.offhand_item.as_deref(),
             cli.held_charge.as_deref(),
             cli.swing_progress,
             cli.slim_arm,
@@ -547,7 +557,13 @@ fn main() -> Result<()> {
     if cli.gui && !cli.headless {
         #[cfg(not(target_arch = "wasm32"))]
         {
-            match window::run_gui_app(cli.seed, cli.width, cli.height, cli.held_item.as_deref()) {
+            match window::run_gui_app(
+                cli.seed,
+                cli.width,
+                cli.height,
+                cli.held_item.as_deref(),
+                cli.offhand_item.as_deref(),
+            ) {
                 Ok(()) => return Ok(()),
                 Err(e) => eprintln!("gui mode unavailable ({e}); falling back to headless"),
             }

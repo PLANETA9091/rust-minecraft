@@ -1476,6 +1476,7 @@ pub fn render_gui_screen(
     width: usize,
     height: usize,
     held_item: Option<&str>,
+    offhand_item: Option<&str>,
     held_charge: Option<&str>,
     swing_progress: Option<f32>,
     slim_arm: bool,
@@ -1490,6 +1491,7 @@ pub fn render_gui_screen(
         width,
         height,
         held_item,
+        offhand_item,
         held_charge,
         swing_progress,
         slim_arm,
@@ -1511,6 +1513,7 @@ pub fn render_gui_screen_opts(
     width: usize,
     height: usize,
     held_item: Option<&str>,
+    offhand_item: Option<&str>,
     held_charge: Option<&str>,
     swing_progress: Option<f32>,
     slim_arm: bool,
@@ -1530,6 +1533,9 @@ pub fn render_gui_screen_opts(
     app.slim_arm = slim_arm;
     if let Some(id) = held_item {
         app.held_item = crate::hand::load_item(id);
+    }
+    if let Some(id) = offhand_item {
+        app.offline_offhand_updated(Some(id));
     }
     if let Some(kind) = held_charge {
         // THE CHARGE SEED: the held stack's own component state (the

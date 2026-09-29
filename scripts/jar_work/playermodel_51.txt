@@ -1,0 +1,184 @@
+class net/minecraft/client/model/player/PlayerModel
+
+=== <init>(Lnet/minecraft/client/model/geom/ModelPart;Z)V ===
+     7 invokespecial net/minecraft/client/model/HumanoidModel.<init>(Lnet/minecraft/client/model/geom/ModelPart;Ljava/util/function/Function;)V  (loc0, loc1)
+    12 putfield net/minecraft/client/model/player/PlayerModel.slim = loc2
+    17 getfield net/minecraft/client/model/player/PlayerModel.leftArm  (loc0)
+    22 invokevirtual net/minecraft/client/model/geom/ModelPart.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;  ('left_sleeve')
+    25 putfield net/minecraft/client/model/player/PlayerModel.leftSleeve = loc0.leftArm.getChild('left_sleeve')
+    30 getfield net/minecraft/client/model/player/PlayerModel.rightArm  (loc0)
+    35 invokevirtual net/minecraft/client/model/geom/ModelPart.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;  ('right_sleeve')
+    38 putfield net/minecraft/client/model/player/PlayerModel.rightSleeve = loc0.rightArm.getChild('right_sleeve')
+    43 getfield net/minecraft/client/model/player/PlayerModel.leftLeg  (loc0)
+    48 invokevirtual net/minecraft/client/model/geom/ModelPart.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;  ('left_pants')
+    51 putfield net/minecraft/client/model/player/PlayerModel.leftPants = loc0.leftLeg.getChild('left_pants')
+    56 getfield net/minecraft/client/model/player/PlayerModel.rightLeg  (loc0)
+    61 invokevirtual net/minecraft/client/model/geom/ModelPart.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;  ('right_pants')
+    64 putfield net/minecraft/client/model/player/PlayerModel.rightPants = loc0.rightLeg.getChild('right_pants')
+    69 getfield net/minecraft/client/model/player/PlayerModel.body  (loc0)
+    74 invokevirtual net/minecraft/client/model/geom/ModelPart.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/ModelPart;  ('jacket')
+    77 putfield net/minecraft/client/model/player/PlayerModel.jacket = loc0.body.getChild('jacket')
+    82 getfield net/minecraft/client/model/player/PlayerModel.head  (loc0)
+    86 getfield net/minecraft/client/model/player/PlayerModel.body  (loc0)
+    90 getfield net/minecraft/client/model/player/PlayerModel.leftArm  (loc0)
+    94 getfield net/minecraft/client/model/player/PlayerModel.rightArm  (loc0)
+    98 getfield net/minecraft/client/model/player/PlayerModel.leftLeg  (loc0)
+   102 getfield net/minecraft/client/model/player/PlayerModel.rightLeg  (loc0)
+   105 invokestatic java/util/List.of(Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;Ljava/lang/Object;)Ljava/util/List;  (loc0.head, loc0.body, loc0.leftArm, loc0.rightArm, loc0.leftLeg, loc0.rightLeg)
+   108 putfield net/minecraft/client/model/player/PlayerModel.bodyParts = List.of(loc0.head, loc0.body, loc0.leftArm, loc0.rightArm, loc0.leftLeg, loc0.rightLeg)
+   111 return
+
+=== createArmorMeshSet(Lnet/minecraft/client/model/geom/builders/CubeDeformation;Lnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/renderer/entity/ArmorModelSet; ===
+     2 invokestatic net/minecraft/client/model/HumanoidModel.createArmorMeshSet(Lnet/minecraft/client/model/geom/builders/CubeDeformation;Lnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/renderer/entity/ArmorModelSet;  (loc0, loc1)
+    10 invokevirtual net/minecraft/client/renderer/entity/ArmorModelSet.map(Ljava/util/function/Function;)Lnet/minecraft/client/renderer/entity/ArmorModelSet;  (HumanoidModel.createArmorMeshSet(loc0, loc1))
+    13 return ?.map(HumanoidModel.createArmorMeshSet(loc0, loc1))
+
+=== createMesh(Lnet/minecraft/client/model/geom/builders/CubeDeformation;Z)Lnet/minecraft/client/model/geom/builders/MeshDefinition; ===
+     2 invokestatic net/minecraft/client/model/HumanoidModel.createMesh(Lnet/minecraft/client/model/geom/builders/CubeDeformation;F)Lnet/minecraft/client/model/geom/builders/MeshDefinition;  (loc0, 0.0)
+     5 ?? opcode 0x4d
+     7 invokevirtual net/minecraft/client/model/geom/builders/MeshDefinition.getRoot()Lnet/minecraft/client/model/geom/builders/PartDefinition;  ()
+    10 ?? opcode 0x4e
+    22 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+    29 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (32, 48)
+    45 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-1.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0)
+    52 invokestatic net/minecraft/client/model/geom/PartPose.offset(FFF)Lnet/minecraft/client/model/geom/PartPose;  (5.0, 2.0, 0.0)
+    55 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_arm', CubeListBuilder.create().texOffs(32, 48).addBox(-1.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0), PartPose.offset(5.0, 2.0, 0.0))
+    63 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+    70 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (40, 16)
+    86 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-2.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0)
+    93 invokestatic net/minecraft/client/model/geom/PartPose.offset(FFF)Lnet/minecraft/client/model/geom/PartPose;  (-5.0, 2.0, 0.0)
+    96 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_arm', CubeListBuilder.create().texOffs(40, 16).addBox(-2.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0), PartPose.offset(-5.0, 2.0, 0.0))
+   105 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   112 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (48, 48)
+   130 invokevirtual net/minecraft/client/model/geom/builders/CubeDeformation.extend(F)Lnet/minecraft/client/model/geom/builders/CubeDeformation;  (0.25)
+   133 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-1.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0.extend(0.25))
+   139 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_sleeve', CubeListBuilder.create().texOffs(48, 48).addBox(-1.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0.extend(0.25)), net/minecraft/client/model/geom/PartPose.ZERO)
+   147 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   154 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (40, 32)
+   172 invokevirtual net/minecraft/client/model/geom/builders/CubeDeformation.extend(F)Lnet/minecraft/client/model/geom/builders/CubeDeformation;  (0.25)
+   175 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-2.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0.extend(0.25))
+   181 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_sleeve', CubeListBuilder.create().texOffs(40, 32).addBox(-2.0, -2.0, -2.0, 3.0, 12.0, 4.0, loc0.extend(0.25)), net/minecraft/client/model/geom/PartPose.ZERO)
+   191 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   198 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (32, 48)
+   214 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-1.0, -2.0, -2.0, 4.0, 12.0, 4.0, loc0)
+   221 invokestatic net/minecraft/client/model/geom/PartPose.offset(FFF)Lnet/minecraft/client/model/geom/PartPose;  (5.0, 2.0, 0.0)
+   224 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_arm', CubeListBuilder.create().texOffs(32, 48).addBox(-1.0, -2.0, -2.0, 4.0, 12.0, 4.0, loc0), PartPose.offset(5.0, 2.0, 0.0))
+   232 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_arm')
+   241 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   248 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (48, 48)
+   266 invokevirtual net/minecraft/client/model/geom/builders/CubeDeformation.extend(F)Lnet/minecraft/client/model/geom/builders/CubeDeformation;  (0.25)
+   269 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-1.0, -2.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25))
+   275 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_sleeve', CubeListBuilder.create().texOffs(48, 48).addBox(-1.0, -2.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25)), net/minecraft/client/model/geom/PartPose.ZERO)
+   283 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   290 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (40, 32)
+   308 invokevirtual net/minecraft/client/model/geom/builders/CubeDeformation.extend(F)Lnet/minecraft/client/model/geom/builders/CubeDeformation;  (0.25)
+   311 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-3.0, -2.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25))
+   317 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_sleeve', CubeListBuilder.create().texOffs(40, 32).addBox(-3.0, -2.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25)), net/minecraft/client/model/geom/PartPose.ZERO)
+   324 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   331 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (16, 48)
+   346 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-2.0, 0.0, -2.0, 4.0, 12.0, 4.0, loc0)
+   354 invokestatic net/minecraft/client/model/geom/PartPose.offset(FFF)Lnet/minecraft/client/model/geom/PartPose;  (1.899999976158142, 12.0, 0.0)
+   357 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_leg', CubeListBuilder.create().texOffs(16, 48).addBox(-2.0, 0.0, -2.0, 4.0, 12.0, 4.0, loc0), PartPose.offset(1.899999976158142, 12.0, 0.0))
+   365 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_leg')
+   374 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   380 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (0, 48)
+   397 invokevirtual net/minecraft/client/model/geom/builders/CubeDeformation.extend(F)Lnet/minecraft/client/model/geom/builders/CubeDeformation;  (0.25)
+   400 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-2.0, 0.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25))
+   406 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_pants', CubeListBuilder.create().texOffs(0, 48).addBox(-2.0, 0.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25)), net/minecraft/client/model/geom/PartPose.ZERO)
+   414 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   420 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (0, 32)
+   437 invokevirtual net/minecraft/client/model/geom/builders/CubeDeformation.extend(F)Lnet/minecraft/client/model/geom/builders/CubeDeformation;  (0.25)
+   440 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-2.0, 0.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25))
+   446 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_pants', CubeListBuilder.create().texOffs(0, 32).addBox(-2.0, 0.0, -2.0, 4.0, 12.0, 4.0, loc0.extend(0.25)), net/minecraft/client/model/geom/PartPose.ZERO)
+   453 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('body')
+   462 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   469 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.texOffs(II)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (16, 32)
+   486 invokevirtual net/minecraft/client/model/geom/builders/CubeDeformation.extend(F)Lnet/minecraft/client/model/geom/builders/CubeDeformation;  (0.25)
+   489 invokevirtual net/minecraft/client/model/geom/builders/CubeListBuilder.addBox(FFFFFFLnet/minecraft/client/model/geom/builders/CubeDeformation;)Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  (-4.0, 0.0, -2.0, 8.0, 12.0, 4.0, loc0.extend(0.25))
+   495 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('jacket', CubeListBuilder.create().texOffs(16, 32).addBox(-4.0, 0.0, -2.0, 8.0, 12.0, 4.0, loc0.extend(0.25)), net/minecraft/client/model/geom/PartPose.ZERO)
+   500 return loc2
+
+=== getRandomBodyPart(Lnet/minecraft/util/RandomSource;)Lnet/minecraft/client/model/geom/ModelPart; ===
+     1 getfield net/minecraft/client/model/player/PlayerModel.bodyParts  (loc0)
+     5 invokestatic net/minecraft/util/Util.getRandom(Ljava/util/List;Lnet/minecraft/util/RandomSource;)Ljava/lang/Object;  (loc0.bodyParts, loc1)
+    11 return Util.getRandom(loc0.bodyParts, loc1)
+
+=== lambda$createArmorMeshSet$0(Lnet/minecraft/client/model/geom/builders/MeshDefinition;)Lnet/minecraft/client/model/geom/builders/MeshDefinition; ===
+     1 invokevirtual net/minecraft/client/model/geom/builders/MeshDefinition.getRoot()Lnet/minecraft/client/model/geom/builders/PartDefinition;  ()
+     4 ?? opcode 0x4c
+     8 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_arm')
+    11 ?? opcode 0x4d
+    15 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_arm')
+    18 ?? opcode 0x4e
+    22 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+    28 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_sleeve', CubeListBuilder.create(), net/minecraft/client/model/geom/PartPose.ZERO)
+    35 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+    41 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_sleeve', CubeListBuilder.create(), net/minecraft/client/model/geom/PartPose.ZERO)
+    48 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_leg')
+    56 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_leg')
+    65 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+    71 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('left_pants', CubeListBuilder.create(), net/minecraft/client/model/geom/PartPose.ZERO)
+    79 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+    85 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('right_pants', CubeListBuilder.create(), net/minecraft/client/model/geom/PartPose.ZERO)
+    92 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.getChild(Ljava/lang/String;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('body')
+   101 invokestatic net/minecraft/client/model/geom/builders/CubeListBuilder.create()Lnet/minecraft/client/model/geom/builders/CubeListBuilder;  ()
+   107 invokevirtual net/minecraft/client/model/geom/builders/PartDefinition.addOrReplaceChild(Ljava/lang/String;Lnet/minecraft/client/model/geom/builders/CubeListBuilder;Lnet/minecraft/client/model/geom/PartPose;)Lnet/minecraft/client/model/geom/builders/PartDefinition;  ('jacket', CubeListBuilder.create(), net/minecraft/client/model/geom/PartPose.ZERO)
+   112 return loc0
+
+=== setupAnim(Ljava/lang/Object;)V ===
+     5 invokevirtual net/minecraft/client/model/player/PlayerModel.setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V  (loc1)
+     8 return
+
+=== setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V ===
+     1 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.isSpectator  (loc1)
+    14 getfield net/minecraft/client/model/player/PlayerModel.body  (loc0)
+    18 putfield net/minecraft/client/model/geom/ModelPart.visible = loc2=0
+    22 getfield net/minecraft/client/model/player/PlayerModel.rightArm  (loc0)
+    26 putfield net/minecraft/client/model/geom/ModelPart.visible = loc2=0
+    30 getfield net/minecraft/client/model/player/PlayerModel.leftArm  (loc0)
+    34 putfield net/minecraft/client/model/geom/ModelPart.visible = loc2=0
+    38 getfield net/minecraft/client/model/player/PlayerModel.rightLeg  (loc0)
+    42 putfield net/minecraft/client/model/geom/ModelPart.visible = loc2=0
+    46 getfield net/minecraft/client/model/player/PlayerModel.leftLeg  (loc0)
+    50 putfield net/minecraft/client/model/geom/ModelPart.visible = loc2=0
+    54 getfield net/minecraft/client/model/player/PlayerModel.hat  (loc0)
+    58 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showHat  (loc1)
+    61 putfield net/minecraft/client/model/geom/ModelPart.visible = loc1.showHat
+    65 getfield net/minecraft/client/model/player/PlayerModel.jacket  (loc0)
+    69 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showJacket  (loc1)
+    72 putfield net/minecraft/client/model/geom/ModelPart.visible = loc1.showJacket
+    76 getfield net/minecraft/client/model/player/PlayerModel.leftPants  (loc0)
+    80 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showLeftPants  (loc1)
+    83 putfield net/minecraft/client/model/geom/ModelPart.visible = loc1.showLeftPants
+    87 getfield net/minecraft/client/model/player/PlayerModel.rightPants  (loc0)
+    91 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showRightPants  (loc1)
+    94 putfield net/minecraft/client/model/geom/ModelPart.visible = loc1.showRightPants
+    98 getfield net/minecraft/client/model/player/PlayerModel.leftSleeve  (loc0)
+   102 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showLeftSleeve  (loc1)
+   105 putfield net/minecraft/client/model/geom/ModelPart.visible = loc1.showLeftSleeve
+   109 getfield net/minecraft/client/model/player/PlayerModel.rightSleeve  (loc0)
+   113 getfield net/minecraft/client/renderer/entity/state/AvatarRenderState.showRightSleeve  (loc1)
+   116 putfield net/minecraft/client/model/geom/ModelPart.visible = loc1.showRightSleeve
+   121 invokespecial net/minecraft/client/model/HumanoidModel.setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V  (loc1)
+   124 return
+
+=== setupAnim(Lnet/minecraft/client/renderer/entity/state/HumanoidRenderState;)V ===
+     5 invokevirtual net/minecraft/client/model/player/PlayerModel.setupAnim(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;)V  (loc1)
+     8 return
+
+=== translateToHand(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lnet/minecraft/world/entity/HumanoidArm;Lcom/mojang/blaze3d/vertex/PoseStack;)V ===
+     1 invokevirtual net/minecraft/client/model/player/PlayerModel.root()Lnet/minecraft/client/model/geom/ModelPart;  ()
+     5 invokevirtual net/minecraft/client/model/geom/ModelPart.translateAndRotate(Lcom/mojang/blaze3d/vertex/PoseStack;)V  (loc3)
+    10 invokevirtual net/minecraft/client/model/player/PlayerModel.getArm(Lnet/minecraft/world/entity/HumanoidArm;)Lnet/minecraft/client/model/geom/ModelPart;  (loc2)
+    16 getfield net/minecraft/client/model/player/PlayerModel.slim  (loc0)
+    43 getfield net/minecraft/client/model/geom/ModelPart.x  (loc4=loc0.getArm(loc2))
+    49 putfield net/minecraft/client/model/geom/ModelPart.x = (loc4=loc0.getArm(loc2).x + loc5=-1)
+    55 invokevirtual net/minecraft/client/model/geom/ModelPart.translateAndRotate(Lcom/mojang/blaze3d/vertex/PoseStack;)V  (loc3)
+    61 getfield net/minecraft/client/model/geom/ModelPart.x  (loc4=loc0.getArm(loc2))
+    67 putfield net/minecraft/client/model/geom/ModelPart.x = (loc4=loc0.getArm(loc2).x - loc5=-1)
+    76 invokevirtual net/minecraft/client/model/geom/ModelPart.translateAndRotate(Lcom/mojang/blaze3d/vertex/PoseStack;)V  (loc3)
+    79 return
+
+=== translateToHand(Lnet/minecraft/client/renderer/entity/state/EntityRenderState;Lnet/minecraft/world/entity/HumanoidArm;Lcom/mojang/blaze3d/vertex/PoseStack;)V ===
+     7 invokevirtual net/minecraft/client/model/player/PlayerModel.translateToHand(Lnet/minecraft/client/renderer/entity/state/AvatarRenderState;Lnet/minecraft/world/entity/HumanoidArm;Lcom/mojang/blaze3d/vertex/PoseStack;)V  (loc1, loc2, loc3)
+    10 return
