@@ -27892,15 +27892,19 @@ impl App {
         let off_spear = off_name.and_then(spear_kinetic_row).is_some();
         // THE USE-ANIM'S OWN MAPPED NAMES (the three-arg law's use
         // gate — getUseAnimation's eight acmp branches answer the
-        // mapped poses; the client's using lanes the four names
+        // mapped poses; the client's using lanes the five names
         // reach: shield the BLOCK, bow the BOW_AND_ARROW, crossbow
-        // the CROSSBOW_CHARGE, goat_horn the TOOT_HORN; the trident
-        // the SPEARS tag the spear verdict subsumes, the food's NONE
-        // the fall-through the ITEM keeps)
+        // the CROSSBOW_CHARGE, spyglass the SPYGLASS, goat_horn the
+        // TOOT_HORN; the trident the SPEARS tag the spear verdict
+        // subsumes, the food's NONE the fall-through the ITEM keeps)
         let use_anim_mapped = |name: Option<&str>| -> bool {
             matches!(
                 name,
-                Some("shield") | Some("bow") | Some("crossbow") | Some("goat_horn")
+                Some("shield")
+                    | Some("bow")
+                    | Some("crossbow")
+                    | Some("spyglass")
+                    | Some("goat_horn")
             )
         };
         let main_using_mapped = matches!(
@@ -27952,6 +27956,40 @@ impl App {
             Some(active)
                 if active.hand == UseHand::Off
                     && mc_registry::item_name(active.item) == Some("shield")
+        );
+        // THE SPYGLASS'S OWN VERDICTS (the three-arg law's use gate
+        // the eight-branch walk keeps: the using stack's
+        // `getUseAnimation() == SPYGLASS` the spyglass name resolves
+        // — the RMB hold the verdict wears, the idle spyglass the
+        // ITEM fall-through the verdicts exclude — the same
+        // using-mapped gate above the same hand answers)
+        let main_spyglass = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && mc_registry::item_name(active.item) == Some("spyglass")
+        );
+        let off_spyglass = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && mc_registry::item_name(active.item) == Some("spyglass")
+        );
+        // THE HORN'S OWN VERDICTS (the same use gate — the using
+        // stack's `getUseAnimation() == TOOT_HORN` the goat_horn name
+        // resolves — the horn's RMB the mouth pose wears, the idle
+        // horn the ITEM fall-through keeps)
+        let main_horn = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && mc_registry::item_name(active.item) == Some("goat_horn")
+        );
+        let off_horn = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && mc_registry::item_name(active.item) == Some("goat_horn")
         );
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
         // sampling — every clock rides the frame's own partial_tick now:
@@ -28023,6 +28061,22 @@ impl App {
             // flag FALSE the second posing never cancels)
             right_block: main_block,
             left_block: off_block,
+            // THE SPYGLASS POSES (the use gate's own verdicts — the
+            // main/off using stack the spyglass name the SPYGLASS
+            // the window wears, the idle spyglass the ITEM the
+            // fall-through keeps; the clinit's (7,0,0) pair the
+            // affectsOffhand flag FALSE the second posing never
+            // cancels)
+            right_spyglass: main_spyglass,
+            left_spyglass: off_spyglass,
+            // THE HORN POSES (the use gate's own verdicts — the
+            // main/off using stack the goat_horn name the TOOT_HORN
+            // the window wears, the idle horn the ITEM the
+            // fall-through keeps; the clinit's (8,0,0) pair the
+            // affectsOffhand flag FALSE the second posing never
+            // cancels)
+            right_horn: main_horn,
+            left_horn: off_horn,
             // THE USING STACK'S OWN PARAMS (fromKineticWeapon(useStack,
             // ticks) — the same window fold the first person's own lane
             // wears, the row the using item's name resolves; the
@@ -29393,6 +29447,14 @@ impl App {
                         // never ride)
                         right_block: false,
                         left_block: false,
+                        // THE MOB LAW THE SPYGLASS/TOOT_HORN NEVER
+                        // ANSWER (the same pc 59-62 — the EMPTY every
+                        // non-spear stack keeps, the mobs the spyglass
+                        // and the horn the lanes never ride)
+                        right_spyglass: false,
+                        left_spyglass: false,
+                        right_horn: false,
+                        left_horn: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict
@@ -29565,6 +29627,14 @@ impl App {
                         // never ride)
                         right_block: false,
                         left_block: false,
+                        // THE MOB LAW THE SPYGLASS/TOOT_HORN NEVER
+                        // ANSWER (the same pc 59-62 — the EMPTY every
+                        // non-spear stack keeps, the mobs the spyglass
+                        // and the horn the lanes never ride)
+                        right_spyglass: false,
+                        left_spyglass: false,
+                        right_horn: false,
+                        left_horn: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict

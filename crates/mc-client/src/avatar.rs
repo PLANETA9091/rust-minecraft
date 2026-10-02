@@ -280,6 +280,37 @@ pub struct AvatarState {
     /// offhand stack's own verdict (the same use-window law, the
     /// side flag the +30 the poseBlockingArm's ifeq answers).
     pub left_block: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.SPYGLASS` — the
+    /// use gate's own verdict (AvatarRenderer.getArmPose the
+    /// eight-branch walk: the hand the `getUsedItemHand()` match
+    /// rides, the remaining ticks the window keeps, the stack's
+    /// `getUseAnimation() == SPYGLASS` the acmp the spyglass alone
+    /// answers — the RMB hold the verdict wears, the idle spyglass
+    /// the ITEM fall-through keeps). THE CLINIT'S OWN FLAG PAIR:
+    /// SPYGLASS(7,0,0) — twoHanded 0, affectsOffhandPose 0 — the
+    /// gate the second posing never cancels. THE MOB LAW THE
+    /// VERDICT NEVER WEARS: HumanoidMobRenderer.getArmPose answers
+    /// EMPTY for every non-spear stack — the mob lanes the lane
+    /// never ride.
+    pub right_spyglass: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.SPYGLASS` — the
+    /// offhand stack's own verdict (the same use-window law, the
+    /// left body's fadd the mirror keeps).
+    pub left_spyglass: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.TOOT_HORN` — the
+    /// use gate's own verdict (the stack's `getUseAnimation() ==
+    /// TOOT_HORN` the acmp the goat horn alone answers — the horn's
+    /// RMB the mouth pose wears, the idle horn the ITEM fall-through
+    /// keeps). THE CLINIT'S OWN FLAG PAIR: TOOT_HORN(8,0,0) —
+    /// twoHanded 0, affectsOffhandPose 0 — the gate the second
+    /// posing never cancels. THE MOB LAW THE VERDICT NEVER WEARS:
+    /// HumanoidMobRenderer.getArmPose answers EMPTY for every
+    /// non-spear stack.
+    pub right_horn: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.TOOT_HORN` — the
+    /// offhand stack's own verdict (the same use-window law, the
+    /// left body's fadd the mirror keeps).
+    pub left_horn: bool,
     /// `SpearAnimations$UseParams.fromKineticWeapon(useStack, ticks)`
     /// — the USING stack's own ten floats, precomputed the screens
     /// lane's item-name knowledge keeps (the render state the jar's
@@ -341,6 +372,10 @@ impl AvatarState {
             left_bow: false,
             right_block: false,
             left_block: false,
+            right_spyglass: false,
+            left_spyglass: false,
+            right_horn: false,
+            left_horn: false,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
             main_hand_kinetic: false,
@@ -4325,17 +4360,20 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     // body the second posing never cancels.
     {
         let use_params = state.kinetic_use_params.as_ref();
-        // THE TABLESWITCH'S OWN FOUR CASES (the poseRightArm/
+        // THE TABLESWITCH'S OWN SIX CASES (the poseRightArm/
         // poseLeftArm pair the matrix dispatches): `Spear` the case-10
         // use lane rides, `Bow` the case-3 both-arms assignment,
-        // `Block` the case-2 poseBlockingArm call, `Item` the case-1
-        // fold — the one closure the whole switch wears, the f32
-        // chains the jar's own bytecode keeps
+        // `Block` the case-2 poseBlockingArm call, `Spyglass` the
+        // case-7 clamp lane, `TootHorn` the case-8 clamp lane,
+        // `Item` the case-1 fold — the one closure the whole switch
+        // wears, the f32 chains the jar's own bytecode keeps
         #[derive(Clone, Copy)]
         enum PoseCase {
             Spear,
             Bow,
             Block,
+            Spyglass,
+            TootHorn,
             Item,
         }
         let mut fold = |right_arm: bool, kind: PoseCase| {
@@ -4429,6 +4467,71 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     *y = (side * DEG2RAD)
                         + head_y.clamp(-YAW_CLAMP, YAW_CLAMP);
                 }
+                PoseCase::Spyglass => {
+                    // THE SPYGLASS'S OWN BODY (poseRightArm/
+                    // poseLeftArm case 7, pcs 326-386 — the CP floats
+                    // the cp_float_485 resolve: #408 = 1.9198622
+                    // (0x3FF5BE0B), #409 = 0.2617994 (0x3E860A92),
+                    // #410 = −2.4 (0xC019999A), #411 = 3.3
+                    // (0x40533333)): the PURE ASSIGNMENT the head's
+                    // own pitch drives (no walk read the value chain
+                    // keeps — the swing the body wipes), the crouch's
+                    // own 15° the isCrouching branch adds, the clamp
+                    // the −2.4/3.3 window rides. THE YROT THE SIDE
+                    // MIRRORS: the right method the fsub (head.yRot −
+                    // #409), the left the fadd (head.yRot + #409) —
+                    // the jar's own asymmetry speaks, the zRot the
+                    // pose never touches.
+                    const PITCH_OFF: f32 = 1.919_862_2; // CP #408, 110 deg
+                    const CROUCH_OFF: f32 = 0.261_799_4; // CP #409, 15 deg
+                    const CLAMP_MIN: f32 = -2.4; // CP #410
+                    const CLAMP_MAX: f32 = 3.3; // CP #411
+                    let (x, y) = if right_arm {
+                        (&mut arm_r_x, &mut arm_r_y)
+                    } else {
+                        (&mut arm_l_x, &mut arm_l_y)
+                    };
+                    *x = (head_x
+                        - PITCH_OFF
+                        - if state.crouching {
+                            CROUCH_OFF
+                        } else {
+                            0.0
+                        })
+                    .clamp(CLAMP_MIN, CLAMP_MAX);
+                    *y = if right_arm {
+                        head_y - CROUCH_OFF
+                    } else {
+                        head_y + CROUCH_OFF
+                    };
+                }
+                PoseCase::TootHorn => {
+                    // THE HORN'S OWN BODY (case 8, pcs 389-430 — CP
+                    // #187 = −1.2 (0xBF99999A), #415 = 1.2
+                    // (0x3F99999A), #416 = 1.4835298 (0x3FBDE44E),
+                    // #417 = 0.5235988 (0x3F060A92) — the BLOCK's
+                    // #417 the same bits the 30° keeps): xRot =
+                    // clamp(head.xRot, ±1.2) − 1.4835298 the pure
+                    // assignment rides (no walk read the chain keeps),
+                    // the yRot the side mirrors (the right the fsub,
+                    // the left the fadd — the ±30° the mouth's aim
+                    // speaks), the zRot the pose never touches.
+                    const CLAMP_MIN: f32 = -1.2; // CP #187
+                    const CLAMP_MAX: f32 = 1.2; // CP #415
+                    const PITCH_OFF: f32 = 1.483_529_8; // CP #416
+                    const YAW_OFF: f32 = 0.523_598_8; // CP #417, 30 deg
+                    let (x, y) = if right_arm {
+                        (&mut arm_r_x, &mut arm_r_y)
+                    } else {
+                        (&mut arm_l_x, &mut arm_l_y)
+                    };
+                    *x = head_x.clamp(CLAMP_MIN, CLAMP_MAX) - PITCH_OFF;
+                    *y = if right_arm {
+                        head_y - YAW_OFF
+                    } else {
+                        head_y + YAW_OFF
+                    };
+                }
                 PoseCase::Item => {
                     // the ITEM case-1 fold — the f32 chain the jar's
                     // fmul/fsub keeps (×0.5 the exact exponent walk,
@@ -4459,6 +4562,14 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 // poses, the affectsOffhand flag FALSE the gate below
                 // the second posing never cancels
                 fold(true, PoseCase::Block);
+            } else if state.right_spyglass {
+                // case 7: the (7,0,0) pair — the FALSE row the second
+                // posing never cancels
+                fold(true, PoseCase::Spyglass);
+            } else if state.right_horn {
+                // case 8: the (8,0,0) pair — the FALSE row the second
+                // posing never cancels
+                fold(true, PoseCase::TootHorn);
             } else if state.right_spear {
                 fold(true, PoseCase::Spear);
             } else if state.right_item {
@@ -4469,6 +4580,10 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     fold(false, PoseCase::Bow);
                 } else if state.left_block {
                     fold(false, PoseCase::Block);
+                } else if state.left_spyglass {
+                    fold(false, PoseCase::Spyglass);
+                } else if state.left_horn {
+                    fold(false, PoseCase::TootHorn);
                 } else if state.left_spear {
                     fold(false, PoseCase::Spear);
                 } else if state.left_item {
@@ -4485,6 +4600,12 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             } else if state.left_block {
                 // case 2 mirror: the iconst_0 the +30 side rides
                 fold(false, PoseCase::Block);
+            } else if state.left_spyglass {
+                // case 7 mirror: the fadd the left body's own rides
+                fold(false, PoseCase::Spyglass);
+            } else if state.left_horn {
+                // case 8 mirror: the fadd the left body's own rides
+                fold(false, PoseCase::TootHorn);
             } else if state.left_spear {
                 fold(false, PoseCase::Spear);
             } else if state.left_item {
@@ -4495,6 +4616,10 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     fold(true, PoseCase::Bow);
                 } else if state.right_block {
                     fold(true, PoseCase::Block);
+                } else if state.right_spyglass {
+                    fold(true, PoseCase::Spyglass);
+                } else if state.right_horn {
+                    fold(true, PoseCase::TootHorn);
                 } else if state.right_spear {
                     fold(true, PoseCase::Spear);
                 } else if state.right_item {
@@ -11811,6 +11936,286 @@ mod tests {
             posed[2].x_rot.to_bits(),
             0xBF86_0A92,
             "the both-flags state the bow branch the chain picks"
+        );
+    }
+
+    /// THE SPYGLASS'S OWN BODY (javap `HumanoidModel.poseRightArm/
+    /// poseLeftArm` the case-7 wholes pcs 326-386, the CP floats the
+    /// cp_float_485 resolves — #408 = 1.9198622 (0x3FF5BE0B), #409 =
+    /// 0.2617994 (0x3E860A92), #410 = −2.4 (0xC019999A), #411 = 3.3
+    /// (0x40533333)): the PURE ASSIGNMENT the head's own pitch
+    /// drives — no walk read the value chain keeps (the crouch's own
+    /// +0.4 the raised arm the body WIPES, the isCrouching branch
+    /// the 15° the chain itself adds), the clamp the −2.4/3.3 window
+    /// rides, the yRot the side mirrors (the right the fsub, the
+    /// left the fadd — the jar's own asymmetry speaks), the zRot the
+    /// pose never touches. THE PINS the pins_485 oracle computes.
+    #[test]
+    fn the_spyglass_pose_the_clamp_the_crouch_speak() {
+        // SCENE R (lane A: the main hand the spyglass uses): the
+        // head pitch +30° the chain rides, the yaw offset +20° the
+        // mirror sides answer — the standing idle arm the 0.0 start
+        // the body WIPES (the pure assignment the walk read never
+        // keeps)
+        let mut s = AvatarState::rest(0.0, 30.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.is_using_item = true;
+        s.use_item_main_hand = true;
+        s.ticks_using_item = 1.0;
+        s.right_spyglass = true;
+        let posed = build_posed_parts(&s);
+        // right.xRot = clamp(f32(30° − 1.9198622) − 0.0, −2.4, 3.3)
+        // = −1.3962634 — the bits the BLOCK's own #419 keeps (the
+        // CP the one value the two constants store)
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBFB2_B8C2,
+            "the right body the spyglass arm's xRot the chain wears"
+        );
+        // right.yRot = f32(20° − 0.2617994) — the fsub the right
+        // body's own rides
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0x3DB2_B8C0,
+            "the right body the fsub side the mirror's minus wears"
+        );
+        // THE LEFT ARM THE NO-VERDICT THE WALK KEEPS: the jar's
+        // case-7 body the ONE arm poses (the rightArm putfield alone
+        // — the left's own verdict absent the walk zeroes the fold
+        // never leaves), the same bits the plain state replays
+        let mut p = AvatarState::rest(0.0, 30.0, 0.0);
+        p.head_yaw_off_deg = 20.0;
+        let plain = build_posed_parts(&p);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            plain[3].x_rot.to_bits(),
+            "the left arm the no-verdict the walk zeroes keep"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            plain[3].y_rot.to_bits(),
+            "the left arm the no-verdict the walk yRot keeps"
+        );
+        // THE ZROT THE POSE NEVER TOUCHES — the plain state the same
+        // age the bits replay
+        assert_eq!(
+            posed[2].z_rot.to_bits(),
+            plain[2].z_rot.to_bits(),
+            "the right body the walk zRot the spyglass never touches"
+        );
+        // SCENE C (the clamp MIN lane + the crouch the wipe keeps):
+        // the head pitch −90° the floor rides — AND the crouching
+        // walk the +0.4 the raised start keeps, the PURE ASSIGNMENT
+        // the wipe the bits prove (the same bits the standing floor
+        // wears — the isCrouching branch the 15° the chain adds
+        // BEFORE the clamp, the raised walk start the body never
+        // reads)
+        let mut c = AvatarState::rest(0.0, -90.0, 0.0);
+        c.crouching = true;
+        c.is_using_item = true;
+        c.use_item_main_hand = true;
+        c.ticks_using_item = 1.0;
+        c.right_spyglass = true;
+        let posed = build_posed_parts(&c);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xC019_999A,
+            "the clamp the pitch floor the crouch's wipe the bits keep"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBE86_0A92,
+            "the crouch the fsub side the minus-15 the bits wear"
+        );
+        // SCENE Z (the clamp MAX lane): the head pitch 310° the
+        // ceiling rides — the jar's own window the +3.3 the bits
+        // keep
+        let mut z = AvatarState::rest(0.0, 310.0, 0.0);
+        z.is_using_item = true;
+        z.use_item_main_hand = true;
+        z.ticks_using_item = 1.0;
+        z.right_spyglass = true;
+        let posed = build_posed_parts(&z);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0x4053_3333,
+            "the clamp the pitch ceiling the spyglass arm's xRot wears"
+        );
+        // SCENE L (lanes B+C: the off hand the spyglass uses): the
+        // fadd the left body's own rides, the right arm the walk
+        // zeroes the no-verdict keeps
+        let mut l = AvatarState::rest(0.0, 30.0, 0.0);
+        l.head_yaw_off_deg = 20.0;
+        l.is_using_item = true;
+        l.use_item_main_hand = false;
+        l.ticks_using_item = 1.0;
+        l.left_spyglass = true;
+        let posed = build_posed_parts(&l);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBFB2_B8C2,
+            "the left body the off-hand lane the xRot chain wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F1C_61AA,
+            "the left body the off-hand lane the fadd side wears"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            plain[2].x_rot.to_bits(),
+            "the right arm the no-verdict the walk zeroes keep"
+        );
+    }
+
+    /// THE HORN'S OWN BODY AND THE GATES' MATRIX (javap the case-8
+    /// wholes pcs 389-430, the CP floats the cp_float_485 resolves —
+    /// #187 = −1.2 (0xBF99999A), #415 = 1.2 (0x3F99999A), #416 =
+    /// 1.4835298 (0x3FBDE44E), #417 = 0.5235988 (0x3F060A92) — the
+    /// BLOCK's own #417 the same bits the 30° keeps): xRot =
+    /// clamp(head.xRot, ±1.2) − 1.4835298 the pure assignment rides,
+    /// the yRot the side mirrors, the (8,0,0) clinit pair the
+    /// affectsOffhand flag FALSE the second posing never cancels.
+    /// THE PINS the pins_485 oracle computes.
+    #[test]
+    fn the_horn_pose_the_gates_the_matrix_speak() {
+        // SCENE R (lane A: the main hand the goat horn uses): the
+        // head pitch 0° the clamp the zero keeps, the yaw offset
+        // +20° the mirror sides answer
+        let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.is_using_item = true;
+        s.use_item_main_hand = true;
+        s.ticks_using_item = 1.0;
+        s.right_horn = true;
+        let posed = build_posed_parts(&s);
+        // right.xRot = f32(clamp(0, ±1.2) − 1.4835298) — the
+        // subtrahend's own bits the chain keeps
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBFBD_E44E,
+            "the right body the horn arm's xRot the subtrahend wears"
+        );
+        // right.yRot = f32(20° − 0.5235988) — the fsub the right
+        // body's own rides (the −30° the mouth's aim speaks)
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBE32_B8C4,
+            "the right body the fsub side the minus-30 wears"
+        );
+        // THE AFFECTSOFFHAND FALSE THE GATE THE SECOND POSING NEVER
+        // CANCELS (the (8,0,0) pair the FALSE row keeps): the left
+        // stack the sword verdict the ITEM fold keeps — the right
+        // horn's first posing the gate never blocks
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0.0f32.to_bits(),
+            "the left stack the no-verdict the walk zeroes keep"
+        );
+        let mut a = AvatarState::rest(0.0, 0.0, 0.0);
+        a.head_yaw_off_deg = 20.0;
+        a.is_using_item = true;
+        a.use_item_main_hand = true;
+        a.ticks_using_item = 1.0;
+        a.right_horn = true;
+        a.left_item = true;
+        let posed = build_posed_parts(&a);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the right horn the left ITEM the gate-open the fold wears"
+        );
+        // SCENE C (the clamp MAX lane): the head pitch +90° the
+        // ceiling rides — xRot = f32(1.2 − 1.4835298)
+        let mut c = AvatarState::rest(0.0, 90.0, 0.0);
+        c.is_using_item = true;
+        c.use_item_main_hand = true;
+        c.ticks_using_item = 1.0;
+        c.right_horn = true;
+        let posed = build_posed_parts(&c);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBE91_2AD0,
+            "the clamp the pitch ceiling the horn arm's xRot wears"
+        );
+        // SCENE C2 (the clamp MIN lane): the head pitch −90° the
+        // floor rides — xRot = f32(−1.2 − 1.4835298)
+        let mut c2 = AvatarState::rest(0.0, -90.0, 0.0);
+        c2.is_using_item = true;
+        c2.use_item_main_hand = true;
+        c2.ticks_using_item = 1.0;
+        c2.right_horn = true;
+        let posed = build_posed_parts(&c2);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xC02B_BEF4,
+            "the clamp the pitch floor the horn arm's xRot wears"
+        );
+        // LANES B+C: the left horn the mirror poses — the fadd the
+        // left body's own rides, the right ITEM verdict the
+        // gate-open the fold keeps
+        let mut b = AvatarState::rest(0.0, 0.0, 0.0);
+        b.head_yaw_off_deg = 20.0;
+        b.is_using_item = true;
+        b.use_item_main_hand = false;
+        b.ticks_using_item = 1.0;
+        b.left_horn = true;
+        b.right_item = true;
+        let posed = build_posed_parts(&b);
+        // left.yRot = f32(20° + 0.5235988) — the fadd the left
+        // body's own rides (the +30° the mirror speaks)
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBFBD_E44E,
+            "the left body the horn fold the same xRot chain wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F5F_66F3,
+            "the left body the fadd side the plus-30 wears"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the left horn the right ITEM the gate-open the fold wears"
+        );
+        // THE IDLE HORN THE VERDICT NEVER WEARS: the jar's use gate
+        // the remaining-ticks window rides — the not-using walk the
+        // ITEM fall-through answers (the idle horn the horn fold
+        // never reaches)
+        let mut idle = AvatarState::rest(0.0, 0.0, 0.0);
+        idle.head_yaw_off_deg = 20.0;
+        idle.right_item = true;
+        let posed = build_posed_parts(&idle);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the idle horn the ITEM fall-through the fold wears"
+        );
+        assert_ne!(
+            posed[2].x_rot.to_bits(),
+            0xBFBD_E44E,
+            "the idle horn the horn fold the matrix never rides"
+        );
+        // THE SPYGLASS THE HORN THE VERDICTS EXCLUDE: the one using
+        // walk the one anim carries — the chain order the exclusive
+        // verdicts the defensive keeps (the spyglass branch first
+        // the fold picks, the horn's bits the clamp lane never
+        // wears) — the head pitch 0° the chain the pitch-0 bits
+        // answers: clamp(f32(0 − 1.9198622), −2.4, 3.3) =
+        // −1.9198622
+        let mut both = AvatarState::rest(0.0, 0.0, 0.0);
+        both.head_yaw_off_deg = 20.0;
+        both.is_using_item = true;
+        both.use_item_main_hand = true;
+        both.ticks_using_item = 1.0;
+        both.right_spyglass = true;
+        both.right_horn = true;
+        let posed = build_posed_parts(&both);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBFF5_BE0B,
+            "the both-flags state the spyglass branch the chain picks"
         );
     }
 
