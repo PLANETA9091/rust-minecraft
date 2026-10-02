@@ -5293,6 +5293,73 @@ fn spear_swing_seconds(name: &str) -> Option<f64> {
     Some(row)
 }
 
+/// THE SEVEN TIERS' OWN KINETIC ROWS (the Items clinit's spear rows —
+/// the CP floats the `Item$Properties.spear` ctor walk turns into the
+/// `KineticWeapon` fields, resolved by `scripts/cp_float.py` over the
+/// 26.2 jar): the delayTicks the bipush 10 all wear, the
+/// contactCooldownTicks the `(int)(F3·20)` fold keeps, the three
+/// conditions the `ofAttackerSpeed/ofRelativeSpeed((int)(F·20), speed)`
+/// pairs bank — the dismount/knockback the ATTACKER's own speed gates
+/// serve (minRelativeSpeed 0.0), the damage the RELATIVE speed the
+/// victim's own motion folds (minSpeed 0.0) — and the damageMultiplier
+/// the F2 float the fold wears. The thresholds the f32 constants the
+/// jar's own CP entries keep (the fcmp the widened pair answers).
+pub(crate) struct KineticRow {
+    pub contact_cooldown: i32,
+    pub dismount_max: i32,
+    pub dismount_min: f32,
+    pub kb_max: i32,
+    pub kb_min: f32,
+    pub dmg_max: i32,
+    pub dmg_min_rel: f32,
+    pub multiplier: f32,
+}
+
+pub(crate) fn spear_kinetic_row(name: &str) -> Option<KineticRow> {
+    let (
+        contact,
+        dmax,
+        dmin,
+        kmax,
+        kmin,
+        gmax,
+        gmin,
+        mult,
+    ) = match name {
+        // wooden: F2 0.70, F3 0.75, (5.0, 14.0), (10.0, 5.1), (15.0, 4.6)
+        "wooden_spear" => (15, 100, 14.0f32, 200, 5.1f32, 300, 4.6f32, 0.70f32),
+        // stone: F2 0.82, F3 0.70, (4.5, 13.0), (9.0, 5.1), (13.75, 4.6)
+        "stone_spear" => (14, 90, 13.0, 180, 5.1, 275, 4.6, 0.82),
+        // copper: F2 0.82, F3 0.65, (4.0, 12.0), (8.25, 5.1), (12.5, 4.6)
+        "copper_spear" => (13, 80, 12.0, 165, 5.1, 250, 4.6, 0.82),
+        // iron: F2 0.95, F3 0.60, (2.5, 11.0), (6.75, 5.1), (11.25, 4.6)
+        "iron_spear" => (12, 50, 11.0, 135, 5.1, 225, 4.6, 0.95),
+        // golden: F2 0.70, F3 0.70, (3.5, 13.0), (8.5, 5.1), (13.75, 4.6)
+        "golden_spear" => (14, 70, 13.0, 170, 5.1, 275, 4.6, 0.70),
+        // diamond: F2 1.075, F3 0.50, (3.0, 10.0), (6.5, 5.1), (10.0, 4.6)
+        "diamond_spear" => (10, 60, 10.0, 130, 5.1, 200, 4.6, 1.075),
+        // netherite: F2 1.20, F3 0.40, (2.5, 9.0), (5.5, 5.1), (8.75, 4.6)
+        "netherite_spear" => (8, 50, 9.0, 110, 5.1, 175, 4.6, 1.20),
+        _ => return None,
+    };
+    Some(KineticRow {
+        contact_cooldown: contact,
+        dismount_max: dmax,
+        dismount_min: dmin,
+        kb_max: kmax,
+        kb_min: kmin,
+        dmg_max: gmax,
+        dmg_min_rel: gmin,
+        multiplier: mult,
+    })
+}
+
+/// THE KINETIC DELAY'S OWN CONSTANT (javap `KineticWeapon.damageEntities`
+/// pcs 9-27 — the delayTicks field the seven spears' bipush 10 ctor arg
+/// keeps: `used < delayTicks` the walk refuses, the `used -= delayTicks`
+/// the conditions' own clock wears).
+pub(crate) const KINETIC_DELAY_TICKS: i32 = 10;
+
 /// THE MAINHAND'S OWN SPEED (javap `createSwordAttributes` 32-53 —
 /// the ATTACK_SPEED modifier the sword's -2.4 addend speaks over the
 /// attribute's own 4.0 default the `Player.createAttributes` 19-22
@@ -6515,6 +6582,16 @@ pub struct App {
     /// spends). The client tick the level's gameTime stand-in keeps
     /// (the base + the frame the same fold the day cycle wears).
     pub last_kinetic_hit_feedback_time: i64,
+    /// THE STAB'S OWN CONTACT MEMORY (javap
+    /// `LivingEntity.recentKineticEnemies` — the
+    /// Object2LongMap<Entity> the use-tick walk keeps: the
+    /// `rememberStabbedEntity` put the gameTime banks, the
+    /// `wasRecentlyStabbed` compare `gameTime - remembered <
+    /// cooldownTicks` the recent verdict speaks). The offline walk's
+    /// own map the (entity id, the tick the bank wore) pairs keep —
+    /// the entries the 600-tick prune retires, the per-victim
+    /// cooldown the use-tick stab's own gate serves.
+    pub stab_contact_memory: Vec<(i32, i64)>,
     /// THE DIG ARC's state machine — the vanilla `MultiPlayerGameMode`'s
     /// destroy half (the survival lane: the destroy fields, the progress
     /// law, the START/ABORT/STOP sends). The left mouse speaks it: the
@@ -7530,6 +7607,7 @@ impl App {
             spell_jitter_rng: crate::drops::Lcg::new(0x5EED_570F),
             attack_ticker: 0,
             last_kinetic_hit_feedback_time: 0,
+            stab_contact_memory: Vec::new(),
             dig: crate::dig::DigState::new(),
             dig_held: false,
             miss_time: 0,
@@ -7715,6 +7793,7 @@ impl App {
         // speaks. The charge math is the registry's (the javap-pinned
         // property laws).
         let mut reload: Option<(i32, usize)> = None;
+        let mut spear_use_tick: Option<u32> = None;
         if let Some(active) = self.using_item.as_mut() {
             active.ticks += 1;
             if let Some(def) = mc_registry::item_using_def(active.item) {
@@ -7727,9 +7806,29 @@ impl App {
                     reload = Some((active.item, idx));
                 }
             }
+            // THE KINETIC WEAPON'S OWN TICK (javap `ItemStack.onUseTick`
+            // pcs 38-77 — the held spear the damage lane carries): the
+            // tick the walk reads AFTER the borrow ends (the vanilla
+            // `damageEntities(stack, remaining, entity, slot)` the
+            // server-side call keeps)
+            if mc_registry::item_name(active.item)
+                .map(|n| n.ends_with("_spear"))
+                .unwrap_or(false)
+            {
+                spear_use_tick = Some(active.ticks);
+            }
         }
         if let Some((id, idx)) = reload {
             self.load_held_payload(id, Some(idx));
+        }
+        // THE USE-TICK STAB'S OWN WALK (the offline world's own server
+        // stand-in — the wire the server's own walk keeps; the pause
+        // the world's own tick sleeps, the dead body the hands'
+        // silence keeps)
+        if let Some(used) = spear_use_tick {
+            if !self.paused && !self.dead && !self.world_is_network {
+                self.spear_use_tick_stab(used as i32);
+            }
         }
         // THE EAT CLOCK (the consumable's own hold — the vanilla
         // updateUsingItem's own order: the burst check at the
@@ -11691,6 +11790,203 @@ impl App {
         contact
     }
 
+    /// THE USE-TICK STAB'S OWN WALK (javap `KineticWeapon.damageEntities`
+    /// over the offline world — the server walk the right-press hold
+    /// rides, `ItemStack.onUseTick` calling it server-side each use
+    /// tick): the delay the first 10 ticks the walk refuses, the
+    /// look·motion dot the `getKnownSpeed()·20` fold speaks (blocks per
+    /// second), the collection the AttackRange ray serves, the
+    /// recent-stab memory the per-victim cooldown keeps (the bank the
+    /// remember call performs BEFORE the conditions — the refused
+    /// evaluation the clock still spends), the three conditions the
+    /// `Condition.test(used, lookDot, relative, factor)` law keeps, the
+    /// damage the base + the `floor(relative·multiplier)` fold wears
+    /// (the RAW base the `getAttributeBaseValue` reads — the material
+    /// bonus the modifier adds the use walk never sees), the knockback
+    /// the kb condition alone gates, and the byte-2 the contact
+    /// broadcasts — the local hit voice the feedback lane's own
+    /// 20-tick throttle carries.
+    fn spear_use_tick_stab(&mut self, used: i32) {
+        // (a) THE DELAY'S OWN GATE (pcs 9-27): the first 10 ticks the
+        // hold the silence keeps
+        if used < KINETIC_DELAY_TICKS {
+            return;
+        }
+        let used_past = used - KINETIC_DELAY_TICKS;
+        let name = self
+            .held_id()
+            .and_then(|id| mc_registry::item_name(id))
+            .unwrap_or("");
+        let Some(row) = spear_kinetic_row(name) else {
+            return;
+        };
+        // the window's own early-out (past both the damage and the
+        // knockback windows the conditions can never speak)
+        if used_past > row.dmg_max && used_past > row.kb_max {
+            return;
+        }
+        // (b) THE LOOK + THE MOTION (pcs 28-43): the look·motion dot
+        // the getKnownSpeed()·20 fold wears — blocks per second
+        let cam = self.world_camera();
+        let f = cam.forward();
+        let look = (f.x as f64, f.y as f64, f.z as f64);
+        let (mvx, mvy, mvz) = self
+            .body
+            .as_ref()
+            .map(|b| (b.vx, b.vy, b.vz))
+            .unwrap_or((0.0, 0.0, 0.0));
+        let look_dot = 20.0 * (mvx * look.0 + mvy * look.1 + mvz * look.2);
+        // (c) THE COLLECTION (pcs 79-115): the same ray the left stab
+        // walks (the AttackRange window + the wall's own shadow)
+        let hits = self.stab_pick_all();
+        if hits.is_empty() {
+            return;
+        }
+        // the attacker's own facts (the melee arm's own reads)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let (bx, bz) = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.z))
+            .unwrap_or((0.0, 0.0));
+        let now = (self.day_time_base + self.frame) as i64;
+        // PASS ONE: the memory + the conditions + the hurt (the facts
+        // the capture banks)
+        let mut outcomes: Vec<(
+            usize,
+            f64,
+            f64,
+            f64,
+            bool,
+            f32,
+            crate::mob::MobKind,
+            Vec<(i32, i32)>,
+            Option<i32>,
+            bool,
+        )> = Vec::new();
+        for &i in &hits {
+            let Some(mob) = self.mobs.get_mut(i) else {
+                continue;
+            };
+            // (i) THE RECENT-STAB SKIP (pcs 168-185): `now - last <
+            // cooldownTicks` the recently verdict keeps
+            if let Some(&(_, last)) = self
+                .stab_contact_memory
+                .iter()
+                .find(|(id, _)| *id == mob.id)
+            {
+                if now - last < row.contact_cooldown as i64 {
+                    continue;
+                }
+            }
+            // (ii) THE BANK (pcs 188-193 — rememberStabbedEntity rides
+            // BEFORE the conditions: the refused evaluation the clock
+            // still spends); the stale entries the write prunes
+            self.stab_contact_memory
+                .retain(|(id, last)| *id != mob.id && now - *last < 600);
+            self.stab_contact_memory.push((mob.id, now));
+            // (iii) THE RELATIVE SPEED (pcs 194-215): the victim's own
+            // motion the dot folds — `max(0.0, lookDot - victimDot)`
+            let vdot = 20.0 * (mob.vx * look.0 + mob.vy * look.1 + mob.vz * look.2);
+            let relative = (look_dot - vdot).max(0.0);
+            // (iv) THE THREE CONDITIONS (Condition.test verbatim — the
+            // player attacker's own factor 1.0 keeps): the window the
+            // used-past clock serves, the attacker's speed the
+            // dismount/knockback gates keep, the RELATIVE speed the
+            // damage gate keeps
+            let dismount = used_past <= row.dismount_max
+                && look_dot >= f64::from(row.dismount_min);
+            let kb = used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
+            let damage = used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
+            if !(dismount || kb || damage) {
+                continue;
+            }
+            // (v) THE DAMAGE (pcs 361-377): the base the
+            // `getAttributeBaseValue` reads + the
+            // `floor(relative · multiplier)` the fold adds
+            let dmg = (PLAYER_ATTACK_DAMAGE as f32)
+                + (relative * f64::from(row.multiplier)).floor() as i32 as f32;
+            // THE HURT the damage condition alone gates (stabAttack's
+            // own z1 — the dying body the verdict refuses)
+            let alive = mob.health > 0.0 && mob.death_time == 0;
+            let hurt = damage && alive;
+            if hurt {
+                mob.hurt(dmg as f64, true);
+            }
+            let died = mob.health <= 0.0;
+            let pitch = mob.voice_pitch();
+            let kind = mob.kind;
+            let (mx, my, mz) = (mob.x, mob.y, mob.z);
+            let loot = if died { mob.death_loot(true) } else { Vec::new() };
+            let xp = if died { Some(mob.base_xp_reward()) } else { None };
+            outcomes.push((i, mx, my, mz, died, pitch, kind, loot, xp, kb));
+        }
+        // PASS TWO: the knockback (the kb condition the stabAttack's
+        // own z2 speaks — the push the hurt's own verdict never gates)
+        for &(i, _, _, _, _, _, _, _, _, kb) in &outcomes {
+            if kb {
+                if let Some(mob) = self.mobs.get_mut(i) {
+                    mob.knockback(
+                        crate::mob::KNOCKBACK_STRENGTH,
+                        bx - mob.x,
+                        bz - mob.z,
+                    );
+                }
+            }
+        }
+        // THE TAIL: the voices + the drops the captured facts speak
+        let mut any = false;
+        for (_, mx, my, mz, died, pitch, kind, loot, xp, _) in outcomes {
+            any = true;
+            if died {
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    kind.voice_event(crate::mob::VoiceSlot::Death),
+                    1.0,
+                    pitch,
+                    ear_distance(ear, mx, my, mz),
+                    ear_pan(ear, yaw, mx, my, mz),
+                );
+                for (item, count) in loot {
+                    let id = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        id,
+                        item,
+                        count,
+                        mx,
+                        my,
+                        mz,
+                        &mut self.mob_rng,
+                    ));
+                }
+                self.spawn_xp_orbs(mx, my + 0.5, mz, xp.unwrap_or(0));
+            } else {
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                    1.0,
+                    pitch,
+                    ear_distance(ear, mx, my, mz),
+                    ear_pan(ear, yaw, mx, my, mz),
+                );
+            }
+        }
+        // (e) THE EVENT (pcs 403-416): the byte-2 the contact
+        // broadcasts — the local hit voice the feedback lane's own
+        // 20-tick throttle carries (the same walk the wire's mailbox
+        // echo answers)
+        if any {
+            self.live_kinetic_hit_events_updated(vec![
+                crate::world_view::WireKineticHitEvent { entity_id: 0 },
+            ]);
+        }
+    }
+
     /// The left press's falling edge — the vanilla `continueAttack(false)`
     /// tail: the missTime clears, and the armed dig ABORTs (the crack
     /// overlay clears, the wire speaks the Player Action packet). The
@@ -15525,6 +15821,45 @@ impl App {
             && self.inventory_arrow_slot().is_none()
         {
             return false; // the FAIL the empty quiver speaks
+        }
+        // THE KINETIC WEAPON'S OWN USE (javap `Item.use` pcs 90-122 —
+        // the KINETIC_WEAPON component the seven spears alone carry:
+        // `startUsingItem(hand)` the hold opens, the component's own
+        // sound the `makeSound` call speaks — the playSound at the
+        // player's own spot the lambda banks, 1.0/1.0 verbatim — the
+        // CONSUME the press returns. The use ticks the damage walk the
+        // KineticWeapon lane serves (the offline world's own server
+        // stand-in — the wire the server's own walk keeps), the
+        // release the honest silence keeps (no releaseUsing the spear
+        // ever speaks)).
+        if let Some(name) = mc_registry::item_name(id) {
+            if name.ends_with("_spear") {
+                self.using_item = None; // one use at a time
+                self.using_item = Some(UseActive {
+                    item: id,
+                    ticks: 0,
+                    state: 0,
+                    hand: UseHand::Main,
+                });
+                let event = if name == "wooden_spear" {
+                    "item.spear_wood.use"
+                } else {
+                    "item.spear.use"
+                };
+                self.sounds.play_voice(self.frame, event, 1.0, 1.0);
+                // the wire echo (the networked lane's own use-item
+                // click — the camera's angles in the vanilla degrees)
+                let (yaw, pitch) =
+                    crate::world_view::wire_angles(&self.world_camera());
+                if let Some(sink) = self.live_clicks.as_ref() {
+                    let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                        yaw,
+                        pitch,
+                        hand: 0,
+                    });
+                }
+                return true;
+            }
         }
         if let Some(def) = mc_registry::item_using_def(id) {
             let state = mc_registry::using_state_index(def, 0.0);
@@ -38570,6 +38905,384 @@ mod tests {
                 .iter()
                 .any(|e| e.starts_with("item.spear.attack ")),
             "the whoosh the prediction speaks: {:?}",
+            app.sounds.events
+        );
+    }
+
+    /// THE KINETIC WEAPON'S OWN USE (javap `Item.use` pcs 90-122 — the
+    /// right-press hold the KINETIC_WEAPON component opens): the use
+    /// the press arms, the component's own sound the `makeSound` call
+    /// speaks (SPEAR_USE/SPEAR_WOOD_USE — `item.spear.use` /
+    /// `item.spear_wood.use`, 1.0/1.0 the playSound-at-the-player law
+    /// keeps), and the release the honest silence keeps (no
+    /// releaseUsing the spear ever speaks — the hold just ends).
+    #[test]
+    fn the_spear_use_the_press_the_hold_arms() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.enter_world();
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        let wooden = mc_registry::item_id_by_name("wooden_spear").unwrap();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE IRON PRESS (the use the hold opens — the item lane the
+        // eat/crossbow/bow gates the spear never wears)
+        assert!(app.on_right_press(0, 0), "the spear the hold arms");
+        let active = app.using_item.as_ref().expect("the use opened");
+        assert_eq!(active.item, iron, "the held spear the use rides");
+        assert_eq!(active.ticks, 0, "the clock the fresh hold keeps");
+        // THE WOOD TIER (the factory's WOOD branch the row names)
+        app.on_right_release();
+        assert!(app.using_item.is_none(), "the release the hold ends");
+        app.inventory.items[app.selected_hotbar] = (wooden, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the wooden spear the hold arms");
+        // THE SWORD'S OWN REFUSAL (the KINETIC_WEAPON component the
+        // spears alone carry — the sword the item_using_def lane's
+        // own PASS keeps)
+        app.on_right_release();
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(!app.on_right_press(0, 0), "the sword the hold never arms");
+        assert!(app.using_item.is_none(), "the sword the use never opens");
+        if !sounds_loaded() {
+            return;
+        }
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("item.spear.use ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the iron tier's own use voice: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("item.spear_wood.use ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the wooden tier's own use voice: {:?}",
+            app.sounds.events
+        );
+        // THE WIRE ECHO'S ABSENCE (the offline world no live lane keeps)
+        assert!(
+            !app.sounds.events.is_empty(),
+            "the sounds the test speaks"
+        );
+        let _ = std::mem::take(&mut app.sounds.events);
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the live press the hold arms");
+        match rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::UseItem { hand, .. } => {
+                assert_eq!(hand, 0, "the MAIN hand ordinal the echo wears");
+            }
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+    }
+
+    /// THE USE-TICK STAB'S OWN DELAY (javap `KineticWeapon.damageEntities`
+    /// pcs 9-27 + 188-193): the first 10 ticks the hold the walk never
+    /// passes (no bank, no hurt), the tick 10 the bank the remember
+    /// call performs — the standing body's zero dot the conditions
+    /// refuse (the relative 0 the 4.6 gate never meets), the next tick
+    /// the recent-stab memory the re-evaluation never serves.
+    #[test]
+    fn the_spear_use_tick_the_delay_the_first_ticks_sleep() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * 3.0,
+            ey - 1.0,
+            ez + f.z as f64 * 3.0,
+            4,
+        ));
+        let pre = app.mobs[0].health;
+        // THE DELAY'S OWN SLEEP (ticks 1-9 the walk refuses — no bank
+        // the memory keeps, no hurt the body wears)
+        app.spear_use_tick_stab(5);
+        assert!(app.stab_contact_memory.is_empty(), "the delay no bank keeps");
+        assert_eq!(app.mobs[0].health, pre, "the delay the body never hurts");
+        // THE FIRST EVALUATION (tick 10): the bank rides — the
+        // standing body's zero dot the conditions refuse (the
+        // refused evaluation the clock still spends)
+        app.spear_use_tick_stab(10);
+        assert_eq!(
+            app.stab_contact_memory.len(),
+            1,
+            "the bank the remember call keeps"
+        );
+        assert_eq!(app.mobs[0].health, pre, "the standing stab never hurts");
+        // THE RECENT-STAB SKIP (tick 11 — `now - last < 12` the
+        // recently verdict keeps: no re-bank, no evaluation)
+        app.spear_use_tick_stab(11);
+        assert_eq!(app.stab_contact_memory.len(), 1, "the skip no re-bank keeps");
+        assert_eq!(app.mobs[0].health, pre, "the cooldown the body guards");
+    }
+
+    /// THE USE-TICK STAB'S OWN KINETIC DAMAGE (javap
+    /// `KineticWeapon.damageEntities` pcs 361-397 over the sprinting
+    /// body): the look·motion dot the `getKnownSpeed()·20` fold wears
+    /// (0.28/tick × 20 = 5.6 b/s — the sprint the 4.6 gate meets), the
+    /// damage the base + the `floor(relative·multiplier)` fold speaks
+    /// (2.0 + floor(5.6·0.95) = 7.0 — the RAW base the
+    /// `getAttributeBaseValue` reads, the material bonus the use walk
+    /// never sees), the zombie's own 2.0 armor the dose absorbs, the
+    /// byte-2 the contact broadcasts — the local hit voice the
+    /// feedback lane carries.
+    #[test]
+    fn the_spear_use_tick_the_sprint_thrust_the_kinetic_damage_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        // the body the camera's own authority wears (the eye the
+        // camera reads — the lunge the body's own velocity carries)
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (app.spawn_y + 7) as f64 - 1.62,
+            c as f64 + 0.5,
+            180.0,
+            0.0,
+        ));
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * 3.0,
+            ey - 1.0,
+            ez + f.z as f64 * 3.0,
+            4,
+        ));
+        // THE SPRINT'S OWN LUNGE (the velocity the look carries —
+        // 0.28 b/tick × 20 = 5.6 b/s the sprint walk rides)
+        if let Some(b) = app.body.as_mut() {
+            b.vx = 0.28 * f.x as f64;
+            b.vz = 0.28 * f.z as f64;
+        }
+        let pre = app.mobs[0].health;
+        app.frame = 30; // the throttle's bank the first window clears
+        app.spear_use_tick_stab(10);
+        // THE KINETIC FOLD (the 2.0 + floor(5.6·0.95) = 7.0 the armor
+        // absorbs: the 6.888 survivor the CombatRules walk speaks)
+        let drop = pre - app.mobs[0].health;
+        assert!(
+            (6.8..7.0).contains(&drop),
+            "the sprint thrust the 7.0 the armor absorbs ({drop})"
+        );
+        assert!(
+            !app.stab_contact_memory.is_empty(),
+            "the bank the contact keeps"
+        );
+        if !sounds_loaded() {
+            return;
+        }
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("item.spear.hit ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the byte-2's own hit voice: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.zombie.hurt ")),
+            "the body's own hurt voice: {:?}",
+            app.sounds.events
+        );
+        // THE COOLDOWN'S OWN SILENCE (the next tick the recent-stab
+        // memory the re-evaluation never serves — no second dose, the
+        // throttle's own window the second voice would never pass)
+        let voiced = app.sounds.events.len();
+        app.spear_use_tick_stab(11);
+        assert_eq!(
+            app.mobs[0].health,
+            pre - drop,
+            "the cooldown the second dose refuses"
+        );
+        if sounds_loaded() {
+            assert_eq!(
+                app.sounds.events.len(),
+                voiced,
+                "the cooldown the second voice refuses"
+            );
+        }
+    }
+
+    /// THE USE-TICK STAB'S OWN WALK REFUSAL (the 4.6 relative gate the
+    /// standing/walking body never meets): the 0.2 b/tick lunge (4.0
+    /// b/s) the relative the damage gate refuses — no hurt, no
+    /// byte-2, the BANK the remember call still performs (the refused
+    /// evaluation the clock still spends — the vanilla order the walk
+    /// banks).
+    #[test]
+    fn the_spear_use_tick_the_walk_the_condition_refuses() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (app.spawn_y + 7) as f64 - 1.62,
+            c as f64 + 0.5,
+            180.0,
+            0.0,
+        ));
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * 3.0,
+            ey - 1.0,
+            ez + f.z as f64 * 3.0,
+            4,
+        ));
+        // THE WALK'S OWN SPEED (0.2 b/tick × 20 = 4.0 b/s — under the
+        // 4.6 relative gate the damage never meets)
+        if let Some(b) = app.body.as_mut() {
+            b.vx = 0.2 * f.x as f64;
+            b.vz = 0.2 * f.z as f64;
+        }
+        let pre = app.mobs[0].health;
+        app.frame = 30;
+        app.spear_use_tick_stab(10);
+        assert_eq!(app.mobs[0].health, pre, "the walk the damage refuses");
+        assert_eq!(
+            app.stab_contact_memory.len(),
+            1,
+            "the refused evaluation the clock still spends"
+        );
+        if !sounds_loaded() {
+            return;
+        }
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear.hit ")),
+            "the refused walk the hit voice never wears: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.zombie.hurt ")),
+            "the refused walk the hurt voice never wears: {:?}",
+            app.sounds.events
+        );
+    }
+
+    /// THE USE CLOCK'S OWN ADVANCE (the hold the update loop ticks):
+    /// the press opens the hold, the updates the ticks advance — the
+    /// first 10 the stab walk's own delay sleeps (no damage the
+    /// standing body wears), the tick counter the vanilla use lane's
+    /// own clock keeps.
+    #[test]
+    fn the_spear_use_the_hold_the_clock_serves() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * 3.0,
+            ey - 1.0,
+            ez + f.z as f64 * 3.0,
+            4,
+        ));
+        let pre = app.mobs[0].health;
+        assert!(app.on_right_press(0, 0), "the hold opens");
+        for _ in 0..3 {
+            app.update();
+        }
+        let active = app.using_item.as_ref().expect("the hold lives");
+        assert_eq!(active.ticks, 3, "the clock the updates advance");
+        assert_eq!(app.mobs[0].health, pre, "the delay the body guards");
+    }
+
+    /// THE WIRE USE'S OWN SERVER (the live lane — the use-tick walk
+    /// the server's own process keeps): the networked world's press
+    /// the UseItem echo sends, the use the hold opens, the local walk
+    /// the `world_is_network` gate never runs (the byte-2 echo the
+    /// entity-event mailbox answers — the autopush-473 lane).
+    #[test]
+    fn the_wire_use_the_local_walk_never_runs() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.live_held = Some(iron);
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        assert!(app.on_right_press(0, 0), "the live press the hold arms");
+        let active = app.using_item.as_ref().expect("the hold opened");
+        assert_eq!(active.item, iron, "the held spear the use rides");
+        match rx.try_recv().expect("the echo rode the lane") {
+            ContainerCommand::UseItem { hand, .. } => {
+                assert_eq!(hand, 0, "the MAIN hand ordinal the echo wears");
+            }
+            other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+        if !sounds_loaded() {
+            return;
+        }
+        // THE USE VOICE (the press's own prediction the client speaks)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear.use ")),
+            "the use voice the press speaks: {:?}",
+            app.sounds.events
+        );
+        // THE LOCAL WALK'S SILENCE (the contact verdict the server
+        // owns — the hit voice the mailbox answers, not the hold)
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear.hit ")),
+            "the wire hold the local hit voice never wears: {:?}",
             app.sounds.events
         );
     }
