@@ -1146,6 +1146,53 @@ pub fn spear_third_person_use_matrix(
         ))
 }
 
+/// `SpearAnimations.thirdPersonAttackItem(ArmedEntityRenderState, PoseStack)`
+/// — the STAB swing's own THIRD-person item transform, verbatim from the
+/// 26.2 bytecode (113 bytes whole, the dump /tmp/spear.txt): the same two
+/// attack clocks the use lane shares — f6 = inQuad(progress(attackTime,
+/// 0.05, 0.2)), f7 = inOutExpo(progress(attackTime, 0.4, 1.0)) — fold the
+/// `rotateAround(Axis.XN.rotationDegrees(70·(f6 - f7)), 0, -0.125,
+/// 0.125)` (pcs 74-96, the pivot the item lane's own anchor keeps) then
+/// the `translate(0, forward·(f6 - f7), 0)` (pcs 99-109) — the FORWARD
+/// the MAIN hand stack's KINETIC_WEAPON component answers (null → 0.0,
+/// pcs 10-36 the getMainHandItemStack walk; the seven tiers the shared
+/// ldc 0.38 the factory wears — [`KINETIC_FORWARD_MOVEMENT`]). The dead
+/// local f4 = 0.125 (pcs 37-39, stored never read) the javac compile
+/// the jar keeps — no Rust shadow the law wears. The thrust's own arc:
+/// the raise window [0.05, 0.2] the inQuad rides to the FULL 70° tilt +
+/// the forward slide the unwind window [0.4, 1.0] the inOutExpo slowly
+/// re-collides — both ends (t ≤ 0.05, t = 1.0) the EXACT identity the
+/// zero difference composes (the per-op f32 the oracle pins_482.py
+/// speaks: f32(1.0) − f32(0.4) rounds to the SAME f32 both sides of the
+/// division, the ratio the EXACT 1.0 the clamp never moves). The caller's
+/// own gates the bytecode keeps upstream (ItemInHandLayer pcs 154-185):
+/// `attackTime > 0 && attackArm == arm && swingAnimationType == STAB` —
+/// the identity the failing gate never composes.
+pub(crate) fn spear_third_person_attack_item_matrix(
+    attack_time: f32,
+    forward_movement: f32,
+) -> Mat4 {
+    let f6 = ease_in_quad(eased_progress(attack_time, 0.05, 0.2));
+    let f7 = ease_in_out_expo(eased_progress(attack_time, 0.4, 1.0));
+    // pcs 74-96: rotateAround(Axis.XN.rotationDegrees(70·(f6 - f7)),
+    // 0, -0.125, 0.125) — the XN the NEGATIVE X axis the +X rotation
+    // by the negated angle answers (the use lane's own XN law)
+    let rot_x_deg = 70.0f32 * (f6 - f7);
+    // pcs 99-109: translate(0, forward·(f6 - f7), 0) — the fsub/fmul
+    // chain the dump's own order keeps
+    rot_around(
+        Mat4::rot_x((-rot_x_deg).to_radians()),
+        0.0,
+        -0.125,
+        0.125,
+    )
+    .mul(&Mat4::translation(
+        0.0,
+        forward_movement * (f6 - f7),
+        0.0,
+    ))
+}
+
 impl HeldItem {
     /// The loaded quad count — the tests' honest size probe (the
     /// geometry's own shape, no internals exposed).
@@ -2630,6 +2677,140 @@ mod held_tests {
                 (cell - expect_mid[i]).abs() < 1e-6,
                 "the mid-attack cell {i}: {cell} vs {}",
                 expect_mid[i]
+            );
+        }
+    }
+
+    /// `SpearAnimations.thirdPersonAttackItem`'s own transform — the
+    /// STAB swing's item lane (the 113-byte whole the dump banks): the
+    /// two clocks f6 = inQuad(progress(t, 0.05, 0.2)), f7 =
+    /// inOutExpo(progress(t, 0.4, 1.0)) fold the XN rotateAround (70°·
+    /// (f6-f7) about the pivot (0, -0.125, 0.125)) then the forward
+    /// translate. The oracle scripts/pins_482.py the per-op f32 chain
+    /// speaks (the numerator's own f32 store the round-trip keeps).
+    #[test]
+    fn the_attack_item_matrix_the_ends_the_thrust_speak() {
+        // THE REST (t = 0: f6 = f7 = 0 — the identity the zero
+        // difference composes, BIT-FOR-BIT the anchor keeps)
+        let m = spear_third_person_attack_item_matrix(0.0, KINETIC_FORWARD_MOVEMENT);
+        for (i, cell) in m.0.iter().enumerate() {
+            assert_eq!(
+                cell.to_bits(),
+                Mat4::IDENT.0[i].to_bits(),
+                "the rest attack-item pose IS the anchor (cell {i})"
+            );
+        }
+        // THE RAISE WINDOW'S FIRST TICK (t = 0.05: progress clamps to
+        // 0 both windows — f6 = f7 = 0, the identity the gate's own
+        // edge never moves; the jar's own zeros the f32 chain speaks)
+        let m = spear_third_person_attack_item_matrix(0.05, KINETIC_FORWARD_MOVEMENT);
+        for (i, cell) in m.0.iter().enumerate() {
+            assert_eq!(
+                cell.to_bits(),
+                Mat4::IDENT.0[i].to_bits(),
+                "the raise's first tick the anchor keeps (cell {i})"
+            );
+        }
+        // THE RETURN (t = 1.0: f6 = f7 = 1 — the arc re-collides, the
+        // identity the EXACT 1.0 progress speaks: f32(1.0) - f32(0.4)
+        // rounds to the SAME f32 both sides of the division, the
+        // unrounded f64 shortcut the wrong draft divided 0.99999994
+        // wore — the per-op f32 the jar's own fsub/fdiv chain keeps)
+        let m = spear_third_person_attack_item_matrix(1.0, KINETIC_FORWARD_MOVEMENT);
+        for (i, cell) in m.0.iter().enumerate() {
+            assert_eq!(
+                cell.to_bits(),
+                Mat4::IDENT.0[i].to_bits(),
+                "the full unwind the anchor re-collides (cell {i})"
+            );
+        }
+        // THE FULL THRUST (t = 0.3: f6 = inQuad(1) = 1, f7 = 0 — the
+        // 70° tilt the rotationDegrees the f32 bits 0x428c0000 keeps,
+        // the forward slide ty = 0.38 the shared component value; the
+        // oracle's own 16 cells, the 1e-6 the sin/cos ulp window keeps)
+        let m = spear_third_person_attack_item_matrix(0.3, KINETIC_FORWARD_MOVEMENT);
+        let expect_thrust: [f32; 16] = [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.342_020_154,
+            -0.939_692_616,
+            0.0,
+            0.0,
+            0.939_692_616,
+            0.342_020_154,
+            0.0,
+            0.0,
+            -0.069_741_398_1,
+            -0.392_297_298,
+            1.0,
+        ];
+        for (i, cell) in m.0.iter().enumerate() {
+            assert!(
+                (cell - expect_thrust[i]).abs() < 1e-6,
+                "the thrust cell {i}: {cell} vs {}",
+                expect_thrust[i]
+            );
+        }
+        // THE UNWIND'S MIDDLE (t = 0.5: f7 = inOutExpo(1/6) =
+        // 0.0049215658 — the 69.6554947° the re-collision begins, the
+        // ty 0.37812981 the forward the same difference rides)
+        let m = spear_third_person_attack_item_matrix(0.5, KINETIC_FORWARD_MOVEMENT);
+        let expect_mid: [f32; 16] = [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.347_664_058,
+            -0.937_619_15,
+            0.0,
+            0.0,
+            0.937_619_15,
+            0.347_664_058,
+            0.0,
+            0.0,
+            -0.067_282_244_6,
+            -0.390_202_165,
+            1.0,
+        ];
+        for (i, cell) in m.0.iter().enumerate() {
+            assert!(
+                (cell - expect_mid[i]).abs() < 1e-6,
+                "the unwind cell {i}: {cell} vs {}",
+                expect_mid[i]
+            );
+        }
+        // THE NON-KINETIC MAIN HAND (forward 0.0 — the component-less
+        // stack the rotation-only fold wears: the tilt rides, the
+        // translate never moves, the ty cell the EXACT 0.0 the fmul
+        // with the null's own zero speaks)
+        let m = spear_third_person_attack_item_matrix(0.3, 0.0);
+        let expect_nokinet: [f32; 16] = [
+            1.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.342_020_154,
+            -0.939_692_616,
+            0.0,
+            0.0,
+            0.939_692_616,
+            0.342_020_154,
+            0.0,
+            0.0,
+            -0.199_709_058,
+            -0.035_214_096_3,
+            1.0,
+        ];
+        for (i, cell) in m.0.iter().enumerate() {
+            assert!(
+                (cell - expect_nokinet[i]).abs() < 1e-6,
+                "the rotation-only cell {i}: {cell} vs {}",
+                expect_nokinet[i]
             );
         }
     }

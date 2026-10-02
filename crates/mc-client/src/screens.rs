@@ -27960,6 +27960,13 @@ impl App {
                     - self.last_kinetic_hit_feedback_time) as f32
                     + self.partial_tick
             },
+            // THE MAIN HAND'S OWN KINETIC VERDICT (the STAB attack-item
+            // lane's forward reads it — the held stack the row table
+            // answers, the SWING_ANIMATION the separate component the
+            // gate reads)
+            main_hand_kinetic: mc_registry::item_name(self.held_id().unwrap_or(0))
+                .and_then(spear_kinetic_row)
+                .is_some(),
         };
         let feet = {
             let (lx, ly, lz) = body.lerped_pos(self.partial_tick);
@@ -29283,6 +29290,13 @@ impl App {
                         left_spear: mob.held_offhand.and_then(spear_kinetic_row).is_some(),
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
+                        // THE MOB'S MAIN HAND the same component verdict
+                        // wears (the held_weapon stack the row table
+                        // answers — the STAB attack-item lane's forward)
+                        main_hand_kinetic: mob
+                            .held_weapon
+                            .and_then(spear_kinetic_row)
+                            .is_some(),
                     };
                     let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
                     // THE MOB-HELD ITEM LANE (ItemInHandLayer.
@@ -29430,6 +29444,13 @@ impl App {
                         left_spear: mob.held_offhand.and_then(spear_kinetic_row).is_some(),
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
+                        // THE MOB'S MAIN HAND the same component verdict
+                        // wears (the held_weapon stack the row table
+                        // answers — the STAB attack-item lane's forward)
+                        main_hand_kinetic: mob
+                            .held_weapon
+                            .and_then(spear_kinetic_row)
+                            .is_some(),
                     };
                     // THE THIN MESH (SkeletonModel's own
                     // createDefaultSkeletonMesh — the 2x12x2 limbs the

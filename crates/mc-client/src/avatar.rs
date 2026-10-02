@@ -251,6 +251,16 @@ pub struct AvatarState {
     /// jolt's clock (`(gameTime - last) + partialTick`, the negative
     /// stamp the 0.0 keeps) the item lane's hitFeedbackAmount reads.
     pub ticks_since_kinetic_hit: f32,
+    /// `ArmedEntityRenderState.getMainHandItemStack().get(KINETIC_WEAPON)
+    /// != null` — the MAIN hand stack's own component verdict the STAB
+    /// attack-item lane's forward reads (`thirdPersonAttackItem` pcs
+    /// 10-36: the component the stack carries answers the shared
+    /// 0.38, the null the 0.0 the rotation-only fold wears). The row
+    /// table the seven kinetic tiers keep the client's own verdict
+    /// — the SWING_ANIMATION STAB the gate reads the SEPARATE
+    /// component the stack may alone carry (the two components the
+    /// jar reads independently, the client the two verdicts keeps).
+    pub main_hand_kinetic: bool,
 }
 
 impl AvatarState {
@@ -286,6 +296,7 @@ impl AvatarState {
             left_spear: false,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
+            main_hand_kinetic: false,
         }
     }
 }
@@ -5616,6 +5627,35 @@ fn hand_item_quads(
         .mul(&Mat4::rot_y(std::f32::consts::PI))
         .mul(&Mat4::translation(x_off, 2.0 / 16.0, -10.0 / 16.0));
     let mut m = m_arm.mul(&layer);
+    // THE ATTACK-ITEM LANE (ItemInHandLayer.submitArmWithItem pcs
+    // 154-185, the 26.2 bytecode): `attackTime > 0` the fcmpl/ifle
+    // speaks, `attackArm == arm` the if_acmpne (the attack_right the
+    // client's own attackArm verdict — the right the main hand rides),
+    // `swingAnimationType == STAB` the second if_acmpne — then
+    // `thirdPersonAttackItem(state, poseStack)` the jar calls BEFORE
+    // the use lane below (pcs 188+ the same walk speaks): the two
+    // lanes STACK when both gates hold (the swing and the use the
+    // same arm rides), the jar's own order the composition keeps.
+    // The forward the MAIN hand stack's KINETIC_WEAPON answers
+    // (pcs 10-36 the getMainHandItemStack walk — the null the 0.0
+    // the rotation-only fold wears, the component the shared 0.38
+    // the seven tiers ride).
+    let attack_arm = state.attack_right == !left;
+    if state.attack_time > 0.0
+        && attack_arm
+        && state.swing_kind == crate::hand::SwingKind::Stab
+    {
+        let forward = if state.main_hand_kinetic {
+            crate::hand::KINETIC_FORWARD_MOVEMENT
+        } else {
+            0.0
+        };
+        let aim = crate::hand::spear_third_person_attack_item_matrix(
+            state.attack_time,
+            forward,
+        );
+        m = m.mul(&aim);
+    }
     // THE USE LANE (ItemInHandLayer.submitArmWithItem pcs 188-232, the
     // 26.2 bytecode): `f12 = state.ticksUsingItem(arm)` — the per-arm
     // method the HumanoidRenderState override keeps (`isUsingItem &&
@@ -5623,9 +5663,9 @@ fn hand_item_quads(
     // 0) — then the arm's own pose `animateUseItem(state, poseStack,
     // f12, arm, stack)`: SPEAR the only override, its body the
     // `thirdPersonUseItem` the ArmPose$1 delegates. The STAB
-    // attack-item lane (pcs 182-185, `thirdPersonAttackItem`) the
-    // jar's own order speaks BEFORE this fold — the next round's
-    // candidate, the slot the composition below reserves.
+    // attack-item lane (pcs 154-185, `thirdPersonAttackItem`) the
+    // jar's own order speaks BEFORE this fold — the composition above
+    // wears it, the two gates the independent clocks keep.
     let pose_spear = if left { state.left_spear } else { state.right_spear };
     // `(useItemHand == MAIN_HAND) == (arm == mainArm)` — mainArm RIGHT
     // the client's own, the arm==mainArm test the left flag answers
@@ -11007,5 +11047,105 @@ mod tests {
             centroid(&left_idle),
             "the right-hand use the left arm's payload never moves"
         );
+    }
+
+    /// The STAB attack-item lane's own gates (ItemInHandLayer pcs
+    /// 154-185): the zero clock the fcmpl/ifle refuses, the wrong arm
+    /// the attackArm if_acmpne refuses, the kind the
+    /// swingAnimationType if_acmpne refuses — and the pass the
+    /// forward's own slide speaks (the component-less main hand the
+    /// rotation-only fold wears, the kinetic the 0.38 adds — the two
+    /// centroids the shared tilt never confounds, only the translate
+    /// the two states separate).
+    #[test]
+    fn the_attack_item_lane_the_gate_the_forward_speak() {
+        let centroid = |quads: &Vec<HeadBlockQuad>| -> [f64; 3] {
+            let mut acc = [0.0f64; 3];
+            let mut n = 0.0f64;
+            for q in quads {
+                for p in q.pts.iter() {
+                    for k in 0..3 {
+                        acc[k] += p[k] as f64;
+                    }
+                }
+                n += 4.0;
+            }
+            if n > 0.0 {
+                [acc[0] / n, acc[1] / n, acc[2] / n]
+            } else {
+                [0.0; 3]
+            }
+        };
+        let stabbing = |kinetic: bool, t: f32, kind: crate::hand::SwingKind| {
+            let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+            s.attack_time = t;
+            s.swing_kind = kind;
+            s.main_hand_kinetic = kinetic;
+            s
+        };
+        // THE ZERO CLOCK (attackTime 0 — the lane's own first gate the
+        // rest state fails; the kind the state carries the zero the
+        // swing block also silences — the two states the same anchor
+        // quad set wear)
+        let idle =
+            held_item_quads(&stabbing(true, 0.0, crate::hand::SwingKind::Stab), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the spear's own stanza the bake carries");
+        let bare =
+            held_item_quads(&stabbing(false, 0.0, crate::hand::SwingKind::Whack), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the bare bake");
+        assert_eq!(centroid(&idle), centroid(&bare), "the zero clock the anchor keeps");
+        // THE WRONG ARM (the attackArm the if_acmpne refuses: the LEFT
+        // lane the right-hand attack mismatches — the kinetic flag the
+        // refused lane never READS, the toggle the SAME state's quads
+        // never moves; a lane the gate leaked into would speak the
+        // forward's own slide the two centroids wear)
+        let left_kin =
+            offhand_item_quads(&stabbing(true, 0.3, crate::hand::SwingKind::Stab), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the left arm's own bake");
+        let left_nk =
+            offhand_item_quads(&stabbing(false, 0.3, crate::hand::SwingKind::Stab), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the left arm's refused bake");
+        assert_eq!(
+            centroid(&left_kin),
+            centroid(&left_nk),
+            "the attackArm mismatch the left lane never reads the forward"
+        );
+        // THE MIRROR PASS (attackArm LEFT the offhand's own gate speaks:
+        // attack_right = false the left lane the STAB gate PASSES — the
+        // kinetic flag the passing lane now reads, the slide the two
+        // centroids wear — the pose the shared folds the flag never
+        // touches, the delta the translate's own magnitude rides)
+        let mut left_att = stabbing(true, 0.3, crate::hand::SwingKind::Stab);
+        left_att.attack_right = false;
+        let mut left_att_nk = stabbing(false, 0.3, crate::hand::SwingKind::Stab);
+        left_att_nk.attack_right = false;
+        let lp =
+            offhand_item_quads(&left_att, Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the left-attack's own bake");
+        let lpn =
+            offhand_item_quads(&left_att_nk, Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the left-attack's refused bake");
+        let slide = (centroid(&lp)[0] - centroid(&lpn)[0]).abs()
+            + (centroid(&lp)[1] - centroid(&lpn)[1]).abs()
+            + (centroid(&lp)[2] - centroid(&lpn)[2]).abs();
+        assert!(slide > 0.02, "the left-attack's own slide the left lane wears: {slide}");
+        // THE KIND + THE FORWARD (the RIGHT lane the STAB gate passes:
+        // the component-less main hand the rotation-only fold wears —
+        // the tilt alone moves the payload; the kinetic main hand the
+        // 0.38 slide adds — the delta the two states separate the
+        // translate's own magnitude rides)
+        let nk =
+            held_item_quads(&stabbing(false, 0.3, crate::hand::SwingKind::Stab), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the rotation-only bake");
+        let wk =
+            held_item_quads(&stabbing(true, 0.3, crate::hand::SwingKind::Stab), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the kinetic bake");
+        let (nk_c, wk_c) = (centroid(&nk), centroid(&wk));
+        let tilt = (nk_c[0] - wk_c[0]).abs() + (nk_c[1] - wk_c[1]).abs() + (nk_c[2] - wk_c[2]).abs();
+        assert!(tilt > 0.02, "the forward's own slide the centroids speak: {tilt}");
+        let moved = (wk_c[0] - centroid(&bare)[0]).abs()
+            + (wk_c[1] - centroid(&bare)[1]).abs()
+            + (wk_c[2] - centroid(&bare)[2]).abs();
+        assert!(moved > 0.05, "the STAB lane the payload moves: {moved}");
     }
 }
