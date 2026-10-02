@@ -364,6 +364,14 @@ pub struct WorldModel {
     /// (the `globalLevelEvent` switch the 2013 id never carries — the
     /// positioned lane the case's own arm wears).
     pub smash_attack_events: Vec<SmashAttackArm>,
+    /// THE KINETIC HIT'S OWN MAILBOX (the Entity Event packet's byte-2
+    /// words the server's own stab contacts broadcast — the
+    /// `LivingEntity.onKineticHit` walk the event's receiver answers:
+    /// the 20-tick throttle + the KINETIC_WEAPON gate + the local hit
+    /// voice the app's law folds). The model's own-entity filter the
+    /// LOCAL player's words bank (the other bodies' events the honest
+    /// silence keeps).
+    pub kinetic_hit_events: Vec<KineticHitArm>,
     /// THE WAX TRIO'S OWN MAILBOX (the Level Event packet's own next
     /// vocabulary word — [`mc_protocol::play::PARTICLES_AND_SOUND_WAX_ON_EFFECT`]
     /// + [`mc_protocol::play::PARTICLES_WAX_OFF_EFFECT`] +
@@ -943,6 +951,21 @@ pub struct SmashAttackArm {
     /// speaks — the two loops' bounds the count's own thirds and
     /// two-thirds carry).
     pub data: i32,
+}
+
+/// One pending KINETIC-HIT arm — the Entity Event packet's byte-2 word
+/// the model keeps (see [`WorldModel::kinetic_hit_events`]). javap of
+/// the real 26.2 `LivingEntity.handleEntityEvent`: the lookupswitch's
+/// `2 -> start+562` arm the `onKineticHit()` call rides — the server's
+/// own stab contact the event broadcast speaks, the ATTACKER's client
+/// copy the receiver keeps. The id verbatim (the BE i32 the packet's
+/// buf ctor reads) — the model's own-entity filter the local player's
+/// lane keeps (the OTHER bodies' events the spatial future serves).
+#[derive(Debug, Clone, PartialEq)]
+pub struct KineticHitArm {
+    /// The event target's id — the LOCAL player's own (the model's
+    /// `own_entity_id` filter the arm banks).
+    pub entity_id: i32,
 }
 
 /// One pending WAX arm — the Level Event packet's own landing (the
@@ -2347,6 +2370,7 @@ impl WorldModel {
             white_smoke_events: Vec::new(),
             in_block_growth_events: Vec::new(),
             smash_attack_events: Vec::new(),
+            kinetic_hit_events: Vec::new(),
             wax_events: Vec::new(),
             gateway_spawn_events: Vec::new(),
             dragon_growl_events: Vec::new(),
@@ -2562,6 +2586,13 @@ impl WorldModel {
     /// exactly one refresh).
     pub fn drain_smash_attack_events(&mut self) -> Vec<SmashAttackArm> {
         std::mem::take(&mut self.smash_attack_events)
+    }
+
+    /// The kinetic-hit mailbox's own drain (the same walk the smash
+    /// arm's own drain speaks — the arms the worker drained ride
+    /// exactly one refresh).
+    pub fn drain_kinetic_hit_events(&mut self) -> Vec<KineticHitArm> {
+        std::mem::take(&mut self.kinetic_hit_events)
     }
 
     /// The wax trio's mailbox's own drain (the same walk the smash
@@ -3140,6 +3171,9 @@ impl WorldModel {
                 // (the same walk — the old level's 2013 words never
                 // smash again)
                 self.smash_attack_events.clear();
+                // the kinetic-hit mailbox dies with the level (the same
+                // walk — the old level's byte-2 words never speak again)
+                self.kinetic_hit_events.clear();
                 // the wax trio's mailbox dies with the level (the same
                 // walk — the old level's 3003/3004/3005 words never
                 // wax again)
@@ -4915,6 +4949,24 @@ impl WorldModel {
             PlayEvent::CombatKill(k) => {
                 if self.own_entity_id() == Some(k.player_id) {
                     self.death_message = Some(k.message);
+                    true
+                } else {
+                    false
+                }
+            }
+            PlayEvent::EntityEvent(e) => {
+                // THE KINETIC HIT'S OWN WORD (javap
+                // `LivingEntity.handleEntityEvent`'s lookupswitch — the
+                // `2 -> start+562` arm the `onKineticHit()` call rides:
+                // the server's stab contact the event broadcast speaks,
+                // the ATTACKER's client copy the receiver keeps). The
+                // own-entity filter the local player's words bank — the
+                // OTHER bodies' events the honest silence keeps (the
+                // spatial future the other lanes serve).
+                if self.own_entity_id() == Some(e.entity_id) && e.event == 2 {
+                    self.kinetic_hit_events.push(KineticHitArm {
+                        entity_id: e.entity_id,
+                    });
                     true
                 } else {
                     false
@@ -8847,6 +8899,50 @@ mod tests {
         // the vitals ride the player (NOT cleared — the health the
         // server speaks crosses the dimension like the effects do)
         assert_eq!(m.health, Some(vitals), "the vitals ride the player");
+    }
+
+    #[test]
+    fn the_entity_event_the_own_body_speaks_keeps() {
+        // THE ENTITY EVENT'S OWN FILTER (javap
+        // `LivingEntity.handleEntityEvent`'s lookupswitch — the byte-2
+        // arm the `onKineticHit()` call rides): the OWN id's word-2 the
+        // mailbox banks, the OTHER body's word the honest silence
+        // keeps, the OTHER word for the own id the same silence, and
+        // the drain ships the arms exactly once.
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::WorldInfo(WorldInfo {
+            entity_id: 17,
+            hardcore: false,
+            dimensions: vec!["minecraft:overworld".to_string()],
+            view_distance: 8,
+            simulation_distance: 8,
+            portal_cooldown: 300,
+            current_dimension: "minecraft:overworld".to_string(),
+        }));
+        // the own body's kinetic hit banks
+        assert!(m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 17,
+            event: 2,
+        })));
+        assert_eq!(m.kinetic_hit_events.len(), 1, "the arm rides");
+        assert_eq!(m.kinetic_hit_events[0].entity_id, 17);
+        // the other body's word-2 never banks (the spatial future's lane)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 900,
+            event: 2,
+        })));
+        // the own body's other word never banks (the handleEntityEvent
+        // switch's other cases the model's law never speaks)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 17,
+            event: 18,
+        })));
+        assert_eq!(m.kinetic_hit_events.len(), 1, "the lone arm holds");
+        // the drain ships the arm exactly once
+        let drained = m.drain_kinetic_hit_events();
+        assert_eq!(drained.len(), 1, "the drain ships the whole mailbox");
+        assert!(m.kinetic_hit_events.is_empty(), "the mailbox spent");
+        assert!(m.drain_kinetic_hit_events().is_empty(), "the drained silence ships nothing");
     }
 
     #[test]

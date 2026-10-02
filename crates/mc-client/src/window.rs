@@ -167,6 +167,7 @@ fn run_join(
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireInBlockGrowthEvent>,
                 Vec<crate::world_view::WireSmashAttackEvent>,
+                Vec<crate::world_view::WireKineticHitEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireDragonGrowlEvent>,
@@ -292,6 +293,7 @@ fn run_join(
             view.model.drain_growth_events();
             view.model.drain_in_block_growth_events();
             view.model.drain_smash_attack_events();
+            view.model.drain_kinetic_hit_events();
             view.model.drain_wax_events();
             view.model.drain_gateway_spawn_events();
             view.model.drain_dragon_growl_events();
@@ -966,6 +968,7 @@ fn run_join(
                             view.model.drain_growth_events();
                             view.model.drain_in_block_growth_events();
                             view.model.drain_smash_attack_events();
+                            view.model.drain_kinetic_hit_events();
                             view.model.drain_wax_events();
                             view.model.drain_gateway_spawn_events();
                             view.model.drain_dragon_growl_events();
@@ -1131,6 +1134,15 @@ fn run_join(
                                     // own law folds, each arm rides
                                     // exactly one shipped refresh)
                                     upd.smash_attack_events,
+                                    // the kinetic-hit arms ride beside
+                                    // them — the byte-2 words the
+                                    // server's own stab contacts
+                                    // broadcast stream to the hit lane
+                                    // (the throttle + the held-weapon
+                                    // gate + the local hit voice the
+                                    // render's own law folds, each arm
+                                    // rides exactly one shipped refresh)
+                                    upd.kinetic_hit_events,
                                     // the wax trio's arms ride beside
                                     // them — the 3003/3004/3005 words
                                     // the server's own honeycomb and
@@ -1594,6 +1606,7 @@ pub fn run_gui_app(
                 Vec<crate::world_view::WireGrowthEvent>,
                 Vec<crate::world_view::WireInBlockGrowthEvent>,
                 Vec<crate::world_view::WireSmashAttackEvent>,
+                Vec<crate::world_view::WireKineticHitEvent>,
                 Vec<crate::world_view::WireWaxEvent>,
                 Vec<crate::world_view::WireGatewaySpawnEvent>,
                 Vec<crate::world_view::WireDragonGrowlEvent>,
@@ -2211,6 +2224,7 @@ pub fn run_gui_app(
                     growth_events,
                     in_block_growth_events,
                     smash_attack_events,
+                    kinetic_hit_events,
                     wax_events,
                     gateway_spawn_events,
                     dragon_growl_events,
@@ -2345,6 +2359,13 @@ pub fn run_gui_app(
                     // two-thirds bounds keep, the vanilla client answers
                     // the same packet with)
                     app.live_smash_attack_events_updated(smash_attack_events);
+                    // the kinetic-hit lane beside the smash's: the byte-2
+                    // words the server's own stab contacts broadcast land
+                    // at the attacker's own ear (the onKineticHit law the
+                    // throttle + the held-spear gate + the local hit
+                    // voice keep — the vanilla client answers the same
+                    // event with)
+                    app.live_kinetic_hit_events_updated(kinetic_hit_events);
                     // the wax trio's lane beside the smash's: the
                     // 3003/3004/3005 words the server's own honeycomb
                     // and axe broadcast land at their own anchors (the

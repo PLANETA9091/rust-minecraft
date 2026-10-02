@@ -96,6 +96,7 @@ pub mod clientbound {
         CB_FORGET_LEVEL_CHUNK as UNLOAD_CHUNK, CB_KEEP_ALIVE as KEEP_ALIVE,
         CB_LEVEL_CHUNK_WITH_LIGHT as CHUNK_DATA, CB_LIGHT_UPDATE as UPDATE_LIGHT,
         CB_LEVEL_EVENT as LEVEL_EVENT,
+        CB_ENTITY_EVENT as ENTITY_EVENT,
         CB_LOGIN as LOGIN, CB_MOVE_ENTITY_POS as MOVE_ENTITY_POS,
         CB_MOVE_ENTITY_POS_ROT as MOVE_ENTITY_POS_ROT, CB_MOVE_ENTITY_ROT as MOVE_ENTITY_ROT,
         CB_PING as PING, CB_PONG_RESPONSE as PONG_RESPONSE,
@@ -9056,6 +9057,39 @@ pub fn parse_hurt_animation(payload: &[u8]) -> Result<HurtAnimation> {
     Ok(HurtAnimation { entity_id, yaw })
 }
 
+/// Entity Event (clientbound play, generated id 34 —
+/// `minecraft:entity_event`). javap of the real 26.2
+/// `ClientboundEntityEventPacket`'s buf ctor: `entityId = buf.readInt()`
+/// — the BE i32 the VarInt mob ids never wear (the ONE packet the
+/// entity streams speak plain ints) — and `eventId = buf.readByte()`
+/// (the one-word case selector the entity's own
+/// `handleEntityEvent(byte)` copy walks). THE KINETIC HIT'S OWN
+/// CHANNEL: the server's stab contact the event byte 2 speaks — the
+/// attacker's client copy answers `LivingEntity.onKineticHit` (the
+/// local hit-sound feedback the spear's own law keeps).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EntityEventPacket {
+    /// The event target's id (the level's entity registry key).
+    pub entity_id: i32,
+    /// The one-word case selector (2 = the kinetic hit — the
+    /// `handleEntityEvent` switch's own arm).
+    pub event: i8,
+}
+
+/// Entity Event's wire walk (see [`EntityEventPacket`] — the BE i32 id +
+/// the raw byte word, the generated-id guard).
+pub fn parse_entity_event(payload: &[u8]) -> Result<EntityEventPacket> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::ENTITY_EVENT,
+        "not an entity event packet (0x{id:02X})"
+    );
+    let entity_id = read_i32(&mut c)?;
+    let event = read_u8(&mut c)? as i8;
+    Ok(EntityEventPacket { entity_id, event })
+}
+
 /// Entity Sound (clientbound play, generated id 116 —
 /// `minecraft:sound_entity`). javap of the real 26.2
 /// `ClientboundEntitySoundPacket`'s STREAM_CODEC read: a VarInt entity
@@ -10437,6 +10471,13 @@ pub enum PlayEvent {
     /// + the tilt yaw float (the damage feedback's own channel; the
     /// model filters the LOCAL player's own id).
     Hurt(HurtAnimation),
+    /// Entity Event: the server's one-byte entity word — the case
+    /// selector the entity's client copy walks (the KINETIC HIT the
+    /// byte 2 speaks: the stab contact the attacker's own
+    /// `onKineticHit` walk answers — the throttle + the held-weapon
+    /// gate + the local hit voice the model's filter rides). The BE
+    /// i32 id the VarInt ids never wear.
+    EntityEvent(EntityEventPacket),
     /// Entity Sound: ONE entity's played voice (the ambient/hurt/death
     /// sounds the SERVER plays — `Mob.baseTick`'s playAmbientSound and
     /// friends) — the VarInt id + the tagged sound holder + the
@@ -10652,6 +10693,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::SET_HEALTH => Ok(PlayEvent::Health(parse_set_health(&pkt)?)),
             clientbound::HURT_ANIMATION => Ok(PlayEvent::Hurt(parse_hurt_animation(&pkt)?)),
+            clientbound::ENTITY_EVENT => {
+                Ok(PlayEvent::EntityEvent(parse_entity_event(&pkt)?))
+            }
             clientbound::SOUND_ENTITY => {
                 Ok(PlayEvent::EntitySound(parse_entity_sound(&pkt)?))
             }
@@ -16633,6 +16677,32 @@ mod tests {
         write_varint(&mut p, clientbound::HURT_ANIMATION);
         write_varint(&mut p, 1);
         assert!(parse_hurt_animation(&p).is_err());
+
+        // ENTITY EVENT: the BE i32 id + the raw byte word (javap
+        // `ClientboundEntityEventPacket.read` — `buf.readInt()` the
+        // VarInt ids never wear, `buf.readByte()` the case selector
+        // carries). The kinetic hit's own word rides byte 2.
+        assert_eq!(clientbound::ENTITY_EVENT, 34, "entity_event (generated id)");
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::ENTITY_EVENT);
+        p.extend_from_slice(&137i32.to_be_bytes());
+        p.push(2);
+        let ev = parse_entity_event(&p).unwrap();
+        assert_eq!(ev.entity_id, 137, "the plain int the buf read speaks");
+        assert_eq!(ev.event, 2, "the kinetic hit's own word");
+        // the multi-byte id the VarInt ids would mangle (id 0x01020304
+        // — the BE ints' own bytes the read carries)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::ENTITY_EVENT);
+        p.extend_from_slice(&0x01020304i32.to_be_bytes());
+        p.push(2);
+        let ev = parse_entity_event(&p).unwrap();
+        assert_eq!(ev.entity_id, 0x01020304);
+        // the truncation map: the id alone refuses
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::ENTITY_EVENT);
+        p.extend_from_slice(&137i32.to_be_bytes());
+        assert!(parse_entity_event(&p).is_err());
 
         // ENTITY SOUND: the VarInt id + the tagged sound holder + the
         // volume/pitch floats + the seed (the registry arm rides tag 1

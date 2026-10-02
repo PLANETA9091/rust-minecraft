@@ -6507,6 +6507,14 @@ pub struct App {
     /// damage law speaks (the delay = (1/ATTACK_SPEED 4.0)·20 = 5.0,
     /// the reset the onAttack call performs).
     pub attack_ticker: u32,
+    /// `LivingEntity.lastKineticHitFeedbackTime` — the stab-hit
+    /// feedback's own throttle clock (javap onKineticHit's own fold:
+    /// the `gameTime - lastKineticHitFeedbackTime > 20` gate the
+    /// event-2 walk speaks, the bank the gate's own pass performs
+    /// BEFORE the weapon gate — the silent miss the clock still
+    /// spends). The client tick the level's gameTime stand-in keeps
+    /// (the base + the frame the same fold the day cycle wears).
+    pub last_kinetic_hit_feedback_time: i64,
     /// THE DIG ARC's state machine — the vanilla `MultiPlayerGameMode`'s
     /// destroy half (the survival lane: the destroy fields, the progress
     /// law, the START/ABORT/STOP sends). The left mouse speaks it: the
@@ -7521,6 +7529,7 @@ impl App {
             level_ambient_rng: crate::drops::Lcg::new(0x5EED_7E11),
             spell_jitter_rng: crate::drops::Lcg::new(0x5EED_570F),
             attack_ticker: 0,
+            last_kinetic_hit_feedback_time: 0,
             dig: crate::dig::DigState::new(),
             dig_held: false,
             miss_time: 0,
@@ -22497,6 +22506,62 @@ impl App {
                 &mut self.level_ambient_rng,
             );
             self.particles.extend(burst);
+        }
+    }
+
+    /// THE KINETIC HIT'S OWN FEEDBACK (javap `LivingEntity.onKineticHit`
+    /// verbatim — the Entity Event packet's byte-2 word the server's own
+    /// stab contact broadcasts, the ATTACKER's client copy the receiver
+    /// keeps: `handleEntityEvent`'s lookupswitch `2 -> start+562` the
+    /// `onKineticHit()` call rides). The walk the dump banks:
+    /// (a) pcs 0-19 the THROTTLE — `level.getGameTime() -
+    /// lastKineticHitFeedbackTime > 20` the gate the early return keeps
+    /// (at most ONE feedback per 20 ticks — the 1-second pace the
+    /// spamming stab never outruns); (b) pcs 20-28 the BANK — the
+    /// timestamp the gate's own pass performs BEFORE the weapon gate
+    /// (the weaponless event the clock still spends — the honest waste
+    /// the vanilla order speaks); (c) pcs 31-49 the USE ITEM'S OWN
+    /// COMPONENT — `useItem.get(KINETIC_WEAPON)` the null check the
+    /// silent return keeps (the stab IS a use action — the useItem the
+    /// held main-hand spear the lane's own read answers); (d)
+    /// `makeLocalHitSound`'s own lambda — `level.playLocalSound(this,
+    /// hitSound.value(), this.getSoundSource(), 1.0f, 1.0f)` the LOCAL
+    /// channel the packet never rides (the attacker's own ear — full
+    /// volume, no pan), the hit sound the material's row names (the
+    /// wooden tier's own `item.spear_wood.hit`, every other tier
+    /// `item.spear.hit` — the factory's WOOD branch the constants
+    /// bank).
+    pub fn live_kinetic_hit_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireKineticHitEvent>,
+    ) {
+        for _ev in events {
+            // (a) THE THROTTLE (pcs 0-19): the client tick the level's
+            // gameTime stand-in keeps — the `<= 20` window the echo
+            // never speaks twice within
+            let now = (self.day_time_base + self.frame) as i64;
+            if now - self.last_kinetic_hit_feedback_time <= 20 {
+                continue;
+            }
+            // (b) THE BANK (pcs 20-28): the timestamp rides BEFORE the
+            // weapon gate — the vanilla order the silent refusal keeps
+            self.last_kinetic_hit_feedback_time = now;
+            // (c) THE WEAPON GATE (pcs 31-49): the KINETIC_WEAPON
+            // component the seven spears alone carry — the same source
+            // the press lane's is_spear read wears
+            let main_id = self.held_id().unwrap_or(0);
+            let held_name = mc_registry::item_name(main_id).unwrap_or("");
+            if !held_name.ends_with("_spear") {
+                continue;
+            }
+            // (d) THE LOCAL VOICE (makeLocalHitSound's lambda): the
+            // attacker's own ear the sound rides to — 1.0/1.0 verbatim
+            let event = if held_name == "wooden_spear" {
+                "item.spear_wood.hit"
+            } else {
+                "item.spear.hit"
+            };
+            self.sounds.play_voice(self.frame, event, 1.0, 1.0);
         }
     }
 
@@ -46797,6 +46862,87 @@ mod tests {
                 .starts_with("entity.zombie.death ")
                 && e.contains(" v1.000000 p1.000000")),
             "the capped ear shot: {:?}",
+            app.sounds.events
+        );
+    }
+
+    /// THE KINETIC HIT'S OWN VOICE (javap `LivingEntity.onKineticHit`
+    /// over the 26.2 jar — the Entity Event byte-2 word the server's
+    /// stab contact broadcasts): the 20-tick throttle the echo never
+    /// outruns, the bank the gate's own pass performs BEFORE the weapon
+    /// gate (the weaponless event the clock still spends — the spear's
+    /// later window the wasted bank eats), the seven spears' component
+    /// the KINETIC_WEAPON gate keeps, the local hit voice the
+    /// material's row names — the wooden tier's `item.spear_wood.hit`,
+    /// every other tier `item.spear.hit` — full volume, full pitch, the
+    /// attacker's own ear the playLocalSound channel carries.
+    #[test]
+    fn the_wire_kinetic_event_the_local_hit_voice_wears() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        let wooden = mc_registry::item_id_by_name("wooden_spear").unwrap();
+        let arm = crate::world_view::WireKineticHitEvent { entity_id: 17 };
+        // THE FIRST WORD (frame 30): the bank's 0 start the 30-gap
+        // clears — the hit voice speaks
+        app.live_held = Some(spear);
+        app.frame = 30;
+        app.live_kinetic_hit_events_updated(vec![arm.clone()]);
+        if !sounds_loaded() {
+            assert!(
+                app.sounds.events.is_empty(),
+                "the empty table the silent voice lane keeps"
+            );
+            return;
+        }
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("item.spear.hit ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the iron spear's hit voice: {:?}",
+            app.sounds.events
+        );
+        // THE ECHO (frame 40): the 10-tick gap under the 20 — silent
+        app.frame = 40;
+        let voiced = app.sounds.events.len();
+        app.live_kinetic_hit_events_updated(vec![arm.clone()]);
+        assert_eq!(app.sounds.events.len(), voiced, "the throttle's silence");
+        // THE SECOND WINDOW (frame 51): the 21-tick gap clears — speaks
+        app.frame = 51;
+        app.live_kinetic_hit_events_updated(vec![arm.clone()]);
+        assert!(
+            app.sounds.events.len() > voiced,
+            "the next window speaks"
+        );
+        // THE WEAPONLESS BANK (frame 100): the fist the component never
+        // carries — silent, AND the timestamp still banks (the vanilla
+        // order the pcs 20-28 walk speaks: the bank rides BEFORE the
+        // weapon gate)
+        app.live_held = None;
+        app.frame = 100;
+        let voiced = app.sounds.events.len();
+        app.live_kinetic_hit_events_updated(vec![arm.clone()]);
+        assert_eq!(app.sounds.events.len(), voiced, "the fist's silence");
+        // THE WASTED WINDOW (frame 110): the spear arrives — the fist's
+        // own bank the 10-tick gap eats (the honest waste the vanilla
+        // order keeps)
+        app.live_held = Some(spear);
+        app.frame = 110;
+        app.live_kinetic_hit_events_updated(vec![arm.clone()]);
+        assert_eq!(app.sounds.events.len(), voiced, "the eaten window");
+        // THE WOOD TIER (frame 130): the factory's WOOD branch the row
+        // names — `item.spear_wood.hit`
+        app.live_held = Some(wooden);
+        app.frame = 130;
+        app.live_kinetic_hit_events_updated(vec![arm.clone()]);
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("item.spear_wood.hit ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the wooden tier's own row: {:?}",
             app.sounds.events
         );
     }

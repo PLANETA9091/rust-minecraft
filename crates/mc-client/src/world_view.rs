@@ -473,6 +473,13 @@ pub struct SnapshotView {
     /// render lane's own law folds the state gate + the dust-pillar
     /// burst.
     pub smash_attack_events: Vec<WireSmashAttackEvent>,
+    /// The kinetic-hit effect's PENDING ARMS — the Entity Event
+    /// mailbox the model kept (the byte-2 words the server's own stab
+    /// contacts broadcast, the attacker's own feedback the law speaks):
+    /// shipped once with the refresh that carried them (the worker's
+    /// own drain empties the mailbox after), the app's own law folds
+    /// the throttle + the held-weapon gate + the local hit voice.
+    pub kinetic_hit_events: Vec<WireKineticHitEvent>,
     /// The wax trio's own wire arms (the 3003/3004/3005 words the
     /// server's own honeycomb and axe broadcast — the anchor + the
     /// word the render lane's own law folds).
@@ -742,6 +749,15 @@ pub struct WireSmashAttackEvent {
     pub y: i32,
     pub z: i32,
     pub data: i32,
+}
+
+/// One wire KINETIC-HIT arm — the Entity Event packet's byte-2 word the
+/// model banked (the server's own stab contact the ATTACKER's client
+/// copy answers — the `onKineticHit` throttle + held-weapon gate + the
+/// local hit voice the app's own law folds).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireKineticHitEvent {
+    pub entity_id: i32,
 }
 
 /// One wire WAX arm — the Level Event packet's own landing (the
@@ -3215,6 +3231,9 @@ pub fn materialize_snapshot_view(
         // and no smash words (the join snapshot carries no 2013
         // traffic — the empty mailbox the render lane skips)
         smash_attack_events: Vec::new(),
+        // and no kinetic-hit words (the join snapshot carries no
+        // byte-2 traffic — the empty mailbox the render lane skips)
+        kinetic_hit_events: Vec::new(),
         // and no wax words (the join snapshot carries no
         // 3003/3004/3005 traffic — the empty mailbox the render lane
         // skips)
@@ -3703,6 +3722,17 @@ impl LiveView {
                 y: arm.y,
                 z: arm.z,
                 data: arm.data,
+            })
+            .collect();
+        // the kinetic-hit effect's own projection (the mailbox verbatim
+        // — the event word the arms carry): each byte-2 word ships once
+        // with this view, the worker's drain empties the mailbox after
+        let kinetic_hit_events = self
+            .model
+            .kinetic_hit_events
+            .iter()
+            .map(|arm| WireKineticHitEvent {
+                entity_id: arm.entity_id,
             })
             .collect();
         // the wax trio's own projection (the mailbox verbatim — the
@@ -4383,6 +4413,10 @@ impl LiveView {
                 // too — the 2013 words are the connection's own traffic,
                 // not the pose's
                 smash_attack_events,
+                // the kinetic-hit arms ride the pose-less arm too — the
+                // byte-2 words are the connection's own traffic, not the
+                // pose's
+                kinetic_hit_events,
                 // the wax trio's arms ride the pose-less arm too — the
                 // 3003/3004/3005 words are the connection's own
                 // traffic, not the pose's
@@ -4609,6 +4643,10 @@ impl LiveView {
             // the 2013 words follow the mailbox exactly like the
             // growth's own arms do
             smash_attack_events,
+            // the kinetic-hit arms ride every refresh too — the byte-2
+            // words follow the mailbox exactly like the smash's own
+            // arms do
+            kinetic_hit_events,
             // the wax trio's arms ride every refresh too — the
             // 3003/3004/3005 words follow the mailbox exactly like the
             // smash's own arms do
