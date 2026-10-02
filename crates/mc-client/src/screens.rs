@@ -10975,7 +10975,29 @@ impl App {
         // (the hits beyond the window the filter refuses either way)
         let held_name = mc_registry::item_name(self.held_id().unwrap_or(0));
         let (min_d2, max_d2) = held_attack_pick_window(held_name, self.abilities_instabuild());
-        let entity_search = max_d2.sqrt();
+        // THE MOVEMENT'S OWN LEAD (javap ProjectileUtil.getHitEntitiesAlong
+        // pcs 30-64 — the ray END the velocity extends: `eye +
+        // look.scale(effectiveMaxRange + max(0, movement · look))` —
+        // the getKnownMovement fold the standing player's
+        // getDeltaMovement speaks, the blocks-per-tick velocity the
+        // body integrates): the CARRIER's own walk the lead extends —
+        // the max the window's reach grows (the sprint the lunge ahead
+        // the crosshair answers), the MIN never moves (the ray start
+        // at effectiveMinRange the velocity never shifts), the
+        // non-carrier the DEFAULT pick the lead never borrows (the
+        // max(4.5, 3.0) walk the filterHitResult's static 3.0 keeps —
+        // the lead lives in the carrier's getClosesetHit alone). The
+        // retreat the max(0, dot) gate the lead never wears.
+        let lead = if min_d2 > 0.0 {
+            self.body
+                .as_ref()
+                .map(|b| (b.vx * view.0 + b.vy * view.1 + b.vz * view.2).max(0.0))
+                .unwrap_or(0.0)
+        } else {
+            0.0
+        };
+        let reach = max_d2.sqrt() + lead;
+        let entity_search = reach;
         // the block clip's own range (the 4.5 the BLOCK reach keeps —
         // the spear's reach the blocks never borrow, the
         // raycastHitResult's own filterHitResult clip the block hits
@@ -11019,11 +11041,12 @@ impl App {
         // fold keeps): the dead zone the min speaks (the too-close
         // body the polearm's ray starts BEYOND), the reach the max
         // extends (4.625 the survival spear wears, 6.625 the creative
-        // keeps), the default the 3.0 the component-less hold never
-        // widens (the exact law the pick rode before the component
-        // spoke — the bare hand and every non-carrier item the same
-        // verdict wears).
-        if mob_d2 < block_d2 && mob_d2 >= min_d2 && mob_d2 < max_d2 {
+        // keeps — the MOVEMENT'S OWN LEAD the sprint lunge adds), the
+        // default the 3.0 the component-less hold never widens (the
+        // exact law the pick rode before the component spoke — the
+        // bare hand and every non-carrier item the same verdict
+        // wears).
+        if mob_d2 < block_d2 && mob_d2 >= min_d2 && mob_d2 < reach * reach {
             Some((i, mob_d2))
         } else {
             None
@@ -38203,6 +38226,96 @@ mod tests {
         assert_eq!(
             super::held_attack_pick_window(None, false),
             (0.0, 3.0 * 3.0)
+        );
+    }
+
+    /// THE MOVEMENT'S OWN LEAD (javap `ProjectileUtil
+    /// .getHitEntitiesAlong` pcs 30-64 — the ray END the velocity
+    /// extends: `effectiveMaxRange + max(0, movement · look)`): the
+    /// body at ~4.7 the static spear's 4.625 refuses, the LUNGING
+    /// body (the 0.3/tick walk ahead the velocity speaks) the lead
+    /// 0.3 the pick serves, the RETREATING body the max(0, dot) gate
+    /// the lead never wears (the far body the retreat never serves).
+    #[test]
+    fn the_spear_the_pick_the_motion_leads() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam0 = app.world_camera();
+        let (ex, ey, ez) = (
+            cam0.pos.x as f64,
+            cam0.pos.y as f64,
+            cam0.pos.z as f64,
+        );
+        // the body the eye's own pose keeps (the feet the STANDING_EYE
+        // 1.62 below the offline camera's eye — the body camera the
+        // world_camera's highest authority wears, the same eye the
+        // offline discipline kept bit for bit; the YAW the body's own
+        // +PI radian fold restores (body degrees -> camera radians
+        // +PI), the pitch the mirrored sign the setup speaks)
+        let body_pose = (ex, ey - crate::body::STANDING_EYE, ez);
+        let body = crate::body::PlayerBody::new(
+            body_pose.0,
+            body_pose.1,
+            body_pose.2,
+            (cam0.yaw - std::f32::consts::PI).to_degrees(),
+            (-cam0.pitch).to_degrees(),
+        );
+        app.body = Some(body);
+        // the camera the body rides now — re-read (the same pose the
+        // body's own camera restores bit for bit)
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let view = (f.x as f64, f.y as f64, f.z as f64);
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // the body far on the aim line (the box front face ~4.7 —
+        // beyond the static 4.625, inside the lunging 4.925)
+        let t = 5.0;
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + view.0 * t,
+            ey - 1.0,
+            ez + view.2 * t,
+            4,
+        ));
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE STANDING HOLD: the static 4.625 the far body refuses
+        assert_eq!(
+            app.pick_mob(&[]),
+            None,
+            "the standing spear the static reach keeps"
+        );
+        // THE LUNGING HOLD (the 0.3/tick velocity along the look —
+        // the lead the ray end extends: 4.625 + 0.3 = 4.925; the body
+        // pose the same, the velocity the only variant)
+        let body = app.body.as_mut().unwrap();
+        body.vx = view.0 * 0.3;
+        body.vy = view.1 * 0.3;
+        body.vz = view.2 * 0.3;
+        assert_eq!(
+            app.pick_mob(&[]),
+            Some(0),
+            "the lunging spear the lead extends"
+        );
+        // THE RETREATING HOLD (the velocity AGAINST the look — the
+        // max(0, dot) gate the lead zeroes: the static reach the far
+        // body the same refusal keeps)
+        let back = app.body.as_mut().unwrap();
+        back.vx = -view.0 * 0.3;
+        back.vy = -view.1 * 0.3;
+        back.vz = -view.2 * 0.3;
+        assert_eq!(
+            app.pick_mob(&[]),
+            None,
+            "the retreat the lead never wears"
         );
     }
 
