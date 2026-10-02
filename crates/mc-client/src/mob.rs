@@ -9834,6 +9834,62 @@ pub fn pick_entity(
     best
 }
 
+/// THE STAB'S OWN COLLECTION (javap `PiercingWeapon.attack`'s own
+/// `getHitEntitiesAlong` walk — the Either's RIGHT arm the identity
+/// lambda keeps: EVERY body along the ray the search sphere holds,
+/// not the nearest one the melee pick ranks — the polearm PIERCES
+/// through the line, the whole file the collection walk serves). The
+/// same clip law the nearest walk speaks: the corpses the
+/// CAN_BE_PICKED gate keeps out, the start-inside branch the
+/// `contains(start)` verdict speaks (t = 0, the own start), the hits
+/// the NEAREST-FIRST order the collection's own ray walk wears.
+pub fn pick_all_entities(
+    mobs: &[Zombie],
+    eye: (f64, f64, f64),
+    view: (f64, f64, f64),
+    search_range: f64,
+) -> Vec<(usize, f64)> {
+    let end = (
+        eye.0 + view.0 * search_range,
+        eye.1 + view.1 * search_range,
+        eye.2 + view.2 * search_range,
+    );
+    let square = search_range * search_range;
+    let mut hits: Vec<(usize, f64)> = Vec::new();
+    for (i, mob) in mobs.iter().enumerate() {
+        if mob.death_time > 0 {
+            continue; // the corpses never pick (the CAN_BE_PICKED gate)
+        }
+        let (bx0, by0, bz0, bx1, by1, bz1) = mob.box_at();
+        let min = (bx0, by0, bz0);
+        let max = (bx1, by1, bz1);
+        // the eye inside the box: the vanilla contains(start) law
+        let inside = eye.0 >= min.0
+            && eye.0 <= max.0
+            && eye.1 >= min.1
+            && eye.1 <= max.1
+            && eye.2 >= min.2
+            && eye.2 <= max.2;
+        let d2 = if inside {
+            0.0
+        } else {
+            match aabb_clip(eye, end, min, max) {
+                Some((point, _)) => {
+                    let (px, py, pz) = point;
+                    let (ex, ey, ez) = (px - eye.0, py - eye.1, pz - eye.2);
+                    ex * ex + ey * ey + ez * ez
+                }
+                None => continue,
+            }
+        };
+        if d2 < square {
+            hits.push((i, d2));
+        }
+    }
+    hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+    hits
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

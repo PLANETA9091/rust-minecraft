@@ -10683,12 +10683,35 @@ impl App {
                 let _ = sink.send(crate::world_view::ContainerCommand::Stab);
             }
             let name = mc_registry::item_name(main_id).unwrap_or("");
-            let event = if name == "wooden_spear" {
+            let hit_event = if name == "wooden_spear" {
+                "item.spear_wood.hit"
+            } else {
+                "item.spear.hit"
+            };
+            let attack_event = if name == "wooden_spear" {
                 "item.spear_wood.attack"
             } else {
                 "item.spear.attack"
             };
-            self.sounds.play_voice(self.frame, event, 1.0, 1.0);
+            // THE OFFLINE WALK (javap `PiercingWeapon.attack` verbatim —
+            // the offline world's own server stand-in: the missing
+            // dedicated process the local law replaces. The collection
+            // the ray serves, the raw ATTACK_DAMAGE attribute the
+            // stabAttack damage wears — the charge the meter FULL already
+            // speaks, the scale the 0.2+0.8·charge² fold the melee walk
+            // keeps the stab NEVER wears — the knockback the
+            // dealsKnockback flag's own push, the voices + the drops the
+            // hurt pipeline carries, and the hit voice the contact's own
+            // `makeHitSound` call speaks BEFORE the whoosh — the vanilla
+            // order the attack walk banks: stabAttack loop → hitSound →
+            // makeSound → swing).
+            if !self.world_is_network {
+                let contact = self.stab_walk(name);
+                if contact {
+                    self.sounds.play_voice(self.frame, hit_event, 1.0, 1.0);
+                }
+            }
+            self.sounds.play_voice(self.frame, attack_event, 1.0, 1.0);
             return;
         }
         // THE ENTITY PICK (the vanilla raycastHitResult's own law —
@@ -11502,6 +11525,170 @@ impl App {
         if !self.world_is_network {
             self.food_data.add_exhaustion(0.1);
         }
+    }
+
+    /// THE STAB'S OWN PICK (javap `PiercingWeapon.attack`'s own walk —
+    /// the `getHitEntitiesAlong` collection the AttackRange window
+    /// serves): EVERY own body along the ray the (min, max) window
+    /// keeps — the nearest-first order the collection walk wears, the
+    /// dead zone the min speaks (the polearm's ray starts BEYOND the
+    /// 1.875 band), the reach the max extends (4.625 the survival
+    /// keeps, 6.625 the creative wears, the MOVEMENT'S OWN LEAD the
+    /// sprint lunge adds — the same fold the melee pick banks), the
+    /// wall's shadow the block clip's own verdict speaks (the mob the
+    /// block reaches first the Either's LEFT arm refuses — the empty
+    /// list the `lambda$attack$1` returns).
+    fn stab_pick_all(&self) -> Vec<usize> {
+        if self.mobs.is_empty() {
+            return Vec::new();
+        }
+        let cam = self.world_camera();
+        let f = cam.forward();
+        let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let view = (f.x as f64, f.y as f64, f.z as f64);
+        let held_name = mc_registry::item_name(self.held_id().unwrap_or(0));
+        let (min_d2, max_d2) =
+            held_attack_pick_window(held_name, self.abilities_instabuild());
+        // the movement's own lead (the same fold the melee pick speaks —
+        // the lunge ahead the crosshair answers, the retreat the max(0,
+        // dot) gate never wears)
+        let lead = if min_d2 > 0.0 {
+            self.body
+                .as_ref()
+                .map(|b| (b.vx * view.0 + b.vy * view.1 + b.vz * view.2).max(0.0))
+                .unwrap_or(0.0)
+        } else {
+            0.0
+        };
+        let reach = max_d2.sqrt() + lead;
+        // the block clip's own shadow (the same search the melee pick
+        // runs — the wall the stab's ray fears)
+        let block_search = crate::world::BLOCK_INTERACTION_RANGE
+            .max(crate::world::ENTITY_INTERACTION_RANGE);
+        let block_d2 = self
+            .active_world()
+            .and_then(|w| w.clip(eye, view, block_search))
+            .map(|hit| {
+                let (lx, ly, lz) = hit.location;
+                let (dx, dy, dz) = (lx - eye.0, ly - eye.1, lz - eye.2);
+                dx * dx + dy * dy + dz * dz
+            })
+            .unwrap_or(f64::INFINITY);
+        crate::mob::pick_all_entities(&self.mobs, eye, view, reach)
+            .into_iter()
+            .filter(|(_, d2)| *d2 >= min_d2 && *d2 < block_d2)
+            .map(|(i, _)| i)
+            .collect()
+    }
+
+    /// THE STAB'S OWN CONTACT WALK (javap `PiercingWeapon.attack` over
+    /// the offline world — the missing server the local law replaces):
+    /// the raw `getAttributeValue(ATTACK_DAMAGE)` the damage float
+    /// keeps (the base + the material's own bonus the modifier rides —
+    /// the charge scale the melee walk speaks the stab NEVER wears),
+    /// every picked body the `stabAttack` call hurts (the
+    /// `iconst_1` damage flag the unconditional verdict speaks), the
+    /// knockback the `dealsKnockback` flag's own push (the
+    /// attacker-minus-victim law the melee arm banks), the hurt/death
+    /// voice the hurt pipeline carries, the drops + the xp the death
+    /// walk speaks. Returns the contact verdict the hit voice rides.
+    fn stab_walk(&mut self, held_name: &str) -> bool {
+        let hits = self.stab_pick_all();
+        if hits.is_empty() {
+            return false;
+        }
+        // the raw attribute (javap: `getAttributeValue(ATTACK_DAMAGE)`
+        // d2f fstore_3 — NO charge scale, NO crit: the polearm's own
+        // verdict the full-charge gate already speaks)
+        let dmg = (PLAYER_ATTACK_DAMAGE + material_bonus(held_name)) as f32;
+        // the attacker's own facts (the melee arm's own reads)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let (bx, bz) = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.z))
+            .unwrap_or((0.0, 0.0));
+        // PASS ONE: the hurt the collection order speaks + the facts
+        // the capture banks (the borrow the pass ends before the
+        // knockback's own walk)
+        let mut outcomes: Vec<(
+            f64,
+            f64,
+            f64,
+            bool,
+            f32,
+            crate::mob::MobKind,
+            Vec<(i32, i32)>,
+            Option<i32>,
+        )> = Vec::new();
+        for &i in &hits {
+            let Some(mob) = self.mobs.get_mut(i) else {
+                continue;
+            };
+            mob.hurt(dmg as f64, true);
+            let died = mob.health <= 0.0;
+            let pitch = mob.voice_pitch();
+            let kind = mob.kind;
+            let (mx, my, mz) = (mob.x, mob.y, mob.z);
+            let loot = if died { mob.death_loot(true) } else { Vec::new() };
+            let xp = if died { Some(mob.base_xp_reward()) } else { None };
+            outcomes.push((mx, my, mz, died, pitch, kind, loot, xp));
+        }
+        // PASS TWO: the knockback (the dealsKnockback flag the factory's
+        // own iconst_1 keeps — the caller's (x, z) the
+        // attacker-minus-victim law runs)
+        for &i in &hits {
+            if let Some(mob) = self.mobs.get_mut(i) {
+                mob.knockback(
+                    crate::mob::KNOCKBACK_STRENGTH,
+                    bx - mob.x,
+                    bz - mob.z,
+                );
+            }
+        }
+        // THE TAIL: the voices + the drops the captured facts speak
+        let mut contact = false;
+        for (mx, my, mz, died, pitch, kind, loot, xp) in outcomes {
+            contact = true;
+            if died {
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    kind.voice_event(crate::mob::VoiceSlot::Death),
+                    1.0,
+                    pitch,
+                    ear_distance(ear, mx, my, mz),
+                    ear_pan(ear, yaw, mx, my, mz),
+                );
+                for (item, count) in loot {
+                    let id = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        id,
+                        item,
+                        count,
+                        mx,
+                        my,
+                        mz,
+                        &mut self.mob_rng,
+                    ));
+                }
+                self.spawn_xp_orbs(mx, my + 0.5, mz, xp.unwrap_or(0));
+            } else {
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    kind.voice_event(crate::mob::VoiceSlot::Hurt),
+                    1.0,
+                    pitch,
+                    ear_distance(ear, mx, my, mz),
+                    ear_pan(ear, yaw, mx, my, mz),
+                );
+            }
+        }
+        contact
     }
 
     /// The left press's falling edge — the vanilla `continueAttack(false)`
@@ -38067,6 +38254,324 @@ mod tests {
             ContainerCommand::Stab => {}
             other => panic!("expected a Stab echo, got {other:?}"),
         }
+    }
+
+    /// THE OFFLINE STAB'S OWN CONTACT (javap `PiercingWeapon.attack` —
+    /// the offline world's own server stand-in the PIERCING branch now
+    /// serves): the body the ray names the `stabAttack` call hurts —
+    /// the raw `getAttributeValue(ATTACK_DAMAGE)` the damage wears
+    /// (the 2.0 base the iron spear's +2.0 bonus the attribute rides:
+    /// 4.0 the health delta speaks, the charge scale the melee walk
+    /// keeps the stab NEVER wears), the hit voice the contact's own
+    /// `makeHitSound` speaks (`item.spear.hit` — full volume, full
+    /// pitch, the attacker's own ear), the whoosh the `makeSound` call
+    /// carries AFTER the hit voice, and the zombie's own hurt voice
+    /// the hurt pipeline rides.
+    #[test]
+    fn the_offline_stab_the_contact_the_raw_attribute_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // the body on the aim line (the box front face ~2.7 — inside
+        // the 4.625 window, outside the 1.875 dead zone)
+        let t = 3.0;
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * t,
+            ey - 1.0,
+            ez + f.z as f64 * t,
+            4,
+        ));
+        let pre = app.mobs[0].health;
+        app.attack_ticker = 19; // the iron spear's own 19-tick delay
+        app.on_attack();
+        // THE RAW ATTRIBUTE (the 2.0 + 2.0 the material bonus keeps —
+        // the 0.2+0.8·charge² scale the melee walk speaks the stab
+        // never wears; the zombie's own 2.0 armor the dose absorbs —
+        // the CombatRules fold the 3.936 survivor speaks, the bare 4.0
+        // the unarmored body alone would wear)
+        let drop = pre - app.mobs[0].health;
+        assert!(
+            (3.9..4.0).contains(&drop),
+            "the iron stab the raw 4.0 the armor law absorbs ({drop})"
+        );
+        assert!(app.swing.swinging, "the stab the swing carries");
+        assert_eq!(app.attack_ticker, 0, "the onAttack's own ticker reset");
+        if !sounds_loaded() {
+            return;
+        }
+        // THE HIT VOICE (the contact's own channel the makeHitSound
+        // call carries — v1.0 p1.0 the attacker's own ear keeps)
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("item.spear.hit ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the iron stab's hit voice: {:?}",
+            app.sounds.events
+        );
+        // THE WHOOSH AFTER (the makeSound call the attack walk banks)
+        assert!(
+            app.sounds.events.iter().any(|e| e.starts_with("item.spear.attack ")),
+            "the stab's own whoosh: {:?}",
+            app.sounds.events
+        );
+        // THE ZOMBIE'S OWN HURT VOICE (the hurt pipeline the stabAttack
+        // call rides)
+        assert!(
+            app.sounds.events.iter().any(|e| e.starts_with("entity.zombie.hurt ")),
+            "the body's own hurt voice: {:?}",
+            app.sounds.events
+        );
+        // THE ORDER (the hit voice the whoosh precedes — the vanilla
+        // order the attack walk banks)
+        let hit = app
+            .sounds
+            .events
+            .iter()
+            .position(|e| e.starts_with("item.spear.hit "))
+            .expect("the hit voice rode the lane");
+        let whoosh = app
+            .sounds
+            .events
+            .iter()
+            .position(|e| e.starts_with("item.spear.attack "))
+            .expect("the whoosh rode the lane");
+        assert!(hit < whoosh, "the hit voice the whoosh precedes");
+    }
+
+    /// THE OFFLINE STAB'S OWN DEAD ZONE (javap `AttackRange.isInRange`'s
+    /// min fold over the stab's own ray — the 2.0 - 0.125 = 1.875 band
+    /// the too-close body the collection refuses): the chest-bumping
+    /// body the contact never serves — no hurt, no hit voice — the
+    /// whoosh the unconditional press still wears (the swing the
+    /// vanilla speaks whether or not a body stood there).
+    #[test]
+    fn the_offline_stab_the_dead_zone_the_polearm_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // the body close on the aim line (the box front face ~0.9 —
+        // inside the 1.875 dead zone the polearm's ray starts beyond)
+        let t = 1.2;
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * t,
+            ey - 1.0,
+            ez + f.z as f64 * t,
+            4,
+        ));
+        let pre = app.mobs[0].health;
+        app.attack_ticker = 19;
+        app.on_attack();
+        assert_eq!(app.mobs[0].health, pre, "the dead zone the contact refuses");
+        assert!(app.swing.swinging, "the swing the miss still wears");
+        if !sounds_loaded() {
+            return;
+        }
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear.hit ")),
+            "the dead zone the hit voice never wears: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear.attack ")),
+            "the whoosh the press still wears: {:?}",
+            app.sounds.events
+        );
+    }
+
+    /// THE OFFLINE STAB'S OWN COLLECTION (javap `PiercingWeapon.attack`'s
+    /// `getHitEntitiesAlong` walk — the Either's RIGHT arm the identity
+    /// lambda keeps): EVERY body along the ray the window serves the
+    /// `stabAttack` call — the polearm PIERCES through the line, both
+    /// bodies the one press hurts (the nearest-first order the
+    /// collection walk wears, the melee pick's single verdict the stab
+    /// never keeps).
+    #[test]
+    fn the_offline_stab_the_collection_the_line_pierces() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // the two bodies the one line holds (the front faces ~2.2 and
+        // ~3.7 — both inside the 4.625 window, both outside the dead
+        // zone)
+        for (id, t) in [(200, 2.5), (201, 4.0)] {
+            app.mobs.push(crate::mob::Zombie::new(
+                id,
+                ex + f.x as f64 * t,
+                ey - 1.0,
+                ez + f.z as f64 * t,
+                4,
+            ));
+        }
+        let (pre0, pre1) = (app.mobs[0].health, app.mobs[1].health);
+        app.attack_ticker = 19;
+        app.on_attack();
+        let drop0 = pre0 - app.mobs[0].health;
+        let drop1 = pre1 - app.mobs[1].health;
+        assert!(
+            (3.9..4.0).contains(&drop0),
+            "the near body the raw 4.0 the armor absorbs ({drop0})"
+        );
+        assert!(
+            (3.9..4.0).contains(&drop1),
+            "the far body the same dose the pierce speaks ({drop1})"
+        );
+    }
+
+    /// THE OFFLINE STAB'S OWN WOOD ROW (the factory's WOOD branch the
+    /// rows name): the wooden tier's own hit voice
+    /// `item.spear_wood.hit` the contact speaks, the whoosh the
+    /// `item.spear_wood.attack` row wears, and the damage the bare
+    /// base keeps (the WOOD material's 0.0 bonus the attribute rides:
+    /// 2.0 the health delta speaks).
+    #[test]
+    fn the_offline_stab_the_wood_tier_the_row_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wooden = mc_registry::item_id_by_name("wooden_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (wooden, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        let t = 3.0;
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * t,
+            ey - 1.0,
+            ez + f.z as f64 * t,
+            4,
+        ));
+        let pre = app.mobs[0].health;
+        app.attack_ticker = 13; // the wooden spear's own 13-tick delay
+        app.on_attack();
+        // THE BARE BASE (the WOOD material's 0.0 bonus the 2.0 keeps —
+        // the zombie's own 2.0 armor the dose absorbs: the 1.92
+        // survivor the CombatRules fold speaks)
+        let drop = pre - app.mobs[0].health;
+        assert!(
+            (1.8..2.0).contains(&drop),
+            "the wood stab the bare 2.0 the armor law absorbs ({drop})"
+        );
+        if !sounds_loaded() {
+            return;
+        }
+        assert!(
+            app.sounds.events.iter().any(|e| e
+                .starts_with("item.spear_wood.hit ")
+                && e.contains(" v1.000000 p1.000000")),
+            "the wooden tier's own hit row: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear_wood.attack ")),
+            "the wooden tier's own whoosh: {:?}",
+            app.sounds.events
+        );
+    }
+
+    /// THE WIRE STAB'S OWN SERVER (the live lane — the contact walk the
+    /// server's own process keeps): the networked world's press the
+    /// Stab packet sends, the local walk the `world_is_network` gate
+    /// never runs — the wire bodies the server's own verdict names, the
+    /// hit voice the entity-event mailbox answers (the byte-2 echo the
+    /// autopush-473 lane carries), the whoosh the prediction still
+    /// speaks.
+    #[test]
+    fn the_wire_stab_the_contact_the_server_keeps() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.live_held = Some(spear);
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // the wire body ahead (the server's own verdict the contact names)
+        app.live_mobs_updated(vec![wire_zombie(17, 0.0, 62.62, 3.0)]);
+        app.attack_ticker = 19;
+        app.on_attack();
+        match rx.try_recv().expect("the stab echo rode the lane") {
+            ContainerCommand::Stab => {}
+            other => panic!("expected a Stab echo, got {other:?}"),
+        }
+        assert!(app.swing.swinging, "the stab the swing carries");
+        if !sounds_loaded() {
+            return;
+        }
+        // THE LOCAL WALK'S SILENCE (the contact verdict the server owns
+        // — the hit voice the mailbox lane answers, not the press)
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear.hit ")),
+            "the wire press the local hit voice never wears: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.spear.attack ")),
+            "the whoosh the prediction speaks: {:?}",
+            app.sounds.events
+        );
     }
 
     /// THE SEVEN TIERS' OWN DELAY LADDER (the Items clinit's spear
