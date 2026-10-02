@@ -232,13 +232,25 @@ pub struct AvatarState {
     /// getArmPose law's own verdict (the SPEARS tag the seven tiers
     /// ride: any spear stack the pose keeps, swinging or using or
     /// neither — the SWING_ANIMATION STAB and the SPEAR use-anim gates
-    /// the tag law subsumes). SPEAR is the ONLY ArmPose the client's
-    /// lanes fold — the EMPTY/ITEM cases the walk's own zeroes never
-    /// move (the banked law).
+    /// the tag law subsumes).
     pub right_spear: bool,
     /// `HumanoidRenderState.leftArmPose == ArmPose.SPEAR` — the
     /// offhand stack's own verdict (the same tag law).
     pub left_spear: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.ITEM` — the
+    /// avatar law's own fall-through verdict (AvatarRenderer.
+    /// getArmPose pc 197-200: the non-empty stack the spear verdict
+    /// never answers, the use-anim gate the four mapped names the
+    /// using hand excludes — shield/bow/crossbow/goat_horn the
+    /// BLOCK/BOW_AND_ARROW/CROSSBOW_CHARGE/TOOT_HORN poses the jar
+    /// answers instead; the food's NONE the fall-through keeps).
+    /// THE MOB LAW THE VERDICT NEVER WEARS: HumanoidMobRenderer.
+    /// getArmPose pc 59-62 answers EMPTY for EVERY non-spear stack —
+    /// the mob lanes the ITEM fold the avatar's own lanes alone ride.
+    pub right_item: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.ITEM` — the
+    /// offhand stack's own verdict (the same fall-through law).
+    pub left_item: bool,
     /// `SpearAnimations$UseParams.fromKineticWeapon(useStack, ticks)`
     /// — the USING stack's own ten floats, precomputed the screens
     /// lane's item-name knowledge keeps (the render state the jar's
@@ -294,6 +306,8 @@ impl AvatarState {
             swim_amount: 0.0,
             right_spear: false,
             left_spear: false,
+            right_item: false,
+            left_item: false,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
             main_hand_kinetic: false,
@@ -4245,22 +4259,40 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     // first when the use hand matches the main arm, poseLeftArm first
     // otherwise (the idle branch the `mainRight != twoHanded` test
     // answers: no two-handed pose the round folds, the false the
-    // SPEAR/EMPTY rows keep). The EMPTY/ITEM cases the walk's own
-    // zeroes never move (the banked law); the SPEAR case 10 the ONLY
-    // fold — `thirdPersonHandUse(arm, head, right,
+    // SPEAR/EMPTY rows keep). TWO folds the matrix dispatches (the
+    // tableswitch the two verdicts the client's lanes answer): the
+    // SPEAR case 10 — `thirdPersonHandUse(arm, head, right,
     // getUseItemStackForArm(arm), state)` the poseRightArm/poseLeftArm
-    // pc-168 pair speaks. The `affectsOffhandPose` skips: SPEAR the
-    // ONLY true row (the clinit's flag pairs the dump banks), the
-    // other arm's posing the flag's truth cancels.
+    // pc-168 pair speaks — and the ITEM case 1 the avatar law's own
+    // fall-through wears (poseRightArm pc 87-116: `xRot = xRot·0.5 −
+    // 0.31415927, yRot = 0` — the constants CP #95/#279 resolve, the
+    // walk xRot the crouch's own +0.4 the fold reads, the EMPTY case 0
+    // the yRot zero the walk's own zeroes never observe; the mob law
+    // the ITEM never answers — HumanoidMobRenderer.getArmPose pc 59-62
+    // the EMPTY the non-spear stacks keep). The `affectsOffhandPose`
+    // skips: SPEAR the ONLY true row the reachable poses keep (the
+    // clinit's flag pairs the dump banks), the other arm's posing the
+    // flag's truth cancels.
     {
         let use_params = state.kinetic_use_params.as_ref();
-        let mut fold = |right_arm: bool| {
-            if right_arm {
+        // The one closure the two folds share: `spear` the SPEAR case's
+        // use lane rides, `!spear` the ITEM case-1 fold — the f32 chain
+        // the jar's fmul/fsub keeps (×0.5 the exact exponent walk, the
+        // fsub one rounding; the yRot zero the walk's own 0.0 the
+        // putfield replays, both arms the same constants — poseLeftArm
+        // pc 87-116 the mirror speaks)
+        let mut fold = |right_arm: bool, spear: bool| {
+            let (x, y, z) = if right_arm {
+                (&mut arm_r_x, &mut arm_r_y, &mut arm_r_z)
+            } else {
+                (&mut arm_l_x, &mut arm_l_y, &mut arm_l_z)
+            };
+            if spear {
                 crate::avatar::third_person_hand_use(
-                    &mut arm_r_x,
-                    &mut arm_r_y,
-                    &mut arm_r_z,
-                    true,
+                    x,
+                    y,
+                    z,
+                    right_arm,
                     state.fall_flying,
                     state.swim_amount,
                     state.ticks_using_item,
@@ -4269,38 +4301,40 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     use_params,
                 );
             } else {
-                crate::avatar::third_person_hand_use(
-                    &mut arm_l_x,
-                    &mut arm_l_y,
-                    &mut arm_l_z,
-                    false,
-                    state.fall_flying,
-                    state.swim_amount,
-                    state.ticks_using_item,
-                    state.is_using_item,
-                    state.use_item_main_hand,
-                    use_params,
-                );
+                *x = *x * 0.5 - 0.314_159_274_101_257_3;
+                *y = 0.0;
             }
         };
         if state.is_using_item && state.use_item_main_hand {
             // pcs 416-438: useMain == mainRight — poseRightArm, then
             // the left the right pose's affectsOffhandPose gates
             if state.right_spear {
-                fold(true);
+                fold(true, true);
+            } else if state.right_item {
+                fold(true, false);
             }
-            if !state.right_spear && state.left_spear {
-                fold(false);
+            if !state.right_spear {
+                if state.left_spear {
+                    fold(false, true);
+                } else if state.left_item {
+                    fold(false, false);
+                }
             }
         } else {
             // pcs 446-463 (the off-hand use) and pcs 469-514 (the idle
             // branch) both speak poseLeftArm first — the same order
             // the left pose's affectsOffhandPose gates
             if state.left_spear {
-                fold(false);
+                fold(false, true);
+            } else if state.left_item {
+                fold(false, false);
             }
-            if !state.left_spear && state.right_spear {
-                fold(true);
+            if !state.left_spear {
+                if state.right_spear {
+                    fold(true, true);
+                } else if state.right_item {
+                    fold(true, false);
+                }
             }
         }
     }
@@ -10971,6 +11005,191 @@ mod tests {
         assert_eq!(posed[2].y_rot.to_bits(), my.to_bits());
         assert_eq!(posed[2].z_rot.to_bits(), mz.to_bits());
     }
+
+    /// THE ITEM POSE'S OWN FOLD (javap `HumanoidModel.poseRightArm`
+    /// pc 87-116 the case-1 walk, the CP #95/#279 the constants
+    /// resolve — poseLeftArm the mirror the same pair wears): the
+    /// standing avatar's held stack the half-the-tilt fold wears —
+    /// xRot the walk's own 0.0 the −0.31415927 the tilt speaks, the
+    /// f32 chain the fmul/fsub keeps, the yRot the zero the walk
+    /// replays; the walking avatar the folded walk cosines the bits
+    /// re-speak; the crouch's own +0.4 the fold the raised xRot reads.
+    #[test]
+    fn the_item_pose_the_half_the_tilt_the_bits_speak() {
+        let plain = build_posed_parts(&AvatarState::rest(0.0, 0.0, 0.0));
+        // THE STANDING RIGHT: 0.0·0.5 − C — the constant's own bits the
+        // fsub rounds (the ×0.5 the exact exponent walk, the fsub one)
+        let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+        s.right_item = true;
+        let posed = build_posed_parts(&s);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            (-0.314_159_274_101_257_3_f32).to_bits(),
+            "the standing ITEM tilt the constant's own bits wear"
+        );
+        assert_eq!(posed[2].y_rot.to_bits(), 0.0f32.to_bits());
+        assert_eq!(
+            posed[2].z_rot.to_bits(),
+            plain[2].z_rot.to_bits(),
+            "the ITEM fold the walk zRot keeps"
+        );
+        // THE LEFT ARM THE VERDICT FALSE KEEPS — the walk's own zeroes
+        // the EMPTY verdict the bits replay
+        assert_eq!(
+            (
+                posed[3].x_rot.to_bits(),
+                posed[3].y_rot.to_bits(),
+                posed[3].z_rot.to_bits()
+            ),
+            (
+                plain[3].x_rot.to_bits(),
+                plain[3].y_rot.to_bits(),
+                plain[3].z_rot.to_bits()
+            ),
+            "the left arm the EMPTY verdict the walk keeps"
+        );
+        // THE STANDING LEFT (the mirror — poseLeftArm pc 87-116 the
+        // same constants the left lane wears)
+        let mut l = AvatarState::rest(0.0, 0.0, 0.0);
+        l.left_item = true;
+        let posed = build_posed_parts(&l);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            (-0.314_159_274_101_257_3_f32).to_bits(),
+            "the left lane the same constant the mirror wears"
+        );
+        assert_eq!(posed[3].y_rot.to_bits(), 0.0f32.to_bits());
+        // THE WALKING VARIANT: the fold the walk+bob xRot reads — the
+        // chain the plain part's own x the f32 ops replay
+        let mut w = AvatarState::rest(0.0, 0.0, 0.0);
+        w.walk_pos = 2.75;
+        w.walk_speed = 1.0;
+        w.age_ticks = 5.0;
+        let walk_plain = build_posed_parts(&w);
+        w.right_item = true;
+        let walk_item = build_posed_parts(&w);
+        let expected = walk_plain[2].x_rot * 0.5 - 0.314_159_274_101_257_3_f32;
+        assert_eq!(
+            walk_item[2].x_rot.to_bits(),
+            expected.to_bits(),
+            "the walking fold the walk xRot the chain re-speaks"
+        );
+        assert_eq!(walk_item[2].y_rot.to_bits(), 0.0f32.to_bits());
+        // THE CROUCH: the walk section's own +0.4 the fold reads (the
+        // raised xRot the poseArms folds — the jar's own order keeps)
+        let mut c = AvatarState::rest(0.0, 0.0, 0.0);
+        c.crouching = true;
+        c.right_item = true;
+        let posed = build_posed_parts(&c);
+        let expected = 0.4f32 * 0.5 - 0.314_159_274_101_257_3_f32;
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            expected.to_bits(),
+            "the crouch's raise the fold the raised xRot reads"
+        );
+    }
+
+    /// THE ITEM LANE'S OWN GATES (the poseArms matrix the two verdicts
+    /// dispatch — pcs 416-514 the branch walk): the using-main branch
+    /// the right SPEAR first poses, the left the affectsOffhand skip
+    /// the left ITEM keeps; the right ITEM the lane's own fold wears;
+    /// the idle branch the left first poses (the left ITEM the fold
+    /// wears), the right ITEM the open gate the fold rides; the left
+    /// SPEAR the right ITEM the affectsOffhand cancels.
+    #[test]
+    fn the_item_pose_the_gates_the_matrix_speaks() {
+        let plain = build_posed_parts(&AvatarState::rest(0.0, 0.0, 0.0));
+        let item_bits = |x: f32| (x * 0.5 - 0.314_159_274_101_257_3_f32).to_bits();
+        // LANE A (using main): the right SPEAR the right poses, the
+        // left ITEM the affectsOffhand skip the walk keeps
+        let mut a = AvatarState::rest(0.0, 0.0, 0.0);
+        a.is_using_item = true;
+        a.use_item_main_hand = true;
+        a.ticks_using_item = 1.0;
+        a.right_spear = true;
+        a.left_item = true;
+        let posed = build_posed_parts(&a);
+        assert_eq!(
+            (
+                posed[3].x_rot.to_bits(),
+                posed[3].y_rot.to_bits(),
+                posed[3].z_rot.to_bits()
+            ),
+            (
+                plain[3].x_rot.to_bits(),
+                plain[3].y_rot.to_bits(),
+                plain[3].z_rot.to_bits()
+            ),
+            "the using branch the left ITEM the skip keeps"
+        );
+        assert_ne!(
+            posed[2].x_rot.to_bits(),
+            plain[2].x_rot.to_bits(),
+            "the right SPEAR the use lane the fold wears"
+        );
+        // LANE A the right ITEM (the main stack the spear verdict never
+        // answers — the item the fold wears), the left the EMPTY the
+        // walk keeps
+        let mut b = AvatarState::rest(0.0, 0.0, 0.0);
+        b.is_using_item = true;
+        b.use_item_main_hand = true;
+        b.ticks_using_item = 1.0;
+        b.right_item = true;
+        let posed = build_posed_parts(&b);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            item_bits(plain[2].x_rot),
+            "the using-main right ITEM the fold wears"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            plain[3].x_rot.to_bits(),
+            "the left EMPTY the walk keeps"
+        );
+        // THE IDLE BRANCH: the left ITEM the left-first fold wears, the
+        // right ITEM the open gate (the ITEM affectsOffhandPose false
+        // the clinit's flags keep) the right fold rides
+        let mut c = AvatarState::rest(0.0, 0.0, 0.0);
+        c.left_item = true;
+        c.right_item = true;
+        let posed = build_posed_parts(&c);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            item_bits(plain[3].x_rot),
+            "the idle left ITEM the fold wears"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            item_bits(plain[2].x_rot),
+            "the open gate the right ITEM the fold rides"
+        );
+        // THE LEFT SPEAR THE RIGHT ITEM CANCELS: the left's
+        // affectsOffhandPose true the poseRightArm call the walk
+        // zeroes keep — the ITEM fold the gate never leaks
+        let mut d = AvatarState::rest(0.0, 0.0, 0.0);
+        d.left_spear = true;
+        d.right_item = true;
+        let posed = build_posed_parts(&d);
+        assert_eq!(
+            (
+                posed[2].x_rot.to_bits(),
+                posed[2].y_rot.to_bits(),
+                posed[2].z_rot.to_bits()
+            ),
+            (
+                plain[2].x_rot.to_bits(),
+                plain[2].y_rot.to_bits(),
+                plain[2].z_rot.to_bits()
+            ),
+            "the left SPEAR's affectsOffhand the right ITEM cancels"
+        );
+        assert_ne!(
+            posed[3].x_rot.to_bits(),
+            plain[3].x_rot.to_bits(),
+            "the left SPEAR the use lane the fold wears"
+        );
+    }
+
 
     /// THE ITEM LANE'S OWN USE FOLD (javap `ItemInHandLayer.
     /// submitArmWithItem` pcs 188-232 over the SPEAR pose's

@@ -27882,6 +27882,39 @@ impl App {
         let Some(model) = &self.avatar else {
             return; // the skin asset failed its sha1 — the renderer stays honest
         };
+        // THE ARM POSES' OWN STACKS (the getArmPose law's own reads —
+        // AvatarRenderer.getArmPose(Avatar, ItemStack, Hand) the two
+        // stacks the three-arg law walks, the names the row table
+        // resolves)
+        let main_name = mc_registry::item_name(self.held_id().unwrap_or(0));
+        let off_name = mc_registry::item_name(self.offhand_stack().0);
+        let main_spear = main_name.and_then(spear_kinetic_row).is_some();
+        let off_spear = off_name.and_then(spear_kinetic_row).is_some();
+        // THE USE-ANIM'S OWN MAPPED NAMES (the three-arg law's use
+        // gate — getUseAnimation's eight acmp branches answer the
+        // mapped poses; the client's using lanes the four names
+        // reach: shield the BLOCK, bow the BOW_AND_ARROW, crossbow
+        // the CROSSBOW_CHARGE, goat_horn the TOOT_HORN; the trident
+        // the SPEARS tag the spear verdict subsumes, the food's NONE
+        // the fall-through the ITEM keeps)
+        let use_anim_mapped = |name: Option<&str>| -> bool {
+            matches!(
+                name,
+                Some("shield") | Some("bow") | Some("crossbow") | Some("goat_horn")
+            )
+        };
+        let main_using_mapped = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && use_anim_mapped(mc_registry::item_name(active.item))
+        );
+        let off_using_mapped = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && use_anim_mapped(mc_registry::item_name(active.item))
+        );
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
         // sampling — every clock rides the frame's own partial_tick now:
         // the walk cosines, the swing, the age — no canonical mid-tick
@@ -27930,12 +27963,16 @@ impl App {
             // the SWING_ANIMATION STAB and the SPEAR use-anim gates the
             // tag law subsumes): the main/off stack's own name the row
             // table answers
-            right_spear: mc_registry::item_name(self.held_id().unwrap_or(0))
-                .and_then(spear_kinetic_row)
-                .is_some(),
-            left_spear: mc_registry::item_name(self.offhand_stack().0)
-                .and_then(spear_kinetic_row)
-                .is_some(),
+            right_spear: main_spear,
+            left_spear: off_spear,
+            // THE ITEM POSES (the avatar law's own fall-through —
+            // getArmPose pc 197-200 the non-empty non-spear stack
+            // answers, the using hand the mapped anims the gate
+            // excludes, the food's NONE the fall-through keeps; the
+            // mob law the EMPTY the verdict the player avatar alone
+            // rides)
+            right_item: main_name.is_some() && !main_spear && !main_using_mapped,
+            left_item: off_name.is_some() && !off_spear && !off_using_mapped,
             // THE USING STACK'S OWN PARAMS (fromKineticWeapon(useStack,
             // ticks) — the same window fold the first person's own lane
             // wears, the row the using item's name resolves; the
@@ -29288,6 +29325,12 @@ impl App {
                         swim_amount: 0.0,
                         right_spear: mob.held_weapon.and_then(spear_kinetic_row).is_some(),
                         left_spear: mob.held_offhand.and_then(spear_kinetic_row).is_some(),
+                        // THE MOB LAW THE ITEM NEVER ANSWERS (HumanoidMobRenderer.
+                        // getArmPose pc 59-62: the non-spear stacks the EMPTY the
+                        // arm keeps — the avatar's fall-through the mob lanes
+                        // never ride, the walk's own zeroes the pose stays)
+                        right_item: false,
+                        left_item: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict
@@ -29442,6 +29485,12 @@ impl App {
                         swim_amount: 0.0,
                         right_spear: mob.held_weapon.and_then(spear_kinetic_row).is_some(),
                         left_spear: mob.held_offhand.and_then(spear_kinetic_row).is_some(),
+                        // THE MOB LAW THE ITEM NEVER ANSWERS (HumanoidMobRenderer.
+                        // getArmPose pc 59-62: the non-spear stacks the EMPTY the
+                        // arm keeps — the avatar's fall-through the mob lanes
+                        // never ride, the walk's own zeroes the pose stays)
+                        right_item: false,
+                        left_item: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict
