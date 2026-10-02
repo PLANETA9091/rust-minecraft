@@ -2276,17 +2276,22 @@ mod held_tests {
     }
 
     /// THE USE PARAMS' OWN WINDOWS (javap `UseParams.fromKineticWeapon`
-    /// over the iron row — delay 10, the dismount/knockback/damage
-    /// starts the `maxDurationTicks + delay` fold keeps): the raise
-    /// ladder over [0, 10] the three sub-windows split (0.5/0.8), the
-    /// sway the [40, 60] window ramps, the lower the elastic [105, 145]
-    /// at `timeHeld - 20` folds, the back-rise the [230, 235] last five
+    /// over the iron row — delay 12 the ctor's own `(int)(F3·20)` fold
+    /// keeps, the dismount/knockback/damage starts the
+    /// `maxDurationTicks + delay` fold answers): the raise ladder over
+    /// [0, 12] the three sub-windows split (0.5/0.8), the sway the
+    /// [42, 62] window ramps, the lower the elastic [107, 147] at
+    /// `timeHeld - 20` folds, the back-rise the [232, 237] last five
     /// ticks, the pump `2·outCirc(sway) - 2·inCirc(back)` and the two
     /// sin folds the 19°/30° frequencies ride.
     #[test]
     fn the_use_params_the_windows_the_tiers_keep() {
-        // THE IRON ROW's own starts: 50+10 / 135+10 / 225+10
-        let (d, ds, ks, gs) = (10.0f32, 60.0f32, 145.0f32, 235.0f32);
+        // THE IRON ROW's own starts: 50+12 / 135+12 / 225+12 — the
+        // delayTicks the ctor's SECOND int arg banks (the (int)(F3·20)
+        // fold the row's own delay_ticks carries; the old 10-tuple the
+        // contactCooldown mis-attribution wore — the dev-61 walk's
+        // putfield-order evidence retires)
+        let (d, ds, ks, gs) = (12.0f32, 62.0f32, 147.0f32, 237.0f32);
         // THE PRESS FRAME (timeHeld = 0 - 1 + partial 1.0): everything zero
         let rest = spear_use_params(0.0, d, ds, ks, gs);
         assert_eq!(rest.raise, 0.0);
@@ -2299,38 +2304,38 @@ mod held_tests {
         assert_eq!(rest.sway_intensity, 0.0, "2·outCirc(0) - 2·inCirc(0)");
         assert_eq!(rest.sway_scale_slow, 0.0);
         assert_eq!(rest.sway_scale_fast, 0.0);
-        // THE RAISE'S MIDPOINT (th = 5): raise 0.5 — the start window
-        // closed, the middle/end not yet opened
-        let mid = spear_use_params(5.0, d, ds, ks, gs);
+        // THE RAISE'S MIDPOINT (th = 6 = d/2): raise 0.5 — the start
+        // window closed, the middle/end not yet opened
+        let mid = spear_use_params(6.0, d, ds, ks, gs);
         assert_eq!(mid.raise, 0.5);
         assert_eq!(mid.raise_start, 1.0, "the [0, 0.5] window closed");
         assert_eq!(mid.raise_middle, 0.0, "the [0.5, 0.8] window not yet");
         assert_eq!(mid.raise_end, 0.0, "the [0.8, 1] window not yet");
-        // THE RAISE'S CLOSE (th = 10): the full ladder at 1
-        let full = spear_use_params(10.0, d, ds, ks, gs);
+        // THE RAISE'S CLOSE (th = 12 = d): the full ladder at 1
+        let full = spear_use_params(12.0, d, ds, ks, gs);
         assert_eq!(full.raise, 1.0);
         assert_eq!(full.raise_start, 1.0);
         assert_eq!(full.raise_middle, 1.0);
         assert_eq!(full.raise_end, 1.0);
-        // THE SWAY'S OWN WINDOW (th = 60 — the dismount start): the
+        // THE SWAY'S OWN WINDOW (th = 62 — the dismount start): the
         // sway ramp closed, the back not yet — the pump 2·outCirc(1) = 2
-        let sway = spear_use_params(60.0, d, ds, ks, gs);
-        assert_eq!(sway.sway_progress, 1.0, "the [40, 60] ramp closed");
-        assert_eq!(sway.raise_back, 0.0, "the [230, 235] window far");
+        let sway = spear_use_params(62.0, d, ds, ks, gs);
+        assert_eq!(sway.sway_progress, 1.0, "the [42, 62] ramp closed");
+        assert_eq!(sway.raise_back, 0.0, "the [232, 237] window far");
         assert_eq!(sway.sway_intensity, 2.0, "2·outCirc(1) - 2·inCirc(0)");
         assert!(
-            (sway.sway_scale_slow - 1.731_986_9).abs() < 1e-6,
-            "sin(60·19°)·2 the table's own verdict (got {})",
+            (sway.sway_scale_slow - 1.980_545_6).abs() < 1e-6,
+            "sin(62·19°)·2 the table's own verdict (got {})",
             sway.sway_scale_slow
         );
         assert!(
-            (sway.sway_scale_fast - -0.000_191_747_60).abs() < 1e-9,
-            "sin(60·30°) the full-circle phase — the table's quantization the wrap speaks (got {})",
+            (sway.sway_scale_fast - 1.731_986_9).abs() < 1e-6,
+            "sin(62·30°) the table's quantization speaks (got {})",
             sway.sway_scale_fast
         );
-        // THE SWAY'S MIDPOINT (th = 50): progress 0.5 — the pump
-        // 2·outCirc(0.5), the sines the 950/1500-degree phases speak
-        let sway_mid = spear_use_params(50.0, d, ds, ks, gs);
+        // THE SWAY'S MIDPOINT (th = 52): progress 0.5 — the pump
+        // 2·outCirc(0.5), the sines the 988/1560-degree phases speak
+        let sway_mid = spear_use_params(52.0, d, ds, ks, gs);
         assert_eq!(sway_mid.sway_progress, 0.5);
         assert!(
             (sway_mid.sway_intensity - 1.732_050_8).abs() < 1e-6,
@@ -2338,34 +2343,34 @@ mod held_tests {
             sway_mid.sway_intensity
         );
         assert!(
-            (sway_mid.sway_scale_slow - -1.326_804_1).abs() < 1e-5,
-            "sin(50·19°)·pump (got {})",
+            (sway_mid.sway_scale_slow - -1.730_990_4).abs() < 1e-5,
+            "sin(52·19°)·pump (got {})",
             sway_mid.sway_scale_slow
         );
         assert!(
-            (sway_mid.sway_scale_fast - 1.499_944_6).abs() < 1e-5,
-            "sin(50·30°)·pump (got {})",
+            (sway_mid.sway_scale_fast - 1.500_027_7).abs() < 1e-5,
+            "sin(52·30°)·pump (got {})",
             sway_mid.sway_scale_fast
         );
-        // THE LOWER'S OWN ELASTIC (th = 135/145/165 — the knock window
-        // [105, 145] at th-20): the clamped open, the phase midpoint,
+        // THE LOWER'S OWN ELASTIC (th = 137/147/167 — the knock window
+        // [107, 147] at th-20): the clamped open, the phase midpoint,
         // the closed end
         assert!(
-            (spear_use_params(135.0, d, ds, ks, gs).lower - 0.035_480_26).abs() < 1e-6,
+            (spear_use_params(137.0, d, ds, ks, gs).lower - 0.035_480_26).abs() < 1e-6,
             "outCubic(elastic(0.25)) (got {})",
-            spear_use_params(135.0, d, ds, ks, gs).lower
+            spear_use_params(137.0, d, ds, ks, gs).lower
         );
         assert!(
-            (spear_use_params(145.0, d, ds, ks, gs).lower - 0.875).abs() < 1e-6,
+            (spear_use_params(147.0, d, ds, ks, gs).lower - 0.875).abs() < 1e-6,
             "the elastic midpoint the outCubic closes"
         );
         assert_eq!(
-            spear_use_params(165.0, d, ds, ks, gs).lower, 1.0,
+            spear_use_params(167.0, d, ds, ks, gs).lower, 1.0,
             "the elastic's closed end"
         );
-        // THE BACK-RISE (th = 232.5 — the [230, 235] window's half)
+        // THE BACK-RISE (th = 234.5 — the [232, 237] window's half)
         assert_eq!(
-            spear_use_params(232.5, d, ds, ks, gs).raise_back, 0.5,
+            spear_use_params(234.5, d, ds, ks, gs).raise_back, 0.5,
             "the last five ticks ramp"
         );
     }
@@ -2373,14 +2378,14 @@ mod held_tests {
     /// THE USE MATRIX'S OWN POSE (javap `firstPersonUse` pcs 41-262):
     /// the press frame the identity the raise's zero terms keep — the
     /// pose IS the bare anchor until the first tick lands — and the
-    /// raise's close (th = 10, iron) the peak the two pivots speak:
+    /// raise's close (th = 12, iron) the peak the two pivots speak:
     /// the origin rides `T(side·0.1, 0, 0)` over the rotAround folds
     /// (the XP −65° about (0, 0.1, 0), the YN −90·side about
     /// (side·0.15, 0, 0) — the −90·side the YN axis the +Y-by-+90·side
     /// fold answers), the left mirror the X-only flip keeps.
     #[test]
     fn the_use_matrix_the_rest_identity_and_the_peak_speak() {
-        let (d, ds, ks, gs) = (10.0f32, 60.0f32, 145.0f32, 235.0f32);
+        let (d, ds, ks, gs) = (12.0f32, 62.0f32, 147.0f32, 237.0f32);
         // THE PRESS FRAME: the identity — every term the zero raise
         // keeps (the pose the bare anchor never moves until the tick)
         let rest = spear_use_params(0.0, d, ds, ks, gs);
@@ -2391,7 +2396,7 @@ mod held_tests {
         // origin to (0.15, 0, 0.15)), then the XP tilt (rot_x(-65°)
         // about (0, 0.1, 0) to (0.15, 0.19368434, 0.15402352)), then
         // the translate (side·0.1, 0, 0) — (0.25, 0.19368434, 0.15402352)
-        let peak = spear_use_params(10.0, d, ds, ks, gs);
+        let peak = spear_use_params(12.0, d, ds, ks, gs);
         let mp = spear_use_matrix(&peak, 0.0, 1.0);
         let o = mp.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
         assert!((o[0] - 0.25).abs() < 1e-4, "the X over both pivots (got {})", o[0]);

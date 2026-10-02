@@ -5319,16 +5319,22 @@ pub(crate) fn held_swing_anim(held: Option<&str>) -> crate::hand::SwingAnim {
 /// THE SEVEN TIERS' OWN KINETIC ROWS (the Items clinit's spear rows —
 /// the CP floats the `Item$Properties.spear` ctor walk turns into the
 /// `KineticWeapon` fields, resolved by `scripts/cp_float.py` over the
-/// 26.2 jar): the delayTicks the bipush 10 all wear, the
-/// contactCooldownTicks the `(int)(F3·20)` fold keeps, the three
-/// conditions the `ofAttackerSpeed/ofRelativeSpeed((int)(F·20), speed)`
-/// pairs bank — the dismount/knockback the ATTACKER's own speed gates
-/// serve (minRelativeSpeed 0.0), the damage the RELATIVE speed the
-/// victim's own motion folds (minSpeed 0.0) — and the damageMultiplier
-/// the F2 float the fold wears. The thresholds the f32 constants the
-/// jar's own CP entries keep (the fcmp the widened pair answers).
+/// 26.2 jar): the ctor's putfield order SPEAKS — iload_1→
+/// contactCooldownTicks, iload_2→delayTicks, fload 6→forwardMovement,
+/// fload 7→damageMultiplier — so the factory's `bipush 10` = the
+/// CONTACT cooldown (the CONSTANT all seven share, jar pcs 168-178's
+/// `wasRecentlyStabbed(entity, contactCooldownTicks)`), the
+/// `(int)(F3·20)` fold = the DELAY the first use ticks refuse (the
+/// TIER-VARYING `delayTicks` field the damageEntities pcs 9-26 gate
+/// rides), the three conditions the
+/// `ofAttackerSpeed/ofRelativeSpeed((int)(F·20), speed)` pairs bank —
+/// the dismount/knockback the ATTACKER's own speed gates serve
+/// (minRelativeSpeed 0.0), the damage the RELATIVE speed the victim's
+/// own motion folds (minSpeed 0.0) — and the damageMultiplier the F2
+/// float the fold wears. The thresholds the f32 constants the jar's
+/// own CP entries keep (the fcmp the widened pair answers).
 pub(crate) struct KineticRow {
-    pub contact_cooldown: i32,
+    pub delay_ticks: i32,
     pub dismount_max: i32,
     pub dismount_min: f32,
     pub kb_max: i32,
@@ -5366,7 +5372,7 @@ pub(crate) fn spear_kinetic_row(name: &str) -> Option<KineticRow> {
         _ => return None,
     };
     Some(KineticRow {
-        contact_cooldown: contact,
+        delay_ticks: contact,
         dismount_max: dmax,
         dismount_min: dmin,
         kb_max: kmax,
@@ -5377,11 +5383,18 @@ pub(crate) fn spear_kinetic_row(name: &str) -> Option<KineticRow> {
     })
 }
 
-/// THE KINETIC DELAY'S OWN CONSTANT (javap `KineticWeapon.damageEntities`
-/// pcs 9-27 — the delayTicks field the seven spears' bipush 10 ctor arg
-/// keeps: `used < delayTicks` the walk refuses, the `used -= delayTicks`
-/// the conditions' own clock wears).
-pub(crate) const KINETIC_DELAY_TICKS: i32 = 10;
+/// THE KINETIC CONTACT'S OWN CONSTANT (javap `Item$Properties.spear`
+/// pc 38 — the ctor's FIRST int arg the `bipush 10` pushes, the
+/// KineticWeapon putfield pc 6 the `contactCooldownTicks` field banks:
+/// the CONSTANT all seven tiers share, the `wasRecentlyStabbed(entity,
+/// contactCooldownTicks)` the damageEntities pcs 168-178 passes): the
+/// per-victim re-stab window the memory gate wears. THE DELAY IS NOT
+/// THIS — the ctor's SECOND int arg the `(int)(F3·20)` fold keeps is
+/// the tier-varying `delayTicks` the row's own `delay_ticks` carries
+/// (the putfield order the dev-61 walk banks; the old
+/// KINETIC_DELAY_TICKS=10 the mis-attribution the ctor arg order
+/// never wore).
+pub(crate) const KINETIC_CONTACT_COOLDOWN_TICKS: i32 = 10;
 
 /// THE MAINHAND'S OWN SPEED (javap `createSwordAttributes` 32-53 —
 /// the ATTACK_SPEED modifier the sword's -2.4 addend speaks over the
@@ -11830,12 +11843,17 @@ impl App {
     /// THE USE-TICK STAB'S OWN WALK (javap `KineticWeapon.damageEntities`
     /// over the offline world — the server walk the right-press hold
     /// rides, `ItemStack.onUseTick` calling it server-side each use
-    /// tick): the delay the first 10 ticks the walk refuses, the
-    /// look·motion dot the `getKnownSpeed()·20` fold speaks (blocks per
-    /// second), the collection the AttackRange ray serves, the
-    /// recent-stab memory the per-victim cooldown keeps (the bank the
-    /// remember call performs BEFORE the conditions — the refused
-    /// evaluation the clock still spends), the three conditions the
+    /// tick): the delay the first `delayTicks` ticks the walk refuses
+    /// (the TIER-VARYING field the row banks — iron 12, wooden 15,
+    /// netherite 8, diamond 10 — the `(int)(F3·20)` fold the ctor's
+    /// second int arg keeps), the look·motion dot the
+    /// `getKnownSpeed()·20` fold speaks (blocks per second), the
+    /// collection the AttackRange ray serves, the recent-stab memory
+    /// the per-victim cooldown keeps (the bank the remember call
+    /// performs BEFORE the conditions — the refused evaluation the
+    /// clock still spends; the window the CONTACT constant's own 10
+    /// ticks the `wasRecentlyStabbed(entity, contactCooldownTicks)`
+    /// call passes), the three conditions the
     /// `Condition.test(used, lookDot, relative, factor)` law keeps, the
     /// damage the base + the `floor(relative·multiplier)` fold wears
     /// (the RAW base the `getAttributeBaseValue` reads — the material
@@ -11844,12 +11862,6 @@ impl App {
     /// broadcasts — the local hit voice the feedback lane's own
     /// 20-tick throttle carries.
     fn spear_use_tick_stab(&mut self, used: i32) {
-        // (a) THE DELAY'S OWN GATE (pcs 9-27): the first 10 ticks the
-        // hold the silence keeps
-        if used < KINETIC_DELAY_TICKS {
-            return;
-        }
-        let used_past = used - KINETIC_DELAY_TICKS;
         let name = self
             .held_id()
             .and_then(|id| mc_registry::item_name(id))
@@ -11857,6 +11869,13 @@ impl App {
         let Some(row) = spear_kinetic_row(name) else {
             return;
         };
+        // (a) THE DELAY'S OWN GATE (pcs 9-26): `used < delayTicks` the
+        // walk refuses, the `used -= delayTicks` the conditions' own
+        // clock wears — the TIER the row's own delay_ticks answers
+        if used < row.delay_ticks {
+            return;
+        }
+        let used_past = used - row.delay_ticks;
         // the window's own early-out (past both the damage and the
         // knockback windows the conditions can never speak)
         if used_past > row.dmg_max && used_past > row.kb_max {
@@ -11916,7 +11935,7 @@ impl App {
                 .iter()
                 .find(|(id, _)| *id == mob.id)
             {
-                if now - last < row.contact_cooldown as i64 {
+                if now - last < KINETIC_CONTACT_COOLDOWN_TICKS as i64 {
                     continue;
                 }
             }
@@ -23179,10 +23198,10 @@ impl App {
         };
         let params = crate::hand::spear_use_params(
             time_held,
-            KINETIC_DELAY_TICKS as f32,
-            (row.dismount_max + KINETIC_DELAY_TICKS) as f32,
-            (row.kb_max + KINETIC_DELAY_TICKS) as f32,
-            (row.dmg_max + KINETIC_DELAY_TICKS) as f32,
+            row.delay_ticks as f32,
+            (row.dismount_max + row.delay_ticks) as f32,
+            (row.kb_max + row.delay_ticks) as f32,
+            (row.dmg_max + row.delay_ticks) as f32,
         );
         let amount = crate::hand::spear_hit_feedback_amount(feedback_ticks);
         Some(crate::hand::spear_use_matrix(&params, amount, side))
@@ -27925,10 +27944,10 @@ impl App {
                 let row = spear_kinetic_row(mc_registry::item_name(active.item)?)?;
                 Some(crate::hand::spear_use_params(
                     active.ticks as f32 - 1.0 + self.partial_tick,
-                    KINETIC_DELAY_TICKS as f32,
-                    (row.dismount_max + KINETIC_DELAY_TICKS) as f32,
-                    (row.kb_max + KINETIC_DELAY_TICKS) as f32,
-                    (row.dmg_max + KINETIC_DELAY_TICKS) as f32,
+                    row.delay_ticks as f32,
+                    (row.dismount_max + row.delay_ticks) as f32,
+                    (row.kb_max + row.delay_ticks) as f32,
+                    (row.dmg_max + row.delay_ticks) as f32,
                 ))
             }),
             // THE HIT JOLT'S OWN CLOCK (getTicksSinceLastKineticHitFeedback
@@ -39250,8 +39269,9 @@ mod tests {
         // THE OTHER LANE: the main-lane use the OFF lane never dresses
         // (the getUsedItemHand() == hand conjunct)
         assert!(app.held_spear_use_pose(UseHand::Off).is_none());
-        // THE TICKS: the raise fades in — ten updates the full ladder
-        // wears (timeHeld = 10, the pose the identity never equals)
+        // THE TICKS: the raise fades in — ten updates the 0.833 the
+        // iron row's own 12-tick delay still rides (timeHeld = 10, the
+        // pose the identity never equals)
         for _ in 0..10 {
             app.update();
         }
@@ -39264,12 +39284,12 @@ mod tests {
         assert!(app.held_spear_use_pose(UseHand::Main).is_none());
         // THE HIT FEEDBACK'S OWN JOLT: the byte-2 bank the negative
         // stamp lifts, one tick later the 0.375 the tail translate
-        // dips — the raise PAST its plateau (11 ticks, the clamp the
-        // steady terms keep) both poses share, the delta the
-        // feedback's own law isolates
+        // dips — the raise PAST its plateau (12 ticks, the iron row's
+        // own delay the clamp's steady terms keep) both poses share,
+        // the delta the feedback's own law isolates
         assert!(app.on_right_press(0, 0), "the hold re-arms");
-        for _ in 0..11 {
-            app.update(); // ticks = 11 — the raise clamped at its full
+        for _ in 0..12 {
+            app.update(); // ticks = 12 — the raise clamped at its full
         }
         let no_hit = app
             .held_spear_use_pose(UseHand::Main)
@@ -39339,24 +39359,32 @@ mod tests {
             4,
         ));
         let pre = app.mobs[0].health;
-        // THE DELAY'S OWN SLEEP (ticks 1-9 the walk refuses — no bank
-        // the memory keeps, no hurt the body wears)
+        // THE DELAY'S OWN SLEEP (the first `delayTicks` ticks the walk
+        // refuses — no bank the memory keeps, no hurt the body wears;
+        // the OLD law's tick 10 the iron tier's own 12 the sleep
+        // extends past)
         app.spear_use_tick_stab(5);
         assert!(app.stab_contact_memory.is_empty(), "the delay no bank keeps");
         assert_eq!(app.mobs[0].health, pre, "the delay the body never hurts");
-        // THE FIRST EVALUATION (tick 10): the bank rides — the
+        app.spear_use_tick_stab(10);
+        assert!(
+            app.stab_contact_memory.is_empty(),
+            "the iron tier's own 12 the tick 10 never passes"
+        );
+        // THE FIRST EVALUATION (tick 12): the bank rides — the
         // standing body's zero dot the conditions refuse (the
         // refused evaluation the clock still spends)
-        app.spear_use_tick_stab(10);
+        app.spear_use_tick_stab(12);
         assert_eq!(
             app.stab_contact_memory.len(),
             1,
             "the bank the remember call keeps"
         );
         assert_eq!(app.mobs[0].health, pre, "the standing stab never hurts");
-        // THE RECENT-STAB SKIP (tick 11 — `now - last < 12` the
-        // recently verdict keeps: no re-bank, no evaluation)
-        app.spear_use_tick_stab(11);
+        // THE RECENT-STAB SKIP (tick 13 — `now - last < 10` the CONTACT
+        // constant's own window the recently verdict keeps: no re-bank,
+        // no evaluation)
+        app.spear_use_tick_stab(13);
         assert_eq!(app.stab_contact_memory.len(), 1, "the skip no re-bank keeps");
         assert_eq!(app.mobs[0].health, pre, "the cooldown the body guards");
     }
@@ -39407,7 +39435,7 @@ mod tests {
         }
         let pre = app.mobs[0].health;
         app.frame = 30; // the throttle's bank the first window clears
-        app.spear_use_tick_stab(10);
+        app.spear_use_tick_stab(12); // the iron tier's own 12 the walk passes
         // THE KINETIC FOLD (the 2.0 + floor(5.6·0.95) = 7.0 the armor
         // absorbs: the 6.888 survivor the CombatRules walk speaks)
         let drop = pre - app.mobs[0].health;
@@ -39441,7 +39469,7 @@ mod tests {
         // memory the re-evaluation never serves — no second dose, the
         // throttle's own window the second voice would never pass)
         let voiced = app.sounds.events.len();
-        app.spear_use_tick_stab(11);
+        app.spear_use_tick_stab(13);
         assert_eq!(
             app.mobs[0].health,
             pre - drop,
@@ -39496,7 +39524,7 @@ mod tests {
         }
         let pre = app.mobs[0].health;
         app.frame = 30;
-        app.spear_use_tick_stab(10);
+        app.spear_use_tick_stab(12); // the iron tier's own 12 the walk passes
         assert_eq!(app.mobs[0].health, pre, "the walk the damage refuses");
         assert_eq!(
             app.stab_contact_memory.len(),
