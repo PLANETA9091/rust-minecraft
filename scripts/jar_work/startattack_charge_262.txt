@@ -1,0 +1,59 @@
+=== cannotAttackWithItem / MINIMUM_ATTACK_CHARGE — javap walk facts
+(jar walk of client262.jar, session 2026-09-29; the raw dumps were lost
+with the container reset — this note banks the decoded evidence the
+dev-57 commit wears; re-runnable with scripts/full_disasm.py once the
+jar returns: Minecraft.startAttack / Player.cannotAttackWithItem /
+Item$Properties.spear / Items.<clinit>)
+
+Minecraft.startAttack()Z (branch order):
+  pcs 0-8     missTime > 0 -> return false
+  pcs 9-44    hitResult null -> logger.error, hasMissTime -> missTime=10
+  pcs 45-56   player.isHandsBusy() -> return false
+  pcs 57-106  spectator lane
+  pcs 107-133 stack = getItemInHand(MAIN_HAND); isItemEnabled gate
+  pcs 134-147 if (player.cannotAttackWithItem(stack, 0)) return false
+  pcs 148-184 PIERCING_WEAPON component -> gameMode.piercingAttack +
+              swing(MAIN_HAND) + return true (entity/block/miss lanes
+              NEVER reached for a spear)
+  pcs 224-283 ENTITY: ATTACK_RANGE component isInRange gate, then
+              gameMode.attack
+  pcs 284-349 BLOCK: startDestroyBlock; re-read air -> dmg = true
+  pcs 350-372 MISS: hasMissTime -> missTime=10; resetAttackStrengthTicker()
+  pcs 373-384 tail: swing(MAIN_HAND); return dmg
+
+Player.cannotAttackWithItem(Lnet/minecraft/world/item/ItemStack;I)Z:
+  minCharge = stack.getOrDefault(MINIMUM_ATTACK_CHARGE, 0.0f)
+  charge    = (attackStrengthTicker + offset) / getCurrentItemAttackStrengthDelay()
+  return (minCharge > 0.0f) && (charge < minCharge)
+  (startAttack passes offset = 0 — NOT the +0.5 the damage-scale read uses)
+
+Player.getCurrentItemAttackStrengthDelay()F:
+  (1.0 / ATTACK_SPEED attribute) * 20.0
+
+Player.resetAttackStrengthTicker()V   = attackStrengthTicker = 0; itemSwapTicker = 0
+Player.resetOnlyAttackStrengthTicker()V = attackStrengthTicker = 0 only
+
+MINIMUM_ATTACK_CHARGE carriers (CP scan of the whole jar):
+  only net/minecraft/world/item/Item$Properties.spear sets it —
+  fconst_1 = 1.0 for ALL seven spears; every other item keeps the 0.0
+  default (gate never fires).
+
+Item$Properties.spear(ToolMaterial;FFFFFFFFF) — the ATTACK_SPEED
+  modifier speaks `1.0/arg2 - 4.0` ADD_VALUE over the 4.0 base, so the
+  attribute = 1.0/arg2 and the delay = 20*arg2 ticks.
+
+Items.<clinit> spear rows (CP float decode, ldc_w constants):
+  wooden    0.65 0.70 0.75 5.00 14.00 10.00 5.10 15.00 4.60
+  stone     0.75 0.82 0.70 4.50 13.00  9.00 5.10 13.75 4.60
+  copper    0.85 0.82 0.65 4.00 12.00  8.25 5.10 12.50 4.60
+  iron      0.95 0.95 0.60 2.50 11.00  6.75 5.10 11.25 4.60
+  golden    0.95 0.70 0.70 3.50 13.00  8.50 5.10 13.75 4.60
+  diamond   1.05 1.08 0.50 3.00 10.00  6.50 5.10 10.00 4.60
+  netherite 1.15 1.20 0.40 2.50  9.00  5.50 5.10  8.75 4.60
+  (arg2 = the first float = the swing seconds)
+  -> charge delays: wooden 13, stone 15, copper 17, iron/golden 19,
+     diamond 21, netherite 23 ticks.
+
+AttackRange component the same spear factory wears:
+  new AttackRange(2.0f, 4.5f, 2.0f, 6.5f, 0.125f, 0.5f) — the entity
+  lane's range gate is a SEPARATE candidate round (not this one).

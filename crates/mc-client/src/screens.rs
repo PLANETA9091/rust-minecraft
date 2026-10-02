@@ -5272,17 +5272,42 @@ fn held_tool_args(held: &str) -> Option<(f64, f64)> {
     Some(row)
 }
 
+/// THE SPEAR'S OWN SWING SECONDS (the Items clinit's own seven
+/// `spear(material, F...)` rows — javap pcs 16646-16969: the first
+/// float the `Item$Properties.spear` walk reads into the ATTACK_SPEED
+/// modifier `1.0/arg2 - 4.0` over the 4.0 base — the attribute the
+/// 1.0/arg2 keeps, the seconds the swing's own clock wears: wooden
+/// 0.65, stone 0.75, copper 0.85, iron/golden 0.95, diamond 1.05,
+/// netherite 1.15 — the delay the `(1.0/speed)*20.0` law turns into
+/// 13/15/17/19/19/21/23 ticks).
+fn spear_swing_seconds(name: &str) -> Option<f64> {
+    let row = match name {
+        "wooden_spear" => 0.65,
+        "stone_spear" => 0.75,
+        "copper_spear" => 0.85,
+        "iron_spear" | "golden_spear" => 0.95,
+        "diamond_spear" => 1.05,
+        "netherite_spear" => 1.15,
+        _ => return None,
+    };
+    Some(row)
+}
+
 /// THE MAINHAND'S OWN SPEED (javap `createSwordAttributes` 32-53 —
 /// the ATTACK_SPEED modifier the sword's -2.4 addend speaks over the
 /// attribute's own 4.0 default the `Player.createAttributes` 19-22
 /// adds bare: the sword the 1.6 rides; the tool rows the lambda
 /// bodies' own speed args keep — the axe the -3.2/-3.1/-3.0 the
 /// shovel/pickaxe the -3.0/-2.8, the hoe the -3.0..0.0 ladder —
+/// the spear the 1.0/seconds the Properties.spear modifier keeps,
 /// the bare hand the 4.0 keeps).
 fn held_attack_speed(held: Option<&str>) -> f64 {
     let Some(name) = held else { return 4.0 };
     if let Some((_dmg_arg, spd_arg)) = held_tool_args(name) {
         return 4.0 + spd_arg;
+    }
+    if let Some(seconds) = spear_swing_seconds(name) {
+        return 1.0 / seconds;
     }
     if name.ends_with("_sword") {
         return 4.0 - 2.4;
@@ -10570,6 +10595,34 @@ impl App {
         if self.using_item.is_some() {
             return; // the vanilla isHandsBusy gate
         }
+        // THE MINIMUM CHARGE THE SPEAR DEMANDS (the 26.2 startAttack's
+        // own gate — pcs 134-147: `player.cannotAttackWithItem(stack,0)`
+        // the early-return the FALSE verdict speaks BEFORE the PIERCING
+        // branch the hit walk serves). Player.cannotAttackWithItem's own
+        // fold: the MINIMUM_ATTACK_CHARGE component the stack's
+        // getOrDefault reads (0.0 the default the item-less lane keeps;
+        // the Item$Properties.spear factory the ONLY setter — fconst_1:
+        // 1.0 all seven spears wear, every other item the 0.0 keeps),
+        // the raw charge `(attackStrengthTicker + offset) / delay` the
+        // offset-0 call reads (NOT the +0.5 the damage-scale read
+        // wears), the `<` compare the fcmpg speaks: minCharge > 0 and
+        // the not-yet-full meter the press answers REFUSE — pc 146's
+        // own ireturn, the swing/sound/packet/dig the press never
+        // wears. The delay the spear's own speed drives: the attribute
+        // 1.0/seconds (the Properties.spear modifier), the delay the
+        // (1.0/speed)*20.0 law keeps — 13/15/17/19/19/21/23 ticks the
+        // seven tiers wear, the full charge the ticker's own count
+        // answers).
+        let main_id = self.held_id().unwrap_or(0);
+        let held_name = mc_registry::item_name(main_id);
+        let is_spear = held_name.is_some_and(|name| name.ends_with("_spear"));
+        if is_spear {
+            let charge = self.attack_ticker as f32
+                / held_charge_delay(held_name) as f32;
+            if charge < 1.0 {
+                return;
+            }
+        }
         // THE PIERCING WEAPON'S OWN STAB (the 26.2 startAttack's own
         // branch — Minecraft.startAttack pcs 154-184 + the
         // MultiPlayerGameMode.piercingAttack walk the dump banks: the
@@ -10581,10 +10634,7 @@ impl App {
         // resetOnlyAttackStrengthTicker resets, the whoosh the
         // component's own attack sound wears (1.0/1.0 — the wooden
         // spear's own SPEAR_WOOD_ATTACK the properties lane names))
-        let main_id = self.held_id().unwrap_or(0);
-        if mc_registry::item_name(main_id)
-            .is_some_and(|name| name.ends_with("_spear"))
-        {
+        if is_spear {
             self.swing.start();
             self.attack_ticker = 0;
             if let Some(sink) = self.live_clicks.as_ref() {
@@ -10796,9 +10846,18 @@ impl App {
                 }
             } else {
                 self.miss_time = 10; // the vanilla hasMissTime branch
+                // THE MISS LANE'S OWN RESET (the 26.2 MISS case's own
+                // tail — startAttack pcs 366-370: the
+                // `resetAttackStrengthTicker()` the miss arm speaks —
+                // the meter the air-click zeroes, the next press the
+                // fresh clock waits for)
+                self.attack_ticker = 0;
             }
         } else {
             self.miss_time = 10; // the pick spoke MISS
+            // THE MISS LANE'S OWN RESET (the same pcs 366-370 walk —
+            // the no-hit arm the same MISS case serves)
+            self.attack_ticker = 0;
         }
         self.enqueue_dig(&sends);
         if dug {
@@ -37723,8 +37782,12 @@ mod tests {
         });
         let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
         app.attach_live_clicks(tx);
-        // THE SPEAR PRESS (the stab branch the hit walk replaces)
-        app.attack_ticker = 4;
+        // THE SPEAR PRESS (the stab branch the hit walk replaces —
+        // the ticker the iron spear's OWN full charge wears: the
+        // Properties.spear modifier 1.0/0.95 the 19-tick delay keeps,
+        // the cannotAttackWithItem gate the not-yet-full press
+        // refuses)
+        app.attack_ticker = 19;
         app.on_attack();
         assert!(app.swing.swinging, "the stab the swing carries");
         assert_eq!(
@@ -37787,14 +37850,134 @@ mod tests {
         app.on_attack();
         assert!(app.dig.is_destroying, "the sword the dig arms");
         app.dig = crate::dig::DigState::default();
-        // THE SPEAR PRESS (the stab branch the dig refuses)
+        // THE SPEAR PRESS (the stab branch the dig refuses — the
+        // diamond spear's own full charge: the 1.0/1.05 modifier the
+        // 21-tick delay keeps, the gate the not-yet-full press
+        // refuses)
         app.inventory.items[app.selected_hotbar] = (spear, 1);
         app.hotbar_slots = app.inventory.hotbar();
+        app.attack_ticker = 21;
         app.on_attack();
         assert!(
             !app.dig.is_destroying,
             "the spear the dig never arms — the stab owns the press"
         );
+    }
+
+    /// THE MINIMUM CHARGE'S OWN BOUNDARY (the 26.2 cannotAttackWithItem
+    /// gate the startAttack pcs 134-147 serves — the iron spear's own
+    /// 19-tick delay the `1.0/0.95` attribute keeps: the ticker 18 the
+    /// `18/19 < 1.0` compare REFUSES — the early return the swing/
+    /// sound/packet/missTime the press never wears, the ticker the
+    /// reset never touches — the ticker 19 the `19/19 == 1.0` compare
+    /// ADMITS, the stab branch the full meter serves).
+    #[test]
+    fn the_spear_the_charge_the_press_refuses() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the camera the sky reads (the miss lane the un-gated press
+        // would serve — the gate returns BEFORE it)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        // THE NOT-YET-FULL PRESS (ticker 18 — one tick the 19-tick
+        // delay falls short: pc 146's own ireturn)
+        app.attack_ticker = 18;
+        app.on_attack();
+        assert!(!app.swing.swinging, "the refused press the swing never wears");
+        assert_eq!(app.miss_time, 0, "the gate returns BEFORE the miss lane");
+        assert_eq!(app.attack_ticker, 18, "the refusal the ticker never resets");
+        assert!(
+            rx.try_recv().is_err(),
+            "the refused press no echo rides — no Stab, no Swing"
+        );
+        // THE FULL-CHARGE PRESS (ticker 19 — the exact `== 1.0` the
+        // `<` compare admits: the stab the meter serves)
+        app.attack_ticker = 19;
+        app.on_attack();
+        assert!(app.swing.swinging, "the admitted press the stab swings");
+        assert_eq!(app.attack_ticker, 0, "the onAttack's own ticker reset");
+        match rx.try_recv().expect("the stab echo rode the lane") {
+            ContainerCommand::Stab => {}
+            other => panic!("expected a Stab echo, got {other:?}"),
+        }
+    }
+
+    /// THE SEVEN TIERS' OWN DELAY LADDER (the Items clinit's spear
+    /// rows the Properties.spear modifier turns into attack speeds —
+    /// the `(1.0/speed)*20.0` law the delays 13/15/17/19/19/21/23
+    /// ticks keeps: the exact floats the CP walk resolved —
+    /// 0.65/0.75/0.85/0.95/0.95/1.05/1.15 the seconds the rows wear).
+    #[test]
+    fn the_spear_the_delay_the_tiers_wear() {
+        let cases: &[(&str, f64)] = &[
+            ("wooden_spear", 13.0),
+            ("stone_spear", 15.0),
+            ("copper_spear", 17.0),
+            ("iron_spear", 19.0),
+            ("golden_spear", 19.0),
+            ("diamond_spear", 21.0),
+            ("netherite_spear", 23.0),
+        ];
+        for (name, delay) in cases {
+            let got = super::held_charge_delay(Some(name));
+            assert!(
+                (got - delay).abs() < 1e-9,
+                "{name}: the delay {got} the row {delay} keeps"
+            );
+        }
+        // the raw speed the modifier speaks (the iron row the
+        // `1.0/0.95` attribute keeps)
+        let speed = super::held_attack_speed(Some("iron_spear"));
+        assert!((speed - 1.0 / 0.95).abs() < 1e-9);
+    }
+
+    /// THE MISS LANE'S OWN RESET (the 26.2 MISS case's tail — the
+    /// `resetAttackStrengthTicker()` pcs 366-370 the dump keeps: the
+    /// air-click the meter zeroes; the BLOCK lane the same law NEVER
+    /// speaks — the dig the ticker's count leaves standing).
+    #[test]
+    fn the_miss_press_the_meter_zeroes() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE BLOCK PRESS FIRST (the dig arms — the ticker the block
+        // lane never touches)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 4) as f32, c as f32 + 0.5),
+            yaw: 180.0,
+            pitch: 80.0,
+        });
+        app.attack_ticker = 30;
+        app.on_attack();
+        assert!(app.dig.is_destroying, "the block press the dig arms");
+        assert_eq!(app.attack_ticker, 30, "the block lane the ticker keeps");
+        // THE SKY PRESS (the miss arm — the missTime AND the reset the
+        // same case tail speaks)
+        app.dig = crate::dig::DigState::default();
+        app.miss_time = 0;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        app.on_attack();
+        assert_eq!(app.miss_time, 10, "the miss the hasMissTime branch arms");
+        assert_eq!(app.attack_ticker, 0, "the miss lane the reset speaks");
     }
 
     /// THE OFFHAND DRINK'S OWN REMAINDER (the milk bucket's arc — the
