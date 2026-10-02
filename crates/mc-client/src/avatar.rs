@@ -264,6 +264,22 @@ pub struct AvatarState {
     /// `HumanoidRenderState.leftArmPose == ArmPose.BOW_AND_ARROW` —
     /// the offhand stack's own verdict (the same use-window law).
     pub left_bow: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.BLOCK` — the use
+    /// gate's OWN FIRST branch (AvatarRenderer.getArmPose pcs 59-69:
+    /// the hand the `getUsedItemHand()` match rides, the remaining
+    /// ticks the window keeps, the stack's `getUseAnimation() ==
+    /// BLOCK` the acmp the shield alone answers — the RMB hold the
+    /// verdict wears). THE CLINIT'S OWN FLAG PAIR: BLOCK(2,0,0) —
+    /// twoHanded 0, affectsOffhandPose 0 — the poseBlockingArm body
+    /// the ONE arm poses, the gate the second posing never cancels.
+    /// THE MOB LAW THE VERDICT NEVER WEARS: HumanoidMobRenderer.
+    /// getArmPose answers EMPTY for every non-spear stack — the
+    /// zombie's own shieldless lane never rides.
+    pub right_block: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.BLOCK` — the
+    /// offhand stack's own verdict (the same use-window law, the
+    /// side flag the +30 the poseBlockingArm's ifeq answers).
+    pub left_block: bool,
     /// `SpearAnimations$UseParams.fromKineticWeapon(useStack, ticks)`
     /// — the USING stack's own ten floats, precomputed the screens
     /// lane's item-name knowledge keeps (the render state the jar's
@@ -323,6 +339,8 @@ impl AvatarState {
             left_item: false,
             right_bow: false,
             left_bow: false,
+            right_block: false,
+            left_block: false,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
             main_hand_kinetic: false,
@@ -4274,8 +4292,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     // first when the use hand matches the main arm, poseLeftArm first
     // otherwise (the idle branch the `mainRight != twoHanded` test
     // answers: no two-handed pose the round folds, the false the
-    // SPEAR/EMPTY rows keep). THREE folds the matrix dispatches (the
-    // tableswitch the three verdicts the client's lanes answer): the
+    // SPEAR/EMPTY rows keep). FOUR folds the matrix dispatches (the
+    // tableswitch the four verdicts the client's lanes answer): the
     // SPEAR case 10 — `thirdPersonHandUse(arm, head, right,
     // getUseItemStackForArm(arm), state)` the poseRightArm/poseLeftArm
     // pc-168 pair speaks — the BOW_AND_ARROW case 3 (pcs 174-249, the
@@ -4287,7 +4305,12 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     // poseLeftArm's the MIRROR the 0.4 the NON-bow arm carries
     // (`right.yRot = (#176 + head.yRot) - #326; left.yRot = #391 +
     // head.yRot` — the two bodies the f32 chains differ, never one
-    // shared fold) — and the ITEM case 1 the avatar law's own
+    // shared fold) — the BLOCK case 2 the poseBlockingArm call the
+    // pcs 75-84 pair speaks (`poseBlockingArm(arm, right)` — the ONE-
+    // ARM body the iconst flag answers: xRot = xRot·0.5 − 54° +
+    // clamp(head.xRot, −80°, 25°), yRot = ±30°·DEG2RAD +
+    // clamp(head.yRot, ±30°), the shield arm the RMB hold poses) —
+    // and the ITEM case 1 the avatar law's own
     // fall-through wears (poseRightArm pc 87-116: `xRot = xRot·0.5 −
     // 0.31415927, yRot = 0` — the walk xRot the crouch's own +0.4 the
     // fold reads, the EMPTY case 0 the yRot zero the walk's own zeroes
@@ -4297,18 +4320,22 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     // BOW_AND_ARROW the true rows the reachable poses keep (the
     // clinit's flag pairs the dump banks — the bow's case-3 body the
     // off arm's posing already IS, the gate the second call cancels),
-    // the other arm's posing the flag's truth cancels.
+    // the other arm's posing the flag's truth cancels — BLOCK the
+    // (2,0,0) pair the FALSE row keeps, the shield arm's one-arm
+    // body the second posing never cancels.
     {
         let use_params = state.kinetic_use_params.as_ref();
-        // THE TABLESWITCH'S OWN THREE CASES (the poseRightArm/
+        // THE TABLESWITCH'S OWN FOUR CASES (the poseRightArm/
         // poseLeftArm pair the matrix dispatches): `Spear` the case-10
-        // use lane rides, `Bow` the case-3 both-arms assignment, `Item`
-        // the case-1 fold — the one closure the whole switch wears, the
-        // f32 chains the jar's own bytecode keeps
+        // use lane rides, `Bow` the case-3 both-arms assignment,
+        // `Block` the case-2 poseBlockingArm call, `Item` the case-1
+        // fold — the one closure the whole switch wears, the f32
+        // chains the jar's own bytecode keeps
         #[derive(Clone, Copy)]
         enum PoseCase {
             Spear,
             Bow,
+            Block,
             Item,
         }
         let mut fold = |right_arm: bool, kind: PoseCase| {
@@ -4363,6 +4390,45 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                         arm_l_x = BOW_PITCH + hx;
                     }
                 }
+                PoseCase::Block => {
+                    // THE SHIELD'S OWN BODY (HumanoidModel.
+                    // poseBlockingArm, the case-2 call the
+                    // poseRightArm/poseLeftArm pcs 75-84 speak — the
+                    // right arm the iconst_1 the left the iconst_0
+                    // rides, the ONE-ARM body the flag answers; the
+                    // CP floats the cp_float_484 resolve: #418 =
+                    // 0.9424779 = 54° (0x3F71463B), #419 = -1.3962634
+                    // = -80° (0xBFB2B8C2), #420 = 0.43633232 = 25°
+                    // (0x3EDF66F3), #421 = -30.0, #422 = 30.0, #242 =
+                    // 0.017453292 = DEG2RAD (0x3C8EFA35), #423/#417 =
+                    // ∓0.5235988 = 30° (0xBF060A92/0x3F060A92)): the
+                    // TWO putfields the body keeps — xRot = xRot·0.5
+                    // − 54° + clamp(head.xRot, −80°, 25°), yRot =
+                    // ±30°·DEG2RAD + clamp(head.yRot, ±30°) — the ±30
+                    // the ARM SIDE the right flag answers (right the
+                    // iconst_1 the −30 rides, the ifeq the left's +30
+                    // keeps), the ×0.5 the exact exponent walk, the
+                    // zRot the pose never touches. THE SIDE THE
+                    // DEGREES SPEAK: −30·#242 the one fmul rounds to
+                    // the SAME bits #423 keeps (0xBF060A92) — the
+                    // constant pool the degrees pre-converted never
+                    // stored, the fmul the conversion wears.
+                    const BLOCK_TILT: f32 = 0.942_477_9; // CP #418, 54 deg
+                    const PITCH_MIN: f32 = -1.396_263_4; // CP #419, -80 deg
+                    const PITCH_MAX: f32 = 0.436_332_32; // CP #420, 25 deg
+                    const YAW_CLAMP: f32 = 0.523_598_8; // CP #417/#423, 30 deg
+                    const DEG2RAD: f32 = 0.017_453_292; // CP #242
+                    let (x, y) = if right_arm {
+                        (&mut arm_r_x, &mut arm_r_y)
+                    } else {
+                        (&mut arm_l_x, &mut arm_l_y)
+                    };
+                    *x = (*x * 0.5 - BLOCK_TILT)
+                        + head_x.clamp(PITCH_MIN, PITCH_MAX);
+                    let side = if right_arm { -30.0f32 } else { 30.0f32 };
+                    *y = (side * DEG2RAD)
+                        + head_y.clamp(-YAW_CLAMP, YAW_CLAMP);
+                }
                 PoseCase::Item => {
                     // the ITEM case-1 fold — the f32 chain the jar's
                     // fmul/fsub keeps (×0.5 the exact exponent walk,
@@ -4388,13 +4454,22 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 // the body itself carries, the gate below the second
                 // call cancels
                 fold(true, PoseCase::Bow);
+            } else if state.right_block {
+                // case 2: the ONE-ARM body — the shield arm alone
+                // poses, the affectsOffhand flag FALSE the gate below
+                // the second posing never cancels
+                fold(true, PoseCase::Block);
             } else if state.right_spear {
                 fold(true, PoseCase::Spear);
             } else if state.right_item {
                 fold(true, PoseCase::Item);
             }
             if !state.right_spear && !state.right_bow {
-                if state.left_spear {
+                if state.left_bow {
+                    fold(false, PoseCase::Bow);
+                } else if state.left_block {
+                    fold(false, PoseCase::Block);
+                } else if state.left_spear {
                     fold(false, PoseCase::Spear);
                 } else if state.left_item {
                     fold(false, PoseCase::Item);
@@ -4407,13 +4482,20 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             if state.left_bow {
                 // case 3 mirror: the left method's own body
                 fold(false, PoseCase::Bow);
+            } else if state.left_block {
+                // case 2 mirror: the iconst_0 the +30 side rides
+                fold(false, PoseCase::Block);
             } else if state.left_spear {
                 fold(false, PoseCase::Spear);
             } else if state.left_item {
                 fold(false, PoseCase::Item);
             }
             if !state.left_spear && !state.left_bow {
-                if state.right_spear {
+                if state.right_bow {
+                    fold(true, PoseCase::Bow);
+                } else if state.right_block {
+                    fold(true, PoseCase::Block);
+                } else if state.right_spear {
                     fold(true, PoseCase::Spear);
                 } else if state.right_item {
                     fold(true, PoseCase::Item);
@@ -11468,15 +11550,14 @@ mod tests {
         // THE IDLE BOW THE VERDICT NEVER WEARS: the jar's use gate
         // the `getUseItemRemainingTicks() > 0` window rides — the
         // not-using walk the ITEM fall-through answers (the client's
-        // own verdict the excluded hands the honest FALSE keeps, the
-        // matrix the idle branch the bow verdict the fold never
-        // reaches)
+        // own verdict the excluded hands the honest FALSE keeps: the
+        // row table the idle bow the FALSE keeps, the right chain
+        // the ITEM verdict the fall-through wears)
         let mut plain_idle = AvatarState::rest(0.0, 30.0, 0.0);
         plain_idle.head_yaw_off_deg = 20.0;
         let idle_plain = build_posed_parts(&plain_idle);
         let mut c = AvatarState::rest(0.0, 30.0, 0.0);
         c.head_yaw_off_deg = 20.0;
-        c.right_bow = true;
         c.right_item = true;
         let posed = build_posed_parts(&c);
         assert_eq!(
@@ -11493,6 +11574,243 @@ mod tests {
             posed[2].x_rot.to_bits(),
             0xBF86_0A92,
             "the idle bow the aim the matrix never rides"
+        );
+        // THE FIELD THE TABLESWITCH READS (the block round's own law
+        // — autopush-484): the jar's poseRightArm the rightArmPose
+        // field WHATEVER it holds reads, no lane guard the bytecode
+        // keeps — the BOW_AND_ARROW field the case-3 body wears
+        // regardless of the using walk (the using window the VERDICT
+        // construction gates — the row table the idle bow the FALSE
+        // keeps — the dispatch the field alone reads)
+        let mut d = AvatarState::rest(0.0, 30.0, 0.0);
+        d.head_yaw_off_deg = 20.0;
+        d.right_bow = true;
+        let posed = build_posed_parts(&d);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the field verdict the case-3 body the dispatch wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0x3E7F_0B1E,
+            "the field verdict the one-fadd yRot wears"
+        );
+    }
+
+    /// THE SHIELD'S OWN BODY (javap `HumanoidModel.poseBlockingArm`
+    /// the 69-byte whole, the case-2 call the poseRightArm/
+    /// poseLeftArm pcs 75-84 pair speaks — the right arm the
+    /// iconst_1 the left the iconst_0 rides): the TWO putfields the
+    /// body keeps — xRot = xRot·0.5 − 54° + clamp(head.xRot, −80°,
+    /// 25°), yRot = ±30°·DEG2RAD + clamp(head.yRot, ±30°) — the ±30
+    /// the ARM SIDE the right flag answers, the clamps the head
+    /// pitch/yaw the ±80/25/±30 windows ride, the zRot the pose
+    /// never touches. THE PINS the pins_484 oracle computes (the f32
+    /// chains the jar's own fmul/fsub/fadd order keeps — every op
+    /// rounds).
+    #[test]
+    fn the_block_pose_the_shield_the_arm_bends_speak() {
+        // SCENE R (lane A: the main hand the shield uses): the head
+        // pitch +30° the clamp MAX lane rides (30° > 25° the jar's
+        // own window), the yaw offset +20° the ±30° window keeps —
+        // the standing idle arm the 0.0 start the fold reads
+        let mut s = AvatarState::rest(0.0, 30.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.is_using_item = true;
+        s.use_item_main_hand = true;
+        s.ticks_using_item = 1.0;
+        s.right_block = true;
+        let posed = build_posed_parts(&s);
+        // right.xRot = f32(f32(0.0·0.5 − 54°) + clamp(30°, −80°, 25°))
+        // = f32(−0.9424779 + 0.43633232) — the clamp MAX the bits pin
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF01_92C2,
+            "the right body the shield arm's xRot the clamp-max lane wears"
+        );
+        // right.yRot = f32(−30°·DEG2RAD + clamp(20°, ±30°)) — the −30
+        // the one fmul the #423's own bits rounds to, the fadd the
+        // head's yaw rides
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBE32_B8C4,
+            "the right body the shield arm's yRot the minus-30 side wears"
+        );
+        // THE ZROT THE POSE NEVER TOUCHES — the plain state the same
+        // age the bits replay
+        let mut p = AvatarState::rest(0.0, 30.0, 0.0);
+        p.head_yaw_off_deg = 20.0;
+        let plain = build_posed_parts(&p);
+        assert_eq!(
+            posed[2].z_rot.to_bits(),
+            plain[2].z_rot.to_bits(),
+            "the right body the walk zRot the block never touches"
+        );
+        // SCENE C (the clamp MIN lanes): the head pitch −90° the
+        // −80° floor rides, the yaw offset −40° the −30° floor rides
+        let mut c = AvatarState::rest(0.0, -90.0, 0.0);
+        c.head_yaw_off_deg = -40.0;
+        c.is_using_item = true;
+        c.use_item_main_hand = true;
+        c.ticks_using_item = 1.0;
+        c.right_block = true;
+        let posed = build_posed_parts(&c);
+        // right.xRot = f32(−0.9424779 + (−1.3962634)) — the floor
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xC015_ADF0,
+            "the clamp the pitch floor the shield arm's xRot wears"
+        );
+        // right.yRot = f32(−30°·DEG2RAD + (−30°)) — the yaw floor
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBF86_0A92,
+            "the clamp the yaw floor the shield arm's yRot wears"
+        );
+        // SCENE CR (the ×0.5 chain the non-zero start reads): the
+        // crouch's own +0.4 the walk arm rides, the half the exact
+        // exponent walk the 0.2 keeps
+        let mut cr = AvatarState::rest(0.0, 30.0, 0.0);
+        cr.head_yaw_off_deg = 20.0;
+        cr.crouching = true;
+        cr.is_using_item = true;
+        cr.use_item_main_hand = true;
+        cr.ticks_using_item = 1.0;
+        cr.right_block = true;
+        let posed = build_posed_parts(&cr);
+        // right.xRot = f32(f32(0.4·0.5 − 54°) + clamp(30°, −80°, 25°))
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBE9C_BF1D,
+            "the crouch the ×0.5 chain the raised start reads"
+        );
+        // SCENE L (lanes B+C: the off hand the shield uses): the
+        // iconst_0 the +30 side the ifeq answers — the MIRROR the
+        // same xRot chain the left arm keeps
+        let mut l = AvatarState::rest(0.0, 30.0, 0.0);
+        l.head_yaw_off_deg = 20.0;
+        l.is_using_item = true;
+        l.use_item_main_hand = false;
+        l.ticks_using_item = 1.0;
+        l.left_block = true;
+        let posed = build_posed_parts(&l);
+        // left.xRot = f32(0.0·0.5 − 54° + clamp(30°, −80°, 25°)) —
+        // the ONE-ARM body the start the left arm's own keeps
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF01_92C2,
+            "the left body the shield arm's xRot the same chain wears"
+        );
+        // left.yRot = f32(+30°·DEG2RAD + clamp(20°, ±30°)) — the +30
+        // the #422 the iconst_0 rides
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F5F_66F3,
+            "the left body the shield arm's yRot the plus-30 side wears"
+        );
+        assert_eq!(
+            posed[3].z_rot.to_bits(),
+            plain[3].z_rot.to_bits(),
+            "the left body the zRot the block never touches"
+        );
+    }
+
+    /// THE BLOCK LANE'S OWN GATES (the poseArms matrix the FOUR
+    /// verdicts dispatch — the BLOCK the clinit's (2,0,0) pair the
+    /// affectsOffhandPose FALSE row keeps, the one-arm body the
+    /// second posing never cancels): the right shield the left ITEM
+    /// the gate opens, the left shield the right ITEM the mirror
+    /// keeps, the idle shield the verdict the ITEM fall-through
+    /// answers (the use gate the using window alone wears).
+    #[test]
+    fn the_block_pose_the_gates_the_matrix_speak() {
+        // LANE A: the right shield the ONE-ARM body poses — the left
+        // stack the sword verdict (left_item) the ITEM fold keeps,
+        // the affectsOffhand flag FALSE the gate the second posing
+        // never cancels (the (2,0,0) pair the SPEAR/BOW true rows
+        // the shield alone misses)
+        let mut a = AvatarState::rest(0.0, 30.0, 0.0);
+        a.head_yaw_off_deg = 20.0;
+        a.is_using_item = true;
+        a.use_item_main_hand = true;
+        a.ticks_using_item = 1.0;
+        a.right_block = true;
+        a.left_item = true;
+        let posed = build_posed_parts(&a);
+        // the left arm's ITEM fold: f32(0.0·0.5 − 0.31415927) — the
+        // gate the fold the bits keep
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the right shield the left ITEM the gate-open the fold wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0.0f32.to_bits(),
+            "the right shield the left ITEM the yRot zero wears"
+        );
+        // LANES B+C: the left shield the mirror poses — the right
+        // stack the ITEM verdict the gate-open the fold keeps
+        let mut b = AvatarState::rest(0.0, 30.0, 0.0);
+        b.head_yaw_off_deg = 20.0;
+        b.is_using_item = true;
+        b.use_item_main_hand = false;
+        b.ticks_using_item = 1.0;
+        b.left_block = true;
+        b.right_item = true;
+        let posed = build_posed_parts(&b);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the left shield the right ITEM the mirror the fold wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0.0f32.to_bits(),
+            "the left shield the right ITEM the yRot zero wears"
+        );
+        // THE IDLE SHIELD THE VERDICT NEVER WEARS: the jar's use gate
+        // the `getUseItemRemainingTicks() > 0` window rides — the
+        // not-using walk the ITEM fall-through answers (the idle
+        // shield the BLOCK fold never reaches, the same law the idle
+        // bow the matrix keeps)
+        let mut idle = AvatarState::rest(0.0, 30.0, 0.0);
+        idle.head_yaw_off_deg = 20.0;
+        idle.right_item = true;
+        let posed = build_posed_parts(&idle);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the idle shield the ITEM fall-through the fold wears"
+        );
+        assert_ne!(
+            posed[2].x_rot.to_bits(),
+            0xBF01_92C2,
+            "the idle shield the block fold the matrix never rides"
+        );
+        // THE BLOCK THE BOW THE VERDICTS EXCLUDE: the one using walk
+        // the one anim carries — the shield name the BLOCK answers,
+        // the bow name the BOW_AND_ARROW — the verdicts the using
+        // window alone answers the matrix dispatches (the client's
+        // row table the exclusive names the flags keep, the fold the
+        // right flag's own verdict reads)
+        let mut both = AvatarState::rest(0.0, 30.0, 0.0);
+        both.head_yaw_off_deg = 20.0;
+        both.is_using_item = true;
+        both.use_item_main_hand = true;
+        both.ticks_using_item = 1.0;
+        both.right_block = true;
+        both.right_bow = true;
+        let posed = build_posed_parts(&both);
+        // the bow verdict the chain's FIRST branch the fold picks —
+        // the aim's bits the shield's clamp lane never wears (the
+        // chain order the exclusive verdicts the defensive keeps,
+        // the jar's own row the one anim never both answers)
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the both-flags state the bow branch the chain picks"
         );
     }
 

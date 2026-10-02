@@ -27935,6 +27935,24 @@ impl App {
                 if active.hand == UseHand::Off
                     && mc_registry::item_name(active.item) == Some("bow")
         );
+        // THE SHIELD'S OWN VERDICTS (the three-arg law's use gate
+        // pcs 59-69 the FIRST branch the eight acmp walk keeps: the
+        // using stack's `getUseAnimation() == BLOCK` the shield name
+        // resolves — the RMB hold the verdict wears, the idle shield
+        // the ITEM fall-through the verdicts exclude — the same
+        // using-mapped gate above the same hand answers)
+        let main_block = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && mc_registry::item_name(active.item) == Some("shield")
+        );
+        let off_block = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && mc_registry::item_name(active.item) == Some("shield")
+        );
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
         // sampling — every clock rides the frame's own partial_tick now:
         // the walk cosines, the swing, the age — no canonical mid-tick
@@ -27998,6 +28016,13 @@ impl App {
             // wears, the idle bow the ITEM the fall-through keeps)
             right_bow: main_bow,
             left_bow: off_bow,
+            // THE SHIELD POSES (the use gate's own first branch — the
+            // main/off using stack the shield name the BLOCK the
+            // window wears, the idle shield the ITEM the fall-through
+            // keeps; the clinit's (2,0,0) pair the affectsOffhand
+            // flag FALSE the second posing never cancels)
+            right_block: main_block,
+            left_block: off_block,
             // THE USING STACK'S OWN PARAMS (fromKineticWeapon(useStack,
             // ticks) — the same window fold the first person's own lane
             // wears, the row the using item's name resolves; the
@@ -29362,6 +29387,12 @@ impl App {
                         // SkeletonModel branch arms, never this lane)
                         right_bow: false,
                         left_bow: false,
+                        // THE MOB LAW THE BLOCK NEVER ANSWERS (the
+                        // same pc 59-62 — the EMPTY every non-spear
+                        // stack keeps, the shieldless mobs the lane
+                        // never ride)
+                        right_block: false,
+                        left_block: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict
@@ -29528,6 +29559,12 @@ impl App {
                         // SkeletonModel branch arms, never this lane)
                         right_bow: false,
                         left_bow: false,
+                        // THE MOB LAW THE BLOCK NEVER ANSWERS (the
+                        // same pc 59-62 — the EMPTY every non-spear
+                        // stack keeps, the shieldless mobs the lane
+                        // never ride)
+                        right_block: false,
+                        left_block: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict
