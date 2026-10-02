@@ -10695,8 +10695,21 @@ impl App {
                 // THE ECHO'S OWN FACTS (the attacker's own state the
                 // offline arm's walk reads — the same gates the same
                 // law computes; the scale read the PRE-reset ticker
-                // keeps)
-                let charge = ((self.attack_ticker as f32 + 0.5) / 5.0).clamp(0.0, 1.0);
+                // keeps). THE CHARGE THE HELD ITEM'S OWN CLOCK READS
+                // (the vanilla `getAttackStrengthScale(0.5)` fold the
+                // offline arm wears — the (ticker + 0.5) numerator the
+                // getCurrentItemAttackStrengthDelay denominator names:
+                // the delay the held item's own attack speed drives —
+                // the fist the 5.0 keeps, the sword the 12.5 rides, the
+                // spear the 13-23 the tiers wear — the /5.0 fist clock
+                // the non-fist items' crit/sweep/strong windows a
+                // half-meter early spoke: the sword's ticker 10 the
+                // fist clock called FULL while the 12.5 meter 0.84
+                // still rides, the weak voice the strong spoke, the
+                // sweep arc the not-yet meter flung).
+                let charge = ((self.attack_ticker as f32 + 0.5)
+                    / held_charge_delay(held_name) as f32)
+                    .clamp(0.0, 1.0);
                 let full = charge > 0.9;
                 let (on_ground, eye_water) = self.body_state();
                 let (falling, sprinting, bx, _by, bz, bvx, bvz, vyaw, by_mid) = self
@@ -62743,6 +62756,109 @@ cow_sound_variant: None,
     }
 
     #[test]
+    fn the_wire_attack_the_sword_clock_the_meter_wears() {
+        // THE WIRE ARM'S OWN CHARGE CLOCK (the getAttackStrengthScale
+        // fold the offline arm wears — the delay the held item's own
+        // attack speed drives: the iron sword's -2.4 modifier the 1.6
+        // speed the 12.5-tick delay keeps — the /5.0 fist clock the
+        // wire lane hardcoded the sword's windows a half-meter early
+        // spoke: ticker 10 the fist clock 2.1 FULL called while the
+        // sword's own meter 10.5/12.5 = 0.84 still rides — the weak
+        // voice the strong spoke, the sweep arc the not-yet meter
+        // flung). THE HALF-METER the weak voice answers, THE FULL
+        // SWORD METER (ticker 12: 12.5/12.5 == 1.0) the strong the
+        // exact boundary speaks.
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let n = app.world_size as f64;
+        let mut body = crate::body::PlayerBody::new(
+            n / 2.0 + 0.5,
+            app.spawn_y as f64,
+            n / 2.0 + 0.5,
+            -90.0,
+            0.0,
+        );
+        body.on_ground = true;
+        app.body = Some(body);
+        let (bx, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.z)
+        };
+        app.live_mobs_updated(vec![wire_mob_named(
+            100,
+            bx + 1.8,
+            app.spawn_y as f64,
+            bz,
+            "minecraft:zombie",
+        )]);
+        // the iron sword the main hand holds — the wire-arm charge the
+        // item's OWN clock reads (the wire name the same table the
+        // held_id resolves)
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        // THE HALF-METER PRESS (ticker 10 — 10.5/12.5 = 0.84 the ≤0.9
+        // gate the weak voice speaks; the fist clock 2.1 the strong
+        // would have named, the sweep arc flung)
+        app.attack_ticker = 10;
+        app.on_attack();
+        assert_eq!(
+            rx.try_recv().unwrap(),
+            ContainerCommand::Attack { entity_id: 100 },
+            "the wire press the packet rides regardless"
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.strong ")),
+            "the sword's half-meter the strong never speaks"
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.sweep")),
+            "the not-yet meter the sweep never arms"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.weak ")),
+            "the half-meter the weak voice speaks"
+        );
+        // THE FULL SWORD METER (ticker 12 — (12+0.5)/12.5 == 1.0 the
+        // >0.9 gate arms — the full-charge sword ON THE GROUND the
+        // doSweepAttack lane owns: the sweep voice the arc flings, the
+        // strong the !crit && !sweep gate never speaks; the fist clock
+        // the ticker 5 named, 7 ticks early)
+        app.sounds.events.clear();
+        app.attack_ticker = 12;
+        app.on_attack();
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.sweep")),
+            "the sword's full meter the sweep flings"
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.player.attack.strong ")),
+            "the sweep lane the strong never speaks"
+        );
+        assert_eq!(app.attack_ticker, 0, "the reset the walk rides last");
+    }
+
+    #[test]
     fn the_wire_attack_predicts_the_crit_emitter() {
         // THE CRIT ARM'S OWN PREDICTION (the 26.2 Player.attack's
         // `this.crit(target)` the repo's javap places BEFORE the hurt —
@@ -62886,7 +63002,11 @@ cow_sound_variant: None,
         app.offline_held_updated(Some("item/wooden_sword"));
         let (tx, _rx) = std::sync::mpsc::channel();
         app.live_clicks = Some(tx);
-        app.attack_ticker = 10; // the full charge the sweep gate reads
+        // the full charge the sword's OWN clock reads (the wooden
+        // sword's 1.6 speed the 12.5-tick delay keeps — ticker 12:
+        // 12.5/12.5 == 1.0 the >0.9 gate arms; the /5.0 fist clock the
+        // old ticker 10 called full while the sword's meter 0.84 rode)
+        app.attack_ticker = 12;
         app.on_attack();
         // THE SWEEP VOICE + THE ARC (the branch's own pair — the
         // strong's absence the sweep arm's None keeps, the crit the
