@@ -6603,7 +6603,12 @@ pub struct App {
     /// event-2 walk speaks, the bank the gate's own pass performs
     /// BEFORE the weapon gate — the silent miss the clock still
     /// spends). The client tick the level's gameTime stand-in keeps
-    /// (the base + the frame the same fold the day cycle wears).
+    /// (the base + the frame the same fold the day cycle wears). The
+    /// ctor's own `ldc2_w -2147483648L` the field arms (the
+    /// LivingEntity constructor's pcs 96-100) — the NEGATIVE stamp the
+    /// `getTicksSinceLastKineticHitFeedback` `< 0` guard answers 0
+    /// until the first hit banks, the fresh world the steady silence
+    /// keeps.
     pub last_kinetic_hit_feedback_time: i64,
     /// THE STAB'S OWN CONTACT MEMORY (javap
     /// `LivingEntity.recentKineticEnemies` — the
@@ -7629,7 +7634,7 @@ impl App {
             level_ambient_rng: crate::drops::Lcg::new(0x5EED_7E11),
             spell_jitter_rng: crate::drops::Lcg::new(0x5EED_570F),
             attack_ticker: 0,
-            last_kinetic_hit_feedback_time: 0,
+            last_kinetic_hit_feedback_time: i64::MIN,
             stab_contact_memory: Vec::new(),
             dig: crate::dig::DigState::new(),
             dig_held: false,
@@ -23092,9 +23097,11 @@ impl App {
         for _ev in events {
             // (a) THE THROTTLE (pcs 0-19): the client tick the level's
             // gameTime stand-in keeps — the `<= 20` window the echo
-            // never speaks twice within
+            // never speaks twice within (the saturating fold the
+            // i64::MIN stamp the fresh world wears — the vanilla
+            // `gameTime - last > 20` lcmp the huge gap answers)
             let now = (self.day_time_base + self.frame) as i64;
-            if now - self.last_kinetic_hit_feedback_time <= 20 {
+            if now.saturating_sub(self.last_kinetic_hit_feedback_time) <= 20 {
                 continue;
             }
             // (b) THE BANK (pcs 20-28): the timestamp rides BEFORE the
@@ -23117,6 +23124,68 @@ impl App {
             };
             self.sounds.play_voice(self.frame, event, 1.0, 1.0);
         }
+    }
+
+    /// THE KINETIC USE'S OWN POSE (javap `ItemInHandRenderer
+    /// .submitArmWithItem` pcs 583-640 + 1287-1336 — the SPEAR
+    /// use-animation branch the `$SwitchMap` maps to case 9): the held
+    /// spear's RMB hold the first-person raise/sway pose wears. The
+    /// gate the vanilla conjuncts keep — `isUsingItem` (the
+    /// `using_item` Some), `getUsedItemHand() == hand` (the pose rides
+    /// the USED lane only, the OTHER lane the swing dispatch keeps) —
+    /// and the drawn stack the branch reads (the active item the lane's
+    /// own held stack answers, the KINETIC_WEAPON component the seven
+    /// spears alone carry). `timeHeld` the branch's own fold —
+    /// `getUseDuration - getUseItemRemainingTicks + partialTick - 1` —
+    /// our `active.ticks` the used count (0 at the press, +1 per tick
+    /// the vanilla remaining-decrement law matches), the feedback tick
+    /// `getTicksSinceLastKineticHitFeedback`'s `(gameTime - last) +
+    /// partialTick` read (the same clock the byte-2 throttle banks).
+    /// The windows the [`KineticRow`]'s own `maxDurationTicks + delay`
+    /// starts keep (the `Condition::maxDurationTicks` lambda the
+    /// invokedynamic binds). `None` = not using, not this lane's use,
+    /// or not a spear — the caller renders the plain swing dispatch.
+    pub fn held_spear_use_pose(&self, hand: UseHand) -> Option<crate::math::Mat4> {
+        let active = self.using_item.as_ref()?;
+        if active.hand != hand {
+            return None;
+        }
+        let stack_id = match hand {
+            UseHand::Main => self.held_id().unwrap_or(0),
+            UseHand::Off => self.offhand_stack().0,
+        };
+        if active.item != stack_id {
+            return None;
+        }
+        let name = mc_registry::item_name(active.item)?;
+        if !name.ends_with("_spear") {
+            return None;
+        }
+        let row = spear_kinetic_row(name)?;
+        let time_held = active.ticks as f32 - 1.0 + self.partial_tick;
+        let now = (self.day_time_base + self.frame) as i64;
+        // the feedback tick: `getTicksSinceLastKineticHitFeedback`'s own
+        // `< 0` guard — the NEGATIVE stamp (the ctor's -2147483648L) the
+        // 0 keeps until the first hit banks, then `(gameTime - last) +
+        // partialTick` the jolt reads
+        let feedback_ticks = if self.last_kinetic_hit_feedback_time < 0 {
+            0.0
+        } else {
+            (now - self.last_kinetic_hit_feedback_time) as f32 + self.partial_tick
+        };
+        let side = match hand {
+            UseHand::Main => 1.0,
+            UseHand::Off => -1.0,
+        };
+        let params = crate::hand::spear_use_params(
+            time_held,
+            KINETIC_DELAY_TICKS as f32,
+            (row.dismount_max + KINETIC_DELAY_TICKS) as f32,
+            (row.kb_max + KINETIC_DELAY_TICKS) as f32,
+            (row.dmg_max + KINETIC_DELAY_TICKS) as f32,
+        );
+        let amount = crate::hand::spear_hit_feedback_amount(feedback_ticks);
+        Some(crate::hand::spear_use_matrix(&params, amount, side))
     }
 
     /// THE BLOCK-BREAK EFFECT'S OWN WIRE LANE (javap
@@ -27361,15 +27430,21 @@ impl App {
                 // pcs 1427-1441: the held STACK's SwingAnimation type the
                 // switch reads every frame — the STAB spears the
                 // firstPersonAttack lane answers, everything else the
-                // DEFAULT (WHACK, 6) component the whack arc wears)
+                // DEFAULT (WHACK, 6) component the whack arc wears).
+                // THE USE LANE REPLACES IT (pcs 583-640: isUsingItem &&
+                // usedHand==thisHand walks the use switch — the spear's
+                // SPEAR animation case 9 the firstPersonUse pose wears,
+                // the swing switch that frame never reaches)
                 let held_kind =
                     held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0))).kind;
+                let held_use_pose = self.held_spear_use_pose(UseHand::Main);
                 item.draw_with_pose(
                     fb,
                     ctx.proj,
                     self.swing.get_attack_anim(self.partial_tick),
                     eat_pose,
                     held_kind,
+                    held_use_pose.as_ref(),
                 );
             } else if let Some(arm) = &self.arm {
                 arm.draw(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick));
@@ -27396,6 +27471,10 @@ impl App {
                     None
                 })
                 .kind;
+                // the OFF lane's own use pose (the getUsedItemHand()
+                // == OFF conjunct — the offhand spear use the same
+                // branch answers, the main-lane use the None keeps)
+                let off_use_pose = self.held_spear_use_pose(UseHand::Off);
                 item.draw_with_pose_side(
                     fb,
                     ctx.proj,
@@ -27403,6 +27482,7 @@ impl App {
                     eat_pose_off,
                     -1.0,
                     off_kind,
+                    off_use_pose.as_ref(),
                 );
             } else if let Some(arm) = &self.arm {
                 arm.draw_side(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick), true);
@@ -39036,6 +39116,97 @@ mod tests {
             }
             other => panic!("expected a UseItem echo, got {other:?}"),
         }
+    }
+
+    /// THE USE POSE'S OWN LANE (javap `submitArmWithItem` pcs 583-603 +
+    /// 1287-1336 — the SPEAR use-animation branch the `$SwitchMap`
+    /// maps case 9): the pose the gates dress — the hold open, the
+    /// USED hand's lane only, the held spear the windows name — and
+    /// the press frame the identity the zero raise keeps, the ticks
+    /// the raise speaks, the release the silence returns, the hit
+    /// feedback's 0.375 jolt the tail translate dips one tick after
+    /// the bank (the same raise both poses keep — the delta the
+    /// feedback's own law isolates).
+    #[test]
+    fn the_use_pose_the_lane_the_gate_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE CLOSED HOLD: no use, no pose
+        assert!(app.held_spear_use_pose(UseHand::Main).is_none());
+        assert!(app.held_spear_use_pose(UseHand::Off).is_none());
+        // THE PRESS: the pose arms — the press frame the identity keeps
+        // (timeHeld = 0 - 1 + partial 1.0 = 0, the raise's zero terms)
+        assert!(app.on_right_press(0, 0), "the spear the hold arms");
+        let pose = app
+            .held_spear_use_pose(UseHand::Main)
+            .expect("the MAIN lane the pose rides");
+        assert_eq!(
+            pose.0,
+            crate::math::Mat4::translation(0.0, 0.0, 0.0).0,
+            "the press frame the identity"
+        );
+        // THE OTHER LANE: the main-lane use the OFF lane never dresses
+        // (the getUsedItemHand() == hand conjunct)
+        assert!(app.held_spear_use_pose(UseHand::Off).is_none());
+        // THE TICKS: the raise fades in — ten updates the full ladder
+        // wears (timeHeld = 10, the pose the identity never equals)
+        for _ in 0..10 {
+            app.update();
+        }
+        let raised = app
+            .held_spear_use_pose(UseHand::Main)
+            .expect("the pose rides the raised frame");
+        assert_ne!(raised.0, pose.0, "the raise the ticks speak");
+        // THE RELEASE: the hold ends, the pose the silence returns
+        app.on_right_release();
+        assert!(app.held_spear_use_pose(UseHand::Main).is_none());
+        // THE HIT FEEDBACK'S OWN JOLT: the byte-2 bank the negative
+        // stamp lifts, one tick later the 0.375 the tail translate
+        // dips — the raise PAST its plateau (11 ticks, the clamp the
+        // steady terms keep) both poses share, the delta the
+        // feedback's own law isolates
+        assert!(app.on_right_press(0, 0), "the hold re-arms");
+        for _ in 0..11 {
+            app.update(); // ticks = 11 — the raise clamped at its full
+        }
+        let no_hit = app
+            .held_spear_use_pose(UseHand::Main)
+            .expect("the pose rides");
+        app.live_kinetic_hit_events_updated(vec![crate::world_view::WireKineticHitEvent {
+            entity_id: 0,
+        }]);
+        app.update(); // the feedback tick = 1 + partial 1.0 = 2 → 0.375
+        let hit = app
+            .held_spear_use_pose(UseHand::Main)
+            .expect("the pose rides the jolt");
+        let o_no = no_hit.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
+        let o_hit = hit.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
+        // the jolt the INNERMOST translate speaks — the dipped point
+        // the two pivots then swing: the X the rotations never move,
+        // the y dips 0.1585, the z reaches 0.3399 further out (the
+        // deltas the f64 walk of (0, −0.375, 0) through the raise's
+        // own two rotAround folds keeps)
+        assert!(
+            (o_hit[0] - o_no[0]).abs() < 1e-6,
+            "the jolt never moves X (got {} vs {})",
+            o_hit[0],
+            o_no[0]
+        );
+        assert!(
+            ((o_hit[1] - o_no[1]).abs() - 0.158_481_85).abs() < 1e-4,
+            "the dipped y the tilt lifts (got {} vs {})",
+            o_hit[1],
+            o_no[1]
+        );
+        assert!(
+            ((o_hit[2] - o_no[2]).abs() - 0.339_865_42).abs() < 1e-4,
+            "the dipped z the turn reaches (got {} vs {})",
+            o_hit[2],
+            o_no[2]
+        );
     }
 
     /// THE USE-TICK STAB'S OWN DELAY (javap `KineticWeapon.damageEntities`

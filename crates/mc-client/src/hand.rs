@@ -153,11 +153,9 @@ impl ArmModel {
 /// applies no swing transform at all (the switch's bare goto).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SwingKind {
-    /// the enum's own id 0 — NO item in the jar's registry declares it
-    /// (the spear factory is the only SwingAnimation declarer), the
-    /// dispatch keeps the variant for the type's own completeness (the
-    /// switch's bare-goto arm)
-    #[cfg_attr(not(test), expect(dead_code))] // the jar's enum row, the registry never names
+    /// the enum's own id 0 — the KINETIC use lane's bare anchor rides
+    /// it (the SPEAR use branch's own translate, the swing dispatch the
+    /// using walk never reaches)
     None,
     Whack,
     Stab,
@@ -793,6 +791,76 @@ fn ease_in_out_expo(x: f32) -> f32 {
     }
 }
 
+/// `net/minecraft/util/Ease.outCubic` (javap, verbatim): `1 - cube(1-x)`
+/// — the `Mth.cube` plain f32 body (`x*x*x`), the `1-x` the fsub speaks.
+fn ease_out_cubic(x: f32) -> f32 {
+    let t = 1.0f32 - x;
+    1.0f32 - (t * t * t)
+}
+
+/// `net/minecraft/util/Ease.inOutElastic` (javap, verbatim): the f64
+/// walk the dump speaks — 0/1 pinned at the ends, the phase
+/// `sin((20.0·x - 11.125) · 1.3962634801864624)` the `ldc2_w #83/#88/#90`
+/// triple banks (the 1.3962634… the f32-rounded 2π/4.5 the CP keeps),
+/// then the two pow branches: `x < 0.5` the `-(2^(20x-10)·s)/2` fold,
+/// else `(2^(-20x+10)·s)/2 + 1` — the `Math.pow`/`Math.sin` f64 bodies
+/// narrowed by `d2f` (the client's established Math convention).
+fn ease_in_out_elastic(x: f32) -> f32 {
+    if x == 0.0 {
+        return 0.0;
+    }
+    if x == 1.0 {
+        return 1.0;
+    }
+    let s = ((20.0 * x as f64 - 11.125) * 1.396_263_480_186_462_4).sin();
+    if x < 0.5 {
+        (-(2.0f64.powf(20.0 * x as f64 - 10.0) * s) / 2.0) as f32
+    } else {
+        (2.0f64.powf(-20.0 * x as f64 + 10.0) * s / 2.0 + 1.0) as f32
+    }
+}
+
+/// `net/minecraft/util/Ease.outCirc` (javap, verbatim): `sqrt(1 -
+/// square(x-1))` — the square the f32 body keeps, the sqrt the f64
+/// `Math.sqrt` call narrowed by `d2f`.
+fn ease_out_circ(x: f32) -> f32 {
+    let t = 1.0f32 - x;
+    ((1.0f32 - t * t) as f64).sqrt() as f32
+}
+
+/// `net/minecraft/util/Ease.inCirc` (javap, verbatim): `1 - sqrt(1 -
+/// x·x)` — the sqrt the f64 call narrows, the f32 result the `fconst_1`
+/// fadd lifts (the 1 adds AFTER the d2f, the dump's own order).
+fn ease_in_circ(x: f32) -> f32 {
+    (-((1.0f32 - x * x) as f64).sqrt() as f32) + 1.0f32
+}
+
+/// `net/minecraft/util/Ease.inOutBack` (javap, verbatim): the CP
+/// constants the two branches bank — `c2 = 2.5949094` (the `fstore_2`
+/// ldc), `2(c2+1) = 7.1898188` / `(c2+1) = 3.5949094` (the first
+/// branch's `#93`/second's `#94`): `x < 0.5` the
+/// `4x²·(#93·x - c2)/2` fold (the dead `c3 = 1.70158` store the dump
+/// keeps but never reads — the compiler folded it), else `t = 2x-2`
+/// and `(t²·(#94·t + c2) + 2)/2` — the `+2` INSIDE the division the
+/// bytecode's `fconst_2; fadd; fconst_2; fdiv` order speaks.
+fn ease_in_out_back(x: f32) -> f32 {
+    const C2: f32 = 2.594_909_4;
+    if x < 0.5 {
+        (4.0f32 * x * x * (7.189_818_8f32 * x - C2)) / 2.0
+    } else {
+        let t = 2.0f32 * x - 2.0;
+        (t * t * (3.594_909_4f32 * t + C2) + 2.0) / 2.0
+    }
+}
+
+/// `net/minecraft/util/Ease.outQuart` (javap, verbatim): `1 -
+/// square(square(1-x))` — the two f32 square bodies the nested
+/// `invokestatic` pair speaks.
+fn ease_out_quart(x: f32) -> f32 {
+    let t = 1.0f32 - x;
+    1.0f32 - (t * t) * (t * t)
+}
+
 /// `SpearAnimations.progress(FFF)F` — `Mth.clamp(Mth.inverseLerp(v, min,
 /// max), 0, 1)`, the inverseLerp the `(v - min) / (max - min)` f32 body
 /// speaks (the dump's own fsub/fdiv pair).
@@ -832,6 +900,151 @@ fn stab_attack_matrix(p: f32, side: f32) -> Mat4 {
     t(side * 0.1 * (f4 - f5), -0.075 * (f4 - f6), 0.65 * (f4 - f5))
         .mul(&Mat4::rot_x((-70.0f32 * (f4 - f6)).to_radians()))
         .mul(&t(0.0, 0.0, -0.25 * (f6 - f5)))
+}
+
+/// `SpearAnimations$UseParams` — the ten floats the
+/// `fromKineticWeapon` ctor walk banks (the putfield order the dump
+/// speaks): the raise ladder over the delay window, the sway pair the
+/// sin folds ride, the elastic lower, the back-rise over the damage
+/// window's own last five ticks.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SpearUseParams {
+    pub raise: f32,
+    pub raise_start: f32,
+    pub raise_middle: f32,
+    pub raise_end: f32,
+    pub sway_progress: f32,
+    pub lower: f32,
+    pub raise_back: f32,
+    pub sway_intensity: f32,
+    pub sway_scale_slow: f32,
+    pub sway_scale_fast: f32,
+}
+
+/// `SpearAnimations$UseParams.fromKineticWeapon(KineticWeapon, F)`
+/// verbatim (the 26.2 dump): `timeHeld` the F param — the caller's
+/// `getUseDuration - getUseItemRemainingTicks + partialTick - 1` fold —
+/// against the windows the KineticWeapon's own fields keep:
+/// `delayTicks` the raise window's end, the three conditions'
+/// `maxDurationTicks + delay` the dismount/knockback/damage starts (the
+/// `Condition::maxDurationTicks` lambda the invokedynamic binds, the
+/// `orElse(0)` the missing condition wears), the sway the
+/// `[dismount-20, dismount]` window the last 20 ticks ramps, the lower
+/// the elastic over `[knock-40, knock]` evaluated at `timeHeld - 20`
+/// (the ldc 20.0 the fsub speaks), the back-rise the damage window's
+/// own `[damage-5, damage]` last five ticks, the sway pump
+/// `2·outCirc(sway) - 2·inCirc(back)` and the two sin folds
+/// `sin(timeHeld·19.0/30.0 · 0.0174532924)` the CP degrees→radians
+/// constant rides.
+pub fn spear_use_params(
+    time_held: f32,
+    delay: f32,
+    dismount_start: f32,
+    knock_start: f32,
+    damage_start: f32,
+) -> SpearUseParams {
+    let raise = eased_progress(time_held, 0.0, delay);
+    let raise_start = eased_progress(raise, 0.0, 0.5);
+    let raise_middle = eased_progress(raise, 0.5, 0.8);
+    let raise_end = eased_progress(raise, 0.8, 1.0);
+    let sway_progress = eased_progress(time_held, dismount_start - 20.0, dismount_start);
+    let lower = ease_out_cubic(ease_in_out_elastic(eased_progress(
+        time_held - 20.0,
+        knock_start - 40.0,
+        knock_start,
+    )));
+    let raise_back = eased_progress(time_held, damage_start - 5.0, damage_start);
+    let sway_intensity =
+        2.0f32 * ease_out_circ(sway_progress) - 2.0f32 * ease_in_circ(raise_back);
+    let sway_scale_slow =
+        mth_sin(time_held * 19.0f32 * 0.017_453_292_4) * sway_intensity;
+    let sway_scale_fast =
+        mth_sin(time_held * 30.0f32 * 0.017_453_292_4) * sway_intensity;
+    SpearUseParams {
+        raise,
+        raise_start,
+        raise_middle,
+        raise_end,
+        sway_progress,
+        lower,
+        raise_back,
+        sway_intensity,
+        sway_scale_slow,
+        sway_scale_fast,
+    }
+}
+
+/// `SpearAnimations.hitFeedbackAmount(F)F` verbatim: `0.4 ·
+/// (outQuart(progress(t, 1.0, 3.0)) - inOutSine(progress(t, 3.0,
+/// 10.0)))` — the fsub the operand order speaks (below - top: the
+/// outQuart the minuend keeps), the 0.4 the leading ldc folds. The
+/// jolt rises across the hit's own first three ticks and settles back
+/// to zero by the tenth — the steady state the outQuart(1) =
+/// inOutSine(1) collision answers.
+pub fn spear_hit_feedback_amount(ticks_since: f32) -> f32 {
+    0.4f32
+        * (ease_out_quart(eased_progress(ticks_since, 1.0, 3.0))
+            - ease_in_out_sine(eased_progress(ticks_since, 3.0, 10.0)))
+}
+
+/// `PoseStack.rotateAround(quat, ox, oy, oz)` — the rotation about the
+/// pivot point the JOML call composes: `T(o) · R · T(-o)` post-multiplied
+/// onto the current pose (the point the pivot frame enters, turns,
+/// leaves — the vanilla walk's own local-space read).
+fn rot_around(r: Mat4, ox: f32, oy: f32, oz: f32) -> Mat4 {
+    Mat4::translation(ox, oy, oz)
+        .mul(&r)
+        .mul(&Mat4::translation(-ox, -oy, -oz))
+}
+
+/// `SpearAnimations.firstPersonUse(F, PoseStack, F, HumanoidArm,
+/// ItemStack)` — the KINETIC use lane's own transform, verbatim from
+/// the 26.2 bytecode (pcs 41-262): the raise/sway translate — `dx =
+/// side·(raise·0.15 + raise_end·(-0.05) + sway·(-0.1) + slow·0.005)`,
+/// `dy = raise·(-0.075) + middle·0.075 + fast·0.01`, `dz` the f64 fold
+/// `raise_start·0.05 + raise_end·(-0.05)` the ldc2_w pair banks plus
+/// the f32 `slow·0.005` — then `rotateAround(XP.rotationDegrees(-65·
+/// inOutBack(raise) - 35·lower + 100·raise_back - 0.5·fast), 0, 0.1,
+/// 0)`, then `rotateAround(YN.rotationDegrees(side·(-90·progress(raise,
+/// 0.5, 0.55) + 90·sway + 2·slow)), side·0.15, 0, 0)` — the YN axis
+/// the rotation about -Y the +Y-by--angle fold answers — then the hit
+/// feedback translate `(0, -amount, 0)`. At the press frame
+/// (`timeHeld` < 0) every term speaks zero: the pose IS the identity,
+/// the raise fades in from the tick after the press.
+pub fn spear_use_matrix(p: &SpearUseParams, feedback_amount: f32, side: f32) -> Mat4 {
+    let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
+    let dx = side
+        * (p.raise * 0.15f32
+            + p.raise_end * -0.05f32
+            + p.sway_progress * -0.1f32
+            + p.sway_scale_slow * 0.005f32);
+    let dy = p.raise * -0.075f32 + p.raise_middle * 0.075f32 + p.sway_scale_fast * 0.01f32;
+    let dz = ((p.raise_start as f64) * 0.05
+        + (p.raise_end as f64) * (-0.05)
+        + ((p.sway_scale_slow * 0.005f32) as f64)) as f32;
+    let rot_x_deg = -65.0f32 * ease_in_out_back(p.raise) - 35.0f32 * p.lower
+        + 100.0f32 * p.raise_back
+        + -0.5f32 * p.sway_scale_fast;
+    let rot_y_deg = side
+        * (-90.0f32 * eased_progress(p.raise, 0.5, 0.55)
+            + 90.0f32 * p.sway_progress
+            + 2.0f32 * p.sway_scale_slow);
+    t(dx, dy, dz)
+        .mul(&rot_around(
+            Mat4::rot_x(rot_x_deg.to_radians()),
+            0.0,
+            0.1,
+            0.0,
+        ))
+        .mul(&rot_around(
+            // `Axis.YN.rotationDegrees(v)` — the rotation about the
+            // NEGATIVE Y axis the +Y rotation by -v answers
+            Mat4::rot_y((-rot_y_deg).to_radians()),
+            side * 0.15f32,
+            0.0,
+            0.0,
+        ))
+        .mul(&t(0.0, -feedback_amount, 0.0))
 }
 
 impl HeldItem {
@@ -879,7 +1092,7 @@ impl HeldItem {
     /// applyEatTransform folds over the item-arm transform chain).
     #[cfg_attr(not(test), expect(dead_code))]
     fn sampled(&self, swing: f32) -> Vec<crate::raster::SampledQuad<'_>> {
-        self.sampled_with_pose(swing, None, 1.0, SwingKind::Whack)
+        self.sampled_with_pose(swing, None, 1.0, SwingKind::Whack, None)
     }
 
     /// The sampled variant with the eat pose and the hand side (the
@@ -887,22 +1100,33 @@ impl HeldItem {
     /// the three rotations, the eat module's verbatim fold; the side
     /// the anchor chain carries, -1 the offhand's). The swing kind is
     /// the held stack's own `SwingAnimation` type — the component the
-    /// submitArmWithItem switch reads every frame.
+    /// submitArmWithItem switch reads every frame. The use pose — the
+    /// KINETIC lane's `firstPersonUse` matrix — REPLACES the swing
+    /// dispatch when present (the vanilla branch order: the using walk
+    /// the swing switch never reaches), the bare anchor it composes
+    /// over (SPEAR's own `customArmTransform=true` the shared walk
+    /// skips, the case-9 translate the only anchor).
     fn sampled_with_pose(
         &self,
         swing: f32,
         eat: Option<crate::eat::EatPose>,
         side: f32,
         kind: SwingKind,
+        use_pose: Option<&Mat4>,
     ) -> Vec<crate::raster::SampledQuad<'_>> {
-        let anchor = item_hand_anchor(kind, swing, 0.0, side);
-        let m = match eat {
-            None => anchor,
-            Some(p) => anchor
-                .mul(&crate::math::Mat4::translation(p.dx, p.dy, p.dz))
-                .mul(&crate::math::Mat4::rot_y(p.rot_y_deg.to_radians()))
-                .mul(&crate::math::Mat4::rot_x(p.rot_x_deg.to_radians()))
-                .mul(&crate::math::Mat4::rot_z(p.rot_z_deg.to_radians())),
+        let m = match use_pose {
+            Some(u) => item_hand_anchor(SwingKind::None, swing, 0.0, side).mul(u),
+            None => {
+                let anchor = item_hand_anchor(kind, swing, 0.0, side);
+                match eat {
+                    None => anchor,
+                    Some(p) => anchor
+                        .mul(&crate::math::Mat4::translation(p.dx, p.dy, p.dz))
+                        .mul(&crate::math::Mat4::rot_y(p.rot_y_deg.to_radians()))
+                        .mul(&crate::math::Mat4::rot_x(p.rot_x_deg.to_radians()))
+                        .mul(&crate::math::Mat4::rot_z(p.rot_z_deg.to_radians())),
+                }
+            }
         };
         self.quads
             .iter()
@@ -927,7 +1151,7 @@ impl HeldItem {
     /// rest poses — every swing term zero).
     #[cfg_attr(not(test), expect(dead_code))]
     pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
-        self.draw_with_pose(fb, proj, swing, None, SwingKind::Whack);
+        self.draw_with_pose(fb, proj, swing, None, SwingKind::Whack, None);
     }
 
     /// The draw with the eat pose (the consumable's hold: the item
@@ -935,6 +1159,8 @@ impl HeldItem {
     /// law; `None` keeps the rest pose). The MAIN hand's side. The kind
     /// is the held stack's own component type (the STAB spears ride
     /// [`stab_attack_matrix`], everything else the DEFAULT WHACK arc).
+    /// The use pose replaces both when present (the KINETIC lane's own
+    /// branch).
     pub fn draw_with_pose(
         &self,
         fb: &mut crate::raster::Framebuf,
@@ -942,8 +1168,9 @@ impl HeldItem {
         swing: f32,
         eat: Option<crate::eat::EatPose>,
         kind: SwingKind,
+        use_pose: Option<&Mat4>,
     ) {
-        self.draw_with_pose_side(fb, proj, swing, eat, 1.0, kind);
+        self.draw_with_pose_side(fb, proj, swing, eat, 1.0, kind, use_pose);
     }
 
     /// The draw on EITHER hand (the submitArmWithItem walk's own
@@ -953,7 +1180,10 @@ impl HeldItem {
     /// context poses — the registry's own left-hand mirror). `side`
     /// = -1 renders the offhand item; the eat pose the MAIN hand's
     /// lane only rides. The kind rides the stack the lane renders —
-    /// the offhand's own component, never the main hand's.
+    /// the offhand's own component, never the main hand's. The use
+    /// pose (the `using_item` hand's KINETIC lane) rides the lane the
+    /// use gates — `getUsedItemHand() == hand` the vanilla conjunct
+    /// speaks, the OTHER lane the swing dispatch keeps.
     pub fn draw_with_pose_side(
         &self,
         fb: &mut crate::raster::Framebuf,
@@ -962,9 +1192,10 @@ impl HeldItem {
         eat: Option<crate::eat::EatPose>,
         side: f32,
         kind: SwingKind,
+        use_pose: Option<&Mat4>,
     ) {
         fb.clear_depth();
-        let quads = self.sampled_with_pose(swing, eat, side, kind);
+        let quads = self.sampled_with_pose(swing, eat, side, kind, use_pose);
         fb.draw_sampled_quads(proj, &quads, &mut |tex, u, v| {
             match sprite_uv::sample_uv(tex, u, v) {
                 Sample::Pixel(c) => Some(c),
@@ -1846,6 +2077,229 @@ mod held_tests {
         assert_eq!(ol[0], -0.66, "the mirrored thrust");
         assert_eq!(ol[1], -0.52f32 + -0.075f32, "the Y the mirror never touches");
         assert_eq!(ol[2], -0.72f32 + 0.65f32, "the Z the mirror never touches");
+    }
+
+    /// THE USE EASES' OWN FOLDS (javap `Ease.outCubic/outCirc/inCirc/
+    /// inOutBack/outQuart/inOutElastic` — the 26.2 dumps): the plain
+    /// f32 bodies the CP constants pin — outCubic the cube fold,
+    /// outCirc/inCirc the f64 sqrt pair (the circ the 1-sqrt mirrors),
+    /// outQuart the nested squares, inOutBack the seam-continuous 0.5
+    /// the two branches share (the `+2` INSIDE the division the
+    /// bytecode's own fadd/fdiv order keeps), inOutElastic the
+    /// end-pinned phase fold (the 0.5 midpoint the sin(−π/2) collision
+    /// answers, the 0.25/0.75 the pow branches speak).
+    #[test]
+    fn the_use_eases_the_folds_the_dump_speaks() {
+        assert_eq!(ease_out_cubic(0.5), 0.875, "1 - cube(0.5)");
+        assert_eq!(ease_out_cubic(1.0), 1.0, "the closed end");
+        assert_eq!(ease_out_cubic(0.0), 0.0, "the open end");
+        let circ = 0.866_025_4;
+        assert!((ease_out_circ(0.5) - circ).abs() < 1e-6, "sqrt(1-0.25)");
+        assert!((ease_in_circ(0.5) - (1.0 - circ)).abs() < 1e-6, "1 - the outCirc mirror");
+        assert_eq!(ease_out_circ(1.0), 1.0, "the closed circle");
+        assert_eq!(ease_in_circ(0.0), 0.0, "the circle's own start");
+        assert_eq!(ease_in_circ(1.0), 1.0, "the circle's own close");
+        assert_eq!(ease_out_quart(0.5), 0.9375, "1 - (0.25)^2");
+        assert_eq!(ease_out_quart(1.0), 1.0, "the closed quart");
+        // inOutBack: the ends pinned, the 0.5 seam the two arms share
+        assert_eq!(ease_in_out_back(0.0), 0.0, "the back's open end");
+        assert_eq!(ease_in_out_back(0.5), 0.5, "the seam both branches speak");
+        assert_eq!(ease_in_out_back(1.0), 1.0, "the back's closed end");
+        // the overshoot: the second branch peaks past 1 (the back's own law)
+        let over = ease_in_out_back(0.8);
+        assert!(over > 1.0, "the inOutBack overshoots past 1 (got {})", over);
+        // inOutElastic: the ends pinned, the midpoint the phase collision
+        assert_eq!(ease_in_out_elastic(0.0), 0.0, "the elastic's open end");
+        assert_eq!(ease_in_out_elastic(1.0), 1.0, "the elastic's closed end");
+        assert!((ease_in_out_elastic(0.5) - 0.5).abs() < 1e-6, "sin(-pi/2) the midpoint folds");
+        assert!(
+            (ease_in_out_elastic(0.25) - 0.011_969_440).abs() < 1e-6,
+            "the first pow branch (got {})",
+            ease_in_out_elastic(0.25)
+        );
+        assert!(
+            (ease_in_out_elastic(0.75) - 0.988_030_55).abs() < 1e-6,
+            "the second pow branch (got {})",
+            ease_in_out_elastic(0.75)
+        );
+    }
+
+    /// THE USE PARAMS' OWN WINDOWS (javap `UseParams.fromKineticWeapon`
+    /// over the iron row — delay 10, the dismount/knockback/damage
+    /// starts the `maxDurationTicks + delay` fold keeps): the raise
+    /// ladder over [0, 10] the three sub-windows split (0.5/0.8), the
+    /// sway the [40, 60] window ramps, the lower the elastic [105, 145]
+    /// at `timeHeld - 20` folds, the back-rise the [230, 235] last five
+    /// ticks, the pump `2·outCirc(sway) - 2·inCirc(back)` and the two
+    /// sin folds the 19°/30° frequencies ride.
+    #[test]
+    fn the_use_params_the_windows_the_tiers_keep() {
+        // THE IRON ROW's own starts: 50+10 / 135+10 / 225+10
+        let (d, ds, ks, gs) = (10.0f32, 60.0f32, 145.0f32, 235.0f32);
+        // THE PRESS FRAME (timeHeld = 0 - 1 + partial 1.0): everything zero
+        let rest = spear_use_params(0.0, d, ds, ks, gs);
+        assert_eq!(rest.raise, 0.0);
+        assert_eq!(rest.raise_start, 0.0);
+        assert_eq!(rest.raise_middle, 0.0);
+        assert_eq!(rest.raise_end, 0.0);
+        assert_eq!(rest.sway_progress, 0.0);
+        assert_eq!(rest.lower, 0.0, "the elastic's clamped open end");
+        assert_eq!(rest.raise_back, 0.0);
+        assert_eq!(rest.sway_intensity, 0.0, "2·outCirc(0) - 2·inCirc(0)");
+        assert_eq!(rest.sway_scale_slow, 0.0);
+        assert_eq!(rest.sway_scale_fast, 0.0);
+        // THE RAISE'S MIDPOINT (th = 5): raise 0.5 — the start window
+        // closed, the middle/end not yet opened
+        let mid = spear_use_params(5.0, d, ds, ks, gs);
+        assert_eq!(mid.raise, 0.5);
+        assert_eq!(mid.raise_start, 1.0, "the [0, 0.5] window closed");
+        assert_eq!(mid.raise_middle, 0.0, "the [0.5, 0.8] window not yet");
+        assert_eq!(mid.raise_end, 0.0, "the [0.8, 1] window not yet");
+        // THE RAISE'S CLOSE (th = 10): the full ladder at 1
+        let full = spear_use_params(10.0, d, ds, ks, gs);
+        assert_eq!(full.raise, 1.0);
+        assert_eq!(full.raise_start, 1.0);
+        assert_eq!(full.raise_middle, 1.0);
+        assert_eq!(full.raise_end, 1.0);
+        // THE SWAY'S OWN WINDOW (th = 60 — the dismount start): the
+        // sway ramp closed, the back not yet — the pump 2·outCirc(1) = 2
+        let sway = spear_use_params(60.0, d, ds, ks, gs);
+        assert_eq!(sway.sway_progress, 1.0, "the [40, 60] ramp closed");
+        assert_eq!(sway.raise_back, 0.0, "the [230, 235] window far");
+        assert_eq!(sway.sway_intensity, 2.0, "2·outCirc(1) - 2·inCirc(0)");
+        assert!(
+            (sway.sway_scale_slow - 1.732_050_7).abs() < 1e-6,
+            "sin(60·19°)·2 (got {})",
+            sway.sway_scale_slow
+        );
+        assert!(
+            sway.sway_scale_fast.abs() < 1e-5,
+            "sin(60·30°) the full-circle phase (got {})",
+            sway.sway_scale_fast
+        );
+        // THE SWAY'S MIDPOINT (th = 50): progress 0.5 — the pump
+        // 2·outCirc(0.5), the sines the 950/1500-degree phases speak
+        let sway_mid = spear_use_params(50.0, d, ds, ks, gs);
+        assert_eq!(sway_mid.sway_progress, 0.5);
+        assert!(
+            (sway_mid.sway_intensity - 1.732_050_8).abs() < 1e-6,
+            "2·outCirc(0.5) (got {})",
+            sway_mid.sway_intensity
+        );
+        assert!(
+            (sway_mid.sway_scale_slow - -1.326_827_8).abs() < 1e-5,
+            "sin(50·19°)·pump (got {})",
+            sway_mid.sway_scale_slow
+        );
+        assert!(
+            (sway_mid.sway_scale_fast - 1.499_999_8).abs() < 1e-5,
+            "sin(50·30°)·pump (got {})",
+            sway_mid.sway_scale_fast
+        );
+        // THE LOWER'S OWN ELASTIC (th = 135/145/165 — the knock window
+        // [105, 145] at th-20): the clamped open, the phase midpoint,
+        // the closed end
+        assert!(
+            (spear_use_params(135.0, d, ds, ks, gs).lower - 0.035_480_26).abs() < 1e-6,
+            "outCubic(elastic(0.25)) (got {})",
+            spear_use_params(135.0, d, ds, ks, gs).lower
+        );
+        assert!(
+            (spear_use_params(145.0, d, ds, ks, gs).lower - 0.875).abs() < 1e-6,
+            "the elastic midpoint the outCubic closes"
+        );
+        assert_eq!(
+            spear_use_params(165.0, d, ds, ks, gs).lower, 1.0,
+            "the elastic's closed end"
+        );
+        // THE BACK-RISE (th = 232.5 — the [230, 235] window's half)
+        assert_eq!(
+            spear_use_params(232.5, d, ds, ks, gs).raise_back, 0.5,
+            "the last five ticks ramp"
+        );
+    }
+
+    /// THE USE MATRIX'S OWN POSE (javap `firstPersonUse` pcs 41-262):
+    /// the press frame the identity the raise's zero terms keep — the
+    /// pose IS the bare anchor until the first tick lands — and the
+    /// raise's close (th = 10, iron) the peak the two pivots speak:
+    /// the origin rides `T(side·0.1, 0, 0)` over the rotAround folds
+    /// (the XP −65° about (0, 0.1, 0), the YN −90·side about
+    /// (side·0.15, 0, 0) — the −90·side the YN axis the +Y-by-+90·side
+    /// fold answers), the left mirror the X-only flip keeps.
+    #[test]
+    fn the_use_matrix_the_rest_identity_and_the_peak_speak() {
+        let (d, ds, ks, gs) = (10.0f32, 60.0f32, 145.0f32, 235.0f32);
+        // THE PRESS FRAME: the identity — every term the zero raise
+        // keeps (the pose the bare anchor never moves until the tick)
+        let rest = spear_use_params(0.0, d, ds, ks, gs);
+        let m = spear_use_matrix(&rest, 0.0, 1.0);
+        assert_eq!(m.0, Mat4::translation(0.0, 0.0, 0.0).0, "the rest IS the identity");
+        // THE RAISE'S CLOSE: the peak the origin map speaks — the f64
+        // walk: YN fold first (rot_y(+90°) about (0.15, 0, 0) maps the
+        // origin to (0.15, 0, 0.15)), then the XP tilt (rot_x(-65°)
+        // about (0, 0.1, 0) to (0.15, 0.19368434, 0.15402352)), then
+        // the translate (side·0.1, 0, 0) — (0.25, 0.19368434, 0.15402352)
+        let peak = spear_use_params(10.0, d, ds, ks, gs);
+        let mp = spear_use_matrix(&peak, 0.0, 1.0);
+        let o = mp.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
+        assert!((o[0] - 0.25).abs() < 1e-4, "the X over both pivots (got {})", o[0]);
+        assert!(
+            (o[1] - 0.193_684_34).abs() < 1e-4,
+            "the XP tilt lifts (got {})",
+            o[1]
+        );
+        assert!(
+            (o[2] - 0.154_023_52).abs() < 1e-4,
+            "the YN turn reaches (got {})",
+            o[2]
+        );
+        // the hit feedback rides LAST in the call order — the
+        // innermost transform the point meets first: the dipped origin
+        // (0, -0.375, 0) the two pivots then swing — the y the tilts
+        // lift to 0.0352, the z the YN turn reaches 0.4939 (the f64
+        // walk: R_y(90°) of (-0.15, -0.375, 0) → (0.15, -0.375, 0.15);
+        // R_x(-65°) → (0.15, -0.0648, 0.4939); + the pivots, + the
+        // translate)
+        let mf = spear_use_matrix(&peak, 0.375, 1.0);
+        let of = mf.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
+        assert!((of[0] - 0.25).abs() < 1e-4, "the X the dips never move");
+        assert!(
+            (of[1] - 0.035_202_49).abs() < 1e-4,
+            "the dipped origin the tilt lifts (got {})",
+            of[1]
+        );
+        assert!(
+            (of[2] - 0.493_888_94).abs() < 1e-4,
+            "the dipped origin the turn reaches (got {})",
+            of[2]
+        );
+        // the left mirror: the X flips, the Y/Z stand
+        let ml = spear_use_matrix(&peak, 0.0, -1.0);
+        let ol = ml.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
+        assert!((ol[0] + 0.25).abs() < 1e-4, "the mirrored X");
+        assert!((ol[1] - 0.193_684_34).abs() < 1e-4, "the Y the mirror never touches");
+        assert!((ol[2] - 0.154_023_52).abs() < 1e-4, "the Z the mirror never touches");
+    }
+
+    /// THE HIT FEEDBACK'S OWN JOLT (javap `SpearAnimations
+    /// .hitFeedbackAmount` pcs 0-25): `0.4·(outQuart(progress(t,1,3)) -
+    /// inOutSine(progress(t,3,10)))` — the fsub the operand order pins
+    /// (the outQuart the minuend keeps), the rise the first three
+    /// ticks speak, the settle the tenth closes, the steady state the
+    /// outQuart(1) = inOutSine(1) collision answers.
+    #[test]
+    fn the_hit_feedback_the_jolt_the_settle_speaks() {
+        assert_eq!(spear_hit_feedback_amount(0.0), 0.0, "the pre-window silence");
+        assert_eq!(spear_hit_feedback_amount(2.0), 0.375, "0.4·outQuart(0.5)");
+        assert_eq!(spear_hit_feedback_amount(1.0), 0.0, "the rise's own start");
+        assert!(
+            (spear_hit_feedback_amount(5.0) - 0.324_697_97).abs() < 1e-6,
+            "the settle's midpoint (got {})",
+            spear_hit_feedback_amount(5.0)
+        );
+        assert_eq!(spear_hit_feedback_amount(10.0), 0.0, "the settle's close");
+        assert_eq!(spear_hit_feedback_amount(100.0), 0.0, "the steady state");
     }
 
     /// THE SWING CLOCK'S OWN DURATION (javap `getCurrentSwingDuration`
