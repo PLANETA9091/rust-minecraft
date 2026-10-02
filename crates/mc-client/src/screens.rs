@@ -27991,6 +27991,37 @@ impl App {
                 if active.hand == UseHand::Off
                     && mc_registry::item_name(active.item) == Some("goat_horn")
         );
+        // THE CROSSBOW'S OWN VERDICTS (the three-arg law's use gate —
+        // the using stack's `getUseAnimation() == CROSSBOW` the
+        // charging crossbow alone answers — the RMB hold the verdict
+        // wears, the reload the using walk ends)
+        let main_charge = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && mc_registry::item_name(active.item) == Some("crossbow")
+        );
+        let off_charge = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && mc_registry::item_name(active.item) == Some("crossbow")
+        );
+        // THE HOLD'S OWN VERDICTS (the three-arg law the use gate
+        // BEFORE the swinging gate answers — pcs 11-38: `!avatar
+        // .swinging && stack.is(CROSSBOW) && CrossbowItem.isCharged
+        // (stack)` the loaded crossbow alone answers — the idle hold
+        // the walk wears, the swing's own arc the verdict excludes;
+        // the held stack's CHARGED_PROJECTILES component the
+        // held_charge lane speaks). THE OFFHAND'S OWN COMPONENT THE
+        // CLIENT NEVER TRACKS (offhand_stack the (id, count) pair
+        // keeps — the charged state the MAIN stack alone predicts):
+        // the off-hold verdict the conservative FALSE keeps (the
+        // same law the missing poses wear)
+        let main_hold = !self.swing.swinging
+            && mc_registry::item_name(self.held_id().unwrap_or(0)) == Some("crossbow")
+            && self.held_charge.is_some();
+        let off_hold = false;
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
         // sampling — every clock rides the frame's own partial_tick now:
         // the walk cosines, the swing, the age — no canonical mid-tick
@@ -28077,6 +28108,22 @@ impl App {
             // cancels)
             right_horn: main_horn,
             left_horn: off_horn,
+            // THE CROSSBOW POSES (the use gate's own verdicts — the
+            // charging stack the CROSSBOW_CHARGE the window wears,
+            // the loaded idle stack the CROSSBOW_HOLD the !swinging
+            // gate answers; the clinit's (5,1,1)/(6,1,1) pairs the
+            // affectsOffhand flag TRUE the second posing cancels —
+            // the both-arms bodies the one call carries)
+            right_crossbow_charge: main_charge,
+            left_crossbow_charge: off_charge,
+            right_crossbow_hold: main_hold,
+            left_crossbow_hold: off_hold,
+            // THE CHARGE BODY'S OWN DENOMINATOR (the render state's
+            // maxCrossbowChargeDuration — CrossbowItem.
+            // getChargeDuration the floor(modify(stack, entity, 1.25)
+            // × 20.0) walk answers, the unmodified 1.25s × 20 the 25
+            // ticks the CROSSBOW_CHARGE_TICKS keeps)
+            max_crossbow_charge_duration: mc_registry::CROSSBOW_CHARGE_TICKS as f32,
             // THE USING STACK'S OWN PARAMS (fromKineticWeapon(useStack,
             // ticks) — the same window fold the first person's own lane
             // wears, the row the using item's name resolves; the
@@ -29455,6 +29502,15 @@ impl App {
                         left_spyglass: false,
                         right_horn: false,
                         left_horn: false,
+                        // THE MOB LAW THE CROSSBOW LANES NEVER ANSWER
+                        // (the same pc 59-62 — the EMPTY every
+                        // non-spear stack keeps, the mobs the charge
+                        // and the hold the lanes never ride)
+                        right_crossbow_charge: false,
+                        left_crossbow_charge: false,
+                        right_crossbow_hold: false,
+                        left_crossbow_hold: false,
+                        max_crossbow_charge_duration: 0.0,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict
@@ -29635,6 +29691,15 @@ impl App {
                         left_spyglass: false,
                         right_horn: false,
                         left_horn: false,
+                        // THE MOB LAW THE CROSSBOW LANES NEVER ANSWER
+                        // (the same pc 59-62 — the EMPTY every
+                        // non-spear stack keeps, the mobs the charge
+                        // and the hold the lanes never ride)
+                        right_crossbow_charge: false,
+                        left_crossbow_charge: false,
+                        right_crossbow_hold: false,
+                        left_crossbow_hold: false,
+                        max_crossbow_charge_duration: 0.0,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict

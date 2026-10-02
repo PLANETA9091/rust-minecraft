@@ -311,6 +311,42 @@ pub struct AvatarState {
     /// offhand stack's own verdict (the same use-window law, the
     /// left body's fadd the mirror keeps).
     pub left_horn: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.CROSSBOW_CHARGE`
+    /// — the use gate's own verdict (the hand match + the remaining
+    /// ticks the window rides, the stack's `getUseAnimation() ==
+    /// CROSSBOW` the acmp the charging crossbow alone answers — the
+    /// RMB hold the verdict wears). THE CLINIT'S OWN FLAG PAIR:
+    /// CROSSBOW_CHARGE(5,1,1) — twoHanded 1, affectsOffhandPose 1 —
+    /// the animateCrossbowCharge body the BOTH arms poses, the gate
+    /// the second posing CANCELS (the bow's true row the same law
+    /// keeps). THE MOB LAW THE VERDICT NEVER WEARS: HumanoidMobRenderer
+    /// .getArmPose answers EMPTY for every non-spear stack.
+    pub right_crossbow_charge: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.CROSSBOW_CHARGE`
+    /// — the offhand stack's own verdict (the same use-window law,
+    /// the iconst_0 flag the mirror keeps).
+    pub left_crossbow_charge: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.CROSSBOW_HOLD` —
+    /// the verdict the use gate BEFORE the swinging gate answers
+    /// (AvatarRenderer.getArmPose pcs 11-38: `!avatar.swinging &&
+    /// stack.is(CROSSBOW) && CrossbowItem.isCharged(stack)` the
+    /// loaded crossbow alone answers — the idle hold the walk wears,
+    /// the swing's own arc the verdict excludes). THE CLINIT'S OWN
+    /// FLAG PAIR: CROSSBOW_HOLD(6,1,1) — twoHanded 1,
+    /// affectsOffhandPose 1 — the animateCrossbowHold body the BOTH
+    /// arms poses, the gate the second posing CANCELS.
+    pub right_crossbow_hold: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.CROSSBOW_HOLD` —
+    /// the offhand stack's own verdict (the same !swinging + charged
+    /// law, the iconst_0 flag the mirror keeps).
+    pub left_crossbow_hold: bool,
+    /// `HumanoidRenderState.maxCrossbowChargeDuration` — the charge
+    /// body's own denominator (CrossbowItem.getChargeDuration:
+    /// `floor(modifyCrossbowChargingTime(stack, entity, 1.25) × 20.0)`
+    /// — the unmodified 1.25s × 20 the 25 ticks the client's
+    /// CROSSBOW_CHARGE_TICKS keeps). The render state's ctor default
+    /// 0.0 the rest walk keeps.
+    pub max_crossbow_charge_duration: f32,
     /// `SpearAnimations$UseParams.fromKineticWeapon(useStack, ticks)`
     /// — the USING stack's own ten floats, precomputed the screens
     /// lane's item-name knowledge keeps (the render state the jar's
@@ -376,6 +412,11 @@ impl AvatarState {
             left_spyglass: false,
             right_horn: false,
             left_horn: false,
+            right_crossbow_charge: false,
+            left_crossbow_charge: false,
+            right_crossbow_hold: false,
+            left_crossbow_hold: false,
+            max_crossbow_charge_duration: 0.0,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
             main_hand_kinetic: false,
@@ -4360,13 +4401,15 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     // body the second posing never cancels.
     {
         let use_params = state.kinetic_use_params.as_ref();
-        // THE TABLESWITCH'S OWN SIX CASES (the poseRightArm/
+        // THE TABLESWITCH'S OWN EIGHT CASES (the poseRightArm/
         // poseLeftArm pair the matrix dispatches): `Spear` the case-10
         // use lane rides, `Bow` the case-3 both-arms assignment,
         // `Block` the case-2 poseBlockingArm call, `Spyglass` the
         // case-7 clamp lane, `TootHorn` the case-8 clamp lane,
-        // `Item` the case-1 fold — the one closure the whole switch
-        // wears, the f32 chains the jar's own bytecode keeps
+        // `CrossbowCharge` the case-5 both-arms body,
+        // `CrossbowHold` the case-6 both-arms body, `Item` the case-1
+        // fold — the one closure the whole switch wears, the f32
+        // chains the jar's own bytecode keeps
         #[derive(Clone, Copy)]
         enum PoseCase {
             Spear,
@@ -4374,6 +4417,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             Block,
             Spyglass,
             TootHorn,
+            CrossbowCharge,
+            CrossbowHold,
             Item,
         }
         let mut fold = |right_arm: bool, kind: PoseCase| {
@@ -4532,6 +4577,114 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                         head_y + YAW_OFF
                     };
                 }
+                PoseCase::CrossbowCharge => {
+                    // THE CHARGE'S OWN BODY (AnimationUtils.
+                    // animateCrossbowCharge, the 58-byte whole the
+                    // full_disasm banks — the CP floats the
+                    // cp_float_486 resolves: #25 = −0.8 (0xBF4CCCCD),
+                    // #26 = 0.8 (0x3F4CCCCD), #27 = −0.9707963
+                    // (0xBF78861C), #32 = 0.4 (0x3ECCCCCD), #33 =
+                    // 0.85 (0x3F59999A), #19 = −1.5707963705062866
+                    // (0xBFC90FDB) = −π/2): the BOTH-ARMS body the
+                    // ONE call carries (the (5,1,1) pair the
+                    // twoHanded row keeps) — the charge arm the right
+                    // flag answers (the poseRightArm call the
+                    // iconst_1, the poseLeftArm the iconst_0), the
+                    // other arm the SUPPORT the body's own second
+                    // half poses. THE LERP THE JAR'S OWN CHAIN KEEPS
+                    // (Mth.lerp(delta, start, end) = f32(start +
+                    // f32(delta · f32(end − start))) — the fsub/fmul/
+                    // fadd one rounding each wears): the pull the
+                    // f1 = f32(clamp(ticks, 0.0, max) / max) drives.
+                    const CHARGE_Y_R: f32 = -0.8; // CP #25
+                    const CHARGE_Y_L: f32 = 0.8; // CP #26
+                    const CHARGE_PITCH: f32 = -0.970_796_346_664_428_7; // CP #27
+                    const LERP_START: f32 = 0.4; // CP #32
+                    const LERP_END: f32 = 0.85; // CP #33
+                    const HOLD_PITCH: f32 = -1.570_796_370_506_286_6; // CP #19
+                    let (charge_x, charge_y, other_x, other_y) = if right_arm {
+                        (
+                            &mut arm_r_x,
+                            &mut arm_r_y,
+                            &mut arm_l_x,
+                            &mut arm_l_y,
+                        )
+                    } else {
+                        (
+                            &mut arm_l_x,
+                            &mut arm_l_y,
+                            &mut arm_r_x,
+                            &mut arm_r_y,
+                        )
+                    };
+                    *charge_y = if right_arm {
+                        CHARGE_Y_R
+                    } else {
+                        CHARGE_Y_L
+                    };
+                    *charge_x = CHARGE_PITCH;
+                    // the other arm's xRot the charge arm's own
+                    // pitch the float copy keeps (pc 48-55)
+                    *other_x = CHARGE_PITCH;
+                    let max = state.max_crossbow_charge_duration;
+                    let clamped = state
+                        .ticks_using_item
+                        .clamp(0.0, max);
+                    let f1 = clamped / max;
+                    // the yRot the lerp(f1, 0.4, 0.85) the side's ±1
+                    // the fmul answers (pc 72-95)
+                    let spread = LERP_START + f1 * (LERP_END - LERP_START);
+                    *other_y = spread * if right_arm { 1.0f32 } else { -1.0f32 };
+                    // the xRot the lerp(f1, other.xRot(= #27), −π/2)
+                    // the pull walks (pc 98-112)
+                    *other_x = CHARGE_PITCH + f1 * (HOLD_PITCH - CHARGE_PITCH);
+                }
+                PoseCase::CrossbowHold => {
+                    // THE HOLD'S OWN BODY (AnimationUtils.
+                    // animateCrossbowHold, the 49-byte whole — CP #7 =
+                    // −0.3 (0xBE99999A), #8 = 0.3 (0x3E99999A), #15 =
+                    // 0.6 (0x3F19999A), #16 = −0.6 (0xBF19999A), #19
+                    // = −π/2, #23 = 0.1 (0x3DCCCCCD), #24 = −1.5
+                    // (0xBFC00000)): the BOTH-ARMS body the ONE call
+                    // carries — the head's own pitch/yaw the four
+                    // sums ride, the charge arm's xRot the (#19 +
+                    // head.xRot) + #23 the TWO fadds keeps, the other
+                    // arm the #24 + head.xRot the one fadd speaks.
+                    const HOLD_Y_R: f32 = -0.3; // CP #7
+                    const HOLD_Y_L: f32 = 0.3; // CP #8
+                    const OTHER_Y_R: f32 = 0.6; // CP #15
+                    const OTHER_Y_L: f32 = -0.6; // CP #16
+                    const CHARGE_PITCH: f32 = -1.570_796_370_506_286_6; // CP #19
+                    const PITCH_ADD: f32 = 0.1; // CP #23
+                    const OTHER_PITCH: f32 = -1.5; // CP #24
+                    let (charge_x, charge_y, other_x, other_y) = if right_arm {
+                        (
+                            &mut arm_r_x,
+                            &mut arm_r_y,
+                            &mut arm_l_x,
+                            &mut arm_l_y,
+                        )
+                    } else {
+                        (
+                            &mut arm_l_x,
+                            &mut arm_l_y,
+                            &mut arm_r_x,
+                            &mut arm_r_y,
+                        )
+                    };
+                    *charge_y = (if right_arm {
+                        HOLD_Y_R
+                    } else {
+                        HOLD_Y_L
+                    }) + head_y;
+                    *other_y = (if right_arm {
+                        OTHER_Y_R
+                    } else {
+                        OTHER_Y_L
+                    }) + head_y;
+                    *charge_x = (CHARGE_PITCH + head_x) + PITCH_ADD;
+                    *other_x = OTHER_PITCH + head_x;
+                }
                 PoseCase::Item => {
                     // the ITEM case-1 fold — the f32 chain the jar's
                     // fmul/fsub keeps (×0.5 the exact exponent walk,
@@ -4570,12 +4723,28 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 // case 8: the (8,0,0) pair — the FALSE row the second
                 // posing never cancels
                 fold(true, PoseCase::TootHorn);
+            } else if state.right_crossbow_charge {
+                // case 5: the (5,1,1) pair — the BOTH-ARMS body the
+                // one call carries, the affectsOffhand flag TRUE the
+                // gate below the second posing CANCELS (the bow's
+                // true row the same law keeps; the two-arg getArmPose
+                // walk's isTwoHanded rewrite the off verdict the
+                // cancelled posing never reads)
+                fold(true, PoseCase::CrossbowCharge);
+            } else if state.right_crossbow_hold {
+                // case 6: the (6,1,1) pair — the BOTH-ARMS body, the
+                // gate the second posing CANCELS
+                fold(true, PoseCase::CrossbowHold);
             } else if state.right_spear {
                 fold(true, PoseCase::Spear);
             } else if state.right_item {
                 fold(true, PoseCase::Item);
             }
-            if !state.right_spear && !state.right_bow {
+            if !state.right_spear
+                && !state.right_bow
+                && !state.right_crossbow_charge
+                && !state.right_crossbow_hold
+            {
                 if state.left_bow {
                     fold(false, PoseCase::Bow);
                 } else if state.left_block {
@@ -4584,6 +4753,10 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     fold(false, PoseCase::Spyglass);
                 } else if state.left_horn {
                     fold(false, PoseCase::TootHorn);
+                } else if state.left_crossbow_charge {
+                    fold(false, PoseCase::CrossbowCharge);
+                } else if state.left_crossbow_hold {
+                    fold(false, PoseCase::CrossbowHold);
                 } else if state.left_spear {
                     fold(false, PoseCase::Spear);
                 } else if state.left_item {
@@ -4606,12 +4779,25 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             } else if state.left_horn {
                 // case 8 mirror: the fadd the left body's own rides
                 fold(false, PoseCase::TootHorn);
+            } else if state.left_crossbow_charge {
+                // case 5 mirror: the iconst_0 the left the CHARGE arm
+                // rides, the affectsOffhand TRUE the gate the second
+                // posing cancels
+                fold(false, PoseCase::CrossbowCharge);
+            } else if state.left_crossbow_hold {
+                // case 6 mirror: the iconst_0 the left the HOLD arm
+                // rides, the gate the second posing cancels
+                fold(false, PoseCase::CrossbowHold);
             } else if state.left_spear {
                 fold(false, PoseCase::Spear);
             } else if state.left_item {
                 fold(false, PoseCase::Item);
             }
-            if !state.left_spear && !state.left_bow {
+            if !state.left_spear
+                && !state.left_bow
+                && !state.left_crossbow_charge
+                && !state.left_crossbow_hold
+            {
                 if state.right_bow {
                     fold(true, PoseCase::Bow);
                 } else if state.right_block {
@@ -4620,6 +4806,10 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     fold(true, PoseCase::Spyglass);
                 } else if state.right_horn {
                     fold(true, PoseCase::TootHorn);
+                } else if state.right_crossbow_charge {
+                    fold(true, PoseCase::CrossbowCharge);
+                } else if state.right_crossbow_hold {
+                    fold(true, PoseCase::CrossbowHold);
                 } else if state.right_spear {
                     fold(true, PoseCase::Spear);
                 } else if state.right_item {
@@ -12216,6 +12406,260 @@ mod tests {
             posed[2].x_rot.to_bits(),
             0xBFF5_BE0B,
             "the both-flags state the spyglass branch the chain picks"
+        );
+    }
+
+    /// THE CROSSBOW CHARGE'S OWN BODY (javap `AnimationUtils.
+    /// animateCrossbowCharge` the 58-byte whole, the CP floats the
+    /// cp_float_486 resolves — #25 = −0.8 (0xBF4CCCCD), #26 = 0.8
+    /// (0x3F4CCCCD), #27 = −0.9707963 (0xBF78861C), #32 = 0.4
+    /// (0x3ECCCCCD), #33 = 0.85 (0x3F59999A), #19 = −π/2
+    /// (0xBFC90FDB)): the BOTH-ARMS body the ONE call carries — the
+    /// charge arm the right flag answers, the other arm the body's
+    /// own second half poses (the float copy the pc 48-55 keeps,
+    /// the pull the f1 = clamp(ticks, 0, max)/max drives, the lerp
+    /// the jar's own fsub/fmul/fadd chain keeps). THE PINS the
+    /// pins_486 oracle computes.
+    #[test]
+    fn the_crossbow_charge_the_both_arms_the_lerp_speak() {
+        // SCENE R (lane A: the main hand the crossbow charges): the
+        // ticks 1.0/25.0 the f1 = 0.04 the early pull keeps — the
+        // charge arm the constants alone wear (the head the body
+        // NEVER reads), the other arm the lerp walks
+        let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.is_using_item = true;
+        s.use_item_main_hand = true;
+        s.ticks_using_item = 1.0;
+        s.max_crossbow_charge_duration = 25.0;
+        s.right_crossbow_charge = true;
+        let posed = build_posed_parts(&s);
+        // charge arm (right): the constants' own bits
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF78_861C,
+            "the charge arm the #27 pitch the constant wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBF4C_CCCD,
+            "the charge arm the minus-0.8 the right flag wears"
+        );
+        // other arm (left): yRot = f32(lerp(0.04, 0.4, 0.85) × 1.0),
+        // xRot = lerp(0.04, #27, −π/2) — the pull's early walk
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3ED6_0419,
+            "the other arm the lerp spread the fmul side wears"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF7E_AAF9,
+            "the other arm the lerp pitch the pull walks"
+        );
+        // THE GATE THE SECOND POSING CANCELS — yet the BOTH-ARMS
+        // body the left arm itself poses: the affectsoffhand TRUE
+        // the left CHAIN skips, the body's own second half the
+        // support arm wears (the walk zeroes the bits disprove)
+        let mut p = AvatarState::rest(0.0, 0.0, 0.0);
+        p.head_yaw_off_deg = 20.0;
+        let plain = build_posed_parts(&p);
+        assert_ne!(
+            posed[3].x_rot.to_bits(),
+            plain[3].x_rot.to_bits(),
+            "the body's own second half the support arm poses"
+        );
+        // SCENE F (the full charge): the ticks 30 the clamp the 25
+        // rides, the f1 = 1.0 the lerp's own ends wear — the
+        // two-rounding chain the lerp(1.0, start, end) the ends'
+        // own bits keep
+        let mut f = AvatarState::rest(0.0, 0.0, 0.0);
+        f.head_yaw_off_deg = 20.0;
+        f.is_using_item = true;
+        f.use_item_main_hand = true;
+        f.ticks_using_item = 30.0;
+        f.max_crossbow_charge_duration = 25.0;
+        f.right_crossbow_charge = true;
+        let posed = build_posed_parts(&f);
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F59_999A,
+            "the full charge the lerp end the spread wears"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBFC9_0FDB,
+            "the full charge the −π/2 the pitch wears"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF78_861C,
+            "the charge arm the clamp the constants keep"
+        );
+        // SCENE L (lanes B+C: the off hand the crossbow charges): the
+        // iconst_0 the LEFT arm the charge arm rides, the other the
+        // right — the side's ±1 the fmul the mirror speaks
+        let mut l = AvatarState::rest(0.0, 0.0, 0.0);
+        l.head_yaw_off_deg = 20.0;
+        l.is_using_item = true;
+        l.use_item_main_hand = false;
+        l.ticks_using_item = 12.0;
+        l.max_crossbow_charge_duration = 25.0;
+        l.left_crossbow_charge = true;
+        let posed = build_posed_parts(&l);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF78_861C,
+            "the left charge arm the same #27 the mirror wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F4C_CCCD,
+            "the left charge arm the plus-0.8 the iconst_0 wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBF1D_B22D,
+            "the other arm the minus side the fmul wears"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBFA1_203D,
+            "the other arm the 12-tick pull the lerp walks"
+        );
+    }
+
+    /// THE CROSSBOW HOLD'S OWN BODY AND THE GATES' MATRIX (javap
+    /// `AnimationUtils.animateCrossbowHold` the 49-byte whole — CP #7
+    /// = −0.3 (0xBE99999A), #8 = 0.3 (0x3E99999A), #15 = 0.6
+    /// (0x3F19999A), #16 = −0.6 (0xBF19999A), #19 = −π/2, #23 = 0.1
+    /// (0x3DCCCCCD), #24 = −1.5 (0xBFC00000)): the BOTH-ARMS body
+    /// the ONE call carries — the head's own pitch/yaw the four sums
+    /// ride, the (6,1,1) pair the affectsOffhand flag TRUE the
+    /// second posing's CHAIN cancels (the body's own support arm
+    /// the fold never loses). THE PINS the pins_486 oracle computes.
+    #[test]
+    fn the_crossbow_hold_the_gates_the_matrix_speak() {
+        // SCENE R (the idle walk the else branch speaks — the loaded
+        // crossbow the main hand holds): the left chain the no
+        // verdict keeps, the gate opens, the right chain the hold
+        // fold wears — the head pitch 0/yaw 20 the sums read
+        let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.right_crossbow_hold = true;
+        let posed = build_posed_parts(&s);
+        // charge arm (right): xRot = f32(f32(−π/2 + 0) + 0.1), yRot =
+        // f32(−0.3 + 20°) — the two-fadd chain the bits keep
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBFBC_430E,
+            "the charge arm the (−π/2 + pitch) + 0.1 the chain wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0x3D48_F940,
+            "the charge arm the minus-0.3 + yaw the fadd wears"
+        );
+        // other arm (left): xRot = f32(−1.5 + 0), yRot = f32(0.6 +
+        // 20°) — the body's own second half the support poses
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBFC0_0000,
+            "the other arm the −1.5 pitch the one fadd wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F72_F5FB,
+            "the other arm the plus-0.6 + yaw the fadd wears"
+        );
+        // SCENE C (the head's own pitch the sums read): the head
+        // pitch −90° the chains walk — charge.xRot = f32(f32(−π/2 +
+        // −1.5707964) + 0.1), other.xRot = f32(−1.5 + −1.5707964)
+        let mut c = AvatarState::rest(0.0, -90.0, 0.0);
+        c.right_crossbow_hold = true;
+        let posed = build_posed_parts(&c);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xC042_A975,
+            "the head pitch the charge arm's chain reads"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xC044_87EE,
+            "the head pitch the other arm's fadd reads"
+        );
+        // SCENE L (the loaded crossbow the off hand holds): the left
+        // chain FIRST (the idle branch poseLeftArm first speaks) —
+        // the iconst_0 the left arm the charge arm rides, the gate
+        // `!left_crossbow_hold` the right CHAIN cancels, the body's
+        // own other arm the right side wears
+        let mut l = AvatarState::rest(0.0, 0.0, 0.0);
+        l.head_yaw_off_deg = 20.0;
+        l.left_crossbow_hold = true;
+        let posed = build_posed_parts(&l);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBFBC_430E,
+            "the left charge arm the same chain the mirror wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F26_292E,
+            "the left charge arm the plus-0.3 + yaw wears"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBFC0_0000,
+            "the body's own other arm the right side wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBE80_7A72,
+            "the body's own other arm the minus-0.6 + yaw wears"
+        );
+        // THE AFFECTSOFFHAND TRUE THE LEFT CHAIN CANCELS (the (5,1,1)
+        // pair the gate law — the CONTRAST the spyglass/horn FALSE
+        // rows speak): the right charge the lane A first poses, the
+        // left stack's ITEM verdict the CHAIN never reaches — the
+        // body's OWN second half the support arm still wears (the
+        // float copy + the lerp walk the scene R bits replay), the
+        // ITEM fold the bits disprove
+        let mut g = AvatarState::rest(0.0, 0.0, 0.0);
+        g.head_yaw_off_deg = 20.0;
+        g.is_using_item = true;
+        g.use_item_main_hand = true;
+        g.ticks_using_item = 1.0;
+        g.max_crossbow_charge_duration = 25.0;
+        g.right_crossbow_charge = true;
+        g.left_item = true;
+        let posed = build_posed_parts(&g);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF7E_AAF9,
+            "the affectsOffhand TRUE the left chain cancels — the body's own support arm wears"
+        );
+        assert_ne!(
+            posed[3].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the left stack's ITEM fold the cancelled chain never reaches"
+        );
+        // THE CHARGE THE HOLD THE CHAIN ORDER EXCLUDES: the one
+        // stack the one verdict carries — the charge branch first
+        // the fold picks (the defensive order the exclusive
+        // verdicts keep)
+        let mut both = AvatarState::rest(0.0, 0.0, 0.0);
+        both.head_yaw_off_deg = 20.0;
+        both.is_using_item = true;
+        both.use_item_main_hand = true;
+        both.ticks_using_item = 1.0;
+        both.max_crossbow_charge_duration = 25.0;
+        both.right_crossbow_charge = true;
+        both.right_crossbow_hold = true;
+        let posed = build_posed_parts(&both);
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBF4C_CCCD,
+            "the both-flags state the charge branch the chain picks"
         );
     }
 
