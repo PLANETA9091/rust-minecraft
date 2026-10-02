@@ -27915,6 +27915,26 @@ impl App {
                 if active.hand == UseHand::Off
                     && use_anim_mapped(mc_registry::item_name(active.item))
         );
+        // THE BOW AND ARROW'S OWN VERDICTS (the three-arg law's use
+        // gate pcs 39-56 + 70-80 the dump banks: `hand ==
+        // getUsedItemHand()` the acmp the USING hand matches,
+        // `getUseItemRemainingTicks() > 0` the window the using walk's
+        // Some answers, the stack's `getUseAnimation() == BOW` the
+        // client's bow name resolves) — the aim the USING hand alone
+        // wears, the idle bow the ITEM fall-through the verdicts
+        // exclude (the using-mapped gate above the same hand answers)
+        let main_bow = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && mc_registry::item_name(active.item) == Some("bow")
+        );
+        let off_bow = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && mc_registry::item_name(active.item) == Some("bow")
+        );
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
         // sampling — every clock rides the frame's own partial_tick now:
         // the walk cosines, the swing, the age — no canonical mid-tick
@@ -27973,6 +27993,11 @@ impl App {
             // rides)
             right_item: main_name.is_some() && !main_spear && !main_using_mapped,
             left_item: off_name.is_some() && !off_spear && !off_using_mapped,
+            // THE BOW POSES (the use gate's own verdicts — the main/off
+            // using stack the bow name the BOW_AND_ARROW the window
+            // wears, the idle bow the ITEM the fall-through keeps)
+            right_bow: main_bow,
+            left_bow: off_bow,
             // THE USING STACK'S OWN PARAMS (fromKineticWeapon(useStack,
             // ticks) — the same window fold the first person's own lane
             // wears, the row the using item's name resolves; the
@@ -29331,6 +29356,12 @@ impl App {
                         // never ride, the walk's own zeroes the pose stays)
                         right_item: false,
                         left_item: false,
+                        // THE MOB LAW THE BOW NEVER ANSWERS (the same
+                        // pc 59-62 — the EMPTY every stack keeps, the
+                        // skeleton's own aggressive bow the
+                        // SkeletonModel branch arms, never this lane)
+                        right_bow: false,
+                        left_bow: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict
@@ -29491,6 +29522,12 @@ impl App {
                         // never ride, the walk's own zeroes the pose stays)
                         right_item: false,
                         left_item: false,
+                        // THE MOB LAW THE BOW NEVER ANSWERS (the same
+                        // pc 59-62 — the EMPTY every stack keeps, the
+                        // skeleton's own aggressive bow the
+                        // SkeletonModel branch arms, never this lane)
+                        right_bow: false,
+                        left_bow: false,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
                         // THE MOB'S MAIN HAND the same component verdict

@@ -251,6 +251,19 @@ pub struct AvatarState {
     /// `HumanoidRenderState.leftArmPose == ArmPose.ITEM` — the
     /// offhand stack's own verdict (the same fall-through law).
     pub left_item: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.BOW_AND_ARROW` —
+    /// the use gate's own verdict (AvatarRenderer.getArmPose
+    /// pcs 39-56 + 70-80: the hand the `getUsedItemHand()` match the
+    /// `getUseItemRemainingTicks() > 0` window rides, the stack's
+    /// `getUseAnimation() == BOW` the acmp answers — the aim the
+    /// USING hand alone wears, the idle bow the ITEM fall-through
+    /// keeps). THE MOB LAW THE VERDICT NEVER WEARS: HumanoidMobRenderer.
+    /// getArmPose answers EMPTY for every stack — the skeleton's own
+    /// aggressive bow the SkeletonModel branch arms, never this lane.
+    pub right_bow: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.BOW_AND_ARROW` —
+    /// the offhand stack's own verdict (the same use-window law).
+    pub left_bow: bool,
     /// `SpearAnimations$UseParams.fromKineticWeapon(useStack, ticks)`
     /// — the USING stack's own ten floats, precomputed the screens
     /// lane's item-name knowledge keeps (the render state the jar's
@@ -308,6 +321,8 @@ impl AvatarState {
             left_spear: false,
             right_item: false,
             left_item: false,
+            right_bow: false,
+            left_bow: false,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
             main_hand_kinetic: false,
@@ -4259,81 +4274,149 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
     // first when the use hand matches the main arm, poseLeftArm first
     // otherwise (the idle branch the `mainRight != twoHanded` test
     // answers: no two-handed pose the round folds, the false the
-    // SPEAR/EMPTY rows keep). TWO folds the matrix dispatches (the
-    // tableswitch the two verdicts the client's lanes answer): the
+    // SPEAR/EMPTY rows keep). THREE folds the matrix dispatches (the
+    // tableswitch the three verdicts the client's lanes answer): the
     // SPEAR case 10 — `thirdPersonHandUse(arm, head, right,
     // getUseItemStackForArm(arm), state)` the poseRightArm/poseLeftArm
-    // pc-168 pair speaks — and the ITEM case 1 the avatar law's own
+    // pc-168 pair speaks — the BOW_AND_ARROW case 3 (pcs 174-249, the
+    // constants CP #176 = -0.1 / #391 = 0.1 / #326 = 0.4 / #392 =
+    // -pi/2 the cp_float resolve) the BOTH-ARMS assignment the
+    // affectsOffhandPose flag wears — poseRightArm's body
+    // `right.yRot = #176 + head.yRot; left.yRot = (#391 + head.yRot)
+    // + #326; both xRot = #392 + head.xRot` the putfield order keeps,
+    // poseLeftArm's the MIRROR the 0.4 the NON-bow arm carries
+    // (`right.yRot = (#176 + head.yRot) - #326; left.yRot = #391 +
+    // head.yRot` — the two bodies the f32 chains differ, never one
+    // shared fold) — and the ITEM case 1 the avatar law's own
     // fall-through wears (poseRightArm pc 87-116: `xRot = xRot·0.5 −
-    // 0.31415927, yRot = 0` — the constants CP #95/#279 resolve, the
-    // walk xRot the crouch's own +0.4 the fold reads, the EMPTY case 0
-    // the yRot zero the walk's own zeroes never observe; the mob law
-    // the ITEM never answers — HumanoidMobRenderer.getArmPose pc 59-62
-    // the EMPTY the non-spear stacks keep). The `affectsOffhandPose`
-    // skips: SPEAR the ONLY true row the reachable poses keep (the
-    // clinit's flag pairs the dump banks), the other arm's posing the
-    // flag's truth cancels.
+    // 0.31415927, yRot = 0` — the walk xRot the crouch's own +0.4 the
+    // fold reads, the EMPTY case 0 the yRot zero the walk's own zeroes
+    // never observe; the mob law the ITEM never answers —
+    // HumanoidMobRenderer.getArmPose pc 59-62 the EMPTY the non-spear
+    // stacks keep). The `affectsOffhandPose` skips: SPEAR and
+    // BOW_AND_ARROW the true rows the reachable poses keep (the
+    // clinit's flag pairs the dump banks — the bow's case-3 body the
+    // off arm's posing already IS, the gate the second call cancels),
+    // the other arm's posing the flag's truth cancels.
     {
         let use_params = state.kinetic_use_params.as_ref();
-        // The one closure the two folds share: `spear` the SPEAR case's
-        // use lane rides, `!spear` the ITEM case-1 fold — the f32 chain
-        // the jar's fmul/fsub keeps (×0.5 the exact exponent walk, the
-        // fsub one rounding; the yRot zero the walk's own 0.0 the
-        // putfield replays, both arms the same constants — poseLeftArm
-        // pc 87-116 the mirror speaks)
-        let mut fold = |right_arm: bool, spear: bool| {
-            let (x, y, z) = if right_arm {
-                (&mut arm_r_x, &mut arm_r_y, &mut arm_r_z)
-            } else {
-                (&mut arm_l_x, &mut arm_l_y, &mut arm_l_z)
-            };
-            if spear {
-                crate::avatar::third_person_hand_use(
-                    x,
-                    y,
-                    z,
-                    right_arm,
-                    state.fall_flying,
-                    state.swim_amount,
-                    state.ticks_using_item,
-                    state.is_using_item,
-                    state.use_item_main_hand,
-                    use_params,
-                );
-            } else {
-                *x = *x * 0.5 - 0.314_159_274_101_257_3;
-                *y = 0.0;
+        // THE TABLESWITCH'S OWN THREE CASES (the poseRightArm/
+        // poseLeftArm pair the matrix dispatches): `Spear` the case-10
+        // use lane rides, `Bow` the case-3 both-arms assignment, `Item`
+        // the case-1 fold — the one closure the whole switch wears, the
+        // f32 chains the jar's own bytecode keeps
+        #[derive(Clone, Copy)]
+        enum PoseCase {
+            Spear,
+            Bow,
+            Item,
+        }
+        let mut fold = |right_arm: bool, kind: PoseCase| {
+            match kind {
+                PoseCase::Spear => {
+                    let (x, y, z) = if right_arm {
+                        (&mut arm_r_x, &mut arm_r_y, &mut arm_r_z)
+                    } else {
+                        (&mut arm_l_x, &mut arm_l_y, &mut arm_l_z)
+                    };
+                    crate::avatar::third_person_hand_use(
+                        x,
+                        y,
+                        z,
+                        right_arm,
+                        state.fall_flying,
+                        state.swim_amount,
+                        state.ticks_using_item,
+                        state.is_using_item,
+                        state.use_item_main_hand,
+                        use_params,
+                    );
+                }
+                PoseCase::Bow => {
+                    // THE BOW AND ARROW'S OWN BODIES (poseRightArm/
+                    // poseLeftArm case 3, pcs 174-249 — the CP floats
+                    // the cp_float_483 resolve: #176 = -0.1
+                    // (0xBDCCCCCD), #391 = 0.1 (0x3DCCCCCD), #326 =
+                    // 0.4 (0x3ECCCCCD), #392 = -1.5707963705062866
+                    // (0xBFC90FDB)): the ASSIGNMENTS the putfield chain
+                    // keeps — the walk's own swing the both arms' x/y
+                    // the body wipes (the zRot the pose never touches),
+                    // the head's pitch/yaw the four sums ride. The yRot
+                    // chains the two bodies DIFFER: the right method's
+                    // left arm the TWO fadds ((0.1 + hy) + 0.4), the
+                    // left method's right arm the fadd-then-fsub
+                    // ((-0.1 + hy) - 0.4) — the 0.4 the NON-bow arm's
+                    // spread the jar's own bytecode keeps, the f32
+                    // rounding each chain's own order wears.
+                    const BOW_PITCH: f32 = -1.570_796_370_506_286_6; // CP #392
+                    let hy = head_y;
+                    let hx = head_x;
+                    if right_arm {
+                        arm_r_y = -0.100_000_001_490_116_12 + hy; // CP #176 + head.yRot
+                        arm_l_y = (0.100_000_001_490_116_12 + hy) + 0.400_000_005_960_464_5; // (#391 + hy) + #326
+                        arm_r_x = BOW_PITCH + hx; // CP #392 + head.xRot
+                        arm_l_x = BOW_PITCH + hx;
+                    } else {
+                        arm_r_y = (-0.100_000_001_490_116_12 + hy) - 0.400_000_005_960_464_5; // (#176 + hy) - #326
+                        arm_l_y = 0.100_000_001_490_116_12 + hy; // CP #391 + head.yRot
+                        arm_r_x = BOW_PITCH + hx;
+                        arm_l_x = BOW_PITCH + hx;
+                    }
+                }
+                PoseCase::Item => {
+                    // the ITEM case-1 fold — the f32 chain the jar's
+                    // fmul/fsub keeps (×0.5 the exact exponent walk,
+                    // the fsub one rounding; the yRot zero the walk's
+                    // own 0.0 the putfield replays, both arms the same
+                    // constants — poseLeftArm pc 87-116 the mirror
+                    // speaks)
+                    let (x, y) = if right_arm {
+                        (&mut arm_r_x, &mut arm_r_y)
+                    } else {
+                        (&mut arm_l_x, &mut arm_l_y)
+                    };
+                    *x = *x * 0.5 - 0.314_159_274_101_257_3;
+                    *y = 0.0;
+                }
             }
         };
         if state.is_using_item && state.use_item_main_hand {
             // pcs 416-438: useMain == mainRight — poseRightArm, then
             // the left the right pose's affectsOffhandPose gates
-            if state.right_spear {
-                fold(true, true);
+            if state.right_bow {
+                // case 3: the BOTH-ARMS body — the left arm's posing
+                // the body itself carries, the gate below the second
+                // call cancels
+                fold(true, PoseCase::Bow);
+            } else if state.right_spear {
+                fold(true, PoseCase::Spear);
             } else if state.right_item {
-                fold(true, false);
+                fold(true, PoseCase::Item);
             }
-            if !state.right_spear {
+            if !state.right_spear && !state.right_bow {
                 if state.left_spear {
-                    fold(false, true);
+                    fold(false, PoseCase::Spear);
                 } else if state.left_item {
-                    fold(false, false);
+                    fold(false, PoseCase::Item);
                 }
             }
         } else {
             // pcs 446-463 (the off-hand use) and pcs 469-514 (the idle
             // branch) both speak poseLeftArm first — the same order
             // the left pose's affectsOffhandPose gates
-            if state.left_spear {
-                fold(false, true);
+            if state.left_bow {
+                // case 3 mirror: the left method's own body
+                fold(false, PoseCase::Bow);
+            } else if state.left_spear {
+                fold(false, PoseCase::Spear);
             } else if state.left_item {
-                fold(false, false);
+                fold(false, PoseCase::Item);
             }
-            if !state.left_spear {
+            if !state.left_spear && !state.left_bow {
                 if state.right_spear {
-                    fold(true, true);
+                    fold(true, PoseCase::Spear);
                 } else if state.right_item {
-                    fold(true, false);
+                    fold(true, PoseCase::Item);
                 }
             }
         }
@@ -11187,6 +11270,229 @@ mod tests {
             posed[3].x_rot.to_bits(),
             plain[3].x_rot.to_bits(),
             "the left SPEAR the use lane the fold wears"
+        );
+    }
+
+    /// THE BOW AND ARROW'S OWN BODIES (javap `HumanoidModel.
+    /// poseRightArm` pc 174-249 the case-3 walk, poseLeftArm the
+    /// mirror — the CP #176/#391/#326/#392 the cp_float_483
+    /// resolves, the pins_483 oracle the f32 chains the bits
+    /// speak): the aim the BOTH arms the putfield assignments wear
+    /// — the walk's own swing the x/y the body wipes (the zRot the
+    /// pose never touches), the head's pitch/yaw the four sums
+    /// ride, the 0.4 the NON-bow arm's spread the two bodies their
+    /// own chains keep (the right method's left arm the two fadds,
+    /// the left method's right arm the fadd-then-fsub — the f32
+    /// rounding the orders differ, the bits the oracle re-speaks).
+    #[test]
+    fn the_bow_pose_the_aim_the_bodies_speak() {
+        // THE RIGHT BODY (lane A: the main hand the bow uses): the
+        // head pitch 30°, the yaw offset 20° the sums the f32
+        // chains ride — the pins_483 oracle the bits pin
+        let mut s = AvatarState::rest(0.0, 30.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.is_using_item = true;
+        s.use_item_main_hand = true;
+        s.ticks_using_item = 1.0;
+        s.right_bow = true;
+        let posed = build_posed_parts(&s);
+        // right.yRot = f32(-0.1 + hy) — CP #176 the one fadd
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0x3E7F_0B1E,
+            "the right body the bow arm's yRot the one-fadd chain wears"
+        );
+        // left.yRot = f32(f32(0.1 + hy) + 0.4) — the TWO fadds the
+        // non-bow arm's spread rides
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F59_5C61,
+            "the right body the spread arm's yRot the two-fadd chain wears"
+        );
+        // both xRot = f32(-1.5707963705062866 + hx) — CP #392 the
+        // pitch rides
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the right body the bow arm's xRot the pitch wears"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the right body the spread arm's xRot the pitch wears"
+        );
+        // THE ZROT THE WALK'S BOB KEEPS — the case-3 body the pose
+        // never touches (the plain state the same age the bits
+        // replay)
+        let mut p = AvatarState::rest(0.0, 30.0, 0.0);
+        p.head_yaw_off_deg = 20.0;
+        let plain = build_posed_parts(&p);
+        assert_eq!(
+            posed[2].z_rot.to_bits(),
+            plain[2].z_rot.to_bits(),
+            "the right body the walk zRot the bow never touches"
+        );
+        assert_eq!(
+            posed[3].z_rot.to_bits(),
+            plain[3].z_rot.to_bits(),
+            "the right body the left zRot the bob keeps"
+        );
+        // THE WALK THE BODY WIPES: the swing's own cosines the
+        // ASSIGNMENTS replace — the walk's posed arms the aim's bits
+        // the both arms wear (the putfield the += never was)
+        let mut w = AvatarState::rest(0.0, 30.0, 0.0);
+        w.head_yaw_off_deg = 20.0;
+        w.walk_pos = 2.75;
+        w.walk_speed = 1.0;
+        w.age_ticks = 5.0;
+        let walk_plain = build_posed_parts(&w);
+        w.right_bow = true;
+        w.is_using_item = true;
+        w.use_item_main_hand = true;
+        w.ticks_using_item = 1.0;
+        let walk_bow = build_posed_parts(&w);
+        assert_eq!(
+            walk_bow[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the walk the bow arm's xRot the assignment wipes"
+        );
+        assert_eq!(
+            walk_bow[3].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the walk the spread arm's xRot the assignment wipes"
+        );
+        assert_ne!(
+            walk_plain[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the walk's own swing the assignment the bits differ"
+        );
+        assert_eq!(
+            walk_bow[2].z_rot.to_bits(),
+            walk_plain[2].z_rot.to_bits(),
+            "the walk the zRot the bow keeps"
+        );
+        // THE LEFT BODY (lanes B+C: the off hand the bow uses) — the
+        // MIRROR the 0.4 the right (non-bow) arm the
+        // fadd-then-fsub carries, the left arm the one fadd keeps
+        let mut l = AvatarState::rest(0.0, 30.0, 0.0);
+        l.head_yaw_off_deg = 20.0;
+        l.is_using_item = true;
+        l.use_item_main_hand = false;
+        l.ticks_using_item = 1.0;
+        l.left_bow = true;
+        let posed = build_posed_parts(&l);
+        // right.yRot = f32(f32(-0.1 + hy) - 0.4) — the fsub the
+        // rounding the right body's left arm never shared
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBE1A_8E7C,
+            "the left body the spread arm's yRot the fadd-fsub chain wears"
+        );
+        // left.yRot = f32(0.1 + hy) — the bow arm the one fadd
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3EE5_EBF5,
+            "the left body the bow arm's yRot the one-fadd chain wears"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the left body the spread arm's xRot the pitch wears"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the left body the bow arm's xRot the pitch wears"
+        );
+        assert_eq!(
+            posed[2].z_rot.to_bits(),
+            plain[2].z_rot.to_bits(),
+            "the left body the right zRot the bow never touches"
+        );
+    }
+
+    /// THE BOW LANE'S OWN GATES (the poseArms matrix the three
+    /// verdicts dispatch — the affectsOffhandPose skip the bow's
+    /// both-arms body the second posing cancels, the using hand the
+    /// gate's verdict reads): the right bow the left ITEM the body
+    /// already carries (the ITEM fold the gate never leaks), the
+    /// left bow the right SPEAR the mirror keeps, the idle bow the
+    /// verdict the ITEM fall-through answers, the off-branch the
+    /// bow verdict the fold never wears.
+    #[test]
+    fn the_bow_pose_the_gates_the_matrix_speak() {
+        // LANE A: the right bow the BOTH-ARMS body poses — the left
+        // stack the sword verdict (left_item) the case-3 bits keep,
+        // the ITEM fold the affectsOffhand gate the leak never wears
+        let mut a = AvatarState::rest(0.0, 30.0, 0.0);
+        a.head_yaw_off_deg = 20.0;
+        a.is_using_item = true;
+        a.use_item_main_hand = true;
+        a.ticks_using_item = 1.0;
+        a.right_bow = true;
+        a.left_item = true;
+        let posed = build_posed_parts(&a);
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x3F59_5C61,
+            "the right bow the left ITEM the case-3 body the bits keep"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the right bow the left ITEM the aim the gate keeps"
+        );
+        // LANES B+C: the left bow the left method's body poses — the
+        // right stack the spear verdict the case-3 bits keep, the
+        // SPEAR use fold the gate the leak never wears (the spear's
+        // thirdPersonHandUse the xRot the aim's bits the value
+        // differs)
+        let mut b = AvatarState::rest(0.0, 30.0, 0.0);
+        b.head_yaw_off_deg = 20.0;
+        b.is_using_item = true;
+        b.use_item_main_hand = false;
+        b.ticks_using_item = 1.0;
+        b.left_bow = true;
+        b.right_spear = true;
+        let posed = build_posed_parts(&b);
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0xBE1A_8E7C,
+            "the left bow the right SPEAR the case-3 body the bits keep"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the left bow the right SPEAR the aim the gate keeps"
+        );
+        // THE IDLE BOW THE VERDICT NEVER WEARS: the jar's use gate
+        // the `getUseItemRemainingTicks() > 0` window rides — the
+        // not-using walk the ITEM fall-through answers (the client's
+        // own verdict the excluded hands the honest FALSE keeps, the
+        // matrix the idle branch the bow verdict the fold never
+        // reaches)
+        let mut plain_idle = AvatarState::rest(0.0, 30.0, 0.0);
+        plain_idle.head_yaw_off_deg = 20.0;
+        let idle_plain = build_posed_parts(&plain_idle);
+        let mut c = AvatarState::rest(0.0, 30.0, 0.0);
+        c.head_yaw_off_deg = 20.0;
+        c.right_bow = true;
+        c.right_item = true;
+        let posed = build_posed_parts(&c);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            (idle_plain[2].x_rot * 0.5 - 0.314_159_274_101_257_3_f32).to_bits(),
+            "the idle bow the ITEM fall-through the fold wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0.0f32.to_bits(),
+            "the idle bow the ITEM fold the yRot zero wears"
+        );
+        assert_ne!(
+            posed[2].x_rot.to_bits(),
+            0xBF86_0A92,
+            "the idle bow the aim the matrix never rides"
         );
     }
 
