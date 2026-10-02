@@ -853,10 +853,19 @@ fn ease_in_out_back(x: f32) -> f32 {
     }
 }
 
+/// `net/minecraft/util/Ease.inQuad` (javap, verbatim): the plain f32
+/// square — `fload_0; fload_0; fmul; freturn` (the 4-byte body the dump
+/// speaks, no constants the CP keeps). The THIRD-PERSON stab's own
+/// raise ease (`SpearAnimations.thirdPersonAttackHand`'s f5) — the
+/// first-person recovery's outBack the same window never shares.
+pub(crate) fn ease_in_quad(x: f32) -> f32 {
+    x * x
+}
+
 /// `net/minecraft/util/Ease.outQuart` (javap, verbatim): `1 -
 /// square(square(1-x))` — the two f32 square bodies the nested
 /// `invokestatic` pair speaks.
-fn ease_out_quart(x: f32) -> f32 {
+pub(crate) fn ease_out_quart(x: f32) -> f32 {
     let t = 1.0f32 - x;
     1.0f32 - (t * t) * (t * t)
 }
@@ -880,6 +889,26 @@ fn stab_eases(p: f32) -> [f32; 3] {
         ease_out_back(eased_progress(p, 0.05, 0.2)),
         ease_in_out_expo(eased_progress(p, 0.4, 1.0)),
     ]
+}
+
+/// `SpearAnimations.thirdPersonAttackHand`'s own xRot window (javap,
+/// verbatim — the 26.2 bytecode the THIRD-person dispatch rides): the
+/// three eased phases — f4 = inOutSine(progress(t, 0.0, 0.05)) the
+/// thrust's snap, f5 = inQuad(progress(t, 0.05, 0.2)) the raise (the
+/// inQuad the first-person outBack never shares), f6 =
+/// inOutExpo(progress(t, 0.4, 1.0)) the slow unwind — fold
+/// `(90·f4 - 120·f5 + 30·f6) · (π/180 f32)` the dump's own order (the
+/// `ldc 90/120/30` fmul chain, the `ldc 0.01745329238474369` — f32
+/// bits 0x3c8efa35 — the degrees→radians the fadd then wears). The
+/// humanoid's switch hands this to the ATTACK arm's xRot; the undo of
+/// the shared body-twist adds rides the avatar's own walk (the jar's
+/// putfield/getfield round-trip the model code keeps).
+pub(crate) fn third_person_stab_x_rot_delta(t: f32) -> f32 {
+    const DEG: f32 = 0.017_453_292; // f32 bits 0x3c8efa35
+    let f4 = ease_in_out_sine(eased_progress(t, 0.0, 0.05));
+    let f5 = ease_in_quad(eased_progress(t, 0.05, 0.2));
+    let f6 = ease_in_out_expo(eased_progress(t, 0.4, 1.0));
+    (90.0f32 * f4 - 120.0f32 * f5 + 30.0f32 * f6) * DEG
 }
 
 /// `SpearAnimations.firstPersonAttack(progress, poseStack, side, arm)`
@@ -2033,6 +2062,53 @@ mod held_tests {
         // f32 subtract/divide round), the first expo branch the pow keeps
         assert_eq!(at(0.7), (1.0, 1.0, 0.499_999_58), "the unwind's midpoint");
         assert_eq!(at(1.0), (1.0, 1.0, 1.0), "the fold returns to the anchor");
+    }
+
+    /// THE THIRD-PERSON STAB'S OWN WINDOW (javap
+    /// `SpearAnimations.thirdPersonAttackHand` pcs 67-133 — the 26.2
+    /// dump the dispatch rides): the three eases the FIRST-person
+    /// never shares (inOutSine the same, the raise the inQuad the
+    /// outBack retires, the expo the same) fold
+    /// `(90·f4 - 120·f5 + 30·f6) · (π/180)` — the pinned values the
+    /// f32 chain computes (the SIN-table cos the inOutSine speaks,
+    /// the f64 pow the expo narrows). t=0/1 the closed windows speak
+    /// zero (the rest the identity keeps, the fold returns); 0.05 the
+    /// full 90° thrust; 0.125 the 60° raise (f5 = inQuad(0.5) = 0.25);
+    /// 0.7 the −15° hold (the f32 progress a hair below 0.5 the expo
+    /// branch keeps); 0.5 the −29.85° over-rotation the unwind rides.
+    #[test]
+    fn the_third_person_stab_window_the_degrees_speak() {
+        // the degrees→radians literal the jar's CP keeps (f32 bits
+        // 0x3c8efa35 — the decimal the dump round-trips)
+        assert_eq!(0.017_453_292_f32.to_bits(), 0x3c8e_fa35);
+        // the plain square the inQuad body keeps (the 4-byte jar body)
+        assert_eq!(ease_in_quad(0.5), 0.25);
+        assert_eq!(ease_in_quad(0.0), 0.0);
+        assert_eq!(ease_in_quad(1.0), 1.0);
+        // the window's own walk (the f32 chain, each pin the oracle
+        // scripts/pins_479.py computed over the SIN table)
+        assert_eq!(third_person_stab_x_rot_delta(0.0).to_bits(), 0.0f32.to_bits());
+        assert_eq!(
+            third_person_stab_x_rot_delta(0.025).to_bits(),
+            0x3f49_0fdb, // 0.7853981852531433 — the 45° the f4=0.5 rides
+        );
+        assert_eq!(
+            third_person_stab_x_rot_delta(0.05).to_bits(),
+            0x3fc9_0fdb, // 1.5707963705062866 — the full 90° thrust
+        );
+        assert_eq!(
+            third_person_stab_x_rot_delta(0.125).to_bits(),
+            0x3f86_0a92, // 1.0471975803375244 — the 60° the raise wears
+        );
+        assert_eq!(
+            third_person_stab_x_rot_delta(0.5).to_bits(),
+            0xbf05_61b0, // -0.521021842956543 — the -29.85° over-rotation
+        );
+        assert_eq!(
+            third_person_stab_x_rot_delta(0.7).to_bits(),
+            0xbe86_0a99, // -0.2617996037006378 — the -15° hold
+        );
+        assert_eq!(third_person_stab_x_rot_delta(1.0).to_bits(), 0.0f32.to_bits());
     }
 
     /// THE STAB ANCHOR'S OWN SHAPE (javap `firstPersonAttack` pcs 37-103

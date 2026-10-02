@@ -27883,6 +27883,13 @@ impl App {
             skeleton_bow: false,
             head_yaw_off_deg: 0.0,
             death_time: 0.0,
+            // the held stack's SWING_ANIMATION component the THIRD-person
+            // dispatch reads (the same law the duration read speaks — the
+            // spear the STAB the thirdPersonAttackHand rides, everything
+            // else the DEFAULT (WHACK, 6))
+            swing_kind: held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0)))
+                .kind,
+            age_scale: 1.0,
         };
         let feet = {
             let (lx, ly, lz) = body.lerped_pos(self.partial_tick);
@@ -29185,6 +29192,11 @@ impl App {
                         skeleton_bow: false,
                         head_yaw_off_deg: head_yaw,
                         death_time: mob.death_time_at(self.partial_tick),
+                        // the mob's own held stack the component law reads
+                        // (the iron_spear the STAB answers, the rest the
+                        // DEFAULT (WHACK, 6) the empty hand keeps)
+                        swing_kind: held_swing_anim(mob.held_weapon).kind,
+                        age_scale: 1.0,
                     };
                     let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
                     // THE MOB-HELD ITEM LANE (ItemInHandLayer.
@@ -29312,6 +29324,10 @@ impl App {
                         skeleton_bow: mob.held_weapon == Some("bow"),
                         head_yaw_off_deg: head_yaw,
                         death_time: mob.death_time_at(self.partial_tick),
+                        // the skeleton's held stack the component law reads
+                        // (the bow the DEFAULT arc the swing never leaves)
+                        swing_kind: held_swing_anim(mob.held_weapon).kind,
+                        age_scale: 1.0,
                     };
                     // THE THIN MESH (SkeletonModel's own
                     // createDefaultSkeletonMesh — the 2x12x2 limbs the

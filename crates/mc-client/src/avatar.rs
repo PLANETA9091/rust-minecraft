@@ -43,12 +43,19 @@
 //!   head pivot `y += 4.2`, the body and both arm pivots `y += 3.2`.
 //!   The renderer's own offset (`AvatarRenderer.getRenderOffset`):
 //!   the crouched avatar draws `scale * -2 / 16` lower.
-//! - `HumanoidModel.setupAttackAnimation` (javap): the swing law —
-//!   `body.yRot = 0.2 * sin(sqrt(attackTime) * 2π)` (negated when the
-//!   attacking arm is the left), the attacking arm:
-//!   `xRot -= sin(sqrt(attackTime) * π) * 1.2 + 0.75 * sin(attackTime
-//!   * π) * (0.7 - head.xRot)`, `yRot += body.yRot * 2`, `zRot +=
-//!   sin(attackTime * π) * -0.4`.
+//! - `HumanoidModel.setupAttackAnimation` (javap, 26.2): the swing
+//!   law — the SHARED folds every kind keeps: `body.yRot = 0.2 *
+//!   sin(sqrt(attackTime) * 2π)` (negated when the attacking arm is
+//!   the left), the four arm-pivot orbits (`x = ±cos(body.yRot)·5·
+//!   ageScale`, `z = ±sin(body.yRot)·5·ageScale`), the three rotation
+//!   adds (`rightArm.yRot += body.yRot`, `leftArm.yRot +=`,
+//!   `leftArm.xRot +=`); then the `$SwitchMap$SwingAnimationType`
+//!   dispatch — WHACK: `xRot -= sin(outQuart(attackTime)·π)·1.2 +
+//!   0.75·sin(attackTime·π)·(0.7 − head.xRot)`, `yRot += body.yRot·2`,
+//!   `zRot += sin(attackTime·π)·−0.4`; NONE: the bare goto; STAB:
+//!   `SpearAnimations.thirdPersonAttackHand` (the three adds undone,
+//!   the xRot window `(90·f4 − 120·f5 + 30·f6)·(π/180)` the
+//!   inOutSine/inQuad/inOutExpo windows fold).
 //! - `LivingEntityRenderer.extractRenderState` (javap): the walk
 //!   sampling — `walkAnimationPos = walk.position(partial)`,
 //!   `walkAnimationSpeed = walk.speed(partial)` (the min(abs, 1)
@@ -187,6 +194,18 @@ pub struct AvatarState {
     /// `LivingEntityRenderState.deathTime` (the entity's deathTime +
     /// partialTick when dying, 0 alive) — the flip law's clock.
     pub death_time: f32,
+    /// `HumanoidRenderState.swingAnimationType` (the held stack's
+    /// SWING_ANIMATION component the setupAttackAnimation's $SwitchMap
+    /// dispatch reads — WHACK the outQuart arc, NONE the bare return,
+    /// STAB `SpearAnimations.thirdPersonAttackHand`). The render state
+    /// the held item answers (the DEFAULT (WHACK, 6) the component
+    /// getOrDefault keeps).
+    pub swing_kind: crate::hand::SwingKind,
+    /// `LivingEntityRenderState.ageScale` (the baby's 0.5, the adult's
+    /// 1.0) — the four arm-pivot orbit folds the swing shares multiply
+    /// the client's adults keep at 1.0 (the baby humanoid the render
+    /// state's own scale the lanes never vary yet).
+    pub age_scale: f32,
 }
 
 impl AvatarState {
@@ -209,6 +228,8 @@ impl AvatarState {
             skeleton_bow: false,
             head_yaw_off_deg: 0.0,
             death_time: 0.0,
+            swing_kind: crate::hand::SwingKind::Whack,
+            age_scale: 1.0,
         }
     }
 }
@@ -4068,25 +4089,78 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
         arm_l_pivot[1] += 3.2;
         arm_r_pivot[1] += 3.2;
     }
-    // THE SWING (setupAttackAnimation): the body's yRot fold and the
-    // attacking arm's WHACK arc
+    // THE SWING (setupAttackAnimation, 26.2 verbatim): the shared folds
+    // run for EVERY swing kind (the body's yRot twist, the arms' orbit
+    // pivots pc 64-155, the three rotation adds pc 158-212), then the
+    // $SwitchMap$SwingAnimationType dispatch speaks (WHACK 1 the
+    // outQuart arc at pc 252, NONE 2 the bare goto at pc 372, STAB 3
+    // `SpearAnimations.thirdPersonAttackHand` at pc 375-377).
     let at = state.attack_time;
     if at > 0.0 {
-        let f = mth_sin(mth_sqrt(at) * std::f32::consts::PI);
         let mut body_rot = 0.2 * mth_sin(mth_sqrt(at) * 6.2831855);
         if !state.attack_right {
             body_rot = -body_rot;
         }
         body_y = body_rot;
-        let head_adjust = 0.75 * mth_sin(at * std::f32::consts::PI) * (0.7 - head_x);
-        if state.attack_right {
-            arm_r_x -= f * 1.2 + head_adjust;
-            arm_r_y += body_y * 2.0;
-            arm_r_z += mth_sin(at * std::f32::consts::PI) * -0.4;
-        } else {
-            arm_l_x -= f * 1.2 + head_adjust;
-            arm_l_y += body_y * 2.0;
-            arm_l_z += mth_sin(at * std::f32::consts::PI) * -0.4;
+        // THE ORBIT (pc 64-155): the four pivot ASSIGNMENTS — the arms
+        // swing AROUND the body's twist (±cos/±sin of body.yRot, the
+        // ldc 5.0 the texel radius, the ageScale the render state's
+        // own f3 the four folds share)
+        arm_r_pivot[2] = mth_sin(body_y) * 5.0 * state.age_scale;
+        arm_r_pivot[0] = -(mth_cos(body_y)) * 5.0 * state.age_scale;
+        arm_l_pivot[2] = -(mth_sin(body_y)) * 5.0 * state.age_scale;
+        arm_l_pivot[0] = mth_cos(body_y) * 5.0 * state.age_scale;
+        // THE SHARED ROTATIONS (pc 158-212): rightArm.yRot += body.yRot,
+        // leftArm.yRot += body.yRot, leftArm.xRot += body.yRot — the
+        // three adds the STAB undo then replays (the putfield/getfield
+        // round-trip the jar's own chain keeps, the f32 the drift wears)
+        arm_r_y += body_y;
+        arm_l_y += body_y;
+        arm_l_x += body_y;
+        // THE DISPATCH (HumanoidModel$1 clinit: $SwitchMap[WHACK] = 1,
+        // [NONE] = 2, [STAB] = 3 — the tableswitch [1->252, 2->372,
+        // 3->375] the dump speaks)
+        match state.swing_kind {
+            crate::hand::SwingKind::Whack => {
+                // THE WHACK ARC (pc 252-369): f5 = sin(outQuart(t)·π)
+                // (the Ease.outQuart the 26.2 verdict — the 1.8-era
+                // sin(sqrt(t)·π) the old law kept the jar retired), f6
+                // = sin(t·π)·(0.7 − head.xRot)·0.75 the head's own
+                // ride, the attack arm the getArm(attackArm) answers
+                let f5 = mth_sin(crate::hand::ease_out_quart(at) * std::f32::consts::PI);
+                let f6 = mth_sin(at * std::f32::consts::PI) * (0.7 - head_x) * 0.75;
+                if state.attack_right {
+                    arm_r_x -= f5 * 1.2 + f6;
+                    arm_r_y += body_y * 2.0;
+                    arm_r_z += mth_sin(at * std::f32::consts::PI) * -0.4;
+                } else {
+                    arm_l_x -= f5 * 1.2 + f6;
+                    arm_l_y += body_y * 2.0;
+                    arm_l_z += mth_sin(at * std::f32::consts::PI) * -0.4;
+                }
+            }
+            crate::hand::SwingKind::None => {
+                // pc 372: the bare goto 380 — the shared folds the kind
+                // keeps, no arc the switch adds
+            }
+            crate::hand::SwingKind::Stab => {
+                // THE STAB (SpearAnimations.thirdPersonAttackHand pcs
+                // 0-133): the three shared adds UNDO (rightArm.yRot -=,
+                // leftArm.yRot -=, leftArm.xRot -= body.yRot — the
+                // round-trip the f32 double-rounding the jar's own
+                // putfield chain wears), then the xRot window
+                // (90·f4 - 120·f5 + 30·f6)·(π/180) the helper folds —
+                // the getArm(attackArm) the ONLY arm the window rides
+                arm_r_y -= body_y;
+                arm_l_y -= body_y;
+                arm_l_x -= body_y;
+                let delta = crate::hand::third_person_stab_x_rot_delta(at);
+                if state.attack_right {
+                    arm_r_x += delta;
+                } else {
+                    arm_l_x += delta;
+                }
+            }
         }
     }
     // THE ZOMBIE ARMS (javap `AnimationUtils.animateZombieArms` +
@@ -8644,6 +8718,115 @@ mod tests {
             .zip(standing.iter())
             .any(|(a, b)| (a.pts[0][1] - b.pts[0][1]).abs() > 1e-4);
         assert!(moved, "the swing moved the arm");
+    }
+
+    /// THE PART INDEX THE SWING TESTS READ: build_posed_parts walks
+    /// head, body, right arm, left arm, right leg, left leg — the
+    /// createMesh order the vec construction keeps.
+    fn arm_parts(parts: &[Part]) -> (&Part, &Part) {
+        (&parts[2], &parts[3])
+    }
+
+    /// THE WHACK ARC'S 26.2 VERDICT (javap setupAttackAnimation pc
+    /// 252-369 + the shared folds pcs 64-212, the f32 chain
+    /// scripts/pins_479.py computed over the SIN table): the shared
+    /// orbit pivots (±cos/±sin of body.yRot the ldc 5.0 radius wears),
+    /// the shared rotation adds (the off arm the +body.yRot pair
+    /// keeps), and the arc the outQuart speaks — the sin(sqrt(t)·π)
+    /// term the old law rode the jar retired (at t=0.5 the two laws
+    /// never agree: 0.19509032 vs 0.70710677).
+    #[test]
+    fn the_whack_arc_the_out_quart_verdict_speaks() {
+        let mut state = AvatarState::rest(0.0, 0.0, 0.0);
+        state.attack_time = 0.5;
+        state.swing_kind = crate::hand::SwingKind::Whack;
+        let parts = build_posed_parts(&state);
+        let (r, l) = arm_parts(&parts);
+        // THE ORBIT (pc 64-155): body_y = 0.2·sin(sqrt(0.5)·2π) =
+        // -0.19277565, the pivots the assignments the swing owns
+        assert_eq!(r.pivot[0].to_bits(), 0xc09d_090f, "right pivot x = -cos·5"); // -4.907355785369873
+        assert_eq!(r.pivot[2].to_bits(), 0xbf75_23e8, "right pivot z = sin·5"); // -0.9575791358947754
+        assert_eq!(l.pivot[0].to_bits(), 0x409d_090f, "left pivot x = cos·5");
+        assert_eq!(l.pivot[2].to_bits(), 0x3f75_23e8, "left pivot z = -sin·5");
+        // THE SHARED ADDS (pc 158-212): the off (left) arm yRot/xRot
+        // the +body.yRot pair keeps (the rest pose the walk keeps 0 —
+        // the bob's x term the sin(age·0.067) speaks is 0 at age 0)
+        assert_eq!(l.y_rot.to_bits(), 0xbe45_66fb, "left yRot = body_y"); // -0.1927756518125534
+        assert_eq!(l.x_rot.to_bits(), 0xbe45_66fb, "left xRot = bob(0) + body_y"); // -0.1927756518125534
+        // THE ARC (pc 252-369) on the attack arm:
+        // xRot = 0 (the bob) - (sin(outQuart(0.5)·π)·1.2 + 0.525)
+        assert_eq!(r.x_rot.to_bits(), 0xbf42_54ed, "right xRot the outQuart wears"); // -0.7591083645820618
+        assert_eq!(r.y_rot.to_bits(), 0xbf14_0d3c, "right yRot = body_y·3"); // -0.578326940536499
+        assert_eq!(r.z_rot.to_bits(), 0xbe4c_cccd, "right zRot the sin(πt)·-0.4 keeps"); // -0.2
+        // THE OLD LAW THE JAR RETIRED: sin(sqrt(0.5)·π) = 0.70710677 —
+        // the arc xRot the sqrt law kept (-(0.70710677·1.2 + 0.525) =
+        // -1.4735) the outQuart verdict (-0.7591) never shares
+        let old = -(0.707_106_77_f32 * 1.2 + 0.525);
+        assert!(r.x_rot != old, "the retired sqrt law the arc never keeps");
+    }
+
+    /// THE STAB'S THIRD-PERSON DISPATCH (javap
+    /// `SpearAnimations.thirdPersonAttackHand` pcs 0-133 + the
+    /// HumanoidModel$1 $SwitchMap the STAB→3 the clinit banks): the
+    /// three shared adds UNDO (the f32 putfield/getfield round-trip
+    /// the drift wears — (−0.1 + body_y) − body_y lands a hair off
+    /// the −0.1 the naive identity keeps), the orbit pivots the
+    /// shared folds never undo, and the xRot window rides the ATTACK
+    /// arm only (the 90/120/30-degree fold the helper computes).
+    #[test]
+    fn the_stab_third_person_the_undo_and_the_window_speak() {
+        let mut state = AvatarState::rest(0.0, 0.0, 0.0);
+        state.attack_time = 0.5;
+        state.swing_kind = crate::hand::SwingKind::Stab;
+        let parts = build_posed_parts(&state);
+        let (r, l) = arm_parts(&parts);
+        // the undo (pc 10-64): rightArm.yRot -= body.yRot — the
+        // (0 + body_y) - body_y chain the exact zero lands (the rest
+        // pose the bob keeps 0 — the f32 the negation addition is
+        // exact when the start rides zero)
+        assert_eq!(r.y_rot.to_bits(), 0.0f32.to_bits(), "right yRot the undo zeroes");
+        assert_eq!(l.y_rot.to_bits(), 0.0f32.to_bits(), "left yRot the undo zeroes");
+        // the left xRot round-trip: (0 + body_y) - body_y = 0 exact
+        assert_eq!(l.x_rot.to_bits(), 0.0f32.to_bits(), "left xRot the round-trip zeroes");
+        // the window on the attack arm: 0 (the bob) + (-0.52102184)
+        assert_eq!(r.x_rot.to_bits(), 0xbf05_61b0, "right xRot the window rides"); // -0.521021842956543
+        // the z the stab never folds (the jar's own scope: xRot only)
+        assert_eq!(r.z_rot.to_bits(), 0.2f32.to_bits(), "right zRot untouched");
+        // THE ORBIT the undo never touches (the pivots the shared
+        // assignments own — identical to the whack's)
+        assert_eq!(r.pivot[0].to_bits(), 0xc09d_090f);
+        assert_eq!(r.pivot[2].to_bits(), 0xbf75_23e8);
+        // THE MIRROR (getArm(attackArm)): the left-attacking body the
+        // window rides the LEFT arm, the right arm the bare bob keeps
+        state.attack_right = false;
+        let parts = build_posed_parts(&state);
+        let (r, l) = arm_parts(&parts);
+        assert_eq!(r.x_rot.to_bits(), 0.0f32.to_bits(), "right xRot the bare bob keeps");
+        assert_eq!(l.x_rot.to_bits(), 0xbf05_61b0, "left xRot the window rides"); // -0.521021842956543
+        // the LEFT flip the body fold wears (negated body_y = +0.19277565)
+        assert_eq!(l.y_rot.to_bits(), 0.0f32.to_bits());
+    }
+
+    /// THE NONE KIND'S BARE GOTO (javap pc 372: the switch's case 2
+    /// the bare `goto 380` speaks): the shared folds the kind keeps
+    /// (the orbit pivots + the three rotation adds), no arc any arm
+    /// wears — the WHACK arc's zRot/extra yRot the none never adds.
+    #[test]
+    fn the_none_kind_the_bare_shared_folds_keep() {
+        let mut state = AvatarState::rest(0.0, 0.0, 0.0);
+        state.attack_time = 0.5;
+        state.swing_kind = crate::hand::SwingKind::None;
+        let parts = build_posed_parts(&state);
+        let (r, l) = arm_parts(&parts);
+        // the shared adds only: yRot = body_y, xRot = bob(0) + body_y (left)
+        assert_eq!(r.y_rot.to_bits(), 0xbe45_66fb, "right yRot = body_y");
+        assert_eq!(r.x_rot.to_bits(), 0.0f32.to_bits(), "right xRot the bare bob keeps");
+        assert_eq!(r.z_rot.to_bits(), 0.2f32.to_bits(), "right zRot the bare bob keeps");
+        assert_eq!(l.y_rot.to_bits(), 0xbe45_66fb, "left yRot = body_y");
+        assert_eq!(l.x_rot.to_bits(), 0xbe45_66fb, "left xRot = bob(0) + body_y");
+        // the orbit pivots the shared fold owns (same as every kind)
+        assert_eq!(r.pivot[0].to_bits(), 0xc09d_090f);
+        assert_eq!(r.pivot[2].to_bits(), 0xbf75_23e8);
     }
 
     /// THE DEATH FLIP (javap: the deathTime branch's ZP rotation riding
