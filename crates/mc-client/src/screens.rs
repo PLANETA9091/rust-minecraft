@@ -5293,6 +5293,29 @@ fn spear_swing_seconds(name: &str) -> Option<f64> {
     Some(row)
 }
 
+/// THE SWING ANIMATION COMPONENT'S OWN TABLE (javap `ItemStack
+/// .getSwingAnimation` + `Item$Properties.spear` pcs 221-240 + the
+/// `SwingAnimation` ctor/static init): the held stack's SWING_ANIMATION
+/// component the render dispatch and the swing clock both read — the
+/// SPEAR factory the jar's ONLY declarer, `new SwingAnimation(STAB,
+/// (int)(f2 · 20.0f))` the fload_2/ldc_w 20.0/fmul/f2i fold keeps (f2 =
+/// the SAME first float the ATTACK_SPEED modifier shares — the seconds
+/// [`spear_swing_seconds`] banks, the ×20 the seconds→ticks law), every
+/// other stack the DEFAULT `(WHACK, 6)` the getOrDefault speaks (the
+/// empty hand included — the fist never leaves the WHACK arc).
+pub(crate) fn held_swing_anim(held: Option<&str>) -> crate::hand::SwingAnim {
+    match held.and_then(spear_swing_seconds) {
+        Some(seconds) => crate::hand::SwingAnim {
+            kind: crate::hand::SwingKind::Stab,
+            // the f2i truncation — the jar folds the f32 product
+            // `(int)(seconds_f32 * 20.0f)` (0.65→13, 0.95→19, 1.15→23;
+            // the f32 widen-then-fold the same law the CP floats wear)
+            duration: ((seconds as f32) * 20.0f32) as i32,
+        },
+        None => crate::hand::SwingAnim::default(),
+    }
+}
+
 /// THE SEVEN TIERS' OWN KINETIC ROWS (the Items clinit's spear rows —
 /// the CP floats the `Item$Properties.spear` ctor walk turns into the
 /// `KineticWeapon` fields, resolved by `scripts/cp_float.py` over the
@@ -7766,7 +7789,16 @@ impl App {
             _ => self.music.update(),
         }
         // the swing clock ticks every game tick like the player entity's
-        // (at rest it pins swingTime to 0 and attackAnim to 0 — no-op)
+        // (at rest it pins swingTime to 0 and attackAnim to 0 — no-op).
+        // THE LIVE DURATION READ first (javap updateSwingTime pcs 0-4:
+        // `getCurrentSwingDuration()` is the local 1 the tick's own
+        // advance/reset/attackAnim folds share — the held stack's
+        // SWING_ANIMATION component, the DEFAULT (WHACK, 6) the empty
+        // hand falls back to; the haste/fatigue folds the jar's duration
+        // gates keep are honest absences here — the client tracks
+        // neither effect)
+        self.swing.duration = held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0)))
+            .duration;
         self.swing.tick();
         // THE OVERLAY CLOCK (Hud.tick's own arm — the overlay message's
         // time ticks down while it lives, the > 0 gate the negative
@@ -27325,7 +27357,20 @@ impl App {
         // carries, the offhand lane the same verdict keeps)
         if self.perspective.is_first_person() && self.screen == ScreenKind::World {
             if let Some(item) = &self.held_item {
-                item.draw_with_pose(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick), eat_pose);
+                // THE COMPONENT'S OWN DISPATCH (javap submitArmWithItem
+                // pcs 1427-1441: the held STACK's SwingAnimation type the
+                // switch reads every frame — the STAB spears the
+                // firstPersonAttack lane answers, everything else the
+                // DEFAULT (WHACK, 6) component the whack arc wears)
+                let held_kind =
+                    held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0))).kind;
+                item.draw_with_pose(
+                    fb,
+                    ctx.proj,
+                    self.swing.get_attack_anim(self.partial_tick),
+                    eat_pose,
+                    held_kind,
+                );
             } else if let Some(arm) = &self.arm {
                 arm.draw(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick));
             }
@@ -27341,12 +27386,23 @@ impl App {
             // answers — the F swap's own mutation the next frame wears.
             self.offhand_held_refreshed();
             if let Some(item) = &self.held_offhand {
+                // the OFFHAND STACK's own component (the switch reads the
+                // stack the lane renders — the offhand spear the stab
+                // wears, the main hand's kind never rides this call)
+                let (off_id, off_count) = self.offhand_stack();
+                let off_kind = held_swing_anim(if off_count > 0 {
+                    mc_registry::item_name(off_id)
+                } else {
+                    None
+                })
+                .kind;
                 item.draw_with_pose_side(
                     fb,
                     ctx.proj,
                     self.swing.get_attack_anim(self.partial_tick),
                     eat_pose_off,
                     -1.0,
+                    off_kind,
                 );
             } else if let Some(arm) = &self.arm {
                 arm.draw_side(fb, ctx.proj, self.swing.get_attack_anim(self.partial_tick), true);
@@ -73451,6 +73507,87 @@ cow_sound_variant: None,
         assert_eq!(lightmap_screen_cell(0, 63), (0, 0), "the bottom-left pixel");
         assert_eq!(lightmap_screen_cell(63, 63), (15, 0), "the bottom-right pixel");
         assert_eq!(lightmap_screen_cell(4, 0), (1, 15), "the second cell the 4px stride keeps");
+    }
+
+    /// THE SWING ANIMATION COMPONENT'S OWN TABLE (javap `Item$Properties
+    /// .spear` pcs 221-240 + the SwingAnimation ctor): the seven spear
+    /// tiers the STAB type with the `(int)(seconds·20)` duration wear —
+    /// 13/15/17/19/19/21/23 (the f32 multiply the exact integers the
+    /// nearest-f32 rounding lands, the f2i the truncation speaks) —
+    /// every other stack the DEFAULT `(WHACK, 6)` the getOrDefault keeps
+    /// (the empty hand, the sword, the unknown id — the fist never
+    /// leaves the whack arc).
+    #[test]
+    fn the_swing_anim_component_the_seven_tiers_wear() {
+        let at = |name: Option<&str>| held_swing_anim(name);
+        let stab = |dur: i32| crate::hand::SwingAnim {
+            kind: crate::hand::SwingKind::Stab,
+            duration: dur,
+        };
+        assert_eq!(at(Some("wooden_spear")), stab(13));
+        assert_eq!(at(Some("stone_spear")), stab(15));
+        assert_eq!(at(Some("copper_spear")), stab(17));
+        assert_eq!(at(Some("iron_spear")), stab(19));
+        assert_eq!(at(Some("golden_spear")), stab(19));
+        assert_eq!(at(Some("diamond_spear")), stab(21));
+        assert_eq!(at(Some("netherite_spear")), stab(23));
+        // the DEFAULT component: the empty hand, the non-spear, the unknown
+        assert_eq!(at(None), crate::hand::SwingAnim::default());
+        assert_eq!(at(Some("iron_sword")), crate::hand::SwingAnim::default());
+        assert_eq!(
+            at(Some("not_an_item")),
+            crate::hand::SwingAnim::default(),
+            "the unknown the DEFAULT keeps"
+        );
+        assert_eq!(
+            crate::hand::SwingAnim::default(),
+            crate::hand::SwingAnim {
+                kind: crate::hand::SwingKind::Whack,
+                duration: 6
+            }
+        );
+    }
+
+    /// THE LIVE DURATION READ (javap `updateSwingTime` pcs 0-4 over
+    /// `getCurrentSwingDuration`): the App's own tick refreshes the
+    /// swing clock's duration from the HELD stack's component — the
+    /// iron spear the 19-tick clock wears (the attackAnim the /19 step
+    /// speaks), the sword switch the DEFAULT 6 answers — and the
+    /// re-trigger gate the LIVE half keeps (the spear's 9, the fist's
+    /// 3).
+    #[test]
+    fn the_swing_clock_the_held_component_refreshes() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.update();
+        assert_eq!(app.swing.duration, 19, "the spear's component the clock wears");
+        // the swing rides the component's own rhythm: the trigger, the
+        // first tick lands 0, the /19 progress step
+        app.swing.start();
+        app.update();
+        assert_eq!(app.swing.swing_time, 0, "the trigger the next tick lands");
+        assert!(
+            (app.swing.attack_anim - 0.0).abs() < 1e-6,
+            "the progress at the landing"
+        );
+        app.update();
+        assert_eq!(app.swing.swing_time, 1);
+        assert!(
+            (app.swing.attack_anim - 1.0 / 19.0).abs() < 1e-6,
+            "the /19 fold the component's duration keeps"
+        );
+        // the switch: the sword's DEFAULT component the next tick reads
+        let sword = mc_registry::item_id_by_name("iron_sword").unwrap();
+        app.inventory.items[app.selected_hotbar] = (sword, 1);
+        app.update();
+        assert_eq!(app.swing.duration, 6, "the DEFAULT the sword wears");
+        assert!(app.swing.swing_time < 6, "the clock the new duration rides");
+        // the empty hand: the fist's own 6
+        app.inventory.items[app.selected_hotbar] = (0, 0);
+        app.update();
+        assert_eq!(app.swing.duration, 6, "the empty stack the DEFAULT keeps");
     }
 }
 

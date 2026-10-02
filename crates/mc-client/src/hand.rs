@@ -143,6 +143,49 @@ impl ArmModel {
     }
 }
 
+/// `net/minecraft/world/item/SwingAnimationType` — the enum the held
+/// stack's `SwingAnimation` component carries (the clinit's own rows:
+/// NONE id 0 / WHACK id 1 / STAB id 2 — the `$values` walk's order, the
+/// STREAM_CODEC the BY_ID continuous map speaks). The render dispatch
+/// (`ItemInHandRenderer.submitArmWithItem`'s own switch over the held
+/// stack's component type) rides it: WHACK walks the classic
+/// swingArm arc, STAB walks `SpearAnimations.firstPersonAttack`, NONE
+/// applies no swing transform at all (the switch's bare goto).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SwingKind {
+    /// the enum's own id 0 — NO item in the jar's registry declares it
+    /// (the spear factory is the only SwingAnimation declarer), the
+    /// dispatch keeps the variant for the type's own completeness (the
+    /// switch's bare-goto arm)
+    #[cfg_attr(not(test), expect(dead_code))] // the jar's enum row, the registry never names
+    None,
+    Whack,
+    Stab,
+}
+
+/// `net/minecraft/world/item/component/SwingAnimation` — the (type,
+/// duration) pair the held item's component keeps (the ctor's two
+/// fields; `ItemStack.getSwingAnimation` = the SWING_ANIMATION
+/// component `getOrDefault(DEFAULT)`). DEFAULT = `(WHACK, 6)` — the
+/// static init's `getstatic WHACK; bipush 6` pair. The SPEAR factory
+/// (`Item$Properties.spear`) is the jar's ONLY declarer: the first
+/// float (the swing seconds the ATTACK_SPEED modifier shares) folds
+/// `(int)(seconds * 20.0f)` into the duration with the STAB type.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SwingAnim {
+    pub kind: SwingKind,
+    pub duration: i32,
+}
+
+impl Default for SwingAnim {
+    fn default() -> Self {
+        Self {
+            kind: SwingKind::Whack,
+            duration: 6,
+        }
+    }
+}
+
 /// The vanilla swing machinery, verbatim from LivingEntity's bytecode
 /// (`swing`, `updateSwingTime`, `getAttackAnim`, `getCurrentSwingDuration`
 /// + `SwingAnimation.DEFAULT = (WHACK, 6)` — the fist swing is 6 ticks).
@@ -159,6 +202,14 @@ pub struct SwingState {
     pub o_attack_anim: f32,
     /// `attackAnim` = swingTime / duration (assigned every tick).
     pub attack_anim: f32,
+    /// `getCurrentSwingDuration()`'s live read — the held stack's own
+    /// `SwingAnimation.duration` (the swingingArm stack's component, the
+    /// DEFAULT (WHACK, 6) the empty stack falls back to). The App
+    /// refreshes it each tick from the held item (the jar reads the
+    /// stack live per call; the haste/fatigue folds ride the duration's
+    /// own gates — the client tracks neither, the plain component is the
+    /// honest law here).
+    pub duration: i32,
 }
 
 impl Default for SwingState {
@@ -168,6 +219,7 @@ impl Default for SwingState {
             swing_time: 0,
             o_attack_anim: 0.0,
             attack_anim: 0.0,
+            duration: 6,
         }
     }
 }
@@ -178,22 +230,25 @@ impl SwingState {
     pub const DEFAULT_DURATION: i32 = 6;
 
     /// `LivingEntity.swing(hand)`'s trigger logic: a re-trigger is IGNORED
-    /// while a swing is still in its first half (swingTime in [0, dur/2));
-    /// otherwise (or fresh) swingTime = -1 and swinging = true.
+    /// while a swing is still in its first half (swingTime in
+    /// [0, getCurrentSwingDuration()/2)); otherwise (or fresh) swingTime
+    /// = -1 and swinging = true. The gate's divisor is the LIVE read —
+    /// the held item's own component duration (`self.duration`).
     pub fn start(&mut self) {
-        if !(self.swinging && self.swing_time < Self::DEFAULT_DURATION / 2 && self.swing_time >= 0)
-        {
+        if !(self.swinging && self.swing_time < self.duration / 2 && self.swing_time >= 0) {
             self.swing_time = -1;
             self.swinging = true;
         }
     }
 
-    /// `LivingEntity.updateSwingTime()` (one game tick): advance swingTime
-    /// while swinging (reset to rest at the duration), pin it to 0 at
-    /// rest, then attackAnim = swingTime / duration. oAttackAnim takes the
-    /// previous tick's value first (the tick's lerp bookkeeping).
+    /// `LivingEntity.updateSwingTime()` (one game tick): the duration is
+    /// the LIVE `getCurrentSwingDuration()` read (the jar's local 1 —
+    /// re-read every tick), advance swingTime while swinging (reset to
+    /// rest at the duration), pin it to 0 at rest, then attackAnim =
+    /// swingTime / duration. oAttackAnim takes the previous tick's value
+    /// first (the tick's lerp bookkeeping).
     pub fn tick(&mut self) {
-        let duration = Self::DEFAULT_DURATION;
+        let duration = self.duration;
         self.o_attack_anim = self.attack_anim;
         if self.swinging {
             self.swing_time += 1;
@@ -236,6 +291,9 @@ impl SwingState {
             swing_time: 0,
             o_attack_anim: progress,
             attack_anim: progress,
+            // the DEFAULT component's clock (the scenes' freeze rides the
+            // empty-stack fallback — the WHACK lane's own 6-tick shape)
+            duration: Self::DEFAULT_DURATION,
         }
     }
 }
@@ -644,24 +702,34 @@ pub fn load_charge_item(id: i32, kind: mc_registry::ChargeKind) -> Option<HeldIt
 /// default offline player's). At the rest pose (swing 0, equip 0) the
 /// only non-trivial terms are the attack transform's rotY(side*45deg) ..
 /// rotY(side*-45deg) pair — vanilla composes them every frame, so we do
-/// too (op-for-op; not collapsed to identity).
-fn item_hand_anchor(swing: f32, equip: f32, side: f32) -> Mat4 {
+/// too (op-for-op; not collapsed to identity). The swing KIND rides the
+/// held stack's own `SwingAnimation` component (`submitArmWithItem`'s
+/// own switch — javap pcs 1427-1494): WHACK walks the classic
+/// swingArm+attack chain, STAB replaces BOTH with
+/// `SpearAnimations.firstPersonAttack`, NONE stops at the bare
+/// applyItemArmTransform anchor (the switch's bare goto).
+fn item_hand_anchor(kind: SwingKind, swing: f32, equip: f32, side: f32) -> Mat4 {
     let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
     let deg = |d: f32| d.to_radians();
     // applyItemArmTransform
     let a = t(side * 0.56, -0.52, equip * -0.6 + -0.72);
-    // swingArm's translate terms (the WHACK arc; exact zeros at rest),
-    // then applyItemArmAttackTransform's two rotation amounts — the
-    // five-term item-side curve, extracted for the sweep test
-    let [f5s, f6s, f7s, f5, f6] = item_swing_terms(swing);
-    let b = t(side * f5s, f6s, f7s);
-    Mat4::IDENT
-        .mul(&a)
-        .mul(&b)
-        .mul(&Mat4::rot_y(deg(side * (45.0 + f5 * -20.0))))
-        .mul(&Mat4::rot_z(deg(side * f6 * -20.0)))
-        .mul(&Mat4::rot_x(deg(f6 * -80.0)))
-        .mul(&Mat4::rot_y(deg(side * -45.0)))
+    match kind {
+        SwingKind::None => a,
+        SwingKind::Stab => a.mul(&stab_attack_matrix(swing, side)),
+        SwingKind::Whack => {
+            // swingArm's translate terms (the WHACK arc; exact zeros at
+            // rest), then applyItemArmAttackTransform's two rotation
+            // amounts — the five-term item-side curve, extracted for the
+            // sweep test
+            let [f5s, f6s, f7s, f5, f6] = item_swing_terms(swing);
+            let b = t(side * f5s, f6s, f7s);
+            a.mul(&b)
+                .mul(&Mat4::rot_y(deg(side * (45.0 + f5 * -20.0))))
+                .mul(&Mat4::rot_z(deg(side * f6 * -20.0)))
+                .mul(&Mat4::rot_x(deg(f6 * -80.0)))
+                .mul(&Mat4::rot_y(deg(side * -45.0)))
+        }
+    }
 }
 
 /// The five swing terms of the held-item path — swingArm's three
@@ -680,6 +748,90 @@ fn item_swing_terms(swing: f32) -> [f32; 5] {
         mth_sin(swing * swing * std::f32::consts::PI), // f5: rotY amount
         mth_sin(sq * std::f32::consts::PI), // f6: rotZ/rotX amount
     ]
+}
+
+/// `net/minecraft/util/Ease.inOutSine` (javap, verbatim): `ldc π (f32) ·
+/// x` (an f32 multiply), the product widened to double for `Mth.cos`,
+/// then the fold `(1 - c) / 2` (the `fsub`'s c−1 the `fneg` flips — the
+/// JVM's operand order the dump speaks). `Mth.cos(D)F` is the 65536-entry
+/// SIN table lookup (the index `(long)(v·10430.378 + 16384.0) & 65535`) —
+/// the client's swing lanes speak the `Math.sin/cos` fold (the same
+/// convention the WHACK arc's `mth_sin` rides, the f64 call narrowed to
+/// f32; the table quantizes the ANGLE instead — a sub-pixel divergence,
+/// a table-fidelity round can swap both lanes together).
+fn ease_in_out_sine(x: f32) -> f32 {
+    let c = ((std::f32::consts::PI * x) as f64).cos() as f32;
+    (1.0 - c) / 2.0
+}
+
+/// `net/minecraft/util/Ease.outBack` (javap, verbatim): the f32 fold
+/// `1 + 2.70158·(x-1)³ + 1.70158·(x-1)²` — `Mth.cube`/`Mth.square` are
+/// the plain `x*x*x` / `x*x` f32 bodies (the dump's own two fmul walks),
+/// the constants the CP's `ldc #7 = 1.70158f` / `ldc #8 = 2.70158f`.
+/// The overshoot peaks past 1.0 (the recovery's own back-swing).
+fn ease_out_back(x: f32) -> f32 {
+    let t = x - 1.0;
+    1.0f32 + 2.701_58f32 * (t * t * t) + 1.701_58f32 * (t * t)
+}
+
+/// `net/minecraft/util/Ease.inOutExpo` (javap, verbatim): the two-branch
+/// exponential — `x < 0.5` (the `fcmpg 0.5` branch): 0 at exactly 0, else
+/// `2^(20x - 10) / 2` (a f64 `Math.pow` folded, `d2f` narrowed); else 1 at
+/// exactly 1, else `(2 - 2^(-20x + 10)) / 2`. Continuous at the 0.5 seam
+/// (both arms speak 0.5 there).
+fn ease_in_out_expo(x: f32) -> f32 {
+    if x < 0.5 {
+        if x == 0.0 {
+            0.0
+        } else {
+            ((2.0f64).powf(20.0 * x as f64 - 10.0) / 2.0) as f32
+        }
+    } else if x == 1.0 {
+        1.0
+    } else {
+        ((2.0 - (2.0f64).powf(-20.0 * x as f64 + 10.0)) / 2.0) as f32
+    }
+}
+
+/// `SpearAnimations.progress(FFF)F` — `Mth.clamp(Mth.inverseLerp(v, min,
+/// max), 0, 1)`, the inverseLerp the `(v - min) / (max - min)` f32 body
+/// speaks (the dump's own fsub/fdiv pair).
+fn eased_progress(value: f32, min: f32, max: f32) -> f32 {
+    ((value - min) / (max - min)).clamp(0.0, 1.0)
+}
+
+/// The three eased phases of `SpearAnimations.firstPersonAttack` —
+/// f4 = inOutSine(progress(p, 0.0, 0.05)) (the thrust's own snap),
+/// f5 = outBack(progress(p, 0.05, 0.2)) (the recovery's overshoot),
+/// f6 = inOutExpo(progress(p, 0.4, 1.0)) (the slow tilt unwind).
+/// Extracted so the sweep test pins the whole stab curve from one
+/// oracle (the same shape [`item_swing_terms`] rides for WHACK).
+fn stab_eases(p: f32) -> [f32; 3] {
+    [
+        ease_in_out_sine(eased_progress(p, 0.0, 0.05)),
+        ease_out_back(eased_progress(p, 0.05, 0.2)),
+        ease_in_out_expo(eased_progress(p, 0.4, 1.0)),
+    ]
+}
+
+/// `SpearAnimations.firstPersonAttack(progress, poseStack, side, arm)`
+/// — the STAB lane's own transform, verbatim from the bytecode: the
+/// three eased phases fold into translate → rotX → translate
+/// (`side·0.1·(f4-f5), -0.075·(f4-f6), 0.65·(f4-f5)` — the CP floats
+/// 0.1/-0.075/0.65 — then `Axis.XP` `-70°·(f4-f6)`, then the f64
+/// translate `(0, 0, -0.25·(f6-f5))`; the ×0.25 exact-power fold the
+/// f32 compose reproduces bit-for-bit). At rest (p = 0) all three eases
+/// speak 0 — the identity the item's raw anchor keeps; at the 0.05 peak
+/// the item sits at the full thrust (side·0.1, -0.075, 0.65) tilted
+/// -70°; at p = 1 the fold returns to the anchor (the f4-f5/f4-f6 terms
+/// re-collide at zero). The matrix composes left-to-right like the
+/// PoseStack's own push walk (the anchor's convention).
+fn stab_attack_matrix(p: f32, side: f32) -> Mat4 {
+    let [f4, f5, f6] = stab_eases(p);
+    let t = |x: f32, y: f32, z: f32| Mat4::translation(x, y, z);
+    t(side * 0.1 * (f4 - f5), -0.075 * (f4 - f6), 0.65 * (f4 - f5))
+        .mul(&Mat4::rot_x((-70.0f32 * (f4 - f6)).to_radians()))
+        .mul(&t(0.0, 0.0, -0.25 * (f6 - f5)))
 }
 
 impl HeldItem {
@@ -727,20 +879,23 @@ impl HeldItem {
     /// applyEatTransform folds over the item-arm transform chain).
     #[cfg_attr(not(test), expect(dead_code))]
     fn sampled(&self, swing: f32) -> Vec<crate::raster::SampledQuad<'_>> {
-        self.sampled_with_pose(swing, None, 1.0)
+        self.sampled_with_pose(swing, None, 1.0, SwingKind::Whack)
     }
 
     /// The sampled variant with the eat pose and the hand side (the
     /// consumable's own first-person law — the pull-in + the bite bob +
     /// the three rotations, the eat module's verbatim fold; the side
-    /// the anchor chain carries, -1 the offhand's).
+    /// the anchor chain carries, -1 the offhand's). The swing kind is
+    /// the held stack's own `SwingAnimation` type — the component the
+    /// submitArmWithItem switch reads every frame.
     fn sampled_with_pose(
         &self,
         swing: f32,
         eat: Option<crate::eat::EatPose>,
         side: f32,
+        kind: SwingKind,
     ) -> Vec<crate::raster::SampledQuad<'_>> {
-        let anchor = item_hand_anchor(swing, 0.0, side);
+        let anchor = item_hand_anchor(kind, swing, 0.0, side);
         let m = match eat {
             None => anchor,
             Some(p) => anchor
@@ -767,23 +922,28 @@ impl HeldItem {
     /// between the level and the hand) and draws the item in view space
     /// under the world's projection (the hand fov follows the world's).
     /// Vanilla also equips/swings here — the swing terms ride
-    /// `item_hand_anchor` above; the equip progress is always 0.
+    /// `item_hand_anchor` above; the equip progress is always 0. The
+    /// convenience keeps the DEFAULT component's WHACK lane (the tests'
+    /// rest poses — every swing term zero).
     #[cfg_attr(not(test), expect(dead_code))]
     pub fn draw(&self, fb: &mut crate::raster::Framebuf, proj: Mat4, swing: f32) {
-        self.draw_with_pose(fb, proj, swing, None);
+        self.draw_with_pose(fb, proj, swing, None, SwingKind::Whack);
     }
 
     /// The draw with the eat pose (the consumable's hold: the item
     /// lifts to the mouth and wobbles — the applyEatTransform's own
-    /// law; `None` keeps the rest pose). The MAIN hand's side.
+    /// law; `None` keeps the rest pose). The MAIN hand's side. The kind
+    /// is the held stack's own component type (the STAB spears ride
+    /// [`stab_attack_matrix`], everything else the DEFAULT WHACK arc).
     pub fn draw_with_pose(
         &self,
         fb: &mut crate::raster::Framebuf,
         proj: Mat4,
         swing: f32,
         eat: Option<crate::eat::EatPose>,
+        kind: SwingKind,
     ) {
-        self.draw_with_pose_side(fb, proj, swing, eat, 1.0);
+        self.draw_with_pose_side(fb, proj, swing, eat, 1.0, kind);
     }
 
     /// The draw on EITHER hand (the submitArmWithItem walk's own
@@ -792,7 +952,8 @@ impl HeldItem {
     /// item quads themselves the FIRST_PERSON_LEFT_HAND display
     /// context poses — the registry's own left-hand mirror). `side`
     /// = -1 renders the offhand item; the eat pose the MAIN hand's
-    /// lane only rides.
+    /// lane only rides. The kind rides the stack the lane renders —
+    /// the offhand's own component, never the main hand's.
     pub fn draw_with_pose_side(
         &self,
         fb: &mut crate::raster::Framebuf,
@@ -800,9 +961,10 @@ impl HeldItem {
         swing: f32,
         eat: Option<crate::eat::EatPose>,
         side: f32,
+        kind: SwingKind,
     ) {
         fb.clear_depth();
-        let quads = self.sampled_with_pose(swing, eat, side);
+        let quads = self.sampled_with_pose(swing, eat, side, kind);
         fb.draw_sampled_quads(proj, &quads, &mut |tex, u, v| {
             match sprite_uv::sample_uv(tex, u, v) {
                 Sample::Pixel(c) => Some(c),
@@ -1296,8 +1458,8 @@ mod held_tests {
     /// result — the two hands the one walk renders.
     #[test]
     fn the_offhand_anchor_mirrors_the_main_anchor() {
-        let right = item_hand_anchor(0.0, 0.0, 1.0);
-        let left = item_hand_anchor(0.0, 0.0, -1.0);
+        let right = item_hand_anchor(SwingKind::Whack, 0.0, 0.0, 1.0);
+        let left = item_hand_anchor(SwingKind::Whack, 0.0, 0.0, -1.0);
         let mirror = |p: [f32; 3]| [-p[0], p[1], p[2]];
         for p in [[0.5f32, -0.3f32, -0.7f32], [-1.2f32, 2.0f32, 0.4f32], [0.0f32, 0.0f32, 0.0f32]] {
             let mp = mirror(p);
@@ -1321,7 +1483,7 @@ mod held_tests {
     fn the_offhand_item_rests_in_the_bottom_left() {
         let item = load_item_ctx("item/iron_sword", mc_registry::display::FIRSTPERSON_LEFTHAND)
             .expect("the left-hand sword bakes");
-        let m = item_hand_anchor(0.0, 0.0, -1.0);
+        let m = item_hand_anchor(SwingKind::Whack, 0.0, 0.0, -1.0);
         let mut mean_y = 0.0f32;
         let mut n = 0.0f32;
         for q in &item.quads {
@@ -1344,7 +1506,7 @@ mod held_tests {
         // center; the BULK sits below center (the blade tip quads may
         // cross the horizontal midline — the vanilla held-sword look)
         let item = load_item("item/iron_sword").expect("iron_sword loads");
-        let m = item_hand_anchor(0.0, 0.0, 1.0);
+        let m = item_hand_anchor(SwingKind::Whack, 0.0, 0.0, 1.0);
         let mut mean_y = 0.0f32;
         for q in &item.quads {
             let mut centroid = [0f32; 3];
@@ -1594,5 +1756,159 @@ mod held_tests {
                 );
             }
         }
+    }
+
+    /// THE STAB'S OWN EASES (javap `SpearAnimations.firstPersonAttack`
+    /// pcs 0-35 + the `Ease` bodies): the three windows the f32 folds
+    /// keep — inOutSine snaps shut by p=0.05, outBack overshoots to
+    /// 1.0877 mid-recovery and settles by 0.2, inOutExpo splits the slow
+    /// unwind at exactly 0.5 when p rides the window's own midpoint
+    /// (0.7). The windows the `progress(p, min, max)` clamps name: 0.05
+    /// below the first window's floor speaks 0, 0.3 between the recovery
+    /// and the unwind holds [1, 1, 0].
+    #[test]
+    fn the_stab_eases_the_three_windows_speak() {
+        // the raw ease laws (the folds the jar's Ease class keeps)
+        assert_eq!(ease_in_out_sine(0.0), 0.0);
+        assert_eq!(ease_in_out_sine(0.5), 0.5);
+        assert_eq!(ease_in_out_sine(1.0), 1.0);
+        assert_eq!(ease_out_back(0.0), 0.0);
+        assert_eq!(ease_out_back(1.0), 1.0);
+        // the overshoot the back-swing speaks (the 2.70158 cube term)
+        assert_eq!(ease_out_back(0.5), 1.087_697_5);
+        assert_eq!(ease_out_back(0.25), 0.817_409_75);
+        assert_eq!(ease_in_out_expo(0.0), 0.0);
+        assert_eq!(ease_in_out_expo(1.0), 1.0);
+        assert_eq!(ease_in_out_expo(0.5), 0.5);
+        // the progress clamp (SpearAnimations.progress over Mth.inverseLerp)
+        assert_eq!(eased_progress(-0.5, 0.0, 0.05), 0.0);
+        assert_eq!(eased_progress(1.5, 0.0, 0.05), 1.0);
+        // the three-phase walk over the swing progress
+        let at = |p: f32| {
+            let [f4, f5, f6] = stab_eases(p);
+            (f4, f5, f6)
+        };
+        assert_eq!(at(0.0), (0.0, 0.0, 0.0), "the rest the identity keeps");
+        assert_eq!(at(0.05), (1.0, 0.0, 0.0), "the thrust snaps shut by 0.05");
+        assert_eq!(at(0.125), (1.0, 1.087_697_5, 0.0), "the recovery overshoots");
+        assert_eq!(at(0.2), (1.0, 1.0, 0.0), "the recovery settles");
+        assert_eq!(at(0.3), (1.0, 1.0, 0.0), "the hold between the windows");
+        // the f32 window: (0.7-0.4)/(1.0-0.4) lands a hair BELOW 0.5 (the
+        // f32 subtract/divide round), the first expo branch the pow keeps
+        assert_eq!(at(0.7), (1.0, 1.0, 0.499_999_58), "the unwind's midpoint");
+        assert_eq!(at(1.0), (1.0, 1.0, 1.0), "the fold returns to the anchor");
+    }
+
+    /// THE STAB ANCHOR'S OWN SHAPE (javap `firstPersonAttack` pcs 37-103
+    /// over the anchor walk): at rest the three eases speak zero — the
+    /// matrix collapses to the bare applyItemArmTransform the NONE arm
+    /// carries (bit-for-bit); at the 0.05 peak the origin sits at the
+    /// full thrust (side·0.1, -0.075, 0.65) with the item's up-axis
+    /// swung -70° about X; at p=1 the fold re-collides at zero (the
+    /// closed stab, the identity again); the side flips the X term only
+    /// (the mirror the offhand lane wears).
+    #[test]
+    fn the_stab_anchor_the_identity_and_the_peak_speak() {
+        // the rest: STAB == NONE == the bare anchor (the switch's two
+        // arms agree bit-for-bit when the swing is silent)
+        let rest_stab = item_hand_anchor(SwingKind::Stab, 0.0, 0.0, 1.0);
+        let rest_none = item_hand_anchor(SwingKind::None, 0.0, 0.0, 1.0);
+        assert_eq!(rest_stab.0, rest_none.0, "the rest pose the identity keeps");
+        // the peak: the origin rides the thrust translate OVER the anchor
+        // (applyItemArmTransform's (0.56, -0.52, -0.72) the chain composes
+        // first — the jar's own order: the anchor walk, then
+        // firstPersonAttack), the rotation never moves the origin
+        let peak = item_hand_anchor(SwingKind::Stab, 0.05, 0.0, 1.0);
+        let o = peak.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
+        // the sums the f32 additions round (the literal 0.66 the x fold
+        // keeps; the y/z the nearest-f32 folds the expressions speak)
+        assert_eq!(o[0], 0.66, "the thrust's X over the anchor (0.56 + 0.1)");
+        assert_eq!(o[1], -0.52f32 + -0.075f32, "the thrust's Y dip (-0.52 - 0.075)");
+        assert_eq!(o[2], -0.72f32 + 0.65f32, "the thrust's Z reach (-0.72 + 0.65)");
+        let up = peak.transform_point(crate::math::Vec3::new(0.0, 1.0, 0.0));
+        assert!((up[0] - 0.66).abs() < 1e-4, "the X the rotation never touches");
+        assert!(
+            (up[1] - -0.252_979_85).abs() < 1e-3,
+            "the up-axis tilts (cos -70° fold over the anchor, got {})",
+            up[1]
+        );
+        assert!(
+            (up[2] - -1.009_692_6).abs() < 1e-3,
+            "the tip swings with the -70° X fold (0.65 + sin -70° - 0.72, got {})",
+            up[2]
+        );
+        // the close: p=1 re-collides at zero — the identity the rest keeps
+        let close = item_hand_anchor(SwingKind::Stab, 1.0, 0.0, 1.0);
+        assert_eq!(close.0, rest_none.0, "the closed stab returns to rest");
+        // the left mirror: the X term flips, the Y/Z terms stand
+        let peak_left = item_hand_anchor(SwingKind::Stab, 0.05, 0.0, -1.0);
+        let ol = peak_left.transform_point(crate::math::Vec3::new(0.0, 0.0, 0.0));
+        assert_eq!(ol[0], -0.66, "the mirrored thrust");
+        assert_eq!(ol[1], -0.52f32 + -0.075f32, "the Y the mirror never touches");
+        assert_eq!(ol[2], -0.72f32 + 0.65f32, "the Z the mirror never touches");
+    }
+
+    /// THE SWING CLOCK'S OWN DURATION (javap `getCurrentSwingDuration`
+    /// over the component + `updateSwingTime`'s live local 1): the iron
+    /// spear's (STAB, 19) component the clock wears — the trigger's
+    /// -1 lands, 19 ticks advance, the reset at the duration; the
+    /// attackAnim the swingTime/19 fold speaks; the re-trigger gate the
+    /// LIVE duration's own half keeps (blocked below 9, allowed at 9 —
+    /// the fist's 6-tick gate the DEFAULT component answers).
+    #[test]
+    fn the_swing_clock_the_component_duration_wears() {
+        let mut s = SwingState::default();
+        s.duration = 19; // the iron spear's component the App refreshes
+        s.start();
+        assert_eq!(s.swing_time, -1, "the trigger arms at -1");
+        s.tick();
+        assert_eq!(s.swing_time, 0, "the first tick lands on 0");
+        assert!((s.attack_anim - 0.0).abs() < 1e-6);
+        for expect in 1..=18 {
+            s.tick();
+            assert_eq!(s.swing_time, expect);
+            let want = expect as f32 / 19.0;
+            assert!(
+                (s.attack_anim - want).abs() < 1e-6,
+                "attackAnim the /19 fold speaks at {expect}"
+            );
+        }
+        assert!(s.swinging, "18 < 19 the swing keeps");
+        s.tick();
+        assert_eq!(s.swing_time, 0, "the reset at the duration");
+        assert!(!s.swinging);
+        // the re-trigger gate: blocked inside the first half (swing_time
+        // 0..8 after the re-arm), allowed from the duration's own 9
+        s.start();
+        s.tick(); // lands 0
+        assert!(s.swinging);
+        // a fresh trigger while the swing sits at 5 (of 19): blocked
+        s.swing_time = 5;
+        s.start();
+        assert_eq!(s.swing_time, 5, "the half-gate the re-trigger refuses");
+        s.swing_time = 9;
+        s.start();
+        assert_eq!(s.swing_time, -1, "the half-gate at 9 re-arms");
+        // the fist's own clock: the DEFAULT (WHACK, 6) the empty hand keeps
+        let mut fist = SwingState::default();
+        assert_eq!(fist.duration, 6);
+        fist.start();
+        fist.tick();
+        for _ in 0..5 {
+            fist.tick();
+        }
+        assert_eq!(fist.swing_time, 5);
+        assert!(fist.swinging);
+        fist.tick();
+        assert!(!fist.swinging, "the fist resets at 6");
+        // the gate's own half: 3 for the fist (blocked at 2, allowed at 3)
+        fist.start();
+        fist.tick();
+        fist.swing_time = 2;
+        fist.start();
+        assert_eq!(fist.swing_time, 2, "the fist's half-gate refuses at 2");
+        fist.swing_time = 3;
+        fist.start();
+        assert_eq!(fist.swing_time, -1, "the fist's half-gate at 3 re-arms");
     }
 }
