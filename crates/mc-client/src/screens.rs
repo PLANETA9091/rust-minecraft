@@ -5323,6 +5323,39 @@ fn held_charge_delay(held: Option<&str>) -> f64 {
     (1.0 / held_attack_speed(held)) * 20.0
 }
 
+/// THE ATTACK RANGE COMPONENT'S OWN PICK WINDOW (javap `AttackRange` +
+/// `ProjectileUtil.getHitEntitiesAlong` + `LocalPlayer
+/// .raycastHitResult` — the pick law the 26.2 crosshair serves): the
+/// spear factory the ONLY carrier the jar's CP scan speaks (the
+/// Item$Properties.spear builds the `new AttackRange(2.0, 4.5, 2.0,
+/// 6.5, 0.125, 0.5)` — every other item's factory the component
+/// never wears), the window the isInRange fold keeps — the MIN the
+/// hitboxMargin subtracts (2.0 - 0.125 = 1.875: the polearm's own
+/// dead zone, the too-close body the entity ray starts BEYOND —
+/// ProjectileUtil's own `eye + look.scale(effectiveMinRange)` ray
+/// start), the MAX the margin pads (survival 4.5 + 0.125 = 4.625,
+/// the creative the maxCreativeReach 6.5 + 0.125 = 6.625 —
+/// effectiveMaxRange's own isCreative switch). The non-carrier the
+/// DEFAULT window keeps (0.0 .. ENTITY_INTERACTION_RANGE 3.0 — the
+/// strict `<` the filterHitResult `closerThan` law wears, the exact
+/// law the pick rode before the component spoke). Returns the
+/// (min_d2, max_d2) bounds the pick's own distance-squared compare
+/// wears.
+fn held_attack_pick_window(held: Option<&str>, creative: bool) -> (f64, f64) {
+    if spear_swing_seconds(held.unwrap_or("")).is_some() {
+        const MARGIN: f64 = 0.125;
+        let min = 2.0 - MARGIN;
+        let max = (if creative { 6.5 } else { 4.5 }) + MARGIN;
+        (min * min, max * max)
+    } else {
+        (
+            0.0,
+            crate::world::ENTITY_INTERACTION_RANGE
+                * crate::world::ENTITY_INTERACTION_RANGE,
+        )
+    }
+}
+
 
 /// THE ROCK'S OWN STEP (javap `tickBubbleColumn`'s client arm — the
 /// walk BOTH lanes speak: the multiplier the bubbleTime's presence
@@ -10934,12 +10967,26 @@ impl App {
         let f = cam.forward();
         let eye = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
         let view = (f.x as f64, f.y as f64, f.z as f64);
-        let search_range = crate::world::BLOCK_INTERACTION_RANGE.max(3.0);
+        // THE HELD ITEM'S OWN WINDOW FIRST (the AttackRange component's
+        // fold the helper keeps): the max the ENTITY RAY's own length
+        // rides (the carrier's getClosesetHit ray the effectiveMax
+        // scale speaks), the default the 3.0 the non-carrier keeps —
+        // the final filter's own verdict the ray length never widens
+        // (the hits beyond the window the filter refuses either way)
+        let held_name = mc_registry::item_name(self.held_id().unwrap_or(0));
+        let (min_d2, max_d2) = held_attack_pick_window(held_name, self.abilities_instabuild());
+        let entity_search = max_d2.sqrt();
+        // the block clip's own range (the 4.5 the BLOCK reach keeps —
+        // the spear's reach the blocks never borrow, the
+        // raycastHitResult's own filterHitResult clip the block hits
+        // the blockInteractionRange serves)
+        let block_search = crate::world::BLOCK_INTERACTION_RANGE
+            .max(crate::world::ENTITY_INTERACTION_RANGE);
         // the two lanes' own nearest (the nearest overall is the
         // nearest of each lane's own nearest — the same verdict the
         // one-list walk speaks)
-        let own = crate::mob::pick_entity(&self.mobs, eye, view, search_range);
-        let wire = crate::mob::pick_entity(extra, eye, view, search_range);
+        let own = crate::mob::pick_entity(&self.mobs, eye, view, entity_search);
+        let wire = crate::mob::pick_entity(extra, eye, view, entity_search);
         let (i, mob_d2) = match (own, wire) {
             (Some((i, a)), Some((j, b))) => {
                 if a <= b {
@@ -10953,10 +11000,10 @@ impl App {
             (None, None) => return None,
         };
         // the block clip's own distance term (the same law the pick's
-        // tail speaks — the blockHit at the search range)
+        // tail speaks — the blockHit at the block's own reach)
         let block_d2 = self
             .active_world()
-            .and_then(|w| w.clip(eye, view, search_range))
+            .and_then(|w| w.clip(eye, view, block_search))
             .map(|hit| {
                 let (lx, ly, lz) = hit.location;
                 let (dx, dy, dz) = (lx - eye.0, ly - eye.1, lz - eye.2);
@@ -10966,9 +11013,17 @@ impl App {
         // THE ENTITY ARM'S OWN FILTER (the filterHitResult the winning
         // hit rides): the clip point inside the 3.0 entity reach
         // STRICT (`closerThan` = `distanceToSqr < d*d`) — else MISS,
-        // the crosshairPickEntity the null speaks
-        let entity_reach = crate::world::ENTITY_INTERACTION_RANGE * crate::world::ENTITY_INTERACTION_RANGE;
-        if mob_d2 < block_d2 && mob_d2 < entity_reach {
+        // the crosshairPickEntity the null speaks. THE ATTACK RANGE
+        // COMPONENT'S OWN WINDOW the held carrier wears (the spear
+        // factory the only carrier — the helper the component's own
+        // fold keeps): the dead zone the min speaks (the too-close
+        // body the polearm's ray starts BEYOND), the reach the max
+        // extends (4.625 the survival spear wears, 6.625 the creative
+        // keeps), the default the 3.0 the component-less hold never
+        // widens (the exact law the pick rode before the component
+        // spoke — the bare hand and every non-carrier item the same
+        // verdict wears).
+        if mob_d2 < block_d2 && mob_d2 >= min_d2 && mob_d2 < max_d2 {
             Some((i, mob_d2))
         } else {
             None
@@ -37991,6 +38046,164 @@ mod tests {
         app.on_attack();
         assert_eq!(app.miss_time, 10, "the miss the hasMissTime branch arms");
         assert_eq!(app.attack_ticker, 0, "the miss lane the reset speaks");
+    }
+
+    /// THE ATTACK RANGE COMPONENT'S OWN PICK EXTENSION (javap
+    /// `LocalPlayer.raycastHitResult` + `AttackRange.effectiveMaxRange`
+    /// — the spear's AttackRange(2.0, 4.5, 2.0, 6.5, 0.125, 0.5) the
+    /// only carrier the CP scan speaks): the body ON the aim line at
+    /// ~4.2 the bare hand's 3.0 filter refuses, the spear's own
+    /// 4.625 reach the pick serves — the crosshair's mob verdict the
+    /// held item's own window wears.
+    #[test]
+    fn the_spear_the_pick_reach_the_component_extends() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // the body on the aim line (the box front face ~3.9 from the
+        // eye — outside the 3.0 default, inside the spear's 4.625)
+        let t = 4.2;
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * t,
+            ey - 1.0,
+            ez + f.z as f64 * t,
+            4,
+        ));
+        // THE BARE HAND (the default window): the 3.0 reach refuses
+        assert_eq!(
+            app.pick_mob(&[]),
+            None,
+            "the bare hand the 3.0 default keeps"
+        );
+        // THE SPEAR (the AttackRange carrier): the reach the pick
+        // extends
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert_eq!(
+            app.pick_mob(&[]),
+            Some(0),
+            "the spear's 4.625 the pick extends"
+        );
+    }
+
+    /// THE POLEARM'S OWN DEAD ZONE (javap `AttackRange.isInRange`'s
+    /// min fold + `ProjectileUtil.getHitEntitiesAlong`'s own ray START
+    /// at `eye + look.scale(effectiveMinRange)` — the 2.0 - 0.125 =
+    /// 1.875 window the too-close body the pick refuses: the spear a
+    /// POLEARM wears, the chest-bumping body the crosshair never
+    /// names).
+    #[test]
+    fn the_spear_the_pick_dead_zone_the_polearm_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // the body close on the aim line (the box front face ~0.9 —
+        // inside the 3.0 default, INSIDE the spear's 1.875 dead zone)
+        let t = 1.2;
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * t,
+            ey - 1.0,
+            ez + f.z as f64 * t,
+            4,
+        ));
+        // THE BARE HAND: the close body the default serves
+        assert_eq!(
+            app.pick_mob(&[]),
+            Some(0),
+            "the bare hand the close body serves"
+        );
+        // THE SPEAR: the dead zone the pick refuses
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert_eq!(
+            app.pick_mob(&[]),
+            None,
+            "the polearm's dead zone the pick refuses"
+        );
+    }
+
+    /// THE CREATIVE REACH'S OWN SWITCH (javap
+    /// `AttackRange.effectiveMaxRange`'s own isCreative fold — the
+    /// maxCreativeReach 6.5 + 0.125 the instabuild attacker wears):
+    /// the body at ~6.0 the survival 4.625 refuses, the creative
+    /// 6.625 the pick serves.
+    #[test]
+    fn the_spear_the_pick_the_creative_reach_extends() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let (ex, ey, ez) = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+        // the body far on the aim line (the box front face ~5.7 —
+        // beyond the survival 4.625, inside the creative 6.625)
+        let t = 6.0;
+        app.mobs.push(crate::mob::Zombie::new(
+            200,
+            ex + f.x as f64 * t,
+            ey - 1.0,
+            ez + f.z as f64 * t,
+            4,
+        ));
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE SURVIVAL HOLD: the 4.625 the far body refuses
+        assert_eq!(
+            app.pick_mob(&[]),
+            None,
+            "the survival 4.625 the far body refuses"
+        );
+        // THE CREATIVE HOLD: the 6.625 the pick extends
+        app.game_mode = GameMode::Creative;
+        assert_eq!(
+            app.pick_mob(&[]),
+            Some(0),
+            "the creative 6.625 the pick extends"
+        );
+        // THE WINDOW HELPER'S OWN TABLE (the exact bounds the fold
+        // keeps — survival (1.875, 4.625), creative (1.875, 6.625),
+        // the non-carrier (0.0, 3.0))
+        assert_eq!(
+            super::held_attack_pick_window(Some("iron_spear"), false),
+            (1.875 * 1.875, 4.625 * 4.625)
+        );
+        assert_eq!(
+            super::held_attack_pick_window(Some("iron_spear"), true),
+            (1.875 * 1.875, 6.625 * 6.625)
+        );
+        assert_eq!(
+            super::held_attack_pick_window(None, false),
+            (0.0, 3.0 * 3.0)
+        );
     }
 
     /// THE OFFHAND DRINK'S OWN REMAINDER (the milk bucket's arc — the
