@@ -27890,6 +27890,57 @@ impl App {
             swing_kind: held_swing_anim(mc_registry::item_name(self.held_id().unwrap_or(0)))
                 .kind,
             age_scale: 1.0,
+            // THE USE STATE (the render state's own fields the RMB hold
+            // fills — `isUsingItem` the using walk's Some/None answers,
+            // the ticks the `timeHeld = ticks - 1 + partialTick` clock
+            // the first person's own lane keeps, the hand the UseActive
+            // carries; the ctor's MAIN_HAND default the None wears)
+            is_using_item: self.using_item.is_some(),
+            use_item_main_hand: match &self.using_item {
+                Some(active) => active.hand == UseHand::Main,
+                None => true,
+            },
+            ticks_using_item: match &self.using_item {
+                Some(active) => active.ticks as f32 - 1.0 + self.partial_tick,
+                None => 0.0,
+            },
+            fall_flying: false,
+            swim_amount: 0.0,
+            // THE SPEAR POSES (the getArmPose law — the SPEARS tag the
+            // seven tiers ride, the pose swinging/using/neither keeps:
+            // the SWING_ANIMATION STAB and the SPEAR use-anim gates the
+            // tag law subsumes): the main/off stack's own name the row
+            // table answers
+            right_spear: mc_registry::item_name(self.held_id().unwrap_or(0))
+                .and_then(spear_kinetic_row)
+                .is_some(),
+            left_spear: mc_registry::item_name(self.offhand_stack().0)
+                .and_then(spear_kinetic_row)
+                .is_some(),
+            // THE USING STACK'S OWN PARAMS (fromKineticWeapon(useStack,
+            // ticks) — the same window fold the first person's own lane
+            // wears, the row the using item's name resolves; the
+            // per-arm gates the folds themselves carry)
+            kinetic_use_params: self.using_item.as_ref().and_then(|active| {
+                let row = spear_kinetic_row(mc_registry::item_name(active.item)?)?;
+                Some(crate::hand::spear_use_params(
+                    active.ticks as f32 - 1.0 + self.partial_tick,
+                    KINETIC_DELAY_TICKS as f32,
+                    (row.dismount_max + KINETIC_DELAY_TICKS) as f32,
+                    (row.kb_max + KINETIC_DELAY_TICKS) as f32,
+                    (row.dmg_max + KINETIC_DELAY_TICKS) as f32,
+                ))
+            }),
+            // THE HIT JOLT'S OWN CLOCK (getTicksSinceLastKineticHitFeedback
+            // — the negative stamp the 0.0 keeps, the same read the
+            // first person's own lane wears)
+            ticks_since_kinetic_hit: if self.last_kinetic_hit_feedback_time < 0 {
+                0.0
+            } else {
+                ((self.day_time_base + self.frame) as i64
+                    - self.last_kinetic_hit_feedback_time) as f32
+                    + self.partial_tick
+            },
         };
         let feet = {
             let (lx, ly, lz) = body.lerped_pos(self.partial_tick);
@@ -29197,6 +29248,22 @@ impl App {
                         // DEFAULT (WHACK, 6) the empty hand keeps)
                         swing_kind: held_swing_anim(mob.held_weapon).kind,
                         age_scale: 1.0,
+                        // THE MOB'S OWN POSES (the SPEARS tag law the
+                        // getArmPose speaks — the held stack the
+                        // seven-tier row answers; the using walk the
+                        // mobs never run, the state fields the honest
+                        // defaults keep — the animateZombieArms
+                        // overwrite the poseArms folds the jar's own
+                        // call order wears)
+                        is_using_item: false,
+                        use_item_main_hand: true,
+                        ticks_using_item: 0.0,
+                        fall_flying: false,
+                        swim_amount: 0.0,
+                        right_spear: mob.held_weapon.and_then(spear_kinetic_row).is_some(),
+                        left_spear: mob.held_offhand.and_then(spear_kinetic_row).is_some(),
+                        kinetic_use_params: None,
+                        ticks_since_kinetic_hit: 0.0,
                     };
                     let quads = model.quads(&state, feet, cam.yaw, cam.pitch);
                     // THE MOB-HELD ITEM LANE (ItemInHandLayer.
@@ -29328,6 +29395,22 @@ impl App {
                         // (the bow the DEFAULT arc the swing never leaves)
                         swing_kind: held_swing_anim(mob.held_weapon).kind,
                         age_scale: 1.0,
+                        // THE MOB'S OWN POSES (the SPEARS tag law the
+                        // getArmPose speaks — the held stack the
+                        // seven-tier row answers; the using walk the
+                        // mobs never run, the state fields the honest
+                        // defaults keep — the calm skeleton the raise
+                        // the poseArms fold wears, the aggressive
+                        // branches the jar's own order overwrites)
+                        is_using_item: false,
+                        use_item_main_hand: true,
+                        ticks_using_item: 0.0,
+                        fall_flying: false,
+                        swim_amount: 0.0,
+                        right_spear: mob.held_weapon.and_then(spear_kinetic_row).is_some(),
+                        left_spear: mob.held_offhand.and_then(spear_kinetic_row).is_some(),
+                        kinetic_use_params: None,
+                        ticks_since_kinetic_hit: 0.0,
                     };
                     // THE THIN MESH (SkeletonModel's own
                     // createDefaultSkeletonMesh — the 2x12x2 limbs the

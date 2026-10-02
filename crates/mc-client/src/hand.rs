@@ -1076,6 +1076,76 @@ pub fn spear_use_matrix(p: &SpearUseParams, feedback_amount: f32, side: f32) -> 
         .mul(&t(0.0, -feedback_amount, 0.0))
 }
 
+/// THE KINETIC FORWARD'S OWN CONSTANT (javap `Item$Properties.spear`
+/// pc 83 — the `ldc_w #275` float the KineticWeapon ctor's 6th arg
+/// carries, `forwardMovement` the record's putfield pc 34 banks): ONE
+/// shared constant all seven tier rows ride — the factory is the only
+/// declarer, the CP entry the seven clinit call sites share. The f32
+/// bits 0x3ec28f5c the decimal 0.3799999952316284 round-trips (the
+/// classic 0.38f). The third-person use lane's translate Z the field
+/// wears (`-forwardMovement · (f10 - raiseBack) + feedback`).
+pub(crate) const KINETIC_FORWARD_MOVEMENT: f32 = 0.38f32; // bits 0x3ec28f5c
+
+/// `SpearAnimations.thirdPersonUseItem(ArmedEntityRenderState, PoseStack,
+/// F, HumanoidArm, ItemStack)` — the KINETIC use lane's own THIRD-person
+/// item transform, verbatim from the 26.2 bytecode (pcs 25-217, the dump
+/// /tmp/spear.txt): the two attack clocks — f6 = inQuad(progress(
+/// attackTime, 0.05, 0.2)), f7 = inOutExpo(progress(attackTime, 0.4,
+/// 1.0)) — the raise's outBack recoil `f10 = 1 - outBack(1 - raise)`,
+/// the hit feedback `f12 = hitFeedbackAmount(ticksSinceKineticHit)`,
+/// then translate → rotateAround(XN) → rotateAround(YP): the translate
+/// `(0, (-f12)·0.4 the F64 fold the ldc2_w speaks, -forwardMovement·
+/// (f10 - raise_back) + f12 the F32 fold the f2d widens)`; the XN axis
+/// the rotation about -X the +X rotation by -angle answers —
+/// `70·(raise - raise_back) - 40·(f6 - f7)` about the pivot
+/// (0, -0.03125, 0.125); the YP axis `side·90·(raise - sway + 3·f7 +
+/// f6)` about (0, 0, 0.125). The caller's own gates the bytecode keeps
+/// upstream (pcs 13-24): the stack's KINETIC_WEAPON null and the `f ==
+/// 0` the per-arm ticks zero — the identity the caller never composes.
+/// The dead local f11 = 0.125 the javap speaks (pc 92-94, stored never
+/// read) the compile the jar's own javac wore — no Rust shadow the law
+/// keeps.
+pub fn spear_third_person_use_matrix(
+    p: &SpearUseParams,
+    attack_time: f32,
+    feedback_amount: f32,
+    side: f32,
+    forward_movement: f32,
+) -> Mat4 {
+    let f6 = ease_in_quad(eased_progress(attack_time, 0.05, 0.2));
+    let f7 = ease_in_out_expo(eased_progress(attack_time, 0.4, 1.0));
+    let f10 = 1.0f32 - ease_out_back(1.0f32 - p.raise);
+    let f12 = feedback_amount;
+    // pcs 105-134: translate(0.0, (-f12)·0.4, -forward·(f10 - rbp) + f12)
+    // — the Y the F64 product the ldc2_w 0.4 folds (the f2d the exact
+    // widen the fneg's f32 keeps), the Z the F32 chain the f2d widens
+    // after — the two roundings the two lanes wear, never one
+    let ty = ((-f12) as f64 * 0.4f64) as f32;
+    let tz = (-forward_movement * (f10 - p.raise_back) + f12) as f64;
+    // pcs 137-174: rotateAround(Axis.XN.rotationDegrees(70·(raise -
+    // raise_back) - 40·(f6 - f7)), 0, -0.03125, 0.125) — the XN the
+    // NEGATIVE X axis the +X rotation by the negated angle answers
+    // (the YN law the first person's own lane wears)
+    let rot_x_deg = 70.0f32 * (p.raise - p.raise_back) - 40.0f32 * (f6 - f7);
+    // pcs 177-207: rotateAround(Axis.YP.rotationDegrees(side·90·
+    // (raise - sway + 3·f7 + f6)), 0, 0, 0.125) — the fsub/fadd chain
+    // the dump's own order keeps
+    let rot_y_deg = side * 90.0f32 * (p.raise - p.sway_progress + 3.0f32 * f7 + f6);
+    Mat4::translation(0.0, ty, tz as f32)
+        .mul(&rot_around(
+            Mat4::rot_x((-rot_x_deg).to_radians()),
+            0.0,
+            -0.03125,
+            0.125,
+        ))
+        .mul(&rot_around(
+            Mat4::rot_y(rot_y_deg.to_radians()),
+            0.0,
+            0.0,
+            0.125,
+        ))
+}
+
 impl HeldItem {
     /// The loaded quad count — the tests' honest size probe (the
     /// geometry's own shape, no internals exposed).
@@ -2445,5 +2515,117 @@ mod held_tests {
         fist.swing_time = 3;
         fist.start();
         assert_eq!(fist.swing_time, -1, "the fist's half-gate at 3 re-arms");
+    }
+
+    /// THE FORWARD MOVEMENT'S OWN CONSTANT (javap `Item$Properties.spear`
+    /// pc 83, the CP float #275): ONE shared constant the seven tier
+    /// rows ride, the f32 bits 0x3ec28f5c the decimal round-trips.
+    #[test]
+    fn the_kinetic_forward_movement_the_shared_constant_speaks() {
+        assert_eq!(KINETIC_FORWARD_MOVEMENT.to_bits(), 0x3ec2_8f5c);
+        assert_eq!(KINETIC_FORWARD_MOVEMENT, 0.38f32);
+    }
+
+    /// THE THIRD-PERSON USE MATRIX'S OWN WALK (javap
+    /// `thirdPersonUseItem` pcs 25-217, scripts/pins_480.py the f32
+    /// chain oracle): the REST params the IDENTITY the caller composes
+    /// (f10 = 1 - outBack(1) = 0, the clocks zero, the rotations zero),
+    /// the FULL raise the translate/rotateAround chain the oracle's
+    /// cells speak (f10 = 1 - outBack(0) = 1, tz = -0.38, the XN -70°
+    /// and the YP +90° the two pivots turn), the MID-ATTACK case the
+    /// f6/f7 windows and the LEFT side's -90° the mirror answers (the
+    /// feedback the table's own 5-tick verdict rides).
+    #[test]
+    fn the_third_person_use_matrix_the_identity_the_raise_speaks() {
+        let rest = SpearUseParams {
+            raise: 0.0,
+            raise_start: 0.0,
+            raise_middle: 0.0,
+            raise_end: 0.0,
+            sway_progress: 0.0,
+            lower: 0.0,
+            raise_back: 0.0,
+            sway_intensity: 0.0,
+            sway_scale_slow: 0.0,
+            sway_scale_fast: 0.0,
+        };
+        // THE REST (pcs 13-24's gates the caller keeps — the identity
+        // the zero clocks compose)
+        let m = spear_third_person_use_matrix(&rest, 0.0, 0.0, 1.0, KINETIC_FORWARD_MOVEMENT);
+        for (i, cell) in m.0.iter().enumerate() {
+            assert_eq!(
+                cell.to_bits(),
+                Mat4::IDENT.0[i].to_bits(),
+                "the rest use pose IS the anchor (cell {i})"
+            );
+        }
+        // THE FULL RAISE (timeHeld 10, the iron row's own delay): f10 =
+        // 1 - outBack(0) = 1, the attack clocks f6/f7 at 0 — the
+        // oracle's own cells, the 1e-6 the sin/cos ulp window keeps
+        let full = SpearUseParams {
+            raise: 1.0,
+            ..rest
+        };
+        let expect_full: [f32; 16] = [
+            6.123_234_3e-17,
+            -0.939_692_62,
+            -0.342_020_15,
+            0.0,
+            0.0,
+            0.342_020_15,
+            -0.939_692_62,
+            0.0,
+            1.0,
+            5.753_958_3e-17,
+            2.094_269_6e-17,
+            0.0,
+            -0.125,
+            -0.020_561_874,
+            -0.284_365_42,
+            1.0,
+        ];
+        let m = spear_third_person_use_matrix(&full, 0.0, 0.0, 1.0, KINETIC_FORWARD_MOVEMENT);
+        for (i, cell) in m.0.iter().enumerate() {
+            assert!(
+                (cell - expect_full[i]).abs() < 1e-6,
+                "the full-raise cell {i}: {cell} vs {}",
+                expect_full[i]
+            );
+        }
+        // THE MID-ATTACK LEFT (attack 0.5: f6 = inQuad(1) = 1, f7 =
+        // inOutExpo(1/6); the side -1 the LEFT arm's mirror; the
+        // feedback the hit's own 5-tick settle the table speaks)
+        let m = spear_third_person_use_matrix(
+            &full,
+            0.5,
+            spear_hit_feedback_amount(5.0),
+            -1.0,
+            KINETIC_FORWARD_MOVEMENT,
+        );
+        let expect_mid: [f32; 16] = [
+            -0.999_731_06,
+            -0.011_664_098,
+            -0.020_043_451,
+            0.0,
+            0.0,
+            0.864_302_34,
+            -0.502_972_6,
+            0.0,
+            0.023_190_325,
+            -0.502_837_36,
+            -0.864_069_88,
+            0.0,
+            -0.002_898_790_6,
+            -0.071_266_785,
+            0.161_993_09,
+            1.0,
+        ];
+        for (i, cell) in m.0.iter().enumerate() {
+            assert!(
+                (cell - expect_mid[i]).abs() < 1e-6,
+                "the mid-attack cell {i}: {cell} vs {}",
+                expect_mid[i]
+            );
+        }
     }
 }

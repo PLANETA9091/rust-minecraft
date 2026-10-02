@@ -206,6 +206,51 @@ pub struct AvatarState {
     /// the client's adults keep at 1.0 (the baby humanoid the render
     /// state's own scale the lanes never vary yet).
     pub age_scale: f32,
+    /// `HumanoidRenderState.isUsingItem` — the use walk's own gate the
+    /// THIRD-person lanes read (the poseArms branch matrix, the
+    /// thirdPersonHandUse early-return, the per-arm ticks the item
+    /// lane's animateUseItem call carries).
+    pub is_using_item: bool,
+    /// `HumanoidRenderState.useItemHand` — MAIN_HAND the ctor's own
+    /// default speaks; the client's `true` = MAIN, `false` = OFF. The
+    /// poseArms matrix and both use gates the pair drives.
+    pub use_item_main_hand: bool,
+    /// `HumanoidRenderState.ticksUsingItem` (the FIELD — the
+    /// `timeHeld` clock `ticks - 1 + partialTick` the first person's
+    /// own law keeps). The thirdPersonHandUse gate reads the FIELD
+    /// both arms share; the item lane's per-arm method the client's
+    /// own `(useItemHand == MAIN) == (arm == mainArm)` zero law
+    /// answers.
+    pub ticks_using_item: f32,
+    /// `HumanoidRenderState.isFallFlying` — the elytra glide the
+    /// thirdPersonHandUse base pose's extra xRot subtraction rides.
+    pub fall_flying: bool,
+    /// `HumanoidRenderState.swimAmount` — the swim blend the same
+    /// base-pose branch reads (`fallFlying || swimAmount > 0`).
+    pub swim_amount: f32,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.SPEAR` — the
+    /// getArmPose law's own verdict (the SPEARS tag the seven tiers
+    /// ride: any spear stack the pose keeps, swinging or using or
+    /// neither — the SWING_ANIMATION STAB and the SPEAR use-anim gates
+    /// the tag law subsumes). SPEAR is the ONLY ArmPose the client's
+    /// lanes fold — the EMPTY/ITEM cases the walk's own zeroes never
+    /// move (the banked law).
+    pub right_spear: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.SPEAR` — the
+    /// offhand stack's own verdict (the same tag law).
+    pub left_spear: bool,
+    /// `SpearAnimations$UseParams.fromKineticWeapon(useStack, ticks)`
+    /// — the USING stack's own ten floats, precomputed the screens
+    /// lane's item-name knowledge keeps (the render state the jar's
+    /// stack component answers; the client the row table reads). Both
+    /// third-person folds share the one pair. `None` = not using, or
+    /// the using stack carries no KINETIC_WEAPON — the folds' own
+    /// kinetic null-return the jar's pcs 163-168 keeps.
+    pub kinetic_use_params: Option<crate::hand::SpearUseParams>,
+    /// `ArmedEntityRenderState.ticksSinceKineticHitFeedback` — the hit
+    /// jolt's clock (`(gameTime - last) + partialTick`, the negative
+    /// stamp the 0.0 keeps) the item lane's hitFeedbackAmount reads.
+    pub ticks_since_kinetic_hit: f32,
 }
 
 impl AvatarState {
@@ -230,6 +275,17 @@ impl AvatarState {
             death_time: 0.0,
             swing_kind: crate::hand::SwingKind::Whack,
             age_scale: 1.0,
+            is_using_item: false,
+            // `HumanoidRenderState`'s ctor default — `useItemHand =
+            // MAIN_HAND` the field init speaks
+            use_item_main_hand: true,
+            ticks_using_item: 0.0,
+            fall_flying: false,
+            swim_amount: 0.0,
+            right_spear: false,
+            left_spear: false,
+            kinetic_use_params: None,
+            ticks_since_kinetic_hit: 0.0,
         }
     }
 }
@@ -4029,6 +4085,89 @@ fn build_baby_pig_parts(state: &PigState) -> Vec<Part> {
     ]
 }
 
+/// `SpearAnimations.thirdPersonHandUse(ModelPart arm, ModelPart head,
+/// boolean right, ItemStack, HumanoidRenderState)` — the SPEAR ArmPose's
+/// own model-lane fold, verbatim from the 26.2 bytecode (the dump
+/// /tmp/spear.txt, 314 bytes): the BASE pose every SPEAR-posed arm
+/// wears (the rest raise the spear-holding body never drops — the jar's
+/// `getArmPose` the SPEARS tag law speaks: swinging, using, or neither),
+/// then the use gate and the kinetic sway the USING arm adds. The base:
+/// `yRot += -0.1·side`, `xRot += -π/2` then `+= 0.8` (the TWO fadds the
+/// putfield pair keeps), the fall-flying/swim extra `xRot -=
+/// 0.9599311` the `fallFlying || swimAmount > 0` branch rides, then the
+/// DEGREE CLAMPS both rotations re-normalize through — `yRot = DEG ·
+/// clamp(yRot·57.2957763671875, -60, 60)`, `xRot = DEG · clamp(xRot·
+/// 57.2957763671875, -120, 30)` (the f32 180/π the exact decimal
+/// speaks). The use gate (pcs 111-150): the FIELD `ticksUsingItem > 0`
+/// and NOT (`isUsingItem` and `useItemHand` != this arm's hand — the
+/// `right ? MAIN_HAND : OFF_HAND` mapping the `iload_2` branch keeps);
+/// the kinetic null-return (pcs 163-168) the `None` params answer. The
+/// kinetic sway (pcs 181-310): `yRot += -side·swayScaleFast·DEG·
+/// swayIntensity·1.0`, `zRot += -side·swayScaleSlow·DEG·swayIntensity·
+/// 0.5`, `xRot += DEG·(-40·raiseStart + 30·raiseMiddle - 20·raiseEnd +
+/// 20·lower + 10·raiseBack + 0.6·swayScaleSlow·swayIntensity)` — the
+/// jar's own DOUBLE intensity multiplication the getters' record keeps
+/// (`swayScaleFast` already rides ×intensity, the fold multiplies
+/// `swayIntensity()` AGAIN — the bytecode's own verdict the client
+/// mirrors, never "fixes").
+pub(crate) fn third_person_hand_use(
+    x_rot: &mut f32,
+    y_rot: &mut f32,
+    z_rot: &mut f32,
+    right: bool,
+    fall_flying: bool,
+    swim_amount: f32,
+    ticks_using_item: f32,
+    is_using_item: bool,
+    use_item_main_hand: bool,
+    use_params: Option<&crate::hand::SpearUseParams>,
+) {
+    const DEG: f32 = 0.017_453_292; // f32 bits 0x3c8efa35 — the CP float 0.01745329238474369
+    const TO_DEG: f32 = 57.295_776_367_187_5; // the f32 180/π the exact decimal round-trips
+    let side = if right { 1.0f32 } else { -1.0f32 };
+    // pcs 11-48: the base raise — the yRot side nudge, the xRot's TWO
+    // separate fadds (-π/2 then +0.8) the two putfield/getfield
+    // round-trips wear
+    *y_rot += -0.100_000_001_490_116_12 * side;
+    *x_rot += -1.570_796_370_506_286_6;
+    *x_rot += 0.800_000_011_920_929;
+    // pcs 40-68: the fall-flying/swim extra — the `isFallFlying ||
+    // swimAmount > 0` branch the ifne/ifle pair drives
+    if fall_flying || swim_amount > 0.0 {
+        *x_rot -= 0.959_931_075_572_967_5;
+    }
+    // pcs 69-108: the degree clamps — the rotation the degrees round
+    // trip re-speaks (the window the spear's raised rest pose wears)
+    *y_rot = DEG * (*y_rot * TO_DEG).clamp(-60.0, 60.0);
+    *x_rot = DEG * (*x_rot * TO_DEG).clamp(-120.0, 30.0);
+    // pcs 111-150: the use gate — the FIELD ticks the both-arms clock
+    // keeps, the `!isUsingItem || useItemHand == hand` disjunction the
+    // ifeq/goto chain answers
+    let hand_is_main = right; // the `right ? MAIN_HAND : OFF_HAND` branch
+    if !(ticks_using_item > 0.0 && (!is_using_item || use_item_main_hand == hand_is_main)) {
+        return;
+    }
+    // pcs 151-168: the use stack's KINETIC_WEAPON null-return
+    let Some(p) = use_params else {
+        return;
+    };
+    // pcs 181-208: the yRot sway — the jar's own double intensity the
+    // record's getters keep
+    *y_rot += -side * p.sway_scale_fast * DEG * p.sway_intensity * 1.0;
+    // pcs 211-239: the zRot sway — the slow scale, the ×0.5 the ldc
+    // folds
+    *z_rot += -side * p.sway_scale_slow * DEG * p.sway_intensity * 0.5;
+    // pcs 242-310: the xRot kinetic window — the six-term sum the
+    // stack's own order builds, the DEG the whole sum multiplies
+    *x_rot += DEG
+        * (-40.0 * p.raise_start
+            + 30.0 * p.raise_middle
+            + -20.0 * p.raise_end
+            + 20.0 * p.lower
+            + 10.0 * p.raise_back
+            + 0.6 * p.sway_scale_slow * p.sway_intensity);
+}
+
 /// The six base parts with their overlay children, posed by `state`
 /// (the setupAnim + setupAttackAnimation + crouch laws, verbatim).
 fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
@@ -4088,6 +4227,71 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
         body_pivot[1] += 3.2;
         arm_l_pivot[1] += 3.2;
         arm_r_pivot[1] += 3.2;
+    }
+    // THE POSE ARMS (HumanoidModel.setupAnim pcs 375-534, the 26.2
+    // bytecode): mainArm RIGHT the client's own, the branch matrix the
+    // isUsingItem/useItemHand/isTwoHanded flags drive — poseRightArm
+    // first when the use hand matches the main arm, poseLeftArm first
+    // otherwise (the idle branch the `mainRight != twoHanded` test
+    // answers: no two-handed pose the round folds, the false the
+    // SPEAR/EMPTY rows keep). The EMPTY/ITEM cases the walk's own
+    // zeroes never move (the banked law); the SPEAR case 10 the ONLY
+    // fold — `thirdPersonHandUse(arm, head, right,
+    // getUseItemStackForArm(arm), state)` the poseRightArm/poseLeftArm
+    // pc-168 pair speaks. The `affectsOffhandPose` skips: SPEAR the
+    // ONLY true row (the clinit's flag pairs the dump banks), the
+    // other arm's posing the flag's truth cancels.
+    {
+        let use_params = state.kinetic_use_params.as_ref();
+        let mut fold = |right_arm: bool| {
+            if right_arm {
+                crate::avatar::third_person_hand_use(
+                    &mut arm_r_x,
+                    &mut arm_r_y,
+                    &mut arm_r_z,
+                    true,
+                    state.fall_flying,
+                    state.swim_amount,
+                    state.ticks_using_item,
+                    state.is_using_item,
+                    state.use_item_main_hand,
+                    use_params,
+                );
+            } else {
+                crate::avatar::third_person_hand_use(
+                    &mut arm_l_x,
+                    &mut arm_l_y,
+                    &mut arm_l_z,
+                    false,
+                    state.fall_flying,
+                    state.swim_amount,
+                    state.ticks_using_item,
+                    state.is_using_item,
+                    state.use_item_main_hand,
+                    use_params,
+                );
+            }
+        };
+        if state.is_using_item && state.use_item_main_hand {
+            // pcs 416-438: useMain == mainRight — poseRightArm, then
+            // the left the right pose's affectsOffhandPose gates
+            if state.right_spear {
+                fold(true);
+            }
+            if !state.right_spear && state.left_spear {
+                fold(false);
+            }
+        } else {
+            // pcs 446-463 (the off-hand use) and pcs 469-514 (the idle
+            // branch) both speak poseLeftArm first — the same order
+            // the left pose's affectsOffhandPose gates
+            if state.left_spear {
+                fold(false);
+            }
+            if !state.left_spear && state.right_spear {
+                fold(true);
+            }
+        }
     }
     // THE SWING (setupAttackAnimation, 26.2 verbatim): the shared folds
     // run for EVERY swing kind (the body's yRot twist, the arms' orbit
@@ -5411,7 +5615,40 @@ fn hand_item_quads(
     let layer = Mat4::rot_x(-std::f32::consts::FRAC_PI_2)
         .mul(&Mat4::rot_y(std::f32::consts::PI))
         .mul(&Mat4::translation(x_off, 2.0 / 16.0, -10.0 / 16.0));
-    let m = m_arm.mul(&layer);
+    let mut m = m_arm.mul(&layer);
+    // THE USE LANE (ItemInHandLayer.submitArmWithItem pcs 188-232, the
+    // 26.2 bytecode): `f12 = state.ticksUsingItem(arm)` — the per-arm
+    // method the HumanoidRenderState override keeps (`isUsingItem &&
+    // (useItemHand == MAIN) == (arm == mainArm)` the field ticks, else
+    // 0) — then the arm's own pose `animateUseItem(state, poseStack,
+    // f12, arm, stack)`: SPEAR the only override, its body the
+    // `thirdPersonUseItem` the ArmPose$1 delegates. The STAB
+    // attack-item lane (pcs 182-185, `thirdPersonAttackItem`) the
+    // jar's own order speaks BEFORE this fold — the next round's
+    // candidate, the slot the composition below reserves.
+    let pose_spear = if left { state.left_spear } else { state.right_spear };
+    // `(useItemHand == MAIN_HAND) == (arm == mainArm)` — mainArm RIGHT
+    // the client's own, the arm==mainArm test the left flag answers
+    let ticks_arm = if state.is_using_item && state.use_item_main_hand == !left {
+        state.ticks_using_item
+    } else {
+        0.0
+    };
+    if ticks_arm != 0.0 && pose_spear {
+        if let Some(p) = &state.kinetic_use_params {
+            let amount =
+                crate::hand::spear_hit_feedback_amount(state.ticks_since_kinetic_hit);
+            let side = if left { -1.0f32 } else { 1.0f32 };
+            let use_m = crate::hand::spear_third_person_use_matrix(
+                p,
+                state.attack_time,
+                amount,
+                side,
+                crate::hand::KINETIC_FORWARD_MOVEMENT,
+            );
+            m = m.mul(&use_m);
+        }
+    }
     let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
     let (fold_point, _fold_normal) =
         entity_folds(state.yaw_deg, state.death_time, crouch_drop, feet);
@@ -10482,5 +10719,293 @@ mod tests {
             }
         }
         assert!(baby_opaque > 100, "the baby hide's texels keep: {baby_opaque}");
+    }
+
+    /// THE HAND-USE BASE'S OWN WALK (javap `thirdPersonHandUse` pcs
+    /// 11-108, scripts/pins_480.py the f32 chain oracle): the walk-zero
+    /// arm's rest raise — the -0.1 side nudge, the TWO xRot fadds, the
+    /// degree clamps the round trip re-speaks (the raw sum the bits the
+    /// round-trip moves), the left arm's mirror, the clamps' bite at
+    /// the ±60°/30° windows, the fall-flying/swim extra the branch
+    /// rides.
+    #[test]
+    fn the_third_person_hand_use_the_base_raise_the_clamps_speak() {
+        // THE WALK-ZERO REST (right): x bits 0xbf4552e8, y bits
+        // 0xbdcccccc, the zRot the fold never touches
+        let mut x = 0.0f32;
+        let mut y = 0.0f32;
+        let mut z = 7.5f32; // the sentinel the untouched law keeps
+        third_person_hand_use(&mut x, &mut y, &mut z, true, false, 0.0, 0.0, false, true, None);
+        assert_eq!(x.to_bits(), 0xbf45_52e8, "the right base xRot: {x}");
+        assert_eq!(y.to_bits(), 0xbdcc_cccc, "the right base yRot: {y}");
+        assert_eq!(z.to_bits(), 7.5f32.to_bits(), "the zRot the base never folds");
+        // THE DEGREES ROUND-TRIP: the raw sum the clamp's own degree
+        // walk moves (the f32 the 57.2957764/0.0174533 pair re-rounds)
+        let raw = 0.0f32 + -1.570_796_370_506_286_6 + 0.800_000_011_920_929;
+        assert_ne!(x.to_bits(), raw.to_bits(), "the round-trip the bits wear");
+        // THE LEFT MIRROR: the yRot the -side flips, the xRot the side
+        // never touches
+        let mut lx = 0.0f32;
+        let mut ly = 0.0f32;
+        let mut lz = 0.0f32;
+        third_person_hand_use(&mut lx, &mut ly, &mut lz, false, false, 0.0, 0.0, false, true, None);
+        assert_eq!(lx.to_bits(), 0xbf45_52e8, "the left base xRot: {lx}");
+        assert_eq!(ly.to_bits(), 0x3dcc_cccc, "the left base yRot: {ly}");
+        // THE CLAMPS' BITE (x0 = 2.0, y0 = 1.5): the 30°/60° windows the
+        // values the oracle speaks
+        let mut bx = 2.0f32;
+        let mut by = 1.5f32;
+        let mut bz = 0.0f32;
+        third_person_hand_use(&mut bx, &mut by, &mut bz, true, false, 0.0, 0.0, false, true, None);
+        assert_eq!(bx.to_bits(), 0x3f06_0a92, "the xRot's 30° ceiling: {bx}");
+        assert_eq!(by.to_bits(), 0x3f86_0a92, "the yRot's 60° ceiling: {by}");
+        // THE FALL-FLYING EXTRA (and the swim blend the same branch rides)
+        let mut fx = 0.0f32;
+        let mut fy = 0.0f32;
+        let mut fz = 0.0f32;
+        third_person_hand_use(&mut fx, &mut fy, &mut fz, true, true, 0.0, 0.0, false, true, None);
+        assert_eq!(fx.to_bits(), 0xbfdd_8879, "the fly extra's xRot: {fx}");
+        let mut sx = 0.0f32;
+        let mut sy = 0.0f32;
+        let mut sz = 0.0f32;
+        third_person_hand_use(&mut sx, &mut sy, &mut sz, true, false, 0.5, 0.0, false, true, None);
+        assert_eq!(sx.to_bits(), 0xbfdd_8879, "the swim extra's xRot: {sx}");
+    }
+
+    /// THE HAND-USE GATE'S OWN MATRIX (javap pcs 111-168): the FIELD
+    /// ticks the both-arms clock keeps, the `!isUsingItem ||
+    /// useItemHand == hand` disjunction, the kinetic null-return — the
+    /// sway the gate alone admits.
+    #[test]
+    fn the_hand_use_the_gate_the_sway_the_jar_keeps() {
+        let params = crate::hand::SpearUseParams {
+            raise: 0.5,
+            raise_start: 0.25,
+            raise_middle: 0.5,
+            raise_end: 0.75,
+            sway_progress: 0.125,
+            lower: 0.0,
+            raise_back: 0.375,
+            sway_intensity: 0.75,
+            sway_scale_slow: 1.25,
+            sway_scale_fast: -0.5,
+        };
+        let base = |right: bool| {
+            let (mut x, mut y, mut z) = (0.0f32, 0.0f32, 0.0f32);
+            third_person_hand_use(&mut x, &mut y, &mut z, right, false, 0.0, 0.0, false, true, None);
+            (x, y, z)
+        };
+        // THE SILENCE: no use, no ticks — the params the gate never
+        // reaches (the kinetic null-return's twin)
+        let (x0, y0, z0) = base(true);
+        let (mut x, mut y, mut z) = (0.0f32, 0.0f32, 0.0f32);
+        third_person_hand_use(
+            &mut x, &mut y, &mut z, true, false, 0.0, 0.0, false, true, Some(&params),
+        );
+        assert_eq!((x.to_bits(), y.to_bits(), z.to_bits()), (x0.to_bits(), y0.to_bits(), z0.to_bits()));
+        // THE WRONG HAND (main uses, the LEFT arm): the gate refuses —
+        // the LEFT arm's own base the mirror answers
+        let (xl0, yl0, zl0) = base(false);
+        let (mut x, mut y, mut z) = (0.0f32, 0.0f32, 0.0f32);
+        third_person_hand_use(
+            &mut x, &mut y, &mut z, false, false, 0.0, 1.0, true, true, Some(&params),
+        );
+        assert_eq!((x.to_bits(), y.to_bits(), z.to_bits()), (xl0.to_bits(), yl0.to_bits(), zl0.to_bits()));
+        // THE ZERO TICKS (using, the right hand): the `> 0.0` refuses
+        let (mut x, mut y, mut z) = (0.0f32, 0.0f32, 0.0f32);
+        third_person_hand_use(
+            &mut x, &mut y, &mut z, true, false, 0.0, 0.0, true, true, Some(&params),
+        );
+        assert_eq!((x.to_bits(), y.to_bits(), z.to_bits()), (x0.to_bits(), y0.to_bits(), z0.to_bits()));
+        // THE ADMITTED SWAY (using, the right hand, ticks 1): the
+        // oracle's own three adds — the xRot the side never mirrors,
+        // the y/z the -side flips
+        let (mut x, mut y, mut z) = (0.0f32, 0.0f32, 0.0f32);
+        third_person_hand_use(
+            &mut x, &mut y, &mut z, true, false, 0.0, 1.0, true, true, Some(&params),
+        );
+        assert_eq!(x.to_bits(), 0xbf5e_bc60, "the right sway's xRot: {x}");
+        assert_eq!(y.to_bits(), 0xbdbf_6557, "the right sway's yRot: {y}");
+        assert_eq!(z.to_bits(), 0xbc06_0a92, "the right sway's zRot: {z}");
+        // THE LEFT'S OWN SWAY (using OFF — the use_item_main_hand false
+        // the hand mapping admits): the y/z the mirror flips, the xRot
+        // the same window wears
+        let (mut x, mut y, mut z) = (0.0f32, 0.0f32, 0.0f32);
+        third_person_hand_use(
+            &mut x, &mut y, &mut z, false, false, 0.0, 1.0, true, false, Some(&params),
+        );
+        assert_eq!(x.to_bits(), 0xbf5e_bc60, "the left sway's xRot: {x}");
+        assert_eq!(y.to_bits(), 0x3dbf_6557, "the left sway's yRot: {y}");
+        assert_eq!(z.to_bits(), 0x3c06_0a92, "the left sway's zRot: {z}");
+        // THE LEFTOVER TICKS (not using, the field ticks ride on): the
+        // `!isUsingItem` disjunction admits — the SAME bits the using
+        // right-hand case keeps
+        let (mut x, mut y, mut z) = (0.0f32, 0.0f32, 0.0f32);
+        third_person_hand_use(
+            &mut x, &mut y, &mut z, true, false, 0.0, 1.0, false, true, Some(&params),
+        );
+        assert_eq!(x.to_bits(), 0xbf5e_bc60);
+        assert_eq!(y.to_bits(), 0xbdbf_6557);
+        assert_eq!(z.to_bits(), 0xbc06_0a92);
+    }
+
+    /// THE POSE ARMS' OWN BRANCH MATRIX (javap `HumanoidModel.setupAnim`
+    /// pcs 375-534, the SPEAR case 10 the only fold): the affectsOffhand
+    /// skips the idle and using branches wear, the pose order the
+    /// isUsingItem/useItemHand pair drives — build_posed_parts the
+    /// parts' own rotations answer.
+    #[test]
+    fn the_pose_arms_the_branch_matrix_the_spear_rest_wears() {
+        let walk = AvatarState::rest(0.0, 0.0, 0.0);
+        let plain = build_posed_parts(&walk);
+        // THE IDLE BRANCH (not using): the right SPEAR folds the right
+        // arm (the base raise), the left the affectsOffhand skip keeps
+        // BIT-IDENTICAL — and the plain walk's right the fold moves
+        let mut rs = AvatarState::rest(0.0, 0.0, 0.0);
+        rs.right_spear = true;
+        let posed = build_posed_parts(&rs);
+        assert_ne!(
+            (posed[2].x_rot.to_bits(), posed[2].y_rot.to_bits()),
+            (plain[2].x_rot.to_bits(), plain[2].y_rot.to_bits()),
+            "the right spear's raise the walk arm moves"
+        );
+        assert_eq!(
+            (posed[3].x_rot.to_bits(), posed[3].y_rot.to_bits(), posed[3].z_rot.to_bits()),
+            (plain[3].x_rot.to_bits(), plain[3].y_rot.to_bits(), plain[3].z_rot.to_bits()),
+            "the affectsOffhand skip the left arm keeps"
+        );
+        // THE LEFT-ONLY IDLE: the left folds (poseLeftArm first), the
+        // right the left pose's affectsOffhand CANCELS — the plain
+        // walk's own rotations the right keeps
+        let mut ls = AvatarState::rest(0.0, 0.0, 0.0);
+        ls.left_spear = true;
+        let posed = build_posed_parts(&ls);
+        assert_ne!(
+            (posed[3].x_rot.to_bits(), posed[3].y_rot.to_bits()),
+            (plain[3].x_rot.to_bits(), plain[3].y_rot.to_bits()),
+            "the left spear's raise the walk arm moves"
+        );
+        assert_eq!(
+            (posed[2].x_rot.to_bits(), posed[2].y_rot.to_bits(), posed[2].z_rot.to_bits()),
+            (plain[2].x_rot.to_bits(), plain[2].y_rot.to_bits(), plain[2].z_rot.to_bits()),
+            "the left's affectsOffhand the right arm cancels"
+        );
+        // THE USING BRANCH (main hand): poseRightArm first — the right
+        // folds, the left the right's affectsOffhand skip keeps even
+        // when the left wears SPEAR too
+        let mut us = AvatarState::rest(0.0, 0.0, 0.0);
+        us.is_using_item = true;
+        us.use_item_main_hand = true;
+        us.ticks_using_item = 1.0;
+        us.right_spear = true;
+        us.left_spear = true;
+        us.kinetic_use_params = Some(crate::hand::SpearUseParams {
+            raise: 0.5,
+            raise_start: 0.25,
+            raise_middle: 0.5,
+            raise_end: 0.75,
+            sway_progress: 0.125,
+            lower: 0.0,
+            raise_back: 0.375,
+            sway_intensity: 0.75,
+            sway_scale_slow: 1.25,
+            sway_scale_fast: -0.5,
+        });
+        let posed = build_posed_parts(&us);
+        // THE LEFT ARM THE SKIP KEEPS: the right pose's affectsOffhand
+        // cancels the poseLeftArm call — the plain walk's own rotations
+        // the left bit-identical keeps
+        assert_eq!(
+            (posed[3].x_rot.to_bits(), posed[3].y_rot.to_bits(), posed[3].z_rot.to_bits()),
+            (plain[3].x_rot.to_bits(), plain[3].y_rot.to_bits(), plain[3].z_rot.to_bits()),
+            "the using branch the left arm skips (the right's affectsOffhand)"
+        );
+        // ...and the RIGHT arm the sway admits — the same values the
+        // direct fold answers (the wiring the bits re-speak)
+        let (mut mx, mut my, mut mz) = (plain[2].x_rot, plain[2].y_rot, plain[2].z_rot);
+        third_person_hand_use(
+            &mut mx, &mut my, &mut mz, true, false, 0.0, 1.0, true, true,
+            us.kinetic_use_params.as_ref(),
+        );
+        assert_eq!(posed[2].x_rot.to_bits(), mx.to_bits());
+        assert_eq!(posed[2].y_rot.to_bits(), my.to_bits());
+        assert_eq!(posed[2].z_rot.to_bits(), mz.to_bits());
+    }
+
+    /// THE ITEM LANE'S OWN USE FOLD (javap `ItemInHandLayer.
+    /// submitArmWithItem` pcs 188-232 over the SPEAR pose's
+    /// animateUseItem): the per-arm ticks the `(useItemHand == MAIN) ==
+    /// (arm == mainArm)` zero law keeps, the SPEAR-only override the
+    /// matrix composes — the using spear arm's payload the geometry
+    /// moves, the idle spear's and the wrong arm's the anchor keeps.
+    #[test]
+    fn the_third_person_item_use_lane_the_geometry_speaks() {
+        let centroid = |quads: &Vec<HeadBlockQuad>| -> [f64; 3] {
+            let mut acc = [0.0f64; 3];
+            let mut n = 0.0f64;
+            for q in quads {
+                for p in q.pts.iter() {
+                    for k in 0..3 {
+                        acc[k] += p[k] as f64;
+                    }
+                }
+                n += 4.0;
+            }
+            if n > 0.0 {
+                [acc[0] / n, acc[1] / n, acc[2] / n]
+            } else {
+                [0.0; 3]
+            }
+        };
+        let using = |is_using: bool| {
+            let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+            s.right_spear = true;
+            s.is_using_item = is_using;
+            s.use_item_main_hand = true;
+            s.ticks_using_item = if is_using { 1.0 } else { 0.0 };
+            s.kinetic_use_params = Some(crate::hand::SpearUseParams {
+                raise: 1.0,
+                raise_start: 1.0,
+                raise_middle: 1.0,
+                raise_end: 1.0,
+                sway_progress: 0.0,
+                lower: 0.0,
+                raise_back: 0.0,
+                sway_intensity: 0.0,
+                sway_scale_slow: 0.0,
+                sway_scale_fast: 0.0,
+            });
+            s
+        };
+        let idle = held_item_quads(&using(false), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+            .expect("the spear's own stanza the bake carries");
+        let raised =
+            held_item_quads(&using(true), Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the using state the same bake keeps");
+        let (ci, cr) = (centroid(&idle), centroid(&raised));
+        let moved = (ci[0] - cr[0]).abs() + (ci[1] - cr[1]).abs() + (ci[2] - cr[2]).abs();
+        assert!(moved > 0.05, "the use matrix the payload moves: {moved}");
+        // THE WRONG ARM'S OWN ZERO (the left lane rides the per-arm
+        // ticks the right-hand use zeroes — the anchor the matrix
+        // never reaches; the idle state the same folded left arm wears
+        // — only the gate the two states separate)
+        let mut wrong = using(true);
+        wrong.right_spear = false;
+        wrong.left_spear = true;
+        wrong.use_item_main_hand = true;
+        let mut idle_left = using(false);
+        idle_left.right_spear = false;
+        idle_left.left_spear = true;
+        let wrong_quads =
+            offhand_item_quads(&wrong, Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the left arm's own bake");
+        let left_idle =
+            offhand_item_quads(&idle_left, Vec3::ZERO, 0.0, 0.0, "item/iron_spear_in_hand")
+                .expect("the left arm's idle bake");
+        assert_eq!(
+            centroid(&wrong_quads),
+            centroid(&left_idle),
+            "the right-hand use the left arm's payload never moves"
+        );
     }
 }
