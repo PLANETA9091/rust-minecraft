@@ -79,14 +79,17 @@ use sha1::Digest;
 
 use crate::math::{Mat4, Vec3};
 
-/// `Mth.cos(float)` — the f64 cos narrowed back to f32 (the Mth body).
+/// `Mth.cos(double)` over the jar's own f2d call-site widening — the
+/// 65536-entry SIN table the Mth body keeps (the `mth` module's law,
+/// the angle the table quantizes).
 fn mth_cos(x: f32) -> f32 {
-    (x as f64).cos() as f32
+    crate::mth::cos(x as f64)
 }
 
-/// `Mth.sin(float)` — the f64 sin narrowed back to f32.
+/// `Mth.sin(double)` over the jar's own f2d call-site widening — the
+/// 65536-entry SIN table the Mth body keeps.
 fn mth_sin(x: f32) -> f32 {
-    (x as f64).sin() as f32
+    crate::mth::sin(x as f64)
 }
 
 /// `Mth.sqrt(float)` — the f64 sqrt narrowed back to f32.

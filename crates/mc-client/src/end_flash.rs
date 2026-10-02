@@ -29,34 +29,20 @@
 //!   intensity — [`EndFlashState::current`]; the lerp still exists and
 //!   is pinned, the vanilla shape intact.
 
-use std::sync::OnceLock;
-
+use crate::mth;
 use crate::sky::JavaRandom;
 
 /// FLASH_INTERVAL_IN_TICKS (javap EndFlashState): the window length the
 /// flash seed rides.
 pub const FLASH_INTERVAL_IN_TICKS: i64 = 600;
 
-/// `Mth.SIN` — the 65536-entry table (javap Mth's static init):
-/// `SIN[i] = (float) Math.sin(i / 10430.378350470453)` — the DIVISION the
-/// bytecode does, each value rounded once to f32.
-fn sin_table() -> &'static [f32; 65536] {
-    static TABLE: OnceLock<[f32; 65536]> = OnceLock::new();
-    TABLE.get_or_init(|| {
-        let mut table = [0f32; 65536];
-        for (i, v) in table.iter_mut().enumerate() {
-            *v = (i as f64 / 10430.378_350_470_453).sin() as f32;
-        }
-        table
-    })
-}
-
-/// `Mth.sin(double)` (javap): `SIN[(long)(x * 10430.378350470453) & 65535]`
-/// — the multiply in f64, `as i64` truncating toward zero exactly like the
-/// JVM's d2l (NaN saturates to 0 in both), then the 16-bit mask.
+/// `Mth.sin(double)` — the 65536-entry SIN table lookup the `mth`
+/// module keeps (the jar's own law: `SIN[(long)(d · 10430.378350470453)
+/// & 65535]`, the d2l truncation toward zero, the 16-bit mask). The
+/// table's private copy this lane rode since its own round now lives
+/// in `mth` — the same lookup every swing lane speaks.
 fn mth_sin(x: f64) -> f32 {
-    let idx = (x * 10430.378_350_470_453) as i64 & 65535;
-    sin_table()[idx as usize]
+    mth::sin(x)
 }
 
 /// The END sky's flash state — the vanilla `EndFlashState` fields and

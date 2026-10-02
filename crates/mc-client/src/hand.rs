@@ -381,10 +381,11 @@ fn swing_terms(swing: f32) -> [f32; 5] {
     ]
 }
 
-/// `Mth.sin(float)`: `Math.sin((double)x)` narrowed back to f32 (the Mth
-/// body — the game never sins in f32).
+/// `Mth.sin(double)` over the jar's own f2d call-site widening — the
+/// 65536-entry SIN table the Mth body keeps (the `mth` module's law,
+/// the angle the table quantizes).
 fn mth_sin(x: f32) -> f32 {
-    (x as f64).sin() as f32
+    crate::mth::sin(x as f64)
 }
 
 /// `Mth.sqrt(float)`: `Math.sqrt((double)x)` narrowed back to f32.
@@ -753,12 +754,11 @@ fn item_swing_terms(swing: f32) -> [f32; 5] {
 /// then the fold `(1 - c) / 2` (the `fsub`'s c−1 the `fneg` flips — the
 /// JVM's operand order the dump speaks). `Mth.cos(D)F` is the 65536-entry
 /// SIN table lookup (the index `(long)(v·10430.378 + 16384.0) & 65535`) —
-/// the client's swing lanes speak the `Math.sin/cos` fold (the same
-/// convention the WHACK arc's `mth_sin` rides, the f64 call narrowed to
-/// f32; the table quantizes the ANGLE instead — a sub-pixel divergence,
-/// a table-fidelity round can swap both lanes together).
+/// the table-fidelity round landed: both swing lanes speak the same
+/// lookup the `mth` module keeps (the angle the table quantizes, the
+/// value the Math.cos fold never narrowed).
 fn ease_in_out_sine(x: f32) -> f32 {
-    let c = ((std::f32::consts::PI * x) as f64).cos() as f32;
+    let c = crate::mth::cos((std::f32::consts::PI * x) as f64);
     (1.0 - c) / 2.0
 }
 
@@ -1851,37 +1851,39 @@ mod held_tests {
     /// The swing-arc SWEEP: both first-person term curves (the bare
     /// arm's f10..f14 and the held item's f5s/f6s/f7s/f5/f6) pinned
     /// BIT-EXACTLY at seven progresses against an independently computed
-    /// oracle (a numpy f32 emulation of the f64-sin/sqrt-narrowed-to-f32
-    /// chain, scripts/swing_terms_oracle.py). Three facts the tables
-    /// lock: (1) rest carries EXACT zeros — including the two NEGATIVE
+    /// oracle (a numpy f32 emulation of the 65536-entry SIN-table chain,
+    /// scripts/swing_terms_oracle.py). Three facts the tables lock:
+    /// (1) rest carries EXACT zeros — including the two NEGATIVE
     /// zeros of the -0.3/-0.4 multiplied terms, which an IEEE == cannot
-    /// distinguish but from_bits can; (2) progress 1 is NOT rest at the
-    /// term level — sin(pi_f32) is -8.742278e-8, the f64-narrowing
-    /// fingerprint a f32-sin rewrite would flip; (3) the mid-arc shape:
-    /// the rotY amount hits EXACT 1.0 at p=0.25 (sin(pi/2)) and the Z
-    /// pull EXACT -0.4/-0.2 at p=0.5 (sin(pi/2) again), the peak rotZ
-    /// 0.98078525 near p=0.75.
+    /// distinguish but from_bits can; (2) progress 1 rides the TABLE's
+    /// own residues — the 2π index wraps to the zero row (f11 EXACT
+    /// 0.0), f13/f14 keep the famous 1.2246469e-16 (sin of the double
+    /// closest to π), f10/f12 the tiny negatives the -0.3/-0.4
+    /// multiplies wear — the bits still differ from rest, the pixels
+    /// never do; (3) the mid-arc shape: the rotY amount hits EXACT 1.0
+    /// at p=0.25 (the π/2 row) and the Z pull EXACT -0.4/-0.2 at p=0.5
+    /// (the π/2 row again), the peak f6 0.40865678 near p=0.75.
     #[test]
     fn the_swing_term_sweep_pins_both_curves_bit_exactly() {
         // [f10, f11, f12, f13, f14] = swing_terms, as f32 bit patterns
         const ARM: [(u32, [u32; 5]); 7] = [
             (0.0f32.to_bits(), [0x80000000, 0x00000000, 0x80000000, 0x00000000, 0x00000000]),
-            (0.1f32.to_bits(), [0xbe80b44f, 0x3ebb52b7, 0xbdfd2590, 0x3d00a892, 0x3f5681d9]),
-            (0.25f32.to_bits(), [0xbe99999a, 0xb31630f2, 0xbe90d0c3, 0x3e47c5c2, 0x3f800000]),
-            (0.5f32.to_bits(), [0xbe746fdc, 0xbec56841, 0xbecccccd, 0x3f3504f3, 0x3f4bb28c]),
-            (0.75f32.to_bits(), [0xbdfb077c, 0xbe98bf39, 0xbe90d0c3, 0x3f7b14be, 0x3ed130e7]),
-            (0.9f32.to_bits(), [0xbd453ed3, 0xbe01cab3, 0xbdfd2592, 0x3f0fe4b4, 0x3e245f05]),
-            (1.0f32.to_bits(), [0x32e1496b, 0x339630f2, 0x331630f2, 0xb3bbbd2e, 0xb3bbbd2e]),
+            (0.1f32.to_bits(), [0xbe80b400, 0x3ebb5355, 0xbdfd1643, 0x3d00643e, 0x3f568154]),
+            (0.25f32.to_bits(), [0xbe99999a, 0x2461e850, 0xbe90d0c3, 0x3e47c5c2, 0x3f800000]),
+            (0.5f32.to_bits(), [0xbe747207, 0xbec566fb, 0xbecccccd, 0x3f3504f3, 0x3f4bb45b]),
+            (0.75f32.to_bits(), [0xbdfb1428, 0xbe98c20b, 0xbe90d0c3, 0x3f7b14be, 0x3ed13b76]),
+            (0.9f32.to_bits(), [0xbd454c5b, 0xbe01d35d, 0xbdfd2963, 0x3f0fe51d, 0x3e246a4b]),
+            (1.0f32.to_bits(), [0xa4296e3c, 0x00000000, 0xa461e850, 0x250d3132, 0x250d3132]),
         ];
         // [f5s, f6s, f7s, f5, f6] = item_swing_terms
         const ITEM: [(u32, [u32; 5]); 7] = [
             (0.0f32.to_bits(), [0x80000000, 0x00000000, 0x80000000, 0x00000000, 0x00000000]),
-            (0.1f32.to_bits(), [0xbeab9b14, 0x3e3b52b7, 0xbd7d2590, 0x3d00a892, 0x3f5681d9]),
-            (0.25f32.to_bits(), [0xbecccccd, 0xb29630f2, 0xbe10d0c3, 0x3e47c5c2, 0x3f800000]),
-            (0.5f32.to_bits(), [0xbea2f53d, 0xbe456841, 0xbe4ccccd, 0x3f3504f3, 0x3f4bb28c]),
-            (0.75f32.to_bits(), [0xbe275a53, 0xbe18bf39, 0xbe10d0c3, 0x3f7b14be, 0x3ed130e7]),
-            (0.9f32.to_bits(), [0xbd837f37, 0xbd81cab3, 0xbd7d2592, 0x3f0fe4b4, 0x3e245f05]),
-            (1.0f32.to_bits(), [0x331630f2, 0x331630f2, 0x329630f2, 0xb3bbbd2e, 0xb3bbbd2e]),
+            (0.1f32.to_bits(), [0xbeab9aaa, 0x3e3b5355, 0xbd7d1643, 0x3d00643e, 0x3f568154]),
+            (0.25f32.to_bits(), [0xbecccccd, 0x23e1e850, 0xbe10d0c3, 0x3e47c5c2, 0x3f800000]),
+            (0.5f32.to_bits(), [0xbea2f6af, 0xbe4566fb, 0xbe4ccccd, 0x3f3504f3, 0x3f4bb45b]),
+            (0.75f32.to_bits(), [0xbe2762c5, 0xbe18c20b, 0xbe10d0c3, 0x3f7b14be, 0x3ed13b76]),
+            (0.9f32.to_bits(), [0xbd83883c, 0xbd81d35d, 0xbd7d2963, 0x3f0fe51d, 0x3e246a4b]),
+            (1.0f32.to_bits(), [0xa461e850, 0x00000000, 0xa3e1e850, 0x250d3132, 0x250d3132]),
         ];
         for (p_bits, want) in ARM {
             let p = f32::from_bits(p_bits);
@@ -1895,11 +1897,14 @@ mod held_tests {
         }
     }
 
-    /// The progress-1 pose is NOT the rest pose at the geometry level —
-    /// every term carries the pi_f32 epsilon — yet the RENDERED frame is
-    /// bit-identical to rest (the sweep's next test pins that): the
-    /// rasterizer's sample grid absorbs a ~1e-7 vertex delta. The UV
-    /// unwrap never moves (the same invariant the 0.5 test asserts).
+    /// The progress-1 pose is NOT the rest pose at the TERM level —
+    /// the table's own residues ride the bits (the 2π row wrapping to
+    /// the exact zero, the double-π rows the 1.2246e-16 keeps) — yet
+    /// the GEOMETRY and the RENDERED frame are bit-identical to rest:
+    /// the ~1e-16 residues sit below the f32 epsilon of every pose
+    /// coordinate, the vertex adds absorb them before the rasterizer
+    /// ever speaks. The UV unwrap never moves (the same invariant the
+    /// 0.5 test asserts).
     #[test]
     fn the_one_pose_terms_are_not_the_rest_terms() {
         let rest_terms = swing_terms(0.0);
@@ -1907,23 +1912,22 @@ mod held_tests {
         assert_ne!(
             rest_terms.map(|t| t.to_bits()),
             one_terms.map(|t| t.to_bits()),
-            "p=1 must carry the pi_f32 epsilon, not exact zeros"
+            "p=1 must carry the table's own residues, not rest's bit pattern"
         );
+        // the residues the table keeps are that tiny: the f11 row the
+        // 2π wrap answers EXACT zero, the f13/f14 the double-π row
+        // 1.2246e-16, the f10/f12 the -3.7e-17/-4.9e-17 negatives the
+        // -0.3/-0.4 multiplies wear — nothing the eye or the rasterizer
+        // ever distinguishes, only from_bits
+        assert_eq!(one_terms[1], 0.0, "the 2π wrap the exact zero answers");
+        assert_eq!(rest_terms[1], 0.0);
         let rest = build_quads();
         let one = build_quads_at(1.0, 0.0);
         assert_eq!(rest.len(), one.len());
-        let mut uv_equal = true;
-        let mut pts_differ = false;
         for (r, o) in rest.iter().zip(&one) {
-            if r.uv != o.uv {
-                uv_equal = false;
-            }
-            if r.pts != o.pts {
-                pts_differ = true;
-            }
+            assert_eq!(r.uv, o.uv, "the UV unwrap never changes");
+            assert_eq!(r.pts, o.pts, "the vertex adds absorb the residues");
         }
-        assert!(uv_equal, "the UV unwrap never changes");
-        assert!(pts_differ, "the epsilon terms must move the corner bits");
     }
 
     /// The pixel-arc sweep over the held-item scene: progress 0.25 and
@@ -1931,11 +1935,12 @@ mod held_tests {
     /// never crosses the midline at all, 0.25's blade tip does), and
     /// progress 1.0 is BIT-IDENTICAL to rest at the pixel level — the
     /// closed arc: every vanilla swing term is a sin multiple that
-    /// vanishes at both ends, and the ~1e-8 pi_f32 residue the floats
+    /// vanishes at both ends, and the ~1e-16 table residue the floats
     /// carry changes no rasterized pixel. The sweep's in-test counts are
-    /// pinned exactly (probe-observed then frozen); the binary probe over
-    /// the full world scene agrees structurally — 6240/5583/0 at
-    /// 0.25/0.75/1.0 — and its LEFT counts match these to the pixel
+    /// pinned exactly (probe-observed then frozen, re-frozen when the
+    /// SIN-table round moved the mid-arc pose by a hair); the binary
+    /// probe over the full world scene agrees structurally — 6240/5583/0
+    /// at 0.25/0.75/1.0 — and its LEFT counts match these to the pixel
     /// (337/0), the coverage flips being background-independent.
     #[test]
     fn the_swing_scene_sweep_pins_the_pixel_arc() {
@@ -1975,7 +1980,7 @@ mod held_tests {
             } else {
                 // the frozen probe-observed counts (in-test, plain-sky
                 // background)
-                let want = if p == 0.25 { (337, 6146) } else { (0, 5684) };
+                let want = if p == 0.25 { (337, 6146) } else { (0, 5683) };
                 assert_eq!(
                     (changed_left, changed_right),
                     want,
@@ -2168,13 +2173,13 @@ mod held_tests {
         assert_eq!(sway.raise_back, 0.0, "the [230, 235] window far");
         assert_eq!(sway.sway_intensity, 2.0, "2·outCirc(1) - 2·inCirc(0)");
         assert!(
-            (sway.sway_scale_slow - 1.732_050_7).abs() < 1e-6,
-            "sin(60·19°)·2 (got {})",
+            (sway.sway_scale_slow - 1.731_986_9).abs() < 1e-6,
+            "sin(60·19°)·2 the table's own verdict (got {})",
             sway.sway_scale_slow
         );
         assert!(
-            sway.sway_scale_fast.abs() < 1e-5,
-            "sin(60·30°) the full-circle phase (got {})",
+            (sway.sway_scale_fast - -0.000_191_747_60).abs() < 1e-9,
+            "sin(60·30°) the full-circle phase — the table's quantization the wrap speaks (got {})",
             sway.sway_scale_fast
         );
         // THE SWAY'S MIDPOINT (th = 50): progress 0.5 — the pump
@@ -2187,12 +2192,12 @@ mod held_tests {
             sway_mid.sway_intensity
         );
         assert!(
-            (sway_mid.sway_scale_slow - -1.326_827_8).abs() < 1e-5,
+            (sway_mid.sway_scale_slow - -1.326_804_1).abs() < 1e-5,
             "sin(50·19°)·pump (got {})",
             sway_mid.sway_scale_slow
         );
         assert!(
-            (sway_mid.sway_scale_fast - 1.499_999_8).abs() < 1e-5,
+            (sway_mid.sway_scale_fast - 1.499_944_6).abs() < 1e-5,
             "sin(50·30°)·pump (got {})",
             sway_mid.sway_scale_fast
         );
@@ -2294,7 +2299,7 @@ mod held_tests {
         assert_eq!(spear_hit_feedback_amount(2.0), 0.375, "0.4·outQuart(0.5)");
         assert_eq!(spear_hit_feedback_amount(1.0), 0.0, "the rise's own start");
         assert!(
-            (spear_hit_feedback_amount(5.0) - 0.324_697_97).abs() < 1e-6,
+            (spear_hit_feedback_amount(5.0) - 0.324_702_23).abs() < 1e-6,
             "the settle's midpoint (got {})",
             spear_hit_feedback_amount(5.0)
         );
