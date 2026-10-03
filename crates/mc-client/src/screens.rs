@@ -7855,6 +7855,7 @@ impl App {
         // property laws).
         let mut reload: Option<(i32, usize)> = None;
         let mut spear_use_tick: Option<u32> = None;
+        let mut brush_use_tick: Option<u32> = None;
         if let Some(active) = self.using_item.as_mut() {
             active.ticks += 1;
             if let Some(def) = mc_registry::item_using_def(active.item) {
@@ -7878,6 +7879,13 @@ impl App {
             {
                 spear_use_tick = Some(active.ticks);
             }
+            // THE BRUSH'S OWN TICK (javap `BrushItem.onUseTick` — the
+            // look-away cancel + the 10-tick voice the walk drives):
+            // the tick the walk reads AFTER the borrow ends (the body's
+            // own drain-slot pattern the spear lane speaks)
+            if mc_registry::item_name(active.item) == Some("brush") {
+                brush_use_tick = Some(active.ticks);
+            }
         }
         if let Some((id, idx)) = reload {
             self.load_held_payload(id, Some(idx));
@@ -7889,6 +7897,16 @@ impl App {
         if let Some(used) = spear_use_tick {
             if !self.paused && !self.dead && !self.world_is_network {
                 self.spear_use_tick_stab(used as i32);
+            }
+        }
+        // THE BRUSH TICK'S OWN WALK (javap `BrushItem.onUseTick` the
+        // 26.2 jar's own law — the pause the world's own tick sleeps;
+        // the client's own onUseTick the BOTH lanes speak — the vanilla
+        // client plays the brushing voice locally, the wire's sound
+        // packet the decode lane never banks)
+        if let Some(elapsed) = brush_use_tick {
+            if !self.paused {
+                self.brush_use_tick_walk(elapsed);
             }
         }
         // THE EAT CLOCK (the consumable's own hold — the vanilla
@@ -16168,6 +16186,82 @@ impl App {
         }
     }
 
+    /// THE BRUSH TICK'S OWN WALK (javap `BrushItem.onUseTick` pcs 26-224
+    /// over the real 26.2 jar — the look-away cancel the BLOCK-hit gate
+    /// keeps, the 10-tick voice the `(duration - remaining + 1) % 10 ==
+    /// 5` cadence arms, the 200-tick complete the `--useItemRemaining <=
+    /// 0` walk speaks): the tick walk the USE CLOCK's drain slot carries
+    /// (the elapsed 1-based count the client's own clock keeps — the
+    /// vanilla t the same number wears). The CANCEL the entity-level
+    /// `releaseUsingItem()` the bytecode's invokevirtual names — NO
+    /// packet the entity walk sends (the vanilla rightClickStop's own
+    /// `gameMode.releaseUsingItem` echo the RELEASE key alone carries —
+    /// the client's own on_right_release the RMB edge serves); the
+    /// COMPLETE the `completeUsingItem()` the same silence keeps (the
+    /// server's own entity walk the mirror verdict serves). The VOICE
+    /// the 4-arg `playSound` default the LevelAccessor clinit wears —
+    /// the `fconst_1` pair the volume/pitch both carry (fixed 1.0/1.0,
+    /// NO randoms), the BLOCKS source the positional play the block
+    /// center the +0.5 fold places. The key the `instanceof
+    /// BrushableBlock` verdict picks: the client's cell vocabulary the
+    /// suspicious cells never banks — every cell the BRUSH_GENERIC arm
+    /// names (`item.brush.brushing.generic` — the honest divergence the
+    /// vocabulary's absence keeps; the wire's completion event the
+    /// server's own key carries). The DUST the spawnDustParticles walk
+    /// speaks the client never banks (the delta law + the CP constants
+    /// the particle vocabulary needs — a later walk the round leaves).
+    fn brush_use_tick_walk(&mut self, elapsed: u32) {
+        // THE COMPLETE (javap updateUsingItem's own tail — `--remaining
+        // <= 0` the completeUsingItem speaks): the 200-tick duration the
+        // `sipush 200` banks, the window the local end closes, the
+        // silence the entity walk keeps (no packet, no restore — the
+        // brush's payload never left the resting resolution)
+        if elapsed >= mc_registry::BRUSH_USE_TICKS {
+            self.using_item = None;
+            return;
+        }
+        // THE LOOK-AWAY CANCEL (javap onUseTick pcs 26-64 — the hit the
+        // view-vector clip re-walks each tick, the BLOCK type the
+        // `if_acmpne` gate keeps, the miss the `releaseUsingItem()`
+        // invokevirtual speaks — the window the look-away closes)
+        let clip = self.active_world().and_then(|w| {
+            let cam = self.world_camera();
+            let f = cam.forward();
+            w.clip(
+                (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64),
+                (f.x as f64, f.y as f64, f.z as f64),
+                crate::world::BLOCK_INTERACTION_RANGE,
+            )
+        });
+        let Some(hit) = clip else {
+            self.using_item = None;
+            return;
+        };
+        // THE CADENCE VOICE (javap pcs 65-92 + 177-224 — the t the
+        // `duration - remaining + 1` fold computes, the `% 10 == 5`
+        // gate the sound arms: t = 5, 15, ..., 195; the brushable
+        // verdict the key picks, the fixed 1.0/1.0 the fconst_1 pair
+        // keeps, the block center the +0.5 fold places)
+        if elapsed % 10 == 5 {
+            let yaw = self.listener_yaw();
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let sx = f64::from(hit.pos.0) + 0.5;
+            let sy = f64::from(hit.pos.1) + 0.5;
+            let sz = f64::from(hit.pos.2) + 0.5;
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "item.brush.brushing.generic",
+                1.0,
+                1.0,
+                ear_distance(ear, sx, sy, sz),
+                ear_pan(ear, yaw, sx, sy, sz),
+            );
+        }
+    }
+
     /// The held-item payload loader — the USING arc's reload lane over
     /// live_held_updated's resting law. `Some(index)` loads the using
     /// branch's state at that index (the special payloads through the
@@ -22475,6 +22569,35 @@ impl App {
                     if let Some(primed) = self.on_right_press_tnt_arm(&hit) {
                         return primed;
                     }
+                } else if held == "brush" {
+                    // THE BRUSH'S OWN USE-ON WALK (javap `BrushItem.useOn`
+                    // over the 26.2 jar — the 31-pc body the whole verdict
+                    // wears: `player.startUsingItem(ctx.getHand())` the
+                    // BLOCK-hit gate arms (pcs 17-28 — the view-vector
+                    // clip's own BLOCK verdict the calculateHitResult
+                    // walk answers), the CONSUME the `getstatic #44`
+                    // ALWAYS returns — the gate the press consumes
+                    // regardless, the fall-through the jar never keeps).
+                    // THE USING WINDOW OPENS: the BRUSH use-anim the
+                    // mapped seven the third person's own lane rides
+                    // (autopush-487's fold), the tick walk the onUseTick
+                    // law drives (the look-away cancel, the 10-tick
+                    // voice, the 200-tick complete). The ECHO the block
+                    // lane's own head already spoke (the useItemOn
+                    // packet every block right-click rides — the walk's
+                    // BLOCK case the vanilla startUseItem serves) — the
+                    // window the echo NEVER doubles. The OFF-HAND turn
+                    // the vanilla for-each-hand walk keeps the later arm
+                    // speaks (the same useOn the OFF hand's own ctx
+                    // answers — a later walk the round leaves).
+                    self.using_item = None; // one use at a time
+                    self.using_item = Some(UseActive {
+                        item: id,
+                        ticks: 0,
+                        state: 0,
+                        hand: UseHand::Main,
+                    });
+                    return true;
                 }
             }
         }
@@ -39716,6 +39839,234 @@ mod tests {
                 assert_eq!(hand, 0, "the MAIN hand ordinal the echo wears");
             }
             other => panic!("expected a UseItem echo, got {other:?}"),
+        }
+    }
+
+    /// THE BRUSH'S OWN USE-ON WALK (javap `BrushItem.useOn` over the
+    /// real 26.2 jar — the 31-pc body the whole press wears): the BLOCK
+    /// hit the using window opens (`startUsingItem` the BLOCK gate
+    /// arms), the CONSUME the always-verdict speaks, the MISS the
+    /// `useOn`-less air walk the PASS keeps (the brush the `use` body
+    /// never carries — the jar's own method list the seven methods
+    /// bank), the look-away the entity-level cancel closes (NO packet
+    /// the entity walk sends — the vanilla rightClickStop's echo the
+    /// RMB edge alone carries), the release the wire's own RELEASE_USE
+    /// echo rides.
+    #[test]
+    fn the_brush_the_press_the_window_wears() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the STONE row keeps (the client's cell vocabulary
+        // the suspicious cells never banks — every cell the generic arm
+        // the tick walk names)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        let brush = mc_registry::item_id_by_name("brush").unwrap();
+        app.inventory.items[app.selected_hotbar] = (brush, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE LIVE LANE FIRST (the echo the block lane's own head
+        // speaks — the useItemOn packet the window NEVER doubles)
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the always-CONSUME the press speaks");
+        let active = app.using_item.as_ref().expect("the window opened");
+        assert_eq!(active.item, brush, "the held brush the use rides");
+        assert_eq!(active.ticks, 0, "the clock the fresh hold keeps");
+        assert_eq!(active.state, 0, "the state the def-less item keeps");
+        match rx.try_recv().expect("the useItemOn echo rode") {
+            ContainerCommand::UseItemOn { pos, .. } => {
+                assert_eq!(pos, (c, surface, c), "the hit cell the packet wears");
+            }
+            other => panic!("expected a UseItemOn echo, got {other:?}"),
+        }
+        assert!(
+            rx.try_recv().is_err(),
+            "the ONE echo the block lane spoke — the window never doubles"
+        );
+        // THE LOOK-AWAY CANCEL (javap onUseTick pcs 26-64): the miss the
+        // view-vector clip re-walks, the entity-level release the
+        // silence keeps — NO packet the cancel sends
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: std::f32::consts::FRAC_PI_2,
+        });
+        app.update();
+        assert!(
+            app.using_item.is_none(),
+            "the look-away the entity-level cancel closes"
+        );
+        assert!(
+            rx.try_recv().is_err(),
+            "the cancel no packet sends — the entity walk the vanilla silence keeps"
+        );
+        // THE MISS ARM (the BLOCK case the walk never routes): the air
+        // walk the PASS keeps — the press never consumed, the window
+        // never opens (the `use` body the jar never banks)
+        assert!(!app.on_right_press(0, 0), "the miss the PASS keeps");
+        assert!(
+            app.using_item.is_none(),
+            "the miss the window never opens"
+        );
+        // THE RELEASE EDGE (the vanilla rightClickStop's own walk — the
+        // gameMode.releaseUsingItem the RELEASE_USE echo speaks): the
+        // re-press the window re-opens, the RMB-up the echo rides
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the re-press the window re-opens");
+        match rx.try_recv().expect("the block echo rode again") {
+            ContainerCommand::UseItemOn { .. } => {}
+            other => panic!("expected a UseItemOn echo, got {other:?}"),
+        }
+        app.on_right_release();
+        assert!(
+            app.using_item.is_none(),
+            "the release the hold ends"
+        );
+        match rx.try_recv().expect("the release echo rode") {
+            ContainerCommand::ReleaseUse => {}
+            other => panic!("expected a ReleaseUse echo, got {other:?}"),
+        }
+    }
+
+    /// THE BRUSH TICK'S OWN CADENCE (javap `BrushItem.onUseTick` pcs
+    /// 65-92 + 177-224 + updateUsingItem's own tail): the t the
+    /// 1-based elapsed the client's own clock keeps, the `% 10 == 5`
+    /// gate the voice arms (t = 5, 15, ..., 195 — the TWENTY voices the
+    /// 200-tick window spends), the fixed 1.0/1.0 the LevelAccessor
+    /// default's fconst_1 pair keeps, and the `sipush 200` duration the
+    /// `--useItemRemaining <= 0` walk completes — the window the local
+    /// end closes, no packet the complete sends.
+    #[test]
+    fn the_brush_the_tick_the_voice_the_cadence_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        let brush = mc_registry::item_id_by_name("brush").unwrap();
+        app.inventory.items[app.selected_hotbar] = (brush, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the window the press opens");
+        let _ = std::mem::take(&mut app.sounds.events);
+        // t = 1..4: the cadence the gate keeps silent
+        for _ in 0..4 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.brush.brushing.generic @")),
+                "the pre-cadence ticks the silence keeps"
+            );
+        }
+        // t = 5: the FIRST voice the cadence arms
+        app.update();
+        if sounds_loaded() {
+            let voices = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("item.brush.brushing.generic @"))
+                .count();
+            assert_eq!(voices, 1, "the t=5 voice the cadence arms");
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("item.brush.brushing.generic @"))
+                .unwrap();
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            let volume: f32 = voice
+                .split(" v")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (pitch - 1.0).abs() < 1e-6 && (volume - 1.0).abs() < 1e-6,
+                "the fixed fold the fconst_1 pair keeps: {voice}"
+            );
+        }
+        // t = 6..10: the mid-decade ticks the silence keeps
+        for _ in 0..5 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.brush.brushing.generic @"))
+                    .count(),
+                1,
+                "the t=10 tick the gate never arms"
+            );
+        }
+        // t = 11..15: the SECOND voice the next decade arms
+        for _ in 0..5 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.brush.brushing.generic @"))
+                    .count(),
+                2,
+                "the t=15 voice the cadence arms"
+            );
+        }
+        // t = 16..200: the window runs out — the t=195 voice the last
+        // the cadence speaks, the 200-tick complete the `sipush 200`
+        // duration closes (20 voices the full window spends)
+        for _ in 0..185 {
+            app.update();
+        }
+        assert!(
+            app.using_item.is_none(),
+            "the 200-tick complete the window closes"
+        );
+        if sounds_loaded() {
+            assert_eq!(
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.brush.brushing.generic @"))
+                    .count(),
+                20,
+                "the twenty voices the 5,15..195 cadence spends"
+            );
         }
     }
 

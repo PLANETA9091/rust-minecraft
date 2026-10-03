@@ -296,6 +296,14 @@ pub fn special_item_renderer(id: i32) -> Option<SpecialItemRender> {
 /// the same constant both lanes speak.
 pub const CROSSBOW_CHARGE_TICKS: u32 = 25;
 
+/// The brush's use duration — javap `BrushItem.getUseDuration` over the
+/// 26.2 jar: the `sipush 200` the ireturn returns verbatim (200 ticks —
+/// the using window's own length). The tick walk's completion the same
+/// constant speaks (`--useItemRemaining <= 0` the completeUsingItem
+/// fires), the cadence voice the `(duration - remaining + 1) % 10 == 5`
+/// gate the same duration divides.
+pub const BRUSH_USE_TICKS: u32 = 200;
+
 /// The item's USING-branch definition — the 5 items whose definition
 /// trees carry the `minecraft:using_item` gate (bow, crossbow,
 /// goat_horn, shield, trident). `None` = the item has no using lane
