@@ -6574,6 +6574,16 @@ pub struct App {
     /// shotAtAngle laws ride, the launch the life==0 word speaks. The
     /// headless scenes never spawn one: the goldens stay.
     pub fireworks: Vec<crate::mob::Firework>,
+    /// THE FIREWORK'S OWN STARTERS (the wire's byte-17 NON-empty
+    /// branch arms — javap `FireworkParticles$Starter` the 26.2 walk:
+    /// the component-driven explosion machine the custom-star rocket's
+    /// synced stack feeds): the cadence the even-life gate drives, the
+    /// blast/twinkle voices the out-vec's positioned lanes speak, the
+    /// shape sparks + the flash the cadence's own walks spawn. The
+    /// OFFLINE rockets never arm one (the plain-rocket law the
+    /// inventory's component-less stacks keep — the poof burst the
+    /// empty branch answers).
+    pub firework_starters: Vec<crate::mob::FireworkStarter>,
     /// THE PRIMED TNT LANE (the offline world's fuse machines — the
     /// ignite arm's spawns the TntBlock.prime walk speaks, the chain
     /// spawns the wasExploded law queues): the flight the
@@ -7670,6 +7680,7 @@ impl App {
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
             fireworks: Vec::new(),
+            firework_starters: Vec::new(),
             primed_tnts: Vec::new(),
             falling_blocks: Vec::new(),
             falling_checks: Vec::new(),
@@ -8076,6 +8087,12 @@ impl App {
         // AFTER the loop the vanilla queue order keeps)
         let mut drip_fall_spawns: Vec<(f64, f64, f64, f64, f64, f64, bool)> = Vec::new();
         let mut drip_land_spawns: Vec<(f64, f64, f64, bool)> = Vec::new();
+        // the firework spark's own out-vec (the trail CHILDREN the
+        // SparkParticle.tick gate arms — the (x, y, z, col, fade,
+        // twinkle) specs the parent's own post-tick state carries, the
+        // ctor draws the consumption's engine stream spends)
+        let mut spark_children: Vec<(f64, f64, f64, [f32; 3], Option<[f32; 3]>, bool)> =
+            Vec::new();
         let level_rng = &mut self.level_ambient_rng;
         self.particles.retain_mut(|p| match p.kind {
             crate::particles::ParticleKind::Bubble => {
@@ -8172,6 +8189,13 @@ impl App {
             // flake slows each tick, the vertical axis's stronger 0.9
             // the fall damps)
             crate::particles::ParticleKind::Snowflake => p.tick_snowflake(),
+            // the firework spark's own walk (javap `SparkParticle.tick`
+            // — the base law + the fade lerp + the trail CHILD the
+            // gate arm banks: the children the out-vec lands, the
+            // ctor draws the post-loop consumption spends)
+            crate::particles::ParticleKind::Spark { .. } => {
+                p.tick_spark(&mut spark_children)
+            }
             _ => p.tick(),
         });
         // THE SMOKE CHILDREN LAND AFTER THE TICK LOOP (the vanilla
@@ -8202,6 +8226,26 @@ impl App {
                 py,
                 pz,
                 size_speed,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(child);
+        }
+        // THE SPARK CHILDREN LAND AFTER THE TICK LOOP (the vanilla
+        // queue order: the parent's engine.add queues the child, the
+        // engine ticks it from the NEXT tick — the render still sees
+        // it this frame). The child's ctor draws ride the LEVEL
+        // random: the base lifetime float, the size float, the
+        // 48 + nextInt(12) re-roll — the color/fade/twinkle the
+        // parent's own post-tick state carries, the age the
+        // lifetime/2 pin keeps.
+        for (px, py, pz, col, fade, twinkle) in spark_children {
+            let child = crate::particles::firework_spark_trail_child(
+                px,
+                py,
+                pz,
+                col,
+                fade,
+                twinkle,
                 &mut self.level_ambient_rng,
             );
             self.particles.push(child);
@@ -9624,6 +9668,13 @@ impl App {
                 // caller reads, the ctor's own draws the consumption's
                 // engine stream spends)
                 let mut firework_trails: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
+                // THE STARTERS' OWN VOICE QUEUES (the life-0 blast + the
+                // end twinkle the tick walk banks — the positioned
+                // AMBIENT voices the volume-20 reach keeps, the pitch
+                // the tick's own draw named, the word the large/far
+                // quadrant picked)
+                let mut starter_blasts: Vec<(f64, f64, f64, &'static str, f32)> = Vec::new();
+                let mut starter_twinkles: Vec<(f64, f64, f64, &'static str, f32)> = Vec::new();
                 // THE PLAYER'S OWN HITS (the mob verdicts the flight
                 // tick carried — the (mob id, damage) pairs the caller
                 // lanes answer: the hurt, the voice, the death loot +
@@ -10083,6 +10134,53 @@ impl App {
                             }
                         }
                         self.fireworks.retain(|f| !f.dead);
+                        // THE FIREWORK STARTERS' OWN WALK (javap
+                        // `FireworkParticles$Starter.tick` the 519-pc
+                        // body — the component-driven explosion machine
+                        // the wire's NON-empty branch arms): the camera
+                        // distance² check the `far` word feeds (`>=
+                        // 256.0` the isFarAwayFromCamera gate keeps —
+                        // the static anchor the camera's own motion
+                        // re-arms each tick), the level's own stream
+                        // the blast/twinkle pitch draws + the shape
+                        // walks' spawns spend (the shared RandomSource
+                        // the particle base ctor speaks). The children
+                        // the vanilla queue order banks — the spawns
+                        // this tick lands the NEXT tick's engine walk
+                        // answers (the retain_mut loop ran earlier —
+                        // the same order the other children lanes
+                        // keep).
+                        if !self.firework_starters.is_empty() {
+                            let cam = self.world_camera();
+                            let mut starters = std::mem::take(&mut self.firework_starters);
+                            for s in starters.iter_mut() {
+                                let dx = f64::from(cam.pos.x) - s.x;
+                                let dy = f64::from(cam.pos.y) - s.y;
+                                let dz = f64::from(cam.pos.z) - s.z;
+                                let far = dx * dx + dy * dy + dz * dz >= 256.0;
+                                let ev = s.tick(far, &mut self.level_ambient_rng);
+                                if let Some((bx, by, bz, large, far, pitch)) = ev.blast {
+                                    let word = match (large, far) {
+                                        (true, true) => "entity.firework_rocket.large_blast_far",
+                                        (true, false) => "entity.firework_rocket.large_blast",
+                                        (false, true) => "entity.firework_rocket.blast_far",
+                                        (false, false) => "entity.firework_rocket.blast",
+                                    };
+                                    starter_blasts.push((bx, by, bz, word, pitch));
+                                }
+                                if let Some((tx, ty, tz, far, pitch)) = ev.twinkle {
+                                    let word = if far {
+                                        "entity.firework_rocket.twinkle_far"
+                                    } else {
+                                        "entity.firework_rocket.twinkle"
+                                    };
+                                    starter_twinkles.push((tx, ty, tz, word, pitch));
+                                }
+                                self.particles.extend(ev.particles);
+                            }
+                            starters.retain(|s| !s.dead);
+                            self.firework_starters = starters;
+                        }
                         // THE PRIMED TNT'S OWN TICK (javap `PrimedTnt.tick`
                         // the 26.2 jar speaks — the fuse machines the
                         // entity tick answers after the mobs' own pass:
@@ -10555,6 +10653,34 @@ impl App {
                         1.0,
                         ear_distance(ear, lx, ly, lz),
                         ear_pan(ear, yaw, lx, ly, lz),
+                    );
+                }
+                // THE STARTERS' OWN VOICES (javap `Starter.tick` the
+                // playLocalSound pairs the walk speaks — the life-0
+                // BLAST the large/far quadrant picks (the volume the
+                // ldc 20.0 keeps, the pitch the tick's own draw named),
+                // the end TWINKLE the twinkleDelay bit gates (the same
+                // volume, the 0.9 + nextFloat × 0.15 pitch the draw
+                // named); the AMBIENT source the positioned lane's
+                // own law answers)
+                for (bx, by, bz, word, pitch) in starter_blasts {
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        word,
+                        20.0,
+                        pitch,
+                        ear_distance(ear, bx, by, bz),
+                        ear_pan(ear, yaw, bx, by, bz),
+                    );
+                }
+                for (tx, ty, tz, word, pitch) in starter_twinkles {
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        word,
+                        20.0,
+                        pitch,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
                     );
                 }
                 // THE FIREWORK'S OWN TRAIL (javap tick pcs 430-507
@@ -24161,22 +24287,41 @@ impl App {
     /// broadcast lands for, the EMPTY-explosions poof branch the plain
     /// rocket's component absence keeps — the RE-ROLLED `2 + nextInt(3)`
     /// burst the level's ambient rng speaks, the particle engine's own
-    /// eight draws the ctor bank spends. No sound the empty branch
-    /// carries (the blast the Starter's non-empty branch alone banks —
-    /// the custom-star rockets the recorded divergence arms when the
-    /// wire's FIREWORKS entity-data decodes).
+    /// eight draws the ctor bank spends. THE NON-EMPTY BRANCH THE
+    /// STARTER ANSWERS (javap `createFireworks` pcs 79-113 the
+    /// `new FireworkParticles$Starter(...)` add walk speaks): the
+    /// component's explosion list the wire's stored stack entry
+    /// decoded, the Starter the machine the cadence drives (the
+    /// blast/twinkle voices the tick's own out-vecs answer, the shape
+    /// sparks + the flash the even-life walks spawn).
     pub fn live_firework_explode_events_updated(
         &mut self,
         events: Vec<crate::world_view::WireFireworkExplodeEvent>,
     ) {
         for ev in events {
-            let burst = crate::particles::firework_poof_burst(
-                ev.x,
-                ev.y,
-                ev.z,
-                &mut self.level_ambient_rng,
-            );
-            self.particles.extend(burst);
+            if ev.explosions.is_empty() {
+                let burst = crate::particles::firework_poof_burst(
+                    ev.x,
+                    ev.y,
+                    ev.z,
+                    &mut self.level_ambient_rng,
+                );
+                self.particles.extend(burst);
+            } else {
+                // THE NON-EMPTY BRANCH'S OWN ARM (the ctor the anchor +
+                // the motion args + the list keep — the caller's own
+                // non-empty gate the IllegalArgumentException never
+                // arms)
+                self.firework_starters.push(crate::mob::FireworkStarter::new(
+                    ev.x,
+                    ev.y,
+                    ev.z,
+                    ev.mx,
+                    ev.my,
+                    ev.mz,
+                    ev.explosions,
+                ));
+            }
         }
     }
 
@@ -31943,20 +32088,21 @@ impl App {
                         None => terrain_groups.push((tile, vec![quad])),
                     }
                 }
-                crate::particles::ParticleKind::Spark => {
+                crate::particles::ParticleKind::Spark { fade: _, .. } => {
                     // the firework trail's own quad (the 8-frame walk
                     // the setSpriteFromAge chain the poof rides — the
                     // `age * (size - 1) / lifetime` list index the
                     // json's DESCENDING order reads — the file the
-                    // same count-1-index fold speaks), the white tint
-                    // the ctor never tints, the alpha walk the
-                    // provider's 0.99 spawn + the mid-life fade the
-                    // SimpleAnimatedParticle tail speaks — the tint's
-                    // own dim the raster's honest equivalent keeps,
-                    // the fullbright look the getLightCoords 0xF000F0
-                    // override banks (the particle lane's own
-                    // no-lightmap fold), the TRANSLUCENT layer the
-                    // getLayer override returns
+                    // same count-1-index fold speaks), the tint the
+                    // particle's own color × the alpha walk speaks
+                    // (the white trail sparks the [1,1,1] base the
+                    // alpha dim alone keeps — the Starter's colored
+                    // sparks the decode banks, the fade walk the tick
+                    // serves — the tint's own dim the raster's honest
+                    // equivalent keeps), the fullbright look the
+                    // getLightCoords 0xF000F0 override banks (the
+                    // particle lane's own no-lightmap fold), the
+                    // TRANSLUCENT layer the getLayer override returns
                     let frame = crate::particles::spark_file_index(
                         crate::particles::spark_frame(p.age, p.lifetime),
                     );
@@ -31965,7 +32111,7 @@ impl App {
                         pts,
                         uv: [[0.0, 8.0], [8.0, 8.0], [8.0, 0.0], [0.0, 0.0]],
                         tex: "particle_spark",
-                        tint: [a, a, a],
+                        tint: [p.col[0] * a, p.col[1] * a, p.col[2] * a],
                     };
                     match spark_groups.iter_mut().find(|(f, _)| *f == frame) {
                         Some((_, quads)) => quads.push(quad),
@@ -32381,6 +32527,22 @@ impl App {
                     // absence the vanilla render pipeline answers —
                     // the NoRenderParticle.render the base's own
                     // return-early keeps)
+                }
+                crate::particles::ParticleKind::Flash => {
+                    // THE FLASH'S OWN DEFERRED QUAD (javap
+                    // `FireworkParticles$OverlayParticle` — the
+                    // 7.1 × sin((age + partial − 1) × π/4) bell the
+                    // getQuadSize override speaks, the ColorParticle-
+                    // Option alpha the setAlpha store carries): the
+                    // flash SPRITE the later round arms — the alpha
+                    // law itself paints NOTHING for the crafting-table
+                    // rockets either (the dye colors' 0xRRGGBB the
+                    // `ARGB.alpha(i) = i >>> 24` fold answers 0 — the
+                    // vanilla render's own alpha-0 quad the verbatim
+                    // law keeps; the custom-ARGB lane the later walk
+                    // arms with the flash sprite the jar banks). The
+                    // sim the tick's own four-tick life runs — the
+                    // honest walk the engine queue keeps.
                 }
             }
         }
@@ -53447,11 +53609,10 @@ cow_sound_variant: None,
         // the flight ticks the earlier updates banked, the crossing's
         // the last one speaks)
         let trail = &app.particles[before];
-        assert_eq!(
+        assert!(matches!(
             trail.kind,
-            crate::particles::ParticleKind::Spark,
-            "the crossing tick the trail spark banks before the burst"
-        );
+            crate::particles::ParticleKind::Spark { .. }
+        ), "the crossing tick the trail spark banks before the burst");
         let burst: Vec<&crate::particles::Particle> =
             app.particles.iter().skip(before + 1).collect();
         assert!(
@@ -53477,6 +53638,10 @@ cow_sound_variant: None,
             x: 1.0,
             y: 2.0,
             z: 3.0,
+            mx: 0.0,
+            my: 0.0,
+            mz: 0.0,
+            explosions: Vec::new(),
         }]);
         let live: Vec<&crate::particles::Particle> =
             app.particles.iter().skip(before_live).collect();
@@ -53488,6 +53653,185 @@ cow_sound_variant: None,
         for p in &live {
             assert_eq!((p.x, p.y, p.z), (1.0, 2.0, 3.0), "the arm's anchor the burst keeps");
         }
+    }
+
+    /// THE FIREWORK'S OWN STARTER — the wire's NON-empty branch the
+    /// Starter machine answers (javap `createFireworks` pcs 79-113 +
+    /// `FireworkParticles$Starter` the 26.2 walk /tmp/fw_starter_538.txt
+    /// pins): the non-empty event the Starter banks (the lifetime the
+    /// `size × 2 − 1` ctor law keeps), the FIRST tick the life-0
+    /// BLAST voice + the SMALL_BALL shell (the 98 sparks the
+    /// 5×5×5-cube shell walk answers: 16 face rows × 5 + 9 inner rows
+    /// × 2) + the FLASH the colors[0] arms, the SECOND tick the odd
+    /// cadence never arms, the THIRD tick the lifetime crossing the
+    /// discard serves (the twinkle the twinkleDelay bit never set
+    /// keeps its silence) — the sparks the color decode + the fade
+    /// laws the fields keep.
+    #[test]
+    fn the_firework_the_starter_the_cadence_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE NON-EMPTY EVENT: the SMALL_BALL explosion the component
+        // list carries, the anchor + the motion the ctor keeps
+        let ball = mc_protocol::FireworkExplosion {
+            shape: 0,
+            colors: vec![0xFF0000],
+            fade_colors: vec![],
+            has_trail: false,
+            has_twinkle: false,
+        };
+        app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            x: 10.0,
+            y: 70.0,
+            z: -5.0,
+            mx: 0.2,
+            my: 0.0,
+            mz: -0.1,
+            explosions: vec![ball.clone()],
+        }]);
+        assert_eq!(app.firework_starters.len(), 1, "the non-empty the Starter banks");
+        let s = &app.firework_starters[0];
+        assert_eq!(s.lifetime, 1, "the size × 2 − 1 the ctor law keeps");
+        assert!(!s.twinkle_delay, "the twinkle-less list the bit never arms");
+        assert_eq!((s.vx, s.vy, s.vz), (0.2, 0.0, -0.1), "the motion args the burst reads");
+        // THE FIRST TICK: the life-0 BLAST + the shell walk + the flash
+        let before = app.particles.len();
+        app.update();
+        assert_eq!(app.firework_starters[0].life, 1, "the cadence the first tick banks");
+        // THE SHELL (the SMALL_BALL walk's own count — the 16 face
+        // rows × 5 + the 9 inner rows × 2 the shell skip answers) +
+        // the FLASH the explosion's own tail keeps
+        let spawned = &app.particles[before..];
+        assert_eq!(
+            spawned.len(),
+            98 + 1,
+            "the ball shell the 98 sparks + the flash the walk keeps ({})",
+            spawned.len()
+        );
+        // THE SPARKS' OWN COLOR (the single-color pick the decode
+        // answers — the 0xFF0000 red the [1.0, 0.0, 0.0] f32 fold
+        // gives), the fade the empty list never arms
+        let sparks = &spawned[..98];
+        for sp in sparks {
+            match &sp.kind {
+                crate::particles::ParticleKind::Spark { fade, .. } => {
+                    assert_eq!(*fade, None, "the empty fade list the store never arms");
+                }
+                other => panic!("the shell the sparks alone wear, got {:?}", other),
+            }
+            assert_eq!(sp.col, [1.0, 0.0, 0.0], "the red the decode gives");
+            assert_eq!(sp.gravity, 0.1, "the spark's own gravity the ctor keeps");
+            assert_eq!(sp.friction, 0.91, "the spark's own friction the ctor keeps");
+        }
+        // THE FLASH (the last spawn the cadence's tail keeps — the
+        // four-tick life + the zero motion + the colors[0] the
+        // option's color decodes)
+        let flash = &spawned[98];
+        assert_eq!(flash.kind, crate::particles::ParticleKind::Flash, "the flash the tail banks");
+        assert_eq!(flash.lifetime, 4, "the iconst_4 the ctor law keeps");
+        assert_eq!(flash.col, [1.0, 0.0, 0.0], "the colors[0] the flash decodes");
+        assert_eq!((flash.vx, flash.vy, flash.vz), (0.0, 0.0, 0.0), "the dconst_0 motion keeps");
+        // THE BLAST VOICE (the life-0 word the AMBIENT lane speaks —
+        // the large gate the single small ball never arms; the far
+        // word the camera's own distance answers, the near/far pair
+        // the two words cover)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.firework_rocket.blast @")
+                        || e.starts_with("entity.firework_rocket.blast_far @")),
+                "the life-0 blast the first tick rode"
+            );
+        }
+        // THE SECOND TICK: the odd cadence never arms (no spawns, no
+        // voices)
+        let before_odd = app.particles.len();
+        app.update();
+        assert_eq!(
+            app.particles.len(),
+            before_odd,
+            "the odd tick the cadence never arms"
+        );
+        // THE THIRD TICK: the lifetime crossing the discard serves
+        // (the twinkle the bit never set keeps its silence; the 2 >
+        // 1 the crossing answers)
+        app.update();
+        assert!(
+            app.firework_starters.is_empty(),
+            "the crossing the discard keeps"
+        );
+        if sounds_loaded() {
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.firework_rocket.twinkle")),
+                "the twinkle-less starter the end never sings"
+            );
+        }
+        // THE SECOND ARM: the two-explosion list the +15 ceiling rides
+        // (the ctor's own break law keeps: one scan, the FIRST twinkle
+        // the +15 arms — the lifetime the 2×2−1+15 the pair banks) —
+        // the anchor the origin holds, the second explosion the BURST
+        // shape with the EMPTY colors the BLACK fallback arms
+        let twinkle_burst = mc_protocol::FireworkExplosion {
+            shape: 4,
+            colors: vec![],
+            fade_colors: vec![],
+            has_trail: false,
+            has_twinkle: true,
+        };
+        app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+            mx: 0.0,
+            my: 0.0,
+            mz: 0.0,
+            explosions: vec![ball.clone(), twinkle_burst.clone()],
+        }]);
+        assert_eq!(app.firework_starters.len(), 1);
+        let s2 = &app.firework_starters[0];
+        assert_eq!(s2.lifetime, 3 + 15, "the first twinkle's +15 the break arms");
+        assert!(s2.twinkle_delay, "the twinkle bit the ctor banks");
+        // THE CADENCE'S OWN TWO TICKS: the life-0 the ball shell at
+        // the origin banks, the odd tick never arms
+        app.update();
+        app.update();
+        // THE THIRD TICK'S OWN BURST (life 2 — the index-1 explosion
+        // the BURST walk answers, the 70-particle loop the bound
+        // keeps, the EMPTY colors the BLACK decode names)
+        let before_burst = app.particles.len();
+        app.update();
+        let spawned_burst = &app.particles[before_burst..];
+        assert_eq!(
+            spawned_burst.len(),
+            70 + 1,
+            "the burst the 70 sparks + the flash the walk keeps ({})",
+            spawned_burst.len()
+        );
+        for sp in &spawned_burst[..70] {
+            assert_eq!(
+                sp.col,
+                crate::particles::spark_color_decode(0x1E1B1B),
+                "the empty colors the BLACK fallback arms"
+            );
+            assert_eq!(
+                (sp.x, sp.y, sp.z),
+                (0.0, 0.0, 0.0),
+                "the burst the ONE anchor shares"
+            );
+        }
+        let burst_flash = &spawned_burst[70];
+        assert_eq!(burst_flash.kind, crate::particles::ParticleKind::Flash);
+        assert_eq!(
+            burst_flash.col,
+            crate::particles::spark_color_decode(0x1E1B1B),
+            "the flash the fallback's colors[0] decodes"
+        );
     }
 
     /// THE FIREWORK'S OWN TRAIL — the tick's client walk the every-tick
@@ -53538,7 +53882,7 @@ cow_sound_variant: None,
         let sparks: Vec<&crate::particles::Particle> = app.particles
             [before..]
             .iter()
-            .filter(|p| p.kind == crate::particles::ParticleKind::Spark)
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Spark { .. }))
             .collect();
         assert_eq!(sparks.len(), 1, "the first tick ONE spark banks");
         let s = sparks[0];
@@ -53583,7 +53927,7 @@ cow_sound_variant: None,
             app.update();
             let n = app.particles[before..]
                 .iter()
-                .filter(|p| p.kind == crate::particles::ParticleKind::Spark)
+                .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Spark { .. }))
                 .count();
             assert_eq!(n, 1, "the tick {ticks} the spark banks");
             // the previous sparks the ages walk rides (the aging the
@@ -53593,7 +53937,7 @@ cow_sound_variant: None,
             let aged = app.particles[..before]
                 .iter()
                 .rev()
-                .find(|p| p.kind == crate::particles::ParticleKind::Spark)
+                .find(|p| matches!(p.kind, crate::particles::ParticleKind::Spark { .. }))
                 .expect("the previous tick's own spark");
             assert_eq!(aged.age, 1, "the age the tick's own walk rides");
             // THE MID-LIFE FADE (the age > lifetime/2 crossing the

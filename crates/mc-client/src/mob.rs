@@ -3721,6 +3721,467 @@ impl Firework {
     }
 }
 
+/// THE SHAPE'S OWN RESOLUTION (javap `FireworkExplosion$Shape.BY_ID` —
+/// the `ByIdMap.continuous(ordinal, values(), ZERO)` map the codec's
+/// decode fills: every id outside [0, 5) — negative AND out-of-range —
+/// resolves to values[0] = SMALL_BALL, the RARITY line the consumer's
+/// own read wears. The port's raw i32 the same fold answers here —
+/// the shape comparisons the Starter's walk speaks read the RESOLVED
+/// id).
+pub fn firework_shape_id(explosion: &mc_protocol::FireworkExplosion) -> i32 {
+    if (0..5).contains(&explosion.shape) {
+        explosion.shape
+    } else {
+        0
+    }
+}
+
+/// The Starter's own tick out-words — the life-0 BLAST (the
+/// large/far arms the caller's positioned voice folds), the END
+/// twinkle (the twinkleDelay bit the ctor arms), the particles the
+/// cadence's own shape walk + the flash spawn (the engine queue the
+/// caller pushes AFTER the walk the vanilla order keeps).
+#[derive(Debug, Default)]
+pub struct FireworkStarterEvents {
+    /// The life==0 word (javap tick pcs 0-155): (x, y, z, large, far,
+    /// pitch) — the large gate the `size >= 3 || any LARGE_BALL` loop
+    /// keeps, the far word the camera-distance² check answers, the
+    /// pitch the `0.95 + nextFloat × 0.1` fold banks (the draw the
+    /// life-0 block's own walk keeps — BEFORE the cadence's draws).
+    pub blast: Option<(f64, f64, f64, bool, bool, f32)>,
+    /// The end word (javap tick pcs 447-513, the twinkleDelay bit
+    /// gated): (x, y, z, far, pitch) — the pitch the `0.9 +
+    /// nextFloat × 0.15` fold banks (the draw the twinkle block's own
+    /// walk keeps).
+    pub twinkle: Option<(f64, f64, f64, bool, f32)>,
+    /// The cadence's own spawns (the shape walk's sparks + the flash,
+    /// in walk order).
+    pub particles: Vec<crate::particles::Particle>,
+}
+
+/// THE FIREWORK'S OWN STARTER (javap `FireworkParticles$Starter` the
+/// 26.2 walk — the NoRenderParticle the `createFireworks` NON-empty
+/// branch adds, the walk /tmp/fw_starter_538.txt forensics pins):
+/// the ctor's own ceiling `size * 2 - 1` the FIRST twinkle's +15
+/// break arms (pcs 60-136 — the twinkleDelay bit the same explosion
+/// sets), the life==0 BLAST the volume-20 AMBIENT voice speaks, the
+/// cadence the `life % 2 == 0 && life / 2 < size` gate drives (one
+/// explosion per EVEN tick, the index the life/2 fold names), the
+/// FLASH each explosion spawns after its shape walk (pcs 395-425 —
+/// the colors[0] the BLACK fallback arms), the `life > lifetime`
+/// crossing the twinkle + remove tail serves. The RNG the LEVEL's
+/// own stream answers (`this.random` = the shared RandomSource the
+/// particle base ctor stores — the poof's precedent). The camera
+/// distance² check (`>= 256.0` → far) the CALLER folds — the
+/// `isFarAwayFromCamera` read the render lane's own camera keeps.
+#[derive(Debug)]
+pub struct FireworkStarter {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The createFireworks motion args (`dm` — the BURST shape's own
+    /// spread reads them; every other shape never does).
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// `FireworkParticles$Starter.life` — the cadence clock.
+    pub life: i32,
+    /// The ctor's own ceiling — `size * 2 - 1`, the first twinkle's
+    /// +15 rides.
+    pub lifetime: i32,
+    /// The explosions the ctor stores (the component's list verbatim).
+    pub explosions: Vec<mc_protocol::FireworkExplosion>,
+    /// The ctor's own twinkle-delay bit (the FIRST twinkle explosion
+    /// sets it and the break stops the scan).
+    pub twinkle_delay: bool,
+    /// The remove flag (the lifetime crossing's tail answers).
+    pub dead: bool,
+}
+
+impl FireworkStarter {
+    /// THE CTOR'S OWN WALK (javap `Starter.<init>` pcs 34-136): the
+    /// empty-list IllegalArgumentException the caller's non-empty gate
+    /// never arms here (the empty branch the poof answers), the
+    /// lifetime the `size * 2 - 1` fold banks, the twinkle scan the
+    /// FIRST `hasTwinkle` explosion the +15 + break arms (the loop's
+    /// `goto -> 136` the bytecode speaks).
+    pub fn new(
+        x: f64,
+        y: f64,
+        z: f64,
+        vx: f64,
+        vy: f64,
+        vz: f64,
+        explosions: Vec<mc_protocol::FireworkExplosion>,
+    ) -> FireworkStarter {
+        let mut twinkle_delay = false;
+        let mut lifetime = explosions.len() as i32 * 2 - 1;
+        for e in &explosions {
+            if e.has_twinkle {
+                twinkle_delay = true;
+                lifetime += 15;
+                break;
+            }
+        }
+        FireworkStarter {
+            x,
+            y,
+            z,
+            vx,
+            vy,
+            vz,
+            life: 0,
+            lifetime,
+            explosions,
+            twinkle_delay,
+            dead: false,
+        }
+    }
+
+    /// THE TICK'S OWN WALK (javap `Starter.tick` the 519-pc body): the
+    /// life-0 blast FIRST (pcs 0-155 — the large gate the size-3 /
+    /// LARGE_BALL scan keeps, the pitch the 0.95 + nextFloat × 0.1
+    /// fold banks), the cadence the even-life gate drives (pcs 157-425
+    /// — the shape walk + the FLASH), the life++ and the crossing
+    /// tail LAST (pcs 426-518 — the twinkle the twinkleDelay bit
+    /// gates, the remove the crossing answers). The `far` word the
+    /// caller's camera distance² check carries (the same check the
+    /// life-0 and the twinkle reads walk — the static anchor the
+    /// camera's own motion re-arms each tick).
+    pub fn tick(&mut self, far: bool, rng: &mut Lcg) -> FireworkStarterEvents {
+        let mut ev = FireworkStarterEvents::default();
+        // THE LIFE-0 BLAST (javap pcs 0-155: the flag the size-3 test
+        // OR the LARGE_BALL scan arms — the else-walk the iterator
+        // loop keeps, the sound the flag × far quadrant picks, the
+        // volume the ldc 20.0 keeps, the pitch the 0.949999988079071
+        // + nextFloat × 0.10000000149011612 fold banks, the `true`
+        // the overlay arg answers)
+        if self.life == 0 {
+            let mut large = self.explosions.len() >= 3;
+            if !large {
+                for e in &self.explosions {
+                    if firework_shape_id(e) == 1 {
+                        large = true;
+                        break;
+                    }
+                }
+            }
+            ev.blast = Some((
+                self.x,
+                self.y,
+                self.z,
+                large,
+                far,
+                0.949_999_988_079_071_f32 + rng.next_f32() * 0.100_000_001_490_116_12_f32,
+            ));
+        }
+        // THE CADENCE (javap pcs 157-425: the even-life gate, the
+        // index the life/2 fold names, the shape's own switch — the
+        // SMALL_BALL the 0.25/2 ball walks, the LARGE_BALL the
+        // 0.5/4 one, the STAR the 0.5 speed shape walk with the
+        // flag-0 0.34 ring gap, the CREEPER the flag-1 0.034 one,
+        // the BURST the 70-particle walk; the FLASH each explosion
+        // spawns after its shape — the colors[0] the fallback arms)
+        if self.life % 2 == 0 && self.life / 2 < self.explosions.len() as i32 {
+            let explosion = self.explosions[(self.life / 2) as usize].clone();
+            let trail = explosion.has_trail;
+            let twinkle = explosion.has_twinkle;
+            // THE EMPTY-COLORS FALLBACK (javap pcs 228-247: the
+            // isEmpty test the BLACK firework color arms — the
+            // `DyeColor.BLACK.getFireworkColor()` the 0x1E1B1B word
+            // speaks, the IntList.of the singleton keeps)
+            let mut colors: Vec<i32> = explosion.colors.clone();
+            if colors.is_empty() {
+                colors = vec![0x1E1B1B];
+            }
+            let fade_colors = &explosion.fade_colors;
+            match firework_shape_id(&explosion) {
+                // SMALL_BALL (tableswitch case 1: the 0.25 speed, the
+                // size-2 shell)
+                0 => self.ball(0.25, 2, &colors, fade_colors, trail, twinkle, rng, &mut ev),
+                // LARGE_BALL (case 2: the 0.5 speed, the size-4 shell)
+                1 => self.ball(0.5, 4, &colors, fade_colors, trail, twinkle, rng, &mut ev),
+                // STAR (case 3: the 0.5 speed, the STAR coords, the
+                // flag-0 0.34 ring gap)
+                2 => self.shape(0.5, &STAR_PARTICLE_COORDS, false, &colors, fade_colors, trail, twinkle, rng, &mut ev),
+                // CREEPER (case 4: the 0.5 speed, the CREEPER coords,
+                // the flag-1 0.034 ring gap)
+                3 => self.shape(0.5, &CREEPER_PARTICLE_COORDS, true, &colors, fade_colors, trail, twinkle, rng, &mut ev),
+                // BURST (case 5: the 70-particle spread)
+                _ => self.burst(&colors, fade_colors, trail, twinkle, rng, &mut ev),
+            }
+            // THE FLASH (javap pcs 395-425: the colors[0] the option's
+            // color arg names, the (0, 0, 0) motion the dconst_0
+            // triples keep, the sprite pick's own draw the single-
+            // frame set spends)
+            let flash = crate::particles::firework_flash(
+                self.x,
+                self.y,
+                self.z,
+                colors[0],
+                rng,
+            );
+            ev.particles.push(flash);
+        }
+        self.life += 1;
+        // THE CROSSING TAIL (javap pcs 436-518: the life > lifetime
+        // gate, the twinkle the twinkleDelay bit gates — the far word
+        // the camera re-check answers, the pitch the 0.8999999761581421
+        // + nextFloat × 0.15000000596046448 fold banks — the remove
+        // the crossing's last word keeps)
+        if self.life > self.lifetime {
+            if self.twinkle_delay {
+                ev.twinkle = Some((
+                    self.x,
+                    self.y,
+                    self.z,
+                    far,
+                    0.899_999_976_158_142_1_f32 + rng.next_f32() * 0.150_000_005_960_464_48_f32,
+                ));
+            }
+            self.dead = true;
+        }
+        ev
+    }
+
+    /// THE SPARK'S OWN CREATE (javap `Starter.createParticle` — the
+    /// helper the three shape walks share): the FIREWORK particle the
+    /// engine spawns at (px, py, pz) with the given motion, the
+    /// color/fade the random PICKS name (the Util.getRandom draws
+    /// ride — one nextInt per non-empty list), the trail/twinkle bits
+    /// the explosion's own flags carry. The ctor chain's own draws
+    /// the helper's callee spends (the base lifetime float, the size
+    /// float, the 48 + nextInt(12) re-roll).
+    #[allow(clippy::too_many_arguments)]
+    fn create_particle(
+        &self,
+        px: f64,
+        py: f64,
+        pz: f64,
+        vx: f64,
+        vy: f64,
+        vz: f64,
+        colors: &[i32],
+        fade_colors: &[i32],
+        trail: bool,
+        twinkle: bool,
+        rng: &mut Lcg,
+        out: &mut Vec<crate::particles::Particle>,
+    ) {
+        out.push(crate::particles::firework_explosion_spark(
+            px,
+            py,
+            pz,
+            vx,
+            vy,
+            vz,
+            colors,
+            fade_colors,
+            trail,
+            twinkle,
+            rng,
+        ));
+    }
+
+    /// THE BALL'S OWN WALK (javap `createParticleBall` the 261-pc
+    /// body): the triple loop the -size..=size band walks, the
+    /// jitter each axis's own `(nextDouble() − nextDouble()) × 0.5`
+    /// pair carries (the draws: j's pair, i's pair, k's pair — the
+    /// dstore 17/19/21 order the pcs 48-132 keep), the speed fold
+    /// the sqrt(d3² + d4² + d5²) / speed + nextGaussian × 0.05 banks,
+    /// the shell skip the inner-cube faces never walks (`i != ±size
+    /// && j != ±size` → k += size × 2 − 1 — the pcs 206-242 arm).
+    #[allow(clippy::too_many_arguments)]
+    fn ball(
+        &self,
+        speed: f64,
+        size: i32,
+        colors: &[i32],
+        fade_colors: &[i32],
+        trail: bool,
+        twinkle: bool,
+        rng: &mut Lcg,
+        ev: &mut FireworkStarterEvents,
+    ) {
+        for i in -size..=size {
+            for j in -size..=size {
+                let mut k = -size;
+                while k <= size {
+                    // the jitter pairs (the draws the bytecode's own
+                    // order keeps: j first, then i, then k)
+                    let d3 = f64::from(j) + (rng.next_f64() - rng.next_f64()) * 0.5;
+                    let d4 = f64::from(i) + (rng.next_f64() - rng.next_f64()) * 0.5;
+                    let d5 = f64::from(k) + (rng.next_f64() - rng.next_f64()) * 0.5;
+                    // the speed fold (the sqrt the Math.sqrt call
+                    // speaks, the gaussian the +0.05 jitter rides)
+                    let d6 =
+                        (d3 * d3 + d4 * d4 + d5 * d5).sqrt() / speed + rng.next_gaussian() * 0.05;
+                    self.create_particle(
+                        self.x, self.y, self.z,
+                        d3 / d6, d4 / d6, d5 / d6,
+                        colors, fade_colors, trail, twinkle, rng,
+                        &mut ev.particles,
+                    );
+                    // THE SHELL SKIP (the inner cube the k-jump never
+                    // walks — the `size * 2 - 1` fold the iinc arm
+                    // adds, then the ++ the loop head carries)
+                    if i != -size && i != size && j != -size && j != size {
+                        k += size * 2 - 1;
+                    }
+                    k += 1;
+                }
+            }
+        }
+    }
+
+    /// THE SHAPE'S OWN WALK (javap `createParticleShape` the 287-pc
+    /// body): the TIP particle the coords[0] point at the given
+    /// speed speaks (the z-arg the dconst_0 keeps), the ring angle
+    /// the `nextFloat() × π` draw names, the ring gap the flag's own
+    /// constant carries (true = 0.034, false = 0.34), the three rings
+    /// the `i < 3` loop walks, the point chain the lerp pairs the
+    /// 0.25-step quartet samples (`d10 <= 1.0` — five samples per
+    /// edge), the ±1 mirror pair the w loop walks (the velocity the
+    /// `(d11·cos(d7)·w, d12·w, d11·sin(d7)·w)` triple gives).
+    #[allow(clippy::too_many_arguments)]
+    fn shape(
+        &self,
+        speed: f64,
+        coords: &[[f64; 2]],
+        flag: bool,
+        colors: &[i32],
+        fade_colors: &[i32],
+        trail: bool,
+        twinkle: bool,
+        rng: &mut Lcg,
+        ev: &mut FireworkStarterEvents,
+    ) {
+        // THE TIP (javap pcs 0-44: the coords[0] point × the speed,
+        // the z the zero keeps)
+        let (d2, d3) = (coords[0][0], coords[0][1]);
+        self.create_particle(
+            self.x, self.y, self.z,
+            d2 * speed, d3 * speed, 0.0,
+            colors, fade_colors, trail, twinkle, rng,
+            &mut ev.particles,
+        );
+        // THE RING ANGLE (pcs 47-59: the `nextFloat() × π` draw — the
+        // f32 the π constant the ldc_w carries) and THE GAP (pcs
+        // 62-76: the flag the 0.034/0.34 pair picks)
+        let f = rng.next_f32() * 3.141_592_741_012_573_2_f32;
+        let gap: f64 = if flag { 0.034 } else { 0.34 };
+        for i in 0..3i32 {
+            // the ring's own angle (pcs 87-101: the f32 π the i-scaled
+            // mul speaks — the f32/f64 promotions the f2d pair keeps)
+            let d7 = f as f64
+                + ((i as f32) * 3.141_592_741_012_573_2_f32) as f64
+                    * gap;
+            // the point chain (pcs 104-119: the prev pair the
+            // coords[0] starts, the j loop the 1..len band walks)
+            let mut prev_x = coords[0][0];
+            let mut prev_y = coords[0][1];
+            for point in &coords[1..] {
+                let (px, py) = (point[0], point[1]);
+                // the 0.25-step quartet (pcs 143-261: the d28 loop
+                // `0.25 → 1.0` band, the lerp pairs the speed scales,
+                // the sin/cos split the d30/d34 stores keep)
+                let mut d10 = 0.25_f64;
+                while d10 <= 1.0_f64 {
+                    let d11 = mth_lerp(d10, prev_x, px) * speed;
+                    let d12 = mth_lerp(d10, prev_y, py) * speed;
+                    let x_comp = d11 * d7.cos();
+                    let z_comp = d11 * d7.sin();
+                    // the ±1 mirror pair (pcs 201-253: the w loop the
+                    // −1 start +2 step walks, the velocity the
+                    // (cos·w, lerpY·w, sin·w) triple gives)
+                    let mut w = -1.0_f64;
+                    while w <= 1.0_f64 {
+                        self.create_particle(
+                            self.x, self.y, self.z,
+                            x_comp * w, d12 * w, z_comp * w,
+                            colors, fade_colors, trail, twinkle, rng,
+                            &mut ev.particles,
+                        );
+                        w += 2.0;
+                    }
+                    d10 += 0.25;
+                }
+                prev_x = px;
+                prev_y = py;
+            }
+        }
+    }
+
+    /// THE BURST'S OWN WALK (javap `createParticleBurst` the 152-pc
+    /// body): the two base gaussians the pre-loop draws keep (the
+    /// `× 0.05` fold each names), the 70-particle loop the `i < 70`
+    /// bound walks — the x/z the `motion × 0.5 + nextGaussian × 0.15
+    /// + base` triple folds give, the y the `motion × 0.5 +
+    /// nextDouble × 0.5` pair answers (the draws: x gaussian, z
+    /// gaussian, y double — the pcs 40-116 order keeps).
+    #[allow(clippy::too_many_arguments)]
+    fn burst(
+        &self,
+        colors: &[i32],
+        fade_colors: &[i32],
+        trail: bool,
+        twinkle: bool,
+        rng: &mut Lcg,
+        ev: &mut FireworkStarterEvents,
+    ) {
+        let base_x = rng.next_gaussian() * 0.05;
+        let base_z = rng.next_gaussian() * 0.05;
+        for _ in 0..70 {
+            let vx = self.vx * 0.5 + rng.next_gaussian() * 0.15 + base_x;
+            let vz = self.vz * 0.5 + rng.next_gaussian() * 0.15 + base_z;
+            let vy = self.vy * 0.5 + rng.next_f64() * 0.5;
+            self.create_particle(
+                self.x, self.y, self.z,
+                vx, vy, vz,
+                colors, fade_colors, trail, twinkle, rng,
+                &mut ev.particles,
+            );
+        }
+    }
+}
+
+/// THE STAR'S OWN POINTS (javap `Starter.<clinit>` pcs 222-329 the
+/// STAR_PARTICLE_COORDS bank speaks — the six [x, y] pairs the
+/// ldc2_w constants keep, the pentagram the tip point + the four
+/// edges walk).
+pub static STAR_PARTICLE_COORDS: [[f64; 2]; 6] = [
+    [0.0, 1.0],
+    [0.3455, 0.309],
+    [0.9511, 0.309],
+    [0.3795918367346939, -0.12653061224489795],
+    [0.6122448979591837, -0.8040816326530612],
+    [0.0, -0.35918367346938773],
+];
+
+/// THE CREEPER'S OWN POINTS (javap `Starter.<clinit>` pcs 0-219 the
+/// CREEPER_PARTICLE_COORDS bank speaks — the twelve [x, y] pairs the
+/// face outline walks).
+pub static CREEPER_PARTICLE_COORDS: [[f64; 2]; 12] = [
+    [0.0, 0.2],
+    [0.2, 0.2],
+    [0.2, 0.6],
+    [0.6, 0.6],
+    [0.6, 0.2],
+    [0.2, 0.2],
+    [0.2, 0.0],
+    [0.4, 0.0],
+    [0.4, -0.6],
+    [0.2, -0.6],
+    [0.2, -0.4],
+    [0.0, -0.4],
+];
+
+/// The `Mth.lerp(delta, start, end)` fold (the start + delta × (end −
+/// start) the vanilla helper speaks — the shape walk's own sampler).
+pub fn mth_lerp(delta: f64, start: f64, end: f64) -> f64 {
+    start + delta * (end - start)
+}
+
 /// The player slice the zombie's AI reads (the NearestAttackableTarget
 /// goal's own view).
 #[derive(Debug, Clone, Copy)]

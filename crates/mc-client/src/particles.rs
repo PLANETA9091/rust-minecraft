@@ -243,10 +243,47 @@ pub enum ParticleKind {
     /// keeps), the fullbright look the getLightCoords 0xF000F0
     /// override banks (the particle lane's own no-lightmap fold the
     /// lava's precedent speaks), the spark_7..spark_0 frame walk the
-    /// descending json list orders. The trail lane the ctor's white
-    /// (1,1,1) the base fields never tint — the Starter's colored
-    /// sparks the component decode a later walk arms.
-    Spark,
+    /// descending json list orders. THE STARTER'S OWN FIELDS (javap
+    /// `SparkParticle` the 26.2 class the walk reads — the trail
+    /// bit the `setTrail` bank stores, the twinkle bit the
+    /// `setTwinkle` stores, the fade target the `setFadeColor`
+    /// decode holds): the trail bit gates the tick's own CHILD walk
+    /// (the half-life's own connecting spark the (age + lifetime) %
+    /// 2 gate spawns), the twinkle bit the CHILDREN alone ride (the
+    /// 26.2 class speaks no render override — the recorded note),
+    /// the fade target the tick's own color lerp arms (`rCol +=
+    /// (fadeR − rCol) × 0.2` — the #75 fold the ctor chain speaks).
+    /// The trail lane the ctor's white (1,1,1) the base fields never
+    /// tint — the Starter's colored sparks the component decode the
+    /// explosion walk banks.
+    Spark {
+        /// The `setTrail` bit — the tick's own child walk's gate (the
+        /// explosion's `hasTrail` flag the Starter's createParticle
+        /// passes; the flight trail's ctor never sets it).
+        trail: bool,
+        /// The `setTwinkle` bit — the CHILDREN ride it (no render
+        /// override the 26.2 class bytes speak — the recorded note).
+        twinkle: bool,
+        /// The fade target (the `setFadeColor` decode — `None` = the
+        /// hasFade bit never set, the color lane the base keeps).
+        fade: Option<[f32; 3]>,
+    },
+    /// `FireworkParticles$OverlayParticle` — the FLASH particle the
+    /// Starter's cadence spawns per explosion (javap
+    /// `FireworkParticles$FlashProvider.createParticle` +
+    /// `OverlayParticle.<init>` the 26.2 walk): the lifetime the
+    /// ctor's `iconst_4` pins, the quad the `7.1 × sin((age +
+    /// partial − 1) × π/4)` bell the getQuadSize override speaks
+    /// (the #33/#23/#36 constants the cp decode banks), the color
+    /// + alpha the ColorParticleOption's own decode gives (`ARGB.
+    /// red/alpha / 255` — the dye colors' alpha-0 byte the verbatim
+    /// law keeps: the vanilla render itself paints nothing for the
+    /// crafting-table rockets), the TRANSLUCENT layer the getLayer
+    /// override returns. The render arm the flash sprite the later
+    /// round arms — the dye-colored quad the alpha-0 law leaves
+    /// unpainted either way (the honest walk the sim still keeps:
+    /// the particle the engine ages, the four-tick life it runs).
+    Flash,
     /// `CritParticle` — the crit star (the critical_hit texture).
     Crit,
     /// `CritParticle` the DAMAGE_INDICATOR provider speaks — the same
@@ -763,6 +800,7 @@ pub fn cloud_lifetime(r: f32) -> u32 {
 /// One particle — the vanilla `Particle` + `SingleQuadParticle` fields
 /// the three kinds' laws speak (the fields the tick and the render
 /// read; the removed lane rides the caller's retain).
+#[derive(Debug)]
 pub struct Particle {
     pub kind: ParticleKind,
     pub x: f64,
@@ -858,6 +896,53 @@ impl Particle {
             _ => {}
         }
         true
+    }
+
+    /// The SparkParticle's own tick tail (javap `SparkParticle.tick` +
+    /// `SimpleAnimatedParticle.tick` the 26.2 walk — the base law the
+    /// super call keeps, the fade lerp the hasFade bit gates, the
+    /// trail CHILD the gate arm spawns): the base `tick()` runs FIRST
+    /// (the physics the super chain speaks — the age the increment
+    /// banks), then the color lerp (`rCol += (fadeR − rCol) × 0.2F`
+    /// — the #75 fold pcs 57-96 speak, all THREE channels), then the
+    /// child gate (`trail && age < lifetime / 2 && (age + lifetime) %
+    /// 2 == 0` — pcs 4-35 the icmpge/irem pair keeps): the child
+    /// rides the parent's own POST-fade color, the fade target, the
+    /// twinkle bit — the spec the caller's post-loop push consumes
+    /// (the vanilla queue order the other lanes keep). The twinkle
+    /// bit the CHILDREN alone carry (no render override the 26.2
+    /// class speaks — the recorded note).
+    pub fn tick_spark(
+        &mut self,
+        children: &mut Vec<(f64, f64, f64, [f32; 3], Option<[f32; 3]>, bool)>,
+    ) -> bool {
+        let (trail, twinkle, fade) = match self.kind {
+            ParticleKind::Spark {
+                trail,
+                twinkle,
+                fade,
+            } => (trail, twinkle, fade),
+            _ => return self.tick(),
+        };
+        // the base law first (the super.tick() the override keeps)
+        let alive = self.tick();
+        // THE FADE LERP (javap SimpleAnimatedParticle.tick pcs 50-120:
+        // the hasFade bit gates, the three channels the ×0.2 fold
+        // walks — the fade target the setFadeColor decode banked)
+        if let Some(f) = fade {
+            self.col[0] += (f[0] - self.col[0]) * 0.2;
+            self.col[1] += (f[1] - self.col[1]) * 0.2;
+            self.col[2] += (f[2] - self.col[2]) * 0.2;
+        }
+        // THE TRAIL CHILD'S OWN GATE (javap SparkParticle.tick pcs
+        // 4-35: the trail bit AND the half-life band AND the (age +
+        // lifetime) % 2 pair — the child at the CURRENT pose, the
+        // zero motion the ctor args keep, the parent's own color +
+        // fade + twinkle the stores ride)
+        if trail && self.age < self.lifetime / 2 && (self.age + self.lifetime) % 2 == 0 {
+            children.push((self.x, self.y, self.z, self.col, fade, twinkle));
+        }
+        alive
     }
 
     /// The render's half-span (the corners ride ± half — the pieces'
@@ -3649,7 +3734,11 @@ pub fn firework_spark(
     // the SparkParticle ctor's own lifetime re-roll
     let life_draw = rng.next_int(12);
     Particle {
-        kind: ParticleKind::Spark,
+        kind: ParticleKind::Spark {
+            trail: false,
+            twinkle: false,
+            fade: None,
+        },
         x,
         y,
         z,
@@ -3666,6 +3755,189 @@ pub fn firework_spark(
         vo: 0.0,
         col: [1.0, 1.0, 1.0],
     }
+}
+
+/// THE TRAIL CHILD'S OWN CTOR (javap `SparkParticle.tick` pcs 38-72
+/// the `new SparkParticle(level, x, y, z, 0, 0, 0, engine, sprites)`
+/// walk answers — the SAME ctor chain the flight spark keeps: the
+/// base lifetime float, the size float ×0.75, the 48 + nextInt(12)
+/// re-roll — then the stores: `setAlpha(0.99F)` the ldc #85 speaks,
+/// `setColor(parent's r/g/b)`, the `age = lifetime / 2` pin pcs
+/// 96-102 bank, the fade + twinkle the parent's own bits ride, the
+/// trail bit the child ctor never sets). The (x, y, z) the parent's
+/// own post-tick pose carries, the motion the (0, 0, 0) args give.
+pub fn firework_spark_trail_child(
+    x: f64,
+    y: f64,
+    z: f64,
+    col: [f32; 3],
+    fade: Option<[f32; 3]>,
+    twinkle: bool,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    let r_base_life = rng.next_f32();
+    let _ = base_lifetime(r_base_life);
+    let r_size = rng.next_f32();
+    let quad = base_quad_size(r_size) * 0.75;
+    let life_draw = rng.next_int(12);
+    let lifetime = 48 + life_draw.max(0) as u32;
+    Particle {
+        kind: ParticleKind::Spark {
+            trail: false,
+            twinkle,
+            fade,
+        },
+        x,
+        y,
+        z,
+        prev: None,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: lifetime / 2,
+        lifetime,
+        gravity: 0.1,
+        friction: 0.91,
+        quad_size: quad,
+        uo: 0.0,
+        vo: 0.0,
+        col,
+    }
+}
+
+/// The SimpleAnimatedParticle's own ARGB decode (javap `setColor(I)`
+/// pcs 0-53 verbatim: `((c >> 16) & 0xFF) / 255F` the red lane, `((c
+/// >> 8) & 0xFF) / 255F` the green, `(c & 0xFF) / 255F` the blue —
+/// the ×1.0 alpha the fconst_1 multiplies, the standard decode both
+/// `setColor` and `setFadeColor` speak).
+pub fn spark_color_decode(c: i32) -> [f32; 3] {
+    [
+        ((c >> 16) & 0xFF) as f32 / 255.0,
+        ((c >> 8) & 0xFF) as f32 / 255.0,
+        (c & 0xFF) as f32 / 255.0,
+    ]
+}
+
+/// THE STARTER'S OWN EXPLOSION SPARK (javap
+/// `FireworkParticles$Starter.createParticle` the 26.2 walk verbatim
+/// — the `engine.createParticle(ParticleTypes.FIREWORK, x, y, z, vx,
+/// vy, vz)` the SparkParticle cast answers, then the four stores:
+/// `setTrail(trail)`, `setTwinkle(twinkle)`, `setAlpha(0.99F)`,
+/// `setColor(Util.getRandom(colors, random))` and — the fade list
+/// non-empty alone — `setFadeColor(Util.getRandom(fadeColors,
+/// random))`). The DRAW ORDER the walk speaks: the ctor chain's own
+/// THREE particle-stream draws FIRST (the base lifetime float, the
+/// size float, the 48 + nextInt(12) re-roll), the random PICKS ride
+/// AFTER (the LEVEL's own stream — `this.random` the shared
+/// RandomSource the Starter speaks; `Util.getRandom` =
+/// `list.get(random.nextInt(size))` — one draw per non-empty list).
+/// The (x, y, z, vx, vy, vz) the shape walk passes (the explosion's
+/// own walk answers).
+pub fn firework_explosion_spark(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    colors: &[i32],
+    fade_colors: &[i32],
+    trail: bool,
+    twinkle: bool,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the base ctor's own lifetime float (the draw the re-roll
+    // overwrites — the stream the fold still spends)
+    let r_base_life = rng.next_f32();
+    let _ = base_lifetime(r_base_life);
+    // the SingleQuadParticle ctor's own size float (the ×0.75 fold
+    // the SparkParticle ctor speaks after the chain)
+    let r_size = rng.next_f32();
+    let quad = base_quad_size(r_size) * 0.75;
+    // the SparkParticle ctor's own lifetime re-roll
+    let life_draw = rng.next_int(12);
+    // THE COLOR PICK (the setColor store's Util.getRandom walk — the
+    // one nextInt(len) draw the non-empty list spends; the BLACK
+    // fallback the caller arms keeps the list non-empty)
+    let color = colors[rng.next_int(colors.len() as u64) as usize % colors.len()];
+    // THE FADE PICK (the setFadeColor store's own walk — the
+    // non-empty fade list the store's isEmpty gate answers)
+    let fade = if fade_colors.is_empty() {
+        None
+    } else {
+        Some(spark_color_decode(
+            fade_colors[rng.next_int(fade_colors.len() as u64) as usize % fade_colors.len()],
+        ))
+    };
+    Particle {
+        kind: ParticleKind::Spark {
+            trail,
+            twinkle,
+            fade,
+        },
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime: 48 + life_draw.max(0) as u32,
+        gravity: 0.1,
+        friction: 0.91,
+        quad_size: quad,
+        uo: 0.0,
+        vo: 0.0,
+        col: spark_color_decode(color),
+    }
+}
+
+/// THE STARTER'S OWN FLASH (javap `Starter.tick` pcs 395-425 the
+/// `engine.createParticle(ColorParticleOption.create(FLASH,
+/// colors[0]), x, y, z, 0, 0, 0)` walk answers — the
+/// `FlashProvider.createParticle` the OverlayParticle ctor chain
+/// speaks: the sprite pick `sprites.get(random)` the ONE nextInt(1)
+/// draw spends (the flash.json's single-texture set the bound-1 roll
+/// answers), the lifetime the ctor's `iconst_4` pins, the color the
+/// option's decode gives, the alpha the `ARGB.alpha(color) / 255`
+/// law keeps (the dye colors' zero byte the verbatim law stores —
+/// the vanilla render itself paints nothing for them)). No motion,
+/// no gravity the OverlayParticle ctor never arms.
+pub fn firework_flash(x: f64, y: f64, z: f64, color: i32, rng: &mut crate::drops::Lcg) -> Particle {
+    // the sprite pick's own draw (the bound-1 roll the single-frame
+    // set spends — `sprites.get(random)` the nextInt(1) answers)
+    let _sprite_roll = rng.next_int(1);
+    Particle {
+        kind: ParticleKind::Flash,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        lifetime: 4,
+        gravity: 0.0,
+        friction: 1.0,
+        quad_size: 7.1,
+        uo: 0.0,
+        vo: 0.0,
+        col: spark_color_decode(color),
+    }
+}
+
+/// The FLASH's own quad bell (javap `OverlayParticle.getQuadSize`
+/// verbatim: `7.1F × sin((age + partial − 1) × 0.25F × π)` — the
+/// growth-and-shrink arc the four-tick life wears, the negative
+/// first-tick fold the spawn frame's own quirk the verbatim law
+/// keeps). The render arm the flash sprite the later round arms —
+/// until then the law the tests alone walk (the expectation the
+/// consumer's landing forces to clean up).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn flash_bell(age: u32, partial: f32) -> f32 {
+    7.1 * (((age as f32 + partial - 1.0) * 0.25 * std::f32::consts::PI).sin())
 }
 
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s
@@ -5706,6 +5978,24 @@ mod tests {
         assert_eq!(crit_grow(0, 32, 0.0), 0.0);
         assert_eq!(crit_grow(1, 32, 0.0), 1.0);
         assert_eq!(crit_grow(0, 40, 0.5), (0.5f32 / 40.0 * 32.0).clamp(0.0, 1.0));
+    }
+
+    #[test]
+    fn the_flash_bell_speaks_the_quad_law() {
+        // javap `OverlayParticle.getQuadSize`: `7.1F × sin((age +
+        // partial − 1) × 0.25F × π)` — the growth-and-shrink arc the
+        // four-tick life wears, the negative first-tick fold the
+        // spawn frame's own quirk the verbatim law keeps
+        let bell = flash_bell(0, 0.0);
+        let want = 7.1f32 * (-1.0f32 * 0.25 * std::f32::consts::PI).sin();
+        assert!((bell - want).abs() < 1e-6, "the spawn frame the negative fold keeps");
+        assert_eq!(flash_bell(1, 0.0), 0.0, "the zero crossing the sin answers");
+        assert_eq!(flash_bell(3, 0.0), 7.1, "the peak the sin(π/2) answer keeps");
+        let mid = flash_bell(2, 0.0);
+        assert!(
+            (mid - 7.1f32 * (std::f32::consts::FRAC_PI_4).sin()).abs() < 1e-6,
+            "the mid arc the sin(π/4) fold keeps"
+        );
     }
 
     #[test]

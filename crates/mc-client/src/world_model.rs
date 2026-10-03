@@ -928,17 +928,37 @@ pub struct WhiteSmokeArm {
 /// (javap `handleEntityEvent` pcs 21-53 the 26.2 walk: the
 /// `createFireworks(getX(), getY(), getZ(), dm, getExplosions())`
 /// call the entity's own pose keeps — the full-precision doubles the
-/// wire's spawn/sync lanes bank). The motion + explosions args the
-/// walk reads for the NON-empty branch alone — the plain rocket's
-/// empty-explosions law the caller's poof burst answers, the
-/// component decode the recorded divergence arms (the wire's
-/// FIREWORKS entity-data the custom-star rockets carry — the Starter
-/// branch the lane never wears yet).
+/// wire's spawn/sync lanes bank). THE NON-EMPTY BRANCH'S OWN PAYLOAD
+/// (javap `getExplosions` the 26.2 walk the decode closes — the
+/// `entityData.get(DATA_ID_FIREWORKS_ITEM)` stack's
+/// `get(DataComponents.FIREWORKS)` read the stored entry answers, the
+/// component's explosion list the Starter walks verbatim): the
+/// explosion list the DATA_ID_FIREWORKS_ITEM entry (accessor 8 —
+/// the clinit's defineId order banks: Entity's 0..7, Projectile's
+/// none, the rocket's own 8/9/10 triple) carries when its patch
+/// names the FIREWORKS component (69), the EMPTY list the
+/// component-absent plain rocket keeps (the poof branch the caller
+/// folds). The motion word rides for the BURST shape alone (the
+/// Starter's `this.xd/yd/zd` the `dm` args feed — the snapshot's
+/// spawn word the stand-in keeps: the PositionSync's velocity lane
+/// the walk never tracks, the recorded note arms). The
+/// EMPTY-branch fields ride every arm (the shape the caller's own
+/// branch answers — the honest uniformity the drain speaks).
 #[derive(Debug, Clone, PartialEq)]
 pub struct FireworkExplodeArm {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+    /// The createFireworks motion args (the `getDeltaMovement()`
+    /// vector the handler passes — the BURST shape's spread the
+    /// Starter's own fields feed; the spawn's motion word the
+    /// snapshot carries).
+    pub mx: f64,
+    pub my: f64,
+    pub mz: f64,
+    /// The decoded explosions (the wire's FIREWORKS component list —
+    /// empty for the plain rocket, the poof branch the caller folds).
+    pub explosions: Vec<mc_protocol::FireworkExplosion>,
 }
 
 /// One pending IN-BLOCK GROWTH arm — the Level Event packet's sibling
@@ -5021,10 +5041,43 @@ impl WorldModel {
                     {
                         return false;
                     }
+                    // THE NON-EMPTY BRANCH'S OWN READ (javap
+                    // `getExplosions` the 26.2 walk: the
+                    // DATA_ID_FIREWORKS_ITEM stack's
+                    // `get(DataComponents.FIREWORKS)` — the component's
+                    // list the Starter walks, the ABSENT component the
+                    // List.of() empty branch keeps). The entry the
+                    // accessor 8 slot banks (the ItemStack the wire's
+                    // Set Entity Data delivered), the patch's added
+                    // (69) the decode's own lane answers, the plain
+                    // rocket the empty vec honest-keeps.
+                    let explosions = match snap.data.get(&8) {
+                        Some(EntityDataEntry::ItemStack {
+                            count,
+                            item_id: _,
+                            patch,
+                        }) if *count > 0 => patch
+                            .added
+                            .iter()
+                            .find(|(t, _)| *t == mc_protocol::play::data_component_types::FIREWORKS)
+                            .and_then(|(_, v)| match v {
+                                mc_protocol::ComponentValue::Fireworks {
+                                    flight: _,
+                                    explosions,
+                                } => Some(explosions.clone()),
+                                _ => None,
+                            })
+                            .unwrap_or_default(),
+                        _ => Vec::new(),
+                    };
                     self.firework_explode_events.push(FireworkExplodeArm {
                         x: snap.x,
                         y: snap.y,
                         z: snap.z,
+                        mx: snap.motion[0],
+                        my: snap.motion[1],
+                        mz: snap.motion[2],
+                        explosions,
                     });
                     return true;
                 }
@@ -7849,7 +7902,160 @@ mod tests {
         let drained = m.drain_firework_explode_events();
         assert_eq!(drained.len(), 1);
         assert_eq!((drained[0].x, drained[0].y, drained[0].z), (12.25, 68.5, -3.75));
+        assert!(drained[0].explosions.is_empty(), "the plain rocket the empty list keeps");
         assert!(m.drain_firework_explode_events().is_empty(), "the drained silence ships nothing");
+    }
+
+    /// THE FIREWORK'S OWN COMPONENT ENTRY (javap `getExplosions` the
+    /// 26.2 walk the non-empty branch reads — the accessor-8 stack's
+    /// `get(DataComponents.FIREWORKS)` the stored entry answers): the
+    /// Set Entity Data packet's ItemStack entry the patch's FIREWORKS
+    /// component carries → the byte-17 arm banks the DECODED
+    /// explosion list, the motion word the snapshot's spawn vector
+    /// keeps; the component-ABSENT stack the EMPTY list the poof
+    /// branch honest-keeps; the entry's absence the same silence.
+    #[test]
+    fn the_firework_event_17_the_component_entry_the_starter_arms() {
+        let mut m = WorldModel::new();
+        m.registry = RegistryData {
+            command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
+            chat_types: Vec::new(),
+            dimension_types: Vec::new(),
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            entity_types: vec![
+                "minecraft:firework_rocket".to_string(),
+                "minecraft:pig".to_string(),
+            ],
+            entity_type_tags: Vec::new(),
+            sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
+            chicken_sound_variants: Vec::new(),
+            pig_sound_variants: Vec::new(),
+            cow_sound_variants: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        // the server's custom-star rocket: the spawn carries the
+        // motion word the burst shape's spread reads
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 40,
+            uuid: 40,
+            type_id: 0,
+            x: 3.5,
+            y: 70.0,
+            z: -8.25,
+            movement: [0.125, -0.25, 0.0625],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        })));
+        // THE SYNCED STACK (the Set Entity Data packet's accessor-8
+        // word — the DATA_ID_FIREWORKS_ITEM slot the clinit's
+        // defineId order banks): the custom-star stack the patch's
+        // FIREWORKS (69) component carries
+        let star = mc_protocol::FireworkExplosion {
+            shape: 2,
+            colors: vec![0xFF0000, 0xFFFF00],
+            fade_colors: vec![0xFFFFFF],
+            has_trail: true,
+            has_twinkle: false,
+        };
+        m.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 40,
+            entries: vec![SetEntityDataEntry {
+                index: 8,
+                serializer: mc_protocol::play::entity_data_serializers::ITEM_STACK,
+                value: EntityDataEntry::ItemStack {
+                    count: 1,
+                    item_id: 0,
+                    patch: ComponentPatch {
+                        added: vec![(
+                            mc_protocol::play::data_component_types::FIREWORKS,
+                            mc_protocol::ComponentValue::Fireworks {
+                                flight: 2,
+                                explosions: vec![star.clone()],
+                            },
+                        )],
+                        removed: vec![],
+                    },
+                },
+            }],
+        }));
+        // THE CROSSING: the 17 the arm banks — the DECODED list the
+        // explosion slot carries verbatim, the motion the spawn word
+        // keeps
+        assert!(m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 40,
+            event: 17,
+        })));
+        assert_eq!(m.firework_explode_events.len(), 1, "the 17 the arm banks");
+        let arm = &m.firework_explode_events[0];
+        assert_eq!(arm.explosions, vec![star.clone()], "the component the list carries");
+        assert_eq!(
+            (arm.mx, arm.my, arm.mz),
+            (0.125, -0.25, 0.0625),
+            "the spawn's motion word the burst shape reads"
+        );
+        m.drain_firework_explode_events();
+        // THE PLAIN STACK: the component-ABSENT patch the EMPTY list
+        // keeps (the `get(DataComponents.FIREWORKS)` null the
+        // List.of() branch answers — the poof the caller folds)
+        m.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 40,
+            entries: vec![SetEntityDataEntry {
+                index: 8,
+                serializer: mc_protocol::play::entity_data_serializers::ITEM_STACK,
+                value: EntityDataEntry::ItemStack {
+                    count: 1,
+                    item_id: 0,
+                    patch: ComponentPatch {
+                        added: vec![],
+                        removed: vec![],
+                    },
+                },
+            }],
+        }));
+        assert!(m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 40,
+            event: 17,
+        })));
+        assert_eq!(m.firework_explode_events.len(), 1);
+        assert!(
+            m.firework_explode_events[0].explosions.is_empty(),
+            "the plain stack the poof branch keeps"
+        );
+        m.drain_firework_explode_events();
+        // THE ENTRY'S OWN ABSENCE (the metadata never spoke the
+        // accessor): the same EMPTY silence the plain stack keeps
+        m.apply(PlayEvent::EntitiesRemoved(vec![40]));
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 41,
+            uuid: 41,
+            type_id: 0,
+            x: 0.0,
+            y: 64.0,
+            z: 0.0,
+            movement: [0.0; 3],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        })));
+        assert!(m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 41,
+            event: 17,
+        })));
+        assert_eq!(m.firework_explode_events.len(), 1);
+        assert!(
+            m.firework_explode_events[0].explosions.is_empty(),
+            "the absent entry the empty list keeps"
+        );
     }
 
     #[test]

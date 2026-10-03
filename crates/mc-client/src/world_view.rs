@@ -1401,14 +1401,23 @@ pub struct WireWhiteSmokeEvent {
 
 /// One wire FIREWORK-EXPLODE arm — the Entity Event packet's own
 /// landing (the byte-17 words the server's own rocket broadcasts): the
-/// full-precision anchor the `createFireworks` call keeps, verbatim
-/// (the plain rocket's own poof burst the render lane folds from it —
-/// the blast the non-empty Starter branch alone banks).
+/// full-precision anchor the `createFireworks` call keeps, verbatim,
+/// the MOTION args the burst shape's spread feeds and the NON-empty
+/// branch's explosion list the Starter walks (the plain rocket's own
+/// poof burst the render lane folds from the EMPTY list — the blast
+/// the non-empty Starter branch alone banks).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireFireworkExplodeEvent {
     pub x: f64,
     pub y: f64,
     pub z: f64,
+    /// The createFireworks motion args (the entity's
+    /// `getDeltaMovement()` word — the BURST shape's own input).
+    pub mx: f64,
+    pub my: f64,
+    pub mz: f64,
+    /// The decoded FIREWORKS component list (empty = the poof branch).
+    pub explosions: Vec<mc_protocol::FireworkExplosion>,
 }
 
 /// One wire SPLASH-POTION arm — the Level Event packet's own landing
@@ -4326,6 +4335,10 @@ impl LiveView {
                 x: arm.x,
                 y: arm.y,
                 z: arm.z,
+                mx: arm.mx,
+                my: arm.my,
+                mz: arm.mz,
+                explosions: arm.explosions.clone(),
             })
             .collect();
         // the splash-potion effect's own projection (the mailbox verbatim
