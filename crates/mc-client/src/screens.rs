@@ -7361,6 +7361,18 @@ pub struct UseActive {
     pub ticks: u32,
     pub state: usize,
     pub hand: UseHand,
+    /// THE CHARGING-SOUND ARC'S OWN PLAYED FLAGS (javap `CrossbowItem.
+    /// startSoundPlayed` / `midLoadSoundPlayed` the `onUseTick` walk
+    /// keeps): the vanilla's STATIC fields the class carries the fresh
+    /// pull's own `f < 0.2` reset branch re-clears every pull — the
+    /// first walk ticks (elapsed 1..4, the ratio 0.04..0.16) the reset
+    /// arm always serves — so the per-use state the equivalent law
+    /// wears (the use's own death the fresh press's reset the same
+    /// silence answers). The CROSSBOW's pull alone reads them (the
+    /// bow's silent draw the no-arc law keeps — the charge-def gate
+    /// the census's one-item answer keeps).
+    pub start_sound_played: bool,
+    pub mid_sound_played: bool,
 }
 
 /// World size for the in-game screen (chunks per side — same as the
@@ -7864,6 +7876,13 @@ impl App {
         let mut spear_use_tick: Option<u32> = None;
         let mut brush_use_tick: Option<u32> = None;
         let mut crossbow_load_tick: Option<(UseHand, i32)> = None;
+        // THE CHARGING-SOUND ARC'S OWN DRAIN SLOTS (the start then the
+        // mid — the bytecode's own branch order the same-tick arm the
+        // post-pause crossing keeps: both flags false past 0.5 the
+        // START voice the pc-50 arm speaks, the MID the pc-86 arm
+        // answers — the two slots the two arms' own order wears)
+        let mut arc_start: Option<&'static str> = None;
+        let mut arc_mid: Option<&'static str> = None;
         if let Some(active) = self.using_item.as_mut() {
             active.ticks += 1;
             if let Some(def) = mc_registry::item_using_def(active.item) {
@@ -7892,6 +7911,42 @@ impl App {
                 };
                 if unloaded {
                     crossbow_load_tick = Some((active.hand, active.item));
+                }
+            }
+            // THE CHARGING-SOUND ARC'S OWN RATIO WALK (javap
+            // `CrossbowItem.onUseTick` pcs 31-119 the 26.2 bytecode the
+            // round reads — the ratio `f = elapsed / 25.0` the fcmp
+            // pair drives: the `f < 0.2` branch (fcmpg + ifge) the
+            // played flags' own reset keeps, the `f >= 0.2` start the
+            // fcmpl gate arms (elapsed 5 — 5/25 == 0.2f the exact f32
+            // the fcmpl's equality arm speaks), the `f >= 0.5` mid the
+            // same gate answers (elapsed 13 — 13/25 == 0.52 the f32
+            // the band keeps); the isClientSide head pcs 0-4 the
+            // SERVER-side walk keeps — the offline world the stand-in
+            // answers, the live session the server's own voices the
+            // wire's WorldSound lane banks (the client predicts none —
+            // the recorded live-silence law the shots' lane wears)):
+            // the PAUSE the walk's own sleep keeps (the world's own
+            // tick law — the once-only flags the paused-tick arming
+            // the drain can never replay, the collection the same
+            // sleep the honest gate wears)
+            if !self.paused
+                && self.live_clicks.is_none()
+                && !self.world_is_network
+                && mc_registry::item_charge_def(active.item).is_some()
+            {
+                let f = active.ticks as f32 / mc_registry::CROSSBOW_CHARGE_TICKS as f32;
+                if f < 0.2 {
+                    active.start_sound_played = false;
+                    active.mid_sound_played = false;
+                }
+                if f >= 0.2 && !active.start_sound_played {
+                    active.start_sound_played = true;
+                    arc_start = Some("item.crossbow.loading_start");
+                }
+                if f >= 0.5 && !active.mid_sound_played {
+                    active.mid_sound_played = true;
+                    arc_mid = Some("item.crossbow.loading_middle");
                 }
             }
             // THE KINETIC WEAPON'S OWN TICK (javap `ItemStack.onUseTick`
@@ -7943,6 +7998,18 @@ impl App {
             if !self.paused {
                 self.crossbow_use_tick_load(hand, item);
             }
+        }
+        // THE ARC'S OWN VOICES (the lambda$0/lambda$1 fold the 26.2
+        // bytecode speaks — `playSound(null, x, y, z, SOUND,
+        // SoundSource.PLAYERS, 0.5F, 1.0F)` the FIXED volume/pitch
+        // pair the two branches keep; the drain the collection's own
+        // pause gate already slept — no second gate the slot's
+        // absence speaks)
+        if let Some(event) = arc_start {
+            self.sounds.play_voice(self.frame, event, 0.5, 1.0);
+        }
+        if let Some(event) = arc_mid {
+            self.sounds.play_voice(self.frame, event, 0.5, 1.0);
         }
         // THE EAT CLOCK (the consumable's own hold — the vanilla
         // updateUsingItem's own order: the burst check at the
@@ -15818,6 +15885,8 @@ impl App {
                             ticks: 0,
                             state: 0,
                             hand: UseHand::Off,
+                            start_sound_played: false,
+                            mid_sound_played: false,
                         });
                         return true;
                     }
@@ -15830,6 +15899,8 @@ impl App {
                             ticks: 0,
                             state,
                             hand: UseHand::Off,
+                            start_sound_played: false,
+                            mid_sound_played: false,
                         });
                         // the offhand payload re-bakes through the LEFT
                         // lane (the using-branch special the left context
@@ -15937,6 +16008,8 @@ impl App {
                         ticks: 0,
                         state,
                         hand: UseHand::Off,
+                        start_sound_played: false,
+                        mid_sound_played: false,
                     });
                     self.offhand_held_loaded = Some(off_id);
                     match mc_registry::item_using_state(off_id, state) {
@@ -16274,6 +16347,8 @@ impl App {
                     ticks: 0,
                     state: 0,
                     hand: UseHand::Main,
+                    start_sound_played: false,
+                    mid_sound_played: false,
                 });
                 let event = if name == "wooden_spear" {
                     "item.spear_wood.use"
@@ -16302,6 +16377,8 @@ impl App {
                     ticks: 0,
                     state,
                     hand: UseHand::Main,
+                    start_sound_played: false,
+                    mid_sound_played: false,
                 });
             self.load_held_payload(id, Some(state));
             // the wire echo: the camera's angles in the vanilla
@@ -22410,6 +22487,23 @@ impl App {
             UseHand::Off => self.load_offhand_payload_from_id(Some(item)),
             UseHand::Main => self.load_held_payload(item, None),
         }
+        // THE END VOICE (javap `onUseTick` pcs 144-156 — the
+        // tryLoadProjectiles SUCCESS the `sounds.end()` arm answers,
+        // the empty scan's early return the silence keeps): the
+        // lambda$2 fold the bytecode speaks — `playSound(null, x, y,
+        // z, CROSSBOW_LOADING_END, entity.getSoundSource(), 1.0F,
+        // 1.0F / (nextFloat() * 0.5F + 1.0F) + 0.2F)` — the level's
+        // random the audio lane's own LCG the chew voice's draws keep,
+        // the players source the entity's own verdict answers. The
+        // server-side walk the offline stand-in alone answers (the
+        // live session the server's own end voice the wire banks —
+        // the same live-silence law the start/mid lane wears).
+        if self.live_clicks.is_none() && !self.world_is_network {
+            let r = self.drop_rng.next_f32();
+            let pitch = 1.0_f32 / (r * 0.5_f32 + 1.0_f32) + 0.2_f32;
+            self.sounds
+                .play_voice(self.frame, "item.crossbow.loading_end", 1.0, pitch);
+        }
     }
 
     /// THE PROJECTILE'S OWN SCAN (javap `Player.getProjectile` the 26.2
@@ -23024,6 +23118,8 @@ impl App {
                         ticks: 0,
                         state: 0,
                         hand: UseHand::Main,
+                        start_sound_played: false,
+                        mid_sound_played: false,
                     });
                     return true;
                 }
@@ -53251,6 +53347,300 @@ cow_sound_variant: None,
         // own uncharged behavior — the crossbow the load never wore)
         assert!(app.on_right_press(0, 0), "the fresh pull starts");
         assert!(app.is_using(), "the pull the fresh stack arms");
+    }
+
+    /// THE CROSSBOW'S OWN CHARGING-SOUND ARC — the three voices the
+    /// ratio walk banks (javap `CrossbowItem.onUseTick` pcs 31-156 the
+    /// 26.2 bytecode the round reads): the START the `f >= 0.2` arm
+    /// speaks at elapsed 5 (5/25 == 0.2f the exact f32 the fcmpl
+    /// equality answers), the MID the `f >= 0.5` arm at elapsed 13
+    /// (13/25 == 0.52 the f32 band keeps), the END the tryLoad-
+    /// Projectiles SUCCESS alone banks at the crossing (elapsed 25 —
+    /// the empty scan's early return the silence keeps); the
+    /// `f < 0.2` reset the once-only flags the fresh pull re-arms
+    /// (the per-use state the vanilla statics' own reset law wears),
+    /// the start/mid the FIXED 0.5/1.0 volume/pitch pair the
+    /// lambda$0/lambda$1 fold keeps, the end the 1.0 volume + the
+    /// `1.0F / (nextFloat() * 0.5F + 1.0F) + 0.2F` pitch the
+    /// lambda$2's level-random draw speaks, and the ARC the
+    /// once-per-pull law wears (the past-the-crossing ticks the
+    /// played flags silence — the shot the no-arc voice keeps).
+    #[test]
+    fn the_crossbow_the_pull_arc_the_three_voices_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let arrow_id = wire("arrow");
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (crossbow_id, 1);
+        app.inventory.items[(slot + 1) % 9] = (arrow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let arc_count =
+            |app: &App| {
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.crossbow.loading_"))
+                    .count()
+            };
+        // THE PRESS: the clock the fresh hold keeps, the base the arc
+        // counter snapshots (the press the no-arc silence speaks)
+        assert!(app.on_right_press(0, 0), "the pull starts");
+        assert_eq!(app.using_item.as_ref().unwrap().ticks, 0);
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 0, "the press the arc silence keeps");
+        }
+        // THE FIRST FOUR TICKS: the `f < 0.2` reset the flags clear,
+        // the start the threshold's own approach never arms early
+        for _ in 0..4 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 0, "the elapsed 1..4 the silence keeps");
+        }
+        // THE FIFTH TICK: the exact 0.2f crossing the START arm speaks
+        app.update();
+        assert_eq!(app.using_item.as_ref().unwrap().ticks, 5);
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 1, "the elapsed 5 the start alone speaks");
+            assert!(
+                app.sounds.events.iter().any(|e| e
+                    .starts_with("item.crossbow.loading_start @")
+                    && e.contains(" v0.500000 p1.000000")),
+                "the FIXED 0.5/1.0 pair the lambda$0 fold keeps: {:?}",
+                app.sounds.events
+            );
+        }
+        // THE SIXTH..TWELFTH: the once-only flag the re-arm silence keeps
+        for _ in 0..7 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 1, "the past-start ticks the silence keeps");
+        }
+        // THE THIRTEENTH: the 0.52 crossing the MID arm speaks
+        app.update();
+        assert_eq!(app.using_item.as_ref().unwrap().ticks, 13);
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 2, "the elapsed 13 the mid speaks");
+            assert!(
+                app.sounds.events.iter().any(|e| e
+                    .starts_with("item.crossbow.loading_middle @")
+                    && e.contains(" v0.500000 p1.000000")),
+                "the FIXED pair the lambda$1 fold keeps: {:?}",
+                app.sounds.events
+            );
+        }
+        // THE FOURTEENTH..TWENTY-FOURTH: the approach the silence keeps
+        for _ in 0..11 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 2, "the past-mid ticks the silence keeps");
+        }
+        // THE CROSSING: the load the component banks, the END the
+        // success alone speaks — the 1.0 volume the lambda$2's own
+        // fold keeps, the pitch the level-random band [0.8667, 1.2]
+        app.update();
+        assert_eq!(app.using_item.as_ref().unwrap().ticks, 25);
+        assert_eq!(
+            app.held_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the crossing the component banks"
+        );
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 3, "the crossing the end voice speaks");
+            let end_line = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("item.crossbow.loading_end @"))
+                .expect("the end voice the log wears");
+            assert!(
+                end_line.contains(" v1.000000 p"),
+                "the 1.0 volume the lambda$2 keeps: {end_line}"
+            );
+            let pitch: f32 = end_line
+                .split(" p")
+                .nth(1)
+                .expect("the pitch the tail carries")
+                .parse()
+                .expect("the pitch the f32 parses");
+            assert!(
+                pitch >= 0.866_666_6 && pitch <= 1.2,
+                "the `1.0F / (nextFloat() * 0.5F + 1.0F) + 0.2F` band keeps ({pitch})"
+            );
+        }
+        // THE PAST-THE-CROSSING HOLD: the played flags the arc silence
+        // keeps (the isCharged gate the load never re-banks)
+        for _ in 0..5 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 3, "the once-per-pull law the hold keeps");
+        }
+        assert_eq!(app.inventory.items[(slot + 1) % 9].1, 0, "the draw the quiver costs");
+        // THE RELEASE + THE CHARGED SHOT: the shot the no-arc voice
+        // keeps (the use()'s own CONSUME branch the sounds never bank)
+        app.on_right_release();
+        assert!(app.on_right_press(0, 0), "the charged press answers");
+        assert!(!app.is_using(), "the shot the instant walk serves");
+        assert_eq!(app.arrows.len(), 1, "the shot the arrow speaks");
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 3, "the shot the arc silence keeps");
+        }
+        // THE EMPTY-QUIVER RE-PULL: the arc the scan's own verdict
+        // never reads — the start the fresh pull re-arms (the reset
+        // law the per-use state wears), the mid the same ratio speaks,
+        // the END the failed scan the silence keeps
+        app.on_right_release();
+        assert!(app.on_right_press(0, 0), "the fresh pull starts");
+        for _ in 0..5 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 4, "the fresh pull the start re-arms");
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.crossbow.loading_start @"))
+                    .count()
+                    == 2,
+                "the SECOND start the fresh pull speaks"
+            );
+        }
+        for _ in 0..8 {
+            app.update();
+        }
+        app.update();
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 5, "the fresh pull the mid re-arms");
+        }
+        for _ in 0..11 {
+            app.update();
+        }
+        app.update();
+        assert!(
+            app.held_charge.is_none(),
+            "the empty scan the component never arms"
+        );
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 5, "the failed scan the END silence keeps");
+        }
+    }
+
+    /// THE ARC THE TWO LANES ANSWER — the OFF pull the same three
+    /// voices wear (the per-use flags the OFF turn's own state keeps,
+    /// the crossing the OFF lane's END speaks), the LIVE session the
+    /// silence keeps (the isClientSide head the server-side walk
+    /// names — the server's own voices the wire's WorldSound lane
+    /// banks, the client predicts none) while the LOCAL BELIEF the
+    /// crossing still arms (the component the wire's own sync the
+    /// recorded law keeps — the arrow stand-in the pull arms).
+    #[test]
+    fn the_crossbow_the_arc_the_offhand_wears_the_live_silence_keeps() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let arrow_id = wire("arrow");
+        let arc_count =
+            |app: &App| {
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.crossbow.loading_"))
+                    .count()
+            };
+        // THE OFF LANE: the empty main hand the OFF turn answers, the
+        // arrow the MAIN slot the scan's held branch consumes
+        let mut app = App::new(3);
+        app.enter_world();
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (0, 0);
+        app.inventory.offhand[0] = (crossbow_id, 1);
+        app.offhand_held_refreshed();
+        app.inventory.items[slot] = (arrow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the OFF pull starts");
+        assert!(matches!(
+            app.using_item.as_ref().map(|u| u.hand),
+            Some(UseHand::Off)
+        ));
+        for _ in 0..5 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 1, "the OFF pull the start speaks");
+        }
+        for _ in 0..8 {
+            app.update();
+        }
+        app.update();
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 2, "the OFF pull the mid speaks");
+        }
+        for _ in 0..11 {
+            app.update();
+        }
+        app.update();
+        assert_eq!(
+            app.off_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the crossing the OFF lane loads"
+        );
+        if sounds_loaded() {
+            assert_eq!(arc_count(&app), 3, "the OFF lane the END voice wears");
+        }
+        // THE LIVE LANE: the silence the isClientSide head keeps — the
+        // pull the wire echo arms, the ticks the same clock advances,
+        // the crossing the LOCAL BELIEF the component still banks, no
+        // voice the client's own log speaks
+        let mut live = App::new(3);
+        live.enter_world();
+        let lslot = live.selected_hotbar;
+        live.inventory.items[lslot] = (crossbow_id, 1);
+        live.inventory.items[(lslot + 1) % 9] = (arrow_id, 1);
+        live.hotbar_slots = live.inventory.hotbar();
+        let (tx, _rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        live.attach_live_clicks(tx);
+        assert!(live.on_right_press(0, 0), "the live pull the wire arms");
+        for _ in 0..5 {
+            live.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(
+                arc_count(&live),
+                0,
+                "the live pull the client's own silence keeps"
+            );
+        }
+        for _ in 0..20 {
+            live.update();
+        }
+        assert_eq!(
+            live.held_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the local belief the crossing arms"
+        );
+        if sounds_loaded() {
+            assert_eq!(
+                arc_count(&live),
+                0,
+                "the live session the server's own voices the wire banks"
+            );
+        }
     }
 
     /// THE OFFHAND'S OWN PULL ARC — the LAYER-pull lane the OFF turn
