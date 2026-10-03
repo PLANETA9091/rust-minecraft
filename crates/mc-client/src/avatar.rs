@@ -6832,6 +6832,51 @@ impl PoofFrames {
     }
 }
 
+/// The FIREWORK PARTICLE LANE's spark frames — the 8x8 the rocket's
+/// trail quad samples (javap: the `firework` particle type's own
+/// SpriteSet, the jar's `textures/particle/spark_0..7.png` pool the
+/// firework.json's DESCENDING list orders — the `SparkParticle` the
+/// trail walk speaks), loaded and sha1-verified the same stream the
+/// poof bank speaks. A missing or tampered file keeps the trail
+/// invisible (the honest absence the other lanes speak).
+pub struct SparkFrames {
+    frames: Vec<Vec<u8>>,
+}
+
+impl SparkFrames {
+    /// Load the 8 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 8x8 layout.
+    pub fn load(root: &std::path::Path) -> Option<SparkFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SPARK_FRAME_COUNT);
+        for i in 0..crate::particles::SPARK_FRAME_COUNT {
+            let bytes = std::fs::read(root.join(skin::PARTICLE_SPARK_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_SPARK_PNG_SHA1S[i] {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != CRIT_SPRITE_SIDE || h != CRIT_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SparkFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..8), nearest
+    /// texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, CRIT_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * CRIT_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's drown bubble texture — the 8x8 the bubble quad
 /// samples (javap: the `bubble` particle type's own sprite, the jar's
 /// `textures/particle/bubble.png`, the `BubbleParticle` the broadcast

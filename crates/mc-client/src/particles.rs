@@ -132,6 +132,41 @@ pub fn smoke_sprite_file_index(age: u32, lifetime: u32) -> usize {
 /// The poof's 8 frames (the `generic_0..7` textures the jar speaks).
 pub const POOF_FRAME_COUNT: usize = 8;
 
+/// The spark's 8 frames (the `spark_0..7` textures the firework.json
+/// list speaks).
+pub const SPARK_FRAME_COUNT: usize = 8;
+
+/// The firework spark's own frame walk (the same `MutableSpriteSet.
+/// get(age, lifetime)` chain the poof rides — the `setSpriteFromAge`
+/// call the ctor AND the tick both speak): `age * (size - 1) /
+/// lifetime` — the 8 spark frames the firework.json's own list holds
+/// (`spark_7..spark_0` the DESCENDING order speaks).
+pub fn spark_frame(age: u32, lifetime: u32) -> usize {
+    (age as usize * (SPARK_FRAME_COUNT - 1)) / lifetime.max(1) as usize
+}
+
+/// The spark list's own direction (the firework.json's descending
+/// order — index 0 reads spark_7, index 7 the spark_0): the file the
+/// same `count - 1 - index` fold the generic pool speaks.
+pub fn spark_file_index(list_index: usize) -> usize {
+    (SPARK_FRAME_COUNT - 1).saturating_sub(list_index)
+}
+
+/// The spark's own alpha walk (javap `SimpleAnimatedParticle.tick`
+/// pcs 12-47 verbatim): the provider's setAlpha(0.99) the spawn
+/// keeps, the `age > lifetime / 2` int-division crossing the fade
+/// arms — `1.0 - (age - lifetime / 2) / lifetime` the fsub/fdiv pair
+/// speaks. The tint's own dim the raster's honest equivalent keeps
+/// (the alpha lane the shriek's precedent folds).
+pub fn spark_alpha(age: u32, lifetime: u32) -> f32 {
+    let half = lifetime / 2;
+    if age <= half {
+        0.99
+    } else {
+        1.0 - (age as f32 - half as f32) / lifetime as f32
+    }
+}
+
 /// The crit's render-growth law (javap `CritParticle.getQuadSize`):
 /// `clamp((age + a) / lifetime * 32.0F, 0.0F, 1.0F)` — the star blooms
 /// from a point to the full quad inside the first lifetime/32 ticks.
@@ -195,6 +230,23 @@ pub enum ParticleKind {
     Terrain { tile: u16 },
     /// `ExplodeParticle` — the death cloud (the generic frames).
     Poof,
+    /// `FireworkParticles$SparkParticle` — the FIREWORK particle
+    /// type's own spark (the rocket's trail the tick's client walk
+    /// spawns every flight tick, the `SparkProvider` the
+    /// `createParticle` walk answers): the SimpleAnimatedParticle
+    /// chain's own laws — the base ctor's size draw the ×0.75 fold
+    /// shrinks, the lifetime the 48 + nextInt(12) re-roll banks, the
+    /// friction 0.91 the ctor's #13 carries, the gravity 0.1 the
+    /// super's float arg keeps, the alpha 0.99 the provider's
+    /// setAlpha speaks, the mid-life fade the age>lifetime/2 walk
+    /// serves (the tint's own dim the raster's honest equivalent
+    /// keeps), the fullbright look the getLightCoords 0xF000F0
+    /// override banks (the particle lane's own no-lightmap fold the
+    /// lava's precedent speaks), the spark_7..spark_0 frame walk the
+    /// descending json list orders. The trail lane the ctor's white
+    /// (1,1,1) the base fields never tint — the Starter's colored
+    /// sparks the component decode a later walk arms.
+    Spark,
     /// `CritParticle` — the crit star (the critical_hit texture).
     Crit,
     /// `CritParticle` the DAMAGE_INDICATOR provider speaks — the same
@@ -3560,6 +3612,60 @@ pub fn firework_poof_burst(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) 
         i += 1;
     }
     out
+}
+
+/// The firework's TRAIL spark (javap `FireworkParticles$SparkProvider.
+/// createParticle` + `SparkParticle.<init>` the 26.2 bytecode speaks —
+/// the FIREWORK particle type the rocket's tick spawns every flight
+/// tick): the ctor chain's own THREE particle-stream draws (the base
+/// `Particle` ctor's lifetime float FIRST — the 4/(r*0.9+0.1) fold
+/// the 48+nextInt(12) re-roll overwrites, the draw the stream still
+/// spends; the `SingleQuadParticle` ctor's size float SECOND — the
+/// `0.1 * (r * 0.5 + 0.5) * 2.0` fold; the `SparkParticle` ctor's
+/// `nextInt(12)` THIRD — the `48 + draw` lifetime banks), the
+/// friction the SimpleAnimatedParticle's #13 0.91F carries, the
+/// gravity the super's own float arg 0.1F keeps, the quad the ×0.75F
+/// fold the ctor's #28 speaks, the alpha the provider's setAlpha
+/// 0.99F banks, the white (1,1,1) the base color fields never tint.
+/// The motion args the CALLER passes (the entity stream's gaussian
+/// pair the tick's own walk spends — the -vy*0.5 fold the y keeps).
+pub fn firework_spark(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the base ctor's own lifetime float (the draw the re-roll
+    // overwrites — the stream the fold still spends)
+    let r_base_life = rng.next_f32();
+    let _ = base_lifetime(r_base_life);
+    // the SingleQuadParticle ctor's own size float (the ×0.75 fold
+    // the SparkParticle ctor speaks after the chain)
+    let r_size = rng.next_f32();
+    let quad = base_quad_size(r_size) * 0.75;
+    // the SparkParticle ctor's own lifetime re-roll
+    let life_draw = rng.next_int(12);
+    Particle {
+        kind: ParticleKind::Spark,
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy,
+        vz,
+        age: 0,
+        lifetime: 48 + life_draw.max(0) as u32,
+        gravity: 0.1,
+        friction: 0.91,
+        quad_size: quad,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
 }
 
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s

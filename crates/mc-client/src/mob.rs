@@ -3460,11 +3460,24 @@ pub struct Firework {
     /// rotation the last flight pose the stuck lane keeps — the
     /// lifetime crossing the explode+discard tail answers.
     pub stuck: bool,
+    /// THE ENTITY'S OWN RANDOM STREAM (javap tick pcs 469/494 the
+    /// `getfield FireworkRocketEntity.random` reads — the trail's
+    /// gaussian pair the entity's own RandomSource speaks, the ctor's
+    /// spent draws the stream's own head keeps: the two triangle
+    /// motion rolls, the lifetime's two nextInt calls, the shoot's
+    /// three triangle spreads — the LCG field the ctor arms and the
+    /// ticks continue, the arrow's persistent-stream precedent the
+    /// id-mixed seed wears). Each tick's trail consumes TWO
+    /// nextGaussian draws — the paired-gaussian cache the Marsaglia
+    /// law keeps rides across the ticks (the cache the LCG's own
+    /// field carries).
+    pub rng: Lcg,
 }
 
 /// The firework's own tick out-edges — the launch word the caller's
 /// positioned voice answers, the lifetime crossing the EXPLODE word
-/// the caller's own createFireworks burst speaks.
+/// the caller's own createFireworks burst speaks, the trail the
+/// caller's own FIREWORK particle spawns each tick.
 #[derive(Debug, Clone, Default)]
 pub struct FireworkEvents {
     /// the life==0 LAUNCH (javap tick's `FIREWORK_ROCKET_LAUNCH` walk
@@ -3484,6 +3497,21 @@ pub struct FireworkEvents {
     /// alone banks it). The (x, y, z) the rocket's own post-tick
     /// pose carries — the createFireworks anchor verbatim.
     pub explode: Option<(f64, f64, f64)>,
+    /// THE CLIENT'S OWN TRAIL (javap tick pcs 430-507 the 26.2 walk
+    /// — the `isClientSide` branch the flight's every tick answers:
+    /// the `life % 2 >= 2` guard the `if_icmpge` pair speaks is the
+    /// NEVER-TAKEN arm (life%2 ∈ {0,1} the >= 2 test fails), so the
+    /// `addParticle(ParticleTypes.FIREWORK, getX(), getY(), getZ(),
+    /// nextGaussian() * 0.05, -getDeltaMovement().y * 0.5,
+    /// nextGaussian() * 0.05)` the walk banks every tick — the launch
+    /// tick, the stuck rest, and the crossing's own tick the tail
+    /// keeps: the trail spawns BEFORE the explode branch answers).
+    /// The tuple the MOTION ARGS the caller's spark ctor passes (the
+    /// position the firework's own post-tick pose the caller reads);
+    /// the pair the ENTITY stream spends (the x gaussian FIRST — pcs
+    /// 469-478 — the y the -vy*0.5 fold no draw carries, the z
+    /// gaussian SECOND — pcs 494-506).
+    pub trail: Option<(f64, f64, f64)>,
 }
 
 impl Firework {
@@ -3552,6 +3580,11 @@ impl Firework {
             lifetime,
             dead: false,
             stuck: false,
+            // THE STREAM'S OWN TAIL (the ctor's spent draws the head
+            // keeps — the trail's gaussians the next draws the ticks
+            // spend, the entity's own RandomSource the field stands
+            // in for)
+            rng,
         }
     }
 
@@ -3588,6 +3621,14 @@ impl Firework {
                 events.launch = Some((self.x, self.y, self.z));
             }
             self.life += 1;
+            // THE TRAIL THE STUCK REST KEEPS (the client's own
+            // instance the wire's clipped pose wears — the vy the
+            // zeroed state answers −0.0, the gaussians the entity
+            // stream still spends: the client walk the branch never
+            // gates keeps)
+            let tx = self.rng.next_gaussian() * 0.05;
+            let tz = self.rng.next_gaussian() * 0.05;
+            events.trail = Some((tx, -self.vy * 0.5, tz));
             if self.life > self.lifetime {
                 events.explode = Some((self.x, self.y, self.z));
                 self.dead = true;
@@ -3643,6 +3684,17 @@ impl Firework {
             events.launch = Some((self.x, self.y, self.z));
         }
         self.life += 1;
+        // THE TRAIL (javap tick pcs 430-507 the 26.2 walk — the
+        // `isClientSide` branch the flight's every tick answers AFTER
+        // the life++ the pc 425 speaks and BEFORE the crossing's own
+        // pcs 510 check: the launch tick AND the exploding tick the
+        // trail both wear — the x gaussian FIRST (pcs 469-478), the
+        // y the -vy*0.5 fold the current velocity answers (no draw
+        // the fold carries), the z gaussian SECOND (pcs 494-506) —
+        // the entity's own stream the field continues)
+        let tx = self.rng.next_gaussian() * 0.05;
+        let tz = self.rng.next_gaussian() * 0.05;
+        events.trail = Some((tx, -self.vy * 0.5, tz));
         // THE LIFETIME CROSSING (life > lifetime — javap tick pcs
         // 510-540: the ServerLevel gate the explode call answers, the
         // broadcastEntityEvent(17) the client's createFireworks burst
@@ -15154,6 +15206,79 @@ mod tests {
         );
         assert!(f.dead, "the discard the crossing serves");
         assert!(ev.launch.is_none(), "the launch the later ticks never replay");
+    }
+
+    /// THE FIREWORK'S OWN TRAIL — the tick's client walk the
+    /// every-tick spawn answers (javap `FireworkRocketEntity.tick` pcs
+    /// 430-507 the 26.2 walk): the `life % 2 >= 2` guard the
+    /// never-taken arm keeps (the `if_icmpge` pair the irrelevance
+    /// speaks), the motion the x gaussian FIRST (pcs 469-478), the y
+    /// the -vy*0.5 fold the current velocity answers (NO draw the
+    /// fold carries), the z gaussian SECOND (pcs 494-506) — the pair
+    /// the ENTITY stream spends, the ctor's own head the spent draws
+    /// keep (the two triangle motion rolls, the two nextInt calls,
+    /// the three shoot spreads), the stuck rest AND the crossing's
+    /// own tick the trail both wear.
+    #[test]
+    fn the_firework_the_trail_the_entity_stream_wears() {
+        let mut air = arrow_air_world();
+        // the stone column the -z flight clips (the wall rest the
+        // stuck lane's trail the same walk answers)
+        for y in 8..12 {
+            air.set(8, y, 4, crate::world::STONE);
+        }
+        let mut f = Firework::crossbow_shot(7, 8.5, 10.0, 8.0, (0.0, 0.0, -1.0));
+        f.lifetime = 3;
+        let vy_flight = f.vy;
+        // THE STREAM REPLAY (the ctor's own head the spent draws
+        // keep — the seed the id-mixed law arms, the draws the ctor
+        // walks spend IN ORDER)
+        let mut rng = Lcg::new(arrow_entity_seed(7));
+        let _ = rng.triangle(0.002_297);
+        let _ = rng.triangle(0.002_297);
+        let _ = rng.next_int(6);
+        let _ = rng.next_int(7);
+        let spread = ARROW_TRIANGLE_SPREAD * PLAYER_ARROW_INACCURACY;
+        let _ = rng.triangle(spread);
+        let _ = rng.triangle(spread);
+        let _ = rng.triangle(spread);
+        // THE FLIGHT TICK'S OWN TRAIL (the first tick the launch
+        // rides — the trail the launch tick wears too)
+        let want = |r: &mut Lcg, vy: f64| -> (f64, f64, f64) {
+            (r.next_gaussian() * 0.05, -vy * 0.5, r.next_gaussian() * 0.05)
+        };
+        let ev = f.tick(&air);
+        assert_eq!(
+            ev.trail,
+            Some(want(&mut rng, vy_flight)),
+            "the flight tick the entity stream's trail banks"
+        );
+        // THE WALL'S OWN TICK (the stuck rest — the vy the zeroed
+        // state answers, the y the -0.0 fold the gaussian pair still
+        // spends)
+        let ev = f.tick(&air);
+        assert!(f.stuck, "the wall hit the rest arms");
+        let (tx, ty, tz) = ev.trail.expect("the stuck tick the trail wears");
+        assert_eq!(ty, 0.0, "the zeroed vy the -0.0 fold answers");
+        let (wx, _, wz) = want(&mut rng, 0.0);
+        assert_eq!((tx, ty, tz), (wx, 0.0, wz), "the stuck trail the stream keeps");
+        // THE REST'S OWN CLOCK (the idle stuck tick the trail still
+        // banks)
+        let ev = f.tick(&air);
+        assert!(ev.trail.is_some(), "the idle rest the trail keeps");
+        assert!(ev.explode.is_none(), "the idle rest the crossing never arms");
+        // THE CROSSING'S OWN TICK (the trail the explode branch the
+        // SAME event speaks — the trail BEFORE the crossing the pcs
+        // order keeps)
+        let ev = f.tick(&air);
+        assert!(
+            ev.trail.is_some(),
+            "the crossing tick the trail still banks"
+        );
+        assert!(
+            ev.explode.is_some(),
+            "the crossing the explode tail answers"
+        );
     }
 
     fn jockey_flat_world() -> World {
