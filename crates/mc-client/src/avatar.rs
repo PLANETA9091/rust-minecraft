@@ -359,6 +359,23 @@ pub struct AvatarState {
     /// — the offhand stack's own verdict (the same use-window law,
     /// the poseLeftArm pc 119-148 mirror the same constants keeps).
     pub left_trident: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.BRUSH` — the use
+    /// gate's own BRUSH branch (AvatarRenderer.getArmPose pcs 125-135:
+    /// the hand match + the remaining-ticks window the use-anim walk
+    /// rides, the stack's `getUseAnimation() == BRUSH` the acmp the
+    /// brushing stack alone answers — the RMB brush hold the verdict
+    /// wears, the idle brush no verdict the ITEM fall-through keeps).
+    /// THE CLINIT'S OWN FLAG PAIR: BRUSH(9,0,0) — twoHanded 0,
+    /// affectsOffhandPose 0 — the case-9 body the ONE arm poses, the
+    /// gate the second posing never cancels (the FALSE row the BLOCK
+    /// pair shares). THE MOB LAW THE VERDICT NEVER WEARS:
+    /// HumanoidMobRenderer.getArmPose answers EMPTY for every
+    /// non-spear stack — the mob lanes the brush never ride.
+    pub right_brush: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.BRUSH` — the
+    /// offhand stack's own verdict (the same use-window law, the
+    /// poseLeftArm pc 294-323 mirror the same constants keeps).
+    pub left_brush: bool,
     /// `HumanoidRenderState.maxCrossbowChargeDuration` — the charge
     /// body's own denominator (CrossbowItem.getChargeDuration:
     /// `floor(modifyCrossbowChargingTime(stack, entity, 1.25) × 20.0)`
@@ -437,6 +454,8 @@ impl AvatarState {
             left_crossbow_hold: false,
             right_trident: false,
             left_trident: false,
+            right_brush: false,
+            left_brush: false,
             max_crossbow_charge_duration: 0.0,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
@@ -4429,9 +4448,9 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
         // case-7 clamp lane, `TootHorn` the case-8 clamp lane,
         // `CrossbowCharge` the case-5 both-arms body,
         // `CrossbowHold` the case-6 both-arms body, `ThrowTrident`
-        // the case-4 π fold, `Item` the case-1
-        // fold — the one closure the whole switch wears, the f32
-        // chains the jar's own bytecode keeps
+        // the case-4 π fold, `Brush` the case-9 π/5 fold, `Item` the
+        // case-1 fold — the one closure the whole switch wears, the
+        // f32 chains the jar's own bytecode keeps
         #[derive(Clone, Copy)]
         enum PoseCase {
             Spear,
@@ -4442,6 +4461,7 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             CrossbowCharge,
             CrossbowHold,
             ThrowTrident,
+            Brush,
             Item,
         }
         let mut fold = |right_arm: bool, kind: PoseCase| {
@@ -4737,6 +4757,39 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     *x = *x * 0.5 - THROW_PI;
                     *y = 0.0;
                 }
+                PoseCase::Brush => {
+                    // THE BRUSH'S OWN BODY (poseRightArm/poseLeftArm
+                    // case 9, pcs 294-325 — the constants the dump
+                    // banks: 0.5 (0x3F000000), 0.6283185482025146 =
+                    // π/5 (0x3F20D97C)): the ONE-ARM fold the walk's
+                    // own xRot READS — xRot = xRot·0.5 − π/5 the
+                    // fmul/fsub chain the putfield order keeps (the
+                    // ×0.5 the exact exponent walk, the fsub one
+                    // rounding; the crouch's own +0.4 raise the fold
+                    // reads the walk law the ITEM fold shares), the
+                    // yRot zero the fconst_0 putfield replays, the
+                    // zRot the pose never touches, the head the body
+                    // NEVER reads. THE VERDICT THE USE GATE'S BRUSH
+                    // BRANCH ANSWERS (AvatarRenderer.getArmPose pcs
+                    // 125-135 — the use-anim walk's sixth acmp, the
+                    // TOOT_HORN branch the fifth wears, the SPEAR
+                    // branch the seventh keeps): the USING stack's
+                    // getUseAnimation() == BRUSH the brushing hold
+                    // the verdict wears, the idle brush no verdict
+                    // the ITEM fall-through keeps. THE CLINIT'S OWN
+                    // FLAG PAIR: BRUSH(9,0,0) — twoHanded 0,
+                    // affectsOffhandPose 0 — the gate the second
+                    // posing never cancels (the FALSE row the BLOCK
+                    // pair shares).
+                    const BRUSH_PI_5: f32 = 0.628_318_548_202_514_6; // CP, pi/5
+                    let (x, y) = if right_arm {
+                        (&mut arm_r_x, &mut arm_r_y)
+                    } else {
+                        (&mut arm_l_x, &mut arm_l_y)
+                    };
+                    *x = *x * 0.5 - BRUSH_PI_5;
+                    *y = 0.0;
+                }
                 PoseCase::Item => {
                     // the ITEM case-1 fold — the f32 chain the jar's
                     // fmul/fsub keeps (×0.5 the exact exponent walk,
@@ -4794,6 +4847,13 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 // posing CANCELS (the use gate's own TRIDENT branch
                 // the verdict wears)
                 fold(true, PoseCase::ThrowTrident);
+            } else if state.right_brush {
+                // case 9: the (9,0,0) pair — the ONE-ARM body the
+                // walk's own xRot the π/5 fold reads, the
+                // affectsOffhand flag FALSE the gate below the
+                // second posing never cancels (the use gate's own
+                // BRUSH branch the verdict wears)
+                fold(true, PoseCase::Brush);
             } else if state.right_spear {
                 fold(true, PoseCase::Spear);
             } else if state.right_item {
@@ -4854,6 +4914,11 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 // affectsOffhand TRUE the gate the second posing
                 // cancels
                 fold(false, PoseCase::ThrowTrident);
+            } else if state.left_brush {
+                // case 9 mirror: the left method's own pc 294-323
+                // the same constants keeps, the affectsOffhand FALSE
+                // the gate the second posing never cancels
+                fold(false, PoseCase::Brush);
             } else if state.left_spear {
                 fold(false, PoseCase::Spear);
             } else if state.left_item {
@@ -4879,6 +4944,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     fold(true, PoseCase::CrossbowHold);
                 } else if state.right_trident {
                     fold(true, PoseCase::ThrowTrident);
+                } else if state.right_brush {
+                    fold(true, PoseCase::Brush);
                 } else if state.right_spear {
                     fold(true, PoseCase::Spear);
                 } else if state.right_item {
@@ -12887,6 +12954,186 @@ mod tests {
             posed[2].x_rot.to_bits(),
             0xC049_0FDB,
             "the both-flags state the trident branch the chain picks"
+        );
+    }
+
+    /// THE BRUSH'S OWN BODY (javap `HumanoidModel.poseRightArm/
+    /// poseLeftArm` case 9, pcs 294-325 — CP = 0.5 (0x3F000000),
+    /// #407 = 0.6283185482025146 = π/5 (0x3F20D97C)): the ONE-ARM
+    /// fold the walk's own xRot READS — xRot = xRot·0.5 − π/5 the
+    /// fmul/fsub chain the putfield order keeps, the yRot zero the
+    /// fconst_0 putfield replays, the head the body never reads, the
+    /// zRot the pose never touches. THE VERDICT the use gate's own
+    /// BRUSH branch answers (AvatarRenderer.getArmPose pcs 125-135):
+    /// the USING stack the RMB brush hold the verdict wears. THE
+    /// PINS the pins_528 oracle computes.
+    #[test]
+    fn the_brush_pose_the_fold_speaks() {
+        // SCENE Z (the rest walk the fold reads: the walk's own zero
+        // the bob's +0.0 the sum keeps): xRot = f32(f32(0.0·0.5) −
+        // π/5) = −π/5 the exact bits, yRot = 0.0 the fconst_0 replays
+        let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.is_using_item = true;
+        s.use_item_main_hand = true;
+        s.ticks_using_item = 10.0;
+        s.right_brush = true;
+        let posed = build_posed_parts(&s);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF20_D97C,
+            "the brush fold the walk's own zero the −π/5 wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0x0000_0000,
+            "the brush fold the yRot zero the fconst_0 replays"
+        );
+        // THE ONE-ARM BODY (the poseLeftArm the walk's own zeroes the
+        // second posing the brush lane never reads — the walk's
+        // plain bits the plain state keeps): the other arm the fold
+        // never touches, the head's own yaw the body never reads
+        let mut p = AvatarState::rest(0.0, 0.0, 0.0);
+        p.head_yaw_off_deg = 20.0;
+        let plain = build_posed_parts(&p);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            plain[3].x_rot.to_bits(),
+            "the one-arm body the other arm the walk's own keeps"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            plain[3].y_rot.to_bits(),
+            "the one-arm body the other arm's yRot the walk keeps"
+        );
+        // SCENE C (the crouch's own +0.4 raise the fold READS — the
+        // walk law the ITEM fold shares): xRot = f32(f32(0.4·0.5) −
+        // π/5) the two-rounding chain the bits keep
+        let mut c = AvatarState::rest(0.0, 0.0, 0.0);
+        c.head_yaw_off_deg = 20.0;
+        c.crouching = true;
+        c.is_using_item = true;
+        c.use_item_main_hand = true;
+        c.ticks_using_item = 10.0;
+        c.right_brush = true;
+        let posed = build_posed_parts(&c);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEDB_4C92,
+            "the crouch raise the fold reads — the f32 chain the bits wear"
+        );
+        // SCENE L (the off hand the brush holds — the poseLeftArm
+        // first the idle/use walk speaks): the LEFT arm the fold
+        // wears, the affectsOffhand FALSE the gate below the right
+        // CHAIN never cancels — the right stack's ITEM verdict the
+        // chain reaches (the FALSE row the BLOCK pair shares, the
+        // trident TRUE row the contrast keeps)
+        let mut l = AvatarState::rest(0.0, 0.0, 0.0);
+        l.head_yaw_off_deg = 20.0;
+        l.is_using_item = true;
+        l.use_item_main_hand = false;
+        l.ticks_using_item = 10.0;
+        l.left_brush = true;
+        l.right_item = true;
+        let posed = build_posed_parts(&l);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBF20_D97C,
+            "the left brush arm the same −π/5 the mirror wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x0000_0000,
+            "the left brush arm the yRot zero the mirror replays"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the affectsOffhand FALSE the right ITEM chain reaches — the −π/10 wears"
+        );
+    }
+
+    /// THE BRUSH'S OWN GATES' MATRIX (the clinit's (9,0,0) pair —
+    /// twoHanded 0, affectsOffhandPose 0 — the gate the second
+    /// posing's chain NEVER cancels the BLOCK/SPYGLASS/HORN FALSE
+    /// rows the same law keeps): the idle brush the ITEM
+    /// fall-through the verdicts keep (the use gate the idle stack
+    /// never rides), the using brush the mapped gate the ITEM
+    /// fall-through excludes (the mapped names the SEVEN the brush
+    /// joins), the both-flags state the chain's defensive order the
+    /// brush branch picks. THE PINS the pins_528 oracle computes.
+    #[test]
+    fn the_brush_pose_the_gates_the_matrix_speak() {
+        // GATE R (the affectsOffhand FALSE the left chain NEVER
+        // cancels — the CONTRAST the trident TRUE row speaks): the
+        // right brush the lane A first poses, the left stack's ITEM
+        // verdict the chain REACHES — the ITEM fold the bits prove
+        // (the walk's own zero the −π/10 wears)
+        let mut g = AvatarState::rest(0.0, 0.0, 0.0);
+        g.head_yaw_off_deg = 20.0;
+        g.is_using_item = true;
+        g.use_item_main_hand = true;
+        g.ticks_using_item = 10.0;
+        g.right_brush = true;
+        g.left_item = true;
+        let posed = build_posed_parts(&g);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the affectsOffhand FALSE the left chain reaches — the ITEM fold wears"
+        );
+        // THE IDLE BRUSH (the ITEM fall-through the verdicts keep —
+        // the use gate the idle stack never rides, no SPEARS-tag row
+        // the brush carries): the ITEM lane the fold wears, the
+        // −π/10 the walk's own zero the bits speak
+        let mut i = AvatarState::rest(0.0, 0.0, 0.0);
+        i.head_yaw_off_deg = 20.0;
+        i.right_item = true;
+        let posed = build_posed_parts(&i);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the idle brush the ITEM fall-through the −π/10 wears"
+        );
+        // THE BOTH-FLAGS DEFENSE (the chain's own order the brush
+        // branch picks — the spear lane the tag law the same stack
+        // never carries, the defensive order the both-flags state
+        // alone reaches): the brush fold the −π/5 the branch wears
+        let mut both = AvatarState::rest(0.0, 0.0, 0.0);
+        both.head_yaw_off_deg = 20.0;
+        both.is_using_item = true;
+        both.use_item_main_hand = true;
+        both.ticks_using_item = 10.0;
+        both.right_brush = true;
+        both.right_spear = true;
+        let posed = build_posed_parts(&both);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF20_D97C,
+            "the both-flags state the brush branch the chain picks"
+        );
+        // THE SECOND-POSING'S OWN BRUSH LANE (the off-hand-use walk's
+        // gate the right chain the brush lane rides — the right arm
+        // the fold wears, the left brush arm the mirror keeps): the
+        // brush lane the chain order holds (hold → trident → brush →
+        // spear), the −π/5 the branch wears
+        let mut s2 = AvatarState::rest(0.0, 0.0, 0.0);
+        s2.head_yaw_off_deg = 20.0;
+        s2.is_using_item = true;
+        s2.use_item_main_hand = false;
+        s2.ticks_using_item = 10.0;
+        s2.left_item = true;
+        s2.right_brush = true;
+        let posed = build_posed_parts(&s2);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBF20_D97C,
+            "the second posing's brush lane the chain order rides"
+        );
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the left stack's ITEM the first pose wears — the chain the lanes keep"
         );
     }
 

@@ -27892,13 +27892,14 @@ impl App {
         let off_spear = off_name.and_then(spear_kinetic_row).is_some();
         // THE USE-ANIM'S OWN MAPPED NAMES (the three-arg law's use
         // gate — getUseAnimation's eight acmp branches answer the
-        // mapped poses; the client's using lanes the six names
+        // mapped poses; the client's using lanes the seven names
         // reach: shield the BLOCK, bow the BOW_AND_ARROW, crossbow
         // the CROSSBOW_CHARGE, spyglass the SPYGLASS, goat_horn the
         // TOOT_HORN, trident the THROW_TRIDENT the use gate's own
-        // TRIDENT branch answers (pcs 81-91 — the SPEARS tag the
-        // row table excludes the idle trident the ITEM fall-through
-        // keeps); the food's NONE the fall-through the ITEM keeps)
+        // TRIDENT branch answers (pcs 81-91), brush the BRUSH the
+        // use gate's own BRUSH branch answers (pcs 125-135 — the
+        // SPEAR branch the seventh acmp the walk keeps); the food's
+        // NONE the fall-through the ITEM keeps)
         let use_anim_mapped = |name: Option<&str>| -> bool {
             matches!(
                 name,
@@ -27908,6 +27909,7 @@ impl App {
                     | Some("spyglass")
                     | Some("goat_horn")
                     | Some("trident")
+                    | Some("brush")
             )
         };
         let main_using_mapped = matches!(
@@ -28027,6 +28029,25 @@ impl App {
             Some(active)
                 if active.hand == UseHand::Off
                     && mc_registry::item_name(active.item) == Some("trident")
+        );
+        // THE BRUSH'S OWN VERDICTS (the use gate's own BRUSH branch
+        // pcs 125-135 — the using stack's `getUseAnimation() ==
+        // BRUSH` the brushing stack alone answers — the RMB brush
+        // hold the verdict wears, the idle brush no verdict the
+        // ITEM fall-through keeps; the clinit's (9,0,0) pair the
+        // affectsOffhand flag FALSE the second posing never
+        // cancels)
+        let main_brush = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && mc_registry::item_name(active.item) == Some("brush")
+        );
+        let off_brush = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && mc_registry::item_name(active.item) == Some("brush")
         );
         // THE HOLD'S OWN VERDICTS (the three-arg law the use gate
         // BEFORE the swinging gate answers — pcs 11-38: `!avatar
@@ -28148,6 +28169,15 @@ impl App {
             // the ONE-ARM body the other arm's own verdict rides)
             right_trident: main_trident,
             left_trident: off_trident,
+            // THE BRUSH POSES (the use gate's own BRUSH branch —
+            // the main/off using stack the brush name the BRUSH
+            // the window wears, the idle brush the ITEM the
+            // fall-through keeps; the clinit's (9,0,0) pair the
+            // affectsOffhand flag FALSE the second posing never
+            // cancels — the ONE-ARM body the other arm's own
+            // verdict rides)
+            right_brush: main_brush,
+            left_brush: off_brush,
             // THE CHARGE BODY'S OWN DENOMINATOR (the render state's
             // maxCrossbowChargeDuration — CrossbowItem.
             // getChargeDuration the floor(modify(stack, entity, 1.25)
@@ -29546,6 +29576,8 @@ impl App {
                         // trident the mob lane never rides)
                         right_trident: false,
                         left_trident: false,
+                        right_brush: false,
+                        left_brush: false,
                         max_crossbow_charge_duration: 0.0,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
@@ -29741,6 +29773,8 @@ impl App {
                         // trident the mob lane never rides)
                         right_trident: false,
                         left_trident: false,
+                        right_brush: false,
+                        left_brush: false,
                         max_crossbow_charge_duration: 0.0,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
