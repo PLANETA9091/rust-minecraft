@@ -6345,6 +6345,16 @@ pub struct App {
     /// resting def. Cleared when the held item changes (the component
     /// belongs to the STACK, never the slot).
     pub held_charge: Option<mc_registry::ChargeKind>,
+    /// THE OFFHAND'S OWN CHARGE LANE (the OFF stack's
+    /// CHARGED_PROJECTILES component the client's own pull predicts —
+    /// the same law the main lane's `held_charge` wears, the OFF turn
+    /// the load law routes): the full-charge release on the OFF hand's
+    /// crossbow sets the lane, the off-hand item change drops it (the
+    /// stack the charge cannot outlive), the off-hold verdict and the
+    /// LEFT resting bolt render read it. The dev-62 conservative-FALSE
+    /// divergence the lane closes — the off-hand stack's own charged
+    /// state the client now tracks.
+    pub off_charge: Option<mc_registry::ChargeKind>,
     /// The OFFLINE procedural world the world screen owns — the
     /// singleplayer lane's own terrain (the App used to keep only its
     /// mesh; the block-use lane's placement prediction needs the VOXELS
@@ -7589,6 +7599,7 @@ impl App {
             held_item: None,
             using_item: None,
             held_charge: None,
+            off_charge: None,
             offline_world: None,
             offline_held: None,
             held_offhand: None,
@@ -15670,12 +15681,9 @@ impl App {
             // hungry body the hold arms). The SPECIAL using defs (the
             // shield, the trident — the single-state payloads the use
             // clock's no-op-reload law never re-bakes) the first arm
-            // speaks, the EAT lane the consumable's own arm follows;
-            // the LAYER pulling states (the bow, the crossbow) ride
-            // the main payload lane — the offhand pull a later walk.
-            // The wire echo the OFF_HAND ordinal speaks (the packet's
-            // own hand field the vanilla ServerboundUseItemPacket
-            // carries).
+            // speaks, the LOADED SHOT and the EAT lane follow, the
+            // LAYER pulling states (the bow, the crossbow) the OFF
+            // turn's own pull arm re-bakes through the LEFT ctx.
             let (off_id, off_count) = self.offhand_stack();
             if off_count > 0 {
                 if let Some(off_def) = mc_registry::item_using_def(off_id) {
@@ -15715,6 +15723,94 @@ impl App {
                         }
                         return true;
                     }
+                    // THE OFFHAND'S OWN LOADED SHOT (javap CrossbowItem.
+                    // use: the CHARGED_PROJECTILES component non-empty ->
+                    // performShooting + CONSUME — the use fires INSTANTLY,
+                    // no pull starts; the off-charge lane the OFF turn's
+                    // own pull loaded, the same law the main lane's own
+                    // shot arm wears — the wire the OFF_HAND ordinal
+                    // speaks)
+                    if self.off_charge.is_some()
+                        && mc_registry::item_charge_def(off_id).is_some()
+                    {
+                        self.off_charge = None;
+                        self.offhand_held_loaded = Some(off_id);
+                        self.load_offhand_payload_from_id(Some(off_id));
+                        let (yaw, pitch) =
+                            crate::world_view::wire_angles(&self.world_camera());
+                        if let Some(sink) = self.live_clicks.as_ref() {
+                            let _ =
+                                sink.send(crate::world_view::ContainerCommand::UseItem {
+                                    yaw,
+                                    pitch,
+                                    hand: 1,
+                                });
+                        }
+                        return true;
+                    }
+                    // THE OFFHAND BOW'S OWN EMPTY-QUIVER GATE (javap
+                    // `BowItem.use`: `canShoot = !getProjectile(stack)
+                    // .isEmpty(); if (hasInfiniteMaterials() || canShoot)
+                    // startUsingItem -> CONSUME; else FAIL` — the empty
+                    // quiver the draw never starts, the OFF turn the LAST
+                    // turn its FAIL the press's own silence; the OFFLINE
+                    // lane's own inventory the scan answers — the LIVE
+                    // session the server's own verdict the echo answers,
+                    // the main lane's own gate the same law keeps)
+                    if self.live_clicks.is_none()
+                        && !self.world_is_network
+                        && self.held_word_of(off_id) == Some("bow")
+                        && self.inventory_arrow_slot().is_none()
+                    {
+                        return false; // the FAIL the empty quiver speaks
+                    }
+                    // THE OFFHAND'S OWN LAYER-PULL (the vanilla
+                    // startUsingItem the OFF hand's own turn answers — the
+                    // bow/crossbow draw states the def's index picks, the
+                    // LEFT context the payload re-bakes: the using-branch
+                    // layers the FIRST_PERSON_LEFT_HAND stanza wears, the
+                    // same honest law the specials arm speaks — a broken
+                    // stanza binds NOTHING, the bare left arm). The wire
+                    // echo the OFF_HAND ordinal speaks (the packet's own
+                    // hand field the vanilla ServerboundUseItemPacket
+                    // carries).
+                    let state = mc_registry::using_state_index(off_def, 0.0);
+                    self.using_item = None; // one use at a time
+                    self.using_item = Some(UseActive {
+                        item: off_id,
+                        ticks: 0,
+                        state,
+                        hand: UseHand::Off,
+                    });
+                    self.offhand_held_loaded = Some(off_id);
+                    match mc_registry::item_using_state(off_id, state) {
+                        Some(mc_registry::UsingStateRender::Special(_)) => {
+                            self.held_offhand = crate::hand::load_special_using_item_ctx(
+                                off_id,
+                                mc_registry::display::FIRSTPERSON_LEFTHAND,
+                            );
+                        }
+                        Some(mc_registry::UsingStateRender::Layers(layers)) => {
+                            self.held_offhand = crate::hand::load_item_layers_ctx(
+                                &layers,
+                                mc_registry::display::FIRSTPERSON_LEFTHAND,
+                            );
+                        }
+                        None => {}
+                    }
+                    // the wire echo: the camera's angles in the vanilla
+                    // degrees, the OFF_HAND ordinal
+                    let (yaw, pitch) =
+                        crate::world_view::wire_angles(&self.world_camera());
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ =
+                            sink.send(crate::world_view::ContainerCommand::UseItem {
+                                yaw,
+                                pitch,
+                                hand: 1,
+                            });
+                    }
+                    return true;
                 }
                 // THE OFFHAND'S OWN EAT LANE (the vanilla use()'s
                 // consumable arm the OFF hand's turn answers — the same
@@ -15970,11 +16066,20 @@ impl App {
         };
         // THE LOAD LAW: the full charge loads the projectile (the
         // crossbow's own gate — the charge def names the component
-        // select's carrier; the bow has no charge lane)
+        // select's carrier; the bow has no charge lane). THE ROUTE
+        // THE HAND SPEAKS: the OFF turn's own pull the OFFHAND lane
+        // loads (the off_charge the off-hold verdict and the LEFT
+        // bolt render read), the MAIN the held_charge keeps — the
+        // leak the one-lane law never speaks (the dev-62 divergence
+        // the route closes).
         if active.ticks >= mc_registry::CROSSBOW_CHARGE_TICKS
             && mc_registry::item_charge_def(active.item).is_some()
         {
-            self.held_charge = Some(mc_registry::ChargeKind::Arrow);
+            if active.hand == UseHand::Off {
+                self.off_charge = Some(mc_registry::ChargeKind::Arrow);
+            } else {
+                self.held_charge = Some(mc_registry::ChargeKind::Arrow);
+            }
         }
         // THE BOW'S OWN RELEASE (javap `BowItem.releaseUsing` the 26.2
         // bytecode speaks: the power the getPowerForTime walk answers —
@@ -26224,7 +26329,24 @@ impl App {
     /// the resting-hand layer tables — through the FIRST_PERSON_LEFT_
     /// HAND display context the left lane wears).
     fn load_offhand_payload_from_id(&mut self, id: Option<i32>) {
+        // THE CHARGE LANE first (the loaded crossbow's resting render
+        // rides the charge_type select's case — the same law the MAIN
+        // lane's own charge lane wears; the off_charge the lane reads
+        // BEFORE the bake — the closure the field's borrow never
+        // captures)
+        let charge = self
+            .off_charge
+            .filter(|_| id.map_or(false, |i| mc_registry::item_charge_def(i).is_some()));
         self.held_offhand = id.and_then(|id| {
+            if let Some(kind) = charge {
+                if let Some(held) = crate::hand::load_charge_item_ctx(
+                    id,
+                    kind,
+                    mc_registry::display::FIRSTPERSON_LEFTHAND,
+                ) {
+                    return Some(held);
+                }
+            }
             if mc_registry::special_item_renderer(id).is_some() {
                 return crate::hand::load_special_item_ctx(
                     id,
@@ -26253,6 +26375,10 @@ impl App {
             return;
         }
         self.offhand_held_loaded = id;
+        // THE STACK THE CHARGE CANNOT OUTLIVE (the same law the main
+        // lane's own live_held key wears — the off_charge the item
+        // change drops, the component the old stack alone kept)
+        self.off_charge = None;
         // the item changed: the offhand use ends (the vanilla
         // releaseUsingItem on the item switch — the hold cannot
         // outlive its own stack — the main lane's own live_held law
@@ -28056,14 +28182,16 @@ impl App {
         // the walk wears, the swing's own arc the verdict excludes;
         // the held stack's CHARGED_PROJECTILES component the
         // held_charge lane speaks). THE OFFHAND'S OWN COMPONENT THE
-        // CLIENT NEVER TRACKS (offhand_stack the (id, count) pair
-        // keeps — the charged state the MAIN stack alone predicts):
-        // the off-hold verdict the conservative FALSE keeps (the
-        // same law the missing poses wear)
+        // CLIENT NOW TRACKS (the off_charge lane the OFF turn's own
+        // pull loads — the dev-62 conservative-FALSE divergence the
+        // lane closes): the off-hold verdict the same !swinging +
+        // charged law wears
         let main_hold = !self.swing.swinging
             && mc_registry::item_name(self.held_id().unwrap_or(0)) == Some("crossbow")
             && self.held_charge.is_some();
-        let off_hold = false;
+        let off_hold = !self.swing.swinging
+            && off_name == Some("crossbow")
+            && self.off_charge.is_some();
         // THE RENDER STATE (LivingEntityRenderer.extractRenderState's own
         // sampling — every clock rides the frame's own partial_tick now:
         // the walk cosines, the swing, the age — no canonical mid-tick
@@ -51608,6 +51736,168 @@ cow_sound_variant: None,
         // the slot — the item switch drops it
         app.live_held_updated(Some((wire("diamond"), 1)));
         assert!(app.held_charge.is_none(), "the switch dropped the charge");
+    }
+
+    /// THE OFFHAND'S OWN PULL ARC — the LAYER-pull lane the OFF turn
+    /// re-bakes through the LEFT ctx (the vanilla startUseItem's
+    /// for-each-hand walk: the MAIN hand's PASS the OFF hand's useItem
+    /// answers): the off-hand crossbow the empty main hand backs, the
+    /// press starts the OFF pull (the OFF_HAND ordinal the echo
+    /// speaks), the full-charge release LOADS the OFF lane (javap
+    /// releaseUsing: tryLoadProjectiles sets the CHARGED_PROJECTILES
+    /// component), the LEFT resting render switches to the charged
+    /// bolt (the charge_type select's arrow case through the LEFT
+    /// context), the next right press fires INSTANTLY (the use()'s
+    /// CONSUME branch — no pull starts), and the MAIN lane the OFF
+    /// load never leaks (the dev-62 divergence the route closes).
+    #[test]
+    fn the_offhand_pull_charges_and_fires() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+
+        // THE EMPTY MAIN HAND the OFF turn the press answers (the MAIN
+        // lane's PASS the walk's own order keeps)
+        app.live_held_updated(None);
+        app.live_inv_slots[45] = (wire("crossbow"), 1);
+        app.offhand_held_refreshed();
+        assert!(app.off_charge.is_none(), "the fresh stack carries no component");
+        assert!(
+            app.on_right_press(0, 0),
+            "the offhand crossbow starts the OFF pull"
+        );
+        assert!(matches!(
+            app.using_item.as_ref().map(|u| u.hand),
+            Some(UseHand::Off)
+        ), "the OFF hand the use clock wears");
+        match click_rx.try_recv().expect("the OFF pull's echo rode the lane") {
+            ContainerCommand::UseItem { hand: 1, .. } => {}
+            other => panic!("expected a hand-1 UseItem echo, got {other:?}"),
+        }
+        let pulling = app.held_offhand.as_ref().expect("the LEFT pulling loads");
+        assert!(
+            pulling.binds_texture("item/crossbow_pulling_0"),
+            "the LEFT ctx the using-branch layers wear"
+        );
+        // 24 ticks then the release: under the charge duration — the
+        // power < 1.0 loads nothing (the javap releaseUsing gate)
+        for _ in 0..24 {
+            app.update();
+        }
+        app.on_right_release();
+        assert!(app.off_charge.is_none(), "24 < 25 ticks — no off load");
+        assert!(
+            matches!(click_rx.try_recv(), Ok(ContainerCommand::ReleaseUse)),
+            "the release echo rode the lane"
+        );
+        // THE FULL CHARGE: 25 ticks then the release — the OFF lane
+        // the load law routes (the MAIN lane the leak never speaks)
+        assert!(app.on_right_press(0, 0), "the OFF pull starts again");
+        let _ = click_rx.try_recv();
+        for _ in 0..25 {
+            app.update();
+        }
+        app.on_right_release();
+        assert_eq!(
+            app.off_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the OFF pull LOADED the off lane (the component set)"
+        );
+        assert!(
+            app.held_charge.is_none(),
+            "the OFF load the MAIN lane never leaks — the route the hand speaks"
+        );
+        let bolt = app.held_offhand.as_ref().expect("the LEFT charged bolt loads");
+        assert!(
+            bolt.binds_texture("item/crossbow_arrow"),
+            "the charge_type select's arrow case through the LEFT ctx"
+        );
+        assert!(
+            matches!(click_rx.try_recv(), Ok(ContainerCommand::ReleaseUse)),
+            "the second release echo rode the lane"
+        );
+        // THE INSTANT SHOT: the right press on the charged OFF crossbow
+        // consumes the OFF lane — no pull starts (the vanilla CONSUME
+        // branch), the plain crossbow renders LEFT again, the shot's
+        // hand-1 echo rides
+        assert!(
+            app.on_right_press(0, 0),
+            "the charged OFF crossbow answers the press"
+        );
+        assert!(app.off_charge.is_none(), "the shot consumed the OFF charge");
+        assert!(!app.is_using(), "the shot is instant — no pull started");
+        let plain = app.held_offhand.as_ref().expect("the LEFT plain returns");
+        assert!(
+            plain.binds_texture("item/crossbow_standby"),
+            "the standby texture returns through the LEFT ctx"
+        );
+        match click_rx.try_recv().expect("the OFF shot's echo rode the lane") {
+            ContainerCommand::UseItem { hand: 1, .. } => {}
+            other => panic!("expected a hand-1 UseItem echo, got {other:?}"),
+        }
+    }
+
+    /// THE OFFHAND CHARGE'S OWN STACK LAW — the component belongs to
+    /// the STACK, never the slot (the same law the main lane's
+    /// `held_charge` wears): the off-hand item change drops the
+    /// off_charge (the refresh walk's id-change key), the emptiness
+    /// drops it too, and the SAME-id refresh the charge keeps (the
+    /// lazy draw cadence never re-clears).
+    #[test]
+    fn the_offhand_charge_dies_with_the_stack() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // THE LIVE BELIEF the slot-45 lane reads (the live_clicks the
+        // offhand_stack's own source switch arms — the store's slot 45
+        // the window-0 store keeps)
+        let (click_tx, _click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.live_inv_slots[45] = (wire("crossbow"), 1);
+        app.offhand_held_refreshed();
+        // THE LOADED OFF STACK: the lane the OFF pull's own law set
+        app.off_charge = Some(mc_registry::ChargeKind::Arrow);
+        // THE SAME-ID REFRESH: the lazy draw cadence the charge keeps
+        app.offhand_held_refreshed();
+        assert_eq!(
+            app.off_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the same-id refresh the charge never re-clears"
+        );
+        // THE ITEM CHANGE: the component the old stack alone kept —
+        // the refresh the id-change key drops it
+        app.live_inv_slots[45] = (wire("shield"), 1);
+        app.offhand_held_refreshed();
+        assert!(
+            app.off_charge.is_none(),
+            "the stack switch dropped the OFF charge"
+        );
+        // THE EMPTINESS: the cleared offhand slot the same law speaks
+        app.off_charge = Some(mc_registry::ChargeKind::Rocket);
+        app.live_inv_slots[45] = (0, 0);
+        app.offhand_held_refreshed();
+        assert!(
+            app.off_charge.is_none(),
+            "the emptied offhand dropped the OFF charge"
+        );
     }
 
     /// THE BLOCK-USE LANE's OFFLINE ARC — the App owns the procedural

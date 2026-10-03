@@ -697,6 +697,20 @@ pub fn load_charge_item(id: i32, kind: mc_registry::ChargeKind) -> Option<HeldIt
     load_item_layers(&layers)
 }
 
+/// The ctx-general charge loader (the loaded crossbow's resting render
+/// on EITHER side — the OFFHAND's own charge lane the LEFT context
+/// wears, the same charge_type select's case the main lane speaks).
+/// `None` = no charge lane, a broken stanza or an unknown model — the
+/// caller renders the bare arm, never a half-render.
+pub fn load_charge_item_ctx(
+    id: i32,
+    kind: mc_registry::ChargeKind,
+    ctx: usize,
+) -> Option<HeldItem> {
+    let layers = mc_registry::item_charge_layers(id, kind)?;
+    load_item_layers_ctx(&layers, ctx)
+}
+
 /// The item-in-hand anchor chain, `side` = +1 (the RIGHT main hand, the
 /// default offline player's). At the rest pose (swing 0, equip 0) the
 /// only non-trivial terms are the attack transform's rotY(side*45deg) ..
