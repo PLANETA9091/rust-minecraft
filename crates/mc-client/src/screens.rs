@@ -7863,6 +7863,7 @@ impl App {
         let mut reload: Option<(i32, usize)> = None;
         let mut spear_use_tick: Option<u32> = None;
         let mut brush_use_tick: Option<u32> = None;
+        let mut crossbow_load_tick: Option<(UseHand, i32)> = None;
         if let Some(active) = self.using_item.as_mut() {
             active.ticks += 1;
             if let Some(def) = mc_registry::item_using_def(active.item) {
@@ -7873,6 +7874,24 @@ impl App {
                 if idx != active.state {
                     active.state = idx;
                     reload = Some((active.item, idx));
+                }
+            }
+            // THE CROSSBOW'S OWN LOAD TICK (javap `CrossbowItem.
+            // onUseTick` pcs 122-141 the 26.2 walk speaks — the charge
+            // ratio the `f >= 1.0` fcmp crossing serves, the
+            // `!isCharged` gate the component's own absence keeps —
+            // every tick past the crossing until the component wears):
+            // the walk reads AFTER the borrow ends (the drain-slot
+            // pattern the spear/brush lanes speak)
+            if mc_registry::item_charge_def(active.item).is_some()
+                && active.ticks >= mc_registry::CROSSBOW_CHARGE_TICKS
+            {
+                let unloaded = match active.hand {
+                    UseHand::Off => self.off_charge.is_none(),
+                    UseHand::Main => self.held_charge.is_none(),
+                };
+                if unloaded {
+                    crossbow_load_tick = Some((active.hand, active.item));
                 }
             }
             // THE KINETIC WEAPON'S OWN TICK (javap `ItemStack.onUseTick`
@@ -7914,6 +7933,15 @@ impl App {
         if let Some(elapsed) = brush_use_tick {
             if !self.paused {
                 self.brush_use_tick_walk(elapsed);
+            }
+        }
+        // THE CROSSBOW'S OWN LOAD WALK (javap `CrossbowItem.onUseTick`
+        // the 26.2 walk serves — the tryLoadProjectiles the
+        // full-charge crossing banks; the pause the world's own tick
+        // sleeps)
+        if let Some((hand, item)) = crossbow_load_tick {
+            if !self.paused {
+                self.crossbow_use_tick_load(hand, item);
             }
         }
         // THE EAT CLOCK (the consumable's own hold — the vanilla
@@ -16318,23 +16346,14 @@ impl App {
         let Some(active) = self.using_item.take() else {
             return;
         };
-        // THE LOAD LAW: the full charge loads the projectile (the
-        // crossbow's own gate — the charge def names the component
-        // select's carrier; the bow has no charge lane). THE ROUTE
-        // THE HAND SPEAKS: the OFF turn's own pull the OFFHAND lane
-        // loads (the off_charge the off-hold verdict and the LEFT
-        // bolt render read), the MAIN the held_charge keeps — the
-        // leak the one-lane law never speaks (the dev-62 divergence
-        // the route closes).
-        if active.ticks >= mc_registry::CROSSBOW_CHARGE_TICKS
-            && mc_registry::item_charge_def(active.item).is_some()
-        {
-            if active.hand == UseHand::Off {
-                self.off_charge = Some(mc_registry::ChargeKind::Arrow);
-            } else {
-                self.held_charge = Some(mc_registry::ChargeKind::Arrow);
-            }
-        }
+        // THE LOAD LAW MOVED (javap `CrossbowItem.onUseTick` the 26.2
+        // walk serves — the full-charge crossing the tryLoadProjectiles
+        // walk banks at the USE TICK, not the release: the release's
+        // own `releaseUsing` the boolean the update walk reads, the
+        // component the crossing's own scan+consume arms — the
+        // crossbow_use_tick_load walk the drain slot serves). The
+        // under-charged release the plain restore keeps; the loaded
+        // weapon the charge lane's own render answers.
         // THE BOW'S OWN RELEASE (javap `BowItem.releaseUsing` the 26.2
         // bytecode speaks: the power the getPowerForTime walk answers —
         // `f < 0.1` the honest silence the release keeps (no shot, no
@@ -22294,6 +22313,103 @@ impl App {
         mc_registry::generated::item_order::ITEM_WIRE_ORDER
             .get(id as usize)
             .copied()
+    }
+
+    /// THE CROSSBOW'S OWN PROJECTILE SCAN (javap `Player.getProjectile`
+    /// + `ProjectileWeaponItem.getHeldProjectile` the 26.2 walk speaks
+    /// — the crossbow's own predicate pair the clinit keeps): the HELD
+    /// projectile first — the OFFHAND item the getHeldProjectile's
+    /// OFF_HAND test keeps, the MAIN hand the tail answers — the
+    /// ARROW_OR_FIREWORK predicate the getSupportedHeldProjectiles
+    /// carries (the firework the held hands alone load), then the
+    /// container order the getAllSupportedProjectiles' ARROW_ONLY loop
+    /// serves (the items 0..36 the main list carries, the armor rows
+    /// the mayPlace gate never holds, the offhand the held scan's own
+    /// answer keeps). The kind the stack's own id names — the arrow
+    /// the FALSE keeps, the firework_rocket the TRUE banks. None = the
+    /// empty scan (tryLoadProjectiles' own false — no load).
+    fn crossbow_projectile_scan(&self) -> Option<(bool, usize)> {
+        let arrow_id = mc_registry::item_id_by_name("arrow");
+        let firework_id = mc_registry::item_id_by_name("firework_rocket");
+        // THE HELD PROJECTILE (getHeldProjectile — the OFF_HAND the
+        // first test speaks, the MAIN hand the tail keeps)
+        let off = self.inventory.offhand[0];
+        if off.1 > 0 {
+            if Some(off.0) == firework_id {
+                return Some((true, crate::drops::OFFHAND_CONTAINER));
+            }
+            if Some(off.0) == arrow_id {
+                return Some((false, crate::drops::OFFHAND_CONTAINER));
+            }
+        }
+        let main_slot = self.selected_hotbar;
+        let main = self.inventory.items[main_slot];
+        if main.1 > 0 {
+            if Some(main.0) == firework_id {
+                return Some((true, main_slot));
+            }
+            if Some(main.0) == arrow_id {
+                return Some((false, main_slot));
+            }
+        }
+        // THE CONTAINER ORDER (getAllSupportedProjectiles — the
+        // ARROW_ONLY predicate the inventory loop serves; the first
+        // match wins)
+        for (i, &(id, count)) in self.inventory.items.iter().enumerate() {
+            if count > 0 && Some(id) == arrow_id {
+                return Some((false, i));
+            }
+        }
+        None
+    }
+
+    /// THE CROSSBOW'S OWN LOAD WALK (javap `CrossbowItem.onUseTick`
+    /// pcs 122-156 the 26.2 walk serves — the ratio >= 1.0 crossing
+    /// the tryLoadProjectiles + ChargingSounds.end walk banks, the
+    /// `!level.isClientSide` gate the server-side walk keeps — the
+    /// offline world the stand-in answers): the scan the kind picks,
+    /// the consume the useAmmo's split(1) speaks (the survival draw
+    /// the plain crossbow's own ammo_use 1 costs — the INTANGIBLE
+    /// copy the Infinity enchantment never arms), the component the
+    /// route the hand serves, and the re-bake the charged bolt's
+    /// mid-hold render wears (the vanilla's own model select the
+    /// component arms while the use still holds). THE LIVE SESSION
+    /// the local belief the recorded law keeps (the server's own
+    /// component the wire syncs — the arrow stand-in the pull arms
+    /// at the same crossing).
+    fn crossbow_use_tick_load(&mut self, hand: UseHand, item: i32) {
+        let charge = if self.live_clicks.is_none() && !self.world_is_network {
+            // THE OFFLINE LANE (the server stand-in): the scan the
+            // kind picks, the consume the draw's own shrink speaks,
+            // the EMPTY scan the no-load silence keeps
+            let Some((rocket, slot)) = self.crossbow_projectile_scan() else {
+                return; // tryLoadProjectiles' own false
+            };
+            self.consume_arrow_at(slot);
+            if rocket {
+                mc_registry::ChargeKind::Rocket
+            } else {
+                mc_registry::ChargeKind::Arrow
+            }
+        } else {
+            // THE LIVE SESSION'S OWN LOCAL BELIEF (the recorded law —
+            // the arrow stand-in the pull arms)
+            mc_registry::ChargeKind::Arrow
+        };
+        // THE COMPONENT THE ROUTE THE HAND SERVES (the off_charge the
+        // LEFT bolt render reads, the held_charge the right keeps —
+        // the leak the one-lane law never speaks)
+        match hand {
+            UseHand::Off => self.off_charge = Some(charge),
+            UseHand::Main => self.held_charge = Some(charge),
+        }
+        // THE RE-BAKE (the charged bolt the mid-hold render wears —
+        // the charge lane the resting resolution reads first, the
+        // using-state reload the crossing's own answer outranks)
+        match hand {
+            UseHand::Off => self.load_offhand_payload_from_id(Some(item)),
+            UseHand::Main => self.load_held_payload(item, None),
+        }
     }
 
     /// THE PROJECTILE'S OWN SCAN (javap `Player.getProjectile` the 26.2
@@ -52567,8 +52683,15 @@ cow_sound_variant: None,
                 .expect("the item rides the wire") as i32
         };
         let crossbow_id = wire("crossbow");
+        let arrow_id = wire("arrow");
         let slot = app.selected_hotbar;
         app.inventory.items[slot] = (crossbow_id, 1);
+        // THE QUIVER'S OWN ARROW (the container scan the load's own
+        // scan law serves — the ARROW_ONLY predicate the
+        // getAllSupportedProjectiles carries, the first slot the
+        // container order picks)
+        let quiver = (slot + 1) % app.inventory.items.len();
+        app.inventory.items[quiver] = (arrow_id, 1);
         app.hotbar_slots = app.inventory.hotbar();
         // the spawn band's air (the terrain's own tops never reach),
         // the level -z look the camera's own forward keeps
@@ -52580,18 +52703,33 @@ cow_sound_variant: None,
             yaw: 0.0,
             pitch: 0.0,
         });
-        // THE LOAD: the full-charge pull the release loads (the
-        // client's charge lane the component's own word keeps — the
-        // load the shot never speaks)
+        // THE LOAD: the full-charge crossing the USE TICK banks (javap
+        // `CrossbowItem.onUseTick` the 26.2 walk — the release the
+        // boolean the update walk reads, the component the crossing's
+        // own scan+consume arms; the load the shot never speaks)
         assert!(app.on_right_press(0, 0), "the pull starts");
         for _ in 0..25 {
             app.update();
         }
+        assert_eq!(
+            app.held_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the crossing LOADED the arrow mid-hold"
+        );
+        assert_eq!(
+            app.inventory.items[quiver].1, 0,
+            "the survival draw the useAmmo's own split(1) costs"
+        );
+        let midhold = app.held_item.as_ref().expect("the charged payload mid-hold");
+        assert!(
+            midhold.binds_texture("item/crossbow_arrow"),
+            "the charged bolt the mid-hold render wears"
+        );
         app.on_right_release();
         assert_eq!(
             app.held_charge,
             Some(mc_registry::ChargeKind::Arrow),
-            "the full charge LOADED the arrow"
+            "the release the component keeps"
         );
         assert!(app.arrows.is_empty(), "the load the shot never speaks");
         // THE SHOT: the charged press the instant walk answers — the
@@ -52675,8 +52813,14 @@ cow_sound_variant: None,
         app.inventory.items[slot] = (0, 0);
         app.inventory.offhand[0] = (crossbow_id, 1);
         app.offhand_held_refreshed();
+        // THE QUIVER'S OWN ARROW the MAIN hand holds (the held scan's
+        // MAIN branch — the getHeldProjectile's OFF_HAND test the
+        // crossbow itself fails, the MAIN hand the tail answers)
+        let arrow_id = wire("arrow");
+        app.inventory.items[slot] = (arrow_id, 1);
         // THE OFF PULL: the OFF turn's own pull the LEFT layers
-        // re-bake, the full charge the OFF lane loads
+        // re-bake, the full charge the crossing loads mid-hold (the
+        // same onUseTick law the MAIN lane wears)
         assert!(app.on_right_press(0, 0), "the OFF pull starts");
         assert!(
             matches!(
@@ -52688,11 +52832,25 @@ cow_sound_variant: None,
         for _ in 0..25 {
             app.update();
         }
+        assert_eq!(
+            app.off_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the crossing LOADED the OFF lane mid-hold"
+        );
+        assert_eq!(
+            app.inventory.items[slot].1, 0,
+            "the survival draw the MAIN hand's stack costs"
+        );
+        let midhold = app.held_offhand.as_ref().expect("the LEFT charged mid-hold");
+        assert!(
+            midhold.binds_texture("item/crossbow_arrow"),
+            "the charged bolt the LEFT mid-hold render wears"
+        );
         app.on_right_release();
         assert_eq!(
             app.off_charge,
             Some(mc_registry::ChargeKind::Arrow),
-            "the full charge LOADED the OFF lane"
+            "the release the component keeps"
         );
         // THE OFF SHOT: the press the instant walk answers — the
         // arrow the same law banks (the hand the walk never reads)
@@ -52955,14 +53113,156 @@ cow_sound_variant: None,
         );
     }
 
+    /// THE CROSSBOW'S OWN ROCKET LOAD — the HELD firework the
+    /// ARROW_OR_FIREWORK scan loads (javap `Player.getProjectile` +
+    /// `CrossbowItem.onUseTick` the 26.2 walk speaks — the held scan
+    /// the getHeldProjectile's OFF_HAND test keeps, the container
+    /// order the ARROW_ONLY loop the firework never passes, the
+    /// crossing the tryLoadProjectiles + useAmmo's split(1) walk
+    /// serves): the offhand rocket the pull loads mid-hold, the
+    /// charged FIREWORK bolt the mid-hold render wears, the release
+    /// the component keeps, and the press the rocket's own shot
+    /// speaks — the held-a-rocket arc the full loop answers.
+    #[test]
+    fn the_crossbow_the_rocket_load_the_held_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let rocket_id = wire("firework_rocket");
+        let slot = app.selected_hotbar;
+        // THE CROSSBOW the main hand holds, the ROCKET the offhand
+        // carries (the held scan's OFF_HAND branch — the firework the
+        // container scan never picks, the held hand alone loads it)
+        app.inventory.items[slot] = (crossbow_id, 1);
+        app.inventory.offhand[0] = (rocket_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE PULL: the crossing the ROCKET loads mid-hold — the kind
+        // the stack's own id names, the consume the offhand's own
+        // stack costs
+        assert!(app.on_right_press(0, 0), "the pull starts");
+        for _ in 0..25 {
+            app.update();
+        }
+        assert_eq!(
+            app.held_charge,
+            Some(mc_registry::ChargeKind::Rocket),
+            "the held firework the crossing LOADED as the Rocket kind"
+        );
+        assert_eq!(
+            app.inventory.offhand[0].1, 0,
+            "the survival draw the offhand's stack costs"
+        );
+        let midhold = app.held_item.as_ref().expect("the charged payload mid-hold");
+        assert!(
+            midhold.binds_texture("item/crossbow_firework"),
+            "the ROCKET bolt the mid-hold render wears"
+        );
+        app.on_right_release();
+        assert_eq!(
+            app.held_charge,
+            Some(mc_registry::ChargeKind::Rocket),
+            "the release the component keeps"
+        );
+        // THE SHOT: the charged press the firework's own walk answers
+        // — the rocket the eye-minus-0.15 spawn rides, the arrow lane
+        // the Rocket kind never leaks
+        assert!(app.on_right_press(0, 0), "the charged press answers");
+        assert!(app.held_charge.is_none(), "the shot consumed the charge");
+        assert_eq!(
+            app.fireworks.len(),
+            1,
+            "the loaded rocket the firework's own shot speaks"
+        );
+        assert!(
+            app.arrows.is_empty(),
+            "the Rocket kind the arrow lane never leaks"
+        );
+        let f = &app.fireworks[0];
+        assert!(
+            (f.y - (eye_y as f64 - crate::mob::FIREWORK_EYE_BACKOFF)).abs() < 1e-6,
+            "the spawn the eye-minus-0.15 walk keeps ({})",
+            f.y
+        );
+        assert!(
+            f.vz < -1.57 && f.vz > -1.63,
+            "the -z the 1.6 flat power speaks ({})",
+            f.vz
+        );
+    }
+
+    /// THE CROSSBOW'S OWN EMPTY SCAN — the no-load silence the
+    /// tryLoadProjectiles' false keeps (javap `CrossbowItem.onUseTick`
+    /// the 26.2 walk speaks — the crossing the isCharged gate re-arms
+    /// every tick, the scan's own empty verdict the component never
+    /// arms): the projectile-less pull the load never speaks, the
+    /// release the plain crossbow restores, and the fresh press the
+    /// pull re-arms (the vanilla's own uncharged behavior).
+    #[test]
+    fn the_crossbow_the_empty_scan_the_silence_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (crossbow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE PAST-THE-CROSSING HOLD: the scan's empty verdict the
+        // component never arms — every tick the isCharged gate keeps
+        // asking, the empty scan the silence keeps
+        assert!(app.on_right_press(0, 0), "the pull starts");
+        for _ in 0..30 {
+            app.update();
+        }
+        assert!(
+            app.held_charge.is_none(),
+            "the empty scan the load never speaks"
+        );
+        assert!(app.is_using(), "the hold the crossing never ends");
+        app.on_right_release();
+        assert!(
+            app.held_charge.is_none(),
+            "the release the empty scan's silence keeps"
+        );
+        let plain = app.held_item.as_ref().expect("the plain crossbow returns");
+        assert!(
+            plain.binds_texture("item/crossbow_standby"),
+            "the under-charged law the plain restore keeps"
+        );
+        // THE RE-PULL: the fresh press the pull re-arms (the vanilla's
+        // own uncharged behavior — the crossbow the load never wore)
+        assert!(app.on_right_press(0, 0), "the fresh pull starts");
+        assert!(app.is_using(), "the pull the fresh stack arms");
+    }
+
     /// THE OFFHAND'S OWN PULL ARC — the LAYER-pull lane the OFF turn
     /// re-bakes through the LEFT ctx (the vanilla startUseItem's
     /// for-each-hand walk: the MAIN hand's PASS the OFF hand's useItem
     /// answers): the off-hand crossbow the empty main hand backs, the
     /// press starts the OFF pull (the OFF_HAND ordinal the echo
-    /// speaks), the full-charge release LOADS the OFF lane (javap
-    /// releaseUsing: tryLoadProjectiles sets the CHARGED_PROJECTILES
-    /// component), the LEFT resting render switches to the charged
+    /// speaks), the full-charge crossing LOADS the OFF lane (javap
+    /// `CrossbowItem.onUseTick`: tryLoadProjectiles sets the
+    /// CHARGED_PROJECTILES component at the ratio >= 1.0 tick — the
+    /// release the boolean the update walk reads), the LEFT resting
+    /// render switches to the charged
     /// bolt (the charge_type select's arrow case through the LEFT
     /// context), the next right press fires INSTANTLY (the use()'s
     /// CONSUME branch — no pull starts), and the MAIN lane the OFF
