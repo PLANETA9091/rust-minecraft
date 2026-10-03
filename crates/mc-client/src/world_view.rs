@@ -349,6 +349,19 @@ pub struct SnapshotView {
     /// refresh that carried them (the worker's own drain empties the
     /// mailbox after — each word rides exactly one ship).
     pub arrow_syncs: Vec<WireArrowSync>,
+    /// The wire's FIREWORK population (see [`WireFirework`]) — the
+    /// rocket entities the registry named `minecraft:firework_rocket`,
+    /// the client sim lane's own spawn words (the flight the sim
+    /// answers between the server's corrections; the empty list the
+    /// honest silence: no rocket the server spawned, the shape every
+    /// lane rides).
+    pub fireworks: Vec<WireFirework>,
+    /// The wire rockets' PENDING SYNC WORDS — the Entity Position Sync
+    /// mailbox the model resolved (see [`WireFireworkSync`]): the
+    /// server's corrections for the rockets in flight, shipped once
+    /// with the refresh that carried them (the worker's own drain
+    /// empties the mailbox after — each word rides exactly one ship).
+    pub firework_syncs: Vec<WireFireworkSync>,
     /// The wire mobs' PENDING VOICES — the Entity Sound mailbox the
     /// model resolved (see [`WireVoice`]): the sounds the SERVER
     /// played for its mobs, shipped once with the refresh that
@@ -1401,13 +1414,18 @@ pub struct WireWhiteSmokeEvent {
 
 /// One wire FIREWORK-EXPLODE arm — the Entity Event packet's own
 /// landing (the byte-17 words the server's own rocket broadcasts): the
-/// full-precision anchor the `createFireworks` call keeps, verbatim,
-/// the MOTION args the burst shape's spread feeds and the NON-empty
-/// branch's explosion list the Starter walks (the plain rocket's own
-/// poof burst the render lane folds from the EMPTY list — the blast
-/// the non-empty Starter branch alone banks).
+/// entity's own id (the wire-rocket sim's anchor lookup key — the
+/// client entity's own pose the vanilla createFireworks anchor
+/// reads), the full-precision anchor the `createFireworks` call
+/// keeps, verbatim, the MOTION args the burst shape's spread feeds
+/// and the NON-empty branch's explosion list the Starter walks (the
+/// plain rocket's own poof burst the render lane folds from the EMPTY
+/// list — the blast the non-empty Starter branch alone banks).
 #[derive(Debug, Clone, PartialEq)]
 pub struct WireFireworkExplodeEvent {
+    /// The rocket's own entity id (the sim pose the screen layer's
+    /// lookup prefers — the store pose the no-sim fallback keeps).
+    pub entity_id: i32,
     pub x: f64,
     pub y: f64,
     pub z: f64,
@@ -1926,6 +1944,91 @@ pub struct WireArrowSync {
     pub yaw: f32,
     /// The synced pitch, verbatim.
     pub pitch: f32,
+}
+
+/// One wire FIREWORK SYNC — the Entity Position Sync packet's own word
+/// for a `minecraft:firework_rocket` entity, projected from the
+/// model's pending-sync mailbox (see
+/// [`crate::world_model::FireworkSyncArm`]): the server's
+/// authoritative correction the wire-rocket sim re-poses at (the
+/// 26.2 handler's near/far law — interpolate inside the 64-cell
+/// band, snap beyond it). The velocity word is deliberately absent —
+/// the handler's raw walk never reads it, the sim's own flight
+/// keeps.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireFireworkSync {
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The synced yaw, verbatim (the render's own walk never reads
+    /// it — the axis/billboard lane the camera's own constants pose
+    /// — the arm's verbatim pair the sync's shape keeps).
+    pub yaw: f32,
+    /// The synced pitch, verbatim.
+    pub pitch: f32,
+}
+
+/// One wire FIREWORK ROCKET as the client sim consumes it — the Add
+/// Entity snapshot's pose verbatim + the spawn word's motion (the LP
+/// Vec3 the flight sim consumes) + the SHOT_AT_ANGLE word the data
+/// accessor keeps. The vanilla ClientLevel's own recreateFromPacket
+/// law: the client-side rocket the packet's words bank, the flight
+/// the client's own tick answers between the server's corrections.
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireFirework {
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The spawn word's own motion — the LP Vec3 the Add Entity
+    /// packet carried (the shoot's initial velocity the straight
+    /// flight keeps). The flight sim's initial `deltaMovement`.
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// THE SHOT-AT-ANGLE WORD — the Set Entity Data accessor 10
+    /// (javap `FireworkRocketEntity.<clinit>` the defineId triple
+    /// speaks: ITEM_STACK 8, OPTIONAL_UNSIGNED_INT 9, BOOLEAN 10) the
+    /// render's axis walk reads: the TRUE arm the ZP/YP/XP rotations
+    /// wear, the FALSE the plain billboard keeps. The byte's absence
+    /// the honest silence keeps (false — the dispenser's plain shot
+    /// the billboard lane renders).
+    pub shot_at_angle: bool,
+}
+
+/// THE FIREWORK PROJECTION: the entity store's `minecraft:firework_rocket`
+/// bodies, the flight lane's own spawn words. Every other type id stays
+/// honest data the screen doesn't draw (the arrow and mob filters' own
+/// shape).
+pub fn fireworks_view(model: &WorldModel) -> Vec<WireFirework> {
+    model
+        .entities()
+        .filter_map(|(id, e)| {
+            let name = model.entity_type_name(e.type_id)?;
+            if name != "minecraft:firework_rocket" {
+                return None; // not-yet-drawn types stay honest data
+            }
+            // THE SHOT-AT-ANGLE BYTE (the accessor 10 the class tree
+            // speaks — the Boolean serializer the render's axis walk
+            // reads; any other entry shape or the byte's ABSENCE the
+            // plain-billboard silence keeps)
+            let shot_at_angle = matches!(
+                e.data.get(&crate::mob::FIREWORK_DATA_SHOT_AT_ANGLE_ID),
+                Some(mc_protocol::play::EntityDataEntry::Bool(true))
+            );
+            Some(WireFirework {
+                id,
+                x: e.x,
+                y: e.y,
+                z: e.z,
+                vx: e.motion[0],
+                vy: e.motion[1],
+                vz: e.motion[2],
+                shot_at_angle,
+            })
+        })
+        .collect()
 }
 
 /// One wire mob as the renderer consumes it — the Add Entity
@@ -3221,6 +3324,12 @@ pub fn materialize_snapshot_view(
         // and no arrow syncs (the join snapshot carries no corrections
         // — the empty mailbox the projection walks)
         arrow_syncs: Vec::new(),
+        // and no rockets (a fresh join carries none in flight — the
+        // empty lane the sim never walks)
+        fireworks: Vec::new(),
+        // and no rocket syncs (the join snapshot carries no rocket
+        // corrections — the empty mailbox the projection walks)
+        firework_syncs: Vec::new(),
         // and no voices yet (the join snapshot carries no played sounds
         // — the empty mailbox the projection walks)
         voices: Vec::new(),
@@ -4332,6 +4441,7 @@ impl LiveView {
             .firework_explode_events
             .iter()
             .map(|arm| WireFireworkExplodeEvent {
+                entity_id: arm.entity_id,
                 x: arm.x,
                 y: arm.y,
                 z: arm.z,
@@ -4395,6 +4505,23 @@ impl LiveView {
                 pitch: arm.x_rot,
             })
             .collect();
+        // the wire rockets' sync mailbox's own projection (the words
+        // in wire order — the worker's drain empties the mailbox after
+        // the ship, each word rides exactly one refresh; the SAME
+        // near/far walk the arrow corrections serve)
+        let firework_syncs = self
+            .model
+            .firework_syncs
+            .iter()
+            .map(|arm| WireFireworkSync {
+                id: arm.id,
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+                yaw: arm.y_rot,
+                pitch: arm.x_rot,
+            })
+            .collect();
         let Some(player) = self.model.player.as_ref() else {
             return SnapshotView {
                 world: materialize(
@@ -4431,6 +4558,12 @@ impl LiveView {
                 // the sync words ride the pose-less arm too — the
                 // corrections are the connection's own word
                 arrow_syncs,
+                // the rockets' belief rides the same arm — the flight
+                // the sim lane owns between the server's words
+                fireworks: fireworks_view(&self.model),
+                // the rockets' sync words ride the pose-less arm too —
+                // the corrections the sim lane re-poses at
+                firework_syncs,
                 voices,
                 world_voices,
                 // the scoreboard's belief rides the pose-less arm too —
@@ -4655,6 +4788,12 @@ impl LiveView {
             // the sync words ride every refresh too — the corrections
             // follow the mailbox exactly like the voices do
             arrow_syncs,
+            // the rockets ride with the population — the flight the sim
+            // lane owns between the server's words
+            fireworks: fireworks_view(&self.model),
+            // the rockets' sync words ride every refresh too — the
+            // corrections the sim lane re-poses at
+            firework_syncs,
             voices,
             world_voices,
             // the scoreboard's belief rides every refresh too — the
@@ -6248,6 +6387,93 @@ mod tests {
         }));
         let upd = view.refresh(example_mapper);
         assert!(!upd.arrows[0].crit, "the cleared byte the plain shot speaks");
+    }
+
+    /// THE FIREWORKS VIEW READS THE SHOT-AT-ANGLE WORD (the Set Entity
+    /// Data accessor 10 — the BOOLEAN serializer the render's axis
+    /// walk reads): the rocket-type body the projection names, the
+    /// spawn word's motion the sim lane's flight banks, the accessor's
+    /// absence the honest billboard keeps (false — the dispenser's
+    /// plain shot), the TRUE word the axis lane arms, the FALSE word
+    /// the billboard answers again. The OTHER types stay outside (the
+    /// arrow body the projection never names).
+    #[test]
+    fn the_fireworks_view_reads_the_shot_at_angle_word() {
+        use mc_protocol::play::{EntityDataEntry, EntityDataSet, EntitySpawn, SetEntityDataEntry};
+        let mut m = WorldModel::new();
+        m.registry.entity_types = vec![
+            "minecraft:arrow".to_string(),
+            "minecraft:firework_rocket".to_string(),
+        ];
+        // the rocket rides the store beside an arrow (the lanes' own
+        // contrast — the arrow body the firework projection never
+        // names)
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 300,
+            uuid: 1,
+            type_id: 1,
+            x: 15.0,
+            y: 66.4,
+            z: 12.0,
+            movement: [0.13, 0.94, -0.31],
+            x_rot: -85.0,
+            y_rot: 22.5,
+            y_head_rot: 22.5,
+            data: 0,
+        })));
+        assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+            id: 301,
+            uuid: 2,
+            type_id: 0,
+            x: 0.0,
+            y: 64.0,
+            z: 0.0,
+            movement: [1.0, 0.0, 0.0],
+            x_rot: 0.0,
+            y_rot: 0.0,
+            y_head_rot: 0.0,
+            data: 0,
+        })));
+        let mut view = LiveView {
+            model: m,
+            side: 1,
+        };
+        // THE BYTE'S ABSENCE: the plain shot the metadata never spoke
+        let upd = view.refresh(example_mapper);
+        assert_eq!(upd.fireworks.len(), 1, "the rocket body the projection names");
+        assert!(
+            !upd.fireworks[0].shot_at_angle,
+            "the silent byte the plain billboard keeps"
+        );
+        assert_eq!(upd.fireworks[0].id, 300);
+        assert_eq!(
+            (upd.fireworks[0].vx, upd.fireworks[0].vy, upd.fireworks[0].vz),
+            (0.13, 0.94, -0.31),
+            "the spawn word's motion the flight banks"
+        );
+        // THE TRUE WORD: the crossbow's own shot the axis lane arms
+        view.model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 300,
+            entries: vec![SetEntityDataEntry {
+                index: crate::mob::FIREWORK_DATA_SHOT_AT_ANGLE_ID,
+                serializer: mc_protocol::play::entity_data_serializers::BOOLEAN,
+                value: EntityDataEntry::Bool(true),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(upd.fireworks[0].shot_at_angle, "the axis word the projection arms");
+        // THE FALSE WORD: the dispenser's plain shot the billboard
+        // answers again
+        view.model.apply(PlayEvent::EntityData(EntityDataSet {
+            id: 300,
+            entries: vec![SetEntityDataEntry {
+                index: crate::mob::FIREWORK_DATA_SHOT_AT_ANGLE_ID,
+                serializer: mc_protocol::play::entity_data_serializers::BOOLEAN,
+                value: EntityDataEntry::Bool(false),
+            }],
+        }));
+        let upd = view.refresh(example_mapper);
+        assert!(!upd.fireworks[0].shot_at_angle, "the plain word the billboard keeps");
     }
 
     /// THE BURNING WORD'S PROJECTION (the shared-flags accessor —

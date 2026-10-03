@@ -6568,6 +6568,16 @@ pub struct App {
     /// hits. The offline lane's own `arrows` stay the client's
     /// authority — the two never mix.
     pub net_arrows: Vec<crate::mob::Arrow>,
+    /// THE WIRE'S OWN ROCKETS (the Add Entity firework_rocket entities
+    /// the server spawned — the flying rockets the byte-17 bursts
+    /// anchor at): the client-side entities the `from_wire` spawn
+    /// built, the flight the client-side tick's own walk answers
+    /// (the move + the trail every tick — the launch the Sound
+    /// packet's own lane speaks, the lifetime crossing the server's
+    /// byte-17 + Remove Entities the authority keeps, the sim never
+    /// self-explodes). The offline lane's own `fireworks` stay the
+    /// client's authority — the two never mix.
+    pub net_fireworks: Vec<crate::mob::Firework>,
     /// THE FIREWORK'S OWN FLIGHT LANE (the offline world's rockets —
     /// the crossbow's loaded-Rocket shot the performShooting walk
     /// speaks): the flight the FireworkRocketEntity tick's own
@@ -7682,6 +7692,7 @@ impl App {
             arrow_model: None,
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
+            net_fireworks: Vec::new(),
             fireworks: Vec::new(),
             firework_starters: Vec::new(),
             primed_tnts: Vec::new(),
@@ -9355,6 +9366,11 @@ impl App {
                 // words built, the physics the client's own tick
                 // simulates, the hits the wire's own lanes speak)
                 self.tick_net_arrows();
+                // THE WIRE ROCKETS' OWN FLIGHT (the same entity lane —
+                // the client-side rockets the spawn words built, the
+                // trail the client walk every tick speaks, the
+                // crossing the server's byte-17 the mailbox answers)
+                self.tick_net_fireworks();
                 self.tick_paddles();
                 self.tick_ride_yaw();
             }
@@ -18921,6 +18937,89 @@ impl App {
         }
     }
 
+    /// THE WIRE ROCKETS' OWN SPAWN LANE (the vanilla ClientLevel's own
+    /// recreateFromPacket law the net-arrow lane's shape wears): the
+    /// Add Entity population the refresh ships merges by id — the
+    /// FRESH spawn the packet's own words become the client-side
+    /// rocket (the pose AND the motion — the flight's initial
+    /// velocity the LP Vec3 carried, the SHOT_AT_ANGLE the data
+    /// accessor's boolean), the STILL-NAMED id the client's own
+    /// flight state keeps (the sim the between-refresh truth — the
+    /// position syncs the server didn't speak never re-pose a
+    /// projectile), the ids the wire no longer names never re-enter
+    /// (the despawn the Remove Entities spoke — no ghosts). The
+    /// offline lane's rockets are never touched.
+    pub fn live_net_fireworks_updated(&mut self, rockets: Vec<crate::world_view::WireFirework>) {
+        if !self.world_is_network {
+            return;
+        }
+        let mut old: std::collections::HashMap<i32, crate::mob::Firework> = std::mem::take(
+            &mut self.net_fireworks,
+        )
+        .into_iter()
+        .map(|f| (f.id, f))
+        .collect();
+        for w in rockets {
+            if let Some(f) = old.remove(&w.id) {
+                self.net_fireworks.push(f);
+                continue;
+            }
+            self.net_fireworks.push(crate::mob::Firework::from_wire(
+                w.id, w.x, w.y, w.z, w.vx, w.vy, w.vz, w.shot_at_angle,
+            ));
+        }
+    }
+
+    /// THE WIRE ROCKETS' SYNC LANE (the same 26.2 handleEntityPositionSync
+    /// walk the arrow lane's shape wears — the handler answers EVERY
+    /// entity type): the server's authoritative correction re-poses
+    /// the client-side sim rocket. The lookup names the id the client
+    /// tracks (an unknown id drops — the spawn packet stays the only
+    /// creator, the phantom law the model's own store keeps); the
+    /// DISTANCE the snap-vs-interpolate word speaks (the dcmpg 4096.0
+    /// the raw disasm reads — 64 cells squared): inside the band the
+    /// current pose rides the word while the prev trio keeps the OLD
+    /// pose (the render's own lerp walks the transit) and the
+    /// rotation ease-from keeps the old angles; beyond it the snap
+    /// arms the prev trio AND the rotation ease-from AT the word (the
+    /// vanilla snapTo's setOldPosAndRot — the render never streaks
+    /// through a teleport). The DELTA (velocity) word never enters
+    /// the lane (no setDeltaMovement call the whole handler speaks —
+    /// the sim's own flight keeps its physics). The offline lane's
+    /// rockets are never touched.
+    pub fn live_firework_syncs_updated(&mut self, syncs: Vec<crate::world_view::WireFireworkSync>) {
+        if !self.world_is_network {
+            return;
+        }
+        for s in syncs {
+            let Some(f) = self.net_fireworks.iter_mut().find(|f| f.id == s.id) else {
+                continue; // the lookup's own gate — no phantom rockets
+            };
+            let (dx, dy, dz) = (s.x - f.x, s.y - f.y, s.z - f.z);
+            if dx * dx + dy * dy + dz * dz > 4096.0 {
+                // THE SNAP ARM (the vanilla snapTo walk): the prev
+                // trio AND the rotation ease-from arm AT the word —
+                // the render's first lerp never moves
+                f.prev_x = s.x;
+                f.prev_y = s.y;
+                f.prev_z = s.z;
+                f.y_rot_o = s.yaw;
+                f.x_rot_o = s.pitch;
+            }
+            // THE POSE LANDS VERBATIM (both walks end at the word —
+            // the exact float angles ride; the near arm's prev and
+            // ease-from keep the OLD pose so the render's own lerp
+            // walks the transit)
+            f.x = s.x;
+            f.y = s.y;
+            f.z = s.z;
+            f.y_rot = s.yaw;
+            f.x_rot = s.pitch;
+            // THE VELOCITY'S OWN SILENCE: the handler never reads the
+            // delta word — the sim's own flight keeps its physics
+        }
+    }
+
     /// THE WIRE MOBS' VOICE LANE (the vanilla ClientLevel's own
     /// handleEntitySound): the Entity Sound mailbox's shipped voices
     /// land at the ENTITIES the level names — an id outside the mob
@@ -20575,6 +20674,48 @@ impl App {
             self.particles.push(crate::particles::crit(
                 tx, ty, tz, tvx, tvy, tvz, r_life, r_size,
             ));
+        }
+    }
+
+    /// THE WIRE ROCKETS' OWN FLIGHT (the vanilla ClientLevel's own
+    /// entity law — the client-side `FireworkRocketEntity` the
+    /// recreateFromPacket spawn built ticks its OWN physics): the
+    /// client walk the move + the trail every tick answers (the
+    /// straight motion the shotAtAngle lane keeps, the wall the
+    /// plain rocket's rest arms), the LIFETIME the client walk
+    /// never crosses (the server's byte-17 + Remove Entities the
+    /// authority keeps — the sim never self-explodes), the launch
+    /// the Sound packet's own lane speaks (the sim never re-voices).
+    /// The trails the SAME consumption lane the offline walk rides
+    /// (the spark ctor's engine-stream draws the level's ambient rng
+    /// speaks). No world yet (the swap the network arm speaks hasn't
+    /// landed): the rockets rest a tick — never a guessed flight.
+    pub fn tick_net_fireworks(&mut self) {
+        if self.net_fireworks.is_empty() {
+            return;
+        }
+        let Some(world) = self.net_world.as_ref() else {
+            return;
+        };
+        let mut firework_trails: Vec<(f64, f64, f64, f64, f64, f64)> = Vec::new();
+        for f in self.net_fireworks.iter_mut() {
+            let fev = f.tick_wire(world);
+            // THE TRAIL THE TICK SPOKE (the motion args the entity
+            // stream drew, the position the firework's own post-tick
+            // pose the addParticle call passes)
+            if let Some((mx, my, mz)) = fev.trail {
+                firework_trails.push((f.x, f.y, f.z, mx, my, mz));
+            }
+        }
+        // the sim's own walk never arms dead — the retain keeps the
+        // whole lane (the Remove Entities the despawn the merge
+        // answers)
+        for (tx, ty, tz, mx, my, mz) in firework_trails {
+            let spark = crate::particles::firework_spark(
+                tx, ty, tz, mx, my, mz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(spark);
         }
     }
 
@@ -24303,11 +24444,28 @@ impl App {
         events: Vec<crate::world_view::WireFireworkExplodeEvent>,
     ) {
         for ev in events {
+            // THE SIM POSE'S OWN ANCHOR (javap handleEntityEvent the
+            // 26.2 walk — the `createFireworks(getX(), getY(), getZ(), …)`
+            // anchor the CLIENT entity's own pose answers): the
+            // wire-rocket sim the flight the client tick owns, the
+            // sim's CURRENT pose the byte-17's anchor the id lookup
+            // prefers — the store's pose the no-sim fallback keeps
+            // (the rocket the refresh no longer names — the Remove
+            // Entities raced the event — the last sync the server's
+            // own crossing pose banks).
+            let (ax, ay, az) = match self
+                .net_fireworks
+                .iter()
+                .find(|f| f.id == ev.entity_id)
+            {
+                Some(f) => (f.x, f.y, f.z),
+                None => (ev.x, ev.y, ev.z),
+            };
             if ev.explosions.is_empty() {
                 let burst = crate::particles::firework_poof_burst(
-                    ev.x,
-                    ev.y,
-                    ev.z,
+                    ax,
+                    ay,
+                    az,
                     &mut self.level_ambient_rng,
                 );
                 self.particles.extend(burst);
@@ -24317,9 +24475,9 @@ impl App {
                 // non-empty gate the IllegalArgumentException never
                 // arms)
                 self.firework_starters.push(crate::mob::FireworkStarter::new(
-                    ev.x,
-                    ev.y,
-                    ev.z,
+                    ax,
+                    ay,
+                    az,
                     ev.mx,
                     ev.my,
                     ev.mz,
@@ -29688,7 +29846,7 @@ impl App {
         ctx: &RenderCtx,
         cam: &crate::camera::Camera,
     ) {
-        if self.fireworks.is_empty() {
+        if self.fireworks.is_empty() && self.net_fireworks.is_empty() {
             return; // the deterministic scenes carry no rockets — the goldens stay
         }
         use mc_registry::element_quads::Direction;
@@ -29727,7 +29885,7 @@ impl App {
             Direction::West | Direction::East => 0.6,
         };
         let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
-        for f in &self.fireworks {
+        for f in self.fireworks.iter().chain(self.net_fireworks.iter()) {
             // THE EXTRACT'S OWN LERP (the render state's own sampling —
             // the position rides the O pair the frame's partial now)
             let px = f.prev_x + (f.x - f.prev_x) * self.partial_tick as f64;
@@ -50042,6 +50200,242 @@ mod tests {
         assert!(offline.net_arrows.is_empty(), "the offline lane never mixes");
     }
 
+    /// THE WIRE ROCKETS' FLIGHT LANE (the vanilla ClientLevel's own
+    /// recreateFromPacket law the net-arrow lane's shape wears): the
+    /// Add Entity word becomes the CLIENT-SIDE rocket (the pose, the
+    /// motion, the SHOT_AT_ANGLE word), the flight the client's own
+    /// tick simulates (the straight motion the shotAtAngle lane
+    /// keeps, the trail spark the every-tick walk spawns — NO launch
+    /// voice, NO self-explode the client walk never crosses), the
+    /// still-named id rides its OWN sim untouched, the wire's silence
+    /// drops the rocket (no ghosts), the offline lane never enters.
+    #[test]
+    fn the_wire_rockets_fly_the_client_sim() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the spawn lands at the word (the prev trio arms at it — the
+        // render's first lerp never moves)
+        app.live_net_fireworks_updated(vec![crate::world_view::WireFirework {
+            id: 500,
+            x: 10.0,
+            y: 66.0,
+            z: 10.0,
+            vx: 0.0,
+            vy: 1.2,
+            vz: 0.0,
+            shot_at_angle: true,
+        }]);
+        assert_eq!(app.net_fireworks.len(), 1, "the rocket rendered v1");
+        assert_eq!(app.net_fireworks[0].id, 500);
+        assert!(app.net_fireworks[0].shot_at_angle, "the axis word banks");
+        assert_eq!(
+            (app.net_fireworks[0].x, app.net_fireworks[0].y, app.net_fireworks[0].z),
+            (10.0, 66.0, 10.0),
+            "the spawn IS the packet's word"
+        );
+        // THE FLIGHT (the client's own walk): the straight motion
+        // adds (y += vy), the trail spark the every-tick walk spawns
+        // (one particle the tick speaks), NO launch the client walk
+        // never re-voices
+        let before = app.particles.len();
+        app.tick_net_fireworks();
+        assert!((app.net_fireworks[0].y - 67.2).abs() < 1e-9, "the move the velocity speaks");
+        assert_eq!(app.particles.len(), before + 1, "the trail the tick banks");
+        assert!(
+            matches!(
+                app.particles[before].kind,
+                crate::particles::ParticleKind::Spark { .. }
+            ),
+            "the trail the firework spark wears"
+        );
+        // THE NEVER-CROSSING WALK: many ticks the wire rocket flies
+        // (the server's own ceiling the client never replays — the
+        // byte-17 + the Remove the authority keeps)
+        for _ in 0..200 {
+            app.tick_net_fireworks();
+            assert!(!app.net_fireworks[0].dead, "the sim never self-discards");
+        }
+        // THE STILL-NAMED ID: the refresh ships the id again — the
+        // client's own sim rides untouched
+        app.live_net_fireworks_updated(vec![crate::world_view::WireFirework {
+            id: 500,
+            x: 99.0,
+            y: 99.0,
+            z: 99.0,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            shot_at_angle: false,
+        }]);
+        assert_eq!(app.net_fireworks.len(), 1, "no duplicate spawn");
+        assert!(app.net_fireworks[0].shot_at_angle, "the sim's own word stands");
+        assert!(
+            (app.net_fireworks[0].y - 67.2 - 1.2 * 200.0).abs() < 1e-6,
+            "the sim's own truth stands ({})",
+            app.net_fireworks[0].y
+        );
+        // THE WIRE'S SILENCE: the Remove Entities truth drops the
+        // rocket
+        app.live_net_fireworks_updated(vec![]);
+        assert!(app.net_fireworks.is_empty(), "the server's truth, no ghosts");
+        // THE OFFLINE GATE: the lane the network arm never opened
+        // stays the offline lane's own (the word lands nothing)
+        let mut offline = App::new(3);
+        offline.open(ScreenKind::World);
+        offline.live_net_fireworks_updated(vec![crate::world_view::WireFirework {
+            id: 600,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            vx: 1.0,
+            vy: 0.0,
+            vz: 0.0,
+            shot_at_angle: false,
+        }]);
+        assert!(offline.net_fireworks.is_empty(), "the offline lane never mixes");
+    }
+
+    /// THE WIRE ROCKETS' SYNC LANE (the handleEntityPositionSync walk
+    /// the arrow lane's shape wears) + THE SIM ANCHOR'S OWN BYTE-17:
+    /// the near correction re-poses the sim at the word with the prev
+    /// trio keeping the OLD pose, the far correction snaps, the
+    /// velocity keeps its physics, the unknown id drops — and the
+    /// explosion event the sim's CURRENT pose anchors (the
+    /// createFireworks anchor the client entity's own getX/getY/getZ
+    /// answers), the store pose the no-sim fallback keeps.
+    #[test]
+    fn the_firework_sync_reposes_the_rocket_and_the_burst_anchors_the_sim() {
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // the spawn lands at the word, one tick flies the sim's own law
+        app.live_net_fireworks_updated(vec![crate::world_view::WireFirework {
+            id: 500,
+            x: 10.0,
+            y: 66.0,
+            z: 10.0,
+            vx: 0.0,
+            vy: 1.2,
+            vz: 0.0,
+            shot_at_angle: true,
+        }]);
+        app.tick_net_fireworks();
+        assert!((app.net_fireworks[0].y - 67.2).abs() < 1e-9, "the flight's own spot");
+        // THE NEAR SYNC (0.5 out — inside the 64-cell band): the pose
+        // lands, the prev trio keeps the OLD pose (the render walks
+        // the transit)
+        app.live_firework_syncs_updated(vec![crate::world_view::WireFireworkSync {
+            id: 500,
+            x: 10.0,
+            y: 67.7,
+            z: 10.0,
+            yaw: 0.0,
+            pitch: 90.0,
+        }]);
+        assert!((app.net_fireworks[0].y - 67.7).abs() < 1e-9, "the word lands");
+        assert!((app.net_fireworks[0].prev_y - 66.0).abs() < 1e-9, "the transit keeps");
+        assert!((app.net_fireworks[0].x_rot - 90.0).abs() < 1e-4, "the angles land");
+        // THE VELOCITY'S OWN SILENCE: the straight flight's word
+        // stands (the delta the handler never read)
+        assert!((app.net_fireworks[0].vy - 1.2).abs() < 1e-9, "the physics keeps");
+        // THE FAR SYNC (100 cells out): the snap arms the prev trio
+        // AT the word — no streak
+        app.live_firework_syncs_updated(vec![crate::world_view::WireFireworkSync {
+            id: 500,
+            x: 10.0,
+            y: 167.7,
+            z: 10.0,
+            yaw: 0.0,
+            pitch: 90.0,
+        }]);
+        assert!((app.net_fireworks[0].y - 167.7).abs() < 1e-9, "the teleport lands");
+        assert!(
+            (app.net_fireworks[0].prev_y - 167.7).abs() < 1e-9,
+            "the snap's own arm — no streak"
+        );
+        // THE UNKNOWN ID: the lookup's own gate — no phantom rocket
+        app.live_firework_syncs_updated(vec![crate::world_view::WireFireworkSync {
+            id: 999,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            yaw: 0.0,
+            pitch: 0.0,
+        }]);
+        assert_eq!(app.net_fireworks.len(), 1, "no phantom");
+        // THE BYTE-17'S OWN ANCHOR: the event the SIM pose answers —
+        // the burst the poof branch speaks at the rocket's CURRENT
+        // spot (167.7), NOT the arm's store word (3.5)
+        app.net_fireworks[0].x = 10.0;
+        app.net_fireworks[0].y = 167.7;
+        app.net_fireworks[0].z = 10.0;
+        let before = app.particles.len();
+        app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            entity_id: 500,
+            x: 3.5,
+            y: 3.5,
+            z: 3.5,
+            mx: 0.0,
+            my: 0.0,
+            mz: 0.0,
+            explosions: Vec::new(),
+        }]);
+        let burst: Vec<&crate::particles::Particle> =
+            app.particles.iter().skip(before).collect();
+        assert!(
+            (2..=4).contains(&burst.len()),
+            "the poof branch the burst banks ({})",
+            burst.len()
+        );
+        for p in &burst {
+            assert_eq!(
+                (p.x, p.y, p.z),
+                (10.0, 167.7, 10.0),
+                "the sim's own pose the anchor answers"
+            );
+        }
+        // THE NO-SIM FALLBACK: the id the refresh no longer names the
+        // arm's own word anchors (the Remove Entities raced the event
+        // — the store's last sync the crossing pose banks)
+        app.live_net_fireworks_updated(vec![]);
+        let before = app.particles.len();
+        app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            entity_id: 500,
+            x: 3.5,
+            y: 3.5,
+            z: 3.5,
+            mx: 0.0,
+            my: 0.0,
+            mz: 0.0,
+            explosions: Vec::new(),
+        }]);
+        let burst: Vec<&crate::particles::Particle> =
+            app.particles.iter().skip(before).collect();
+        for p in &burst {
+            assert_eq!(
+                (p.x, p.y, p.z),
+                (3.5, 3.5, 3.5),
+                "the store pose the fallback keeps"
+            );
+        }
+        // THE OFFLINE GATE: the sync lane the network arm never
+        // opened lands nothing
+        let mut offline = App::new(3);
+        offline.open(ScreenKind::World);
+        offline.live_firework_syncs_updated(vec![crate::world_view::WireFireworkSync {
+            id: 500,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            yaw: 0.0,
+            pitch: 0.0,
+        }]);
+        assert!(offline.net_fireworks.is_empty(), "the offline lane never mixes");
+    }
+
     /// THE WIRE ARROW'S CRIT TRAIL (the flags byte the projection
     /// rides → the from_wire word the shot arms → the flight the
     /// 4-star-per-tick the particle engine spawns): the crit star the
@@ -53662,6 +54056,7 @@ cow_sound_variant: None,
         // the same empty-explosions law speaks at the arm's own anchor
         let before_live = app.particles.len();
         app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            entity_id: 40,
             x: 1.0,
             y: 2.0,
             z: 3.0,
@@ -53708,6 +54103,7 @@ cow_sound_variant: None,
             has_twinkle: false,
         };
         app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            entity_id: 41,
             x: 10.0,
             y: 70.0,
             z: -5.0,
@@ -53821,6 +54217,7 @@ cow_sound_variant: None,
             has_twinkle: true,
         };
         app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            entity_id: 42,
             x: 0.0,
             y: 0.0,
             z: 0.0,

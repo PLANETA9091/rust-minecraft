@@ -149,9 +149,11 @@ fn run_join(
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireBoat>,
                 Vec<crate::world_view::WireArrow>,
+                Vec<crate::world_view::WireFirework>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
                 Vec<crate::world_view::WireArrowSync>,
+                Vec<crate::world_view::WireFireworkSync>,
                 Option<crate::world_view::WireSidebar>,
                 crate::world_view::WirePlayerList,
                 Option<crate::world_view::WireRide>,
@@ -1049,6 +1051,12 @@ fn run_join(
                                     // despawns — the sim the client's own
                                     // tick owns between them)
                                     upd.arrows,
+                                    // the rockets ride with the population —
+                                    // the firework entities the server spawned
+                                    // stream to the net-rocket lane (the sim
+                                    // the client's own tick owns between the
+                                    // server's corrections)
+                                    upd.fireworks,
                                     // the mobs' voices ride with the
                                     // population — the sounds the server
                                     // played stream to the voice lane
@@ -1064,6 +1072,12 @@ fn run_join(
                                     // lane's re-pose law (each word rides
                                     // exactly one shipped refresh)
                                     upd.arrow_syncs,
+                                    // the rockets' sync words ride beside
+                                    // them — the same Entity Position Sync
+                                    // walk the sim rockets re-pose at (each
+                                    // word rides exactly one shipped
+                                    // refresh)
+                                    upd.firework_syncs,
                                     // the scoreboard's belief rides with
                                     // them — the sidebar the wire trio
                                     // keeps streams to the HUD's lane
@@ -1602,9 +1616,11 @@ pub fn run_gui_app(
                 Vec<crate::world_view::WireMob>,
                 Vec<crate::world_view::WireBoat>,
                 Vec<crate::world_view::WireArrow>,
+                Vec<crate::world_view::WireFirework>,
                 Vec<crate::world_view::WireVoice>,
                 Vec<crate::world_view::WireWorldVoice>,
                 Vec<crate::world_view::WireArrowSync>,
+                Vec<crate::world_view::WireFireworkSync>,
                 Option<crate::world_view::WireSidebar>,
                 crate::world_view::WirePlayerList,
                 Option<crate::world_view::WireRide>,
@@ -2221,9 +2237,11 @@ pub fn run_gui_app(
                     mobs,
                     boats,
                     arrows,
+                    fireworks,
                     voices,
                     world_voices,
                     arrow_syncs,
+                    firework_syncs,
                     sidebar,
                     player_list,
                     ride,
@@ -2338,11 +2356,21 @@ pub fn run_gui_app(
                     // missing id drops — the sim the client's own tick
                     // owns between the refreshes)
                     app.live_net_arrows_updated(arrows);
+                    // the wire-rocket lane beside the net-arrow lane's:
+                    // the spawns and the despawns the wire's own
+                    // population speaks (the fresh id the spawn word
+                    // builds, the missing id drops — the flight the
+                    // client's own tick owns between the server's
+                    // corrections)
+                    app.live_net_fireworks_updated(fireworks);
                     // the arrows' sync lane beside it: the Entity
                     // Position Sync corrections re-pose the sim shots
                     // at the server's word (the near band the transit
                     // keeps, the far band the snap answers)
                     app.live_arrow_syncs_updated(arrow_syncs);
+                    // the rockets' sync lane beside it: the same walk
+                    // the sim rockets re-pose at the server's word
+                    app.live_firework_syncs_updated(firework_syncs);
                     // the voice lane beside the mob lane's: the sounds
                     // the SERVER played for its mobs land at the named
                     // entities (the entity lookup's own gate — the

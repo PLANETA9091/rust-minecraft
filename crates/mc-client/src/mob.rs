@@ -3403,6 +3403,17 @@ fn lerp_rotation(current: f32, target: f32) -> f32 {
     cur + (tgt - cur) * ARROW_ROTATION_LERP
 }
 
+/// THE FIREWORK'S OWN DATA WORDS (javap `FireworkRocketEntity.<clinit>`
+/// the 26.2 walk — the clinit's own defineId triple the Entity base's
+/// 0..7 keeps: the ITEM_STACK accessor 8 the byte-17 handler's
+/// `getExplosions` read answers, the OPTIONAL_UNSIGNED_INT 9 the
+/// attached-to lane the client never rides, the BOOLEAN 10 the
+/// SHOT_AT_ANGLE the render's axis walk reads). The wire's Set Entity
+/// Data entries the store banks — the view projection the accessor id
+/// answers, the entry's absence the honest silence keeps.
+pub const FIREWORK_DATA_ITEM_STACK_ID: u8 = 8;
+pub const FIREWORK_DATA_SHOT_AT_ANGLE_ID: u8 = 10;
+
 /// THE FIREWORK'S OWN FLIGHT (javap `FireworkRocketEntity` the 26.2
 /// bytecode speaks — the crossbow's shot the DATA_SHOT_AT_ANGLE true
 /// ctor keeps): the straight motion the shotAtAngle lane's `1.15 /
@@ -3414,7 +3425,9 @@ fn lerp_rotation(current: f32, target: f32) -> f32 {
 /// walk banks — the despawn the discard keeps.
 #[derive(Debug)]
 pub struct Firework {
-    #[expect(dead_code)] // the entity id the render/wire lane's own walk reads — the ledger keeps
+    /// the entity id the wire lane's own merge walk reads — the
+    /// still-named rocket the refresh matches, the byte-17 anchor the
+    /// sim lookup answers
     pub id: i32,
     pub x: f64,
     pub y: f64,
@@ -3633,22 +3646,118 @@ impl Firework {
                 events.launch = Some((self.x, self.y, self.z));
             }
             self.life += 1;
-            // THE TRAIL THE STUCK REST KEEPS (the client's own
-            // instance the wire's clipped pose wears — the vy the
-            // zeroed state answers −0.0, the gaussians the entity
-            // stream still spends: the client walk the branch never
-            // gates keeps)
-            let tx = self.rng.next_gaussian() * 0.05;
-            let tz = self.rng.next_gaussian() * 0.05;
-            events.trail = Some((tx, -self.vy * 0.5, tz));
+            self.spent_trail(&mut events);
             if self.life > self.lifetime {
                 events.explode = Some((self.x, self.y, self.z));
                 self.dead = true;
             }
             return events;
         }
-        // THE HIT LANE (the getHitResultOnMoveVector's block clip —
-        // the position to the position+velocity the segment clips)
+        self.flight_move(world);
+        self.flight_rotation();
+        // THE LAUNCH (life==0 && !isSilent — the FIREWORK_ROCKET_LAUNCH
+        // the AMBIENT source the 3.0 volume carries, the pitch the
+        // fconst_1 keeps; no isAlive gate the voice's own walk keeps)
+        if self.life == 0 {
+            events.launch = Some((self.x, self.y, self.z));
+        }
+        self.life += 1;
+        self.spent_trail(&mut events);
+        // THE LIFETIME CROSSING (life > lifetime — javap tick pcs
+        // 510-540: the ServerLevel gate the explode call answers, the
+        // broadcastEntityEvent(17) the client's createFireworks burst
+        // the caller's own lane folds, the gameEvent + damage +
+        // discard the server tail keeps — the power-0 damage the
+        // plain rocket's no-op wears)
+        if self.life > self.lifetime {
+            events.explode = Some((self.x, self.y, self.z));
+            self.dead = true;
+        }
+        events
+    }
+
+    /// THE WIRE SPAWN'S OWN SIM (javap the vanilla client's own
+    /// `recreateFromPacket` law the ClientLevel entity answers — the
+    /// Add Entity packet's words the client-side rocket banks): the
+    /// pose verbatim, the motion the spawn word's LP Vec3 carries
+    /// (the shoot's initial velocity the flight sim consumes), the
+    /// SHOT_AT_ANGLE the data accessor's boolean keeps. The lifetime
+    /// the SERVER's own branch holds (the `10 * (1 + flightDuration)
+    /// + nextInt(6) + nextInt(7)` roll the client never replays —
+    /// the wire lane's honest 0 the crossing never reads), the
+    /// stream the id-mixed seed arms (the arrow's persistent-stream
+    /// precedent — the client's own RandomSource the deterministic
+    /// stand-in keeps, the trail's gaussians the ticks spend).
+    pub fn from_wire(
+        id: i32,
+        x: f64,
+        y: f64,
+        z: f64,
+        vx: f64,
+        vy: f64,
+        vz: f64,
+        shot_at_angle: bool,
+    ) -> Firework {
+        Firework {
+            id,
+            x,
+            y,
+            z,
+            prev_x: x,
+            prev_y: y,
+            prev_z: z,
+            vx,
+            vy,
+            vz,
+            y_rot: 0.0,
+            x_rot: 0.0,
+            y_rot_o: 0.0,
+            x_rot_o: 0.0,
+            life: 0,
+            lifetime: 0,
+            dead: false,
+            stuck: false,
+            shot_at_angle,
+            rng: Lcg::new(arrow_entity_seed(id)),
+        }
+    }
+
+    /// THE CLIENT-SIDE FLIGHT (javap `FireworkRocketEntity.tick` the
+    /// 26.2 walk's own split — the `!isClientSide` branch the SERVER
+    /// walk keeps: the launch voice the Sound packet's own lane
+    /// speaks, the life++ the server's clock counts, the lifetime
+    /// crossing the byte-17 event + the Remove Entities the
+    /// authority answers — the client-side rocket NEVER self-explodes
+    /// and never re-voices the launch, the double-walk the two-side
+    /// split retires). The common path the client walk answers: the
+    /// move the hit result clips (the wall the PLAIN rocket's own
+    /// rest — the `hasExplosion()` gate both sides' onHitBlock
+    /// keeps), the rotation the updateRotation ease banks, the trail
+    /// the `isClientSide` branch every tick spawns (the launch tick
+    /// AND the stuck rest AND the crossing's own tick the client's
+    /// instance the same walk wears).
+    pub fn tick_wire(&mut self, world: &World) -> FireworkEvents {
+        let mut events = FireworkEvents::default();
+        self.prev_x = self.x;
+        self.prev_y = self.y;
+        self.prev_z = self.z;
+        self.x_rot_o = self.x_rot;
+        self.y_rot_o = self.y_rot;
+        if !self.stuck {
+            self.flight_move(world);
+            self.flight_rotation();
+        }
+        self.spent_trail(&mut events);
+        events
+    }
+
+    /// THE HIT + MOVE (the tick's common path the both-side walk
+    /// keeps — the getHitResultOnMoveVector's block clip, the hit
+    /// point the PLAIN rocket's rest pins (no discard — the
+    /// `hasExplosion()` gate the onHitBlock walk keeps for the
+    /// empty-explosions rocket), the free fly the constant motion
+    /// adds)
+    fn flight_move(&mut self, world: &World) {
         let hit_block = crate::body::clip_ray(
             world,
             crate::math::Vec3::new(self.x as f32, self.y as f32, self.z as f32),
@@ -3658,11 +3767,6 @@ impl Firework {
                 (self.z + self.vz) as f32,
             ),
         );
-        // THE MOVE (the hit point the block's own walk keeps — the
-        // PLAIN rocket's rest, NOT the discard: the `hasExplosion()`
-        // gate the onHitBlock walk keeps for the empty-explosions
-        // rocket, the lifetime crossing the explode tail answers —
-        // the free fly the constant motion adds)
         match hit_block {
             Some(h) => {
                 self.x = h.x as f64;
@@ -3679,45 +3783,33 @@ impl Firework {
                 self.z += self.vz;
             }
         }
-        // THE ROTATION (javap `Projectile.updateRotation` — the
-        // velocity's own angles the 0.2 lerp eases; the axes the
-        // Projectile walk keeps: yRot from (vx, vz) the NON-negated
-        // pair the arrow's own tick never shares, xRot from (vy,
-        // horiz))
+    }
+
+    /// THE ROTATION (javap `Projectile.updateRotation` — the
+    /// velocity's own angles the 0.2 lerp eases; the axes the
+    /// Projectile walk keeps: yRot from (vx, vz) the NON-negated
+    /// pair the arrow's own tick never shares, xRot from (vy,
+    /// horiz))
+    fn flight_rotation(&mut self) {
         let horiz = (self.vx * self.vx + self.vz * self.vz).sqrt();
         let target_x = ((self.vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
         let target_y = ((self.vx).atan2(self.vz) * 57.295_776_367_187_5) as f32;
         self.x_rot = lerp_rotation(self.x_rot, target_x);
         self.y_rot = lerp_rotation(self.y_rot, target_y);
-        // THE LAUNCH (life==0 && !isSilent — the FIREWORK_ROCKET_LAUNCH
-        // the AMBIENT source the 3.0 volume carries, the pitch the
-        // fconst_1 keeps; no isAlive gate the voice's own walk keeps)
-        if self.life == 0 {
-            events.launch = Some((self.x, self.y, self.z));
-        }
-        self.life += 1;
-        // THE TRAIL (javap tick pcs 430-507 the 26.2 walk — the
-        // `isClientSide` branch the flight's every tick answers AFTER
-        // the life++ the pc 425 speaks and BEFORE the crossing's own
-        // pcs 510 check: the launch tick AND the exploding tick the
-        // trail both wear — the x gaussian FIRST (pcs 469-478), the
-        // y the -vy*0.5 fold the current velocity answers (no draw
-        // the fold carries), the z gaussian SECOND (pcs 494-506) —
-        // the entity's own stream the field continues)
+    }
+
+    /// THE TRAIL (javap tick pcs 430-507 the 26.2 walk — the
+    /// `isClientSide` branch the flight's every tick answers AFTER
+    /// the life++ the pc 425 speaks and BEFORE the crossing's own
+    /// pcs 510 check: the launch tick AND the exploding tick the
+    /// trail both wear — the x gaussian FIRST (pcs 469-478), the
+    /// y the -vy*0.5 fold the current velocity answers (no draw
+    /// the fold carries), the z gaussian SECOND (pcs 494-506) —
+    /// the entity's own stream the field continues)
+    fn spent_trail(&mut self, events: &mut FireworkEvents) {
         let tx = self.rng.next_gaussian() * 0.05;
         let tz = self.rng.next_gaussian() * 0.05;
         events.trail = Some((tx, -self.vy * 0.5, tz));
-        // THE LIFETIME CROSSING (life > lifetime — javap tick pcs
-        // 510-540: the ServerLevel gate the explode call answers, the
-        // broadcastEntityEvent(17) the client's createFireworks burst
-        // the caller's own lane folds, the gameEvent + damage +
-        // discard the server tail keeps — the power-0 damage the
-        // plain rocket's no-op wears)
-        if self.life > self.lifetime {
-            events.explode = Some((self.x, self.y, self.z));
-            self.dead = true;
-        }
-        events
     }
 }
 
@@ -15752,6 +15844,91 @@ mod tests {
             ev.explode.is_some(),
             "the crossing the explode tail answers"
         );
+    }
+
+    /// THE WIRE ROCKET'S OWN CLIENT WALK (the vanilla ClientLevel's
+    /// own entity law — the client-side `FireworkRocketEntity` the
+    /// recreateFromPacket spawn built ticks its OWN physics): the
+    /// from_wire spawn the Add Entity words bank, the flight the
+    /// straight motion the shotAtAngle lane keeps, the trail the
+    /// every-tick spawn the entity stream speaks, the LIFETIME the
+    /// client walk NEVER crosses (the server's own branch the byte-17
+    /// + Remove Entities authority answers — the wire rocket no
+    /// lifetime count self-explodes, the launch the Sound packet's
+    /// own lane speaks the sim never re-voices), the wall the plain
+    /// rocket's rest arms (the stuck trail the -0.0 fold keeps).
+    #[test]
+    fn the_wire_rocket_the_client_walk_the_never_crossing_banks() {
+        let mut wall = arrow_air_world();
+        // the stone column the -z flight clips (the wall rest the
+        // stuck lane the same walk answers)
+        for y in 8..12 {
+            wall.set(8, y, 4, crate::world::STONE);
+        }
+        let mut f = Firework::from_wire(31, 8.5, 10.0, 8.0, 0.0, 0.0, -1.6, true);
+        assert_eq!(f.id, 31, "the wire id the merge walk reads");
+        assert!(f.shot_at_angle, "the accessor-10 word the sim banks");
+        assert_eq!(
+            (f.prev_x, f.prev_y, f.prev_z),
+            (f.x, f.y, f.z),
+            "the spawn pose the lerp's from-trio pins"
+        );
+        // THE FLIGHT TICK: the straight motion advances, the trail
+        // the stream spends, NO launch the client walk speaks
+        let vy = f.vy;
+        let ev = f.tick_wire(&wall);
+        assert_eq!(
+            (f.x, f.y, f.z),
+            (8.5, 10.0, 8.0 - 1.6),
+            "the constant motion the flight adds"
+        );
+        assert_eq!(
+            (f.prev_x, f.prev_y, f.prev_z),
+            (8.5, 10.0, 8.0),
+            "the pre-move trio the render's lerp walks from"
+        );
+        let (tx, ty, tz) = ev.trail.expect("the flight tick the trail wears");
+        assert_eq!(ty, -vy * 0.5, "the y the -vy*0.5 fold answers");
+        // THE STREAM (the id-mixed seed arms — the from_wire ctor
+        // spends NO draws, the trail's gaussians the first pair)
+        let mut rng = Lcg::new(arrow_entity_seed(31));
+        assert_eq!(
+            (tx, tz),
+            (
+                rng.next_gaussian() * 0.05,
+                rng.next_gaussian() * 0.05
+            ),
+            "the entity stream the pair spends"
+        );
+        assert!(ev.launch.is_none(), "the launch the client walk never re-voices");
+        assert!(ev.explode.is_none(), "the client walk the crossing never banks");
+        // THE NEVER-CROSSING WALK: the wire rocket's lifetime the
+        // from_wire ctor pins at 0 — the OFFLINE walk the same state
+        // explodes AT the first tick (life 1 > ceiling 0), the client
+        // walk the crossing never reads (the server's own ceiling the
+        // client never replays — the byte-17 + the Remove the
+        // authority speaks); the wall hit the REST the plain rocket's
+        // own walk keeps
+        let ev = f.tick_wire(&wall);
+        assert!(f.stuck, "the wall hit the rest arms");
+        assert_eq!(
+            (f.vx, f.vy, f.vz),
+            (0.0, 0.0, 0.0),
+            "the rest the motion zeroes"
+        );
+        assert!(f.z <= 5.0 && f.z > 3.9, "the position the wall face pins ({})", f.z);
+        assert!(ev.explode.is_none(), "the zero ceiling the client walk never reads");
+        assert!(!f.dead, "the discard the server's word alone serves");
+        let (_, ty, _) = ev.trail.expect("the stuck tick the trail wears");
+        assert_eq!(ty, 0.0, "the zeroed vy the -0.0 fold answers");
+        // THE REST'S OWN TAIL: the trail the idle stuck ticks keep,
+        // the sim the walk never discards
+        for _ in 0..10 {
+            let ev = f.tick_wire(&wall);
+            assert!(ev.trail.is_some(), "the idle rest the trail keeps");
+            assert!(ev.explode.is_none(), "the idle rest the crossing never banks");
+            assert!(!f.dead, "the rest the client walk never discards");
+        }
     }
 
     fn jockey_flat_world() -> World {

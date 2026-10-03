@@ -259,6 +259,17 @@ pub struct WorldModel {
     /// own projection law (the lerp the refresh serves), the arrows
     /// are the lane whose client-side sim never reads the store back.
     pub arrow_syncs: Vec<ArrowSyncArm>,
+    /// The wire rockets' PENDING SYNC MAILBOX — the Entity Position
+    /// Sync packets' words for `minecraft:firework_rocket` entities
+    /// (see [`FireworkSyncArm`]): the server's authoritative
+    /// corrections the client-side sim lane re-poses at, shipped once
+    /// with the refresh that carried them (the worker's own drain
+    /// empties the mailbox after — each word rides exactly one ship).
+    /// The OTHER entity types never enter it: the mobs and the hulls
+    /// ride the store's own projection law, the wire rocket the lane
+    /// whose client-side sim never reads the store back (the arrow's
+    /// own split the same walk keeps).
+    pub firework_syncs: Vec<FireworkSyncArm>,
     /// The world's PENDING VOICES (the Sound packets — the GLOBAL
     /// sounds the SERVER plays at a world spot: the doors and the
     /// machines the block-use lanes trigger, the weather, the
@@ -946,6 +957,14 @@ pub struct WhiteSmokeArm {
 /// branch answers — the honest uniformity the drain speaks).
 #[derive(Debug, Clone, PartialEq)]
 pub struct FireworkExplodeArm {
+    /// THE ENTITY'S OWN ID (javap handleEntityEvent the 26.2 walk —
+    /// the `createFireworks` anchor the CLIENT entity's own pose
+    /// answers: the client-side rocket the flight sim owns between
+    /// the server's words, the sim's post-tick pose the anchor the
+    /// caller's sim lookup prefers — the store's pose the no-sim
+    /// fallback keeps, the despawn race the refresh's own order
+    /// arms)
+    pub entity_id: i32,
     pub x: f64,
     pub y: f64,
     pub z: f64,
@@ -2016,6 +2035,31 @@ pub struct ArrowSyncArm {
     pub x_rot: f32,
 }
 
+/// One pending FIREWORK position sync — the Entity Position Sync
+/// packet's word for a `minecraft:firework_rocket` entity the model
+/// keeps until the refresh ships it (see
+/// [`WorldModel::firework_syncs`]): the server's authoritative
+/// correction the wire-rocket sim re-poses at, the SAME near/far law
+/// the arrow's own mailbox carries (the 26.2 handler's walk answers
+/// EVERY entity type — the projectile lanes the same word serves).
+/// The shape the arrow arm wears verbatim; the DELTA (velocity) word
+/// deliberately absent — the handler's raw walk never reads it, the
+/// sim's own flight keeps its physics.
+#[derive(Debug, Clone, PartialEq)]
+pub struct FireworkSyncArm {
+    /// The synced rocket's id (the wire-firework lane's own match
+    /// key).
+    pub id: i32,
+    /// The synced position (full-precision doubles, verbatim).
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// The synced yaw, verbatim.
+    pub y_rot: f32,
+    /// The synced pitch, verbatim.
+    pub x_rot: f32,
+}
+
 /// The model's view of ONE active mob effect on the LOCAL player — the
 /// facts the Update Mob Effect packet has actually delivered, retained
 /// verbatim (the amplifier/duration/flags the future HUD and the fade
@@ -2414,6 +2458,7 @@ impl WorldModel {
             entity_equipment: std::collections::BTreeMap::new(),
             entity_sounds: Vec::new(),
             arrow_syncs: Vec::new(),
+            firework_syncs: Vec::new(),
             world_sounds: Vec::new(),
             growth_events: Vec::new(),
             break_events: Vec::new(),
@@ -3004,6 +3049,14 @@ impl WorldModel {
         std::mem::take(&mut self.arrow_syncs)
     }
 
+    /// The wire rockets' sync mailbox's own drain (the arrow's walk
+    /// mirrored — each word ships exactly once): the Entity Position
+    /// Sync corrections the wire-rocket sim re-poses at, the delta
+    /// word the 26.2 handler never read stays absent from the arms.
+    pub fn drain_firework_syncs(&mut self) -> Vec<FireworkSyncArm> {
+        std::mem::take(&mut self.firework_syncs)
+    }
+
     /// One entity type's registry name, by the synced-registry id the
     /// Add Entity packet carries (`minecraft:zombie` the mob lane's
     /// render model speaks). `None` when the registry never synced or
@@ -3206,6 +3259,9 @@ impl WorldModel {
                 // the arrows' sync mailbox dies with the level too (the
                 // same ids — the new level's shots speak their own)
                 self.arrow_syncs.clear();
+                // the wire rockets' sync mailbox dies with the level too
+                // (the same ids — the new level's rockets speak their own)
+                self.firework_syncs.clear();
                 // the world sounds' mailbox dies with the level (the
                 // same walk — the old level's spots never speak again)
                 self.world_sounds.clear();
@@ -3634,6 +3690,23 @@ impl WorldModel {
                 // projection law the refresh serves.
                 if self.entity_type_name(type_id) == Some("minecraft:arrow") {
                     self.arrow_syncs.push(ArrowSyncArm {
+                        id: sync.id,
+                        x: sync.x,
+                        y: sync.y,
+                        z: sync.z,
+                        y_rot: sync.y_rot,
+                        x_rot: sync.x_rot,
+                    });
+                }
+                // THE WIRE ROCKET'S OWN SYNC WORD (the 26.2 handler's
+                // walk the EVERY-entity answer keeps — the projectile
+                // lanes the same mailbox shape serves): the firework
+                // entities' corrections ride their own mailbox, the
+                // sim lane's re-pose law the same near/far walk
+                // answers (the mob and hull bodies stay outside — the
+                // store's own projection the render's lerp serves).
+                if self.entity_type_name(type_id) == Some("minecraft:firework_rocket") {
+                    self.firework_syncs.push(FireworkSyncArm {
                         id: sync.id,
                         x: sync.x,
                         y: sync.y,
@@ -5051,7 +5124,7 @@ impl WorldModel {
                     // Set Entity Data delivered), the patch's added
                     // (69) the decode's own lane answers, the plain
                     // rocket the empty vec honest-keeps.
-                    let explosions = match snap.data.get(&8) {
+                    let explosions = match snap.data.get(&crate::mob::FIREWORK_DATA_ITEM_STACK_ID) {
                         Some(EntityDataEntry::ItemStack {
                             count,
                             item_id: _,
@@ -5071,6 +5144,7 @@ impl WorldModel {
                         _ => Vec::new(),
                     };
                     self.firework_explode_events.push(FireworkExplodeArm {
+                        entity_id: e.entity_id,
                         x: snap.x,
                         y: snap.y,
                         z: snap.z,
@@ -7874,6 +7948,7 @@ mod tests {
         })));
         assert_eq!(m.firework_explode_events.len(), 1, "the 17 the arm banks");
         let arm = &m.firework_explode_events[0];
+        assert_eq!(arm.entity_id, 40, "the entity's own id the sim lookup reads");
         assert_eq!((arm.x, arm.y, arm.z), (12.25, 68.5, -3.75));
         // THE PIG'S 17: the type gate the silence keeps (the event's
         // dispatch the firework's own class answers — a pig's body the
@@ -7996,6 +8071,7 @@ mod tests {
         })));
         assert_eq!(m.firework_explode_events.len(), 1, "the 17 the arm banks");
         let arm = &m.firework_explode_events[0];
+        assert_eq!(arm.entity_id, 40, "the id the anchor override reads");
         assert_eq!(arm.explosions, vec![star.clone()], "the component the list carries");
         assert_eq!(
             (arm.mx, arm.my, arm.mz),
@@ -8267,6 +8343,119 @@ mod tests {
             portal_cooldown: 60,
         })));
         assert!(m.arrow_syncs.is_empty(), "the box dies with the level");
+    }
+
+    /// THE WIRE ROCKET'S OWN SYNC MAILBOX (the EntityMoved walk's
+    /// firework arm — the arrow's own shape the every-entity walk
+    /// serves): the firework-type sync arms the rockets' mailbox (the
+    /// drain ships the word once, the second drain the spent silence
+    /// keeps), the ARROW and the MOB stay outside their own lanes
+    /// (the arrow's box the firework word never arms, and vice versa
+    /// — the type gate the registry's own name answers), the unknown
+    /// id is refused AND arms nothing, and the level change empties
+    /// the box (the same-ids law the sibling walk keeps).
+    #[test]
+    fn the_firework_sync_words_the_mailbox() {
+        let mut m = WorldModel::new();
+        // the synced registry: type id 0 = zombie (the mob lane's own
+        // body), id 1 = arrow, id 2 = firework_rocket (the rocket the
+        // sim lane serves)
+        m.registry.entity_types = vec![
+            "minecraft:zombie".to_string(),
+            "minecraft:arrow".to_string(),
+            "minecraft:firework_rocket".to_string(),
+        ];
+        // one body per lane beside each other (the lanes' own
+        // contrast)
+        for (id, type_id) in [(7, 0), (8, 1), (9, 2)] {
+            assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid: id as u128,
+                type_id,
+                x: 10.0,
+                y: 64.0,
+                z: 10.0,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                y_head_rot: 0.0,
+                data: 0,
+            })));
+        }
+        // THE ROCKET'S SYNC: the store re-poses AND the firework box
+        // arms (the arrow's box stays silent — the type gate the
+        // names' own disjoint pair answers)
+        assert!(m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 9,
+            x: 10.25,
+            y: 70.5,
+            z: 10.75,
+            delta: [0.0, 0.5, 0.0],
+            y_rot: 30.0,
+            x_rot: -60.0,
+            on_ground: false,
+        })));
+        assert_eq!(m.entity(9).unwrap().x, 10.25, "the store's own truth");
+        assert_eq!(m.firework_syncs.len(), 1, "the word armed");
+        assert_eq!(m.firework_syncs[0].id, 9);
+        assert_eq!(m.firework_syncs[0].y, 70.5);
+        assert_eq!(m.firework_syncs[0].x_rot, -60.0);
+        assert!(m.arrow_syncs.is_empty(), "the arrow's box the rocket's word never arms");
+        // THE ARROW'S OWN WORD (the reverse gate — the firework box
+        // stays silent)
+        assert!(m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 8,
+            x: 11.0,
+            y: 64.0,
+            z: 10.0,
+            delta: [0.0; 3],
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert_eq!(m.arrow_syncs.len(), 1, "the arrow's word its own box arms");
+        assert_eq!(m.firework_syncs.len(), 1, "the rocket's box the arrow's word never arms");
+        // THE DRAIN: the word ships exactly once, the spent silence
+        // ships nothing
+        let drained = m.drain_firework_syncs();
+        assert_eq!(drained.len(), 1, "the drain ships the word");
+        assert!(m.firework_syncs.is_empty(), "the mailbox spent");
+        assert!(
+            m.drain_firework_syncs().is_empty(),
+            "the drained silence ships nothing"
+        );
+        // THE UNKNOWN ID: refused AND armed nothing (the spawn packet
+        // stays the only creator)
+        assert!(!m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 999,
+            x: 1.0,
+            y: 1.0,
+            z: 1.0,
+            delta: [0.0; 3],
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert!(m.firework_syncs.is_empty(), "no phantom word");
+        // THE LEVEL CHANGE: the mailbox dies with the old level (the
+        // same-ids law the sibling walk keeps)
+        assert!(m.apply(PlayEvent::EntityMoved(EntityPositionSync {
+            id: 9,
+            x: 10.5,
+            y: 71.0,
+            z: 10.5,
+            delta: [0.0; 3],
+            y_rot: 0.0,
+            x_rot: 0.0,
+            on_ground: false,
+        })));
+        assert_eq!(m.firework_syncs.len(), 1, "the word armed again");
+        assert!(m.apply(PlayEvent::Respawn(SpawnInfo {
+            dimension_type_id: 0,
+            dimension: "minecraft:overworld".to_string(),
+            portal_cooldown: 60,
+        })));
+        assert!(m.firework_syncs.is_empty(), "the box dies with the level");
     }
 
     #[test]
