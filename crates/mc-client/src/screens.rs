@@ -27892,11 +27892,13 @@ impl App {
         let off_spear = off_name.and_then(spear_kinetic_row).is_some();
         // THE USE-ANIM'S OWN MAPPED NAMES (the three-arg law's use
         // gate — getUseAnimation's eight acmp branches answer the
-        // mapped poses; the client's using lanes the five names
+        // mapped poses; the client's using lanes the six names
         // reach: shield the BLOCK, bow the BOW_AND_ARROW, crossbow
         // the CROSSBOW_CHARGE, spyglass the SPYGLASS, goat_horn the
-        // TOOT_HORN; the trident the SPEARS tag the spear verdict
-        // subsumes, the food's NONE the fall-through the ITEM keeps)
+        // TOOT_HORN, trident the THROW_TRIDENT the use gate's own
+        // TRIDENT branch answers (pcs 81-91 — the SPEARS tag the
+        // row table excludes the idle trident the ITEM fall-through
+        // keeps); the food's NONE the fall-through the ITEM keeps)
         let use_anim_mapped = |name: Option<&str>| -> bool {
             matches!(
                 name,
@@ -27905,6 +27907,7 @@ impl App {
                     | Some("crossbow")
                     | Some("spyglass")
                     | Some("goat_horn")
+                    | Some("trident")
             )
         };
         let main_using_mapped = matches!(
@@ -28006,6 +28009,24 @@ impl App {
             Some(active)
                 if active.hand == UseHand::Off
                     && mc_registry::item_name(active.item) == Some("crossbow")
+        );
+        // THE TRIDENT'S OWN VERDICTS (the use gate's own TRIDENT
+        // branch pcs 81-91 — the using stack's `getUseAnimation() ==
+        // TRIDENT` the charging trident alone answers — the RMB
+        // charge the THROW_TRIDENT verdict wears, the idle trident
+        // the SPEARS tag the row table excludes the ITEM
+        // fall-through keeps)
+        let main_trident = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Main
+                    && mc_registry::item_name(active.item) == Some("trident")
+        );
+        let off_trident = matches!(
+            &self.using_item,
+            Some(active)
+                if active.hand == UseHand::Off
+                    && mc_registry::item_name(active.item) == Some("trident")
         );
         // THE HOLD'S OWN VERDICTS (the three-arg law the use gate
         // BEFORE the swinging gate answers — pcs 11-38: `!avatar
@@ -28118,6 +28139,15 @@ impl App {
             left_crossbow_charge: off_charge,
             right_crossbow_hold: main_hold,
             left_crossbow_hold: off_hold,
+            // THE TRIDENT POSES (the use gate's own TRIDENT branch —
+            // the main/off using stack the trident name the
+            // THROW_TRIDENT the window wears, the idle trident the
+            // SPEARS tag the row table excludes the ITEM the
+            // fall-through keeps; the clinit's (4,0,1) pair the
+            // affectsOffhand flag TRUE the second posing cancels —
+            // the ONE-ARM body the other arm's own verdict rides)
+            right_trident: main_trident,
+            left_trident: off_trident,
             // THE CHARGE BODY'S OWN DENOMINATOR (the render state's
             // maxCrossbowChargeDuration — CrossbowItem.
             // getChargeDuration the floor(modify(stack, entity, 1.25)
@@ -29510,6 +29540,12 @@ impl App {
                         left_crossbow_charge: false,
                         right_crossbow_hold: false,
                         left_crossbow_hold: false,
+                        // THE MOB LAW THE TRIDENT LANE NEVER ANSWERS
+                        // (the same pc 59-62 — the EMPTY every
+                        // non-spear stack keeps, the drowned's own
+                        // trident the mob lane never rides)
+                        right_trident: false,
+                        left_trident: false,
                         max_crossbow_charge_duration: 0.0,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,
@@ -29699,6 +29735,12 @@ impl App {
                         left_crossbow_charge: false,
                         right_crossbow_hold: false,
                         left_crossbow_hold: false,
+                        // THE MOB LAW THE TRIDENT LANE NEVER ANSWERS
+                        // (the same pc 59-62 — the EMPTY every
+                        // non-spear stack keeps, the drowned's own
+                        // trident the mob lane never rides)
+                        right_trident: false,
+                        left_trident: false,
                         max_crossbow_charge_duration: 0.0,
                         kinetic_use_params: None,
                         ticks_since_kinetic_hit: 0.0,

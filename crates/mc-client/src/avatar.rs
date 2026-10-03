@@ -340,6 +340,25 @@ pub struct AvatarState {
     /// the offhand stack's own verdict (the same !swinging + charged
     /// law, the iconst_0 flag the mirror keeps).
     pub left_crossbow_hold: bool,
+    /// `HumanoidRenderState.rightArmPose == ArmPose.THROW_TRIDENT`
+    /// — the use gate's own TRIDENT branch (AvatarRenderer.getArmPose
+    /// pcs 81-91: the hand match + the remaining-ticks window the
+    /// use-anim walk rides, the stack's `getUseAnimation() ==
+    /// TRIDENT` the acmp the charging trident alone answers — the
+    /// RMB charge the verdict wears, the idle trident the SPEARS tag
+    /// the row table excludes the ITEM fall-through keeps). THE
+    /// CLINIT'S OWN FLAG PAIR: THROW_TRIDENT(4,0,1) — twoHanded 0,
+    /// affectsOffhandPose 1 — the case-4 body the ONE arm poses, the
+    /// gate the second posing's CHAIN CANCELS (the bow's true row
+    /// the same law keeps). THE MOB LAW THE VERDICT NEVER WEARS:
+    /// HumanoidMobRenderer.getArmPose answers EMPTY for every
+    /// non-spear stack — the drowned's own trident the mob lanes
+    /// never ride.
+    pub right_trident: bool,
+    /// `HumanoidRenderState.leftArmPose == ArmPose.THROW_TRIDENT`
+    /// — the offhand stack's own verdict (the same use-window law,
+    /// the poseLeftArm pc 119-148 mirror the same constants keeps).
+    pub left_trident: bool,
     /// `HumanoidRenderState.maxCrossbowChargeDuration` — the charge
     /// body's own denominator (CrossbowItem.getChargeDuration:
     /// `floor(modifyCrossbowChargingTime(stack, entity, 1.25) × 20.0)`
@@ -416,6 +435,8 @@ impl AvatarState {
             left_crossbow_charge: false,
             right_crossbow_hold: false,
             left_crossbow_hold: false,
+            right_trident: false,
+            left_trident: false,
             max_crossbow_charge_duration: 0.0,
             kinetic_use_params: None,
             ticks_since_kinetic_hit: 0.0,
@@ -4407,7 +4428,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
         // `Block` the case-2 poseBlockingArm call, `Spyglass` the
         // case-7 clamp lane, `TootHorn` the case-8 clamp lane,
         // `CrossbowCharge` the case-5 both-arms body,
-        // `CrossbowHold` the case-6 both-arms body, `Item` the case-1
+        // `CrossbowHold` the case-6 both-arms body, `ThrowTrident`
+        // the case-4 π fold, `Item` the case-1
         // fold — the one closure the whole switch wears, the f32
         // chains the jar's own bytecode keeps
         #[derive(Clone, Copy)]
@@ -4419,6 +4441,7 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
             TootHorn,
             CrossbowCharge,
             CrossbowHold,
+            ThrowTrident,
             Item,
         }
         let mut fold = |right_arm: bool, kind: PoseCase| {
@@ -4685,6 +4708,35 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     *charge_x = (CHARGE_PITCH + head_x) + PITCH_ADD;
                     *other_x = OTHER_PITCH + head_x;
                 }
+                PoseCase::ThrowTrident => {
+                    // THE THROW TRIDENT'S OWN BODY (poseRightArm/
+                    // poseLeftArm case 4, pcs 119-148 — the CP floats
+                    // the cp_527 resolves: #95 = 0.5 (0x3F000000),
+                    // #260 = 3.1415927410125732 = π (0x40490FDB)): the
+                    // ONE-ARM fold the walk's own xRot READS — xRot =
+                    // xRot·0.5 − π the fmul/fsub chain the putfield
+                    // order keeps (the ×0.5 the exact exponent walk,
+                    // the fsub one rounding; the crouch's own +0.4
+                    // raise the fold reads the walk law the ITEM fold
+                    // shares), the yRot zero the fconst_0 putfield
+                    // replays, the zRot the pose never touches, the
+                    // head the body NEVER reads. THE VERDICT THE USE
+                    // GATE'S TRIDENT BRANCH ANSWERS (AvatarRenderer.
+                    // getArmPose pcs 81-91 — the use-anim walk's third
+                    // acmp, the BLOCK/BOW branches the first two
+                    // wear): the USING stack's getUseAnimation() ==
+                    // TRIDENT the RMB charge the verdict wears, the
+                    // idle trident the SPEARS tag the row table
+                    // excludes the ITEM fall-through keeps.
+                    const THROW_PI: f32 = 3.141_592_741_012_573_2; // CP #260, pi
+                    let (x, y) = if right_arm {
+                        (&mut arm_r_x, &mut arm_r_y)
+                    } else {
+                        (&mut arm_l_x, &mut arm_l_y)
+                    };
+                    *x = *x * 0.5 - THROW_PI;
+                    *y = 0.0;
+                }
                 PoseCase::Item => {
                     // the ITEM case-1 fold — the f32 chain the jar's
                     // fmul/fsub keeps (×0.5 the exact exponent walk,
@@ -4735,6 +4787,13 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 // case 6: the (6,1,1) pair — the BOTH-ARMS body, the
                 // gate the second posing CANCELS
                 fold(true, PoseCase::CrossbowHold);
+            } else if state.right_trident {
+                // case 4: the (4,0,1) pair — the ONE-ARM body the
+                // walk's own xRot the π fold reads, the
+                // affectsOffhand flag TRUE the gate below the second
+                // posing CANCELS (the use gate's own TRIDENT branch
+                // the verdict wears)
+                fold(true, PoseCase::ThrowTrident);
             } else if state.right_spear {
                 fold(true, PoseCase::Spear);
             } else if state.right_item {
@@ -4744,6 +4803,7 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 && !state.right_bow
                 && !state.right_crossbow_charge
                 && !state.right_crossbow_hold
+                && !state.right_trident
             {
                 if state.left_bow {
                     fold(false, PoseCase::Bow);
@@ -4788,6 +4848,12 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 // case 6 mirror: the iconst_0 the left the HOLD arm
                 // rides, the gate the second posing cancels
                 fold(false, PoseCase::CrossbowHold);
+            } else if state.left_trident {
+                // case 4 mirror: the ONE-ARM body the left method's
+                // own pc 119-148 the same constants keeps, the
+                // affectsOffhand TRUE the gate the second posing
+                // cancels
+                fold(false, PoseCase::ThrowTrident);
             } else if state.left_spear {
                 fold(false, PoseCase::Spear);
             } else if state.left_item {
@@ -4797,6 +4863,7 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                 && !state.left_bow
                 && !state.left_crossbow_charge
                 && !state.left_crossbow_hold
+                && !state.left_trident
             {
                 if state.right_bow {
                     fold(true, PoseCase::Bow);
@@ -4810,6 +4877,8 @@ fn build_posed_parts(state: &AvatarState) -> Vec<Part> {
                     fold(true, PoseCase::CrossbowCharge);
                 } else if state.right_crossbow_hold {
                     fold(true, PoseCase::CrossbowHold);
+                } else if state.right_trident {
+                    fold(true, PoseCase::ThrowTrident);
                 } else if state.right_spear {
                     fold(true, PoseCase::Spear);
                 } else if state.right_item {
@@ -12660,6 +12729,164 @@ mod tests {
             posed[2].y_rot.to_bits(),
             0xBF4C_CCCD,
             "the both-flags state the charge branch the chain picks"
+        );
+    }
+
+    /// THE THROW TRIDENT'S OWN BODY (javap `HumanoidModel.
+    /// poseRightArm/poseLeftArm` case 4, pcs 119-148 — CP #95 = 0.5
+    /// (0x3F000000), #260 = 3.1415927410125732 = π (0x40490FDB)):
+    /// the ONE-ARM fold the walk's own xRot READS — xRot = xRot·0.5 −
+    /// π the fmul/fsub chain the putfield order keeps, the yRot zero
+    /// the fconst_0 putfield replays, the head the body never reads,
+    /// the zRot the pose never touches. THE VERDICT the use gate's
+    /// own TRIDENT branch answers (AvatarRenderer.getArmPose
+    /// pcs 81-91): the USING stack the RMB charge the verdict wears.
+    /// THE PINS the pins_527 oracle computes.
+    #[test]
+    fn the_trident_pose_the_throw_the_fold_speaks() {
+        // SCENE Z (the rest walk the fold reads: the walk's own zero
+        // the bob's +0.0 the sum keeps): xRot = f32(f32(0.0·0.5) − π)
+        // = −π the exact bits, yRot = 0.0 the fconst_0 replays
+        let mut s = AvatarState::rest(0.0, 0.0, 0.0);
+        s.head_yaw_off_deg = 20.0;
+        s.is_using_item = true;
+        s.use_item_main_hand = true;
+        s.ticks_using_item = 10.0;
+        s.right_trident = true;
+        let posed = build_posed_parts(&s);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xC049_0FDB,
+            "the throw fold the walk's own zero the −π wears"
+        );
+        assert_eq!(
+            posed[2].y_rot.to_bits(),
+            0x0000_0000,
+            "the throw fold the yRot zero the fconst_0 replays"
+        );
+        // THE ONE-ARM BODY (the poseLeftArm the walk's own zeroes the
+        // second posing the trident lane never reads — the walk's
+        // plain bits the plain state keeps): the other arm the fold
+        // never touches, the head's own yaw the body never reads
+        let mut p = AvatarState::rest(0.0, 0.0, 0.0);
+        p.head_yaw_off_deg = 20.0;
+        let plain = build_posed_parts(&p);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            plain[3].x_rot.to_bits(),
+            "the one-arm body the other arm the walk's own keeps"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            plain[3].y_rot.to_bits(),
+            "the one-arm body the other arm's yRot the walk keeps"
+        );
+        // SCENE C (the crouch's own +0.4 raise the fold READS — the
+        // walk law the ITEM fold shares): xRot = f32(f32(0.4·0.5) − π)
+        // the two-rounding chain the bits keep
+        let mut c = AvatarState::rest(0.0, 0.0, 0.0);
+        c.head_yaw_off_deg = 20.0;
+        c.crouching = true;
+        c.is_using_item = true;
+        c.use_item_main_hand = true;
+        c.ticks_using_item = 10.0;
+        c.right_trident = true;
+        let posed = build_posed_parts(&c);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xC03C_430E,
+            "the crouch raise the fold reads — the f32 chain the bits wear"
+        );
+        // SCENE L (lanes B+C: the off hand the trident charges — the
+        // poseLeftArm first the idle/use walk speaks): the LEFT arm
+        // the fold wears, the gate below the right CHAIN cancels
+        let mut l = AvatarState::rest(0.0, 0.0, 0.0);
+        l.head_yaw_off_deg = 20.0;
+        l.is_using_item = true;
+        l.use_item_main_hand = false;
+        l.ticks_using_item = 10.0;
+        l.left_trident = true;
+        l.right_item = true;
+        let posed = build_posed_parts(&l);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0xC049_0FDB,
+            "the left throw arm the same −π the mirror wears"
+        );
+        assert_eq!(
+            posed[3].y_rot.to_bits(),
+            0x0000_0000,
+            "the left throw arm the yRot zero the mirror replays"
+        );
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0x0000_0000,
+            "the gate the right chain cancels — the walk's own zero keeps"
+        );
+    }
+
+    /// THE THROW TRIDENT'S OWN GATES' MATRIX (the clinit's (4,0,1)
+    /// pair — twoHanded 0, affectsOffhandPose 1 — the gate the
+    /// second posing's CHAIN cancels the bow's true row the same law
+    /// keeps): the idle trident the ITEM fall-through the verdicts
+    /// keep (the SPEARS tag the row table the seven tiers the
+    /// trident never rides), the both-flags state the chain's
+    /// defensive order the trident branch picks. THE PINS the
+    /// pins_527 oracle computes.
+    #[test]
+    fn the_trident_pose_the_gates_the_matrix_speak() {
+        // GATE R (the affectsOffhand TRUE the left CHAIN cancels —
+        // the CONTRAST the spyglass/horn FALSE rows speak): the right
+        // trident the lane A first poses, the left stack's ITEM
+        // verdict the CHAIN never reaches — the walk's own zero the
+        // plain state keeps, the ITEM fold the bits disprove
+        let mut g = AvatarState::rest(0.0, 0.0, 0.0);
+        g.head_yaw_off_deg = 20.0;
+        g.is_using_item = true;
+        g.use_item_main_hand = true;
+        g.ticks_using_item = 10.0;
+        g.right_trident = true;
+        g.left_item = true;
+        let posed = build_posed_parts(&g);
+        assert_eq!(
+            posed[3].x_rot.to_bits(),
+            0x0000_0000,
+            "the affectsOffhand TRUE the left chain cancels — the walk's own keeps"
+        );
+        assert_ne!(
+            posed[3].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the left stack's ITEM fold the cancelled chain never reaches"
+        );
+        // THE IDLE TRIDENT (the ITEM fall-through the verdicts keep —
+        // the use gate the idle stack never rides, the SPEARS tag the
+        // row table the trident excludes): the ITEM lane the fold
+        // wears, the −π/10 the walk's own zero the bits speak
+        let mut i = AvatarState::rest(0.0, 0.0, 0.0);
+        i.head_yaw_off_deg = 20.0;
+        i.right_item = true;
+        let posed = build_posed_parts(&i);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xBEA0_D97C,
+            "the idle trident the ITEM fall-through the −π/10 wears"
+        );
+        // THE BOTH-FLAGS DEFENSE (the chain's own order the trident
+        // branch picks — the spear lane the tag law the same stack
+        // never carries, the defensive order the both-flags state
+        // alone reaches): the throw fold the −π the branch wears
+        let mut both = AvatarState::rest(0.0, 0.0, 0.0);
+        both.head_yaw_off_deg = 20.0;
+        both.is_using_item = true;
+        both.use_item_main_hand = true;
+        both.ticks_using_item = 10.0;
+        both.right_trident = true;
+        both.right_spear = true;
+        let posed = build_posed_parts(&both);
+        assert_eq!(
+            posed[2].x_rot.to_bits(),
+            0xC049_0FDB,
+            "the both-flags state the trident branch the chain picks"
         );
     }
 
