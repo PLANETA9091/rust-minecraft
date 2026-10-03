@@ -28184,6 +28184,10 @@ impl App {
         self.render_tnts(fb, &ctx, &cam);
         self.render_falling_blocks(fb, &ctx, &cam);
         self.render_arrows(fb, &ctx, &cam);
+        // THE FIREWORK ROCKETS' OWN PASS (the entity pass's own lane —
+        // the flying rockets the crossbow's shots spawn, the item
+        // sprite the billboard + the axis lane places)
+        self.render_fireworks(fb, &ctx, &cam);
         // THE EAT ARC's pieces (the BreakingItemParticle pass — the
         // vanilla's own particle layer rides the entity pass): the
         // mouth's debris as camera-facing quads
@@ -29507,6 +29511,100 @@ impl App {
         fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &sampled, &mut |_tex, u, v| {
             let [r, g, b, a] = pixel(u, v);
             Some([r, g, b, a])
+        });
+    }
+
+    /// THE FIREWORK ROCKETS' OWN PASS (javap `FireworkEntityRenderer`
+    /// the 26.2 walk — the flying rockets the crossbow's shots spawn,
+    /// the lane the trail sparks never replace): the extract's lerp
+    /// the O pair rides (`prev + (x - prev) * partial` — the arrow
+    /// pass's own fold), the item the `updateForNonLiving(state,
+    /// getItem(), GROUND, entity)` walk poses (the registry's posed
+    /// chain — the firework_rocket item model the GROUND display
+    /// transform carries), the submit the point walk places (the
+    /// billboard + the shotAtAngle axis lane the pure fn speaks — the
+    /// 26.2 dispatcher's own wrap the translate alone keeps, NO entity
+    /// rotation the render-state refactor moved out), the face shade
+    /// the drop lane's own table wears (the offline world carries no
+    /// light grid — the same full-bright lane the procedural scenes
+    /// mesh in), the pixels the sprite's own uv the sample walk
+    /// answers. The composite the sprite's up takes along the view
+    /// axis — the flying rocket reads as the art lying ALONG its
+    /// flight (the sliver the shooter's own distance foreshortens,
+    /// the trail the visible companion, the burst the show's own
+    /// answer) — the honest 26.2 look the bytecode computes.
+    fn render_fireworks(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.fireworks.is_empty() {
+            return; // the deterministic scenes carry no rockets — the goldens stay
+        }
+        use mc_registry::element_quads::Direction;
+        let Some(rocket_id) = mc_registry::item_id_by_name("firework_rocket") else {
+            return; // the honest unknown renders nothing
+        };
+        let Some(layers) = mc_registry::item_model_layers(rocket_id) else {
+            return;
+        };
+        // the posed quads with their layer's tint jsons (the
+        // updateForNonLiving GROUND walk — the drop lane's own chain)
+        let mut parts: Vec<(mc_registry::element_quads::Quad, &'static [&'static str])> =
+            Vec::new();
+        for layer in &layers {
+            match mc_registry::display::posed_item_layer_quads(
+                layer.model,
+                layer.transform,
+                mc_registry::display::GROUND,
+            ) {
+                Some(Ok(quads)) => {
+                    for q in quads {
+                        parts.push((q, layer.tints));
+                    }
+                }
+                _ => return, // the honest unknown renders nothing
+            }
+        }
+        if parts.is_empty() {
+            return;
+        }
+        // the face shade law (the drop lane's own table, the Cull enum order)
+        let ground_shade = |d: Direction| match d {
+            Direction::Up => 1.0f32,
+            Direction::Down => 0.5,
+            Direction::North | Direction::South => 0.8,
+            Direction::West | Direction::East => 0.6,
+        };
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for f in &self.fireworks {
+            // THE EXTRACT'S OWN LERP (the render state's own sampling —
+            // the position rides the O pair the frame's partial now)
+            let px = f.prev_x + (f.x - f.prev_x) * self.partial_tick as f64;
+            let py = f.prev_y + (f.y - f.prev_y) * self.partial_tick as f64;
+            let pz = f.prev_z + (f.z - f.prev_z) * self.partial_tick as f64;
+            let center = [px as f32, py as f32, pz as f32];
+            for (q, tints) in &parts {
+                let base = icon_tint(tints);
+                let sh = if q.shade { ground_shade(q.direction) } else { 1.0 };
+                sampled.push(crate::raster::SampledQuad {
+                    pts: q.vertices.map(|v| {
+                        firework_rocket_point(center, cam.yaw, cam.pitch, f.shot_at_angle, v)
+                    }),
+                    uv: q.uvs,
+                    tex: q.texture,
+                    tint: [base[0] * sh, base[1] * sh, base[2] * sh],
+                });
+            }
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Unknown => None,
+            }
         });
     }
 
@@ -35322,6 +35420,54 @@ fn piece_sprite(item: i32) -> Option<(&'static str, [f32; 4])> {
         v_hi = v_hi.max(uv[1]);
     }
     Some((q.texture, [u_lo, u_hi, v_lo, v_hi]))
+}
+
+/// THE FIREWORK ROCKET'S OWN POINT (javap `FireworkEntityRenderer.
+/// submit` the 26.2 walk, every operand spoken): the billboard the
+/// `mulPose(cameraRenderState.orientation)` fold speaks — the camera
+/// basis `Camera.setRotation`'s own constants carry (FORWARDS
+/// (0,0,1), UP (0,1,0), LEFT (1,0,0) the clinit banks, the
+/// `rotationYXZ(-yRot*rad, -xRot*rad, 0)` the quaternion arms; this
+/// client's radians read the same basis left = [-cy, 0, -sy],
+/// up = [-sy*sp, cp, cy*sp], forwards = [sy*cp, sp, -cy*cp] — the
+/// name-tag/orb lanes' validated fold), the isShotAtAngle branch the
+/// ZP 180 -> YP 180 -> XP 90 chain wears (the constant pool's #47
+/// 180.0F and #58 90.0F the cp dump speaks; the JOML post-multiply
+/// the vertex-first order keeps — the three matrices multiply to the
+/// net (x, y, z) -> (x, z, -y)), the posed vertex the chain places:
+/// world = center + LEFT*a + UP*b + FORWARDS*c. The composite the
+/// sprite's up takes along the view axis — the art lies ALONG the
+/// flight the 26.2 walk answers.
+pub(crate) fn firework_rocket_point(
+    center: [f32; 3],
+    cam_yaw: f32,
+    cam_pitch: f32,
+    shot_at_angle: bool,
+    p: [f32; 3],
+) -> [f32; 3] {
+    // THE AXIS LANE (the isShotAtAngle branch): ZP(180), YP(180),
+    // XP(90) the vertex first — the composite the matrix product
+    // folds to (x, z, -y). The FALSE arm the plain billboard keeps
+    // (the identity the branch's skip speaks).
+    let (a, b, c) = if shot_at_angle {
+        (p[0], p[2], -p[1])
+    } else {
+        (p[0], p[1], p[2])
+    };
+    // THE CAMERA BASIS (the mulPose(cameraRenderState.orientation)
+    // fold — Camera.setRotation's own constants the clinit banks)
+    let sy = cam_yaw.sin();
+    let cy = cam_yaw.cos();
+    let sp = cam_pitch.sin();
+    let cp = cam_pitch.cos();
+    let left = [-cy, 0.0, -sy];
+    let up = [-sy * sp, cp, cy * sp];
+    let forwards = [sy * cp, sp, -cy * cp];
+    [
+        center[0] + left[0] * a + up[0] * b + forwards[0] * c,
+        center[1] + left[1] * a + up[1] * b + forwards[1] * c,
+        center[2] + left[2] * a + up[2] * b + forwards[2] * c,
+    ]
 }
 
 /// The ItemColors law for the GUI icons: the first tint json of the
@@ -53548,6 +53694,208 @@ cow_sound_variant: None,
         assert!(
             plain.binds_texture("item/crossbow_standby"),
             "the standby returns through the LEFT ctx"
+        );
+    }
+
+    /// THE FIREWORK ROCKET'S OWN POSE — the render point's composite
+    /// the 26.2 walk pins (javap `FireworkEntityRenderer.submit` +
+    /// `Camera.setRotation` + the Axis constants the cp dump speaks):
+    /// the FALSE arm the plain billboard keeps (the posed vertex the
+    /// camera basis places verbatim), the TRUE arm the ZP 180 ->
+    /// YP 180 -> XP 90 chain wears (the net (x, z, -y) the matrix
+    /// product folds — the sprite's up the view-depth axis takes,
+    /// the slab the screen-up axis carries), and the GROUND pose the
+    /// updateForNonLiving walk feeds the chain (the centered bake the
+    /// scale-0.5 + the [0, 2/16, 0] translation bounds).
+    #[test]
+    fn the_firework_rocket_the_pose_the_composite_wears() {
+        // THE GROUND POSE (the posed_item_layer_quads chain — the
+        // firework_rocket item the layer's own bounds carry)
+        let rocket_id = mc_registry::item_id_by_name("firework_rocket")
+            .expect("the firework_rocket item rides the registry");
+        let layers = mc_registry::item_model_layers(rocket_id)
+            .expect("the item model the registry speaks");
+        let mut min = [f32::MAX; 3];
+        let mut max = [f32::MIN; 3];
+        let mut quads = 0usize;
+        for layer in &layers {
+            let posed = mc_registry::display::posed_item_layer_quads(
+                layer.model,
+                layer.transform,
+                mc_registry::display::GROUND,
+            )
+            .expect("the posed chain the known model keeps")
+            .expect("the transform stanza the ground context keeps");
+            for q in posed {
+                quads += 1;
+                for v in q.vertices {
+                    for a in 0..3 {
+                        min[a] = min[a].min(v[a]);
+                        max[a] = max[a].max(v[a]);
+                    }
+                }
+            }
+        }
+        assert!(quads >= 2, "the flat bake's two faces ({quads})");
+        // the bounds the centered bake + the GROUND stanza speak: the
+        // scale-0.5 sprite the x/y [-0.5, 0.5] centered bake carries,
+        // the [0, 2/16, 0] translation the vanilla ground.json lifts,
+        // the slab the z +-1/64 span keeps
+        assert!(
+            (min[0] - (-0.25)).abs() < 1e-6 && (max[0] - 0.25).abs() < 1e-6,
+            "the x the centered scale-0.5 span keeps ({},{})",
+            min[0],
+            max[0]
+        );
+        assert!(
+            (min[1] - (-0.125)).abs() < 1e-6 && (max[1] - 0.375).abs() < 1e-6,
+            "the y the 2/16 lift + the span keeps ({},{})",
+            min[1],
+            max[1]
+        );
+        assert!(
+            (min[2] - (-0.015625)).abs() < 1e-6 && (max[2] - 0.015625).abs() < 1e-6,
+            "the z the slab the +-1/64 span keeps ({},{})",
+            min[2],
+            max[2]
+        );
+        // THE FALSE ARM (the plain billboard): the posed vertex the
+        // camera basis places verbatim — at yaw 0 / pitch 0 the LEFT
+        // = [-1,0,0], the UP = [0,1,0], the FORWARDS = [0,0,-1] the
+        // constants speak (the min corner the chain's own bounds keep)
+        let p = [-0.25, -0.125, -0.015625];
+        let out = firework_rocket_point([10.0, 20.0, 30.0], 0.0, 0.0, false, p);
+        let want = [10.0 + 0.25, 20.0 - 0.125, 30.0 + 0.015625];
+        assert!(
+            out.iter()
+                .zip(want.iter())
+                .all(|(o, w)| (o - w).abs() < 1e-5),
+            "the plain billboard the basis places ({out:?} vs {want:?})"
+        );
+        // THE TRUE ARM (the shotAtAngle lane): the composite (x, z, -y)
+        // the slab the screen-up takes and the lift the depth carries
+        let out = firework_rocket_point([10.0, 20.0, 30.0], 0.0, 0.0, true, p);
+        let want = [10.0 + 0.25, 20.0 - 0.015625, 30.0 - 0.125];
+        assert!(
+            out.iter()
+                .zip(want.iter())
+                .all(|(o, w)| (o - w).abs() < 1e-5),
+            "the axis lane the composite places ({out:?} vs {want:?})"
+        );
+        // THE EAST YAW (yaw = +90 deg, the forward the +X speaks): the
+        // LEFT the [-1,0,0] -> [0,0,-1] basis walk answers, the axis
+        // lane the same composite carries (the lift the +x reads)
+        let out = firework_rocket_point(
+            [10.0, 20.0, 30.0],
+            std::f32::consts::FRAC_PI_2,
+            0.0,
+            true,
+            p,
+        );
+        let want = [10.0 + 0.125, 20.0 - 0.015625, 30.0 + 0.25];
+        assert!(
+            out.iter()
+                .zip(want.iter())
+                .all(|(o, w)| (o - w).abs() < 1e-5),
+            "the east yaw the basis turns ({out:?} vs {want:?})"
+        );
+        // THE DOWN PITCH (pitch = -90 deg, the camera looks straight
+        // down): the card the camera faces — the lift the -y axis
+        // takes, the slab the -z reads (the sprite the camera sees)
+        let out = firework_rocket_point(
+            [10.0, 20.0, 30.0],
+            0.0,
+            -std::f32::consts::FRAC_PI_2,
+            true,
+            p,
+        );
+        let want = [10.0 + 0.25, 20.0 - 0.125, 30.0 + 0.015625];
+        assert!(
+            out.iter()
+                .zip(want.iter())
+                .all(|(o, w)| (o - w).abs() < 1e-5),
+            "the down pitch the card faces ({out:?} vs {want:?})"
+        );
+    }
+
+    /// THE FIREWORK ROCKET'S OWN RENDER — the flying rocket the frame
+    /// keeps (javap `FireworkEntityRenderer` the 26.2 walk the lane
+    /// answers): the shot the rocket banks, the camera the 1-block
+    /// spot the sliver's own strips fill (the composite the sprite's
+    /// up takes along the view axis — the near look the strips' 4px
+    /// footprints cross the pixel centers), the render the sprite's
+    /// own pixels lights (the with/without diff the frame speaks),
+    /// and the empty lane the discard keeps (no rockets, no pixels —
+    /// the honest skip).
+    #[test]
+    fn the_firework_rocket_the_render_the_pixels_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (crossbow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let eye_y = app.spawn_y + 7;
+        // the rocket the look-axis spot 1 block ahead of the -45 down
+        // look (the rig rides ABOVE the canopy the down-ray clips)
+        app.held_charge = Some(mc_registry::ChargeKind::Rocket);
+        assert!(app.on_right_press(0, 0), "the charged press answers");
+        assert_eq!(app.fireworks.len(), 1, "the shot the rocket banks");
+        assert!(
+            app.fireworks[0].shot_at_angle,
+            "the seventh ctor arg the shot keeps"
+        );
+        let s7 = 0.5f32.sqrt();
+        let f = &mut app.fireworks[0];
+        f.x = c as f64 + 0.5;
+        f.y = eye_y as f64 + 6.0;
+        f.z = c as f64 + 0.5;
+        f.prev_x = f.x;
+        f.prev_y = f.y;
+        f.prev_z = f.z;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                c as f32 + 0.5,
+                (eye_y + 6) as f32 + s7,
+                c as f32 + 0.5 + s7,
+            ),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_4,
+        });
+        // THE RENDER: the with/without diff the sprite's own pixels
+        // answers (the same frame twice, the rocket the only delta)
+        let mut fb_with = crate::raster::Framebuf::new(320, 180);
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        app.render(&mut fb_with, &mut assets);
+        let with = fb_with.color.clone();
+        let rockets = std::mem::take(&mut app.fireworks);
+        let mut fb_without = crate::raster::Framebuf::new(320, 180);
+        app.render(&mut fb_without, &mut assets);
+        let diff = with
+            .iter()
+            .zip(fb_without.color.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(
+            diff > 64,
+            "the rocket the frame lights ({diff} bytes differ)"
+        );
+        // THE EMPTY LANE: the discard the skip keeps — the re-render
+        // the same frame answers (the rockets' own spot the without
+        // frame already wears)
+        app.fireworks = rockets;
+        let mut fb_again = crate::raster::Framebuf::new(320, 180);
+        app.render(&mut fb_again, &mut assets);
+        assert_eq!(
+            fb_again.color, with,
+            "the same rockets the same frame wears"
         );
     }
 

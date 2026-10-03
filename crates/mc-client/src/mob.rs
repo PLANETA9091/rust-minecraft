@@ -3460,6 +3460,14 @@ pub struct Firework {
     /// rotation the last flight pose the stuck lane keeps — the
     /// lifetime crossing the explode+discard tail answers.
     pub stuck: bool,
+    /// `FireworkRocketEntity.SHOT_AT_ANGLE` (javap the entity-data
+    /// boolean the render's own walk reads — `FireworkEntityRenderer.
+    /// submit`'s `isShotAtAngle` gate the 26.2 bytecode keeps: the
+    /// TRUE arm the ZP/YP/XP axis rotations wear, the FALSE the plain
+    /// billboard keeps). The crossbow's `createProjectile` the SEVENTH
+    /// ctor arg `true` speaks — every rocket this client spawns the
+    /// shot lane banks.
+    pub shot_at_angle: bool,
     /// THE ENTITY'S OWN RANDOM STREAM (javap tick pcs 469/494 the
     /// `getfield FireworkRocketEntity.random` reads — the trail's
     /// gaussian pair the entity's own RandomSource speaks, the ctor's
@@ -3580,6 +3588,10 @@ impl Firework {
             lifetime,
             dead: false,
             stuck: false,
+            // THE SEVENTH CTOR ARG (the crossbow's createProjectile
+            // `true` keeps — the shot lane the render's axis walk
+            // wears)
+            shot_at_angle: true,
             // THE STREAM'S OWN TAIL (the ctor's spent draws the head
             // keeps — the trail's gaussians the next draws the ticks
             // spend, the entity's own RandomSource the field stands
