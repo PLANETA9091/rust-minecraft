@@ -16243,6 +16243,80 @@ impl App {
         // verdict the key picks, the fixed 1.0/1.0 the fconst_1 pair
         // keeps, the block center the +0.5 fold places)
         if elapsed % 10 == 5 {
+            // THE DUST BURST FIRST (javap pcs 142-174 — the
+            // spawnDustParticles walk the flag tick speaks BEFORE the
+            // voice the tail plays; the shouldSpawnTerrainParticles +
+            // RenderShape-INVISIBLE gates the client's banked cells
+            // always pass — the honest absence the 69-cell vocabulary
+            // keeps). THE TANGENT THE FROM-DIRECTION WALK CARRIES
+            // (javap DustParticlesDelta.fromDirection — the look
+            // vector's tangential component on the hit face's plane:
+            // UP/DOWN the (z, -x) pair, the side faces the fixed
+            // ±1.0/±0.1 arms the #48/#50/#52 doubles speak —
+            // -0.1/−1.0/0.1); THE NUDGE THE #256 FLOAT SPEAKS (the
+            // (float)1.0E-6 the f2d widens — the WEST x / NORTH z
+            // epsilon the spawn point pulls inside the face). THE
+            // COUNT THE NEXTINT(7,12) ARMS, THE SIDE THE MAIN-ARM
+            // RIGHT ANSWERS (side = 1 — the left-handed lane the
+            // client never keeps), the multiplier the #206 double's
+            // 3.0 the velocity ride; per particle the nextDouble pair
+            // the velocity walk spends, then the terrain ctor's own
+            // four draws (life, size, uo, vo) the addParticle chain
+            // costs — the level's own random the mob_rng stands for
+            // (the arrow-shoot pitch's own precedent).
+            let cell = self
+                .active_world()
+                .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2));
+            let tile = cell.map(particle_tile);
+            if let Some(tile) = tile.filter(|t| *t != mc_registry::generated::atlas::TILE_NONE) {
+                let cam = self.world_camera();
+                let f = cam.forward();
+                let (vx, vz) = (f.x as f64, f.z as f64);
+                // THE TANGENT (the clip's own face encoding — the
+                // vanilla Direction ordinals the world.rs clip speaks:
+                // 0 DOWN, 1 UP, 2 NORTH, 3 SOUTH, 4 WEST, 5 EAST)
+                let (dx, dz) = match hit.face {
+                    0 | 1 => (vz, -vx), // DOWN/UP: the look's (z, -x)
+                    2 => (1.0, -0.1),   // NORTH
+                    3 => (-1.0, 0.1),   // SOUTH
+                    4 => (-0.1, -1.0),  // WEST
+                    5 => (0.1, 1.0),    // EAST
+                    _ => (0.0, 0.0),
+                };
+                // THE NUDGE (the WEST x / NORTH z epsilon)
+                let mut px = hit.location.0;
+                let mut pz = hit.location.2;
+                if hit.face == 4 {
+                    px -= 1.0e-6_f32 as f64;
+                }
+                if hit.face == 2 {
+                    pz -= 1.0e-6_f32 as f64;
+                }
+                let count = 7 + self.mob_rng.next_int(5); // nextInt(7, 12)
+                for _ in 0..count {
+                    let xd = dx * 3.0 * self.mob_rng.next_f64();
+                    let zd = dz * 3.0 * self.mob_rng.next_f64();
+                    // the terrain ctor chain's own four draws (life,
+                    // size, uo, vo — the base ctor speaks first)
+                    let r_life = self.mob_rng.next_f32();
+                    let r_size = self.mob_rng.next_f32();
+                    let r_uo = self.mob_rng.next_f32();
+                    let r_vo = self.mob_rng.next_f32();
+                    self.particles.push(crate::particles::terrain(
+                        tile,
+                        px,
+                        hit.location.1,
+                        pz,
+                        xd,
+                        0.0,
+                        zd,
+                        r_life,
+                        r_size,
+                        r_uo,
+                        r_vo,
+                    ));
+                }
+            }
             let yaw = self.listener_yaw();
             let ear = self
                 .body
@@ -40068,6 +40142,141 @@ mod tests {
                 "the twenty voices the 5,15..195 cadence spends"
             );
         }
+    }
+
+    /// THE BRUSH DUST'S OWN BURST (javap `spawnDustParticles` +
+    /// `DustParticlesDelta.fromDirection` over the real 26.2 jar — the
+    /// CP walk the #206/#256/#48/#50/#52 constants resolved): the
+    /// flag-tick burst the side faces' fixed tangent rides (NORTH the
+    /// (1.0, -0.1) pair the case-3 arm speaks), the count the
+    /// `nextInt(7, 12)` band arms, the velocity the `delta * side *
+    /// 3.0 * nextDouble()` fold carries, the yd the dconst_0 keeps,
+    /// the spawn point the hit location + the NORTH z-epsilon wears,
+    /// and the terrain ctor's own draws the particle walks ride.
+    #[test]
+    fn the_brush_the_dust_the_tangent_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        // the trench the side ray's own layer clears (the till test's
+        // own walk — the ray's path the camera-to-face walk keeps
+        // solid-free, the pinned stone the FIRST cell the ray enters)
+        for dz in -3..0 {
+            app.offline_world
+                .as_mut()
+                .unwrap()
+                .set(c, surface, c + dz, crate::world::AIR);
+        }
+        let brush = mc_registry::item_id_by_name("brush").unwrap();
+        app.inventory.items[app.selected_hotbar] = (brush, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, surface as f32 + 0.5, (c - 3) as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: 0.0,
+        });
+        assert!(app.on_right_press(0, 0), "the window the press opens");
+        let _ = std::mem::take(&mut app.sounds.events);
+        // t = 1..4: the pre-cadence ticks the burst never spends
+        for _ in 0..4 {
+            app.update();
+        }
+        let before = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Terrain { .. }))
+            .count();
+        // t = 5: the burst the flag tick speaks
+        app.update();
+        let burst: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Terrain { .. }))
+            .skip(before)
+            .collect();
+        assert!(
+            (7..12).contains(&burst.len()),
+            "the nextInt(7, 12) band the count wears: {}",
+            burst.len()
+        );
+        for p in &burst {
+            // THE TERRAIN KIND (the hit cell's own tile — stone the
+            // STONE row maps)
+            let crate::particles::ParticleKind::Terrain { tile } = p.kind else {
+                panic!("the terrain kind the burst banks");
+            };
+            assert_eq!(tile, particle_tile(crate::world::STONE), "the stone tile");
+            // THE TANGENT'S OWN VELOCITY (the NORTH face the (1.0,
+            // -0.1) pair wears, the side the RIGHT arm answers, the
+            // 3.0 the #206 double multiplies): the spawn velocity
+            // vx = 3u, vz = -0.3u, yd = 0 — the PARTICLE TICK the same
+            // update walks (the velocity step + the 0.98 friction +
+            // the 0.04 gravity fold), so the post-tick reads: vx in
+            // [0, 3), vz in (-0.3, 0], the yd the gravity's own -0.04
+            // x 0.98 fold moves
+            assert!(
+                p.vx >= 0.0 && p.vx < 3.0,
+                "the +x slide the NORTH tangent wears: {}",
+                p.vx
+            );
+            assert!(
+                p.vz <= 0.0 && p.vz > -0.3,
+                "the -z drift the case-3's -0.1 keeps: {}",
+                p.vz
+            );
+            assert!(
+                p.vy < 0.0 && p.vy > -0.05,
+                "the dconst_0 yd the gravity fold moved: {}",
+                p.vy
+            );
+            // THE SPAWN POINT + THE FIRST TICK'S OWN WALK (the hit
+            // location the ray's own x/y keeps — the f32 forward's own
+            // sine drift the 1e-6 band holds — z the face boundary the
+            // NORTH epsilon + the -0.3u slide the first tick walks)
+            assert!(
+                p.x >= c as f64 + 0.5 - 1e-6 && p.x < c as f64 + 0.5 + 3.0,
+                "the ray's own x the +x slide walked: {}",
+                p.x
+            );
+            assert!(
+                p.y <= surface as f64 + 0.5 && p.y > surface as f64 + 0.45,
+                "the eye layer the gravity fold dipped: {}",
+                p.y
+            );
+            assert!(
+                p.z <= c as f64 && p.z > c as f64 - 0.35,
+                "the NORTH face z the tangent slide walked: {}",
+                p.z
+            );
+            // THE CTOR'S OWN FOLDS (the terrain particle's gravity
+            // 1.0 / friction 0.98 the base ctor wears)
+            assert_eq!(p.gravity, 1.0, "the terrain gravity");
+            assert_eq!(p.friction, 0.98, "the terrain friction");
+        }
+        // t = 6..10: the mid-decade ticks the burst never spends
+        let settled = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Terrain { .. }))
+            .count();
+        for _ in 0..5 {
+            app.update();
+        }
+        let settled_now = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Terrain { .. }))
+            .count();
+        assert!(
+            settled_now <= settled,
+            "the mid-decade ticks the burst never spends (terrain particles only age)"
+        );
     }
 
     /// THE USE POSE'S OWN LANE (javap `submitArmWithItem` pcs 583-603 +
