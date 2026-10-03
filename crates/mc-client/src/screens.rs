@@ -59242,6 +59242,189 @@ cow_sound_variant: None,
         assert!(!app.on_right_press(0, 0), "the spent quiver the FAIL keeps");
     }
 
+    /// THE OFFHAND BOW'S OWN OFFLINE ARC — the release walk the HAND
+    /// never reads (the active stack's own item the gate resolves —
+    /// `held_word_of(active.item)` the OFF bow's own id answers — the
+    /// mirror the main lane's walk already wears, the candidate the
+    /// round PINS): the off-hand bow the empty main hand backs, the
+    /// draw the LEFT pulling layers re-bakes (the FIRST_PERSON_LEFT_
+    /// HAND ctx the payload wears), the full draw the release answers
+    /// — the arrow the eye-minus-0.1 spawn rides, the -z aim the 3.0
+    /// velocity keeps, the CRIT the full-draw power arms, the stack
+    /// the survival draw shrinks, the MAIN lane the OFF shot never
+    /// leaks, the LEFT render the standby restores — and the SPENT
+    /// quiver the gate refuses (the OFF turn's own FAIL the press's
+    /// silence keeps).
+    #[test]
+    fn the_offhand_bow_the_offline_shot_the_release_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let bow_id = wire("bow");
+        let arrow_id = wire("arrow");
+        let slot = app.selected_hotbar;
+        let quiver = (slot + 1) % 9;
+        // the spawn band's air (the terrain's own tops never reach),
+        // the level -z look the camera's own forward keeps
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE OFFHAND BOW the offline slot wears, the MAIN hand the
+        // empty inventory speaks (the MAIN turn's PASS the OFF turn
+        // answers)
+        app.inventory.items[slot] = (0, 0);
+        app.inventory.offhand[0] = (bow_id, 1);
+        app.offhand_held_refreshed();
+        app.inventory.items[quiver] = (arrow_id, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE DRAW: the OFF turn's own pull the LEFT layers re-bakes
+        assert!(
+            app.on_right_press(0, 0),
+            "the OFF draw the arrow speaks"
+        );
+        assert!(
+            matches!(
+                app.using_item.as_ref().map(|u| u.hand),
+                Some(UseHand::Off)
+            ),
+            "the OFF hand the draw wears"
+        );
+        let pulling = app.held_offhand.as_ref().expect("the LEFT pulling loads");
+        assert!(
+            pulling.binds_texture("item/bow_pulling_0"),
+            "the LEFT ctx the using-branch layers wear"
+        );
+        // THE FULL DRAW: the use clock the 20 ticks the cap speaks
+        for _ in 0..21 {
+            app.update();
+        }
+        assert!(
+            app.using_item.as_ref().unwrap().ticks >= 20,
+            "the draw clock the update advances"
+        );
+        // THE RELEASE: the shot the full power speaks (the walk the
+        // hand never reads — the active stack's own item the gate
+        // resolves)
+        app.on_right_release();
+        assert!(app.using_item.is_none(), "the release the use ends");
+        assert_eq!(app.arrows.len(), 1, "the OFF shot the arrow speaks");
+        let a = &app.arrows[0];
+        assert!(a.player_shot, "the owner lane the player speaks");
+        assert!(a.crit, "the full draw the crit arms");
+        assert!(
+            (a.x - (c as f64 + 0.5)).abs() < 1e-6
+                && (a.y - (eye_y as f64 - 0.1)).abs() < 1e-6
+                && (a.z - (c as f64 + 0.5)).abs() < 1e-6,
+            "the spawn the eye walk keeps ({},{},{})",
+            a.x,
+            a.y,
+            a.z
+        );
+        assert!(
+            a.vz < -2.948 && a.vz > -3.052,
+            "the -z the aim speaks ({})",
+            a.vz
+        );
+        // THE CONSUME: the stack the survival draw shrinks
+        assert_eq!(
+            app.inventory.items[quiver],
+            (arrow_id, 2),
+            "the survival draw the stack shrinks"
+        );
+        // THE VOICE (the level's own random the pitch draw rides)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.arrow.shoot @")),
+                "the ARROW_SHOOT voice the release rode"
+            );
+        }
+        // THE RESTORE: the LEFT render the plain bow wears, the MAIN
+        // lane the OFF arc the leak never speaks
+        let plain = app.held_offhand.as_ref().expect("the LEFT plain returns");
+        assert!(
+            plain.binds_texture("item/bow"),
+            "the resting bow returns through the LEFT ctx (the bow the standby model never keeps)"
+        );
+        assert!(
+            app.held_charge.is_none(),
+            "the OFF shot the MAIN lane never leaks"
+        );
+        // THE SPENT QUIVER: the OFF turn's own gate the FAIL keeps
+        app.inventory.items[quiver] = (0, 0);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(
+            !app.on_right_press(0, 0),
+            "the spent quiver the OFF FAIL keeps"
+        );
+        assert!(app.using_item.is_none(), "the gate the window never opens");
+    }
+
+    /// THE OFFHAND BOW'S OWN EMPTY-QUIVER GATE (javap `BowItem.use` the
+    /// OFF turn's own arc the offline lane keeps — the autopush-488
+    /// gate the live lane wore, the offline source the same law reads):
+    /// the arrow-less offhand the draw never starts, the press the FAIL
+    /// verdict keeps, the LEFT render the resting bow the pull never
+    /// re-bakes, and the window the silence keeps (the using_item the
+    /// gate never opens).
+    #[test]
+    fn the_offhand_bow_the_offline_empty_quiver_the_gate_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let bow_id = wire("bow");
+        let slot = app.selected_hotbar;
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE OFFHAND BOW the arrow-less lane wears (the MAIN hand the
+        // empty inventory speaks)
+        app.inventory.items[slot] = (0, 0);
+        app.inventory.offhand[0] = (bow_id, 1);
+        app.offhand_held_refreshed();
+        let resting = app.held_offhand.as_ref().expect("the LEFT resting bow");
+        assert!(
+            resting.binds_texture("item/bow"),
+            "the resting bow the LEFT ctx wears (the bow the standby model never keeps)"
+        );
+        // THE EMPTY QUIVER: the OFF turn's own gate the FAIL speaks
+        assert!(
+            !app.on_right_press(0, 0),
+            "the empty quiver the OFF FAIL keeps"
+        );
+        assert!(
+            app.using_item.is_none(),
+            "the gate the window never opens"
+        );
+        let still = app.held_offhand.as_ref().expect("the LEFT render stands");
+        assert!(
+            still.binds_texture("item/bow"),
+            "the pull the render never re-bakes"
+        );
+    }
+
     /// THE FLATTEN'S OWN DOWN-FACE REFUSAL — the useOn's
     /// `getClickedFace() == DOWN` the second PASS return speaks (the
     /// clicked underside never flattens): the camera under the grass
