@@ -227,9 +227,18 @@ pub const PLAYER_ARROW_INACCURACY: f64 = 1.0;
 /// the ARROW list's flat velocity the `projectile.shoot` call's
 /// velocity slot carries (the bow's `f * 3.0F` power fold the flat
 /// power never wears; the firework list the `ldc #84 // float 1.6f`
-/// names — the Rocket kind the client's charge lane never banks, the
-/// honest divergence the later walk may close).
+/// names — the Rocket kind the firework arm's own walk banks).
 pub const CROSSBOW_SHOOTING_POWER: f32 = 3.15;
+/// `CrossbowItem.getShootingPower`'s own `ldc #84 // float 1.6f` —
+/// the FIREWORK_ROCKET list's flat velocity the same verdict keeps
+/// (the arrow's 3.15 the rocket never wears — the kind the shot's
+/// own power fold picks BEFORE the projectile's walk answers).
+pub const CROSSBOW_FIREWORK_POWER: f32 = 1.6;
+/// `CrossbowItem.createProjectile`'s own `ldc2_w double
+/// 0.15000000596046448` — the firework ctor's eye back-off the
+/// `getEyeY() - …` spawn pose keeps (the f64 the 0.15f promotion
+/// carries — the arrow's 0.1 back-off the rocket never wears).
+pub const FIREWORK_EYE_BACKOFF: f64 = 0.15_f32 as f64;
 /// `Mob.dropCustomDeathLoot`'s own chance — `DropChances`' default the
 /// `byEquipment(slot)` answers for every slot the mob's own table
 /// never overrides (the 0.085 the nextFloat draw gates).
@@ -3392,6 +3401,203 @@ fn lerp_rotation(current: f32, target: f32) -> f32 {
         cur += 360.0;
     }
     cur + (tgt - cur) * ARROW_ROTATION_LERP
+}
+
+/// THE FIREWORK'S OWN FLIGHT (javap `FireworkRocketEntity` the 26.2
+/// bytecode speaks — the crossbow's shot the DATA_SHOT_AT_ANGLE true
+/// ctor keeps): the straight motion the shotAtAngle lane's `1.15 /
+/// 0.04` boost never bends (the `!isShotAtAngle` gate the walk's own
+/// else skips), the launch the life==0 word speaks, the lifetime the
+/// ctor's own `10 * (1 + flightDuration) + nextInt(6) + nextInt(7)`
+/// arms, the lifetime crossing the explode+discard tail serves. The
+/// explosion's own walk (the damage, the bursts, the boom) the later
+/// walk banks — the despawn the discard keeps.
+#[derive(Debug)]
+pub struct Firework {
+    #[expect(dead_code)] // the entity id the render/wire lane's own walk reads — the ledger keeps
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// the pre-move feet the render's lerp walks FROM (the Entity
+    /// tick's own `xo = x` fold)
+    pub prev_x: f64,
+    pub prev_y: f64,
+    pub prev_z: f64,
+    /// `Entity.deltaMovement` — the shoot's 1.6-scale vector the
+    /// triangle spread perturbs, the flight the shotAtAngle lane
+    /// never bends (no drag, no gravity, no boost)
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// the flight rotation (the shoot's own atan2 degrees the
+    /// updateRotation walk eases toward the velocity's own angles —
+    /// the Projectile walk's own axes the arrow's negated pair never
+    /// shares)
+    pub y_rot: f32,
+    pub x_rot: f32,
+    pub y_rot_o: f32,
+    pub x_rot_o: f32,
+    /// `FireworkRocketEntity.life` — the flight clock (the 0 the
+    /// launch word's own tick keeps)
+    pub life: i32,
+    /// the ctor's own ceiling — `10 * (1 + flightDuration) +
+    /// nextInt(6) + nextInt(7)`, the plain rocket's flightDuration 1
+    /// the i=2 keeps (the 20..=32 band)
+    pub lifetime: i32,
+    /// the discard flag (the lifetime crossing + the wall hit the
+    /// onHit law answers)
+    pub dead: bool,
+}
+
+/// The firework's own tick out-edges — the launch word the caller's
+/// positioned voice answers.
+#[derive(Debug, Clone, Default)]
+pub struct FireworkEvents {
+    /// the life==0 LAUNCH (javap tick's `FIREWORK_ROCKET_LAUNCH` walk
+    /// — `playSound(null, x, y, z, LAUNCH, AMBIENT, 3.0F, 1.0F)` the
+    /// no-silence gate keeps)
+    pub launch: Option<(f64, f64, f64)>,
+}
+
+impl Firework {
+    /// THE CROSSBOW'S OWN FIREWORK SHOT (javap `CrossbowItem.
+    /// createProjectile` the 26.2 bytecode speaks — the FIREWORK_ROCKET
+    /// branch the arrow walk never wears): the spawn the owner's own
+    /// pose keeps (`getX, getEyeY - 0.15000000596046448, getZ` — the
+    /// f64 the 0.15f promotion carries, the feet x/z the getX/getZ
+    /// pair speaks), the ctor's own motion walk the shoot()
+    /// overwrites (the DRAWS the stream spends — the triangle pair
+    /// the 0.002297 delta arms), the lifetime the `10 * (1 +
+    /// flightDuration) + nextInt(6) + nextInt(7)` walk banks, then
+    /// `Projectile.shoot`'s own walk answers: the normalize + the
+    /// triangle spread (the inaccuracy 1.0 the bow's own fold shares)
+    /// scaled by the FIREWORK power 1.6 (the `getShootingPower` #84
+    /// the arrow's 3.15 never wears), the rotation the non-negated
+    /// atan2 axes keep. The seed the id-mixed law keeps (the
+    /// deterministic stand-in the arrow ctor wears), NO crit lane the
+    /// firework never speaks (the setCritArrow the ArrowItem branch
+    /// alone carries).
+    pub fn crossbow_shot(id: i32, ox: f64, oy: f64, oz: f64, dir: (f64, f64, f64)) -> Firework {
+        let seed = arrow_entity_seed(id);
+        let mut rng = Lcg::new(seed);
+        // THE CTOR'S OWN MOTION WALK (setDeltaMovement(triangle, 0.05,
+        // triangle) — the values the shoot() overwrites, the draws
+        // the stream spends)
+        let _gx = rng.triangle(0.002297);
+        let _gz = rng.triangle(0.002297);
+        // THE LIFETIME WALK (the plain rocket's FIREWORKS component
+        // flightDuration 1 the i = 1 + 1 keeps — the custom-star rows
+        // the inventory's stack never carries)
+        let lifetime = 10 * (1 + 1) + rng.next_int(6) + rng.next_int(7);
+        // THE SHOOT (Projectile.shoot): normalize FIRST, the spread
+        // adds, the flat power scales — the walk's own order the
+        // arrow's crossbow ctor keeps
+        let (dx, dy, dz) = dir;
+        let len = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+        let (nx, ny, nz) = (dx / len, dy / len, dz / len);
+        let spread = ARROW_TRIANGLE_SPREAD * PLAYER_ARROW_INACCURACY;
+        let (mx, my, mz) = (
+            nx + rng.triangle(spread),
+            ny + rng.triangle(spread),
+            nz + rng.triangle(spread),
+        );
+        let v = CROSSBOW_FIREWORK_POWER as f64;
+        let (vx, vy, vz) = (mx * v, my * v, mz * v);
+        let horiz = (vx * vx + vz * vz).sqrt();
+        let y_rot = ((vx).atan2(vz) * 57.295_776_367_187_5) as f32;
+        let x_rot = ((vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
+        Firework {
+            id,
+            x: ox,
+            y: oy,
+            z: oz,
+            prev_x: ox,
+            prev_y: oy,
+            prev_z: oz,
+            vx,
+            vy,
+            vz,
+            y_rot,
+            x_rot,
+            y_rot_o: y_rot,
+            x_rot_o: x_rot,
+            life: 0,
+            lifetime,
+            dead: false,
+        }
+    }
+
+    /// THE SHOT-AT-ANGLE FLIGHT (javap `FireworkRocketEntity.tick` the
+    /// 26.2 walk speaks — the detached lane the crossbow's shot
+    /// rides): the hit result the move vector clips (the MISS the
+    /// flight keeps, the wall the onHit explode+discard law answers —
+    /// the explosion's own walk the later walk banks, the despawn the
+    /// discard keeps), the move the constant motion adds (the
+    /// shotAtAngle lane's own straight walk — no drag, no gravity, no
+    /// boost), the rotation the `updateRotation` walk eases (the
+    /// Projectile walk's own lerp 0.2 the arrow's ease shares), the
+    /// launch the life==0 word speaks, the lifetime crossing the
+    /// explode tail serves.
+    pub fn tick(&mut self, world: &World) -> FireworkEvents {
+        let mut events = FireworkEvents::default();
+        self.prev_x = self.x;
+        self.prev_y = self.y;
+        self.prev_z = self.z;
+        self.x_rot_o = self.x_rot;
+        self.y_rot_o = self.y_rot;
+        // THE HIT LANE (the getHitResultOnMoveVector's block clip —
+        // the position to the position+velocity the segment clips)
+        let hit_block = crate::body::clip_ray(
+            world,
+            crate::math::Vec3::new(self.x as f32, self.y as f32, self.z as f32),
+            crate::math::Vec3::new(
+                (self.x + self.vx) as f32,
+                (self.y + self.vy) as f32,
+                (self.z + self.vz) as f32,
+            ),
+        );
+        // THE MOVE (the hit point the block's own walk keeps, the
+        // free fly the constant motion adds)
+        match hit_block {
+            Some(h) => {
+                self.x = h.x as f64;
+                self.y = h.y as f64;
+                self.z = h.z as f64;
+                self.dead = true;
+            }
+            None => {
+                self.x += self.vx;
+                self.y += self.vy;
+                self.z += self.vz;
+            }
+        }
+        // THE ROTATION (javap `Projectile.updateRotation` — the
+        // velocity's own angles the 0.2 lerp eases; the axes the
+        // Projectile walk keeps: yRot from (vx, vz) the NON-negated
+        // pair the arrow's own tick never shares, xRot from (vy,
+        // horiz))
+        let horiz = (self.vx * self.vx + self.vz * self.vz).sqrt();
+        let target_x = ((self.vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
+        let target_y = ((self.vx).atan2(self.vz) * 57.295_776_367_187_5) as f32;
+        self.x_rot = lerp_rotation(self.x_rot, target_x);
+        self.y_rot = lerp_rotation(self.y_rot, target_y);
+        // THE LAUNCH (life==0 && !isSilent — the FIREWORK_ROCKET_LAUNCH
+        // the AMBIENT source the 3.0 volume carries, the pitch the
+        // fconst_1 keeps; no isAlive gate the voice's own walk keeps)
+        if self.life == 0 {
+            events.launch = Some((self.x, self.y, self.z));
+        }
+        self.life += 1;
+        // THE LIFETIME CROSSING (life > lifetime — the ServerLevel
+        // explode the offline stand-in's own level answers, the
+        // explosion's own walk the later walk banks, the discard the
+        // dead flag keeps)
+        if self.life > self.lifetime {
+            self.dead = true;
+        }
+        events
+    }
 }
 
 /// The player slice the zombie's AI reads (the NearestAttackableTarget

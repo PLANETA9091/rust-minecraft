@@ -6568,6 +6568,12 @@ pub struct App {
     /// hits. The offline lane's own `arrows` stay the client's
     /// authority — the two never mix.
     pub net_arrows: Vec<crate::mob::Arrow>,
+    /// THE FIREWORK'S OWN FLIGHT LANE (the offline world's rockets —
+    /// the crossbow's loaded-Rocket shot the performShooting walk
+    /// speaks): the flight the FireworkRocketEntity tick's own
+    /// shotAtAngle laws ride, the launch the life==0 word speaks. The
+    /// headless scenes never spawn one: the goldens stay.
+    pub fireworks: Vec<crate::mob::Firework>,
     /// THE PRIMED TNT LANE (the offline world's fuse machines — the
     /// ignite arm's spawns the TntBlock.prime walk speaks, the chain
     /// spawns the wasExploded law queues): the flight the
@@ -7647,6 +7653,7 @@ impl App {
             arrow_model: None,
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
+            fireworks: Vec::new(),
             primed_tnts: Vec::new(),
             falling_blocks: Vec::new(),
             falling_checks: Vec::new(),
@@ -9503,6 +9510,10 @@ impl App {
                 // the block's voice the stick's own pitch keeps)
                 let mut arrow_player_hits: Vec<f64> = Vec::new();
                 let mut arrow_block_hits: Vec<(f64, f64, f64, f32)> = Vec::new();
+                // THE FIREWORK'S OWN OUT-EDGE (the launch word the
+                // flight tick carries — the positioned voice the
+                // caller's lane answers)
+                let mut firework_launches: Vec<(f64, f64, f64)> = Vec::new();
                 // THE PLAYER'S OWN HITS (the mob verdicts the flight
                 // tick carried — the (mob id, damage) pairs the caller
                 // lanes answer: the hurt, the voice, the death loot +
@@ -9938,6 +9949,19 @@ impl App {
                             arrow_trails.append(&mut aev.trail);
                         }
                         self.arrows.retain(|a| !a.dead);
+                        // THE FIREWORK FLIGHTS (javap
+                        // `FireworkRocketEntity.tick` the 26.2 walk —
+                        // the shotAtAngle lane the crossbow's own shot
+                        // rides: the straight motion the boost never
+                        // bends, the launch the life==0 word speaks,
+                        // the lifetime crossing the discard keeps)
+                        for f in self.fireworks.iter_mut() {
+                            let fev = f.tick(world);
+                            if let Some((lx, ly, lz)) = fev.launch {
+                                firework_launches.push((lx, ly, lz));
+                            }
+                        }
+                        self.fireworks.retain(|f| !f.dead);
                         // THE PRIMED TNT'S OWN TICK (javap `PrimedTnt.tick`
                         // the 26.2 jar speaks — the fuse machines the
                         // entity tick answers after the mobs' own pass:
@@ -10395,6 +10419,21 @@ impl App {
                         pitch,
                         ear_distance(ear, ax, ay, az),
                         ear_pan(ear, yaw, ax, ay, az),
+                    );
+                }
+                // THE FIREWORK'S OWN LAUNCH (javap tick's
+                // FIREWORK_ROCKET_LAUNCH walk the flight tick's word
+                // carries — the AMBIENT source the 3.0 volume keeps,
+                // the pitch the fconst_1 1.0 answers, the entity's own
+                // spot the positioned lane places)
+                for (lx, ly, lz) in firework_launches {
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "entity.firework_rocket.launch",
+                        3.0,
+                        1.0,
+                        ear_distance(ear, lx, ly, lz),
+                        ear_pan(ear, yaw, lx, ly, lz),
                     );
                 }
                 // THE PLAYER'S OWN ARROWS (the mob hits the onHitEntity
@@ -15803,23 +15842,27 @@ impl App {
                         && mc_registry::item_charge_def(off_id).is_some()
                     {
                         // THE KIND THE SHOT READS BEFORE THE CLEAR (the
-                        // Rocket kind the honest skip keeps — the
-                        // firework's own spawn the later walk banks)
-                        let arrow_charge =
-                            self.off_charge == Some(mc_registry::ChargeKind::Arrow);
+                        // ROCKET kind the firework's own spawn the
+                        // performShooting walk answers, the ARROW kind
+                        // the arrow's own shot keeps — the Charged-
+                        // Projectiles component the contains walk reads)
+                        let rocket_charge =
+                            self.off_charge == Some(mc_registry::ChargeKind::Rocket);
                         self.off_charge = None;
                         self.offhand_held_loaded = Some(off_id);
                         self.load_offhand_payload_from_id(Some(off_id));
                         // THE OFFHAND'S OWN OFFLINE SHOT (the same walk
                         // the MAIN arm's shot speaks — the hand the
                         // release walk never reads, the OFF turn the
-                        // same eye/voice the helper keeps; the LIVE
-                        // session the server's arrow the wire serves)
-                        if arrow_charge
-                            && self.live_clicks.is_none()
-                            && !self.world_is_network
-                        {
-                            self.crossbow_shot_offline();
+                        // same eye/voice the helper keeps; the kind the
+                        // routing answers, the LIVE session the
+                        // server's own projectile the wire serves)
+                        if self.live_clicks.is_none() && !self.world_is_network {
+                            if rocket_charge {
+                                self.firework_shot_offline();
+                            } else {
+                                self.crossbow_shot_offline();
+                            }
                         }
                         let (yaw, pitch) =
                             crate::world_view::wire_angles(&self.world_camera());
@@ -15996,6 +16039,61 @@ impl App {
             .play_voice(self.frame, "item.crossbow.shoot", 1.0, 1.0);
     }
 
+    /// THE FIREWORK'S OWN OFFLINE SHOT (javap `CrossbowItem.
+    /// createProjectile` the 26.2 walk speaks — the FIREWORK_ROCKET
+    /// branch the arrow walk never wears, then `shootProjectile` the
+    /// same triangle the arrow's velocity carries): the spawn the
+    /// owner's own pose keeps — the FEET x/z the getX/getZ pair
+    /// speaks, the eye minus 0.15000000596046448 the 0.15f promotion
+    /// carries (the arrow's −0.1 the rocket never wears), the 1.6
+    /// flat power the `getShootingPower` #84 names, the voice the
+    /// SAME per-projectile walk rides (the index-0 pitch the early
+    /// return keeps — 1.0, no random the walk spends). The LIVE
+    /// session the ServerLevel gate the silence keeps — the server's
+    /// own rocket the wire's Add Entity serves, the client predicts
+    /// none.
+    fn firework_shot_offline(&mut self) {
+        // THE OWNER'S OWN POSE (the createProjectile ctor's spawn law
+        // — the feet x/z + the eye-minus-0.15 y the body's own coords
+        // keep, the flight camera the headless fallback answers)
+        let (ox, oy, oz, dir) = match self.body.as_ref() {
+            Some(b) => {
+                let cam = b.camera();
+                (
+                    b.x,
+                    b.y + b.eye_height() - crate::mob::FIREWORK_EYE_BACKOFF,
+                    b.z,
+                    cam.forward(),
+                )
+            }
+            None => {
+                let cam = self.world_camera();
+                (
+                    cam.pos.x as f64,
+                    cam.pos.y as f64 - crate::mob::FIREWORK_EYE_BACKOFF,
+                    cam.pos.z as f64,
+                    cam.forward(),
+                )
+            }
+        };
+        // THE LEVEL'S OWN ENTITY COUNTER (the next_drop_id the shared
+        // id space keeps — the arrow arm's own precedent)
+        let id = self.next_drop_id;
+        self.next_drop_id += 1;
+        self.fireworks.push(crate::mob::Firework::crossbow_shot(
+            id,
+            ox,
+            oy,
+            oz,
+            (dir.x as f64, dir.y as f64, dir.z as f64),
+        ));
+        // THE VOICE (the shootProjectile's per-projectile walk — the
+        // same item.crossbow.shoot the arrow arm wears, the index-0
+        // 1.0/1.0 the walk's own constancy keeps)
+        self.sounds
+            .play_voice(self.frame, "item.crossbow.shoot", 1.0, 1.0);
+    }
+
     /// THE MAIN-HAND'S OWN ITEM LANE (the vanilla startUseItem's hand-0
     /// turn — the unified held id's use walk the lanes' own order keeps:
     /// the boat's spawn, the carrot stick's boost, the eat's consumable,
@@ -16085,18 +16183,24 @@ impl App {
         // resting render returns to the plain crossbow, and
         // the wire echo rides (the shot is a use-item click)
         if self.held_charge.is_some() && mc_registry::item_charge_def(id).is_some() {
-            // THE KIND THE SHOT READS BEFORE THE CLEAR (the Rocket
-            // kind the firework's own spawn the later walk banks —
-            // the honest divergence the arrow walk keeps)
-            let arrow_charge = self.held_charge == Some(mc_registry::ChargeKind::Arrow);
+            // THE KIND THE SHOT READS BEFORE THE CLEAR (the ROCKET
+            // kind the firework's own spawn the performShooting walk
+            // answers, the ARROW kind the arrow's own shot keeps —
+            // the ChargedProjectiles component the contains walk
+            // reads)
+            let rocket_charge = self.held_charge == Some(mc_registry::ChargeKind::Rocket);
             self.held_charge = None;
             self.load_held_payload(id, None);
             // THE OFFLINE SHOT (javap `performShooting` the walk the
-            // helper carries): the ARROW kind the walk answers, the
-            // LIVE session the server's own arrow the wire's Add
+            // helpers carry): the kind the routing answers, the LIVE
+            // session the server's own projectile the wire's Add
             // Entity serves (the client predicts none)
-            if arrow_charge && self.live_clicks.is_none() && !self.world_is_network {
-                self.crossbow_shot_offline();
+            if self.live_clicks.is_none() && !self.world_is_network {
+                if rocket_charge {
+                    self.firework_shot_offline();
+                } else {
+                    self.crossbow_shot_offline();
+                }
             }
             let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
             if let Some(sink) = self.live_clicks.as_ref() {
@@ -52623,6 +52727,224 @@ cow_sound_variant: None,
                     .iter()
                     .any(|e| e.starts_with("item.crossbow.shoot @")),
                 "the CROSSBOW_SHOOT voice the OFF shot rode"
+            );
+        }
+        // THE RESTORE: the LEFT render the plain crossbow wears
+        let plain = app.held_offhand.as_ref().expect("the LEFT plain returns");
+        assert!(
+            plain.binds_texture("item/crossbow_standby"),
+            "the standby returns through the LEFT ctx"
+        );
+    }
+
+    /// THE CROSSBOW'S OWN FIREWORK SHOT — the Rocket kind the
+    /// performShooting walk answers (javap `CrossbowItem.
+    /// createProjectile` the FIREWORK_ROCKET branch the 26.2 bytecode
+    /// speaks): the charged press the instant walk serves — the
+    /// rocket the eye-minus-0.15 spawn rides (the FEET x/z the
+    /// getX/getZ pair keeps), the 1.6 flat power the #84 ldc names
+    /// (the arrow's 3.15 the rocket never wears), the NO crit lane
+    /// the ArrowItem branch alone carries, the item.crossbow.shoot
+    /// voice the same per-projectile walk rides, the launch the
+    /// first tick's own word speaks, the lifetime the ctor's own
+    /// 20..=32 band keeps, the lifetime crossing the despawn serves,
+    /// and the arrow lane the Rocket kind never leaks.
+    #[test]
+    fn the_crossbow_the_firework_shot_the_rocket_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (crossbow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the spawn band's air (the terrain's own tops never reach),
+        // the level -z look the camera's own forward keeps
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE ROCKET COMPONENT the stand-in arms (the Charged-
+        // Projectiles the contains walk reads — the kind the shot's
+        // own routing answers)
+        app.held_charge = Some(mc_registry::ChargeKind::Rocket);
+        // THE SHOT: the charged press the instant walk answers — the
+        // rocket the createProjectile branch banks
+        assert!(app.on_right_press(0, 0), "the charged press answers");
+        assert!(!app.is_using(), "the shot is instant — no pull");
+        assert!(app.held_charge.is_none(), "the shot consumed the charge");
+        assert_eq!(
+            app.fireworks.len(),
+            1,
+            "the offline shot the firework speaks"
+        );
+        assert!(
+            app.arrows.is_empty(),
+            "the Rocket kind the arrow lane never leaks"
+        );
+        let f = &app.fireworks[0];
+        assert!(
+            (f.x - (c as f64 + 0.5)).abs() < 1e-6 && (f.z - (c as f64 + 0.5)).abs() < 1e-6,
+            "the spawn the FEET x/z the getX/getZ pair keeps ({},{})",
+            f.x,
+            f.z
+        );
+        assert!(
+            (f.y - (eye_y as f64 - crate::mob::FIREWORK_EYE_BACKOFF)).abs() < 1e-6,
+            "the spawn the eye-minus-0.15 walk keeps ({})",
+            f.y
+        );
+        assert!(
+            f.vz < -1.57 && f.vz > -1.63,
+            "the -z the 1.6 flat power speaks ({})",
+            f.vz
+        );
+        assert!(
+            f.vx.abs() < 0.03 && f.vy.abs() < 0.03,
+            "the triangle spread the inaccuracy 1.0 keeps"
+        );
+        assert!(
+            (20..=32).contains(&f.lifetime),
+            "the lifetime the ctor's own band keeps ({})",
+            f.lifetime
+        );
+        // THE VOICE: the same per-projectile walk the arrow arm rides
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.crossbow.shoot @")),
+                "the CROSSBOW_SHOOT voice the shot rode"
+            );
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.firework_rocket.launch @")),
+                "the launch the first tick never speaks early"
+            );
+        }
+        // THE FIRST TICK: the launch word the life==0 walk speaks,
+        // the straight motion the shotAtAngle lane never bends
+        app.update();
+        assert_eq!(app.fireworks.len(), 1, "the flight the first tick keeps");
+        let f = &app.fireworks[0];
+        assert_eq!(f.life, 1, "the flight clock the tick advances");
+        assert!(
+            (f.z - (c as f64 + 0.5 + f.vz)).abs() < 1e-6,
+            "the straight motion the shotAtAngle lane keeps ({})",
+            f.z
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.firework_rocket.launch @")),
+                "the FIREWORK_ROCKET_LAUNCH the first tick rode"
+            );
+        }
+        // THE LIFETIME CROSSING: the explode tail the despawn serves
+        // (the explosion's own walk the later walk banks)
+        let lifetime = app.fireworks[0].lifetime;
+        app.fireworks[0].life = lifetime;
+        app.update();
+        assert!(
+            app.fireworks.is_empty(),
+            "the lifetime crossing the discard keeps"
+        );
+        // THE RE-CHARGE: the fresh pull the next rocket arms
+        assert!(app.on_right_press(0, 0), "the fresh pull starts");
+        assert!(app.is_using(), "the pull the fresh stack arms");
+    }
+
+    /// THE OFFHAND CROSSBOW'S OWN FIREWORK SHOT — the OFF turn's own
+    /// Rocket kind the mirror walk answers (javap `CrossbowItem.use`
+    /// the OFF hand's own turn the for-each-hand walk serves): the
+    /// off-charge the Rocket kind carries, the OFF press the instant
+    /// walk serves — the rocket the same eye/velocity/voice law
+    /// banks, the MAIN lane the OFF shot never leaks, the LEFT
+    /// render the standby restores, and the arrow lane the OFF shot
+    /// never speaks.
+    #[test]
+    fn the_offhand_crossbow_the_firework_shot_the_mirror_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let slot = app.selected_hotbar;
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE OFFHAND CROSSBOW the offline slot wears, the MAIN hand
+        // the empty inventory speaks (the MAIN turn's PASS the OFF
+        // turn answers)
+        app.inventory.items[slot] = (0, 0);
+        app.inventory.offhand[0] = (crossbow_id, 1);
+        app.offhand_held_refreshed();
+        // THE ROCKET COMPONENT the OFF lane arms (the kind the OFF
+        // pull's own walk never loads — the stand-in the shot's own
+        // routing answers)
+        app.off_charge = Some(mc_registry::ChargeKind::Rocket);
+        // THE OFF SHOT: the press the instant walk answers — the
+        // rocket the same createProjectile branch banks
+        assert!(app.on_right_press(0, 0), "the charged OFF press answers");
+        assert!(!app.is_using(), "the shot is instant — no pull");
+        assert!(app.off_charge.is_none(), "the shot consumed the OFF charge");
+        assert_eq!(
+            app.fireworks.len(),
+            1,
+            "the OFF shot the firework speaks"
+        );
+        assert!(
+            app.arrows.is_empty(),
+            "the OFF shot the arrow lane never leaks"
+        );
+        assert!(
+            app.held_charge.is_none(),
+            "the MAIN lane the OFF shot never leaks"
+        );
+        let f = &app.fireworks[0];
+        assert!(
+            (f.y - (eye_y as f64 - crate::mob::FIREWORK_EYE_BACKOFF)).abs() < 1e-6,
+            "the spawn the eye-minus-0.15 walk keeps ({})",
+            f.y
+        );
+        assert!(
+            f.vz < -1.57 && f.vz > -1.63,
+            "the -z the 1.6 flat power speaks ({})",
+            f.vz
+        );
+        // THE FIRST TICK: the launch word the same walk rides
+        app.update();
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.firework_rocket.launch @")),
+                "the FIREWORK_ROCKET_LAUNCH the first tick rode"
             );
         }
         // THE RESTORE: the LEFT render the plain crossbow wears
