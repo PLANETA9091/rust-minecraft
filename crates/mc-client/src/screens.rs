@@ -6987,6 +6987,9 @@ pub struct App {
     /// LevelEvent-3007 arm's own ring pixels the lane draws; the
     /// missing file the honest absence keeps)
     pub shriek_sprite: Option<crate::avatar::ShriekSprite>,
+    /// The firework flash's single sprite (the same lazy load — the
+    /// Starter cadence's flash quad's pixel source).
+    pub flash_sprite: Option<crate::avatar::FlashSprite>,
     /// The splash-potion ring's TWO sprite sets (the same lazy load —
     /// the `effect_N` set the regular splash rides, the `spell_N` set
     /// the instant word answers).
@@ -7749,6 +7752,7 @@ impl App {
             sculk_charge_frames: None,
             sculk_pop_frames: None,
             shriek_sprite: None,
+            flash_sprite: None,
             effect_frames: None,
             spell_frames: None,
             potion_sprites: None,
@@ -31807,6 +31811,10 @@ impl App {
             self.shriek_sprite =
                 crate::avatar::ShriekSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.flash_sprite.is_none() {
+            self.flash_sprite =
+                crate::avatar::FlashSprite::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.glint_sprite.is_none() {
             self.glint_sprite =
                 crate::avatar::GlintSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -31895,6 +31903,10 @@ impl App {
         // single sprite the eye's own model keeps)
         let mut portal_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut eye_shard_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        // the firework flash's own group (the Starter cadence's overlay
+        // quads — the alpha law the tint carries, the visible quad the
+        // custom-ARGB colors arm)
+        let mut flash_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         for p in &self.particles {
             let half = p.half();
             // THE RENDER FOLD (javap Particle.render's own lerp): the
@@ -32528,21 +32540,28 @@ impl App {
                     // the NoRenderParticle.render the base's own
                     // return-early keeps)
                 }
-                crate::particles::ParticleKind::Flash => {
-                    // THE FLASH'S OWN DEFERRED QUAD (javap
+                crate::particles::ParticleKind::Flash { alpha } => {
+                    // THE FLASH'S OWN QUAD (javap
                     // `FireworkParticles$OverlayParticle` — the
-                    // 7.1 × sin((age + partial − 1) × π/4) bell the
-                    // getQuadSize override speaks, the ColorParticle-
-                    // Option alpha the setAlpha store carries): the
-                    // flash SPRITE the later round arms — the alpha
-                    // law itself paints NOTHING for the crafting-table
-                    // rockets either (the dye colors' 0xRRGGBB the
-                    // `ARGB.alpha(i) = i >>> 24` fold answers 0 — the
-                    // vanilla render's own alpha-0 quad the verbatim
-                    // law keeps; the custom-ARGB lane the later walk
-                    // arms with the flash sprite the jar banks). The
-                    // sim the tick's own four-tick life runs — the
-                    // honest walk the engine queue keeps.
+                    // `7.1 × sin((age + partial − 1) × π/4)` bell the
+                    // half() arm folds, the flash sprite the quad
+                    // samples, the tint the particle's own color ×
+                    // alpha the dim carries). THE ALPHA-0 LAW (javap
+                    // `ARGB.alpha(I)` = `i >>> 24`: the dye colors'
+                    // 0xRRGGBB the ZERO byte answers — the setAlpha(0)
+                    // quad the vanilla render itself paints nothing
+                    // for): the quad the zero-alpha flash honestly
+                    // skips, the custom-ARGB colors' visible quads the
+                    // TRANSLUCENT layer the getLayer override returns
+                    // draws.
+                    if alpha > 0.0 {
+                        flash_quads.push(crate::raster::SampledQuad {
+                            pts,
+                            uv: [[0.0, 32.0], [32.0, 32.0], [32.0, 0.0], [0.0, 0.0]],
+                            tex: "particle_flash",
+                            tint: [p.col[0] * alpha, p.col[1] * alpha, p.col[2] * alpha],
+                        });
+                    }
                 }
             }
         }
@@ -32575,6 +32594,14 @@ impl App {
                     Some(frames.pixel(*frame, u, v))
                 });
             }
+        }
+        // the firework flash's group (the overlay's own pixels — the
+        // alpha-0 quads the render arm never banks, the visible ones
+        // the custom-ARGB colors arm)
+        if let Some(s) = &self.flash_sprite {
+            fb.draw_sampled_quads(vp, &flash_quads, &mut |_tex, u, v| {
+                Some(s.pixel(u, v))
+            });
         }
         // the crit group (the star's own pixels)
         if let Some(crit) = &self.crit_sprite {
@@ -53725,11 +53752,20 @@ cow_sound_variant: None,
         }
         // THE FLASH (the last spawn the cadence's tail keeps — the
         // four-tick life + the zero motion + the colors[0] the
-        // option's color decodes)
+        // option's color decodes, the alpha the dye color's 0x00 byte
+        // answers — the vanilla paint-nothing law the field banks)
         let flash = &spawned[98];
-        assert_eq!(flash.kind, crate::particles::ParticleKind::Flash, "the flash the tail banks");
+        assert!(
+            matches!(flash.kind, crate::particles::ParticleKind::Flash { .. }),
+            "the flash the tail banks"
+        );
         assert_eq!(flash.lifetime, 4, "the iconst_4 the ctor law keeps");
         assert_eq!(flash.col, [1.0, 0.0, 0.0], "the colors[0] the flash decodes");
+        assert_eq!(
+            flash.kind,
+            crate::particles::ParticleKind::Flash { alpha: 0.0 },
+            "the dye color's 0x00 byte the alpha decode answers"
+        );
         assert_eq!((flash.vx, flash.vy, flash.vz), (0.0, 0.0, 0.0), "the dconst_0 motion keeps");
         // THE BLAST VOICE (the life-0 word the AMBIENT lane speaks —
         // the large gate the single small ball never arms; the far
@@ -53826,7 +53862,10 @@ cow_sound_variant: None,
             );
         }
         let burst_flash = &spawned_burst[70];
-        assert_eq!(burst_flash.kind, crate::particles::ParticleKind::Flash);
+        assert!(
+            matches!(burst_flash.kind, crate::particles::ParticleKind::Flash { .. }),
+            "the burst's own flash the tail banks"
+        );
         assert_eq!(
             burst_flash.col,
             crate::particles::spark_color_decode(0x1E1B1B),
@@ -54240,6 +54279,90 @@ cow_sound_variant: None,
         assert_eq!(
             fb_again.color, with,
             "the same rockets the same frame wears"
+        );
+    }
+
+    /// THE FLASH'S OWN RENDER — the alpha law the frame answers (javap
+    /// `OverlayParticle.getQuadSize` + `ARGB.alpha` the 26.2 walk): the
+    /// custom-ARGB color's alpha-1 quad the frame lights (the
+    /// with/without diff the flash's own pixels answer — the bell's
+    /// own span the age-0 fold's inverted corners cover), the dye
+    /// color's alpha-0 quad the frame NEVER lights (the `setAlpha(0)`
+    /// the vanilla render itself paints nothing for — the honest skip
+    /// the zero arm keeps).
+    #[test]
+    fn the_flash_the_render_the_alpha_law_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let c = app.offline_world.as_ref().unwrap().size_blocks() / 2;
+        let eye_y = app.spawn_y + 7;
+        // the camera the -Z look keeps, the flash 2 blocks ahead (the
+        // quad the bell's own span fills — the age-0 fold the negative
+        // half answers inverted, the area the same square covers)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let fx = c as f64 + 0.5;
+        let fy = eye_y as f64;
+        let fz = c as f64 + 0.5 - 2.0;
+        let mut assets = GuiAssets::open("assets-cache/jar");
+        // THE SPRITE'S OWN PRE-LOAD (the unit test's CWD the package
+        // root keeps — the manifest-relative walk-up the audio tests
+        // speak; the render's lazy load the Some arm never re-runs)
+        app.flash_sprite = crate::avatar::FlashSprite::load(
+            &std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+                .join("../../assets-cache/jar"),
+        );
+        assert!(
+            app.flash_sprite.is_some(),
+            "the flash sprite the cache load answers"
+        );
+        // THE DYE-COLOR FLASH (0xFF0000 — the alpha byte the 0x00
+        // keeps): the quad the frame never lights
+        app.particles.push(crate::particles::firework_flash(
+            fx,
+            fy,
+            fz,
+            0xFF0000,
+            &mut app.level_ambient_rng,
+        ));
+        let mut fb_dye = crate::raster::Framebuf::new(320, 180);
+        app.render(&mut fb_dye, &mut assets);
+        let dye = fb_dye.color.clone();
+        let _dye_particle = std::mem::take(&mut app.particles);
+        let mut fb_base = crate::raster::Framebuf::new(320, 180);
+        app.render(&mut fb_base, &mut assets);
+        let diff_dye = dye
+            .iter()
+            .zip(fb_base.color.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert_eq!(
+            diff_dye, 0,
+            "the alpha-0 flash the frame never lights ({diff_dye})"
+        );
+        // THE CUSTOM-ARGB FLASH (0xFFFF0000 — the alpha byte the FF
+        // keeps): the alpha-1 quad the frame lights
+        app.particles.push(crate::particles::firework_flash(
+            fx,
+            fy,
+            fz,
+            0xFFFF0000u32 as i32,
+            &mut app.level_ambient_rng,
+        ));
+        let mut fb_argb = crate::raster::Framebuf::new(320, 180);
+        app.render(&mut fb_argb, &mut assets);
+        let diff_argb = fb_argb
+            .color
+            .iter()
+            .zip(fb_base.color.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(
+            diff_argb > 64,
+            "the alpha-1 flash the frame lights ({diff_argb})"
         );
     }
 

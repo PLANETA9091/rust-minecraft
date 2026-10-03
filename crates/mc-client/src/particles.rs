@@ -276,14 +276,18 @@ pub enum ParticleKind {
     /// partial − 1) × π/4)` bell the getQuadSize override speaks
     /// (the #33/#23/#36 constants the cp decode banks), the color
     /// + alpha the ColorParticleOption's own decode gives (`ARGB.
-    /// red/alpha / 255` — the dye colors' alpha-0 byte the verbatim
-    /// law keeps: the vanilla render itself paints nothing for the
-    /// crafting-table rockets), the TRANSLUCENT layer the getLayer
-    /// override returns. The render arm the flash sprite the later
-    /// round arms — the dye-colored quad the alpha-0 law leaves
-    /// unpainted either way (the honest walk the sim still keeps:
-    /// the particle the engine ages, the four-tick life it runs).
-    Flash,
+    /// red/alpha / 255`). THE ALPHA THE QUAD'S OWN VISIBILITY CARRIES
+    /// (javap `ARGB.alpha(I)` = `i >>> 24` — the dye colors' 0xRRGGBB
+    /// the ZERO byte answers, the setAlpha(0) quad the vanilla render
+    /// itself paints nothing for; the custom-ARGB colors the alpha
+    /// byte's own answer keep): the render arm the alpha-0 quad
+    /// honestly skips, the alpha>0 one the tint × alpha dim draws.
+    Flash {
+        /// The `setAlpha` store — `(color >>> 24) / 255` the decode
+        /// gives (the 0.0 the dye colors keep, the visible quad the
+        /// custom-ARGB bytes arm).
+        alpha: f32,
+    },
     /// `CritParticle` — the crit star (the critical_hit texture).
     Crit,
     /// `CritParticle` the DAMAGE_INDICATOR provider speaks — the same
@@ -999,6 +1003,13 @@ impl Particle {
             ParticleKind::SculkShriek { .. } => {
                 base * shriek_grow(self.age, self.lifetime, 0.0)
             }
+            // the flash's own bell (javap OverlayParticle.getQuadSize —
+            // the SIZE the bell returns, the corner span the ±size/2
+            // convention halves; the negative first-tick fold the
+            // vanilla vertex fold's own ±f5 swap answers — the covered
+            // area the same square keeps, the magnitude the raster's
+            // CCW edge test the flip would otherwise trip preserves)
+            ParticleKind::Flash { .. } => flash_bell(self.age, 0.0).abs() * 0.5,
             _ => base,
         }
     }
@@ -3909,7 +3920,9 @@ pub fn firework_flash(x: f64, y: f64, z: f64, color: i32, rng: &mut crate::drops
     // set spends — `sprites.get(random)` the nextInt(1) answers)
     let _sprite_roll = rng.next_int(1);
     Particle {
-        kind: ParticleKind::Flash,
+        kind: ParticleKind::Flash {
+            alpha: ((color as u32) >> 24) as f32 / 255.0,
+        },
         x,
         y,
         z,
@@ -3932,10 +3945,8 @@ pub fn firework_flash(x: f64, y: f64, z: f64, color: i32, rng: &mut crate::drops
 /// verbatim: `7.1F × sin((age + partial − 1) × 0.25F × π)` — the
 /// growth-and-shrink arc the four-tick life wears, the negative
 /// first-tick fold the spawn frame's own quirk the verbatim law
-/// keeps). The render arm the flash sprite the later round arms —
-/// until then the law the tests alone walk (the expectation the
-/// consumer's landing forces to clean up).
-#[cfg_attr(not(test), expect(dead_code))]
+/// keeps; the SIZE the render's half() fold halves — the corner span
+/// the ±size/2 convention keeps).
 pub fn flash_bell(age: u32, partial: f32) -> f32 {
     7.1 * (((age as f32 + partial - 1.0) * 0.25 * std::f32::consts::PI).sin())
 }

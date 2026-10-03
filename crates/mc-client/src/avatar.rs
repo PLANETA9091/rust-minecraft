@@ -7221,6 +7221,49 @@ impl ShriekSprite {
 /// The glow texture's own layout (the jar's 8x8 the IHDR speaks).
 pub const GLOW_SPRITE_SIDE: u32 = 8;
 
+/// The PARTICLE LANE's firework flash sprite — the Starter cadence's
+/// own overlay (javap: the `flash` particle type's single texture, the
+/// jar's `textures/particle/flash.png`, the `FireworkParticles$
+/// FlashProvider`'s `SpriteSet.get(random)` pick the
+/// `BitRandomSource.nextInt(1)` draw answers whatever the roll — the
+/// one-texture set the flash.json keeps, the `OverlayParticle` the
+/// Starter's per-explosion tail spawns), loaded and sha1-verified the
+/// same stream the shriek sprite speaks. A missing or tampered file
+/// keeps the flashes invisible (the honest absence the other lanes
+/// speak — the dye colors' alpha-0 law paints nothing either way).
+pub struct FlashSprite {
+    pub rgba: Vec<u8>,
+}
+
+/// The flash texture's own layout (the jar's 32x32 the IHDR speaks).
+pub const FLASH_SPRITE_SIDE: u32 = 32;
+
+impl FlashSprite {
+    /// Load from the runtime cache root (the generator's
+    /// `assets-cache/jar/`), verify the generated sha1, decode, and
+    /// shape-check the 32x32 layout.
+    pub fn load(root: &std::path::Path) -> Option<FlashSprite> {
+        let bytes = std::fs::read(root.join(skin::PARTICLE_FLASH_RUNTIME_PATH)).ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes)) != skin::PARTICLE_FLASH_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != FLASH_SPRITE_SIDE || h != FLASH_SPRITE_SIDE {
+            return None;
+        }
+        Some(FlashSprite { rgba })
+    }
+
+    /// The sprite pixel at (u, v) in TEXTURE UNITS (the 0..32 the
+    /// flash quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let x = (u.floor().clamp(0.0, FLASH_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, FLASH_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * FLASH_SPRITE_SIDE as usize + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
 impl GlowSprite {
     /// Load from the runtime cache root (the generator's
     /// `assets-cache/jar/`), verify the generated sha1, decode, and

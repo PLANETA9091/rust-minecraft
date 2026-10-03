@@ -232,6 +232,13 @@ pub const PARTICLE_SCULK_POP_JAR_PATHS: [&str; 4] = [
 /// size the lane checks; the `ShriekParticle`'s render the
 /// LevelEvent-3007 arm's ten-delayed ring feeds).
 pub const PARTICLE_SHRIEK_JAR_PATH: &str = "assets/minecraft/textures/particle/shriek.png";
+/// The firework FLASH's single sprite (javap: the `flash` particle
+/// type's own texture, the jar's `textures/particle/flash.png`, the
+/// `SpriteSet.get(random)` pick the FlashProvider speaks — the
+/// `BitRandomSource.nextInt(1)` draw the power-of-2 arm still spends;
+/// the 32x32 the IHDR verifies; the `OverlayParticle` the Starter's
+/// cadence feeds).
+pub const PARTICLE_FLASH_JAR_PATH: &str = "assets/minecraft/textures/particle/flash.png";
 /// The sweep attack's 8-frame arc (javap: the `sweep_attack` particle
 /// type's sprite set — the jar's `particles/sweep_attack.json` lists
 /// EIGHT textures, `minecraft:sweep_0..7` in ASCENDING order — the
@@ -468,6 +475,9 @@ pub const PARTICLE_SCULK_POP_RUNTIME_PATHS: [&str; 4] = [
 /// The sculk shriek's runtime-cache path (the same textures/ prefix
 /// strip the other lanes speak).
 pub const PARTICLE_SHRIEK_RUNTIME_PATH: &str = "particle/shriek.png";
+/// The firework flash's runtime-cache path (the same textures/ prefix
+/// strip the other lanes speak).
+pub const PARTICLE_FLASH_RUNTIME_PATH: &str = "particle/flash.png";
 /// The splash-potion ring's runtime-cache paths (the same textures/
 /// prefix strip the other lanes speak — the FILE index the json's
 /// descending list folds).
@@ -647,6 +657,10 @@ pub struct SkinData {
     /// integrity) — the LevelEvent-3007 arm's ten-delayed ring's pixel
     /// source (the 13x13 shriek sprite the one-texture json keeps).
     pub particle_shriek_png_sha1: String,
+    /// sha1 of the firework flash's single sprite (jar-verbatim
+    /// integrity) — the Starter cadence's flash quad's pixel source
+    /// (the 32x32 flash sprite the one-texture json keeps).
+    pub particle_flash_png_sha1: String,
     /// sha1s of the splash-potion ring's two 8-frame sets (jar-verbatim
     /// integrity) — the spell ring's pixel sources (the 8x8 effect/spell
     /// frames the two jsons' descending lists order).
@@ -1179,6 +1193,17 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         kw,
         kh
     );
+    // the firework flash's single sprite (the same shape check the
+    // shriek walk speaks — the 32x32 the flash quads sample)
+    let flash_bytes = read_entry(archive, PARTICLE_FLASH_JAR_PATH).context("read flash")?;
+    let particle_flash_png_sha1 = crate::util::sha1_hex(&flash_bytes);
+    let (fw, fh, _flash_rgba) = decode_rgba(&flash_bytes).context("decode flash")?;
+    anyhow::ensure!(
+        (fw, fh) == (32, 32),
+        "flash must be the 32x32 sprite, got {}x{}",
+        fw,
+        fh
+    );
     // the splash-potion ring's two 8-frame sets (the same shape check
     // the poof walk speaks — the 8x8 the ring quads sample over their
     // own lives, the type's own json the set rides)
@@ -1344,6 +1369,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_sculk_charge_png_sha1s,
         particle_sculk_pop_png_sha1s,
         particle_shriek_png_sha1,
+        particle_flash_png_sha1,
         particle_effect_png_sha1s,
         particle_spell_png_sha1s,
         item_potion_overlay_png_sha1,
@@ -1862,6 +1888,13 @@ pub fn emit(data: &SkinData) -> Result<String> {
         "pub const PARTICLE_SHRIEK_RUNTIME_PATH: &str = \"{PARTICLE_SHRIEK_RUNTIME_PATH}\";\n"
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_FLASH_PNG_SHA1: &str = \"{}\";\n",
+        data.particle_flash_png_sha1
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_FLASH_RUNTIME_PATH: &str = \"{PARTICLE_FLASH_RUNTIME_PATH}\";\n"
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = [{}];\n",
         data.particle_effect_png_sha1s
             .iter()
@@ -2184,6 +2217,8 @@ mod tests {
             sculk_pops.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let shriek = shriek_png();
         let expected_shriek_sha1 = crate::util::sha1_hex(&shriek);
+        let flash = sweep_png();
+        let expected_flash_sha1 = crate::util::sha1_hex(&flash);
         let effects = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
         let expected_effect_sha1s: Vec<String> =
             effects.iter().map(|p| crate::util::sha1_hex(p)).collect();
@@ -2331,6 +2366,7 @@ mod tests {
             (PARTICLE_SCULK_POP_JAR_PATHS[2], sculk_pops[2].clone()),
             (PARTICLE_SCULK_POP_JAR_PATHS[3], sculk_pops[3].clone()),
             (PARTICLE_SHRIEK_JAR_PATH, shriek),
+            (PARTICLE_FLASH_JAR_PATH, flash),
             (PARTICLE_EFFECT_JAR_PATHS[0], effects[0].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[1], effects[1].clone()),
             (PARTICLE_EFFECT_JAR_PATHS[2], effects[2].clone()),
@@ -2490,6 +2526,10 @@ mod tests {
         assert_eq!(
             data.particle_shriek_png_sha1, expected_shriek_sha1,
             "the shriek sprite's own sha1"
+        );
+        assert_eq!(
+            data.particle_flash_png_sha1, expected_flash_sha1,
+            "the flash sprite's own sha1"
         );
         assert_eq!(
             data.particle_effect_png_sha1s,
