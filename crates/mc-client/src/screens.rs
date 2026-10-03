@@ -9609,6 +9609,10 @@ impl App {
                 // flight tick carries — the positioned voice the
                 // caller's lane answers)
                 let mut firework_launches: Vec<(f64, f64, f64)> = Vec::new();
+                // THE EXPLOSION BURSTS' OWN QUEUE (the lifetime crossing's
+                // explode words — the poof burst the post-loop walk
+                // speaks)
+                let mut firework_explodes: Vec<(f64, f64, f64)> = Vec::new();
                 // THE PLAYER'S OWN HITS (the mob verdicts the flight
                 // tick carried — the (mob id, damage) pairs the caller
                 // lanes answer: the hurt, the voice, the death loot +
@@ -10054,6 +10058,9 @@ impl App {
                             let fev = f.tick(world);
                             if let Some((lx, ly, lz)) = fev.launch {
                                 firework_launches.push((lx, ly, lz));
+                            }
+                            if let Some((ex, ey, ez)) = fev.explode {
+                                firework_explodes.push((ex, ey, ez));
                             }
                         }
                         self.fireworks.retain(|f| !f.dead);
@@ -10530,6 +10537,23 @@ impl App {
                         ear_distance(ear, lx, ly, lz),
                         ear_pan(ear, yaw, lx, ly, lz),
                     );
+                }
+                // THE FIREWORK'S OWN EXPLOSION (javap `handleEntityEvent`
+                // 17 → `createFireworks(x, y, z, dm, EMPTY)` the client
+                // walk answers — the RE-ROLLED `2 + nextInt(3)` poof
+                // burst the empty-explosions branch speaks, the particle
+                // engine's own rng the ctor draws spend, the level's
+                // ambient lane the plain rocket's silence keeps: no
+                // blast voice the Starter never wears, no damage the
+                // power-0 no-op banks)
+                for (ex, ey, ez) in firework_explodes {
+                    let burst = crate::particles::firework_poof_burst(
+                        ex,
+                        ey,
+                        ez,
+                        &mut self.level_ambient_rng,
+                    );
+                    self.particles.extend(burst);
                 }
                 // THE PLAYER'S OWN ARROWS (the mob hits the onHitEntity
                 // verdict answers — the hurt pipeline the melee kill's
@@ -24093,6 +24117,31 @@ impl App {
     ) {
         for ev in events {
             self.play_white_smoke(ev.x, ev.y, ev.z, ev.data);
+        }
+    }
+
+    /// THE FIREWORK-EXPLOSION'S OWN WIRE LANE (javap `FireworkRocket-
+    /// Entity.handleEntityEvent` byte 17 → `ClientLevel.createFireworks`
+    /// the 26.2 walk over the jar): the server's own rocket the event
+    /// broadcast lands for, the EMPTY-explosions poof branch the plain
+    /// rocket's component absence keeps — the RE-ROLLED `2 + nextInt(3)`
+    /// burst the level's ambient rng speaks, the particle engine's own
+    /// eight draws the ctor bank spends. No sound the empty branch
+    /// carries (the blast the Starter's non-empty branch alone banks —
+    /// the custom-star rockets the recorded divergence arms when the
+    /// wire's FIREWORKS entity-data decodes).
+    pub fn live_firework_explode_events_updated(
+        &mut self,
+        events: Vec<crate::world_view::WireFireworkExplodeEvent>,
+    ) {
+        for ev in events {
+            let burst = crate::particles::firework_poof_burst(
+                ev.x,
+                ev.y,
+                ev.z,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.extend(burst);
         }
     }
 
@@ -53121,6 +53170,86 @@ cow_sound_variant: None,
         // THE RE-CHARGE: the fresh pull the next rocket arms
         assert!(app.on_right_press(0, 0), "the fresh pull starts");
         assert!(app.is_using(), "the pull the fresh stack arms");
+    }
+
+    /// THE FIREWORK'S OWN CROSSING BURST — the lifetime crossing the
+    /// `createFireworks` POOF walk answers (javap `handleEntityEvent`
+    /// 17 → `ClientLevel.createFireworks(x, y, z, dm, EMPTY)` the 26.2
+    /// walk over the jar): the RE-ROLLED `2 + nextInt(3)` bound the
+    /// 2..=4 band keeps, the Poof kind the ExplodeParticle provider
+    /// speaks, the burst the ONE anchor shares, and the live byte-17
+    /// lane the same walk's wire landing keeps.
+    #[test]
+    fn the_firework_the_crossing_the_poof_burst_banks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (crossbow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        app.held_charge = Some(mc_registry::ChargeKind::Rocket);
+        assert!(app.on_right_press(0, 0), "the charged press answers");
+        assert_eq!(app.fireworks.len(), 1, "the shot the rocket banks");
+        // THE FIRST TICK: the launch the flight rides (the crossing
+        // the early ticks never arm)
+        app.update();
+        assert_eq!(app.fireworks.len(), 1, "the flight the first tick keeps");
+        // THE LIFETIME CROSSING: the explode word the burst answers —
+        // the poofs the ONE anchor share, the kind the provider speaks
+        let before = app.particles.len();
+        app.fireworks[0].life = app.fireworks[0].lifetime;
+        app.update();
+        assert!(app.fireworks.is_empty(), "the crossing the discard keeps");
+        let burst: Vec<&crate::particles::Particle> =
+            app.particles.iter().skip(before).collect();
+        assert!(
+            (2..=4).contains(&burst.len()),
+            "the re-rolled bound the 2..=4 band keeps ({})",
+            burst.len()
+        );
+        for p in &burst {
+            assert_eq!(
+                p.kind,
+                crate::particles::ParticleKind::Poof,
+                "the ExplodeParticle provider the plain rocket wears"
+            );
+        }
+        let (ax, ay, az) = (burst[0].x, burst[0].y, burst[0].z);
+        for p in &burst {
+            assert_eq!((p.x, p.y, p.z), (ax, ay, az), "the burst the ONE anchor shares");
+        }
+        // THE LIVE LANE: the byte-17 word the wire ships → the burst
+        // the same empty-explosions law speaks at the arm's own anchor
+        let before_live = app.particles.len();
+        app.live_firework_explode_events_updated(vec![crate::world_view::WireFireworkExplodeEvent {
+            x: 1.0,
+            y: 2.0,
+            z: 3.0,
+        }]);
+        let live: Vec<&crate::particles::Particle> =
+            app.particles.iter().skip(before_live).collect();
+        assert!(
+            (2..=4).contains(&live.len()),
+            "the wire's 17 the burst banks ({})",
+            live.len()
+        );
+        for p in &live {
+            assert_eq!((p.x, p.y, p.z), (1.0, 2.0, 3.0), "the arm's anchor the burst keeps");
+        }
     }
 
     /// THE OFFHAND CROSSBOW'S OWN FIREWORK SHOT — the OFF turn's own

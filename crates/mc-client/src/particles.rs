@@ -3511,6 +3511,57 @@ pub fn cobweb_spawn_burst(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) 
     out
 }
 
+/// THE FIREWORK'S OWN EXPLOSION POOF (javap `ClientLevel.createFireworks`
+/// the 26.2 bytecode's EMPTY-explosions branch verbatim — the plain
+/// rocket's own answer the `handleEntityEvent(17)` walk calls): the
+/// loop bound `2 + level.random.nextInt(3)` the RE-ROLLED head keeps
+/// (pcs 13-27 the condition rolls a FRESH `nextInt(3)` each iteration
+/// — the Java for-loop's own re-evaluation the bytecode speaks, the
+/// count the first crossing's own roll answers — the observed band
+/// 2..=4 the shared shape wears), the POOF particle the `addParticle
+/// (POOF, x, y, z, nextGaussian() * 0.05, 0.005, nextGaussian() *
+/// 0.05)` base velocity rides (pcs 30-67 — the FIXED 0.005 y the
+/// bytecode's own f64 keeps, the ±0.05 gaussian band the f32
+/// promotion speaks, the motion args the
+/// caller passes the walk never reads), the POOF provider chain's own
+/// eight draws the ctor bank spends. NO sound the empty branch speaks
+/// (the blast the Starter's non-empty branch alone banks — the plain
+/// rocket's own silence the same walk keeps), no damage the power-0
+/// no-op wears (the `dealExplosionDamage`'s `5.0 + size * 2` the
+/// empty list never arms). The (x, y, z) the createFireworks anchor
+/// carries — the rocket's own post-tick pose the caller passes.
+pub fn firework_poof_burst(x: f64, y: f64, z: f64, rng: &mut crate::drops::Lcg) -> Vec<Particle> {
+    let mut out = Vec::new();
+    let mut i = 0u32;
+    loop {
+        // THE RE-ROLLED BOUND (the bytecode's own loop head — the
+        // fresh `nextInt(3)` each iteration the condition speaks)
+        if i >= 2u32.saturating_add(rng.next_int(3) as u32) {
+            break;
+        }
+        // THE BASE VELOCITY (pc 38-67 the draw order keeps: the
+        // gaussian x FIRST, the fixed y, the gaussian z)
+        let vx = rng.next_gaussian() * 0.05;
+        let vy = 0.005;
+        let vz = rng.next_gaussian() * 0.05;
+        // the POOF provider chain's own eight draws (the death
+        // cloud's ctor bank the same provider wears)
+        let r_base_life = rng.next_f32();
+        let r_jx = rng.next_f32();
+        let r_jy = rng.next_f32();
+        let r_jz = rng.next_f32();
+        let r_grey = rng.next_f32();
+        let r_s1 = rng.next_f32();
+        let r_s2 = rng.next_f32();
+        let r_life = rng.next_f32();
+        out.push(poof(
+            x, y, z, vx, vy, vz, r_base_life, r_jx, r_jy, r_jz, r_grey, r_s1, r_s2, r_life,
+        ));
+        i += 1;
+    }
+    out
+}
+
 /// The 2001 event's own burst (`ClientLevel.addDestroyBlockEffect`'s
 /// lambda verbatim) over one full-cube box: the box's extents
 /// `min(1.0, max - min)` (the cube's 1.0), the sections

@@ -442,6 +442,10 @@ pub struct SnapshotView {
     /// server's own crafter broadcasts — the sibling lane the smoke
     /// shipment's own shape wears).
     pub white_smoke_events: Vec<WireWhiteSmokeEvent>,
+    /// THE FIREWORK-EXPLOSION'S OWN SHIPMENT (the byte-17 words the
+    /// server's own rocket broadcasts — the entity-event lane the
+    /// sibling shipments' own shape wears).
+    pub firework_explode_events: Vec<WireFireworkExplodeEvent>,
     /// The splash-potion effect's PENDING ARMS — the Level Event mailbox
     /// the model kept (the 2002/2007 words the server's own potion
     /// impacts broadcast, [`mc_protocol::play::SPLASH_POTION_EFFECT`] /
@@ -1393,6 +1397,18 @@ pub struct WireWhiteSmokeEvent {
     pub y: i32,
     pub z: i32,
     pub data: i32,
+}
+
+/// One wire FIREWORK-EXPLODE arm — the Entity Event packet's own
+/// landing (the byte-17 words the server's own rocket broadcasts): the
+/// full-precision anchor the `createFireworks` call keeps, verbatim
+/// (the plain rocket's own poof burst the render lane folds from it —
+/// the blast the non-empty Starter branch alone banks).
+#[derive(Debug, Clone, PartialEq)]
+pub struct WireFireworkExplodeEvent {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 /// One wire SPLASH-POTION arm — the Level Event packet's own landing
@@ -3337,6 +3353,9 @@ pub fn materialize_snapshot_view(
         // — the empty mailbox the render lane skips)
         shoot_smoke_events: Vec::new(),
         white_smoke_events: Vec::new(),
+        // and no firework-explosion words (the join snapshot carries no
+        // byte-17 traffic — the empty mailbox the render lane skips)
+        firework_explode_events: Vec::new(),
         // and no splash words (the join snapshot carries no 2002/2007
         // traffic — the empty mailbox the render lane skips)
         splash_events: Vec::new(),
@@ -4295,6 +4314,20 @@ impl LiveView {
                 data: arm.data,
             })
             .collect();
+        // the firework-explosion's own projection (the mailbox verbatim
+        // — the full-precision anchor the arms carry, the render lane's
+        // own poof burst reads): each byte-17 word ships once with this
+        // view, the worker's drain empties the mailbox after
+        let firework_explode_events = self
+            .model
+            .firework_explode_events
+            .iter()
+            .map(|arm| WireFireworkExplodeEvent {
+                x: arm.x,
+                y: arm.y,
+                z: arm.z,
+            })
+            .collect();
         // the splash-potion effect's own projection (the mailbox verbatim
         // — the anchor + the color word + the instant flag the arms
         // carry, the render lane's own law reads): each 2002/2007 word
@@ -4564,6 +4597,10 @@ impl LiveView {
                 // too — the 2010 words are the connection's own
                 // traffic, not the pose's
                 white_smoke_events,
+                // the firework-explosion's arms ride the pose-less arm
+                // too — the byte-17 words are the connection's own
+                // traffic, not the pose's
+                firework_explode_events,
                 // the splash-potion effect's arms ride the pose-less
                 // arm too — the 2002/2007 words are the connection's
                 // own traffic, not the pose's
@@ -4794,6 +4831,10 @@ impl LiveView {
             // the 2010 words follow the mailbox exactly like the
             // smoke's own arms do
             white_smoke_events,
+            // the firework-explosion's arms ride every refresh too —
+            // the byte-17 words follow the mailbox exactly like the
+            // white-smoke's own arms do
+            firework_explode_events,
             // the splash-potion effect's arms ride every refresh too —
             // the 2002/2007 words follow the mailbox exactly like the
             // smoke's own arms do

@@ -3445,19 +3445,45 @@ pub struct Firework {
     /// nextInt(6) + nextInt(7)`, the plain rocket's flightDuration 1
     /// the i=2 keeps (the 20..=32 band)
     pub lifetime: i32,
-    /// the discard flag (the lifetime crossing + the wall hit the
-    /// onHit law answers)
+    /// the discard flag (the lifetime crossing the explode walk
+    /// answers — the plain rocket's wall hit the REST the flag never
+    /// sets: the `hasExplosion()` gate the onHitBlock walk keeps, the
+    /// empty-explosions rocket the lifetime's own crossing banks)
     pub dead: bool,
+    /// THE PLAIN ROCKET'S OWN REST (the wall-hit law the 26.2 tick's
+    /// move-clip keeps: `onHitBlock` runs, the `hasExplosion()` gate
+    /// the EMPTY-explosions rocket fails — no explode, no discard —
+    /// the `move(MoverType.SELF, vec)` the position clips at the wall
+    /// face and the life the ceiling keeps counting). The stand-in's
+    /// honest rest: the motion the zeroed state pins (the arrow's
+    /// in-ground precedent), the position the hit point holds, the
+    /// rotation the last flight pose the stuck lane keeps — the
+    /// lifetime crossing the explode+discard tail answers.
+    pub stuck: bool,
 }
 
 /// The firework's own tick out-edges — the launch word the caller's
-/// positioned voice answers.
+/// positioned voice answers, the lifetime crossing the EXPLODE word
+/// the caller's own createFireworks burst speaks.
 #[derive(Debug, Clone, Default)]
 pub struct FireworkEvents {
     /// the life==0 LAUNCH (javap tick's `FIREWORK_ROCKET_LAUNCH` walk
     /// — `playSound(null, x, y, z, LAUNCH, AMBIENT, 3.0F, 1.0F)` the
     /// no-silence gate keeps)
     pub launch: Option<(f64, f64, f64)>,
+    /// THE LIFETIME CROSSING'S OWN EXPLODE (javap tick pcs 510-540 +
+    /// `explode(ServerLevel)` pcs 0-27 the 26.2 walk — the
+    /// `broadcastEntityEvent(this, 17)` the client's
+    /// `handleEntityEvent` answers, the `gameEvent(EXPLODE, owner)` +
+    /// `dealExplosionDamage` + `discard()` the server tail keeps). The
+    /// plain rocket's own answer the CLIENT walk speaks:
+    /// `createFireworks(x, y, z, dm, EMPTY)` the poof branch fires
+    /// (the caller's burst the empty-explosions law folds) — the
+    /// damage the power-0 no-op keeps (5.0 + size*2 never wears), the
+    /// blast voice the Starter never wears (the non-empty branch
+    /// alone banks it). The (x, y, z) the rocket's own post-tick
+    /// pose carries — the createFireworks anchor verbatim.
+    pub explode: Option<(f64, f64, f64)>,
 }
 
 impl Firework {
@@ -3525,20 +3551,22 @@ impl Firework {
             life: 0,
             lifetime,
             dead: false,
+            stuck: false,
         }
     }
 
     /// THE SHOT-AT-ANGLE FLIGHT (javap `FireworkRocketEntity.tick` the
     /// 26.2 walk speaks — the detached lane the crossbow's shot
     /// rides): the hit result the move vector clips (the MISS the
-    /// flight keeps, the wall the onHit explode+discard law answers —
-    /// the explosion's own walk the later walk banks, the despawn the
-    /// discard keeps), the move the constant motion adds (the
-    /// shotAtAngle lane's own straight walk — no drag, no gravity, no
-    /// boost), the rotation the `updateRotation` walk eases (the
-    /// Projectile walk's own lerp 0.2 the arrow's ease shares), the
-    /// launch the life==0 word speaks, the lifetime crossing the
-    /// explode tail serves.
+    /// flight keeps, the wall the PLAIN rocket's own rest answers —
+    /// the `hasExplosion()` gate the onHitBlock walk keeps, the
+    /// empty-explosions rocket the lifetime crossing's explode
+    /// serves), the move the constant motion adds (the shotAtAngle
+    /// lane's own straight walk — no drag, no gravity, no boost), the
+    /// rotation the `updateRotation` walk eases (the Projectile
+    /// walk's own lerp 0.2 the arrow's ease shares), the launch the
+    /// life==0 word speaks, the lifetime crossing the explode tail
+    /// serves.
     pub fn tick(&mut self, world: &World) -> FireworkEvents {
         let mut events = FireworkEvents::default();
         self.prev_x = self.x;
@@ -3546,6 +3574,26 @@ impl Firework {
         self.prev_z = self.z;
         self.x_rot_o = self.x_rot;
         self.y_rot_o = self.y_rot;
+        // THE STUCK LANE (the plain rocket's wall-hit rest — the 26.2
+        // tick's move-clip keeps the body at the wall face, the
+        // `hasExplosion()` gate the onHitBlock walk never passes for
+        // the EMPTY-explosions rocket): the position the hit point
+        // pins, the motion the zeroed state (the arrow's in-ground
+        // precedent), the rotation the last flight pose keeps, the
+        // life the ceiling keeps counting — the lifetime crossing the
+        // explode+discard tail answers (the same walk the free flight
+        // wears).
+        if self.stuck {
+            if self.life == 0 {
+                events.launch = Some((self.x, self.y, self.z));
+            }
+            self.life += 1;
+            if self.life > self.lifetime {
+                events.explode = Some((self.x, self.y, self.z));
+                self.dead = true;
+            }
+            return events;
+        }
         // THE HIT LANE (the getHitResultOnMoveVector's block clip —
         // the position to the position+velocity the segment clips)
         let hit_block = crate::body::clip_ray(
@@ -3557,14 +3605,20 @@ impl Firework {
                 (self.z + self.vz) as f32,
             ),
         );
-        // THE MOVE (the hit point the block's own walk keeps, the
-        // free fly the constant motion adds)
+        // THE MOVE (the hit point the block's own walk keeps — the
+        // PLAIN rocket's rest, NOT the discard: the `hasExplosion()`
+        // gate the onHitBlock walk keeps for the empty-explosions
+        // rocket, the lifetime crossing the explode tail answers —
+        // the free fly the constant motion adds)
         match hit_block {
             Some(h) => {
                 self.x = h.x as f64;
                 self.y = h.y as f64;
                 self.z = h.z as f64;
-                self.dead = true;
+                self.vx = 0.0;
+                self.vy = 0.0;
+                self.vz = 0.0;
+                self.stuck = true;
             }
             None => {
                 self.x += self.vx;
@@ -3589,11 +3643,14 @@ impl Firework {
             events.launch = Some((self.x, self.y, self.z));
         }
         self.life += 1;
-        // THE LIFETIME CROSSING (life > lifetime — the ServerLevel
-        // explode the offline stand-in's own level answers, the
-        // explosion's own walk the later walk banks, the discard the
-        // dead flag keeps)
+        // THE LIFETIME CROSSING (life > lifetime — javap tick pcs
+        // 510-540: the ServerLevel gate the explode call answers, the
+        // broadcastEntityEvent(17) the client's createFireworks burst
+        // the caller's own lane folds, the gameEvent + damage +
+        // discard the server tail keeps — the power-0 damage the
+        // plain rocket's no-op wears)
         if self.life > self.lifetime {
+            events.explode = Some((self.x, self.y, self.z));
             self.dead = true;
         }
         events
@@ -15039,6 +15096,64 @@ mod tests {
             }
         }
         w
+    }
+
+    /// THE PLAIN ROCKET'S OWN REST AND CROSSING (javap the 26.2 tick +
+    /// `onHitBlock`'s `hasExplosion()` gate the wall-hit walk keeps):
+    /// the wall hit the PLAIN rocket STICKS (no explode, no discard —
+    /// the empty-explosions gate the onHitBlock walk never passes),
+    /// the motion the zeroed rest keeps, the life the ceiling keeps
+    /// counting — and the LIFETIME CROSSING the explode+discard tail
+    /// answers (the same walk the free flight wears: the position the
+    /// createFireworks anchor carries, the launch the life-0 tick
+    /// keeps before the rest's own clock).
+    #[test]
+    fn the_firework_the_wall_rest_the_crossing_explode_speaks() {
+        let mut wall = arrow_air_world();
+        // the stone column the -z flight clips (the wall's own face
+        // the z=4 cell the flight reaches)
+        for y in 8..12 {
+            wall.set(8, y, 4, crate::world::STONE);
+        }
+        let mut f = Firework::crossbow_shot(
+            7,
+            8.5,
+            10.0,
+            8.0,
+            (0.0, 0.0, -1.0), // the straight -z the wall sits on
+        );
+        f.lifetime = 3; // the short ceiling the test fast-forwards
+        // THE FIRST TICK: the launch speaks, the flight rides
+        let ev = f.tick(&wall);
+        assert!(ev.launch.is_some(), "the life-0 tick the launch speaks");
+        assert!(ev.explode.is_none(), "the flight the crossing never banks");
+        assert_eq!(f.life, 1);
+        // THE WALL'S OWN TICK: the segment clips, the STICK arms
+        let ev = f.tick(&wall);
+        assert!(f.stuck, "the wall hit the plain rocket's rest arms");
+        assert!(!f.dead, "the plain rocket the wall never discards");
+        assert!(ev.explode.is_none(), "the rest the crossing never arms");
+        assert_eq!(
+            (f.vx, f.vy, f.vz),
+            (0.0, 0.0, 0.0),
+            "the rest the motion zeroes"
+        );
+        assert!(f.z <= 5.0 && f.z > 3.9, "the position the wall face pins ({})", f.z);
+        // THE REST'S OWN CLOCK: the life the ceiling keeps counting
+        f.tick(&wall);
+        assert!(f.stuck && !f.dead, "the idle rest the life only counts");
+        // THE LIFETIME CROSSING (life 3 > ceiling 3 — the fourth tick's
+        // own crossing): the explode word banks at the STUCK anchor,
+        // the discard the dead flag keeps
+        let (ex, ey, ez) = (f.x, f.y, f.z);
+        let ev = f.tick(&wall);
+        assert_eq!(
+            ev.explode,
+            Some((ex, ey, ez)),
+            "the crossing the explode anchor banks"
+        );
+        assert!(f.dead, "the discard the crossing serves");
+        assert!(ev.launch.is_none(), "the launch the later ticks never replay");
     }
 
     fn jockey_flat_world() -> World {

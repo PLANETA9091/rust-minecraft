@@ -185,6 +185,7 @@ fn run_join(
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
+                Vec<crate::world_view::WireFireworkExplodeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireComposterFillEvent>,
@@ -311,6 +312,7 @@ fn run_join(
             view.model.drain_break_events();
             view.model.drain_shoot_smoke_events();
             view.model.drain_white_smoke_events();
+            view.model.drain_firework_explode_events();
             view.model.drain_dragon_fireball_splash_events();
             view.model.drain_water_evaporating_events();
             view.model.drain_composter_fill_events();
@@ -989,6 +991,7 @@ fn run_join(
                             view.model.drain_break_events();
                             view.model.drain_shoot_smoke_events();
                             view.model.drain_white_smoke_events();
+            view.model.drain_firework_explode_events();
                             view.model.drain_dragon_fireball_splash_events();
                             view.model.drain_water_evaporating_events();
                             view.model.drain_composter_fill_events();
@@ -1285,6 +1288,14 @@ fn run_join(
                                     // folds, each arm rides exactly one
                                     // shipped refresh)
                                     upd.white_smoke_events,
+                                    // the firework-explosion's arms ride
+                                    // beside the white's — the byte-17
+                                    // words the server's own rocket
+                                    // broadcasts stream to the firework
+                                    // lane (the poof burst the render's
+                                    // own law folds, each arm rides
+                                    // exactly one shipped refresh)
+                                    upd.firework_explode_events,
                                     // the dragon-fireball splash's arms ride
                                     // beside the white's — the 2006 words
                                     // the server's own fireball broadcast
@@ -1627,6 +1638,7 @@ pub fn run_gui_app(
                 Vec<crate::world_view::WireBreakEvent>,
                 Vec<crate::world_view::WireShootSmokeEvent>,
                 Vec<crate::world_view::WireWhiteSmokeEvent>,
+                Vec<crate::world_view::WireFireworkExplodeEvent>,
                 Vec<crate::world_view::WireDragonFireballSplashEvent>,
                 Vec<crate::world_view::WireWaterEvaporatingEvent>,
                 Vec<crate::world_view::WireComposterFillEvent>,
@@ -2245,6 +2257,7 @@ pub fn run_gui_app(
                     break_events,
                     shoot_smoke_events,
                     white_smoke_events,
+                    firework_explode_events,
                     dragon_fireball_splash_events,
                     water_evaporating_events,
                     composter_fill_events,
@@ -2501,6 +2514,12 @@ pub fn run_gui_app(
                     // puff the vanilla client answers the same packet
                     // with)
                     app.live_white_smoke_events_updated(white_smoke_events);
+                    // the firework-explosion's lane beside the white's:
+                    // the byte-17 words the server's own rocket broadcasts
+                    // land at their own anchors (the poof burst the render
+                    // lane's own law folds — the plain rocket's silence
+                    // the vanilla client answers the same packet with)
+                    app.live_firework_explode_events_updated(firework_explode_events);
                     // the dragon-fireball splash's lane beside the white's:
                     // the 2006 words the server's own fireball broadcasts
                     // land at their own anchors (the 200-puff pool walk the

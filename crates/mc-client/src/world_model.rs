@@ -372,6 +372,18 @@ pub struct WorldModel {
     /// LOCAL player's words bank (the other bodies' events the honest
     /// silence keeps).
     pub kinetic_hit_events: Vec<KineticHitArm>,
+    /// THE FIREWORK'S OWN EXPLOSION MAILBOX (the Entity Event packet's
+    /// byte-17 words the server's own rocket broadcasts — javap
+    /// `FireworkRocketEntity.explode` pcs 0-4 the 26.2 walk:
+    /// `broadcastEntityEvent(this, (byte) 17)` the lifetime crossing
+    /// and the wall-hit arm speaks, the client's `handleEntityEvent`
+    /// the `createFireworks` poof burst answers). The arms the
+    /// entity's own wire pose carry — the createFireworks anchor the
+    /// plain rocket's empty-explosions law folds. The TYPE gate the
+    /// registry's own name keeps (`minecraft:firework_rocket` the Add
+    /// Entity packet declared) — the other bodies' 17s the honest
+    /// silence keeps.
+    pub firework_explode_events: Vec<FireworkExplodeArm>,
     /// THE WAX TRIO'S OWN MAILBOX (the Level Event packet's own next
     /// vocabulary word — [`mc_protocol::play::PARTICLES_AND_SOUND_WAX_ON_EFFECT`]
     /// + [`mc_protocol::play::PARTICLES_WAX_OFF_EFFECT`] +
@@ -908,6 +920,25 @@ pub struct WhiteSmokeArm {
     /// The direction id (the `get3DDataValue` word the crafter's
     /// facing speaks — the smoke arm's own band the fold rides).
     pub data: i32,
+}
+
+/// One pending FIREWORK-EXPLODE arm — the Entity Event packet's
+/// byte-17 word the model keeps verbatim (see
+/// [`WorldModel::firework_explode_events`]). The f64 anchor rides
+/// (javap `handleEntityEvent` pcs 21-53 the 26.2 walk: the
+/// `createFireworks(getX(), getY(), getZ(), dm, getExplosions())`
+/// call the entity's own pose keeps — the full-precision doubles the
+/// wire's spawn/sync lanes bank). The motion + explosions args the
+/// walk reads for the NON-empty branch alone — the plain rocket's
+/// empty-explosions law the caller's poof burst answers, the
+/// component decode the recorded divergence arms (the wire's
+/// FIREWORKS entity-data the custom-star rockets carry — the Starter
+/// branch the lane never wears yet).
+#[derive(Debug, Clone, PartialEq)]
+pub struct FireworkExplodeArm {
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
 }
 
 /// One pending IN-BLOCK GROWTH arm — the Level Event packet's sibling
@@ -2371,6 +2402,7 @@ impl WorldModel {
             in_block_growth_events: Vec::new(),
             smash_attack_events: Vec::new(),
             kinetic_hit_events: Vec::new(),
+            firework_explode_events: Vec::new(),
             wax_events: Vec::new(),
             gateway_spawn_events: Vec::new(),
             dragon_growl_events: Vec::new(),
@@ -2607,6 +2639,13 @@ impl WorldModel {
     /// ride exactly one refresh).
     pub fn drain_gateway_spawn_events(&mut self) -> Vec<GatewaySpawnArm> {
         std::mem::take(&mut self.gateway_spawn_events)
+    }
+
+    /// The firework-explosion mailbox's own drain (the same walk the
+    /// sibling lanes speak — the byte-17 arms the refresh ships
+    /// exactly once, the drained mailbox the empty vec keeps).
+    pub fn drain_firework_explode_events(&mut self) -> Vec<FireworkExplodeArm> {
+        std::mem::take(&mut self.firework_explode_events)
     }
 
     /// The ender-dragon growl effect's mailbox's own drain (the same
@@ -3174,6 +3213,10 @@ impl WorldModel {
                 // the kinetic-hit mailbox dies with the level (the same
                 // walk — the old level's byte-2 words never speak again)
                 self.kinetic_hit_events.clear();
+                // the firework-explosion mailbox dies with the level
+                // (the same walk — the old level's byte-17 words never
+                // poof again)
+                self.firework_explode_events.clear();
                 // the wax trio's mailbox dies with the level (the same
                 // walk — the old level's 3003/3004/3005 words never
                 // wax again)
@@ -4955,6 +4998,36 @@ impl WorldModel {
                 }
             }
             PlayEvent::EntityEvent(e) => {
+                // THE FIREWORK'S OWN 17 (javap `FireworkRocketEntity.
+                // handleEntityEvent` the 26.2 walk — the byte-17 gate
+                // the `isClientSide` arm keeps, the `createFireworks
+                // (getX(), getY(), getZ(), dm, getExplosions())` call
+                // the entity's own pose banks). The TYPE gate the
+                // registry's own name keeps — the `minecraft:
+                // firework_rocket` the Add Entity packet declared, the
+                // OTHER bodies' 17s the honest silence keeps (the
+                // event's dispatch the entity's own class answers). The
+                // COMPONENT the wire never decoded (the FIREWORKS
+                // entity-data the custom-star rockets carry) — the
+                // plain rocket's EMPTY-explosions law the caller's own
+                // poof burst answers, the Starter branch the recorded
+                // divergence arms later.
+                if e.event == 17 {
+                    let Some(snap) = self.entities.get(&e.entity_id) else {
+                        return false;
+                    };
+                    if self.entity_type_name(snap.type_id)
+                        != Some("minecraft:firework_rocket")
+                    {
+                        return false;
+                    }
+                    self.firework_explode_events.push(FireworkExplodeArm {
+                        x: snap.x,
+                        y: snap.y,
+                        z: snap.z,
+                    });
+                    return true;
+                }
                 // THE KINETIC HIT'S OWN WORD (javap
                 // `LivingEntity.handleEntityEvent`'s lookupswitch — the
                 // `2 -> start+562` arm the `onKineticHit()` call rides:
@@ -7687,6 +7760,96 @@ mod tests {
         assert!(m.entity(8).is_some(), "the unlisted neighbor survives");
         // nothing left in the batch existed — the no-op reports false
         assert!(!m.apply(PlayEvent::EntitiesRemoved(vec![7, 999])));
+    }
+
+    /// THE FIREWORK'S OWN 17 (javap `FireworkRocketEntity.
+    /// handleEntityEvent` the 26.2 walk): the byte-17 the entity's own
+    /// class dispatch answers — the TYPE gate the registry's
+    /// `minecraft:firework_rocket` name keeps, the pose the
+    /// createFireworks anchor banks, the OTHER bodies' 17s the honest
+    /// silence keeps, the drain ships once.
+    #[test]
+    fn the_firework_event_17_the_type_gate_the_poof_arm_banks() {
+        let mut m = WorldModel::new();
+        m.registry = RegistryData {
+            command_argument_types: Vec::new(),
+            jukebox_songs: Vec::new(),
+            chat_types: Vec::new(),
+            dimension_types: Vec::new(),
+            biomes: Vec::new(),
+            biome_tags: Vec::new(),
+            world_clocks: Vec::new(),
+            // the synced entity-type table: id 0 the rocket, id 1 the
+            // pig (the arrival-order ids the Add Entity packets carry)
+            entity_types: vec![
+                "minecraft:firework_rocket".to_string(),
+                "minecraft:pig".to_string(),
+            ],
+            entity_type_tags: Vec::new(),
+            sound_events: Vec::new(),
+            chicken_variants: Vec::new(),
+            pig_variants: Vec::new(),
+            cow_variants: Vec::new(),
+            chicken_sound_variants: Vec::new(),
+            pig_sound_variants: Vec::new(),
+            cow_sound_variants: Vec::new(),
+            timelines: Vec::new(),
+            timeline_tags: Vec::new(),
+        };
+        // the server's rocket + a pig neighbor: the spawn packets the
+        // wire speaks (the full-precision poses the anchor banks)
+        for (id, type_id, x, z) in [(40, 0, 12.25, -3.75), (41, 1, 0.0, 0.0)] {
+            assert!(m.apply(PlayEvent::Spawn(EntitySpawn {
+                id,
+                uuid: id as u128,
+                type_id,
+                x,
+                y: 68.5,
+                z,
+                movement: [0.0; 3],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                y_head_rot: 0.0,
+                data: 0,
+            })));
+        }
+        // THE ROCKET'S CROSSING: the 17 the explode broadcast speaks →
+        // the arm banks at the entity's own pose
+        assert!(m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 40,
+            event: 17,
+        })));
+        assert_eq!(m.firework_explode_events.len(), 1, "the 17 the arm banks");
+        let arm = &m.firework_explode_events[0];
+        assert_eq!((arm.x, arm.y, arm.z), (12.25, 68.5, -3.75));
+        // THE PIG'S 17: the type gate the silence keeps (the event's
+        // dispatch the firework's own class answers — a pig's body the
+        // byte never lands for)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 41,
+            event: 17,
+        })));
+        assert_eq!(m.firework_explode_events.len(), 1, "the pig's 17 the silence keeps");
+        // THE UNKNOWN ID: no phantom burst (the dispatch needs the
+        // entity's own body — the model's map the lookup answers)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 999,
+            event: 17,
+        })));
+        assert_eq!(m.firework_explode_events.len(), 1);
+        // THE OTHER BYTES: the 17 gate alone arms this lane (the
+        // pig's byte-2 for a non-own entity the kinetic walk refuses —
+        // the whole arm the honest false keeps)
+        assert!(!m.apply(PlayEvent::EntityEvent(mc_protocol::play::EntityEventPacket {
+            entity_id: 40,
+            event: 2,
+        })));
+        assert_eq!(m.firework_explode_events.len(), 1, "the byte-2 never poofs");
+        // THE DRAIN: ships once, then the empty silence
+        let drained = m.drain_firework_explode_events();
+        assert_eq!(drained.len(), 1);
+        assert_eq!((drained[0].x, drained[0].y, drained[0].z), (12.25, 68.5, -3.75));
+        assert!(m.drain_firework_explode_events().is_empty(), "the drained silence ships nothing");
     }
 
     #[test]
