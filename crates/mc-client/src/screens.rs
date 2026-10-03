@@ -15704,6 +15704,57 @@ impl App {
             // turn's own pull arm re-bakes through the LEFT ctx.
             let (off_id, off_count) = self.offhand_stack();
             if off_count > 0 {
+                // THE OFFHAND BRUSH'S OWN USE-ON TURN (javap BrushItem.
+                // useOn the BLOCK-hit gate the MAIN lane's own arm wears
+                // — the vanilla per-hand body the useOn walk FIRST
+                // answers, the use-family arms follow): the view-vector
+                // clip the block lane's own head speaks, the BLOCK hit
+                // the always-CONSUME the `getstatic #44` arms (the gate
+                // the press consumes regardless), the window the OFF
+                // hand wears (the third person's left_brush lane the
+                // autopush-487 fold rides). The ECHO the OFF ctx's own
+                // packet speaks — the hand-1 ordinal the for-each-hand
+                // walk's OFF turn carries (the MAIN turn's block-half
+                // echo the block lane's head already spoke — the two
+                // echoes the two turns' own ctx wears, neither doubles).
+                // The MISS the PASS keeps — the def-gated arms follow.
+                if mc_registry::item_name(off_id) == Some("brush") {
+                    let clip = self.active_world().and_then(|w| {
+                        let cam = self.world_camera();
+                        let f = cam.forward();
+                        w.clip(
+                            (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64),
+                            (f.x as f64, f.y as f64, f.z as f64),
+                            crate::world::BLOCK_INTERACTION_RANGE,
+                        )
+                    });
+                    if let Some(hit) = clip {
+                        let cursor = (
+                            (hit.location.0 - hit.pos.0 as f64) as f32,
+                            (hit.location.1 - hit.pos.1 as f64) as f32,
+                            (hit.location.2 - hit.pos.2 as f64) as f32,
+                        );
+                        if let Some(sink) = self.live_clicks.as_ref() {
+                            let _ = sink.send(
+                                crate::world_view::ContainerCommand::UseItemOn {
+                                    hand: 1, // the OFF turn's own ctx
+                                    pos: hit.pos,
+                                    face: hit.face,
+                                    cursor,
+                                    inside: hit.inside,
+                                },
+                            );
+                        }
+                        self.using_item = None; // one use at a time
+                        self.using_item = Some(UseActive {
+                            item: off_id,
+                            ticks: 0,
+                            state: 0,
+                            hand: UseHand::Off,
+                        });
+                        return true;
+                    }
+                }
                 if let Some(off_def) = mc_registry::item_using_def(off_id) {
                     if mc_registry::special_item_renderer(off_id).is_some() {
                         let state = mc_registry::using_state_index(off_def, 0.0);
@@ -22557,6 +22608,7 @@ impl App {
         );
         if let Some(sink) = self.live_clicks.as_ref() {
             let _ = sink.send(crate::world_view::ContainerCommand::UseItemOn {
+                hand: 0, // the MAIN turn's own ctx the head echo wears
                 pos: hit.pos,
                 face: hit.face,
                 cursor,
@@ -22663,7 +22715,8 @@ impl App {
                     // window the echo NEVER doubles. The OFF-HAND turn
                     // the vanilla for-each-hand walk keeps the later arm
                     // speaks (the same useOn the OFF hand's own ctx
-                    // answers — a later walk the round leaves).
+                    // answers — the OFF turn's own brush arm the
+                    // hand-1 echo wears).
                     self.using_item = None; // one use at a time
                     self.using_item = Some(UseActive {
                         item: id,
@@ -52460,6 +52513,207 @@ cow_sound_variant: None,
         );
     }
 
+    /// THE OFFHAND BRUSH'S OWN TURN — the useOn lane the OFF turn
+    /// speaks (the vanilla startUseItem's for-each-hand walk: the MAIN
+    /// turn's PASS the OFF hand's useOn answers, javap `BrushItem.useOn`
+    /// the BLOCK-hit gate the MAIN lane's own arm wears, the OFF ctx the
+    /// window opens): the off-hand brush the empty main hand backs, the
+    /// press the always-CONSUME the `getstatic #44` arms (the OFF window
+    /// the `UseHand::Off` wears, the state the def-less item keeps),
+    /// the echo the OFF ctx's own packet speaks (the hand-1 ordinal the
+    /// two-turn walk's own field carries — the MAIN turn's block-half
+    /// echo the head spoke first, neither doubles), the look-away the
+    /// entity-level cancel closes (NO packet the cancel sends), the MISS
+    /// the PASS keeps (the useOn the BLOCK case alone routes — the
+    /// window never opens), and the re-press the window re-opens (the
+    /// release the RMB edge serves).
+    #[test]
+    fn the_offhand_brush_the_window_the_echo_wear() {
+        use crate::world_view::ContainerCommand;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the STONE row keeps (the generic arm the tick
+        // walk names — the same law the main lane's own arc wears)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        // THE OFFHAND BRUSH the LIVE slot-45 store keeps (the
+        // offhand_stack's own source switch arms), the MAIN hand the
+        // empty inventory speaks (the PASS the OFF turn answers)
+        let (tx, rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(tx);
+        let brush = wire("brush");
+        app.live_inv_slots[45] = (brush, 1);
+        app.offhand_held_refreshed();
+        assert_eq!(
+            app.offhand_stack(),
+            (brush, 1),
+            "the OFF stack the slot-45 store wears"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the OFF turn the always-CONSUME speaks"
+        );
+        let active = app.using_item.as_ref().expect("the OFF window opened");
+        assert_eq!(active.item, brush, "the OFF brush the use rides");
+        assert!(
+            matches!(active.hand, UseHand::Off),
+            "the OFF hand the window wears"
+        );
+        assert_eq!(active.ticks, 0, "the clock the fresh hold keeps");
+        assert_eq!(active.state, 0, "the state the def-less item keeps");
+        // THE TWO ECHOES the two turns' own ctx wears: the MAIN turn's
+        // block-half echo the head speaks (hand 0 — the packet every
+        // block right-click rides), the OFF turn's own useOn the hand-1
+        // ordinal carries (the OFF ctx's own packet)
+        match rx.try_recv().expect("the MAIN turn's block echo rode") {
+            ContainerCommand::UseItemOn { hand: 0, .. } => {}
+            other => panic!("expected the MAIN turn's UseItemOn echo, got {other:?}"),
+        }
+        match rx.try_recv().expect("the OFF turn's own echo rode") {
+            ContainerCommand::UseItemOn { hand: 1, pos, .. } => {
+                assert_eq!(pos, (c, surface, c), "the hit cell the OFF ctx wears");
+            }
+            other => panic!("expected the OFF turn's hand-1 UseItemOn echo, got {other:?}"),
+        }
+        assert!(
+            rx.try_recv().is_err(),
+            "the window the echoes never double"
+        );
+        // THE LOOK-AWAY CANCEL (the tick walk's own clip re-walk — the
+        // entity-level release the silence keeps, NO packet the cancel
+        // sends)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: std::f32::consts::FRAC_PI_2,
+        });
+        app.update();
+        assert!(
+            app.using_item.is_none(),
+            "the look-away the OFF window closes"
+        );
+        assert!(
+            rx.try_recv().is_err(),
+            "the cancel no packet sends — the entity walk the vanilla silence keeps"
+        );
+        // THE MISS ARM (the OFF brush the air walk the PASS keeps — the
+        // useOn the BLOCK case alone routes, the `use` body the jar
+        // never banks)
+        assert!(!app.on_right_press(0, 0), "the miss the PASS keeps");
+        assert!(
+            app.using_item.is_none(),
+            "the miss the OFF window never opens"
+        );
+        assert!(rx.try_recv().is_err(), "the miss no echo speaks");
+        // THE RE-PRESS (the window the OFF turn re-opens) + the RELEASE
+        // (the RMB edge the hold ends, the RELEASE_USE echo rides)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the re-press the window re-opens");
+        let _ = rx.try_recv();
+        let _ = rx.try_recv();
+        app.on_right_release();
+        assert!(app.using_item.is_none(), "the release the OFF hold ends");
+        assert!(
+            matches!(rx.try_recv(), Ok(ContainerCommand::ReleaseUse)),
+            "the release echo rode the lane"
+        );
+    }
+
+    /// THE OFFHAND BRUSH'S OWN OFFLINE ARC — the offline sources the
+    /// `offhand_stack` switch arms speak (the inventory's offhand slot
+    /// the live-less lane reads) and THE FOR-EACH-HAND ORDER (the MAIN
+    /// turn's own CONSUME the OFF turn never reaches): the both-hands
+    /// brush the MAIN window the order answers, the cleared main hand
+    /// the OFF window the OFF turn speaks, and the cadence voice the
+    /// tick walk's own law rides (the hand the walk never reads — the
+    /// tick the using_item's own name arms).
+    #[test]
+    fn the_offhand_brush_the_offline_lane_the_order_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        let brush = mc_registry::item_id_by_name("brush").unwrap();
+        // THE BOTH-HANDS BRUSH: the MAIN turn's own arm the order
+        // answers (the block lane's brush arm the CONSUME speaks — the
+        // OFF turn the walk never reaches)
+        app.inventory.items[app.selected_hotbar] = (brush, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        app.inventory.offhand[0] = (brush, 1);
+        app.offhand_held_refreshed();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the MAIN turn the order answers");
+        assert!(
+            matches!(
+                app.using_item.as_ref().map(|u| u.hand),
+                Some(UseHand::Main)
+            ),
+            "the MAIN window the for-each-hand order speaks"
+        );
+        app.on_right_release();
+        assert!(app.using_item.is_none(), "the release the MAIN hold ends");
+        // THE CLEARED MAIN HAND: the OFF turn the OFF window speaks (the
+        // offline offhand slot the source switch answers)
+        app.inventory.items[app.selected_hotbar] = (0, 0);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the OFF turn the press answers");
+        assert!(
+            matches!(
+                app.using_item.as_ref().map(|u| u.hand),
+                Some(UseHand::Off)
+            ),
+            "the OFF window the OFF turn speaks"
+        );
+        // THE CADENCE VOICE the tick walk's own law rides (the hand the
+        // walk never reads — the t=5 voice the OFF window's tick arms)
+        let _ = std::mem::take(&mut app.sounds.events);
+        for _ in 0..5 {
+            app.update();
+        }
+        if sounds_loaded() {
+            assert_eq!(
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("item.brush.brushing.generic @"))
+                    .count(),
+                1,
+                "the t=5 voice the OFF window's tick arms"
+            );
+        }
+        app.on_right_release();
+        assert!(app.using_item.is_none(), "the release the OFF hold ends");
+    }
+
     /// THE BLOCK-USE LANE's OFFLINE ARC — the App owns the procedural
     /// voxels, the `--held-item` stand-in holds dirt, the look seam aims
     /// the camera straight down at the spawn column, and the placement
@@ -59122,7 +59376,14 @@ cow_sound_variant: None,
         });
         assert!(app.on_right_press(0, 0), "the block lane answers the press");
         match click_rx.try_recv().expect("the useItemOn echo rode the lane") {
-            ContainerCommand::UseItemOn { pos, face, cursor, inside } => {
+            ContainerCommand::UseItemOn {
+                hand: 0,
+                pos,
+                face,
+                cursor,
+                inside,
+            } => {
+                // the `hand: 0` pattern the MAIN turn's own ctx asserts
                 assert_eq!(pos, (c, floor_y, c), "the hit voxel");
                 assert_eq!(face, 1, "UP — the floor's entry face");
                 // the cursor rides the float cast's own tail (the

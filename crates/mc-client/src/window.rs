@@ -540,19 +540,22 @@ fn run_join(
                             session.use_item(hand, use_sequence, yaw, pitch)
                         }
                         crate::world_view::ContainerCommand::UseItemOn {
+                            hand,
                             pos,
                             face,
                             cursor,
                             inside,
                         } => {
                             // THE BLOCK HALF's wire echo (the vanilla
-                            // gameMode.useItemOn's own shape): the MAIN_HAND
-                            // ordinal, the clip's hit through the
+                            // gameMode.useItemOn's own shape): the hand
+                            // ordinal the useOn ctx wore (the MAIN 0, the
+                            // OFF 1 — the for-each-hand walk's own field),
+                            // the clip's hit through the
                             // writeBlockHitResult law, the same monotonic
                             // prediction counter the use/release spoke
                             use_sequence += 1;
                             session.use_item_on(
-                                0,
+                                hand,
                                 pos,
                                 face,
                                 cursor,

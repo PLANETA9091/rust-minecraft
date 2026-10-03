@@ -2199,10 +2199,13 @@ pub enum ContainerCommand {
     /// the block half of the use arc): the client clip's hit (the hit
     /// voxel, the entry face's Direction ordinal, the cursor floats the
     /// wire's writeBlockHitResult speaks — the hit location minus the
-    /// block origin — and the eye-inside flag). The worker speaks the
-    /// MAIN_HAND ordinal and the same monotonic prediction sequence the
-    /// use/release echo (the serverbound Use Item On packet).
+    /// block origin — and the eye-inside flag) and the hand ordinal the
+    /// useOn ctx wore (the MAIN 0, the OFF 1 — the packet's own field
+    /// the vanilla for-each-hand walk speaks). The worker speaks the
+    /// same monotonic prediction sequence the use/release echo (the
+    /// serverbound Use Item On packet).
     UseItemOn {
+        hand: u8,
         pos: (i32, i32, i32),
         face: u8,
         cursor: (f32, f32, f32),
