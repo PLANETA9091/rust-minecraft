@@ -4173,10 +4173,32 @@ pub mod data_component_types {
     /// (list) ctor's -1 default, any server sync RESETS the client's
     /// selection (the bundle-selection round's own law).
     pub const BUNDLE_CONTENTS: i32 = 50;
+    /// `FireworkExplosion.STREAM_CODEC` — ONE FireworkExplosion
+    /// record (the star item's own component — the fireworks rocket
+    /// component's single-entry sibling; the SAME record codec both
+    /// ids share, see [`FireworkExplosion`]). Registered right before
+    /// FIREWORKS (the clinit's lodestone_tracker 67 .. firework_
+    /// explosion 68 .. fireworks 69 walk).
+    pub const FIREWORK_EXPLOSION: i32 = 68;
+    /// `Fireworks.STREAM_CODEC` — a TWO-lane composite (javap
+    /// Fireworks.<clinit> pc 11-43 the 26.2 walk):
+    /// `ByteBufCodecs.VAR_INT` flight_duration (the NBT side's
+    /// UNSIGNED_BYTE + optionalFieldOf(0) pair is the SCHEMA's own
+    /// lane — the wire always carries the plain VarInt, the
+    /// enchantment-LEVEL line), then
+    /// `FireworkExplosion.STREAM_CODEC.list(256)` — the capped list
+    /// (a VarInt count: a negative count refuses, a count past the
+    /// 256 cap throws — the lore line). The component the
+    /// DATA_ID_FIREWORKS_ITEM stack of a custom-star rocket carries
+    /// (javap FireworkRocketEntity.getExplosions the 26.2 walk: the
+    /// synced stack's `get(DataComponents.FIREWORKS)` read — an
+    /// absent component is the EMPTY `List.of()` branch).
+    pub const FIREWORKS: i32 = 69;
     /// The client-side DATA_COMPONENT_TYPE registry's SIZE — vanilla's
-    /// clinit census (111 registered types; TWENTY-FOUR carry value
-    /// codecs, the other 87 refuse). The `byIdOrThrow` bound of every
-    /// bare component-type id lane (the any-value predicate lane).
+    /// clinit census (111 registered types; TWENTY-SIX carry value
+    /// codecs — the fireworks pair joined at autopush-499 — the other
+    /// 85 refuse). The `byIdOrThrow` bound of every bare component-type
+    /// id lane (the any-value predicate lane).
     pub const REGISTRY_SIZE: i32 = 111;
 }
 
@@ -4419,6 +4441,25 @@ pub enum ComponentValue {
         /// an unknown id refuses — byIdOrThrow).
         effects: Vec<ConsumeEffect>,
     },
+    /// The fireworks lane: firework_explosion (68) — ONE
+    /// [`FireworkExplosion`] record (the star item's own component);
+    /// fireworks (69) — the flight VarInt + the capped-256 explosion
+    /// list (the rocket item's own component, the
+    /// DATA_ID_FIREWORKS_ITEM stack's rider). See the record struct
+    /// for the five-lane shape both walk.
+    Fireworks {
+        /// The flight duration — a plain VarInt on the wire (the
+        /// NBT schema's UNSIGNED_BYTE + optionalFieldOf(0) pair is
+        /// NOT this lane).
+        flight: i32,
+        /// The explosions, in wire order (the `.list(256)` cap — a
+        /// larger count refuses).
+        explosions: Vec<FireworkExplosion>,
+    },
+    /// The star lane: firework_explosion (68) — the ONE record the
+    /// component's value IS (no flight, no list count — the
+    /// composite's five lanes ride bare).
+    FireworkExplosion(FireworkExplosion),
 }
 
 /// The item stack's component patch — the `DataComponentPatch$3`
@@ -4432,6 +4473,37 @@ pub struct ComponentPatch {
     pub added: Vec<(i32, ComponentValue)>,
     /// The removed components' type ids, in wire order.
     pub removed: Vec<i32>,
+}
+
+/// ONE firework explosion — the `FireworkExplosion.STREAM_CODEC`
+/// composite verbatim (javap FireworkExplosion.<clinit> pc 87-132 the
+/// 26.2 walk), FIVE lanes in wire order. The component value the
+/// firework_explosion (68) star item carries bare and the fireworks
+/// (69) rocket item lists (see [`ComponentValue::Fireworks`]); the
+/// record the ClientLevel.createFireworks Starter walks (the shape
+/// the table's SwitchMap reads, the trail/twinkle the flags answer).
+#[derive(Debug, Clone, PartialEq)]
+pub struct FireworkExplosion {
+    /// The shape's idMapper ordinal (`Shape.BY_ID` =
+    /// `ByIdMap.continuous(ordinal, values(), ZERO)` — SMALL_BALL=0,
+    /// LARGE_BALL=1, STAR=2, CREEPER=3, BURST=4), retained verbatim:
+    /// the continuous map NEVER refuses, every key outside [0, 5) —
+    /// negative AND out-of-range — fills to values[0] = SMALL_BALL
+    /// (the RARITY line; the fill is a consumer's resolution).
+    pub shape: i32,
+    /// The primary colors, in wire order — `ByteBufCodecs.INT.list()`
+    /// mapped to the record's IntList: the no-arg list's count lane
+    /// (a negative count refuses; NO upper cap — the ceiling is the
+    /// readCount's own) then count × BIG-ENDIAN i32s (`ByteBufCodecs.
+    /// INT` = readInt, the custom-model-data colors line — NOT
+    /// VarInts).
+    pub colors: Vec<i32>,
+    /// The fade colors — the SAME lane the primary colors ride.
+    pub fade_colors: Vec<i32>,
+    /// The trail flag — one byte (`ByteBufCodecs.BOOL`).
+    pub has_trail: bool,
+    /// The twinkle flag — one byte.
+    pub has_twinkle: bool,
 }
 
 /// The vibration's dispatched position source — the
@@ -5050,11 +5122,69 @@ fn read_component_value(type_id: i32, c: &mut &[u8], depth: u32) -> Result<Compo
                 effects: consumed,
             }
         }
+        t::FIREWORKS => {
+            // Fireworks.STREAM_CODEC — the TWO-lane composite: the
+            // flight a plain VarInt (the NBT schema's
+            // UNSIGNED_BYTE + optionalFieldOf(0) pair is not this
+            // lane), then the explosions list — `.list(256)`: the
+            // capped count (a negative refuses, a count past the cap
+            // throws — the lore line).
+            let flight = read_varint(c)?;
+            let n = read_component_count(c, "firework explosion list")?;
+            anyhow::ensure!(
+                n <= 256,
+                "firework explosion list over the codec's 256-entry cap ({n})"
+            );
+            let mut explosions = Vec::with_capacity(n as usize);
+            for _ in 0..n {
+                explosions.push(read_firework_explosion(c)?);
+            }
+            ComponentValue::Fireworks { flight, explosions }
+        }
+        t::FIREWORK_EXPLOSION => {
+            // FireworkExplosion.STREAM_CODEC — the ONE record the
+            // component's value IS (no flight, no list count).
+            ComponentValue::FireworkExplosion(read_firework_explosion(c)?)
+        }
         other => anyhow::bail!(
             "no value codec for component type {other} (the patch wire is unframed; \
              the value cannot be skipped honestly)"
         ),
     })
+}
+
+/// ONE FireworkExplosion record's wire walk — the composite's FIVE
+/// lanes in order (see [`FireworkExplosion`]): the shape's idMapper
+/// VarInt (retained verbatim — the continuous ZERO map never
+/// refuses), the two `ByteBufCodecs.INT.list()` color lists (BE
+/// i32s), the two one-byte flags.
+fn read_firework_explosion(c: &mut &[u8]) -> Result<FireworkExplosion> {
+    let shape = read_varint(c)?;
+    let colors = read_firework_color_list(c)?;
+    let fade_colors = read_firework_color_list(c)?;
+    let has_trail = read_u8(c)? != 0;
+    let has_twinkle = read_u8(c)? != 0;
+    Ok(FireworkExplosion {
+        shape,
+        colors,
+        fade_colors,
+        has_trail,
+        has_twinkle,
+    })
+}
+
+/// `ByteBufCodecs.INT.list()` mapped to the record's IntList — the
+/// no-arg list's count lane (a negative count refuses; NO upper cap —
+/// the ceiling is the readCount's own, the bundle-contents line) then
+/// count × BIG-ENDIAN i32s (`ByteBufCodecs.INT` = readInt, the
+/// custom-model-data colors line — NOT VarInts).
+fn read_firework_color_list(c: &mut &[u8]) -> Result<Vec<i32>> {
+    let n = read_component_count(c, "firework color list")?;
+    let mut colors = Vec::with_capacity(n as usize);
+    for _ in 0..n {
+        colors.push(read_i32(c)?);
+    }
+    Ok(colors)
 }
 
 /// The block-set lane of a [`BlockPredicate`] — the
@@ -6717,11 +6847,39 @@ fn write_component_value(out: &mut Vec<u8>, type_id: i32, v: &ComponentValue) ->
                 write_consume_effect(out, e)?;
             }
         }
+        (t::FIREWORKS, ComponentValue::Fireworks { flight, explosions }) => {
+            write_varint(out, *flight);
+            write_varint(out, explosions.len() as i32);
+            for e in explosions {
+                write_firework_explosion(out, e)?;
+            }
+        }
+        (t::FIREWORK_EXPLOSION, ComponentValue::FireworkExplosion(e)) => {
+            write_firework_explosion(out, e)?
+        }
         _ => anyhow::bail!(
             "no value writer pairs component type {type_id} with {v:?} (the patch wire \
              is unframed — the pairing is the store's invariant)"
         ),
     }
+    Ok(())
+}
+
+/// ONE FireworkExplosion record's wire mirror — the FIVE lanes in
+/// order (the read walk's inverse: the idMapper VarInt verbatim, the
+/// BE-i32 color lists, the one-byte flags).
+fn write_firework_explosion(out: &mut Vec<u8>, e: &FireworkExplosion) -> Result<()> {
+    write_varint(out, e.shape);
+    write_varint(out, e.colors.len() as i32);
+    for color in &e.colors {
+        write_i32(out, *color);
+    }
+    write_varint(out, e.fade_colors.len() as i32);
+    for color in &e.fade_colors {
+        write_i32(out, *color);
+    }
+    write_bool(out, e.has_trail);
+    write_bool(out, e.has_twinkle);
     Ok(())
 }
 
@@ -14460,6 +14618,167 @@ mod tests {
         neg_tag.extend_from_slice(&test_support::entity_data_varint(1));
         neg_tag.extend_from_slice(&test_support::entity_data_varint(-2));
         assert!(parse_set_entity_data(&one_stack(&neg_tag)).is_err());
+    }
+
+    /// The FIREWORKS component (69) decodes through the synced item
+    /// stack — the custom-star rocket's own rider (javap
+    /// FireworkRocketEntity.getExplosions the 26.2 walk: the
+    /// DATA_ID_FIREWORKS_ITEM stack's `get(DataComponents.FIREWORKS)`
+    /// read; javap Fireworks.<clinit>: `composite(VAR_INT,
+    /// FireworkExplosion.STREAM_CODEC.list(256))`; javap
+    /// FireworkExplosion.<clinit> pc 87-132: the FIVE-lane record
+    /// composite — the idMapper shape (the continuous ZERO map NEVER
+    /// refuses, the RARITY line), the two `ByteBufCodecs.INT.list()`
+    /// color lists (BE i32s — the custom-model-data colors line), the
+    /// two one-byte flags). The firework_explosion (68) star item's
+    /// value is the ONE record, bare. Refusals: the capped list's
+    /// 257-entry count, a negative color count. The write mirror
+    /// round-trips the store byte for byte (the encoder's pairing
+    /// invariant).
+    #[test]
+    fn the_fireworks_component_the_stars_decode_refuse_roundtrip() {
+        use data_component_types as t;
+        use entity_data_serializers as s;
+
+        let stack_with = |fireworks_bytes: &[u8]| -> Vec<u8> {
+            // the ItemStack$1 walk: count 1, item id 1 (stone — the
+            // id the decode retains verbatim), the patch's ADDED
+            // count 1, the REMOVED count 0
+            let mut v = Vec::new();
+            for prefix in [1i32, 1, 1, 0] {
+                v.extend_from_slice(&test_support::entity_data_varint(prefix));
+            }
+            v.extend_from_slice(fireworks_bytes);
+            v
+        };
+        let one_stack = |fireworks_bytes: &[u8]| -> Vec<u8> {
+            test_support::set_entity_data_packet(
+                5,
+                &test_support::entity_data_entry(8, s::ITEM_STACK, &stack_with(fireworks_bytes)),
+            )
+        };
+
+        // the custom-star rocket: flight 2, TWO explosions — the
+        // STAR (ordinal 2) with two colors + one fade + twinkle, the
+        // BURST (ordinal 4) with NO colors + trail
+        let mut value = Vec::new();
+        value.extend_from_slice(&test_support::entity_data_varint(t::FIREWORKS));
+        value.extend_from_slice(&test_support::entity_data_varint(2)); // flight
+        value.extend_from_slice(&test_support::entity_data_varint(2)); // explosion count
+        // explosion 1: STAR
+        value.extend_from_slice(&test_support::entity_data_varint(2)); // shape
+        value.extend_from_slice(&test_support::entity_data_varint(2)); // colors count
+        value.extend_from_slice(&0xFF0000i32.to_be_bytes());
+        value.extend_from_slice(&0x00FF00i32.to_be_bytes());
+        value.extend_from_slice(&test_support::entity_data_varint(1)); // fades count
+        value.extend_from_slice(&0xFFi32.to_be_bytes());
+        value.push(0); // has_trail
+        value.push(1); // has_twinkle
+        // explosion 2: BURST
+        value.extend_from_slice(&test_support::entity_data_varint(4)); // shape
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // no colors
+        value.extend_from_slice(&test_support::entity_data_varint(0)); // no fades
+        value.push(1); // has_trail
+        value.push(0); // has_twinkle
+        let d = parse_set_entity_data(&one_stack(&value)).unwrap();
+        let decoded = match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => patch.added[0].1.clone(),
+            other => panic!("expected an item stack, got {other:?}"),
+        };
+        assert_eq!(
+            decoded,
+            ComponentValue::Fireworks {
+                flight: 2,
+                explosions: vec![
+                    FireworkExplosion {
+                        shape: 2,
+                        colors: vec![0xFF0000, 0x00FF00],
+                        fade_colors: vec![0xFF],
+                        has_trail: false,
+                        has_twinkle: true,
+                    },
+                    FireworkExplosion {
+                        shape: 4,
+                        colors: vec![],
+                        fade_colors: vec![],
+                        has_trail: true,
+                        has_twinkle: false,
+                    },
+                ],
+            }
+        );
+
+        // the write mirror round-trips the decoded value byte for
+        // byte (the store's invariant — the encoder pairs the type id
+        // with the variant it decodes)
+        let mut round = Vec::new();
+        write_component_value(&mut round, t::FIREWORKS, &decoded).unwrap();
+        assert_eq!(round, value[1..]); // [1..] skips the one-byte type id the caller prefixed
+
+        // the star item's own component (68): the ONE record bare —
+        // LARGE_BALL (ordinal 1), one color, no fades, no flags
+        let mut star = Vec::new();
+        star.extend_from_slice(&test_support::entity_data_varint(t::FIREWORK_EXPLOSION));
+        star.extend_from_slice(&test_support::entity_data_varint(1)); // shape
+        star.extend_from_slice(&test_support::entity_data_varint(1)); // colors count
+        star.extend_from_slice(&0xFFFFFFi32.to_be_bytes());
+        star.extend_from_slice(&test_support::entity_data_varint(0)); // no fades
+        star.push(0);
+        star.push(0);
+        let d = parse_set_entity_data(&one_stack(&star)).unwrap();
+        match &d.entries[0].value {
+            EntityDataEntry::ItemStack { patch, .. } => assert_eq!(
+                patch.added[0].1,
+                ComponentValue::FireworkExplosion(FireworkExplosion {
+                    shape: 1,
+                    colors: vec![0xFFFFFF],
+                    fade_colors: vec![],
+                    has_trail: false,
+                    has_twinkle: false,
+                })
+            ),
+            other => panic!("expected an item stack, got {other:?}"),
+        }
+
+        // the shape lane NEVER refuses — the continuous ZERO map
+        // fills every key outside [0, 5) to values[0] (the RARITY
+        // line): an out-of-range ordinal (9) AND a negative one (-1)
+        // decode verbatim (the fill is a consumer's resolution)
+        for hostile_shape in [9i32, -1] {
+            let mut v = Vec::new();
+            v.extend_from_slice(&test_support::entity_data_varint(t::FIREWORK_EXPLOSION));
+            v.extend_from_slice(&test_support::entity_data_varint(hostile_shape));
+            v.extend_from_slice(&test_support::entity_data_varint(0)); // no colors
+            v.extend_from_slice(&test_support::entity_data_varint(0)); // no fades
+            v.push(0);
+            v.push(0);
+            let d = parse_set_entity_data(&one_stack(&v)).unwrap();
+            match &d.entries[0].value {
+                EntityDataEntry::ItemStack { patch, .. } => match &patch.added[0].1 {
+                    ComponentValue::FireworkExplosion(e) => {
+                        assert_eq!(e.shape, hostile_shape, "the ordinal rides verbatim");
+                    }
+                    other => panic!("expected a firework explosion, got {other:?}"),
+                },
+                other => panic!("expected an item stack, got {other:?}"),
+            }
+        }
+
+        // the capped list refuses a count past the 256 cap (the
+        // lore line) — 257 explosions of one shape each
+        let mut over = Vec::new();
+        over.extend_from_slice(&test_support::entity_data_varint(t::FIREWORKS));
+        over.extend_from_slice(&test_support::entity_data_varint(0)); // flight
+        over.extend_from_slice(&test_support::entity_data_varint(257));
+        assert!(parse_set_entity_data(&one_stack(&over)).is_err());
+
+        // a negative color count refuses (the no-arg list's count
+        // lane — the readCount's own guard)
+        let mut neg_colors = Vec::new();
+        neg_colors.extend_from_slice(&test_support::entity_data_varint(t::FIREWORK_EXPLOSION));
+        neg_colors.extend_from_slice(&test_support::entity_data_varint(0)); // shape
+        neg_colors.extend_from_slice(&test_support::entity_data_varint(-2));
+        assert!(parse_set_entity_data(&one_stack(&neg_colors)).is_err());
     }
 
     /// The consume-effect dispatch decodes ALL FIVE types, the
