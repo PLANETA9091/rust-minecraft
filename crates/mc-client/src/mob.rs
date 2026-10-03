@@ -223,6 +223,13 @@ pub const BOW_FULL_POWER_SHOOT_VELOCITY: f32 = 3.0;
 /// inaccuracy arg (the PLAYER's own shot the 1.0 spread speaks — the
 /// skeleton's 10.0 the mob lane never shares).
 pub const PLAYER_ARROW_INACCURACY: f64 = 1.0;
+/// `CrossbowItem.getShootingPower`'s own `ldc #85 // float 3.15f` —
+/// the ARROW list's flat velocity the `projectile.shoot` call's
+/// velocity slot carries (the bow's `f * 3.0F` power fold the flat
+/// power never wears; the firework list the `ldc #84 // float 1.6f`
+/// names — the Rocket kind the client's charge lane never banks, the
+/// honest divergence the later walk may close).
+pub const CROSSBOW_SHOOTING_POWER: f32 = 3.15;
 /// `Mob.dropCustomDeathLoot`'s own chance — `DropChances`' default the
 /// `byEquipment(slot)` answers for every slot the mob's own table
 /// never overrides (the 0.085 the nextFloat draw gates).
@@ -2913,6 +2920,66 @@ impl Arrow {
             shake_time: 0,
             // the full-draw's own 1.0 the fcmpl gate arms
             crit: power == 1.0,
+            dead: false,
+            player_shot: true,
+            owner: None,
+            rng,
+        }
+    }
+
+    /// THE CROSSBOW'S OWN SHOT (javap `CrossbowItem.shootProjectile`
+    /// → `projectile.shoot(vec, velocity, 1.0F)` the 26.2 walk speaks
+    /// — the offline client the server's own stand-in wears): the
+    /// velocity the `getShootingPower` verdict's flat power keeps
+    /// (`ldc #85` 3.15 — the bow's `f * 3.0F` fold the flat power
+    /// never wears), the spread the `getMovementToShoot` triangle
+    /// walk the inaccuracy 1.0 costs (the soundPitch param the shoot
+    /// call's fifth slot lands — the bow's own shootFromRotation
+    /// fold the same walk costs), the CRIT the `createProjectile`'s
+    /// `setCritArrow(isPlayer)` the player's own shot ALWAYS arms
+    /// (the bow's full-draw fcmpl gate the crossbow never needs),
+    /// and the seed the id-mixed law the same stream arms (the
+    /// deterministic stand-in the player_shot ctor keeps).
+    pub fn crossbow_shot(id: i32, ox: f64, oy: f64, oz: f64, dir: (f64, f64, f64)) -> Arrow {
+        let seed = arrow_entity_seed(id);
+        let mut rng = Lcg::new(seed);
+        // THE SHOOT (Projectile.getMovementToShoot): normalize FIRST,
+        // the spread adds, the flat power scales — the walk's own
+        // order the bow ctor keeps
+        let (dx, dy, dz) = dir;
+        let len = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+        let (nx, ny, nz) = (dx / len, dy / len, dz / len);
+        let spread = ARROW_TRIANGLE_SPREAD * PLAYER_ARROW_INACCURACY;
+        let (mx, my, mz) = (
+            nx + rng.triangle(spread),
+            ny + rng.triangle(spread),
+            nz + rng.triangle(spread),
+        );
+        let v = CROSSBOW_SHOOTING_POWER as f64;
+        let (vx, vy, vz) = (mx * v, my * v, mz * v);
+        let horiz = (vx * vx + vz * vz).sqrt();
+        let y_rot = ((vx).atan2(vz) * 57.295_776_367_187_5) as f32;
+        let x_rot = ((vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
+        Arrow {
+            id,
+            x: ox,
+            y: oy,
+            z: oz,
+            prev_x: ox,
+            prev_y: oy,
+            prev_z: oz,
+            vx,
+            vy,
+            vz,
+            y_rot,
+            x_rot,
+            y_rot_o: y_rot,
+            x_rot_o: x_rot,
+            life: 0,
+            in_ground: false,
+            shake_time: 0,
+            // the player's own shot the setCritArrow(true) always arms
+            crit: true,
             dead: false,
             player_shot: true,
             owner: None,

@@ -15802,9 +15802,25 @@ impl App {
                     if self.off_charge.is_some()
                         && mc_registry::item_charge_def(off_id).is_some()
                     {
+                        // THE KIND THE SHOT READS BEFORE THE CLEAR (the
+                        // Rocket kind the honest skip keeps — the
+                        // firework's own spawn the later walk banks)
+                        let arrow_charge =
+                            self.off_charge == Some(mc_registry::ChargeKind::Arrow);
                         self.off_charge = None;
                         self.offhand_held_loaded = Some(off_id);
                         self.load_offhand_payload_from_id(Some(off_id));
+                        // THE OFFHAND'S OWN OFFLINE SHOT (the same walk
+                        // the MAIN arm's shot speaks — the hand the
+                        // release walk never reads, the OFF turn the
+                        // same eye/voice the helper keeps; the LIVE
+                        // session the server's arrow the wire serves)
+                        if arrow_charge
+                            && self.live_clicks.is_none()
+                            && !self.world_is_network
+                        {
+                            self.crossbow_shot_offline();
+                        }
                         let (yaw, pitch) =
                             crate::world_view::wire_angles(&self.world_camera());
                         if let Some(sink) = self.live_clicks.as_ref() {
@@ -15926,6 +15942,60 @@ impl App {
         false
     }
 
+    /// THE CROSSBOW'S OWN OFFLINE SHOT (javap `CrossbowItem.use` →
+    /// `performShooting` → `ProjectileWeaponItem.shoot` →
+    /// `CrossbowItem.shootProjectile` the 26.2 bytecode the walk
+    /// reads — the offline client the server's own stand-in wears):
+    /// the component clear the lane already spoke, the shot the walk
+    /// answers — the single arrow the client's charge lane banks (no
+    /// multishot — the size-1 spread the `shoot` walk's own
+    /// `f11 = 0.0` keeps: yRotOffset 0.0, the shot vector the view
+    /// vector verbatim the quaternion never rotates), the velocity
+    /// the `getShootingPower` verdict's flat 3.15 keeps, the spawn
+    /// the AbstractArrow ctor's own eye law speaks (getX, getEyeY −
+    /// 0.1, getZ — the bow release walk's own precedent), and the
+    /// VOICE the per-projectile `playSound(null, shooter.xyz,
+    /// CROSSBOW_SHOOT, source, 1.0F, getShotPitch(random, 0))` walk
+    /// banks — the index-0 early return the fconst_1 keeps (1.0, NO
+    /// random the walk spends). The durability the `hurtAndBreak`
+    /// walk spends the client never banks (the items' wear the
+    /// honest skip keeps), the stats the server's own ledger names.
+    fn crossbow_shot_offline(&mut self) {
+        // THE OWNER'S OWN EYE (the AbstractArrow ctor's spawn law —
+        // the body's own coords the camera's authority keeps, the
+        // flight camera the headless fallback answers)
+        let (ox, oy, oz, dir) = match self.body.as_ref() {
+            Some(b) => {
+                let cam = b.camera();
+                (b.x, b.y + b.eye_height() - 0.1, b.z, cam.forward())
+            }
+            None => {
+                let cam = self.world_camera();
+                (
+                    cam.pos.x as f64,
+                    cam.pos.y as f64 - 0.1,
+                    cam.pos.z as f64,
+                    cam.forward(),
+                )
+            }
+        };
+        // THE LEVEL'S OWN ENTITY COUNTER (the next_drop_id the shared
+        // id space keeps — the bow release walk's own precedent)
+        let id = self.next_drop_id;
+        self.next_drop_id += 1;
+        self.arrows.push(crate::mob::Arrow::crossbow_shot(
+            id,
+            ox,
+            oy,
+            oz,
+            (dir.x as f64, dir.y as f64, dir.z as f64),
+        ));
+        // THE VOICE (the index-0 pitch the early return keeps — the
+        // playSound at the shooter's own spot the ear answers)
+        self.sounds
+            .play_voice(self.frame, "item.crossbow.shoot", 1.0, 1.0);
+    }
+
     /// THE MAIN-HAND'S OWN ITEM LANE (the vanilla startUseItem's hand-0
     /// turn — the unified held id's use walk the lanes' own order keeps:
     /// the boat's spawn, the carrot stick's boost, the eat's consumable,
@@ -16015,8 +16085,19 @@ impl App {
         // resting render returns to the plain crossbow, and
         // the wire echo rides (the shot is a use-item click)
         if self.held_charge.is_some() && mc_registry::item_charge_def(id).is_some() {
+            // THE KIND THE SHOT READS BEFORE THE CLEAR (the Rocket
+            // kind the firework's own spawn the later walk banks —
+            // the honest divergence the arrow walk keeps)
+            let arrow_charge = self.held_charge == Some(mc_registry::ChargeKind::Arrow);
             self.held_charge = None;
             self.load_held_payload(id, None);
+            // THE OFFLINE SHOT (javap `performShooting` the walk the
+            // helper carries): the ARROW kind the walk answers, the
+            // LIVE session the server's own arrow the wire's Add
+            // Entity serves (the client predicts none)
+            if arrow_charge && self.live_clicks.is_none() && !self.world_is_network {
+                self.crossbow_shot_offline();
+            }
             let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
             if let Some(sink) = self.live_clicks.as_ref() {
                 let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
@@ -52337,6 +52418,15 @@ cow_sound_variant: None,
             ContainerCommand::UseItem { .. } => {}
             other => panic!("expected a UseItem echo, got {other:?}"),
         }
+        // THE LIVE LANE'S OWN SILENCE (javap `performShooting` the
+        // `instanceof ServerLevel` gate keeps — the server's own walk
+        // the arrow spawns, the wire's Add Entity the client's
+        // projectile lane serves): the client predicts NO arrow the
+        // echo the shot rides
+        assert!(
+            app.arrows.is_empty(),
+            "the LIVE lane the server's own walk the wire serves — no client arrow"
+        );
 
         // THE ROCKET SEED: the component lane's other case (the CLI
         // seed's own domain) renders the firework bolt
@@ -52349,6 +52439,198 @@ cow_sound_variant: None,
         // the slot — the item switch drops it
         app.live_held_updated(Some((wire("diamond"), 1)));
         assert!(app.held_charge.is_none(), "the switch dropped the charge");
+    }
+
+    /// THE CROSSBOW'S OWN OFFLINE SHOT — the arrow the walk never
+    /// spawned the round banks (javap `CrossbowItem.use` →
+    /// `performShooting` → `ProjectileWeaponItem.shoot` →
+    /// `CrossbowItem.shootProjectile` the 26.2 bytecode speaks): the
+    /// charged crossbow's press the instant CONSUME branch keeps (no
+    /// pull), the arrow the `getShootingPower` verdict's flat 3.15
+    /// velocity rides, the eye-minus-0.1 spawn the AbstractArrow ctor
+    /// keeps, the CRIT the `setCritArrow(isPlayer)` the player's own
+    /// shot ALWAYS arms, the voice the `getShotPitch(random, 0)`'s
+    /// own early return keeps (1.0 — no random the index-0 walk
+    /// spends), and the resting render the standby texture returns.
+    #[test]
+    fn the_crossbow_the_offline_shot_the_arrow_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (crossbow_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the spawn band's air (the terrain's own tops never reach),
+        // the level -z look the camera's own forward keeps
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE LOAD: the full-charge pull the release loads (the
+        // client's charge lane the component's own word keeps — the
+        // load the shot never speaks)
+        assert!(app.on_right_press(0, 0), "the pull starts");
+        for _ in 0..25 {
+            app.update();
+        }
+        app.on_right_release();
+        assert_eq!(
+            app.held_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the full charge LOADED the arrow"
+        );
+        assert!(app.arrows.is_empty(), "the load the shot never speaks");
+        // THE SHOT: the charged press the instant walk answers — the
+        // arrow the offline lane banks (the server's stand-in the
+        // client wears)
+        assert!(app.on_right_press(0, 0), "the charged press answers");
+        assert!(!app.is_using(), "the shot is instant — no pull");
+        assert!(app.held_charge.is_none(), "the shot consumed the charge");
+        assert_eq!(app.arrows.len(), 1, "the offline shot the arrow speaks");
+        let a = &app.arrows[0];
+        assert!(a.player_shot, "the owner lane the player speaks");
+        assert!(
+            a.crit,
+            "the setCritArrow(isPlayer) the player's shot ALWAYS arms"
+        );
+        assert!(
+            (a.x - (c as f64 + 0.5)).abs() < 1e-6
+                && (a.y - (eye_y as f64 - 0.1)).abs() < 1e-6
+                && (a.z - (c as f64 + 0.5)).abs() < 1e-6,
+            "the spawn the eye walk keeps ({},{},{})",
+            a.x,
+            a.y,
+            a.z
+        );
+        assert!(
+            a.vz < -3.09 && a.vz > -3.21,
+            "the -z the 3.15 flat power speaks ({})",
+            a.vz
+        );
+        // THE VOICE: the index-0 pitch the early return keeps (1.0 —
+        // the fconst_1 the getShotPitch walk answers, NO random spent)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.crossbow.shoot @")),
+                "the CROSSBOW_SHOOT voice the shot rode"
+            );
+        }
+        // THE RESTORE: the plain crossbow renders again
+        let plain = app.held_item.as_ref().expect("the plain crossbow returns");
+        assert!(plain.binds_texture("item/crossbow_standby"), "the standby returns");
+        // THE RE-CHARGE: the fresh pull the next arrow arms (the lane
+        // the one-shot never breaks)
+        assert!(app.on_right_press(0, 0), "the fresh pull starts");
+        assert!(app.is_using(), "the pull the fresh stack arms");
+    }
+
+    /// THE OFFHAND CROSSBOW'S OWN OFFLINE SHOT — the OFF turn's own
+    /// loaded shot the mirror walk answers (javap `CrossbowItem.use`
+    /// the OFF hand's own turn the for-each-hand walk serves — the
+    /// `performShooting` law the hand never reads): the off-charge
+    /// the OFF pull loaded, the press the instant shot speaks — the
+    /// arrow the same eye/velocity/crit law banks, the voice the
+    /// same key rides, the LEFT render the standby restores, and the
+    /// MAIN lane the OFF shot never leaks.
+    #[test]
+    fn the_offhand_crossbow_the_offline_shot_the_mirror_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let crossbow_id = wire("crossbow");
+        let slot = app.selected_hotbar;
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let eye_y = app.spawn_y + 7;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, eye_y as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // THE OFFHAND CROSSBOW the offline slot wears, the MAIN hand
+        // the empty inventory speaks (the MAIN turn's PASS the OFF
+        // turn answers)
+        app.inventory.items[slot] = (0, 0);
+        app.inventory.offhand[0] = (crossbow_id, 1);
+        app.offhand_held_refreshed();
+        // THE OFF PULL: the OFF turn's own pull the LEFT layers
+        // re-bake, the full charge the OFF lane loads
+        assert!(app.on_right_press(0, 0), "the OFF pull starts");
+        assert!(
+            matches!(
+                app.using_item.as_ref().map(|u| u.hand),
+                Some(UseHand::Off)
+            ),
+            "the OFF hand the draw wears"
+        );
+        for _ in 0..25 {
+            app.update();
+        }
+        app.on_right_release();
+        assert_eq!(
+            app.off_charge,
+            Some(mc_registry::ChargeKind::Arrow),
+            "the full charge LOADED the OFF lane"
+        );
+        // THE OFF SHOT: the press the instant walk answers — the
+        // arrow the same law banks (the hand the walk never reads)
+        assert!(app.on_right_press(0, 0), "the charged OFF press answers");
+        assert!(!app.is_using(), "the shot is instant — no pull");
+        assert!(app.off_charge.is_none(), "the shot consumed the OFF charge");
+        assert_eq!(app.arrows.len(), 1, "the OFF shot the arrow speaks");
+        let a = &app.arrows[0];
+        assert!(
+            a.crit && a.player_shot,
+            "the crit/owner law the player's shot keeps"
+        );
+        assert!(
+            (a.y - (eye_y as f64 - 0.1)).abs() < 1e-6,
+            "the spawn the eye walk keeps ({})",
+            a.y
+        );
+        assert!(
+            a.vz < -3.09 && a.vz > -3.21,
+            "the -z the 3.15 flat power speaks ({})",
+            a.vz
+        );
+        assert!(
+            app.held_charge.is_none(),
+            "the MAIN lane the OFF shot never leaks"
+        );
+        // THE VOICE: the same key the OFF turn rides
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.crossbow.shoot @")),
+                "the CROSSBOW_SHOOT voice the OFF shot rode"
+            );
+        }
+        // THE RESTORE: the LEFT render the plain crossbow wears
+        let plain = app.held_offhand.as_ref().expect("the LEFT plain returns");
+        assert!(
+            plain.binds_texture("item/crossbow_standby"),
+            "the standby returns through the LEFT ctx"
+        );
     }
 
     /// THE OFFHAND'S OWN PULL ARC — the LAYER-pull lane the OFF turn
