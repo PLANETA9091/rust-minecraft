@@ -3478,9 +3478,21 @@ pub struct Firework {
     /// submit`'s `isShotAtAngle` gate the 26.2 bytecode keeps: the
     /// TRUE arm the ZP/YP/XP axis rotations wear, the FALSE the plain
     /// billboard keeps). The crossbow's `createProjectile` the SEVENTH
-    /// ctor arg `true` speaks — every rocket this client spawns the
-    /// shot lane banks.
+    /// ctor arg `true` speaks — every DETACHED rocket this client
+    /// spawns the shot lane banks; the USE-spawned attached rocket
+    /// the (Level, ItemStack, LivingEntity) ctor the flag never sets
+    /// (the plain billboard the follow walk renders).
     pub shot_at_angle: bool,
+    /// THE USE-SPAWNED ROCKET'S OWN ATTACHMENT (javap the
+    /// `FireworkRocketItem.use` ctor walk — the (Level, ItemStack,
+    /// LivingEntity) ctor the DATA_ATTACHED_TO_TARGET accessor sets
+    /// + the `attachedToEntity` field arms): the true the tick's
+    /// ATTACHED arm wears — no free-flight move the walk ever runs
+    /// (the pos the hand-follow law pins each tick, the boost the
+    /// isFallFlying gate folds, the lifetime crossing the same tail
+    /// serves). The DETACHED lanes the flag never wears (the
+    /// crossbow's shot, the ground launch, the wire spawn).
+    pub attached: bool,
     /// THE ENTITY'S OWN RANDOM STREAM (javap tick pcs 469/494 the
     /// `getfield FireworkRocketEntity.random` reads — the trail's
     /// gaussian pair the entity's own RandomSource speaks, the ctor's
@@ -3533,6 +3545,49 @@ pub struct FireworkEvents {
     /// 469-478 — the y the -vy*0.5 fold no draw carries, the z
     /// gaussian SECOND — pcs 494-506).
     pub trail: Option<(f64, f64, f64)>,
+    /// THE ATTACHED ROCKET'S OWN BOOST WORD (javap tick pcs 51-174
+    /// the 26.2 walk — the attached arm's `setDeltaMovement(vec3.add(
+    /// look*0.1 + (look*1.5 − v)*0.5 ...))` fold the gliding rider
+    /// wears): the POST-fold velocity the caller's body wears — the
+    /// fold the ROCKET's tick speaks, the body's own fields the
+    /// caller's tail writes (the vanilla order the rocket-after-player
+    /// tick pairing keeps — the NEXT tick's travel the boosted v
+    /// reads). The NOT-gliding rider the ZERO arm keeps (the
+    /// isFallFlying gate the fold never passes — no word the events
+    /// carry), the follow's own delta sync the same walk banks.
+    pub boost: Option<(f64, f64, f64)>,
+}
+
+/// THE ATTACHED ROCKET'S OWN RIDER (javap tick pcs 11-243 the 26.2
+/// walk — the attached arm's reads the ROCKET's tick wears: the
+/// feet pose the setPos origin answers, the look angle the boost
+/// fold's getLookAngle read carries, the velocity the fold's
+/// getDeltaMovement read + the delta sync's POST-boost wear, the
+/// fall-flying flag the isFallFlying gate keeps, the yaw the
+/// getHandHoldingItemAngle's +80° fold wears). The snapshot the
+/// CALLER owns — the vanilla order the player-then-rocket tick
+/// pairing keeps (the pose the player's OWN tick wore).
+#[derive(Debug, Clone, Copy)]
+pub struct GlideRider {
+    /// the feet pose (`getX/getY/getZ` the setPos origin reads —
+    /// pcs 197-231)
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// the vanilla-degrees yaw the hand fold wears (`getYRot` the
+    /// calculateViewVector walk reads — the MAIN-arm +80° the RIGHT
+    /// mainArm's own answer keeps)
+    pub yaw: f32,
+    /// `getLookAngle()` — the fold's steering vector (pcs 61-63)
+    pub look: (f64, f64, f64),
+    /// `getDeltaMovement()` — the fold's own v read (pcs 79-82) + the
+    /// delta sync's POST-boost v the pc 235-243 walk answers
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// `isFallFlying()` — the boost gate (pc 51-54: the false the
+    /// ZERO arm keeps, no fold the add never speaks)
+    pub fall_flying: bool,
 }
 
 impl Firework {
@@ -3605,6 +3660,10 @@ impl Firework {
             // `true` keeps — the shot lane the render's axis walk
             // wears)
             shot_at_angle: true,
+            // THE SHOT'S OWN DETACHMENT (the crossbow lane the
+            // attached arm never wears — the free flight the tick's
+            // own branch answers)
+            attached: false,
             // THE STREAM'S OWN TAIL (the ctor's spent draws the head
             // keeps — the trail's gaussians the next draws the ticks
             // spend, the entity's own RandomSource the field stands
@@ -3670,11 +3729,174 @@ impl Firework {
             // THE ACCESSOR'S OWN DEFAULT (the plain rocket's billboard
             // — the crossbow's axis lane the flag never wears)
             shot_at_angle: false,
+            // THE GROUND LAUNCH'S OWN DETACHMENT (the useOn lane the
+            // attached arm never wears — the free flight the tick's
+            // own branch answers)
+            attached: false,
             // THE STREAM'S OWN TAIL (the ctor's spent draws the head
             // keeps — the trail's gaussians the next draws the ticks
             // spend, the crossbow's own tail the same walk banks)
             rng,
         }
+    }
+
+    /// THE USE-SPAWNED ROCKET'S OWN ATTACHMENT (javap `FireworkRocketItem.
+    /// use` the 26.2 walk speaks — the (Level, ItemStack, LivingEntity)
+    /// ctor the use's gliding branch spawns): the pose the owner's OWN
+    /// FEET the delegating super-ctor keeps (`getX/getY/getZ` the
+    /// `<init>:(Level, Entity, DDD, ItemStack)` walk reads — pcs 4-15
+    /// the move-through pair serves), the DATA_ATTACHED_TO_TARGET the
+    /// owner id accessor sets (pcs 23-33) + the `attachedToEntity`
+    /// field the same owner arms (pcs 37-38), the SHOT_AT_ANGLE the
+    /// accessor's own FALSE the flag never set keeps (the plain
+    /// billboard the follow walk renders), the MOTION + the LIFETIME
+    /// the shared base ctor's own walk banks (pcs 78-141 of the
+    /// `<init>(Level, Entity, DDD, ItemStack)`): `setDeltaMovement(
+    /// triangle(0.0, 0.002297), 0.05, triangle(0.0, 0.002297))` — the
+    /// two draws the stream spends (the first tick's boost + the delta
+    /// sync the walk overwrites) —, the lifetime the `10 * (1 + 1) +
+    /// nextInt(6) + nextInt(7)` walk the banked flightDuration-1
+    /// stand-in keeps (the client's id-only stack the same read the
+    /// crossbow/ground lanes wear — the ONE vocabulary the client's
+    /// own rockets speak). The seed the id-mixed law keeps (the
+    /// deterministic stand-in the arrow ctor wears).
+    pub fn attached_rocket(id: i32, ox: f64, oy: f64, oz: f64) -> Firework {
+        let seed = arrow_entity_seed(id);
+        let mut rng = Lcg::new(seed);
+        // THE BASE CTOR'S OWN MOTION WALK (the two triangle draws the
+        // stream spends — the first tick's sync the values overwrite)
+        let vx = rng.triangle(0.002297);
+        let vz = rng.triangle(0.002297);
+        // THE LIFETIME WALK (the banked flightDuration-1 stand-in the
+        // client's own rockets wear — the band 20..=32)
+        let lifetime = 10 * (1 + 1) + rng.next_int(6) + rng.next_int(7);
+        Firework {
+            id,
+            x: ox,
+            y: oy,
+            z: oz,
+            prev_x: ox,
+            prev_y: oy,
+            prev_z: oz,
+            vx,
+            vy: 0.05,
+            vz,
+            y_rot: 0.0,
+            x_rot: 0.0,
+            y_rot_o: 0.0,
+            x_rot_o: 0.0,
+            life: 0,
+            lifetime,
+            dead: false,
+            stuck: false,
+            // THE ATTACHED CTOR'S OWN BILLBOARD (the SHOT_AT_ANGLE the
+            // accessor's default keeps — no axis walk the render wears)
+            shot_at_angle: false,
+            // THE USE'S OWN ATTACHMENT (the DATA_ATTACHED_TO_TARGET
+            // accessor the ctor sets — the tick's attached arm the
+            // flag wears)
+            attached: true,
+            rng,
+        }
+    }
+
+    /// THE HAND'S OWN ANGLE (javap `Entity.getHandHoldingItemAngle` the
+    /// 26.2 bytecode speaks — the arm walk the tick's pcs 177-187 reads:
+    /// `is(Player) && offhand.is(item) && !mainhand.is(item)` the
+    /// OPPOSITE-arm test answers, else the mainArm; the vector the
+    /// `calculateViewVector(0, yRot + (arm == RIGHT ? 80 : -80)).
+    /// scale(0.5)` walk returns — pcs 62-94). The MAIN-hand use lane
+    /// the +80° the RIGHT mainArm keeps (the offhand arm the later
+    /// lane answers), the pitch-0 view the HORIZONTAL vector wears,
+    /// the f32 math the vanilla Mth.cos/sin walk keeps.
+    pub fn hand_offset(yaw: f32) -> (f64, f64, f64) {
+        // calculateViewVector(0f, yaw + 80f): x = sin(-yaw') * cos(0),
+        // y = -sin(0), z = cos(-yaw') * cos(0) — the yaw' the +80°
+        // fold wears; the scale(0.5) the ldc2_w #656 speaks
+        let rad = -(yaw + 80.0).to_radians();
+        (
+            (rad.sin() * 0.5) as f64,
+            0.0,
+            (rad.cos() * 0.5) as f64,
+        )
+    }
+
+    /// THE ATTACHED ROCKET'S OWN TICK (javap `FireworkRocketEntity.tick`
+    /// the 26.2 walk's ATTACHED arm speaks — pcs 5-243: the
+    /// isAttachedToEntity gate the arm enters, the boost the
+    /// isFallFlying rider flag folds, the hand-follow the setPos walk
+    /// pins, the delta sync the POST-boost velocity wears, the tail
+    /// the free flight's own walk shares): THE BOOST (pcs 51-174 —
+    /// `vec3 = attached.getDeltaMovement(); attached.setDeltaMovement(
+    /// vec3.add(look.x*0.1 + (look.x*1.5 − vec3.x)*0.5, ...))` — the
+    /// 1.5 the dstore-4 constant keeps, the 0.1 the dstore-6, the 0.5
+    /// the ldc2_w #193; the NOT-gliding rider the ZERO arm keeps —
+    /// pcs 51-54 the flag's own branch answers, the fold never speaks)
+    /// — the fold's word the events carry, the body's fields the
+    /// CALLER's tail writes (the vanilla tick order the
+    /// rocket-after-player pairing keeps). THE HAND FOLLOW (pcs
+    /// 177-232 — `setPos(attached.getX() + angle.x, ...)`, the angle
+    /// the getHandHoldingItemAngle law keeps — the hand_offset walk).
+    /// THE DELTA SYNC (pcs 235-243 — `this.setDeltaMovement(attached.
+    /// getDeltaMovement())` — the read the POST-boost v answers, the
+    /// trail's own -vy*0.5 arg the synced delta wears). THE TAIL (the
+    /// free tick's own walk: the launch the life==0 word speaks, the
+    /// trail the isClientSide branch every tick spawns, the lifetime
+    /// crossing the explode+discard tail serves). THE LANE THE ARM
+    /// SKIPS: the free-flight move (the 1.15/0.04 fold + the
+    /// move-clip the NOT-attached branch wears — the pos the follow
+    /// law pins, no wall rest the stuck lane ever banks), the
+    /// rotation ease (no atan2 the attached walk runs — the spawn's
+    /// 0/0 pose the render's billboard keeps), the hit lane (the
+    /// attached arm's predicate the rider's own self-hits excludes,
+    /// the block clip's rest the follow's own setPos overrides).
+    pub fn tick_attached(&mut self, rider: &GlideRider) -> FireworkEvents {
+        let mut events = FireworkEvents::default();
+        self.prev_x = self.x;
+        self.prev_y = self.y;
+        self.prev_z = self.z;
+        self.x_rot_o = self.x_rot;
+        self.y_rot_o = self.y_rot;
+        // THE BOOST'S OWN FOLD (pcs 84-174 — the per-axis walk the
+        // add() carries: v += look*0.1 + (look*1.5 − v)*0.5)
+        if rider.fall_flying {
+            let (lx, ly, lz) = rider.look;
+            let nvx = rider.vx + lx * 0.1 + (lx * 1.5 - rider.vx) * 0.5;
+            let nvy = rider.vy + ly * 0.1 + (ly * 1.5 - rider.vy) * 0.5;
+            let nvz = rider.vz + lz * 0.1 + (lz * 1.5 - rider.vz) * 0.5;
+            events.boost = Some((nvx, nvy, nvz));
+            // THE DELTA SYNC (pcs 235-243 — the read the POST-boost v
+            // answers: the rocket's own motion the rider's boosted v
+            // wears, the trail's arg the same walk reads)
+            self.vx = nvx;
+            self.vy = nvy;
+            self.vz = nvz;
+        } else {
+            // THE ZERO ARM'S OWN SYNC (the fold never speaks — the
+            // delta sync still answers: the rider's current v the
+            // rocket wears)
+            self.vx = rider.vx;
+            self.vy = rider.vy;
+            self.vz = rider.vz;
+        }
+        // THE HAND FOLLOW (pcs 177-232 — the feet + the hand angle
+        // the setPos walk pins; the y the pitch-0 view's 0.0 keeps)
+        let (hx, hy, hz) = Firework::hand_offset(rider.yaw);
+        self.x = rider.x + hx;
+        self.y = rider.y + hy;
+        self.z = rider.z + hz;
+        // THE TAIL (the free tick's own walk — the launch, the trail,
+        // the lifetime crossing the explode+discard serves)
+        if self.life == 0 {
+            events.launch = Some((self.x, self.y, self.z));
+        }
+        self.life += 1;
+        self.spent_trail(&mut events);
+        if self.life > self.lifetime {
+            events.explode = Some((self.x, self.y, self.z));
+            self.dead = true;
+        }
+        events
     }
 
     /// THE SHOT-AT-ANGLE FLIGHT (javap `FireworkRocketEntity.tick` the
@@ -3782,6 +4004,10 @@ impl Firework {
             dead: false,
             stuck: false,
             shot_at_angle,
+            // THE WIRE SPAWN'S OWN DETACHMENT (the networked lane the
+            // attached arm never wears — the server's own verdict the
+            // attachment rides, the client's sim the free flight keeps)
+            attached: false,
             rng: Lcg::new(arrow_entity_seed(id)),
         }
     }
@@ -15907,6 +16133,114 @@ mod tests {
         assert!(
             ev.explode.is_some(),
             "the crossing the explode tail answers"
+        );
+    }
+
+    /// THE ATTACHED ROCKET'S OWN BOOST — javap `FireworkRocketEntity.
+    /// tick` the attached arm the 26.2 walk speaks (pcs 51-243): the
+    /// fold the gliding rider wears (`v += look*0.1 + (look*1.5 − v)*0.5`
+    /// the per-axis walk the add() carries — the 1.5 the dstore-4's
+    /// own constant, the 0.1 the dstore-6, the 0.5 the ldc2_w #193),
+    /// the NOT-gliding rider the ZERO arm keeps (pcs 51-54 the flag's
+    /// own branch — no fold the events carry, the follow's own delta
+    /// sync answers), the hand-follow the getHandHoldingItemAngle law
+    /// pins (the view(0, yaw+80°)*0.5 the mainArm RIGHT keeps — the
+    /// +80° the RIGHT answer, the y the pitch-0 view's 0.0 wears),
+    /// the delta sync the POST-boost v reads (pcs 235-243), the
+    /// launch the life==0 word speaks, the lifetime crossing the same
+    /// explode+discard tail the free flight serves.
+    #[test]
+    fn the_boost_folds_the_law_wears() {
+        // THE GLIDING RIDER (the level look +z — the body yaw 0 the
+        // +z look keeps, the zero v the glide-start tick wears)
+        let rider = GlideRider {
+            x: 10.0,
+            y: 40.0,
+            z: 10.0,
+            yaw: 0.0,
+            look: (0.0, 0.0, 1.0),
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            fall_flying: true,
+        };
+        let mut f = Firework::attached_rocket(9, 10.0, 40.0, 10.0);
+        assert!(f.attached, "the use-spawned ctor the attachment arms");
+        assert!(!f.shot_at_angle, "the attached ctor the billboard keeps");
+        assert!(
+            (20..=32).contains(&f.lifetime),
+            "the lifetime the banked band keeps ({})",
+            f.lifetime
+        );
+        // THE FIRST TICK: the launch speaks, the exact fold rides
+        let ev = f.tick_attached(&rider);
+        assert!(ev.launch.is_some(), "the life-0 tick the launch speaks");
+        let (bx, by, bz) = ev
+            .boost
+            .expect("the gliding rider the fold's word carries");
+        assert_eq!(bz, 0.1 + (1.5 - 0.0) * 0.5, "the exact z fold ({})", bz);
+        assert_eq!(by, 0.0, "the level look the y fold keeps");
+        assert!(bx.abs() < 1e-12, "the level look the x fold keeps");
+        assert_eq!(f.vz, bz, "the delta sync the POST-boost v reads");
+        // THE HAND FOLLOW (the view(0, +80°)*0.5 — the feet origin
+        // the setPos walk keeps, the y the pitch-0 view's 0.0 wears)
+        assert_eq!(f.y, 40.0, "the y the pitch-0 view keeps");
+        assert!(
+            (f.x - (10.0 - 0.492_403_9)).abs() < 1e-5,
+            "the -sin(80°) the x offset keeps ({})",
+            f.x
+        );
+        assert!(
+            (f.z - (10.0 + 0.086_824_1)).abs() < 1e-5,
+            "the cos(80°) the z offset keeps ({})",
+            f.z
+        );
+        // THE SEQUENTIAL FOLD (the SECOND attached rocket the
+        // POST-boost v reads — the caller's threaded walk the
+        // vanilla's own setDeltaMovement ordering keeps)
+        let ev2 = f.tick_attached(&GlideRider {
+            vx: bx,
+            vy: by,
+            vz: bz,
+            ..rider
+        });
+        let (_, _, bz2) = ev2.boost.expect("the second fold speaks");
+        assert_eq!(
+            bz2,
+            bz + 0.1 + (1.5 - bz) * 0.5,
+            "the convergence walk the second fold wears ({})",
+            bz2
+        );
+        // THE ZERO ARM (the NOT-gliding rider: no fold the events
+        // carry, the delta sync the current v wears, the follow the
+        // hand law still pins)
+        let grounded = GlideRider {
+            fall_flying: false,
+            ..rider
+        };
+        let mut f2 = Firework::attached_rocket(10, 0.0, 0.0, 0.0);
+        let ev3 = f2.tick_attached(&grounded);
+        assert!(
+            ev3.boost.is_none(),
+            "the not-gliding rider the fold never speaks"
+        );
+        assert_eq!(
+            f2.vz, rider.vz,
+            "the zero arm's sync the current v wears"
+        );
+        assert_eq!(f2.x, 10.0 + Firework::hand_offset(0.0).0, "the follow pins");
+        // THE LIFETIME CROSSING (the same tail the free flight
+        // serves — the explode word banks, the discard arms)
+        f2.lifetime = 2;
+        let _ = f2.tick_attached(&grounded);
+        let _ = f2.tick_attached(&grounded);
+        let (ex, ey, ez) = (f2.x, f2.y, f2.z);
+        let ev4 = f2.tick_attached(&grounded);
+        assert!(f2.dead, "the discard the crossing serves");
+        assert_eq!(
+            ev4.explode,
+            Some((ex, ey, ez)),
+            "the crossing the explode anchor banks"
         );
     }
 

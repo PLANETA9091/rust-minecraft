@@ -10367,7 +10367,68 @@ impl App {
                         // rides: the straight motion the boost never
                         // bends, the launch the life==0 word speaks,
                         // the lifetime crossing the discard keeps)
+                        // THE ATTACHED ROCKET'S OWN RIDER (the vanilla
+                        // tick order the player-then-rocket pairing
+                        // keeps — the body's tick spoke EARLIER this
+                        // walk, the snapshot the rocket's fold + the
+                        // hand-follow wear, the POST-fold velocity the
+                        // tail writes the body's fields the NEXT
+                        // tick's travel reads; the rider_v the loop
+                        // THREADS — the second attached rocket the
+                        // fold's own POST-boost v reads, the vanilla's
+                        // sequential setDeltaMovement walk the pairing
+                        // answers)
+                        let rider = self.body.as_ref().map(|b| {
+                            let look = b.camera().forward();
+                            crate::mob::GlideRider {
+                                x: b.x,
+                                y: b.y,
+                                z: b.z,
+                                yaw: b.yaw,
+                                look: (look.x as f64, look.y as f64, look.z as f64),
+                                vx: b.vx,
+                                vy: b.vy,
+                                vz: b.vz,
+                                fall_flying: b.fall_flying,
+                            }
+                        });
+                        let mut rider_v: Option<(f64, f64, f64)> =
+                            rider.map(|r| (r.vx, r.vy, r.vz));
                         for f in self.fireworks.iter_mut() {
+                            // THE ATTACHED ARM (the use-spawned rocket
+                            // the follow law pins — the free-flight
+                            // move the branch never runs, the boost
+                            // the isFallFlying gate folds, the delta
+                            // the events' word carries)
+                            if f.attached {
+                                if let (Some(pose), Some(v)) = (&rider, rider_v.as_mut()) {
+                                    let p = crate::mob::GlideRider {
+                                        vx: v.0,
+                                        vy: v.1,
+                                        vz: v.2,
+                                        ..*pose
+                                    };
+                                    let fev = f.tick_attached(&p);
+                                    if let Some((lx, ly, lz)) = fev.launch {
+                                        firework_launches.push((lx, ly, lz));
+                                    }
+                                    if let Some((ex, ey, ez)) = fev.explode {
+                                        firework_explodes.push((ex, ey, ez));
+                                    }
+                                    if let Some((mx, my, mz)) = fev.trail {
+                                        firework_trails.push((f.x, f.y, f.z, mx, my, mz));
+                                    }
+                                    // THE SEQUENTIAL FOLD (the fold's
+                                    // POST-boost v the NEXT attached
+                                    // rocket's read wears — the
+                                    // vanilla's own setDeltaMovement
+                                    // ordering the pairing keeps)
+                                    if let Some((bx, by, bz)) = fev.boost {
+                                        *v = (bx, by, bz);
+                                    }
+                                }
+                                continue;
+                            }
                             let fev = f.tick(world);
                             if let Some((lx, ly, lz)) = fev.launch {
                                 firework_launches.push((lx, ly, lz));
@@ -10385,6 +10446,18 @@ impl App {
                             }
                         }
                         self.fireworks.retain(|f| !f.dead);
+                        // THE BOOST'S OWN TAIL (the fold's velocity the
+                        // body's fields wear — the NEXT tick's travel
+                        // the boosted v reads, the rocket-after-player
+                        // tick pairing the vanilla order keeps; the
+                        // glide-less frame the word never carries)
+                        if let (Some(b), Some((vx, vy, vz))) =
+                            (self.body.as_mut(), rider_v)
+                        {
+                            b.vx = vx;
+                            b.vy = vy;
+                            b.vz = vz;
+                        }
                         // THE FIREWORK STARTERS' OWN WALK (javap
                         // `FireworkParticles$Starter.tick` the 519-pc
                         // body — the component-driven explosion machine
@@ -16759,6 +16832,64 @@ impl App {
             self.eating = crate::eat::EatActive::start(id, def);
             // the wire echo: the eat's use-item click (the
             // networked lane's own command the pull lane rides)
+            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
+            }
+            return true;
+        }
+        // THE FIREWORK'S OWN USE (javap `FireworkRocketItem.use` the
+        // 26.2 walk — the isFallFlying gate the verdict keeps: the
+        // NOT-gliding press the PASS answer serves (pc 90 the getstatic
+        // PASS arm — the OFF hand's own turn the fall-through speaks),
+        // the gliding press the SUCCESS wears: the attached rocket the
+        // (Level, ItemStack, LivingEntity) ctor spawns, the
+        // `consume(1, player)` the stack answers, the awardStat the
+        // client's ledger never banks)
+        if self.held_word_of(id) == Some("firework_rocket") {
+            let gliding = self
+                .body
+                .as_ref()
+                .map(|b| b.fall_flying)
+                .unwrap_or(false);
+            if !gliding {
+                return false; // the PASS the gate keeps
+            }
+            // THE OFFLINE PREDICTION (the useOn firework arm's own
+            // gate — the LIVE session the server's own rocket the
+            // wire's Add Entity lane serves, the client predicts none)
+            if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                // THE OWNER'S OWN FEET (the ctor's super walk the
+                // getX/getY/getZ reads — the attached_rocket ctor the
+                // same pose keeps; the body the gate's glide verdict
+                // owns)
+                let (ox, oy, oz) = match self.body.as_ref() {
+                    Some(b) => (b.x, b.y, b.z),
+                    None => (0.0, 0.0, 0.0),
+                };
+                // THE LEVEL'S OWN ENTITY COUNTER (the next_drop_id the
+                // shared id space keeps — the arrow arm's own precedent)
+                let ent = self.next_drop_id;
+                self.next_drop_id += 1;
+                self.fireworks
+                    .push(crate::mob::Firework::attached_rocket(ent, ox, oy, oz));
+                // THE CONSUME (javap ItemStack.consume(1, player) — the
+                // hasInfiniteMaterials gate the creative arm keeps, the
+                // shrink(1) the survival stack wears; the `--held-item`
+                // stand-in the conjured stack the shrink never owns)
+                if self.game_mode != GameMode::Creative {
+                    let slot = self.selected_hotbar;
+                    if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
+                        self.inventory.items[slot].1 -= 1;
+                    }
+                }
+            }
+            // THE WIRE ECHO (the use-item click the networked lane
+            // rides — the camera's angles in the vanilla degrees)
             let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
             if let Some(sink) = self.live_clicks.as_ref() {
                 let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
@@ -55727,6 +55858,252 @@ cow_sound_variant: None,
         assert!(
             rx.try_recv().is_err(),
             "the save the wire never spends"
+        );
+    }
+
+    /// THE FIREWORK USE'S OWN GATE + SUCCESS — javap `FireworkRocketItem.
+    /// use` the 26.2 walk (pcs 0-93): the isFallFlying gate the PASS
+    /// verdict keeps (the NOT-gliding press the false the OFF hand's
+    /// turn serves — no rocket the client banks, no count the stack
+    /// loses, no echo the refused lane speaks), the gliding press the
+    /// SUCCESS wears (the attached rocket the (Level, ItemStack,
+    /// LivingEntity) ctor spawns — the attachment the flag arms, the
+    /// billboard the SHOT_AT_ANGLE keeps, the lifetime the banked
+    /// 20..=32 band keeps —, the `consume(1, player)` the survival
+    /// stack wears, the use-item echo the click rides).
+    #[test]
+    fn the_firework_use_the_glide_asks() {
+        let rocket = mc_registry::item_id_by_name("firework_rocket")
+            .expect("the rocket rides the registry");
+        // THE NOT-GLIDING PRESS (the grounded body the PASS keeps)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE LEVEL'S OWN EYE (the pitch the clip's ray reads — the
+        // spawn's slight down-pitch the ground lane would feed, the
+        // level ray the useOn arm never arms)
+        {
+            let b = app.body.as_mut().expect("the offline body spawns");
+            b.yaw = 0.0;
+            b.pitch = 0.0;
+        }
+        // THE SKY'S OWN AIM (the clip the block lane never feeds — the
+        // useOn ground-launch arm the BLOCK click answers, the AIR use
+        // the item lane's own gate serves)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        app.inventory.items[app.selected_hotbar] = (rocket, 3);
+        assert!(
+            !app.on_right_press(0, 0),
+            "the not-gliding press the PASS answers"
+        );
+        assert!(
+            app.fireworks.is_empty(),
+            "the PASS no rocket banks"
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (rocket, 3),
+            "the stack the PASS never touches"
+        );
+        // THE GLIDING PRESS (the elytra chest + the airborne jump
+        // chord the glide starts — the SUCCESS the rocket banks)
+        let elytra = mc_registry::item_id_by_name("elytra")
+            .expect("the elytra rides the registry");
+        app.inventory.armor[2] = (elytra, 1);
+        {
+            let b = app.body.as_mut().expect("the offline body spawns");
+            b.y = 40.0;
+            b.on_ground = false;
+            b.yaw = 0.0;
+            b.pitch = 0.0;
+        }
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").fall_flying,
+            "the glide chord the start speaks"
+        );
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        assert!(
+            app.on_right_press(0, 0),
+            "the gliding press the SUCCESS answers"
+        );
+        assert_eq!(app.fireworks.len(), 1, "the attached rocket banks");
+        let f = &app.fireworks[0];
+        assert!(f.attached, "the attachment the use spawns");
+        assert!(!f.shot_at_angle, "the billboard the attached ctor keeps");
+        assert!(
+            (20..=32).contains(&f.lifetime),
+            "the lifetime the banked band keeps ({})",
+            f.lifetime
+        );
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar],
+            (rocket, 2),
+            "the consume the survival stack wears"
+        );
+        // THE USE-ITEM ECHO (the click the networked lane rides — the
+        // vanilla single-player client's own use-item packet)
+        let mut saw_echo = false;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::UseItem { .. } = cmd {
+                saw_echo = true;
+                break;
+            }
+        }
+        assert!(saw_echo, "the use-item echo the press rode");
+    }
+
+    /// THE BOOST CHAIN THE GLIDE WEARS — the end-to-end walk the
+    /// frame's own tick order speaks (the body's travel FIRST, the
+    /// rocket's attached tick SECOND — the vanilla player-then-rocket
+    /// pairing the update walk keeps): the fold the body's velocity
+    /// wears (the PAIRED WALK the deterministic sim speaks — the
+    /// boost-less twin the SAME body walk runs, the difference the
+    /// exact `v += look*0.1 + (look*1.5 − v)*0.5` fold answers), the
+    /// hand follow the setPos law pins (the view(0, +80°)*0.5 offset
+    /// the feet origin keeps), the delta sync the rocket's own motion
+    /// wears, the LANDING the boost retires (the ZERO arm — the
+    /// follow the same law keeps), the lifetime crossing the boost's
+    /// own end serves.
+    #[test]
+    fn the_boost_chain_the_glide_wears() {
+        let rocket = mc_registry::item_id_by_name("firework_rocket")
+            .expect("the rocket rides the registry");
+        let elytra = mc_registry::item_id_by_name("elytra")
+            .expect("the elytra rides the registry");
+        // THE SCENARIO'S OWN BUILDER (the twin apps the paired walk
+        // arms — the rocket stack the only variable)
+        let glide_app = |rocket_count: i32| -> App {
+            let mut app = App::new(3);
+            app.enter_world();
+            app.spawn_offline_body();
+            // THE SKY'S OWN AIM (the clip the block lane never feeds —
+            // the AIR use the item lane's own gate serves)
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            app.offline_camera_updated(crate::camera::Camera {
+                pos: crate::math::Vec3::new(
+                    c as f32 + 0.5,
+                    (app.spawn_y + 7) as f32,
+                    c as f32 + 0.5,
+                ),
+                yaw: 0.0,
+                pitch: 0.0,
+            });
+            if rocket_count > 0 {
+                app.inventory.items[app.selected_hotbar] = (rocket, rocket_count);
+            }
+            app.inventory.armor[2] = (elytra, 1);
+            {
+                let b = app.body.as_mut().expect("the offline body spawns");
+                b.y = 40.0;
+                b.on_ground = false;
+                b.yaw = 0.0;
+                b.pitch = 0.0;
+            }
+            app.on_movement_input(0.0, 0.0, true, false, false);
+            app.update();
+            assert!(app.body.as_ref().expect("the body rides").fall_flying);
+            app
+        };
+        // THE TWIN WALKS (the boost run the use speaks, the plain run
+        // the empty hand keeps — the body's own glide walk the SAME
+        // walk both frames run, the rocket's fold the only delta)
+        let mut boosted = glide_app(1);
+        let mut plain = glide_app(0);
+        assert!(boosted.on_right_press(0, 0), "the use the SUCCESS speaks");
+        // THE LOOK THE SNAPSHOT WORES (the body's pose the press
+        // never moves — the same look the rocket's fold reads)
+        let look = boosted
+            .body
+            .as_ref()
+            .expect("the body rides")
+            .camera()
+            .forward();
+        let (lx, ly, lz) = (look.x as f64, look.y as f64, look.z as f64);
+        // THE TWIN'S OWN FRAME (the SAME frame count the plain run
+        // walks — the body's own glide walk the identical walk both
+        // bodies ran, the rocket's fold the only delta the boost
+        // frame carries)
+        plain.update();
+        boosted.update();
+        {
+            let b = boosted.body.as_ref().expect("the body rides");
+            let p = plain.body.as_ref().expect("the plain body rides");
+            let f = &boosted.fireworks[0];
+            // THE EXACT FOLD (the rider's v the twin's post-tick v
+            // answers — the same deterministic walk both bodies ran,
+            // the delta the fold's own walk wears)
+            let rvz = p.vz;
+            assert_eq!(
+                b.vz,
+                rvz + lz * 0.1 + (lz * 1.5 - rvz) * 0.5,
+                "the exact fold the body's velocity wears ({})",
+                b.vz
+            );
+            let rvx = p.vx;
+            assert_eq!(
+                b.vx,
+                rvx + lx * 0.1 + (lx * 1.5 - rvx) * 0.5,
+                "the exact x fold the body's velocity wears ({})",
+                b.vx
+            );
+            let rvy = p.vy;
+            assert_eq!(
+                b.vy,
+                rvy + ly * 0.1 + (ly * 1.5 - rvy) * 0.5,
+                "the exact y fold the body's velocity wears ({})",
+                b.vy
+            );
+            assert_eq!(f.vz, b.vz, "the delta sync the post-boost v wears");
+            // THE HAND FOLLOW (the feet + the +80° offset the tick's
+            // own setPos walk pins — the body's yaw the fold reads)
+            let (hx, _, hz) = crate::mob::Firework::hand_offset(b.yaw);
+            assert_eq!(f.y, b.y, "the y the pitch-0 view keeps");
+            assert!((f.x - (b.x + hx)).abs() < 1e-9, "the x the hand pins");
+            assert!((f.z - (b.z + hz)).abs() < 1e-9, "the z the hand pins");
+        }
+        // THE LANDING (the ground the glide retires — the ZERO arm
+        // the boost never speaks, the follow the same law keeps)
+        {
+            let b = boosted.body.as_mut().expect("the body rides");
+            b.on_ground = true;
+            b.fall_flying = false;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+        }
+        boosted.update();
+        {
+            let b = boosted.body.as_ref().expect("the body rides");
+            let f = &boosted.fireworks[0];
+            assert!(!b.fall_flying, "the landing the glide retires");
+            assert_eq!(
+                f.vz, b.vz,
+                "the zero arm's sync the current v wears"
+            );
+            let (hx, _, _) = crate::mob::Firework::hand_offset(b.yaw);
+            assert!(
+                (f.x - (b.x + hx)).abs() < 1e-9,
+                "the follow the landing still pins"
+            );
+        }
+        // THE LIFETIME CROSSING (the boost's own end the discard
+        // serves — the chain the expiry retires)
+        let lifetime = boosted.fireworks[0].lifetime;
+        boosted.fireworks[0].life = lifetime;
+        boosted.update();
+        assert!(
+            boosted.fireworks.is_empty(),
+            "the crossing the attached rocket discards"
         );
     }
 
