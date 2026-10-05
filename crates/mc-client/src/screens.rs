@@ -29932,6 +29932,69 @@ impl App {
         None
     }
 
+    /// THE ARMOR ROW'S OWN RESOLUTION (the pure law the player's
+    /// third-person lane renders — the same verdict the mob lane's
+    /// own walk speaks): the empty stack the early return refuses,
+    /// the name the registry answers, the word the armor family's
+    /// own asset walk names (the EQUIPPABLE `assetId` the shouldRender
+    /// gate reads — the non-armor items the None keeps), the texture
+    /// dir the slot's own model set speaks (javap `usesInnerModel`:
+    /// the LEGS verdict the HUMANOID_LEGGINGS layer type answers —
+    /// the leggings dir the LEGS slot reads, the HUMANOID dir the
+    /// helmet/chestplate/boots keep), the leather flag the dyeable
+    /// composite's own lane arms (the overlay pair the client info
+    /// JSON's second row keeps).
+    pub(crate) fn player_armor_texture_row(
+        slot: usize,
+        stack: (i32, i32),
+    ) -> Option<(usize, &'static str, &'static str, bool)> {
+        if stack.1 <= 0 {
+            return None;
+        }
+        let word = mc_registry::item_name(stack.0)?;
+        let asset = crate::mob::armor_piece_asset(word)?;
+        let entry = mc_registry::generated::equipment::find(asset)?;
+        let dir = if slot == crate::avatar::ARMOR_SLOT_LEGS {
+            mc_registry::generated::equipment::LEGGINGS_DIR
+        } else {
+            mc_registry::generated::equipment::HUMANOID_DIR
+        };
+        Some((slot, dir, entry.name, asset == "leather"))
+    }
+
+    /// THE PLAYER'S OWN ARMOR ROWS (the draw order the
+    /// HumanoidArmorLayer.submit walk speaks: CHEST, LEGS, FEET, HEAD
+    /// — the chest the first call carries, the head the last). The
+    /// two lanes the slots read: the offline armor list head-first
+    /// (HEAD 0, CHEST 1, LEGS 2, FEET 3), the live store's window
+    /// slots 5..8 (the InventoryMenu ctor's `39 - k` containers the
+    /// 5+k menu slots answer). Each row the pure resolution walks —
+    /// the empty slot the None keeps, the non-armor word (the
+    /// pumpkin, the skulls, the elytra's wings-only json) the bare
+    /// body never paints.
+    pub(crate) fn player_armor_lane_rows(
+        &self,
+    ) -> Vec<(usize, &'static str, &'static str, bool)> {
+        let raw = if self.world_is_network {
+            [
+                (crate::avatar::ARMOR_SLOT_CHEST, self.live_inv_slots[6]),
+                (crate::avatar::ARMOR_SLOT_LEGS, self.live_inv_slots[7]),
+                (crate::avatar::ARMOR_SLOT_FEET, self.live_inv_slots[8]),
+                (crate::avatar::ARMOR_SLOT_HEAD, self.live_inv_slots[5]),
+            ]
+        } else {
+            [
+                (crate::avatar::ARMOR_SLOT_CHEST, self.inventory.armor[1]),
+                (crate::avatar::ARMOR_SLOT_LEGS, self.inventory.armor[2]),
+                (crate::avatar::ARMOR_SLOT_FEET, self.inventory.armor[3]),
+                (crate::avatar::ARMOR_SLOT_HEAD, self.inventory.armor[0]),
+            ]
+        };
+        raw.iter()
+            .filter_map(|&(slot, stack)| Self::player_armor_texture_row(slot, stack))
+            .collect()
+    }
+
     /// THE THIRD-PERSON AVATAR's frame render — the vanilla
     /// LevelRenderer's detached-camera entity pass: the camera entity's
     /// OWN model draws (after the terrain's depth, before the clouds),
@@ -30314,6 +30377,108 @@ impl App {
             let [r, g, b, a] = model.pixel(u, v);
             Some([r, g, b, a])
         });
+        // THE ARMOR LANE (javap `HumanoidArmorLayer.submit` the 26.2
+        // jar — the render state's own field reads the walk keeps: the
+        // chestEquipment → CHEST call first, legsEquipment → LEGS
+        // second, feetEquipment → FEET third, headEquipment → HEAD
+        // last; the AvatarRenderer ctor's own addLayer order the layer
+        // lane speaks — HumanoidArmorLayer the FIRST layer the walk
+        // adds, the wings the seventh: the armor the body's pixels
+        // underpaint, the elytra's wings overpaint). Each row the
+        // EQUIPPABLE gate reads (renderArmorPiece pc 0-27: the null
+        // component the early return keeps, the shouldRender walk the
+        // assetId.isPresent() && slot() == slot verdict arms — the
+        // elytra the gate PASSES but the equipment/elytra.json's
+        // humanoid rows the ABSENT list keeps: the renderLayers call
+        // nothing paints, the wings layer alone the chest slot
+        // textures — the armor_piece_asset's None the same verdict
+        // speaks). The rows the two lanes' own sources read (the same
+        // walk the wings' chest read keeps: the offline armor list
+        // head-first — HEAD 0, CHEST 1, LEGS 2, FEET 3 — the live
+        // store's window slots 5..8 the InventoryMenu ctor's 39-k
+        // order speaks), the textures the lazy pre-pass loads (the
+        // same honesty the mob lane speaks: a failed sha1 verify the
+        // piece bare keeps), the leather the dyeable composite rides
+        // (the overlay's opaque texels the undyed-tinted base fills
+        // the holes for).
+        for (slot, dir, name, leather) in self.player_armor_lane_rows() {
+            let Some(entry) = mc_registry::generated::equipment::find(name) else {
+                continue;
+            };
+            let base_key = format!("{dir}/{name}");
+            if !self.armor_textures.contains_key(&base_key) {
+                let loaded = crate::avatar::ArmorTex::load(
+                    std::path::Path::new("assets-cache/jar"),
+                    dir,
+                    entry,
+                );
+                self.armor_textures.insert(base_key.clone(), loaded);
+            }
+            if !matches!(self.armor_textures.get(&base_key), Some(Some(_))) {
+                continue; // the layer failed its verify — the piece stays bare
+            }
+            if leather && !self
+                .armor_textures
+                .contains_key(&format!("{base_key}_overlay"))
+            {
+                let loaded = mc_registry::generated::equipment::find("leather_overlay")
+                    .and_then(|e| {
+                        crate::avatar::ArmorTex::load(
+                            std::path::Path::new("assets-cache/jar"),
+                            dir,
+                            e,
+                        )
+                    });
+                self.armor_textures
+                    .insert(format!("{base_key}_overlay"), loaded);
+            }
+            let key = if leather {
+                format!("{base_key}+overlay")
+            } else {
+                base_key
+            };
+            let aq = crate::avatar::armor_quads(&state, feet, cam.yaw, cam.pitch, slot);
+            let armor_sampled: Vec<crate::raster::SampledQuad> = aq
+                .iter()
+                .map(|q| crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: key.as_str(),
+                    tint: [q.shade, q.shade, q.shade],
+                })
+                .collect();
+            fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &armor_sampled, &mut |tex, u, v| {
+                if let Some(base_key) = tex.strip_suffix("+overlay") {
+                    // THE LEATHER COMPOSITE (the mannequin's own
+                    // walk): the overlay's opaque texel first, the
+                    // undyed-tinted base fills the holes
+                    let base = self.armor_textures.get(base_key).and_then(|o| o.as_ref());
+                    let overlay_key = format!("{base_key}_overlay");
+                    let overlay =
+                        self.armor_textures.get(&overlay_key).and_then(|o| o.as_ref());
+                    if let (Some(base), Some(overlay)) = (base, overlay) {
+                        let [r, g, b, al] = overlay.pixel(u, v);
+                        if al >= 128 {
+                            return Some([r, g, b, al]);
+                        }
+                        let [r, g, b, al] = base.pixel(u, v);
+                        let t = crate::tint::unpack(crate::avatar::LEATHER_UNDYED_COLOR);
+                        return Some([
+                            (r as f32 / 255.0 * t[0] * 255.0).round() as u8,
+                            (g as f32 / 255.0 * t[1] * 255.0).round() as u8,
+                            (b as f32 / 255.0 * t[2] * 255.0).round() as u8,
+                            al,
+                        ]);
+                    }
+                    return None;
+                }
+                if let Some(layer) = self.armor_textures.get(tex).and_then(|o| o.as_ref()) {
+                    let [r, g, b, al] = layer.pixel(u, v);
+                    return Some([r, g, b, al]);
+                }
+                None
+            });
+        }
         // THE WINGS LAYER (javap `WingsLayer.submit` the 26.2 jar — the
         // chestEquipment's EQUIPPABLE assetId the empty-Optional return
         // refuses, the elytra the only root item the WINGS lane
@@ -80977,6 +81142,177 @@ cow_sound_variant: None,
         app.inventory.items[app.selected_hotbar] = (0, 0);
         app.update();
         assert_eq!(app.swing.duration, 6, "the empty stack the DEFAULT keeps");
+    }
+
+    /// THE PLAYER'S OWN ARMOR LANE (the HumanoidArmorLayer walk the
+    /// third-person render wires — javap the 26.2 jar byte-level):
+    /// the pure resolution the row law speaks (the dirs the
+    /// usesInnerModel verdict answers, the leather flag the
+    /// composite's own lane arms, the empty/non-armor/elytra rows the
+    /// honest None keeps), the offline list the head-first order the
+    /// submit's field reads wear, the live store's window slots 5..8
+    /// the ctor's 39-k containers speak.
+    #[test]
+    fn the_player_armor_lane_the_rows_resolve() {
+        let id = |name: &str| {
+            mc_registry::item_id_by_name(name)
+                .unwrap_or_else(|| panic!("{name} the registry carries"))
+        };
+        let hum = mc_registry::generated::equipment::HUMANOID_DIR;
+        let leg = mc_registry::generated::equipment::LEGGINGS_DIR;
+
+        // THE PURE ROW (the chestplate the humanoid dir keeps)
+        let (slot, dir, name, leather) =
+            App::player_armor_texture_row(crate::avatar::ARMOR_SLOT_CHEST, (id("iron_chestplate"), 1))
+                .expect("the chestplate rides the lane");
+        assert_eq!(slot, crate::avatar::ARMOR_SLOT_CHEST);
+        assert_eq!(dir, hum, "the chestplate the humanoid dir keeps");
+        assert_eq!(name, "iron");
+        assert!(!leather, "the iron the composite never rides");
+
+        // THE LEGS DIR (usesInnerModel's own verdict — the leggings
+        // the inner model set textures, the golden prefix the asset
+        // fold keeps)
+        let (_, dir, name, _) =
+            App::player_armor_texture_row(crate::avatar::ARMOR_SLOT_LEGS, (id("golden_leggings"), 1))
+                .expect("the leggings ride the lane");
+        assert_eq!(dir, leg, "the leggings the inner dir reads");
+        assert_eq!(name, "gold");
+
+        // THE LEATHER FLAG (the dyeable composite's own lane)
+        let (_, _, name, leather) =
+            App::player_armor_texture_row(crate::avatar::ARMOR_SLOT_CHEST, (id("leather_chestplate"), 1))
+                .expect("the leather rides the lane");
+        assert_eq!(name, "leather");
+        assert!(leather, "the leather the composite arms");
+
+        // THE REFUSALS (the honest gates the shouldRender verdict
+        // speaks: the empty slot, the wings-only json, the pumpkin)
+        assert_eq!(
+            App::player_armor_texture_row(crate::avatar::ARMOR_SLOT_HEAD, (0, 0)),
+            None,
+            "the empty slot the None keeps"
+        );
+        assert_eq!(
+            App::player_armor_texture_row(crate::avatar::ARMOR_SLOT_CHEST, (id("elytra"), 1)),
+            None,
+            "the elytra the wings-only json keeps bare"
+        );
+        assert_eq!(
+            App::player_armor_texture_row(crate::avatar::ARMOR_SLOT_HEAD, (id("carved_pumpkin"), 1)),
+            None,
+            "the pumpkin the CustomHead lane owns"
+        );
+
+        // THE OFFLINE LANE (the armor list head-first — the rows the
+        // submit's CHEST, LEGS, FEET, HEAD call order wears)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.armor[0] = (id("iron_helmet"), 1);
+        app.inventory.armor[1] = (id("iron_chestplate"), 1);
+        app.inventory.armor[2] = (id("golden_leggings"), 1);
+        app.inventory.armor[3] = (id("diamond_boots"), 1);
+        let want: Vec<(usize, &'static str, &'static str, bool)> = vec![
+            (crate::avatar::ARMOR_SLOT_CHEST, hum, "iron", false),
+            (crate::avatar::ARMOR_SLOT_LEGS, leg, "gold", false),
+            (crate::avatar::ARMOR_SLOT_FEET, hum, "diamond", false),
+            (crate::avatar::ARMOR_SLOT_HEAD, hum, "iron", false),
+        ];
+        assert_eq!(app.player_armor_lane_rows(), want, "the offline rows the walk order keeps");
+
+        // THE BARE HEAD'S SKIP (the empty row the lane drops)
+        app.inventory.armor[0] = (0, 0);
+        assert_eq!(app.player_armor_lane_rows().len(), 3, "the bare head the lane drops");
+
+        // THE NETWORK LANE (the window slots 5 head, 6 chest, 7 legs,
+        // 8 feet — the ctor's 39-k containers the menu slots answer;
+        // the bare legs row the lane drops, the leather the flag arms)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.world_is_network = true;
+        app.live_inv_slots[5] = (id("iron_helmet"), 1);
+        app.live_inv_slots[6] = (id("leather_chestplate"), 1);
+        app.live_inv_slots[7] = (0, 0);
+        app.live_inv_slots[8] = (id("iron_boots"), 1);
+        let want: Vec<(usize, &'static str, &'static str, bool)> = vec![
+            (crate::avatar::ARMOR_SLOT_CHEST, hum, "leather", true),
+            (crate::avatar::ARMOR_SLOT_FEET, hum, "iron", false),
+            (crate::avatar::ARMOR_SLOT_HEAD, hum, "iron", false),
+        ];
+        assert_eq!(app.player_armor_lane_rows(), want, "the live rows the window slots read");
+    }
+
+    /// THE PLAYER'S ARMOR THE FRAME PAINTS (the third-person render's
+    /// own round — the pre-filled assets the walked root loads, the
+    /// bare body the baseline speaks against, the iron kit the
+    /// inflated cubes paint over): the bare frames bit-identical
+    /// twice, the dressed frame the armor's pixels wear.
+    #[test]
+    fn the_player_armor_the_frame_paints() {
+        // the runtime root the loaders' prefix walk keeps (the absent
+        // cache the honest skip answers — the mannequin tests' own law)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        // the skin + armor gates the same honesty keeps (a failed
+        // sha1 verify the lane never draws)
+        let Some(model) = crate::avatar::AvatarModel::load(root) else {
+            return;
+        };
+        let hum = mc_registry::generated::equipment::HUMANOID_DIR;
+        let leg = mc_registry::generated::equipment::LEGGINGS_DIR;
+        let iron_base = mc_registry::generated::equipment::find("iron")
+            .and_then(|e| crate::avatar::ArmorTex::load(root, hum, e));
+        let iron_legs = mc_registry::generated::equipment::find("iron")
+            .and_then(|e| crate::avatar::ArmorTex::load(root, leg, e));
+        let (Some(iron_base), Some(iron_legs)) = (iron_base, iron_legs) else {
+            return; // the equipment pngs the runtime cache keeps absent
+        };
+        let id = |name: &str| {
+            mc_registry::item_id_by_name(name)
+                .unwrap_or_else(|| panic!("{name} the registry carries"))
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.perspective = crate::camera::CameraType::ThirdPersonBack;
+        // THE PRE-FILLED ASSETS (the walked root the loaders' honesty
+        // keeps — the lazy pass the cache's presence never re-loads,
+        // the hardcoded CWD the test process never consults)
+        app.avatar = Some(model);
+        app.armor_textures.insert(format!("{hum}/iron"), Some(iron_base));
+        app.armor_textures.insert(format!("{leg}/iron"), Some(iron_legs));
+        let mut assets = GuiAssets::open(root);
+        let mut render_bare = || {
+            let mut fb = crate::raster::Framebuf::new(320, 200);
+            app.render(&mut fb, &mut assets);
+            fb.color.clone()
+        };
+        let bare = render_bare();
+        let bare_twice = render_bare();
+        assert_eq!(bare, bare_twice, "the bare frames bit-identical twice");
+        // THE KIT (the four rows the offline list head-first carries —
+        // the helmet, the chestplate, the leggings, the boots)
+        app.inventory.armor[0] = (id("iron_helmet"), 1);
+        app.inventory.armor[1] = (id("iron_chestplate"), 1);
+        app.inventory.armor[2] = (id("iron_leggings"), 1);
+        app.inventory.armor[3] = (id("iron_boots"), 1);
+        let mut fb = crate::raster::Framebuf::new(320, 200);
+        app.render(&mut fb, &mut assets);
+        let mut diff = 0usize;
+        for (b, d) in bare.chunks_exact(3).zip(fb.color.chunks_exact(3)) {
+            if b != d {
+                diff += 1;
+            }
+        }
+        assert!(
+            diff > 100,
+            "the iron kit the frame paints: {diff} pixels differ"
+        );
     }
 }
 
