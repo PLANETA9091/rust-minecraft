@@ -16499,6 +16499,15 @@ impl App {
                 return false;
             }
         }
+        // THE BUCKET'S OWN USE WALK (javap BucketItem.use — the fluid
+        // context's POV clip the content's mode picks, the pour the
+        // emptyContents walk answers, the pickup the BucketPickup
+        // draw serves): the None the item lanes' fall-through keeps
+        // (a PASS — the vanilla's own order), the Some the press's
+        // own verdict speaks.
+        if let Some(consumed) = self.on_right_press_bucket_lane(id) {
+            return consumed;
+        }
         // THE EAT LANE FIRST (the vanilla startUseItem's own
         // order — the item's use() speaks: the CONSUMABLE's
         // startConsuming opens the hold; the pull lanes ride
@@ -27222,6 +27231,181 @@ impl App {
         }
     }
 
+    /// THE BUCKET'S OWN USE WALK — javap `BucketItem.use` over the real
+    /// 26.2 jar (the fluid-context POV clip the content's own mode
+    /// picks, the pour the `emptyContents` walk answers, the pickup the
+    /// `BucketPickup.pickupBlock` draw serves): the POV clip the
+    /// `Item.getPlayerPOVHitResult` walk keeps — the eye + the view
+    /// vector scaled by `blockInteractionRange()`, the `ClipContext.
+    /// Block.OUTLINE` the repo's block clip answers, the FLUID mode the
+    /// content's own `getFluidContext` picks (the EMPTY bucket the
+    /// SOURCE_ONLY lane keeps, the filled the NONE — the fluids the
+    /// ray never sees). THE FILL ARC (water_bucket/lava_bucket): the
+    /// target the `hitPos.relative(face)` walk keeps (the
+    /// LiquidBlockContainer waterlogging exception the vocabulary never
+    /// wears — no container kinds the palette banks), the ok gate the
+    /// `emptyContents` walk speaks (`isAir || (canBeReplaced && !shift)`
+    /// — the canBeReplaced the tuft/double-plant rows the
+    /// [`crate::world::is_replaceable`] walk answers, the sneaking
+    /// waterlog-bypass the shift-down bit keeps), the placement the
+    /// `content.defaultFluidState().createLegacyBlock()` answer wears
+    /// (the WATER and the LAVA the vocabulary's own kinds keep), the
+    /// `playEmptySound` voice the LAVA tag's own pick speaks
+    /// (`item.bucket.empty_lava` the lava row answers, `item.bucket.
+    /// empty` the water keeps — the 1.0/1.0 BLOCKS consts the bytecode
+    /// pins). THE PICKUP ARC (bucket): the SOURCE_ONLY clip's hit the
+    /// fluid cell keeps (the solids the collision lane stops — the
+    /// kinds the source verdict refuses the FAIL keeps), the cell the
+    /// AIR answer empties, the `getPickupSound` fill voice the
+    /// `playNotifySound` ear answers (`item.bucket.fill`), the
+    /// FLUID_PICKUP gameEvent the walk keeps. THE ITEM'S OWN TRANSFORM
+    /// (`createFilledResult`/`heldItemTransformedTo` — the slot's own
+    /// id swap the survival stack answers; the count the swap keeps,
+    /// the CLI `--held-item` lane the slot never carries — the swap
+    /// the stand-in never answers, the live session the server's own
+    /// inventory delta serves). THE OFFLINE PREDICTION the convert
+    /// arms' own gate mirrors (the live session the UseItem echo the
+    /// boat lane's own arc wears, the voices the server's broadcast
+    /// keeps, the local sim none).
+    fn on_right_press_bucket_lane(&mut self, id: i32) -> Option<bool> {
+        // THE CONTENT GATE (the item name's own fluid parse — the
+        // bucket family the registry order speaks)
+        let name = mc_registry::item_name(id)?;
+        let content = match name {
+            "water_bucket" => 1u8,
+            "lava_bucket" => 2u8,
+            "bucket" => 0u8,
+            _ => return None,
+        };
+        let cam = self.world_camera();
+        let f = cam.forward();
+        // THE POV CLIP (the getPlayerPOVHitResult walk — the eye, the
+        // view vector × the block interaction reach, the fluid mode the
+        // content picks)
+        let hit = self.active_world().and_then(|w| {
+            let from = (cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64);
+            let dir = (f.x as f64, f.y as f64, f.z as f64);
+            if content == 0 {
+                // THE SOURCE-ONLY MODE (the empty bucket — the sources
+                // AND the collision the shared clip stops)
+                w.clip_fluid_source_only(
+                    from,
+                    dir,
+                    crate::world::BLOCK_INTERACTION_RANGE,
+                )
+            } else {
+                // THE NONE MODE (the filled bucket — the fluids the ray
+                // never sees, the solids the one lane keeps)
+                w.clip(from, dir, crate::world::BLOCK_INTERACTION_RANGE)
+            }
+        })?;
+        // THE LIVE SESSION (the echo the SUCCESS arc wears — the
+        // server's own pour/pickup the emptyContents walk answers, the
+        // voices the broadcast lane keeps, the swap the inventory delta
+        // serves, the local prediction none)
+        if self.world_is_network {
+            let (yaw, pitch) = crate::world_view::wire_angles(&cam);
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
+            }
+            return Some(true);
+        }
+        if content == 0 {
+            // THE PICKUP ARM (the hit cell's own fluid the empty bucket
+            // draws — the solid verdict the FAIL keeps)
+            let (bx, by, bz) = hit.pos;
+            let kind = self.active_world()?.get(bx, by, bz);
+            if kind != crate::world::WATER && kind != crate::world::LAVA {
+                return Some(false); // the FAIL — the solid the pickup never answers
+            }
+            // THE OFFLINE PREDICTION (the cell the AIR answer empties,
+            // the mesh re-speaks)
+            if let Some(w) = self.offline_world.as_mut() {
+                w.set(bx, by, bz, crate::world::AIR);
+                w.relight();
+                self.world_quads = Some(crate::mesher::mesh_world(w, None));
+            }
+            // THE FILL VOICE (getPickupSound → BUCKET_FILL — the
+            // playNotifySound the player-ear answer the positioned
+            // voice keeps)
+            self.sounds
+                .play_voice(self.frame, "item.bucket.fill", 1.0, 1.0);
+            // THE ITEM'S OWN TRANSFORM (the filled bucket the slot wears)
+            self.transform_bucket_slot(if kind == crate::world::WATER {
+                "water_bucket"
+            } else {
+                "lava_bucket"
+            });
+            Some(true)
+        } else {
+            // THE FILL ARC (the target the relPos walk keeps — the
+            // hit's own face normal the adjacent cell answers)
+            let normal = crate::world::World::DIRECTION_NORMAL[hit.face as usize];
+            let tx = hit.pos.0 + normal.0;
+            let ty = hit.pos.1 + normal.1;
+            let tz = hit.pos.2 + normal.2;
+            let cell = self.active_world()?.get(tx, ty, tz);
+            // THE OK GATE (emptyContents: `isAir || (canBeReplaced &&
+            // !shift)` — the waterlogging sub-arm the vocabulary never
+            // wears, the tuft/double-plant rows the replaceable walk
+            // answers)
+            let ok = cell == crate::world::AIR
+                || (!self.shift_down && crate::world::is_replaceable(cell));
+            if !ok {
+                return Some(false); // the FAIL — the occupied target the pour refuses
+            }
+            // THE OFFLINE PREDICTION (the destroy-pop the replaceable
+            // non-liquid cell keeps — the drop the dig lane owns; the
+            // fluid the legacy block answer wears)
+            if let Some(w) = self.offline_world.as_mut() {
+                w.set(
+                    tx,
+                    ty,
+                    tz,
+                    if content == 2 {
+                        crate::world::LAVA
+                    } else {
+                        crate::world::WATER
+                    },
+                );
+                w.relight();
+                self.world_quads = Some(crate::mesher::mesh_world(w, None));
+            }
+            // THE EMPTY VOICE (playEmptySound — the LAVA tag the
+            // empty_lava pick keeps, the 1.0/1.0 BLOCKS the consts
+            // speak)
+            let voice = if content == 2 {
+                "item.bucket.empty_lava"
+            } else {
+                "item.bucket.empty"
+            };
+            self.sounds.play_voice(self.frame, voice, 1.0, 1.0);
+            // THE ITEM'S OWN TRANSFORM (the empty bucket the slot wears)
+            self.transform_bucket_slot("bucket");
+            Some(true)
+        }
+    }
+
+    /// THE BUCKET'S OWN STACK TRANSFORM (`createFilledResult` /
+    /// `heldItemTransformedTo` — the slot's own id swap the single-slot
+    /// survival walk speaks; the count the swap keeps, the creative
+    /// keep the offline stand-in never arms, the CLI `--held-item`
+    /// lane the slot never carries — the swap the stand-in never
+    /// answers, the hotbar row the every-mutation law syncs).
+    fn transform_bucket_slot(&mut self, name: &str) {
+        let slot = self.selected_hotbar;
+        if self.live_held.is_none() && self.inventory.items[slot].1 > 0 {
+            if let Some(new_id) = mc_registry::item_id_by_name(name) {
+                self.inventory.items[slot].0 = new_id;
+                self.hotbar_slots = self.inventory.hotbar();
+            }
+        }
+    }
+
     /// THE BOAT'S OWN USE WALK — javap BoatItem.use over the 26.2 jar:
     /// the held stack, the POV clip with `ClipContext.Fluid.ANY` (the
     /// reach `player.blockInteractionRange()` speaks — the static's own
@@ -27238,8 +27422,8 @@ impl App {
     /// swing (the consumesAction law) and the spawn the lanes split —
     /// the NETWORKED lane's UseItem echo (the client predicts NOTHING:
     /// the vanilla's own `isClientSide` guard, the server's addFreshEntity
-    /// the Add Entity echo lands through) or the OFFLINE lane's local
-    /// hull (the singleplayer's own addFreshEntity + the survival
+    /// echo lands through) or the OFFLINE lane's local hull (the
+    /// singleplayer's own addFreshEntity + the survival
     /// `ItemStack.consume(1, player)` the stack rides down). `None` =
     /// the boat gate's silence (the held item is no hull) or a PASS
     /// result — the item lanes' fall-through the vanilla's own order
@@ -54195,6 +54379,195 @@ cow_sound_variant: None,
             app.fireworks.is_empty(),
             "the lifetime crossing the discard keeps"
         );
+    }
+
+    /// THE WATER BUCKET'S OWN POUR — javap `BucketItem.use` +
+    /// `emptyContents` the 26.2 walk (the filled bucket's Fluid-NONE
+    /// POV clip the solid top answers, the target the relPos walk
+    /// keeps, the ok gate the `isAir || (canBeReplaced && !shift)` law
+    /// wears, the WATER the legacy block answer places, the
+    /// `item.bucket.empty` voice the playEmptySound walk speaks, the
+    /// EMPTY bucket the `heldItemTransformedTo` slot swap wears).
+    #[test]
+    fn the_water_bucket_the_pour_the_target_law_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (wire("water_bucket"), 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the solid ground keeps (the top face the DOWN
+        // look answers — the target the above cell serves)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE POUR: the SUCCESS verdict the press consumes
+        assert!(app.on_right_press(0, 0), "the pour the SUCCESS consumes");
+        // THE TARGET (the relPos walk — the UP face's own above cell)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::WATER,
+            "the water cell the legacy block answer keeps"
+        );
+        // THE VOICE (the playEmptySound walk — the water row the
+        // item.bucket.empty pick keeps)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.bucket.empty @")),
+                "the BUCKET_EMPTY voice the pour rode"
+            );
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.bucket.empty_lava @")),
+                "the lava pick the water row never wears"
+            );
+        }
+        // THE ITEM'S OWN TRANSFORM (the EMPTY bucket the slot wears)
+        assert_eq!(
+            app.inventory.items[slot].0,
+            wire("bucket"),
+            "the empty bucket the transform speaks"
+        );
+        assert_eq!(app.inventory.items[slot].1, 1, "the count the swap keeps");
+    }
+
+    /// THE EMPTY BUCKET'S OWN PICKUP — javap `BucketItem.use` the
+    /// SOURCE_ONLY arc (the fluid cell the POV clip answers, the
+    /// `BucketPickup.pickupBlock` draw the AIR answer keeps, the
+    /// `item.bucket.fill` voice the getPickupSound walk speaks, the
+    /// WATER bucket the `heldItemTransformedTo` slot swap wears).
+    #[test]
+    fn the_bucket_the_pickup_the_source_cell_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (wire("bucket"), 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the fluid source keeps (the pool cell the DOWN
+        // look answers — the stone floor the same column carries)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface, c, crate::world::WATER);
+            w.set(c, surface - 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE PICKUP: the SUCCESS verdict the press consumes
+        assert!(app.on_right_press(0, 0), "the pickup the SUCCESS consumes");
+        // THE CELL (the AIR answer empties)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::AIR,
+            "the source cell the pickup empties"
+        );
+        // THE VOICE (the getPickupSound walk — the BUCKET_FILL the ear
+        // answers)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.bucket.fill @")),
+                "the BUCKET_FILL voice the pickup rode"
+            );
+        }
+        // THE ITEM'S OWN TRANSFORM (the WATER bucket the slot wears)
+        assert_eq!(
+            app.inventory.items[slot].0,
+            wire("water_bucket"),
+            "the water bucket the transform speaks"
+        );
+    }
+
+    /// THE POUR'S OWN FAIL — javap `emptyContents` the ok gate the
+    /// water cell refuses (the `canBeReplaced` walk the liquid state
+    /// never passes, the isAir gate the same verdict keeps): the
+    /// occupied target the pour refuses, the FAIL verdict the press
+    /// never consumes, the voice the walk never speaks, the slot the
+    /// transform never wears.
+    #[test]
+    fn the_water_bucket_the_occupied_target_the_fail_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (wire("water_bucket"), 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the solid ground keeps, the TARGET cell the
+        // water pool wears (the Fluid-NONE clip the ray through the
+        // pool keeps — the hit the stone's own top answers)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface, c, crate::world::STONE);
+            w.set(c, surface + 1, c, crate::world::WATER);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE FAIL: the press the verdict never consumes
+        assert!(
+            !app.on_right_press(0, 0),
+            "the occupied target the FAIL keeps"
+        );
+        // THE CELLS (the pool the water keeps, the stone the same)
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(w.get(c, surface, c), crate::world::STONE);
+        assert_eq!(w.get(c, surface + 1, c), crate::world::WATER);
+        // THE VOICE (the FAIL the playEmptySound never speaks)
+        if sounds_loaded() {
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.bucket.empty @")),
+                "the empty voice the FAIL never speaks"
+            );
+        }
+        // THE SLOT (the transform the FAIL never wears)
+        assert_eq!(app.inventory.items[slot].0, wire("water_bucket"));
     }
 
     /// THE FIREWORK'S OWN CROSSING BURST — the lifetime crossing the
