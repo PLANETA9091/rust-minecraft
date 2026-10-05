@@ -31517,9 +31517,17 @@ impl App {
         {
             let mut wanted: Vec<(&'static str, &'static str)> = Vec::new();
             for m in self.mobs.iter().chain(self.net_mobs.iter()) {
-                if m.kind != crate::mob::MobKind::Zombie {
-                    continue;
-                }
+                // THE HUMANOID ARMORED KINDS the walk serves — NO kind
+                // gate here: the ZOMBIE_ARMOR_WALK the SKELETON's own
+                // draw arm speaks too (the AbstractSkeletonRenderer the
+                // humanoid layers render, the wire skeleton's armor
+                // rows the same store walk keeps), so an armored
+                // skeleton's pairs the collection loads ONCE (the
+                // zombie's own keys the map may never carry — the
+                // skeleton's bare pieces the missing pairs buried);
+                // the no-equipment kinds the ctor's None rows the
+                // loop's own continue refuses — the gate the words'
+                // absence keeps, the kinds' names it never needs.
                 for &(row, slot) in crate::mob::ZOMBIE_ARMOR_WALK.iter() {
                     let Some(word) = m.armor[row] else { continue };
                     let Some(asset) = crate::mob::armor_piece_asset(word) else {
@@ -81531,6 +81539,142 @@ cow_sound_variant: None,
         assert!(
             diff > 200,
             "the live window slot 5 the third-person frame paints: {diff} pixels differ"
+        );
+    }
+
+    /// The armored SKELETON's own stage (the flat strip the world's
+    /// spawn neighborhood keeps — the strip the terrain's own hills
+    /// never occlude): the body at the spawn, the skeleton 3 blocks
+    /// ahead of the body's straight-ahead look (the yaw 0 the
+    /// camera's own forward law speaks), the world's strip cleared
+    /// and re-meshed the fresh stage the frame draws.
+    fn armored_skeleton_stage(app: &mut App) {
+        app.enter_world();
+        app.spawn_offline_body();
+        app.perspective = crate::camera::CameraType::ThirdPersonBack;
+        // THE ZOMBIE SKIN'S OWN GATE (render_mobs's early return the
+        // failed sha1 keeps — the pre-fill the walked root speaks, the
+        // hardcoded CWD the test process never consults): the mob lane
+        // the pre-pass and the draw both live in
+        if app.zombie_avatar.is_none() {
+            if let Some(root) = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+                .iter()
+                .map(std::path::Path::new)
+                .find(|p| p.join("gui/container/inventory.png").exists())
+            {
+                app.zombie_avatar = crate::avatar::AvatarModel::load_zombie(root);
+            }
+        }
+        {
+            let body = app.body.as_mut().unwrap();
+            body.yaw = 0.0;
+            body.pitch = 0.0;
+        }
+        let body = app.body.as_ref().unwrap();
+        let (bx, by, bz) = (body.x as i32, body.y as i32, body.z as i32);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for x in (bx - 5)..=(bx + 5) {
+                for z in (bz - 7)..=(bz + 3) {
+                    for y in by..=(by + 5) {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                    w.set(x, by - 1, z, crate::world::STONE);
+                }
+            }
+        }
+        if let Some(w) = app.offline_world.as_ref() {
+            app.world_quads = Some(crate::mesher::mesh_world(w, None));
+        }
+        // THE ARCHER (the offline mob the Skeleton kind arms — the
+        // ctor's prev trio armed at the pose, the static stage the
+        // no-tick frames keep): 3 blocks ahead of the body's look,
+        // one block right — the camera's own frame the skeleton fills
+        let mut sk = crate::mob::Zombie::new(
+            901,
+            (bx as f64) + 1.0,
+            by as f64,
+            (bz as f64) - 3.0,
+            262,
+        );
+        sk.kind = crate::mob::MobKind::Skeleton;
+        sk.on_ground = true;
+        app.mobs.push(sk);
+    }
+
+    #[test]
+    fn the_skeleton_armor_the_prepass_collects() {
+        // the pre-pass's own law (the kind gate's drop this round
+        // speaks): an armored SKELETON's pairs the collection loads —
+        // the bare skeleton the map never touches
+        let mut app = App::new(3);
+        armored_skeleton_stage(&mut app);
+        let key = format!(
+            "{}/iron",
+            mc_registry::generated::equipment::HUMANOID_DIR
+        );
+        let _ = third_person_frame(&mut app);
+        assert!(
+            !app.armor_textures.contains_key(&key),
+            "the bare skeleton the armor map never fills"
+        );
+        // THE DRESS (the wire words the skeleton's rows carry — the
+        // boots the FEET row, the helmet the HEAD row): the render
+        // round the pairs collect (the value the test's CWD the
+        // honest failed-read keeps — the collection the law pins)
+        app.mobs[0].armor[0] = Some("iron_boots");
+        app.mobs[0].armor[3] = Some("iron_helmet");
+        let _ = third_person_frame(&mut app);
+        assert!(
+            app.armor_textures.contains_key(&key),
+            "the armored skeleton's pairs the pre-pass collects"
+        );
+    }
+
+    #[test]
+    fn the_skeleton_armor_the_frame_paints() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(model) = crate::avatar::AvatarModel::load(root) else {
+            return;
+        };
+        let Some(skeleton) = crate::avatar::AvatarModel::load_skeleton(root) else {
+            return;
+        };
+        let hum = mc_registry::generated::equipment::HUMANOID_DIR;
+        let Some(iron) = mc_registry::generated::equipment::find("iron")
+            .and_then(|e| crate::avatar::ArmorTex::load(root, hum, e))
+        else {
+            return; // the equipment png the runtime cache keeps absent
+        };
+        let mut app = App::new(3);
+        armored_skeleton_stage(&mut app);
+        // THE PRE-FILLED ASSETS (the walked root the loaders' honesty
+        // keeps — the hardcoded CWD the test process never consults)
+        app.avatar = Some(model);
+        app.skeleton_avatar = Some(skeleton);
+        app.armor_textures.insert(format!("{hum}/iron"), Some(iron));
+        let bare = third_person_frame(&mut app);
+        let bare_twice = third_person_frame(&mut app);
+        assert_eq!(bare, bare_twice, "the bare frames bit-identical twice");
+        // THE DRESS (the boots the FEET row, the helmet the HEAD row):
+        // the skeleton's armor the frame paints — the iron kit the
+        // archer's own body wears over the bare skin
+        app.mobs[0].armor[0] = Some("iron_boots");
+        app.mobs[0].armor[3] = Some("iron_helmet");
+        let dressed = third_person_frame(&mut app);
+        let dressed_twice = third_person_frame(&mut app);
+        assert_eq!(
+            dressed, dressed_twice,
+            "the dressed frames bit-identical twice"
+        );
+        let diff = diff_pixels(&bare, &dressed);
+        assert!(
+            diff > 2000,
+            "the skeleton's armor the frame paints: {diff} pixels differ"
         );
     }
 }
