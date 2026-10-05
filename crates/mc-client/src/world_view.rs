@@ -2295,6 +2295,17 @@ pub enum ContainerCommand {
     /// hand follows through the store's own projection) and echoes the
     /// serverbound Set Carried Item (the dump's short-shaped slot).
     SelectHotbar { selection: u8 },
+    /// THE CREATIVE SLOT'S OWN WIRE (the vanilla
+    /// `gameMode.handleCreativeModeItemAdd`'s echo — the
+    /// ServerboundSetCreativeModeSlotPacket the hotbar LOAD walk
+    /// speaks per stack, the CONTAINER id the slot field rides — the
+    /// menu numbering's 36..44 the hotbar row keys). The worker's
+    /// store-half the local prediction speaks FIRST (the
+    /// [`crate::world_model::WorldModel::set_window_slot`] walk —
+    /// the creative client the authority keeps), the packet the echo
+    /// rides after (the server's own creative handler the verdict
+    /// accepts).
+    CreativeSetSlot { slot: i32, item: (i32, i32) },
     /// THE MIDDLE-CLICK PICK's wire half (the vanilla
     /// `MultiPlayerGameMode.handlePickItemFromBlock`'s own lane — the
     /// packet send ALONE, the inventory law server-side): the clip's

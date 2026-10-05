@@ -142,6 +142,7 @@ pub mod serverbound {
         SB_MOVE_PLAYER_ROT as MOVE_PLAYER_ROT, SB_MOVE_PLAYER_STATUS_ONLY as MOVE_PLAYER_STATUS_ONLY,
         SB_DEBUG_SUBSCRIPTION_REQUEST as DEBUG_SUBSCRIPTION_REQUEST,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
+        SB_SET_CREATIVE_MODE_SLOT as SET_CREATIVE_MODE_SLOT,
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
         SB_PLAYER_INPUT as PLAYER_INPUT,
@@ -7605,6 +7606,31 @@ pub fn encode_set_carried_item(slot: u8) -> Vec<u8> {
     p
 }
 
+/// The creative inventory's OWN slot write — the serverbound Set
+/// Creative Mode Slot packet (the generated id table's
+/// SB_SET_CREATIVE_MODE_SLOT = 56, `minecraft:set_creative_mode_slot`).
+/// THE WIRE (the 26.2 jar's `ServerboundSetCreativeModeSlotPacket
+/// .<clinit>` walk — the composite STREAM_CODEC's own pair): the slot
+/// the SAME big-endian SHORT the Set Carried Item packet speaks (the
+/// ctor's `i2s` the slotNum's own field keeps — the wiki-era VarInt
+/// memory the two-byte shape refuses), and the stack the
+/// OPTIONAL_UNTRUSTED_STREAM_CODEC walk answers (the count the VarInt
+/// speaks, the id + the component patch the non-empty keeps — the
+/// client's stacks carry no components, the empty pair the patch's
+/// own 0/0 law keeps). The slot is the CONTAINER id (the inventory
+/// menu's own numbering — the hotbar row's 36..44 base the
+/// `handleCreativeModeItemAdd(stack, 36 + j)` call rides, the offhand
+/// 45 the same walk never touches).
+pub fn encode_set_creative_mode_slot(slot: i32, count: i32, item_id: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(8);
+    write_varint(&mut p, serverbound::SET_CREATIVE_MODE_SLOT);
+    p.extend_from_slice(&(slot as i16).to_be_bytes());
+    // the empty component patch the write's own infallibility keeps —
+    // the two zero VarInts the default patch carries never fail
+    let _ = write_item_stack(&mut p, count, item_id, &ComponentPatch::default());
+    p
+}
+
 /// The middle-click PICK's wire half (the vanilla
 /// `MultiPlayerGameMode.handlePickItemFromBlock`'s own echo —
 /// ServerboundPickItemFromBlockPacket, generated id 36,
@@ -10922,6 +10948,19 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_set_carried_item(slot))
             .context("send set carried item")
+    }
+
+    /// The creative inventory's OWN slot write (the vanilla
+    /// `gameMode.handleCreativeModeItemAdd`'s echo — the
+    /// ServerboundSetCreativeModeSlotPacket the hotbar load walk
+    /// speaks per stack). The slot is the CONTAINER id (the menu's
+    /// own numbering — 36..44 the hotbar row), the stack the (id,
+    /// count) pair — the count <= 0 the EMPTY stack the wire's count-0
+    /// law keeps.
+    pub fn set_creative_mode_slot(&mut self, slot: i32, count: i32, item_id: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_set_creative_mode_slot(slot, count, item_id))
+            .context("send set creative mode slot")
     }
 
     /// The middle-click PICK's wire half (the vanilla

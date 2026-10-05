@@ -17077,12 +17077,23 @@ impl App {
     /// reload the number-key lane keeps).
     /// THE SAVE (pc 111-199) — `Hotbar.storeFrom(inventory, access)`
     /// the hotbar row's OWN snapshot banks (`getItem(0..SIZE)` the
-    /// list walk speaks), the overlay message the
+    /// list walk speaks — the LIVE session the store's OWN row the
+    /// belief answers), the overlay message the
     /// "inventory.hotbarSaved" law wears (the keyLoadHotbarActivator's
     /// "X" + the digit's own name the `%1$s/%2$s` args keep — the
     /// positional pair the local substitution answers), the
     /// `HotbarManager.save()` file walk the in-memory pages answer
     /// (the `hotbar.nbt` lane the later round owes).
+    /// THE LIVE SESSION'S OWN WALK (the vanilla creative client the
+    /// AUTHORITY keeps — the `setItem` the local store wears, the
+    /// `handleCreativeModeItemAdd` the ServerboundSetCreativeModeSlot
+    /// packet per stack speaks): the LOAD the belief's in-place
+    /// mutation the click lane's own contract keeps (the rows the
+    /// store's 36..44 menu ids wear, the HUD row the same-frame sync
+    /// speaks, the held model the selected stack's swap follows — the
+    /// live_held_updated law) + the nine CreativeSetSlot commands the
+    /// wire rides; the SAVE the client-local walk the vanilla keeps
+    /// (no wire the save() spends).
     pub fn on_hotbar_save_load_key(
         &mut self,
         selection: usize,
@@ -17110,24 +17121,44 @@ impl App {
         if !save_down && !load_down {
             return false;
         }
-        // THE LIVE SESSION'S HONEST SILENCE (the load's wire half the
-        // ServerboundSetCreativeModeSlot lane carries — the packet lane
-        // the later round owes; the plain select the key keeps
-        // meanwhile)
-        if self.live_clicks.is_some() || self.world_is_network {
-            return false;
-        }
         if load_down {
             // THE LOAD ARM (pc 30-108 — the page the row wears)
             let page = self.hotbar_manager[selection];
-            self.inventory.items[0..9].copy_from_slice(&page);
-            self.hotbar_slots = self.inventory.hotbar();
-            let id = self.held_id();
-            self.load_held_payload_from_id(id);
+            if self.world_is_network {
+                // THE LIVE LANE (the client-authoritative walk — the
+                // belief's in-place mutation + the nine packets the
+                // wire speaks)
+                for (j, item) in page.iter().enumerate() {
+                    if let Some(sink) = self.live_clicks.as_ref() {
+                        let _ = sink.send(
+                            crate::world_view::ContainerCommand::CreativeSetSlot {
+                                slot: 36 + j as i32,
+                                item: *item,
+                            },
+                        );
+                    }
+                    self.live_inv_slots[36 + j] = *item;
+                }
+                self.hotbar_slots = page;
+                let held = page[self.selected_hotbar];
+                self.live_held_updated(Some(held));
+            } else {
+                // THE OFFLINE LANE (the gameplay inventory the truth
+                // keeps)
+                self.inventory.items[0..9].copy_from_slice(&page);
+                self.hotbar_slots = self.inventory.hotbar();
+                let id = self.held_id();
+                self.load_held_payload_from_id(id);
+            }
         } else {
             // THE SAVE ARM (pc 111-199 — the row the page banks, the
             // overlay the law speaks)
-            self.hotbar_manager[selection] = self.inventory.hotbar();
+            let row = if self.world_is_network {
+                self.live_hotbar_row()
+            } else {
+                self.inventory.hotbar()
+            };
+            self.hotbar_manager[selection] = row;
             let fmt = tr("inventory.hotbarSaved")
                 .unwrap_or("Item hotbar saved (restore with %1$s + %2$s)");
             let msg = fmt
@@ -54975,6 +55006,91 @@ cow_sound_variant: None,
             app.inventory.items[0],
             (wire("stone"), 9),
             "the row the chord never touches"
+        );
+    }
+
+    /// THE CREATIVE CHORDS' OWN LIVE STORE — javap
+    /// `handleHotbarLoadOrSave` the live-session walk (the
+    /// client-authoritative creative client the vanilla keeps — the
+    /// `setItem` the local store wears, the
+    /// `handleCreativeModeItemAdd` the ServerboundSetCreativeModeSlot
+    /// packet per stack speaks): the LOAD the belief's in-place
+    /// mutation keeps (the store's 36..44 rows the page wears, the
+    /// HUD row the same-frame sync speaks) + the nine CreativeSetSlot
+    /// words the wire rides in order; the SAVE the store's OWN row
+    /// the page banks — the client-local walk the vanilla `save()`
+    /// keeps (no wire the save spends).
+    #[test]
+    fn the_creative_chords_the_live_store_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        app.world_is_network = true;
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let page = [
+            (wire("sand"), 4),
+            (0, 0),
+            (wire("bricks"), 8),
+            (0, 0),
+            (wire("glass"), 2),
+            (0, 0),
+            (wire("torch"), 6),
+            (0, 0),
+            (wire("red_wool"), 1),
+        ];
+        app.hotbar_manager[1] = page;
+        // the belief row the garbage wears (the load's own overwrite
+        // answers)
+        app.live_inv_slots[36] = (wire("diamond_sword"), 1);
+        app.live_inv_slots[44] = (wire("apple"), 3);
+        // THE LOAD CHORD (X + 2 — the live walk the belief keeps)
+        assert!(
+            app.on_hotbar_save_load_key(1, false, true),
+            "the creative load the live chord consumes"
+        );
+        // THE NINE WIRE WORDS (the CreativeSetSlot commands the wire
+        // rides IN ORDER — the container ids 36..44 the walk keys)
+        for (j, expected) in page.iter().enumerate() {
+            match rx
+                .try_recv()
+                .expect("the load's own wire word")
+            {
+                crate::world_view::ContainerCommand::CreativeSetSlot { slot, item } => {
+                    assert_eq!(slot, 36 + j as i32, "the container id the walk keys");
+                    assert_eq!(item, *expected, "the stack the wire word rides");
+                }
+                other => panic!("the unexpected command the wire rode: {other:?}"),
+            }
+        }
+        // THE BELIEF (the in-place mutation the store's own rows keep)
+        assert_eq!(
+            &app.live_inv_slots[36..45],
+            &page,
+            "the store rows the load walk wears"
+        );
+        // THE HUD ROW (the same-frame sync the belief speaks)
+        assert_eq!(app.hotbar_slots, page, "the HUD row the sync speaks");
+        // THE SAVE CHORD (C + 2 — the store's OWN row the page banks)
+        assert!(
+            app.on_hotbar_save_load_key(1, true, false),
+            "the creative save the live chord consumes"
+        );
+        assert_eq!(
+            app.hotbar_manager[1], page,
+            "the page the store's own row banks"
+        );
+        // NO WIRE THE SAVE SPENDS (the client-local walk the vanilla
+        // keeps — the channel the save never rides)
+        assert!(
+            rx.try_recv().is_err(),
+            "the save the wire never spends"
         );
     }
 

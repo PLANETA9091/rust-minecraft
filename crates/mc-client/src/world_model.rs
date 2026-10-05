@@ -3125,6 +3125,45 @@ impl WorldModel {
         }
     }
 
+    /// THE CREATIVE SLOT'S OWN STORE HALF (the vanilla
+    /// `Inventory.setItem` walk the client-authoritative creative
+    /// load speaks — the worker-side store the CreativeSetSlot arm's
+    /// local prediction moves, the same in-place contract the
+    /// [`Self::swap_offhand`] walk keeps): the CONTAINER id the slot
+    /// field rides (the menu numbering's own — 36..44 the hotbar row,
+    /// 45 the offhand), the (id, count) pair the stack wears, the
+    /// count <= 0 the EMPTY stack the wire's count-0 law keeps. A
+    /// slot past the store's current end the growth law speaks (the
+    /// empty stacks the retention line keeps); a NEGATIVE slot the
+    /// false verdict refuses.
+    pub fn set_window_slot(&mut self, slot: i32, item: (i32, i32)) -> bool {
+        if slot < 0 {
+            return false;
+        }
+        let idx = slot as usize;
+        if idx >= self.inventory.slots.len() {
+            self.inventory.slots.resize_with(idx + 1, || ItemStack {
+                count: 0,
+                item_id: 0,
+                patch: ComponentPatch::default(),
+            });
+        }
+        self.inventory.slots[idx] = if item.1 > 0 {
+            ItemStack {
+                count: item.1,
+                item_id: item.0,
+                patch: ComponentPatch::default(),
+            }
+        } else {
+            ItemStack {
+                count: 0,
+                item_id: 0,
+                patch: ComponentPatch::default(),
+            }
+        };
+        true
+    }
+
     /// THE OFFHAND SWAP'S STORE HALF (the vanilla handleKeybinds's
     /// keySwapOffhand lane's own prediction — the worker-side store the
     /// SelectHotbar arm's `view.model.select_hotbar` walk moves, the

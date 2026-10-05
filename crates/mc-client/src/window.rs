@@ -499,6 +499,21 @@ fn run_join(
                             view.model.select_hotbar(selection as usize);
                             session.set_carried_item(selection)
                         }
+                        crate::world_view::ContainerCommand::CreativeSetSlot {
+                            slot,
+                            item,
+                        } => {
+                            // THE CREATIVE SLOT'S OWN STORE HALF + THE
+                            // WIRE (the vanilla handleCreativeModeItemAdd
+                            // walk — the setItem the client-authoritative
+                            // inventory wears FIRST, the
+                            // ServerboundSetCreativeModeSlotPacket the
+                            // echo rides after; the server's own creative
+                            // handler the verdict accepts, the next sync
+                            // the same rows re-speaks)
+                            view.model.set_window_slot(slot, item);
+                            session.set_creative_mode_slot(slot, item.1, item.0)
+                        }
                         crate::world_view::ContainerCommand::SelectBundleItem {
                             slot_id,
                             selected_item_index,
