@@ -856,8 +856,22 @@ fn special_render_quads(
 pub fn item_gui_quads(
     id: i32,
 ) -> Option<Result<Vec<(crate::element_quads::Quad, bool, &'static [&'static str])>, String>> {
+    item_gui_quads_broken(id, false)
+}
+
+/// The broken-aware GUI walk — [`item_gui_quads`] with the
+/// `minecraft:broken` condition's verdict spoken (the torn elytra's
+/// icon the vanilla wear state wears): `broken = true` swaps the
+/// condition items' layer list to the on_true branch's model (the
+/// `BROKEN_CONDITION_ON_TRUE` walk — the override's resting models the
+/// swap replaces whole), `false` or a non-condition item the resting
+/// arm rides untouched.
+pub fn item_gui_quads_broken(
+    id: i32,
+    broken: bool,
+) -> Option<Result<Vec<(crate::element_quads::Quad, bool, &'static [&'static str])>, String>> {
     let name = crate::item_name(id)?;
-    let layers: Vec<(&str, &'static [&'static str])> =
+    let mut layers: Vec<(&str, &'static [&'static str])> =
         if let Some((_, icon)) = crate::generated::item_models::ITEM_GUI_OVERRIDES
             .iter()
             .find(|d| d.0 == name)
@@ -895,6 +909,19 @@ pub fn item_gui_quads(
                 def.2,
             )]
         };
+
+    // THE BROKEN CONDITION'S SWAP (the on_true branch's own model —
+    // the resting layer list the verdict replaces whole)
+    if broken {
+        if let Some((_, model)) =
+            crate::BROKEN_CONDITION_ON_TRUE.iter().find(|(n, _)| *n == name)
+        {
+            layers = vec![(
+                model.strip_prefix("minecraft:").unwrap_or(model),
+                &[] as &'static [&'static str],
+            )];
+        }
+    }
 
     // the bake per model: the element chain first (the 3D block
     // geometry), the generated extrusion second (the flat sprites).
@@ -1799,5 +1826,54 @@ mod tests {
         assert!(quads.iter().all(|(q, _, _)| q.texture == "entity/shield/shield_base_nopattern"));
         // the unknown id is the honest None
         assert!(item_gui_quads(-1).is_none());
+    }
+
+    /// THE BROKEN VERDICT'S GUI SWAP (javap `Broken.get` =
+    /// `nextDamageWillBreak`): the torn elytra's icon rides the
+    /// on_true branch's bake — the elytra_broken sprite's own quads —
+    /// the resting arm the override's own model keeps, the
+    /// non-condition item both verdicts paint the same.
+    #[test]
+    fn the_broken_verdict_the_gui_icon_wears() {
+        let wire = |name: &str| {
+            crate::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|n| *n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let elytra = wire("elytra");
+        // THE RESTING ARM (the override's own model — the elytra
+        // sprite the bake rides)
+        let rest = item_gui_quads_broken(elytra, false)
+            .expect("the elytra's gui quads resolve")
+            .expect("the bake speaks");
+        assert!(!rest.is_empty(), "the resting quads speak");
+        assert!(
+            rest.iter().all(|(q, _, _)| q.texture == "item/elytra"),
+            "the resting bake the elytra sprite rides"
+        );
+        // THE TORN ARM (the on_true branch's bake — the broken
+        // sprite's own quads the swap carries)
+        let torn = item_gui_quads_broken(elytra, true)
+            .expect("the torn elytra's gui quads resolve")
+            .expect("the bake speaks");
+        assert!(!torn.is_empty(), "the torn quads speak");
+        assert!(
+            torn.iter().all(|(q, _, _)| q.texture == "item/elytra_broken"),
+            "the torn bake the broken sprite rides"
+        );
+        // the quad COUNTS the sprites' own opaque shapes speak (the
+        // extrusion bake the per-pixel art emits — no law the two
+        // images share, the broken art's torn shape the count keeps)
+        // THE NON-CONDITION ITEM BOTH VERDICTS PAINT (the diamond's
+        // quads the broken flag never moves)
+        let diamond = wire("diamond");
+        let rest_d = item_gui_quads_broken(diamond, false)
+            .expect("the diamond resolves")
+            .expect("the bake speaks");
+        let torn_d = item_gui_quads_broken(diamond, true)
+            .expect("the diamond resolves")
+            .expect("the bake speaks");
+        assert_eq!(rest_d, torn_d, "the plain item both verdicts paint");
     }
 }

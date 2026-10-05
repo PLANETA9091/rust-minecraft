@@ -9042,16 +9042,23 @@ impl App {
                     // nextDamageWillBreak gate, the component-less stack
                     // the id stand-in answers, the durability the
                     // client's stacks never bank): the chest slot the
-                    // two lanes' own source reads — the offline
-                    // inventory's armor row (FEET/LEGS/CHEST/HEAD the
-                    // vanilla order keeps, the CHEST index 2), the live
-                    // store's window slot 7 (5 boots, 6 leggings,
-                    // 7 chestplate, 8 helmet the InventoryMenu map
-                    // speaks)
+                    // two lanes' own source reads — the armor column's
+                    // LOOP row 1 the ctor walk keeps (javap
+                    // InventoryMenu.<init>: `ArmorSlot(inv, owner,
+                    // SLOT_IDS[k], 39 - k, 8, 8 + k * 18, ...)` — the
+                    // SLOT_IDS order HEAD, CHEST, LEGS, FEET the menu
+                    // slots 5..8 and the containers 39-k wear — the
+                    // client's own rows the same order keeps, the
+                    // click/draw/mayPlace walks the loop index speaks;
+                    // NOT the vanilla Inventory.armor list's own
+                    // FEET-first order — that list the client's
+                    // head-first rows never ride), the live store's
+                    // window slot 6 (the same SLOT_IDS walk: menu slot
+                    // 5 head, 6 chest, 7 legs, 8 feet)
                     let chest = if self.world_is_network {
-                        self.live_inv_slots[7]
+                        self.live_inv_slots[6]
                     } else {
-                        self.inventory.armor[2]
+                        self.inventory.armor[1]
                     };
                     // THE INFINITE MATERIALS GATE (javap
                     // Player.hasInfiniteMaterials — the abilities.
@@ -9224,16 +9231,17 @@ impl App {
             }
             // THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken →
             // the entityEvent 47 → the client's breakItem walk): the
-            // slot the two lanes' own source clears (the offline
-            // armor row's CHEST index 2, the live store's window slot
-            // 7), the break voice the breakItem law lands (v0.8,
-            // p0.8+r*0.4), the 5 item particles the
+            // slot the two lanes' own source clears (the same LOOP row
+            // 1 the chest read keeps — the client's armor rows
+            // HEAD-first, the live store's menu slot 6 the ctor's
+            // SLOT_IDS walk banks), the break voice the breakItem law
+            // lands (v0.8, p0.8+r*0.4), the 5 item particles the
             // spawnItemParticles(stack, 5) call speaks
             if elytra_broke {
                 if self.world_is_network {
-                    self.live_inv_slots[7] = (0, 0);
+                    self.live_inv_slots[6] = (0, 0);
                 } else {
-                    self.inventory.armor[2] = (0, 0);
+                    self.inventory.armor[1] = (0, 0);
                 }
                 self.sounds.play_item_break_voice(self.frame);
                 if let Some(elytra_id) = mc_registry::item_id_by_name("elytra") {
@@ -15018,6 +15026,26 @@ impl App {
         });
     }
 
+    /// THE TORN ELYTRA'S OWN ICON VERDICT (the `minecraft:broken`
+    /// condition's own truth — javap `Broken.get` =
+    /// `nextDamageWillBreak` = `isDamageableItem && damage >= max-1`):
+    /// the armor row's CHEST elytra the verdict consults — the OFFLINE
+    /// lane the body's wear clock banks (the client's one
+    /// damage-carrying stack the walk tracks), the network lane the
+    /// (id, count) stacks the damage component never carries — the
+    /// resting arm the honest answer keeps. The hand lane the same law
+    /// never rides yet (the held stacks' bare tuples, the registry's
+    /// broken accessor ready).
+    fn armor_slot_icon_broken(&self, k: usize, id: i32) -> bool {
+        !self.world_is_network
+            && k == crate::avatar::ARMOR_SLOT_CHEST
+            && Some(id) == mc_registry::item_id_by_name("elytra")
+            && self
+                .body
+                .as_ref()
+                .is_some_and(|b| b.elytra_next_damage_will_break())
+    }
+
     /// The survival inventory's SLOT pass: the REAL 36-slot store's
     /// icons and counts (the hotbar row from store 0..9, the main rows
     /// from store 9..36 — the chest's icon/count law verbatim), the
@@ -15085,7 +15113,10 @@ impl App {
                 self.inventory.armor[k]
             };
             if count > 0 {
-                draw_item_icon(g, id, sx + 1, sy + 1);
+                // THE BROKEN VERDICT (the CHEST elytra's torn icon the
+                // offline wear clock wears — the helper the law walks)
+                let broken = self.armor_slot_icon_broken(k, id);
+                draw_item_icon_broken(g, id, broken, sx + 1, sy + 1);
                 if count > 1 {
                     let s = count.to_string();
                     let tw = g.text_width(&s);
@@ -36737,8 +36768,12 @@ fn icon_tint(tints: &[&str]) -> [f32; 3] {
 /// The quads ride the registry's gui chain with the per-quad tint x
 /// shade folded into the SampledQuad multiplier. Returns false when the
 /// item has no gui quads (the caller falls back to the flat blit).
-fn draw_item_icon_3d(g: &mut Gui, item_id: i32, x: i32, y: i32) -> bool {
-    let Some(Ok(layers)) = mc_registry::display::item_gui_quads(item_id) else {
+///
+/// THE BROKEN-AWARE WALK (the `minecraft:broken` condition's verdict
+/// spoken — the torn elytra's icon the vanilla wear state wears; the
+/// resting arm the plain `broken = false` call keeps).
+fn draw_item_icon_3d_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: i32) -> bool {
+    let Some(Ok(layers)) = mc_registry::display::item_gui_quads_broken(item_id, broken) else {
         return false;
     };
     if layers.is_empty() {
@@ -36798,6 +36833,15 @@ fn draw_item_icon_3d(g: &mut Gui, item_id: i32, x: i32, y: i32) -> bool {
 }
 
 fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
+    draw_item_icon_broken(g, item_id, false, x, y)
+}
+
+/// THE BROKEN-AWARE ICON ([`draw_item_icon`] with the
+/// `minecraft:broken` condition's verdict spoken): the torn elytra's
+/// icon the vanilla wear state wears (the elytra_broken model the
+/// on_true branch carries — one damage point BEFORE the break), the
+/// resting arm the plain call keeps.
+fn draw_item_icon_broken(g: &mut Gui, item_id: i32, broken: bool, x: i32, y: i32) {
     // THE 3D ICON PATH: every item's GUI icon is the vanilla atlas arc's
     // own render — the gui-context quads (the block models' isometric
     // geometry, the flat sprites' centered extrusion, the 63 specials'
@@ -36805,7 +36849,7 @@ fn draw_item_icon(g: &mut Gui, item_id: i32, x: i32, y: i32) {
     // drawToSlot law (the slot-center translate, the scale(s, -s, s)
     // y-flip, the ortho depth). The flat blit below stays as the
     // defensive fallback for ids the quad path refuses.
-    if draw_item_icon_3d(g, item_id, x, y) {
+    if draw_item_icon_3d_broken(g, item_id, broken, x, y) {
         return;
     }
     let Some((rgba, w, h)) = mc_registry::item_icon(item_id) else {
@@ -38149,14 +38193,15 @@ mod tests {
         };
         // THE LIVE LANE (the net world the body walks, the sink the
         // word rides — the same harness the F4 toggle's wire test
-        // wears): the chest slot 7 the elytra stack wears, the
+        // wears): the chest MENU slot 6 the elytra stack wears (the
+        // ctor's SLOT_IDS walk: 5 head, 6 chest, 7 legs, 8 feet), the
         // airborne body the jump key holds
         let mut app = App::new(3);
         app.net_world = Some(air_net_world(2, 0));
         app.enter_network_world(None, Skybox::Overworld, None, None);
         let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
         app.attach_live_clicks(tx);
-        app.live_inv_slots[7] = (wire("elytra"), 1);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
         app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
         app.on_movement_input(0.0, 0.0, true, false, false);
         app.update();
@@ -38194,7 +38239,7 @@ mod tests {
         app.spawn_offline_body();
         let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
         app.attach_live_clicks(tx);
-        app.inventory.armor[2] = (wire("elytra"), 1);
+        app.inventory.armor[1] = (wire("elytra"), 1);
         {
             let b = app.body.as_mut().expect("the offline body spawns");
             b.y = 40.0;
@@ -38239,7 +38284,7 @@ mod tests {
         let mut app = App::new(3);
         app.net_world = Some(air_net_world(2, 0));
         app.enter_network_world(None, Skybox::Overworld, None, None);
-        app.live_inv_slots[7] = (wire("elytra"), 1);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
         app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
         app.on_movement_input(0.0, 0.0, true, false, false);
         app.update();
@@ -38274,7 +38319,7 @@ mod tests {
         let mut app = App::new(3);
         app.enter_world();
         app.spawn_offline_body();
-        app.inventory.armor[2] = (wire("elytra"), 1);
+        app.inventory.armor[1] = (wire("elytra"), 1);
         {
             let b = app.body.as_mut().expect("the offline body spawns");
             b.y = 40.0;
@@ -38287,7 +38332,7 @@ mod tests {
         }
         let pieces_before = app.pieces.len();
         app.update();
-        assert_eq!(app.inventory.armor[2], (0, 0), "the slot the break drain clears");
+        assert_eq!(app.inventory.armor[1], (0, 0), "the slot the break drain clears");
         assert!(
             !app.body
                 .as_ref()
@@ -38306,6 +38351,110 @@ mod tests {
             app.pieces.len() - pieces_before,
             5,
             "the 5 item particles the spawn speaks"
+        );
+    }
+
+    /// THE CHEST SLOT'S OWN LANE (the regression the last round's
+    /// mis-indexed chest read owed): the elytra the shift-click
+    /// quick-move EQUIPS lands the armor row's LOOP row 1 (the ctor
+    /// walk's SLOT_IDS order HEAD, CHEST, LEGS, FEET — the click/
+    /// draw/mayPlace walks the same index speaks, the vanilla
+    /// Inventory.armor list's own FEET-first order the client's rows
+    /// never ride), and the SAME worn stack the chest read the tick
+    /// walk keeps — the airborne jump chord the glide STARTS from the
+    /// real equip path (the hand-placed stands the earlier tests
+    /// wear, this walk the UI's own answer pins).
+    #[test]
+    fn the_quick_moved_elytra_the_glide_wears() {
+        let elytra = mc_registry::item_id_by_name("elytra")
+            .expect("the elytra rides the registry");
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE EQUIP (store row 9's elytra the shift-click quick-move
+        // equips — the armor arm ends the walk, the CHEST loop row 1
+        // takes it)
+        app.inventory.items[9] = (elytra, 1);
+        app.shift_down = true;
+        app.on_press(248, 189);
+        app.shift_down = false;
+        assert_eq!(
+            app.inventory.armor[1],
+            (elytra, 1),
+            "the chest took the quick-moved elytra"
+        );
+        assert_eq!(app.inventory.items[9], (0, 0), "the source emptied");
+        // THE SCREEN'S OWN CLOSE (the E-key route — the inventory
+        // screen the body's tick never walks, the World screen the
+        // tick gate reopens)
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "the inventory closed");
+        // THE GLIDE (the same worn stack the chest read speaks — the
+        // airborne double-jump chord the glide starts)
+        {
+            let b = app.body.as_mut().expect("the offline body spawns");
+            b.y = 40.0;
+            b.on_ground = false;
+        }
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").fall_flying,
+            "the really-worn elytra the glide starts"
+        );
+    }
+
+    /// THE TORN ELYTRA'S ICON VERDICT (the `minecraft:broken`
+    /// condition the armor row's draw consults — javap `Broken.get` =
+    /// `nextDamageWillBreak`): the fresh stack the resting icon wears,
+    /// the 431 stack the broken icon wears, the non-elytra chest the
+    /// verdict never moves, the wrong row never consults, the network
+    /// lane's bare tuples the resting arm keeps.
+    #[test]
+    fn the_torn_elytra_icon_the_verdict_wears() {
+        let elytra = mc_registry::item_id_by_name("elytra")
+            .expect("the elytra rides the registry");
+        let iron_chest = mc_registry::item_id_by_name("iron_chestplate")
+            .expect("the chestplate rides the registry");
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE FRESH STACK (damage 0 — the resting arm)
+        app.inventory.armor[1] = (elytra, 1);
+        assert!(
+            !app.armor_slot_icon_broken(1, elytra),
+            "the fresh elytra the resting icon wears"
+        );
+        // THE TORN STACK (431 — the verdict the on_true branch wears)
+        {
+            let b = app.body.as_mut().expect("the offline body spawns");
+            b.elytra_damage = 431;
+        }
+        assert!(
+            app.armor_slot_icon_broken(1, elytra),
+            "the torn elytra the broken icon wears"
+        );
+        // THE NON-ELYTRA CHEST (the chestplate's icon the verdict
+        // never moves — the condition the elytra's json alone roots)
+        app.inventory.armor[1] = (iron_chest, 1);
+        assert!(
+            !app.armor_slot_icon_broken(1, iron_chest),
+            "the chestplate the verdict never consults"
+        );
+        // THE WRONG ROW (the helmet row's k the law never wears)
+        app.inventory.armor[1] = (elytra, 1);
+        assert!(
+            !app.armor_slot_icon_broken(0, elytra),
+            "the head row the verdict never wears"
+        );
+        // THE NETWORK LANE (the live stacks' bare (id, count) tuples —
+        // the damage component they never carry, the resting arm)
+        app.world_is_network = true;
+        assert!(
+            !app.armor_slot_icon_broken(1, elytra),
+            "the live lane the resting arm keeps"
         );
     }
 
@@ -56072,7 +56221,7 @@ cow_sound_variant: None,
         // chord the glide starts — the SUCCESS the rocket banks)
         let elytra = mc_registry::item_id_by_name("elytra")
             .expect("the elytra rides the registry");
-        app.inventory.armor[2] = (elytra, 1);
+        app.inventory.armor[1] = (elytra, 1);
         {
             let b = app.body.as_mut().expect("the offline body spawns");
             b.y = 40.0;
@@ -56158,7 +56307,7 @@ cow_sound_variant: None,
             if rocket_count > 0 {
                 app.inventory.items[app.selected_hotbar] = (rocket, rocket_count);
             }
-            app.inventory.armor[2] = (elytra, 1);
+            app.inventory.armor[1] = (elytra, 1);
             {
                 let b = app.body.as_mut().expect("the offline body spawns");
                 b.y = 40.0;
@@ -56281,7 +56430,7 @@ cow_sound_variant: None,
         let mut app = App::new(3);
         app.enter_world();
         app.spawn_offline_body();
-        app.inventory.armor[2] = (elytra, 1);
+        app.inventory.armor[1] = (elytra, 1);
         {
             let b = app.body.as_mut().expect("the offline body spawns");
             b.y = 40.0;

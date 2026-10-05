@@ -219,6 +219,49 @@ pub fn item_model_layers(id: i32) -> Option<Vec<ItemModelLayer>> {
         })
 }
 
+/// THE BROKEN CONDITION'S ON_TRUE ARM (the vanilla item jsons' own
+/// walk — the 26.2 cache's `items/elytra.json` the only root
+/// `minecraft:broken` condition the items/ tree speaks, the javap
+/// evidence byte-level: `properties.conditional.Broken.get` is
+/// `stack.nextDamageWillBreak()` verbatim — the aload_1/invokevirtual
+/// pair the whole body keeps — and `ItemStack.nextDamageWillBreak` is
+/// `isDamageableItem() && getDamageValue() >= getMaxDamage() - 1`:
+/// the isDamageableItem gate the ifeq answers false, the damage the
+/// max-minus-one threshold the if_icmplt compares, the crossing
+/// (pc 17) the true verdict wears). The rows (item name, the
+/// on_true branch's plain model path): the elytra's condition —
+/// on_false `minecraft:item/elytra` (the RESOLVED_ITEM_LAYERS row the
+/// resting accessor already speaks), on_true `minecraft:item/elytra_broken`
+/// (a plain model node, no tints, no transform — the same shape the
+/// plain-def rows keep). The sibling `Damaged` property rides
+/// `isDamaged()` — no item json roots it, the table stays one row.
+pub const BROKEN_CONDITION_ON_TRUE: &[(&str, &str)] =
+    &[("elytra", "minecraft:item/elytra_broken")];
+
+/// The ITEM registry id's resting-hand model layers with the
+/// `minecraft:broken` condition's own verdict spoken: `broken = true`
+/// swaps the condition items' layers to the on_true branch's model
+/// (the torn elytra's icon/hand render the vanilla wear state wears —
+/// one damage point BEFORE the break, the same threshold the glide's
+/// `canGlideUsing` refusal pairs with), `false` or a non-condition
+/// item rides [`item_model_layers`] untouched.
+pub fn item_model_layers_broken(id: i32, broken: bool) -> Option<Vec<ItemModelLayer>> {
+    if broken {
+        let name = item_name(id)?;
+        if let Some((_, model)) = BROKEN_CONDITION_ON_TRUE
+            .iter()
+            .find(|(n, _)| *n == name)
+        {
+            return Some(vec![ItemModelLayer {
+                model: model.strip_prefix("minecraft:").unwrap_or(model),
+                tints: &[],
+                transform: None,
+            }]);
+        }
+    }
+    item_model_layers(id)
+}
+
 /// One resolved special layer: the geometry (the dump's polygons) and
 /// the texture id the pixels ride. The tinted banner flag binds its
 /// PER-COLOR pre-tinted variant ("entity/banner/banner_base_<dye>" —
@@ -1316,6 +1359,56 @@ mod tests {
         // offline lane's own vocabulary): the bow stays None there
         assert!(item_model_path(bow_id).is_none());
         assert_eq!(item_model_path(diamond_id), Some("item/diamond"));
+    }
+
+    /// THE BROKEN CONDITION'S OWN WALK (javap `Broken.get` =
+    /// `stack.nextDamageWillBreak()` verbatim; `nextDamageWillBreak` =
+    /// `isDamageableItem() && damage >= maxDamage - 1` — the if_icmplt
+    /// threshold the pc 17 crossing speaks): the elytra — the ONLY
+    /// root `minecraft:broken` condition the 26.2 items/ tree carries —
+    /// swaps to the on_true branch's plain model the torn verdict
+    /// wears, the resting arm the false answer keeps, the
+    /// non-condition items both verdicts ride the same.
+    #[test]
+    fn the_broken_condition_the_torn_elytra_wears() {
+        let wire = |name: &str| {
+            generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|n| *n == name)
+                .unwrap() as i32
+        };
+        // THE ONLY ROOT CONDITION (the one row the table keeps)
+        assert_eq!(BROKEN_CONDITION_ON_TRUE.len(), 1);
+        let elytra_id = wire("elytra");
+        // THE RESTING ARM (the RESOLVED table's on_false branch — the
+        // plain elytra model the fresh stack wears)
+        let rest = item_model_layers(elytra_id).expect("the elytra resolves");
+        assert_eq!(rest.len(), 1);
+        assert_eq!(rest[0].model, "item/elytra");
+        // THE TORN ARM (the on_true branch's model the verdict swaps —
+        // the plain node, no tints, no transform)
+        let torn = item_model_layers_broken(elytra_id, true).expect("the torn elytra resolves");
+        assert_eq!(torn.len(), 1);
+        assert_eq!(torn[0].model, "item/elytra_broken");
+        assert!(torn[0].tints.is_empty());
+        assert!(torn[0].transform.is_none());
+        // THE RESTING VERDICT THE FALSE ANSWER KEEPS (the plain
+        // accessor's own walk)
+        let untorn =
+            item_model_layers_broken(elytra_id, false).expect("the resting elytra resolves");
+        assert_eq!(untorn[0].model, "item/elytra");
+        // THE NON-CONDITION ITEM THE VERDICT NEVER MOVES (the plain
+        // def's own layers both verdicts speak — the field walk the
+        // bare struct's own shape keeps)
+        let diamond_id = wire("diamond");
+        let resting = item_model_layers(diamond_id).expect("the diamond resolves");
+        let broken = item_model_layers_broken(diamond_id, true).expect("the diamond resolves");
+        assert_eq!(resting.len(), broken.len(), "the same layer count");
+        for (a, b) in resting.iter().zip(broken.iter()) {
+            assert_eq!(a.model, b.model, "the plain def both verdicts wear");
+            assert_eq!(a.tints.len(), b.tints.len());
+            assert_eq!(a.transform.is_some(), b.transform.is_some());
+        }
     }
 
     /// THE USING BRANCH: the five gated items resolve through the

@@ -2033,6 +2033,21 @@ impl PlayerBody {
             && self.elytra_damage < ELYTRA_MAX_DAMAGE - 1
     }
 
+    /// THE STACK'S OWN VERDICT (javap `ItemStack.nextDamageWillBreak`
+    /// the 26.2 walk — the isDamageableItem gate the ifeq answers, the
+    /// `damage >= maxDamage - 1` threshold the if_icmplt compares,
+    /// pc 17 the crossing speaks): the `minecraft:broken` item-model
+    /// condition's own truth (the client's
+    /// `properties.conditional.Broken.get` the raw verdict reads) —
+    /// the worn elytra's ICON the verdict wears (the inventory's
+    /// armor row the draw consults, the elytra_broken model the
+    /// on_true branch carries), the glide the same threshold refuses
+    /// (fall_flying_can_glide's own tail — the torn elytra's two
+    /// evidences the one law pairs).
+    pub fn elytra_next_damage_will_break(&self) -> bool {
+        self.elytra_damage >= ELYTRA_MAX_DAMAGE - 1
+    }
+
     /// THE HURT LAW (javap `ItemStack.hurtAndBreak` the 26.2 walk —
     /// the processDurabilityChange's hasInfiniteMaterials gate the
     /// creative stack never carries, the applyDamage's `damage +=
@@ -4234,6 +4249,37 @@ mod tests {
         b.elytra_hurt_and_break(1);
         assert_eq!(b.elytra_damage, 100, "the creative gate the damage never rides");
         assert!(!b.elytra_broke_due, "the creative stack never breaks");
+    }
+
+    /// THE BROKEN VERDICT'S OWN LAW (javap
+    /// `ItemStack.nextDamageWillBreak` the 26.2 walk — the
+    /// `isDamageableItem && damage >= maxDamage - 1` threshold the
+    /// if_icmplt compares, pc 17 the crossing speaks): the
+    /// `minecraft:broken` item-model condition's own truth — the 430
+    /// stack the resting verdict keeps, the 431 stack the torn verdict
+    /// wears (ONE point before the break), the crossed stack stays
+    /// true, and the verdict the glide's refusal pairs (the SAME
+    /// threshold `fall_flying_can_glide`'s tail speaks — the torn
+    /// elytra's two evidences the one law keeps).
+    #[test]
+    fn the_broken_verdict_the_last_point_wears() {
+        let mut b = PlayerBody::new(0.0, 0.0, 0.0, 0.0, 0.0);
+        b.chest_glides = true;
+        b.fall_flying = true;
+        // THE FRESH-PENULTIMATE CROSSING (429..430 the resting arm)
+        b.elytra_damage = 429;
+        assert!(!b.elytra_next_damage_will_break(), "the 429 stack the resting verdict keeps");
+        b.elytra_damage = 430;
+        assert!(!b.elytra_next_damage_will_break(), "the 430 stack the resting verdict keeps");
+        assert!(b.fall_flying_can_glide(), "the 430 stack the glide still rides");
+        // THE TORN POINT (431 — the verdict flips, the glide refuses)
+        b.elytra_damage = 431;
+        assert!(b.elytra_next_damage_will_break(), "the 431 stack the torn verdict wears");
+        assert!(!b.fall_flying_can_glide(), "the 431 stack the glide's gate refuses");
+        // THE CROSSED STACK (432 — the broken stack stays true, the
+        // verdict the post-break reads never lies)
+        b.elytra_damage = 432;
+        assert!(b.elytra_next_damage_will_break(), "the crossed stack the verdict keeps true");
     }
 
     /// THE GLIDE'S OWN RETIRE (javap `LivingEntity.updateFallFlying`'s
