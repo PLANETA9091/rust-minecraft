@@ -1785,7 +1785,18 @@ pub fn run_gui_app(
             {
                 if window.is_key_pressed(*key, minifb::KeyRepeat::No) {
                     if !app.on_profiler_chart_digit(i as i32 + 1) {
-                        app.on_number_key(i);
+                        // THE SAVE/LOAD CHORDS' OWN ROUTE (vanilla
+                        // handleKeybinds's keySaveHotbarActivator (C) /
+                        // keyLoadHotbarActivator (X) isDown pair the
+                        // keyHotbarSlots loop reads): the creative
+                        // arm the chords consume, the plain select
+                        // every other verdict keeps (the lane's own
+                        // false the existing number-key walk answers)
+                        let save_down = window.is_key_down(Key::C);
+                        let load_down = window.is_key_down(Key::X);
+                        if !app.on_hotbar_save_load_key(i, save_down, load_down) {
+                            app.on_number_key(i);
+                        }
                     }
                 }
             }

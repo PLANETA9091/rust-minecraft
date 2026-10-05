@@ -6057,6 +6057,13 @@ pub struct App {
     /// carries no store — the row stays empty and the hotbar renders
     /// its chrome only (the honest shape the goldens pin).
     pub hotbar_slots: [(i32, i32); 9],
+    /// THE HOTBAR MANAGER'S OWN PAGES (javap `HotbarManager` the 26.2
+    /// jar — the nine `Hotbar` snapshots the save/load chords bank, the
+    /// `"0".."8"` rows the NBT file's own keys speak; the fresh-install
+    /// empty pages the client's in-memory stand-in keeps — the
+    /// `hotbar.nbt` file walk the later round owes, the `get(i)` lazy
+    /// load the once-flag keeps).
+    pub hotbar_manager: [[(i32, i32); 9]; 9],
     /// THE WINDOW-0 STORE'S OWN PROJECTION (the live store lane the
     /// chest's slots speak, the player's own inventory window): the
     /// full 46-slot shape in the wire's own numbering (result 0,
@@ -7592,6 +7599,7 @@ impl App {
             spectator_last_selection: None,
             bundle_contents: std::collections::HashMap::new(),
             hotbar_slots: [(0, 0); 9],
+            hotbar_manager: [[(0, 0); 9]; 9],
             live_inv_slots: [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS],
             live_inv_state_id: 0,
             live_inv_carried: (0, 0),
@@ -17031,6 +17039,103 @@ impl App {
                 selection: selection as u8,
             });
         }
+    }
+
+    /// THE HOTBAR SAVE/LOAD CHORDS' OWN LANE (javap `Minecraft
+    /// .handleKeybinds` pcs 154-278 + `CreativeModeInventoryScreen
+    /// .handleHotbarLoadOrSave(Minecraft, I, Z, Z)` the 26.2 jar walks
+    /// — the keyHotbarSlots loop the digit's rising edge answers, the
+    /// keySaveHotbarActivator (C) / keyLoadHotbarActivator (X) `isDown`
+    /// states the arm reads, the verdict chain in the bytecode's own
+    /// order): the SPECTATOR the plain route keeps (pc 199-223 — the
+    /// `spectatorGui.onHotbarSelected(i)` walk the chords never read,
+    /// the existing number-key lane's spectator arm answers), the
+    /// NON-creative the plain select keeps (pc 226-233 — the
+    /// `hasInfiniteMaterials` FALSE the `setSelectedSlot` else arm
+    /// wears), the SCREEN-OPEN the plain select keeps (pc 236-243 —
+    /// the `screen == null` gate the save/load arm wraps, the death
+    /// modal the same verdict answers), the NEITHER-modifier the plain
+    /// select keeps (pc 246-251), BOTH modifiers the LOAD wears (the
+    /// load param the call's own first boolean keeps — pc 30's
+    /// `iload_2` the load branch consumes first, the save branch the
+    /// `goto` return never reads). THE CREATIVE ARM the chords alone
+    /// consume:
+    /// THE LOAD (pc 30-108) — `HotbarManager.get(i).load(registryAccess)`
+    /// the nine stacks answer, the `Inventory.setItem(j, stack)` row
+    /// the j in 0..`getSelectionSize()` walk writes (the hotbar row's
+    /// own 0..8 container ids), the menu broadcast the carried stack
+    /// respeaks — the empty page the `(0, 0)` sentinels keep (the
+    /// vanilla `Hotbar.EMPTY_STACK` law). THE WIRE HALF the live
+    /// session never rides (`handleCreativeModeItemAdd` the
+    /// ServerboundSetCreativeModeSlot packet lane the bytecode 81-91
+    /// speaks — the packet lane the later round owes; the LIVE world
+    /// the plain select keeps, the honest silence the boat/bucket
+    /// lanes wear — the server-driven store the local write would
+    /// desync), the OFFLINE world the row the snapshot restores, the
+    /// HUD row the same-frame sync speaks, the held model the
+    /// selected stack's swap follows (the setItem's own selected-slot
+    /// reload the number-key lane keeps).
+    /// THE SAVE (pc 111-199) — `Hotbar.storeFrom(inventory, access)`
+    /// the hotbar row's OWN snapshot banks (`getItem(0..SIZE)` the
+    /// list walk speaks), the overlay message the
+    /// "inventory.hotbarSaved" law wears (the keyLoadHotbarActivator's
+    /// "X" + the digit's own name the `%1$s/%2$s` args keep — the
+    /// positional pair the local substitution answers), the
+    /// `HotbarManager.save()` file walk the in-memory pages answer
+    /// (the `hotbar.nbt` lane the later round owes).
+    pub fn on_hotbar_save_load_key(
+        &mut self,
+        selection: usize,
+        save_down: bool,
+        load_down: bool,
+    ) -> bool {
+        // THE SPECTATOR'S OWN ARM FIRST (the verdict order the bytecode
+        // keeps — the chords the spectator route never reads)
+        if self.game_mode == GameMode::Spectator {
+            return false;
+        }
+        // THE CREATIVE GATE (hasInfiniteMaterials — the survival and
+        // the adventure the plain select keeps)
+        if self.game_mode != GameMode::Creative {
+            return false;
+        }
+        // THE SCREEN-NULL GATE (the save/load arm's own wrap — the
+        // container screens the chord never reads, the death the modal
+        // keeps)
+        if self.screen != ScreenKind::World || self.dead {
+            return false;
+        }
+        // THE NEITHER-MODIFIER ARM (pc 246-251 — the plain select the
+        // else branch keeps)
+        if !save_down && !load_down {
+            return false;
+        }
+        // THE LIVE SESSION'S HONEST SILENCE (the load's wire half the
+        // ServerboundSetCreativeModeSlot lane carries — the packet lane
+        // the later round owes; the plain select the key keeps
+        // meanwhile)
+        if self.live_clicks.is_some() || self.world_is_network {
+            return false;
+        }
+        if load_down {
+            // THE LOAD ARM (pc 30-108 — the page the row wears)
+            let page = self.hotbar_manager[selection];
+            self.inventory.items[0..9].copy_from_slice(&page);
+            self.hotbar_slots = self.inventory.hotbar();
+            let id = self.held_id();
+            self.load_held_payload_from_id(id);
+        } else {
+            // THE SAVE ARM (pc 111-199 — the row the page banks, the
+            // overlay the law speaks)
+            self.hotbar_manager[selection] = self.inventory.hotbar();
+            let fmt = tr("inventory.hotbarSaved")
+                .unwrap_or("Item hotbar saved (restore with %1$s + %2$s)");
+            let msg = fmt
+                .replace("%1$s", "X")
+                .replace("%2$s", &(selection + 1).to_string());
+            self.set_overlay_message(&msg);
+        }
+        true
     }
 
     /// THE F KEY'S OWN LANE (javap Minecraft.handleKeybinds's
@@ -54701,6 +54806,175 @@ cow_sound_variant: None,
             app.inventory.items[slot].0,
             wire("lava_bucket"),
             "the lava bucket the transform speaks"
+        );
+    }
+
+    /// THE HOTBAR SAVE CHORD'S OWN PAGE — javap `Minecraft
+    /// .handleKeybinds` pc 258 + `CreativeModeInventoryScreen
+    /// .handleHotbarLoadOrSave` pc 111-199 the 26.2 walk (the C-down
+    /// chord the creative arm consumes): the `Hotbar.storeFrom` walk
+    /// the hotbar row's OWN nine stacks bank, the overlay message the
+    /// "inventory.hotbarSaved" law wears (the X + the digit's own name
+    /// the positional pair keeps), the row the save never touches.
+    #[test]
+    fn the_hotbar_save_chord_the_page_banks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // the hotbar row the distinct stacks wear (the storeFrom walk's
+        // own getItem(0..SIZE) read)
+        let row = [
+            (wire("stone"), 7),
+            (wire("dirt"), 13),
+            (wire("oak_planks"), 29),
+            (0, 0),
+            (wire("torch"), 41),
+            (wire("cobblestone"), 3),
+            (0, 0),
+            (wire("glass"), 17),
+            (wire("ladder"), 23),
+        ];
+        app.inventory.items[0..9].copy_from_slice(&row);
+        // THE SAVE CHORD (C + 4 — the saveDown && !loadDown verdict the
+        // arm consumes)
+        assert!(
+            app.on_hotbar_save_load_key(3, true, false),
+            "the creative save the chord consumes"
+        );
+        // THE PAGE (the row's own snapshot the HotbarManager banks)
+        assert_eq!(
+            app.hotbar_manager[3], row,
+            "the page the storeFrom walk banks"
+        );
+        // THE ROW (the save the inventory never touches)
+        assert_eq!(
+            &app.inventory.items[0..9],
+            &row,
+            "the row the save never touches"
+        );
+        // THE OVERLAY (the inventory.hotbarSaved law — the X + 4 pair
+        // the positional args keep)
+        assert_eq!(
+            app.overlay_message.as_deref(),
+            Some("Item hotbar saved (restore with X + 4)"),
+            "the overlay the save law speaks"
+        );
+    }
+
+    /// THE HOTBAR LOAD CHORD'S OWN ROW — javap `handleHotbarLoadOrSave`
+    /// pc 30-108 the 26.2 walk (the X-down chord the creative arm
+    /// consumes, the BOTH-modifier press the load param's own first
+    /// boolean wears — pc 30's `iload_2` the load branch consumes
+    /// first, the save branch the `goto` return never reads): the
+    /// `Inventory.setItem(j, stack)` row the j in 0..9 walk writes,
+    /// the HUD row the same-frame sync speaks, the empty page the
+    /// `(0, 0)` sentinels keep, the overlay the load never speaks.
+    #[test]
+    fn the_hotbar_load_chord_the_row_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let slot = app.selected_hotbar;
+        // the page the "previously saved" stacks wear (the
+        // HotbarManager.get(i) walk's own answer)
+        let page = [
+            (wire("sand"), 31),
+            (0, 0),
+            (wire("bricks"), 11),
+            (wire("bookshelf"), 2),
+            (0, 0),
+            (wire("water_bucket"), 1),
+            (wire("stick"), 19),
+            (0, 0),
+            (wire("red_wool"), 5),
+        ];
+        app.hotbar_manager[5] = page;
+        // the row the garbage wears (the load's own overwrite answers)
+        app.inventory.items[0] = (wire("diamond_sword"), 1);
+        app.inventory.items[8] = (wire("apple"), 3);
+        // THE LOAD CHORD (X + 6 — and the BOTH-modifier press the same
+        // load verdict wears: the load param the first boolean keeps)
+        assert!(
+            app.on_hotbar_save_load_key(5, true, true),
+            "the creative load the chord consumes"
+        );
+        // THE ROW (the setItem walk the page restores — the garbage the
+        // snapshot's own truth replaces)
+        assert_eq!(
+            &app.inventory.items[0..9],
+            &page,
+            "the row the load walk restores"
+        );
+        // THE HUD ROW (the same-frame sync the broadcastChanges law
+        // keeps)
+        assert_eq!(app.hotbar_slots, page, "the HUD row the sync speaks");
+        // THE HELD MODEL (the selected slot's own stack the reload
+        // follows)
+        assert_eq!(
+            app.inventory.items[slot].0,
+            page[slot].0,
+            "the selected stack the row's own id keeps"
+        );
+        // THE OVERLAY (the load the message never speaks)
+        assert_eq!(
+            app.overlay_message, None,
+            "the overlay the load never wears"
+        );
+    }
+
+    /// THE SURVIVAL CHORD'S OWN REFUSAL — javap `Minecraft
+    /// .handleKeybinds` pcs 226-233 the 26.2 walk (the
+    /// `hasInfiniteMaterials` FALSE the save/load arm skips, the
+    /// `setSelectedSlot` else arm pc 264-272 the plain select wears):
+    /// the survival chord the arm never consumes, the page the
+    /// snapshot never banks, the plain select the number key keeps.
+    #[test]
+    fn the_survival_chord_the_plain_select_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the survival default the constructor keeps (the creative
+        // gate's own FALSE verdict)
+        assert_eq!(
+            app.game_mode,
+            GameMode::Survival,
+            "the survival default the fresh app keeps"
+        );
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        app.inventory.items[0] = (wire("stone"), 9);
+        // THE REFUSAL (C + 3 the survival verdict never consumes)
+        assert!(
+            !app.on_hotbar_save_load_key(2, true, false),
+            "the survival chord the arm refuses"
+        );
+        // THE PAGE (the snapshot never banks — the empty page the
+        // fresh install keeps)
+        assert_eq!(
+            app.hotbar_manager[2],
+            [(0, 0); 9],
+            "the page the refusal never banks"
+        );
+        // THE ROW (the save the inventory never wears)
+        assert_eq!(
+            app.inventory.items[0],
+            (wire("stone"), 9),
+            "the row the chord never touches"
         );
     }
 
