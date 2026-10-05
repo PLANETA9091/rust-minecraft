@@ -24163,12 +24163,17 @@ impl App {
                     // walk the BLOCK-use pass follows: the
                     // GameType.useItemOn dispatch the block.use arm
                     // FIRST serves, the non-TNT cell the pass the
-                    // item's own walk reaches). The fire_charge's own
-                    // placement a SEPARATE class speaks (its useOn the
-                    // setBlockAndUpdate walk the javap answers) — the
-                    // held gate the flint alone keeps, the charge's
-                    // walk a follow-up round's own step wears.
+                    // item's own walk reaches).
                     if let Some(placed) = self.on_right_press_flint_placement_arm(&hit) {
+                        return placed;
+                    }
+                    // THE FIRE CHARGE'S OWN PLACEMENT ARM (javap
+                    // FireChargeItem.useOn — the separate class's own
+                    // walk the same pass serves: the canLight consults
+                    // the clicked read never fires the offline palette
+                    // the three kinds never carries, the placement
+                    // branch the setBlockAndUpdate + shrink walk keeps)
+                    if let Some(placed) = self.on_right_press_fire_charge_placement_arm(&hit) {
                         return placed;
                     }
                 } else if held == "brush" {
@@ -27760,6 +27765,119 @@ impl App {
         // inventory speaks — the durability component the vanilla's
         // own EquipmentSlot walk reads, the fold the honest no-op
         // keeps)
+        Some(true)
+    }
+
+    /// THE FIRE CHARGE'S OWN PLACEMENT ARM — javap `FireChargeItem.useOn`
+    /// over the real 26.2 jar (the item's own walk the BLOCK-use pass
+    /// reaches, the flint arm's own sibling): the clicked cell's
+    /// `canLight` consults FIRST (the CampfireBlock/CandleBlock/
+    /// CandleCakeBlock rows the lit-arm serves — the offline palette the
+    /// three kinds never carries, the branch the clicked read never
+    /// fires), else the placement cell the clickedPos.relative(face)
+    /// keeps, the `BaseFireBlock.canBePlacedAt` gate the isAir +
+    /// canSurvive arms wears, the sound-then-set order the private
+    /// playSound serves (the FIRECHARGE_USE row the clinit's #3239
+    /// banks — "item.firecharge.use", volume 1.0F, the pitch the
+    /// `(r - r) * 0.2F + 1.0F` fold the rng-less replay keeps — the
+    /// constant 1.0 the subtraction never splits, the splash's own
+    /// (r - r) precedent the ignite arm wears), the setBlockAndUpdate
+    /// + the BLOCK_PLACE gameEvent the sculk lane's own follow-up
+    /// speaks, then the `stack.shrink(1)` the TNT arm's consume block
+    /// answers (the (id, count) pair the offline inventory speaks —
+    /// the zero the empty slot wears).
+    fn on_right_press_fire_charge_placement_arm(
+        &mut self,
+        hit: &crate::world::ClipHit,
+    ) -> Option<bool> {
+        // THE HELD GATE: the fire_charge item the walk owns (the
+        // flint's own arm the sibling gate keeps — the TNT arm's
+        // shared igniter gate the prime lane keeps)
+        let held = self.held_id().and_then(mc_registry::item_name)?;
+        if held != "fire_charge" {
+            return None;
+        }
+        // THE PLACEMENT POS: the clicked cell + the entry face's
+        // normal (the context's own relative walk — the same cell the
+        // flint arm computes)
+        let normal = crate::world::World::DIRECTION_NORMAL[hit.face as usize];
+        let cell = (
+            hit.pos.0 + normal.0,
+            hit.pos.1 + normal.1,
+            hit.pos.2 + normal.2,
+        );
+        // THE CANBEPLACEDAT WALK (one immutable borrow — the mutable
+        // prediction never crosses): the target cell air, then the
+        // survival law the flint arm's own walk keeps (the below
+        // cell's sturdy UP face OR the six-way burnable scan the
+        // Direction.values() order keeps — DOWN, UP, NORTH, SOUTH,
+        // WEST, EAST)
+        {
+            let world = self.active_world()?;
+            if world.get(cell.0, cell.1, cell.2) != crate::world::AIR {
+                return None; // the isAir refusal — the FAIL keeps
+            }
+            let below = world.get(cell.0, cell.1 - 1, cell.2);
+            let neighbors = [
+                world.get(cell.0, cell.1 - 1, cell.2), // DOWN
+                world.get(cell.0, cell.1 + 1, cell.2), // UP
+                world.get(cell.0, cell.1, cell.2 - 1), // NORTH
+                world.get(cell.0, cell.1, cell.2 + 1), // SOUTH
+                world.get(cell.0 - 1, cell.1, cell.2), // WEST
+                world.get(cell.0 + 1, cell.1, cell.2), // EAST
+            ];
+            if !crate::world::fire_can_survive(below, neighbors) {
+                return None; // the canSurvive refusal — the FAIL keeps
+            }
+        }
+        // THE SOUND BEFORE THE SET (the private playSound's own order
+        // — the FIRECHARGE_USE row the real table carries, the pitch
+        // the (r - r) * 0.2F + 1.0F fold the rng-less replay keeps —
+        // the constant 1.0 the subtraction never splits, the mob_rng
+        // the fold never advances)
+        let ear = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        let (tx, ty, tz) = (
+            cell.0 as f64 + 0.5,
+            cell.1 as f64 + 0.5,
+            cell.2 as f64 + 0.5,
+        );
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "item.firecharge.use",
+            1.0,
+            1.0,
+            ear_distance(ear, tx, ty, tz),
+            ear_pan(ear, yaw, tx, ty, tz),
+        );
+        // THE OFFLINE PREDICTION: the fire lands in the App's own
+        // terrain and the mesh re-speaks (the networked world's fire
+        // rides the server's chunk refresh — no local edit). The
+        // relight the emission row speaks (the fire's 15 the light
+        // grid's own walk bakes).
+        if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            world.set(cell.0, cell.1, cell.2, crate::world::FIRE);
+            world.relight();
+            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        }
+        // THE CONSUMPTION'S OWN WALK: the `stack.shrink(1)` the TNT
+        // arm's consume block answers (the (id, count) pair the
+        // offline inventory speaks — the zero the empty slot wears,
+        // the hotbar the refresh re-speaks)
+        if let Some(id) = self.held_id() {
+            let sel = self.selected_hotbar;
+            let stack = self.inventory.items[sel];
+            if stack.1 > 0 && stack.0 == id {
+                self.inventory.items[sel].1 -= 1;
+                if self.inventory.items[sel].1 <= 0 {
+                    self.inventory.items[sel] = (0, 0);
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+            }
+        }
         Some(true)
     }
 
@@ -73018,6 +73136,175 @@ cow_sound_variant: None,
             app.offline_world.as_ref().unwrap().get(c, top, c),
             crate::world::FIRE,
             "the location arm's fire the cell wears"
+        );
+    }
+
+    #[test]
+    fn the_fire_charge_placement_the_world_lands() {
+        // THE ITEM'S OWN USEON WALK (javap FireChargeItem.useOn the
+        // 26.2 jar speaks): the non-TNT cell the BLOCK-use pass rides,
+        // the placement cell the entry face's normal keeps, the
+        // canBePlacedAt gate the isAir + canSurvive arms wears, the
+        // sound-then-set order the private playSound serves, the
+        // shrink(1) the count walk keeps, the FIRE the above-stone
+        // cell wears.
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/fire_charge"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE STONE'S OWN STAGE (the flint arm's own walk — the hit
+        // cell the solid ground keeps, the target the honest air wears)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::STONE);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::AIR);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let (tx, rx) = std::sync::mpsc::channel();
+        app.live_clicks = Some(tx);
+        // THE CONSUMPTION'S OWN SEED (the (id, count) pair the shrink
+        // walk answers)
+        let charge_id = mc_registry::item_id_by_name("fire_charge").expect("the wire rides");
+        let sel = app.selected_hotbar;
+        app.inventory.items[sel] = (charge_id, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        // THE PLACEMENT: the SUCCESS verdict the press consumes
+        assert!(
+            app.on_right_press(0, 0),
+            "the useOn SUCCESS the press consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FIRE,
+            "the setBlockAndUpdate(FIRE) the above-stone cell wears"
+        );
+        assert_eq!(
+            app.inventory.items[sel],
+            (charge_id, 2),
+            "the shrink(1) the count walk keeps"
+        );
+        assert!(
+            app.world_quads.is_some(),
+            "the mesh re-speak the world set bakes"
+        );
+        assert!(
+            rx.try_recv().is_ok(),
+            "the UseItemOn echo the block press rides"
+        );
+        // THE VOICE'S OWN ROW (the private playSound the verdict's
+        // first fruit speaks — the FIRECHARGE_USE row the real table
+        // carries, the pitch the (r - r) * 0.2F + 1.0F fold the
+        // rng-less replay keeps — the constant 1.0 the log's p field
+        // wears)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.firecharge.use @") && e.contains("p1.000000")),
+                "the FIRECHARGE_USE voice the placement plays — the pitch the fold keeps"
+            );
+        }
+        // THE ISAIR ARM'S OWN REFUSAL (the second press the same column
+        // aims — the flame cell the clip's Empty-collision row passes,
+        // the stone top face the hit again serves, the non-air target
+        // the FAIL keeps: the press the item lanes' PASS refuses, the
+        // count the shrink never touches)
+        app.sounds.events.clear();
+        assert!(
+            !app.on_right_press(0, 0),
+            "the non-air target the press never consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FIRE,
+            "the fire cell the refused press never clears"
+        );
+        assert_eq!(
+            app.inventory.items[sel],
+            (charge_id, 2),
+            "the FAIL the shrink never touches"
+        );
+        // THE CANSURVIVE ARM'S OWN REFUSAL (the farmland the 15/16
+        // column wears — the sturdy arm refuses, the stone-sided
+        // neighborhood the burnable scan refuses: the FAIL the press
+        // never consumes)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/fire_charge"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top - 1, c, crate::world::FARMLAND);
+            // the six-way scan's honest emptiness (the spawn flora the
+            // neighborhood may carry — the deterministic refusal the
+            // cleared cells keep)
+            w.set(c, top, c, crate::world::AIR);
+            w.set(c, top + 1, c, crate::world::AIR);
+            w.set(c, top, c - 1, crate::world::AIR);
+            w.set(c, top, c + 1, crate::world::AIR);
+            w.set(c - 1, top, c, crate::world::STONE);
+            w.set(c + 1, top, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let charge_id = mc_registry::item_id_by_name("fire_charge").expect("the wire rides");
+        let sel = app.selected_hotbar;
+        app.inventory.items[sel] = (charge_id, 2);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(
+            !app.on_right_press(0, 0),
+            "the farmland's no-odds cell the press never consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the refused fire the cell never wears"
+        );
+        assert_eq!(
+            app.inventory.items[sel],
+            (charge_id, 2),
+            "the refusal the count never touches"
+        );
+        // THE LOCATION ARM'S OWN ANSWER (the west log the burnable
+        // odds speak — the farmland the sturdy arm refuses, the
+        // six-way scan the log's ignite row answers, the fire lands)
+        // + THE ZERO'S OWN SLOT (the count-1 stack the last shrink
+        // empties — the (0, 0) pair the empty slot wears, the hotbar
+        // the refresh re-speaks)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c - 1, top, c, crate::world::LOG);
+        app.inventory.items[sel] = (charge_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(
+            app.on_right_press(0, 0),
+            "the log's odds the placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FIRE,
+            "the location arm's fire the cell wears"
+        );
+        assert_eq!(
+            app.inventory.items[sel],
+            (0, 0),
+            "the last shrink the empty slot wears"
         );
     }
 
