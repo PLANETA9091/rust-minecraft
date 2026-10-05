@@ -1543,6 +1543,14 @@ pub fn run_gui_app(
         WindowOptions { resize: true, ..WindowOptions::default() },
     )?;
     let mut app = App::new(seed);
+    // THE HOTBAR MANAGER'S OWN GAME DIR (javap the HotbarManager ctor pc
+    // 17-22 the 26.2 walk — `Path.resolve("hotbar.nbt")` the optionsFile
+    // field keeps; the vanilla default game dir the client's own cwd
+    // names, the options.txt row the same dir shares): the save chord's
+    // `HotbarManager.save()` pc 199 walk writes it, the get(i) once-flag's
+    // lazy `load()` walk reads it — the headless boot the None keeps.
+    app.hotbar_options_file =
+        Some(std::env::current_dir().unwrap_or_default().join("hotbar.nbt"));
     app.offline_held_updated(held_item);
     app.offline_offhand_updated(offhand_item);
     // THE SAVE-DRAFTS OPTION'S OWN SEED (the --no-save-chat-drafts flag

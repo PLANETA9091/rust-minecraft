@@ -145,6 +145,29 @@ pub fn write_bare_nbt(value: &Nbt, out: &mut Vec<u8>) -> io::Result<()> {
     write_payload(value, out, 0)
 }
 
+/// Write one NBT value in the named-root FILE format vanilla's
+/// `NbtIo.write(CompoundTag, Path)` speaks (javap the 26.2 jar — the
+/// writeByte the root tag's own id keeps, the writeUTF the root name
+/// pairs — hotbar.nbt's `""` root the empty string names). The file
+/// bytes: tag id + u16-prefixed name + payload — the read_file_nbt
+/// reader's mirror walk.
+pub fn write_file_nbt(root_name: &str, value: &Nbt, out: &mut Vec<u8>) -> io::Result<()> {
+    out.push(tag_of(value));
+    write_nbt_string(root_name, out)?;
+    write_payload(value, out, 0)
+}
+
+/// Read one named-root FILE value (the `NbtIo.read` walk's mirror):
+/// the tag id byte, the u16-prefixed root name, the payload. The
+/// (name, value) pair returns — the hotbar.nbt lane the root's name
+/// never reads, the honest pair the caller keeps.
+pub fn read_file_nbt(r: &mut &[u8]) -> io::Result<(String, Nbt)> {
+    let tag = read_u8(r)?;
+    let name = read_nbt_string(r)?;
+    let value = read_payload(r, tag, 0)?;
+    Ok((name, value))
+}
+
 // ---------------------------------------------------------------------------
 // reader internals
 // ---------------------------------------------------------------------------
@@ -530,5 +553,34 @@ mod tests {
         let mut cursor: &[u8] = &buf;
         let back = read_network_nbt(&mut cursor).expect("read");
         assert_eq!(back, tree);
+    }
+
+    #[test]
+    fn file_nbt_the_named_root_wears() {
+        // THE BYTES THE FILE FORMAT KEEPS (javap NbtIo.write — the
+        // writeByte the tag id keeps, the writeUTF the name pairs): the
+        // 0x0A root, the u16 "" name, the payload
+        let tree = Nbt::Compound(vec![("DataVersion".to_string(), Nbt::Int(4903))]);
+        let mut buf = Vec::new();
+        write_file_nbt("", &tree, &mut buf).expect("write");
+        assert_eq!(buf[0], 0x0A, "root compound tag");
+        assert_eq!(buf[1], 0x00, "root name length high byte");
+        assert_eq!(buf[2], 0x00, "root name length low byte");
+        assert_eq!(buf[3], 0x03, "the entry's Int tag the container writes first");
+        assert_eq!(&buf[4..6], &[0x00, 0x0B], "entry name length");
+        assert_eq!(&buf[6..17], b"DataVersion", "entry name");
+        assert_eq!(&buf[17..21], &4903_i32.to_be_bytes(), "the version Int");
+        // THE READ MIRROR (the NbtIo.read walk) — the pair returns
+        let mut cursor: &[u8] = &buf;
+        let (name, back) = read_file_nbt(&mut cursor).expect("read");
+        assert_eq!(name, "", "the hotbar.nbt root the empty string names");
+        assert_eq!(back, tree);
+        // THE NAMED ROOT (a foreign file's own name the honest pair keeps)
+        let mut buf2 = Vec::new();
+        write_file_nbt("SomeServer", &tree, &mut buf2).expect("write");
+        let mut cursor: &[u8] = &buf2;
+        let (name2, back2) = read_file_nbt(&mut cursor).expect("read");
+        assert_eq!(name2, "SomeServer");
+        assert_eq!(back2, tree);
     }
 }

@@ -6064,6 +6064,21 @@ pub struct App {
     /// `hotbar.nbt` file walk the later round owes, the `get(i)` lazy
     /// load the once-flag keeps).
     pub hotbar_manager: [[(i32, i32); 9]; 9],
+    /// THE HOTBAR MANAGER'S OWN FILE (javap the HotbarManager ctor pc 17-22
+    /// — `Path.resolve("hotbar.nbt")` the optionsFile field keeps, the
+    /// game dir the vanilla default's own cwd names): the file the save
+    /// chord's `HotbarManager.save()` pc 199 walk writes and the
+    /// `get(i)` once-flag's lazy `load()` walk reads. `None` keeps the
+    /// no-game-dir boot (the headless goldens' own determinism — the
+    /// file lanes the chord never spends), `Some` the real game loop's
+    /// walk rides.
+    pub hotbar_options_file: Option<std::path::PathBuf>,
+    /// THE ONCE-FLAG'S OWN LAZY LANE (javap `HotbarManager.get(I)` pcs
+    /// 1-13 — the `loaded` field the verdict keeps, the first `get`'s
+    /// `load()` the file read speaks, the flag the page walk banks
+    /// before the pages serve): the chord's first touch the file wears,
+    /// every later touch the in-memory pages keep.
+    pub hotbar_file_loaded: bool,
     /// THE WINDOW-0 STORE'S OWN PROJECTION (the live store lane the
     /// chest's slots speak, the player's own inventory window): the
     /// full 46-slot shape in the wire's own numbering (result 0,
@@ -7542,6 +7557,101 @@ pub(crate) fn name_tag_planes(
     (Some(bg), glyphs)
 }
 
+/// THE FILE'S OWN DATA VERSION (javap `NbtUtils.addCurrentDataVersion`
+/// the 26.2 walk — `SharedConstants.getCurrentVersion().dataVersion()
+/// .version()` the root compound's own Int field keeps; the jar's
+/// version.json the 4903 world_version answers — the save writes it,
+/// the load's DataFixer walk the client's own table never needs).
+pub const HOTBAR_DATA_VERSION: i32 = 4903;
+
+/// THE HOTBAR PAGES' OWN ROOT COMPOUND — javap `HotbarManager.save()`
+/// pcs 4-54 the 26.2 walk (the `NbtUtils.addCurrentDataVersion` root
+/// the save builds, the nine `String.valueOf(i)` keys the get(i)
+/// loop speaks, the `Hotbar.CODEC.encodeStart` page each value
+/// wears): `{"DataVersion": Int(4903), "0".."8": List<9 compound>}`.
+/// THE STACK'S OWN SHAPE the `ItemStack.OPTIONAL_CODEC` walk keeps —
+/// the empty stack the OPTIONAL empty map `{}` answers (the
+/// optionalEmptyMap walk the client's `(0, 0)` sentinel wears), the
+/// non-empty the `"id"` + `"count"` pair speaks (the id the
+/// `minecraft:` prefix the BuiltInRegistries.ITEM key wears, the
+/// count the primitive-with-default field the codec always writes —
+/// the `optionalFieldOf("count", 1)` pair the fallback keeps, the
+/// `components` the client's component-less stacks never carry).
+/// THE HONEST REFUSAL the unresolvable id keeps: the stack the empty
+/// compound wears — the guessed `minecraft:` name the encode never
+/// speaks.
+pub fn hotbar_pages_to_nbt(pages: &[[(i32, i32); 9]; 9]) -> mc_protocol::nbt::Nbt {
+    let item_compound = |(id, count): (i32, i32)| -> mc_protocol::nbt::Nbt {
+        let name = if id == 0 {
+            None
+        } else {
+            mc_registry::item_name(id).map(|n| format!("minecraft:{n}"))
+        };
+        match name {
+            Some(id) => mc_protocol::nbt::Nbt::Compound(vec![
+                ("id".to_string(), mc_protocol::nbt::Nbt::String(id)),
+                ("count".to_string(), mc_protocol::nbt::Nbt::Int(count)),
+            ]),
+            None => mc_protocol::nbt::Nbt::Compound(vec![]),
+        }
+    };
+    let mut root: Vec<(String, mc_protocol::nbt::Nbt)> =
+        vec![("DataVersion".to_string(), mc_protocol::nbt::Nbt::Int(HOTBAR_DATA_VERSION))];
+    for (i, page) in pages.iter().enumerate() {
+        let items = page.iter().copied().map(item_compound).collect();
+        root.push((i.to_string(), mc_protocol::nbt::Nbt::List(items)));
+    }
+    mc_protocol::nbt::Nbt::Compound(root)
+}
+
+/// THE FILE ROOT'S OWN PAGES — javap `HotbarManager.load()` pcs 17-104
+/// the 26.2 walk (the `NbtIo.read` compound the file answers, the nine
+/// `String.valueOf(i)` rows the get walk reads, the
+/// `Hotbar.CODEC.parse(NbtOps)` page each row wears, the
+/// `resultOrPartial` fresh empties the parse failure keeps): the
+/// tolerant walk the client's stand-in keeps — the missing page the
+/// empty sentinels answer, the empty compound the `(0, 0)` stack
+/// wears, the `"count"` the fallback-1 field the absent entry keeps
+/// (the `optionalFieldOf` decode law), the `"minecraft:"` prefix the
+/// strip the resolver's plain table reads, the unknown name the
+/// honest empty stack keeps — never a guessed id.
+pub fn hotbar_pages_from_nbt(value: &mc_protocol::nbt::Nbt) -> [[(i32, i32); 9]; 9] {
+    let mut pages = [[(0, 0); 9]; 9];
+    let mc_protocol::nbt::Nbt::Compound(entries) = value else {
+        return pages;
+    };
+    for (i, page) in pages.iter_mut().enumerate() {
+        let Some((_, mc_protocol::nbt::Nbt::List(items))) =
+            entries.iter().find(|(k, _)| k == &i.to_string())
+        else {
+            continue;
+        };
+        for (j, item) in items.iter().enumerate().take(9) {
+            let mc_protocol::nbt::Nbt::Compound(fields) = item else {
+                continue;
+            };
+            if fields.is_empty() {
+                continue; // the OPTIONAL empty map the empty stack wears
+            }
+            let Some((_, mc_protocol::nbt::Nbt::String(id))) =
+                fields.iter().find(|(k, _)| k == "id")
+            else {
+                continue;
+            };
+            let count = fields
+                .iter()
+                .find(|(k, _)| k == "count")
+                .and_then(|(_, v)| v.as_i32())
+                .unwrap_or(1);
+            let plain = id.strip_prefix("minecraft:").unwrap_or(id);
+            if let Some(wire_id) = mc_registry::item_id_by_name(plain) {
+                page[j] = (wire_id, count);
+            }
+        }
+    }
+    pages
+}
+
 impl App {
     /// Deterministic boot: splash selection from the seed (vanilla picks a
     /// random line; here the RNG is seeded for reproducible rendering).
@@ -7600,6 +7710,8 @@ impl App {
             bundle_contents: std::collections::HashMap::new(),
             hotbar_slots: [(0, 0); 9],
             hotbar_manager: [[(0, 0); 9]; 9],
+            hotbar_options_file: None,
+            hotbar_file_loaded: false,
             live_inv_slots: [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS],
             live_inv_state_id: 0,
             live_inv_carried: (0, 0),
@@ -17121,6 +17233,11 @@ impl App {
         if !save_down && !load_down {
             return false;
         }
+        // THE FILE'S OWN ONCE-FLAG (javap get(I) pcs 1-13 — both arms
+        // the get(i) walk touches, the first chord the lazy load
+        // speaks, the file the fresh-install empties answer when the
+        // game dir carries none)
+        self.hotbar_file_load_once();
         if load_down {
             // THE LOAD ARM (pc 30-108 — the page the row wears)
             let page = self.hotbar_manager[selection];
@@ -17159,6 +17276,10 @@ impl App {
                 self.inventory.hotbar()
             };
             self.hotbar_manager[selection] = row;
+            // THE FILE'S OWN WALK (javap handleHotbarLoadOrSave pc 199 —
+            // the `HotbarManager.save()` the page's bank serves — the
+            // hotbar.nbt the game dir keeps, the restart the pages wear)
+            self.hotbar_file_save();
             let fmt = tr("inventory.hotbarSaved")
                 .unwrap_or("Item hotbar saved (restore with %1$s + %2$s)");
             let msg = fmt
@@ -17167,6 +17288,52 @@ impl App {
             self.set_overlay_message(&msg);
         }
         true
+    }
+
+    /// THE FILE'S OWN LAZY LOAD — javap `HotbarManager.get(I)` pcs 1-13
+    /// the 26.2 walk (the `loaded` once-flag the verdict keeps, the
+    /// first get's `load()` the `NbtIo.read` walk speaks): the file the
+    /// `hotbar_pages_from_nbt` parse wears, the fresh-install empties
+    /// the missing/corrupt file keeps (the `resultOrPartial` failure
+    /// the vanilla log answers — the honest empties, never a guessed
+    /// page), the flag the page walk banks so the later chords the
+    /// in-memory pages keep. THE NONE BOOT the no-game-dir stand-in
+    /// keeps — the flag banks, the file lanes the chord never spends
+    /// (the headless goldens' own determinism).
+    fn hotbar_file_load_once(&mut self) {
+        if self.hotbar_file_loaded {
+            return;
+        }
+        self.hotbar_file_loaded = true;
+        let Some(path) = self.hotbar_options_file.clone() else {
+            return;
+        };
+        if let Ok(bytes) = std::fs::read(&path) {
+            if let Ok((_, root)) =
+                mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice())
+            {
+                self.hotbar_manager = hotbar_pages_from_nbt(&root);
+            }
+        }
+    }
+
+    /// THE FILE'S OWN SAVE WALK — javap `HotbarManager.save()` pcs 4-69
+    /// the 26.2 walk (the root compound the nine `String.valueOf(i)`
+    /// keys keep, the `NbtIo.write(compound, optionsFile)` the pc 69
+    /// walk serves — the uncompressed lane the writeCompressed sibling
+    /// never wears): the pages the `hotbar_pages_to_nbt` encode, the
+    /// file the write speaks, the failure the silent keep answers (the
+    /// in-memory page the truth stays — the vanilla log the error
+    /// walks). THE NONE BOOT the no-game-dir stand-in keeps.
+    fn hotbar_file_save(&self) {
+        let Some(path) = &self.hotbar_options_file else {
+            return;
+        };
+        let root = hotbar_pages_to_nbt(&self.hotbar_manager);
+        let mut bytes = Vec::new();
+        if mc_protocol::nbt::write_file_nbt("", &root, &mut bytes).is_ok() {
+            let _ = std::fs::write(path, &bytes);
+        }
     }
 
     /// THE F KEY'S OWN LANE (javap Minecraft.handleKeybinds's
@@ -55007,6 +55174,205 @@ cow_sound_variant: None,
             (wire("stone"), 9),
             "the row the chord never touches"
         );
+    }
+
+    /// THE HOTBAR FILE'S OWN PAGES — javap `HotbarManager.save()` pcs
+    /// 4-54 + `NbtIo.write` the 26.2 walk (the root compound the
+    /// DataVersion row keeps, the `"0".."8"` list rows the get loop
+    /// speaks, the `ItemStack.OPTIONAL_CODEC` item compound each entry
+    /// wears): the round-trip the read_file_nbt mirror answers — the
+    /// empty stack the `{}` compound keeps, the id the `minecraft:`
+    /// prefix the registry key wears, the count the Int the
+    /// always-written field keeps, the DataVersion the 4903 the jar's
+    /// own world_version answers.
+    #[test]
+    fn the_hotbar_file_the_pages_wear() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut pages = [[(0, 0); 9]; 9];
+        pages[2] = [
+            (wire("stone"), 7),
+            (0, 0),
+            (wire("dirt"), 1),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (wire("torch"), 41),
+        ];
+        // THE ROOT (the save walk's own shape)
+        let root = hotbar_pages_to_nbt(&pages);
+        let mc_protocol::nbt::Nbt::Compound(entries) = &root else {
+            panic!("the root the compound wears");
+        };
+        assert_eq!(
+            entries[0],
+            ("DataVersion".to_string(), mc_protocol::nbt::Nbt::Int(HOTBAR_DATA_VERSION)),
+            "the DataVersion row the root keeps"
+        );
+        let mc_protocol::nbt::Nbt::List(items) = &entries[3].1 else {
+            panic!("the page 2 the list wears");
+        };
+        // THE EMPTY STACK (the OPTIONAL empty map the `{}` wears)
+        assert_eq!(
+            items[1],
+            mc_protocol::nbt::Nbt::Compound(vec![]),
+            "the empty stack the empty compound keeps"
+        );
+        // THE NON-EMPTY (the id the minecraft: prefix wears, the count
+        // the Int the always-written field keeps)
+        assert_eq!(
+            items[0],
+            mc_protocol::nbt::Nbt::Compound(vec![
+                ("id".to_string(), mc_protocol::nbt::Nbt::String("minecraft:stone".to_string())),
+                ("count".to_string(), mc_protocol::nbt::Nbt::Int(7)),
+            ]),
+            "the stone stack the id+count pair wears"
+        );
+        // THE COUNT-1 (the field the same always-written walk keeps)
+        assert_eq!(
+            items[2],
+            mc_protocol::nbt::Nbt::Compound(vec![
+                ("id".to_string(), mc_protocol::nbt::Nbt::String("minecraft:dirt".to_string())),
+                ("count".to_string(), mc_protocol::nbt::Nbt::Int(1)),
+            ]),
+            "the count-1 stack the Int the pair keeps"
+        );
+        // THE ROUND-TRIP (the NbtIo.write/read mirror the file format
+        // keeps — the parse the same pages answer)
+        let mut bytes = Vec::new();
+        mc_protocol::nbt::write_file_nbt("", &root, &mut bytes).expect("the write serves");
+        let (_, back) =
+            mc_protocol::nbt::read_file_nbt(&mut bytes.as_slice()).expect("the read serves");
+        assert_eq!(
+            hotbar_pages_from_nbt(&back),
+            pages,
+            "the pages the round-trip wears"
+        );
+    }
+
+    /// THE FILE CHORD'S OWN RESTART — javap `HotbarManager` the 26.2
+    /// walk (the save chord's `HotbarManager.save()` pc 199 the file
+    /// writes, the fresh app's `get(i)` once-flag pc 1-13 the lazy
+    /// `load()` speaks): the banked page the file wears, the NEW app
+    /// the same options file the row restores — the restart walk the
+    /// vanilla client's own pages keep.
+    #[test]
+    fn the_file_chord_the_restart_wears() {
+        let dir = std::env::temp_dir().join(format!("mc2rs-hotbar-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("hotbar-save-round.nbt");
+        let _ = std::fs::remove_file(&file);
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        app.hotbar_options_file = Some(file.clone());
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let row = [
+            (wire("stone"), 7),
+            (wire("dirt"), 13),
+            (0, 0),
+            (wire("oak_planks"), 29),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (0, 0),
+            (wire("glass"), 17),
+        ];
+        app.inventory.items[0..9].copy_from_slice(&row);
+        // THE SAVE CHORD (C + 4 — the page banks AND the file writes)
+        assert!(app.on_hotbar_save_load_key(3, true, false), "the save consumes");
+        assert!(file.exists(), "the file the save walk writes");
+        // THE RESTART (the fresh app the same options file carries —
+        // the first load chord the once-flag's lazy read speaks)
+        let mut fresh = App::new(5);
+        fresh.enter_world();
+        fresh.game_mode = GameMode::Creative;
+        fresh.hotbar_options_file = Some(file.clone());
+        assert!(
+            fresh.on_hotbar_save_load_key(3, false, true),
+            "the load chord the fresh app consumes"
+        );
+        assert_eq!(
+            fresh.hotbar_manager[3], row,
+            "the banked page the restart wears"
+        );
+        // THE ONCE-FLAG (the load the file never re-reads — the second
+        // chord the in-memory pages keep)
+        fresh.hotbar_manager[3] = [(9, 9); 9];
+        fresh.on_hotbar_save_load_key(3, false, true);
+        assert_eq!(
+            fresh.hotbar_manager[3], [(9, 9); 9],
+            "the in-memory page the once-flag keeps"
+        );
+        let _ = std::fs::remove_file(&file);
+    }
+
+    /// THE FILE'S OWN REFUSALS — javap `HotbarManager.load()` the
+    /// resultOrPartial walk (the parse failure the fresh empties
+    /// keeps, the log the error answers): the non-compound root the
+    /// empties keep, the unknown item name the honest empty stack
+    /// wears (never a guessed id), the missing count the fallback-1
+    /// field keeps, the corrupt file the lazy load never wears.
+    #[test]
+    fn the_file_parse_the_refusals_keep() {
+        // THE NON-COMPOUND ROOT (the list the pages never parse)
+        let pages = hotbar_pages_from_nbt(&mc_protocol::nbt::Nbt::Int(1));
+        assert_eq!(pages, [[(0, 0); 9]; 9], "the non-compound the empties keep");
+        // THE UNKNOWN NAME + THE MISSING COUNT (the tolerant walk the
+        // honest refusals keep)
+        let root = mc_protocol::nbt::Nbt::Compound(vec![(
+            "0".to_string(),
+            mc_protocol::nbt::Nbt::List(vec![
+                mc_protocol::nbt::Nbt::Compound(vec![(
+                    "id".to_string(),
+                    mc_protocol::nbt::Nbt::String("minecraft:not_an_item".to_string()),
+                )]),
+                mc_protocol::nbt::Nbt::Compound(vec![(
+                    "id".to_string(),
+                    mc_protocol::nbt::Nbt::String("minecraft:stone".to_string()),
+                )]),
+            ]),
+        )]);
+        let pages = hotbar_pages_from_nbt(&root);
+        assert_eq!(pages[0][0], (0, 0), "the unknown name the empty stack keeps");
+        let stone = mc_registry::item_id_by_name("stone").expect("the registry names");
+        assert_eq!(
+            pages[0][1],
+            (stone, 1),
+            "the missing count the fallback-1 field keeps"
+        );
+        // THE CORRUPT FILE (the lazy load the fresh empties keep — the
+        // read failure the silent keep answers)
+        let dir = std::env::temp_dir().join(format!("mc2rs-hotbar-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).expect("the temp dir");
+        let file = dir.join("hotbar-corrupt.nbt");
+        std::fs::write(&file, [0x0A, 0x00, 0x01, 0xFF]).expect("the garbage writes");
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        app.hotbar_options_file = Some(file.clone());
+        assert!(
+            app.on_hotbar_save_load_key(6, false, true),
+            "the load chord the corrupt file still consumes"
+        );
+        assert_eq!(
+            app.hotbar_manager[6],
+            [(0, 0); 9],
+            "the corrupt file the fresh empties keep"
+        );
+        assert!(app.hotbar_file_loaded, "the once-flag the failed read banks");
+        let _ = std::fs::remove_file(&file);
     }
 
     /// THE CREATIVE CHORDS' OWN LIVE STORE — javap
