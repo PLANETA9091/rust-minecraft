@@ -622,6 +622,56 @@ pub fn collision_shape(id: u16) -> CollisionShape {
     }
 }
 
+/// THE FLINT'S OWN BURNABLE SUBSET — javap `FireBlock` over the real
+/// 26.2 jar (`/tmp/client.jar`): the static init's `setFlammable`
+/// rows the ignite-odds map banks (`getIgniteOdds(state) > 0` the
+/// `canBurn` verdict's own walk answers — the ONLY arm the fire's
+/// survival and spread consult). The offline palette's honest rows
+/// (the bytecode's own constants: OAK_LOG iconst_5/iconst_5 the 5/5
+/// pair keeps, OAK_LEAVES bipush 30/60, PALE_OAK_LEAVES 30/60,
+/// LEAF_LITTER 60/100, TNT 15/100, SHORT_GRASS 60/100, BUSH 60/100,
+/// TALL_GRASS 60/100, LARGE_FERN 60/100, the flower family
+/// DANDELION/POPPY/AZURE_BLUET/OXEYE_DAISY/CORNFLOWER/the four
+/// TULIPS all 60/100 — the upper halves the SAME block the offline
+/// HALF-KIND word splits, the odds the base rows speak). THE SILENCE
+/// THE VERDICT KEEPS: WHEAT and CRAFTING_TABLE ride NO setFlammable
+/// row (the static init's own walk the grep of the full dump answers
+/// — the crop and the table the canBurn refusal wears), every stone/
+/// dirt/ore/fluid kind the vocabulary speaks the same refusal keeps.
+pub fn fire_can_burn(id: u16) -> bool {
+    matches!(
+        id,
+        LOG
+            | LEAVES
+            | PALE_LEAVES
+            | LEAF_LITTER
+            | TNT
+            | SHORT_GRASS
+            | BUSH
+            | TALL_GRASS
+            | TALL_GRASS_UPPER
+            | LARGE_FERN
+            | LARGE_FERN_UPPER
+    ) || is_flower(id)
+}
+
+/// THE FIRE'S OWN SURVIVAL LAW — javap `FireBlock.canSurvive(state,
+/// level, pos)` (the 26.2 jar): `belowState.isFaceSturdy(level,
+/// below, UP) || isValidFireLocation(level, pos)` the two arms the
+/// verdict ORs. THE STURDY ARM the offline collision table answers:
+/// the full-cube row the UP face the vanilla's own isFaceFull math
+/// keeps (the FARMLAND/DIRT_PATH 15/16 columns the full-face
+/// verdict REFUSES — the sub-one height the shape's own math speaks);
+/// THE LOCATION ARM (javap `isValidFireLocation` — the
+/// `Direction.values()` loop the bytecode's pc 0-52 speaks): ANY of
+/// the six neighbor cells the `canBurn` odds > 0 answers — the below
+/// cell the scan's own read repeats (the sturdy refusal the burnable
+/// odds may still answer), the DOWN..EAST enum order the array's own
+/// walk keeps.
+pub fn fire_can_survive(below: u16, neighbors: [u16; 6]) -> bool {
+    collision_shape(below) == CollisionShape::Full || neighbors.into_iter().any(fire_can_burn)
+}
+
 /// THE PAIR'S OWN MATE — the opposite half's kind (`Some` the family
 /// alone answers): the TALL_GRASS pair (43 <-> 44) and the LARGE_FERN
 /// pair (45 <-> 46) the two-cell law swaps. The dig lane's
@@ -2169,6 +2219,92 @@ mod tests {
                 NAME_OF[id as usize]
             );
         }
+    }
+
+    /// THE FLINT'S OWN ODDS LAW (javap FireBlock's static init +
+    /// canSurvive over the 26.2 jar — the setFlammable rows the
+    /// ignite-odds map banks, the canSurvive walk the two arms ORs):
+    /// the burnable rows the canBurn verdict wears (the odds > 0 the
+    /// getIgniteOdds read answers), the NO-ROW silence the crop and
+    /// the table keep, the sturdy arm the full-cube collision row
+    /// speaks (the 15/16 columns the sub-one height refuses), the
+    /// location arm the six-way scan banks (the Direction.values()
+    /// order — the burnable neighbor ANY slot answers, the below
+    /// cell the scan's own read repeats).
+    #[test]
+    fn the_fire_survival_the_odds_law_keeps() {
+        // THE BURNABLE ROWS (the static init's own constants: the log
+        // 5/5, the leaves 30/60, the litter 60/100, the tnt 15/100,
+        // the flora 60/100 — the upper halves the SAME block the
+        // odds never split)
+        for id in [
+            LOG, LEAVES, PALE_LEAVES, LEAF_LITTER, TNT, SHORT_GRASS, BUSH, TALL_GRASS,
+            TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER, DANDELION, POPPY, AZURE_BLUET,
+            OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP, PINK_TULIP, WHITE_TULIP,
+        ] {
+            assert!(
+                fire_can_burn(id),
+                "the ignite row {} the canBurn verdict wears",
+                NAME_OF[id as usize]
+            );
+        }
+        // THE SILENCE THE VERDICT KEEPS (the static init's own walk:
+        // WHEAT and CRAFTING_TABLE ride NO setFlammable row — the
+        // stone/dirt/ore/fluid kinds the same refusal wears)
+        for id in [
+            WHEAT, WHEAT_STAGE7, CRAFTING_TABLE, STONE, DIRT, GRASS, SAND, WATER, LAVA, BEDROCK,
+        ] {
+            assert!(
+                !fire_can_burn(id),
+                "the no-row silence {} keeps",
+                NAME_OF[id as usize]
+            );
+        }
+        // THE STURDY ARM: the full-cube below the UP face the verdict
+        // wears — no burnable neighbor the scan needs
+        let none = [AIR; 6];
+        assert!(
+            fire_can_survive(STONE, none),
+            "the full-cube below the sturdy arm speaks"
+        );
+        // THE 15/16 COLUMN'S OWN REFUSAL (the farmland/dirt_path the
+        // full-face math refuses — the sub-one height the shape's own
+        // isFaceFull verdict keeps)
+        assert!(
+            !fire_can_survive(FARMLAND, none),
+            "the 15/16 column the sturdy arm refuses"
+        );
+        // THE LOCATION ARM: the burnable neighbor ANY of the six slots
+        // answers (the DOWN..EAST enum order the array's own walk
+        // keeps — the below cell the scan's own read repeats)
+        let mut with_log = none;
+        with_log[5] = LOG; // EAST
+        assert!(
+            fire_can_survive(FARMLAND, with_log),
+            "the east log the location arm speaks"
+        );
+        let mut with_below = none;
+        with_below[0] = LEAVES; // DOWN — the sturdy refusal the burnable odds answer
+        assert!(
+            fire_can_survive(FARMLAND, with_below),
+            "the below leaves the scan's own read speaks"
+        );
+        let mut with_upper = none;
+        with_upper[1] = TALL_GRASS_UPPER; // UP — the half-kind word the same odds wear
+        assert!(
+            fire_can_survive(AIR, with_upper),
+            "the above tuft the half-kind odds speak"
+        );
+        // THE STONE NEIGHBORHOOD'S OWN REFUSAL (no sturdy below, no
+        // burnable neighbor — the FAIL the vanilla keeps)
+        let mut stony = none;
+        stony[2] = STONE;
+        stony[3] = DIRT;
+        stony[4] = CRAFTING_TABLE; // the no-row silence the burnable scan refuses
+        assert!(
+            !fire_can_survive(AIR, stony),
+            "the stone neighborhood the survival refuses"
+        );
     }
 
     /// THE CONCRETE'S OWN TOUCHES-LIQUID WALK (javap

@@ -4825,7 +4825,6 @@ mod tests {
         assert!(!b.touches_fire(&w), "the body starts off the flame");
         b.forward = 1.0;
         let mut entry_hurt = false;
-        let mut on_fire_beats = 0;
         for _ in 0..12 {
             b.tick(&w, false);
             if b.in_fire_hurt_due {
@@ -4839,9 +4838,6 @@ mod tests {
                 !b.in_soul_fire_hurt_due,
                 "the plain flame never speaks the soul's flag"
             );
-            if b.on_fire_hurt_due {
-                on_fire_beats += 1;
-            }
         }
         assert!(entry_hurt, "the entry spoke its entityInside hurt");
         assert!(b.touches_fire(&w), "the body stands in the flame");
