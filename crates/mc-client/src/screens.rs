@@ -8538,10 +8538,14 @@ impl App {
             let mut exhaustion_cost = 0.0f32;
             // THE FIRE ARC's own drain slots (the body's borrow fills
             // them — the hurt pipeline runs after it ends): the lava's
-            // 4.0, the fire clock's 1.0, the water douse's fizz
+            // 4.0, the fire clock's 1.0, the water douse's fizz, the
+            // fire kinds' own entityInside doses (the 1.0/2.0 the ctor
+            // floats speak)
             let mut lava_hurt = false;
             let mut on_fire_hurt = false;
             let mut fire_doused = false;
+            let mut in_fire_hurt = false;
+            let mut in_soul_fire_hurt = false;
             let mut drown_hurt = false;
             // THE ELYTRA BREAK's own drain slot (the body's borrow fills
             // it — the entityEvent 47's client arm runs after it ends:
@@ -9213,6 +9217,12 @@ impl App {
                     lava_hurt = std::mem::take(&mut b.lava_hurt_due);
                     on_fire_hurt = std::mem::take(&mut b.on_fire_hurt_due);
                     fire_doused = std::mem::take(&mut b.fire_doused_due);
+                    // THE FIRE KINDS' OWN DRAIN (the same-tick read the
+                    // fire arc's own drains speak — the entityInside
+                    // doses the move tail banked, the hurt pipeline's
+                    // cooldown the answers ride)
+                    in_fire_hurt = std::mem::take(&mut b.in_fire_hurt_due);
+                    in_soul_fire_hurt = std::mem::take(&mut b.in_soul_fire_hurt_due);
                     // THE AIR ARC'S OWN DRAIN (the same per-tick flag
                     // law the fire arc's three speak — the -20 fold's
                     // own read, the body keeps it true until the NEXT
@@ -9304,6 +9314,26 @@ impl App {
             // the baseTick hurt never carried one)
             if on_fire_hurt {
                 self.hurt_burning(crate::body::ON_FIRE_DAMAGE);
+            }
+            // THE IN-FIRE HURTS (BaseFireBlock.entityInside's runAfter
+            // tail — the hurt(inFire(), fireDamage) the fire kind's
+            // contact fires, the 1.0 the FireBlock ctor speaks, the
+            // 2.0 the SoulFireBlock's fconst_2 keeps): the answers
+            // through the SAME pipeline the lava lane wears, the
+            // GENERIC_BURN voice the landed hurt speaks (the same
+            // DamageEffects.BURNING the inFire type carries — the
+            // play_burn the ifeq gate rides), the pipeline's own
+            // invulnerable cooldown the two doses' overlap buries (the
+            // vanilla's own per-tick beat the window folds)
+            if in_fire_hurt {
+                if self.hurt_burning(crate::body::IN_FIRE_DAMAGE) {
+                    self.sounds.play_burn(self.frame);
+                }
+            }
+            if in_soul_fire_hurt {
+                if self.hurt_burning(crate::body::IN_SOUL_FIRE_DAMAGE) {
+                    self.sounds.play_burn(self.frame);
+                }
             }
             // THE DROWN HURT (the air branch's own dose — the DROWNING
             // voice the damage type speaks: hurtServer(drown(), 2.0F)

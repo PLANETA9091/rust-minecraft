@@ -271,8 +271,50 @@ pub const CONCRETE_POWDER: u16 = 55;
 /// solidified block the support loss the gravity never wears).
 pub const CONCRETE: u16 = 56;
 
+/// Kind 57 (the fifty-eighth entry, the autopush-515 round): the
+/// fire arm's own kind — the FLINT'S OWN PRODUCT and the entity-inside
+/// brand the body's fire walk reads (javap the 26.2 jar's Blocks
+/// clinit, the `BlockIds.FIRE` registration walk pcs 6617-6666: the
+/// `replaceable().noCollision().instabreak()` triple the properties
+/// chain speaks, the lightLevel lambda `lambda$static$67`'s
+/// `bipush 15; ireturn` the emission table answers, the SoundType.WOOL
+/// row the dig voice keeps, the PushReaction.DESTROY the piston's
+/// verdict wears; the ctor's `super(properties, 1.0F)` the fconst_1
+/// the FireBlock bytecode speaks — the fireDamage float the
+/// entityInside's hurt(inFire(), fireDamage) tail consumes). The
+/// blockstate is a MULTIPART of rotated elements (the floor pair's
+/// ±22.5° planes, the side walls' flat z=0.01, all y 0..22.4) — the
+/// mesher's fire lane a documented follow-up keeps (the palette row
+/// + the fire_0 tile the FACE_TILES table banks; the rendered quads
+/// the follow-up speaks, the honest hole the glass kind wears until
+/// then). The ENTITY-INSIDE law (BaseFireBlock.entityInside — the
+/// same walk both fire kinds inherit): CLEAR_FREEZE (no vocabulary
+/// — the freeze lane the repo never carries), then FIRE_IGNITE =
+/// `BaseFireBlock::fireIgnite` (fireImmune aside — the bare player
+/// never is; the negative arm the no-freeze clock never speaks;
+/// the ServerPlayer +1..2 arm the rng-less replay the splash's own
+/// (r - r) precedent folds — the arm the body's walk never banks;
+/// the `remainingFireTicks < igniteForTicks(floor(8.0F * 20.0F) =
+/// 160)` lift the igniteForTicks verdict wears — never a lower),
+/// then the runAfter hurt(inFire(), 1.0) the hurt pipeline's own
+/// cooldown answers (the GENERIC_BURN voice the landed hurt speaks).
+pub const FIRE: u16 = 57;
+
+/// Kind 58 (the fifty-ninth entry, the same round): the SOUL FIRE'S
+/// OWN KIND — the `BlockIds.SOUL_FIRE` registration walk pcs 6669-6718
+/// the same clinit keeps (the SAME noCollision/instabreak/replaceable
+/// rows, the light lambda `lambda$static$68`'s `bipush 10; ireturn`
+/// the emission table answers), the SoulFireBlock ctor's
+/// `super(properties, 2.0F)` the fconst_2 the bytecode speaks — the
+/// fireDamage float the shared entityInside tail consumes: the hurt
+/// the soul fire's cell doubles. The ignite law the BaseFireBlock
+/// parent keeps VERBATIM (the same 160-tick lift the fire kind's
+/// walk speaks — the law the two kinds share, the damage the ctor
+/// floats split).
+pub const SOUL_FIRE: u16 = 58;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 57] = [
+pub const NAME_OF: [&str; 59] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -304,6 +346,11 @@ pub const NAME_OF: [&str; 57] = [
     // the names the item wire order's rows exactly keep: the
     // placement lane's placeable lookup the reverse walk serves)
     "white_concrete_powder", "white_concrete",
+    // THE FIRE KINDS' OWN ROWS (the flint's own product and the
+    // entity-inside brand the body's fire walk reads — the names the
+    // generated atlas REGISTRY_NAMES rows exactly keep, the runtime
+    // mapper's own verdict the networked world's fires land through)
+    "fire", "soul_fire",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -560,6 +607,12 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         || is_double_plant(id)
         || is_wheat(id)
         || id == LEAF_LITTER
+        // THE FIRE KINDS' OWN ROW (the blocks clinit's noCollision()
+        // call the fire registrations both speak — the replaceable
+        // pass-through the vanilla's own shape keeps: the body walks
+        // THROUGH the flame cell the entityInside walk then brands)
+        || id == FIRE
+        || id == SOUL_FIRE
     {
         CollisionShape::Empty
     } else if id == FARMLAND || id == DIRT_PATH {
@@ -2085,11 +2138,15 @@ mod tests {
     #[test]
     fn the_collision_shape_rows_wear_the_no_collision_law() {
         // THE EMPTY FAMILY: the fluids, the cross plants, the crops,
-        // the torch, the ground cover
+        // the torch, the ground cover, the fire kinds (the blocks
+        // clinit's noCollision() rows the two fire registrations
+        // speak — the replaceable pass-through the body walks
+        // THROUGH, the entityInside walk the move tail then brands)
         for id in [
             AIR, WATER, LAVA, TORCH, DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER,
             ORANGE_TULIP, RED_TULIP, PINK_TULIP, WHITE_TULIP, SHORT_GRASS, BUSH, TALL_GRASS,
             TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER, LEAF_LITTER, WHEAT, WHEAT_STAGE7,
+            FIRE, SOUL_FIRE,
         ] {
             assert_eq!(
                 collision_shape(id),

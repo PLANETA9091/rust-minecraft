@@ -45,8 +45,9 @@ use crate::math::Vec3;
 use crate::world::{
     BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
     COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
-    GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
-    NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, STONE, TORCH, WATER,
+    FIRE, GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES,
+    LIGHT_UNKNOWN, LOG, NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, SOUL_FIRE, STONE, TORCH,
+    WATER,
 };
 use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -5162,6 +5163,15 @@ pub fn runtime_mapper(id: u32) -> u16 {
         // the LightGrid block layer carries), the offline
         // prediction's kind the same palette id keeps
         Some("minecraft:torch") => TORCH,
+        // THE FIRE KINDS' OWN ARMS (the autopush-515 round — the wire
+        // world's own flames the server's block updates place, the
+        // generated block_ids rows the state ids resolve): the cells
+        // the body's entityInside walk brands (the box scan the
+        // touches_fire/touches_soul_fire pair speaks), the light the
+        // emission table answers (the 15/10 the clinit's own lambdas
+        // bank), the collision the Empty row keeps
+        Some("minecraft:fire") => FIRE,
+        Some("minecraft:soul_fire") => SOUL_FIRE,
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }
@@ -6982,6 +6992,14 @@ mod tests {
         // property the state lane never extracts)
         assert_eq!(runtime_mapper(3_370), TORCH, "torch = global id 3370");
         assert_eq!(runtime_mapper(3_371), AIR, "wall_torch the palette refuses");
+        // THE FIRE KINDS' OWN ARMS (the autopush-515 round — the
+        // generated table's rows the kinds land through: fire's 512
+        // age states ride the 3375..3887 range, soul fire the single
+        // 3887 the blockstate's own no-property row keeps)
+        assert_eq!(runtime_mapper(3_375), FIRE, "fire age=0 (its default state)");
+        assert_eq!(runtime_mapper(3_886), FIRE, "fire age=15 collapses");
+        assert_eq!(runtime_mapper(3_631), FIRE, "any state collapses");
+        assert_eq!(runtime_mapper(3_887), SOUL_FIRE, "soul_fire the single state");
         // the twelfth-audit kind: pale_oak_leaves (states 448..476) maps
         // and carries NO tint slot (the audited BlockColors verdict)
         assert_eq!(runtime_mapper(448), PALE_LEAVES, "pale_oak_leaves distance=0 persistent=true");

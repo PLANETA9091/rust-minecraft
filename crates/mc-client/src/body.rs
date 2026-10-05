@@ -230,6 +230,28 @@ pub const ON_FIRE_DAMAGE: f32 = 1.0;
 /// names; the body keeps its own — the laws speak per-owner).
 pub const FIRE_DAMAGE_INTERVAL: i32 = 20;
 
+// THE FIRE BLOCK'S OWN ARC (javap the 26.2 jar — the fire kinds the
+// entityInside walk reads):
+/// `BaseFireBlock::fireIgnite`'s own floor — the igniteForSeconds(8.0F)
+/// the `if remainingFireTicks >= 0` arm speaks (the ldc 8.0f), folded
+/// `igniteForTicks(Mth.floor(8.0F * 20.0F))` = 160 ticks. The law
+/// LIFTS the clock to the floor when under — never lowers it (the
+/// `remainingFireTicks < 160` verdict the igniteForTicks bytecode
+/// keeps). Both fire kinds ride the SAME parent law — the entityInside
+/// the SoulFireBlock never overrides.
+pub const FIRE_IGNITE_TICKS: i32 = 160;
+/// `BaseFireBlock.entityInside`'s runAfter tail's own dose for the
+/// plain fire — the `hurt(inFire(), fireDamage)` the applier queue
+/// speaks, the FireBlock ctor's `super(properties, 1.0F)` the
+/// fconst_1 the bytecode banks (the fireDamage field the lambda
+/// consumes). The hurt pipeline's own cooldown answers it — the
+/// in-window repeats the vanilla's invulnerable beat buries.
+pub const IN_FIRE_DAMAGE: f32 = 1.0;
+/// The SAME entityInside tail's own dose for the soul fire — the
+/// SoulFireBlock ctor's `super(properties, 2.0F)` the fconst_2 the
+/// bytecode banks: the soul fire's cell the shared walk doubles.
+pub const IN_SOUL_FIRE_DAMAGE: f32 = 2.0;
+
 // THE AIR ARC's constants (javap, the same jar — the drowning lane):
 /// `Entity.getMaxAirSupply`'s own value — the `sipush 300; ireturn`
 /// the bytecode speaks (the store the DATA_AIR_SUPPLY_ID define folds).
@@ -1086,6 +1108,19 @@ pub struct PlayerBody {
     /// The App answers through the same pipeline, the BURNING voice
     /// the DamageEffects speaks.
     pub on_fire_hurt_due: bool,
+    /// THE IN-FIRE HURT (BaseFireBlock.entityInside's runAfter tail —
+    /// the `hurt(inFire(), fireDamage)` the fire cell's contact fires
+    /// every tick it overlaps): the FireBlock ctor's fconst_1 the
+    /// 1.0 dose speaks. The App answers through the same pipeline
+    /// the lava lane wears (the GENERIC_BURN voice the landed hurt
+    /// speaks — the same DamageEffects.BURNING the inFire type
+    /// carries). The body never clears it, the reader does.
+    pub in_fire_hurt_due: bool,
+    /// THE IN-SOUL-FIRE HURT (the SAME entityInside tail — the
+    /// SoulFireBlock ctor's fconst_2 the 2.0 dose speaks): the
+    /// soul fire's cell the shared walk doubles. The body never
+    /// clears it, the reader does.
+    pub in_soul_fire_hurt_due: bool,
     /// THE WATER DOUSE (InsideBlockEffectType.EXTINGUISH =
     /// Entity::clearFire, the water block's own inside-effect): the
     /// burning body touching water dies to min(0, remaining) and the
@@ -1216,6 +1251,8 @@ impl PlayerBody {
             in_lava: false,
             lava_hurt_due: false,
             on_fire_hurt_due: false,
+            in_fire_hurt_due: false,
+            in_soul_fire_hurt_due: false,
             fire_doused_due: false,
             air_supply: TOTAL_AIR_SUPPLY,
             eye_in_water: false,
@@ -1465,6 +1502,8 @@ impl PlayerBody {
         self.splash_pose = None;
         self.lava_hurt_due = false;
         self.on_fire_hurt_due = false;
+        self.in_fire_hurt_due = false;
+        self.in_soul_fire_hurt_due = false;
         self.fire_doused_due = false;
         self.drown_hurt_due = false;
         // the pre-tick position — the walk distance law's own source
@@ -1978,6 +2017,41 @@ impl PlayerBody {
             }
             self.lava_hurt_due = true;
         }
+        // THE FIRE KINDS' OWN ENTITY-INSIDE (javap
+        // `BaseFireBlock.entityInside` the 26.2 jar — the same
+        // inside-blocks walk the lava/water beats ride, the InsideBlock
+        // EffectApplier's order kept: CLEAR_FREEZE (no vocabulary —
+        // the freeze lane the repo never carries), then FIRE_IGNITE =
+        // `BaseFireBlock::fireIgnite` (fireImmune aside — the bare
+        // player never is; the negative arm the no-freeze clock never
+        // speaks; the ServerPlayer +1..2 arm the rng-less replay the
+        // splash's own (r - r) precedent folds — the arm the body's
+        // walk never banks; the igniteForSeconds(8.0F) ->
+        // igniteForTicks(floor(8 * 20) = 160) the `remainingFireTicks
+        // < 160` lift the verdict wears — never a lower), then the
+        // runAfter hurt(inFire(), fireDamage) the hurt pipeline's own
+        // cooldown answers through its own invulnerable beat. The
+        // SOUL FIRE the shared parent walk keeps VERBATIM — the kind
+        // the fireDamage float splits (the 2.0 the ctor's fconst_2
+        // speaks). The cells the noCollision shape the body walks
+        // THROUGH brand it standing (the box overlap the scan
+        // speaks); the box walk's own cell order the vanilla's
+        // per-block entityInside fires ride — the two kinds' verdicts
+        // the pair of scans speaks, the water douse the NEXT beat
+        // still wins (the applier's queue order the inside walk
+        // keeps).
+        if !self.no_physics && self.touches_fire(world) {
+            if self.remaining_fire_ticks < FIRE_IGNITE_TICKS {
+                self.remaining_fire_ticks = FIRE_IGNITE_TICKS;
+            }
+            self.in_fire_hurt_due = true;
+        }
+        if !self.no_physics && self.touches_soul_fire(world) {
+            if self.remaining_fire_ticks < FIRE_IGNITE_TICKS {
+                self.remaining_fire_ticks = FIRE_IGNITE_TICKS;
+            }
+            self.in_soul_fire_hurt_due = true;
+        }
         // THE WATER'S EXTINGUISH (javap `WaterFluid.entityInside`'s own
         // InsideBlockEffectType.EXTINGUISH = `Entity::clearFire` — the
         // same contact beat the lava's brand rides, the inside-effect
@@ -2325,6 +2399,41 @@ impl PlayerBody {
             for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
                     if world.get(cx, cy, cz) == crate::world::LAVA {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE FIRE CELL'S OWN GATE (the vanilla `isInBlock`'s box shape —
+    /// the SAME box-overlap walk the lava lane speaks): TRUE when any
+    /// cell the body box overlaps is a fire kind — the entityInside
+    /// walk the move's tail speaks (the FireBlock's noCollision shape
+    /// the body walks THROUGH, the contact the walk then brands).
+    fn touches_fire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::FIRE {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE SOUL FIRE CELL'S OWN GATE (the same box-overlap walk — the
+    /// kind the damage doubles, the ignite the shared parent keeps).
+    fn touches_soul_fire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::SOUL_FIRE {
                         return true;
                     }
                 }
@@ -4679,6 +4788,133 @@ mod tests {
         settle(&mut c, &w);
         c.tick(&w, false);
         assert!(!c.fire_doused_due, "the unburnt wader never fizzes");
+    }
+
+    /// THE FIRE CELL'S OWN BRAND (javap `BaseFireBlock.entityInside`
+    /// the 26.2 jar — the inside walk the move's tail speaks): the
+    /// body standing in the fire cell the contact ignites — the
+    /// fireIgnite fold lifts the clock to the igniteForSeconds(8)'s
+    /// 160 and the hurt flag fires — and the SOUL FIRE's cell the
+    /// SAME parent walk keeps with its own doubled-dose flag (the
+    /// 2.0 the ctor's fconst_2 speaks). The clock holds at the floor
+    /// (the contact re-lifts what the tick drained), the onFire beat
+    /// rides the % 20 cadence while the body stands (the !isInLava
+    /// gate the fire lane never arms), and the WATER douse the NEXT
+    /// beat still wins (the applier's queue order the inside walk
+    /// keeps — the fire-then-water pair the straddling box speaks).
+    #[test]
+    fn the_fire_cell_ignites_the_standing_body() {
+        // a stone floor: fire at the center cell, soul fire beside,
+        // water the straddle's own douse witness
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        w.set(8, 1, 8, crate::world::FIRE);
+        w.set(12, 1, 8, crate::world::SOUL_FIRE);
+        // THE PLAIN FIRE'S ENTRY: the walk carries the body INTO the
+        // cell (the ~0.216/tick stride the walk law speaks — the
+        // 12-tick arc lands the box mid-flame)
+        let mut b = PlayerBody::new(6.0, 1.0, 8.0, -90.0, 0.0); // east, toward the flame
+        settle(&mut b, &w);
+        assert!(!b.touches_fire(&w), "the body starts off the flame");
+        b.forward = 1.0;
+        let mut entry_hurt = false;
+        let mut on_fire_beats = 0;
+        for _ in 0..12 {
+            b.tick(&w, false);
+            if b.in_fire_hurt_due {
+                entry_hurt = true;
+                assert_eq!(
+                    b.remaining_fire_ticks, FIRE_IGNITE_TICKS,
+                    "the brand rides the igniteForSeconds(8) fold's 160"
+                );
+            }
+            assert!(
+                !b.in_soul_fire_hurt_due,
+                "the plain flame never speaks the soul's flag"
+            );
+            if b.on_fire_hurt_due {
+                on_fire_beats += 1;
+            }
+        }
+        assert!(entry_hurt, "the entry spoke its entityInside hurt");
+        assert!(b.touches_fire(&w), "the body stands in the flame");
+        assert_eq!(
+            b.remaining_fire_ticks, FIRE_IGNITE_TICKS,
+            "the clock holds at the floor (the contact re-lifts)"
+        );
+        // THE STANDING HOLD: the body resting IN the flame cell speaks
+        // the hurt flag every tick and the clock never leaves the
+        // floor; the onFire beat rides the % 20 cadence's own head
+        // read (160 the beat the countdown walks)
+        let mut e = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0); // centered IN the flame
+        settle(&mut e, &w);
+        assert!(e.touches_fire(&w), "the settled body rests in the cell");
+        let mut on_fire_beats = 0;
+        for _ in 0..20 {
+            e.tick(&w, false);
+            assert!(
+                e.in_fire_hurt_due,
+                "the contact fires the hurt every tick it overlaps"
+            );
+            assert_eq!(e.remaining_fire_ticks, FIRE_IGNITE_TICKS);
+            if e.on_fire_hurt_due {
+                on_fire_beats += 1;
+            }
+        }
+        assert!(on_fire_beats >= 1, "the onFire beat spoke while standing");
+        // THE SOUL FIRE'S OWN DOSE (the same walk, the doubled flag):
+        // the body standing in the soul cell speaks the soul's flag —
+        // the plain flame's flag silent
+        let mut c = PlayerBody::new(12.0, 1.0, 8.0, 0.0, 0.0);
+        settle(&mut c, &w);
+        c.tick(&w, false);
+        assert!(c.touches_soul_fire(&w), "the body stands in the soul flame");
+        assert!(
+            c.in_soul_fire_hurt_due,
+            "the soul cell speaks its doubled dose"
+        );
+        assert!(
+            !c.in_fire_hurt_due,
+            "the soul flame never speaks the plain fire's flag"
+        );
+        assert_eq!(
+            c.remaining_fire_ticks, FIRE_IGNITE_TICKS,
+            "the shared parent law lifts the same 160"
+        );
+        // THE WATER DOSE WINS (the queue order the straddle speaks):
+        // the box over fire AND water the same tick — the fire beat
+        // arms (the flag the drain reads), the water's clearFire
+        // kills the clock to zero, the fizz speaks
+        let mut w2 = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                w2.set(x, 0, z, crate::world::STONE);
+                for y in 1..crate::world::CHUNK_Y {
+                    w2.set(x, y as i32, z, AIR);
+                }
+            }
+        }
+        w2.set(8, 1, 8, crate::world::FIRE);
+        w2.set(9, 1, 8, WATER);
+        let mut d = PlayerBody::new(8.9, 1.0, 8.0, 0.0, 0.0); // the box straddles both cells
+        settle(&mut d, &w2);
+        d.tick(&w2, false);
+        assert!(
+            d.in_fire_hurt_due,
+            "the fire beat armed before the water's own"
+        );
+        assert!(d.fire_doused_due, "the douse spoke its fizz");
+        assert_eq!(
+            d.remaining_fire_ticks, 0,
+            "the clearFire fold's zero wins the tick"
+        );
     }
 
     /// THE LAVA LANDING'S OWN GRACE (the fluid scan's reset the

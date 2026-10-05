@@ -175,7 +175,29 @@ use zip::ZipArchive;
 /// onLand and the updateShape conversions both speak; the SAME
 /// cube_all chain the powder's walk keeps (the color pair the
 /// vanilla's own two rows carry).
-pub const RUNTIME_PALETTE: [&str; 57] = [
+/// fire is kind 57 and soul_fire kind 58 (the fifty-eighth/fifty-ninth
+/// entries, the autopush-515 round): the flint arm's own product and
+/// the ENTITY-INSIDE brand the body's fire walk reads (javap the 26.2
+/// jar — BaseFireBlock.entityInside's CLEAR_FREEZE + FIRE_IGNITE +
+/// the runAfter hurt(inFire(), fireDamage) the ctor floats speak:
+/// FireBlock fconst_1 = 1.0, SoulFireBlock fconst_2 = 2.0; the
+/// blocks clinit's noCollision/instabreak/replaceable rows the walk
+/// banks, the light lambdas' bipush 15 / bipush 10 the emission
+/// table answers). The blockstate is a MULTIPART (the floor pair
+/// under a no-walls condition, four side groups + the up pair),
+/// every model built from ROTATED elements (template_fire_floor's
+/// 22.5° rotX/rotZ + rescale planes, template_fire_side's flat
+/// z=0.01 walls — all y 0..22.4, `shade: false`, model-level
+/// `ambientocclusion: false`) — resolve_block's full-cube six-face
+/// requirement cannot apply. The texture stem resolves through the
+/// REAL chain (the multipart's FIRST floor apply fire_floor0 /
+/// soul_fire_floor0 -> the merged texture map's `fire` ref ->
+/// block/fire_0 / block/soul_fire_0), tinted = false (the faces
+/// carry NO tintindex — the animated strips the game's own crop
+/// machinery plays). The mesher's fire lane a documented follow-up
+/// keeps (the palette row the kind's tile the FACE_TILES table
+/// banks — the rendered quads the follow-up speaks).
+pub const RUNTIME_PALETTE: [&str; 59] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -189,6 +211,7 @@ pub const RUNTIME_PALETTE: [&str; 57] = [
     "orange_tulip", "red_tulip", "pink_tulip", "white_tulip",
     "torch",
     "white_concrete_powder", "white_concrete",
+    "fire", "soul_fire",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -488,6 +511,66 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             // game tints in-world (probe: every opaque pixel r==g==b,
             // binary alpha 0/255 — cutout, unlike pre-colored pale oak).
             faces.push(resolve_flat_stem("leaf_litter", true));
+            continue;
+        }
+        if block == "fire" || block == "soul_fire" {
+            // THE FIRE KINDS' OWN CHAIN (the autopush-515 round, the
+            // official 26.2 jar): the blockstate is a MULTIPART — the
+            // floor pair fires under the no-walls condition, the four
+            // side groups ride the wall directions, the up pair the
+            // block above — and every template model is built from
+            // ROTATED elements (template_fire_floor's ±22.5° rotX/
+            // rotZ + rescale planes, template_fire_side's flat
+            // z=0.01 walls, all y 0..22.4), so resolve_block's
+            // full-cube six-face requirement cannot apply. The
+            // texture stem resolves through the REAL chain: the
+            // multipart's FIRST floor apply (block/fire_floor0 /
+            // block/soul_fire_floor0 — the floor pair the no-walls
+            // condition applies, floor0 the canonical first) ->
+            // load_model_chain's merged texture map -> the `fire`
+            // ref (block/fire_0 / block/soul_fire_0 — the animated
+            // strips the game's own crop machinery plays), tinted =
+            // false (the faces carry NO tintindex).
+            let stem = if block == "fire" { "fire" } else { "soul_fire" };
+            let bs_path = format!("assets/minecraft/blockstates/{stem}.json");
+            let bs_bytes = read_jar(&mut archive, &bs_path)?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {stem}: json parse"))?;
+            let parts = bs
+                .get("multipart")
+                .and_then(|v| v.as_array())
+                .with_context(|| format!("blockstate {stem}: no multipart"))?;
+            // the FIRST floor apply (the no-walls condition's own
+            // pair — fire_floor0/soul_fire_floor0 the canonical
+            // first row wears)
+            let mut model_ref: Option<String> = None;
+            for part in parts {
+                let applies = part.get("apply").and_then(|v| v.as_array());
+                let Some(applies) = applies else { continue };
+                if let Some(first) = applies
+                    .first()
+                    .and_then(|a| a.get("model"))
+                    .and_then(|m| m.as_str())
+                {
+                    let name = first.trim_start_matches("minecraft:").to_string();
+                    if name.ends_with("floor0") {
+                        model_ref = Some(name);
+                        break;
+                    }
+                }
+            }
+            let model_ref = model_ref
+                .with_context(|| format!("blockstate {stem}: no floor0 apply"))?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {stem}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("fire")
+                .with_context(|| format!("model {model_ref}: no fire texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
         if block == "wheat" || block.starts_with("wheat_stage") {

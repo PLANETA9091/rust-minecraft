@@ -7,10 +7,10 @@
 pub const ATLAS_VERSION: &str = "26.2";
 pub const TILE_SIZE: usize = 16;
 pub const TILE_NONE: u16 = u16::MAX;
-pub const N_KINDS: usize = 57;
-pub const KIND_NAMES: [&str; N_KINDS] = ["air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand", "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter", "lava", "farmland", "dirt_path", "wheat", "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4", "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt", "dandelion", "poppy", "short_grass", "bush", "tall_grass", "tall_grass_upper", "large_fern", "large_fern_upper", "azure_bluet", "oxeye_daisy", "cornflower", "orange_tulip", "red_tulip", "pink_tulip", "white_tulip", "torch", "white_concrete_powder", "white_concrete"];
+pub const N_KINDS: usize = 59;
+pub const KIND_NAMES: [&str; N_KINDS] = ["air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand", "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter", "lava", "farmland", "dirt_path", "wheat", "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4", "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt", "dandelion", "poppy", "short_grass", "bush", "tall_grass", "tall_grass_upper", "large_fern", "large_fern_upper", "azure_bluet", "oxeye_daisy", "cornflower", "orange_tulip", "red_tulip", "pink_tulip", "white_tulip", "torch", "white_concrete_powder", "white_concrete", "fire", "soul_fire"];
 
-pub const REGISTRY_NAMES: [&str; N_KINDS] = ["air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand", "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter", "lava", "farmland", "dirt_path", "wheat", "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4", "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt", "dandelion", "poppy", "short_grass", "bush", "tall_grass", "tall_grass", "large_fern", "large_fern", "azure_bluet", "oxeye_daisy", "cornflower", "orange_tulip", "red_tulip", "pink_tulip", "white_tulip", "torch", "white_concrete_powder", "white_concrete"];
+pub const REGISTRY_NAMES: [&str; N_KINDS] = ["air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand", "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter", "lava", "farmland", "dirt_path", "wheat", "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4", "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table", "tnt", "dandelion", "poppy", "short_grass", "bush", "tall_grass", "tall_grass", "large_fern", "large_fern", "azure_bluet", "oxeye_daisy", "cornflower", "orange_tulip", "red_tulip", "pink_tulip", "white_tulip", "torch", "white_concrete_powder", "white_concrete", "fire", "soul_fire"];
 
 pub const FACE_TILES: [[u16; 6]; N_KINDS] = [
     [65535, 65535, 65535, 65535, 65535, 65535],
@@ -70,6 +70,8 @@ pub const FACE_TILES: [[u16; 6]; N_KINDS] = [
     [62, 62, 62, 62, 62, 62],
     [63, 63, 63, 63, 63, 63],
     [64, 64, 64, 64, 64, 64],
+    [65, 65, 65, 65, 65, 65],
+    [66, 66, 66, 66, 66, 66],
 ];
 
 pub const TINTS: [[u32; 6]; N_KINDS] = [
@@ -120,6 +122,8 @@ pub const TINTS: [[u32; 6]; N_KINDS] = [
     [0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59],
     [0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59],
     [0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59, 0x91bd59],
+    [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
+    [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
     [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
     [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
     [0x0, 0x0, 0x0, 0x0, 0x0, 0x0],
@@ -3058,6 +3062,96 @@ static TILE_64_RGBA: [u8; 1024] = [
 207,213,214,255,208,214,215,255,207,213,214,255,208,214,215,255,
 ];
 static TILE_65_RGBA: [u8; 1024] = [
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,180,69,0,255,
+180,69,0,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,178,65,0,255,
+180,68,0,255,180,69,0,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,184,75,0,255,187,80,0,255,181,70,0,255,
+179,67,0,255,182,71,0,255,181,69,0,255,179,67,0,255,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,183,73,0,255,190,86,1,255,195,97,2,255,199,104,3,255,190,86,1,255,
+180,68,0,255,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,184,75,0,255,184,76,0,255,191,88,1,255,204,115,4,255,
+205,117,5,255,205,119,5,255,205,117,5,255,200,106,3,255,181,70,0,255,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+198,102,2,255,200,107,3,255,201,109,3,255,208,124,6,255,213,136,11,255,215,140,13,255,
+208,124,7,255,200,107,3,255,184,75,0,255,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,191,88,1,255,199,104,2,255,197,100,2,255,
+192,91,1,255,193,92,1,255,200,107,3,255,207,121,6,255,218,149,17,255,228,175,38,255,
+222,159,24,255,200,108,3,255,191,89,1,255,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,196,99,2,255,211,131,9,255,200,107,3,255,201,108,3,255,217,145,15,255,
+227,173,36,255,226,169,33,255,225,166,29,255,242,215,110,255,253,251,236,255,237,199,74,255,
+217,147,16,255,218,148,17,255,194,94,1,255,0,0,0,0,0,0,0,0,185,77,0,255,
+202,111,4,255,221,155,21,255,225,167,30,255,227,173,37,255,232,185,51,255,232,186,52,255,
+247,231,158,255,241,212,102,255,244,223,130,255,239,205,85,255,246,229,150,255,235,194,65,255,
+211,132,9,255,0,0,0,0,0,0,0,0,204,114,4,255,231,184,51,255,219,151,18,255,
+214,138,12,255,210,130,8,255,214,138,12,255,253,249,226,255,255,255,255,255,255,255,255,255,
+223,160,25,255,220,153,20,255,232,186,53,255,218,148,16,255,193,93,1,255,0,0,0,0,
+0,0,0,0,195,95,1,255,198,103,2,255,198,103,2,255,187,81,0,255,193,93,1,255,
+234,192,63,255,255,255,255,255,255,255,255,255,242,216,112,255,233,189,57,255,200,106,3,255,
+193,93,1,255,195,97,2,255,196,98,2,255,0,0,0,0,0,0,0,0,213,137,11,255,
+187,81,0,255,178,65,0,255,193,92,1,255,194,94,1,255,242,214,107,255,255,255,255,255,
+255,255,255,255,255,255,255,255,255,255,255,255,217,146,15,255,185,78,0,255,180,68,0,255,
+0,0,0,0,0,0,0,0,0,0,0,0,201,109,3,255,255,255,255,255,255,255,255,255,
+208,125,7,255,190,86,1,255,210,130,8,255,255,255,255,255,251,243,204,255,255,255,255,255,
+232,185,51,255,237,201,79,255,255,255,255,255,255,255,255,255,212,135,10,255,188,83,0,255,
+0,0,0,0,255,255,255,255,255,255,255,255,251,243,202,255,207,122,6,255,185,77,0,255,
+227,172,36,255,252,246,217,255,199,105,3,255,191,88,1,255,198,103,2,255,229,179,43,255,
+255,255,255,255,222,159,24,255,195,97,2,255,0,0,0,0,
+];
+static TILE_66_RGBA: [u8; 1024] = [
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,1,130,134,255,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,128,133,255,
+1,131,135,255,0,0,0,0,0,0,0,0,0,0,0,0,1,132,136,255,1,131,135,255,
+0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+0,0,0,0,0,0,0,0,0,0,0,0,1,134,139,255,1,140,145,255,1,145,149,255,
+1,148,153,255,1,153,158,255,1,142,147,255,1,129,134,255,0,0,0,0,0,0,0,0,
+0,0,0,0,1,143,148,255,1,139,143,255,0,0,0,0,0,0,0,0,1,149,154,255,
+3,199,205,255,0,195,201,255,1,188,194,255,1,169,174,255,1,169,174,255,1,175,181,255,
+1,170,176,255,1,140,145,255,0,0,0,0,0,0,0,0,0,0,0,0,1,142,147,255,
+1,155,161,255,1,153,158,255,1,164,170,255,7,203,209,255,35,224,230,255,72,240,245,255,
+32,223,229,255,9,205,211,255,1,190,196,255,1,184,190,255,1,168,173,255,1,145,149,255,
+0,0,0,0,0,0,0,0,0,0,0,0,0,196,202,255,8,205,211,255,1,180,186,255,
+1,172,177,255,1,184,190,255,21,215,221,255,62,236,242,255,56,234,240,255,22,216,222,255,
+7,203,209,255,15,210,216,255,50,232,238,255,1,175,181,255,0,0,0,0,0,0,0,0,
+1,128,133,255,68,238,244,255,35,225,231,255,0,195,201,255,1,175,181,255,1,163,168,255,
+4,200,206,255,35,224,230,255,101,246,251,255,167,252,255,255,28,220,226,255,24,217,223,255,
+12,208,214,255,1,192,198,255,1,162,167,255,0,0,0,0,1,193,199,255,109,248,252,255,
+255,255,255,255,33,223,229,255,4,199,205,255,8,205,211,255,51,231,237,255,57,234,240,255,
+255,255,255,255,255,255,255,255,219,254,255,255,36,225,231,255,21,215,221,255,18,213,219,255,
+1,169,174,255,0,0,0,0,1,192,198,255,127,250,254,255,120,250,254,255,57,234,240,255,
+18,213,219,255,8,204,210,255,18,213,219,255,131,251,255,255,85,243,248,255,133,251,255,255,
+39,227,233,255,8,204,210,255,1,184,190,255,1,178,183,255,1,184,190,255,1,145,150,255,
+1,152,157,255,73,239,244,255,29,221,227,255,18,213,219,255,1,176,182,255,0,195,201,255,
+184,253,255,255,123,250,254,255,138,251,255,255,18,213,219,255,1,182,187,255,1,192,198,255,
+0,196,202,255,1,175,181,255,1,168,173,255,0,0,0,0,1,172,178,255,69,239,244,255,
+255,255,255,255,72,240,245,255,2,198,204,255,255,255,255,255,255,255,255,255,98,246,251,255,
+11,207,213,255,182,252,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,255,
+19,214,220,255,0,0,0,0,72,240,245,255,255,255,255,255,57,234,240,255,2,198,204,255,
+1,194,200,255,33,223,229,255,255,255,255,255,255,255,255,255,161,252,255,255,82,243,248,255,
+211,253,255,255,123,249,253,255,112,249,253,255,114,249,253,255,255,255,255,255,255,255,255,255,
+1,162,167,255,0,195,201,255,0,196,202,255,1,162,167,255,18,213,219,255,255,255,255,255,
+255,255,255,255,41,227,233,255,51,231,237,255,1,151,156,255,1,149,154,255,15,211,217,255,
+1,167,172,255,10,206,212,255,91,245,250,255,1,148,153,255,
+];
+static TILE_67_RGBA: [u8; 1024] = [
 85,46,15,255,85,46,15,255,63,33,10,255,52,25,7,255,63,33,10,255,63,33,10,255,
 85,46,15,255,85,46,15,255,85,46,15,255,85,46,15,255,63,33,10,255,52,25,7,255,
 63,33,10,255,85,46,15,255,110,60,21,255,110,60,21,255,110,60,21,255,85,46,15,255,
@@ -3102,7 +3196,7 @@ static TILE_65_RGBA: [u8; 1024] = [
 85,46,15,255,85,46,15,255,110,60,21,255,85,46,15,255,63,33,10,255,52,25,7,255,
 63,33,10,255,110,60,21,255,110,60,21,255,85,46,15,255,
 ];
-static TILE_66_RGBA: [u8; 1024] = [
+static TILE_68_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3147,7 +3241,7 @@ static TILE_66_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_67_RGBA: [u8; 1024] = [
+static TILE_69_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3192,7 +3286,7 @@ static TILE_67_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_68_RGBA: [u8; 1024] = [
+static TILE_70_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3237,7 +3331,7 @@ static TILE_68_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_69_RGBA: [u8; 1024] = [
+static TILE_71_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3282,7 +3376,7 @@ static TILE_69_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_70_RGBA: [u8; 1024] = [
+static TILE_72_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3327,7 +3421,7 @@ static TILE_70_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_71_RGBA: [u8; 1024] = [
+static TILE_73_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3372,7 +3466,7 @@ static TILE_71_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_72_RGBA: [u8; 1024] = [
+static TILE_74_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3417,7 +3511,7 @@ static TILE_72_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_73_RGBA: [u8; 1024] = [
+static TILE_75_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3462,7 +3556,7 @@ static TILE_73_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,155,155,155,255,255,255,255,1,255,255,255,1,255,255,255,1,
 155,155,155,255,255,255,255,1,255,255,255,1,255,255,255,1,
 ];
-static TILE_74_RGBA: [u8; 1024] = [
+static TILE_76_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,255,255,255,1,
 61,61,61,255,255,255,255,1,155,155,155,255,255,255,255,1,255,255,255,1,255,255,255,1,
 255,255,255,1,255,255,255,1,155,155,155,255,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3507,7 +3601,7 @@ static TILE_74_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,61,61,61,255,255,255,255,1,255,255,255,1,255,255,255,1,
 155,155,155,255,155,155,155,255,61,61,61,255,255,255,255,1,
 ];
-static TILE_75_RGBA: [u8; 1024] = [
+static TILE_77_RGBA: [u8; 1024] = [
 255,255,255,1,255,255,255,1,61,61,61,255,255,255,255,1,255,255,255,1,255,255,255,1,
 61,61,61,255,255,255,255,1,155,155,155,255,255,255,255,1,61,61,61,255,255,255,255,1,
 61,61,61,255,255,255,255,1,155,155,155,255,255,255,255,1,255,255,255,1,255,255,255,1,
@@ -3554,7 +3648,7 @@ static TILE_75_RGBA: [u8; 1024] = [
 ];
 
 /// RGBA8 texel data, one entry per tile (16x16x4 bytes).
-pub static TILES: [&[u8]; 76] = [&TILE_0_RGBA,&TILE_1_RGBA,&TILE_2_RGBA,&TILE_3_RGBA,&TILE_4_RGBA,&TILE_5_RGBA,&TILE_6_RGBA,&TILE_7_RGBA,&TILE_8_RGBA,&TILE_9_RGBA,&TILE_10_RGBA,&TILE_11_RGBA,&TILE_12_RGBA,&TILE_13_RGBA,&TILE_14_RGBA,&TILE_15_RGBA,&TILE_16_RGBA,&TILE_17_RGBA,&TILE_18_RGBA,&TILE_19_RGBA,&TILE_20_RGBA,&TILE_21_RGBA,&TILE_22_RGBA,&TILE_23_RGBA,&TILE_24_RGBA,&TILE_25_RGBA,&TILE_26_RGBA,&TILE_27_RGBA,&TILE_28_RGBA,&TILE_29_RGBA,&TILE_30_RGBA,&TILE_31_RGBA,&TILE_32_RGBA,&TILE_33_RGBA,&TILE_34_RGBA,&TILE_35_RGBA,&TILE_36_RGBA,&TILE_37_RGBA,&TILE_38_RGBA,&TILE_39_RGBA,&TILE_40_RGBA,&TILE_41_RGBA,&TILE_42_RGBA,&TILE_43_RGBA,&TILE_44_RGBA,&TILE_45_RGBA,&TILE_46_RGBA,&TILE_47_RGBA,&TILE_48_RGBA,&TILE_49_RGBA,&TILE_50_RGBA,&TILE_51_RGBA,&TILE_52_RGBA,&TILE_53_RGBA,&TILE_54_RGBA,&TILE_55_RGBA,&TILE_56_RGBA,&TILE_57_RGBA,&TILE_58_RGBA,&TILE_59_RGBA,&TILE_60_RGBA,&TILE_61_RGBA,&TILE_62_RGBA,&TILE_63_RGBA,&TILE_64_RGBA,&TILE_65_RGBA,&TILE_66_RGBA,&TILE_67_RGBA,&TILE_68_RGBA,&TILE_69_RGBA,&TILE_70_RGBA,&TILE_71_RGBA,&TILE_72_RGBA,&TILE_73_RGBA,&TILE_74_RGBA,&TILE_75_RGBA,];
+pub static TILES: [&[u8]; 78] = [&TILE_0_RGBA,&TILE_1_RGBA,&TILE_2_RGBA,&TILE_3_RGBA,&TILE_4_RGBA,&TILE_5_RGBA,&TILE_6_RGBA,&TILE_7_RGBA,&TILE_8_RGBA,&TILE_9_RGBA,&TILE_10_RGBA,&TILE_11_RGBA,&TILE_12_RGBA,&TILE_13_RGBA,&TILE_14_RGBA,&TILE_15_RGBA,&TILE_16_RGBA,&TILE_17_RGBA,&TILE_18_RGBA,&TILE_19_RGBA,&TILE_20_RGBA,&TILE_21_RGBA,&TILE_22_RGBA,&TILE_23_RGBA,&TILE_24_RGBA,&TILE_25_RGBA,&TILE_26_RGBA,&TILE_27_RGBA,&TILE_28_RGBA,&TILE_29_RGBA,&TILE_30_RGBA,&TILE_31_RGBA,&TILE_32_RGBA,&TILE_33_RGBA,&TILE_34_RGBA,&TILE_35_RGBA,&TILE_36_RGBA,&TILE_37_RGBA,&TILE_38_RGBA,&TILE_39_RGBA,&TILE_40_RGBA,&TILE_41_RGBA,&TILE_42_RGBA,&TILE_43_RGBA,&TILE_44_RGBA,&TILE_45_RGBA,&TILE_46_RGBA,&TILE_47_RGBA,&TILE_48_RGBA,&TILE_49_RGBA,&TILE_50_RGBA,&TILE_51_RGBA,&TILE_52_RGBA,&TILE_53_RGBA,&TILE_54_RGBA,&TILE_55_RGBA,&TILE_56_RGBA,&TILE_57_RGBA,&TILE_58_RGBA,&TILE_59_RGBA,&TILE_60_RGBA,&TILE_61_RGBA,&TILE_62_RGBA,&TILE_63_RGBA,&TILE_64_RGBA,&TILE_65_RGBA,&TILE_66_RGBA,&TILE_67_RGBA,&TILE_68_RGBA,&TILE_69_RGBA,&TILE_70_RGBA,&TILE_71_RGBA,&TILE_72_RGBA,&TILE_73_RGBA,&TILE_74_RGBA,&TILE_75_RGBA,&TILE_76_RGBA,&TILE_77_RGBA,];
 
 pub fn has_tiles() -> bool { !TILES.is_empty() }
 
@@ -3566,15 +3660,15 @@ pub fn tile_name(idx: u16) -> &'static str {
     TILE_NAMES[idx as usize]
 }
 
-pub static TILE_NAMES: [&str; 76] = ["stone", "dirt", "grass_block_side", "grass_block_top", "oak_log", "oak_log_top", "oak_leaves", "water_still", "sand", "granite", "diorite", "andesite", "deepslate", "deepslate_top", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter", "lava_still", "farmland", "dirt_path_side", "dirt_path_top", "wheat_stage0", "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4", "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table_side", "crafting_table_front", "crafting_table_top", "oak_planks", "tnt_side", "tnt_top", "tnt_bottom", "dandelion", "poppy", "short_grass", "bush", "tall_grass_bottom", "tall_grass_top", "large_fern_bottom", "large_fern_top", "azure_bluet", "oxeye_daisy", "cornflower", "orange_tulip", "red_tulip", "pink_tulip", "white_tulip", "torch", "white_concrete_powder", "white_concrete", "farmland_moist", "destroy_stage_0", "destroy_stage_1", "destroy_stage_2", "destroy_stage_3", "destroy_stage_4", "destroy_stage_5", "destroy_stage_6", "destroy_stage_7", "destroy_stage_8", "destroy_stage_9"];
+pub static TILE_NAMES: [&str; 78] = ["stone", "dirt", "grass_block_side", "grass_block_top", "oak_log", "oak_log_top", "oak_leaves", "water_still", "sand", "granite", "diorite", "andesite", "deepslate", "deepslate_top", "cobbled_deepslate", "gravel", "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore", "lapis_ore", "diamond_ore", "emerald_ore", "netherrack", "pale_oak_leaves", "leaf_litter", "lava_still", "farmland", "dirt_path_side", "dirt_path_top", "wheat_stage0", "wheat_stage1", "wheat_stage2", "wheat_stage3", "wheat_stage4", "wheat_stage5", "wheat_stage6", "wheat_stage7", "crafting_table_side", "crafting_table_front", "crafting_table_top", "oak_planks", "tnt_side", "tnt_top", "tnt_bottom", "dandelion", "poppy", "short_grass", "bush", "tall_grass_bottom", "tall_grass_top", "large_fern_bottom", "large_fern_top", "azure_bluet", "oxeye_daisy", "cornflower", "orange_tulip", "red_tulip", "pink_tulip", "white_tulip", "torch", "white_concrete_powder", "white_concrete", "fire_0", "soul_fire_0", "farmland_moist", "destroy_stage_0", "destroy_stage_1", "destroy_stage_2", "destroy_stage_3", "destroy_stage_4", "destroy_stage_5", "destroy_stage_6", "destroy_stage_7", "destroy_stage_8", "destroy_stage_9"];
 
 /// THE FARMLAND'S WET FACE — the moisture=7 variant's own tile the
      /// blockstates/farmland.json's second arm resolves (block/farmland_moist
      /// -> the farmland_moist texture the template_farmland's up face names).
      /// The mesher's farmland top-face verdict the named const reads.
-     pub const TILE_FARMLAND_MOIST: u16 = 65;
+     pub const TILE_FARMLAND_MOIST: u16 = 67;
 
 /// The destroy_stage_0..9 tile indices (the breaking overlay's own
      /// crack frames; the vanilla `DestroyStage.getDestructor` law maps
      /// the progress to the index). Appended after the block tiles.
-     pub const DESTROY_TILES: [u16; 10] = [66, 67, 68, 69, 70, 71, 72, 73, 74, 75];
+     pub const DESTROY_TILES: [u16; 10] = [68, 69, 70, 71, 72, 73, 74, 75, 76, 77];

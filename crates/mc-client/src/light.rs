@@ -73,13 +73,22 @@ fn sky_opacity(id: u16) -> u8 {
 }
 
 /// The cell's own emission — `BlockState.lightEmission` over the
-/// client's palette: the torch 14, the lava 15, the rest dark.
+/// client's palette: the torch 14, the lava 15, the fire kinds the
+/// clinit's own lambdas answer (the `lambda$static$67` bipush 15 the
+/// fire registration's lightLevel call banks, the `lambda$static$68`
+/// bipush 10 the soul fire's row keeps — the constants the two
+/// registrations wear, the palette's default-state fold the client's
+/// kind-only world speaks), the rest dark.
 fn emission(id: u16) -> u8 {
     use crate::world::*;
     if is_torch(id) {
         14
     } else if id == LAVA {
         15
+    } else if id == FIRE {
+        15
+    } else if id == SOUL_FIRE {
+        10
     } else {
         0
     }
@@ -665,6 +674,25 @@ mod tests {
         assert_eq!(light_at(&w, 3, 6, 3).1, Some(15), "the lava's own cell");
         assert_eq!(light_at(&w, 4, 6, 3).1, Some(14), "one east");
         assert_eq!(light_at(&w, 3, 7, 3).1, Some(14), "one above");
+    }
+
+    #[test]
+    fn the_fire_kinds_speak_the_clinit_lambdas_emission() {
+        // THE FIRE KINDS' OWN ROWS (the autopush-515 round — the
+        // blocks clinit's lightLevel lambdas the two registrations
+        // wear: fire `lambda$static$67`'s `bipush 15; ireturn`, soul
+        // fire `lambda$static$68`'s `bipush 10; ireturn` — the
+        // constants the palette's default-state fold speaks, the
+        // flood's own spread the relight answers)
+        let mut w = empty_world();
+        w.set(3, 6, 3, FIRE);
+        w.set(8, 6, 3, SOUL_FIRE);
+        w.relight();
+        assert_eq!(light_at(&w, 3, 6, 3).1, Some(15), "the fire's own cell");
+        assert_eq!(light_at(&w, 4, 6, 3).1, Some(14), "one east of the fire");
+        assert_eq!(light_at(&w, 8, 6, 3).1, Some(10), "the soul fire's own cell");
+        assert_eq!(light_at(&w, 9, 6, 3).1, Some(9), "one east of the soul");
+        assert_eq!(light_at(&w, 8, 7, 3).1, Some(9), "one above the soul");
     }
 
     #[test]
