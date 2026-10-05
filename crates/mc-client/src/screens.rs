@@ -30479,6 +30479,90 @@ impl App {
                 None
             });
         }
+        // THE CUSTOM-HEAD LANE (javap CustomHeadLayer.submit the 26.2
+        // jar — the AvatarRenderer ctor's addLayer chain pins the
+        // order: HumanoidArmorLayer FIRST, CustomHeadLayer SIXTH,
+        // WingsLayer SEVENTH — the block-on-head paints OVER the
+        // armor's underpaint, UNDER the wings): the head slot the two
+        // lanes' own source reads (the offline armor list's HEAD
+        // index 0, the live store's window slot 5 the InventoryMenu
+        // ctor's 39-k order speaks). The extraction's own three-way
+        // verdict the draw keeps: the EMPTY stack nothing; the
+        // carved_pumpkin the item branch (the assetless plain block
+        // the HumanoidArmorLayer.shouldRender gate refuses — the
+        // armor row's own None the same verdict, the itemModelResolver
+        // updateForLiving(HEAD) fill the item branch speaks); the
+        // skull family the wornHeadType branch (the AbstractSkullBlock
+        // verdict the extraction fills); the helmet NEITHER — the
+        // shouldRender TRUE arm's headItem.clear() the armor lane
+        // already painted (no double render).
+        let head_stack = if self.world_is_network {
+            self.live_inv_slots[5]
+        } else {
+            self.inventory.armor[0]
+        };
+        let head_name = (head_stack.1 > 0)
+            .then(|| mc_registry::item_name(head_stack.0))
+            .flatten();
+        if head_name == Some("carved_pumpkin") {
+            if let Some((_, model, _, _)) = mc_registry::generated::item_models::ITEM_MODEL_DEFS
+                .iter()
+                .find(|d| d.0 == "carved_pumpkin")
+            {
+                let model_id = model.strip_prefix("minecraft:").unwrap_or(model);
+                if let Some(hb) =
+                    crate::avatar::head_block_quads(&state, feet, cam.yaw, cam.pitch, model_id)
+                {
+                    let head_sampled: Vec<crate::raster::SampledQuad> = hb
+                        .iter()
+                        .map(|q| crate::raster::SampledQuad {
+                            pts: q.pts,
+                            uv: q.uv,
+                            tex: q.texture,
+                            tint: [q.shade, q.shade, q.shade],
+                        })
+                        .collect();
+                    // the resolved material the element bake carries —
+                    // the same atlas fetch the mannequin pass and the
+                    // GUI icons speak, the quad's own shade already
+                    // folded in the tint (the block's face law)
+                    fb.draw_sampled_quads(
+                        ctx.proj.mul(&ctx.view),
+                        &head_sampled,
+                        &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                            mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                            mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                            mc_registry::sprite_uv::Sample::Unknown => None,
+                        },
+                    );
+                }
+            }
+        } else if crate::avatar::skull_item(head_name) {
+            if let Some(sq) =
+                crate::avatar::skull_quads(&state, feet, cam.yaw, cam.pitch, head_stack.0)
+            {
+                let skull_sampled: Vec<crate::raster::SampledQuad> = sq
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: q.texture,
+                        tint: [q.shade, q.shade, q.shade],
+                    })
+                    .collect();
+                // the skull's entity textures the same atlas fetch
+                // serves (the special bake's dump the ids speak)
+                fb.draw_sampled_quads(
+                    ctx.proj.mul(&ctx.view),
+                    &skull_sampled,
+                    &mut |tex, u, v| match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                        mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                        mc_registry::sprite_uv::Sample::Unknown => None,
+                    },
+                );
+            }
+        }
         // THE WINGS LAYER (javap `WingsLayer.submit` the 26.2 jar — the
         // chestEquipment's EQUIPPABLE assetId the empty-Optional return
         // refuses, the elytra the only root item the WINGS lane
@@ -81314,8 +81398,139 @@ cow_sound_variant: None,
             "the iron kit the frame paints: {diff} pixels differ"
         );
     }
+
+    fn third_person_frame(app: &mut App) -> Vec<u8> {
+        let mut assets = GuiAssets::open(
+            ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+                .iter()
+                .map(std::path::Path::new)
+                .find(|p| p.join("gui/container/inventory.png").exists())
+                .expect("the runtime cache the prefix walk keeps"),
+        );
+        let mut fb = crate::raster::Framebuf::new(320, 200);
+        app.render(&mut fb, &mut assets);
+        fb.color.clone()
+    }
+
+    fn diff_pixels(a: &[u8], b: &[u8]) -> usize {
+        a.chunks_exact(3).zip(b.chunks_exact(3)).filter(|(x, y)| x != y).count()
+    }
+
+    #[test]
+    fn the_third_person_head_block_the_frame_paints() {
+        // the runtime root the loaders' prefix walk keeps (the absent
+        // cache the honest skip answers — the armor frame test's own
+        // law)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(model) = crate::avatar::AvatarModel::load(root) else {
+            return;
+        };
+        let id = |name: &str| {
+            mc_registry::item_id_by_name(name)
+                .unwrap_or_else(|| panic!("{name} the registry carries"))
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.perspective = crate::camera::CameraType::ThirdPersonBack;
+        app.avatar = Some(model);
+        let bare = third_person_frame(&mut app);
+        let bare_twice = third_person_frame(&mut app);
+        assert_eq!(bare, bare_twice, "the bare frames bit-identical twice");
+        // THE PUMPKIN (the offline HEAD row's own stack): the item
+        // branch the third-person frame paints — the block's faces
+        // the head chain rides (the centered 0.625 law the mannequin
+        // round's geometry test pins, the atlas fetch the sampler
+        // keeps)
+        app.inventory.armor[0] = (id("carved_pumpkin"), 1);
+        let worn = third_person_frame(&mut app);
+        let diff = diff_pixels(&bare, &worn);
+        assert!(
+            diff > 200,
+            "the carved pumpkin the third-person frame paints: {diff} pixels differ"
+        );
+    }
+
+    #[test]
+    fn the_third_person_skull_the_frame_paints() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(model) = crate::avatar::AvatarModel::load(root) else {
+            return;
+        };
+        let id = |name: &str| {
+            mc_registry::item_id_by_name(name)
+                .unwrap_or_else(|| panic!("{name} the registry carries"))
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.perspective = crate::camera::CameraType::ThirdPersonBack;
+        app.avatar = Some(model);
+        let bare = third_person_frame(&mut app);
+        // THE SKULL (the wornHeadType branch's own stack): the special
+        // bake the third-person frame paints — the 1.1875 chain the
+        // submitSkull walk keeps, the entity textures the atlas serves
+        app.inventory.armor[0] = (id("skeleton_skull"), 1);
+        let worn = third_person_frame(&mut app);
+        let worn_twice = third_person_frame(&mut app);
+        assert_eq!(worn, worn_twice, "the skull frames bit-identical twice");
+        let diff = diff_pixels(&bare, &worn);
+        assert!(
+            diff > 200,
+            "the skeleton skull the third-person frame paints: {diff} pixels differ"
+        );
+    }
+
+    #[test]
+    fn the_third_person_head_lane_the_live_and_verdict_keep() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join("gui/container/inventory.png").exists());
+        let Some(root) = root else { return };
+        let Some(model) = crate::avatar::AvatarModel::load(root) else {
+            return;
+        };
+        let id = |name: &str| {
+            mc_registry::item_id_by_name(name)
+                .unwrap_or_else(|| panic!("{name} the registry carries"))
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.perspective = crate::camera::CameraType::ThirdPersonBack;
+        app.avatar = Some(model);
+        let bare = third_person_frame(&mut app);
+        // THE HELMET'S NO-DOUBLE-RENDER (the shouldRender TRUE arm's
+        // headItem.clear() the extraction speaks): the head lane
+        // refuses the EQUIPPABLE stack, the armor lane the lazy load
+        // the test's CWD never satisfies — the frame stays BARE
+        app.inventory.armor[0] = (id("iron_helmet"), 1);
+        let helmeted = third_person_frame(&mut app);
+        assert_eq!(
+            diff_pixels(&bare, &helmeted),
+            0,
+            "the unverified helmet the third-person frame never paints (no double render)"
+        );
+        // THE LIVE LANE (the network store's window slot 5 the 39-k
+        // order speaks): the server's own equipment the head chain
+        // wears — the offline row the walk ignores in the network mode
+        app.inventory.armor[0] = (0, 0);
+        app.world_is_network = true;
+        app.live_inv_slots[5] = (id("carved_pumpkin"), 1);
+        let live = third_person_frame(&mut app);
+        let diff = diff_pixels(&bare, &live);
+        assert!(
+            diff > 200,
+            "the live window slot 5 the third-person frame paints: {diff} pixels differ"
+        );
+    }
 }
-
-
-
-
