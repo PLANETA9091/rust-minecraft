@@ -54570,6 +54570,140 @@ cow_sound_variant: None,
         assert_eq!(app.inventory.items[slot].0, wire("water_bucket"));
     }
 
+    /// THE LAVA BUCKET'S OWN POUR — javap `BucketItem.use` +
+    /// `emptyContents` the 26.2 walk the lava content rides (the same
+    /// Fluid-NONE POV clip the solid top answers, the target the
+    /// relPos walk keeps, the ok gate the same law wears, the LAVA the
+    /// `createLegacyBlock` answer places, the `item.bucket.empty_lava`
+    /// voice the playEmptySound walk's LAVA-tag pick speaks — the
+    /// water row the same press never wears, the EMPTY bucket the
+    /// `heldItemTransformedTo` slot swap keeps).
+    #[test]
+    fn the_lava_bucket_the_pour_the_target_law_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (wire("lava_bucket"), 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the solid ground keeps (the top face the DOWN
+        // look answers — the target the above cell serves)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE POUR: the SUCCESS verdict the press consumes
+        assert!(app.on_right_press(0, 0), "the pour the SUCCESS consumes");
+        // THE TARGET (the relPos walk — the LAVA the legacy block
+        // answer keeps)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface + 1, c),
+            crate::world::LAVA,
+            "the lava cell the legacy block answer keeps"
+        );
+        // THE VOICE (the playEmptySound walk — the LAVA row the
+        // item.bucket.empty_lava pick keeps)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.bucket.empty_lava @")),
+                "the BUCKET_EMPTY_LAVA voice the pour rode"
+            );
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.bucket.empty @")),
+                "the water pick the lava row never wears"
+            );
+        }
+        // THE ITEM'S OWN TRANSFORM (the EMPTY bucket the slot wears)
+        assert_eq!(
+            app.inventory.items[slot].0,
+            wire("bucket"),
+            "the empty bucket the transform speaks"
+        );
+        assert_eq!(app.inventory.items[slot].1, 1, "the count the swap keeps");
+    }
+
+    /// THE EMPTY BUCKET'S OWN LAVA PICKUP — javap `BucketItem.use` the
+    /// SOURCE_ONLY arc the lava source rides (the clip the LAVA kind
+    /// the same predicate keeps, the `BucketPickup.pickupBlock` draw
+    /// the AIR answer empties, the `item.bucket.fill` voice the
+    /// getPickupSound walk speaks, the LAVA bucket the
+    /// `heldItemTransformedTo` slot swap wears — the water pick the
+    /// lava source never answers).
+    #[test]
+    fn the_bucket_the_lava_source_the_pickup_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (wire("bucket"), 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the lava source keeps (the pool cell the DOWN
+        // look answers — the stone floor the same column carries)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, surface, c, crate::world::LAVA);
+            w.set(c, surface - 1, c, crate::world::STONE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE PICKUP: the SUCCESS verdict the press consumes
+        assert!(app.on_right_press(0, 0), "the pickup the SUCCESS consumes");
+        // THE CELL (the AIR answer empties)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::AIR,
+            "the source cell the pickup empties"
+        );
+        // THE VOICE (the getPickupSound walk — the BUCKET_FILL the ear
+        // answers)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("item.bucket.fill @")),
+                "the BUCKET_FILL voice the pickup rode"
+            );
+        }
+        // THE ITEM'S OWN TRANSFORM (the LAVA bucket the slot wears)
+        assert_eq!(
+            app.inventory.items[slot].0,
+            wire("lava_bucket"),
+            "the lava bucket the transform speaks"
+        );
+    }
+
     /// THE FIREWORK'S OWN CROSSING BURST — the lifetime crossing the
     /// `createFireworks` POOF walk answers (javap `handleEntityEvent`
     /// 17 → `ClientLevel.createFireworks(x, y, z, dm, EMPTY)` the 26.2
