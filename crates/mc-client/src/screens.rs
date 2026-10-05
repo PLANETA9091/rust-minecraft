@@ -6627,6 +6627,11 @@ pub struct App {
     /// The flame feature's two strips (the burn lane's pixel source —
     /// lazy-loaded and sha1-verified the zombie skin's way).
     pub fire_strips: Option<crate::avatar::FireStrips>,
+    /// THE WINGS LANE'S TEXTURE (the elytra's own
+    /// `entity/equipment/wings/elytra.png` — lazy-loaded and
+    /// sha1-verified the fire strips' way, the failed load keeps the
+    /// wings unseen).
+    pub wings_tex: Option<crate::avatar::WingsTex>,
     /// THE XP ORB's sprite sheet (the lazy runtime load the fire strips
     /// speak — the sha1-verified OrbSheet, a missing file keeps the orbs
     /// invisible).
@@ -7880,6 +7885,7 @@ impl App {
             wolf_model: None,
             baby_wolf_model: None,
             fire_strips: None,
+            wings_tex: None,
             orb_sheet: None,
             underwater_screen: None,
             mobs: Vec::new(),
@@ -30308,6 +30314,53 @@ impl App {
             let [r, g, b, a] = model.pixel(u, v);
             Some([r, g, b, a])
         });
+        // THE WINGS LAYER (javap `WingsLayer.submit` the 26.2 jar — the
+        // chestEquipment's EQUIPPABLE assetId the empty-Optional return
+        // refuses, the elytra the only root item the WINGS lane
+        // textures): the worn elytra the third-person body's own wings
+        // wear — the animation state's pose the render lerp serves,
+        // the rest/glide/crouch targets the body's tick walk banks.
+        // The chest slot the two lanes' own source reads (the same walk
+        // the chest_glides feed keeps: the offline armor row's CHEST
+        // index 1, the live store's window slot 6).
+        let chest = if self.world_is_network {
+            self.live_inv_slots[6]
+        } else {
+            self.inventory.armor[1]
+        };
+        let wearing_elytra =
+            chest.1 > 0 && Some(chest.0) == mc_registry::item_id_by_name("elytra");
+        if wearing_elytra {
+            if self.wings_tex.is_none() {
+                self.wings_tex =
+                    crate::avatar::WingsTex::load(std::path::Path::new("assets-cache/jar"));
+            }
+            if let Some(tex) = &self.wings_tex {
+                // THE POSE'S OWN LERP (the extraction's
+                // `getRotX(partialTick)` walk the anim state speaks)
+                let (rx, ry, rz) = body.elytra_wing_rot_at(self.partial_tick);
+                let wings = crate::avatar::wings_quads(
+                    &state, feet, cam.yaw, cam.pitch, rx, ry, rz,
+                );
+                let wing_quads: Vec<crate::raster::SampledQuad> = wings
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: "",
+                        tint: [q.shade, q.shade, q.shade],
+                    })
+                    .collect();
+                // the depth-tested entity draw — the same lane the
+                // armor layers speak (the entity diffuse the quads
+                // carry, the alpha-cutout the raster keeps: the
+                // elytra.png's empty regions show the world)
+                fb.draw_sampled_quads(ctx.proj.mul(&ctx.view), &wing_quads, &mut |_tex, u, v| {
+                    let [r, g, b, a] = tex.pixel(u, v);
+                    Some([r, g, b, a])
+                });
+            }
+        }
         // THE FLAME FEATURE (the burning avatar's own overlay — the
         // vanilla draws the flame feature AFTER the body, the same
         // billboard ring stack the zombie's lane speaks; the player

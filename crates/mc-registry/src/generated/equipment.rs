@@ -36,9 +36,21 @@ pub const EQUIPMENT_ASSETS: &[EquipmentTex] = &[
     EquipmentTex { name: "turtle_scute", humanoid: "2337cd582471724c9899bf0a1b822e205932f791", leggings: None },
 ];
 
+/// The wings layer's texture dir (`EquipmentClientInfo.LayerType.WINGS`
+/// — the elytra's own equipment/elytra.json the jar carries, the
+/// WingsLayer's renderLayers walk the texture resolves).
+pub const WINGS_DIR: &str = "entity/equipment/wings";
+
+/// The wings layer's elytra texture integrity sha1 (the
+/// `minecraft:elytra` texture the equipment/elytra.json names, the
+/// `use_player_texture` verdict the default no-cape/no-skin-elytra
+/// skin keeps). The verbatim PNG bytes inside the jar.
+pub const WINGS_ELYTRA_SHA1: &str = "10521260a4f7179153f539f3ba0197984d7fccf6";
+
 /// The asset table's own lookup — `None` for the names the equipment
 /// registry never spoke (the elytra's wings layer the humanoid slots
-/// never texture, the client's own honesty).
+/// never texture — its own WINGS lane the constants above speak —
+/// the client's own honesty).
 pub fn find(name: &str) -> Option<&'static EquipmentTex> {
     EQUIPMENT_ASSETS.iter().find(|t| t.name == name)
 }

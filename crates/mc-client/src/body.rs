@@ -109,6 +109,34 @@ pub const CUBE_SPEED_NUMERATOR: f32 = 0.21600002; // the ice-slip law's own
 /// the nextDamageWillBreak refusal the max - 1 keeps).
 pub const ELYTRA_MAX_DAMAGE: i32 = 432;
 
+// THE WINGS ANIM'S OWN CONSTANTS (javap `ElytraAnimationState` the 26.2
+// jar — the <clinit>'s own ldc pair the DEFAULT_X_ROT/DEFAULT_Z_ROT
+// fields keep, the glide/crouch branch constants the tick walk banks:
+// the lerp pair the falling fold speaks, the crouch triple the
+// isCrouching arm carries, the 0.3F ease the walk's tail wears).
+/// `DEFAULT_X_ROT` — the resting wings' own pitch (15°).
+pub const ELYTRA_WING_DEFAULT_X: f32 = 0.2617994;
+/// `DEFAULT_Z_ROT` — the resting wings' own roll (-15°).
+pub const ELYTRA_WING_DEFAULT_Z: f32 = -0.2617994;
+/// The falling fold's own x-lerp pair: `Mth.lerp(f, 0.2617994F,
+/// 0.34906584F)` — the steeper pitch the fast descent wears (20°).
+pub const ELYTRA_WING_GLIDE_X_END: f32 = 0.34906584;
+/// The falling fold's own z-lerp pair: `Mth.lerp(f, -0.2617994F,
+/// -1.5707964F)` — the wings' flat-out spread the dive reaches (-90°).
+pub const ELYTRA_WING_GLIDE_Z_END: f32 = -1.5707964;
+/// The crouch branch's own triple: x 0.6981317F (40°), z -0.7853982F
+/// (-45°), y 0.08726646F (5°) — the folded-back pose the sneak wears.
+pub const ELYTRA_WING_CROUCH_X: f32 = 0.6981317;
+pub const ELYTRA_WING_CROUCH_Y: f32 = 0.08726646;
+pub const ELYTRA_WING_CROUCH_Z: f32 = -0.7853982;
+/// The ease's own factor (`(target - rot) * 0.3F` the walk's tail
+/// speaks, the rotY lane the same factor keeps).
+pub const ELYTRA_WING_EASE: f32 = 0.3;
+/// The falling fold's own exponent (`Math.pow(-v.normalize().y, 1.5D)`
+/// the d2f narrowing keeps — the descent steepness the lerp driver
+/// wears).
+pub const ELYTRA_WING_POW: f64 = 1.5;
+
 pub const WIDTH: f64 = 0.6;
 pub const STANDING_HEIGHT: f64 = 1.8;
 pub const CROUCH_HEIGHT: f64 = 1.5;
@@ -976,6 +1004,19 @@ pub struct PlayerBody {
     /// Set every tenth gliding tick, the App drains it (the world's
     /// sculk lane a later round may answer).
     pub elytra_glide_event_due: bool,
+    /// THE WINGS ANIM'S OWN STATE (javap `ElytraAnimationState` — the
+    /// rotX/rotY/rotZ + the rotXOld/rotYOld/rotZOld field pair the
+    /// tick walk banks, the render's `getRotX(partialTick)` lerp the
+    /// extraction serves): the elytra wings' pose clock the third-
+    /// person lane reads. Java field initializers keep all six at 0.0
+    /// — the fresh spawn's wings ease OPEN from flat (the same law
+    /// vanilla's fresh entity speaks), the ease never snaps.
+    pub elytra_wing_rot_x: f32,
+    pub elytra_wing_rot_y: f32,
+    pub elytra_wing_rot_z: f32,
+    pub elytra_wing_rot_x_old: f32,
+    pub elytra_wing_rot_y_old: f32,
+    pub elytra_wing_rot_z_old: f32,
     /// THE INFINITE MATERIALS GATE (javap `Player.hasInfiniteMaterials`
     /// — the abilities.instabuild the creative mode speaks): the
     /// processDurabilityChange arm the creative stack never carries —
@@ -1163,6 +1204,12 @@ impl PlayerBody {
             elytra_damage: 0,
             elytra_broke_due: false,
             elytra_glide_event_due: false,
+            elytra_wing_rot_x: 0.0,
+            elytra_wing_rot_y: 0.0,
+            elytra_wing_rot_z: 0.0,
+            elytra_wing_rot_x_old: 0.0,
+            elytra_wing_rot_y_old: 0.0,
+            elytra_wing_rot_z_old: 0.0,
             infinite_materials: false,
             chest_item: 0,
             remaining_fire_ticks: 0,
@@ -2011,6 +2058,76 @@ impl PlayerBody {
         // body's first 50ms beat spoke its lanes splash-free — the
         // gate opens
         self.first_tick = false;
+        // THE WINGS ANIM'S OWN TICK (javap LivingEntity.tick the 26.2
+        // jar — the `elytraAnimationState.tick()` call the tail's own
+        // walk keeps, pcs 639-643 right after the fallFlyTicks walk +
+        // the isSleeping xRot reset + the refreshDirtyAttributes
+        // answer, the RETURN the next fold never reaches): EVERY tick
+        // the state eases — gliding, crouching, or standing.
+        self.tick_elytra_wing_anim();
+    }
+
+    /// THE WINGS ANIM'S OWN TICK (javap `ElytraAnimationState.tick` the
+    /// 26.2 jar — the exact branch order the bytecode keeps):
+    /// 1) the old fields bank the current (`rotXOld = rotX`, the y/z
+    ///    pair the same order keeps) — the render lerp's own source;
+    /// 2) THE GLIDE ARM — `isFallFlying()`: `f = 1.0F`, the falling
+    ///    velocity (`v.y < 0`) the normalize + `1.0F - (float)Math.pow(
+    ///    -v.normalize().y, 1.5D)` fold eases it — the steeper the
+    ///    descent the further the lerp drives;
+    ///    the targets `Mth.lerp(f, 0.2617994F, 0.34906584F)` (x),
+    ///    `Mth.lerp(f, -0.2617994F, -1.5707964F)` (z), y 0.0;
+    /// 3) THE CROUCH ARM — the triple (0.6981317, 0.08726646,
+    ///    -0.7853982) the folded-back pose wears;
+    /// 4) THE REST ARM — the DEFAULT pair (0.2617994, 0, -0.2617994);
+    /// 5) THE EASE — `rot += (target - rot) * 0.3F`, the x/y/z order
+    ///    the bytecode keeps (the y target the f3 slot speaks, the z
+    ///    the f2 — the branch's own store order the reads mirror).
+    fn tick_elytra_wing_anim(&mut self) {
+        self.elytra_wing_rot_x_old = self.elytra_wing_rot_x;
+        self.elytra_wing_rot_y_old = self.elytra_wing_rot_y;
+        self.elytra_wing_rot_z_old = self.elytra_wing_rot_z;
+        let (tx, ty, tz) = if self.fall_flying {
+            let mut f = 1.0_f32;
+            if self.vy < 0.0 {
+                // the f64 normalize the dcmpg branch keeps (the Vec3
+                // math never narrows until the d2f the pow's tail
+                // speaks)
+                let len = (self.vx * self.vx + self.vy * self.vy + self.vz * self.vz).sqrt();
+                if len > 0.0 {
+                    f = 1.0 - (-(self.vy / len)).powf(ELYTRA_WING_POW) as f32;
+                }
+            }
+            (
+                ELYTRA_WING_DEFAULT_X + f * (ELYTRA_WING_GLIDE_X_END - ELYTRA_WING_DEFAULT_X),
+                0.0,
+                ELYTRA_WING_DEFAULT_Z + f * (ELYTRA_WING_GLIDE_Z_END - ELYTRA_WING_DEFAULT_Z),
+            )
+        } else if self.crouching {
+            (
+                ELYTRA_WING_CROUCH_X,
+                ELYTRA_WING_CROUCH_Y,
+                ELYTRA_WING_CROUCH_Z,
+            )
+        } else {
+            (ELYTRA_WING_DEFAULT_X, 0.0, ELYTRA_WING_DEFAULT_Z)
+        };
+        self.elytra_wing_rot_x += (tx - self.elytra_wing_rot_x) * ELYTRA_WING_EASE;
+        self.elytra_wing_rot_y += (ty - self.elytra_wing_rot_y) * ELYTRA_WING_EASE;
+        self.elytra_wing_rot_z += (tz - self.elytra_wing_rot_z) * ELYTRA_WING_EASE;
+    }
+
+    /// THE RENDER'S OWN LERP (javap `ElytraAnimationState.getRotX/Y/Z`
+    /// — `Mth.lerp(partialTick, rotXOld, rotX)` the extraction walk
+    /// serves): the wings' pose at the frame's own moment, the sub-tick
+    /// trail the partial eases.
+    pub fn elytra_wing_rot_at(&self, partial: f32) -> (f32, f32, f32) {
+        let lerp = |o: f32, c: f32| o + partial * (c - o);
+        (
+            lerp(self.elytra_wing_rot_x_old, self.elytra_wing_rot_x),
+            lerp(self.elytra_wing_rot_y_old, self.elytra_wing_rot_y),
+            lerp(self.elytra_wing_rot_z_old, self.elytra_wing_rot_z),
+        )
     }
 
     /// THE GLIDE VERDICT (javap `LivingEntity.canGlide` the 26.2 walk
@@ -4280,6 +4397,97 @@ mod tests {
         // verdict the post-break reads never lies)
         b.elytra_damage = 432;
         assert!(b.elytra_next_damage_will_break(), "the crossed stack the verdict keeps true");
+    }
+
+    /// THE WINGS ANIM'S OWN LAW (javap `ElytraAnimationState.tick` +
+    /// `getRotX/Y/Z` the 26.2 walk — the rest/crouch/glide targets the
+    /// branch constants keep, the 0.3 ease the tail wears, the old/cur
+    /// bank the render lerp reads).
+    #[test]
+    fn the_elytra_wing_anim_the_law_wears() {
+        let w = flat_world();
+        // THE REST ARM: the standing body's wings converge to the
+        // DEFAULT pair — from the Java fields' own 0.0 start the ease
+        // walks, never snaps
+        let mut b = PlayerBody::new(2.0, 1.0, 2.0, 0.0, 0.0);
+        assert_eq!(b.elytra_wing_rot_x, 0.0, "the fresh state's Java zero");
+        for _ in 0..80 {
+            b.tick(&w, false);
+        }
+        let (rx, ry, rz) = b.elytra_wing_rot_at(1.0);
+        assert!(
+            (rx - ELYTRA_WING_DEFAULT_X).abs() < 1.0e-5,
+            "the rest x the default keeps, got {rx}"
+        );
+        assert!(ry.abs() < 1.0e-5, "the rest y the zero keeps, got {ry}");
+        assert!(
+            (rz - ELYTRA_WING_DEFAULT_Z).abs() < 1.0e-5,
+            "the rest z the default keeps, got {rz}"
+        );
+        // THE FIRST-TICK EASE: the fresh body's single tick — old 0
+        // banked, cur = (target - 0) * 0.3 (the ease's own walk)
+        let mut b = PlayerBody::new(2.0, 1.0, 2.0, 0.0, 0.0);
+        b.tick(&w, false);
+        assert_eq!(b.elytra_wing_rot_x_old, 0.0, "the old the bank keeps");
+        assert!(
+            (b.elytra_wing_rot_x - ELYTRA_WING_DEFAULT_X * ELYTRA_WING_EASE).abs() < 1.0e-6,
+            "the first ease the 0.3 speaks, got {}",
+            b.elytra_wing_rot_x
+        );
+        // THE RENDER LERP (getRotX(partialTick) = lerp(partial, old,
+        // cur)): halfway the exact midpoint the formula keeps
+        let mid = b.elytra_wing_rot_at(0.5).0;
+        assert!(
+            (mid - b.elytra_wing_rot_x * 0.5).abs() < 1.0e-6,
+            "the half-tick lerp the exact midpoint keeps"
+        );
+        // THE CROUCH ARM: the folded-back triple the isCrouching branch
+        // wears (x 40°, y 5°, z -45°), the convergence the ease walks
+        let mut b = PlayerBody::new(2.0, 1.0, 2.0, 0.0, 0.0);
+        // the pose walk the tick's own verdict keeps (the want the
+        // key speaks, the crouching the updatePlayerPose answers)
+        b.want_crouch = true;
+        for _ in 0..80 {
+            b.tick(&w, false);
+        }
+        let (rx, ry, rz) = b.elytra_wing_rot_at(1.0);
+        assert!((rx - ELYTRA_WING_CROUCH_X).abs() < 1.0e-5, "the crouch x, got {rx}");
+        assert!((ry - ELYTRA_WING_CROUCH_Y).abs() < 1.0e-5, "the crouch y, got {ry}");
+        assert!((rz - ELYTRA_WING_CROUCH_Z).abs() < 1.0e-5, "the crouch z, got {rz}");
+        // THE GLIDE ARM: the gliding body the spread wears — the dive
+        // the velocity's own fold banks (the falling body's forward
+        // thrust the glide folds speak: ny < 1 the f > 0 answers, the
+        // z target below the default the flat-out spread keeps)
+        let mut b = PlayerBody::new(2.0, 40.0, 2.0, 0.0, 0.0);
+        b.chest_glides = true;
+        b.fall_flying = true;
+        for _ in 0..40 {
+            b.tick(&w, false);
+            assert!(b.fall_flying, "the airborne glide never retires");
+        }
+        let (_, ry_g, rz_g) = b.elytra_wing_rot_at(1.0);
+        assert!(
+            ry_g.abs() < 1.0e-5,
+            "the glide arm's y target the zero keeps, got {ry_g}"
+        );
+        assert!(
+            rz_g < ELYTRA_WING_DEFAULT_Z - 0.1,
+            "the glide z the spread wears (past the default), got {rz_g}"
+        );
+        // THE STOP'S OWN RETURN (the unequip arm — the chest verdict
+        // the next tick's stop speaks): the wings ease BACK to the
+        // default (the same convergence the rest arm speaks, the
+        // animation never freezes at the spread)
+        b.chest_glides = false;
+        for _ in 0..80 {
+            b.tick(&w, false);
+            assert!(!b.fall_flying, "the unequip the stop arm retires");
+        }
+        let (rx, _, rz) = b.elytra_wing_rot_at(1.0);
+        assert!(
+            (rx - ELYTRA_WING_DEFAULT_X).abs() < 1.0e-5 && (rz - ELYTRA_WING_DEFAULT_Z).abs() < 1.0e-5,
+            "the stop the wings ease back, got ({rx}, {rz})"
+        );
     }
 
     /// THE GLIDE'S OWN RETIRE (javap `LivingEntity.updateFallFlying`'s

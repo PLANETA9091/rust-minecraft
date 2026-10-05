@@ -5994,6 +5994,137 @@ pub fn armor_asset_name(name: Option<&str>) -> Option<&'static str> {
     Some(asset)
 }
 
+/// THE WINGS LANE'S TEXTURE (javap `WingsLayer` the 26.2 jar — the
+/// elytra chest stack the `chestEquipment` field reads, the
+/// EQUIPPABLE's assetId the empty-Optional return refuses, the
+/// `getPlayerElytraTexture` walk the texture serves: the AvatarRender
+/// State's `skin.elytra()` first, the `skin.cape()` + showCape pair
+/// next, NULL the default steve's neither-kept answer — the NULL the
+/// EquipmentLayerRenderer's LAYER texture keeps, the
+/// equipment/elytra.json's own `minecraft:elytra` row the WINGS dir
+/// resolves). The `use_player_texture: true` the json speaks rides the
+/// same walk — the client's default skin carries neither an elytra nor
+/// a cape texture, the layer png stays.
+pub struct WingsTex {
+    rgba: Vec<u8>,
+}
+
+impl WingsTex {
+    /// Load + sha1-verify the wings texture (the generated
+    /// `WINGS_ELYTRA_SHA1` the generator's own walk banks), decode,
+    /// shape-check 64x32. `None` = the wings never render (the same
+    /// honesty every texture lane keeps).
+    pub fn load(root: &Path) -> Option<WingsTex> {
+        let bytes = std::fs::read(
+            root.join(mc_registry::generated::equipment::WINGS_DIR).join("elytra.png"),
+        )
+        .ok()?;
+        if hex::encode(sha1::Sha1::digest(&bytes))
+            != mc_registry::generated::equipment::WINGS_ELYTRA_SHA1
+        {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 64 || h != 32 {
+            return None;
+        }
+        Some(WingsTex { rgba })
+    }
+
+    /// The layer pixel at (u, v) in wing texels — the skin's own
+    /// clamp-to-edge nearest-texel law, 64x32.
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 64.0 - 1e-4), v.clamp(0.0, 32.0 - 1e-4));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 64 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+}
+
+/// THE WINGS LANE'S GEOMETRY (javap `ElytraModel.createLayer` +
+/// `setupAnim` the 26.2 jar — the exact part walk the bytecode keeps):
+/// the texture 64x32 (`LayerDefinition.create(mesh, 64, 32)`), the
+/// `CubeDeformation(1.0F)` the shared inflate keeps, the two wings the
+/// root carries —
+/// * LEFT: `texOffs(22, 0)`, `addBox(-10, 0, 0, 10, 20, 2, def 1.0)`,
+///   pivot (5, 0, 0);
+/// * RIGHT: the SAME texOffs `.mirror()`ed, `addBox(0, 0, 0, 10, 20,
+///   2, def 1.0)`, pivot (-5, 0, 0).
+/// `setupAnim`'s own overwrite (the PartPose rotations the anim state
+/// replaces every frame — the rot inputs the walk's own law speaks):
+/// left `(rotX, rotY, rotZ)`, right `(rotX, -rotY, -rotZ)` (the fneg
+/// pair the yRot/zRot reads keep, the xRot the SAME both wings wear);
+/// the crouch wing's own `y = 3.0F` the pivot drop speaks (the model
+/// space y-down, the wings sag 3 texels). THE LAYER'S OWN TRANSLATE
+/// (javap `WingsLayer.submit` — `poseStack.translate(0.0F, 0.0F,
+/// 0.125F)` the push/pop pair keeps): the whole root shifts 2 texels
+/// toward the model's +z — the BACK side the fold's own z law never
+/// flips (the body's face the -z plane wears, the wings hang behind).
+fn elytra_wing_parts(
+    crouching: bool,
+    rot_x: f32,
+    rot_y: f32,
+    rot_z: f32,
+) -> Vec<Part> {
+    let def = 1.0;
+    let y_drop = if crouching { 3.0 } else { 0.0 };
+    let cube = |ox: f32, mirror: bool| Cube {
+        tex: (22.0, 0.0),
+        origin: [ox, 0.0, 0.0],
+        size: [10.0, 20.0, 2.0],
+        inflate: def,
+        mirror,
+    };
+    vec![
+        Part {
+            pivot: [5.0, y_drop, 0.0],
+            x_rot: rot_x,
+            y_rot: rot_y,
+            z_rot: rot_z,
+            cubes: vec![cube(-10.0, false)],
+            children: vec![],
+        },
+        Part {
+            pivot: [-5.0, y_drop, 0.0],
+            x_rot: rot_x,
+            y_rot: -rot_y,
+            z_rot: -rot_z,
+            cubes: vec![cube(0.0, true)],
+            children: vec![],
+        },
+    ]
+}
+
+/// The wings layer's world-space quads at `state` — the skin's own
+/// entity chain (`armor_quads`'s fold verbatim) over the layer's
+/// translate + the wing parts. `rot_*` = the animation state's own
+/// render lerp (`elytra_wing_rot_at` the body speaks), the pose the
+/// extraction's partial-tick law wears.
+pub fn wings_quads(
+    state: &AvatarState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    rot_x: f32,
+    rot_y: f32,
+    rot_z: f32,
+) -> Vec<AvatarQuad> {
+    let parts = elytra_wing_parts(state.crouching, rot_x, rot_y, rot_z);
+    let crouch_drop = if state.crouching { -2.0 / 16.0 } else { 0.0 };
+    let (fold_point, fold_normal) =
+        entity_folds(state.yaw_deg, state.death_time, crouch_drop, feet);
+    // THE LAYER'S OWN TRANSLATE (WingsLayer.submit's
+    // `translate(0, 0, 0.125)` — the entity-rotated frame the pose
+    // stack carries, the model-space +z the fold's own law keeps)
+    let parent = Mat4::translation(0.0, 0.0, 0.125);
+    let mut out: Vec<AvatarQuad> = Vec::new();
+    for part in &parts {
+        collect_part(part, &parent, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+    }
+    out
+}
+
 /// One head-block quad: the CustomHeadLayer item branch's geometry over
 /// the element bake — the texture id rides for the sampler (the atlas
 /// lane the GUI icons speak), the shade is the block's own face law.
@@ -10472,6 +10603,127 @@ mod tests {
         assert_eq!(feet[1].cubes[0].inflate, 0.9);
         // the unknown slot never speaks
         assert!(armor_parts(&state, 9).is_empty());
+    }
+
+    /// THE WINGS LANE'S GEOMETRY (javap `ElytraModel.createLayer` +
+    /// `setupAnim` + `WingsLayer.submit` the 26.2 walk — the 12 quads
+    /// the two cubes speak, the ±5 pivots the root offsets keep, the
+    /// 0.125 z translate the layer's own push wears, the mirror the
+    /// right wing's UV rect flips, the crouch the 3-texel drop + the
+    /// entity fold's own -2 the pair speaks, the glide spread the
+    /// z-rot's swing wears).
+    #[test]
+    fn the_elytra_wings_the_model_wears() {
+        // THE RAW GEOMETRY (the rot 0 the part pose's own pre-anim
+        // state keeps — the pivot/inflate/translate pins the bare box
+        // speaks; the anim rotations the spread arm below wears)
+        let state = AvatarState::rest(180.0, 0.0, 0.0);
+        let quads = wings_quads(&state, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0);
+        assert_eq!(quads.len(), 12, "two cubes, six faces each");
+        // THE BACK'S OWN TRANSLATE: every wing point rides the +z
+        // 0.125 the layer keeps (the wing z the 0.0625..0.3125 band
+        // wears — the cube's -1..3 texel z the inflate speaks, the
+        // 2-texel shift the 0.125*16 adds)
+        let mut zs = Vec::new();
+        let mut xs = Vec::new();
+        let mut ys = Vec::new();
+        for q in &quads {
+            for p in q.pts {
+                zs.push(p[2]);
+                xs.push(p[0]);
+                ys.push(p[1]);
+            }
+        }
+        let zmin = zs.iter().cloned().fold(f32::MAX, f32::min);
+        let zmax = zs.iter().cloned().fold(f32::MIN, f32::max);
+        assert!((zmin - 0.0625).abs() < 1.0e-4, "the wing z floor, got {zmin}");
+        assert!((zmax - 0.3125).abs() < 1.0e-4, "the wing z ceiling, got {zmax}");
+        // THE ±5 PIVOTS: the x extent the two wings' mirrored cubes
+        // wear — the cube's -11..1 texel span the inflate keeps, the
+        // pivots the ±5 the root offsets speak (x -6/16..6/16)
+        let xmin = xs.iter().cloned().fold(f32::MAX, f32::min);
+        let xmax = xs.iter().cloned().fold(f32::MIN, f32::max);
+        assert!((xmin + 6.0 / 16.0).abs() < 1.0e-4, "the left extent, got {xmin}");
+        assert!((xmax - 6.0 / 16.0).abs() < 1.0e-4, "the right extent, got {xmax}");
+        // THE NECK'S OWN RIDE: the model y 0..20 (+1 inflate both
+        // ways) hangs from the y=0 neck line DOWN (the y-down law the
+        // fold's 1.501 keeps) — the ceiling 1/16 above the neck, the
+        // floor 21/16 below
+        let ymax = ys.iter().cloned().fold(f32::MIN, f32::max);
+        let ymin = ys.iter().cloned().fold(f32::MAX, f32::min);
+        assert!((ymax - (1.501 + 1.0 / 16.0)).abs() < 1.0e-4, "the wing top, got {ymax}");
+        assert!((ymin - (1.501 - 21.0 / 16.0)).abs() < 1.0e-4, "the wing bottom, got {ymin}");
+        // THE MIRROR'S OWN FLAGS (the CubeListBuilder's own mirror
+        // call the right wing rides — the left the plain builder
+        // keeps)
+        let left = elytra_wing_parts(false, 0.0, 0.0, 0.0);
+        assert!(!left[0].cubes[0].mirror && left[1].cubes[0].mirror, "the mirror flags");
+        // THE CROUCH DROP: the 3-texel pivot drop the setupAnim's own
+        // y speaks + the entity fold's own -2/16 — the pair the
+        // ceiling's 5/16 descent wears
+        let crouched = AvatarState {
+            crouching: true,
+            ..state
+        };
+        let cq = wings_quads(&crouched, Vec3::new(0.0, 0.0, 0.0), 0.0, 0.0, 0.0, 0.0, 0.0);
+        let cymax = cq
+            .iter()
+            .flat_map(|q| q.pts)
+            .map(|p| p[1])
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (cymax - (ymax - 5.0 / 16.0)).abs() < 1.0e-4,
+            "the crouch drop the pair speaks, got {cymax} vs {ymax}"
+        );
+        // THE GLIDE SPREAD (javap setupAnim's zRot overwrite — the
+        // -90° z the flat-out spread wears): the tip the 20-texel
+        // swing lands horizontal — the x extent past the ±6/16 band
+        let spread = wings_quads(
+            &state,
+            Vec3::new(0.0, 0.0, 0.0),
+            0.0,
+            0.0,
+            0.34906584,
+            0.0,
+            -1.5707964,
+        );
+        let sxmax = spread
+            .iter()
+            .flat_map(|q| q.pts)
+            .map(|p| p[0].abs())
+            .fold(f32::MIN, f32::max);
+        assert!(sxmax > 1.3, "the spread the tip speaks, got {sxmax}");
+        let symin = spread
+            .iter()
+            .flat_map(|q| q.pts)
+            .map(|p| p[1])
+            .fold(f32::MAX, f32::min);
+        assert!(
+            symin > ymin + 0.5,
+            "the flattened wings the vertical extent sheds, got {symin} vs {ymin}"
+        );
+    }
+
+    /// THE WINGS LANE'S TEXTURE (the generated sha1 the generator's
+    /// own walk banks — the real cache file loads, the 64x32 the
+    /// shape-check keeps).
+    #[test]
+    #[ignore = "needs runtime assets (assets-cache/jar) from mc2rs-gen generate"]
+    fn the_wings_tex_the_sha1_verifies() {
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let tex = WingsTex::load(&root).expect("the wings texture loads");
+        let [r, g, b, a] = tex.pixel(22.0, 0.0);
+        _ = (r, g, b, a);
+        // the out-of-range clamp the nearest-texel law keeps
+        let [_, _, _, a2] = tex.pixel(100.0, 50.0);
+        _ = a2;
     }
 
     /// THE ARMOR'S POSE (copyPropertiesTo's own walk): the armor part

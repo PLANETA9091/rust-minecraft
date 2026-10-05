@@ -13,6 +13,7 @@ import zipfile
 
 HUMANOID_DIR = "entity/equipment/humanoid"
 LEGGINGS_DIR = "entity/equipment/humanoid_leggings"
+WINGS_DIR = "entity/equipment/wings"
 # The EquipmentAssets registry keys the 26.2 client jar's clinit speaks
 # (raw_disasm: LEATHER, COPPER, CHAINMAIL, IRON, GOLD, DIAMOND,
 # TURTLE_SCUTE, NETHERITE — the humanoid/humanoid_leggings PNG set the
@@ -64,6 +65,16 @@ def main() -> None:
     jar_path = sys.argv[1]
     root = sys.argv[2] if len(sys.argv) > 2 else "."
     jar = zipfile.ZipFile(jar_path)
+    # THE WINGS LAYER'S OWN TEXTURE (javap WingsLayer + the elytra's
+    # equipment/elytra.json the 26.2 jar carries: the WINGS layer
+    # type's single row, `texture minecraft:elytra` — the elytra the
+    # ONLY root item the wings asset textures; `use_player_texture`
+    # true — the player's own skin.elytra()/cape() the
+    # getPlayerElytraTexture walk serves instead when the skin carries
+    # one, the default steve's neither the elytra.png keeps).
+    wings_sha = hashlib.sha1(
+        jar.read(f"assets/minecraft/textures/{WINGS_DIR}/elytra.png")
+    ).hexdigest()
     rows = []
     for name in ASSETS:
         hu = f"{HUMANOID_DIR}/{name}.png"
@@ -79,14 +90,27 @@ def main() -> None:
         )
     out = HEADER.format(humanoid_dir=HUMANOID_DIR, leggings_dir=LEGGINGS_DIR)
     out += "\n".join(rows) + "\n];\n\n"
-    out += """\
+    out += f'''\
+/// The wings layer's texture dir (`EquipmentClientInfo.LayerType.WINGS`
+/// — the elytra's own equipment/elytra.json the jar carries, the
+/// WingsLayer's renderLayers walk the texture resolves).
+pub const WINGS_DIR: &str = "{WINGS_DIR}";
+
+/// The wings layer's elytra texture integrity sha1 (the
+/// `minecraft:elytra` texture the equipment/elytra.json names, the
+/// `use_player_texture` verdict the default no-cape/no-skin-elytra
+/// skin keeps). The verbatim PNG bytes inside the jar.
+pub const WINGS_ELYTRA_SHA1: &str = "{wings_sha}";
+
 /// The asset table's own lookup — `None` for the names the equipment
 /// registry never spoke (the elytra's wings layer the humanoid slots
-/// never texture, the client's own honesty).
-pub fn find(name: &str) -> Option<&'static EquipmentTex> {
+/// never texture — its own WINGS lane the constants above speak —
+/// the client's own honesty).
+pub fn find(name: &str) -> Option<&'static EquipmentTex> {{
     EQUIPMENT_ASSETS.iter().find(|t| t.name == name)
-}
-"""
+}}
+'''
+    _ = LEGGINGS_DIR  # the emit's own walk keeps both dir consts
     path = f"{root}/crates/mc-registry/src/generated/equipment.rs"
     with open(path, "w") as f:
         f.write(out)
