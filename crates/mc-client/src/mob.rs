@@ -3613,6 +3613,70 @@ impl Firework {
         }
     }
 
+    /// THE GROUND LAUNCH'S OWN SPAWN (javap `FireworkRocketItem.useOn`
+    /// + the `FireworkRocketEntity` ctor pair the 26.2 bytecode speaks —
+    /// the item-use walk the block click arms): the spawn the USE
+    /// CONTEXT'S OWN POSE keeps — the click location `getClickLocation()`
+    /// plus the clicked face's step × 0.15 (the `ldc2_w #59` double the
+    /// three `dmul`/`dadd` pairs carry — the i2d face steps the exact
+    /// f64 promotion keeps), the owner the `setOwner` walk names. THE
+    /// MOTION THE CTOR'S OWN LAW WEARS (the 5-arg base ctor pcs 78-108
+    /// — NO `shoot` the useOn path never calls): `setDeltaMovement(
+    /// triangle(0.0, 0.002297), 0.05, triangle(0.0, 0.002297))` — the
+    /// straight-up rise the tiny jitter perturbs, the `ldc2_w #74`
+    /// 0.05 the y keeps, the triangle pair the `RandomSource.triangle`
+    /// walk spends (the x draw FIRST — pcs 78-92 — the z SECOND — pcs
+    /// 95-107). THE LIFETIME THE CTOR'S OWN WALK BANKS (pcs 111-141 —
+    /// `10 * i + nextInt(6) + nextInt(7)` where the `i = 1 +
+    /// flightDuration` the FIREWORKS component read arms; the plain
+    /// rocket's flightDuration 1 the i = 2 keeps — the 20..=32 band
+    /// the crossbow's own walk shares). THE ROTATION THE ZERO DEFAULT
+    /// KEEPS (no `updateRotation` the shoot-less path never rides —
+    /// the entity's own 0/0 the plain spawn wears). THE FLAG THE
+    /// ACCESSOR'S DEFAULT KEEPS (`SHOT_AT_ANGLE` false — the crossbow's
+    /// SEVENTH ctor arg `true` the ground launch never wears; the
+    /// render's isShotAtAngle gate the billboard arm answers). The seed
+    /// the id-mixed law keeps (the crossbow shot's own precedent).
+    pub fn ground_launch(id: i32, ox: f64, oy: f64, oz: f64) -> Firework {
+        let seed = arrow_entity_seed(id);
+        let mut rng = Lcg::new(seed);
+        // THE CTOR'S OWN MOTION WALK (the draws the flight KEEPS — the
+        // crossbow's overwritten pair the ground launch wears)
+        let vx = rng.triangle(0.002297);
+        let vz = rng.triangle(0.002297);
+        // THE LIFETIME WALK (the plain rocket's FIREWORKS component
+        // flightDuration 1 the i = 1 + 1 keeps — the custom-star rows
+        // the inventory's stack never carries)
+        let lifetime = 10 * (1 + 1) + rng.next_int(6) + rng.next_int(7);
+        Firework {
+            id,
+            x: ox,
+            y: oy,
+            z: oz,
+            prev_x: ox,
+            prev_y: oy,
+            prev_z: oz,
+            vx,
+            vy: 0.05,
+            vz,
+            y_rot: 0.0,
+            x_rot: 0.0,
+            y_rot_o: 0.0,
+            x_rot_o: 0.0,
+            life: 0,
+            lifetime,
+            dead: false,
+            stuck: false,
+            // THE ACCESSOR'S OWN DEFAULT (the plain rocket's billboard
+            // — the crossbow's axis lane the flag never wears)
+            shot_at_angle: false,
+            // THE STREAM'S OWN TAIL (the ctor's spent draws the head
+            // keeps — the trail's gaussians the next draws the ticks
+            // spend, the crossbow's own tail the same walk banks)
+            rng,
+        }
+    }
+
     /// THE SHOT-AT-ANGLE FLIGHT (javap `FireworkRocketEntity.tick` the
     /// 26.2 walk speaks — the detached lane the crossbow's shot
     /// rides): the hit result the move vector clips (the MISS the

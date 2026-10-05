@@ -16400,6 +16400,51 @@ impl App {
             .play_voice(self.frame, "item.crossbow.shoot", 1.0, 1.0);
     }
 
+    /// THE ROCKET'S OWN USE-ON SPAWN ARM (javap `FireworkRocketItem.
+    /// useOn` the 26.2 walk — the `use` the AIR lane never rides here:
+    /// the block click's own verb the spawn serves): the spawn the USE
+    /// CONTEXT'S own pose keeps — `getClickLocation()` + the clicked
+    /// face's step × 0.15 (the `ldc2_w #59` double the three
+    /// `dmul`/`dadd` pairs carry — the DOWN/UP/NORTH/SOUTH/WEST/EAST
+    /// ordinals the clip's own encoding speaks, the i2d steps the exact
+    /// f64 promotion keeps), then `Projectile.spawnProjectile` the
+    /// `addFreshEntity` walk serves (the ctor's own motion/lifetime the
+    /// [`crate::mob::Firework::ground_launch`] ctor banks — no `shoot`
+    /// the useOn path never calls, the launch the life==0 tick's own
+    /// voice speaks). THE LIVE SESSION the `ServerLevel` gate the
+    /// silence keeps — the server's own rocket the wire's Add Entity
+    /// lane serves (the client predicts none, the launch voice the
+    /// server's own Sound packet answers), the SUCCESS the press
+    /// consumes either way (the NOT-ServerLevel arm the same verdict
+    /// speaks).
+    fn on_right_press_firework_arm(&mut self, hit: &crate::world::ClipHit) -> Option<bool> {
+        // THE FACE'S OWN STEP (the vanilla Direction ordinals the clip
+        // speaks — 0 DOWN, 1 UP, 2 NORTH, 3 SOUTH, 4 WEST, 5 EAST)
+        let step = match hit.face {
+            0 => (0.0, -1.0, 0.0),
+            1 => (0.0, 1.0, 0.0),
+            2 => (0.0, 0.0, -1.0),
+            3 => (0.0, 0.0, 1.0),
+            4 => (-1.0, 0.0, 0.0),
+            5 => (1.0, 0.0, 0.0),
+            _ => (0.0, 0.0, 0.0),
+        };
+        let sx = hit.location.0 + step.0 * 0.15;
+        let sy = hit.location.1 + step.1 * 0.15;
+        let sz = hit.location.2 + step.2 * 0.15;
+        // THE OFFLINE PREDICTION (the convert arms' own gate the spawn
+        // mirrors — the live session no local sim)
+        if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
+            // THE LEVEL'S OWN ENTITY COUNTER (the next_drop_id the
+            // crossbow's own shot arm keeps — the shared id space)
+            let id = self.next_drop_id;
+            self.next_drop_id += 1;
+            self.fireworks
+                .push(crate::mob::Firework::ground_launch(id, sx, sy, sz));
+        }
+        Some(true)
+    }
+
     /// THE MAIN-HAND'S OWN ITEM LANE (the vanilla startUseItem's hand-0
     /// turn — the unified held id's use walk the lanes' own order keeps:
     /// the boat's spawn, the carrot stick's boost, the eat's consumable,
@@ -23452,6 +23497,26 @@ impl App {
                         mid_sound_played: false,
                     });
                     return true;
+                } else if held == "firework_rocket" {
+                    // THE ROCKET'S OWN USE-ON ARM (javap `FireworkRocketItem.
+                    // useOn` over the 26.2 jar — the 25-pc body the whole
+                    // verdict wears): the PASS guard the elytra branch owns
+                    // (`player.isFallFlying()` — the boost lane the AIR-use
+                    // walk answers; the offline body the fall-flying state
+                    // never wears, the ground launch the plain walk keeps),
+                    // the `ServerLevel` gate the body wraps (the offline
+                    // world the stand-in keeps — the live session the
+                    // server's own rocket the wire's Add Entity + Sound
+                    // packet lanes serve, the client predicts none), the
+                    // spawn the click + face-step × 0.15 pose rides, the
+                    // `stack.shrink(1)` the held-id stand-in never counts
+                    // (the tool arms' own honesty), the SUCCESS the press
+                    // consumes unconditionally (pcs 132-135 the
+                    // `getstatic PASS`-guard's own tail keeps — the
+                    // NOT-ServerLevel arm the same verdict speaks).
+                    if let Some(launched) = self.on_right_press_firework_arm(&hit) {
+                        return launched;
+                    }
                 }
             }
         }
@@ -53979,6 +54044,157 @@ cow_sound_variant: None,
         // THE RE-CHARGE: the fresh pull the next rocket arms
         assert!(app.on_right_press(0, 0), "the fresh pull starts");
         assert!(app.is_using(), "the pull the fresh stack arms");
+    }
+
+    /// THE GROUND LAUNCH'S OWN CTOR LAW — javap `FireworkRocketEntity`
+    /// the 5-arg base ctor the 26.2 bytecode speaks (the useOn's own
+    /// spawn pair the [`crate::mob::Firework::ground_launch`] ctor
+    /// wears): the motion the `setDeltaMovement(triangle(0.0, 0.002297),
+    /// 0.05, triangle(0.0, 0.002297))` walk banks (the x draw FIRST,
+    /// the z SECOND — the draws the flight KEEPS, the crossbow's
+    /// overwritten pair the ground launch wears), the 0.05 the `ldc2_w
+    /// #74` rise keeps, the lifetime the `10 * (1 + flightDuration) +
+    /// nextInt(6) + nextInt(7)` walk banks (the plain rocket's
+    /// flightDuration 1 the i = 2 keeps — the 20..=32 band the
+    /// crossbow's own walk shares), the rotation the zero default
+    /// keeps (no `updateRotation` the shoot-less path never rides), the
+    /// SHOT_AT_ANGLE flag the accessor's false default keeps (the
+    /// crossbow's SEVENTH arg `true` the ground launch never wears),
+    /// and the spawn pose the caller's click answer wears verbatim.
+    #[test]
+    fn the_ground_launch_the_ctor_law_wears() {
+        // THE STREAM MIRROR (the same id-mixed seed the same draws
+        // spends — the x first, the z second, the lifetime's two
+        // nextInts the tail keeps)
+        let seed = crate::mob::arrow_entity_seed(7);
+        let mut mirror = crate::drops::Lcg::new(seed);
+        let mx = mirror.triangle(0.002297);
+        let mz = mirror.triangle(0.002297);
+        let mlifetime = 10 * (1 + 1) + mirror.next_int(6) + mirror.next_int(7);
+        let f = crate::mob::Firework::ground_launch(7, 1.5, 2.5, 3.5);
+        assert_eq!(f.vx, mx, "the x triangle the FIRST draw keeps");
+        assert_eq!(f.vz, mz, "the z triangle the SECOND draw keeps");
+        assert_eq!(f.vy, 0.05, "the 0.05 rise the ldc2_w #74 keeps");
+        assert_eq!(f.lifetime, mlifetime, "the lifetime the ctor's walk banks");
+        assert!(
+            (20..=32).contains(&f.lifetime),
+            "the lifetime the ctor's own band keeps ({})",
+            f.lifetime
+        );
+        assert_eq!(f.life, 0, "the flight clock the zero keeps");
+        assert!(!f.shot_at_angle, "the plain rocket's billboard the flag keeps");
+        assert_eq!(f.y_rot, 0.0, "no updateRotation the shoot-less path keeps");
+        assert_eq!(f.x_rot, 0.0, "no updateRotation the shoot-less path keeps");
+        assert_eq!(
+            (f.x, f.y, f.z),
+            (1.5, 2.5, 3.5),
+            "the spawn pose the caller's click answers verbatim"
+        );
+        assert!(!f.stuck && !f.dead, "the fresh launch the rest never wears");
+    }
+
+    /// THE ROCKET'S OWN USE-ON LAUNCH — javap `FireworkRocketItem.useOn`
+    /// over the 26.2 jar (the ground launch the block click arms): the
+    /// held rocket's RMB the spawn serves — the click + face-step ×
+    /// 0.15 pose (the `ldc2_w #59` double the dmul/dadd pairs carry),
+    /// the straight-up rise the ctor's own motion keeps (NO `shoot`
+    /// the useOn path never calls), the SUCCESS the press consumes,
+    /// the launch the life==0 tick's own voice speaks, and the flight
+    /// the lifetime crossing the explode tail serves.
+    #[test]
+    fn the_rocket_use_on_the_ground_launch_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let rocket_id = wire("firework_rocket");
+        let slot = app.selected_hotbar;
+        app.inventory.items[slot] = (rocket_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        // the hit cell the solid ground keeps (the top face the DOWN
+        // look answers — the hit the camera's own column serves)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::STONE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.fireworks.is_empty(), "the fresh world no rocket keeps");
+        // THE LAUNCH: the SUCCESS verdict the press consumes
+        assert!(app.on_right_press(0, 0), "the useOn SUCCESS the press consumes");
+        assert_eq!(app.fireworks.len(), 1, "the ground launch the rocket banks");
+        let f = &app.fireworks[0];
+        // THE SPAWN POSE (the click location + the UP face's step × 0.15
+        // — the y the top face's own plane + 0.15 keeps, the x/z the
+        // click's own ray answers)
+        assert!(
+            (f.x - (c as f64 + 0.5)).abs() < 1e-6 && (f.z - (c as f64 + 0.5)).abs() < 1e-6,
+            "the click's own x/z the spawn keeps ({},{})",
+            f.x,
+            f.z
+        );
+        assert!(
+            (f.y - ((surface + 1) as f64 + 0.15)).abs() < 1e-6,
+            "the UP face step × 0.15 the spawn y keeps ({})",
+            f.y
+        );
+        // THE CTOR'S OWN MOTION (the straight-up rise the jitter
+        // perturbs — no shoot the useOn path never calls)
+        assert_eq!(f.vy, 0.05, "the 0.05 rise the ctor's own law keeps");
+        assert!(
+            f.vx.abs() <= 0.002297 && f.vz.abs() <= 0.002297,
+            "the triangle jitter the ctor's spread keeps"
+        );
+        assert!(!f.shot_at_angle, "the plain rocket's billboard the flag keeps");
+        // THE LAUNCH VOICE (the life==0 tick's own word — the playSound
+        // the useOn itself never speaks)
+        if sounds_loaded() {
+            assert!(
+                !app
+                    .sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.firework_rocket.launch @")),
+                "the launch the press never speaks early"
+            );
+        }
+        let spawn_y = app.fireworks[0].y;
+        app.update();
+        assert_eq!(app.fireworks.len(), 1, "the flight the first tick keeps");
+        assert_eq!(app.fireworks[0].life, 1, "the flight clock the tick advances");
+        // THE RISE (the flight the +y keeps — the wall-free column the
+        // straight-up motion never clips)
+        assert!(
+            app.fireworks[0].y > spawn_y,
+            "the rise the flight's own tick keeps"
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.firework_rocket.launch @")),
+                "the FIREWORK_ROCKET_LAUNCH the first tick rode"
+            );
+        }
+        // THE LIFETIME CROSSING: the explode tail the despawn serves
+        let lifetime = app.fireworks[0].lifetime;
+        app.fireworks[0].life = lifetime;
+        app.update();
+        assert!(
+            app.fireworks.is_empty(),
+            "the lifetime crossing the discard keeps"
+        );
     }
 
     /// THE FIREWORK'S OWN CROSSING BURST — the lifetime crossing the
