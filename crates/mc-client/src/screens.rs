@@ -6722,6 +6722,14 @@ pub struct App {
     /// one stream the server shares, the client's per-lane streams the
     /// existing seeds' own pins keep)
     pub crop_rng: crate::drops::Lcg,
+    /// THE FIRE LANE'S OWN STREAM — the scheduled-tick walks' draw
+    /// source (the crop lane's own stream the walk's precedent wears):
+    /// the fire_tick_delay re-arms, the ladder's own roll, the
+    /// burn-out's own six rolls and the spread's own candidate rolls
+    /// the walk keeps, the placement arms' own first schedule the
+    /// onPlace law's own draw speaks. The vanilla's own level.random
+    /// the shared stream the client's per-lane stand-in never borrows.
+    pub fire_rng: crate::drops::Lcg,
     /// THE AMBIENT WALK'S TWO STREAMS (javap `ClientLevel.animateTick`
     /// — the pair the walk's bytecode speaks): the LEVEL random (the
     /// position jitter's six draws per sample, the particle ctors' own
@@ -7903,6 +7911,7 @@ impl App {
             next_mob_id: 1,
             mob_rng: crate::drops::Lcg::new(0x5EED_10CA),
             crop_rng: crate::drops::Lcg::new(0x5EED_C909),
+            fire_rng: crate::drops::Lcg::new(0x5EED_F1A7),
             ambient_rng: crate::drops::Lcg::new(0x5EED_1ABA),
             level_ambient_rng: crate::drops::Lcg::new(0x5EED_7E11),
             spell_jitter_rng: crate::drops::Lcg::new(0x5EED_570F),
@@ -9993,6 +10002,70 @@ impl App {
                 }
                 if crops_grew {
                     self.remesh_offline();
+                }
+                // THE FIRE'S OWN SCHEDULED TICKS (javap `FireBlock.tick`
+                // the 26.2 jar — the walk the onPlace law's own queue
+                // feeds: the igniter arms' first schedule the placement
+                // speaks, the walk's own re-arm the queue's Set dedup
+                // keeps): the due cells the drain gives up (the time
+                // order the LevelTicks' own sort wears), each the
+                // [`World::fire_tick` ] law answers — the ladder, the
+                // survival, the burn-out and the spread the walk's own
+                // rolls keep. The networked world the SERVER ticks
+                // (the same split the crop lane's own authority keeps).
+                // The remesh + relight the walk's own sets speak ONCE
+                // (the batched rhythm the crop lane keeps), the burnt
+                // TNT the prime walk spawns (the PrimedTnt ctor + the
+                // TNT_PRIMED voice the prime arm's own law wears).
+                if let Some(world) = self.offline_world.as_mut() {
+                    let due = world.drain_due_fire_ticks(self.frame);
+                    if !due.is_empty() {
+                        let mut fire_changed = false;
+                        let mut tnt_primed: Vec<(i32, i32, i32)> = Vec::new();
+                        for (x, y, z) in due {
+                            let out = world.fire_tick(self.frame, x, y, z, &mut self.fire_rng);
+                            fire_changed |= out.changed;
+                            tnt_primed.extend(out.tnt_primed);
+                        }
+                        if fire_changed {
+                            world.relight();
+                            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                        }
+                        for (x, y, z) in tnt_primed {
+                            let id = self.next_mob_id;
+                            self.next_mob_id += 1;
+                            self.primed_tnts.push(crate::mob::PrimedTnt::new(
+                                id,
+                                x as f64 + 0.5,
+                                y as f64,
+                                z as f64 + 0.5,
+                                self.mob_rng.next(),
+                            ));
+                            // THE PRIME'S OWN VOICE (javap the private
+                            // prime's pc 91+ — the TNT_PRIMED row the
+                            // BLOCKS source serves, the 1.0F/1.0F pair
+                            // the volume and the pitch keep — the same
+                            // law the igniter arm's own prime speaks)
+                            let ear = self
+                                .body
+                                .as_ref()
+                                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                            let yaw = self.listener_yaw();
+                            let (tx, ty, tz) = (
+                                x as f64 + 0.5,
+                                y as f64,
+                                z as f64 + 0.5,
+                            );
+                            self.sounds.play_voice_at_pan(
+                                self.frame,
+                                "entity.tnt.primed",
+                                1.0,
+                                1.0,
+                                ear_distance(ear, tx, ty, tz),
+                                ear_pan(ear, yaw, tx, ty, tz),
+                            );
+                        }
+                    }
                 }
                 // THE MOB TICKS (the vanilla Minecraft.tick's entity
                 // lane): each zombie thinks on the active world's
@@ -27757,6 +27830,21 @@ impl App {
         // grid's own walk bakes).
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(cell.0, cell.1, cell.2, crate::world::FIRE);
+            // THE ONPLACE LAW'S OWN FIRST SCHEDULE (javap
+            // `FireBlock.onPlace` — the super's canSurvive removal the
+            // arm's own gate already answered, the `scheduleTick(pos,
+            // this, getFireTickDelay(level.getRandom()))` the pc 11-21
+            // walk serves): the AGE-0 default the store banks (the
+            // getStateForPlacement's own default the ladder reads),
+            // the walk the due tick answers (the queue's Set dedup the
+            // re-placement's duplicate refuses)
+            world.fire_age.insert(cell, 0);
+            world.schedule_fire_tick(
+                self.frame + crate::world::fire_tick_delay(&mut self.fire_rng),
+                cell.0,
+                cell.1,
+                cell.2,
+            );
             world.relight();
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
@@ -27860,6 +27948,21 @@ impl App {
         // grid's own walk bakes).
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(cell.0, cell.1, cell.2, crate::world::FIRE);
+            // THE ONPLACE LAW'S OWN FIRST SCHEDULE (javap
+            // `FireBlock.onPlace` — the super's canSurvive removal the
+            // arm's own gate already answered, the `scheduleTick(pos,
+            // this, getFireTickDelay(level.getRandom()))` the pc 11-21
+            // walk serves): the AGE-0 default the store banks (the
+            // getStateForPlacement's own default the ladder reads),
+            // the walk the due tick answers (the queue's Set dedup the
+            // re-placement's duplicate refuses)
+            world.fire_age.insert(cell, 0);
+            world.schedule_fire_tick(
+                self.frame + crate::world::fire_tick_delay(&mut self.fire_rng),
+                cell.0,
+                cell.1,
+                cell.2,
+            );
             world.relight();
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
@@ -50582,6 +50685,10 @@ mod tests {
             difficulty: crate::difficulty::Difficulty::Peaceful,
             difficulty_locked: true,
             inhabited: None,
+            // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+            // the empty store the offline walk alone fills
+            fire_ticks: Vec::new(),
+            fire_age: std::collections::HashMap::new(),
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -51148,6 +51255,10 @@ mod tests {
                     difficulty: crate::difficulty::Difficulty::Normal,
                     difficulty_locked: false,
                     inhabited: None,
+                    // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+                    // the empty store the offline walk alone fills
+                    fire_ticks: Vec::new(),
+                    fire_age: std::collections::HashMap::new(),
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -51587,6 +51698,10 @@ mod tests {
             difficulty: crate::difficulty::Difficulty::Normal,
             difficulty_locked: false,
             inhabited: None,
+            // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+            // the empty store the offline walk alone fills
+            fire_ticks: Vec::new(),
+            fire_age: std::collections::HashMap::new(),
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -51652,6 +51767,10 @@ mod tests {
             difficulty: crate::difficulty::Difficulty::Normal,
             difficulty_locked: false,
             inhabited: None,
+            // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+            // the empty store the offline walk alone fills
+            fire_ticks: Vec::new(),
+            fire_age: std::collections::HashMap::new(),
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -51719,6 +51838,10 @@ mod tests {
                     difficulty: crate::difficulty::Difficulty::Normal,
                     difficulty_locked: false,
                     inhabited: None,
+                    // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+                    // the empty store the offline walk alone fills
+                    fire_ticks: Vec::new(),
+                    fire_age: std::collections::HashMap::new(),
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -51763,6 +51886,10 @@ mod tests {
             difficulty: crate::difficulty::Difficulty::Normal,
             difficulty_locked: false,
             inhabited: None,
+            // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+            // the empty store the offline walk alone fills
+            fire_ticks: Vec::new(),
+            fire_age: std::collections::HashMap::new(),
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 side * side
@@ -69716,6 +69843,10 @@ cow_sound_variant: None,
             difficulty: crate::difficulty::Difficulty::Normal,
             difficulty_locked: false,
             inhabited: None,
+            // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+            // the empty store the offline walk alone fills
+            fire_ticks: Vec::new(),
+            fire_age: std::collections::HashMap::new(),
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -73137,6 +73268,114 @@ cow_sound_variant: None,
             crate::world::FIRE,
             "the location arm's fire the cell wears"
         );
+    }
+
+    /// THE FIRE DRAIN'S OWN WALK THE APP LANDS — the update loop's
+    /// scheduled-tick lane the drain site speaks: the placement's own
+    /// onPlace law the queue arms (the age-0 entry + the 30..=39 due),
+    /// the due tick the drain crosses (the walk the world's own law
+    /// answers), the burnt TNT the prime walk spawns (the PrimedTnt
+    /// the ctor's own center keeps, the fuse the entity's own clock
+    /// starts) and the TNT_PRIMED voice the BLOCKS source plays — the
+    /// chain the fire the player sets the offline world finally
+    /// carries.
+    #[test]
+    fn the_fire_drain_the_walk_the_app_lands() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE STAGE'S OWN DETERMINISM: the stone floor, the TNT
+        // neighbor the burn-out lane reads, the open box the terrain's
+        // own flora never perturbs
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c + 1, top, c, crate::world::TNT); // the east neighbor the roll eats
+        }
+        // THE ONPLACE LAW'S OWN ARM (the placement arm's own shape):
+        // the fire lands, the age-0 entry the store banks, the queue
+        // the 30..=39 due wears
+        let frame0 = app.frame;
+        let due = {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::FIRE);
+            w.fire_age.insert((c, top, c), 0);
+            let d = frame0 + crate::world::fire_tick_delay(&mut app.fire_rng);
+            w.schedule_fire_tick(d, c, top, c);
+            assert!(
+                d > frame0 + 29 && d < frame0 + 40,
+                "the delay window the onPlace draw banks"
+            );
+            d
+        };
+        assert!(
+            due > app.frame,
+            "the due the future the first walk never crosses"
+        );
+        // THE DUE TICK'S OWN CROSSING: the updates the walk the drain
+        // speaks (the re-arm the queue keeps — the flame the TNT's own
+        // burnable odds holds, the isValid scan the neighbor answers)
+        for _ in 0..45 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::FIRE,
+                "the young flame the walk's own verdict keeps"
+            );
+            assert!(
+                w.fire_ticks.iter().any(|&(_, x, y, z)| (x, y, z) == (c, top, c)),
+                "the re-arm the walk's own opening speaks"
+            );
+        }
+        // THE PRIME'S OWN LANDING: the 100-odds roll the east neighbor
+        // wears (1/3 per fire tick) — the drive the spawn answers, the
+        // break the fuse's own crossing beats (the 80-tick clock the
+        // boom never reaches)
+        let mut primed = false;
+        for _ in 0..900 {
+            app.update();
+            if !app.primed_tnts.is_empty() {
+                primed = true;
+                break;
+            }
+        }
+        assert!(primed, "the burnt TNT the drain's own spawn wears");
+        let t = &app.primed_tnts[0];
+        assert!(
+            t.fuse <= 80,
+            "the fuse the ctor's own clock starts (the tick the same update wears)"
+        );
+        assert!(
+            (t.x - (c as f64 + 1.5)).abs() < 0.5 && (t.z - (c as f64 + 0.5)).abs() < 0.5,
+            "the prime's own center the ctor keeps (the same cell the entity lane's own
+             ticks the accumulator ran may drift — the exact cell the world walk pins)"
+        );
+        assert!(
+            t.y >= top as f64 - 0.1 && t.y < top as f64 + 0.3,
+            "the ignite's own lift the first ticks wear"
+        );
+        // THE VOICE'S OWN ROW (the TNT_PRIMED row the BLOCKS source
+        // serves — the 1.0F/1.0F pair the volume and the pitch keep)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.tnt.primed @")),
+                "the TNT_PRIMED voice the drain's own spawn plays"
+            );
+        }
     }
 
     #[test]

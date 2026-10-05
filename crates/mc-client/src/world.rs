@@ -682,6 +682,78 @@ pub fn is_fire(id: u16) -> bool {
     id == FIRE || id == SOUL_FIRE
 }
 
+/// THE FIRE'S OWN AGE CEILING — javap `FireBlock` the 26.2 jar: `public
+/// static final int MAX_AGE` the field the AGE property's own ladder
+/// caps (the 0..=15 the IntegerProperty.create("age", 0, 15) walk
+/// banks), the age-15 cell the extinguish arm's own roll reads.
+pub const FIRE_MAX_AGE: u8 = 15;
+
+/// THE FIRE'S OWN SCHEDULED-TICK DELAY — javap `FireBlock.getFireTickDelay`
+/// (the 26.2 jar, the static the tick's own opening draw and the
+/// onPlace law's own first schedule share): `bipush 30` the base the
+/// pc 0-2 pair keeps, `nextInt(10)` the window the pc 3-5 draw wears —
+/// 30..=39 game ticks between a fire cell's own walks (~1.5-2s the
+/// vanilla cadence speaks).
+pub const FIRE_TICK_DELAY_BASE: u64 = 30;
+pub const FIRE_TICK_DELAY_WINDOW: u64 = 10;
+
+/// THE FIRE'S OWN SCHEDULED DELAY DRAW — javap `getFireTickDelay(RandomSource)`
+/// verbatim: `30 + random.nextInt(10)`. The lane's own rng the caller
+/// keeps (the crop lane's own stream the walk's precedent wears).
+pub fn fire_tick_delay(rng: &mut crate::drops::Lcg) -> u64 {
+    FIRE_TICK_DELAY_BASE + rng.next_int(FIRE_TICK_DELAY_WINDOW) as u64
+}
+
+/// THE IGNITE ODDS' OWN TABLE — javap `FireBlock.bootStrap()` over the
+/// real 26.2 jar (the `setFlammable(block, ignite, burn)` pairs the
+/// static init's own walk banks, the 175 rows the dump speaks): the
+/// OAK_LOG 5/5 pair the iconst_5/iconst_5 keeps, the LEAVES family
+/// 30/60, the LEAF_LITTER 60/100, the TNT 15/100, the flora family
+/// SHORT_GRASS/BUSH/TALL_GRASS/LARGE_FERN/the flower rows all 60/100 —
+/// the upper halves the SAME block the odds never split (the offline
+/// HALF-KIND word the base row's own odds wear). THE SILENCE THE
+/// TABLE KEEPS: WHEAT and CRAFTING_TABLE ride NO row (the canBurn
+/// refusal the crop and the table wear), every stone/dirt/fluid kind
+/// the same refusal keeps. THE SPREAD'S OWN READ (javap
+/// `getIgniteOdds(LevelReader, BlockPos)` — the `isEmptyBlock` gate
+/// the pc 0-11 pair serves FIRST, the `Direction.values()` max fold
+/// pc 12-72 the SIX neighbors wear): the target cell the AIR alone
+/// answers, the odds the direct neighbors' own rows speak — the
+/// threshold `(odds + 40 + difficulty*7) / (age + 30)` the walk's
+/// own arithmetic keeps.
+pub fn fire_ignite_odds(id: u16) -> i32 {
+    match id {
+        LOG => 5,
+        LEAVES | PALE_LEAVES => 30,
+        TNT => 15,
+        LEAF_LITTER | SHORT_GRASS | BUSH | TALL_GRASS | TALL_GRASS_UPPER | LARGE_FERN
+        | LARGE_FERN_UPPER => 60,
+        _ if is_flower(id) => 60,
+        _ => 0,
+    }
+}
+
+/// THE BURN ODDS' OWN TABLE — javap `FireBlock.bootStrap()` the same
+/// pairs' second column (the `getBurnOdds(BlockState)` read the
+/// checkBurnOut roll wears — `random.nextInt(chance) < burnOdds` the
+/// pc 11-21 compare serves; the waterlogged read the map lookup's own
+/// gate keeps — the offline kind-only world the fluid kinds the
+/// zero rows speak): the LOG family 5/5 (the trunk the slow coal the
+/// pair speaks), the LEAVES family 60/60, the LEAF_LITTER 60/100,
+/// the TNT 15/100 (the 100 the prime chain's own chance wears), the
+/// flora family all 60/100 — the same silence the non-flammable kinds
+/// keep.
+pub fn fire_burn_odds(id: u16) -> i32 {
+    match id {
+        LOG => 5,
+        LEAVES | PALE_LEAVES => 60,
+        TNT | LEAF_LITTER | SHORT_GRASS | BUSH | TALL_GRASS | TALL_GRASS_UPPER | LARGE_FERN
+        | LARGE_FERN_UPPER => 100,
+        _ if is_flower(id) => 100,
+        _ => 0,
+    }
+}
+
 /// THE PAIR'S OWN MATE — the opposite half's kind (`Some` the family
 /// alone answers): the TALL_GRASS pair (43 <-> 44) and the LARGE_FERN
 /// pair (45 <-> 46) the two-cell law swaps. The dig lane's
@@ -1092,6 +1164,21 @@ pub const BLOCK_INTERACTION_RANGE: f64 = 4.5;
 /// 3.0)` — the strict compare, else the hit degrades to a MISS.
 pub const ENTITY_INTERACTION_RANGE: f64 = 3.0;
 
+/// THE FIRE WALK'S OWN FRUITS — the one-cell [`World::fire_tick` ]
+/// verdict the caller's own lanes answer: `changed` the remesh+relight
+/// batch speaks once (the walk's own sets the mesher's fire lane and
+/// the light grid's emission rows re-speak), `new_fire` the placed
+/// cells the walk's own schedule already queued (the onPlace law the
+/// placement arms and the burn-out/spread arms share), `tnt_primed`
+/// the burnt TNT cells the caller's own entity lane spawns (the
+/// PrimedTnt the prime walk's own ctor law keeps).
+#[derive(Debug, Clone, Default, PartialEq)]
+pub struct FireTickOutcome {
+    pub changed: bool,
+    pub new_fire: Vec<(i32, i32, i32)>,
+    pub tnt_primed: Vec<(i32, i32, i32)>,
+}
+
 /// One block-ray hit — the vanilla `BlockHitResult`'s own shape: the hit
 /// voxel, the entry face's Direction ordinal, the exact hit location the
 /// wire's cursor floats subtract from (double math, float cast), and the
@@ -1257,6 +1344,33 @@ pub struct World {
     /// wire never sends, the client's words never predict it (the
     /// no-opinion convention every lane field keeps).
     pub inhabited: Option<Vec<u64>>,
+    /// THE FIRE'S OWN SCHEDULED-TICK QUEUE — javap `FireBlock.onPlace`
+    /// (the 26.2 jar: `level.scheduleTick(pos, this, getFireTickDelay(
+    /// level.getRandom()))` the pc 11-21 walk serves — the FIRST tick
+    /// the placement's own set speaks) and `FireBlock.tick`'s own
+    /// opening pc 0-10 pair (the re-arm EVERY walk's first draw keeps):
+    /// the (due game tick, x, y, z) entries the offline world's own
+    /// [`World::fire_tick` ] answers. THE SET'S OWN LAW (javap
+    /// `LevelChunkTicks.schedule` — the `ticksPerPosition` Set's
+    /// `add`-returns-false dedup the pc 1-10 pair serves): ONE live
+    /// entry per cell — the re-arm the walk's opening draw claims, the
+    /// ladder's flag-260 setBlock the onPlace schedule the slot taken
+    /// DROPS (the exponential the queue never grows), the dead cell's
+    /// stale entry the drain's own kind gate drops. The networked
+    /// world the SERVER ticks (the same split the crop lane's own
+    /// authority keeps) — the queue the offline world alone fills.
+    pub fire_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE FIRE'S OWN AGE LADDER — the per-cell AGE property the
+    /// offline kind-only world the `FIRE`/`SOUL_FIRE` kind ids alone
+    /// cannot carry (the SOUL_FIRE 58 the FIRE+age arithmetic the
+    /// range collision refuses — the side-table the honest store
+    /// wears): the 0..=15 ladder the walk's own roll advances
+    /// (`min(15, age + nextInt(3)/2)`), the burn-out and spread arms'
+    /// own `min(15, age + nextInt(5)/4)` the new cells' entries bank,
+    /// the removal the entry the map drops. `None`-shaped absence =
+    /// age 0 (the placement's own default the getStateForPlacement
+    /// walk banks).
+    pub fire_age: std::collections::HashMap<(i32, i32, i32), u8>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -1431,6 +1545,8 @@ impl World {
             difficulty: crate::difficulty::Difficulty::Normal, // the host's own new-world default
             difficulty_locked: false, // the lock the confirm's Yes alone arms
             inhabited: Some(vec![0u64; chunks_per_side * chunks_per_side]), // the host world's own dwell clock
+            fire_ticks: Vec::new(), // the fire's own queue: no fire, no schedule
+            fire_age: std::collections::HashMap::new(), // the ladder's store: empty
         };
         w.generate();
         w
@@ -1851,6 +1967,339 @@ impl World {
             }
         }
         grew
+    }
+
+    /// THE FIRE'S OWN SCHEDULE (javap `LevelChunkTicks.schedule` the
+    /// 26.2 jar — the `ticksPerPosition` Set's `add`-returns-false
+    /// dedup the pc 1-10 pair keeps): the (due, x, y, z) entry the
+    /// queue gains UNLESS the cell already rides one (the ONE live
+    /// entry per cell the Set's own membership law speaks — the re-arm
+    /// the walk's opening draw claims, the ladder's onPlace schedule
+    /// the slot taken drops, the exponential the queue never grows).
+    /// The `ScheduledTick.equals` the type+pos pair alone compares —
+    /// the kind the fire's own family alone wears (the two kinds the
+    /// one-cell-at-a-time law never mixes) — the pos the dedup key.
+    pub fn schedule_fire_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .fire_ticks
+            .iter()
+            .any(|&(_, px, py, pz)| px == x && py == y && pz == z)
+        {
+            return; // the Set's own verdict — the duplicate the add refuses
+        }
+        self.fire_ticks.push((due, x, y, z));
+    }
+
+    /// THE FIRE QUEUE'S OWN DRAIN (the `ServerLevel.tick` scheduled
+    /// lane's own order the due ticks keep — the time order the
+    /// LevelTicks' own sort wears): the due-at-or-before-`now` entries
+    /// the queue gives UP (the retain's own removal the falling lane's
+    /// drain speaks), the time order the stable sort banks. The due
+    /// list the caller's own walks answer.
+    pub fn drain_due_fire_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due_cells: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.fire_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due_cells.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due_cells.sort_by_key(|&(at, _, _, _)| at);
+        due_cells
+            .into_iter()
+            .map(|(_, x, y, z)| (x, y, z))
+            .collect()
+    }
+
+    /// THE FIRE'S OWN SCHEDULED TICK — javap `FireBlock.tick(state,
+    /// level, pos, random)` over the real 26.2 jar, the walk the
+    /// tick's own pc map keeps in ORDER:
+    ///
+    /// 1. pc 0-10 `scheduleTick(pos, this, getFireTickDelay(random))`
+    ///    — the re-arm FIRST (30 + nextInt(10), the queue's own Set
+    ///    law the duplicate the slot claims);
+    /// 2. pc 13-21 `canSpreadFireAround` — the FIRE_SPREAD_RADIUS
+    ///    gamerule + the player-proximity gate the offline world's own
+    ///    single player never refuses (the fold the gamerule's own -1
+    ///    default the radius-less world wears);
+    /// 3. pc 22-37 `canSurvive` — the removal the failed verdict
+    ///    serves... the vanilla walk CONTINUES (the pc 38+ fall-through
+    ///    the early return never wears): the rain arm's own draw and
+    ///    the ladder's own roll the stream parity banks, the re-place
+    ///    the flag-260 setBlock serves the isValid step's own
+    ///    removeBlock the SAME walk erases (the AIR end-state the two
+    ///    walks share — the fold the early return's own draws keep);
+    /// 4. pc 77-127 the rain arm — `!infiniburn && isRaining &&
+    ///    isNearRain && nextFloat() < 0.2F + age*0.03F` the removal
+    ///    wears. THE FOLD the offline world keeps: isRaining the
+    ///    `rain_level > 0.0` verdict speaks, the isNearRain walk's
+    ///    canSeeSky/heightmap reads (javap `isNearRain` — the pos +
+    ///    the four horizontal neighbors' isRainingAt the five reads
+    ///    speak) the open-sky procedural plains the TRUE fold answers
+    ///    (the heightmap walk the offline world never carries — the
+    ///    crop lane's own light-gate fold the precedent wears);
+    /// 5. pc 128-180 the ladder — `min(15, age + nextInt(3)/2)` the
+    ///    new age the setBlock(260) stores; THE WALK'S OWN QUIRK the
+    ///    bytecode's locals bank: the pc 62-75 `istore 7` age the
+    ///    DOWNSTREAM reads all wear (pc 221/233/320/543/602 the
+    ///    iload-7 family speaks) — the ladder's own product the NEXT
+    ///    tick's pc 62-75 read alone answers, this walk's decisions
+    ///    the PRE-LADDER age keeps;
+    /// 6. pc 186-232 the isValid arm — `!isValidFireLocation` the
+    ///    six-way canBurn scan refuses (the below cell the sturdy
+    ///    UP-face row answers — the collision Full verdict the
+    ///    [`fire_can_survive` ] law's own arm keeps): the `sturdy &&
+    ///    age <= 3` pair the survival speaks, the else the removal
+    ///    + return wears (the young flame the sturdy floor holds,
+    ///    the grown flame the burnless floor douses);
+    /// 7. pc 233-273 the age-15 arm — `age == 15 && nextInt(4) == 0
+    ///    && !canBurn(below)` the removal wears (the draw the age-15
+    ///    gate alone serves, the canBurn read the roll's own verdict
+    ///    follows);
+    /// 8. pc 274-419 the burn-out lane — the SIX checkBurnOut calls
+    ///    the east/west/below/above/north/south order the bytecode's
+    ///    own walk keeps (chance 300/300/250/250/300/300, the
+    ///    INCREASED_FIRE_BURNOUT -50 bonus the nether attribute the
+    ///    offline overworld never arms): every call ROLLS (the draw
+    ///    the zero-odds neighbor never skips), the roll
+    ///    `nextInt(chance) < burnOdds` the [`fire_burn_odds` ] table
+    ///    answers; the inner walk (javap `checkBurnOut` pc 31-99):
+    ///    `nextInt(age + 10) < 5 && !isRainingAt` the FIRE
+    ///    placement's own arm serves (`min(15, age + nextInt(5)/4)`
+    ///    the new cell's age wears — the onPlace law's own schedule
+    ///    the queue's Set dedup banks), else the AIR removal; the
+    ///    pre-removal state the TNT verdict reads (pc 100-120) —
+    ///    `TntBlock.prime` the entity spawn the caller's own lane
+    ///    answers (javap the private prime: the TNT_EXPLODES gate,
+    ///    the `new PrimedTnt(level, x+0.5, y, z+0.5, null)` ctor +
+    ///    the addFreshEntity + the TNT_PRIMED BLOCKS 1.0F/1.0F voice —
+    ///    the removal the inner walk ALREADY served, the prime's own
+    ///    walk no removeBlock wears);
+    /// 9. pc 420-655 the spread loop — the x outer (-1..=1), z middle
+    ///    (-1..=1), y inner (-1..=4) nesting the bytecode's own var
+    ///    order banks (var12/13/14 the setWithOffset(x, y, z) args
+    ///    speak), the (0,0,0) self the skip keeps, the chance
+    ///    `100 + max(0, y-1)*100` the height falloff wears (the y=2..4
+    ///    candidates the 200/300/400 chances speak); the candidate's
+    ///    own walk (javap `getIgniteOdds(LevelReader, BlockPos)`):
+    ///    the STRICT-AIR gate (the isEmptyBlock the pc 0-11 pair
+    ///    serves — the plants/fluids the refuse keeps), the max over
+    ///    the six neighbors the [`fire_ignite_odds` ] table answers,
+    ///    the threshold `(odds + 40 + difficulty*7) / (age + 30)` the
+    ///    integer division truncates (the difficulty the world's own
+    ///    dial speaks), the `nextInt(chance) >= threshold` the roll
+    ///    refuses, the rain the candidate skips (the isNearRain fold
+    ///    the raining world wears), `min(15, age + nextInt(5)/4)` the
+    ///    spread age the getStateWithAge's own FIRE the offline
+    ///    soul-less palette banks (the SOUL_FIRE_BASE_BLOCKS tag the
+    ///    palette's kind rows never name — the plain FIRE the verdict
+    ///    always keeps, the flint round's own law the spread inherits).
+    ///
+    /// Returns the walk's own fruits: `changed` the remesh+relight
+    /// batch the caller speaks once, `new_fire` the placed cells the
+    /// onPlace law's own schedule the walk itself serves, `tnt_primed`
+    /// the burnt TNT cells the caller's own entity lane spawns.
+    pub fn fire_tick(
+        &mut self,
+        now: u64,
+        x: i32,
+        y: i32,
+        z: i32,
+        rng: &mut crate::drops::Lcg,
+    ) -> FireTickOutcome {
+        let mut out = FireTickOutcome::default();
+        // THE BLOCK-MATCH GATE (the scheduled tick's own verdict — the
+        // `block == getBlockState(pos).getBlock()` check the
+        // ServerLevel's own walk keeps): the cell the fire kinds alone
+        // walk, the dead cell's stale entry the drain's own gate drops
+        if !is_fire(self.get(x, y, z)) {
+            self.fire_age.remove(&(x, y, z));
+            return out;
+        }
+        // 1. THE RE-ARM FIRST (pc 0-10 — the draw the walk's own
+        // opening serves, the queue's Set law the duplicate refuses)
+        let due = now + fire_tick_delay(rng);
+        self.schedule_fire_tick(due, x, y, z);
+        let raining = self.rain_level > 0.0;
+        // THE WALK'S OWN QUIRK (pc 62-75 `istore 7` — the bytecode's
+        // own local the DOWNSTREAM reads all wear): the pre-ladder age
+        // every decision this walk keeps, the ladder's product the
+        // NEXT tick's read alone answers
+        let age = self.fire_age.get(&(x, y, z)).copied().unwrap_or(0) as i32;
+        let below = self.get(x, y - 1, z);
+        let neighbors = [
+            self.get(x, y - 1, z), // DOWN
+            self.get(x, y + 1, z), // UP
+            self.get(x, y, z - 1), // NORTH
+            self.get(x, y, z + 1), // SOUTH
+            self.get(x - 1, y, z), // WEST
+            self.get(x + 1, y, z), // EAST
+        ];
+        // 3. THE SURVIVAL'S OWN REFUSAL (pc 22-37 — the removal the
+        // failed verdict serves, the vanilla's own fall-through the
+        // draws the stream parity keeps: the rain arm's own nextFloat
+        // and the ladder's own nextInt(3) the removed cell's walk
+        // still banks — the re-place the flag-260 setBlock serves the
+        // isValid step's own removeBlock the same walk erases)
+        if !fire_can_survive(below, neighbors) {
+            self.set(x, y, z, AIR);
+            self.fire_age.remove(&(x, y, z));
+            out.changed = true;
+            if raining {
+                let _ = rng.next_f32();
+            }
+            let _ = rng.next_int(3);
+            return out;
+        }
+        // 4. THE RAIN ARM (pc 77-127 — the draw the gate's own verdict
+        // alone serves, the 0.2F + age*0.03F fold the bytecode's own
+        // arithmetic keeps)
+        if raining && rng.next_f32() < 0.2 + age as f32 * 0.03 {
+            self.set(x, y, z, AIR);
+            self.fire_age.remove(&(x, y, z));
+            out.changed = true;
+            return out;
+        }
+        // 5. THE LADDER (pc 128-180 — the pre-ladder age the walk's
+        // own decisions keep, the new age the store alone wears)
+        let new_age = ((age + rng.next_int(3) / 2) as u8).min(FIRE_MAX_AGE);
+        if new_age as i32 != age {
+            self.fire_age.insert((x, y, z), new_age);
+        }
+        // 6. THE isValid ARM (pc 186-232 — the six-way scan the burn
+        // burnable neighbors answer, the young flame the sturdy floor
+        // holds, the grown the burnless floor douses)
+        if !neighbors.iter().any(|&n| fire_can_burn(n)) {
+            let sturdy = collision_shape(below) == CollisionShape::Full;
+            if !(sturdy && age <= 3) {
+                self.set(x, y, z, AIR);
+                self.fire_age.remove(&(x, y, z));
+                out.changed = true;
+                return out;
+            }
+        }
+        // 7. THE AGE-15 ARM (pc 233-273 — the roll the age-15 gate
+        // alone serves — the vanilla's own sequence the isValid arm's
+        // verdict NEVER gates: the arm runs whether the isValid scan
+        // refused or passed, the young flames the gate's own age
+        // verdict refuses), the canBurn read the roll's own verdict
+        // follows
+        if age == FIRE_MAX_AGE as i32
+            && rng.next_int(4) == 0
+            && !fire_can_burn(below)
+        {
+            self.set(x, y, z, AIR);
+            self.fire_age.remove(&(x, y, z));
+            out.changed = true;
+            return out;
+        }
+        // 8. THE BURN-OUT LANE (pc 274-419 — the six calls the
+        // bytecode's own order keeps, every call the roll wears)
+        self.fire_check_burn_out(now, x + 1, y, z, 300, rng, age, &mut out); // east
+        self.fire_check_burn_out(now, x - 1, y, z, 300, rng, age, &mut out); // west
+        self.fire_check_burn_out(now, x, y - 1, z, 250, rng, age, &mut out); // below
+        self.fire_check_burn_out(now, x, y + 1, z, 250, rng, age, &mut out); // above
+        self.fire_check_burn_out(now, x, y, z - 1, 300, rng, age, &mut out); // north
+        self.fire_check_burn_out(now, x, y, z + 1, 300, rng, age, &mut out); // south
+        // 9. THE SPREAD LOOP (pc 420-655 — the x/z/y nesting the
+        // bytecode's own var order banks, the height falloff the
+        // chance arithmetic wears)
+        let difficulty_id = self.difficulty.id() as i32;
+        for dx in -1..=1i32 {
+            for dz in -1..=1i32 {
+                for dy in -1..=4i32 {
+                    if dx == 0 && dy == 0 && dz == 0 {
+                        continue; // the (0,0,0) self the skip keeps
+                    }
+                    let chance = 100 + if dy > 1 { (dy - 1) * 100 } else { 0 };
+                    let tx = x + dx;
+                    let ty = y + dy;
+                    let tz = z + dz;
+                    if self.get(tx, ty, tz) != AIR {
+                        continue; // the strict-AIR gate — no draw
+                    }
+                    let odds = [
+                        self.get(tx, ty - 1, tz),
+                        self.get(tx, ty + 1, tz),
+                        self.get(tx, ty, tz - 1),
+                        self.get(tx, ty, tz + 1),
+                        self.get(tx - 1, ty, tz),
+                        self.get(tx + 1, ty, tz),
+                    ]
+                    .into_iter()
+                    .map(fire_ignite_odds)
+                    .max()
+                    .unwrap_or(0);
+                    if odds <= 0 {
+                        continue; // no draw
+                    }
+                    let threshold = (odds + 40 + difficulty_id * 7) / (age + 30);
+                    if threshold <= 0 {
+                        continue; // no draw
+                    }
+                    if rng.next_int(chance as u64) >= threshold {
+                        continue;
+                    }
+                    if raining {
+                        continue; // the isNearRain fold the raining world keeps
+                    }
+                    let spread_age =
+                        ((age + rng.next_int(5) / 4) as u8).min(FIRE_MAX_AGE);
+                    self.set(tx, ty, tz, FIRE);
+                    self.fire_age.insert((tx, ty, tz), spread_age);
+                    self.schedule_fire_tick(now + fire_tick_delay(rng), tx, ty, tz);
+                    out.new_fire.push((tx, ty, tz));
+                    out.changed = true;
+                }
+            }
+        }
+        out
+    }
+
+    /// THE BURN-OUT'S OWN ROLL (javap `checkBurnOut(level, pos, chance,
+    /// random, age)` — the odds read the pc 0-9 pair serves, the roll
+    /// the pc 11-21 compare wears, the inner walk the pc 24-120 body
+    /// keeps): the roll `nextInt(chance) < burnOdds` the burnable
+    /// table answers (the zero-odds neighbor the always-lose roll
+    /// wears — the draw the stream keeps), the inner `nextInt(age+10)
+    /// < 5 && !isRainingAt` the FIRE arm serves (the new cell's own
+    /// age the `min(15, age + nextInt(5)/4)` walk banks, the onPlace
+    /// law's own schedule the queue speaks), else the AIR removal; the
+    /// pre-removal state the TNT verdict reads — the prime the
+    /// caller's own entity lane answers (the removal the inner walk
+    /// ALREADY served — the prime's own walk no removeBlock wears).
+    fn fire_check_burn_out(
+        &mut self,
+        now: u64,
+        x: i32,
+        y: i32,
+        z: i32,
+        chance: i32,
+        rng: &mut crate::drops::Lcg,
+        age: i32,
+        out: &mut FireTickOutcome,
+    ) {
+        let burn_odds = fire_burn_odds(self.get(x, y, z));
+        if rng.next_int(chance as u64) >= burn_odds {
+            return; // the roll's own refusal — the cell the fire never eats
+        }
+        let pre = self.get(x, y, z);
+        if rng.next_int((age + 10) as u64) < 5 && self.rain_level <= 0.0 {
+            let spread_age = ((age + rng.next_int(5) / 4) as u8).min(FIRE_MAX_AGE);
+            self.set(x, y, z, FIRE);
+            self.fire_age.insert((x, y, z), spread_age);
+            self.schedule_fire_tick(now + fire_tick_delay(rng), x, y, z);
+            out.new_fire.push((x, y, z));
+        } else {
+            self.set(x, y, z, AIR);
+            self.fire_age.remove(&(x, y, z));
+        }
+        out.changed = true;
+        if pre == TNT {
+            out.tnt_primed.push((x, y, z));
+        }
     }
 
     /// The block clip — the vanilla `Level.clip` COLLIDER law over full
@@ -2315,6 +2764,382 @@ mod tests {
             !fire_can_survive(AIR, stony),
             "the stone neighborhood the survival refuses"
         );
+    }
+
+    /// THE ODDS TABLES' OWN ROWS — javap `FireBlock.bootStrap()` the
+    /// 175 rows the static init's own walk banks (the `setFlammable(
+    /// block, ignite, burn)` pairs the dump speaks): the ignite column
+    /// the spread threshold's own numerator wears, the burn column the
+    /// checkBurnOut roll's own verdict reads, the canBurn verdict the
+    /// odds' own truth (`getIgniteOdds(state) > 0`) the parity keeps —
+    /// every kind the tables and the verdict agree, the no-row silence
+    /// the stone/dirt/fluid/crop family wears.
+    #[test]
+    fn the_fire_tables_bank_the_bootstrap_odds() {
+        // THE IGNITE COLUMN (the pairs' first half: the log 5, the
+        // leaves family 30, the litter 60, the tnt 15, the flora 60)
+        assert_eq!(fire_ignite_odds(LOG), 5, "the log the 5/5 pair keeps");
+        assert_eq!(fire_ignite_odds(LEAVES), 30);
+        assert_eq!(fire_ignite_odds(PALE_LEAVES), 30);
+        assert_eq!(fire_ignite_odds(LEAF_LITTER), 60);
+        assert_eq!(fire_ignite_odds(TNT), 15, "the tnt the 15/100 pair keeps");
+        for id in [
+            SHORT_GRASS, BUSH, TALL_GRASS, TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER,
+            DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP,
+            PINK_TULIP, WHITE_TULIP,
+        ] {
+            assert_eq!(
+                fire_ignite_odds(id),
+                60,
+                "the flora row {} the 60/100 pair keeps",
+                NAME_OF[id as usize]
+            );
+        }
+        // THE BURN COLUMN (the pairs' second half: the log 5, the
+        // leaves family 60, the litter 100, the tnt 100, the flora
+        // 100 — the trunk the slow coal the 5 speaks)
+        assert_eq!(fire_burn_odds(LOG), 5);
+        assert_eq!(fire_burn_odds(LEAVES), 60);
+        assert_eq!(fire_burn_odds(PALE_LEAVES), 60);
+        assert_eq!(fire_burn_odds(TNT), 100, "the tnt the prime chain's own 100 wears");
+        assert_eq!(fire_burn_odds(LEAF_LITTER), 100);
+        for id in [
+            SHORT_GRASS, BUSH, TALL_GRASS, TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER,
+            DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP,
+            PINK_TULIP, WHITE_TULIP,
+        ] {
+            assert_eq!(
+                fire_burn_odds(id),
+                100,
+                "the flora row {} the 100 burn keeps",
+                NAME_OF[id as usize]
+            );
+        }
+        // THE SILENCE THE TABLES KEEP (the no-row kinds the zero odds
+        // wear — the crop, the table, the stones, the fluids, the fire
+        // kinds themselves the flammable scan never names)
+        for id in [
+            STONE, DIRT, GRASS, SAND, WATER, LAVA, WHEAT, WHEAT_STAGE7, CRAFTING_TABLE,
+            FARMLAND, FIRE, SOUL_FIRE,
+        ] {
+            assert_eq!(
+                fire_ignite_odds(id),
+                0,
+                "the no-row silence {} the ignite keeps",
+                NAME_OF[id as usize]
+            );
+            assert_eq!(
+                fire_burn_odds(id),
+                0,
+                "the no-row silence {} the burn keeps",
+                NAME_OF[id as usize]
+            );
+        }
+        // THE PARITY LAW (javap `canBurn(BlockState)` — the
+        // `getIgniteOdds(state) > 0` verdict the pc 0-13 pair serves):
+        // every palette kind the verdict and the table agree
+        for id in 0..(NAME_OF.len() as u16) {
+            assert_eq!(
+                fire_can_burn(id),
+                fire_ignite_odds(id) > 0,
+                "the parity {} the canBurn verdict keeps",
+                NAME_OF[id as usize]
+            );
+        }
+    }
+
+    /// THE FIRE TICK'S OWN SMALL LAWS — javap `FireBlock.tick` the
+    /// walk's own opening arms: the re-arm the queue's ONE-entry law
+    /// keeps (the Set dedup the schedule's duplicate refuses), the
+    /// 30..=39 window the delay draw banks, the ladder the pre-ladder
+    /// quirk honors, the survival refusal the floating cell's own
+    /// walk serves, the stream parity the draws' own count keeps (the
+    /// re-arm + the ladder + the six burn-out rolls the lone stone
+    /// stage speaks — the spread the zero-odds candidates never draws).
+    #[test]
+    fn the_fire_tick_the_ladder_the_rearm_and_the_survival_keep() {
+        // THE SET'S OWN DEDUP (the LevelChunkTicks.schedule law — the
+        // duplicate the add refuses): two schedules one entry
+        let mut w = World::new(1, 0xF117);
+        w.schedule_fire_tick(50, 4, 31, 4);
+        w.schedule_fire_tick(60, 4, 31, 4);
+        assert_eq!(w.fire_ticks.len(), 1, "the Set's own law the duplicate refuses");
+        assert_eq!(w.fire_ticks[0], (50, 4, 31, 4), "the first the slot holds");
+        // THE FLOATING FIRE'S OWN REFUSAL (pc 22-37 — the canSurvive
+        // verdict the air-below cell fails, the removal the walk
+        // serves): the parity draws the survival path keeps (the
+        // re-arm's nextInt(10) + the ladder's nextInt(3) — the rain
+        // arm the dry world never draws). The dedup probe's own entry
+        // the fresh stage clears.
+        w.fire_ticks.clear();
+        let mut rng = crate::drops::Lcg::new(0xF117_A1);
+        let mut probe = rng.clone();
+        let _ = probe.next_int(10); // the re-arm's own draw
+        let _ = probe.next_int(3); // the ladder's own draw (the parity)
+        w.set(4, 40, 4, FIRE);
+        let out = w.fire_tick(100, 4, 40, 4, &mut rng);
+        assert!(out.changed, "the floating removal the walk speaks");
+        assert_eq!(w.get(4, 40, 4), AIR, "the canSurvive refusal the cell clears");
+        assert!(!w.fire_age.contains_key(&(4, 40, 4)), "the removal the entry drops");
+        assert_eq!(
+            w.fire_ticks.len(),
+            1,
+            "the re-arm the stale entry the dead cell leaves"
+        );
+        // the stale entry the next drain's own gate drops (the
+        // block-match verdict the non-fire cell answers)
+        let due = w.fire_ticks[0].0;
+        let cells = w.drain_due_fire_ticks(due);
+        assert_eq!(cells, vec![(4, 40, 4)]);
+        let out = w.fire_tick(due, 4, 40, 4, &mut rng);
+        assert!(!out.changed, "the dead cell's own walk the silence keeps");
+        assert!(w.fire_ticks.is_empty(), "the gate the stale entry drops");
+        // THE LONE STONE FIRE'S OWN LADDER (the grounded cell the
+        // sturdy floor holds, no burnable neighbor the isValid scan
+        // refuses): the age the pre-ladder quirk honors — the walk's
+        // own decisions the pc 62-75 local wears, the death the
+        // age>3 walk serves, the parity draws the eight the lone
+        // stage speaks (re-arm + ladder + six burn-out rolls — the
+        // spread the zero-odds candidates never draws)
+        let mut w = World::new(1, 0xF117);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 30, z, STONE);
+            }
+        }
+        for y in 31..=38 {
+            for x in 0..16 {
+                for z in 0..16 {
+                    w.set(x, y, z, AIR); // the open box the stage clears
+                }
+            }
+        }
+        w.set(4, 31, 4, FIRE); // the grounded flame the stone holds
+        w.fire_age.insert((4, 31, 4), 0);
+        let mut rng = crate::drops::Lcg::new(0xF117_A2);
+        let mut probe = rng.clone();
+        let window = probe.next_int(10); // the re-arm's own draw
+        let roll = probe.next_int(3); // the ladder's own roll
+        let _ = probe.next_int(300); // east — the six burn-out rolls
+        let _ = probe.next_int(300); // west
+        let _ = probe.next_int(250); // below
+        let _ = probe.next_int(250); // above
+        let _ = probe.next_int(300); // north
+        let _ = probe.next_int(300); // south
+        let out = w.fire_tick(1000, 4, 31, 4, &mut rng);
+        assert!(!out.changed, "the young flame the sturdy floor holds");
+        assert_eq!(w.get(4, 31, 4), FIRE, "the surviving cell the walk keeps");
+        // THE RE-ARM'S OWN WINDOW (the 30..=39 the delay draw banks)
+        assert_eq!(
+            w.fire_ticks.len(),
+            1,
+            "the ONE-entry law the walk's own re-arm keeps"
+        );
+        assert_eq!(
+            w.fire_ticks[0].0,
+            1000 + FIRE_TICK_DELAY_BASE + window as u64,
+            "the due the re-arm's own draw banks"
+        );
+        // THE LADDER'S OWN PRODUCT (min(15, 0 + roll/2) — the nonzero
+        // step alone re-stores, the placement's own age-0 entry the
+        // zero step keeps)
+        match (roll, w.fire_age.get(&(4, 31, 4))) {
+            (0, Some(&0)) | (1, Some(&0)) => {}
+            (2, Some(&1)) => {}
+            other => panic!("the ladder's own law the pair {:?} refuses", other),
+        }
+        // THE STREAM PARITY (the eight draws the lone stage speaks)
+        assert_eq!(rng.next_int(1000), probe.next_int(1000), "the stream rejoins");
+        // THE PRE-LADDER QUIRK'S OWN DEATH: the walks the age climbs
+        // (monotone, +0 or +1 per walk), the death the age>3 walk's
+        // own removal serves (the sturdy arm the grown flame refuses)
+        let mut prev_age = 0i32;
+        for step in 1..=30 {
+            let due = w.fire_ticks[0].0;
+            let cells = w.drain_due_fire_ticks(due);
+            assert_eq!(cells, vec![(4, 31, 4)]);
+            let out = w.fire_tick(due, 4, 31, 4, &mut rng);
+            let alive = w.get(4, 31, 4) == FIRE;
+            if alive {
+                assert!(!out.changed, "the survivor the silence keeps");
+                let age = *w.fire_age.get(&(4, 31, 4)).unwrap_or(&0) as i32;
+                assert!(
+                    age >= prev_age && age - prev_age <= 1,
+                    "the ladder's own law the step {} wears ({} -> {})",
+                    step,
+                    prev_age,
+                    age
+                );
+                prev_age = age;
+            } else {
+                assert!(out.changed, "the death the walk speaks");
+                assert!(
+                    prev_age > 3,
+                    "the death the age>3 walk serves (the age {} the ladder wore)",
+                    prev_age
+                );
+                return;
+            }
+        }
+        panic!("the lone stone fire the walks never doused");
+    }
+
+    /// THE FIRE'S OWN LIFE — javap `FireBlock.tick` the spread, the
+    /// burn-out and the prime chain the seeded drive answers: the TNT
+    /// neighbor the 100-odds roll eats (the prime the walk's own fruit
+    /// carries, the cell the inner walk's own product wears), the grass
+    /// tuft the 100-odds roll consumes, the spread the odds gate's own
+    /// rolls place (the burnable neighbor's own air the threshold
+    /// answers), the floor the no-row silence keeps (the grass_block
+    /// the fire never eats), the end the walk's own verdict speaks —
+    /// the fireless stage the queue's own drain clears.
+    #[test]
+    fn the_fire_the_spread_the_burnout_and_the_prime_land() {
+        let mut w = World::new(1, 0xF17E);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 30, z, GRASS); // the floor the no-row silence keeps
+            }
+        }
+        for y in 31..=38 {
+            for x in 0..16 {
+                for z in 0..16 {
+                    w.set(x, y, z, AIR); // the open box the stage clears
+                }
+            }
+        }
+        let (fx, fy, fz) = (8i32, 31i32, 8i32);
+        let (tx, ty, tz) = (9i32, 31i32, 8i32); // the east neighbor the TNT wears
+        let (gx, gy, gz) = (7i32, 31i32, 8i32); // the west neighbor the tuft wears
+        w.set(tx, ty, tz, TNT);
+        w.set(gx, gy, gz, SHORT_GRASS);
+        w.set(fx, fy, fz, FIRE);
+        w.fire_age.insert((fx, fy, fz), 0);
+        // THE ONPLACE LAW'S OWN FIRST SCHEDULE (the placement arm's own
+        // shape — the age-0 entry + the 30..=39 due)
+        let mut rng = crate::drops::Lcg::new(0xF17E_117);
+        w.schedule_fire_tick(1000 + fire_tick_delay(&mut rng), fx, fy, fz);
+        let (mut saw_new_fire, mut saw_prime, mut steps) = (false, false, 0);
+        while steps < 400 {
+            let Some(min_due) = w.fire_ticks.iter().map(|&(at, _, _, _)| at).min() else {
+                break; // the queue's own silence — the walk's end speaks
+            };
+            let cells = w.drain_due_fire_ticks(min_due);
+            steps += 1;
+            for (x, y, z) in cells {
+                let out = w.fire_tick(min_due, x, y, z, &mut rng);
+                saw_new_fire |= !out.new_fire.is_empty();
+                saw_prime |= out.tnt_primed.contains(&(tx, ty, tz));
+            }
+            // THE END'S OWN VERDICT: the TNT the prime ate, the tuft
+            // the roll consumed, no fire left, the queue clean
+            if saw_prime
+                && w.get(tx, ty, tz) != TNT
+                && w.get(gx, gy, gz) != SHORT_GRASS
+                && !w.fire_ticks.is_empty()
+            {
+                // the stale entries the dead cells leave — the drains
+                // the gate clears, the loop's own walk answers
+                continue;
+            }
+            if saw_prime && w.get(tx, ty, tz) != TNT && w.get(gx, gy, gz) != SHORT_GRASS {
+                // drive the stale entries out — the queue's own end
+                let mut guard = 0;
+                while !w.fire_ticks.is_empty() && guard < 64 {
+                    let due = w.fire_ticks.iter().map(|&(at, _, _, _)| at).min().unwrap();
+                    let cells = w.drain_due_fire_ticks(due);
+                    for (x, y, z) in cells {
+                        let _ = w.fire_tick(due, x, y, z, &mut rng);
+                    }
+                    guard += 1;
+                }
+                break;
+            }
+        }
+        assert!(saw_prime, "the TNT the prime chain ate (steps {})", steps);
+        assert!(
+            w.get(tx, ty, tz) != TNT,
+            "the burnt TNT cell the prime's own product wears"
+        );
+        assert!(
+            w.get(gx, gy, gz) != SHORT_GRASS,
+            "the tuft the burn-out roll consumed"
+        );
+        assert!(saw_new_fire, "the spread's own rolls placed fire");
+        assert!(
+            !is_fire(w.get(fx, fy, fz)) && !is_fire(w.get(tx, ty, tz)) && !is_fire(w.get(gx, gy, gz)),
+            "the end the walk's own verdict speaks — the fireless stage"
+        );
+        assert!(
+            w.fire_ticks.is_empty(),
+            "the queue the stale drains clear"
+        );
+        // THE FLOOR'S OWN SILENCE (the no-row grass_block the fire
+        // never eats — the burnable scan the floor's own kind refuses)
+        for x in 0..16 {
+            for z in 0..16 {
+                assert_eq!(
+                    w.get(x, 30, z),
+                    GRASS,
+                    "the floor {} the no-row silence keeps",
+                    NAME_OF[w.get(x, 30, z) as usize]
+                );
+            }
+        }
+    }
+
+    /// THE RAIN'S OWN DOUSE — javap `FireBlock.tick` pc 77-127 the arm
+    /// the rain gate serves (`isRaining && isNearRain && nextFloat() <
+    /// 0.2F + age*0.03F` — the fold the offline world's own rain_level
+    /// and the open-sky plains wear): the rain the dry world's fire
+    /// never draws, the wet world's fire the 0.2+ ladder douses.
+    #[test]
+    fn the_rain_the_fire_douses() {
+        let mut w = World::new(1, 0xF117);
+        for x in 0..16 {
+            for z in 0..16 {
+                w.set(x, 30, z, STONE);
+            }
+        }
+        for y in 31..=38 {
+            for x in 0..16 {
+                for z in 0..16 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        w.set(4, 31, 4, FIRE);
+        w.fire_age.insert((4, 31, 4), 0);
+        let mut rng = crate::drops::Lcg::new(0xF117_A3);
+        // THE DRY WORLD'S OWN SILENCE: the fire the arm never touches
+        // (the rain_level 0.0 the procedural world keeps)
+        w.schedule_fire_tick(1000 + fire_tick_delay(&mut rng), 4, 31, 4);
+        for _ in 0..3 {
+            let due = w.fire_ticks.iter().map(|&(at, _, _, _)| at).min().unwrap();
+            let cells = w.drain_due_fire_ticks(due);
+            for (x, y, z) in cells {
+                let _ = w.fire_tick(due, x, y, z, &mut rng);
+            }
+        }
+        assert_eq!(w.get(4, 31, 4), FIRE, "the dry world's fire the arm never douses");
+        // THE WET WORLD'S OWN DOUSE: the 0.2+ draw the arm's own roll
+        // serves — the ladder's own young ages the 0.2 floor wears
+        w.rain_level = 1.0;
+        let mut doused = false;
+        for _ in 0..60 {
+            let Some(due) = w.fire_ticks.iter().map(|&(at, _, _, _)| at).min() else {
+                break;
+            };
+            let cells = w.drain_due_fire_ticks(due);
+            for (x, y, z) in cells {
+                let _ = w.fire_tick(due, x, y, z, &mut rng);
+            }
+            if w.get(4, 31, 4) != FIRE {
+                doused = true;
+                break;
+            }
+        }
+        assert!(doused, "the rain the arm's own roll douses");
     }
 
     /// THE CONCRETE'S OWN TOUCHES-LIQUID WALK (javap

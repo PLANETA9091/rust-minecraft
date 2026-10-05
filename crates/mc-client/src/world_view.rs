@@ -175,6 +175,14 @@ pub fn materialize(
         // — `None` = no opinion: the server's own server-side truth the
         // wire never sends, the client's words never predict it
         inhabited: None,
+        // THE FIRE'S OWN QUEUE + LADDER the NETWORKED world never
+        // carries — the server ticks the fire's own scheduled walks
+        // (the same authority split the crop lane and every world-tick
+        // lane keeps): the offline world's own [`World::fire_tick` ]
+        // the queue alone feeds, the wire world's fire the server's
+        // block updates land
+        fire_ticks: Vec::new(),
+        fire_age: std::collections::HashMap::new(),
     };
     let side_i = side as i32;
     for gz in 0..side_i {

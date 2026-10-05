@@ -1534,6 +1534,10 @@ mod tests {
             difficulty: crate::difficulty::Difficulty::Normal,
             difficulty_locked: false,
             inhabited: None,
+            // THE FIRE'S OWN QUEUE + LADDER the test stage never arms —
+            // the empty store the offline walk alone fills
+            fire_ticks: Vec::new(),
+            fire_age: std::collections::HashMap::new(),
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             light: None,
             day_tick: None,
