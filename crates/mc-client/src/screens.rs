@@ -115,10 +115,10 @@ fn tr(key: &str) -> Option<&'static str> {
 }
 
 /// THE CHAT DECORATION'S OWN FORMAT (vanilla `TranslatableContents`
-/// .decompose's sequential `%s` walk — the pattern the en_us lang table's
-/// entry carries, each `%s` the NEXT argument replaces; the positional
-/// `%N$s` forms the later round owes, the honest sequential lane the
-/// vanilla chat decorations all wear). A MISSING key answers with the
+/// .decompose's walk — the pattern the en_us lang table's entries carry,
+/// each `%s` the NEXT argument replaces; the positional `%N$s` forms the
+/// general [`format_positional`] walk answers, the lang table's own
+/// `%1$s`/`%2$s` rows the same law wears). A MISSING key answers with the
 /// key ITSELF — the `Language.getOrDefault` law the real client's own
 /// lookup keeps (an untranslatable server-custom key displays as its
 /// key, the args the format never speaks).
@@ -126,28 +126,103 @@ pub(crate) fn format_chat_decoration(key: &str, args: &[&str]) -> String {
     let Some(fmt) = tr(key) else {
         return key.to_string();
     };
+    format_positional(fmt, args)
+}
+
+/// THE POSITIONAL WALK (vanilla `TranslatableContents.decompose`'s
+/// template walk — the SAME law the chat decorations and the lang
+/// table's `%N$s` rows share: the sequential `%s` the NEXT argument
+/// replaces, the positional `%N$s` the N-th (1-based) argument answers
+/// and the sequential counter the form never advances (the decompose
+/// walk's own counter law — ONLY the plain `%s` branch the `counter[0]++`
+/// consumes, the positional read the counter never touches: the mixed
+/// template `%1$s %s` the args `[a, b]` the `a a` pair answers — the
+/// plain `%s` the FIRST non-positional slot fills), the
+/// `%%` the literal percent keeps, the malformed `%` (the trailing one,
+/// the unknown escape's) the literal the walk emits — the next char the
+/// honest walk serves as itself). A MISSING argument answers `""` — the
+/// `args.get().unwrap_or("")` law the sequential lane already wears.
+/// THE SIBLING RESET rides both substitutions (the template's literals
+/// wear the TEMPLATE's style, never the argument's: the §-codes the arg
+/// carried the §r closes).
+pub(crate) fn format_positional(fmt: &str, args: &[&str]) -> String {
     let mut out = String::with_capacity(fmt.len());
     let mut chars = fmt.chars().peekable();
     let mut arg_i = 0usize;
     while let Some(c) = chars.next() {
-        if c == '%' && chars.peek() == Some(&'s') {
-            chars.next();
-            let arg = args.get(arg_i).copied().unwrap_or("");
-            out.push_str(arg);
-            // THE SIBLING RESET (the TranslatableContents' own law — the
-            // template's literals wear the TEMPLATE's style, never the
-            // argument's: the §-codes the arg carried the §r closes,
-            // the draw's entry-base law answers; the code-less arg the
-            // state never left — no code the honest walk emits)
-            if arg.contains('\u{a7}') {
-                out.push_str("\u{a7}r");
-            }
-            arg_i += 1;
-        } else {
+        if c != '%' {
             out.push(c);
+            continue;
+        }
+        // THE PERCENT'S OWN BRANCH (the decompose walk's char pairs)
+        match chars.peek().copied() {
+            Some('%') => {
+                chars.next();
+                out.push('%');
+            }
+            Some('s') => {
+                chars.next();
+                let arg = args.get(arg_i).copied().unwrap_or("");
+                push_positional_arg(&mut out, arg);
+                arg_i += 1;
+            }
+            Some(d) if d.is_ascii_digit() => {
+                // THE POSITIONAL FORM — the digit run the `%N$s` shape
+                // keeps (the multi-digit index the run answers, the
+                // `$s` pair the form's own tail wears)
+                let mut idx = String::new();
+                while let Some(d2) = chars.peek().copied() {
+                    if !d2.is_ascii_digit() {
+                        break;
+                    }
+                    idx.push(d2);
+                    chars.next();
+                }
+                if chars.peek() == Some(&'$') {
+                    chars.next();
+                    if chars.peek() == Some(&'s') {
+                        chars.next();
+                        let n: usize = idx.parse().unwrap_or(0);
+                        let arg = if n >= 1 {
+                            args.get(n - 1).copied().unwrap_or("")
+                        } else {
+                            // THE ZERO INDEX — `%0$s` the 1-based law
+                            // refuses, the empty answer keeps
+                            ""
+                        };
+                        push_positional_arg(&mut out, arg);
+                    } else {
+                        // THE MALFORMED TAIL (`%1$x`) — the literal
+                        // percent the walk emits, the digits + the
+                        // dollar the honest walk re-speaks
+                        out.push('%');
+                        out.push_str(&idx);
+                        out.push('$');
+                    }
+                } else {
+                    // THE MALFORMED SHAPE (`%1x`) — the literal percent,
+                    // the digits the next chars themselves answer
+                    out.push('%');
+                    out.push_str(&idx);
+                }
+            }
+            _ => {
+                // THE TRAILING PERCENT — the literal the walk keeps
+                out.push('%');
+            }
         }
     }
     out
+}
+
+/// THE ARG'S OWN PUSH (the sibling-reset law both forms share — the
+/// code-bearing arg the §r close speaks, the code-less arg the state
+/// never left).
+fn push_positional_arg(out: &mut String, arg: &str) {
+    out.push_str(arg);
+    if arg.contains('\u{a7}') {
+        out.push_str("\u{a7}r");
+    }
 }
 
 /// THE DECORATION LINE'S OWN FILL (the parameter walk BOTH chat
@@ -17282,9 +17357,7 @@ impl App {
             self.hotbar_file_save();
             let fmt = tr("inventory.hotbarSaved")
                 .unwrap_or("Item hotbar saved (restore with %1$s + %2$s)");
-            let msg = fmt
-                .replace("%1$s", "X")
-                .replace("%2$s", &(selection + 1).to_string());
+            let msg = format_positional(fmt, &["X", &(selection + 1).to_string()]);
             self.set_overlay_message(&msg);
         }
         true
@@ -22395,7 +22468,10 @@ impl App {
                 // never passes): the translatable the lang folds, the
                 // setOverlayMessage's 60-tick life, the dismount's no
                 // explicit clear the timeout owns
-                self.set_overlay_message(&MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY));
+                self.set_overlay_message(&format_positional(
+                    MOUNT_ONBOARD_FORMAT,
+                    &[SHIFT_KEY_DISPLAY],
+                ));
             }
         }
         self.net_ride = ride;
@@ -22593,7 +22669,10 @@ impl App {
         }
         // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
         // handler speaks — the same translatable the wire lane folds)
-        self.set_overlay_message(&MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY));
+        self.set_overlay_message(&format_positional(
+            MOUNT_ONBOARD_FORMAT,
+            &[SHIFT_KEY_DISPLAY],
+        ));
         true
     }
 
@@ -22628,7 +22707,10 @@ impl App {
         });
         // THE MOUNT'S OWN MESSAGE (the fresh-mount arm the packet
         // handler speaks — the same translatable the wire lane folds)
-        self.set_overlay_message(&MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY));
+        self.set_overlay_message(&format_positional(
+            MOUNT_ONBOARD_FORMAT,
+            &[SHIFT_KEY_DISPLAY],
+        ));
         true
     }
 
@@ -35110,7 +35192,7 @@ impl App {
             .unwrap_or(crate::difficulty::Difficulty::Normal);
         let title = tr("difficulty.lock.title").unwrap_or("Lock World Difficulty");
         let question = tr("difficulty.lock.question")
-            .map(|fmt| fmt.replace("%1$s", diff.display_name()))
+            .map(|fmt| format_positional(fmt, &[diff.display_name()]))
             .unwrap_or_else(|| {
                 format!(
                     "Are you sure you want to lock the difficulty of this world? This will set \
@@ -39652,6 +39734,70 @@ mod tests {
         assert_eq!(
             format_chat_decoration("server.custom.key", &["a", "b"]),
             "server.custom.key"
+        );
+    }
+
+    #[test]
+    fn the_positional_walk_the_arg_order_speaks() {
+        // THE ORDER SWAP (the `%N$s` form the 1-based index answers —
+        // the lang table's own rows the same shape carries:
+        // inventory.hotbarSaved `%1$s + %2$s`, mount.onboard `%1$s`,
+        // difficulty.lock.question `%1$s`)
+        assert_eq!(
+            format_positional("%2$s before %1$s", &["first", "second"]),
+            "second before first",
+            "the positional index the order answers"
+        );
+        // THE MIXED WALK (the decompose walk's own counter law — ONLY
+        // the plain %s branch the counter consumes, the positional read
+        // the counter never touches: the mixed template `%1$s %s` the
+        // args [a, b] the a a pair answers, the plain %s the FIRST
+        // non-positional slot fills)
+        assert_eq!(
+            format_positional("%1$s %s %1$s", &["a", "b"]),
+            "a a a",
+            "the positional the sequential counter never advances"
+        );
+        // THE LITERAL PERCENT (the `%%` escape the walk folds)
+        assert_eq!(
+            format_positional("100%% %s", &["done"]),
+            "100% done",
+            "the doubled percent the literal keeps"
+        );
+        // THE MALFORMED WALKS (the trailing %, the unknown escape, the
+        // digit run the `$s` tail never wears — each the literal percent
+        // the honest walk emits, the next chars themselves answer)
+        assert_eq!(format_positional("50%", &[]), "50%");
+        assert_eq!(format_positional("%x", &["a"]), "%x");
+        assert_eq!(format_positional("%1x", &["a"]), "%1x");
+        assert_eq!(format_positional("%1$y", &["a"]), "%1$y");
+        // THE MISSING SLOTS (the out-of-range positional the empty
+        // string fills, the `%0$s` the 1-based law refuses)
+        assert_eq!(format_positional("[%9$s]", &["a"]), "[]");
+        assert_eq!(format_positional("[%0$s]", &["a"]), "[]");
+        // THE MULTI-DIGIT INDEX (the digit run the run answers)
+        assert_eq!(
+            format_positional("%10$s wins", &["a", "b", "c", "d", "e", "f", "g", "h", "i", "j"]),
+            "j wins",
+            "the two-digit index the tenth arg answers"
+        );
+        // THE SIBLING RESET (the §-bearing positional arg the §r close
+        // speaks — the template's literals the template's style wear)
+        assert_eq!(
+            format_positional("hey %1$s!", &["\u{a7}9Steve"]),
+            "hey \u{a7}9Steve\u{a7}r!",
+            "the code-bearing arg the reset keeps"
+        );
+        // THE LANG TABLE'S OWN ROW (the en_us inventory.hotbarSaved the
+        // general walk answers — the X + 4 pair the overlay speaks)
+        assert_eq!(
+            format_positional(
+                tr("inventory.hotbarSaved")
+                    .unwrap_or("Item hotbar saved (restore with %1$s + %2$s)"),
+                &["X", "4"],
+            ),
+            "Item hotbar saved (restore with X + 4)",
+            "the table row the positional walk fills"
         );
     }
 
@@ -78429,7 +78575,7 @@ cow_sound_variant: None,
         // THE MESSAGE'S OWN TEXT (the translatable the lang folds:
         // mount.onboard + the shift binding's display)
         assert_eq!(
-            MOUNT_ONBOARD_FORMAT.replace("%1$s", SHIFT_KEY_DISPLAY),
+            format_positional(MOUNT_ONBOARD_FORMAT, &[SHIFT_KEY_DISPLAY]),
             "Press Left Shift to Dismount",
             "the en_us the jar speaks"
         );
