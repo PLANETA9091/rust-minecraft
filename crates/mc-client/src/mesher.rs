@@ -10,6 +10,8 @@
 
 use rayon::prelude::*;
 
+use mc_registry::blockstate_lookup::{select_parts, Part};
+use mc_registry::element_quads::{derive_model_inherited, Quad as DerivedQuad};
 use mc_registry::generated::atlas;
 
 use crate::colors::{default_color, FACE_SHADE};
@@ -104,6 +106,11 @@ fn is_transparent(kind: u16) -> bool {
         // stick box the neighbors' faces draw against, the noCollision
         // row the Properties chain speaks)
         || crate::world::is_torch(kind)
+        // THE FIRE KINDS the same verdict keeps (the blocks clinit's
+        // replaceable().noCollision() rows the registrations speak —
+        // the ground's top face under the flame draws, the flame casts
+        // no AO, the multipart planes the cell's own lane renders)
+        || crate::world::is_fire(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -1056,6 +1063,189 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE FIRE KINDS' OWN MULTIPART LANE (the flint's and the
+                // charge's own product finally RENDERS — the honest hole
+                // the glass precedent wore, the fan the vanilla blockstate
+                // speaks). blockstates/fire.json is a MULTIPART over the
+                // five wall booleans (north/east/south/west/up): the floor
+                // pair under the all-false condition, the four side
+                // groups each under OR[dir=true, all-false], the up pair
+                // under up=true; blockstates/soul_fire.json carries NO
+                // when — the full fan always, the up group never (the
+                // soul flame the directional properties never wears).
+                // THE PROPS' OWN DERIVATION — javap `FireBlock.
+                // getStateForPlacement(BlockGetter, BlockPos)` (the 26.2
+                // jar): the below cell's `canBurn(belowState) ||
+                // belowState.isFaceSturdy(level, below, UP)` gate pc 14-33
+                // serves the DEFAULT state (all five booleans false) when
+                // it answers, else the `Direction.values()` walk's
+                // `setValue(PROPERTY_BY_DIRECTION.get(d),
+                // canBurn(getBlockState(pos.relative(d))))` pc 47-128
+                // reads the DIRECT neighbor per direction (DOWN rides no
+                // property — the map's own row the null check skips).
+                // `updateShape` re-runs the SAME walk (`getStateWithAge`
+                // -> `getState` -> the placement's own law) — the live
+                // neighbor read the offline single-kind world wears as
+                // its steady state. The sturdy arm the collision table's
+                // Full row answers (the same offline equivalence the
+                // survival law's doc keeps), the canBurn odds the
+                // placement round's own `fire_can_burn` table speaks.
+                // THE SELECTION rides the real blockstate engine (the
+                // parse + select_parts walk the fence/wire tests pin) —
+                // the jar's own when-conditions, the jar's own y rotations.
+                // THE MODEL QUADS ride the derive walk (the torch lane's
+                // own bake): template_fire_floor's ±22.5° rotX/rotZ +
+                // rescale planes, template_fire_side's flat z=0.01 walls,
+                // template_fire_up's rotated ceil planes with their uv
+                // rotations — the census-derived ELEMENTS table banks all
+                // ten fire and six soul models, `derive_model_inherited`
+                // resolves the parent chain and the #fire refs. The
+                // second-frame carriers (block/fire_1, block/soul_fire_1
+                // — fire_floor1/fire_up1/soul_fire_floor1's own rows) map
+                // to the kind's SINGLE atlas tile (the static-frame
+                // policy the fluids wear — the animation strips the
+                // palette's frame-0 banking keeps). `shade: false` +
+                // model-level `ambientocclusion: false` on every fire
+                // element — the tesselateWithoutAO shape the crop and
+                // torch lanes wear: the CELL's own light, no AO diagonals,
+                // no FACE_SHADE term. No cullface anywhere — the planes
+                // draw unconditionally; the multipart's `y` rotation
+                // (no uvlock on any fire apply) turns the side walls
+                // about the cell's own center: javap
+                // `Variant$SimpleModelState.asModelState` ->
+                // `Quadrant.fromXYZAngles` -> `OctahedralGroup.
+                // BLOCK_ROT_Y_90` = `ROT_90_Y_NEG` = (P321, flipX) —
+                // the (x, z) -> (1-z, x) quarter the north-to-east turn
+                // speaks, 180 the double, 270 the inverse.
+                if crate::world::is_fire(id) {
+                    let soul = id == crate::world::SOUL_FIRE;
+                    let below = world.get(wx, wy - 1, wz);
+                    let gate = crate::world::fire_can_burn(below)
+                        || crate::world::collision_shape(below)
+                            == crate::world::CollisionShape::Full;
+                    let prop = |read: bool| {
+                        // the gate's own verdict — the default state's
+                        // all-false shape the below cell's gate keeps
+                        if gate { "false" } else if read { "true" } else { "false" }
+                    };
+                    let props = [
+                        ("north", prop(crate::world::fire_can_burn(world.get(wx, wy, wz - 1)))),
+                        ("east", prop(crate::world::fire_can_burn(world.get(wx + 1, wy, wz)))),
+                        ("south", prop(crate::world::fire_can_burn(world.get(wx, wy, wz + 1)))),
+                        ("west", prop(crate::world::fire_can_burn(world.get(wx - 1, wy, wz)))),
+                        ("up", prop(crate::world::fire_can_burn(world.get(wx, wy + 1, wz)))),
+                    ];
+                    // The attribute-system fold (the shared per-mesh
+                    // uniforms both existing paths speak — see the flat
+                    // path's own walk for the javap-proven arithmetic).
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    // THE CELL'S OWN LIGHT — the withoutAO walk's
+                    // getLightColor(state, pos): both layers sampled AT
+                    // the flame cell, all corners the same sample (the
+                    // grid absent keeps the legacy unshaded look — the
+                    // same None convention both paths speak).
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    // `shade: false` + the no-atlas boot's own default —
+                    // the tile's own pixels speak, the flat palette the
+                    // missing row keeps (the torch path's own verdict)
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    for apply in select_parts(fire_parts(soul), &props) {
+                        // the namespaced ref the blockstate writes the
+                        // vanilla ModelResourceLocation parse resolves —
+                        // the bare `builtin/` refs the four special forms
+                        // keep ride the same strip (the fire applies all
+                        // carry the minecraft: prefix, the honest default)
+                        let model_id = apply.model.strip_prefix("minecraft:").unwrap_or(apply.model);
+                        let Some(model) = fire_model_quads().get(model_id) else {
+                            continue;
+                        };
+                        for q in model {
+                            let mut pts = [[0f32; 3]; 4];
+                            let mut colors = [[0f32; 3]; 4];
+                            let mut uvs = [[0f32; 2]; 4];
+                            for (i, v) in q.vertices.iter().enumerate() {
+                                // the multipart's y quarter about the cell's
+                                // own center (no uvlock — the uvs ride)
+                                let (vx, vz) = match (apply.y / 90) % 4 {
+                                    1 => (1.0 - v[2], v[0]),
+                                    2 => (1.0 - v[0], 1.0 - v[2]),
+                                    3 => (v[2], 1.0 - v[0]),
+                                    _ => (v[0], v[2]),
+                                };
+                                let lm = lightmap_combine(
+                                    cell_sky,
+                                    cell_block,
+                                    sky_factor,
+                                    sky_tint,
+                                    ambient,
+                                    block_tint,
+                                    night_vision,
+                                    world.night_vision_factor,
+                                );
+                                // `shade: false` — no FACE_SHADE term,
+                                // the lightmap alone multiplies
+                                pts[i] = [wx as f32 + vx, wy as f32 + v[1], wz as f32 + vz];
+                                uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                                colors[i] = [base[0] * lm[0], base[1] * lm[1], base[2] * lm[2]];
+                            }
+                            out.push(Quad {
+                                pts,
+                                colors,
+                                uvs,
+                                tile,
+                                translucent: false,
+                            });
+                        }
+                    }
+                    continue;
+                }
                 for face in 0..6usize {
                     let (dx, dy, dz) = NEIGHBOR[face];
                     let n = world.get(wx + dx, wy + dy, wz + dz);
@@ -1238,6 +1428,60 @@ fn torch_model_quads() -> &'static [mc_registry::element_quads::Quad] {
     QUADS.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited("block/torch")
             .unwrap_or_default()
+    })
+}
+
+/// THE FIRE MULTIPART'S OWN CACHED PARTS — the parsed blockstate
+/// definition the selection rides, derived ONCE (the jar's own when
+/// conditions and y rotations; `parse` returns 'static data, the
+/// clone the cache keeps is the same borrows). The soul half's own
+/// column carries NO when — the full fan the selection always speaks.
+fn fire_parts(soul: bool) -> &'static [Part<'static>] {
+    static FIRE: std::sync::OnceLock<Vec<Part<'static>>> = std::sync::OnceLock::new();
+    static SOUL: std::sync::OnceLock<Vec<Part<'static>>> = std::sync::OnceLock::new();
+    let cache = if soul { &SOUL } else { &FIRE };
+    cache.get_or_init(|| {
+        let block = if soul { "soul_fire" } else { "fire" };
+        match mc_registry::blockstate_lookup::parse(block) {
+            Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) => {
+                parts.to_vec()
+            }
+            _ => Vec::new(),
+        }
+    })
+}
+
+/// THE FIRE MODELS' OWN CACHED BAKES — the derive walk's quads per
+/// model id, derived ONCE for the whole ten-model fire and six-model
+/// soul set (the floor pair, the four side templates, the up pair's
+/// two alt forms; the second-frame carriers fire_1/soul_fire_1 ride
+/// the same bake — the texture ref the kind's tile mapping folds).
+fn fire_model_quads() -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
+    static QUADS: std::sync::OnceLock<std::collections::HashMap<&'static str, Vec<DerivedQuad>>> =
+        std::sync::OnceLock::new();
+    QUADS.get_or_init(|| {
+        let models = [
+            "block/fire_floor0",
+            "block/fire_floor1",
+            "block/fire_side0",
+            "block/fire_side1",
+            "block/fire_side_alt0",
+            "block/fire_side_alt1",
+            "block/fire_up0",
+            "block/fire_up1",
+            "block/fire_up_alt0",
+            "block/fire_up_alt1",
+            "block/soul_fire_floor0",
+            "block/soul_fire_floor1",
+            "block/soul_fire_side0",
+            "block/soul_fire_side1",
+            "block/soul_fire_side_alt0",
+            "block/soul_fire_side_alt1",
+        ];
+        models
+            .into_iter()
+            .map(|m| (m, derive_model_inherited(m).unwrap_or_default()))
+            .collect()
     })
 }
 
@@ -2774,6 +3018,160 @@ mod tests {
                     && quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
             }),
             "the stone's face the torch cell draws against"
+        );
+    }
+
+    #[test]
+    fn the_fire_lane_selects_the_real_multipart_parts() {
+        // THE SELECTION'S OWN REGIMES (the real blockstate engine the
+        // lane rides — parse("fire")/parse("soul_fire") over the jar's
+        // own columns, the same select_parts walk the fence/wire tests
+        // pin): the freestanding all-false state the FULL fan speaks
+        // (the floor pair via the all-false condition, all four side
+        // groups each via its OR's all-false arm, the y quarters the
+        // four groups carry), the single-wall state the wall's own
+        // group alone answers, the up state the up pair answers.
+        let freestanding: Vec<_> = select_parts(fire_parts(false), &[("north", "false"), ("east", "false"), ("south", "false"), ("west", "false"), ("up", "false")]);
+        assert_eq!(freestanding.len(), 18, "the floor pair + the four side groups the all-false arms wear");
+        let floors = freestanding.iter().filter(|a| a.model.contains("fire_floor")).count();
+        let sides = freestanding.iter().filter(|a| a.model.contains("fire_side")).count();
+        let ups = freestanding.iter().filter(|a| a.model.contains("fire_up")).count();
+        assert_eq!((floors, sides, ups), (2, 16, 0), "the floor pair, the 4x4 side stack, no up pair");
+        // THE FOUR QUARTERS the side groups carry — north y=0, east
+        // y=90, south y=180, west y=270 (the jar's own apply rows)
+        for (y, quarter_count) in [(0u32, 4usize), (90, 4), (180, 4), (270, 4)] {
+            assert_eq!(
+                freestanding.iter().filter(|a| a.model.contains("fire_side") && a.y == y).count(),
+                quarter_count,
+                "the y={y} quarter the group's four side models wear"
+            );
+        }
+        // THE EAST WALL ALONE — the floating fire's log-adjacent state:
+        // the floor's all-false condition refuses, the other groups'
+        // OR arms refuse, the east group's own arm answers at y=90
+        let east: Vec<_> = select_parts(fire_parts(false), &[("north", "false"), ("east", "true"), ("south", "false"), ("west", "false"), ("up", "false")]);
+        assert_eq!(east.len(), 4, "the east group's four side models alone");
+        assert!(east.iter().all(|a| a.model.contains("fire_side") && a.y == 90));
+        // THE UP PAIR ALONE — the burnable-above state: the up group's
+        // four models at y=0, the floor and the sides all refuse
+        let up: Vec<_> = select_parts(fire_parts(false), &[("north", "false"), ("east", "false"), ("south", "false"), ("west", "false"), ("up", "true")]);
+        assert_eq!(up.len(), 4, "the up group's four models alone");
+        assert!(up.iter().all(|a| a.model.contains("fire_up") && a.y == 0));
+        // THE SOUL COLUMN'S OWN UNCONDITIONAL FAN — no when anywhere:
+        // ANY state the full 18-applies fan answers, the up pair never
+        for state in [
+            [("north", "false"), ("east", "false"), ("south", "false"), ("west", "false"), ("up", "false")],
+            [("north", "true"), ("east", "true"), ("south", "true"), ("west", "true"), ("up", "true")],
+        ] {
+            let soul: Vec<_> = select_parts(fire_parts(true), &state);
+            assert_eq!(soul.len(), 18, "the soul fan the no-when column always speaks");
+            assert!(soul.iter().all(|a| !a.model.contains("up")), "the up pair the soul column never wears");
+        }
+    }
+
+    #[test]
+    fn the_fire_lane_renders_the_fan_the_blockstate_speaks() {
+        use mc_registry::generated::atlas as gen_atlas;
+        let fire_tile = gen_atlas::FACE_TILES[crate::world::FIRE as usize][2];
+        let soul_tile = gen_atlas::FACE_TILES[crate::world::SOUL_FIRE as usize][2];
+        assert_ne!(fire_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
+        assert_ne!(soul_tile, gen_atlas::TILE_NONE, "the soul tile the regen banks");
+        // THE FREESTANDING FAN — fire on stone (the below cell the
+        // gate's sturdy arm answers): the 40 quads the floor pair (8)
+        // plus the four side groups (32) wear, the flame's own tile on
+        // every quad, the planes the cell's own footprint keeps and
+        // the 22.4-texel rise the rotated tips' honest excursion wears
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::FIRE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let fan: Vec<_> = q.iter().filter(|quad| quad.tile == fire_tile).collect();
+        assert_eq!(fan.len(), 40, "the floor pair's 8 + the four groups' 32 the fan wears");
+        for quad in &fan {
+            assert!(!quad.translucent, "the flame the opaque cutout lane wears");
+            for p in &quad.pts {
+                let (fx, fy, fz) = (p[0] - 8.0, p[1], p[2] - 8.0);
+                assert!(
+                    (-1e-6..=1.0 + 1e-6).contains(&fx) && (-1e-6..=1.0 + 1e-6).contains(&fz),
+                    "the planes the cell's own footprint keeps: ({fx},{fz})"
+                );
+                // the vertical span the rescaled rotation wears: the
+                // side walls' 22.4-texel rise (1.4), the rotated floor
+                // planes' tips the ±22.5° + rescale fold lifts to
+                // 1.42071 and dips to -0.02071 (the honest excursion
+                // the vanilla fan's own bake carries)
+                assert!(
+                    (8.0 - 0.0208..=9.0 + 1.4208).contains(&fy),
+                    "the fan's rise the rotated tips' excursion wears: {fy}"
+                );
+            }
+            for uv in &quad.uvs {
+                assert!(
+                    (0.0..=1.0).contains(&uv[0]) && (0.0..=1.0).contains(&uv[1]),
+                    "the /16 fold the tile space keeps: {uv:?}"
+                );
+            }
+        }
+        // THE GATE'S OWN SILENCE — the log beside the grounded fire the
+        // props NEVER reach (the below stone's sturdy arm the default
+        // state serves): the fan the same 40 quads keeps, no walls the
+        // log's burnable odds could add
+        let mut w_gate = empty_world();
+        put(&mut w_gate, 8, 8, 8, STONE);
+        put(&mut w_gate, 8, 9, 8, crate::world::FIRE);
+        put(&mut w_gate, 9, 9, 8, crate::world::LOG);
+        let q_gate = mesh_chunk(&w_gate, 0, 0, None);
+        assert_eq!(
+            q_gate.iter().filter(|quad| quad.tile == fire_tile).count(),
+            40,
+            "the grounded fire the gate's default state keeps freestanding"
+        );
+        // THE FLOATING FIRE'S OWN WALL — the below air the gate refuses,
+        // the east log the canBurn read answers: the east group's eight
+        // quads alone, the wall plane the y=90 quarter's (x,z) -> (1-z,
+        // x) turn speaks (the template's z=0.01 the 0.999375 plane keeps)
+        let mut w_east = empty_world();
+        put(&mut w_east, 8, 9, 8, crate::world::FIRE);
+        put(&mut w_east, 9, 9, 8, crate::world::LOG);
+        let q_east = mesh_chunk(&w_east, 0, 0, None);
+        let wall: Vec<_> = q_east.iter().filter(|quad| quad.tile == fire_tile).collect();
+        assert_eq!(wall.len(), 8, "the east group's four models x the two faces");
+        for quad in &wall {
+            for p in &quad.pts {
+                assert!(
+                    (p[0] - 8.0 - (1.0 - 0.01 / 16.0)).abs() < 1e-5,
+                    "the east plane the y=90 turn speaks: {}",
+                    p[0] - 8.0
+                );
+                assert!(
+                    (8.0..=9.0 + 1e-6).contains(&p[2]) && (9.0..=10.4 + 1e-4).contains(&p[1]),
+                    "the wall's span the template element keeps: ({},{})",
+                    p[1], p[2]
+                );
+            }
+        }
+        // THE NEIGHBORS' OWN FACES — the flame cell the ground's top
+        // face draws against (the replaceable().noCollision() rows the
+        // is_transparent verdict wears): the stone's top face at the
+        // shared plane renders
+        assert!(
+            q.iter().any(|quad| {
+                quad.tile == gen_atlas::FACE_TILES[STONE as usize][2]
+                    && quad.pts.iter().all(|p| (p[1] - 9.0).abs() < 1e-6)
+            }),
+            "the stone's top face the flame cell draws against"
+        );
+        // THE SOUL FAN — the unconditional column's own 40 quads, the
+        // soul tile the kind's own row banks
+        let mut w_soul = empty_world();
+        put(&mut w_soul, 8, 8, 8, STONE);
+        put(&mut w_soul, 8, 9, 8, crate::world::SOUL_FIRE);
+        let q_soul = mesh_chunk(&w_soul, 0, 0, None);
+        let soul_fan: Vec<_> = q_soul.iter().filter(|quad| quad.tile == soul_tile).collect();
+        assert_eq!(soul_fan.len(), 40, "the soul fan the no-when column always wears");
+        assert!(
+            q_soul.iter().all(|quad| quad.tile != fire_tile),
+            "the soul cell the plain flame's tile never wears"
         );
     }
 

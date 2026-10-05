@@ -672,6 +672,16 @@ pub fn fire_can_survive(below: u16, neighbors: [u16; 6]) -> bool {
     collision_shape(below) == CollisionShape::Full || neighbors.into_iter().any(fire_can_burn)
 }
 
+/// THE FIRE KINDS' OWN FAMILY — the two kinds the placement's igniter
+/// arms, the body's flame-branding walk, the light grid's emission rows
+/// and the mesher's multipart lane read (the family-fn shape the plant
+/// and torch families wear, the two members the Blocks clinit's own
+/// fire registrations keep — the plain flame the flint's and the
+/// charge's own product, the soul flame the soul-sand base's verdict).
+pub fn is_fire(id: u16) -> bool {
+    id == FIRE || id == SOUL_FIRE
+}
+
 /// THE PAIR'S OWN MATE — the opposite half's kind (`Some` the family
 /// alone answers): the TALL_GRASS pair (43 <-> 44) and the LARGE_FERN
 /// pair (45 <-> 46) the two-cell law swaps. The dig lane's
