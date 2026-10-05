@@ -104,6 +104,11 @@ pub const JUMP_POWER: f32 = 0.42; // JUMP_STRENGTH
 pub const SPRINT_JUMP_BOOST: f32 = 0.2;
 pub const JUMP_REPEAT_TICKS: i32 = 10; // noJumpDelay
 pub const CUBE_SPEED_NUMERATOR: f32 = 0.21600002; // the ice-slip law's own
+/// THE ELYTRA'S OWN MAX DAMAGE (the vanilla elytra item registration's
+/// own 432 — the durability the hurt walk's isBroken arm compares,
+/// the nextDamageWillBreak refusal the max - 1 keeps).
+pub const ELYTRA_MAX_DAMAGE: i32 = 432;
+
 pub const WIDTH: f64 = 0.6;
 pub const STANDING_HEIGHT: f64 = 1.8;
 pub const CROUCH_HEIGHT: f64 = 1.5;
@@ -937,6 +942,53 @@ pub struct PlayerBody {
     /// the start walk and the stop arm the tick's own aiStep order
     /// keeps, the glide folds the travel lane wears.
     pub fall_flying: bool,
+    /// THE FALL-FLYING WEAR CLOCK (javap `LivingEntity.updateFallFlying`
+    /// the 26.2 walk — the `fallFlyTicks` field the server arm's own
+    /// first fold keeps: `i = ++fallFlyTicks` each gliding tick, the
+    /// `i % 10 == 0` gate the gameEvent ELYTRA_GLIDE speaks, the `(i /
+    /// 10) % 2 == 0` gate the hurtAndBreak(1) answer). The counter the
+    /// walk NEVER resets — the rhythm rides across glides (the 26.2
+    /// bytecode carries no reset arm, the getFallFlyingTicks read the
+    /// same field keeps).
+    pub fall_fly_ticks: i32,
+    /// THE ELYTRA'S OWN DAMAGE BANK (javap `ItemStack.hurtAndBreak` —
+    /// the `damage` the applyDamage walk banks, the elytra item's own
+    /// 432 the vanilla registration carries): the ONE damageable stack
+    /// the glide wears (the chest slot). The (id, count) tuples the
+    /// App's slots carry no damage component — the bank rides the
+    /// body (the single-player walk's own truth), the chest-item
+    /// change the App's feed resets (the stack swap the fresh
+    /// elytra's zero speaks).
+    pub elytra_damage: i32,
+    /// THE BREAK'S OWN DUE FLAG (javap `ItemStack.hurtAndBreak` — the
+    /// isBroken arm the shrink + onEquippedItemBroken pair answers:
+    /// the entityEvent 47 the CHEST break broadcasts, the client's
+    /// breakItem the sound + the item particles speak). Set in the
+    /// hurt walk the damage crossing speaks, the App drains it (the
+    /// slot clears, the voice lands, the pieces spawn). The glide's
+    /// own reach never triggers it — the nextDamageWillBreak gate
+    /// refuses the LAST point first (the torn elytra the glide never
+    /// rides), the arm the shared law keeps for the other sources.
+    pub elytra_broke_due: bool,
+    /// THE GLIDE GAME-EVENT'S DUE FLAG (javap `updateFallFlying` —
+    /// the `gameEvent(GameEvent.ELYTRA_GLIDE)` the i%10 gate speaks:
+    /// the every-10-tick world event the sculk's own hearing rides).
+    /// Set every tenth gliding tick, the App drains it (the world's
+    /// sculk lane a later round may answer).
+    pub elytra_glide_event_due: bool,
+    /// THE INFINITE MATERIALS GATE (javap `Player.hasInfiniteMaterials`
+    /// — the abilities.instabuild the creative mode speaks): the
+    /// processDurabilityChange arm the creative stack never carries —
+    /// the hurt walk's own zero answer. The App's game-mode feed
+    /// sets it each tick.
+    pub infinite_materials: bool,
+    /// THE LAST-SEEN CHEST ITEM (the App's feed walk banks it — the
+    /// stack-swap detector the damage reset speaks: the elytra's
+    /// equip/unequip/replace the fresh bank answers, the break's own
+    /// drain the cleared slot rides). The (id, count) tuples the
+    /// slots carry no damage component — the change walk the honest
+    /// stand-in keeps.
+    pub chest_item: i32,
     /// THE CHEST'S OWN GLIDE VERDICT (javap `canGlideUsing` the 26.2
     /// walk — the GLIDER component the elytra item carries + the
     /// equippable slot pair + the nextDamageWillBreak gate, the
@@ -1107,6 +1159,12 @@ impl PlayerBody {
             fall_flying: false,
             chest_glides: false,
             glide_started_due: false,
+            fall_fly_ticks: 0,
+            elytra_damage: 0,
+            elytra_broke_due: false,
+            elytra_glide_event_due: false,
+            infinite_materials: false,
+            chest_item: 0,
             remaining_fire_ticks: 0,
             in_lava: false,
             lava_hurt_due: false,
@@ -1579,6 +1637,28 @@ impl PlayerBody {
         if self.fall_flying && !self.fall_flying_can_glide() {
             self.fall_flying = false;
         }
+        // THE FALL-FLYING WEAR (javap `LivingEntity.updateFallFlying`
+        // the 26.2 walk — the server arm the canGlide win banks, the
+        // walk the aiStep's own call right before the travel keeps:
+        // `i = ++fallFlyTicks` each gliding tick, the `i % 10 == 0`
+        // gate the gameEvent ELYTRA_GLIDE speaks, the `(i / 10) % 2 ==
+        // 0` gate the hurtAndBreak(1) answer — the every-20-tick wear
+        // the ONE qualifying slot's stack carries: the gliding-slot
+        // list the canGlideUsing filter banks holds the CHEST alone,
+        // the Util.getRandom pick the single-element list never
+        // shakes). The retire tick the stop arm claims — the wear
+        // never rides it (the vanilla's gate-then-return shape the
+        // same order keeps).
+        if self.fall_flying {
+            self.fall_fly_ticks += 1;
+            let i = self.fall_fly_ticks;
+            if i % 10 == 0 {
+                if (i / 10) % 2 == 0 {
+                    self.elytra_hurt_and_break(1);
+                }
+                self.elytra_glide_event_due = true;
+            }
+        }
         // THE GLIDE'S OWN ROUTE (javap `LivingEntity.travelFallFlying`
         // the 26.2 walk — the travelVec arg the glide lane NEVER
         // reads: the input impulse the air lane adds the glide never
@@ -1940,8 +2020,38 @@ impl PlayerBody {
     /// the levitation effect the vocabulary never banks, the ride
     /// lanes the body-tick never reaches, the equipment the chest
     /// verdict's feed answers).
+    /// THE LAST POINT'S OWN REFUSAL (javap `canGlideUsing` the 26.2
+    /// walk — the nextDamageWillBreak gate the walk's tail keeps:
+    /// `damage >= maxDamage - 1` the verdict refuses, the torn elytra
+    /// the glide never rides — the elytra at its last durability
+    /// point retires the glide, the break the glide's own reach
+    /// never speaks).
     fn fall_flying_can_glide(&self) -> bool {
-        !self.flying && !self.on_ground && self.chest_glides
+        !self.flying
+            && !self.on_ground
+            && self.chest_glides
+            && self.elytra_damage < ELYTRA_MAX_DAMAGE - 1
+    }
+
+    /// THE HURT LAW (javap `ItemStack.hurtAndBreak` the 26.2 walk —
+    /// the processDurabilityChange's hasInfiniteMaterials gate the
+    /// creative stack never carries, the applyDamage's `damage +=
+    /// amount` the setDamageValue answer, the isBroken arm (`damage
+    /// >= maxDamage`) the shrink + onEquippedItemBroken pair speaks:
+    /// the entityEvent 47 the CHEST break broadcasts, the client's
+    /// breakItem the sound (v0.8, p0.8+r*0.4) + the item particles
+    /// (spawnItemParticles(stack, 5)) answer — the App's drain the
+    /// due flag rides). The enchantment fold the banked vocabulary
+    /// never carries — the unbreaking-less stack the raw damage
+    /// keeps.
+    fn elytra_hurt_and_break(&mut self, amount: i32) {
+        if self.infinite_materials {
+            return;
+        }
+        self.elytra_damage += amount;
+        if self.elytra_damage >= ELYTRA_MAX_DAMAGE {
+            self.elytra_broke_due = true;
+        }
     }
 
     /// THE GLIDE'S OWN VELOCITY FOLD (javap
@@ -4021,6 +4131,109 @@ mod tests {
         b.chest_glides = true;
         settle(&mut b, &w);
         assert!(!b.fall_flying, "the grounded body never glides");
+    }
+
+    /// THE FALL-FLYING WEAR'S OWN CLOCK (javap `updateFallFlying` the
+    /// 26.2 walk): the gliding body's `i = ++fallFlyTicks` walk — the
+    /// damage banks at the i%20 gates (20, 40 — the (i/10)%2 == 0 arm
+    /// speaks), the gameEvent due at EVERY i%10 gate (10, 20, 30, 40),
+    /// the counter the stop+restart never resets (the rhythm rides
+    /// across glides), the last point's refusal the canGlideUsing arm
+    /// speaks (the 431-damage body the stop arm retires, the wear the
+    /// retire tick never rides, the break the glide's own reach never
+    /// triggers — the isBroken arm the direct hurt call answers).
+    #[test]
+    fn the_elytra_wear_the_clock_keeps() {
+        let mut w = World::new(1, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { AIR });
+                }
+            }
+        }
+        let mut b = PlayerBody::new(2.0, 64.0, 2.0, 0.0, 0.0);
+        b.fall_flying = true;
+        b.chest_glides = true;
+        let mut event_ticks = Vec::new();
+        for t in 1..=40 {
+            b.tick(&w, false);
+            assert!(b.fall_flying, "the airborne glide never retires (tick {t})");
+            if b.elytra_glide_event_due {
+                b.elytra_glide_event_due = false;
+                event_ticks.push(t);
+            }
+            // the stop at the halfway point: the counter the restart
+            // never resets (the second glide rides the same clock)
+            if t == 20 {
+                b.fall_flying = false;
+                b.tick(&w, false);
+                assert!(!b.elytra_glide_event_due, "the stopped tick the wear never rides");
+                b.fall_flying = true;
+            }
+        }
+        // the event rhythm: EVERY i%10 gate speaks (the 20th tick's
+        // stop+restart the clock's own continuity keeps — the gates at
+        // 10, 20, 30, 40 all land)
+        assert_eq!(event_ticks, vec![10, 20, 30, 40], "the every-10 event rhythm");
+        // the damage rhythm: the (i/10)%2 == 0 arm — the gates at 20
+        // and 40, NOT at 10 or 30
+        assert_eq!(b.fall_fly_ticks, 40, "the clock the stop never resets");
+        assert_eq!(b.elytra_damage, 2, "the every-20 wear: two points the 40 ticks speak");
+    }
+
+    /// THE LAST POINT'S OWN REFUSAL (javap `canGlideUsing`'s
+    /// nextDamageWillBreak gate the 26.2 walk — the damage >= max - 1
+    /// stack the verdict refuses) + THE HURT LAW'S OWN ARMS (javap
+    /// `ItemStack.hurtAndBreak` — the isBroken arm the 432 crossing
+    /// speaks, the hasInfiniteMaterials gate the creative stack never
+    /// carries).
+    #[test]
+    fn the_elytra_wear_the_refusal_the_break_the_creative() {
+        let mut w = World::new(1, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { AIR });
+                }
+            }
+        }
+        // THE REFUSAL: the 431-damage body the glide retires — the
+        // stop arm the next tick's verdict speaks, the wear the retire
+        // tick never rides, the break the glide's own reach never
+        // triggers (the vanilla's torn elytra the glide never rides)
+        let mut b = PlayerBody::new(2.0, 64.0, 2.0, 0.0, 0.0);
+        b.fall_flying = true;
+        b.chest_glides = true;
+        b.elytra_damage = 431;
+        b.tick(&w, false);
+        assert!(!b.fall_flying, "the last point the stop arm retires");
+        assert_eq!(b.fall_fly_ticks, 0, "the retire tick the wear never rides");
+        assert!(!b.elytra_broke_due, "the break the glide's own reach never speaks");
+        // THE PENULTIMATE POINT: the 430-damage body still glides (the
+        // 430 < 431 gate the verdict keeps)
+        let mut b = PlayerBody::new(2.0, 64.0, 2.0, 0.0, 0.0);
+        b.fall_flying = true;
+        b.chest_glides = true;
+        b.elytra_damage = 430;
+        b.tick(&w, false);
+        assert!(b.fall_flying, "the penultimate point the glide keeps");
+        // THE ISBROKEN ARM (the direct hurt call — the shared law the
+        // other sources the lane may speak): 431 + 1 the 432 crossing
+        // answers, the due flag the App's drain reads
+        let mut b = PlayerBody::new(0.0, 0.0, 0.0, 0.0, 0.0);
+        b.elytra_damage = 431;
+        b.elytra_hurt_and_break(1);
+        assert_eq!(b.elytra_damage, 432, "the applyDamage's += the walk keeps");
+        assert!(b.elytra_broke_due, "the isBroken arm the 432 crossing speaks");
+        // THE CREATIVE ARM: the infinite-materials stack the damage
+        // never carries (the processDurabilityChange's own zero)
+        let mut b = PlayerBody::new(0.0, 0.0, 0.0, 0.0, 0.0);
+        b.infinite_materials = true;
+        b.elytra_damage = 100;
+        b.elytra_hurt_and_break(1);
+        assert_eq!(b.elytra_damage, 100, "the creative gate the damage never rides");
+        assert!(!b.elytra_broke_due, "the creative stack never breaks");
     }
 
     /// THE GLIDE'S OWN RETIRE (javap `LivingEntity.updateFallFlying`'s

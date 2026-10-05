@@ -758,6 +758,27 @@ impl BlockSounds {
         });
     }
 
+    /// THE ITEM BREAK VOICE (javap `LivingEntity.breakItem` the 26.2
+    /// walk — the BREAK_SOUND component's default `entity.item.break`
+    /// the non-empty stack keeps, the isSilent arm the quiet body
+    /// never wears, the playLocalSound call the constants speak:
+    /// volume 0.8F, pitch `0.8F + random.nextFloat() * 0.4F` — the
+    /// [0.8, 1.2] band the ONE draw carries). The elytra's own break
+    /// the entityEvent 47's client arm answers — the sound + the
+    /// spawnItemParticles(stack, 5) pieces the drain pair speaks.
+    pub fn play_item_break_voice(&mut self, tick: u64) {
+        const EVENT: &str = "entity.item.break";
+        let r = self.next_rand_f32();
+        let pitch = 0.8 + r * 0.4;
+        let Some(file) = self.pick_file(EVENT) else {
+            return;
+        };
+        self.events.push(format!(
+            "{EVENT} @{tick} #{file} v{:.6} p{:.6}",
+            0.8, pitch
+        ));
+    }
+
     /// THE ELYTRA VOICE'S OWN TICK (javap `ElytraOnPlayerSoundInstance.
     /// tick` the 26.2 walk — the sound manager's per-tick law the
     /// player's own post-tick state reads): THE CLOCK (pcs 0-9 — the
@@ -1211,6 +1232,44 @@ mod tests {
         let mut c = BlockSounds::new(3);
         c.play_fall_voice(0, 5);
         assert!(c.events[0].starts_with("entity.player.big_fall"));
+    }
+
+    /// THE ITEM BREAK VOICE's law (javap `LivingEntity.breakItem` the
+    /// 26.2 walk): `entity.item.break` at the FIXED volume 0.8, the
+    /// pitch `0.8F + random.nextFloat() * 0.4F` in [0.8, 1.2] — the
+    /// ONE draw the playLocalSound call speaks, the log format the
+    /// backend mirrors. The same-seed second instance the exact pitch
+    /// pins (the draw order: the pitch's f32 first, the file pick's
+    /// roll second).
+    #[test]
+    fn the_item_break_voice_speaks_the_breakitem_law() {
+        let mut a = BlockSounds::new(21);
+        a.play_item_break_voice(9);
+        assert_eq!(a.events.len(), 1);
+        assert!(
+            a.events[0].starts_with("entity.item.break @9 #"),
+            "the entry: {}",
+            a.events[0]
+        );
+        assert!(a.events[0].contains(" v0.800000 p"), "the volume: {}", a.events[0]);
+        let pitch: f32 = a.events[0].split(" p").nth(1).unwrap().parse().unwrap();
+        assert!((0.8..=1.2).contains(&pitch), "the pitch range: {pitch}");
+        // the exact pitch the same-seed draw pins (the ONE nextFloat
+        // the breakItem law keeps, the file pick's roll the second)
+        // — the comparison the log's own 6-digit rounding speaks
+        let mut b = BlockSounds::new(21);
+        let r = b.next_rand_f32();
+        let expect = 0.8 + r * 0.4;
+        assert!(
+            a.events[0]
+                .ends_with(&format!(" v0.800000 p{expect:.6}")),
+            "the draw order the exact pitch pins: {} vs {expect:.6}",
+            a.events[0]
+        );
+        // determinism: the same seed speaks the same voice
+        let mut c = BlockSounds::new(21);
+        c.play_item_break_voice(9);
+        assert_eq!(a.events, c.events);
     }
 
     /// THE HURT AND DEATH VOICES' pitch law: `(r - r) * 0.2 + 1.0`

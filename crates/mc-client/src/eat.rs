@@ -134,43 +134,58 @@ pub const BURP_PITCH_MAX: f32 = 1.0;
 
 /// `LivingEntity.spawnItemParticles`'s own geometry — one piece's
 /// spawn point offset and initial velocity, computed verbatim from the
-/// eye position and the view angles (degrees). The offset
-/// `Vec3((r-0.5)*0.1, r*0.1+0.1, 0)` and the velocity
-/// `Vec3((r-0.5)*0.3, -r*0.6-0.3, 0.6)`, both folded through
-/// `xRot(-pitch * PI/180)` then `yRot(-yaw * PI/180)`.
+/// eye position and the view angles (degrees). The 26.2 bytecode's
+/// own walk, per piece FOUR nextFloat draws in this order: the SPEED
+/// vec's two (`(r1-0.5)*0.1, r2*0.1+0.1, 0` — the addParticle's
+/// velocity args, the `+0.05` y lift the call's own fold speaks), the
+/// OFFSET's d6 roll (`-r3*0.6 - 0.3` — the position's dy), the
+/// OFFSET's x (`(r4-0.5)*0.3`; the position's z the `0.6` CONSTANT
+/// the ldc2_w speaks — no draw rides it). Both vecs fold through
+/// `xRot(-pitch * PI/180)` then `yRot(-yaw * PI/180)`. The OFFSET is
+/// the POSITION (the eye add the caller rides — the vanilla's
+/// `getX() + vec31.x, getEyeY() + vec31.y, getZ() + vec31.z`), the
+/// SPEED the velocity (the addParticle's own speed args).
 ///
-/// The rotation here mirrors `Vec3.xRot`/`Vec3.yRot` (javap):
-/// `xRot(a)`: (x, y*cos - z*sin, y*sin + z*cos) for the angle
-/// `-pitch_rad` carried in; `yRot(a)`: (x*cos + z*sin, y,
-/// z*cos - x*sin).
+/// The rotation mirrors the jar's `Vec3.xRot`/`Vec3.yRot` (javap the
+/// 26.2 walk — the cos/sin sign pattern the bytecode's dmul/dadd pair
+/// keeps): `xRot(a)`: x unchanged, `y' = y*cos(a) + z*sin(a)`,
+/// `z' = z*cos(a) - y*sin(a)`; `yRot(a)`: y unchanged, `x' = x*cos(a)
+/// + z*sin(a)`, `z' = z*cos(a) - x*sin(a)`. The view-forward
+/// cross-check the convention answers: the local (0, 0, 1) through
+/// `xRot(-pitch)` lands `(0, -sin p, cos p)` — straight DOWN at pitch
+/// +90, the look direction the vanilla walk speaks.
 pub fn piece_offset_and_velocity(
-    r_off_x: f32,
-    r_off_y: f32,
-    r_vel_x: f32,
-    r_vel_y: f32,
+    r_speed_x: f32,
+    r_speed_y: f32,
+    r_pos_dy: f32,
+    r_pos_dx: f32,
     yaw_deg: f32,
     pitch_deg: f32,
 ) -> ([f64; 3], [f64; 3]) {
     let rad = std::f32::consts::PI / 180.0;
-    // the offset vec, pre-rotation
+    // the OFFSET vec, pre-rotation (the d6 = -r3*0.6 - 0.3 fold the
+    // fneg/f2d/0.6-dmul/0.3-dsub chain keeps, the z the 0.6 constant
+    // speaks — the mouthward spawn the eye add answers)
+    let d6 = (-(r_pos_dy as f64)) * 0.6 - 0.3;
     let mut off = [
-        ((r_off_x - 0.5) * 0.1) as f64,
-        (r_off_y * 0.1 + 0.1) as f64,
-        0.0,
-    ];
-    // the velocity vec, pre-rotation (the d0 = -r*0.6 - 0.3 fold)
-    let d0 = (-(r_vel_y as f64)) * 0.6 - 0.3;
-    let mut vel = [
-        ((r_vel_x - 0.5) * 0.3) as f64,
-        d0,
+        ((r_pos_dx - 0.5) * 0.3) as f64,
+        d6,
         0.6,
     ];
-    // xRot(-pitch * PI/180): y' = y*cos(a) - z*sin(a), z' = y*sin(a) +
-    // z*cos(a) with a = the passed angle (Vec3.xRot's own convention)
+    // the SPEED vec, pre-rotation (the gentle upward drift the
+    // r2*0.1+0.1 fold keeps)
+    let mut speed = [
+        ((r_speed_x - 0.5) * 0.1) as f64,
+        (r_speed_y * 0.1 + 0.1) as f64,
+        0.0,
+    ];
+    // xRot(a): y' = y*cos(a) + z*sin(a), z' = z*cos(a) - y*sin(a)
+    // (the jar's own dmul/dadd then dmul/dsub pair — the Mth.cos/sin
+    // f32 returns the f64 products widen)
     let rot_x = |v: &mut [f64; 3], a: f64| {
         let (s, c) = a.sin_cos();
-        let y = v[1] * c - v[2] * s;
-        let z = v[1] * s + v[2] * c;
+        let y = v[1] * c + v[2] * s;
+        let z = v[2] * c - v[1] * s;
         v[1] = y;
         v[2] = z;
     };
@@ -186,9 +201,12 @@ pub fn piece_offset_and_velocity(
     let ya = (-yaw_deg * rad) as f64;
     rot_x(&mut off, pa);
     rot_y(&mut off, ya);
-    rot_x(&mut vel, pa);
-    rot_y(&mut vel, ya);
-    (off, vel)
+    rot_x(&mut speed, pa);
+    rot_y(&mut speed, ya);
+    // the addParticle's y-arg lift (the `vec.y + 0.05` the speed
+    // arg's own fold speaks — the drift's extra whisper)
+    speed[1] += 0.05;
+    (off, speed)
 }
 
 /// The `Particle(ClientLevel, x, y, z, vx, vy, vz)` parent
@@ -526,26 +544,53 @@ mod tests {
     }
 
     /// THE PIECE GEOMETRY (javap spawnItemParticles, the straight-on
-    /// view yaw=0/pitch=0): the offset's Z stays 0 and the velocity's
-    /// Z stays 0.6 — the piece spawns a whisper off the eye and flies
-    /// INTO the mouth's -Z... the rotations negated at the zero angles
-    /// leave the frame's own axes. The Y velocity folds
-    /// `-r * 0.6 - 0.3` (the downward arc into the mouth).
+    /// view yaw=0/pitch=0): the OFFSET's z stays the mouthward 0.6 and
+    /// its y rides `-r*0.6 - 0.3` — the piece spawns BELOW-FRONT of
+    /// the eye (the mouth height the vanilla crumb arc speaks); the
+    /// SPEED's z stays 0 and its y rides `r*0.1 + 0.1 + 0.05` — the
+    /// gentle upward drift the addParticle's own lift speaks. The
+    /// FOUR-roll draw order the signature keeps: the speed's two, the
+    /// d6 roll, the offset's x (the z no draw rides — the 0.6 the
+    /// constant speaks).
     #[test]
     fn the_piece_geometry_flies_into_the_mouth() {
-        let (off, vel) = piece_offset_and_velocity(0.5, 1.0, 0.5, 0.0, 0.0, 0.0);
-        assert!((off[0] - 0.0).abs() < 1e-6, "the x-center offset: (0.5-0.5)*0.1");
-        assert!((off[1] - 0.2).abs() < 1e-6, "the y: r*0.1 + 0.1 at r=1.0");
-        assert!((off[2]).abs() < 1e-6, "the z pre-rotation is 0");
-        assert!((vel[0] - 0.0).abs() < 1e-6, "the x-center velocity");
-        assert!((vel[1] + 0.3).abs() < 1e-6, "the y: -0*0.6 - 0.3");
-        assert!((vel[2] - 0.6).abs() < 1e-6, "the z: the mouthward 0.6");
-        // the corner case: the offsets span ±0.05 / [0.1, 0.2], the
-        // velocities ±0.15 / [-0.9, -0.3]
-        let (off, vel) = piece_offset_and_velocity(1.0, 0.0, 0.0, 1.0, 0.0, 0.0);
-        assert!((off[0] - 0.05).abs() < 1e-6 && (off[1] - 0.1).abs() < 1e-6);
-        assert!((vel[0] + 0.15).abs() < 1e-6, "the x: (0-0.5)*0.3");
-        assert!((vel[1] + 0.9).abs() < 1e-6, "the y: -1*0.6 - 0.3");
+        let (off, speed) = piece_offset_and_velocity(0.5, 1.0, 0.5, 0.5, 0.0, 0.0);
+        assert!((off[0] - 0.0).abs() < 1e-6, "the x-center offset: (0.5-0.5)*0.3");
+        assert!((off[1] + 0.6).abs() < 1e-6, "the y: -0.5*0.6 - 0.3");
+        assert!((off[2] - 0.6).abs() < 1e-6, "the z: the mouthward 0.6 constant");
+        assert!((speed[0] - 0.0).abs() < 1e-6, "the x-center speed: (0.5-0.5)*0.1");
+        assert!((speed[1] - 0.25).abs() < 1e-6, "the y: 1.0*0.1 + 0.1 + the 0.05 lift");
+        assert!((speed[2]).abs() < 1e-6, "the z pre-rotation is 0");
+        // the corner case: the offsets span ±0.15 / [-0.9, -0.3], the
+        // speeds ±0.05 / [0.15, 0.25]
+        let (off, speed) = piece_offset_and_velocity(1.0, 0.0, 1.0, 0.0, 0.0, 0.0);
+        assert!((off[0] + 0.15).abs() < 1e-6, "the x: (0-0.5)*0.3");
+        assert!((off[1] + 0.9).abs() < 1e-6, "the y: -1*0.6 - 0.3");
+        assert!((off[2] - 0.6).abs() < 1e-6, "the z constant");
+        assert!((speed[0] - 0.05).abs() < 1e-6, "the x: (1-0.5)*0.1");
+        assert!((speed[1] - 0.15).abs() < 1e-6, "the y: 0.0*0.1 + 0.1 + 0.05");
+    }
+
+    /// THE PIECE ROTATION'S OWN CONVENTION (javap Vec3.xRot the 26.2
+    /// walk — `y' = y*cos + z*sin, z' = z*cos - y*sin` the dmul/dadd
+    /// then dmul/dsub pair keeps): the local forward (0, 0, 1) through
+    /// `xRot(-pitch)` lands `(0, -sin p, cos p)` — straight DOWN at
+    /// pitch +90. The mouthward offset (0, -0.6, 0.6) at the straight
+    /// -down look folds `(0, -0.6, -0.6)` — the piece BELOW the eye,
+    /// the forward's own world-down the rotation answers.
+    #[test]
+    fn the_piece_rotation_lands_the_look() {
+        // the straight-down look: pitch 90, yaw 0
+        let (off, _) = piece_offset_and_velocity(0.5, 0.0, 0.5, 0.5, 0.0, 90.0);
+        assert!((off[0]).abs() < 1e-6);
+        assert!((off[1] + 0.6).abs() < 1e-6, "the below-eye y the down-look keeps");
+        assert!((off[2] + 0.6).abs() < 1e-6, "the z the y-rot's zero-yaw never shakes");
+        // the yaw spin: the offset's z 0.6 at yaw 90 folds onto the x
+        // axis (the -90° yRot of (0, -0.6, 0.6) lands (-0.6, -0.6, ~0))
+        let (off, _) = piece_offset_and_velocity(0.5, 0.0, 0.5, 0.5, 90.0, 0.0);
+        assert!((off[0] + 0.6).abs() < 1e-6, "the x the yaw spin speaks");
+        assert!((off[1] + 0.6).abs() < 1e-6);
+        assert!(off[2].abs() < 1e-6, "the z the spin empties");
     }
 
     /// THE PIECE PHYSICS CHAIN (javap Particle then

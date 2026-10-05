@@ -237,6 +237,7 @@ fn test_fixture_table() -> SoundTable {
         "music.under_water",
         "item.honey_bottle.drink",
         "item.elytra.flying",
+        "entity.item.break",
         "ui.button.click",
         "ui.hud.bubble_pop",
     ] {

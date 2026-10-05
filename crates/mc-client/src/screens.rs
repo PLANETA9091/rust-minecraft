@@ -8537,6 +8537,10 @@ impl App {
             let mut on_fire_hurt = false;
             let mut fire_doused = false;
             let mut drown_hurt = false;
+            // THE ELYTRA BREAK's own drain slot (the body's borrow fills
+            // it — the entityEvent 47's client arm runs after it ends:
+            // the slot clear, the break voice, the 5 item particles)
+            let mut elytra_broke = false;
             // THE BROADCAST-67 POSE (the makeDrownParticles law's own
             // read — the body's feet position and delta movement the
             // bubbles' spawn speaks, captured the drain's own tick)
@@ -9049,6 +9053,20 @@ impl App {
                     } else {
                         self.inventory.armor[2]
                     };
+                    // THE INFINITE MATERIALS GATE (javap
+                    // Player.hasInfiniteMaterials — the abilities.
+                    // instabuild the creative mode speaks) + THE
+                    // CHEST-CHANGE RESET (the stack-swap detector the
+                    // fresh bank speaks: the equip/unequip/replace the
+                    // zero answers, the break's own cleared slot the
+                    // same walk rides — the (id, count) tuples carry
+                    // no damage component, the change walk the honest
+                    // stand-in keeps)
+                    b.infinite_materials = self.game_mode == GameMode::Creative;
+                    if chest.0 != b.chest_item {
+                        b.chest_item = chest.0;
+                        b.elytra_damage = 0;
+                    }
                     b.chest_glides = chest.1 > 0
                         && Some(chest.0) == mc_registry::item_id_by_name("elytra");
                     b.tick(w, using);
@@ -9149,6 +9167,17 @@ impl App {
                             }
                         }
                     }
+                    // THE ELYTRA WEAR'S OWN DRAIN (the due flags the
+                    // per-tick walk keeps true until the next tick's
+                    // head clears — the same law the fire arc's three
+                    // speak): the gameEvent ELYTRA_GLIDE's every-10
+                    // flag the sculk lane a later round answers, the
+                    // break's own the entityEvent 47's client arm
+                    // speaks — the slot clears, the break voice lands,
+                    // the 5 item particles the breakItem walk keeps
+                    // (the post-borrow tail the disjoint split runs)
+                    elytra_broke = std::mem::take(&mut b.elytra_broke_due);
+                    b.elytra_glide_event_due = false;
                     // THE ELYTRA VOICE'S OWN MANAGER TICK (javap
                     // `ElytraOnPlayerSoundInstance.tick` — the per-tick
                     // walk the sound manager's own law keeps: the
@@ -9192,6 +9221,24 @@ impl App {
             }
             if let Some(dmg) = fall_event {
                 self.apply_fall_damage(dmg);
+            }
+            // THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken →
+            // the entityEvent 47 → the client's breakItem walk): the
+            // slot the two lanes' own source clears (the offline
+            // armor row's CHEST index 2, the live store's window slot
+            // 7), the break voice the breakItem law lands (v0.8,
+            // p0.8+r*0.4), the 5 item particles the
+            // spawnItemParticles(stack, 5) call speaks
+            if elytra_broke {
+                if self.world_is_network {
+                    self.live_inv_slots[7] = (0, 0);
+                } else {
+                    self.inventory.armor[2] = (0, 0);
+                }
+                self.sounds.play_item_break_voice(self.frame);
+                if let Some(elytra_id) = mc_registry::item_id_by_name("elytra") {
+                    self.spawn_pieces(elytra_id, 5);
+                }
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -28338,20 +28385,24 @@ impl App {
     }
 
     /// THE PIECE SPAWNER (javap spawnItemParticles): `count` pieces at
-    /// the eye + the rotated offset, riding the rotated mouthward
-    /// velocity through the Particle + BreakingItemParticle folds.
+    /// the eye + the rotated below-front offset, riding the rotated
+    /// gentle-upward speed through the Particle + BreakingItemParticle
+    /// folds. The FOUR-roll draw order the walk keeps: the speed's
+    /// two, the d6 roll, the offset's x (the z the 0.6 constant
+    /// speaks).
     fn spawn_pieces(&mut self, item: i32, count: u32) {
         let cam = self.world_camera();
         let (yaw, pitch) = (cam.yaw, cam.pitch);
         let eye = [cam.pos.x as f64, cam.pos.y as f64, cam.pos.z as f64];
         for _ in 0..count {
-            // the offset's two draws, the velocity's two
-            let r_ox = self.drop_rng.next_f32();
-            let r_oy = self.drop_rng.next_f32();
-            let r_vx = self.drop_rng.next_f32();
-            let r_vy = self.drop_rng.next_f32();
-            let (off, vel) =
-                crate::eat::piece_offset_and_velocity(r_ox, r_oy, r_vx, r_vy, yaw, pitch);
+            // the speed's two draws, the d6 roll, the offset's x — the
+            // FOUR draws the spawnItemParticles walk keeps
+            let r_sx = self.drop_rng.next_f32();
+            let r_sy = self.drop_rng.next_f32();
+            let r_pd = self.drop_rng.next_f32();
+            let r_px = self.drop_rng.next_f32();
+            let (off, speed) =
+                crate::eat::piece_offset_and_velocity(r_sx, r_sy, r_pd, r_px, yaw, pitch);
             // the parent's jitter fold (six draws) + the normalize's
             // d0 (two draws)
             let jx = self.drop_rng.next_f32();
@@ -28360,16 +28411,16 @@ impl App {
             let r1 = self.drop_rng.next_f32();
             let r2 = self.drop_rng.next_f32();
             let parent = crate::eat::parent_velocity(
-                vel[0] as f32,
-                vel[1] as f32,
-                vel[2] as f32,
+                speed[0] as f32,
+                speed[1] as f32,
+                speed[2] as f32,
                 jx,
                 jy,
                 jz,
                 r1,
                 r2,
             );
-            let final_v = crate::eat::breaking_item_velocity(parent, vel[0] as f32, vel[1] as f32, vel[2] as f32);
+            let final_v = crate::eat::breaking_item_velocity(parent, speed[0] as f32, speed[1] as f32, speed[2] as f32);
             // the lifetime's draw, the texture slice's two
             let life = crate::eat::particle_lifetime(self.drop_rng.next_f32());
             let uo = self.drop_rng.next_f32() * 3.0;
@@ -38167,6 +38218,94 @@ mod tests {
         assert!(
             !saw_word,
             "the offline lane the wire never spends"
+        );
+    }
+
+    /// THE FALL-FLYING WEAR'S OWN RIDE (javap `updateFallFlying` the
+    /// 26.2 walk — the gliding ride the live lane's air world keeps
+    /// airborne): the 40-tick glide the clock keeps, the every-20
+    /// gates the TWO damage points speak, the break the 2-point wear
+    /// never triggers, the survival stack the infinite-materials
+    /// gate never shields (the feed walk the creative mode alone
+    /// arms).
+    #[test]
+    fn the_elytra_wear_the_glide_banks_the_damage() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[7] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").fall_flying,
+            "the glide chord the start speaks"
+        );
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 0..39 {
+            app.update();
+        }
+        let b = app.body.as_ref().expect("the body rides");
+        assert_eq!(b.fall_fly_ticks, 40, "the clock the 40 glide ticks keep");
+        assert_eq!(b.elytra_damage, 2, "the every-20 wear the 40 ticks speak");
+        assert!(!b.elytra_broke_due, "the 2-point wear the break never speaks");
+        assert!(b.fall_flying, "the air world the glide never retires");
+    }
+
+    /// THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken → the
+    /// entityEvent 47 → the client's breakItem walk): the due flag the
+    /// drain reads, the chest slot the two lanes' own source clears,
+    /// the break voice the breakItem law lands, the FIVE item pieces
+    /// the spawnItemParticles(stack, 5) call speaks.
+    #[test]
+    fn the_elytra_break_the_tail_the_lane_wears() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.armor[2] = (wire("elytra"), 1);
+        {
+            let b = app.body.as_mut().expect("the offline body spawns");
+            b.y = 40.0;
+            b.on_ground = false;
+            // the 432 crossing the hurt walk's own answer — the direct
+            // set stands for the isBroken arm the earlier body test
+            // pins (the flag survives the tick, the drain the same
+            // update reads)
+            b.elytra_broke_due = true;
+        }
+        let pieces_before = app.pieces.len();
+        app.update();
+        assert_eq!(app.inventory.armor[2], (0, 0), "the slot the break drain clears");
+        assert!(
+            !app.body
+                .as_ref()
+                .expect("the body rides")
+                .elytra_broke_due,
+            "the drain clears the flag"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.item.break @")),
+            "the break voice the drain lands"
+        );
+        assert_eq!(
+            app.pieces.len() - pieces_before,
+            5,
+            "the 5 item particles the spawn speaks"
         );
     }
 
