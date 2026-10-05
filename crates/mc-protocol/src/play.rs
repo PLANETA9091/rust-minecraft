@@ -143,6 +143,7 @@ pub mod serverbound {
         SB_DEBUG_SUBSCRIPTION_REQUEST as DEBUG_SUBSCRIPTION_REQUEST,
         SB_PLAYER_ACTION as PLAYER_ACTION, SB_SET_CARRIED_ITEM as SET_CARRIED_ITEM,
         SB_SET_CREATIVE_MODE_SLOT as SET_CREATIVE_MODE_SLOT,
+        SB_PLAYER_COMMAND as PLAYER_COMMAND,
         SB_SWING as SWING, SB_USE_ITEM as USE_ITEM, SB_USE_ITEM_ON as USE_ITEM_ON,
         SB_CLIENT_COMMAND as CLIENT_COMMAND, SB_INTERACT as INTERACT,
         SB_PLAYER_INPUT as PLAYER_INPUT,
@@ -7631,6 +7632,32 @@ pub fn encode_set_creative_mode_slot(slot: i32, count: i32, item_id: i32) -> Vec
     p
 }
 
+/// `ServerboundPlayerCommandPacket$Action.START_FALL_FLYING`'s own 26.2
+/// ordinal (javap the Action enum's `<clinit>` the jar speaks — 0
+/// STOP_SLEEPING, 1 START_SPRINTING, 2 STOP_SPRINTING, 3
+/// START_RIDING_JUMP, 4 STOP_RIDING_JUMP, 5 OPEN_INVENTORY, 6
+/// START_FALL_FLYING: the PRESS/RELEASE_SHIFT_KEY pair the wiki era
+/// carried the input packet's flags byte absorbed — the dump's own
+/// ordinals the memory refuses).
+pub const PLAYER_COMMAND_START_FALL_FLYING: i32 = 6;
+
+/// The fall-flying START's own wire (javap
+/// `ServerboundPlayerCommandPacket` the 26.2 jar — the private
+/// FriendlyByteBuf ctor's read order the write mirrors: the entity id
+/// a VarInt, the action the readEnum ordinal a VarInt, the data a
+/// VarInt the zero-data ctor `iconst_0` keeps; the generated packet id
+/// 42, `minecraft:player_command`). The LocalPlayer's glide-start
+/// echo rides (aiStep pcs 679-694 — the tryToStart verdict's own
+/// success the packet send speaks).
+pub fn encode_player_command(entity_id: i32, action: i32, data: i32) -> Vec<u8> {
+    let mut p = Vec::with_capacity(12);
+    write_varint(&mut p, serverbound::PLAYER_COMMAND);
+    write_varint(&mut p, entity_id);
+    write_varint(&mut p, action);
+    write_varint(&mut p, data);
+    p
+}
+
 /// The middle-click PICK's wire half (the vanilla
 /// `MultiPlayerGameMode.handlePickItemFromBlock`'s own echo —
 /// ServerboundPickItemFromBlockPacket, generated id 36,
@@ -10961,6 +10988,17 @@ impl<S: Read + Write> PlaySession<S> {
         self.conn
             .send_packet(&encode_set_creative_mode_slot(slot, count, item_id))
             .context("send set creative mode slot")
+    }
+
+    /// The fall-flying START's own echo (the vanilla
+    /// ServerboundPlayerCommandPacket lane the LocalPlayer.aiStep walk
+    /// speaks — the client's own entity id the ctor reads, the
+    /// START_FALL_FLYING ordinal the 26.2 enum banks). The glide's
+    /// wire half the offline lane never spends.
+    pub fn player_command(&mut self, entity_id: i32, action: i32) -> Result<()> {
+        self.conn
+            .send_packet(&encode_player_command(entity_id, action, 0))
+            .context("send player command")
     }
 
     /// The middle-click PICK's wire half (the vanilla
@@ -16361,6 +16399,32 @@ mod tests {
             encode_set_carried_item(8),
             vec![0x35, 0x00, 0x08],
             "slot 8: the selection domain's own end"
+        );
+    }
+
+    /// THE PLAYER COMMAND'S OWN WIRE (javap the 26.2 packet class —
+    /// the private FriendlyByteBuf ctor's read order the write
+    /// mirrors: the entity id a VarInt, the action the readEnum
+    /// ordinal a VarInt, the data a VarInt; the generated id 42 =
+    /// 0x2A, the single-byte VarInt). THE 26.2 ORDINAL: the Action
+    /// enum's `<clinit>` speaks START_FALL_FLYING = 6 — the
+    /// PRESS/RELEASE_SHIFT_KEY pair the wiki era carried the input
+    /// packet's flags byte absorbed (the enum's own tail the dump
+    /// reads: 0 STOP_SLEEPING .. 6 START_FALL_FLYING).
+    #[test]
+    fn the_player_command_lane_speaks_the_varint_triple() {
+        // the glide-start echo: entity 129 (the two-byte VarInt
+        // 0x81 0x01), action 6, the zero data VarInt the ctor keeps
+        assert_eq!(
+            encode_player_command(129, PLAYER_COMMAND_START_FALL_FLYING, 0),
+            vec![0x2A, 0x81, 0x01, 0x06, 0x00],
+            "the glide-start echo the three VarInts ride"
+        );
+        // the small id the single-byte VarInt keeps
+        assert_eq!(
+            encode_player_command(7, PLAYER_COMMAND_START_FALL_FLYING, 0),
+            vec![0x2A, 0x07, 0x06, 0x00],
+            "entity 7 the single byte wears"
         );
     }
 

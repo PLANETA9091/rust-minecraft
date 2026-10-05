@@ -929,6 +929,29 @@ pub struct PlayerBody {
     /// !wasTouchingWater && !firstTick): the water's big welcome. The
     /// App clears it after the sound fold.
     pub splash_due: bool,
+    /// THE FALL-FLYING STATE (javap `Entity.isFallFlying`'s own shared
+    /// flag 7 — `startFallFlying`'s `setSharedFlag(7, true)` the
+    /// 26.2 walk speaks, `stopFallFlying`'s true-then-false pair the
+    /// dirty-bit propagation guarantees): the elytra glide the body
+    /// wears. The App's chest verdict feeds [`Self::chest_glides`];
+    /// the start walk and the stop arm the tick's own aiStep order
+    /// keeps, the glide folds the travel lane wears.
+    pub fall_flying: bool,
+    /// THE CHEST'S OWN GLIDE VERDICT (javap `canGlideUsing` the 26.2
+    /// walk — the GLIDER component the elytra item carries + the
+    /// equippable slot pair + the nextDamageWillBreak gate, the
+    /// component-less stack the id stand-in answers): the App feeds
+    /// it each tick from the chest slot (the offline armor row's
+    /// CHEST index, the live store's window slot 7), the canGlide
+    /// walks read.
+    pub chest_glides: bool,
+    /// THE GLIDE START'S OWN WIRE ECHO (javap `LocalPlayer.aiStep`
+    /// pcs 679-694 — the tryToStart verdict's success the
+    /// ServerboundPlayerCommandPacket ride speaks): set in the tick
+    /// the chord wins, the App drains it and the live session the
+    /// START_FALL_FLYING command speaks (the offline lane no wire
+    /// spends). Cleared by the reader.
+    pub glide_started_due: bool,
     /// THE SPEED VARIANT (the < 0.25 gate): false speaks the plain
     /// PLAYER_SPLASH, true the HIGH_SPEED one — the fast fall's own
     /// louder welcome.
@@ -1081,6 +1104,9 @@ impl PlayerBody {
             splash_high_speed: false,
             splash_volume: 0.0,
             splash_pose: None,
+            fall_flying: false,
+            chest_glides: false,
+            glide_started_due: false,
             remaining_fire_ticks: 0,
             in_lava: false,
             lava_hurt_due: false,
@@ -1517,6 +1543,57 @@ impl PlayerBody {
         if self.jumping && self.on_ground && self.no_jump_delay == 0 {
             self.jump_from_ground();
         }
+        // THE FALL-FLYING START WALK (javap `LocalPlayer.aiStep` pcs
+        // 644-694 the 26.2 jar — the jump key the HELD state reads
+        // (the `Input.jump()` the keyPresses record carries), the
+        // ride/climb gates the walk's own order keeps, and
+        // `Player.tryToStartFallFlying`'s own verdict the start
+        // speaks: `!isFallFlying && canGlide() && !isInWater()` — the
+        // canGlide the Player's own override answers (the
+        // abilities.flying arm the creative flight refuses) over the
+        // LivingEntity law (`!onGround && !isPassenger &&
+        // !hasEffect(LEVITATION)` + the equipment's canGlideUsing),
+        // the levitation effect the vocabulary never banks, the ride
+        // lanes the body-tick never reaches). The win the shared flag
+        // 7 sets and the wire echo banks.
+        if self.jumping
+            && !self.fall_flying
+            && !self.flying
+            && !self.on_ground
+            && self.chest_glides
+            && !self.was_touching_water
+        {
+            self.fall_flying = true;
+            self.glide_started_due = true;
+        }
+        // THE FALL-FLYING STOP ARM (javap `LivingEntity.updateFallFlying`
+        // the 26.2 walk — the aiStep's own call right before the
+        // travel: the server arm's `!canGlide() -> setSharedFlag(7,
+        // false)` verdict the single-player body runs directly — the
+        // ground the glide retires, the elytra's unequip the verdict
+        // answers, the creative flight the Player's own override
+        // refuses). The fluid touch the verdict never reads — the
+        // flag the water keeps, the exit mid-air the glide resumes
+        // (the travel's own fluid-first routing the physics skips
+        // while the flag stays).
+        if self.fall_flying && !self.fall_flying_can_glide() {
+            self.fall_flying = false;
+        }
+        // THE GLIDE'S OWN ROUTE (javap `LivingEntity.travelFallFlying`
+        // the 26.2 walk — the travelVec arg the glide lane NEVER
+        // reads: the input impulse the air lane adds the glide never
+        // speaks, the look-steered folds the velocity alone wear; the
+        // fluid-first routing the touch lane answers — the folds the
+        // touching tick skips, the flag the exit keeps). The folds
+        // run BEFORE the move the travel's own order keeps.
+        let glide_active = self.fall_flying && !self.no_physics && !self.in_lava && !in_water;
+        if glide_active {
+            self.glide_folds();
+        } else if !glide_active && self.fall_flying {
+            // the fluid-touching glide tick — the impulse the air lane
+            // adds the glide never speaks (the travelVec arg the fluid
+            // route never reads either)
+        } else {
         // THE MOVE IMPULSE (getInputVector's law): the input vector
         // (left, forward) normalized past 1.0, scaled by the
         // friction-influenced speed (the GROUND control is the
@@ -1562,6 +1639,7 @@ impl PlayerBody {
             let (s, c) = (rad.sin(), rad.cos());
             self.vx += (ix * c - iz * s) * speed;
             self.vz += (iz * c + ix * s) * speed;
+            }
         }
         // THE PRE-TRAVEL VY (javap Player.travel pcs 131-138 — the
         // flying branch's own save: `d2 = getDeltaMovement().y` the
@@ -1803,12 +1881,19 @@ impl PlayerBody {
         }
         // THE DRAGS + THE GRAVITY (travelInAir's own order): the
         // horizontal decay `friction * 0.91`, the vertical 0.98 with
-        // the gravity subtracted BEFORE it
+        // the gravity subtracted BEFORE it. THE GLIDE LANE THE FOLD
+        // SKIPS (travelFallFlying's own tail — the glide's own
+        // 0.99/0.98 drag the velocity fold itself spoke, the air
+        // lane's post-move walk the glide never wears; the
+        // fluid-touching tick the folds skipped the air stand-in
+        // wears, the body's fluid lane the vocabulary keeps)
         let friction = if self.on_ground { BLOCK_FRICTION } else { AIR_FRICTION };
-        self.vy = (self.vy - GRAVITY) * VERTICAL_DRAG as f64;
-        let drag = (friction * GROUND_DRAG) as f64;
-        self.vx *= drag;
-        self.vz *= drag;
+        if !glide_active {
+            self.vy = (self.vy - GRAVITY) * VERTICAL_DRAG as f64;
+            let drag = (friction * GROUND_DRAG) as f64;
+            self.vx *= drag;
+            self.vz *= drag;
+        }
         if self.flying {
             // THE PLAYER.TRAVEL RESTORE (javap the 26.2 jar pcs
             // 121-163 — the flying branch's own tail: `d2 = the saved
@@ -1846,6 +1931,91 @@ impl PlayerBody {
         // body's first 50ms beat spoke its lanes splash-free — the
         // gate opens
         self.first_tick = false;
+    }
+
+    /// THE GLIDE VERDICT (javap `LivingEntity.canGlide` the 26.2 walk
+    /// over the Player's own override: `abilities.flying` the creative
+    /// flight refuses FIRST, then `!onGround() && !isPassenger() &&
+    /// !hasEffect(LEVITATION)` + the equipment's `canGlideUsing` —
+    /// the levitation effect the vocabulary never banks, the ride
+    /// lanes the body-tick never reaches, the equipment the chest
+    /// verdict's feed answers).
+    fn fall_flying_can_glide(&self) -> bool {
+        !self.flying && !self.on_ground && self.chest_glides
+    }
+
+    /// THE GLIDE'S OWN VELOCITY FOLD (javap
+    /// `LivingEntity.updateFallFlyingMovement` the 26.2 walk — the
+    /// exact bytecode order the travel lane wears, the look vector
+    /// the throw lane's own convention speaks):
+    /// A) the gravity fold — `vy += gravity * (-1.0 + 0.75 *
+    ///    cos²(pitch))` (the getEffectiveGravity read, the bare
+    ///    player's 0.08 the attribute base keeps; the slow-falling
+    ///    min the effect lane never banks);
+    /// B) the dive conversion — falling AND a horizontal look:
+    ///    `t = vy * -0.1 * cos²` (positive while falling), the
+    ///    velocity `+= (look.x * t / d4, t, look.z * t / d4)` — the
+    ///    descent's own speed the forward thrust and the lift wear
+    ///    (pc 80-135: the Y add the `dload 12` ALONE speaks);
+    /// C) the climb arm — a negative pitch (the look UP) and a
+    ///    horizontal look: `u = horizSpeed * -sin(pitch) * 0.04`,
+    ///    the velocity `+= (-look.x * u / d4, u * 3.2, -look.z * u /
+    ///    d4)` — the backward drag and the 3.2-scaled lift the
+    ///    climb's own deceleration speaks (the Mth.sin f32 the
+    ///    narrowing keeps);
+    /// D) the alignment — a horizontal look: the horizontal velocity
+    ///    steers toward the look DIRECTION at the entry horizontal
+    ///    speed's magnitude, `+= (target - v) * 0.1` per axis (the
+    ///    d6 the ENTRY snapshot keeps, the folds' own adds the
+    ///    retarget never reads);
+    /// E) the drag — the velocity `*= (0.99, 0.98, 0.99)` (the f32
+    ///    constants the promotion's own bits keep).
+    fn glide_folds(&mut self) {
+        let xrad = self.pitch * 0.017453_292_f32;
+        let yrad = self.yaw * 0.017453_292_f32;
+        // the look vector (the degrees the same narrowing the throw
+        // lane's f8..f11 walk speaks: the f64 sin/cos narrowed to f32;
+        // the Y component the folds never read — the pitch's cos² and
+        // the vy the walk's own forms carry)
+        let (lx, _ly, lz) = (
+            (-(yrad as f64).sin() * (xrad as f64).cos()) as f64,
+            -((xrad as f64).sin()),
+            ((yrad as f64).cos() * (xrad as f64).cos()),
+        );
+        let d4 = lx * lx + lz * lz; // the square the sqrt gate reads
+        let d4 = if d4 > 0.0 { d4.sqrt() } else { 0.0 };
+        // d6 — the ENTRY horizontal speed (the snapshot the alignment
+        // reads, the folds' own adds never re-read)
+        let d6 = (self.vx * self.vx + self.vz * self.vz).sqrt();
+        let cos2 = {
+            let c = (xrad as f64).cos();
+            c * c
+        };
+        // A) the gravity fold
+        self.vy += GRAVITY * (-1.0 + 0.75 * cos2);
+        // B) the dive conversion (the post-A vy the gate reads)
+        if self.vy < 0.0 && d4 > 0.0 {
+            let t = self.vy * -0.1 * cos2;
+            self.vx += lx * t / d4;
+            self.vy += t;
+            self.vz += lz * t / d4;
+        }
+        // C) the climb arm (the f32 pitch gate the fcmpg keeps)
+        if xrad < 0.0 && d4 > 0.0 {
+            let u = d6 * (-((xrad as f64).sin() as f32) as f64) * 0.04;
+            self.vx += -lx * u / d4;
+            self.vy += u * 3.2;
+            self.vz += -lz * u / d4;
+        }
+        // D) the alignment
+        if d4 > 0.0 {
+            self.vx += ((lx / d4) * d6 - self.vx) * 0.1;
+            self.vz += ((lz / d4) * d6 - self.vz) * 0.1;
+        }
+        // E) the drag (the f32 constants the f64 promotion wears)
+        self.vx *= 0.99_f32 as f64;
+        self.vy *= 0.98_f32 as f64;
+        self.vz *= 0.99_f32 as f64;
     }
 
     /// THE FALL DISTANCE LAW (javap `Entity.checkFallDamage` over the
@@ -3774,6 +3944,139 @@ mod tests {
             }
         }
         assert!(reentry_splash, "the re-entry spoke its splash");
+    }
+
+    /// THE GLIDE'S OWN FOLD (javap
+    /// `updateFallFlyingMovement` the 26.2 walk — the level look's
+    /// one-tick walk the exact f64 values pin: A) the gravity fold
+    /// `vy += 0.08 * (-1.0 + 0.75)`, B) the dive conversion `t =
+    /// vy * -0.1` (the Y add the `dload 12` ALONE speaks, the +Z
+    /// look the Z thrust answers), D) the alignment (the horizontal
+    /// speed steers toward the look at the ENTRY magnitude's
+    /// direction, the 0.1 gain), E) the drag `(0.99, 0.98, 0.99)`
+    /// the f32-promoted constants keep).
+    #[test]
+    fn the_glide_folds_the_law_wears() {
+        let mut b = PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0);
+        // the look +Z (yaw 0), level (pitch 0): lx = 0, lz = 1, cos²=1
+        b.vx = 1.0;
+        b.vy = -0.3;
+        b.vz = 0.0;
+        b.glide_folds();
+        // A+B: vy = -0.3 + 0.08*(-0.25) = -0.32, then t = 0.032:
+        // vy = -0.288, vz = 0.032, vx untouched (the look's X is zero)
+        // D: vx += (0*1 - 1)*0.1 = -0.1 -> 0.9; vz += (1*1 - 0.032)*0.1
+        // E: the f32-promoted drag multiplies
+        assert_eq!(b.vx, 0.8910000085830688, "the X the alignment+drag wear");
+        assert_eq!(b.vy, -0.2822400054931641, "the Y the gravity+dive+drag wear");
+        assert_eq!(b.vz, 0.1275120012283325, "the Z the dive+align+drag wear");
+    }
+
+    /// THE GLIDE CHORD'S OWN START (javap `Player.tryToStartFallFlying`
+    /// + `LocalPlayer.aiStep` pcs 644-694 the 26.2 walk): the jump key
+    /// the HELD state reads, the airborne body the canGlide's own
+    /// !onGround arm requires, the chest verdict the equipment
+    /// answers — the elytra-less body never starts, the creative
+    /// flight the abilities arm refuses, the grounded body the
+    /// verdict refuses.
+    #[test]
+    fn the_glide_chord_the_flag_wears() {
+        let mut w = World::new(1, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { AIR });
+                }
+            }
+        }
+        // THE ELYTRA CHORD: the body walks off the ledge mid-air with
+        // the chest wearing and jump held — the flag the verdict
+        // speaks (and the wire echo banks)
+        let mut b = PlayerBody::new(3.0, 40.0, 3.0, 0.0, 0.0);
+        b.chest_glides = true;
+        b.jumping = true;
+        b.tick(&w, false);
+        assert!(b.fall_flying, "the airborne chord the glide starts");
+        assert!(b.glide_started_due, "the start's own wire echo banks");
+        b.glide_started_due = false;
+        assert!(!b.glide_started_due, "the echo the next tick never re-speaks");
+        // THE BARE CHEST: the same chord without the elytra the
+        // canGlideUsing arm refuses
+        let mut b = PlayerBody::new(3.0, 40.0, 3.0, 0.0, 0.0);
+        b.jumping = true;
+        b.tick(&w, false);
+        assert!(!b.fall_flying, "the elytra-less body never glides");
+        // THE CREATIVE FLIGHT: the abilities.flying arm the Player's
+        // own override refuses (the same held jump mid-air)
+        let mut b = PlayerBody::new(3.0, 40.0, 3.0, 0.0, 0.0);
+        b.chest_glides = true;
+        b.jumping = true;
+        b.flying = true;
+        b.tick(&w, false);
+        assert!(!b.fall_flying, "the creative flight the glide never starts");
+        // THE GROUNDED BODY: the jump key UP — the start walk's own
+        // held-key gate refuses (the canGlide's !onGround arm reads
+        // only while the chord rides)
+        let mut b = PlayerBody::new(3.0, 1.0, 3.0, 0.0, 0.0);
+        b.chest_glides = true;
+        settle(&mut b, &w);
+        assert!(!b.fall_flying, "the grounded body never glides");
+    }
+
+    /// THE GLIDE'S OWN RETIRE (javap `LivingEntity.updateFallFlying`'s
+    /// own !canGlide verdict the 26.2 walk — the ground the landing
+    /// speaks, the elytra's unequip the verdict answers, the water
+    /// touch the verdict NEVER reads — the flag the fluid keeps, the
+    /// exit mid-air the glide resumes).
+    #[test]
+    fn the_glide_the_ground_the_unequip_retire() {
+        let mut w = World::new(1, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { AIR });
+                }
+            }
+        }
+        // THE UNEQUIP: the gliding body the chest verdict loses —
+        // the flag the next tick's stop arm clears
+        let mut b = PlayerBody::new(3.0, 40.0, 3.0, 0.0, 0.0);
+        b.fall_flying = true;
+        b.tick(&w, false);
+        assert!(!b.fall_flying, "the unequip the stop arm retires");
+        // THE FLUID KEEP: the gliding body over the pool the flag
+        // KEEPS (the canGlide verdict reads no fluid — the exit
+        // mid-air the glide resumes)
+        let mut w = World::new(1, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { AIR });
+                }
+                w.set(x, 1, z, WATER);
+            }
+        }
+        let mut b = PlayerBody::new(3.0, 2.5, 3.0, 0.0, 0.0);
+        b.chest_glides = true;
+        b.fall_flying = true;
+        settle(&mut b, &w);
+        assert!(b.fall_flying, "the water touch the flag never clears");
+        // THE GROUND RETIRE: the landed body the verdict refuses —
+        // the flag the landing tick clears
+        let mut w = World::new(1, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { AIR });
+                }
+            }
+        }
+        let mut b = PlayerBody::new(3.0, 1.0, 3.0, 0.0, 0.0);
+        b.on_ground = true;
+        b.chest_glides = true;
+        b.fall_flying = true;
+        settle(&mut b, &w);
+        assert!(!b.fall_flying, "the landing the stop arm retires");
     }
 
     /// THE ENTRY'S BRAND (LavaFluid.entityInside's own beat — the

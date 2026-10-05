@@ -2306,6 +2306,15 @@ pub enum ContainerCommand {
     /// rides after (the server's own creative handler the verdict
     /// accepts).
     CreativeSetSlot { slot: i32, item: (i32, i32) },
+    /// THE FALL-FLYING START's own wire (the vanilla
+    /// `LocalPlayer.aiStep` pcs 679-694 walk — the
+    /// ServerboundPlayerCommandPacket the tryToStart verdict's own
+    /// success sends): the START_FALL_FLYING action ordinal the
+    /// worker's entity-id resolution rides (the client's own id the
+    /// ctor reads), the zero data VarInt the ctor keeps. The offline
+    /// lane never spends the word (the command the drain's own live
+    /// gate refuses).
+    PlayerCommand { action: i32 },
     /// THE MIDDLE-CLICK PICK's wire half (the vanilla
     /// `MultiPlayerGameMode.handlePickItemFromBlock`'s own lane — the
     /// packet send ALONE, the inventory law server-side): the clip's

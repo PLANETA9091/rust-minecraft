@@ -9032,6 +9032,25 @@ impl App {
                     // F4 flick the bank feeds instantly, the
                     // survival/adventure flick the grant retires)
                     b.invulnerable = self.game_mode.invulnerable();
+                    // THE CHEST'S OWN GLIDE VERDICT (javap canGlideUsing
+                    // the 26.2 walk — the GLIDER component the elytra
+                    // item carries + the equippable slot pair + the
+                    // nextDamageWillBreak gate, the component-less stack
+                    // the id stand-in answers, the durability the
+                    // client's stacks never bank): the chest slot the
+                    // two lanes' own source reads — the offline
+                    // inventory's armor row (FEET/LEGS/CHEST/HEAD the
+                    // vanilla order keeps, the CHEST index 2), the live
+                    // store's window slot 7 (5 boots, 6 leggings,
+                    // 7 chestplate, 8 helmet the InventoryMenu map
+                    // speaks)
+                    let chest = if self.world_is_network {
+                        self.live_inv_slots[7]
+                    } else {
+                        self.inventory.armor[2]
+                    };
+                    b.chest_glides = chest.1 > 0
+                        && Some(chest.0) == mc_registry::item_id_by_name("elytra");
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the
@@ -9104,6 +9123,23 @@ impl App {
                     if let Some(cmd) = b.take_move_wire().map(Self::move_wire_command) {
                         if let Some(sink) = self.live_clicks.as_ref() {
                             let _ = sink.send(cmd);
+                        }
+                    }
+                    // THE GLIDE START'S OWN WIRE (javap LocalPlayer.aiStep
+                    // pcs 679-694 — the START_FALL_FLYING command the
+                    // chord's own success rides, the live session the
+                    // word speaks; the offline lane no wire spends)
+                    if b.glide_started_due {
+                        b.glide_started_due = false;
+                        if self.world_is_network {
+                            if let Some(sink) = self.live_clicks.as_ref() {
+                                let _ = sink.send(
+                                    crate::world_view::ContainerCommand::PlayerCommand {
+                                        action: mc_protocol::play::
+                                            PLAYER_COMMAND_START_FALL_FLYING,
+                                    },
+                                );
+                            }
                         }
                     }
                     // THE FALL EVENT (the landing's damage the body's
@@ -37895,6 +37931,94 @@ mod tests {
         assert_eq!(app.screen, ScreenKind::World, "the release closes");
         assert_eq!(app.game_mode, GameMode::Survival, "the mode the server owns");
         assert!(app.previous_game_mode.is_none(), "the bank the wire never fills");
+    }
+
+    /// THE GLIDE START'S OWN WIRE WORD (javap LocalPlayer.aiStep
+    /// pcs 644-694 the 26.2 walk — the jump chord's success the
+    /// ServerboundPlayerCommandPacket rides, the live session the
+    /// word speaks, the offline lane the wire never spends): the
+    /// elytra chest the verdict grants, the airborne body the start
+    /// speaks, the drain the command banks and clears.
+    #[test]
+    fn the_glide_start_the_wire_word_rides() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // THE LIVE LANE (the net world the body walks, the sink the
+        // word rides — the same harness the F4 toggle's wire test
+        // wears): the chest slot 7 the elytra stack wears, the
+        // airborne body the jump key holds
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.live_inv_slots[7] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        // THE START + THE WORD (the flag the verdict speaks, the
+        // drain the command banks and clears, the 26.2 ordinal 6 the
+        // Action enum's clinit banks)
+        assert!(
+            app.body.as_ref().expect("the body rides").fall_flying,
+            "the glide chord the start speaks"
+        );
+        assert!(
+            !app.body.as_ref().expect("the body rides").glide_started_due,
+            "the echo the drain clears"
+        );
+        // the input packet the jump key's sync lane rides FIRST — the
+        // command word the drain speaks after it (the try-recv walk
+        // the input rows skip)
+        let mut saw_word = None;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::PlayerCommand { action } = cmd {
+                saw_word = Some(action);
+                break;
+            }
+        }
+        assert_eq!(
+            saw_word,
+            Some(mc_protocol::play::PLAYER_COMMAND_START_FALL_FLYING),
+            "the START_FALL_FLYING ordinal the word carries"
+        );
+        // THE OFFLINE LANE (the gameplay inventory the chest row
+        // wears): the same chord the glide starts and the wire the
+        // lane never spends
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.inventory.armor[2] = (wire("elytra"), 1);
+        {
+            let b = app.body.as_mut().expect("the offline body spawns");
+            b.y = 40.0;
+            b.on_ground = false;
+        }
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").fall_flying,
+            "the offline glide the same chord starts"
+        );
+        // the input sync the jump press still rides (the sink the
+        // input lane reads) — the COMMAND word the offline drain
+        // never spends
+        let mut saw_word = false;
+        while let Ok(cmd) = rx.try_recv() {
+            if let crate::world_view::ContainerCommand::PlayerCommand { .. } = cmd {
+                saw_word = true;
+            }
+        }
+        assert!(
+            !saw_word,
+            "the offline lane the wire never spends"
+        );
     }
 
     #[test]

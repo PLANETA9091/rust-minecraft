@@ -514,6 +514,19 @@ fn run_join(
                             view.model.set_window_slot(slot, item);
                             session.set_creative_mode_slot(slot, item.1, item.0)
                         }
+                        crate::world_view::ContainerCommand::PlayerCommand { action } => {
+                            // THE FALL-FLYING START'S OWN WIRE (the
+                            // LocalPlayer.aiStep pcs 679-694 walk — the
+                            // packet the glide-start chord's success
+                            // sends, the client's own entity id the
+                            // ctor reads, the zero data VarInt the
+                            // ctor keeps)
+                            if let Some(id) = view.model.own_entity_id() {
+                                session.player_command(id, action)
+                            } else {
+                                Ok(())
+                            }
+                        }
                         crate::world_view::ContainerCommand::SelectBundleItem {
                             slot_id,
                             selected_item_index,
