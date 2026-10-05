@@ -198,6 +198,26 @@ pub struct BlockSounds {
     /// non-null gate keeps). The event key rides the value — the stop
     /// log line's own identity.
     pub records: Vec<((i32, i32, i32), String)>,
+    /// THE ELYTRA VOICE'S OWN INSTANCE (javap `ElytraOnPlayerSoundInstance`
+    /// — the tickable loop the shared-flag edge's sync arm plays: the
+    /// LocalPlayer field the instance carries, the ONE the sound
+    /// manager banks). The None the silent ground keeps — the Some the
+    /// per-tick walk the manager's own law speaks.
+    pub elytra_voice: Option<ElytraVoiceState>,
+}
+
+/// THE ELYTRA VOICE'S OWN STATE (javap `ElytraOnPlayerSoundInstance`
+/// the 26.2 jar — the tickable instance's live fields the tick walk
+/// banks: the `time` clock the iadd speaks, the `volume` the ctor's
+/// 0.1 opens, the `pitch` the tick's own 0.8-threshold law answers).
+#[derive(Debug, Clone, Copy)]
+pub struct ElytraVoiceState {
+    /// `time` — the ctor's 0, the tick's `iadd` first fold keeps
+    pub time: i32,
+    /// `volume` — the ctor's `ldc 0.1f`, the tick's clamp/ramp re-folds
+    pub volume: f32,
+    /// `pitch` — the tick's `volume > 0.8F` law answers
+    pub pitch: f32,
 }
 
 impl BlockSounds {
@@ -206,6 +226,7 @@ impl BlockSounds {
             rng: seed ^ 0x5EED_C0FF_EE12_3456,
             events: Vec::new(),
             records: Vec::new(),
+            elytra_voice: None,
         }
     }
 
@@ -708,6 +729,84 @@ impl BlockSounds {
         }
         self.records.push(((x, y, z), event.to_string()));
     }
+
+    /// THE ELYTRA VOICE'S OWN PLAY (javap `ElytraOnPlayerSoundInstance`
+    /// ctor + `SoundManager.play` the 26.2 jar — the tickable loop the
+    /// shared-flag edge's sync arm speaks): the ELYTRA_FLYING event the
+    /// `SoundEvents.ELYTRA_FLYING` constant holds (the registry name
+    /// `item.elytra.flying` the <clinit>'s ldc keeps — javap
+    /// SoundEvents pcs 4959-4965), the PLAYERS source the ctor's
+    /// second arg names, the `looping = true` the iconst_1 sets, the
+    /// DELAY 0 the iconst_0 keeps, the `volume = 0.1F` the ldc #41
+    /// speaks, the pitch the AbstractTickableSoundInstance default's
+    /// 1.0 keeps. The play line the one-shot lanes' own shape wears
+    /// (the engine's LCG the file pick spends — the loop's single
+    /// `item/elytra/elytra_loop` row the cache's sounds.json carries),
+    /// the instance banks the law's own state (the time 0 the first
+    /// tick's iadd advances — the SAME frame's manager tick the
+    /// vanilla's play-then-tick walk speaks).
+    pub fn start_elytra_voice(&mut self, tick: u64) {
+        const EVENT: &str = "item.elytra.flying";
+        if let Some(file) = self.pick_file(EVENT) {
+            self.events
+                .push(format!("{EVENT} @{tick} #{file} v0.100000 p1.000000"));
+        }
+        self.elytra_voice = Some(ElytraVoiceState {
+            time: 0,
+            volume: 0.1,
+            pitch: 1.0,
+        });
+    }
+
+    /// THE ELYTRA VOICE'S OWN TICK (javap `ElytraOnPlayerSoundInstance.
+    /// tick` the 26.2 walk — the sound manager's per-tick law the
+    /// player's own post-tick state reads): THE CLOCK (pcs 0-9 — the
+    /// `time++` the walk's own first fold), THE DEFERRED STOP (pcs
+    /// 10-43 — the isRemoved arm the sim's player never wears, the
+    /// `time > 20 && !isFallFlying()` gate the stop serves: the FIRST
+    /// 20 ticks the flag check never runs — the loop plays its
+    /// minimum window through a glide that ended —, the stopped line
+    /// the record lane's own shape wears, the discard the None keeps;
+    /// the stop tick's own return NO volume fold speaks), THE
+    /// VOLUME'S OWN WALK (pcs 83-124 — `f = (float) deltaMovement.
+    /// lengthSqr()` the d2f narrowing keeps, the `>= 1.0E-7` gate the
+    /// f2d compare speaks, `volume = Mth.clamp(f / 4.0F, 0.0F, 1.0F)`
+    /// the 4.0 divisor answers, the zero the quiet body keeps; the
+    /// FADE pair pcs 125-170 — `time < 20` the mute speaks, `time <
+    /// 40` the `volume *= (time - 20) / 20.0F` linear ramp wears),
+    /// THE PITCH'S OWN LAW (pcs 171-204 — the `volume > 0.8F` fcmpl
+    /// threshold the strictly-greater test keeps, `pitch = 1.0F +
+    /// (volume - 0.8F)` the over-threshold arm answers, the 1.0 the
+    /// else keeps).
+    pub fn tick_elytra_voice(&mut self, tick: u64, fall_flying: bool, speed_sqr: f64) {
+        const EVENT: &str = "item.elytra.flying";
+        let Some(mut voice) = self.elytra_voice else {
+            return;
+        };
+        voice.time += 1;
+        if !fall_flying && voice.time > 20 {
+            self.events.push(format!("{EVENT} @{tick} stopped"));
+            self.elytra_voice = None;
+            return;
+        }
+        let f = speed_sqr as f32;
+        if (f as f64) >= 1.0e-7 {
+            voice.volume = (f / 4.0).clamp(0.0, 1.0);
+        } else {
+            voice.volume = 0.0;
+        }
+        if voice.time < 20 {
+            voice.volume = 0.0;
+        } else if voice.time < 40 {
+            voice.volume *= (voice.time - 20) as f32 / 20.0;
+        }
+        voice.pitch = if voice.volume > 0.8 {
+            1.0 + (voice.volume - 0.8)
+        } else {
+            1.0
+        };
+        self.elytra_voice = Some(voice);
+    }
 }
 
 /// THE CAVE MOOD'S OWN BANK (javap `AmbientMoodSettings.LEGACY_CAVE_SETTINGS`
@@ -868,6 +967,123 @@ impl CaveMood {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// THE ELYTRA VOICE'S OWN LAW — javap `ElytraOnPlayerSoundInstance`
+    /// the 26.2 walk: the play line the ctor's own constants keep (the
+    /// 0.1 volume the ldc #41 speaks, the 1.0 pitch the default keeps),
+    /// the mute window the first 19 ticks wear, the tick-20 zero the
+    /// ramp's own base keeps, the linear ramp the 20..40 pair speaks,
+    /// the full voice the 40+ carries, the 0.8 pitch law the
+    /// over-threshold arm answers, the deferred stop the flag's fall
+    /// answers (the 20-tick minimum the loop plays through), the
+    /// stopped line the record lane's own shape wears, the dead voice
+    /// the tick never re-speaks.
+    #[test]
+    fn the_elytra_voice_the_law_wears() {
+        let mut s = BlockSounds::new(7);
+        // THE START (the ctor's own constants the play line keeps —
+        // the instance the law's own state banks)
+        s.start_elytra_voice(10);
+        let v = s.elytra_voice.expect("the voice the start banks");
+        assert_eq!(
+            (v.time, v.volume, v.pitch),
+            (0, 0.1, 1.0),
+            "the ctor's constants the state keeps"
+        );
+        assert!(
+            s.events
+                .iter()
+                .any(|e| e.starts_with("item.elytra.flying @10 #")
+                    && e.ends_with(" v0.100000 p1.000000")),
+            "the play line the ctor's constants carry"
+        );
+        // THE MUTE + THE RAMP (the speed² 4.0 the clamp rides at 1.0 —
+        // the fade the time gates keep, the pitch the volume law
+        // answers; ticks 11..=39 walk the time 1..=29)
+        for t in 11..=39 {
+            s.tick_elytra_voice(t, true, 4.0);
+            let v = s.elytra_voice.unwrap();
+            let expect = if v.time < 20 {
+                0.0
+            } else {
+                1.0 * (v.time - 20) as f32 / 20.0
+            };
+            assert_eq!(v.volume, expect, "the fade walk tick {}", v.time);
+            let expect_pitch = if expect > 0.8 {
+                1.0 + (expect - 0.8)
+            } else {
+                1.0
+            };
+            assert_eq!(
+                v.pitch, expect_pitch,
+                "the pitch law tick {}",
+                v.time
+            );
+        }
+        assert_eq!(
+            s.elytra_voice.as_ref().unwrap().volume,
+            9.0 / 20.0,
+            "the tick-29 ramp the linear fold keeps"
+        );
+        // THE FULL VOICE (tick 40 the ramp retires — the clamp the 4.0
+        // speed² keeps at 1.0, the pitch the over-0.8 arm answers)
+        for t in 30..=40 {
+            s.tick_elytra_voice(t, true, 4.0);
+        }
+        let v = s.elytra_voice.unwrap();
+        assert_eq!(v.volume, 1.0, "the full voice the clamp keeps");
+        assert_eq!(v.pitch, 1.2, "the 0.8-over the pitch law answers");
+        // THE CLAMP'S OWN FOLD (the speed² 100.0 the /4 = 25 the clamp
+        // caps, the mid value 0.5 the same /4 fold answers)
+        s.tick_elytra_voice(41, true, 100.0);
+        assert_eq!(s.elytra_voice.unwrap().volume, 1.0, "the cap the clamp keeps");
+        s.tick_elytra_voice(42, true, 2.0);
+        assert_eq!(
+            s.elytra_voice.unwrap().volume,
+            0.5,
+            "the mid value the /4 fold keeps"
+        );
+        // THE QUIET BODY (the 1.0E-7 gate the zero speaks — the pitch
+        // the base keeps)
+        s.tick_elytra_voice(43, true, 0.0);
+        let v = s.elytra_voice.unwrap();
+        assert_eq!(
+            (v.volume, v.pitch),
+            (0.0, 1.0),
+            "the quiet body the zero keeps"
+        );
+        // THE DEFERRED STOP (the fresh voice the early landing wears —
+        // the flag check the first 20 ticks never runs, the crossing
+        // the stop serves, the dead voice the tick never re-speaks)
+        let mut s2 = BlockSounds::new(9);
+        s2.start_elytra_voice(100);
+        for t in 101..=119 {
+            s2.tick_elytra_voice(t, false, 4.0);
+        }
+        assert!(
+            s2.elytra_voice.is_some(),
+            "the first 20 ticks the flag check never runs"
+        );
+        let lines_before = s2.events.len();
+        s2.tick_elytra_voice(120, false, 4.0);
+        assert!(
+            s2.elytra_voice.is_some(),
+            "the tick-20 the gate's own edge keeps"
+        );
+        s2.tick_elytra_voice(121, false, 4.0);
+        assert!(s2.elytra_voice.is_none(), "the crossing the discard serves");
+        assert_eq!(
+            s2.events.last().expect("the stop line banks"),
+            "item.elytra.flying @121 stopped",
+            "the stopped line the record lane's shape wears"
+        );
+        s2.tick_elytra_voice(122, false, 4.0);
+        assert_eq!(
+            s2.events.len(),
+            lines_before + 1,
+            "the dead voice the tick never re-speaks"
+        );
+    }
 
     #[test]
     fn the_laws_fold_the_javap_constants() {

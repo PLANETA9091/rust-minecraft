@@ -9131,6 +9131,13 @@ impl App {
                     // word speaks; the offline lane no wire spends)
                     if b.glide_started_due {
                         b.glide_started_due = false;
+                        // THE ELYTRA VOICE'S OWN RISE (javap LocalPlayer's
+                        // shared-flag sync arm pcs 117-149 — the
+                        // `isFallFlying() && !wasFallFlying` edge the
+                        // instance plays: the SoundManager.play the
+                        // voice banks — the sound BOTH lanes speak, the
+                        // wire the live session rides)
+                        self.sounds.start_elytra_voice(self.frame);
                         if self.world_is_network {
                             if let Some(sink) = self.live_clicks.as_ref() {
                                 let _ = sink.send(
@@ -9142,6 +9149,17 @@ impl App {
                             }
                         }
                     }
+                    // THE ELYTRA VOICE'S OWN MANAGER TICK (javap
+                    // `ElytraOnPlayerSoundInstance.tick` — the per-tick
+                    // walk the sound manager's own law keeps: the
+                    // deferred stop, the mute/ramp fade pair, the 0.8
+                    // pitch law — the body's own POST-tick velocity the
+                    // lengthSqr fold reads, the flag the same post-tick
+                    // state carries; the vanilla's play-then-tick same
+                    // frame the start's own walk speaks)
+                    let speed_sqr = b.vx * b.vx + b.vy * b.vy + b.vz * b.vz;
+                    self.sounds
+                        .tick_elytra_voice(self.frame, b.fall_flying, speed_sqr);
                     // THE FALL EVENT (the landing's damage the body's
                     // law folded this tick — drained like the step_due
                     // lane it sits beside; the hurt pipeline runs after
@@ -56105,6 +56123,115 @@ cow_sound_variant: None,
             boosted.fireworks.is_empty(),
             "the crossing the attached rocket discards"
         );
+    }
+
+    /// THE ELYTRA VOICE THE GLIDE WEARS — the end-to-end walk the
+    /// frame's own order speaks (javap LocalPlayer's shared-flag sync
+    /// arm the play ride, `ElytraOnPlayerSoundInstance.tick` the
+    /// per-tick law): the rise the edge speaks (the play line the
+    /// ctor's constants carry, the SAME frame's manager tick the
+    /// vanilla's play-then-tick walk keeps), the hold the clock
+    /// advances (the mute window the early voice wears), the landing
+    /// the deferred stop serves (the 20-tick minimum the loop plays
+    /// through, the stopped line banks), the re-glide the fresh
+    /// instance arms (the second play line the new edge rides).
+    #[test]
+    fn the_elytra_voice_the_glide_wears() {
+        let elytra = mc_registry::item_id_by_name("elytra")
+            .expect("the elytra rides the registry");
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.inventory.armor[2] = (elytra, 1);
+        {
+            let b = app.body.as_mut().expect("the offline body spawns");
+            b.y = 40.0;
+            b.on_ground = false;
+            b.yaw = 0.0;
+            b.pitch = 0.0;
+        }
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(app.body.as_ref().expect("the body rides").fall_flying);
+        // THE RISE (the play line the edge spoke, the instance the
+        // same frame's tick advanced — the time 1 the iadd keeps)
+        let v = app
+            .sounds
+            .elytra_voice
+            .expect("the voice the rise banks");
+        assert_eq!(v.time, 1, "the same frame's tick the walk advances");
+        let play_lines = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("item.elytra.flying @") && e.contains("#"))
+            .count();
+        assert_eq!(play_lines, 1, "the play line the rise spoke");
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.elytra.flying @")
+                    && e.ends_with(" v0.100000 p1.000000")),
+            "the play line the ctor's constants carry"
+        );
+        // THE HOLD (the glide the loop walks — the mute window the
+        // early ticks keep, the clock the frames advance)
+        for _ in 0..5 {
+            app.update();
+        }
+        let v = app.sounds.elytra_voice.expect("the hold the voice keeps");
+        assert_eq!(v.time, 6, "the hold the clock advances");
+        assert_eq!(v.volume, 0.0, "the mute window the early voice keeps");
+        // THE STOP (the landing the glide retires — the deferred
+        // window the loop plays through, the crossing the discard
+        // serves, the stopped line the record lane's shape wears)
+        app.sounds.elytra_voice.as_mut().expect("the voice rides").time = 25;
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.on_ground = true;
+        }
+        app.update();
+        assert!(
+            !app.body
+                .as_ref()
+                .expect("the body rides")
+                .fall_flying,
+            "the landing the glide retires"
+        );
+        assert!(
+            app.sounds.elytra_voice.is_none(),
+            "the crossing the discard serves"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.elytra.flying @") && e.ends_with(" stopped")),
+            "the stopped line the crossing banks"
+        );
+        // THE RE-GLIDE (the fresh edge the new instance arms — the
+        // second play line the same law speaks)
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.y = 40.0;
+            b.on_ground = false;
+        }
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(app.body.as_ref().expect("the body rides").fall_flying);
+        let v = app
+            .sounds
+            .elytra_voice
+            .expect("the re-glide the fresh voice banks");
+        assert_eq!(v.time, 1, "the fresh instance the same walk wears");
+        let play_lines = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("item.elytra.flying @") && e.contains("#"))
+            .count();
+        assert_eq!(play_lines, 2, "the second edge the new play line spoke");
     }
 
     /// THE FIREWORK'S OWN CROSSING BURST — the lifetime crossing the
