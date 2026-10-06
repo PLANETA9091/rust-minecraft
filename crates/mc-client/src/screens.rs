@@ -7103,6 +7103,10 @@ pub struct App {
     /// LevelEvent-3006 pop arm's own burst pixels the lane draws;
     /// the missing file the honest absence keeps)
     pub sculk_pop_frames: Option<crate::avatar::SculkPopFrames>,
+    /// The campfire smoke's 12-frame set (the lazy load — the dowse
+    /// arm's cosy column's own big_smoke pixels the lane draws; the
+    /// missing file the honest absence keeps)
+    pub big_smoke_frames: Option<crate::avatar::BigSmokeFrames>,
     /// The sculk shriek's single sprite (the lazy load — the
     /// LevelEvent-3007 arm's own ring pixels the lane draws; the
     /// missing file the honest absence keeps)
@@ -7972,6 +7976,7 @@ impl App {
             glow_sprite: None,
             sculk_charge_frames: None,
             sculk_pop_frames: None,
+            big_smoke_frames: None,
             shriek_sprite: None,
             flash_sprite: None,
             effect_frames: None,
@@ -8420,6 +8425,14 @@ impl App {
             // ctor draws the post-loop consumption spends)
             crate::particles::ParticleKind::Spark { .. } => {
                 p.tick_spark(&mut spark_children)
+            }
+            // the campfire smoke's own walk (javap CampfireSmokeParticle
+            // .tick — the FULL override the drift/fade laws the base
+            // lane never folds: the four rolls per tick, the raw
+            // gravity subtract, the no-friction move, the last-60
+            // band's −0.015 drain)
+            crate::particles::ParticleKind::CampfireSmoke { .. } => {
+                p.tick_campfire_smoke(level_rng)
             }
             _ => p.tick(),
         });
@@ -25635,39 +25648,50 @@ impl App {
     /// makeParticles over the 26.2 jar): the `isClientSide` gate the
     /// client's own walk speaks, the 20-call loop the `bipush 20`
     /// keeps, per call the forced `true` arg the makeParticles walk
-    /// carries. THE COSY HALF the rolls the stream spends (the
-    /// CAMPFIRE_COSY_SMOKE kind the offline particle lane a future
-    /// round banks — the CampfireSmokeParticle's own tick/getLayer
-    /// overrides the kind's own walk demands): the position draws the
-    /// x `+ (nextDouble / 3.0) * (nextBoolean ? 1 : -1)`, the y `+
-    /// nextDouble + nextDouble`, the z the x's own fold keep (4
-    /// doubles + 2 booleans), the CosyProvider's SpriteSet.get
-    /// nextInt, the ctor's nextInt(50) lifetime + the
-    /// nextFloat()/500 yd bump — nine draws the unbanked kind the
-    /// stream never skips. THE SIGNAL_FIRE property the kind-only
-    /// vocabulary never carries — the vanilla DEFAULT false the COSY
-    /// type answers (the hay-bale signal fire the offline palette
-    /// never speaks). THE SMOKE HALF the isForce branch serves (the
-    /// `addParticle(SMOKE, ...)` pc 134-228): the position `pos +
-    /// 0.5 + (nextDouble / 4.0) * (nextBoolean ? 1 : -1)` the x and z
-    /// folds keep, the y the `+ 0.4` constant wears (the bytecode's
-    /// own no-random row), the speed args (0.0, 0.005, 0.0) the
-    /// addParticle carries, the SmokeParticle ctor chain the
-    /// shoot_smoke_puff helper folds (the nine draws the candle
-    /// walk's own chain speaks).
+    /// carries. THE COSY HALF the BANKED KIND spawns (the
+    /// CAMPFIRE_COSY_SMOKE type the CosyProvider's chain answers — the
+    /// SIGNAL_FIRE property the offline palette never lights, the
+    /// vanilla DEFAULT false the COSY arm keeps): the position draws
+    /// the x `+ (nextDouble / 3.0) * (nextBoolean ? 1 : -1)`, the y
+    /// `+ nextDouble + nextDouble`, the z the x's own fold keep (4
+    /// doubles + 2 booleans), then the CAMPFIRE-SMOKE CTOR CHAIN the
+    /// helper folds (the `SpriteSet.get` nextInt(12) frame pick, the
+    /// dead base lifetime draw, the `SingleQuadParticle` size draw the
+    /// `scale(3.0f)` triple multiplies, the `nextInt(50) + 80`
+    /// lifetime, the `nextFloat()/500` yd bump — ELEVEN draws the
+    /// vanilla walk per call spends, the cosy vy the 0.07 speed arg
+    /// the addAlwaysVisibleParticle carries). THE SMOKE HALF the
+    /// isForce branch serves (the `addParticle(SMOKE, ...)` pc
+    /// 134-228): the position `pos + 0.5 + (nextDouble / 4.0) *
+    /// (nextBoolean ? 1 : -1)` the x and z folds keep, the y the
+    /// `+ 0.4` constant wears (the bytecode's own no-random row), the
+    /// speed args (0.0, 0.005, 0.0) the addParticle carries, the
+    /// SmokeParticle ctor chain the shoot_smoke_puff helper folds (the
+    /// nine draws the candle walk's own chain speaks).
     fn play_campfire_dowse_smoke(&mut self, pos: (i32, i32, i32)) {
         for _ in 0..20 {
             // THE COSY HALF'S OWN ROLLS (the stream the vanilla walk
-            // spends — the unbanked kind the documented gap keeps)
-            let _cosy_x = self.level_ambient_rng.next_f64();
-            let _cosy_x_coin = self.level_ambient_rng.next() & 1 == 0;
-            let _cosy_y1 = self.level_ambient_rng.next_f64();
-            let _cosy_y2 = self.level_ambient_rng.next_f64();
-            let _cosy_z = self.level_ambient_rng.next_f64();
-            let _cosy_z_coin = self.level_ambient_rng.next() & 1 == 0;
-            let _sprite = self.level_ambient_rng.next_int(12);
-            let _cosy_life = self.level_ambient_rng.next_int(50);
-            let _cosy_yd = self.level_ambient_rng.next_f32();
+            // spends — the position folds the /3.0 bands keep)
+            let cosy_x = self.level_ambient_rng.next_f64();
+            let cosy_x_coin = self.level_ambient_rng.next() & 1 == 0;
+            let cosy_y1 = self.level_ambient_rng.next_f64();
+            let cosy_y2 = self.level_ambient_rng.next_f64();
+            let cosy_z = self.level_ambient_rng.next_f64();
+            let cosy_z_coin = self.level_ambient_rng.next() & 1 == 0;
+            let cx = pos.0 as f64 + 0.5 + cosy_x / 3.0 * if cosy_x_coin { 1.0 } else { -1.0 };
+            let cy = pos.1 as f64 + cosy_y1 + cosy_y2;
+            let cz = pos.2 as f64 + 0.5 + cosy_z / 3.0 * if cosy_z_coin { 1.0 } else { -1.0 };
+            let puff = crate::particles::campfire_smoke_puff(
+                cx,
+                cy,
+                cz,
+                0.0,
+                0.07,
+                0.0,
+                false,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(puff);
             // THE SMOKE HALF (the isForce branch's own walk)
             let sx = self.level_ambient_rng.next_f64();
             let sx_coin = self.level_ambient_rng.next() & 1 == 0;
@@ -34111,6 +34135,10 @@ impl App {
             self.sculk_pop_frames =
                 crate::avatar::SculkPopFrames::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.big_smoke_frames.is_none() {
+            self.big_smoke_frames =
+                crate::avatar::BigSmokeFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.shriek_sprite.is_none() {
             self.shriek_sprite =
                 crate::avatar::ShriekSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -34192,6 +34220,10 @@ impl App {
         // the sculk pop's own groups (the frame-keyed frames the age
         // walk rides — the LevelEvent-3006 pop arm's 16x16 set)
         let mut sculk_pop_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the campfire smoke's own groups (the frame-keyed quads the
+        // ONE static pick banks — the dowse arm's cosy column the
+        // big_smoke pool the TRANSLUCENT lane draws)
+        let mut campfire_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         // the sculk shriek's own quads (the single 13x13 sprite the
         // LevelEvent-3007 arm's ten-delayed ring samples — the TWO
         // tilted quads the crossed-rings look wears)
@@ -34671,6 +34703,32 @@ impl App {
                         None => cloud_groups.push((file, vec![quad])),
                     }
                 }
+                crate::particles::ParticleKind::CampfireSmoke { frame, alpha } => {
+                    // the campfire's own quad (the ONE static frame the
+                    // SpriteSet.get pick banks — no setSpriteFromAge the
+                    // tick override never calls, the ascending json list
+                    // the file index reads directly, the 16x16 big_smoke
+                    // pixels the 0..16 uv units sample, the WHITE tint
+                    // the ctor defaults keep, the TRANSLUCENT layer the
+                    // getLayer override returns): the ALPHA the tint dim
+                    // rides (the flash lane's own honest equivalent —
+                    // the tint × alpha fold the spark lane speaks, the
+                    // drained alpha the skip arm answers — the vanilla
+                    // translucent blend the dim's own honest stand-in
+                    // wears)
+                    if alpha > 0.0 {
+                        let quad = crate::raster::SampledQuad {
+                            pts,
+                            uv: [[0.0, 16.0], [16.0, 16.0], [16.0, 0.0], [0.0, 0.0]],
+                            tex: "particle_big_smoke",
+                            tint: [p.col[0] * alpha, p.col[1] * alpha, p.col[2] * alpha],
+                        };
+                        match campfire_groups.iter_mut().find(|(f, _)| *f == frame) {
+                            Some((_, quads)) => quads.push(quad),
+                            None => campfire_groups.push((frame, vec![quad])),
+                        }
+                    }
+                }
                 crate::particles::ParticleKind::Explosion => {
                     // the burst's own quad (the 32x32 frame the age's
                     // own walk speaks — the same setSpriteFromAge
@@ -35000,6 +35058,17 @@ impl App {
             for (file, quads) in &cloud_groups {
                 fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
                     Some(frames.pixel(*file, u, v))
+                });
+            }
+        }
+        // the campfire smoke groups (the cosy column's own 16x16
+        // pixels — the ONE static frame the pick banks, the ascending
+        // json list the file index reads directly, the alpha the tint
+        // dim the quad's own pixels carry)
+        if let Some(frames) = &self.big_smoke_frames {
+            for (frame, quads) in &campfire_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
                 });
             }
         }
@@ -75145,35 +75214,102 @@ cow_sound_variant: None,
             app.sounds.events.last()
         );
         // THE DOWSE'S OWN SMOKE COLUMN (the 20-call loop the
-        // makeParticles walk serves — the smoke half the y +0.4 the
+        // makeParticles walk serves — the COSY half the banked kind
+        // spawns the big_smoke frame the ascending list picks, the y
+        // the +nextDouble+nextDouble band keeps, the vy the 0.07 arg
+        // + the /500 bump carries; the smoke half the y +0.4 the
         // exact row keeps, the x/z the ±0.25 jitter band the /4.0
         // folds speak, the 0.005 rise the spread band carries)
         assert_eq!(
             app.particles.len(),
-            20,
-            "the 20-call loop the column spawns"
+            40,
+            "the 20-call loop the TWO puffs the call spawns"
         );
         for p in &app.particles {
-            assert_eq!(p.kind, crate::particles::ParticleKind::Smoke);
-            assert_eq!(
-                p.y,
-                top as f64 + 0.4,
-                "the +0.4 constant the y row wears"
+            match &p.kind {
+                crate::particles::ParticleKind::CampfireSmoke { frame, alpha } => {
+                    // THE COSY HALF'S OWN LAWS (the banked kind wears)
+                    assert!(*frame < 12, "the frame the ascending list keeps: {}", frame);
+                    assert!(
+                        (*alpha - 0.9).abs() < 1e-6,
+                        "the Cosy setAlpha the spawn keeps: {}",
+                        alpha
+                    );
+                    assert!(
+                        (80..=129).contains(&p.lifetime),
+                        "the nextInt(50)+80 band the cosy arm keeps: {}",
+                        p.lifetime
+                    );
+                    assert!(
+                        p.quad_size >= 0.3 && p.quad_size <= 0.6,
+                        "the scale(3.0f) the base quad triples: {}",
+                        p.quad_size
+                    );
+                    assert_eq!(
+                        p.col,
+                        [1.0, 1.0, 1.0],
+                        "the WHITE tint the ctor defaults keep"
+                    );
+                    assert!(
+                        p.vy >= 0.07 && p.vy < 0.082,
+                        "the 0.07 arg the /500 bump carries: {}",
+                        p.vy
+                    );
+                    assert!(
+                        p.y >= top as f64 && p.y <= top as f64 + 2.0,
+                        "the +nextDouble+nextDouble band the y row keeps: {}",
+                        p.y
+                    );
+                    assert!(
+                        p.x >= c as f64 + 0.1666 && p.x <= c as f64 + 0.8334,
+                        "the x jitter the /3.0 band keeps: {}",
+                        p.x
+                    );
+                    assert!(
+                        p.z >= c as f64 + 0.1666 && p.z <= c as f64 + 0.8334,
+                        "the z jitter the /3.0 band keeps: {}",
+                        p.z
+                    );
+                }
+                crate::particles::ParticleKind::Smoke => {
+                    assert_eq!(
+                        p.y,
+                        top as f64 + 0.4,
+                        "the +0.4 constant the y row wears"
+                    );
+                    assert!(
+                        p.x >= c as f64 + 0.25 && p.x <= c as f64 + 0.75,
+                        "the x jitter the /4.0 band keeps: {}",
+                        p.x
+                    );
+                    assert!(
+                        p.z >= c as f64 + 0.25 && p.z <= c as f64 + 0.75,
+                        "the z jitter the /4.0 band keeps: {}",
+                        p.z
+                    );
+                    assert!(
+                        p.vy > -0.03 && p.vy < 0.06,
+                        "the 0.005 rise the spread band keeps: {}",
+                        p.vy
+                    );
+                }
+                other => panic!("the TWO kinds the column speaks: {:?}", other),
+            }
+        }
+        // THE PAIR ORDER (the makeParticles walk the cosy half FIRST
+        // serves, the isForce smoke the same call appends — the
+        // interleaved pairs the bytecode's own sequence keeps)
+        for pair in app.particles.chunks(2) {
+            assert!(
+                matches!(
+                    pair[0].kind,
+                    crate::particles::ParticleKind::CampfireSmoke { .. }
+                ),
+                "the cosy puff the pair's head wears"
             );
             assert!(
-                p.x >= c as f64 + 0.25 && p.x <= c as f64 + 0.75,
-                "the x jitter the /4.0 band keeps: {}",
-                p.x
-            );
-            assert!(
-                p.z >= c as f64 + 0.25 && p.z <= c as f64 + 0.75,
-                "the z jitter the /4.0 band keeps: {}",
-                p.z
-            );
-            assert!(
-                p.vy > -0.03 && p.vy < 0.06,
-                "the 0.005 rise the spread band keeps: {}",
-                p.vy
+                matches!(pair[1].kind, crate::particles::ParticleKind::Smoke),
+                "the smoke puff the pair's tail wears"
             );
         }
     }

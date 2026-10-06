@@ -7843,6 +7843,62 @@ impl SculkPopFrames {
     }
 }
 
+/// The PARTICLE LANE's campfire smoke frames — the dowse arm's cosy
+/// column's 12-frame sprite set (javap: the `campfire_cosy_smoke` +
+/// `campfire_signal_smoke` particle types' own sprites, the jar's
+/// `textures/particle/big_smoke_0..11.png` pool the two jsons' shared
+/// ASCENDING lists order — the `CampfireSmokeParticle`'s Cosy/Signal
+/// providers the `SpriteSet.get(random)` pick speaks, ONE frame static
+/// the whole life the tick override's own no-sprite walk keeps), each
+/// file loaded and sha1-verified the same stream the sculk banks
+/// speak. A missing or tampered frame keeps the cosy column invisible
+/// (the honest absence the other lanes speak).
+pub struct BigSmokeFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The campfire smoke texture's own layout (the jar's 16x16 the IHDR
+/// speaks).
+pub const BIG_SMOKE_SPRITE_SIDE: u32 = 16;
+
+impl BigSmokeFrames {
+    /// Load the 12 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 16x16 layout.
+    pub fn load(root: &std::path::Path) -> Option<BigSmokeFrames> {
+        let mut frames =
+            Vec::with_capacity(crate::particles::CAMPFIRE_BIG_SMOKE_FRAME_COUNT);
+        for i in 0..crate::particles::CAMPFIRE_BIG_SMOKE_FRAME_COUNT {
+            let bytes =
+                std::fs::read(root.join(skin::PARTICLE_BIG_SMOKE_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes))
+                != skin::PARTICLE_BIG_SMOKE_PNG_SHA1S[i]
+            {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != BIG_SMOKE_SPRITE_SIDE || h != BIG_SMOKE_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(BigSmokeFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..16 the
+    /// 16x16 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, BIG_SMOKE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, BIG_SMOKE_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * BIG_SMOKE_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The explosion texture's own layout (the jar's 32x32 the IHDR
 /// speaks).
 pub const EXPLOSION_SPRITE_SIDE: u32 = 32;

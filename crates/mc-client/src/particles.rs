@@ -132,6 +132,11 @@ pub fn smoke_sprite_file_index(age: u32, lifetime: u32) -> usize {
 /// The poof's 8 frames (the `generic_0..7` textures the jar speaks).
 pub const POOF_FRAME_COUNT: usize = 8;
 
+/// The campfire smoke's 12 frames (the `big_smoke_0..11` textures the
+/// two jsons' shared ASCENDING lists speak — the file index the
+/// `SpriteSet.get` pick reads directly).
+pub const CAMPFIRE_BIG_SMOKE_FRAME_COUNT: usize = 12;
+
 /// The spark's 8 frames (the `spark_0..7` textures the firework.json
 /// list speaks).
 pub const SPARK_FRAME_COUNT: usize = 8;
@@ -334,6 +339,28 @@ pub enum ParticleKind {
     /// the 0.75 size fold, the 8 generic frames the smoke.json's
     /// descending order lists).
     Smoke,
+    /// `CampfireSmokeParticle` — the campfire's own smoke (the
+    /// CAMPFIRE_COSY_SMOKE / CAMPFIRE_SIGNAL_SMOKE types the dowse's
+    /// makeParticles walk speaks, the ctor chain the own laws wears:
+    /// the `scale(3.0f)` triple the birth quad carries, the
+    /// nextInt(50) + 80/280 lifetime the force flag's own ladder
+    /// banks, the 3e-6 gravity the raw subtract rides, the ONE
+    /// `big_smoke_N` frame the `SpriteSet.get` pick banks static the
+    /// whole life (no setSpriteFromAge the tick override never calls),
+    /// the 0.9/0.95 alpha the providers' setAlpha stores, the drift
+    /// the tick's own ±nextFloat/5000 rolls speak, the fade the
+    /// last-60-ticks −0.015 walk serves, the TRANSLUCENT layer the
+    /// getLayer override returns). The frame rides the ASCENDING json
+    /// list the file index reads directly.
+    CampfireSmoke {
+        /// The `SpriteSet.get(random)` pick — the big_smoke_N file
+        /// index (0..11, the ascending list the quads sample).
+        frame: usize,
+        /// The provider's setAlpha store — the 0.9 the Cosy answers,
+        /// the 0.95 the Signal's force arm keeps; the tick's fade walk
+        /// drains it (the last-60 band the −0.015 fold rides).
+        alpha: f32,
+    },
     /// `AttackSweepParticle` — the sword's own arc (the SWEEP_ATTACK
     /// type the `doSweepAttack` sendParticles speaks, the 8 32x32
     /// sweep frames the json's ascending order lists, the static pose
@@ -947,6 +974,56 @@ impl Particle {
             children.push((self.x, self.y, self.z, self.col, fade, twinkle));
         }
         alive
+    }
+
+    /// The campfire smoke's own tick (javap `CampfireSmokeParticle.tick`
+    /// the 26.2 jar verbatim — the FULL override the base law never
+    /// reaches): the head saves the pre-move pose, the age walks, the
+    /// remove the `age >= lifetime || alpha <= 0` OR-pair answers (the
+    /// drained alpha the early exit wears), then the DRIFT the four
+    /// rolls per tick speak — `xd += nextFloat()/5000.0f * (nextBoolean
+    /// ? 1 : -1)` the x and z lanes keep (the f32 math the f2d
+    /// widening wears), `yd -= gravity` the RAW subtract rides (the
+    /// 3e-6 the NO 0.04 factor the base lane folds), the plain move
+    /// (the collision lane sleeps — the pieces' honest absence), NO
+    /// friction the override never applies, then the FADE the
+    /// last-60-ticks band serves — `age >= lifetime - 60 && alpha >
+    /// 0.01f` the gate keeps, `-0.015f` per tick the drain walks (the
+    /// 0.9 spawn alpha the 60-tick band exactly drains — the remove
+    /// the age walk the same tick answers). The frame the ONE pick
+    /// static keeps (no setSpriteFromAge the override never calls).
+    /// The tick's own draws ride the caller's rng (the vanilla
+    /// per-particle `RandomSource.create()` the level's ambient stream
+    /// the lava tick's own precedent stands in for).
+    pub fn tick_campfire_smoke(&mut self, rng: &mut crate::drops::Lcg) -> bool {
+        let (frame, alpha) = match self.kind {
+            ParticleKind::CampfireSmoke { frame, alpha } => (frame, alpha),
+            _ => return self.tick(),
+        };
+        self.tick_head();
+        self.age += 1;
+        if self.age >= self.lifetime || alpha <= 0.0 {
+            return false;
+        }
+        // THE DRIFT'S OWN ROLLS (the f32 /5000.0 the ± coin folds —
+        // the f2d widening the dadd pairs wear)
+        self.vx += f64::from(rng.next_f32() / 5000.0) * if rng.next() & 1 == 0 { 1.0 } else { -1.0 };
+        self.vz += f64::from(rng.next_f32() / 5000.0) * if rng.next() & 1 == 0 { 1.0 } else { -1.0 };
+        // THE RAW GRAVITY SUBTRACT (the 3e-6 the no-0.04 law keeps)
+        self.vy -= self.gravity;
+        // THE PLAIN MOVE (the collision lane sleeps)
+        self.x += self.vx;
+        self.y += self.vy;
+        self.z += self.vz;
+        // THE FADE'S OWN BAND (the last 60 ticks the −0.015 drain —
+        // the >0.01 gate the final sub-quantum ticks wear)
+        if let ParticleKind::CampfireSmoke { alpha, .. } = &mut self.kind {
+            if self.age >= self.lifetime.saturating_sub(60) && *alpha > 0.01 {
+                *alpha -= 0.015;
+            }
+        }
+        let _ = frame;
+        true
     }
 
     /// The render's half-span (the corners ride ± half — the pieces'
@@ -2307,6 +2384,85 @@ pub fn shoot_smoke_puff(
         r_tint,
         r_life,
     )
+}
+
+/// The campfire smoke's own lifetime law (javap
+/// `CampfireSmokeParticle` ctor pc 27-69 the 26.2 jar speaks): the
+/// force flag's own ladder — the COSY provider's `false` arm the
+/// `nextInt(50) + 80` bank keeps (80..129 ticks), the SIGNAL
+/// provider's `true` arm the `nextInt(50) + 280` bank carries
+/// (280..329 — the hay-bale signal fire the offline palette never
+/// lights, the arm's own law the helper still wears).
+pub fn campfire_smoke_lifetime(r: i32, force: bool) -> u32 {
+    (if force { 280 } else { 80 } + r) as u32
+}
+
+/// The CAMPFIRE-SMOKE particle's own spawn (javap
+/// `CampfireSmokeParticle` + the Cosy/Signal providers over the 26.2
+/// jar — the CAMPFIRE_COSY_SMOKE type the dowse's makeParticles walk
+/// banks, the full ctor chain the bytecodes pin): the draw order the
+/// arg evaluation + the ctor chain speak — the `sprites.get(random)`
+/// pick FIRST (the nextInt(12) frame draw the ascending list reads),
+/// then the base `Particle(level, DDD)` ctor's DEAD lifetime draw
+/// (the `(int)(4.0 / (nextFloat * 0.9 + 0.1))` fold the value the
+/// own lifetime write overrides), then the `SingleQuadParticle` tail's
+/// SIZE draw (the `0.1 * (r * 0.5 + 0.5) * 2.0` base the `scale(3.0f)`
+/// triple multiplies), then the own `nextInt(50)` lifetime + the
+/// `nextFloat()/500` yd bump. The body the bytecodes keep: the
+/// `setSize(0.25, 0.25)` bb the collision lane sleeps (the quad the
+/// render alone wears), the gravity `3.0E-6f` the RAW tick subtract
+/// rides (no 0.04 factor the base lane folds), the xd/zd the speed
+/// args verbatim (the cosy walk's zeros), the `yd = ySpeed +
+/// nextFloat()/500.0` bump the f2d widening wears, the friction the
+/// base ctor's 0.98 the tick override never applies (the campfire
+/// smoke's own tick the friction lane never folds), the WHITE tint
+/// the SingleQuadParticle defaults keep (no tint draw the chain
+/// spends — the sprite's own greys the quad samples), the alpha the
+/// provider's setAlpha banks (0.9 the Cosy, 0.95 the Signal), the
+/// ONE frame static the whole life the no-sprite tick keeps.
+pub fn campfire_smoke_puff(
+    x: f64,
+    y: f64,
+    z: f64,
+    vx: f64,
+    vy: f64,
+    vz: f64,
+    force: bool,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // the frame pick (the SpriteSet.get(random) the ctor arg FIRST
+    // evaluates — the nextInt(12) the ascending list reads directly)
+    let frame = rng.next_int(CAMPFIRE_BIG_SMOKE_FRAME_COUNT as u64) as usize;
+    // the dead base lifetime (the draw the stream keeps, the value
+    // the own lifetime write overrides)
+    let _dead_base_life = base_lifetime(rng.next_f32());
+    // the base quad size × the scale(3.0f) triple
+    let quad = base_quad_size(rng.next_f32()) * 3.0;
+    // the own lifetime ladder (the force flag the provider arms keep)
+    let lifetime = campfire_smoke_lifetime(rng.next_int(50), force);
+    // the yd bump (the nextFloat()/500 the f2d widening wears)
+    let bump = f64::from(rng.next_f32() / 500.0);
+    Particle {
+        kind: ParticleKind::CampfireSmoke {
+            frame,
+            alpha: if force { 0.95 } else { 0.9 },
+        },
+        x,
+        y,
+        z,
+        prev: None,
+        vx,
+        vy: vy + bump,
+        vz,
+        age: 0,
+        lifetime,
+        gravity: 3.0e-6,
+        friction: 0.98,
+        quad_size: quad,
+        uo: 0.0,
+        vo: 0.0,
+        col: [1.0, 1.0, 1.0],
+    }
 }
 
 /// The SHOOT-WHITE-SMOKE particle's own spawn (javap
@@ -5537,6 +5693,139 @@ mod tests {
     fn the_base_quad_size_spans_the_vanilla_band() {
         assert!((base_quad_size(0.0) - 0.1).abs() < 1e-6);
         assert!((base_quad_size(1.0) - 0.2).abs() < 1e-6);
+    }
+
+    #[test]
+    fn the_campfire_smoke_the_ctor_chain_wears() {
+        // THE STREAM'S OWN PARITY (javap CampfireSmokeParticle + the
+        // CosyProvider the 26.2 jar speaks — the draw order the arg
+        // evaluation + the ctor chain pin): the `SpriteSet.get` pick
+        // FIRST (nextInt(12) the ascending list reads), then the base
+        // Particle ctor's DEAD lifetime draw, then the
+        // SingleQuadParticle tail's SIZE draw the scale(3.0f) triple
+        // multiplies, then the own nextInt(50) + 80 ladder and the
+        // nextFloat()/500 yd bump. The replayed Lcg the same five
+        // draws spends — the spawned puff bit for bit.
+        let mut r = rng();
+        let frame = r.next_int(12) as usize;
+        let _dead = base_lifetime(r.next_f32());
+        let quad = base_quad_size(r.next_f32()) * 3.0;
+        let life = campfire_smoke_lifetime(r.next_int(50), false);
+        let bump = f64::from(r.next_f32() / 500.0);
+        let mut r2 = rng();
+        let p = campfire_smoke_puff(1.0, 2.0, 3.0, 0.0, 0.07, 0.0, false, &mut r2);
+        assert!(matches!(
+            p.kind,
+            ParticleKind::CampfireSmoke { .. }
+        ));
+        let ParticleKind::CampfireSmoke {
+            frame: got_frame,
+            alpha,
+        } = p.kind
+        else {
+            panic!("the campfire kind the ctor banks");
+        };
+        assert_eq!(got_frame, frame, "the ascending list the pick reads");
+        assert!((alpha - 0.9).abs() < 1e-6, "the Cosy setAlpha keeps");
+        assert_eq!(p.x, 1.0);
+        assert_eq!(p.y, 2.0);
+        assert_eq!(p.z, 3.0);
+        assert_eq!(p.vx, 0.0);
+        assert!((p.vy - (0.07 + bump)).abs() < 1e-12, "the 0.07 arg + the bump");
+        assert_eq!(p.vz, 0.0);
+        assert_eq!(p.lifetime, life, "the nextInt(50)+80 the cosy arm keeps");
+        assert!(
+            (p.lifetime as f64) >= 80.0 && (p.lifetime as f64) <= 129.0,
+            "the cosy band the ladder keeps: {}",
+            p.lifetime
+        );
+        assert!((p.quad_size - quad).abs() < 1e-6);
+        assert!(p.quad_size >= 0.3 && p.quad_size <= 0.6, "the scale(3.0f)");
+        assert_eq!(p.gravity, 3.0e-6, "the RAW gravity the tick subtracts");
+        assert_eq!(p.friction, 0.98, "the base ctor's own field");
+        assert_eq!(p.col, [1.0, 1.0, 1.0], "the WHITE tint no draw tints");
+        // THE SIGNAL ARM (the force flag the ladder's own row keeps —
+        // the nextInt(50) + 280 band, the 0.95 the setAlpha keeps)
+        let mut r3 = rng();
+        let sig = campfire_smoke_puff(0.0, 0.0, 0.0, 0.0, 0.0, 0.0, true, &mut r3);
+        let ParticleKind::CampfireSmoke {
+            alpha: sig_alpha, ..
+        } = sig.kind
+        else {
+            panic!("the campfire kind the ctor banks");
+        };
+        assert!(
+            (sig_alpha - 0.95).abs() < 1e-6,
+            "the Signal setAlpha the spawn keeps: {}",
+            sig_alpha
+        );
+        assert!(
+            (280..=329).contains(&sig.lifetime),
+            "the +280 band the force arm keeps: {}",
+            sig.lifetime
+        );
+    }
+
+    #[test]
+    fn the_campfire_smoke_the_tick_the_drift_fade_wear() {
+        // THE TICK'S OWN LAW (javap CampfireSmokeParticle.tick the
+        // 26.2 jar verbatim): the four rolls per tick, the RAW
+        // gravity subtract (no 0.04 the base lane folds), the NO
+        // friction the override never applies, the fade the last-60
+        // band serves, the remove the alpha<=0 OR-arm answers.
+        let mut r = rng();
+        let mut p = campfire_smoke_puff(0.0, 0.0, 0.0, 0.25, 0.07, 0.0, false, &mut r);
+        let life = p.lifetime;
+        let fade_start = life - 60; // the age the fade band's head opens
+        let spawn_vy = p.vy;
+        // THE FADE'S OWN BOUNDARY (the tick n = fade_start the age
+        // walks FIRST — the fade arm the SAME tick drains -0.015)
+        for _ in 0..fade_start {
+            assert!(p.tick_campfire_smoke(&mut r), "the alive tick");
+        }
+        assert_eq!(p.age, fade_start);
+        let ParticleKind::CampfireSmoke { alpha, .. } = &p.kind else {
+            panic!();
+        };
+        assert!(
+            (*alpha - (0.9 - 0.015)).abs() < 1e-6,
+            "the boundary tick's own drain the alpha wears: {}",
+            alpha
+        );
+        // THE GRAVITY'S OWN RAW SUBTRACT (the vy -= 3e-6 per tick the
+        // NO 0.04 fold wears — the exact row the spawn's bump keeps)
+        assert!(
+            (p.vy - (spawn_vy - fade_start as f64 * 3.0e-6)).abs() < 1e-12,
+            "the raw subtract the vy row wears: {}",
+            p.vy
+        );
+        // THE NO-FRICTION LAW (the vx the drift rolls alone move —
+        // the 0.98 multiply the base lane never reaches, the
+        // ±1/5000-per-tick the band keeps)
+        assert!(
+            p.vx.abs() <= 1.0 && p.vx != 0.0,
+            "the drift the vx moves (no shrink): {}",
+            p.vx
+        );
+        // THE DRAIN'S OWN LADDER (the -0.015 per tick while > 0.01 —
+        // 0.885 / 0.015 = 59 the exact drains the band holds)
+        for _ in 0..58 {
+            assert!(p.tick_campfire_smoke(&mut r), "the alive drain");
+            let ParticleKind::CampfireSmoke { alpha, .. } = &p.kind else {
+                panic!();
+            };
+            assert!(*alpha > 0.0, "the positive the drain keeps: {}", alpha);
+        }
+        // THE DRAINED ALPHA'S OWN REMOVE (the last sub-quantum tick
+        // the alpha 0.0 banks, the next tick the OR-arm answers)
+        let mut alive = true;
+        for _ in 0..5 {
+            alive = p.tick_campfire_smoke(&mut r);
+            if !alive {
+                break;
+            }
+        }
+        assert!(!alive, "the drained alpha the remove answers");
     }
 
     #[test]

@@ -129,6 +129,22 @@ pub const PARTICLE_POOF_JAR_PATHS: [&str; 8] = [
     "assets/minecraft/textures/particle/generic_6.png",
     "assets/minecraft/textures/particle/generic_7.png",
 ];
+/// The firework spark's 8-frame set (javap: the `firework` particle
+/// type's own SpriteSet — the jar's `particles/firework.json` lists
+/// EIGHT textures, `minecraft:spark_7..spark_0` in DESCENDING order;
+/// each frame the 8x8 the IHDR verifies — the `SparkParticle`'s
+/// `setSpriteFromAge` walk the trail bank's frame index rides; the
+/// runtime cache the `SparkFrames` loader sha1-verifies).
+pub const PARTICLE_SPARK_JAR_PATHS: [&str; 8] = [
+    "assets/minecraft/textures/particle/spark_0.png",
+    "assets/minecraft/textures/particle/spark_1.png",
+    "assets/minecraft/textures/particle/spark_2.png",
+    "assets/minecraft/textures/particle/spark_3.png",
+    "assets/minecraft/textures/particle/spark_4.png",
+    "assets/minecraft/textures/particle/spark_5.png",
+    "assets/minecraft/textures/particle/spark_6.png",
+    "assets/minecraft/textures/particle/spark_7.png",
+];
 /// The splash droplet's 4 frames (javap: the `splash` particle type's
 /// sprite set — the `SplashParticle$Provider`'s `SpriteSet.get(random)`
 /// pick, one frame static per particle's own life; the jar's
@@ -223,6 +239,29 @@ pub const PARTICLE_SCULK_POP_JAR_PATHS: [&str; 4] = [
     "assets/minecraft/textures/particle/sculk_charge_pop_1.png",
     "assets/minecraft/textures/particle/sculk_charge_pop_2.png",
     "assets/minecraft/textures/particle/sculk_charge_pop_3.png",
+];
+/// The campfire smoke's 12-frame set (javap: the `campfire_cosy_smoke`
+/// + `campfire_signal_smoke` particle types' own sprite set — the jar's
+/// `particles/campfire_cosy_smoke.json` and `particles/campfire_signal
+/// _smoke.json` both list TWELVE textures, `minecraft:big_smoke_0..11`
+/// in ASCENDING order — the `SpriteSet.get(random)` pick the
+/// `CampfireSmokeParticle`'s Cosy/Signal providers speak, one frame
+/// static the whole life the tick override's own no-sprite walk keeps;
+/// each frame the 16x16 the IHDR verifies — the dowse's cosy column
+/// the offline lane banks).
+pub const PARTICLE_BIG_SMOKE_JAR_PATHS: [&str; 12] = [
+    "assets/minecraft/textures/particle/big_smoke_0.png",
+    "assets/minecraft/textures/particle/big_smoke_1.png",
+    "assets/minecraft/textures/particle/big_smoke_2.png",
+    "assets/minecraft/textures/particle/big_smoke_3.png",
+    "assets/minecraft/textures/particle/big_smoke_4.png",
+    "assets/minecraft/textures/particle/big_smoke_5.png",
+    "assets/minecraft/textures/particle/big_smoke_6.png",
+    "assets/minecraft/textures/particle/big_smoke_7.png",
+    "assets/minecraft/textures/particle/big_smoke_8.png",
+    "assets/minecraft/textures/particle/big_smoke_9.png",
+    "assets/minecraft/textures/particle/big_smoke_10.png",
+    "assets/minecraft/textures/particle/big_smoke_11.png",
 ];
 /// The sculk shriek's single sprite (javap: the `shriek` particle
 /// type's sprite set — the jar's `particles/shriek.json` lists ONE
@@ -388,6 +427,18 @@ pub const PARTICLE_POOF_RUNTIME_PATHS: [&str; 8] = [
     "particle/generic_6.png",
     "particle/generic_7.png",
 ];
+/// The firework spark's runtime-cache paths (the same strip — the
+/// json's DESCENDING list the index folds the consumer side keeps).
+pub const PARTICLE_SPARK_RUNTIME_PATHS: [&str; 8] = [
+    "particle/spark_0.png",
+    "particle/spark_1.png",
+    "particle/spark_2.png",
+    "particle/spark_3.png",
+    "particle/spark_4.png",
+    "particle/spark_5.png",
+    "particle/spark_6.png",
+    "particle/spark_7.png",
+];
 pub const PARTICLE_SPLASH_RUNTIME_PATHS: [&str; 4] = [
     "particle/splash_0.png",
     "particle/splash_1.png",
@@ -471,6 +522,23 @@ pub const PARTICLE_SCULK_POP_RUNTIME_PATHS: [&str; 4] = [
     "particle/sculk_charge_pop_1.png",
     "particle/sculk_charge_pop_2.png",
     "particle/sculk_charge_pop_3.png",
+];
+/// The campfire smoke's runtime-cache paths (the same strip — the two
+/// jsons' shared ASCENDING list the index folds, the cosy column the
+/// dowse arm's own walk rides).
+pub const PARTICLE_BIG_SMOKE_RUNTIME_PATHS: [&str; 12] = [
+    "particle/big_smoke_0.png",
+    "particle/big_smoke_1.png",
+    "particle/big_smoke_2.png",
+    "particle/big_smoke_3.png",
+    "particle/big_smoke_4.png",
+    "particle/big_smoke_5.png",
+    "particle/big_smoke_6.png",
+    "particle/big_smoke_7.png",
+    "particle/big_smoke_8.png",
+    "particle/big_smoke_9.png",
+    "particle/big_smoke_10.png",
+    "particle/big_smoke_11.png",
 ];
 /// The sculk shriek's runtime-cache path (the same textures/ prefix
 /// strip the other lanes speak).
@@ -604,6 +672,10 @@ pub struct SkinData {
     /// sha1s of the poof cloud's 8 frames (jar-verbatim integrity) —
     /// the death cloud's pixel sources (the 8x8 generic frames).
     pub particle_poof_png_sha1s: [String; 8],
+    /// sha1s of the firework spark's 8 frames (jar-verbatim integrity)
+    /// — the trail's own frame walk's pixel sources (the 8x8 spark
+    /// frames the firework.json's descending list orders).
+    pub particle_spark_png_sha1s: [String; 8],
     /// sha1s of the splash droplet's 4 frames (jar-verbatim integrity)
     /// — the entry splash's second ring's pixel sources (the 8x8
     /// splash frames).
@@ -653,6 +725,11 @@ pub struct SkinData {
     /// sources (the 16x16 sculk_charge_pop frames the json's ascending
     /// list orders).
     pub particle_sculk_pop_png_sha1s: [String; 4],
+    /// sha1s of the campfire smoke's 12 frames (jar-verbatim
+    /// integrity) — the dowse arm's cosy column's pixel sources (the
+    /// 16x16 big_smoke frames the two jsons' shared ascending list
+    /// orders, the `SpriteSet.get(random)` pick the providers speak).
+    pub particle_big_smoke_png_sha1s: [String; 12],
     /// sha1 of the sculk shriek's single sprite (jar-verbatim
     /// integrity) — the LevelEvent-3007 arm's ten-delayed ring's pixel
     /// source (the 13x13 shriek sprite the one-texture json keeps).
@@ -1003,6 +1080,21 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         );
         particle_poof_png_sha1s[i] = crate::util::sha1_hex(&bytes);
     }
+    // the firework spark's 8 frames (the same shape check the poof
+    // walk speaks — the 8x8 the trail quads sample over their own
+    // lives, the firework.json's DESCENDING list the set rides)
+    let mut particle_spark_png_sha1s: [String; 8] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_SPARK_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read spark frame")?;
+        particle_spark_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (sw, sh, _spark_rgba) = decode_rgba(&bytes).context("decode spark frame")?;
+        anyhow::ensure!(
+            (sw, sh) == (8, 8),
+            "spark_{i} must be the 8x8 frame, got {}x{}",
+            sw,
+            sh
+        );
+    }
     let mut particle_splash_png_sha1s: [String; 4] = std::array::from_fn(|_| String::new());
     for (i, path) in PARTICLE_SPLASH_JAR_PATHS.iter().enumerate() {
         let bytes = read_entry(archive, path).context("read splash frame")?;
@@ -1182,6 +1274,21 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             ph
         );
     }
+    // the campfire smoke's 12 frames (the same shape check the sculk
+    // walk speaks — the 16x16 the cosy column's quads sample whole,
+    // the two jsons' ASCENDING lists the set rides)
+    let mut particle_big_smoke_png_sha1s: [String; 12] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_BIG_SMOKE_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read big smoke frame")?;
+        particle_big_smoke_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (gw, gh, _smoke_rgba) = decode_rgba(&bytes).context("decode big smoke frame")?;
+        anyhow::ensure!(
+            (gw, gh) == (16, 16),
+            "big smoke frames must be the 16x16 sprites, got {}x{}",
+            gw,
+            gh
+        );
+    }
     // the sculk shriek's single sprite (the same shape check the glint
     // walk speaks — the 13x13 the case-3007 ring quads sample)
     let shriek_bytes = read_entry(archive, PARTICLE_SHRIEK_JAR_PATH).context("read shriek")?;
@@ -1353,6 +1460,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_crit_png_sha1,
         particle_bubble_png_sha1,
         particle_poof_png_sha1s,
+        particle_spark_png_sha1s,
         particle_splash_png_sha1s,
         particle_lava_png_sha1,
         particle_drip_hang_png_sha1,
@@ -1368,6 +1476,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_explosion_png_sha1s,
         particle_sculk_charge_png_sha1s,
         particle_sculk_pop_png_sha1s,
+        particle_big_smoke_png_sha1s,
         particle_shriek_png_sha1,
         particle_flash_png_sha1,
         particle_effect_png_sha1s,
@@ -1732,6 +1841,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .join(", ")
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_SPARK_PNG_SHA1S: [&str; 8] = [{}];\n",
+        data.particle_spark_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SPARK_RUNTIME_PATHS: [&str; 8] = [{}];\n",
+        PARTICLE_SPARK_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_SPLASH_PNG_SHA1S: [&str; 4] = [{}];\n",
         data.particle_splash_png_sha1s
             .iter()
@@ -1875,6 +2000,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
     out.push_str(&format!(
         "pub const PARTICLE_SCULK_POP_RUNTIME_PATHS: [&str; 4] = [{}];\n",
         PARTICLE_SCULK_POP_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_BIG_SMOKE_PNG_SHA1S: [&str; 12] = [{}];\n",
+        data.particle_big_smoke_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_BIG_SMOKE_RUNTIME_PATHS: [&str; 12] = [{}];\n",
+        PARTICLE_BIG_SMOKE_RUNTIME_PATHS
             .iter()
             .map(|s| format!("\"{s}\""))
             .collect::<Vec<_>>()
@@ -2215,6 +2356,12 @@ mod tests {
         let sculk_pops = [item_png(), item_png(), item_png(), item_png()];
         let expected_sculk_pop_sha1s: Vec<String> =
             sculk_pops.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let big_smokes: [Vec<u8>; 12] = std::array::from_fn(|_| item_png());
+        let expected_big_smoke_sha1s: Vec<String> =
+            big_smokes.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let sparks = [tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png(), tiny_png()];
+        let expected_spark_sha1s: Vec<String> =
+            sparks.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let shriek = shriek_png();
         let expected_shriek_sha1 = crate::util::sha1_hex(&shriek);
         let flash = sweep_png();
@@ -2365,6 +2512,26 @@ mod tests {
             (PARTICLE_SCULK_POP_JAR_PATHS[1], sculk_pops[1].clone()),
             (PARTICLE_SCULK_POP_JAR_PATHS[2], sculk_pops[2].clone()),
             (PARTICLE_SCULK_POP_JAR_PATHS[3], sculk_pops[3].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[0], big_smokes[0].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[1], big_smokes[1].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[2], big_smokes[2].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[3], big_smokes[3].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[4], big_smokes[4].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[5], big_smokes[5].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[6], big_smokes[6].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[7], big_smokes[7].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[8], big_smokes[8].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[9], big_smokes[9].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[10], big_smokes[10].clone()),
+            (PARTICLE_BIG_SMOKE_JAR_PATHS[11], big_smokes[11].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[0], sparks[0].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[1], sparks[1].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[2], sparks[2].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[3], sparks[3].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[4], sparks[4].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[5], sparks[5].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[6], sparks[6].clone()),
+            (PARTICLE_SPARK_JAR_PATHS[7], sparks[7].clone()),
             (PARTICLE_SHRIEK_JAR_PATH, shriek),
             (PARTICLE_FLASH_JAR_PATH, flash),
             (PARTICLE_EFFECT_JAR_PATHS[0], effects[0].clone()),
@@ -2522,6 +2689,16 @@ mod tests {
             data.particle_sculk_pop_png_sha1s,
             expected_sculk_pop_sha1s.as_slice(),
             "the sculk pop frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_big_smoke_png_sha1s,
+            expected_big_smoke_sha1s.as_slice(),
+            "the campfire smoke frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_spark_png_sha1s,
+            expected_spark_sha1s.as_slice(),
+            "the firework spark frames' own sha1s"
         );
         assert_eq!(
             data.particle_shriek_png_sha1, expected_shriek_sha1,
