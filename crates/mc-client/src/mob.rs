@@ -5036,6 +5036,22 @@ pub struct Zombie {
     /// set 160 by `igniteForSeconds(8)`, decremented per tick, the
     /// onFire hurt rides the %20 gate, the water effect clears it
     pub fire_ticks: i32,
+    /// THE FIRE DOSES' OWN SHARED WINDOW — the invulnerableTime the
+    /// vanilla's hurt pipeline keeps (javap `LivingEntity.hurt`'s own
+    /// 20-arm + the <= 10 gate) and the mob lane's own hurt walk never
+    /// carried: the %20 onFire beat and the entityInside's deferred
+    /// inFire/soul doses the ONE clock answers. The landed dose arms
+    /// 20, the in-window repeats the gate refuses, the STRONGER dose
+    /// the bypass wears (the soul's 2.0 the plain 1.0's window
+    /// pierces — the `amount > lastHurt` law the same walk keeps).
+    /// The fold the lane keeps: the window the FIRE family's doses
+    /// alone share (the melee/arrow doses the shared field the vanilla
+    /// never splits — the lane's own hurt walk the cooldown never
+    /// touches, the existing doses' own rhythm intact).
+    pub fire_hurt_cooldown: i32,
+    /// the window's own lastHurt word (the bypass's own comparison —
+    /// the fire family's doses the lane's own clock keeps)
+    fire_last_dose: f32,
     /// THE FOOTSTEP ACCUMULATION (Entity.move's own fields — the same
     /// pair the player's body speaks): moveDist grows by the collided
     /// horizontal × 0.6, the step fires past nextStep (the ctor's own
@@ -5230,6 +5246,8 @@ impl Zombie {
             ambient_time: -AMBIENT_INTERVAL_TICKS,
             rng: Lcg::new(seed),
             fire_ticks: 0,
+            fire_hurt_cooldown: 0,
+            fire_last_dose: 0.0,
             move_dist: 0.0,
             next_step: 1.0,
             flap: 0.0,
@@ -5307,6 +5325,67 @@ impl Zombie {
             self.y + h,
             self.z + h2,
         )
+    }
+
+    /// THE FIRE CELL'S OWN GATE (the body lane's own box-overlap scan
+    /// the mob's box wears — javap `Entity.checkInsideBlocks`'s own
+    /// walk: the box's occupied cells the BlockGetter read answers,
+    /// the kind the [`crate::world::is_fire` ] family alone admits):
+    /// the cell the plain FIRE kind alone answers, the box the
+    /// [`Self::box_for` ] dims speak (the EntityTypes sized(w,h) each
+    /// kind's own clinit arms — the baby's own half-sized box the
+    /// same fold wears).
+    pub fn touches_fire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = self.box_for();
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::FIRE {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE SOUL FIRE CELL'S OWN GATE (the same box-overlap walk — the
+    /// kind the damage doubles, the ignite the shared parent keeps:
+    /// javap `BaseFireBlock.entityInside` the two kinds' shared walk
+    /// the fireDamage float splits).
+    pub fn touches_soul_fire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = self.box_for();
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::SOUL_FIRE {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE FIRE DOSE'S OWN WINDOW WALK (javap `LivingEntity.hurt`'s
+    /// invulnerable beat the fire doses share — the <= 10 window the
+    /// same-dose repeats refuse, the STRONGER dose the `amount >
+    /// lastHurt` bypass wears): the landed dose the mob's own hurt
+    /// answers (the armor the shared body folds, the flash the
+    /// hurt_time speaks), the events the caller's own voice lane
+    /// plays (the burn word the landed hurt speaks), the window the
+    /// 20-tick arm re-arms. The null-source dose the fire family's
+    /// own clock keeps — the melee/arrow doses the shared hurt walk
+    /// never consults.
+    fn fire_hurt_server(&mut self, amount: f32, events: &mut MobEvents) {
+        if self.fire_hurt_cooldown > 10 && amount <= self.fire_last_dose {
+            return; // the window's own refusal — the same-dose repeat
+        }
+        self.hurt(amount as f64, false);
+        events.fire_hurt = true;
+        events.fire_death = self.health <= 0.0;
+        self.fire_hurt_cooldown = 20; // the landed dose's own arm
+        self.fire_last_dose = amount;
     }
 
     /// THE RENDER FOLD (javap `Entity.render`'s own lerp — `Mth.lerp(
@@ -5757,19 +5836,60 @@ impl Zombie {
         } else {
             self.in_sitting_pose = false;
         }
+        // THE INSIDE-BLOCK BRAND (javap `Entity.checkInsideBlocks` +
+        // `BaseFireBlock.entityInside` the applier's own phases the
+        // queue speaks — the FIRE_IGNITE the immediate phase serves:
+        // the `igniteForSeconds(8)` 160-lift the `remainingFireTicks <
+        // 160` verdict wears — never a lower; the runAfter hurt(
+        // inFire(), fireDamage) the DEFERRED phase the tick's own walk
+        // answers): the fire cell the box overlaps the lift + the
+        // pending dose carries, the soul cell the SAME walk the
+        // fireDamage float splits (the 2.0 the ctor's fconst_2 speaks
+        // — the queue the two kinds' doses BOTH carry, the window's
+        // own bypass the stronger wears). The dying body the inside
+        // walk never brands (the corpse keeps its clock — the hurt
+        // the alive gate refuses).
+        let alive = self.death_time == 0 && self.health > 0.0;
+        let mut deferred_doses: Vec<f32> = Vec::new();
+        if alive {
+            if self.touches_fire(world) {
+                if self.fire_ticks < crate::body::FIRE_IGNITE_TICKS {
+                    self.fire_ticks = crate::body::FIRE_IGNITE_TICKS;
+                }
+                deferred_doses.push(crate::body::IN_FIRE_DAMAGE);
+            }
+            if self.touches_soul_fire(world) {
+                if self.fire_ticks < crate::body::FIRE_IGNITE_TICKS {
+                    self.fire_ticks = crate::body::FIRE_IGNITE_TICKS;
+                }
+                deferred_doses.push(crate::body::IN_SOUL_FIRE_DAMAGE);
+            }
+        }
         // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
         // death gate — the corpse keeps its clock but the dying refuse
         // the hurt): remainingFireTicks > 0 && !fireImmune -> the %20
         // onFire hurt (not in lava — no lava in this lane), then the
-        // decrement.
+        // decrement. THE DOSE THE WINDOW ANSWERS (the invulnerable
+        // beat the fire family's own clock keeps — the landed %20 dose
+        // arms, the deferred inFire the window's own gate answers).
+        if self.fire_hurt_cooldown > 0 {
+            self.fire_hurt_cooldown -= 1;
+        }
         if self.fire_ticks > 0 {
             let alive = self.death_time == 0 && self.health > 0.0;
             if self.fire_ticks % FIRE_DAMAGE_INTERVAL == 0 && alive {
-                self.hurt(FIRE_DAMAGE, false);
-                events.fire_hurt = true;
-                events.fire_death = self.health <= 0.0;
+                self.fire_hurt_server(FIRE_DAMAGE as f32, &mut events);
             }
             self.fire_ticks -= 1;
+        }
+        // THE APPLIER'S OWN runAfter PHASE (the deferred inFire/soul
+        // doses the tick's own walk answered — the order the queue
+        // keeps, the window the same clock answers: the soul's 2.0
+        // the plain 1.0's window the bypass pierces)
+        if alive {
+            for dose in deferred_doses {
+                self.fire_hurt_server(dose, &mut events);
+            }
         }
         // THE EXTINGUISH (the water block's inside-block effect:
         // InsideBlockEffectType.EXTINGUISH = Entity::clearFire) — the
@@ -17675,6 +17795,152 @@ mod tests {
         let burn = ZOMBIE_MAX_HEALTH - z.health;
         let doses = (burn / 0.94).round();
         assert!((doses * 0.94 - burn).abs() < 0.01, "the armor fold {burn}");
+    }
+
+    /// THE FIRE CELL'S OWN BRAND (javap `BaseFireBlock.entityInside`
+    /// the applier's own phases — the immediate FIRE_IGNITE lift the
+    /// `remainingFireTicks < 160` verdict wears, the runAfter
+    /// hurt(inFire(), fireDamage) the deferred phase serves): the
+    /// standing body the box's own overlap brands, the clock lifts
+    /// (never lowers), the doses land through the window's own law
+    /// (the first the %20 beat wears, the repeats the <= 10 gate
+    /// refuses — the net the 1.0-per-10-ticks cadence keeps), and the
+    /// smelt fold the burning death's own drops wear.
+    #[test]
+    fn the_mob_the_fire_cell_brands() {
+        let mut world = wide_flat_world();
+        let (fx, fy, fz) = (32i32, 4i32, 32i32);
+        world.set(fx, fy, fz, crate::world::FIRE);
+        let mut z = Zombie::new(1, fx as f64 + 0.5, fy as f64, fz as f64 + 0.5, 7);
+        assert!(z.touches_fire(&world), "the spawn's own box the flame cell answers");
+        // the standing body the cell's own overlap brands
+        let mut burn_before = z.health;
+        let mut first_dose_tick = None;
+        let mut landed = 0usize;
+        for t in 0..40 {
+            z.tick(&world, None, NIGHT);
+            if z.health < burn_before {
+                if first_dose_tick.is_none() {
+                    first_dose_tick = Some(t);
+                }
+                landed += 1;
+                burn_before = z.health;
+            }
+        }
+        assert_eq!(first_dose_tick, Some(0), "the standing body the first tick doses");
+        // the brand the clock lifts (never lowers): the 160 the
+        // igniteForSeconds(8) fold speaks — the drain the same walk
+        // wears (the 40-tick stand the 120 floor keeps)
+        assert!(
+            z.fire_ticks > 0 && z.fire_ticks <= 160,
+            "the clock the brand's own lift wears (the drain the same walk keeps)"
+        );
+        // THE WINDOW'S OWN CADENCE: the repeats the <= 10 gate refuses
+        // — no two landed doses within 10 ticks of each other (the net
+        // the 1.0-per-10-ticks cadence keeps)
+        assert!(landed >= 2, "the standing body the doses land (landed {landed})");
+        // THE SMELT FOLD'S OWN FEED: the brand the fire_ticks > 0 word
+        // the burning death's own drops read
+        assert!(z.fire_ticks > 0, "the brand the smelt fold's own gate feeds");
+        // THE COLD CELL'S OWN SILENCE: the body off the flame the
+        // inside walk never brands (the box the overlap refuses)
+        let mut z = Zombie::new(2, fx as f64 + 0.5, fy as f64, fz as f64 + 0.5, 7);
+        world.set(fx, fy, fz, crate::world::AIR);
+        for _ in 0..30 {
+            z.tick(&world, None, NIGHT);
+        }
+        assert_eq!(z.health, ZOMBIE_MAX_HEALTH, "the cold cell the body never brands");
+        assert_eq!(z.fire_ticks, 0, "the cold cell the clock never lifts");
+    }
+
+    /// THE SOUL CELL'S OWN DOUBLED DOSE (the same entityInside walk —
+    /// the SoulFireBlock ctor's fconst_2 the fireDamage float splits):
+    /// the soul cell the shared walk doubles, the window's own bypass
+    /// the stronger dose wears (the 2.0 the plain 1.0's window
+    /// pierces — the `amount > lastHurt` law the same walk keeps).
+    #[test]
+    fn the_soul_cell_the_doubled_dose_wears() {
+        let mut world = wide_flat_world();
+        let (sx, sy, sz) = (32i32, 4i32, 32i32);
+        world.set(sx, sy, sz, crate::world::SOUL_FIRE);
+        let mut z = Zombie::new(1, sx as f64 + 0.5, sy as f64, sz as f64 + 0.5, 7);
+        assert!(z.touches_soul_fire(&world), "the soul cell the box answers");
+        // the first tick: the %20 beat (160 % 20 == 0) the plain 1.0
+        // lands, the deferred soul 2.0 the window's own bypass pierces
+        // (the stronger the gate never refuses) — the net the 3.0 the
+        // two doses wear
+        let before = z.health;
+        z.tick(&world, None, NIGHT);
+        let burn = before - z.health;
+        assert!(
+            (burn - (0.94 + 1.92)).abs() < 0.02,
+            "the two doses the first tick wears (the 1.0 + the 2.0 the bypass lands —
+             the armor fold each dose's own amount wears): {burn}"
+        );
+        // the same walk the plain fire never doubles
+        let mut world = wide_flat_world();
+        world.set(sx, sy, sz, crate::world::FIRE);
+        let mut z = Zombie::new(2, sx as f64 + 0.5, sy as f64, sz as f64 + 0.5, 7);
+        let before = z.health;
+        z.tick(&world, None, NIGHT);
+        let burn = before - z.health;
+        assert!(
+            (burn - 0.94).abs() < 0.02,
+            "the plain fire the single dose wears: {burn}"
+        );
+    }
+
+    /// THE WINDOW'S OWN LAW (javap `LivingEntity.hurt`'s invulnerable
+    /// beat the fire doses share): the in-window repeat the gate
+    /// refuses, the clock's own drain the tick wears, the arm the
+    /// landed dose re-arms, the sun-brand's own %20 rhythm the
+    /// 20-tick spacing the window never refuses (the doses land
+    /// exactly as they did before the lane landed).
+    #[test]
+    fn the_window_the_fire_doses_share() {
+        let mut world = wide_flat_world();
+        let (fx, fy, fz) = (32i32, 4i32, 32i32);
+        world.set(fx, fy, fz, crate::world::FIRE);
+        let mut z = Zombie::new(1, fx as f64 + 0.5, fy as f64, fz as f64 + 0.5, 7);
+        // the first tick: the %20 beat lands (the window open), arms
+        // 20 — the drain the NEXT tick's own head wears (the arm the
+        // landed dose keeps intact through the same tick)
+        z.tick(&world, None, NIGHT);
+        assert_eq!(z.fire_hurt_cooldown, 20, "the landed dose arms 20");
+        // the in-window repeat (the brand the box still answers — the
+        // deferred dose the > 10 gate refuses: the same-dose repeat)
+        z.fire_hurt_cooldown = 15;
+        let before = z.health;
+        z.tick(&world, None, NIGHT);
+        assert_eq!(z.health, before, "the in-window repeat the gate refuses");
+        // the window's own open gate (the <= 10 the repeats admit)
+        z.fire_hurt_cooldown = 10;
+        let before = z.health;
+        z.tick(&world, None, NIGHT);
+        assert!(z.health < before, "the open window the dose admits");
+        // THE SUN-BRAND'S OWN RHYTHM: the %20 doses the 20-tick
+        // spacing the window never refuses — the standing brand's
+        // landed cadence the sun lane's own law keeps (the seed's own
+        // moon the burn roll never re-arms: the brand the fire cell
+        // alone wears)
+        let world = wide_flat_world();
+        let mut z = Zombie::new(3, 32.0, 5.0, 32.0, 11);
+        z.fire_ticks = 160; // the pre-armed brand the test stages
+        let mut landed = 0usize;
+        let mut prev = z.health;
+        for _ in 0..160 {
+            z.tick(&world, None, NIGHT);
+            if z.health < prev {
+                landed += 1;
+            }
+            prev = z.health;
+        }
+        // the 160-tick clock: the %20 beats at 160/140/120/100/80/60/
+        // 40/20 the eight doses speak + the fire never stood (the wide
+        // flat world's own box the flame cell never wears) — the doses
+        // the window admits (the 20-tick spacing the <= 10 gate always
+        // admits)
+        assert_eq!(landed, 8, "the %20 rhythm the window keeps (landed {landed})");
     }
 
     /// THE NIGHT HIDES THEM — the MONSTERS_BURN track false, the same
