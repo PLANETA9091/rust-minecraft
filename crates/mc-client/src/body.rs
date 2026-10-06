@@ -1008,14 +1008,19 @@ pub struct PlayerBody {
     /// the start walk and the stop arm the tick's own aiStep order
     /// keeps, the glide folds the travel lane wears.
     pub fall_flying: bool,
-    /// THE FALL-FLYING WEAR CLOCK (javap `LivingEntity.updateFallFlying`
-    /// the 26.2 walk — the `fallFlyTicks` field the server arm's own
-    /// first fold keeps: `i = ++fallFlyTicks` each gliding tick, the
-    /// `i % 10 == 0` gate the gameEvent ELYTRA_GLIDE speaks, the `(i /
-    /// 10) % 2 == 0` gate the hurtAndBreak(1) answer). The counter the
-    /// walk NEVER resets — the rhythm rides across glides (the 26.2
-    /// bytecode carries no reset arm, the getFallFlyingTicks read the
-    /// same field keeps).
+    /// THE FALL-FLYING WEAR CLOCK (javap `LivingEntity.tick` the 26.2
+    /// walk — the `fallFlyTicks` field the glide-gated pair keeps: the
+    /// pc 496-504 gate the isFallFlying win `updateFallFlying` speaks
+    /// (the local `i = fallFlyTicks + 1` fold the `i % 10 == 0` gate
+    /// the gameEvent ELYTRA_GLIDE answers, the `(i / 10) % 2 == 0`
+    /// gate the hurtAndBreak(1) rides), the pc 598-620 tail the field
+    /// itself banks — `isFallFlying() ? ++fallFlyTicks :
+    /// fallFlyTicks = 0`, the reset arm the NON-gliding tick speaks).
+    /// The grounded tick the clock zeroes — the fresh glide the
+    /// rhythm restarts (the prior round's "never resets" verdict the
+    /// updateFallFlying-only view wore — that walk's istore_1 the
+    /// LOCAL alone banks, the tick()'s own putfield walk the re-exam
+    /// retires).
     pub fall_fly_ticks: i32,
     /// THE ELYTRA'S OWN DAMAGE BANK (javap `ItemStack.hurtAndBreak` —
     /// the `damage` the applyDamage walk banks, the elytra item's own
@@ -1755,18 +1760,20 @@ impl PlayerBody {
         if self.fall_flying && !self.fall_flying_can_glide() {
             self.fall_flying = false;
         }
-        // THE FALL-FLYING WEAR (javap `LivingEntity.updateFallFlying`
-        // the 26.2 walk — the server arm the canGlide win banks, the
-        // walk the aiStep's own call right before the travel keeps:
-        // `i = ++fallFlyTicks` each gliding tick, the `i % 10 == 0`
-        // gate the gameEvent ELYTRA_GLIDE speaks, the `(i / 10) % 2 ==
-        // 0` gate the hurtAndBreak(1) answer — the every-20-tick wear
-        // the ONE qualifying slot's stack carries: the gliding-slot
-        // list the canGlideUsing filter banks holds the CHEST alone,
-        // the Util.getRandom pick the single-element list never
-        // shakes). The retire tick the stop arm claims — the wear
-        // never rides it (the vanilla's gate-then-return shape the
-        // same order keeps).
+        // THE FALL-FLYING WEAR (javap `LivingEntity.tick` the 26.2
+        // walk — the pc 496-504 gate the isFallFlying win the
+        // updateFallFlying call speaks right before the travel: the
+        // server arm the canGlide win banks, the local `i =
+        // fallFlyTicks + 1` fold the `i % 10 == 0` gate the gameEvent
+        // ELYTRA_GLIDE answers, the `(i / 10) % 2 == 0` gate the
+        // hurtAndBreak(1) rides — the every-20-tick wear the ONE
+        // qualifying slot's stack carries: the gliding-slot list the
+        // canGlideUsing filter banks holds the CHEST alone, the
+        // Util.getRandom pick the single-element list never shakes).
+        // The retire tick the stop arm claims — the wear never rides
+        // it (the vanilla's gate-then-return shape the same order
+        // keeps). The field walk itself the tick()'s own pc 598-620
+        // tail banks — the else arm below the reset speaks.
         if self.fall_flying {
             self.fall_fly_ticks += 1;
             let i = self.fall_fly_ticks;
@@ -1776,6 +1783,14 @@ impl PlayerBody {
                 }
                 self.elytra_glide_event_due = true;
             }
+        } else {
+            // THE RESET ARM (javap `LivingEntity.tick` pcs 598-620 —
+            // the `ifeq 618 / iconst_0 / putfield fallFlyTicks` walk
+            // the non-gliding tick answers: the grounded tick the
+            // clock zeroes, the fresh glide the rhythm restarts — the
+            // every-10 gate the FRESH count speaks, the stale field
+            // the old walk's across-glide ride the re-exam retires).
+            self.fall_fly_ticks = 0;
         }
         // THE GLIDE'S OWN ROUTE (javap `LivingEntity.travelFallFlying`
         // the 26.2 walk — the travelVec arg the glide lane NEVER
@@ -4459,15 +4474,17 @@ mod tests {
         assert!(!b.fall_flying, "the grounded body never glides");
     }
 
-    /// THE FALL-FLYING WEAR'S OWN CLOCK (javap `updateFallFlying` the
-    /// 26.2 walk): the gliding body's `i = ++fallFlyTicks` walk — the
-    /// damage banks at the i%20 gates (20, 40 — the (i/10)%2 == 0 arm
-    /// speaks), the gameEvent due at EVERY i%10 gate (10, 20, 30, 40),
-    /// the counter the stop+restart never resets (the rhythm rides
-    /// across glides), the last point's refusal the canGlideUsing arm
-    /// speaks (the 431-damage body the stop arm retires, the wear the
-    /// retire tick never rides, the break the glide's own reach never
-    /// triggers — the isBroken arm the direct hurt call answers).
+    /// THE FALL-FLYING WEAR'S OWN CLOCK (javap `LivingEntity.tick` the
+    /// 26.2 walk): the gliding body's wear walk — the damage banks at
+    /// the i%20 gates (20, 40 — the (i/10)%2 == 0 arm speaks), the
+    /// gameEvent due at EVERY i%10 gate (10, 20, 30, 40), the stopped
+    /// tick the pc 598-620 reset arm zeroes (the fresh glide the count
+    /// restarts — the second ride the 1..20 walk banks, the event
+    /// rhythm the same gates lands), the last point's refusal the
+    /// canGlideUsing arm speaks (the 431-damage body the stop arm
+    /// retires, the wear the retire tick never rides, the break the
+    /// glide's own reach never triggers — the isBroken arm the direct
+    /// hurt call answers).
     #[test]
     fn the_elytra_wear_the_clock_keeps() {
         let mut w = World::new(1, 42);
@@ -4498,14 +4515,74 @@ mod tests {
                 b.fall_flying = true;
             }
         }
-        // the event rhythm: EVERY i%10 gate speaks (the 20th tick's
-        // stop+restart the clock's own continuity keeps — the gates at
-        // 10, 20, 30, 40 all land)
+        // the event rhythm: EVERY i%10 gate speaks (the stopped tick
+        // the reset arm zeroes — the fresh glide the count restarts,
+        // the second ride's own 10th tick the t=30 gate lands — the
+        // gates at 10, 20, 30, 40 all keep)
         assert_eq!(event_ticks, vec![10, 20, 30, 40], "the every-10 event rhythm");
         // the damage rhythm: the (i/10)%2 == 0 arm — the gates at 20
-        // and 40, NOT at 10 or 30
-        assert_eq!(b.fall_fly_ticks, 40, "the clock the stop never resets");
+        // and 40, NOT at 10 or 30 (the fresh ride's i=20 the t=40
+        // gate wears)
+        assert_eq!(
+            b.fall_fly_ticks, 20,
+            "the stopped tick the reset arm zeroes — the second glide the fresh clock rides"
+        );
         assert_eq!(b.elytra_damage, 2, "the every-20 wear: two points the 40 ticks speak");
+    }
+
+    /// THE GLIDE CLOCK'S OWN RESET ARM (javap `LivingEntity.tick` the
+    /// 26.2 walk — the pc 598-620 field tail the glide's own gate
+    /// keeps: `isFallFlying() ? ++fallFlyTicks : fallFlyTicks = 0`,
+    /// the grounded tick the zero the fresh glide the count restarts,
+    /// the fresh ride's own 10th gate the event speaks, the stale
+    /// cumulative count the hurt's j=2 answer never rides).
+    #[test]
+    fn the_glide_clock_the_reset_arm_zeroes() {
+        let mut w = World::new(1, 42);
+        for x in 0..8 {
+            for z in 0..8 {
+                for y in 0..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, if y == 0 { crate::world::STONE } else { AIR });
+                }
+            }
+        }
+        // THE FIRST RIDE: 9 gliding ticks — the clock the 9 count
+        // banks, the every-10 gate the silence keeps
+        let mut b = PlayerBody::new(2.0, 64.0, 2.0, 0.0, 0.0);
+        b.fall_flying = true;
+        b.chest_glides = true;
+        for _ in 0..9 {
+            b.tick(&w, false);
+            assert!(b.fall_flying, "the airborne glide never retires");
+        }
+        assert_eq!(b.fall_fly_ticks, 9, "the first ride the 9 count banks");
+        assert!(!b.elytra_glide_event_due, "the 9 count the gate never speaks");
+        // THE GROUNDED TICK: the flag the drop answers — the reset arm
+        // the zero speaks (the old walk's cumulative 20 the fresh
+        // clock refuses — the every-10 gate the stale field never
+        // rides), the grounded tick the wear walk never enters
+        b.fall_flying = false;
+        b.tick(&w, false);
+        assert_eq!(b.fall_fly_ticks, 0, "the grounded tick the arm zeroes");
+        assert!(!b.elytra_glide_event_due, "the grounded tick no event speaks");
+        // THE FRESH RIDE: 10 gliding ticks — the event the FRESH
+        // clock's own 10th gate speaks (the cumulative count the old
+        // walk rode the reset retires), the hurt gate the fresh j=1
+        // refuses (the (i/10)%2 arm the odd answer keeps — the old
+        // walk's i=20 j=2 hurt the zeroed clock never wears)
+        let mut event_tick = 0;
+        for t in 1..=10 {
+            b.fall_flying = true;
+            b.tick(&w, false);
+            assert!(b.fall_flying, "the airborne glide never retires (tick {t})");
+            if b.elytra_glide_event_due {
+                b.elytra_glide_event_due = false;
+                event_tick = t;
+            }
+        }
+        assert_eq!(event_tick, 10, "the fresh ride the own 10th gate speaks");
+        assert_eq!(b.fall_fly_ticks, 10, "the fresh clock the 10 count keeps");
+        assert_eq!(b.elytra_damage, 0, "the fresh j=1 the hurt gate refuses");
     }
 
     /// THE LAST POINT'S OWN REFUSAL (javap `canGlideUsing`'s
