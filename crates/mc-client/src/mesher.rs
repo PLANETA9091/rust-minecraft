@@ -4538,6 +4538,113 @@ mod tests {
     }
 
     #[test]
+    fn the_lit_log_anim_the_interpolate_blends() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE INTERPOLATE LANE'S OWN WALK (the 26.2 jar's mcmeta: the
+        // lit-log strips the {"interpolate": true, "frametime": 20}
+        // 4-frame cycle carry): the blend bank the full 80-tick cycle
+        // tiles (the frametime-1 cadence the per-tick resolution
+        // keeps), the tick-0 head the BASE tile the alpha-0 identity
+        // wears (the golden safety the byte-identical head rides), the
+        // wrap the LAST frame's span the FIRST frame blends toward
+        // (javap SpriteContents$AnimationState.drawToAtlas pc 88-115 —
+        // the (frame + 1) % count modulo law)
+        assert_eq!(
+            gen_atlas::CAMPFIRE_LOG_LIT_FRAMETIME,
+            1,
+            "the per-tick blend cadence"
+        );
+        assert_eq!(
+            gen_atlas::CAMPFIRE_LOG_LIT_FRAMES.len(),
+            80,
+            "the 4-frame x 20-tick cycle"
+        );
+        assert_eq!(gen_atlas::SOUL_CAMPFIRE_LOG_LIT_FRAMES.len(), 80);
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::TILE_CAMPFIRE_LOG_LIT, 0),
+            gen_atlas::TILE_CAMPFIRE_LOG_LIT,
+            "tick 0 the base tile the alpha-0 identity wears"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::TILE_CAMPFIRE_LOG_LIT, 1),
+            gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[1],
+            "tick 1 the first blend tile the walk answers"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::TILE_CAMPFIRE_LOG_LIT, 20),
+            gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[20],
+            "tick 20 the second span's own head (the pure frame 1)"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::TILE_CAMPFIRE_LOG_LIT, 79),
+            gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[79],
+            "tick 79 the wrap span's tail"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::TILE_CAMPFIRE_LOG_LIT, 80),
+            gen_atlas::anim_tile(gen_atlas::TILE_CAMPFIRE_LOG_LIT, 0),
+            "the 80-tick cycle the playlist's own period wears"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::TILE_SOUL_CAMPFIRE_LOG_LIT, 3),
+            gen_atlas::SOUL_CAMPFIRE_LOG_LIT_FRAMES[3],
+            "the soul strip the same walk answers"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::TILE_CAMPFIRE_LOG, 7),
+            gen_atlas::TILE_CAMPFIRE_LOG,
+            "the unlit log the identity wears"
+        );
+        // THE PIXEL LAW'S OWN PROBE (the thousandths quantization the
+        // f2i truncation banks — javap pc 39-76; for the frametime 20
+        // the quantization the NO-OP law keeps — the empirical walk
+        // the 3/20 -> 150 truncation speaks, the f32 grid rounds UP):
+        // the tick-3 blend tile the exact 150/1000 alpha's round mix
+        // wears (the 149/1000 neighbor the strip refuses), the tick-10
+        // tile the exact 500/1000 half, the tick-79 wrap the 950/1000
+        // mix (the LAST frame the FIRST blends toward)
+        let base = gen_atlas::tile_rgba(gen_atlas::TILE_CAMPFIRE_LOG_LIT);
+        let f1 = gen_atlas::tile_rgba(gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[20]);
+        let t3 = gen_atlas::tile_rgba(gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[3]);
+        let t10 = gen_atlas::tile_rgba(gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[10]);
+        assert!(
+            base.iter().zip(f1.iter()).any(|(a, b)| a != b),
+            "the frame 1 the base's own pixels depart somewhere"
+        );
+        let law = |alpha: f64| -> Vec<u8> {
+            base.iter()
+                .zip(f1.iter())
+                .map(|(&a, &b)| (a as f64 + (b as f64 - a as f64) * alpha).round() as u8)
+                .collect()
+        };
+        assert_eq!(t3, law(0.15), "tick 3 every texel the 150/1000 alpha's mix wears");
+        assert_ne!(
+            t3,
+            law(0.149),
+            "the 149/1000 neighbor the exact quantization refuses"
+        );
+        assert_eq!(t10, law(0.5), "tick 10 the exact half's mix wears");
+        let f3 = gen_atlas::tile_rgba(gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[60]);
+        let t79 = gen_atlas::tile_rgba(gen_atlas::CAMPFIRE_LOG_LIT_FRAMES[79]);
+        let law_wrap = |alpha: f64| -> Vec<u8> {
+            f3.iter()
+                .zip(base.iter())
+                .map(|(&a, &b)| (a as f64 + (b as f64 - a as f64) * alpha).round() as u8)
+                .collect()
+        };
+        assert_eq!(
+            t79,
+            law_wrap(0.95),
+            "tick 79 the wrap's 950/1000 mix wears"
+        );
+        assert_ne!(
+            t79,
+            law_wrap(0.949),
+            "the wrap's own quantization the 949/1000 law refuses"
+        );
+    }
+
+    #[test]
     fn the_fluid_anim_the_strips_walk() {
         use mc_registry::generated::atlas as gen_atlas;
         // THE FLUIDS' OWN MCMETA (the 26.2 jar): water_still frametime 2

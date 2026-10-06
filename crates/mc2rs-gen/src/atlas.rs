@@ -623,6 +623,30 @@ fn bake_tint(rgba: &mut [u8], tint: u32) {
     }
 }
 
+/// THE INTERPOLATE LANE'S OWN MIX (the autopush-527 round): the two
+/// frame pixels the sub-frame alpha blends — the alpha law the vanilla
+/// sprite animator speaks (javap SpriteContents$AnimationState.
+/// drawToAtlas pc 39-76 over the 26.2 jar): `(float) subFrame / (float)
+/// frameTime` the fdiv serves, the `ldc 1000.0f` fmul + the f2i
+/// truncation the thousandths quantization banks — alpha_eff =
+/// (int)(alpha * 1000.0f) / 1000 (for the lit-log's frametime 20 the
+/// quantization the NO-OP law keeps — the f32 grid the k/20 values the
+/// exact k*50 thousandths answer, the empirical walk the 3/20 -> 150
+/// and the 19/20 -> 950 truncations speak), the next frame the
+/// (frame + 1) % count modulo the wrap law speaks (pc 88-115 — the
+/// LAST frame's span the FIRST frame blends toward), the channel mix
+/// the ANIMATE_SPRITE_INTERPOLATE pipeline's float lerp serves, the
+/// unorm8 round-to-nearest the u8 bank keeps. The four channels the
+/// same law rides (the RGBA bytes the strip frames bank).
+fn blend_frames(cur: &[u8], next: &[u8], sub: usize, time: u64) -> Vec<u8> {
+    let a = (sub as f32 / time as f32 * 1000.0f32) as i32;
+    let alpha = a as f64 / 1000.0;
+    cur.iter()
+        .zip(next.iter())
+        .map(|(&c, &n)| (c as f64 + (n as f64 - c as f64) * alpha).round() as u8)
+        .collect()
+}
+
 /// Build the atlas from the official jar bytes and emit generated Rust.
 pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<String> {
     let cursor = std::io::Cursor::new(jar_bytes);
@@ -1405,18 +1429,26 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         }
         anim_strips.push((stem.to_string(), tiles, playlist, frametime));
     }
-    // THE LIT-LOG MASTERS' OWN STATIC BANK (the dev-6 round): the two
-    // lit_log textures the template_campfire's lit faces name — 16x64
-    // strips whose mcmeta carries `{"interpolate": true, "frametime":
-    // 20}` (the 4-frame 80-tick cycle). THE INTERPOLATION GAP the
-    // honest round keeps: the vanilla sprite animator CROSS-FADES the
-    // frames the interpolate key speaks — a blend lane the atlas walk
-    // never carried (the fire/fluid strips' frametime swaps the
-    // step-only rule serves), so the masters bank the FRAME-0 still
-    // (the ember row the cycle opens), the cross-fade a future lane's
-    // own growth keeps. Named tiles the mesher's per-quad texture
-    // verdict reads (the TILE_CAMPFIRE_LOG_LIT/TILE_SOUL_CAMPFIRE_
-    // LOG_LIT consts the emit answers).
+    // THE LIT-LOG MASTERS' OWN BLEND BANK (the dev-6 round banked the
+    // static frame-0 still — the autopush-527 round the interpolate
+    // gap CLOSES): the two lit_log textures the template_campfire's
+    // lit faces name — 16x64 strips whose mcmeta carries
+    // `{"interpolate": true, "frametime": 20}` (the 4-frame 80-tick
+    // cycle). The vanilla sprite animator CROSS-FADES the frames the
+    // interpolate key speaks (javap SpriteContents$AnimationState.
+    // drawToAtlas — the alpha = subFrame/time law the thousandths
+    // quantization quantizes, the (frame+1) % count modulo the wrap
+    // law speaks), so the bank walks the FULL cycle: the base tile =
+    // the frame-0 still the named const carries (the tick-0 blend the
+    // SAME pixels answers — alpha 0 the mix's own identity keeps, the
+    // golden safety the byte-identical head rides), then one blend
+    // tile PER TICK of the 80-tick cycle (the per-tick resolution the
+    // vanilla per-sub-tick alpha the tick fold quantizes — the frametime-1
+    // cadence the strip registration wears). Named tiles the mesher's
+    // per-quad texture verdict reads (the TILE_CAMPFIRE_LOG_LIT/
+    // TILE_SOUL_CAMPFIRE_LOG_LIT consts the emit answers); the strip
+    // the anim walk's own tables bank (the CAMPFIRE_LOG_LIT_* consts
+    // the emission answers).
     for stem in ["campfire_log_lit", "soul_campfire_log_lit"] {
         if tile_names.iter().any(|n| n == stem) {
             continue; // the palette row's own bank — the dedup the walk keeps
@@ -1427,16 +1459,84 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         )
         .with_context(|| format!("texture block/{stem}.png"))?;
         let (w, h, rgba) = decode_rgba(&raw)?;
-        let (w, h, rgba) = first_frame(w, h, &rgba);
-        if w != 16 || h != 16 {
-            bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+        if w != 16 || h == 0 || h % w != 0 {
+            bail!("texture {stem}: expected the 16-wide strip, got {w}x{h}");
         }
-        let mut bytes = rgba;
-        bake_tint(&mut bytes, tint_for_texture(stem));
-        let idx = tile_names.len() as u16;
+        let frame_count = (h / w) as usize;
+        // THE MCMETA'S OWN TRUTH (the fire strips' walk the same read
+        // keeps): the frametime the key speaks, the interpolate key
+        // the blend lane DEMANDS (the absent/false key the static
+        // walk a future step strip keeps).
+        let mc_bytes = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png.mcmeta"),
+        )
+        .with_context(|| format!("texture block/{stem}.png.mcmeta"))?;
+        let mc: Value = serde_json::from_slice(&mc_bytes)
+            .with_context(|| format!("texture {stem}: mcmeta parse"))?;
+        let anim = mc
+            .get("animation")
+            .with_context(|| format!("texture {stem}: no animation key"))?;
+        let frametime_lit = anim
+            .get("frametime")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(1);
+        if frametime_lit == 0 {
+            bail!("texture {stem}: frametime 0 refuses");
+        }
+        if !anim
+            .get("interpolate")
+            .and_then(|v| v.as_bool())
+            .unwrap_or(false)
+        {
+            bail!("texture {stem}: the interpolate key the blend lane demands");
+        }
+        // THE TINT BAKE THE FRAMES WEAR FIRST (the static bank's own
+        // walk the per-frame bake keeps): the blend the TINTED frames
+        // the atlas banks mix (the lit-log stems the neutral
+        // fall-through answers — the bake the no-op keeps).
+        let strip_tint = tint_for_texture(stem);
+        let row = 16 * 16 * 4;
+        let frames: Vec<Vec<u8>> = (0..frame_count)
+            .map(|k| {
+                let mut bytes = rgba[k * row..(k + 1) * row].to_vec();
+                bake_tint(&mut bytes, strip_tint);
+                bytes
+            })
+            .collect();
+        // THE CYCLE'S OWN BANK: tick 0 the base tile reuses (the pure
+        // frame 0 the alpha-0 blend answers), ticks 1..frames*frametime
+        // the blend tiles bank (the pure frames 1.. the alpha-0 tails
+        // the span boundaries speak).
+        let cycle = frame_count as u64 * frametime_lit;
+        let base_idx = tile_names.len() as u16;
         tile_names.push(stem.to_string());
-        tile_bytes.push(bytes);
-        let _ = idx;
+        tile_bytes.push(frames[0].clone());
+        let mut tiles: Vec<u16> = Vec::with_capacity(cycle as usize);
+        tiles.push(base_idx);
+        for t in 1..cycle {
+            let cur = (t / frametime_lit) as usize % frame_count;
+            let nxt = (cur + 1) % frame_count;
+            let blended = blend_frames(
+                &frames[cur],
+                &frames[nxt],
+                (t % frametime_lit) as usize,
+                frametime_lit,
+            );
+            let idx = tile_names.len() as u16;
+            tile_names.push(format!("{stem}_blend{t:02}"));
+            tile_bytes.push(blended);
+            tiles.push(idx);
+        }
+        // THE STRIP'S OWN REGISTRATION — the anim walk the frametime-1
+        // cadence keeps (each tick ONE blend tile the cycle banks),
+        // the identity playlist the FRAMES walk serves.
+        anim_strips.push((
+            stem.to_string(),
+            tiles,
+            (0..cycle).map(|i| i as u8).collect(),
+            1,
+        ));
     }
     // THE CAKE MASTERS' OWN STATIC BANK (the autopush-523 round): the
     // three cake textures the template_cake_with_candle's faces name —
@@ -1624,7 +1724,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     // generated names the palette order carries: the const prefix the
     // strip's own stem maps (fire_0 -> FIRE_0 ... water_still -> WATER,
     // lava_still -> LAVA — the names the client's walks read).
-    let prefixes: [(&str, &str); 8] = [
+    let prefixes: [(&str, &str); 10] = [
         ("fire_0", "FIRE_0"),
         ("fire_1", "FIRE_1"),
         ("soul_fire_0", "SOUL_FIRE_0"),
@@ -1633,6 +1733,8 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         ("lava_still", "LAVA"),
         ("campfire_fire", "CAMPFIRE_FIRE"),
         ("soul_campfire_fire", "SOUL_CAMPFIRE_FIRE"),
+        ("campfire_log_lit", "CAMPFIRE_LOG_LIT"),
+        ("soul_campfire_log_lit", "SOUL_CAMPFIRE_LOG_LIT"),
     ];
     src.push_str(
         "\n/// THE ANIMATED STRIPS' OWN TABLES (the dev-5 round's fire, the\n\
@@ -1672,7 +1774,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
          \x20    /// mesher bakes (the strip's own palette row or appended frame-00)\n\
          \x20    /// the current animation frame's tile the tick answers: the\n\
          \x20    /// playlist position `(tick / frametime) % len` the vanilla\n\
-         \x20    /// TextureAtlasSprite animator's per-tick walk speaks, the six\n\
+         \x20    /// TextureAtlasSprite animator's per-tick walk speaks, the eight\n\
          \x20    /// base tiles their own strips keep, every other tile the\n\
          \x20    /// identity wears (the destroy stages, the farmland's wet face,\n\
          \x20    /// the whole block palette).\n\
@@ -1908,6 +2010,38 @@ mod tests {
         let mut none = vec![200u8, 100, 50, 255];
         bake_tint(&mut none, 0);
         assert_eq!(none, vec![200, 100, 50, 255]);
+    }
+
+    #[test]
+    fn blend_frames_walks_the_thousandths_law() {
+        // THE ALPHA LAW'S OWN QUANTIZATION (javap SpriteContents$AnimationState.
+        // drawToAtlas pc 39-76 over the 26.2 jar — the (float) subFrame /
+        // (float) frameTime fdiv the ldc 1000.0f fmul + the f2i truncation
+        // the thousandths quantization banks): for the lit-log's frametime
+        // 20 the quantization the NO-OP law keeps — the f32 grid the k/20
+        // values the exact k*50 thousandths answer (the empirical walk
+        // the 3/20 -> 150 and the 19/20 -> 950 truncations speak — the
+        // f32 rounding rounds UP here, the 0.1500000060 neighbor). The
+        // channel mix the unorm8 round-to-nearest the u8 bank keeps.
+        let cur = vec![100u8; 4];
+        let next = vec![200u8; 4];
+        // sub 0: the pure current frame (alpha 0 — the tick-0 head the
+        // base tile reuses, the golden safety rides)
+        assert_eq!(blend_frames(&cur, &next, 0, 20), cur, "alpha 0 the mix's identity");
+        // sub 10: alpha 500/1000 — the exact half the round-to-nearest
+        // .5 tie the half-up answer keeps (150)
+        assert_eq!(blend_frames(&cur, &next, 10, 20), vec![150u8; 4]);
+        // THE DELTA PROBE the laws' own razor keeps — cur 0 / next 170:
+        // the 150/1000 alpha's 25.5 the half-up 26 answers, the
+        // 149/1000 neighbor's 25.33 the 25 the truncation keeps — the
+        // two alphas the probe alone parts
+        let lo = vec![0u8; 4];
+        let hi = vec![170u8; 4];
+        assert_eq!(blend_frames(&lo, &hi, 3, 20), vec![26u8; 4], "the 150/1000 alpha the half-up 26 wears");
+        assert_eq!(blend_frames(&lo, &hi, 19, 20), vec![162u8; 4], "the 950/1000 alpha the half-up 162 wears");
+        // the plain delta the same law rides (100..200 the 115.0 exact)
+        assert_eq!(blend_frames(&cur, &next, 3, 20), vec![115u8; 4]);
+        assert_eq!(blend_frames(&cur, &next, 19, 20), vec![195u8; 4]);
     }
 
     #[test]
