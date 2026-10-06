@@ -24244,10 +24244,82 @@ impl App {
             .active_world()
             .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2));
         let held = self.held_id().and_then(mc_registry::item_name);
+        // THE DOUSE SUB-ARM (javap CandleCakeBlock.useItemOn pc 24-67
+        // over the 26.2 jar): the candleHit consult pc 24-29 the
+        // hit-location's own upper-half read answers — the private
+        // walk's `hit.getLocation().y - hit.getBlockPos().getY() >
+        // 0.5` the ldc2_w 0.5d the dcmpl speaks, the 0.5 floor the
+        // candle stick's own 8..14 base the SHAPE union keeps — the
+        // stack.isEmpty() read pc 32-36 the EMPTY main hand alone
+        // reaches (the held_id gate the offline empty-hand read
+        // wears), the LIT verdict pc 39-52 the lit kind alone
+        // answers, the extinguish walk pc 55-67 the SUCCESS the
+        // press consumes. THE FLINT/CHARGE STACKS the PASS pc 0-23
+        // the igniter arms' consult keeps — the held stack the
+        // empty-hand gate alone excludes (the held row the item
+        // lanes' own walks answer). THE EXTINGUISH ORDER (javap
+        // AbstractCandleBlock.extinguish pc 0-62): the setLit walk
+        // pc 0-7 the setValue(LIT, false) the setBlock(pos, ..., 11)
+        // bipush-11 broadcast wears FIRST — the kind swap the
+        // flag-11 chain call the campfire douse's own beat wears —
+        // the SMOKE particles lambda$extinguish$0 the offline
+        // particle lane a future round keeps (the PARTICLE_OFFSETS
+        // the single wick-top Vec3(0.5, 1.0, 0.5) the scale(0.0625)
+        // walk banks), the playSound(CANDLE_EXTINGUISH, BLOCKS,
+        // 1.0F, 1.0F) pc 40-51 the extinguish's own voice plays
+        // AFTER, the BLOCK_CHANGE gameEvent pc 56-62 the documented
+        // pending lane the offline fold never banks. The
+        // useWithoutItem's eat fall-through (the TRY_WITH_EMPTY_HAND
+        // verdict the super walk's own default returns — the class
+        // the useItemOn override never carries) the LOWER-half press
+        // alone reaches — the CakeBlock.eat + the dropResources
+        // candle drop the next round's own candidate wears.
+        let douse = self.held_id().is_none()
+            && cell_kind == Some(crate::world::CANDLE_CAKE_LIT)
+            && hit.location.1 - hit.pos.1 as f64 > 0.5;
         let candle_swap = held == Some("candle") && cell_kind == Some(crate::world::CAKE);
         let eat_bite = self.held_id().is_none()
             && cell_kind.is_some_and(crate::world::is_cake)
             && self.food_data.needs_food();
+        if !self.world_is_network && douse {
+            // THE SET BEFORE THE VOICE (the extinguish walk's own
+            // sequence — the cake-add arm's voice-first beat the
+            // bytecode's own order departs): the kind swap the unlit
+            // kind answers, the fire_shape_updates chain call the
+            // flag-11's own neighbor walk serves, the relight the
+            // emission-3 row's removal the flood re-bakes (the lit
+            // row's 3 the light grid never keeps), the mesh the swap
+            // re-speaks
+            if let Some(world) = self.offline_world.as_mut() {
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::CANDLE_CAKE);
+                world.fire_shape_updates(hit.pos);
+                world.relight();
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            // THE CANDLE_EXTINGUISH VOICE (javap pc 40-51 — the
+            // BLOCKS source at the block pos, 1.0F, 1.0F the plain
+            // row the positional walk keeps; the sounds.json's own
+            // extinguish1 rows the runtime table the pick answers)
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            let (tx, ty, tz) = (
+                hit.pos.0 as f64 + 0.5,
+                hit.pos.1 as f64 + 0.5,
+                hit.pos.2 as f64 + 0.5,
+            );
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.candle.extinguish",
+                1.0,
+                1.0,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            return true;
+        }
         if !self.world_is_network && (candle_swap || eat_bite) {
             // THE CANDLE-ON-CAKE VOICE BEFORE THE SET (the useItemOn's
             // own order — the playSound(CAKE_ADD_CANDLE, BLOCKS,
@@ -74530,6 +74602,166 @@ cow_sound_variant: None,
                 "no fire the refused placement keeps"
             );
         }
+    }
+
+    #[test]
+    fn the_empty_hand_the_lit_candle_cake_douses() {
+        // THE DOUSE ARM'S OWN WALK (javap CandleCakeBlock.useItemOn
+        // pc 24-67 + AbstractCandleBlock.extinguish pc 0-62 over the
+        // 26.2 jar): the EMPTY main hand the stack.isEmpty() read
+        // answers, the upper-half hit the candleHit read's 0.5
+        // verdict speaks (the top-face press the cell's own top the
+        // y-frac 1.0 wears), the LIT kind the verdict answers: the
+        // CANDLE_CAKE kind the setLit walk's swap wears, the
+        // flag-11 chain call the fire_shape_updates walk serves, the
+        // CANDLE_EXTINGUISH voice the extinguish walk plays AFTER
+        // the set (the bytecode's own order the cake-add arm's
+        // voice-first beat departs), the SUCCESS the press consumes
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE_LIT);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the douse the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_CAKE,
+                "the setLit walk the unlit kind wears"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.candle.extinguish")),
+            "the CANDLE_EXTINGUISH voice the log wears"
+        );
+    }
+
+    #[test]
+    fn the_lower_half_press_the_douse_refuses() {
+        // THE CANDLEHIT READ'S OWN PRECISION (javap pc 24-29 — the
+        // 0.5 the dcmpl verdict keeps): the side press the slab
+        // band's own y-frac 0.25 the upper-half verdict refuses —
+        // the douse never speaks, the TRY_WITH_EMPTY_HAND verdict
+        // the super walk's own default returns (the useWithoutItem
+        // lane the CakeBlock.eat + the dropResources candle drop a
+        // future round wears), the press the fall-through keeps,
+        // the lit kind the world keeps, no voice the log never
+        // banks
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE_LIT);
+        }
+        // THE SIDE PRESS (the -x look the yaw -pi/2 the forward walk
+        // speaks): the ray the slab band's 0.25 row enters — the
+        // y-frac the 0.5 floor the verdict refuses
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 3.5, top as f32 + 0.25, c as f32 + 0.5),
+            yaw: -std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the refused douse the press never consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_CAKE_LIT,
+                "the lit kind the press keeps"
+            );
+        }
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.candle.extinguish")),
+            "no extinguish voice the refused verdict keeps"
+        );
+    }
+
+    #[test]
+    fn the_unlit_candle_cake_the_douse_refuses() {
+        // THE LIT VERDICT'S OWN REFUSAL (javap pc 39-52 — the
+        // Boolean.booleanValue false the branch never takes): the
+        // unlit kind the douse never speaks — the press the
+        // fall-through keeps (the eat lane the candle-cake kinds a
+        // future round wears), the unlit kind the world keeps
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the refused douse the press never consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_CAKE,
+                "the unlit kind the press keeps"
+            );
+        }
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.candle.extinguish")),
+            "no extinguish voice the refused verdict keeps"
+        );
     }
 
     #[test]
