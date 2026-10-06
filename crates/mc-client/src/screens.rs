@@ -24273,13 +24273,25 @@ impl App {
         // verdict the super walk's own default returns — the class
         // the useItemOn override never carries) the LOWER-half press
         // alone reaches — the CakeBlock.eat + the dropResources
-        // candle drop the next round's own candidate wears.
+        // candle drop the candle_cake_eat arm below wears.
         let douse = self.held_id().is_none()
             && cell_kind == Some(crate::world::CANDLE_CAKE_LIT)
             && hit.location.1 - hit.pos.1 as f64 > 0.5;
         let candle_swap = held == Some("candle") && cell_kind == Some(crate::world::CAKE);
         let eat_bite = self.held_id().is_none()
             && cell_kind.is_some_and(crate::world::is_cake)
+            && self.food_data.needs_food();
+        // THE CANDLE CAKE'S OWN EAT FALL-THROUGH (javap CandleCakeBlock.
+        // useWithoutItem pc 0-33 over the 26.2 jar — the douse consult's
+        // refusal the useWithoutItem lane the TRY_WITH_EMPTY_HAND verdict
+        // alone serves): the CakeBlock.eat(level, pos, CAKE.
+        // defaultBlockState(), player) walk the FRESH-CAKE state wears —
+        // the canEat(false) gate the needsFood verdict speaks (the full
+        // bar the PASS the walk's own refusal keeps), the FoodData.eat(2,
+        // 0.1F) the bite's own feed, the bites 0->1 branch the CAKE_SLICE1
+        // kind the flag-3 setBlock answers
+        let candle_cake_eat = self.held_id().is_none()
+            && cell_kind.is_some_and(crate::world::is_candle_cake)
             && self.food_data.needs_food();
         if !self.world_is_network && douse {
             // THE SET BEFORE THE VOICE (the extinguish walk's own
@@ -24320,7 +24332,7 @@ impl App {
             );
             return true;
         }
-        if !self.world_is_network && (candle_swap || eat_bite) {
+        if !self.world_is_network && (candle_swap || eat_bite || candle_cake_eat) {
             // THE CANDLE-ON-CAKE VOICE BEFORE THE SET (the useItemOn's
             // own order — the playSound(CAKE_ADD_CANDLE, BLOCKS,
             // 1.0F, 1.0F) pc 68-80 the swap's first fruit speaks, the
@@ -24391,6 +24403,35 @@ impl App {
                     world.fire_shape_updates(pos);
                     world.relight();
                     self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                } else if candle_cake_eat {
+                    // THE EAT'S OWN WALK (javap CandleCakeBlock.
+                    // useWithoutItem pc 0-13 — the CakeBlock.eat static
+                    // the fresh-CAKE state serves): the FoodData.eat(2,
+                    // 0.1F) the bite's own feed, the bites 0->1 branch
+                    // the CAKE_SLICE1 kind the flag-3 setBlock wears
+                    // (the fire_shape_updates chain call the plain-cake
+                    // arm's own beat keeps)
+                    self.food_data.eat(2, 0.1);
+                    let pos = hit.pos;
+                    world.set(pos.0, pos.1, pos.2, crate::world::CAKE_SLICE1);
+                    world.fire_shape_updates(pos);
+                    world.relight();
+                    self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                    // THE DROP'S OWN TAIL (javap pc 15-28 — the
+                    // consumesAction verdict ALONE the dropResources
+                    // serves: the candle item the loot table's own row
+                    // the item entity the popResource law spawns — the
+                    // arm's hungry gate the verdict's own precondition
+                    // keeps, the full bar the tail never sees)
+                    for (item, count) in
+                        crate::drops::roll_drops(cell_kind.unwrap(), &mut self.drop_rng)
+                    {
+                        let id = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.drops.push(crate::drops::ItemDrop::spawn(
+                            id, item, count, pos.0, pos.1, pos.2, &mut self.drop_rng,
+                        ));
+                    }
                 }
             }
             return true;
@@ -74761,6 +74802,177 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.starts_with("block.candle.extinguish")),
             "no extinguish voice the refused verdict keeps"
+        );
+    }
+
+    #[test]
+    fn the_empty_hand_the_candle_cake_eats() {
+        // THE EAT FALL-THROUGH'S OWN WALK (javap CandleCakeBlock.
+        // useWithoutItem pc 0-33 over the 26.2 jar): the douse
+        // consult's refusal the useWithoutItem lane serves — the
+        // CakeBlock.eat static the FRESH-CAKE state wears (the canEat
+        // gate the hungry body answers, the FoodData.eat(2, 0.1F) the
+        // bite's own feed, the bites 0->1 branch the CAKE_SLICE1 kind
+        // the flag-3 setBlock wears), the consumesAction verdict the
+        // dropResources tail serves (the candle item the loot table's
+        // own row the item entity the popResource law spawns)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.drops.is_empty(), "the lane starts empty");
+        app.food_data.set_food_level(6);
+        assert!(
+            app.on_right_press(0, 0),
+            "the eat lane the press consumes"
+        );
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::CAKE_SLICE1,
+            "the fresh-CAKE state the bites 0->1 ladder wears"
+        );
+        assert_eq!(app.food_data.food_level(), 8, "the +2 feed the bar wears");
+        // THE DROP'S OWN TAIL (the candle item the loot table's own
+        // row the item entity the popResource law spawns)
+        assert_eq!(app.drops.len(), 1, "the candle drop the tail spawns");
+        let name = crate::world::NAME_OF[crate::world::CANDLE_CAKE as usize];
+        let pools = mc_registry::generated::block_drops::drops(name)
+            .expect("the candle cake's loot row exists");
+        let expected = mc_registry::item_id_by_name(pools[0].entries[0].item).unwrap();
+        assert_eq!(
+            app.drops[0].item, expected,
+            "the drop rides the table's own row"
+        );
+        assert_eq!(app.drops[0].count, 1);
+    }
+
+    #[test]
+    fn the_lit_candle_cake_the_lower_half_eats() {
+        // THE FALL-THROUGH'S OWN PRECISION (javap pc 24-29 the
+        // candleHit read the 0.5 verdict keeps, the useWithoutItem
+        // lane the refused douse alone serves): the side press the
+        // slab band's 0.25 y-frac the douse verdict refuses — the
+        // hungry body the eat walk answers: the CAKE_SLICE1 kind the
+        // fresh-CAKE state wears, the +2 feed the bar carries, the
+        // candle drop the consumesAction tail spawns, the
+        // extinguish voice the refused douse never banks
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -4..=4 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE_LIT);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 3.5, top as f32 + 0.25, c as f32 + 0.5),
+            yaw: -std::f32::consts::FRAC_PI_2,
+            pitch: 0.0,
+        });
+        app.food_data.set_food_level(6);
+        assert!(
+            app.on_right_press(0, 0),
+            "the eat walk the refused douse serves"
+        );
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::CAKE_SLICE1,
+            "the fresh-CAKE state the bites 0->1 ladder wears"
+        );
+        assert_eq!(app.food_data.food_level(), 8, "the +2 feed the bar wears");
+        assert_eq!(app.drops.len(), 1, "the candle drop the tail spawns");
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.candle.extinguish")),
+            "no extinguish voice the eat walk banks"
+        );
+    }
+
+    #[test]
+    fn the_hungry_body_the_douse_the_eat_precedes() {
+        // THE DOUSE ARM'S OWN PRECEDENCE (javap the useItemOn walk the
+        // useWithoutItem lane the dispatch's own order precedes): the
+        // upper-half press the candleHit verdict answers FIRST — the
+        // extinguish walk the hungry body never denies, the eat lane
+        // the press the douse's SUCCESS alone withholds: the unlit
+        // kind the setLit swap wears, the bar the bite never feeds,
+        // the candle drop the eat's tail never spawns
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE_LIT);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.food_data.set_food_level(6);
+        assert!(
+            app.on_right_press(0, 0),
+            "the douse the press consumes"
+        );
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::CANDLE_CAKE,
+            "the setLit walk the unlit kind wears"
+        );
+        assert_eq!(
+            app.food_data.food_level(),
+            6,
+            "the douse the bar never feeds"
+        );
+        assert!(
+            app.drops.is_empty(),
+            "the eat tail the douse's SUCCESS withholds"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.candle.extinguish")),
+            "the CANDLE_EXTINGUISH voice the log wears"
         );
     }
 
