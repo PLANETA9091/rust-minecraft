@@ -104,6 +104,7 @@ pub fn run_windowed(world: &World, lut: Option<&TextureLut>, width: usize, heigh
             fog_color: FOG_COLOR,
             fog_near: n * 0.5,
             fog_far: n * 1.6,
+            fire_anim_tick: 0, // the demo orbit's still
         };
         fb.draw_quads(&ctx, &quads);
         let render_ms = t0.elapsed().as_secs_f64() * 1000.0;

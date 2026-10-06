@@ -24,6 +24,14 @@ pub struct RenderCtx {
     pub fog_color: [f32; 3],
     pub fog_near: f32,
     pub fog_far: f32,
+    /// THE FIRE ANIMATION'S OWN CLOCK (the vanilla TextureAtlasSprite
+    /// animator's per-tick walk the 20-tps cadence speaks): the fire
+    /// multipart's two frame families the `atlas::fire_anim_tile` remap
+    /// answers at DRAW time — the strip's playlist position
+    /// `(tick / frametime) % 32`, the mesher's baked base tile the
+    /// remap never re-bakes. The 0 the golden/preview renders keep
+    /// (the honest still the fresh atlas's first playlist row wears).
+    pub fire_anim_tick: u64,
 }
 
 /// Blend function for color-only FlatQuads (official pipeline semantics).
@@ -351,6 +359,13 @@ impl Framebuf {
             if quad.translucent != translucent {
                 continue;
             }
+            // THE FIRE ANIMATION'S DRAW-TIME REMAP (the vanilla
+            // TextureAtlasSprite animator's own seat — the sprite's frame
+            // the atlas's tick walk swaps WITHOUT a re-mesh, the mesher's
+            // baked base tile the quads keep): the fire multipart's two
+            // frame families the fire_anim_tile walk answers, every other
+            // tile the identity wears.
+            let tile = atlas::fire_anim_tile(quad.tile, ctx.fire_anim_tick);
             // ---- transform + near-plane clip (Sutherland–Hodgman in clip space) ----
             let clip: Vec<[f32; 4]> = quad.pts.iter().map(|p| vp.transform_point(Vec3::new(p[0], p[1], p[2]))).collect();
             let clipped = clip_near(&clip);
@@ -395,7 +410,7 @@ impl Framebuf {
             }
             // ---- fan rasterization with perspective-correct depth + UV and
             // per-vertex color (smooth lighting) ----
-            let textured = overlay || (quad.tile != atlas::TILE_NONE && atlas::has_tiles());
+            let textured = overlay || (tile != atlas::TILE_NONE && atlas::has_tiles());
             for tri in 1..clipped.len() - 1 {
                 let (ax, ay, a_ow, a_vz) = (sx[0], sy[0], ow[0], vz[0]);
                 let (bx, by, b_ow, b_vz) = (sx[tri], sy[tri], ow[tri], vz[tri]);
@@ -459,7 +474,7 @@ impl Framebuf {
                                     (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
                                 let v =
                                     (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
-                                let texel = textures::sample_tile(quad.tile, u, v);
+                                let texel = textures::sample_tile(tile, u, v);
                                 let a = texel[3];
                                 if a <= 0.0 {
                                     continue;
@@ -476,7 +491,7 @@ impl Framebuf {
                                         * dist;
                                     let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow)
                                         * dist;
-                                    let texel = textures::sample_tile(quad.tile, u, v);
+                                    let texel = textures::sample_tile(tile, u, v);
                                     if texel[3] < 0.5 {
                                         continue; // cutout hole (leaves): no color, no depth
                                     }

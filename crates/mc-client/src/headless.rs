@@ -66,6 +66,7 @@ pub fn render_frames(
             fog_color: FOG_COLOR,
             fog_near: n * 0.55,
             fog_far: n * 1.7,
+            fire_anim_tick: 0, // the goldens' honest still
         };
         fb.draw_quads(&ctx, &quads);
         let ms = t0.elapsed().as_secs_f64() * 1000.0;

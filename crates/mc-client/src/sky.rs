@@ -1115,6 +1115,7 @@ mod tests {
             fog_color: [0.0; 3],
             fog_near: 1.0,
             fog_far: 2.0,
+            fire_anim_tick: 0,
         };
         // Deterministic build: two runs produce identical quads.
         let collect = || {
@@ -1148,6 +1149,7 @@ mod tests {
             fog_color: [0.0; 3],
             fog_near: 1.0,
             fog_far: 2.0,
+            fire_anim_tick: 0,
         };
         let midnight = 18_000i64;
         let render = |skybox: Skybox| {
@@ -1192,6 +1194,7 @@ mod tests {
             fog_color: [0.0; 3],
             fog_near: 1.0,
             fog_far: 2.0,
+            fire_anim_tick: 0,
         };
         let render = |skybox: Skybox, flash: &crate::end_flash::EndFlashState| {
             let mut fb = crate::raster::Framebuf::new(32, 32);
@@ -1239,6 +1242,7 @@ mod tests {
             fog_color: [0.0; 3],
             fog_near: 1.0,
             fog_far: 2.0,
+            fire_anim_tick: 0,
         };
         let noon = 6_000i64;
         let render = |rain: f32| {
@@ -1275,6 +1279,7 @@ mod tests {
             fog_color: [0.0; 3],
             fog_near: 1.0,
             fog_far: 2.0,
+            fire_anim_tick: 0,
         };
         let night = |rain: f32| {
             let mut fb = crate::raster::Framebuf::new(32, 32);

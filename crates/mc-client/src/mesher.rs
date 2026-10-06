@@ -1186,6 +1186,33 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     } else {
                         atlas::TILE_NONE
                     };
+                    // THE SECOND FRAME'S OWN FAMILY — the model id's
+                    // trailing digit the blockstate's own apply pairs
+                    // speak (fire_floor0 AND fire_floor1, the side0/1 +
+                    // side_alt0/1 fours, the up pair — both families the
+                    // SAME group applies, the two overlapped quads the
+                    // independent sprite flicker speaks): the *_1 models
+                    // the fire_1/soul_fire_1 strip's frame-0 tile bake
+                    // (the remap's own base), the *_0 family the kind's
+                    // single atlas tile keeps (the fire_0/soul_fire_0
+                    // strip's first frame the block palette banks). The
+                    // frames themselves the DRAW-TIME remap swaps
+                    // (`atlas::fire_anim_tile` — the mesher never
+                    // re-meshes for the flicker).
+                    let tile_of_family = |model_id: &str| -> u16 {
+                        if (id as usize) >= atlas::N_KINDS {
+                            return atlas::TILE_NONE;
+                        }
+                        if model_id.ends_with('1') {
+                            if soul {
+                                atlas::SOUL_FIRE_1_FRAMES[0]
+                            } else {
+                                atlas::FIRE_1_FRAMES[0]
+                            }
+                        } else {
+                            tile
+                        }
+                    };
                     // `shade: false` + the no-atlas boot's own default —
                     // the tile's own pixels speak, the flat palette the
                     // missing row keeps (the torch path's own verdict)
@@ -1206,6 +1233,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         let Some(model) = fire_model_quads().get(model_id) else {
                             continue;
                         };
+                        let tile = tile_of_family(model_id);
                         for q in model {
                             let mut pts = [[0f32; 3]; 4];
                             let mut colors = [[0f32; 3]; 4];
@@ -3080,17 +3108,39 @@ mod tests {
         let soul_tile = gen_atlas::FACE_TILES[crate::world::SOUL_FIRE as usize][2];
         assert_ne!(fire_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
         assert_ne!(soul_tile, gen_atlas::TILE_NONE, "the soul tile the regen banks");
+        // THE SECOND FRAME'S OWN BASE TILES — the *_1 families the
+        // appended frame-00 tiles bake (the blockstate's own apply
+        // pairs the BOTH-families fan speak)
+        let fire1_tile = gen_atlas::FIRE_1_FRAMES[0];
+        let soul1_tile = gen_atlas::SOUL_FIRE_1_FRAMES[0];
+        assert_ne!(fire1_tile, fire_tile, "the two families' own tiles");
+        assert_ne!(soul1_tile, soul_tile, "the soul families' own tiles");
         // THE FREESTANDING FAN — fire on stone (the below cell the
         // gate's sturdy arm answers): the 40 quads the floor pair (8)
-        // plus the four side groups (32) wear, the flame's own tile on
-        // every quad, the planes the cell's own footprint keeps and
+        // plus the four side groups (32) wear, the TWO frame families'
+        // own tiles on the quads (the blockstate's apply pairs the
+        // both-families fan speaks — 20/20 the even split keeps), the
+        // planes the cell's own footprint keeps and
         // the 22.4-texel rise the rotated tips' honest excursion wears
         let mut w = empty_world();
         put(&mut w, 8, 8, 8, STONE);
         put(&mut w, 8, 9, 8, crate::world::FIRE);
         let q = mesh_chunk(&w, 0, 0, None);
-        let fan: Vec<_> = q.iter().filter(|quad| quad.tile == fire_tile).collect();
+        let fan: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == fire_tile || quad.tile == fire1_tile)
+            .collect();
         assert_eq!(fan.len(), 40, "the floor pair's 8 + the four groups' 32 the fan wears");
+        assert_eq!(
+            fan.iter().filter(|quad| quad.tile == fire_tile).count(),
+            20,
+            "the *_0 family's own half the even split keeps"
+        );
+        assert_eq!(
+            fan.iter().filter(|quad| quad.tile == fire1_tile).count(),
+            20,
+            "the *_1 family's own half the even split keeps"
+        );
         for quad in &fan {
             assert!(!quad.translucent, "the flame the opaque cutout lane wears");
             for p in &quad.pts {
@@ -3126,7 +3176,10 @@ mod tests {
         put(&mut w_gate, 9, 9, 8, crate::world::LOG);
         let q_gate = mesh_chunk(&w_gate, 0, 0, None);
         assert_eq!(
-            q_gate.iter().filter(|quad| quad.tile == fire_tile).count(),
+            q_gate
+                .iter()
+                .filter(|quad| quad.tile == fire_tile || quad.tile == fire1_tile)
+                .count(),
             40,
             "the grounded fire the gate's default state keeps freestanding"
         );
@@ -3138,8 +3191,21 @@ mod tests {
         put(&mut w_east, 8, 9, 8, crate::world::FIRE);
         put(&mut w_east, 9, 9, 8, crate::world::LOG);
         let q_east = mesh_chunk(&w_east, 0, 0, None);
-        let wall: Vec<_> = q_east.iter().filter(|quad| quad.tile == fire_tile).collect();
+        let wall: Vec<_> = q_east
+            .iter()
+            .filter(|quad| quad.tile == fire_tile || quad.tile == fire1_tile)
+            .collect();
         assert_eq!(wall.len(), 8, "the east group's four models x the two faces");
+        assert_eq!(
+            wall.iter().filter(|quad| quad.tile == fire_tile).count(),
+            4,
+            "the east group's *_0 half the even split keeps"
+        );
+        assert_eq!(
+            wall.iter().filter(|quad| quad.tile == fire1_tile).count(),
+            4,
+            "the east group's *_1 half the even split keeps"
+        );
         for quad in &wall {
             for p in &quad.pts {
                 assert!(
@@ -3171,11 +3237,140 @@ mod tests {
         put(&mut w_soul, 8, 8, 8, STONE);
         put(&mut w_soul, 8, 9, 8, crate::world::SOUL_FIRE);
         let q_soul = mesh_chunk(&w_soul, 0, 0, None);
-        let soul_fan: Vec<_> = q_soul.iter().filter(|quad| quad.tile == soul_tile).collect();
+        let soul_fan: Vec<_> = q_soul
+            .iter()
+            .filter(|quad| quad.tile == soul_tile || quad.tile == soul1_tile)
+            .collect();
         assert_eq!(soul_fan.len(), 40, "the soul fan the no-when column always wears");
+        assert_eq!(
+            soul_fan.iter().filter(|quad| quad.tile == soul_tile).count(),
+            20,
+            "the soul *_0 family's own half the even split keeps"
+        );
+        assert_eq!(
+            soul_fan.iter().filter(|quad| quad.tile == soul1_tile).count(),
+            20,
+            "the soul *_1 family's own half the even split keeps"
+        );
         assert!(
-            q_soul.iter().all(|quad| quad.tile != fire_tile),
-            "the soul cell the plain flame's tile never wears"
+            q_soul.iter()
+                .all(|quad| quad.tile != fire_tile && quad.tile != fire1_tile),
+            "the soul cell the plain flame's tiles never wears"
+        );
+    }
+
+    #[test]
+    fn the_fire_anim_remap_the_playlist_walks() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE PLAYLIST'S OWN WALK — the vanilla TextureAtlasSprite
+        // animator's per-tick step the frametime 1 cadence speaks: tick
+        // t the playlist position t % 32 reads, the frames the strip's
+        // own rows bank. fire_0's mcmeta [16..31, 0..15] the playlist
+        // the jar banks, fire_1's empty animation the sequential rule
+        // serves — the two families the OUT-OF-PHASE flicker speaks.
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            gen_atlas::FIRE_0_FRAMES[16],
+            "tick 0 the playlist's own head frame 16 wears"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 1),
+            gen_atlas::FIRE_0_FRAMES[17],
+            "tick 1 the walk's own next row"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 15),
+            gen_atlas::FIRE_0_FRAMES[31],
+            "tick 15 the playlist's first leg ends"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 16),
+            gen_atlas::FIRE_0_FRAMES[0],
+            "tick 16 the second leg the frame 0 row opens"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 31),
+            gen_atlas::FIRE_0_FRAMES[15],
+            "tick 31 the playlist's own tail"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 32),
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            "the 32-tick cycle the playlist's own period wears"
+        );
+        // THE SECOND FAMILY'S OWN STRIP — the sequential walk the empty
+        // animation serves, the two families the phase split speaks
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_1_FRAME0, 0),
+            gen_atlas::FIRE_1_FRAMES[0],
+            "tick 0 the strip's own first frame"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_1_FRAME0, 1),
+            gen_atlas::FIRE_1_FRAMES[1],
+            "tick 1 the sequential walk's next row"
+        );
+        assert_ne!(
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_1_FRAME0, 0),
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            "the families' phase split the distinct frames keep"
+        );
+        // THE SOUL HALF'S OWN STRIPS — the same playlists the kind's
+        // own frame arrays answer, never the plain flame's rows
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::SOUL_FIRE_0_FRAME0, 0),
+            gen_atlas::SOUL_FIRE_0_FRAMES[16],
+            "the soul *_0 strip the playlist's own head wears"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::SOUL_FIRE_1_FRAME0, 0),
+            gen_atlas::SOUL_FIRE_1_FRAMES[0],
+            "the soul *_1 strip the sequential head wears"
+        );
+        assert_ne!(
+            gen_atlas::fire_anim_tile(gen_atlas::SOUL_FIRE_0_FRAME0, 0),
+            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            "the soul's frames the plain flame's rows never share"
+        );
+        // THE IDENTITY — every non-fire tile the remap never touches
+        // (the block palette, the destroy stages, the missing-material
+        // sentinel the flat path keeps)
+        let stone = gen_atlas::FACE_TILES[STONE as usize][2];
+        assert_eq!(gen_atlas::fire_anim_tile(stone, 7), stone, "the stone tile the identity wears");
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::DESTROY_TILES[3], 19),
+            gen_atlas::DESTROY_TILES[3],
+            "the destroy overlay's crack frames the identity wears"
+        );
+        assert_eq!(
+            gen_atlas::fire_anim_tile(gen_atlas::TILE_NONE, 5),
+            gen_atlas::TILE_NONE,
+            "the flat path's sentinel the identity wears"
+        );
+        // THE APPENDED FRAMES' OWN BODY — every frame tile the non-empty
+        // 16x16 texel body carries, the frame-00 rows the block tile's
+        // own pixels speak (the strip's first frame the palette's crop
+        // already banked — the two index spaces the same pixels wear)
+        for f in gen_atlas::FIRE_0_FRAMES.iter().copied()
+            .chain(gen_atlas::FIRE_1_FRAMES.iter().copied())
+            .chain(gen_atlas::SOUL_FIRE_0_FRAMES.iter().copied())
+            .chain(gen_atlas::SOUL_FIRE_1_FRAMES.iter().copied())
+        {
+            assert_eq!(
+                gen_atlas::tile_rgba(f).len(),
+                16 * 16 * 4,
+                "the frame tile's own body: tile {f}"
+            );
+        }
+        assert_eq!(
+            gen_atlas::tile_rgba(gen_atlas::FIRE_0_FRAME0),
+            gen_atlas::tile_rgba(gen_atlas::FIRE_0_FRAMES[0]),
+            "the block tile's pixels the strip's first frame carries"
+        );
+        assert_eq!(
+            gen_atlas::tile_rgba(gen_atlas::SOUL_FIRE_0_FRAME0),
+            gen_atlas::tile_rgba(gen_atlas::SOUL_FIRE_0_FRAMES[0]),
+            "the soul block tile's pixels the strip's first frame carries"
         );
     }
 

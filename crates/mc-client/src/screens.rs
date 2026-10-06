@@ -29736,6 +29736,13 @@ impl App {
             fog_color,
             fog_near,
             fog_far,
+            // THE FIRE ANIMATION'S OWN CLOCK — the offline world's live
+            // tick the sprite animator's 20-tps cadence speaks (the two
+            // frame families the playlist walk swaps at draw time); the
+            // networked world's clock the same app tick the render's own
+            // frame carries, the day_tick the server's Set Time word
+            // never gates.
+            fire_anim_tick: self.day_time_base.wrapping_add(self.frame),
         };
         // Official render order: sky color -> sun/moon/stars -> terrain ->
         // clouds (depth-tested against terrain, the CLOUDS pass runs with
@@ -71893,6 +71900,7 @@ cow_sound_variant: None,
             fog_color: [0.0, 0.0, 0.0],
             fog_near: 100.0,
             fog_far: 200.0,
+            fire_anim_tick: 0, // the dive preview's still
         };
 
         // THE DIVE: the seeded pool + the first-person eye under the
