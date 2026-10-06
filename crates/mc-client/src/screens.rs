@@ -9373,6 +9373,40 @@ impl App {
                         glide_pos,
                         sensor.pos,
                     ) {
+                        // THE OCCLUSION GATE (javap
+                        // VibrationSystem$Listener.handleGameEvent — the
+                        // isOccluded call the canReceiveVibration's own
+                        // phase the walk follows, the scheduleVibration
+                        // the clean ray serves): the six-ray clip the
+                        // event's block center to the listener's keeps —
+                        // the wool the tag the clip refuses, the
+                        // ANY-clean-ray rule the boolean answers; the
+                        // ACTIVE world's own cells the predicate reads
+                        // (the registry fold the state id wears), the
+                        // world-less scene the vacuum the clean answer
+                        // keeps
+                        let hearing_world = if self.world_is_network {
+                            self.net_world.as_ref()
+                        } else {
+                            self.offline_world.as_ref()
+                        };
+                        let occluded = match hearing_world {
+                            Some(w) => crate::sculk::vibration_occluded(
+                                glide_pos,
+                                (
+                                    sensor.pos.0 as f64 + 0.5,
+                                    sensor.pos.1 as f64 + 0.5,
+                                    sensor.pos.2 as f64 + 0.5,
+                                ),
+                                |x, y, z| {
+                                    crate::sculk::block_occludes(w.get(x, y, z) as u32)
+                                },
+                            ),
+                            None => false,
+                        };
+                        if occluded {
+                            continue;
+                        }
                         self.game_events.push(format!(
                             "sculk_hearing @{} x{} y{} z{} d{:.6} t{} f{} p{}",
                             self.frame,
@@ -40653,6 +40687,132 @@ mod tests {
         assert_eq!(
             app.sculk_sensors[1].clicking_at, None,
             "the whole walk the in-range cell the refusal keeps"
+        );
+    }
+
+    /// THE WOOL'S OWN REFUSAL (the occlusion walk the hearing gates):
+    /// the wool cell the ray path keeps — the hearing the isOccluded
+    /// walk refuses (the post the lane banks, the phase the sensor
+    /// never arms), the moved wool the ray path leaves — the tick-20
+    /// event the re-opened path hears (the exact hearing line the
+    /// reference folds pin), the arrival the broadcast the re-opened
+    /// activation banks.
+    #[test]
+    fn the_wool_the_hearing_refuses() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let wool_id = mc_registry::generated::block_ids::BLOCK_RANGES
+            .iter()
+            .find(|(_, _, n)| *n == "minecraft:white_wool")
+            .map(|(s, _, _)| *s as u16)
+            .expect("white_wool rides the registry");
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_sensor(0, 32, 0);
+        // THE WOOL COLUMN the ray path keeps — the cell between the
+        // event's block and the sensor's own (the chunk (0,0) the
+        // chunk-major index serves; the world the 48-high grid keeps,
+        // the scene the 32-40 band rides)
+        app.net_world.as_mut().expect("the world rides").chunks[0]
+            [36 * crate::world::CHUNK_X * crate::world::CHUNK_Z] = wool_id;
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        app.update(); // tick 10: the post banks, the hearing the wool refuses
+        assert_eq!(
+            app.game_events.len(),
+            1,
+            "the post the lane banks — the hearing the wool refuses"
+        );
+        assert!(
+            app.game_events[0].starts_with("elytra_glide @10 "),
+            "the post the lane banks"
+        );
+        {
+            let cell = &app.sculk_sensors[0];
+            assert_eq!(
+                cell.clicking_at, None,
+                "the phase the wool's refusal never arms"
+            );
+            assert_eq!(
+                cell.free_at, 0,
+                "the window the refusal never spends"
+            );
+        }
+        // THE WOOL MOVES — the ray path re-opens (the off-path cell the
+        // selectivity keeps: (5,60,5) the column walk never enters)
+        {
+            let w = app.net_world.as_mut().expect("the world rides");
+            w.chunks[0][36 * crate::world::CHUNK_X * crate::world::CHUNK_Z] =
+                crate::world::AIR;
+            w.chunks[0][5
+                + 5 * crate::world::CHUNK_X
+                + 36 * crate::world::CHUNK_X * crate::world::CHUNK_Z] = wool_id;
+        }
+        for _ in 11..=19 {
+            app.update();
+        }
+        let pos19 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        // the reference folds the tick-20 hearing's own fields pin
+        let dx = pos19.0 - 0.5;
+        let dy = pos19.1 - 32.5;
+        let dz = pos19.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let eb = (
+            pos19.0.floor() as i32,
+            pos19.1.floor() as i32,
+            pos19.2.floor() as i32,
+        );
+        let dsq = ((eb.0 - 0) * (eb.0 - 0)
+            + (eb.1 - 32) * (eb.1 - 32)
+            + (eb.2 - 0) * (eb.2 - 0)) as f64;
+        let p = std::cmp::max(1, 15 - ((15.0f64 / 8.0) * dsq.sqrt()).floor() as i32);
+        app.update(); // tick 20: the post + the hearing — the path re-opened
+        assert_eq!(
+            app.game_events.len(),
+            3,
+            "the tick-20 post + the hearing the re-opened path banks"
+        );
+        assert!(
+            app.game_events[1].starts_with("elytra_glide @20 "),
+            "the tick-20 post the lane banks"
+        );
+        assert_eq!(
+            app.game_events[2],
+            format!(
+                "sculk_hearing @20 x0 y32 z0 d{:.6} t{} f4 p{}",
+                d, t, p
+            ),
+            "the hearing the reference folds pin bit-for-bit"
+        );
+        // THE ARRIVAL: the broadcast the re-opened activation banks —
+        // the wool-refused walk the voice never wore, the re-opened
+        // hearing's window the record speaks
+        let click_at = 20 + t;
+        for _ in 21..click_at {
+            app.update();
+        }
+        app.update();
+        assert!(
+            app.game_events.iter().any(|l| l.starts_with(&format!(
+                "sculk_sensor_tendrils_clicking @{} x0.500000 y32.500000 z0.500000 r16 f0",
+                click_at
+            ))),
+            "the arrival the broadcast the re-opened activation banks"
         );
     }
 

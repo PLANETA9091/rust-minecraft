@@ -172,6 +172,183 @@ pub fn is_valid_vibration(event: &str) -> bool {
     VIBRATION_TAG.contains(&event)
 }
 
+/// THE OCCLUDES TAG'S OWN ROWS (the jar's
+/// `data/minecraft/tags/block/occludes_vibration_signals.json` the
+/// `#minecraft:wool` REFERENCE answers — the wool tag's own 16 rows
+/// the reference resolves to, the exact names the json wears, bare
+/// the VIBRATION_TAG's own format keeps).
+const OCCLUDES_VIBRATION_SIGNALS: &[&str] = &[
+    "white_wool",
+    "orange_wool",
+    "magenta_wool",
+    "light_blue_wool",
+    "yellow_wool",
+    "lime_wool",
+    "pink_wool",
+    "gray_wool",
+    "light_gray_wool",
+    "cyan_wool",
+    "purple_wool",
+    "blue_wool",
+    "brown_wool",
+    "green_wool",
+    "red_wool",
+    "black_wool",
+];
+
+/// The clip predicate's own answer (javap `lambda$isOccluded$0` — the
+/// `state.is(BlockTags.OCCLUDES_VIBRATION_SIGNALS)` the clip's stop
+/// test wears): the tag's row the true answers, the rest the false.
+pub fn occludes_vibration_signals(name: &str) -> bool {
+    OCCLUDES_VIBRATION_SIGNALS.contains(&name)
+}
+
+/// The world-cell fold the clip's predicate wears: the block state's
+/// registry name the prefix strip answers (the `minecraft:` the
+/// generated range's own names wear, the bare tag the lookup keeps).
+pub fn block_occludes(state_id: u32) -> bool {
+    match mc_registry::generated::block_ids::block_name_of(state_id) {
+        Some(name) => {
+            let bare = name.strip_prefix("minecraft:").unwrap_or(name);
+            occludes_vibration_signals(bare)
+        }
+        None => false,
+    }
+}
+
+/// THE OCCLUSION WALK (javap `VibrationSystem$Listener.isOccluded` —
+/// the FULL transcription): the endpoints the block-center folds keep
+/// (pc 0-87 — the `Mth.floor + 0.5` both ends), the SIX rays the
+/// `Direction.values()` loop serves (pc 89-165), each start the
+/// `relative(direction, 9.999999747378752E-6)` nudge wears (pc 116-122
+/// — the epsilon the widened float keeps), the clip the
+/// `Level.isBlockInLine` walk rides (the OCCLUDES predicate the clip's
+/// own tag test wears): the ANY-clean-ray rule the `!= BLOCK → false`
+/// return serves (pc 144-157), the all-blocked verdict the loop's exit
+/// speaks (pc 164: iconst_1).
+pub fn vibration_occluded(
+    from: (f64, f64, f64),
+    to: (f64, f64, f64),
+    mut occludes_at: impl FnMut(i32, i32, i32) -> bool,
+) -> bool {
+    let from_c = (
+        crate::mth::floor(from.0) as f64 + 0.5,
+        crate::mth::floor(from.1) as f64 + 0.5,
+        crate::mth::floor(from.2) as f64 + 0.5,
+    );
+    let to_c = (
+        crate::mth::floor(to.0) as f64 + 0.5,
+        crate::mth::floor(to.1) as f64 + 0.5,
+        crate::mth::floor(to.2) as f64 + 0.5,
+    );
+    // Direction.values() — the vanilla enum order the loop keeps (the
+    // boolean the order never reads — the ANY rule the set alone serves)
+    const DIRS: [(f64, f64, f64); 6] = [
+        (0.0, -1.0, 0.0),
+        (0.0, 1.0, 0.0),
+        (0.0, 0.0, -1.0),
+        (0.0, 0.0, 1.0),
+        (-1.0, 0.0, 0.0),
+        (1.0, 0.0, 0.0),
+    ];
+    for dir in DIRS {
+        let start = (
+            from_c.0 + dir.0 * 9.999999747378752e-6,
+            from_c.1 + dir.1 * 9.999999747378752e-6,
+            from_c.2 + dir.2 * 9.999999747378752e-6,
+        );
+        if !clip_hits_occluder(start, to_c, &mut occludes_at) {
+            return false;
+        }
+    }
+    true
+}
+
+/// `BlockGetter.traverseBlocks` (javap, the FULL DDA the clip walk
+/// rides) wearing the OCCLUDES predicate: the -1e-7 lerp both
+/// endpoints wear (pc 17-111), the FROM-side block the walk's head
+/// checks FIRST (pc 113-167), the step/t-max trio the frac folds keep
+/// (pc 189-341), the loop the smallest-t axis steps (pc 342-450) and
+/// every entered cell checks (pc 452-479), the clean end the t>1 exit
+/// speaks (pc 342-360 → 483-491).
+fn clip_hits_occluder(
+    from: (f64, f64, f64),
+    to: (f64, f64, f64),
+    occludes_at: &mut impl FnMut(i32, i32, i32) -> bool,
+) -> bool {
+    if from == to {
+        return false;
+    }
+    let d0 = crate::mth::lerp(-1.0e-7, to.0, from.0);
+    let d1 = crate::mth::lerp(-1.0e-7, to.1, from.1);
+    let d2 = crate::mth::lerp(-1.0e-7, to.2, from.2);
+    let d3 = crate::mth::lerp(-1.0e-7, from.0, to.0);
+    let d4 = crate::mth::lerp(-1.0e-7, from.1, to.1);
+    let d5 = crate::mth::lerp(-1.0e-7, from.2, to.2);
+    let (mut i, mut j, mut k) = (
+        crate::mth::floor(d3),
+        crate::mth::floor(d4),
+        crate::mth::floor(d5),
+    );
+    // the START cell the walk's head check fires (pc 149-167)
+    if occludes_at(i, j, k) {
+        return true;
+    }
+    let (dx, dy, dz) = (d0 - d3, d1 - d4, d2 - d5);
+    let (sx, sy, sz) = (
+        crate::mth::sign(dx),
+        crate::mth::sign(dy),
+        crate::mth::sign(dz),
+    );
+    let step_x = if sx == 0 { f64::MAX } else { sx as f64 / dx };
+    let step_y = if sy == 0 { f64::MAX } else { sy as f64 / dy };
+    let step_z = if sz == 0 { f64::MAX } else { sz as f64 / dz };
+    let mut t_max_x = step_x
+        * if sx > 0 {
+            1.0 - crate::mth::frac(d3)
+        } else {
+            crate::mth::frac(d3)
+        };
+    let mut t_max_y = step_y
+        * if sy > 0 {
+            1.0 - crate::mth::frac(d4)
+        } else {
+            crate::mth::frac(d4)
+        };
+    let mut t_max_z = step_z
+        * if sz > 0 {
+            1.0 - crate::mth::frac(d5)
+        } else {
+            crate::mth::frac(d5)
+        };
+    loop {
+        // the clean end the t>1 exit speaks — the ray reached `to`
+        // without ever touching an occluding cell
+        if t_max_x > 1.0 && t_max_y > 1.0 && t_max_z > 1.0 {
+            return false;
+        }
+        if t_max_x < t_max_y {
+            if t_max_x < t_max_z {
+                i += sx;
+                t_max_x += step_x;
+            } else {
+                k += sz;
+                t_max_z += step_z;
+            }
+        } else if t_max_y < t_max_z {
+            j += sy;
+            t_max_y += step_y;
+        } else {
+            k += sz;
+            t_max_z += step_z;
+        }
+        // the entered cell the check serves (pc 452-479)
+        if occludes_at(i, j, k) {
+            return true;
+        }
+    }
+}
+
 /// THE SENSOR'S OWN HEARING (javap the 26.2 dispatch walk — the four
 /// laws the struct's fields keep): the acceptance the walk's own order
 /// keeps —
@@ -193,10 +370,11 @@ pub fn is_valid_vibration(event: &str) -> bool {
 ///    `SculkSensorBlockEntity$VibrationUser.onReceiveVibration` — the
 ///    `distanceBetweenInBlocks` the integer-coord sqrt folds, the
 ///    redstone fold's own range arg the bipush-8 radius keeps).
-/// The OCCLUSION walk the later round serves (the wool path the
-/// open-air hearing this round never reads); the PHASE gate the call
-/// site's free-at window keeps (the data-busy + the active/cooldown
-/// pair the same fold subsumes).
+/// The OCCLUSION walk the call site's own ray serves (javap
+/// `VibrationSystem$Listener.isOccluded` — the six-ray clip the wool
+/// tag answers, the `vibration_occluded` walk the world's cells
+/// wears); the PHASE gate the call site's free-at window keeps (the
+/// data-busy + the active/cooldown pair the same fold subsumes).
 pub struct SensorHearing {
     /// the vibration's travel distance — the VibrationInfo ctor's
     /// `distanceTo` answer in f32 (the d2f the fold speaks)
@@ -468,6 +646,91 @@ mod tests {
         assert!(!is_valid_vibration("shriek"));
         assert!(!is_valid_vibration("jukebox_play"));
         assert!(!is_valid_vibration("item_interact_start"));
+    }
+
+    /// THE OCCLUDES TAG'S OWN ROWS — the jar's occludes json the
+    /// `#minecraft:wool` reference answers, the wool tag's own 16 rows
+    /// the resolution keeps, the registry fold the world's cells wear.
+    #[test]
+    fn the_occludes_tag_the_wool_rows_the_json_keeps() {
+        assert_eq!(
+            OCCLUDES_VIBRATION_SIGNALS.len(),
+            16,
+            "the wool tag's own count"
+        );
+        assert!(occludes_vibration_signals("white_wool"), "the first row");
+        assert!(occludes_vibration_signals("black_wool"), "the last row");
+        assert!(
+            occludes_vibration_signals("light_gray_wool"),
+            "the sampled row"
+        );
+        assert!(
+            !occludes_vibration_signals("stone"),
+            "the untagged the refusal keeps"
+        );
+        assert!(
+            !occludes_vibration_signals("moss_block"),
+            "the near-miss the refusal keeps"
+        );
+        let wool_id = mc_registry::generated::block_ids::BLOCK_RANGES
+            .iter()
+            .find(|(_, _, n)| *n == "minecraft:white_wool")
+            .map(|(s, _, _)| *s)
+            .expect("white_wool rides the registry");
+        assert!(
+            block_occludes(wool_id),
+            "the wool cell the registry fold answers"
+        );
+        let stone_id = mc_registry::generated::block_ids::BLOCK_RANGES
+            .iter()
+            .find(|(_, _, n)| *n == "minecraft:stone")
+            .map(|(s, _, _)| *s)
+            .expect("stone rides the registry");
+        assert!(
+            !block_occludes(stone_id),
+            "the stone cell the refusal keeps"
+        );
+    }
+
+    /// THE OCCLUSION WALK (the six-ray clip the isOccluded
+    /// transcription serves) — the clear ray the clean answer keeps,
+    /// the wool wall the all-blocked verdict wears, the ANY-clean-ray
+    /// rule the escape arm speaks, the START cell the clip's own head
+    /// check fires, the listener's own cell the walk enters the hit
+    /// keeps.
+    #[test]
+    fn the_occlusion_walk_the_rays_the_wool_blocks() {
+        let from = (0.5, 64.5, 0.5);
+        let to = (0.5, 56.5, 0.5);
+        assert!(
+            !vibration_occluded(from, to, |_, _, _| false),
+            "the open air the clean ray keeps"
+        );
+        // the wool wall the column keeps — every ray the drift the same
+        // x/z block rides, the y=60 cell ALL SIX enter
+        assert!(
+            vibration_occluded(from, to, |x, y, z| x == 0 && y == 60 && z == 0),
+            "the wool wall the six rays the blocked verdict wears"
+        );
+        // the ring of wool AROUND the column, the column cell itself
+        // air — the vertical rays the clean answer wears (the
+        // ANY-clean-ray rule the boolean speaks)
+        assert!(
+            !vibration_occluded(from, to, |x, y, z| y == 60 && !(x == 0 && z == 0)),
+            "the ring the vertical rays the clean answer keeps"
+        );
+        // the event's own block the clip's head check fires — the nudge
+        // the start the same block keeps, the BLOCK the walk wears
+        assert!(
+            vibration_occluded(from, to, |x, y, z| x == 0 && y == 64 && z == 0),
+            "the event's own block the start check the blocked verdict wears"
+        );
+        // the listener's own block the walk enters the hit keeps — the
+        // sensor in wool the hearing the vanilla walk refuses
+        assert!(
+            vibration_occluded(from, to, |x, y, z| x == 0 && y == 56 && z == 0),
+            "the listener's own block the entered cell the blocked verdict wears"
+        );
     }
 
     /// THE HEARING WALK (the dispatch's own laws the javap serves) —

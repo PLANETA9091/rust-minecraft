@@ -66,6 +66,33 @@ pub fn floor(d: f64) -> i32 {
     d.floor() as i32
 }
 
+/// `Mth.frac(double)` — the fractional part the DDA's t-max init keeps
+/// (the same Math.floor the walk serves): `d - floor(d)`, ALWAYS in
+/// 0..1 — the negative edge the toward-negative fold keeps positive.
+pub fn frac(d: f64) -> f64 {
+    d - floor(d) as f64
+}
+
+/// `Mth.sign(double) → int` — the per-axis step direction the DDA's
+/// march wears: the positive the 1 answers, the negative the -1, the
+/// zero (and the negative zero) the 0 keeps.
+pub fn sign(d: f64) -> i32 {
+    if d > 0.0 {
+        1
+    } else if d < 0.0 {
+        -1
+    } else {
+        0
+    }
+}
+
+/// `Mth.lerp(delta, start, end)` — `start + delta * (end - start)`, the
+/// -1e-7 endpoint nudge the traverseBlocks walk's own endpoint folds
+/// wear (the boundary cells the nudge keeps unambiguous).
+pub fn lerp(delta: f64, start: f64, end: f64) -> f64 {
+    start + delta * (end - start)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
