@@ -8090,6 +8090,8 @@ impl App {
         self.sculk_sensors.push(crate::sculk::SculkSensorCell {
             pos: (x, y, z),
             free_at: 0,
+            clicking_at: None,
+            stop_at: None,
         });
     }
 
@@ -9385,8 +9387,60 @@ impl App {
                         sensor.free_at = self.frame
                             + hearing.arrival_ticks as u64
                             + crate::sculk::SCULK_SENSOR_REARM_TICKS;
+                        // THE ACTIVATION'S OWN WINDOW (javap activate —
+                        // the schedule the arrival tick speaks, the
+                        // re-arm tail the stop voice answers): the
+                        // CLICKING the vibration's own travel rides,
+                        // the CLICKING_STOP the free-at's own twin
+                        // banks — the free-at the same fold the
+                        // window's tail keeps
+                        sensor.clicking_at =
+                            Some(self.frame + hearing.arrival_ticks as u64);
+                        sensor.stop_at = Some(sensor.free_at);
                     }
                 }
+            }
+            // THE SENSOR'S OWN VOICE SWEEP (javap SculkSensorBlock —
+            // the block-entity tick the activation's scheduled window
+            // speaks, EVERY tick the pending answers drain): the
+            // CLICKING the arrival tick answers (activate pcs 73-141 —
+            // the WATERLOGGED gate the dry cell passes, the DDD
+            // playSound at the +0.5 center, v1.0F, the level random's
+            // own 0.8F + nextFloat() * 0.2F draw), the CLICKING_STOP
+            // the re-arm tail speaks (tick pcs 56-81 — the
+            // COOLDOWN→INACTIVE setBlock the voice follows, the SAME
+            // v/pair the ServerLevel random keeps); the clicking the
+            // sweep's own head keeps (the activate the cooldown tail
+            // precedes), the cleared Option the double-voice refusal
+            // wears. THE SAME LEVEL STREAM the draw rides — the
+            // level_ambient_rng the Level.random analog the shriek's
+            // own pitch fold wears; the block-tick phase the ambient
+            // walk's draws precede (the vanilla's own tick order the
+            // sweep's head speaks)
+            let mut sensor_voices: Vec<(i32, i32, i32, &'static str, f32)> = Vec::new();
+            for sensor in &mut self.sculk_sensors {
+                if sensor.clicking_at == Some(self.frame) {
+                    sensor.clicking_at = None;
+                    sensor_voices.push((
+                        sensor.pos.0,
+                        sensor.pos.1,
+                        sensor.pos.2,
+                        "block.sculk_sensor.clicking",
+                        0.8 + self.level_ambient_rng.next_f32() * 0.2,
+                    ));
+                } else if sensor.stop_at == Some(self.frame) {
+                    sensor.stop_at = None;
+                    sensor_voices.push((
+                        sensor.pos.0,
+                        sensor.pos.1,
+                        sensor.pos.2,
+                        "block.sculk_sensor.clicking_stop",
+                        0.8 + self.level_ambient_rng.next_f32() * 0.2,
+                    ));
+                }
+            }
+            for (vx, vy, vz, key, pitch) in sensor_voices {
+                self.play_sculk_sensor_voice(vx, vy, vz, key, 1.0, pitch);
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -27082,6 +27136,35 @@ impl App {
         }
     }
 
+    /// THE SCULK-SENSOR VOICE WALK (javap activate's own DDD
+    /// `playSound(null, x+0.5, y+0.5, z+0.5, SCULK_CLICKING, BLOCKS,
+    /// ...)` shape — the +0.5 the block center the fold speaks, the
+    /// distance-delay flag false the immediate voice keeps): the
+    /// clicking and the clicking_stop the same positioned lane rides.
+    fn play_sculk_sensor_voice(
+        &mut self,
+        x: i32,
+        y: i32,
+        z: i32,
+        key: &str,
+        volume: f32,
+        pitch: f32,
+    ) {
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE SCULK-SHRIEK VOICE WALK (the case's own DDD
     /// `playLocalSound` shape): the SHRIEK HEIGHT the voice rides at
     /// (the `pos.y + TOP_Y` = +0.5 the ring's own plane keeps), the
@@ -40157,6 +40240,194 @@ mod tests {
                 d2, t2, p2
             ),
             "the re-armed hearing the reference folds pin bit-for-bit"
+        );
+    }
+
+    /// THE SENSOR'S OWN VOICE LANE (javap SculkSensorBlock — the
+    /// activation's scheduled window the sweep speaks): the hearing
+    /// the schedule arms (the CLICKING the arrival tick answers — the
+    /// post tick the voice never wears), the CLICKING the arrival
+    /// speaks (the v1.0F / 0.8F + nextFloat() * 0.2F pair the level's
+    /// own stream keeps), the CLICKING_STOP the re-arm tail answers
+    /// (the free-at's own twin), the cleared Options the double-voice
+    /// refusal wears.
+    #[test]
+    fn the_sculk_voice_the_activation_the_sensors_speak() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.place_sculk_sensor(0, 56, 0);
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        // the reference fold the arrival pins — the Vec3→CENTER
+        // distance the travel law floors
+        let dx = pos9.0 - 0.5;
+        let dy = pos9.1 - 56.5;
+        let dz = pos9.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let click_at = 10 + t;
+        let stop_at = click_at + crate::sculk::SCULK_SENSOR_REARM_TICKS as i32;
+        app.update(); // tick 10: the post + the hearing — the schedule arms
+        // THE SCHEDULE the hearing arms, the POST tick the voice
+        // never wears (the arrival the vibration's own travel speaks)
+        {
+            let cell = &app.sculk_sensors[0];
+            assert_eq!(
+                cell.clicking_at,
+                Some(click_at as u64),
+                "the arrival tick the schedule banks"
+            );
+            assert_eq!(
+                cell.stop_at,
+                Some(stop_at as u64),
+                "the re-arm tail the free-at's twin banks"
+            );
+            assert_eq!(
+                cell.free_at,
+                stop_at as u64,
+                "the free-at the same fold the window keeps"
+            );
+        }
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.sculk_sensor.clicking")),
+            "the post tick the voice never wears"
+        );
+        // the ticks between the post and the arrival: the window holds
+        for _ in 11..click_at {
+            app.update();
+        }
+        assert_eq!(
+            app.sculk_sensors[0].clicking_at,
+            Some(click_at as u64),
+            "the pending window the interim ticks keep"
+        );
+        // THE ARRIVAL TICK: the CLICKING speaks, the window's head drains
+        app.update();
+        {
+            let cell = &app.sculk_sensors[0];
+            assert_eq!(
+                cell.clicking_at, None,
+                "the cleared Option the double-voice refusal wears"
+            );
+            assert_eq!(
+                cell.stop_at,
+                Some(stop_at as u64),
+                "the stop the window's tail still banks"
+            );
+        }
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.sculk_sensor.clicking @"))
+                .expect("the CLICKING voice the arrival speaks");
+            assert!(
+                voice.starts_with(&format!("block.sculk_sensor.clicking @{click_at} ")),
+                "the arrival tick the stamp keeps: {voice}"
+            );
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|tk| tk[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (0.8..1.0).contains(&pitch),
+                "the 0.8 + r * 0.2 band the draw keeps: {pitch}"
+            );
+        }
+        // THE RE-ARM TAIL: the CLICKING_STOP speaks, the window drains
+        for _ in (click_at + 1)..stop_at {
+            app.update();
+        }
+        assert_eq!(
+            app.sculk_sensors[0].stop_at,
+            Some(stop_at as u64),
+            "the tail the interim ticks keep"
+        );
+        app.update();
+        {
+            let cell = &app.sculk_sensors[0];
+            assert_eq!(cell.stop_at, None, "the tail the window drains");
+            assert_eq!(
+                cell.free_at,
+                stop_at as u64,
+                "the phase the INACTIVE walks home — the cell hears again"
+            );
+        }
+        if sounds_loaded() {
+            let stop = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with("block.sculk_sensor.clicking_stop @"))
+                .expect("the CLICKING_STOP voice the re-arm tail speaks");
+            assert!(
+                stop.starts_with(&format!("block.sculk_sensor.clicking_stop @{stop_at} ")),
+                "the re-arm tail the stamp keeps: {stop}"
+            );
+            let pitch: f32 = stop
+                .split(" p")
+                .nth(1)
+                .and_then(|tk| tk[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (0.8..1.0).contains(&pitch),
+                "the same band the stop's draw keeps: {pitch}"
+            );
+        }
+        // THE DRAINED WINDOW: a further tick the silence keeps (no
+        // double voice the cleared Options wear)
+        let (clicks, stops) = (
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.sculk_sensor.clicking @"))
+                .count(),
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.sculk_sensor.clicking_stop @"))
+                .count(),
+        );
+        app.update();
+        assert_eq!(
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.sculk_sensor.clicking @"))
+                .count(),
+            clicks,
+            "the drained window the clicking silence keeps"
+        );
+        assert_eq!(
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.sculk_sensor.clicking_stop @"))
+                .count(),
+            stops,
+            "the drained window the stop silence keeps"
         );
     }
 

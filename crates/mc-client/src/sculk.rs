@@ -227,10 +227,28 @@ pub fn distance_between_in_blocks(a: (i32, i32, i32), b: (i32, i32, i32)) -> f32
 /// the cell the App's vec stands in): the pos the block cell keeps,
 /// the free-at the phase window's own head banks (the earliest tick
 /// the cell hears again — the arrival + the ACTIVE 30 + the COOLDOWN
-/// 10 the re-arm law folds).
+/// 10 the re-arm law folds), the pending voice window the activation's
+/// own walk banks — the CLICKING the arrival tick answers (javap
+/// SculkSensorBlock.activate pcs 73-141: the WATERLOGGED `ifne` gate
+/// the dry cell passes, the DDD `playSound(null, x+0.5, y+0.5, z+0.5,
+/// SCULK_CLICKING, BLOCKS, 1.0F, random.nextFloat() * 0.2F + 0.8F)`
+/// the level's own RandomSource the draw rides), the CLICKING_STOP
+/// the re-arm tail speaks (javap tick pcs 56-81: the COOLDOWN→INACTIVE
+/// setBlock the voice follows, the SAME 1.0F / nextFloat()*0.2F+0.8F
+/// pair the ServerLevel's own random keeps).
 pub struct SculkSensorCell {
     pub pos: (i32, i32, i32),
     pub free_at: u64,
+    /// the arrival tick the SCULK_CLICKING voice answers — the
+    /// scheduleVibration's own travel the activation rides (the
+    /// onReceiveVibration walk the arrival tick speaks, the post
+    /// tick the voice never wears)
+    pub clicking_at: Option<u64>,
+    /// the re-arm tail tick the SCULK_CLICKING_STOP voice answers —
+    /// the free-at's own twin (the COOLDOWN→INACTIVE setBlock the
+    /// voice follows, the tick walk's WATERLOGGED gate the dry cell
+    /// passes)
+    pub stop_at: Option<u64>,
 }
 
 /// THE HEARING WALK (the laws the SensorHearing doc names, the order
