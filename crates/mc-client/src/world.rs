@@ -313,8 +313,46 @@ pub const FIRE: u16 = 57;
 /// floats split).
 pub const SOUL_FIRE: u16 = 58;
 
+/// Kind 59 (the sixtieth entry, the autopush-522 round): THE CANDLE'S
+/// OWN KIND — the canLight consult's own unlit row the two igniter
+/// arms wait for (javap the 26.2 jar's CandleBlock ctor: the
+/// `setValue(CANDLES, 1).setValue(LIT, false).setValue(WATERLOGGED,
+/// false)` walk the default state registers — the kind-only palette
+/// the 1-candle unlit state's rows banks). The blockstate's FIRST
+/// variant row ("candles=1,lit=false" -> block/candle_one_candle ->
+/// block/template_candle — the stick box [7,0,7]->[9,6,9] plus the
+/// two ±45° wick planes the generated ELEMENTS table carries) the
+/// atlas walk resolves, the `#all` ref the block/candle tile
+/// answers. The lightLevel lambda `lambda$static$0` the `lit ? 3 *
+/// candles : 0` fold banks — the UNLIT row the dark 0 the emission
+/// table keeps. The canSurvive the `Block.canSupportCenter(below,
+/// UP)` delegate the torch's own law speaks (the placement gate the
+/// [`can_support_torch`] fold serves). The LIT state the palette
+/// CANNOT speak as a property — the kind-only vocabulary the
+/// [`CANDLE_LIT`] half-kind word carries, the igniter arms' own
+/// setValue walk the swap answers.
+pub const CANDLE: u16 = 59;
+
+/// Kind 60 (the sixty-first entry, the same round): THE LIT CANDLE'S
+/// OWN KIND — the canLight branch's own product (javap
+/// FlintAndSteelItem.useOn pc 77-97: the `setBlock(clickedPos,
+/// state.setValue(BlockStateProperties.LIT, true), 11)` walk the
+/// flag-11 broadcast wears; FireChargeItem.useOn pc 50-67 the
+/// `setBlockAndUpdate` flag-3 sibling serves). The "candles=1,
+/// lit=true" variant the SAME template geometry resolves (the
+/// stick box the wick planes the lit walk keeps verbatim), the
+/// `#all` ref the block/candle_lit tile answers (the flame pixels
+/// the lit master carries). The lightLevel lambda's lit arm the
+/// 1-candle row's 3 the emission table answers — the light grid
+/// the set walk's incremental flood bakes (the fire kinds' own
+/// rows the same walk speaks). The name the dig/drop/sound lanes
+/// resolve the BASE "candle" row keeps (the double-plant's shared
+/// row precedent — the instabreak 0.1 + the CANDLE sound row the
+/// jar's registry answers, the pick lane the same item id grants).
+pub const CANDLE_LIT: u16 = 60;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 59] = [
+pub const NAME_OF: [&str; 61] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -351,6 +389,14 @@ pub const NAME_OF: [&str; 59] = [
     // generated atlas REGISTRY_NAMES rows exactly keep, the runtime
     // mapper's own verdict the networked world's fires land through)
     "fire", "soul_fire",
+    // THE CANDLE PAIR'S OWN ROWS (the canLight consult's own kinds —
+    // the lit kind the BASE name the shared-row law keeps: the dig
+    // row (0.1 hardness), the drops table (the self-entry), the
+    // sounds' CANDLE row and the item id the pick lane grants BOTH
+    // states speak — the placeable lookup the reverse walk the
+    // UNLIT kind's first row answers, the lit swap the igniter
+    // arms' own product never places)
+    "candle", "candle",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -363,6 +409,16 @@ pub const NAME_OF: [&str; 59] = [
 pub fn is_flower(id: u16) -> bool {
     (DANDELION..=POPPY).contains(&id)
         || (AZURE_BLUET..=WHITE_TULIP).contains(&id)
+}
+
+/// THE CANDLE PAIR'S OWN FAMILY — the canLight consult's own kinds the
+/// two igniter arms read (the unlit kind the consult answers, the lit
+/// kind the branch's own product the consult refuses — the vanilla
+/// `!LIT` verdict the kind-only vocabulary the pair's split wears).
+/// The mesher's element lane, the collision's Empty row and the
+/// emission's lit-3 row the same family predicate reads.
+pub fn is_candle(id: u16) -> bool {
+    id == CANDLE || id == CANDLE_LIT
 }
 
 /// THE HIGH STATES' OWN FAMILY — the poppy first row and the three
@@ -613,6 +669,17 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // THROUGH the flame cell the entityInside walk then brands)
         || id == FIRE
         || id == SOUL_FIRE
+        // THE CANDLE PAIR'S OWN ROW (the autopush-522 round — the
+        // blocks clinit's CandleBlock registration the SHAPE boxes
+        // speak: the 1-candle box [7,0,7]->[9,6,9] a 2x6x2-px center
+        // column the per-cell vocabulary's Empty/Column/Full arms
+        // cannot speak — the Empty row the honest feel-fold keeps:
+        // the vanilla body the 6-px box the auto-step walks over
+        // (the 0.6-block step height the sweep instantly answers),
+        // the pass-through the per-cell fold the same feel speaks;
+        // the placement-obstruction refusal the coarse fold never
+        // wears — the documented gap the small-shape family keeps)
+        || is_candle(id)
     {
         CollisionShape::Empty
     } else if id == FARMLAND || id == DIRT_PATH {

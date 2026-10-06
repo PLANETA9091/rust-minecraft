@@ -24248,9 +24248,9 @@ impl App {
                     // THE FIRE CHARGE'S OWN PLACEMENT ARM (javap
                     // FireChargeItem.useOn — the separate class's own
                     // walk the same pass serves: the canLight consults
-                    // the clicked read never fires the offline palette
-                    // the three kinds never carries, the placement
-                    // branch the setBlockAndUpdate + shrink walk keeps)
+                    // the clicked candle the lit branch the autopush-522
+                    // palette FIRES, the placement branch the
+                    // setBlockAndUpdate + shrink walk keeps)
                     if let Some(placed) = self.on_right_press_fire_charge_placement_arm(&hit) {
                         return placed;
                     }
@@ -24457,8 +24457,12 @@ impl App {
         // UNSTABLE_BOTTOM_CENTER tag the fence-gate family the palette
         // never banks, the no-op the vocabulary wears), the floating
         // torch the refusal keeps — the press the PASS carries, the
-        // item lanes follow, nothing consumed.
-        if crate::world::is_torch(block) {
+        // item lanes follow, nothing consumed. THE CANDLE'S OWN ROW
+        // (the autopush-522 round — javap CandleBlock.canSurvive the
+        // SAME `canSupportCenter(below, UP)` delegate the 26.2 jar
+        // speaks): the shared predicate the floating candle the same
+        // refusal keeps.
+        if crate::world::is_torch(block) || crate::world::is_candle(block) {
             let below = self
                 .active_world()
                 .map(|w| w.get(cell.0, cell.1 - 1, cell.2));
@@ -27746,9 +27750,13 @@ impl App {
     /// over the real 26.2 jar (the item's own walk the BLOCK-use pass
     /// reaches): the clicked cell's `canLight` consults FIRST (the
     /// CampfireBlock/CandleBlock/CandleCakeBlock rows the lit-arm
-    /// serves — the offline palette the three kinds never carries, the
-    /// branch the clicked read never fires, the placement's own walk
-    /// follows), then `pos = clickedPos.relative(getClickedFace())`
+    /// serves — the offline palette the CANDLE kind the autopush-522
+    /// round carries, the consult's own lit branch the clicked candle
+    /// FIRES: the sound-then-set walk the branch body speaks; the
+    /// campfire/candle-cake rows the palette still never carries, the
+    /// unlit campfire the shovel-douse lane a future round keeps), the
+    /// refusal the placement's own walk follows: then `pos =
+    /// clickedPos.relative(getClickedFace())`
     /// the placement cell the entry face's normal keeps, then
     /// `BaseFireBlock.canBePlacedAt(level, pos, horizontalDirection)`
     /// the gate the bytecode's pc 153-156 ifeq wears — the target
@@ -27787,6 +27795,62 @@ impl App {
         let held = self.held_id().and_then(mc_registry::item_name)?;
         if held != "flint_and_steel" {
             return None;
+        }
+        // THE CANLIGHT CONSULT'S OWN LIT BRANCH (javap
+        // FlintAndSteelItem.useOn pc 24-45 over the 26.2 jar: the
+        // CampfireBlock/CandleBlock/CandleCakeBlock canLight
+        // disjunction the consult answers FIRST — CandleBlock.canLight
+        // the CANDLES tag + the `!LIT` verdict the offline palette the
+        // unlit kind's own row speaks — the branch pc 48-134 the
+        // SUCCESS verdict carries BEFORE the placement walk pc 135+
+        // reaches). THE ORDER THE BRANCH SERVES: the playSound FIRST
+        // (pc 48-74 — the FLINTANDSTEEL_USE row at the CLICKED pos the
+        // blockpos the vanilla read keeps, the volume 1.0F + the pitch
+        // `rand * 0.4F + 0.8F` the placement arm's own fold wears),
+        // then the setBlock(clickedPos, LIT=true, 11) the flag-11
+        // broadcast the chain call answers (pc 77-97), the BLOCK_CHANGE
+        // gameEvent the sculk lane's own follow-up keeps (pc 101-108 —
+        // the documented pending lane the offline world never wears),
+        // the hurtAndBreak the offline stack never carries (pc 111-128
+        // — the honest no-op the placement arm speaks), the SUCCESS
+        // the Some(true) verdict carries (pc 131-134). The LIT kind
+        // the consult REFUSES (the !LIT verdict the lit row's own
+        // state speaks — the fall-through the placement walk answers).
+        if self
+            .active_world()
+            .is_some_and(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CANDLE)
+        {
+            let (tx, ty, tz) = (
+                hit.pos.0 as f64 + 0.5,
+                hit.pos.1 as f64 + 0.5,
+                hit.pos.2 as f64 + 0.5,
+            );
+            let pitch = 0.8 + 0.4 * self.mob_rng.next_f32();
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "item.flintandsteel.use",
+                1.0,
+                pitch,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                // THE SET: the LIT swap the kind-only vocabulary the
+                // CANDLE_LIT half-kind word answers — the emission 3
+                // the light grid's own walk bakes (the relight the
+                // fire placement arm's own pattern keeps), the flag-11
+                // broadcast the chain call the same beat wears
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::CANDLE_LIT);
+                world.fire_shape_updates(hit.pos);
+                world.relight();
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            return Some(true);
         }
         // THE PLACEMENT POS: the clicked cell + the entry face's
         // normal (the context's own relative walk — the same cell the
@@ -27881,8 +27945,9 @@ impl App {
     /// reaches, the flint arm's own sibling): the clicked cell's
     /// `canLight` consults FIRST (the CampfireBlock/CandleBlock/
     /// CandleCakeBlock rows the lit-arm serves — the offline palette the
-    /// three kinds never carries, the branch the clicked read never
-    /// fires), else the placement cell the clickedPos.relative(face)
+    /// CANDLE kind the autopush-522 round carries, the consult's own
+    /// lit branch the clicked candle FIRES), else the placement cell the
+    /// clickedPos.relative(face)
     /// keeps, the `BaseFireBlock.canBePlacedAt` gate the isAir +
     /// canSurvive arms wears, the sound-then-set order the private
     /// playSound serves (the FIRECHARGE_USE row the clinit's #3239
@@ -27904,6 +27969,52 @@ impl App {
         let held = self.held_id().and_then(mc_registry::item_name)?;
         if held != "fire_charge" {
             return None;
+        }
+        // THE CANLIGHT CONSULT'S OWN LIT BRANCH (javap
+        // FireChargeItem.useOn pc 20-41 over the 26.2 jar: the SAME
+        // three-way canLight disjunction the flint's consult speaks —
+        // the branch pc 44-86 the flag verdict carries BEFORE the
+        // placement walk pc 89+ reaches). THE ORDER THE BRANCH SERVES:
+        // the private playSound FIRST (pc 44-47 — the FIRECHARGE_USE
+        // row at the CLICKED pos, the (r - r) * 0.2F + 1.0F fold the
+        // rng-less replay keeps), then the setBlockAndUpdate(clickedPos,
+        // LIT=true) the flag-3 broadcast the chain call answers
+        // (pc 50-67), the BLOCK_CHANGE gameEvent the sculk lane's own
+        // follow-up keeps (pc 71-80), the `true` the Some(true)
+        // verdict carries (pc 83-86). The LIT kind the consult
+        // REFUSES (the !LIT verdict the fall-through answers).
+        if self
+            .active_world()
+            .is_some_and(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CANDLE)
+        {
+            let (tx, ty, tz) = (
+                hit.pos.0 as f64 + 0.5,
+                hit.pos.1 as f64 + 0.5,
+                hit.pos.2 as f64 + 0.5,
+            );
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "item.firecharge.use",
+                1.0,
+                1.0, // the (r - r) fold the rng never splits
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+            if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                // THE SET: the LIT swap the setBlockAndUpdate flag-3
+                // broadcast the chain call the same beat wears (the
+                // dig lane's own flag-3 precedent the removal speaks)
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::CANDLE_LIT);
+                world.fire_shape_updates(hit.pos);
+                world.relight();
+                self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            return Some(true);
         }
         // THE PLACEMENT POS: the clicked cell + the entry face's
         // normal (the context's own relative walk — the same cell the
@@ -73857,6 +73968,158 @@ cow_sound_variant: None,
                 w.get(c - 8, top, c - 8),
                 crate::world::FIRE,
                 "the far fire the chain's reach never crosses"
+            );
+        }
+    }
+
+    #[test]
+    fn the_flint_consult_the_candle_lights() {
+        // THE CANLIGHT CONSULT'S OWN LIT BRANCH (javap
+        // FlintAndSteelItem.useOn pc 24-45 over the 26.2 jar — the
+        // CandleBlock.canLight arm the consult answers FIRST, the
+        // branch pc 48-134 the SUCCESS verdict carries): the clicked
+        // candle the LIT swap the kind-only vocabulary the CANDLE_LIT
+        // half-kind word answers — the sound the branch's first fruit
+        // speaks, the set the flag-11 broadcast the chain call wears,
+        // the placement cell the branch never touches (the fire the
+        // placement walk would set beside the candle the consult's
+        // consume keeps absent)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the lit branch the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_LIT,
+                "the lit kind the setValue walk's own swap wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "the placement cell the branch never touches — no fire beside"
+            );
+        }
+    }
+
+    #[test]
+    fn the_fire_charge_consult_the_same_beat() {
+        // THE CHARGE'S OWN CONSULT (javap FireChargeItem.useOn pc 20-41
+        // over the 26.2 jar — the SAME three-way canLight disjunction
+        // the flint's consult speaks, the branch pc 44-86 the
+        // setBlockAndUpdate flag-3 arm keeps): the clicked candle the
+        // SAME lit swap the charge's walk wears
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/fire_charge"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the charge's lit branch the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_LIT,
+                "the lit kind the setBlockAndUpdate walk wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "the placement cell the branch never touches"
+            );
+        }
+    }
+
+    #[test]
+    fn the_lit_candle_the_consult_refuses() {
+        // THE !LIT VERDICT'S OWN REFUSAL (javap CandleBlock.canLight —
+        // the tag consult the LIT row's own state refuses, the
+        // fall-through the placement walk answers): the lit candle the
+        // flint's consult NEVER relights, the placement's own
+        // canBePlacedAt gate the survival law refuses (the candle cell
+        // the below read the Empty collision keeps, the neighbors the
+        // canBurn scan refuses) — the press the PASS verdict carries,
+        // the world the same state keeps
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_LIT);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the refused consult the PASS verdict carries"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_LIT,
+                "the lit kind the press never touches"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "no fire the refused placement keeps"
             );
         }
     }

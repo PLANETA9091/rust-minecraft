@@ -1063,6 +1063,144 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE CANDLE PAIR'S OWN ELEMENT LANE (the autopush-522
+                // round — the canLight consult's own kinds finally
+                // RENDERS). blockstates/candle.json's one-candle rows:
+                // "candles=1,lit=false" -> block/candle_one_candle and
+                // "candles=1,lit=true" -> block/candle_one_candle_lit,
+                // BOTH parents block/template_candle — the stick box
+                // [7,0,7]->[9,6,9] (six faces, the `#all` ref the kind's
+                // own tile answers) PLUS the two ±45° rotY wick planes
+                // the generated ELEMENTS table carries (the derive walk
+                // bakes the rotations into the vertices the fire lane's
+                // rotated planes speak). The elements carry `shade: true`
+                // — the vanilla tesselation's FACE_SHADE term the cube
+                // path's own table wears (up 1.0, down 0.5, the four
+                // horizontals 0.8/0.6), the term the torch/fire lanes'
+                // `shade: false` elements never pay. The cell's own
+                // light every corner samples (no AO diagonals — the
+                // same withoutAO fold the element lanes keep), the down
+                // face's `cullface: down` the below cell's opaque
+                // verdict culls (the torch lane's own verdict).
+                if crate::world::is_candle(id) {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    let tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    // the no-atlas boot's own default — the tile's own
+                    // pixels speak, the flat palette the missing row
+                    // keeps (the torch path's own verdict)
+                    let base = if tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    // THE DOWN CULL'S OWN READ — the below cell the
+                    // cullface verdict samples (the vanilla cullface law:
+                    // the neighbor's face the solid render answers)
+                    let below = world.get(wx, wy - 1, wz);
+                    for q in candle_model_quads(id == crate::world::CANDLE_LIT) {
+                        if q.cullface == Some(mc_registry::element_quads::Direction::Down)
+                            && !is_transparent(below)
+                        {
+                            continue; // the stick's bottom the solid ground never shows
+                        }
+                        // THE SHADE TERM'S OWN READ — the element's
+                        // `shade: true` the vanilla tesselation's
+                        // direction table answers (the FACE_SHADE
+                        // constants the cube path wears; the quad's own
+                        // direction the derive walk's facing verdict
+                        // carries)
+                        let face_shade = if q.shade {
+                            match q.direction {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            // the texel-space uv the /16 fold normalizes
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE FIRE KINDS' OWN MULTIPART LANE (the flint's and the
                 // charge's own product finally RENDERS — the honest hole
                 // the glass precedent wore, the fan the vanilla blockstate
@@ -1456,6 +1594,31 @@ fn torch_model_quads() -> &'static [mc_registry::element_quads::Quad] {
     QUADS.get_or_init(|| {
         mc_registry::element_quads::derive_model_inherited("block/torch")
             .unwrap_or_default()
+    })
+}
+
+/// THE CANDLE PAIR'S OWN MODEL BAKES — the block/candle_one_candle and
+/// block/candle_one_candle_lit chains the registry's derive walk
+/// resolves (the torch lane's own cache pattern): BOTH walk the parent
+/// link to block/template_candle's element geometry, the merged
+/// texture map's `#all` ref the per-quad texture name answers (the
+/// block/candle and block/candle_lit masters the kind tiles bank —
+/// the lane reads the KIND's own tile, the quads' texture name the
+/// lane never consults). The failed derive the honest empty slice
+/// keeps (the stick the nothing renders).
+fn candle_model_quads(lit: bool) -> &'static [mc_registry::element_quads::Quad] {
+    static UNLIT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    static LIT: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    let cache = if lit { &LIT } else { &UNLIT };
+    cache.get_or_init(|| {
+        let model = if lit {
+            "block/candle_one_candle_lit"
+        } else {
+            "block/candle_one_candle"
+        };
+        mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
     })
 }
 
@@ -3256,6 +3419,98 @@ mod tests {
             q_soul.iter()
                 .all(|quad| quad.tile != fire_tile && quad.tile != fire1_tile),
             "the soul cell the plain flame's tiles never wears"
+        );
+    }
+
+    #[test]
+    fn the_candle_lane_the_template_bakes() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE CANDLE PAIR'S OWN TILES — the regen the two masters bank
+        // (the blockstate's one-candle rows the `#all` refs resolve),
+        // the two states' own tiles the kind rows keep
+        let unlit_tile = gen_atlas::FACE_TILES[crate::world::CANDLE as usize][2];
+        let lit_tile = gen_atlas::FACE_TILES[crate::world::CANDLE_LIT as usize][2];
+        assert_ne!(unlit_tile, gen_atlas::TILE_NONE, "the tile the regen banks");
+        assert_ne!(lit_tile, gen_atlas::TILE_NONE, "the lit tile the regen banks");
+        assert_ne!(unlit_tile, lit_tile, "the two states' own masters");
+        // THE STICK'S OWN BAKE — the unlit candle on stone: the 9 quads
+        // the box's six faces (the down face the cullface verdict
+        // culled) plus the two wick planes' four wear, the template's
+        // own texel geometry the cell keeps (the box [7,0,7]->[9,6,9],
+        // the wick planes the ±45° turns bake — the vertices never
+        // leave the cell, the rise the 7-texel wick tip wears)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::CANDLE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let stick: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == unlit_tile)
+            .collect();
+        assert_eq!(stick.len(), 9, "the box's five faces + the wick's four");
+        for quad in &stick {
+            assert!(!quad.translucent, "the candle the opaque cutout lane wears");
+            for p in &quad.pts {
+                let (fx, fy, fz) = (p[0] - 8.0, p[1], p[2] - 8.0);
+                assert!(
+                    (-1e-6..=1.0 + 1e-6).contains(&fx) && (-1e-6..=1.0 + 1e-6).contains(&fz),
+                    "the stick the cell's own footprint keeps: ({fx},{fz})"
+                );
+                assert!(
+                    (9.0 - 1e-6..=9.0 + 7.0 / 16.0 + 1e-6).contains(&fy),
+                    "the rise the box's 6 texels + the wick's 7th keeps: {fy}"
+                );
+            }
+        }
+        // THE SHADE TERM'S OWN READ — the elements' `shade: true` the
+        // vanilla tesselation's direction table answers: the up face's
+        // corners the 1.0 keeps, the horizontals the 0.8 wears (the
+        // lightmap the no-grid convention the unshaded 1.0 carries —
+        // the colors the shade alone splits)
+        assert!(
+            stick.iter().any(|quad| {
+                quad.pts.iter().all(|p| (p[1] - 9.375).abs() < 1e-5)
+                    && quad.colors.iter().all(|c| (c[0] - 1.0).abs() < 1e-5)
+            }),
+            "the box top's up face the 1.0 shade keeps"
+        );
+        assert!(
+            stick.iter().any(|quad| {
+                quad.colors.iter().all(|c| (c[0] - 0.8).abs() < 1e-5)
+            }),
+            "the horizontal faces the 0.8 shade wears"
+        );
+        assert!(
+            stick.iter().all(|quad| {
+                quad.colors.iter().all(|c| (0.5..=1.0).contains(&c[0]))
+            }),
+            "the shade table the cube path's constants keeps"
+        );
+        // THE AIR BELOW'S OWN TEN — the floating candle the down face
+        // the cull keeps: the full 10 quads the template's three
+        // elements wear
+        let mut w_float = empty_world();
+        put(&mut w_float, 8, 9, 8, crate::world::CANDLE);
+        let q_float = mesh_chunk(&w_float, 0, 0, None);
+        assert_eq!(
+            q_float
+                .iter()
+                .filter(|quad| quad.tile == unlit_tile)
+                .count(),
+            10,
+            "the down face the air-below cell never culls"
+        );
+        // THE LIT KIND'S OWN TILES — the same geometry the lit master
+        // wears: 9 quads on the stone, the lit tile the quads carry
+        let mut w_lit = empty_world();
+        put(&mut w_lit, 8, 8, 8, STONE);
+        put(&mut w_lit, 8, 9, 8, crate::world::CANDLE_LIT);
+        let q_lit = mesh_chunk(&w_lit, 0, 0, None);
+        let lit: Vec<_> = q_lit.iter().filter(|quad| quad.tile == lit_tile).collect();
+        assert_eq!(lit.len(), 9, "the lit candle the same template bakes");
+        assert!(
+            q_lit.iter().all(|quad| quad.tile != unlit_tile),
+            "the lit cell the unlit master never wears"
         );
     }
 

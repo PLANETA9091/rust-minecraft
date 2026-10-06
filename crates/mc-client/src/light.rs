@@ -89,6 +89,14 @@ fn emission(id: u16) -> u8 {
         15
     } else if id == SOUL_FIRE {
         10
+    } else if id == CANDLE_LIT {
+        // THE LIT CANDLE'S OWN ROW (the autopush-522 round — javap
+        // CandleBlock.lambda$static$0 over the 26.2 jar: the
+        // `lit ? 3 * candles : 0` fold the lightLevel registration
+        // banks, the 1-candle default state the kind-only palette
+        // speaks — the LIT row's 3 the imul's own answer, the UNLIT
+        // kind the dark 0 the else arm keeps)
+        3
     } else {
         0
     }
@@ -674,6 +682,24 @@ mod tests {
         assert_eq!(light_at(&w, 3, 6, 3).1, Some(15), "the lava's own cell");
         assert_eq!(light_at(&w, 4, 6, 3).1, Some(14), "one east");
         assert_eq!(light_at(&w, 3, 7, 3).1, Some(14), "one above");
+    }
+
+    #[test]
+    fn the_candle_pair_speak_the_lightlevel_lambda() {
+        // THE CANDLE PAIR'S OWN ROWS (the autopush-522 round — javap
+        // CandleBlock.lambda$static$0 over the 26.2 jar: the `lit ? 3 *
+        // candles : 0` fold the lightLevel registration banks, the
+        // 1-candle default state the kind-only palette speaks — the
+        // UNLIT kind the dark 0 the else arm keeps, the LIT kind the
+        // imul's own 3 answers, the flood the relight answers)
+        let mut w = empty_world();
+        w.set(3, 6, 3, CANDLE);
+        w.set(8, 6, 3, CANDLE_LIT);
+        w.relight();
+        assert_eq!(light_at(&w, 3, 6, 3).1, Some(0), "the unlit kind dark");
+        assert_eq!(light_at(&w, 8, 6, 3).1, Some(3), "the lit kind's own cell");
+        assert_eq!(light_at(&w, 9, 6, 3).1, Some(2), "one east of the candle");
+        assert_eq!(light_at(&w, 8, 7, 3).1, Some(2), "one above the candle");
     }
 
     #[test]

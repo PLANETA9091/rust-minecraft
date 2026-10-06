@@ -197,7 +197,32 @@ use zip::ZipArchive;
 /// machinery plays). The mesher's fire lane a documented follow-up
 /// keeps (the palette row the kind's tile the FACE_TILES table
 /// banks — the rendered quads the follow-up speaks).
-pub const RUNTIME_PALETTE: [&str; 59] = [
+/// candle is kind 59 and candle_lit kind 60 (the sixtieth/sixty-first
+/// entries, the autopush-522 round): the CANLIGHT CONSULT'S OWN KINDS
+/// the two igniter arms wait for (javap the 26.2 jar —
+/// FlintAndSteelItem.useOn pc 24-45 the CampfireBlock/CandleBlock/
+/// CandleCakeBlock canLight disjunction the LIT branch serves, the
+/// FireChargeItem.useOn pc 20-41 the same walk the setBlockAndUpdate
+/// flag-3 arm keeps). CandleBlock's ctor the DEFAULT state registers
+/// (CANDLES=1, LIT=false, WATERLOGGED=false — the placement walk the
+/// unlit kind speaks), the lightLevel lambda `lambda$static$0` the
+/// `lit ? 3 * candles : 0` fold banks (the 1-candle default the LIT
+/// row's 3 the emission table answers), the canSurvive the
+/// `Block.canSupportCenter(level, below, UP)` delegate the torch's
+/// own law speaks (the client's [`can_support_torch`] fold the same
+/// below-cell verdict keeps). The blockstate is a plain VARIANTS map
+/// over candles=1..4 x lit — the UNLIT kind the FIRST row resolves
+/// ("candles=1,lit=false" -> block/candle_one_candle ->
+/// block/template_candle — the stick box [7,0,7]->[9,6,9] whose SIX
+/// faces the resolve_block full-cube finder accepts, the `#all` ref
+/// block/candle the tile answers), the LIT kind the "candles=1,
+/// lit=true" row the arm reads (block/candle_one_candle_lit -> the
+/// SAME template geometry, `#all` block/candle_lit). The offline
+/// state fold the two kinds speak (the kind-only vocabulary the
+/// LIT/CANDLES properties never carries — the default state's own
+/// rows the palette banks, the lit swap the igniter arms' own
+/// setValue walk wears).
+pub const RUNTIME_PALETTE: [&str; 61] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -212,6 +237,7 @@ pub const RUNTIME_PALETTE: [&str; 59] = [
     "torch",
     "white_concrete_powder", "white_concrete",
     "fire", "soul_fire",
+    "candle", "candle_lit",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -566,6 +592,45 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("fire")
                 .with_context(|| format!("model {model_ref}: no fire texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block == "candle_lit" {
+            // THE LIT KIND'S OWN ROW (the autopush-522 round, the
+            // official 26.2 jar): the palette name the client's own
+            // half-kind word carries — the blockstate has NO
+            // candle_lit.json (the lit state the SAME candle.json's
+            // "candles=1,lit=true" variant resolves — the
+            // `_upper` half-kind precedent the registry-name strip
+            // wears). The walk reads the EXPLICIT row (never the
+            // first-variant default the unlit kind resolves), the
+            // merged texture map's `all` ref the block/candle_lit
+            // stem answers, tinted = false (the faces carry NO
+            // tintindex — the pre-colored master renders as
+            // authored).
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/candle.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate candle: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get("candles=1,lit=true"))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| "blockstate candle: no candles=1,lit=true model")?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block candle_lit: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("all")
+                .with_context(|| format!("model {model_ref}: no all texture ref"))?;
             let stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")
@@ -1254,7 +1319,10 @@ pub fn fallback_source(version: &str) -> String {
 fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
     let mut names = [""; RUNTIME_PALETTE.len()];
     for (i, name) in RUNTIME_PALETTE.iter().enumerate() {
-        names[i] = name.strip_suffix("_upper").unwrap_or(name);
+        names[i] = name
+            .strip_suffix("_upper")
+            .or_else(|| name.strip_suffix("_lit"))
+            .unwrap_or(name);
     }
     names
 }
