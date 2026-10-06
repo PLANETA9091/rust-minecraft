@@ -1044,9 +1044,17 @@ pub struct PlayerBody {
     /// THE GLIDE GAME-EVENT'S DUE FLAG (javap `updateFallFlying` —
     /// the `gameEvent(GameEvent.ELYTRA_GLIDE)` the i%10 gate speaks:
     /// the every-10-tick world event the sculk's own hearing rides).
-    /// Set every tenth gliding tick, the App drains it (the world's
-    /// sculk lane a later round may answer).
+    /// Set every tenth gliding tick, the App drains it (the sculk
+    /// lane's record the drain speaks).
     pub elytra_glide_event_due: bool,
+    /// THE GLIDE GAME-EVENT'S OWN POSITION STASH (javap
+    /// `Entity.gameEvent(Holder, Entity)` — the `getfield position`
+    /// the Level.gameEvent call carries: the event posts at the
+    /// entity's Vec3 THE MOMENT the gate speaks — the wear walk the
+    /// tick's PRE-travel head runs, the move the position never
+    /// touched yet). The gate walk banks it beside the flag, the
+    /// App's drain lane reads the pair.
+    pub elytra_glide_event_pos: (f64, f64, f64),
     /// THE WINGS ANIM'S OWN STATE (javap `ElytraAnimationState` — the
     /// rotX/rotY/rotZ + the rotXOld/rotYOld/rotZOld field pair the
     /// tick walk banks, the render's `getRotX(partialTick)` lerp the
@@ -1272,6 +1280,7 @@ impl PlayerBody {
             elytra_damage: 0,
             elytra_broke_due: false,
             elytra_glide_event_due: false,
+            elytra_glide_event_pos: (0.0, 0.0, 0.0),
             elytra_wing_rot_x: 0.0,
             elytra_wing_rot_y: 0.0,
             elytra_wing_rot_z: 0.0,
@@ -1781,7 +1790,14 @@ impl PlayerBody {
                 if (i / 10) % 2 == 0 {
                     self.elytra_hurt_and_break(1);
                 }
+                // THE EVENT'S OWN POST (javap updateFallFlying pcs
+                // 105-109 — the gameEvent call the i%10 gate's tail
+                // answers, the hurt parity the gate never reads: the
+                // odd j the hurt refuses, the event STILL speaks) —
+                // the position the PRE-travel field the Entity's own
+                // `getfield position` walk banks
                 self.elytra_glide_event_due = true;
+                self.elytra_glide_event_pos = (self.x, self.y, self.z);
             }
         } else {
             // THE RESET ARM (javap `LivingEntity.tick` pcs 598-620 —

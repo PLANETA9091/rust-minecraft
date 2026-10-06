@@ -7038,6 +7038,16 @@ pub struct App {
     /// particles.rs laws the emitters speak; the tick prunes at the
     /// lifetime the base Particle law rides).
     pub particles: Vec<crate::particles::Particle>,
+    /// THE GAME-EVENT RECORD LANE (javap `Level.gameEvent` →
+    /// `GameEventDispatcher.post` — the world's own hearing: one
+    /// line per posted event, `{event} @{tick} x{:.6} y{:.6} z{:.6}
+    /// r{radius} f{frequency}` — the r the GameEvent's
+    /// notificationRadius the register walk banks, the f the
+    /// VibrationSystem's frequency map answers, the sculk sensor's
+    /// own vibration vocabulary). The elytra glide's every-10 gate
+    /// the body's due flag + position stash bank — the drain the
+    /// record speaks.
+    pub game_events: Vec<String>,
     /// THE CRIT EMITTERS (the TrackingEmitters the crit attacks arm —
     /// 3 ticks of life each, the 16-sample walk per tick).
     pub crit_emitters: Vec<crate::particles::CritEmitter>,
@@ -7954,6 +7964,7 @@ impl App {
             eating: None,
             pieces: Vec::new(),
             particles: Vec::new(),
+            game_events: Vec::new(),
             crit_emitters: Vec::new(),
             crit_sprite: None,
             weather_rain: None,
@@ -8575,6 +8586,12 @@ impl App {
             // it — the entityEvent 47's client arm runs after it ends:
             // the slot clear, the break voice, the 5 item particles)
             let mut elytra_broke = false;
+            // THE SCULK LANE'S OWN DRAIN SLOTS (the body's borrow
+            // fills them — the gameEvent ELYTRA_GLIDE's due flag and
+            // the gate's own position stash the drain reads, the
+            // record the borrow's end speaks)
+            let mut glide_event = false;
+            let mut glide_pos = (0.0f64, 0.0f64, 0.0f64);
             // THE BROADCAST-67 POSE (the makeDrownParticles law's own
             // read — the body's feet position and delta movement the
             // bubbles' spawn speaks, captured the drain's own tick)
@@ -9218,7 +9235,13 @@ impl App {
                     // the 5 item particles the breakItem walk keeps
                     // (the post-borrow tail the disjoint split runs)
                     elytra_broke = std::mem::take(&mut b.elytra_broke_due);
-                    b.elytra_glide_event_due = false;
+                    // THE SCULK LANE'S OWN DRAIN (javap Entity.gameEvent
+                    // → Level.gameEvent → GameEventDispatcher.post —
+                    // the event the world's hearing posts: the entity's
+                    // Vec3 the gate's own pre-travel stash carries, the
+                    // silent clear the old walk wore the record retires)
+                    glide_event = std::mem::take(&mut b.elytra_glide_event_due);
+                    glide_pos = b.elytra_glide_event_pos;
                     // THE ELYTRA VOICE'S OWN MANAGER TICK (javap
                     // `ElytraOnPlayerSoundInstance.tick` — the per-tick
                     // walk the sound manager's own law keeps: the
@@ -9292,6 +9315,20 @@ impl App {
                 if let Some(elytra_id) = mc_registry::item_id_by_name("elytra") {
                     self.spawn_pieces(elytra_id, 5);
                 }
+            }
+            // THE SCULK LANE'S OWN RECORD (javap Entity.gameEvent →
+            // Level.gameEvent → ServerLevel.gameEvent →
+            // GameEventDispatcher.post the 26.2 walk: the registry
+            // name the static init's `ldc elytra_glide` speaks, the
+            // r16 the register(name)'s own `bipush 16` default-radius
+            // walk banks, the f4 the VibrationSystem's frequency map
+            // answers — the record line the lane's own vocabulary
+            // keeps, the sculk sensor's hearing a later round rides)
+            if glide_event {
+                self.game_events.push(format!(
+                    "elytra_glide @{} x{:.6} y{:.6} z{:.6} r16 f4",
+                    self.frame, glide_pos.0, glide_pos.1, glide_pos.2
+                ));
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -39768,6 +39805,110 @@ mod tests {
         assert_eq!(b.elytra_damage, 2, "the every-20 wear the 40 ticks speak");
         assert!(!b.elytra_broke_due, "the 2-point wear the break never speaks");
         assert!(b.fall_flying, "the air world the glide never retires");
+    }
+
+    /// THE SCULK LANE'S OWN RECORD (javap Entity.gameEvent →
+    /// Level.gameEvent → ServerLevel.gameEvent →
+    /// GameEventDispatcher.post the 26.2 walk): the every-10 gate
+    /// the world's hearing speaks — the record the lane banks, the
+    /// PRE-travel position the Entity's own `getfield position`
+    /// walk carries (the wear walk the tick's head runs, the move
+    /// the position never touched yet), the r16 the register(name)'s
+    /// own default-radius walk banks, the f4 the VibrationSystem's
+    /// frequency map answers.
+    #[test]
+    fn the_sculk_lane_the_glide_event_the_world_hears() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").fall_flying,
+            "the glide chord the start speaks"
+        );
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        // ticks 2..=9: the gate silent, the lane empty
+        for _ in 2..=9 {
+            app.update();
+        }
+        assert!(
+            app.game_events.is_empty(),
+            "the 9 count the gate keeps silent"
+        );
+        // the event's own position: the PRE-travel field of tick 10 =
+        // the post-tick-9 answer the body banks
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        app.update(); // tick 10: the first gate
+        assert_eq!(
+            app.game_events.len(),
+            1,
+            "the 10th tick the gate speaks"
+        );
+        assert_eq!(
+            app.game_events[0],
+            format!(
+                "elytra_glide @10 x{:.6} y{:.6} z{:.6} r16 f4",
+                pos9.0, pos9.1, pos9.2
+            ),
+            "the record the pre-travel position + the register's r16 + the vibration's f4 banks"
+        );
+        // ticks 11..=19: the rhythm's silence again
+        for _ in 11..=19 {
+            app.update();
+        }
+        let pos19 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        app.update(); // tick 20: the second gate (the HURT parity's own —
+                      // the (i/10)%2 walk the hurtAndBreak rides, the
+                      // record the gate NEVER reads)
+        assert_eq!(
+            app.game_events[1],
+            format!(
+                "elytra_glide @20 x{:.6} y{:.6} z{:.6} r16 f4",
+                pos19.0, pos19.1, pos19.2
+            ),
+            "the hurt tick the record ALIKE speaks — the parity the gate never reads"
+        );
+        // ticks 21..=40: the every-10 rhythm rides (i=30 the hurtless,
+        // i=40 the hurt pair — the count the rhythm's own answer)
+        for _ in 21..=40 {
+            app.update();
+        }
+        assert_eq!(
+            app.game_events.len(),
+            4,
+            "the every-10 rhythm the 40 ticks bank"
+        );
+        assert!(
+            app.game_events[2].starts_with("elytra_glide @30 "),
+            "the 30th stamp the rhythm banks"
+        );
+        assert!(
+            app.game_events[3].starts_with("elytra_glide @40 "),
+            "the 40th stamp the rhythm banks"
+        );
+        // tick 41: the drain the lane keeps — the no-gate tick the
+        // record never speaks
+        app.update();
+        assert_eq!(
+            app.game_events.len(),
+            4,
+            "the 41st tick the gate refuses"
+        );
     }
 
     /// THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken → the
