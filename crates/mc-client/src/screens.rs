@@ -25693,6 +25693,11 @@ impl App {
     /// banks — the queue the OFFLINE world alone fills (the networked
     /// world the fire lane's own split speaks).
     fn tick_campfire_ambient(&mut self) {
+        // the ear's own pose the walk hoists before the world borrow
+        // (the camera's own law the tick serves — the values the per-
+        // cell loop never re-reads)
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
         if let Some(world) = self.offline_world.as_mut() {
             let due = world.drain_due_campfire_ticks(self.frame);
             for (x, y, z) in due {
@@ -25729,6 +25734,34 @@ impl App {
                         );
                         self.particles.push(puff);
                     }
+                }
+                // THE CRACKLE'S OWN ANIMATE WALK (javap CampfireBlock.
+                // animateTick over the 26.2 jar — the block display
+                // tick's own lane the BE ticker's smoke walk precedes,
+                // the vanilla phase order the level tick speaks): the
+                // LIT gate pc 0-16 the kind gate above answers, the
+                // crackle arm pc 17-26 the `nextInt(10) == 0` gate
+                // every tick rolls, pc 29-92 the positioned voice the
+                // BLOCKS source plays — the cell-center anchor the
+                // +0.5 folds speak, the volume the `0.5f + nextFloat()`
+                // fold pc 63-73, the pitch the `nextFloat() * 0.7f +
+                // 0.6f` fold pc 74-88 (the TWO folds the gate hit alone
+                // spends — the draw order the bytecode's own sequence
+                // keeps), the distanceDelay the iconst_0 false wears.
+                // The soul kind the same LIT gate answers — no second
+                // verdict the arm never reads.
+                if self.level_ambient_rng.next_int(10) == 0 {
+                    let volume = 0.5f32 + self.level_ambient_rng.next_f32();
+                    let pitch = self.level_ambient_rng.next_f32() * 0.7f32 + 0.6f32;
+                    let (tx, ty, tz) = (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "block.campfire.crackle",
+                        volume,
+                        pitch,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
+                    );
                 }
                 world.rearm_campfire_tick(self.frame + 1, x, y, z);
             }
@@ -75384,6 +75417,114 @@ cow_sound_variant: None,
                 "the due+1 the re-arm banks"
             );
         }
+    }
+
+    #[test]
+    fn the_campfire_the_crackle_the_animate_gate_wears() {
+        // THE CRACKLE'S OWN ANIMATE LANE (javap CampfireBlock.animateTick
+        // over the 26.2 jar — the block display tick's own walk the BE
+        // ticker's smoke walk precedes, the vanilla phase order the
+        // level tick speaks): the crackle arm pc 17-26 the
+        // `nextInt(10) == 0` gate every tick rolls, pc 29-92 the
+        // positioned voice the BLOCKS source plays — the volume the
+        // `0.5f + nextFloat()` fold pc 63-73, the pitch the
+        // `nextFloat() * 0.7f + 0.6f` fold pc 74-88, the draw order the
+        // gate the two folds keeps (the folds the gate hit alone
+        // spends). THE SEED LAW the replay pins: the smoke arm's draws
+        // the stream first spends, the crackle's the tail rides — the
+        // gate-hit walk seed 45 the exact folds the log wears (the
+        // raw 0.5+f the 0.702055 the distance-zero gain keeps, the
+        // pitch the 1.093107 fold), the seed 20 the volume the 1.218
+        // fold the attenuate's own min() the 1.0 cap speaks, the seed
+        // 2 the gate draw 6 the silence keeps, the seed 0xbeef the
+        // smoke pins the crackle gate 7 the tail never disturbs.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::CAMPFIRE_LIT);
+        }
+        // THE GATE'S OWN HIT (seed 45: the smoke gate draw the 11%
+        // share refuses — zero puffs — the crackle gate draw 0 the
+        // voice the tail speaks, the bit-for-bit folds the log wears)
+        app.frame = 100;
+        app.level_ambient_rng = crate::drops::Lcg::new(45);
+        app.tick_campfire_ambient();
+        assert!(
+            app.particles.iter().all(|p| !matches!(
+                p.kind,
+                crate::particles::ParticleKind::CampfireSmoke { .. }
+            )),
+            "the smoke gate the 11% share refuses"
+        );
+        let crackle_lines: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.campfire.crackle @"))
+            .collect();
+        assert_eq!(
+            crackle_lines.len(),
+            1,
+            "the gate hit the ONE voice speaks: {:?}",
+            app.sounds.events
+        );
+        assert!(
+            crackle_lines[0].ends_with(" v0.702055 p1.093107"),
+            "the bit-for-bit folds the volume/pitch log wears: {}",
+            crackle_lines[0]
+        );
+        // THE CAP'S OWN LAW (seed 20: the volume fold 0.5+f the 1.218
+        // the gain the min() the 1.0 ceiling speaks — the positioned
+        // voice's own fold the distance-zero linear keeps)
+        app.frame = 200;
+        app.level_ambient_rng = crate::drops::Lcg::new(20);
+        app.tick_campfire_ambient();
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.campfire.crackle @200 ")
+                    && e.ends_with(" v1.000000 p0.623867")),
+            "the volume cap the gain fold wears: {:?}",
+            app.sounds.events.last()
+        );
+        // THE GATE'S OWN MISS (seed 2: the crackle gate draw 6 the
+        // silence the no-draw walk keeps — no third voice the count
+        // law pins, the smoke the same refusal wears)
+        app.frame = 300;
+        app.level_ambient_rng = crate::drops::Lcg::new(2);
+        app.tick_campfire_ambient();
+        assert_eq!(
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.campfire.crackle @"))
+                .count(),
+            2,
+            "the miss the count keeps"
+        );
+        // THE SOUL CAMPFIRE'S OWN ARM (the LIT gate pc 0-16 the only
+        // verdict the bytecode speaks — the soul kind the same crackle
+        // the same folds plays)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::SOUL_CAMPFIRE_LIT);
+        }
+        app.frame = 400;
+        app.level_ambient_rng = crate::drops::Lcg::new(45);
+        app.tick_campfire_ambient();
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.campfire.crackle @400 ")
+                    && e.ends_with(" v0.702055 p1.093107")),
+            "the soul kind the same law wears"
+        );
     }
 
     #[test]
