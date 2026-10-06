@@ -3456,7 +3456,7 @@ pub struct Firework {
     pub life: i32,
     /// the ctor's own ceiling — `10 * (1 + flightDuration) +
     /// nextInt(6) + nextInt(7)`, the plain rocket's flightDuration 1
-    /// the i=2 keeps (the 20..=32 band)
+    /// the i=2 keeps (the 20..=31 band)
     pub lifetime: i32,
     /// the discard flag (the lifetime crossing the explode walk
     /// answers — the plain rocket's wall hit the REST the flag never
@@ -3688,7 +3688,7 @@ impl Firework {
     /// 95-107). THE LIFETIME THE CTOR'S OWN WALK BANKS (pcs 111-141 —
     /// `10 * i + nextInt(6) + nextInt(7)` where the `i = 1 +
     /// flightDuration` the FIREWORKS component read arms; the plain
-    /// rocket's flightDuration 1 the i = 2 keeps — the 20..=32 band
+    /// rocket's flightDuration 1 the i = 2 keeps — the 20..=31 band
     /// the crossbow's own walk shares). THE ROTATION THE ZERO DEFAULT
     /// KEEPS (no `updateRotation` the shoot-less path never rides —
     /// the entity's own 0/0 the plain spawn wears). THE FLAG THE
@@ -3768,7 +3768,7 @@ impl Firework {
         let vx = rng.triangle(0.002297);
         let vz = rng.triangle(0.002297);
         // THE LIFETIME WALK (the banked flightDuration-1 stand-in the
-        // client's own rockets wear — the band 20..=32)
+        // client's own rockets wear — the band 20..=31)
         let lifetime = 10 * (1 + 1) + rng.next_int(6) + rng.next_int(7);
         Firework {
             id,
@@ -16337,7 +16337,7 @@ mod tests {
         assert!(f.attached, "the use-spawned ctor the attachment arms");
         assert!(!f.shot_at_angle, "the attached ctor the billboard keeps");
         assert!(
-            (20..=32).contains(&f.lifetime),
+            (20..=31).contains(&f.lifetime),
             "the lifetime the banked band keeps ({})",
             f.lifetime
         );

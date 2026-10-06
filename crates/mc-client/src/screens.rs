@@ -56621,7 +56621,7 @@ cow_sound_variant: None,
     /// the ArrowItem branch alone carries, the item.crossbow.shoot
     /// voice the same per-projectile walk rides, the launch the
     /// first tick's own word speaks, the lifetime the ctor's own
-    /// 20..=32 band keeps, the lifetime crossing the despawn serves,
+    /// 20..=31 band keeps, the lifetime crossing the despawn serves,
     /// and the arrow lane the Rocket kind never leaks.
     #[test]
     fn the_crossbow_the_firework_shot_the_rocket_wears() {
@@ -56687,7 +56687,7 @@ cow_sound_variant: None,
             "the triangle spread the inaccuracy 1.0 keeps"
         );
         assert!(
-            (20..=32).contains(&f.lifetime),
+            (20..=31).contains(&f.lifetime),
             "the lifetime the ctor's own band keeps ({})",
             f.lifetime
         );
@@ -56752,7 +56752,7 @@ cow_sound_variant: None,
     /// overwritten pair the ground launch wears), the 0.05 the `ldc2_w
     /// #74` rise keeps, the lifetime the `10 * (1 + flightDuration) +
     /// nextInt(6) + nextInt(7)` walk banks (the plain rocket's
-    /// flightDuration 1 the i = 2 keeps — the 20..=32 band the
+    /// flightDuration 1 the i = 2 keeps — the 20..=31 band the
     /// crossbow's own walk shares), the rotation the zero default
     /// keeps (no `updateRotation` the shoot-less path never rides), the
     /// SHOT_AT_ANGLE flag the accessor's false default keeps (the
@@ -56774,7 +56774,7 @@ cow_sound_variant: None,
         assert_eq!(f.vy, 0.05, "the 0.05 rise the ldc2_w #74 keeps");
         assert_eq!(f.lifetime, mlifetime, "the lifetime the ctor's walk banks");
         assert!(
-            (20..=32).contains(&f.lifetime),
+            (20..=31).contains(&f.lifetime),
             "the lifetime the ctor's own band keeps ({})",
             f.lifetime
         );
@@ -56788,6 +56788,66 @@ cow_sound_variant: None,
             "the spawn pose the caller's click answers verbatim"
         );
         assert!(!f.stuck && !f.dead, "the fresh launch the rest never wears");
+    }
+
+    /// THE LIFETIME BAND'S OWN RE-EXAMINATION — javap the 5-arg base
+    /// ctor pcs 111-141 the 26.2 bytecode speaks: `bipush 6` the
+    /// nextInt(6) draw the [0, 5] band keeps, `bipush 7` the
+    /// nextInt(7) draw the [0, 6] band keeps, `10 * i` the i = 2 base
+    /// the walk banks — the 20..=31 ceiling the SUM speaks (the
+    /// 20..=32 claim the prior docs wore the nextInt(7)'s own
+    /// exclusive bound the re-exam retires; the tick's crossing the
+    /// `if_icmple` law the same walk confirms — life > lifetime, the
+    /// increment the trail's own head banks, pcs 377-427, the code's
+    /// `life > self.lifetime` the same strict verdict wears). THE
+    /// EDGE IDS the probe's own corrected walk chose (each triangle
+    /// spends TWO f64 draws — the pair 4 raw draws before the
+    /// nextInts — the 2-draw slip the first pass wore the corrected
+    /// walk retires): id 34 the (5, 6) max edge, id 48 the (0, 0)
+    /// min edge.
+    #[test]
+    fn the_ground_launch_the_lifetime_band_the_bytecode_tightens() {
+        // THE MAX EDGE (id 34's own walk: the two triangles the stream
+        // spends, the nextInt(6) draw 5, the nextInt(7) draw 6 — the
+        // ceiling the 31 lifetime banks)
+        let f = crate::mob::Firework::ground_launch(34, 0.0, 0.0, 0.0);
+        let mut r = crate::drops::Lcg::new(crate::mob::arrow_entity_seed(34));
+        let _mx = r.triangle(0.002297);
+        let _mz = r.triangle(0.002297);
+        let a = r.next_int(6);
+        let b = r.next_int(7);
+        assert_eq!((a, b), (5, 6), "the max edge the probe's own id wears");
+        assert_eq!(f.lifetime, 20 + a + b, "the ceiling the sum banks");
+        assert_eq!(f.lifetime, 31, "the band's own top the walk keeps");
+        // THE MIN EDGE (id 48's own walk: the zero draws the floor
+        // banks — the 20 lifetime the i=2 base keeps)
+        let f = crate::mob::Firework::ground_launch(48, 0.0, 0.0, 0.0);
+        let mut r = crate::drops::Lcg::new(crate::mob::arrow_entity_seed(48));
+        let _mx = r.triangle(0.002297);
+        let _mz = r.triangle(0.002297);
+        let a = r.next_int(6);
+        let b = r.next_int(7);
+        assert_eq!((a, b), (0, 0), "the min edge the probe's own id wears");
+        assert_eq!(f.lifetime, 20, "the band's own floor the base keeps");
+        // THE BAND'S OWN SWEEP (ids 1..=200 the walk replays — every
+        // lifetime the 20..=31 window keeps, the 12 distinct values
+        // the [0, 11] sum band answers)
+        let mut seen = std::collections::HashSet::new();
+        for eid in 1..=200 {
+            let f = crate::mob::Firework::ground_launch(eid, 0.0, 0.0, 0.0);
+            assert!(
+                (20..=31).contains(&f.lifetime),
+                "the band the bytecode's own bounds keep ({})",
+                f.lifetime
+            );
+            seen.insert(f.lifetime);
+        }
+        assert_eq!(
+            seen.len(),
+            12,
+            "the sum band the 12 values speaks: {:?}",
+            seen
+        );
     }
 
     /// THE ROCKET'S OWN USE-ON LAUNCH — javap `FireworkRocketItem.useOn`
@@ -57678,7 +57738,7 @@ cow_sound_variant: None,
     /// SUCCESS wears (the attached rocket the (Level, ItemStack,
     /// LivingEntity) ctor spawns — the attachment the flag arms, the
     /// billboard the SHOT_AT_ANGLE keeps, the lifetime the banked
-    /// 20..=32 band keeps —, the `consume(1, player)` the survival
+    /// 20..=31 band keeps —, the `consume(1, player)` the survival
     /// stack wears, the use-item echo the click rides).
     #[test]
     fn the_firework_use_the_glide_asks() {
@@ -57749,7 +57809,7 @@ cow_sound_variant: None,
         assert!(f.attached, "the attachment the use spawns");
         assert!(!f.shot_at_angle, "the billboard the attached ctor keeps");
         assert!(
-            (20..=32).contains(&f.lifetime),
+            (20..=31).contains(&f.lifetime),
             "the lifetime the banked band keeps ({})",
             f.lifetime
         );
