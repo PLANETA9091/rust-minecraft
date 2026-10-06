@@ -1197,7 +1197,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // single atlas tile keeps (the fire_0/soul_fire_0
                     // strip's first frame the block palette banks). The
                     // frames themselves the DRAW-TIME remap swaps
-                    // (`atlas::fire_anim_tile` — the mesher never
+                    // (`atlas::anim_tile` — the mesher never
                     // re-meshes for the flicker).
                     let tile_of_family = |model_id: &str| -> u16 {
                         if (id as usize) >= atlas::N_KINDS {
@@ -3269,81 +3269,81 @@ mod tests {
         // the jar banks, fire_1's empty animation the sequential rule
         // serves — the two families the OUT-OF-PHASE flicker speaks.
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
             gen_atlas::FIRE_0_FRAMES[16],
             "tick 0 the playlist's own head frame 16 wears"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 1),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 1),
             gen_atlas::FIRE_0_FRAMES[17],
             "tick 1 the walk's own next row"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 15),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 15),
             gen_atlas::FIRE_0_FRAMES[31],
             "tick 15 the playlist's first leg ends"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 16),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 16),
             gen_atlas::FIRE_0_FRAMES[0],
             "tick 16 the second leg the frame 0 row opens"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 31),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 31),
             gen_atlas::FIRE_0_FRAMES[15],
             "tick 31 the playlist's own tail"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 32),
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
-            "the 32-tick cycle the playlist's own period wears"
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 32),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            "the 32-tick cycle the playlist's own period wears (frametime 1)"
         );
         // THE SECOND FAMILY'S OWN STRIP — the sequential walk the empty
         // animation serves, the two families the phase split speaks
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_1_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::FIRE_1_FRAME0, 0),
             gen_atlas::FIRE_1_FRAMES[0],
             "tick 0 the strip's own first frame"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_1_FRAME0, 1),
+            gen_atlas::anim_tile(gen_atlas::FIRE_1_FRAME0, 1),
             gen_atlas::FIRE_1_FRAMES[1],
             "tick 1 the sequential walk's next row"
         );
         assert_ne!(
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_1_FRAME0, 0),
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::FIRE_1_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
             "the families' phase split the distinct frames keep"
         );
         // THE SOUL HALF'S OWN STRIPS — the same playlists the kind's
         // own frame arrays answer, never the plain flame's rows
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::SOUL_FIRE_0_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::SOUL_FIRE_0_FRAME0, 0),
             gen_atlas::SOUL_FIRE_0_FRAMES[16],
             "the soul *_0 strip the playlist's own head wears"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::SOUL_FIRE_1_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::SOUL_FIRE_1_FRAME0, 0),
             gen_atlas::SOUL_FIRE_1_FRAMES[0],
             "the soul *_1 strip the sequential head wears"
         );
         assert_ne!(
-            gen_atlas::fire_anim_tile(gen_atlas::SOUL_FIRE_0_FRAME0, 0),
-            gen_atlas::fire_anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::SOUL_FIRE_0_FRAME0, 0),
+            gen_atlas::anim_tile(gen_atlas::FIRE_0_FRAME0, 0),
             "the soul's frames the plain flame's rows never share"
         );
         // THE IDENTITY — every non-fire tile the remap never touches
         // (the block palette, the destroy stages, the missing-material
         // sentinel the flat path keeps)
         let stone = gen_atlas::FACE_TILES[STONE as usize][2];
-        assert_eq!(gen_atlas::fire_anim_tile(stone, 7), stone, "the stone tile the identity wears");
+        assert_eq!(gen_atlas::anim_tile(stone, 7), stone, "the stone tile the identity wears");
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::DESTROY_TILES[3], 19),
+            gen_atlas::anim_tile(gen_atlas::DESTROY_TILES[3], 19),
             gen_atlas::DESTROY_TILES[3],
             "the destroy overlay's crack frames the identity wears"
         );
         assert_eq!(
-            gen_atlas::fire_anim_tile(gen_atlas::TILE_NONE, 5),
+            gen_atlas::anim_tile(gen_atlas::TILE_NONE, 5),
             gen_atlas::TILE_NONE,
             "the flat path's sentinel the identity wears"
         );
@@ -3372,6 +3372,83 @@ mod tests {
             gen_atlas::tile_rgba(gen_atlas::SOUL_FIRE_0_FRAMES[0]),
             "the soul block tile's pixels the strip's first frame carries"
         );
+    }
+
+    #[test]
+    fn the_fluid_anim_the_strips_walk() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE FLUIDS' OWN MCMETA (the 26.2 jar): water_still frametime 2
+        // the EMPTY frames array the sequential rule serves, lava_still
+        // frametime 2 the EXPLICIT ping-pong [0..19, 18..1] speaks (the
+        // 38 display steps over the strip's 20 frames) — the per-strip
+        // frametime the single fire constant never served.
+        assert_eq!(gen_atlas::WATER_FRAMETIME, 2, "the water mcmeta's own key");
+        assert_eq!(gen_atlas::LAVA_FRAMETIME, 2, "the lava mcmeta's own key");
+        // THE WATER'S OWN WALK — the frametime 2 dwell the even ticks
+        // answer: tick 0 the first frame, tick 1 the SAME frame (the
+        // dwell the divisor speaks), tick 2 the walk's next row; the
+        // 64-tick cycle the 32 frames x the frametime wears
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FRAME0, 0),
+            gen_atlas::WATER_FRAMES[0],
+            "tick 0 the strip's own first frame"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FRAME0, 1),
+            gen_atlas::WATER_FRAMES[0],
+            "tick 1 the frametime dwell the same frame keeps"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FRAME0, 2),
+            gen_atlas::WATER_FRAMES[1],
+            "tick 2 the sequential walk's next row"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FRAME0, 64),
+            gen_atlas::anim_tile(gen_atlas::WATER_FRAME0, 0),
+            "the 64-tick cycle the 32-frame strip's period wears"
+        );
+        // THE LAVA'S OWN PING-PONG — the explicit playlist the ascent
+        // and the descent both walk: tick 38 (pos 19) the strip's last
+        // frame, tick 40 (pos 20) the descent's 18 row, the 76-tick
+        // cycle the 38 steps x the frametime wears
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::LAVA_FRAME0, 38),
+            gen_atlas::LAVA_FRAMES[19],
+            "tick 38 the ascent's own tail frame"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::LAVA_FRAME0, 40),
+            gen_atlas::LAVA_FRAMES[18],
+            "tick 40 the ping-pong's descent the 18 row wears"
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::LAVA_FRAME0, 76),
+            gen_atlas::anim_tile(gen_atlas::LAVA_FRAME0, 0),
+            "the 76-tick cycle the 38-step playlist's period wears"
+        );
+        // THE TICK-0 PIXEL IDENTITY — the appended frame-00 tiles the
+        // palette's own rows the same bytes carry (the goldens' own
+        // proof: the scenes' water at tick 0 the still the palette's
+        // crop painted, the renders byte-identical)
+        assert_eq!(
+            gen_atlas::tile_rgba(gen_atlas::WATER_FRAME0),
+            gen_atlas::tile_rgba(gen_atlas::WATER_FRAMES[0]),
+            "the water block tile's pixels the strip's first frame carries"
+        );
+        assert_eq!(
+            gen_atlas::tile_rgba(gen_atlas::LAVA_FRAME0),
+            gen_atlas::tile_rgba(gen_atlas::LAVA_FRAMES[0]),
+            "the lava block tile's pixels the strip's first frame carries"
+        );
+        // THE FRAME BODIES — every appended frame tile the full 16x16
+        // body carries (the water strip's 32, the lava strip's 20)
+        for f in gen_atlas::WATER_FRAMES.iter().copied() {
+            assert_eq!(gen_atlas::tile_rgba(f).len(), 16 * 16 * 4, "water frame {f}");
+        }
+        for f in gen_atlas::LAVA_FRAMES.iter().copied() {
+            assert_eq!(gen_atlas::tile_rgba(f).len(), 16 * 16 * 4, "lava frame {f}");
+        }
     }
 
     #[test]

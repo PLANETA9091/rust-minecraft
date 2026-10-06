@@ -49068,19 +49068,25 @@ mod tests {
         let y = chat_line_y(360, 0);
         let hist_diff = diff_count(&bare, &fb.color, 2, y - 1, 200, 10);
         assert!(hist_diff > 40, "the chat line the band + text paints: {hist_diff}");
-        // THE 200-TICK AGE (the fade's zero the line skips — the band
-        // the bare world's own bytes return). The frame == tick model
-        // the sky/celestial lane rides moves the 201-tick frame's sky
-        // the band never contains — the band-level equality the chat
-        // line's own fade answers.
-        app.frame += 201;
+        // THE AGE THE LIVING WORLD'S LANES COINCIDE (the fade's zero
+        // the line skips — the band the bare world's own bytes return).
+        // The frame == tick model the sky/celestial lane rides moves the
+        // aged frame's sky the band never contains — the band-level
+        // equality the chat line's own fade answers. THE ANIMATION'S OWN
+        // SHIFT: the world's living lanes (the water/lava/fire strips the
+        // draw-time remap repaints) the 1216-tick shift never repaints —
+        // the multiple every strip's own period wears (water 64, lava
+        // 76, fire 32) — while the age the fade's 200-tick window
+        // outlives, the plateau the same flat sky sample keeps (6000 +
+        // 1216 = 7216 < 11867).
+        app.frame += 1216;
         app.render(&mut fb, &mut assets);
         let aged_band = diff_count(&bare, &fb.color, 2, y - 1, 200, 10);
         assert_eq!(
             aged_band, 0,
             "the aged line the fade never draws — the bare band returns"
         );
-        app.frame -= 201;
+        app.frame -= 1216;
         // THE FOCUSED INPUT (the ChatScreen's own layer — the band the
         // hidden HUD's frame still paints, the F1 law the Screen never
         // gates)

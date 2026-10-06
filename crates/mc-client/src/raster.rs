@@ -365,7 +365,7 @@ impl Framebuf {
             // baked base tile the quads keep): the fire multipart's two
             // frame families the fire_anim_tile walk answers, every other
             // tile the identity wears.
-            let tile = atlas::fire_anim_tile(quad.tile, ctx.fire_anim_tick);
+            let tile = atlas::anim_tile(quad.tile, ctx.fire_anim_tick);
             // ---- transform + near-plane clip (Sutherland–Hodgman in clip space) ----
             let clip: Vec<[f32; 4]> = quad.pts.iter().map(|p| vp.transform_point(Vec3::new(p[0], p[1], p[2]))).collect();
             let clipped = clip_near(&clip);

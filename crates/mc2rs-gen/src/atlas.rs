@@ -925,28 +925,41 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         destroy_tiles.push(idx);
     }
 
-    // THE FIRE ANIMATION'S OWN STRIPS (the dev-5 round, the official
-    // 26.2 jar): the four animated textures the fire/soul_fire
-    // multipart's two frame families name — block/fire_0, block/fire_1,
-    // block/soul_fire_0, block/soul_fire_1, each the 16x512 32-frame
-    // strip the game's own animation machinery plays. THE BLOCKSTATE'S
-    // OWN PAIR: every fire.json/soul_fire.json apply group is an ARRAY
-    // applying BOTH families' models (fire_floor0 AND fire_floor1, the
-    // side0/1 + side_alt0/1 fours, the up pair) — the two overlapped
-    // quads the independent sprite flicker speaks, the blockstate JSON
-    // the dump proves. APPENDED after the destroy stages — the block
-    // palette's tile indices stay byte-identical (the deterministic
-    // scenes keep their exact pixels), the destroy lanes the same
-    // precedent wears. Each strip banks ALL 32 frames (frame k = the
-    // strip's k-th 16x16 row block — first_frame's own slice the
-    // general walk keeps); the mcmeta playlists ride the emitted
-    // constants (fire_0/soul_fire_0: the frames array [16..31, 0..15];
-    // fire_1/soul_fire_1: the EMPTY animation the vanilla sequential
-    // rule serves), the frametime the serializer's default 1 tick the
-    // absent key speaks, the client's draw-time remap the fire_anim_tile
-    // walk answers.
-    let mut fire_anim: Vec<(String, Vec<u16>, Vec<u8>, u64)> = Vec::new();
-    for stem in ["fire_0", "fire_1", "soul_fire_0", "soul_fire_1"] {
+    // THE ANIMATED STRIPS' OWN WALK (the dev-5 round's fire, the
+    // autopush-521 round's fluids, the official 26.2 jar): the SIX
+    // animated textures the client's world quads name — the fire
+    // multipart's two frame families (block/fire_0, block/fire_1,
+    // block/soul_fire_0, block/soul_fire_1) AND the fluids' still
+    // masters (block/water_still, block/lava_still — the surface quads
+    // the fluid lane's FACE_TILES rows carry). THE MCMETA'S OWN TRUTH,
+    // PER STRIP: fire_0/soul_fire_0 the frames array [16..31, 0..15]
+    // frametime default 1; fire_1/soul_fire_1 the EMPTY animation the
+    // sequential rule frametime 1 serves; water_still frametime 2 the
+    // sequential 0..31 serves (the 64-tick cycle); lava_still frametime
+    // 2 the EXPLICIT ping-pong [0..19, 18..1] speaks (the 38-row
+    // playlist, the 76-tick cycle). APPENDED after the destroy stages —
+    // the block palette's tile indices stay byte-identical (the
+    // deterministic scenes keep their exact pixels). Each strip banks
+    // ALL frames (frame k = the strip's k-th 16x16 row block —
+    // first_frame's own slice the general walk keeps); the TICK-0
+    // VERDICT the goldens' own safety rides: the FLUIDS' playlists
+    // OPEN at frame 0 (water sequential, lava's explicit array the
+    // same head speaks) — the tick-0 remap the appended frame-00 tile
+    // answers, the pixels the palette's own crop already banked, the
+    // golden renders (the scenes' water) byte-identical the still
+    // keeps. The FIRE strips' playlists the frame-16 head the vanilla
+    // fresh atlas speaks (the mcmeta's own array — the dev-5 test
+    // pins) — no golden scene rides a fire cell, the tick-0 still the
+    // vanilla-faithful first row wears.
+    let mut anim_strips: Vec<(String, Vec<u16>, Vec<u8>, u64)> = Vec::new();
+    for stem in [
+        "fire_0",
+        "fire_1",
+        "soul_fire_0",
+        "soul_fire_1",
+        "water_still",
+        "lava_still",
+    ] {
         let raw = read_jar(
             &mut archive,
             &format!("assets/minecraft/textures/block/{stem}.png"),
@@ -954,7 +967,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         .with_context(|| format!("texture block/{stem}.png"))?;
         let (w, h, rgba) = decode_rgba(&raw)?;
         if w != 16 || h == 0 || h % w != 0 {
-            bail!("texture {stem}: expected the 16x512 strip, got {w}x{h}");
+            bail!("texture {stem}: expected the 16-wide strip, got {w}x{h}");
         }
         let frame_count = (h / w) as usize;
         let mc_bytes = read_jar(
@@ -986,48 +999,57 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
                 .collect::<Result<Vec<_>>>()?,
             None => (0..frame_count as u8).collect(),
         };
-        if playlist.len() != frame_count {
-            bail!(
-                "texture {stem}: playlist {} rows vs {frame_count} frames",
-                playlist.len()
-            );
-        }
+        // THE PLAYLIST'S OWN LENGTH — the rows the DISPLAY steps speak,
+        // repeats legal (lava_still's ping-pong [0..19, 18..1] the 38
+        // steps over the strip's 20 frames the 26.2 jar banks): the
+        // strip's frame COUNT the rows' BOUNDS alone gate, the length
+        // never (the vanilla AnimationMetadataSection's own frames
+        // list the length-free walk keeps).
         if playlist.iter().any(|&f| (f as usize) >= frame_count) {
             bail!("texture {stem}: playlist row beyond the strip's frames");
         }
+        // THE TICK-0 VERDICT (the FLUIDS' own law) — the water/lava
+        // playlists the frame-0 row open (the golden scenes' water the
+        // still keeps byte-identical); the fire strips' frame-16 heads
+        // the vanilla fresh atlas speaks, the mcmeta's own arrays — the
+        // honest frames the vanilla plays, no golden scene rides fire.
+        if (stem == "water_still" || stem == "lava_still") && playlist[0] != 0 {
+            bail!("texture {stem}: the playlist's head row {head} refuses — the tick-0 still the frame 0 wears", head = playlist[0]);
+        }
+        // THE TINT BAKE THE PALETTE ROWS WEAR — the appended frames the
+        // SAME per-texture bake carry (water_still the TINT_WATER master
+        // the palette's tile bakes, the fire strips the untinted 0):
+        // the tick-0 pixel identity the golden safety rides DEMANDS the
+        // frame tiles the palette row's exact bytes speak, the animated
+        // frames the blue water the in-world look paints.
+        let strip_tint = tint_for_texture(stem);
         let row = 16 * 16 * 4;
         let mut tiles: Vec<u16> = Vec::with_capacity(frame_count);
         for k in 0..frame_count {
+            let mut bytes = rgba[k * row..(k + 1) * row].to_vec();
+            bake_tint(&mut bytes, strip_tint);
             let idx = tile_names.len() as u16;
             tile_names.push(format!("{stem}_frame{k:02}"));
-            tile_bytes.push(rgba[k * row..(k + 1) * row].to_vec());
+            tile_bytes.push(bytes);
             tiles.push(idx);
         }
-        fire_anim.push((stem.to_string(), tiles, playlist, frametime));
+        anim_strips.push((stem.to_string(), tiles, playlist, frametime));
     }
-    // THE JAR'S OWN CADENCE — the four strips the one frametime speak
-    // (every 26.2 fire mcmeta the absent key wears); a disagreement the
-    // per-strip table would need, the single constant refuses.
-    let fire_anim_frametime = fire_anim[0].3;
-    if fire_anim.iter().any(|(_, _, _, ft)| *ft != fire_anim_frametime) {
-        bail!("the fire strips' frametimes disagree — the single FIRE_ANIM_FRAMETIME refuses");
-    }
-    // THE FOUR BASE TILES the mesher's family split bakes: the *_0
-    // families the BLOCK palette's own rows keep (the "fire_0" /
-    // "soul_fire_0" tiles the kind's FACE_TILES row banks — the
-    // existing law byte-identical), the *_1 families the appended
-    // frame-00 tiles speak (the remap's own bases).
-    let fire_anim_base = |name: &str| -> Result<u16> {
-        tile_names
-            .iter()
-            .position(|n| n == name)
-            .map(|i| i as u16)
-            .with_context(|| format!("fire anim base tile {name}: absent"))
+    // THE BASE TILES the quads bake: the four palette-named strips the
+    // BLOCK palette's own rows keep (the "fire_0" / "soul_fire_0" /
+    // "water_still" / "lava_still" tiles the FACE_TILES rows bank — the
+    // existing law byte-identical), the two *_1 fire families the
+    // appended frame-00 tiles speak (the remap's own bases).
+    let strip_base = |stem: &str| -> Result<u16> {
+        match tile_names.iter().position(|n| n == stem) {
+            Some(i) => Ok(i as u16),
+            None => anim_strips
+                .iter()
+                .find(|(s, _, _, _)| s == stem)
+                .map(|(_, t, _, _)| t[0])
+                .with_context(|| format!("strip {stem}: neither palette row nor appended frames")),
+        }
     };
-    let fire_0_base = fire_anim_base("fire_0")?;
-    let soul_0_base = fire_anim_base("soul_fire_0")?;
-    let fire_1_base = fire_anim.iter().find(|(s, _, _, _)| s == "fire_1").map(|(_, t, _, _)| t[0]).with_context(|| "fire_1 frames absent")?;
-    let soul_1_base = fire_anim.iter().find(|(s, _, _, _)| s == "soul_fire_1").map(|(_, t, _, _)| t[0]).with_context(|| "soul_fire_1 frames absent")?;
 
     // ---- emit Rust ----
     let mut src = String::with_capacity(tile_bytes.len() * 1100 + 4096);
@@ -1104,67 +1126,81 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
          \x20    pub const DESTROY_TILES: [u16; 10] = {:?};\n",
         destroy_tiles
     ));
-    src.push_str(&format!(
-        "\n/// THE FIRE ANIMATION'S OWN TABLES (the dev-5 round): the four\n\
-         \x20    /// animated strips the fire/soul_fire multipart's two frame\n\
-         \x20    /// families name (the 16x512, 32-frame strips the game's own\n\
-         \x20    /// animation machinery plays). The frame arrays bank ALL 32\n\
-         \x20    /// frames per strip (frame k = the strip's k-th 16x16 row block;\n\
-         \x20    /// the *_0 families' frame-0 PIXELS the block palette's own\n\
-         \x20    /// tiles already carry — the appended rows the independent index\n\
-         \x20    /// space keep), the playlists the mcmeta's own frames arrays\n\
-         \x20    /// (fire_0/soul_fire_0: [16..31, 0..15]; fire_1/soul_fire_1: the\n\
-         \x20    /// empty animation the vanilla sequential rule serves), the\n\
-         \x20    /// frametime the serializer's default 1 tick the absent key\n\
-         \x20    /// speaks. The base tiles the mesher's family split bakes: the\n\
-         \x20    /// *_0 families the block palette's own rows, the *_1 families\n\
-         \x20    /// the appended frame-00 tiles — fire_anim_tile the draw-time\n\
-         \x20    /// remap answers.\n\
-         \x20    pub const FIRE_ANIM_FRAMETIME: u64 = {ft};\n\
-         \x20    pub const FIRE_0_FRAME0: u16 = {f0b};\n\
-         \x20    pub const FIRE_1_FRAME0: u16 = {f1b};\n\
-         \x20    pub const SOUL_FIRE_0_FRAME0: u16 = {s0b};\n\
-         \x20    pub const SOUL_FIRE_1_FRAME0: u16 = {s1b};\n\
-         \x20    pub const FIRE_0_FRAMES: [u16; 32] = {f0:?};\n\
-         \x20    pub const FIRE_1_FRAMES: [u16; 32] = {f1:?};\n\
-         \x20    pub const SOUL_FIRE_0_FRAMES: [u16; 32] = {s0:?};\n\
-         \x20    pub const SOUL_FIRE_1_FRAMES: [u16; 32] = {s1:?};\n\
-         \x20    pub const FIRE_0_PLAYLIST: [u8; 32] = {p0:?};\n\
-         \x20    pub const FIRE_1_PLAYLIST: [u8; 32] = {p1:?};\n\
-         \x20    pub const SOUL_FIRE_0_PLAYLIST: [u8; 32] = {sp0:?};\n\
-         \x20    pub const SOUL_FIRE_1_PLAYLIST: [u8; 32] = {sp1:?};\n\
-         \x20    /// THE FIRE ANIMATION'S DRAW-TIME REMAP — the base frame-0\n\
-         \x20    /// tile the mesher bakes (the family's own strip) the current\n\
-         \x20    /// animation frame's tile the tick answers: the playlist\n\
-         \x20    /// position `(tick / frametime) % 32` the vanilla\n\
-         \x20    /// TextureAtlasSprite animator's per-tick walk speaks, the four\n\
-         \x20    /// base tiles the two families' own strips keep, every other\n\
-         \x20    /// tile the identity wears (the destroy stages, the farmland's\n\
-         \x20    /// wet face, the whole block palette).\n\
-         \x20    pub fn fire_anim_tile(base: u16, tick: u64) -> u16 {{\n\
-         \x20        let pos = ((tick / FIRE_ANIM_FRAMETIME) % 32) as usize;\n\
-         \x20        match base {{\n\
-         \x20            FIRE_0_FRAME0 => FIRE_0_FRAMES[FIRE_0_PLAYLIST[pos] as usize],\n\
-         \x20            FIRE_1_FRAME0 => FIRE_1_FRAMES[FIRE_1_PLAYLIST[pos] as usize],\n\
-         \x20            SOUL_FIRE_0_FRAME0 => SOUL_FIRE_0_FRAMES[SOUL_FIRE_0_PLAYLIST[pos] as usize],\n\
-         \x20            SOUL_FIRE_1_FRAME0 => SOUL_FIRE_1_FRAMES[SOUL_FIRE_1_PLAYLIST[pos] as usize],\n\
-         \x20            _ => base,\n\
-         \x20        }}\n\
-         \x20    }}\n",
-        ft = fire_anim_frametime,
-        f0b = fire_0_base,
-        f1b = fire_1_base,
-        s0b = soul_0_base,
-        s1b = soul_1_base,
-        f0 = &fire_anim[0].1,
-        f1 = &fire_anim[1].1,
-        s0 = &fire_anim[2].1,
-        s1 = &fire_anim[3].1,
-        p0 = &fire_anim[0].2,
-        p1 = &fire_anim[1].2,
-        sp0 = &fire_anim[2].2,
-        sp1 = &fire_anim[3].2,
-    ));
+    // THE ANIMATED STRIPS' OWN TABLES (the dev-5 round's fire, the
+    // autopush-521 round's fluids): per-strip constants the draw-time
+    // remap walks — the frame-tile arrays, the mcmeta playlists, the
+    // per-strip frametime (the single-constant law the fire-only lane
+    // wore can't serve the fluids' frametime 2 — the per-strip truth
+    // the mcmeta itself speaks), the base tile the quads bake. The
+    // generated names the palette order carries: the const prefix the
+    // strip's own stem maps (fire_0 -> FIRE_0 ... water_still -> WATER,
+    // lava_still -> LAVA — the names the client's walks read).
+    let prefixes: [(&str, &str); 6] = [
+        ("fire_0", "FIRE_0"),
+        ("fire_1", "FIRE_1"),
+        ("soul_fire_0", "SOUL_FIRE_0"),
+        ("soul_fire_1", "SOUL_FIRE_1"),
+        ("water_still", "WATER"),
+        ("lava_still", "LAVA"),
+    ];
+    src.push_str(
+        "\n/// THE ANIMATED STRIPS' OWN TABLES (the dev-5 round's fire, the\n\
+         \x20    /// autopush-521 round's fluids): per-strip constants the draw-time\n\
+         \x20    /// remap walks. Each strip banks ALL its frames (frame k = the\n\
+         \x20    /// strip's k-th 16x16 row block; the palette-named strips'\n\
+         \x20    /// frame-0 PIXELS the block palette's own tiles already carry —\n\
+         \x20    /// the appended rows the independent index space keep), the\n\
+         \x20    /// playlists the mcmeta's own frames arrays (the empty/absent\n\
+         \x20    /// animation the vanilla sequential rule serves), the frametime\n\
+         \x20    /// the mcmeta's own key the per-strip truth speaks (the absent\n\
+         \x20    /// key the serializer's default 1 tick wears). The base tiles\n\
+         \x20    /// the quads bake: the palette-named strips the block palette's\n\
+         \x20    /// own rows, the fire *_1 families the appended frame-00 tiles —\n\
+         \x20    /// anim_tile the draw-time remap answers (the FLUIDS' playlists the\n\
+         \x20    /// frame-0 row open — the tick-0 answer the pixels the palette's\n\
+         \x20    /// crop carries, the golden renders byte-identical the still keeps;\n\
+         \x20    /// the fire strips' frame-16 heads the vanilla fresh atlas speaks).\n",
+    );
+    for (stem, prefix) in &prefixes {
+        let (_, tiles, playlist, frametime) = anim_strips
+            .iter()
+            .find(|(s, _, _, _)| s == stem)
+            .with_context(|| format!("strip {stem}: absent from the anim walk"))?;
+        let base = strip_base(stem)?;
+        src.push_str(&format!(
+            "    pub const {prefix}_FRAME0: u16 = {base};\n\
+             \x20    pub const {prefix}_FRAMETIME: u64 = {frametime};\n\
+             \x20    pub const {prefix}_FRAMES: [u16; {nf}] = {tiles:?};\n\
+             \x20    pub const {prefix}_PLAYLIST: [u8; {np}] = {playlist:?};\n",
+            nf = tiles.len(),
+            np = playlist.len(),
+        ));
+    }
+    src.push_str(
+        "    /// THE ANIMATION'S DRAW-TIME REMAP — the base frame-0 tile the\n\
+         \x20    /// mesher bakes (the strip's own palette row or appended frame-00)\n\
+         \x20    /// the current animation frame's tile the tick answers: the\n\
+         \x20    /// playlist position `(tick / frametime) % len` the vanilla\n\
+         \x20    /// TextureAtlasSprite animator's per-tick walk speaks, the six\n\
+         \x20    /// base tiles their own strips keep, every other tile the\n\
+         \x20    /// identity wears (the destroy stages, the farmland's wet face,\n\
+         \x20    /// the whole block palette).\n\
+         \x20    pub fn anim_tile(base: u16, tick: u64) -> u16 {\n\
+         \x20        match base {\n",
+    );
+    for (_, prefix) in &prefixes {
+        src.push_str(&format!(
+            "        {prefix}_FRAME0 => {{\n\
+             \x20            let pos = ((tick / {prefix}_FRAMETIME) % {prefix}_PLAYLIST.len() as u64) as usize;\n\
+             \x20            {prefix}_FRAMES[{prefix}_PLAYLIST[pos] as usize]\n\
+             \x20        }}\n"
+        ));
+    }
+    src.push_str(
+        "        _ => base,\n\
+         \x20    }\n\
+         }\n",
+    );
     Ok(src)
 }
 
