@@ -535,9 +535,24 @@ pub const CAKE_SLICE3: u16 = 70;
 pub const CAKE_SLICE4: u16 = 71;
 pub const CAKE_SLICE5: u16 = 72;
 pub const CAKE_SLICE6: u16 = 73;
+/// THE SIGNAL FIRE'S OWN KIND (the autopush-530 round): the hay bale
+/// the campfire's below-cell the isSmokeSource verdict reads — javap
+/// CampfireBlock pc 229-230 over the 26.2 jar: `state.is(Blocks.
+/// HAY_BLOCK)` the SIGNAL_FIRE property's own law speaks (the
+/// getStateForPlacement pc 43-63 the below-cell read banks, the
+/// updateShape pc 34-58 the DOWN-neighbor change re-answers — the
+/// offline kind-only palette the LIVE below-read the same verdict
+/// answers, the property the cache the read-each-time law never
+/// needs). The wire registry's own row the generated block_ids
+/// (12893..12896) the real block's state range banks — the offline
+/// kind the palette's own tail slot 74 the kind-only vocabulary
+/// carries. The full opaque cube the cube_column model resolves (the
+/// hay_block_top/side tiles the FACE_TILES row banks) — the dig/drop
+/// lanes the generated hay_block rows the name lookup answers.
+pub const HAY_BLOCK: u16 = 74;
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 74] = [
+pub const NAME_OF: [&str; 75] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -611,6 +626,14 @@ pub const NAME_OF: [&str; 74] = [
     // the item places), the bitten stages the eat lane's own kind
     // swaps never place)
     "cake", "cake", "cake", "cake", "cake", "cake", "cake",
+    // THE SIGNAL FIRE'S OWN ROW (the autopush-530 round): the hay bale
+    // the dig row (1.0 hardness — the strength the clinit arm speaks),
+    // the drops table (the self-entry the generated hay_block rows
+    // bank), the sounds' GRASS row and the item id the pick lane
+    // grants — the placeable lookup the reverse walk the kind's own
+    // row answers (the below-campfire placement the signal verdict
+    // lights)
+    "hay_block",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -1764,6 +1787,24 @@ pub struct World {
     /// world the SERVER ticks (the same split the crop lane's own
     /// authority keeps) — the queue the offline world alone fills.
     pub fire_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE CAMPFIRE'S OWN AMBIENT QUEUE (the autopush-530 round — the
+    /// fire queue's own shape the BE tick's every-tick cadence wears):
+    /// the (due game tick, x, y, z) entries the lit campfires the
+    /// offline world tracks (javap CampfireBlockEntity.particleTick —
+    /// the CLIENT block-entity ticker the loaded campfires every tick
+    /// walks: the `nextFloat() < 0.11f` gate the 11% share answers,
+    /// the `nextInt(2) + 2` loop the 2..3 puffs spends, the
+    /// makeParticles(level, pos, SIGNAL_FIRE, false) call the signal
+    /// flag the state carries). THE SET'S OWN LAW the fire queue's
+    /// walk keeps: ONE live entry per cell — the set()'s own lit
+    /// transition the entry pushes (due 0 — the next drain picks it
+    /// up, the re-arm the walk's own tail speaks), the un-lit
+    /// transition the entry drops. The re-arm EVERY tick claims — the
+    /// vanilla BE the LIT gate the walk's own head reads, the queue
+    /// never expires the cell stays lit. The networked world the
+    /// SERVER's word rides (the same split the fire lane's own
+    /// authority keeps) — the queue the offline world alone fills.
+    pub campfire_ticks: Vec<(u64, i32, i32, i32)>,
     /// THE FIRE'S OWN AGE LADDER — the per-cell AGE property the
     /// offline kind-only world the `FIRE`/`SOUL_FIRE` kind ids alone
     /// cannot carry (the SOUL_FIRE 58 the FIRE+age arithmetic the
@@ -1950,6 +1991,7 @@ impl World {
             difficulty_locked: false, // the lock the confirm's Yes alone arms
             inhabited: Some(vec![0u64; chunks_per_side * chunks_per_side]), // the host world's own dwell clock
             fire_ticks: Vec::new(), // the fire's own queue: no fire, no schedule
+            campfire_ticks: Vec::new(), // the campfire's own queue: no lit campfire, no walk
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
         };
         w.generate();
@@ -2012,6 +2054,30 @@ impl World {
                 return; // THE SAME STATE'S OWN SILENCE — the no-op edit the walk never pays
             }
             self.chunks[ci][cell] = id;
+            // THE CAMPFIRE QUEUE'S OWN MAINTENANCE (the autopush-530
+            // round — the lit transition the entry pushes, the un-lit
+            // the entry drops: the ONE-live-entry-per-cell law the fire
+            // queue's own dedup speaks). The due-0 entry the next
+            // drain picks up (the walk's re-arm the every-tick cadence
+            // the BE ticker wears); the set()'s own same-state silence
+            // the early return above keeps — the maintenance the
+            // TRANSITIONS alone spends.
+            {
+                let was_lit = old == CAMPFIRE_LIT || old == SOUL_CAMPFIRE_LIT;
+                let is_lit = id == CAMPFIRE_LIT || id == SOUL_CAMPFIRE_LIT;
+                if is_lit && !was_lit {
+                    if !self
+                        .campfire_ticks
+                        .iter()
+                        .any(|&(_, px, py, pz)| px == wx && py == wy && pz == wz)
+                    {
+                        self.campfire_ticks.push((0, wx, wy, wz));
+                    }
+                } else if was_lit && !is_lit {
+                    self.campfire_ticks
+                        .retain(|&(_, px, py, pz)| !(px == wx && py == wy && pz == wz));
+                }
+            }
             // THE EDIT'S OWN INCREMENTAL LIGHT (the vanilla LightEngine's
             // block-change answer — the 26.2 jar's checkBlock update the
             // one setBlock speaks): the grid the world carries the walk
@@ -2392,6 +2458,56 @@ impl World {
             return; // the Set's own verdict — the duplicate the add refuses
         }
         self.fire_ticks.push((due, x, y, z));
+    }
+
+    /// THE CAMPFIRE QUEUE'S OWN DRAIN (the fire queue's own shape the
+    /// BE tick's every-tick cadence wears): the due-at-or-before-`now`
+    /// entries the queue gives UP, the time order the stable sort
+    /// banks. The caller's own walk the 11% gate + the 2..3 puff loop
+    /// answers, the re-arm the due+1 entry the walk's own tail speaks
+    /// ([`World::rearm_campfire_tick`]).
+    pub fn drain_due_campfire_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due_cells: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.campfire_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due_cells.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due_cells.sort_by_key(|&(at, _, _, _)| at);
+        due_cells
+            .into_iter()
+            .map(|(_, x, y, z)| (x, y, z))
+            .collect()
+    }
+
+    /// THE CAMPFIRE WALK'S OWN RE-ARM (the BE ticker's every-tick
+    /// cadence the due+1 entry banks — the walk each tick the gate
+    /// rolls, the queue the entry the same dedup law keeps).
+    pub fn rearm_campfire_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .campfire_ticks
+            .iter()
+            .any(|&(_, px, py, pz)| px == x && py == y && pz == z)
+        {
+            return; // the Set's own verdict — the duplicate the add refuses
+        }
+        self.campfire_ticks.push((due, x, y, z));
+    }
+
+    /// THE SIGNAL FIRE'S OWN VERDICT (javap CampfireBlock.isSmokeSource
+    /// pc 228-231 over the 26.2 jar — the `state.is(Blocks.HAY_BLOCK)`
+    /// read the SIGNAL_FIRE property's own law carries): the campfire
+    /// cell's BELOW read the hay bale alone answers true. The vanilla
+    /// state-cache (the getStateForPlacement bank + the updateShape
+    /// DOWN-neighbor re-answer) the property stores — the offline
+    /// kind-only palette the LIVE read the same verdict answers (the
+    /// property's own updates track the below cell exactly, the
+    /// per-tick read the value the cache never drifts from).
+    pub fn is_signal_fire(&self, x: i32, y: i32, z: i32) -> bool {
+        self.get(x, y - 1, z) == HAY_BLOCK
     }
 
     /// THE FIRE QUEUE'S OWN DRAIN (the `ServerLevel.tick` scheduled
@@ -3576,6 +3692,79 @@ mod tests {
         }
         panic!("the lone stone fire the walks never doused");
     }
+
+    #[test]
+    fn the_signal_fire_the_hay_below_the_verdict_wears() {
+        // THE SMOKE SOURCE'S OWN LAW (javap CampfireBlock.isSmokeSource
+        // pc 228-231 over the 26.2 jar — the `state.is(Blocks.HAY_BLOCK)`
+        // read the SIGNAL_FIRE property carries): the campfire's below
+        // cell the hay bale ALONE answers true — the stone the dirt the
+        // whole palette the verdict refuses, the below-world read the
+        // honest false keeps.
+        let mut w = World::new(1, 0xF117);
+        let (x, y, z) = (4, 40, 4);
+        w.set(x, y, z, CAMPFIRE_LIT);
+        // the stone below: the property the vanilla placement walk
+        // banks false — the verdict refuses
+        assert!(!w.is_signal_fire(x, y, z), "the stone below the verdict refuses");
+        // the hay bale: the isSmokeSource read the SIGNAL arm answers
+        w.set(x, y - 1, z, HAY_BLOCK);
+        assert!(w.is_signal_fire(x, y, z), "the hay below the verdict answers");
+        // the hay removed: the updateShape's DOWN-neighbor re-answer the
+        // live read tracks (the offline read-each-time law the property
+        // cache never drifts from)
+        w.set(x, y - 1, z, AIR);
+        assert!(!w.is_signal_fire(x, y, z), "the hay removal the verdict re-answers");
+        // THE SOUL CAMPFIRE'S OWN VERDICT: the same below-read the
+        // signal law keeps (the vanilla property the two campfire
+        // families share)
+        w.set(x, y - 1, z, HAY_BLOCK);
+        w.set(x, y, z, SOUL_CAMPFIRE_LIT);
+        assert!(w.is_signal_fire(x, y, z), "the soul campfire the same verdict wears");
+    }
+
+    #[test]
+    fn the_campfire_queue_the_set_maintenance_the_rearm_wear() {
+        // THE SET'S OWN TRANSITIONS (the fire queue's own shape the BE
+        // tick's every-tick cadence wears): the lit transition the
+        // entry pushes (due 0 — the next drain picks it up), the
+        // same-state silence the duplicate never pushes, the un-lit
+        // transition the entry drops, the re-lit the entry re-banks.
+        let mut w = World::new(1, 0xF117);
+        let (x, y, z) = (4, 40, 4);
+        w.set(x, y, z, CAMPFIRE_LIT);
+        assert_eq!(w.campfire_ticks, vec![(0, x, y, z)], "the lit transition the entry pushes");
+        // the same-state silence (the set's own early return the
+        // maintenance never re-spends)
+        w.set(x, y, z, CAMPFIRE_LIT);
+        assert_eq!(w.campfire_ticks.len(), 1, "the same state the queue never doubles");
+        // the soul campfire's own swap: lit -> lit stays (the
+        // is_lit -> is_lit no-transition the maintenance skips)
+        w.set(x, y, z, SOUL_CAMPFIRE_LIT);
+        assert_eq!(w.campfire_ticks.len(), 1, "the lit-to-lit swap the entry keeps");
+        // the douse: the un-lit transition the entry drops (the set's
+        // own maintenance the walk never drains a dead cell)
+        w.set(x, y, z, CAMPFIRE);
+        assert!(w.campfire_ticks.is_empty(), "the douse the entry drops");
+        // the re-lit: the entry re-banks (the ignite lane's own
+        // product the queue serves again)
+        w.set(x, y, z, CAMPFIRE_LIT);
+        assert_eq!(w.campfire_ticks, vec![(0, x, y, z)], "the re-lit the entry re-banks");
+        // THE DRAIN'S OWN SHAPE (the fire queue's own drain the time
+        // order the stable sort banks): the due entry the drain gives
+        // up, the re-arm the due+1 entry banks, the duplicate the add
+        // refuses
+        let due = w.drain_due_campfire_ticks(100);
+        assert_eq!(due, vec![(x, y, z)], "the due-0 entry the drain gives up");
+        assert!(w.campfire_ticks.is_empty());
+        w.rearm_campfire_tick(101, x, y, z);
+        w.rearm_campfire_tick(102, x, y, z);
+        assert_eq!(w.campfire_ticks, vec![(101, x, y, z)], "the one-live-entry law the duplicate refuses");
+        // the not-yet-due entry the drain keeps
+        assert!(w.drain_due_campfire_ticks(100).is_empty(), "the future entry the drain keeps");
+        assert_eq!(w.drain_due_campfire_ticks(101), vec![(x, y, z)]);
+    }
+
 
     /// THE FIRE'S OWN LIFE — javap `FireBlock.tick` the spread, the
     /// burn-out and the prime chain the seeded drive answers: the TNT

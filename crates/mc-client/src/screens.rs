@@ -10102,6 +10102,10 @@ impl App {
                         }
                     }
                 }
+                // THE CAMPFIRE'S OWN AMBIENT WALK (the method the
+                // particleTick law owns — the due cells the walk
+                // answers, the re-arm the every-tick cadence banks)
+                self.tick_campfire_ambient();
                 // THE MOB TICKS (the vanilla Minecraft.tick's entity
                 // lane): each zombie thinks on the active world's
                 // voxels, the player slice feeds the goals, the attack
@@ -25668,6 +25672,69 @@ impl App {
     /// speed args (0.0, 0.005, 0.0) the addParticle carries, the
     /// SmokeParticle ctor chain the shoot_smoke_puff helper folds (the
     /// nine draws the candle walk's own chain speaks).
+    /// THE CAMPFIRE'S OWN AMBIENT WALK (javap CampfireBlockEntity.
+    /// particleTick over the 26.2 jar — the CLIENT block-entity ticker
+    /// the loaded lit campfires every tick walks): the due cells the
+    /// queue drains (the set()'s own lit transitions the entries
+    /// pushed, the un-lit the entries dropped), each the walk's own
+    /// laws answers — the stale cell the kind gate drops, the
+    /// `nextFloat() < 0.11f` gate the 11% share answers (pc 6-16 —
+    /// the LEVEL random the same stream the lava tick's own rolls
+    /// borrow), the `nextInt(2) + 2` loop the 2..3 puffs spends
+    /// (pc 22-34 — the bound the CONDITION re-rolls EVERY iteration:
+    /// the first two checks always pass, the third puff the third
+    /// draw's 1 alone grants, the fourth never), the
+    /// makeParticles(level, pos, SIGNAL_FIRE, false) call the COSY
+    /// half's rolls the /3.0 folds speak (the douse walk's own
+    /// pattern) and the SIGNAL flag the isSmokeSource verdict rides
+    /// (the hay-below read — the SIGNAL provider's force arm the
+    /// helper's 280..329/0.95 laws bank, the vy 0.07 the makeParticles
+    /// arg carries). The re-arm the due+1 entry the every-tick cadence
+    /// banks — the queue the OFFLINE world alone fills (the networked
+    /// world the fire lane's own split speaks).
+    fn tick_campfire_ambient(&mut self) {
+        if let Some(world) = self.offline_world.as_mut() {
+            let due = world.drain_due_campfire_ticks(self.frame);
+            for (x, y, z) in due {
+                let cell = world.get(x, y, z);
+                if cell != crate::world::CAMPFIRE_LIT && cell != crate::world::SOUL_CAMPFIRE_LIT {
+                    continue; // the stale entry the kind gate drops
+                }
+                let signal = world.is_signal_fire(x, y, z);
+                if self.level_ambient_rng.next_f32() < 0.11 {
+                    let mut i: i32 = 0;
+                    while i < self.level_ambient_rng.next_int(2) + 2 {
+                        i += 1;
+                        // the COSY half's own rolls (the stream the
+                        // vanilla walk spends — the /3.0 bands the
+                        // douse walk's own pattern keeps)
+                        let rx = self.level_ambient_rng.next_f64();
+                        let rx_coin = self.level_ambient_rng.next() & 1 == 0;
+                        let ry1 = self.level_ambient_rng.next_f64();
+                        let ry2 = self.level_ambient_rng.next_f64();
+                        let rz = self.level_ambient_rng.next_f64();
+                        let rz_coin = self.level_ambient_rng.next() & 1 == 0;
+                        let px = x as f64 + 0.5 + rx / 3.0 * if rx_coin { 1.0 } else { -1.0 };
+                        let py = y as f64 + ry1 + ry2;
+                        let pz = z as f64 + 0.5 + rz / 3.0 * if rz_coin { 1.0 } else { -1.0 };
+                        let puff = crate::particles::campfire_smoke_puff(
+                            px,
+                            py,
+                            pz,
+                            0.0,
+                            0.07,
+                            0.0,
+                            signal,
+                            &mut self.level_ambient_rng,
+                        );
+                        self.particles.push(puff);
+                    }
+                }
+                world.rearm_campfire_tick(self.frame + 1, x, y, z);
+            }
+        }
+    }
+
     fn play_campfire_dowse_smoke(&mut self, pos: (i32, i32, i32)) {
         for _ in 0..20 {
             // THE COSY HALF'S OWN ROLLS (the stream the vanilla walk
@@ -51316,6 +51383,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -51886,6 +51954,7 @@ mod tests {
                     // the empty store the offline walk alone fills
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
+                    campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -52329,6 +52398,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -52398,6 +52468,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -52469,6 +52540,7 @@ mod tests {
                     // the empty store the offline walk alone fills
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
+                    campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -52517,6 +52589,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 side * side
@@ -70474,6 +70547,7 @@ cow_sound_variant: None,
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -75157,6 +75231,159 @@ cow_sound_variant: None,
                 .any(|e| e.starts_with("block.candle.extinguish")),
             "the CANDLE_EXTINGUISH voice the log wears"
         );
+    }
+
+    #[test]
+    fn the_campfire_the_ambient_walk_the_signal_puffs_wear() {
+        // THE PARTICLE TICK'S OWN WALK (javap CampfireBlockEntity.
+        // particleTick over the 26.2 jar — the 11% gate the 2..3 puff
+        // loop the SIGNAL flag the hay-below verdict rides): the
+        // stream replay the fixed seed pins bit-for-bit — the gate
+        // draw, the loop's re-rolled bounds, the bodies' 11-draw
+        // chains, the SIGNAL provider's force arm the helper banks.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top - 1, c, crate::world::HAY_BLOCK);
+            w.set(c, top, c, crate::world::CAMPFIRE_LIT);
+        }
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert!(
+                w.is_signal_fire(c, top, c),
+                "the hay below the signal verdict answers"
+            );
+            assert_eq!(
+                w.campfire_ticks,
+                vec![(0, c, top, c)],
+                "the lit transition the queue entry banks"
+            );
+        }
+        // THE SIGNAL REPLAY (seed 0xbeef: the gate draw 0.0847 the 11%
+        // share passes, the third check draw 1 the third body grants —
+        // THREE puffs, the lifetimes 280 + [3, 42, 39] the SIGNAL
+        // ladder wears)
+        app.frame = 100;
+        app.level_ambient_rng = crate::drops::Lcg::new(0xbeef);
+        app.tick_campfire_ambient();
+        let signal_puffs: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::CampfireSmoke { .. }))
+            .collect();
+        assert_eq!(
+            signal_puffs.len(),
+            3,
+            "the seed's own replay the third puff grants"
+        );
+        let pinned_lifetimes: Vec<u32> = signal_puffs.iter().map(|p| p.lifetime).collect();
+        assert_eq!(
+            pinned_lifetimes,
+            vec![283, 322, 319],
+            "the SIGNAL ladder 280 + [3, 42, 39]"
+        );
+        for p in &signal_puffs {
+            match p.kind {
+                crate::particles::ParticleKind::CampfireSmoke { alpha, .. } => {
+                    assert_eq!(alpha, 0.95, "the SIGNAL provider's own alpha");
+                }
+                _ => unreachable!(),
+            }
+            // the makeParticles COSY half's own position bands (the
+            // /3.0 folds the cell center keeps, the y the
+            // nextDouble+nextDouble band rides)
+            assert!(
+                (p.x - (c as f64 + 0.5)).abs() <= 1.0 / 3.0,
+                "the x band the /3.0 fold keeps"
+            );
+            assert!(
+                (p.z - (c as f64 + 0.5)).abs() <= 1.0 / 3.0,
+                "the z band the /3.0 fold keeps"
+            );
+            assert!(
+                (top as f64..top as f64 + 2.0).contains(&p.y),
+                "the y band the double roll rides"
+            );
+            // the vy the makeParticles arg carries + the ctor's /500
+            // bump (0.07 + [0, 0.002))
+            assert!((0.07..0.072).contains(&p.vy), "the vy the 0.07 arg the bump keeps");
+        }
+        // THE RE-ARM'S OWN CADENCE: the due+1 entry the walk banks,
+        // the one-live-entry law the duplicate refuses
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.campfire_ticks,
+                vec![(101, c, top, c)],
+                "the due+1 the re-arm banks"
+            );
+        }
+        // the not-yet-due entry the earlier walk keeps (the every-tick
+        // walk the future entry leaves)
+        app.frame = 100;
+        app.tick_campfire_ambient();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.campfire_ticks,
+                vec![(101, c, top, c)],
+                "the future entry the drain keeps"
+            );
+        }
+        // THE COSY ARM'S OWN REPLAY (the hay removal the verdict
+        // re-answers — the live read the property cache's own law
+        // keeps; seed 0xbeef: the gate 0.0847 passes, the third check
+        // draw 1 the third body grants, the lifetimes 80 + [3, 42, 39]
+        // the COSY ladder wears)
+        app.particles.clear();
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top - 1, c, crate::world::AIR);
+        }
+        app.frame = 200;
+        app.level_ambient_rng = crate::drops::Lcg::new(0xbeef);
+        app.tick_campfire_ambient();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert!(
+                !w.is_signal_fire(c, top, c),
+                "the hay removal the verdict refuses"
+            );
+        }
+        let cosy_puffs: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::CampfireSmoke { .. }))
+            .collect();
+        assert_eq!(
+            cosy_puffs.len(),
+            3,
+            "the seed's own replay the third puff grants"
+        );
+        let cosy_lifetimes: Vec<u32> = cosy_puffs.iter().map(|p| p.lifetime).collect();
+        assert_eq!(cosy_lifetimes, vec![83, 122, 119], "the COSY ladder 80 + [3, 42, 39]");
+        for p in &cosy_puffs {
+            match p.kind {
+                crate::particles::ParticleKind::CampfireSmoke { alpha, .. } => {
+                    assert_eq!(alpha, 0.9, "the COSY provider's own alpha");
+                }
+                _ => unreachable!(),
+            }
+            assert!((80..=129).contains(&p.lifetime), "the COSY band the ladder keeps");
+        }
+        // the re-arm the next cadence tick banks
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.campfire_ticks,
+                vec![(201, c, top, c)],
+                "the due+1 the re-arm banks"
+            );
+        }
     }
 
     #[test]

@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 74] = [
+pub const RUNTIME_PALETTE: [&str; 75] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -349,6 +349,12 @@ pub const RUNTIME_PALETTE: [&str; 74] = [
     "candle_cake", "candle_cake_lit",
     "cake", "cake_slice1", "cake_slice2", "cake_slice3",
     "cake_slice4", "cake_slice5", "cake_slice6",
+    // THE SIGNAL FIRE'S OWN KIND (the autopush-530 round): hay_block
+    // the campfire's below-cell the isSmokeSource verdict reads (javap
+    // CampfireBlock pc 229-230 — the `state.is(Blocks.HAY_BLOCK)` the
+    // SIGNAL_FIRE property's own law speaks), the palette row the
+    // offline signal-fire lane the kind-only vocabulary now carries.
+    "hay_block",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2075,6 +2081,9 @@ mod tests {
         assert_eq!(RUNTIME_PALETTE[71], "cake_slice4");
         assert_eq!(RUNTIME_PALETTE[72], "cake_slice5");
         assert_eq!(RUNTIME_PALETTE[73], "cake_slice6");
+        // the signal fire's own kind (the autopush-530 round): the hay
+        // bale the campfire's below-cell the isSmokeSource verdict reads
+        assert_eq!(RUNTIME_PALETTE[74], "hay_block");
         // the shared-row law the registry-name walk speaks: every
         // stage the BASE "cake" row the dig/drop/sound/item lanes keep
         let names = registry_names();

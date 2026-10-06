@@ -183,6 +183,7 @@ pub fn materialize(
         // block updates land
         fire_ticks: Vec::new(),
         fire_age: std::collections::HashMap::new(),
+        campfire_ticks: Vec::new(), // the campfire's own queue: empty
     };
     let side_i = side as i32;
     for gz in 0..side_i {

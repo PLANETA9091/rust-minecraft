@@ -2377,6 +2377,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]],
             light: None,
             day_tick: None,
