@@ -7048,6 +7048,13 @@ pub struct App {
     /// the body's due flag + position stash bank — the drain the
     /// record speaks.
     pub game_events: Vec<String>,
+    /// THE SCULK SENSOR'S OWN REGISTRY (the listener registry's
+    /// analog — the vanilla's block entity the chunk-section registry
+    /// walk registers, the cell vec the App keeps): the glide event's
+    /// own dispatch the drain walk serves — the gates the sculk
+    /// module's hearing walk answers, the free-at the phase window's
+    /// re-arm law keeps.
+    pub sculk_sensors: Vec<crate::sculk::SculkSensorCell>,
     /// THE CRIT EMITTERS (the TrackingEmitters the crit attacks arm —
     /// 3 ticks of life each, the 16-sample walk per tick).
     pub crit_emitters: Vec<crate::particles::CritEmitter>,
@@ -7965,6 +7972,7 @@ impl App {
             pieces: Vec::new(),
             particles: Vec::new(),
             game_events: Vec::new(),
+            sculk_sensors: Vec::new(),
             crit_emitters: Vec::new(),
             crit_sprite: None,
             weather_rain: None,
@@ -8073,6 +8081,16 @@ impl App {
             frame_sample_size: 0,
             spawn_pose: None,
         }
+    }
+
+    /// THE SCULK SENSOR'S OWN PLACEMENT (the registry walk's analog —
+    /// the cell the vec banks, the fresh sensor the INACTIVE phase's
+    /// own free-at keeps: the earliest tick the hearing rides).
+    pub fn place_sculk_sensor(&mut self, x: i32, y: i32, z: i32) {
+        self.sculk_sensors.push(crate::sculk::SculkSensorCell {
+            pos: (x, y, z),
+            free_at: 0,
+        });
     }
 
     /// Advance deterministic boot progress; transitions to title.
@@ -9336,6 +9354,39 @@ impl App {
                     glide_pos.2,
                     crate::sculk::vibration_frequency("elytra_glide")
                 ));
+                // THE SCULK LANE'S OWN HEARING (javap the dispatch walk —
+                // the registry visit the getPostableListenerPosition gate
+                // keeps, the Listener.handleGameEvent's own gates the
+                // hearing walk answers, the phase window the free-at fold
+                // keeps): each registered sensor cell the gates answer —
+                // the hearing record the world's own reaction banks, the
+                // re-arm the arrival + the ACTIVE 30 + the COOLDOWN 10
+                // the fold serves
+                for sensor in &mut self.sculk_sensors {
+                    if self.frame < sensor.free_at {
+                        continue;
+                    }
+                    if let Some(hearing) = crate::sculk::sensor_hearing(
+                        "elytra_glide",
+                        glide_pos,
+                        sensor.pos,
+                    ) {
+                        self.game_events.push(format!(
+                            "sculk_hearing @{} x{} y{} z{} d{:.6} t{} f{} p{}",
+                            self.frame,
+                            sensor.pos.0,
+                            sensor.pos.1,
+                            sensor.pos.2,
+                            hearing.distance,
+                            hearing.arrival_ticks,
+                            hearing.frequency,
+                            hearing.redstone_strength
+                        ));
+                        sensor.free_at = self.frame
+                            + hearing.arrival_ticks as u64
+                            + crate::sculk::SCULK_SENSOR_REARM_TICKS;
+                    }
+                }
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -39915,6 +39966,197 @@ mod tests {
             app.game_events.len(),
             4,
             "the 41st tick the gate refuses"
+        );
+    }
+
+    /// THE SCULK SENSOR'S OWN HEARING (the dispatch walk the App
+    /// serves): the glide event the registered sensor cells answer —
+    /// the hearing record the lane banks (the exact line the
+    /// reference folds pin), the out-of-range sensor the gate
+    /// refuses, the phase window the re-arm law keeps (the tick-20
+    /// event the ACTIVE/COOLDOWN walk refuses, the tick-50 event the
+    /// window's tail still refuses, the post-window tick-60 event the
+    /// INACTIVE phase hears again).
+    #[test]
+    fn the_sculk_sensor_the_glide_hears() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        // the near sensor rides the fall path, the far sensor the
+        // gate's own radius refuses
+        app.place_sculk_sensor(0, 56, 0);
+        app.place_sculk_sensor(10, 56, 0);
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        assert!(
+            app.body.as_ref().expect("the body rides").fall_flying,
+            "the glide chord the start speaks"
+        );
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        assert!(app.game_events.is_empty());
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        // the reference folds the expected hearing's own fields pin —
+        // the distance the Vec3→CENTER fold, the arrival the floor,
+        // the strength the integer-sqrt + the fold pair
+        let dx = pos9.0 - 0.5;
+        let dy = pos9.1 - 56.5;
+        let dz = pos9.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let eb = (
+            pos9.0.floor() as i32,
+            pos9.1.floor() as i32,
+            pos9.2.floor() as i32,
+        );
+        let dsq = ((eb.0 - 0) * (eb.0 - 0)
+            + (eb.1 - 56) * (eb.1 - 56)
+            + (eb.2 - 0) * (eb.2 - 0)) as f64;
+        let p = std::cmp::max(1, 15 - ((15.0f64 / 8.0) * dsq.sqrt()).floor() as i32);
+        app.update(); // tick 10: the first gate — the post + ONE hearing
+        assert_eq!(
+            app.game_events.len(),
+            2,
+            "the post + the near sensor's hearing — the far sensor the gate refuses"
+        );
+        assert!(
+            app.game_events[0].starts_with("elytra_glide @10 "),
+            "the post the lane banks first"
+        );
+        assert_eq!(
+            app.game_events[1],
+            format!(
+                "sculk_hearing @10 x0 y56 z0 d{:.6} t{} f4 p{}",
+                d, t, p
+            ),
+            "the hearing the reference folds pin bit-for-bit"
+        );
+        // the tick-20 event the phase window refuses (the sensor the
+        // ACTIVE/COOLDOWN walk keeps — the arrival + 40 the free-at
+        // folds)
+        for _ in 11..=19 {
+            app.update();
+        }
+        app.update(); // tick 20
+        assert_eq!(
+            app.game_events.len(),
+            3,
+            "the post banks, the hearing the phase refuses"
+        );
+        assert!(
+            app.game_events[2].starts_with("elytra_glide @20 "),
+            "the second post the lane banks"
+        );
+        // the tick-50 event the window's tail STILL refuses (the
+        // free-at the arrival + 40 the re-arm law keeps) — the body
+        // the teleport parks in range first. The tick-30/40 events
+        // the walk posts alike (the glide clock the gate never
+        // pauses) — the posts the lane banks, the hearings the phase
+        // refuses
+        for _ in 21..=45 {
+            app.update();
+        }
+        assert_eq!(
+            app.game_events.len(),
+            5,
+            "the tick-30/40 posts bank — the hearings the phase refuses"
+        );
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.x = 0.0;
+            b.y = 64.0;
+            b.z = 0.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+        }
+        for _ in 46..=49 {
+            app.update();
+        }
+        app.update(); // tick 50
+        assert_eq!(
+            app.game_events.len(),
+            6,
+            "the tick-50 post banks, the hearing the window still refuses"
+        );
+        assert!(
+            app.game_events[5].starts_with("elytra_glide @50 "),
+            "the tick-50 post the lane banks"
+        );
+        // the post-window event the re-armed sensor hears again (the
+        // INACTIVE phase the window's tail restores)
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.y = 64.0;
+            b.vy = 0.0;
+        }
+        for _ in 51..=56 {
+            app.update();
+        }
+        // the post-window event the re-armed sensor hears again (the
+        // INACTIVE phase the window's tail restores): the teleport
+        // parks the body in range — the look-steered drift the glide
+        // keeps the z fold resets too
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.x = 0.0;
+            b.y = 64.0;
+            b.z = 0.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+        }
+        for _ in 57..=59 {
+            app.update();
+        }
+        let pos59 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        let dx2 = pos59.0 - 0.5;
+        let dy2 = pos59.1 - 56.5;
+        let dz2 = pos59.2 - 0.5;
+        let d2 = ((dx2 * dx2 + dy2 * dy2 + dz2 * dz2).sqrt()) as f32;
+        let t2 = d2.floor() as i32;
+        let eb2 = (
+            pos59.0.floor() as i32,
+            pos59.1.floor() as i32,
+            pos59.2.floor() as i32,
+        );
+        let dsq2 = ((eb2.0 - 0) * (eb2.0 - 0)
+            + (eb2.1 - 56) * (eb2.1 - 56)
+            + (eb2.2 - 0) * (eb2.2 - 0)) as f64;
+        let p2 = std::cmp::max(1, 15 - ((15.0f64 / 8.0) * dsq2.sqrt()).floor() as i32);
+        app.update(); // tick 60
+        assert_eq!(
+            app.game_events.len(),
+            8,
+            "the tick-60 post + the SECOND hearing the re-armed sensor banks"
+        );
+        assert!(
+            app.game_events[6].starts_with("elytra_glide @60 "),
+            "the tick-60 post the lane banks"
+        );
+        assert_eq!(
+            app.game_events[7],
+            format!(
+                "sculk_hearing @60 x0 y56 z0 d{:.6} t{} f4 p{}",
+                d2, t2, p2
+            ),
+            "the re-armed hearing the reference folds pin bit-for-bit"
         );
     }
 
