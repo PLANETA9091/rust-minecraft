@@ -827,6 +827,23 @@ impl BlockSounds {
             1.0
         };
         self.elytra_voice = Some(voice);
+        // THE ENGINE'S OWN CHANNEL WRITE (javap SoundEngine.tick(boolean)
+        // over the 26.2 jar — the non-paused walk the live voice every
+        // tick answers: the tickable's own update the state walk above
+        // keeps, then the calculateVolume/calculatePitch pair the
+        // handle.execute lambda the InvokeDynamic #6:accept speaks —
+        // the Channel.setVolume/setPitch write the lambda's own
+        // invokespecial pair banks — the UNCONDITIONAL per-tick write
+        // the no-change gate never guards, the mute window's zero the
+        // same write carries). The mod line the record lane's own
+        // shape wears — the post-update values the channel's live
+        // state the backend's mirror replays; the stop tick the
+        // return above serves (the stopped line the write never
+        // rides, the dead voice the None keeps).
+        self.events.push(format!(
+            "{EVENT} @{tick} mod v{:.6} p{:.6}",
+            voice.volume, voice.pitch
+        ));
     }
 }
 
@@ -1046,6 +1063,16 @@ mod tests {
             9.0 / 20.0,
             "the tick-29 ramp the linear fold keeps"
         );
+        // THE LIVE WRITE (javap SoundEngine.tick(boolean) — the
+        // non-paused walk the handle.execute lambda every live tick
+        // answers: the post-update values the Channel.setVolume/
+        // setPitch pair the mod line carries — the mute window's zero
+        // the same write banks)
+        assert_eq!(
+            s.events.last().expect("the mod line banks"),
+            "item.elytra.flying @39 mod v0.450000 p1.000000",
+            "the engine's write the post-update values carries"
+        );
         // THE FULL VOICE (tick 40 the ramp retires — the clamp the 4.0
         // speed² keeps at 1.0, the pitch the over-0.8 arm answers)
         for t in 30..=40 {
@@ -1054,6 +1081,11 @@ mod tests {
         let v = s.elytra_voice.unwrap();
         assert_eq!(v.volume, 1.0, "the full voice the clamp keeps");
         assert_eq!(v.pitch, 1.2, "the 0.8-over the pitch law answers");
+        assert_eq!(
+            s.events.last().expect("the mod line banks"),
+            "item.elytra.flying @40 mod v1.000000 p1.200000",
+            "the full voice the live write carries"
+        );
         // THE CLAMP'S OWN FOLD (the speed² 100.0 the /4 = 25 the clamp
         // caps, the mid value 0.5 the same /4 fold answers)
         s.tick_elytra_voice(41, true, 100.0);
@@ -1073,6 +1105,11 @@ mod tests {
             (0.0, 1.0),
             "the quiet body the zero keeps"
         );
+        assert_eq!(
+            s.events.last().expect("the mod line banks"),
+            "item.elytra.flying @43 mod v0.000000 p1.000000",
+            "the mute window the same write carries"
+        );
         // THE DEFERRED STOP (the fresh voice the early landing wears —
         // the flag check the first 20 ticks never runs, the crossing
         // the stop serves, the dead voice the tick never re-speaks)
@@ -1085,18 +1122,25 @@ mod tests {
             s2.elytra_voice.is_some(),
             "the first 20 ticks the flag check never runs"
         );
-        let lines_before = s2.events.len();
         s2.tick_elytra_voice(120, false, 4.0);
         assert!(
             s2.elytra_voice.is_some(),
             "the tick-20 the gate's own edge keeps"
         );
+        // the count the EDGE TICK's own mod line banks (the live write
+        // the same tick speaks — the capture the stop's own head keeps)
+        let lines_before = s2.events.len();
         s2.tick_elytra_voice(121, false, 4.0);
         assert!(s2.elytra_voice.is_none(), "the crossing the discard serves");
         assert_eq!(
             s2.events.last().expect("the stop line banks"),
             "item.elytra.flying @121 stopped",
             "the stopped line the record lane's shape wears"
+        );
+        assert_eq!(
+            s2.events.iter().filter(|e| e.contains(" mod v")).count(),
+            20,
+            "the live ticks the write every tick banks (the stop tick the write never rides)"
         );
         s2.tick_elytra_voice(122, false, 4.0);
         assert_eq!(
