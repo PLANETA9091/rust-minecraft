@@ -216,6 +216,80 @@ pub fn block_occludes(state_id: u32) -> bool {
     }
 }
 
+/// THE VIBRATION_RESONATORS TAG (the jar's
+/// `data/minecraft/tags/block/vibration_resonators.json` — the ONE row
+/// the json wears: the amethyst the sensor's own activation makes
+/// sing; the shrieker/catalyst the tag NEVER carries — the resonate
+/// the neighbors alone answer).
+const VIBRATION_RESONATORS: &[&str] = &["amethyst_block"];
+
+/// The resonate scan's own predicate (javap tryResonateVibration pc
+/// 43-51 — the `state.is(BlockTags.VIBRATION_RESONATORS)` the neighbor
+/// test wears): the tag's row the true answers, the rest the false.
+pub fn is_vibration_resonator(name: &str) -> bool {
+    VIBRATION_RESONATORS.contains(&name)
+}
+
+/// The world-cell fold the resonate scan wears: the block state's
+/// registry name the prefix strip answers (the block_occludes fold
+/// the same shape keeps).
+pub fn block_resonates(state_id: u32) -> bool {
+    match mc_registry::generated::block_ids::block_name_of(state_id) {
+        Some(name) => {
+            let bare = name.strip_prefix("minecraft:").unwrap_or(name);
+            is_vibration_resonator(bare)
+        }
+        None => false,
+    }
+}
+
+/// THE RESONANCE EVENTS (javap VibrationSystem — the RESONANCE_EVENTS
+/// list the clinit's RESONATE_1..15 key() walk fills, the
+/// `getResonanceEventByFrequency`'s `List.get(f - 1)` the isub
+/// serves).
+const RESONANCE_EVENTS: [&str; 15] = [
+    "resonate_1",
+    "resonate_2",
+    "resonate_3",
+    "resonate_4",
+    "resonate_5",
+    "resonate_6",
+    "resonate_7",
+    "resonate_8",
+    "resonate_9",
+    "resonate_10",
+    "resonate_11",
+    "resonate_12",
+    "resonate_13",
+    "resonate_14",
+    "resonate_15",
+];
+
+/// `VibrationSystem.getResonanceEventByFrequency(int)` (javap,
+/// verbatim): `RESONANCE_EVENTS.get(f - 1)` — the frequency the index
+/// serves (the tagged hearings' own 1..=15 band the caller keeps; the
+/// JVM's IOOBE the out-of-band index throws, the usize underflow the
+/// same refusal wears).
+pub fn resonance_event_by_frequency(frequency: i32) -> &'static str {
+    RESONANCE_EVENTS[(frequency - 1) as usize]
+}
+
+/// THE RESONANCE PITCH BEND (javap lambda$static$0 — the 16 semitone
+/// steps the fill banks, the `NoteBlock.getPitchFromNote` fold the
+/// loop wears).
+const RESONANCE_PITCH_BEND_NOTES: [i32; 16] = [
+    0, 0, 2, 4, 6, 7, 9, 10, 12, 14, 15, 18, 19, 21, 22, 24,
+];
+
+/// `NoteBlock.getPitchFromNote(int)` (javap, verbatim):
+/// `(float)Math.pow(2.0, (note - 12) / 12.0)` — the bend the
+/// RESONANCE_PITCH_BEND[frequency] draw wears (the amethyst's own
+/// voice the pitch keeps; no draw the deterministic fold spends).
+pub fn resonance_pitch_bend(frequency: usize) -> f32 {
+    let note = RESONANCE_PITCH_BEND_NOTES[frequency];
+    2.0f64.powf((note - 12) as f64 / 12.0) as f32
+}
+
 /// THE OCCLUSION WALK (javap `VibrationSystem$Listener.isOccluded` —
 /// the FULL transcription): the endpoints the block-center folds keep
 /// (pc 0-87 — the `Mth.floor + 0.5` both ends), the SIX rays the
@@ -427,6 +501,11 @@ pub struct SculkSensorCell {
     /// voice follows, the tick walk's WATERLOGGED gate the dry cell
     /// passes)
     pub stop_at: Option<u64>,
+    /// the vibration's own frequency the hearing armed — the activate
+    /// walk's arg6 the resonate walk rides (the
+    /// tryResonateVibration's iload_3 the faload index keeps; 0 = no
+    /// hearing has armed the cell)
+    pub resonate_frequency: i32,
 }
 
 /// THE HEARING WALK (the laws the SensorHearing doc names, the order
@@ -484,6 +563,13 @@ pub fn sensor_hearing(
 /// holder's key the map answers — the unknown event the default's zero
 /// keeps (the `.orElse(0)` walk the interface's own fold speaks).
 pub fn vibration_frequency(event: &str) -> i32 {
+    // THE RESONATE ROWS the clinit's own loop banks (javap
+    // VibrationSystem <clinit> — the `map.put(getResonanceEventByFrequency(i), i)`
+    // walk the lambda's 41 the tail appends: resonate_N → N the map
+    // carries, the gap the lambda-only table wore the loop retires)
+    if let Some(idx) = RESONANCE_EVENTS.iter().position(|&n| n == event) {
+        return idx as i32 + 1;
+    }
     VIBRATION_FREQUENCIES
         .iter()
         .find(|(name, _)| *name == event)
@@ -730,6 +816,118 @@ mod tests {
         assert!(
             vibration_occluded(from, to, |x, y, z| x == 0 && y == 56 && z == 0),
             "the listener's own block the entered cell the blocked verdict wears"
+        );
+    }
+
+    /// THE RESONATORS' OWN VOCABULARY — the tag the amethyst alone
+    /// carries (the shrieker/catalyst the json never grants), the
+    /// registry fold the world's cells wear, the bend notes the
+    /// lambda's fill banks, the getPitchFromNote fold the pitch keeps,
+    /// the resonance events the isub fold serves, the map's resonate
+    /// rows the clinit loop banks (the round-trip the gap retires).
+    #[test]
+    fn the_resonators_the_amethyst_the_tag_keeps() {
+        assert!(
+            is_vibration_resonator("amethyst_block"),
+            "the one row the tag carries"
+        );
+        assert!(
+            !is_vibration_resonator("sculk_shrieker"),
+            "the shrieker the tag never carries"
+        );
+        assert!(
+            !is_vibration_resonator("sculk_catalyst"),
+            "the catalyst the tag never carries"
+        );
+        assert!(
+            !is_vibration_resonator("white_wool"),
+            "the wool the resonate scan never answers"
+        );
+        let amethyst_id = mc_registry::generated::block_ids::BLOCK_RANGES
+            .iter()
+            .find(|(_, _, n)| *n == "minecraft:amethyst_block")
+            .map(|(s, _, _)| *s)
+            .expect("amethyst_block rides the registry");
+        assert!(
+            block_resonates(amethyst_id),
+            "the amethyst cell the registry fold answers"
+        );
+        let stone_id = mc_registry::generated::block_ids::BLOCK_RANGES
+            .iter()
+            .find(|(_, _, n)| *n == "minecraft:stone")
+            .map(|(s, _, _)| *s)
+            .expect("stone rides the registry");
+        assert!(
+            !block_resonates(stone_id),
+            "the stone cell the refusal keeps"
+        );
+        // the bend notes the fill banks — the sampled rows the lambda's
+        // own iastore pairs pin (the 16 the count keeps)
+        assert_eq!(
+            resonance_pitch_bend(0),
+            2.0f64.powf(-12.0 / 12.0) as f32,
+            "the note 0 the half-pitch the fold answers"
+        );
+        assert_eq!(
+            resonance_pitch_bend(1),
+            2.0f64.powf(-12.0 / 12.0) as f32,
+            "the note 0 the SAME half-pitch keeps"
+        );
+        assert_eq!(
+            resonance_pitch_bend(4),
+            2.0f64.powf(-6.0 / 12.0) as f32,
+            "the note 6 the tritone-down the glide's own voice wears"
+        );
+        assert_eq!(
+            resonance_pitch_bend(15),
+            2.0f64.powf(12.0 / 12.0) as f32,
+            "the note 24 the double pitch the top answers"
+        );
+        assert!(
+            (resonance_pitch_bend(4) - 0.7071).abs() < 1e-3,
+            "the 2^-0.5 the tritone keeps"
+        );
+        // the resonance events the isub fold serves
+        assert_eq!(
+            resonance_event_by_frequency(1),
+            "resonate_1",
+            "the first the isub keeps"
+        );
+        assert_eq!(
+            resonance_event_by_frequency(4),
+            "resonate_4",
+            "the glide's own frequency the resonate_4 answers"
+        );
+        assert_eq!(
+            resonance_event_by_frequency(15),
+            "resonate_15",
+            "the top the list's tail keeps"
+        );
+        // the map's resonate rows the clinit loop banks — the
+        // round-trip the gap retires, the lambda's own 41 the same
+        // table keeps
+        assert_eq!(
+            vibration_frequency("resonate_4"),
+            4,
+            "the resonate row the clinit's put answers"
+        );
+        for f in 1..=15 {
+            let event = resonance_event_by_frequency(f);
+            assert_eq!(
+                vibration_frequency(event),
+                f,
+                "the round-trip the loop's own put keeps: {event}"
+            );
+        }
+        assert_eq!(
+            vibration_frequency("elytra_glide"),
+            4,
+            "the lambda's own row the same lookup keeps"
+        );
+        assert_eq!(
+            vibration_frequency("sculk_sensor_tendrils_clicking"),
+            0,
+            "the untagged the default's zero keeps"
         );
     }
 

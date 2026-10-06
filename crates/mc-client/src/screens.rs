@@ -8092,6 +8092,7 @@ impl App {
             free_at: 0,
             clicking_at: None,
             stop_at: None,
+            resonate_frequency: 0,
         });
     }
 
@@ -9431,6 +9432,10 @@ impl App {
                         sensor.clicking_at =
                             Some(self.frame + hearing.arrival_ticks as u64);
                         sensor.stop_at = Some(sensor.free_at);
+                        // THE FREQUENCY the cell keeps (the activate
+                        // walk's arg6 the resonate walk rides — the
+                        // hearing's own answer the field banks)
+                        sensor.resonate_frequency = hearing.frequency;
                     }
                 }
             }
@@ -9455,6 +9460,69 @@ impl App {
             for sensor in &mut self.sculk_sensors {
                 if sensor.clicking_at == Some(self.frame) {
                     sensor.clicking_at = None;
+                    // THE RESONATE WALK (javap tryResonateVibration —
+                    // the activate walk's own pc 56-63 the
+                    // updateNeighbours precedes, the gameEvent broadcast
+                    // pc 64-72 the tail follows): the SIX neighbours the
+                    // Direction.values() loop serves (the vanilla enum
+                    // order the occlusion walk keeps), the
+                    // VIBRATION_RESONATORS tag the amethyst the answer
+                    // keeps — the resonate_N event the
+                    // getResonanceEventByFrequency's isub fold speaks
+                    // (the record the resonator's own center banks —
+                    // the BlockPos overload the atCenterOf fold wears,
+                    // the r16 the register(name)'s own default, the f
+                    // the clinit's resonate row answers), the
+                    // AMETHYST_BLOCK_RESONATE voice the pitch bend wears
+                    // (v1.0F the fconst speaks, the bend the
+                    // RESONANCE_PITCH_BEND[f] draw keeps — no draw the
+                    // deterministic fold spends, the level stream the
+                    // order keeps)
+                    let resonate_world = if self.world_is_network {
+                        self.net_world.as_ref()
+                    } else {
+                        self.offline_world.as_ref()
+                    };
+                    if let Some(w) = resonate_world {
+                        const RESONATE_DIRS: [(i32, i32, i32); 6] = [
+                            (0, -1, 0),
+                            (0, 1, 0),
+                            (0, 0, -1),
+                            (0, 0, 1),
+                            (-1, 0, 0),
+                            (1, 0, 0),
+                        ];
+                        for (dx, dy, dz) in RESONATE_DIRS {
+                            let (nx, ny, nz) = (
+                                sensor.pos.0 + dx,
+                                sensor.pos.1 + dy,
+                                sensor.pos.2 + dz,
+                            );
+                            if crate::sculk::block_resonates(w.get(nx, ny, nz) as u32) {
+                                let event = crate::sculk::resonance_event_by_frequency(
+                                    sensor.resonate_frequency,
+                                );
+                                self.game_events.push(format!(
+                                    "{} @{} x{:.6} y{:.6} z{:.6} r16 f{}",
+                                    event,
+                                    self.frame,
+                                    nx as f64 + 0.5,
+                                    ny as f64 + 0.5,
+                                    nz as f64 + 0.5,
+                                    crate::sculk::vibration_frequency(event)
+                                ));
+                                sensor_voices.push((
+                                    nx,
+                                    ny,
+                                    nz,
+                                    "block.amethyst_block.resonate",
+                                    crate::sculk::resonance_pitch_bend(
+                                        sensor.resonate_frequency as usize,
+                                    ),
+                                ));
+                            }
+                        }
+                    }
                     // THE SENSOR'S OWN BROADCAST (javap activate pc 64-72 —
                     // Level.gameEvent(entity, SCULK_SENSOR_TENDRILS_CLICKING,
                     // pos) the tryResonateVibration the walk precedes, the
@@ -40813,6 +40881,140 @@ mod tests {
                 click_at
             ))),
             "the arrival the broadcast the re-opened activation banks"
+        );
+    }
+
+    /// THE RESONATE WALK (javap tryResonateVibration — the activation's
+    /// own pc 56-63 the six-neighbour scan serves): the amethyst the
+    /// UP neighbour keeps — the resonate_4 record the resonator's own
+    /// center banks (the exact line the reference folds pin), the
+    /// broadcast the pc order follows, the amethyst voice the bend
+    /// pitch wears (the tritone-down the glide's own frequency keeps),
+    /// the re-arm tail the resonate never repeats.
+    #[test]
+    fn the_resonate_the_amethyst_the_sensor_answers() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let amethyst_id = mc_registry::generated::block_ids::BLOCK_RANGES
+            .iter()
+            .find(|(_, _, n)| *n == "minecraft:amethyst_block")
+            .map(|(s, _, _)| *s as u16)
+            .expect("amethyst_block rides the registry");
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_sensor(0, 32, 0);
+        // the fresh cell the frequency never carries
+        assert_eq!(
+            app.sculk_sensors[0].resonate_frequency, 0,
+            "the fresh cell the hearing never armed"
+        );
+        // THE AMETHYST the UP neighbour keeps — the resonator the
+        // scan's own tag answers
+        app.net_world.as_mut().expect("the world rides").chunks[0]
+            [33 * crate::world::CHUNK_X * crate::world::CHUNK_Z] = amethyst_id;
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        app.update(); // tick 10: the post + the hearing — the frequency the cell banks
+        assert_eq!(
+            app.game_events.len(),
+            2,
+            "the post + the hearing the lane banks — the resonate the arrival speaks"
+        );
+        assert_eq!(
+            app.sculk_sensors[0].resonate_frequency, 4,
+            "the glide's own frequency the hearing banks"
+        );
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        let dx = pos9.0 - 0.5;
+        let dy = pos9.1 - 32.5;
+        let dz = pos9.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let click_at = 10 + t;
+        let stop_at = click_at + crate::sculk::SCULK_SENSOR_REARM_TICKS as i32;
+        for _ in 11..click_at {
+            app.update();
+        }
+        // THE ARRIVAL: the resonate record the walk banks FIRST (the
+        // pc order the broadcast's own head keeps), the broadcast the
+        // tail wears
+        app.update();
+        assert_eq!(
+            app.game_events.len(),
+            4,
+            "the resonate + the broadcast the arrival banks — the tick-10 pair the lane keeps"
+        );
+        assert_eq!(
+            app.game_events[2],
+            format!(
+                "resonate_4 @{} x0.500000 y33.500000 z0.500000 r16 f4",
+                click_at
+            ),
+            "the resonate the walk's own line pins — the resonator's center the atCenterOf fold keeps, the r16 the register(name)'s bipush, the f4 the clinit's resonate row answers"
+        );
+        assert_eq!(
+            app.game_events[3],
+            format!(
+                "sculk_sensor_tendrils_clicking @{} x0.500000 y32.500000 z0.500000 r16 f0",
+                click_at
+            ),
+            "the broadcast the pc order follows"
+        );
+        if sounds_loaded() {
+            let events = &app.sounds.events;
+            let amethyst_idx = events
+                .iter()
+                .position(|e| e.starts_with("block.amethyst_block.resonate @"))
+                .expect("the amethyst voice the bend speaks");
+            let voice = &events[amethyst_idx];
+            assert!(
+                voice.starts_with(&format!("block.amethyst_block.resonate @{click_at} ")),
+                "the arrival tick the stamp keeps: {voice}"
+            );
+            assert!(
+                voice.contains(&format!(
+                    "p{:.6}",
+                    crate::sculk::resonance_pitch_bend(4)
+                )),
+                "the bend pitch the deterministic fold keeps: {voice}"
+            );
+            let clicking_idx = events
+                .iter()
+                .position(|e| e.starts_with("block.sculk_sensor.clicking @"))
+                .expect("the CLICKING voice the activation speaks");
+            assert!(
+                amethyst_idx < clicking_idx,
+                "the amethyst the walk's own order keeps — the tryResonate the CLICKING precedes"
+            );
+        }
+        // THE RE-ARM TAIL: the stop the resonate never repeats (the
+        // tick walk the gameEvent never posts, the tryResonate the
+        // activate's own walk keeps)
+        for _ in (click_at + 1)..stop_at {
+            app.update();
+        }
+        app.update();
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("resonate_"))
+                .count(),
+            1,
+            "the re-arm tail the resonate never repeats"
         );
     }
 
