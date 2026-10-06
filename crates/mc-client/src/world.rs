@@ -437,8 +437,57 @@ pub const SOUL_CAMPFIRE: u16 = 63;
 /// sound lanes resolve the BASE "soul_campfire" row keeps.
 pub const SOUL_CAMPFIRE_LIT: u16 = 64;
 
+/// Kind 65 (the sixty-sixth entry, the autopush-523 round): THE
+/// UNLIT CANDLE CAKE'S OWN KIND — the canLight consult's THIRD row
+/// the two igniter arms' disjunction names and the palette has
+/// never banked (javap the 26.2 jar — CandleCakeBlock's ctor the
+/// DEFAULT state registers `LIT=false` (the setValue(LIT, false)
+/// iconst_0 walk the any() builder serves), the registration the
+/// blocks clinit's BlockIds.CANDLE_CAKE row banks:
+/// `ofLegacyCopy(CAKE)` the CAKE strength/sound rows the legacy
+/// copy wears, `lightLevel(litBlockEmission(3))` the lit row's 3
+/// the emission table answers — and the register(ResourceKey,
+/// Function, Properties) walk carries NO BlockItemId: the block
+/// the ITEM FORM never had, the placeable lookup the vanilla
+/// itself refuses (the vanilla player the candle-on-cake use lane
+/// the cake kind's own round serves). CandleCakeBlock.canLight's
+/// pc walk: the CANDLE_CAKES tag consult + the `hasProperty(LIT)
+/// && !getValue(LIT)` predicate (lambda$canLight$0) the offline
+/// kind-only palette the UNLIT row answers (the lit kind the
+/// consult refuses — the same verdict the candle/campfire rows
+/// wear). THE SHAPE the static init's `Shapes.or(column(2.0, 8.0,
+/// 14.0), column(14.0, 0.0, 8.0))` walk banks — the cake slab's
+/// 0..8/16 band the collision table's Column(8) row answers (the
+/// body walks onto the cake the 0.6-block auto-step serves), the
+/// 2-px stick's 8..14 band the per-cell vocabulary never speaks
+/// (the honest fold the documented gap keeps). The name the dig/
+/// drop/sound lanes resolve the BASE "candle_cake" row keeps (the
+/// generated block_dig/block_sounds/block_drops tables' own rows
+/// the registry answers — the drops table the CANDLE item the
+/// vanilla loot table speaks, the self-entry the candle wears the
+/// cake never carries; the getCloneItemStack the CAKE item the
+/// pick lane answers a future cake round keeps).
+pub const CANDLE_CAKE: u16 = 65;
+
+/// Kind 66 (the sixty-seventh entry, the same round): THE LIT
+/// CANDLE CAKE'S OWN KIND — the canLight branch's own product
+/// (javap the 26.2 jar: the "lit=true" row block/candle_cake_lit
+/// resolves — the template_cake_with_candle parent the candle_lit
+/// texture override carries, the same cake slab + stick + wick
+/// geometry the unlit row banks). The lightLevel
+/// litBlockEmission(3) the lit row's 3 the emission table answers
+/// (the `iconst_3` the registration's lightLevel call speaks —
+/// the dimmest of the lit family, the candle's own 3 the same
+/// helper folds). The `!LIT` verdict the consult REFUSES the lit
+/// kind — the fall-through the placement walk answers. The name
+/// the dig/drop/sound lanes resolve the BASE "candle_cake" row
+/// keeps (the shared-row law the candle pair wears — the relight
+/// the lanes' own product never places; the useWithoutItem eat
+/// walk the CakeBlock.eat lane a future cake round keeps).
+pub const CANDLE_CAKE_LIT: u16 = 66;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 65] = [
+pub const NAME_OF: [&str; 67] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -492,6 +541,16 @@ pub const NAME_OF: [&str; 65] = [
     // canLight branches' own products never place)
     "campfire", "campfire",
     "soul_campfire", "soul_campfire",
+    // THE CANDLE CAKE PAIR'S OWN ROWS (the canLight consult's third
+    // row — the lit kind the BASE name the shared-row law keeps: the
+    // dig row (the CAKE's own strength the ofLegacyCopy wears), the
+    // drops table (the CANDLE item the vanilla loot table speaks —
+    // the self-entry the cake never carries), the sounds' WOOL row
+    // the cake's own registration banks; NO item id the vanilla
+    // itself grants — the register walk carries NO BlockItemId, the
+    // placeable lookup the vanilla itself refuses, the pick lane the
+    // getCloneItemStack's CAKE answer a future cake round keeps)
+    "candle_cake", "candle_cake",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -525,6 +584,17 @@ pub fn is_campfire(id: u16) -> bool {
     id == CAMPFIRE || id == CAMPFIRE_LIT || id == SOUL_CAMPFIRE || id == SOUL_CAMPFIRE_LIT
 }
 
+/// THE CANDLE CAKE PAIR'S OWN FAMILY — the canLight consult's third
+/// row the two igniter arms read (the unlit kind the consult
+/// answers, the lit kind the branch's own product the consult
+/// refuses — the vanilla `!LIT` verdict the kind-only vocabulary
+/// the pair's split wears). The mesher's element lane, the
+/// collision's Column(8) row and the emission's lit-3 row the same
+/// family predicate reads.
+pub fn is_candle_cake(id: u16) -> bool {
+    id == CANDLE_CAKE || id == CANDLE_CAKE_LIT
+}
+
 /// THE DOSE'S OWN PRODUCT MAP — the lit campfire the `setValue(LIT,
 /// false)` walk the shovel's douse arm serves (javap ShovelItem.useOn
 /// pc 151-166 over the 26.2 jar: the `state.setValue(CampfireBlock.
@@ -546,16 +616,19 @@ pub fn match_lit_campfire(cell: u16) -> Option<u16> {
 /// CANDLES tag + the `!LIT` verdict speaks; CampfireBlock.canLight
 /// the CAMPFIRES tag + the `!WATERLOGGED` and `!LIT` reads — the
 /// kind-only palette the WATERLOGGED property never carries, the
-/// UNLIT kind the verdict answers; the CandleCakeBlock row the cake
-/// base the palette never banks — the None the consult's refusal
-/// keeps). The lit kind the branch's own `setValue(LIT, true)`
-/// product carries — the LIT kinds and every non-lightable cell the
-/// fall-through the placement walk answers.
+/// UNLIT kind the verdict answers; the CandleCakeBlock row the
+/// CANDLE_CAKES tag + the `hasProperty(LIT) && !getValue(LIT)`
+/// predicate the lambda$canLight$0 walk speaks — the autopush-523
+/// round the cake pair the palette banks). The lit kind the branch's
+/// own `setValue(LIT, true)` product carries — the LIT kinds and
+/// every non-lightable cell the fall-through the placement walk
+/// answers.
 pub fn can_light_product(cell: u16) -> Option<u16> {
     match cell {
         CANDLE => Some(CANDLE_LIT),
         CAMPFIRE => Some(CAMPFIRE_LIT),
         SOUL_CAMPFIRE => Some(SOUL_CAMPFIRE_LIT),
+        CANDLE_CAKE => Some(CANDLE_CAKE_LIT),
         _ => None,
     }
 }
@@ -823,6 +896,18 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         CollisionShape::Empty
     } else if id == FARMLAND || id == DIRT_PATH {
         CollisionShape::Column(15)
+    } else if is_candle_cake(id) {
+        // THE CANDLE CAKE PAIR'S OWN COLUMN (the autopush-523 round —
+        // javap CandleCakeBlock.getShape the SHAPE field returns, the
+        // static init's `Shapes.or(column(2.0, 8.0, 14.0), column(14.0,
+        // 0.0, 8.0))` walk banks: the cake slab's 0..8/16 band the
+        // Column row's own vocabulary speaks — the body walks onto
+        // the cake the 0.6-block auto-step serves, the vanilla's own
+        // walk-over feel the per-cell fold keeps; the 14-px slab
+        // footprint's 1-px inset and the 2-px stick's 8..14 band the
+        // full-footprint fold never speaks — the documented gap the
+        // small-shape family keeps)
+        CollisionShape::Column(8)
     } else if is_campfire(id) {
         // THE CAMPFIRE FAMILY'S OWN ROW (the dev-6 round — javap the
         // 26.2 jar: CampfireBlock.getShape the SHAPE field returns,
@@ -2984,6 +3069,17 @@ mod tests {
         assert_eq!(
             collision_shape(SOUL_CAMPFIRE_LIT),
             CollisionShape::Column(7)
+        );
+        // THE CANDLE CAKE PAIR'S OWN COLUMN (the autopush-523 round —
+        // javap CandleCakeBlock.getShape the SHAPE field returns, the
+        // static init's `Shapes.or(column(2.0, 8.0, 14.0), column(14.0,
+        // 0.0, 8.0))` walk banks: the cake slab's 0..8/16 band the
+        // Column row speaks — the walk-over feel the auto-step keeps;
+        // the stick band the per-cell fold never speaks)
+        assert_eq!(collision_shape(CANDLE_CAKE), CollisionShape::Column(8));
+        assert_eq!(
+            collision_shape(CANDLE_CAKE_LIT),
+            CollisionShape::Column(8)
         );
         // THE FULL-CUBE FAMILY: the default registration — the terrain,
         // the foliage cubes, the machines

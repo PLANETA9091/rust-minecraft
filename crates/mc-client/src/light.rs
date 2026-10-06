@@ -97,6 +97,15 @@ fn emission(id: u16) -> u8 {
         // speaks — the LIT row's 3 the imul's own answer, the UNLIT
         // kind the dark 0 the else arm keeps)
         3
+    } else if id == CANDLE_CAKE_LIT {
+        // THE LIT CANDLE CAKE'S OWN ROW (the autopush-523 round —
+        // javap the blocks clinit's candle_cake registration over
+        // the 26.2 jar: the `iconst_3; litBlockEmission(I)`
+        // lightLevel call the ofLegacyCopy(CAKE) props chain banks —
+        // the lit-state read the emission's own verdict keeps, the
+        // 3 the dimmest of the lit family the candle's own row
+        // shares, the UNLIT kind the dark 0 the else arm keeps)
+        3
     } else if id == CAMPFIRE_LIT {
         // THE LIT CAMPFIRE'S OWN ROW (the dev-6 round — javap the
         // blocks clinit's campfire registration over the 26.2 jar:
@@ -714,6 +723,30 @@ mod tests {
         assert_eq!(light_at(&w, 8, 6, 3).1, Some(3), "the lit kind's own cell");
         assert_eq!(light_at(&w, 9, 6, 3).1, Some(2), "one east of the candle");
         assert_eq!(light_at(&w, 8, 7, 3).1, Some(2), "one above the candle");
+    }
+
+    #[test]
+    fn the_candle_cake_pair_speaks_the_lightlevel_lambda() {
+        // THE CANDLE CAKE PAIR'S OWN ROWS (the autopush-523 round —
+        // javap the blocks clinit's candle_cake registration over the
+        // 26.2 jar: the `iconst_3; litBlockEmission(I)` lightLevel
+        // call the ofLegacyCopy(CAKE) props chain banks — the
+        // lit-state read the emission's own verdict keeps, the UNLIT
+        // kind the dark 0 the else arm keeps, the LIT kind the 3 the
+        // candle's own row shares, the flood's own spread the
+        // relight answers)
+        let mut w = empty_world();
+        w.set(3, 6, 3, CANDLE_CAKE);
+        w.set(8, 6, 3, CANDLE_CAKE_LIT);
+        w.relight();
+        assert_eq!(light_at(&w, 3, 6, 3).1, Some(0), "the unlit kind dark");
+        assert_eq!(
+            light_at(&w, 8, 6, 3).1,
+            Some(3),
+            "the lit kind's own cell"
+        );
+        assert_eq!(light_at(&w, 9, 6, 3).1, Some(2), "one east of the cake");
+        assert_eq!(light_at(&w, 8, 7, 3).1, Some(2), "one above the cake");
     }
 
     #[test]

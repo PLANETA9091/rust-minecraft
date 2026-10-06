@@ -27921,11 +27921,12 @@ impl App {
             );
             if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
                 // THE SET: the LIT swap the kind-only vocabulary the
-                // CANDLE_LIT/CAMPFIRE_LIT/SOUL_CAMPFIRE_LIT half-kind
-                // words answer — the emission 3/15/10 the light grid's
-                // own walk bakes (the relight the fire placement arm's
-                // own pattern keeps), the flag-11 broadcast the chain
-                // call the same beat wears
+                // CANDLE_LIT/CAMPFIRE_LIT/SOUL_CAMPFIRE_LIT/
+                // CANDLE_CAKE_LIT half-kind words answer — the emission
+                // 3/15/10/3 the light grid's own walk bakes (the
+                // relight the fire placement arm's own pattern keeps),
+                // the flag-11 broadcast the chain call the same beat
+                // wears
                 world.set(hit.pos.0, hit.pos.1, hit.pos.2, lit_kind);
                 world.fire_shape_updates(hit.pos);
                 world.relight();
@@ -74297,6 +74298,110 @@ cow_sound_variant: None,
                 w.get(c, top, c),
                 crate::world::SOUL_CAMPFIRE_LIT,
                 "the soul lit kind the setValue walk's own swap wears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_canlight_consult_the_candle_cake_lights() {
+        // THE THIRD ROW'S OWN ANSWER (the autopush-523 round — javap
+        // CandleCakeBlock.canLight over the 26.2 jar: the CANDLE_CAKES
+        // tag + the `hasProperty(LIT) && !getValue(LIT)` predicate the
+        // lambda$canLight$0 walk speaks — the unlit kind the consult
+        // answers, the branch the SAME walk the candle/campfire rows
+        // wear): the clicked candle cake the LIT swap the
+        // can_light_product mapping carries — the sound the branch's
+        // first fruit speaks, the set the flag-11 broadcast the chain
+        // call wears, the placement cell the branch never touches
+        // (no fire beside the cake the consult's consume keeps)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the lit branch the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_CAKE_LIT,
+                "the lit kind the setValue walk's own swap wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "the placement cell the branch never touches — no fire beside"
+            );
+        }
+    }
+
+    #[test]
+    fn the_lit_candle_cake_the_consult_refuses() {
+        // THE !LIT VERDICT'S OWN REFUSAL (javap CandleCakeBlock.
+        // canLight — the predicate the LIT row's own state refuses,
+        // the fall-through the placement walk answers): the lit cake
+        // the flint's consult NEVER relights, the placement's own
+        // canBePlacedAt gate the survival law refuses (the cake cell
+        // the Column(8) collision the below read answers, the
+        // neighbors the canBurn scan refuses) — the press the PASS
+        // verdict carries, the world the same state keeps
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE_LIT);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the refused consult the PASS verdict carries"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_CAKE_LIT,
+                "the lit kind the press never touches"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "no fire the refused placement keeps"
             );
         }
     }

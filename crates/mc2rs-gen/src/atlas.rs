@@ -261,7 +261,43 @@ use zip::ZipArchive;
 /// kinds speak (the kind-only vocabulary the LIT/SIGNAL_FIRE/
 /// WATERLOGGED/FACING properties never carries — the douse and the
 /// relight the kind swaps the two lanes wear).
-pub const RUNTIME_PALETTE: [&str; 65] = [
+/// candle_cake is kind 65 and candle_cake_lit kind 66 (the
+/// sixty-sixth/sixty-seventh entries, the autopush-523 round): THE
+/// CANLIGHT CONSULT'S THIRD ROW the two igniter arms' disjunction
+/// names and the palette has never banked (javap the 26.2 jar —
+/// CandleCakeBlock's ctor the DEFAULT state registers LIT=false
+/// (the setValue(LIT, false) iconst_0 walk the any() builder
+/// serves), the registration the blocks clinit's BlockIds.
+/// CANDLE_CAKE row banks: `ofLegacyCopy(CAKE)` the CAKE strength/
+/// sound rows the legacy copy wears, `lightLevel(litBlockEmission(
+/// 3))` the lit row's 3 the emission table answers — and the
+/// register(ResourceKey, Function, Properties) walk carries NO
+/// BlockItemId: the block the ITEM FORM never had, the placeable
+/// lookup the vanilla itself refuses (the vanilla player the
+/// candle-on-cake use lane the cake kind's own round serves).
+/// CandleCakeBlock.canLight's pc walk: the CANDLE_CAKES tag consult
+/// + the `hasProperty(LIT) && !getValue(LIT)` predicate
+/// (lambda$canLight$0) the offline kind-only palette the UNLIT
+/// kind's own row answers (the lit kind the consult refuses — the
+/// same verdict the candle/campfire rows wear). THE SHAPE the
+/// static init's `Shapes.or(column(2.0, 8.0, 14.0), column(14.0,
+/// 0.0, 8.0))` walk banks — the cake slab's 0..8/16 band the
+/// collision table's Column(8) row answers (the body walks onto
+/// the cake the 0.6-block auto-step serves), the 2-px stick's
+/// 8..14 band the per-cell vocabulary never speaks (the honest
+/// fold the documented gap keeps). The blockstate is a plain
+/// VARIANTS map over lit — "lit=false" -> block/candle_cake,
+/// "lit=true" -> block/candle_cake_lit, BOTH parents
+/// block/template_cake_with_candle: the cake slab box [1,0,1]->
+/// [15,8,15] (#bottom/#top/#side the cake masters name) + the
+/// candle stick box [7,8,7]->[9,14,9] (#candle — block/candle the
+/// unlit row, block/candle_lit the lit row the vanilla's own
+/// texture overrides carry) + the two ±45° rotY wick planes the
+/// rotation walk bakes. The offline state fold the two kinds
+/// speak (the kind-only vocabulary the LIT property never carries
+/// — the relight the igniter arms' own kind swap wears; the use
+/// lane the cake's eat/douse walks a future round keeps).
+pub const RUNTIME_PALETTE: [&str; 67] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -278,6 +314,7 @@ pub const RUNTIME_PALETTE: [&str; 65] = [
     "fire", "soul_fire",
     "candle", "candle_lit",
     "campfire", "campfire_lit", "soul_campfire", "soul_campfire_lit",
+    "candle_cake", "candle_cake_lit",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -762,6 +799,52 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             let tex = tex_map
                 .get("fire")
                 .with_context(|| format!("model {model_ref}: no fire texture ref"))?;
+            let tex_stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&tex_stem, false));
+            continue;
+        }
+        if block == "candle_cake" || block == "candle_cake_lit" {
+            // THE CANDLE CAKE KINDS' OWN ROWS (the autopush-523 round,
+            // the official 26.2 jar): the blockstate is a plain
+            // VARIANTS map over lit — the UNLIT kind the "lit=false"
+            // row resolves (block/candle_cake), the LIT kind the
+            // "lit=true" row reads (block/candle_cake_lit), BOTH
+            // parents block/template_cake_with_candle. The flat row
+            // the `side` ref banks (block/cake_side — the template's
+            // own particle the cake body's dominant texture speaks);
+            // the multi-texture template's #bottom/#top/#candle refs
+            // the MESHER's own per-quad verdict reads (the cake
+            // masters the appended tiles bank, the candle tiles the
+            // palette's candle rows keep). tinted = false (the faces
+            // carry NO tintindex — the pre-colored masters render as
+            // authored).
+            let lit_row = if block == "candle_cake_lit" {
+                "lit=true"
+            } else {
+                "lit=false"
+            };
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/candle_cake.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate candle_cake: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(lit_row))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate candle_cake: no {lit_row} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block candle_cake: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("side")
+                .with_context(|| format!("model {model_ref}: no side texture ref"))?;
             let tex_stem = tex
                 .trim_start_matches("minecraft:")
                 .trim_start_matches("block/")
@@ -1266,6 +1349,37 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         tile_bytes.push(bytes);
         let _ = idx;
     }
+    // THE CAKE MASTERS' OWN STATIC BANK (the autopush-523 round): the
+    // three cake textures the template_cake_with_candle's faces name —
+    // plain 16x16 stills the mcmeta never animates (the cake body the
+    // candle rides). APPENDED after the palette rows — the block
+    // palette's tile indices stay byte-identical (the deterministic
+    // scenes keep their exact pixels). Named tiles the mesher's
+    // per-quad texture verdict reads (the TILE_CAKE_BOTTOM/TILE_CAKE_
+    // TOP/TILE_CAKE_SIDE consts the emit answers); the candle tiles
+    // the lane reads the PALETTE's own candle rows keep (no append —
+    // the same block/candle and block/candle_lit masters the kind
+    // tiles already bank).
+    for stem in ["cake_bottom", "cake_top", "cake_side"] {
+        if tile_names.iter().any(|n| n == stem) {
+            continue; // the dedup the walk keeps
+        }
+        let raw = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png"),
+        )
+        .with_context(|| format!("texture block/{stem}.png"))?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        if w != 16 || h != 16 {
+            bail!("texture {stem}: expected 16x16, got {w}x{h}");
+        }
+        let mut bytes = rgba;
+        bake_tint(&mut bytes, tint_for_texture(stem));
+        let idx = tile_names.len() as u16;
+        tile_names.push(stem.to_string());
+        tile_bytes.push(bytes);
+        let _ = idx;
+    }
     // THE BASE TILES the quads bake: the four palette-named strips the
     // BLOCK palette's own rows keep (the "fire_0" / "soul_fire_0" /
     // "water_still" / "lava_still" tiles the FACE_TILES rows bank — the
@@ -1350,14 +1464,15 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
          \x20    pub const TILE_FARMLAND_MOIST: u16 = {};\n",
         wet_idx
     ));
-    // THE CAMPFIRE LANE'S OWN TILE CONSTS (the dev-6 round): the log
-    // tiles the mesher's per-quad texture verdict reads (the fire
-    // quads' bases the strip tables' FRAME0 consts answer — the log
+    // THE MESHER LANES' OWN TILE CONSTS (the dev-6 round's campfire
+    // logs, the autopush-523 round's cake masters): the named tiles
+    // the mesher's per-quad texture verdicts read (the fire quads'
+    // bases the strip tables' FRAME0 consts answer — the log and cake
     // masters ride no strip). The names the tile_names walk banks
     // (the palette arms' resolve walk speaks); the absent name the
     // honest error keeps (the lane's const the walk's own guarantee
     // demands).
-    let campfire_tile_const = |tile_names: &Vec<String>, stem: &str| -> Result<u16> {
+    let tile_const = |tile_names: &Vec<String>, stem: &str| -> Result<u16> {
         tile_names
             .iter()
             .position(|n| n == stem)
@@ -1369,7 +1484,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         ("campfire_log_lit", "TILE_CAMPFIRE_LOG_LIT"),
         ("soul_campfire_log_lit", "TILE_SOUL_CAMPFIRE_LOG_LIT"),
     ] {
-        let idx = campfire_tile_const(&tile_names, stem)?;
+        let idx = tile_const(&tile_names, stem)?;
         src.push_str(&format!(
             "\n/// The campfire lane's own {} tile (the dev-6 round — the\n\
              \x20    /// five-log geometry's per-quad texture verdict reads it;\n\
@@ -1383,6 +1498,21 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             },
             prefix,
             idx
+        ));
+    }
+    for (stem, prefix) in [
+        ("cake_bottom", "TILE_CAKE_BOTTOM"),
+        ("cake_top", "TILE_CAKE_TOP"),
+        ("cake_side", "TILE_CAKE_SIDE"),
+    ] {
+        let idx = tile_const(&tile_names, stem)?;
+        src.push_str(&format!(
+            "\n/// The candle-cake lane's own {} tile (the autopush-523\n\
+             \x20    /// round — the template_cake_with_candle geometry's\n\
+             \x20    /// per-quad texture verdict reads it; the candle faces\n\
+             \x20    /// the palette's own candle tiles answer).\n\
+             \x20    pub const {}: u16 = {};\n",
+            stem, prefix, idx
         ));
     }
     src.push_str(&format!(
@@ -1609,6 +1739,10 @@ mod tests {
         assert_eq!(RUNTIME_PALETTE[51], "red_tulip");
         assert_eq!(RUNTIME_PALETTE[52], "pink_tulip");
         assert_eq!(RUNTIME_PALETTE[53], "white_tulip");
+        // the candle-cake pair (the autopush-523 round): the canLight
+        // consult's third row the two igniter arms' disjunction names
+        assert_eq!(RUNTIME_PALETTE[65], "candle_cake");
+        assert_eq!(RUNTIME_PALETTE[66], "candle_cake_lit");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 
