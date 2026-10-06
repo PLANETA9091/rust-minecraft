@@ -23945,6 +23945,11 @@ impl App {
             (self.offline_world.as_mut(), mate_cell)
         {
             world.set(mx, my, mz, crate::world::AIR);
+            // THE MATE'S OWN CHAIN (javap the autopush-413 walk — the
+            // flag-35 setBlock the UPDATE_NEIGHBORS bit keeps): the fire
+            // cells the mate held (the tall_grass the canBurn scan
+            // answers) the SAME beat douses
+            let _ = world.fire_shape_updates((mx, my, mz));
         }
         // THE FALLING SUPPORT'S OWN SCHEDULE (the block-update walk the
         // dig's neighbor change arms — the changed cell's own dispatch
@@ -24490,9 +24495,24 @@ impl App {
                 };
                 if world.get(mx, my, mz) == mate {
                     world.set(mx, my, mz, crate::world::AIR);
+                    // THE ORPHAN'S OWN CHAIN (javap DoublePlantBlock.
+                    // updateShape pc 74-80 — the mate-half's own AIR the
+                    // Y-arm returns, the removal the placement's own
+                    // flag-11 broadcast the walk drives): the fire cells
+                    // the burned-down mate held (the tall_grass the
+                    // canBurn scan answers) the SAME beat douses
+                    let _ = world.fire_shape_updates((mx, my, mz));
                 }
             }
             world.set(cell.0, cell.1, cell.2, block);
+            // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
+            // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
+            // broadcast keeps): the REPLACED cell the placement's own
+            // swap the burnable loss wears (the tuft the canBeReplaced
+            // law gives way — the fire cell the scan the tuft held the
+            // SAME beat douses); the surviving branch the verdict the
+            // added support never gates (the chain the false fold keeps)
+            let _ = world.fire_shape_updates(cell);
             if crate::world::is_double_plant(block) {
                 if let Some(upper) = crate::world::double_plant_mate(block) {
                     // the is_double_plant mate IS the upper half (the
@@ -73757,6 +73777,136 @@ cow_sound_variant: None,
             Some(crate::world::BUSH),
             "the bush the placeable lookup names"
         );
+    }
+
+    #[test]
+    fn the_placement_the_burnable_swap_the_fire_douses() {
+        // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc 9
+        // `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
+        // broadcast keeps): the tuft the placement's own swap the
+        // burnable loss wears — the fire cell the canBurn scan the
+        // tuft held the SAME beat douses (the flag-11 broadcast the
+        // updateShape walk the vanilla serves; the scheduled tick's
+        // 30..=39 lag the vanilla never waits)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/stone"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE STAGE: the tuft the aim cell keeps, the fire its ONLY
+        // burnable neighbor holds (the below cell the air the sturdy
+        // arm refuses), the far fire the sturdy floor the chain's
+        // reach never crosses
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top - 1, c + 1, crate::world::AIR); // the fire's own below the air
+            w.set(c, top, c, crate::world::SHORT_GRASS); // the tuft the scan holds
+            w.set(c, top, c + 1, crate::world::FIRE);
+            w.fire_age.insert((c, top, c + 1), 0);
+            w.set(c - 8, top, c - 8, crate::world::FIRE); // the far fire on the stone floor
+            w.fire_age.insert((c - 8, top, c - 8), 0);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the placement into the tuft the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::STONE,
+                "the stone the tuft's own cell wears"
+            );
+            assert_eq!(
+                w.get(c, top, c + 1),
+                crate::world::AIR,
+                "the fire the burnable's swap the chain douses — the same beat"
+            );
+            assert!(
+                !w.fire_age.contains_key(&(c, top, c + 1)),
+                "the dead cell's age entry the chain drops"
+            );
+            assert_eq!(
+                w.get(c - 8, top, c - 8),
+                crate::world::FIRE,
+                "the far fire the chain's reach never crosses"
+            );
+        }
+    }
+
+    #[test]
+    fn the_dig_the_mate_clear_the_fire_chain_wears() {
+        // THE MATE'S OWN CHAIN (javap the autopush-413 walk — the
+        // flag-35 setBlock the UPDATE_NEIGHBORS bit keeps, the
+        // DoublePlantBlock.updateShape the Y-arm the orphan's own AIR
+        // serves): the UPPER's dig the LOWER's clear the same beat
+        // speaks, the fire cell the canBurn scan the mate held the
+        // SAME beat douses
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::TALL_GRASS); // the LOWER half the dig reads
+            w.set(c, top + 1, c, crate::world::TALL_GRASS_UPPER); // the UPPER the aim hits
+            w.set(c, top - 1, c + 1, crate::world::AIR); // the fire's own below the air
+            w.set(c, top, c + 1, crate::world::FIRE); // the fire the LOWER the scan holds
+            w.fire_age.insert((c, top, c + 1), 0);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 5.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE INSTABREAK PRESS: the dig arms the aim cell (the UPPER —
+        // the instabreak row the START completes), the mate's own clear
+        // the effects walk serves, the chain the fire the SAME beat
+        // douses
+        app.on_attack();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_ne!(
+                w.get(c, top + 1, c),
+                crate::world::TALL_GRASS_UPPER,
+                "the dig the UPPER consumes"
+            );
+            assert_ne!(
+                w.get(c, top, c),
+                crate::world::TALL_GRASS,
+                "the mate's own clear the walk speaks"
+            );
+            assert_eq!(
+                w.get(c, top, c + 1),
+                crate::world::AIR,
+                "the fire the mate's loss the chain douses — the same beat"
+            );
+            assert!(
+                !w.fire_age.contains_key(&(c, top, c + 1)),
+                "the dead cell's age entry the chain drops"
+            );
+        }
     }
 
     /// THE TORCH'S OWN PLACEMENT WALK (the dev-32 round — javap
