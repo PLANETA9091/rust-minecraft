@@ -1970,6 +1970,29 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             && world.is_near_water(wx, wy, wz)
                         {
                             atlas::TILE_FARMLAND_MOIST
+                        } else if (water_self || lava_self) && face != 2 && face != 3 {
+                            // THE VANILLA SIDE-FACE LAW (javap FluidRenderer,
+                            // the 26.2 jar pc 1458-1466): the horizontal
+                            // sides the HORIZONTAL loop walks the FLOWING
+                            // sprite ALWAYS wear — the still pick the top
+                            // face's calm-pool verdict (pc 671-691, the
+                            // getFlow==(0,0) the stillMaterial answers) and
+                            // the bottom face's own stillMaterial walk
+                            // (pc 1040-1048) keep, the side quads the flow
+                            // master's top-left 16x16 quadrant the
+                            // generator banks (the corner UVs pc 1515-1567
+                            // the getU(0.0)..getU(0.5) x
+                            // getV((1-h)*0.5)..getV(0.5) window the
+                            // full-height cell the exact quadrant answers —
+                            // the tile the side quad's whole UV rect maps).
+                            // The draw-time remap the flow strips' own
+                            // frametimes the anim_tile arms speak (water 1,
+                            // lava 3 — the mcmeta's own keys).
+                            if water_self {
+                                atlas::WATER_FLOW_FRAME0
+                            } else {
+                                atlas::LAVA_FLOW_FRAME0
+                            }
                         } else {
                             atlas::FACE_TILES[id as usize][face]
                         }
@@ -4936,6 +4959,165 @@ mod tests {
             let in_water_span = quad.pts.iter().all(|p| (5.0..=6.0).contains(&p[1]));
             assert_eq!(quad.translucent, in_water_span);
         }
+    }
+
+    #[test]
+    fn the_fluid_the_side_faces_the_flow_master_wears() {
+        // THE VANILLA SIDE-FACE LAW (javap FluidRenderer pc 1458-1466,
+        // the 26.2 jar): the horizontal sides the HORIZONTAL loop walks
+        // the flowing sprite ALWAYS wear — the calm source's own
+        // flow==(0,0) verdict the still pick the top face keeps
+        // (pc 671-691) and the bottom face's own stillMaterial walk
+        // (pc 1040-1048) keeps. The side quads the flow strip's frame-0
+        // tile bake — the generator's quadrant bank the top-left 16x16
+        // region the side UVs pc 1515-1567 sample (getU(0.0)..getU(0.5)
+        // x getV((1-h)*0.5)..getV(0.5), the full-height cell the exact
+        // quadrant answers), the tile the side quad's whole UV rect
+        // maps. The draw-time remap the flow strips' own frametime the
+        // anim_tile arms speak (the sibling walk test pins).
+        use mc_registry::generated::atlas as gen_atlas;
+        let mut w = empty_world();
+        put(&mut w, 8, 5, 8, WATER);
+        let q = mesh_chunk(&w, 0, 0, None);
+        // the top face: the still master keeps (the calm pool's verdict —
+        // the palette's own water_still row the FACE_TILES bank)
+        let top = q
+            .iter()
+            .find(|quad| quad.pts.iter().all(|p| p[1] == 6.0))
+            .expect("water top face");
+        assert_eq!(top.tile, gen_atlas::FACE_TILES[WATER as usize][2]);
+        assert_eq!(top.tile, gen_atlas::WATER_FRAME0, "the still strip's own base");
+        // the bottom face: the still master keeps (the vanilla
+        // stillMaterial walk the down face wears)
+        let bottom = q
+            .iter()
+            .find(|quad| quad.pts.iter().all(|p| p[1] == 5.0))
+            .expect("water bottom face");
+        assert_eq!(bottom.tile, gen_atlas::FACE_TILES[WATER as usize][3]);
+        // the four sides: the FLOW master's frame-0 tile — never the
+        // still row the pre-529 world wore
+        let sides: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().any(|p| p[1] == 5.0) && quad.pts.iter().any(|p| p[1] == 6.0)
+            })
+            .collect();
+        assert_eq!(
+            sides.len(),
+            4,
+            "the four horizontal faces the air neighbors draw"
+        );
+        for side in &sides {
+            assert_eq!(side.tile, gen_atlas::WATER_FLOW_FRAME0);
+            assert!(side.translucent, "the water side the translucent pass rides");
+        }
+        // the generated bank's own contract: the base the appended
+        // frame-00 quadrant names (the strip the quadrant rows follow)
+        assert_eq!(
+            gen_atlas::TILE_NAMES[gen_atlas::WATER_FLOW_FRAME0 as usize],
+            "water_flow_frame00"
+        );
+        // the flow master's pixels the still row never shares (the side
+        // faces' look the flow strip's own streaks speak)
+        assert_ne!(
+            gen_atlas::TILES[gen_atlas::WATER_FLOW_FRAME0 as usize],
+            gen_atlas::TILES[gen_atlas::FACE_TILES[WATER as usize][2] as usize],
+        );
+    }
+
+    #[test]
+    fn the_lava_the_sides_the_flow_the_still_top_keeps() {
+        // the SECOND fluid member (the lava lane): the same side-face law
+        // the water arm speaks — the sides the lava_flow master's frame-0
+        // quadrant wear, the top/bottom the lava_still keeps, the quads
+        // OPAQUE (the translucent pass the water alone rides)
+        use mc_registry::generated::atlas as gen_atlas;
+        let mut w = empty_world();
+        put(&mut w, 8, 5, 8, LAVA);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let sides: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().any(|p| p[1] == 5.0) && quad.pts.iter().any(|p| p[1] == 6.0)
+            })
+            .collect();
+        assert_eq!(sides.len(), 4);
+        for side in &sides {
+            assert_eq!(side.tile, gen_atlas::LAVA_FLOW_FRAME0);
+            assert!(!side.translucent, "the lava stays opaque");
+        }
+        assert_eq!(
+            gen_atlas::TILE_NAMES[gen_atlas::LAVA_FLOW_FRAME0 as usize],
+            "lava_flow_frame00"
+        );
+        let top = q
+            .iter()
+            .find(|quad| quad.pts.iter().all(|p| p[1] == 6.0))
+            .expect("lava top face");
+        assert_eq!(top.tile, gen_atlas::FACE_TILES[LAVA as usize][2]);
+        assert_eq!(top.tile, gen_atlas::LAVA_FRAME0, "the still strip's own base");
+    }
+
+    #[test]
+    fn the_flow_anim_the_water_walks_the_lava_lags() {
+        // THE MCMETA'S OWN TRUTH the anim_tile arms serve: water_flow {}
+        // the frametime-1 sequential 32 (the 32-tick cycle), lava_flow
+        // {"frametime": 3} the sequential 16 (the 48-tick cycle), NO
+        // interpolate key the static frame walk keeps. The tick-0 head
+        // the frame-0 verdict (the fresh atlas's first frame the
+        // playlist's own head row speaks).
+        use mc_registry::generated::atlas as gen_atlas;
+        assert_eq!(gen_atlas::WATER_FLOW_FRAMETIME, 1);
+        assert_eq!(gen_atlas::WATER_FLOW_FRAMES.len(), 32);
+        assert_eq!(gen_atlas::WATER_FLOW_PLAYLIST.len(), 32);
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FLOW_FRAME0, 0),
+            gen_atlas::WATER_FLOW_FRAMES[0]
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FLOW_FRAME0, 1),
+            gen_atlas::WATER_FLOW_FRAMES[1]
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FLOW_FRAME0, 31),
+            gen_atlas::WATER_FLOW_FRAMES[31]
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FLOW_FRAME0, 32),
+            gen_atlas::WATER_FLOW_FRAMES[0],
+            "the 32-tick cycle wraps"
+        );
+        // every frame tile a DISTINCT index (the strip the full row bank
+        // walks — the appended frames no dedup shares)
+        let mut set = gen_atlas::WATER_FLOW_FRAMES.to_vec();
+        set.sort_unstable();
+        set.dedup();
+        assert_eq!(set.len(), 32);
+        assert_eq!(gen_atlas::LAVA_FLOW_FRAMETIME, 3);
+        assert_eq!(gen_atlas::LAVA_FLOW_FRAMES.len(), 16);
+        assert_eq!(gen_atlas::LAVA_FLOW_PLAYLIST.len(), 16);
+        // the frametime-3 lag: tick 2 still the head frame, tick 3 the
+        // second frame, the 48-tick cycle wraps
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::LAVA_FLOW_FRAME0, 2),
+            gen_atlas::LAVA_FLOW_FRAMES[0]
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::LAVA_FLOW_FRAME0, 3),
+            gen_atlas::LAVA_FLOW_FRAMES[1]
+        );
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::LAVA_FLOW_FRAME0, 48),
+            gen_atlas::LAVA_FLOW_FRAMES[0]
+        );
+        // the still masters their own strips walk (the bases the
+        // FACE_TILES rows bank — water_still the frametime-2 walk the
+        // tick-10/pos-5 row speaks), the plain tiles the identity keeps
+        assert_eq!(
+            gen_atlas::anim_tile(gen_atlas::WATER_FRAME0, 10),
+            gen_atlas::WATER_FRAMES[5]
+        );
+        assert_eq!(gen_atlas::anim_tile(0, 99), 0, "the stone tile the identity wears");
     }
 
     #[test]

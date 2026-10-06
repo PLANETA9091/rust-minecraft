@@ -379,6 +379,13 @@ fn tint_for_texture(stem: &str) -> u32 {
         "grass_block_top" => TINT_GRASS,
         "oak_leaves" => TINT_FOLIAGE,
         "water_still" => TINT_WATER,
+        // THE FLOW MASTER'S OWN ROW (the autopush-529 round): the
+        // water_flow strip the fluid SIDE faces wear the SAME in-world
+        // biome tint the still master wears — javap FluidRenderer the
+        // ARGB tint the per-STATE color the render carries (the tint
+        // rides the fluid, never the sprite), the grayscale flow
+        // master the same TINT_WATER bake the water_still rows speak.
+        "water_flow" => TINT_WATER,
         "leaf_litter" => TINT_DRY,
         // THE GRASS TUFT'S OWN ROW (the autopush-412 round): the
         // tinted_cross family's grayscale masters the
@@ -1572,6 +1579,102 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         tile_bytes.push(bytes);
         let _ = idx;
     }
+    // THE FLOW STRIPS' OWN QUADRANT BANK (the autopush-529 round): the
+    // two flow textures the fluid SIDE faces wear — the still-only
+    // world the lane never drew. 32x32-PER-FRAME strips (water_flow
+    // 32x1024 = 32 frames, lava_flow 32x512 = 16 frames; the official
+    // 26.2 jar's own IHDRs), the mcmeta the frametime speaks (water {}
+    // -> the default 1, lava {"frametime": 3}) and NO interpolate key
+    // (the static sequential walk the fire strips' own law keeps).
+    // THE QUADRANT LAW (javap FluidRenderer pc 1515-1567, the 26.2
+    // jar): the horizontal sides ALWAYS flowingMaterial().sprite()
+    // wear (the still pick the top/bottom faces' own verdict keeps),
+    // the corner UVs the HALF-sprite window sample — u = getU(0.0)..
+    // getU(0.5), v = getV((1-h)*0.5)..getV(0.5) (the corner heights h
+    // the fluid's own walk speaks; the full-height cell the top-left
+    // 16x16 quadrant answers) — so each frame banks EXACTLY its
+    // top-left 16x16 quadrant: the tile the side quad's whole 0..1 UV
+    // rect maps, the vanilla-sampled region the pixel-perfect match
+    // speaks. The tick-0 verdict the fluids' own law keeps (the
+    // sequential head row 0 — the fresh atlas's first frame), the
+    // appended rows the existing indices 0..442 the END append keeps.
+    for stem in ["water_flow", "lava_flow"] {
+        let raw = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png"),
+        )
+        .with_context(|| format!("texture block/{stem}.png"))?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        if w != 32 || h == 0 || h % w != 0 {
+            bail!("texture {stem}: expected the 32-wide flow strip, got {w}x{h}");
+        }
+        let frame_count = (h / w) as usize;
+        let mc_bytes = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png.mcmeta"),
+        )
+        .with_context(|| format!("texture {stem}: mcmeta read"))?;
+        let mc: Value = serde_json::from_slice(&mc_bytes)
+            .with_context(|| format!("texture {stem}: mcmeta parse"))?;
+        let anim = mc
+            .get("animation")
+            .with_context(|| format!("texture {stem}: no animation key"))?;
+        // THE SERIALIZER'S OWN DEFAULTS (the still strips' own walk the
+        // same laws keep): the frametime the absent key's 1 tick wears,
+        // the frames the absent array's sequential 0..count-1 walk
+        // serves (the flow mcmetas' EMPTY {} animation the full strip
+        // plays — no interpolate key the static walk keeps).
+        let frametime = anim.get("frametime").and_then(|v| v.as_u64()).unwrap_or(1);
+        if frametime == 0 {
+            bail!("texture {stem}: frametime 0 refuses");
+        }
+        let playlist: Vec<u8> = match anim.get("frames").and_then(|v| v.as_array()) {
+            Some(frames) => frames
+                .iter()
+                .map(|f| {
+                    f.as_u64()
+                        .map(|v| v as u8)
+                        .with_context(|| format!("texture {stem}: bad frames row"))
+                })
+                .collect::<Result<Vec<_>>>()?,
+            None => (0..frame_count as u8).collect(),
+        };
+        if playlist.iter().any(|&f| (f as usize) >= frame_count) {
+            bail!("texture {stem}: playlist row beyond the strip's frames");
+        }
+        if playlist[0] != 0 {
+            bail!(
+                "texture {stem}: the playlist's head row {head} refuses — the tick-0 still the frame 0 wears",
+                head = playlist[0]
+            );
+        }
+        // THE QUADRANT CROP: frame k's byte base k*32rows*stride (the
+        // 32-px row the 128-byte stride wears), the quadrant the TOP
+        // half's rows (0..16) x the LEFT half's columns (bytes 0..64)
+        // — the 16x16 RGBA tile the side quad's UV rect the whole
+        // window answers. The tint bake the water master's own row
+        // carries (water_flow the TINT_WATER bake the water_still
+        // rows speak; lava_flow the pre-colored master the untinted
+        // default keeps).
+        let tile_len = 16 * 16 * 4;
+        let src_stride = 32 * 4;
+        let mut tiles: Vec<u16> = Vec::with_capacity(frame_count);
+        for k in 0..frame_count {
+            let frame_base = k * 32 * src_stride;
+            let mut bytes = vec![0u8; tile_len];
+            for r in 0..16usize {
+                let src = frame_base + r * src_stride;
+                let dst = r * 16 * 4;
+                bytes[dst..dst + 16 * 4].copy_from_slice(&rgba[src..src + 16 * 4]);
+            }
+            bake_tint(&mut bytes, tint_for_texture(stem));
+            let idx = tile_names.len() as u16;
+            tile_names.push(format!("{stem}_frame{k:02}"));
+            tile_bytes.push(bytes);
+            tiles.push(idx);
+        }
+        anim_strips.push((stem.to_string(), tiles, playlist, frametime));
+    }
     // THE BASE TILES the quads bake: the four palette-named strips the
     // BLOCK palette's own rows keep (the "fire_0" / "soul_fire_0" /
     // "water_still" / "lava_still" tiles the FACE_TILES rows bank — the
@@ -1724,7 +1827,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     // generated names the palette order carries: the const prefix the
     // strip's own stem maps (fire_0 -> FIRE_0 ... water_still -> WATER,
     // lava_still -> LAVA — the names the client's walks read).
-    let prefixes: [(&str, &str); 10] = [
+    let prefixes: [(&str, &str); 12] = [
         ("fire_0", "FIRE_0"),
         ("fire_1", "FIRE_1"),
         ("soul_fire_0", "SOUL_FIRE_0"),
@@ -1735,6 +1838,12 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         ("soul_campfire_fire", "SOUL_CAMPFIRE_FIRE"),
         ("campfire_log_lit", "CAMPFIRE_LOG_LIT"),
         ("soul_campfire_log_lit", "SOUL_CAMPFIRE_LOG_LIT"),
+        // THE FLOW STRIPS' OWN PREFIXES (the autopush-529 round): the
+        // side-face lane's base tiles the consts carry (the mesher's
+        // side-face verdict the WATER_FLOW_FRAME0/LAVA_FLOW_FRAME0
+        // rows read).
+        ("water_flow", "WATER_FLOW"),
+        ("lava_flow", "LAVA_FLOW"),
     ];
     src.push_str(
         "\n/// THE ANIMATED STRIPS' OWN TABLES (the dev-5 round's fire, the\n\
@@ -1774,7 +1883,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
          \x20    /// mesher bakes (the strip's own palette row or appended frame-00)\n\
          \x20    /// the current animation frame's tile the tick answers: the\n\
          \x20    /// playlist position `(tick / frametime) % len` the vanilla\n\
-         \x20    /// TextureAtlasSprite animator's per-tick walk speaks, the eight\n\
+         \x20    /// TextureAtlasSprite animator's per-tick walk speaks, the strips'\n\
          \x20    /// base tiles their own strips keep, every other tile the\n\
          \x20    /// identity wears (the destroy stages, the farmland's wet face,\n\
          \x20    /// the whole block palette).\n\
@@ -1979,6 +2088,13 @@ mod tests {
         assert_eq!(tint_for_texture("grass_block_top"), TINT_GRASS);
         assert_eq!(tint_for_texture("oak_leaves"), TINT_FOLIAGE);
         assert_eq!(tint_for_texture("water_still"), TINT_WATER);
+        // the flow master's own row (the autopush-529 round): the
+        // water_flow strip the side faces wear the SAME TINT_WATER bake
+        // the still master speaks (the tint rides the fluid state, never
+        // the sprite), the lava_flow the pre-colored master the
+        // untinted default keeps (lava_still's own law)
+        assert_eq!(tint_for_texture("water_flow"), TINT_WATER);
+        assert_eq!(tint_for_texture("lava_flow"), 0, "pre-colored");
         // the dry analog (13th audit): the REAL dry_foliage grid at the
         // plains climate (0.8, 0.4) — probed 0xA37546 in the 12th-audit run
         assert_eq!(tint_for_texture("leaf_litter"), TINT_DRY);
