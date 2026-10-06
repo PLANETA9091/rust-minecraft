@@ -2013,6 +2013,78 @@ impl World {
             .collect()
     }
 
+    /// THE FIRE'S OWN SHAPE UPDATE — javap `FireBlock.updateShape(state,
+    /// level, sched, pos, dir, neighborPos, neighborState, random)` over
+    /// the real 26.2 jar: the pc 0-8 `canSurvive` verdict the failed
+    /// branch the pc 32-38 `Blocks.AIR.defaultBlockState()` serves (the
+    /// surviving branch the pc 11-31 `getStateWithAge` re-derivation the
+    /// mesher's own live-props walk the offline world never re-speaks),
+    /// the CHAIN javap `Level.removeBlock` pc 12 `iconst_3` the flag-3
+    /// setBlock the UPDATE_NEIGHBORS broadcast keeps — the dig's own
+    /// `destroyBlock` and the burn-out's own two arms (the FIRE arm's
+    /// pc 85 `iconst_3` setBlock, the AIR arm's pc 95-96
+    /// `removeBlock(pos, false)`) every one the chain fires, the fire
+    /// cells the changed block held the chain douses the SAME beat (the
+    /// scheduled tick's own survival arm the 30..=39 lag the vanilla
+    /// never waits: the updateShape the flag-3 walk answers). The
+    /// changed cell itself the walk never reads (the chain targets the
+    /// SIX neighbors the broadcast serves); the DYING cell's own
+    /// setBlock the chain re-fires (the fire stack the support's loss
+    /// kills upward the cascade the worklist walks — the vanilla's own
+    /// recursion the depth the world's own bounds keep). The verdict
+    /// the [`fire_can_survive`] law reads (the below-sturdy arm OR the
+    /// six-neighbor burnable scan the 26.2 bytecodes speak). The AGE
+    /// entries the dead cells drop (the ladder's own store); the
+    /// SCHEDULE entries the block-match gate later drops (the stale
+    /// rows the drain's own verdict refuses). Returns whether any fire
+    /// cell died (the caller's own remesh the flag folds).
+    pub fn fire_shape_updates(&mut self, changed: (i32, i32, i32)) -> bool {
+        let (cx, cy, cz) = changed;
+        // the DOWN..EAST order the Direction.values() walk keeps (the
+        // verdict the per-cell read the order never gates)
+        let mut queue: Vec<(i32, i32, i32)> = vec![
+            (cx, cy - 1, cz),
+            (cx, cy + 1, cz),
+            (cx, cy, cz - 1),
+            (cx, cy, cz + 1),
+            (cx - 1, cy, cz),
+            (cx + 1, cy, cz),
+        ];
+        let mut changed_any = false;
+        while let Some((x, y, z)) = queue.pop() {
+            if !is_fire(self.get(x, y, z)) {
+                continue;
+            }
+            let below = self.get(x, y - 1, z);
+            let neighbors = [
+                self.get(x, y - 1, z), // DOWN
+                self.get(x, y + 1, z), // UP
+                self.get(x, y, z - 1), // NORTH
+                self.get(x, y, z + 1), // SOUTH
+                self.get(x - 1, y, z), // WEST
+                self.get(x + 1, y, z), // EAST
+            ];
+            if fire_can_survive(below, neighbors) {
+                continue; // the surviving branch — the props re-derivation the mesher's own live walk wears
+            }
+            self.set(x, y, z, AIR);
+            self.fire_age.remove(&(x, y, z));
+            changed_any = true;
+            // THE CASCADE: the dying cell's own broadcast the chain
+            // re-reads (the fire stack the support's loss the walk
+            // kills — the vanilla's own flag-3 recursion)
+            queue.extend([
+                (x, y - 1, z),
+                (x, y + 1, z),
+                (x, y, z - 1),
+                (x, y, z + 1),
+                (x - 1, y, z),
+                (x + 1, y, z),
+            ]);
+        }
+        changed_any
+    }
+
     /// THE FIRE'S OWN SCHEDULED TICK — javap `FireBlock.tick(state,
     /// level, pos, random)` over the real 26.2 jar, the walk the
     /// tick's own pc map keeps in ORDER:
@@ -2292,9 +2364,22 @@ impl World {
             self.fire_age.insert((x, y, z), spread_age);
             self.schedule_fire_tick(now + fire_tick_delay(rng), x, y, z);
             out.new_fire.push((x, y, z));
+            // THE FLAG-3 CHAIN THE FIRE ARM FIRES (pc 85 `iconst_3` —
+            // the setBlock the broadcast keeps): the fire cells the
+            // burnt block held (the log the cell above stood on) the
+            // placement the SAME beat douses — the burnable the cell
+            // wore the flame replaces, the canSurvive verdict the loss
+            // the chain re-reads
+            let _ = self.fire_shape_updates((x, y, z));
         } else {
             self.set(x, y, z, AIR);
             self.fire_age.remove(&(x, y, z));
+            // THE REMOVAL'S OWN CHAIN (javap `Level.removeBlock` pc 12
+            // `iconst_3` — the flag-3 setBlock the broadcast keeps):
+            // the fire cells the burnt block held the removal the same
+            // beat douses (the updateShape walk the scheduled tick's
+            // 30..=39 lag never waits)
+            let _ = self.fire_shape_updates((x, y, z));
         }
         out.changed = true;
         if pre == TNT {
@@ -3140,6 +3225,153 @@ mod tests {
             }
         }
         assert!(doused, "the rain the arm's own roll douses");
+    }
+
+    /// THE FIRE'S OWN SHAPE UPDATE — javap `FireBlock.updateShape` the
+    /// pc 0-8 canSurvive verdict the pc 32-38 AIR branch serves, the
+    /// chain the flag-3 broadcast keeps: the FIRE arm's own flip (the
+    /// log the cell above stood on the flame replaces — the below
+    /// burnable the canSurvive verdict loses, the loss the chain the
+    /// SAME beat douses), the NEIGHBOR-SCAN arm (the six-way canBurn
+    /// read the horizontal log the verdict holds, the log's loss the
+    /// chain speaks), the STURDY arm the grounded flame keeps (the
+    /// burnable's loss the below-Full verdict never gates), the
+    /// CHANGED CELL the walk never reads (the neighbors alone the
+    /// broadcast serves — the placed flame the chain's own silence
+    /// keeps).
+    #[test]
+    fn the_support_the_chain_the_fire_arm_wears() {
+        // (a) THE FIRE ARM'S OWN FLIP: the log the cell above stood on
+        // the flame replaces (pc 85 `iconst_3` — the setBlock the
+        // broadcast keeps), the chain the fire above the SAME beat
+        // douses
+        let mut w = World::new(1, 0xF117);
+        w.set(4, 30, 4, STONE);
+        w.set(4, 31, 4, LOG);
+        w.set(4, 32, 4, FIRE);
+        w.fire_age.insert((4, 32, 4), 0);
+        w.set(4, 31, 4, FIRE); // the burn-out's own product the arm places
+        let changed = w.fire_shape_updates((4, 31, 4));
+        assert!(changed, "the fire the log held the chain douses");
+        assert_eq!(
+            w.get(4, 32, 4),
+            AIR,
+            "the below-burnable the flame replaces, the verdict the loss refuses"
+        );
+        assert!(
+            !w.fire_age.contains_key(&(4, 32, 4)),
+            "the dead cell's age entry the chain drops"
+        );
+        assert_eq!(
+            w.get(4, 31, 4),
+            FIRE,
+            "the changed cell the walk never reads — the placed flame stays"
+        );
+        // (b) THE NEIGHBOR-SCAN ARM: the floating flame the horizontal
+        // log the canBurn scan holds — the surviving branch the walk
+        // keeps (false the fold returns), the log's loss the chain
+        // speaks
+        let mut w = World::new(1, 0xF117);
+        w.set(8, 32, 8, FIRE); // the below cell the air the sturdy arm refuses
+        w.fire_age.insert((8, 32, 8), 3);
+        w.set(8, 32, 9, LOG); // the SOUTH burnable the scan holds
+        let changed = w.fire_shape_updates((8, 32, 9));
+        assert!(!changed, "the surviving branch the walk keeps");
+        assert_eq!(w.get(8, 32, 8), FIRE, "the scan's own hold the flame keeps");
+        w.set(8, 32, 9, AIR); // the log's own loss
+        let changed = w.fire_shape_updates((8, 32, 9));
+        assert!(changed, "the burnable's loss the chain speaks");
+        assert_eq!(w.get(8, 32, 8), AIR, "the floating flame the scan's loss douses");
+        assert!(!w.fire_age.contains_key(&(8, 32, 8)), "the age entry the death drops");
+        // (c) THE STURDY ARM: the grounded flame the below-Full verdict
+        // holds — the burnable neighbor's own loss the scan never gates
+        let mut w = World::new(1, 0xF117);
+        w.set(4, 30, 4, STONE);
+        w.set(4, 31, 4, FIRE);
+        w.fire_age.insert((4, 31, 4), 0);
+        w.set(4, 31, 5, SHORT_GRASS);
+        w.set(4, 31, 5, AIR); // the tuft's own loss
+        let changed = w.fire_shape_updates((4, 31, 5));
+        assert!(
+            !changed,
+            "the sturdy floor the verdict keeps — the burnable's loss the scan never gates"
+        );
+        assert_eq!(w.get(4, 31, 4), FIRE, "the grounded flame stands");
+    }
+
+    /// THE BURN-OUT'S OWN CHAIN THROUGH THE WALK — the seeded drive the
+    /// below call's own 250-chance roll forces (the LOG's own burn odds
+    /// 5 the hit wears): the inner arm the FIRE cell or the AIR removal
+    /// serves, EVERY arm the flag-3 broadcast fires (pc 85 the setBlock,
+    /// pc 95-96 the removeBlock), the fire stack the burnt cell held the
+    /// chain the SAME walk douses — the scheduled tick's own 30..=39 lag
+    /// the vanilla never waits.
+    #[test]
+    fn the_burnout_the_chain_the_fire_stack_wears() {
+        let stage = || {
+            let mut w = World::new(1, 0xF117);
+            for x in 0..16 {
+                for z in 0..16 {
+                    w.set(x, 30, z, STONE);
+                }
+            }
+            for y in 31..=38 {
+                for x in 0..16 {
+                    for z in 0..16 {
+                        w.set(x, y, z, AIR);
+                    }
+                }
+            }
+            w.set(4, 31, 4, LOG); // the only burnable the stage banks
+            w.set(4, 32, 4, FIRE); // the flame the log's own loss alone holds
+            w.fire_age.insert((4, 32, 4), 0);
+            w
+        };
+        // the brute drive: some seed the below call hits (2%/tick), the
+        // inner arm's own split the two products each land — every hit
+        // the chain's own douse wears
+        let (mut fire_arm, mut air_arm) = (None, None);
+        for seed in 0..4000u64 {
+            let mut w = stage();
+            let mut rng = crate::drops::Lcg::new(seed);
+            let out = w.fire_tick(1000, 4, 32, 4, &mut rng);
+            let below = w.get(4, 31, 4);
+            if below == LOG {
+                continue; // the roll refused — the cell the fire never ate
+            }
+            // THE CHAIN'S OWN VERDICT (the walk's own mid-beat douse):
+            // the fire above the burnt cell DIES the same walk, the age
+            // entry the death drops, the changed flag the walk's own
+            // burn-out wears
+            assert_eq!(
+                w.get(4, 32, 4),
+                AIR,
+                "the stack the chain douses (seed {seed}, the arm {:?})",
+                below
+            );
+            assert!(
+                !w.fire_age.contains_key(&(4, 32, 4)),
+                "the dead flame's age entry the chain drops (seed {seed})"
+            );
+            assert!(out.changed, "the burn-out the changed flag wears");
+            if below == FIRE && fire_arm.is_none() {
+                fire_arm = Some(seed); // pc 85 — the setBlock arm's own chain
+            }
+            if below == AIR && air_arm.is_none() {
+                air_arm = Some(seed); // pc 95-96 — the removeBlock arm's own chain
+            }
+            if fire_arm.is_some() && air_arm.is_some() {
+                break;
+            }
+        }
+        assert!(
+            fire_arm.is_some(),
+            "the FIRE arm's own hit the drive never forced"
+        );
+        assert!(
+            air_arm.is_some(),
+            "the AIR arm's own hit the drive never forced"
+        );
     }
 
     /// THE CONCRETE'S OWN TOUCHES-LIQUID WALK (javap

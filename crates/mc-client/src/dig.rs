@@ -143,12 +143,20 @@ impl DigState {
     /// client palette carries none of the masters) and becomes air (the
     /// fluid-legacy law is a no-op for the client palette — no
     /// waterlogged states exist; the broken cell takes the EMPTY fluid).
-    /// The caller re-speaks the mesh (the placement lane's own rhythm).
+    /// THE REMOVAL'S OWN CHAIN (javap `Level.removeBlock` pc 12
+    /// `iconst_3` — the flag-3 setBlock the UPDATE_NEIGHBORS broadcast
+    /// keeps): the broken block's own neighborhood the chain re-reads —
+    /// the fire cells the dug block held the [`crate::world::World::
+    /// fire_shape_updates`] walk the SAME beat douses (the updateShape
+    /// law the scheduled tick's 30..=39 lag never waits). The caller
+    /// re-speaks the mesh (the placement lane's own rhythm; the chain's
+    /// own cells the same re-speak folds).
     pub fn destroy_block(world: &mut World, pos: (i32, i32, i32)) -> bool {
         if world.get(pos.0, pos.1, pos.2) == crate::world::AIR {
             return false;
         }
         world.set(pos.0, pos.1, pos.2, crate::world::AIR);
+        let _ = world.fire_shape_updates(pos);
         true
     }
 
@@ -735,5 +743,71 @@ mod tests {
             d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, false, true);
         assert!(sends.is_empty());
         assert!(!dug, "the refused retarget never beats");
+    }
+
+    #[test]
+    fn the_dig_the_support_the_fire_chain_douses() {
+        // THE REMOVAL'S OWN CHAIN (javap `Level.removeBlock` pc 12
+        // `iconst_3` — the flag-3 broadcast the dig's own
+        // destroyBlock walk serves, `FireBlock.updateShape` the
+        // pc 0-8 canSurvive verdict the pc 32-38 AIR answers): the
+        // fire the dug block held dies the SAME beat the dig lands —
+        // the scheduled tick's own survival arm the 30..=39 lag the
+        // vanilla never waits
+        let mut world = small_world();
+        // THE STAGE: the log the fire stands on, the fire's age the
+        // ladder banks, a FAR fire on its own log the chain's reach
+        // never crosses
+        world.set(1, 1, 1, crate::world::LOG);
+        world.set(1, 2, 1, crate::world::FIRE);
+        world.fire_age.insert((1, 2, 1), 2);
+        world.set(6, 1, 6, crate::world::LOG);
+        world.set(6, 2, 6, crate::world::FIRE);
+        world.fire_age.insert((6, 2, 6), 5);
+        let mut d = DigState::new();
+        // THE CREATIVE PRESS: the log breaks, the chain fires, the
+        // flame above the SAME beat douses (the stale schedule entry
+        // the block-match gate later drops)
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false);
+        assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the log the press breaks");
+        assert_eq!(
+            world.get(1, 2, 1),
+            crate::world::AIR,
+            "the fire the support's loss the chain douses — the same beat"
+        );
+        assert!(
+            !world.fire_age.contains_key(&(1, 2, 1)),
+            "the dead cell's age entry the chain drops"
+        );
+        assert_eq!(
+            world.get(6, 2, 6),
+            crate::world::FIRE,
+            "the far fire the chain's reach never crosses"
+        );
+        assert!(
+            world.fire_age.contains_key(&(6, 2, 6)),
+            "the living fire's own age entry the chain keeps"
+        );
+        // THE CASCADE (the dying cell's own broadcast the chain
+        // re-fires): the fire stack the log's loss kills bottom-up —
+        // the top cell's own verdict reads the BOTTOM cell's air, the
+        // walk the worklist keeps
+        world.set(1, 1, 1, crate::world::LOG);
+        world.set(1, 2, 1, crate::world::FIRE);
+        world.fire_age.insert((1, 2, 1), 0);
+        world.set(1, 3, 1, crate::world::FIRE);
+        world.fire_age.insert((1, 3, 1), 0);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false);
+        assert_eq!(world.get(1, 2, 1), crate::world::AIR, "the bottom flame douses");
+        assert_eq!(world.get(1, 3, 1), crate::world::AIR, "the top flame the cascade douses");
+        // THE AIR PRESS (the chain's own silence): the fireless dig
+        // the chain's verdict never speaks — the return the dig's own
+        // law keeps
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false);
+        assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the stone breaks as ever");
     }
 }
