@@ -9321,13 +9321,20 @@ impl App {
             // GameEventDispatcher.post the 26.2 walk: the registry
             // name the static init's `ldc elytra_glide` speaks, the
             // r16 the register(name)'s own `bipush 16` default-radius
-            // walk banks, the f4 the VibrationSystem's frequency map
-            // answers — the record line the lane's own vocabulary
-            // keeps, the sculk sensor's hearing a later round rides)
+            // walk banks, the f the VibrationSystem's frequency map
+            // answers (the vibration_frequency lookup the map's own
+            // verdict keeps — the literal the prior round wore the
+            // elytra_glide entry's iconst_4 retires) — the record line
+            // the lane's own vocabulary keeps, the sculk sensor's
+            // hearing a later round rides)
             if glide_event {
                 self.game_events.push(format!(
-                    "elytra_glide @{} x{:.6} y{:.6} z{:.6} r16 f4",
-                    self.frame, glide_pos.0, glide_pos.1, glide_pos.2
+                    "elytra_glide @{} x{:.6} y{:.6} z{:.6} r16 f{}",
+                    self.frame,
+                    glide_pos.0,
+                    glide_pos.1,
+                    glide_pos.2,
+                    crate::sculk::vibration_frequency("elytra_glide")
                 ));
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —

@@ -58,6 +58,14 @@ pub fn cos(d: f64) -> f32 {
     sin_table()[((d * TABLE_SCALE + 16384.0) as i64 & 65535) as usize]
 }
 
+/// `Mth.floor(double)` (javap, verbatim): `Math.floor(d)` then `d2i` —
+/// the toward-negative-infinity fold the JVM's own Math.floor speaks
+/// (the truncation-toward-zero the plain `as` cast wears NEVER rides),
+/// the d2i the NaN answers 0 (the saturation Rust's `as` shares).
+pub fn floor(d: f64) -> i32 {
+    d.floor() as i32
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -147,5 +155,23 @@ mod tests {
     #[test]
     fn the_scale_the_bits_the_decimal_roundtrips() {
         assert_eq!(TABLE_SCALE.to_bits(), 0x40c4_5f30_6dc9_c883);
+    }
+
+    /// THE FLOOR the d2i answers — the toward-negative-infinity fold
+    /// the Math.floor speaks: the positive fraction truncates DOWN
+    /// (7.5 → 7, the truncation the plain cast wears answers the same
+    /// HERE), the negative fraction the floor lifts to the next-lowest
+    /// integer (−0.9375 → −1, the truncation the cast wears answers 0 —
+    /// the last-bit difference the vibration fold's own answer rides),
+    /// the exact integer the identity keeps, the NaN the d2i's zero.
+    #[test]
+    fn the_floor_the_negative_edge_the_d2i_keeps() {
+        assert_eq!(floor(7.5), 7);
+        assert_eq!(floor(15.0), 15);
+        assert_eq!(floor(-0.9375), -1, "the floor the next-lowest answers");
+        assert_eq!((-0.9375f64) as i32, 0, "the plain cast the truncation wears");
+        assert_eq!(floor(-1.0), -1);
+        assert_eq!(floor(f64::NAN), 0, "the d2i the NaN answers zero");
+        assert_eq!(floor(0.9375), 0);
     }
 }

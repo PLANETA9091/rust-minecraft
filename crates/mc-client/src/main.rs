@@ -40,6 +40,7 @@ mod png_io;
 mod profiler;
 mod raster;
 mod screens;
+mod sculk;
 mod sky;
 mod sound;
 mod sound_table;
