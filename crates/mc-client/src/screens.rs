@@ -24308,6 +24308,29 @@ impl App {
                 world.relight();
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
+            // THE SMOKE PUFF'S OWN WALK (javap lambda$extinguish$0 over
+            // the 26.2 jar — the PARTICLE_OFFSETS the single wick-top
+            // offset the `Vec3(8.0, 16.0, 8.0).scale(0.0625)` walk
+            // banks — (0.5, 1.0, 0.5) the wick's own top): the
+            // addParticle(SMOKE, pos + the offset, 0.0,
+            // 0.10000000149011612, 0.0) the client's own walk speaks
+            // (the Level.addParticle the client-side law the offline
+            // client answers), the SmokeParticle ctor chain the
+            // shoot_smoke_puff helper folds (the nine draws the
+            // stream consumes — the vanilla order the set block's own
+            // walk precedes, the voice follows)
+            {
+                let puff = crate::particles::shoot_smoke_puff(
+                    hit.pos.0 as f64 + 0.5,
+                    hit.pos.1 as f64 + 1.0,
+                    hit.pos.2 as f64 + 0.5,
+                    0.0,
+                    f64::from(0.1f32),
+                    0.0,
+                    &mut self.level_ambient_rng,
+                );
+                self.particles.push(puff);
+            }
             // THE CANDLE_EXTINGUISH VOICE (javap pc 40-51 — the
             // BLOCKS source at the block pos, 1.0F, 1.0F the plain
             // row the positional walk keeps; the sounds.json's own
@@ -24915,6 +24938,14 @@ impl App {
             );
         } else {
             self.sounds.play_voice(self.frame, voice, 1.0, 1.0);
+        }
+        // THE DOWSE'S OWN SMOKE WALK (the CampfireBlock.dowse call pc
+        // 140-148 the client's own 20-call loop speaks — the sound the
+        // levelEvent's own order precedes, the `setValue(LIT, false)`
+        // walk follows; the `isClientSide` gate the client both worlds
+        // answer — the smoke the client's own lane spawns)
+        if doused {
+            self.play_campfire_dowse_smoke(hit.pos);
         }
         // THE OFFLINE PREDICTION: the converted block lands in the
         // App's own terrain and the mesh re-speaks (the networked
@@ -25594,6 +25625,64 @@ impl App {
                 vx,
                 vy,
                 vz,
+                &mut self.level_ambient_rng,
+            );
+            self.particles.push(puff);
+        }
+    }
+
+    /// THE DOWSE'S OWN SMOKE WALK (javap CampfireBlock.dowse +
+    /// makeParticles over the 26.2 jar): the `isClientSide` gate the
+    /// client's own walk speaks, the 20-call loop the `bipush 20`
+    /// keeps, per call the forced `true` arg the makeParticles walk
+    /// carries. THE COSY HALF the rolls the stream spends (the
+    /// CAMPFIRE_COSY_SMOKE kind the offline particle lane a future
+    /// round banks — the CampfireSmokeParticle's own tick/getLayer
+    /// overrides the kind's own walk demands): the position draws the
+    /// x `+ (nextDouble / 3.0) * (nextBoolean ? 1 : -1)`, the y `+
+    /// nextDouble + nextDouble`, the z the x's own fold keep (4
+    /// doubles + 2 booleans), the CosyProvider's SpriteSet.get
+    /// nextInt, the ctor's nextInt(50) lifetime + the
+    /// nextFloat()/500 yd bump — nine draws the unbanked kind the
+    /// stream never skips. THE SIGNAL_FIRE property the kind-only
+    /// vocabulary never carries — the vanilla DEFAULT false the COSY
+    /// type answers (the hay-bale signal fire the offline palette
+    /// never speaks). THE SMOKE HALF the isForce branch serves (the
+    /// `addParticle(SMOKE, ...)` pc 134-228): the position `pos +
+    /// 0.5 + (nextDouble / 4.0) * (nextBoolean ? 1 : -1)` the x and z
+    /// folds keep, the y the `+ 0.4` constant wears (the bytecode's
+    /// own no-random row), the speed args (0.0, 0.005, 0.0) the
+    /// addParticle carries, the SmokeParticle ctor chain the
+    /// shoot_smoke_puff helper folds (the nine draws the candle
+    /// walk's own chain speaks).
+    fn play_campfire_dowse_smoke(&mut self, pos: (i32, i32, i32)) {
+        for _ in 0..20 {
+            // THE COSY HALF'S OWN ROLLS (the stream the vanilla walk
+            // spends — the unbanked kind the documented gap keeps)
+            let _cosy_x = self.level_ambient_rng.next_f64();
+            let _cosy_x_coin = self.level_ambient_rng.next() & 1 == 0;
+            let _cosy_y1 = self.level_ambient_rng.next_f64();
+            let _cosy_y2 = self.level_ambient_rng.next_f64();
+            let _cosy_z = self.level_ambient_rng.next_f64();
+            let _cosy_z_coin = self.level_ambient_rng.next() & 1 == 0;
+            let _sprite = self.level_ambient_rng.next_int(12);
+            let _cosy_life = self.level_ambient_rng.next_int(50);
+            let _cosy_yd = self.level_ambient_rng.next_f32();
+            // THE SMOKE HALF (the isForce branch's own walk)
+            let sx = self.level_ambient_rng.next_f64();
+            let sx_coin = self.level_ambient_rng.next() & 1 == 0;
+            let sz = self.level_ambient_rng.next_f64();
+            let sz_coin = self.level_ambient_rng.next() & 1 == 0;
+            let px = pos.0 as f64 + 0.5 + sx / 4.0 * if sx_coin { 1.0 } else { -1.0 };
+            let py = pos.1 as f64 + 0.4;
+            let pz = pos.2 as f64 + 0.5 + sz / 4.0 * if sz_coin { 1.0 } else { -1.0 };
+            let puff = crate::particles::shoot_smoke_puff(
+                px,
+                py,
+                pz,
+                0.0,
+                0.005,
+                0.0,
                 &mut self.level_ambient_rng,
             );
             self.particles.push(puff);
@@ -74698,6 +74787,27 @@ cow_sound_variant: None,
                 .any(|e| e.starts_with("block.candle.extinguish")),
             "the CANDLE_EXTINGUISH voice the log wears"
         );
+        // THE SMOKE PUFF'S OWN WALK (the lambda$extinguish$0's
+        // addParticle the client's own lane speaks — the wick top the
+        // position the exact spawn keeps, the speed args the ctor
+        // chain's own velocity fold rides)
+        assert_eq!(
+            app.particles.len(),
+            1,
+            "the wick's own puff the douse spawns"
+        );
+        let puff = &app.particles[0];
+        assert_eq!(puff.kind, crate::particles::ParticleKind::Smoke);
+        assert_eq!(puff.x, c as f64 + 0.5, "the wick top's own x");
+        assert_eq!(puff.y, top as f64 + 1.0, "the wick top's own y");
+        assert_eq!(puff.z, c as f64 + 0.5, "the wick top's own z");
+        // the speed args (0, 0.1, 0) the ctor's spread-fold rides —
+        // the normalized spread's own band the vy neighborhood keeps
+        assert!(
+            puff.vy > 0.05 && puff.vy < 0.15,
+            "the rising drift the speed arg's own band keeps: {}",
+            puff.vy
+        );
     }
 
     #[test]
@@ -74802,6 +74912,10 @@ cow_sound_variant: None,
                 .iter()
                 .any(|e| e.starts_with("block.candle.extinguish")),
             "no extinguish voice the refused verdict keeps"
+        );
+        assert!(
+            app.particles.is_empty(),
+            "the refused douse the puff never spawns"
         );
     }
 
@@ -75030,6 +75144,104 @@ cow_sound_variant: None,
             "the levelEvent(1009) the FIRE_EXTINGUISH row the douse speaks: {:?}",
             app.sounds.events.last()
         );
+        // THE DOWSE'S OWN SMOKE COLUMN (the 20-call loop the
+        // makeParticles walk serves — the smoke half the y +0.4 the
+        // exact row keeps, the x/z the ±0.25 jitter band the /4.0
+        // folds speak, the 0.005 rise the spread band carries)
+        assert_eq!(
+            app.particles.len(),
+            20,
+            "the 20-call loop the column spawns"
+        );
+        for p in &app.particles {
+            assert_eq!(p.kind, crate::particles::ParticleKind::Smoke);
+            assert_eq!(
+                p.y,
+                top as f64 + 0.4,
+                "the +0.4 constant the y row wears"
+            );
+            assert!(
+                p.x >= c as f64 + 0.25 && p.x <= c as f64 + 0.75,
+                "the x jitter the /4.0 band keeps: {}",
+                p.x
+            );
+            assert!(
+                p.z >= c as f64 + 0.25 && p.z <= c as f64 + 0.75,
+                "the z jitter the /4.0 band keeps: {}",
+                p.z
+            );
+            assert!(
+                p.vy > -0.03 && p.vy < 0.06,
+                "the 0.005 rise the spread band keeps: {}",
+                p.vy
+            );
+        }
+    }
+
+    #[test]
+    fn the_douse_the_wick_smoke_the_ctor_law_wears() {
+        // THE SMOKE'S OWN CTOR CHAIN (javap BaseAshSmokeParticle over
+        // the 26.2 jar — the shoot_smoke_puff helper's own fold the
+        // douse's addParticle rides): the grey tint the r*0.3 draw
+        // carries, the 0.75 size fold the base quad's own band keeps,
+        // the 8..40 lifetime the smoke_lifetime law speaks, the
+        // gravity −0.1 the rise rides, the 0.96 friction the ctor
+        // sets — the wick-top puff the douse's own walk spawns
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE_LIT);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the douse the press consumes"
+        );
+        assert_eq!(
+            app.particles.len(),
+            1,
+            "the wick's own puff the douse spawns"
+        );
+        let p = &app.particles[0];
+        assert_eq!(p.kind, crate::particles::ParticleKind::Smoke);
+        // THE TINT'S OWN GREY (the r*0.3 draw the [0, 0.3) band keeps,
+        // the r=g=b trio the grey lane speaks)
+        assert!(
+            p.col[0] < 0.3 && p.col[0] == p.col[1] && p.col[1] == p.col[2],
+            "the grey tint the r*0.3 draw keeps: {:?}",
+            p.col
+        );
+        // THE SIZE'S OWN FOLD (the base 0.1..0.2 the ×0.75 the band
+        // 0.075..0.15 keeps)
+        assert!(
+            p.quad_size >= 0.0749 && p.quad_size <= 0.1501,
+            "the 0.75 fold the size band keeps: {}",
+            p.quad_size
+        );
+        // THE LIFETIME'S OWN LAW (the 8..40 ticks the 8/(r*0.8+0.2)
+        // walk speaks)
+        assert!(
+            (8..=40).contains(&p.lifetime),
+            "the 8..40 band the lifetime law keeps: {}",
+            p.lifetime
+        );
+        assert_eq!(p.gravity, -0.1, "the rise the negative gravity rides");
+        assert_eq!(p.friction, 0.96, "the ctor's own friction");
     }
 
     #[test]
