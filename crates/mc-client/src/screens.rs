@@ -25763,6 +25763,59 @@ impl App {
                         ear_pan(ear, yaw, tx, ty, tz),
                     );
                 }
+                // THE LAVA-PARTICLE'S OWN ANIMATE TAIL (javap
+                // CampfireBlock.animateTick pc 93-192 over the 26.2
+                // jar): the `spawnParticles` field the CONSTRUCTOR arg
+                // speaks — the regular kind the (true, 1) factory
+                // lambda$static$310 wears, the soul kind the (false,
+                // 2) lambda$static$311 the field never lights (the
+                // fireDamage 1/2 pairing the lambdas' own args pin) —
+                // the gate the kind verdict alone answers and the
+                // short-circuit the soul's stream the gate draw never
+                // spends. pc 100-108 the `nextInt(5) == 0` gate the
+                // tick rolls, pc 111-126 the loop the
+                // `i < nextInt(1) + 1` bound keeps — nextInt(1)
+                // spends one raw draw and returns 0 (the mod law the
+                // Lcg speaks), so the body runs ONCE and the
+                // condition spends twice (the entry + the exit
+                // check). pc 129-159 the cell-center position the
+                // +0.5 folds speak; pc 160-168 / 173-181 the
+                // xSpeed/zSpeed the `nextFloat() / 2.0f` folds spend
+                // — the LavaParticle PROVIDER the speeds DROPS (javap
+                // LavaParticle ctor: super(level, x, y, z, 0.0, 0.0,
+                // 0.0) the dconst_0 triple speaks) but the draws the
+                // call site spends FIRST; the ctor's own four draws
+                // follow — the base ctor's size float, the yd
+                // `nextFloat() * 0.4f + 0.05f`, the size-mul
+                // `nextFloat() * 2.0f + 0.2f`, the lifetime
+                // `16.0 / (nextFloat() * 0.8 + 0.2)` — the lava_drip
+                // helper's documented order the same stream replays.
+                if cell == crate::world::CAMPFIRE_LIT
+                    && self.level_ambient_rng.next_int(5) == 0
+                {
+                    let mut i: i32 = 0;
+                    while i < self.level_ambient_rng.next_int(1) + 1 {
+                        i += 1;
+                        // the call-site speed folds the provider
+                        // drops (the draws the walk spends)
+                        let _xs = self.level_ambient_rng.next_f32() / 2.0f32;
+                        let _zs = self.level_ambient_rng.next_f32() / 2.0f32;
+                        let r_base = self.level_ambient_rng.next_f32();
+                        let r_yd = self.level_ambient_rng.next_f32();
+                        let r_size = self.level_ambient_rng.next_f32();
+                        let r_life = self.level_ambient_rng.next_f32();
+                        let blob = crate::particles::lava_drip(
+                            x as f64 + 0.5,
+                            y as f64 + 0.5,
+                            z as f64 + 0.5,
+                            r_base,
+                            r_yd,
+                            r_size,
+                            r_life,
+                        );
+                        self.particles.push(blob);
+                    }
+                }
                 world.rearm_campfire_tick(self.frame + 1, x, y, z);
             }
         }
@@ -75524,6 +75577,139 @@ cow_sound_variant: None,
                 .any(|e| e.starts_with("block.campfire.crackle @400 ")
                     && e.ends_with(" v0.702055 p1.093107")),
             "the soul kind the same law wears"
+        );
+    }
+
+    #[test]
+    fn the_campfire_the_lava_arm_the_spawn_particles_gate_wears() {
+        // THE LAVA-PARTICLE'S OWN ANIMATE TAIL (javap
+        // CampfireBlock.animateTick pc 93-192 over the 26.2 jar): the
+        // `spawnParticles` field the CONSTRUCTOR arg the regular kind
+        // alone lights (the (true, 1) lambda$static$310 — the soul the
+        // (false, 2) lambda$static$311 the field never speaks), pc
+        // 100-108 the `nextInt(5) == 0` gate, pc 111-126 the loop the
+        // `i < nextInt(1) + 1` bound keeps — the body ONCE, the
+        // condition twice. THE SEED LAW the replay pins: seed 3 the
+        // smoke gate 0.662262 the 11% share refuses, the crackle gate
+        // 8 the silence keeps, the lava gate 0 the arm fires — the
+        // 11-draw walk the stream tail pins; seed 2 the lava gate 3
+        // the miss keeps (three draws the tick spends); the soul kind
+        // the same seed the short-circuit the gate draw never rolls
+        // (two draws the tick spends).
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::CAMPFIRE_LIT);
+        }
+        // THE GATE'S OWN HIT (seed 3: the one-iteration loop the ONE
+        // blob the cell center wears — the position the +0.5 folds
+        // speak, the speeds the call site spent the provider dropped,
+        // the ctor's four draws the lava_drip helper replays)
+        app.frame = 100;
+        app.level_ambient_rng = crate::drops::Lcg::new(3);
+        app.tick_campfire_ambient();
+        let blobs: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Lava))
+            .collect();
+        assert_eq!(
+            blobs.len(),
+            1,
+            "the loop the one-iteration law keeps: {}",
+            app.particles.len()
+        );
+        // the pinned fields the fresh walk's own helper replay answers
+        let mut r = crate::drops::Lcg::new(3);
+        let _smoke_gate = r.next_f32();
+        let _crackle_gate = r.next_int(10);
+        let _lava_gate = r.next_int(5);
+        let _cond_entry = r.next_int(1);
+        let _xs = r.next_f32() / 2.0f32;
+        let _zs = r.next_f32() / 2.0f32;
+        let r_base = r.next_f32();
+        let r_yd = r.next_f32();
+        let r_size = r.next_f32();
+        let r_life = r.next_f32();
+        let expected = crate::particles::lava_drip(
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5,
+            r_base,
+            r_yd,
+            r_size,
+            r_life,
+        );
+        let b = blobs[0];
+        assert_eq!((b.x, b.y, b.z), (expected.x, expected.y, expected.z), "the cell-center spawn the +0.5 folds wear");
+        assert_eq!(b.vy, expected.vy, "the yd fold r*0.4+0.05");
+        assert_eq!(b.quad_size, expected.quad_size, "the size-mul fold");
+        assert_eq!(b.lifetime, expected.lifetime, "the 16.0/(r*0.8+0.2) fold");
+        assert_eq!(b.gravity, 0.75, "the lava blob's own gravity");
+        assert_eq!(b.friction, 0.999, "the lava blob's own friction");
+        // THE STREAM TAIL the total-draw count pins (11 raw draws: the
+        // three gates + the two condition spends + the two speed
+        // folds + the ctor's four — the probe the 12th draw answers)
+        let mut probe = crate::drops::Lcg::new(3);
+        for _ in 0..11 {
+            probe.next();
+        }
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            probe.next_f32(),
+            "the 11-draw walk the tail pins"
+        );
+        // THE GATE'S OWN MISS (seed 2: the lava gate draw 3 the
+        // silence keeps — no blob, the three-gate walk the tail pins)
+        app.frame = 200;
+        app.level_ambient_rng = crate::drops::Lcg::new(2);
+        app.tick_campfire_ambient();
+        let blobs_after: usize = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Lava))
+            .count();
+        assert_eq!(
+            blobs_after, 1,
+            "the miss the count keeps (no second blob)"
+        );
+        let mut probe2 = crate::drops::Lcg::new(2);
+        for _ in 0..3 {
+            probe2.next();
+        }
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            probe2.next_f32(),
+            "the miss the three-draw walk pins"
+        );
+        // THE SOUL KIND'S OWN SHORT-CIRCUIT (the spawnParticles field
+        // false — the gate draw the stream never spends, the two-gate
+        // walk the tail pins)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c, top, c, crate::world::SOUL_CAMPFIRE_LIT);
+        }
+        app.frame = 300;
+        app.level_ambient_rng = crate::drops::Lcg::new(3);
+        app.tick_campfire_ambient();
+        let blobs_soul: usize = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Lava))
+            .count();
+        assert_eq!(blobs_soul, 1, "the soul field the arm never lights");
+        let mut probe3 = crate::drops::Lcg::new(3);
+        for _ in 0..2 {
+            probe3.next();
+        }
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            probe3.next_f32(),
+            "the soul's two-draw walk the tail pins"
         );
     }
 
