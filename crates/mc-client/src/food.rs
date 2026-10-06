@@ -92,8 +92,8 @@ pub const FOOD_SATURATION_MAX: f32 = 1.0;
 pub const FOOD_SATURATION_SUPERNATURAL: f32 = 1.2;
 
 /// `FoodConstants.saturationByModifier` (javap: `food * modifier *
-/// 2.0` — the eat lane's own saturation math).
-#[cfg_attr(not(test), expect(dead_code))]
+/// 2.0` — the eat lane's own saturation math; the cake bite's own
+/// walk the autopush-524 round the (int, float) overload serves).
 pub fn saturation_by_modifier(nutrition: i32, modifier: f32) -> f32 {
     nutrition as f32 * modifier * 2.0
 }
@@ -219,8 +219,8 @@ impl FoodData {
     }
 
     /// `eat(int, float)` (javap: `add(food, saturationByModifier(food,
-    /// modifier))` — the eat arc's own entry).
-    #[cfg_attr(not(test), expect(dead_code))]
+    /// modifier))` — the eat arc's own entry; the cake bite's own
+    /// walk the autopush-524 round serves).
     pub fn eat(&mut self, nutrition: i32, modifier: f32) {
         self.add(nutrition, saturation_by_modifier(nutrition, modifier));
     }

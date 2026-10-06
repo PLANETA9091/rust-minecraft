@@ -486,8 +486,58 @@ pub const CANDLE_CAKE: u16 = 65;
 /// walk the CakeBlock.eat lane a future cake round keeps).
 pub const CANDLE_CAKE_LIT: u16 = 66;
 
+/// Kind 67 (the sixty-eighth entry, the autopush-524 round): THE FULL
+/// CAKE'S OWN KIND — the eat lane the useWithoutItem walk serves and
+/// the palette has never banked (javap the 26.2 jar — CakeBlock's
+/// ctor the DEFAULT state registers BITES=0, the registration the
+/// blocks clinit's BlockItemIds.CAKE row banks: `forceSolidOn()` the
+/// pc 11242 walk the pushReaction(DESTROY) rows the pc 11222/11256
+/// wear, `strength(0.5f)` the ldc 0.5f the dig lane answers,
+/// `sound(SoundType.WOOL)` the WOOL row the sounds table speaks —
+/// and the register(BlockItemIds.CAKE, ...) walk CARRIES the item
+/// id: the block the ITEM FORM HAS, the placeable lookup the reverse
+/// walk answers, the pick lane the getCloneItemStack's CAKE item
+/// grants). The BITES property 0..6 the SEVEN palette kinds the
+/// kind-only vocabulary wears (the wheat_stageN ladder the same law
+/// keeps — each kind the bite's own stage speaks). The SHAPE the
+/// static init's `Block.boxes(MAX_BITES + 1, lambda$static$0)` walk
+/// banks — the lambda's `Block.box(1 + bites*2, 0, 1, 15, 8, 15)`
+/// the x-start walk the per-slice model boxes exactly mirror (the
+/// per-cell fold the Column(8) row the cake band answers, the
+/// x-narrowing the documented gap keeps). The name the dig/drop/
+/// sound/item lanes resolve the BASE "cake" row the shared-row law
+/// keeps (the generated block_dig/block_drops/block_sounds/item_
+/// order tables' own rows the registry answers — the cake item the
+/// loot table's self-entry drops, the pick and the placement the
+/// same item id grants).
+pub const CAKE: u16 = 67;
+
+/// Kinds 68..73 (the sixty-ninth..seventy-fourth entries, the same
+/// round): THE BITTEN STAGES' OWN KINDS — the BITES ladder the
+/// kind-only vocabulary wears (javap the 26.2 jar — the blockstate's
+/// "bites=N" rows block/cake_sliceN resolve, each a SINGLE box
+/// element [1+2N, 0, 1]->[15, 8, 15]: the west face #inside the
+/// bitten cut speaks, block/cake_inner the bank's own fourth tile
+/// answers). The eat lane the ladder's own walk rides: the bites<6
+/// branch `setValue(BITES, bites + 1)` the flag-3 setBlock the
+/// stage's own kind swap answers (the CAKE..CAKE_SLICE6 kinds the
+/// +1 walk speaks), the max-bite branch the removeBlock the AIR the
+/// cell returns (javap Level.removeBlock — the pc 12 iconst_3
+/// setBlock the UPDATE_NEIGHBORS broadcast keeps). The shape lambda
+/// the SAME x-start walk every stage narrows — the per-cell fold the
+/// Column(8) row every stage wears. The name the dig/drop/sound/
+/// item lanes the BASE "cake" row the shared-row law keeps (the
+/// registry_names strip the generated REGISTRY_NAMES rows speak —
+/// the world.rs NAME_OF rows the cross-check asserts).
+pub const CAKE_SLICE1: u16 = 68;
+pub const CAKE_SLICE2: u16 = 69;
+pub const CAKE_SLICE3: u16 = 70;
+pub const CAKE_SLICE4: u16 = 71;
+pub const CAKE_SLICE5: u16 = 72;
+pub const CAKE_SLICE6: u16 = 73;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 67] = [
+pub const NAME_OF: [&str; 74] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -551,6 +601,16 @@ pub const NAME_OF: [&str; 67] = [
     // placeable lookup the vanilla itself refuses, the pick lane the
     // getCloneItemStack's CAKE answer a future cake round keeps)
     "candle_cake", "candle_cake",
+    // THE CAKE LADDER'S OWN ROWS (the autopush-524 round — every
+    // stage the BASE "cake" name the shared-row law keeps: the dig
+    // row (0.5 hardness — the strength(0.5f) the clinit arm speaks),
+    // the drops table (the cake item the loot table's self-entry
+    // drops), the sounds' WOOL row and the item id the pick lane
+    // grants EVERY stage speak — the placeable lookup the reverse
+    // walk the FULL row's first position answers (the bites=0 cake
+    // the item places), the bitten stages the eat lane's own kind
+    // swaps never place)
+    "cake", "cake", "cake", "cake", "cake", "cake", "cake",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -593,6 +653,39 @@ pub fn is_campfire(id: u16) -> bool {
 /// family predicate reads.
 pub fn is_candle_cake(id: u16) -> bool {
     id == CANDLE_CAKE || id == CANDLE_CAKE_LIT
+}
+
+/// THE CAKE LADDER'S OWN FAMILY — the seven bite stages the eat
+/// lane's kind-swap walk and the mesher's element lane read (the
+/// full kind the item places, the bitten stages the bites<6 branch's
+/// own products wear — the vanilla `setValue(BITES, bites + 1)`
+/// walk the kind-only vocabulary the +1 swaps wear).
+pub fn is_cake(id: u16) -> bool {
+    (CAKE..=CAKE_SLICE6).contains(&id)
+}
+
+/// THE EAT LANE'S OWN BITE MAP — javap `CakeBlock.eat(LevelAccessor,
+/// BlockPos, BlockState, Player)` over the 26.2 jar: the `bites =
+/// state.getValue(BITES)` read pc 29-42, the `bites < 6` branch pc
+/// 55-59 the `setBlock(pos, state.setValue(BITES, bites + 1), 3)`
+/// flag-3 step serves (the stage's own kind swap the +1 walk speaks
+/// — the CAKE..CAKE_SLICE5 kinds the next stage answers), the
+/// max-bite branch pc 91-106 the `removeBlock(pos, false)` walk the
+/// AIR returns (javap Level.removeBlock — the pc 12 iconst_3
+/// setBlock the UPDATE_NEIGHBORS broadcast keeps — the None the
+/// caller's own clear wears). Every non-cake cell the PASS the None
+/// keeps.
+pub fn cake_bite_next(cell: u16) -> Option<u16> {
+    match cell {
+        CAKE => Some(CAKE_SLICE1),
+        CAKE_SLICE1 => Some(CAKE_SLICE2),
+        CAKE_SLICE2 => Some(CAKE_SLICE3),
+        CAKE_SLICE3 => Some(CAKE_SLICE4),
+        CAKE_SLICE4 => Some(CAKE_SLICE5),
+        CAKE_SLICE5 => Some(CAKE_SLICE6),
+        CAKE_SLICE6 => None,
+        _ => None,
+    }
 }
 
 /// THE DOSE'S OWN PRODUCT MAP — the lit campfire the `setValue(LIT,
@@ -896,8 +989,8 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         CollisionShape::Empty
     } else if id == FARMLAND || id == DIRT_PATH {
         CollisionShape::Column(15)
-    } else if is_candle_cake(id) {
-        // THE CANDLE CAKE PAIR'S OWN COLUMN (the autopush-523 round —
+    } else if is_candle_cake(id) || is_cake(id) {
+        // THE CAKE FAMILY'S OWN COLUMN (the autopush-523/524 rounds —
         // javap CandleCakeBlock.getShape the SHAPE field returns, the
         // static init's `Shapes.or(column(2.0, 8.0, 14.0), column(14.0,
         // 0.0, 8.0))` walk banks: the cake slab's 0..8/16 band the
@@ -906,7 +999,14 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // walk-over feel the per-cell fold keeps; the 14-px slab
         // footprint's 1-px inset and the 2-px stick's 8..14 band the
         // full-footprint fold never speaks — the documented gap the
-        // small-shape family keeps)
+        // small-shape family keeps). THE PLAIN CAKE the same band
+        // wears (the autopush-524 round — javap CakeBlock.getShape
+        // the SHAPES[bites] field returns, the static init's
+        // `Block.boxes(MAX_BITES + 1, lambda$static$0)` walk banks:
+        // the lambda's `Block.box(1 + bites*2, 0, 1, 15, 8, 15)` the
+        // y-band 0..8 the Column row speaks, the x-start's per-bite
+        // narrowing 1+2*bites the per-cell vocabulary never carries —
+        // the same documented gap the per-cell fold keeps)
         CollisionShape::Column(8)
     } else if is_campfire(id) {
         // THE CAMPFIRE FAMILY'S OWN ROW (the dev-6 round — javap the
@@ -3081,6 +3181,21 @@ mod tests {
             collision_shape(CANDLE_CAKE_LIT),
             CollisionShape::Column(8)
         );
+        // THE CAKE LADDER'S OWN COLUMN (the autopush-524 round — javap
+        // CakeBlock.getShape the SHAPES[bites] field returns, the
+        // static init's `Block.boxes(MAX_BITES + 1, lambda$static$0)`
+        // walk banks: the lambda's `Block.box(1 + bites*2, 0, 1, 15,
+        // 8, 15)` the y-band 0..8 the Column row speaks, the x-start's
+        // per-bite narrowing the per-cell vocabulary never carries —
+        // the same documented gap the per-cell fold keeps)
+        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
+            assert_eq!(
+                collision_shape(id),
+                CollisionShape::Column(8),
+                "the cake band {} wears",
+                NAME_OF[id as usize]
+            );
+        }
         // THE FULL-CUBE FAMILY: the default registration — the terrain,
         // the foliage cubes, the machines
         for id in [STONE, DIRT, GRASS, LOG, LEAVES, PALE_LEAVES, SAND, TNT, CRAFTING_TABLE] {
@@ -3091,6 +3206,71 @@ mod tests {
                 NAME_OF[id as usize]
             );
         }
+    }
+
+    #[test]
+    fn the_cake_family_speaks_the_bites_ladder() {
+        // THE LADDER'S OWN KINDS (the autopush-524 round — javap the
+        // 26.2 jar: CakeBlock's ctor the DEFAULT state registers
+        // BITES=0, the blockstate's "bites=N" rows block/cake_sliceN
+        // resolve, the kind-only vocabulary the SEVEN stages wears):
+        // the full kind the item places, the bitten stages the eat
+        // lane's own kind swaps wear
+        assert_eq!(CAKE, 67);
+        assert_eq!(CAKE_SLICE6, 73);
+        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
+            assert!(is_cake(id), "the family predicate {id} answers");
+        }
+        assert!(!is_cake(CANDLE_CAKE), "the candle cake the family never carries");
+        assert!(!is_cake(STONE), "the stone the family never carries");
+        // THE SHARED-ROW LAW (the world.rs NAME_OF rows the generated
+        // REGISTRY_NAMES the cross-check asserts — every stage the
+        // BASE "cake" row the dig/drop/sound/item lanes keep)
+        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
+            assert_eq!(NAME_OF[id as usize], "cake", "stage {id} the base row wears");
+        }
+        // THE ITEM FORM THE REGISTRATION CARRIES (javap the blocks
+        // clinit's BlockItemIds.CAKE row — the register walk the item
+        // id speaks, the pick lane the getCloneItemStack's answer
+        // grants): the placeable lookup the reverse walk the FULL
+        // row's first position answers
+        assert_eq!(World::placeable_block("cake"), Some(CAKE));
+        let cake_item = mc_registry::item_id_by_name("cake").unwrap();
+        for id in [CAKE, CAKE_SLICE1, CAKE_SLICE2, CAKE_SLICE3, CAKE_SLICE4, CAKE_SLICE5, CAKE_SLICE6] {
+            assert_eq!(
+                mc_registry::item_id_by_name(NAME_OF[id as usize]),
+                Some(cake_item),
+                "stage {id} the pick lane the cake item grants"
+            );
+        }
+        // THE DIG ROW THE CLINIT ARM SPEAKS (the strength(0.5f) the
+        // ldc 0.5f the dig lane answers, the WOOL row the sounds
+        // table speaks — the generated tables' own rows)
+        let (speed, _) = crate::dig::DigState::block_dig_row(CAKE);
+        assert!((speed - 0.5).abs() < 1e-4, "the 0.5 strength the dig row wears");
+        // THE DROPS THE LOOT TABLE SPEAKS (javap the jar's own
+        // data/minecraft/loot_table/blocks/cake.json — the type +
+        // random_sequence row the POOLS never carries: the cake the
+        // dig lane alone answers, the bite the eat lane's own verb
+        // serves — the honest absence the drops lookup keeps, the
+        // self-entry the cake never drops)
+        assert!(
+            mc_registry::generated::block_drops::drops("cake").is_none(),
+            "the empty loot table the honest absence keeps"
+        );
+        // THE BITE MAP THE EAT LANE RIDES (javap CakeBlock.eat pc
+        // 55-106 — the bites<6 branch the +1 kind swap answers, the
+        // max-bite branch the None the AIR clear wears, every
+        // non-cake cell the PASS keeps)
+        assert_eq!(cake_bite_next(CAKE), Some(CAKE_SLICE1));
+        assert_eq!(cake_bite_next(CAKE_SLICE1), Some(CAKE_SLICE2));
+        assert_eq!(cake_bite_next(CAKE_SLICE2), Some(CAKE_SLICE3));
+        assert_eq!(cake_bite_next(CAKE_SLICE3), Some(CAKE_SLICE4));
+        assert_eq!(cake_bite_next(CAKE_SLICE4), Some(CAKE_SLICE5));
+        assert_eq!(cake_bite_next(CAKE_SLICE5), Some(CAKE_SLICE6));
+        assert_eq!(cake_bite_next(CAKE_SLICE6), None, "the max bite the removeBlock wears");
+        assert_eq!(cake_bite_next(STONE), None, "the stone the PASS keeps");
+        assert_eq!(cake_bite_next(CANDLE_CAKE), None, "the candle cake the map never speaks");
     }
 
     /// THE FLINT'S OWN ODDS LAW (javap FireBlock's static init +

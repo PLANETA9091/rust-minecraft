@@ -297,7 +297,39 @@ use zip::ZipArchive;
 /// speak (the kind-only vocabulary the LIT property never carries
 /// — the relight the igniter arms' own kind swap wears; the use
 /// lane the cake's eat/douse walks a future round keeps).
-pub const RUNTIME_PALETTE: [&str; 67] = [
+///
+/// cake is kind 67 and cake_slice1..6 kinds 68..73 (the
+/// sixty-eighth..seventy-fourth entries, the autopush-524 round): THE
+/// CAKE KIND ITSELF the eat lane the useWithoutItem walk serves and
+/// the palette has never banked (javap the 26.2 jar — CakeBlock's
+/// ctor the DEFAULT state registers BITES=0, the registration the
+/// blocks clinit's BlockItemIds.CAKE row banks: `forceSolidOn()`
+/// the pushReaction the pc 11239-11262 walk wears, `strength(0.5f)`
+/// the ldc 0.5f row the dig lane answers, `sound(SoundType.WOOL)`
+/// the WOOL row the sounds table speaks — and the register(
+/// BlockItemIds.CAKE, ...) walk CARRIES the item id: the block the
+/// ITEM FORM HAS, the placeable lookup the reverse walk answers,
+/// the pick lane the getCloneItemStack's CAKE item grants). The
+/// BITES property 0..6 the SEVEN palette kinds the kind-only
+/// vocabulary wears (the wheat_stageN ladder the same law keeps —
+/// each slice the bite's own stage speaks). The SHAPE the static
+/// init's `Block.boxes(MAX_BITES + 1, lambda$static$0)` walk banks —
+/// the lambda's `Block.box(1 + bites*2, 0, 1, 15, 8, 15)` the
+/// x-start walk the per-slice model boxes exactly mirror (the
+/// per-cell fold the Column(8) row the cake band answers, the
+/// x-narrowing the documented gap keeps). The blockstate is a
+/// plain VARIANTS map over bites — "bites=0" -> block/cake,
+/// "bites=N" -> block/cake_sliceN, each a SINGLE box element
+/// [1+2N, 0, 1]->[15, 8, 15] (#bottom/#top/#side the cake masters
+/// name, the west face #inside the bitten cut speaks — block/
+/// cake_inner the bank's own fourth tile answers). The eat lane
+/// the CakeBlock.eat walk serves: `canEat(false)` the gate, the
+/// `FoodData.eat(2, 0.1F)` the bite's own feed, the bites<6
+/// setBlock(flag 3) the ladder's own step, the max-bite
+/// removeBlock the AIR the cell returns — the candle-on-cake arm
+/// the useItemOn walk the CANDLES tag + bites==0 consult answers
+/// (the CAKE_ADD_CANDLE voice the swap plays).
+pub const RUNTIME_PALETTE: [&str; 74] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -315,6 +347,8 @@ pub const RUNTIME_PALETTE: [&str; 67] = [
     "candle", "candle_lit",
     "campfire", "campfire_lit", "soul_campfire", "soul_campfire_lit",
     "candle_cake", "candle_cake_lit",
+    "cake", "cake_slice1", "cake_slice2", "cake_slice3",
+    "cake_slice4", "cake_slice5", "cake_slice6",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -852,6 +886,61 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&tex_stem, false));
             continue;
         }
+        if block == "cake" || block.starts_with("cake_slice") {
+            // THE CAKE FAMILY'S OWN ROWS (the autopush-524 round, the
+            // official 26.2 jar): the blockstate is a plain VARIANTS
+            // map over bites — the FULL cake the "bites=0" row
+            // resolves (block/cake), the bitten stages the "bites=N"
+            // rows read (block/cake_sliceN — the palette name's own
+            // trailing digits the row key keeps, the wheat_stageN arm
+            // the same walk generalizes), the per-slice blockstates
+            // the vanilla itself never carries (no cake_slice1.json —
+            // the resolve_block first-variant walk the slices'
+            // explicit-row arm alone answers). Each model is a SINGLE
+            // box element [1+2N, 0, 1]->[15, 8, 15] (the lambda$
+            // static$0 shape the x-start walk mirrors): #bottom/
+            // #top/#side the cake masters name, the west face #inside
+            // the bitten cut speaks (block/cake_inner — the bank's
+            // own fourth tile the appended walk serves). The flat row
+            // the `side` ref banks (block/cake_side — the template's
+            // own particle the cake body's dominant texture speaks;
+            // the multi-texture box's other faces the MESHER's own
+            // per-quad verdict reads, the candle-cake lane the same
+            // law keeps). tinted = false (the faces carry NO
+            // tintindex — the pre-colored masters render as
+            // authored).
+            let bites = if block == "cake" {
+                0
+            } else {
+                block
+                    .trim_start_matches("cake_slice")
+                    .parse::<u8>()
+                    .with_context(|| format!("block {block}: no bite stage"))?
+            };
+            let row_key = format!("bites={bites}");
+            let bs_bytes = read_jar(&mut archive, "assets/minecraft/blockstates/cake.json")?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate cake: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(&row_key))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate cake: no {row_key} model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("side")
+                .with_context(|| format!("model {model_ref}: no side texture ref"))?;
+            let tex_stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&tex_stem, false));
+            continue;
+        }
         if block == "wheat" || block.starts_with("wheat_stage") {
             // THE FIFTEENTH AUDIT + THE GROWTH ROUND (official 26.2 jar):
             // the blockstate is a plain variants map (age=0..7) — "wheat"
@@ -1359,8 +1448,11 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     // TOP/TILE_CAKE_SIDE consts the emit answers); the candle tiles
     // the lane reads the PALETTE's own candle rows keep (no append —
     // the same block/candle and block/candle_lit masters the kind
-    // tiles already bank).
-    for stem in ["cake_bottom", "cake_top", "cake_side"] {
+    // tiles already bank). THE FOURTH CAKE TILE (the autopush-524
+    // round): cake_inner the bitten cut's own texture the slice
+    // models' #inside ref names — the west face the per-quad verdict
+    // the TILE_CAKE_INNER const answers.
+    for stem in ["cake_bottom", "cake_top", "cake_side", "cake_inner"] {
         if tile_names.iter().any(|n| n == stem) {
             continue; // the dedup the walk keeps
         }
@@ -1504,6 +1596,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         ("cake_bottom", "TILE_CAKE_BOTTOM"),
         ("cake_top", "TILE_CAKE_TOP"),
         ("cake_side", "TILE_CAKE_SIDE"),
+        ("cake_inner", "TILE_CAKE_INNER"),
     ] {
         let idx = tile_const(&tile_names, stem)?;
         src.push_str(&format!(
@@ -1647,14 +1740,33 @@ pub fn fallback_source(version: &str) -> String {
 /// to the BASE block name the jar's registry rows answer (the
 /// tall_grass/large_fern chains the instabreak + replaceable rows
 /// wear — the two loot pools the identical walk keeps, the grass
-/// sound row both halves speak). Every other kind the base name IS
-/// the palette name.
+/// sound row both halves speak). The `_lit` suffix the same walk
+/// answers (the candle/campfire/candle-cake pairs the lit swaps'
+/// products never place), the cake ladder's `cake_sliceN` the BASE
+/// "cake" row the shared-row law keeps (the autopush-524 round —
+/// the dig row, the drops table, the sounds' WOOL row and the item
+/// id the pick lane grants EVERY stage speak). Every other kind the
+/// base name IS the palette name.
 fn registry_names() -> [&'static str; RUNTIME_PALETTE.len()] {
     let mut names = [""; RUNTIME_PALETTE.len()];
     for (i, name) in RUNTIME_PALETTE.iter().enumerate() {
         names[i] = name
             .strip_suffix("_upper")
             .or_else(|| name.strip_suffix("_lit"))
+            // THE CAKE LADDER'S OWN STRIP (the autopush-524 round): the
+            // seven bite stages the BASE "cake" row the shared-row law
+            // keeps — the dig row (0.5 hardness), the drops table (the
+            // cake item), the sounds' WOOL row and the item id the pick
+            // lane grants EVERY stage speak (the world.rs NAME_OF rows
+            // the cross-check asserts — the cake_sliceN name the palette
+            // alone wears)
+            .or_else(|| {
+                if name.starts_with("cake_slice") {
+                    Some("cake")
+                } else {
+                    None
+                }
+            })
             .unwrap_or(name);
     }
     names
@@ -1743,6 +1855,20 @@ mod tests {
         // consult's third row the two igniter arms' disjunction names
         assert_eq!(RUNTIME_PALETTE[65], "candle_cake");
         assert_eq!(RUNTIME_PALETTE[66], "candle_cake_lit");
+        // the cake ladder (the autopush-524 round): the seven bite
+        // stages the eat lane's kind-swap walk wears
+        assert_eq!(RUNTIME_PALETTE[67], "cake");
+        assert_eq!(RUNTIME_PALETTE[68], "cake_slice1");
+        assert_eq!(RUNTIME_PALETTE[69], "cake_slice2");
+        assert_eq!(RUNTIME_PALETTE[70], "cake_slice3");
+        assert_eq!(RUNTIME_PALETTE[71], "cake_slice4");
+        assert_eq!(RUNTIME_PALETTE[72], "cake_slice5");
+        assert_eq!(RUNTIME_PALETTE[73], "cake_slice6");
+        // the shared-row law the registry-name walk speaks: every
+        // stage the BASE "cake" row the dig/drop/sound/item lanes keep
+        let names = registry_names();
+        assert_eq!(names[67], "cake");
+        assert_eq!(names[73], "cake");
         assert_eq!(FACE_KEYS, ["east", "west", "up", "down", "south", "north"]);
     }
 

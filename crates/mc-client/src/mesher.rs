@@ -1563,6 +1563,176 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE CAKE LADDER'S OWN ELEMENT LANE (the autopush-524
+                // round — the full cake and the six bitten stages the
+                // eat lane's kind swaps wear, the candle-cake lane's
+                // own single-box law the ladder generalizes). The
+                // blockstate's "bites=N" rows block/cake and
+                // block/cake_sliceN resolve — each a SINGLE box element
+                // [1+2N, 0, 1]->[15, 8, 15] (the lambda$static$0 shape
+                // the x-start walk the models exactly mirror), #bottom/
+                // #top/#side the cake masters name, the west face
+                // #inside the bitten cut speaks (block/cake_inner the
+                // bank's own fourth tile answers). The elements carry
+                // `shade: true` — the vanilla tesselation's FACE_SHADE
+                // term the cube path's own table wears (up 1.0, down
+                // 0.5, the four horizontals 0.8/0.6), the term the
+                // torch/fire lanes' `shade: false` elements never pay.
+                // The cell's own light every corner samples (no AO
+                // diagonals — the same withoutAO fold the element lanes
+                // keep); the down face's `cullface: down` the below
+                // cell's opaque verdict culls (the candle-cake lane's
+                // own six-direction verdict the single row keeps).
+                if crate::world::is_cake(id) {
+                    let model_id = match id {
+                        crate::world::CAKE_SLICE1 => "block/cake_slice1",
+                        crate::world::CAKE_SLICE2 => "block/cake_slice2",
+                        crate::world::CAKE_SLICE3 => "block/cake_slice3",
+                        crate::world::CAKE_SLICE4 => "block/cake_slice4",
+                        crate::world::CAKE_SLICE5 => "block/cake_slice5",
+                        crate::world::CAKE_SLICE6 => "block/cake_slice6",
+                        _ => "block/cake",
+                    };
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the kind's own FACE_TILES row — the no-atlas
+                    // boot's own default (the cake_side row the
+                    // palette arm banks — the resolved texture verdict
+                    // the named consts duplicate)
+                    let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if fallback_tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    for q in cake_model_quads(model_id) {
+                        // THE SIX-DIRECTION CULLFACE VERDICT — the
+                        // box's own down row the neighbor read culls
+                        // (the vanilla cullface law: the neighbor's
+                        // face the solid render answers — the
+                        // candle-cake lane's own walk)
+                        if let Some(dir) = q.cullface {
+                            let (dx, dy, dz) = match dir {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TEXTURE VERDICT — the resolved
+                        // texture name the tile mapping answers (the
+                        // cake masters the named consts bank, the
+                        // bitten cut the TILE_CAKE_INNER const answers
+                        // — the unknown ref the kind's own row serves)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let tile = match tex_stem {
+                            "cake_bottom" => atlas::TILE_CAKE_BOTTOM,
+                            "cake_top" => atlas::TILE_CAKE_TOP,
+                            "cake_side" => atlas::TILE_CAKE_SIDE,
+                            "cake_inner" => atlas::TILE_CAKE_INNER,
+                            _ => fallback_tile,
+                        };
+                        // THE SHADE TERM'S OWN READ — the template's
+                        // shade:true elements the direction table
+                        // answers, the never-shaded the 1.0 keeps
+                        let face_shade = if q.shade {
+                            match q.direction {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE FIRE KINDS' OWN MULTIPART LANE (the flint's and the
                 // charge's own product finally RENDERS — the honest hole
                 // the glass precedent wore, the fan the vanilla blockstate
@@ -2027,6 +2197,42 @@ fn cake_candle_model_quads(model_id: &str) -> &'static [mc_registry::element_qua
         std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
     > = std::sync::OnceLock::new();
     let models = ["block/candle_cake", "block/candle_cake_lit"];
+    let map = QUADS.get_or_init(|| {
+        models
+            .into_iter()
+            .map(|m| {
+                (
+                    m,
+                    mc_registry::element_quads::derive_model_inherited(m).unwrap_or_default(),
+                )
+            })
+            .collect()
+    });
+    map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE CAKE LADDER'S OWN MODEL BAKES — the block/cake and
+/// block/cake_slice1..6 chains the registry's derive walk resolves
+/// (the campfire lane's own cache pattern the seven models walk):
+/// each a SINGLE box element [1+2N, 0, 1]->[15, 8, 15] (the
+/// lambda$static$0 shape the x-start walk the models exactly mirror),
+/// the west face's #inside ref the bitten cut speaks — the per-quad
+/// texture names RESOLVED (the parent-chain merge the texture walk
+/// serves — the named consts the verdict reads). The failed derive
+/// the honest empty slice keeps (the cake the nothing renders).
+fn cake_model_quads(model_id: &str) -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let models = [
+        "block/cake",
+        "block/cake_slice1",
+        "block/cake_slice2",
+        "block/cake_slice3",
+        "block/cake_slice4",
+        "block/cake_slice5",
+        "block/cake_slice6",
+    ];
     let map = QUADS.get_or_init(|| {
         models
             .into_iter()
@@ -3851,6 +4057,112 @@ mod tests {
                 .all(|c| (c[0] - 1.0).abs() < 1e-5)),
             "the up face the 1.0 shade term wears"
         );
+        assert!(
+            sides.iter().all(|quad| quad
+                .colors
+                .iter()
+                .all(|c| (c[0] - 0.8).abs() < 1e-5 || (c[0] - 0.6).abs() < 1e-5)),
+            "the side faces the 0.8/0.6 shade terms wear"
+        );
+    }
+
+    #[test]
+    fn the_cake_lane_the_slice_models_bake() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE CAKE LADDER'S OWN TILES — the named consts the regen
+        // banks (the appended walk the four masters answer), the
+        // bitten cut the TILE_CAKE_INNER const the west face reads
+        let bottom_tile = gen_atlas::TILE_CAKE_BOTTOM;
+        let top_tile = gen_atlas::TILE_CAKE_TOP;
+        let side_tile = gen_atlas::TILE_CAKE_SIDE;
+        let inner_tile = gen_atlas::TILE_CAKE_INNER;
+        assert_ne!(bottom_tile, gen_atlas::TILE_NONE, "the bottom tile the regen banks");
+        assert_ne!(top_tile, gen_atlas::TILE_NONE, "the top tile the regen banks");
+        assert_ne!(side_tile, gen_atlas::TILE_NONE, "the side tile the regen banks");
+        assert_ne!(inner_tile, gen_atlas::TILE_NONE, "the inner tile the regen banks");
+        // THE FULL KIND'S OWN BAKE — the single box on stone: the SIX
+        // element faces the walk derives, the down cullface the solid
+        // ground culled (the 5 drawn quads the texture verdict splits
+        // — the top 1, the four sides 4), the colors the shade:true
+        // terms the direction table pays
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::CAKE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let cell = |quad: &&crate::mesher::Quad| quad.pts[0][0] >= 8.0 && quad.pts[0][0] < 9.0;
+        let drawn: Vec<_> = q.iter().filter(|quad| {
+            cell(quad) && (quad.tile == bottom_tile || quad.tile == top_tile
+                || quad.tile == side_tile || quad.tile == inner_tile)
+        }).collect();
+        assert_eq!(drawn.len(), 5, "the six faces the down cull the ground serves");
+        assert_eq!(drawn.iter().filter(|quad| quad.tile == top_tile).count(), 1,
+            "the up face the top tile wears");
+        assert_eq!(drawn.iter().filter(|quad| quad.tile == side_tile).count(), 4,
+            "the four side faces the side tile wears");
+        // THE FLOATING KIND'S OWN CULLS — the air-below cell the down
+        // face draws (the cullface verdict the neighbor read keeps):
+        // the 6 faces the walk answers uncut
+        put(&mut w, 12, 9, 8, crate::world::CAKE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let floating: Vec<_> = q.iter().filter(|quad| {
+            quad.pts[0][0] >= 12.0 && quad.pts[0][0] < 13.0
+                && (quad.tile == bottom_tile || quad.tile == top_tile || quad.tile == side_tile)
+        }).collect();
+        assert_eq!(floating.len(), 6, "the floating cake the down culls never trigger");
+        assert_eq!(floating.iter().filter(|quad| quad.tile == bottom_tile).count(), 1,
+            "the down face the air below draws");
+        // THE BITTEN STAGES' OWN BAKES — every slice the SAME single
+        // box the x-start walk narrows (the lambda$static$0 shape the
+        // models exactly mirror): the west face the #inside ref the
+        // TILE_CAKE_INNER const answers, the other five the cake
+        // masters keep (the on-ground slice the down cull keeps — the
+        // 5 drawn quads the west-inside split wears)
+        for (slice, kind) in [
+            ("block/cake_slice1", crate::world::CAKE_SLICE1),
+            ("block/cake_slice2", crate::world::CAKE_SLICE2),
+            ("block/cake_slice3", crate::world::CAKE_SLICE3),
+            ("block/cake_slice4", crate::world::CAKE_SLICE4),
+            ("block/cake_slice5", crate::world::CAKE_SLICE5),
+            ("block/cake_slice6", crate::world::CAKE_SLICE6),
+        ] {
+            let mut w = empty_world();
+            put(&mut w, 8, 8, 8, STONE);
+            put(&mut w, 8, 9, 8, kind);
+            let q = mesh_chunk(&w, 0, 0, None);
+            let inners: Vec<_> = q
+                .iter()
+                .filter(|quad| quad.tile == inner_tile && cell(quad))
+                .collect();
+            assert_eq!(inners.len(), 1, "slice {slice}: the west face the inner tile wears");
+            let tops: Vec<_> = q
+                .iter()
+                .filter(|quad| quad.tile == top_tile && cell(quad))
+                .collect();
+            assert_eq!(tops.len(), 1, "slice {slice}: the up face the top tile wears");
+        }
+        // THE SHADE TERM'S OWN SPLIT — the box's shade:true elements
+        // the direction table pays: the up face the 1.0 term keeps,
+        // the four sides the 0.8/0.6 horizontals wear (the no-grid
+        // convention the lightmap alone multiplies)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::CAKE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let tops: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == top_tile && cell(quad))
+            .collect();
+        assert!(
+            tops.iter().all(|quad| quad
+                .colors
+                .iter()
+                .all(|c| (c[0] - 1.0).abs() < 1e-5)),
+            "the up face the 1.0 shade term wears"
+        );
+        let sides: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == side_tile && cell(quad))
+            .collect();
         assert!(
             sides.iter().all(|quad| quad
                 .colors

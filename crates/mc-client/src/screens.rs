@@ -15797,8 +15797,17 @@ impl App {
         // THE CLONE (getCloneItemStack's own law — the block's own item
         // the registry's name walk answers; the includeData flag the
         // survival conjunct keeps false, the block-entity data lane the
-        // id-only stack model never carries)
-        let Some(item) = mc_registry::item_id_by_name(crate::world::NAME_OF[kind as usize])
+        // id-only stack model never carries). THE CANDLE CAKE'S OWN
+        // ANSWER (javap CandleCakeBlock.getCloneItemStack — the CAKE
+        // item the pick lane grants: the block the ITEM FORM never
+        // had, the vanilla's own walk the base cake's stack returns —
+        // the autopush-524 round the cake item the registry carries)
+        let pick_name = if crate::world::is_candle_cake(kind) {
+            "cake"
+        } else {
+            crate::world::NAME_OF[kind as usize]
+        };
+        let Some(item) = mc_registry::item_id_by_name(pick_name)
         else {
             return; // the item-less block — the honest absence
         };
@@ -24195,6 +24204,123 @@ impl App {
                 .is_some_and(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CRAFTING_TABLE)
         {
             self.open_crafting_table();
+            return true;
+        }
+        // THE CAKE'S OWN BLOCK-USE ARM (javap 26.2 CakeBlock — the
+        // useItemOn/useWithoutItem walk the BLOCK-use pass serves
+        // BEFORE the item lanes reach, the crafting-table arm's own
+        // order the vanilla dispatch keeps; the sneaking player the
+        // cake's arms NEVER gate — CakeBlock carries no isShiftKeyDown
+        // read, the crafting table's own use() the shift skip wears).
+        // THE CANDLE-ON-CAKE SUB-ARM (useItemOn pc 0-122): the held
+        // item's CANDLES tag consult pc 6-13 + the BITES==0 read pc
+        // 16-29 + the byItem instanceof CandleBlock verdict pc 32-52 —
+        // the consume(1) pc 61-65 the stack answers, the playSound(
+        // CAKE_ADD_CANDLE, BLOCKS, 1.0F, 1.0F) pc 68-80 the swap's own
+        // voice plays, the setBlockAndUpdate(pos, CandleCakeBlock.
+        // byCandle(candle)) pc 83-93 the flag-3 broadcast the offline
+        // kind-swap walk wears, the BLOCK_CHANGE gameEvent pc 95-103
+        // the documented pending lane the offline world never banks,
+        // the SUCCESS pc 119-122. The offline palette the PLAIN candle
+        // item the byCandle walk's plain row answers (the dyed rows
+        // the kind-only vocabulary never carries). THE EAT SUB-ARM
+        // (useWithoutItem -> CakeBlock.eat pc 0-114): the EMPTY main
+        // hand the TRY_WITH_EMPTY_HAND flow alone reaches (the held
+        // stack the fall-through the item lanes answer), the canEat(
+        // false) gate pc 0-11 the needsFood verdict speaks, the
+        // FoodData.eat(2, 0.1F) pc 19-26 the bite's own feed, the
+        // gameEvent(EAT) pc 44-50 the sculk lane the offline fold
+        // never banks, the bites<6 branch pc 55-88 the flag-3 setBlock
+        // the kind swap wears, the max-bite branch pc 91-106 the
+        // removeBlock walk the AIR returns (the pc 12 iconst_3 the
+        // UPDATE_NEIGHBORS broadcast keeps — the fire_shape_updates
+        // chain call the flag's own neighbor walk serves), the SUCCESS
+        // pc 111-114. THE WIRE SESSION the local edit never makes
+        // (the networked world's cake the server's own walk lands).
+        // THE CONSULTS (the immutable reads BEFORE the mutable borrow —
+        // the flint arm's own discipline): the clicked cell, the held
+        // item, the canEat verdict the two sub-arms' gates answer
+        let cell_kind = self
+            .active_world()
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2));
+        let held = self.held_id().and_then(mc_registry::item_name);
+        let candle_swap = held == Some("candle") && cell_kind == Some(crate::world::CAKE);
+        let eat_bite = self.held_id().is_none()
+            && cell_kind.is_some_and(crate::world::is_cake)
+            && self.food_data.needs_food();
+        if !self.world_is_network && (candle_swap || eat_bite) {
+            // THE CANDLE-ON-CAKE VOICE BEFORE THE SET (the useItemOn's
+            // own order — the playSound(CAKE_ADD_CANDLE, BLOCKS,
+            // 1.0F, 1.0F) pc 68-80 the swap's first fruit speaks, the
+            // positional walk the flint arm's own fold wears)
+            if candle_swap {
+                let ear = self
+                    .body
+                    .as_ref()
+                    .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                let (tx, ty, tz) = (
+                    hit.pos.0 as f64 + 0.5,
+                    hit.pos.1 as f64 + 0.5,
+                    hit.pos.2 as f64 + 0.5,
+                );
+                self.sounds.play_voice_at_pan(
+                    self.frame,
+                    "block.cake.add_candle",
+                    1.0,
+                    1.0,
+                    ear_distance(ear, tx, ty, tz),
+                    ear_pan(ear, yaw, tx, ty, tz),
+                );
+            }
+            // THE OFFLINE PREDICTION: the kind swaps the offline
+            // terrain answers, the mesh re-speaks (the networked
+            // world's cake the server's own walk lands)
+            if let Some(world) = self.offline_world.as_mut() {
+                if candle_swap {
+                    // THE SWAP (javap setBlockAndUpdate(pos,
+                    // CandleCakeBlock.byCandle(candle)) pc 83-93 — the
+                    // flag-3 broadcast the chain call the douse arm's
+                    // own beat wears; the BLOCK_CHANGE gameEvent the
+                    // documented pending lane the offline fold never
+                    // banks)
+                    world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::CANDLE_CAKE);
+                    world.fire_shape_updates(hit.pos);
+                    world.relight();
+                    self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                    // THE CONSUME (javap ItemStack.consume(1, player) —
+                    // the survival stack the shrink wears, the `--held-
+                    // item` stand-in the count the stack model never owns)
+                    let sel = self.selected_hotbar;
+                    if self.inventory.items[sel].1 > 0 {
+                        self.inventory.items[sel].1 -= 1;
+                        if self.inventory.items[sel].1 <= 0 {
+                            self.inventory.items[sel] = (0, 0);
+                        }
+                        self.hotbar_slots = self.inventory.hotbar();
+                    }
+                } else if eat_bite {
+                    // THE BITE'S OWN FEED (javap FoodData.eat(2, 0.1F) —
+                    // the nutrition 2 the saturation modifier 0.1 the
+                    // add walk's clamp answers)
+                    self.food_data.eat(2, 0.1);
+                    // THE BITES LADDER (javap CakeBlock.eat pc 55-106 —
+                    // the bites<6 branch the flag-3 setBlock the kind
+                    // swap wears, the max-bite branch pc 91-106 the
+                    // removeBlock walk the AIR returns — the pc 12
+                    // iconst_3 the UPDATE_NEIGHBORS broadcast keeps,
+                    // the fire_shape_updates chain call the flag's own
+                    // neighbor walk serves)
+                    let pos = hit.pos;
+                    match crate::world::cake_bite_next(cell_kind.unwrap()) {
+                        Some(next) => world.set(pos.0, pos.1, pos.2, next),
+                        None => world.set(pos.0, pos.1, pos.2, crate::world::AIR),
+                    }
+                    world.fire_shape_updates(pos);
+                    world.relight();
+                    self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                }
+            }
             return true;
         }
         // THE TOOL ARMS' OWN USE-ON-BLOCK WALK (javap HoeItem.useOn +
@@ -74522,6 +74648,230 @@ cow_sound_variant: None,
                 "the dead cell's age entry the chain drops"
             );
         }
+    }
+
+    #[test]
+    fn the_empty_hand_the_cake_eats() {
+        // THE EAT LANE'S OWN WALK (javap CakeBlock.useWithoutItem +
+        // the eat static over the 26.2 jar — the EMPTY main hand the
+        // TRY_WITH_EMPTY_HAND flow alone reaches, the canEat(false)
+        // gate the needsFood verdict speaks, the FoodData.eat(2,
+        // 0.1F) the bite's own feed, the bites<6 branch the flag-3
+        // setBlock the kind swap wears, the max-bite branch the
+        // removeBlock the AIR returns): the seven bites the ladder
+        // walks, the food bar the +2 the bite feeds, the mesh the
+        // swap re-speaks
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAKE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE HUNGRY BODY THE GATE ANSWERS (the default bar the
+        // MAX_FOOD the new() starts — the walk the set_food_level
+        // lowering speaks; the 6 start level the SEVEN bites the bar
+        // carries — the +2 feed the clamp never gates, the 18 the
+        // seventh bite's canEat still answers)
+        app.food_data.set_food_level(6);
+        let ladder = [
+            crate::world::CAKE_SLICE1,
+            crate::world::CAKE_SLICE2,
+            crate::world::CAKE_SLICE3,
+            crate::world::CAKE_SLICE4,
+            crate::world::CAKE_SLICE5,
+            crate::world::CAKE_SLICE6,
+        ];
+        for (bite, expected) in ladder.iter().enumerate() {
+            assert!(
+                app.on_right_press(0, 0),
+                "bite {bite}: the eat lane the press consumes"
+            );
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                *expected,
+                "bite {bite}: the stage the kind swap wears"
+            );
+            assert_eq!(
+                app.food_data.food_level(),
+                6 + (bite as i32 + 1) * 2,
+                "bite {bite}: the +2 feed the bar wears"
+            );
+        }
+        // THE MAX BITE THE AIR RETURNS (the removeBlock walk the
+        // seventh bite's own branch serves — the eaten cake the cell
+        // clears)
+        assert!(app.on_right_press(0, 0), "the seventh bite consumes");
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(w.get(c, top, c), crate::world::AIR, "the cake the cell clears");
+        assert_eq!(app.food_data.food_level(), 20, "the seventh feed the bar wears");
+    }
+
+    #[test]
+    fn the_full_bar_the_cake_refuses() {
+        // THE CANEAT GATE'S OWN PASS (javap Player.canEat(false) —
+        // the needsFood verdict the full bar refuses, the PASS the
+        // item lanes' fall-through keeps): the press the false
+        // verdict carries, the cake the same stage keeps, the bar
+        // the same level keeps
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAKE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the full bar the PASS verdict carries"
+        );
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(w.get(c, top, c), crate::world::CAKE, "the cake the press never touches");
+        assert_eq!(app.food_data.food_level(), 20, "the full bar the bite never feeds");
+    }
+
+    #[test]
+    fn the_candle_the_cake_wears() {
+        // THE CANDLE-ON-CAKE ARM'S OWN WALK (javap CakeBlock.
+        // useItemOn pc 0-122 over the 26.2 jar — the CANDLES tag +
+        // BITES==0 + instanceof CandleBlock consult the held candle
+        // answers: the playSound(CAKE_ADD_CANDLE, BLOCKS, 1.0F,
+        // 1.0F) the swap's first fruit speaks, the consume(1) the
+        // stack answers, the setBlockAndUpdate(pos, byCandle(candle))
+        // the CANDLE_CAKE kind the flag-3 broadcast wears, the
+        // SUCCESS the press consumes)
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAKE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let candle_item = mc_registry::item_id_by_name("candle").unwrap();
+        let sel = app.selected_hotbar;
+        app.inventory.items[sel] = (candle_item, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(
+            app.on_right_press(0, 0),
+            "the consult the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CANDLE_CAKE,
+                "the byCandle walk the swap wears"
+            );
+        }
+        assert_eq!(
+            app.inventory.items[sel],
+            (candle_item, 2),
+            "the consume(1) the stack answers"
+        );
+        // THE VOICE THE SWAP PLAYS (the playSound the log's own
+        // event row speaks)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.cake.add_candle")),
+            "the CAKE_ADD_CANDLE voice the log wears"
+        );
+    }
+
+    #[test]
+    fn the_bitten_cake_the_candle_refuses() {
+        // THE BITES==0 GATE'S OWN REFUSAL (javap useItemOn pc 16-29 —
+        // the `getValue(BITES) != 0` branch the TRY_WITH_EMPTY_HAND
+        // returns: the bitten stage the candle consult never wears,
+        // the held stack the placement lane's own walk follows — the
+        // candle the placeable lookup the above cell places): the
+        // cake cell the bitten stage keeps, the swap never speaks
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAKE_SLICE2);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        let candle_item = mc_registry::item_id_by_name("candle").unwrap();
+        let sel = app.selected_hotbar;
+        app.inventory.items[sel] = (candle_item, 3);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the placement lane the candle item the above cell places —
+        // the press CONSUMES (the placement's own SUCCESS the
+        // can_support_torch coarse fold the cake row answers — the
+        // vanilla's own sturdy-face law the per-cell predicate the
+        // documented fold keeps), the cake the bitten stage keeps,
+        // the swap never speaks
+        assert!(app.on_right_press(0, 0), "the placement the candle places");
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!(
+            w.get(c, top, c),
+            crate::world::CAKE_SLICE2,
+            "the bitten stage the swap never touches"
+        );
+        assert!(
+            !app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.cake.add_candle")),
+            "the voice the refused consult never plays"
+        );
     }
 
     /// THE TORCH'S OWN PLACEMENT WALK (the dev-32 round — javap
