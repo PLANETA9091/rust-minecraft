@@ -8555,6 +8555,8 @@ impl App {
             let mut fire_doused = false;
             let mut in_fire_hurt = false;
             let mut in_soul_fire_hurt = false;
+            let mut in_campfire_hurt = false;
+            let mut in_soul_campfire_hurt = false;
             let mut drown_hurt = false;
             // THE ELYTRA BREAK's own drain slot (the body's borrow fills
             // it — the entityEvent 47's client arm runs after it ends:
@@ -9232,6 +9234,11 @@ impl App {
                     // cooldown the answers ride)
                     in_fire_hurt = std::mem::take(&mut b.in_fire_hurt_due);
                     in_soul_fire_hurt = std::mem::take(&mut b.in_soul_fire_hurt_due);
+                    // THE LIT CAMPFIRES' OWN DRAIN (the dev-6 round —
+                    // the direct-hurt doses the campfire walk banked,
+                    // the same-tick flag law the fire pair speaks)
+                    in_campfire_hurt = std::mem::take(&mut b.in_campfire_hurt_due);
+                    in_soul_campfire_hurt = std::mem::take(&mut b.in_soul_campfire_hurt_due);
                     // THE AIR ARC'S OWN DRAIN (the same per-tick flag
                     // law the fire arc's three speak — the -20 fold's
                     // own read, the body keeps it true until the NEXT
@@ -9341,6 +9348,21 @@ impl App {
             }
             if in_soul_fire_hurt {
                 if self.hurt_burning(crate::body::IN_SOUL_FIRE_DAMAGE) {
+                    self.sounds.play_burn(self.frame);
+                }
+            }
+            // THE LIT CAMPFIRES' OWN DOSES (the dev-6 round — javap
+            // CampfireBlock.entityInside the DIRECT hurt call the
+            // fireDamage ints split: the campfire damage type the
+            // BURNING voice the same pipeline wears, the invulnerable
+            // window the same cooldown the repeats bury)
+            if in_campfire_hurt {
+                if self.hurt_burning(crate::body::CAMPFIRE_DAMAGE) {
+                    self.sounds.play_burn(self.frame);
+                }
+            }
+            if in_soul_campfire_hurt {
+                if self.hurt_burning(crate::body::SOUL_CAMPFIRE_DAMAGE) {
                     self.sounds.play_burn(self.frame);
                 }
             }
@@ -24583,40 +24605,96 @@ impl App {
         voice: &str,
         face_gate: bool,
     ) -> Option<bool> {
-        // THE SHOVEL'S OWN FACE GATE (the DOWN face the strict refusal
-        // speaks — the clicked underside never flattens)
+        // THE SHOVEL'S OWN FACE GATE (javap ShovelItem.useOn pc 17-24
+        // over the 26.2 jar: the `getClickedFace() == DOWN` acmpeq the
+        // PASS keeps — the clicked underside neither flattens nor
+        // douses)
         if face_gate && hit.face == 0 {
             return None;
         }
         // THE MAP'S LOOKUP + THE PREDICATE (one immutable walk — the
-        // borrow the mutable prediction never crosses): the GRASS_BLOCK
-        // and the DIRT rows the vocabulary's honest subset keeps (the
+        // borrow the mutable prediction never crosses): the
+        // FLATTENABLES consult pc 33-49 the GRASS_BLOCK and the DIRT
+        // rows the vocabulary's honest subset keeps (the
         // PODZOL/COARSE_DIRT/ROOTED_DIRT/MYCELIUM/DIRT_PATH rows the
-        // palette never speaks — the 29-kind vocabulary the honest
-        // subset names)
+        // palette never speaks), the above-air predicate pc 59-70 the
+        // flatten arm's own gate speaks. THE DOUSE ARM pc 95-166 the
+        // flatten consult's ELSE branch serves (javap ShovelItem.useOn:
+        // the `instanceof CampfireBlock` check pc 100 + the LIT read
+        // pc 106-120 the lit-campfire verdict answers — the plain and
+        // the soul kind the CAMPFIRES family both carry): the
+        // levelEvent(1009) pc 130-137 the FIRE_EXTINGUISH row the
+        // server's own handler plays at the block pos, the
+        // CampfireBlock.dowse pc 140-148 the smoke walk the offline
+        // world's particle lane a future round keeps, the
+        // `setValue(LIT, false)` pc 151-166 the unlit kind the douse's
+        // own product speaks.
         let result = {
             let world = self.active_world()?;
             let cell = world.get(hit.pos.0, hit.pos.1, hit.pos.2);
-            let result = map(cell)?;
-            let above = world.get(hit.pos.0, hit.pos.1 + 1, hit.pos.2);
-            if above != crate::world::AIR {
-                return None; // the above-air predicate's refusal — the PASS
+            let flatten = map(cell);
+            match flatten {
+                Some(flattened) => {
+                    let above = world.get(hit.pos.0, hit.pos.1 + 1, hit.pos.2);
+                    if above != crate::world::AIR {
+                        None // the above-air predicate's refusal — the PASS
+                    } else {
+                        Some((flattened, false))
+                    }
+                }
+                // THE DOUSE CONSULT: the lit campfire the unlit kind's
+                // own swap answers (the `setValue(LIT, false)` walk the
+                // bytecode pc 151-166 keeps), the doused kinds and the
+                // non-campfire cells the PASS the fall-through keeps
+                None => crate::world::match_lit_campfire(cell).map(|unlit| (unlit, true)),
             }
-            result
         };
+        let (result, doused) = result?;
         // THE SOUND BEFORE THE SET (the useOn's own order — the
-        // playSound the verdict's first fruit speaks)
-        self.sounds.play_voice(self.frame, voice, 1.0, 1.0);
+        // flatten arm the SHOVEL_FLATTEN playSound pc 77-85 speaks,
+        // the douse arm the levelEvent(1009) pc 130-137 the
+        // FIRE_EXTINGUISH row at the block pos the positional walk
+        // keeps)
+        if doused {
+            let (tx, ty, tz) = (
+                hit.pos.0 as f64 + 0.5,
+                hit.pos.1 as f64 + 0.5,
+                hit.pos.2 as f64 + 0.5,
+            );
+            let ear = self
+                .body
+                .as_ref()
+                .map(|b| (b.x, b.y + b.eye_height(), b.z));
+            let yaw = self.listener_yaw();
+            self.sounds.play_voice_at_pan(
+                self.frame,
+                "block.fire.extinguish",
+                1.0,
+                1.0,
+                ear_distance(ear, tx, ty, tz),
+                ear_pan(ear, yaw, tx, ty, tz),
+            );
+        } else {
+            self.sounds.play_voice(self.frame, voice, 1.0, 1.0);
+        }
         // THE OFFLINE PREDICTION: the converted block lands in the
         // App's own terrain and the mesh re-speaks (the networked
         // world's convert rides the server's chunk refresh — no local
-        // edit)
+        // edit). THE DOUSE'S OWN CHAIN CALL (javap ShovelItem.useOn pc
+        // 180-186: the `setBlock(pos, result, 11)` bipush 11 the
+        // UPDATE_NEIGHBORS broadcast keeps — the shape-update walk the
+        // light arms' own pattern wears; the BLOCK_CHANGE gameEvent pc
+        // 190-202 the sculk lane a future round keeps, the
+        // hurtAndBreak(1) pc 205-224 the offline stack never carries)
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(hit.pos.0, hit.pos.1, hit.pos.2, result);
+            if doused {
+                world.fire_shape_updates(hit.pos);
+            }
             world.relight(); // the convert's own re-speak the refreshed grid bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
-        Some(true)
+        Some(true) // the SUCCESS pc 227-230 the press consumes
     }
 
     /// THE SEEDS' OWN PLANT ARM — javap BlockItem.place over the real
@@ -27800,8 +27878,9 @@ impl App {
         // FlintAndSteelItem.useOn pc 24-45 over the 26.2 jar: the
         // CampfireBlock/CandleBlock/CandleCakeBlock canLight
         // disjunction the consult answers FIRST — CandleBlock.canLight
-        // the CANDLES tag + the `!LIT` verdict the offline palette the
-        // unlit kind's own row speaks — the branch pc 48-134 the
+        // the CANDLES tag + the `!LIT` verdict, CampfireBlock.canLight
+        // the CAMPFIRES tag + the `!WATERLOGGED` + `!LIT` reads the
+        // dev-6 round's campfire rows join — the branch pc 48-134 the
         // SUCCESS verdict carries BEFORE the placement walk pc 135+
         // reaches). THE ORDER THE BRANCH SERVES: the playSound FIRST
         // (pc 48-74 — the FLINTANDSTEEL_USE row at the CLICKED pos the
@@ -27813,13 +27892,14 @@ impl App {
         // the documented pending lane the offline world never wears),
         // the hurtAndBreak the offline stack never carries (pc 111-128
         // — the honest no-op the placement arm speaks), the SUCCESS
-        // the Some(true) verdict carries (pc 131-134). The LIT kind
-        // the consult REFUSES (the !LIT verdict the lit row's own
-        // state speaks — the fall-through the placement walk answers).
-        if self
+        // the Some(true) verdict carries (pc 131-134). The LIT kinds
+        // the consult REFUSES (the !LIT verdict the lit rows' own
+        // states speak — the fall-through the placement walk answers).
+        let lit_kind = self
             .active_world()
-            .is_some_and(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CANDLE)
-        {
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            .and_then(crate::world::can_light_product);
+        if let Some(lit_kind) = lit_kind {
             let (tx, ty, tz) = (
                 hit.pos.0 as f64 + 0.5,
                 hit.pos.1 as f64 + 0.5,
@@ -27841,11 +27921,12 @@ impl App {
             );
             if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
                 // THE SET: the LIT swap the kind-only vocabulary the
-                // CANDLE_LIT half-kind word answers — the emission 3
-                // the light grid's own walk bakes (the relight the
-                // fire placement arm's own pattern keeps), the flag-11
-                // broadcast the chain call the same beat wears
-                world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::CANDLE_LIT);
+                // CANDLE_LIT/CAMPFIRE_LIT/SOUL_CAMPFIRE_LIT half-kind
+                // words answer — the emission 3/15/10 the light grid's
+                // own walk bakes (the relight the fire placement arm's
+                // own pattern keeps), the flag-11 broadcast the chain
+                // call the same beat wears
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, lit_kind);
                 world.fire_shape_updates(hit.pos);
                 world.relight();
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
@@ -27981,12 +28062,16 @@ impl App {
         // LIT=true) the flag-3 broadcast the chain call answers
         // (pc 50-67), the BLOCK_CHANGE gameEvent the sculk lane's own
         // follow-up keeps (pc 71-80), the `true` the Some(true)
-        // verdict carries (pc 83-86). The LIT kind the consult
-        // REFUSES (the !LIT verdict the fall-through answers).
-        if self
+        // verdict carries (pc 83-86). The LIT kinds the consult
+        // REFUSES (the !LIT verdict the fall-through answers) — the
+        // campfire/soul_campfire rows the dev-6 round's palette the
+        // same consult answers (the CAMPFIRES tag + `!LIT` the
+        // canLight walk speaks).
+        let lit_kind = self
             .active_world()
-            .is_some_and(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2) == crate::world::CANDLE)
-        {
+            .map(|w| w.get(hit.pos.0, hit.pos.1, hit.pos.2))
+            .and_then(crate::world::can_light_product);
+        if let Some(lit_kind) = lit_kind {
             let (tx, ty, tz) = (
                 hit.pos.0 as f64 + 0.5,
                 hit.pos.1 as f64 + 0.5,
@@ -28009,7 +28094,7 @@ impl App {
                 // THE SET: the LIT swap the setBlockAndUpdate flag-3
                 // broadcast the chain call the same beat wears (the
                 // dig lane's own flag-3 precedent the removal speaks)
-                world.set(hit.pos.0, hit.pos.1, hit.pos.2, crate::world::CANDLE_LIT);
+                world.set(hit.pos.0, hit.pos.1, hit.pos.2, lit_kind);
                 world.fire_shape_updates(hit.pos);
                 world.relight();
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
@@ -74122,6 +74207,154 @@ cow_sound_variant: None,
                 "no fire the refused placement keeps"
             );
         }
+    }
+
+    #[test]
+    fn the_canlight_consult_the_campfire_lights() {
+        // THE CAMPFIRE ROW'S OWN ANSWER (the dev-6 round — javap
+        // CampfireBlock.canLight: the CAMPFIRES tag + `!LIT` verdict
+        // the unlit kind answers, the branch the SAME walk the
+        // candle row wears): the clicked campfire the LIT swap the
+        // can_light_product mapping carries — the sound the branch's
+        // first fruit speaks, the set the flag-11 broadcast the chain
+        // call wears, the placement cell the branch never touches
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAMPFIRE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the lit branch the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CAMPFIRE_LIT,
+                "the lit kind the setValue walk's own swap wears"
+            );
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::AIR,
+                "the placement cell the branch never touches — no fire beside"
+            );
+        }
+    }
+
+    #[test]
+    fn the_charge_consult_the_soul_campfire_lights() {
+        // THE SOUL ROW'S OWN ANSWER (the same consult — the
+        // FireChargeItem arm the CAMPFIRES family's soul kind reads):
+        // the clicked soul campfire the SOUL_CAMPFIRE_LIT swap the
+        // flag-3 broadcast the charge's own walk wears
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/fire_charge"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::SOUL_CAMPFIRE);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the lit branch the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::SOUL_CAMPFIRE_LIT,
+                "the soul lit kind the setValue walk's own swap wears"
+            );
+        }
+    }
+
+    #[test]
+    fn the_shovel_the_lit_campfire_douses() {
+        // THE DOUSE ARM'S OWN WALK (javap ShovelItem.useOn pc 95-230
+        // over the 26.2 jar — the `instanceof CampfireBlock` + LIT
+        // verdict the lit kind answers: the levelEvent(1009) the
+        // FIRE_EXTINGUISH row speaks, the `setValue(LIT, false)` the
+        // unlit kind the douse's own product carries, the flag-11 set
+        // the chain call wears, the SUCCESS pc 227-230 the press
+        // consumes). THE DOWN-FACE GATE pc 17-24 the shared gate the
+        // flatten arm's own face test keeps (the acmpeq the underside
+        // PASS wears — the clicked underside neither flattens nor
+        // douses)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/diamond_shovel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAMPFIRE_LIT);
+        }
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the douse arm the press consumes"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top, c),
+                crate::world::CAMPFIRE,
+                "the unlit kind the setValue walk's own product wears"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.fire.extinguish @")),
+            "the levelEvent(1009) the FIRE_EXTINGUISH row the douse speaks: {:?}",
+            app.sounds.events.last()
+        );
     }
 
     #[test]

@@ -5367,6 +5367,42 @@ impl Zombie {
         false
     }
 
+    /// THE LIT CAMPFIRE'S OWN GATE (the dev-6 round — the body lane's
+    /// own box-overlap scan the fire scans wear: javap
+    /// CampfireBlock.entityInside the LIT verdict the lit kind alone
+    /// admits — the doused cells and the dark unlit kind the scan
+    /// never touches, the `!LIT` verdict the kind-only palette the
+    /// unlit rows keep).
+    pub fn touches_campfire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = self.box_for();
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::CAMPFIRE_LIT {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE LIT SOUL CAMPFIRE'S OWN GATE (the same box-overlap walk —
+    /// the soul kind the fireDamage int doubles).
+    pub fn touches_soul_campfire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = self.box_for();
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::SOUL_CAMPFIRE_LIT {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
     /// THE FIRE DOSE'S OWN WINDOW WALK (javap `LivingEntity.hurt`'s
     /// invulnerable beat the fire doses share — the <= 10 window the
     /// same-dose repeats refuse, the STRONGER dose the `amount >
@@ -5863,6 +5899,19 @@ impl Zombie {
                     self.fire_ticks = crate::body::FIRE_IGNITE_TICKS;
                 }
                 deferred_doses.push(crate::body::IN_SOUL_FIRE_DAMAGE);
+            }
+            // THE LIT CAMPFIRES' OWN DOSES (the dev-6 round — javap
+            // CampfireBlock.entityInside the DIRECT hurt call the
+            // fireDamage ints split — the NO ignite lift the
+            // BaseFireBlock walk's applier phases alone wear, the
+            // doused kinds the !LIT verdict the scan refuses): the
+            // lit cells the doses the queue carries, the invulnerable
+            // window the same clock answers
+            if self.touches_campfire(world) {
+                deferred_doses.push(crate::body::CAMPFIRE_DAMAGE);
+            }
+            if self.touches_soul_campfire(world) {
+                deferred_doses.push(crate::body::SOUL_CAMPFIRE_DAMAGE);
             }
         }
         // THE FIRE CLOCK (Entity.baseTick's own block, run BEFORE the
@@ -17887,6 +17936,69 @@ mod tests {
         assert!(
             (burn - 0.94).abs() < 0.02,
             "the plain fire the single dose wears: {burn}"
+        );
+    }
+
+    #[test]
+    fn the_lit_campfire_the_mob_brands() {
+        // THE LIT CAMPFIRE'S OWN DOSE (the dev-6 round — javap
+        // CampfireBlock.entityInside over the 26.2 jar: the LIT
+        // verdict + the LivingEntity gate the `hurt(damageSources.
+        // campfire(), fireDamage)` DIRECT call serves — the 1.0 the
+        // ctor's (true, 1) row keeps, the 7-px column the standing
+        // body overlaps, the NO ignite lift the BaseFireBlock walk's
+        // applier phases alone wear)
+        let mut world = wide_flat_world();
+        let (fx, fy, fz) = (32i32, 4i32, 32i32);
+        world.set(fx, fy, fz, crate::world::CAMPFIRE_LIT);
+        let mut z = Zombie::new(1, fx as f64 + 0.5, fy as f64, fz as f64 + 0.5, 7);
+        assert!(
+            z.touches_campfire(&world),
+            "the lit cell the standing box answers"
+        );
+        let before = z.health;
+        z.tick(&world, None, NIGHT);
+        let burn = before - z.health;
+        assert!(
+            (burn - 0.94).abs() < 0.02,
+            "the campfire dose the first tick lands (the 1.0 the armor fold wears): {burn}"
+        );
+        assert_eq!(
+            z.fire_ticks, 0,
+            "the NO ignite lift the direct-hurt walk keeps — the clock the campfire never arms"
+        );
+        // THE SOUL CELL'S OWN DOUBLE (the ctor's (false, 2) row the
+        // fireDamage int keeps — the 2.0 the armor fold doubles)
+        let mut world = wide_flat_world();
+        world.set(fx, fy, fz, crate::world::SOUL_CAMPFIRE_LIT);
+        let mut z = Zombie::new(2, fx as f64 + 0.5, fy as f64, fz as f64 + 0.5, 7);
+        assert!(
+            z.touches_soul_campfire(&world),
+            "the soul lit cell the box answers"
+        );
+        let before = z.health;
+        z.tick(&world, None, NIGHT);
+        let burn = before - z.health;
+        assert!(
+            (burn - 1.92).abs() < 0.02,
+            "the soul campfire dose the doubled amount wears: {burn}"
+        );
+        // THE DOUSED KIND'S OWN SILENCE (the !LIT verdict the scan
+        // refuses — the unlit kind the dose never answers) + THE DARK
+        // CELL'S OWN (the cold ground the inside walk never brands)
+        let mut world = wide_flat_world();
+        world.set(fx, fy, fz, crate::world::CAMPFIRE);
+        let mut z = Zombie::new(3, fx as f64 + 0.5, fy as f64, fz as f64 + 0.5, 7);
+        assert!(
+            !z.touches_campfire(&world),
+            "the doused kind the !LIT verdict refuses"
+        );
+        for _ in 0..30 {
+            z.tick(&world, None, NIGHT);
+        }
+        assert_eq!(
+            z.health, ZOMBIE_MAX_HEALTH,
+            "the doused campfire the body never brands"
         );
     }
 

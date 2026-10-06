@@ -351,8 +351,94 @@ pub const CANDLE: u16 = 59;
 /// jar's registry answers, the pick lane the same item id grants).
 pub const CANDLE_LIT: u16 = 60;
 
+/// Kind 61 (the sixty-second entry, the dev-6 round): THE UNLIT
+/// CAMPFIRE'S OWN KIND — the douse lane's own product and the
+/// canLight consult's campfire row the two igniter arms read (javap
+/// the 26.2 jar — CampfireBlock's ctor the DEFAULT state registers
+/// `LIT=true, SIGNAL_FIRE=false, WATERLOGGED=false, FACING=NORTH`:
+/// the vanilla campfire the player places lands LIT — the offline
+/// placement lane the generic walk serves, the shovel's douse arm
+/// the `setValue(LIT, false)` product this kind speaks, the flint
+/// canLight relight the `!LIT` verdict the doused kind answers).
+/// CampfireBlock.canLight's pc walk: the CAMPFIRES tag consult +
+/// the `!WATERLOGGED` and `!LIT` reads the kind-only palette the
+/// UNLIT row answers (the lit kind the consult refuses — the same
+/// verdict the candle pair wears). The properties chain the blocks
+/// clinit's lambda$static$310 arm banks: strength(2.0), SoundType.
+/// WOOD, lightLevel litBlockEmission(15) — the UNLIT row the dark 0
+/// the emission table keeps — noOcclusion, the ctor args (true, 1)
+/// the spawnParticles/fireDamage pair the body's dose walk reads.
+/// THE SHAPE the static init's `Block.column(16.0, 0.0, 7.0)` walk
+/// banks (ldc2_w 16.0 / dconst_0 / ldc2_w 7.0) — the full 0..1
+/// footprint under the 0..7/16 band the collision table's Column(7)
+/// row answers (the body steps onto the 7-px box, the 0.6-block
+/// auto-step the sweep serves). No canSurvive override the 26.2
+/// class carries — the campfire floats the support's loss never
+/// douses, the placement gate's absence the generic lane keeps.
+/// The name the dig/drop/sound lanes resolve the BASE "campfire"
+/// row keeps (the generated block_dig/block_sounds/block_drops
+/// tables' own rows the registry answers, the item id the pick
+/// lane grants).
+pub const CAMPFIRE: u16 = 61;
+
+/// Kind 62 (the sixty-third entry, the same round): THE LIT
+/// CAMPFIRE'S OWN KIND — the canLight branch's own product and the
+/// placement default's own word (javap the 26.2 jar: the ctor's
+/// `registerDefaultState` the LIT=true row registers, the flint's
+/// `setBlock(clickedPos, state.setValue(CampfireBlock.LIT, true),
+/// 11)` walk the flag-11 broadcast wears — pc 77-97 — the
+/// FireChargeItem sibling the setBlockAndUpdate flag-3 keeps).
+/// The "facing=south,lit=true" variant the SAME template geometry
+/// resolves (block/campfire — the five-log boxes the lit_log faces
+/// swap, PLUS the two ±45° rotY rescale fire planes the `#fire`
+/// ref block/campfire_fire the strip's own frametime-2 animation
+/// plays). The lightLevel litBlockEmission(15) the lit row's 15
+/// the emission table answers — the light grid the set walk's
+/// incremental flood bakes. The entityInside walk the body's dose
+/// lanes read (javap CampfireBlock.entityInside: the LIT verdict
+/// + the LivingEntity gate the `hurt(damageSources.campfire(),
+/// fireDamage)` call serves — the fireDamage int the ctor's (true,
+/// 1) row keeps, the plain fire's 1.0 dose the shared walk speaks).
+/// The name the dig/drop/sound lanes resolve the BASE "campfire"
+/// row keeps (the shared-row law the candle pair wears — the lit
+/// swap the lanes' own product never places).
+pub const CAMPFIRE_LIT: u16 = 62;
+
+/// Kind 63 (the sixty-fourth entry, the same round): THE UNLIT SOUL
+/// CAMPFIRE'S OWN KIND — the douse lane's own soul product (javap
+/// the 26.2 jar: the blocks clinit's lambda$static$311 arm the
+/// `new CampfireBlock(false, 2, props)` ctor call banks — the
+/// spawnParticles=false/fireDamage=2 pair the soul's own rows
+/// keep, the properties chain the SAME strength/sound/lightLevel
+/// shape the plain row speaks). The blockstate's lit=false rows
+/// the SAME block/campfire_off model the plain kind points (the
+/// unlit soul the plain-log look the vanilla itself renders, the
+/// soul tint only the lit masters' pixels carry). The canLight
+/// consult's soul row the two igniter arms read (the `!LIT`
+/// verdict the doused kind answers), the douse arm the unlit
+/// product the swap speaks. The name the dig/drop/sound lanes
+/// resolve the BASE "soul_campfire" row keeps (the item id the
+/// pick lane grants).
+pub const SOUL_CAMPFIRE: u16 = 63;
+
+/// Kind 64 (the sixty-fifth entry, the same round): THE LIT SOUL
+/// CAMPFIRE'S OWN KIND — the canLight branch's own soul product
+/// (javap the 26.2 jar: the "facing=south,lit=true" row
+/// block/soul_campfire resolves — the template_campfire parent
+/// the soul_campfire_fire/soul_campfire_log_lit texture overrides
+/// carry, the two ±45° fire planes the soul strip's own
+/// frametime-2 animation plays). The lightLevel litBlockEmission(10)
+/// the lit row's 10 the emission table answers (the `bipush 10`
+/// the soul registration's lightLevel call speaks). The
+/// entityInside walk the body's dose lanes read — the ctor's
+/// (false, 2) row the fireDamage int keeps, the soul's 2.0 dose
+/// the plain's window the bypass pierces (the BaseFireBlock walk's
+/// own float split the same beat wears). The name the dig/drop/
+/// sound lanes resolve the BASE "soul_campfire" row keeps.
+pub const SOUL_CAMPFIRE_LIT: u16 = 64;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 61] = [
+pub const NAME_OF: [&str; 65] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -397,6 +483,15 @@ pub const NAME_OF: [&str; 61] = [
     // UNLIT kind's first row answers, the lit swap the igniter
     // arms' own product never places)
     "candle", "candle",
+    // THE CAMPFIRE FAMILY'S OWN ROWS (the douse lane's own kinds —
+    // the lit kinds the BASE names the shared-row law keeps: the dig
+    // rows (2.0 hardness — the strength(2.0) the clinit arm speaks),
+    // the drops tables, the sounds' WOOD rows and the item ids the
+    // pick lane grants BOTH states speak — the placeable lookup the
+    // reverse walk the UNLIT kinds' rows answer, the lit swaps the
+    // canLight branches' own products never place)
+    "campfire", "campfire",
+    "soul_campfire", "soul_campfire",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -419,6 +514,50 @@ pub fn is_flower(id: u16) -> bool {
 /// emission's lit-3 row the same family predicate reads.
 pub fn is_candle(id: u16) -> bool {
     id == CANDLE || id == CANDLE_LIT
+}
+
+/// THE CAMPFIRE FAMILY'S OWN PREDICATE — the four kinds the douse
+/// lane's consult and the mesher's element lane read (the unlit
+/// pair the canLight verdict answers, the lit pair the branch's
+/// own product speaks — the vanilla `!LIT` verdict the kind-only
+/// vocabulary the four-way split wears).
+pub fn is_campfire(id: u16) -> bool {
+    id == CAMPFIRE || id == CAMPFIRE_LIT || id == SOUL_CAMPFIRE || id == SOUL_CAMPFIRE_LIT
+}
+
+/// THE DOSE'S OWN PRODUCT MAP — the lit campfire the `setValue(LIT,
+/// false)` walk the shovel's douse arm serves (javap ShovelItem.useOn
+/// pc 151-166 over the 26.2 jar: the `state.setValue(CampfireBlock.
+/// LIT, false)` the douse's own product carries), the unlit kind the
+/// swap answers (the plain and the soul pair the CAMPFIRES family
+/// both speaks), the non-campfire cells the PASS the None keeps.
+pub fn match_lit_campfire(cell: u16) -> Option<u16> {
+    match cell {
+        CAMPFIRE_LIT => Some(CAMPFIRE),
+        SOUL_CAMPFIRE_LIT => Some(SOUL_CAMPFIRE),
+        _ => None,
+    }
+}
+
+/// THE CANLIGHT CONSULT'S OWN PRODUCT — the two igniter arms'
+/// `CampfireBlock.canLight(state) || CandleBlock.canLight(state) ||
+/// CandleCakeBlock.canLight(state)` disjunction the offline kind-only
+/// vocabulary folds (javap the 26.2 jar: CandleBlock.canLight the
+/// CANDLES tag + the `!LIT` verdict speaks; CampfireBlock.canLight
+/// the CAMPFIRES tag + the `!WATERLOGGED` and `!LIT` reads — the
+/// kind-only palette the WATERLOGGED property never carries, the
+/// UNLIT kind the verdict answers; the CandleCakeBlock row the cake
+/// base the palette never banks — the None the consult's refusal
+/// keeps). The lit kind the branch's own `setValue(LIT, true)`
+/// product carries — the LIT kinds and every non-lightable cell the
+/// fall-through the placement walk answers.
+pub fn can_light_product(cell: u16) -> Option<u16> {
+    match cell {
+        CANDLE => Some(CANDLE_LIT),
+        CAMPFIRE => Some(CAMPFIRE_LIT),
+        SOUL_CAMPFIRE => Some(SOUL_CAMPFIRE_LIT),
+        _ => None,
+    }
 }
 
 /// THE HIGH STATES' OWN FAMILY — the poppy first row and the three
@@ -684,6 +823,19 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         CollisionShape::Empty
     } else if id == FARMLAND || id == DIRT_PATH {
         CollisionShape::Column(15)
+    } else if is_campfire(id) {
+        // THE CAMPFIRE FAMILY'S OWN ROW (the dev-6 round — javap the
+        // 26.2 jar: CampfireBlock.getShape the SHAPE field returns,
+        // the static init's `Block.column(16.0, 0.0, 7.0)` walk the
+        // ldc2_w 16.0/dconst_0/ldc2_w 7.0 triple banks — the full
+        // 0..1 footprint under the 0..7/16 band the Column row's own
+        // vocabulary speaks): the body steps onto the 7-px box (the
+        // 0.6-block auto-step the sweep instantly answers), the
+        // vanilla's own walk-over feel the per-cell fold keeps; the
+        // lit kinds' entityInside the box overlap the dose lanes read
+        // (the standing body the 7-px band tops, the walking-in body
+        // the overlap brands)
+        CollisionShape::Column(7)
     } else {
         CollisionShape::Full
     }
@@ -2820,6 +2972,19 @@ mod tests {
         // Block.column(16, 0, 15) the two SHAPE constants speak
         assert_eq!(collision_shape(FARMLAND), CollisionShape::Column(15));
         assert_eq!(collision_shape(DIRT_PATH), CollisionShape::Column(15));
+        // THE CAMPFIRE FAMILY'S OWN COLUMN (the dev-6 round — javap
+        // CampfireBlock.getShape the SHAPE field returns, the static
+        // init's `Block.column(16.0, 0.0, 7.0)` walk banks: the full
+        // 0..1 footprint under the 0..7/16 band the Column row's own
+        // vocabulary speaks — the four kinds the two registrations'
+        // getShape overrides all answer)
+        assert_eq!(collision_shape(CAMPFIRE), CollisionShape::Column(7));
+        assert_eq!(collision_shape(CAMPFIRE_LIT), CollisionShape::Column(7));
+        assert_eq!(collision_shape(SOUL_CAMPFIRE), CollisionShape::Column(7));
+        assert_eq!(
+            collision_shape(SOUL_CAMPFIRE_LIT),
+            CollisionShape::Column(7)
+        );
         // THE FULL-CUBE FAMILY: the default registration — the terrain,
         // the foliage cubes, the machines
         for id in [STONE, DIRT, GRASS, LOG, LEAVES, PALE_LEAVES, SAND, TNT, CRAFTING_TABLE] {

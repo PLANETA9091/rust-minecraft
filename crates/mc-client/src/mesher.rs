@@ -111,6 +111,13 @@ fn is_transparent(kind: u16) -> bool {
         // the ground's top face under the flame draws, the flame casts
         // no AO, the multipart planes the cell's own lane renders)
         || crate::world::is_fire(kind)
+        // THE CAMPFIRE FAMILY the same verdict keeps (the dev-6 round —
+        // the blocks clinit's noOcclusion() row the two registrations
+        // speak: the non-occluding column the neighbors' faces draw
+        // against, the cullface verdicts the campfire lane's own
+        // neighbor reads keep, the fire planes the cell's own light
+        // the lane renders)
+        || crate::world::is_campfire(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -1201,6 +1208,186 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE CAMPFIRE FAMILY'S OWN ELEMENT LANE (the dev-6
+                // round — the douse lane's own kinds finally RENDER).
+                // blockstates/campfire.json's "facing=south,lit=false"
+                // row -> block/campfire_off (the five-log geometry BOTH
+                // unlit kinds share — the SOUL_CAMPFIRE kind the same
+                // model the blockstate's own rows point, the unlit soul
+                // the plain-log look the vanilla itself renders), the
+                // "facing=south,lit=true" rows -> block/campfire /
+                // block/soul_campfire (BOTH parents
+                // block/template_campfire: the five-log boxes the lit
+                // faces swap, PLUS the two ±45° rotY rescale fire
+                // planes the derive walk bakes — the candle lane's own
+                // rotated-plane fold speaks). The per-quad TEXTURE
+                // VERDICT the multi-texture template demands (the
+                // candle lane's single-tile fold the campfire never
+                // wears — the merged texture map's #log/#lit_log/#fire
+                // refs the resolved quad texture names carry): the log
+                // faces the named tile consts read, the fire faces the
+                // strip tables' FRAME0 bases — the draw-time remap the
+                // campfire_fire/soul_campfire_fire frametime-2
+                // animations swaps (the mesher never re-meshes for the
+                // flicker). The cullfaces the five-log boxes carry
+                // (north/south/east/west/down) the six-direction
+                // neighbor read culls (the vanilla cullface law: the
+                // neighbor's face the solid render answers — the
+                // candle lane's down-only verdict the campfire's four
+                // side rows generalize). The log boxes' `shade: true`
+                // elements the FACE_SHADE table pays (up 1.0, down
+                // 0.5, the horizontals 0.8/0.6), the fire planes'
+                // `shade: false` the lightmap alone multiplies. The
+                // cell's own light every corner samples (no AO
+                // diagonals — the same withoutAO fold the element
+                // lanes keep); the fire planes' y 1..17 span the cell
+                // above pokes into, the vanilla's own lick-above the
+                // mesh never clips.
+                if crate::world::is_campfire(id) {
+                    let model_id = match id {
+                        crate::world::CAMPFIRE_LIT => "block/campfire",
+                        crate::world::SOUL_CAMPFIRE_LIT => "block/soul_campfire",
+                        _ => "block/campfire_off",
+                    };
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the kind's own FACE_TILES row — the fire quads'
+                    // no-atlas fallback (the fire ref the palette row
+                    // banks — the resolved texture verdict the strip
+                    // base duplicates)
+                    let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if fallback_tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    for q in campfire_model_quads(model_id) {
+                        // THE SIX-DIRECTION CULLFACE VERDICT — the five-
+                        // log boxes' side + down rows the neighbor read
+                        // culls (the vanilla cullface law the candle
+                        // lane's down arm generalizes)
+                        if let Some(dir) = q.cullface {
+                            let (dx, dy, dz) = match dir {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TEXTURE VERDICT — the resolved
+                        // texture name the tile mapping answers (the
+                        // fire bases the draw-time remap animates, the
+                        // unknown ref the kind's own row keeps)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let tile = match tex_stem {
+                            "campfire_log" => atlas::TILE_CAMPFIRE_LOG,
+                            "campfire_log_lit" => atlas::TILE_CAMPFIRE_LOG_LIT,
+                            "campfire_fire" => atlas::CAMPFIRE_FIRE_FRAME0,
+                            "soul_campfire_log_lit" => atlas::TILE_SOUL_CAMPFIRE_LOG_LIT,
+                            "soul_campfire_fire" => atlas::SOUL_CAMPFIRE_FIRE_FRAME0,
+                            _ => fallback_tile,
+                        };
+                        // THE SHADE TERM'S OWN READ — the log boxes'
+                        // shade:true elements the direction table
+                        // answers, the fire planes the 1.0 keeps
+                        let face_shade = if q.shade {
+                            match q.direction {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: false,
+                        });
+                    }
+                    continue;
+                }
                 // THE FIRE KINDS' OWN MULTIPART LANE (the flint's and the
                 // charge's own product finally RENDERS — the honest hole
                 // the glass precedent wore, the fan the vanilla blockstate
@@ -1620,6 +1807,35 @@ fn candle_model_quads(lit: bool) -> &'static [mc_registry::element_quads::Quad] 
         };
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
     })
+}
+
+/// THE CAMPFIRE FAMILY'S OWN MODEL BAKES — the block/campfire_off,
+/// block/campfire and block/soul_campfire chains the registry's
+/// derive walk resolves (the candle lane's own cache pattern): the
+/// unlit kind's five-log geometry and the lit kinds' template
+/// inheritance (the lit_log face swaps + the two 45-degree rotY
+/// rescale fire planes the rotation walk bakes), the per-quad
+/// texture names RESOLVED (the parent-chain merge the texture walk
+/// serves — the lane's per-quad tile verdict the names read). The
+/// failed derive the honest empty slice keeps (the logs the nothing
+/// renders).
+fn campfire_model_quads(model_id: &str) -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let models = ["block/campfire_off", "block/campfire", "block/soul_campfire"];
+    let map = QUADS.get_or_init(|| {
+        models
+            .into_iter()
+            .map(|m| {
+                (
+                    m,
+                    mc_registry::element_quads::derive_model_inherited(m).unwrap_or_default(),
+                )
+            })
+            .collect()
+    });
+    map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
 }
 
 /// THE FIRE MULTIPART'S OWN CACHED PARTS — the parsed blockstate
@@ -3262,6 +3478,91 @@ mod tests {
             assert_eq!(soul.len(), 18, "the soul fan the no-when column always speaks");
             assert!(soul.iter().all(|a| !a.model.contains("up")), "the up pair the soul column never wears");
         }
+    }
+
+    #[test]
+    fn the_campfire_lane_the_template_bakes() {
+        use mc_registry::generated::atlas as gen_atlas;
+        // THE CAMPFIRE FAMILY'S OWN TILES — the regen the log masters
+        // bank (the palette arms' resolve walk the strip tables speak),
+        // the fire quads' bases the FRAME0 consts answer
+        let log_tile = gen_atlas::TILE_CAMPFIRE_LOG;
+        let lit_tile = gen_atlas::TILE_CAMPFIRE_LOG_LIT;
+        let soul_lit_tile = gen_atlas::TILE_SOUL_CAMPFIRE_LOG_LIT;
+        let fire_tile = gen_atlas::CAMPFIRE_FIRE_FRAME0;
+        assert_ne!(log_tile, gen_atlas::TILE_NONE, "the log tile the regen banks");
+        assert_ne!(lit_tile, gen_atlas::TILE_NONE, "the lit-log tile the regen banks");
+        assert_ne!(soul_lit_tile, gen_atlas::TILE_NONE, "the soul lit-log tile the regen banks");
+        assert_ne!(fire_tile, gen_atlas::TILE_NONE, "the fire tile the strip tables bank");
+        // THE UNLIT KIND'S OWN BAKE — the five-log geometry on stone:
+        // the 28 element faces the walk derives, the THREE down
+        // cullfaces the solid ground culled (log1/log3/log5's own
+        // rows), the 25 drawn quads the log tile alone answers
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::CAMPFIRE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let unlit: Vec<_> = q.iter().filter(|quad| quad.tile == log_tile).collect();
+        assert_eq!(
+            unlit.len(),
+            25,
+            "the five-log boxes' 28 faces minus the three down culls"
+        );
+        // THE FLOATING KIND'S OWN CULLS — the air-below cell the down
+        // faces draw (the cullface verdict the neighbor read keeps):
+        // the 28 faces the walk answers uncut
+        put(&mut w, 12, 9, 8, crate::world::CAMPFIRE);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let floating: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == log_tile && quad.pts[0][0] >= 12.0)
+            .collect();
+        assert_eq!(floating.len(), 28, "the floating campfire the down culls never trigger");
+        // THE LIT KIND'S OWN BAKE — the same five-log geometry the
+        // lit_log faces swap PLUS the two 45-degree fire planes the
+        // rotation walk bakes: the 16 log + 9 lit_log + 4 fire quads
+        // the per-quad texture verdict splits (the 25 drawn log-box
+        // quads the three down culls keep, the swap the texture refs
+        // wear), the fire planes' y 1..17 span the cell above licks
+        // into (the vanilla's own rise the mesh never clips)
+        put(&mut w, 8, 9, 8, crate::world::CAMPFIRE_LIT);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let lit_logs: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == log_tile && quad.pts[0][0] >= 6.0 && quad.pts[0][0] < 10.0)
+            .collect();
+        let lit_lits: Vec<_> = q.iter().filter(|quad| quad.tile == lit_tile).collect();
+        let fires: Vec<_> = q.iter().filter(|quad| quad.tile == fire_tile).collect();
+        assert_eq!(lit_logs.len(), 16, "the #log faces the lit template keeps");
+        assert_eq!(lit_lits.len(), 9, "the #lit_log faces the lit template swaps");
+        assert_eq!(fires.len(), 4, "the two fire planes' north/south + west/east pairs");
+        for quad in &fires {
+            assert!(
+                quad.pts.iter().any(|p| p[1] > 10.0),
+                "the fire plane the cell's top the vanilla lick wears: {:?}",
+                quad.pts.iter().map(|p| p[1]).collect::<Vec<_>>()
+            );
+        }
+        // THE SHADE TERM'S OWN SPLIT — the log boxes' `shade: true`
+        // elements the direction table pays, the fire planes'
+        // `shade: false` the lightmap alone multiplies (the no-grid
+        // convention the unshaded 1.0 the fire corners carry)
+        assert!(
+            fires.iter().all(|quad| quad.colors.iter().all(|c| (c[0] - 1.0).abs() < 1e-5)),
+            "the fire planes the 1.0 shade-false keeps"
+        );
+        // THE SOUL KIND'S OWN BAKE — the same geometry the soul
+        // masters answer (the lit_log tile the soul strip's own row
+        // keeps, the fire the soul strip's frame-0 base)
+        put(&mut w, 4, 9, 8, crate::world::SOUL_CAMPFIRE_LIT);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let soul_fires: Vec<_> = q
+            .iter()
+            .filter(|quad| quad.tile == gen_atlas::SOUL_CAMPFIRE_FIRE_FRAME0)
+            .collect();
+        let soul_lits: Vec<_> = q.iter().filter(|quad| quad.tile == soul_lit_tile).collect();
+        assert_eq!(soul_fires.len(), 4, "the soul fire planes the same bake answers");
+        assert_eq!(soul_lits.len(), 9, "the soul lit-log faces the same split wears");
     }
 
     #[test]

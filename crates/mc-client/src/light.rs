@@ -97,6 +97,20 @@ fn emission(id: u16) -> u8 {
         // speaks — the LIT row's 3 the imul's own answer, the UNLIT
         // kind the dark 0 the else arm keeps)
         3
+    } else if id == CAMPFIRE_LIT {
+        // THE LIT CAMPFIRE'S OWN ROW (the dev-6 round — javap the
+        // blocks clinit's campfire registration over the 26.2 jar:
+        // the `bipush 15; litBlockEmission(I)` lightLevel call the
+        // lambda$static$310 props chain banks — the lit-state read
+        // the emission's own verdict keeps, the 15 the lit row's
+        // own answer, the UNLIT kind the dark 0 the else arm keeps)
+        15
+    } else if id == SOUL_CAMPFIRE_LIT {
+        // THE LIT SOUL CAMPFIRE'S OWN ROW (the same round — the
+        // lambda$static$311 props chain the `bipush 10` lightLevel
+        // call banks: the soul flame the dimmer row the vanilla's
+        // own two registrations speak)
+        10
     } else {
         0
     }
@@ -719,6 +733,36 @@ mod tests {
         assert_eq!(light_at(&w, 8, 6, 3).1, Some(10), "the soul fire's own cell");
         assert_eq!(light_at(&w, 9, 6, 3).1, Some(9), "one east of the soul");
         assert_eq!(light_at(&w, 8, 7, 3).1, Some(9), "one above the soul");
+    }
+
+    #[test]
+    fn the_campfires_speak_the_lightlevel_lambdas() {
+        // THE CAMPFIRE FAMILY'S OWN ROWS (the dev-6 round — javap the
+        // blocks clinit's campfire/soul_campfire registrations over
+        // the 26.2 jar: the `bipush 15; litBlockEmission(I)` and the
+        // `bipush 10` lightLevel calls the lambda$static$310/311
+        // props chains bank — the lit-state read the emission's own
+        // verdict keeps, the UNLIT kinds the dark 0 the else arm
+        // keeps, the flood's own spread the relight answers)
+        let mut w = empty_world();
+        w.set(3, 6, 3, CAMPFIRE);
+        w.set(8, 6, 3, CAMPFIRE_LIT);
+        w.set(14, 6, 3, SOUL_CAMPFIRE_LIT);
+        w.relight();
+        assert_eq!(light_at(&w, 3, 6, 3).1, Some(0), "the unlit kind dark");
+        assert_eq!(
+            light_at(&w, 8, 6, 3).1,
+            Some(15),
+            "the lit campfire's own cell"
+        );
+        assert_eq!(light_at(&w, 9, 6, 3).1, Some(14), "one east of the flame");
+        assert_eq!(light_at(&w, 8, 7, 3).1, Some(14), "one above the flame");
+        assert_eq!(
+            light_at(&w, 14, 6, 3).1,
+            Some(10),
+            "the soul campfire's own cell"
+        );
+        assert_eq!(light_at(&w, 15, 6, 3).1, Some(9), "one east of the soul");
     }
 
     #[test]

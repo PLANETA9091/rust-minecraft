@@ -252,6 +252,22 @@ pub const IN_FIRE_DAMAGE: f32 = 1.0;
 /// bytecode banks: the soul fire's cell the shared walk doubles.
 pub const IN_SOUL_FIRE_DAMAGE: f32 = 2.0;
 
+/// THE LIT CAMPFIRE'S OWN DOSE (the dev-6 round — javap
+/// CampfireBlock.entityInside over the 26.2 jar: the LIT verdict +
+/// the LivingEntity gate the `hurt(damageSources.campfire(),
+/// fireDamage)` call serves — the DIRECT hurt the BaseFireBlock's
+/// ignite-then-hurt applier phases never wear, the fireDamage int
+/// the ctor's (true, 1) args row keeps). The campfire damage type's
+/// IS_FIRE tag the pipeline's own refusal arms read — the NO ignite
+/// lift the bytecode's own shape keeps (the block walk sets NO fire
+/// clock, the burning-after the BaseFireBlock walk alone serves).
+pub const CAMPFIRE_DAMAGE: f32 = 1.0;
+/// THE LIT SOUL CAMPFIRE'S OWN DOSE (the same round — the ctor's
+/// (false, 2) args row the fireDamage int keeps: the soul campfire's
+/// cell the plain's amount doubles — the BaseFireBlock walk's own
+/// float split the same beat wears).
+pub const SOUL_CAMPFIRE_DAMAGE: f32 = 2.0;
+
 // THE AIR ARC's constants (javap, the same jar — the drowning lane):
 /// `Entity.getMaxAirSupply`'s own value — the `sipush 300; ireturn`
 /// the bytecode speaks (the store the DATA_AIR_SUPPLY_ID define folds).
@@ -1121,6 +1137,18 @@ pub struct PlayerBody {
     /// soul fire's cell the shared walk doubles. The body never
     /// clears it, the reader does.
     pub in_soul_fire_hurt_due: bool,
+    /// THE IN-CAMPFIRE HURT (the dev-6 round — javap
+    /// CampfireBlock.entityInside: the LIT verdict + the LivingEntity
+    /// gate the `hurt(campfire(), fireDamage)` DIRECT call serves —
+    /// NO ignite phase the BaseFireBlock applier wears): the lit
+    /// campfire's cell the 7-px column the standing body overlaps
+    /// (the Column(7) collision the walk-onto tops, the walk-in the
+    /// overlap brands). The body never clears it, the reader does.
+    pub in_campfire_hurt_due: bool,
+    /// THE IN-SOUL-CAMPFIRE HURT (the same walk — the ctor's (false,
+    /// 2) row the fireDamage int keeps, the soul campfire's dose the
+    /// plain's amount doubles).
+    pub in_soul_campfire_hurt_due: bool,
     /// THE WATER DOUSE (InsideBlockEffectType.EXTINGUISH =
     /// Entity::clearFire, the water block's own inside-effect): the
     /// burning body touching water dies to min(0, remaining) and the
@@ -1253,6 +1281,8 @@ impl PlayerBody {
             on_fire_hurt_due: false,
             in_fire_hurt_due: false,
             in_soul_fire_hurt_due: false,
+            in_campfire_hurt_due: false,
+            in_soul_campfire_hurt_due: false,
             fire_doused_due: false,
             air_supply: TOTAL_AIR_SUPPLY,
             eye_in_water: false,
@@ -1504,6 +1534,8 @@ impl PlayerBody {
         self.on_fire_hurt_due = false;
         self.in_fire_hurt_due = false;
         self.in_soul_fire_hurt_due = false;
+        self.in_campfire_hurt_due = false;
+        self.in_soul_campfire_hurt_due = false;
         self.fire_doused_due = false;
         self.drown_hurt_due = false;
         // the pre-tick position — the walk distance law's own source
@@ -2052,6 +2084,23 @@ impl PlayerBody {
             }
             self.in_soul_fire_hurt_due = true;
         }
+        // THE LIT CAMPFIRES' OWN DOSE (the dev-6 round — javap
+        // CampfireBlock.entityInside: the LIT verdict + the
+        // LivingEntity gate the DIRECT hurt call serves — the NO
+        // ignite lift the BaseFireBlock walk's applier phases alone
+        // wear, the fireDamage int the plain/soul ctor rows split):
+        // the lit cells the box overlap the dose flags bank, the
+        // doused kinds and the dark cells the scan never touches
+        // (the !LIT verdict the kind-only palette the unlit rows
+        // keep). The DOSE WINS over nothing — the water douse the
+        // NEXT beat still wins (the applier's queue order the
+        // inside walk keeps).
+        if !self.no_physics && self.touches_campfire(world) {
+            self.in_campfire_hurt_due = true;
+        }
+        if !self.no_physics && self.touches_soul_campfire(world) {
+            self.in_soul_campfire_hurt_due = true;
+        }
         // THE WATER'S EXTINGUISH (javap `WaterFluid.entityInside`'s own
         // InsideBlockEffectType.EXTINGUISH = `Entity::clearFire` — the
         // same contact beat the lava's brand rides, the inside-effect
@@ -2434,6 +2483,42 @@ impl PlayerBody {
             for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
                     if world.get(cx, cy, cz) == crate::world::SOUL_FIRE {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE LIT CAMPFIRE'S OWN GATE (the dev-6 round — the body lane's
+    /// own box-overlap scan the fire scans wear: javap
+    /// CampfireBlock.entityInside the LIT verdict the lit kind alone
+    /// admits — the doused cells and the dark unlit kind the scan
+    /// never touches, the `!LIT` verdict the kind-only palette the
+    /// unlit rows keep).
+    fn touches_campfire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::CAMPFIRE_LIT {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE LIT SOUL CAMPFIRE'S OWN GATE (the same box-overlap walk —
+    /// the soul kind the fireDamage int doubles).
+    fn touches_soul_campfire(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::SOUL_CAMPFIRE_LIT {
                         return true;
                     }
                 }

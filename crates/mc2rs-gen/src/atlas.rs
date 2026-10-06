@@ -222,7 +222,46 @@ use zip::ZipArchive;
 /// LIT/CANDLES properties never carries — the default state's own
 /// rows the palette banks, the lit swap the igniter arms' own
 /// setValue walk wears).
-pub const RUNTIME_PALETTE: [&str; 61] = [
+/// campfire is kind 61, campfire_lit kind 62, soul_campfire kind 63
+/// and soul_campfire_lit kind 64 (the sixty-second..sixty-fifth
+/// entries, the dev-6 round): THE DOUSE LANE'S OWN KINDS the shovel's
+/// arm and the canLight consult's campfire rows wait for (javap the
+/// 26.2 jar — CampfireBlock's ctor the DEFAULT state registers
+/// LIT=true, SIGNAL_FIRE=false, WATERLOGGED=false, FACING=NORTH — the
+/// vanilla campfire the player places lands LIT, the shovel's douse
+/// arm the setValue(LIT, false) walk the unlit kind speaks, the flint
+/// canLight relight the `!LIT` verdict the doused kind answers).
+/// CampfireBlock.canLight's pc walk: the CAMPFIRES tag consult +
+/// the `!WATERLOGGED` and `!LIT` reads the offline kind-only palette
+/// the UNLIT kind's own row answers (the lit kind the consult
+/// refuses — the same verdict the candle pair wears). The
+/// properties chain the blocks clinit's lambda$static$310/311 arms
+/// bank: strength(2.0), SoundType.WOOD, lightLevel litBlockEmission(15)
+/// the plain row / (10) the soul row keeps (the `bipush 15`/`bipush
+/// 10` the litBlockEmission calls speak), noOcclusion; the ctor args
+/// (spawnParticles, fireDamage) the plain (true, 1) and the soul
+/// (false, 2) rows keep. THE SHAPE the static init's `Block.column(
+/// 16.0, 0.0, 7.0)` walk banks (ldc2_w 16.0/dconst_0/ldc2_w 7.0 —
+/// the full 0..1 footprint under the 0..7/16 band the client's
+/// Column(7) collision row answers). No canSurvive override the
+/// 26.2 class carries — the campfire floats the support's loss
+/// never douses (the placement gate's absence the generic lane
+/// keeps). The blockstate is a plain VARIANTS map over facing x lit
+/// — the UNLIT kinds the "facing=south,lit=false" row resolve
+/// (block/campfire_off — the five-log element geometry BOTH kinds
+/// share, the `#log` ref block/campfire_log the tile answers; the
+/// SOUL_CAMPFIRE kind the SAME campfire_off model the blockstate's
+/// own rows point, the unlit soul the plain-log look the vanilla
+/// itself renders), the LIT kinds the "facing=south,lit=true" rows
+/// read (block/campfire / block/soul_campfire — BOTH parents
+/// block/template_campfire: the five-log boxes the lit_log faces
+/// swap, PLUS the two ±45° rotY rescale fire planes the `#fire` ref
+/// block/campfire_fire / block/soul_campfire_fire the strips' own
+/// frametime-2 animations play). The offline state fold the four
+/// kinds speak (the kind-only vocabulary the LIT/SIGNAL_FIRE/
+/// WATERLOGGED/FACING properties never carries — the douse and the
+/// relight the kind swaps the two lanes wear).
+pub const RUNTIME_PALETTE: [&str; 65] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -238,6 +277,7 @@ pub const RUNTIME_PALETTE: [&str; 61] = [
     "white_concrete_powder", "white_concrete",
     "fire", "soul_fire",
     "candle", "candle_lit",
+    "campfire", "campfire_lit", "soul_campfire", "soul_campfire_lit",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -638,6 +678,97 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block == "campfire" || block == "soul_campfire" {
+            // THE UNLIT KINDS' OWN ROWS (the dev-6 round, the official
+            // 26.2 jar): the blockstates read the "facing=south,
+            // lit=false" row (the y-rotation-free row the palette's
+            // kind-only vocabulary keeps — the facing property the
+            // offline world never speaks, the south row the default
+            // orientation banks), BOTH rows resolving
+            // block/campfire_off (the SOUL_CAMPFIRE kind the blockstate's
+            // own lit=false rows the SAME model point — the unlit soul
+            // campfire the plain-log look the vanilla itself renders).
+            // The model's own textures (particle/log = block/
+            // campfire_log) the `#log` ref answers, tinted = false
+            // (the faces carry NO tintindex — the pre-colored logs
+            // render as authored).
+            let stem = if block == "campfire" {
+                "campfire"
+            } else {
+                "soul_campfire"
+            };
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{stem}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {stem}: json parse"))?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get("facing=south,lit=false"))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate {stem}: no facing=south,lit=false model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {stem}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("log")
+                .with_context(|| format!("model {model_ref}: no log texture ref"))?;
+            let tex_stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&tex_stem, false));
+            continue;
+        }
+        if block == "campfire_lit" || block == "soul_campfire_lit" {
+            // THE LIT KINDS' OWN ROWS (the same round — the half-kind
+            // name the registry-name strip wears, the blockstate has
+            // NO campfire_lit.json — the lit state the SAME
+            // campfire/soul_campfire.json's "facing=south,lit=true"
+            // rows resolve): block/campfire / block/soul_campfire —
+            // BOTH parents block/template_campfire. The merged texture
+            // map's `#fire` ref the block/campfire_fire /
+            // block/soul_campfire_fire stem answers (the palette row
+            // the strip's own frame-0 crop banks — the frametime-2
+            // animations the anim-strip walk plays, the draw-time
+            // remap the base tile swaps). The five-log boxes' `#log`
+            // and `#lit_log` refs the mesher's own lane reads (the
+            // per-quad texture verdict the kind's tile mapping keeps),
+            // tinted = false (no tintindex anywhere).
+            let stem = if block == "campfire_lit" {
+                "campfire"
+            } else {
+                "soul_campfire"
+            };
+            let bs_bytes = read_jar(
+                &mut archive,
+                &format!("assets/minecraft/blockstates/{stem}.json"),
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| format!("blockstate {stem}: json parse"))?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get("facing=south,lit=true"))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| format!("blockstate {stem}: no facing=south,lit=true model"))?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block {stem}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("fire")
+                .with_context(|| format!("model {model_ref}: no fire texture ref"))?;
+            let tex_stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&tex_stem, false));
+            continue;
+        }
         if block == "wheat" || block.starts_with("wheat_stage") {
             // THE FIFTEENTH AUDIT + THE GROWTH ROUND (official 26.2 jar):
             // the blockstate is a plain variants map (age=0..7) — "wheat"
@@ -1024,6 +1155,8 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         "soul_fire_1",
         "water_still",
         "lava_still",
+        "campfire_fire",
+        "soul_campfire_fire",
     ] {
         let raw = read_jar(
             &mut archive,
@@ -1099,6 +1232,39 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             tiles.push(idx);
         }
         anim_strips.push((stem.to_string(), tiles, playlist, frametime));
+    }
+    // THE LIT-LOG MASTERS' OWN STATIC BANK (the dev-6 round): the two
+    // lit_log textures the template_campfire's lit faces name — 16x64
+    // strips whose mcmeta carries `{"interpolate": true, "frametime":
+    // 20}` (the 4-frame 80-tick cycle). THE INTERPOLATION GAP the
+    // honest round keeps: the vanilla sprite animator CROSS-FADES the
+    // frames the interpolate key speaks — a blend lane the atlas walk
+    // never carried (the fire/fluid strips' frametime swaps the
+    // step-only rule serves), so the masters bank the FRAME-0 still
+    // (the ember row the cycle opens), the cross-fade a future lane's
+    // own growth keeps. Named tiles the mesher's per-quad texture
+    // verdict reads (the TILE_CAMPFIRE_LOG_LIT/TILE_SOUL_CAMPFIRE_
+    // LOG_LIT consts the emit answers).
+    for stem in ["campfire_log_lit", "soul_campfire_log_lit"] {
+        if tile_names.iter().any(|n| n == stem) {
+            continue; // the palette row's own bank — the dedup the walk keeps
+        }
+        let raw = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png"),
+        )
+        .with_context(|| format!("texture block/{stem}.png"))?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        let (w, h, rgba) = first_frame(w, h, &rgba);
+        if w != 16 || h != 16 {
+            bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+        }
+        let mut bytes = rgba;
+        bake_tint(&mut bytes, tint_for_texture(stem));
+        let idx = tile_names.len() as u16;
+        tile_names.push(stem.to_string());
+        tile_bytes.push(bytes);
+        let _ = idx;
     }
     // THE BASE TILES the quads bake: the four palette-named strips the
     // BLOCK palette's own rows keep (the "fire_0" / "soul_fire_0" /
@@ -1184,6 +1350,41 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
          \x20    pub const TILE_FARMLAND_MOIST: u16 = {};\n",
         wet_idx
     ));
+    // THE CAMPFIRE LANE'S OWN TILE CONSTS (the dev-6 round): the log
+    // tiles the mesher's per-quad texture verdict reads (the fire
+    // quads' bases the strip tables' FRAME0 consts answer — the log
+    // masters ride no strip). The names the tile_names walk banks
+    // (the palette arms' resolve walk speaks); the absent name the
+    // honest error keeps (the lane's const the walk's own guarantee
+    // demands).
+    let campfire_tile_const = |tile_names: &Vec<String>, stem: &str| -> Result<u16> {
+        tile_names
+            .iter()
+            .position(|n| n == stem)
+            .map(|i| i as u16)
+            .with_context(|| format!("tile {stem}: absent from the banked tiles"))
+    };
+    for (stem, prefix) in [
+        ("campfire_log", "TILE_CAMPFIRE_LOG"),
+        ("campfire_log_lit", "TILE_CAMPFIRE_LOG_LIT"),
+        ("soul_campfire_log_lit", "TILE_SOUL_CAMPFIRE_LOG_LIT"),
+    ] {
+        let idx = campfire_tile_const(&tile_names, stem)?;
+        src.push_str(&format!(
+            "\n/// The campfire lane's own {} tile (the dev-6 round — the\n\
+             \x20    /// five-log geometry's per-quad texture verdict reads it;\n\
+             \x20    /// the {} ref the merged texture map answers).\n\
+             \x20    pub const {}: u16 = {};\n",
+            stem,
+            if prefix.ends_with("LOG_LIT") {
+                if stem.starts_with("soul") { "#lit_log (soul)" } else { "#lit_log" }
+            } else {
+                "#log"
+            },
+            prefix,
+            idx
+        ));
+    }
     src.push_str(&format!(
         "\n/// The destroy_stage_0..9 tile indices (the breaking overlay's own\n\
          \x20    /// crack frames; the vanilla `DestroyStage.getDestructor` law maps\n\
@@ -1200,13 +1401,15 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     // generated names the palette order carries: the const prefix the
     // strip's own stem maps (fire_0 -> FIRE_0 ... water_still -> WATER,
     // lava_still -> LAVA — the names the client's walks read).
-    let prefixes: [(&str, &str); 6] = [
+    let prefixes: [(&str, &str); 8] = [
         ("fire_0", "FIRE_0"),
         ("fire_1", "FIRE_1"),
         ("soul_fire_0", "SOUL_FIRE_0"),
         ("soul_fire_1", "SOUL_FIRE_1"),
         ("water_still", "WATER"),
         ("lava_still", "LAVA"),
+        ("campfire_fire", "CAMPFIRE_FIRE"),
+        ("soul_campfire_fire", "SOUL_CAMPFIRE_FIRE"),
     ];
     src.push_str(
         "\n/// THE ANIMATED STRIPS' OWN TABLES (the dev-5 round's fire, the\n\
