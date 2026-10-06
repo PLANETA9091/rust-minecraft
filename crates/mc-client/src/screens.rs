@@ -9421,6 +9421,27 @@ impl App {
             for sensor in &mut self.sculk_sensors {
                 if sensor.clicking_at == Some(self.frame) {
                     sensor.clicking_at = None;
+                    // THE SENSOR'S OWN BROADCAST (javap activate pc 64-72 —
+                    // Level.gameEvent(entity, SCULK_SENSOR_TENDRILS_CLICKING,
+                    // pos) the tryResonateVibration the walk precedes, the
+                    // WATERLOGGED-gated CLICKING playSound the tail follows;
+                    // the Vec3.atCenterOf overload the +0.5 center the block
+                    // pos keeps): the record the lane's own vocabulary banks —
+                    // the r16 the register(name)'s own `bipush 16` default
+                    // radius (javap GameEvent.register(String)), the f the
+                    // VibrationSystem map the tendrils row never carries (the
+                    // defaultReturnValue(0) the lookup answers, the vibrations
+                    // json the 56 rows the event never carries — the
+                    // isValidVibration gate the second-order hearing refuses,
+                    // no cascade the dispatch ever serves)
+                    self.game_events.push(format!(
+                        "sculk_sensor_tendrils_clicking @{} x{:.6} y{:.6} z{:.6} r16 f{}",
+                        self.frame,
+                        sensor.pos.0 as f64 + 0.5,
+                        sensor.pos.1 as f64 + 0.5,
+                        sensor.pos.2 as f64 + 0.5,
+                        crate::sculk::vibration_frequency("sculk_sensor_tendrils_clicking")
+                    ));
                     sensor_voices.push((
                         sensor.pos.0,
                         sensor.pos.1,
@@ -40059,7 +40080,9 @@ mod tests {
     /// refuses, the phase window the re-arm law keeps (the tick-20
     /// event the ACTIVE/COOLDOWN walk refuses, the tick-50 event the
     /// window's tail still refuses, the post-window tick-60 event the
-    /// INACTIVE phase hears again).
+    /// INACTIVE phase hears again) — the arrival's own broadcast the
+    /// activation banks (the record the sweep serves, the lane the
+    /// walk's own tail wears).
     #[test]
     fn the_sculk_sensor_the_glide_hears() {
         let wire = |name: &str| {
@@ -40129,18 +40152,48 @@ mod tests {
         );
         // the tick-20 event the phase window refuses (the sensor the
         // ACTIVE/COOLDOWN walk keeps — the arrival + 40 the free-at
-        // folds)
-        for _ in 11..=19 {
+        // folds). THE ARRIVAL'S OWN BROADCAST the window's middle
+        // banks — the activation the record lane wears (the walk the
+        // sweep serves), the hearing the tag gate never repeats
+        let click_at = 10 + t;
+        for _ in 11..click_at {
             app.update();
         }
-        app.update(); // tick 20
+        assert_eq!(
+            app.game_events.len(),
+            2,
+            "the interim ticks the lane keeps"
+        );
+        app.update(); // the arrival: the sweep the broadcast banks
         assert_eq!(
             app.game_events.len(),
             3,
-            "the post banks, the hearing the phase refuses"
+            "the arrival the broadcast the lane banks"
+        );
+        assert_eq!(
+            app.game_events[2],
+            format!(
+                "sculk_sensor_tendrils_clicking @{} x0.500000 y56.500000 z0.500000 r16 f0",
+                click_at
+            ),
+            "the broadcast the walk's own line pins"
+        );
+        for _ in (click_at + 1)..=19 {
+            app.update();
+        }
+        assert_eq!(
+            app.game_events.len(),
+            3,
+            "the interim tail the lane keeps"
+        );
+        app.update(); // tick 20
+        assert_eq!(
+            app.game_events.len(),
+            4,
+            "the post banks, the hearing the phase refuses, the arrival broadcast the lane keeps"
         );
         assert!(
-            app.game_events[2].starts_with("elytra_glide @20 "),
+            app.game_events[3].starts_with("elytra_glide @20 "),
             "the second post the lane banks"
         );
         // the tick-50 event the window's tail STILL refuses (the
@@ -40154,7 +40207,7 @@ mod tests {
         }
         assert_eq!(
             app.game_events.len(),
-            5,
+            6,
             "the tick-30/40 posts bank — the hearings the phase refuses"
         );
         {
@@ -40172,11 +40225,11 @@ mod tests {
         app.update(); // tick 50
         assert_eq!(
             app.game_events.len(),
-            6,
+            7,
             "the tick-50 post banks, the hearing the window still refuses"
         );
         assert!(
-            app.game_events[5].starts_with("elytra_glide @50 "),
+            app.game_events[6].starts_with("elytra_glide @50 "),
             "the tick-50 post the lane banks"
         );
         // the post-window event the re-armed sensor hears again (the
@@ -40226,15 +40279,15 @@ mod tests {
         app.update(); // tick 60
         assert_eq!(
             app.game_events.len(),
-            8,
+            9,
             "the tick-60 post + the SECOND hearing the re-armed sensor banks"
         );
         assert!(
-            app.game_events[6].starts_with("elytra_glide @60 "),
+            app.game_events[7].starts_with("elytra_glide @60 "),
             "the tick-60 post the lane banks"
         );
         assert_eq!(
-            app.game_events[7],
+            app.game_events[8],
             format!(
                 "sculk_hearing @60 x0 y56 z0 d{:.6} t{} f4 p{}",
                 d2, t2, p2
@@ -40428,6 +40481,178 @@ mod tests {
                 .count(),
             stops,
             "the drained window the stop silence keeps"
+        );
+    }
+
+    /// THE SENSOR'S OWN BROADCAST (javap activate pc 64-72 — the
+    /// Level.gameEvent(entity, SCULK_SENSOR_TENDRILS_CLICKING, pos) the
+    /// activation's own walk posts): the record line the lane banks (the
+    /// atCenterOf +0.5 center, the register(name)'s bipush 16 radius, the
+    /// f0 the map's defaultReturnValue answers — the tendrils row the 41
+    /// pairs never carry), the dispatch's tag gate the second-order
+    /// hearing refuses (the vibrations json the 56 rows the event never
+    /// carries — the in-range cell the gates pass, the tag alone refuses,
+    /// no cascade the lane ever banks), the double-post the cleared
+    /// Option refuses, the glide clock the phase window keeps silent.
+    #[test]
+    fn the_broadcast_the_sensors_never_hear() {
+        // the vocabulary the map's own default keeps — the event the
+        // frequency table and the vibrations tag alike never carry
+        assert_eq!(
+            crate::sculk::vibration_frequency("sculk_sensor_tendrils_clicking"),
+            0,
+            "the map's defaultReturnValue the lookup answers"
+        );
+        assert!(
+            !crate::sculk::is_valid_vibration("sculk_sensor_tendrils_clicking"),
+            "the vibrations tag the row never carries"
+        );
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        // the near sensor rides the fall path, the second sensor the
+        // broadcast's own radius keeps (the tendrils center the in-range
+        // gate passes — the tag alone the hearing refuses; the glide's
+        // own events the radius never grants it)
+        app.place_sculk_sensor(0, 56, 0);
+        app.place_sculk_sensor(2, 50, 2);
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        // the reference fold the arrival pins — the Vec3→CENTER distance
+        // the travel law floors
+        let dx = pos9.0 - 0.5;
+        let dy = pos9.1 - 56.5;
+        let dz = pos9.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let click_at = 10 + t;
+        let stop_at = click_at + crate::sculk::SCULK_SENSOR_REARM_TICKS as i32;
+        app.update(); // tick 10: the post + ONE hearing
+        assert_eq!(
+            app.game_events.len(),
+            2,
+            "the post + the near sensor's hearing — the second sensor the glide's own radius refuses"
+        );
+        assert!(
+            app.game_events[0].starts_with("elytra_glide @10 "),
+            "the post the lane banks first"
+        );
+        assert!(
+            app.game_events[1].starts_with("sculk_hearing @10 x0 y56 z0 "),
+            "the near sensor's hearing the lane banks"
+        );
+        // the interim ticks the window keeps — the lane the glide clock
+        // never disturbs before the first gate
+        for _ in 11..click_at {
+            app.update();
+        }
+        assert_eq!(
+            app.game_events.len(),
+            2,
+            "the interim ticks the lane keeps"
+        );
+        // THE ARRIVAL: the sweep the activation walks — the broadcast the
+        // record lane banks (the gameEvent the playSound precedes)
+        app.update();
+        assert_eq!(
+            app.game_events.len(),
+            3,
+            "the broadcast the lane banks at the arrival"
+        );
+        assert_eq!(
+            app.game_events[2],
+            format!(
+                "sculk_sensor_tendrils_clicking @{} x0.500000 y56.500000 z0.500000 r16 f0",
+                click_at
+            ),
+            "the broadcast the walk's own line pins — the center the atCenterOf fold keeps, the r16 the register(name)'s bipush banks, the f0 the map's default speaks"
+        );
+        // THE DISPATCH'S TAG GATE the second-order hearing refuses — the
+        // in-range cell the gates pass, the tag alone the refusal wears
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("sculk_hearing"))
+                .count(),
+            1,
+            "the tick-10 hearing the only one — the broadcast the tag refuses"
+        );
+        {
+            let near = &app.sculk_sensors[0];
+            assert_eq!(
+                near.clicking_at, None,
+                "the cleared Option the double-voice refusal wears"
+            );
+            assert_eq!(
+                near.stop_at,
+                Some(stop_at as u64),
+                "the stop the window's tail still banks — the broadcast the phase never disturbs"
+            );
+            assert_eq!(
+                near.free_at,
+                stop_at as u64,
+                "the free-at the same fold keeps"
+            );
+        }
+        {
+            let second = &app.sculk_sensors[1];
+            assert_eq!(
+                second.clicking_at, None,
+                "the in-range cell the window never arms — the tag the hearing refuses"
+            );
+            assert_eq!(
+                second.stop_at, None,
+                "the tail the refusal keeps empty"
+            );
+            assert_eq!(
+                second.free_at, 0,
+                "the phase the refusal never spends"
+            );
+        }
+        // the glide clock the next gate posts — the phase window the
+        // hearing refuses, the second-order silence the walk keeps
+        for _ in (click_at + 1)..=20 {
+            app.update();
+        }
+        assert!(
+            app.game_events[3].starts_with("elytra_glide @20 "),
+            "the glide clock the next gate posts"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("sculk_hearing"))
+                .count(),
+            1,
+            "the phase window the tick-20 hearing refuses — the second-order silence keeps"
+        );
+        // the i%10 gate the odd tick refuses — the broadcast the cleared
+        // Option never doubles
+        app.update();
+        assert_eq!(
+            app.game_events.len(),
+            4,
+            "the 21st tick the gates refuse — the broadcast the double-post refusal wears"
+        );
+        assert_eq!(
+            app.sculk_sensors[1].clicking_at, None,
+            "the whole walk the in-range cell the refusal keeps"
         );
     }
 
