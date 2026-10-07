@@ -8187,10 +8187,7 @@ impl App {
             if !charges.is_empty() {
                 let total: i32 = charges.iter().sum();
                 for charge in &charges {
-                    cat.cursors.push(crate::sculk::SculkCursor {
-                        pos: cursor_pos,
-                        charge: *charge,
-                    });
+                    cat.cursors.push(crate::sculk::SculkCursor::fresh(cursor_pos, *charge));
                 }
                 self.game_events.push(format!(
                     "sculk_cursors @{} x{} y{} z{} n{} c{}",
@@ -9816,6 +9813,51 @@ impl App {
             for cat in &mut self.sculk_catalysts {
                 if cat.pulse_off_at == Some(self.frame) {
                     cat.pulse_off_at = None;
+                }
+            }
+            // THE CATALYST'S OWN SPREADER DRAIN (javap
+            // SculkCatalystBlockEntity.serverTick pc 0-17 — the
+            // `updateCursors(level, pos, level.getRandom(), true)` the
+            // block entity's own tick serves): the drain the cursors
+            // walk (the DEFAULT charge law the decay arms, the merge
+            // fold the same-pos pair keeps, the 3006 pops the dead
+            // cursor's own data-0 word wears), each pop the WIRE ARM
+            // the client walk already banks (the full-block verdict
+            // the state read the model's own law keeps — the absent
+            // cell the full-cube majority answers), the voice + the
+            // particle bursts the count<=0 / count>0 arms the same
+            // walk serves (the RNG draws the wire walk's own law
+            // banks — the drain itself spends none)
+            if !self.sculk_catalysts.is_empty() {
+                let drain_world = if self.world_is_network {
+                    self.net_world.as_ref()
+                } else {
+                    self.offline_world.as_ref()
+                };
+                let mut charge_events: Vec<crate::world_view::WireSculkChargeEvent> = Vec::new();
+                for cat in &mut self.sculk_catalysts {
+                    for pop in crate::sculk::update_cursors(cat) {
+                        let full_block = drain_world
+                            .map(|w| {
+                                crate::world_model::collision_full_block(
+                                    mc_registry::generated::block_ids::block_name_of(
+                                        w.get(pop.pos.0, pop.pos.1, pop.pos.2) as u32,
+                                    )
+                                    .unwrap_or("air"),
+                                )
+                            })
+                            .unwrap_or(true);
+                        charge_events.push(crate::world_view::WireSculkChargeEvent {
+                            x: pop.pos.0,
+                            y: pop.pos.1,
+                            z: pop.pos.2,
+                            data: pop.data,
+                            full_block,
+                        });
+                    }
+                }
+                if !charge_events.is_empty() {
+                    self.live_sculk_charge_events_updated(charge_events);
                 }
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
@@ -41663,6 +41705,74 @@ mod tests {
             app.sculk_catalysts[0].pulse_off_at.is_none(),
             "the 8-tick tail the pulse clears"
         );
+    }
+
+    /// THE SPREADER DRAIN THE TICKS WEAR (javap serverTick pc 0-17 —
+    /// the `updateCursors(level, pos, random, true)` the block
+    /// entity's own tick serves, the DEFAULT charge law the decay
+    /// arms): the app walk — the death the cursor banks, the FIRST
+    /// drain the charge keeps (the decay countdown folds), the SECOND
+    /// the spread countdown paces, the THIRD the data-0 pop the dead
+    /// cursor speaks (the voice the fixed 1.0/1.0 pair the pop arm
+    /// wears, the cube burst the full-block verdict splits, the RNG
+    /// draws the wire walk's own law banks), the list the drain
+    /// empties.
+    #[test]
+    fn the_spreader_drain_the_ticks_the_pop_wears() {
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_catalyst(0, 32, 0);
+        app.update();
+        app.entity_die_at(2.5, 32.5, 0.5, 5);
+        assert_eq!(app.sculk_catalysts[0].cursors.len(), 1);
+        // TICK 1 (the drain the fresh cursor keeps — the charge walk
+        // the decayDelay 1 reads): the pop the drain never wears
+        app.update();
+        assert_eq!(
+            app.sculk_catalysts[0].cursors.len(),
+            1,
+            "the first drain the cursor keeps"
+        );
+        assert_eq!(app.sculk_catalysts[0].cursors[0].decay_delay, 0);
+        assert_eq!(app.sculk_catalysts[0].cursors[0].update_delay, 1);
+        // TICK 2 (the spread countdown the charge walk paces)
+        app.update();
+        assert_eq!(app.sculk_catalysts[0].cursors[0].update_delay, 0);
+        assert_eq!(app.sculk_catalysts[0].cursors[0].charge, 5);
+        // TICK 3 (the elapsed decay the ZERO answer wears — the pop
+        // the client walk serves)
+        app.update();
+        assert!(
+            app.sculk_catalysts[0].cursors.is_empty(),
+            "the dead cursor the drain drops"
+        );
+        // THE POP ARM (the data-0 word the pop walk splits — the fixed
+        // voice + the cube burst the full-block verdict splits)
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.sculk.charge @"))
+                .count();
+            assert_eq!(
+                voice, 1,
+                "the pop arm's own voice the data-0 word wears"
+            );
+        }
+        // THE POP BURST (the SculkChargePop particles the arm spawns —
+        // the air cell the lane's own full-cube approximation keeps
+        // (the collision_full_block name law the model's own read
+        // answers — the same verdict the wire arm's tests bank), the
+        // 40-burst the full split wears)
+        let pops = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SculkChargePop))
+            .count();
+        assert_eq!(pops, 40, "the lane's own verdict the 40-burst wears");
     }
 
     /// THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken → the

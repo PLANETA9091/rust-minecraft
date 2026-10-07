@@ -715,7 +715,6 @@ pub const CATALYST_PULSE_TICKS: u64 = 8;
 /// `new ChargeCursor(pos, capped)` the list add rides and `charge -=
 /// capped` the tail answers; a 5-xp death one cursor keeps, a 1500
 /// death the 1000 + 500 pair wears.
-#[cfg_attr(not(test), expect(dead_code))]
 pub const SCULK_SPREADER_MAX_CHARGE: i32 = 1000;
 
 /// `SculkSpreader.addCursor` pc 4-11 (javap): the `bipush 32`
@@ -747,12 +746,34 @@ pub const SCULK_SPREADER_ADDITIONAL_DECAY_RATE: i32 = 5;
 /// `BlockPos.containing(eventPos.relative(UP, 0.5))` the
 /// handleGameEvent pc 86-99 serves — the UP half-block the death
 /// point's ceiling cell wears), the charge the addCursors loop's
-/// `Math.min` fold speaks.
+/// `Math.min` fold speaks, the updateDelay the spread countdown
+/// rides, the decayDelay the DEFAULT charge law reads, the facings
+/// the `Optional.empty()` fresh cursor keeps (the multiface set the
+/// movement walk's availableFaces arms — the lane never wears yet).
+#[derive(Clone, Debug, PartialEq)]
 pub struct SculkCursor {
-    #[cfg_attr(not(test), expect(dead_code))]
     pub pos: (i32, i32, i32),
-    #[cfg_attr(not(test), expect(dead_code))]
     pub charge: i32,
+    pub update_delay: i32,
+    pub decay_delay: i32,
+    pub facings: Option<u8>,
+}
+
+impl SculkCursor {
+    /// THE PUBLIC CTOR'S OWN LAW (javap `new ChargeCursor(pos,
+    /// charge)` pc 0-11: the private walk the `iconst_1` decayDelay +
+    /// the `iconst_0` updateDelay + the `Optional.empty()` facings
+    /// the defaults speak).
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn fresh(pos: (i32, i32, i32), charge: i32) -> SculkCursor {
+        SculkCursor {
+            pos,
+            charge,
+            update_delay: 0,
+            decay_delay: CURSOR_DECAY_DELAY_START,
+            facings: None,
+        }
+    }
 }
 
 /// THE CATALYST'S OWN CELL (the CatalystListener's analog — the
@@ -761,13 +782,11 @@ pub struct SculkCursor {
 /// (the scheduleTick 8 the earliest tick the block's own tick clears
 /// — Some = the bloom flag ON), the cursors the spreader's list
 /// banks (the addCursors walk the deaths grow, the 32 cap the
-/// addCursor refusal keeps; the updateCursors drain the NEXT round's
-/// lane wears).
+/// addCursor refusal keeps; the updateCursors drain the tick sweep
+/// serves).
 pub struct SculkCatalystCell {
-    #[cfg_attr(not(test), expect(dead_code))]
     pub pos: (i32, i32, i32),
     pub pulse_off_at: Option<u64>,
-    #[cfg_attr(not(test), expect(dead_code))]
     pub cursors: Vec<SculkCursor>,
 }
 
@@ -836,6 +855,217 @@ pub fn sculk_cursor_charges(xp: i32, existing: usize) -> Vec<i32> {
         charge -= capped;
     }
     out
+}
+
+/// `SculkSpreader$ChargeCursor.isPosUnreasonable` (javap pc 0-19): the
+/// `distChessboard > 1024` refusal the `sipush 1024` speaks — the
+/// chessboard distance (the max of the axis deltas the vanilla
+/// BlockPos.distChessboard folds) beyond the bound the cursor's own
+/// walk never serves.
+pub const SCULK_SPREADER_MAX_CURSOR_DISTANCE: i32 = 1024;
+
+/// `SculkBehaviour.getSculkSpreadDelay` default (javap the `iconst_1`
+/// answer): the updateDelay the cursor's own walk re-arms each tick —
+/// the spread the countdown paces.
+pub const SCULK_SPREAD_DELAY: i32 = 1;
+
+/// THE PUBLIC CTOR'S OWN DECAY START (javap `new ChargeCursor(pos,
+/// charge)` pc 3: the `iconst_1` the private walk stores as
+/// decayDelay — the DEFAULT charge law the first tick keeps, the
+/// second answers).
+pub const CURSOR_DECAY_DELAY_START: i32 = 1;
+
+/// THE SURVIVOR POP'S OWN DIVISOR (javap `updateCursors` pc 365: the
+/// `ldc2_w 2.299999952316284` the log1p fold divides — the widened
+/// float the `(int)(Math.log1p(total) / 2.3) + 1` decay law carries).
+pub const CHARGE_POP_DECAY_DIVISOR: f64 = 2.3;
+
+/// ONE 3006 POP THE DRAIN BANKS (the `levelEvent(3006, pos, data)`
+/// word the updateCursors walk speaks — the data the client's own
+/// decode splits: `data >> 6` the charge count, `data & 63` the face
+/// byte, the 0 word the dead cursor's own pop wears).
+#[derive(Clone, Debug, PartialEq)]
+pub struct SculkChargePop {
+    pub pos: (i32, i32, i32),
+    pub data: i32,
+}
+
+/// THE UNREASONABLE SKIP (javap pc 0-19 — the chessboard distance the
+/// 1024 bound refuses): the max of the axis deltas the bound's own
+/// comparison keeps, the strict `>` the true verdict wears.
+pub fn cursor_is_pos_unreasonable(pos: (i32, i32, i32), catalyst: (i32, i32, i32)) -> bool {
+    let dx = (pos.0 - catalyst.0).abs();
+    let dy = (pos.1 - catalyst.1).abs();
+    let dz = (pos.2 - catalyst.2).abs();
+    dx.max(dy).max(dz) > SCULK_SPREADER_MAX_CURSOR_DISTANCE
+}
+
+/// THE DEFAULT CHARGE LAW (javap `SculkBehaviour$1.attemptUseCharge`
+/// pc 0-15 — the non-sculk host the offline worlds wear: the
+/// `decayDelay > 0` gate the charge keeps, the elapsed decay the ZERO
+/// answer wears — the cursor the host's own decay kills).
+pub fn default_attempt_use_charge(decay_delay: i32, charge: i32) -> i32 {
+    if decay_delay > 0 {
+        charge
+    } else {
+        0
+    }
+}
+
+/// THE DEFAULT DECAY WALK (javap `SculkBehaviour$1.updateDecayDelay`
+/// pc 0-7 verbatim: `Math.max(decayDelay - 1, 0)` — the countdown the
+/// floor keeps).
+pub fn default_update_decay_delay(decay_delay: i32) -> i32 {
+    std::cmp::max(decay_delay - 1, 0)
+}
+
+/// THE SURVIVOR POP'S OWN DECAY FOLD (javap `updateCursors` pc
+/// 349-372: `(int)(Math.log1p(total) / 2.3) + 1` — the ln(1+x) fold
+/// the divisor speaks, the +1 tail the data word's high bits wear).
+pub fn charge_pop_decay(total: i32) -> i32 {
+    ((total as f64).ln_1p() / CHARGE_POP_DECAY_DIVISOR) as i32 + 1
+}
+
+/// THE SPREADER'S OWN DRAIN (javap `SculkSpreader.updateCursors` —
+/// the serverTick's `updateCursors(level, pos, random, true)` the
+/// block entity's own tick serves): the walk transcribed over the
+/// cursors the cell banks —
+/// - the EMPTY head (pc 0-12 the return keeps),
+/// - the UNREASONABLE skip (pc 73-82 — the chessboard bound the
+///   cursor silently drops, NO pop the refusal wears),
+/// - the UPDATE walk (ChargeCursor.update: the `shouldUpdate` head
+///   the zero-charge cursor refuses — the pop the loop's own check
+///   wears; the updateDelay countdown the spread paces; the DEFAULT
+///   charge law the decayDelay reads — the charge the first tick
+///   keeps, the elapsed decay the ZERO answer wears; the decay
+///   `max(dd-1, 0)` the countdown folds; the updateDelay the spread
+///   delay re-arms),
+/// - the CHARGE MAP (pc 122-145 — the computeInt fold the total
+///   feeds, EVERY alive cursor's charge rides),
+/// - the MERGE fold (pc 146-259 — the first-kept cursor the map
+///   banks, the ≤1000 pair the mergeWith law folds (the charge adds,
+///   the other vanishes, the updateDelay the min keeps), the over-cap
+///   pair the BOTH cursors keep (the weaker one the map's facings
+///   source swaps to — pc 234-258)),
+/// - the SURVIVOR POP walk (pc 262-400 — the log1p decay fold the
+///   total wears, the `(decay << 6) + pack(faces)` data word the pop
+///   carries; the facings-None cursor the offline lane never arms —
+///   the gate the fresh cursor skips).
+///
+/// THE WALKS THE LANE NEVER WEARS YET (documented): the vein spread
+/// (`attemptSpreadVein` — the MultifaceSpreader's spreadAll the
+/// onlyGrowers arm serves) and the movement walk
+/// (`getValidMovementPos` — the shuffled non-corner neighbours the
+/// charge-carrying cursor rides); their random draws the lanes bank
+/// when the walks land. THE DRAIN ITSELF spends NO draws — the
+/// DEFAULT charge law the merge fold the pops the deterministic walk
+/// keeps.
+pub fn update_cursors(cell: &mut SculkCatalystCell) -> Vec<SculkChargePop> {
+    if cell.cursors.is_empty() {
+        return Vec::new();
+    }
+    let mut pops: Vec<SculkChargePop> = Vec::new();
+    let mut kept: Vec<SculkCursor> = Vec::new();
+    // the chargeMap the survivor pop rides (the computeInt fold —
+    // the totals the insertion order banks, the offline lane's own
+    // deterministic convention)
+    let mut totals: Vec<((i32, i32, i32), i32)> = Vec::new();
+    // the cursorMap the merge + the facings source keep (the kept
+    // index the entry stores)
+    let mut map_cursor: Vec<((i32, i32, i32), usize)> = Vec::new();
+    for cursor in std::mem::take(&mut cell.cursors) {
+        // THE UNREASONABLE SKIP (the chessboard bound — the cursor
+        // the list silently drops)
+        if cursor_is_pos_unreasonable(cursor.pos, cell.pos) {
+            continue;
+        }
+        // THE shouldUpdate HEAD (the zero-charge cursor the update
+        // walk refuses — the loop's own charge check the pop wears)
+        if cursor.charge <= 0 {
+            pops.push(SculkChargePop {
+                pos: cursor.pos,
+                data: 0,
+            });
+            continue;
+        }
+        // THE UPDATE WALK (the countdown the spread paces, the
+        // DEFAULT charge law the decay reads)
+        let updated = if cursor.update_delay > 0 {
+            SculkCursor {
+                update_delay: cursor.update_delay - 1,
+                ..cursor
+            }
+        } else {
+            let charge = default_attempt_use_charge(cursor.decay_delay, cursor.charge);
+            if charge <= 0 {
+                // THE DEAD CURSOR'S OWN POP (pc 104-114 — the data 0
+                // word the pop arm wears)
+                pops.push(SculkChargePop {
+                    pos: cursor.pos,
+                    data: 0,
+                });
+                continue;
+            }
+            SculkCursor {
+                charge,
+                decay_delay: default_update_decay_delay(cursor.decay_delay),
+                update_delay: SCULK_SPREAD_DELAY,
+                ..cursor
+            }
+        };
+        // THE CHARGE MAP (the total the computeInt fold feeds)
+        match totals.iter_mut().find(|(p, _)| *p == updated.pos) {
+            Some((_, t)) => *t += updated.charge,
+            None => totals.push((updated.pos, updated.charge)),
+        }
+        // THE MERGE WALK (the first-kept cursor the map banks)
+        let seen = map_cursor.iter().find(|(p, _)| *p == updated.pos).map(|(_, i)| *i);
+        match seen {
+            None => {
+                map_cursor.push((updated.pos, kept.len()));
+                kept.push(updated);
+            }
+            Some(i) => {
+                let existing_charge = kept[i].charge;
+                if updated.charge + existing_charge <= SCULK_SPREADER_MAX_CHARGE {
+                    // THE MERGEWITH LAW (the charge adds, the other
+                    // vanishes, the updateDelay the min keeps)
+                    kept[i].charge += updated.charge;
+                    kept[i].update_delay = kept[i].update_delay.min(updated.update_delay);
+                } else {
+                    // THE OVER-CAP PAIR (both the list keeps, the
+                    // weaker one the map's facings source swaps to)
+                    if updated.charge < existing_charge {
+                        if let Some(entry) = map_cursor.iter_mut().find(|(p, _)| *p == updated.pos)
+                        {
+                            entry.1 = kept.len();
+                        }
+                    }
+                    kept.push(updated);
+                }
+            }
+        }
+    }
+    // THE SURVIVOR POP WALK (the log1p fold the total wears — the
+    // facings-None cursor the gate skips)
+    for (pos, total) in &totals {
+        if *total <= 0 {
+            continue;
+        }
+        let facing = map_cursor
+            .iter()
+            .find(|(p, _)| p == pos)
+            .and_then(|(_, i)| kept[*i].facings);
+        if let Some(faces) = facing {
+            let decay = charge_pop_decay(*total);
+            pops.push(SculkChargePop {
+                pos: *pos,
+                data: (decay << 6) + faces as i32,
+            });
+        }
+    }
+    cell.cursors = kept;
+    pops
 }
 
 #[cfg(test)]
@@ -1415,5 +1645,147 @@ mod tests {
             vec![5],
             "the one-free slot the exact fit banks"
         );
+    }
+
+    /// THE SPREADER'S OWN DRAIN (javap `updateCursors` + the DEFAULT
+    /// `SculkBehaviour$1` walks over the 26.2 jar): the lifecycle the
+    /// ticks wear — the fresh cursor the charge walk keeps (the
+    /// decayDelay 1 the law reads, the decay countdown folds, the
+    /// spread delay re-arms), the countdown the charge walk skips,
+    /// the elapsed decay the ZERO answer wears (the cursor the host's
+    /// own decay kills — the data-0 pop the dead cursor speaks), the
+    /// merge fold the same-pos pair keeps (the charge adds, the other
+    /// vanishes, the total the survivor pop rides), the log1p fold
+    /// the data word's high bits wear, the unreasonable skip the
+    /// chessboard bound serves (the cursor silently drops), the
+    /// over-cap pair both the list keeps.
+    #[test]
+    fn the_drain_the_decay_the_merge_the_pop_word_keeps() {
+        // THE CONSTANTS (the javap bipushes + the ldc2_w the walk banks)
+        assert_eq!(
+            SCULK_SPREADER_MAX_CURSOR_DISTANCE, 1024,
+            "isPosUnreasonable's sipush keeps"
+        );
+        assert_eq!(SCULK_SPREAD_DELAY, 1, "getSculkSpreadDelay's iconst_1 keeps");
+        assert_eq!(
+            CURSOR_DECAY_DELAY_START, 1,
+            "the public ctor's iconst_1 decayDelay keeps"
+        );
+        assert_eq!(
+            CHARGE_POP_DECAY_DIVISOR, 2.3,
+            "the log1p fold's ldc2_w keeps"
+        );
+        // THE FRESH CTOR (the ctor law verbatim)
+        let fresh = SculkCursor::fresh((2, 33, 0), 5);
+        assert_eq!(
+            (fresh.pos, fresh.charge, fresh.update_delay, fresh.decay_delay, fresh.facings),
+            ((2, 33, 0), 5, 0, 1, None),
+            "the (pos, charge, 0, 1, empty) tuple the ctor law keeps"
+        );
+        // THE FOLD (the log1p law the total wears)
+        assert_eq!(charge_pop_decay(1), 1, "the ln(2)/2.3 floor the +1 keeps");
+        assert_eq!(
+            charge_pop_decay(10),
+            2,
+            "the ln(11)/2.3 = 1.04 the floor +1 wears"
+        );
+        assert_eq!(
+            charge_pop_decay(1000),
+            4,
+            "the ln(1001)/2.3 = 3.0038 the floor +1 wears"
+        );
+        // THE UNREASONABLE SKIP (the chessboard bound)
+        assert!(!cursor_is_pos_unreasonable((1024, 32, 0), (0, 32, 0)));
+        assert!(cursor_is_pos_unreasonable((1025, 32, 0), (0, 32, 0)));
+        // THE LIFECYCLE — TICK 1: the fresh cursors the charge walk
+        // keeps (the merge folds the same-pos pair, the survivor pop
+        // the facings source wears)
+        let mut cell = SculkCatalystCell {
+            pos: (0, 32, 0),
+            pulse_off_at: None,
+            cursors: vec![
+                SculkCursor::fresh((2, 33, 0), 5),
+                SculkCursor::fresh((2, 33, 0), 5),
+                // the facings-armed twin the survivor pop's data word
+                // pins (the map's first cursor the facings source keeps)
+                SculkCursor {
+                    facings: Some(2),
+                    ..SculkCursor::fresh((2, 34, 0), 10)
+                },
+            ],
+        };
+        let pops = update_cursors(&mut cell);
+        // THE MERGE (the 5+5 pair the ≤1000 fold folds — the list the
+        // merged cursor + the facings twin keeps)
+        assert_eq!(cell.cursors.len(), 2, "the merge the pair folds");
+        assert_eq!(cell.cursors[0].pos, (2, 33, 0));
+        assert_eq!(cell.cursors[0].charge, 10, "the charge the mergeWith adds");
+        assert_eq!(
+            cell.cursors[0].update_delay, 1,
+            "the spread delay the walk re-arms"
+        );
+        assert_eq!(
+            cell.cursors[0].decay_delay, 0,
+            "the decay countdown the first tick folds"
+        );
+        // THE FACINGS TWIN (the second pos the map's own cursor keeps)
+        assert_eq!(cell.cursors[1].pos, (2, 34, 0));
+        assert_eq!(cell.cursors[1].charge, 10);
+        // THE SURVIVOR POPS (the log1p decay the totals wear — the
+        // 10-charge pair the decay 2 word speaks, the UP-facing twin
+        // the (2<<6)+2 word banks; the merged pos the FIRST cursor's
+        // facings the None keeps — NO pop the gate skips)
+        assert_eq!(pops.len(), 1, "the facings-None gate the merged pos skips");
+        assert_eq!(pops[0].pos, (2, 34, 0));
+        assert_eq!(
+            pops[0].data,
+            (2 << 6) + 2,
+            "the (decay << 6) + pack(faces) word the UP bit wears"
+        );
+        // TICK 2: the countdown the charge walk skips (the decay the
+        // countdown never touches); the SURVIVOR POP the facings twin
+        // re-fires (the walk the EVERY drain serves — the vein-flight
+        // word the living cursor keeps ticking)
+        let pops = update_cursors(&mut cell);
+        assert_eq!(pops.len(), 1, "the facings twin the survivor pop re-wears");
+        assert_eq!(pops[0].pos, (2, 34, 0));
+        assert_eq!(pops[0].data, (2 << 6) + 2);
+        assert_eq!(cell.cursors[0].update_delay, 0, "the countdown folds");
+        assert_eq!(cell.cursors[0].decay_delay, 0, "the decay the countdown keeps");
+        assert_eq!(cell.cursors[0].charge, 10, "the charge the countdown keeps");
+        // TICK 3: the elapsed decay the ZERO answer wears — the data-0
+        // pop the dead cursor speaks, the list the drain empties
+        let pops = update_cursors(&mut cell);
+        assert_eq!(pops.len(), 2, "both cursors the decay kills");
+        assert_eq!(pops[0].pos, (2, 33, 0));
+        assert_eq!(pops[0].data, 0, "the dead cursor's own data-0 word");
+        assert_eq!(pops[1].pos, (2, 34, 0));
+        assert_eq!(pops[1].data, 0);
+        assert!(cell.cursors.is_empty(), "the drain the list empties");
+        // THE EMPTY HEAD (pc 0-12 — the drain the empty list returns)
+        assert!(update_cursors(&mut cell).is_empty());
+        // THE OVER-CAP PAIR (the 600+600 pair the ≤1000 fold refuses —
+        // both the list keeps)
+        let mut cell = SculkCatalystCell {
+            pos: (0, 32, 0),
+            pulse_off_at: None,
+            cursors: vec![
+                SculkCursor::fresh((2, 33, 0), 600),
+                SculkCursor::fresh((2, 33, 0), 600),
+            ],
+        };
+        let pops = update_cursors(&mut cell);
+        assert!(pops.is_empty());
+        assert_eq!(cell.cursors.len(), 2, "the over-cap pair the list keeps");
+        // THE UNREASONABLE DROP (the chessboard bound the cursor
+        // silently drops — NO pop the refusal wears)
+        let mut cell = SculkCatalystCell {
+            pos: (0, 32, 0),
+            pulse_off_at: None,
+            cursors: vec![SculkCursor::fresh((2000, 32, 0), 5)],
+        };
+        let pops = update_cursors(&mut cell);
+        assert!(pops.is_empty(), "the refusal the pop never wears");
+        assert!(cell.cursors.is_empty(), "the unreasonable cursor drops");
     }
 }
