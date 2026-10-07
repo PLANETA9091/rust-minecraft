@@ -10184,18 +10184,28 @@ impl App {
 
             // THE WARDEN'S PENDING HEARS (javap
             // `VibrationSystem$Ticker.receiveVibration` — the vibration
-            // the arrival tick RECEIVES, the `onReceiveVibration` walk
-            // the arrival serves: the cooldown 40 + the tendril clicks
-            // (v5.0, the two-draw pitch) + the anger arms the walk
-            // speaks, the RECENT verdict the arrival-time state
-            // consults). The due entries the frame walk drains — the
-            // outcomes the collected vec serves, the borrow the play's
-            // own pass splits.
+            // the arrival tick RECEIVES, the `BlockPos.containing` fold
+            // pc 0-7 the pos the receive answers, the
+            // `onReceiveVibration` walk the arrival serves: the cooldown
+            // 40 + the tendril clicks (v5.0, the two-draw pitch) + the
+            // anger arms the walk speaks, the RECENT verdict the
+            // arrival-time state consults, the disturbance tail the
+            // Calm arms bank). The due entries the frame walk drains —
+            // the outcomes the collected vec serves, the borrow the
+            // play's own pass splits.
             let mut due_hears: Vec<(usize, crate::sculk::WardenHearing)> = Vec::new();
             for i in (0..self.warden_hears.len()).rev() {
                 if self.frame >= self.warden_hears[i].at_frame {
                     let pending = self.warden_hears.remove(i);
                     if let Some(warden) = self.wardens.get_mut(pending.warden_index) {
+                        // THE CONTAINING FOLD (javap
+                        // `BlockPos.containing(Position)` — the Mth.floor
+                        // law the three axes wear)
+                        let vibration_block = (
+                            pending.vibration_pos.0.floor() as i32,
+                            pending.vibration_pos.1.floor() as i32,
+                            pending.vibration_pos.2.floor() as i32,
+                        );
                         if let Some(hear) = warden.hear_vibration(
                             pending.vibration_entity,
                             pending.projectile_owner,
@@ -10203,6 +10213,7 @@ impl App {
                             pending.entity_is_player,
                             pending.owner_is_player,
                             pending.owner_targetable,
+                            vibration_block,
                         ) {
                             due_hears.push((pending.warden_index, hear));
                         }
@@ -10240,6 +10251,17 @@ impl App {
                     crate::sculk::WARDEN_DEFAULT_ANGER,
                     self.wardens[warden_index].active_anger()
                 ));
+                // THE DISTURBANCE RECORD (javap setDisturbanceLocation
+                // pc 82-93 — the DISTURBANCE_LOCATION the Calm tail
+                // banks, the containing fold the pos wears, the 100l
+                // expiry the memory keeps; the ANGRY/mismatch refusals
+                // the None keeps)
+                if let Some(d) = hear.disturbance {
+                    self.game_events.push(format!(
+                        "warden_disturbance @{} x{} y{} z{} e{}",
+                        self.frame, d.pos.0, d.pos.1, d.pos.2, d.remaining
+                    ));
+                }
                 if let Some((word, pitch)) = hear.listening {
                     // THE LISTENING VOICE (javap playListeningSound
                     // pc 0-28 — the ROARING gate the walk keeps, the
@@ -28730,6 +28752,7 @@ impl App {
                     entity_is_player: true,
                     owner_is_player: true,
                     owner_targetable: source_targetable,
+                    vibration_pos: pos,
                 });
             }
             
@@ -43925,6 +43948,7 @@ mod tests {
                 true,
                 true,
                 true,
+                (16, 34, 0),
             )
             .expect("the hearing answers");
         assert!(
@@ -44071,6 +44095,222 @@ mod tests {
             crate::sculk::warden_heartbeat_delay(150),
             10,
             "the max anger the clamp the floor keeps"
+        );
+    }
+
+    /// THE DISTURBANCE THE CALM TAIL BANKS (javap
+    /// `WardenAi.setDisturbanceLocation` pc 0-106 + the
+    /// onReceiveVibration tail pc 172-229 — the containing fold the
+    /// pos wears, the 100l expiry the memory keeps, the Calm arm the
+    /// ANGRY level refuses, the drain the tick walks serve).
+    #[test]
+    fn the_disturbance_the_calm_tail_banks() {
+        // === THE SUMMON (the glide-hears test's own setup — the stone
+        // floor the warden lands) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(14.0, 35.0, 14.0, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        app.wardens[0].x = 14.5;
+        app.wardens[0].y = 35.0;
+        app.wardens[0].z = 12.5;
+        // the fresh store the empty-active pass keeps — the eyes the
+        // first vibration opens
+        assert!(app.wardens[0].disturbance.is_none(), "the fresh memory the None keeps");
+
+        // === THE GLIDE EVENT (the same lane the glide-hears test
+        // drives — the pos the PRE-travel field wears) ===
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.elytra_glide_event_due = true;
+            b.elytra_glide_event_pos = (14.0, 35.0, 12.0);
+        }
+        app.update();
+        assert_eq!(app.warden_hears.len(), 1, "the pending the dispatch banks");
+        let at = app.warden_hears[0].at_frame;
+        // THE ARRIVAL the tail banks — the containing fold the pos
+        // wears (floor(14.0, 35.0, 12.0) the (14, 35, 12) block keeps)
+        while app.frame < at {
+            app.update();
+        }
+        let line = app
+            .game_events
+            .iter()
+            .find(|l| l.starts_with("warden_disturbance @"))
+            .expect("the arrival the disturbance record banks");
+        assert!(
+            line.contains("x14 y35 z12"),
+            "the containing fold the pos wears — the block the vibration rode: {line}"
+        );
+        assert!(
+            line.contains("e100"),
+            "the 100l expiry the record wears: {line}"
+        );
+        // the memory the entity banks — the bank tick the drain never
+        // precedes (the tick walk the drain serves BEFORE the hears
+        // walk the same frame banks)
+        let d = app.wardens[0]
+            .disturbance
+            .expect("the memory the tail banks");
+        assert_eq!(d.pos, (14, 35, 12), "the containing fold the memory wears");
+        assert_eq!(
+            d.remaining,
+            crate::sculk::WARDEN_DISTURBANCE_EXPIRY,
+            "the bank tick the drain never precedes"
+        );
+        // THE EXPIRY the 100 updates the memory drops — the drain the
+        // zero the None answers
+        for _ in 0..crate::sculk::WARDEN_DISTURBANCE_EXPIRY {
+            app.update();
+        }
+        assert!(
+            app.wardens[0].disturbance.is_none(),
+            "the expiry the memory drops — the 100 ticks the walk drains"
+        );
+    }
+
+    /// THE ANGRY TAIL THE REFUSAL KEEPS (javap onReceiveVibration
+    /// pc 176-182 — the isAngry head the tail never enters; javap
+    /// setDisturbanceLocation pc 14-21 — the ANGRY-at gate the direct
+    /// call refuses; the trio pc 197-217 — the mismatch the
+    /// `if_acmpne 229` refuses, the same-suspect pass the identity
+    /// keeps).
+    #[test]
+    fn the_disturbance_the_angry_the_refusal_keeps() {
+        // THE ANGRY HEAD: the +100 hurt the ANGRY level banks — the
+        // hearing the tail never enters (the ANGRY-at gate the same
+        // verdict the direct call wears)
+        let mut w = crate::sculk::WardenMob::new(3, 0.0, 40.0, 0.0);
+        w.hurt_from_player(7.0, true);
+        assert!(
+            crate::sculk::warden_anger_level(w.active_anger()).is_angry(),
+            "the +100 the ANGRY verdict banks"
+        );
+        let hear = w
+            .hear_vibration(
+                Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+                None,
+                None,
+                true,
+                true,
+                true,
+                (16, 34, 0),
+            )
+            .expect("the living warden the hearing speaks");
+        assert!(
+            hear.disturbance.is_none(),
+            "the ANGRY head the tail refuses — the memory the walk never banks"
+        );
+        w.set_disturbance_location((16, 34, 0));
+        assert!(
+            w.disturbance.is_none(),
+            "the ANGRY-at gate the direct call refuses"
+        );
+
+        // THE MISMATCH the trio refuses: the top suspect 7 the
+        // vibration entity 1 — the identity the if_acmpne wears (the
+        // NON-player flag the store's player-priority sort never
+        // arms — the tie the stable order keeps: 7 the head wears)
+        let mut m = crate::sculk::WardenMob::new(4, 0.0, 40.0, 0.0);
+        m.anger.increase(7, 35);
+        let hear2 = m
+            .hear_vibration(Some(1), None, None, false, true, true, (16, 34, 0))
+            .expect("the hearing speaks");
+        assert!(
+            hear2.disturbance.is_none(),
+            "the mismatch the trio refuses — the top suspect the identity wears"
+        );
+
+        // THE SAME-SUSPECT pass the trio keeps: the vibration entity 7
+        // the top suspect the identity answers
+        m.vibration_cooldown = 0;
+        let hear3 = m
+            .hear_vibration(Some(7), None, None, false, true, true, (16, 34, 0))
+            .expect("the hearing speaks");
+        assert_eq!(
+            hear3.disturbance.expect("the same-suspect pass banks").pos,
+            (16, 34, 0),
+            "the vibration pos the memory wears"
+        );
+        assert_eq!(
+            m.disturbance.expect("the memory banks").remaining,
+            crate::sculk::WARDEN_DISTURBANCE_EXPIRY,
+            "the 100l expiry the fresh bank wears"
+        );
+    }
+
+    /// THE OWNER PASS THE POS RE-BANKS (javap onReceiveVibration
+    /// pc 98-115 — the RECENT arm the canTarget consult the owner's
+    /// blockPosition re-banks, the disturbance the re-banked pos
+    /// wears; the fresh warden the RECENT arm the +35 wears, the
+    /// else arm the +10 keeps).
+    #[test]
+    fn the_disturbance_the_owner_pass_the_pos_re_banks() {
+        // THE RECENT ARM: the memory armed, the owner the within-30
+        // wears — the pos the OWNER's blockPosition re-banks (the
+        // floor(2.0, 40.0, 2.0) the (2, 40, 2) block keeps, the
+        // vibration pos (16, 34, 0) the re-bank never wears)
+        let mut w = crate::sculk::WardenMob::new(6, 0.0, 40.0, 0.0);
+        w.recent_projectile = crate::sculk::WARDEN_RECENT_PROJECTILE_TICKS;
+        let hear = w
+            .hear_vibration(
+                None,
+                Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+                Some((2.0, 40.0, 2.0)),
+                false,
+                true,
+                true,
+                (16, 34, 0),
+            )
+            .expect("the hearing speaks");
+        assert_eq!(
+            w.active_anger(),
+            crate::sculk::WARDEN_DEFAULT_ANGER,
+            "the RECENT arm the +35 wears — the within-30 fold the d2 = 8 answers"
+        );
+        let d = hear
+            .disturbance
+            .expect("the owner pass the disturbance banks");
+        assert_eq!(
+            d.pos, (2, 40, 2),
+            "the owner's blockPosition the pos re-banks — the floor law the containing wears"
+        );
+
+        // THE FRESH WARDEN the else arm the +10 wears — the pos the
+        // vibration pos wears (the re-bank the no-RECENT arm never
+        // reaches)
+        let mut f = crate::sculk::WardenMob::new(7, 0.0, 40.0, 0.0);
+        let hear2 = f
+            .hear_vibration(
+                None,
+                Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+                Some((2.0, 40.0, 2.0)),
+                false,
+                true,
+                true,
+                (16, 34, 0),
+            )
+            .expect("the hearing speaks");
+        assert_eq!(
+            f.active_anger(),
+            crate::sculk::WARDEN_PROJECTILE_ANGER,
+            "the no-RECENT memory the else arm's +10 wears"
+        );
+        assert_eq!(
+            hear2.disturbance.expect("the owner pass banks").pos,
+            (16, 34, 0),
+            "the vibration pos the memory wears — the re-bank the else arm never reaches"
         );
     }
 
