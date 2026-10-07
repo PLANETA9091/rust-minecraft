@@ -1125,6 +1125,277 @@ pub fn warden_darkness_applies(
     d2 < WARDEN_DARKNESS_RADIUS * WARDEN_DARKNESS_RADIUS
 }
 
+// === THE ANGER MANAGEMENT (javap
+// `net.minecraft.world.entity.monster.warden.AngerManagement` — the
+// store the warden's own anger walks: the per-suspect map the
+// increase caps, the suspects list the sorter reorders, the highest
+// the sort's own side-effect banks, the decay the 20-tick cadence
+// wears) ===
+
+/// `lambda$increaseAnger$0` (javap pc 0-23): the `sipush 150`
+/// `Math.min(150, (existing == null ? 0 : existing) + amount)` the
+/// merge wears — the per-suspect cap the increase never crosses.
+pub const WARDEN_ANGER_MAX: i32 = 150;
+
+/// `Warden.customServerAiStep` (javap pc 59-87): the `tickCount % 20`
+/// irem head the anger walk gates (`ANGERMANAGEMENT_TICK_DELAY` the
+/// bipush-20 cadence keeps) — the `angerManagement.tick` + the
+/// `syncClientAngerLevel` pair the arm serves.
+pub const WARDEN_ANGER_TICK_DELAY: i32 = 20;
+
+/// `Warden.increaseAngerAt(Entity)` (javap pc 0-8): the
+/// `increaseAngerAt(entity, 35, true)` delegate the bipush-35 default
+/// speaks — the LISTENING flag the iconst_1 arm keeps (the listening
+/// sound the touch/projectile lanes play).
+pub const WARDEN_DEFAULT_ANGER: i32 = 35;
+
+/// `Warden$VibrationUser.onReceiveVibration` (javap pc 129-138): the
+/// `increaseAngerAt(entity, 10, true)` the bipush-10 else arm serves —
+/// the no-recent-projectile hearing's own +10.
+pub const WARDEN_PROJECTILE_ANGER: i32 = 10;
+
+/// `Warden.hurtServer` (javap pc 29-44): the
+/// `increaseAngerAt(attacker, AngerLevel.ANGRY.getMinimumAnger() + 20,
+/// false)` the bipush-20 boost speaks over the ANGRY 80 floor — the
+/// ON-HURT anger the listening flag NEVER arms. THE HURT WALK the
+/// melee-integration round wires (the pick lanes the warden's own box
+/// consult — the client's mobs the warden never joins yet) — the
+/// constant the wiring round consumes.
+#[cfg_attr(not(test), expect(dead_code))]
+pub const WARDEN_ON_HURT_ANGER_BOOST: i32 = 20;
+
+/// `Warden$VibrationUser.getListenerRadius` (javap pc 0-2): the
+/// `bipush 16` the warden's own hearing range keeps (the sensor's 8
+/// the warden doubles — the GAME_EVENT_LISTENER_RANGE the field wears).
+pub const WARDEN_LISTENER_RANGE: i32 = 16;
+
+/// `Warden$VibrationUser.onReceiveVibration` (javap pc 18-27): the
+/// `setMemoryWithExpiry(VIBRATION_COOLDOWN, UNIT, 40l)` the ldc2_w
+/// speaks — the brain memory the canReceiveVibration's hasMemoryValue
+/// gate refuses while the 40 ticks drain.
+pub const WARDEN_VIBRATION_COOLDOWN: i32 = 40;
+
+/// `Warden$VibrationUser.onReceiveVibration` (javap pc 148-157): the
+/// `setMemoryWithExpiry(RECENT_PROJECTILE, UNIT, 100l)` the ldc2_w
+/// speaks — the memory the next projectile-owner hearing consults
+/// (the recent arm the 35-anger ladder wears), BOTH owner arms the
+/// refresh re-arms.
+pub const WARDEN_RECENT_PROJECTILE_TICKS: i32 = 100;
+
+/// `Warden$VibrationUser.onReceiveVibration` (javap pc 67-76): the
+/// `closerThan(entity, 30.0d)` the ldc2_w speaks — the STRICT
+/// `distanceToSqr < 900.0` fold the Vec3.closerThan dcmpg keeps (the
+/// exact-touch the FALSE wears — the same law the darkness walk
+/// speaks).
+pub const WARDEN_VIBRATION_CLOSER_THAN: f64 = 30.0;
+
+/// `EntityType$Builder.sized(0.9f, 2.9f)` (javap the EntityTypes
+/// clinit pc 6612-6618 — the WARDEN register call's own pair the
+/// `ldc_w 0.9f` / `ldc_w 2.9f` rows keep): the warden's own
+/// EntityDimensions the standing pose wears (the digging/emerging arm
+/// the `fixed(width, 1.0)` override the getDefaultDimensions walk
+/// serves). THE WIDTH the pick/render rounds the box consult (the
+/// warden the mobs list never joins yet) — the constant the same
+/// rounds consume.
+#[cfg_attr(not(test), expect(dead_code))] // the pick/render rounds the box consult
+pub const WARDEN_MOB_WIDTH: f32 = 0.9;
+pub const WARDEN_MOB_HEIGHT: f32 = 2.9;
+
+/// `EntityDimensions.defaultEyeHeight` (javap pc 0-4): the
+/// `height * 0.85f` fold the scalable ctor's fload_2 arg speaks —
+/// the warden's standing eye the `2.9f * 0.85f` pair answers (the
+/// `getEyeHeight` walk the EntityDimensions.eyeHeight field read
+/// wraps). The VIBRATION LISTENER'S OWN OFFSET: the
+/// `Warden$VibrationUser` ctor (javap pc 14-33) the
+/// `EntityPositionSource(this, getEyeHeight())` pair keeps — the
+/// warden's ears ride the EYE point, not the feet.
+pub const WARDEN_EYE_HEIGHT: f32 = WARDEN_MOB_HEIGHT * 0.85;
+
+/// THE LOCAL SUSPECT'S OWN KEY (the client's single local player the
+/// anger map's suspect id wears — the hear walks' `vibration_entity`
+/// arg the key carries, the wire rounds the player's own eid re-key;
+/// the u64 the store's walks read).
+pub const WARDEN_PLAYER_SUSPECT: u64 = 0;
+
+/// THE ANGER STORE (javap `AngerManagement` — the fields the class
+/// wears: the `angerBySuspect` Object2IntOpenHashMap the per-suspect
+/// int answers, the `suspects` ArrayList the sorter reorders, the
+/// `highestAnger` int the sort's own side-effect banks, the
+/// `conversionDelay` int the ctor's iconst_2 floor keeps). The client
+/// keeps the map the insertion-order Vec wears (the small suspect set
+/// the walks read), the UUID lane the map never fills (the client's
+/// suspects never unload — the `convertFromUuids` walk the empty map
+/// keeps a no-op) — the persistence lane the wire rounds re-key.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct AngerStore {
+    /// `angerBySuspect` — the suspect id the anger int answers (the
+    /// Object2IntMap.getOrDefault(0) the walks consult)
+    pub anger_by_suspect: Vec<(u64, i32)>,
+    /// `suspects` — the list the sorter's own ladder reorders
+    pub suspects: Vec<u64>,
+    /// `highestAnger` — the active-anger target the None arm reads
+    pub highest_anger: i32,
+    /// `conversionDelay` — the ctor's fresh 2 (javap pc 8-13), the
+    /// tick's decrement the reset re-arms
+    pub conversion_delay: i32,
+    /// the PLAYER-KEY the sorter's `instanceof Player` ladder consults
+    /// (the client's single local suspect — the id the wire rounds
+    /// re-key; the None the fresh store keeps)
+    pub player_suspect: Option<u64>,
+}
+
+impl Default for AngerStore {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl AngerStore {
+    /// THE FRESH STORE (javap the ctor pc 8-52: the iconst_2 delay the
+    /// ctor keeps, the zero highestAnger the JVM zero-init wears, the
+    /// empty suspects/map pair the ctor's own ArrayList/OpenHashMap
+    /// ctor calls bank).
+    pub fn new() -> Self {
+        Self {
+            anger_by_suspect: Vec::new(),
+            suspects: Vec::new(),
+            highest_anger: 0,
+            conversion_delay: 2,
+            player_suspect: None,
+        }
+    }
+
+    /// `Object2IntMap.getOrDefault(id, 0)` — the map's own answer (the
+    /// missing suspect the 0 the Sorter/getActiveAnger walks read).
+    pub fn anger_of(&self, id: u64) -> i32 {
+        self.anger_by_suspect
+            .iter()
+            .find(|(sid, _)| *sid == id)
+            .map_or(0, |(_, v)| *v)
+    }
+
+    /// `AngerManagement.increaseAnger(Entity, int)` (javap pc 0-91,
+    /// verbatim): the `wasEmpty = !containsKey` read the head keeps,
+    /// the `computeInt` merge the lambda's `Math.min(150, (null ? 0 :
+    /// existing) + amount)` cap wears, the first-suspect arm the
+    /// `suspects.add` tail serves, the `sortAndUpdateHighestAnger`
+    /// close the walk always speaks — the NEW anger int the ireturn
+    /// answers.
+    pub fn increase(&mut self, id: u64, amount: i32) -> i32 {
+        let was_empty = !self.anger_by_suspect.iter().any(|(sid, _)| *sid == id);
+        let fresh = (self.anger_of(id) + amount).min(WARDEN_ANGER_MAX);
+        if let Some(slot) = self
+            .anger_by_suspect
+            .iter_mut()
+            .find(|(sid, _)| *sid == id)
+        {
+            slot.1 = fresh;
+        } else {
+            self.anger_by_suspect.push((id, fresh));
+        }
+        if was_empty {
+            // pc 41-84: the first-suspect arm — the uuid-map remove the
+            // client's empty map never wears, the suspects.add the tail
+            self.suspects.push(id);
+        }
+        self.sort_and_update_highest();
+        fresh
+    }
+
+    /// `AngerManagement.sortAndUpdateHighestAnger` (javap pc 0-48):
+    /// the `highestAnger = 0` reset the head keeps, the
+    /// `suspects.sort(suspectSorter)` the ladder walk serves, the
+    /// `size() == 1` arm the single suspect's own anger banks. THE
+    /// SORTER'S SIDE EFFECT the honest fold answers: every member of a
+    /// len >= 2 list participates in at least one comparison (the
+    /// binary-insertion walk the TimSort small-run serves), the
+    /// `highestAnger = max(highestAnger, max(a, b))` pairs the
+    /// comparison's own bank makes the max-over-all-suspects the same
+    /// verdict the vanilla sort wears; the len 1 list ZERO comparisons
+    /// makes (the override fills it), the len 0 the reset keeps.
+    pub fn sort_and_update_highest(&mut self) {
+        self.highest_anger = 0;
+        if self.suspects.len() >= 2 {
+            self.highest_anger = self
+                .suspects
+                .iter()
+                .map(|&id| self.anger_of(id))
+                .max()
+                .unwrap_or(0);
+        }
+        // the snapshot the comparator reads (the borrow the sort's own
+        // walk splits — the map the compare's own reads never mutate)
+        let snapshot = self.anger_by_suspect.clone();
+        let player = self.player_suspect;
+        self.suspects.sort_by(|a, b| {
+            let lookup =
+                |id: u64| snapshot.iter().find(|(sid, _)| *sid == id).map_or(0, |(_, v)| *v);
+            use std::cmp::Ordering;
+            if a == b {
+                return Ordering::Equal;
+            }
+            let aa = lookup(*a);
+            let ba = lookup(*b);
+            let a_angry = warden_anger_level(aa).is_angry();
+            let b_angry = warden_anger_level(ba).is_angry();
+            if a_angry != b_angry {
+                return if a_angry { Ordering::Less } else { Ordering::Greater };
+            }
+            let a_player = player == Some(*a);
+            let b_player = player == Some(*b);
+            if a_player != b_player {
+                return if a_player { Ordering::Less } else { Ordering::Greater };
+            }
+            ba.cmp(&aa)
+        });
+        if self.suspects.len() == 1 {
+            self.highest_anger = self.anger_of(self.suspects[0]);
+        }
+    }
+
+    /// `AngerManagement.getActiveAnger(Entity)` (javap pc 0-21,
+    /// verbatim): the null target the `highestAnger` field answers,
+    /// the present the `angerBySuspect.getInt(target)` map read keeps
+    /// (the getOrDefault(0) the missing suspect wears).
+    pub fn active_anger(&self, target: Option<u64>) -> i32 {
+        match target {
+            None => self.highest_anger,
+            Some(id) => self.anger_of(id),
+        }
+    }
+
+    /// `AngerManagement.tick(ServerLevel, Predicate)` (javap pc 0-293,
+    /// the client's honest walk): the `--conversionDelay <= 0` head the
+    /// `convertFromUuids` (the client's empty uuid map the no-op keeps)
+    /// + the `conversionDelay = 2` reset pair serves, the uuid-map
+    /// decay loop the empty map never wears, the suspect loop the
+    /// `value <= 1 → remove` / else `-1` fold speaks (the predicate
+    /// gate the client's ever-present suspect always passes, the
+    /// removal-reason arm the client's unloaded lane never wears), the
+    /// `sortAndUpdateHighestAnger` tail pc 289-293 keeps.
+    pub fn tick(&mut self) {
+        self.conversion_delay -= 1;
+        if self.conversion_delay <= 0 {
+            // pc 17-26: the convertFromUuids walk — the client's empty
+            // uuid map the no-op keeps — + the reset re-arms
+            self.conversion_delay = 2;
+        }
+        let mut survivors: Vec<u64> = Vec::with_capacity(self.suspects.len());
+        for (id, anger) in self.anger_by_suspect.iter_mut() {
+            if *anger > 1 {
+                *anger -= 1;
+                survivors.push(*id);
+            }
+        }
+        if survivors.len() != self.anger_by_suspect.len() {
+            self.anger_by_suspect
+                .retain(|(id, _)| survivors.contains(id));
+            self.suspects.retain(|id| survivors.contains(id));
+        }
+        self.sort_and_update_highest();
+    }
+}
+
 // === THE WARDEN ENTITY (the spawned mob the wardens list keeps —
 // the addFreshEntity the SpawnUtil.trySpawnMob tail serves, the
 // entity's own lanes the 26.2 jar speaks) ===
@@ -1174,11 +1445,25 @@ impl WardenAngerLevel {
     }
 
     /// `AngerLevel.isAngry` (javap pc 0-12 — the `this == ANGRY` acmp
-    /// the iconst_1 arm answers). The verdict the brain lanes consult —
-    /// the fresh warden's lane never speaks yet.
-    #[cfg_attr(not(test), expect(dead_code))] // the anger lane the brain rounds consult
+    /// the iconst_1 arm answers). The verdict the sorter's own ladder
+    /// consults (the ANGRY-first key the suspects sort wears) — the
+    /// brain lanes the same word consult.
     pub fn is_angry(self) -> bool {
         self == Self::Angry
+    }
+
+    /// `AngerLevel.getListeningSound` (javap pc 0-4 — the field read
+    /// the areturn wraps): CALM WARDEN_LISTENING, AGITATED
+    /// WARDEN_LISTENING_ANGRY, ANGRY WARDEN_LISTENING_ANGRY — the
+    /// registry names the SoundEvents clinit's ldc rows keep
+    /// (`entity.warden.listening` / `.listening_angry`). The word the
+    /// playListeningSound walk speaks when the warden GAINS the anger
+    /// (the vibration lane the hearing round wires).
+    pub fn listening_sound(self) -> &'static str {
+        match self {
+            Self::Calm => "entity.warden.listening",
+            Self::Agitated | Self::Angry => "entity.warden.listening_angry",
+        }
     }
 }
 
@@ -1223,11 +1508,12 @@ pub fn warden_ambient_sound(
 /// THE WARDEN MOB (the entity the summon list banks — the feet-center
 /// the spawn cell's `+0.5` pair wears, the lanes the baseTick law
 /// ticks): the id the entity counter keeps, the health the
-/// MAX_HEALTH 500.0 speaks, the anger the management's own int (the
-/// fresh 0 the Calm level wears — the brain lane the anger raises, a
-/// future round banks), the pose/digging flags the ambient gates
-/// consult, the voice stream the entity's OWN LCG keeps (the seed the
-/// entity_voice_seed law speaks — the same law the generic mobs ride).
+/// MAX_HEALTH 500.0 speaks, the ANGER the management's own store
+/// keeps (the fresh empty map the Calm level wears — the hearing lane
+/// the increase raises, this round's own walk banks), the pose/digging
+/// flags the ambient gates consult, the voice stream the entity's OWN
+/// LCG keeps (the seed the entity_voice_seed law speaks — the same
+/// law the generic mobs ride).
 #[derive(Debug, Clone)]
 pub struct WardenMob {
     /// the entity id the counter's own draw banks (the wire-id lane the
@@ -1241,8 +1527,24 @@ pub struct WardenMob {
     pub z: f64,
     /// the MAX_HEALTH attribute's own 500.0 the fresh entity keeps
     pub health: f32,
-    /// the anger management's own int (the fresh 0 the Calm level wears)
-    pub anger: i32,
+    /// the ANGER MANAGEMENT's own store (javap `Warden.angerManagement`
+    /// — the field the class wears, the fresh empty map the Calm level
+    /// keeps — the hearing lane the increase raises, the 20-tick decay
+    /// the tick drains)
+    pub anger: AngerStore,
+    /// the VIBRATION_COOLDOWN brain memory (javap the
+    /// setMemoryWithExpiry 40l the hearing sets — the expiry the tick
+    /// decrements, the hasMemoryValue gate the canReceiveVibration
+    /// refuses while the drain runs)
+    pub vibration_cooldown: i32,
+    /// the RECENT_PROJECTILE brain memory (javap the
+    /// setMemoryWithExpiry 100l the hearing's owner arms re-arms — the
+    /// hasMemoryValue verdict the next owner hearing consults)
+    pub recent_projectile: i32,
+    /// the entity's own tick counter (javap `ServerLevel
+    /// .tickNonPassenger` pc 8-15 — the `entity.tickCount++` the tick
+    /// HEAD serves, the customServerAiStep cadences the count reads)
+    pub tick_count: i32,
     /// the ROARING pose the ambient's first gate consults (the brain
     /// lane the roar arms, the fresh false the gates keep)
     pub roaring: bool,
@@ -1261,8 +1563,9 @@ pub struct WardenMob {
 
 impl WardenMob {
     /// THE FRESH ENTITY (the ctor's own defaults: the JVM zero-init the
-    /// anger/pose pair keeps, the -80 clock the house's ambient lane
-    /// wears, the seed the entity_voice_seed law speaks).
+    /// pose/memory trio keeps, the fresh store the ctor's own fields
+    /// bank, the -80 clock the house's ambient lane wears, the seed the
+    /// entity_voice_seed law speaks).
     #[cfg_attr(not(test), expect(dead_code))] // the summon lane the dig-integration round wires
     pub fn new(id: i32, x: f64, y: f64, z: f64) -> Self {
         Self {
@@ -1271,12 +1574,23 @@ impl WardenMob {
             y,
             z,
             health: WARDEN_MOB_MAX_HEALTH,
-            anger: 0,
+            anger: AngerStore::new(),
+            vibration_cooldown: 0,
+            recent_projectile: 0,
+            tick_count: 0,
             roaring: false,
             digging_or_emerging: false,
             ambient_time: -crate::mob::AMBIENT_INTERVAL_TICKS,
             rng: crate::drops::Lcg::new(crate::mob::entity_voice_seed(id)),
         }
+    }
+
+    /// `Warden.getActiveAnger` (javap pc 0-11, verbatim): the
+    /// `angerManagement.getActiveAnger(getTarget())` fold — the brain
+    /// target the client's None keeps (the brain lanes the target
+    /// rounds bank), the store's own active-anger the answer serves.
+    pub fn active_anger(&self) -> i32 {
+        self.anger.active_anger(None)
     }
 
     /// THE AMBIENT VOICE'S TICK (javap `Mob.baseTick` pc 17-55, the
@@ -1286,20 +1600,184 @@ impl WardenMob {
     /// draw the entity's own stream spends under the climbing clock,
     /// the fired arm the play + the `-getAmbientSoundInterval()` reset
     /// serves). The health gate the alive word answers — the 500.0
-    /// fresh body the lane never hurts yet.
+    /// fresh body the lane never hurts yet. THE HEAD the
+    /// tickNonPassenger law serves first: the `tickCount++` the entity
+    /// counter climbs (pc 8-15), the brain memories the expiry drains
+    /// (the 40/100 the hearing sets — the dead body the aiStep lane
+    /// never runs, the drain rides the alive arm), the ANGER DECAY the
+    /// customServerAiStep pc 59-87 cadence wears (`tickCount % 20 == 0`
+    /// → the `angerManagement.tick` — the same dead-body gate the aiStep
+    /// lane keeps).
     pub fn tick(&mut self) -> bool {
+        self.tick_count += 1;
         if self.health <= 0.0 {
             return false;
         }
-        self.ambient_time += 1;
-        if self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
-            < self.ambient_time.max(0) as u64
-        {
-            self.ambient_time = -crate::mob::AMBIENT_INTERVAL_TICKS;
-            true
-        } else {
-            false
+        if self.vibration_cooldown > 0 {
+            self.vibration_cooldown -= 1;
         }
+        if self.recent_projectile > 0 {
+            self.recent_projectile -= 1;
+        }
+        self.ambient_time += 1;
+        let fired = self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
+            < self.ambient_time.max(0) as u64;
+        if fired {
+            self.ambient_time = -crate::mob::AMBIENT_INTERVAL_TICKS;
+        }
+        if self.tick_count % WARDEN_ANGER_TICK_DELAY == 0 {
+            self.anger.tick();
+        }
+        fired
+    }
+
+    /// `Warden$VibrationUser.canReceiveVibration` (javap pc 0-98, the
+    /// client's honest walk): the isNoAi flag the client never arms —
+    /// the pass keeps, the `isDeadOrDying()` gate the health word
+    /// answers, the `hasMemoryValue(VIBRATION_COOLDOWN)` gate the
+    /// drain refuses (the 40-tick window the hearing arms), the
+    /// `isDiggingOrEmerging()` gate the fresh false keeps, the
+    /// worldBorder gate the client's loaded world always passes, the
+    /// SOURCE tail the caller's own verdict consults (the living
+    /// source the canTargetEntity fold answers — the creative player
+    /// the FALSE keeps — the non-living the TRUE arm serves — the
+    /// `Option` the two arms wear: None the non-living pass keeps,
+    /// Some(false) the living refusal wears).
+    pub fn can_receive_vibration(&self, source_targetable: Option<bool>) -> bool {
+        if self.health <= 0.0 {
+            return false;
+        }
+        if self.vibration_cooldown > 0 {
+            return false;
+        }
+        if self.digging_or_emerging {
+            return false;
+        }
+        source_targetable != Some(false)
+    }
+
+    /// `Warden.increaseAngerAt(Entity, int, boolean)` (javap pc 0-88,
+    /// verbatim): the isNoAi flag the client never arms — the pass
+    /// keeps, the `canTargetEntity(suspect)` gate the caller's verdict
+    /// consults (the creative/spectator/invulnerable/dead the refusal
+    /// keeps — pc 9-12 the ifeq 88 skip), the store's own increase the
+    /// pc 36-45 call serves, the player-ladder erase arm the brain
+    /// lanes keep (no brain yet — the lane the target rounds wire),
+    /// the LISTENING arm the pc 80-85 flag serves: the
+    /// `playListeningSound` walk — the `hasPose(ROARING)` gate the
+    /// ifne pair keeps, the `getAngerLevel().getListeningSound()` word
+    /// the POST-increase verdict answers (the brain target the None
+    /// keeps — the store's own highest), the `getVoicePitch()` TWO
+    /// draws the entity's own stream spends. The volume the walk's
+    /// OWN 10.0f the playSound fold keeps (javap pc 18-21 — the
+    /// getSoundVolume 4.0 the listening NEVER reads).
+    pub fn increase_anger_at(
+        &mut self,
+        suspect: u64,
+        suspect_is_player: bool,
+        suspect_targetable: bool,
+        amount: i32,
+        listening: bool,
+    ) -> Option<(&'static str, f32)> {
+        if !suspect_targetable {
+            return None;
+        }
+        if suspect_is_player && self.anger.player_suspect.is_none() {
+            self.anger.player_suspect = Some(suspect);
+        }
+        self.anger.increase(suspect, amount);
+        if listening && !self.roaring {
+            let word = warden_anger_level(self.active_anger()).listening_sound();
+            let pitch = self.voice_pitch();
+            Some((word, pitch))
+        } else {
+            None
+        }
+    }
+
+    /// THE WARDEN'S EARS (javap
+    /// `Warden$VibrationUser.onReceiveVibration` pc 0-229, verbatim):
+    /// the `isDeadOrDying()` gate the head keeps, the
+    /// `setMemoryWithExpiry(VIBRATION_COOLDOWN, 40l)` the hearing
+    /// ALWAYS arms (pc 11-29), the `broadcastEntityEvent(this, 61)`
+    /// tendril-clicking animation the client's record lane banks, the
+    /// `playSound(WARDEN_TENDRIL_CLICKS, 5.0f, getVoicePitch())` the
+    /// pc 40-58 fold speaks — the TWO-draw pitch the entity's own
+    /// stream spends. THE ANGER ARMS the suspect pair consults: the
+    /// PROJECTILE OWNER (param 4 — javap the Ticker pc 79-88 the
+    /// `getProjectileOwner` arg keeps) the pc 62-160 walk serves —
+    /// the `closerThan(owner, 30.0)` STRICT fold + the
+    /// `hasMemoryValue(RECENT_PROJECTILE)` verdict the recent arm
+    /// gates (`canTargetEntity` the disturbance-pos arm the brain
+    /// keeps — the increase `(35, true)` the pc 123 call wears) — the
+    /// else arm the `increaseAngerAt(owner, 10, true)` pc 129-138
+    /// serves — BOTH arms the `setMemoryWithExpiry(RECENT_PROJECTILE,
+    /// 100l)` pc 141-157 refresh re-arms. The owner-null arm the pc
+    /// 163 call wears: the VIBRATING ENTITY (param 3 — the
+    /// `getEntity` arg) the `increaseAngerAt(35, true)` default
+    /// serves. THE DISTURBANCE TAIL pc 172-229 the brain lanes keep
+    /// (the setDisturbanceLocation the brain rounds wire). The
+    /// listening voice the Option answers — the ROARING pose the
+    /// increase_anger_at's own gate never arms.
+    pub fn hear_vibration(
+        &mut self,
+        vibration_entity: Option<u64>,
+        projectile_owner: Option<u64>,
+        owner_pos: Option<(f64, f64, f64)>,
+        vibration_entity_is_player: bool,
+        owner_is_player: bool,
+        owner_targetable: bool,
+    ) -> Option<WardenHearing> {
+        if self.health <= 0.0 {
+            return None;
+        }
+        self.vibration_cooldown = WARDEN_VIBRATION_COOLDOWN;
+        let click_pitch = self.voice_pitch();
+        let listening = match projectile_owner {
+            Some(owner) => {
+                let within = owner_pos
+                    .map(|p| {
+                        let (dx, dy, dz) = (p.0 - self.x, p.1 - self.y, p.2 - self.z);
+                        let d2 = dx * dx + dy * dy + dz * dz;
+                        d2 < WARDEN_VIBRATION_CLOSER_THAN * WARDEN_VIBRATION_CLOSER_THAN
+                    })
+                    .unwrap_or(false);
+                if within && self.recent_projectile > 0 {
+                    self.increase_anger_at(
+                        owner,
+                        owner_is_player,
+                        owner_targetable,
+                        WARDEN_DEFAULT_ANGER,
+                        true,
+                    )
+                } else {
+                    self.increase_anger_at(
+                        owner,
+                        owner_is_player,
+                        owner_targetable,
+                        WARDEN_PROJECTILE_ANGER,
+                        true,
+                    )
+                }
+            }
+            None => match vibration_entity {
+                Some(entity) => self.increase_anger_at(
+                    entity,
+                    vibration_entity_is_player,
+                    owner_targetable,
+                    WARDEN_DEFAULT_ANGER,
+                    true,
+                ),
+                None => None,
+            },
+        };
+        if projectile_owner.is_some() {
+            self.recent_projectile = WARDEN_RECENT_PROJECTILE_TICKS;
+        }
+        Some(WardenHearing {
+            click_pitch,
+            listening,
+        })
     }
 
     /// `LivingEntity.getVoicePitch` (javap pc 35-60 — the adult arm the
@@ -1309,6 +1787,97 @@ impl WardenMob {
     pub fn voice_pitch(&mut self) -> f32 {
         (self.rng.next_f32() - self.rng.next_f32()) * 0.2 + 1.0
     }
+}
+
+/// THE HEARING'S OWN OUTCOME (javap `onReceiveVibration` — the
+/// tendril-clicks sound the ALWAYS arm serves, the listening voice
+/// the anger arms wear — the volume the playSound's 10.0f the walk
+/// keeps, the pitch the two-draw law the streams wear).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenHearing {
+    /// the tendril-clicks pitch (the TWO draws the hearing's own walk
+    /// spends — the v5.0 the play lane folds)
+    pub click_pitch: f32,
+    /// the listening voice (the word + the pitch) the anger arms serve
+    /// — the None the ROARING pose/gate refusal keeps
+    pub listening: Option<(&'static str, f32)>,
+}
+
+/// THE WARDEN'S OWN HEARING WALK (javap the dispatch laws the
+/// `VibrationSystem$Listener.handleGameEvent` serves, the same shape
+/// the sensor's own hearing wears): the tag gate the
+/// `isValidVibration` default keeps, the IN-RANGE gate the listener
+/// radius 16 bounds (the `distSqr > radius²` refusal the sensor's
+/// own walk wears — the EQUAL case the strict `>` passes), the
+/// listener position the EntityPositionSource's eye point answers
+/// (the warden's feet + the WARDEN_EYE_HEIGHT offset), the vibration
+/// distance the VibrationInfo's distanceTo fold keeps, the arrival
+/// the `Mth.floor` walk serves. The OCCLUSION the caller's own gate
+/// consults (the six-ray clip the event's block center to the
+/// listener's — the handleGameEvent pc 101-113 walk).
+pub fn warden_hearing(
+    event: &str,
+    event_pos: (f64, f64, f64),
+    warden: (f64, f64, f64),
+) -> Option<WardenHearingDistance> {
+    if !is_valid_vibration(event) {
+        return None;
+    }
+    let listener = (
+        warden.0,
+        warden.1 + WARDEN_EYE_HEIGHT as f64,
+        warden.2,
+    );
+    let dx = event_pos.0 - listener.0;
+    let dy = event_pos.1 - listener.1;
+    let dz = event_pos.2 - listener.2;
+    let dist_sqr = dx * dx + dy * dy + dz * dz;
+    let radius_sqr = f64::from(WARDEN_LISTENER_RANGE * WARDEN_LISTENER_RANGE);
+    if dist_sqr > radius_sqr {
+        return None;
+    }
+    let distance = dist_sqr.sqrt() as f32;
+    Some(WardenHearingDistance {
+        distance,
+        arrival_ticks: crate::mth::floor(distance as f64),
+    })
+}
+
+/// THE HEARING'S OWN DISTANCE (the sensor's own record shape the
+/// warden's lane wears — the distance the d fold keeps, the arrival
+/// the t fold answers).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenHearingDistance {
+    pub distance: f32,
+    pub arrival_ticks: i32,
+}
+
+/// THE WARDEN'S PENDING HEAR (the vibration's own travel the arrival
+/// serves — the `onReceiveVibration` walk the ARRIVAL tick speaks, the
+/// same scheduling law the sensors' own `clicking_at` wears): the
+/// suspect facts the dispatch banks, the arrival-time walk the flags
+/// consult, the RECENT memory the arrival-time state answers).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenPendingHear {
+    /// the arrival tick the `frame + arrival_ticks` fold banks
+    pub at_frame: u64,
+    /// the warden the hearing's own listener wears (the vec index)
+    pub warden_index: usize,
+    /// the VIBRATING ENTITY (javap the Ticker pc 67-76 the `getEntity`
+    /// arg keeps — the player's own suspect the glide event banks)
+    pub vibration_entity: Option<u64>,
+    /// the PROJECTILE OWNER (javap pc 79-88 the `getProjectileOwner`
+    /// arg keeps — the arrow lanes the owner rounds bank)
+    pub projectile_owner: Option<u64>,
+    /// the owner's feet-center the `closerThan(owner, 30.0)` fold
+    /// consults
+    pub owner_pos: Option<(f64, f64, f64)>,
+    /// the `instanceof Player` keys the store's ladder consults
+    pub entity_is_player: bool,
+    pub owner_is_player: bool,
+    /// the `canTargetEntity(suspect)` verdict the increase walk's own
+    /// gate consults (the creative/spectator/dead the refusal keeps)
+    pub owner_targetable: bool,
 }
 
 /// `SculkSpreader.addCursors` pc 4-8 (javap): the `sipush 1000`
@@ -5208,7 +5777,8 @@ mod tests {
             "the MAX_HEALTH attribute's own 500.0 the fresh body keeps"
         );
         assert_eq!(
-            warden.anger, 0,
+            warden.active_anger(),
+            0,
             "the zero anger the Calm level wears"
         );
         assert!(
@@ -5293,6 +5863,279 @@ mod tests {
             dead.rng.next_f32(),
             dead_mirror.rng.next_f32(),
             "the dead body the draw never spends — the gate the stream's own position keeps"
+        );
+    }
+
+    /// THE ANGER STORE'S OWN WALK (javap `AngerManagement` + the
+    /// `Sorter.compare` ladder — the increase's cap the merge wears,
+    /// the active-anger the target/highest pair answers, the decay the
+    /// 20-tick cadence drains, the sorter's ladder the order speaks).
+    #[test]
+    fn the_anger_store_the_cap_the_decay_the_ladder() {
+        // === THE INCREASE (increaseAnger pc 0-91 — the merge + the
+        // first-suspect join + the sort close) ===
+        let mut store = AngerStore::new();
+        assert_eq!(store.conversion_delay, 2, "the fresh store the ctor's iconst_2 keeps");
+        let a = store.increase(7, 35);
+        assert_eq!(a, 35, "the fresh suspect the null→0 fold wears");
+        assert_eq!(store.suspects, vec![7], "the first-suspect arm the suspects.add serves");
+        assert_eq!(store.highest_anger, 35, "the len-1 override the single suspect's anger banks");
+        let b = store.increase(7, 35);
+        assert_eq!(b, 70, "the standing suspect the existing+amount merge wears");
+        assert_eq!(store.suspects.len(), 1, "the wasEmpty read the re-join refusal keeps");
+        // the CAP (lambda$increaseAnger$0 pc 0-23 — the Math.min(150) fold)
+        let c = store.increase(7, 500);
+        assert_eq!(c, WARDEN_ANGER_MAX, "the merge the 150 cap never crosses");
+        // the SECOND suspect (the max-over-all the sorter's side effect banks)
+        let d = store.increase(11, 40);
+        assert_eq!(d, 40);
+        assert_eq!(
+            store.highest_anger,
+            WARDEN_ANGER_MAX,
+            "the len-2 list the comparisons' max the same verdict wears"
+        );
+        // the missing suspect the getOrDefault(0) answer wears
+        assert_eq!(store.anger_of(99), 0, "the missing suspect the default 0 keeps");
+
+        // === THE ACTIVE ANGER (getActiveAnger pc 0-21 — the null target
+        // the highest field answers, the present the map read keeps) ===
+        assert_eq!(
+            store.active_anger(None),
+            WARDEN_ANGER_MAX,
+            "the brain target the None keeps — the store's own highest answers"
+        );
+        assert_eq!(store.active_anger(Some(11)), 40, "the present suspect the map read answers");
+        assert_eq!(
+            store.active_anger(Some(12)),
+            0,
+            "the suspect the map never wore the getOrDefault 0 keeps"
+        );
+
+        // === THE SORTER'S OWN LADDER (Sorter.compare pc 0-137 — the
+        // ANGRY-first key, the player-first key, the anger-descending
+        // tail) ===
+        let mut ladder = AngerStore::new();
+        ladder.player_suspect = Some(3);
+        ladder.increase(1, 90); // ANGRY
+        ladder.increase(2, 50); // AGITATED
+        ladder.increase(3, 50); // AGITATED — the player
+        ladder.increase(4, 10); // CALM
+        ladder.sort_and_update_highest();
+        assert_eq!(ladder.suspects[0], 1, "the ANGRY suspect the ladder's first key sorts front");
+        assert_eq!(ladder.suspects[1], 3, "the player suspect the ladder's second key sorts before");
+        assert_eq!(ladder.suspects[2], 2, "the equal anger the DESCENDING tail keeps stable-equal");
+        assert_eq!(ladder.suspects[3], 4, "the CALM suspect the tail's own order wears");
+
+        // === THE DECAY (tick pc 0-293 — the delay bookkeeping, the
+        // -1 walk, the removal at <=1, the sort tail) ===
+        let mut decay = AngerStore::new();
+        decay.increase(5, 3);
+        decay.conversion_delay = 1;
+        decay.tick();
+        assert_eq!(decay.conversion_delay, 2, "the delay the reset re-arms");
+        assert_eq!(decay.anger_of(5), 2, "the decay the -1 walk wears");
+        decay.tick();
+        assert_eq!(decay.anger_of(5), 1, "the decay the second pass wears");
+        decay.tick();
+        assert_eq!(
+            decay.anger_of(5),
+            0,
+            "the <=1 entry the removal walk serves — the map the getOrDefault 0 answers"
+        );
+        assert!(
+            !decay.suspects.contains(&5),
+            "the removed suspect the suspects list retires"
+        );
+        assert_eq!(decay.highest_anger, 0, "the empty store the reset's own zero keeps");
+    }
+
+    /// THE WARDEN'S EARS' OWN WALK (javap
+    /// `Warden$VibrationUser.onReceiveVibration` pc 0-229 — the
+    /// cooldown the hearing arms, the tendril clicks the always voice
+    /// speaks, the anger arms the suspect pair consults, the listening
+    /// sound the level map answers).
+    #[test]
+    fn the_warden_hears_the_vibration_the_listening_wears() {
+        // === THE LISTENING MAP (AngerLevel.getListeningSound — the
+        // field reads the registry names keep) ===
+        assert_eq!(
+            WardenAngerLevel::Calm.listening_sound(),
+            "entity.warden.listening",
+            "the CALM level the WARDEN_LISTENING field keeps"
+        );
+        assert_eq!(
+            WardenAngerLevel::Agitated.listening_sound(),
+            "entity.warden.listening_angry",
+            "the AGITATED level the WARDEN_LISTENING_ANGRY pair wears"
+        );
+        assert_eq!(
+            WardenAngerLevel::Angry.listening_sound(),
+            "entity.warden.listening_angry",
+            "the ANGRY level the same pair wears"
+        );
+
+        // === THE FIRST HEARING (pc 0-58 + the owner-null arm pc 163 —
+        // the cooldown arms, the clicks voice speaks, the +35 the
+        // default wear, the CALM listening the 35-anger verdict
+        // answers) ===
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        let mut mirror = WardenMob::new(3, 10.5, 32.0, 3.5);
+        let hear = warden
+            .hear_vibration(Some(WARDEN_PLAYER_SUSPECT), None, None, true, true, true)
+            .expect("the living warden the hearing speaks");
+        assert_eq!(
+            warden.vibration_cooldown, WARDEN_VIBRATION_COOLDOWN,
+            "the setMemoryWithExpiry 40l the hearing arms"
+        );
+        // the pitch the TWO draws the entity's own stream spends — the
+        // mirror the same order wears
+        assert_eq!(hear.click_pitch, mirror.voice_pitch(), "the tendril clicks the two-draw pitch wears");
+        // the anger walk's own draws — the two-draw law the pitch speaks
+        assert_eq!(
+            warden.active_anger(),
+            WARDEN_DEFAULT_ANGER,
+            "the default arm the +35 wears"
+        );
+        let listening = hear.listening.expect("the non-roaring warden the listening serves");
+        assert_eq!(
+            listening.0,
+            "entity.warden.listening",
+            "the 35-anger verdict the CALM level's listening wears"
+        );
+        assert_eq!(listening.1, mirror.voice_pitch(), "the listening pitch the two-draw law speaks");
+        assert_eq!(warden.recent_projectile, 0, "the owner-null arm the RECENT memory never arms");
+
+        // === THE SECOND HEARING THE LADDER CLIMBS (the 35+35 the
+        // AGITATED verdict answers — the listening_angry the pair
+        // serves) ===
+        warden.vibration_cooldown = 0;
+        let hear2 = warden
+            .hear_vibration(Some(WARDEN_PLAYER_SUSPECT), None, None, true, true, true)
+            .unwrap();
+        assert_eq!(warden.active_anger(), 70, "the second hearing the ladder climbs");
+        assert_eq!(
+            hear2.listening.unwrap().0,
+            "entity.warden.listening_angry",
+            "the AGITATED verdict the listening_angry wears"
+        );
+
+        // === THE COOLDOWN GATE (canReceiveVibration pc 27-33 — the
+        // hasMemoryValue refusal the drain keeps) ===
+        assert!(
+            !warden.can_receive_vibration(Some(true)),
+            "the armed cooldown the reception refuses"
+        );
+        for _ in 0..WARDEN_VIBRATION_COOLDOWN {
+            warden.tick();
+        }
+        assert_eq!(warden.vibration_cooldown, 0, "the drain the memory expires");
+        assert!(
+            warden.can_receive_vibration(Some(true)),
+            "the expired memory the reception keeps"
+        );
+
+        // === THE PROJECTILE-OWNER ARMS (pc 62-160 — the RECENT arm the
+        // 35 wears, the else arm the 10 keeps, BOTH the 100l refresh
+        // re-arms) ===
+        let mut shooter = WardenMob::new(4, 0.0, 0.0, 0.0);
+        let near = (2.0, 0.0, 2.0);
+        let hear3 = shooter
+            .hear_vibration(None, Some(11), Some(near), false, true, true)
+            .unwrap();
+        assert_eq!(
+            shooter.active_anger(),
+            WARDEN_PROJECTILE_ANGER,
+            "the no-RECENT memory the else arm's +10 wears"
+        );
+        assert_eq!(
+            shooter.recent_projectile,
+            WARDEN_RECENT_PROJECTILE_TICKS,
+            "the owner path the 100l refresh re-arms"
+        );
+        assert!(hear3.listening.is_some(), "the else arm's iconst_1 the listening serves");
+        // the within-30 STRICT fold — the exact-touch the refusal keeps
+        let exact = (WARDEN_VIBRATION_CLOSER_THAN, 0.0, 0.0);
+        let mut exactward = WardenMob::new(5, 0.0, 0.0, 0.0);
+        let hear4 = exactward
+            .hear_vibration(None, Some(11), Some(exact), false, true, true)
+            .unwrap();
+        assert_eq!(
+            exactward.active_anger(),
+            WARDEN_PROJECTILE_ANGER,
+            "the d2 >= 900 the STRICT fold refuses — the recent arm's 35 never wears"
+        );
+        assert!(hear4.listening.is_some());
+        // the RECENT arm — the memory armed, the next near landing climbs
+        let hear5 = shooter
+            .hear_vibration(None, Some(11), Some(near), false, true, true)
+            .unwrap();
+        assert_eq!(
+            shooter.active_anger(),
+            WARDEN_PROJECTILE_ANGER + WARDEN_DEFAULT_ANGER,
+            "the armed RECENT memory the recent arm's +35 wears"
+        );
+        assert!(hear5.listening.is_some(), "the recent arm's iconst_1 the listening serves");
+
+        // === THE GATES (the canTarget refusal the increase never wears,
+        // the ROARING pose the listening never speaks, the dead body
+        // the hearing never runs) ===
+        let mut gate = WardenMob::new(6, 0.0, 0.0, 0.0);
+        let gated = gate
+            .hear_vibration(Some(1), None, None, true, true, false)
+            .unwrap();
+        assert_eq!(gate.active_anger(), 0, "the canTarget refusal the anger never climbs");
+        assert!(gated.listening.is_none(), "the gated increase the listening never wears");
+        assert_eq!(
+            gate.vibration_cooldown, WARDEN_VIBRATION_COOLDOWN,
+            "the cooldown the hearing STILL arms — the memory the walk always wears"
+        );
+        let mut roarer = WardenMob::new(7, 0.0, 0.0, 0.0);
+        roarer.roaring = true;
+        let roared = roarer
+            .hear_vibration(Some(1), None, None, true, true, true)
+            .unwrap();
+        assert!(
+            roared.listening.is_none(),
+            "the ROARING pose the playListeningSound's own gate keeps"
+        );
+        assert_eq!(roarer.active_anger(), WARDEN_DEFAULT_ANGER, "the anger the pose never blocks");
+        let mut dead = WardenMob::new(8, 0.0, 0.0, 0.0);
+        dead.health = 0.0;
+        let dead_hear = dead.hear_vibration(Some(1), None, None, true, true, true);
+        assert!(
+            dead_hear.is_none(),
+            "the isDeadOrDying head the whole walk never runs"
+        );
+
+        // === THE HEARING WALK'S OWN GATES (warden_hearing — the tag
+        // refusal, the radius-16 bounds, the eye-point listener) ===
+        assert_eq!(
+            warden_hearing("not_an_event", (0.0, 0.0, 0.0), (0.0, 0.0, 0.0)),
+            None,
+            "the untagged event the isValidVibration refusal keeps"
+        );
+        // the listener rides the EYE point — the feet + 2.465 the offset
+        // wears; the event at the eye the distance 0 answers
+        let eye = WARDEN_EYE_HEIGHT as f64;
+        let close = warden_hearing("elytra_glide", (0.0, eye, 0.0), (0.0, 0.0, 0.0)).unwrap();
+        assert_eq!(close.distance, 0.0, "the eye-point listener the zero distance wears");
+        assert_eq!(close.arrival_ticks, 0, "the zero distance the floor walk keeps");
+        // the 17-block step the radius refusal keeps (the block-pos law
+        // the sensor's own walk shares)
+        assert_eq!(
+            warden_hearing("elytra_glide", (17.0, eye, 0.0), (0.0, 0.0, 0.0)),
+            None,
+            "the 17-block event the radius-16 refusal keeps"
+        );
+        // the 16-block event the strict > refusal passes
+        let edge = warden_hearing("elytra_glide", (16.0, eye, 0.0), (0.0, 0.0, 0.0)).unwrap();
+        assert!(
+            edge.distance > 15.9,
+            "the edge event the distance the eye-point vec answers"
+        );
+        assert_eq!(
+            edge.arrival_ticks, 16,
+            "the edge event the arrival the Mth.floor walk keeps"
         );
     }
 }

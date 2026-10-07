@@ -7086,6 +7086,13 @@ pub struct App {
     /// the law speaks, the anger the brain round raises; the empty vec
     /// the hasNearbyWarden gate's honest pass keeps).
     pub wardens: Vec<crate::sculk::WardenMob>,
+    /// THE WARDEN'S PENDING HEARS (the vibration's own travel the
+    /// arrival serves — the onReceiveVibration walk the arrival tick
+    /// speaks, the same scheduling law the sensors' own clicking_at
+    /// wears): the queue the glide lane pushes, the update walk drains
+    /// at the arrival, the RECENT verdict the arrival-time state
+    /// consults).
+    pub warden_hears: Vec<crate::sculk::WardenPendingHear>,
     /// THE SCULK CATALYST CELLS (the plain GameEventListener's analog
     /// — the vanilla's block entity the chunk-section registry walk
     /// registers, the CatalystListener the App's vec stands in): the
@@ -8053,6 +8060,7 @@ impl App {
             sculk_shrikers: Vec::new(),
             warden_tracker: crate::sculk::WardenSpawnTracker::fresh(),
             wardens: Vec::new(),
+            warden_hears: Vec::new(),
             sculk_catalysts: Vec::new(),
             sculk_vein_faces: Vec::new(),
             sculk_block_placements: Vec::new(),
@@ -8307,7 +8315,7 @@ impl App {
                 // answers, the ROARING/digging gates the fresh pair
                 // never arms)
                 let spawn_voice = crate::sculk::warden_ambient_sound(
-                    warden.anger,
+                    warden.active_anger(),
                     warden.roaring,
                     warden.digging_or_emerging,
                 )
@@ -9832,6 +9840,63 @@ impl App {
                         sensor.resonate_frequency = hearing.frequency;
                     }
                 }
+                // THE WARDEN'S OWN EARS (javap `Warden$VibrationUser
+                // .onReceiveVibration` pc 0-229 + the
+                // `VibrationSystem$Listener.handleGameEvent` gates the
+                // dispatch serves): the same elytra_glide event the
+                // sensors hear the warden's own listener answers — the
+                // tag + the radius-16 gates the warden_hearing walk
+                // wears, the occlusion the six-ray clip keeps (the
+                // handleGameEvent pc 101-113 isOccluded call — the
+                // listener the EYE point the EntityPositionSource
+                // carries), the canReceiveVibration gates the
+                // cooldown/digging/source pair closes — THE DISPATCH
+                // the pending hear banks (the arrival tick the
+                // vibration's own travel wears — the
+                // onReceiveVibration walk the arrival speaks)
+                let warden_world = if self.world_is_network {
+                    self.net_world.as_ref()
+                } else {
+                    self.offline_world.as_ref()
+                };
+                let source_targetable = self.game_mode.is_survival() && !self.dead;
+                for (warden_index, warden) in self.wardens.iter_mut().enumerate() {
+                    let Some(hear_distance) = crate::sculk::warden_hearing(
+                        "elytra_glide",
+                        glide_pos,
+                        (warden.x, warden.y, warden.z),
+                    ) else {
+                        continue;
+                    };
+                    let occluded = match warden_world {
+                        Some(w) => crate::sculk::vibration_occluded(
+                            glide_pos,
+                            (
+                                warden.x,
+                                warden.y + f64::from(crate::sculk::WARDEN_EYE_HEIGHT),
+                                warden.z,
+                            ),
+                            |x, y, z| crate::sculk::block_occludes(w.get(x, y, z) as u32),
+                        ),
+                        None => false,
+                    };
+                    if occluded {
+                        continue;
+                    }
+                    if !warden.can_receive_vibration(Some(source_targetable)) {
+                        continue;
+                    }
+                    self.warden_hears.push(crate::sculk::WardenPendingHear {
+                        at_frame: self.frame + hear_distance.arrival_ticks as u64,
+                        warden_index,
+                        vibration_entity: Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+                        projectile_owner: None,
+                        owner_pos: None,
+                        entity_is_player: true,
+                        owner_is_player: true,
+                        owner_targetable: source_targetable,
+                    });
+                }
             }
             // THE SENSOR'S OWN VOICE SWEEP (javap SculkSensorBlock —
             // the block-entity tick the activation's scheduled window
@@ -10149,7 +10214,7 @@ impl App {
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
-                        warden.anger,
+                        warden.active_anger(),
                         warden.roaring,
                         warden.digging_or_emerging,
                     ) {
@@ -10160,6 +10225,73 @@ impl App {
             }
             for (word, wx, wy, wz, pitch) in warden_voices {
                 self.play_warden_voice(word, wx, wy, wz, pitch);
+            }
+
+            // THE WARDEN'S PENDING HEARS (javap
+            // `VibrationSystem$Ticker.receiveVibration` — the vibration
+            // the arrival tick RECEIVES, the `onReceiveVibration` walk
+            // the arrival serves: the cooldown 40 + the tendril clicks
+            // (v5.0, the two-draw pitch) + the anger arms the walk
+            // speaks, the RECENT verdict the arrival-time state
+            // consults). The due entries the frame walk drains — the
+            // outcomes the collected vec serves, the borrow the play's
+            // own pass splits.
+            let mut due_hears: Vec<(usize, crate::sculk::WardenHearing)> = Vec::new();
+            for i in (0..self.warden_hears.len()).rev() {
+                if self.frame >= self.warden_hears[i].at_frame {
+                    let pending = self.warden_hears.remove(i);
+                    if let Some(warden) = self.wardens.get_mut(pending.warden_index) {
+                        if let Some(hear) = warden.hear_vibration(
+                            pending.vibration_entity,
+                            pending.projectile_owner,
+                            pending.owner_pos,
+                            pending.entity_is_player,
+                            pending.owner_is_player,
+                            pending.owner_targetable,
+                        ) {
+                            due_hears.push((pending.warden_index, hear));
+                        }
+                    }
+                }
+            }
+            for (warden_index, hear) in due_hears {
+                let (wx, wy, wz) = {
+                    let w = &self.wardens[warden_index];
+                    (w.x, w.y, w.z)
+                };
+                // THE TENDRIL-CLICK RECORD (javap broadcastEntityEvent
+                // (this, 61) — the animation event the client's record
+                // lane banks, the playSound(WARDEN_TENDRIL_CLICKS,
+                // 5.0f, pitch) the pc 40-58 fold speaks)
+                self.game_events.push(format!(
+                    "warden_tendrils_clicking @{} x{:.6} y{:.6} z{:.6} v5.0 p{:.6}",
+                    self.frame, wx, wy, wz, hear.click_pitch
+                ));
+                self.play_warden_voice_v(
+                    "entity.warden.tendril_clicks",
+                    wx,
+                    wy,
+                    wz,
+                    hear.click_pitch,
+                    5.0,
+                );
+                // THE ANGER RECORD (the hearing's own verdict the store
+                // banks — the +35 the default arm serves, the
+                // active-anger the POST-increase verdict answers)
+                self.game_events.push(format!(
+                    "warden_anger @{} suspect{} +{} -> {}",
+                    self.frame,
+                    crate::sculk::WARDEN_PLAYER_SUSPECT,
+                    crate::sculk::WARDEN_DEFAULT_ANGER,
+                    self.wardens[warden_index].active_anger()
+                ));
+                if let Some((word, pitch)) = hear.listening {
+                    // THE LISTENING VOICE (javap playListeningSound
+                    // pc 0-28 — the ROARING gate the walk keeps, the
+                    // playSound(word, 10.0f, pitch) the volume the
+                    // getSoundVolume 4.0 NEVER serves)
+                    self.play_warden_voice_v(word, wx, wy, wz, pitch, 10.0);
+                }
             }
             // THE CATALYST'S OWN PULSE TAIL (javap SculkCatalystBlock.tick
             // pc 0-37 — the block's own scheduled tick the bloom's
@@ -28195,12 +28327,37 @@ impl App {
     /// two-draw law carries, the feet-center spot the entity's own
     /// position wears — no block's +0.5 the entity lane never adds).
     fn play_warden_voice(&mut self, word: &'static str, x: f64, y: f64, z: f64, pitch: f32) {
+        self.play_warden_voice_v(
+            word,
+            x,
+            y,
+            z,
+            pitch,
+            crate::sculk::WARDEN_MOB_SOUND_VOLUME,
+        );
+    }
+
+    /// THE VOLUME-CARRYING TWIN (javap `LivingEntity.makeSound` — the
+    /// `playSound(sound, getSoundVolume(), getVoicePitch())` fold the
+    /// ambient voices wear — the LISTENING sound the playListeningSound
+    /// walk's OWN 10.0f volume serves, the makeSound fold the listening
+    /// never reads). The AL_MAX_GAIN ceiling the close lane clamps, the
+    /// same law the v4.0 twin speaks.
+    fn play_warden_voice_v(
+        &mut self,
+        word: &'static str,
+        x: f64,
+        y: f64,
+        z: f64,
+        pitch: f32,
+        volume: f32,
+    ) {
         let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
         let yaw = self.listener_yaw();
         self.sounds.play_voice_at_pan(
             self.frame,
             word,
-            crate::sculk::WARDEN_MOB_SOUND_VOLUME,
+            volume,
             pitch,
             ear_distance(ear, x, y, z),
             ear_pan(ear, yaw, x, y, z),
@@ -42673,7 +42830,8 @@ mod tests {
             "the fresh entity the MAX_HEALTH 500.0 keeps"
         );
         assert_eq!(
-            app.wardens[0].anger, 0,
+            app.wardens[0].active_anger(),
+            0,
             "the fresh entity the zero anger the Calm level wears"
         );
         assert!(
@@ -42979,6 +43137,147 @@ mod tests {
         assert!(
             app.wardens[0].ambient_time < 0,
             "the fire the resetAmbientSoundTime floor wears"
+        );
+    }
+
+    /// THE WARDEN'S EARS THE GLIDE THE LISTENING PLAYS (javap
+    /// `Warden$VibrationUser.onReceiveVibration` + the dispatch gates —
+    /// the glide event the pending hear banks, the arrival tick the
+    /// onReceiveVibration speaks, the tendril clicks + the anger + the
+    /// LISTENING voice the walk serves, the records the vocabulary
+    /// banks, the armed cooldown the second dispatch refuses).
+    #[test]
+    fn the_warden_ears_the_glide_the_listening_plays() {
+        // === THE SUMMON (the walk-B's own setup — the stone floor the
+        // warden lands) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(14.0, 35.0, 14.0, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        // the warden the player's earshot moves — the (0.5, 0, -1.5)
+        // offset the in-range verdict keeps
+        app.wardens[0].x = 14.5;
+        app.wardens[0].y = 35.0;
+        app.wardens[0].z = 12.5;
+        // the survival default the canTarget source verdict keeps
+        assert!(app.game_mode.is_survival(), "the fresh App the survival default wears");
+
+        // === THE GLIDE EVENT THE LANE DRIVES (the every-10 gate the
+        // body's own walk serves — the due flag the stamp carries, the
+        // pos the PRE-travel field wears) ===
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.elytra_glide_event_due = true;
+            b.elytra_glide_event_pos = (14.0, 35.0, 12.0);
+        }
+        let before = app.game_events.len();
+        app.update();
+        assert!(
+            app.game_events[before..].iter().any(|l| l.starts_with("elytra_glide @")),
+            "the glide record the sculk lane banks"
+        );
+        assert_eq!(
+            app.warden_hears.len(),
+            1,
+            "the glide the warden's pending hear banks — the radius-16 + the occlusion + the source gates pass"
+        );
+        let pending = app.warden_hears[0];
+        // the listener the EYE point the EntityPositionSource carries —
+        // the distance the feet+2.465 offset folds
+        let eye = f64::from(crate::sculk::WARDEN_EYE_HEIGHT);
+        let (dx, dy, dz) = (14.0 - 14.5, 35.0 - (35.0 + eye), 12.0 - 12.5);
+        let dist = (dx * dx + dy * dy + dz * dz).sqrt();
+        assert_eq!(
+            pending.at_frame,
+            app.frame + crate::mth::floor(dist) as u64,
+            "the arrival the floor fold banks"
+        );
+        assert_eq!(
+            pending.vibration_entity,
+            Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+            "the vibrating entity the local suspect wears"
+        );
+        assert!(
+            !app.game_events.iter().any(|l| l.starts_with("warden_tendrils_clicking")),
+            "the pre-arrival ticks the hearing never speaks"
+        );
+        assert_eq!(app.wardens[0].active_anger(), 0, "the pre-arrival anger the fresh 0 keeps");
+
+        // === THE ARRIVAL (the onReceiveVibration walk the arrival
+        // tick serves — the cooldown 40 arms, the tendril clicks the
+        // v5.0 voice speaks, the anger +35 the default arm wears, the
+        // CALM listening the 35-anger verdict answers) ===
+        while app.frame < pending.at_frame {
+            app.update();
+        }
+        assert!(
+            app.game_events.iter().any(|l| l.starts_with("warden_tendrils_clicking @")),
+            "the arrival the tendril-click record banks"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("warden_anger @") && l.contains("suspect0 +35 -> 35")),
+            "the anger record the +35 -> 35 verdict banks"
+        );
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            35,
+            "the default arm the anger climbs — the Calm level the 35 verdict wears"
+        );
+        assert_eq!(
+            app.wardens[0].vibration_cooldown,
+            crate::sculk::WARDEN_VIBRATION_COOLDOWN,
+            "the arrival the 40-tick memory arms"
+        );
+        let listen_line = app
+            .sounds
+            .events
+            .iter()
+            .find(|e| e.starts_with("entity.warden.listening "));
+        assert!(
+            listen_line.is_some(),
+            "the listening voice the arrival plays — the events lane banks: {:?}",
+            app.sounds.events.iter().filter(|e| e.contains("warden")).collect::<Vec<_>>()
+        );
+        assert!(
+            listen_line.unwrap().contains("v1.000000"),
+            "the v10.0 the AL_MAX_GAIN close ceiling clamps: {:?}",
+            listen_line
+        );
+        assert!(
+            app.sounds.events.iter().any(|e| e.starts_with("entity.warden.tendril_clicks ")),
+            "the tendril-click voice the always arm speaks"
+        );
+
+        // === THE SECOND GLIDE THE COOLDOWN REFUSES (the 40 the
+        // arrival armed, the drain the 40-tick window keeps — the
+        // dispatch the hasMemoryValue gate refuses) ===
+        {
+            let b = app.body.as_mut().expect("the body rides");
+            b.elytra_glide_event_due = true;
+            b.elytra_glide_event_pos = (14.0, 35.0, 12.0);
+        }
+        app.update();
+        assert!(
+            app.warden_hears.is_empty(),
+            "the armed cooldown the dispatch refuses — the pending hear never banks"
+        );
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            35,
+            "the refused dispatch the anger never climbs"
         );
     }
 
