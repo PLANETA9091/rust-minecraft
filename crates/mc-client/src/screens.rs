@@ -25958,6 +25958,13 @@ impl App {
         let candle_cake_eat = self.held_id().is_none()
             && cell_kind.is_some_and(crate::world::is_candle_cake)
             && self.food_data.needs_food();
+        // THE MAX BITE'S OWN VERDICT (javap CakeBlock.eat pc 55-59 —
+        // the bites >= 6 branch the removeBlock walk + the
+        // BLOCK_DESTROY gameEvent pc 100-106 wears — the verdict the
+        // posts' own tail consults, the fresh-cake fall-through the
+        // ladder's first stage the verdict never answers)
+        let cake_final_bite = eat_bite
+            && cell_kind.is_some_and(|k| crate::world::cake_bite_next(k).is_none());
         if !self.world_is_network && douse {
             // THE SET BEFORE THE VOICE (the extinguish walk's own
             // sequence — the cake-add arm's voice-first beat the
@@ -26138,12 +26145,51 @@ impl App {
             // `gameEvent(BLOCK_CHANGE, pos, Context.of(player, state))`
             // walk pc 95-103 serves — the cake cell's own center the
             // +0.5 pair wears, the f11 the row keeps): the candle-on-
-            // cake swap the sensors hear, the eats the lane never
-            // speaks (the EAT gameEvent the CakeBlock.eat pc 44-50
-            // walk a future round banks)
+            // cake swap the sensors hear
             if candle_swap && !self.world_is_network && self.offline_world.is_some() {
                 self.dispatch_vibration_event(
                     "block_change",
+                    (
+                        hit.pos.0 as f64 + 0.5,
+                        hit.pos.1 as f64 + 0.5,
+                        hit.pos.2 as f64 + 0.5,
+                    ),
+                );
+            }
+            // THE EAT EVENT'S OWN POST (javap CakeBlock.eat pc 44-50
+            // over the 26.2 jar — the FoodData.eat pc 19-26 and the
+            // BITES read pc 29-42 the `gameEvent(player, GameEvent.EAT,
+            // pos)` walk pc 44-50 FOLLOWS, the bites branch pc 55+ the
+            // tail serves — the cake cell's own center the +0.5 pair
+            // wears, the f8 the eat row keeps): EVERY successful bite
+            // the post speaks — the plain cake's ladder AND the candle
+            // cake's fall-through (the CakeBlock.eat static the fresh-
+            // CAKE state serves, the same pc 44-50 walk the sibling
+            // wears) — the eating suspect the sensors hear, the f8
+            // the warden's ears the snack answers
+            if (eat_bite || candle_cake_eat)
+                && !self.world_is_network
+                && self.offline_world.is_some()
+            {
+                self.dispatch_vibration_event(
+                    "eat",
+                    (
+                        hit.pos.0 as f64 + 0.5,
+                        hit.pos.1 as f64 + 0.5,
+                        hit.pos.2 as f64 + 0.5,
+                    ),
+                );
+            }
+            // THE MAX-BITE DESTROY'S OWN POST (javap CakeBlock.eat
+            // pc 100-106 — the removeBlock pc 91-99 FOLLOWS the
+            // `gameEvent(player, GameEvent.BLOCK_DESTROY, pos)` walk
+            // the tail serves — the seventh bite the AIR wears, the
+            // f12 the block_destroy row keeps, the EAT post the record
+            // PRECEDES the vanilla's own pc order keeps): the ladder's
+            // last bite the destroy the sensors hear
+            if cake_final_bite && !self.world_is_network && self.offline_world.is_some() {
+                self.dispatch_vibration_event(
+                    "block_destroy",
                     (
                         hit.pos.0 as f64 + 0.5,
                         hit.pos.1 as f64 + 0.5,
@@ -46204,6 +46250,286 @@ mod tests {
                 .iter()
                 .all(|l| !l.starts_with("block_place @")),
             "the floor refusal the block_place record never banks: {:?}",
+            app.game_events
+        );
+    }
+
+    /// THE CAKE BITE THE SENSOR HEARS (javap CakeBlock.eat pc 44-50
+    /// over the 26.2 jar — the FoodData.eat pc 19-26 and the BITES
+    /// read pc 29-42 the `gameEvent(player, GameEvent.EAT, pos)` walk
+    /// pc 44-50 FOLLOWS, the bites<6 branch pc 55-88 the tail serves
+    /// — the cake cell's center the +0.5 pair speaks, the f8 the eat
+    /// row keeps): the hungry body the plain cake bites, the record
+    /// the cake center banks, the earshot sensor the sculk_hearing
+    /// answers — the ladder's first stage the destroy never speaks.
+    #[test]
+    fn the_cake_bite_the_sensor_hears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAKE);
+        }
+        app.place_sculk_sensor(c + 2, top + 2, c);
+        assert!(
+            app.game_events.iter().all(|l| !l.starts_with("eat @")),
+            "the unbitten world the eat never speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE HUNGRY BODY THE GATE ANSWERS (the bite test's own bar —
+        // the 6 start the +2 feed the clamp never gates)
+        app.food_data.set_food_level(6);
+        app.food_data.set_saturation(0.0);
+        assert!(app.on_right_press(0, 0), "the bite consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::CAKE_SLICE1,
+            "the bites 0->1 branch the kind swap wears"
+        );
+        assert_eq!(app.food_data.food_level(), 8, "the +2 feed the bar wears");
+        // THE RECORD THE CAKE CENTER SPEAKS (the gameEvent's pos the
+        // +0.5 pair answers — the f8 the eat row wears)
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("eat @") && l.contains(&center) && l.ends_with("r16 f8")),
+            "the bite the eat record the cake center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the bite hears"
+        );
+        // THE LADDER'S FIRST STAGE THE DESTROY NEVER SPEAKS (the
+        // bites<6 branch the setBlock alone wears — the BLOCK_DESTROY
+        // gameEvent the max-bite walk a later bite banks)
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_destroy @")),
+            "the first bite the destroy never speaks: {:?}",
+            app.game_events
+        );
+    }
+
+    /// THE MAX BITE THE DESTROY WEARS (javap CakeBlock.eat pc 91-106
+    /// over the 26.2 jar — the seventh bite the bites >= 6 branch
+    /// serves: the removeBlock pc 91-99 the AIR returns, the
+    /// `gameEvent(player, GameEvent.BLOCK_DESTROY, pos)` walk
+    /// pc 100-106 FOLLOWS — the f12 the block_destroy row keeps, the
+    /// EAT post pc 44-50 the record PRECEDES the vanilla's own pc
+    /// order keeps): the ladder the six slices the eat row wears, the
+    /// seventh bite the destroy the sensors hear.
+    #[test]
+    fn the_cake_max_bite_the_destroy_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CAKE);
+        }
+        app.place_sculk_sensor(c + 2, top + 2, c);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        // THE HUNGRY BODY THE SEVEN BITES THE BAR CARRIES (the 18 the
+        // seventh bite's canEat still answers — the ladder test's own
+        // law)
+        app.food_data.set_food_level(6);
+        app.food_data.set_saturation(0.0);
+        let ladder = [
+            crate::world::CAKE_SLICE1,
+            crate::world::CAKE_SLICE2,
+            crate::world::CAKE_SLICE3,
+            crate::world::CAKE_SLICE4,
+            crate::world::CAKE_SLICE5,
+            crate::world::CAKE_SLICE6,
+        ];
+        for (bite, expected) in ladder.iter().enumerate() {
+            assert!(
+                app.on_right_press(0, 0),
+                "bite {bite}: the eat lane the press consumes"
+            );
+            assert_eq!(
+                app.offline_world.as_ref().unwrap().get(c, top, c),
+                *expected,
+                "bite {bite}: the stage the kind swap wears"
+            );
+        }
+        // THE LADDER THE SIX EAT ROWS THE DESTROY NEVER SPEAKS (the
+        // bites<6 branch the setBlock alone wears)
+        let eats_after_ladder = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("eat @"))
+            .count();
+        assert_eq!(eats_after_ladder, 6, "the six bites the six rows wear");
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_destroy @")),
+            "the ladder the destroy never speaks"
+        );
+        // THE SEVENTH BITE THE AIR RETURNS (the removeBlock walk the
+        // max-bite branch serves — the EAT row AND the destroy row
+        // the same bite banks)
+        assert!(app.on_right_press(0, 0), "the seventh bite consumes");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::AIR,
+            "the cake the cell clears"
+        );
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        let eats_after_max = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("eat @"))
+            .count();
+        assert_eq!(eats_after_max, 7, "the seventh bite the eat row wears");
+        let last_eat = app
+            .game_events
+            .iter()
+            .rposition(|l| l.starts_with("eat @"))
+            .expect("the eat rows the ladder banks");
+        let destroy_pos = app
+            .game_events
+            .iter()
+            .position(|l| l.starts_with("block_destroy @"))
+            .expect("the max bite the destroy banks");
+        assert!(
+            destroy_pos > last_eat,
+            "the destroy the EAT post FOLLOWS the vanilla's own pc order: {:?}",
+            app.game_events
+        );
+        assert!(
+            app.game_events.iter().any(|l| l.starts_with("block_destroy @")
+                && l.contains(&center)
+                && l.ends_with("r16 f12")),
+            "the max bite the block_destroy record the cake center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the ladder hears"
+        );
+    }
+
+    /// THE CANDLE CAKE EAT THE SENSOR HEARS (javap CandleCakeBlock.
+    /// useWithoutItem pc 0-33 over the 26.2 jar — the douse consult's
+    /// refusal the CakeBlock.eat static the FRESH-CAKE state serves:
+    /// the same pc 44-50 EAT post the sibling wears, the bites 0->1
+    /// branch the CAKE_SLICE1 kind answers — the fresh stage the
+    /// destroy NEVER speaks, the f8 the eat row keeps): the empty
+    /// hand the lit-free cake eats, the record the cake center banks,
+    /// the candle drop the tail rides.
+    #[test]
+    fn the_candle_cake_eat_the_sensor_hears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            for dx in -2..=2 {
+                for dz in -2..=2 {
+                    w.set(c + dx, top - 1, c + dz, crate::world::STONE);
+                    w.set(c + dx, top, c + dz, crate::world::AIR);
+                    w.set(c + dx, top + 1, c + dz, crate::world::AIR);
+                }
+            }
+            w.set(c, top, c, crate::world::CANDLE_CAKE);
+        }
+        app.place_sculk_sensor(c + 2, top + 2, c);
+        assert!(
+            app.game_events.iter().all(|l| !l.starts_with("eat @")),
+            "the unbitten world the eat never speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.food_data.set_food_level(6);
+        app.food_data.set_saturation(0.0);
+        assert!(
+            app.on_right_press(0, 0),
+            "the eat lane the press consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::CAKE_SLICE1,
+            "the fresh-CAKE state the bites 0->1 ladder wears"
+        );
+        assert_eq!(app.drops.len(), 1, "the candle drop the tail spawns");
+        // THE RECORD THE CAKE CENTER SPEAKS (the same pc 44-50 walk
+        // the static serves — the f8 the eat row wears)
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("eat @") && l.contains(&center) && l.ends_with("r16 f8")),
+            "the candle cake's eat the record the cake center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the eat hears"
+        );
+        // THE FRESH STAGE THE DESTROY NEVER SPEAKS (the bites 0->1
+        // branch the setBlock alone wears — the BLOCK_DESTROY the
+        // max-bite walk a later bite banks)
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_destroy @")),
+            "the fresh stage the destroy never speaks: {:?}",
             app.game_events
         );
     }
