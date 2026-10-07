@@ -10153,12 +10153,19 @@ impl App {
             // the touches the collected vec banks, the borrow the
             // play's own pass splits.
             let mut warden_touches: Vec<(usize, u64, crate::sculk::WardenTouch)> = Vec::new();
+            let mut warden_crammings: Vec<((f64, f64, f64), crate::sculk::WardenCramming)> =
+                Vec::new();
             let touch_targetable = self.game_mode.is_survival() && !self.dead;
             for (wi, warden) in self.wardens.iter_mut().enumerate() {
                 if warden.health <= 0.0 {
                     continue;
                 }
                 let wbox = crate::sculk::warden_entity_box((warden.x, warden.y, warden.z));
+                // THE QUERY (pc 0-12): the intersecting pushable bodies
+                // the list banks FIRST — the cramming arm pc 28-156 the
+                // list serves BEFORE the doPush loop pc 157-191 (the
+                // real order the walk wears)
+                let mut pushable: Vec<(u64, (f64, f64, f64), bool, bool)> = Vec::new();
                 if let Some(b) = self.body.as_ref() {
                     // THE ALIVE VERDICT the pushableBy's spectator-free
                     // walk keeps (javap pc 31-47 — the NO_SPECTATORS
@@ -10171,14 +10178,12 @@ impl App {
                             (b.x + 0.3, b.y + 1.8, b.z + 0.3),
                         );
                         if crate::sculk::aabb_intersects(wbox, pbox) {
-                            if let Some(t) = warden.do_push(
+                            pushable.push((
                                 crate::sculk::WARDEN_PLAYER_SUSPECT,
                                 (b.x, b.y, b.z),
                                 true,
                                 touch_targetable,
-                            ) {
-                                warden_touches.push((wi, crate::sculk::WARDEN_PLAYER_SUSPECT, t));
-                            }
+                            ));
                         }
                     }
                 }
@@ -10192,11 +10197,56 @@ impl App {
                         (z.x + zh, z.y + crate::mob::ZOMBIE_HEIGHT, z.z + zh),
                     );
                     if crate::sculk::aabb_intersects(wbox, zbox) {
-                        if let Some(t) = warden.do_push(z.id as u64, (z.x, z.y, z.z), false, true) {
-                            warden_touches.push((wi, z.id as u64, t));
-                        }
+                        pushable.push((z.id as u64, (z.x, z.y, z.z), false, true));
                     }
                 }
+                // pc 13-22: the empty list the early return keeps
+                if pushable.is_empty() {
+                    continue;
+                }
+                // pc 28-156: THE CRAMMING ARM — the server gamerule
+                // branch the touches PRECEDE: the `size() > max - 1`
+                // STRICT fold the few entities never arms, the 1-in-4
+                // draw the ENTITY'S OWN stream spends, the RAW 6.0f the
+                // health folds — the null attacker the anger NEVER
+                // banks, the listening NEVER arms (the
+                // MAX_ENTITY_CRAMMING default the GameRules clinit's
+                // bipush-24 carries)
+                if let Some(cram) = warden.cramming_hurt(
+                    pushable.len(),
+                    pushable.len(),
+                    crate::sculk::MAX_ENTITY_CRAMMING_DEFAULT,
+                ) {
+                    warden_crammings.push(((warden.x, warden.y, warden.z), cram));
+                }
+                // pc 157-191: THE DOPUSH LOOP — the same list the
+                // touches serve (the TOUCH_COOLDOWN gate the loop's own
+                // refusals keep — the crowd the ONE touch banks)
+                for (suspect, pos, is_player, targetable) in &pushable {
+                    if let Some(t) = warden.do_push(*suspect, *pos, *is_player, *targetable) {
+                        warden_touches.push((wi, *suspect, t));
+                    }
+                }
+            }
+            // THE CRAMMING RECORDS (pc 141-156 — the hurt the raw fold
+            // wears, the voice the pipeline answers): the records the
+            // touch records PRECEDE — the pc order the walk wears, the
+            // getSoundVolume 4.0 the hurt voice speaks
+            for ((wx, wy, wz), cram) in warden_crammings {
+                self.game_events.push(format!(
+                    "warden_cramming @{} d{} -> {}",
+                    self.frame,
+                    crate::sculk::WARDEN_CRAMMING_DAMAGE,
+                    cram.health_after
+                ));
+                self.play_warden_voice_v(
+                    cram.word,
+                    wx,
+                    wy,
+                    wz,
+                    cram.pitch,
+                    crate::sculk::WARDEN_MOB_SOUND_VOLUME,
+                );
             }
             for (wi, suspect, touch) in warden_touches {
                 let w = &self.wardens[wi];
@@ -44691,6 +44741,289 @@ mod tests {
         );
         assert_eq!(app.wardens[3].touch_cooldown, 0, "the D the memory never banks");
         assert!(app.wardens[3].disturbance.is_none(), "the D the eyes never open");
+    }
+
+    /// THE CRAMMING THE GATES THE DAMAGE WEARS (javap
+    /// `LivingEntity.pushEntities` pc 28-156 — the gates the order the
+    /// pc walk wears: the 0/negative gamerule the arm refuses, the few
+    /// entities the `size() > max - 1` STRICT fold never arms, the
+    /// 1-in-4 draw the ENTITY'S OWN stream spends — the refusals the
+    /// draw NEVER refund, the count gate the draw the spent wear
+    /// keeps, the RAW 6.0f the health folds, the null attacker the
+    /// anger NEVER banks).
+    #[test]
+    fn the_cramming_the_gates_the_damage_wears() {
+        let mut w = crate::sculk::WardenMob::new(900, 0.0, 0.0, 0.0);
+        // === THE DISABLED RULE (pc 57-58): the `ifle 157` the 0 the
+        // arm NEVER enters — the rng the gate never draws ===
+        let fresh = w.rng.clone();
+        assert!(
+            w.cramming_hurt(24, 24, 0).is_none(),
+            "the 0 gamerule the cramming NEVER arms"
+        );
+        assert_eq!(w.rng, fresh, "the disabled rule the stream never spends");
+        // === THE FEW ENTITIES (pc 61-70): the size 23 the
+        // `23 > 23` STRICT fold refuses — the draw the gate never
+        // reaches ===
+        assert!(
+            w.cramming_hurt(23, 23, crate::sculk::MAX_ENTITY_CRAMMING_DEFAULT).is_none(),
+            "the few entities the branch never arms"
+        );
+        assert_eq!(w.rng, fresh, "the size gate the refusal the stream keeps");
+        // === THE SIZE GATE THE DRAW SPENDS (pc 73-83): the size 24
+        // the draw rides — the unlucky seed the 1-in-4 refuses, the
+        // stream the SPENT wear keeps (the refusal the NEVER refunds)
+        let mut seed = 1u64;
+        loop {
+            let mut p = crate::drops::Lcg::new(seed);
+            if p.next_int(4) != 0 {
+                break;
+            }
+            seed += 1;
+        }
+        w.rng = crate::drops::Lcg::new(seed);
+        let pre = w.rng.clone();
+        assert!(
+            w.cramming_hurt(24, 24, crate::sculk::MAX_ENTITY_CRAMMING_DEFAULT).is_none(),
+            "the 1-in-4 draw the unlucky walk refuses"
+        );
+        assert_ne!(w.rng, pre, "the draw the stream spends — the refusal NEVER refunds");
+        // === THE COUNT GATE THE DRAW STILL SPENDS (pc 86-138): the
+        // passengers the crowd the count refuses — the draw the pc
+        // order the BEFORE wears (the pc 73-83 the pc 133-138
+        // precedes) ===
+        let mut seed = 1u64;
+        loop {
+            let mut p = crate::drops::Lcg::new(seed);
+            if p.next_int(4) == 0 {
+                break;
+            }
+            seed += 1;
+        }
+        w.rng = crate::drops::Lcg::new(seed);
+        let pre = w.rng.clone();
+        assert!(
+            w.cramming_hurt(24, 23, crate::sculk::MAX_ENTITY_CRAMMING_DEFAULT).is_none(),
+            "the passengers the count gate refuses"
+        );
+        assert_ne!(w.rng, pre, "the count gate the draw the spent wear keeps");
+        // === THE DAMAGE (pc 141-156): the lucky seed the crowd the
+        // hurt wears — the RAW 6.0f the 500-body folds, the hurt voice
+        // the pipeline answers, the pitch the two-draw the voice
+        // spends, THE ANGER the null attacker NEVER banks ===
+        w.rng = crate::drops::Lcg::new(seed);
+        let cram = w
+            .cramming_hurt(24, 24, crate::sculk::MAX_ENTITY_CRAMMING_DEFAULT)
+            .expect("the crowd the hurt wears");
+        assert_eq!(w.health, 494.0, "the RAW 6.0f the health folds — the NO-ARMOR rows keep");
+        assert_eq!(cram.health_after, 494.0, "the POST-damage health the verdict banks");
+        assert!(!cram.died, "the wounded the false keeps");
+        assert_eq!(cram.word, "entity.warden.hurt", "the hurt voice the pipeline answers");
+        assert!(cram.pitch > 0.0, "the two-draw pitch the voice wears");
+        assert_eq!(w.active_anger(), 0, "the null attacker the anger NEVER climbs");
+        assert!(w.disturbance.is_none(), "the disturbance the null pos NEVER banks");
+        assert_eq!(w.touch_cooldown, 0, "the cramming the touch never banks");
+        // === THE DEATH (the same pipeline the 5-body wears): the
+        // 5.0 - 6.0 the isDeadOrDying the TRUE answers, the WARDEN_DEATH
+        // the word keeps ===
+        w.health = 5.0;
+        w.rng = crate::drops::Lcg::new(seed);
+        let cram = w
+            .cramming_hurt(24, 24, crate::sculk::MAX_ENTITY_CRAMMING_DEFAULT)
+            .expect("the wounded the hurt wears");
+        assert!(cram.died, "the 5.0 - 6.0 the death wears");
+        assert_eq!(cram.word, "entity.warden.death", "the death voice the pipeline answers");
+        assert_eq!(cram.health_after, -1.0, "the negative the raw fold wears");
+        // === THE DEAD HEAD (the isDeadOrDying the pipeline keeps):
+        // the hurt refuses — the draw the pc order the spent wear keeps
+        w.health = 0.0;
+        w.rng = crate::drops::Lcg::new(seed);
+        let pre = w.rng.clone();
+        assert!(
+            w.cramming_hurt(24, 24, crate::sculk::MAX_ENTITY_CRAMMING_DEFAULT).is_none(),
+            "the isDeadOrDying head the hurt refuses"
+        );
+        assert_ne!(w.rng, pre, "the dead head the draw the spent wear keeps");
+    }
+
+    /// THE CRAMMING THE PUSH WALK THE ORDER SERVES (the frame walk's
+    /// own restructure the 24-zombie crowd wears: the query pc 0-12
+    /// the list banks, the empty check pc 13-22 keeps, the cramming
+    /// arm pc 28-156 the touches PRECEDE — the record the pc order
+    /// banks, the hurt voice the pipeline plays, the touch loop
+    /// pc 157-191 the ONE touch the standing cooldown keeps, the +35
+    /// the anger the touch alone banks).
+    #[test]
+    fn the_cramming_the_push_walk_the_order_serves() {
+        // === THE SETUP (the touch test's own floor — the warden the
+        // 24-zombie crowd the box meets: the size 24 the `> 23` STRICT
+        // fold the branch arms) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.wardens
+            .push(crate::sculk::WardenMob::new(101, 12.5, 35.0, 12.5));
+        for i in 0..24 {
+            app.mobs
+                .push(crate::mob::Zombie::new(1000 + i as i32, 12.5, 35.0, 12.5, 7));
+        }
+        // THE LUCKY SEED (the per-tick stream the ambient draw rides
+        // FIRST — the second draw the cramming's own 1-in-4 spends):
+        // the probe the TWO draws consults
+        let mut seed = 1u64;
+        loop {
+            let mut p = crate::drops::Lcg::new(seed);
+            p.next();
+            if p.next_int(4) == 0 {
+                break;
+            }
+            seed += 1;
+        }
+        app.wardens[0].rng = crate::drops::Lcg::new(seed);
+        // === THE FRAME (the push walk the cramming arm the touches
+        // PRECEDE — the pc order the records wear) ===
+        for z in &mut app.mobs {
+            z.x = 12.5;
+            z.y = 35.0;
+            z.z = 12.5;
+        }
+        app.update();
+        // THE CRAMMING RECORD THE TOUCHES PRECEDE (the pc 141-156 the
+        // pc 157-191 precedes — the game_events order the walk wears)
+        let cram_ix = app
+            .game_events
+            .iter()
+            .position(|l| l.starts_with("warden_cramming @"))
+            .expect("the crowd the hurt record banks");
+        let touch_ix = app
+            .game_events
+            .iter()
+            .position(|l| l.starts_with("warden_touch @"))
+            .expect("the touch the contact banks");
+        assert!(
+            cram_ix < touch_ix,
+            "the cramming arm the doPush loop PRECEDES: {:?}",
+            &app.game_events[cram_ix..=touch_ix]
+        );
+        let cram_line = &app.game_events[cram_ix];
+        assert!(
+            cram_line.contains("d6 -> 494"),
+            "the RAW 6.0f the 500-body folds: {}",
+            cram_line
+        );
+        assert_eq!(app.wardens[0].health, 494.0, "the health the raw fold wears");
+        // THE ANGER THE TOUCH ALONE BANKS (the cramming the null
+        // attacker the store NEVER touches — the +35 the doPush speaks)
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            35,
+            "the touch the +35 banks — the cramming the anger NEVER climbs"
+        );
+        // THE CROWD THE ONE TOUCH (the TOUCH_COOLDOWN gate the loop's
+        // own refusals keep — the 24 bodies the ONE anger arm wears)
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("warden_touch @"))
+                .count(),
+            1,
+            "the standing cooldown the crowd the ONE touch banks"
+        );
+        // THE HURT VOICE (the pipeline the WARDEN_HURT plays — the
+        // getSoundVolume 4.0 the lane speaks)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.hurt ")),
+            "the cramming hurt the voice plays: {:?}",
+            app.sounds.events
+        );
+    }
+
+    /// THE CRAMMING THE FEW THE LANE KEEPS (the 23-zombie crowd the
+    /// size gate refuses — the `23 > 23` STRICT fold the FALSE keeps,
+    /// the draw the gate never spends, the health the fresh body
+    /// keeps, the hurt voice never plays — AND the touch lane the
+    /// restructure never breaks: the same list the doPush loop the
+    /// 555 law serves).
+    #[test]
+    fn the_cramming_the_few_the_lane_keeps() {
+        // === THE SETUP (the 23-zombie crowd — ONE below the arm) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.wardens
+            .push(crate::sculk::WardenMob::new(101, 12.5, 35.0, 12.5));
+        for i in 0..23 {
+            app.mobs
+                .push(crate::mob::Zombie::new(1000 + i as i32, 12.5, 35.0, 12.5, 7));
+        }
+        // the lucky seed anyway — the boundary the refusal keeps (the
+        // draw the size gate never spends)
+        let mut seed = 1u64;
+        loop {
+            let mut p = crate::drops::Lcg::new(seed);
+            p.next();
+            if p.next_int(4) == 0 {
+                break;
+            }
+            seed += 1;
+        }
+        app.wardens[0].rng = crate::drops::Lcg::new(seed);
+        for z in &mut app.mobs {
+            z.x = 12.5;
+            z.y = 35.0;
+            z.z = 12.5;
+        }
+        app.update();
+        // THE FEW THE BRANCH NEVER ARMS: no cramming record, the
+        // health the fresh body keeps, the hurt voice never plays
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("warden_cramming @")),
+            "the 23 the size gate refuses: {:?}",
+            app.game_events
+                .iter()
+                .filter(|l| l.contains("cramming"))
+                .collect::<Vec<_>>()
+        );
+        assert_eq!(
+            app.wardens[0].health,
+            crate::sculk::WARDEN_MOB_MAX_HEALTH,
+            "the refusal the health keeps"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("entity.warden.hurt ")),
+            "the hurt voice the refusal never plays"
+        );
+        // THE TOUCH LANE THE RESTRUCTURE NEVER BREAKS (the same list
+        // the doPush loop serves — the 555 law the restructure keeps)
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("warden_touch @"))
+                .count(),
+            1,
+            "the contact the ONE touch banks"
+        );
+        assert_eq!(app.wardens[0].active_anger(), 35, "the touch the anger climbs");
     }
 
     /// THE WARDEN'S EARS THE GLIDE THE LISTENING PLAYS (javap

@@ -1361,6 +1361,43 @@ pub struct WardenTouch {
     pub disturbance: Option<WardenDisturbance>,
 }
 
+/// THE CRAMMING GAMERULE'S OWN DEFAULT (javap `GameRules` clinit —
+/// the `registerInteger("maxEntityCramming", MISC, bipush 24,
+/// iconst_0)` walk the row banks: the integer rule the fresh world
+/// the 24 carries, the `bipush 24` the default the clinit speaks).
+pub const MAX_ENTITY_CRAMMING_DEFAULT: i32 = 24;
+
+/// THE CRAMMING DAMAGE (javap `LivingEntity.pushEntities` pc 150 —
+/// the `ldc_w 6.0f` the `hurtServer(serverLevel, damageSources()
+/// .cramming(), 6.0f)` call wears: the RAW damage the
+/// createAttributes the NO-ARMOR row keeps — the health the fold
+/// never scales).
+pub const WARDEN_CRAMMING_DAMAGE: f32 = 6.0;
+
+/// THE CRAMMING HURT'S OWN VERDICT (javap `LivingEntity.pushEntities`
+/// pc 141-156 — the hurt the walk banks: the health the RAW damage
+/// wears, the word the hurt pipeline's own voice answers (the death
+/// the WARDEN_DEATH answers), the pitch the two-draw the voice
+/// spends. THE ANGER the null attacker REFUSES — the cramming source
+/// the `getEntity()` null answers, the increaseAngerAt the
+/// canTargetEntity(null) head the instanceof the null FAILS keeps —
+/// the anger NEVER climbs, the listening NEVER arms, the disturbance
+/// NEVER banks).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenCramming {
+    /// the isDeadOrDying verdict the damage wears (the 500.0 body the
+    /// 6.0 fold the death never meets — the wounded the false keeps)
+    pub died: bool,
+    /// the hurt pipeline's own voice word (the hurt the
+    /// WARDEN_HURT answers, the death the WARDEN_DEATH keeps)
+    pub word: &'static str,
+    /// the two-draw pitch the voice spends (the entity's own stream
+    /// the getVoicePitch fold wears)
+    pub pitch: f32,
+    /// the POST-damage health the raw fold wears
+    pub health_after: f32,
+}
+
 /// `EntityType$Builder.sized(0.9f, 2.9f)` (javap the EntityTypes
 /// clinit pc 6612-6618 — the WARDEN register call's own pair the
 /// `ldc_w 0.9f` / `ldc_w 2.9f` rows keep): the warden's own
@@ -1919,6 +1956,93 @@ impl WardenMob {
         Some(WardenTouch {
             listening,
             disturbance: self.disturbance,
+        })
+    }
+
+    /// THE CRAMMING WALK (javap `LivingEntity.pushEntities` pc 28-156,
+    /// verbatim — the server gamerule branch the doPush loop pc 157-191
+    /// PRECEDES: the hurt the touches' own head wears). THE SERVER ARM
+    /// pc 28-32 the `instanceof ServerLevel` keeps (the caller the
+    /// frame walk's own server lane wears — the client the branch never
+    /// serves). THE GATES the order the pc walk wears:
+    /// pc 40-58 — the `getGameRules().get(MAX_ENTITY_CRAMMING)` fold
+    /// the `max` param answers (the GameRules clinit's bipush-24 the
+    /// default carries), the `ifle 157` the 0/negative rule the
+    /// cramming NEVER arms;
+    /// pc 61-70 — the `list.size() > max - 1` STRICT fold the size
+    /// gate wears (the few entities the branch never arms — the
+    /// if_icmple the `<=` pair keeps);
+    /// pc 73-83 — the `this.random.nextInt(4) == 0` draw the ENTITY'S
+    /// OWN RandomSource spends (the warden's own rng the voice lanes
+    /// share) — THE DRAW THE LATER GATES REFUSE STILL SPENDS (the
+    /// pc 86-138 count walk the draw NEVER guards);
+    /// pc 86-133 — the non-passenger count the `isPassenger()` filter
+    /// wears (the riding bodies the count refuses; the port's
+    /// no-vehicle world every body the false verdict keeps — the
+    /// caller the same count the size serves);
+    /// pc 133-138 — the `count > max - 1` STRICT fold the count gate
+    /// wears (the passengers the crowd the count never meets);
+    /// pc 141-156 — the `hurtServer(serverLevel, damageSources()
+    /// .cramming(), 6.0f)` the walk wears: the isDeadOrDying head the
+    /// hurt pipeline keeps, the RAW 6.0f the health folds (the
+    /// NO-ARMOR rows the createAttributes keeps), the hurt voice the
+    /// pipeline answers, the pitch the two-draw the voice spends. THE
+    /// ANGER the null attacker REFUSES (javap `Warden.hurtServer`
+    /// pc 23-44 — the `getEntity()` null the cramming source answers,
+    /// the `increaseAngerAt(null, 100, false)` the 3-arg's own
+    /// `canTargetEntity(null)` head pc 7-12 the instanceof the null
+    /// FAILS keeps — the anger NEVER climbs, the listening NEVER
+    /// arms), the ATTACK_TARGET arm pc 61-66 the `instanceof
+    /// LivingEntity` the null FAILS keeps (the target the cramming
+    /// never sets), the disturbance the null pos NEVER banks.
+    pub fn cramming_hurt(
+        &mut self,
+        pushable_size: usize,
+        pushable_non_passengers: usize,
+        max: i32,
+    ) -> Option<WardenCramming> {
+        // pc 40-58: the `ifle 157` — the 0/negative gamerule the
+        // cramming NEVER arms (the disabled rule the lane keeps)
+        if max <= 0 {
+            return None;
+        }
+        // pc 61-70: the `size() > max - 1` STRICT fold — the few
+        // entities the branch never arms
+        if (pushable_size as i32) <= max - 1 {
+            return None;
+        }
+        // pc 73-83: the `nextInt(4) == 0` draw — the ENTITY'S OWN
+        // stream the 1-in-4 gate spends (the draw the later refusals
+        // NEVER refund — the stream the spent wear keeps)
+        if self.rng.next_int(4) != 0 {
+            return None;
+        }
+        // pc 86-138: the non-passenger count gate — the `isPassenger()`
+        // filter the riding bodies refuse (the no-vehicle world the
+        // caller the count the size keeps), the `count > max - 1`
+        // STRICT fold the crowd verdict answers
+        if (pushable_non_passengers as i32) <= max - 1 {
+            return None;
+        }
+        // pc 141-156: the hurtServer(cramming(), 6.0f) — the
+        // isDeadOrDying head the pipeline keeps (the dead body the
+        // hurt refuses — the draw the spent wear the refusal keeps)
+        if self.health <= 0.0 {
+            return None;
+        }
+        self.health -= WARDEN_CRAMMING_DAMAGE;
+        let died = self.health <= 0.0;
+        let word = if died {
+            "entity.warden.death"
+        } else {
+            "entity.warden.hurt"
+        };
+        let pitch = self.voice_pitch();
+        Some(WardenCramming {
+            died,
+            word,
+            pitch,
+            health_after: self.health,
         })
     }
 
