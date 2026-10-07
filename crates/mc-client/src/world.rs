@@ -1735,6 +1735,17 @@ pub struct World {
     /// the dry world the goldens render, the sun/moon at full alpha.
     pub rain_level: f32,
     pub thunder_level: f32,
+    /// THE DARKNESS EFFECT'S OWN LIGHTMAP SCALE (javap
+    /// `LightmapRenderStateExtractor` pc 304-344 — the `darknessEffect
+    /// Scale` the blend factor × the pulse cosine fold speaks, the
+    /// shader's `color -= vec3(DarknessScale)` arm the lightmap build
+    /// consumes). THE PLAYER'S OWN EFFECT STATE the world's render
+    /// fold carries — the same shape the `night_vision_factor` field
+    /// wears (the effect's own factor the snapshot rides); the App
+    /// writes it per frame from the effect store's blend, the mesher's
+    /// lightmap bake consumes. `0.0` = the no-effect floor (the fold's
+    /// bit-for-bit identity — the subtraction the 0.0 no-op keeps).
+    pub darkness_scale: f32,
     /// THE HOST'S OWN DANGER DIAL (the `ServerLevel.getDifficulty()`
     /// walk the F3's LocalDifficulty entry reads — the world's own
     /// `Difficulty` the integrated-server default keeps: NORMAL, the
@@ -1986,7 +1997,8 @@ impl World {
             night_vision_color: None, // the procedural scene: the #999999 default, factor 0.0
             night_vision_factor: 0.0, // the procedural scene: no effect store, the golden floor
             rain_level: 0.0,  // the procedural scene: the dry world the goldens keep
-            thunder_level: 0.0, // the procedural scene: no storm the clouds speak
+            thunder_level: 0.0,
+            darkness_scale: 0.0, // the procedural scene: no effect the store arms // the procedural scene: no storm the clouds speak
             difficulty: crate::difficulty::Difficulty::Normal, // the host's own new-world default
             difficulty_locked: false, // the lock the confirm's Yes alone arms
             inhabited: Some(vec![0u64; chunks_per_side * chunks_per_side]), // the host world's own dwell clock

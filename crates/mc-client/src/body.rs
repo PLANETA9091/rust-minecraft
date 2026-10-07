@@ -964,6 +964,13 @@ pub struct PlayerBody {
     /// feet's own voice.
     pub move_dist: f32,
     pub next_step: f32,
+    /// THE ENTITY'S OWN TICK COUNTER (javap `ServerLevel.tickNonPassenger`
+    /// pc 8-15 — the `entity.tickCount++` the tick's own HEAD serves
+    /// (before `entity.tick()`'s walk), the post-tick value the render's
+    /// partial-0 boundary reads; the darkness pulse's cosine fold the
+    /// count's lifetime speaks). The ctor zeroes; the tick walk's head
+    /// increments.
+    pub tick_count: i32,
     /// the tick's step fired (the block under was solid) — the App
     /// clears it after the sound folds
     pub step_due: bool,
@@ -1263,6 +1270,7 @@ impl PlayerBody {
             no_jump_delay: 0,
             move_dist: 0.0,
             next_step: 1.0,
+            tick_count: 0,
             step_due: false,
             step_in_water: false,
             swim_due: false,
@@ -1536,6 +1544,10 @@ impl PlayerBody {
     /// impulse, the collide, the gravity and the drags. `using_item`
     /// speaks the use arc's own slowdown.
     pub fn tick(&mut self, world: &World, using_item: bool) {
+        // THE ENTITY'S OWN TICK COUNTER (javap tickNonPassenger pc 8-15
+        // — the `tickCount++` the walk's own HEAD serves, before the
+        // physics the vanilla order keeps)
+        self.tick_count += 1;
         // the per-tick event flags clear at the head (the App drains
         // what THIS tick spoke): the splash's own clear rides here —
         // the fluid update fires it AFTER this line, the step block's

@@ -317,8 +317,13 @@ fn night_vision_base(ambient: [f32; 3], tint: Option<[f32; 3]>, factor: f32) -> 
 /// 140) mixed 0.9-parabola toward white on the raw
 /// level — scaled by `BlockFactor` 1.4, the flicker's expectation (the
 /// random walk itself is the documented non-goal). The remaining shader
-/// terms are the defaults' identities at this client's state:
-/// DarknessScale / BossOverlay are 0, and the
+/// terms: the DarknessScale arm the player's own effect state carries —
+/// the shader's `color = color - vec3(lightmapInfo.DarknessScale);`
+/// subtract (javap `LightmapRenderStateExtractor` pc 304-344 + the
+/// 26.2 jar's `shaders/core/lightmap.fsh` verbatim) BEFORE the clamp —
+/// the 0.0 no-effect floor keeps the fold bit for bit (the `x - 0.0`
+/// identity, the bottom clamp no-op on the non-negative terms) —, the
+/// BossOverlay 0 identity, and the
 /// brightness (gamma) mix is an identity at gamma 0. A layer the model
 /// never answered for is `None`, not zero; no layer at all is the legacy
 /// unshaded look.
@@ -332,6 +337,7 @@ pub(crate) fn lightmap_combine(
     block_tint: Option<[f32; 3]>,
     night_vision: Option<[f32; 3]>,
     night_vision_factor: f32,
+    darkness_scale: f32,
 ) -> [f32; 3] {
     let sky_term = sky.map(|v| light_brightness(v) * sky_factor);
     let block_term = block.map(|v| {
@@ -357,7 +363,21 @@ pub(crate) fn lightmap_combine(
         color[1] += b[1];
         color[2] += b[2];
     }
-    [color[0].min(1.0), color[1].min(1.0), color[2].min(1.0)]
+    // THE DARKNESS ARM (lightmap.fsh verbatim: `color = color -
+    // vec3(lightmapInfo.DarknessScale);` — the subtract the shader
+    // speaks BEFORE the clamp; the 0.0 floor the `x - 0.0` f32
+    // identity keeps bit for bit)
+    color[0] -= darkness_scale;
+    color[1] -= darkness_scale;
+    color[2] -= darkness_scale;
+    // the shader's own clamp BOTH sides (`clamp(color, 0.0, 1.0)`) —
+    // the bottom floor the subtraction's negatives land on (the
+    // no-effect floor never wears it — every term above non-negative)
+    [
+        color[0].min(1.0).max(0.0),
+        color[1].min(1.0).max(0.0),
+        color[2].min(1.0).max(0.0),
+    ]
 }
 
 /// The cell's two RAW light layers, as the engine reported them — sky
@@ -682,6 +702,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                         block_tint,
                                         night_vision,
                                         world.night_vision_factor,
+                                        world.darkness_scale,
                                     ),
                                     None => [1.0; 3], // no light layer — legacy look
                                 };
@@ -886,6 +907,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                         block_tint,
                                         night_vision,
                                         world.night_vision_factor,
+                                        world.darkness_scale,
                                     );
                                     colors[i] = [
                                         base[0] * lm[0],
@@ -937,6 +959,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     block_tint,
                                     night_vision,
                                     world.night_vision_factor,
+                                    world.darkness_scale,
                                 );
                                 // `shade: false` — no FACE_SHADE term,
                                 // the lightmap alone multiplies
@@ -1055,6 +1078,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 block_tint,
                                 night_vision,
                                 world.night_vision_factor,
+                                world.darkness_scale,
                             );
                             // `shade: false` — no FACE_SHADE term, the
                             // lightmap alone multiplies
@@ -1191,6 +1215,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 block_tint,
                                 night_vision,
                                 world.night_vision_factor,
+                                world.darkness_scale,
                             );
                             colors[i] = [
                                 base[0] * lm[0] * face_shade,
@@ -1371,6 +1396,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 block_tint,
                                 night_vision,
                                 world.night_vision_factor,
+                                world.darkness_scale,
                             );
                             colors[i] = [
                                 base[0] * lm[0] * face_shade,
@@ -1546,6 +1572,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 block_tint,
                                 night_vision,
                                 world.night_vision_factor,
+                                world.darkness_scale,
                             );
                             colors[i] = [
                                 base[0] * lm[0] * face_shade,
@@ -1716,6 +1743,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 block_tint,
                                 night_vision,
                                 world.night_vision_factor,
+                                world.darkness_scale,
                             );
                             colors[i] = [
                                 base[0] * lm[0] * face_shade,
@@ -1926,6 +1954,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     block_tint,
                                     night_vision,
                                     world.night_vision_factor,
+                                    world.darkness_scale,
                                 );
                                 // `shade: false` — no FACE_SHADE term,
                                 // the lightmap alone multiplies
@@ -2111,7 +2140,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // old max's verdict). No known cell -> legacy look.
                         let lm = match clight.as_ref() {
                             Some((sky, block)) => {
-                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint, night_vision, world.night_vision_factor)
+                                lightmap_combine(sky[src], block[src], sky_factor, sky_tint, ambient, block_tint, night_vision, world.night_vision_factor, world.darkness_scale)
                             }
                             None => [1.0; 3], // no light layer — legacy look
                         };
@@ -2368,6 +2397,7 @@ mod tests {
     /// 1-chunk world, all air.
     fn empty_world() -> World {
         World {
+            darkness_scale: 0.0,
             chunks_per_side: 1,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Normal,
@@ -3304,6 +3334,105 @@ mod tests {
                 assert!((ch - e).abs() < 1e-6, "the lifted base per channel: {ch} vs {e}");
             }
         }
+    }
+
+    /// THE DARKNESS ARM THE SUBTRACT THE CLAMP KEEPS (javap
+    /// LightmapRenderStateExtractor pc 304-344 + the 26.2 jar's
+    /// `shaders/core/lightmap.fsh` — the `color = color -
+    /// vec3(lightmapInfo.DarknessScale);` subtract the clamp's own
+    /// floor speaks, the 0.0 no-effect floor the bit-for-bit identity
+    /// keeps: the goldens' own shape, untouched by construction).
+    #[test]
+    fn the_darkness_arm_the_subtract_the_clamp_keeps() {
+        // THE 0.0 FLOOR (the `x - 0.0` f32 identity + the bottom
+        // clamp's no-op on the non-negative terms): every texel the
+        // pre-darkness arithmetic keeps bit for bit
+        let base = crate::mesher::lightmap_combine(
+            Some(15.0),
+            Some(5.0),
+            1.0,
+            [1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0],
+            None,
+            None,
+            0.0,
+            0.0,
+        );
+        let expect_raw = {
+            let sky = light_brightness(15.0) * 1.0;
+            let b = light_brightness(5.0) * BLOCK_FACTOR;
+            let c = block_light_color(5.0, None);
+            [0.0 + sky + b * c[0], 0.0 + sky + b * c[1], 0.0 + sky + b * c[2]]
+        };
+        let expect = [
+            expect_raw[0].min(1.0),
+            expect_raw[1].min(1.0),
+            expect_raw[2].min(1.0),
+        ];
+        assert_eq!(base, expect, "the no-effect floor the identity wears");
+        // THE SUBTRACT (the shader's own arm): the bright texel the
+        // 0.45 scale dims — the exact float the subtract keeps
+        let dimmed = crate::mesher::lightmap_combine(
+            Some(15.0),
+            Some(5.0),
+            1.0,
+            [1.0, 1.0, 1.0],
+            [0.0, 0.0, 0.0],
+            None,
+            None,
+            0.0,
+            0.45,
+        );
+        // THE SHADER'S OWN ORDER (the clamp rides AFTER the darkness
+        // subtract — the unclamped sum the subtract sees, the
+        // `clamp(color, 0.0, 1.0)` the tail wears): the bright texel
+        // 1.0 + block-term 0.1556 = 1.1556 - 0.45 = 0.7056 — the
+        // clamp-before-subtract shape the identity never spoke
+        for ch in 0..3 {
+            let raw = expect_raw[ch];
+            let want = (raw - 0.45).clamp(0.0, 1.0);
+            assert!(
+                (dimmed[ch] - want).abs() < 1e-6,
+                "the bright texel the subtract wears: {} vs {}",
+                dimmed[ch],
+                want
+            );
+        }
+        // THE CLAMP'S OWN FLOOR (the dark texel the ambient base alone
+        // carries — the subtraction's negative the 0.0 clamps: the
+        // shader's `clamp(color, 0.0, 1.0)` BOTH sides)
+        let dark = crate::mesher::lightmap_combine(
+            Some(0.0),
+            Some(0.0),
+            0.26666668,
+            [1.0, 1.0, 1.0],
+            [0.039215688, 0.039215688, 0.039215688],
+            None,
+            None,
+            0.0,
+            0.45,
+        );
+        assert_eq!(dark, [0.0, 0.0, 0.0], "the dark texel the floor clamps");
+        // THE WORLD FIELD'S OWN RIDE (the mesher's call sites the
+        // World's own field consume — the mesh's vertex colors the
+        // scale's dim wears, the no-effect floor the bake never
+        // touches)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        w.light = Some(unknown_light());
+        set_light(&mut w, None, Some(5), 8, 9, 8);
+        let floor = vertex_multiplier(&top_face(&w));
+        w.darkness_scale = 0.45;
+        let dimmed = vertex_multiplier(&top_face(&w));
+        for (fc, dc) in floor.iter().zip(dimmed.iter()) {
+            assert!(
+                dc < fc || *fc <= 0.0,
+                "the dimmed bake never brightens: {dc} vs {fc}"
+            );
+        }
+        // the floor restored — the identity the zero keeps
+        w.darkness_scale = 0.0;
+        assert_eq!(vertex_multiplier(&top_face(&w)), floor);
     }
 
     #[test]

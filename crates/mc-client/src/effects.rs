@@ -40,6 +40,42 @@ pub const MOB_EFFECT_FIRE_RESISTANCE: i32 = 11;
 /// `minecraft:absorption`'s mob-effect registry id (the test pins it).
 pub const MOB_EFFECT_ABSORPTION: i32 = 21;
 
+/// `minecraft:darkness`'s mob-effect registry id — the 0-based wire
+/// order's own slot (the generated `MOB_EFFECT_ORDER` table's 33rd row,
+/// the index the warden's lightmap lane consumes).
+pub const MOB_EFFECT_DARKNESS: i32 = 32;
+
+/// DARKNESS's own blend duration (javap MobEffects pc 884-908 — the
+/// `new MobEffect(HARMFUL, 2696993).setBlendDuration(22)` registration
+/// walk: the single-arg overload delegates `setBlendDuration(22, 22,
+/// 22)` (javap MobEffect setBlendDuration pc 0-7 — the same int the
+/// THREE fields speak), so the blend-in, the blend-out and the
+/// blend-out ADVANCE padding all wear 22 ticks. The advance is the
+/// blend's own padding law (javap BlendState.hasEffect pc 0-27 — the
+/// `!instance.endsWithin(effect.getBlendOutAdvanceTicks())` verdict:
+/// the factor's target flips to 0 the 22 ticks BEFORE the expiry, the
+/// fade-out completes exactly as the instance dies — the removal's
+/// snap the padding makes invisible).
+pub const DARKNESS_BLEND_TICKS: i32 = 22;
+
+/// The per-effect blend durations `(blend_in, blend_out, advance)` —
+/// javap MobEffects clinit: the effects the `setBlendDuration` call
+/// rides carry their own row, every PLAIN `MobEffect` ctor the JVM's
+/// zero-init keeps (the 0 blend ticks the factor SNAPS to the target —
+/// the fade never speaks). The DARKNESS row the registration's own
+/// `setBlendDuration(22)` banks.
+fn blend_durations(effect_id: i32) -> (i32, i32, i32) {
+    if effect_id == MOB_EFFECT_DARKNESS {
+        (
+            DARKNESS_BLEND_TICKS,
+            DARKNESS_BLEND_TICKS,
+            DARKNESS_BLEND_TICKS,
+        )
+    } else {
+        (0, 0, 0)
+    }
+}
+
 /// The flags' packing the Update Mob Effect packet speaks: bit 0 ambient,
 /// bit 1 visible, bit 2 show icon, bit 3 blend.
 pub const FLAG_AMBIENT: u8 = 1;
@@ -120,6 +156,15 @@ pub struct EffectInstance {
     /// Bit 0 ambient, bit 1 visible, bit 2 show icon, bit 3 blend — the
     /// packet's packing order, retained raw.
     pub flags: u8,
+    /// THE BLEND STATE (javap `MobEffectInstance$BlendState` — the
+    /// instance's own pair the 26.2 class carries: `factor` the current
+    /// 0..1 blend, `factorPreviousFrame` the pre-tick value the render's
+    /// partial-tick lerp walks FROM). The fresh instance the ctor's
+    /// zero pair keeps — the fade-in walks from 0 (the BlendState ctor's
+    /// own JVM zero-init; the `setImmediate` full-sync path the wire
+    /// lane never carries). The DARKNESS lightmap fold consumes it.
+    pub blend_factor: f32,
+    pub blend_prev: f32,
 }
 
 impl EffectInstance {
@@ -150,6 +195,34 @@ impl EffectInstance {
     /// `endsWithin(t)` — `!infinite && duration <= t`.
     pub fn ends_within(&self, t: i32) -> bool {
         !self.is_infinite() && self.duration <= t
+    }
+
+    /// THE BLEND STATE'S OWN TICK (javap `BlendState.tick` pc 0-109 —
+    /// the walk the instance's `tickClient` tail serves AFTER the
+    /// duration's decrement (javap tickClient pc 16-21 — the blend
+    /// consults the POST-decrement duration)): the head the
+    /// `factorPreviousFrame = factor` copy keeps, the target the
+    /// `hasEffect` verdict answers (`!endsWithin(blendOutAdvanceTicks)`
+    /// — the padding flips the target the ADVANCE ticks before the
+    /// expiry), the equal-value early return the `fcmpl` pair keeps,
+    /// the step the `1.0F / blendDurationTicks` fold speaks — the
+    /// `Mth.clamp(target - factor, -step, step)` accumulate the same
+    /// f32 arithmetic wears, the ZERO blend ticks the snap keeps.
+    fn tick_blend(&mut self, effect_id: i32) {
+        self.blend_prev = self.blend_factor;
+        let (in_ticks, out_ticks, advance) = blend_durations(effect_id);
+        let has = !self.ends_within(advance);
+        let target = if has { 1.0_f32 } else { 0.0_f32 };
+        if self.blend_factor == target {
+            return;
+        }
+        let blend_ticks = if has { in_ticks } else { out_ticks };
+        if blend_ticks == 0 {
+            self.blend_factor = target;
+        } else {
+            let step = 1.0_f32 / blend_ticks as f32;
+            self.blend_factor += (target - self.blend_factor).clamp(-step, step);
+        }
     }
 
     /// `isShorterDurationThan(other)` — `!infinite && (duration <
@@ -242,7 +315,16 @@ impl EffectsStore {
     /// `onEffectStarted` lift on EVERY application (the bytecode's
     /// unconditional tail). Returns whether the store changed.
     pub fn add_effect(&mut self, effect_id: i32, amplifier: i32, duration: i32, flags: u8) -> bool {
-        let new = EffectInstance { amplifier, duration, flags };
+        // THE FRESH INSTANCE'S OWN ZERO PAIR (the BlendState ctor's JVM
+        // zero-init — the fade-in walks from 0, the setImmediate
+        // full-sync path the wire lane never carries)
+        let new = EffectInstance {
+            amplifier,
+            duration,
+            flags,
+            blend_factor: 0.0,
+            blend_prev: 0.0,
+        };
         let changed = match self.effects.get_mut(&effect_id) {
             None => {
                 self.effects.insert(effect_id, new);
@@ -305,6 +387,12 @@ impl EffectsStore {
                     if !inst.is_infinite() {
                         inst.duration -= 1;
                     }
+                    // THE BLEND'S OWN TICK (javap tickClient pc 16-21 —
+                    // the blend consults the POST-decrement duration;
+                    // the expired instance's last tick the padding's
+                    // own zero factor keeps — the removal's snap the
+                    // fade-out already made invisible)
+                    inst.tick_blend(id);
                     !inst.has_remaining()
                 }
             };
@@ -320,10 +408,29 @@ impl EffectsStore {
     /// durations tick down, nothing ever removes here (the wire's next
     /// Update/Remove is the truth the model's own store mirrors).
     pub fn tick_client(&mut self) {
-        for inst in self.effects.values_mut() {
+        for (&id, inst) in self.effects.iter_mut() {
             if inst.has_remaining() && !inst.is_infinite() {
                 inst.duration -= 1;
             }
+            // THE BLEND'S OWN TICK (javap tickClient pc 16-21 — the
+            // walk's own tail, the decrement's POST state the blend
+            // consults; the expired-and-not-yet-removed instance the
+            // fade-out's own tail keeps walking)
+            inst.tick_blend(id);
+        }
+    }
+
+    /// THE BLEND FACTOR'S OWN READ (javap `LivingEntity.getEffectBlend
+    /// Factor` pc 0-17 — the `getEffect(holder)` instance the blend's
+    /// own factor answers, the ABSENT effect the 0.0 the null arm
+    /// keeps; the factor itself the `BlendState.getFactor` walk serves
+    /// — javap pc 15-27: `Mth.lerp(partialTick, factorPreviousFrame,
+    /// factor)` the render's interpolation folds, the tick-aligned
+    /// full-tick partial the POST-tick factor wears).
+    pub fn get_blend_factor(&self, effect_id: i32, partial: f32) -> f32 {
+        match self.effects.get(&effect_id) {
+            None => 0.0,
+            Some(inst) => inst.blend_prev + (inst.blend_factor - inst.blend_prev) * partial,
         }
     }
 
@@ -625,5 +732,98 @@ mod tests {
         assert_eq!(effect_id_by_name("minecraft:regeneration"), Some(9));
         assert_eq!(effect_id_by_name("minecraft:absorption"), Some(21));
         assert_eq!(effect_id_by_name("minecraft:nope"), None);
+    }
+
+    /// THE DARKNESS BLEND THE PADDING THE STEP WEARS (javap the 26.2
+    /// jar BlendState.tick pc 0-109 + the tickClient pc 16-21 seat +
+    /// MobEffects pc 884-908's setBlendDuration(22) — the fade-in the
+    /// 22 steps speak, the padding the target flips 22 ticks before
+    /// the expiry, the fade-out completes exactly as the instance
+    /// dies, the plain effect's zero-row the snap keeps, the
+    /// partial-tick lerp the full-tick partial the POST-tick factor
+    /// wears).
+    #[test]
+    fn the_darkness_blend_the_padding_the_step_wears() {
+        let step = 1.0_f32 / DARKNESS_BLEND_TICKS as f32;
+        // THE FADE-IN (the 22 steps the 1/22 fold speaks): the MIRROR
+        // walk the same f32 accumulation speaks — the exact equality
+        // the identical arithmetic keeps
+        let mut s = EffectsStore::new();
+        assert!(s.add_effect(MOB_EFFECT_DARKNESS, 0, 260, DEFAULT_EFFECT_FLAGS));
+        assert_eq!(s.get_blend_factor(MOB_EFFECT_DARKNESS, 1.0), 0.0,
+            "the fresh pair the ctor's zero-init keeps");
+        let mut mirror = 0.0_f32;
+        for k in 1..=DARKNESS_BLEND_TICKS {
+            s.tick_client();
+            mirror += (1.0_f32 - mirror).clamp(-step, step);
+            assert_eq!(s.get_blend_factor(MOB_EFFECT_DARKNESS, 1.0), mirror,
+                "fade-in tick {k} the same accumulation wears");
+        }
+        assert_eq!(mirror, 1.0, "the 22nd step the clamp's convergence lands");
+        assert_eq!(s.get(MOB_EFFECT_DARKNESS).unwrap().duration, 260 - DARKNESS_BLEND_TICKS,
+            "the decrement the tick's own head serves");
+        // THE HOLD (the factor's 1.0 the equal-value early return
+        // keeps): the drain to the duration 23 — the padding's own
+        // boundary the NEXT tick's post-decrement 22 flips (the blend
+        // consults the POST-decrement duration — the tick that LANDS
+        // on 22 already wears the fade-out's first step)
+        for _ in 0..(260 - 2 * DARKNESS_BLEND_TICKS - 1) {
+            s.tick_client();
+        }
+        assert_eq!(s.get(MOB_EFFECT_DARKNESS).unwrap().duration, DARKNESS_BLEND_TICKS + 1);
+        assert_eq!(s.get_blend_factor(MOB_EFFECT_DARKNESS, 1.0), 1.0,
+            "the hold the 1.0 keeps");
+        // THE FADE-OUT (the padding's own 22 steps — the target the
+        // endsWithin(22) verdict flipped): the zero the expiry's tail
+        // banks exactly
+        let mut mirror = 1.0_f32;
+        for k in 1..=DARKNESS_BLEND_TICKS {
+            s.tick_client();
+            mirror += (0.0_f32 - mirror).clamp(-step, step);
+            assert_eq!(s.get_blend_factor(MOB_EFFECT_DARKNESS, 1.0), mirror,
+                "fade-out tick {k} the padding's own step wears");
+        }
+        assert_eq!(mirror, 0.0, "the fade-out completes exactly as the instance dies");
+        assert_eq!(s.get(MOB_EFFECT_DARKNESS).unwrap().duration, 1,
+            "the fade-out's own 22 steps the duration-1 boundary wears");
+        // THE EXPIRED INSTANCE STAYS (the client's copy never removes —
+        // the wire's Remove the truth), the factor the 0.0 floor keeps
+        s.tick_client();
+        assert_eq!(s.get(MOB_EFFECT_DARKNESS).unwrap().duration, 0);
+        assert_eq!(s.get_blend_factor(MOB_EFFECT_DARKNESS, 1.0), 0.0,
+            "the expiry the fade-out already completed — the padding's own poetry");
+        // THE PARTIAL-TICK LERP (the BlendState.getFactor pc 15-27 —
+        // the prev/factor pair the partial interpolates): the fresh
+        // instance's first tick the prev 0 the lerp walks FROM
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_DARKNESS, 0, 260, DEFAULT_EFFECT_FLAGS);
+        s2.tick_client();
+        assert_eq!(s2.get_blend_factor(MOB_EFFECT_DARKNESS, 0.5), step * 0.5,
+            "the half-tick partial the mid-fade wears");
+        assert_eq!(s2.get_blend_factor(MOB_EFFECT_DARKNESS, 0.0), 0.0,
+            "the zero partial the pre-tick value wears");
+        // THE PLAIN EFFECT'S OWN SNAP (the zero blend row the JVM
+        // zero-init keeps — the 0 blend ticks the factor snaps to the
+        // target): the fire-resistance add the first tick's 1.0 wears
+        let mut s3 = EffectsStore::new();
+        s3.add_effect(MOB_EFFECT_FIRE_RESISTANCE, 0, 2400, DEFAULT_EFFECT_FLAGS);
+        s3.tick_client();
+        assert_eq!(s3.get_blend_factor(MOB_EFFECT_FIRE_RESISTANCE, 1.0), 1.0,
+            "the zero row the snap keeps");
+        // THE OFFLINE LANE'S OWN SEAT (the same blend tick the
+        // tick_offline walk's tail wears — the decrement's POST state
+        // the blend consults; the expired instance the removal's own
+        // verdict keeps)
+        let mut s4 = EffectsStore::new();
+        s4.add_effect(MOB_EFFECT_DARKNESS, 0, 260, DEFAULT_EFFECT_FLAGS);
+        s4.tick_offline();
+        assert_eq!(s4.get_blend_factor(MOB_EFFECT_DARKNESS, 1.0), step,
+            "the offline walk the blend's own tick serves");
+        s4.effects.get_mut(&MOB_EFFECT_DARKNESS).unwrap().duration = 1;
+        s4.tick_offline();
+        assert!(s4.get(MOB_EFFECT_DARKNESS).is_none(),
+            "the duration-1 walk the same-tick expiry REMOVES — the walk's own law");
+        assert_eq!(s4.get_blend_factor(MOB_EFFECT_DARKNESS, 1.0), 0.0,
+            "the removal the padding's zero factor keeps");
     }
 }

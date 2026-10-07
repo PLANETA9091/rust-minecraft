@@ -1957,6 +1957,7 @@ struct LightmapUniforms {
     block_tint: Option<[f32; 3]>,
     night_vision: Option<[f32; 3]>,
     night_vision_factor: f32,
+    darkness_scale: f32,
 }
 
 /// THE UNIFORM DECODE (the mesher's own walk mirrored — the stated
@@ -1999,6 +2000,7 @@ fn lightmap_uniforms(world: &crate::world::World) -> LightmapUniforms {
             [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
         }),
         night_vision_factor: world.night_vision_factor,
+        darkness_scale: world.darkness_scale,
     }
 }
 
@@ -2055,6 +2057,7 @@ fn lightmap_grid(u: &LightmapUniforms) -> [[f32; 3]; 256] {
                 u.block_tint,
                 u.night_vision,
                 u.night_vision_factor,
+                u.darkness_scale,
             );
         }
     }
@@ -6185,6 +6188,14 @@ pub struct App {
     /// against the clock's own pair each frame; the `None` the
     /// pre-clock state keeps.
     pub(crate) day_bake: Option<(u32, [u8; 3])>,
+    /// THE DARKNESS RE-BAKE'S OWN GRAIN (the player's DARKNESS effect
+    /// the lightmap fold carries — the quantized scale the bake's
+    /// inputs join: `(scale * 128.0).round()` the same 1/128-step
+    /// economy the day pair keeps). `None` = the no-effect floor (the
+    /// scale 0.0 the fold's bit-for-bit identity wears); the changed
+    /// grain the mesh re-walks — the pulse's per-tick drift the grain
+    /// bounds, the same re-bake cadence the dawn ramp already pays.
+    pub(crate) darkness_bake: Option<u32>,
     /// THE FIXED CLOCK'S RENDER REMAINDER (vanilla `Minecraft.runTick`'s
     /// own partialTick): the fraction of the next 50ms tick the wall
     /// clock has already accrued when this frame renders — the windowed
@@ -7889,6 +7900,7 @@ impl App {
             live_inv_carried: (0, 0),
             day_time_base: 0,
             day_bake: None,
+            darkness_bake: None,
             partial_tick: 1.0,
             end_flash: crate::end_flash::EndFlashState::new(),
             rain_sound_time: 0,
@@ -8311,8 +8323,16 @@ impl App {
         // THE DARKNESS TAIL (pc 28-39): the verdict walk the center
         // (+0.5 the atCenterOf fold) + the player's own survival and
         // feet-position fold answers — the record the lane's
-        // vocabulary banks, the effect's own lightmap fold the
-        // effects-lane round speaks
+        // vocabulary banks, THE EFFECT'S OWN APPLICATION the
+        // `MobEffectUtil.addEffectToPlayersAround` walk serves (javap
+        // Warden.applyDarknessAround pc 0-31 — the DARKNESS
+        // `new MobEffectInstance(MobEffects.DARKNESS, 260, 0, false,
+        // false, false)` the 260-tick instance carries, the
+        // `addEffect` law the store's own walk speaks: the absent
+        // inserts, the standing one the refresh law answers — the
+        // equal amplifier the longer duration replaces, the
+        // endsWithin(199) gate the predicate's own arm keeps), the
+        // lightmap's pulse the effects-lane round renders)
         let survival = self.game_mode.is_survival();
         if let Some(b) = self.body.as_ref() {
             if crate::sculk::warden_darkness_applies(
@@ -8320,6 +8340,12 @@ impl App {
                 (b.x, b.y, b.z),
                 survival,
             ) {
+                self.effects.add_effect(
+                    crate::effects::MOB_EFFECT_DARKNESS,
+                    0,
+                    crate::sculk::WARDEN_DARKNESS_TICKS,
+                    crate::effects::DEFAULT_EFFECT_FLAGS,
+                );
                 self.game_events.push(format!(
                     "warden_darkness @{} x{:.6} y{:.6} z{:.6} t{}",
                     self.frame,
@@ -31533,6 +31559,69 @@ impl App {
                 self.day_bake = current;
             }
         }
+        // THE DARKNESS EFFECT'S OWN LIGHTMAP STATE (javap
+        // LightmapRenderStateExtractor pc 304-344 — the extraction walk
+        // the 26.2 jar's per-frame lightmap state speaks: the blend
+        // factor × the options' default 1.0 the client's own slider
+        // floor keeps, the `brightness = max(0, gamma - blend)` arm the
+        // gamma-0 identity keeps (the BrightnessFactor mix the 0
+        // never lifts), the darknessEffectScale the
+        // `calculateDarknessScale(player, blend, partialTick) * option`
+        // fold banks — javap pc 0-30: `max(0.0F, cos((tickCount -
+        // partialTick) * 3.1415927F * 0.025F)) * 0.45F * blend` — the
+        // 80-tick cosine pulse the warden's darkness breathes). The
+        // blend's own read the store's lerp law speaks (the
+        // partial_tick the fixed clock's remainder wears). The scale
+        // rides the ACTIVE world's own field (the same shape the
+        // night_vision_factor field wears), the mesher's lightmap bake
+        // consumes.
+        let darkness_blend = self
+            .effects
+            .get_blend_factor(crate::effects::MOB_EFFECT_DARKNESS, self.partial_tick);
+        // THE PULSE'S OWN ARG (the extractor's `(tickCount -
+        // partialTick)` — the entity's own count the tick-head increment
+        // banks, the fixed clock's remainder the subtraction wears; the
+        // body-absent case the blend-0 floor keeps — the scale the 0
+        // product never lifts)
+        let darkness_tick = self
+            .body
+            .as_ref()
+            .map(|b| b.tick_count as f32)
+            .unwrap_or(0.0);
+        let darkness_scale = ((darkness_tick - self.partial_tick)
+            * std::f32::consts::PI
+            * 0.025)
+            .cos()
+            .max(0.0)
+            * 0.45
+            * darkness_blend;
+        // THE DARKNESS RE-BAKE (the pulse's own grain — the 1/128 step
+        // the day re-bake's own economy keeps): the quantized scale the
+        // bake's inputs join, the changed grain the mesh re-walks —
+        // BOTH lanes (the client's own visual state the server's word
+        // never carries), the `None` floor the expired effect's return
+        // wears (the fade-out completes at the expiry — the padding's
+        // own law — the final grain-step re-bake the floor's identity
+        // restores)
+        let dark_grain = if darkness_scale > 0.0 {
+            Some((darkness_scale * 128.0).round() as u32)
+        } else {
+            None
+        };
+        if dark_grain != self.darkness_bake {
+            if !self.world_is_network {
+                if let Some(world) = self.offline_world.as_mut() {
+                    world.darkness_scale = darkness_scale;
+                    let quads = crate::mesher::mesh_world(world, None);
+                    self.world_quads = Some(quads);
+                }
+            } else if let Some(world) = self.net_world.as_mut() {
+                world.darkness_scale = darkness_scale;
+                let quads = crate::mesher::mesh_world(world, None);
+                self.world_quads = Some(quads);
+            }
+            self.darkness_bake = dark_grain;
+        }
         // the END sky's flash state ticks on the client's game-time clock
         // (vanilla ticks ClientLevel.endFlashState on the level's game
         // time); tick() is idempotent per tick, so the per-frame call is
@@ -42631,6 +42720,108 @@ mod tests {
                 .any(|l| l.starts_with("warden_darkness @")),
             "the creative mode the survival gate refuses"
         );
+    }
+
+    /// THE DARKNESS EFFECT THE STORE THE PULSE WEARS (javap the 26.2
+    /// jar Warden.applyDarknessAround + the effect-store's own laws +
+    /// LightmapRenderStateExtractor pc 304-344 — the removal tail the
+    /// 260-tick DARKNESS instance arms, the blend the 22-step fade
+    /// walks, the pulse the cosine fold breathes, the re-bake grain the
+    /// mesh's own re-walk wears, the survival gate the creative mode
+    /// refuses).
+    #[test]
+    fn the_darkness_effect_the_store_the_pulse_wears() {
+        // === THE REMOVAL TAIL ARMS THE STORE (the 547 walk-A's own
+        // setup — the all-air net world the failed summon wears, the
+        // darkness verdict the survival player's own fold answers)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 35.0, 0.0, 0.0, 0.0));
+        app.place_sculk_shrieker(2, 35, 0, true);
+        let f = app.frame;
+        app.sculk_shrikers[0].free_at = f + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(2, 35, 0);
+        {
+            let inst = app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).expect("the effect rides");
+            assert_eq!(inst.duration, crate::sculk::WARDEN_DARKNESS_TICKS,
+                "the 260-tick instance the tail's own application banks");
+            assert_eq!(inst.amplifier, 0, "the amplifier the MobEffectInstance ctor keeps");
+            assert_eq!(inst.blend_factor, 0.0, "the fresh pair the fade-in walks from");
+        }
+        assert!(app.darkness_bake.is_none(),
+            "the pre-render floor the grain never arms — the walk the render serves");
+        // THE RENDER SEAT (the windowed loop's own split — the update
+        // ticks, the render walks the lightmap state; the assets-cache
+        // root the gui tests' own discovery keeps)
+        let root = std::env::var("MC2RS_ASSETS").ok().map(std::path::PathBuf::from).or_else(|| {
+            std::env::current_dir()
+                .ok()
+                .map(|d| d.join("assets-cache"))
+                .filter(|p| p.join("jar").exists())
+        });
+        let Some(root) = root else { return };
+        let mut assets = GuiAssets::open(&root);
+        let mut fb = crate::raster::Framebuf::new(320, 180);
+        // === THE PULSE (the update ticks the body + the store, the
+        // render's own walk the scale + the grain wear): the mirror the
+        // same f32 accumulation speaks, the world's own field the
+        // render's write carries
+        let step = 1.0_f32 / crate::effects::DARKNESS_BLEND_TICKS as f32;
+        let mut mirror = 0.0_f32;
+        for k in 1..=6u32 {
+            app.update();
+            app.render(&mut fb, &mut assets);
+            mirror += (1.0_f32 - mirror).clamp(-step, step);
+            let blend = app.effects.get_blend_factor(
+                crate::effects::MOB_EFFECT_DARKNESS,
+                app.partial_tick,
+            );
+            assert_eq!(blend, mirror, "tick {k} the fade-in's own step wears");
+            let scale = ((app.body.as_ref().unwrap().tick_count as f32
+                - app.partial_tick)
+                * std::f32::consts::PI
+                * 0.025)
+                .cos()
+                .max(0.0)
+                * 0.45
+                * blend;
+            let world = app.net_world.as_ref().unwrap();
+            assert_eq!(world.darkness_scale, scale,
+                "tick {k} the world's own field the render's write banks");
+            if scale > 0.0 {
+                assert_eq!(app.darkness_bake, Some((scale * 128.0).round() as u32),
+                    "tick {k} the grain the re-bake's own walk arms");
+            }
+        }
+        // === THE EXPIRY (the 260-tick window drains — the effect gone,
+        // the floor restored: the grain None the field's 0.0 wears —
+        // the final render the re-bake's own return speaks)
+        for _ in 0..254 {
+            app.update();
+        }
+        assert!(app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).is_none(),
+            "the drained window the net lane's own decrement retires");
+        app.update();
+        app.render(&mut fb, &mut assets);
+        assert_eq!(app.darkness_bake, None,
+            "the expired effect the floor's grain restores");
+        assert_eq!(app.net_world.as_ref().unwrap().darkness_scale, 0.0,
+            "the floor the field's own identity keeps");
+        // === THE CREATIVE GATE (the survival head the verdict refuses —
+        // the store the removal never arms)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 35.0, 0.0, 0.0, 0.0));
+        app.game_mode = GameMode::Creative;
+        app.place_sculk_shrieker(2, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(2, 35, 0);
+        assert!(app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).is_none(),
+            "the creative mode the store never arms");
     }
 
     /// THE CATALYST THE DEATH THE BLOOM ANSWERS (javap the
@@ -54935,6 +55126,7 @@ mod tests {
         // bank the refresh ships — the Peaceful + locked word the
         // server's own dial keeps)
         app.net_world = Some(crate::world::World {
+            darkness_scale: 0.0,
             chunks_per_side: 2,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Peaceful,
@@ -55506,6 +55698,7 @@ mod tests {
                 view_distance: 8,
                 chunks: 1,
                 world: crate::world::World {
+                    darkness_scale: 0.0,
                     chunks_per_side: 2,
                     seed: 0,
                     difficulty: crate::difficulty::Difficulty::Normal,
@@ -55950,6 +56143,7 @@ mod tests {
         app.open(ScreenKind::Connect);
         // an all-air network window: the state machine must not care
         app.net_world = Some(crate::world::World {
+            darkness_scale: 0.0,
             chunks_per_side: 2,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Normal,
@@ -56020,6 +56214,7 @@ mod tests {
         // the deterministic flight camera stands — never a guess about
         // where the player is
         app.net_world = Some(crate::world::World {
+            darkness_scale: 0.0,
             chunks_per_side: 2,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Normal,
@@ -56092,6 +56287,7 @@ mod tests {
                 view_distance: 8,
                 chunks: 1,
                 world: crate::world::World {
+                    darkness_scale: 0.0,
                     chunks_per_side: 2,
                     seed: 0,
                     difficulty: crate::difficulty::Difficulty::Normal,
@@ -56141,6 +56337,7 @@ mod tests {
     /// machine must not care about content) with a distinguishable seed.
     fn air_net_world(side: usize, seed: u64) -> crate::world::World {
         crate::world::World {
+            darkness_scale: 0.0,
             chunks_per_side: side,
             seed,
             difficulty: crate::difficulty::Difficulty::Normal,
@@ -74159,6 +74356,7 @@ cow_sound_variant: None,
     fn the_body_reanchors_on_the_teleport_and_holds_the_prediction() {
         let mut app = App::new(3);
         app.net_world = Some(crate::world::World {
+            darkness_scale: 0.0,
             chunks_per_side: 2,
             seed: 0,
             difficulty: crate::difficulty::Difficulty::Normal,
@@ -87944,6 +88142,7 @@ cow_sound_variant: None,
         // the full-day sky factor, the white track, the black ambient,
         // the default block tint the None carries)
         let u = LightmapUniforms {
+            darkness_scale: 0.0,
             sky_factor: 1.0,
             sky_tint: [1.0, 1.0, 1.0],
             ambient: [0.0, 0.0, 0.0],
@@ -87982,6 +88181,7 @@ cow_sound_variant: None,
                 [0.0, 0.0, 0.0],
                 None,
                 None,
+                0.0,
                 0.0
             ),
             "the night (block15, sky0) cell the block term alone wears"

@@ -148,6 +148,11 @@ pub fn materialize(
         // no weather word ever arrived (every procedural/golden scene)
         rain_level: model.rain_level(),
         thunder_level: model.thunder_level(),
+        // THE DARKNESS SCALE'S OWN FLOOR (the join's snapshot carries no
+        // effect the store arms — the blend's fade-in walk the fresh
+        // zero pair keeps; the App's per-frame write the live lane
+        // speaks)
+        darkness_scale: 0.0,
         // THE WIRE'S OWN DANGER DIAL rides the SAME snapshot (javap 26.2
         // `ClientPacketListener.handleChangeDifficulty` — the
         // ClientboundChangeDifficultyPacket the levelData pair stores):
