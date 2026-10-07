@@ -1084,13 +1084,64 @@ fn is_sculk_behaviour_name(name: &str) -> bool {
 /// the full-cube families speak, the AIR cell the exclusion keeps —
 /// vanilla's air state isFaceSturdy NEVER answers (no support the
 /// empty cell carries), so the obstruction walk the air neighbor the
-/// UNOBSTRUCTED answer serves. (The pop arm's own
+/// UNOBSTRUCTED answer serves — and the FLUID PAIR the same exclusion
+/// wears (the vein-spread round: vanilla water/lava isFaceSturdy
+/// NEVER answers — the empty collision the fluids carry, the cursor's
+/// movement walks THROUGH the lake cell, the vein's canAttachTo the
+/// water substrate refuses). (The pop arm's own
 /// isCollisionShapeFullBlock read the SAME name law shares — the
 /// absent cell the full-cube majority answers THERE, the 40-burst the
 /// arm's own verdict banks — the two walks' verdicts the two vanilla
 /// reads keep, each its own documented law.)
 fn is_face_sturdy(name: &str) -> bool {
-    name != "air" && crate::world_model::collision_full_block(name)
+    name != "air"
+        && name != "water"
+        && name != "lava"
+        && crate::world_model::collision_full_block(name)
+}
+
+/// `BlockState.canBeReplaced()` — the no-arg overload the vein
+/// override's `stateCanBeReplaced` tail consults (javap pc 131-136:
+/// `state.canBeReplaced()` the `ifne 153` pass wears): the replaceable
+/// property's own families the lane's vocabulary keeps — the airs, the
+/// fluids, the snow layer, the tuft/plant family, the vine/lichen
+/// climbs, the light and structure_void placeholders. The FIRE cell
+/// never reaches the arm (the tag's own refusal the walk keeps first).
+pub fn can_be_replaced(name: &str) -> bool {
+    matches!(
+        name,
+        "air"
+            | "cave_air"
+            | "void_air"
+            | "water"
+            | "lava"
+            | "snow"
+            | "short_grass"
+            | "tall_grass"
+            | "fern"
+            | "large_fern"
+            | "dead_bush"
+            | "seagrass"
+            | "tall_seagrass"
+            | "vine"
+            | "glow_lichen"
+            | "hanging_roots"
+            | "light"
+            | "structure_void"
+            | "bubble_column"
+    )
+}
+
+/// `SculkBehaviour.canChangeBlockStateOnSpread()` — the DEFAULT the
+/// interface speaks (javap SculkBehaviour pc 0-1: `iconst_1` — TRUE)
+/// and the SCULK BLOCK'S OWN OVERRIDE refuses (javap SculkBlock pc
+/// 0-1: `iconst_0` — FALSE): the spread's post-walk re-read (ChargeCursor
+/// update pc 83-110) the non-sculk hosts alone wear. The vein inherits
+/// the default (no override the class carries), the air/stone cells
+/// the DEFAULT behaviour answers — the sculk block alone the silent
+/// state keeps.
+pub fn can_change_block_state_on_spread(name: &str) -> bool {
+    name != "sculk"
 }
 
 /// THE MOVEMENT'S OWN OBSTRUCTION WALK (javap
@@ -1109,9 +1160,9 @@ fn is_face_sturdy(name: &str) -> bool {
 /// same verdict the pop arm's count/spread split banks): the
 /// full-cube neighbor sturdy → obstructed (false), the non-full
 /// neighbor (vein, slab, air) → unobstructed (true).
-pub fn movement_unobstructed<F>(from: (i32, i32, i32), to: (i32, i32, i32), world: &F) -> bool
+pub fn movement_unobstructed<F>(from: (i32, i32, i32), to: (i32, i32, i32), world: &mut F) -> bool
 where
-    F: Fn(i32, i32, i32) -> SculkMovementProbe,
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
 {
     let manhattan =
         (to.0 - from.0).abs() + (to.1 - from.1).abs() + (to.2 - from.2).abs();
@@ -1122,8 +1173,8 @@ where
     let sx = if delta.0 < 0 { -1 } else { 1 };
     let sy = if delta.1 < 0 { -1 } else { 1 };
     let sz = if delta.2 < 0 { -1 } else { 1 };
-    let unobstructed = |x: i32, y: i32, z: i32| -> bool {
-        let probe = world(from.0 + x, from.1 + y, from.2 + z);
+    let mut unobstructed = |x: i32, y: i32, z: i32| -> bool {
+        let probe = world(from.0 + x, from.1 + y, from.2 + z, None);
         !is_face_sturdy(probe.name)
     };
     if delta.0 == 0 {
@@ -1147,10 +1198,10 @@ where
 pub fn has_substrate_access<F>(
     probe: &SculkMovementProbe,
     pos: (i32, i32, i32),
-    world: &F,
+    world: &mut F,
 ) -> bool
 where
-    F: Fn(i32, i32, i32) -> SculkMovementProbe,
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
 {
     if probe.name != "sculk_vein" {
         return false;
@@ -1160,7 +1211,7 @@ where
         .zip(SUBSTRATE_DIRECTION_BITS.iter())
     {
         if probe.faces & bit != 0 {
-            let neighbor = world(pos.0 + dir.0, pos.1 + dir.1, pos.2 + dir.2);
+            let neighbor = world(pos.0 + dir.0, pos.1 + dir.1, pos.2 + dir.2, None);
             if SCULK_REPLACEABLE.contains(&neighbor.name) {
                 return true;
             }
@@ -1189,15 +1240,15 @@ where
 pub fn get_valid_movement_pos<F>(
     from: (i32, i32, i32),
     rng: &mut crate::drops::Lcg,
-    world: &F,
+    world: &mut F,
 ) -> Option<(i32, i32, i32)>
 where
-    F: Fn(i32, i32, i32) -> SculkMovementProbe,
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
 {
     let mut found = from;
     for (ox, oy, oz) in shuffled_non_corner_offsets(rng) {
         let candidate = (from.0 + ox, from.1 + oy, from.2 + oz);
-        let probe = world(candidate.0, candidate.1, candidate.2);
+        let probe = world(candidate.0, candidate.1, candidate.2, None);
         if is_sculk_behaviour_name(probe.name)
             && movement_unobstructed(from, candidate, world)
             && has_substrate_access(&probe, candidate, world)
@@ -1213,6 +1264,322 @@ where
     }
 }
 
+/// THE SPREAD TYPES (javap `MultifaceSpreader$SpreadType` — the THREE
+/// constants the `$values` init banks — SAME_POSITION, SAME_PLANE,
+/// WRAP_AROUND — the abstract `getSpreadPos(BlockPos, Direction
+/// toFace, Direction fromFace)` the three anonymous impls answer):
+/// the veinSpreader's config the DEFAULT_SPREAD_ORDER passes verbatim
+/// (javap MultifaceSpreader static init pc 0-25 — the same order the
+/// array literal wears).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SpreadKind {
+    /// `SpreadType$1` — `new SpreadPos(pos, toFace)`: the SAME cell
+    /// gains the toFace (the vein cell's own face-add, the air cell
+    /// the replaceable target carries).
+    SamePosition,
+    /// `SpreadType$2` — `new SpreadPos(pos.relative(toFace), fromFace)`:
+    /// the neighbor cell in the toFace direction, attaching on the
+    /// fromFace side (the sideways crawl the same plane keeps).
+    SamePlane,
+    /// `SpreadType$3` — `new SpreadPos(pos.relative(toFace)
+    /// .relative(fromFace), toFace.getOpposite())`: the diagonal wrap
+    /// around the corner, attaching on the toFace's opposite.
+    WrapAround,
+}
+
+/// `MultifaceSpreader.DEFAULT_SPREAD_ORDER` — the static init's array
+/// literal (javap pc 0-25), the veinSpreader's own config order.
+pub const SPREAD_KINDS: [SpreadKind; 3] = [
+    SpreadKind::SamePosition,
+    SpreadKind::SamePlane,
+    SpreadKind::WrapAround,
+];
+
+/// `Direction.getOpposite()` — the six-direction table's own pairing
+/// (down↔up, north↔south, west↔east — every pair differs in bit 0,
+/// the XOR the index law wears).
+pub fn opposite_face(face: usize) -> usize {
+    face ^ 1
+}
+
+/// `Direction.getAxis()` — the axis identity the same-axis refusal
+/// compares (Y for down/up, Z for north/south, X for west/east — the
+/// `face >> 1` fold the table's own order banks).
+pub fn face_axis(face: usize) -> usize {
+    face >> 1
+}
+
+/// `MultifaceBlock.hasFace(state, dir)` — the `1 << ordinal` bit the
+/// face property's boolean answers (the SUBSTRATE_DIRECTION_BITS the
+/// probe's face word carries).
+fn has_face_bit(faces: u8, face: usize) -> bool {
+    faces & SUBSTRATE_DIRECTION_BITS[face] != 0
+}
+
+/// THE THREE SPREAD POS LAWS (javap the three `SpreadType` impls'
+/// `getSpreadPos` — the call `t.getSpreadPos(pos, toFace, fromFace)`
+/// the `getSpreadFromFaceTowardDirection` walk serves, pc 97-104):
+/// each kind the pos/face pair its own impl banks.
+pub fn spread_pos_for(
+    kind: SpreadKind,
+    pos: (i32, i32, i32),
+    to_face: usize,
+    from_face: usize,
+) -> ((i32, i32, i32), usize) {
+    let (dx, dy, dz) = SUBSTRATE_DIRECTIONS[to_face];
+    let (fx, fy, fz) = SUBSTRATE_DIRECTIONS[from_face];
+    match kind {
+        SpreadKind::SamePosition => (pos, to_face),
+        SpreadKind::SamePlane => ((pos.0 + dx, pos.1 + dy, pos.2 + dz), from_face),
+        SpreadKind::WrapAround => (
+            (
+                pos.0 + dx + fx,
+                pos.1 + dy + fy,
+                pos.2 + dz + fz,
+            ),
+            opposite_face(to_face),
+        ),
+    }
+}
+
+/// `MultifaceSpreader$SpreadConfig.canSpreadFrom` — the DEFAULT law
+/// (javap pc 0-26: `isOtherBlockValidAsSource(state) || hasFace(state,
+/// dir)`), the vein config's own `isOtherBlockValidAsSource` the
+/// `!state.is(SCULK_VEIN)` refusal keeps (javap SculkVeinSpreaderConfig
+/// pc 0-15): a NON-vein source state (the sculk block, the air cell the
+/// cursor sits in) spreads from EVERY face, the vein source only the
+/// faces its own state carries.
+pub fn can_spread_from(source: &SculkMovementProbe, from_face: usize) -> bool {
+    source.name != "sculk_vein" || has_face_bit(source.faces, from_face)
+}
+
+/// THE VEIN CONFIG'S OWN REPLACEMENT LAW (javap
+/// `SculkVeinSpreaderConfig.stateCanBeReplaced` — the walk verbatim):
+/// - the BEHIND cell (`spreadPos.pos.relative(face)`) the
+///   sculk/catalyst/moving_piston trio refuses (pc 14-48 — no face
+///   the sculk-family substrate hosts),
+/// - the manhattan-2 spread (the wrap-around's diagonal) the
+///   BETWEEN-cell sturdiness refuses (pc 49-89 —
+///   `sourcePos.relative(face.getOpposite())` the cell the
+///   isFaceSturdy(world, cell, face) verdict answers),
+/// - the non-water fluid refuses (pc 90-117 — the `!isEmpty() &&
+///   !is(WATER)` pair the lava cell wears),
+/// - the FIRE tag refuses (pc 118-130),
+/// - the replaceable tail (pc 131-157):
+///   `state.canBeReplaced() || super.stateCanBeReplaced(...)` — the
+///   super arm the air/vein/non-source-water trio answers.
+pub fn state_can_be_replaced<F>(
+    source_pos: (i32, i32, i32),
+    spread_pos: (i32, i32, i32),
+    face: usize,
+    target: &SculkMovementProbe,
+    world: &mut F,
+) -> bool
+where
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
+{
+    // pc 0-7: the behind read — the SAME cell the attach verdict
+    // reads (one read, two laws: the sculk-family NAME refusal here,
+    // the canAttachTo full verdict the isValidStateForPlacement walk
+    // serves)
+    let (bx, by, bz) = SUBSTRATE_DIRECTIONS[face];
+    let behind = world(
+        spread_pos.0 + bx,
+        spread_pos.1 + by,
+        spread_pos.2 + bz,
+        None,
+    );
+    // pc 14-48: the sculk/catalyst/moving_piston trio the NAME
+    // refusal wears
+    if behind.name == "sculk" || behind.name == "sculk_catalyst" || behind.name == "moving_piston"
+    {
+        return false;
+    }
+    // pc 49-89: the manhattan-2 diagonal the between-cell sturdiness
+    // refuses (`sourcePos.relative(face.getOpposite())` the cell the
+    // walk reads, the isFaceSturdy verdict the lane's own full-cube
+    // law answers)
+    if source_pos.0.abs_diff(spread_pos.0)
+        + source_pos.1.abs_diff(spread_pos.1)
+        + source_pos.2.abs_diff(spread_pos.2)
+        == 2
+    {
+        let (ox, oy, oz) = SUBSTRATE_DIRECTIONS[opposite_face(face)];
+        let between = world(
+            source_pos.0 + ox,
+            source_pos.1 + oy,
+            source_pos.2 + oz,
+            None,
+        );
+        if is_face_sturdy(between.name) {
+            return false;
+        }
+    }
+    // pc 90-117: the non-water fluid refuses (the lane's vocabulary
+    // carries lava as the only non-empty non-water fluid)
+    if target.name == "lava" {
+        return false;
+    }
+    // pc 118-130: the FIRE tag refuses (the lane's own fire family)
+    if target.name == "fire" || target.name == "soul_fire" {
+        return false;
+    }
+    // pc 131-157: `canBeReplaced() || super...` — the super arm the
+    // air/vein/water trio answers (the `state.is(this.block)` the
+    // vein config's own block field keeps, the non-source water the
+    // grid's single water word serves)
+    can_be_replaced(target.name)
+        || target.name == "air"
+        || target.name == "sculk_vein"
+        || target.name == "water"
+}
+
+/// `MultifaceBlock.isValidStateForPlacement` (javap pc 0-52) — the
+/// duplicate-face refusal (`state.is(this) && hasFace(state, face)`
+/// the already-veined face keeps) and the canAttachTo verdict (pc
+/// 28-52: the attach cell `pos.relative(face)` the isFaceFull of the
+/// support/collision shape answers — the lane's own full-cube law the
+/// [`is_face_sturdy`] verdict keeps).
+fn is_valid_state_for_placement<F>(
+    target: &SculkMovementProbe,
+    spread_pos: (i32, i32, i32),
+    face: usize,
+    world: &mut F,
+) -> bool
+where
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
+{
+    if target.name == "sculk_vein" && has_face_bit(target.faces, face) {
+        return false;
+    }
+    let (bx, by, bz) = SUBSTRATE_DIRECTIONS[face];
+    let attach = world(
+        spread_pos.0 + bx,
+        spread_pos.1 + by,
+        spread_pos.2 + bz,
+        None,
+    );
+    is_face_sturdy(attach.name)
+}
+
+/// `MultifaceSpreader$SpreadConfig.canSpreadInto` (javap pc 0-57):
+/// the target state the pos read banks, the replacement law AND the
+/// placement validity the AND fold answers.
+pub fn can_spread_into<F>(
+    source_pos: (i32, i32, i32),
+    spread_pos: (i32, i32, i32),
+    face: usize,
+    world: &mut F,
+) -> bool
+where
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
+{
+    let target = world(spread_pos.0, spread_pos.1, spread_pos.2, None);
+    state_can_be_replaced(source_pos, spread_pos, face, &target, world)
+        && is_valid_state_for_placement(&target, spread_pos, face, world)
+}
+
+/// THE ONE-CANDIDATE WALK (javap
+/// `MultifaceSpreader.getSpreadFromFaceTowardDirection` pc 0-138):
+/// the same-axis refusal (pc 0-16 — `toFace.getAxis() ==
+/// fromFace.getAxis()` the empty keeps), the isOther/hasFace arm
+/// (pc 17-63 — proceed iff `isOtherBlockValidAsSource(state) ||
+/// (hasFace(state, fromFace) && !hasFace(state, toFace))` — the vein
+/// source the already-carried toFace refuses, the new toFace the
+/// loop arms), then the SpreadType loop (pc 64-135 — the FIRST
+/// winning kind the `Optional.of` return banks).
+pub fn get_spread_from_face_toward_direction<F>(
+    source: &SculkMovementProbe,
+    pos: (i32, i32, i32),
+    from_face: usize,
+    to_face: usize,
+    world: &mut F,
+) -> Option<((i32, i32, i32), usize)>
+where
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
+{
+    if face_axis(to_face) == face_axis(from_face) {
+        return None;
+    }
+    if source.name != "sculk_vein" {
+        // pc 27 `ifne 64`: the non-vein source the face checks skips
+        // (the isOtherBlockValidAsSource TRUE the loop arms)
+    } else {
+        let has_from = has_face_bit(source.faces, from_face);
+        let has_to = has_face_bit(source.faces, to_face);
+        if !has_from {
+            // pc 42 `ifeq 60`: the from-face the vein never carried —
+            // the empty answer (the canSpreadFrom filter already
+            // refused, the walk's own arm the same verdict keeps)
+            return None;
+        }
+        if has_to {
+            // pc 57 `ifeq 64`: the to-face the vein ALREADY carries —
+            // the empty answer (the duplicate the guard refuses)
+            return None;
+        }
+    }
+    for kind in SPREAD_KINDS {
+        let (spread_pos, spread_face) = spread_pos_for(kind, pos, to_face, from_face);
+        if can_spread_into(pos, spread_pos, spread_face, world) {
+            return Some((spread_pos, spread_face));
+        }
+    }
+    None
+}
+
+/// `SculkBehaviour.attemptSpreadVein`'s OWN WALK (javap the interface
+/// default pc 0-27: `Blocks.SCULK_VEIN.getSpreader().spreadAll(state,
+/// level, pos, markForUpdates) > 0` — the vein does NOT override, the
+/// sculk block neither, the cursor's own facings argument the default
+/// NEVER reads): the `spreadAll` walk (javap pc 0-51 — the
+/// `Direction.stream()` outer filter `canSpreadFrom`, the inner
+/// `spreadFromFaceTowardAllDirections` the per-toFace walk serves,
+/// the `.count()` fold the total wears) — each winning (from, to)
+/// pair the `spreadToFace` → `placeBlock` → `setBlock(pos, state, 2)`
+/// walk the lane's OWN WRITE CALLBACK banks (`Some(face_bit)` — the
+/// vein-face placement the offline lane's ledger carries, the
+/// immediate visibility the next read observes the vanilla setBlock's
+/// own law keeps). The walk spends NO random draws (the fixed
+/// v1.0/p1.0 voice the update arm's own playSound speaks, no random
+/// the overload carries).
+pub fn spread_all<F>(source: &SculkMovementProbe, pos: (i32, i32, i32), world: &mut F) -> u64
+where
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
+{
+    let mut count = 0u64;
+    for from_face in 0..SUBSTRATE_DIRECTIONS.len() {
+        if !can_spread_from(source, from_face) {
+            continue;
+        }
+        for to_face in 0..SUBSTRATE_DIRECTIONS.len() {
+            if let Some((spread_pos, spread_face)) =
+                get_spread_from_face_toward_direction(source, pos, from_face, to_face, world)
+            {
+                // THE PLACEMENT (spreadToFace → placeBlock →
+                // setBlock(pos, newState, 2) — the lane's own ledger
+                // write the face bit carries)
+                world(spread_pos.0, spread_pos.1, spread_pos.2, Some(1 << spread_face));
+                count += 1;
+            }
+        }
+    }
+    count
+}
+
+/// THE SPREAD VOICE'S OWN WORD (javap ChargeCursor.update pc 112-126
+/// — the `playSound(null, pos, SCULK_BLOCK_SPREAD, BLOCKS, 1.0F,
+/// 1.0F)` the BlockPos overload speaks: the FIXED volume/pitch pair
+/// the fconst_1 double wears, NO random the overload carries): the
+/// record line + the positioned voice the app walk serves (the
+/// `sculk_spread` line the bloom/shriek conventions keep, the +0.5
+/// center the atCenterOf fold wears).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SculkSpreadVoice {
+    pub pos: (i32, i32, i32),
+    pub count: u64,
+}
+
 /// THE SPREADER'S OWN DRAIN (javap `SculkSpreader.updateCursors` —
 /// the serverTick's `updateCursors(level, pos, random, true)` the
 /// block entity's own tick serves): the walk transcribed over the
@@ -1223,11 +1590,23 @@ where
 /// - the UPDATE walk (ChargeCursor.update: the `shouldUpdate` head
 ///   the zero-charge cursor refuses — the pop the loop's own check
 ///   wears; the updateDelay countdown the spread paces — the walk the
-///   countdown path EARLY-RETURNS, no movement no draws it spends;
-///   the DEFAULT charge law the decayDelay reads — the charge the
-///   first tick keeps, the elapsed decay the ZERO answer wears; the
-///   decay `max(dd-1, 0)` the countdown folds; the updateDelay the
+///   countdown path EARLY-RETURNS, no spread no movement no draws it
+///   spends; the DEFAULT charge law the decayDelay reads — the charge
+///   the first tick keeps, the elapsed decay the ZERO answer wears;
+///   the decay `max(dd-1, 0)` the countdown folds; the updateDelay the
 ///   spread delay re-arms),
+/// - the VEIN SPREAD ARM (update pc 33-130 — the level lane's
+///   onlyGrowers the serverTick's `iconst_1` speaks: the state read
+///   at the cursor pos (pc 33-50), the `attemptSpreadVein` call
+///   (pc 57-80 — the interface DEFAULT the spreadAll walk serves,
+///   the placements the write callback banks with the immediate
+///   visibility the next read observes), the `canChangeBlockStateOn`
+///   Spread` re-read (pc 83-110 — the sculk block alone the silent
+///   state keeps — the re-read the lane's own formality, the charge
+///   law the cursor alone reads), the `SCULK_BLOCK_SPREAD` v1.0/p1.0
+///   voice (pc 112-126 — the fixed pair the fconst_1 double wears,
+///   NO random the overload carries) — the arm the spread>0 verdict
+///   alone voices),
 /// - the MOVEMENT WALK (update pc 173-271 — the charge>0 tail the
 ///   full update alone serves: the shuffled non-corner offsets the
 ///   SEVENTEEN draws re-order, the three gates the candidate answers,
@@ -1253,25 +1632,27 @@ where
 ///   carries; the facings-None cursor the gate skips — the refreshed
 ///   Some the pop the survivor's own word wears).
 ///
-/// THE WALK THE LANE NEVER WEARS YET (documented): the vein spread
-/// (`attemptSpreadVein` — the MultifaceSpreader's spreadAll the
-/// onlyGrowers arm serves); its random draws the lanes bank when the
-/// walk lands. The drain's own draws: the movement's SEVENTEEN
+/// THE WALK THE VEIN SPREAD ROUND WEARS: the spread arm (above — the
+/// spreadAll walk the write callback serves, the placements the
+/// movement's own substrate arms then answer IN the world the probe
+/// reads). The drain's own draws: the movement's SEVENTEEN
 /// `nextInt` draws EVERY full update spends (the countdown and the
-/// dead-cursor paths the early returns keep — no draws they spend),
-/// the `level.getRandom()` stream the caller's own order rides.
+/// dead-cursor paths the early returns keep — no draws they spend;
+/// the SPREAD ARM zero draws the fixed voice speaks), the
+/// `level.getRandom()` stream the caller's own order rides.
 pub fn update_cursors<F>(
     cell: &mut SculkCatalystCell,
     rng: &mut crate::drops::Lcg,
-    world: F,
-) -> Vec<SculkChargePop>
+    mut world: F,
+) -> (Vec<SculkChargePop>, Vec<SculkSpreadVoice>)
 where
-    F: Fn(i32, i32, i32) -> SculkMovementProbe,
+    F: FnMut(i32, i32, i32, Option<u8>) -> SculkMovementProbe,
 {
     if cell.cursors.is_empty() {
-        return Vec::new();
+        return (Vec::new(), Vec::new());
     }
     let mut pops: Vec<SculkChargePop> = Vec::new();
+    let mut spreads: Vec<SculkSpreadVoice> = Vec::new();
     let mut kept: Vec<SculkCursor> = Vec::new();
     // the chargeMap the survivor pop rides (the computeInt fold —
     // the totals the insertion order banks, the offline lane's own
@@ -1303,6 +1684,30 @@ where
                 ..cursor
             }
         } else {
+            // pc 33-50: the state + behaviour read (the spread arm's
+            // own probe the walk banks BEFORE the charge walk)
+            let state = world(cursor.pos.0, cursor.pos.1, cursor.pos.2, None);
+            // pc 52-80: THE VEIN SPREAD ARM (the level lane's
+            // onlyGrowers the serverTick speaks — the attemptSpreadVein
+            // call the spreadAll walk serves, the placements the write
+            // callback banks, the immediate visibility the movement's
+            // own reads then observe)
+            let spread = spread_all(&state, cursor.pos, &mut world);
+            if spread > 0 {
+                // pc 83-110: the re-read arm (the
+                // `canChangeBlockStateOnSpread` gate the sculk block's
+                // own FALSE answer keeps — the re-read the state the
+                // walk re-banks, the charge law the cursor alone
+                // reads; NO draw the formality spends)
+                if can_change_block_state_on_spread(state.name) {
+                    let _ = world(cursor.pos.0, cursor.pos.1, cursor.pos.2, None);
+                }
+                // pc 112-126: the fixed v1.0/p1.0 voice
+                spreads.push(SculkSpreadVoice {
+                    pos: cursor.pos,
+                    count: spread,
+                });
+            }
             let charge = default_attempt_use_charge(cursor.decay_delay, cursor.charge);
             if charge <= 0 {
                 // THE DEAD CURSOR'S OWN POP (pc 104-114 — the data 0
@@ -1326,7 +1731,7 @@ where
             // the cursor's pos the new cell banks; the onDischarged at
             // the old pos the DEFAULT no-op keeps, the world-gen
             // charge-kill the level lane never arms)
-            if let Some(new_pos) = get_valid_movement_pos(updated.pos, rng, &world) {
+            if let Some(new_pos) = get_valid_movement_pos(updated.pos, rng, &mut world) {
                 updated.pos = new_pos;
             }
             // THE FACINGS REFRESH (update pc 272-291 — the state read
@@ -1335,7 +1740,7 @@ where
             // the multiface set banks: the sculk block the EMPTY set
             // word wears (Some(0)), the vein the face bits, the air
             // cell the fresh cursor's None keeps)
-            let here = world(updated.pos.0, updated.pos.1, updated.pos.2);
+            let here = world(updated.pos.0, updated.pos.1, updated.pos.2, None);
             if is_sculk_behaviour_name(here.name) {
                 updated.facings = Some(here.faces);
             }
@@ -1393,7 +1798,7 @@ where
         }
     }
     cell.cursors = kept;
-    pops
+    (pops, spreads)
 }
 
 #[cfg(test)]
@@ -2043,7 +2448,7 @@ mod tests {
             ],
         };
         let mut rng = crate::drops::Lcg::new(1);
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         // THE MERGE (the 5+5 pair the ≤1000 fold folds — the list the
         // merged cursor + the facings twin keeps)
         assert_eq!(cell.cursors.len(), 2, "the merge the pair folds");
@@ -2076,7 +2481,7 @@ mod tests {
         // re-fires (the walk the EVERY drain serves — the vein-flight
         // word the living cursor keeps ticking)
         let mut rng = crate::drops::Lcg::new(1);
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert_eq!(pops.len(), 1, "the facings twin the survivor pop re-wears");
         assert_eq!(pops[0].pos, (2, 34, 0));
         assert_eq!(pops[0].data, (2 << 6) + 2);
@@ -2086,7 +2491,7 @@ mod tests {
         // TICK 3: the elapsed decay the ZERO answer wears — the data-0
         // pop the dead cursor speaks, the list the drain empties
         let mut rng = crate::drops::Lcg::new(1);
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert_eq!(pops.len(), 2, "both cursors the decay kills");
         assert_eq!(pops[0].pos, (2, 33, 0));
         assert_eq!(pops[0].data, 0, "the dead cursor's own data-0 word");
@@ -2095,7 +2500,11 @@ mod tests {
         assert!(cell.cursors.is_empty(), "the drain the list empties");
         // THE EMPTY HEAD (pc 0-12 — the drain the empty list returns)
         let mut rng = crate::drops::Lcg::new(1);
-        assert!(update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe { name: "air", faces: 0 }).is_empty());
+        assert!(
+            update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 })
+                .0
+                .is_empty()
+        );
         // THE OVER-CAP PAIR (the 600+600 pair the ≤1000 fold refuses —
         // both the list keeps)
         let mut cell = SculkCatalystCell {
@@ -2107,7 +2516,7 @@ mod tests {
             ],
         };
         let mut rng = crate::drops::Lcg::new(1);
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert!(pops.is_empty());
         assert_eq!(cell.cursors.len(), 2, "the over-cap pair the list keeps");
         // THE UNREASONABLE DROP (the chessboard bound the cursor
@@ -2118,7 +2527,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2000, 32, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(1);
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert!(pops.is_empty(), "the refusal the pop never wears");
         assert!(cell.cursors.is_empty(), "the unreasonable cursor drops");
     }
@@ -2203,19 +2612,19 @@ mod tests {
         // the early return keeps)
         let air = SculkMovementProbe { name: "air", faces: 0 };
         let stone = SculkMovementProbe { name: "stone", faces: 0 };
-        let full_world =
-            |_: i32, _: i32, _: i32| SculkMovementProbe { name: "stone", faces: 0 };
-        assert!(movement_unobstructed((0, 0, 0), (1, 0, 0), &full_world));
+        let mut full_world =
+            |_: i32, _: i32, _: i32, _: Option<u8>| SculkMovementProbe { name: "stone", faces: 0 };
+        assert!(movement_unobstructed((0, 0, 0), (1, 0, 0), &mut full_world));
         // THE DELTA ARMS (pc 89-180): delta.x == 0 the Y/Z pair
         // answers, delta.y == 0 the X/Z pair, else the X/Y pair — the
         // full-cube neighbours the obstructed answer wears, the air
         // half the true keeps, the NOT-consulted axis the OR's own
         // scope never reads
-        assert!(!movement_unobstructed((0, 0, 0), (0, 2, 0), &full_world));
+        assert!(!movement_unobstructed((0, 0, 0), (0, 2, 0), &mut full_world));
         assert!(movement_unobstructed(
             (0, 0, 0),
             (0, 2, 0),
-            &|x: i32, y: i32, z: i32| {
+            &mut |x: i32, y: i32, z: i32, _: Option<u8>| {
                 if (x, y, z) == (0, 1, 0) {
                     air.clone()
                 } else {
@@ -2226,7 +2635,7 @@ mod tests {
         assert!(movement_unobstructed(
             (0, 0, 0),
             (0, 2, 0),
-            &|x: i32, y: i32, z: i32| {
+            &mut |x: i32, y: i32, z: i32, _: Option<u8>| {
                 if (x, y, z) == (0, 0, 1) {
                     air.clone()
                 } else {
@@ -2234,11 +2643,11 @@ mod tests {
                 }
             }
         ));
-        assert!(!movement_unobstructed((0, 0, 0), (2, 0, 0), &full_world));
+        assert!(!movement_unobstructed((0, 0, 0), (2, 0, 0), &mut full_world));
         assert!(movement_unobstructed(
             (0, 0, 0),
             (2, 0, 0),
-            &|x: i32, y: i32, z: i32| {
+            &mut |x: i32, y: i32, z: i32, _: Option<u8>| {
                 if (x, y, z) == (1, 0, 0) {
                     air.clone()
                 } else {
@@ -2251,7 +2660,7 @@ mod tests {
         assert!(!movement_unobstructed(
             (0, 0, 0),
             (2, 2, 0),
-            &|x: i32, y: i32, z: i32| {
+            &mut |x: i32, y: i32, z: i32, _: Option<u8>| {
                 if (x, y, z) == (0, 0, 1) {
                     air.clone()
                 } else {
@@ -2262,7 +2671,7 @@ mod tests {
         assert!(movement_unobstructed(
             (0, 0, 0),
             (2, 2, 0),
-            &|x: i32, y: i32, z: i32| {
+            &mut |x: i32, y: i32, z: i32, _: Option<u8>| {
                 if (x, y, z) == (1, 0, 0) {
                     air.clone()
                 } else {
@@ -2275,7 +2684,7 @@ mod tests {
         assert!(movement_unobstructed(
             (0, 0, 0),
             (0, -2, 0),
-            &|x: i32, y: i32, z: i32| {
+            &mut |x: i32, y: i32, z: i32, _: Option<u8>| {
                 if (x, y, z) == (0, -1, 0) {
                     air.clone()
                 } else {
@@ -2286,7 +2695,7 @@ mod tests {
         assert!(movement_unobstructed(
             (0, 0, 0),
             (0, 0, 2),
-            &|x: i32, y: i32, z: i32| {
+            &mut |x: i32, y: i32, z: i32, _: Option<u8>| {
                 if (x, y, z) == (0, 1, 0) {
                     air.clone()
                 } else {
@@ -2299,48 +2708,48 @@ mod tests {
         // the non-vein refuses, the face-toward-replaceable pair the
         // scan answers)
         let vein_east = SculkMovementProbe { name: "sculk_vein", faces: 32 };
-        let substrate = |x: i32, _: i32, _: i32| {
+        let mut substrate = |x: i32, _: i32, _: i32, _: Option<u8>| {
             if x == 1 {
                 stone.clone()
             } else {
                 air.clone()
             }
         };
-        assert!(has_substrate_access(&vein_east, (0, 0, 0), &substrate));
-        let barren = |_: i32, _: i32, _: i32| air.clone();
-        assert!(!has_substrate_access(&vein_east, (0, 0, 0), &barren));
+        assert!(has_substrate_access(&vein_east, (0, 0, 0), &mut substrate));
+        let mut barren = |_: i32, _: i32, _: i32, _: Option<u8>| air.clone();
+        assert!(!has_substrate_access(&vein_east, (0, 0, 0), &mut barren));
         // the faceless vein the scan refuses
         let vein_bare = SculkMovementProbe { name: "sculk_vein", faces: 0 };
-        assert!(!has_substrate_access(&vein_bare, (0, 0, 0), &substrate));
+        assert!(!has_substrate_access(&vein_bare, (0, 0, 0), &mut substrate));
         // the sculk block the VEIN head refuses (the SculkBehaviour
         // instanceof the candidate walk's first gate alone wears)
         let sculk_cell = SculkMovementProbe { name: "sculk", faces: 0 };
-        assert!(!has_substrate_access(&sculk_cell, (0, 0, 0), &substrate));
+        assert!(!has_substrate_access(&sculk_cell, (0, 0, 0), &mut substrate));
         // the down-face vein the dirt-below pair answers (the tag's
         // own rows the substrate reads — the sampled pass + the
         // sampled refusals the tag's scope keeps)
         let vein_down = SculkMovementProbe { name: "sculk_vein", faces: 1 };
-        let dirt_below = |_: i32, y: i32, _: i32| {
+        let mut dirt_below = |_: i32, y: i32, _: i32, _: Option<u8>| {
             if y == -1 {
                 SculkMovementProbe { name: "dirt", faces: 0 }
             } else {
                 air.clone()
             }
         };
-        assert!(has_substrate_access(&vein_down, (0, 0, 0), &dirt_below));
-        let glass_below = |_: i32, y: i32, _: i32| {
+        assert!(has_substrate_access(&vein_down, (0, 0, 0), &mut dirt_below));
+        let mut glass_below = |_: i32, y: i32, _: i32, _: Option<u8>| {
             if y == -1 {
                 SculkMovementProbe { name: "glass", faces: 0 }
             } else {
                 air.clone()
             }
         };
-        assert!(!has_substrate_access(&vein_down, (0, 0, 0), &glass_below));
+        assert!(!has_substrate_access(&vein_down, (0, 0, 0), &mut glass_below));
 
         // THE SINGLE-CANDIDATE LAW — whatever the shuffle order
         // serves, the ONLY valid candidate the walk returns (the vein
         // the west-face + stone-substrate pair arms, the rest air)
-        let single = |x: i32, y: i32, z: i32| -> SculkMovementProbe {
+        let mut single = |x: i32, y: i32, z: i32, _: Option<u8>| -> SculkMovementProbe {
             if (x, y, z) == (3, 33, 0) {
                 SculkMovementProbe { name: "sculk_vein", faces: 16 }
             } else if (x, y, z) == (2, 33, 0) {
@@ -2351,16 +2760,17 @@ mod tests {
         };
         let mut rng = crate::drops::Lcg::new(9);
         assert_eq!(
-            get_valid_movement_pos((2, 33, 0), &mut rng, &single),
+            get_valid_movement_pos((2, 33, 0), &mut rng, &mut single),
             Some((3, 33, 0)),
             "the lone valid candidate the walk returns"
         );
         // the air world the never-found walk the None answer keeps
         let mut rng = crate::drops::Lcg::new(9);
         assert_eq!(
-            get_valid_movement_pos((2, 33, 0), &mut rng, &|_: i32,
+            get_valid_movement_pos((2, 33, 0), &mut rng, &mut |_: i32,
                 _: i32,
-                _: i32|
+                _: i32,
+                _: Option<u8>|
                 -> SculkMovementProbe { air.clone() }),
             None,
             "the air walk the null answer keeps"
@@ -2368,7 +2778,7 @@ mod tests {
         // the OBSTRUCTED vein the walk refuses (the candidate the
         // delta's arms block — the Y/Z pair full, the vein's own
         // substrate arm never reaches)
-        let blocked = |x: i32, y: i32, z: i32| -> SculkMovementProbe {
+        let mut blocked = |x: i32, y: i32, z: i32, _: Option<u8>| -> SculkMovementProbe {
             if (x, y, z) == (2, 35, 0) {
                 SculkMovementProbe { name: "sculk_vein", faces: 32 }
             } else if (x, y, z) == (3, 35, 0) {
@@ -2381,7 +2791,7 @@ mod tests {
         };
         let mut rng = crate::drops::Lcg::new(9);
         assert_eq!(
-            get_valid_movement_pos((2, 33, 0), &mut rng, &blocked),
+            get_valid_movement_pos((2, 33, 0), &mut rng, &mut blocked),
             None,
             "the obstructed vein the gates refuse"
         );
@@ -2395,7 +2805,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(11);
-        let pops = update_cursors(&mut cell, &mut rng, &single);
+        let (pops, _) = update_cursors(&mut cell, &mut rng, &mut single);
         assert_eq!(cell.cursors[0].pos, (3, 33, 0), "the pass the cursor moves");
         assert_eq!(
             cell.cursors[0].facings,
@@ -2423,7 +2833,7 @@ mod tests {
         // alive cursor still rides — the survivor pop the drain
         // RE-WEARS every tick, the 541 law the same word keeps)
         let before = rng.clone();
-        let pops = update_cursors(&mut cell, &mut rng, &single);
+        let (pops, _) = update_cursors(&mut cell, &mut rng, &mut single);
         assert_eq!(rng, before, "the countdown tick the walk never spends");
         assert_eq!(cell.cursors[0].update_delay, 0, "the countdown folds");
         assert_eq!(
@@ -2441,7 +2851,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(13);
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe {
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
             name: "air",
             faces: 0,
         });
@@ -2462,7 +2872,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(17);
-        let pops = update_cursors(&mut cell, &mut rng, |x: i32, y: i32, z: i32| {
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |x: i32, y: i32, z: i32, _: Option<u8>| {
             if (x, y, z) == (2, 33, 0) {
                 SculkMovementProbe { name: "sculk", faces: 0 }
             } else {
@@ -2480,7 +2890,7 @@ mod tests {
         // no shuffle it wears; the fold the Some(0) cursor still
         // rides — the pack-0 pop the drain re-wears)
         let before = rng.clone();
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe {
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
             name: "air",
             faces: 0,
         });
@@ -2490,12 +2900,317 @@ mod tests {
         assert_eq!(cell.cursors[0].update_delay, 0);
         // THE DEAD-CURSOR PATH SPENDS NOTHING (the pop the early
         // return wears — no shuffle the death tick draws)
-        let pops = update_cursors(&mut cell, &mut rng, |_, _, _| SculkMovementProbe {
+        let (pops, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
             name: "air",
             faces: 0,
         });
         assert_eq!(rng, before, "the dead cursor the walk never spends");
         assert_eq!(pops[0].data, 0, "the data-0 pop the decay kills");
         assert!(cell.cursors.is_empty());
+    }
+
+    /// THE VEIN SPREAD (javap the `SculkSpreader$ChargeCursor.update`
+    /// onlyGrowers arm pc 33-130 + the `SculkBehaviour.attemptSpreadVein`
+    /// default + the `MultifaceSpreader` walk verbatim): the THREE
+    /// spread kinds' pos laws, the same-axis refusal, the
+    /// canSpreadFrom law (the non-vein source every face, the vein
+    /// source only its own), the replacement chain (the behind-cell
+    /// sculk trio, the manhattan-2 between-cell sturdiness, the
+    /// lava/fire refusals, the replaceable tail), the duplicate-face
+    /// guard the IMMEDIATE visibility wears, the placement the
+    /// ledger's OR-merge banks — and the drain arm's own order (the
+    /// spread BEFORE the charge walk, the countdown tick the arm
+    /// skips, the fixed v1.0/p1.0 voice the spread>0 verdict alone
+    /// wears, the ZERO draws the walk never spends).
+    #[test]
+    fn the_vein_spread_the_faces_the_wrap_the_ledger_keeps() {
+        // THE SPREAD POS LAWS (javap the three SpreadType impls —
+        // SAME_POSITION the (pos, toFace) pair, SAME_PLANE the
+        // (pos.relative(toFace), fromFace) pair, WRAP_AROUND the
+        // diagonal + the toFace's opposite)
+        assert_eq!(spread_pos_for(SpreadKind::SamePosition, (5, 6, 7), 2, 0), ((5, 6, 7), 2));
+        assert_eq!(
+            spread_pos_for(SpreadKind::SamePlane, (5, 6, 7), 2, 0),
+            ((5, 6, 6), 0),
+            "the north step the from-face pair wears"
+        );
+        assert_eq!(
+            spread_pos_for(SpreadKind::WrapAround, (5, 6, 7), 2, 0),
+            ((5, 5, 6), 3),
+            "the diagonal wrap the south-face word wears"
+        );
+        // THE FACE LAWS (the opposite the XOR wears, the axis the >> 1
+        // fold banks — the same-axis refusal the Y/Z/X identity keeps)
+        for (face, opp) in [(0usize, 1usize), (1, 0), (2, 3), (3, 2), (4, 5), (5, 4)] {
+            assert_eq!(opposite_face(face), opp, "the pair the XOR wears");
+        }
+        assert_eq!(face_axis(0), face_axis(1), "down/up the Y axis shares");
+        assert_eq!(face_axis(2), face_axis(3), "north/south the Z axis shares");
+        assert_eq!(face_axis(4), face_axis(5), "west/east the X axis shares");
+        assert_ne!(face_axis(0), face_axis(2));
+        assert_ne!(face_axis(2), face_axis(4));
+
+        // THE CANSPREADFROM LAW (javap SpreadConfig.canSpreadFrom —
+        // `isOtherBlockValidAsSource(state) || hasFace(state, dir)`,
+        // the vein config's isOther the `!state.is(SCULK_VEIN)`
+        // refusal keeps)
+        let vein_up = SculkMovementProbe { name: "sculk_vein", faces: 2 };
+        assert!(can_spread_from(&vein_up, 1), "the carried face the pass wears");
+        assert!(!can_spread_from(&vein_up, 0), "the un-carried face the refusal wears");
+        assert!(!can_spread_from(&vein_up, 4));
+        let air_cell = SculkMovementProbe { name: "air", faces: 0 };
+        for face in 0..6usize {
+            assert!(
+                can_spread_from(&air_cell, face),
+                "the non-vein source EVERY face the isOther answer wears"
+            );
+        }
+        let sculk_cell = SculkMovementProbe { name: "sculk", faces: 0 };
+        assert!(can_spread_from(&sculk_cell, 3));
+
+        // THE RE-READ LAW (javap SculkBlock.canChangeBlockStateOnSpread
+        // pc 0-1 `iconst_0` — the sculk block alone the FALSE answer
+        // keeps, the DEFAULT the interface `iconst_1` wears)
+        assert!(!can_change_block_state_on_spread("sculk"));
+        assert!(can_change_block_state_on_spread("sculk_vein"));
+        assert!(can_change_block_state_on_spread("air"));
+
+        // THE REPLACEABLE TAIL (javap pc 131-157 — the canBeReplaced
+        // families the lane's vocabulary keeps)
+        assert!(can_be_replaced("air"));
+        assert!(can_be_replaced("water"));
+        assert!(can_be_replaced("short_grass"));
+        assert!(can_be_replaced("vine"));
+        assert!(!can_be_replaced("stone"));
+        assert!(!can_be_replaced("dirt"));
+        assert!(!can_be_replaced("sculk"));
+
+        // THE SPREAD_ALL WALK — the fresh cursor's AIR source the
+        // stone floor+wall world answers: THREE placements the walk
+        // banks (the down face on the cell itself, the north face the
+        // duplicate guard already wears, the wrap-around the stone's
+        // east face the between-cell pass arms)
+        let mut ledger: Vec<(i32, i32, i32, u8)> = Vec::new();
+        let mut world = |x: i32, y: i32, z: i32, place: Option<u8>| -> SculkMovementProbe {
+            if let Some(bit) = place {
+                match ledger
+                    .iter_mut()
+                    .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                {
+                    Some((_, _, _, f)) => *f |= bit,
+                    None => ledger.push((x, y, z, bit)),
+                }
+            }
+            if let Some((_, _, _, f)) = ledger
+                .iter()
+                .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+            {
+                return SculkMovementProbe {
+                    name: "sculk_vein",
+                    faces: *f,
+                };
+            }
+            match (x, y, z) {
+                (0, -1, 0) | (0, 0, -1) => SculkMovementProbe { name: "stone", faces: 0 },
+                _ => SculkMovementProbe { name: "air", faces: 0 },
+            }
+        };
+        let count = spread_all(&air_cell, (0, 0, 0), &mut world);
+        assert_eq!(count, 8, "the eight winning pairs the count banks");
+        assert_eq!(
+            ledger,
+            vec![
+                (0, 0, 0, 5),
+                (0, -1, 1, 4),
+                (-1, -1, 0, 32),
+                (1, -1, 0, 16),
+                (0, 1, -1, 1),
+                (-1, 0, -1, 32),
+                (1, 0, -1, 16),
+            ],
+            "the self-faces the OR-merge banks + the six wraps the stones' sides wear"
+        );
+        // THE VEIN SOURCE (the faces the source carries the filter
+        // alone spreads — the up-face vein the two placements the
+        // down/north pairs bank, the un-carried from-faces the filter
+        // refuses)
+        ledger.clear();
+        let mut world = |x: i32, y: i32, z: i32, place: Option<u8>| -> SculkMovementProbe {
+            if let Some(bit) = place {
+                match ledger
+                    .iter_mut()
+                    .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                {
+                    Some((_, _, _, f)) => *f |= bit,
+                    None => ledger.push((x, y, z, bit)),
+                }
+            }
+            if let Some((_, _, _, f)) = ledger
+                .iter()
+                .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+            {
+                return SculkMovementProbe {
+                    name: "sculk_vein",
+                    faces: *f,
+                };
+            }
+            match (x, y, z) {
+                (0, 0, 0) => SculkMovementProbe { name: "sculk_vein", faces: 2 },
+                (0, -1, 0) | (0, 0, -1) => SculkMovementProbe { name: "stone", faces: 0 },
+                _ => SculkMovementProbe { name: "air", faces: 0 },
+            }
+        };
+        let count = spread_all(&vein_up, (0, 0, 0), &mut world);
+        assert_eq!(
+            count, 1,
+            "the up-face source the ONE sideways placement wears (the down target the same-axis refusal keeps)"
+        );
+        assert_eq!(
+            ledger,
+            vec![(0, 0, 0, 4)],
+            "the north face-add the ledger banks"
+        );
+        ledger.clear();
+
+        // THE REPLACEMENT CHAIN's refusals (javap
+        // SculkVeinSpreaderConfig.stateCanBeReplaced): the lava/fire
+        // targets the fluid+tag refusals keep, the behind-cell sculk
+        // the trio refusal wears
+        let mut world = |x: i32, y: i32, z: i32, _: Option<u8>| -> SculkMovementProbe {
+            match (x, y, z) {
+                (0, 0, -1) => SculkMovementProbe { name: "lava", faces: 0 },
+                (1, 0, -1) => SculkMovementProbe { name: "fire", faces: 0 },
+                (0, -1, -1) => SculkMovementProbe { name: "sculk", faces: 0 },
+                (0, 0, 0) => SculkMovementProbe { name: "stone", faces: 0 },
+                _ => SculkMovementProbe { name: "air", faces: 0 },
+            }
+        };
+        // the lava target the SAME_POSITION north face refuses
+        assert!(!can_spread_into((0, 0, 0), (0, 0, -1), 2, &mut world));
+        // the fire target the tag refusal wears (the east face)
+        assert!(!can_spread_into((0, 0, 0), (1, 0, -1), 2, &mut world));
+        // the behind-cell sculk the trio refusal keeps (the north
+        // face's substrate the sculk cell answers)
+        assert!(!can_spread_into((0, 0, 0), (0, -1, -1), 2, &mut world));
+        // the stone target the replaceable tail REFUSES (the full
+        // cube the spread never replaces)
+        assert!(!can_spread_into((0, 0, 0), (0, 0, 0), 2, &mut world));
+
+        // THE DRAIN ARM (the spread BEFORE the charge walk — the voice
+        // the spread>0 verdict alone wears, the countdown tick the arm
+        // skips, the ZERO draws the walk never spends, the ledger the
+        // probe's own answers the movement then reads)
+        let mut cell = SculkCatalystCell {
+            pos: (0, 32, 0),
+            pulse_off_at: None,
+            cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
+        };
+        let mut ledger: Vec<(i32, i32, i32, u8)> = Vec::new();
+        let mut world = |x: i32, y: i32, z: i32, place: Option<u8>| -> SculkMovementProbe {
+            if let Some(bit) = place {
+                match ledger
+                    .iter_mut()
+                    .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                {
+                    Some((_, _, _, f)) => *f |= bit,
+                    None => ledger.push((x, y, z, bit)),
+                }
+            }
+            if let Some((_, _, _, f)) = ledger
+                .iter()
+                .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+            {
+                return SculkMovementProbe {
+                    name: "sculk_vein",
+                    faces: *f,
+                };
+            }
+            if (x, y, z) == (2, 32, 0) {
+                SculkMovementProbe { name: "stone", faces: 0 }
+            } else {
+                SculkMovementProbe { name: "air", faces: 0 }
+            }
+        };
+        let mut rng = crate::drops::Lcg::new(23);
+        let (pops, spreads) = update_cursors(&mut cell, &mut rng, &mut world);
+        // THE VOICE (the five placements the count wears — the down
+        // face the cell itself banks, the FOUR WRAPS the stone's sides
+        // the crawl wears — the vein the spread's own product the
+        // movement's candidate reads then answer)
+        assert_eq!(spreads.len(), 1, "the spread>0 verdict the voice wears");
+        assert_eq!(spreads[0].pos, (2, 33, 0));
+        assert_eq!(spreads[0].count, 5);
+        // THE ZERO-DRAW LAW (the shuffle's SEVENTEEN draws the only
+        // spend — the spread the walk never draws)
+        let mut expected = crate::drops::Lcg::new(23);
+        for _ in 0..17 {
+            expected.next();
+        }
+        assert_eq!(rng, expected, "the spread the zero-draw law keeps");
+        // THE CHARGE WALK UNCHANGED (the decay law the spread never
+        // touches — the charge the first tick keeps, the delays the
+        // same re-arm banks)
+        assert_eq!(cell.cursors[0].charge, 5);
+        assert_eq!(cell.cursors[0].decay_delay, 0);
+        assert_eq!(cell.cursors[0].update_delay, 1);
+        assert_eq!(pops.len(), 1, "the survivor pop the fold still wears");
+        // THE COUNTDOWN TICK (the arm the early return skips — no
+        // spread, no voice, no draw)
+        let before = rng.clone();
+        let (_, spreads) = update_cursors(&mut cell, &mut rng, &mut world);
+        assert!(spreads.is_empty(), "the countdown tick the spread skips");
+        assert_eq!(rng, before, "the countdown the zero-draw keeps");
+        // THE LEDGER (the five placements the crawl banks — the down
+        // self-face + the four side wraps, the walk's own order)
+        assert_eq!(
+            ledger,
+            vec![
+                (2, 32, -1, 8),
+                (2, 32, 1, 4),
+                (1, 32, 0, 32),
+                (3, 32, 0, 16),
+                (2, 33, 0, 1),
+            ],
+            "the four side wraps the stone's sides + the down self-face the ledger banks"
+        );
+        // THE AIR WORLD (the silence the no-substrate world wears —
+        // the spreadAll the zero count answers, no voice the drain
+        // speaks)
+        let mut cell = SculkCatalystCell {
+            pos: (0, 32, 0),
+            pulse_off_at: None,
+            cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
+        };
+        let mut ledger: Vec<(i32, i32, i32, u8)> = Vec::new();
+        let mut world = |x: i32, y: i32, z: i32, place: Option<u8>| -> SculkMovementProbe {
+            if let Some(bit) = place {
+                match ledger
+                    .iter_mut()
+                    .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                {
+                    Some((_, _, _, f)) => *f |= bit,
+                    None => ledger.push((x, y, z, bit)),
+                }
+            }
+            if let Some((_, _, _, f)) = ledger
+                .iter()
+                .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+            {
+                return SculkMovementProbe {
+                    name: "sculk_vein",
+                    faces: *f,
+                };
+            }
+            SculkMovementProbe { name: "air", faces: 0 }
+        };
+        let mut rng = crate::drops::Lcg::new(29);
+        let (_, spreads) = update_cursors(&mut cell, &mut rng, &mut world);
+        assert!(spreads.is_empty(), "the air world the spread silences");
+        assert!(ledger.is_empty());
+        let mut expected = crate::drops::Lcg::new(29);
+        for _ in 0..17 {
+            expected.next();
+        }
+        assert_eq!(rng, expected, "the air walk the 17 draws still spend");
     }
 }
