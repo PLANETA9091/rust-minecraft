@@ -8170,10 +8170,12 @@ pub fn flame_quads(
 /// `getTendrilAnimation(partialTick)` word the extractRenderState
 /// walk carries (the lerp/10.0 getter the sculk lane speaks). NO
 /// death clock the state wears — the warden's removal lane the
-/// health gate serves, the corpse the list never keeps. NO
-/// keyframe animations the fresh warden's stopped states keep — the
-/// attack/sonic-boom/dig/emerge/roar/sniff the AnimationState start
-/// arms, the never-started states the apply no-op keeps.
+/// health gate serves, the corpse the list never keeps. THE ROAR
+/// the keyframe lane wears — the WARDEN_ROAR definition the
+/// `WardenAnimation` clinit banks, the pose window the elapsed
+/// clock speaks (the other five — attack/sonic-boom/dig/emerge/
+/// sniff — the never-started states the apply no-op keeps, the
+/// fresh warden the stopped states wear).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct WardenState {
     pub yaw_deg: f32,
@@ -8183,6 +8185,19 @@ pub struct WardenState {
     pub walk_speed: f32,
     pub age_ticks: f32,
     pub tendril_animation: f32,
+    /// THE ROAR'S OWN CLOCK (javap `Warden.onSyncedDataUpdated` pc
+    /// 10-63 — the DATA_POSE sync the ROARING pose's own arrival
+    /// wears, the `roarAnimationState.start(tickCount)` pc 52-60 the
+    /// pose arm banks): the elapsed TICKS since the pose's own
+    /// start (the window's own `84 - roar_ticks` walk the caller
+    /// derives, the partial the lerp adds — the
+    /// `AnimationState.getTimeInMillis` `(age - startTick) * 50` the
+    /// millis fold keeps, the KeyframeAnimation's `/1000.0f` the
+    /// elapsed seconds speak). The `None` the never-armed state
+    /// keeps — the `ifStarted` gate the apply no-op wears (the
+    /// pose's own STANDING the stop banks, the window's own end the
+    /// clock retires).
+    pub roar_time: Option<f32>,
 }
 
 /// The full warden model — the 26.2 `WardenModel.createBodyLayer`
@@ -8337,15 +8352,257 @@ fn warden_folds(state: &WardenState) -> WardenFolds {
     }
 }
 
+// === THE WARDEN'S KEYFRAME ANIMATIONS (javap `WardenAnimation` the
+// 26.2 jar speaks — the `AnimationDefinition`s the clinit bakes,
+// the `KeyframeAnimation.bake(model, root)` the WardenModel ctor's
+// `AnimationDefinition.bake(root)` walk banks, the `apply(state,
+// ageInTicks)` the setupAnim's own tail serves — the additive
+// offsets the walk/idle/tendril folds the AHEAD banks speak) ===
+
+/// ONE KEYFRAME (javap `Keyframe` the record — the timestamp the
+/// f32 keeps, the vec the `degreeVec`/`posVec` bake wears, the
+/// interpolation the CATMULLROM choice the ROAR always speaks).
+/// The vecs the RAW definition words keep — the degrees the
+/// 0.017453292 bake multiplies, the POSITION's y the posVec fneg
+/// negates — the conversion the EVAL's own head serves (the
+/// vanilla bake the clinit's own order wears: convert FIRST, the
+/// interpolation the radians speak).
+struct WardenKeyframe {
+    t: f32,
+    v: [f32; 3],
+}
+
+/// THE WARDEN_ROAR DEFINITION (javap `WardenAnimation` clinit pc
+/// 7771-9138, verbatim — the `withLength(4.2f)` head the 84-tick
+/// window the `Mth.ceil(84.0f)` ROAR_DURATION wears, the four
+/// bones the addAnimation chain names — body, head, right_arm,
+/// left_arm — each its ROTATION + POSITION pair the 8/5, 8/6,
+/// 7/5, 7/5 keyframe arrays bank; EVERY keyframe the CATMULLROM
+/// interpolation wears). THE TIMELINE the pose window wears: the
+/// wind-up the -25° body tilt banks (t=1.24s = window tick 24.8 —
+/// the roar sound the 25th tick answers), the shake the head's
+/// own ±26° zRot pairs wear (t=1.6-2.44s), the settle the 3.0-4.2
+/// tail speaks — the final keyframe the (0,0,0) rest banks, the
+/// window's own 84th tick the pose's STANDING clears.
+const WARDEN_ROAR_BODY_ROT: [WardenKeyframe; 8] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 1.24, v: [-25.0, 0.0, 0.0] },
+    WardenKeyframe { t: 1.6, v: [32.5, 0.0, -7.5] },
+    WardenKeyframe { t: 1.84, v: [38.33, 0.0, 2.99] },
+    WardenKeyframe { t: 2.08, v: [40.97, 0.0, -4.3] },
+    WardenKeyframe { t: 2.36, v: [44.41, 0.0, 6.29] },
+    WardenKeyframe { t: 3.0, v: [47.5, 0.0, 0.0] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ROAR_BODY_POS: [WardenKeyframe; 5] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 1.24, v: [0.0, -1.0, 3.0] },
+    WardenKeyframe { t: 1.6, v: [0.0, -3.0, -6.0] },
+    WardenKeyframe { t: 3.0, v: [0.0, -3.0, -6.0] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ROAR_HEAD_ROT: [WardenKeyframe; 8] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 1.24, v: [-32.5, 0.0, 0.0] },
+    WardenKeyframe { t: 1.6, v: [-32.5, 0.0, -27.5] },
+    WardenKeyframe { t: 1.8, v: [-32.5, 0.0, 26.0] },
+    WardenKeyframe { t: 2.04, v: [-32.5, 0.0, -27.5] },
+    WardenKeyframe { t: 2.44, v: [-32.5, 0.0, 26.0] },
+    WardenKeyframe { t: 2.84, v: [-5.0, 0.0, -12.5] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ROAR_HEAD_POS: [WardenKeyframe; 6] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 1.24, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 1.6, v: [0.0, -2.0, -6.0] },
+    WardenKeyframe { t: 2.2, v: [0.0, -2.0, -6.0] },
+    WardenKeyframe { t: 2.48, v: [0.0, -2.0, -6.0] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ROAR_RIGHT_ARM_ROT: [WardenKeyframe; 7] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.72, v: [-120.0, 0.0, -20.0] },
+    WardenKeyframe { t: 1.24, v: [-77.5, 3.75, 15.0] },
+    WardenKeyframe { t: 1.48, v: [67.5, -32.5, 20.0] },
+    WardenKeyframe { t: 2.48, v: [37.5, -32.5, 25.0] },
+    WardenKeyframe { t: 2.88, v: [27.6, -17.1, 32.5] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ROAR_RIGHT_ARM_POS: [WardenKeyframe; 5] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.72, v: [3.0, -2.0, 0.0] },
+    WardenKeyframe { t: 1.48, v: [4.0, -2.0, 0.0] },
+    WardenKeyframe { t: 2.48, v: [4.0, -2.0, 0.0] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ROAR_LEFT_ARM_ROT: [WardenKeyframe; 7] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.72, v: [-125.0, 0.0, 20.0] },
+    WardenKeyframe { t: 1.24, v: [-76.25, -17.5, -7.5] },
+    WardenKeyframe { t: 1.48, v: [62.5, 42.5, -12.5] },
+    WardenKeyframe { t: 2.48, v: [37.5, 27.5, -27.5] },
+    WardenKeyframe { t: 2.88, v: [25.0, 18.4, -30.0] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ROAR_LEFT_ARM_POS: [WardenKeyframe; 5] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.72, v: [-3.0, -2.0, 0.0] },
+    WardenKeyframe { t: 1.48, v: [-4.0, -2.0, 0.0] },
+    WardenKeyframe { t: 2.48, v: [-4.0, -2.0, 0.0] },
+    WardenKeyframe { t: 4.2, v: [0.0, 0.0, 0.0] },
+];
+/// (the definition's own `withLength(4.2f)` head — the 84-tick
+/// window the 20-tick second wears — the final keyframe's own
+/// timestamp the length equals, the tail loop the test banks)
+
+/// THE MTH.CATMULLROM (javap `Mth.catmullrom` pc 0-59, verbatim —
+/// the 0.5 the head push keeps, the chain the bytecode's own
+/// mul/add order speaks: the 2b the first add banks, the
+/// (c-a)*t the second, the quadratic `*t*t` and the cubic
+/// `*t*t*t` the LEFT-assoc powers wear, the 0.5 the tail's own
+/// fmul answers)
+fn mth_catmullrom(t: f32, a: f32, b: f32, c: f32, d: f32) -> f32 {
+    0.5
+        * (2.0 * b
+            + (c - a) * t
+            + (2.0 * a - 5.0 * b + 4.0 * c - d) * t * t
+            + (3.0 * b - a - 3.0 * c + d) * t * t * t)
+}
+
+/// THE KEYFRAME'S OWN WALK (javap `KeyframeAnimation$Entry.apply`
+/// pc 0-138, verbatim): the `Mth.binarySearch(0, n, e <= kf.t)`
+/// the LOWER BOUND keeps (the first index the predicate answers —
+/// the `Mth.binarySearch` halving walk the `i -= j + 1` the
+/// never-found `min` = n wears), the `max(bs - 1, 0)` the
+/// segment's own start banks, the `min(n - 1, i + 1)` the end
+/// answers, the delta the `clamp((e - t_i)/(t_j - t_i), 0, 1)`
+/// speaks (the j==i the ZERO keeps — the past-end walk the rest
+/// pose banks), the CATMULLROM the END keyframe's own choice
+/// wears — the p0 the `max(i-1, 0)` clamps, the p3 the
+/// `min(n-1, j+1)` answers, the SCALE the 1.0 the apply's own
+/// fconst_1 keeps. The `pos` flag the posVec's own bake wears —
+/// the y the fneg negates; the rotation bake the degreeVec's
+/// 0.017453292 multiplies — the CONVERT-FIRST order the clinit's
+/// own bake speaks (the interpolation the baked vecs answer).
+fn warden_roar_channel(kfs: &[WardenKeyframe], elapsed: f32, pos: bool) -> [f32; 3] {
+    // THE BINARY SEARCH (Mth.binarySearch pc 0-43, verbatim: the
+    // `i = max - min` the length keeps, the `j = i / 2` the half
+    // banks, the pred the `elapsed <= kf.t` wears, the true the
+    // `i = j` halves, the false the `min = k + 1` the tail walks)
+    let n = kfs.len();
+    let mut lo = 0usize;
+    let mut len = n;
+    while len > 0 {
+        let half = len / 2;
+        let mid = lo + half;
+        if elapsed <= kfs[mid].t {
+            len = half;
+        } else {
+            lo = mid + 1;
+            len -= half + 1;
+        }
+    }
+    let i = lo.saturating_sub(1);
+    let j = (i + 1).min(n - 1);
+    let delta = if j == i {
+        0.0_f32
+    } else {
+        ((elapsed - kfs[i].t) / (kfs[j].t - kfs[i].t)).clamp(0.0, 1.0)
+    };
+    // THE BAKE (the degreeVec/posVec the clinit serves — the
+    // rotation the 0.017453292 xyz multiply keeps, the position
+    // the y-only fneg wears)
+    let bake = |kf: &WardenKeyframe| -> [f32; 3] {
+        if pos {
+            [kf.v[0], -kf.v[1], kf.v[2]]
+        } else {
+            [
+                kf.v[0] * 0.017_453_292_f32,
+                kf.v[1] * 0.017_453_292_f32,
+                kf.v[2] * 0.017_453_292_f32,
+            ]
+        }
+    };
+    let p0 = bake(&kfs[i.saturating_sub(1)]);
+    let p1 = bake(&kfs[i]);
+    let p2 = bake(&kfs[j]);
+    let p3 = bake(&kfs[(j + 1).min(n - 1)]);
+    [
+        mth_catmullrom(delta, p0[0], p1[0], p2[0], p3[0]),
+        mth_catmullrom(delta, p0[1], p1[1], p2[1], p3[1]),
+        mth_catmullrom(delta, p0[2], p1[2], p2[2], p3[2]),
+    ]
+}
+
+/// THE ROAR'S OWN DELTAS (the WARDEN_ROAR definition the 8
+/// channels evaluate — the additive offsets the vanilla
+/// `ModelPart.offsetRotation`/`offsetPos` walk speaks, the four
+/// folds the setupAnim's own order AHEAD banks): the `None` the
+/// never-armed state keeps (the `ifStarted` gate the ALL-ZERO
+/// no-op wears — the fresh warden the stopped states speak), the
+/// `Some(ticks)` the `getTimeInMillis` *50 /1000 the elapsed
+/// seconds answer.
+struct WardenRoarDeltas {
+    body_rot: [f32; 3],
+    body_pos: [f32; 3],
+    head_rot: [f32; 3],
+    head_pos: [f32; 3],
+    right_arm_rot: [f32; 3],
+    right_arm_pos: [f32; 3],
+    left_arm_rot: [f32; 3],
+    left_arm_pos: [f32; 3],
+}
+
+fn warden_roar_deltas(state: &WardenState) -> WardenRoarDeltas {
+    let zero = [0.0_f32; 3];
+    let Some(roar_ticks) = state.roar_time else {
+        // the never-started state the apply no-op wears
+        return WardenRoarDeltas {
+            body_rot: zero,
+            body_pos: zero,
+            head_rot: zero,
+            head_pos: zero,
+            right_arm_rot: zero,
+            right_arm_pos: zero,
+            left_arm_rot: zero,
+            left_arm_pos: zero,
+        };
+    };
+    // THE ELAPSED SECONDS (the `(age - startTick) * 50` the millis
+    // fold keeps, the `/1000.0f` the seconds speak — the two-step
+    // the bytecode's own order wears)
+    let elapsed = (roar_ticks * 50.0) / 1000.0;
+    WardenRoarDeltas {
+        body_rot: warden_roar_channel(&WARDEN_ROAR_BODY_ROT, elapsed, false),
+        body_pos: warden_roar_channel(&WARDEN_ROAR_BODY_POS, elapsed, true),
+        head_rot: warden_roar_channel(&WARDEN_ROAR_HEAD_ROT, elapsed, false),
+        head_pos: warden_roar_channel(&WARDEN_ROAR_HEAD_POS, elapsed, true),
+        right_arm_rot: warden_roar_channel(&WARDEN_ROAR_RIGHT_ARM_ROT, elapsed, false),
+        right_arm_pos: warden_roar_channel(&WARDEN_ROAR_RIGHT_ARM_POS, elapsed, true),
+        left_arm_rot: warden_roar_channel(&WARDEN_ROAR_LEFT_ARM_ROT, elapsed, false),
+        left_arm_pos: warden_roar_channel(&WARDEN_ROAR_LEFT_ARM_POS, elapsed, true),
+    }
+}
+
 fn build_warden_parts(state: &WardenState) -> Part {
     let f = warden_folds(state);
+    // THE ROAR'S OWN OFFSETS (the keyframe deltas the folds' own
+    // tail ADDS — the `offsetRotation`/`offsetPos` the vanilla walk
+    // speaks, the setupAnim order the keyframe applies the LAST
+    // keeps; the None the all-zero the no-op wears — the fresh
+    // warden the same numbers the folds alone speak)
+    let r = warden_roar_deltas(state);
     // THE BODY CUBE (the one cube the two ribcages' parent wears —
     // texOffs(0,0) addBox(-9,-13,-4,18,21,11))
     let body_part = Part {
-        pivot: [0.0, -21.0, 0.0],
-        x_rot: f.body_x,
-        y_rot: 0.0,
-        z_rot: f.body_z,
+        pivot: [
+            0.0 + r.body_pos[0],
+            -21.0 + r.body_pos[1],
+            0.0 + r.body_pos[2],
+        ],
+        x_rot: f.body_x + r.body_rot[0],
+        y_rot: r.body_rot[1],
+        z_rot: f.body_z + r.body_rot[2],
         cubes: vec![Cube {
             tex: (0.0, 0.0),
             origin: [-9.0, -13.0, -4.0],
@@ -8357,10 +8614,14 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // THE HEAD (texOffs(0,32) addBox(-8,-16,-5,16,16,10) at
             // (0,-13,0) — the tendrils its children ride)
             Part {
-                pivot: [0.0, -13.0, 0.0],
-                x_rot: f.head_x,
-                y_rot: f.head_y,
-                z_rot: f.head_z,
+                pivot: [
+                    0.0 + r.head_pos[0],
+                    -13.0 + r.head_pos[1],
+                    0.0 + r.head_pos[2],
+                ],
+                x_rot: f.head_x + r.head_rot[0],
+                y_rot: f.head_y + r.head_rot[1],
+                z_rot: f.head_z + r.head_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 32.0),
                     origin: [-8.0, -16.0, -5.0],
@@ -8439,10 +8700,14 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // THE RIGHT ARM (texOffs(44,50) addBox(-4,0,-4,8,28,8)
             // at (-13,-13,1))
             Part {
-                pivot: [-13.0, -13.0, 1.0],
-                x_rot: f.right_arm_x,
-                y_rot: 0.0,
-                z_rot: 0.0,
+                pivot: [
+                    -13.0 + r.right_arm_pos[0],
+                    -13.0 + r.right_arm_pos[1],
+                    1.0 + r.right_arm_pos[2],
+                ],
+                x_rot: f.right_arm_x + r.right_arm_rot[0],
+                y_rot: r.right_arm_rot[1],
+                z_rot: r.right_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (44.0, 50.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -8455,10 +8720,14 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // THE LEFT ARM (texOffs(0,58) addBox(-4,0,-4,8,28,8) at
             // (13,-13,1))
             Part {
-                pivot: [13.0, -13.0, 1.0],
-                x_rot: f.left_arm_x,
-                y_rot: 0.0,
-                z_rot: 0.0,
+                pivot: [
+                    13.0 + r.left_arm_pos[0],
+                    -13.0 + r.left_arm_pos[1],
+                    1.0 + r.left_arm_pos[2],
+                ],
+                x_rot: f.left_arm_x + r.left_arm_rot[0],
+                y_rot: r.left_arm_rot[1],
+                z_rot: r.left_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 58.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -8624,6 +8893,10 @@ pub fn warden_layer_quads(
     layer: WardenLayer,
 ) -> Vec<AvatarQuad> {
     let f = warden_folds(state);
+    // THE ROAR'S OWN OFFSETS (the layer models bake their OWN
+    // WardenModel instances whose setupAnim runs the SAME keyframe
+    // applies — the deltas the folds' own tail ADDS here too)
+    let r = warden_roar_deltas(state);
     // the retain law's per-part verdicts (the named sets the lambdas
     // bank: biolum {head, arms, legs}, spots {body, head, arms, legs},
     // tendrils {the tendril pair}, heart {body})
@@ -8639,10 +8912,14 @@ pub fn warden_layer_quads(
     // THE BODY (the stub law: the unnamed part's cubes drop, the pose
     // rides — the head/limb children the merge law re-parents)
     let body_part = Part {
-        pivot: [0.0, -21.0, 0.0],
-        x_rot: f.body_x,
-        y_rot: 0.0,
-        z_rot: f.body_z,
+        pivot: [
+            0.0 + r.body_pos[0],
+            -21.0 + r.body_pos[1],
+            0.0 + r.body_pos[2],
+        ],
+        x_rot: f.body_x + r.body_rot[0],
+        y_rot: r.body_rot[1],
+        z_rot: f.body_z + r.body_rot[2],
         cubes: if body_kept {
             vec![Cube {
                 tex: (0.0, 0.0),
@@ -8659,10 +8936,14 @@ pub fn warden_layer_quads(
             // clearRecursively law drops — the stub: the tendrils the
             // re-parent law keeps riding)
             Part {
-                pivot: [0.0, -13.0, 0.0],
-                x_rot: f.head_x,
-                y_rot: f.head_y,
-                z_rot: f.head_z,
+                pivot: [
+                    0.0 + r.head_pos[0],
+                    -13.0 + r.head_pos[1],
+                    0.0 + r.head_pos[2],
+                ],
+                x_rot: f.head_x + r.head_rot[0],
+                y_rot: f.head_y + r.head_rot[1],
+                z_rot: f.head_z + r.head_rot[2],
                 cubes: if head_kept {
                     vec![Cube {
                         tex: (0.0, 32.0),
@@ -8733,10 +9014,14 @@ pub fn warden_layer_quads(
             },
             // THE ARMS
             Part {
-                pivot: [-13.0, -13.0, 1.0],
-                x_rot: f.right_arm_x,
-                y_rot: 0.0,
-                z_rot: 0.0,
+                pivot: [
+                    -13.0 + r.right_arm_pos[0],
+                    -13.0 + r.right_arm_pos[1],
+                    1.0 + r.right_arm_pos[2],
+                ],
+                x_rot: f.right_arm_x + r.right_arm_rot[0],
+                y_rot: r.right_arm_rot[1],
+                z_rot: r.right_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (44.0, 50.0),
@@ -8751,10 +9036,14 @@ pub fn warden_layer_quads(
                 children: vec![],
             },
             Part {
-                pivot: [13.0, -13.0, 1.0],
-                x_rot: f.left_arm_x,
-                y_rot: 0.0,
-                z_rot: 0.0,
+                pivot: [
+                    13.0 + r.left_arm_pos[0],
+                    -13.0 + r.left_arm_pos[1],
+                    1.0 + r.left_arm_pos[2],
+                ],
+                x_rot: f.left_arm_x + r.left_arm_rot[0],
+                y_rot: r.left_arm_rot[1],
+                z_rot: r.left_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (0.0, 58.0),
@@ -14485,6 +14774,7 @@ mod tests {
             walk_speed: 0.0,
             age_ticks: 0.0,
             tendril_animation: 0.0,
+            roar_time: None,
         };
         let feet = Vec3::new(10.0, 32.0, -4.0);
         let quads = model.quads(&state, feet, 0.0, 0.0);
@@ -14618,6 +14908,323 @@ mod tests {
         assert_eq!(left_arm.pivot, [13.0, -13.0, 1.0]);
         assert_eq!(right_arm.pivot, [-13.0, -13.0, 1.0]);
     }
+
+    /// THE ROAR DEFINITION'S OWN BANK (javap `WardenAnimation` clinit
+    /// pc 7771-9138 — the channel bones the addAnimation chain names,
+    /// the keyframe counts the anewarray sizes wear, the spot
+    /// constants the ldc floats speak, the `withLength(4.2f)` the
+    /// 84-tick window keeps).
+    #[test]
+    fn the_roar_definition_the_jar_banks() {
+        // THE LENGTH (the withLength head — the ROAR_DURATION 84 the
+        // 20-tick second wears; the final keyframe's own timestamp
+        // the length equals)
+        assert_eq!(
+            WARDEN_ROAR_BODY_ROT[7].t, 4.2,
+            "the 84-tick window the tail keeps"
+        );
+        // THE CHANNEL COUNTS (the anewarray sizes: body 8/5, head
+        // 8/6, right_arm 7/5, left_arm 7/5)
+        assert_eq!(WARDEN_ROAR_BODY_ROT.len(), 8, "the body's rot pair banks");
+        assert_eq!(WARDEN_ROAR_BODY_POS.len(), 5, "the body's pos pair banks");
+        assert_eq!(WARDEN_ROAR_HEAD_ROT.len(), 8, "the head's rot pair banks");
+        assert_eq!(WARDEN_ROAR_HEAD_POS.len(), 6, "the head's pos pair banks");
+        assert_eq!(
+            WARDEN_ROAR_RIGHT_ARM_ROT.len(),
+            7,
+            "the right arm's rot pair banks"
+        );
+        assert_eq!(
+            WARDEN_ROAR_RIGHT_ARM_POS.len(),
+            5,
+            "the right arm's pos pair banks"
+        );
+        assert_eq!(
+            WARDEN_ROAR_LEFT_ARM_ROT.len(),
+            7,
+            "the left arm's rot pair banks"
+        );
+        assert_eq!(
+            WARDEN_ROAR_LEFT_ARM_POS.len(),
+            5,
+            "the left arm's pos pair banks"
+        );
+        // THE SPOT CONSTANTS (the ldc floats the javap speaks): the
+        // wind-up apex, the shake pair, the arm raises, the settle
+        assert_eq!(WARDEN_ROAR_BODY_ROT[1].t, 1.24, "the wind-up's own tick");
+        assert_eq!(
+            WARDEN_ROAR_BODY_ROT[1].v,
+            [-25.0, 0.0, 0.0],
+            "the -25 body tilt the apex banks"
+        );
+        assert_eq!(WARDEN_ROAR_BODY_ROT[6].v, [47.5, 0.0, 0.0], "the 47.5 peak");
+        assert_eq!(
+            WARDEN_ROAR_HEAD_ROT[3].v,
+            [-32.5, 0.0, 26.0],
+            "the head shake the +26 zRot wears"
+        );
+        assert_eq!(
+            WARDEN_ROAR_HEAD_ROT[4].v,
+            [-32.5, 0.0, -27.5],
+            "the anti-phase shake the -27.5 answers"
+        );
+        assert_eq!(
+            WARDEN_ROAR_RIGHT_ARM_ROT[1].v,
+            [-120.0, 0.0, -20.0],
+            "the right arm's -120 raise"
+        );
+        assert_eq!(
+            WARDEN_ROAR_LEFT_ARM_ROT[1].v,
+            [-125.0, 0.0, 20.0],
+            "the left arm's -125 raise"
+        );
+        assert_eq!(
+            WARDEN_ROAR_LEFT_ARM_ROT[5].v,
+            [25.0, 18.4, -30.0],
+            "the settle's own arm words"
+        );
+        assert_eq!(
+            WARDEN_ROAR_BODY_POS[1].v,
+            [0.0, -1.0, 3.0],
+            "the body's pos lift the raw words keep"
+        );
+        assert_eq!(
+            WARDEN_ROAR_HEAD_POS[2].v,
+            [0.0, -2.0, -6.0],
+            "the head's pos the shake window banks"
+        );
+        // THE REST TAIL (every channel's final keyframe the (0,0,0)
+        // rest banks — the window's own end the pose clears)
+        for (name, kfs) in [
+            ("body rot", &WARDEN_ROAR_BODY_ROT[..]),
+            ("body pos", &WARDEN_ROAR_BODY_POS[..]),
+            ("head rot", &WARDEN_ROAR_HEAD_ROT[..]),
+            ("head pos", &WARDEN_ROAR_HEAD_POS[..]),
+            ("right arm rot", &WARDEN_ROAR_RIGHT_ARM_ROT[..]),
+            ("right arm pos", &WARDEN_ROAR_RIGHT_ARM_POS[..]),
+            ("left arm rot", &WARDEN_ROAR_LEFT_ARM_ROT[..]),
+            ("left arm pos", &WARDEN_ROAR_LEFT_ARM_POS[..]),
+        ] {
+            let last = &kfs[kfs.len() - 1];
+            assert_eq!(last.t, 4.2, "the {name} tail the definition's length keeps");
+            assert_eq!(last.v, [0.0, 0.0, 0.0], "the {name} tail the rest banks");
+        }
+    }
+
+    /// THE KEYFRAME CHANNEL'S OWN WALK (javap `KeyframeAnimation$Entry
+    /// .apply` pc 0-138 — the binary search the segment pair keeps, the
+    /// delta the clamp speaks, the CATMULLROM the end keyframe's own
+    /// choice wears, the posVec's y the fneg negates, the degreeVec
+    /// the 0.017453292 multiplies — the convert-first bake the clinit's
+    /// own order speaks).
+    #[test]
+    fn the_roar_channel_the_segment_walk_keeps() {
+        let deg = 0.017_453_292_f32;
+        // THE WIND-UP'S OWN START (elapsed 0 — the segment [0, 1.24]
+        // the delta-zero keeps, the catmullrom(0) the p1 = kf0 speaks)
+        assert_eq!(
+            warden_roar_channel(&WARDEN_ROAR_BODY_ROT, 0.0, false),
+            [0.0, 0.0, 0.0],
+            "the start the rest banks"
+        );
+        // THE APEX (elapsed 1.24 — the binary search the kf1 timestamp
+        // answers, the delta the 1.0 clamp keeps, the catmullrom(1) the
+        // p2 = kf1 speaks — the a=p0=b=p1 the ZERO vecs keep, the
+        // c=kf2/d=kf3 the neighbors wear; the inline chain the f32
+        // cancellation's own 1-ulp word speaks — the raw -25° rad the
+        // chain NEVER equals bitwise)
+        let t = 1.0_f32;
+        let (a, b, c, d) = (
+            0.0_f32,
+            0.0_f32,
+            -25.0_f32 * deg,
+            32.5_f32 * deg,
+        );
+        let expected_apex = 0.5
+            * (2.0 * b
+                + (c - a) * t
+                + (2.0 * a - 5.0 * b + 4.0 * c - d) * t * t
+                + (3.0 * b - a - 3.0 * c + d) * t * t * t);
+        let got = warden_roar_channel(&WARDEN_ROAR_BODY_ROT, 1.24, false);
+        assert_eq!(got[0], expected_apex, "the apex the catmullrom endpoint wears");
+        // THE POS BAKE (elapsed 1.24 — the raw (0,-1,3) the y-only fneg
+        // wears: (0, +1, +3) — the z the posVec never negates)
+        assert_eq!(
+            warden_roar_channel(&WARDEN_ROAR_BODY_POS, 1.24, true),
+            [0.0, 1.0, 3.0],
+            "the pos the y-neg bake keeps"
+        );
+        // THE MID-SEGMENT (elapsed 1.4 — the segment [1.24, 1.6], the
+        // p0..p3 the kf0..kf3 answers, the inline chain the bytecode's
+        // own f32 order replicates: 0.5 * (2b + (c-a)t + quad*t*t +
+        // cubic*t*t*t), the powers the LEFT-assoc keeps)
+        let t = (1.4_f32 - 1.24) / (1.6 - 1.24);
+        // THE ROT X (a=0, b=-25, c=32.5, d=38.33 — the radians the
+        // convert-first bake wears)
+        let (a, b, c, d) = (
+            0.0_f32 * deg,
+            -25.0_f32 * deg,
+            32.5_f32 * deg,
+            38.33_f32 * deg,
+        );
+        let expected = 0.5
+            * (2.0 * b
+                + (c - a) * t
+                + (2.0 * a - 5.0 * b + 4.0 * c - d) * t * t
+                + (3.0 * b - a - 3.0 * c + d) * t * t * t);
+        let got = warden_roar_channel(&WARDEN_ROAR_BODY_ROT, 1.4, false);
+        assert_eq!(got[0], expected, "the mid-segment rot the catmullrom wears");
+        // THE POS Y (a=0, b=+1, c=+3, d=+3 — the baked words)
+        let (a, b, c, d) = (0.0_f32, 1.0_f32, 3.0_f32, 3.0_f32);
+        let expected_y = 0.5
+            * (2.0 * b
+                + (c - a) * t
+                + (2.0 * a - 5.0 * b + 4.0 * c - d) * t * t
+                + (3.0 * b - a - 3.0 * c + d) * t * t * t);
+        let got = warden_roar_channel(&WARDEN_ROAR_BODY_POS, 1.4, true);
+        assert_eq!(got[1], expected_y, "the mid-segment pos the bake keeps");
+        // THE PAST-END REST (elapsed 5.0 — the binary search the n
+        // never-found wears, the j==i the delta-zero keeps, the value
+        // the last keyframe's own (0,0,0) banks)
+        assert_eq!(
+            warden_roar_channel(&WARDEN_ROAR_BODY_ROT, 5.0, false),
+            [0.0, 0.0, 0.0],
+            "the past-end the rest speaks"
+        );
+        assert_eq!(
+            warden_roar_channel(&WARDEN_ROAR_BODY_POS, 5.0, true),
+            [0.0, 0.0, 0.0],
+            "the past-end pos the rest answers"
+        );
+    }
+
+    /// THE ROAR'S OWN RENDER LAW (javap `WardenModel.setupAnim` pc
+    /// 106-118 — the roarAnimation the state consults, the apply the
+    /// ADDITIVE tail wears; the pose window the `84 - roar_ticks`
+    /// derivation the screens pass banks — the sound tick the 25th
+    /// window tick answers).
+    #[test]
+    fn the_roar_deltas_the_pose_window_banks() {
+        // THE NO-OP (the never-armed None — the parts the rest pose
+        // keeps: the +0.0 sums the folds' own numbers exactly wear)
+        let calm = build_warden_parts(&WardenState::rest());
+        let roared = build_warden_parts(&WardenState {
+            roar_time: Some(0.0),
+            ..WardenState::rest()
+        });
+        assert_eq!(calm.x_rot, roared.x_rot, "the elapsed-0 wind-up the zero wears");
+        let calm_body = &calm.children[0];
+        let roared_body = &roared.children[0];
+        assert_eq!(
+            calm_body.pivot,
+            roared_body.pivot,
+            "the elapsed-0 pos the zero keeps"
+        );
+        assert_eq!(calm_body.x_rot, roared_body.x_rot, "the elapsed-0 rot the zero speaks");
+        // THE WINDOW'S OWN DERIVATION (the sound tick: 84 - 59 = 25
+        // ticks — the elapsed the (25 * 50) / 1000 = 1.25s the
+        // getTimeInMillis fold keeps): the body the -25°→32.5° segment
+        // rides, the delta the (1.25-1.24)/0.36 speaks
+        let warden_roar_ticks = crate::sculk::WARDEN_ROAR_DURATION - 59;
+        assert_eq!(warden_roar_ticks, 25, "the sound tick the window wears");
+        let elapsed = (25.0_f32 * 50.0) / 1000.0;
+        assert_eq!(elapsed, 1.25, "the elapsed the *50/1000 fold keeps");
+        let parts = build_warden_parts(&WardenState {
+            roar_time: Some(25.0),
+            ..WardenState::rest()
+        });
+        let body = &parts.children[0];
+        let t = (1.25_f32 - 1.24) / (1.6 - 1.24);
+        let deg = 0.017_453_292_f32;
+        let (a, b, c, d) = (
+            0.0_f32 * deg,
+            -25.0_f32 * deg,
+            32.5_f32 * deg,
+            38.33_f32 * deg,
+        );
+        let expected_x = 0.5
+            * (2.0 * b
+                + (c - a) * t
+                + (2.0 * a - 5.0 * b + 4.0 * c - d) * t * t
+                + (3.0 * b - a - 3.0 * c + d) * t * t * t);
+        // THE IDLE'S OWN ADD (the rest state's age-0 clock the idle
+        // sway wears — the body_x the +0.025*cos(0) the folds' own
+        // tail banks, the roar delta the AFTER speaks: the setupAnim
+        // order the idle AHEAD of the keyframe applies keeps)
+        assert_eq!(
+            body.x_rot,
+            0.025_f32 + expected_x,
+            "the sound-tick tilt the idle + the catmullrom wear"
+        );
+        // THE POS SHIFT (the baked (0,+1,+3) apex the segment rides —
+        // the pivot the -21.0 base + the delta keeps; the z the (0,3,
+        // -6) baked words the same chain speaks)
+        let (a, b, c, d) = (0.0_f32, 1.0_f32, 3.0_f32, 3.0_f32);
+        let expected_y = 0.5
+            * (2.0 * b
+                + (c - a) * t
+                + (2.0 * a - 5.0 * b + 4.0 * c - d) * t * t
+                + (3.0 * b - a - 3.0 * c + d) * t * t * t);
+        let (a, b, c, d) = (0.0_f32, 3.0_f32, -6.0_f32, -6.0_f32);
+        let expected_z = 0.5
+            * (2.0 * b
+                + (c - a) * t
+                + (2.0 * a - 5.0 * b + 4.0 * c - d) * t * t
+                + (3.0 * b - a - 3.0 * c + d) * t * t * t);
+        assert_eq!(
+            body.pivot,
+            [0.0, -21.0 + expected_y, expected_z],
+            "the body pivot the pos delta wears"
+        );
+        // THE ARMS' OWN RAISE (the right arm at 1.25s — the binary
+        // search the [1.24, 1.48] segment keeps (the 1.25 the 1.24
+        // timestamp OUTGROWS), the p0..p3 the kf1..kf4 answers)
+        let right_arm = &body.children[3];
+        let ta = (1.25_f32 - 1.24) / (1.48 - 1.24);
+        let deg = 0.017_453_292_f32;
+        let (a, b, c, d) = (
+            -120.0_f32 * deg,
+            -77.5_f32 * deg,
+            67.5_f32 * deg,
+            37.5_f32 * deg,
+        );
+        let expected_ra = 0.5
+            * (2.0 * b
+                + (c - a) * ta
+                + (2.0 * a - 5.0 * b + 4.0 * c - d) * ta * ta
+                + (3.0 * b - a - 3.0 * c + d) * ta * ta * ta);
+        assert_eq!(
+            right_arm.x_rot, expected_ra,
+            "the arm raise the segment walk wears"
+        );
+        // THE ADDITIVITY (the roaring WALKER — the deltas the walk
+        // folds' own tail ADDS, the setupAnim order the keyframe
+        // applies the LAST keeps; the calm walker the folds alone
+        // speak)
+        let walker = WardenState {
+            walk_pos: 1.0,
+            walk_speed: 0.5,
+            ..WardenState::rest()
+        };
+        let roaring_walker = WardenState {
+            roar_time: Some(25.0),
+            ..walker
+        };
+        let calm_parts = build_warden_parts(&walker);
+        let roar_parts = build_warden_parts(&roaring_walker);
+        let calm_body = &calm_parts.children[0];
+        let roar_body = &roar_parts.children[0];
+        let f4 = 1.0_f32 * 0.8662;
+        let damp = 0.5_f32.min(3.0 * 0.5);
+        let walk_fold = mth_cos(f4) * 0.35_f32.min(damp) + 0.025;
+        assert_eq!(
+            roar_body.x_rot,
+            walk_fold + expected_x,
+            "the roar the walk fold's own tail adds"
+        );
+        assert_eq!(calm_body.x_rot, walk_fold, "the calm walker the folds alone speak");
+    }
+
     impl WardenState {
         /// THE STANDING REST (the zero pair the fresh warden's
         /// stillness wears — the look pair zero, the walk pair zero,
@@ -14631,6 +15238,7 @@ mod tests {
                 walk_speed: 0.0,
                 age_ticks: 0.0,
                 tendril_animation: 0.0,
+                roar_time: None,
             }
         }
     }
@@ -14656,6 +15264,7 @@ mod tests {
             walk_speed: 0.0,
             age_ticks: 40.0,
             tendril_animation: 0.5,
+            roar_time: None,
         };
         let feet = Vec3::new(3.0, 20.0, -7.0);
         // THE HEART (Set.of("body")): the body cube's six faces the
@@ -14741,6 +15350,7 @@ mod tests {
             walk_speed: 0.0,
             age_ticks: 137.0,
             tendril_animation: 0.0,
+            roar_time: None,
         };
         // THE CONST (the always-on glow)
         assert_eq!(

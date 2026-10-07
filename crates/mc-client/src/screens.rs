@@ -36281,6 +36281,22 @@ impl App {
                 walk_speed: warden.walk.speed_at(self.partial_tick),
                 age_ticks,
                 tendril_animation: tendril_word,
+                // THE ROAR'S OWN CLOCK (javap `Warden.onSyncedDataUpdated`
+                // pc 10-63 — the DATA_POSE sync the ROARING pose's own
+                // arrival wears, the `roarAnimationState.start(tickCount)`
+                // the pose arm banks): the elapsed ticks the window's own
+                // `84 - roar_ticks` walk derives (the countdown the
+                // roar_start banks, the stop the window's end serves),
+                // the partial the lerp adds — the pose's STANDING the
+                // stop clears, the clock the None the no-op keeps
+                roar_time: if warden.roaring {
+                    Some(
+                        (crate::sculk::WARDEN_ROAR_DURATION - warden.roar_ticks) as f32
+                            + self.partial_tick,
+                    )
+                } else {
+                    None
+                },
             };
             let quads = warden_model.quads(&state, feet, cam.yaw, cam.pitch);
             // THE DRAW (the same SampledQuad fold the mob chain
