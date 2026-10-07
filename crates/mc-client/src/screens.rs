@@ -7091,6 +7091,18 @@ pub struct App {
     /// refuses, the walk the re-fire the duplicate placement never
     /// spends).
     pub sculk_block_placements: Vec<(i32, i32, i32)>,
+    /// THE SCULK-GROWTH CELLS (the sculk law's own store — javap
+    /// SculkBlock.attemptUseCharge pc 148-159: the `setBlock(above,
+    /// state, 3)` the flag-3 walk wears, the `getRandomGrowthState`
+    /// draw the sensor 10-in-11 / the shrieker 1-in-11 answers — the
+    /// grown cell's pos + the shrieker flag the store keeps (the
+    /// WATERLOGGED bit the lane's cells never carry — the documented
+    /// no-carry the fluid state the read alone keeps), the grid's u16
+    /// palette the sculk family rows never carry (the render hole the
+    /// vein ledger's own convention keeps), the persistent table the
+    /// drain's probe reads the NEXT tick's canPlaceGrowth count wears
+    /// — the cap the two cells keep, the THIRD the growth refuses).
+    pub sculk_growth_cells: Vec<(i32, i32, i32, bool)>,
     /// THE CRIT EMITTERS (the TrackingEmitters the crit attacks arm —
     /// 3 ticks of life each, the 16-sample walk per tick).
     pub crit_emitters: Vec<crate::particles::CritEmitter>,
@@ -8017,6 +8029,7 @@ impl App {
             sculk_catalysts: Vec::new(),
             sculk_vein_faces: Vec::new(),
             sculk_block_placements: Vec::new(),
+            sculk_growth_cells: Vec::new(),
             crit_emitters: Vec::new(),
             crit_sprite: None,
             weather_rain: None,
@@ -8131,7 +8144,6 @@ impl App {
     /// THE SCULK SENSOR'S OWN PLACEMENT (the registry walk's analog —
     /// the cell the vec banks, the fresh sensor the INACTIVE phase's
     /// own free-at keeps: the earliest tick the hearing rides).
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn place_sculk_sensor(&mut self, x: i32, y: i32, z: i32) {
         self.sculk_sensors.push(crate::sculk::SculkSensorCell {
             pos: (x, y, z),
@@ -8146,7 +8158,6 @@ impl App {
     /// the cell the vec banks, the fresh shrieker the INACTIVE phase's
     /// own free-at keeps: the earliest tick the hearing rides, the
     /// pending arrival the data's own silence keeps).
-    #[cfg_attr(not(test), expect(dead_code))]
     pub fn place_sculk_shrieker(&mut self, x: i32, y: i32, z: i32) {
         self.sculk_shrikers.push(crate::sculk::SculkShriekerCell {
             pos: (x, y, z),
@@ -9869,6 +9880,10 @@ impl App {
                 // the take/put-back the ledger's own borrow discipline
                 // serves)
                 let mut sculk_cells = std::mem::take(&mut self.sculk_block_placements);
+                // THE SCULK-GROWTH CELLS (the sculk law's own store —
+                // the take/put-back the ledger's own borrow discipline
+                // serves)
+                let mut growth_cells = std::mem::take(&mut self.sculk_growth_cells);
                 // THE DRAIN'S OWN PROBE (javap ChargeCursor.update's
                 // `getBlockState` reads the spread + movement + facings
                 // walks spend — the world's LOCAL palette id the
@@ -9925,6 +9940,28 @@ impl App {
                                 sculk_cells.push((x, y, z));
                             }
                         }
+                        crate::sculk::SculkWrite::SculkSensor => {
+                            // THE GROWTH (setBlock(above, sensor, 3) —
+                            // the 10-in-11 draw the store banks, the
+                            // duplicate the contains guard refuses)
+                            if !growth_cells
+                                .iter()
+                                .any(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                            {
+                                growth_cells.push((x, y, z, false));
+                            }
+                        }
+                        crate::sculk::SculkWrite::SculkShrieker => {
+                            // THE GROWTH (setBlock(above, shrieker, 3)
+                            // — the 1-in-11 draw the store banks, the
+                            // duplicate the contains guard refuses)
+                            if !growth_cells
+                                .iter()
+                                .any(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                            {
+                                growth_cells.push((x, y, z, true));
+                            }
+                        }
                     }
                     // THE READ (the ledger the vein rows bank, the
                     // placement store the sculk cells answer, the grid
@@ -9949,6 +9986,16 @@ impl App {
                             faces: 0,
                         };
                     }
+                    if let Some(shrieker) = growth_cells
+                        .iter()
+                        .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                        .map(|(_, _, _, s)| *s)
+                    {
+                        return crate::sculk::SculkMovementProbe {
+                            name: if shrieker { "sculk_shrieker" } else { "sculk_sensor" },
+                            faces: 0,
+                        };
+                    }
                     let name = drain_world
                         .map(|w| {
                             let id = w.get(x, y, z);
@@ -9966,14 +10013,16 @@ impl App {
                 let mut charge_events: Vec<crate::world_view::WireSculkChargeEvent> = Vec::new();
                 let mut spread_voices: Vec<crate::sculk::SculkSpreadVoice> = Vec::new();
                 let mut place_voices: Vec<crate::sculk::SculkPlaceVoice> = Vec::new();
+                let mut growth_voices: Vec<crate::sculk::SculkGrowthVoice> = Vec::new();
                 for cat in &mut self.sculk_catalysts {
-                    let (pops, spreads, places) = crate::sculk::update_cursors(
+                    let (pops, spreads, places, growths) = crate::sculk::update_cursors(
                         cat,
                         &mut self.level_ambient_rng,
                         &mut probe_at,
                     );
                     spread_voices.extend(spreads);
                     place_voices.extend(places);
+                    growth_voices.extend(growths);
                     for pop in pops {
                         // THE POP ARM'S OWN VERDICT (the
                         // isCollisionShapeFullBlock read the case's pop
@@ -10031,11 +10080,41 @@ impl App {
                 for pv in &place_voices {
                     self.play_sculk_spread(pv.pos.0, pv.pos.1, pv.pos.2);
                 }
+                // THE GROWTH'S OWN WORD (the record + the registration +
+                // the place sound — javap attemptUseCharge pc 148-177:
+                // the setBlock(above, state, 3) the flag-3 walk wears,
+                // the playSound(null, cursorPos, placeSound, BLOCKS,
+                // 1.0F, 1.0F) the CURSOR cell speaks — the record the
+                // GROWN cell's pos + the kind wears, the registration
+                // the active sensor/shrieker cell banks, the +0.5
+                // center the atCenterOf fold wears)
+                for g in &growth_voices {
+                    let (cx, cy, cz) = (g.pos.0, g.pos.1 + 1, g.pos.2);
+                    self.game_events.push(format!(
+                        "sculk_growth @{} x{:.6} y{:.6} z{:.6} {}",
+                        self.frame,
+                        cx as f64 + 0.5,
+                        cy as f64 + 0.5,
+                        cz as f64 + 0.5,
+                        if g.shrieker { "shrieker" } else { "sensor" }
+                    ));
+                }
+                for g in &growth_voices {
+                    let (cx, cy, cz) = (g.pos.0, g.pos.1 + 1, g.pos.2);
+                    if g.shrieker {
+                        self.place_sculk_shrieker(cx, cy, cz);
+                        self.play_sculk_growth("block.sculk_shrieker.place", g.pos.0, g.pos.1, g.pos.2);
+                    } else {
+                        self.place_sculk_sensor(cx, cy, cz);
+                        self.play_sculk_growth("block.sculk_sensor.place", g.pos.0, g.pos.1, g.pos.2);
+                    }
+                }
                 if !charge_events.is_empty() {
                     self.live_sculk_charge_events_updated(charge_events);
                 }
                 self.sculk_vein_faces = vein_ledger;
                 self.sculk_block_placements = sculk_cells;
+                self.sculk_growth_cells = growth_cells;
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -27824,6 +27903,30 @@ impl App {
         );
     }
 
+    /// THE SCULK-GROWTH VOICE WALK (javap `SculkBlock.attemptUseCharge`
+    /// pc 160-177 — the `playSound(null, cursorPos,
+    /// state.getSoundType().getPlaceSound(), BLOCKS, 1.0F, 1.0F)` the
+    /// BlockPos overload speaks: the grown block's own SoundType the
+    /// key answers (`block.sculk_sensor.place` / `block.sculk_shrieker.
+    /// place`), the FIXED volume/pitch pair the fconst_1 double wears,
+    /// NO random the overload carries — the pos the CURSOR cell (the
+    /// grown block sits ABOVE).)
+    fn play_sculk_growth(&mut self, key: &str, x: i32, y: i32, z: i32) {
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            key,
+            1.0,
+            1.0,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE BRUSH-COMPLETE WIRE LANE (javap `LevelEventHandler` case
     /// 3008 — offset 1629 — over the 26.2 jar): the server's own
     /// brush completion the client NOW answers
@@ -42209,6 +42312,93 @@ mod tests {
             assert!(
                 place_voice.contains(" p1.000000"),
                 "the fixed pitch the place voice carries"
+            );
+        }
+    }
+
+    /// THE DRAIN'S OWN SCULK LAW (javap `SculkBlock.attemptUseCharge`
+    /// pc 0-191 — the SCULK BLOCK HOST the charge walk's own override
+    /// wears): the death INSIDE the sculk cell the UP-half cursor the
+    /// sculk host banks, the pre-seeded placement store the host read
+    /// answers, the noGrowthRadius STRICT bound the far cursor the
+    /// GROWTH arm wears (the canPlaceGrowth the above air + the sensor
+    /// cap keeps), the `nextInt(growthSpawnCost) < charge` draw the
+    /// placement wears, the `getRandomGrowthState` draw the
+    /// sensor/shrieker kind banks — the grown cell the store + the
+    /// ACTIVE registration both bank, the place sound the CURSOR cell
+    /// speaks, the charge the cost the ALWAYS-subtract wears.
+    #[test]
+    fn the_drain_the_sculk_law_the_growth_wears() {
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_catalyst(0, 32, 0);
+        app.update();
+        let walk_frame = app.frame;
+        // THE PRE-SEEDED SCULK CELL (the vein law's own product the
+        // store banks — the cursor the death inside the cell the sculk
+        // host wears: the host read the store's own sculk name answers)
+        app.sculk_block_placements.push((6, 32, 0));
+        app.entity_die_at(6.5, 32.0, 0.5, 15);
+        assert_eq!(app.sculk_catalysts[0].cursors.len(), 1);
+        assert_eq!(
+            app.sculk_catalysts[0].cursors[0].pos, (6, 32, 0),
+            "the death inside the sculk cell the cursor banks"
+        );
+        // TICK 1 (the full update the sculk law serves): the growth arm
+        // the far cursor wears (the dist 6 the STRICT 16 bound refuses
+        // the radius, the above air + the empty box the canPlace keeps,
+        // the nextInt(10) < 15 draw the placement wears ALWAYS — the
+        // state draw the kind answers), the charge the cost drops to 5
+        app.update();
+        assert_eq!(
+            app.sculk_growth_cells,
+            vec![(6, 33, 0, false)],
+            "the ABOVE cell the sensor write banks"
+        );
+        // THE REGISTRATION (the grown cell the ACTIVE sensor the
+        // app's own placement walk banks — the hearing lane the cell
+        // rides the next tick)
+        assert_eq!(
+            app.sculk_sensors.iter().map(|s| s.pos).collect::<Vec<_>>(),
+            vec![(6, 33, 0)],
+            "the grown sensor the registration banks"
+        );
+        assert!(app.sculk_shrikers.is_empty(), "the 10-in-11 draw the shrieker never wears");
+        // THE RECORD (the GROWN cell's pos + the kind the +0.5 center
+        // wears)
+        let record = app
+            .game_events
+            .iter()
+            .find(|l| l.starts_with("sculk_growth"))
+            .expect("the growth the record banks");
+        assert_eq!(
+            *record,
+            format!("sculk_growth @{} x6.500000 y33.500000 z0.500000 sensor", walk_frame + 1),
+            "the growth record the walk's own frame wears"
+        );
+        // THE CURSOR (the charge the cost drops, the facings the sculk
+        // cell's EMPTY set wears, the movement the air world the cursor
+        // keeps)
+        let cursor = &app.sculk_catalysts[0].cursors[0];
+        assert_eq!(
+            (cursor.pos, cursor.charge, cursor.update_delay, cursor.decay_delay, cursor.facings),
+            ((6, 32, 0), 5, 1, 0, Some(0)),
+            "the (pos, 15-10, spread-delay, decay, pack-0) tuple the law keeps"
+        );
+        // THE PLACE SOUND (javap pc 160-177 — the getPlaceSound key the
+        // CURSOR cell speaks, the fixed p1.000000 pair wears)
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with(&format!("block.sculk_sensor.place @{}", walk_frame + 1)))
+                .expect("the growth voice the sensor key wears");
+            assert!(
+                voice.contains(" p1.000000"),
+                "the fixed pitch the growth voice carries"
             );
         }
     }

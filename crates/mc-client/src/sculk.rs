@@ -732,12 +732,9 @@ pub const SCULK_SPREADER_MAX_CURSORS: usize = 32;
 /// additionalDecayRate the walk banks (the worldgen twin the
 /// `createWorldGenSpreader` speaks — 50/1/5/10 — the isWorldGen flag
 /// the iconst_0 head keeps false).
-#[cfg_attr(not(test), expect(dead_code))]
 pub const SCULK_SPREADER_GROWTH_SPAWN_COST: i32 = 10;
-#[cfg_attr(not(test), expect(dead_code))]
 pub const SCULK_SPREADER_NO_GROWTH_RADIUS: i32 = 4;
 pub const SCULK_SPREADER_CHARGE_DECAY_RATE: i32 = 10;
-#[cfg_attr(not(test), expect(dead_code))]
 pub const SCULK_SPREADER_ADDITIONAL_DECAY_RATE: i32 = 5;
 
 /// ONE CHARGE CURSOR (the `SculkSpreader$ChargeCursor` the offline
@@ -1056,13 +1053,22 @@ const SUBSTRATE_DIRECTION_BITS: [u8; 6] = [1, 2, 4, 8, 16, 32];
 ///   attemptPlaceSculk banks (the `setBlock(target, SCULK, 3)` the
 ///   flag-3 walk wears — the SCULK_REPLACEABLE substrate the new
 ///   sculk block replaces, the immediate visibility the next read
-///   observes).
+///   observes),
+/// - [`SculkWrite::SculkSensor`] / [`SculkWrite::SculkShrieker`] —
+///   the GROWTH placements the sculk law's own attemptUseCharge banks
+///   (javap pc 148-159: the `setBlock(above, state, 3)` the flag-3
+///   walk wears — the `getRandomGrowthState` draw the sensor 10-in-11
+///   the shrieker 1-in-11 answers, the WATERLOGGED bit the lane's
+///   cells never carry — the documented no-carry the fluid state the
+///   read alone keeps).
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub enum SculkWrite {
     None,
     Vein(u8),
     VeinClear(u8),
     Sculk,
+    SculkSensor,
+    SculkShrieker,
 }
 
 /// ONE CELL THE MOVEMENT'S WORLD ANSWERS (the `getBlockState` read the
@@ -1815,6 +1821,174 @@ where
     }
 }
 
+/// THE GROWTH VOICE'S OWN WORD (javap SculkBlock.attemptUseCharge pc
+/// 148-177 — the `setBlock(above, state, 3)` the flag-3 walk wears +
+/// the `playSound(null, cursorPos, state.getSoundType().getPlaceSound(),
+/// BLOCKS, 1.0F, 1.0F)` the CURSOR cell speaks: the FIXED pair the
+/// fconst_1 double wears, NO random the overload carries — the sound
+/// key the grown block's own SoundType answers, the pos the CURSOR
+/// cell (the block the growth rides), the cell the ABOVE pos banks).
+#[derive(Debug, Clone, PartialEq)]
+pub struct SculkGrowthVoice {
+    /// THE CURSOR CELL (the playSound's own pos the pc 162-164 aload 8
+    /// banks — the grown block sits ABOVE).
+    pub pos: (i32, i32, i32),
+    /// THE GROWTH KIND (the `getRandomGrowthState` draw the 1-in-11
+    /// shrieker wears, the 10-in-11 sensor keeps).
+    pub shrieker: bool,
+}
+
+/// `SculkBlock.getDecayPenalty` (javap pc 0-59 verbatim — the static
+/// helper the decay arm's far charges consult): the distance the
+/// cursor-catalyst pair keeps (`distSqr` then the sqrt the d2f fold
+/// wears), the `noGrowthRadius` the fsub subtraction answers, the
+/// `Mth.square(f)` base the fmul folds, the `Mth.square(24 - radius)`
+/// the i2f divisor wears, the `Math.min(1.0F, base / max)` fraction
+/// clamps, the `Math.max(1, (int)(charge * fraction * 0.5F))` penalty
+/// the f2i TRUNCATION banks — NO draws the pure fold spends.
+pub fn get_decay_penalty(
+    cursor_pos: (i32, i32, i32),
+    catalyst_pos: (i32, i32, i32),
+    charge: i32,
+) -> i32 {
+    let radius = SCULK_SPREADER_NO_GROWTH_RADIUS as f32;
+    let dx = (cursor_pos.0 - catalyst_pos.0) as f64;
+    let dy = (cursor_pos.1 - catalyst_pos.1) as f64;
+    let dz = (cursor_pos.2 - catalyst_pos.2) as f64;
+    let dist = (dx * dx + dy * dy + dz * dz).sqrt() as f32;
+    let base = (dist - radius) * (dist - radius);
+    let max = ((24 - SCULK_SPREADER_NO_GROWTH_RADIUS) * (24 - SCULK_SPREADER_NO_GROWTH_RADIUS)) as f32;
+    let fraction = 1.0f32.min(base / max);
+    1.max((charge as f32 * fraction * 0.5) as i32)
+}
+
+/// `SculkBlock.canPlaceGrowth` (javap pc 0-139 verbatim — the private
+/// static helper the growth arm's gate consults): the ABOVE read
+/// (`pos.above()` pc 0-5 — the cell the growth would occupy), the
+/// `isAir()` pass + the WATER pair (`is(WATER) && getFluidState().is(
+/// WATER)` — the lane's single water word the source fluid answers),
+/// the FALSE the occupied cell keeps (pc 41-42), then the 243-cell
+/// box scan (`pos.offset(-4,0,-4)` .. `pos.offset(4,2,4)` — the
+/// betweenClosed walk pc 43-69, the x-fastest/z-middle/y-outer order
+/// the movement table's own convention keeps), each SCULK_SENSOR or
+/// SCULK_SHRIEKER cell the count feeds, the `count > 2` the FALSE
+/// return banks (pc 128-134 — the cap the two sensors/shriekers keep,
+/// the THIRD the growth refuses) — NO draws the scan spends.
+pub fn can_place_growth<F>(pos: (i32, i32, i32), world: &mut F) -> bool
+where
+    F: FnMut(i32, i32, i32, SculkWrite) -> SculkMovementProbe,
+{
+    let above = world(pos.0, pos.1 + 1, pos.2, SculkWrite::None);
+    if above.name != "air" && above.name != "water" {
+        return false;
+    }
+    let mut sensors = 0;
+    for dy in 0..=2i32 {
+        for dz in -4..=4i32 {
+            for dx in -4..=4i32 {
+                let probe = world(pos.0 + dx, pos.1 + dy, pos.2 + dz, SculkWrite::None);
+                if probe.name == "sculk_sensor" || probe.name == "sculk_shrieker" {
+                    sensors += 1;
+                    if sensors > 2 {
+                        return false;
+                    }
+                }
+            }
+        }
+    }
+    true
+}
+
+/// `SculkBlock.attemptUseCharge` (javap pc 0-191 verbatim — the
+/// SCULK BLOCK'S OWN OVERRIDE the sculk host wears): the zero-charge
+/// head the early return keeps (pc 6-8), the
+/// `nextInt(chargeDecayRate)` gate the first draw spends (pc 11-23 —
+/// the non-zero the charge unchanged keeps, the ZERO the walk arms),
+/// the `closerThan(catalystPos, noGrowthRadius)` the STRICT d² bound
+/// keeps (pc 35-47 — javap Vec3i.closerThan: `distSqr < square(d)` —
+/// the charge WITHIN four blocks the catalyst the decay arm wears),
+/// the `canPlaceGrowth` gate the box scan answers (pc 54-60 — the arm
+/// the in-radius walk SKIPS), the DECAY ARM (pc 63-103: the
+/// `nextInt(additionalDecayRate)` draw the second spends — the
+/// non-zero the charge keeps, the ZERO the
+/// `charge - (inRadius ? 1 : getDecayPenalty(...))` the isub answer
+/// banks), the GROWTH ARM (pc 104-191: the `nextInt(growthSpawnCost)`
+/// draw the third spends, the `< charge` the placement gate wears —
+/// the `getRandomGrowthState` draw the FOURTH spends (the 1-in-11
+/// shrieker, the 10-in-11 sensor — the WATERLOGGED bit the lane's
+/// cells never carry), the `setBlock(above, state, 3)` the write
+/// banks, the fixed v1.0/p1.0 place sound the CURSOR cell speaks —
+/// the `Math.max(0, charge - growthSpawnCost)` return the charge
+/// ALWAYS drops), the tuple the lane's voice plumbing serves.
+///
+/// The charge the sculk block's own body consumes — the growth the
+/// sensor/shrieker ladder banks IN the app world (the cells the
+/// drain's own registration walks ride).
+pub fn sculk_attempt_use_charge<F>(
+    cursor_pos: (i32, i32, i32),
+    catalyst_pos: (i32, i32, i32),
+    rng: &mut crate::drops::Lcg,
+    world: &mut F,
+    charge: i32,
+) -> (i32, Option<SculkGrowthVoice>)
+where
+    F: FnMut(i32, i32, i32, SculkWrite) -> SculkMovementProbe,
+{
+    if charge == 0 {
+        return (charge, None);
+    }
+    if rng.next_int(SCULK_SPREADER_CHARGE_DECAY_RATE as u64) != 0 {
+        return (charge, None);
+    }
+    let dx = (cursor_pos.0 - catalyst_pos.0) as f64;
+    let dy = (cursor_pos.1 - catalyst_pos.1) as f64;
+    let dz = (cursor_pos.2 - catalyst_pos.2) as f64;
+    let in_radius = dx * dx + dy * dy + dz * dz
+        < (SCULK_SPREADER_NO_GROWTH_RADIUS * SCULK_SPREADER_NO_GROWTH_RADIUS) as f64;
+    let can_place = if in_radius {
+        false
+    } else {
+        can_place_growth(cursor_pos, world)
+    };
+    if in_radius || !can_place {
+        // THE DECAY ARM (the additionalDecayRate draw the second
+        // spends — the ZERO the penalty isub answers)
+        if rng.next_int(SCULK_SPREADER_ADDITIONAL_DECAY_RATE as u64) != 0 {
+            return (charge, None);
+        }
+        let penalty = if in_radius {
+            1
+        } else {
+            get_decay_penalty(cursor_pos, catalyst_pos, charge)
+        };
+        return (charge - penalty, None);
+    }
+    // THE GROWTH ARM (the growthSpawnCost draw the third spends — the
+    // < charge gate the placement wears, the state draw the FOURTH
+    // spends, the charge the cost the ALWAYS-subtract wears)
+    let draw = rng.next_int(SCULK_SPREADER_GROWTH_SPAWN_COST as u64);
+    let mut growth = None;
+    if draw < charge {
+        let shrieker = rng.next_int(11) == 0;
+        let above = (cursor_pos.0, cursor_pos.1 + 1, cursor_pos.2);
+        world(
+            above.0,
+            above.1,
+            above.2,
+            if shrieker {
+                SculkWrite::SculkShrieker
+            } else {
+                SculkWrite::SculkSensor
+            },
+        );
+        growth = Some(SculkGrowthVoice {
+            pos: cursor_pos,
+            shrieker,
+        });
+    }
+    (0.max(charge - SCULK_SPREADER_GROWTH_SPAWN_COST), growth)
+}
+
 /// THE SPREADER'S OWN DRAIN (javap `SculkSpreader.updateCursors` —
 /// the serverTick's `updateCursors(level, pos, random, true)` the
 /// block entity's own tick serves): the walk transcribed over the
@@ -1842,16 +2016,21 @@ where
 ///   voice (pc 112-126 — the fixed pair the fconst_1 double wears,
 ///   NO random the overload carries) — the arm the spread>0 verdict
 ///   alone voices),
-/// - the CHARGE WALK (update pc 131-147 — the DEFAULT decayDelay law
-///   the non-sculk hosts keep, the VEIN'S OWN OVERRIDE the sculk_vein
-///   host wears: the attemptPlaceSculk first arm the placed walk the
-///   charge-1 + the place voice banks — the FIVE shuffle draws the
-///   walk spends BEFORE any halving, the regrow + the chain the ZERO
-///   draws keep — the fall-through the nextInt(chargeDecayRate) draw
-///   spends, the ZERO the floor(charge*0.5f) halving answers; the
-///   sculk-block host the DEFAULT keeps — the SculkBlock.attemptUse
-///   Charge growth law the lane never wears yet, the gap the next
-///   candidate banks),
+/// - the CHARGE WALK (update pc 131-147 — the behaviour cast the
+///   PRE-SPREAD state answers dispatches the THREE laws: the VEIN'S
+///   OWN OVERRIDE the sculk_vein host wears (the attemptPlaceSculk
+///   first arm the placed walk the charge-1 + the place voice banks —
+///   the FIVE shuffle draws the walk spends BEFORE any halving, the
+///   regrow + the chain the ZERO draws keep — the fall-through the
+///   nextInt(chargeDecayRate) draw spends, the ZERO the
+///   floor(charge*0.5f) halving answers), the SCULK BLOCK'S OWN
+///   OVERRIDE the sculk host wears (the nextInt(chargeDecayRate)
+///   gate, the noGrowthRadius closerThan the decay arm or the
+///   canPlaceGrowth growth arm — the nextInt(additionalDecayRate)
+///   penalty isub or the nextInt(growthSpawnCost) < charge the
+///   getRandomGrowthState draw the sensor/shrieker ladder banks — the
+///   charge the cost the ALWAYS-subtract wears), the DEFAULT
+///   decayDelay law the other hosts keep),
 /// - the MOVEMENT WALK (update pc 173-271 — the charge>0 tail the
 ///   full update alone serves: the shuffled non-corner offsets the
 ///   SEVENTEEN draws re-order, the three gates the candidate answers,
@@ -1905,16 +2084,18 @@ pub fn update_cursors<F>(
     Vec<SculkChargePop>,
     Vec<SculkSpreadVoice>,
     Vec<SculkPlaceVoice>,
+    Vec<SculkGrowthVoice>,
 )
 where
     F: FnMut(i32, i32, i32, SculkWrite) -> SculkMovementProbe,
 {
     if cell.cursors.is_empty() {
-        return (Vec::new(), Vec::new(), Vec::new());
+        return (Vec::new(), Vec::new(), Vec::new(), Vec::new());
     }
     let mut pops: Vec<SculkChargePop> = Vec::new();
     let mut spreads: Vec<SculkSpreadVoice> = Vec::new();
     let mut places: Vec<SculkPlaceVoice> = Vec::new();
+    let mut growths: Vec<SculkGrowthVoice> = Vec::new();
     let mut kept: Vec<SculkCursor> = Vec::new();
     // the chargeMap the survivor pop rides (the computeInt fold —
     // the totals the insertion order banks, the offline lane's own
@@ -1970,22 +2151,36 @@ where
                     count: spread,
                 });
             }
-            // pc 131-147: THE CHARGE WALK — the VEIN'S OWN OVERRIDE
-            // the sculk_vein host wears (the pre-spread state the
-            // behaviour cast answers — the vanilla walk the SAME
-            // behaviour object both arms read), the DEFAULT law the
-            // non-sculk hosts keep (the sculk block's own growth law
-            // the lane never wears yet — the gap the next candidate
-            // banks)
-            let (charge, placed) = if state.name == "sculk_vein" {
-                vein_attempt_use_charge(&state, cursor.pos, rng, &mut world, cursor.charge)
+            // pc 131-147: THE CHARGE WALK — the behaviour cast the
+            // PRE-SPREAD state answers dispatches the THREE laws (the
+            // vanilla walk the SAME behaviour object both arms read):
+            // the VEIN'S OWN OVERRIDE the sculk_vein host wears, the
+            // SCULK BLOCK'S OWN OVERRIDE the sculk host wears, the
+            // DEFAULT law the other hosts keep
+            let (charge, placed, growth) = if state.name == "sculk_vein" {
+                let (c, p) =
+                    vein_attempt_use_charge(&state, cursor.pos, rng, &mut world, cursor.charge);
+                (c, p, None)
+            } else if state.name == "sculk" {
+                let (c, g) = sculk_attempt_use_charge(cursor.pos, cell.pos, rng, &mut world, cursor.charge);
+                (c, None, g)
             } else {
-                (default_attempt_use_charge(cursor.decay_delay, cursor.charge), None)
+                (
+                    default_attempt_use_charge(cursor.decay_delay, cursor.charge),
+                    None,
+                    None,
+                )
             };
             if let Some(target) = placed {
                 // THE PLACE VOICE (attemptPlaceSculk pc 124-141 — the
                 // fixed v1.0/p1.0 voice the TARGET cell wears)
                 places.push(SculkPlaceVoice { pos: target });
+            }
+            if let Some(g) = growth {
+                // THE GROWTH VOICE (attemptUseCharge pc 148-177 — the
+                // place sound the CURSOR cell wears, the cell the
+                // ABOVE pos banks)
+                growths.push(g);
             }
             if charge <= 0 {
                 // THE DEAD CURSOR'S OWN POP (pc 104-114 — the data 0
@@ -2076,7 +2271,7 @@ where
         }
     }
     cell.cursors = kept;
-    (pops, spreads, places)
+    (pops, spreads, places, growths)
 }
 
 #[cfg(test)]
@@ -2726,7 +2921,7 @@ mod tests {
             ],
         };
         let mut rng = crate::drops::Lcg::new(1);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         // THE MERGE (the 5+5 pair the ≤1000 fold folds — the list the
         // merged cursor + the facings twin keeps)
         assert_eq!(cell.cursors.len(), 2, "the merge the pair folds");
@@ -2759,7 +2954,7 @@ mod tests {
         // re-fires (the walk the EVERY drain serves — the vein-flight
         // word the living cursor keeps ticking)
         let mut rng = crate::drops::Lcg::new(1);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert_eq!(pops.len(), 1, "the facings twin the survivor pop re-wears");
         assert_eq!(pops[0].pos, (2, 34, 0));
         assert_eq!(pops[0].data, (2 << 6) + 2);
@@ -2769,7 +2964,7 @@ mod tests {
         // TICK 3: the elapsed decay the ZERO answer wears — the data-0
         // pop the dead cursor speaks, the list the drain empties
         let mut rng = crate::drops::Lcg::new(1);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert_eq!(pops.len(), 2, "both cursors the decay kills");
         assert_eq!(pops[0].pos, (2, 33, 0));
         assert_eq!(pops[0].data, 0, "the dead cursor's own data-0 word");
@@ -2794,7 +2989,7 @@ mod tests {
             ],
         };
         let mut rng = crate::drops::Lcg::new(1);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert!(pops.is_empty());
         assert_eq!(cell.cursors.len(), 2, "the over-cap pair the list keeps");
         // THE UNREASONABLE DROP (the chessboard bound the cursor
@@ -2805,7 +3000,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2000, 32, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(1);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe { name: "air", faces: 0 });
         assert!(pops.is_empty(), "the refusal the pop never wears");
         assert!(cell.cursors.is_empty(), "the unreasonable cursor drops");
     }
@@ -3083,7 +3278,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(11);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, &mut single);
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, &mut single);
         assert_eq!(cell.cursors[0].pos, (3, 33, 0), "the pass the cursor moves");
         assert_eq!(
             cell.cursors[0].facings,
@@ -3111,7 +3306,7 @@ mod tests {
         // alive cursor still rides — the survivor pop the drain
         // RE-WEARS every tick, the 541 law the same word keeps)
         let before = rng.clone();
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, &mut single);
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, &mut single);
         assert_eq!(rng, before, "the countdown tick the walk never spends");
         assert_eq!(cell.cursors[0].update_delay, 0, "the countdown folds");
         assert_eq!(
@@ -3129,7 +3324,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(13);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
             name: "air",
             faces: 0,
         });
@@ -3150,7 +3345,7 @@ mod tests {
             cursors: vec![SculkCursor::fresh((2, 33, 0), 5)],
         };
         let mut rng = crate::drops::Lcg::new(17);
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |x: i32, y: i32, z: i32, _: SculkWrite| {
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |x: i32, y: i32, z: i32, _: SculkWrite| {
             if (x, y, z) == (2, 33, 0) {
                 SculkMovementProbe { name: "sculk", faces: 0 }
             } else {
@@ -3168,7 +3363,7 @@ mod tests {
         // no shuffle it wears; the fold the Some(0) cursor still
         // rides — the pack-0 pop the drain re-wears)
         let before = rng.clone();
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
             name: "air",
             faces: 0,
         });
@@ -3178,7 +3373,7 @@ mod tests {
         assert_eq!(cell.cursors[0].update_delay, 0);
         // THE DEAD-CURSOR PATH SPENDS NOTHING (the pop the early
         // return wears — no shuffle the death tick draws)
-        let (pops, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
+        let (pops, _, _, _) = update_cursors(&mut cell, &mut rng, |_, _, _, _| SculkMovementProbe {
             name: "air",
             faces: 0,
         });
@@ -3410,7 +3605,7 @@ mod tests {
             }
         };
         let mut rng = crate::drops::Lcg::new(23);
-        let (pops, spreads, _) = update_cursors(&mut cell, &mut rng, &mut world);
+        let (pops, spreads, _, _) = update_cursors(&mut cell, &mut rng, &mut world);
         // THE VOICE (the five placements the count wears — the down
         // face the cell itself banks, the FOUR WRAPS the stone's sides
         // the crawl wears — the vein the spread's own product the
@@ -3435,7 +3630,7 @@ mod tests {
         // THE COUNTDOWN TICK (the arm the early return skips — no
         // spread, no voice, no draw)
         let before = rng.clone();
-        let (_, spreads, _) = update_cursors(&mut cell, &mut rng, &mut world);
+        let (_, spreads, _, _) = update_cursors(&mut cell, &mut rng, &mut world);
         assert!(spreads.is_empty(), "the countdown tick the spread skips");
         assert_eq!(rng, before, "the countdown the zero-draw keeps");
         // THE LEDGER (the five placements the crawl banks — the down
@@ -3482,7 +3677,7 @@ mod tests {
             SculkMovementProbe { name: "air", faces: 0 }
         };
         let mut rng = crate::drops::Lcg::new(29);
-        let (_, spreads, _) = update_cursors(&mut cell, &mut rng, &mut world);
+        let (_, spreads, _, _) = update_cursors(&mut cell, &mut rng, &mut world);
         assert!(spreads.is_empty(), "the air world the spread silences");
         assert!(ledger.is_empty());
         let mut expected = crate::drops::Lcg::new(29);
@@ -3586,6 +3781,10 @@ mod tests {
                         cells.push((x, y, z));
                     }
                 }
+                // THE GROWTH ARMS the vein law's world never wears (the
+                // sculk host the law alone arms — the lane the walks
+                // the worlds the law's own hosts keep)
+                SculkWrite::SculkSensor | SculkWrite::SculkShrieker => {}
             }
             if let Some((_, _, _, f)) = ledger
                 .iter()
@@ -3722,6 +3921,241 @@ mod tests {
                 &mut world,
             );
             assert_eq!(ledger, vec![(5, 5, 5, 4)], "the non-vein head the row never touches");
+        }
+    }
+
+    /// THE SCULK BLOCK'S OWN CHARGE LAW (javap
+    /// `SculkBlock.attemptUseCharge` pc 0-191 + the helpers verbatim):
+    /// the gate draw the charge keeps, the noGrowthRadius STRICT d²
+    /// closerThan the decay arm wears (the additionalDecayRate draw
+    /// the penalty isub answers — the radius-inside the penalty 1, the
+    /// far charge the getDecayPenalty fold wears), the canPlaceGrowth
+    /// gate the above pair + the 243-cell sensor cap keeps, the growth
+    /// arm the growthSpawnCost draw the `< charge` gate wears (the
+    /// state draw the 1-in-11 shrieker / the 10-in-11 sensor answers —
+    /// the charge the cost the ALWAYS-subtract wears, the dead cursor
+    /// the zero the pop answers).
+    #[test]
+    fn the_sculk_law_the_decay_the_growth_the_cap_keeps() {
+        // THE PENALTY FOLD (javap getDecayPenalty pc 0-59 — the pure
+        // fold the f2i truncation banks)
+        assert_eq!(
+            get_decay_penalty((5, 0, 0), (0, 0, 0), 100),
+            1,
+            "the dist-5 fraction 1/400 the truncation the floor-1 wears"
+        );
+        assert_eq!(
+            get_decay_penalty((24, 0, 0), (0, 0, 0), 5),
+            2,
+            "the dist-24 fraction 1.0 the half-charge truncation wears"
+        );
+        assert_eq!(
+            get_decay_penalty((0, 20, 0), (0, 0, 0), 10),
+            3,
+            "the dist-20 fraction 0.64 the 3.2 truncation wears"
+        );
+        // THE CAP (javap canPlaceGrowth — the above pair + the
+        // 243-cell scan the two sensors keep, the THIRD refuses)
+        // the stone above the growth refuses (the y+1 read the
+        // isAir/WATER pair answers)
+        let mut world = |_: i32, _: i32, _: i32, _: SculkWrite| -> SculkMovementProbe {
+            SculkMovementProbe { name: "stone", faces: 0 }
+        };
+        assert!(
+            !can_place_growth((0, 32, 0), &mut world),
+            "the occupied above the growth refuses"
+        );
+        // the water above the growth PASSES (the lane's single water
+        // word the source-fluid pair answers)
+        let mut world = |_: i32, _: i32, _: i32, _: SculkWrite| -> SculkMovementProbe {
+            SculkMovementProbe { name: "water", faces: 0 }
+        };
+        assert!(
+            can_place_growth((0, 32, 0), &mut world),
+            "the water above the growth passes"
+        );
+        // the TWO sensors the cap keeps
+        let two = [(1i32, 32i32, 0i32), (-1, 32, 0)];
+        let mut world = |x: i32, y: i32, z: i32, _: SculkWrite| -> SculkMovementProbe {
+            if two.iter().any(|(px, py, pz)| *px == x && *py == y && *pz == z) {
+                return SculkMovementProbe { name: "sculk_sensor", faces: 0 };
+            }
+            SculkMovementProbe { name: "air", faces: 0 }
+        };
+        assert!(
+            can_place_growth((0, 32, 0), &mut world),
+            "the two sensors the cap keeps"
+        );
+        // the THIRD refuses
+        let three = [(1i32, 32i32, 0i32), (-1, 32, 0), (0, 34, 0)];
+        let mut world = |x: i32, y: i32, z: i32, _: SculkWrite| -> SculkMovementProbe {
+            if three.iter().any(|(px, py, pz)| *px == x && *py == y && *pz == z) {
+                return SculkMovementProbe { name: "sculk_sensor", faces: 0 };
+            }
+            SculkMovementProbe { name: "air", faces: 0 }
+        };
+        assert!(
+            !can_place_growth((0, 32, 0), &mut world),
+            "the third sensor the cap refuses"
+        );
+
+        // THE GATE (seed 1: the first nextInt(10) = 8 — the charge
+        // unchanged keeps, ONE draw the replay pins)
+        let mut world = |_: i32, _: i32, _: i32, _: SculkWrite| -> SculkMovementProbe {
+            SculkMovementProbe { name: "air", faces: 0 }
+        };
+        let mut rng = crate::drops::Lcg::new(1);
+        let (charge, growth) =
+            sculk_attempt_use_charge((5, 32, 0), (0, 32, 0), &mut rng, &mut world, 5);
+        assert_eq!(charge, 5, "the non-zero gate draw the charge keeps");
+        assert_eq!(growth, None);
+        let mut replay = crate::drops::Lcg::new(1);
+        replay.next_int(10);
+        assert_eq!(rng, replay, "the gate the ONE draw spends");
+
+        // THE DECAY ARM INSIDE THE RADIUS (seed 5: the gate = 0, the
+        // cursor dist 1 the STRICT 16 bound keeps inside, the second
+        // nextInt(5) = 4 — the charge kept, TWO draws; seed 29: the
+        // second draw = 0 — the radius penalty 1 the isub wears)
+        let mut rng = crate::drops::Lcg::new(5);
+        let (charge, growth) =
+            sculk_attempt_use_charge((1, 32, 0), (0, 32, 0), &mut rng, &mut world, 5);
+        assert_eq!(charge, 5, "the non-zero decay draw the charge keeps");
+        assert_eq!(growth, None);
+        let mut replay = crate::drops::Lcg::new(5);
+        replay.next_int(10);
+        replay.next_int(5);
+        assert_eq!(rng, replay, "the decay arm the TWO draws spends");
+        let mut rng = crate::drops::Lcg::new(29);
+        let (charge, growth) =
+            sculk_attempt_use_charge((1, 32, 0), (0, 32, 0), &mut rng, &mut world, 5);
+        assert_eq!(charge, 4, "the radius-inside penalty 1 the isub wears");
+        assert_eq!(growth, None);
+
+        // THE GROWTH ARM (seed 13: the gate = 0, the cursor dist 5
+        // OUTSIDE the strict bound, the above air the canPlace passes,
+        // the third nextInt(10) = 3 < 5 the placement wears, the state
+        // draw = 6 — the SENSOR the 10-in-11 answer banks, the charge
+        // the cost the ALWAYS-subtract wears — the dead cursor the
+        // zero speaks)
+        {
+            let mut growth_cells: Vec<(i32, i32, i32, bool)> = Vec::new();
+            let mut world = |x: i32, y: i32, z: i32, place: SculkWrite| -> SculkMovementProbe {
+                match place {
+                    SculkWrite::SculkSensor => {
+                        growth_cells.push((x, y, z, false));
+                    }
+                    SculkWrite::SculkShrieker => {
+                        growth_cells.push((x, y, z, true));
+                    }
+                    _ => {}
+                }
+                if let Some(s) = growth_cells
+                    .iter()
+                    .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                    .map(|(_, _, _, s)| *s)
+                {
+                    return SculkMovementProbe {
+                        name: if s { "sculk_shrieker" } else { "sculk_sensor" },
+                        faces: 0,
+                    };
+                }
+                SculkMovementProbe { name: "air", faces: 0 }
+            };
+            let mut rng = crate::drops::Lcg::new(13);
+            let (charge, growth) =
+                sculk_attempt_use_charge((5, 32, 0), (0, 32, 0), &mut rng, &mut world, 5);
+            assert_eq!(charge, 0, "the growth arm the cost the charge drops");
+            assert_eq!(
+                growth,
+                Some(SculkGrowthVoice { pos: (5, 32, 0), shrieker: false }),
+                "the 10-in-11 draw the sensor voice banks"
+            );
+            assert_eq!(
+                growth_cells,
+                vec![(5, 33, 0, false)],
+                "the ABOVE cell the sensor write banks"
+            );
+            let mut replay = crate::drops::Lcg::new(13);
+            replay.next_int(10);
+            replay.next_int(10);
+            replay.next_int(11);
+            assert_eq!(rng, replay, "the growth arm the THREE draws spends");
+        }
+        // THE SHRIEKER (seed 5 charge 10: the gate = 0, the third draw
+        // 9 < 10, the state draw = 0 — the 1-in-11 shrieker wears)
+        {
+            let mut growth_cells: Vec<(i32, i32, i32, bool)> = Vec::new();
+            let mut world = |x: i32, y: i32, z: i32, place: SculkWrite| -> SculkMovementProbe {
+                match place {
+                    SculkWrite::SculkSensor => {
+                        growth_cells.push((x, y, z, false));
+                    }
+                    SculkWrite::SculkShrieker => {
+                        growth_cells.push((x, y, z, true));
+                    }
+                    _ => {}
+                }
+                if let Some(s) = growth_cells
+                    .iter()
+                    .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                    .map(|(_, _, _, s)| *s)
+                {
+                    return SculkMovementProbe {
+                        name: if s { "sculk_shrieker" } else { "sculk_sensor" },
+                        faces: 0,
+                    };
+                }
+                SculkMovementProbe { name: "air", faces: 0 }
+            };
+            let mut rng = crate::drops::Lcg::new(5);
+            let (charge, growth) =
+                sculk_attempt_use_charge((5, 32, 0), (0, 32, 0), &mut rng, &mut world, 10);
+            assert_eq!(charge, 0);
+            assert_eq!(
+                growth,
+                Some(SculkGrowthVoice { pos: (5, 32, 0), shrieker: true }),
+                "the 1-in-11 draw the shrieker voice banks"
+            );
+            assert_eq!(growth_cells, vec![(5, 33, 0, true)]);
+        }
+        // THE GROWTH REFUSED (seed 34 charge 5: the third draw 6 >= 5 —
+        // no placement the state draw NEVER spends, the charge the cost
+        // still drops)
+        {
+            let mut growth_cells: Vec<(i32, i32, i32, bool)> = Vec::new();
+            let mut world = |x: i32, y: i32, z: i32, place: SculkWrite| -> SculkMovementProbe {
+                match place {
+                    SculkWrite::SculkSensor => {
+                        growth_cells.push((x, y, z, false));
+                    }
+                    SculkWrite::SculkShrieker => {
+                        growth_cells.push((x, y, z, true));
+                    }
+                    _ => {}
+                }
+                if let Some(s) = growth_cells
+                    .iter()
+                    .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                    .map(|(_, _, _, s)| *s)
+                {
+                    return SculkMovementProbe {
+                        name: if s { "sculk_shrieker" } else { "sculk_sensor" },
+                        faces: 0,
+                    };
+                }
+                SculkMovementProbe { name: "air", faces: 0 }
+            };
+            let mut rng = crate::drops::Lcg::new(34);
+            let (charge, growth) =
+                sculk_attempt_use_charge((5, 32, 0), (0, 32, 0), &mut rng, &mut world, 5);
+            assert_eq!(charge, 0, "the refused placement the charge still drops");
+            assert_eq!(growth, None, "the >= charge draw the placement refuses");
+            assert!(growth_cells.is_empty());
+            let mut replay = crate::drops::Lcg::new(34);
+            replay.next_int(10);
+            replay.next_int(10);
+            assert_eq!(rng, replay, "the refused growth the TWO draws spends");
         }
     }
 }
