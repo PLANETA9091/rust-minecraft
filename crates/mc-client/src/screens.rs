@@ -10248,6 +10248,47 @@ impl App {
                     self.play_warden_voice_v(word, wx, wy, wz, pitch, 10.0);
                 }
             }
+
+            // THE WARDEN'S HEARTBEAT (javap `Warden.tick` pc 51-227 —
+            // the CLIENT branch the tick's own tail serves AFTER the
+            // server walk pc 0-47 + the super tick pc 47-50, the
+            // arrival's shiver clock the same frame the decay reads:
+            // the `tickCount % getHeartBeatDelay() == 0` fold the due
+            // tick keeps, the heart clock the bipush-10 fills, the
+            // `playLocalSound(x, y, z, WARDEN_HEARTBEAT, source, 5.0f,
+            // pitch, false)` the voice wears — the pitch the two-draw
+            // the stream spends, the anger the delay shortens, the
+            // animation decay the same walk serves). The alive body
+            // the caller's health verdict keeps — the dead the level's
+            // own removal keeps out, the corpse the lane never ticks.
+            // The heartbeats the collected vec banks — the borrow the
+            // play's own pass splits.
+            let mut warden_heartbeats: Vec<(f64, f64, f64, f32)> = Vec::new();
+            for warden in &mut self.wardens {
+                if warden.health > 0.0 {
+                    if let Some(beat) = warden.tick_client() {
+                        warden_heartbeats.push((warden.x, warden.y, warden.z, beat.pitch));
+                    }
+                }
+            }
+            for (wx, wy, wz, pitch) in warden_heartbeats {
+                // THE HEARTBEAT RECORD (javap pc 102-116 — the
+                // playLocalSound the ldc-5.0 volume wears, the
+                // getSoundVolume 4.0 the OTHER voices speak, the
+                // heartbeat the LITERAL keeps)
+                self.game_events.push(format!(
+                    "warden_heartbeat @{} x{:.6} y{:.6} z{:.6} v5.0 p{:.6}",
+                    self.frame, wx, wy, wz, pitch
+                ));
+                self.play_warden_voice_v(
+                    "entity.warden.heartbeat",
+                    wx,
+                    wy,
+                    wz,
+                    pitch,
+                    crate::sculk::WARDEN_HEARTBEAT_VOLUME,
+                );
+            }
             // THE CATALYST'S OWN PULSE TAIL (javap SculkCatalystBlock.tick
             // pc 0-37 — the block's own scheduled tick the bloom's
             // scheduleTick 8 window banks: the `getValue(PULSE)` true
@@ -43417,6 +43458,11 @@ mod tests {
                     t = tick;
                     break;
                 }
+                // the client branch the frame walk serves — the
+                // heartbeat draws the entity's own stream spends, the
+                // mirror the same walk keeps (javap `Warden.tick` the
+                // server walk the client branch the SAME tick serves)
+                probe.tick_client();
             }
             assert!(t > 0, "the climb fires — the mirror the law keeps");
             t
@@ -43435,6 +43481,10 @@ mod tests {
         let base = ambient_count(&app);
         for i in 1..=schedule {
             let twin_fired = twin.tick();
+            // the client branch the app's own walk serves — the
+            // heartbeat draws the twin's stream spends the same ticks
+            // the lockstep keeps (the due fold the same anger answers)
+            twin.tick_client();
             app.update();
             let now = ambient_count(&app);
             let expect = if i == schedule { base + 1 } else { base };
@@ -43731,6 +43781,296 @@ mod tests {
         assert!(
             app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).is_none(),
             "the effect the dead lane never banks"
+        );
+    }
+
+    /// THE HEARTBEAT THE CADENCE THE RECORD BANKS (javap `Warden.tick`
+    /// pc 51-116 — the client branch the alive body serves, the
+    /// `tickCount % getHeartBeatDelay() == 0` fold the due tick keeps,
+    /// the `playLocalSound(x, y, z, WARDEN_HEARTBEAT, source, 5.0f,
+    /// pitch, false)` the voice the literal volume wears, the heart
+    /// clock the bipush-10 fills).
+    #[test]
+    fn the_heartbeat_the_cadence_the_record_banks() {
+        // === THE SUMMON (the walk-B's own setup — the stone floor the
+        // warden lands) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(14.0, 35.0, 14.0, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        app.wardens[0].x = 10.5;
+        app.wardens[0].y = 35.0;
+        app.wardens[0].z = 10.5;
+        // the SHRIEK TAIL's own application the summon banks — the fresh
+        // store the beat's legs the summon's standing never taints
+        app.effects = crate::effects::EffectsStore::new();
+
+        // THE CALM WINDOW the delay fold answers (javap getHeartBeatDelay
+        // pc 14-29 — the zero anger the clamp floor keeps, `40 - 0` the
+        // 40-tick window wears)
+        assert_eq!(
+            crate::sculk::warden_heartbeat_delay(0),
+            40,
+            "the fresh Calm the 40-tick window wears"
+        );
+
+        // THE PRE-DUE TICKS the silence keeps (ticks 1..39 — the fold
+        // the remainder refuses)
+        let before = app.game_events.len();
+        for _ in 0..39 {
+            app.update();
+        }
+        assert!(
+            !app.game_events[before..]
+                .iter()
+                .any(|l| l.starts_with("warden_heartbeat @")),
+            "the pre-due ticks the silence keeps — the fold the remainder refuses"
+        );
+
+        // THE 40TH TICK the beat banks — the record the entity's own
+        // feet the position wears, the literal volume the v5.0 tail
+        // keeps, the pitch the two-draw the 1.0-neighborhood answers
+        app.update();
+        let beat_line = app.game_events[before..]
+            .iter()
+            .find(|l| l.starts_with("warden_heartbeat @"))
+            .expect("the beat record banks — the due tick the cadence serves");
+        assert!(
+            beat_line.contains("x10.500000 y35.000000 z10.500000"),
+            "the entity's own feet the record wears — the getX/getY/getZ folds the call keeps: {beat_line}"
+        );
+        assert!(
+            beat_line.contains("v5.0 "),
+            "the LITERAL volume the record wears — the ldc 5.0f the getSoundVolume 4.0 never serves: {beat_line}"
+        );
+        let pitch: f32 = beat_line
+            .split_whitespace()
+            .last()
+            .and_then(|t| t.strip_prefix('p'))
+            .and_then(|v| v.parse().ok())
+            .expect("the p-tail the two-draw pitch wears");
+        assert!(
+            (0.79..=1.21).contains(&pitch),
+            "the two-draw adult law the 1.0-neighborhood wears: {pitch}"
+        );
+
+        // THE HEART CLOCK the beat fills — the O snapshot the fire tick
+        // banks, the drain the same walk serves (javap pc 73-76 the
+        // fill, pc 144-166 the snapshot+drain pair)
+        assert_eq!(
+            app.wardens[0].heart_animation_o,
+            crate::sculk::WARDEN_HEARTBEAT_ANIMATION,
+            "the O snapshot the fire tick banks"
+        );
+        assert_eq!(
+            app.wardens[0].heart_animation,
+            crate::sculk::WARDEN_HEARTBEAT_ANIMATION - 1,
+            "the drain the same walk serves"
+        );
+
+        // THE QUIET WINDOW the next 39 ticks keep — the fold the
+        // remainder refuses until the 80th
+        let before2 = app.game_events.len();
+        for _ in 0..39 {
+            app.update();
+        }
+        assert!(
+            !app.game_events[before2..]
+                .iter()
+                .any(|l| l.starts_with("warden_heartbeat @")),
+            "the quiet window the fold keeps"
+        );
+        app.update();
+        assert!(
+            app.game_events[before2..]
+                .iter()
+                .any(|l| l.starts_with("warden_heartbeat @")),
+            "the 80th tick the next beat banks — the cadence the window repeats"
+        );
+    }
+
+    /// THE SHIVER THE HEARING BANKS THE DECAY THE CLOCKS DRAIN (javap
+    /// `Warden$VibrationUser.onReceiveVibration` pc 30-37 — the
+    /// broadcastEntityEvent(this, 61) the walk speaks, the
+    /// handleEntityEvent pc 26-35 the tendril clock fills; javap
+    /// `Warden.tick` pc 119-166 — the O-snapshot + drain pair both
+    /// clocks the client branch serves, the >0 gate the zero keeps).
+    #[test]
+    fn the_shiver_the_hearing_banks_the_decay_drains() {
+        let mut w = crate::sculk::WardenMob::new(11, 5.5, 40.0, 5.5);
+
+        // THE FRESH CLOCKS the JVM zero-init keeps
+        assert_eq!(w.tendril_animation, 0, "the fresh tendril the zero keeps");
+        assert_eq!(w.heart_animation, 0, "the fresh heart the zero keeps");
+
+        // THE HEARING the shiver banks — the byte-61 event the
+        // vibration receive speaks (the pitch the two-draw the click
+        // voice spends, the 1.0-neighborhood the adult law wears)
+        let hear = w
+            .hear_vibration(
+                Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+                None,
+                None,
+                true,
+                true,
+                true,
+            )
+            .expect("the hearing answers");
+        assert!(
+            (0.79..=1.21).contains(&hear.click_pitch),
+            "the click pitch the two-draw law wears: {}",
+            hear.click_pitch
+        );
+        assert_eq!(
+            w.tendril_animation,
+            crate::sculk::WARDEN_TENDRILS_SHIVER_ANIMATION,
+            "the shiver the byte-61 banks — the bipush-10 the clock fills"
+        );
+
+        // THE FIRST CLIENT TICK the shiver drains — the O snapshot 10
+        // the lerp's own source banks, the cur the 9 answers (the
+        // fresh anger the 40-window the first tick never beats — the
+        // POST-increment count 1 the remainder keeps)
+        w.tick();
+        assert!(
+            w.tick_client().is_none(),
+            "the count 1 the 40-window refuses — the beat never banks early"
+        );
+        assert_eq!(
+            w.tendril_animation_o,
+            crate::sculk::WARDEN_TENDRILS_SHIVER_ANIMATION,
+            "the O snapshot the first walk banks"
+        );
+        assert_eq!(
+            w.tendril_animation,
+            crate::sculk::WARDEN_TENDRILS_SHIVER_ANIMATION - 1,
+            "the drain the first walk serves"
+        );
+
+        // THE NINE MORE WALKS the clock drains to the boundary — the
+        // O-lag the pair wears (the 10th walk the O 1 the cur 0 keeps,
+        // the 11th the both-zero the gate answers)
+        for _ in 0..9 {
+            w.tick();
+            w.tick_client();
+        }
+        assert_eq!(w.tendril_animation_o, 1, "the O-lag the boundary wears");
+        assert_eq!(w.tendril_animation, 0, "the drain the zero reaches");
+        w.tick();
+        w.tick_client();
+        assert_eq!(w.tendril_animation_o, 0, "the O the zero follows");
+        assert_eq!(w.tendril_animation, 0, "the >0 gate the drain stops");
+
+        // THE HEART CLOCK the hearing's anger the window wears — the
+        // +35 the hearing raised (the delay fold the 27 answers:
+        // 35/80 * 30 = 13.125, the floor 13, `40 - 13` the window
+        // wears), the count now 11 — the ANGER DECAY the 20th count
+        // the window re-banks (35 -> 34, the floor 12, the 28 the
+        // window wears), the NEXT MULTIPLE of 28 the beat answers
+        assert_eq!(
+            crate::sculk::warden_heartbeat_delay(w.active_anger()),
+            27,
+            "the hearing's +35 the 27-tick window wears"
+        );
+        for _ in 0..16 {
+            w.tick();
+            w.tick_client();
+        }
+        assert_eq!(
+            w.tick_count, 27,
+            "the 27th count the beat never banks — the decay the window re-banked"
+        );
+        // the count now 27 — the NEXT walk the count 28 banks the beat
+        w.tick();
+        let beat = w.tick_client().expect("the count 28 the beat banks");
+        assert_eq!(
+            w.tick_count, 28,
+            "the multiple of 28 the beat answers — the decay the window re-banks"
+        );
+        assert!(
+            (0.79..=1.21).contains(&beat.pitch),
+            "the beat pitch the two-draw law wears: {}",
+            beat.pitch
+        );
+        assert_eq!(
+            w.heart_animation_o,
+            crate::sculk::WARDEN_HEARTBEAT_ANIMATION,
+            "the heart O the fire walk banks"
+        );
+        assert_eq!(
+            w.heart_animation,
+            crate::sculk::WARDEN_HEARTBEAT_ANIMATION - 1,
+            "the heart drain the fire walk serves"
+        );
+    }
+
+    /// THE ANGER THE WINDOW SHORTENS (javap getHeartBeatDelay pc 0-30 —
+    /// the delay the anger fold wears: the +100 hurt the ANGRY ceiling
+    /// the clamp keeps, the `40 - 30` the 10-tick floor answers, the
+    /// cadence the next multiple the shortened window wears).
+    #[test]
+    fn the_heartbeat_the_anger_the_window_shortens() {
+        let mut w = crate::sculk::WardenMob::new(3, 5.5, 40.0, 5.5);
+
+        // THE CALM WALK the first beat at 40 (the fresh anger the
+        // 40-tick window wears, the 39 prior walks the silence keeps)
+        let mut first_beat = 0;
+        for _ in 0..40 {
+            w.tick();
+            if w.tick_client().is_some() {
+                first_beat = w.tick_count;
+            }
+        }
+        assert_eq!(first_beat, 40, "the calm window the first beat at 40");
+
+        // THE HURT the +100 anger raises — the delay the ceiling fold
+        // answers (100/80 the clamp 1.0 keeps, `40 - floor(30)` the
+        // 10-tick floor wears; the anger the decay the -1-per-20 the
+        // window never crosses the 80 floor within the test walk)
+        w.hurt_from_player(7.0, true);
+        assert_eq!(
+            crate::sculk::warden_heartbeat_delay(w.active_anger()),
+            10,
+            "the ANGRY anger the 10-tick floor wears"
+        );
+
+        // THE SHORTENED WINDOW the next beat 10 ticks later — the fold
+        // the multiple 50 answers (NOT the calm 80)
+        let mut second_beat = 0;
+        for _ in 0..20 {
+            w.tick();
+            if w.tick_client().is_some() {
+                second_beat = w.tick_count;
+                break;
+            }
+        }
+        assert_eq!(
+            second_beat, 50,
+            "the shortened window the 50th count answers — the anger the heart quickens"
+        );
+
+        // THE DELAY FOLD'S OWN ROWS (javap pc 0-30 — the clamp the
+        // rows keep: the zero the 40 wears, the 40 the half the 25
+        // answers, the 80 the 10 wears, the 150 the ceiling the clamp
+        // the 10 keeps — the anger the window never SLOWER wears)
+        assert_eq!(crate::sculk::warden_heartbeat_delay(0), 40);
+        assert_eq!(crate::sculk::warden_heartbeat_delay(40), 25);
+        assert_eq!(crate::sculk::warden_heartbeat_delay(80), 10);
+        assert_eq!(
+            crate::sculk::warden_heartbeat_delay(150),
+            10,
+            "the max anger the clamp the floor keeps"
         );
     }
 

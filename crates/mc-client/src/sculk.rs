@@ -1198,6 +1198,55 @@ pub fn warden_pulse_darkness_applies(
     }
 }
 
+// === THE WARDEN'S HEARTBEAT (javap `Warden.tick` pc 51-227 — the
+// CLIENT branch the level's client walk serves: the heartbeat the
+// anger-shortened cadence banks, the animation clocks the decay
+// drains) ===
+
+/// javap `Warden.tick` pc 73-76 — the `bipush 10` the heartbeat arm
+/// banks: the due tick the heart clock the animation fills, the
+/// client branch's decay the drain serves.
+pub const WARDEN_HEARTBEAT_ANIMATION: i32 = 10;
+
+/// javap `Warden.handleEntityEvent` pc 26-35 — the byte-61 event the
+/// `Warden$VibrationUser.onReceiveVibration` pc 30-37 broadcast
+/// speaks (`broadcastEntityEvent(this, EntityEvent.TENDRILS_SHIVER)`,
+/// the inlined bipush the jar's own walk keeps): the receiving client
+/// the tendril clock the shiver fills, the same decay the drain
+/// serves.
+pub const WARDEN_TENDRILS_SHIVER_ANIMATION: i32 = 10;
+
+/// javap `Warden.tick` pc 102-109 — the `ldc 5.0f` the
+/// `playLocalSound(x, y, z, WARDEN_HEARTBEAT, source, 5.0f, pitch,
+/// false)` volume wears: the LITERAL the call keeps (the
+/// getSoundVolume 4.0 the OTHER warden voices speak — the ambient,
+/// the hurt, the death — the heartbeat the ldc keeps).
+pub const WARDEN_HEARTBEAT_VOLUME: f32 = 5.0;
+
+/// javap `Warden.getHeartBeatDelay` pc 0-30, verbatim: `40 -
+/// Mth.floor(Mth.clamp(getClientAngerLevel() / 80.0f, 0.0f, 1.0f) *
+/// 30.0f)` — the numerator the CLIENT_ANGER_LEVEL synced value the
+/// fused model's active-anger wears (the `syncClientAngerLevel` the
+/// 20-tick cadence pc 59-86 banks, the `getActiveAnger` the same
+/// store the verdict consults), the denominator the
+/// `AngerLevel.ANGRY.getMinimumAnger()` the WARDEN_ANGER_ANGRY_MIN 80
+/// keeps. Calm the 40-tick window wears, the ANGRY ceiling the clamp
+/// the 10-tick floor keeps — the angrier the warden the faster the
+/// heart, the anger the window never the slower wears.
+pub fn warden_heartbeat_delay(anger: i32) -> i32 {
+    40 - ((anger as f32 / WARDEN_ANGER_ANGRY_MIN as f32).clamp(0.0, 1.0) * 30.0).floor() as i32
+}
+
+/// THE HEARTBEAT'S OWN VOICE (the record the client branch banks —
+/// the pitch the two-draw the stream spends, the volume the literal
+/// 5.0f the playLocalSound keeps, the position the entity's own feet
+/// the getX/getY/getZ folds wear).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenHeartbeat {
+    /// the `getVoicePitch()` the two-draw adult law speaks
+    pub pitch: f32,
+}
+
 // === THE ANGER MANAGEMENT (javap
 // `net.minecraft.world.entity.monster.warden.AngerManagement` — the
 // store the warden's own anger walks: the per-suspect map the
@@ -1630,6 +1679,15 @@ pub struct WardenMob {
     /// the entity's own RandomSource — the one-draw tick gate the
     /// baseTick law spends, the two-draw pitch law the voice speaks
     pub rng: crate::drops::Lcg,
+    /// THE CLIENT BRANCH'S OWN CLOCKS (javap `Warden.tick` pc 119-166
+    /// — the tendril/heart animation pair the client branch wears: the
+    /// O snapshot the lerp's own source keeps, the drain the >0 gate
+    /// answers; the byte-61 event the tendril fills, the heartbeat the
+    /// heart fills; the fresh zero the JVM's own init banks)
+    pub tendril_animation: i32,
+    pub tendril_animation_o: i32,
+    pub heart_animation: i32,
+    pub heart_animation_o: i32,
 }
 
 impl WardenMob {
@@ -1653,6 +1711,10 @@ impl WardenMob {
             digging_or_emerging: false,
             ambient_time: -crate::mob::AMBIENT_INTERVAL_TICKS,
             rng: crate::drops::Lcg::new(crate::mob::entity_voice_seed(id)),
+            tendril_animation: 0,
+            tendril_animation_o: 0,
+            heart_animation: 0,
+            heart_animation_o: 0,
         }
     }
 
@@ -1700,6 +1762,45 @@ impl WardenMob {
             self.anger.tick();
         }
         fired
+    }
+
+    /// THE CLIENT BRANCH'S OWN WALK (javap `Warden.tick` pc 51-227,
+    /// verbatim): the `level().isClientSide()` arm the SERVER walk
+    /// NEVER wears — the fused singleplayer frame the same walk the
+    /// caller's pass serves, the alive body the caller's health
+    /// verdict keeps (the bytecode the gate never carries — the dead
+    /// body the level's own removal keeps out, the corpse the lane
+    /// never ticks). THE HEARTBEAT pc 61-116: the `tickCount %
+    /// getHeartBeatDelay() == 0` fold the due tick keeps (the count
+    /// the POST-increment value the tick()'s own head banks — the
+    /// delay the active-anger fold the window shortens), the heart
+    /// clock the `bipush 10` fills, the `isSilent()` gate the fresh
+    /// false the pass keeps, the `playLocalSound(getX(), getY(),
+    /// getZ(), WARDEN_HEARTBEAT, source, 5.0f, getVoicePitch(), false)`
+    /// the voice wears — the pitch the TWO draws the entity's own
+    /// stream spends, the draws the heart-set pc 73-76 AFTER the walk
+    /// orders. THE DECAY pc 119-166 the same walk serves: the tendril
+    /// O-snapshot then the `> 0` drain (pc 119-141), the heart the
+    /// same pair (pc 144-166) — the O the lerp's own source the
+    /// render round consults, the fire tick the fresh 10 the snapshot
+    /// banks and the drain the 9 answers. The due verdict the
+    /// WardenHeartbeat voice banks — the quiet ticks the None keep.
+    pub fn tick_client(&mut self) -> Option<WardenHeartbeat> {
+        let mut heartbeat = None;
+        if self.tick_count % warden_heartbeat_delay(self.active_anger()) == 0 {
+            self.heart_animation = WARDEN_HEARTBEAT_ANIMATION;
+            let pitch = self.voice_pitch();
+            heartbeat = Some(WardenHeartbeat { pitch });
+        }
+        self.tendril_animation_o = self.tendril_animation;
+        if self.tendril_animation > 0 {
+            self.tendril_animation -= 1;
+        }
+        self.heart_animation_o = self.heart_animation;
+        if self.heart_animation > 0 {
+            self.heart_animation -= 1;
+        }
+        heartbeat
     }
 
     /// `Warden$VibrationUser.canReceiveVibration` (javap pc 0-98, the
@@ -1803,6 +1904,15 @@ impl WardenMob {
             return None;
         }
         self.vibration_cooldown = WARDEN_VIBRATION_COOLDOWN;
+        // THE TENDRILS-SHIVER EVENT (javap
+        // `Warden$VibrationUser.onReceiveVibration` pc 30-37 — the
+        // `broadcastEntityEvent(this, 61)` walk the cooldown set
+        // pc 11-29 SPEAKS BEFORE the click voice pc 40-56 serves, the
+        // `handleEntityEvent` pc 26-35 the client's clock fills: the
+        // `tendrilAnimation` the bipush-10 banks, the client branch's
+        // decay the drain serves — the shiver every received
+        // vibration fills, the dead gate pc 0-10 the head keeps)
+        self.tendril_animation = WARDEN_TENDRILS_SHIVER_ANIMATION;
         let click_pitch = self.voice_pitch();
         let listening = match projectile_owner {
             Some(owner) => {
