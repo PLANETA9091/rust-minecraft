@@ -1060,7 +1060,24 @@ impl Framebuf {
         alpha_scale: f32,
         sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
     ) {
-        self.draw_translucent_sampled_quads_impl(proj, quads, &|_| alpha_scale, sample);
+        self.draw_translucent_sampled_quads_impl(proj, quads, &|_| alpha_scale, false, sample);
+    }
+
+    /// THE COPLANAR EMISSIVE LAYER'S OWN BLEND (the sampled
+    /// translucent walk's LEQUAL twin — the `RenderType.eyes` composite
+    /// the warden's LivingEntityEmissiveLayer passes speak: the layer's
+    /// pruned mesh the body's OWN cube geometry shares, the depth tie
+    /// the LEQUAL func answers, the translucent blend the alpha wears,
+    /// the NO-DEPTH-WRITE the color-write mask keeps). Everything else
+    /// identical to `draw_translucent_sampled_quads`.
+    pub fn draw_translucent_sampled_quads_lequal(
+        &mut self,
+        proj: Mat4,
+        quads: &[SampledQuad],
+        alpha_scale: f32,
+        sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
+    ) {
+        self.draw_translucent_sampled_quads_impl(proj, quads, &|_| alpha_scale, true, sample);
     }
 
     /// THE PER-QUAD ALPHA WALK (the weather renderer's own entry — the
@@ -1081,18 +1098,26 @@ impl Framebuf {
             proj,
             quads,
             &|i| alphas.get(i).copied().unwrap_or(1.0),
+            false,
             sample,
         );
     }
 
     /// The shared translucent core — `alpha_of` picks the quad's vertex
     /// alpha (the constant scalar the screen overlays speak, the
-    /// per-column word the weather lane folds).
+    /// per-column word the weather lane folds); `depth_lequal` picks
+    /// the depth func: `false` = the strict-LESS law the fire/weather
+    /// lanes keep (ties never blend), `true` = the entity-layer LEQUAL
+    /// (the `RenderType.eyes` the warden's coplanar emissive overlays
+    /// speak — the layer's own geometry the body's own cubes share,
+    /// the depth TIE the pass must answer the vanilla glow the
+    /// SheepWoolUndercoatLayer's own opaque twin already banks).
     fn draw_translucent_sampled_quads_impl(
         &mut self,
         proj: Mat4,
         quads: &[SampledQuad],
         alpha_of: &dyn Fn(usize) -> f32,
+        depth_lequal: bool,
         sample: &mut dyn FnMut(&str, f32, f32) -> Option<[u8; 4]>,
     ) {
         let w_px = self.w as f32;
@@ -1157,7 +1182,11 @@ impl Framebuf {
                         let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow) * dist;
                         let v = (b0 * va * a_ow + b1 * vb * b_ow + b2 * vc * c_ow) * dist;
                         let idx = (py as usize) * self.w + px_ as usize;
-                        if z >= self.depth[idx] {
+                        if if depth_lequal {
+                            z > self.depth[idx]
+                        } else {
+                            z >= self.depth[idx]
+                        } {
                             continue; // the depth TEST survives; nothing writes
                         }
                         let Some(texel) = sample(quad.tex, u, v) else {

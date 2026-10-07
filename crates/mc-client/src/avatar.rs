@@ -8251,7 +8251,27 @@ impl WardenModel {
     }
 }
 
-/// THE WARDEN'S OWN FOLDS (the 26.2 `WardenModel.setupAnim` walk the
+/// THE WARDEN'S OWN FOLD WORDS (the 26.2 `WardenModel.setupAnim`'s
+/// per-part rotations the four private walks serve — the shared
+/// computation BOTH the full body mesh and the emissive layers'
+/// pruned meshes consult: the vanilla layer models bake their OWN
+/// WardenModel instances whose setupAnim runs the same folds).
+struct WardenFolds {
+    head_x: f32,
+    head_y: f32,
+    head_z: f32,
+    body_x: f32,
+    body_z: f32,
+    left_leg_x: f32,
+    right_leg_x: f32,
+    left_arm_x: f32,
+    right_arm_x: f32,
+    /// the tendril shiver swing (the left the plain arm, the right
+    /// the negation keeps)
+    swing: f32,
+}
+
+/// THE FOLD COMPUTATION (the 26.2 `WardenModel.setupAnim` walk the
 /// bytecode speaks, verbatim, in the walk's OWN order): the head
 /// look pair FIRST (`animateHeadLookTarget` — the xRot/yRot the
 /// 0.017453292 multiplier wears), the walk swing SECOND
@@ -8265,7 +8285,7 @@ impl WardenModel {
 /// `tendrilAnimation * cos(age * 2.25) * PI * 0.1` fold speaks, the
 /// Math.cos the REAL double cos the javap keeps — NOT the Mth table
 /// — the left the plain arm wears, the right the negation keeps).
-fn build_warden_parts(state: &WardenState) -> Part {
+fn warden_folds(state: &WardenState) -> WardenFolds {
     // THE LOOK PAIR (animateHeadLookTarget pc 0-24 — the
     // 0.017453292f the two fmul keeps)
     let deg2rad = 0.017_453_292_f32;
@@ -8303,13 +8323,29 @@ fn build_warden_parts(state: &WardenState) -> Part {
     let swing = state.tendril_animation
         * (((state.age_ticks as f64) * 2.25).cos() * std::f64::consts::PI
             * 0.100_000_001_490_116_12) as f32;
+    WardenFolds {
+        head_x,
+        head_y,
+        head_z,
+        body_x,
+        body_z,
+        left_leg_x,
+        right_leg_x,
+        left_arm_x,
+        right_arm_x,
+        swing,
+    }
+}
+
+fn build_warden_parts(state: &WardenState) -> Part {
+    let f = warden_folds(state);
     // THE BODY CUBE (the one cube the two ribcages' parent wears —
     // texOffs(0,0) addBox(-9,-13,-4,18,21,11))
     let body_part = Part {
         pivot: [0.0, -21.0, 0.0],
-        x_rot: body_x,
+        x_rot: f.body_x,
         y_rot: 0.0,
-        z_rot: body_z,
+        z_rot: f.body_z,
         cubes: vec![Cube {
             tex: (0.0, 0.0),
             origin: [-9.0, -13.0, -4.0],
@@ -8322,9 +8358,9 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // (0,-13,0) — the tendrils its children ride)
             Part {
                 pivot: [0.0, -13.0, 0.0],
-                x_rot: head_x,
-                y_rot: head_y,
-                z_rot: head_z,
+                x_rot: f.head_x,
+                y_rot: f.head_y,
+                z_rot: f.head_z,
                 cubes: vec![Cube {
                     tex: (0.0, 32.0),
                     origin: [-8.0, -16.0, -5.0],
@@ -8337,7 +8373,7 @@ fn build_warden_parts(state: &WardenState) -> Part {
                     // addBox(-16,-13,0,16,16,0) at (-8,-12,0))
                     Part {
                         pivot: [-8.0, -12.0, 0.0],
-                        x_rot: swing,
+                        x_rot: f.swing,
                         y_rot: 0.0,
                         z_rot: 0.0,
                         cubes: vec![Cube {
@@ -8353,7 +8389,7 @@ fn build_warden_parts(state: &WardenState) -> Part {
                     // addBox(0,-13,0,16,16,0) at (8,-12,0))
                     Part {
                         pivot: [8.0, -12.0, 0.0],
-                        x_rot: -swing,
+                        x_rot: -f.swing,
                         y_rot: 0.0,
                         z_rot: 0.0,
                         cubes: vec![Cube {
@@ -8404,7 +8440,7 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // at (-13,-13,1))
             Part {
                 pivot: [-13.0, -13.0, 1.0],
-                x_rot: right_arm_x,
+                x_rot: f.right_arm_x,
                 y_rot: 0.0,
                 z_rot: 0.0,
                 cubes: vec![Cube {
@@ -8420,7 +8456,7 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // (13,-13,1))
             Part {
                 pivot: [13.0, -13.0, 1.0],
-                x_rot: left_arm_x,
+                x_rot: f.left_arm_x,
                 y_rot: 0.0,
                 z_rot: 0.0,
                 cubes: vec![Cube {
@@ -8449,7 +8485,7 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // at (-5.9,-13,0))
             Part {
                 pivot: [-5.9, -13.0, 0.0],
-                x_rot: right_leg_x,
+                x_rot: f.right_leg_x,
                 y_rot: 0.0,
                 z_rot: 0.0,
                 cubes: vec![Cube {
@@ -8465,7 +8501,7 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // at (5.9,-13,0))
             Part {
                 pivot: [5.9, -13.0, 0.0],
-                x_rot: left_leg_x,
+                x_rot: f.left_leg_x,
                 y_rot: 0.0,
                 z_rot: 0.0,
                 cubes: vec![Cube {
@@ -8481,7 +8517,339 @@ fn build_warden_parts(state: &WardenState) -> Part {
     }
 }
 
-#[cfg(test)]
+// === THE WARDEN'S EMISSIVE LAYERS (javap `WardenRenderer`'s ctor +
+// `LivingEntityEmissiveLayer.submit` the 26.2 jar speaks — the FIVE
+// fullbright overlays the ctor's addLayer order keeps, each its own
+// pruned mesh + texture + alpha function, the `RenderType.eyes` the
+// bufferProvider lambda serves) ===
+
+/// ONE EMISSIVE LANE (javap `WardenRenderer`'s ctor the 26.2 jar
+/// speaks — the addLayer ORDER the draw sequence wears, each layer's
+/// pruned mesh the `retainExactParts` walk banks: the NAMED parts
+/// keep their cubes (`clearRecursively` the descendants drop), the
+/// unnamed parts become POSE-ONLY stubs the
+/// `addOrReplaceChild(String, PartDefinition)` merge law re-parents —
+/// the kept cubes ride the FULL ancestor chain the stubs preserve).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WardenLayer {
+    /// layer 1 — the `retainExactParts(Set.of("head", "left_arm",
+    /// "right_arm", "left_leg", "right_leg"))` mesh, the
+    /// BIOLUMINESCENT texture, the alpha-1.0 const lambda
+    /// (`lambda$new$1: fconst_1`) the constant glow speaks
+    Bioluminescent,
+    /// layer 2 — the `retainExactParts(Set.of("body", "head", arms,
+    /// legs))` mesh, the SPOTS-1 texture, the
+    /// `max(0.25, Mth.cos(age * 0.045) * 0.25)` alpha lambda
+    /// (`lambda$new$3`)
+    PulsatingSpots1,
+    /// layer 3 — the SAME pruned mesh, the SPOTS-2 texture, the
+    /// ANTI-PHASE `max(0.25, Mth.cos(age * 0.045 + 3.1415927f) *
+    /// 0.25)` lambda (`lambda$new$5`)
+    PulsatingSpots2,
+    /// layer 4 — the `retainExactParts(Set.of("left_tendril",
+    /// "right_tendril"))` mesh (the head the pose-only stub keeps —
+    /// the tendrils its re-parented children ride), the BASE warden
+    /// texture (`lambda$new$6` returns TEXTURE), the
+    /// `tendrilAnimation` word the getter serves (`lambda$new$7`)
+    Tendrils,
+    /// layer 5 — the `retainExactParts(Set.of("body"))` mesh, the
+    /// HEART texture, the `heartAnimation` word (`lambda$new$9`)
+    Heart,
+}
+
+impl WardenLayer {
+    /// THE LAYER'S OWN TEXTURE (javap the texture lambdas — the
+    /// tendrils layer the BASE warden.png wears, the others their OWN
+    /// emissive textures keep).
+    pub fn runtime_path(self) -> Option<&'static str> {
+        match self {
+            WardenLayer::Bioluminescent => Some(skin::WARDEN_BIOLUM_RUNTIME_PATH),
+            WardenLayer::PulsatingSpots1 => Some(skin::WARDEN_SPOTS1_RUNTIME_PATH),
+            WardenLayer::PulsatingSpots2 => Some(skin::WARDEN_SPOTS2_RUNTIME_PATH),
+            WardenLayer::Tendrils => None, // the BASE texture the warden body wears
+            WardenLayer::Heart => Some(skin::WARDEN_HEART_RUNTIME_PATH),
+        }
+    }
+
+    /// THE LAYER'S OWN SHA1 (the same lambdas' texture words).
+    pub fn png_sha1(self) -> Option<&'static str> {
+        match self {
+            WardenLayer::Bioluminescent => Some(skin::WARDEN_BIOLUM_PNG_SHA1),
+            WardenLayer::PulsatingSpots1 => Some(skin::WARDEN_SPOTS1_PNG_SHA1),
+            WardenLayer::PulsatingSpots2 => Some(skin::WARDEN_SPOTS2_PNG_SHA1),
+            WardenLayer::Tendrils => Some(skin::WARDEN_PNG_SHA1),
+            WardenLayer::Heart => Some(skin::WARDEN_HEART_PNG_SHA1),
+        }
+    }
+
+    /// THE LAYER'S OWN ALPHA FUNCTION (javap `LivingEntityEmissiveLayer
+    /// .submit` pc 16-32 — the AlphaFunction the render state's age
+    /// clock consults; the `<= 1.0E-5` gate the caller's skip keeps):
+    /// the bioluminescent the 1.0 const keeps, the TWO spot layers the
+    /// `max(0.25, Mth.cos(age * 0.045 [* + 3.1415927]) * 0.25)` pair
+    /// wears — the cos halves the max-0.25 floor CLAMPS (the pulse the
+    /// bytecode's own arithmetic keeps: the product never exceeds the
+    /// floor, the constant 0.25 the honest answer), the tendrils the
+    /// shiver clock's getter word, the heart the heartbeat's.
+    pub fn alpha_at(self, state: &WardenState, tendril: f32, heart: f32) -> f32 {
+        match self {
+            WardenLayer::Bioluminescent => 1.0,
+            WardenLayer::PulsatingSpots1 => {
+                0.25f32.max(mth_cos(state.age_ticks * 0.045) * 0.25)
+            }
+            WardenLayer::PulsatingSpots2 => {
+                0.25f32.max(mth_cos(state.age_ticks * 0.045 + std::f32::consts::PI) * 0.25)
+            }
+            WardenLayer::Tendrils => tendril,
+            WardenLayer::Heart => heart,
+        }
+    }
+}
+
+/// THE LAYER'S OWN PRUNED MESH (javap `PartDefinition.retainExactParts`
+/// the 26.2 jar speaks, verbatim): the NAMED parts keep their cubes
+/// (`clearRecursively` the descendants drop), the unnamed parts become
+/// POSE-ONLY stubs the two-arg `addOrReplaceChild` merge law
+/// re-parents (`newChild.children.putAll(old.children)`) — the kept
+/// cubes ride the FULL ancestor chain. The ribcages NO layer keeps —
+/// their cubes every pruned mesh drops. The FULLBRIGHT pass the eyes
+/// shader serves: the entity diffuse NEVER applies (the rendertype_eyes
+/// vertex color the model color alone keeps), the shade the 1.0 the
+/// caller's tint multiplies.
+pub fn warden_layer_quads(
+    state: &WardenState,
+    feet: Vec3,
+    cam_yaw: f32,
+    cam_pitch: f32,
+    layer: WardenLayer,
+) -> Vec<AvatarQuad> {
+    let f = warden_folds(state);
+    // the retain law's per-part verdicts (the named sets the lambdas
+    // bank: biolum {head, arms, legs}, spots {body, head, arms, legs},
+    // tendrils {the tendril pair}, heart {body})
+    let spots = matches!(
+        layer,
+        WardenLayer::PulsatingSpots1 | WardenLayer::PulsatingSpots2
+    );
+    let body_kept = spots || layer == WardenLayer::Heart;
+    let head_kept = spots || layer == WardenLayer::Bioluminescent;
+    let limbs_kept = spots || layer == WardenLayer::Bioluminescent;
+    let tendril_kept = layer == WardenLayer::Tendrils;
+    let empty: Vec<Cube> = Vec::new();
+    // THE BODY (the stub law: the unnamed part's cubes drop, the pose
+    // rides — the head/limb children the merge law re-parents)
+    let body_part = Part {
+        pivot: [0.0, -21.0, 0.0],
+        x_rot: f.body_x,
+        y_rot: 0.0,
+        z_rot: f.body_z,
+        cubes: if body_kept {
+            vec![Cube {
+                tex: (0.0, 0.0),
+                origin: [-9.0, -13.0, -4.0],
+                size: [18.0, 21.0, 11.0],
+                inflate: 0.0,
+                mirror: false,
+            }]
+        } else {
+            empty.clone()
+        },
+        children: vec![
+            // THE HEAD (kept: the tendril children the
+            // clearRecursively law drops — the stub: the tendrils the
+            // re-parent law keeps riding)
+            Part {
+                pivot: [0.0, -13.0, 0.0],
+                x_rot: f.head_x,
+                y_rot: f.head_y,
+                z_rot: f.head_z,
+                cubes: if head_kept {
+                    vec![Cube {
+                        tex: (0.0, 32.0),
+                        origin: [-8.0, -16.0, -5.0],
+                        size: [16.0, 16.0, 10.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }]
+                } else {
+                    empty.clone()
+                },
+                children: vec![
+                    Part {
+                        pivot: [-8.0, -12.0, 0.0],
+                        x_rot: f.swing,
+                        y_rot: 0.0,
+                        z_rot: 0.0,
+                        cubes: if tendril_kept {
+                            vec![Cube {
+                                tex: (52.0, 32.0),
+                                origin: [-16.0, -13.0, 0.0],
+                                size: [16.0, 16.0, 0.0],
+                                inflate: 0.0,
+                                mirror: false,
+                            }]
+                        } else {
+                            empty.clone()
+                        },
+                        children: vec![],
+                    },
+                    Part {
+                        pivot: [8.0, -12.0, 0.0],
+                        x_rot: -f.swing,
+                        y_rot: 0.0,
+                        z_rot: 0.0,
+                        cubes: if tendril_kept {
+                            vec![Cube {
+                                tex: (58.0, 0.0),
+                                origin: [0.0, -13.0, 0.0],
+                                size: [16.0, 16.0, 0.0],
+                                inflate: 0.0,
+                                mirror: false,
+                            }]
+                        } else {
+                            empty.clone()
+                        },
+                        children: vec![],
+                    },
+                ],
+            },
+            // THE RIBCAGES (NO layer's set keeps them — the stubs the
+            // pose keeps, the cubes every mesh drops)
+            Part {
+                pivot: [-7.0, -2.0, -4.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![],
+                children: vec![],
+            },
+            Part {
+                pivot: [7.0, -2.0, -4.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![],
+                children: vec![],
+            },
+            // THE ARMS
+            Part {
+                pivot: [-13.0, -13.0, 1.0],
+                x_rot: f.right_arm_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: if limbs_kept {
+                    vec![Cube {
+                        tex: (44.0, 50.0),
+                        origin: [-4.0, 0.0, -4.0],
+                        size: [8.0, 28.0, 8.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }]
+                } else {
+                    empty.clone()
+                },
+                children: vec![],
+            },
+            Part {
+                pivot: [13.0, -13.0, 1.0],
+                x_rot: f.left_arm_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: if limbs_kept {
+                    vec![Cube {
+                        tex: (0.0, 58.0),
+                        origin: [-4.0, 0.0, -4.0],
+                        size: [8.0, 28.0, 8.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }]
+                } else {
+                    empty.clone()
+                },
+                children: vec![],
+            },
+        ],
+    };
+    // THE ROOT BONE (the pose-only stub the legs re-parented ride)
+    let bone = Part {
+        pivot: [0.0, 24.0, 0.0],
+        x_rot: 0.0,
+        y_rot: 0.0,
+        z_rot: 0.0,
+        cubes: vec![],
+        children: vec![
+            body_part,
+            Part {
+                pivot: [-5.9, -13.0, 0.0],
+                x_rot: f.right_leg_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: if limbs_kept {
+                    vec![Cube {
+                        tex: (76.0, 48.0),
+                        origin: [-3.1, 0.0, -3.0],
+                        size: [6.0, 13.0, 6.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }]
+                } else {
+                    empty.clone()
+                },
+                children: vec![],
+            },
+            Part {
+                pivot: [5.9, -13.0, 0.0],
+                x_rot: f.left_leg_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: if limbs_kept {
+                    vec![Cube {
+                        tex: (76.0, 76.0),
+                        origin: [-2.9, 0.0, -3.0],
+                        size: [6.0, 13.0, 6.0],
+                        inflate: 0.0,
+                        mirror: false,
+                    }]
+                } else {
+                    empty.clone()
+                },
+                children: vec![],
+            },
+        ],
+    };
+    let (fold_point, fold_normal) = entity_folds(state.yaw_deg, 0.0, 0.0, feet);
+    let mut out: Vec<AvatarQuad> = Vec::new();
+    let ident = Mat4::IDENT;
+    collect_part(&bone, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+    // THE FULLBRIGHT LAW (the rendertype_eyes shader the entity
+    // diffuse never calls — the shade the 1.0 the model color's white
+    // RGB keeps)
+    for q in &mut out {
+        q.shade = 1.0;
+    }
+    out
+}
+
+impl WardenModel {
+    /// ONE LAYER TEXTURE'S OWN LOAD (the sha1 the same honesty the
+    /// body load keeps — the `None` the layer's absence keeps unseen,
+    /// the OTHER layers keep drawing). The tendrils layer the BASE
+    /// warden texture wears — the body's own model serves.
+    pub fn load_layer(root: &Path, layer: WardenLayer) -> Option<WardenModel> {
+        let bytes = std::fs::read(root.join(layer.runtime_path()?)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != layer.png_sha1()? {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 128 || h != 128 || rgba.len() != 128 * 128 * 4 {
+            return None;
+        }
+        Some(WardenModel { rgba })
+    }
+}
+
+#[cfg(test)]#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -14267,5 +14635,203 @@ mod tests {
         }
     }
 
+
+    /// THE EMISSIVE LAYERS' OWN RETAIN LAW (javap
+    /// `PartDefinition.retainExactParts` the 26.2 jar speaks): the
+    /// NAMED parts keep their cubes, the unnamed parts the pose-only
+    /// stubs become — the per-layer quad counts the cube sets wear
+    /// (the heart the body cube ONLY, the tendrils the zero-width
+    /// pair's two faces EACH, the bioluminescent the five cubes, the
+    /// spots the body + the five limbs), the FULLBRIGHT shade the
+    /// eyes shader's no-diffuse law keeps, the transform chain the
+    /// stub poses preserve (the heart's body quads the full mesh's
+    /// own body quads the EXACT points answer).
+    #[test]
+    fn the_warden_layers_the_retain_law_keeps() {
+        let state = WardenState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 40.0,
+            tendril_animation: 0.5,
+        };
+        let feet = Vec3::new(3.0, 20.0, -7.0);
+        // THE HEART (Set.of("body")): the body cube's six faces the
+        // ONLY quads the pruned mesh keeps
+        let heart = warden_layer_quads(&state, feet, 0.0, 0.0, WardenLayer::Heart);
+        assert_eq!(heart.len(), 6, "the heart layer the body cube alone keeps");
+        // THE TENDRILS (Set.of(left, right)): the TWO zero-width
+        // planes the six-face table each wears (the degenerate faces
+        // the raster's own area check culls — the LIST the twelve
+        // entries keeps)
+        let tendrils = warden_layer_quads(&state, feet, 0.0, 0.0, WardenLayer::Tendrils);
+        assert_eq!(tendrils.len(), 12, "the tendril layer the pair's cubes keep");
+        // THE BIOLUMINESCENT (head + arms + legs): the five cubes the
+        // thirty faces wear (the body the stub drops, the ribcages
+        // NO layer keeps)
+        let biolum =
+            warden_layer_quads(&state, feet, 0.0, 0.0, WardenLayer::Bioluminescent);
+        assert_eq!(biolum.len(), 30, "the biolum layer the five cubes keep");
+        // THE SPOTS (body + head + arms + legs): the SIX cubes the
+        // thirty-six faces wear (the retain set the six names bank —
+        // the ribcages no set keeps)
+        let spots1 =
+            warden_layer_quads(&state, feet, 0.0, 0.0, WardenLayer::PulsatingSpots1);
+        let spots2 =
+            warden_layer_quads(&state, feet, 0.0, 0.0, WardenLayer::PulsatingSpots2);
+        assert_eq!(spots1.len(), 36, "the spots layer the six cubes keep");
+        assert_eq!(spots2.len(), 36, "the spots-2 layer the same mesh wears");
+        // THE FULLBRIGHT (the eyes shader's no-diffuse law): every
+        // layer quad's shade the 1.0 keeps
+        for q in biolum.iter().chain(heart.iter()) {
+            assert_eq!(q.shade, 1.0, "the layer quads the fullbright shade keep");
+        }
+        // THE TRANSFORM CHAIN (the stub poses preserve): the heart's
+        // body quads the FULL mesh's body quads the same world points
+        // wear — the body is the full tree's FIRST cube, its six
+        // quads the chain's head
+        let full = {
+            let model_parts = build_warden_parts(&state);
+            let (fold_point, fold_normal) = entity_folds(state.yaw_deg, 0.0, 0.0, feet);
+            let mut out: Vec<AvatarQuad> = Vec::new();
+            let ident = Mat4::IDENT;
+            collect_part(&model_parts, &ident, &fold_point, &fold_normal, 0.0, 0.0, &mut out);
+            out
+        };
+        for (l, f) in heart.iter().zip(full.iter()) {
+            assert_eq!(l.pts, f.pts, "the heart layer's body the full mesh's transform rides");
+        }
+        // THE SHIVER RIDE (the tendril stubs the folds serve): the
+        // filled shiver clock the tendril quads MOVE the drained
+        // stillness never wears
+        let shiver_state = WardenState { tendril_animation: 1.0, ..state };
+        let moved =
+            warden_layer_quads(&shiver_state, feet, 0.0, 0.0, WardenLayer::Tendrils);
+        let still = warden_layer_quads(&state, feet, 0.0, 0.0, WardenLayer::Tendrils);
+        let total: f32 = moved
+            .iter()
+            .zip(still.iter())
+            .map(|(m, s)| {
+                m.pts
+                    .iter()
+                    .zip(s.pts.iter())
+                    .map(|(a, b)| (a[0] - b[0]).abs() + (a[1] - b[1]).abs() + (a[2] - b[2]).abs())
+                    .sum::<f32>()
+            })
+            .sum();
+        assert!(total > 0.2, "the shiver clock the tendril layer swings: {total}");
+    }
+
+    /// THE LAYERS' OWN ALPHA LAMBDAS (javap `WardenRenderer` the 26.2
+    /// jar speaks — `lambda$new$1` the 1.0 const, `lambda$new$3` /
+    /// `lambda$new$5` the `max(0.25, Mth.cos(age * 0.045 [+ PI]) *
+    /// 0.25)` pair, `lambda$new$7` / `lambda$new$9` the clock words):
+    /// the bioluminescent the constant keeps, the spot pair the
+    /// max-0.25 floor CLAMPS (the cos product never exceeds the
+    /// floor), the tendrils/heart the getters' own words wear.
+    #[test]
+    fn the_warden_layer_alphas_the_lambdas_wear() {
+        let state = WardenState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 137.0,
+            tendril_animation: 0.0,
+        };
+        // THE CONST (the always-on glow)
+        assert_eq!(
+            WardenLayer::Bioluminescent.alpha_at(&state, 0.3, 0.7),
+            1.0,
+            "the biolum lambda the 1.0 const keeps"
+        );
+        // THE SPOT PAIR (the max-0.25 floor — the sweep the clamp
+        // pins: cos ranges the [-1, 1] band, the product the [-0.25,
+        // 0.25] one, the max the 0.25 floor keeps)
+        for age in [0.0f32, 3.5, 7.0, 11.3, 40.0, 137.0, 900.0] {
+            let s = WardenState { age_ticks: age, ..state };
+            let a1 = WardenLayer::PulsatingSpots1.alpha_at(&s, 0.0, 0.0);
+            let a2 = WardenLayer::PulsatingSpots2.alpha_at(&s, 0.0, 0.0);
+            assert_eq!(a1, 0.25, "the spots-1 lambda the max floor keeps at {age}");
+            assert_eq!(a2, 0.25, "the spots-2 lambda the max floor keeps at {age}");
+        }
+        // THE CLOCK WORDS (the pass-through the getters serve)
+        assert_eq!(
+            WardenLayer::Tendrils.alpha_at(&state, 0.55, 0.7),
+            0.55,
+            "the tendrils lambda the shiver word wears"
+        );
+        assert_eq!(
+            WardenLayer::Heart.alpha_at(&state, 0.55, 0.7),
+            0.7,
+            "the heart lambda the heartbeat word wears"
+        );
+        // THE GATE WORDS (the drained clocks the 0.0 the `<= 1.0E-5`
+        // skip keeps)
+        assert_eq!(
+            WardenLayer::Tendrils.alpha_at(&state, 0.0, 0.0),
+            0.0,
+            "the drained shiver the zero the gate refuses"
+        );
+        assert_eq!(
+            WardenLayer::Heart.alpha_at(&state, 0.0, 0.0),
+            0.0,
+            "the drained heart the zero the gate refuses"
+        );
+    }
+
+    /// THE LAYER TEXTURES' OWN LOADS (the sha1 the same honesty the
+    /// body load keeps — the four emissive PNGs the 128x128 layout
+    /// wears, the glow texels the alpha rows keep, the TENDRILS
+    /// layer's own texture word the BASE warden.png the lambda bank
+    /// speaks).
+    #[test]
+    fn the_warden_layer_textures_the_shas_keep() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join(skin::WARDEN_RUNTIME_PATH).exists());
+        let Some(root) = root else { return };
+        // THE FOUR LANE LOADS (each its own sha1 the load verifies)
+        let heart = WardenModel::load_layer(root, WardenLayer::Heart);
+        let biolum = WardenModel::load_layer(root, WardenLayer::Bioluminescent);
+        let spots1 = WardenModel::load_layer(root, WardenLayer::PulsatingSpots1);
+        let spots2 = WardenModel::load_layer(root, WardenLayer::PulsatingSpots2);
+        let (Some(heart), Some(biolum), Some(spots1), Some(spots2)) =
+            (heart, biolum, spots1, spots2)
+        else {
+            return; // the sha1 gate — the honest skip
+        };
+        // THE GLOW TEXELS (the emissive rows the layers blend): the
+        // heart's chest dots, the biolum's spots, the spots pair's
+        // own rows — each texture OPAQUE texels carries
+        for (name, model) in [
+            ("heart", &heart),
+            ("biolum", &biolum),
+            ("spots1", &spots1),
+            ("spots2", &spots2),
+        ] {
+            let lit: usize = (0..128usize)
+                .map(|v| {
+                    (0..128usize)
+                        .filter(|&u| model.pixel(u as f32, v as f32)[3] > 0)
+                        .count()
+                })
+                .sum();
+            assert!(lit > 0, "the {name} texture the glow texels keep");
+        }
+        // THE TENDRILS' OWN WORD (the BASE texture the layer wears —
+        // the png_sha1 the body's own row answers, the runtime path
+        // the None keeps)
+        assert_eq!(
+            WardenLayer::Tendrils.png_sha1(),
+            Some(skin::WARDEN_PNG_SHA1),
+            "the tendril layer the base texture's sha wears"
+        );
+        assert_eq!(WardenLayer::Tendrils.runtime_path(), None);
+    }
 
 }

@@ -6644,6 +6644,16 @@ pub struct App {
     /// the creeper's field mirrors: the `None` the skin's absence
     /// speaks, the body the honesty keeps unseen.
     pub warden_model: Option<crate::avatar::WardenModel>,
+    /// THE WARDEN'S EMISSIVE LAYERS' OWN TEXTURES (the
+    /// LivingEntityEmissiveLayer set the ctor arms — the heart, the
+    /// bioluminescent, the TWO pulsating spots; the TENDRILS layer the
+    /// BASE warden texture wears, the body's own model serves), the
+    /// sha1-verified loads the body's field mirrors: the `None` the
+    /// layer's absence speaks, the OTHER layers keep drawing.
+    pub warden_heart_model: Option<crate::avatar::WardenModel>,
+    pub warden_biolum_model: Option<crate::avatar::WardenModel>,
+    pub warden_spots1_model: Option<crate::avatar::WardenModel>,
+    pub warden_spots2_model: Option<crate::avatar::WardenModel>,
     /// THE CANINE'S OWN LANES (the AgeableMobRenderer's pair the
     /// WolfRenderer ctor keeps — the adult the WOLF layer bakes, the
     /// baby the WOLF_BABY layer, the isBaby word the render arm picks).
@@ -8010,6 +8020,10 @@ impl App {
             spider_model: None,
             creeper_model: None,
             warden_model: None,
+            warden_heart_model: None,
+            warden_biolum_model: None,
+            warden_spots1_model: None,
+            warden_spots2_model: None,
             wolf_model: None,
             baby_wolf_model: None,
             fire_strips: None,
@@ -34767,6 +34781,34 @@ impl App {
             self.warden_model =
                 crate::avatar::WardenModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE EMISSIVE LAYERS' own lazy walks (the ctor's addLayer
+        // set — each texture its OWN sha1 lane, a failed layer keeps
+        // only THAT glow unseen, the body and the other layers keep
+        // drawing)
+        if self.warden_heart_model.is_none() {
+            self.warden_heart_model = crate::avatar::WardenModel::load_layer(
+                std::path::Path::new("assets-cache/jar"),
+                crate::avatar::WardenLayer::Heart,
+            );
+        }
+        if self.warden_biolum_model.is_none() {
+            self.warden_biolum_model = crate::avatar::WardenModel::load_layer(
+                std::path::Path::new("assets-cache/jar"),
+                crate::avatar::WardenLayer::Bioluminescent,
+            );
+        }
+        if self.warden_spots1_model.is_none() {
+            self.warden_spots1_model = crate::avatar::WardenModel::load_layer(
+                std::path::Path::new("assets-cache/jar"),
+                crate::avatar::WardenLayer::PulsatingSpots1,
+            );
+        }
+        if self.warden_spots2_model.is_none() {
+            self.warden_spots2_model = crate::avatar::WardenModel::load_layer(
+                std::path::Path::new("assets-cache/jar"),
+                crate::avatar::WardenLayer::PulsatingSpots2,
+            );
+        }
         // THE WOLF LANES' own lazy load (the same honesty: a failed
         // wolf skin keeps only the canines unseen — the adult and the
         // baby the two OWN shas the loads verify)
@@ -34831,6 +34873,10 @@ impl App {
         // the warden's honesty is ITS OWN lane: a failed warden skin
         // keeps only the wardens unseen, the other bodies keep drawing
         let warden_model = self.warden_model.as_ref();
+        let warden_heart_model = self.warden_heart_model.as_ref();
+        let warden_biolum_model = self.warden_biolum_model.as_ref();
+        let warden_spots1_model = self.warden_spots1_model.as_ref();
+        let warden_spots2_model = self.warden_spots2_model.as_ref();
         // the wolf lanes' honesty is THEIR OWN lane: a failed wolf
         // skin keeps only the canines unseen (the adult and the baby
         // the pair's own shas verify)
@@ -36122,17 +36168,18 @@ impl App {
             // pair the zero speed the stillness wears, the age clock
             // the tick count speaks, the TENDRIL ANIMATION the
             // getTendrilAnimation(partialTick) lerp getter banks
+            let age_ticks = warden.tick_count as f32 + self.partial_tick;
+            let tendril_word =
+                crate::sculk::warden_tendril_animation_at(warden, self.partial_tick);
+            let heart_word = crate::sculk::warden_heart_animation_at(warden, self.partial_tick);
             let state = crate::avatar::WardenState {
-                yaw_deg: 0.0,
+                yaw_deg: warden.yaw_deg,
                 pitch_deg: 0.0,
                 head_yaw_off_deg: 0.0,
                 walk_pos: 0.0,
                 walk_speed: 0.0,
-                age_ticks: warden.tick_count as f32,
-                tendril_animation: crate::sculk::warden_tendril_animation_at(
-                    warden,
-                    self.partial_tick,
-                ),
+                age_ticks,
+                tendril_animation: tendril_word,
             };
             let quads = warden_model.quads(&state, feet, cam.yaw, cam.pitch);
             // THE DRAW (the same SampledQuad fold the mob chain
@@ -36152,6 +36199,100 @@ impl App {
                 let [r, g, b, a] = warden_model.pixel(u, v);
                 Some([r, g, b, a])
             });
+            // THE EMISSIVE LAYERS' OWN PASSES (javap
+            // `LivingEntityEmissiveLayer.submit` pc 0-115 the 26.2 jar
+            // speaks, the ctor's addLayer ORDER the draw sequence
+            // wears): each layer its own pruned mesh + texture +
+            // alpha function, the `alpha <= 1.0E-5` gate the skip
+            // keeps, the `ARGB.white(alpha)` the model color the
+            // translucent blend scales, the `RenderType.eyes` the
+            // FULLBRIGHT law serves (the entity diffuse the shader
+            // never calls — the tint the 1.0 keeps) and the
+            // NO-DEPTH-WRITE the color-write mask speaks (the LEQUAL
+            // translucent walk the coplanar overlay rides: the depth
+            // TEST survives, the body's own pixels the layer's blend
+            // never overwrites the depth of)
+            let layers: [(
+                crate::avatar::WardenLayer,
+                Option<&crate::avatar::WardenModel>,
+                f32,
+            ); 5] = [
+                (
+                    crate::avatar::WardenLayer::Bioluminescent,
+                    warden_biolum_model,
+                    crate::avatar::WardenLayer::Bioluminescent.alpha_at(
+                        &state,
+                        tendril_word,
+                        heart_word,
+                    ),
+                ),
+                (
+                    crate::avatar::WardenLayer::PulsatingSpots1,
+                    warden_spots1_model,
+                    crate::avatar::WardenLayer::PulsatingSpots1.alpha_at(
+                        &state,
+                        tendril_word,
+                        heart_word,
+                    ),
+                ),
+                (
+                    crate::avatar::WardenLayer::PulsatingSpots2,
+                    warden_spots2_model,
+                    crate::avatar::WardenLayer::PulsatingSpots2.alpha_at(
+                        &state,
+                        tendril_word,
+                        heart_word,
+                    ),
+                ),
+                (
+                    crate::avatar::WardenLayer::Tendrils,
+                    Some(warden_model),
+                    crate::avatar::WardenLayer::Tendrils.alpha_at(
+                        &state,
+                        tendril_word,
+                        heart_word,
+                    ),
+                ),
+                (
+                    crate::avatar::WardenLayer::Heart,
+                    warden_heart_model,
+                    crate::avatar::WardenLayer::Heart.alpha_at(
+                        &state,
+                        tendril_word,
+                        heart_word,
+                    ),
+                ),
+            ];
+            for (layer, tex, alpha) in layers {
+                // THE ALPHA GATE (pc 34-42 — the `<= 1.0E-5` the
+                // return keeps) AND the texture's own honesty (the
+                // failed sha1 the layer's absence keeps, the OTHER
+                // layers keep drawing)
+                if alpha <= 1.0e-5 {
+                    continue;
+                }
+                let Some(tex) = tex else { continue };
+                let layer_quads =
+                    crate::avatar::warden_layer_quads(&state, feet, cam.yaw, cam.pitch, layer);
+                let layer_sampled: Vec<crate::raster::SampledQuad> = layer_quads
+                    .iter()
+                    .map(|q| crate::raster::SampledQuad {
+                        pts: q.pts,
+                        uv: q.uv,
+                        tex: "",
+                        tint: [q.shade, q.shade, q.shade],
+                    })
+                    .collect();
+                fb.draw_translucent_sampled_quads_lequal(
+                    vp,
+                    &layer_sampled,
+                    alpha,
+                    &mut |_t, u, v| {
+                        let [r, g, b, a] = tex.pixel(u, v);
+                        Some([r, g, b, a])
+                    },
+                );
+            }
         }
     }
 
@@ -92968,4 +93109,97 @@ cow_sound_variant: None,
     }
 
 
+
+    /// THE WARDEN'S EMISSIVE GLOW (the LivingEntityEmissiveLayer
+    /// passes the render arm serves): the sha1-verified layer loads
+    /// the frame answers, the BIOLUMINESCENT glow the with/without
+    /// diff lights (the constant-1.0 alpha the head/limb glow rects
+    /// blend, the stage camera's far look the warden's lit side
+    /// faces), the HEART glow the heartbeat clock fills (the flipped
+    /// stage camera the chest glow's own unwrap side turns — the full
+    /// clock the chest dots light, the drained clock the
+    /// `<= 1.0E-5` gate the texture's own absence answers), the
+    /// LEQUAL tie the coplanar overlay the body's own depth answers.
+    #[test]
+    fn the_warden_glow_the_layers_the_frame_wears() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join(mc_registry::generated::skin::WARDEN_RUNTIME_PATH).exists());
+        let Some(root) = root else { return };
+        let Some(warden_model) = crate::avatar::WardenModel::load(root) else {
+            return;
+        };
+        let Some(heart_model) =
+            crate::avatar::WardenModel::load_layer(root, crate::avatar::WardenLayer::Heart)
+        else {
+            return;
+        };
+        let Some(biolum_model) = crate::avatar::WardenModel::load_layer(
+            root,
+            crate::avatar::WardenLayer::Bioluminescent,
+        ) else {
+            return;
+        };
+        let mut app = App::new(3);
+        armored_skeleton_stage(&mut app);
+        app.warden_model = Some(warden_model);
+        app.warden_heart_model = Some(heart_model);
+        app.warden_biolum_model = Some(biolum_model);
+        // THE WARDEN (the cleared box's far half — the stage camera's
+        // own seven-block look the whole body the frame keeps)
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x, b.y, b.z)
+        };
+        let warden = crate::sculk::WardenMob::new(502, bx + 1.0, by, bz + 3.0);
+        app.mobs.clear();
+        app.wardens.push(warden);
+        // THE BIOLUM AXIS (the constant-1.0 layer the frame lights,
+        // the texture's absence the honest skip keeps)
+        let plain0 = third_person_frame(&mut app);
+        let saved = app.warden_biolum_model.take();
+        let no_biolum = third_person_frame(&mut app);
+        app.warden_biolum_model = saved;
+        let biolum_diff = plain0
+            .iter()
+            .zip(no_biolum.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(
+            biolum_diff > 100,
+            "the biolum glow the frame lights ({biolum_diff} bytes differ)"
+        );
+        // THE HEART AXIS (the flipped stage camera the chest glow's
+        // own unwrap side turns): the full heartbeat clock the chest
+        // dots light, the drained clock the gate skips
+        {
+            let body = app.body.as_mut().unwrap();
+            body.yaw = 180.0;
+        }
+        app.wardens[0].heart_animation_o = crate::sculk::WARDEN_HEARTBEAT_ANIMATION;
+        app.wardens[0].heart_animation = crate::sculk::WARDEN_HEARTBEAT_ANIMATION;
+        let full180 = third_person_frame(&mut app);
+        app.wardens[0].heart_animation_o = 0;
+        app.wardens[0].heart_animation = 0;
+        let drained180 = third_person_frame(&mut app);
+        let heart_diff = full180
+            .iter()
+            .zip(drained180.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(
+            heart_diff > 300,
+            "the heart glow the frame lights ({heart_diff} bytes differ)"
+        );
+        // THE GATE'S OWN HONESTY (the drained clock the layer skips —
+        // the same frame the texture's ABSENCE answers)
+        let saved_heart = app.warden_heart_model.take();
+        let taken180 = third_person_frame(&mut app);
+        app.warden_heart_model = saved_heart;
+        assert_eq!(
+            drained180, taken180,
+            "the drained clock the gate's skip the absence answers"
+        );
+    }
 }

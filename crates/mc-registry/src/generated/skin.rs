@@ -335,3 +335,38 @@ pub const WOLF_BABY_RUNTIME_PATH: &str = "entity/wolf/wolf_baby.png";
 /// SQUARE 128-wide stride the twelve-part hierarchy unwraps).
 pub const WARDEN_PNG_SHA1: &str = "539056d457840a3e660bd08eae290a60c791fd8e";
 pub const WARDEN_RUNTIME_PATH: &str = "entity/warden/warden.png";
+
+/// The WARDEN HEART (the chest glow's own emissive texture), generated
+/// from the same jar: the source sha1 the heart layer verifies before
+/// it draws (javap `WardenRenderer`'s HEART_TEXTURE — the
+/// `textures/entity/warden/warden_heart.png` the clinit names, the
+/// WARDEN_HEART layer's `retainExactParts(Set.of("body"))` mesh the
+/// body cube unwraps, the `RenderType.eyes` the fullbright pass keeps).
+pub const WARDEN_HEART_PNG_SHA1: &str = "5e2dbf5512f3ddc8036ce4c592e1bfbb12ac200f";
+pub const WARDEN_HEART_RUNTIME_PATH: &str = "entity/warden/warden_heart.png";
+
+/// The WARDEN BIOLUMINESCENT LAYER (the constant-glow spots' own
+/// emissive texture), generated from the same jar: the source sha1 the
+/// bioluminescent layer verifies before it draws (javap
+/// `WardenRenderer`'s BIOLUMINESCENT_LAYER_TEXTURE — the
+/// `textures/entity/warden/warden_bioluminescent_layer.png` the clinit
+/// names, the `retainExactParts(Set.of("head", arms, legs))` mesh the
+/// five cubes unwrap, the alpha-1.0 lambda the const glow speaks).
+pub const WARDEN_BIOLUM_PNG_SHA1: &str = "e2ff1b5380c1e1f94d4a29bb656b40cf267a8ecc";
+pub const WARDEN_BIOLUM_RUNTIME_PATH: &str = "entity/warden/warden_bioluminescent_layer.png";
+
+/// The WARDEN PULSATING SPOTS 1 (the first spot layer's own emissive
+/// texture), generated from the same jar: the source sha1 the first
+/// spots layer verifies before it draws (javap `WardenRenderer`'s
+/// PULSATING_SPOTS_TEXTURE_1 — the `cos(age * 0.045) * 0.25` max-0.25
+/// alpha the lambda speaks).
+pub const WARDEN_SPOTS1_PNG_SHA1: &str = "61e98ebadb670b948dca35cb9b39176d29f73336";
+pub const WARDEN_SPOTS1_RUNTIME_PATH: &str = "entity/warden/warden_pulsating_spots_1.png";
+
+/// The WARDEN PULSATING SPOTS 2 (the second spot layer's own emissive
+/// texture — the ANTI-PHASE pulse the +3.1415927f lambda speaks),
+/// generated from the same jar: the source sha1 the second spots layer
+/// verifies before it draws (javap `WardenRenderer`'s
+/// PULSATING_SPOTS_TEXTURE_2).
+pub const WARDEN_SPOTS2_PNG_SHA1: &str = "37cfc349b2de94b02dd7f4bc4e12e6e2d9aeae31";
+pub const WARDEN_SPOTS2_RUNTIME_PATH: &str = "entity/warden/warden_pulsating_spots_2.png";

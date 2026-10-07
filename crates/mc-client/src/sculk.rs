@@ -1276,9 +1276,7 @@ pub fn warden_tendril_animation_at(w: &WardenMob, partial_tick: f32) -> f32 {
 /// layer's alpha function reads. The heartbeat the
 /// `tickCount % getHeartBeatDelay() == 0` fold fills, the same
 /// O-snapshot drain the tick_client walk serves. (The HEART LAYER's
-/// own draw the emissive round wires — the getter the clock lane
-/// banks now, the alpha arm a future consult serves.)
-#[cfg_attr(not(test), expect(dead_code))]
+/// own draw the emissive round serves — the alpha the pulse wears.)
 pub fn warden_heart_animation_at(w: &WardenMob, partial_tick: f32) -> f32 {
     (crate::mth::lerp(
         partial_tick as f64,
@@ -1768,6 +1766,12 @@ pub struct WardenMob {
     /// render/brain rounds consult — the stab-contact memory the id
     /// banks now the use-tick lane wears)
     pub id: i32,
+    /// THE BODY'S OWN YAW (javap `LivingEntity.yRot` the entity wears —
+    /// the degrees the render state's yRot the extract speaks, the
+    /// WardenModel's own look fold the body's orientation serves; the
+    /// fresh spawn the 0.0 keeps, the AI rounds the walk a future lane
+    /// turns)
+    pub yaw_deg: f32,
     /// the feet-center (the spawn cell's (x + 0.5, y, z + 0.5) the
     /// summon walk banks — the vanilla position the entity wears)
     pub x: f64,
@@ -1839,6 +1843,7 @@ impl WardenMob {
     pub fn new(id: i32, x: f64, y: f64, z: f64) -> Self {
         Self {
             id,
+            yaw_deg: 0.0,
             x,
             y,
             z,
