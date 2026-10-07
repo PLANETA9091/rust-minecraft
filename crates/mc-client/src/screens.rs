@@ -25174,6 +25174,35 @@ impl App {
             // answers) the SAME beat douses
             let _ = world.fire_shape_updates((mx, my, mz));
         }
+        // THE BLOCK_DESTROY EVENT'S OWN POST (javap the 26.2 jar — the
+        // every-dig walk the bytecodes keep: `ServerPlayerGameMode
+        // .destroyBlock` pc 104-116 calls `Block.playerWillDestroy`,
+        // whose pc 40-51 speaks `level.gameEvent(GameEvent.BLOCK_DESTROY,
+        // pos, GameEvent.Context.of(player, state))` — the event the
+        // removeBlock walk PRECEDES (pc 121-127), the creative instabuild
+        // arm the same call serves (`handleBlockBreakAction` pc 707 →
+        // the same destroyBlock) — BOTH the client's completion lanes the
+        // shared fold speaks. The BlockPos overload the
+        // `LevelAccessor.gameEvent` default answers: the
+        // `Vec3.atCenterOf(pos)` fold the dug cell's center the
+        // dispatch's own pos wears. THE TERMINAL CELL'S OWN LAW (javap
+        // `VibrationSystem$Listener.isOccluded` — the six rays from the
+        // listener's cell center the `lambda$isOccluded$0` predicate
+        // clips, the `state.is(BlockTags.OCCLUDES_VIBRATION_SIGNALS)`
+        // the wool family the tag answers): the ray's step-then-check
+        // walk the dug cell's own block the occluder verdict consults —
+        // the vanilla posts the event while the block still stands (the
+        // wool's own dig the terminal cell silences), the client's
+        // completion the early removal speaks (the dug cell already AIR)
+        // — the verdicts IDENTICAL every reachable kind the palette's
+        // wool-free set keeps, the block-present override the wool
+        // family a future round banks. The sensors' hearing walk the
+        // shared dispatch serves, the WARDEN'S EARS the same post
+        // answers — the digging suspect the +35 the anger ladder climbs.
+        self.dispatch_vibration_event(
+            "block_destroy",
+            (pos.0 as f64 + 0.5, pos.1 as f64 + 0.5, pos.2 as f64 + 0.5),
+        );
         // THE FALLING SUPPORT'S OWN SCHEDULE (the block-update walk the
         // dig's neighbor change arms — the changed cell's own dispatch
         // the 6 neighbors + the cell itself the helper speaks, the
@@ -26024,6 +26053,24 @@ impl App {
         // echo never doubles it — the vanilla's own singleplayer shape).
         let name = crate::world::NAME_OF[block as usize];
         self.sounds.play(self.frame, name, crate::sound::Lane::Place);
+        // THE BLOCK_PLACE EVENT'S OWN POST (javap BlockItem.place
+        // pc 243-257 — the `level.gameEvent(GameEvent.BLOCK_PLACE, pos,
+        // GameEvent.Context.of(player, state))` the playSound walk
+        // FOLLOWS (pc 208-240), the consume(1) the tail rides — the
+        // placed BlockPos the `Vec3.atCenterOf` fold the dispatch's own
+        // pos wears, the placed block the setBlock-present the occlusion
+        // walk reads — the vanilla's own order the set-before walk keeps.
+        // THE OFFLINE LANE the set's own branch wears (the networked
+        // placement the server's own useItemOn walk answers — the
+        // client's model the fused singleplayer shape speaks).
+        // The warden's ears the same post serves — the placing suspect
+        // the +35 the anger ladder climbs.)
+        if !self.world_is_network && self.offline_world.is_some() {
+            self.dispatch_vibration_event(
+                "block_place",
+                (cell.0 as f64 + 0.5, cell.1 as f64 + 0.5, cell.2 as f64 + 0.5),
+            );
+        }
         true
     }
 
@@ -43511,6 +43558,208 @@ mod tests {
                 .iter()
                 .any(|e| e.starts_with("entity.warden.listening_angry ")),
             "the AGITATED verdict the listening_angry wears"
+        );
+    }
+
+    /// THE DIG THE SENSOR THE DESTROY HEARS (javap
+    /// `ServerPlayerGameMode.destroyBlock` pc 104-116 →
+    /// `Block.playerWillDestroy` pc 40-51 — the completion the
+    /// `gameEvent(BLOCK_DESTROY, pos, Context.of(player, state))` the
+    /// dug cell's center speaks, the f12 the frequency table's own row
+    /// wears): the held dig the block_destroy record banks, the
+    /// earshot sensor the sculk_hearing answers, the re-arm the
+    /// window arms — the sensors' hearing the dig lane joins.
+    #[test]
+    fn the_dig_the_sensor_the_destroy_hears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1; // the top SOLID cell the ray hits
+        // the earshot sensor the air cell above the surface banks —
+        // the (2, 2) offset the radius-16 gate passes, the rays the
+        // wool-free terrain never refuse
+        app.place_sculk_sensor(c + 2, surface + 2, c);
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_destroy @")),
+            "the undug world the destroy never speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        assert!(app.dig.is_destroying, "the press armed the destroy");
+        // THE HOLD: the ticks mine, the completion the event posts
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        // THE RECORD THE CENTER SPEAKS (the atCenterOf fold the +0.5
+        // pair answers, the f12 the block_destroy row wears)
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            surface as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_destroy @") && l.contains(&center) && l.ends_with("r16 f12")),
+            "the dig the block_destroy record at the cell center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events.iter().any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the destroy hears"
+        );
+        assert!(
+            app.sculk_sensors[0].free_at > 0,
+            "the hearing the re-arm window arms"
+        );
+    }
+
+    /// THE PLACE THE SENSOR THE PLACEMENT HEARS (javap
+    /// `BlockItem.place` pc 243-257 — the placement the
+    /// `gameEvent(BLOCK_PLACE, pos, Context.of(player, state))` the
+    /// placed cell's center speaks after the place sound, the f13 the
+    /// frequency table's own row wears): the held dirt the
+    /// block_place record banks, the earshot sensor the sculk_hearing
+    /// answers, the miss the press never speaks.
+    #[test]
+    fn the_place_the_sensor_the_placement_hears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/dirt"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y; // the standing cell the straight-down ray fills
+        app.place_sculk_sensor(c + 2, top + 2, c);
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_place @")),
+            "the unplaced world the place never speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the placement consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::DIRT,
+            "the held dirt landed in the adjacent cell"
+        );
+        // THE RECORD THE CENTER SPEAKS (the placed cell's own +0.5
+        // pair, the f13 the block_place row wears)
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_place @") && l.contains(&center) && l.ends_with("r16 f13")),
+            "the placement the block_place record at the placed cell wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events.iter().any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the placement hears"
+        );
+        // THE MISS THE SILENCE KEEPS (the reach refusal the press never
+        // consumes — the second placement cell the air the record
+        // never banks)
+        let records_before = app.game_events.len();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 40.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(!app.on_right_press(0, 0), "the miss does not consume");
+        assert_eq!(
+            app.game_events.len(),
+            records_before,
+            "the miss the place record never banks"
+        );
+    }
+
+    /// THE DIG THE WARDEN THE PENDING BANKS (the shared dispatch's own
+    /// warden lane — the block_destroy event the dig completion posts
+    /// the warden's ears answer, the pending hear the arrival banks,
+    /// the +35 the anger ladder climbs, the Calm listening the
+    /// first-heard verdict wears): the digging suspect the warden
+    /// hears — the dig-near-the-warden stealth gameplay the client
+    /// speaks.
+    #[test]
+    fn the_dig_the_warden_the_pending_banks() {
+        // === THE SUMMON (the walk-B's own setup — the terrain the
+        // warden lands) ===
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.place_sculk_shrieker(c + 6, surface + 1, c + 6, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(c + 6, surface + 1, c + 6);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        // the warden the dig-path's earshot moves — the (3, 0) offset
+        // the radius-16 gate passes
+        app.wardens[0].x = c as f64 + 3.5;
+        app.wardens[0].y = surface as f64;
+        app.wardens[0].z = c as f64 + 0.5;
+        // THE DIG THE EVENT POSTS (the completion the shared dispatch
+        // serves — the warden's pending hear the arrival banks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        let mut ticks = 0;
+        while app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 400, "the dig completed in time");
+        }
+        assert!(
+            !app.warden_hears.is_empty(),
+            "the digging player the warden's pending hear banks"
+        );
+        let pending = app.warden_hears[0];
+        assert_eq!(
+            pending.vibration_entity,
+            Some(crate::sculk::WARDEN_PLAYER_SUSPECT),
+            "the vibrating entity the local suspect wears"
+        );
+        // THE ARRIVAL THE ANGER CLIMBS (the owner-null arm the +35
+        // serves, the Calm listening the first-heard verdict answers)
+        while app.frame < pending.at_frame {
+            app.update();
+        }
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            35,
+            "the first heard dig the anger climbs"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.listening ")),
+            "the listening voice the arrival plays"
         );
     }
 
