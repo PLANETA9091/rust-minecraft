@@ -778,12 +778,38 @@ pub fn warden_search_box(
 /// the position the feet-center keeps): the (min, max) pair the
 /// entity's bounding box wears — [x - 0.45, y, z - 0.45] .. [x +
 /// 0.45, y + 2.9, z + 0.45].
-#[cfg_attr(not(test), expect(dead_code))]
 pub fn warden_entity_box(p: (f64, f64, f64)) -> ((f64, f64, f64), (f64, f64, f64)) {
     (
         (p.0 - 0.45, p.1, p.2 - 0.45),
         (p.0 + 0.45, p.1 + 2.9, p.2 + 0.45),
     )
+}
+
+/// THE BLOCK-POS CLOSER WALK (javap `Vec3i.closerThan(Vec3i, double)`
+/// — the `distSqr(other) < Mth.square(dist)` fold the trigger's own
+/// gate consults: the CROSSWISE integer squares `dx*dx + dy*dy +
+/// dz*dz` the block coords wear, the STRICT `<` the dcmp keeps —
+/// the exact-touch the FALSE answers, the same law the vibration's
+/// own 30.0 fold speaks).
+pub fn block_pos_closer_than(
+    a: (i32, i32, i32),
+    b: (i32, i32, i32),
+    dist: i32,
+) -> bool {
+    let dx = (a.0 - b.0) as i64;
+    let dy = (a.1 - b.1) as i64;
+    let dz = (a.2 - b.2) as i64;
+    let dist = dist as i64;
+    dx * dx + dy * dy + dz * dz < dist * dist
+}
+
+/// THE MANHATTAN WALK (javap `Vec3i.distManhattan(Vec3i)` — the
+/// `Math.abs(x - other.x) + Math.abs(y - other.y) + Math.abs(z -
+/// other.z)` fold the sink's own arrival consults (the
+/// `reachedTarget` pc 0-28 verbatim: the `distManhattan <=
+/// getCloseEnoughDist()` the if_icmpgt pair keeps).
+pub fn block_pos_dist_manhattan(a: (i32, i32, i32), b: (i32, i32, i32)) -> i32 {
+    (a.0 - b.0).abs() + (a.1 - b.1).abs() + (a.2 - b.2).abs()
 }
 
 /// THE AABB INTERSECT WALK (javap AABB.intersects(DDDDDD) pc 0-62 —
@@ -1312,6 +1338,72 @@ pub struct WardenDisturbance {
     pub remaining: i32,
 }
 
+// === THE INVESTIGATE ACTIVITY'S OWN WALK (javap `WardenAi
+// .initInvestigateActivity` pc 0-30, verbatim — the activity the
+// updateActivity's setDefaultActivity(IDLE) +
+// setActiveActivityToFirstValid(EMERGE, DIG, ROAR, FIGHT, INVESTIGATE,
+// SNIFF, IDLE) ladder wears, the priority the iconst_5 speaks, the
+// required-memory set the DISTURBANCE_LOCATION alone carries): the
+// `GoToTargetLocation.create(DISTURBANCE_LOCATION, iconst_2, ldc
+// 0.7f)` OneShot the investigation's own walk arms — the disturbance
+// the memory banks, the walk target the brain rounds consult, the
+// warden the walk the dark serves ===
+
+/// `WardenAi.initInvestigateActivity` pc 3 — the `iconst_5` the
+/// `ActivityData.create(ACTIVITY, priority, ...)` call wears: the
+/// INVESTIGATE activity's own priority the ladder arms (the CORE 0,
+/// the fight/roar the higher lanes speak, the investigate the 5 the
+/// disturbance's own walk answers).
+pub const WARDEN_INVESTIGATE_PRIORITY: i32 = 5;
+
+/// `WardenAi.initInvestigateActivity` pc 15 — the `iconst_2` the
+/// `GoToTargetLocation.create(...)` call wears: the close-enough the
+/// arrival consults (the trigger's `closerThan(blockPos, 2)` the
+/// same literal keeps, the sink's `distManhattan <= 2` the pair
+/// speaks).
+pub const WARDEN_INVESTIGATE_CLOSE_ENOUGH: i32 = 2;
+
+/// `WardenAi.initInvestigateActivity` pc 16 — the `ldc 0.7f` the
+/// `GoToTargetLocation.create(...)` call wears: the speed modifier
+/// the walk target carries (the MoveControl's own setSpeed the
+/// modifier multiplies, the attribute 0.3 the walk rides).
+pub const WARDEN_INVESTIGATE_SPEED: f32 = 0.7;
+
+/// `GoToTargetLocation.getRandomOffset` (javap pc 0-9, verbatim):
+/// `nextInt(3) - 1` — the nextInt bound the iconst_3 speaks, the
+/// isub the -1 keeps — the ±1 jitter the nearby pos wears (the x
+/// the z the TWO draws spend, the y the iconst_0 never jitters).
+pub const WARDEN_OFFSET_BOUND: u64 = 3;
+
+/// `Warden.createAttributes` (javap the 26.2 jar — the
+/// `Attributes.MOVEMENT_SPEED` add the `ldc 0.3` the walk rides):
+/// the attribute the MoveControl's own gain multiplies (the walk
+/// target's 0.7 modifier the fold wears).
+pub const WARDEN_MOVEMENT_SPEED: f32 = 0.3;
+
+/// THE WALK TARGET'S OWN MEMORY (javap `MemoryModuleType.WALK_TARGET`
+/// — the `BehaviorUtils.setWalkAndLookTargetMemories` walk banks: the
+/// `new WalkTarget(new BlockPosTracker(pos), speedModifier,
+/// closeEnoughDist)` the pair the trigger arms — the tracker's center
+/// the walk consults, the block pos the sink's arrival answers).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenWalkTarget {
+    /// the walk-target BLOCK pos the tracker wraps (the
+    /// `currentBlockPosition` the sink's manhattan law consults —
+    /// the jittered nearby cell the trigger's offset draw wears)
+    pub block: (i32, i32, i32),
+    /// the tracker's own center (javap `BlockPosTracker` — the
+    /// `Vec3.atCenterOf` the +0.5 pair speaks): the point the walk's
+    /// straight-line stand-in faces
+    pub pos: (f64, f64, f64),
+    /// the speed modifier the WalkTarget carries (the 0.7 the
+    /// investigate's own ldc keeps)
+    pub speed_modifier: f32,
+    /// the close-enough the WalkTarget carries (the 2 the sink's
+    /// manhattan arrival consults)
+    pub close_enough: i32,
+}
+
 // === THE ANGER MANAGEMENT (javap
 // `net.minecraft.world.entity.monster.warden.AngerManagement` — the
 // store the warden's own anger walks: the per-suspect map the
@@ -1832,6 +1924,26 @@ pub struct WardenMob {
     /// expiry the tick drains, the same walk the other brain
     /// memories wear)
     pub touch_cooldown: i32,
+    /// THE WALK TARGET'S OWN MEMORY (javap `WardenAi` the
+    /// INVESTIGATE activity's GoToTargetLocation the OneShot arms —
+    /// the fresh None the JVM init keeps, the trigger the absent
+    /// gate consults, the sink the arrival erase serves)
+    pub walk_target: Option<WardenWalkTarget>,
+    /// THE DELTA MOVEMENT (javap `Entity.setDeltaMovement` — the
+    /// xyz deltas the travel's own impulse adds, the drag the tail
+    /// multiplies; the fresh zeros the JVM init keeps)
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// THE GROUND FLAG (javap `Entity.onGround` — the collide's own
+    /// verdict the fresh spawn's TRUE keeps: the spawned body the
+    /// floor's own surface stands)
+    pub on_ground: bool,
+    /// THE WALK ANIMATION STORE (javap `WalkAnimationState` — the
+    /// tick's own move distance the 0.4 blend feeds, the damping
+    /// min(0.5, 3.0 * speed) the render consults; the fresh zero
+    /// the standing body keeps)
+    pub walk: crate::body::WalkAnimationState,
 }
 
 impl WardenMob {
@@ -1862,6 +1974,17 @@ impl WardenMob {
             heart_animation_o: 0,
             disturbance: None,
             touch_cooldown: 0,
+            walk_target: None,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            on_ground: true,
+            walk: crate::body::WalkAnimationState {
+                speed_old: 0.0,
+                speed: 0.0,
+                position: 0.0,
+                position_scale: 1.0,
+            },
         }
     }
 
@@ -1932,7 +2055,227 @@ impl WardenMob {
             pos,
             remaining: WARDEN_DISTURBANCE_EXPIRY,
         });
-        // pc 96-103: the WALK_TARGET erase — the walk-target round wires
+        // pc 96-103: the WALK_TARGET erase — the fresh disturbance the
+        // standing walk target retires (the `eraseMemory(WALK_TARGET)`
+        // call the walk-target round wires — the next brain pass the
+        // trigger's absent gate re-arms)
+        self.walk_target = None;
+    }
+
+    /// THE INVESTIGATE ONE-SHOT (javap
+    /// `net.minecraft.world.entity.ai.behavior.GoToTargetLocation`,
+    /// verbatim — the `WardenAi.initInvestigateActivity` pc 12-18's
+    /// `GoToTargetLocation.create(DISTURBANCE_LOCATION, 2, 0.7f)` the
+    /// INVESTIGATE activity wears): the TRIGGER's own group
+    /// `lambda$create$0` pc 0-27 the gates bank — the
+    /// `present(memoryType)` the DISTURBANCE consults, the
+    /// `absent(ATTACK_TARGET)` the client's brain-less pass keeps
+    /// (the target memory the sim's brain never arms yet — the
+    /// fight rounds the lane wires), the `absent(WALK_TARGET)` the
+    /// standing walk REFUSES, the `registered(LOOK_TARGET)` the
+    /// always-true register keeps. THE ACTION `lambda$create$2`
+    /// pc 0-44 the walk banks: the `flag = pos.closerThan(mob
+    /// .blockPosition(), closeEnoughDist)` pc 10-22 the crosswise
+    /// fold answers, the `ifne 43` the closer warden the set
+    /// SKIPS (the trigger the true return keeps, the walk target
+    /// the None the caller observes), the
+    /// `BehaviorUtils.setWalkAndLookTargetMemories(mob, getNearbyPos
+    /// (mob, pos), speedModifier, closeEnoughDist)` pc 29-40 the
+    /// not-closer walk serves — the `getNearbyPos` pc 0-21 the
+    /// `pos.offset(getRandomOffset(rng), 0, getRandomOffset(rng))`
+    /// jitter wears (the nextInt(3)-1 pair the ±1 speaks, the y the
+    /// iconst_0 never jitters), the
+    /// `new WalkTarget(new BlockPosTracker(nearby), 0.7f, 2)` the
+    /// pair the memory banks. THE RNG the javap's own law keeps:
+    /// the offsets ride `mob.level().getRandom()` — the LEVEL's own
+    /// stream (the caller the app's level-ambient lane passes), the
+    /// entity's voice stream the draw never spends.
+    ///
+    /// The verdict: the WALK_TARGET armed (the observable the
+    /// lambda's own ifne keeps — the closer warden the skip the
+    /// false answers).
+    pub fn investigate_trigger(&mut self, rng: &mut crate::drops::Lcg) -> bool {
+        // lambda$create$0 pc 0-6: present(DISTURBANCE_LOCATION)
+        let Some(d) = self.disturbance else {
+            return false;
+        };
+        // lambda$create$0 pc 7-10: absent(ATTACK_TARGET) — the
+        // sim's brain the target memory never arms, the gate passes
+        // lambda$create$0 pc 13-17: absent(WALK_TARGET)
+        if self.walk_target.is_some() {
+            return false;
+        }
+        // lambda$create$0 pc 20-24: registered(LOOK_TARGET) — the
+        // always-true register the pass keeps
+        // lambda$create$2 pc 10-22: the closerThan flag
+        let dpos = d.pos;
+        let epos = (
+            self.x.floor() as i32,
+            self.y.floor() as i32,
+            self.z.floor() as i32,
+        );
+        if block_pos_closer_than(dpos, epos, WARDEN_INVESTIGATE_CLOSE_ENOUGH) {
+            return false; // the ifne 43 — the set the closer warden skips
+        }
+        // lambda$create$2 pc 29-40 + getNearbyPos pc 0-21: the
+        // jittered nearby the TWO draws wear
+        let ox = rng.next_int(WARDEN_OFFSET_BOUND) - 1;
+        let oz = rng.next_int(WARDEN_OFFSET_BOUND) - 1;
+        let nearby = (dpos.0 + ox, dpos.1, dpos.2 + oz);
+        // BehaviorUtils.setWalkAndLookTargetMemories pc 0-14: the
+        // BlockPosTracker the nearby wraps — the center the +0.5
+        // pair speaks
+        self.walk_target = Some(WardenWalkTarget {
+            block: nearby,
+            pos: (
+                nearby.0 as f64 + 0.5,
+                nearby.1 as f64 + 0.5,
+                nearby.2 as f64 + 0.5,
+            ),
+            speed_modifier: WARDEN_INVESTIGATE_SPEED,
+            close_enough: WARDEN_INVESTIGATE_CLOSE_ENOUGH,
+        });
+        true
+    }
+
+    /// THE SINK'S OWN ARRIVAL (javap
+    /// `net.minecraft.world.entity.ai.behavior.MoveToTargetSink
+    /// .reachedTarget` pc 0-28, verbatim): the
+    /// `walkTarget.getTarget().currentBlockPosition()
+    /// .distManhattan(mob.blockPosition()) <= walkTarget
+    /// .getCloseEnoughDist()` fold the if_icmpgt pair keeps — the
+    /// MANHATTAN distance the block coords wear, the close-enough 2
+    /// the walk target carries.
+    pub fn walk_reached(&self) -> bool {
+        let Some(t) = self.walk_target else {
+            return false;
+        };
+        let epos = (
+            self.x.floor() as i32,
+            self.y.floor() as i32,
+            self.z.floor() as i32,
+        );
+        block_pos_dist_manhattan(t.block, epos) <= t.close_enough
+    }
+
+    /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
+    /// mob.rs lane speaks — the travel fold the LivingEntity's own
+    /// bytecode keeps, the warden's attribute 0.3 the gain wears):
+    /// the SINK the arrival consults first (the `MoveToTargetSink
+    /// .stop` pc 62-79's `navigation.stop()` + the WALK_TARGET
+    /// erase the reached walk serves — the straight-line stand-in
+    /// the pathfinding's own complexity never rides, the same
+    /// honest law the zombie's melee approach keeps), the IMPULSE
+    /// the not-arrived walk arms (the yaw the direction answers,
+    /// the forward iz=1 the body's own facing rides), the COLLIDE
+    /// the stepped sweep serves, the TAIL the drags + gravity +
+    /// the walk animation the move distance feeds.
+    pub fn ai_walk(&mut self, world: &crate::world::World) {
+        // THE SINK'S OWN ARRIVAL (prio 0 — the CORE activity the
+        // investigate's 5 precedes): the reached walk the target
+        // erases, the coast the tail keeps
+        if self.walk_target.is_some() && self.walk_reached() {
+            self.walk_target = None;
+        }
+        // THE IMPULSE (the not-arrived walk target the direction
+        // arms — the zombie's own melee-approach law the yaw speaks)
+        let want = self.walk_target.is_some();
+        if want {
+            let t = self.walk_target.expect("the target the want gate keeps");
+            let dx = t.pos.0 - self.x;
+            let dz = t.pos.2 - self.z;
+            let len = (dx * dx + dz * dz).sqrt().max(1e-9);
+            self.yaw_deg = ((-(dx / len)).atan2(dz / len)).to_degrees() as f32;
+            let friction = if self.on_ground {
+                crate::body::BLOCK_FRICTION
+            } else {
+                crate::body::AIR_FRICTION
+            };
+            // the attribute speed the createAttributes keeps (the
+            // 0.3 the MOVEMENT_SPEED add speaks), the walk target's
+            // 0.7 modifier the investigate's own ldc wears — the
+            // same friction law the zombie walker keeps (the ground
+            // gain the plain attribute speaks, the CUBE numerator
+            // the slippery friction serves)
+            let attr = WARDEN_MOVEMENT_SPEED as f64;
+            let speed = if friction > 0.6 {
+                attr * crate::body::CUBE_SPEED_NUMERATOR as f64
+                    / ((friction * friction * friction) as f64)
+            } else {
+                attr
+            } * t.speed_modifier as f64;
+            let rad = self.yaw_deg as f64 * std::f64::consts::PI / 180.0;
+            let (s, c) = (rad.sin(), rad.cos());
+            // the forward impulse (ix = 0, iz = 1 — the body's own
+            // yaw the travel's getInputVector rotates)
+            self.vx += (0.0 * c - 1.0 * s) * speed;
+            self.vz += (1.0 * c + 0.0 * s) * speed;
+        }
+        // THE GRAVITY (the travel's own pre-move fold — javap
+        // `LivingEntity.travel` pc: the `vec3.y -= gravity` the
+        // BEFORE-move walk serves, the downward delta the floor's
+        // own collision answers the fresh vy=0 body the first tick
+        // keeps grounded)
+        self.vy = (self.vy - crate::body::GRAVITY) * crate::body::VERTICAL_DRAG as f64;
+        // THE COLLIDE (the same stepped sweep the walker's own box
+        // rides — the warden's 0.9 x 2.9 the registration dims keep,
+        // the warden_entity_box the javap's own builder speaks)
+        let (x0, y0, z0) = (self.x, self.y, self.z);
+        let (bmin, bmax) = warden_entity_box((self.x, self.y, self.z));
+        let box6 = (bmin.0, bmin.1, bmin.2, bmax.0, bmax.1, bmax.2);
+        let was_on_ground = self.on_ground;
+        let col = crate::body::collide_stepped(
+            world,
+            box6,
+            (self.vx, self.vy, self.vz),
+            self.on_ground,
+            crate::body::MAX_UP_STEP,
+        );
+        self.x += col.dx;
+        self.y += col.dy;
+        self.z += col.dz;
+        self.on_ground = col.vertical_collision_below;
+        // THE AUTO-JUMP (LivingEntity.aiStep's own: the horizontal
+        // collision + the ground -> jumpFromGround — the warden hops
+        // the one-block wall the straight-line stand-in can't path
+        // around)
+        if col.horizontal_collision && was_on_ground {
+            self.vy = crate::body::JUMP_POWER as f64;
+            self.on_ground = false;
+        }
+        // THE RESTITUTION + DRAGS (the travel tail verbatim — the
+        // collided components the zeros answer, the horizontal drag
+        // the friction's own product wears, the y the NEXT tick's
+        // pre-move fold re-fills)
+        if col.collided_x {
+            self.vx = 0.0;
+        }
+        if col.collided_y {
+            self.vy = 0.0;
+        }
+        if col.collided_z {
+            self.vz = 0.0;
+        }
+        let friction = if was_on_ground {
+            crate::body::BLOCK_FRICTION
+        } else {
+            crate::body::AIR_FRICTION
+        };
+        let drag = (friction * crate::body::GROUND_DRAG) as f64;
+        self.vx *= drag;
+        self.vz *= drag;
+        // THE WALK ANIMATION (calculateEntityAnimation's own law —
+        // the same 4.0 scale and 0.4 blend the zombie walker keeps;
+        // the standing body the zero dist feeds, the blend the
+        // speed drains)
+        let dist = ((self.x - x0) * (self.x - x0)
+            + (self.y - y0) * (self.y - y0)
+            + (self.z - z0) * (self.z - z0))
+            .sqrt() as f32;
+        if dist.is_finite() {
+            self.walk
+                .update((dist * crate::body::WALK_DISTANCE_SCALE).min(1.0), crate::body::WALK_BLEND, 1.0);
+        }
     }
 
     /// THE CONTACT'S OWN WALK (javap `Warden.doPush(Entity)` pc 0-54,
@@ -6967,6 +7310,260 @@ mod tests {
         assert_eq!(warden.heart_animation, 9);
         assert_eq!(warden.heart_animation_o, 10);
         assert_eq!(warden_heart_animation_at(&warden, 0.5), 0.95);
+    }
+
+    /// THE INVESTIGATE ONE-SHOT'S OWN ARM (javap
+    /// `GoToTargetLocation.lambda$create$0` the gates +
+    /// `lambda$create$2` the action verbatim): the disturbance the
+    /// trigger banks — the not-closer warden the walk target arms
+    /// (the speed 0.7 the ldc keeps, the close-enough 2 the
+    /// iconst_2 wears, the y the iconst_0 never jitters, the ±1
+    /// jitter the TWO draws wear, the tracker center the +0.5 pair
+    /// speaks), the LEVEL rng the draws spend (the entity's voice
+    /// stream the law never touches).
+    #[test]
+    fn the_disturbance_arms_the_investigate_walk() {
+        // THE NOT-CLOSER WARDEN (the crosswise (5,0,0)=25 the 4
+        // refuses — the walk the dark serves)
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden.set_disturbance_location((5, 32, 3));
+        let mut level_rng = crate::drops::Lcg::new(0xA17E as u64);
+        let armed = warden.investigate_trigger(&mut level_rng);
+        assert!(armed, "the not-closer warden the trigger arms");
+        let t = warden
+            .walk_target
+            .expect("the setWalkAndLookTargetMemories the pair banks");
+        // THE WALK TARGET'S OWN WORDS (the WalkTarget ctor pair):
+        assert_eq!(t.speed_modifier, WARDEN_INVESTIGATE_SPEED, "the 0.7f the ldc wears");
+        assert_eq!(
+            t.close_enough, WARDEN_INVESTIGATE_CLOSE_ENOUGH,
+            "the iconst_2 the close-enough wears"
+        );
+        // THE JITTER (getNearbyPos pc 0-21): the y the iconst_0
+        // keeps, the x/z the ±1 the nextInt(3)-1 pair wears, the
+        // tracker center the +0.5 pair speaks
+        assert_eq!(t.block.1, 32, "the y the iconst_0 never jitters");
+        assert!(
+            (4..=6).contains(&t.block.0) && (2..=4).contains(&t.block.2),
+            "the ±1 jitter the nearby cell wears: {:?}",
+            t.block
+        );
+        assert_eq!(t.pos, (t.block.0 as f64 + 0.5, 32.5, t.block.2 as f64 + 0.5), "the BlockPosTracker center the +0.5 pair speaks");
+        // THE ENTITY'S OWN STREAM THE DRAW NEVER SPENDS (the javap's
+        // own law — the offsets ride the LEVEL random): the fresh
+        // warden's voice stream the mirror's state keeps
+        let mut mirror = WardenMob::new(3, 10.5, 32.0, 3.5);
+        assert_eq!(
+            warden.rng.next(), mirror.rng.next(),
+            "the entity stream the trigger never touches"
+        );
+        // THE DISTURBANCE'S OWN EXPIRY the set walk keeps (the
+        // 100l the setMemoryWithExpiry wears — the walk lane the
+        // memory never re-arms)
+        assert_eq!(
+            warden.disturbance.expect("the memory banks").remaining,
+            WARDEN_DISTURBANCE_EXPIRY,
+            "the 100l expiry the set walk keeps"
+        );
+    }
+
+    /// THE TRIGGER'S OWN GATES (javap `lambda$create$0` pc 7-17 the
+    /// absent pair verbatim): the standing WALK_TARGET the re-arm
+    /// REFUSES, the fresh disturbance the standing walk retires
+    /// (the `eraseMemory(WALK_TARGET)` pc 96-103 the set walk
+    /// serves), the disturbance-less warden the trigger never arms.
+    #[test]
+    fn the_walk_target_absent_gate_the_disturbance_erase_keeps() {
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden.set_disturbance_location((5, 32, 3));
+        let mut level_rng = crate::drops::Lcg::new(7);
+        let first = warden.investigate_trigger(&mut level_rng);
+        assert!(first, "the first arm the absent gate speaks");
+        let standing = warden.walk_target.expect("the target banks");
+        // THE ABSENT GATE (pc 13-17): the standing target the
+        // second trigger REFUSES — the verdict false, the memory
+        // the standing pair keeps
+        let second = warden.investigate_trigger(&mut level_rng);
+        assert!(!second, "the standing target the absent gate refuses");
+        assert_eq!(
+            warden.walk_target, Some(standing),
+            "the standing pair the refusal never rewrites"
+        );
+        // THE ERASE (pc 96-103): the fresh disturbance the standing
+        // walk retires — the next brain pass the absent gate re-arms
+        warden.set_disturbance_location((20, 32, 3));
+        assert!(warden.walk_target.is_none(), "the eraseMemory(WALK_TARGET) the fresh disturbance serves");
+        // THE RE-ARM (the absent gate the erase lifts): the fresh
+        // disturbance the walk re-arms (the crosswise (9,0,0)=81
+        // the 4 refuses)
+        let re_armed = warden.investigate_trigger(&mut level_rng);
+        assert!(re_armed, "the fresh disturbance the absent gate re-arms");
+        assert_eq!(
+            warden.walk_target.expect("the re-arm banks").block.1, 32,
+            "the fresh disturbance's y the walk wears"
+        );
+        // THE PRESENT GATE (pc 0-6): the disturbance-less warden the
+        // trigger never arms
+        let mut quiet = WardenMob::new(4, 10.5, 32.0, 3.5);
+        assert!(
+            !quiet.investigate_trigger(&mut level_rng),
+            "the DISTURBANCE the present gate consults"
+        );
+        assert!(quiet.walk_target.is_none(), "the quiet brain the walk never banks");
+    }
+
+    /// THE ARRIVAL'S OWN TWO LAWS (javap `Vec3i.closerThan` the
+    /// trigger's crosswise fold + `MoveToTargetSink.reachedTarget`
+    /// the sink's manhattan fold, verbatim): the diagonal (1,1,1)
+    /// neighbor the crosswise 3 < 4 the trigger's CLOSER verdict
+    /// wears while the manhattan 3 the sink's NOT-REACHED answers —
+    /// the split the vanilla's own two distances keep. THE CLOSER
+    /// GATE the walk never arms (the ifne 43 the set skips), THE
+    /// SINK the arrival the WALK_TARGET erases (the stop's own
+    /// walk the reached body serves).
+    #[test]
+    fn the_investigate_arrival_the_manhattan_keeps() {
+        // THE UNIT LAWS: the crosswise STRICT < the exact-touch the
+        // FALSE answers, the manhattan the INCLUSIVE <= the arrival
+        // wears
+        assert!(
+            !block_pos_closer_than((0, 0, 0), (2, 0, 0), 2),
+            "the exact-touch the strict < refuses"
+        );
+        assert!(
+            block_pos_closer_than((0, 0, 0), (1, 1, 1), 2),
+            "the diagonal 3 < 4 the crosswise passes"
+        );
+        assert_eq!(
+            block_pos_dist_manhattan((0, 0, 0), (1, 1, 1)), 3,
+            "the diagonal the manhattan 3 speaks"
+        );
+        // THE SPLIT (the two laws the same cell answers): the warden
+        // one diagonal step from the disturbance — the trigger the
+        // CLOSER verdict the walk never arms, the walk_reached the
+        // manhattan the NOT-REACHED answers
+        let mut diagonal = WardenMob::new(3, 1.5, 1.0, 1.5);
+        diagonal.set_disturbance_location((0, 0, 0));
+        let mut level_rng = crate::drops::Lcg::new(7);
+        assert!(
+            !diagonal.investigate_trigger(&mut level_rng),
+            "the diagonal the crosswise closer verdict skips the set"
+        );
+        assert!(diagonal.walk_target.is_none(), "the closer warden the walk never banks");
+        diagonal.walk_target = Some(WardenWalkTarget {
+            block: (0, 0, 0),
+            pos: (0.5, 0.5, 0.5),
+            speed_modifier: WARDEN_INVESTIGATE_SPEED,
+            close_enough: WARDEN_INVESTIGATE_CLOSE_ENOUGH,
+        });
+        assert!(
+            !diagonal.walk_reached(),
+            "the manhattan 3 the sink's not-reached answers"
+        );
+        // THE REACHED WALK (the manhattan <= 2 the if_icmpgt pair
+        // keeps): the target cell the arrival erases — the ai_walk
+        // the stop's own WALK_TARGET retire serves
+        let mut arrived = WardenMob::new(3, 0.5, 0.0, 0.5);
+        arrived.walk_target = Some(WardenWalkTarget {
+            block: (1, 0, 1),
+            pos: (1.5, 0.5, 1.5),
+            speed_modifier: WARDEN_INVESTIGATE_SPEED,
+            close_enough: WARDEN_INVESTIGATE_CLOSE_ENOUGH,
+        });
+        assert!(arrived.walk_reached(), "the manhattan 2 the arrival passes");
+        let world = crate::world::World::new(1, 42);
+        arrived.ai_walk(&world);
+        assert!(arrived.walk_target.is_none(), "the sink's erase the reached walk serves");
+        // THE TARGET'S OWN ARM THE DEAD BODY NEVER WALKS — the lane
+        // the caller's health gate keeps (the fn the target's absence
+        // the impulse stills): the target-less body the travel tail
+        // the zero impulse wears
+        let mut still = WardenMob::new(5, 0.5, 0.0, 0.5);
+        still.ai_walk(&world);
+        assert_eq!(still.vx, 0.0, "the target-less body the impulse never arms");
+        assert_eq!(still.x, 0.5, "the still body the position keeps");
+    }
+
+    /// THE WALK'S OWN TRAVEL (the zombie walker's own law the
+    /// mob.rs lane speaks): the flat floor the warden the
+    /// disturbance's own cell walks — the yaw the direction arms,
+    /// the walk animation the move distance feeds (the speed fills,
+    /// the position climbs), the arrival the WALK_TARGET erases,
+    /// the coast the blend the speed drains, the floor the body the
+    /// ground keeps.
+    #[test]
+    fn the_warden_walks_the_travel_folds_wear() {
+        // THE FLAT FLOOR (the mob lane's own helper the sculk test
+        // copies — the stone y 0..4, the air above, the warden the
+        // y=5 surface stands)
+        let mut world = crate::world::World::new(1, 42);
+        for x in 0..world.size_blocks() {
+            for z in 0..world.size_blocks() {
+                for y in 5..world.size_blocks() {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+                for y in 0..5 {
+                    world.set(x, y, z, crate::world::STONE);
+                }
+            }
+        }
+        // THE WALK (the disturbance five blocks west — the crosswise
+        // (5,0,0)=25 the 4 refuses, the trigger the walk arms)
+        let mut warden = WardenMob::new(3, 10.5, 5.0, 3.5);
+        warden.set_disturbance_location((5, 5, 3));
+        let mut level_rng = crate::drops::Lcg::new(7);
+        assert!(warden.investigate_trigger(&mut level_rng), "the not-closer warden the walk arms");
+        let t = warden.walk_target.expect("the target banks");
+        // THE FIRST TICK: the yaw the direction arms (the body the
+        // target faces — the atan2 law the known target answers),
+        // the move the x serves, the walk animation the distance
+        // feeds
+        warden.ai_walk(&world);
+        let (dx, dz) = (t.pos.0 - 10.5, t.pos.2 - 3.5);
+        let expected_yaw = ((-(dx / (dx * dx + dz * dz).sqrt()))
+            .atan2(dz / (dx * dx + dz * dz).sqrt()))
+            .to_degrees() as f32;
+        assert!(
+            (warden.yaw_deg - expected_yaw).abs() < 1e-3,
+            "the body the target faces: {} vs {}",
+            warden.yaw_deg,
+            expected_yaw
+        );
+        assert!(warden.x < 10.5, "the westward walk the x serves: {}", warden.x);
+        assert!(warden.walk.speed > 0.0, "the walk speed the move distance fills");
+        assert!(warden.walk.position > 0.0, "the walk position the speed climbs");
+        assert!(warden.on_ground, "the floor the body keeps");
+        assert!((warden.y - 5.0).abs() < 1e-9, "the flat floor the y keeps: {}", warden.y);
+        // THE ARRIVAL (the walk the target's own 2-block ring
+        // reaches — the manhattan the sink consults): the erase the
+        // stop's own walk serves
+        let mut ticks = 0;
+        while warden.walk_target.is_some() && ticks < 400 {
+            warden.ai_walk(&world);
+            ticks += 1;
+        }
+        assert!(ticks < 400, "the walk the arrival reaches");
+        let final_manhattan =
+            block_pos_dist_manhattan(t.block, (warden.x.floor() as i32, warden.y.floor() as i32, warden.z.floor() as i32));
+        assert!(
+            final_manhattan <= WARDEN_INVESTIGATE_CLOSE_ENOUGH,
+            "the arrival the manhattan <= 2 keeps: {}",
+            final_manhattan
+        );
+        // THE COAST (the drag the blend the speed drains — the
+        // standing body the legs still): the post-arrival ticks the
+        // walk speed toward the zero drains
+        let peak = warden.walk.speed;
+        for _ in 0..30 {
+            warden.ai_walk(&world);
+        }
+        assert!(
+            warden.walk.speed < peak,
+            "the coast the speed drains: {} -> {}",
+            peak,
+            warden.walk.speed
+        );
+        assert!((warden.y - 5.0).abs() < 1e-9, "the flat floor the coast never sinks");
     }
 }
 

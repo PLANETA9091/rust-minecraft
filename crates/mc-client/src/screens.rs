@@ -10142,6 +10142,27 @@ impl App {
                         warden_voices.push((word, warden.x, warden.y, warden.z, pitch));
                     }
                 }
+                // THE AI'S OWN WALK (the alive body the dead lane never
+                // walks — the same gate the push pass wears): the brain
+                // the investigate One-Shot consults, the travel the
+                // collision lane serves. THE RNG the javap's own law
+                // keeps — the offsets ride `mob.level().getRandom()`, the
+                // LEVEL's own stream the level-ambient lane carries (the
+                // entity's voice stream the draw never spends).
+                if warden.health > 0.0 {
+                    warden.investigate_trigger(&mut self.level_ambient_rng);
+                    // THE TRAVEL (the world the collision sweep consults —
+                    // the fused singleplayer frame the offline lane keeps,
+                    // the networked frame the net world serves)
+                    let walk_world = if self.world_is_network {
+                        self.net_world.as_ref()
+                    } else {
+                        self.offline_world.as_ref()
+                    };
+                    if let Some(world) = walk_world {
+                        warden.ai_walk(world);
+                    }
+                }
             }
             for (word, wx, wy, wz, pitch) in warden_voices {
                 self.play_warden_voice(word, wx, wy, wz, pitch);
@@ -36159,15 +36180,20 @@ impl App {
             if warden.health <= 0.0 {
                 continue; // the dead body the lane removes — no corpse draws
             }
-            // THE FEET (the summon cell's own position the entity
-            // wears — the warden's own walk the AI rounds never
-            // serve, the prev-pos lerp the standing body needs not)
+            // THE FEET (the entity's own position the walk serves —
+            // the ai_walk the collide's own sweep banks, the feet
+            // the current position the house's own mob chain keeps)
             let feet = Vec3::new(warden.x as f32, warden.y as f32, warden.z as f32);
             // THE STATE (the 26.2 setupAnim's own words): the look
-            // pair the zero yaw the standing body keeps, the walk
-            // pair the zero speed the stillness wears, the age clock
-            // the tick count speaks, the TENDRIL ANIMATION the
-            // getTendrilAnimation(partialTick) lerp getter banks
+            // pair the zero yaw the standing body keeps, the WALK
+            // PAIR the WalkAnimationState's own getters serve (the
+            // speed(partial) the damping min(0.5, 3.0 * speed)
+            // consults, the position(partial) the 0.8662 phase rides
+            // — the tick's own move distance the 0.4 blend feeds,
+            // the standing body the zero state the stillness wears),
+            // the age clock the tick count speaks, the TENDRIL
+            // ANIMATION the getTendrilAnimation(partialTick) lerp
+            // getter banks
             let age_ticks = warden.tick_count as f32 + self.partial_tick;
             let tendril_word =
                 crate::sculk::warden_tendril_animation_at(warden, self.partial_tick);
@@ -36176,8 +36202,8 @@ impl App {
                 yaw_deg: warden.yaw_deg,
                 pitch_deg: 0.0,
                 head_yaw_off_deg: 0.0,
-                walk_pos: 0.0,
-                walk_speed: 0.0,
+                walk_pos: warden.walk.position_at(self.partial_tick),
+                walk_speed: warden.walk.speed_at(self.partial_tick),
                 age_ticks,
                 tendril_animation: tendril_word,
             };
