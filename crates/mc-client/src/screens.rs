@@ -26805,6 +26805,24 @@ impl App {
         // the wheat row the generated block_sounds table carries —
         // `item.crop.plant` at the (v+1)/2, p*0.8 fold
         self.sounds.play(self.frame, "wheat", crate::sound::Lane::Place);
+        // THE BLOCK PLACE EVENT'S OWN POST (javap BlockItem.place
+        // pc 243-257 over the 26.2 jar — the playSound pc 208-240 the
+        // `level.gameEvent(GameEvent.BLOCK_PLACE, pos, Context.of(
+        // player, state))` walk FOLLOWS, the consume pc 260-265 the
+        // tail rides — the planted cell's own center the +0.5 pair
+        // wears, the f13 the block_place row keeps): the crop's own
+        // post the sensors hear — the farming near the warden the
+        // planting suspect the ears answer
+        if !self.world_is_network && self.offline_world.is_some() {
+            self.dispatch_vibration_event(
+                "block_place",
+                (
+                    cell.0 as f64 + 0.5,
+                    cell.1 as f64 + 0.5,
+                    cell.2 as f64 + 0.5,
+                ),
+            );
+        }
         Some(true)
     }
 
@@ -30560,6 +30578,26 @@ impl App {
             world.relight();
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
         }
+        // THE BLOCK PLACE EVENT'S OWN POST (javap FlintAndSteelItem.useOn
+        // pc 207-214 over the 26.2 jar — the setBlock pc 196-203
+        // FOLLOWS the `level.gameEvent(player, GameEvent.BLOCK_PLACE,
+        // pos)` walk the tail serves — THE CLICKED POS the local-4 read
+        // keeps: the placement walk's own `astore 6` the relative cell
+        // the SOUND (pc 161) and the SET (pc 199) speak, the gameEvent's
+        // `aload 4` the clicked cell the quirk the vanilla's own walk
+        // wears — the fire cell the record NEVER wears, the f13 the
+        // block_place row keeps): the fire's own post the sensors hear
+        // — the flint-sparked fire near the warden the ears answer
+        if !self.world_is_network && self.offline_world.is_some() {
+            self.dispatch_vibration_event(
+                "block_place",
+                (
+                    hit.pos.0 as f64 + 0.5,
+                    hit.pos.1 as f64 + 0.5,
+                    hit.pos.2 as f64 + 0.5,
+                ),
+            );
+        }
         // THE DURABILITY'S OWN FOLD: the hurtAndBreak(1) the offline
         // stack model never carries (the (id, count) pair the
         // inventory speaks — the durability component the vanilla's
@@ -30744,6 +30782,26 @@ impl App {
             );
             world.relight();
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        }
+        // THE BLOCK PLACE EVENT'S OWN POST (javap FireChargeItem.useOn
+        // pc 127-136 over the 26.2 jar — the setBlockAndUpdate
+        // pc 116-123 FOLLOWS the `level.gameEvent(player,
+        // GameEvent.BLOCK_PLACE, pos)` walk the tail serves — THE
+        // PLACEMENT CELL the reassigned local-3 read keeps: the pc
+        // 89-97 `astore_3` the relative cell the clickedPos slot
+        // REBANKS, the gameEvent's aload_3 the fire cell the flint's
+        // clicked-pos quirk the sibling NEVER wears — the f13 the
+        // block_place row keeps): the charge's own post the sensors
+        // hear — the fire-charge spark near the warden the ears answer
+        if !self.world_is_network && self.offline_world.is_some() {
+            self.dispatch_vibration_event(
+                "block_place",
+                (
+                    cell.0 as f64 + 0.5,
+                    cell.1 as f64 + 0.5,
+                    cell.2 as f64 + 0.5,
+                ),
+            );
         }
         // THE CONSUMPTION'S OWN WALK: the `stack.shrink(1)` the TNT
         // arm's consume block answers (the (id, count) pair the
@@ -45830,6 +45888,323 @@ mod tests {
                 .iter()
                 .all(|l| !l.contains("f13")),
             "the eats the BLOCK_PLACE pair never speaks (the f11 rows alone)"
+        );
+    }
+
+    /// THE FLINT FIRE THE PLACE HEARS (javap FlintAndSteelItem.useOn
+    /// pc 207-214 over the 26.2 jar — the placement branch's setBlock
+    /// pc 196-203 the `gameEvent(player, GameEvent.BLOCK_PLACE, pos)`
+    /// walk pc 207-214 follows — THE CLICKED POS the local-4 read
+    /// keeps: the `astore 6` relative cell the sound (pc 161) and the
+    /// set (pc 199) speak, the gameEvent's `aload 4` the clicked cell
+    /// the quirk the vanilla's own walk wears, the f13 the block_place
+    /// row keeps): the flint the stone top face sparks, the record the
+    /// CLICKED center banks, the fire cell the record never wears —
+    /// the non-air refusal the post never speaks.
+    #[test]
+    fn the_flint_fire_the_place_hears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE STONE'S OWN STAGE (the placement test's own walk — the
+        // hit cell the solid ground keeps, the target the honest air
+        // wears)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::STONE);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::AIR);
+        app.place_sculk_sensor(c + 2, top + 2, c);
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_place @")),
+            "the unsparked world the place never speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the spark consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FIRE,
+            "the fire cell the above-stone target wears"
+        );
+        // THE RECORD THE CLICKED CENTER SPEAKS (the local-4 quirk the
+        // +0.5 pair answers — the f13 the block_place row wears)
+        let clicked = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            (top - 1) as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_place @")
+                    && l.contains(&clicked)
+                    && l.ends_with("r16 f13")),
+            "the spark the block_place record the CLICKED center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        // THE FIRE CELL THE RECORD NEVER WEARS (the gameEvent's aload-4
+        // the clicked slot reads — the `astore 6` fire cell the sound
+        // and the set speak, the post the placement center never
+        // banks)
+        let fire_cell = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.contains(&fire_cell)),
+            "the fire cell the record never wears (the local-4 quirk): {:?}",
+            app.game_events
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the spark hears"
+        );
+        // THE REFUSAL THE POST NEVER SPEAKS (the non-air target the
+        // canBePlacedAt walk refuses — the second press the same
+        // column aims, the fire cell the occupied target wears, the
+        // FAIL the record never banks)
+        let records_before = app.game_events.len();
+        assert!(
+            !app.on_right_press(0, 0),
+            "the non-air target the press never consumes"
+        );
+        assert_eq!(
+            app.game_events.len(),
+            records_before,
+            "the refusal the block_place record never banks"
+        );
+    }
+
+    /// THE CHARGE FIRE THE PLACE HEARS (javap FireChargeItem.useOn
+    /// pc 127-136 over the 26.2 jar — the placement branch's
+    /// setBlockAndUpdate pc 116-123 the `gameEvent(player,
+    /// GameEvent.BLOCK_PLACE, pos)` walk pc 127-136 follows — THE
+    /// PLACEMENT CELL the reassigned local-3 read keeps: the pc 89-97
+    /// `astore_3` the relative cell the clickedPos slot REBANKS, the
+    /// flint's clicked-pos quirk the sibling NEVER wears, the f13 the
+    /// block_place row keeps): the charge the stone top face sparks,
+    /// the record the FIRE cell banks — the lit branch the same item
+    /// wears the f11 the BLOCK_CHANGE row keeps.
+    #[test]
+    fn the_charge_fire_the_place_hears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/fire_charge"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::STONE);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::AIR);
+        app.place_sculk_sensor(c + 2, top + 2, c);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the spark consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FIRE,
+            "the fire cell the above-stone target wears"
+        );
+        // THE RECORD THE FIRE CELL SPEAKS (the reassigned local-3 the
+        // +0.5 pair answers — the f13 the block_place row wears)
+        let fire_cell = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_place @")
+                    && l.contains(&fire_cell)
+                    && l.ends_with("r16 f13")),
+            "the spark the block_place record the FIRE cell wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        // THE CLICKED CELL THE RECORD NEVER WEARS (the reassignment
+        // the slot REBANKS — the stone cell the sound and the set
+        // never speak the placement row)
+        let clicked = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            (top - 1) as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.contains(&clicked)),
+            "the clicked cell the placement record never wears: {:?}",
+            app.game_events
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the spark hears"
+        );
+        // THE LIT BRANCH THE SIBLING ROW KEEPS (the candle the same
+        // item lights — the BLOCK_CHANGE the clicked center the f11
+        // row wears, the placement row the consult never speaks)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::CANDLE);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::AIR);
+        app.game_events.clear();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the ignite consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top - 1, c),
+            crate::world::CANDLE_LIT,
+            "the held charge lit the candle"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_change @")
+                    && l.contains(&clicked)
+                    && l.ends_with("r16 f11")),
+            "the ignite the block_change record the clicked center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_place @")),
+            "the lit branch the placement row never speaks"
+        );
+    }
+
+    /// THE SEEDS PLANT THE PLACE HEARS (javap BlockItem.place
+    /// pc 243-257 over the 26.2 jar — the plant arm's playSound
+    /// pc 208-240 the `gameEvent(GameEvent.BLOCK_PLACE, pos,
+    /// Context.of(player, state))` walk pc 243-257 follows, the
+    /// consume pc 260-265 the tail rides — the planted cell's center
+    /// the +0.5 pair speaks, the f13 the block_place row keeps): the
+    /// seeds the farmland floor plant, the record the planted cell
+    /// banks, the earshot sensor the sculk_hearing answers — the dirt
+    /// floor the SUPPORTS_CROPS refusal the post never speaks.
+    #[test]
+    fn the_seeds_plant_the_place_hears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/wheat_seeds"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::FARMLAND);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::AIR);
+        app.place_sculk_sensor(c + 2, top + 2, c);
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_place @")),
+            "the unplanted world the place never speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the plant consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::WHEAT,
+            "the seeds the above-farmland cell planted"
+        );
+        // THE RECORD THE PLANTED CELL SPEAKS (the gameEvent's placed
+        // pos the +0.5 pair answers — the f13 the block_place row
+        // wears)
+        let planted = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            top as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_place @")
+                    && l.contains(&planted)
+                    && l.ends_with("r16 f13")),
+            "the plant the block_place record the planted cell wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the plant hears"
+        );
+        // THE FLOOR REFUSAL THE POST NEVER SPEAKS (the plain dirt the
+        // canSurvive floor refuses — the SUPPORTS_CROPS tag the sole
+        // farmland row keeps, the FAIL the record never banks)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::AIR);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top - 1, c, crate::world::DIRT);
+        app.game_events.clear();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the dirt floor the press never consumes"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_place @")),
+            "the floor refusal the block_place record never banks: {:?}",
+            app.game_events
         );
     }
 
