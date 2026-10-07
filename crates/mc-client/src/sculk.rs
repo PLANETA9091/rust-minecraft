@@ -590,6 +590,106 @@ pub fn redstone_strength_for_distance(distance: f32, range: i32) -> i32 {
     std::cmp::max(1, 15 - crate::mth::floor(d * distance as f64))
 }
 
+// ===== THE SHRIEKER LANE (the listen tag the clicking alone grants,
+// the r8 the user's own radius keeps, the shriek walk the arrival
+// arms — the dispatch's own gates the shrieker cell answers) =====
+
+/// `data/minecraft/tags/game_event/shrieker_can_listen.json` (the
+/// 26.2 jar, verbatim): the ONE row the tag carries — the sensor's
+/// own tendrils-clicking broadcast the shrieker alone listens to
+/// (the glide's own events the tag never grants, the resonate rows
+/// the tag never carries — the shrieker's ear the sensor's activation
+/// alone wakes).
+pub const SHRIEKER_CAN_LISTEN: &[&str] = &["sculk_sensor_tendrils_clicking"];
+
+/// `SculkShriekerBlockEntity$VibrationUser.getListenerRadius()` (javap):
+/// the `bipush 8` the listen radius banks — the sensor's own r16
+/// broadcast the shrieker hears at HALF the sensor's ear wears.
+pub const SHRIEKER_LISTEN_RADIUS: i32 = 8;
+
+/// `SculkShriekerBlockEntity.shriek` pc 40 (javap): the `bipush 90`
+/// `scheduleTick(pos, block, 90)` the SHRIEKING window banks — the
+/// blockstate the shriek arms, the block's own tick walk clears 90
+/// ticks later (the canReceiveVibration gate the in-window hearing
+/// refuses).
+pub const SHRIEKER_SHRIEK_TICKS: u64 = 90;
+
+/// `GameEvent.SHRIEK` (javap GameEvent <clinit> pc 324-331): the
+/// `register("shriek", 32)` two-arg walk the `bipush 32` speaks —
+/// the WIDEST radius the registry carries (the register(String)
+/// single-arg walks the r16 default keep); the shriek event the
+/// vibrations tag never carries (the json the row never wears) —
+/// the shriek's own broadcast the dispatch's isValidVibration gate
+/// refuses, no cascade the walk ever serves.
+pub const SHRIEK_RADIUS: i32 = 32;
+
+/// The tag consult the default `isValidVibration`'s own head keeps
+/// (javap VibrationSystem$User — the `event.is(getListenableEvents())`
+/// arm the shrieker's tag answers): the clicking row the true speaks,
+/// every other event the refusal wears.
+pub fn shrieker_can_listen(event: &str) -> bool {
+    SHRIEKER_CAN_LISTEN.contains(&event)
+}
+
+/// THE SHRIEKER'S OWN CELL (the listener registry's analog — the
+/// vanilla's block entity the chunk-section registry walk registers,
+/// the cell the App's vec stands in): the pos the block cell keeps,
+/// the free-at the SHRIEKING window's own tail banks (the scheduleTick
+/// 90 walk the shriek arms — the earliest tick the cell hears again),
+/// the pending arrival the scheduled vibration banks (the travel law
+/// the sensor's own arrival keeps; Some = the data busy the second
+/// hearing refuses — the dispatch's own pc 22-31 the busy walk keeps).
+pub struct SculkShriekerCell {
+    pub pos: (i32, i32, i32),
+    pub free_at: u64,
+    pub shriek_at: Option<u64>,
+}
+
+/// THE SHRIEKER'S HEARING WALK (the gates the dispatch's own ladder
+/// keeps — the tag the default isValidVibration's head consults, the
+/// range the dispatcher's radius² bound serves, the distance the
+/// VibrationInfo ctor's d2f fold speaks): the untagged event the None
+/// keeps, the out-of-range shrieker the None keeps, the hearing the
+/// Some(distance) speaks — the frequency/redstone fields the shrieker
+/// lane never wears (the map no row carries, the POWER property the
+/// shrieker's state never banks). The SHRIEKING + player-source gates
+/// the caller's own walk keeps (the canReceiveVibration pair the
+/// handleGameEvent ladder answers AFTER the dispatcher's range walk).
+pub fn shrieker_hearing(
+    event: &str,
+    event_pos: (f64, f64, f64),
+    shrieker: (i32, i32, i32),
+) -> Option<f32> {
+    // THE TAG GATE (the isValidVibration default the shrieker's own
+    // tag consult keeps — the ONE row the clicking alone grants)
+    if !shrieker_can_listen(event) {
+        return None;
+    }
+    // THE IN-RANGE GATE (the dispatcher's block-pos distSqr the
+    // radius² bounds; the BlockPos.containing the floor fold serves,
+    // the EQUAL case the strict `>` refusal passes)
+    let eb = (
+        crate::mth::floor(event_pos.0),
+        crate::mth::floor(event_pos.1),
+        crate::mth::floor(event_pos.2),
+    );
+    let dx = (eb.0 - shrieker.0) as f64;
+    let dy = (eb.1 - shrieker.1) as f64;
+    let dz = (eb.2 - shrieker.2) as f64;
+    let dist_sqr = dx * dx + dy * dy + dz * dz;
+    let radius_sqr = (SHRIEKER_LISTEN_RADIUS * SHRIEKER_LISTEN_RADIUS) as f64;
+    if dist_sqr > radius_sqr {
+        return None;
+    }
+    // THE VIBRATION'S OWN DISTANCE (the VibrationInfo ctor's
+    // distanceTo → d2f fold — the shrieker's listener position the
+    // BlockPositionSource's atCenterOf answer keeps)
+    let lx = event_pos.0 - (shrieker.0 as f64 + 0.5);
+    let ly = event_pos.1 - (shrieker.1 as f64 + 0.5);
+    let lz = event_pos.2 - (shrieker.2 as f64 + 0.5);
+    Some(((lx * lx + ly * ly + lz * lz).sqrt()) as f32)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -982,5 +1082,84 @@ mod tests {
         // the distance helper the integer-coord law keeps
         assert_eq!(distance_between_in_blocks((0, 0, 0), (8, 0, 0)), 8.0);
         assert_eq!(distance_between_in_blocks((0, 60, 0), (0, 56, 0)), 4.0);
+    }
+
+    /// THE SHRIEKER LANE THE TAG THE RADII KEEP — the ONE row the
+    /// shrieker_can_listen json carries (the clicking alone the
+    /// shrieker's ear grants), the r8 the VibrationUser's own bipush
+    /// banks, the 90 the shriek walk's scheduleTick keeps, the r32
+    /// the register(name, 32)'s own bipush wears (the WIDEST the
+    /// registry carries), the shriek the map the row never carries
+    /// (the f0 the default's own silence speaks) AND the vibrations
+    /// tag the json the row never wears (the no-cascade the dispatch's
+    /// isValidVibration gate serves); the HEARING the gates the folds
+    /// keep: the tagged in-range the Some(distance) speaks (the
+    /// Vec3→CENTER fold the +0.5 law wears), the equal-edge the
+    /// distSqr 64 passes, the out-of-range the None keeps, the
+    /// untagged event the tag gate refuses even in range.
+    #[test]
+    fn the_shrieker_tag_the_clicking_the_radii_keep() {
+        // THE VOCABULARY (the tag the ONE row the json carries)
+        assert_eq!(
+            SHRIEKER_CAN_LISTEN,
+            &["sculk_sensor_tendrils_clicking"],
+            "the shrieker_can_listen json the ONE row the jar wears"
+        );
+        assert!(shrieker_can_listen("sculk_sensor_tendrils_clicking"));
+        assert!(
+            !shrieker_can_listen("elytra_glide"),
+            "the glide's own event the tag never grants"
+        );
+        assert!(
+            !shrieker_can_listen("shriek"),
+            "the shriek's own broadcast the tag the row never carries"
+        );
+        assert!(
+            !shrieker_can_listen("resonate_4"),
+            "the resonate rows the tag never carries"
+        );
+        assert!(
+            !shrieker_can_listen("entity_die"),
+            "the map's own rows the shrieker's ear never grants"
+        );
+        // THE RADII/TICKS (the bipush constants the javap walks bank)
+        assert_eq!(SHRIEKER_LISTEN_RADIUS, 8, "the user's own bipush 8");
+        assert_eq!(SHRIEKER_SHRIEK_TICKS, 90, "the shriek's own bipush 90");
+        assert_eq!(SHRIEK_RADIUS, 32, "the register(name, 32)'s bipush 32");
+        // THE NO-CASCADE PAIR (the shriek the map AND the vibrations
+        // tag alike the row never carry)
+        assert_eq!(
+            vibration_frequency("shriek"),
+            0,
+            "the map's defaultReturnValue the shriek row never wears"
+        );
+        assert!(
+            !is_valid_vibration("shriek"),
+            "the vibrations tag the json the row never carries — no cascade"
+        );
+        // THE HEARING (the tagged in-range the Some(distance) speaks —
+        // the event center (0.5, 56.5, 0.5), the shrieker (2, 56, 0)
+        // center (2.5, 56.5, 0.5): the distance 2.0 the fold keeps)
+        let d = shrieker_hearing("sculk_sensor_tendrils_clicking", (0.5, 56.5, 0.5), (2, 56, 0))
+            .expect("the clicking the tag grants");
+        assert_eq!(d, 2.0, "the Vec3→CENTER fold the exact answer keeps");
+        // the EQUAL-edge: distSqr 64 the strict refusal passes
+        let d8 = shrieker_hearing("sculk_sensor_tendrils_clicking", (0.5, 0.5, 0.5), (8, 0, 0))
+            .expect("the 64 distSqr the gate passes");
+        assert_eq!(
+            d8, 8.0,
+            "the center distance the fold keeps — (0.5,0.5,0.5) to (8.5,0.5,0.5)"
+        );
+        // the OUT-OF-RANGE refusal: distSqr 81 > 64
+        assert!(
+            shrieker_hearing("sculk_sensor_tendrils_clicking", (0.5, 0.5, 0.5), (9, 0, 0))
+                .is_none(),
+            "the 81 distSqr the gate refuses"
+        );
+        // the UNTAGGED event the tag gate refuses even in range
+        assert!(
+            shrieker_hearing("elytra_glide", (0.5, 56.5, 0.5), (2, 56, 0)).is_none(),
+            "the glide's own event the tag the refusal wears"
+        );
     }
 }

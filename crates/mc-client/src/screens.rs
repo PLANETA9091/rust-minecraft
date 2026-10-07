@@ -7055,6 +7055,13 @@ pub struct App {
     /// module's hearing walk answers, the free-at the phase window's
     /// re-arm law keeps.
     pub sculk_sensors: Vec<crate::sculk::SculkSensorCell>,
+    /// THE SCULK SHRIEKER CELLS (the listener registry's analog —
+    /// the vanilla's block entity the chunk-section registry walk
+    /// registers, the cell vec the App keeps): the clicking
+    /// broadcast's own dispatch the drain walk serves — the tag the
+    /// shrieker_can_listen row answers, the r8 the user's own radius
+    /// keeps, the SHRIEKING window the shriek walk arms.
+    pub sculk_shrikers: Vec<crate::sculk::SculkShriekerCell>,
     /// THE CRIT EMITTERS (the TrackingEmitters the crit attacks arm —
     /// 3 ticks of life each, the 16-sample walk per tick).
     pub crit_emitters: Vec<crate::particles::CritEmitter>,
@@ -7973,6 +7980,7 @@ impl App {
             particles: Vec::new(),
             game_events: Vec::new(),
             sculk_sensors: Vec::new(),
+            sculk_shrikers: Vec::new(),
             crit_emitters: Vec::new(),
             crit_sprite: None,
             weather_rain: None,
@@ -8086,6 +8094,7 @@ impl App {
     /// THE SCULK SENSOR'S OWN PLACEMENT (the registry walk's analog —
     /// the cell the vec banks, the fresh sensor the INACTIVE phase's
     /// own free-at keeps: the earliest tick the hearing rides).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn place_sculk_sensor(&mut self, x: i32, y: i32, z: i32) {
         self.sculk_sensors.push(crate::sculk::SculkSensorCell {
             pos: (x, y, z),
@@ -8093,6 +8102,19 @@ impl App {
             clicking_at: None,
             stop_at: None,
             resonate_frequency: 0,
+        });
+    }
+
+    /// THE SCULK SHRIEKER'S OWN PLACEMENT (the registry walk's analog —
+    /// the cell the vec banks, the fresh shrieker the INACTIVE phase's
+    /// own free-at keeps: the earliest tick the hearing rides, the
+    /// pending arrival the data's own silence keeps).
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn place_sculk_shrieker(&mut self, x: i32, y: i32, z: i32) {
+        self.sculk_shrikers.push(crate::sculk::SculkShriekerCell {
+            pos: (x, y, z),
+            free_at: 0,
+            shriek_at: None,
         });
     }
 
@@ -9544,6 +9566,78 @@ impl App {
                         sensor.pos.2 as f64 + 0.5,
                         crate::sculk::vibration_frequency("sculk_sensor_tendrils_clicking")
                     ));
+                    // THE SHRIEKER'S OWN HEARING (javap the dispatch walk —
+                    // the tendrils-clicking event the shrieker_can_listen
+                    // tag ALONE grants — the ONE row the json carries, the
+                    // glide's own events the tag never grants, the r8 the
+                    // VibrationUser's own bipush keeps): each registered
+                    // shrieker cell the gates answer — the data-busy the
+                    // scheduled arrival refuses (pc 22-31), the SHRIEKING
+                    // window the canReceiveVibration's own head keeps (the
+                    // blockstate property the shriek arms, the scheduleTick
+                    // 90 the walk clears), the occlusion the clean ray
+                    // serves, the schedule the arrival tick banks — the
+                    // hearing record the lane's own vocabulary banks (the
+                    // f the map's default the tendrils row never wears,
+                    // the p the no-POWER arm the shrieker's state keeps —
+                    // the property the sensor wears the shrieker never
+                    // carries)
+                    let sk_world = if self.world_is_network {
+                        self.net_world.as_ref()
+                    } else {
+                        self.offline_world.as_ref()
+                    };
+                    let broadcast_center = (
+                        sensor.pos.0 as f64 + 0.5,
+                        sensor.pos.1 as f64 + 0.5,
+                        sensor.pos.2 as f64 + 0.5,
+                    );
+                    for sk in &mut self.sculk_shrikers {
+                        if sk.shriek_at.is_some() {
+                            continue;
+                        }
+                        if let Some(distance) = crate::sculk::shrieker_hearing(
+                            "sculk_sensor_tendrils_clicking",
+                            broadcast_center,
+                            sk.pos,
+                        ) {
+                            if self.frame < sk.free_at {
+                                continue;
+                            }
+                            let occluded = match sk_world {
+                                Some(w) => crate::sculk::vibration_occluded(
+                                    broadcast_center,
+                                    (
+                                        sk.pos.0 as f64 + 0.5,
+                                        sk.pos.1 as f64 + 0.5,
+                                        sk.pos.2 as f64 + 0.5,
+                                    ),
+                                    |x, y, z| {
+                                        crate::sculk::block_occludes(w.get(x, y, z) as u32)
+                                    },
+                                ),
+                                None => false,
+                            };
+                            if occluded {
+                                continue;
+                            }
+                            self.game_events.push(format!(
+                                "sculk_hearing @{} x{} y{} z{} d{:.6} t{} f{} p{}",
+                                self.frame,
+                                sk.pos.0,
+                                sk.pos.1,
+                                sk.pos.2,
+                                distance,
+                                crate::mth::floor(distance as f64),
+                                crate::sculk::vibration_frequency(
+                                    "sculk_sensor_tendrils_clicking"
+                                ),
+                                0
+                            ));
+                            sk.shriek_at =
+                                Some(self.frame + crate::mth::floor(distance as f64) as u64);
+                        }
+                    }
                     sensor_voices.push((
                         sensor.pos.0,
                         sensor.pos.1,
@@ -9564,6 +9658,48 @@ impl App {
             }
             for (vx, vy, vz, key, pitch) in sensor_voices {
                 self.play_sculk_sensor_voice(vx, vy, vz, key, 1.0, pitch);
+            }
+            // THE SHRIEKER'S OWN ARRIVAL (javap SculkShriekerBlockEntity
+            // shriek — the scheduled vibration the arrival tick answers,
+            // the tryShriek walk the onReceiveVibration speaks: the
+            // warningLevel reset the fresh walk keeps, the canRespond
+            // gate the no-CAN_SUMMON cell refuses, the shriek the tail
+            // serves): the SHRIEKING arm the setBlock walk speaks (the
+            // scheduleTick 90 the window banks — the block's own tick
+            // clears the state the tail wears), the levelEvent 3007 the
+            // client's own walk answers (javap LevelEventHandler case
+            // 3007 — the ten ShriekParticleOption(i * 5) walks the ring
+            // banks, the ONE playLocalSound the v2.0F /
+            // 0.6F + nextFloat() * 0.4F draw wears — the level ambient
+            // stream the wire lane's own order keeps), the
+            // GameEvent.SHRIEK post the record lane banks (the r32 the
+            // register(name, 32)'s own bipush keeps, the f the map the
+            // shriek row never carries — the vibrations tag the json
+            // never wears, no cascade the dispatch ever serves)
+            let mut shriek_voices: Vec<(i32, i32, i32, f32, f32)> = Vec::new();
+            for sk in &mut self.sculk_shrikers {
+                if sk.shriek_at != Some(self.frame) {
+                    continue;
+                }
+                sk.shriek_at = None;
+                sk.free_at = self.frame + crate::sculk::SHRIEKER_SHRIEK_TICKS;
+                let ring =
+                    crate::particles::sculk_shriek_ring(sk.pos, &mut self.level_ambient_rng);
+                self.particles.extend(ring);
+                let pitch = 0.6 + self.level_ambient_rng.next_f32() * 0.4;
+                shriek_voices.push((sk.pos.0, sk.pos.1, sk.pos.2, 2.0, pitch));
+                self.game_events.push(format!(
+                    "shriek @{} x{:.6} y{:.6} z{:.6} r{} f{}",
+                    self.frame,
+                    sk.pos.0 as f64 + 0.5,
+                    sk.pos.1 as f64 + 0.5,
+                    sk.pos.2 as f64 + 0.5,
+                    crate::sculk::SHRIEK_RADIUS,
+                    crate::sculk::vibration_frequency("shriek")
+                ));
+            }
+            for (vx, vy, vz, volume, pitch) in shriek_voices {
+                self.play_sculk_shriek(vx, vy, vz, volume, pitch);
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -41015,6 +41151,197 @@ mod tests {
                 .count(),
             1,
             "the re-arm tail the resonate never repeats"
+        );
+    }
+
+    /// THE SHRIEKER THE CLICKING THE SHRIEK ANSWERS (javap the
+    /// dispatch walk — the tendrils-clicking event the
+    /// shrieker_can_listen tag ALONE grants, the r8 the user's own
+    /// radius keeps, the arrival the tryShriek walk answers): the app
+    /// walk — the fresh cell the window never arms, the broadcast the
+    /// SHRIEKER hearing follows (the exact line the reference folds
+    /// pin — the d the 2.0 fold, the t2 the travel law, the f0 the
+    /// map's default, the p0 the no-POWER arm), the arrival the
+    /// shriek walk serves (the ring the ten members banks, the v2.0F
+    /// voice the pitch band wears, the r32 record the register(name,
+    /// 32)'s own bipush keeps, the f0 the map the shriek row never
+    /// carries), the SHRIEKING window the in-window hearing refuses
+    /// (the re-armed sensor's second broadcast the gate never hears).
+    #[test]
+    fn the_shrieker_the_clicking_the_shriek_answers() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_sensor(0, 32, 0);
+        // the SECOND sensor the glide path's own +z drift serves (the
+        // elytra walk the fall powers forward) — the fresh ear the
+        // window's middle re-arms, the broadcast the SHRIEKING gate's
+        // own proof the refusal carries
+        app.place_sculk_sensor(0, 32, 6);
+        app.place_sculk_shrieker(2, 32, 0);
+        // the fresh cell the window never arms
+        assert_eq!(
+            app.sculk_shrikers[0].free_at, 0,
+            "the fresh cell the hearing never armed"
+        );
+        assert!(app.sculk_shrikers[0].shriek_at.is_none());
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        let dx = pos9.0 - 0.5;
+        let dy = pos9.1 - 32.5;
+        let dz = pos9.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let click_at = 10 + t;
+        app.update(); // tick 10: the post + the sensor's own hearing
+        assert_eq!(
+            app.game_events.len(),
+            2,
+            "the post + the sensor's hearing — the shrieker the glide's own tag refuses"
+        );
+        for _ in 11..click_at {
+            app.update();
+        }
+        // THE BROADCAST TICK: the broadcast + the SHRIEKER hearing —
+        // the sensor's clicking arm the shrieker's walk follows (the
+        // pc order the dispatch keeps)
+        app.update();
+        assert_eq!(
+            app.game_events.len(),
+            4,
+            "the broadcast + the shrieker's hearing the lane banks"
+        );
+        assert_eq!(
+            app.game_events[2],
+            format!(
+                "sculk_sensor_tendrils_clicking @{} x0.500000 y32.500000 z0.500000 r16 f0",
+                click_at
+            ),
+            "the broadcast the pc order follows"
+        );
+        assert_eq!(
+            app.game_events[3],
+            format!("sculk_hearing @{} x2 y32 z0 d2.000000 t2 f0 p0", click_at),
+            "the shrieker's hearing the exact line pins — the d the 2.0 fold, the t2 the travel law, the f0 the map's default, the p0 the no-POWER arm"
+        );
+        assert_eq!(
+            app.sculk_shrikers[0].shriek_at,
+            Some((click_at + 2) as u64),
+            "the scheduled arrival the travel law banks"
+        );
+        // THE ARRIVAL: the shriek walk — the ring, the voice, the r32
+        // record (the pc order the shriek walk keeps: the levelEvent
+        // the gameEvent post precedes)
+        let before = app.particles.len();
+        for _ in (click_at + 1)..=(click_at + 2) {
+            app.update();
+        }
+        let arrival = click_at + 2;
+        assert_eq!(
+            app.sculk_shrikers[0].shriek_at,
+            None,
+            "the arrival the pending walk clears"
+        );
+        assert_eq!(
+            app.sculk_shrikers[0].free_at,
+            arrival as u64 + crate::sculk::SHRIEKER_SHRIEK_TICKS,
+            "the SHRIEKING window the scheduleTick 90 banks"
+        );
+        assert_eq!(
+            app.particles.len(),
+            before + 10,
+            "the ten members the ring banks"
+        );
+        assert_eq!(
+            app.game_events[4],
+            format!(
+                "shriek @{} x2.500000 y32.500000 z0.500000 r32 f0",
+                arrival
+            ),
+            "the GameEvent.SHRIEK post the exact line pins — the r32 the register(name, 32)'s bipush, the f0 the map the shriek row never carries"
+        );
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with(&format!("block.sculk_shrieker.shriek @{arrival} ")))
+                .expect("the shriek voice the dry arm speaks");
+            // the log the FOLDED gain records (the attenuate law the
+            // positioned lane speaks — the 2.0F the fold's own input
+            // keeps), the pitch band the draw's own answer wears
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (0.6..1.0).contains(&pitch),
+                "the 0.6 + r * 0.4 band the voice keeps: {voice}"
+            );
+        }
+        // THE SHRIEKING WINDOW THE REFUSAL KEEPS: the SECOND sensor's
+        // own broadcast (the fresh ear the glide path's +z drift wakes
+        // — the event the shrieker's r8 keeps in range) the in-window
+        // shrieker never hears (the canReceiveVibration gate the
+        // free-at walk serves)
+        let hearing_count = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("sculk_hearing @") && l.contains(" x2 y32 z0 "))
+            .count();
+        assert_eq!(hearing_count, 1, "the first hearing the lane banks alone");
+        for _ in (arrival + 1)..=(click_at + 40) {
+            app.update();
+        }
+        let second = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("sculk_sensor_tendrils_clicking @"))
+            .any(|l| {
+                l.split('@')
+                    .nth(1)
+                    .and_then(|r| r.split(' ').next())
+                    .and_then(|v| v.parse::<i64>().ok())
+                    .map(|t| t > click_at as i64)
+                    .unwrap_or(false)
+            });
+        assert!(
+            second,
+            "the second sensor's broadcast the re-arm walk banks"
+        );
+        let new_hearings = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("sculk_hearing @") && l.contains(" x2 y32 z0 "))
+            .count();
+        assert_eq!(
+            new_hearings, hearing_count,
+            "the SHRIEKING window the in-window hearing refuses"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("shriek @"))
+                .count(),
+            1,
+            "the window the second shriek refuses"
         );
     }
 
