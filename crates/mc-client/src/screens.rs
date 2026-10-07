@@ -7079,6 +7079,18 @@ pub struct App {
     /// duplicate-face refusals wear — the re-fired spreadAll the
     /// zero-count silence speaks).
     pub sculk_vein_faces: Vec<(i32, i32, i32, u8)>,
+    /// THE SCULK-BLOCK PLACEMENTS (the vein law's own store — javap
+    /// SculkVeinBlock.attemptPlaceSculk pc 93-112: the
+    /// `setBlock(target, SCULK, 3)` the flag-3 walk wears, the
+    /// SCULK_REPLACEABLE substrate the new sculk block replaces — the
+    /// placed block's pos the store keeps, the grid's u16 palette the
+    /// sculk row never carries (the render hole the vein ledger's own
+    /// convention keeps — the mesher the store never sees), the
+    /// persistent table the drain's probe reads the NEXT tick's
+    /// SCULK_REPLACEABLE refusals wear — the placed cell the tag
+    /// refuses, the walk the re-fire the duplicate placement never
+    /// spends).
+    pub sculk_block_placements: Vec<(i32, i32, i32)>,
     /// THE CRIT EMITTERS (the TrackingEmitters the crit attacks arm —
     /// 3 ticks of life each, the 16-sample walk per tick).
     pub crit_emitters: Vec<crate::particles::CritEmitter>,
@@ -8004,6 +8016,7 @@ impl App {
             sculk_shrikers: Vec::new(),
             sculk_catalysts: Vec::new(),
             sculk_vein_faces: Vec::new(),
+            sculk_block_placements: Vec::new(),
             crit_emitters: Vec::new(),
             crit_sprite: None,
             weather_rain: None,
@@ -9852,6 +9865,10 @@ impl App {
                 // bits word keeps, the take/put-back the drain's own
                 // borrow discipline serves)
                 let mut vein_ledger = std::mem::take(&mut self.sculk_vein_faces);
+                // THE SCULK-BLOCK PLACEMENTS (the vein law's own store —
+                // the take/put-back the ledger's own borrow discipline
+                // serves)
+                let mut sculk_cells = std::mem::take(&mut self.sculk_block_placements);
                 // THE DRAIN'S OWN PROBE (javap ChargeCursor.update's
                 // `getBlockState` reads the spread + movement + facings
                 // walks spend — the world's LOCAL palette id the
@@ -9862,55 +9879,101 @@ impl App {
                 // own store carries — the placed vein the SCULK_VEIN
                 // name + the face bits answer, the grid's u16
                 // vocabulary the face words never carries)
-                let mut probe_at = |x: i32, y: i32, z: i32, place: Option<u8>| -> crate::sculk::SculkMovementProbe {
-                    if let Some(bit) = place {
-                        // THE PLACEMENT (setBlock(pos, newState, 2)'s
-                        // own law — the lane's ledger the vein state
-                        // stores: the entry the face OR-merge keeps,
-                        // the fresh cell the push banks)
-                        match vein_ledger
-                            .iter_mut()
-                            .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
-                        {
-                            Some((_, _, _, f)) => *f |= bit,
-                            None => vein_ledger.push((x, y, z, bit)),
-                        }
-                    }
-                    let entry = vein_ledger
-                        .iter()
-                        .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
-                        .map(|(_, _, _, f)| *f);
-                    match entry {
-                        Some(faces) => crate::sculk::SculkMovementProbe {
-                            name: "sculk_vein",
-                            faces,
-                        },
-                        None => {
-                            let name = drain_world
-                                .map(|w| {
-                                    let id = w.get(x, y, z);
-                                    crate::world::NAME_OF
-                                        .get(id as usize)
-                                        .copied()
-                                        .unwrap_or("air")
-                                })
-                                .unwrap_or("air");
-                            crate::sculk::SculkMovementProbe {
-                                name: name.strip_prefix("minecraft:").unwrap_or(name),
-                                faces: 0,
+                let mut probe_at = |x: i32, y: i32, z: i32, place: crate::sculk::SculkWrite| -> crate::sculk::SculkMovementProbe {
+                    match place {
+                        crate::sculk::SculkWrite::None => {}
+                        crate::sculk::SculkWrite::Vein(bit) => {
+                            // THE PLACEMENT (setBlock(pos, newState, 2)'s
+                            // own law — the lane's ledger the vein state
+                            // stores: the entry the face OR-merge keeps,
+                            // the fresh cell the push banks)
+                            match vein_ledger
+                                .iter_mut()
+                                .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                            {
+                                Some((_, _, _, f)) => *f |= bit,
+                                None => vein_ledger.push((x, y, z, bit)),
                             }
                         }
+                        crate::sculk::SculkWrite::VeinClear(mask) => {
+                            // THE STRIP (the onDischarged law — the
+                            // AND-NOT fold the carried faces clear, the
+                            // zero-left row the death REMOVES — the
+                            // setBlock(pos, air_or_water, 3) restore the
+                            // ledger's own row removal banks, the grid
+                            // write the vein the ledger alone stores
+                            // never carries)
+                            if let Some(i) = vein_ledger
+                                .iter()
+                                .position(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                            {
+                                vein_ledger[i].3 &= !mask;
+                                if vein_ledger[i].3 == 0 {
+                                    vein_ledger.remove(i);
+                                }
+                            }
+                        }
+                        crate::sculk::SculkWrite::Sculk => {
+                            // THE SCULK PLACEMENT (setBlock(target,
+                            // SCULK, 3) — the flag-3 walk the store
+                            // banks, the duplicate the contains guard
+                            // refuses)
+                            if !sculk_cells
+                                .iter()
+                                .any(|(px, py, pz)| *px == x && *py == y && *pz == z)
+                            {
+                                sculk_cells.push((x, y, z));
+                            }
+                        }
+                    }
+                    // THE READ (the ledger the vein rows bank, the
+                    // placement store the sculk cells answer, the grid
+                    // the rest reads — the immediate visibility the
+                    // vanilla setBlock's own law keeps)
+                    if let Some(faces) = vein_ledger
+                        .iter()
+                        .find(|(px, py, pz, _)| *px == x && *py == y && *pz == z)
+                        .map(|(_, _, _, f)| *f)
+                    {
+                        return crate::sculk::SculkMovementProbe {
+                            name: "sculk_vein",
+                            faces,
+                        };
+                    }
+                    if sculk_cells
+                        .iter()
+                        .any(|(px, py, pz)| *px == x && *py == y && *pz == z)
+                    {
+                        return crate::sculk::SculkMovementProbe {
+                            name: "sculk",
+                            faces: 0,
+                        };
+                    }
+                    let name = drain_world
+                        .map(|w| {
+                            let id = w.get(x, y, z);
+                            crate::world::NAME_OF
+                                .get(id as usize)
+                                .copied()
+                                .unwrap_or("air")
+                        })
+                        .unwrap_or("air");
+                    crate::sculk::SculkMovementProbe {
+                        name: name.strip_prefix("minecraft:").unwrap_or(name),
+                        faces: 0,
                     }
                 };
                 let mut charge_events: Vec<crate::world_view::WireSculkChargeEvent> = Vec::new();
                 let mut spread_voices: Vec<crate::sculk::SculkSpreadVoice> = Vec::new();
+                let mut place_voices: Vec<crate::sculk::SculkPlaceVoice> = Vec::new();
                 for cat in &mut self.sculk_catalysts {
-                    let (pops, spreads) = crate::sculk::update_cursors(
+                    let (pops, spreads, places) = crate::sculk::update_cursors(
                         cat,
                         &mut self.level_ambient_rng,
                         &mut probe_at,
                     );
                     spread_voices.extend(spreads);
+                    place_voices.extend(places);
                     for pop in pops {
                         // THE POP ARM'S OWN VERDICT (the
                         // isCollisionShapeFullBlock read the case's pop
@@ -9952,10 +10015,27 @@ impl App {
                 for sv in &spread_voices {
                     self.play_sculk_spread(sv.pos.0, sv.pos.1, sv.pos.2);
                 }
+                // THE PLACE'S OWN WORD (the record + the SAME
+                // block.sculk.spread voice the fixed pair wears — javap
+                // attemptPlaceSculk pc 124-141 the TARGET cell speaks,
+                // the +0.5 center the atCenterOf fold wears)
+                for pv in &place_voices {
+                    self.game_events.push(format!(
+                        "sculk_place @{} x{:.6} y{:.6} z{:.6}",
+                        self.frame,
+                        pv.pos.0 as f64 + 0.5,
+                        pv.pos.1 as f64 + 0.5,
+                        pv.pos.2 as f64 + 0.5
+                    ));
+                }
+                for pv in &place_voices {
+                    self.play_sculk_spread(pv.pos.0, pv.pos.1, pv.pos.2);
+                }
                 if !charge_events.is_empty() {
                     self.live_sculk_charge_events_updated(charge_events);
                 }
                 self.sculk_vein_faces = vein_ledger;
+                self.sculk_block_placements = sculk_cells;
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -41903,8 +41983,10 @@ mod tests {
     /// product the ledger banks, the grid's u16 vocabulary the face
     /// words never carries), the `sculk_spread` record the +0.5
     /// center wears, the voice the fixed pair speaks, the countdown
-    /// tick the arm skips, the re-fire the duplicate-face refusals
-    /// the ledger's own persistence keeps.
+    /// tick the arm skips — and the THIRD tick the VEIN LAW the 544
+    /// round wears (the sculk_vein host the stone substrate the
+    /// SCULK_REPLACEABLE placement converts, the strip deaths the
+    /// chain answers, the source row the skip spares).
     #[test]
     fn the_drain_the_vein_the_spread_wears() {
         let mut app = App::new(3);
@@ -41973,22 +42055,162 @@ mod tests {
             5,
             "the countdown tick the spread skips"
         );
-        // TICK 3 (the re-fire the ledger's own persistence answers:
-        // the duplicate-face guard the already-carried faces refuses —
-        // the five rows the ledger's own PREFIX keeps, the cursor's
-        // new crawl the wraps the substrate's own sides banks)
+        // TICK 3 (THE VEIN LAW the sculk_vein host wears — the 544
+        // round's own change: the cursor the tick-1 movement the
+        // substrate-side wrap banks (the east-face row (3,32,0,16) the
+        // seed's shuffle serves), the carried west face the STONE
+        // target wears — the stone the SCULK_REPLACEABLE tag's
+        // base_stone_overworld family answers — the placement the
+        // store banks, the SPREAD ARM's own wrap the strip death
+        // clears, the neighbor-vein chain the sculk-touching rows
+        // strips, the SOURCE row the opposite-direction skip spares)
         app.update();
         assert_eq!(
-            &app.sculk_vein_faces[..5],
-            &[
+            app.sculk_block_placements,
+            vec![(2, 32, 0)],
+            "the stone substrate the sculk placement banks"
+        );
+        assert_eq!(
+            app.sculk_vein_faces,
+            vec![(3, 32, 0, 16)],
+            "the chain the sculk-touching rows strips, the source row the skip spares"
+        );
+        assert_eq!(
+            app.sculk_catalysts[0].cursors[0].charge, 4,
+            "the placed walk the charge-1 wears"
+        );
+        // THE PLACE RECORD (the +0.5 center the atCenterOf fold wears —
+        // the TARGET cell the placement banks)
+        let place_record = app
+            .game_events
+            .iter()
+            .find(|l| l.starts_with("sculk_place"))
+            .expect("the placement the record banks");
+        assert_eq!(
+            *place_record,
+            format!("sculk_place @{} x2.500000 y32.500000 z0.500000", walk_frame + 3),
+            "the place record the walk's own frame wears"
+        );
+    }
+
+    /// THE DRAIN'S OWN VEIN LAW (javap `SculkVeinBlock.attemptUseCharge`
+    /// pc 0-61 + the private `attemptPlaceSculk` pc 0-250 — the
+    /// sculk_vein HOST the charge walk's own override wears): the
+    /// SCULK_REPLACEABLE substrate the sculk block replaces (the
+    /// `setBlock(target, SCULK, 3)` the flag-3 walk banks — the store
+    /// the grid's u16 palette the sculk row never carries), the
+    /// `sculk_place` record the +0.5 center wears, the SAME
+    /// block.sculk.spread voice the fixed pair speaks, the charge-1
+    /// the placed walk banks (the halving draw the placed walk never
+    /// spends), the neighbor-vein chain the strip deaths wear (the
+    /// sculk-touching faces the AND-NOT clears — the substrate-side
+    /// wraps the death answers, the source vein the opposite-direction
+    /// skip spares), the regrow the all-air attach the zero-count
+    /// silence keeps.
+    #[test]
+    fn the_drain_the_vein_law_the_place_wears() {
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        // THE DIRT SUBSTRATE (the SCULK_REPLACEABLE cell the vein law's
+        // placement wears — the tag the 52-row flat expansion answers)
+        world.set(2, 32, 0, crate::world::DIRT);
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_catalyst(0, 32, 0);
+        app.update();
+        let walk_frame = app.frame;
+        app.entity_die_at(2.5, 32.5, 0.5, 5);
+        assert_eq!(app.sculk_catalysts[0].cursors.len(), 1);
+        // TICK 1 (the host AIR the DEFAULT charge law keeps — the vein
+        // law the sculk_vein host alone wears): the spread the five
+        // rows banks, the store the placement never touches
+        app.update();
+        assert_eq!(
+            app.sculk_vein_faces,
+            vec![
                 (2, 32, -1, 8),
                 (2, 32, 1, 4),
                 (1, 32, 0, 32),
                 (3, 32, 0, 16),
                 (2, 33, 0, 1),
-            ][..],
-            "the re-fire the duplicate refusals keep"
+            ],
+            "the wraps + the down self-face the ledger banks"
         );
+        assert!(
+            app.sculk_block_placements.is_empty(),
+            "the air host the placement never wears"
+        );
+        // TICK 2 (the countdown the spread paces — the stores keep)
+        app.update();
+        assert_eq!(app.sculk_vein_faces.len(), 5);
+        assert!(app.sculk_block_placements.is_empty());
+        // TICK 3 (the vein law the sculk_vein host wears — the cursor
+        // the tick-1 movement the substrate-side wrap banks, the ONLY
+        // carried face the dirt target wears, the placement the store
+        // banks): the charge-1 the placed walk keeps, the four
+        // sculk-touching wraps the strip death clears, the SOURCE row
+        // the opposite-direction skip spares
+        app.update();
+        assert_eq!(
+            app.sculk_block_placements,
+            vec![(2, 32, 0)],
+            "the dirt substrate the sculk placement banks"
+        );
+        // THE LEDGER (the host row ALONE the skip spares — the row the
+        // moved cursor's own cell keeps, the other four the strip
+        // death wears)
+        let host = &app.sculk_catalysts[0].cursors[0];
+        assert_eq!(
+            app.sculk_vein_faces.len(),
+            1,
+            "the sculk-touching faces the strip death clears"
+        );
+        assert_eq!(
+            (app.sculk_vein_faces[0].0, app.sculk_vein_faces[0].1, app.sculk_vein_faces[0].2),
+            host.pos,
+            "the spared row the source vein's own cell keeps"
+        );
+        assert_eq!(host.charge, 4, "the placed walk the charge-1 wears");
+        // THE PLACE RECORD (the +0.5 center the atCenterOf fold wears —
+        // the TARGET cell the placement banks)
+        let record = app
+            .game_events
+            .iter()
+            .find(|l| l.starts_with("sculk_place"))
+            .expect("the placement the record banks");
+        assert_eq!(
+            *record,
+            format!("sculk_place @{} x2.500000 y32.500000 z0.500000", walk_frame + 3),
+            "the place record the walk's own frame wears"
+        );
+        // THE VOICES (the SAME block.sculk.spread the fixed pair wears —
+        // the tick-1 spread + the tick-3 place the TWO deterministic
+        // events bank, the tick-3 spread arm's own placement the
+        // movement winner's seed may add; the PLACE voice the TARGET
+        // cell's own coordinates answer)
+        if sounds_loaded() {
+            let voices = app
+                .sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("block.sculk.spread @"))
+                .count();
+            assert!(
+                voices >= 2,
+                "the spread + the place the voices bank"
+            );
+            let place_voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with(&format!("block.sculk.spread @{}", walk_frame + 3)))
+                .expect("the place voice the place tick wears");
+            assert!(
+                place_voice.contains(" p1.000000"),
+                "the fixed pitch the place voice carries"
+            );
+        }
     }
 
     /// THE DRAIN'S OWN SHUFFLE (javap ChargeCursor.getValidMovementPos
