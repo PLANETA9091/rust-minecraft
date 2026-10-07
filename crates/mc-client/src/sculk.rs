@@ -1125,6 +1125,79 @@ pub fn warden_darkness_applies(
     d2 < WARDEN_DARKNESS_RADIUS * WARDEN_DARKNESS_RADIUS
 }
 
+/// THE PULSE'S OWN CADENCE (javap `Warden.customServerAiStep` pc 33-45,
+/// the 26.2 jar verbatim): the `(this.tickCount + this.getId()) % 120
+/// == 0` fold the iadd + the bipush-120 irem keep — the entity's own
+/// id the sum banks, the POST-increment tickCount the
+/// tickNonPassenger order speaks (the `entity.tickCount++` the tick
+/// HEAD serves, the customServerAiStep the incremented value consults),
+/// the customServerAiStep lane the ALIVE body only serves (the
+/// client's own tick() the dead gate the early-false keeps — the
+/// caller's health verdict the lane consults).
+pub const WARDEN_PULSE_DARKNESS_INTERVAL: i32 = 120;
+
+/// THE PULSE'S OWN RADIUS (javap pc 54 — the `bipush 20` the
+/// `applyDarknessAround(level, this.position(), this, 20)` call keeps):
+/// the ENTITY's own feet position the center wears (the exact x/y/z
+/// the summon walk banks — the atCenterOf +0.5 fold the shriek's
+/// BLOCK walk speaks, the pulse the entity's own Vec3 keeps), the
+/// `this` SOURCE the predicate's ally arm consults (the
+/// `isAlliedTo(player)` the no-team warden the FALSE answers — the
+/// same pass the null-source arm the shriek lane wears).
+pub const WARDEN_PULSE_DARKNESS_RADIUS: f64 = 20.0;
+
+/// The pulse's cadence fold (javap pc 33-45): `(tickCount + id) % 120
+/// == 0` — the sum the entity's own id banks, the irem the ZERO the
+/// pulse tick answers.
+pub fn warden_pulse_due(tick_count: i32, id: i32) -> bool {
+    (tick_count + id) % WARDEN_PULSE_DARKNESS_INTERVAL == 0
+}
+
+/// THE PULSE'S OWN VERDICT (javap MobEffectUtil
+/// lambda$addEffectToPlayersAround$0 pc 0-87 — the predicate the
+/// `addEffectToPlayersAround(level, this, position(), 20.0, instance,
+/// 200)` walk consults): the survival gate the head keeps (pc 0-10 —
+/// the gameMode's own isSurvival verdict), the `this`-source ally arm
+/// the no-team warden the FALSE answers (pc 11-24 — the
+/// `isAlliedTo(player)` the pass the shriek's null arm the same
+/// verdict wears — no teams the client speaks), the
+/// `closerThan(position(), 20.0)` the STRICT `d2 < 400.0` fold speaks
+/// (pc 24-34 — the exact-touch the FALSE wears), the REFRESH arm the
+/// pc 37-82 walk keeps: the no-effect answer TRUE (pc 37-44 the `ifeq
+/// 82`), the standing instance the `amplifier >= 0 && endsWithin(200 -
+/// 1)` pair consults (pc 47-76 — the standing LONGER walk the skip
+/// wears, the WARDEN_DARKNESS_WINDOW the sipush-200 arg the
+/// applyDarknessAround call keeps; the amplifier the DARKNESS lane
+/// never mixes — the zero the pulse's own instance carries; the
+/// infinite standing the client's darkness lanes never bank — the
+/// finite 260 the pulse/shriek writes keep, the raw duration the pair
+/// consults).
+pub fn warden_pulse_darkness_applies(
+    center: (f64, f64, f64),
+    player_pos: (f64, f64, f64),
+    player_survival: bool,
+    standing: Option<(i32, i32)>, // (amplifier, duration) the standing instance wears
+) -> bool {
+    // pc 0-10: the survival gate
+    if !player_survival {
+        return false;
+    }
+    // pc 24-34: the STRICT distance fold — d2 < 20.0 * 20.0
+    let dx = player_pos.0 - center.0;
+    let dy = player_pos.1 - center.1;
+    let dz = player_pos.2 - center.2;
+    let d2 = dx * dx + dy * dy + dz * dz;
+    if d2 >= WARDEN_PULSE_DARKNESS_RADIUS * WARDEN_PULSE_DARKNESS_RADIUS {
+        return false;
+    }
+    // pc 37-82: the refresh arm — the no-effect TRUE, the standing
+    // the amplifier+window pair consults
+    match standing {
+        None => true,
+        Some((amp, remaining)) => amp >= 0 && remaining <= WARDEN_DARKNESS_WINDOW - 1,
+    }
+}
+
 // === THE ANGER MANAGEMENT (javap
 // `net.minecraft.world.entity.monster.warden.AngerManagement` — the
 // store the warden's own anger walks: the per-suspect map the

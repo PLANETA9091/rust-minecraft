@@ -10127,6 +10127,61 @@ impl App {
                 self.play_warden_voice(word, wx, wy, wz, pitch);
             }
 
+            // THE WARDEN'S DARKNESS PULSE (javap
+            // `Warden.customServerAiStep` pc 33-56 — the
+            // `(tickCount + getId()) % 120 == 0` cadence the ALIVE body
+            // serves (the tick_count the POST-increment value the
+            // tick()'s own head banks, the dead gate the lane never
+            // keeps), the `applyDarknessAround(level, this.position(),
+            // this, 20)` call the walk wears: the ENTITY's own feet
+            // position the center keeps (the +0.5 the atCenterOf fold
+            // the shriek's block walk speaks — the pulse the Vec3 the
+            // entity wears), the `this` source the ally arm the
+            // no-team warden the FALSE answers, the DARKNESS 260
+            // instance the addEffectToPlayersAround walk applies, the
+            // refresh arm the endsWithin(199) gate keeps). The pulses
+            // the collected vec serves — the borrow the apply's own
+            // pass splits, the verdict the body + game_mode + standing
+            // reads bank.
+            let mut warden_pulses: Vec<(f64, f64, f64)> = Vec::new();
+            for warden in &mut self.wardens {
+                if warden.health > 0.0
+                    && crate::sculk::warden_pulse_due(warden.tick_count, warden.id)
+                {
+                    warden_pulses.push((warden.x, warden.y, warden.z));
+                }
+            }
+            for (wx, wy, wz) in warden_pulses {
+                let standing = self
+                    .effects
+                    .get(crate::effects::MOB_EFFECT_DARKNESS)
+                    .map(|inst| (inst.amplifier, inst.duration));
+                let survival = self.game_mode.is_survival();
+                if let Some(b) = self.body.as_ref() {
+                    if crate::sculk::warden_pulse_darkness_applies(
+                        (wx, wy, wz),
+                        (b.x, b.y, b.z),
+                        survival,
+                        standing,
+                    ) {
+                        self.effects.add_effect(
+                            crate::effects::MOB_EFFECT_DARKNESS,
+                            0,
+                            crate::sculk::WARDEN_DARKNESS_TICKS,
+                            crate::effects::DEFAULT_EFFECT_FLAGS,
+                        );
+                        self.game_events.push(format!(
+                            "warden_darkness_pulse @{} x{:.6} y{:.6} z{:.6} t{}",
+                            self.frame,
+                            wx,
+                            wy,
+                            wz,
+                            crate::sculk::WARDEN_DARKNESS_TICKS
+                        ));
+                    }
+                }
+            }
+
             // THE WARDEN'S PENDING HEARS (javap
             // `VibrationSystem$Ticker.receiveVibration` — the vibration
             // the arrival tick RECEIVES, the `onReceiveVibration` walk
@@ -43412,6 +43467,270 @@ mod tests {
         assert!(
             app.wardens[0].ambient_time < 0,
             "the fire the resetAmbientSoundTime floor wears"
+        );
+    }
+
+    /// THE PULSE THE CADENCE THE DARKNESS WEARS (javap
+    /// `Warden.customServerAiStep` pc 33-56 — the
+    /// `(tickCount + getId()) % 120 == 0` cadence the walk serves, the
+    /// `applyDarknessAround(level, position(), this, 20)` call the
+    /// ENTITY's own feet position wears, the DARKNESS 260 the effects
+    /// store banks, the STRICT closerThan the exact-touch refuses).
+    #[test]
+    fn the_pulse_the_cadence_the_darkness_wears() {
+        // === THE SUMMON (the walk-B's own setup — the stone floor the
+        // warden lands) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(14.0, 35.0, 14.0, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        // the warden the KNOWN feet moves — the entity's own position()
+        // the center wears (the exact Vec3 the pulse call keeps)
+        app.wardens[0].x = 10.5;
+        app.wardens[0].y = 35.0;
+        app.wardens[0].z = 10.5;
+        // the SHRIEK TAIL's own application the summon banks (the
+        // tryRespond walk the radius-40 verdict wears) — the fresh store
+        // the pulse legs the summon's standing never taints
+        app.effects = crate::effects::EffectsStore::new();
+        let warden_id = app.wardens[0].id;
+        // THE CADENCE (javap pc 33-45): the first tick_count N >= 1 the
+        // (N + id) % 120 == 0 answers — the POST-increment count the
+        // tick()'s own head banks
+        let interval = crate::sculk::WARDEN_PULSE_DARKNESS_INTERVAL;
+        let pulse_tick = interval - warden_id % interval;
+        assert!(crate::sculk::warden_pulse_due(pulse_tick, warden_id));
+        // the pre-pulse ticks the silence keeps
+        let before = app.game_events.len();
+        for _ in 0..pulse_tick {
+            app.update();
+        }
+        // the verdict: the body (14, 35, 14) vs the center
+        // (10.5, 35, 10.5) — d2 = 24.5 < 400.0 the pass wears
+        let pulse_line = app.game_events[before..]
+            .iter()
+            .find(|l| l.starts_with("warden_darkness_pulse @"))
+            .expect("the pulse record banks — the cadence the walk serves");
+        assert!(
+            pulse_line.contains("x10.500000 y35.000000 z10.500000"),
+            "the entity's own feet position the center wears — the +0.5 the atCenterOf fold the shriek's BLOCK walk speaks, the pulse never: {pulse_line}"
+        );
+        assert!(
+            pulse_line.contains(&format!("t{}", crate::sculk::WARDEN_DARKNESS_TICKS)),
+            "the 260 the instance wears: {pulse_line}"
+        );
+        // the effect the store banks — the drain the post-pulse tick
+        // wears (the tick_client the -1 the same update serves)
+        let inst = app
+            .effects
+            .get(crate::effects::MOB_EFFECT_DARKNESS)
+            .expect("the darkness rides");
+        assert_eq!(
+            inst.duration,
+            crate::sculk::WARDEN_DARKNESS_TICKS - 1,
+            "the drain the post-pulse tick wears"
+        );
+        assert_eq!(inst.amplifier, 0, "the zero amplifier the instance keeps");
+
+        // THE STRICT TOUCH the distance fold refuses: the player the
+        // exact +20.0 x moves, the NEXT pulse the silence keeps — the
+        // standing the refresh never lifts
+        app.body = Some(crate::body::PlayerBody::new(30.5, 35.0, 10.5, 0.0, 0.0));
+        let before2 = app.game_events.len();
+        for _ in 0..interval {
+            app.update();
+        }
+        assert!(
+            !app.game_events[before2..]
+                .iter()
+                .any(|l| l.starts_with("warden_darkness_pulse @")),
+            "the exact-touch the STRICT fold refuses — the dcmpg the equality wears"
+        );
+        let inst2 = app
+            .effects
+            .get(crate::effects::MOB_EFFECT_DARKNESS)
+            .expect("the standing keeps");
+        assert_eq!(
+            inst2.duration,
+            crate::sculk::WARDEN_DARKNESS_TICKS - 1 - interval,
+            "the standing the plain drain wears — the refresh the distance refusal never lifts"
+        );
+    }
+
+    /// THE PULSE THE REFRESH THE WINDOW KEEPS (javap MobEffectUtil
+    /// lambda$addEffectToPlayersAround$0 pc 37-82 — the standing
+    /// instance the `endsWithin(200 - 1)` pair consults: the LONGER
+    /// walk the skip wears, the SHORT the refresh the 260 banks).
+    #[test]
+    fn the_pulse_the_refresh_the_window_keeps() {
+        // === THE SUMMON (the walk-B's own setup) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(10.5, 35.0, 10.5, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        app.wardens[0].x = 10.5;
+        app.wardens[0].y = 35.0;
+        app.wardens[0].z = 10.5;
+        // the SHRIEK TAIL's own application the summon banks — the fresh
+        // store the planted D the standing's own 260 never taints
+        app.effects = crate::effects::EffectsStore::new();
+        let warden_id = app.wardens[0].id;
+        let interval = crate::sculk::WARDEN_PULSE_DARKNESS_INTERVAL;
+        let pulse_tick = interval - warden_id % interval;
+
+        // CASE A — the standing LONGER the window keeps: the planted D
+        // the pulse reads 210 (> 199) wears — the refresh the verdict
+        // refuses, the plain drain the standing keeps
+        let d_long = 210 + pulse_tick - 1;
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_DARKNESS,
+            0,
+            d_long,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        let before = app.game_events.len();
+        for _ in 0..pulse_tick {
+            app.update();
+        }
+        assert!(
+            !app.game_events[before..]
+                .iter()
+                .any(|l| l.starts_with("warden_darkness_pulse @")),
+            "the longer standing the refresh refuses — the record the verdict never banks"
+        );
+        let inst = app
+            .effects
+            .get(crate::effects::MOB_EFFECT_DARKNESS)
+            .expect("the standing keeps");
+        assert_eq!(
+            inst.duration, 209,
+            "the 210 the pulse reads, the drain the window keeps — the 260 the refresh never banks"
+        );
+
+        // CASE B — the standing SHORT the window the refresh wears: the
+        // fresh store the 150 the NEXT pulse reads plants, the refresh
+        // the 260 the store banks
+        app.effects = crate::effects::EffectsStore::new();
+        // the next pulse the 120-tick gap walks — the planted D the
+        // 119 drains the pulse read wears (the drain the pulse's own
+        // update serves AFTER the verdict)
+        let d_short = 150 + interval - 1;
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_DARKNESS,
+            0,
+            d_short,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        let before2 = app.game_events.len();
+        for _ in 0..interval {
+            app.update();
+        }
+        let pulse2 = app.game_events[before2..]
+            .iter()
+            .find(|l| l.starts_with("warden_darkness_pulse @"))
+            .expect("the refresh the record banks — the window the verdict opens");
+        assert!(
+            pulse2.contains(&format!("t{}", crate::sculk::WARDEN_DARKNESS_TICKS)),
+            "the 260 the refresh wears: {pulse2}"
+        );
+        let inst2 = app
+            .effects
+            .get(crate::effects::MOB_EFFECT_DARKNESS)
+            .expect("the refreshed rides");
+        assert_eq!(
+            inst2.duration,
+            crate::sculk::WARDEN_DARKNESS_TICKS - 1,
+            "the 260 the refresh banks, the drain the post-pulse tick wears"
+        );
+    }
+
+    /// THE PULSE THE GATES THE REFUSAL KEEPS (javap pc 0-10 the
+    /// isSurvival head + the ALIVE body the customServerAiStep lane
+    /// keeps — the creative the head refuses, the dead body the lane
+    /// never serves, the effect the store never banks).
+    #[test]
+    fn the_pulse_the_gates_the_refusal_keeps() {
+        // === THE SUMMON (the walk-B's own setup) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(10.5, 35.0, 10.5, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        app.wardens[0].x = 10.5;
+        app.wardens[0].y = 35.0;
+        app.wardens[0].z = 10.5;
+        // the SHRIEK TAIL's own application the summon banks — the fresh
+        // store the gates' legs the summon's standing never taints
+        app.effects = crate::effects::EffectsStore::new();
+        let warden_id = app.wardens[0].id;
+        let interval = crate::sculk::WARDEN_PULSE_DARKNESS_INTERVAL;
+        let pulse_tick = interval - warden_id % interval;
+
+        // THE CREATIVE the survival head refuses (pc 0-10 — the
+        // gameMode's own isSurvival verdict the FALSE wears)
+        app.game_mode = GameMode::Creative;
+        for _ in 0..pulse_tick {
+            app.update();
+        }
+        assert!(
+            !app.game_events.iter().any(|l| l.starts_with("warden_darkness_pulse @")),
+            "the creative the head refuses — the record the verdict never banks"
+        );
+        assert!(
+            app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).is_none(),
+            "the effect the creative never banks"
+        );
+
+        // THE DEAD BODY the lane never serves: the survival the re-arm
+        // wears, the health 0 the tick() the early-false keeps — the
+        // pulse the alive gate refuses
+        app.game_mode = GameMode::Survival;
+        app.wardens[0].health = 0.0;
+        let before = app.game_events.len();
+        for _ in 0..interval {
+            app.update();
+        }
+        assert!(
+            !app.game_events[before..]
+                .iter()
+                .any(|l| l.starts_with("warden_darkness_pulse @")),
+            "the dead body the pulse never serves"
+        );
+        assert!(
+            app.effects.get(crate::effects::MOB_EFFECT_DARKNESS).is_none(),
+            "the effect the dead lane never banks"
         );
     }
 
