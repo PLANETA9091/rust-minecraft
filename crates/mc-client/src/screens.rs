@@ -10137,6 +10137,15 @@ impl App {
             // keeps)
             let mut roar_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
                 Vec::new();
+            // THE SNIFF'S OWN VOICES (the Sniffing.start's own tail the
+            // volume-carrying pair speaks — the play_warden_voice_v the
+            // 5.0f volume serves, the FIXED pitch 1.0f the fconst_1
+            // keeps; the LISTENING pair the stop's anger arm banks —
+            // the 10.0f volume the playListeningSound wears)
+            let mut sniff_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
+                Vec::new();
+            let mut sniff_listen_voices: Vec<(&'static str, f64, f64, f64, f32)> =
+                Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
@@ -10217,6 +10226,94 @@ impl App {
                     if warden.roar_target.is_none() {
                         warden.investigate_trigger(&mut self.level_ambient_rng);
                     }
+                    // THE SNIFF LANE (javap `WardenAi.initSniffingActivity`
+                    // pc 0-31 — the SNIFF activity the prio-5 the required
+                    // IS_SNIFFING memory wears, the
+                    // `new Sniffing(SNIFFING_DURATION)` the 84-tick window
+                    // serves; the TryToSniff the IDLE activity's own second
+                    // behavior the trigger arms — the SNIFFING pose the
+                    // window holds, the walk the trigger's own erase
+                    // stills). THE SUSPECT VIEW (javap
+                    // `WardenEntitySensor.doTick` pc 6-36 — the
+                    // NEAREST_ATTACKABLE the sensor's own walk keeps: the
+                    // getClosest(warden, is-PLAYER) the players-first
+                    // filter consults, the `.or(getClosest(NOT-player))`
+                    // the fallback answers — the PLAYER option the empty
+                    // stream only consults the fallback, the
+                    // FOLLOW_RANGE 24.0-inflated box the candidates
+                    // bound, the canTargetEntity filter the verdict
+                    // wears): the player body the survival + alive pair
+                    // qualifies, the mobs the nearest alive body the
+                    // fallback serves.
+                    let suspect_view: Option<crate::sculk::WardenSuspect> = {
+                        let wpos = (warden.x, warden.y, warden.z);
+                        let range2 = crate::sculk::WARDEN_SENSOR_RANGE
+                            * crate::sculk::WARDEN_SENSOR_RANGE;
+                        // THE PLAYER ARM (the lambda$0 the PLAYER filter
+                        // keeps — the canTargetEntity verdict the
+                        // survival + alive pair answers)
+                        let player_ok = self.game_mode.is_survival()
+                            && !self.dead
+                            && self.body.as_ref().is_some_and(|b| {
+                                let dx = b.x - wpos.0;
+                                let dy = b.y - wpos.1;
+                                let dz = b.z - wpos.2;
+                                dx * dx + dy * dy + dz * dz <= range2
+                            });
+                        if player_ok {
+                            let b = self.body.as_ref().expect("the body the ok gate keeps");
+                            Some(crate::sculk::WardenSuspect {
+                                id: crate::sculk::WARDEN_PLAYER_SUSPECT,
+                                pos: (b.x, b.y, b.z),
+                                is_player: true,
+                                targetable: true,
+                            })
+                        } else {
+                            // THE FALLBACK (the lambda$2 the NOT-player
+                            // filter keeps — the nearest alive mob the
+                            // distance-ordered findFirst wears)
+                            let mut best: Option<(f64, crate::sculk::WardenSuspect)> = None;
+                            for m in &self.mobs {
+                                if m.health <= 0.0 || m.death_time > 0 {
+                                    continue;
+                                }
+                                let dx = m.x - wpos.0;
+                                let dy = m.y - wpos.1;
+                                let dz = m.z - wpos.2;
+                                let d2 = dx * dx + dy * dy + dz * dz;
+                                if d2 > range2 {
+                                    continue;
+                                }
+                                if best.as_ref().map(|(bd, _)| d2 < *bd).unwrap_or(true) {
+                                    best = Some((
+                                        d2,
+                                        crate::sculk::WardenSuspect {
+                                            id: m.id as u64,
+                                            pos: (m.x, m.y, m.z),
+                                            is_player: false,
+                                            targetable: true,
+                                        },
+                                    ));
+                                }
+                            }
+                            best.map(|(_, s)| s)
+                        }
+                    };
+                    let sniff_out =
+                        warden.sniff_lane(&mut self.level_ambient_rng, suspect_view);
+                    if let Some(sound) = sniff_out.sound {
+                        sniff_voices.push((
+                            sound.word,
+                            warden.x,
+                            warden.y,
+                            warden.z,
+                            sound.pitch,
+                            sound.volume,
+                        ));
+                    }
+                    if let Some((word, pitch)) = sniff_out.listening {
+                        sniff_listen_voices.push((word, warden.x, warden.y, warden.z, pitch));
+                    }
                     // THE TRAVEL (the walk the impulse consults, the
                     // coast the tail keeps — the world the collision
                     // sweep consults, the fused singleplayer frame the
@@ -10241,6 +10338,21 @@ impl App {
                 // explicit-arg walk speaks, the makeSound fold's own
                 // getSoundVolume 4.0 the default twin never reads)
                 self.play_warden_voice_v(word, wx, wy, wz, pitch, volume);
+            }
+            for (word, wx, wy, wz, pitch, volume) in sniff_voices {
+                // THE SNIFF'S OWN VOLUME (javap `Sniffing.start` pc
+                // 0-10 — the `playSound(WARDEN_SNIFF, 5.0f, 1.0f)` the
+                // explicit-arg walk speaks, the FIXED pair the voice
+                // carries)
+                self.play_warden_voice_v(word, wx, wy, wz, pitch, volume);
+            }
+            for (word, wx, wy, wz, pitch) in sniff_listen_voices {
+                // THE SNIFF'S OWN LISTENING (javap playListeningSound —
+                // the ROARING gate the walk keeps, the playSound
+                // (word, 10.0f, pitch) the volume the
+                // getSoundVolume 4.0 NEVER serves — the same walk the
+                // touch lane's listening voice wears)
+                self.play_warden_voice_v(word, wx, wy, wz, pitch, 10.0);
             }
 
             // THE WARDEN'S PUSH ENTITIES (javap `LivingEntity.aiStep`
@@ -36297,6 +36409,24 @@ impl App {
                 } else {
                     None
                 },
+                // THE SNIFF'S OWN CLOCK (javap `Warden.onSyncedDataUpdated`
+                // pc 66-77 — the DATA_POSE sync the SNIFFING pose's own
+                // arrival wears, the `sniffAnimationState.start
+                // (tickCount)` the pose arm banks): the elapsed ticks
+                // the window's own `84 - sniff_ticks` walk derives (the
+                // countdown the sniff_start banks, the stop the window's
+                // end serves), the partial the lerp adds — the pose's
+                // STANDING the stop clears, the clock the None the
+                // no-op keeps
+                sniff_time: if warden.sniffing {
+                    Some(
+                        (crate::sculk::WARDEN_SNIFFING_DURATION_TICKS - warden.sniff_ticks)
+                            as f32
+                            + self.partial_tick,
+                    )
+                } else {
+                    None
+                },
             };
             let quads = warden_model.quads(&state, feet, cam.yaw, cam.pitch);
             // THE DRAW (the same SampledQuad fold the mob chain
@@ -44246,6 +44376,12 @@ mod tests {
         app.wardens[0].x = 10.5;
         app.wardens[0].y = 35.0;
         app.wardens[0].z = 10.5;
+        // THE SNIFF LANE THE TEST ISOLATES (the standing SNIFF_COOLDOWN
+        // memory the trigger's absent gate refuses — the value the
+        // vanilla 100..200 range the isolation stretches, the law the
+        // number never serves; the drain the 1/tick walk the test's
+        // window never exhausts)
+        app.wardens[0].sniff_cooldown = i32::MAX;
         // the SHRIEK TAIL's own application the summon banks (the
         // tryRespond walk the radius-40 verdict wears) — the fresh store
         // the pulse legs the summon's standing never taints
@@ -45010,6 +45146,12 @@ mod tests {
         app.enter_network_world(None, Skybox::Overworld, None, None);
         app.wardens
             .push(crate::sculk::WardenMob::new(101, 12.5, 35.0, 12.5));
+        // THE SNIFF LANE THE TEST ISOLATES (the standing SNIFF_COOLDOWN
+        // memory the trigger's absent gate refuses — the value the
+        // vanilla 100..200 range the isolation stretches, the law the
+        // number never serves; the drain the 1/tick walk the test's
+        // window never exhausts)
+        app.wardens[0].sniff_cooldown = i32::MAX;
         app.mobs
             .push(crate::mob::Zombie::new(1, 12.5, 35.0, 12.5, 7));
         assert!(app.body.is_none(), "the body the None keeps — the player arm the scan never serves");
@@ -45577,6 +45719,12 @@ mod tests {
         app.wardens[0].x = 14.5;
         app.wardens[0].y = 35.0;
         app.wardens[0].z = 12.5;
+        // THE SNIFF LANE THE TEST ISOLATES (the standing SNIFF_COOLDOWN
+        // memory the trigger's absent gate refuses — the value the
+        // vanilla 100..200 range the isolation stretches, the law the
+        // number never serves; the drain the 1/tick walk the test's
+        // window never exhausts)
+        app.wardens[0].sniff_cooldown = i32::MAX;
         // the survival default the canTarget source verdict keeps
         assert!(app.game_mode.is_survival(), "the fresh App the survival default wears");
 
@@ -45792,6 +45940,12 @@ mod tests {
         app.wardens[0].x = 16.5;
         app.wardens[0].y = 35.0;
         app.wardens[0].z = 14.0;
+        // THE SNIFF LANE THE TEST ISOLATES (the standing SNIFF_COOLDOWN
+        // memory the trigger's absent gate refuses — the value the
+        // vanilla 100..200 range the isolation stretches, the law the
+        // number never serves; the drain the 1/tick walk the test's
+        // window never exhausts)
+        app.wardens[0].sniff_cooldown = i32::MAX;
         // THE FIRST STEP THE HEARING BANKS (the walk the pending hear
         // pushes — the vibrating entity the local suspect wears)
         for _ in 0..12 {

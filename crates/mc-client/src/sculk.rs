@@ -1458,6 +1458,130 @@ pub struct WardenRoarSound {
     pub pitch: f32,
 }
 
+// === THE SNIFF ACTIVITY'S OWN WALK (javap `WardenAi
+// .initSniffingActivity` pc 0-31, verbatim — the activity the
+// updateActivity's EMERGE, DIG, ROAR, FIGHT, INVESTIGATE, SNIFF, IDLE
+// ladder wears the INVESTIGATE's own 5 the same lane keeps, the
+// priority the iconst_5 speaks, the required-memory set the
+// IS_SNIFFING alone carries): the behavior pair the ImmutableList
+// banks — the `SetRoarTarget.create(...)` the roar's own trigger the
+// same method ref rides, the `new Sniffing(SNIFFING_DURATION)` the
+// 84-tick window serves — the TryToSniff the IDLE activity's own
+// second behavior the trigger arms, the warden the SNIFFING pose the
+// dark smells ===
+
+/// `WardenAi.initSniffingActivity` pc 3 — the `iconst_5` the
+/// `ActivityData.create(ACTIVITY, priority, ...)` call wears: the
+/// SNIFF activity's own priority the ladder arms (the INVESTIGATE's
+/// own 5 the same pair speaks — the two lanes the ladder orders, the
+/// INVESTIGATE the disturbance's walk the FIRST the list banks).
+pub const WARDEN_SNIFF_ACTIVITY_PRIORITY: i32 = 5;
+
+/// `WardenAi` clinit pc 27-33 — the `ldc 83.2f` the `Mth.ceil`
+/// fold the `putstatic SNIFFING_DURATION` banks: the Sniffing
+/// behavior's own 84-tick window (the `new Sniffing(duration)` ctor
+/// the Behavior duration carries, the canStillUse the true keeps,
+/// the tickOrStop the expiry the stop serves).
+pub const WARDEN_SNIFFING_DURATION_TICKS: i32 = 84;
+
+/// `TryToSniff` clinit pc 0-8 — the `UniformInt.of(100, 200)` pair
+/// the `putstatic SNIFF_COOLDOWN` banks: the cooldown memory the
+/// trigger's `setWithExpiry(UNIT, sample(random))` wears — the
+/// sample the `min + nextInt(max - min + 1)` the 100..200 window
+/// speaks, the drain the Brain expiry walk serves.
+pub const WARDEN_SNIFF_COOLDOWN_MIN: i32 = 100;
+pub const WARDEN_SNIFF_COOLDOWN_MAX: i32 = 200;
+
+/// `SoundEvents.WARDEN_SNIFF` — the registry name the sound table's
+/// own row keeps (`entity.warden.sniff` — the Sniffing.start's
+/// `playSound` walk the voice serves).
+pub const WARDEN_SNIFF_SOUND: &str = "entity.warden.sniff";
+
+/// `Sniffing.start` pc 4-7 — the `ldc 5.0f` + the `fconst_1` pair
+/// the `playSound(WARDEN_SNIFF, 5.0f, 1.0f)` call wears: the FIXED
+/// volume/pitch the explicit-arg walk speaks (the makeSound fold's
+/// own getSoundVolume 4.0 the ambient voices keep — the sniff the
+/// volume arg NEVER reads, the two-draw voice law the roar speaks
+/// the same walk wears).
+pub const WARDEN_SNIFF_VOLUME: f32 = 5.0;
+pub const WARDEN_SNIFF_PITCH: f32 = 1.0;
+
+/// `Sniffing.stop` lambda$stop$0 pc 2-8 — the `ldc2_w 6.0d` + the
+/// `ldc2_w 20.0d` pair the `closerThan(entity, 6.0, 20.0)` filter
+/// wears (javap `Entity.closerThan(Entity, double, double)` pc 0-67,
+/// verbatim: the `Mth.lengthSquared(dx, dz) < square(horiz)` the
+/// XZ arm keeps, the `square(dy) < square(vert)` the Y arm answers —
+/// BOTH the strict `<` the dcmpg keeps, the exact-touch the FALSE
+/// wears): the sniff's own anger reach the stop consults.
+pub const WARDEN_SNIFF_ANGER_XZ: f64 = 6.0;
+pub const WARDEN_SNIFF_ANGER_Y: f64 = 20.0;
+
+/// `Warden.createAttributes` pc 46-49 — the `ldc2_w 24.0d` the
+/// `FOLLOW_RANGE` attribute wears: the WardenEntitySensor's own
+/// search box the `getBoundingBox().inflate(range, range, range)`
+/// fold inflates (javap `NearestLivingEntitySensor.doTick` pc 0-18 —
+/// the attribute value the dload triple speaks, the NEAREST_LIVING_
+/// ENTITIES list the query banks, the WardenEntitySensor's
+/// getClosest the players-first filter wears).
+pub const WARDEN_SENSOR_RANGE: f64 = 24.0;
+
+/// THE SNIFF'S OWN VOICE (the Sniffing.start's own tail the pair
+/// speaks — the FIXED volume/pitch the explicit-arg walk carries,
+/// the voice stream the law never spends).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenSniffSound {
+    /// the registry name the SoundEvents.WARDEN_SNIFF keeps
+    pub word: &'static str,
+    /// the 5.0f the ldc wears
+    pub volume: f32,
+    /// the 1.0f the fconst_1 keeps
+    pub pitch: f32,
+}
+
+/// THE NEAREST_ATTACKABLE'S OWN VIEW (javap
+/// `WardenEntitySensor.doTick` pc 6-36, verbatim — the memory the
+/// sensor's own walk keeps: the `getClosest(warden, lambda$0
+/// is-PLAYER)` the players-first filter consults, the `.or(getClosest
+/// (warden, lambda$2 NOT-player))` the fallback answers — the PLAYER
+/// option the empty stream only consults the fallback, the
+/// `getClosest` pc 0-50 the NEAREST_LIVING_ENTITIES stream the
+/// `canTargetEntity` filter + the distance-ordered findFirst wears,
+/// the `ifPresentOrElse(setMemory / eraseMemory)` pc 24-36 the
+/// tick-refresh serves): the caller's per-tick verdict the trigger's
+/// `present(NEAREST_ATTACKABLE)` gate + the stop's anger arm consult —
+/// the FOLLOW_RANGE 24.0-inflated box the candidates bound, the
+/// nearest TARGETABLE body the id/pos pair banks.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenSuspect {
+    /// the suspect's own identity (the fused model's u64 the anger
+    /// store's keys wear — the WARDEN_PLAYER_SUSPECT the player body
+    /// banks, the mob ids the list keeps)
+    pub id: u64,
+    /// the suspect's own position (the entity's feet the closerThan
+    /// fold consults — the stop's 6.0/20.0 pair the dx/dy/dz speaks)
+    pub pos: (f64, f64, f64),
+    /// the player verdict (the lambda$0 the PLAYER filter keeps, the
+    /// anger store's player-ladder the arm consults)
+    pub is_player: bool,
+    /// the canTargetEntity verdict (the sensor's own filter the
+    /// creative/spectator/dead refusals keep)
+    pub targetable: bool,
+}
+
+/// THE SNIFF LANE'S OWN REPORT (the per-tick driver the caller
+/// serves — the START sound the TryToSniff arm's same-tick walk
+/// banks, the STOP's listening voice the anger arm's (35, true)
+/// fold arms: the empty pair the quiet tick keeps).
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub struct WardenSniffLaneOut {
+    /// the WARDEN_SNIFF voice the Sniffing.start's playSound speaks
+    pub sound: Option<WardenSniffSound>,
+    /// the listening voice the stop's increaseAngerAt(entity)
+    /// one-arg fold arms (the (word, pitch) pair the play path
+    /// carries — the 10.0f volume the playListeningSound wears)
+    pub listening: Option<(&'static str, f32)>,
+}
+
 /// THE WALK TARGET'S OWN MEMORY (javap `MemoryModuleType.WALK_TARGET`
 /// — the `BehaviorUtils.setWalkAndLookTargetMemories` walk banks: the
 /// `new WalkTarget(new BlockPosTracker(pos), speedModifier,
@@ -2046,6 +2170,27 @@ pub struct WardenMob {
     /// duration the Roar carries — the canStillUse the true keeps,
     /// the countdown the window drains, the zero the stop serves)
     pub roar_ticks: i32,
+    /// THE SNIFFING POSE + THE IS_SNIFFING MEMORY (javap `Pose
+    /// .SNIFFING` + `MemoryModuleType.IS_SNIFFING` — the TryToSniff
+    /// action's `set(IS_SNIFFING)` + `setPose(SNIFFING)` pair the
+    /// SAME arm banks (lambda$create$2 pc 0 + pc 33-36), the
+    /// Sniffing.stop's `hasPose(SNIFFING) -> setPose(STANDING)` +
+    /// `eraseMemory(IS_SNIFFING)` pair the window's end clears; the
+    /// fresh false the JVM init keeps)
+    pub sniffing: bool,
+    /// THE SNIFF COOLDOWN'S OWN MEMORY (javap
+    /// `MemoryModuleType.SNIFF_COOLDOWN` — the TryToSniff action's
+    /// `setWithExpiry(UNIT, SNIFF_COOLDOWN.sample(random))` pc 7-24
+    /// the 100..200 draw banks, the Brain expiry walk the tick
+    /// drains, the trigger's `absent(SNIFF_COOLDOWN)` gate the
+    /// standing memory refuses; the fresh zero the JVM init keeps)
+    pub sniff_cooldown: i32,
+    /// THE SNIFFING BEHAVIOR'S OWN WINDOW (the `new
+    /// Sniffing(SNIFFING_DURATION)` ctor's 84-tick duration the
+    /// behavior carries — the canStillUse the true keeps, the
+    /// countdown the window drains, the expiry + the ROAR/
+    /// INVESTIGATE preemption the stop serves)
+    pub sniff_ticks: i32,
 }
 
 impl WardenMob {
@@ -2092,6 +2237,9 @@ impl WardenMob {
             roar_sound_delay: 0,
             roar_sound_cooldown: 0,
             roar_ticks: 0,
+            sniffing: false,
+            sniff_cooldown: 0,
+            sniff_ticks: 0,
         }
     }
 
@@ -2451,6 +2599,192 @@ impl WardenMob {
         }
     }
 
+    /// THE SNIFF TRIGGER (javap
+    /// `net.minecraft.world.entity.ai.behavior.warden.TryToSniff`,
+    /// verbatim): the GROUP `lambda$create$0` pc 0-36 the gates bank —
+    /// the `registered(IS_SNIFFING)` the brain's own register the
+    /// always-true pass keeps, the `registered(WALK_TARGET)` the
+    /// REGISTERED state the present-or-absent pass answers (the
+    /// memory the module the brain declares — the VALUE_PRESENT the
+    /// `present()` pair never wears), the `absent(SNIFF_COOLDOWN)`
+    /// the standing cooldown REFUSES, the `present(NEAREST_ATTACKABLE)`
+    /// the sensor's suspect the gate consults, the
+    /// `absent(DISTURBANCE_LOCATION)` the armed disturbance REFUSES.
+    /// THE ACTION `lambda$create$2` pc 0-39 the arm serves — the
+    /// accessors the lambda$create$1 capture order banks (a0 the
+    /// IS_SNIFFING set, a2 the SNIFF_COOLDOWN setWithExpiry, a1 the
+    /// WALK_TARGET erase): the `set(IS_SNIFFING, UNIT)` pc 0-6 the
+    /// memory arms, the
+    /// `setWithExpiry(UNIT, SNIFF_COOLDOWN.sample(level.getRandom()))`
+    /// pc 7-24 the 100..200 draw banks (the UniformInt.sample the
+    /// `min + nextInt(max - min + 1)` law the inclusive draw keeps),
+    /// the `erase(WALK_TARGET)` pc 27-29 the walk stills, the
+    /// `setPose(Pose.SNIFFING)` pc 31-36 the pose arms, the true
+    /// pc 39 returns.
+    pub fn sniff_trigger(&mut self, rng: &mut crate::drops::Lcg, suspect_near: bool) -> bool {
+        // lambda$create$0 pc 0-5: registered(IS_SNIFFING) — the
+        // brain's own register the pass keeps
+        // lambda$create$0 pc 5-12: registered(WALK_TARGET) — the
+        // REGISTERED status the pass keeps (the present-or-absent the
+        // same word answers)
+        // lambda$create$0 pc 12-19: absent(SNIFF_COOLDOWN)
+        if self.sniff_cooldown > 0 {
+            return false;
+        }
+        // lambda$create$0 pc 19-26: present(NEAREST_ATTACKABLE)
+        if !suspect_near {
+            return false;
+        }
+        // lambda$create$0 pc 26-33: absent(DISTURBANCE_LOCATION)
+        if self.disturbance.is_some() {
+            return false;
+        }
+        // lambda$create$2 pc 0-6: the IS_SNIFFING set
+        // lambda$create$2 pc 31-36: the SNIFFING pose — the pair the
+        // SAME action banks (the flag the pose + the memory wears)
+        self.sniffing = true;
+        // lambda$create$2 pc 7-24: the SNIFF_COOLDOWN setWithExpiry —
+        // the UniformInt sample the 100..200 draw keeps
+        self.sniff_cooldown =
+            rng.next_int_inclusive(WARDEN_SNIFF_COOLDOWN_MIN, WARDEN_SNIFF_COOLDOWN_MAX);
+        // lambda$create$2 pc 27-29: the WALK_TARGET erase — the sniff
+        // the walk stills
+        self.walk_target = None;
+        true
+    }
+
+    /// THE SNIFFING BEHAVIOR'S OWN START (javap `Sniffing.start`
+    /// pc 0-10, verbatim): the `playSound(WARDEN_SNIFF, 5.0f, 1.0f)`
+    /// the FIXED pair the voice carries (the two-draw law the ambient
+    /// voices spend the sniff NEVER rides — the voice stream the draw
+    /// never touches), the window the ctor's SNIFFING_DURATION 84
+    /// wears.
+    pub fn sniff_start(&mut self) -> WardenSniffSound {
+        // the window the ctor's 84 wears
+        self.sniff_ticks = WARDEN_SNIFFING_DURATION_TICKS;
+        WardenSniffSound {
+            word: WARDEN_SNIFF_SOUND,
+            volume: WARDEN_SNIFF_VOLUME,
+            pitch: WARDEN_SNIFF_PITCH,
+        }
+    }
+
+    /// THE SNIFFING BEHAVIOR'S OWN STOP (javap `Sniffing.stop`
+    /// pc 0-60, verbatim): the `hasPose(SNIFFING) -> setPose(STANDING)`
+    /// pc 0-16 the pose clears, the `eraseMemory(IS_SNIFFING)` pc
+    /// 17-26 the memory retires, the
+    /// `getMemory(NEAREST_ATTACKABLE).filter(warden::closerThan(entity,
+    /// 6.0, 20.0))` pc 27-57 the in-reach suspect the filter keeps —
+    /// the `ifPresent` tail lambda$stop$0 the walk serves: the
+    /// `increaseAngerAt(entity)` ONE-arg fold pc 14-16 the (35, true)
+    /// pair wears (the listening flag the iconst_1 ARMS — the
+    /// listening sound the boost speaks), the
+    /// `!hasMemoryValue(DISTURBANCE_LOCATION)` gate pc 19-29 the
+    /// standing disturbance the set REFUSES, the
+    /// `setDisturbanceLocation(entity.blockPosition())` pc 32-37 the
+    /// suspect's own cell the floor law banks.
+    pub fn sniff_stop(&mut self, suspect: Option<WardenSuspect>) -> Option<(&'static str, f32)> {
+        // pc 0-16: the pose clears
+        if self.sniffing {
+            self.sniffing = false;
+        }
+        // pc 17-26: the IS_SNIFFING retires
+        // (the flag the pose + the memory wear — the single arm clears)
+        // pc 27-57: the NEAREST_ATTACKABLE filter — the absent memory
+        // the empty Optional the ifPresent skip keeps
+        let Some(s) = suspect else {
+            return None;
+        };
+        // the closerThan(entity, 6.0, 20.0) fold — javap
+        // `Entity.closerThan(Entity, double, double)` pc 0-67: the
+        // `Mth.lengthSquared(dx, dz) < square(horiz)` the XZ arm, the
+        // `square(dy) < square(vert)` the Y arm — BOTH the strict <
+        // keeps
+        let dx = s.pos.0 - self.x;
+        let dy = s.pos.1 - self.y;
+        let dz = s.pos.2 - self.z;
+        let xz2 = dx * dx + dz * dz;
+        if !(xz2 < WARDEN_SNIFF_ANGER_XZ * WARDEN_SNIFF_ANGER_XZ
+            && dy * dy < WARDEN_SNIFF_ANGER_Y * WARDEN_SNIFF_ANGER_Y)
+        {
+            return None;
+        }
+        // lambda$stop$0 pc 14-16: the increaseAngerAt(entity) — the
+        // ONE-arg walk the (35, true) fold keeps (the listening flag
+        // the iconst_1 arms)
+        let listening = self.increase_anger_at(
+            s.id,
+            s.is_player,
+            s.targetable,
+            WARDEN_DEFAULT_ANGER,
+            true,
+        );
+        // lambda$stop$0 pc 19-29: the !hasMemoryValue gate — the
+        // standing disturbance the set refuses
+        // lambda$stop$0 pc 32-37: the setDisturbanceLocation — the
+        // suspect's own block pos the floor law answers
+        if self.disturbance.is_none() {
+            self.set_disturbance_location((
+                s.pos.0.floor() as i32,
+                s.pos.1.floor() as i32,
+                s.pos.2.floor() as i32,
+            ));
+        }
+        listening
+    }
+
+    /// THE SNIFF LANE (the per-tick driver the caller serves — the
+    /// brain's own activity ladder the lane keeps: the ROAR/
+    /// FIGHT/INVESTIGATE precedences the trigger consult excludes,
+    /// the ROAR/INVESTIGATE preemptions the armed window the stop
+    /// serves FIRST — the `setActiveActivity`'s stopAllBehaviors walk
+    /// the switch wears): the SNIFFING pose the window drains (the
+    /// tickOrStop law the expiry answers — the 84th window tick the
+    /// stop serves, the sound the START's own tail the arm banked),
+    /// the fresh brain the trigger consults (the IDLE activity's own
+    /// TryToSniff — the absent gates the standing pair refuses, the
+    /// start the same tick the behavior's own walk banks).
+    pub fn sniff_lane(
+        &mut self,
+        rng: &mut crate::drops::Lcg,
+        suspect: Option<WardenSuspect>,
+    ) -> WardenSniffLaneOut {
+        let mut out = WardenSniffLaneOut::default();
+        if self.sniffing {
+            // THE PREEMPTION (the brain's own activity ladder — the
+            // ROAR activity the ROAR_TARGET arms, the INVESTIGATE the
+            // DISTURBANCE_LOCATION arms, both the SNIFF activity the
+            // ladder outranks — the switch the stopAllBehaviors walk
+            // stops the Sniffing behavior, the stop's own walk the
+            // anger arm keeps)
+            if self.roar_target.is_some() || self.disturbance.is_some() {
+                out.listening = self.sniff_stop(suspect);
+                return out;
+            }
+            // THE WINDOW (the tickOrStop law — the expiry the stop
+            // serves, the canStillUse the true the drain keeps)
+            self.sniff_ticks -= 1;
+            if self.sniff_ticks <= 0 {
+                out.listening = self.sniff_stop(suspect);
+            }
+            return out;
+        }
+        // THE TRIGGER CONSULT (the IDLE activity's own TryToSniff —
+        // the ROAR activity the ROAR_TARGET arms, the FIGHT the
+        // ATTACK_TARGET arms, both the IDLE the ladder outranks: the
+        // consult the armed pair refuses; the INVESTIGATE the
+        // disturbance arms — the trigger's own absent gate the same
+        // refusal keeps)
+        if self.roar_target.is_none() && self.attack_target.is_none() {
+            // the present(NEAREST_ATTACKABLE) gate the sensor's own
+            // verdict consults — the suspect the caller's view banks
+            if self.sniff_trigger(rng, suspect.is_some()) {
+                out.sound = Some(self.sniff_start());
+            }
+        }
+        out
+    }
+
     /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
     /// mob.rs lane speaks — the travel fold the LivingEntity's own
     /// bytecode keeps, the warden's attribute 0.3 the gain wears):
@@ -2776,6 +3110,13 @@ impl WardenMob {
         }
         if self.roar_sound_cooldown > 0 {
             self.roar_sound_cooldown -= 1;
+        }
+        // THE SNIFF COOLDOWN'S OWN DRAIN (the same Brain expiry walk —
+        // the 100..200-tick expiry the trigger's setWithExpiry banks,
+        // the zero the memory expires, the absent gate the re-sniff
+        // lifts)
+        if self.sniff_cooldown > 0 {
+            self.sniff_cooldown -= 1;
         }
         self.ambient_time += 1;
         let fired = self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
@@ -8110,6 +8451,299 @@ mod tests {
             "the erased target the re-arm lifts"
         );
         assert!(warden.roar_target.is_some(), "the still-ANGRY warden the roar re-arms");
+    }
+
+    /// THE SNIFF TRIGGER (javap `TryToSniff` lambda$create$0 +
+    /// lambda$create$2, verbatim): the REGISTERED pair the always-true
+    /// pass keeps, the absent(SNIFF_COOLDOWN) the standing memory
+    /// refuses, the present(NEAREST_ATTACKABLE) the sensor's verdict
+    /// consults, the absent(DISTURBANCE_LOCATION) the armed walk
+    /// refuses; the action the IS_SNIFFING + the pose arms, the
+    /// 100..200 draw banks, the WALK_TARGET the erase stills.
+    #[test]
+    fn the_sniff_trigger_the_gates_the_cooldown_bank_keeps() {
+        // THE SUSPECT GATE (pc 19-26): the no-suspect tick the
+        // present gate refuses
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        let mut rng = crate::drops::Lcg::new(7);
+        assert!(
+            !warden.sniff_trigger(&mut rng, false),
+            "the absent suspect the present gate refuses"
+        );
+        assert!(!warden.sniffing, "the refused arm the pose never banks");
+        // THE COOLDOWN GATE (pc 12-19): the standing memory the
+        // absent gate refuses
+        warden.sniff_cooldown = 55;
+        assert!(
+            !warden.sniff_trigger(&mut rng, true),
+            "the standing SNIFF_COOLDOWN the absent gate refuses"
+        );
+        // THE DISTURBANCE GATE (pc 26-33): the armed disturbance the
+        // absent gate refuses (the cooldown the zero the drain wears)
+        warden.sniff_cooldown = 0;
+        warden.disturbance = Some(WardenDisturbance {
+            pos: (10, 32, 3),
+            remaining: 90,
+        });
+        assert!(
+            !warden.sniff_trigger(&mut rng, true),
+            "the armed disturbance the absent gate refuses"
+        );
+        warden.disturbance = None;
+        // THE ARM (lambda$create$2 pc 0-39): the suspect the gates
+        // pass, the IS_SNIFFING + the SNIFFING pose the SAME action
+        // banks, the 100..200 draw the setWithExpiry wears, the
+        // WALK_TARGET the erase stills (the investigate's own arm the
+        // pre-state banks — the REGISTERED-not-present law the gate
+        // never consults)
+        warden.walk_target = Some(WardenWalkTarget {
+            block: (5, 32, 3),
+            pos: (5.5, 32.5, 3.5),
+            speed_modifier: WARDEN_INVESTIGATE_SPEED,
+            close_enough: WARDEN_INVESTIGATE_CLOSE_ENOUGH,
+        });
+        assert!(
+            warden.sniff_trigger(&mut rng, true),
+            "the near suspect the gates pass — the trigger arms"
+        );
+        assert!(warden.sniffing, "the IS_SNIFFING + the pose the arm banks");
+        assert!(
+            warden.sniff_cooldown >= WARDEN_SNIFF_COOLDOWN_MIN
+                && warden.sniff_cooldown <= WARDEN_SNIFF_COOLDOWN_MAX,
+            "the UniformInt sample the 100..200 window wears: {}",
+            warden.sniff_cooldown
+        );
+        assert!(
+            warden.walk_target.is_none(),
+            "the WALK_TARGET erase the walk stills"
+        );
+        // THE STANDING POSE (the armed sniff the re-trigger refuses —
+        // the cooldown the setWithExpiry the same arm banks)
+        let standing = warden.sniff_cooldown;
+        assert!(
+            !warden.sniff_trigger(&mut rng, true),
+            "the standing cooldown the re-arm refuses"
+        );
+        assert_eq!(
+            warden.sniff_cooldown,
+            standing,
+            "the refused draw the memory never re-banks"
+        );
+    }
+
+    /// THE SNIFFING BEHAVIOR'S OWN START + WINDOW (javap
+    /// `Sniffing.start` pc 0-10 + the ctor's SNIFFING_DURATION):
+    /// the FIXED 5.0/1.0 pair the voice carries, the 84-tick window
+    /// the start banks, the drain the tickOrStop law wears.
+    #[test]
+    fn the_sniff_start_the_window_the_fixed_sound_keeps() {
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        let sound = warden.sniff_start();
+        assert_eq!(
+            sound.word, WARDEN_SNIFF_SOUND,
+            "the SoundEvents.WARDEN_SNIFF the registry name keeps"
+        );
+        assert_eq!(sound.volume, WARDEN_SNIFF_VOLUME, "the 5.0f the ldc wears");
+        assert_eq!(sound.pitch, WARDEN_SNIFF_PITCH, "the fconst_1 the pitch keeps");
+        assert_eq!(
+            warden.sniff_ticks,
+            WARDEN_SNIFFING_DURATION_TICKS,
+            "the ctor's 84 the window banks"
+        );
+        // THE POSE THE TRIGGER ARMS (the start the window + the voice
+        // alone serves — the IS_SNIFFING + the pose the trigger's own
+        // action banks before the behavior ever starts)
+        warden.sniffing = true;
+        // THE WINDOW'S OWN DRAIN (the tickOrStop law — the canStillUse
+        // the true keeps, the countdown the window drains): the
+        // 84-tick walk the stop at the window's end serves
+        let mut sound_ticks = 0;
+        let mut stops = 0;
+        for _ in 0..WARDEN_SNIFFING_DURATION_TICKS {
+            warden.sniff_ticks -= 1;
+            if warden.sniff_ticks <= 0 && warden.sniffing {
+                warden.sniffing = false;
+                stops += 1;
+            }
+        }
+        assert_eq!(stops, 1, "the window's end the stop once answers");
+        assert_eq!(sound_ticks, 0, "the drain the start never re-speaks");
+        assert!(!warden.sniffing, "the stop the pose clears");
+    }
+
+    /// THE SNIFFING BEHAVIOR'S OWN STOP (javap `Sniffing.stop`
+    /// pc 0-60 + lambda$stop$0, verbatim): the pose clears, the
+    /// memory retires, the closerThan(entity, 6.0, 20.0) filter the
+    /// in-reach suspect keeps (the STRICT < pair the dcmpg wears),
+    /// the increaseAngerAt(entity) the (35, true) fold serves, the
+    /// !hasMemoryValue gate the standing disturbance the set refuses.
+    #[test]
+    fn the_sniff_stop_the_anger_arm_the_disturbance_keeps() {
+        // THE POSE CLEAR (pc 0-16) + THE ABSENT SUSPECT (pc 27-57):
+        // the empty memory the filter skip keeps
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden.sniffing = true;
+        assert!(
+            warden.sniff_stop(None).is_none(),
+            "the absent suspect the arm never serves"
+        );
+        assert!(!warden.sniffing, "the stop the pose clears");
+        // THE XZ ARM (lambda$stop$0 pc 2-8): the STRICT < fold — the
+        // 5.9-block suspect the arm serves, the exact-touch 6.0 the
+        // dcmpg refuses
+        let mut warden2 = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden2.sniffing = true;
+        let near = WardenSuspect {
+            id: WARDEN_PLAYER_SUSPECT,
+            pos: (13.9, 32.0, 6.9), // dx=3.4, dz=3.4 -> 23.12 < 36.0
+            is_player: true,
+            targetable: true,
+        };
+        let listening = warden2.sniff_stop(Some(near));
+        assert!(listening.is_some(), "the in-reach suspect the (35, true) fold arms");
+        assert_eq!(
+            warden2.active_anger(),
+            WARDEN_DEFAULT_ANGER,
+            "the one-arg walk the +35 serves"
+        );
+        assert_eq!(
+            warden2.disturbance.expect("the disturbance banks").pos,
+            (13, 32, 6),
+            "the suspect's own block pos the floor law answers"
+        );
+        // THE EXACT TOUCH (the same fold): the 6.0-squared the
+        // `dcmpg < 0` verdict the FALSE keeps — the 6.0 XZ arm refuses
+        let mut warden3 = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden3.sniffing = true;
+        let touch = WardenSuspect {
+            id: WARDEN_PLAYER_SUSPECT,
+            pos: (16.5, 32.0, 3.5), // dx=6.0, dz=0.0 -> 36.0 the STRICT < refuses
+            is_player: true,
+            targetable: true,
+        };
+        assert!(
+            warden3.sniff_stop(Some(touch)).is_none(),
+            "the exact-touch XZ the strict < refuses"
+        );
+        assert_eq!(warden3.active_anger(), 0, "the refused filter the anger never climbs");
+        assert!(
+            warden3.disturbance.is_none(),
+            "the refused arm the disturbance never banks"
+        );
+        // THE Y ARM: the 20.1-height suspect the square(dy) < 400.0
+        // verdict refuses
+        let mut warden4 = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden4.sniffing = true;
+        let high = WardenSuspect {
+            id: WARDEN_PLAYER_SUSPECT,
+            pos: (13.5, 52.1, 3.5), // dy=20.1 -> 404.01 the Y arm refuses
+            is_player: true,
+            targetable: true,
+        };
+        assert!(
+            warden4.sniff_stop(Some(high)).is_none(),
+            "the out-of-reach Y the strict < refuses"
+        );
+        // THE STANDING DISTURBANCE (lambda$stop$0 pc 19-29): the
+        // armed memory the set refuses — the anger the same walk
+        // keeps
+        let mut warden5 = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden5.sniffing = true;
+        warden5.disturbance = Some(WardenDisturbance {
+            pos: (30, 32, 30),
+            remaining: 90,
+        });
+        let _ = warden5.sniff_stop(Some(near));
+        assert_eq!(
+            warden5.disturbance.expect("the standing memory keeps").pos,
+            (30, 32, 30),
+            "the !hasMemoryValue gate the standing disturbance the set refuses"
+        );
+        assert_eq!(
+            warden5.active_anger(),
+            WARDEN_DEFAULT_ANGER,
+            "the anger the filter's own walk keeps"
+        );
+    }
+
+    /// THE SNIFF LANE (the per-tick driver): the trigger consult the
+    /// ROAR/FIGHT precedences exclude, the armed window the drain
+    /// keeps, the preemption the ROAR/INVESTIGATE arms the stop
+    /// serves, the cooldown the re-sniff refuses, the stop's
+    /// listening voice the lane reports.
+    #[test]
+    fn the_sniff_lane_the_preemption_the_window_banks() {
+        // THE IDLE CONSULT (the ROAR_TARGET absent the pass keeps):
+        // the suspect the trigger arms, the sound the start serves
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        let mut rng = crate::drops::Lcg::new(11);
+        let suspect = WardenSuspect {
+            id: WARDEN_PLAYER_SUSPECT,
+            pos: (13.5, 32.0, 3.5),
+            is_player: true,
+            targetable: true,
+        };
+        let out = warden.sniff_lane(&mut rng, Some(suspect));
+        assert!(out.sound.is_some(), "the armed trigger the start voice banks");
+        assert!(out.listening.is_none(), "the start the stop never banks");
+        assert!(warden.sniffing, "the SNIFFING pose the arm wears");
+        assert_eq!(
+            warden.sniff_ticks,
+            WARDEN_SNIFFING_DURATION_TICKS,
+            "the window the start banks"
+        );
+        // THE FIGHT PRECEDENCE (the ATTACK_TARGET armed the consult
+        // refuses — the fresh warden the same ladder keeps)
+        let mut fighting = WardenMob::new(4, 10.5, 32.0, 3.5);
+        fighting.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        let out = fighting.sniff_lane(&mut rng, Some(suspect));
+        assert!(out.sound.is_none(), "the FIGHT activity the consult excludes");
+        // THE WINDOW DRAIN (the canStillUse the true keeps — the
+        // mid-window tick the silence wears): the 83 quiet ticks the
+        // lane never speaks, the 84th the stop serves
+        for _ in 0..WARDEN_SNIFFING_DURATION_TICKS - 1 {
+            let out = warden.sniff_lane(&mut rng, Some(suspect));
+            assert!(
+                out.sound.is_none() && out.listening.is_none(),
+                "the mid-window tick the silence keeps"
+            );
+        }
+        let out = warden.sniff_lane(&mut rng, Some(suspect));
+        assert!(
+            out.listening.is_some(),
+            "the window's end the stop the listening voice banks (the in-reach suspect the arm serves)"
+        );
+        assert!(!warden.sniffing, "the stop the pose clears");
+        assert_eq!(
+            warden.active_anger(),
+            WARDEN_DEFAULT_ANGER,
+            "the stop's anger arm the +35 serves"
+        );
+        // THE COOLDOWN (the setWithExpiry the trigger banks): the
+        // re-consult the standing memory refuses
+        let out = warden.sniff_lane(&mut rng, Some(suspect));
+        assert!(out.sound.is_none(), "the standing cooldown the re-sniff refuses");
+        // THE PREEMPTION (the ROAR/INVESTIGATE arms the stop serves
+        // FIRST): the armed window + the fresh disturbance the stop
+        // the same tick answers
+        let mut warden2 = WardenMob::new(5, 10.5, 32.0, 3.5);
+        let out = warden2.sniff_lane(&mut rng, Some(suspect));
+        assert!(out.sound.is_some(), "the fresh warden the sniff arms");
+        warden2.disturbance = Some(WardenDisturbance {
+            pos: (30, 32, 30),
+            remaining: 90,
+        });
+        let out = warden2.sniff_lane(&mut rng, Some(suspect));
+        assert!(!warden2.sniffing, "the preemption the stop serves");
+        assert!(
+            out.listening.is_some(),
+            "the stop's anger arm the preemption walk keeps"
+        );
+        // THE RETIRED WINDOW (the stop the behavior retires — the
+        // cleared pose the re-consult gates on, the standing cooldown
+        // the re-sniff refuses)
+        let out = warden2.sniff_lane(&mut rng, Some(suspect));
+        assert!(out.sound.is_none(), "the retired behavior the lane never re-arms");
     }
 }
 

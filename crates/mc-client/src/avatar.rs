@@ -8198,6 +8198,20 @@ pub struct WardenState {
     /// pose's own STANDING the stop banks, the window's own end the
     /// clock retires).
     pub roar_time: Option<f32>,
+    /// THE SNIFF'S OWN CLOCK (javap `Warden.onSyncedDataUpdated` pc
+    /// 66-77 — the DATA_POSE sync the SNIFFING pose's own arrival
+    /// wears, the `sniffAnimationState.start(tickCount)` pc 66-74 the
+    /// pose arm banks): the elapsed TICKS since the pose's own
+    /// start (the window's own `84 - sniff_ticks` walk the caller
+    /// derives, the partial the lerp adds — the
+    /// `AnimationState.getTimeInMillis` `(age - startTick) * 50` the
+    /// millis fold keeps, the KeyframeAnimation's `/1000.0f` the
+    /// elapsed seconds speak). The `None` the never-armed state
+    /// keeps — the `ifStarted` gate the apply no-op wears (the
+    /// pose's own STANDING the stop clears, the clock the None the
+    /// no-op keeps — the definition's own 3.32s rest tail the past-end
+    /// walk the same pixels wears).
+    pub sniff_time: Option<f32>,
 }
 
 /// The full warden model — the 26.2 `WardenModel.createBodyLayer`
@@ -8455,6 +8469,53 @@ const WARDEN_ROAR_LEFT_ARM_POS: [WardenKeyframe; 5] = [
 /// window the 20-tick second wears — the final keyframe's own
 /// timestamp the length equals, the tail loop the test banks)
 
+/// THE WARDEN_SNIFF DEFINITION (javap `WardenAnimation` clinit pc
+/// 9141-9798, verbatim — the `withLength(4.16f)` head the
+/// `Mth.ceil(83.2f)` SNIFFING_DURATION the 84-tick window wears, the
+/// four bones the addAnimation chain names — body, head, right_arm,
+/// left_arm — each its ROTATION channel the 6/9/5/5 keyframe arrays
+/// bank (the SNIFF def NO POSITION channel carries), EVERY keyframe
+/// the CATMULLROM interpolation wears — the 25/25 the bytecode's
+/// own ldc rows speak). THE TIMELINE the pose window wears: the
+/// lunge the body's 17.5/32.5 pair the 0.56s peak banks, the sway
+/// the head's ±40/20/35 yRot pairs the 0.68-1.76s window rides, the
+/// settle the 2.2-3.32 tail speaks — the final keyframe the (0,0,0)
+/// rest banks, the definition's own 3.32s tail the 4.16s window the
+/// rest keeps (the past-end walk the Entry.apply's own law speaks).
+const WARDEN_SNIFF_BODY_ROT: [WardenKeyframe; 6] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.56, v: [17.5, 32.5, 0.0] },
+    WardenKeyframe { t: 0.96, v: [0.0, 32.5, 0.0] },
+    WardenKeyframe { t: 2.2, v: [10.0, 0.0, 0.0] },
+    WardenKeyframe { t: 2.8, v: [10.0, -30.0, 0.0] },
+    WardenKeyframe { t: 3.32, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_SNIFF_HEAD_ROT: [WardenKeyframe; 9] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.68, v: [0.0, 40.0, 0.0] },
+    WardenKeyframe { t: 0.96, v: [-22.5, 40.0, 0.0] },
+    WardenKeyframe { t: 1.24, v: [0.0, 20.0, 0.0] },
+    WardenKeyframe { t: 1.52, v: [-35.0, 20.0, 0.0] },
+    WardenKeyframe { t: 1.76, v: [0.0, 20.0, 0.0] },
+    WardenKeyframe { t: 2.28, v: [0.0, -20.0, 0.0] },
+    WardenKeyframe { t: 2.88, v: [0.0, -20.0, 0.0] },
+    WardenKeyframe { t: 3.32, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_SNIFF_RIGHT_ARM_ROT: [WardenKeyframe; 5] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.96, v: [17.5, 0.0, 0.0] },
+    WardenKeyframe { t: 2.2, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 2.76, v: [-15.0, 0.0, 0.0] },
+    WardenKeyframe { t: 3.32, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_SNIFF_LEFT_ARM_ROT: [WardenKeyframe; 5] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.96, v: [-15.0, 0.0, 0.0] },
+    WardenKeyframe { t: 2.2, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 2.76, v: [17.5, 0.0, 0.0] },
+    WardenKeyframe { t: 3.32, v: [0.0, 0.0, 0.0] },
+];
+
 /// THE MTH.CATMULLROM (javap `Mth.catmullrom` pc 0-59, verbatim —
 /// the 0.5 the head push keeps, the chain the bytecode's own
 /// mul/add order speaks: the 2b the first add banks, the
@@ -8584,6 +8645,46 @@ fn warden_roar_deltas(state: &WardenState) -> WardenRoarDeltas {
     }
 }
 
+/// THE SNIFF'S OWN DELTAS (the WARDEN_SNIFF definition the 4
+/// ROTATION channels evaluate — the SAME Entry.apply walk the roar
+/// lanes shares, the additive offsets the `ModelPart
+/// .offsetRotation` walk speaks, the setupAnim's own order the
+/// sniff apply the roar's own tail FOLLOWS): the `None` the
+/// never-armed state keeps (the `ifStarted` gate the ALL-ZERO
+/// no-op wears — the fresh warden the stopped states speak), the
+/// `Some(ticks)` the `getTimeInMillis` *50 /1000 the elapsed
+/// seconds answer. NO POSITION channel the definition carries —
+/// the pivots the sniff deltas never move.
+struct WardenSniffDeltas {
+    body_rot: [f32; 3],
+    head_rot: [f32; 3],
+    right_arm_rot: [f32; 3],
+    left_arm_rot: [f32; 3],
+}
+
+fn warden_sniff_deltas(state: &WardenState) -> WardenSniffDeltas {
+    let zero = [0.0_f32; 3];
+    let Some(sniff_ticks) = state.sniff_time else {
+        // the never-started state the apply no-op wears
+        return WardenSniffDeltas {
+            body_rot: zero,
+            head_rot: zero,
+            right_arm_rot: zero,
+            left_arm_rot: zero,
+        };
+    };
+    // THE ELAPSED SECONDS (the `(age - startTick) * 50` the millis
+    // fold keeps, the `/1000.0f` the seconds speak — the two-step
+    // the bytecode's own order wears)
+    let elapsed = (sniff_ticks * 50.0) / 1000.0;
+    WardenSniffDeltas {
+        body_rot: warden_roar_channel(&WARDEN_SNIFF_BODY_ROT, elapsed, false),
+        head_rot: warden_roar_channel(&WARDEN_SNIFF_HEAD_ROT, elapsed, false),
+        right_arm_rot: warden_roar_channel(&WARDEN_SNIFF_RIGHT_ARM_ROT, elapsed, false),
+        left_arm_rot: warden_roar_channel(&WARDEN_SNIFF_LEFT_ARM_ROT, elapsed, false),
+    }
+}
+
 fn build_warden_parts(state: &WardenState) -> Part {
     let f = warden_folds(state);
     // THE ROAR'S OWN OFFSETS (the keyframe deltas the folds' own
@@ -8592,6 +8693,11 @@ fn build_warden_parts(state: &WardenState) -> Part {
     // keeps; the None the all-zero the no-op wears — the fresh
     // warden the same numbers the folds alone speak)
     let r = warden_roar_deltas(state);
+    // THE SNIFF'S OWN OFFSETS (the setupAnim's own tail order the
+    // sniff apply the roar's own apply FOLLOWS — each the additive
+    // walk wears, the two states the pose law never co-arms — the
+    // sum the active one's deltas the pair speaks)
+    let s = warden_sniff_deltas(state);
     // THE BODY CUBE (the one cube the two ribcages' parent wears —
     // texOffs(0,0) addBox(-9,-13,-4,18,21,11))
     let body_part = Part {
@@ -8600,9 +8706,9 @@ fn build_warden_parts(state: &WardenState) -> Part {
             -21.0 + r.body_pos[1],
             0.0 + r.body_pos[2],
         ],
-        x_rot: f.body_x + r.body_rot[0],
-        y_rot: r.body_rot[1],
-        z_rot: f.body_z + r.body_rot[2],
+        x_rot: f.body_x + r.body_rot[0] + s.body_rot[0],
+        y_rot: r.body_rot[1] + s.body_rot[1],
+        z_rot: f.body_z + r.body_rot[2] + s.body_rot[2],
         cubes: vec![Cube {
             tex: (0.0, 0.0),
             origin: [-9.0, -13.0, -4.0],
@@ -8619,9 +8725,9 @@ fn build_warden_parts(state: &WardenState) -> Part {
                     -13.0 + r.head_pos[1],
                     0.0 + r.head_pos[2],
                 ],
-                x_rot: f.head_x + r.head_rot[0],
-                y_rot: f.head_y + r.head_rot[1],
-                z_rot: f.head_z + r.head_rot[2],
+                x_rot: f.head_x + r.head_rot[0] + s.head_rot[0],
+                y_rot: f.head_y + r.head_rot[1] + s.head_rot[1],
+                z_rot: f.head_z + r.head_rot[2] + s.head_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 32.0),
                     origin: [-8.0, -16.0, -5.0],
@@ -8705,9 +8811,9 @@ fn build_warden_parts(state: &WardenState) -> Part {
                     -13.0 + r.right_arm_pos[1],
                     1.0 + r.right_arm_pos[2],
                 ],
-                x_rot: f.right_arm_x + r.right_arm_rot[0],
-                y_rot: r.right_arm_rot[1],
-                z_rot: r.right_arm_rot[2],
+                x_rot: f.right_arm_x + r.right_arm_rot[0] + s.right_arm_rot[0],
+                y_rot: r.right_arm_rot[1] + s.right_arm_rot[1],
+                z_rot: r.right_arm_rot[2] + s.right_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (44.0, 50.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -8725,9 +8831,9 @@ fn build_warden_parts(state: &WardenState) -> Part {
                     -13.0 + r.left_arm_pos[1],
                     1.0 + r.left_arm_pos[2],
                 ],
-                x_rot: f.left_arm_x + r.left_arm_rot[0],
-                y_rot: r.left_arm_rot[1],
-                z_rot: r.left_arm_rot[2],
+                x_rot: f.left_arm_x + r.left_arm_rot[0] + s.left_arm_rot[0],
+                y_rot: r.left_arm_rot[1] + s.left_arm_rot[1],
+                z_rot: r.left_arm_rot[2] + s.left_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 58.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -8897,6 +9003,10 @@ pub fn warden_layer_quads(
     // WardenModel instances whose setupAnim runs the SAME keyframe
     // applies — the deltas the folds' own tail ADDS here too)
     let r = warden_roar_deltas(state);
+    // THE SNIFF'S OWN OFFSETS (the layer models' own setupAnim the
+    // SAME tail order wears — the sniff apply the additive walk
+    // keeps here too)
+    let s = warden_sniff_deltas(state);
     // the retain law's per-part verdicts (the named sets the lambdas
     // bank: biolum {head, arms, legs}, spots {body, head, arms, legs},
     // tendrils {the tendril pair}, heart {body})
@@ -8917,9 +9027,9 @@ pub fn warden_layer_quads(
             -21.0 + r.body_pos[1],
             0.0 + r.body_pos[2],
         ],
-        x_rot: f.body_x + r.body_rot[0],
-        y_rot: r.body_rot[1],
-        z_rot: f.body_z + r.body_rot[2],
+        x_rot: f.body_x + r.body_rot[0] + s.body_rot[0],
+        y_rot: r.body_rot[1] + s.body_rot[1],
+        z_rot: f.body_z + r.body_rot[2] + s.body_rot[2],
         cubes: if body_kept {
             vec![Cube {
                 tex: (0.0, 0.0),
@@ -8941,9 +9051,9 @@ pub fn warden_layer_quads(
                     -13.0 + r.head_pos[1],
                     0.0 + r.head_pos[2],
                 ],
-                x_rot: f.head_x + r.head_rot[0],
-                y_rot: f.head_y + r.head_rot[1],
-                z_rot: f.head_z + r.head_rot[2],
+                x_rot: f.head_x + r.head_rot[0] + s.head_rot[0],
+                y_rot: f.head_y + r.head_rot[1] + s.head_rot[1],
+                z_rot: f.head_z + r.head_rot[2] + s.head_rot[2],
                 cubes: if head_kept {
                     vec![Cube {
                         tex: (0.0, 32.0),
@@ -9019,9 +9129,9 @@ pub fn warden_layer_quads(
                     -13.0 + r.right_arm_pos[1],
                     1.0 + r.right_arm_pos[2],
                 ],
-                x_rot: f.right_arm_x + r.right_arm_rot[0],
-                y_rot: r.right_arm_rot[1],
-                z_rot: r.right_arm_rot[2],
+                x_rot: f.right_arm_x + r.right_arm_rot[0] + s.right_arm_rot[0],
+                y_rot: r.right_arm_rot[1] + s.right_arm_rot[1],
+                z_rot: r.right_arm_rot[2] + s.right_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (44.0, 50.0),
@@ -9041,9 +9151,9 @@ pub fn warden_layer_quads(
                     -13.0 + r.left_arm_pos[1],
                     1.0 + r.left_arm_pos[2],
                 ],
-                x_rot: f.left_arm_x + r.left_arm_rot[0],
-                y_rot: r.left_arm_rot[1],
-                z_rot: r.left_arm_rot[2],
+                x_rot: f.left_arm_x + r.left_arm_rot[0] + s.left_arm_rot[0],
+                y_rot: r.left_arm_rot[1] + s.left_arm_rot[1],
+                z_rot: r.left_arm_rot[2] + s.left_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (0.0, 58.0),
@@ -14775,6 +14885,7 @@ mod tests {
             age_ticks: 0.0,
             tendril_animation: 0.0,
             roar_time: None,
+            sniff_time: None,
         };
         let feet = Vec3::new(10.0, 32.0, -4.0);
         let quads = model.quads(&state, feet, 0.0, 0.0);
@@ -15225,6 +15336,263 @@ mod tests {
         assert_eq!(calm_body.x_rot, walk_fold, "the calm walker the folds alone speak");
     }
 
+    /// THE WARDEN_SNIFF DEFINITION (javap `WardenAnimation` clinit pc
+    /// 9141-9798 — the channel bones the addAnimation chain names, the
+    /// keyframe counts the anewarray sizes wear, the spot constants
+    /// the ldc floats speak, the `withLength(4.16f)` the
+    /// `Mth.ceil(83.2f)` SNIFFING_DURATION the 84-tick window keeps,
+    /// NO POSITION channel the def carries).
+    #[test]
+    fn the_sniff_definition_the_jar_banks() {
+        // THE CHANNEL COUNTS (the anewarray sizes: body rot 6, head
+        // rot 9, right_arm rot 5, left_arm rot 5 — the SNIFF def no
+        // pos pair banks)
+        assert_eq!(WARDEN_SNIFF_BODY_ROT.len(), 6, "the body's rot bank");
+        assert_eq!(WARDEN_SNIFF_HEAD_ROT.len(), 9, "the head's rot bank");
+        assert_eq!(WARDEN_SNIFF_RIGHT_ARM_ROT.len(), 5, "the right arm's rot bank");
+        assert_eq!(WARDEN_SNIFF_LEFT_ARM_ROT.len(), 5, "the left arm's rot bank");
+        // THE SPOT CONSTANTS (the ldc floats the javap speaks): the
+        // lunge pair, the sway pairs, the settle
+        assert_eq!(WARDEN_SNIFF_BODY_ROT[1].t, 0.56, "the lunge's own tick");
+        assert_eq!(
+            WARDEN_SNIFF_BODY_ROT[1].v,
+            [17.5, 32.5, 0.0],
+            "the 17.5/32.5 lunge the body banks"
+        );
+        assert_eq!(
+            WARDEN_SNIFF_BODY_ROT[4].v,
+            [10.0, -30.0, 0.0],
+            "the -30 sway the settle banks"
+        );
+        assert_eq!(WARDEN_SNIFF_HEAD_ROT[1].t, 0.68, "the sway's own tick");
+        assert_eq!(
+            WARDEN_SNIFF_HEAD_ROT[1].v,
+            [0.0, 40.0, 0.0],
+            "the +40 yRot the head banks"
+        );
+        assert_eq!(
+            WARDEN_SNIFF_HEAD_ROT[2].v,
+            [-22.5, 40.0, 0.0],
+            "the -22.5 xRot the tilt keeps"
+        );
+        assert_eq!(
+            WARDEN_SNIFF_HEAD_ROT[4].v,
+            [-35.0, 20.0, 0.0],
+            "the -35 second dip the sway banks"
+        );
+        assert_eq!(
+            WARDEN_SNIFF_HEAD_ROT[6].v,
+            [0.0, -20.0, 0.0],
+            "the -20 tail sway answers"
+        );
+        assert_eq!(
+            WARDEN_SNIFF_RIGHT_ARM_ROT[1].v,
+            [17.5, 0.0, 0.0],
+            "the right arm's 17.5 raise"
+        );
+        assert_eq!(
+            WARDEN_SNIFF_LEFT_ARM_ROT[1].v,
+            [-15.0, 0.0, 0.0],
+            "the left arm's -15 raise"
+        );
+        assert_eq!(
+            WARDEN_SNIFF_RIGHT_ARM_ROT[3].v,
+            [-15.0, 0.0, 0.0],
+            "the arms' anti-phase pair the tail swaps"
+        );
+        // THE REST TAIL (every channel's final keyframe the (0,0,0)
+        // rest banks — the definition's own 3.32s tail the 4.16s
+        // window the rest keeps)
+        for (name, kfs) in [
+            ("body rot", &WARDEN_SNIFF_BODY_ROT[..]),
+            ("head rot", &WARDEN_SNIFF_HEAD_ROT[..]),
+            ("right arm rot", &WARDEN_SNIFF_RIGHT_ARM_ROT[..]),
+            ("left arm rot", &WARDEN_SNIFF_LEFT_ARM_ROT[..]),
+        ] {
+            let last = &kfs[kfs.len() - 1];
+            assert_eq!(last.t, 3.32, "the {name} tail the definition's rest keeps");
+            assert_eq!(last.v, [0.0, 0.0, 0.0], "the {name} tail the rest banks");
+        }
+        // THE LENGTH (the withLength head the 4.16f speaks — the
+        // 83.2-tick float the Mth.ceil the 84-tick SNIFFING_DURATION
+        // banks): the rest tail the window INSIDE the definition's
+        // own 4.16 the length wears
+        assert_eq!(
+            crate::sculk::WARDEN_SNIFFING_DURATION_TICKS,
+            84,
+            "the Mth.ceil(83.2f) the window keeps"
+        );
+    }
+
+    /// THE SNIFF CHANNEL'S OWN WALK (the SAME Entry.apply walk the
+    /// roar lanes shares — the binary search the segment pair keeps,
+    /// the CATMULLROM the end keyframe's own choice wears, the
+    /// degreeVec the 0.017453292 multiplies, the pos flag the def
+    /// never wears — the SNIFF no pos channel banks).
+    #[test]
+    fn the_sniff_channel_the_segment_walk_keeps() {
+        let deg = 0.017_453_292_f32;
+        // THE ELAPSED-0 ZEROS (the first keyframe the segment start
+        // banks — the delta the zero the pose keeps)
+        let v = warden_roar_channel(&WARDEN_SNIFF_BODY_ROT, 0.0, false);
+        assert_eq!(v, [0.0, 0.0, 0.0], "the elapsed-0 the rest pose keeps");
+        // THE 0.56 APEX (the keyframe's own endpoint the exact values
+        // wear — the catmullrom the endpoint the identity answers, the
+        // degreeVec the radians bake)
+        let v = warden_roar_channel(&WARDEN_SNIFF_BODY_ROT, 0.56, false);
+        let want = [17.5 * deg, 32.5 * deg, 0.0];
+        assert!(
+            (v[0] - want[0]).abs() < 1e-6 && (v[1] - want[1]).abs() < 1e-6,
+            "the 0.56 apex the endpoint bake wears: {v:?}"
+        );
+        // THE MID-SEGMENT WALK (the 0.28 the [0, 0.56] segment's own
+        // half wears — the catmullrom the quartet the bytecode's own
+        // order replicates: the inline chain the same f32 words keep)
+        let v = warden_roar_channel(&WARDEN_SNIFF_BODY_ROT, 0.28, false);
+        let p0 = 0.0_f32;
+        let p1 = 0.0_f32;
+        let p2 = 17.5 * deg;
+        let p3 = 0.0_f32;
+        let t = 0.5_f32;
+        let want_x = 0.5
+            * (2.0 * p1
+                + (p2 - p0) * t
+                + (2.0 * p0 - 5.0 * p1 + 4.0 * p2 - p3) * t * t
+                + (3.0 * p1 - p0 - 3.0 * p2 + p3) * t * t * t);
+        assert!(
+            (v[0] - want_x).abs() < 1e-6,
+            "the mid-segment the catmullrom quartet answers: {v:?} vs {want_x}"
+        );
+        // THE HEAD'S OWN SEGMENT (the 0.68-0.96 pair the sway rides —
+        // the 0.82 the half-walk the quartet answers: the yRot the
+        // 40-plateau pair the neighbors OVERSHOOT — the catmullrom's
+        // own curve the 43.75 apex wears)
+        let v = warden_roar_channel(&WARDEN_SNIFF_HEAD_ROT, 0.82, false);
+        let want_y = mth_catmullrom(
+            0.5,
+            0.0 * deg,
+            40.0 * deg,
+            40.0 * deg,
+            20.0 * deg,
+        );
+        assert!(
+            (v[1] - want_y).abs() < 1e-5,
+            "the head's yRot the quartet's own curve wears: {:?} vs {:?}",
+            v[1] / deg,
+            want_y / deg
+        );
+        // THE PAST-END REST (the 3.4 the final keyframe's own tail the
+        // window wears — the j==i the zero delta the rest pose banks)
+        let v = warden_roar_channel(&WARDEN_SNIFF_BODY_ROT, 3.4, false);
+        assert_eq!(v, [0.0, 0.0, 0.0], "the past-end the rest banks");
+    }
+
+    /// THE SNIFF DELTAS' OWN POSE WINDOW (the WardenSniffDeltas the
+    /// sniff_time serves — the None the all-zero no-op wears, the
+    /// elapsed the *50/1000 two-step keeps, the additive order the
+    /// roar deltas the ahead banks, the layer quads the SAME deltas
+    /// the shared setupAnim speaks).
+    #[test]
+    fn the_sniff_deltas_the_pose_window_banks() {
+        // THE NO-OP (the never-armed None — the parts the rest pose
+        // keeps: the +0.0 sums the folds' own numbers exactly wear)
+        let calm = build_warden_parts(&WardenState::rest());
+        let sniffing = build_warden_parts(&WardenState {
+            sniff_time: Some(0.0),
+            ..WardenState::rest()
+        });
+        assert_eq!(calm.x_rot, sniffing.x_rot, "the elapsed-0 wind-up the zero wears");
+        let calm_body = &calm.children[0];
+        let sniff_body = &sniffing.children[0];
+        assert_eq!(
+            calm_body.x_rot, sniff_body.x_rot,
+            "the elapsed-0 rot the zero speaks"
+        );
+        // THE WINDOW'S OWN DERIVATION (the mid-walk: 84 - 44 = 40
+        // ticks — the elapsed the (40 * 50) / 1000 = 2.0s the
+        // getTimeInMillis fold keeps — the head the [0.68, 0.96]
+        // segment's own walk answers, the settle xRot the plain
+        // 10-degree tail the 2.2 kf wears)
+        let elapsed = (40.0_f32 * 50.0) / 1000.0;
+        assert_eq!(elapsed, 2.0, "the elapsed the *50/1000 fold keeps");
+        let parts = build_warden_parts(&WardenState {
+            sniff_time: Some(40.0),
+            ..WardenState::rest()
+        });
+        let body = &parts.children[0];
+        let delta = (2.0 - 0.96) / (2.2 - 0.96);
+        // the quartet the segment's own wear banks: p0 = kfs[1], p1 =
+        // kfs[2], p2 = kfs[3], p3 = kfs[4] — the lower-bound walk the
+        // Entry.apply speaks
+        let want_body_x = mth_catmullrom(
+            delta,
+            WARDEN_SNIFF_BODY_ROT[1].v[0] * 0.017_453_292_f32,
+            WARDEN_SNIFF_BODY_ROT[2].v[0] * 0.017_453_292_f32,
+            WARDEN_SNIFF_BODY_ROT[3].v[0] * 0.017_453_292_f32,
+            WARDEN_SNIFF_BODY_ROT[4].v[0] * 0.017_453_292_f32,
+        );
+        assert!(
+            (body.x_rot - 0.025 - want_body_x).abs() < 1e-5,
+            "the body the [0.96, 2.2] segment the idle fold's own tail wears: {:?} vs {:?}",
+            body.x_rot - 0.025,
+            want_body_x
+        );
+        // THE ADDITIVITY (the sniffing WALKER — the deltas the walk
+        // folds' own tail ADDS, the setupAnim order the sniff apply
+        // the tail keeps; the calm walker the folds alone speak)
+        let walker = WardenState {
+            walk_pos: 1.0,
+            walk_speed: 0.5,
+            ..WardenState::rest()
+        };
+        let sniffing_walker = WardenState {
+            sniff_time: Some(40.0),
+            ..walker
+        };
+        let calm_parts = build_warden_parts(&walker);
+        let sniff_parts = build_warden_parts(&sniffing_walker);
+        let calm_body = &calm_parts.children[0];
+        let sniff_body = &sniff_parts.children[0];
+        let f4 = 1.0_f32 * 0.8662;
+        let damp = 0.5_f32.min(3.0 * 0.5);
+        let walk_fold = mth_cos(f4) * 0.35_f32.min(damp) + 0.025;
+        assert_eq!(
+            sniff_body.x_rot,
+            walk_fold + want_body_x,
+            "the sniff the walk fold's own tail adds"
+        );
+        assert_eq!(calm_body.x_rot, walk_fold, "the calm walker the folds alone speak");
+        // THE LAYER QUADS THE SAME DELTAS (the layer models' own
+        // setupAnim the shared walk wears — the sniffing head the
+        // biolum layer's own stub the same delta answers)
+        let feet = Vec3::new(3.0, 20.0, -7.0);
+        let calm_layer =
+            warden_layer_quads(&WardenState::rest(), feet, 0.0, 0.0, WardenLayer::Bioluminescent);
+        let sniff_layer = warden_layer_quads(
+            &WardenState {
+                sniff_time: Some(14.0),
+                ..WardenState::rest()
+            },
+            feet,
+            0.0,
+            0.0,
+            WardenLayer::Bioluminescent,
+        );
+        assert_eq!(calm_layer.len(), sniff_layer.len(), "the layer the mesh keeps");
+        let moved: f32 = sniff_layer
+            .iter()
+            .zip(calm_layer.iter())
+            .map(|(s, r)| {
+                s.pts
+                    .iter()
+                    .zip(r.pts.iter())
+                    .map(|(a, b)| (a[0] - b[0]).abs() + (a[1] - b[1]).abs() + (a[2] - b[2]).abs())
+                    .sum::<f32>()
+            })
+            .sum();
+        assert!(moved > 0.5, "the sniff the layer quads move: {moved}");
+    }
+
     impl WardenState {
         /// THE STANDING REST (the zero pair the fresh warden's
         /// stillness wears — the look pair zero, the walk pair zero,
@@ -15239,6 +15607,7 @@ mod tests {
                 age_ticks: 0.0,
                 tendril_animation: 0.0,
                 roar_time: None,
+                sniff_time: None,
             }
         }
     }
@@ -15265,6 +15634,7 @@ mod tests {
             age_ticks: 40.0,
             tendril_animation: 0.5,
             roar_time: None,
+            sniff_time: None,
         };
         let feet = Vec3::new(3.0, 20.0, -7.0);
         // THE HEART (Set.of("body")): the body cube's six faces the
@@ -15351,6 +15721,7 @@ mod tests {
             age_ticks: 137.0,
             tendril_animation: 0.0,
             roar_time: None,
+            sniff_time: None,
         };
         // THE CONST (the always-on glow)
         assert_eq!(
