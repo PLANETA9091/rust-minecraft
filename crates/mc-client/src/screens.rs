@@ -7062,6 +7062,17 @@ pub struct App {
     /// shrieker_can_listen row answers, the r8 the user's own radius
     /// keeps, the SHRIEKING window the shriek walk arms.
     pub sculk_shrikers: Vec<crate::sculk::SculkShriekerCell>,
+    /// THE AVATAR'S OWN WARDEN TRACKER (javap ServerPlayer pc 115 —
+    /// the `private WardenSpawnTracker wardenSpawnTracker` the
+    /// clinit's `new WardenSpawnTracker()` ctor banks, the doTick walk
+    /// pc 14-18 the gameMode.tick tail ticks): the shrieker warn
+    /// ladder's own per-player state the tryWarn walk wears.
+    pub warden_tracker: crate::sculk::WardenSpawnTracker,
+    /// THE WORLD'S OWN WARDENS (the getEntitiesOfClass(Warden, box)
+    /// list's analog — the feet-center positions the entity's own box
+    /// walk consults; the lane the summon walk a later round fills,
+    /// the empty vec the hasNearbyWarden gate's honest pass keeps).
+    pub wardens: Vec<(f64, f64, f64)>,
     /// THE SCULK CATALYST CELLS (the plain GameEventListener's analog
     /// — the vanilla's block entity the chunk-section registry walk
     /// registers, the CatalystListener the App's vec stands in): the
@@ -8026,6 +8037,8 @@ impl App {
             game_events: Vec::new(),
             sculk_sensors: Vec::new(),
             sculk_shrikers: Vec::new(),
+            warden_tracker: crate::sculk::WardenSpawnTracker::fresh(),
+            wardens: Vec::new(),
             sculk_catalysts: Vec::new(),
             sculk_vein_faces: Vec::new(),
             sculk_block_placements: Vec::new(),
@@ -8157,12 +8170,18 @@ impl App {
     /// THE SCULK SHRIEKER'S OWN PLACEMENT (the registry walk's analog —
     /// the cell the vec banks, the fresh shrieker the INACTIVE phase's
     /// own free-at keeps: the earliest tick the hearing rides, the
-    /// pending arrival the data's own silence keeps).
-    pub fn place_sculk_shrieker(&mut self, x: i32, y: i32, z: i32) {
+    /// pending arrival the data's own silence keeps). The can-summon
+    /// arg the CAN_SUMMON property's own verdict wears (the worldgen
+    /// shrieker the bit carries, the lane's placed cells the false
+    /// walk keeps), the fresh warning level the tryShriek walk's own
+    /// zero banks).
+    pub fn place_sculk_shrieker(&mut self, x: i32, y: i32, z: i32, can_summon: bool) {
         self.sculk_shrikers.push(crate::sculk::SculkShriekerCell {
             pos: (x, y, z),
             free_at: 0,
             shriek_at: None,
+            can_summon,
+            warning_level: 0,
         });
     }
 
@@ -9496,6 +9515,16 @@ impl App {
                     self.spawn_pieces(elytra_id, 5);
                 }
             }
+            // THE PLAYER'S OWN TRACKER TICK (javap ServerPlayer.doTick
+            // pc 14-18 — the `wardenSpawnTracker.tick()` walk the
+            // gameMode.tick tail serves, the invulnerableTime walk the
+            // next keeps: the player's own per-tick slot the level's
+            // block-entity walks FOLLOW — the cooldown's own countdown
+            // the arrival ladder's frame-before reads): the 12000
+            // decay head the decrease wears, the cooldown the
+            // decrement answers — NO draw, NO record the silent walk
+            // keeps
+            self.warden_tracker.tick();
             // THE SCULK LANE'S OWN RECORD (javap Entity.gameEvent →
             // Level.gameEvent → ServerLevel.gameEvent →
             // GameEventDispatcher.post the 26.2 walk: the registry
@@ -9812,13 +9841,71 @@ impl App {
             // GameEvent.SHRIEK post the record lane banks (the r32 the
             // register(name, 32)'s own bipush keeps, the f the map the
             // shriek row never carries — the vibrations tag the json
-            // never wears, no cascade the dispatch ever serves)
+            // never wears, no cascade the dispatch ever serves).
+            // THE TRYSHRIEK WALK'S OWN LAW (javap tryShriek pc 0-56):
+            // the null-player return the hearing lane's own gate keeps,
+            // the SHRIEKING-state early return the in-window refusal
+            // the hearing arm already served, the `warningLevel = 0`
+            // reset pc 27-31 the fresh walk banks, the canRespond gate
+            // pc 32-49 the CAN_SUMMON trio answers (the property the
+            // state read keeps, the PEACEFUL acmp the difficulty walk
+            // serves, the SPAWN_WARDENS gamerule the default-true the
+            // lane keeps) — the can-summon cell the tryToWarn walk
+            // arms (pc 40-49: the FAILED warn the `return` the
+            // NO-shriek tail keeps, the OPTIONALINT the ifPresent put
+            // the shrieker's own warningLevel banks), the plain cell
+            // the shriek tail wears (the ifeq 50 the direct
+            // fall-through serves)
+            let sk_difficulty = if self.world_is_network {
+                self.net_world
+                    .as_ref()
+                    .map(|w| w.difficulty)
+                    .unwrap_or(crate::difficulty::Difficulty::Normal)
+            } else {
+                self.offline_world
+                    .as_ref()
+                    .map(|w| w.difficulty)
+                    .unwrap_or(crate::difficulty::Difficulty::Normal)
+            };
             let mut shriek_voices: Vec<(i32, i32, i32, f32, f32)> = Vec::new();
             for sk in &mut self.sculk_shrikers {
                 if sk.shriek_at != Some(self.frame) {
                     continue;
                 }
                 sk.shriek_at = None;
+                // THE TRYSHRIEK HEAD (javap pc 27-31): the SHRIEKER'S
+                // OWN warningLevel the fresh walk zeroes — the old
+                // ladder the shriek's own reset retires
+                sk.warning_level = 0;
+                // THE CANRESPOND GATE (javap canRespond pc 0-53 + the
+                // tryShriek pc 32-49 walk): the can-summon cell the
+                // warn ladder consults — the warden_try_warn walk the
+                // OptionalInt answers (the Some the ifPresent put
+                // banks, the None the pc 49 return the shriek walk
+                // never arms); the plain cell the gate skips
+                let can_respond = sk.can_summon
+                    && sk_difficulty != crate::difficulty::Difficulty::Peaceful;
+                if can_respond {
+                    match crate::sculk::warden_try_warn(
+                        sk.pos,
+                        &self.wardens,
+                        &mut self.warden_tracker,
+                    ) {
+                        Some(level) => {
+                            sk.warning_level = level;
+                            self.game_events.push(format!(
+                                "warden_warn @{} x{} y{} z{} lvl{}",
+                                self.frame, sk.pos.0, sk.pos.1, sk.pos.2, level
+                            ));
+                        }
+                        // THE FAILED WARN (javap pc 46-49): the ifne
+                        // misses the return — NO shriek the walk wears
+                        // (the SHRIEKING state the block never enters,
+                        // the window the free-at never arms, the cell
+                        // the next broadcast's own hearing keeps)
+                        None => continue,
+                    }
+                }
                 sk.free_at = self.frame + crate::sculk::SHRIEKER_SHRIEK_TICKS;
                 let ring =
                     crate::particles::sculk_shriek_ring(sk.pos, &mut self.level_ambient_rng);
@@ -10102,7 +10189,13 @@ impl App {
                 for g in &growth_voices {
                     let (cx, cy, cz) = (g.pos.0, g.pos.1 + 1, g.pos.2);
                     if g.shrieker {
-                        self.place_sculk_shrieker(cx, cy, cz);
+                        // THE CAN_SUMMON BIT THE GROWTH LAW'S OWN VERDICT
+                        // KEEPS (javap SculkBlock.getRandomGrowthState —
+                        // the `CAN_SUMMON = isWorldGen` the shrieker arm
+                        // answers; the level spreader the isWorldGen=false
+                        // walk keeps — the lane's grown cell the same
+                        // honest false wears)
+                        self.place_sculk_shrieker(cx, cy, cz, false);
                         self.play_sculk_growth("block.sculk_shrieker.place", g.pos.0, g.pos.1, g.pos.2);
                     } else {
                         self.place_sculk_sensor(cx, cy, cz);
@@ -41707,7 +41800,7 @@ mod tests {
         // window's middle re-arms, the broadcast the SHRIEKING gate's
         // own proof the refusal carries
         app.place_sculk_sensor(0, 32, 6);
-        app.place_sculk_shrieker(2, 32, 0);
+        app.place_sculk_shrieker(2, 32, 0, false);
         // the fresh cell the window never arms
         assert_eq!(
             app.sculk_shrikers[0].free_at, 0,
@@ -41863,6 +41956,270 @@ mod tests {
                 .count(),
             1,
             "the window the second shriek refuses"
+        );
+    }
+
+    /// THE DRAIN THE WARDEN LADDER THE CAN_SUMMON WEARS (javap the
+    /// 26.2 jar SculkShriekerBlockEntity.tryShriek pc 0-56 +
+    /// WardenSpawnTracker.tryWarn — the arrival walk the tryShriek
+    /// law serves: the SHRIEKER'S OWN warningLevel the reset keeps,
+    /// the canRespond gate the CAN_SUMMON + the PEACEFUL acmp pair
+    /// answers, the failed warn the pc 46-49 return the NO-shriek
+    /// tail keeps, the passed warn the OptionalInt the ifPresent put
+    /// banks): the app walk — the can-summon cell the ladder arms
+    /// (the warden_warn record the walk's own line banks BEFORE the
+    /// shriek record the pc order keeps, the tracker the cooldown-200
+    /// state wears), the window's re-hearing the cooldown refusal
+    /// keeps (the NO-shriek arrival the reset wears — the
+    /// warning_level zero the fresh walk banks, the free-at the
+    /// refusal never re-arms), the drained window the second warn
+    /// wears (the lvl2 line the ladder's own rung speaks), the
+    /// PEACEFUL world the can-summon cell the shriek tail wears (the
+    /// acmp the gate refuses, NO warn the tracker never draws).
+    #[test]
+    fn the_drain_the_warden_ladder_the_can_summon_wears() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // === WALK A: the Normal world the ladder arms ===
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_sensor(0, 32, 0);
+        app.place_sculk_shrieker(2, 32, 0, true);
+        assert!(
+            app.sculk_shrikers[0].can_summon,
+            "the can-summon bit the placement banks"
+        );
+        assert_eq!(
+            app.warden_tracker,
+            crate::sculk::WardenSpawnTracker::fresh(),
+            "the fresh tracker the ServerPlayer ctor keeps"
+        );
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        let dx = pos9.0 - 0.5;
+        let dy = pos9.1 - 32.5;
+        let dz = pos9.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let click_at = 10 + t;
+        app.update(); // tick 10: the post + the sensor's own hearing
+        for _ in 11..click_at {
+            app.update();
+        }
+        app.update(); // the broadcast + the shrieker's hearing
+        assert_eq!(
+            app.game_events.len(),
+            4,
+            "the broadcast + the hearing the lane banks"
+        );
+        // THE ARRIVAL: the warn ladder the Some(1) arm — the
+        // warden_warn record the shriek record PRECEDES (the
+        // tryToWarn walk the shriek tail serves)
+        for _ in (click_at + 1)..=(click_at + 2) {
+            app.update();
+        }
+        let arrival = click_at + 2;
+        assert_eq!(
+            app.game_events[4],
+            format!("warden_warn @{} x2 y32 z0 lvl1", arrival),
+            "the warn record the exact line pins — the Some the ifPresent put banks"
+        );
+        assert_eq!(
+            app.game_events[5],
+            format!(
+                "shriek @{} x2.500000 y32.500000 z0.500000 r32 f0",
+                arrival
+            ),
+            "the shriek record the warn's tail wears"
+        );
+        assert_eq!(
+            app.sculk_shrikers[0].warning_level, 1,
+            "the OptionalInt the cell's own level banks"
+        );
+        assert_eq!(
+            app.warden_tracker.warning_level, 1,
+            "the tracker the ladder's own rung wears"
+        );
+        assert_eq!(
+            app.warden_tracker.cooldown_ticks,
+            crate::sculk::WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN,
+            "the increase the cooldown-200 window banks"
+        );
+        assert_eq!(
+            app.warden_tracker.ticks_since_last_warning, 0,
+            "the increase the counter's own reset wears"
+        );
+        // THE WINDOW'S RE-HEARING THE COOLDOWN REFUSAL KEEPS: the
+        // player's own return the r8 ear's reach keeps (the body the
+        // walk re-banks every tick — the elytra drift the return
+        // undoes, the glide's own count the return never resets) —
+        // the first glide beat the hearing arms again, the arrival
+        // walks the ladder — the on-cooldown tracker the None speaks,
+        // the pc 46-49 return the NO-shriek tail wears (the reset the
+        // fresh walk banks — the cell's own level the zero keeps, the
+        // free-at the refusal never re-arms)
+        for f in (arrival + 1)..=214 {
+            if f >= 95 {
+                let b = app.body.as_mut().expect("the body rides");
+                b.x = 0.0;
+                b.y = 34.0;
+                b.z = 0.0;
+            }
+            app.update();
+        }
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("warden_warn @"))
+                .count(),
+            1,
+            "the cooldown the second warn refuses"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("shriek @"))
+                .count(),
+            1,
+            "the failed warn the second shriek refuses"
+        );
+        assert_eq!(
+            app.sculk_shrikers[0].warning_level, 0,
+            "the second arrival the reset wears — the warn failed"
+        );
+        assert_eq!(
+            app.sculk_shrikers[0].free_at,
+            arrival as u64 + crate::sculk::SHRIEKER_SHRIEK_TICKS,
+            "the refusal the free-at never re-arms"
+        );
+        // THE DRAINED WINDOW THE SECOND WARN WEARS: the return the
+        // hearing's reach keeps again — the first arrival past the
+        // 214 drain the ladder's second rung banks (the lvl2 line the
+        // walk's own answer keeps) — the walk the +90 window's own
+        // reach never crosses (the third arrival the re-armed free-at
+        // refuses before the walk ends)
+        for _ in 215..=260 {
+            let b = app.body.as_mut().expect("the body rides");
+            b.x = 0.0;
+            b.y = 34.0;
+            b.z = 0.0;
+            app.update();
+        }
+        let warns: Vec<&String> = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("warden_warn @"))
+            .collect();
+        assert_eq!(
+            warns.len(),
+            2,
+            "the drained window the second warn wears"
+        );
+        assert!(
+            warns[1].contains(" x2 y32 z0 lvl2"),
+            "the second rung the exact level pins: {}",
+            warns[1]
+        );
+        assert_eq!(
+            app.sculk_shrikers[0].warning_level, 2,
+            "the cell the second rung banks"
+        );
+        assert_eq!(
+            app.warden_tracker.warning_level, 2,
+            "the tracker the second rung wears"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("shriek @"))
+                .count(),
+            2,
+            "the passed warn the second shriek wears"
+        );
+
+        // === WALK B: the Peaceful world the acmp the gate refuses ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        world.difficulty = crate::difficulty::Difficulty::Peaceful;
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.live_inv_slots[6] = (wire("elytra"), 1);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_sensor(0, 32, 0);
+        app.place_sculk_shrieker(2, 32, 0, true);
+        app.on_movement_input(0.0, 0.0, true, false, false);
+        app.update();
+        app.on_movement_input(0.0, 0.0, false, false, false);
+        for _ in 2..=9 {
+            app.update();
+        }
+        let pos9 = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x, b.y, b.z)
+        };
+        let dx = pos9.0 - 0.5;
+        let dy = pos9.1 - 32.5;
+        let dz = pos9.2 - 0.5;
+        let d = ((dx * dx + dy * dy + dz * dz).sqrt()) as f32;
+        let t = d.floor() as i32;
+        let click_at = 10 + t;
+        app.update();
+        for _ in 11..click_at {
+            app.update();
+        }
+        app.update();
+        for _ in (click_at + 1)..=(click_at + 2) {
+            app.update();
+        }
+        // THE SHRIEK TAIL THE PLAIN CELL KEEPS: the acmp the
+        // canRespond refuses — the shriek wears, NO warn the ladder
+        // never arms, the tracker the fresh trio keeps
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("shriek @"))
+                .count(),
+            1,
+            "the peaceful world the shriek tail wears"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("warden_warn @"))
+                .count(),
+            0,
+            "the PEACEFUL acmp the warn never arms"
+        );
+        assert_eq!(
+            app.sculk_shrikers[0].warning_level, 0,
+            "the gate the cell's own level keeps"
+        );
+        assert_eq!(
+            app.warden_tracker.warning_level, 0,
+            "the tracker the peaceful walk never draws"
+        );
+        assert_eq!(
+            app.warden_tracker.cooldown_ticks, 0,
+            "the cooldown the increase never arms"
+        );
+        assert_eq!(
+            app.warden_tracker.ticks_since_last_warning, arrival as i32,
+            "the tick walk the doTick slot keeps — the warn the counter never resets"
         );
     }
 

@@ -638,11 +638,21 @@ pub fn shrieker_can_listen(event: &str) -> bool {
 /// 90 walk the shriek arms — the earliest tick the cell hears again),
 /// the pending arrival the scheduled vibration banks (the travel law
 /// the sensor's own arrival keeps; Some = the data busy the second
-/// hearing refuses — the dispatch's own pc 22-31 the busy walk keeps).
+/// hearing refuses — the dispatch's own pc 22-31 the busy walk keeps),
+/// the can-summon bit the CAN_SUMMON property the state read answers
+/// (javap SculkShriekerBlockEntity.canRespond pc 0-16 — the worldgen
+/// shrieker the bit alone carries, the lane's grown cells the
+/// isWorldGen=false walk keeps), the warning level the SHRIEKER'S OWN
+/// int field keeps (javap SculkShriekerBlockEntity pc 19 — the
+/// `private int warningLevel` the tryShriek walk zeroes pc 27-31, the
+/// tryToWarn's OptionalInt the ifPresent put banks, the tryRespond
+/// removal tail the next round's walk reads).
 pub struct SculkShriekerCell {
     pub pos: (i32, i32, i32),
     pub free_at: u64,
     pub shriek_at: Option<u64>,
+    pub can_summon: bool,
+    pub warning_level: i32,
 }
 
 /// THE SHRIEKER'S HEARING WALK (the gates the dispatch's own ladder
@@ -708,6 +718,231 @@ pub const SCULK_CATALYST_LISTEN_RADIUS: i32 = 8;
 /// 11-14 speaks).
 #[cfg_attr(not(test), expect(dead_code))]
 pub const CATALYST_PULSE_TICKS: u64 = 8;
+
+// === THE WARDEN SPAWN TRACKER (javap the 26.2 jar
+// net/minecraft/world/entity/monster/warden/WardenSpawnTracker — the
+// per-PLAYER warning ladder the shrieker's tryToWarn walk consults,
+// the ServerPlayer's own field the doTick walk ticks) ===
+
+/// `WardenSpawnTracker.setWarningLevel` pc 2-7 (javap): the
+/// `Mth.clamp(value, 0, MAX_WARNING_LEVEL)` the iconst_0 + iconst_4
+/// pair the bound keeps — the FIFTH warn the clamp never passes.
+pub const WARDEN_MAX_WARNING_LEVEL: i32 = 4;
+
+/// `WardenSpawnTracker.lambda$getNearbyPlayers$0` pc 11-15 (javap):
+/// the `Vec3.closerThan(center, 16.0)` the ldc2_w radius speaks — the
+/// player-list's own ear (the `!isSpectator && closerThan && isAlive`
+/// triple the lambda's three arms keep). The single-avatar lane the
+/// list keeps the source player alone — the radius the walk never
+/// reads, the law the doc banks.
+#[expect(dead_code)]
+pub const WARDEN_PLAYER_SEARCH_RADIUS: f64 = 16.0;
+
+/// `WardenSpawnTracker.hasNearbyWarden` pc 4-13 (javap): the
+/// `AABB.ofSize(atCenterOf(pos), 48.0, 48.0, 48.0)` the ldc2_w trio
+/// the search box banks — the warden's own box the intersect answers
+/// (the `!getEntitiesOfClass(Warden, box).isEmpty()` the verdict
+/// speaks). The ofSize law (javap AABB.ofSize): min = center -
+/// size/2, max = center + size/2 — the ±24 half-extents wear.
+pub const WARDEN_WARNING_CHECK_DIAMETER: f64 = 48.0;
+
+/// `WardenSpawnTracker.tick` pc 4-7 (javap): the `sipush 12000`
+/// `if_icmplt` head the decay interval banks — the
+/// `ticksSinceLastWarning >= 12000` the decrease + zero-reset wears,
+/// the else the increment speaks.
+pub const WARDEN_DECREASE_WARNING_LEVEL_EVERY_INTERVAL: i32 = 12000;
+
+/// `WardenSpawnTracker.increaseWarningLevel` pc 13-16 (javap): the
+/// `sipush 200` `cooldownTicks = 200` the re-warn window banks — the
+/// on-cooldown tracker the increase refuses (pc 1-4 the ifne return
+/// keeps).
+pub const WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN: i32 = 200;
+
+/// THE WARDEN'S OWN SEARCH BOX (javap AABB.ofSize + the
+/// Vec3.atCenterOf law — the +0.5 center the block pos wears, the
+/// ±24.0 half-extents the 48-diameter keeps): the (min, max) pair
+/// the intersect walk consults.
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn warden_search_box(
+    pos: (i32, i32, i32),
+) -> ((f64, f64, f64), (f64, f64, f64)) {
+    let cx = pos.0 as f64 + 0.5;
+    let cy = pos.1 as f64 + 0.5;
+    let cz = pos.2 as f64 + 0.5;
+    let h = WARDEN_WARNING_CHECK_DIAMETER / 2.0;
+    ((cx - h, cy - h, cz - h), (cx + h, cy + h, cz + h))
+}
+
+/// THE WARDEN'S OWN ENTITY BOX (javap EntityTypes clinit pc 6612-6618
+/// — the `Builder.sized(0.9f, 2.9f)` the WARDEN registration speaks,
+/// the position the feet-center keeps): the (min, max) pair the
+/// entity's bounding box wears — [x - 0.45, y, z - 0.45] .. [x +
+/// 0.45, y + 2.9, z + 0.45].
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn warden_entity_box(p: (f64, f64, f64)) -> ((f64, f64, f64), (f64, f64, f64)) {
+    (
+        (p.0 - 0.45, p.1, p.2 - 0.45),
+        (p.0 + 0.45, p.1 + 2.9, p.2 + 0.45),
+    )
+}
+
+/// THE AABB INTERSECT WALK (javap AABB.intersects(DDDDDD) pc 0-62 —
+/// the six dcmpg/dcmpl branches the STRICT pair keeps: `this.min <
+/// other.max && this.max > other.min` per axis, the exact-touch the
+/// FALSE keeps).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn aabb_intersects(
+    a: ((f64, f64, f64), (f64, f64, f64)),
+    b: ((f64, f64, f64), (f64, f64, f64)),
+) -> bool {
+    let (a_min, a_max) = a;
+    let (b_min, b_max) = b;
+    a_min.0 < b_max.0 && a_max.0 > b_min.0 && a_min.1 < b_max.1 && a_max.1 > b_min.1
+        && a_min.2 < b_max.2 && a_max.2 > b_min.2
+}
+
+/// THE NEARBY-WARDEN GATE (javap hasNearbyWarden pc 0-37 — the
+/// `!getEntitiesOfClass(Warden, ofSize(center, 48, 48, 48)).isEmpty()`
+/// verdict the list's own box test answers): any warden position the
+/// intersect walk passes the TRUE speaks. The lane's wardens carry
+/// the entity's feet-center positions (the Vec3 the entity's own
+/// walk banks).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn has_nearby_warden(pos: (i32, i32, i32), wardens: &[(f64, f64, f64)]) -> bool {
+    let search = warden_search_box(pos);
+    wardens
+        .iter()
+        .any(|&w| aabb_intersects(search, warden_entity_box(w)))
+}
+
+/// ONE PLAYER'S OWN WARNING LADDER (javap WardenSpawnTracker — the
+/// three int fields the CODEC's own rows carry: ticks_since_last_warning,
+/// warning_level, cooldown_ticks; the ServerPlayer's field the
+/// `new WardenSpawnTracker()` ctor zeroes — javap ServerPlayer clinit
+/// pc 130-137).
+#[derive(Clone, Debug, PartialEq)]
+pub struct WardenSpawnTracker {
+    pub ticks_since_last_warning: i32,
+    pub warning_level: i32,
+    pub cooldown_ticks: i32,
+}
+
+impl WardenSpawnTracker {
+    /// THE NO-ARG CTOR'S OWN TRIO (javap pc 0-7 — the `this(0, 0, 0)`
+    /// delegate the three iconst_0 draws speak).
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn fresh() -> WardenSpawnTracker {
+        WardenSpawnTracker {
+            ticks_since_last_warning: 0,
+            warning_level: 0,
+            cooldown_ticks: 0,
+        }
+    }
+
+    /// THE PLAYER'S OWN TICK WALK (javap tick pc 0-49 — the
+    /// ServerPlayer.doTick slot the gameMode.tick tail serves: pc 14-18
+    /// the `wardenSpawnTracker.tick()` the gameMode walk follows, the
+    /// invulnerableTime walk the next keeps): the 12000 head the
+    /// decrease + the zero-reset wears, the else the increment speaks,
+    /// the cooldown the `> 0` guard the decrement answers.
+    pub fn tick(&mut self) {
+        if self.ticks_since_last_warning >= WARDEN_DECREASE_WARNING_LEVEL_EVERY_INTERVAL {
+            self.set_warning_level(self.warning_level - 1);
+            self.ticks_since_last_warning = 0;
+        } else {
+            self.ticks_since_last_warning += 1;
+        }
+        if self.cooldown_ticks > 0 {
+            self.cooldown_ticks -= 1;
+        }
+    }
+
+    /// THE RESET WALK (javap reset pc 0-15 — the three iconst_0 put
+    /// fields the tracker's own zero keeps).
+    #[expect(dead_code)]
+    pub fn reset(&mut self) {
+        self.ticks_since_last_warning = 0;
+        self.warning_level = 0;
+        self.cooldown_ticks = 0;
+    }
+
+    /// THE CLAMPED SETTER (javap setWarningLevel pc 0-10 — the
+    /// `Mth.clamp(value, 0, 4)` the iconst pair the bounds keep, the
+    /// putfield the store answers).
+    pub fn set_warning_level(&mut self, value: i32) {
+        self.warning_level = value.clamp(0, WARDEN_MAX_WARNING_LEVEL);
+    }
+
+    /// THE COOLDOWN GATE (javap onCooldown pc 0-12 — the
+    /// `cooldownTicks > 0` the ifle branch answers).
+    pub fn on_cooldown(&self) -> bool {
+        self.cooldown_ticks > 0
+    }
+
+    /// THE INCREASE WALK (javap increaseWarningLevel pc 0-29 — the
+    /// on-cooldown early return the ifne head keeps, the ticks-zero +
+    /// the cooldown-200 pair the first arm banks, the
+    /// `setWarningLevel(getWarningLevel() + 1)` the clamp's own arm
+    /// wears — the 4-capped ladder the clamp speaks).
+    pub fn increase_warning_level(&mut self) {
+        if self.on_cooldown() {
+            return;
+        }
+        self.ticks_since_last_warning = 0;
+        self.cooldown_ticks = WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN;
+        self.set_warning_level(self.warning_level + 1);
+    }
+
+    /// THE COPY WALK (javap copyData pc 0-24 — the three putfield
+    /// rows the chosen tracker's own state the player-list's forEach
+    /// spreads: warningLevel, cooldownTicks, ticksSinceLastWarning).
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn copy_data(&mut self, other: &WardenSpawnTracker) {
+        self.warning_level = other.warning_level;
+        self.cooldown_ticks = other.cooldown_ticks;
+        self.ticks_since_last_warning = other.ticks_since_last_warning;
+    }
+}
+
+/// THE STATIC TRYWARN WALK (javap WardenSpawnTracker.tryWarn pc 0-138
+/// — the OptionalInt the Optional.None the empty verdicts keep, the
+/// ladder the single-source lane's own tracker wears): the
+/// nearby-warden gate pc 0-11 the 48-box verdict answers (the empty
+/// return the first arm keeps), the cooldown anyMatch pc 36-58 the
+/// lambda$tryWarn$0's `map(onCooldown).orElse(false)` fold the player
+/// list wears, the max-tracker increase pc 59-134 the
+/// comparingInt(getWarningLevel) max the chosen tracker banks — the
+/// copyData forEach pc 113-121 the player list's own trackers
+/// spreads, the `OptionalInt.of(chosen.getWarningLevel())` the new
+/// level returns. THE LANE'S OWN COLLAPSE: the single-avatar world
+/// the getNearbyPlayers list keeps the SOURCE player alone (the
+/// `!list.contains(player) → add` arm pc 18-35 the source's own
+/// presence always banks — the 16-radius list the world's second
+/// player never grows), the max + the forEach the same tracker wears
+/// (the self-copy the identity keeps), the walk the source's own
+/// tracker alone consults.
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn warden_try_warn(
+    pos: (i32, i32, i32),
+    wardens: &[(f64, f64, f64)],
+    source: &mut WardenSpawnTracker,
+) -> Option<i32> {
+    // THE NEARBY-WARDEN GATE (pc 0-11): the 48-box the intersect
+    // verdict answers — the warden nearby the empty() return speaks
+    if has_nearby_warden(pos, wardens) {
+        return None;
+    }
+    // THE COOLDOWN ANYMATCH (pc 36-58): the on-cooldown tracker the
+    // empty() return keeps — the single-source list the source's own
+    // gate wears
+    if source.on_cooldown() {
+        return None;
+    }
+    // THE MAX-TRACKER INCREASE (pc 59-134): the chosen tracker the
+    // increase walk wears, the new level the OptionalInt.of answers
+    source.increase_warning_level();
+    Some(source.warning_level)
+}
 
 /// `SculkSpreader.addCursors` pc 4-8 (javap): the `sipush 1000`
 /// `Math.min(charge, 1000)` the per-cursor cap banks — the loop
@@ -3911,7 +4146,7 @@ mod tests {
         // THE NON-VEIN HEAD (the `state.is(this)` guard the early
         // return keeps — the sculk state the walk never reads)
         {
-            let mut ledger: Vec<(i32, i32, i32, u8)> = vec![(5, 5, 5, 4)];
+            let ledger: Vec<(i32, i32, i32, u8)> = vec![(5, 5, 5, 4)];
             let mut world = |_: i32, _: i32, _: i32, _: SculkWrite| -> SculkMovementProbe {
                 SculkMovementProbe { name: "sculk", faces: 0 }
             };
@@ -4157,5 +4392,151 @@ mod tests {
             replay.next_int(10);
             assert_eq!(rng, replay, "the refused growth the TWO draws spends");
         }
+    }
+
+    /// THE WARDEN TRACKER THE LADDER THE CLAMP KEEPS (javap the 26.2
+    /// jar WardenSpawnTracker — the tick walk the doTick slot serves,
+    /// the increase the cooldown-200 walk banks, the clamp the 0..4
+    /// bound keeps, the tryWarn the three-gate walk wears: the
+    /// nearby-warden gate the 48-box intersect answers, the cooldown
+    /// anyMatch the empty return speaks, the increase the new level
+    /// banks — NO draw the ladder ever spends).
+    #[test]
+    fn the_warden_tracker_the_ladder_the_clamp_keeps() {
+        // THE FRESH TRIO (javap the no-arg ctor pc 0-7)
+        let mut t = WardenSpawnTracker::fresh();
+        assert_eq!(
+            t,
+            WardenSpawnTracker {
+                ticks_since_last_warning: 0,
+                warning_level: 0,
+                cooldown_ticks: 0,
+            }
+        );
+        // THE TICK WALK'S TWO BRANCHES (javap tick pc 0-49): the
+        // sub-12000 the increment speaks, the cooldown the `> 0`
+        // guard the decrement answers
+        t.tick();
+        assert_eq!(t.ticks_since_last_warning, 1);
+        assert_eq!(t.cooldown_ticks, 0, "the zero the decrement never wears");
+        // THE 12000 HEAD: the counter the >= verdict arms — the
+        // decrease the clamp keeps (0 - 1 clamped to 0) + the zero
+        // reset
+        t.ticks_since_last_warning = WARDEN_DECREASE_WARNING_LEVEL_EVERY_INTERVAL;
+        t.tick();
+        assert_eq!(t.warning_level, 0, "the clamp the below-floor keeps");
+        assert_eq!(t.ticks_since_last_warning, 0, "the head the reset banks");
+        // THE CLAMPED SETTER (javap setWarningLevel pc 0-10)
+        t.set_warning_level(5);
+        assert_eq!(t.warning_level, 4, "the above-ceiling the clamp keeps");
+        t.set_warning_level(-1);
+        assert_eq!(t.warning_level, 0, "the below-floor the clamp keeps");
+        // THE INCREASE WALK (javap increaseWarningLevel pc 0-29): the
+        // fresh tracker the +1 wears, the ticks-zero + the cooldown-200
+        // pair the first arm banks
+        t.set_warning_level(0);
+        t.ticks_since_last_warning = 7;
+        t.increase_warning_level();
+        assert_eq!(t.warning_level, 1);
+        assert_eq!(t.ticks_since_last_warning, 0);
+        assert_eq!(t.cooldown_ticks, WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN);
+        // THE ON-COOLDOWN REFUSAL: the increase the early return keeps
+        t.set_warning_level(3);
+        t.increase_warning_level();
+        assert_eq!(t.warning_level, 3, "the cooldown the increase refuses");
+        assert_eq!(t.cooldown_ticks, WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN);
+        // THE COOLDOWN DRAIN: the 200 decrements the window empties
+        for _ in 0..WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN {
+            t.tick();
+        }
+        assert!(!t.on_cooldown(), "the 200 ticks the window drains");
+        assert_eq!(
+            t.ticks_since_last_warning, 200,
+            "the cooldown walks the increment wears"
+        );
+        // THE CEILING: the 4-capped ladder the clamp speaks — the
+        // fifth warn the 4 keeps
+        t.set_warning_level(4);
+        t.increase_warning_level();
+        assert_eq!(t.warning_level, 4, "the ceiling the clamp never passes");
+        assert_eq!(t.cooldown_ticks, WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN);
+        // THE COPY WALK (javap copyData pc 0-24)
+        let mut other = WardenSpawnTracker::fresh();
+        other.copy_data(&t);
+        assert_eq!(other, t, "the three fields the copy spreads");
+
+        // === THE TRYWARN WALK (javap tryWarn pc 0-138) ===
+        // THE NEARBY-WARDEN GATE (pc 0-11): the 48-box the intersect
+        // answers — the warden at the shrieker cell the empty keeps
+        let pos = (2, 32, 0);
+        let mut tracker = WardenSpawnTracker::fresh();
+        assert_eq!(
+            warden_try_warn(pos, &[(2.5, 40.0, 0.5)], &mut tracker),
+            None,
+            "the nearby warden the empty() answer wears"
+        );
+        assert_eq!(tracker.warning_level, 0, "the gate the ladder never arms");
+        // THE SEARCH BOX WALK (javap AABB.ofSize + the intersect): the
+        // ±24.0 half-extents the +0.5 center wears, the warden's own
+        // 0.9/2.9 box the intersect keeps — the search max 26.5 the
+        // strict pair speaks: the warden min 26.45 (x=26.9) the
+        // intersect passes, the 27.0 min 26.55 the refusal wears
+        assert!(
+            has_nearby_warden(pos, &[(26.9, 40.0, 0.5)]),
+            "the box-edge warden the intersect keeps"
+        );
+        assert!(
+            !has_nearby_warden(pos, &[(27.0, 40.0, 0.5)]),
+            "the past-edge walk the intersect refuses"
+        );
+        // THE COOLDOWN ANYMATCH (pc 36-58): the on-cooldown tracker
+        // the empty keeps
+        tracker.set_warning_level(1);
+        tracker.cooldown_ticks = 1;
+        assert_eq!(
+            warden_try_warn(pos, &[], &mut tracker),
+            None,
+            "the on-cooldown tracker the anyMatch refuses"
+        );
+        // THE SUCCESS LADDER (pc 59-134): the fresh tracker the +1
+        // banks, the second walk the cooldown refusal keeps, the
+        // drained window the +2 wears
+        let mut tracker = WardenSpawnTracker::fresh();
+        assert_eq!(
+            warden_try_warn(pos, &[], &mut tracker),
+            Some(1),
+            "the first warn the ladder arms"
+        );
+        assert_eq!(
+            warden_try_warn(pos, &[], &mut tracker),
+            None,
+            "the 200-tick window the second warn refuses"
+        );
+        for _ in 0..WARDEN_WARNING_LEVEL_INCREASE_COOLDOWN {
+            tracker.tick();
+        }
+        assert_eq!(
+            warden_try_warn(pos, &[], &mut tracker),
+            Some(2),
+            "the drained window the second warn wears"
+        );
+        // THE CEILING WALK: the level-4 tracker the clamp's own 4
+        // returns
+        let mut capped = WardenSpawnTracker::fresh();
+        capped.set_warning_level(4);
+        assert_eq!(
+            warden_try_warn(pos, &[], &mut capped),
+            Some(4),
+            "the ceiling the set-clamp keeps"
+        );
+        // THE WARDEN GATE PRECEDES (pc 0-11 the first arm): the
+        // on-cooldown tracker + the nearby warden the gate's own empty
+        // keeps — the order the pc walk pins
+        capped.cooldown_ticks = 5;
+        assert_eq!(
+            warden_try_warn(pos, &[(2.5, 40.0, 0.5)], &mut capped),
+            None,
+            "the gate the pc order keeps"
+        );
     }
 }
