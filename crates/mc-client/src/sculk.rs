@@ -944,6 +944,187 @@ pub fn warden_try_warn(
     Some(source.warning_level)
 }
 
+// ===== THE REMOVAL TAIL'S OWN WALKS (javap SculkShriekerBlockEntity
+// preRemoveSideEffects pc 0-41 + tryRespond pc 0-42 over the 26.2 jar
+// — the dig-removed SHRIEKING cell the walk answers) =====
+
+/// `trySummonWarden` pc 21-30 (javap): the
+/// `SpawnUtil.trySpawnMob(WARDEN, TRIGGERED, level, pos, 20, 5, 6,
+/// ON_TOP_OF_COLLIDER, false)` trio the bytecode pins — the THREE int
+/// args the walk keeps: 20 attempts, the ±5 horizontal spread (the
+/// `iconst_5` pc 23 speaks — the prior round's writeup the 15 word
+/// wore, the jar's own bytecode REFUTES), the 6 y-walk half-height.
+#[cfg_attr(not(test), expect(dead_code))]
+pub const WARDEN_SUMMON_ATTEMPTS: i32 = 20;
+#[cfg_attr(not(test), expect(dead_code))]
+pub const WARDEN_SUMMON_RANGE: i32 = 5;
+#[cfg_attr(not(test), expect(dead_code))]
+pub const WARDEN_SUMMON_Y_RANGE: i32 = 6;
+
+/// `tryRespond` pc 36-39 (javap): the
+/// `Warden.applyDarknessAround(level, Vec3.atCenterOf(pos), null, 40)`
+/// the bipush-40 radius wears; javap `Warden.applyDarknessAround`
+/// pc 0-31: the DARKNESS `new MobEffectInstance(MobEffects.DARKNESS,
+/// 260, 0, false, false, false)` the sipush-260 duration keeps, the
+/// `MobEffectUtil.addEffectToPlayersAround(..., 200)` the sipush-200
+/// refresh-window arg speaks. The effect's own lightmap fold the
+/// effects-lane round banks — the verdict walk the tail consults.
+#[cfg_attr(not(test), expect(dead_code))]
+pub const WARDEN_DARKNESS_RADIUS: f64 = 40.0;
+#[cfg_attr(not(test), expect(dead_code))]
+pub const WARDEN_DARKNESS_TICKS: i32 = 260;
+#[expect(dead_code)] // the refresh-window arg the effects-lane round reads
+pub const WARDEN_DARKNESS_WINDOW: i32 = 200;
+
+/// `lambda$static$0` (javap SculkShriekerBlockEntity pc 0-36 — the
+/// SOUND_BY_LEVEL builder the Util.make Consumer lambda fills): the
+/// quartet the SoundEvents ldc rows speak — 1 nearby_close, 2
+/// nearby_closer, 3 nearby_closest, 4 listening_angry (the
+/// `register(String)` names the jar's own keys keep); the levels
+/// outside 1..4 the `null` the map's own miss answers — the
+/// playWardenReplySound's `if (sound != null)` arm keeps.
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn warden_reply_sound(warning_level: i32) -> Option<&'static str> {
+    match warning_level {
+        1 => Some("entity.warden.nearby_close"),
+        2 => Some("entity.warden.nearby_closer"),
+        3 => Some("entity.warden.nearby_closest"),
+        4 => Some("entity.warden.listening_angry"),
+        _ => None,
+    }
+}
+
+/// THE SUMMON WALK (javap SpawnUtil.trySpawnMob pc 0-203 +
+/// moveToPossibleSpawnPosition pc 0-94 + Strategy lambda$static$1 —
+/// the ON_TOP_OF_COLLIDER law verbatim): per attempt the TWO
+/// `Mth.randomBetweenInclusive(rng, -5, 5)` draws speak FIRST (pc
+/// 22-44 — `nextInt(11) - 5` the range-5 fold, the law the Lcg's own
+/// `next_int_inclusive` keeps), the `setWithOffset(pos, dx, 6, dz)`
+/// head banks, THEN the border gate (pc 59-68 — the client's own
+/// loaded column the worldborder analog answers) and the y-walk: 13
+/// checks (i = 6..=-6, the mutable DOWN move FIRST each pass — the
+/// ground cell y+5..y-7, the above cell y+6..y-6), the law the
+/// lambda$static$1 pair keeps: the ABOVE state's collision EMPTY
+/// (the `getCollisionShape(...).isEmpty()` head the pc 0-10 walk
+/// speaks) AND the GROUND state's up-face FULL (the
+/// `isFaceFull(shape, UP)` arm the Full shape answers); the success
+/// the mutable UP move answers — the spawn cell the ABOVE cell the
+/// walk returns. The requireSolid=false arg the noCollision walk
+/// SKIPS (pc 87-89 the `ifeq 132` jump keeps); the create +
+/// checkSpawnRules walk the Mob's own `iconst_1` constant answers
+/// (javap pc 0-1 — Warden the override never carries); the
+/// checkSpawnObstruction walk the client's overlay verdict folds:
+/// `!containsAnyLiquid(box) && isUnobstructed(entity)` (javap
+/// Mob.checkSpawnObstruction pc 0-28 — the liquid gate the OR-arms
+/// the head keeps) over the warden box the feet-center position
+/// wears (the WARDEN registration's `sized(0.9f, 2.9f)` — the box
+/// [x+0.5-0.45, y, z+0.5-0.45] .. [x+0.5+0.45, y+2.9, z+0.5+0.45]
+/// the cells y..y+2 the span answers), the failed check the
+/// `discard()` + the next attempt wears (pc 189-197). The
+/// playAmbientSound tail (pc 178-184) the ENTITY random's own pitch
+/// the overlay list never banks — the voice a future warden-mob
+/// round speaks; the wardens vec the feet-center rows the caller's
+/// own push keeps.
+///
+/// The two draws per attempt ride BEFORE every gate — a failed
+/// column or ground walk the SAME two draws the stream spends (the
+/// bytecode's own order pc 22-44 the gates precede).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn warden_summon_walk(
+    pos: (i32, i32, i32),
+    column_loaded: impl Fn(i32, i32) -> bool,
+    get: impl Fn(i32, i32, i32) -> u16,
+    rng: &mut crate::drops::Lcg,
+) -> Option<(i32, i32, i32)> {
+    for _ in 0..WARDEN_SUMMON_ATTEMPTS {
+        // pc 22-44: the TWO draws the attempt spends — the ±5 pair
+        let dx = rng.next_int_inclusive(-WARDEN_SUMMON_RANGE, WARDEN_SUMMON_RANGE);
+        let dz = rng.next_int_inclusive(-WARDEN_SUMMON_RANGE, WARDEN_SUMMON_RANGE);
+        let mx = pos.0 + dx;
+        let mz = pos.2 + dz;
+        // pc 59-68: the border gate — the loaded column the client's
+        // own world bounds answer
+        if !column_loaded(mx, mz) {
+            continue;
+        }
+        // pc 71-81 + the inner walk: the mutable's head at y+6, the
+        // DOWN move FIRST — the ground y+6-k, the above y+7-k, k = 1..13
+        let top = pos.1 + WARDEN_SUMMON_Y_RANGE;
+        for k in 1..=(2 * WARDEN_SUMMON_Y_RANGE + 1) {
+            let ground_y = top - k;
+            let above_y = ground_y + 1;
+            // lambda$static$1 pc 0-10: the ABOVE state the EMPTY
+            // collision the head keeps
+            if crate::world::collision_shape(get(mx, above_y, mz))
+                != crate::world::CollisionShape::Empty
+            {
+                continue;
+            }
+            // lambda$static$1 pc 13-25: the GROUND state the
+            // isFaceFull(UP) arm the Full shape answers
+            if crate::world::collision_shape(get(mx, ground_y, mz))
+                != crate::world::CollisionShape::Full
+            {
+                continue;
+            }
+            // pc 132-188: the spawn cell — the obstruction walk the
+            // client's overlay verdict folds (the liquid gate the
+            // head keeps, the unobstructed the 3-cell span answers)
+            let mut obstructed = false;
+            for dy in 0..=2 {
+                let id = get(mx, above_y + dy, mz);
+                if id == crate::world::WATER || id == crate::world::LAVA {
+                    obstructed = true;
+                    break;
+                }
+                if crate::world::collision_shape(id) != crate::world::CollisionShape::Empty {
+                    obstructed = true;
+                    break;
+                }
+            }
+            if obstructed {
+                continue;
+            }
+            // pc 73-80: the mutable UP move — the spawn cell the
+            // ABOVE cell answers
+            return Some((mx, above_y, mz));
+        }
+    }
+    None
+}
+
+/// THE DARKNESS VERDICT (javap MobEffectUtil
+/// lambda$addEffectToPlayersAround$0 pc 0-87 — the predicate the
+/// `addEffectToPlayersAround(level, null, center, 40.0, instance,
+/// 200)` walk consults): the survival gate the head keeps, the
+/// null-source ally arm the skip wears (pc 11-24 — the `ifnull 24`
+/// branch), the `closerThan(center, 40.0)` the STRICT
+/// `distanceToSqr < 1600.0` fold speaks (javap Vec3.closerThan pc
+/// 22-34 — the `dcmpg`/`ifge` the equality refusal keeps — the
+/// exact-touch the FALSE wears), the hasEffect refresh arm the
+/// client's empty effect store keeps TRUE (pc 37-44 the `ifeq 82`
+/// the no-effect answer). The verdict the darkness record's own
+/// gate answers — the effect's instance the effects-lane round
+/// banks.
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn warden_darkness_applies(
+    center: (f64, f64, f64),
+    player_pos: (f64, f64, f64),
+    player_survival: bool,
+) -> bool {
+    // pc 0-10: the survival gate — the gameMode's own isSurvival
+    // verdict (the client's own Survival|Adventure fold)
+    if !player_survival {
+        return false;
+    }
+    // pc 24-34: the STRICT distance fold — d2 < 40.0 * 40.0
+    let dx = player_pos.0 - center.0;
+    let dy = player_pos.1 - center.1;
+    let dz = player_pos.2 - center.2;
+    let d2 = dx * dx + dy * dy + dz * dz;
+    d2 < WARDEN_DARKNESS_RADIUS * WARDEN_DARKNESS_RADIUS
+}
+
 /// `SculkSpreader.addCursors` pc 4-8 (javap): the `sipush 1000`
 /// `Math.min(charge, 1000)` the per-cursor cap banks — the loop
 /// `while (charge > 0)` walks (pc 0-1 the `ifle 32` head), each pass
@@ -4537,6 +4718,235 @@ mod tests {
             warden_try_warn(pos, &[(2.5, 40.0, 0.5)], &mut capped),
             None,
             "the gate the pc order keeps"
+        );
+    }
+
+    /// THE SUMMON WALK THE GROUND LAW KEEPS (javap SpawnUtil
+    /// trySpawnMob pc 0-203 + moveToPossibleSpawnPosition pc 0-94 +
+    /// Strategy lambda$static$1 — the 26.2 jar): the TWO draws the
+    /// attempt spends BEFORE every gate (pc 22-44), the y-walk the 13
+    /// checks the window keeps (the ground 45..33 for the y-40 head,
+    /// the above one higher), the law the pair keeps: the above EMPTY
+    /// + the ground FULL, the obstruction the 3-cell span + the liquid
+    /// gate folds, the success the ABOVE cell answers.
+    #[test]
+    fn the_warden_summon_walk_the_ground_law_the_two_draws_keep() {
+        use std::collections::HashMap;
+        let air = crate::world::AIR;
+        let stone = crate::world::STONE;
+        let farmland = crate::world::FARMLAND;
+        let water = crate::world::WATER;
+
+        // === THE CLEAN FLOOR LANDS (the first attempt's own two draws
+        // the spawn cell speaks): the stone floor at y=34 (inside the
+        // 45..33 window), the spawn the ABOVE cell 35 keeps — the cell
+        // the SAME-seed probe's own two draws names
+        let mut floor: HashMap<(i32, i32, i32), u16> = HashMap::new();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                floor.insert((x, 34, z), stone);
+            }
+        }
+        let mut probe = crate::drops::Lcg::new(0xA11);
+        let expect_dx = probe.next_int_inclusive(-5, 5);
+        let expect_dz = probe.next_int_inclusive(-5, 5);
+        let mut rng = crate::drops::Lcg::new(0xA11);
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *floor.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            Some((expect_dx, 35, expect_dz)),
+            "the clean floor the above cell spawns — the two draws the attempt spent"
+        );
+        assert_eq!(
+            rng.next_f32(),
+            probe.next_f32(),
+            "the success the FIRST attempt wears — two draws the stream spent"
+        );
+
+        // === THE ALL-AIR WORLD: the ground law the 13 checks refuse —
+        // the 20 attempts the 40 draws spend (the mirror the stream
+        // position pins)
+        let mut rng = crate::drops::Lcg::new(0xB22);
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |_: i32, _: i32, _: i32| air,
+                &mut rng,
+            ),
+            None,
+            "the no-ground world the cap keeps"
+        );
+        let mut mirror = crate::drops::Lcg::new(0xB22);
+        for _ in 0..(2 * WARDEN_SUMMON_ATTEMPTS as usize) {
+            mirror.next_int_inclusive(-5, 5);
+        }
+        assert_eq!(
+            rng.next_f32(),
+            mirror.next_f32(),
+            "the 20 attempts the 40 draws spend — the stream position pins"
+        );
+
+        // === THE GROUND LAW (lambda$static$1 the pair keeps): the
+        // farmland ground the Column shape the FULL check refuses, the
+        // farmland above the EMPTY check refuses
+        let mut column_floor: HashMap<(i32, i32, i32), u16> = HashMap::new();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                column_floor.insert((x, 34, z), farmland);
+            }
+        }
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *column_floor.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            None,
+            "the column ground the isFaceFull refusal wears"
+        );
+        let mut slab_above = floor.clone();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                slab_above.insert((x, 35, z), farmland);
+            }
+        }
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *slab_above.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            None,
+            "the column above the isEmpty refusal wears"
+        );
+
+        // === THE WINDOW'S EDGES (the mutable's DOWN move first — the
+        // ground 45..33 the 13 checks speak): the y-45 floor the top
+        // check lands, the y-32 floor the window below refuses. The
+        // SUCCESS cases re-seed the SAME stream — the first attempt's
+        // own draws the probe's pair names
+        let mut rng = crate::drops::Lcg::new(0xA11);
+        let mut top_floor: HashMap<(i32, i32, i32), u16> = HashMap::new();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                top_floor.insert((x, 45, z), stone);
+            }
+        }
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *top_floor.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            Some((expect_dx, 46, expect_dz)),
+            "the window's top the k-1 check lands"
+        );
+        let mut low_floor: HashMap<(i32, i32, i32), u16> = HashMap::new();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                low_floor.insert((x, 32, z), stone);
+            }
+        }
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *low_floor.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            None,
+            "the window's below the 13 checks refuse"
+        );
+
+        // === THE OBSTRUCTION WALK (pc 132-188 the client's fold): the
+        // water the liquid gate refuses (the collision the Empty the
+        // above check PASSES — the liquid head catches); the SPAN is
+        // where the verdict bites: the water in the 3-cell span above
+        // the found pair refuses it (the solid CAN'T — the stone the
+        // span carries the HIGHER pair the descent lands on — the
+        // walk the top-most valid ground answers), the water ABOVE the
+        // span the spawn keeps. The SUCCESS case re-seeds — the first
+        // attempt's own draws the probe's pair names
+        let mut wet = floor.clone();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                wet.insert((x, 35, z), water);
+            }
+        }
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *wet.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            None,
+            "the span's own cell the liquid refusal wears"
+        );
+        let mut wet_top = floor.clone();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                wet_top.insert((x, 37, z), water);
+            }
+        }
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *wet_top.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            None,
+            "the span's top cell the liquid refusal wears"
+        );
+        let mut wet_high = floor.clone();
+        for x in -8..=8 {
+            for z in -8..=8 {
+                wet_high.insert((x, 38, z), water);
+            }
+        }
+        let mut rng = crate::drops::Lcg::new(0xA11);
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| true,
+                |x, y, z| *wet_high.get(&(x, y, z)).unwrap_or(&air),
+                &mut rng,
+            ),
+            Some((expect_dx, 35, expect_dz)),
+            "the span's above the box misses — the spawn lands"
+        );
+
+        // === THE BORDER GATE (pc 59-68): the unloaded column the
+        // attempt refuses — the TWO draws the gate's own head spent
+        // (the pc order the mirror pins)
+        let mut rng = crate::drops::Lcg::new(0xC33);
+        assert_eq!(
+            warden_summon_walk(
+                (0, 40, 0),
+                |_, _| false,
+                |_: i32, _: i32, _: i32| stone,
+                &mut rng,
+            ),
+            None,
+            "the unloaded column the border gate refuses"
+        );
+        let mut mirror = crate::drops::Lcg::new(0xC33);
+        for _ in 0..(2 * WARDEN_SUMMON_ATTEMPTS as usize) {
+            mirror.next_int_inclusive(-5, 5);
+        }
+        assert_eq!(
+            rng.next_f32(),
+            mirror.next_f32(),
+            "the gate the draws PRECEDE — the bytecode's own order pins"
         );
     }
 }

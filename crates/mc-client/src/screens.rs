@@ -8185,6 +8185,153 @@ impl App {
         });
     }
 
+    /// THE SCULK SHRIEKER'S OWN REMOVAL TAIL (javap
+    /// SculkShriekerBlockEntity.preRemoveSideEffects pc 0-41 over the
+    /// 26.2 jar — the block's removal the SHRIEKING state gates (the
+    /// blockstate property the shriek arms, the scheduleTick-90 window
+    /// the `frame < free_at` fold keeps — the hearing walk's own law),
+    /// the ServerLevel arm tryRespond answers): javap tryRespond
+    /// pc 0-42 — the canRespond gate (the CAN_SUMMON property the
+    /// state read keeps, the PEACEFUL acmp the difficulty walk serves,
+    /// the SPAWN_WARDENS gamerule the default-true the lane keeps) +
+    /// the `warningLevel > 0` pair the head wears, the
+    /// trySummonWarden walk the 20-attempt law serves (the level RNG
+    /// the two draws per attempt spends), the FAILED summon the
+    /// playWardenReplySound voice speaks (the SOUND_BY_LEVEL quartet,
+    /// the THREE randomBetweenInclusive(-10, 10) draws the offsets
+    /// bank, the HOSTILE v5.0 f1.0 voice the playSound overload
+    /// speaks), the applyDarknessAround-40 the tail wears REGARDLESS
+    /// of the summon verdict (pc 28-39 the both-arms tail keeps —
+    /// pc 20's `ifne 28` the sound arm alone skips). The cell the vec
+    /// removal retires (the block gone) BEFORE the tail reads the
+    /// cell's own state (the removal the preRemove walk serves — the
+    /// state the block carried, not the world's after-image).
+    #[cfg_attr(not(test), expect(dead_code))] // the removal entry the dig-integration round wires
+    pub fn remove_sculk_shrieker(&mut self, x: i32, y: i32, z: i32) {
+        let Some(idx) = self
+            .sculk_shrikers
+            .iter()
+            .position(|sk| sk.pos == (x, y, z))
+        else {
+            return;
+        };
+        let sk = self.sculk_shrikers.remove(idx);
+        // THE SHRIEKING GATE (pc 1-13): the window the `frame <
+        // free_at` fold keeps — the cleared/never-shrieked cell the
+        // silent removal wears (the canRespond walk the removal never
+        // reaches)
+        if self.frame >= sk.free_at {
+            return;
+        }
+        // THE CANRESPOND + warningLevel PAIR (pc 0-14): the same
+        // difficulty read the arrival walk keeps (the net/offline
+        // split the world's own opinion answers)
+        let difficulty = if self.world_is_network {
+            self.net_world
+                .as_ref()
+                .map(|w| w.difficulty)
+                .unwrap_or(crate::difficulty::Difficulty::Normal)
+        } else {
+            self.offline_world
+                .as_ref()
+                .map(|w| w.difficulty)
+                .unwrap_or(crate::difficulty::Difficulty::Normal)
+        };
+        let can_respond = sk.can_summon
+            && difficulty != crate::difficulty::Difficulty::Peaceful;
+        if !can_respond || sk.warning_level <= 0 {
+            return;
+        }
+        // THE SUMMON WALK (pc 15-20): the 20-attempt law the level RNG
+        // wears — the world reads the closures carry (the disjoint
+        // field splits the walk needs: the world's immutable read the
+        // closures borrow, the level stream the walk spends)
+        let world: Option<&crate::world::World> = if self.world_is_network {
+            self.net_world.as_ref()
+        } else {
+            self.offline_world.as_ref()
+        };
+        let spawn = crate::sculk::warden_summon_walk(
+            (x, y, z),
+            |wx, wz| {
+                world
+                    .as_ref()
+                    .map(|w| w.column_sent(wx, wz))
+                    .unwrap_or(false)
+            },
+            |wx, wy, wz| {
+                world
+                    .as_ref()
+                    .map(|w| w.get(wx, wy, wz))
+                    .unwrap_or(crate::world::AIR)
+            },
+            &mut self.level_ambient_rng,
+        );
+        match spawn {
+            Some((sx, sy, sz)) => {
+                // THE SPAWNED WARDEN (the addFreshEntityWithPassengers
+                // walk the list keeps — the feet-center the entity's
+                // own position wears: (cell.x + 0.5, cell.y, cell.z +
+                // 0.5)), the record the lane's vocabulary banks
+                self.wardens.push((sx as f64 + 0.5, sy as f64, sz as f64 + 0.5));
+                self.game_events.push(format!(
+                    "warden_summon @{} x{:.6} y{:.6} z{:.6}",
+                    self.frame,
+                    sx as f64 + 0.5,
+                    sy as f64,
+                    sz as f64 + 0.5
+                ));
+            }
+            None => {
+                // THE REPLY VOICE (pc 20-27): the SOUND_BY_LEVEL
+                // quartet the cell's own level answers (the null miss
+                // the silent tail keeps), the THREE
+                // randomBetweenInclusive(-10, 10) draws the offsets
+                // bank (pc 31-77 — the level RNG's own stream), the
+                // playSound(null, (double)rx, (double)ry, (double)rz,
+                // sound, HOSTILE, 5.0f, 1.0f) the raw-int doubles the
+                // positioned walk speaks
+                if let Some(sound) = crate::sculk::warden_reply_sound(sk.warning_level) {
+                    let rx = x + self.level_ambient_rng.next_int_inclusive(-10, 10);
+                    let ry = y + self.level_ambient_rng.next_int_inclusive(-10, 10);
+                    let rz = z + self.level_ambient_rng.next_int_inclusive(-10, 10);
+                    let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                    let yaw = self.listener_yaw();
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        sound,
+                        5.0,
+                        1.0,
+                        ear_distance(ear, rx as f64, ry as f64, rz as f64),
+                        ear_pan(ear, yaw, rx as f64, ry as f64, rz as f64),
+                    );
+                }
+            }
+        }
+        // THE DARKNESS TAIL (pc 28-39): the verdict walk the center
+        // (+0.5 the atCenterOf fold) + the player's own survival and
+        // feet-position fold answers — the record the lane's
+        // vocabulary banks, the effect's own lightmap fold the
+        // effects-lane round speaks
+        let survival = self.game_mode.is_survival();
+        if let Some(b) = self.body.as_ref() {
+            if crate::sculk::warden_darkness_applies(
+                (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5),
+                (b.x, b.y, b.z),
+                survival,
+            ) {
+                self.game_events.push(format!(
+                    "warden_darkness @{} x{:.6} y{:.6} z{:.6} t{}",
+                    self.frame,
+                    x as f64 + 0.5,
+                    y as f64 + 0.5,
+                    z as f64 + 0.5,
+                    crate::sculk::WARDEN_DARKNESS_TICKS
+                ));
+            }
+        }
+    }
+
     /// THE SCULK CATALYST'S OWN PLACEMENT (the registry walk's analog
     /// — the cell the vec banks, the fresh catalyst the PULSE-free
     /// state keeps: no bloom the window's silence wears, the cursor
@@ -42220,6 +42367,269 @@ mod tests {
         assert_eq!(
             app.warden_tracker.ticks_since_last_warning, arrival as i32,
             "the tick walk the doTick slot keeps — the warn the counter never resets"
+        );
+    }
+
+    /// THE REMOVAL TAIL THE REPLY VOICE THE DARKNESS WEARS (javap the
+    /// 26.2 jar SculkShriekerBlockEntity.preRemoveSideEffects pc 0-41 +
+    /// tryRespond pc 0-42 + SpawnUtil.trySpawnMob + Warden
+    /// applyDarknessAround — the dig-removed SHRIEKING cell the walk
+    /// answers): the all-air world the can-summon lvl-4 cell the FAILED
+    /// summon wears (the 40 draws the 20 attempts spend, the reply
+    /// voice the listening_angry quartet speaks, the THREE offsets the
+    /// voice's own draws bank, the darkness record the both-arms tail
+    /// keeps), the stone floor the SUCCESSFUL summon wears (the
+    /// feet-center the wardens list banks, NO reply voice the success
+    /// never plays, the TWO draws the first attempt keeps), the gates
+    /// the silent removals speak (the never-shrieked window, the
+    /// zero-level cell, the PEACEFUL acmp), the verdict's own folds the
+    /// records answer (the EXACT-40 distance the strict refusal keeps,
+    /// the creative mode the survival gate refuses).
+    #[test]
+    fn the_removal_tail_the_reply_voice_the_darkness_wears() {
+        // === WALK A: the FAILED summon — the all-air world the reply
+        // voice + the darkness record keep (the 40 + 3 draws the walk
+        // spends — the mirror the stream position pins)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 35.0, 0.0, 0.0, 0.0));
+        app.place_sculk_shrieker(2, 35, 0, true);
+        let f = app.frame;
+        app.sculk_shrikers[0].free_at = f + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        let probe = app.level_ambient_rng.clone();
+        app.remove_sculk_shrieker(2, 35, 0);
+        assert!(
+            app.sculk_shrikers.is_empty(),
+            "the dug cell the vec removal retires"
+        );
+        assert!(
+            app.wardens.is_empty(),
+            "the failed summon the warden list keeps empty"
+        );
+        assert!(
+            !app
+                .game_events
+                .iter()
+                .any(|l| l.starts_with("warden_summon @")),
+            "the failed summon the summon record never banks"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.listening_angry ")),
+            "the lvl-4 reply the listening_angry voice speaks"
+        );
+        assert_eq!(
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.warden."))
+                .count(),
+            1,
+            "the reply the ONLY warden voice the tail plays"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .find(|l| l.starts_with("warden_darkness @"))
+                .map(String::as_str),
+            Some(
+                format!("warden_darkness @{f} x2.500000 y35.500000 z0.500000 t260").as_str()
+            ),
+            "the darkness record the both-arms tail banks — the +0.5 center the atCenterOf fold wears"
+        );
+        // THE DRAW LAW: the 40 summon draws + the THREE reply offsets —
+        // the mirror the stream position pins
+        let mut mirror = probe.clone();
+        for _ in 0..(2 * crate::sculk::WARDEN_SUMMON_ATTEMPTS as usize) {
+            mirror.next_int_inclusive(
+                -crate::sculk::WARDEN_SUMMON_RANGE,
+                crate::sculk::WARDEN_SUMMON_RANGE,
+            );
+        }
+        for _ in 0..3 {
+            mirror.next_int_inclusive(-10, 10);
+        }
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            mirror.next_f32(),
+            "the failed walk the 43 draws spend — the bytecode's own order pins"
+        );
+
+        // === WALK B: the SUCCESSFUL summon — the stone floor the
+        // warden lands (the feet-center the list banks, NO reply the
+        // success never plays, the TWO draws the first attempt keeps)
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(14.0, 35.0, 14.0, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        let f = app.frame;
+        app.sculk_shrikers[0].free_at = f + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        let mut probe = app.level_ambient_rng.clone();
+        let expect_dx = probe.next_int_inclusive(
+            -crate::sculk::WARDEN_SUMMON_RANGE,
+            crate::sculk::WARDEN_SUMMON_RANGE,
+        );
+        let expect_dz = probe.next_int_inclusive(
+            -crate::sculk::WARDEN_SUMMON_RANGE,
+            crate::sculk::WARDEN_SUMMON_RANGE,
+        );
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(
+            app.wardens,
+            vec![(16.0 + expect_dx as f64 + 0.5, 35.0, expect_dz as f64 + 0.5)],
+            "the spawn cell the feet-center wears — the first attempt's own draws name it"
+        );
+        assert!(
+            app.game_events.iter().any(|l| l.starts_with(&format!(
+                "warden_summon @{f} x{:.6} y35.000000 z",
+                16.0 + expect_dx as f64 + 0.5
+            ))),
+            "the summon record the spawn's own cell banks"
+        );
+        assert!(
+            !app
+                .sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.")),
+            "the success the reply voice never plays"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("warden_darkness @")),
+            "the darkness the both-arms tail wears — the summon verdict the tail never skips"
+        );
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            probe.next_f32(),
+            "the success the TWO draws spend"
+        );
+
+        // === WALK C: THE GATES THE SILENT REMOVALS SPEAK — the
+        // never-shrieked window the cell alone retires, the zero-level
+        // cell the tryRespond head refuses, the PEACEFUL world the
+        // canRespond acmp refuses
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 35.0, 0.0, 0.0, 0.0));
+        app.place_sculk_shrieker(2, 35, 0, true);
+        app.sculk_shrikers[0].warning_level = 4;
+        let mut probe = app.level_ambient_rng.clone();
+        app.remove_sculk_shrieker(2, 35, 0);
+        assert!(
+            app.sculk_shrikers.is_empty(),
+            "the never-shrieked window the cell alone retires"
+        );
+        assert!(
+            !app
+                .game_events
+                .iter()
+                .any(|l| l.starts_with("warden_darkness @") || l.starts_with("warden_summon @")),
+            "the never-shrieked window the silent removal keeps"
+        );
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            probe.next_f32(),
+            "the SHRIEKING gate the walk never reaches — no draw the removal spends"
+        );
+        // THE ZERO-LEVEL CELL: the shrieking window the warnLevel > 0
+        // pair the head refuses
+        app.place_sculk_shrieker(2, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        let mut probe = app.level_ambient_rng.clone();
+        app.remove_sculk_shrieker(2, 35, 0);
+        assert!(
+            !app
+                .game_events
+                .iter()
+                .any(|l| l.starts_with("warden_darkness @") || l.starts_with("warden_summon @")),
+            "the zero level the tryRespond head refuses"
+        );
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            probe.next_f32(),
+            "the head the draws never reaches"
+        );
+        // THE PEACEFUL ACMP: the can-summon lvl-4 cell the gate refuses
+        let mut peaceful = air_net_world(2, 0);
+        peaceful.difficulty = crate::difficulty::Difficulty::Peaceful;
+        app.net_world = Some(peaceful);
+        app.place_sculk_shrieker(2, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        let mut probe = app.level_ambient_rng.clone();
+        app.remove_sculk_shrieker(2, 35, 0);
+        assert!(
+            !app
+                .game_events
+                .iter()
+                .any(|l| l.starts_with("warden_darkness @") || l.starts_with("warden_summon @")),
+            "the PEACEFUL acmp the canRespond refusal wears"
+        );
+        assert_eq!(
+            app.level_ambient_rng.next_f32(),
+            probe.next_f32(),
+            "the gate the summon walk never arms"
+        );
+        // THE EXACT-40 DISTANCE: the strict closerThan the refusal
+        // keeps (the d2 >= 1600 the FALSE wears) — the reply voice the
+        // failed summon plays, the darkness record the verdict refuses
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(2.5, 75.5, 0.5, 0.0, 0.0));
+        app.place_sculk_shrieker(2, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 1;
+        app.remove_sculk_shrieker(2, 35, 0);
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.nearby_close ")),
+            "the lvl-1 reply the nearby_close voice speaks"
+        );
+        assert!(
+            !app
+                .game_events
+                .iter()
+                .any(|l| l.starts_with("warden_darkness @")),
+            "the exact-40 the strict fold refuses — d2 >= 1600 the FALSE wears"
+        );
+        // THE CREATIVE GATE: the survival head the verdict refuses
+        app.body = Some(crate::body::PlayerBody::new(0.0, 35.0, 0.0, 0.0, 0.0));
+        app.game_mode = GameMode::Creative;
+        app.place_sculk_shrieker(2, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 2;
+        app.remove_sculk_shrieker(2, 35, 0);
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.nearby_closer ")),
+            "the lvl-2 reply the nearby_closer voice speaks"
+        );
+        assert!(
+            !app
+                .game_events
+                .iter()
+                .any(|l| l.starts_with("warden_darkness @")),
+            "the creative mode the survival gate refuses"
         );
     }
 
