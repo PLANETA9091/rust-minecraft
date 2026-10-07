@@ -691,6 +691,25 @@ pub enum ParticleKind {
         /// down — 0, 5, .., 45 the i*5 fold gives).
         delay: u32,
     },
+    /// `SoulParticle` — the SCULK_SOUL bloom wisp (javap the
+    /// `SculkCatalystBlockEntity$CatalystListener.bloom`'s
+    /// `sendParticles(SCULK_SOUL, ...)` post the 26.2 jar speaks, the
+    /// `sculk_soul` particle type's OWN 11-frame set the json banks —
+    /// `minecraft:sculk_soul_0..10` ASCENDING — the `SoulParticle`
+    /// ctor chain the walk serves: the base draws (the dead life + the
+    /// size the scale(1.5F) fold rides), the `RisingParticle` jit +
+    /// lifetime overrides, the sprite the `SpriteSet.first()` /
+    /// `setSpriteFromAge` picks — NO draw the first() call speaks),
+    /// the zero velocity the packet's gaussian*0.0 trio keeps (the
+    /// handler's 6 nextGaussian draws the SPENDS the 0-speed
+    /// multiplies discard — the wisps hover the jitter ±0.05 alone
+    /// wears), the white tint the ctor never tints, the alpha 1.0 the
+    /// provider's own setAlpha speaks, the TRANSLUCENT layer the
+    /// getLayer override returns, the NOT-glowing light the default
+    /// isGlowing=false keeps (the glow twin the $GlowProvider alone
+    /// arms).
+    #[cfg_attr(not(test), expect(dead_code))]
+    SculkSoul,
 }
 
 /// The splash droplet's 4 frames (the `splash_0..3` textures the jar
@@ -764,6 +783,30 @@ pub fn sculk_charge_frame(age: u32, lifetime: u32) -> usize {
 pub fn sculk_pop_frame(age: u32, lifetime: u32) -> usize {
     ((age as usize * (SCULK_POP_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
         .min(SCULK_POP_FRAME_COUNT - 1)
+}
+
+/// The SCULK_SOUL wisp's 11 frames (the `sculk_soul_0..10` textures
+/// the jar speaks — the `sculk_soul` particle type's OWN set the json
+/// lists ASCENDING, the list index the frame law reads directly; the
+/// plain `soul` type's `soul_0..10` set the SEPARATE pool the same
+/// walk speaks — the two jsons the two lists keep, this lane the
+/// catalyst's own type wears).
+pub const SCULK_SOUL_FRAME_COUNT: usize = 11;
+
+/// The soul wisp's own frame law (the same `MutableSpriteSet.get`
+/// walk — 11 frames, the 12..44 tick life walking the ascending list).
+pub fn sculk_soul_frame(age: u32, lifetime: u32) -> usize {
+    ((age as usize * (SCULK_SOUL_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
+        .min(SCULK_SOUL_FRAME_COUNT - 1)
+}
+
+/// The soul wisp's own lifetime law (javap `RisingParticle` ctor pc
+/// 165-191 verbatim: `(int)(8.0 / (nextFloat * 0.8 + 0.2)) + 4` — the
+/// divisor 0.2..1.0 the 8..40 quotient speaks, the +4 tail the
+/// 12..44 band wears).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn sculk_soul_lifetime(r: f32) -> u32 {
+    (8.0 / (r as f64 * 0.8 + 0.2)) as u32 + 4
 }
 
 /// The shriek's own lifetime (javap the ctor's `bipush 30` write —
@@ -5578,6 +5621,80 @@ pub fn sculk_shriek_ring(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) -
     out
 }
 
+/// The SCULK_SOUL bloom wisps (javap the walk the 26.2 jar serves —
+/// the bloom's `sendParticles(SCULK_SOUL, x + 0.5, y + 1.15, z + 0.5,
+/// 2, 0.2, 0.0, 0.2, 0)` post, the CLIENT handler the packet answers:
+/// `ClientPacketListener.handleParticleEvent` count>0 branch pc
+/// 113-266 — per particle SIX `nextGaussian` draws the walk spends
+/// (3 offsets × the packet's dist trio + 3 velocities × the packet's
+/// speed), the offsets the `x + g * dist` folds wear, the velocities
+/// the `g * 0.0` speed multiplies DISCARD (the spends the 0-speed
+/// packet keeps, the values the folds never wear); then the
+/// `SoulParticle` ctor chain (the `Particle` base's dead life + size
+/// draws, the `RisingParticle` pc 69-162 the ±0.05 jitter pairs and
+/// the 8.0/(r*0.8+0.2)+4 lifetime write, the `scale(1.5F)` the quad
+/// ×1.5 fold rides, the `SpriteSet.first()` NO draw the first() call
+/// speaks) — the friction 0.96 the RisingParticle putfield keeps, the
+/// gravity 0.0 the base float, the velocity ZERO the packet's
+/// 0.0-speed multiplies wear (the wisps hover the jitter alone
+/// moves). THE SAME STREAM the ambient walk serves — the level
+/// ambient rng the client's own random bank stands in (the shriek
+/// ring's own convention the wire lanes keep).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn sculk_soul_wisps(anchor: (i32, i32, i32), rng: &mut crate::drops::Lcg) -> Vec<Particle> {
+    // the packet's own base pos (the bloom walk's +0.5 / +1.15 /
+    // +0.5 folds the bytecode speaks)
+    let px = anchor.0 as f64 + 0.5;
+    let py = anchor.1 as f64 + 1.15;
+    let pz = anchor.2 as f64 + 0.5;
+    const X_DIST: f64 = 0.2;
+    const Y_DIST: f64 = 0.0;
+    const Z_DIST: f64 = 0.2;
+    const SPEED: f64 = 0.0;
+    let mut out = Vec::new();
+    for _ in 0..2u32 {
+        // THE HANDLER'S SIX GAUSSIANS (pc 123-222 — 3 offsets + 3
+        // velocities, ALL the draws spend, the velocity trio the 0.0
+        // multiplies discard)
+        let ox = rng.next_gaussian() * X_DIST;
+        let oy = rng.next_gaussian() * Y_DIST;
+        let oz = rng.next_gaussian() * Z_DIST;
+        let _vx = rng.next_gaussian() * SPEED;
+        let _vy = rng.next_gaussian() * SPEED;
+        let _vz = rng.next_gaussian() * SPEED;
+        // THE BASE CTOR'S DEAD DRAWS (the life the RisingParticle's
+        // own write overrides, the size the scale(1.5F) fold rides)
+        let r_life = rng.next_f32();
+        let r_size = rng.next_f32();
+        let _dead_base_life = base_lifetime(r_life);
+        // THE RISINGPARTICLE WALK (pc 69-191 — the ±0.05 jitter
+        // pairs, the lifetime write the law speaks)
+        let jx = (rng.next_f32() - rng.next_f32()) * 0.05;
+        let jy = (rng.next_f32() - rng.next_f32()) * 0.05;
+        let jz = (rng.next_f32() - rng.next_f32()) * 0.05;
+        let r_life2 = rng.next_f32();
+        out.push(Particle {
+            kind: ParticleKind::SculkSoul,
+            x: px + ox + jx as f64,
+            y: py + oy + jy as f64,
+            z: pz + oz + jz as f64,
+            prev: None,
+            vx: 0.0,
+            vy: 0.0,
+            vz: 0.0,
+            age: 0,
+            lifetime: sculk_soul_lifetime(r_life2),
+            gravity: 0.0,
+            friction: 0.96,
+            quad_size: base_quad_size(r_size) * 1.5,
+            uo: 0.0,
+            vo: 0.0,
+            col: [1.0, 1.0, 1.0],
+        });
+    }
+    out
+}
+
 /// The Direction enum's own ordinal (the values() array index the
 /// `MultifaceBlock.unpack` bit law reads — DOWN 0, UP 1, NORTH 2,
 /// SOUTH 3, WEST 4, EAST 5).
@@ -9387,5 +9504,106 @@ mod tests {
                 "the seeded chain replays"
             );
         }
+    }
+
+    /// THE SOUL WISPS' OWN WALK (javap the bloom's sendParticles post +
+    /// the client handler's count>0 branch + the SoulParticle ctor
+    /// chain over the 26.2 jar): the TWO particles the count speaks,
+    /// the +0.5/+1.15/+0.5 base the packet pos keeps, the SIX
+    /// gaussians per particle the handler spends (the offsets the 0.2
+    /// x/z dists scale, the y dist 0.0 the offset discards, the
+    /// velocity trio the 0.0 speed discards), the EIGHT f32 draws the
+    /// ctor chain spends (the dead life + the size the scale rides,
+    /// the six jitter floats the ±0.05 pairs fold, the lifetime
+    /// divisor the 12..44 band speaks), the ZERO velocity the packet
+    /// keeps, the 0.96 friction the RisingParticle putfield keeps,
+    /// the ×1.5 quad the scale fold rides, the white tint the ctor
+    /// never tints, the frame law the ascending 11 keeps, the seeded
+    /// chain replays.
+    #[test]
+    fn the_soul_wisps_the_gaussians_the_zero_velocity_keep() {
+        let seed = 0x5C01_5EEDu64 ^ 0xB100;
+        let mut r = crate::drops::Lcg::new(seed);
+        let wisps = sculk_soul_wisps((4, 33, 2), &mut r);
+        assert_eq!(wisps.len(), 2, "the two particles the count speaks");
+        for p in &wisps {
+            assert!(
+                matches!(p.kind, ParticleKind::SculkSoul),
+                "the soul kind the bloom walk banks"
+            );
+            // THE BASE + SPREAD (the packet pos ± the 0.05 jitter, the
+            // x/z the 0.2-dist gaussians widen — the y the 0.0 dist
+            // keeps the jitter band alone)
+            let (bx, by, bz) = (4.5f64, 34.15f64, 2.5f64);
+            assert!(
+                (p.x - bx).abs() <= 0.05 + 1.0 && (p.z - bz).abs() <= 0.05 + 1.0,
+                "the x/z spreads the 0.2-dist gaussians ride"
+            );
+            assert!(
+                (p.y - by).abs() <= 0.05,
+                "the y the 0.0 dist keeps — the jitter band alone"
+            );
+            assert_eq!(
+                (p.vx, p.vy, p.vz),
+                (0.0, 0.0, 0.0),
+                "the zero velocity the 0.0-speed multiplies wear"
+            );
+            assert!(
+                (12..=44).contains(&p.lifetime),
+                "the 8.0/(r*0.8+0.2)+4 law the 12..44 band speaks: {}",
+                p.lifetime
+            );
+            assert_eq!(p.friction, 0.96, "the RisingParticle putfield keeps");
+            assert_eq!(p.gravity, 0.0);
+            assert_eq!(p.col, [1.0, 1.0, 1.0], "the white tint the ctor keeps");
+            assert!(
+                (0.15..=0.3).contains(&p.quad_size),
+                "the base*1.5 quad the scale fold rides: {}",
+                p.quad_size
+            );
+        }
+        // THE DRAW COUNT (28 draws the walk spends — per particle the
+        // six gaussians + the eight f32s the ctor chain spends)
+        let mut replay = crate::drops::Lcg::new(seed);
+        for _ in 0..2 {
+            let _ = replay.next_gaussian();
+            let _ = replay.next_gaussian();
+            let _ = replay.next_gaussian();
+            let _ = replay.next_gaussian();
+            let _ = replay.next_gaussian();
+            let _ = replay.next_gaussian();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+            let _ = replay.next_f32();
+        }
+        assert_eq!(r, replay, "the 28 draws the walk exactly spends");
+        // THE LIFETIME LAW (the divisor edges — the r=0 the 44 keeps,
+        // the r→1 the 12 wears)
+        assert_eq!(sculk_soul_lifetime(0.0), 44, "the 0.2 divisor the 40 quotient keeps");
+        assert_eq!(
+            sculk_soul_lifetime(0.999),
+            12,
+            "the ~1.0 divisor the 8 quotient keeps"
+        );
+        // THE FRAME LAW (the ascending 11 — the age walk the
+        // MutableSpriteSet.get law folds)
+        assert_eq!(SCULK_SOUL_FRAME_COUNT, 11, "the json's own count");
+        assert_eq!(sculk_soul_frame(0, 40), 0, "the birth the first frame keeps");
+        assert_eq!(sculk_soul_frame(40, 40), 10, "the death the last frame wears");
+        assert_eq!(
+            sculk_soul_frame(20, 40),
+            5,
+            "the midpoint the 5*10/40 law speaks"
+        );
+        assert_eq!(
+            sculk_soul_frame(40, 1),
+            10,
+            "the degenerate life the min clamp keeps"
+        );
     }
 }

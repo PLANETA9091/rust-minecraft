@@ -7843,6 +7843,61 @@ impl SculkPopFrames {
     }
 }
 
+/// The PARTICLE LANE's SCULK_SOUL frames — the catalyst bloom's own
+/// 11-frame sprite set (javap: the
+/// `SculkCatalystBlockEntity$CatalystListener.bloom`'s
+/// `sendParticles(SCULK_SOUL, ...)` post the `sculk_soul` particle
+/// type's own set feeds, the jar's `textures/particle/sculk_soul_0..
+/// 10.png` pool the json's ASCENDING list orders — the
+/// `SoulParticle`'s `SpriteSet` the `first()` + `setSpriteFromAge`
+/// walks serve, each file loaded and sha1-verified the same stream
+/// the sculk banks speak). A missing or tampered frame keeps the
+/// bloom wisps invisible (the honest absence the other lanes speak).
+pub struct SculkSoulFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The sculk soul texture's own layout (the jar's 16x16 the IHDR
+/// speaks).
+pub const SCULK_SOUL_SPRITE_SIDE: u32 = 16;
+
+impl SculkSoulFrames {
+    /// Load the 11 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 16x16 layout.
+    pub fn load(root: &std::path::Path) -> Option<SculkSoulFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SCULK_SOUL_FRAME_COUNT);
+        for i in 0..crate::particles::SCULK_SOUL_FRAME_COUNT {
+            let bytes = std::fs::read(root.join(skin::PARTICLE_SCULK_SOUL_RUNTIME_PATHS[i]))
+                .ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes))
+                != skin::PARTICLE_SCULK_SOUL_PNG_SHA1S[i]
+            {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != SCULK_SOUL_SPRITE_SIDE || h != SCULK_SOUL_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SculkSoulFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..16 the
+    /// 16x16 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, SCULK_SOUL_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SCULK_SOUL_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SCULK_SOUL_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's campfire smoke frames — the dowse arm's cosy
 /// column's 12-frame sprite set (javap: the `campfire_cosy_smoke` +
 /// `campfire_signal_smoke` particle types' own sprites, the jar's

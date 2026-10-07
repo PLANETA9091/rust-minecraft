@@ -690,6 +690,154 @@ pub fn shrieker_hearing(
     Some(((lx * lx + ly * ly + lz * lz).sqrt()) as f32)
 }
 
+/// `SculkCatalystBlockEntity$CatalystListener.getListenerRadius()`
+/// (javap): the `bipush 8` the listen radius banks — the same half-ear
+/// the shrieker's VibrationUser wears, the plain GameEventListener the
+/// catalyst IS (no VibrationSystem the dispatch's tag/data walks
+/// serve — the listener the radius² bound ALONE gates).
+#[cfg_attr(not(test), expect(dead_code))]
+pub const SCULK_CATALYST_LISTEN_RADIUS: i32 = 8;
+
+/// `SculkCatalystBlockEntity$CatalystListener.bloom` pc 21-31 (javap):
+/// the `bipush 8` `scheduleTick(pos, block, 8)` the PULSE window banks
+/// — the blockstate's bloom flag the setBlock walk arms (pc 0-20, the
+/// `setValue(PULSE, true)` + flag-3 walk), the block's own tick walk
+/// (`SculkCatalystBlock.tick` pc 13-36) clears 8 ticks later (the
+/// `setValue(PULSE, false)` the same flag-3 walk wears). The PULSE
+/// property IS `BlockStateProperties.BLOOM` (the block's clinit pc
+/// 11-14 speaks).
+#[cfg_attr(not(test), expect(dead_code))]
+pub const CATALYST_PULSE_TICKS: u64 = 8;
+
+/// `SculkSpreader.addCursors` pc 4-8 (javap): the `sipush 1000`
+/// `Math.min(charge, 1000)` the per-cursor cap banks — the loop
+/// `while (charge > 0)` walks (pc 0-1 the `ifle 32` head), each pass
+/// `new ChargeCursor(pos, capped)` the list add rides and `charge -=
+/// capped` the tail answers; a 5-xp death one cursor keeps, a 1500
+/// death the 1000 + 500 pair wears.
+#[cfg_attr(not(test), expect(dead_code))]
+pub const SCULK_SPREADER_MAX_CHARGE: i32 = 1000;
+
+/// `SculkSpreader.addCursor` pc 4-11 (javap): the `bipush 32`
+/// `cursors.size() >= 32` the list cap banks — the 33rd cursor the
+/// cap silently DROPS (the `if_icmplt 15` the refusal speaks, the add
+/// the 15 pc wears); the NBT load's own `sizeLimitedListOf(32)` the
+/// same cap keeps.
+#[cfg_attr(not(test), expect(dead_code))]
+pub const SCULK_SPREADER_MAX_CURSORS: usize = 32;
+
+/// `SculkSpreader.createLevelSpreader` (javap — the level walk's own
+/// arg quartet): `new SculkSpreader(false, SCULK_REPLACEABLE, 10, 4,
+/// 10, 5)` — the `bipush 10` growthSpawnCost, the `iconst_4`
+/// noGrowthRadius, the `bipush 10` chargeDecayRate, the `iconst_5`
+/// additionalDecayRate the walk banks (the worldgen twin the
+/// `createWorldGenSpreader` speaks — 50/1/5/10 — the isWorldGen flag
+/// the iconst_0 head keeps false).
+#[cfg_attr(not(test), expect(dead_code))]
+pub const SCULK_SPREADER_GROWTH_SPAWN_COST: i32 = 10;
+#[cfg_attr(not(test), expect(dead_code))]
+pub const SCULK_SPREADER_NO_GROWTH_RADIUS: i32 = 4;
+#[cfg_attr(not(test), expect(dead_code))]
+pub const SCULK_SPREADER_CHARGE_DECAY_RATE: i32 = 10;
+#[cfg_attr(not(test), expect(dead_code))]
+pub const SCULK_SPREADER_ADDITIONAL_DECAY_RATE: i32 = 5;
+
+/// ONE CHARGE CURSOR (the `SculkSpreader$ChargeCursor` the offline
+/// lane's own stand-in): the pos the death's own walk banks (the
+/// `BlockPos.containing(eventPos.relative(UP, 0.5))` the
+/// handleGameEvent pc 86-99 serves — the UP half-block the death
+/// point's ceiling cell wears), the charge the addCursors loop's
+/// `Math.min` fold speaks.
+pub struct SculkCursor {
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub pos: (i32, i32, i32),
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub charge: i32,
+}
+
+/// THE CATALYST'S OWN CELL (the CatalystListener's analog — the
+/// vanilla's block entity + spreader the cell stands in): the pos the
+/// block cell keeps, the PULSE window's tail the bloom walk banks
+/// (the scheduleTick 8 the earliest tick the block's own tick clears
+/// — Some = the bloom flag ON), the cursors the spreader's list
+/// banks (the addCursors walk the deaths grow, the 32 cap the
+/// addCursor refusal keeps; the updateCursors drain the NEXT round's
+/// lane wears).
+pub struct SculkCatalystCell {
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub pos: (i32, i32, i32),
+    pub pulse_off_at: Option<u64>,
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub cursors: Vec<SculkCursor>,
+}
+
+/// THE CATALYST'S HEARING WALK (javap
+/// `CatalystListener.handleGameEvent` pc 0-23 — the `event.is(
+/// GameEvent.ENTITY_DIE)` head the ONLY event the gate keeps, the
+/// `sourceEntity() instanceof LivingEntity` pair the source gate
+/// speaks, the dispatcher's radius² bound the range walk wears): the
+/// other events the None keeps, the out-of-range catalyst the None
+/// keeps, the death the Some speaks. NO occlusion walk the plain
+/// listener's own body carries (no isOccluded the catalyst never
+/// wears — the vibration-walk gates the VibrationSystem's users keep,
+/// the catalyst NOT one), NO data-busy window the second death the
+/// same tick answers (the pulsing catalyst the fresh hearing keeps).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn catalyst_hearing(
+    event: &str,
+    event_pos: (f64, f64, f64),
+    catalyst: (i32, i32, i32),
+) -> Option<()> {
+    // THE EVENT GATE (the Holder.is(ENTITY_DIE) head — the ONE event
+    // the catalyst's own body answers)
+    if event != "entity_die" {
+        return None;
+    }
+    // THE IN-RANGE GATE (the dispatcher's block-pos distSqr the
+    // radius² bounds; the BlockPos.containing the floor fold serves,
+    // the EQUAL case the strict `>` refusal passes)
+    let eb = (
+        crate::mth::floor(event_pos.0),
+        crate::mth::floor(event_pos.1),
+        crate::mth::floor(event_pos.2),
+    );
+    let dx = (eb.0 - catalyst.0) as f64;
+    let dy = (eb.1 - catalyst.1) as f64;
+    let dz = (eb.2 - catalyst.2) as f64;
+    let dist_sqr = dx * dx + dy * dy + dz * dz;
+    let radius_sqr = (SCULK_CATALYST_LISTEN_RADIUS * SCULK_CATALYST_LISTEN_RADIUS) as f64;
+    if dist_sqr > radius_sqr {
+        return None;
+    }
+    Some(())
+}
+
+/// THE ADDCURSORS WALK (javap SculkSpreader.addCursors + addCursor —
+/// the `while (charge > 0)` loop the 1000-cap fold serves, the 32
+/// list cap the tail drops): the xp's own per-cursor charges the walk
+/// banks — the sub-1000 death ONE cursor keeps, the 1500 death the
+/// 1000 + 500 pair wears, the 33000 death the 33-walk the 32-cap's
+/// own tail trims (the 33rd cursor the refusal speaks). The
+/// `existing` arg the list's own head keeps (the death the prior
+/// deaths' cursors ahead rides — the cap the JOINT list bounds).
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn sculk_cursor_charges(xp: i32, existing: usize) -> Vec<i32> {
+    let mut out = Vec::new();
+    if xp <= 0 {
+        return out;
+    }
+    let mut charge = xp;
+    while charge > 0 {
+        if existing + out.len() >= SCULK_SPREADER_MAX_CURSORS {
+            break;
+        }
+        let capped = charge.min(SCULK_SPREADER_MAX_CHARGE);
+        out.push(capped);
+        charge -= capped;
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1160,6 +1308,112 @@ mod tests {
         assert!(
             shrieker_hearing("elytra_glide", (0.5, 56.5, 0.5), (2, 56, 0)).is_none(),
             "the glide's own event the tag the refusal wears"
+        );
+    }
+
+    /// THE CATALYST'S OWN HEARING + THE CURSOR WALK (javap the
+    /// CatalystListener's gates the death the radius² bound keeps, the
+    /// addCursors loop the 1000-cap + the 32 list cap the charges
+    /// speak): the entity_die the ONLY event the gate keeps, the
+    /// equal-edge distSqr 64 the refusal passes, the 81 the gate
+    /// refuses, the OTHER events the head refuses even in range, the
+    /// no-occlusion law the plain listener's own body keeps (the
+    /// function takes no world — the signature IS the evidence); the
+    /// cursor charges the loop's own folds speak — the 5 death one
+    /// cursor, the 1500 the 1000+500 pair, the 33000 the 33-walk the
+    /// 32-cap trims, the zero-xp death NO cursor the caller's own
+    /// gate keeps, the existing head the joint list bounds.
+    #[test]
+    fn the_catalyst_hearing_the_death_the_cursors_keep() {
+        // THE EVENT GATE (the Holder.is(ENTITY_DIE) head)
+        assert!(
+            catalyst_hearing("entity_die", (0.5, 56.5, 0.5), (2, 56, 0)).is_some(),
+            "the death the in-range catalyst answers"
+        );
+        assert!(
+            catalyst_hearing("elytra_glide", (0.5, 56.5, 0.5), (2, 56, 0)).is_none(),
+            "the glide's own event the head refuses — the ONE event the gate keeps"
+        );
+        assert!(
+            catalyst_hearing("shriek", (0.5, 56.5, 0.5), (2, 56, 0)).is_none(),
+            "the shriek the same refusal wears"
+        );
+        // THE RANGE GATE (the dispatcher's radius² bound — the
+        // equal-edge 64 passes, the 81 refuses)
+        assert!(
+            catalyst_hearing("entity_die", (0.5, 0.5, 0.5), (8, 0, 0)).is_some(),
+            "the 64 distSqr the gate passes"
+        );
+        assert!(
+            catalyst_hearing("entity_die", (0.5, 0.5, 0.5), (9, 0, 0)).is_none(),
+            "the 81 distSqr the gate refuses"
+        );
+        // THE CONSTANT TRIO (the javap bipushes the walk banks)
+        assert_eq!(SCULK_CATALYST_LISTEN_RADIUS, 8, "getListenerRadius's bipush 8");
+        assert_eq!(CATALYST_PULSE_TICKS, 8, "the bloom scheduleTick's bipush 8");
+        assert_eq!(
+            SCULK_SPREADER_MAX_CHARGE, 1000,
+            "addCursors' sipush 1000 the per-cursor cap keeps"
+        );
+        assert_eq!(
+            SCULK_SPREADER_MAX_CURSORS, 32,
+            "addCursor's bipush 32 the list cap keeps"
+        );
+        // createLevelSpreader's own arg quartet (the level walk — NOT
+        // the worldgen twin's 50/1/5/10)
+        assert_eq!(SCULK_SPREADER_GROWTH_SPAWN_COST, 10);
+        assert_eq!(SCULK_SPREADER_NO_GROWTH_RADIUS, 4);
+        assert_eq!(SCULK_SPREADER_CHARGE_DECAY_RATE, 10);
+        assert_eq!(SCULK_SPREADER_ADDITIONAL_DECAY_RATE, 5);
+        // THE CURSOR CHARGES (the loop's own folds)
+        assert_eq!(
+            sculk_cursor_charges(5, 0),
+            vec![5],
+            "the sub-1000 death ONE cursor keeps"
+        );
+        assert_eq!(
+            sculk_cursor_charges(1000, 0),
+            vec![1000],
+            "the exact cap ONE full cursor wears"
+        );
+        assert_eq!(
+            sculk_cursor_charges(1001, 0),
+            vec![1000, 1],
+            "the over-cap death the remainder cursor keeps"
+        );
+        assert_eq!(
+            sculk_cursor_charges(1500, 0),
+            vec![1000, 500],
+            "the 1500 death the 1000+500 pair wears"
+        );
+        assert!(
+            sculk_cursor_charges(0, 0).is_empty(),
+            "the zero-xp death NO cursor — the caller's own xp>0 gate keeps"
+        );
+        assert!(
+            sculk_cursor_charges(-3, 0).is_empty(),
+            "the negative walk the same refusal keeps"
+        );
+        assert_eq!(
+            sculk_cursor_charges(33000, 0).len(),
+            32,
+            "the 33-cursor walk the 32-cap's own tail trims"
+        );
+        assert_eq!(
+            sculk_cursor_charges(33000, 0).iter().sum::<i32>(),
+            32000,
+            "the trimmed bank the 32 x 1000 charge keeps"
+        );
+        // THE EXISTING HEAD (the joint list the cap bounds — 32 ahead
+        // the fresh death nothing banks)
+        assert!(
+            sculk_cursor_charges(5, SCULK_SPREADER_MAX_CURSORS).is_empty(),
+            "the full list the fresh cursor the cap refuses"
+        );
+        assert_eq!(
+            sculk_cursor_charges(5, SCULK_SPREADER_MAX_CURSORS - 1),
+            vec![5],
+            "the one-free slot the exact fit banks"
         );
     }
 }

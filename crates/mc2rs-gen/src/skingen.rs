@@ -240,6 +240,27 @@ pub const PARTICLE_SCULK_POP_JAR_PATHS: [&str; 4] = [
     "assets/minecraft/textures/particle/sculk_charge_pop_2.png",
     "assets/minecraft/textures/particle/sculk_charge_pop_3.png",
 ];
+/// The SCULK_SOUL wisp's 11-frame set (javap the bloom's
+/// `sendParticles(SCULK_SOUL, ...)` post the 26.2 jar serves — the
+/// jar's `particles/sculk_soul.json` lists ELEVEN textures,
+/// `minecraft:sculk_soul_0..10` ASCENDING — the `SoulParticle`'s
+/// `SpriteSet` the set feeds, each frame the 16x16 the IHDR
+/// verifies; the plain `soul` type's `soul_0..10` pool the SEPARATE
+/// set the same json shape speaks — this lane the catalyst's own
+/// type wears).
+pub const PARTICLE_SCULK_SOUL_JAR_PATHS: [&str; 11] = [
+    "assets/minecraft/textures/particle/sculk_soul_0.png",
+    "assets/minecraft/textures/particle/sculk_soul_1.png",
+    "assets/minecraft/textures/particle/sculk_soul_2.png",
+    "assets/minecraft/textures/particle/sculk_soul_3.png",
+    "assets/minecraft/textures/particle/sculk_soul_4.png",
+    "assets/minecraft/textures/particle/sculk_soul_5.png",
+    "assets/minecraft/textures/particle/sculk_soul_6.png",
+    "assets/minecraft/textures/particle/sculk_soul_7.png",
+    "assets/minecraft/textures/particle/sculk_soul_8.png",
+    "assets/minecraft/textures/particle/sculk_soul_9.png",
+    "assets/minecraft/textures/particle/sculk_soul_10.png",
+];
 /// The campfire smoke's 12-frame set (javap: the `campfire_cosy_smoke`
 /// + `campfire_signal_smoke` particle types' own sprite set — the jar's
 /// `particles/campfire_cosy_smoke.json` and `particles/campfire_signal
@@ -523,6 +544,22 @@ pub const PARTICLE_SCULK_POP_RUNTIME_PATHS: [&str; 4] = [
     "particle/sculk_charge_pop_2.png",
     "particle/sculk_charge_pop_3.png",
 ];
+/// The SCULK_SOUL wisp's runtime-cache paths (the same strip — the
+/// json's ASCENDING list the index folds, the bloom wisps the
+/// catalyst's own walk rides).
+pub const PARTICLE_SCULK_SOUL_RUNTIME_PATHS: [&str; 11] = [
+    "particle/sculk_soul_0.png",
+    "particle/sculk_soul_1.png",
+    "particle/sculk_soul_2.png",
+    "particle/sculk_soul_3.png",
+    "particle/sculk_soul_4.png",
+    "particle/sculk_soul_5.png",
+    "particle/sculk_soul_6.png",
+    "particle/sculk_soul_7.png",
+    "particle/sculk_soul_8.png",
+    "particle/sculk_soul_9.png",
+    "particle/sculk_soul_10.png",
+];
 /// The campfire smoke's runtime-cache paths (the same strip — the two
 /// jsons' shared ASCENDING list the index folds, the cosy column the
 /// dowse arm's own walk rides).
@@ -725,6 +762,11 @@ pub struct SkinData {
     /// sources (the 16x16 sculk_charge_pop frames the json's ascending
     /// list orders).
     pub particle_sculk_pop_png_sha1s: [String; 4],
+    /// sha1s of the SCULK_SOUL wisp's 11 frames (jar-verbatim
+    /// integrity) — the catalyst bloom's sendParticles walk's pixel
+    /// sources (the 16x16 sculk_soul frames the json's ascending list
+    /// orders).
+    pub particle_sculk_soul_png_sha1s: [String; 11],
     /// sha1s of the campfire smoke's 12 frames (jar-verbatim
     /// integrity) — the dowse arm's cosy column's pixel sources (the
     /// 16x16 big_smoke frames the two jsons' shared ascending list
@@ -1274,6 +1316,21 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
             ph
         );
     }
+    // the SCULK_SOUL wisp's 11 frames (the same shape check the pop
+    // walk speaks — the 16x16 the bloom wisps' quads sample over
+    // their own lives, the json's ASCENDING list the set rides)
+    let mut particle_sculk_soul_png_sha1s: [String; 11] = std::array::from_fn(|_| String::new());
+    for (i, path) in PARTICLE_SCULK_SOUL_JAR_PATHS.iter().enumerate() {
+        let bytes = read_entry(archive, path).context("read sculk soul frame")?;
+        particle_sculk_soul_png_sha1s[i] = crate::util::sha1_hex(&bytes);
+        let (sw, sh, _soul_rgba) = decode_rgba(&bytes).context("decode sculk soul frame")?;
+        anyhow::ensure!(
+            (sw, sh) == (16, 16),
+            "sculk soul frames must be the 16x16 sprites, got {}x{}",
+            sw,
+            sh
+        );
+    }
     // the campfire smoke's 12 frames (the same shape check the sculk
     // walk speaks — the 16x16 the cosy column's quads sample whole,
     // the two jsons' ASCENDING lists the set rides)
@@ -1476,6 +1533,7 @@ pub fn generate<R: std::io::Read + std::io::Seek>(archive: &mut zip::ZipArchive<
         particle_explosion_png_sha1s,
         particle_sculk_charge_png_sha1s,
         particle_sculk_pop_png_sha1s,
+        particle_sculk_soul_png_sha1s,
         particle_big_smoke_png_sha1s,
         particle_shriek_png_sha1,
         particle_flash_png_sha1,
@@ -2006,6 +2064,22 @@ pub fn emit(data: &SkinData) -> Result<String> {
             .join(", ")
     ));
     out.push_str(&format!(
+        "pub const PARTICLE_SCULK_SOUL_PNG_SHA1S: [&str; 11] = [{}];\n",
+        data.particle_sculk_soul_png_sha1s
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
+        "pub const PARTICLE_SCULK_SOUL_RUNTIME_PATHS: [&str; 11] = [{}];\n",
+        PARTICLE_SCULK_SOUL_RUNTIME_PATHS
+            .iter()
+            .map(|s| format!("\"{s}\""))
+            .collect::<Vec<_>>()
+            .join(", ")
+    ));
+    out.push_str(&format!(
         "pub const PARTICLE_BIG_SMOKE_PNG_SHA1S: [&str; 12] = [{}];\n",
         data.particle_big_smoke_png_sha1s
             .iter()
@@ -2356,6 +2430,9 @@ mod tests {
         let sculk_pops = [item_png(), item_png(), item_png(), item_png()];
         let expected_sculk_pop_sha1s: Vec<String> =
             sculk_pops.iter().map(|p| crate::util::sha1_hex(p)).collect();
+        let sculk_souls: [Vec<u8>; 11] = std::array::from_fn(|_| item_png());
+        let expected_sculk_soul_sha1s: Vec<String> =
+            sculk_souls.iter().map(|p| crate::util::sha1_hex(p)).collect();
         let big_smokes: [Vec<u8>; 12] = std::array::from_fn(|_| item_png());
         let expected_big_smoke_sha1s: Vec<String> =
             big_smokes.iter().map(|p| crate::util::sha1_hex(p)).collect();
@@ -2512,6 +2589,17 @@ mod tests {
             (PARTICLE_SCULK_POP_JAR_PATHS[1], sculk_pops[1].clone()),
             (PARTICLE_SCULK_POP_JAR_PATHS[2], sculk_pops[2].clone()),
             (PARTICLE_SCULK_POP_JAR_PATHS[3], sculk_pops[3].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[0], sculk_souls[0].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[1], sculk_souls[1].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[2], sculk_souls[2].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[3], sculk_souls[3].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[4], sculk_souls[4].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[5], sculk_souls[5].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[6], sculk_souls[6].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[7], sculk_souls[7].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[8], sculk_souls[8].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[9], sculk_souls[9].clone()),
+            (PARTICLE_SCULK_SOUL_JAR_PATHS[10], sculk_souls[10].clone()),
             (PARTICLE_BIG_SMOKE_JAR_PATHS[0], big_smokes[0].clone()),
             (PARTICLE_BIG_SMOKE_JAR_PATHS[1], big_smokes[1].clone()),
             (PARTICLE_BIG_SMOKE_JAR_PATHS[2], big_smokes[2].clone()),
@@ -2689,6 +2777,11 @@ mod tests {
             data.particle_sculk_pop_png_sha1s,
             expected_sculk_pop_sha1s.as_slice(),
             "the sculk pop frames' own sha1s"
+        );
+        assert_eq!(
+            data.particle_sculk_soul_png_sha1s,
+            expected_sculk_soul_sha1s.as_slice(),
+            "the sculk soul frames' own sha1s"
         );
         assert_eq!(
             data.particle_big_smoke_png_sha1s,

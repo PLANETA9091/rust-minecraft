@@ -7062,6 +7062,14 @@ pub struct App {
     /// shrieker_can_listen row answers, the r8 the user's own radius
     /// keeps, the SHRIEKING window the shriek walk arms.
     pub sculk_shrikers: Vec<crate::sculk::SculkShriekerCell>,
+    /// THE SCULK CATALYST CELLS (the plain GameEventListener's analog
+    /// — the vanilla's block entity the chunk-section registry walk
+    /// registers, the CatalystListener the App's vec stands in): the
+    /// ENTITY_DIE dispatch the death walk serves — the r8 the
+    /// listener's own radius keeps, the charge cursors the spreader's
+    /// list banks, the PULSE window the bloom walk arms (the
+    /// scheduleTick 8 the block's own tick clears).
+    pub sculk_catalysts: Vec<crate::sculk::SculkCatalystCell>,
     /// THE CRIT EMITTERS (the TrackingEmitters the crit attacks arm —
     /// 3 ticks of life each, the 16-sample walk per tick).
     pub crit_emitters: Vec<crate::particles::CritEmitter>,
@@ -7135,6 +7143,10 @@ pub struct App {
     /// LevelEvent-3007 arm's own ring pixels the lane draws; the
     /// missing file the honest absence keeps)
     pub shriek_sprite: Option<crate::avatar::ShriekSprite>,
+    /// The SCULK_SOUL wisp's 11 frames (the same lazy load — the
+    /// catalyst bloom's own wisp pixels the lane draws; the missing
+    /// file the honest absence keeps)
+    pub sculk_soul_frames: Option<crate::avatar::SculkSoulFrames>,
     /// The firework flash's single sprite (the same lazy load — the
     /// Starter cadence's flash quad's pixel source).
     pub flash_sprite: Option<crate::avatar::FlashSprite>,
@@ -7981,6 +7993,7 @@ impl App {
             game_events: Vec::new(),
             sculk_sensors: Vec::new(),
             sculk_shrikers: Vec::new(),
+            sculk_catalysts: Vec::new(),
             crit_emitters: Vec::new(),
             crit_sprite: None,
             weather_rain: None,
@@ -8005,6 +8018,7 @@ impl App {
             sculk_pop_frames: None,
             big_smoke_frames: None,
             shriek_sprite: None,
+            sculk_soul_frames: None,
             flash_sprite: None,
             effect_frames: None,
             spell_frames: None,
@@ -8116,6 +8130,98 @@ impl App {
             free_at: 0,
             shriek_at: None,
         });
+    }
+
+    /// THE SCULK CATALYST'S OWN PLACEMENT (the registry walk's analog
+    /// — the cell the vec banks, the fresh catalyst the PULSE-free
+    /// state keeps: no bloom the window's silence wears, the cursor
+    /// list the spreader's own empty walk banks).
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn place_sculk_catalyst(&mut self, x: i32, y: i32, z: i32) {
+        self.sculk_catalysts.push(crate::sculk::SculkCatalystCell {
+            pos: (x, y, z),
+            pulse_off_at: None,
+            cursors: Vec::new(),
+        });
+    }
+
+    /// THE DEATH WALK (javap `CatalystListener.handleGameEvent` — the
+    /// ENTITY_DIE dispatch the catalyst's own body answers: the
+    /// `wasExperienceConsumed` gate the offline lane keeps FALSE (the
+    /// respawn-xp flag the offline walk never arms), the xp the
+    /// caller supplies (the getExperienceReward fold the causing
+    /// entity's own reward speaks), the `shouldDropExperience() &&
+    /// xp > 0` pair the addCursors gate wears, the `skipDropExperience`
+    /// tail the catalyst's own claim speaks, the bloom the
+    /// positionSource's own pos serves — THE BLOOM EVERY death wears,
+    /// the zero-xp one included (the pc 79 `ifle 112` the bloom's own
+    /// continuation keeps)): each in-range catalyst the gates answer
+    /// (the r8 the dispatcher's radius² bound keeps, NO occlusion the
+    /// plain listener's own body never wears, NO data-busy window the
+    /// second death the same tick answers), the cursor records the
+    /// addCursors walk banks (the `sculk_cursors` line the joint
+    /// list's own growth speaks), the bloom record + the SOUL wisps +
+    /// the voice the pulse arm serves (the 28 draws the wisp walk
+    /// spends, the pitch draw 0.6 + nextFloat * 0.4 the v2.0 voice
+    /// wears — the level ambient stream the order keeps).
+    #[cfg_attr(not(test), expect(dead_code))]
+    pub fn entity_die_at(&mut self, x: f64, y: f64, z: f64, xp: i32) {
+        // THE CURSOR POS (the pc 86-99 walk — the UP half-block the
+        // containing fold floors)
+        let cursor_pos = (
+            crate::mth::floor(x),
+            crate::mth::floor(y + 0.5),
+            crate::mth::floor(z),
+        );
+        // THE VOICES the loop banks (the play the post-loop drain
+        // serves — the shriek walk's own convention the borrow keeps)
+        let mut bloom_voices: Vec<(i32, i32, i32, f32, f32)> = Vec::new();
+        for cat in &mut self.sculk_catalysts {
+            if crate::sculk::catalyst_hearing("entity_die", (x, y, z), cat.pos).is_none() {
+                continue;
+            }
+            // THE ADDCURSORS GATE (the shouldDropExperience && xp > 0
+            // pair — the charges the loop banks, the 32 cap the joint
+            // list bounds)
+            let charges = crate::sculk::sculk_cursor_charges(xp, cat.cursors.len());
+            if !charges.is_empty() {
+                let total: i32 = charges.iter().sum();
+                for charge in &charges {
+                    cat.cursors.push(crate::sculk::SculkCursor {
+                        pos: cursor_pos,
+                        charge: *charge,
+                    });
+                }
+                self.game_events.push(format!(
+                    "sculk_cursors @{} x{} y{} z{} n{} c{}",
+                    self.frame,
+                    cursor_pos.0,
+                    cursor_pos.1,
+                    cursor_pos.2,
+                    charges.len(),
+                    total
+                ));
+            }
+            // THE BLOOM (the pc 112-134 walk — the PULSE arm the
+            // scheduleTick 8 window banks, the SOUL wisps the
+            // sendParticles post spawns, the voice the pitch draw
+            // wears, the record the composite walk banks)
+            cat.pulse_off_at = Some(self.frame + crate::sculk::CATALYST_PULSE_TICKS);
+            let wisps = crate::particles::sculk_soul_wisps(cat.pos, &mut self.level_ambient_rng);
+            self.particles.extend(wisps);
+            let pitch = 0.6 + self.level_ambient_rng.next_f32() * 0.4;
+            bloom_voices.push((cat.pos.0, cat.pos.1, cat.pos.2, 2.0, pitch));
+            self.game_events.push(format!(
+                "sculk_bloom @{} x{:.6} y{:.6} z{:.6}",
+                self.frame,
+                cat.pos.0 as f64 + 0.5,
+                cat.pos.1 as f64 + 0.5,
+                cat.pos.2 as f64 + 0.5
+            ));
+        }
+        for (vx, vy, vz, volume, pitch) in bloom_voices {
+            self.play_sculk_catalyst_bloom(vx, vy, vz, volume, pitch);
+        }
     }
 
     /// Advance deterministic boot progress; transitions to title.
@@ -9700,6 +9806,17 @@ impl App {
             }
             for (vx, vy, vz, volume, pitch) in shriek_voices {
                 self.play_sculk_shriek(vx, vy, vz, volume, pitch);
+            }
+            // THE CATALYST'S OWN PULSE TAIL (javap SculkCatalystBlock.tick
+            // pc 0-37 — the block's own scheduled tick the bloom's
+            // scheduleTick 8 window banks: the `getValue(PULSE)` true
+            // gate the head keeps, the `setValue(PULSE, false)` + flag-3
+            // setBlock the tail wears — NO voice, NO record the clear
+            // walk speaks)
+            for cat in &mut self.sculk_catalysts {
+                if cat.pulse_off_at == Some(self.frame) {
+                    cat.pulse_off_at = None;
+                }
             }
             // THE AMBIENT WALK (ClientLevel.animateTick's own law —
             // the per-tick sampler the lava pool's drips AND the
@@ -27444,6 +27561,28 @@ impl App {
         );
     }
 
+    /// THE SCULK-CATALYST-BLOOM VOICE WALK (javap `bloom` pc 76-101 —
+    /// the `playSound(null, pos, SCULK_CATALYST_BLOOM, BLOCKS, 2.0F,
+    /// 0.6F + random.nextFloat() * 0.4F)` the BlockPos overload speaks:
+    /// the +0.5 center the atCenterOf fold wears, the v2.0 the armed
+    /// max the attenuate fold's own input keeps).
+    #[cfg_attr(not(test), expect(dead_code))]
+    fn play_sculk_catalyst_bloom(&mut self, x: i32, y: i32, z: i32, volume: f32, pitch: f32) {
+        let sx = f64::from(x) + 0.5;
+        let sy = f64::from(y) + 0.5;
+        let sz = f64::from(z) + 0.5;
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            "block.sculk_catalyst.bloom",
+            volume,
+            pitch,
+            ear_distance(ear, sx, sy, sz),
+            ear_pan(ear, yaw, sx, sy, sz),
+        );
+    }
+
     /// THE BRUSH-COMPLETE WIRE LANE (javap `LevelEventHandler` case
     /// 3008 — offset 1629 — over the 26.2 jar): the server's own
     /// brush completion the client NOW answers
@@ -34733,6 +34872,10 @@ impl App {
             self.shriek_sprite =
                 crate::avatar::ShriekSprite::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.sculk_soul_frames.is_none() {
+            self.sculk_soul_frames =
+                crate::avatar::SculkSoulFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.flash_sprite.is_none() {
             self.flash_sprite =
                 crate::avatar::FlashSprite::load(std::path::Path::new("assets-cache/jar"));
@@ -34818,6 +34961,9 @@ impl App {
         // LevelEvent-3007 arm's ten-delayed ring samples — the TWO
         // tilted quads the crossed-rings look wears)
         let mut shriek_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        // the soul wisp's own groups (the 11-frame walk the age rides
+        // — the group-per-frame the smoke/campfire banks keep)
+        let mut soul_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         // THE SPLASH LANE'S GROUPS (the ring keyed by the instant flag
         // + the frame file, the shards keyed by the item layer — the
         // closure's own capture)
@@ -35515,6 +35661,27 @@ impl App {
                         });
                     }
                 }
+                crate::particles::ParticleKind::SculkSoul => {
+                    // the soul wisp's own quad (the 16x16 frame the
+                    // age's own walk speaks — the 11-frame set the
+                    // json's ascending list orders, the setSpriteFromAge
+                    // chain the smoke walk rides, the white tint the
+                    // ctor never tints, the alpha 1.0 the provider's
+                    // own setAlpha keeps, the TRANSLUCENT layer the
+                    // getLayer override returns, the NOT-glowing light
+                    // the default isGlowing=false keeps)
+                    let frame = crate::particles::sculk_soul_frame(p.age, p.lifetime);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [[0.0, 16.0], [16.0, 16.0], [16.0, 0.0], [0.0, 0.0]],
+                        tex: "particle_sculk_soul",
+                        tint: p.col,
+                    };
+                    match soul_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => soul_groups.push((frame, vec![quad])),
+                    }
+                }
             }
         }
         let vp = ctx.proj.mul(&ctx.view);
@@ -35730,6 +35897,16 @@ impl App {
             fb.draw_sampled_quads(vp, &shriek_quads, &mut |_tex, u, v| {
                 Some(shriek.pixel(u, v))
             });
+        }
+        // the soul wisp groups (the 11-frame walk's own pixels — the
+        // frame the age's own walk folds, the ascending json order the
+        // index reads directly)
+        if let Some(frames) = &self.sculk_soul_frames {
+            for (frame, quads) in &soul_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
+                });
+            }
         }
         // the spell ring groups (the two sets' own pixels — the frame
         // file the age's own walk folds, the set the instant flag
@@ -41342,6 +41519,149 @@ mod tests {
                 .count(),
             1,
             "the window the second shriek refuses"
+        );
+    }
+
+    /// THE CATALYST THE DEATH THE BLOOM ANSWERS (javap the
+    /// CatalystListener's gates the death the plain listener answers,
+    /// the addCursors walk the charges bank, the bloom the pulse arm
+    /// serves): the app walk — the fresh cell the window never arms,
+    /// the death the in-range catalyst answers (the exact cursor +
+    /// bloom lines the reference folds pin — the UP half-block the
+    /// containing fold floors, the +0.5 center the bloom pos wears),
+    /// the OUT-OF-RANGE twin the same death never wakes, the wisps the
+    /// 28-draw walk spawns (the zero velocity the 0.0-speed pair
+    /// keeps, the 12..44 life band the divisor law speaks), the voice
+    /// the pitch band wears, the SECOND death the pulsing catalyst
+    /// answers (NO data-busy window the plain listener keeps — the
+    /// zero-xp death the cursorless bloom wears, the pc 79 `ifle 112`
+    /// the bloom's own continuation speaks), the PULSE tail the
+    /// scheduleTick 8 window's own tick clears (NO voice, NO record
+    /// the clear walk speaks).
+    #[test]
+    fn the_catalyst_the_death_the_bloom_answers() {
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 40.0, 0.0, 0.0, 0.0));
+        app.place_sculk_catalyst(0, 32, 0);
+        // the OUT-OF-RANGE twin (the 20-block walk the r8 ear refuses)
+        app.place_sculk_catalyst(20, 32, 0);
+        // the fresh cell the window never arms
+        assert!(app.sculk_catalysts[0].pulse_off_at.is_none());
+        assert!(app.sculk_catalysts[0].cursors.is_empty());
+        app.update();
+        let walk_frame = app.frame;
+        // THE DEATH (the 5-xp death the caller supplies — the event
+        // pos the +0.5 centers keep, the range the 4-distSqr keeps)
+        app.entity_die_at(2.5, 32.5, 0.5, 5);
+        // THE CURSOR RECORD (the UP half-block the containing fold
+        // floors: containing(2.5, 33.0, 0.5) = (2, 33, 0))
+        let cursors = app
+            .game_events
+            .iter()
+            .find(|l| l.starts_with("sculk_cursors"))
+            .expect("the addCursors walk the record banks");
+        assert_eq!(
+            *cursors,
+            format!("sculk_cursors @{walk_frame} x2 y33 z0 n1 c5"),
+            "the one-cursor walk the exact line pins — the n the loop's count, the c the death's xp"
+        );
+        // THE CURSORS THE CELL BANKS (the spreader list's own growth)
+        assert_eq!(app.sculk_catalysts[0].cursors.len(), 1);
+        assert_eq!(app.sculk_catalysts[0].cursors[0].pos, (2, 33, 0));
+        assert_eq!(app.sculk_catalysts[0].cursors[0].charge, 5);
+        // THE BLOOM RECORD (the +0.5 center the atCenterOf fold wears)
+        let bloom = app
+            .game_events
+            .iter()
+            .find(|l| l.starts_with("sculk_bloom"))
+            .expect("the bloom the record banks");
+        assert_eq!(
+            *bloom,
+            format!("sculk_bloom @{walk_frame} x0.500000 y32.500000 z0.500000"),
+            "the bloom the exact line pins"
+        );
+        // THE PULSE WINDOW (the scheduleTick 8 the walk banks)
+        assert_eq!(
+            app.sculk_catalysts[0].pulse_off_at,
+            Some(walk_frame + 8),
+            "the 8-tick window the bloom arms"
+        );
+        // THE WISPS (the two particles the count speaks — the zero
+        // velocity the 0.0-speed pair keeps, the base the +0.5/+1.15
+        // folds wear, the life the 12..44 band keeps)
+        let wisps: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SculkSoul))
+            .collect();
+        assert_eq!(wisps.len(), 2, "the two wisps the count banks");
+        for w in &wisps {
+            assert_eq!((w.vx, w.vy, w.vz), (0.0, 0.0, 0.0));
+            assert!((12..=44).contains(&w.lifetime));
+            assert!((w.y - 33.15f64).abs() <= 0.05, "the y the 0.0 dist keeps");
+        }
+        // THE OUT-OF-RANGE TWIN (the 20-block walk the ear refuses)
+        assert!(app.sculk_catalysts[1].pulse_off_at.is_none());
+        assert!(app.sculk_catalysts[1].cursors.is_empty());
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("sculk_bloom"))
+                .count(),
+            1,
+            "the twin the bloom never wears"
+        );
+        // THE VOICE (the pitch draw the band keeps)
+        if sounds_loaded() {
+            let voice = app
+                .sounds
+                .events
+                .iter()
+                .find(|e| e.starts_with(&format!("block.sculk_catalyst.bloom @{walk_frame} ")))
+                .expect("the bloom voice the v2.0 walk speaks");
+            let pitch: f32 = voice
+                .split(" p")
+                .nth(1)
+                .and_then(|t| t[..6].parse().ok())
+                .unwrap_or(0.0);
+            assert!(
+                (0.6..1.0).contains(&pitch),
+                "the 0.6 + r * 0.4 band the voice keeps: {voice}"
+            );
+        }
+        // THE SECOND DEATH (the pulsing catalyst answers — NO
+        // data-busy window the plain listener keeps; the ZERO-xp death
+        // the cursorless bloom wears)
+        app.entity_die_at(2.5, 32.5, 0.5, 0);
+        assert!(
+            app.game_events.iter().all(|l| !l.starts_with("sculk_cursors")
+                || l.ends_with("n1 c5")),
+            "the zero-xp death the cursor walk never spends"
+        );
+        assert_eq!(app.sculk_catalysts[0].cursors.len(), 1, "the list the zero-xp walk never grows");
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|l| l.starts_with("sculk_bloom"))
+                .count(),
+            2,
+            "the second bloom the continuation banks"
+        );
+        assert_eq!(
+            app.sculk_catalysts[0].pulse_off_at,
+            Some(walk_frame + 8),
+            "the pulse re-arms the same window"
+        );
+        // THE PULSE TAIL (the scheduleTick 8 the block's own tick
+        // clears — the window's own end the walk serves)
+        for _ in 0..8 {
+            app.update();
+        }
+        assert!(
+            app.sculk_catalysts[0].pulse_off_at.is_none(),
+            "the 8-tick tail the pulse clears"
         );
     }
 
