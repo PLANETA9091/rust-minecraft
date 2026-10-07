@@ -7080,10 +7080,12 @@ pub struct App {
     /// ladder's own per-player state the tryWarn walk wears.
     pub warden_tracker: crate::sculk::WardenSpawnTracker,
     /// THE WORLD'S OWN WARDENS (the getEntitiesOfClass(Warden, box)
-    /// list's analog — the feet-center positions the entity's own box
-    /// walk consults; the lane the summon walk a later round fills,
-    /// the empty vec the hasNearbyWarden gate's honest pass keeps).
-    pub wardens: Vec<(f64, f64, f64)>,
+    /// list's analog — the entities the summon walk fills, the feet-
+    /// center the entity's own box walk consults; the WARDEN MOB the
+    /// entity's own lanes the baseTick law ticks — the ambient voice
+    /// the law speaks, the anger the brain round raises; the empty vec
+    /// the hasNearbyWarden gate's honest pass keeps).
+    pub wardens: Vec<crate::sculk::WardenMob>,
     /// THE SCULK CATALYST CELLS (the plain GameEventListener's analog
     /// — the vanilla's block entity the chunk-section registry walk
     /// registers, the CatalystListener the App's vec stands in): the
@@ -8284,8 +8286,39 @@ impl App {
                 // THE SPAWNED WARDEN (the addFreshEntityWithPassengers
                 // walk the list keeps — the feet-center the entity's
                 // own position wears: (cell.x + 0.5, cell.y, cell.z +
-                // 0.5)), the record the lane's vocabulary banks
-                self.wardens.push((sx as f64 + 0.5, sy as f64, sz as f64 + 0.5));
+                // 0.5)): the entity the WARDEN MOB struct carries (the
+                // id the counter's own draw answers — the next_mob_id
+                // walk the other spawn lanes share), the record the
+                // lane's vocabulary banks
+                let id = self.next_mob_id;
+                self.next_mob_id += 1;
+                let mut warden = crate::sculk::WardenMob::new(
+                    id,
+                    sx as f64 + 0.5,
+                    sy as f64,
+                    sz as f64 + 0.5,
+                );
+                // THE SPAWN'S OWN AMBIENT (javap `SpawnUtil.trySpawnMob`
+                // pc 172-184 — the addFreshEntity tail the
+                // `playAmbientSound()` call serves: the makeSound walk
+                // the getSoundVolume 4.0 + the getVoicePitch fold
+                // carries — the TWO draws the entity's OWN stream
+                // speaks, the fresh warden's Calm level the word
+                // answers, the ROARING/digging gates the fresh pair
+                // never arms)
+                let spawn_voice = crate::sculk::warden_ambient_sound(
+                    warden.anger,
+                    warden.roaring,
+                    warden.digging_or_emerging,
+                )
+                .map(|word| {
+                    let pitch = warden.voice_pitch();
+                    (word, warden.x, warden.y, warden.z, pitch)
+                });
+                self.wardens.push(warden);
+                if let Some((word, wx, wy, wz, pitch)) = spawn_voice {
+                    self.play_warden_voice(word, wx, wy, wz, pitch);
+                }
                 self.game_events.push(format!(
                     "warden_summon @{} x{:.6} y{:.6} z{:.6}",
                     self.frame,
@@ -10059,9 +10092,14 @@ impl App {
                 let can_respond = sk.can_summon
                     && sk_difficulty != crate::difficulty::Difficulty::Peaceful;
                 if can_respond {
+                    // THE POSITIONS THE GATE READS (the
+                    // getEntitiesOfClass walk's own shape — the wardens'
+                    // feet-center the box verdict consults)
+                    let warden_positions: Vec<(f64, f64, f64)> =
+                        self.wardens.iter().map(|w| (w.x, w.y, w.z)).collect();
                     match crate::sculk::warden_try_warn(
                         sk.pos,
-                        &self.wardens,
+                        &warden_positions,
                         &mut self.warden_tracker,
                     ) {
                         Some(level) => {
@@ -10097,6 +10135,31 @@ impl App {
             }
             for (vx, vy, vz, volume, pitch) in shriek_voices {
                 self.play_sculk_shriek(vx, vy, vz, volume, pitch);
+            }
+            // THE WARDEN'S OWN TICK (the spawned entities the frame walk
+            // serves — javap `Mob.baseTick` the ambient law the voice
+            // lane speaks: the draw the entity's own stream spends under
+            // the climbing clock, the fired arm the makeSound fold
+            // plays — the getAmbientSound verdict the anger/pose gates
+            // answer, the volume the Warden.getSoundVolume's 4.0 keeps,
+            // the pitch the two-draw law carries). The voices the
+            // collected vec serves — the borrow the play's own pass
+            // keeps.
+            let mut warden_voices: Vec<(&'static str, f64, f64, f64, f32)> = Vec::new();
+            for warden in &mut self.wardens {
+                if warden.tick() {
+                    if let Some(word) = crate::sculk::warden_ambient_sound(
+                        warden.anger,
+                        warden.roaring,
+                        warden.digging_or_emerging,
+                    ) {
+                        let pitch = warden.voice_pitch();
+                        warden_voices.push((word, warden.x, warden.y, warden.z, pitch));
+                    }
+                }
+            }
+            for (word, wx, wy, wz, pitch) in warden_voices {
+                self.play_warden_voice(word, wx, wy, wz, pitch);
             }
             // THE CATALYST'S OWN PULSE TAIL (javap SculkCatalystBlock.tick
             // pc 0-37 — the block's own scheduled tick the bloom's
@@ -28125,6 +28188,25 @@ impl App {
         );
     }
 
+    /// THE WARDEN'S OWN VOICE WALK (javap `LivingEntity.makeSound` —
+    /// the non-null gate the `playSound(sound, getSoundVolume(),
+    /// getVoicePitch())` overload speaks: the v4.0 the
+    /// `Warden.getSoundVolume`'s own ldc keeps, the pitch the caller's
+    /// two-draw law carries, the feet-center spot the entity's own
+    /// position wears — no block's +0.5 the entity lane never adds).
+    fn play_warden_voice(&mut self, word: &'static str, x: f64, y: f64, z: f64, pitch: f32) {
+        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let yaw = self.listener_yaw();
+        self.sounds.play_voice_at_pan(
+            self.frame,
+            word,
+            crate::sculk::WARDEN_MOB_SOUND_VOLUME,
+            pitch,
+            ear_distance(ear, x, y, z),
+            ear_pan(ear, yaw, x, y, z),
+        );
+    }
+
     /// THE SCULK-CATALYST-BLOOM VOICE WALK (javap `bloom` pc 76-101 —
     /// the `playSound(null, pos, SCULK_CATALYST_BLOOM, BLOCKS, 2.0F,
     /// 0.6F + random.nextFloat() * 0.4F)` the BlockPos overload speaks:
@@ -42576,9 +42658,27 @@ mod tests {
         );
         app.remove_sculk_shrieker(16, 35, 0);
         assert_eq!(
-            app.wardens,
-            vec![(16.0 + expect_dx as f64 + 0.5, 35.0, expect_dz as f64 + 0.5)],
+            app.wardens.len(),
+            1,
+            "the spawn the ONE warden the list banks"
+        );
+        assert_eq!(
+            (app.wardens[0].x, app.wardens[0].y, app.wardens[0].z),
+            (16.0 + expect_dx as f64 + 0.5, 35.0, expect_dz as f64 + 0.5),
             "the spawn cell the feet-center wears — the first attempt's own draws name it"
+        );
+        assert_eq!(
+            app.wardens[0].health,
+            crate::sculk::WARDEN_MOB_MAX_HEALTH,
+            "the fresh entity the MAX_HEALTH 500.0 keeps"
+        );
+        assert_eq!(
+            app.wardens[0].anger, 0,
+            "the fresh entity the zero anger the Calm level wears"
+        );
+        assert!(
+            app.wardens[0].ambient_time < 0,
+            "the fresh clock the -80 floor the house's ambient lane wears"
         );
         assert!(
             app.game_events.iter().any(|l| l.starts_with(&format!(
@@ -42587,13 +42687,26 @@ mod tests {
             ))),
             "the summon record the spawn's own cell banks"
         );
-        assert!(
-            !app
-                .sounds
+        // THE SPAWN'S OWN AMBIENT (javap `SpawnUtil.trySpawnMob`
+        // pc 172-184 — the addFreshEntity tail the playAmbientSound
+        // call serves): the success the ONE warden voice speaks — the
+        // entity's own ambient the Calm level answers, the reply
+        // quartet the failed summon alone plays
+        assert_eq!(
+            app.sounds
                 .events
                 .iter()
-                .any(|e| e.starts_with("entity.warden.")),
-            "the success the reply voice never plays"
+                .filter(|e| e.starts_with("entity.warden."))
+                .count(),
+            1,
+            "the success the spawn ambient ALONE speaks — the reply voice the failure keeps"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.ambient ")),
+            "the trySpawnMob tail the ambient voice serves — the Calm level's own word"
         );
         assert!(
             app.game_events
@@ -42719,6 +42832,153 @@ mod tests {
                 .iter()
                 .any(|l| l.starts_with("warden_darkness @")),
             "the creative mode the survival gate refuses"
+        );
+    }
+
+    /// THE WARDEN'S OWN TICK THE FRAME WALK THE AMBIENT SPEAKS (javap
+    /// the 26.2 jar `SpawnUtil.trySpawnMob` pc 172-184 + `Mob.baseTick`
+    /// pc 17-55 + `LivingEntity.makeSound` — the summon the entity
+    /// banks, the spawn ambient the tail plays, the update() walk the
+    /// baseTick law ticks, the lockstep mirror the same fire tick
+    /// answers, the v4.0 the Warden.getSoundVolume keeps, the two-draw
+    /// pitch law the entity's own stream speaks).
+    #[test]
+    fn the_warden_tick_the_frame_walk_the_ambient_speaks() {
+        // === THE SUMMON (the walk-B's own setup — the stone floor the
+        // warden lands) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(14.0, 35.0, 14.0, 0.0, 0.0));
+        app.place_sculk_shrieker(16, 35, 0, true);
+        app.sculk_shrikers[0].free_at = app.frame + 90;
+        app.sculk_shrikers[0].warning_level = 4;
+        app.remove_sculk_shrieker(16, 35, 0);
+        assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
+        let warden_id = app.wardens[0].id;
+
+        // THE SPAWN VOICE (pc 172-184): the ONE warden event the sounds
+        // lane banks — the ambient word the Calm level answers, the
+        // v4.0 the warden's own volume keeps, the p the two-draw law
+        // the spawn's own draws speak
+        let ambient_count = |app: &App| {
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.warden.ambient "))
+                .count()
+        };
+        assert_eq!(
+            ambient_count(&app),
+            1,
+            "the spawn ambient the trySpawnMob tail plays"
+        );
+        // the aligned twin: the SAME seed, the SAME two spawn draws
+        // spent — the mirror the entity's own stream keeps
+        let w = &app.wardens[0];
+        let mut twin = crate::sculk::WardenMob::new(warden_id, w.x, w.y, w.z);
+        let pa = twin.rng.next_f32();
+        let pb = twin.rng.next_f32();
+        let spawn_pitch = (pa - pb) * 0.2 + 1.0;
+        let spawn_line = app
+            .sounds
+            .events
+            .iter()
+            .find(|e| e.starts_with("entity.warden.ambient "))
+            .expect("the spawn voice rides");
+        assert!(
+            spawn_line.contains(&format!("p{spawn_pitch:.6}")),
+            "the two-draw law the spawn's pitch speaks — the line the fold carries: {spawn_line}"
+        );
+        // the volume the makeSound fold carries — the 4.0 the
+        // Warden.getSoundVolume speaks, the gain the distance law folds
+        // (the AL_MAX_GAIN ceiling the close lane clamps)
+        let ear = app.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+        let spawn_dist = ear_distance(ear, w.x, w.y, w.z);
+        let spawn_gain = crate::sound::attenuate(
+            crate::sculk::WARDEN_MOB_SOUND_VOLUME,
+            spawn_dist,
+            crate::sound::voice_max_distance(crate::sculk::WARDEN_MOB_SOUND_VOLUME),
+        );
+        assert!(
+            spawn_line.contains(&format!("v{spawn_gain:.6}")),
+            "the v4.0 the distance law folds — the line the gain carries: {spawn_line}"
+        );
+        assert_eq!(
+            app.wardens[0].ambient_time, twin.ambient_time,
+            "the fresh clock the spawn voice never touches"
+        );
+
+        // THE SCHEDULE (the twin's own walk pins — the fire tick the
+        // same seed answers, the law's own probability the drive
+        // resolves deterministically)
+        let schedule = {
+            let mut probe =
+                crate::sculk::WardenMob::new(warden_id, w.x, w.y, w.z);
+            probe.rng.next_f32();
+            probe.rng.next_f32();
+            let mut t = 0usize;
+            for tick in 1..=1_000_000usize {
+                if probe.tick() {
+                    t = tick;
+                    break;
+                }
+            }
+            assert!(t > 0, "the climb fires — the mirror the law keeps");
+            t
+        };
+        assert!(
+            schedule > crate::mob::AMBIENT_INTERVAL_TICKS as usize,
+            "the fresh clock the 80-tick hold the schedule keeps"
+        );
+
+        // THE LOCKSTEP WALK: the update() the frame walk serves — the
+        // warden the baseTick law ticks, the twin the same walk keeps
+        // (the one-draw gate the same ticks spend), the fire the
+        // schedule's OWN update speaks (the earlier updates the silence
+        // keeps), the fired voice's pitch the post-fire pair the twin
+        // draws first
+        let base = ambient_count(&app);
+        for i in 1..=schedule {
+            let twin_fired = twin.tick();
+            app.update();
+            let now = ambient_count(&app);
+            let expect = if i == schedule { base + 1 } else { base };
+            assert_eq!(
+                now, expect,
+                "the schedule the lockstep keeps — the fire the same tick the twin wears"
+            );
+            assert_eq!(
+                twin_fired,
+                i == schedule,
+                "the twin the same fire tick answers — the same seed the same walk wears"
+            );
+        }
+        let qa = twin.rng.next_f32();
+        let qb = twin.rng.next_f32();
+        let fired_pitch = (qa - qb) * 0.2 + 1.0;
+        let fired_line = app
+            .sounds
+            .events
+            .iter()
+            .rev()
+            .find(|e| e.starts_with("entity.warden.ambient "))
+            .expect("the fired voice rides");
+        assert!(
+            fired_line.contains(&format!("p{fired_pitch:.6}")),
+            "the fired voice the two-draw law speaks — the twin the same pair wears: {fired_line}"
+        );
+        // the clock the -80 reset wears — the next chance the interval
+        // holds again
+        assert!(
+            app.wardens[0].ambient_time < 0,
+            "the fire the resetAmbientSoundTime floor wears"
         );
     }
 

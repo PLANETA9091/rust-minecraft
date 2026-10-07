@@ -1125,6 +1125,192 @@ pub fn warden_darkness_applies(
     d2 < WARDEN_DARKNESS_RADIUS * WARDEN_DARKNESS_RADIUS
 }
 
+// === THE WARDEN ENTITY (the spawned mob the wardens list keeps —
+// the addFreshEntity the SpawnUtil.trySpawnMob tail serves, the
+// entity's own lanes the 26.2 jar speaks) ===
+
+/// `Warden.createAttributes` (javap the 26.2 jar) — the
+/// `Attributes.MAX_HEALTH` add the `ldc2_w 500.0d` speaks: the fresh
+/// warden's own health pool (the MOVEMENT_SPEED 0.3, the
+/// ATTACK_DAMAGE 30.0, the FOLLOW_RANGE 24.0 the other adds keep —
+/// the lanes the brain rounds ride).
+pub const WARDEN_MOB_MAX_HEALTH: f32 = 500.0;
+
+/// `Warden.getSoundVolume` (javap pc 0-3) — the `ldc_w 4.0f` the
+/// volume speaks: the warden the LOUD entity the default 1.0 mobs
+/// never wear, the makeSound fold the play's own input keeps.
+pub const WARDEN_MOB_SOUND_VOLUME: f32 = 4.0;
+
+/// `AngerLevel` clinit (javap the 26.2 jar) — the three constants'
+/// `minimumAnger` ints the ctor calls keep: CALM iconst_0, AGITATED
+/// bipush 40, ANGRY bipush 80 (the SORTED_LEVELS array the
+/// `lambda$static$0`'s `Arrays.sort` fills — the ascending order the
+/// byAnger walk consults).
+pub const WARDEN_ANGER_CALM_MIN: i32 = 0;
+pub const WARDEN_ANGER_AGITATED_MIN: i32 = 40;
+pub const WARDEN_ANGER_ANGRY_MIN: i32 = 80;
+
+/// THE ANGER LADDER (javap `net.minecraft.world.entity.monster.
+/// warden.AngerLevel` — the enum the three constants carry, each its
+/// `ambientSound` + `listeningSound` pair the ctor args bank).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum WardenAngerLevel {
+    Calm,
+    Agitated,
+    Angry,
+}
+
+impl WardenAngerLevel {
+    /// `AngerLevel.getAmbientSound` (javap pc 0-4 — the field read the
+    /// ireturn wraps): CALM WARDEN_AMBIENT, AGITATED WARDEN_AGITATED,
+    /// ANGRY WARDEN_ANGRY — the registry names the SoundEvents clinit's
+    /// ldc rows keep (`entity.warden.ambient` / `.agitated` / `.angry`).
+    pub fn ambient_sound(self) -> &'static str {
+        match self {
+            Self::Calm => "entity.warden.ambient",
+            Self::Agitated => "entity.warden.agitated",
+            Self::Angry => "entity.warden.angry",
+        }
+    }
+
+    /// `AngerLevel.isAngry` (javap pc 0-12 — the `this == ANGRY` acmp
+    /// the iconst_1 arm answers). The verdict the brain lanes consult —
+    /// the fresh warden's lane never speaks yet.
+    #[cfg_attr(not(test), expect(dead_code))] // the anger lane the brain rounds consult
+    pub fn is_angry(self) -> bool {
+        self == Self::Angry
+    }
+}
+
+/// `AngerLevel.byAnger` (javap pc 0-40, verbatim): the SORTED_LEVELS
+/// walk — the `lambda$static$1` comparator the `Integer.compare(arg2,
+/// arg1)` reversal keeps (the DESCENDING minimumAnger the sort wears:
+/// ANGRY 80, AGITATED 40, CALM 0), the FIRST level whose `anger >=
+/// minimumAnger` fits returns — the HIGHEST fitting level the walk
+/// answers — the CALM fallback the exhausted tail keeps.
+pub fn warden_anger_level(anger: i32) -> WardenAngerLevel {
+    const SORTED_LEVELS: [(WardenAngerLevel, i32); 3] = [
+        (WardenAngerLevel::Angry, WARDEN_ANGER_ANGRY_MIN),
+        (WardenAngerLevel::Agitated, WARDEN_ANGER_AGITATED_MIN),
+        (WardenAngerLevel::Calm, WARDEN_ANGER_CALM_MIN),
+    ];
+    for (level, minimum_anger) in SORTED_LEVELS {
+        if anger >= minimum_anger {
+            return level;
+        }
+    }
+    WardenAngerLevel::Calm
+}
+
+/// `Warden.getAmbientSound` (javap pc 0-26, verbatim): the
+/// `hasPose(Pose.ROARING)` arm the ifne pair keeps, the
+/// `isDiggingOrEmerging()` arm the ifeq pair keeps — EITHER the null
+/// (the aconst_null the areturn wears, the makeSound's own null gate
+/// the silence serves) — else `getAngerLevel().getAmbientSound()` the
+/// tail answers. The pose/digging verdicts the brain lanes carry —
+/// the flags the fresh warden's false pair never arms.
+pub fn warden_ambient_sound(
+    anger: i32,
+    roaring: bool,
+    digging_or_emerging: bool,
+) -> Option<&'static str> {
+    if roaring || digging_or_emerging {
+        return None;
+    }
+    Some(warden_anger_level(anger).ambient_sound())
+}
+
+/// THE WARDEN MOB (the entity the summon list banks — the feet-center
+/// the spawn cell's `+0.5` pair wears, the lanes the baseTick law
+/// ticks): the id the entity counter keeps, the health the
+/// MAX_HEALTH 500.0 speaks, the anger the management's own int (the
+/// fresh 0 the Calm level wears — the brain lane the anger raises, a
+/// future round banks), the pose/digging flags the ambient gates
+/// consult, the voice stream the entity's OWN LCG keeps (the seed the
+/// entity_voice_seed law speaks — the same law the generic mobs ride).
+#[derive(Debug, Clone)]
+pub struct WardenMob {
+    /// the entity id the counter's own draw banks (the wire-id lane the
+    /// render/brain rounds consult — the fresh walk never reads yet)
+    #[cfg_attr(not(test), expect(dead_code))] // the id lane the entity rounds consult
+    pub id: i32,
+    /// the feet-center (the spawn cell's (x + 0.5, y, z + 0.5) the
+    /// summon walk banks — the vanilla position the entity wears)
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    /// the MAX_HEALTH attribute's own 500.0 the fresh entity keeps
+    pub health: f32,
+    /// the anger management's own int (the fresh 0 the Calm level wears)
+    pub anger: i32,
+    /// the ROARING pose the ambient's first gate consults (the brain
+    /// lane the roar arms, the fresh false the gates keep)
+    pub roaring: bool,
+    /// the `isDiggingOrEmerging()` verdict the ambient's second gate
+    /// consults (the brain lane the dig/emerge arms, the fresh false)
+    pub digging_or_emerging: bool,
+    /// the ambient clock — the fresh `-80` the house's own ambient lane
+    /// keeps (the resetAmbientSoundTime's own floor the fresh walk
+    /// wears: one interval the first chance holds, the same law the
+    /// generic mobs speak)
+    pub ambient_time: i32,
+    /// the entity's own RandomSource — the one-draw tick gate the
+    /// baseTick law spends, the two-draw pitch law the voice speaks
+    pub rng: crate::drops::Lcg,
+}
+
+impl WardenMob {
+    /// THE FRESH ENTITY (the ctor's own defaults: the JVM zero-init the
+    /// anger/pose pair keeps, the -80 clock the house's ambient lane
+    /// wears, the seed the entity_voice_seed law speaks).
+    #[cfg_attr(not(test), expect(dead_code))] // the summon lane the dig-integration round wires
+    pub fn new(id: i32, x: f64, y: f64, z: f64) -> Self {
+        Self {
+            id,
+            x,
+            y,
+            z,
+            health: WARDEN_MOB_MAX_HEALTH,
+            anger: 0,
+            roaring: false,
+            digging_or_emerging: false,
+            ambient_time: -crate::mob::AMBIENT_INTERVAL_TICKS,
+            rng: crate::drops::Lcg::new(crate::mob::entity_voice_seed(id)),
+        }
+    }
+
+    /// THE AMBIENT VOICE'S TICK (javap `Mob.baseTick` pc 17-55, the
+    /// walk the generic mobs' own lane shares: the `isAlive()` gate the
+    /// head keeps — the ifeq the WHOLE walk wraps, the dead body the
+    /// draw never spends — the `nextInt(1000) < ambientSoundTime++`
+    /// draw the entity's own stream spends under the climbing clock,
+    /// the fired arm the play + the `-getAmbientSoundInterval()` reset
+    /// serves). The health gate the alive word answers — the 500.0
+    /// fresh body the lane never hurts yet.
+    pub fn tick(&mut self) -> bool {
+        if self.health <= 0.0 {
+            return false;
+        }
+        self.ambient_time += 1;
+        if self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
+            < self.ambient_time.max(0) as u64
+        {
+            self.ambient_time = -crate::mob::AMBIENT_INTERVAL_TICKS;
+            true
+        } else {
+            false
+        }
+    }
+
+    /// `LivingEntity.getVoicePitch` (javap pc 35-60 — the adult arm the
+    /// warden the baby never carries, verbatim): `(nextFloat() -
+    /// nextFloat()) * 0.2F + 1.0F` — the TWO draws the entity's own
+    /// stream spends, the draw order the fsub's stack keeps.
+    pub fn voice_pitch(&mut self) -> f32 {
+        (self.rng.next_f32() - self.rng.next_f32()) * 0.2 + 1.0
+    }
+}
+
 /// `SculkSpreader.addCursors` pc 4-8 (javap): the `sipush 1000`
 /// `Math.min(charge, 1000)` the per-cursor cap banks — the loop
 /// `while (charge > 0)` walks (pc 0-1 the `ifle 32` head), each pass
@@ -4947,6 +5133,166 @@ mod tests {
             rng.next_f32(),
             mirror.next_f32(),
             "the gate the draws PRECEDE — the bytecode's own order pins"
+        );
+    }
+
+    /// THE WARDEN ENTITY THE ANGER LADDER THE AMBIENT LAW (javap the
+    /// 26.2 jar `AngerLevel` + `Warden.getAmbientSound` + `Mob.baseTick`
+    /// — the spawned entity's own lanes): the byAnger walk the
+    /// comparator's DESCENDING minimumAnger keeps (the first fit
+    /// answers, the exhausted tail the CALM fallback speaks), the
+    /// ambient map the three levels answer (the registry names the
+    /// SoundEvents clinit's ldc rows keep), the ROARING/digging gates
+    /// the null pair speaks, the fresh entity the 500.0 health + the
+    /// zero anger + the -80 clock the fresh walk keeps, the tick walk
+    /// the climbing clock under the one-draw gate the mirror pins (the
+    /// 80-tick hold the max(0) floor keeps, the fire the -80 reset
+    /// wears, the same seed the same fire tick answers), the pitch the
+    /// two-draw adult law the voice's own order speaks, the dead body
+    /// the draw never spends (the isAlive gate the WHOLE walk wraps).
+    #[test]
+    fn the_warden_entity_the_anger_ladder_the_ambient_law() {
+        // === THE BYANGER WALK (AngerLevel.byAnger pc 14-34) ===
+        assert_eq!(warden_anger_level(0), WardenAngerLevel::Calm);
+        assert_eq!(warden_anger_level(39), WardenAngerLevel::Calm);
+        assert_eq!(warden_anger_level(40), WardenAngerLevel::Agitated);
+        assert_eq!(warden_anger_level(79), WardenAngerLevel::Agitated);
+        assert_eq!(warden_anger_level(80), WardenAngerLevel::Angry);
+        assert_eq!(warden_anger_level(500), WardenAngerLevel::Angry);
+        assert_eq!(
+            warden_anger_level(-5),
+            WardenAngerLevel::Calm,
+            "the exhausted walk the CALM fallback keeps"
+        );
+        assert!(WardenAngerLevel::Angry.is_angry());
+        assert!(!WardenAngerLevel::Agitated.is_angry());
+        assert!(!WardenAngerLevel::Calm.is_angry());
+
+        // === THE AMBIENT MAP (Warden.getAmbientSound pc 0-26) ===
+        assert_eq!(
+            warden_ambient_sound(0, false, false),
+            Some("entity.warden.ambient"),
+            "the Calm level the WARDEN_AMBIENT field keeps"
+        );
+        assert_eq!(
+            warden_ambient_sound(40, false, false),
+            Some("entity.warden.agitated"),
+            "the Agitated level its own ambient wears"
+        );
+        assert_eq!(
+            warden_ambient_sound(80, false, false),
+            Some("entity.warden.angry"),
+            "the Angry level its own ambient wears"
+        );
+        assert_eq!(
+            warden_ambient_sound(0, true, false),
+            None,
+            "the ROARING pose the null arm keeps"
+        );
+        assert_eq!(
+            warden_ambient_sound(0, false, true),
+            None,
+            "the isDiggingOrEmerging arm the null keeps"
+        );
+
+        // === THE FRESH ENTITY (the ctor's own defaults) ===
+        let mut warden = WardenMob::new(7, 10.5, 32.0, 3.5);
+        assert_eq!(warden.id, 7);
+        assert_eq!(
+            (warden.x, warden.y, warden.z),
+            (10.5, 32.0, 3.5),
+            "the feet-center the spawn cell's +0.5 pair wears"
+        );
+        assert_eq!(
+            warden.health, WARDEN_MOB_MAX_HEALTH,
+            "the MAX_HEALTH attribute's own 500.0 the fresh body keeps"
+        );
+        assert_eq!(
+            warden.anger, 0,
+            "the zero anger the Calm level wears"
+        );
+        assert!(
+            !warden.roaring && !warden.digging_or_emerging,
+            "the fresh pair the brain lanes never arms"
+        );
+        assert_eq!(
+            warden.ambient_time,
+            -crate::mob::AMBIENT_INTERVAL_TICKS,
+            "the fresh clock the -80 floor the house's ambient lane keeps"
+        );
+
+        // === THE TICK WALK (Mob.baseTick pc 17-55) — the mirror the
+        // same seed pins ===
+        let mut mirror = WardenMob::new(7, 10.5, 32.0, 3.5);
+        for _ in 0..crate::mob::AMBIENT_INTERVAL_TICKS {
+            assert!(
+                !warden.tick(),
+                "the hold the fire never speaks — the max(0) floor the draw never beats"
+            );
+            assert!(
+                !mirror.tick(),
+                "the mirror the same hold keeps — the same seed the same walk wears"
+            );
+        }
+        assert_eq!(
+            warden.ambient_time, 0,
+            "the climb the -80 + 80 ticks wears"
+        );
+        assert_eq!(
+            mirror.ambient_time, 0,
+            "the twin's clock the same climb wears"
+        );
+        // the two streams aligned — the lockstep walk the same fire
+        // tick answers, the mirror the verdict's own twin keeps
+        let mut fired_at = 0usize;
+        for t in 1..=1_000_000usize {
+            let fired_app = warden.tick();
+            let fired_mirror = mirror.tick();
+            assert_eq!(
+                fired_app, fired_mirror,
+                "the same seed the same walk wears — the stream the gate's own draw advances"
+            );
+            if fired_app {
+                fired_at = t;
+                break;
+            }
+        }
+        assert!(
+            fired_at > 0,
+            "the climb fires — the law's own probability the walk never starves"
+        );
+        assert_eq!(
+            warden.ambient_time,
+            -crate::mob::AMBIENT_INTERVAL_TICKS,
+            "the fire the -80 reset wears"
+        );
+        // the pitch draw pair: the two streams still aligned, the adult
+        // arm's 1.0 ± 0.2 fold the law keeps
+        let expect_pitch = mirror.voice_pitch();
+        assert_eq!(
+            warden.voice_pitch(),
+            expect_pitch,
+            "the two-draw law the entity's own stream speaks — the order the fsub's stack keeps"
+        );
+        assert!(
+            (expect_pitch - 1.0).abs() <= 0.2,
+            "the adult arm the 1.0 +- 0.2 fold keeps"
+        );
+
+        // === THE DEAD BODY THE DRAW NEVER SPENDS (pc 18-21 — the
+        // isAlive gate the ifeq the WHOLE walk wraps) ===
+        let mut dead = WardenMob::new(9, 0.0, 0.0, 0.0);
+        dead.health = 0.0;
+        let mut dead_mirror = WardenMob::new(9, 0.0, 0.0, 0.0);
+        assert!(!dead.tick(), "the dead tick the fire never speaks");
+        assert_eq!(
+            dead.ambient_time, dead_mirror.ambient_time,
+            "the dead tick the clock never climbs"
+        );
+        assert_eq!(
+            dead.rng.next_f32(),
+            dead_mirror.rng.next_f32(),
+            "the dead body the draw never spends — the gate the stream's own position keeps"
         );
     }
 }
