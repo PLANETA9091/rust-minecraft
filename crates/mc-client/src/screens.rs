@@ -9827,16 +9827,43 @@ impl App {
             // cell the full-cube majority answers), the voice + the
             // particle bursts the count<=0 / count>0 arms the same
             // walk serves (the RNG draws the wire walk's own law
-            // banks — the drain itself spends none)
+            // banks — the drain's own MOVEMENT the shuffle's 17 draws
+            // the level stream rides, the countdown and the dead
+            // cursor the early returns keep)
             if !self.sculk_catalysts.is_empty() {
                 let drain_world = if self.world_is_network {
                     self.net_world.as_ref()
                 } else {
                     self.offline_world.as_ref()
                 };
+                // THE MOVEMENT'S OWN PROBE (javap ChargeCursor
+                // .getValidMovementPos's `getBlockState` reads the
+                // candidate walk spends — the world's block id the
+                // name resolution answers, the BARE name the gates
+                // read; the face-less probe the offline world's own
+                // cells keep — the real vein faces the vein-spread
+                // round carries)
+                let probe_at = move |x: i32, y: i32, z: i32| -> crate::sculk::SculkMovementProbe {
+                    let name = drain_world
+                        .map(|w| {
+                            mc_registry::generated::block_ids::block_name_of(
+                                w.get(x, y, z) as u32,
+                            )
+                            .unwrap_or("air")
+                        })
+                        .unwrap_or("air");
+                    crate::sculk::SculkMovementProbe {
+                        name: name.strip_prefix("minecraft:").unwrap_or(name),
+                        faces: 0,
+                    }
+                };
                 let mut charge_events: Vec<crate::world_view::WireSculkChargeEvent> = Vec::new();
                 for cat in &mut self.sculk_catalysts {
-                    for pop in crate::sculk::update_cursors(cat) {
+                    for pop in crate::sculk::update_cursors(
+                        cat,
+                        &mut self.level_ambient_rng,
+                        &probe_at,
+                    ) {
                         let full_block = drain_world
                             .map(|w| {
                                 crate::world_model::collision_full_block(
@@ -41773,6 +41800,81 @@ mod tests {
             .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SculkChargePop))
             .count();
         assert_eq!(pops, 40, "the lane's own verdict the 40-burst wears");
+    }
+
+    /// THE DRAIN'S OWN SHUFFLE (javap ChargeCursor.getValidMovementPos
+    /// → getRandomizedNonCornerNeighbourOffsets → Util.shuffledCopy —
+    /// the Fisher-Yates walk the 18-element table serves, SEVENTEEN
+    /// nextInt draws every full update spends, the `level.getRandom()`
+    /// stream the app's own level ambient rides): the BODYLESS app the
+    /// drain the tick's ONLY spender keeps (the ambient walk the body
+    /// gate skips, the mood tick the world gate refuses), the replay
+    /// the bounds order pins — the full update the 17-draw stream
+    /// advance wears, the countdown and the pop ticks the zero-draw
+    /// early returns keep, the air world the cursor's pos the movement
+    /// never completes.
+    #[test]
+    fn the_drain_the_shuffle_the_walk_spends() {
+        let mut app = App::new(3);
+        // THE WORLD SCREEN the tick sweep's own gate keeps (the
+        // ScreenKind::World && !paused pair the walk rides), NO body
+        // and NO world otherwise — the tick's own spenders the gates
+        // skip, the drain the stream's only rider keeps
+        app.screen = ScreenKind::World;
+        app.place_sculk_catalyst(0, 32, 0);
+        app.entity_die_at(2.5, 32.5, 0.5, 5);
+        assert_eq!(app.sculk_catalysts[0].cursors.len(), 1);
+        // TICK 1 (the full update the fresh cursor keeps): the shuffle
+        // the SEVENTEEN draws spends — the replay the bounds walk
+        // pins (nextInt(18) down to nextInt(2), the raw draws the
+        // same stream the clone answers)
+        let before = app.level_ambient_rng.clone();
+        app.update();
+        let mut replay = before.clone();
+        for i in (2..=18u64).rev() {
+            replay.next_int(i);
+        }
+        assert_eq!(
+            app.level_ambient_rng, replay,
+            "the tick's only spender the 17-draw shuffle keeps"
+        );
+        assert_eq!(app.sculk_catalysts[0].cursors.len(), 1);
+        assert_eq!(
+            app.sculk_catalysts[0].cursors[0].pos, (2, 33, 0),
+            "the air walk the cursor keeps — no vein the gates answer"
+        );
+        assert_eq!(app.sculk_catalysts[0].cursors[0].decay_delay, 0);
+        assert_eq!(app.sculk_catalysts[0].cursors[0].update_delay, 1);
+        // TICK 2 (the countdown the spread paces): the walk the early
+        // return keeps — the stream the tick NEVER advances
+        let mid = app.level_ambient_rng.clone();
+        app.update();
+        assert_eq!(
+            app.level_ambient_rng, mid,
+            "the countdown tick the walk never spends"
+        );
+        assert_eq!(app.sculk_catalysts[0].cursors[0].update_delay, 0);
+        // TICK 3 (the elapsed decay the ZERO answer wears): the pop
+        // the early return keeps — the stream the SHUFFLE never
+        // touches (the pop burst's own draws the wire arm spends, the
+        // stream the same walk advances)
+        app.update();
+        assert!(
+            app.sculk_catalysts[0].cursors.is_empty(),
+            "the dead cursor the drain drops"
+        );
+        assert!(
+            app.level_ambient_rng != mid,
+            "the pop burst's own draws the stream advances"
+        );
+        // THE 40-BURST the pop arm spawns (the same verdict the 541
+        // pin banks)
+        let pops = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SculkChargePop))
+            .count();
+        assert_eq!(pops, 40, "the pop arm the burst wears");
     }
 
     /// THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken → the
