@@ -1582,6 +1582,63 @@ pub struct WardenSniffLaneOut {
     pub listening: Option<(&'static str, f32)>,
 }
 
+// === THE EMERGE ACTIVITY'S OWN WALK (javap `WardenAi
+// .initEmergeActivity` pc 0-23 + `Emerging` + `Warden.finalizeSpawn`
+// verbatim — the activity the updateActivity's ladder the FIRST lane
+// wears, the priority the iconst_5 speaks, the required-memory set
+// the IS_EMERGING alone carries): the `new Emerging(EMERGE_DURATION)`
+// behavior the 134-tick window serves — the finalizeSpawn the TRIGGERED
+// summon the pose + the memory + the agitated voice arms, the
+// Emerging.start the emerge voice the window's own head speaks, the
+// stop the pose clears — the warden the GROUND the dark rises ===
+
+/// `WardenAi` clinit pc 9-15 — the `ldc 133.59999f` the `Mth.ceil`
+/// fold the `putstatic EMERGE_DURATION` banks: the Emerging
+/// behavior's own 134-tick window (the `new Emerging(duration)` ctor
+/// the Behavior duration carries, the canStillUse the true keeps,
+/// the tickOrStop the expiry the stop serves).
+pub const WARDEN_EMERGE_DURATION_TICKS: i32 = 134;
+
+/// `Warden.finalizeSpawn` pc 10-13 — the `ldc2_w 1200l` the
+/// `setMemoryWithExpiry(DIG_COOLDOWN, UNIT, 1200l)` call wears: the
+/// dig cooldown memory EVERY spawn banks (the TRIGGERED arm the
+/// verdict never gates — the 60-second window the dig lane the
+/// future round wires).
+pub const WARDEN_DIG_COOLDOWN_TICKS: i32 = 1200;
+
+/// `SoundEvents.WARDEN_EMERGE` — the registry name the SoundEvents
+/// clinit's ldc row keeps (`entity.warden.emerge` — the
+/// Emerging.start's `playSound` walk the voice serves).
+pub const WARDEN_EMERGE_SOUND: &str = "entity.warden.emerge";
+
+/// `SoundEvents.WARDEN_AGITATED` — the registry name the
+/// finalizeSpawn's own ldc row keeps (`entity.warden.agitated` — the
+/// `playSound(WARDEN_AGITATED, 5.0f, 1.0f)` the TRIGGERED arm
+/// speaks, the same word the Agitated level's ambient keeps).
+pub const WARDEN_AGITATED_SOUND: &str = "entity.warden.agitated";
+
+/// `Emerging.start` pc 8-14 + `Warden.finalizeSpawn` pc 47-54 — the
+/// `ldc 5.0f` + the `fconst_1` pair BOTH playSound calls wear: the
+/// FIXED volume/pitch the explicit-arg walk speaks (the two-draw
+/// voice law the ambient voices spend these two NEVER ride — the
+/// voice stream the draw never touches).
+pub const WARDEN_EMERGE_VOLUME: f32 = 5.0;
+pub const WARDEN_EMERGE_PITCH: f32 = 1.0;
+
+/// THE EMERGE'S OWN VOICE (the Emerging.start's own tail the pair
+/// speaks — the FIXED volume/pitch the explicit-arg walk carries;
+/// the AGITATED voice the finalize's own arm banks the same trio
+/// wears with its own word).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenEmergeSound {
+    /// the registry name the SoundEvents row keeps
+    pub word: &'static str,
+    /// the 5.0f the ldc wears
+    pub volume: f32,
+    /// the 1.0f the fconst_1 keeps
+    pub pitch: f32,
+}
+
 /// THE WALK TARGET'S OWN MEMORY (javap `MemoryModuleType.WALK_TARGET`
 /// — the `BehaviorUtils.setWalkAndLookTargetMemories` walk banks: the
 /// `new WalkTarget(new BlockPosTracker(pos), speedModifier,
@@ -2191,6 +2248,24 @@ pub struct WardenMob {
     /// countdown the window drains, the expiry + the ROAR/
     /// INVESTIGATE preemption the stop serves)
     pub sniff_ticks: i32,
+    /// THE EMERGING POSE + THE IS_EMERGING MEMORY (javap `Pose
+    /// .EMERGING` + `MemoryModuleType.IS_EMERGING` — the
+    /// finalizeSpawn's TRIGGERED arm the pose + the 134l memory pair
+    /// banks, the Emerging.start's setPose the same pose re-arms, the
+    /// Emerging.stop's `hasPose(EMERGING) -> setPose(STANDING)` the
+    /// window's end clears; the fresh false the JVM init keeps)
+    pub emerging: bool,
+    /// THE EMERGING BEHAVIOR'S OWN WINDOW (the `new
+    /// Emerging(EMERGE_DURATION)` ctor's 134-tick duration the
+    /// behavior carries — the canStillUse the true keeps, the
+    /// countdown the window drains, the expiry the stop serves)
+    pub emerge_ticks: i32,
+    /// THE DIG COOLDOWN'S OWN MEMORY (javap
+    /// `MemoryModuleType.DIG_COOLDOWN` — the finalizeSpawn's
+    /// `setMemoryWithExpiry(UNIT, 1200l)` pc 0-13 EVERY spawn banks,
+    /// the Brain expiry walk the tick drains; the fresh zero the JVM
+    /// init keeps — the dig lane the future round wires)
+    pub dig_cooldown: i32,
 }
 
 impl WardenMob {
@@ -2240,6 +2315,9 @@ impl WardenMob {
             sniffing: false,
             sniff_cooldown: 0,
             sniff_ticks: 0,
+            emerging: false,
+            emerge_ticks: 0,
+            dig_cooldown: 0,
         }
     }
 
@@ -2785,6 +2863,77 @@ impl WardenMob {
         out
     }
 
+    /// THE SUMMON'S OWN FINALIZE (javap `Warden.finalizeSpawn`
+    /// pc 0-66, verbatim): the
+    /// `setMemoryWithExpiry(DIG_COOLDOWN, UNIT, 1200l)` pc 0-13 EVERY
+    /// spawn banks (the TRIGGERED verdict the arm never gates), the
+    /// spawn-reason arm pc 16-56 the TRIGGERED summon serves — the
+    /// `setPose(Pose.EMERGING)` pc 23-27 the pose arms, the
+    /// `setMemoryWithExpiry(IS_EMERGING, UNIT, EMERGE_DURATION)`
+    /// pc 30-44 the 134-tick window banks, the
+    /// `playSound(WARDEN_AGITATED, 5.0f, 1.0f)` pc 47-54 the FIXED
+    /// pair the voice carries (the two-draw law the ambient voices
+    /// spend the finalize NEVER rides — the voice stream the draw
+    /// never touches), the super tail the caller's walk keeps. THE
+    /// VERDICT the TRIGGERED voice banks — the non-triggered spawn
+    /// the None keeps.
+    pub fn finalize_spawn(&mut self, triggered: bool) -> Option<WardenEmergeSound> {
+        // pc 0-13: the DIG_COOLDOWN memory — EVERY spawn banks
+        self.dig_cooldown = WARDEN_DIG_COOLDOWN_TICKS;
+        // pc 16-20: the spawn-reason gate — the TRIGGERED verdict the
+        // arm consults (the shrieker summon the acmp answers)
+        if !triggered {
+            return None;
+        }
+        // pc 23-27: the EMERGING pose
+        self.emerging = true;
+        // pc 30-44: the IS_EMERGING memory — the 134-tick window the
+        // Behavior's own duration wears
+        self.emerge_ticks = WARDEN_EMERGE_DURATION_TICKS;
+        // pc 47-54: the AGITATED voice
+        Some(WardenEmergeSound {
+            word: WARDEN_AGITATED_SOUND,
+            volume: WARDEN_EMERGE_VOLUME,
+            pitch: WARDEN_EMERGE_PITCH,
+        })
+    }
+
+    /// THE EMERGING BEHAVIOR'S OWN LANE (javap `Emerging` verbatim —
+    /// the EMERGE activity's own behavior the ladder's FIRST lane
+    /// wears): the fresh window the START's own tick the EMERGE
+    /// voice banks (`setPose(EMERGING)` the finalize's arm re-arms +
+    /// the `playSound(WARDEN_EMERGE, 5.0f, 1.0f)` pc 8-14 the FIXED
+    /// pair speaks), the canStillUse the true the window drains, the
+    /// 134th drain the STOP serves (`hasPose(EMERGING) ->
+    /// setPose(STANDING)` pc 0-14 the pose clears — the IS_EMERGING
+    /// memory the 134l expiry the same window retires). THE EXCLUSIVITY
+    /// the ladder keeps: the EMERGE the ROAR/FIGHT/INVESTIGATE/SNIFF
+    /// lanes the consults' own gates exclude while the window runs.
+    pub fn emerge_lane(&mut self) -> Option<WardenEmergeSound> {
+        if !self.emerging {
+            return None;
+        }
+        // THE START (the window's own head — the fresh 134 the
+        // finalize banks): the EMERGE voice the behavior's own start
+        // tick banks, the drain the same tick wears
+        if self.emerge_ticks == WARDEN_EMERGE_DURATION_TICKS {
+            self.emerge_ticks -= 1;
+            return Some(WardenEmergeSound {
+                word: WARDEN_EMERGE_SOUND,
+                volume: WARDEN_EMERGE_VOLUME,
+                pitch: WARDEN_EMERGE_PITCH,
+            });
+        }
+        // THE WINDOW (the tickOrStop law — the expiry the stop
+        // serves, the canStillUse the true the drain keeps)
+        self.emerge_ticks -= 1;
+        if self.emerge_ticks <= 0 {
+            // the stop — the pose clears
+            self.emerging = false;
+        }
+        None
+    }
+
     /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
     /// mob.rs lane speaks — the travel fold the LivingEntity's own
     /// bytecode keeps, the warden's attribute 0.3 the gain wears):
@@ -3118,6 +3267,12 @@ impl WardenMob {
         if self.sniff_cooldown > 0 {
             self.sniff_cooldown -= 1;
         }
+        // THE DIG COOLDOWN'S OWN DRAIN (the same Brain expiry walk —
+        // the 1200-tick expiry the finalizeSpawn banks, the zero the
+        // memory expires)
+        if self.dig_cooldown > 0 {
+            self.dig_cooldown -= 1;
+        }
         self.ambient_time += 1;
         let fired = self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
             < self.ambient_time.max(0) as u64;
@@ -3188,7 +3343,10 @@ impl WardenMob {
         if self.vibration_cooldown > 0 {
             return false;
         }
-        if self.digging_or_emerging {
+        // the isDiggingOrEmerging() gate — the DIGGING pose the flag
+        // wears, the EMERGING pose the finalize's own arm banks (the
+        // risen body the pair the same verdict consults)
+        if self.digging_or_emerging || self.emerging {
             return false;
         }
         source_targetable != Some(false)
@@ -8557,7 +8715,7 @@ mod tests {
         // THE WINDOW'S OWN DRAIN (the tickOrStop law — the canStillUse
         // the true keeps, the countdown the window drains): the
         // 84-tick walk the stop at the window's end serves
-        let mut sound_ticks = 0;
+        let sound_ticks = 0;
         let mut stops = 0;
         for _ in 0..WARDEN_SNIFFING_DURATION_TICKS {
             warden.sniff_ticks -= 1;
@@ -8744,6 +8902,108 @@ mod tests {
         // the re-sniff refuses)
         let out = warden2.sniff_lane(&mut rng, Some(suspect));
         assert!(out.sound.is_none(), "the retired behavior the lane never re-arms");
+    }
+
+    /// THE SUMMON'S OWN FINALIZE (javap `Warden.finalizeSpawn`
+    /// pc 0-66, verbatim): the DIG_COOLDOWN 1200l EVERY spawn banks,
+    /// the TRIGGERED arm the EMERGING pose + the IS_EMERGING 134l
+    /// window + the AGITATED voice serves, the non-triggered spawn
+    /// the None keeps.
+    #[test]
+    fn the_emerge_finalize_the_summon_arms() {
+        // THE TRIGGERED ARM (the shrieker summon's own walk)
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        let voice = warden.finalize_spawn(true);
+        assert_eq!(
+            warden.dig_cooldown,
+            WARDEN_DIG_COOLDOWN_TICKS,
+            "the setMemoryWithExpiry 1200l EVERY spawn banks"
+        );
+        assert!(voice.is_some(), "the TRIGGERED arm the voice banks");
+        let voice = voice.expect("the voice the arm banks");
+        assert_eq!(
+            voice.word, WARDEN_AGITATED_SOUND,
+            "the WARDEN_AGITATED registry name the finalize speaks"
+        );
+        assert_eq!(voice.volume, WARDEN_EMERGE_VOLUME, "the 5.0f the ldc wears");
+        assert_eq!(voice.pitch, WARDEN_EMERGE_PITCH, "the fconst_1 the pitch keeps");
+        assert!(warden.emerging, "the EMERGING pose the setPose arms");
+        assert_eq!(
+            warden.emerge_ticks,
+            WARDEN_EMERGE_DURATION_TICKS,
+            "the IS_EMERGING 134l the window banks"
+        );
+        // THE NON-TRIGGERED SPAWN (pc 16-20 the acmp the not-equal arm
+        // serves): the dig cooldown the SAME arm banks, the pose the
+        // verdict never arms, the voice the None keeps
+        let mut natural = WardenMob::new(4, 10.5, 32.0, 3.5);
+        assert!(
+            natural.finalize_spawn(false).is_none(),
+            "the non-triggered spawn the None keeps"
+        );
+        assert_eq!(
+            natural.dig_cooldown,
+            WARDEN_DIG_COOLDOWN_TICKS,
+            "the dig cooldown the arm the verdict never gates"
+        );
+        assert!(!natural.emerging, "the pose the non-triggered spawn never banks");
+        assert_eq!(natural.emerge_ticks, 0, "the window the arm never banks");
+        // THE HEARING GATE (javap `canReceiveVibration` — the
+        // isDiggingOrEmerging() gate the risen body the same verdict
+        // consults): the EMERGING pose the hearing refuses
+        assert!(
+            !warden.can_receive_vibration(None),
+            "the EMERGING pose the hearing gate refuses"
+        );
+    }
+
+    /// THE EMERGING BEHAVIOR'S OWN LANE (javap `Emerging` verbatim):
+    /// the window's own head the EMERGE voice banks, the drain the
+    /// tickOrStop law keeps, the 134th drain the stop serves, the
+    /// pose the STANDING clears, the quiet body the lane never
+    /// speaks.
+    #[test]
+    fn the_emerge_lane_the_window_the_stop_banks() {
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        // THE QUIET BODY (the never-armed pose the lane never speaks)
+        assert!(
+            warden.emerge_lane().is_none(),
+            "the fresh body the lane never speaks"
+        );
+        // THE ARM (the finalize's own walk)
+        warden.finalize_spawn(true);
+        // THE START (the window's own head — the fresh 134): the
+        // EMERGE voice the behavior's own start tick banks
+        let voice = warden.emerge_lane().expect("the start the voice banks");
+        assert_eq!(
+            voice.word, WARDEN_EMERGE_SOUND,
+            "the WARDEN_EMERGE registry name the start speaks"
+        );
+        assert_eq!(voice.volume, WARDEN_EMERGE_VOLUME, "the 5.0f the ldc wears");
+        assert_eq!(voice.pitch, WARDEN_EMERGE_PITCH, "the fconst_1 the pitch keeps");
+        assert_eq!(
+            warden.emerge_ticks,
+            WARDEN_EMERGE_DURATION_TICKS - 1,
+            "the start the drain wears"
+        );
+        assert!(warden.emerging, "the pose the window keeps");
+        // THE WINDOW (the canStillUse the true keeps — the mid-window
+        // tick the silence wears): the remaining 133 drains the lane
+        // never speaks, the 134th the stop serves
+        let mut stops = 0;
+        for _ in 1..WARDEN_EMERGE_DURATION_TICKS {
+            assert!(warden.emerge_lane().is_none(), "the mid-window tick the silence keeps");
+        }
+        for _ in 0..1 {
+            if warden.emerge_lane().is_none() && !warden.emerging {
+                stops += 1;
+            }
+        }
+        assert_eq!(stops, 1, "the 134th drain the stop serves");
+        assert!(!warden.emerging, "the stop the pose clears");
+        // THE RETIRED WINDOW (the stop the behavior retires — the
+        // quiet body the lane never speaks)
+        assert!(warden.emerge_lane().is_none(), "the retired lane never speaks");
     }
 }
 

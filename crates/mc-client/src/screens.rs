@@ -8335,24 +8335,45 @@ impl App {
                     sy as f64,
                     sz as f64 + 0.5,
                 );
+                // THE SUMMON'S OWN FINALIZE (javap `Warden.finalizeSpawn`
+                // pc 0-66 — the TRIGGERED spawn reason the shrieker's
+                // trySummonWarden `EntitySpawnReason.TRIGGERED` arg
+                // wears): the DIG_COOLDOWN 1200l the arm banks, the
+                // EMERGING pose + the IS_EMERGING 134l the TRIGGERED arm
+                // banks, the `playSound(WARDEN_AGITATED, 5.0f, 1.0f)` pc
+                // 47-54 the FIXED pair the voice carries
+                let agitated_voice = warden.finalize_spawn(true);
                 // THE SPAWN'S OWN AMBIENT (javap `SpawnUtil.trySpawnMob`
                 // pc 172-184 — the addFreshEntity tail the
                 // `playAmbientSound()` call serves: the makeSound walk
                 // the getSoundVolume 4.0 + the getVoicePitch fold
                 // carries — the TWO draws the entity's OWN stream
                 // speaks, the fresh warden's Calm level the word
-                // answers, the ROARING/digging gates the fresh pair
-                // never arms)
+                // answers, the ROARING/digging gates the fresh EMERGING
+                // pose the ambient REFUSES)
                 let spawn_voice = crate::sculk::warden_ambient_sound(
                     warden.active_anger(),
                     warden.roaring,
-                    warden.digging_or_emerging,
+                    warden.digging_or_emerging || warden.emerging,
                 )
                 .map(|word| {
                     let pitch = warden.voice_pitch();
                     (word, warden.x, warden.y, warden.z, pitch)
                 });
                 self.wardens.push(warden);
+                if let Some(sound) = agitated_voice {
+                    // THE AGITATED VOICE (the finalizeSpawn's own arm —
+                    // the playSound(WARDEN_AGITATED, 5.0f, 1.0f) the
+                    // FIXED pair the play_warden_voice_v carries)
+                    self.play_warden_voice_v(
+                        sound.word,
+                        self.wardens.last().map(|w| w.x).unwrap_or(0.0),
+                        self.wardens.last().map(|w| w.y).unwrap_or(0.0),
+                        self.wardens.last().map(|w| w.z).unwrap_or(0.0),
+                        sound.pitch,
+                        sound.volume,
+                    );
+                }
                 if let Some((word, wx, wy, wz, pitch)) = spawn_voice {
                     self.play_warden_voice(word, wx, wy, wz, pitch);
                 }
@@ -10146,12 +10167,18 @@ impl App {
                 Vec::new();
             let mut sniff_listen_voices: Vec<(&'static str, f64, f64, f64, f32)> =
                 Vec::new();
+            // THE EMERGE'S OWN VOICES (the Emerging.start's own tail the
+            // volume-carrying pair speaks — the play_warden_voice_v the
+            // 5.0f volume serves, the FIXED pitch 1.0f the fconst_1
+            // keeps)
+            let mut emerge_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
+                Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
                         warden.active_anger(),
                         warden.roaring,
-                        warden.digging_or_emerging,
+                        warden.digging_or_emerging || warden.emerging,
                     ) {
                         let pitch = warden.voice_pitch();
                         warden_voices.push((word, warden.x, warden.y, warden.z, pitch));
@@ -10162,6 +10189,25 @@ impl App {
                 // the roar + the investigate lanes consult, the travel
                 // the collision lane serves.
                 if warden.health > 0.0 {
+                    // THE EMERGE LANE (javap `Emerging` verbatim — the
+                    // EMERGE activity the ladder's FIRST lane wears, the
+                    // `new Emerging(EMERGE_DURATION)` behavior the
+                    // 134-tick window serves): the fresh window the
+                    // START's own tick the EMERGE voice banks, the drain
+                    // the tickOrStop law keeps, the 134th drain the stop
+                    // serves. THE EXCLUSIVITY the ladder keeps — the
+                    // EMERGE the ROAR/FIGHT/INVESTIGATE/SNIFF lanes the
+                    // consults' own gates exclude while the window runs.
+                    if let Some(sound) = warden.emerge_lane() {
+                        emerge_voices.push((
+                            sound.word,
+                            warden.x,
+                            warden.y,
+                            warden.z,
+                            sound.pitch,
+                            sound.volume,
+                        ));
+                    }
                     // THE ROAR LANE (javap `WardenAi.initRoarActivity`
                     // pc 0-21 — the ROAR activity the prio-10 the
                     // required ROAR_TARGET memory wears, the `new
@@ -10171,13 +10217,18 @@ impl App {
                     // `Warden::getEntityAngryAt` BootstrapMethods #0
                     // method ref answers): the targetable verdict the
                     // canTargetEntity's own pair answers, the window
-                    // the sound once answers.
-                    let roar_targetable = match warden.entity_angry_at() {
-                        Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => {
-                            self.game_mode.is_survival() && !self.dead
+                    // the sound once answers. THE EMERGE EXCLUDES (the
+                    // ladder's FIRST lane the consult gates).
+                    let roar_targetable = if warden.emerging {
+                        false
+                    } else {
+                        match warden.entity_angry_at() {
+                            Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => {
+                                self.game_mode.is_survival() && !self.dead
+                            }
+                            Some(_) => true,
+                            None => false,
                         }
-                        Some(_) => true,
-                        None => false,
                     };
                     // THE TARGET POS THE LOOK ARM CONSULTS (the player
                     // body the suspect answers, the mob the list keeps)
@@ -10223,7 +10274,7 @@ impl App {
                     // `mob.level().getRandom()`, the LEVEL's own stream
                     // the level-ambient lane carries (the entity's voice
                     // stream the draw never spends).
-                    if warden.roar_target.is_none() {
+                    if warden.roar_target.is_none() && !warden.emerging {
                         warden.investigate_trigger(&mut self.level_ambient_rng);
                     }
                     // THE SNIFF LANE (javap `WardenAi.initSniffingActivity`
@@ -10299,8 +10350,13 @@ impl App {
                             best.map(|(_, s)| s)
                         }
                     };
-                    let sniff_out =
-                        warden.sniff_lane(&mut self.level_ambient_rng, suspect_view);
+                    let sniff_out = if warden.emerging {
+                        // the EMERGE the ladder's FIRST lane — the sniff
+                        // consult + the window the exclusivity gates
+                        crate::sculk::WardenSniffLaneOut::default()
+                    } else {
+                        warden.sniff_lane(&mut self.level_ambient_rng, suspect_view)
+                    };
                     if let Some(sound) = sniff_out.sound {
                         sniff_voices.push((
                             sound.word,
@@ -10353,6 +10409,13 @@ impl App {
                 // getSoundVolume 4.0 NEVER serves — the same walk the
                 // touch lane's listening voice wears)
                 self.play_warden_voice_v(word, wx, wy, wz, pitch, 10.0);
+            }
+            for (word, wx, wy, wz, pitch, volume) in emerge_voices {
+                // THE EMERGE'S OWN VOLUME (javap `Emerging.start` pc
+                // 8-14 — the `playSound(WARDEN_EMERGE, 5.0f, 1.0f)` the
+                // explicit-arg walk speaks, the FIXED pair the voice
+                // carries)
+                self.play_warden_voice_v(word, wx, wy, wz, pitch, volume);
             }
 
             // THE WARDEN'S PUSH ENTITIES (javap `LivingEntity.aiStep`
@@ -36427,6 +36490,24 @@ impl App {
                 } else {
                     None
                 },
+                // THE EMERGE'S OWN CLOCK (javap `Warden.onSyncedDataUpdated`
+                // pc 80-91 — the DATA_POSE sync the EMERGING pose's own
+                // arrival wears, the `emergeAnimationState.start
+                // (tickCount)` the pose arm banks): the elapsed ticks
+                // the window's own `134 - emerge_ticks` walk derives (the
+                // countdown the finalize banks, the stop the window's
+                // end serves), the partial the lerp adds — the pose's
+                // STANDING the stop clears, the clock the None the
+                // no-op keeps
+                emerge_time: if warden.emerging {
+                    Some(
+                        (crate::sculk::WARDEN_EMERGE_DURATION_TICKS - warden.emerge_ticks)
+                            as f32
+                            + self.partial_tick,
+                    )
+                } else {
+                    None
+                },
             };
             let quads = warden_model.quads(&state, feet, cam.yaw, cam.pitch);
             // THE DRAW (the same SampledQuad fold the mob chain
@@ -44054,14 +44135,14 @@ mod tests {
                 .filter(|e| e.starts_with("entity.warden."))
                 .count(),
             1,
-            "the success the spawn ambient ALONE speaks — the reply voice the failure keeps"
+            "the success the finalize's AGITATED voice ALONE speaks — the reply voice the failure keeps"
         );
         assert!(
             app.sounds
                 .events
                 .iter()
-                .any(|e| e.starts_with("entity.warden.ambient ")),
-            "the trySpawnMob tail the ambient voice serves — the Calm level's own word"
+                .any(|e| e.starts_with("entity.warden.agitated ")),
+            "the finalizeSpawn's own arm the WARDEN_AGITATED voice serves — the EMERGING pose the spawn ambient the gate REFUSES"
         );
         assert!(
             app.game_events
@@ -44218,66 +44299,82 @@ mod tests {
         assert_eq!(app.wardens.len(), 1, "the spawn the ONE warden banks");
         let warden_id = app.wardens[0].id;
 
-        // THE SPAWN VOICE (pc 172-184): the ONE warden event the sounds
-        // lane banks — the ambient word the Calm level answers, the
-        // v4.0 the warden's own volume keeps, the p the two-draw law
-        // the spawn's own draws speak
-        let ambient_count = |app: &App| {
+        // THE SPAWN VOICE (javap `Warden.finalizeSpawn` pc 47-54): the
+        // ONE warden event the sounds lane banks — the AGITATED word
+        // the TRIGGERED arm speaks (the EMERGING pose the spawn
+        // ambient the gate REFUSES — the getAmbientSound the pose
+        // null keeps), the v5.0 the FIXED pair keeps. THE VOICE
+        // STREAM THE DRAW NEVER SPENDS — the FIXED pitch the
+        // explicit-arg walk carries, the two-draw law the ambient
+        // voices spend the finalize NEVER rides.
+        let agitated_count = |app: &App| {
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.warden.agitated "))
+                .count()
+        };
+        assert_eq!(
+            agitated_count(&app),
+            1,
+            "the finalize's AGITATED voice the summon speaks"
+        );
+        assert_eq!(
             app.sounds
                 .events
                 .iter()
                 .filter(|e| e.starts_with("entity.warden.ambient "))
-                .count()
-        };
-        assert_eq!(
-            ambient_count(&app),
-            1,
-            "the spawn ambient the trySpawnMob tail plays"
+                .count(),
+            0,
+            "the EMERGING pose the spawn ambient the gate refuses"
         );
-        // the aligned twin: the SAME seed, the SAME two spawn draws
-        // spent — the mirror the entity's own stream keeps
-        let w = &app.wardens[0];
-        let mut twin = crate::sculk::WardenMob::new(warden_id, w.x, w.y, w.z);
-        let pa = twin.rng.next_f32();
-        let pb = twin.rng.next_f32();
-        let spawn_pitch = (pa - pb) * 0.2 + 1.0;
-        let spawn_line = app
+        // the FIXED pitch the line carries — the fconst_1 the
+        // playSound's own pitch arg wears
+        let agitated_line = app
             .sounds
             .events
             .iter()
-            .find(|e| e.starts_with("entity.warden.ambient "))
-            .expect("the spawn voice rides");
+            .find(|e| e.starts_with("entity.warden.agitated "))
+            .expect("the agitated voice rides");
         assert!(
-            spawn_line.contains(&format!("p{spawn_pitch:.6}")),
-            "the two-draw law the spawn's pitch speaks — the line the fold carries: {spawn_line}"
+            agitated_line.contains("p1.000000"),
+            "the FIXED pitch the explicit-arg walk speaks: {agitated_line}"
         );
-        // the volume the makeSound fold carries — the 4.0 the
-        // Warden.getSoundVolume speaks, the gain the distance law folds
-        // (the AL_MAX_GAIN ceiling the close lane clamps)
+        // the volume the attenuate fold carries — the 5.0f the ldc
+        // wears, the gain the distance law folds (the AL_MAX_GAIN
+        // ceiling the close lane clamps)
         let ear = app.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
-        let spawn_dist = ear_distance(ear, w.x, w.y, w.z);
-        let spawn_gain = crate::sound::attenuate(
-            crate::sculk::WARDEN_MOB_SOUND_VOLUME,
-            spawn_dist,
-            crate::sound::voice_max_distance(crate::sculk::WARDEN_MOB_SOUND_VOLUME),
+        let (wx, wy, wz) = (app.wardens[0].x, app.wardens[0].y, app.wardens[0].z);
+        let agitated_dist = ear_distance(ear, wx, wy, wz);
+        let agitated_gain = crate::sound::attenuate(
+            crate::sculk::WARDEN_EMERGE_VOLUME,
+            agitated_dist,
+            crate::sound::voice_max_distance(crate::sculk::WARDEN_EMERGE_VOLUME),
         );
         assert!(
-            spawn_line.contains(&format!("v{spawn_gain:.6}")),
-            "the v4.0 the distance law folds — the line the gain carries: {spawn_line}"
+            agitated_line.contains(&format!("v{agitated_gain:.6}")),
+            "the v5.0 the distance law folds — the line the gain carries: {agitated_line}"
         );
         assert_eq!(
-            app.wardens[0].ambient_time, twin.ambient_time,
-            "the fresh clock the spawn voice never touches"
+            app.wardens[0].ambient_time, -crate::mob::AMBIENT_INTERVAL_TICKS,
+            "the fresh clock the summon voice never touches"
         );
+        // THE EMERGE WINDOW THE TEST SKIPS (the finalizeSpawn's own arm
+        // the summoned body wears — the isDiggingOrEmerging() gate the
+        // ambient the window REFUSES; the steady-state body the
+        // schedule law consults)
+        app.wardens[0].emerging = false;
+        app.wardens[0].emerge_ticks = 0;
 
         // THE SCHEDULE (the twin's own walk pins — the fire tick the
         // same seed answers, the law's own probability the drive
-        // resolves deterministically)
+        // resolves deterministically; the fresh stream the summon's
+        // FIXED voice NEVER spends — the pre-draws the old ambient
+        // premise wore are gone)
+        let mut twin = crate::sculk::WardenMob::new(warden_id, wx, wy, wz);
         let schedule = {
             let mut probe =
-                crate::sculk::WardenMob::new(warden_id, w.x, w.y, w.z);
-            probe.rng.next_f32();
-            probe.rng.next_f32();
+                crate::sculk::WardenMob::new(warden_id, wx, wy, wz);
             let mut t = 0usize;
             for tick in 1..=1_000_000usize {
                 if probe.tick() {
@@ -44304,7 +44401,14 @@ mod tests {
         // schedule's OWN update speaks (the earlier updates the silence
         // keeps), the fired voice's pitch the post-fire pair the twin
         // draws first
-        let base = ambient_count(&app);
+        let base = {
+            // the ambient count the lockstep base keeps
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.starts_with("entity.warden.ambient "))
+                .count()
+        };
         for i in 1..=schedule {
             let twin_fired = twin.tick();
             // the client branch the app's own walk serves — the
@@ -44312,7 +44416,13 @@ mod tests {
             // the lockstep keeps (the due fold the same anger answers)
             twin.tick_client();
             app.update();
-            let now = ambient_count(&app);
+            let now = {
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.starts_with("entity.warden.ambient "))
+                    .count()
+            };
             let expect = if i == schedule { base + 1 } else { base };
             assert_eq!(
                 now, expect,
@@ -44934,6 +45044,12 @@ mod tests {
         app.wardens[0].x = 14.5;
         app.wardens[0].y = 35.0;
         app.wardens[0].z = 12.5;
+        // THE EMERGE WINDOW THE TEST SKIPS (the finalizeSpawn's own
+        // arm the summoned body wears — the isDiggingOrEmerging() gate
+        // the hearing the window REFUSES; the steady-state body the
+        // test's own lanes consult)
+        app.wardens[0].emerging = false;
+        app.wardens[0].emerge_ticks = 0;
         // the fresh store the empty-active pass keeps — the eyes the
         // first vibration opens
         assert!(app.wardens[0].disturbance.is_none(), "the fresh memory the None keeps");
@@ -45725,6 +45841,12 @@ mod tests {
         // number never serves; the drain the 1/tick walk the test's
         // window never exhausts)
         app.wardens[0].sniff_cooldown = i32::MAX;
+        // THE EMERGE WINDOW THE TEST SKIPS (the finalizeSpawn's own
+        // arm the summoned body wears — the isDiggingOrEmerging() gate
+        // the hearing the window REFUSES; the steady-state body the
+        // test's own lanes consult)
+        app.wardens[0].emerging = false;
+        app.wardens[0].emerge_ticks = 0;
         // the survival default the canTarget source verdict keeps
         assert!(app.game_mode.is_survival(), "the fresh App the survival default wears");
 
@@ -45946,6 +46068,12 @@ mod tests {
         // number never serves; the drain the 1/tick walk the test's
         // window never exhausts)
         app.wardens[0].sniff_cooldown = i32::MAX;
+        // THE EMERGE WINDOW THE TEST SKIPS (the finalizeSpawn's own
+        // arm the summoned body wears — the isDiggingOrEmerging() gate
+        // the hearing the window REFUSES; the steady-state body the
+        // test's own lanes consult)
+        app.wardens[0].emerging = false;
+        app.wardens[0].emerge_ticks = 0;
         // THE FIRST STEP THE HEARING BANKS (the walk the pending hear
         // pushes — the vibrating entity the local suspect wears)
         for _ in 0..12 {
@@ -47045,6 +47173,12 @@ mod tests {
         app.wardens[0].x = c as f64 + 3.5;
         app.wardens[0].y = surface as f64;
         app.wardens[0].z = c as f64 + 0.5;
+        // THE EMERGE WINDOW THE TEST SKIPS (the finalizeSpawn's own
+        // arm the summoned body wears — the isDiggingOrEmerging() gate
+        // the hearing the window REFUSES; the steady-state body the
+        // test's own lanes consult)
+        app.wardens[0].emerging = false;
+        app.wardens[0].emerge_ticks = 0;
         // THE DIG THE EVENT POSTS (the completion the shared dispatch
         // serves — the warden's pending hear the arrival banks)
         app.offline_camera_updated(crate::camera::Camera {
