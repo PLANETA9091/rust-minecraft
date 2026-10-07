@@ -10131,6 +10131,12 @@ impl App {
             // collected vec serves — the borrow the play's own pass
             // keeps.
             let mut warden_voices: Vec<(&'static str, f64, f64, f64, f32)> = Vec::new();
+            // THE ROAR'S OWN VOICES (the Roar.tick's own tail the
+            // volume-carrying pair speaks — the play_warden_voice_v the
+            // 3.0f volume serves, the FIXED pitch 1.0f the fconst_1
+            // keeps)
+            let mut roar_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
+                Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
@@ -10144,16 +10150,78 @@ impl App {
                 }
                 // THE AI'S OWN WALK (the alive body the dead lane never
                 // walks — the same gate the push pass wears): the brain
-                // the investigate One-Shot consults, the travel the
-                // collision lane serves. THE RNG the javap's own law
-                // keeps — the offsets ride `mob.level().getRandom()`, the
-                // LEVEL's own stream the level-ambient lane carries (the
-                // entity's voice stream the draw never spends).
+                // the roar + the investigate lanes consult, the travel
+                // the collision lane serves.
                 if warden.health > 0.0 {
-                    warden.investigate_trigger(&mut self.level_ambient_rng);
-                    // THE TRAVEL (the world the collision sweep consults —
-                    // the fused singleplayer frame the offline lane keeps,
-                    // the networked frame the net world serves)
+                    // THE ROAR LANE (javap `WardenAi.initRoarActivity`
+                    // pc 0-21 — the ROAR activity the prio-10 the
+                    // required ROAR_TARGET memory wears, the `new
+                    // Roar()` behavior the 84-tick window serves; the
+                    // SetRoarTarget the IDLE/INVESTIGATE/SNIFF lanes'
+                    // first behavior rides — the ANGRY-at suspect the
+                    // `Warden::getEntityAngryAt` BootstrapMethods #0
+                    // method ref answers): the targetable verdict the
+                    // canTargetEntity's own pair answers, the window
+                    // the sound once answers.
+                    let roar_targetable = match warden.entity_angry_at() {
+                        Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => {
+                            self.game_mode.is_survival() && !self.dead
+                        }
+                        Some(_) => true,
+                        None => false,
+                    };
+                    // THE TARGET POS THE LOOK ARM CONSULTS (the player
+                    // body the suspect answers, the mob the list keeps)
+                    let (roar_pos, roar_is_player) = match warden.entity_angry_at() {
+                        Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => (
+                            self.body.as_ref().map(|b| (b.x, b.y, b.z)),
+                            true,
+                        ),
+                        Some(id) => (
+                            self.mobs
+                                .iter()
+                                .find(|m| m.id as u64 == id)
+                                .map(|m| (m.x, m.y, m.z)),
+                            false,
+                        ),
+                        None => (None, false),
+                    };
+                    if let Some(sound) =
+                        warden.roar_lane(roar_targetable, roar_pos, roar_is_player)
+                    {
+                        roar_voices.push((
+                            sound.word,
+                            warden.x,
+                            warden.y,
+                            warden.z,
+                            sound.pitch,
+                            sound.volume,
+                        ));
+                    }
+                    // THE INVALID-TARGET ERASE (the
+                    // StopAttackingIfTargetInvalid's own law the
+                    // minimal stand-in serves — the un-targetable
+                    // suspect the ATTACK_TARGET retires, the next
+                    // trigger's absent gate the re-arm lifts)
+                    if !roar_targetable && warden.attack_target.is_some() {
+                        warden.attack_target = None;
+                    }
+                    // THE INVESTIGATE TRIGGER (prio 5 — the ROAR
+                    // activity's own prio-10 the first-valid order
+                    // excludes while the window runs; the walk the
+                    // roar's own erase stills). THE RNG the javap's own
+                    // law keeps — the offsets ride
+                    // `mob.level().getRandom()`, the LEVEL's own stream
+                    // the level-ambient lane carries (the entity's voice
+                    // stream the draw never spends).
+                    if warden.roar_target.is_none() {
+                        warden.investigate_trigger(&mut self.level_ambient_rng);
+                    }
+                    // THE TRAVEL (the walk the impulse consults, the
+                    // coast the tail keeps — the world the collision
+                    // sweep consults, the fused singleplayer frame the
+                    // offline lane keeps, the networked frame the net
+                    // world serves)
                     let walk_world = if self.world_is_network {
                         self.net_world.as_ref()
                     } else {
@@ -10166,6 +10234,13 @@ impl App {
             }
             for (word, wx, wy, wz, pitch) in warden_voices {
                 self.play_warden_voice(word, wx, wy, wz, pitch);
+            }
+            for (word, wx, wy, wz, pitch, volume) in roar_voices {
+                // THE ROAR'S OWN VOLUME (javap `Roar.tick` pc 47-54 —
+                // the `playSound(WARDEN_ROAR, 3.0f, 1.0f)` the
+                // explicit-arg walk speaks, the makeSound fold's own
+                // getSoundVolume 4.0 the default twin never reads)
+                self.play_warden_voice_v(word, wx, wy, wz, pitch, volume);
             }
 
             // THE WARDEN'S PUSH ENTITIES (javap `LivingEntity.aiStep`

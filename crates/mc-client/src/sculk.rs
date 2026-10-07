@@ -1381,6 +1381,83 @@ pub const WARDEN_OFFSET_BOUND: u64 = 3;
 /// target's 0.7 modifier the fold wears).
 pub const WARDEN_MOVEMENT_SPEED: f32 = 0.3;
 
+// === THE ROAR ACTIVITY'S OWN WINDOW (javap `WardenAi
+// .initRoarActivity` pc 0-21 + the WardenAi clinit pc 18-24 +
+// `net.minecraft.world.entity.ai.behavior.warden.Roar` +
+// `net.minecraft.world.entity.ai.behavior.warden.SetRoarTarget`,
+// verbatim — the ROAR activity the prio-10 the required
+// ROAR_TARGET memory wears, the `new Roar()` behavior the 84-tick
+// window serves; the SetRoarTarget the IDLE/INVESTIGATE/SNIFF
+// lanes' first behavior rides, the `Warden::getEntityAngryAt` the
+// BootstrapMethods #0 method ref the targetFinder keeps): the
+// ANGRY-at suspect the roar arms, the pose the 84 ticks holds, the
+// 25-tick delay the sound answers — the warden the ROARING body the
+// deep dark screams ===
+
+/// `WardenAi.initRoarActivity` pc 3 — the `bipush 10` the
+/// `ActivityData.create(ROAR, priority, ...)` call wears: the ROAR
+/// activity's own priority (the first-valid ladder the EMERGE/DIG/
+/// ROAR/FIGHT/INVESTIGATE/SNIFF/IDLE order keeps — the roar the
+/// investigate's own 5 outranks).
+pub const WARDEN_ROAR_PRIORITY: i32 = 10;
+
+/// `WardenAi` clinit pc 18-24 — the `ldc_w 84.0f` the
+/// `Mth.ceil(84.0f)` the `ROAR_DURATION` putstatic wears: the Roar
+/// behavior's own window the ctor's duration arg carries (the
+/// canStillUse the true keeps, the expiry the stop serves).
+pub const WARDEN_ROAR_DURATION: i32 = 84;
+
+/// `Roar.start` pc 6-19 — the `ldc2_w 25l` the
+/// `setMemoryWithExpiry(ROAR_SOUND_DELAY, UNIT, 25l)` walk wears:
+/// the sound's own delay the start banks, the brain's expiry walk
+/// the tick drains.
+pub const WARDEN_ROAR_SOUND_DELAY_TICKS: i32 = 25;
+
+/// `Roar.tick` pc 27-44 — the `ROAR_DURATION - 25` isub the
+/// `setMemoryWithExpiry(ROAR_SOUND_COOLDOWN, UNIT, 59l)` walk
+/// wears: the cooldown the sound's own tick banks (the 84-tick
+/// window the sound once answers — the re-fire the cooldown
+/// refuses).
+pub const WARDEN_ROAR_SOUND_COOLDOWN_TICKS: i32 = WARDEN_ROAR_DURATION
+    - WARDEN_ROAR_SOUND_DELAY_TICKS;
+
+/// `Roar.start` pc 59-67 — the `bipush 20` the
+/// `increaseAngerAt(target, 20, false)` call wears: the roar's own
+/// anger boost (the listening flag the iconst_0 NEVER arms — the
+/// listening sound the boost never speaks).
+pub const WARDEN_ROAR_ANGER_INCREASE: i32 = 20;
+
+/// `Roar.tick` pc 47-54 — the `ldc 3.0f` the
+/// `playSound(WARDEN_ROAR, 3.0f, 1.0f)` call wears: the FIXED
+/// volume the explicit-arg walk speaks (the makeSound fold's own
+/// getSoundVolume 4.0 the ambient voices keep — the roar the
+/// volume arg NEVER reads).
+pub const WARDEN_ROAR_VOLUME: f32 = 3.0;
+
+/// `Roar.tick` pc 47-54 — the `fconst_1` the playSound's own pitch
+/// arg wears: the FIXED pitch the explicit-arg walk speaks (the
+/// two-draw voice law the ambient voices spend the roar NEVER
+/// rides).
+pub const WARDEN_ROAR_PITCH: f32 = 1.0;
+
+/// `SoundEvents.WARDEN_ROAR` — the registry name the sound table's
+/// own ldc row keeps (`entity.warden.roar` — the `Warden
+/// .playSound` walk the Roar.tick's own tail serves).
+pub const WARDEN_ROAR_SOUND: &str = "entity.warden.roar";
+
+/// THE ROAR'S OWN SOUND (the Roar.tick's own tail the pair speaks —
+/// the FIXED volume/pitch the explicit-arg walk carries, the voice
+/// stream the law never spends).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenRoarSound {
+    /// the registry name the SoundEvents.WARDEN_ROAR keeps
+    pub word: &'static str,
+    /// the 3.0f the ldc wears
+    pub volume: f32,
+    /// the 1.0f the fconst_1 keeps
+    pub pitch: f32,
+}
+
 /// THE WALK TARGET'S OWN MEMORY (javap `MemoryModuleType.WALK_TARGET`
 /// — the `BehaviorUtils.setWalkAndLookTargetMemories` walk banks: the
 /// `new WalkTarget(new BlockPosTracker(pos), speedModifier,
@@ -1944,6 +2021,31 @@ pub struct WardenMob {
     /// min(0.5, 3.0 * speed) the render consults; the fresh zero
     /// the standing body keeps)
     pub walk: crate::body::WalkAnimationState,
+    /// THE ROAR TARGET'S OWN MEMORY (javap `MemoryModuleType
+    /// .ROAR_TARGET` — the SetRoarTarget the absent gate consults,
+    /// the Roar.stop's erase the window's end serves; the fresh
+    /// None the JVM init keeps)
+    pub roar_target: Option<u64>,
+    /// THE ATTACK TARGET'S OWN MEMORY (javap `MemoryModuleType
+    /// .ATTACK_TARGET` — the SetRoarTarget's absent gate consults,
+    /// the Roar.stop's setAttackTarget arm banks, the
+    /// setDisturbanceLocation's own pc 24-37 gate the standing
+    /// memory refuses; the fresh None the JVM init keeps — the
+    /// erase the invalid-target arm the caller's verdict serves)
+    pub attack_target: Option<u64>,
+    /// THE ROAR SOUND'S OWN DELAY (javap `MemoryModuleType
+    /// .ROAR_SOUND_DELAY` — the 25l expiry the start banks, the
+    /// brain's expiry walk the tick drains, the hasMemoryValue
+    /// gate the silence keeps)
+    pub roar_sound_delay: i32,
+    /// THE ROAR SOUND'S OWN COOLDOWN (javap `MemoryModuleType
+    /// .ROAR_SOUND_COOLDOWN` — the 59l expiry the sound's own tick
+    /// banks, the re-fire the standing memory refuses)
+    pub roar_sound_cooldown: i32,
+    /// THE ROAR BEHAVIOR'S OWN WINDOW (the Behavior ctor's 84-tick
+    /// duration the Roar carries — the canStillUse the true keeps,
+    /// the countdown the window drains, the zero the stop serves)
+    pub roar_ticks: i32,
 }
 
 impl WardenMob {
@@ -1985,6 +2087,11 @@ impl WardenMob {
                 position: 0.0,
                 position_scale: 1.0,
             },
+            roar_target: None,
+            attack_target: None,
+            roar_sound_delay: 0,
+            roar_sound_cooldown: 0,
+            roar_ticks: 0,
         }
     }
 
@@ -2045,7 +2152,15 @@ impl WardenMob {
         if self.entity_angry_at().is_some() {
             return;
         }
-        // pc 24-37: the ATTACK_TARGET gate — the brain-less pass keeps
+        // pc 24-37: the ATTACK_TARGET gate — the standing target the
+        // disturbance refuses (the getMemory(ATTACK_TARGET)
+        // .isPresent() verdict the ifeq 41 keeps — the fighting
+        // warden the eyes the memory's own walk never re-aims; the
+        // memory the Roar.stop's setAttackTarget arm banks, the
+        // invalid-target erase the caller's verdict serves)
+        if self.attack_target.is_some() {
+            return;
+        }
         // pc 41-44: the setDigCooldown refresh — the absent memory the
         // no-op keeps (the dig-integration round wires)
         // pc 45-79: the SNIFF_COOLDOWN + the LOOK_TARGET memories —
@@ -2156,6 +2271,184 @@ impl WardenMob {
             self.z.floor() as i32,
         );
         block_pos_dist_manhattan(t.block, epos) <= t.close_enough
+    }
+
+    /// THE ROAR TRIGGER (javap
+    /// `net.minecraft.world.entity.ai.behavior.warden.SetRoarTarget`,
+    /// verbatim — the behavior the IDLE/INVESTIGATE/SNIFF activities'
+    /// first slots ride, the `Warden::getEntityAngryAt` the
+    /// BootstrapMethods #0 method ref the targetFinder keeps): the
+    /// GROUP `lambda$create$0` pc 0-22 the gates bank — the
+    /// `absent(ROAR_TARGET)` the standing roar REFUSES, the
+    /// `absent(ATTACK_TARGET)` the fighting warden REFUSES, the
+    /// `registered(CANT_REACH_WALK_TARGET_SINCE)` the always-true
+    /// register keeps. THE TRIGGER `lambda$create$2` pc 0-55 the
+    /// arm serves: the `targetFinder.apply(warden)` the
+    /// getEntityAngryAt call answers, the
+    /// `optional.filter(warden::canTargetEntity).isEmpty()` the
+    /// un-targetable suspect the false answers (the
+    /// NO_CREATIVE_OR_SPECTATOR + the !isDeadOrDying pair the
+    /// caller's verdict keeps), the `set(ROAR_TARGET, target)` pc
+    /// 38-47 the memory banks, the `erase(CANT_REACH)` pc 50-51 the
+    /// never-armed memory the no-op keeps.
+    pub fn roar_trigger(&mut self, targetable: bool) -> bool {
+        // lambda$create$0 pc 0-8: absent(ROAR_TARGET)
+        if self.roar_target.is_some() {
+            return false;
+        }
+        // lambda$create$0 pc 8-12: absent(ATTACK_TARGET)
+        if self.attack_target.is_some() {
+            return false;
+        }
+        // lambda$create$0 pc 15-19: registered(CANT_REACH) — the
+        // always-true register the pass keeps
+        // lambda$create$2 pc 0-13: the getEntityAngryAt call
+        let Some(_target) = self.entity_angry_at() else {
+            return false;
+        };
+        // lambda$create$2 pc 22-37: the canTargetEntity filter —
+        // the empty the false answers
+        if !targetable {
+            return false;
+        }
+        // lambda$create$2 pc 38-47: the ROAR_TARGET set
+        self.roar_target = self.entity_angry_at();
+        // lambda$create$2 pc 50-51: the CANT_REACH erase — the
+        // never-armed memory the no-op keeps
+        true
+    }
+
+    /// THE ROAR BEHAVIOR'S OWN START (javap `Roar.start` pc 0-68,
+    /// verbatim): the `setMemoryWithExpiry(ROAR_SOUND_DELAY, UNIT,
+    /// 25l)` pc 0-19 the delay banks, the `eraseMemory(WALK_TARGET)`
+    /// pc 20-27 the walk retires, the `BehaviorUtils.lookAtEntity`
+    /// pc 28-51 the LOOK_TARGET the target pos banks (the yaw the
+    /// body's own face wears — the same atan2 law the walk speaks),
+    /// the `setPose(Pose.ROARING)` pc 52-58 the pose arms, the
+    /// `increaseAngerAt(target, 20, false)` pc 59-67 the +20 boost
+    /// serves (the listening flag the iconst_0 never arms — the
+    /// listening sound the boost never speaks), the window the
+    /// ctor's 84 wears.
+    pub fn roar_start(
+        &mut self,
+        target_pos: Option<(f64, f64, f64)>,
+        target_is_player: bool,
+        target: u64,
+    ) {
+        // pc 0-19: the ROAR_SOUND_DELAY memory
+        self.roar_sound_delay = WARDEN_ROAR_SOUND_DELAY_TICKS;
+        // pc 20-27: the WALK_TARGET erase — the roar the walk stills
+        self.walk_target = None;
+        // pc 28-51: the look — the yaw the target pos answers
+        if let Some(p) = target_pos {
+            let dx = p.0 - self.x;
+            let dz = p.2 - self.z;
+            let len = (dx * dx + dz * dz).sqrt().max(1e-9);
+            self.yaw_deg = ((-(dx / len)).atan2(dz / len)).to_degrees() as f32;
+        }
+        // pc 52-58: the ROARING pose
+        self.roaring = true;
+        // pc 59-67: the anger boost (the listening FALSE)
+        let _ = self.increase_anger_at(
+            target,
+            target_is_player,
+            true,
+            WARDEN_ROAR_ANGER_INCREASE,
+            false,
+        );
+        // the window the ctor's 84 wears
+        self.roar_ticks = WARDEN_ROAR_DURATION;
+    }
+
+    /// THE ROAR'S OWN TICK (javap `Roar.tick` pc 0-54, verbatim):
+    /// the `hasMemoryValue(ROAR_SOUND_DELAY)` pc 0-10 the standing
+    /// delay the silence keeps, the `hasMemoryValue(ROAR_SOUND_
+    /// COOLDOWN)` pc 13-23 the standing cooldown the silence keeps,
+    /// the BOTH-absent tick the sound speaks — the
+    /// `setMemoryWithExpiry(ROAR_SOUND_COOLDOWN, UNIT,
+    /// ROAR_DURATION - 25)` pc 27-44 the cooldown banks, the
+    /// `playSound(WARDEN_ROAR, 3.0f, 1.0f)` pc 47-54 the FIXED
+    /// pair the voice carries (the two-draw law the ambient voices
+    /// spend the roar NEVER rides — the voice stream the draw never
+    /// touches).
+    pub fn roar_tick(&mut self) -> Option<WardenRoarSound> {
+        // pc 0-10: the standing delay the silence keeps
+        if self.roar_sound_delay > 0 {
+            return None;
+        }
+        // pc 13-23: the standing cooldown the silence keeps
+        if self.roar_sound_cooldown > 0 {
+            return None;
+        }
+        // pc 27-44: the cooldown banks
+        self.roar_sound_cooldown = WARDEN_ROAR_SOUND_COOLDOWN_TICKS;
+        // pc 47-54: the sound
+        Some(WardenRoarSound {
+            word: WARDEN_ROAR_SOUND,
+            volume: WARDEN_ROAR_VOLUME,
+            pitch: WARDEN_ROAR_PITCH,
+        })
+    }
+
+    /// THE ROAR BEHAVIOR'S OWN STOP (javap `Roar.stop` pc 0-51,
+    /// verbatim): the `hasPose(ROARING)` pc 0-14 the pose the
+    /// STANDING clears, the
+    /// `getMemory(ROAR_TARGET).ifPresent(warden::setAttackTarget)`
+    /// pc 17-40 the ATTACK_TARGET the fight rounds wire (the
+    /// setMemory the stop's own arm banks — the erase the
+    /// StopAttackingIfTargetInvalid's own invalid verdict the
+    /// caller serves), the `eraseMemory(ROAR_TARGET)` pc 41-51 the
+    /// memory the window's end retires.
+    pub fn roar_stop(&mut self) {
+        // pc 0-14: the pose clears
+        if self.roaring {
+            self.roaring = false;
+        }
+        // pc 17-40: the setAttackTarget arm — the fight rounds wire
+        if let Some(t) = self.roar_target {
+            self.attack_target = Some(t);
+        }
+        // pc 41-51: the ROAR_TARGET retires
+        self.roar_target = None;
+    }
+
+    /// THE ROAR LANE (the per-tick driver the caller serves — the
+    /// WardenAi's own activity order the lane keeps: the SetRoarTarget
+    /// the IDLE/INVESTIGATE/SNIFF lanes' first behavior rides, the
+    /// ROAR activity's prio-10 the window excludes the investigate's
+    /// own 5): the fresh brain the trigger consults (the absent gates
+    /// the standing pair refuses), the armed window the tick + the
+    /// stop serves — the sound the delay's own expiry answers, the
+    /// 84-tick countdown the stop's own walk serves.
+    pub fn roar_lane(
+        &mut self,
+        targetable: bool,
+        target_pos: Option<(f64, f64, f64)>,
+        target_is_player: bool,
+    ) -> Option<WardenRoarSound> {
+        if self.roar_target.is_none() {
+            // the SetRoarTarget — the trigger the arm speaks, the
+            // start the same tick the behavior's own walk banks
+            if self.roar_trigger(targetable) {
+                let target = self.roar_target.expect("the arm the trigger banks");
+                self.roar_start(target_pos, target_is_player, target);
+            }
+            None
+        } else {
+            // the Roar behavior's own window (the
+            // Behavior.tickOrStop's own law — the `expiredAt >
+            // gameTime` the tick keeps, the expiry the stop serves
+            // FIRST: the 84th window tick the stop answers, the
+            // cooldown's own 59 the window's 84 outlasts, the sound
+            // ONCE the window banks)
+            self.roar_ticks -= 1;
+            if self.roar_ticks <= 0 {
+                self.roar_stop();
+                None
+            } else {
+                self.roar_tick()
+            }
+        }
     }
 
     /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
@@ -2474,6 +2767,15 @@ impl WardenMob {
             if d.remaining <= 0 {
                 self.disturbance = None;
             }
+        }
+        // THE ROAR'S OWN DRAINS (the same Brain expiry walk — the
+        // 25l the start banks, the 59l the sound's own tick banks,
+        // the hasMemoryValue gates the drains keep)
+        if self.roar_sound_delay > 0 {
+            self.roar_sound_delay -= 1;
+        }
+        if self.roar_sound_cooldown > 0 {
+            self.roar_sound_cooldown -= 1;
         }
         self.ambient_time += 1;
         let fired = self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
@@ -7564,6 +7866,250 @@ mod tests {
             warden.walk.speed
         );
         assert!((warden.y - 5.0).abs() < 1e-9, "the flat floor the coast never sinks");
+    }
+
+    /// THE ROAR TRIGGER'S OWN GATES (javap `SetRoarTarget
+    /// .lambda$create$0` the absent pair + `lambda$create$2` the
+    /// filter verbatim): the ANGRY-at suspect the `Warden
+    /// ::getEntityAngryAt` BootstrapMethods #0 method ref answers,
+    /// the calm/agitated warden the None the false keeps, the
+    /// standing ROAR_TARGET the re-arm refuses, the standing
+    /// ATTACK_TARGET the absent gate refuses, the un-targetable
+    /// suspect the canTargetEntity filter refuses.
+    #[test]
+    fn the_roar_target_the_angry_arms() {
+        // THE CALM WARDEN (the getEntityAngryAt the Optional.empty
+        // the false keeps)
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        assert!(
+            !warden.roar_trigger(true),
+            "the calm warden the angry-at gate refuses"
+        );
+        assert!(warden.roar_target.is_none(), "the calm brain the roar never banks");
+        // THE ANGRY CROSSING (the +80 the ANGRY minimum the ladder
+        // wears — the getEntityAngryAt the Optional.of answers)
+        warden.increase_anger_at(WARDEN_PLAYER_SUSPECT, true, true, WARDEN_ANGER_ANGRY_MIN, false);
+        assert!(
+            warden.entity_angry_at().is_some(),
+            "the ANGRY level the angry-at verdict answers"
+        );
+        // THE ARM (lambda$create$2 pc 38-47): the targetable suspect
+        // the ROAR_TARGET banks
+        assert!(warden.roar_trigger(true), "the ANGRY-at suspect the trigger arms");
+        assert_eq!(
+            warden.roar_target,
+            Some(WARDEN_PLAYER_SUSPECT),
+            "the ROAR_TARGET the set arm banks"
+        );
+        // THE ABSENT GATE (pc 0-8): the standing roar the re-arm
+        // refuses
+        assert!(
+            !warden.roar_trigger(true),
+            "the standing ROAR_TARGET the absent gate refuses"
+        );
+        // THE ATTACK-TARGET GATE (pc 8-12): the standing attack
+        // target the fresh warden's arm refuses
+        let mut fighting = WardenMob::new(4, 10.5, 32.0, 3.5);
+        fighting.increase_anger_at(
+            WARDEN_PLAYER_SUSPECT, true, true, WARDEN_ANGER_ANGRY_MIN, false,
+        );
+        fighting.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        assert!(
+            !fighting.roar_trigger(true),
+            "the standing ATTACK_TARGET the absent gate refuses"
+        );
+        // THE FILTER (lambda$create$2 pc 22-37): the un-targetable
+        // suspect the canTargetEntity filter refuses (the
+        // NO_CREATIVE_OR_SPECTATOR + the !isDeadOrDying pair the
+        // caller's verdict keeps)
+        let mut warden2 = WardenMob::new(5, 10.5, 32.0, 3.5);
+        warden2.increase_anger_at(
+            WARDEN_PLAYER_SUSPECT, true, true, WARDEN_ANGER_ANGRY_MIN, false,
+        );
+        assert!(
+            !warden2.roar_trigger(false),
+            "the un-targetable suspect the filter refuses"
+        );
+        assert!(warden2.roar_target.is_none(), "the refused arm the memory never banks");
+    }
+
+    /// THE ROAR BEHAVIOR'S OWN START (javap `Roar.start` pc 0-68,
+    /// verbatim): the 25-tick delay the start banks, the WALK_TARGET
+    /// the erase retires, the look the yaw the target pos answers,
+    /// the ROARING pose the setPose arms, the +20 anger boost the
+    /// increase serves (the listening flag the false keeps — the
+    /// listening sound the boost never speaks), the 84-tick window
+    /// the ctor's duration banks.
+    #[test]
+    fn the_roar_start_the_pose_the_walk_retires() {
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        // THE WALK TARGET THE ROAR RETIRES (the investigate's own arm
+        // the erase consults — the crosswise (5,0,0)=25 the 4
+        // refuses; the CALM warden the ANGRY-at gate the set walk
+        // passes — the ANGRY crossing the arm ride precedes)
+        warden.set_disturbance_location((5, 32, 3));
+        let mut level_rng = crate::drops::Lcg::new(7);
+        assert!(warden.investigate_trigger(&mut level_rng), "the walk arms");
+        assert!(warden.walk_target.is_some(), "the standing walk the erase consults");
+        // THE ANGRY CROSSING (the +80 the ANGRY minimum the ladder
+        // wears — the getEntityAngryAt the Optional.of answers)
+        warden.increase_anger_at(WARDEN_PLAYER_SUSPECT, true, true, WARDEN_ANGER_ANGRY_MIN, false);
+        // THE START (the same westward target the look faces)
+        warden.roar_start(Some((5.5, 32.0, 3.5)), true, WARDEN_PLAYER_SUSPECT);
+        assert_eq!(
+            warden.roar_sound_delay, WARDEN_ROAR_SOUND_DELAY_TICKS,
+            "the 25l expiry the start banks"
+        );
+        assert!(warden.walk_target.is_none(), "the eraseMemory(WALK_TARGET) the start serves");
+        assert!(warden.roaring, "the setPose(ROARING) the pose arms");
+        assert_eq!(
+            warden.roar_ticks, WARDEN_ROAR_DURATION,
+            "the 84-tick window the ctor banks"
+        );
+        // THE ANGER BOOST (pc 59-67: the +20 the increase serves — the
+        // 80 the ANGRY + the 20 the roar answers, the listening NEVER)
+        assert_eq!(
+            warden.active_anger(),
+            WARDEN_ANGER_ANGRY_MIN + WARDEN_ROAR_ANGER_INCREASE,
+            "the +20 boost the increase serves"
+        );
+        // THE LOOK (pc 28-51: the yaw the target pos answers — the
+        // westward body the +90 keeps)
+        let expected_yaw = 90.0_f32;
+        assert!(
+            (warden.yaw_deg - expected_yaw).abs() < 1e-3,
+            "the look the yaw serves: {}",
+            warden.yaw_deg
+        );
+        // THE LISTENING THE BOOST NEVER SPEAKS (the false flag the
+        // increase's own arg wears — the suspects the boost reorders,
+        // the voice the None keeps — the active anger the same fold
+        // answers)
+        assert_eq!(
+            warden.active_anger(),
+            WARDEN_ANGER_ANGRY_MIN + WARDEN_ROAR_ANGER_INCREASE,
+            "the boost the anger re-reads"
+        );
+    }
+
+    /// THE ROAR'S OWN SOUND (javap `Roar.tick` pc 0-54 verbatim): the
+    /// standing delay the silence keeps, the delay's own expiry the
+    /// sound answers (the FIXED pair the explicit-arg walk carries —
+    /// the volume 3.0f the ldc keeps, the pitch 1.0f the fconst_1
+    /// wears, the two-draw law the voice stream never spends), the
+    /// cooldown the re-fire refuses, the stop the pose + the
+    /// ROAR_TARGET retire and the ATTACK_TARGET banks.
+    #[test]
+    fn the_roar_sound_the_delay_the_cooldown_keep() {
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden.increase_anger_at(WARDEN_PLAYER_SUSPECT, true, true, WARDEN_ANGER_ANGRY_MIN, false);
+        assert!(warden.roar_trigger(true), "the arm speaks");
+        warden.roar_start(None, true, WARDEN_PLAYER_SUSPECT);
+        // THE STANDING DELAY (pc 0-10): the hasMemoryValue gate the
+        // silence keeps
+        assert!(warden.roar_tick().is_none(), "the standing delay the silence keeps");
+        // THE DELAY'S OWN DRAIN (the brain's expiry walk — the 25l
+        // the tick drains): the 25th tick the sound answers
+        for i in 0..WARDEN_ROAR_SOUND_DELAY_TICKS - 1 {
+            warden.tick();
+            assert!(
+                warden.roar_tick().is_none(),
+                "the delay the tick {} keeps silent",
+                i
+            );
+        }
+        warden.tick();
+        let sound = warden
+            .roar_tick()
+            .expect("the delay's own expiry the sound answers");
+        assert_eq!(sound.word, WARDEN_ROAR_SOUND, "the WARDEN_ROAR registry name wears");
+        assert_eq!(sound.volume, WARDEN_ROAR_VOLUME, "the 3.0f the ldc wears");
+        assert_eq!(sound.pitch, WARDEN_ROAR_PITCH, "the 1.0f the fconst_1 keeps");
+        // THE COOLDOWN (pc 27-44: the 59l the sound's own tick banks —
+        // the re-fire the standing memory refuses)
+        assert_eq!(
+            warden.roar_sound_cooldown, WARDEN_ROAR_SOUND_COOLDOWN_TICKS,
+            "the 59l the isub keeps"
+        );
+        assert!(warden.roar_tick().is_none(), "the standing cooldown the re-fire refuses");
+        // THE VOICE STREAM THE ROAR NEVER SPENDS (the FIXED pair the
+        // explicit-arg walk carries — the ONLY draws the walk spends
+        // the ambient lane's own tick spends, the mirror the same 25
+        // ticks the lockstep keeps): the replayed mirror's state the
+        // roared warden's stream keeps
+        let mut mirror = WardenMob::new(3, 10.5, 32.0, 3.5);
+        for _ in 0..WARDEN_ROAR_SOUND_DELAY_TICKS {
+            mirror.tick();
+        }
+        assert_eq!(
+            warden.rng.next(), mirror.rng.next(),
+            "the voice stream the roar never touches"
+        );
+        // THE STOP (javap Roar.stop pc 0-51: the pose clears, the
+        // ROAR_TARGET retires, the ATTACK_TARGET banks)
+        warden.roar_stop();
+        assert!(!warden.roaring, "the STANDING pose the stop clears");
+        assert!(warden.roar_target.is_none(), "the ROAR_TARGET the stop retires");
+        assert_eq!(
+            warden.attack_target,
+            Some(WARDEN_PLAYER_SUSPECT),
+            "the setAttackTarget arm the stop banks"
+        );
+    }
+
+    /// THE ROAR LANE'S OWN WINDOW (the per-tick driver the caller
+    /// serves): the arm the same tick the start banks, the 25th
+    /// window tick the sound answers, the cooldown the re-fire
+    /// refuses, the 84th tick the stop serves — the gate the
+    /// ATTACK_TARGET's own absence the re-arm consults, the
+    /// invalid-target erase the caller's verdict serves.
+    #[test]
+    fn the_roar_lane_the_window_the_stop_banks() {
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        warden.increase_anger_at(WARDEN_PLAYER_SUSPECT, true, true, WARDEN_ANGER_ANGRY_MIN, false);
+        // THE ARM (the lane's first call — the trigger the start the
+        // same tick banks, the verdict None keeps)
+        assert!(
+            warden.roar_lane(true, Some((5.5, 32.0, 3.5)), true).is_none(),
+            "the arm tick the sound never speaks"
+        );
+        assert!(warden.roar_target.is_some(), "the ROAR_TARGET the lane banks");
+        assert_eq!(warden.roar_ticks, WARDEN_ROAR_DURATION, "the window banks");
+        // THE WINDOW (the tick + the lane pair the caller serves): the
+        // 25th window tick the sound answers ONCE, the cooldown the
+        // rest keeps, the 84th window tick the stop serves (the
+        // tickOrStop's own expiry law the tick never outruns — the
+        // cooldown's 59 the window's 84 outlasts)
+        let mut sound_ticks = 0;
+        for _ in 0..WARDEN_ROAR_DURATION {
+            warden.tick();
+            if warden.roar_lane(true, Some((5.5, 32.0, 3.5)), true).is_some() {
+                sound_ticks += 1;
+            }
+        }
+        assert_eq!(sound_ticks, 1, "the window the sound once answers");
+        assert!(!warden.roaring, "the 84th tick the stop serves");
+        assert!(warden.roar_target.is_none(), "the stop the ROAR_TARGET retires");
+        assert_eq!(
+            warden.attack_target,
+            Some(WARDEN_PLAYER_SUSPECT),
+            "the stop the ATTACK_TARGET banks"
+        );
+        // THE GATE (the absent pair the next trigger consults): the
+        // standing ATTACK_TARGET the re-arm refuses
+        assert!(
+            !warden.roar_trigger(true),
+            "the standing ATTACK_TARGET the re-arm refuses"
+        );
+        // THE INVALID-TARGET ERASE (the caller's own verdict serves):
+        // the un-targetable suspect the ATTACK_TARGET retires, the
+        // re-arm the still-ANGRY verdict answers
+        warden.attack_target = None;
+        assert!(
+            warden.roar_trigger(true),
+            "the erased target the re-arm lifts"
+        );
+        assert!(warden.roar_target.is_some(), "the still-ANGRY warden the roar re-arms");
     }
 }
 
