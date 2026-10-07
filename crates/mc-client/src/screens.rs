@@ -26018,6 +26018,16 @@ impl App {
                 ear_distance(ear, tx, ty, tz),
                 ear_pan(ear, yaw, tx, ty, tz),
             );
+            // THE BLOCK CHANGE EVENT'S OWN POST (javap
+            // AbstractCandleBlock.extinguish pc 56-62 — the playSound
+            // pc 40-51 FOLLOWS the `gameEvent(BLOCK_CHANGE)` walk the
+            // tail serves — the extinguished cell's own center the
+            // +0.5 pair wears, the f11 the block_change row keeps):
+            // the douse arm the sensors hear — the warden's ears the
+            // snuffing suspect answers
+            if !self.world_is_network && self.offline_world.is_some() {
+                self.dispatch_vibration_event("block_change", (tx, ty, tz));
+            }
             return true;
         }
         if !self.world_is_network && (candle_swap || eat_bite || candle_cake_eat) {
@@ -26121,6 +26131,25 @@ impl App {
                         ));
                     }
                 }
+            }
+            // THE BLOCK CHANGE EVENT'S OWN POST (javap
+            // CandleCakeBlock.useItemOn pc 95-103 — the
+            // setBlockAndUpdate pc 83-93 FOLLOWS the
+            // `gameEvent(BLOCK_CHANGE, pos, Context.of(player, state))`
+            // walk pc 95-103 serves — the cake cell's own center the
+            // +0.5 pair wears, the f11 the row keeps): the candle-on-
+            // cake swap the sensors hear, the eats the lane never
+            // speaks (the EAT gameEvent the CakeBlock.eat pc 44-50
+            // walk a future round banks)
+            if candle_swap && !self.world_is_network && self.offline_world.is_some() {
+                self.dispatch_vibration_event(
+                    "block_change",
+                    (
+                        hit.pos.0 as f64 + 0.5,
+                        hit.pos.1 as f64 + 0.5,
+                        hit.pos.2 as f64 + 0.5,
+                    ),
+                );
             }
             return true;
         }
@@ -26646,6 +26675,29 @@ impl App {
             }
             world.relight(); // the convert's own re-speak the refreshed grid bakes
             self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        }
+        // THE BLOCK CHANGE EVENT'S OWN POST (javap ShovelItem.useOn
+        // pc 190-202 — the `setBlock` pc 180-186 FOLLOWS the
+        // `level.gameEvent(GameEvent.BLOCK_CHANGE, pos,
+        // Context.of(player, state))` walk the tail serves; the hoe's
+        // own lambda the same pair the consumer speaks — javap
+        // HoeItem.lambda$changeIntoState$0 pc 9-34: the setBlock
+        // pc 9-11 FIRST, the gameEvent pc 15-34 AFTER — the converted
+        // BlockPos the `Vec3.atCenterOf` fold the dispatch's pos
+        // wears, the f11 the block_change row the frequency table
+        // keeps. THE OFFLINE LANE the set's own branch wears — the
+        // networked convert the server's own useItemOn walk answers.
+        // The warden's ears the same post serves — the tilling
+        // suspect the +10 the anger ladder climbs.)
+        if !self.world_is_network && self.offline_world.is_some() {
+            self.dispatch_vibration_event(
+                "block_change",
+                (
+                    hit.pos.0 as f64 + 0.5,
+                    hit.pos.1 as f64 + 0.5,
+                    hit.pos.2 as f64 + 0.5,
+                ),
+            );
         }
         Some(true) // the SUCCESS pc 227-230 the press consumes
     }
@@ -30408,6 +30460,24 @@ impl App {
                 world.relight();
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
             }
+            // THE BLOCK CHANGE EVENT'S OWN POST (javap
+            // FlintAndSteelItem.useOn pc 101-108 — the setBlock
+            // pc 95-100 FOLLOWS the `level.gameEvent(player,
+            // GameEvent.BLOCK_CHANGE, pos)` walk the tail serves — the
+            // ignited cell's own center the atCenterOf fold wears, the
+            // f11 the row keeps): the ignite arm the sensors hear —
+            // the lighting-near-the-warden stealth the dig/place pair
+            // speaks
+            if !self.world_is_network && self.offline_world.is_some() {
+                self.dispatch_vibration_event(
+                    "block_change",
+                    (
+                        hit.pos.0 as f64 + 0.5,
+                        hit.pos.1 as f64 + 0.5,
+                        hit.pos.2 as f64 + 0.5,
+                    ),
+                );
+            }
             return Some(true);
         }
         // THE PLACEMENT POS: the clicked cell + the entry face's
@@ -30575,6 +30645,22 @@ impl App {
                 world.fire_shape_updates(hit.pos);
                 world.relight();
                 self.world_quads = Some(crate::mesher::mesh_world(world, None));
+            }
+            // THE BLOCK CHANGE EVENT'S OWN POST (javap
+            // FireChargeItem.useOn pc 71-80 — the setBlockAndUpdate
+            // pc 50-67 FOLLOWS the `gameEvent(player, BLOCK_CHANGE,
+            // pos)` walk the tail serves — the same +0.5 center the
+            // f11 row wears): the charge's ignite arm the sensors
+            // hear — the flint arm's own sibling the walk shares
+            if !self.world_is_network && self.offline_world.is_some() {
+                self.dispatch_vibration_event(
+                    "block_change",
+                    (
+                        hit.pos.0 as f64 + 0.5,
+                        hit.pos.1 as f64 + 0.5,
+                        hit.pos.2 as f64 + 0.5,
+                    ),
+                );
             }
             return Some(true);
         }
@@ -45476,6 +45562,274 @@ mod tests {
             app.game_events.len(),
             records_before,
             "the miss the place record never banks"
+        );
+    }
+
+    /// THE TILL THE SENSOR THE CHANGE HEARS (javap
+    /// `HoeItem.lambda$changeIntoState$0` pc 9-34 over the 26.2 jar —
+    /// the till consumer's setBlock pc 9-11 the BLOCK_CHANGE gameEvent
+    /// pc 15-34 FOLLOWS, the shovel's flatten the same tail
+    /// ShovelItem.useOn pc 180-202 wears — the converted cell's center
+    /// the +0.5 pair speaks, the f11 the block_change row keeps): the
+    /// hoe the grass tills, the record the tilled center banks, the
+    /// earshot sensor the sculk_hearing answers — the shovel the same
+    /// walk the DIRT_PATH swap wears.
+    #[test]
+    fn the_till_the_sensor_the_change_hears() {
+        // === THE SETUP (the place test's own floor — the hoe the
+        // surface's grass cell tills) ===
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/wooden_hoe"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1; // the top SOLID cell the ray hits
+        app.place_sculk_sensor(c + 2, surface + 2, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::GRASS);
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.starts_with("block_change @")),
+            "the untilled world the change never speaks"
+        );
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the till consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::FARMLAND,
+            "the held hoe tilled the grass cell"
+        );
+        // THE RECORD THE CENTER SPEAKS (the atCenterOf fold the +0.5
+        // pair answers, the f11 the block_change row wears)
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            surface as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_change @")
+                    && l.contains(&center)
+                    && l.ends_with("r16 f11")),
+            "the till the block_change record at the cell center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.game_events.iter().any(|l| l.starts_with("sculk_hearing @")),
+            "the earshot sensor the till hears"
+        );
+        // THE FLATTEN THE SAME WALK SPEAKS (the shovel the second map
+        // arm — the DIRT_PATH the kind swap wears, the record the same
+        // row keeps; the isolated events the clear keeps)
+        app.offline_held_updated(Some("item/wooden_shovel"));
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::GRASS);
+        app.game_events.clear();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the flatten consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::DIRT_PATH,
+            "the held shovel flattened the grass cell"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_change @")
+                    && l.contains(&center)
+                    && l.ends_with("r16 f11")),
+            "the flatten the block_change record the same row wears: {:?}",
+            app.game_events
+        );
+    }
+
+    /// THE DOUSE THE IGNITE THE CHANGE HEARS (javap ShovelItem.useOn
+    /// pc 95-202 — the campfire douse the flatten consult's ELSE arm
+    /// the same BLOCK_CHANGE tail wears; FlintAndSteelItem.useOn
+    /// pc 24-134 — the canLight branch the setBlock pc 95-100 the
+    /// gameEvent pc 101-108 follows): the shovel the lit campfire
+    /// douses, the flint the candle lights — the LIT swaps the
+    /// sensors hear, the voices the arms' own rows play.
+    #[test]
+    fn the_douse_the_ignite_the_change_hears() {
+        // === THE SETUP (the lit campfire the shovel douses) ===
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/wooden_shovel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.place_sculk_sensor(c + 2, surface + 2, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::CAMPFIRE_LIT);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the douse consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::CAMPFIRE,
+            "the held shovel doused the lit campfire"
+        );
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            surface as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_change @")
+                    && l.contains(&center)
+                    && l.ends_with("r16 f11")),
+            "the douse the block_change record at the cell center wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.fire.extinguish ")),
+            "the douse voice the levelEvent row plays"
+        );
+        // === THE IGNITE (the flint the candle lights — the LIT swap
+        // the same row wears) ===
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::CANDLE);
+        app.game_events.clear();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the ignite consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::CANDLE_LIT,
+            "the held flint lit the candle"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_change @")
+                    && l.contains(&center)
+                    && l.ends_with("r16 f11")),
+            "the ignite the block_change record the same row wears: {:?}",
+            app.game_events
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("item.flintandsteel.use ")),
+            "the ignite voice the FLINTANDSTEEL_USE row plays"
+        );
+    }
+
+    /// THE CAKE PAIR THE CHANGE HEARS (javap CandleCakeBlock.useItemOn
+    /// pc 83-103 — the candle-on-cake swap the setBlockAndUpdate the
+    /// gameEvent pc 95-103 follows; AbstractCandleBlock.extinguish
+    /// pc 0-62 — the douse the setLit walk the BLOCK_CHANGE pc 56-62
+    /// tail wears): the held candle the plain cake takes, the empty
+    /// hand the lit candle-cake snuffs — the two swaps the sensors
+    /// hear, the eats the lane never speaks (the EAT gameEvent the
+    /// future round banks).
+    #[test]
+    fn the_cake_pair_the_change_hears() {
+        // === THE SETUP (the candle the plain cake takes) ===
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/candle"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1;
+        app.place_sculk_sensor(c + 2, surface + 2, c);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::CAKE);
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the swap consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::CANDLE_CAKE,
+            "the held candle the plain cake took"
+        );
+        let center = format!(
+            "x{:.6} y{:.6} z{:.6}",
+            c as f64 + 0.5,
+            surface as f64 + 0.5,
+            c as f64 + 0.5
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_change @")
+                    && l.contains(&center)
+                    && l.ends_with("r16 f11")),
+            "the swap the block_change record at the cake cell wears: {:?}",
+            app.game_events.iter().rev().take(8).collect::<Vec<_>>()
+        );
+        // === THE DOUSE (the empty hand the lit candle-cake snuffs —
+        // the upper-half hit the straight-down ray answers) ===
+        app.offline_held_updated(None);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, surface, c, crate::world::CANDLE_CAKE_LIT);
+        app.game_events.clear();
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the douse consumed the press");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, surface, c),
+            crate::world::CANDLE_CAKE,
+            "the empty hand the lit candle-cake snuffed"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|l| l.starts_with("block_change @")
+                    && l.contains(&center)
+                    && l.ends_with("r16 f11")),
+            "the douse the block_change record the same row wears: {:?}",
+            app.game_events
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .all(|l| !l.contains("f13")),
+            "the eats the BLOCK_PLACE pair never speaks (the f11 rows alone)"
         );
     }
 
