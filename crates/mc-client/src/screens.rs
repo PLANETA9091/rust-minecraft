@@ -10127,6 +10127,108 @@ impl App {
                 self.play_warden_voice(word, wx, wy, wz, pitch);
             }
 
+            // THE WARDEN'S PUSH ENTITIES (javap `LivingEntity.aiStep`
+            // pc 817 — the `pushEntities()` walk the aiStep tail
+            // serves, the `getPushableEntities(this, getBoundingBox())`
+            // query pc 0-12 the Level walk answers (javap pc 0-10 — the
+            // `getEntities(entity, aabb, EntitySelector.pushableBy)`
+            // fold the bb query wears), the empty list the early
+            // return pc 13-22 keeps, the doPush loop pc 157-191 the
+            // walk serves — the cramming walk pc 28-156 the server
+            // gamerule branch wears, the few entities the branch never
+            // arms). THE TOUCH ARM (javap `Warden.doPush` pc 1-51):
+            // the isNoAi pass pc 1-4 keeps, the TOUCH_COOLDOWN gate
+            // pc 7-17 the standing memory refuses, the
+            // setMemoryWithExpiry 20l pc 20-33 banks, the
+            // `increaseAngerAt(entity)` ONE-arg fold pc 36-38 the
+            // (35, true) pair wears, the
+            // `setDisturbanceLocation(entity.blockPosition())` pc 41-46
+            // the touched entity's own block pos answers, the
+            // Monster.doPush super pc 49-51 the physics push the
+            // collision lane serves. The pushable bodies the fused
+            // world carries: the player avatar (the feet ±0.3, the
+            // height 1.8 — the body's own shape the collision keeps)
+            // + the AI mobs (the zombie's 0.6 x 1.95 registration
+            // dims) — the alive bodies the dead/dying verdicts keep,
+            // the touches the collected vec banks, the borrow the
+            // play's own pass splits.
+            let mut warden_touches: Vec<(usize, u64, crate::sculk::WardenTouch)> = Vec::new();
+            let touch_targetable = self.game_mode.is_survival() && !self.dead;
+            for (wi, warden) in self.wardens.iter_mut().enumerate() {
+                if warden.health <= 0.0 {
+                    continue;
+                }
+                let wbox = crate::sculk::warden_entity_box((warden.x, warden.y, warden.z));
+                if let Some(b) = self.body.as_ref() {
+                    // THE ALIVE VERDICT the pushableBy's spectator-free
+                    // walk keeps (javap pc 31-47 — the NO_SPECTATORS
+                    // filter the only entity-level refusal wears, the
+                    // creative the pass keeps — the targetable verdict
+                    // the increase's own canTarget head consults)
+                    if !self.dead {
+                        let pbox = (
+                            (b.x - 0.3, b.y, b.z - 0.3),
+                            (b.x + 0.3, b.y + 1.8, b.z + 0.3),
+                        );
+                        if crate::sculk::aabb_intersects(wbox, pbox) {
+                            if let Some(t) = warden.do_push(
+                                crate::sculk::WARDEN_PLAYER_SUSPECT,
+                                (b.x, b.y, b.z),
+                                true,
+                                touch_targetable,
+                            ) {
+                                warden_touches.push((wi, crate::sculk::WARDEN_PLAYER_SUSPECT, t));
+                            }
+                        }
+                    }
+                }
+                for z in &self.mobs {
+                    if z.health <= 0.0 {
+                        continue;
+                    }
+                    let zh = crate::mob::ZOMBIE_WIDTH / 2.0;
+                    let zbox = (
+                        (z.x - zh, z.y, z.z - zh),
+                        (z.x + zh, z.y + crate::mob::ZOMBIE_HEIGHT, z.z + zh),
+                    );
+                    if crate::sculk::aabb_intersects(wbox, zbox) {
+                        if let Some(t) = warden.do_push(z.id as u64, (z.x, z.y, z.z), false, true) {
+                            warden_touches.push((wi, z.id as u64, t));
+                        }
+                    }
+                }
+            }
+            for (wi, suspect, touch) in warden_touches {
+                let w = &self.wardens[wi];
+                // THE TOUCH RECORD (javap doPush pc 36-38 — the
+                // increaseAngerAt(entity) fold the +35 the store banks,
+                // the POST-increase active-anger the verdict answers)
+                self.game_events.push(format!(
+                    "warden_touch @{} suspect{} +{} -> {}",
+                    self.frame,
+                    suspect,
+                    crate::sculk::WARDEN_DEFAULT_ANGER,
+                    self.wardens[wi].active_anger()
+                ));
+                // THE DISTURBANCE RECORD (javap pc 41-46 — the
+                // setDisturbanceLocation walk the touched entity's own
+                // block pos banks, the ANGRY-at gate the refusal keeps,
+                // the same record the hearing lane's tail wears)
+                if let Some(d) = touch.disturbance {
+                    self.game_events.push(format!(
+                        "warden_disturbance @{} x{} y{} z{} e{}",
+                        self.frame, d.pos.0, d.pos.1, d.pos.2, d.remaining
+                    ));
+                }
+                if let Some((word, pitch)) = touch.listening {
+                    // THE LISTENING VOICE (javap playListeningSound —
+                    // the ROARING gate the walk keeps, the playSound
+                    // (word, 10.0f, pitch) the volume the
+                    // getSoundVolume 4.0 NEVER serves)
+                    self.play_warden_voice_v(word, w.x, w.y, w.z, pitch, 10.0);
+                }
+            }
+
             // THE WARDEN'S DARKNESS PULSE (javap
             // `Warden.customServerAiStep` pc 33-56 — the
             // `(tickCount + getId()) % 120 == 0` cadence the ALIVE body
@@ -44312,6 +44414,283 @@ mod tests {
             (16, 34, 0),
             "the vibration pos the memory wears — the re-bank the else arm never reaches"
         );
+    }
+
+    /// THE TOUCH THE CONTACT THE ANGER CLIMBS (javap `Warden.doPush`
+    /// pc 1-51 + the `LivingEntity.pushEntities` caller — the bb query
+    /// the intersect walk answers, the TOUCH_COOLDOWN 20l the contact
+    /// banks, the increaseAngerAt(entity) the (35, true) fold wears,
+    /// the setDisturbanceLocation the touched entity's own block pos
+    /// banks, the standing cooldown the next touch refuses, the drain
+    /// the 20th update the walk re-arms).
+    #[test]
+    fn the_touch_the_contact_the_anger_climbs() {
+        // === THE SETUP (the disturbance test's own floor — the warden
+        // the zombie's body touches, the body the None keeps — the
+        // player arm the scan never serves) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.wardens
+            .push(crate::sculk::WardenMob::new(101, 12.5, 35.0, 12.5));
+        app.mobs
+            .push(crate::mob::Zombie::new(1, 12.5, 35.0, 12.5, 7));
+        assert!(app.body.is_none(), "the body the None keeps — the player arm the scan never serves");
+
+        // === THE FIRST CONTACT (the pushEntities walk the frame
+        // serves — the boxes the intersect answers, the doPush the
+        // touch speaks: the +35 the store climbs, the 20l the memory
+        // banks, the disturbance the zombie's own block pos wears) ===
+        app.update();
+        let touches: Vec<&String> = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("warden_touch @"))
+            .collect();
+        assert_eq!(touches.len(), 1, "the contact the ONE touch banks: {:?}", touches);
+        assert!(
+            touches[0].contains("suspect1 +35 -> 35"),
+            "the ONE-arg fold the +35 the POST-increase verdict banks: {}",
+            touches[0]
+        );
+        let dist_line = app
+            .game_events
+            .iter()
+            .find(|l| l.starts_with("warden_disturbance @"))
+            .expect("the touch the disturbance record banks");
+        assert!(
+            dist_line.contains("x12 y35 z12 e100"),
+            "the touched entity's own block pos the containing fold wears: {dist_line}"
+        );
+        assert_eq!(
+            app.wardens[0].touch_cooldown,
+            crate::sculk::WARDEN_TOUCH_COOLDOWN_TICKS,
+            "the setMemoryWithExpiry 20l the contact banks"
+        );
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            35,
+            "the increaseAngerAt(entity) the anger climbs"
+        );
+        assert_eq!(
+            app.wardens[0].disturbance.expect("the memory banks").pos,
+            (12, 35, 12),
+            "the zombie's own feet the floor law answers"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("entity.warden.listening ")),
+            "the Calm listening the 35-anger verdict plays"
+        );
+
+        // === THE IMMEDIATE SECOND FRAME (the standing cooldown the
+        // hasMemoryValue gate refuses — the anger the refusal keeps,
+        // the tick-2 the decay never walks) ===
+        app.update();
+        let touches: Vec<&String> = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("warden_touch @"))
+            .collect();
+        assert_eq!(touches.len(), 1, "the standing memory the anger arm refuses");
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            35,
+            "the refused touch the anger never climbs — the tick-2 the decay never walks"
+        );
+
+        // === THE DRAIN THE WALK RE-ARMS (the 20l expiry the updates
+        // drain, the 20th-tick decay the anger wears, the 21st update
+        // the touch re-fires — the 34 + 35 the store banks) ===
+        for _ in 0..19 {
+            let z = &mut app.mobs[0];
+            z.x = 12.5;
+            z.y = 35.0;
+            z.z = 12.5;
+            app.update();
+        }
+        let touches: Vec<&String> = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("warden_touch @"))
+            .collect();
+        assert_eq!(touches.len(), 2, "the drained memory the walk re-arms: {:?}", touches);
+        assert!(
+            touches[1].contains("suspect1 +35 -> 69"),
+            "the decayed 34 the re-fire +35 banks: {}",
+            touches[1]
+        );
+        assert_eq!(
+            app.wardens[0].touch_cooldown,
+            crate::sculk::WARDEN_TOUCH_COOLDOWN_TICKS,
+            "the re-fire the 20l re-banks"
+        );
+    }
+
+    /// THE TOUCH THE GATES THE REFUSALS KEEP (javap doPush pc 7-17 —
+    /// the standing cooldown the immediate second call refuses; javap
+    /// increaseAngerAt pc 9-12 — the NOT-targetable suspect the
+    /// canTarget gate refuses while the cooldown set pc 20-33 AND the
+    /// disturbance tail pc 41-46 the walk STILL serves; the pushable
+    /// scan's alive verdicts the dead pair keeps).
+    #[test]
+    fn the_touch_the_gates_the_refusals_keep() {
+        // === THE NOT-TARGETABLE WALK (the creative/spectator suspect
+        // the canTarget refusal wears — the cooldown + the disturbance
+        // the refusal NEVER lifts) ===
+        let mut w = crate::sculk::WardenMob::new(11, 2.5, 40.0, 2.5);
+        let touch = w.do_push(
+            crate::sculk::WARDEN_PLAYER_SUSPECT,
+            (2.4, 40.0, 2.4),
+            true,
+            false,
+        );
+        assert_eq!(
+            w.touch_cooldown,
+            crate::sculk::WARDEN_TOUCH_COOLDOWN_TICKS,
+            "the pc 20-33 set the increase NEVER lifts"
+        );
+        assert_eq!(
+            w.active_anger(),
+            0,
+            "the canTarget gate the anger refuses — the +35 the refusal keeps"
+        );
+        assert!(
+            touch.unwrap().listening.is_none(),
+            "the refused increase the listening never arms"
+        );
+        assert_eq!(
+            w.disturbance.expect("the tail banks").pos,
+            (2, 40, 2),
+            "the pc 41-46 the disturbance the walk STILL serves — the (2, 40, 2) block the floor law answers"
+        );
+
+        // === THE STANDING COOLDOWN (the immediate second call the
+        // pc 7-17 gate refuses — the walk's None the arm skips) ===
+        assert!(
+            w.do_push(crate::sculk::WARDEN_PLAYER_SUSPECT, (2.4, 40.0, 2.4), true, true)
+                .is_none(),
+            "the standing TOUCH_COOLDOWN the anger arm refuses"
+        );
+        assert_eq!(
+            w.active_anger(),
+            0,
+            "the refused call the anger never climbs"
+        );
+
+        // === THE DRAIN (the 20 updates the memory expires — the walk
+        // re-fires the targetable suspect the +35 serves) ===
+        for _ in 0..crate::sculk::WARDEN_TOUCH_COOLDOWN_TICKS {
+            w.tick();
+        }
+        assert_eq!(w.touch_cooldown, 0, "the expiry the drain answers");
+        let touch = w.do_push(
+            crate::sculk::WARDEN_PLAYER_SUSPECT,
+            (2.4, 40.0, 2.4),
+            true,
+            true,
+        );
+        assert!(
+            touch.unwrap().listening.is_some(),
+            "the re-fired walk the targetable +35 the listening arms"
+        );
+        assert_eq!(
+            w.active_anger(),
+            35,
+            "the re-fire the anger climbs — the decayed store the +35 wears"
+        );
+    }
+
+    /// THE PUSHABLE SCAN THE ALIVE PAIR KEEPS (javap
+    /// `LivingEntity.pushEntities` — the bb query the intersect walk
+    /// answers, the far body the box test refuses, the dead warden
+    /// the alive gate keeps, the dead zombie the pushable verdict
+    /// keeps out).
+    #[test]
+    fn the_pushable_scan_the_alive_pair_keeps() {
+        // === THE FOUR WARDENS (the live+contact / the live+far / the
+        // dead warden+live contact / the live+dead contact — the ONE
+        // update the walk serves all) ===
+        let mut app = App::new(3);
+        let mut world = air_net_world(2, 0);
+        for x in 0..32 {
+            for z in 0..32 {
+                world.set(x, 34, z, crate::world::STONE);
+            }
+        }
+        app.net_world = Some(world);
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        // A: the live warden the live zombie touches
+        app.wardens
+            .push(crate::sculk::WardenMob::new(101, 12.5, 35.0, 12.5));
+        // B: the live warden no body near
+        app.wardens
+            .push(crate::sculk::WardenMob::new(102, 20.5, 35.0, 20.5));
+        // C: the DEAD warden the live zombie touches
+        let mut dead = crate::sculk::WardenMob::new(103, 24.5, 35.0, 24.5);
+        dead.health = 0.0;
+        app.wardens.push(dead);
+        // D: the live warden the DEAD zombie touches
+        app.wardens
+            .push(crate::sculk::WardenMob::new(104, 28.5, 35.0, 28.5));
+        app.mobs
+            .push(crate::mob::Zombie::new(1, 12.5, 35.0, 12.5, 7));
+        app.mobs
+            .push(crate::mob::Zombie::new(2, 24.5, 35.0, 24.5, 8));
+        let mut corpse = crate::mob::Zombie::new(3, 28.5, 35.0, 28.5, 9);
+        corpse.health = 0.0;
+        app.mobs.push(corpse);
+
+        app.update();
+        let touches: Vec<&String> = app
+            .game_events
+            .iter()
+            .filter(|l| l.starts_with("warden_touch @"))
+            .collect();
+        assert_eq!(touches.len(), 1, "the live contact the ONLY touch banks: {:?}", touches);
+        assert!(
+            touches[0].contains("suspect1 +35 -> 35"),
+            "the A warden the zombie suspect banks: {}",
+            touches[0]
+        );
+        // A: the touched state banks
+        assert_eq!(app.wardens[0].active_anger(), 35, "the A the anger climbs");
+        assert_eq!(
+            app.wardens[0].touch_cooldown,
+            crate::sculk::WARDEN_TOUCH_COOLDOWN_TICKS,
+            "the A the 20l banks"
+        );
+        // B: the far body the box test refuses — the fresh state keeps
+        assert_eq!(
+            app.wardens[1].active_anger(),
+            0,
+            "the B the box never intersects — the anger the fresh 0 keeps"
+        );
+        assert_eq!(app.wardens[1].touch_cooldown, 0, "the B the memory never banks");
+        assert!(app.wardens[1].disturbance.is_none(), "the B the eyes never open");
+        // C: the dead warden the alive gate keeps
+        assert_eq!(
+            app.wardens[2].active_anger(),
+            0,
+            "the C the dead body the scan keeps out — the anger never climbs"
+        );
+        assert_eq!(app.wardens[2].touch_cooldown, 0, "the C the memory never banks");
+        // D: the dead zombie the pushable verdict keeps out
+        assert_eq!(
+            app.wardens[3].active_anger(),
+            0,
+            "the D the dead zombie the pushable list never joins — the anger never climbs"
+        );
+        assert_eq!(app.wardens[3].touch_cooldown, 0, "the D the memory never banks");
+        assert!(app.wardens[3].disturbance.is_none(), "the D the eyes never open");
     }
 
     /// THE WARDEN'S EARS THE GLIDE THE LISTENING PLAYS (javap

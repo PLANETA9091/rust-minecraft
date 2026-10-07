@@ -1337,6 +1337,30 @@ pub const WARDEN_RECENT_PROJECTILE_TICKS: i32 = 100;
 /// speaks).
 pub const WARDEN_VIBRATION_CLOSER_THAN: f64 = 30.0;
 
+/// `Warden.doPush` (javap pc 20-33): the
+/// `setMemoryWithExpiry(TOUCH_COOLDOWN, UNIT, 20l)` the ldc2_w
+/// speaks — the contact memory the next touch consults (the
+/// hasMemoryValue gate pc 7-17 the standing cooldown the anger arm
+/// refuses while the 20 ticks drain — the super doPush pc 49 the
+/// physics push the gate NEVER guards).
+pub const WARDEN_TOUCH_COOLDOWN_TICKS: i32 = 20;
+
+/// THE TOUCH'S OWN OUTCOME (javap `Warden.doPush` — the anger arm's
+/// own pair the walk banks: the listening voice the increase's flag
+/// arms, the disturbance the setDisturbanceLocation walk banks —
+/// the touched entity's own block pos the memory wears).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenTouch {
+    /// the listening voice the `increaseAngerAt(entity)` fold's
+    /// iconst_1 flag arms (the POST-increase verdict the word
+    /// answers, the ROARING pose the gate never arms)
+    pub listening: Option<(&'static str, f32)>,
+    /// the DISTURBANCE_LOCATION the tail walk banks (the touched
+    /// entity's own block pos the pc 41-46 call wears, the gates the
+    /// ANGRY-at refusal keeps)
+    pub disturbance: Option<WardenDisturbance>,
+}
+
 /// `EntityType$Builder.sized(0.9f, 2.9f)` (javap the EntityTypes
 /// clinit pc 6612-6618 — the WARDEN register call's own pair the
 /// `ldc_w 0.9f` / `ldc_w 2.9f` rows keep): the warden's own
@@ -1720,6 +1744,13 @@ pub struct WardenMob {
     /// 100l expiry the tick drains; the fresh None the JVM init
     /// keeps — the hearing walk the Calm arm banks)
     pub disturbance: Option<WardenDisturbance>,
+    /// THE TOUCH'S OWN COOLDOWN (javap Brain's TOUCH_COOLDOWN memory
+    /// — the setMemoryWithExpiry 20l the doPush pc 20-33 banks, the
+    /// hasMemoryValue gate pc 7-17 the standing memory the next
+    /// touch refuses; the fresh zero the JVM init keeps — the
+    /// expiry the tick drains, the same walk the other brain
+    /// memories wear)
+    pub touch_cooldown: i32,
 }
 
 impl WardenMob {
@@ -1748,6 +1779,7 @@ impl WardenMob {
             heart_animation: 0,
             heart_animation_o: 0,
             disturbance: None,
+            touch_cooldown: 0,
         }
     }
 
@@ -1821,6 +1853,75 @@ impl WardenMob {
         // pc 96-103: the WALK_TARGET erase — the walk-target round wires
     }
 
+    /// THE CONTACT'S OWN WALK (javap `Warden.doPush(Entity)` pc 0-54,
+    /// verbatim — the `LivingEntity.pushEntities` caller serves: the
+    /// `getPushableEntities(this, getBoundingBox())` query pc 0-12
+    /// the Level walk answers (the entities the warden's own box
+    /// intersects, the pushable filter the living/spectator pair
+    /// keeps), the empty list the early return pc 13-22 wears, the
+    /// doPush loop pc 157-191 the walk serves — the cramming walk
+    /// pc 28-156 the server gamerule branch wears, the few entities
+    /// the branch never arms). THE ANGER ARM the pair of gates
+    /// guards: the `isNoAi()` head pc 1-4 the client's honest pass
+    /// keeps (the flag the client never arms — the same pass the
+    /// canReceiveVibration walk wears), the
+    /// `hasMemoryValue(TOUCH_COOLDOWN)` gate pc 7-17 the standing
+    /// memory the arm REFUSES (the 20-tick window the touch arms);
+    /// the `setMemoryWithExpiry(TOUCH_COOLDOWN, UNIT, 20l)` pc 20-33
+    /// banks, the `increaseAngerAt(entity)` pc 36-38 the ONE-arg walk
+    /// the `(35, true)` fold keeps (javap pc 0-8 — the bipush-35 +
+    /// iconst_1 pair the call wears, the canTarget gate the 3-arg's
+    /// own head the increase refuses — the cooldown the refusal
+    /// NEVER lifts), the `setDisturbanceLocation(this,
+    /// entity.blockPosition())` pc 41-46 the TOUCHED entity's own
+    /// block pos the floor law answers (the disturbance's own gates
+    /// the ANGRY-at refusal keeps — the Calm warden the eyes
+    /// re-aims), the `Monster.doPush(entity)` super pc 49-51 the
+    /// physics push the collision lane serves (the bodies the
+    /// world's own collision answers — the lane never speaks, the
+    /// anger arm the walk banks).
+    pub fn do_push(
+        &mut self,
+        entity: u64,
+        entity_pos: (f64, f64, f64),
+        entity_is_player: bool,
+        entity_targetable: bool,
+    ) -> Option<WardenTouch> {
+        // pc 1-4: the isNoAi flag the client never arms — the pass keeps
+        // pc 7-17: the hasMemoryValue(TOUCH_COOLDOWN) gate — the
+        // standing memory the anger arm refuses (the super push pc 49
+        // the gate NEVER guards — the physics the collision lane
+        // serves regardless)
+        if self.touch_cooldown > 0 {
+            return None;
+        }
+        // pc 20-33: the setMemoryWithExpiry(TOUCH_COOLDOWN, UNIT, 20l)
+        self.touch_cooldown = WARDEN_TOUCH_COOLDOWN_TICKS;
+        // pc 36-38: the increaseAngerAt(entity) — the ONE-arg walk the
+        // `(35, true)` fold keeps
+        let listening = self.increase_anger_at(
+            entity,
+            entity_is_player,
+            entity_targetable,
+            WARDEN_DEFAULT_ANGER,
+            true,
+        );
+        // pc 41-46: the setDisturbanceLocation(this, entity
+        // .blockPosition()) — the TOUCHED entity's own block pos the
+        // floor law answers
+        self.set_disturbance_location((
+            entity_pos.0.floor() as i32,
+            entity_pos.1.floor() as i32,
+            entity_pos.2.floor() as i32,
+        ));
+        // pc 49-51: the Monster.doPush(entity) super — the physics push
+        // the collision lane serves
+        Some(WardenTouch {
+            listening,
+            disturbance: self.disturbance,
+        })
+    }
+
     /// THE AMBIENT VOICE'S TICK (javap `Mob.baseTick` pc 17-55, the
     /// walk the generic mobs' own lane shares: the `isAlive()` gate the
     /// head keeps — the ifeq the WHOLE walk wraps, the dead body the
@@ -1846,6 +1947,12 @@ impl WardenMob {
         }
         if self.recent_projectile > 0 {
             self.recent_projectile -= 1;
+        }
+        // THE TOUCH'S OWN DRAIN (javap Brain's expiry walk — the 20l
+        // expiry the memory wears, the zero the memory expires, the
+        // hasMemoryValue gate the next touch the refusal lifts)
+        if self.touch_cooldown > 0 {
+            self.touch_cooldown -= 1;
         }
         // THE DISTURBANCE'S OWN DRAIN (javap Brain's expiry walk — the
         // 100l expiry the memory wears, the zero the memory expires,
