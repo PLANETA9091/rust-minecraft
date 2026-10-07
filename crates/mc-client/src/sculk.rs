@@ -1161,7 +1161,6 @@ pub const WARDEN_PROJECTILE_ANGER: i32 = 10;
 /// melee-integration round wires (the pick lanes the warden's own box
 /// consult — the client's mobs the warden never joins yet) — the
 /// constant the wiring round consumes.
-#[cfg_attr(not(test), expect(dead_code))]
 pub const WARDEN_ON_HURT_ANGER_BOOST: i32 = 20;
 
 /// `Warden$VibrationUser.getListenerRadius` (javap pc 0-2): the
@@ -1197,7 +1196,6 @@ pub const WARDEN_VIBRATION_CLOSER_THAN: f64 = 30.0;
 /// serves). THE WIDTH the pick/render rounds the box consult (the
 /// warden the mobs list never joins yet) — the constant the same
 /// rounds consume.
-#[cfg_attr(not(test), expect(dead_code))] // the pick/render rounds the box consult
 pub const WARDEN_MOB_WIDTH: f32 = 0.9;
 pub const WARDEN_MOB_HEIGHT: f32 = 2.9;
 
@@ -1517,8 +1515,8 @@ pub fn warden_ambient_sound(
 #[derive(Debug, Clone)]
 pub struct WardenMob {
     /// the entity id the counter's own draw banks (the wire-id lane the
-    /// render/brain rounds consult — the fresh walk never reads yet)
-    #[cfg_attr(not(test), expect(dead_code))] // the id lane the entity rounds consult
+    /// render/brain rounds consult — the stab-contact memory the id
+    /// banks now the use-tick lane wears)
     pub id: i32,
     /// the feet-center (the spawn cell's (x + 0.5, y, z + 0.5) the
     /// summon walk banks — the vanilla position the entity wears)
@@ -1787,6 +1785,87 @@ impl WardenMob {
     pub fn voice_pitch(&mut self) -> f32 {
         (self.rng.next_f32() - self.rng.next_f32()) * 0.2 + 1.0
     }
+
+    /// THE WARDEN'S OWN HURT WALK (javap `Warden.hurtServer(ServerLevel,
+    /// DamageSource, float)` pc 0-103, verbatim): the super
+    /// `Monster.hurtServer` call pc 0-7 the hurt pipeline speaks — the
+    /// health the damage wears (createAttributes pc 0-52 carries NO
+    /// ARMOR row — MAX_HEALTH 500.0 / MOVEMENT_SPEED 0.3 /
+    /// KNOCKBACK_RESISTANCE 1.0 / ATTACK_KNOCKBACK 1.5 / ATTACK_DAMAGE
+    /// 30.0 / FOLLOW_RANGE 24.0 the six rows the builder keeps — the
+    /// RAW damage the attribute-absence keeps), the hurt voice the
+    /// getHurtSound WARDEN_HURT / the death the getDeathSound
+    /// WARDEN_DEATH answers (the getSoundVolume 4.0f the makeSound fold
+    /// wears — the caller's play lane folds), the pitch the one
+    /// two-draw the voice spends. THE ANGER pc 9-44: the isNoAi pass
+    /// the client never refuses, the `isDiggingOrEmerging()` gate the
+    /// ifne pair keeps (the digging warden the anger never climbs),
+    /// the `increaseAngerAt(attacker, ANGRY.getMinimumAnger() + 20,
+    /// false)` pc 29-44 the hurt walk speaks — the amount the
+    /// WARDEN_ANGER_ANGRY_MIN 80 + the WARDEN_ON_HURT_ANGER_BOOST 20
+    /// = 100 the iadd folds, the LISTENING flag the iconst_0 keeps —
+    /// the listening sound the hurt path NEVER arms (the playSound the
+    /// flag's own gate refuses). The ATTACK_TARGET brain lane pc 45-100
+    /// the memory the empty consults (the brain rounds wire). The
+    /// KNOCKBACK the resistance's own 1.0 the law refuses — the caller
+    /// the push never serves (the `*(1.0 - 1.0)` zero the
+    /// LivingEntity.knockback fold keeps). The dead the hurt refuses
+    /// (the isDeadOrDying gate the pipeline's own head wears). The
+    /// attacker the LOCAL PLAYER the WARDEN_PLAYER_SUSPECT key banks —
+    /// the targetable the caller's canTargetEntity verdict consults
+    /// (the survival+alive pair the TRUE keeps, the creative the FALSE
+    /// the anger refuses — the hurt the creative STILL wears).
+    pub fn hurt_from_player(&mut self, dmg: f32, attacker_targetable: bool) -> Option<WardenHurt> {
+        if self.health <= 0.0 {
+            return None;
+        }
+        self.health -= dmg;
+        let died = self.health <= 0.0;
+        let word = if died {
+            "entity.warden.death"
+        } else {
+            "entity.warden.hurt"
+        };
+        let pitch = self.voice_pitch();
+        let mut anger_raised = false;
+        if !self.digging_or_emerging {
+            self.increase_anger_at(
+                WARDEN_PLAYER_SUSPECT,
+                true,
+                attacker_targetable,
+                WARDEN_ANGER_ANGRY_MIN + WARDEN_ON_HURT_ANGER_BOOST,
+                false,
+            );
+            anger_raised = attacker_targetable;
+        }
+        Some(WardenHurt {
+            died,
+            word,
+            pitch,
+            anger_raised,
+            anger_after: self.active_anger(),
+        })
+    }
+}
+
+/// THE HURT'S OWN VERDICT (the record the hurt walk banks — the word
+/// the voice plays, the pitch the two-draw speaks, the anger the
+/// store's own POST-increase answer keeps).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenHurt {
+    /// the health the 0.0 the death verdict crosses
+    pub died: bool,
+    /// the voice word (getHurtSound WARDEN_HURT / getDeathSound
+    /// WARDEN_DEATH the 26.2 overrides keep)
+    pub word: &'static str,
+    /// the pitch the ONE two-draw the voice spends
+    pub pitch: f32,
+    /// the anger walk the digging/targetable pair gates — the TRUE
+    /// the store's own increase banked
+    pub anger_raised: bool,
+    /// the active anger the POST-increase verdict answers (the
+    /// highest the store's own sort banks)
+    pub anger_after: i32,
 }
 
 /// THE HEARING'S OWN OUTCOME (javap `onReceiveVibration` — the
@@ -1801,6 +1880,65 @@ pub struct WardenHearing {
     /// the listening voice (the word + the pitch) the anger arms serve
     /// — the None the ROARING pose/gate refusal keeps
     pub listening: Option<(&'static str, f32)>,
+}
+
+/// THE STAB'S OWN WARDEN COLLECTION (the same clip law the mob pick's
+/// `pick_all_entities` walk speaks — javap `PiercingWeapon.attack`'s
+/// own `getHitEntitiesAlong` ray the collection serves, the warden's
+/// own box the `EntityDimensions.sized(0.9f, 2.9f)` dims keep): the
+/// ray-vs-AABB clip the mob.rs `aabb_clip` answers, the start-inside
+/// branch the `contains(start)` verdict speaks (t = 0, the own
+/// start), the dead (health <= 0.0) the CAN_BE_PICKED gate keeps out,
+/// the hits the NEAREST-FIRST order the collection's own walk wears.
+pub fn warden_pick_all(
+    wardens: &[WardenMob],
+    eye: (f64, f64, f64),
+    view: (f64, f64, f64),
+    search_range: f64,
+) -> Vec<(usize, f64)> {
+    let end = (
+        eye.0 + view.0 * search_range,
+        eye.1 + view.1 * search_range,
+        eye.2 + view.2 * search_range,
+    );
+    let square = search_range * search_range;
+    let mut hits: Vec<(usize, f64)> = Vec::new();
+    for (i, warden) in wardens.iter().enumerate() {
+        if warden.health <= 0.0 {
+            continue; // the dead never pick (the CAN_BE_PICKED gate)
+        }
+        let h = f64::from(WARDEN_MOB_WIDTH) / 2.0;
+        let min = (warden.x - h, warden.y, warden.z - h);
+        let max = (
+            warden.x + h,
+            warden.y + f64::from(WARDEN_MOB_HEIGHT),
+            warden.z + h,
+        );
+        // the eye inside the box: the vanilla contains(start) law
+        let inside = eye.0 >= min.0
+            && eye.0 <= max.0
+            && eye.1 >= min.1
+            && eye.1 <= max.1
+            && eye.2 >= min.2
+            && eye.2 <= max.2;
+        let d2 = if inside {
+            0.0
+        } else {
+            match crate::mob::aabb_clip(eye, end, min, max) {
+                Some((point, _)) => {
+                    let (px, py, pz) = point;
+                    let (ex, ey, ez) = (px - eye.0, py - eye.1, pz - eye.2);
+                    ex * ex + ey * ey + ez * ez
+                }
+                None => continue,
+            }
+        };
+        if d2 < square {
+            hits.push((i, d2));
+        }
+    }
+    hits.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+    hits
 }
 
 /// THE WARDEN'S OWN HEARING WALK (javap the dispatch laws the

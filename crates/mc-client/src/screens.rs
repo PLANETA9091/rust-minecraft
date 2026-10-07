@@ -5504,6 +5504,15 @@ fn held_charge_delay(held: Option<&str>) -> f64 {
     (1.0 / held_attack_speed(held)) * 20.0
 }
 
+/// THE STAB'S OWN TARGET TAG (the merged collection's own item — the
+/// mob body the mobs list answers, the warden the own list keeps; the
+/// two the hurt's own walk splits)
+#[derive(Clone, Copy, Debug, PartialEq)]
+enum StabPick {
+    Mob(usize),
+    Warden(usize),
+}
+
 /// THE ATTACK RANGE COMPONENT'S OWN PICK WINDOW (javap `AttackRange` +
 /// `ProjectileUtil.getHitEntitiesAlong` + `LocalPlayer
 /// .raycastHitResult` — the pick law the 26.2 crosshair serves): the
@@ -13755,8 +13764,8 @@ impl App {
     /// wall's shadow the block clip's own verdict speaks (the mob the
     /// block reaches first the Either's LEFT arm refuses — the empty
     /// list the `lambda$attack$1` returns).
-    fn stab_pick_all(&self) -> Vec<usize> {
-        if self.mobs.is_empty() {
+    fn stab_pick_all(&self) -> Vec<StabPick> {
+        if self.mobs.is_empty() && self.wardens.is_empty() {
             return Vec::new();
         }
         let cam = self.world_camera();
@@ -13791,11 +13800,27 @@ impl App {
                 dx * dx + dy * dy + dz * dz
             })
             .unwrap_or(f64::INFINITY);
-        crate::mob::pick_all_entities(&self.mobs, eye, view, reach)
-            .into_iter()
-            .filter(|(_, d2)| *d2 >= min_d2 && *d2 < block_d2)
-            .map(|(i, _)| i)
-            .collect()
+        // THE MERGED COLLECTION (the two lists the same ray serves —
+        // the mob bodies + the wardens the NEAREST-FIRST order the
+        // pierce's own walk wears)
+        let mut merged: Vec<(StabPick, f64)> = crate::mob::pick_all_entities(
+            &self.mobs,
+            eye,
+            view,
+            reach,
+        )
+        .into_iter()
+        .filter(|(_, d2)| *d2 >= min_d2 && *d2 < block_d2)
+        .map(|(i, d2)| (StabPick::Mob(i), d2))
+        .collect();
+        merged.extend(
+            crate::sculk::warden_pick_all(&self.wardens, eye, view, reach)
+                .into_iter()
+                .filter(|(_, d2)| *d2 >= min_d2 && *d2 < block_d2)
+                .map(|(i, d2)| (StabPick::Warden(i), d2)),
+        );
+        merged.sort_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal));
+        merged.into_iter().map(|(pick, _)| pick).collect()
     }
 
     /// THE STAB'S OWN CONTACT WALK (javap `PiercingWeapon.attack` over
@@ -13829,6 +13854,11 @@ impl App {
             .as_ref()
             .map(|b| (b.x, b.z))
             .unwrap_or((0.0, 0.0));
+        // THE ATTACKER'S OWN TARGETABLE VERDICT (the hurtServer anger
+        // walk's canTargetEntity consult — the survival+alive pair the
+        // dispatch's own SOURCE tail wears, the creative the FALSE the
+        // anger refuses — the hurt the creative STILL wears)
+        let source_targetable = self.game_mode.is_survival() && !self.dead;
         // PASS ONE: the hurt the collection order speaks + the facts
         // the capture banks (the borrow the pass ends before the
         // knockback's own walk)
@@ -13842,29 +13872,56 @@ impl App {
             Vec<(i32, i32)>,
             Option<i32>,
         )> = Vec::new();
-        for &i in &hits {
-            let Some(mob) = self.mobs.get_mut(i) else {
-                continue;
-            };
-            mob.hurt(dmg as f64, true);
-            let died = mob.health <= 0.0;
-            let pitch = mob.voice_pitch();
-            let kind = mob.kind;
-            let (mx, my, mz) = (mob.x, mob.y, mob.z);
-            let loot = if died { mob.death_loot(true) } else { Vec::new() };
-            let xp = if died { Some(mob.base_xp_reward()) } else { None };
-            outcomes.push((mx, my, mz, died, pitch, kind, loot, xp));
+        let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> =
+            Vec::new();
+        for &pick in &hits {
+            match pick {
+                StabPick::Mob(i) => {
+                    let Some(mob) = self.mobs.get_mut(i) else {
+                        continue;
+                    };
+                    mob.hurt(dmg as f64, true);
+                    let died = mob.health <= 0.0;
+                    let pitch = mob.voice_pitch();
+                    let kind = mob.kind;
+                    let (mx, my, mz) = (mob.x, mob.y, mob.z);
+                    let loot = if died { mob.death_loot(true) } else { Vec::new() };
+                    let xp = if died { Some(mob.base_xp_reward()) } else { None };
+                    outcomes.push((mx, my, mz, died, pitch, kind, loot, xp));
+                }
+                StabPick::Warden(i) => {
+                    // THE WARDEN'S OWN HURT WALK (javap Warden.hurtServer
+                    // pc 0-103 — the super's hurt the health wears, the
+                    // anger the +100 the listening flag NEVER arms, the
+                    // voice the WARDEN_HURT/DEATH word the record banks)
+                    let Some(warden) = self.wardens.get_mut(i) else {
+                        continue;
+                    };
+                    if let Some(hurt) =
+                        warden.hurt_from_player(dmg, source_targetable)
+                    {
+                        warden_outcomes
+                            .push((warden.x, warden.y, warden.z, hurt));
+                    }
+                    // THE KNOCKBACK the resistance's own 1.0 the law
+                    // refuses — the push the `*(1.0 - 1.0)` zero the
+                    // LivingEntity.knockback fold keeps
+                }
+            }
         }
         // PASS TWO: the knockback (the dealsKnockback flag the factory's
         // own iconst_1 keeps — the caller's (x, z) the
-        // attacker-minus-victim law runs)
-        for &i in &hits {
-            if let Some(mob) = self.mobs.get_mut(i) {
-                mob.knockback(
-                    crate::mob::KNOCKBACK_STRENGTH,
-                    bx - mob.x,
-                    bz - mob.z,
-                );
+        // attacker-minus-victim law runs; the WARDEN the resistance's
+        // own full immunity the law never pushes)
+        for &pick in &hits {
+            if let StabPick::Mob(i) = pick {
+                if let Some(mob) = self.mobs.get_mut(i) {
+                    mob.knockback(
+                        crate::mob::KNOCKBACK_STRENGTH,
+                        bx - mob.x,
+                        bz - mob.z,
+                    );
+                }
             }
         }
         // THE TAIL: the voices + the drops the captured facts speak
@@ -13903,6 +13960,31 @@ impl App {
                     ear_distance(ear, mx, my, mz),
                     ear_pan(ear, yaw, mx, my, mz),
                 );
+            }
+        }
+        // THE WARDEN'S OWN TAIL (the hurt pipeline the super speaks —
+        // the voice the getSoundVolume 4.0 the makeSound fold wears,
+        // the anger the store's own POST-increase verdict the record
+        // banks — the +100 the ANGRY_MIN + the boost the iadd folds)
+        for (wx, wy, wz, hurt) in warden_outcomes {
+            contact = true;
+            self.play_warden_voice_v(
+                hurt.word,
+                wx,
+                wy,
+                wz,
+                hurt.pitch,
+                crate::sculk::WARDEN_MOB_SOUND_VOLUME,
+            );
+            if hurt.anger_raised {
+                self.game_events.push(format!(
+                    "warden_anger @{} suspect{} +{} -> {}",
+                    self.frame,
+                    crate::sculk::WARDEN_PLAYER_SUSPECT,
+                    crate::sculk::WARDEN_ANGER_ANGRY_MIN
+                        + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
+                    hurt.anger_after
+                ));
             }
         }
         contact
@@ -13978,6 +14060,10 @@ impl App {
             .map(|b| (b.x, b.z))
             .unwrap_or((0.0, 0.0));
         let now = (self.day_time_base + self.frame) as i64;
+        // THE ATTACKER'S OWN TARGETABLE VERDICT (the hurtServer anger
+        // walk's canTargetEntity consult — the survival+alive pair the
+        // dispatch's own SOURCE tail wears)
+        let source_targetable = self.game_mode.is_survival() && !self.dead;
         // PASS ONE: the memory + the conditions + the hurt (the facts
         // the capture banks)
         let mut outcomes: Vec<(
@@ -13992,7 +14078,69 @@ impl App {
             Option<i32>,
             bool,
         )> = Vec::new();
-        for &i in &hits {
+        let mut warden_outcomes: Vec<(f64, f64, f64, crate::sculk::WardenHurt)> =
+            Vec::new();
+        let mut warden_contact = false;
+        for &pick in &hits {
+            if let StabPick::Warden(i) = pick {
+                // THE WARDEN'S OWN ARM (the same memory + conditions
+                // walk the mob body serves — the stationary body the
+                // victim's own zero dot keeps, the KNOCKBACK the
+                // resistance's own 1.0 the law never pushes)
+                let Some(warden) = self.wardens.get_mut(i) else {
+                    continue;
+                };
+                // (i) THE RECENT-STAB SKIP (pcs 168-185): the same
+                // memory the warden's own id banks
+                if let Some(&(_, last)) = self
+                    .stab_contact_memory
+                    .iter()
+                    .find(|(id, _)| *id == warden.id)
+                {
+                    if now - last < KINETIC_CONTACT_COOLDOWN_TICKS as i64 {
+                        continue;
+                    }
+                }
+                // (ii) THE BANK (pcs 188-193 — the remember call the
+                // conditions' own clock rides BEFORE)
+                self.stab_contact_memory.retain(|(id, last)| {
+                    *id != warden.id && now - *last < 600
+                });
+                self.stab_contact_memory.push((warden.id, now));
+                // (iii) THE RELATIVE SPEED (pcs 194-215): the
+                // STATIONARY body the victim's own zero dot keeps (the
+                // AI rounds the movement wire — the struct's own
+                // absence the 0.0 keeps)
+                let relative = look_dot.max(0.0);
+                // (iv) THE THREE CONDITIONS (Condition.test verbatim)
+                let dismount = used_past <= row.dismount_max
+                    && look_dot >= f64::from(row.dismount_min);
+                let kb =
+                    used_past <= row.kb_max && look_dot >= f64::from(row.kb_min);
+                let damage =
+                    used_past <= row.dmg_max && relative >= f64::from(row.dmg_min_rel);
+                if !(dismount || kb || damage) {
+                    continue;
+                }
+                warden_contact = true;
+                // (v) THE DAMAGE (pcs 361-377 — the same fold the mob
+                // arm wears; the hurt the damage condition alone gates
+                // — stabAttack's own z1, the dying body the verdict
+                // refuses)
+                let dmg = (PLAYER_ATTACK_DAMAGE as f32)
+                    + (relative * f64::from(row.multiplier)).floor() as i32 as f32;
+                if damage && warden.health > 0.0 {
+                    if let Some(hurt) =
+                        warden.hurt_from_player(dmg, source_targetable)
+                    {
+                        warden_outcomes.push((warden.x, warden.y, warden.z, hurt));
+                    }
+                }
+                continue;
+            }
+            let StabPick::Mob(i) = pick else {
+                continue;
+            };
             let Some(mob) = self.mobs.get_mut(i) else {
                 continue;
             };
@@ -14050,7 +14198,9 @@ impl App {
             outcomes.push((i, mx, my, mz, died, pitch, kind, loot, xp, kb));
         }
         // PASS TWO: the knockback (the kb condition the stabAttack's
-        // own z2 speaks — the push the hurt's own verdict never gates)
+        // own z2 speaks — the push the hurt's own verdict never gates;
+        // the WARDEN the resistance's own full immunity the law never
+        // pushes)
         for &(i, _, _, _, _, _, _, _, _, kb) in &outcomes {
             if kb {
                 if let Some(mob) = self.mobs.get_mut(i) {
@@ -14063,7 +14213,7 @@ impl App {
             }
         }
         // THE TAIL: the voices + the drops the captured facts speak
-        let mut any = false;
+        let mut any = warden_contact;
         for (_, mx, my, mz, died, pitch, kind, loot, xp, _) in outcomes {
             any = true;
             if died {
@@ -14104,6 +14254,30 @@ impl App {
         // broadcasts — the local hit voice the feedback lane's own
         // 20-tick throttle carries (the same walk the wire's mailbox
         // echo answers)
+        // THE WARDEN'S OWN TAIL (the hurt pipeline the super speaks —
+        // the voice the getSoundVolume 4.0 the makeSound fold wears,
+        // the anger the store's own POST-increase verdict the record
+        // banks — the +100 the ANGRY_MIN + the boost the iadd folds)
+        for (wx, wy, wz, hurt) in warden_outcomes {
+            self.play_warden_voice_v(
+                hurt.word,
+                wx,
+                wy,
+                wz,
+                hurt.pitch,
+                crate::sculk::WARDEN_MOB_SOUND_VOLUME,
+            );
+            if hurt.anger_raised {
+                self.game_events.push(format!(
+                    "warden_anger @{} suspect{} +{} -> {}",
+                    self.frame,
+                    crate::sculk::WARDEN_PLAYER_SUSPECT,
+                    crate::sculk::WARDEN_ANGER_ANGRY_MIN
+                        + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
+                    hurt.anger_after
+                ));
+            }
+        }
         if any {
             self.live_kinetic_hit_events_updated(vec![
                 crate::world_view::WireKineticHitEvent { entity_id: 0 },
@@ -49097,6 +49271,234 @@ mod tests {
                 .any(|e| e.starts_with("entity.zombie.hurt ")),
             "the refused walk the hurt voice never wears: {:?}",
             app.sounds.events
+        );
+    }
+
+    /// THE HURT LANE'S OWN WARDEN (javap `Warden.hurtServer` pc 0-103
+    /// over the offline world — the stab the warden's own box the
+    /// merged pick consults, the hurt the RAW damage the
+    /// armor-absence wears, the anger the +100 the ANGRY_MIN + the
+    /// boost the iadd folds, the LISTENING the hurt path NEVER arms,
+    /// the knockback the resistance's own 1.0 the law refuses, the
+    /// DIGGING the anger the ifne gate refuses).
+    #[test]
+    fn the_stab_the_warden_the_hurt_the_anger_climbs() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        // the camera the sky reads (the stab's own ray the block clip
+        // never fears)
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        // the warden the camera's own forward serves (3.0 ahead, the
+        // feet the eye - 1.0 the box's own span covers)
+        let cam = app.world_camera();
+        let f = cam.forward();
+        let wx = cam.pos.x as f64 + f.x as f64 * 3.0;
+        let wy = cam.pos.y as f64 - 1.0;
+        let wz = cam.pos.z as f64 + f.z as f64 * 3.0;
+        app.wardens.push(crate::sculk::WardenMob::new(101, wx, wy, wz));
+        // THE STAB (the raw attribute the dmg wears — PLAYER_ATTACK_DAMAGE
+        // + the material's own bonus the modifier rides)
+        let expected_dmg = (PLAYER_ATTACK_DAMAGE + material_bonus("iron_spear")) as f32;
+        let contact = app.stab_walk("iron_spear");
+        assert!(contact, "the warden the stab's collection answers");
+        assert_eq!(
+            app.wardens[0].health,
+            500.0 - expected_dmg,
+            "the RAW damage the armor-absence keeps (the no-armor attributes the hurt wears)"
+        );
+        // THE ANGER (+100 -> 100 — the ANGRY_MIN 80 + the boost 20 the
+        // iadd folds, the record the POST-increase verdict banks)
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("warden_anger @") && e.contains("+100 -> 100")),
+            "the hurt's own +100 the record banks: {:?}",
+            app.game_events
+        );
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            crate::sculk::WARDEN_ANGER_ANGRY_MIN + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
+            "the store the +100 the hurt wears"
+        );
+        // THE HURT VOICE (getHurtSound WARDEN_HURT — the v4.0 the
+        // getSoundVolume fold wears)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.warden.hurt ")),
+                "the warden's own hurt voice: {:?}",
+                app.sounds.events
+            );
+        }
+        // THE KNOCKBACK the resistance's own 1.0 the law refuses (the
+        // position the push never moves)
+        assert_eq!(app.wardens[0].x, wx, "the warden the push never moves");
+        assert_eq!(app.wardens[0].z, wz, "the z the push never moves");
+        // THE DIGGING WARDEN (javap pc 16-20 — the isDiggingOrEmerging
+        // gate the ifne pair keeps: the second stab the anger never
+        // climbs, the hurt STILL wears)
+        app.wardens[0].digging_or_emerging = true;
+        let contact = app.stab_walk("iron_spear");
+        assert!(contact, "the digging warden the stab still reaches");
+        assert_eq!(
+            app.wardens[0].health,
+            500.0 - 2.0 * expected_dmg,
+            "the digging the hurt never refuses"
+        );
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            crate::sculk::WARDEN_ANGER_ANGRY_MIN + crate::sculk::WARDEN_ON_HURT_ANGER_BOOST,
+            "the digging the anger the gate refuses"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|e| e.starts_with("warden_anger @"))
+                .count(),
+            1,
+            "the second stab the digging silence keeps (no second record)"
+        );
+    }
+
+    /// THE CREATIVE'S OWN REFUSAL (javap `Warden.canTargetEntity` — the
+    /// creative player the FALSE the anger refuses: the hurt the
+    /// creative STILL wears, the store the stab never climbs, the
+    /// record the anger_raised flag never banks).
+    #[test]
+    fn the_stab_the_warden_the_creative_the_anger_refuses() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        let spear = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (spear, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, (app.spawn_y + 7) as f32, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: 0.0,
+        });
+        let cam = app.world_camera();
+        let f = cam.forward();
+        app.wardens.push(crate::sculk::WardenMob::new(
+            102,
+            cam.pos.x as f64 + f.x as f64 * 3.0,
+            cam.pos.y as f64 - 1.0,
+            cam.pos.z as f64 + f.z as f64 * 3.0,
+        ));
+        let expected_dmg = (PLAYER_ATTACK_DAMAGE + material_bonus("iron_spear")) as f32;
+        let contact = app.stab_walk("iron_spear");
+        assert!(contact, "the creative the stab still reaches");
+        assert_eq!(
+            app.wardens[0].health,
+            500.0 - expected_dmg,
+            "the hurt the creative STILL wears"
+        );
+        assert_eq!(
+            app.wardens[0].active_anger(),
+            0,
+            "the canTargetEntity refusal the anger keeps"
+        );
+        assert!(
+            !app.game_events.iter().any(|e| e.starts_with("warden_anger @")),
+            "the refused anger the record never banks"
+        );
+    }
+
+    /// THE USE-TICK STAB'S OWN WARDEN (javap `KineticWeapon.damageEntities`
+    /// — the sprint thrust the warden's own stationary body the zero
+    /// victim-dot keeps, the FULL 7.0 the armor-absence wears (the
+    /// zombie's own 6.888 the CombatRules walk absorbs), the memory the
+    /// warden's own id banks, the cooldown the second dose refuses, the
+    /// +100 the anger the record banks).
+    #[test]
+    fn the_use_tick_stab_the_warden_the_raw_damage_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let iron = mc_registry::item_id_by_name("iron_spear").unwrap();
+        app.inventory.items[app.selected_hotbar] = (iron, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            (app.spawn_y + 7) as f64 - 1.62,
+            c as f64 + 0.5,
+            180.0,
+            0.0,
+        ));
+        let cam = app.world_camera();
+        let f = cam.forward();
+        app.wardens.push(crate::sculk::WardenMob::new(
+            103,
+            cam.pos.x as f64 + f.x as f64 * 3.0,
+            cam.pos.y as f64 - 1.0,
+            cam.pos.z as f64 + f.z as f64 * 3.0,
+        ));
+        // THE SPRINT'S OWN LUNGE (the velocity the look carries — the
+        // same 0.28 b/tick the sprint walk rides, the warden the
+        // STATIONARY body the victim's own zero dot keeps)
+        if let Some(b) = app.body.as_mut() {
+            b.vx = 0.28 * f.x as f64;
+            b.vz = 0.28 * f.z as f64;
+        }
+        app.frame = 30; // the throttle's bank the first window clears
+        app.spear_use_tick_stab(12); // the iron tier's own 12 the walk passes
+        // THE RAW FOLD (2.0 + floor(5.6·0.95) = 7.0 — the FULL the
+        // armor-absence wears, the zombie's own absorbed 6.888 the
+        // CombatRules walk speaks)
+        assert_eq!(
+            app.wardens[0].health, 493.0,
+            "the FULL 7.0 the no-armor attributes keep"
+        );
+        assert!(
+            app.stab_contact_memory.iter().any(|(id, _)| *id == 103),
+            "the memory the warden's own id banks"
+        );
+        assert!(
+            app.game_events
+                .iter()
+                .any(|e| e.starts_with("warden_anger @") && e.contains("+100 -> 100")),
+            "the use-tick stab's own +100 the record banks: {:?}",
+            app.game_events
+        );
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("entity.warden.hurt ")),
+                "the warden's own hurt voice: {:?}",
+                app.sounds.events
+            );
+        }
+        // THE COOLDOWN'S OWN SILENCE (the next tick the recent-stab
+        // memory the re-evaluation never serves — no second dose, no
+        // second +100)
+        app.spear_use_tick_stab(13);
+        assert_eq!(
+            app.wardens[0].health, 493.0,
+            "the cooldown the second dose refuses"
+        );
+        assert_eq!(
+            app.game_events
+                .iter()
+                .filter(|e| e.starts_with("warden_anger @"))
+                .count(),
+            1,
+            "the cooldown the second record refuses"
         );
     }
 
