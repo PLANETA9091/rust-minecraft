@@ -6639,6 +6639,11 @@ pub struct App {
     /// the spider's field mirrors: the `None` the skin's absence
     /// speaks, the body the honesty keeps unseen.
     pub creeper_model: Option<crate::avatar::CreeperModel>,
+    /// THE WARDEN'S OWN BODY (the WardenRenderer's bake — the
+    /// WardenModel the WARDEN layer keeps), the sha1-verified load
+    /// the creeper's field mirrors: the `None` the skin's absence
+    /// speaks, the body the honesty keeps unseen.
+    pub warden_model: Option<crate::avatar::WardenModel>,
     /// THE CANINE'S OWN LANES (the AgeableMobRenderer's pair the
     /// WolfRenderer ctor keeps — the adult the WOLF layer bakes, the
     /// baby the WOLF_BABY layer, the isBaby word the render arm picks).
@@ -8004,6 +8009,7 @@ impl App {
             baby_cow_warm_model: None,
             spider_model: None,
             creeper_model: None,
+            warden_model: None,
             wolf_model: None,
             baby_wolf_model: None,
             fire_strips: None,
@@ -34619,7 +34625,7 @@ impl App {
         day_time: i64,
         a: &mut GuiAssets,
     ) {
-        if self.mobs.is_empty() && self.net_mobs.is_empty() {
+        if self.mobs.is_empty() && self.net_mobs.is_empty() && self.wardens.is_empty() {
             return; // the deterministic scenes carry no mobs — the goldens stay
         }
         if self.zombie_avatar.is_none() {
@@ -34755,6 +34761,12 @@ impl App {
             self.creeper_model =
                 crate::avatar::CreeperModel::load(std::path::Path::new("assets-cache/jar"));
         }
+        // THE WARDEN LANE's own lazy load (the same honesty: a failed
+        // warden skin keeps only the wardens unseen)
+        if self.warden_model.is_none() {
+            self.warden_model =
+                crate::avatar::WardenModel::load(std::path::Path::new("assets-cache/jar"));
+        }
         // THE WOLF LANES' own lazy load (the same honesty: a failed
         // wolf skin keeps only the canines unseen — the adult and the
         // baby the two OWN shas the loads verify)
@@ -34816,6 +34828,9 @@ impl App {
         // keeps only the arachnids unseen, the other bodies keep drawing
         let spider_model = self.spider_model.as_ref();
         let creeper_model = self.creeper_model.as_ref();
+        // the warden's honesty is ITS OWN lane: a failed warden skin
+        // keeps only the wardens unseen, the other bodies keep drawing
+        let warden_model = self.warden_model.as_ref();
         // the wolf lanes' honesty is THEIR OWN lane: a failed wolf
         // skin keeps only the canines unseen (the adult and the baby
         // the pair's own shas verify)
@@ -36079,6 +36094,64 @@ impl App {
                     );
                 }
             }
+        }
+        // THE WARDEN'S OWN RENDER LOOP (the WardenRenderer's own lane
+        // — the wardens list the mob chains never carry, the Warden
+        // renderer the dispatcher's own class map picks): the warden
+        // body the base skin draws, the same entity chain fold the
+        // other bodies speak. The idle sway + the tendril shiver the
+        // age clock and the shiver clock wear — the standing warden's
+        // own living breath the folds speak (the walk pair the
+        // zero-speed damping stills, the warden's own walk the AI
+        // round a future lane serves). The dead body the health gate
+        // refuses — the corpse the list's own removal lane keeps.
+        let Some(warden_model) = warden_model else {
+            return; // the warden skin failed its sha1 — the wardens stay unseen
+        };
+        let vp = ctx.proj.mul(&ctx.view);
+        for warden in &self.wardens {
+            if warden.health <= 0.0 {
+                continue; // the dead body the lane removes — no corpse draws
+            }
+            // THE FEET (the summon cell's own position the entity
+            // wears — the warden's own walk the AI rounds never
+            // serve, the prev-pos lerp the standing body needs not)
+            let feet = Vec3::new(warden.x as f32, warden.y as f32, warden.z as f32);
+            // THE STATE (the 26.2 setupAnim's own words): the look
+            // pair the zero yaw the standing body keeps, the walk
+            // pair the zero speed the stillness wears, the age clock
+            // the tick count speaks, the TENDRIL ANIMATION the
+            // getTendrilAnimation(partialTick) lerp getter banks
+            let state = crate::avatar::WardenState {
+                yaw_deg: 0.0,
+                pitch_deg: 0.0,
+                head_yaw_off_deg: 0.0,
+                walk_pos: 0.0,
+                walk_speed: 0.0,
+                age_ticks: warden.tick_count as f32,
+                tendril_animation: crate::sculk::warden_tendril_animation_at(
+                    warden,
+                    self.partial_tick,
+                ),
+            };
+            let quads = warden_model.quads(&state, feet, cam.yaw, cam.pitch);
+            // THE DRAW (the same SampledQuad fold the mob chain
+            // speaks — the entity diffuse the quads' own shade
+            // carries, the hurt shade the warden's hurt lane never
+            // arms: no hurt_time word the struct keeps)
+            let sampled: Vec<crate::raster::SampledQuad> = quads
+                .iter()
+                .map(|q| crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv: q.uv,
+                    tex: "",
+                    tint: [q.shade, q.shade, q.shade],
+                })
+                .collect();
+            fb.draw_sampled_quads(vp, &sampled, &mut |_tex, u, v| {
+                let [r, g, b, a] = warden_model.pixel(u, v);
+                Some([r, g, b, a])
+            });
         }
     }
 
@@ -92831,4 +92904,68 @@ cow_sound_variant: None,
             "the skeleton's armor the frame paints: {diff} pixels differ"
         );
     }
+    /// THE WARDEN'S OWN RENDER (the WardenRenderer's own lane — the
+    /// wardens list the warden body the base skin draws): the
+    /// sha1-verified 128x128 load the frame answers, the standing
+    /// body the with/without diff lights (the idle sway the age
+    /// clock wears), the dead body the health gate refuses (the
+    /// corpse the frame never wears). THE TENDRIL SHIVER's own swing
+    /// the avatar module's quad-level test pins — the sparse dotted
+    /// tendril texels the north-facing faces keep, the south-facing
+    /// stage camera the frame never lights them the honest cutout
+    /// law speaks.
+    #[test]
+    fn the_warden_the_body_the_frame_wears() {
+        // THE WALKED ROOT (the 3-path fallback the test process speaks
+        // — the hardcoded CWD the lazy loads consult, the walked root
+        // the PRE-FILLED field keeps — the skeleton armor's own law)
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join(mc_registry::generated::skin::WARDEN_RUNTIME_PATH).exists());
+        let Some(root) = root else { return };
+        let Some(warden_model) = crate::avatar::WardenModel::load(root) else {
+            return; // the sha1 gate — the honest skip
+        };
+        let mut app = App::new(3);
+        armored_skeleton_stage(&mut app);
+        app.warden_model = Some(warden_model);
+        // THE WARDEN (the stage's own ground keeps — the body's look
+        // three ahead, the static no-tick frame the skeleton's stage
+        // shares): the SHIVER clock the O pair fills (the lerp the
+        // getter serves — BOTH halves the 10 the partial sweep keeps,
+        // the any-partial answer the 1.0 swing wears)
+        let mut warden = crate::sculk::WardenMob::new(501, app.mobs[0].x, app.mobs[0].y, app.mobs[0].z);
+        warden.tendril_animation_o = crate::sculk::WARDEN_TENDRILS_SHIVER_ANIMATION;
+        warden.tendril_animation = crate::sculk::WARDEN_TENDRILS_SHIVER_ANIMATION;
+        app.mobs.clear();
+        app.wardens.push(warden);
+        // THE WITH/WITHOUT (the same frame the warden the only delta
+        // wears — the skeleton armor's own diff law speaks)
+        let with = third_person_frame(&mut app);
+        let wardens = std::mem::take(&mut app.wardens);
+        let without = third_person_frame(&mut app);
+        let diff = with
+            .iter()
+            .zip(without.iter())
+            .filter(|(a, b)| a != b)
+            .count();
+        assert!(
+            diff > 512,
+            "the warden's body the frame lights ({diff} bytes differ)"
+        );
+        // THE DEAD GATE (the health-0 body the frame never wears —
+        // the corpse the removal lane keeps): the dead re-render the
+        // without frame the EXACT bytes answer
+        let mut dead = wardens.clone();
+        dead[0].health = 0.0;
+        app.wardens = dead;
+        let dead_frame = third_person_frame(&mut app);
+        assert_eq!(
+            dead_frame, without,
+            "the dead warden the frame never wears"
+        );
+    }
+
+
 }

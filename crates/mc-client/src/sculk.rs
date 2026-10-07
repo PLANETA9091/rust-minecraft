@@ -1247,6 +1247,46 @@ pub struct WardenHeartbeat {
     pub pitch: f32,
 }
 
+// === THE ANIMATION GETTERS (javap `Warden.getTendrilAnimation` /
+// `Warden.getHeartAnimation` — the lerp/10.0 folds the renderer's
+// own extraction wears, the O snapshot the lerp's source keeps) ===
+
+/// javap `Warden.getTendrilAnimation` pc 0-18, verbatim: the
+/// `Mth.lerp(partialTick, tendrilAnimationO, tendrilAnimation) / 10.0f`
+/// fold the extractRenderState walk carries (pc 8-13 the getter call
+/// keeps, pc 16-17 the `ldc 10.0f` fdiv the tail serves) — the
+/// render state's `tendrilAnimation` word the tendrils layer's alpha
+/// AND the model's own `animateTendrils` fold both read. The clocks
+/// the client branch's own walk banks: the byte-61 shiver event the
+/// fill serves, the O snapshot + the `> 0` drain the tick_client
+/// walk keeps.
+pub fn warden_tendril_animation_at(w: &WardenMob, partial_tick: f32) -> f32 {
+    (crate::mth::lerp(
+        partial_tick as f64,
+        w.tendril_animation_o as f64,
+        w.tendril_animation as f64,
+    ) / 10.0) as f32
+}
+
+/// javap `Warden.getHeartAnimation` pc 0-18, verbatim: the
+/// `Mth.lerp(partialTick, heartAnimationO, heartAnimation) / 10.0f`
+/// fold the extractRenderState walk carries (pc 17-22 the getter
+/// call keeps, pc 16-17 the same `ldc 10.0f` fdiv the tail serves)
+/// — the render state's `heartAnimation` word the heart emissive
+/// layer's alpha function reads. The heartbeat the
+/// `tickCount % getHeartBeatDelay() == 0` fold fills, the same
+/// O-snapshot drain the tick_client walk serves. (The HEART LAYER's
+/// own draw the emissive round wires — the getter the clock lane
+/// banks now, the alpha arm a future consult serves.)
+#[cfg_attr(not(test), expect(dead_code))]
+pub fn warden_heart_animation_at(w: &WardenMob, partial_tick: f32) -> f32 {
+    (crate::mth::lerp(
+        partial_tick as f64,
+        w.heart_animation_o as f64,
+        w.heart_animation as f64,
+    ) / 10.0) as f32
+}
+
 // === THE DISTURBANCE (javap `WardenAi.setDisturbanceLocation` — the
 // brain memory the Calm warden banks, the vibration's own pos the
 // walk wears, the 100l expiry the three memory arms share) ===
@@ -6882,4 +6922,46 @@ mod tests {
             "the edge event the arrival the Mth.floor walk keeps"
         );
     }
+    /// THE ANIMATION GETTERS' OWN LERP LAW (javap
+    /// `Warden.getTendrilAnimation` / `Warden.getHeartAnimation` pc
+    /// 0-18, verbatim): the `Mth.lerp(partialTick, O, cur) / 10.0f`
+    /// fold — the fresh zero clocks the 0.0 answer keeps, the
+    /// shiver-filled clock the partial sweep serves (the O snapshot
+    /// the fill tick banks, the drain the next tick serves), the
+    /// heart clock the same law wears.
+    #[test]
+    fn the_warden_clocks_the_lerp_law_wears() {
+        let mut warden = WardenMob::new(11, 0.0, 0.0, 0.0);
+        // THE FRESH ZERO: the stopped clocks the 0.0 answer keeps at
+        // EVERY partial — the lerp of equal zeros the zero serves
+        assert_eq!(warden_tendril_animation_at(&warden, 0.0), 0.0);
+        assert_eq!(warden_tendril_animation_at(&warden, 0.5), 0.0);
+        assert_eq!(warden_heart_animation_at(&warden, 1.0), 0.0);
+        // THE SHIVER FILL (the byte-61 event the onReceiveVibration
+        // walk banks — the same WARDEN_TENDRILS_SHIVER_ANIMATION the
+        // broadcast arms): the O snapshot the FILL tick keeps (the
+        // fresh zero), the partial sweep the lerp law serves — 0.0
+        // -> 0.0, 0.5 -> 0.5, 1.0 -> 1.0 (the /10.0 the divisor wears)
+        warden.tendril_animation = WARDEN_TENDRILS_SHIVER_ANIMATION;
+        assert_eq!(warden_tendril_animation_at(&warden, 0.0), 0.0);
+        assert_eq!(warden_tendril_animation_at(&warden, 0.5), 0.5);
+        assert_eq!(warden_tendril_animation_at(&warden, 1.0), 1.0);
+        // THE DRAIN (the tick_client walk's own pair): the O the OLD
+        // clock snapshots, the current the 9 the drain keeps — the
+        // partial-0.5 the 0.95 answer wears (lerp(0.5, 10, 9) / 10)
+        warden.tick_client();
+        assert_eq!(warden.tendril_animation, 9);
+        assert_eq!(warden.tendril_animation_o, 10);
+        assert_eq!(warden_tendril_animation_at(&warden, 0.5), 0.95);
+        // THE HEART'S OWN CLOCK (the heartbeat fill the tick_client
+        // arms — the same lerp/10 law the getter speaks): the fill
+        // tick the O-zero snapshot keeps, the drain the sweep serves
+        warden.heart_animation = WARDEN_HEARTBEAT_ANIMATION;
+        assert_eq!(warden_heart_animation_at(&warden, 1.0), 1.0);
+        warden.tick_client();
+        assert_eq!(warden.heart_animation, 9);
+        assert_eq!(warden.heart_animation_o, 10);
+        assert_eq!(warden_heart_animation_at(&warden, 0.5), 0.95);
+    }
 }
+

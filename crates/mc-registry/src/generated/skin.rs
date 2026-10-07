@@ -325,3 +325,13 @@ pub const WOLF_RUNTIME_PATH: &str = "entity/wolf/wolf.png";
 /// OWN 32x32 layout the BabyWolfModel's `createBodyLayer` create keeps).
 pub const WOLF_BABY_PNG_SHA1: &str = "c30f5f4c2811b5169c6be18fa2bfb126f7d837c1";
 pub const WOLF_BABY_RUNTIME_PATH: &str = "entity/wolf/wolf_baby.png";
+
+/// The WARDEN skin (the deep-dark warden's own body), generated from
+/// the same jar: the source sha1 the warden renderer verifies before
+/// it draws (javap: `WardenRenderer`'s TEXTURE — the
+/// `textures/entity/warden/warden.png` the clinit names, the
+/// WardenModel's own `createBodyLayer` the
+/// `LayerDefinition.create(mesh, 128, 128)` layout unwraps — the
+/// SQUARE 128-wide stride the twelve-part hierarchy unwraps).
+pub const WARDEN_PNG_SHA1: &str = "539056d457840a3e660bd08eae290a60c791fd8e";
+pub const WARDEN_RUNTIME_PATH: &str = "entity/warden/warden.png";

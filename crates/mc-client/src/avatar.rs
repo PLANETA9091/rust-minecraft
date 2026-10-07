@@ -8157,6 +8157,330 @@ pub fn flame_quads(
     out
 }
 
+// === THE WARDEN (javap `WardenModel` the 26.2 jar speaks — the
+// twelve-part hierarchy the `createBodyLayer` walk banks, the four
+// setupAnim folds the walk serves: the head look pair, the walk's
+// own damped swing, the idle sway, the tendril shiver the clock
+// wears) ===
+
+/// 26.2 `WardenModel.setupAnim` reads — the look pair rides the
+/// netHeadYaw/pitch words the humanoid's own state wears, the walk
+/// pair the WalkAnimationState feeds, the age clock the idle +
+/// tendril folds consult, the TENDRIL ANIMATION the
+/// `getTendrilAnimation(partialTick)` word the extractRenderState
+/// walk carries (the lerp/10.0 getter the sculk lane speaks). NO
+/// death clock the state wears — the warden's removal lane the
+/// health gate serves, the corpse the list never keeps. NO
+/// keyframe animations the fresh warden's stopped states keep — the
+/// attack/sonic-boom/dig/emerge/roar/sniff the AnimationState start
+/// arms, the never-started states the apply no-op keeps.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenState {
+    pub yaw_deg: f32,
+    pub pitch_deg: f32,
+    pub head_yaw_off_deg: f32,
+    pub walk_pos: f32,
+    pub walk_speed: f32,
+    pub age_ticks: f32,
+    pub tendril_animation: f32,
+}
+
+/// The full warden model — the 26.2 `WardenModel.createBodyLayer`
+/// own numbers, bytecode-proven off the official jar (the twelve
+/// parts' pivots/boxes the addOrReplaceChild chain speaks,
+/// `LayerDefinition.create(mesh, 128, 128)` the tail keeps): the
+/// root `bone` pivot (0, 24, 0) no cubes carries, the `body`
+/// 18x21x11 (uv 0,0) rides the bone at offset (0, -21, 0), the TWO
+/// zero-width ribcages (uv 90,11 — the left the mirror flag wears)
+/// hang off the body at (∓7, -2, -4), the head 16x16x10 (uv 0,32)
+/// rides the body at (0, -13, 0), the TWO zero-width tendrils (uv
+/// 52,32 / 58,0) ride the head at (∓8, -12, 0), the TWO 8x28x8 arms
+/// (uv 44,50 / 0,58) ride the body at (∓13, -13, 1), the TWO
+/// 6x13x6 legs (uv 76,48 / 76,76 — the 3.1/2.9 the x origins wear)
+/// ride the bone at (∓5.9, -13, 0).
+pub struct WardenModel {
+    rgba: Vec<u8>,
+}
+
+impl WardenModel {
+    /// Load + sha1-verify the WARDEN's skin (the WardenRenderer's
+    /// TEXTURE — `textures/entity/warden/warden.png` the clinit
+    /// names). The `None` = the warden never renders (the same
+    /// honesty the other bodies speak: the renderer must not lie
+    /// about its data).
+    pub fn load(root: &Path) -> Option<WardenModel> {
+        let bytes = std::fs::read(root.join(skin::WARDEN_RUNTIME_PATH)).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != skin::WARDEN_PNG_SHA1 {
+            return None;
+        }
+        let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+        if w != 128 || h != 128 || rgba.len() != 128 * 128 * 4 {
+            return None;
+        }
+        Some(WardenModel { rgba })
+    }
+
+    /// The skin pixel at (u, v) — the RGBA row-major words, v down
+    /// (the 128x128 layout's own stride the load verified).
+    pub fn pixel(&self, u: f32, v: f32) -> [u8; 4] {
+        let (uu, vv) = (u.clamp(0.0, 127.999_9), v.clamp(0.0, 127.999_9));
+        let x = uu as usize;
+        let y = vv as usize;
+        let o = (y * 128 + x) * 4;
+        [self.rgba[o], self.rgba[o + 1], self.rgba[o + 2], self.rgba[o + 3]]
+    }
+
+    /// THE POSED RENDER: the world-space textured quads of the
+    /// warden at `state` — the SAME entity chain fold the avatar
+    /// speaks (one law, every living model), the warden's own
+    /// hierarchy beneath (the bone root the parts ride).
+    pub fn quads(
+        &self,
+        state: &WardenState,
+        feet: Vec3,
+        cam_yaw: f32,
+        cam_pitch: f32,
+    ) -> Vec<AvatarQuad> {
+        let bone = build_warden_parts(state);
+        let (fold_point, fold_normal) = entity_folds(state.yaw_deg, 0.0, 0.0, feet);
+        let mut out: Vec<AvatarQuad> = Vec::with_capacity(6 * 10);
+        let ident = Mat4::IDENT;
+        collect_part(&bone, &ident, &fold_point, &fold_normal, cam_yaw, cam_pitch, &mut out);
+        out
+    }
+}
+
+/// THE WARDEN'S OWN FOLDS (the 26.2 `WardenModel.setupAnim` walk the
+/// bytecode speaks, verbatim, in the walk's OWN order): the head
+/// look pair FIRST (`animateHeadLookTarget` — the xRot/yRot the
+/// 0.017453292 multiplier wears), the walk swing SECOND
+/// (`animateWalk` — the damping `min(0.5, 3.0 * speed)` f3 keeps,
+/// the phase the 0.8662 scalar banks, the head's zRot the += ride,
+/// the body's OWN assignments the `putfield` pair speaks, the legs
+/// the anti-phase cos pair swings, the arms the 0.8 counter-swing
+/// keeps), the idle sway THIRD (`animateIdlePose` — the 0.1-time
+/// clock the +0.06 head / +0.025 body adds wear), the tendril
+/// shiver LAST (`animateTendrils` — the swing the
+/// `tendrilAnimation * cos(age * 2.25) * PI * 0.1` fold speaks, the
+/// Math.cos the REAL double cos the javap keeps — NOT the Mth table
+/// — the left the plain arm wears, the right the negation keeps).
+fn build_warden_parts(state: &WardenState) -> Part {
+    // THE LOOK PAIR (animateHeadLookTarget pc 0-24 — the
+    // 0.017453292f the two fmul keeps)
+    let deg2rad = 0.017_453_292_f32;
+    let mut head_x = state.pitch_deg * deg2rad;
+    let head_y = state.head_yaw_off_deg * deg2rad;
+    let mut head_z = 0.0_f32;
+    // THE WALK (animateWalk pc 0-208)
+    let f3 = 0.5_f32.min(3.0 * state.walk_speed); // the damping
+    let f4 = state.walk_pos * 0.866_2; // the phase
+    let f5 = mth_cos(f4); // Mth.cos
+    let f6 = mth_sin(f4); // Mth.sin
+    let f7 = 0.35_f32.min(f3);
+    head_z += 0.3 * f6 * f3;
+    head_x += 1.2 * mth_cos(f4 + 1.570_796_4) * f7;
+    let body_z = 0.1 * f6 * f3;
+    let mut body_x = 1.0 * f5 * f7;
+    let left_leg_x = 1.0 * f5 * f3;
+    let right_leg_x = 1.0 * mth_cos(f4 + std::f32::consts::PI) * f3;
+    let left_arm_x = -(0.8 * f5 * f3);
+    let right_arm_x = -(0.8 * f6 * f3);
+    // THE IDLE SWAY (animateIdlePose pc 0-89 — the age * 0.1 clock
+    // the Mth.cos/sin pair consults, the head the 0.06 adds keep,
+    // the body the 0.025 adds serve)
+    let f2 = state.age_ticks * 0.1;
+    let idle_c = mth_cos(f2);
+    let idle_s = mth_sin(f2);
+    head_z += 0.06 * idle_c;
+    head_x += 0.06 * idle_s;
+    body_x += 0.025 * idle_c;
+    let body_z = body_z + 0.025 * idle_s;
+    // THE TENDRIL SHIVER (animateTendrils pc 0-41 — the
+    // java/lang/Math.cos the REAL double cos keeps, the
+    // 0.10000000149011612 the ldc2_w wears, the left the plain arm
+    // serves, the right the fneg answers)
+    let swing = state.tendril_animation
+        * (((state.age_ticks as f64) * 2.25).cos() * std::f64::consts::PI
+            * 0.100_000_001_490_116_12) as f32;
+    // THE BODY CUBE (the one cube the two ribcages' parent wears —
+    // texOffs(0,0) addBox(-9,-13,-4,18,21,11))
+    let body_part = Part {
+        pivot: [0.0, -21.0, 0.0],
+        x_rot: body_x,
+        y_rot: 0.0,
+        z_rot: body_z,
+        cubes: vec![Cube {
+            tex: (0.0, 0.0),
+            origin: [-9.0, -13.0, -4.0],
+            size: [18.0, 21.0, 11.0],
+            inflate: 0.0,
+            mirror: false,
+        }],
+        children: vec![
+            // THE HEAD (texOffs(0,32) addBox(-8,-16,-5,16,16,10) at
+            // (0,-13,0) — the tendrils its children ride)
+            Part {
+                pivot: [0.0, -13.0, 0.0],
+                x_rot: head_x,
+                y_rot: head_y,
+                z_rot: head_z,
+                cubes: vec![Cube {
+                    tex: (0.0, 32.0),
+                    origin: [-8.0, -16.0, -5.0],
+                    size: [16.0, 16.0, 10.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![
+                    // THE RIGHT TENDRIL (texOffs(52,32)
+                    // addBox(-16,-13,0,16,16,0) at (-8,-12,0))
+                    Part {
+                        pivot: [-8.0, -12.0, 0.0],
+                        x_rot: swing,
+                        y_rot: 0.0,
+                        z_rot: 0.0,
+                        cubes: vec![Cube {
+                            tex: (52.0, 32.0),
+                            origin: [-16.0, -13.0, 0.0],
+                            size: [16.0, 16.0, 0.0],
+                            inflate: 0.0,
+                            mirror: false,
+                        }],
+                        children: vec![],
+                    },
+                    // THE LEFT TENDRIL (texOffs(58,0)
+                    // addBox(0,-13,0,16,16,0) at (8,-12,0))
+                    Part {
+                        pivot: [8.0, -12.0, 0.0],
+                        x_rot: -swing,
+                        y_rot: 0.0,
+                        z_rot: 0.0,
+                        cubes: vec![Cube {
+                            tex: (58.0, 0.0),
+                            origin: [0.0, -13.0, 0.0],
+                            size: [16.0, 16.0, 0.0],
+                            inflate: 0.0,
+                            mirror: false,
+                        }],
+                        children: vec![],
+                    },
+                ],
+            },
+            // THE RIGHT RIBCAGE (texOffs(90,11)
+            // addBox(-2,-11,-0.1,9,21,0) at (-7,-2,-4))
+            Part {
+                pivot: [-7.0, -2.0, -4.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (90.0, 11.0),
+                    origin: [-2.0, -11.0, -0.1],
+                    size: [9.0, 21.0, 0.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            },
+            // THE LEFT RIBCAGE (the mirror flag the builder wears —
+            // addBox(-7,-11,-0.1,9,21,0) at (7,-2,-4), the
+            // `mirror(false)` reset the tail keeps)
+            Part {
+                pivot: [7.0, -2.0, -4.0],
+                x_rot: 0.0,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (90.0, 11.0),
+                    origin: [-7.0, -11.0, -0.1],
+                    size: [9.0, 21.0, 0.0],
+                    inflate: 0.0,
+                    mirror: true,
+                }],
+                children: vec![],
+            },
+            // THE RIGHT ARM (texOffs(44,50) addBox(-4,0,-4,8,28,8)
+            // at (-13,-13,1))
+            Part {
+                pivot: [-13.0, -13.0, 1.0],
+                x_rot: right_arm_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (44.0, 50.0),
+                    origin: [-4.0, 0.0, -4.0],
+                    size: [8.0, 28.0, 8.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            },
+            // THE LEFT ARM (texOffs(0,58) addBox(-4,0,-4,8,28,8) at
+            // (13,-13,1))
+            Part {
+                pivot: [13.0, -13.0, 1.0],
+                x_rot: left_arm_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (0.0, 58.0),
+                    origin: [-4.0, 0.0, -4.0],
+                    size: [8.0, 28.0, 8.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            },
+        ],
+    };
+    // THE ROOT BONE (PartPose.offset(0, 24, 0) no cubes keeps — the
+    // body and the legs its children ride, the hierarchy the
+    // addOrReplaceChild chain banks)
+    Part {
+        pivot: [0.0, 24.0, 0.0],
+        x_rot: 0.0,
+        y_rot: 0.0,
+        z_rot: 0.0,
+        cubes: vec![],
+        children: vec![
+            body_part,
+            // THE RIGHT LEG (texOffs(76,48) addBox(-3.1,0,-3,6,13,6)
+            // at (-5.9,-13,0))
+            Part {
+                pivot: [-5.9, -13.0, 0.0],
+                x_rot: right_leg_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (76.0, 48.0),
+                    origin: [-3.1, 0.0, -3.0],
+                    size: [6.0, 13.0, 6.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            },
+            // THE LEFT LEG (texOffs(76,76) addBox(-2.9,0,-3,6,13,6)
+            // at (5.9,-13,0))
+            Part {
+                pivot: [5.9, -13.0, 0.0],
+                x_rot: left_leg_x,
+                y_rot: 0.0,
+                z_rot: 0.0,
+                cubes: vec![Cube {
+                    tex: (76.0, 76.0),
+                    origin: [-2.9, 0.0, -3.0],
+                    size: [6.0, 13.0, 6.0],
+                    inflate: 0.0,
+                    mirror: false,
+                }],
+                children: vec![],
+            },
+        ],
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -13765,4 +14089,183 @@ mod tests {
             + (wk_c[2] - centroid(&bare)[2]).abs();
         assert!(moved > 0.05, "the STAB lane the payload moves: {moved}");
     }
+    /// THE WARDEN MESH'S OWN LAYER (javap `WardenModel.createBodyLayer`
+    /// the 26.2 jar speaks — the TWELVE parts the hierarchy banks, the
+    /// ten cubes the six-face fold renders): the sha1-verified 128x128
+    /// load the quads answer, the TEN cubes x SIX faces the count
+    /// keeps, the extents the pivots' own chain wears — the feet the
+    /// bone's 24-texel line serves, the crown the head box's -26
+    /// texel reach wears (the 3.125 the 50-texel stack speaks), the
+    /// tendrils the head's children ride.
+    #[test]
+    fn the_warden_mesh_the_body_layer_keeps() {
+        let root = ["assets-cache/jar", "../assets-cache/jar", "../../assets-cache/jar"]
+            .iter()
+            .map(std::path::Path::new)
+            .find(|p| p.join(skin::WARDEN_RUNTIME_PATH).exists());
+        let Some(root) = root else { return };
+        let Some(model) = WardenModel::load(root) else {
+            return; // the sha1 gate — the honest skip
+        };
+        // THE REST POSE (age 0, the tendril clock stopped): the idle
+        // sway the zero-sin keeps, the shiver the zero clock stills
+        let state = WardenState {
+            yaw_deg: 0.0,
+            pitch_deg: 0.0,
+            head_yaw_off_deg: 0.0,
+            walk_pos: 0.0,
+            walk_speed: 0.0,
+            age_ticks: 0.0,
+            tendril_animation: 0.0,
+        };
+        let feet = Vec3::new(10.0, 32.0, -4.0);
+        let quads = model.quads(&state, feet, 0.0, 0.0);
+        // THE TEN CUBES (bone none, body 1, head 1, tendrils 2,
+        // ribcages 2, arms 2, legs 2) the six-face fold renders
+        assert_eq!(
+            quads.len(),
+            60,
+            "the twelve parts' ten cubes the sixty faces wear"
+        );
+        // THE EXTENTS (the pivots' own chain): the TENDRIL TIPS the
+        // head's own children wear (bone 24 - body 21 - head 13 -
+        // tendril pivot 12 - box 13 = -35 texels -> 24+35 = 59 texels
+        // = 3.6875, the idle 0.06/0.025 tilts the small wobble the
+        // reach adds), the crown the head box's -26 texel reach keeps
+        // (3.125) BELOW the tendril tips, the feet the bone line's
+        // own floor speaks (the legs' 24-texel bottom)
+        let mut max_y = f32::MIN;
+        let mut min_y = f32::MAX;
+        for q in &quads {
+            for pt in &q.pts {
+                max_y = max_y.max(pt[1]);
+                min_y = min_y.min(pt[1]);
+            }
+        }
+        assert!(
+            max_y > feet.y + 3.6 && max_y < feet.y + 3.9,
+            "the tendril tips' own reach the fifty-nine-texel stack speaks: {max_y}"
+        );
+        assert!(
+            min_y > feet.y - 0.05 && min_y < feet.y + 0.1,
+            "the feet the bone's own 24-texel line keeps: {min_y}"
+        );
+        // THE WIDTH (the TENDRIL TIPS' own lateral reach: the left
+        // tendril's box runs 0..16 texels past its +8 pivot = 24
+        // texels = 1.5 blocks half-width — the arms' 17-texel reach
+        // the SECOND widest keeps — the idle tilts the small swing
+        // the tolerance wears)
+        let mut max_x = f32::MIN;
+        for q in &quads {
+            for pt in &q.pts {
+                max_x = max_x.max(pt[0]);
+            }
+        }
+        assert!(
+            max_x > feet.x + 1.5 && max_x < feet.x + 1.7,
+            "the tendril tips' own 24-texel half-width wears: {max_x}"
+        );
+        // THE TENDRIL SHIVER (the swing the clock arms — the shiver
+        // clock the crown's own zero-width planes the x_rot swings):
+        // the filled clock the quads MOVE the rest pose never wears
+        let shiver_state = WardenState { tendril_animation: 1.0, age_ticks: 0.0, ..state };
+        let shiver_quads = model.quads(&shiver_state, feet, 0.0, 0.0);
+        let moved: f32 = shiver_quads
+            .iter()
+            .zip(quads.iter())
+            .map(|(s, r)| {
+                s.pts
+                    .iter()
+                    .zip(r.pts.iter())
+                    .map(|(a, b)| (a[0] - b[0]).abs() + (a[1] - b[1]).abs() + (a[2] - b[2]).abs())
+                    .sum::<f32>()
+            })
+            .sum();
+        assert!(moved > 0.5, "the shiver clock the tendrils swing: {moved}");
+    }
+
+    /// THE WARDEN'S OWN WALK FOLDS (javap `WardenModel.animateWalk`
+    /// pc 0-208, verbatim): the damping the min(0.5, 3.0 * speed)
+    /// law keeps, the legs the anti-phase cos pair swings (the left
+    /// the plain phase, the right the +PI answers — the mirror the
+    /// negation speaks), the arms the 0.8 counter-swing keeps, the
+    /// phase the 0.8662 scalar banks, the head the += ride the body
+    /// the putfield assignment serves.
+    #[test]
+    fn the_warden_walk_the_folds_wear() {
+        // THE DAMPING (min(0.5, 3.0 * speed)): the slow 0.1 walk the
+        // 0.3 damping keeps, the fast 1.0 walk the 0.5 ceiling clamps
+        let slow = WardenState {
+            walk_pos: 2.0,
+            walk_speed: 0.1,
+            age_ticks: 0.0,
+            tendril_animation: 0.0,
+            ..WardenState::rest()
+        };
+        let fast = WardenState { walk_speed: 1.0, ..slow };
+        let f4 = 2.0 * 0.8662;
+        let slow_damp = 0.5_f32.min(3.0 * 0.1);
+        let fast_damp = 0.5_f32.min(3.0 * 1.0);
+        // THE LEG PAIR (x_rot = cos(phase) * damping — the left the
+        // plain phase, the right the +PI anti-phase): the parts the
+        // private builder banks, the roots the fold's own legs speak
+        let slow_parts = build_warden_parts(&slow);
+        let fast_parts = build_warden_parts(&fast);
+        let (slow_body, slow_rleg, slow_lleg) = {
+            // the bone's children: [body, right_leg, left_leg]
+            let body = &slow_parts.children[0];
+            (
+                body.x_rot,
+                slow_parts.children[1].x_rot,
+                slow_parts.children[2].x_rot,
+            )
+        };
+        let expected_lleg = mth_cos(f4) * slow_damp;
+        let expected_rleg = mth_cos(f4 + std::f32::consts::PI) * slow_damp;
+        assert_eq!(slow_lleg, expected_lleg, "the left leg the plain phase wears");
+        assert_eq!(slow_rleg, expected_rleg, "the right leg the +PI anti-phase wears");
+        assert!(
+            (slow_lleg + slow_rleg).abs() < 1e-4,
+            "the anti-phase the mirror law keeps"
+        );
+        // THE BODY (x_rot = cos(phase) * min(0.35, damping) + the
+        // idle 0.025*cos(age*0.1) add — age 0 the 0.025 keeps)
+        let expected_body = mth_cos(f4) * 0.35_f32.min(slow_damp) + 0.025;
+        assert_eq!(slow_body, expected_body, "the body the f7-damped fold wears");
+        // THE DAMPING'S CEILING: the fast walk the legs NEVER exceed
+        // the 0.5 clamp the min law keeps
+        let fast_rleg = fast_parts.children[1].x_rot;
+        assert_eq!(fast_rleg, mth_cos(f4 + std::f32::consts::PI) * fast_damp);
+        assert!(fast_rleg.abs() <= 0.5 + 1e-4, "the clamp the fast walk keeps");
+        // THE ARMS (x_rot = -0.8 * cos/sin * damping — the left the
+        // plain cos, the right the sin answers): the body's children
+        // [head, ribcages, arms] the pivot pair names — the RIGHT
+        // arm the pair's first slot keeps (the builder's own order:
+        // head, ribs, right, left), the LEFT the second answers
+        let slow_arms = &slow_parts.children[0].children;
+        let right_arm = &slow_arms[3];
+        let left_arm = &slow_arms[4];
+        assert_eq!(left_arm.x_rot, -(0.8 * mth_cos(f4) * slow_damp));
+        assert_eq!(right_arm.x_rot, -(0.8 * mth_sin(f4) * slow_damp));
+        assert_eq!(left_arm.pivot, [13.0, -13.0, 1.0]);
+        assert_eq!(right_arm.pivot, [-13.0, -13.0, 1.0]);
+    }
+    impl WardenState {
+        /// THE STANDING REST (the zero pair the fresh warden's
+        /// stillness wears — the look pair zero, the walk pair zero,
+        /// the clocks stopped, the age the zero tick keeps).
+        fn rest() -> WardenState {
+            WardenState {
+                yaw_deg: 0.0,
+                pitch_deg: 0.0,
+                head_yaw_off_deg: 0.0,
+                walk_pos: 0.0,
+                walk_speed: 0.0,
+                age_ticks: 0.0,
+                tendril_animation: 0.0,
+            }
+        }
+    }
+
+
 }
