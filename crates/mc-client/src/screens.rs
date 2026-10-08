@@ -9948,6 +9948,50 @@ impl App {
                     }
                     b.chest_glides = chest.1 > 0
                         && Some(chest.0) == mc_registry::item_id_by_name("elytra");
+                    // THE EFFECT ATTRIBUTES' OWN FOLD (javap
+                    // `MobEffect.addAttributeModifiers` +
+                    // `AttributeTemplate.create` pc 8-16 — the modifier
+                    // the `amount * (amplifier + 1)` law carries — +
+                    // `AttributeInstance.calculateValue` pcs 101-145 —
+                    // the ADD_MULTIPLIED_TOTAL fold ×(1+amount) EACH
+                    // modifier its own step wears, the sanitizeValue
+                    // [0, ..] clamp the negative floor refuses): the
+                    // speed/slowness rows' product the movement fold
+                    // banks (the +0.2/−0.15 amounts the clinit speaks,
+                    // the attribute MAP the documented absence keeps —
+                    // the value the fold's OWN verdict speaks), the
+                    // jump_boost's power the getJumpBoostPower direct
+                    // read (`0.1f * (amp + 1)`, the 26.2 row the
+                    // JUMP_STRENGTH modifier never carries) and the
+                    // SAFE_FALL_DISTANCE's +1.0×(amp+1) ADD_VALUE lift
+                    // the fall-grace threshold wears.
+                    let mut speed_mult = 1.0f32;
+                    if let Some(inst) = self
+                        .effects
+                        .get(crate::effects::MOB_EFFECT_SPEED)
+                    {
+                        speed_mult *=
+                            1.0 + crate::body::SPEED_EFFECT_MOVEMENT_MODIFIER
+                                * (inst.amplifier + 1) as f32;
+                    }
+                    if let Some(inst) = self
+                        .effects
+                        .get(crate::effects::MOB_EFFECT_SLOWNESS)
+                    {
+                        speed_mult *=
+                            1.0 + crate::body::SLOWNESS_EFFECT_MOVEMENT_MODIFIER
+                                * (inst.amplifier + 1) as f32;
+                    }
+                    b.effect_speed_mult = speed_mult.max(0.0);
+                    let jump_amp = self
+                        .effects
+                        .get(crate::effects::MOB_EFFECT_JUMP_BOOST)
+                        .map(|inst| inst.amplifier + 1);
+                    b.jump_boost_power = jump_amp
+                        .map(|levels| crate::body::JUMP_BOOST_POWER_PER_LEVEL * levels as f32)
+                        .unwrap_or(0.0);
+                    b.safe_fall_distance = crate::body::SAFE_FALL_DISTANCE
+                        + jump_amp.map(|levels| levels as f64).unwrap_or(0.0);
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the
@@ -45428,6 +45472,95 @@ mod tests {
         let inst = app.effects.get(speed).expect("the infinite never expires");
         assert_eq!(inst.duration, -1);
         assert_eq!(inst.amplifier, 0, "the no-amplifier arm the zero wears");
+    }
+
+    /// THE EFFECT DOSES' OWN MOTION WIRING (javap the attribute lanes
+    /// — the speed/slowness rows' ×(1+amount×(amp+1)) product the
+    /// movement fold banks, the jump_boost's 0.1×(amp+1) power the
+    /// jump floor reads, the SAFE_FALL_DISTANCE's +1.0×(amp+1) lift
+    /// the fall grace wears): the commands the store speaks, the
+    /// body's own fields the one update each carries.
+    #[test]
+    fn the_effect_doses_the_motion_wiring_speaks() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        // THE SPEED DOSE (the no-amp give the ×1.2 product banks)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s speed".into();
+        app.on_chat_submit();
+        app.update();
+        assert_eq!(
+            app.body.as_ref().unwrap().effect_speed_mult,
+            1.0 + crate::body::SPEED_EFFECT_MOVEMENT_MODIFIER,
+        );
+        // THE AMPLIFIER LIFT (the amp-1 upgrade the ×1.4 product wears)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s speed 30 1".into();
+        app.on_chat_submit();
+        app.update();
+        assert_eq!(
+            app.body.as_ref().unwrap().effect_speed_mult,
+            1.0 + crate::body::SPEED_EFFECT_MOVEMENT_MODIFIER * 2.0,
+        );
+        // THE PAIR FOLD (the slowness III the ×0.4 step the product
+        // multiplies — the two ×(1+amount) steps the calculate law
+        // keeps)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s slowness 30 3".into();
+        app.on_chat_submit();
+        app.update();
+        let expected = (1.0 + crate::body::SPEED_EFFECT_MOVEMENT_MODIFIER * 2.0)
+            * (1.0 + crate::body::SLOWNESS_EFFECT_MOVEMENT_MODIFIER * 4.0);
+        let got = app.body.as_ref().unwrap().effect_speed_mult;
+        assert!(
+            (got - expected).abs() < 1e-6,
+            "the pair fold speaks: {got} vs {expected}"
+        );
+        // THE SANITIZE FLOOR (the extreme slowness the ZERO speed
+        // wears — the negative product the [0, ..] clamp refuses)
+        app.chat_open = true;
+        app.chat_input = "/effect clear".into();
+        app.on_chat_submit();
+        app.chat_open = true;
+        app.chat_input = "/effect give @s slowness 30 6".into();
+        app.on_chat_submit();
+        app.update();
+        assert_eq!(
+            app.body.as_ref().unwrap().effect_speed_mult,
+            0.0,
+            "the amp-6 slowness the zero speed the clamp wears"
+        );
+        // THE JUMP BOOST'S OWN LANES (the power the jump floor reads,
+        // the threshold the fall grace lifts — the amp-3 dose the
+        // 0.4/7.0 pair wears)
+        app.chat_open = true;
+        app.chat_input = "/effect clear".into();
+        app.on_chat_submit();
+        app.chat_open = true;
+        app.chat_input = "/effect give @s jump_boost 30 3".into();
+        app.on_chat_submit();
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(
+            b.jump_boost_power,
+            crate::body::JUMP_BOOST_POWER_PER_LEVEL * 4.0,
+        );
+        assert_eq!(
+            b.safe_fall_distance,
+            crate::body::SAFE_FALL_DISTANCE + 4.0,
+        );
+        // THE CLEAR RESTORE (the empty store the defaults the body
+        // wears — the 1.0/0.0/3.0 the no-effect body carries)
+        app.chat_open = true;
+        app.chat_input = "/effect clear".into();
+        app.on_chat_submit();
+        app.update();
+        let b = app.body.as_ref().unwrap();
+        assert_eq!(b.effect_speed_mult, 1.0);
+        assert_eq!(b.jump_boost_power, 0.0);
+        assert_eq!(b.safe_fall_distance, crate::body::SAFE_FALL_DISTANCE);
     }
 
     #[test]

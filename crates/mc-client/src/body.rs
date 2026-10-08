@@ -101,6 +101,28 @@ pub const FLY_VY_RESTORE: f64 = 0.6;
 /// flying camera's own zoom-out the sprint ratio multiplies).
 pub const FLY_FOV: f32 = 1.1;
 pub const JUMP_POWER: f32 = 0.42; // JUMP_STRENGTH
+
+/// THE SPEED EFFECT'S OWN MOVEMENT MODIFIER (javap MobEffects clinit
+/// pc 22 — the `double 0.20000000298023224` the SPEED row's
+/// addAttributeModifier(MOVEMENT_SPEED, "effect.speed", ..,
+/// ADD_MULTIPLIED_TOTAL) call carries; the AttributeTemplate.create
+/// pc 8-16 the amount the `(amplifier + 1)` factor scales — the
+/// f64-as-f32 form the f32 fold keeps).
+pub const SPEED_EFFECT_MOVEMENT_MODIFIER: f32 = 0.2;
+
+/// THE SLOWNESS EFFECT'S OWN MOVEMENT MODIFIER (javap MobEffects
+/// clinit pc 59 — the `double -0.15000000596046448` the SLOWNESS
+/// row's same call carries, the SAME ADD_MULTIPLIED_TOTAL operation
+/// the fold wears).
+pub const SLOWNESS_EFFECT_MOVEMENT_MODIFIER: f32 = -0.15;
+
+/// THE JUMP BOOST EFFECT'S OWN POWER PER LEVEL (javap
+/// `LivingEntity.getJumpBoostPower` pcs 10-26 — the `float 0.1f` the
+/// `(amplifier + 1)` factor scales: the jump power the DIRECT effect
+/// read the getJumpPower fold adds, the attribute modifier the SAFE
+/// FALL lane alone carries — the 26.2 jump_boost row the
+/// SAFE_FALL_DISTANCE modifier alone wears).
+pub const JUMP_BOOST_POWER_PER_LEVEL: f32 = 0.1;
 pub const SPRINT_JUMP_BOOST: f32 = 0.2;
 pub const JUMP_REPEAT_TICKS: i32 = 10; // noJumpDelay
 pub const CUBE_SPEED_NUMERATOR: f32 = 0.21600002; // the ice-slip law's own
@@ -298,12 +320,18 @@ pub fn fall_damage_multiplier(_block: u16) -> f64 {
 
 /// THE FALL DAMAGE LAW (javap `LivingEntity.calculateFallDamage`):
 /// `Mth.floor(fallPower * blockMultiplier * FALL_DAMAGE_MULTIPLIER)`
-/// where `fallPower = (distance + 1.0E-6) - SAFE_FALL_DISTANCE`
-/// (the attribute defaults 3.0 / 1.0). The EXACTLY-3-block fall
-/// stays safe (the epsilon pushes power to 1e-6, the floor floors
-/// it to 0); every full block past 3.0 speaks one damage.
-pub fn calculate_fall_damage(distance: f64, block_multiplier: f64) -> i32 {
-    let power = (distance + FALL_POWER_EPSILON) - SAFE_FALL_DISTANCE;
+/// where `fallPower = (distance + 1.0E-6) - safeFallDistance` — the
+/// threshold the SAFE_FALL_DISTANCE attribute's value carries (the
+/// default 3.0; the jump_boost's ADD_VALUE modifier the +1.0×(amp+1)
+/// lift the template law speaks). The EXACTLY-3-block fall stays
+/// safe (the epsilon pushes power to 1e-6, the floor floors it to
+/// 0); every full block past the threshold speaks one damage.
+pub fn calculate_fall_damage(
+    distance: f64,
+    block_multiplier: f64,
+    safe_fall_distance: f64,
+) -> i32 {
+    let power = (distance + FALL_POWER_EPSILON) - safe_fall_distance;
     (power * block_multiplier * FALL_DAMAGE_MULTIPLIER).floor() as i32
 }
 
@@ -956,6 +984,32 @@ pub struct PlayerBody {
     pub left: f32,
     pub jumping: bool,
     no_jump_delay: i32,
+    /// THE EFFECT ATTRIBUTES' OWN MOVEMENT FOLD (javap
+    /// `MobEffect.addAttributeModifiers` + `AttributeTemplate.create`
+    /// pc 8-16 + `AttributeInstance.calculateValue` pcs 101-145 — the
+    /// ADD_MULTIPLIED_TOTAL modifiers the amount×(amplifier+1) law
+    /// carries, the ×(1+amount) fold EACH modifier its own step
+    /// wears, the sanitizeValue [0, 1024] clamp the negative floor
+    /// refuses): the speed/slowness rows' PRODUCT the App's tick
+    /// banks from the effects store (the attribute MAP the documented
+    /// absence keeps — the value the fold's OWN verdict speaks). The
+    /// speed() walk and the FOV's own ratio both read it — the
+    /// sprint-zoom the effect doses the same law widens.
+    pub effect_speed_mult: f32,
+    /// THE JUMP BOOST EFFECT'S OWN POWER (javap
+    /// `LivingEntity.getJumpBoostPower` — the `0.1f * (amplifier + 1)`
+    /// the hasEffect gate answers, the DIRECT effect read the
+    /// 26.2's jump_boost row the attribute map never carries): the
+    /// App's tick banks it from the store, the jumpFromGround floor
+    /// the JUMP_STRENGTH value adds it.
+    pub jump_boost_power: f32,
+    /// THE JUMP BOOST EFFECT'S OWN SAFE FALL (javap the jump_boost
+    /// row's `addAttributeModifier(SAFE_FALL_DISTANCE,
+    /// "effect.jump_boost", 1.0, ADD_VALUE)` — the amount×(amp+1)
+    /// the template law scales, the ADD_VALUE the calculate fold
+    /// adds): the fall-grace threshold the App's tick banks, the
+    /// calculateFallDamage walk reads it.
+    pub safe_fall_distance: f64,
     /// THE FOOTSTEP ACCUMULATION (Entity.move's own fields): the walk
     /// distance grows by the horizontal movement × 0.6, the step fires
     /// when it crosses `next_step` (nextStep() = (int)moveDist + 1.0F —
@@ -1268,6 +1322,9 @@ impl PlayerBody {
             left: 0.0,
             jumping: false,
             no_jump_delay: 0,
+            effect_speed_mult: 1.0,
+            jump_boost_power: 0.0,
+            safe_fall_distance: SAFE_FALL_DISTANCE,
             move_dist: 0.0,
             next_step: 1.0,
             tick_count: 0,
@@ -1350,7 +1407,12 @@ impl PlayerBody {
     /// the `jumpFromGround()` call the audited walk carries) both
     /// speak it — the same method the vanilla's two lanes call.
     pub fn jump_from_ground(&mut self) {
-        self.vy = (self.vy as f64).max(JUMP_POWER as f64);
+        // THE JUMP BOOST'S OWN POWER (javap getJumpPower(float) pcs
+        // 0-19 — the JUMP_STRENGTH attribute value the
+        // getJumpBoostPower() direct read ADDS: the
+        // `attribute * blockFactor + 0.1f * (amp + 1)` walk the
+        // blockJumpFactor's 1.0 default the plain ground wears)
+        self.vy = (self.vy as f64).max((JUMP_POWER + self.jump_boost_power) as f64);
         if self.sprinting {
             let rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
             self.vx += -(rad.sin()) * SPRINT_JUMP_BOOST as f64;
@@ -1401,9 +1463,14 @@ impl PlayerBody {
 
     /// The speed attribute's current value (the base, the sprint's
     /// 1.3, the sneak's 0.7, the using slowdown's 0.2 — the
-    /// ADD_MULTIPLIED_TOTAL fold the attribute system speaks).
+    /// ADD_MULTIPLIED_TOTAL fold the attribute system speaks). THE
+    /// EFFECT MODIFIERS the attribute value the base fold carries —
+    /// the speed/slowness rows' ×(1+amount) product the effect_speed_mult
+    /// field banks, the sanitizeValue [0, ..] clamp the negative
+    /// floor refuses (the extreme slowness the ZERO speed wears, the
+    /// body the wall the vanilla law never walks through).
     fn speed(&self, using_item: bool) -> f32 {
-        let mut s = MOVEMENT_SPEED;
+        let mut s = MOVEMENT_SPEED * self.effect_speed_mult;
         if self.sprinting {
             s *= SPRINT_MULTIPLIER;
         }
@@ -2455,6 +2522,7 @@ impl PlayerBody {
                 let dmg = calculate_fall_damage(
                     self.fall_distance,
                     fall_damage_multiplier(block),
+                    self.safe_fall_distance,
                 );
                 if dmg > 0 {
                     self.fall_event = Some(dmg);
@@ -2880,22 +2948,44 @@ mod tests {
         let m = fall_damage_multiplier(crate::world::STONE);
         assert_eq!(m, 1.0, "the palette's stone multiplies by the default");
         // the grace: exactly three blocks and everything below
-        assert_eq!(calculate_fall_damage(3.0, m), 0);
+        assert_eq!(calculate_fall_damage(3.0, m, SAFE_FALL_DISTANCE), 0);
         // the LAW's own negatives (the floor of a negative power — the
         // caller's `i > 0` gate refuses them, the hurt never speaks)
-        assert_eq!(calculate_fall_damage(1.0, m), -2);
-        assert_eq!(calculate_fall_damage(0.0, m), -3);
+        assert_eq!(calculate_fall_damage(1.0, m, SAFE_FALL_DISTANCE), -2);
+        assert_eq!(calculate_fall_damage(0.0, m, SAFE_FALL_DISTANCE), -3);
         // the half block floors away: 3.5 falls safe
-        assert_eq!(calculate_fall_damage(3.5, m), 0);
+        assert_eq!(calculate_fall_damage(3.5, m, SAFE_FALL_DISTANCE), 0);
         // every whole block past 3.0 speaks one
-        assert_eq!(calculate_fall_damage(4.0, m), 1);
-        assert_eq!(calculate_fall_damage(8.0, m), 5);
-        assert_eq!(calculate_fall_damage(23.0, m), 20, "the pure law's own kill count");
+        assert_eq!(calculate_fall_damage(4.0, m, SAFE_FALL_DISTANCE), 1);
+        assert_eq!(calculate_fall_damage(8.0, m, SAFE_FALL_DISTANCE), 5);
+        assert_eq!(
+            calculate_fall_damage(23.0, m, SAFE_FALL_DISTANCE),
+            20,
+            "the pure law's own kill count"
+        );
         // the epsilon's own beat: 2.999999 falls safe, the 4.0 boundary
         // speaks one (the floor's own arithmetic)
-        assert_eq!(calculate_fall_damage(2.999999, m), 0);
-        assert_eq!(calculate_fall_damage(3.9999999, m), 1);
-        assert_eq!(calculate_fall_damage(4.000001, m), 1);
+        assert_eq!(calculate_fall_damage(2.999999, m, SAFE_FALL_DISTANCE), 0);
+        assert_eq!(calculate_fall_damage(3.9999999, m, SAFE_FALL_DISTANCE), 1);
+        assert_eq!(calculate_fall_damage(4.000001, m, SAFE_FALL_DISTANCE), 1);
+        // THE JUMP BOOST'S OWN GRACE (the +1.0×(amp+1) ADD_VALUE
+        // modifier the threshold lifts — the 4.0 fall the level-0
+        // dose the SAFE fall wears)
+        assert_eq!(
+            calculate_fall_damage(4.0, m, SAFE_FALL_DISTANCE + 1.0),
+            0,
+            "the jump_boost I the 4-block fall the grace wears"
+        );
+        assert_eq!(
+            calculate_fall_damage(6.0, m, SAFE_FALL_DISTANCE + 3.0),
+            0,
+            "the jump_boost III the 6-block fall the grace wears"
+        );
+        assert_eq!(
+            calculate_fall_damage(7.0, m, SAFE_FALL_DISTANCE + 3.0),
+            1,
+            "the jump_boost III the 7th block the next damage speaks"
+        );
     }
 
     /// THE LONG FALL SPEAKS (the 10-block descent banks 10.0 through
@@ -4025,6 +4115,93 @@ mod tests {
         b.sprinting = true;
         b.tick(&w, false);
         assert_eq!(b.exhaustion_event, crate::food::EXHAUSTION_SPRINT_JUMP);
+    }
+
+    /// THE EFFECT ATTRIBUTES' OWN MOTION (javap MobEffects clinit the
+    /// ±0.2/−0.15 ADD_MULTIPLIED_TOTAL rows + AttributeTemplate.create
+    /// the amount×(amp+1) law + AttributeInstance.calculateValue the
+    /// ×(1+amount) fold + getJumpBoostPower the 0.1×(amp+1) read):
+    /// the speed() the product folds, the FOV's own ratio the sprint
+    /// zoom the effect doses widens, the jump floor the power lifts,
+    /// the WALK the real displacement the multiplier scales.
+    #[test]
+    fn the_effect_attributes_the_motion_the_fov_wears() {
+        // THE ATTRIBUTE VALUE (the speed() the base×mult chain folds —
+        // the sprint/sneak/use multipliers the same chain rides)
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.effect_speed_mult = 1.0;
+        assert_eq!(b.speed(false), MOVEMENT_SPEED);
+        b.effect_speed_mult = 1.2;
+        assert_eq!(b.speed(false), MOVEMENT_SPEED * 1.2);
+        b.sprinting = true;
+        assert_eq!(b.speed(false), MOVEMENT_SPEED * 1.2 * SPRINT_MULTIPLIER);
+        // THE PAIR (speed I × slowness III — 1.4 × 0.4 the two
+        // ×(1+amount) steps the calculate law keeps)
+        let pair = (1.0 + SPEED_EFFECT_MOVEMENT_MODIFIER * 2.0)
+            * (1.0 + SLOWNESS_EFFECT_MOVEMENT_MODIFIER * 4.0);
+        b.effect_speed_mult = pair;
+        b.sprinting = false;
+        assert!(
+            (b.speed(false) - MOVEMENT_SPEED * pair).abs() < 1e-9,
+            "the pair fold speaks the base×product"
+        );
+        // THE SANITIZE FLOOR (the extreme slowness the ZERO speed
+        // wears — the value the negative never walks)
+        b.effect_speed_mult = 0.0;
+        assert_eq!(b.speed(false), 0.0);
+        // THE FOV RATIO (getFieldOfViewModifier's (speed/base + 1)/2 —
+        // the speed I dose the 1.2 ratio the 1.1 zoom answers, the
+        // slowness the 0.85 the 0.925 wears)
+        b.effect_speed_mult = 1.2;
+        b.sprinting = false;
+        assert!((b.fov_target(false) - 1.1).abs() < 1e-6);
+        b.effect_speed_mult = 0.85;
+        assert!((b.fov_target(false) - 0.925).abs() < 1e-6);
+        // THE JUMP FLOOR (getJumpPower's attribute + the boost power —
+        // the plain 0.42, the level-0 dose 0.52, the amp-2 dose 0.72)
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.jump_from_ground();
+        assert_eq!(b.vy, JUMP_POWER as f64);
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.jump_boost_power = JUMP_BOOST_POWER_PER_LEVEL;
+        b.jump_from_ground();
+        assert_eq!(b.vy, (JUMP_POWER + JUMP_BOOST_POWER_PER_LEVEL) as f64);
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.jump_boost_power = JUMP_BOOST_POWER_PER_LEVEL * 3.0;
+        b.jump_from_ground();
+        assert_eq!(b.vy, (JUMP_POWER + JUMP_BOOST_POWER_PER_LEVEL * 3.0) as f64);
+        // THE REAL MOTION (the flat walk the displacement the
+        // multiplier scales — the drag the same linear walk the
+        // terminal speed the input speed the proportional law keeps)
+        let w = flat_world();
+        let walk = |mult: f32| {
+            let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+            b.effect_speed_mult = mult;
+            b.forward = 1.0;
+            for _ in 0..5 {
+                b.tick(&w, false); // the settle
+            }
+            b.forward = 1.0;
+            b.effect_speed_mult = mult;
+            let (x0, z0) = (b.x, b.z);
+            for _ in 0..40 {
+                b.tick(&w, false);
+                b.forward = 1.0;
+                b.effect_speed_mult = mult;
+            }
+            ((b.x - x0) * (b.x - x0) + (b.z - z0) * (b.z - z0)).sqrt()
+        };
+        let base = walk(1.0);
+        let boosted = walk(1.2);
+        assert!(
+            ((boosted / base) - 1.2).abs() < 0.02,
+            "the 1.2x dose the displacement scales: {base} -> {boosted}"
+        );
+        let slowed = walk(0.85);
+        assert!(
+            ((slowed / base) - 0.85).abs() < 0.02,
+            "the 0.85x dose the displacement scales: {base} -> {slowed}"
+        );
     }
 
     /// THE SPRINT MOVE'S OWN COST (javap ServerPlayer.checkMovementStatistics

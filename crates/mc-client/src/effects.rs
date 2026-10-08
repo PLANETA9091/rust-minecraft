@@ -62,6 +62,18 @@ pub const MOB_EFFECT_SATURATION: i32 = 22;
 /// the index the warden's lightmap lane consumes).
 pub const MOB_EFFECT_DARKNESS: i32 = 32;
 
+/// `minecraft:speed`'s mob-effect registry id — the 0-based wire
+/// order's own FIRST row (the attribute lane's movement fold reads it).
+pub const MOB_EFFECT_SPEED: i32 = 0;
+
+/// `minecraft:slowness`'s mob-effect registry id (the wire order's own
+/// SECOND row, the movement fold's harmful arm).
+pub const MOB_EFFECT_SLOWNESS: i32 = 1;
+
+/// `minecraft:jump_boost`'s mob-effect registry id (the wire order's
+/// own 8th row — the jump-power and safe-fall lanes read it).
+pub const MOB_EFFECT_JUMP_BOOST: i32 = 7;
+
 /// DARKNESS's own blend duration (javap MobEffects pc 884-908 — the
 /// `new MobEffect(HARMFUL, 2696993).setBlendDuration(22)` registration
 /// walk: the single-arg overload delegates `setBlendDuration(22, 22,
