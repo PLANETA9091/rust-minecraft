@@ -5621,7 +5621,16 @@ impl Zombie {
         // weapon branch — no piercing item the fist speaks)
         let f5 = 2.0_f32; // 2.0 + ARMOR_TOUGHNESS(0.0)/4
         let f6 = (ZOMBIE_ARMOR as f32 - amount / f5).clamp(ZOMBIE_ARMOR as f32 * 0.2, 20.0);
-        self.health -= amount * (1.0 - f6 / 25.0);
+        let after_armor = amount * (1.0 - f6 / 25.0);
+        // THE RESISTANCE'S OWN FOLD (javap actuallyHurt's own order —
+        // the getDamageAfterMagicAbsorb call the armor survivor rides,
+        // the health the folded survivor spends: the magic lane the
+        // armor's AFTER wears, the BYPASSES rosters the mob's own
+        // voices never name — the melee/fire/poison/wither doses the
+        // fold every one rides, the starve the player's food lane
+        // alone speaks)
+        let after_magic = crate::effects::folded_by_resistance(&self.effects, after_armor);
+        self.health -= after_magic;
         self.hurt_time = HURT_DURATION_TICKS;
         self.walk.set_speed(crate::body::HURT_WALK_SPEED);
         self.panic_memory_ticks = PANIC_DAMAGE_MEMORY_TICKS;
@@ -18403,6 +18412,41 @@ mod tests {
             );
         }
         assert_eq!(z.fire_ticks, 0, "the brand the clock's own burn spends");
+    }
+
+    /// THE RESISTANCE'S OWN MOB FOLD (javap actuallyHurt's own order —
+    /// the getDamageAfterMagicAbsorb call the armor survivor rides,
+    /// the health the folded survivor spends): the branded body the
+    /// 1.0 dose the 0.94 armor survivor the ×0.8 fold wears, the
+    /// exact f32 mirror the two lanes' own arithmetic keeps.
+    #[test]
+    fn the_resistance_the_armor_survivor_the_mob_folds() {
+        let mut z = Zombie::new(3, 32.0, 5.0, 32.0, 11);
+        z.effects.add_effect(
+            crate::effects::MOB_EFFECT_RESISTANCE,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        z.hurt(1.0, false);
+        // the exact f32 mirror: the armor law's own f6 for the 1.0
+        // dose, the magic fold's own ×20/25 the survivor rides
+        let f6 = (ZOMBIE_ARMOR as f32 - 1.0_f32 / 2.0).clamp(ZOMBIE_ARMOR as f32 * 0.2, 20.0);
+        let after_armor = 1.0_f32 * (1.0 - f6 / 25.0);
+        assert_eq!(
+            z.health,
+            ZOMBIE_MAX_HEALTH - crate::effects::resistance_scale(0, after_armor),
+            "the armor→magic pair the folded survivor wears"
+        );
+        // the bare cadence the contrast: the UNBRANDED body the same
+        // dose the armor-alone survivor wears
+        let mut bare = Zombie::new(4, 32.0, 5.0, 32.0, 12);
+        bare.hurt(1.0, false);
+        assert_eq!(
+            bare.health,
+            ZOMBIE_MAX_HEALTH - after_armor,
+            "the armor-alone survivor the bare body wears"
+        );
     }
 
     /// THE NIGHT HIDES THEM — the MONSTERS_BURN track false, the same

@@ -34,6 +34,9 @@ use crate::world_model::MobEffectState;
 /// order the generated `MOB_EFFECT_ORDER` table carries (the test pins
 /// the slot).
 pub const MOB_EFFECT_REGENERATION: i32 = 9;
+/// `minecraft:resistance`'s mob-effect registry id (the 0-based
+/// order's own slot — the damage-fold lane's scale arm reads it).
+pub const MOB_EFFECT_RESISTANCE: i32 = 10;
 /// `minecraft:fire_resistance`'s mob-effect registry id (the 0-based
 /// order's own slot — the lava fog's vision arm reads it).
 pub const MOB_EFFECT_FIRE_RESISTANCE: i32 = 11;
@@ -133,6 +136,35 @@ pub const MAX_ABSORPTION: f32 = 20.0;
 /// amplifier level times two.
 pub fn absorption_amount_for(amplifier: i32) -> f32 {
     (4 * (1 + amplifier)) as f32
+}
+
+/// THE RESISTANCE'S OWN FOLD (javap `LivingEntity
+/// .getDamageAfterMagicAbsorb` pcs 32-73 — the fold the RESISTANCE
+/// holder's own bytecode keeps): `i = amplifier + 1` (the iadd the
+/// pcs 42-43 speak), `j = 25 - i * 5` (the imul/isub pair), the
+/// survivor `max(damage * j / 25.0, 0.0)` (the fmul/fdiv/fconst_0/
+/// Math.max chain). Amp 0 the ×0.8 wears, amp 3 the ×0.2, amp 4+ the
+/// j-at-or-below-zero the max(0) clamps — the full immunity the
+/// vanilla's own arithmetic speaks (the negative product the fdiv
+/// carries, the fconst_0 the max lifts). The BYPASSES lanes the
+/// CALLER's own verdict keeps (the starve the BYPASSES_EFFECTS
+/// member, the generic_kill the BYPASSES_RESISTANCE one — the
+/// pcs 0-29 early returns the fold never reaches).
+pub fn resistance_scale(amplifier: i32, damage: f32) -> f32 {
+    let j = 25 - (amplifier + 1) * 5;
+    ((damage * j as f32) / 25.0).max(0.0)
+}
+
+/// THE FOLD'S OWN STORE READ (the caller's lane — the RESISTANCE
+/// instance the body wears the amplifier the fold reads, the
+/// unworn body the damage the identity passes): the same free fn
+/// the player's and the mob's hurt bodies share, the one site the
+/// 26.2's own single-method law keeps.
+pub fn folded_by_resistance(store: &EffectsStore, damage: f32) -> f32 {
+    match store.get(MOB_EFFECT_RESISTANCE) {
+        Some(inst) => resistance_scale(inst.amplifier, damage),
+        None => damage,
+    }
 }
 
 /// THE INSTANT WALK'S OWN SET (javap `MobEffects` clinit — the effects
@@ -841,6 +873,45 @@ mod tests {
             assert!(tick.poisons.is_empty() && tick.withers.is_empty());
         }
         assert!(s3.is_empty());
+    }
+
+    /// THE RESISTANCE'S OWN LADDER (javap getDamageAfterMagicAbsorb
+    /// pcs 32-73 — the j = 25 − 5(amp+1) law the fold wears): the amp
+    /// walk the ×0.8/×0.6/×0.4/×0.2 survivors speak, the amp-4 the
+    /// j-zero zero wears, the amp-5 the negative product the max(0)
+    /// clamp lifts — the 10.0 dose the exact f32 speakers keep (the
+    /// 20/15/10/5 products the /25 the exact decimals wear).
+    #[test]
+    fn the_resistance_the_25_law_the_ladder_wears() {
+        assert_eq!(resistance_scale(0, 10.0), 8.0, "the amp-0 the x0.8 wears");
+        assert_eq!(resistance_scale(1, 10.0), 6.0, "the amp-1 the x0.6 wears");
+        assert_eq!(resistance_scale(2, 10.0), 4.0, "the amp-2 the x0.4 wears");
+        assert_eq!(resistance_scale(3, 10.0), 2.0, "the amp-3 the x0.2 wears");
+        assert_eq!(
+            resistance_scale(4, 10.0),
+            0.0,
+            "the amp-4 the j-zero zero wears"
+        );
+        assert_eq!(
+            resistance_scale(5, 10.0),
+            0.0,
+            "the amp-5 the negative product the max(0) lifts"
+        );
+        // the store read: the worn body the fold wears, the bare body
+        // the identity passes
+        let mut s = EffectsStore::new();
+        assert_eq!(folded_by_resistance(&s, 10.0), 10.0);
+        s.add_effect(MOB_EFFECT_RESISTANCE, 2, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(folded_by_resistance(&s, 10.0), 4.0);
+        // the expiry the identity restores (the clock's own walk)
+        for _ in 0..400 {
+            s.tick_offline();
+        }
+        assert_eq!(
+            folded_by_resistance(&s, 10.0),
+            10.0,
+            "the expired brand the fold never reads"
+        );
     }
 
     #[test]

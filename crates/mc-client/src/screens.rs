@@ -6266,12 +6266,19 @@ pub(crate) fn draw_gamemode_switcher_panel(g: &mut Gui, x: i32, y: i32) {
 /// plain sources speak DamageEffects.HURT (entity.player.hurt), the
 /// BURNING sources (lava, onFire) the on-fire voice
 /// (entity.player.hurt_on_fire), the DROWNING source the water's own
-/// voice (entity.player.hurt_drown).
+/// voice (entity.player.hurt_drown). THE BYPASS PAIR the tag rosters
+/// name (starve the BYPASSES_EFFECTS member, generic_kill the
+/// BYPASSES_RESISTANCE one): the damage-type identities the
+/// resistance fold's early returns read — the STARVING body the
+/// same HURT voice the no-effects JSON speaks, the GENERIC_KILL the
+/// actuallyHurt-only walk the voice block never reaches.
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum HurtVoice {
     Plain,
     Burning,
     Drowning,
+    Starving,
+    GenericKill,
 }
 
 /// THE BUNDLE CONTENTS COMPONENT (the 26.2 `BundleContents` record's
@@ -12307,7 +12314,7 @@ impl App {
                     self.health = (self.health + events.heal).min(MAX_HEALTH);
                 }
                 if events.starve {
-                    self.hurt(crate::food::STARVE_DAMAGE);
+                    self.hurt_starving(crate::food::STARVE_DAMAGE);
                 }
                 // THIS tick's sources bank for the next fold (the
                 // causeFoodExhaustion's own !isClientSide gate — the
@@ -24282,7 +24289,7 @@ impl App {
             // (commands.kill.success.single the killed entity's
             // display name wears).
             ["kill"] => {
-                self.actually_hurt(f32::MAX);
+                self.actually_hurt(f32::MAX, HurtVoice::GenericKill);
                 let msg = format_positional(
                     tr("commands.kill.success.single").unwrap_or("Killed %s"),
                     &[PLAYER_NAME],
@@ -24311,7 +24318,7 @@ impl App {
                 // collection the count still speaks)
                 for target in &targets {
                     match target {
-                        KillTarget::Player => self.actually_hurt(f32::MAX),
+                        KillTarget::Player => self.actually_hurt(f32::MAX, HurtVoice::GenericKill),
                         KillTarget::Mob(i) => {
                             if let Some(mob) = self.mobs.get_mut(*i) {
                                 mob.hurt(f64::MAX, false);
@@ -34730,6 +34737,14 @@ impl App {
         self.hurt_inner(amount, HurtVoice::Drowning)
     }
 
+    /// THE STARVE SOURCE'S OWN GATE (the same pipeline, the starve
+    /// damage type's own name — the BYPASSES_EFFECTS member the
+    /// getDamageAfterMagicAbsorb's pcs 0-11 early return answers:
+    /// the fold the hunger's own bite never wears).
+    pub fn hurt_starving(&mut self, amount: f32) -> bool {
+        self.hurt_inner(amount, HurtVoice::Starving)
+    }
+
     /// THE VOICE THE DAMAGE TYPE'S EFFECTS NAME (the getHurtSound
     /// override's three arms the pipeline speaks: the plain HURT, the
     /// BURNING (lava, onFire), the DROWNING).
@@ -34770,7 +34785,7 @@ impl App {
             if amount <= self.last_hurt {
                 return false;
             }
-            self.actually_hurt(amount - self.last_hurt);
+            self.actually_hurt(amount - self.last_hurt, voice);
             self.last_hurt = amount;
             true
         } else {
@@ -34778,7 +34793,7 @@ impl App {
             self.invulnerable_time = 20;
             self.hurt_duration = 10;
             self.hurt_time = self.hurt_duration;
-            self.actually_hurt(amount);
+            self.actually_hurt(amount, voice);
             // the hurt voice (handleDamageEvent's own call — the
             // client's own law speaks the (r - r) * 0.2 + 1.0 pitch;
             // the damage type's effects name the event — the plain
@@ -34788,6 +34803,12 @@ impl App {
                 HurtVoice::Plain => self.sounds.play_hurt_voice(self.frame),
                 HurtVoice::Burning => self.sounds.play_hurt_on_fire_voice(self.frame),
                 HurtVoice::Drowning => self.sounds.play_hurt_drown_voice(self.frame),
+                // the starve type's own no-effects JSON the same HURT
+                // voice the plain sources wear
+                HurtVoice::Starving => self.sounds.play_hurt_voice(self.frame),
+                // the /kill lane's direct actuallyHurt walk — the
+                // hurtServer pipeline the voice block never rides
+                HurtVoice::GenericKill => {}
             }
             true
         }
@@ -34806,7 +34827,22 @@ impl App {
     /// bytecode speaks). A fully-absorbed hit never touches the health
     /// and never reaches the combat/death tail (the `amount == 0`
     /// return).
-    fn actually_hurt(&mut self, amount: f32) {
+    fn actually_hurt(&mut self, amount: f32, voice: HurtVoice) {
+        // THE RESISTANCE'S OWN FOLD (javap actuallyHurt's own order —
+        // the armor lane the bare body skips, the getDamageAfterMagicAbsorb
+        // call the magic fold serves, the ABSORPTION lane the survivor
+        // rides: the fold sits BETWEEN, the cooldown's last_hurt the
+        // RAW word keeps — the window's comparison the unfolded dose
+        // reads, the difference arm the fold the vanilla's own
+        // actuallyHurt(diff) walk wears). The BYPASS PAIR the tag
+        // rosters keep (pcs 0-29): the starve the BYPASSES_EFFECTS
+        // member, the generic_kill the BYPASSES_RESISTANCE one — the
+        // fold the pair never reaches, the /kill's Float.MAX_VALUE
+        // the identity pass speaks.
+        let amount = match voice {
+            HurtVoice::Starving | HurtVoice::GenericKill => amount,
+            _ => crate::effects::folded_by_resistance(&self.effects, amount),
+        };
         // THE HURT FLINCH (LivingEntity.handleDamageEvent's own opening
         // move): the walk speed kicks to 1.5 — the third-person
         // avatar's limbs flail through the hurt tick
@@ -45687,6 +45723,107 @@ mod tests {
         );
     }
 
+    /// THE RESISTANCE'S OWN FOLD (javap getDamageAfterMagicAbsorb pcs
+    /// 0-73 — the fold the actuallyHurt's magic lane wears): the amp-0
+    /// body the 5.0 blow the 4.0 survivor spends, the cooldown's
+    /// last_hurt the RAW word keeps (the 4.5 window arm the raw
+    /// comparison refuses, the 6.0 the 1.0 difference the fold wears),
+    /// the amp-4 the j-zero the full immunity speaks, the STARVE the
+    /// BYPASSES_EFFECTS member the fold never wears, the /kill the
+    /// generic_kill identity rides.
+    #[test]
+    fn the_resistance_the_doses_the_raw_word_wears() {
+        // THE AMP-0 WALK (the fold the 5.0 blow wears, the raw word
+        // the window's own comparison reads)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        assert!(app.effects.add_effect(
+            crate::effects::MOB_EFFECT_RESISTANCE,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS
+        ));
+        app.health = 20.0;
+        assert!(app.hurt(5.0), "the fresh dose lands");
+        assert_eq!(
+            app.health,
+            20.0 - crate::effects::resistance_scale(0, 5.0),
+            "the folded survivor the health spends"
+        );
+        // THE RAW WORD (the window arm the UNFOLDED comparison reads —
+        // the 4.5 folded would pass the 3.2 survivor, the 4.5 raw the
+        // 5.0 last_hurt refuses)
+        assert!(!app.hurt(4.5), "the raw word the window keeps");
+        assert_eq!(app.health, 20.0 - crate::effects::resistance_scale(0, 5.0));
+        // THE STRONGER RAW DOSE (the 1.0 difference the fold wears —
+        // the last_hurt the 6.0 raw banks)
+        assert!(app.hurt(6.0), "the stronger raw dose the window admits");
+        assert_eq!(
+            app.health,
+            20.0 - crate::effects::resistance_scale(0, 5.0)
+                - crate::effects::resistance_scale(0, 1.0),
+            "the difference arm the fold wears"
+        );
+
+        // THE AMP-4 WALK (the j-zero the max(0) clamp — the full
+        // immunity the health the dose never spends)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_RESISTANCE,
+            4,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        app.health = 20.0;
+        assert!(app.hurt(5.0), "the landed hurt the zero dose wears");
+        assert_eq!(app.health, 20.0, "the zero survivor the health keeps");
+
+        // THE STARVE WALK (the BYPASSES_EFFECTS member — the 1.0 bite
+        // the fold never wears, the unscaled 1.0 the health speaks)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_RESISTANCE,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        app.health = 20.0;
+        assert!(app.hurt_starving(crate::food::STARVE_DAMAGE));
+        assert_eq!(
+            app.health,
+            20.0 - crate::food::STARVE_DAMAGE,
+            "the starve the unscaled bite wears"
+        );
+
+        // THE /KILL WALK (the generic_kill the BYPASSES_RESISTANCE
+        // member — the Float.MAX_VALUE the identity pass speaks, the
+        // death the health-floor tail arms)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_RESISTANCE,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        app.health = 20.0;
+        app.chat_open = true;
+        app.chat_input = "/kill".into();
+        app.on_chat_submit();
+        assert!(app.dead, "the generic_kill the resistance never gates");
+        assert_eq!(app.health, 0.0, "the kill walk the health floors");
+    }
+
     /// THE EFFECT DOSES' OWN MOTION WIRING (javap the attribute lanes
     /// — the speed/slowness rows' ×(1+amount×(amp+1)) product the
     /// movement fold banks, the jump_boost's 0.1×(amp+1) power the
@@ -54778,7 +54915,7 @@ mod tests {
             app.on_chat_char(c);
         }
         assert!(app.chat_open);
-        app.actually_hurt(100.0);
+        app.actually_hurt(100.0, HurtVoice::Plain);
         // THE INTERRUPTED WALK (the close the save lane banks — the
         // method the startsWith walk names, the chat the death overlay
         // the input never shares)
@@ -54828,7 +54965,7 @@ mod tests {
         for c in "   ".chars() {
             app.on_chat_char(c);
         }
-        app.actually_hurt(100.0);
+        app.actually_hurt(100.0, HurtVoice::Plain);
         assert!(app.dead);
         assert!(!app.chat_open);
         assert_eq!(
@@ -54855,7 +54992,7 @@ mod tests {
         // untouched draft the skip-save keeps — the bank unchanged)
         app.on_chat_key();
         assert!(app.chat_input_is_draft);
-        app.actually_hurt(100.0);
+        app.actually_hurt(100.0, HurtVoice::Plain);
         assert!(app.dead);
         assert!(!app.chat_open);
         assert_eq!(
@@ -54880,7 +55017,7 @@ mod tests {
     fn the_death_screen_the_modal_keeps() {
         let mut app = App::new(3);
         app.enter_world();
-        app.actually_hurt(100.0);
+        app.actually_hurt(100.0, HurtVoice::Plain);
         assert!(app.dead && !app.chat_open);
         // THE DEAD ESC (the on_escape death gate — the pause the modal
         // never arms, the screen the World keeps)
@@ -54911,7 +55048,7 @@ mod tests {
         for c in "tp 1 2 3".chars() {
             app.on_chat_char(c);
         }
-        app.actually_hurt(100.0);
+        app.actually_hurt(100.0, HurtVoice::Plain);
         assert!(app.dead && !app.chat_open);
         assert_eq!(
             app.chat_latest_draft,
@@ -55065,7 +55202,7 @@ mod tests {
         }
         // THE DEATH (the INTERRUPTED verdict — the option the lane
         // never reads, the draft the replacement close banks)
-        app.actually_hurt(100.0);
+        app.actually_hurt(100.0, HurtVoice::Plain);
         assert!(app.dead && !app.chat_open);
         assert_eq!(
             app.chat_latest_draft,
@@ -91744,7 +91881,7 @@ cow_sound_variant: None,
             ride_height: 0.9,
         });
         // THE FATAL DOSE (the health the 0.0 crossing speaks)
-        app.actually_hurt(100.0);
+        app.actually_hurt(100.0, HurtVoice::Plain);
         assert!(app.dead, "the dose the player kills");
         assert!(
             app.offline_ride.is_none(),
