@@ -141,6 +141,44 @@ pub fn item_name(id: i32) -> Option<&'static str> {
     generated::item_order::ITEM_WIRE_ORDER.get(id as usize).copied()
 }
 
+/// The ITEM registry id's default RARITY LEVEL — the `Rarity.id` the
+/// item's own `Item.Properties` construction carries (0 COMMON / 1
+/// UNCOMMON / 2 RARE / 3 EPIC). The table only rows the NON-COMMON
+/// items (the javap walk of `Items.class`'s static init — each
+/// `Item$Properties.rarity(...)` call paired with its registration
+/// statement); the MISSING rows are the `Item.Properties` field
+/// init's own COMMON default, never a guessed level. Unresolvable
+/// ids are `None` — the honest unknown, the same law [`item_name`]
+/// keeps.
+pub fn item_rarity(id: i32) -> Option<u8> {
+    let name = item_name(id)?;
+    let name = name.strip_prefix("minecraft:").unwrap_or(name);
+    Some(
+        generated::item_rarity::ITEM_RARITY
+            .binary_search_by_key(&name, |&(n, _)| n)
+            .map(|idx| generated::item_rarity::ITEM_RARITY[idx].1)
+            .unwrap_or(0),
+    )
+}
+
+/// The ITEM registry id's default rarity's CHAT COLOR — the
+/// `getRarity().color()` walk the HUD's held-item name rides, the
+/// `ChatFormatting` enum's own mapping (Rarity.class's static init:
+/// COMMON → WHITE / UNCOMMON → YELLOW / RARE → AQUA / EPIC →
+/// LIGHT_PURPLE) resolved through `TextColor.fromLegacyFormat`'s own
+/// switch (TextColor.class's static init: white 16777215 = 0xFFFFFF,
+/// yellow 16777045 = 0xFFFF55, aqua 5636095 = 0x55FFFF, light_purple
+/// 16733695 = 0xFF55FF — the 26.2 jar's NAMED-color palette, the
+/// legacy §-code trios). Unresolvable ids are `None`.
+pub fn item_rarity_color(id: i32) -> Option<u32> {
+    match item_rarity(id)? {
+        1 => Some(0xFFFF55),
+        2 => Some(0x55FFFF),
+        3 => Some(0xFF55FF),
+        _ => Some(0xFFFFFF),
+    }
+}
+
 /// The ITEM registry id's flat GUI icon — the generated texture table's
 /// `item/<name>` RGBA texels with the (w, h) the sprite rides (16x16
 /// for the plain items the chest screen pins; the 3D block-model items
@@ -708,6 +746,52 @@ mod tests {
         assert_eq!(item_model_path(-1), None);
         let n = generated::item_order::ITEM_WIRE_ORDER.len() as i32;
         assert_eq!(item_model_path(n), None);
+    }
+
+    #[test]
+    fn item_rarity_resolves_the_jar_laws() {
+        // the wire ids the vocabulary names (the position IS the id)
+        let id_of = |name: &str| {
+            generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect(name) as i32
+        };
+        // the NO-rarity registrations the COMMON default keeps (the
+        // Item.Properties field init the jar's own construction speaks)
+        assert_eq!(item_rarity(id_of("diamond_sword")), Some(0));
+        assert_eq!(item_rarity_color(id_of("diamond_sword")), Some(0xFFFFFF));
+        assert_eq!(item_rarity(id_of("golden_apple")), Some(0),
+            "the plain golden apple wears NO rarity call — COMMON, never guessed");
+        // the direct static-init rarity calls the javap walk paired
+        assert_eq!(item_rarity(id_of("enchanted_golden_apple")), Some(2));
+        assert_eq!(item_rarity_color(id_of("enchanted_golden_apple")), Some(0x55FFFF));
+        assert_eq!(item_rarity(id_of("elytra")), Some(3));
+        assert_eq!(item_rarity_color(id_of("elytra")), Some(0xFF55FF));
+        assert_eq!(item_rarity(id_of("chainmail_helmet")), Some(1));
+        assert_eq!(item_rarity_color(id_of("chainmail_helmet")), Some(0xFFFF55));
+        assert_eq!(item_rarity(id_of("trident")), Some(2));
+        assert_eq!(item_rarity(id_of("command_block")), Some(3));
+        // the LAMBDA customization lane (the BootstrapMethods mapping):
+        // lambda$static$21 = EPIC rides LIGHT, lambda$static$30 =
+        // UNCOMMON rides SNIFFER_EGG
+        assert_eq!(item_rarity(id_of("light")), Some(3));
+        assert_eq!(item_rarity(id_of("sniffer_egg")), Some(1));
+        // the boundaries refuse like item_name's own
+        assert_eq!(item_rarity(-1), None);
+        assert_eq!(item_rarity_color(-1), None);
+        let n = generated::item_order::ITEM_WIRE_ORDER.len() as i32;
+        assert_eq!(item_rarity(n), None);
+        // the table's own shape: sorted by name (the binary-search law)
+        // and every row resolves through the wire vocabulary
+        let rows = generated::item_rarity::ITEM_RARITY;
+        assert!(rows.windows(2).all(|w| w[0].0 < w[1].0), "sorted for the search");
+        for (name, _) in rows {
+            assert!(
+                generated::item_order::ITEM_WIRE_ORDER.iter().any(|&n| n == name),
+                "the rarity row {name} rides the wire vocabulary",
+            );
+        }
     }
 
     #[test]

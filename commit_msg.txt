@@ -1,60 +1,55 @@
-v0.3.639: the ALERTOTHER'S OWN ATTACKER WORD the pack's fangs wear
-(autopush-579)
+v0.3.640: the held name the pop the fade the rarity wears (autopush-580)
 
-THE ROUND (the queue's top candidate the 578 worklog named — the
-mob-victim retaliation's own SIBLING ALERT: the warden-source dose
-the victim's own start event arms, the alertOther(m,
-getLastHurtByMob()) setTarget write the pack's own chase the round
-wires — the alerted sibling the WARDEN's own view the pack law
-serves):
-- mob.rs: the `alerted_target: Option<PreyView>` field the
-  alertOther's own setTarget write banks (javap `HurtByTargetGoal
-  .alertOther` — the `m.setTarget(attacker)` the box's same-kind
-  walk speaks; the sibling's OWN hurt memory the write never rides —
-  the canUse's timestamp pair the EQUAL words keeps, the cascade the
-  vanilla law never arms); `alert_hurt_by` the attacker word the
-  Option arg carries (the mob-source dose the Some arm serves, the
-  PLAYER-source the None the client's own vocabulary keeps — the
-  player the sibling's own player lane the flag's run answers); the
-  retaliation lane's victim read the `.or()` fold the two words the
-  same continue walk serves (the hurt memory the fresh start arms,
-  the alerted write the flag's own run keeps), the drop walk the
-  setTarget(null) the stop's own word clears; the refresh pass the
-  alerted target's OWN LIVE walk joins (the warden's own pos the
-  pack's chase reads, the dead attacker the run's drop answers).
-- screens.rs: the sibling pass's tuple the attacker word carries
-  (the push the victim's own hurt_by_reference names — the
-  mob-source dose the warden's live view banks), the pass the
-  `m.alert_hurt_by(attacker)` the vanilla setTarget write serves.
-- `the_alert_arms_the_pack_the_warden_the_sibling_chases` (screens.rs,
-  the chase test's own flat-floor stage the ROOF 12..14 the sky
-  column breaks — the burn roll's canSeeSky the broken column
-  refuses, the 500.0 pool the health law the exact keeps; the WALL
-  16..17 the eye rays blocks — the prio-2 scan the fresh sibling
-  never arms, the alert's getTarget() != null gate the alert's own
-  reach arms): the warden the 3.0 gap the chase the dose the 29.52
-  the armor law lands (the 578 law the same stage wears), the
-  victim's own start the event fires, the sibling pass the alert
-  arms — the setTarget write the warden's own view banks (the id
-  201 the kind the WARDEN word carries, the live pos the snapshot
-  wears), the NO-CASCADE the sibling's own hurt memory the write
-  never rides the round pins, the chase the warden's own spot the
-  sibling's walk CLOSES (the coast the dose's wake keeps — the
-  distance the pair the honest pin speaks), the pack's own bite the
-  +100 the suspect78 row the dose's own walk records (the steps'
-  own +35 rows the hearing walk banks the bite's row never speaks),
-  the warden's pool the pack's fangs wear, the standing
-  ATTACK_TARGET the hurt walk's empty-brain gate keeps.
-- PRODUCTION code the round touches (the alert's own wire — the
-  target lanes the pack law rides) — the RENDER path the round
-  never names.
+the HUD's own HELD-ITEM NAME lane the vanilla Hud keeps (javap
+`Hud.toolHighlightTimer` / `lastToolHighlight` / `extractSelectedItemName`
+the 26.2 jar's walk, client sha1 2dc72797acbc1b63fc16a11c4ac393605f453754):
 
-THE VERIFIED:
-- CARGO_INCREMENTAL=0 cargo test --workspace: 2123 passed / 0 failed
-  / 21 ignored (baseline 2122 + 1 — the alert's own pack walk the
-  new pin answers; the player-source alert test the None word the
-  same law keeps).
-- goldens 14/14 PASS rms 0.000 (NO regeneration — the render path
-  the round never names; the matrix the fresh release build the
-  walk answers).
-- build warnings 12 = 12 (the baseline the round never grows).
+- the TICK law (Hud.update pcs 88-213): the selected stack read, the
+  EMPTY arm `toolHighlightTimer = 0` (pcs 102-114), the SAME-item arm
+  (the `is(getItem())` + `getHoverName().equals()` pair pcs 117-157)
+  the `> 0` gate one tick a step (pcs 191-205), the CHANGE arm the
+  `(int)(40.0d * notificationDisplayTime)` store (pcs 160-185 — the
+  default 1.0 the fresh install keeps, the 40 the HELD_NAME_POP_TICKS
+  constant carries), the `lastToolHighlight = selected` copy the tail
+  (pcs 208-210) — the PURE compare law the selection events never
+  hook: the number-key / scroll / pick-block lanes the same state the
+  honest read keeps, the `minecraft.player != null` gate the walk's
+  pc 85 branch speaks (the menu boot the silence wears).
+- the RENDER law (extractSelectedItemName pcs 0-162): the timer > 0
+  + non-empty pair opens, the hover name the rarity's ChatFormatting
+  style wears (Rarity.class's static init: COMMON WHITE / UNCOMMON
+  YELLOW / RARE AQUA / EPIC LIGHT_PURPLE, resolved through
+  TextColor.fromLegacyFormat's own switch — the 26.2 NAMED palette:
+  0xFFFFFF / 0xFFFF55 / 0x55FFFF / 0xFF55FF), the CUSTOM_NAME italic
+  branch the no-custom-names vocabulary never arms, the centered
+  `(w - textWidth) / 2` x walk, the `h - 59` y the `!canHurtPlayer()`
+  +14 creative shift lifts (the audited isSurvival fold), the
+  `(int)(timer * 256.0f / 10.0f)` alpha the 255 clamp carries (the
+  full window + the ten-step fade), the textWithBackdrop's own fill
+  the backgroundForChatOnly default gates OFF (Options.
+  getBackgroundOpacity the 0.0f arg keeps — the shadowed text the
+  law's tail renders), the SPECTATOR acmp the extract lane skips.
+- the RARITY table (generated/item_rarity.rs, 115 rows): the
+  Items.class static-init walk — each `Item$Properties.rarity(...)`
+  call paired with its registration statement (the putstatic
+  boundary, the ItemIds/BlockItemIds key window), the lambda lanes
+  mapped through BootstrapMethods (lambda$static$21 = EPIC rides
+  LIGHT, lambda$static$30 = UNCOMMON rides SNIFFER_EGG) — the
+  missing rows the Item.Properties field-init COMMON default keeps,
+  never a guessed level; `item_rarity` / `item_rarity_color` the
+  accessors the HUD walk consumes.
+- the hover-name resolution: the item's OWN translation key the
+  en_us table renders — the pure items `item.minecraft.<name>`
+  ("Diamond Sword"), the block items `BlockItem`'s
+  `block.minecraft.<name>` ("Dirt") — the two key lanes the
+  registry name never shares.
+- the interactivity queue's HUD lane the round serves: the slot
+  swap the player presses the name pop paints, the vanilla look.
+
+verified: CARGO_INCREMENTAL=0 cargo test --workspace 2125 passed /
+0 failed / 21 ignored (baseline 2123 + 2 — the registry's rarity
+law pin + the client's pop/decay/swap walk pin); goldens 14/14
+PASS rms 0.000 (NO regeneration — the offline hotbar row the
+chrome-only shape keeps, the timer the zero the empty arm stores,
+the name the never-armed draw the goldens never name); build
+warnings 12 = 12 (the baseline the round never grows).

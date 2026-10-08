@@ -2102,6 +2102,15 @@ pub const SHIFT_KEY_DISPLAY: &str = "Left Shift";
 /// three seconds, the first 40 the full alpha, the last 20 the fade).
 pub const OVERLAY_MESSAGE_LIFE: i32 = 60;
 
+/// THE HELD NAME'S OWN POP SPAN (javap `Hud`'s update walk — the
+/// `(int)(40.0d * options.notificationDisplayTime().get())` store the
+/// item-change arm speaks: the `40.0d` the ldc2_w keeps, the
+/// `notificationDisplayTime` OptionInstance the fresh-install default
+/// 1.0 holds (the multiplier the defaults never move) — the 40-tick
+/// span the fade law spends, the full-alpha window + the ten-step
+/// 256/10 render walk the timer wears).
+pub const HELD_NAME_POP_TICKS: i32 = 40;
+
 /// THE OVERLAY'S OWN ALPHA (extractOverlayMessage's own fold — the
 /// `f = time - partialTick` the delta keeps, `(int)(f * 255.0F /
 /// 20.0F)` the truncation speaks, the 255 clamp, the <= 0 skip the
@@ -6389,6 +6398,17 @@ pub struct App {
     /// fade the vanilla honesty is).
     pub overlay_message: Option<String>,
     pub overlay_message_time: i32,
+    /// THE HELD NAME'S OWN CLOCK (javap `Hud`'s own fields — the
+    /// `toolHighlightTimer` int the update walk spends one tick a step,
+    /// the `lastToolHighlight` ItemStack the compare law reads): the
+    /// timer the pop's remaining ticks wear (the extract law renders
+    /// while > 0), the last stack the (item id, resolved hover name)
+    /// pair stands in for — the vanilla `getItem()` +
+    /// `getHoverName().equals()` pair the pair's equality folds (the
+    /// client's stacks carry no custom names, the identity the pair
+    /// keeps IS the identity the law compares).
+    pub held_name_timer: i32,
+    pub held_name_last: Option<(i32, String)>,
     /// THE OVERLAY'S OWN ANIMATE FLAG (javap `Hud.setOverlayMessage`'s
     /// second param the `animateOverlayMessageColor` field keeps —
     /// the `iconst_1` the `setNowPlaying` walk passes, the mount's own
@@ -7971,6 +7991,8 @@ impl App {
             ride_boat_yaw_prev: None,
             overlay_message: None,
             overlay_message_time: 0,
+            held_name_timer: 0,
+            held_name_last: None,
             animate_overlay_message_color: false,
             world_is_network: false,
             world_skybox: Skybox::Overworld,
@@ -8578,6 +8600,14 @@ impl App {
         // never keeps)
         if self.overlay_message_time > 0 {
             self.overlay_message_time -= 1;
+        }
+        // THE HELD NAME CLOCK (Hud.update's own arm — the same per-tick
+        // walk the overlay message's decay rides: the selected stack's
+        // compare the pop re-arms, the same stack the decay spends;
+        // the `minecraft.player != null` gate the walk's pc 85 branch
+        // keeps — the menu boot the no-player silence wears)
+        if self.offline_world.is_some() || self.net_world.is_some() {
+            self.tick_held_name();
         }
         // THE WATER VISION CLOCK (javap LocalPlayer.tick, the 26.2
         // jar's offsets 737-812): the eye's water speaks +1/tick (the
@@ -39785,6 +39815,117 @@ impl App {
         g.text_faded(a, x, y, text, [1.0, 1.0, 1.0], alpha, true);
     }
 
+    /// THE HELD NAME'S OWN RESOLUTION (the vanilla hover name the plain
+    /// stack carries — the item's OWN translation key the en_us lang
+    /// table renders: the pure items the `item.minecraft.<name>` key
+    /// speaks ("Diamond Sword"), the block items the `BlockItem`
+    /// `block.minecraft.<name>` key carries ("Dirt") — the two key
+    /// lanes the registry name never shares, the ordered probe the
+    /// table's own miss falls through; the both-lanes-miss the plain
+    /// registry name falls back to, the unresolvable id the empty
+    /// string keeps — the draw the empty width never arms).
+    fn held_item_display_name(&self, id: i32) -> String {
+        let Some(name) = mc_registry::item_name(id) else {
+            return String::new();
+        };
+        if let Some(s) = tr(&format!("item.minecraft.{name}")) {
+            return s.to_string();
+        }
+        if let Some(s) = tr(&format!("block.minecraft.{name}")) {
+            return s.to_string();
+        }
+        name.to_string()
+    }
+
+    /// THE HELD NAME'S OWN TICK (javap `Hud`'s update walk pcs 88-213 —
+    /// the selected stack read opens (pcs 88-101), the EMPTY arm the
+    /// `toolHighlightTimer = 0` store keeps (pcs 102-114), the
+    /// SAME-item arm — the `is(getItem())` + `getHoverName().equals()`
+    /// pair pcs 117-157 speak — the `> 0` gate the one-tick-a-step
+    /// decay rides (pcs 191-205), the CHANGE arm the
+    /// `(int)(40.0d * notificationDisplayTime)` store re-arms
+    /// (pcs 160-185), the `lastToolHighlight = selected` copy the
+    /// walk's own tail carries (pcs 208-210)): the pure compare law
+    /// the selection events never hook — the timer follows the STATE,
+    /// the number-key / scroll / pick-block lanes the same tick walk
+    /// the honest read keeps.
+    pub fn tick_held_name(&mut self) {
+        let (id, count) = self.hotbar_slots[self.selected_hotbar];
+        if id <= 0 || count <= 0 {
+            // the empty stack: the timer zeroes, the last stack the
+            // EMPTY the copy keeps (the next non-empty the change arm
+            // re-arms — the pc 121-124 `isEmpty` gate the walk speaks)
+            self.held_name_timer = 0;
+            self.held_name_last = None;
+            return;
+        }
+        let name = self.held_item_display_name(id);
+        let current = (id, name);
+        if self.held_name_last.as_ref() != Some(&current) {
+            self.held_name_timer = HELD_NAME_POP_TICKS;
+        } else if self.held_name_timer > 0 {
+            self.held_name_timer -= 1;
+        }
+        self.held_name_last = Some(current);
+    }
+
+    /// THE HELD ITEM NAME (javap `Hud.extractSelectedItemName` pcs
+    /// 0-162 — the `toolHighlightTimer > 0` + `!lastToolHighlight.
+    /// isEmpty()` pair the draw opens on (pcs 1-14); the text the
+    /// hover name + the rarity's ChatFormatting style wears (`getRarity
+    /// ().color()` the withStyle keeps — the `TextColor.fromLegacyFormat`
+    /// ints the 26.2 palette carries: white 0xFFFFFF / yellow 0xFFFF55
+    /// / aqua 0x55FFFF / light_purple 0xFF55FF); the CUSTOM_NAME
+    /// italic the component branch speaks (pcs 44-64) — the client's
+    /// stacks carry no custom names, the branch the honest absence
+    /// keeps; the x the centered `(guiWidth - textWidth) / 2` walk
+    /// (pcs 74-82), the y the `guiHeight - 59` store (pcs 84-91) the
+    /// `!canHurtPlayer()` +14 shift lifts (pcs 93-106 — the
+    /// isSurvival fold the audited lane speaks, the creative frame
+    /// the shift wears); the alpha the `(int)(timer * 256.0f / 10.0f)`
+    /// fold (pcs 109-123) the 255 clamp carries (pcs 125-136) — the
+    /// full alpha the first 30 ticks speak, the last 10 the linear
+    /// fade rides; the textWithBackdrop's own fill the
+    /// backgroundForChatOnly default gates OFF (Options.
+    /// getBackgroundOpacity's `true → fload_1` arm the 0.0f arg keeps —
+    /// the bg alpha 0 the `ifeq 57` skip speaks), the shadowed text
+    /// the law's own tail renders (pcs 57-66 — dropShadow TRUE); the
+    /// SPECTATOR mode the extract lane's own acmp skips (the
+    /// extractHotbarAndDecorations walk the spectatorGui.extractAction
+    /// lane carries — the action name the prompt paints, the item
+    /// name the mode never speaks).
+    fn render_held_item_name(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        if self.game_mode == GameMode::Spectator || self.held_name_timer <= 0 {
+            return;
+        }
+        let Some((id, name)) = self.held_name_last.clone() else {
+            return;
+        };
+        if name.is_empty() {
+            return;
+        }
+        let rarity = mc_registry::item_rarity_color(id).unwrap_or(0xFFFFFF);
+        let color = [
+            ((rarity >> 16) & 0xFF) as f32 / 255.0,
+            ((rarity >> 8) & 0xFF) as f32 / 255.0,
+            (rarity & 0xFF) as f32 / 255.0,
+        ];
+        let tw = g.text_width(&name);
+        let x = (w - tw) / 2;
+        let mut y = h - 59;
+        if !self.game_mode.is_survival() {
+            y += 14;
+        }
+        // the 256/10 law — the integer walk the float fold's own
+        // truncation answers (timer * 256 never rounds, the /10 the
+        // f2i truncation the integer division keeps)
+        let alpha = (self.held_name_timer * 256 / 10).min(255);
+        if alpha <= 0 {
+            return;
+        }
+        g.text_faded(a, x, y, &name, color, alpha as f32 / 255.0, true);
+    }
+
     /// Vanilla HUD: crosshair, hotbar + selection, hearts and hunger — all
     /// official `hud/*` sprites at vanilla positions and sizes.
     fn render_hud(&mut self, g: &mut Gui, a: &mut GuiAssets) {
@@ -39924,6 +40065,12 @@ impl App {
         if self.game_mode.is_survival() {
             self.render_survival_decorations(g, a);
         }
+        // THE HELD ITEM NAME (javap Hud.extractSelectedItemName — the
+        // extractHotbarAndDecorations walk's own tail the item-name
+        // lane rides, the timer > 0 gate the pop's fade wears): the
+        // rarity-colored hover name centered above the hotbar, the
+        // selection-change pop the tick law spends
+        self.render_held_item_name(g, a, w, h);
         // THE EFFECT ICONS (javap Hud.extractEffects — the 26.2 row
         // law, verbatim): the icons render whenever the store carries
         // effects — the base Screen's `showsActiveEffects` is a flat
@@ -42434,6 +42581,67 @@ mod tests {
         // table the flat icon textures walk)
         assert_eq!(mc_registry::item_name(921), Some("apple"));
         assert_eq!(mc_registry::item_name(926), Some("diamond"));
+    }
+
+    #[test]
+    fn the_held_name_the_pop_the_decay_the_swap_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the row: slot 0 the diamond sword, slot 1 the dirt stack, the
+        // rest the wire's emptiness (the (0, 0) sentinel)
+        let mut row = [(0, 0); 9];
+        row[0] = (964, 1);
+        row[1] = (55, 64);
+        app.live_hotbar_updated(row);
+        // the display-name resolution the pop renders (the en_us lang
+        // table's own hover names; the unresolvable id the empty string
+        // keeps — the draw the empty width never arms)
+        assert_eq!(app.held_item_display_name(964), "Diamond Sword");
+        assert_eq!(app.held_item_display_name(55), "Dirt");
+        assert_eq!(app.held_item_display_name(-1), "");
+        assert_eq!(app.held_item_display_name(20000), "");
+        // THE FRESH POP (the change arm): the first in-world tick the
+        // sword's selection the 40-tick store arms
+        app.update();
+        assert_eq!(app.held_name_timer, HELD_NAME_POP_TICKS);
+        assert_eq!(app.held_name_last, Some((964, "Diamond Sword".to_string())));
+        // THE SAME-ITEM DECAY (the `is(getItem())` + hover-name equal
+        // arm): every quiet tick one step down, the zero the floor
+        app.update();
+        assert_eq!(app.held_name_timer, HELD_NAME_POP_TICKS - 1);
+        for _ in 0..50 {
+            app.update();
+        }
+        assert_eq!(app.held_name_timer, 0, "the decay the zero floor keeps");
+        app.update();
+        assert_eq!(app.held_name_timer, 0, "the `> 0` gate no negative keeps");
+        // THE SWAP RE-ARMS (the number-key lane the state compare feeds —
+        // no event hook, the pure per-tick walk the honest read keeps)
+        app.on_number_key(1);
+        app.update();
+        assert_eq!(app.held_name_timer, HELD_NAME_POP_TICKS);
+        assert_eq!(app.held_name_last, Some((55, "Dirt".to_string())));
+        // the SAME-slot re-select (the on_number_key gate eats the
+        // repeat) — the quiet tick decays, never re-arms
+        app.on_number_key(1);
+        app.update();
+        assert_eq!(app.held_name_timer, HELD_NAME_POP_TICKS - 1);
+        // THE SWAP BACK (the item change the 40 store re-arms)
+        app.on_number_key(0);
+        app.update();
+        assert_eq!(app.held_name_timer, HELD_NAME_POP_TICKS);
+        assert_eq!(app.held_name_last, Some((964, "Diamond Sword".to_string())));
+        // THE EMPTY SELECTION (the empty arm): the timer zeroes, the
+        // last stack the EMPTY the copy keeps
+        app.on_number_key(2);
+        app.update();
+        assert_eq!(app.held_name_timer, 0);
+        assert_eq!(app.held_name_last, None);
+        // the empty → non-empty (the pc 121-124 isEmpty gate): the
+        // change arm re-arms
+        app.on_number_key(0);
+        app.update();
+        assert_eq!(app.held_name_timer, HELD_NAME_POP_TICKS);
     }
 
     #[test]

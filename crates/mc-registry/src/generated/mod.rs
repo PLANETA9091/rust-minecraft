@@ -10,6 +10,7 @@ pub mod equipment;
 pub mod gui;
 pub mod item_models;
 pub mod item_order;
+pub mod item_rarity;
 pub mod items;
 pub mod models;
 pub mod mob_effects;
