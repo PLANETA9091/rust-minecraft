@@ -5510,6 +5510,17 @@ impl Zombie {
     /// own clock keeps — the melee/arrow doses the shared hurt walk
     /// never consults.
     fn fire_hurt_server(&mut self, amount: f32, events: &mut MobEvents) {
+        // THE FIRE IMMUNITY'S OWN VERDICT (javap hurtServer pcs 20-41
+        // — the `source.is(IS_FIRE) && hasEffect(FIRE_RESISTANCE)`
+        // pair the 0-return answers: the dose the window the arm the
+        // health the events the refusal never touches, the visual
+        // brand the clock's own walk keeps)
+        if self
+            .effects
+            .has_effect(crate::effects::MOB_EFFECT_FIRE_RESISTANCE)
+        {
+            return;
+        }
         if self.fire_hurt_cooldown > 10 && amount <= self.fire_last_dose {
             return; // the window's own refusal — the same-dose repeat
         }
@@ -18364,6 +18375,34 @@ mod tests {
         // the window admits (the 20-tick spacing the <= 10 gate always
         // admits)
         assert_eq!(landed, 8, "the %20 rhythm the window keeps (landed {landed})");
+    }
+
+    /// THE FIRE IMMUNITY'S OWN VERDICT (javap hurtServer pcs 20-41 —
+    /// the `source.is(IS_FIRE) && hasEffect(FIRE_RESISTANCE)` pair
+    /// the 0-return answers): the branded body the doses the verdict
+    /// refuses — the health the clock's own burn keeps, the events
+    /// the refusal never arms, the bare cadence the same brand the
+    /// immunity without wears the contrast the landed speaks.
+    #[test]
+    fn the_fire_resistance_the_fire_doses_refuse() {
+        let world = wide_flat_world();
+        let mut z = Zombie::new(3, 32.0, 5.0, 32.0, 11);
+        z.fire_ticks = 160; // the pre-armed brand the test stages
+        z.effects.add_effect(
+            crate::effects::MOB_EFFECT_FIRE_RESISTANCE,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        for _ in 0..160 {
+            let ev = z.tick(&world, None, NIGHT);
+            assert!(!ev.fire_hurt, "the immune body the dose refuses");
+            assert_eq!(
+                z.health, ZOMBIE_MAX_HEALTH,
+                "the refused dose the health keeps"
+            );
+        }
+        assert_eq!(z.fire_ticks, 0, "the brand the clock's own burn spends");
     }
 
     /// THE NIGHT HIDES THEM — the MONSTERS_BURN track false, the same

@@ -34750,6 +34750,22 @@ impl App {
         if amount <= 0.0 || self.dead {
             return false;
         }
+        // THE FIRE IMMUNITY'S OWN VERDICT (javap hurtServer pcs 20-41
+        // — the `source.is(IS_FIRE) && hasEffect(FIRE_RESISTANCE)`
+        // pair the 0-return answers: the gate the dying check's own
+        // tail wears, the cooldown the flash the health the voice the
+        // walk the refusal never reaches. The BURNING voice the
+        // IS_FIRE membership speaks — the lava/onFire/inFire/campfire
+        // sources the tag's own roster keeps, the plain/drowning
+        // voices the pair never reads. The visual brand the clock's
+        // own walk keeps — the effect the DAMAGE alone refuses.)
+        if voice == HurtVoice::Burning
+            && self
+                .effects
+                .has_effect(crate::effects::MOB_EFFECT_FIRE_RESISTANCE)
+        {
+            return false;
+        }
         if (self.invulnerable_time as f32) > 10.0 {
             if amount <= self.last_hurt {
                 return false;
@@ -45601,6 +45617,73 @@ mod tests {
         assert_eq!(
             app.health, 0.0,
             "the ungated wither dose the 1.0 body kills"
+        );
+    }
+
+    /// THE FIRE IMMUNITY'S OWN VERDICT (javap hurtServer pcs 20-41 —
+    /// the `source.is(IS_FIRE) && hasEffect(FIRE_RESISTANCE)` pair
+    /// the 0-return answers): the six burning doses the immune body
+    /// refuses — the health the refusal never spends, the clear the
+    /// immunity lifts, the bare body the dose lands again.
+    #[test]
+    fn the_fire_resistance_the_burning_doses_refuse() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        // THE BARE BODY'S BURN (the lava dose the pipeline lands: the
+        // 4.0 the health drop speaks, the true return the landed hurt
+        // wears)
+        app.health = 20.0;
+        assert!(
+            app.hurt_burning(crate::body::LAVA_DAMAGE),
+            "the bare body the lava dose lands"
+        );
+        assert_eq!(app.health, 20.0 - crate::body::LAVA_DAMAGE);
+        // THE IMMUNITY'S OWN HEAD (the give the store banks: the six
+        // burning sources the verdict refuses — the false return the
+        // landed verdict keeps, the health the flash the voice the
+        // refusal never touches)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s fire_resistance".into();
+        app.on_chat_submit();
+        assert!(
+            app.effects
+                .has_effect(crate::effects::MOB_EFFECT_FIRE_RESISTANCE),
+            "the give the store banks"
+        );
+        app.health = 20.0;
+        assert!(!app.hurt_burning(crate::body::LAVA_DAMAGE));
+        assert!(!app.hurt_burning(crate::body::ON_FIRE_DAMAGE));
+        assert!(!app.hurt_burning(crate::body::IN_FIRE_DAMAGE));
+        assert!(!app.hurt_burning(crate::body::IN_SOUL_FIRE_DAMAGE));
+        assert!(!app.hurt_burning(crate::body::CAMPFIRE_DAMAGE));
+        assert!(!app.hurt_burning(crate::body::SOUL_CAMPFIRE_DAMAGE));
+        assert_eq!(app.health, 20.0, "the six refusals the health keeps");
+        // THE CLEAR LIFTS THE IMMUNITY (the milk the store empties:
+        // the 11 updates the 20-tick window the bare dose admits —
+        // the cooldown the six refusals never re-armed, the bare
+        // body the on-fire dose lands again)
+        app.chat_open = true;
+        app.chat_input = "/effect clear".into();
+        app.on_chat_submit();
+        assert!(
+            !app
+                .effects
+                .has_effect(crate::effects::MOB_EFFECT_FIRE_RESISTANCE),
+            "the clear the store empties"
+        );
+        for _ in 0..11 {
+            app.update();
+        }
+        assert!(
+            app.hurt_burning(crate::body::ON_FIRE_DAMAGE),
+            "the bare body the dose lands again"
+        );
+        assert_eq!(
+            app.health,
+            20.0 - crate::body::ON_FIRE_DAMAGE,
+            "the bare body's own drop the landed dose speaks"
         );
     }
 
