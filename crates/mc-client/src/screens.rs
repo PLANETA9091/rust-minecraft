@@ -10612,6 +10612,27 @@ impl App {
                                 })
                             })
                         };
+                        // THE FIGHT'S OWN LOOK-AT (javap `MeleeAttackGoal
+                        // .tick` pc 13-25 + `SonicBoom.tick` pc 0-18 — the
+                        // FIGHT list's own goals the look-at walks wear):
+                        // the SONIC's running window the 3-ARG chain serves
+                        // (`setLookAt(position())` the FEET the Vec3 keeps,
+                        // the ±10/±40 the mob's own getHeadRotSpeed /
+                        // getMaxHeadXRot answers, EVERY tick the gates the
+                        // walk precedes) — the melee's own tick the 5-ARG
+                        // serves (`setLookAt(target, 30.0f, 30.0f)` the EYE
+                        // the getEyeY keeps, the FIXED pair the goal's own
+                        // ldcs carry, the cooldown window the goal still
+                        // runs); the goals' own order the LAST bank the
+                        // wanted wins — the charge window the melee's
+                        // absent gate keeps the sonic's alone
+                        if warden.sonic_active {
+                            if let Some((fx, fy, fz)) = fight_pos {
+                                warden.look_at_feet(fx, fy, fz);
+                            }
+                        } else if let Some((ex, ey, ez)) = sonic_eye {
+                            warden.look_at_eye(ex, ey, ez, 30.0, 30.0);
+                        }
                         let sonic_out = warden.sonic_lane(fight_pos, sonic_eye);
                         if sonic_out.charge_started {
                             warden_sonic_charge_voices.push((warden.x, warden.y, warden.z));
@@ -10647,7 +10668,27 @@ impl App {
                         if melee_out.landed {
                             warden_melee_doses.push((fight_target_id, warden.yaw_deg));
                         }
+                        // THE LOOK'S OWN HEAD TICK (javap `LookControl.tick`
+                        // — the server aiStep's own controls section the
+                        // head rotation serves, the travel the walk
+                        // precedes: the wanted the goals' banks keep, the
+                        // ±max turn the rotateTowards bounds, the Mob's
+                        // ±75 ring the clamp holds)
+                        warden.look_tick_head();
+                        let (pre_x, pre_z) = (warden.x, warden.z);
                         warden.ai_walk(world);
+                        // THE BODY'S OWN FOLLOW (javap `BodyRotationControl
+                        // .clientTick` — the tickHeadTurn walk the
+                        // movement's own delta reads, the isMoving law the
+                        // `(x − xo)² + (z − zo)² > 2.500000277905201e-7`
+                        // fold keeps: the moving tick the head's ring
+                        // clamps, the standing swing the body the ±75
+                        // turn serves, the stable window the front-return
+                        // the decay wears)
+                        let moving = (warden.x - pre_x) * (warden.x - pre_x)
+                            + (warden.z - pre_z) * (warden.z - pre_z)
+                            > 2.500000277905201e-7;
+                        warden.look_tick_body(moving);
                     }
                 }
             }
@@ -37022,8 +37063,13 @@ impl App {
             // the ai_walk the collide's own sweep banks, the feet
             // the current position the house's own mob chain keeps)
             let feet = Vec3::new(warden.x as f32, warden.y as f32, warden.z as f32);
-            // THE STATE (the 26.2 setupAnim's own words): the look
-            // pair the zero yaw the standing body keeps, the WALK
+            // THE STATE (the 26.2 setupAnim's own words): the LOOK
+            // PAIR the extractRenderState's own lerp words serve — the
+            // HEAD YAW the `Mth.lerp(partial, yHeadRotO, yHeadRot)` law
+            // the body's own yaw the wrapped difference answers (the
+            // model's head part the offset rotates, the ±75 ring the
+            // control's clamps keep), the HEAD PITCH the xRot pair the
+            // same fold serves, the WALK
             // PAIR the WalkAnimationState's own getters serve (the
             // speed(partial) the damping min(0.5, 3.0 * speed)
             // consults, the position(partial) the 0.8662 phase rides
@@ -37036,10 +37082,11 @@ impl App {
             let tendril_word =
                 crate::sculk::warden_tendril_animation_at(warden, self.partial_tick);
             let heart_word = crate::sculk::warden_heart_animation_at(warden, self.partial_tick);
+            let head_yaw_word = warden.head_yaw_word_at(self.partial_tick);
             let state = crate::avatar::WardenState {
                 yaw_deg: warden.yaw_deg,
-                pitch_deg: 0.0,
-                head_yaw_off_deg: 0.0,
+                pitch_deg: warden.head_pitch_word_at(self.partial_tick),
+                head_yaw_off_deg: crate::mth::wrap_degrees(head_yaw_word - warden.yaw_deg),
                 walk_pos: warden.walk.position_at(self.partial_tick),
                 walk_speed: warden.walk.speed_at(self.partial_tick),
                 age_ticks,
@@ -53270,6 +53317,71 @@ mod tests {
             app.wardens[0].sonic_boom_cooldown,
             crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS,
             "the 40l the doHurtTarget's own setCooldown banks"
+        );
+    }
+
+    /// THE FIGHT'S OWN LOOK (javap `MeleeAttackGoal.tick` pc 13-25 +
+    /// `LookControl.tick` + `BodyRotationControl.clientTick` over the
+    /// offline world — the armed target the look-at banks, the ±30 the
+    /// first tick the clamp bounds, the O-pair the pre-tick snapshot
+    /// keeps, the swing the body the ±75 turn serves: the standing
+    /// fight the warden the TARGET the head and body both wear — the
+    /// stale yaw the old law never turned).
+    #[test]
+    fn the_fight_look_the_head_the_body_the_target_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE AIR NEIGHBORHOOD (the dose test's own stage — the boxes
+        // the 1.0 gap the reach intersects, the swing the same window
+        // lands)
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body = Some(crate::body::PlayerBody::new(
+            px,
+            feet_y,
+            pz,
+            180.0,
+            0.0,
+        ));
+        // THE WARDEN THE +X NEIGHBOR, THE STALE YAW (the fresh spawn's
+        // 0.0 the +Z facing keeps — the +X target the look NEVER wore,
+        // the old law the yaw the walk direction alone turned)
+        app.wardens
+            .push(crate::sculk::WardenMob::new(201, px + 1.0, feet_y, pz));
+        app.wardens[0].attack_target = Some(crate::sculk::WARDEN_PLAYER_SUSPECT);
+        // THE SONIC BANK THE FRESH WINDOW KEEPS (the melee look the
+        // sonic-free window serves — the 5-arg the 30.0f pair banks)
+        app.wardens[0].sonic_boom_cooldown =
+            crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
+        app.update();
+        // THE HEAD (the ±30 the first tick bounds — the wanted +90 the
+        // -X wing answers: atan2(dz=0, dx=-1)·C − 90, the clamp the
+        // exact 30.0 the sweep wears)
+        assert_eq!(
+            app.wardens[0].head_yaw, 30.0,
+            "the +90 wanted the ±30 clamp bounds the first tick"
+        );
+        // THE O-PAIR (the pre-tick snapshot the render lerp keeps —
+        // the fresh spawn's 0.0 the O banks)
+        assert_eq!(app.wardens[0].head_yaw_o, 0.0);
+        // THE PITCH (the player's eye BELOW the warden's own: the
+        // −0.845 dy the +40.26 wanted wears, the ±30 the first tick
+        // bounds — the exact 30.0 the clamp wears)
+        assert_eq!(
+            app.wardens[0].head_pitch, 30.0,
+            "the below eye the pitch the ±30 turn bounds"
+        );
+        // THE BODY (the standing fight the swing arm serves — the 30°
+        // swing the |head − lastStable| > 15 gate answers, the ±75 the
+        // body the head's own spot turns: the warden the TARGET both
+        // the head and the body wear)
+        assert_eq!(
+            app.wardens[0].yaw_deg, 30.0,
+            "the swing the body the head's own spot turns"
         );
     }
 

@@ -1,60 +1,89 @@
-v0.3.632: the warden the SPOTS the pulse the floor the blink (autopush-573)
+v0.3.633: the warden the FIGHT the look the head the body the target wears (autopush-574)
 
-THE PULSATING SPOTS THE REAL PULSE WEARS — the emissive layers' own
-alpha functions the fresh bytecode re-speaks (jar evidence: 26.2 javap
-verbatim, /tmp/client.jar sha1 2dc72797acbc1b63fc16a11c4ac393605f453754):
+THE WARDEN'S FIGHT LOOK LANE — the head and body the fight target the
+control laws turn (jar evidence: 26.2 javap verbatim, /tmp/client.jar
+sha1 2dc72797acbc1b63fc16a11c4ac393605f453754):
 
-WardenRenderer lambda$new$3 (spots-1) pc 0-15: fconst_0, fload_1, ldc
-0.045f, fmul, f2d, invokestatic Mth.cos(D)F, ldc 0.25f, fmul,
-invokestatic Math.max(FF)F — the max's FIRST arg the FCONST_0 keeps:
-Math.max(0.0f, Mth.cos(age * 0.045f) * 0.25f). lambda$new$5 (spots-2)
-the same walk the +3.1415927f shift wears. The submit call-site
-(LivingEntityEmissiveLayer pc 17-27) the getfield ageInTicks:F the
-second arg passes — the alpha the age clock consults.
+MeleeAttackGoal.tick pc 13-25: getLookControl().setLookAt(target,
+30.0f, 30.0f) — EVERY tick the path recalculation the walk precedes,
+the FIXED pair the goal's own ldcs keep. SonicBoom.tick pc 0-18:
+ATTACK_TARGET.ifPresent(lambda$tick$0: setLookAt(position())) — the
+FEET the Vec3 keeps, EVERY tick the SOUND_DELAY/COOLDOWN gates the
+look PRECEDES (the cooldown return the look never rides).
 
-THE LAW the fresh bytecode banks: the cos halves the [-0.25, 0.25]
-band swing, the max-0.0 floor the NEGATIVE halves swallows — the
-spots-1 the peak 0.25 and the trough 0.0 the age clock alternates,
-the spots-2 the +π shift the anti-phase twin wears (the one the peak
-keeps the instant the other the trough sleeps). The max-0.25 floor
-the autopush-560 round banked the fresh javap REFUTES — the constant
-alpha the misread kept the "pulsating" name never wore (the fconst_0
-the bytecode speaks, the 0.25f ldc the lambda's SECOND max arg alone
-carries — the multiply, not the floor).
+LookControl.setLookAt(Entity,FF) pc 0-18: the wanted the (getX,
+getEyeY, getZ) the overload banks, the maxes the putfields store, the
+lookAtCooldown the iconst_2 arms. setLookAt(DDD) pc 0-24: the maxes
+the MOB's own words serve — getHeadRotSpeed() the bipush-10 answers,
+getMaxHeadXRot() the bipush-40 answers. LookControl.tick pc 0-95: the
+armed tick the getYRotD/getXRotD laws the rotateTowards ±max turn
+serves (the yaw the atan2(dz, dx)·57.2957763671875 − 90.0f fold, the
+pitch the eye anchor + the NEGATION the atan2 tail wears, the dead
+zones the BOTH-absent keeps), the drained window the head the body
+drifts at the 10.0f ldc. Mob.clampHeadRotationToBody pc 0-52 (the
+override the navigation gate DROPS): head = body −
+clamp(wrapDegrees(body − head), ±75). BodyRotationControl.clientTick
+pc 0-116: the moving arm (isMoving the `(x−xo)²+(z−zo)² >
+2.500000277905201e-7` fold) the head's ring rotateHeadIfNecessary
+clamps + the clocks reset, the standing swing the |head −
+lastStable| > 15.0f the ±75 body turn serves, the >10 stable window
+the front-return wears (the g = clamp((stable−10)/10, 0, 1) decay the
+75·(1−g) speed folds). Mth.wrapDegrees/degreesDifference/
+rotateIfNecessary + Control.rotateTowards the helper walks the
+bytecode speaks.
 
-Implemented: avatar.rs alpha_at — the two spot arms' floor 0.25 →
-0.0 (the f32::max(0.0, ...) the Math.max semantics the normal values
-share), the doc comment the fresh walk re-speaks; mc-registry
-generated/skin.rs the hand-maintained warden spots-1 doc row the
-same correction wears (doc-only; the sha1 rows untouched).
+THE GAP THE LANE WEARS: the warden's yaw_deg the ai_walk's own
+direction law alone turned — the standing fight (the in-reach target
+the walk target erase serves) the yaw the LAST WALK DIRECTION kept:
+the warden bit and boomed FACING AWAY, the head never turned, the
+pitch never tilted, the render state's zeros the look pair wore. The
+fresh spawn's own field doc named the lane ("the AI rounds the walk a
+future lane turns").
 
-Tests: the_warden_layer_alphas_the_lambdas_wear re-pins — the sweep
-the lambda walk the same Mth table re-computes (the exact-equality
-the alpha's own fn answers), the [0.0, 0.25] band the pair keeps,
-the ENDS the pulse speaks: age 0.0 the spots-1 peak 0.25 / the
-anti-phase spots-2 trough 0.0 the floor keeps, age π/0.045 the pair
-SWAPS (the spots-1 the cos(π) trough the floor swallows, the
-spots-2 the near-peak > 0.24 the contrast pins); the const biolum /
-the tendrils + heart clock words / the drained gates the prior pins
-keep. Test count unchanged (2107 passed / 0 failed / 21 ignored,
-CARGO_INCREMENTAL=0 — the law's correction the same baseline wears).
+Implemented: mth.rs wrap_degrees/degrees_difference/rotate_towards/
+rotate_if_necessary/clamp (the Mth + Control laws verbatim); sculk.rs
+WardenMob the look fields (the wanted/cooldown/maxes quartet, the
+head_yaw/pitch O-pairs, the body control's stable clocks) +
+WARDEN_HEAD_ROT_SPEED/WARDEN_MAX_HEAD_X_ROT/WARDEN_MAX_HEAD_Y_ROT +
+look_at_eye/look_at_feet + look_tick_head/look_tick_body + the head
+lerp getters; screens.rs the fight walk's look-at banks (the sonic's
+running window the feet wears, the melee the eye the 30.0f pair), the
+look ticks the shared travel walk's own every-tick law wears (the
+moving flag the isMoving delta computes), the render state's head yaw
+offset + pitch the lerp words answer.
+
+Tests +6 (2107 → 2113 passed / 0 failed / 21 ignored,
+CARGO_INCREMENTAL=0): the mth wrap/rotate folds (the ±180 boundary
+the strict pair splits, the shortest path the wrap picks), the
+look-at banks (the overloads' own maxes the consts pin), the head
+tick (the ±30 sweep the convergence pins, the dead zone, the drained
+drift, the ±75 clamp snap, the pitch's negation, the O-pair), the
+body follow (the moving ring, the 15.0f swing, the front-return
+decay, the isMoving threshold), the fight integration (the +X target
+the head/body/pitch the first tick all wear — the stale-yaw law the
+round retires).
 
 Goldens: verify_goldens.sh 13/13 PASS rms 0.000 — NO regeneration
 (verified, not assumed: the golden scenes the warden never renders,
-the pulse the age clock blinks the combat-free frames never feed;
-the render-path change the matrix re-ran green end to end).
+the look the combat-free frames never feed).
 
-Version: workspace Cargo.toml 0.3.631 → 0.3.632 (scripts/
+Version: workspace Cargo.toml 0.3.632 → 0.3.633 (scripts/
 bump_version.py, the 6 lock entries the tool refreshes).
 
 NEXT CANDIDATES (one per round):
-1. the EAT gameEvent lane (the cake bite f8 eating row).
-2. the mob-victim RETALIATION lane (the MobKind::Warden variant the
-   kind tables need, the hunt the HurtByTargetGoal arms).
-3. the SONIC BOOM'S OWN ALL-VICTIMS WALK (the getEntities box the
-   beam's own path wears — the multi-victim dose the single
-   fight-target pair the stand-in keeps).
+1. the mob-victim RETALIATION lane (the MobKind::Warden variant the
+   kind tables need, the hunt the HurtByTargetGoal arms — the dose
+   walks' setLastHurtByMob honest skip the warden-in-mobs lane
+   answers).
+2. the INVESTIGATE/SNIFF look lane (the calm behaviors' own
+   SetLookTarget the disturbance/sniff suspect serves — the fight
+   look the sibling walk wears).
+3. the SONIC CHARGE'S OWN LOOK DURING THE WHOLE WINDOW (the sonic's
+   feet-anchored look the ±10 turn the charge's 60 ticks sweep — the
+   integration the fight walk's branch keeps; the test the charge
+   window wears).
 4. interactivity queue (resident priority): any GUI/input/sound lane.
-5. the warden render polish the CHARGE serves (the layer quads the
-   sonic keyframes ride — the wiring the 570 round landed, the
-   render-arm call-sites the pass-through keeps).
+5. the EAT/SONIC/ALL-VICTIMS candidates the prior rounds named — the
+   autopush-558 (the eat lane) + this round's fresh tick walk (the
+   single-target dose the Optional chain keeps) the jar refuted the
+   stale list's own premise.

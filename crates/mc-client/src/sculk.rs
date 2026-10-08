@@ -2065,6 +2065,18 @@ pub const WARDEN_MOB_HEIGHT: f32 = 2.9;
 /// warden's ears ride the EYE point, not the feet.
 pub const WARDEN_EYE_HEIGHT: f32 = WARDEN_MOB_HEIGHT * 0.85;
 
+/// THE MOB'S OWN HEAD WORDS (javap `Mob` the 26.2 jar — the base's own
+/// bipushes the Warden's class never overrides): `getHeadRotSpeed()` the
+/// `bipush 10` answers (the look-at's yMax the 3-ARG overload the mob
+/// serves), `getMaxHeadXRot()` the `bipush 40` answers (the look-at's
+/// xMax the same overload banks), `getMaxHeadYRot()` the `bipush 75`
+/// answers (the head's ±75 ring the clamp + the body rotates keep).
+/// The MELEE's own 30.0f pair the `MeleeAttackGoal.tick` ldcs carry —
+/// the 5-arg overload the caller's fixed pair banks.
+pub const WARDEN_HEAD_ROT_SPEED: i32 = 10;
+pub const WARDEN_MAX_HEAD_X_ROT: i32 = 40;
+pub const WARDEN_MAX_HEAD_Y_ROT: i32 = 75;
+
 /// THE LOCAL SUSPECT'S OWN KEY (the client's single local player the
 /// anger map's suspect id wears — the hear walks' `vibration_entity`
 /// arg the key carries, the wire rounds the player's own eid re-key;
@@ -2599,6 +2611,28 @@ pub struct WardenMob {
     /// stop answers: javap `SonicBoom.stop` pc 0-6 the
     /// `setCooldown(this, 40)` bank the same walk speaks)
     pub sonic_active: bool,
+    /// THE LOOK CONTROL'S OWN BANKED WORDS (javap `LookControl` — the
+    /// wantedX/Y/Z the 5-arg `setLookAt` stores, the yMaxRotSpeed /
+    /// xMaxRotAngle pair the same call banks, the lookAtCooldown the
+    /// `iconst_2` arms; the fresh None/0/0/0 the unarmed look keeps)
+    pub look_wanted: Option<(f64, f64, f64)>,
+    pub look_cooldown: i32,
+    pub look_y_max: f32,
+    pub look_x_max: f32,
+    /// THE HEAD'S OWN ROTATION (javap `Mob.yHeadRot` / `xRot` — the
+    /// LookControl.tick's rotateTowards writes, the O-pair the render's
+    /// partial lerp keeps; the fresh zero the JVM init keeps — the
+    /// fresh spawn's head the body's own 0.0 the ai walk wears)
+    pub head_yaw: f32,
+    pub head_yaw_o: f32,
+    pub head_pitch: f32,
+    pub head_pitch_o: f32,
+    /// THE BODY ROTATION CONTROL'S OWN CLOCKS (javap
+    /// `BodyRotationControl` — the headStableTime the standing window
+    /// counts, the lastStableYHeadRot the 15.0f swing comparator reads;
+    /// the fresh zero/zero the JVM init keeps)
+    pub head_stable_time: i32,
+    pub last_stable_head_yaw: f32,
 }
 
 impl WardenMob {
@@ -2661,6 +2695,178 @@ impl WardenMob {
             sonic_sound_delay: 0,
             sonic_sound_cooldown: 0,
             sonic_active: false,
+            look_wanted: None,
+            look_cooldown: 0,
+            look_y_max: 0.0,
+            look_x_max: 0.0,
+            head_yaw: 0.0,
+            head_yaw_o: 0.0,
+            head_pitch: 0.0,
+            head_pitch_o: 0.0,
+            head_stable_time: 0,
+            last_stable_head_yaw: 0.0,
+        }
+    }
+
+    /// THE 5-ARG SETLOOKAT (javap `LookControl.setLookAt(Entity,FF)` pc
+    /// 0-18 — the wanted the target's `(getX, getEyeY, getZ)` the
+    /// Entity overload's own walks bank, the maxes the pair the
+    /// putfields store, the lookAtCooldown the `iconst_2` arms): the
+    /// MELEE's own call the `MeleeAttackGoal.tick` pc 13-25 serves —
+    /// `setLookAt(target, 30.0f, 30.0f)` the FIXED pair the goal's own
+    /// ldcs keep, EVERY tick the path recalculation the walk precedes.
+    pub fn look_at_eye(&mut self, x: f64, y: f64, z: f64, y_max: f32, x_max: f32) {
+        self.look_wanted = Some((x, y, z));
+        self.look_y_max = y_max;
+        self.look_x_max = x_max;
+        self.look_cooldown = 2;
+    }
+
+    /// THE 3-ARG SETLOOKAT (javap `LookControl.setLookAt(DDD)` pc 0-24
+    /// — the maxes the MOB's own words serve: `getHeadRotSpeed()` the
+    /// bipush-10 answers, `getMaxHeadXRot()` the bipush-40 answers,
+    /// the cooldown the `iconst_2` arms): the SONIC's own call the
+    /// `SonicBoom.tick` pc 0-18 serves — `ATTACK_TARGET.ifPresent
+    /// (lambda$tick$0: setLookAt(position()))` the FEET the Vec3 the
+    /// position's own coordinates keep, EVERY tick the SOUND_DELAY /
+    /// SOUND_COOLDOWN gates the walk precedes (the cooldown return the
+    /// look NEVER rides).
+    pub fn look_at_feet(&mut self, x: f64, y: f64, z: f64) {
+        self.look_at_eye(
+            x,
+            y,
+            z,
+            WARDEN_HEAD_ROT_SPEED as f32,
+            WARDEN_MAX_HEAD_X_ROT as f32,
+        );
+    }
+
+    /// THE RENDER'S OWN HEAD WORDS (the LivingEntityRenderer's lerp
+    /// law — `Mth.lerp(partialTick, yHeadRotO, yHeadRot)` the head yaw
+    /// wears, the xRot pair the same fold serves): the model's head
+    /// part the caller's wrap answer.
+    pub fn head_yaw_word_at(&self, partial: f32) -> f32 {
+        crate::mth::lerp(
+            partial as f64,
+            self.head_yaw_o as f64,
+            self.head_yaw as f64,
+        ) as f32
+    }
+
+    /// THE RENDER'S OWN PITCH WORD (the same lerp law the xRot pair
+    /// wears — the head's own tilt the model's xRot the caller serves).
+    pub fn head_pitch_word_at(&self, partial: f32) -> f32 {
+        crate::mth::lerp(
+            partial as f64,
+            self.head_pitch_o as f64,
+            self.head_pitch as f64,
+        ) as f32
+    }
+
+    /// THE LOOK'S OWN TICK (javap `LookControl.tick` pc 0-95 + `Mob
+    /// .clampHeadRotationToBody` pc 0-52 — the HEAD walk the server
+    /// aiStep's own `controls` section serves: the goals bank the
+    /// wanted, the control the head turns BEFORE the movement the
+    /// travel walks). The BODY's own follow the `look_tick_body` the
+    /// tick's tail serves (`tickHeadTurn` → BodyRotationControl — the
+    /// movement's own delta the isMoving comparator reads).
+    ///
+    /// THE HEAD (the LookControl's own rotation): the armed tick the
+    /// wanted yaw/pitch the rotateTowards ±max turn serves — the YAW
+    /// the `getYRotD` law the `atan2(dz, dx)·57.2957763671875 − 90.0f`
+    /// fold speaks (the dead zone the BOTH-absent keeps), the PITCH
+    /// the `getXRotD` law the eye anchor reads, the NEGATION the
+    /// atan2's own tail wears (`dmul` then `dneg`), the dead zone the
+    /// same both-absent law keeps; the drained window the head the
+    /// body drifts at the `10.0f` the ldc keeps. THE CLAMP (the Mob's
+    /// own override — the navigation gate the base's walk carries, the
+    /// override DROPS): the head the body's ±75 ring holds — `head =
+    /// body − clamp(wrapDegrees(body − head), ±75)`.
+    pub fn look_tick_head(&mut self) {
+        // THE O-PAIR (the render's lerp the LivingEntity tick's own
+        // snapshot keeps — the O the pre-tick rotation banks)
+        self.head_yaw_o = self.head_yaw;
+        self.head_pitch_o = self.head_pitch;
+        // THE LOOK CONTROL'S OWN ROTATION (the cooldown's armed tick
+        // the wanted serves, the drained one the body drift wears)
+        if self.look_cooldown > 0 {
+            self.look_cooldown -= 1;
+            if let Some((wx, wy, wz)) = self.look_wanted {
+                let dx = wx - self.x;
+                let dz = wz - self.z;
+                // THE YAW (getYRotD pc 0-73 + lambda$tick$0 — the
+                // dead zone the BOTH-absent keeps, the turn the
+                // rotateTowards ±yMax bounds)
+                if dz.abs() > 1.0e-5 || dx.abs() > 1.0e-5 {
+                    let wanted = (dz.atan2(dx)) as f32 * 57.2957763671875 - 90.0;
+                    self.head_yaw =
+                        crate::mth::rotate_towards(self.head_yaw, wanted, self.look_y_max);
+                }
+                // THE PITCH (getXRotD pc 0-101 + lambda$tick$1 — the
+                // eye the anchor reads, the negation the tail wears)
+                let dy = wy - (self.y + WARDEN_EYE_HEIGHT as f64);
+                let horiz = (dx * dx + dz * dz).sqrt();
+                if dy.abs() > 1.0e-5 || horiz.abs() > 1.0e-5 {
+                    let wanted = -(dy.atan2(horiz)) as f32 * 57.2957763671875;
+                    self.head_pitch = crate::mth::rotate_towards(
+                        self.head_pitch,
+                        wanted,
+                        self.look_x_max,
+                    );
+                }
+            }
+        } else {
+            // THE DRAINED WINDOW (pc 61-88 — the head the body drifts
+            // at the 10.0f the rotateTowards bounds)
+            self.head_yaw = crate::mth::rotate_towards(self.head_yaw, self.yaw_deg, 10.0);
+        }
+        // THE MOB'S OWN HEAD CLAMP (the override — the head the body's
+        // ring the wrap fold keeps, every tick)
+        let max_y = WARDEN_MAX_HEAD_Y_ROT as f32;
+        let wrap = crate::mth::wrap_degrees(self.yaw_deg - self.head_yaw);
+        self.head_yaw = self.yaw_deg - crate::mth::clamp(wrap, -max_y, max_y);
+    }
+
+    /// THE BODY'S OWN FOLLOW (javap `BodyRotationControl.clientTick` pc
+    /// 0-116 — the `tickHeadTurn` walk the LivingEntity.tick's own tail
+    /// serves, the movement's delta the `isMoving` comparator reads:
+    /// `(x − xo)² + (z − zo)² > 2.500000277905201e-7` the `ldc2_w` fold
+    /// speaks — the caller's flag the pre-move snapshot carries): the
+    /// moving tick the head the body's ring `rotateHeadIfNecessary`
+    /// clamps (the stable clocks reset), the standing swing the
+    /// `|head − lastStable| > 15.0f` the body turn serves
+    /// (`rotateBodyIfNecessary`), the stable window the `> 10` counter
+    /// the front-return wears (`rotateHeadTowardsFront` — the
+    /// `g = clamp((stable − 10)/10, 0, 1)` decay the speed the
+    /// `75·(1 − g)` fold serves).
+    pub fn look_tick_body(&mut self, moving: bool) {
+        let max_y = WARDEN_MAX_HEAD_Y_ROT as f32;
+        if moving {
+            // pc 0-41: the head the body's ring clamps, the stable
+            // clocks the reset keeps
+            self.head_yaw = crate::mth::rotate_if_necessary(self.head_yaw, self.yaw_deg, max_y);
+            self.last_stable_head_yaw = self.head_yaw;
+            self.head_stable_time = 0;
+        } else if (self.head_yaw - self.last_stable_head_yaw).abs() > 15.0 {
+            // pc 42-90: THE SWING ARM — the head the last stable spot
+            // leaves, the body the ±75 turn serves, the clocks reset
+            self.head_stable_time = 0;
+            self.last_stable_head_yaw = self.head_yaw;
+            self.yaw_deg = crate::mth::rotate_if_necessary(self.yaw_deg, self.head_yaw, max_y);
+        } else {
+            // pc 93-115: THE STABLE ARM — the >10 counter the
+            // front-return wears, the speed the decay folds
+            self.head_stable_time += 1;
+            if self.head_stable_time > 10 {
+                let g = crate::mth::clamp(
+                    (self.head_stable_time - 10) as f32 / 10.0,
+                    0.0,
+                    1.0,
+                );
+                let speed = max_y * (1.0 - g);
+                self.yaw_deg =
+                    crate::mth::rotate_if_necessary(self.yaw_deg, self.head_yaw, speed);
+            }
         }
     }
 
@@ -10456,5 +10662,180 @@ mod tests {
         );
         assert!(out.beam.1 > 0.0, "the above eye the beam lifts");
     }
-}
 
+    /// THE LOOK-AT'S OWN BANKS (javap `LookControl.setLookAt(Entity,FF)`
+    /// pc 0-18 + `setLookAt(DDD)` pc 0-24 — the wanted the overload's
+    /// own walks store, the maxes the pair banks, the cooldown the
+    /// iconst_2 arms: the MELEE's 30.0f pair the fixed ldcs keep, the
+    /// SONIC's 3-arg the mob's own getHeadRotSpeed/getMaxHeadXRot
+    /// bipushes serve).
+    #[test]
+    fn the_fight_look_the_banks_the_overloads_keep() {
+        let mut warden = WardenMob::new(9, 10.0, 32.0, 5.0);
+        // THE FRESH BODY (the JVM init — the unarmed look keeps)
+        assert_eq!(warden.look_wanted, None);
+        assert_eq!(warden.look_cooldown, 0);
+        assert_eq!(warden.look_y_max, 0.0);
+        assert_eq!(warden.look_x_max, 0.0);
+        // THE 5-ARG (the melee's own pair the fixed ldcs carry)
+        warden.look_at_eye(14.0, 35.0, 5.0, 30.0, 30.0);
+        assert_eq!(warden.look_wanted, Some((14.0, 35.0, 5.0)));
+        assert_eq!(warden.look_cooldown, 2, "the iconst_2 the window arms");
+        assert_eq!(warden.look_y_max, 30.0, "the melee's fixed yMax banks");
+        assert_eq!(warden.look_x_max, 30.0, "the melee's fixed xMax banks");
+        // THE 3-ARG (the sonic's own chain the mob's bipushes serve)
+        warden.look_at_feet(14.0, 32.0, 5.0);
+        assert_eq!(warden.look_wanted, Some((14.0, 32.0, 5.0)));
+        assert_eq!(warden.look_cooldown, 2);
+        assert_eq!(
+            warden.look_y_max,
+            WARDEN_HEAD_ROT_SPEED as f32,
+            "the getHeadRotSpeed bipush-10 the 3-arg serves"
+        );
+        assert_eq!(
+            warden.look_x_max,
+            WARDEN_MAX_HEAD_X_ROT as f32,
+            "the getMaxHeadXRot bipush-40 the 3-arg serves"
+        );
+    }
+
+    /// THE LOOK'S OWN HEAD TICK (javap `LookControl.tick` pc 0-95 + the
+    /// Mob clamp — the ±max turn the rotateTowards bounds, the dead
+    /// zone the BOTH-absent keeps, the negation the pitch's tail wears,
+    /// the drained window the head the body drifts, the ±75 ring the
+    /// clamp holds, the O-pair the pre-tick snapshot banks).
+    #[test]
+    fn the_look_tick_head_the_turn_the_clamp_the_drift_keep() {
+        let mut warden = WardenMob::new(9, 10.0, 32.0, 5.0);
+        // THE MELEE'S OWN LOOK (the target the -X wing the eye wears —
+        // the wanted yaw atan2(dz=0, dx=-1)·C − 90 the +90 answers; the
+        // wanted's y the EYE ANCHOR's own expression keeps — the f32
+        // 2.465 the WARDEN_EYE_HEIGHT fold rounds, the literal the last
+        // bits never share)
+        warden.look_at_eye(9.0, 32.0 + WARDEN_EYE_HEIGHT as f64, 5.0, 30.0, 30.0);
+        warden.look_tick_head();
+        // THE O-PAIR (the pre-tick snapshot the render lerp keeps)
+        assert_eq!(warden.head_yaw_o, 0.0, "the O the pre-tick head banks");
+        // THE ±30 TURN (the far wanted the first tick the clamp bounds)
+        assert_eq!(
+            warden.head_yaw, 30.0,
+            "the +90 wanted the ±30 clamp bounds"
+        );
+        // THE PITCH (the level eye: the wanted's y the eye anchor's own
+        // value keeps — the dy the 1e-5 band holds, the horiz the 1.0
+        // the compute arm answers: the atan2(0, 1) = 0 the wanted 0
+        // keeps)
+        assert_eq!(warden.head_pitch, 0.0, "the level eye the pitch keeps");
+        // THE CONVERGENCE (the second tick the sweep carries)
+        warden.look_tick_head();
+        assert_eq!(
+            warden.head_yaw, 60.0,
+            "the second tick the ±30 sweep carries"
+        );
+        // THE MOB CLAMP (the head the body's ±75 ring holds — the
+        // beyond-ring head the wrap fold snaps)
+        warden.head_yaw = 120.0;
+        warden.look_tick_head();
+        assert_eq!(
+            warden.head_yaw, 75.0,
+            "the beyond-ring head the clamp snaps to the ring"
+        );
+        // THE DRAINED WINDOW (the cooldown the tick drains — the head
+        // the body drifts at the 10.0f the rotateTowards bounds)
+        warden.head_yaw = 30.0;
+        warden.look_tick_head();
+        assert_eq!(
+            warden.head_yaw, 20.0,
+            "the drained window the head the body drifts"
+        );
+        // THE DEAD ZONE (the coincident wanted the yaw keeps — the
+        // BOTH-absent the empty arm wears)
+        let mut dead = WardenMob::new(9, 10.0, 32.0, 5.0);
+        dead.look_at_eye(10.0 + 5.0e-6, 34.465, 5.0 + 5.0e-6, 30.0, 30.0);
+        dead.look_tick_head();
+        assert_eq!(
+            dead.head_yaw, 0.0,
+            "the both-absent the yaw the dead zone keeps"
+        );
+        // THE PITCH'S OWN TURN (the target BELOW the eye: the negation
+        // the atan2's own tail wears — the +pitch the down look banks)
+        let mut below = WardenMob::new(9, 10.0, 32.0, 5.0);
+        below.look_at_eye(10.0, 22.0, 5.0, 30.0, 30.0);
+        below.look_tick_head();
+        assert_eq!(
+            below.head_pitch, 30.0,
+            "the below eye the pitch the ±30 turn bounds"
+        );
+    }
+
+    /// THE BODY'S OWN FOLLOW (javap `BodyRotationControl.clientTick` pc
+    /// 0-116 — the moving tick the head's ring clamps and the clocks
+    /// reset, the standing swing the |head − lastStable| > 15.0f the
+    /// ±75 body turn serves, the stable window the >10 counter the
+    /// front-return wears, the isMoving threshold the squared 2.5e-7
+    /// fold keeps).
+    #[test]
+    fn the_look_tick_body_the_swing_the_front_return_keep() {
+        let mut warden = WardenMob::new(9, 10.0, 32.0, 5.0);
+        // THE MOVING ARM (the head the ±75 ring clamps, the clocks the
+        // reset keeps)
+        warden.yaw_deg = 0.0;
+        warden.head_yaw = 100.0;
+        warden.look_tick_body(true);
+        assert_eq!(
+            warden.head_yaw, 25.0,
+            "the moving tick the head the ring clamps: 100 + clamp(−100, ±75)"
+        );
+        assert_eq!(
+            warden.last_stable_head_yaw, 25.0,
+            "the stable spot the moving tick banks"
+        );
+        assert_eq!(warden.head_stable_time, 0, "the moving tick the window resets");
+        // THE STANDING SWING (the head the last stable spot leaves —
+        // the body the ±75 turn serves, the clocks the swing resets)
+        warden.head_yaw = 60.0;
+        warden.look_tick_body(false);
+        assert_eq!(
+            warden.yaw_deg, 60.0,
+            "the swing the body the ±75 turn serves"
+        );
+        assert_eq!(warden.head_stable_time, 0, "the swing the window resets");
+        assert_eq!(warden.last_stable_head_yaw, 60.0);
+        // THE SMALL SWING (the head the 15.0f threshold refuses — the
+        // body the standing body keeps, the window the counter arms)
+        let mut small = WardenMob::new(9, 10.0, 32.0, 5.0);
+        small.yaw_deg = 0.0;
+        small.head_yaw = 10.0;
+        small.last_stable_head_yaw = 0.0;
+        small.look_tick_body(false);
+        assert_eq!(
+            small.yaw_deg, 0.0,
+            "the ≤15 swing the body the standing body keeps"
+        );
+        assert_eq!(small.head_stable_time, 1, "the stable tick the window arms");
+        // THE FRONT-RETURN (the >10 counter the decay wears: the 11th
+        // stable tick the g=0.1 the speed 67.5 serves — the in-ring
+        // offset the single turn wears)
+        for _ in 0..10 {
+            small.look_tick_body(false);
+        }
+        assert_eq!(small.head_stable_time, 11, "the eleven stable ticks bank");
+        assert_eq!(
+            small.yaw_deg, 10.0,
+            "the front-return the body the head serves"
+        );
+        // THE ISMOVING'S OWN THRESHOLD (the squared law the caller's
+        // flag wears — the 0.0005 delta the 2.5e-7 square the strict
+        // compare refuses, the 0.0006 the bigger square arms)
+        let still = 0.0005f64;
+        assert!(
+            !(still * still > 2.500000277905201e-7),
+            "the threshold edge the strict compare keeps stationary"
+        );
+        let moved = 0.0006f64;
+        assert!(
+            moved * moved > 2.500000277905201e-7,
+            "the bigger square the moving flag arms"
+        );
+    }
+}

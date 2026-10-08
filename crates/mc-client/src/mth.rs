@@ -93,6 +93,58 @@ pub fn lerp(delta: f64, start: f64, end: f64) -> f64 {
     start + delta * (end - start)
 }
 
+/// `Mth.clamp(float, float, float)` (javap, verbatim): the three-way
+/// fold the low edge the first compare keeps, the high edge the second.
+pub fn clamp(value: f32, low: f32, high: f32) -> f32 {
+    if value < low {
+        low
+    } else if value > high {
+        high
+    } else {
+        value
+    }
+}
+
+/// `Mth.wrapDegrees(float)` (javap, verbatim): the `frem 360.0f` fold,
+/// the `>= 180.0f` branch the -360 answers, the `< -180.0f` branch the
+/// +360 answers — the EXACT compares the bytecode keeps (the ±180.0
+/// boundary values the strict pair splits: +180 wraps to -180, -180
+/// the strict `<` refuses and stays).
+pub fn wrap_degrees(a: f32) -> f32 {
+    let mut v = a % 360.0;
+    if v >= 180.0 {
+        v -= 360.0;
+    }
+    if v < -180.0 {
+        v += 360.0;
+    }
+    v
+}
+
+/// `Mth.degreesDifference(float, float)` (javap, verbatim): the signed
+/// shortest difference the LOOK walks wear — `wrapDegrees(b - a)` (the
+/// `fsub` the bytecode's own operand order keeps).
+pub fn degrees_difference(a: f32, b: f32) -> f32 {
+    wrap_degrees(b - a)
+}
+
+/// `Control.rotateTowards(from, to, maxTurn)` (javap the interface's
+/// default method, verbatim): the LOOK CONTROL's own per-tick turn —
+/// `from + clamp(degreesDifference(from, to), -maxTurn, maxTurn)` (the
+/// `fneg` the negated low arg the bytecode keeps).
+pub fn rotate_towards(from: f32, to: f32, max_turn: f32) -> f32 {
+    from + clamp(degrees_difference(from, to), -max_turn, max_turn)
+}
+
+/// `Mth.rotateIfNecessary(current, target, maxDelta)` (javap, verbatim):
+/// the BODY ROTATION's own ring —
+/// `current + clamp(degreesDifference(current, target), -maxDelta, maxDelta)`
+/// (the same fold the Control's own default wears, the Mth name the
+/// BodyRotationControl's three rotate walks call).
+pub fn rotate_if_necessary(current: f32, target: f32, max_delta: f32) -> f32 {
+    current + clamp(degrees_difference(current, target), -max_delta, max_delta)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -200,5 +252,51 @@ mod tests {
         assert_eq!(floor(-1.0), -1);
         assert_eq!(floor(f64::NAN), 0, "the d2i the NaN answers zero");
         assert_eq!(floor(0.9375), 0);
+    }
+
+    /// THE WRAP the frem the branches keep (javap, verbatim): the
+    /// boundary pair the strict compares split (+180 the `>= 180`
+    /// fold wraps to -180, -180 the `< -180` refusal keeps), the full
+    /// turn the frem swallows, the negative the +360 fold lifts, the
+    /// already-in-range the identity keeps.
+    #[test]
+    fn the_wrap_degrees_the_boundary_the_frem_keep() {
+        assert_eq!(wrap_degrees(180.0), -180.0, "the +180 the fold wraps");
+        assert_eq!(wrap_degrees(-180.0), -180.0, "the -180 the strict refusal keeps");
+        assert_eq!(wrap_degrees(0.0), 0.0);
+        assert_eq!(wrap_degrees(359.0), -1.0);
+        assert_eq!(wrap_degrees(-359.0), 1.0);
+        assert_eq!(wrap_degrees(360.0), 0.0, "the full turn the frem swallows");
+        assert_eq!(wrap_degrees(720.5), 0.5);
+        assert_eq!(wrap_degrees(45.0), 45.0, "the in-range the identity keeps");
+        assert_eq!(wrap_degrees(-1000.0), 80.0, "the -280 frem the +360 fold lifts");
+    }
+
+    /// THE ROTATION FOLDS the look walks wear (javap Control +
+    /// Mth.rotateIfNecessary, verbatim): the shortest path the
+    /// difference keeps (the +350→+10 pair the -20 answer speaks, the
+    /// +180 wrap the sign the shortest side picks), the clamp the
+    /// per-tick turn bounds (the ±30 the melee's pair answers), the
+    /// zero-max the stillness keeps.
+    #[test]
+    fn the_rotate_folds_the_clamp_the_shortest_path_keep() {
+        // the shortest path: the wrap the +350 -(+10) difference folds
+        assert_eq!(degrees_difference(10.0, 350.0), -20.0);
+        assert_eq!(degrees_difference(350.0, 10.0), 20.0);
+        // the per-tick clamp: the far target the ±max turn bounds —
+        // the ±180 pair the wrap law BOTH the -180 side wears (the
+        // +180 the `>= 180` fold wraps, the -180 the strict refusal
+        // keeps: the ties the same -30 turn answer)
+        assert_eq!(rotate_towards(0.0, 180.0, 30.0), -30.0);
+        assert_eq!(rotate_towards(0.0, -180.0, 30.0), -30.0);
+        assert_eq!(rotate_towards(0.0, 179.0, 30.0), 30.0);
+        assert_eq!(rotate_towards(0.0, -179.0, 30.0), -30.0);
+        assert_eq!(rotate_towards(10.0, 20.0, 30.0), 20.0, "the near the identity keeps");
+        // the rotateIfNecessary the same fold wears
+        assert_eq!(rotate_if_necessary(0.0, 100.0, 75.0), 75.0);
+        assert_eq!(rotate_if_necessary(100.0, 0.0, 75.0), 25.0);
+        assert_eq!(clamp(0.5, 0.0, 1.0), 0.5);
+        assert_eq!(clamp(-1.0, 0.0, 1.0), 0.0);
+        assert_eq!(clamp(2.0, 0.0, 1.0), 1.0);
     }
 }
