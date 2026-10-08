@@ -1188,6 +1188,22 @@ pub enum MobKind {
     /// creeper.json's own pool drops, the NO ambient voice the
     /// getAmbientSound override's absence speaks.
     Creeper,
+    /// THE BRAIN MONSTER (javap `Warden extends Monster` the 26.2 jar
+    /// speaks — the class the goalSelector NEVER wears, the
+    /// Brain/WardenAi activity walk the fighting lanes serve). The
+    /// registration's own words the EntityTypes clinit pins
+    /// (`sized(0.9f, 2.9f)` the warden_sized doc keeps, NO explicit
+    /// eyeHeight the `2.9f * 0.85f` scalable default answers, the
+    /// WARDEN_MOB_* consts speak). The variant the PREY LANE's own
+    /// word carries — the warden's melee/sonic doses the
+    /// `setLastHurtByMob(warden)` reference bank (javap
+    /// `LivingEntity.hurtServer` the resolve walk's tail speaks), the
+    /// bitten mob's own HurtByTargetGoal the warden's PreyView arms,
+    /// the counter-bite the warden's `hurt_from_mob` walk answers.
+    /// The mobs array the body NEVER tracks (the WardenMob the
+    /// sculk lane keeps — the live pos the refresh pass's own
+    /// warden views serve).
+    Warden,
 }
 
 /// THE MOB CATEGORY'S OWN CENSUS SLICE (javap the 26.2 jar the
@@ -1250,9 +1266,11 @@ impl MobKind {
     /// the 346 round's clinit audit already banked).
     pub fn mob_category(self) -> MobCategory {
         match self {
-            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => {
-                MobCategory::Monster
-            }
+            // THE WARDEN'S OWN WORD (javap `Warden extends Monster` the
+            // 26.2 jar speaks — the Monster base the brain monster
+            // joins, the MONSTER category the registration arms)
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper
+            | MobKind::Warden => MobCategory::Monster,
             MobKind::Pig | MobKind::Cow | MobKind::Sheep | MobKind::Chicken
             | MobKind::Wolf => MobCategory::Creature,
         }
@@ -1355,6 +1373,13 @@ impl MobKind {
             // the wolf's own explicit eyeHeight(0.6800000071525574F) —
             // the EntityTypeIds.WOLF block's ldc_w the 26.2 clinit keeps
             MobKind::Wolf => WOLF_EYE_HEIGHT,
+            // THE WARDEN'S SCALABLE DEFAULT (javap the 26.2 jar — the
+            // EntityTypes clinit's WARDEN registration the eyeHeight(F)
+            // call never makes, the EntityDimensions.defaultEyeHeight's
+            // own h * 0.85 fold the warden's `2.9f * 0.85f` pair answers:
+            // 2.465 the WARDEN_EYE_HEIGHT const speaks) — the prey
+            // lane's eye-to-eye rays the same word the fight walk reads
+            MobKind::Warden => crate::sculk::WARDEN_EYE_HEIGHT as f64,
             // THE CREEPER'S SCALABLE DEFAULT — the EntityTypes clinit's
             // own builder chain the eyeHeight(F) call NEVER makes (the
             // registration region's sized/tracking/notInPeaceful the
@@ -1383,6 +1408,11 @@ impl MobKind {
             // the wolf's own createAttributes MAX_HEALTH 8.0 — the
             // Animal.createAnimalAttributes chain's second add speaks
             MobKind::Wolf => WOLF_MAX_HEALTH,
+            // THE WARDEN'S OWN 500.0 (javap `Warden.createAttributes`
+            // pc 3-9 — the add(Attributes.MAX_HEALTH, 500.0d) the
+            // ldc2_w speaks, the WARDEN_MOB_MAX_HEALTH const the same
+            // chain banks) — the hurt lanes' health the same body wears
+            MobKind::Warden => crate::sculk::WARDEN_MOB_MAX_HEALTH,
             // THE CREEPER'S REGISTERED DEFAULT — the
             // Creeper.createAttributes chain the MOVEMENT_SPEED add
             // ALONE makes (javap the 26.2 jar: the
@@ -1408,7 +1438,12 @@ impl MobKind {
             // arms (the armadillo class the lambda names — no armadillo
             // this client draws, the goal the empty vocabulary
             // honest-skips) and NO panic goal the monster gate keeps
-            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => None,
+            // THE WARDEN the same None keeps (the brain monster the
+            // goalSelector never wears — no PanicGoal the registerGoals
+            // walk could speak, the hurt reaction the anger store's own
+            // walk serves)
+            MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper
+            | MobKind::Warden => None,
             MobKind::Sheep => Some(PANIC_SPEED_SHEEP),
             MobKind::Cow => Some(PANIC_SPEED_COW),
             MobKind::Pig => Some(PANIC_SPEED_PIG),
@@ -1447,6 +1482,12 @@ impl MobKind {
             // the Wolf.createAttributes' own add(MOVEMENT_SPEED,
             // 0.30000001192092896) the same word the canine speaks
             MobKind::Wolf => WOLF_MOVEMENT_SPEED,
+            // THE WARDEN'S OWN ADD (javap `Warden.createAttributes`
+            // pc 12-18 — the add(Attributes.MOVEMENT_SPEED,
+            // 0.30000001192092896d) the ldc2_w speaks; the WARDEN
+            // _MOVEMENT_SPEED f32 the same value widens — 0.3f32
+            // IS the 0.30000001192092896 f64 the attribute keeps)
+            MobKind::Warden => crate::sculk::WARDEN_MOVEMENT_SPEED as f64,
         }
     }
 
@@ -1483,6 +1524,11 @@ impl MobKind {
             // WaterAvoidingRandomStrollGoal(this, 1.0) the dconst_1
             // the dump keeps — the shared plain walk rides
             MobKind::Wolf => 1.0,
+            // THE WARDEN the plain 1.0 keeps — the brain monster the
+            // RandomStrollGoal table never consults (the stroll the
+            // WardenAi's own GetRandomPos walk serves, the modifier
+            // the goal API never reads)
+            MobKind::Warden => 1.0,
         }
     }
 
@@ -1559,6 +1605,17 @@ impl MobKind {
             (MobKind::Creeper, VoiceSlot::Ambient) => "entity.creeper.hurt",
             (MobKind::Creeper, VoiceSlot::Hurt) => "entity.creeper.hurt",
             (MobKind::Creeper, VoiceSlot::Death) => "entity.creeper.death",
+            // THE WARDEN'S OWN ROWS (javap `Warden.getAmbientSound` /
+            // `getHurtSound` / `getDeathSound` the 26.2 bytecode keeps —
+            // SoundEvents.WARDEN_AMBIENT / WARDEN_HURT / WARDEN_DEATH
+            // the getstatics name; the words the sculk lane's own voice
+            // walk already speaks). The generic table's row the mobs
+            // array never reaches (the warden the body never tracks —
+            // the voice the sculk lanes' own stream plays), the words
+            // the honest table rows wear.
+            (MobKind::Warden, VoiceSlot::Ambient) => "entity.warden.ambient",
+            (MobKind::Warden, VoiceSlot::Hurt) => "entity.warden.hurt",
+            (MobKind::Warden, VoiceSlot::Death) => "entity.warden.death",
         }
     }
 
@@ -1629,6 +1686,14 @@ impl MobKind {
                     crate::sound::Lane::Step.fold(bs::SOUND_VOLUME[idx], bs::SOUND_PITCH[idx]);
                 Some((crate::sound::Lane::Step.event_of(idx), volume, pitch))
             }
+            // THE WARDEN'S OWN FLAT FOLD (javap `Warden.playStepSound`
+            // pc 0-11 the 26.2 bytecode speaks — the SoundEvents
+            // .WARDEN_STEP the `playSound(..., 10.0f, 1.0f)` walk plays:
+            // the FIXED 10.0 volume the heavy body's own word wears, no
+            // block state the voice reads). The mobs array the body
+            // never tracks (the step the warden's own walk voice the
+            // sculk lane serves) — the row the exhaustiveness keeps.
+            MobKind::Warden => Some(("entity.warden.step", 10.0, 1.0)),
         }
     }
 }
@@ -5306,6 +5371,16 @@ impl Zombie {
             // the wolf's own sized(0.6, 0.85) — the EntityTypeIds.WOLF
             // block's ldc pair the 26.2 clinit keeps
             MobKind::Wolf => (WOLF_WIDTH, WOLF_HEIGHT),
+            // THE WARDEN'S OWN SIZED LAW (javap `EntityType$Builder
+            // .sized(0.9f, 2.9f)` the WARDEN registration's ldc_w pair
+            // speaks — the WARDEN_MOB_* consts the same words bank):
+            // the prey lane's reach math the same box reads (the warden
+            // the mobs array never tracks — the row the kind table's
+            // exhaustiveness keeps)
+            MobKind::Warden => (
+                crate::sculk::WARDEN_MOB_WIDTH as f64,
+                crate::sculk::WARDEN_MOB_HEIGHT as f64,
+            ),
         };
         // THE BABY'S OWN DIMENSIONS (javap `Sheep.getDefaultDimensions`
         // the isBaby arm the dump names — the half-sized box the baby
@@ -5609,6 +5684,28 @@ impl Zombie {
     /// scan).
     pub fn has_target(&self) -> bool {
         self.retaliation_target || self.scan_target
+    }
+
+    /// THE HURTBY REFERENCE'S OWN READ (the lastHurtByMob word the
+    /// goal's own canUse reads — the walk the integration tests'
+    /// assertions consult).
+    pub fn hurt_by_reference(&self) -> Option<PreyView> {
+        self.last_hurt_by_mob
+    }
+
+    /// THE HURTBY REFERENCE'S OWN WRITE (the setLastHurtByMob walk
+    /// the dose lanes' shapes bank — the reference the integration
+    /// tests' prior-bite setup arms).
+    pub fn set_hurt_by_reference(&mut self, attacker: PreyView) {
+        self.last_hurt_by_mob = Some(attacker);
+        self.last_hurt_by_mob_timestamp = self.age_ticks;
+    }
+
+    /// THE RETALIATION'S OWN RUN WORD (the prio-1 goal's own start
+    /// flag the canUse's timestamp law arms — the walk the
+    /// integration tests' assertions consult).
+    pub fn retaliation_armed(&self) -> bool {
+        self.retaliation_target
     }
 
     /// THE MOB-SOURCE HURTBY LANE (javap the prio-1 goal the same
@@ -8249,9 +8346,12 @@ impl Zombie {
             // newest body the same refusal keeps). THE WOLF the same
             // closed gate keeps — the vanilla isFood the TAME word
             // gates (the owner's hand the client never reads), the
-            // wild body no food accepts
+            // wild body no food accepts. THE WARDEN the same closed
+            // gate keeps — the monster chain the Animal.mobInteract's
+            // food arm never reaches.
             MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => false,
             MobKind::Wolf => false,
+            MobKind::Warden => false,
         }
     }
 
@@ -8442,6 +8542,10 @@ impl Zombie {
             // canine never names, the age-lock the kind refuses
             MobKind::Zombie | MobKind::Skeleton | MobKind::Spider | MobKind::Creeper => false,
             MobKind::Wolf => false,
+            // THE WARDEN the same lock keeps — the monster chain the
+            // AgeableMob arm never reaches (no baby the brain monster
+            // wears)
+            MobKind::Warden => false,
         }
     }
 
@@ -8778,6 +8882,20 @@ impl Zombie {
                     if let Some(item) = wire_id("gunpowder") {
                         out.push((item, count));
                     }
+                }
+            }
+            MobKind::Warden => {
+                // THE WARDEN'S OWN POOL (the jar's
+                // data/minecraft/loot_table/entities/warden.json the
+                // verbatim read — POOL 1 the SCULK_CATALYST the weight-1
+                // entry keeps, the count 1 the fixed set_count wears;
+                // the looting ench_count_increase the client's enchant
+                // lane never arms). The generic walk the body never
+                // reaches (the warden the mobs array never tracks — the
+                // death the sculk lanes' own pipeline answers), the row
+                // the honest table word wears.
+                if let Some(item) = wire_id("sculk_catalyst") {
+                    out.push((item, 1));
                 }
             }
         }
@@ -9756,21 +9874,48 @@ pub fn mob_prey_view(m: &Zombie) -> PreyView {
     }
 }
 
+/// THE WARDEN'S OWN SNAPSHOT (the PreyView the warden's doses wear —
+/// the id + the live pos + the eye + the box the same builder law the
+/// mob_prey_view keeps): the kind the WARDEN variant speaks, the eye
+/// the `2.9f * 0.85f` scalable default answers (2.465 the
+/// WARDEN_EYE_HEIGHT const banks), the box the `sized(0.9f, 2.9f)`
+/// registration dims carry. The reference the bitten mob's own
+/// HurtByTargetGoal arms — the counter-fire the warden's own body
+/// aims (javap `LivingEntity.hurtServer` the resolve walk's tail the
+/// setLastHurtByMob(warden) reference banks).
+pub fn warden_prey_view(w: &crate::sculk::WardenMob) -> PreyView {
+    PreyView {
+        id: w.id,
+        kind: MobKind::Warden,
+        x: w.x,
+        y: w.y,
+        z: w.z,
+        eye_y: w.y + crate::sculk::WARDEN_EYE_HEIGHT as f64,
+        width: crate::sculk::WARDEN_MOB_WIDTH as f64,
+        height: crate::sculk::WARDEN_MOB_HEIGHT as f64,
+    }
+}
+
 /// THE MOB-SOURCE HURTBY'S OWN REFRESH (the reference's live body the
 /// pre-pass re-snapshots — the vanilla EntityReference the id names,
 /// the aim the LIVE pos reads: the attacker's own walk the chase
 /// answers, the stale pos the frozen snapshot never wears). The dead
 /// body the canAttack word drops — the reference the null write
 /// clears, the run's own target flag the drop answers (the
-/// canContinueToUse's alive gate the same law speaks). The caller's
-/// own pre-pass moment the wolf's hunt scan shares — the goals' own
-/// tick-before walk.
-pub fn refresh_hurt_by_mob_views(mobs: &mut [Zombie]) {
-    let attackers: Vec<PreyView> = mobs
+/// canContinueToUse's alive gate the same law speaks). THE WARDEN'S
+/// OWN UNIVERSE (the warden the mobs array never tracks — the live
+/// views the caller's own tick banks, the same id-match walk the mob
+/// attackers wear): the warden's own walk the chase follows, the
+/// dead/dropped warden the reference the same null write clears. The
+/// caller's own pre-pass moment the wolf's hunt scan shares — the
+/// goals' own tick-before walk.
+pub fn refresh_hurt_by_mob_views(mobs: &mut [Zombie], warden_views: &[PreyView]) {
+    let mut attackers: Vec<PreyView> = mobs
         .iter()
         .filter(|m| m.health > 0.0 && m.death_time == 0)
         .map(mob_prey_view)
         .collect();
+    attackers.extend_from_slice(warden_views);
     for i in 0..mobs.len() {
         if let Some(victim) = mobs[i].last_hurt_by_mob {
             match attackers.iter().find(|a| a.id == victim.id) {
@@ -12979,7 +13124,7 @@ mod tests {
         // follows)
         wolf.x = 12.5;
         let mut mobs = vec![sk, wolf];
-        refresh_hurt_by_mob_views(&mut mobs);
+        refresh_hurt_by_mob_views(&mut mobs, &[]);
         assert_eq!(
             mobs[0]
                 .last_hurt_by_mob
@@ -12994,12 +13139,81 @@ mod tests {
         // reference the null write clears, the target flag the drop
         // keeps)
         mobs[1].health = 0.0;
-        refresh_hurt_by_mob_views(&mut mobs);
+        refresh_hurt_by_mob_views(&mut mobs, &[]);
         assert!(
             mobs[0].last_hurt_by_mob.is_none(),
             "the dead attacker the reference clears"
         );
         assert!(!mobs[0].retaliation_target, "the dead body the run drops");
+    }
+
+    /// THE WARDEN'S OWN REFRESH LANE (the warden the mobs array never
+    /// tracks — the live views the caller's own tick banks): the
+    /// warden's own walk the reference the LIVE pos follows, the
+    /// dead warden the same null write clears, the kind the WARDEN
+    /// word the snapshot banks (javap `LivingEntity.hurtServer` the
+    /// resolve walk's tail the setLastHurtByMob(warden) reference
+    /// names).
+    #[test]
+    fn the_wardens_own_views_the_reference_the_livewalk_serves() {
+        let world = flat_world();
+        let mut sk = Zombie::new(1, 10.5, 5.0, 10.5, 7);
+        sk.kind = MobKind::Skeleton;
+        sk.on_ground = true;
+        sk.tick(&world, None, NIGHT);
+        // THE WARDEN THE COUNTER-BITE NAMES (the dose the melee walk
+        // banks — the snapshot the builder's own laws wear: the eye
+        // the 2.9*0.85 fold, the box the sized(0.9, 2.9) dims)
+        let mut warden = crate::sculk::WardenMob::new(9, 12.5, 5.0, 10.5);
+        let view = warden_prey_view(&warden);
+        assert_eq!(view.id, 9, "the id the snapshot carries");
+        assert_eq!(view.kind, MobKind::Warden, "the kind the variant banks");
+        assert_eq!(
+            view.eye_y,
+            5.0 + crate::sculk::WARDEN_EYE_HEIGHT as f64,
+            "the eye the scalable default answers"
+        );
+        assert_eq!(
+            (view.width, view.height),
+            (
+                crate::sculk::WARDEN_MOB_WIDTH as f64,
+                crate::sculk::WARDEN_MOB_HEIGHT as f64,
+            ),
+            "the box the registration dims speak"
+        );
+        sk.hurt_by_mob(4.0, view);
+        sk.tick(&world, None, NIGHT);
+        assert!(sk.has_target(), "the warden's dose the lane arms");
+        assert_eq!(
+            sk.last_hurt_by_mob.as_ref().expect("the ref arms").kind,
+            MobKind::Warden,
+            "the warden kind the reference banks"
+        );
+        // THE LIVE REFRESH (the warden's own walk the snapshot
+        // follows — the views the caller's own tick banks)
+        warden.x = 11.5;
+        let views = vec![warden_prey_view(&warden)];
+        let mut mobs = vec![sk];
+        refresh_hurt_by_mob_views(&mut mobs, &views);
+        assert_eq!(
+            mobs[0]
+                .last_hurt_by_mob
+                .as_ref()
+                .expect("the ref the live body wears")
+                .x,
+            11.5,
+            "the warden's walk the live pos answers"
+        );
+        assert!(mobs[0].retaliation_target, "the live body the run keeps");
+        // THE DEAD WARDEN THE SAME DROP (the absent views the
+        // reference clears — the mob attackers' own law the warden
+        // lane wears)
+        refresh_hurt_by_mob_views(&mut mobs, &[]);
+        assert!(
+            mobs[0].last_hurt_by_mob.is_none(),
+            "the dropped warden the reference clears"
+        );
+        assert!(!mobs[0].retaliation_target, "the gone body the run drops");
     }
 
     /// THE WOLF'S ANGER THE MOB DOSE NEVER ROLLS (javap the prio-4
@@ -17370,6 +17584,10 @@ mod tests {
             MobKind::Spider => (SPIDER_WIDTH, SPIDER_HEIGHT),
             MobKind::Creeper => (CREEPER_WIDTH, CREEPER_HEIGHT),
             MobKind::Wolf => (WOLF_WIDTH, WOLF_HEIGHT),
+            MobKind::Warden => (
+                crate::sculk::WARDEN_MOB_WIDTH as f64,
+                crate::sculk::WARDEN_MOB_HEIGHT as f64,
+            ),
         };
         for (k, m) in mobs.iter().enumerate() {
             let (w, h) = dims(m.kind);

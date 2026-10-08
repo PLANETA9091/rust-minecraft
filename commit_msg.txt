@@ -1,76 +1,98 @@
-v0.3.634: the warden the CALM the look the disturbance the head wears (dev-16)
+v0.3.636: the mob-victim RETALIATION lane the warden's own hurt law
+wears (autopush-576)
 
-THE WARDEN'S CALM LOOK LANE — the CORE activity's own look the calm
-body the disturbance and roar target the head turns (jar evidence:
-26.2 javap verbatim, /tmp/client.jar sha1
-2dc72797acbc1b63fc16a11c4ac393605f453754):
+THE EVIDENCE (javap the 26.2 jar speaks, the dump
+scripts/jar_work/warden_class_262.txt banks):
+- `Warden.hurtServer` pc 0-103, verbatim: the `Monster.hurtServer`
+  super call pc 0-7 the dose lands FIRST, the `isNoAi()` gate pc 9-13
+  the brain-always warden never arms, the `isDiggingOrEmerging()` gate
+  pc 16-20 the digging body the ANGER walk refuses (the dose the gate
+  STILL wears), the `source.getEntity()` pc 23-27 the attacker
+  reference names, the `increaseAngerAt(entity, AngerLevel.ANGRY
+  .getMinimumAnger() + 20, false)` pc 29-44 the +100 the store's own
+  walk serves (the ON_HURT_ANGER_BOOST 20 the ANGRY_MIN 80 rides, the
+  countermax flag the iconst_0 never arms), the
+  `brain.getMemory(ATTACK_TARGET).isEmpty()` pc 45-58 the EMPTY brain
+  the retaliation arms, the `instanceof LivingEntity` pc 61-66 the mob
+  body answers, the `!isDirect() || closerThan(entity, 5.0)` pc 76-92
+  the direct bite the 5.0-ring gates, the `setAttackTarget(entity)`
+  pc 95-98 the set walk serves.
+- `Warden.setAttackTarget` pc 0-38: the `eraseMemory(ROAR_TARGET)`
+  head, the `setMemory(ATTACK_TARGET, target)` bank, the
+  `eraseMemory(CANT_REACH_WALK_TARGET_SINCE)` the never-armed memory
+  the no-op keeps, the `SonicBoom.setCooldown(this, 200)` pc 31-35
+  the `sipush 200` the ATTACK_COOLING_DOWN bank speaks.
+- `Warden.createAttributes` pc 3-52: the MAX_HEALTH 500.0 / the
+  MOVEMENT_SPEED 0.30000001192092896 / the KNOCKBACK_RESISTANCE 1.0 /
+  the ATTACK_KNOCKBACK 1.5 / the ATTACK_DAMAGE 30.0 / the
+  FOLLOW_RANGE 24.0 the builder chain speaks.
+- `Warden.playStepSound` pc 0-11: the `playSound(WARDEN_STEP, 10.0f,
+  1.0f)` the FIXED pair the heavy body's own word wears (the Mob base
+  the step-fold the override REPLACES).
+- `LivingEntity.hurtServer` the resolve walk's tail: the LivingEntity
+  source the `setLastHurtByMob(attacker)` reference + the tickCount
+  timestamp arms — the warden's own melee/sonic doses the reference
+  the bitten mob's own HurtByTargetGoal reads (the plain-dose
+  honest-skip the stale shape the round retires).
 
-WardenAi.initCoreActivity pc 0-37: the CORE list the Swim +
-SetWardenLookTarget.create() + LookAtTargetSink.<init>(II) the
-`bipush 45` / `bipush 90` pair + MoveToTargetSink wears — the look
-lane the CORE priority-0 activity EVERY alive tick runs. SetWarden
-LookTarget.lambda$create$0 pc 0-42: the registered trio (the
-LOOK_TARGET / DISTURBANCE_LOCATION / ROAR_TARGET containers) + the
-absent(ATTACK_TARGET) the fighting body's refusal keeps.
-lambda$create$2 pc 0-55: the ROAR_TARGET the `Entity.blockPosition`
-map captures FIRST (the bootstrap #3 the REF_invokeVirtual pins), the
-DISTURBANCE_LOCATION the `or()` fallback serves, the empty pair the
-false answer keeps — the `new BlockPosTracker(pos)` the LOOK_TARGET
-setter banks. BlockPosTracker: currentPosition the bottom-center
-`(x + 0.5, y, z + 0.5)` the centerPosition field wears,
-isVisibleBy the `iconst_1` const the TRUE answer always keeps (the
-canStillUse filter the block tracker never refuses). LookAtTargetSink
-pc 34-47 + lambda$tick$0 pc 0-13: the
-`lookControl.setLookAt(tracker.currentPosition())` walk the 3-ARG
-chain serves (the ±10/±40 the mob's own getHeadRotSpeed /
-getMaxHeadXRot answers), the stop pc 0-10 the
-eraseMemory(LOOK_TARGET) the window's end keeps.
+IMPLEMENTED:
+- mob.rs the `MobKind::Warden` variant the ~14 kind-match sites arm:
+  the mob_category's MONSTER word (Warden extends Monster), the eye's
+  scalable default `2.9f * 0.85f` (2.465 the WARDEN_EYE_HEIGHT const),
+  the MAX_HEALTH 500.0, the MOVEMENT_SPEED 0.3, the stroll's plain
+  1.0, the panic's None (the brain monster the goalSelector never
+  wears), the voice table's WARDEN_AMBIENT/HURT/DEATH rows, the step's
+  FLAT 10.0f/1.0f fold, the food/golden-dandelion gates the monster
+  chain's refusals, the box's `sized(0.9f, 2.9f)` dims (the box_for
+  walk AND the test dims closure AND the render bbox), the death
+  loot's warden.json row (the sculk_catalyst the weight-1 entry
+  keeps), the render model's empty arm (the warden the mobs array
+  never tracks — the generic path's fold the body never reaches).
+- mob.rs `warden_prey_view(w)` — the PreyView the warden's doses
+  wear (the id + the live pos + the eye + the box the same builder
+  law the mob_prey_view keeps); `refresh_hurt_by_mob_views(mobs,
+  warden_views)` — the warden's own universe the attackers' array
+  joins (the warden the mobs array never tracks, the live body the
+  caller's own tick banks, the dead/dropped warden the same null
+  write clears); the hurtby reference's own read/write/run-word
+  accessors the integration tests consult.
+- sculk.rs `WARDEN_SET_TARGET_SONIC_COOLDOWN_TICKS = 200` + the
+  `hurt_from_mob(dmg, attacker_id, targetable, in5)` walk — the
+  hurtServer pc 0-103 law verbatim (the dose the head lands, the +100
+  the ANGRY_MIN + the boost the iadd folds, the digging gate the
+  anger walk refuses, the EMPTY-ATTACK-TARGET brain + the
+  closerThan(5.0) the setAttackTarget arm serves: the ROAR_TARGET
+  erase + the ATTACK_TARGET bank + the CANT_REACH no-op + the 200l
+  the SonicBoom.setCooldown wears, the knockback the resistance's own
+  1.0 the caller never serves).
+- screens.rs the dose walks the reference now banks: the melee bite
+  `hurt_by_mob(dmg, warden_view)` (the warden's own live body the
+  dose re-checks, the dead/dropped warden the null-source word keeps
+  — the same law the mob-vs-mob bite walk speaks), the sonic boom's
+  `hurtServer(sonicBoom(warden), 10.0f)` the SAME LivingEntity source
+  the resolve walk names; the refresh caller the warden's own views
+  banks (the alive filter the universe wears); the bite_events walk
+  the warden's own body arm — the counter-bite `hurt_from_mob` the
+  mob's dose answers (the attacker's own live word the canTargetEntity
+  verdict consults, the closerThan(5.0) the feet the
+  Entity.distanceToSqr law reads, the hurt voice the v4.0 the
+  getSoundVolume fold wears, the +100 the game_events row the walk
+  records, the knockback the resistance the push never serves).
 
-THE LOOK THE LANE WEARS: the calm warden the DISTURBANCE the head
-never turned — the investigate walk moved the body, the head the
-stale direction kept; the roar the warden roared, the head the
-wind-up's own target never faced. The stealth gameplay the sounds
-build: the thrown snowball the warden's head the echo's own block
-turns toward — the calm body's eyes the client now serves.
-
-Implemented: sculk.rs WARDEN_LOOK_SINK_DURATION_TICKS(45) /
-WARDEN_LOOK_SINK_MAX_DISTANCE(90) + WardenMob the look_target
-memory + the look_sink_ticks run clock + calm_look_trigger (the
-absent gate + the roar-first or() chain + the bottom-center bank +
-the fresh-window clock reset the running re-bank never restarts) +
-calm_look_tick (the 45-tick window the stop's erase serves); screens
-.rs the calm lane the travel walk's own every-tick law wears (the
-roar target's LIVE block pos the resolution keeps, the disturbance
-the or() fallback) + the calm branch the look chain's own priority
-answers (the fight's own goals the wanted WIN the order keeps, the
-CORE's sink the 3-arg the leftover look serves).
-
-Tests +2 (2113 → 2115 passed / 0 failed / 21 ignored,
-CARGO_INCREMENTAL=0): the calm look's own laws (the both-absent
-refusal, the bottom-center bank, the re-bank the running clock
-never restarts, the fight refusal, the roar-first or() arm, the
-45-tick window the 46th erase + the re-fire, the (45, 90) pair the
-bipushes pin) + the integration (the Manhattan-1 disturbance the
-investigate walk refuses while the CORE's look the distance gate
-never carries — the head the ±10 the first tick bounds, the body
-the ≤15 swing the standing body keeps).
-
-Goldens: verify_goldens.sh 13/13 PASS rms 0.000 — NO regeneration
-(verified, not assumed: the golden scenes the warden never renders,
-the calm look the combat-free frames never feed). Build warnings
-12 = 12 (the pre-existing set the round never grows).
-
-Version: workspace Cargo.toml 0.3.633 → 0.3.634 (scripts/
-bump_version.py, the 6 lock entries the tool refreshes).
-
-NEXT CANDIDATES (one per round):
-1. the mob-victim RETALIATION lane (the MobKind::Warden variant the
-   ~13 kind-match sites need, the hunt the HurtByTargetGoal arms).
-2. the SNIFF'S OWN LOOK the suspect wears (the SetEntityLookTarget
-   Sometimes the SNIFF activity's own behavior — the calm look the
-   sibling lane wears, the entity target the tracker follows).
-3. the SONIC CHARGE'S OWN LOOK the whole window wears (the feet-
-   anchored ±10 sweep the 60-tick charge integration keeps).
-4. interactivity queue (resident priority): any GUI/input/sound lane.
-5. the DISK WATCH (the round the 6.0G root closes — the target/ the
-   builds re-fill; the du check the future rounds wear).
+VERIFIED:
+- CARGO_INCREMENTAL=0 cargo test --workspace 2120 passed / 0 failed /
+  21 ignored (baseline 2116 + 4: the hurt_from_mob's own laws — the
+  dose, the +100, the occupied brain the re-bank refuses, the
+  beyond-5 ring, the untargetable anger, the digging gate, the dead
+  body — + the warden views' refresh lane (the live pos the snapshot
+  follows, the dropped warden the reference clears) + the bite's own
+  reference the integration world pins (the 29.52 the ARMOR LAW
+  wears: the zombie's own 2 armor the CombatRules fold speaks) + the
+  counter-bite's own walk (the chase the step vibrations the hearing
+  lane serves, the +100 the dose adds, the ATTACK_TARGET the mob id
+  banks, the 200l the cooldown wears, the 3.0 the bare fangs deal));
+  goldens 14/14 PASS rms 0.000 (NO regeneration — the golden scenes
+  the warden never renders, the empty arm the generic path the dead
+  code keeps); build warnings 11 = 11 (the baseline the round never
+  grows).
+- committed v0.3.636, pushed origin main.

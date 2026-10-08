@@ -1732,6 +1732,14 @@ pub const WARDEN_ATTACK_IMPACT_VOLUME: f32 = 10.0;
 /// consults.
 pub const WARDEN_ATTACK_SONIC_COOLDOWN_TICKS: i32 = 40;
 
+/// javap `Warden.setAttackTarget` pc 31-35 — the `sipush 200` the
+/// `SonicBoom.setCooldown(this, 200)` call keeps: the ATTACK_COOLING_DOWN
+/// memory the EVERY setAttackTarget write banks (the hurt walk's own
+/// retaliation arm the brain rounds serve — the roar-stop's setAttack
+/// Target arm the same bank speaks, the 200-tick window the sonic
+/// start refuses while it lives).
+pub const WARDEN_SET_TARGET_SONIC_COOLDOWN_TICKS: i32 = 200;
+
 /// `SonicBoom` clinit pc 9-15 — the `ldc_w 60.0f` the `Mth.ceil` walk
 /// serves: the DURATION the Behavior ctor's own arg carries (the
 /// charge window the start's `setMemoryWithExpiry(ATTACK_COOLING_DOWN,
@@ -4728,6 +4736,77 @@ impl WardenMob {
                 false,
             );
             anger_raised = attacker_targetable;
+        }
+        Some(WardenHurt {
+            died,
+            word,
+            pitch,
+            anger_raised,
+            anger_after: self.active_anger(),
+        })
+    }
+
+    /// THE MOB-SOURCE DOSE'S OWN WALK (javap `Warden.hurtServer` pc 0-103
+    /// the 26.2 bytecode speaks, verbatim: the `Monster.hurtServer` super
+    /// call pc 0-7 the dose lands FIRST, the `isNoAi()` gate pc 9-13 the
+    /// brain-always warden never arms, the `isDiggingOrEmerging()` gate
+    /// pc 16-20 the digging body the ANGER walk refuses — the dose the
+    /// gate STILL wears; the `source.getEntity()` pc 23-27 the attacker
+    /// reference names, the `increaseAngerAt(entity, AngerLevel.ANGRY
+    /// .getMinimumAnger() + 20, false)` pc 29-44 the +100 the store's
+    /// own walk serves — the ON_HURT_ANGER_BOOST 20 the ANGRY_MIN 80
+    /// rides, the countermax flag the iconst_0 never arms; the
+    /// `brain.getMemory(ATTACK_TARGET).isEmpty()` pc 45-58 the EMPTY
+    /// brain the retaliation arms, the `instanceof LivingEntity` pc 61-66
+    /// the mob body answers, the `!isDirect() || closerThan(entity, 5.0)
+    /// ` pc 76-92 the direct bite the 5.0-ring gates, the `setAttack
+    /// Target(entity)` pc 95-98 the ROAR_TARGET erase + the ATTACK_TARGET
+    /// set + the CANT_REACH erase + the SonicBoom.setCooldown 200 the
+    /// Warden.setAttackTarget pc 0-38 walk serves).
+    /// The KNOCKBACK the resistance's own 1.0 the law refuses — the
+    /// caller the push never serves (the `*(1.0 - 1.0)` zero the
+    /// LivingEntity.knockback fold keeps). The dead the dose refuses
+    /// (the hurt_from_player's own gate the same head keeps). The
+    /// attacker the MOB ID the anger store's key banks (the
+    /// WARDEN_PLAYER_SUSPECT word the player doses alone speak).
+    pub fn hurt_from_mob(
+        &mut self,
+        dmg: f32,
+        attacker_id: u64,
+        attacker_targetable: bool,
+        attacker_in_closer_than_5: bool,
+    ) -> Option<WardenHurt> {
+        if self.health <= 0.0 {
+            return None;
+        }
+        self.health -= dmg;
+        let died = self.health <= 0.0;
+        let word = if died {
+            "entity.warden.death"
+        } else {
+            "entity.warden.hurt"
+        };
+        let pitch = self.voice_pitch();
+        let mut anger_raised = false;
+        if !self.digging_or_emerging {
+            // pc 29-44: the +100 the store's own walk serves
+            self.increase_anger_at(
+                attacker_id,
+                false,
+                attacker_targetable,
+                WARDEN_ANGER_ANGRY_MIN + WARDEN_ON_HURT_ANGER_BOOST,
+                false,
+            );
+            anger_raised = attacker_targetable;
+            // pc 45-98: the EMPTY brain + the direct-bite 5.0-ring the
+            // setAttackTarget arm wears (the roar-stop's own bank the
+            // same walk speaks — the CANT_REACH the never-armed memory
+            // the no-op keeps)
+            if self.attack_target.is_none() && attacker_in_closer_than_5 {
+                self.roar_target = None;
+                self.attack_target = Some(attacker_id);
+                self.attack_cooldown = WARDEN_SET_TARGET_SONIC_COOLDOWN_TICKS;
+            }
         }
         Some(WardenHurt {
             died,
@@ -11176,6 +11255,146 @@ mod tests {
         assert_eq!(
             warden.look_sink_ticks, 0,
             "the fresh arm the clock restarts"
+        );
+    }
+
+    /// THE MOB-SOURCE HURT'S OWN LAWS (javap `Warden.hurtServer` pc
+    /// 0-103 the 26.2 bytecode keeps — the dose the super call lands,
+    /// the +100 the ON_HURT_ANGER_BOOST the ANGRY_MIN rides, the
+    /// digging gate the anger walk refuses, the EMPTY-ATTACK-TARGET
+    /// brain + the closerThan(5.0) the setAttackTarget arm wears, the
+    /// 200l the SonicBoom.setCooldown banks).
+    #[test]
+    fn the_hurt_from_mob_the_laws_the_bytecode_keeps() {
+        // THE DOSE + THE ANGER (the +100 the mob-id key banks — the
+        // fresh warden's store the 100 the POST-increase verdict
+        // answers)
+        let mut warden = WardenMob::new(11, 5.5, 40.0, 5.5);
+        let pre_health = warden.health;
+        let hurt = warden
+            .hurt_from_mob(7.0, 4242, true, true)
+            .expect("the live body the dose answers");
+        assert_eq!(
+            warden.health,
+            pre_health - 7.0,
+            "the raw dose the health wears (the no-armor body)"
+        );
+        assert!(!hurt.died, "the survivor the death verdict refuses");
+        assert_eq!(hurt.word, "entity.warden.hurt", "the hurt voice banks");
+        assert!(hurt.anger_raised, "the targetable attacker the anger arms");
+        assert_eq!(
+            hurt.anger_after,
+            WARDEN_ANGER_ANGRY_MIN + WARDEN_ON_HURT_ANGER_BOOST,
+            "the +100 the ANGRY_MIN + the boost the iadd folds"
+        );
+        // THE SETATTACKTARGET ARM (the EMPTY brain + the direct-bite
+        // 5.0-ring the walk serves — the ROAR_TARGET erase the None
+        // keeps, the ATTACK_TARGET the mob id banks, the 200l the
+        // SonicBoom.setCooldown's own bank answers)
+        assert_eq!(
+            warden.attack_target,
+            Some(4242),
+            "the mob id the ATTACK_TARGET banks"
+        );
+        assert!(
+            warden.roar_target.is_none(),
+            "the erase the ROAR_TARGET retires"
+        );
+        assert_eq!(
+            warden.attack_cooldown,
+            WARDEN_SET_TARGET_SONIC_COOLDOWN_TICKS,
+            "the 200l the setCooldown bank speaks"
+        );
+
+        // THE OCCUPIED BRAIN THE RE-BANK REFUSES (the
+        // ATTACK_TARGET-present walk pc 58's ifeq the arm never
+        // serves — the anger STILL climbs)
+        let mut warden = WardenMob::new(11, 5.5, 40.0, 5.5);
+        warden.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        let pre_health = warden.health;
+        warden
+            .hurt_from_mob(7.0, 4242, true, true)
+            .expect("the live body the dose answers");
+        assert_eq!(
+            warden.attack_target,
+            Some(WARDEN_PLAYER_SUSPECT),
+            "the occupied brain the re-bank refuses"
+        );
+        assert_eq!(
+            warden.active_anger(),
+            WARDEN_ANGER_ANGRY_MIN + WARDEN_ON_HURT_ANGER_BOOST,
+            "the anger the occupied brain still banks"
+        );
+        assert_eq!(
+            warden.health,
+            pre_health - 7.0,
+            "the dose the occupied brain still wears"
+        );
+
+        // THE BEYOND-5 DIRECT DOSE (the ring the arm refuses — the
+        // anger the store still banks, the target the None keeps)
+        let mut warden = WardenMob::new(11, 5.5, 40.0, 5.5);
+        warden
+            .hurt_from_mob(7.0, 4242, true, false)
+            .expect("the live body the dose answers");
+        assert_eq!(
+            warden.attack_target, None,
+            "the beyond-5 bite the target arm refuses"
+        );
+        assert_eq!(
+            warden.active_anger(),
+            WARDEN_ANGER_ANGRY_MIN + WARDEN_ON_HURT_ANGER_BOOST,
+            "the anger the ring never gates"
+        );
+        assert_eq!(
+            warden.attack_cooldown, 0,
+            "the cooldown the refused arm never banks"
+        );
+
+        // THE UNTARGETABLE ATTACKER (the canTargetEntity verdict the
+        // anger walk consults — the dose the walk STILL lands, the
+        // setAttackTarget the LivingEntity source the ring serves)
+        let mut warden = WardenMob::new(11, 5.5, 40.0, 5.5);
+        warden
+            .hurt_from_mob(7.0, 4242, false, true)
+            .expect("the live body the dose answers");
+        assert_eq!(
+            warden.active_anger(), 0,
+            "the untargetable suspect the anger refuses"
+        );
+        assert_eq!(
+            warden.attack_target,
+            Some(4242),
+            "the LivingEntity source the target arm serves"
+        );
+
+        // THE DIGGING GATE (javap pc 16-20 — the isDiggingOrEmerging
+        // the ANGER/TARGET walk refuses, the dose the gate STILL
+        // wears)
+        let mut warden = WardenMob::new(11, 5.5, 40.0, 5.5);
+        warden.digging_or_emerging = true;
+        let pre_health = warden.health;
+        let hurt = warden
+            .hurt_from_mob(7.0, 4242, true, true)
+            .expect("the live body the dose answers");
+        assert_eq!(
+            warden.health,
+            pre_health - 7.0,
+            "the digging the dose still wears"
+        );
+        assert!(!hurt.anger_raised, "the digging the anger refuses");
+        assert_eq!(
+            warden.attack_target, None,
+            "the digging the target arm refuses"
+        );
+
+        // THE DEAD BODY THE DOSE REFUSES (the hurt_from_player's own
+        // gate the same head keeps)
+        let mut warden = WardenMob::new(11, 5.5, 40.0, 5.5);
+        warden.health = 0.0;
+        assert!(
+            warden.hurt_from_mob(7.0, 4242, true, true).is_none(),
+            "the corpse the dose refuses"
         );
     }
 }
