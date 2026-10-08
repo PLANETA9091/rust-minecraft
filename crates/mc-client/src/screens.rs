@@ -10203,12 +10203,16 @@ impl App {
             // own arms the lanes serve — the charge the start's voice
             // wears, the boom the dose + the push the victim's own
             // pipeline answers: the beam the plain-add push rides, the
-            // yaws the melee walk keeps the sonic NEVER consults)
+            // yaws the melee walk keeps the sonic NEVER consults; the
+            // VICTIM the pair carries — the player the None speaks,
+            // the mob target's own id the Some banks — the dose the
+            // consumer's per-victim walk serves)
             let mut warden_sonic_charge_voices: Vec<(f64, f64, f64)> =
                 Vec::new();
             let mut warden_sonic_boom_voices: Vec<(f64, f64, f64)> =
                 Vec::new();
-            let mut warden_sonic_doses: Vec<(f64, f64, f64)> = Vec::new();
+            let mut warden_sonic_doses: Vec<(Option<u64>, f64, f64, f64)> =
+                Vec::new();
             // THE SONIC BEAM'S OWN PLANTS (javap `SonicBoom
             // .lambda$tick$2` pc 40-108 — the `Mth.floor(len) + 7`
             // walk's exact points the sendParticles count-1 plants: the
@@ -10613,7 +10617,12 @@ impl App {
                             warden_sonic_charge_voices.push((warden.x, warden.y, warden.z));
                         }
                         if sonic_out.boomed {
-                            warden_sonic_doses.push(sonic_out.beam);
+                            warden_sonic_doses.push((
+                                fight_target_id,
+                                sonic_out.beam.0,
+                                sonic_out.beam.1,
+                                sonic_out.beam.2,
+                            ));
                             warden_sonic_boom_voices.push((warden.x, warden.y, warden.z));
                             // THE BEAM'S OWN WALK (pc 40-51 the `i =
                             // Mth.floor(len) + 7` length banks, pc 53-108
@@ -10852,7 +10861,7 @@ impl App {
                     }
                 }
             }
-            for (bx, by, bz) in warden_sonic_doses {
+            for (victim, bx, by, bz) in warden_sonic_doses {
                 // THE SONIC DOSE'S OWN WALK (javap `SonicBoom
                 // .lambda$tick$2` pc 121-137 — the 10.0f the
                 // `hurtServer(sonicBoom(warden), 10.0f)` dose wears,
@@ -10867,12 +10876,112 @@ impl App {
                 // the 0.5 the vertical the KNOCKBACK_VERTICAL wears,
                 // the `(1 − resistance)` fold the player's own 0.0
                 // the raw dose speaks, the isFinite guard the
-                // normalization answers)
-                if self.hurt(crate::sculk::WARDEN_SONIC_DAMAGE) {
-                    if let Some(b) = &mut self.body {
-                        b.vx += bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
-                        b.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
-                        b.vz += bz * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                // normalization answers) — THE VICTIM the pair
+                // carries: the player the None speaks, the mob
+                // target's own id the Some banks (the same
+                // per-victim walk the bite's consumer keeps).
+                match victim {
+                    // THE MOB-TARGET DOSE (the same hurtServer walk
+                    // the player arm wears — the 10.0 the health
+                    // wears through the mob's own hurt pipeline's
+                    // armor walk, the beam push the plain add speaks,
+                    // the hurt/death voice the pipeline's makeSound
+                    // speaks, the loot the die() tail rolls at the
+                    // kill — the CLOSED player-kill XP gate the rare
+                    // rows refuse, the dying body the repeat boom
+                    // refuses). THE SETLASTHURTBYMOB WORD the
+                    // reference banks the same honest skip the bite
+                    // keeps — the plain dose the shape holds.
+                    Some(id) => {
+                        let Some(mob) =
+                            self.mobs.iter_mut().find(|m| m.id as u64 == id)
+                        else {
+                            continue;
+                        };
+                        // THE DYING BODY THE DOSE REFUSES (the hurt
+                        // pipeline's own gate — the corpse the repeat
+                        // booms never dose)
+                        if mob.death_time > 0 || mob.health <= 0.0 {
+                            continue;
+                        }
+                        mob.hurt(crate::sculk::WARDEN_SONIC_DAMAGE as f64, false);
+                        // THE BEAM'S OWN PUSH (the plain add the
+                        // Entity.push keeps — the vel the HALF the
+                        // melee knockback's own fold never takes, the
+                        // beam the direction the normalized walk
+                        // serves)
+                        mob.vx +=
+                            bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                        mob.vy +=
+                            by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
+                        mob.vz +=
+                            bz * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                        // THE KIND'S OWN WORDS + THE LOOT'S OWN ROLL (the
+                        // facts the borrow captures — the drop the tail
+                        // speaks AT the kill, the spawn order the
+                        // die-then-drop walk keeps)
+                        let pitch = mob.voice_pitch();
+                        let kind = mob.kind;
+                        let died = mob.health <= 0.0;
+                        let (mx, my, mz) = (mob.x, mob.y, mob.z);
+                        let loot =
+                            if died { mob.death_loot(false) } else { Vec::new() };
+                        let hurt_word = kind.voice_event(crate::mob::VoiceSlot::Hurt);
+                        let death_word = kind.voice_event(crate::mob::VoiceSlot::Death);
+                        let ear = self
+                            .body
+                            .as_ref()
+                            .map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let yaw = self.listener_yaw();
+                        // THE VOICE (hurtServer's makeSound — the hurt
+                        // sound while alive, the death sound the die()
+                        // tail speaks) + THE LOOT'S OWN SPAWN (the
+                        // dropAllDeathLoot walk — the entity's feet the
+                        // spawnAtLocation law serves, the pickup delay
+                        // the default 10)
+                        if died {
+                            self.sounds.play_voice_at_pan(
+                                self.frame,
+                                death_word,
+                                1.0,
+                                pitch,
+                                ear_distance(ear, mx, my, mz),
+                                ear_pan(ear, yaw, mx, my, mz),
+                            );
+                            for (item, count) in loot {
+                                let drop_id = self.next_drop_id;
+                                self.next_drop_id += 1;
+                                self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                                    drop_id,
+                                    item,
+                                    count,
+                                    mx,
+                                    my,
+                                    mz,
+                                    &mut self.mob_rng,
+                                ));
+                            }
+                        } else {
+                            self.sounds.play_voice_at_pan(
+                                self.frame,
+                                hurt_word,
+                                1.0,
+                                pitch,
+                                ear_distance(ear, mx, my, mz),
+                                ear_pan(ear, yaw, mx, my, mz),
+                            );
+                        }
+                    }
+                    // THE PLAYER ARM (the dose the body's own pipeline
+                    // wears — the same walk the pre-victim rounds kept)
+                    None => {
+                        if self.hurt(crate::sculk::WARDEN_SONIC_DAMAGE) {
+                            if let Some(b) = &mut self.body {
+                                b.vx += bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                                b.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
+                                b.vz += bz * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                            }
+                        }
                     }
                 }
             }
@@ -53382,6 +53491,259 @@ mod tests {
                     .collect::<Vec<_>>()
             );
         }
+    }
+
+    /// THE SONIC BOOM'S OWN MOB DOSE (javap `SonicBoom.lambda$tick$2`
+    /// pc 121-137 over the offline world — the warden the MOB target
+    /// the mid-window boom serves: the 10.0 the health wears through
+    /// the hurt pipeline's armor walk, the beam push the plain add
+    /// speaks, the hurt voice the pipeline's makeSound plays, the 26l
+    /// the fired boom banks — the player's own pool the mob victim
+    /// never wears).
+    #[test]
+    fn the_sonic_boom_the_mob_the_dose_the_push_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE CREATIVE STAND-IN (the bite test's own law — the zombie's
+        // own player-scan the creative word refuses: the hunt walk the
+        // stage's walk keeps silent, the boom the warden's own dose
+        // alone speaks)
+        app.game_mode = GameMode::Creative;
+        // THE AIR NEIGHBORHOOD (the dose test's own stage the eye ray
+        // never fears — the zombie the +X neighbor the beam the
+        // chest→eye walk serves)
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body =
+            Some(crate::body::PlayerBody::new(px, feet_y, pz, 180.0, 0.0));
+        app.mobs
+            .push(crate::mob::Zombie::new(777, px + 1.0, feet_y, pz, 4));
+        // THE HEALED STAND-IN (the 100.0 pool the one-shot boom
+        // refuses — the dose the SURVIVOR the walk serves)
+        app.mobs[0].health = 100.0;
+        app.wardens
+            .push(crate::sculk::WardenMob::new(204, px, feet_y, pz));
+        app.wardens[0].attack_target = Some(777);
+        // THE MID-WINDOW STATE (the rings test's own surgical setup —
+        // the active the running state keeps, the 2 the window's own
+        // tail banks, the 1 the delay's last tick covers — the update's
+        // drain walk the both-absent tick the boom arms; the standing
+        // window the melee swing the same tick refuses)
+        app.wardens[0].sonic_active = true;
+        app.wardens[0].attack_cooldown = 2;
+        app.wardens[0].sonic_sound_delay = 1;
+        app.wardens[0].sonic_sound_cooldown = 0;
+        let health_before = app.mobs[0].health;
+        let (vx_before, vz_before) = (app.mobs[0].vx, app.mobs[0].vz);
+        app.update();
+        // THE DOSE (the 10.0 the armor walk wears — the CombatRules
+        // fold the hurt_shared body keeps: the zombie's own 2.0 armor
+        // the 10/2 the divisor answers, the 0.4 floor the clamp keeps)
+        let f6 = (crate::mob::ZOMBIE_ARMOR as f32 - 10.0f32 / 2.0)
+            .clamp((crate::mob::ZOMBIE_ARMOR * 0.2) as f32, 20.0);
+        assert_eq!(
+            app.mobs[0].health,
+            health_before - 10.0 * (1.0 - f6 / 25.0),
+            "the boom the armor walk wears"
+        );
+        // THE PUSH (the beam the +X direction wears — the plain add
+        // the Entity.push keeps: the 2.5 the horizontal the
+        // KNOCKBACK_HORIZONTAL carries, the +Z the beam never wears)
+        assert!(
+            app.mobs[0].vx - vx_before > 0.5,
+            "the 2.5 push the +X beam wears: {} vs {}",
+            app.mobs[0].vx,
+            vx_before
+        );
+        assert!(
+            (app.mobs[0].vz - vz_before).abs() < 1e-6,
+            "the push the +Z the beam never wears: {} vs {}",
+            app.mobs[0].vz,
+            vz_before
+        );
+        // THE HURT VOICE (the hurtServer's makeSound speaks — the
+        // audio assets the CI body keeps absent the honest skip)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.contains("entity.zombie.hurt")),
+                "the dose the hurt voice speaks: {:?}",
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.contains("zombie"))
+                    .collect::<Vec<_>>()
+            );
+        }
+        // THE PLAYER THE BOOM NEVER WEARS (the mob victim the pair
+        // keeps — the player's own pool the Some arm never consults)
+        assert_eq!(app.health, 20.0, "the player the mob dose never wears");
+        // THE BOOM'S OWN BANKS (the 26l the fired boom banks)
+        assert_eq!(
+            app.wardens[0].sonic_sound_cooldown,
+            crate::sculk::WARDEN_SONIC_SOUND_COOLDOWN_TICKS,
+            "the 26l the fired boom banks"
+        );
+    }
+
+    /// THE SONIC BOOM'S OWN KILL (the die() tail the lethal boom
+    /// serves — the death voice the makeSound speaks, the loot the
+    /// dropAllDeathLoot rolls at the entity's feet, the XP the closed
+    /// lastHurtByPlayerMemoryTime gate never awards, the corpse the
+    /// repeat boom refuses).
+    #[test]
+    fn the_sonic_boom_the_kill_the_loot_the_corpse_refuses() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE CREATIVE STAND-IN (the dose test's own law — the scan
+        // the creative word refuses, the boom the warden's own dose
+        // alone speaks)
+        app.game_mode = GameMode::Creative;
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body =
+            Some(crate::body::PlayerBody::new(px, feet_y, pz, 180.0, 0.0));
+        app.mobs
+            .push(crate::mob::Zombie::new(779, px + 1.0, feet_y, pz, 4));
+        // THE WOUNDED BODY (the 9.0 pool the 9.84 armor-folded dose
+        // the death walk serves)
+        app.mobs[0].health = 9.0;
+        app.wardens
+            .push(crate::sculk::WardenMob::new(205, px, feet_y, pz));
+        app.wardens[0].attack_target = Some(779);
+        app.wardens[0].sonic_active = true;
+        app.wardens[0].attack_cooldown = 2;
+        app.wardens[0].sonic_sound_delay = 1;
+        app.wardens[0].sonic_sound_cooldown = 0;
+        app.update();
+        // THE DEATH (the health the lethal dose sinks)
+        assert!(
+            app.mobs[0].health <= 0.0,
+            "the lethal boom the death walk serves"
+        );
+        // THE LOOT (the dropAllDeathLoot roll — the entity's feet the
+        // spawnAtLocation law serves)
+        assert!(
+            !app.drops.is_empty(),
+            "the kill the loot roll speaks: {}",
+            app.drops.len()
+        );
+        // THE XP THE CLOSED GATE NEVER AWARDS (the warden's boom the
+        // player memory never banks — the bite kill's own precedent
+        // the closed reward wears)
+        assert!(
+            app.orbs.is_empty(),
+            "the non-player kill the reward never rolls: {}",
+            app.orbs.len()
+        );
+        // THE CORPSE THE REPEAT BOOM REFUSES (the window the fresh
+        // arm keeps, the dead body the dose refuses — the loot the
+        // second roll never wears)
+        let drops_after_kill = app.drops.len();
+        app.wardens[0].sonic_active = true;
+        app.wardens[0].attack_cooldown = 2;
+        app.wardens[0].sonic_sound_delay = 1;
+        app.wardens[0].sonic_sound_cooldown = 0;
+        app.update();
+        assert_eq!(
+            app.drops.len(),
+            drops_after_kill,
+            "the corpse the repeat boom refuses"
+        );
+        // THE DEATH VOICE (the die() tail the makeSound speaks — the
+        // audio assets the CI body keeps absent the honest skip)
+        if sounds_loaded() {
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.contains("entity.zombie.death")),
+                "the kill the death voice speaks: {:?}",
+                app.sounds
+                    .events
+                    .iter()
+                    .filter(|e| e.contains("zombie"))
+                    .collect::<Vec<_>>()
+            );
+        }
+    }
+
+    /// THE SONIC BOOM'S OWN PLAYER DOSE (the None arm the pre-victim
+    /// rounds kept — the 10.0 the health wears, the beam push the
+    /// plain add speaks, the mob-less world the Some arm never
+    /// consults: the victim pair's refactor the walk guards).
+    #[test]
+    fn the_sonic_boom_the_player_the_dose_the_push_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE SURVIVAL STAND-IN (the hurt pipeline's own gate — the
+        // creative word the dose refuses)
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body = Some(crate::body::PlayerBody::new(
+            px,
+            feet_y,
+            pz,
+            180.0,
+            0.0,
+        ));
+        // THE WARDEN THE +X FIVE (the rings test's own staging — the
+        // XZ 5 the 15-range keeps, the feet dy 0 the 20-range answers)
+        let wx = px + 5.0;
+        app.wardens
+            .push(crate::sculk::WardenMob::new(206, wx, feet_y, pz));
+        app.wardens[0].attack_target = Some(crate::sculk::WARDEN_PLAYER_SUSPECT);
+        app.wardens[0].sonic_active = true;
+        app.wardens[0].attack_cooldown = 2;
+        app.wardens[0].sonic_sound_delay = 1;
+        app.wardens[0].sonic_sound_cooldown = 0;
+        let health_before = app.health;
+        let (vx_before, vz_before) = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.vx, b.vz)
+        };
+        app.update();
+        // THE DOSE (the 10.0 the bare pool wears — the armor the
+        // default body never wears)
+        assert!(
+            app.health < health_before,
+            "the sonic dose the health wears: {} vs {}",
+            app.health,
+            health_before
+        );
+        // THE PUSH (the beam the -X direction wears — the plain add
+        // the Entity.push keeps: the chest→eye walk the -X the
+        // warden's +X staging answers, the +Z the beam never wears)
+        let (vx, vz) = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.vx, b.vz)
+        };
+        assert!(
+            vx - vx_before < -0.5,
+            "the 2.5 push the -X beam wears: {} vs {}",
+            vx,
+            vx_before
+        );
+        assert!(
+            (vz - vz_before).abs() < 1e-6,
+            "the push the +Z the beam never wears: {} vs {}",
+            vz,
+            vz_before
+        );
     }
 
     /// THE SONIC BOOM'S OWN BEAM (javap `SonicBoom.lambda$tick$2`
