@@ -5963,6 +5963,21 @@ impl Zombie {
             for d in effects.harms {
                 self.hurt(d as f64, false);
             }
+            // THE POISON'S OWN DOSE (javap PoisonMobEffect
+            // .applyEffectTick pcs 0-24 — the `getHealth() > 1.0F`
+            // gate the `hurtServer(magic, 1.0F)` walk wears: the
+            // half-heart floor the mob body the same law keeps)
+            for d in effects.poisons {
+                if self.health > 1.0 {
+                    self.hurt(d as f64, false);
+                }
+            }
+            // THE WITHER'S OWN DOSE (javap WitherMobEffect
+            // .applyEffectTick pcs 0-15 — the ungated
+            // `hurtServer(wither, 1.0F)` the kill lands)
+            for d in effects.withers {
+                self.hurt(d as f64, false);
+            }
         }
         // THE SWELL MACHINE'S OWN ARITHMETIC (javap `Creeper.tick` the
         // 26.2 jar speaks — the fold the isAlive gate wraps FIRST, the

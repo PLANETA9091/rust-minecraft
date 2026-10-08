@@ -12342,6 +12342,25 @@ impl App {
                     for d in tick.harms {
                         self.hurt(d);
                     }
+                    // THE POISON'S OWN DOSE (javap
+                    // `PoisonMobEffect.applyEffectTick` pcs 0-24 —
+                    // the `getHealth() > 1.0F` fcmpl gate the
+                    // `hurtServer(magic, 1.0F)` walk wears: the
+                    // half-heart floor the poison NEVER breaks, the
+                    // kill the dose refuses)
+                    for d in tick.poisons {
+                        if self.health > 1.0 {
+                            self.hurt(d);
+                        }
+                    }
+                    // THE WITHER'S OWN DOSE (javap
+                    // `WitherMobEffect.applyEffectTick` pcs 0-15 —
+                    // the `hurtServer(wither, 1.0F)` call the health
+                    // read the bytecode never makes: the wither dose
+                    // KILLS, the death screen the zero arms)
+                    for d in tick.withers {
+                        self.hurt(d);
+                    }
                 }
             } else if self.health > 0.0 {
                 // THE NETWORKED LANE'S CLIENT COPY (the LocalPlayer's
@@ -45472,6 +45491,117 @@ mod tests {
         let inst = app.effects.get(speed).expect("the infinite never expires");
         assert_eq!(inst.duration, -1);
         assert_eq!(inst.amplifier, 0, "the no-amplifier arm the zero wears");
+    }
+
+    /// THE PERIODIC DOSES' OWN LANES (javap PoisonMobEffect/
+    /// WitherMobEffect — the `25/40 >> amp` periods the pre-dec
+    /// duration the remainder speaks, the poison's `getHealth()
+    /// > 1.0F` gate the half-heart floor wears, the wither's
+    /// ungated dose the kill lands): the beats the folds the
+    /// bodies speak.
+    #[test]
+    fn the_poison_wither_doses_the_bodies_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        // the food lane's own silence (the below-18 walk never
+        // heals — the doses the assertions the alone effects own)
+        app.food_data.set_food_level(1);
+        app.food_data.set_saturation(0.0);
+        // THE POISON'S FIRST BEAT (the 600-tick body the /effect
+        // seconds-as-ticks law wears: the 600 the 25-multiple the
+        // FIRST tick's pre-dec duration speaks — the beat the 1.0
+        // dose the pipeline lands)
+        app.health = 10.0;
+        app.chat_open = true;
+        app.chat_input = "/effect give @s poison 30".into();
+        app.on_chat_submit();
+        app.update();
+        assert_eq!(
+            app.health, 9.0,
+            "the first-tick beat the 1.0 dose lands"
+        );
+        // THE 25-TICK GAP THE PERIOD WEARS (the next multiple the
+        // 575 pre-dec duration waits for: the 24 more updates the
+        // health the 9.0 the no-beat window keeps, the 25th the
+        // 575-multiple beat the 8.0 speaks)
+        for _ in 0..24 {
+            app.update();
+        }
+        assert_eq!(app.health, 9.0, "the gap the no-beat window wears");
+        app.update();
+        assert_eq!(app.health, 8.0, "the 575-multiple the second beat wears");
+        // THE FLOOR THE POISON NEVER BREAKS (the 1.0 body the
+        // `getHealth() > 1.0F` fcmpl gate refuses: the fresh give
+        // the first-tick beat the gate keeps — the health the
+        // 1.0 the dose never spends)
+        app.health = 1.0;
+        app.chat_open = true;
+        app.chat_input = "/effect give @s poison 30".into();
+        app.on_chat_submit();
+        app.update();
+        assert_eq!(
+            app.health, 1.0,
+            "the half-heart floor the gate refuses"
+        );
+        assert!(
+            app.effects
+                .has_effect(crate::effects::MOB_EFFECT_POISON),
+            "the refused dose the effect still stands"
+        );
+        // THE MOB LANE (the pig's poison beat the pig's body the
+        // same 1.0 dose wears, the > 1.0F gate the pig's own
+        // health reads — the 4.0 body the armor fold the shared
+        // hurt pipeline keeps: the 1.0 dose the CombatRules walk
+        // the 0.94 lands, the 3.06 the f64 health speaks)
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the body");
+            (b.x, b.y, b.z)
+        };
+        let mut pig = crate::mob::Zombie::new(121, bx + 1.0, by, bz, 15);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.health = 4.0;
+        app.mobs.push(pig);
+        app.chat_open = true;
+        app.chat_input = "/effect give @e[type=pig] poison 30".into();
+        app.on_chat_submit();
+        app.update();
+        let absorbed = 1.0_f32
+            * (1.0
+                - (crate::mob::ZOMBIE_ARMOR as f32 - 1.0_f32 / 2.0_f32).max(
+                    crate::mob::ZOMBIE_ARMOR as f32 * 0.2,
+                )
+                    / 25.0_f32);
+        assert_eq!(
+            app.mobs[0].health,
+            4.0 - absorbed,
+            "the pig's first-tick beat the armor-fold dose lands"
+        );
+        // THE COOLDOWN'S OWN DECAY (the 20-tick window the 9→8 beat
+        // armed: the 11 more updates the invulnerable_time the >10
+        // gate drains — the wither dose the fresh hurt the closed
+        // window serves; the standing poison's next 575-multiple
+        // beat the window never crosses, the 1.0 body the gate
+        // refuses regardless)
+        for _ in 0..11 {
+            app.update();
+        }
+        // THE WITHER'S UNGATED KILL (the 40-tick body the 40 the
+        // multiple the first tick speaks: the 1.0 body the
+        // `hurtServer(wither, 1.0F)` the health read the bytecode
+        // never makes — the dose KILLS, the health the zero arms)
+        app.chat_open = true;
+        app.chat_input = "/effect clear".into();
+        app.on_chat_submit();
+        app.chat_open = true;
+        app.chat_input = "/effect give @s wither 2".into();
+        app.on_chat_submit();
+        app.update();
+        assert_eq!(
+            app.health, 0.0,
+            "the ungated wither dose the 1.0 body kills"
+        );
     }
 
     /// THE EFFECT DOSES' OWN MOTION WIRING (javap the attribute lanes

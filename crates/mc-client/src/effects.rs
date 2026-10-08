@@ -53,6 +53,10 @@ pub const MOB_EFFECT_INSTANT_DAMAGE: i32 = 6;
 /// 19th row — the undead-refusal lane's one arm reads it).
 pub const MOB_EFFECT_POISON: i32 = 18;
 
+/// `minecraft:wither`'s mob-effect registry id (the wire order's own
+/// 20th row — the periodic-dose lane's ungated arm reads it).
+pub const MOB_EFFECT_WITHER: i32 = 19;
+
 /// `minecraft:saturation`'s mob-effect registry id (the wire order's
 /// own 23rd row, the InstantaneousMobEffect's food row).
 pub const MOB_EFFECT_SATURATION: i32 = 22;
@@ -330,13 +334,18 @@ pub struct EffectsStore {
 /// the magic doses the instant-harm beat wanted (the `hurtServer`
 /// pipeline the caller runs), the saturation's food lifts (the
 /// `FoodData.eat(amplifier + 1, 1.0)` doses — the caller folds them
-/// through the food walk) and the ids that expired this tick (the
-/// removal the server's `tickServer` false return speaks).
+/// through the food walk), the POISON/WITHER beats the periodic laws
+/// landed (the 1.0 `hurtServer` doses the CALLER's own health the
+/// poison's `> 1.0F` gate reads — the store the beat alone banks) and
+/// the ids that expired this tick (the removal the server's
+/// `tickServer` false return speaks).
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct OfflineTick {
     pub heals: Vec<f32>,
     pub harms: Vec<f32>,
     pub eats: Vec<i32>,
+    pub poisons: Vec<f32>,
+    pub withers: Vec<f32>,
     pub expired: Vec<i32>,
 }
 
@@ -444,6 +453,39 @@ impl EffectsStore {
                         let due = if period > 0 { inst.duration % period == 0 } else { true };
                         if due {
                             out.heals.push(1.0);
+                        }
+                    }
+                    // THE POISON'S OWN BEAT (javap PoisonMobEffect
+                    // shouldApplyEffectTickThisTick pcs 0-22 — the
+                    // `25 >> amplifier` period the PRE-tick-down
+                    // duration the remainder law speaks, the zero
+                    // period the `k > 0` false arm answers true) —
+                    // the beat ALONE the store banks, the
+                    // `hurtServer(magic, 1.0F)` dose the health gate
+                    // the caller's own body reads (javap
+                    // applyEffectTick pcs 0-24 — the `getHealth()
+                    // > 1.0F` fcmpl word the half-heart floor speaks,
+                    // the kill the dose refuses).
+                    if id == MOB_EFFECT_POISON {
+                        let period = 25 >> inst.amplifier;
+                        let due = if period > 0 { inst.duration % period == 0 } else { true };
+                        if due {
+                            out.poisons.push(1.0);
+                        }
+                    }
+                    // THE WITHER'S OWN BEAT (javap WitherMobEffect
+                    // shouldApplyEffectTickThisTick pcs 0-22 — the
+                    // `40 >> amplifier` period the same remainder
+                    // law speaks) — the `hurtServer(wither, 1.0F)`
+                    // dose the health gate NEVER wears (javap
+                    // applyEffectTick pcs 0-15 — the hurtServer call
+                    // the getHealth read the bytecode never makes,
+                    // the kill the dose lands).
+                    if id == MOB_EFFECT_WITHER {
+                        let period = 40 >> inst.amplifier;
+                        let due = if period > 0 { inst.duration % period == 0 } else { true };
+                        if due {
+                            out.withers.push(1.0);
                         }
                     }
                     // THE INSTANT WALK (javap `InstantaneousMobEffect
@@ -707,6 +749,98 @@ mod tests {
         assert_eq!(heals, 4, "four beats over the 100-tick span");
         assert_eq!(expired_at, Some(99), "the zero removes the same tick");
         assert!(s.is_empty());
+    }
+
+    /// THE POISON'S OWN BEAT THE 25-PERIOD WEARS (javap
+    /// PoisonMobEffect.shouldApplyEffectTickThisTick pcs 0-22 — the
+    /// `25 >> amplifier` period the PRE-tick-down duration the
+    /// remainder speaks): the amp-0 body the 100-tick span the
+    /// 100/75/50/25 multiples beat, the beats the store banks, the
+    /// caller's health gate the doses alone answer.
+    #[test]
+    fn the_poison_beats_the_25_period() {
+        let mut s = EffectsStore::new();
+        s.add_effect(MOB_EFFECT_POISON, 0, 100, DEFAULT_EFFECT_FLAGS);
+        let mut beats = 0;
+        let mut expired_at = None;
+        for t in 0..200 {
+            let tick = s.tick_offline();
+            beats += tick.poisons.len();
+            assert!(
+                tick.withers.is_empty(),
+                "the poison row the wither lane never fills"
+            );
+            if !tick.expired.is_empty() {
+                expired_at = Some(t);
+                break;
+            }
+        }
+        assert_eq!(beats, 4, "the 25-multiples the four beats wear");
+        assert_eq!(expired_at, Some(99), "the zero removes the same tick");
+        assert!(s.is_empty());
+    }
+
+    /// THE WITHER'S OWN BEAT THE 40-PERIOD WEARS (javap
+    /// WitherMobEffect.shouldApplyEffectTickThisTick pcs 0-22 — the
+    /// `40 >> amplifier` period the same remainder law speaks): the
+    /// amp-0 body the 100-tick span the 80/40 multiples beat, the
+    /// 25-law the 40-period never rides.
+    #[test]
+    fn the_wither_beats_the_40_period() {
+        let mut s = EffectsStore::new();
+        s.add_effect(MOB_EFFECT_WITHER, 0, 100, DEFAULT_EFFECT_FLAGS);
+        let mut beats = 0;
+        let mut expired_at = None;
+        for t in 0..200 {
+            let tick = s.tick_offline();
+            beats += tick.withers.len();
+            assert!(
+                tick.poisons.is_empty(),
+                "the wither row the poison lane never fills"
+            );
+            if !tick.expired.is_empty() {
+                expired_at = Some(t);
+                break;
+            }
+        }
+        assert_eq!(beats, 2, "the 40-multiples the two beats wear");
+        assert_eq!(expired_at, Some(99), "the zero removes the same tick");
+        assert!(s.is_empty());
+    }
+
+    /// THE PERIOD'S OWN SHIFT AND ZERO (the `>> amplifier` ishr the
+    /// two laws speak): the amp-1 poison the 12-period wears, the
+    /// amp-6 poison the `25 >> 6` ZERO the `k > 0` false arm the
+    /// every-tick verdict answers, the silent rows the lanes the
+    /// empty law keeps.
+    #[test]
+    fn the_period_the_amplifier_shifts_and_the_zero_speaks() {
+        // the amp-1 poison: the 12-period the 24-tick span the
+        // 24/12 multiples beat
+        let mut s = EffectsStore::new();
+        s.add_effect(MOB_EFFECT_POISON, 1, 24, DEFAULT_EFFECT_FLAGS);
+        let mut beats = 0;
+        for _ in 0..24 {
+            beats += s.tick_offline().poisons.len();
+        }
+        assert_eq!(beats, 2, "the 12-period the two beats wear");
+        // the amp-6 poison: the ZERO period the every-tick verdict
+        // wears (25 >> 6 = 0 — the `k > 0` branch the false arm keeps)
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_POISON, 6, 5, DEFAULT_EFFECT_FLAGS);
+        let mut beats2 = 0;
+        for _ in 0..5 {
+            beats2 += s2.tick_offline().poisons.len();
+        }
+        assert_eq!(beats2, 5, "the zero period the every-tick beat wears");
+        // the silent rows: the absorption the lanes never fills
+        let mut s3 = EffectsStore::new();
+        s3.add_effect(MOB_EFFECT_ABSORPTION, 0, 10, DEFAULT_EFFECT_FLAGS);
+        for _ in 0..10 {
+            let tick = s3.tick_offline();
+            assert!(tick.poisons.is_empty() && tick.withers.is_empty());
+        }
+        assert!(s3.is_empty());
     }
 
     #[test]
