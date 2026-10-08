@@ -1698,6 +1698,45 @@ pub const WARDEN_ATTACK_IMPACT_VOLUME: f32 = 10.0;
 /// consults.
 pub const WARDEN_ATTACK_SONIC_COOLDOWN_TICKS: i32 = 40;
 
+/// `Warden.createAttributes` — the `Attributes.ATTACK_DAMAGE` add the
+/// `ldc2_w 30.0d` row keeps: the melee dose the bare fist speaks (the
+/// `Mob.doHurtTarget` pc 0-7 the `d2f` fold wears — the weapon the
+/// getWeaponItem EMPTY the bare branch keeps, the enchant walk the
+/// dose never rides).
+pub const WARDEN_ATTACK_DAMAGE: f32 = 30.0;
+
+/// `Warden.createAttributes` — the `Attributes.ATTACK_KNOCKBACK` add
+/// the `ldc2_w 1.5d` row keeps: the melee push the
+/// `LivingEntity.getKnockback` pc 0-7 the attr reads, the
+/// `causeExtraKnockback` pc 0-56 the `Entity.knockback(strength,
+/// sin(yRot), -cos(yRot))` walk serves — the brutal 1.5 push the
+/// generic 0.4 mobs never wear.
+pub const WARDEN_ATTACK_KNOCKBACK: f32 = 1.5;
+
+/// `WardenAi.initFightActivity` pc 40-43 — the `ldc_w 1.2f` the
+/// `SetWalkTargetFromAttackTargetIfTargetOutOfReach.create(1.2f)`
+/// walk wears: the chase speed modifier the FIGHT activity's walk
+/// target carries (the WALK_TARGET the out-of-reach arm sets, the
+/// in-reach arm the erase serves).
+pub const WARDEN_FIGHT_SPEED_MODIFIER: f32 = 1.2;
+
+/// `WardenAi.initFightActivity` pc 53-55 — the `bipush 18` the
+/// `MeleeAttack.create(18)` ctor keeps: the ATTACK_COOLING_DOWN
+/// memory the melee's own `setWithExpiry(true, 18)` pc 88-97 banks
+/// (the 18-tick window the re-swing refuses, the tick's expiry walk
+/// the drain serves).
+pub const WARDEN_MELEE_COOLDOWN_TICKS: i32 = 18;
+
+/// `Mob` clinit pc 42-52 — the `Math.sqrt(2.0399999618530273d)` the
+/// `ldc2_w 0.6000000238418579d` subtract keeps: the
+/// DEFAULT_ATTACK_REACH the bare-hand `isWithinMeleeAttackRange`
+/// branch wears (`getAttackBoundingBox(range) = getBoundingBox()
+/// .inflate(range, 0, range)` pc 97-109 — the horizontal inflate the
+/// Y never wears, the intersect the target's `getHitbox()` box
+/// answers). The reach the item-based AttackRange component's own
+/// default keeps — the warden the bare fists the constant rides.
+pub const WARDEN_MELEE_REACH: f64 = 0.8282856485126004;
+
 /// THE MELEE SWING'S OWN VOICE (javap `Warden.doHurtTarget` pc 7-17 —
 /// the `playSound(WARDEN_ATTACK_IMPACT, 10.0f, getVoicePitch())` the
 /// landing swing speaks): the volume the FIXED 10.0 the ldc_w wears,
@@ -1712,6 +1751,23 @@ pub struct WardenAttackImpact {
     pub volume: f32,
     /// the getVoicePitch() the two-draw law speaks
     pub pitch: f32,
+}
+
+/// THE FIGHT LANE'S OWN OUT (the FIGHT activity's own arms the lane
+/// serves — the chase the walk-target memory banks, the melee the
+/// impact voice + the landed verdict speaks): the landed dose the
+/// caller's own hurt walk wears (the 30.0 the ATTACK_DAMAGE attr
+/// carries), the impact the play lane consumes.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenMeleeOut {
+    /// the landing swing's own voice (the do_hurt_target walk
+    /// banks — the 10.0 volume the play lane serves)
+    pub impact: Option<WardenAttackImpact>,
+    /// the melee landed this tick (the dose the caller's hurt walk
+    /// wears, the knockback the ATTACK_KNOCKBACK 1.5 the push
+    /// speaks — the hurt the victim's own verdict gates, the dying
+    /// body the dose refuses)
+    pub landed: bool,
 }
 
 /// THE EMERGE'S OWN VOICE (the Emerging.start's own tail the pair
@@ -2391,6 +2447,12 @@ pub struct WardenMob {
     /// the JVM init keeps — the FIGHT round the SonicBoom behavior
     /// the same memory consults)
     pub sonic_boom_cooldown: i32,
+    /// THE ATTACK_COOLING_DOWN'S OWN MEMORY (javap `MeleeAttack`
+    /// lambda$create$3 pc 88-97 — the `setWithExpiry(true, 18)` the
+    /// landing swing banks, the Brain expiry walk the tick drains;
+    /// the fresh zero the JVM init keeps — the standing memory the
+    /// next swing's absent gate refuses)
+    pub attack_cooldown: i32,
 }
 
 impl WardenMob {
@@ -2448,6 +2510,7 @@ impl WardenMob {
             dig_cooldown: 0,
             attack_start: None,
             sonic_boom_cooldown: 0,
+            attack_cooldown: 0,
         }
     }
 
@@ -3205,8 +3268,8 @@ impl WardenMob {
     /// actual damage the FIGHT round wires (the target the caller's
     /// reach consults — the swing the caller's own verdict arms).
     /// THE VOICE the landing swing banks — the out the play lane
-    /// consumes.
-    #[cfg_attr(not(test), expect(dead_code))] // the FIGHT lane the melee round wires
+    /// consumes. THE FIGHT LANE the melee round wired — the
+    /// dead-code expectation the call retires.
     pub fn do_hurt_target(&mut self) -> Option<WardenAttackImpact> {
         // pc 0-5: the event-4 broadcast — the client arm the walk
         // serves (the roar animation stops, the attack starts)
@@ -3225,6 +3288,97 @@ impl WardenMob {
         // pc 26-29: the super tail — the actual damage the FIGHT
         // round wires
         Some(voice)
+    }
+
+    /// THE FIGHT ACTIVITY'S OWN LANE (javap `WardenAi
+    /// .initFightActivity` pc 0-67 — the FIGHT activity the prio-10
+    /// the required ATTACK_TARGET memory wears, the behavior list the
+    /// SetWalkTargetFromAttackTargetIfTargetOutOfReach(1.2f) +
+    /// MeleeAttack.create(18) pair the lane serves): the required
+    /// memory the gate consults (the unarmed brain the lane never
+    /// runs — the ROAR's own stop walk the memory arms), the CHASE
+    /// the walk-target memory serves (javap
+    /// `SetWalkTargetFromAttackTargetIfTargetOutOfReach`
+    /// lambda$create$3 pc 0-59 — the visible + the
+    /// `isWithinAttackRange` pair the in-reach arm the WALK_TARGET
+    /// erase serves, the out-of-reach arm pc 59-75 the
+    /// `EntityTracker(target, 1)` tracker the 1.2f modifier sets),
+    /// the MELEE the swing arm wears (javap `MeleeAttack`
+    /// lambda$create$3 pc 0-101 — the predicate + the bare-hands +
+    /// the `isWithinMeleeAttackRange` + the visible quartet the
+    /// trigger keeps, the LOOK_TARGET set the house's own look walk
+    /// the yaw answers, the swing + the `doHurtTarget` pc 70-87 the
+    /// landing serves, the ATTACK_COOLING_DOWN `setWithExpiry(true,
+    /// 18)` pc 88-97 banks). THE DOSE the landing banks — the 30.0
+    /// the ATTACK_DAMAGE attr carries, the caller's own hurt walk
+    /// the player wears (the mob-vs-mob dose the bite lane a future
+    /// round wires). THE BOOM'S OWN ORDER the FIGHT list keeps (the
+    /// SonicBoom pair the MeleeAttack PRECEDES — the charge window
+    /// the ATTACK_COOLING_DOWN 30l the boom start banks, the melee
+    /// the standing window refuses; the SonicBoom lane the boom
+    /// round wires, the fresh fight the melee arm the interim
+    /// order serves).
+    pub fn fight_lane(
+        &mut self,
+        target_pos: Option<(f64, f64, f64)>,
+        target_seen: bool,
+        target_in_reach: bool,
+    ) -> WardenMeleeOut {
+        let mut out = WardenMeleeOut {
+            impact: None,
+            landed: false,
+        };
+        // THE FIGHT ACTIVITY'S OWN GATE (pc 61-64 — the required
+        // ATTACK_TARGET the activity's eligibility keeps: the unarmed
+        // brain the lane never runs)
+        if self.attack_target.is_none() {
+            return out;
+        }
+        // THE CHASE ARM (the walk-target memory — the in-reach pair
+        // the erase serves, the out-of-reach the 1.2 tracker sets;
+        // the pos the caller's own target view carries — the player
+        // the body's own feet speaks)
+        if let Some(pos) = target_pos {
+            if target_seen && target_in_reach {
+                // lambda$create$3 pc 52-56: the WALK_TARGET erase —
+                // the in-reach warden stands (the swing the same tick
+                // the melee arm wears)
+                self.walk_target = None;
+            } else {
+                // pc 59-75: the EntityTracker(target, 1) tracker —
+                // the walk target the 1.2f modifier carries, the
+                // close-enough 1 the tracker's own arg keeps
+                self.walk_target = Some(WardenWalkTarget {
+                    block: (pos.0.floor() as i32, pos.1.floor() as i32, pos.2.floor() as i32),
+                    pos,
+                    speed_modifier: WARDEN_FIGHT_SPEED_MODIFIER,
+                    close_enough: 1,
+                });
+            }
+        }
+        // THE MELEE ARM (the swing quartet — the cooldown's absent
+        // gate the standing window refuses, the visible + the reach
+        // pair the caller's own verdicts carry)
+        if self.attack_cooldown > 0 {
+            return out;
+        }
+        if !target_seen || !target_in_reach {
+            return out;
+        }
+        // pc 88-97: the ATTACK_COOLING_DOWN memory — the 18-tick
+        // window the landing banks (the re-swing the standing memory
+        // refuses)
+        self.attack_cooldown = WARDEN_MELEE_COOLDOWN_TICKS;
+        // pc 70-87: the swing + the doHurtTarget — the event-4 walk
+        // the client arm serves (the roar animation stops, the
+        // attack animation starts), the impact voice the landing
+        // speaks, the SONIC_BOOM_COOLDOWN the 40l the swing banks
+        out.impact = self.do_hurt_target();
+        // THE DOSE (the super tail pc 26-29 — the 30.0 the
+        // ATTACK_DAMAGE attr wears, the hurt the victim's own
+        // pipeline answers)
+        out.landed = true;
+        out
     }
 
     /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
@@ -3572,6 +3726,13 @@ impl WardenMob {
         // standing window refuses)
         if self.sonic_boom_cooldown > 0 {
             self.sonic_boom_cooldown -= 1;
+        }
+        // THE ATTACK_COOLING_DOWN'S OWN DRAIN (the same Brain expiry
+        // walk — the 18-tick expiry the melee's own setWithExpiry
+        // banks, the zero the memory expires, the re-swing the
+        // absent gate lifts)
+        if self.attack_cooldown > 0 {
+            self.attack_cooldown -= 1;
         }
         self.ambient_time += 1;
         let fired = self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
@@ -9599,6 +9760,119 @@ mod tests {
             (10, 32, 3),
         );
         assert!(hear.is_some(), "the standing body the hearing serves");
+    }
+
+    /// THE FIGHT LANE (javap `WardenAi.initFightActivity` pc 0-67 +
+    /// `SetWalkTargetFromAttackTargetIfTargetOutOfReach` +
+    /// `MeleeAttack.create(18)` verbatim): the required ATTACK_TARGET
+    /// gate the unarmed brain refuses, the chase the 1.2 tracker the
+    /// out-of-reach arm sets (the in-reach pair the erase serves),
+    /// the swing the impact voice + the 18l cooldown banks (the
+    /// event-4 walk the roar retires + the attack starts, the 40l
+    /// sonic bank the landing wears), the standing window the
+    /// re-swing refuses (the 18th drain the re-arm lifts), the
+    /// unseen the chase still walks.
+    #[test]
+    fn the_fight_lane_the_chase_the_swing_keeps() {
+        let mut warden = WardenMob::new(9, 10.5, 32.0, 3.5);
+        // THE UNARMED GATE (the required ATTACK_TARGET — the fresh
+        // brain the None keeps, the lane never runs)
+        let out = warden.fight_lane(Some((12.0, 32.0, 3.5)), true, true);
+        assert!(
+            !out.landed && out.impact.is_none(),
+            "the unarmed brain the lane never runs"
+        );
+        assert_eq!(warden.walk_target, None, "the gate the chase stills");
+        // THE ARMED OUT-OF-REACH CHASE (the 1.2 tracker the walk
+        // target banks — the swing the reach gate refuses)
+        warden.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        let out = warden.fight_lane(Some((14.5, 32.0, 3.5)), true, false);
+        assert!(
+            !out.landed && out.impact.is_none(),
+            "the out-of-reach the swing refuses"
+        );
+        let t = warden.walk_target.expect("the chase the walk target banks");
+        assert_eq!(t.block, (14, 32, 3), "the block the pos floor wears");
+        assert_eq!(t.pos, (14.5, 32.0, 3.5), "the tracker the target pos wraps");
+        assert_eq!(
+            t.speed_modifier, WARDEN_FIGHT_SPEED_MODIFIER,
+            "the 1.2f the chase wears"
+        );
+        assert_eq!(t.close_enough, 1, "the tracker's own 1 the arg keeps");
+        // THE IN-REACH SWING (the erase + the landing walk — the
+        // impact the 18l the swing banks, the event-4 walk the pair
+        // serves)
+        let mut mirror = WardenMob::new(9, 10.5, 32.0, 3.5);
+        let want_pitch = mirror.voice_pitch();
+        warden.roaring = true; // the event-4 walk the roar retires
+        warden.tick_count = 40;
+        let out = warden.fight_lane(Some((11.0, 32.0, 3.5)), true, true);
+        let voice = out.impact.expect("the swing the impact banks");
+        assert_eq!(
+            voice.word, WARDEN_ATTACK_IMPACT_SOUND,
+            "the attack_impact registry name the landing speaks"
+        );
+        assert_eq!(
+            voice.volume, WARDEN_ATTACK_IMPACT_VOLUME,
+            "the 10.0f the ldc_w wears"
+        );
+        assert_eq!(
+            voice.pitch, want_pitch,
+            "the getVoicePitch the two-draw law speaks"
+        );
+        assert!(out.landed, "the dose the landing banks");
+        assert_eq!(
+            warden.walk_target, None,
+            "the in-reach pair the erase serves"
+        );
+        assert_eq!(
+            warden.attack_cooldown, WARDEN_MELEE_COOLDOWN_TICKS,
+            "the 18l the setWithExpiry banks"
+        );
+        assert_eq!(
+            warden.attack_start,
+            Some(40),
+            "the event-4 the attackAnimationState.start banks"
+        );
+        assert!(
+            !warden.roaring,
+            "the roarAnimationState.stop the pose retires"
+        );
+        assert_eq!(
+            warden.sonic_boom_cooldown, WARDEN_ATTACK_SONIC_COOLDOWN_TICKS,
+            "the 40l the doHurtTarget's own setCooldown banks"
+        );
+        // THE COOLDOWN'S OWN REFUSAL + THE 18th RE-ARM (the expiry
+        // walk the drain serves, the absent gate the re-swing lifts)
+        let out = warden.fight_lane(Some((11.0, 32.0, 3.5)), true, true);
+        assert!(
+            !out.landed && out.impact.is_none(),
+            "the standing window the re-swing refuses"
+        );
+        for _ in 0..17 {
+            warden.tick();
+        }
+        assert_eq!(
+            warden.attack_cooldown, 1,
+            "the 17th drain the window's own tail keeps"
+        );
+        warden.tick();
+        let out = warden.fight_lane(Some((11.0, 32.0, 3.5)), true, true);
+        assert!(out.landed, "the expired memory the re-swing lifts");
+        // THE UNSEEN CHASE (the erase the seen pair requires — the
+        // walk target the else arm sets, the swing the visible gate
+        // refuses)
+        warden.attack_cooldown = 0;
+        warden.walk_target = None;
+        let out = warden.fight_lane(Some((14.5, 32.0, 3.5)), false, false);
+        assert!(
+            !out.landed && out.impact.is_none(),
+            "the unseen the swing refuses"
+        );
+        assert!(
+            warden.walk_target.is_some(),
+            "the unseen the chase still walks"
+        );
     }
 }
 

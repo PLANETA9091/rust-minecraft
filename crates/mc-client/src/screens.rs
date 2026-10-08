@@ -10180,6 +10180,17 @@ impl App {
             // AGITATED the water/lava arm carries)
             let mut dig_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
                 Vec::new();
+            // THE ATTACK IMPACT'S OWN VOICES (the doHurtTarget's own
+            // landing the volume-carrying pair speaks — the
+            // play_warden_voice_v the FIXED 10.0 volume serves, the
+            // two-draw pitch the landing banks)
+            let mut warden_impact_voices: Vec<(f64, f64, f64, f32)> =
+                Vec::new();
+            // THE MELEE DOSE'S OWN YAWS (the landed swings the caller's
+            // own hurt walk wears — the 30.0 the ATTACK_DAMAGE attr
+            // carries, the knockback the swing's own facing speaks: the
+            // yaw the causeExtraKnockback walk consults)
+            let mut warden_melee_doses: Vec<f32> = Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
@@ -10266,11 +10277,24 @@ impl App {
                         ));
                     }
                     // THE INVALID-TARGET ERASE (the
-                    // StopAttackingIfTargetInvalid's own law the
-                    // minimal stand-in serves — the un-targetable
-                    // suspect the ATTACK_TARGET retires, the next
-                    // trigger's absent gate the re-arm lifts)
-                    if !roar_targetable && warden.attack_target.is_some() {
+                    // StopAttackingIfTargetInvalid's own law — the
+                    // !canTargetEntity verdict the memory's own target
+                    // wears: the survival+alive pair the player keeps,
+                    // the alive the mob keeps; the anger-gated view the
+                    // ROAR trigger consults the erase never reads —
+                    // the CALM body the standing memory the same
+                    // verdict wears, the memory the Roar.stop arms)
+                    let fight_targetable = match warden.attack_target {
+                        Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => {
+                            self.game_mode.is_survival() && !self.dead
+                        }
+                        Some(id) => self
+                            .mobs
+                            .iter()
+                            .any(|m| m.id as u64 == id && m.health > 0.0),
+                        None => false,
+                    };
+                    if !fight_targetable && warden.attack_target.is_some() {
                         warden.attack_target = None;
                     }
                     // THE INVESTIGATE TRIGGER (prio 5 — the ROAR
@@ -10408,6 +10432,115 @@ impl App {
                         self.offline_world.as_ref()
                     };
                     if let Some(world) = walk_world {
+                        // THE FIGHT'S OWN TARGET VIEW (the ATTACK_TARGET
+                        // memory the FIGHT activity's behaviors read —
+                        // the anger-gated view the ROAR lane consults
+                        // the fight NEVER reads: the memory the
+                        // Roar.stop arms the same body the view serves)
+                        let (fight_target_id, fight_is_player) = match warden.attack_target {
+                            Some(crate::sculk::WARDEN_PLAYER_SUSPECT) => (None, true),
+                            Some(id) => (Some(id), false),
+                            None => (None, false),
+                        };
+                        let fight_pos = if fight_is_player {
+                            self.body.as_ref().map(|b| (b.x, b.y, b.z))
+                        } else {
+                            fight_target_id.and_then(|id| {
+                                self.mobs
+                                    .iter()
+                                    .find(|m| m.id as u64 == id)
+                                    .map(|m| (m.x, m.y, m.z))
+                            })
+                        };
+                        // THE FIGHT LANE'S OWN MELEE ARM (javap
+                        // `WardenAi.initFightActivity` pc 0-67 — the
+                        // FIGHT activity the required ATTACK_TARGET the
+                        // eligibility wears, the chase the 1.2f walk
+                        // target serves, the MeleeAttack the swing the
+                        // 18-tick cooldown banks): the LOS the
+                        // NEAREST_VISIBLE stand-in the clip_ray wears
+                        // (the same honest walk the zombie's melee
+                        // lane keeps), the reach the 26.2 bare-hand
+                        // law serves (the attack box the
+                        // DEFAULT_ATTACK_REACH inflates, the intersect
+                        // the target's own hitbox answers — the mob
+                        // targets the bite lane a future round wires)
+                        let fight_seen = match (fight_pos, fight_is_player) {
+                            (Some((tx, ty, tz)), true) => match self.body.as_ref() {
+                                Some(b) => crate::body::clip_ray(
+                                    world,
+                                    crate::math::Vec3::new(
+                                        warden.x as f32,
+                                        (warden.y + crate::sculk::WARDEN_EYE_HEIGHT as f64) as f32,
+                                        warden.z as f32,
+                                    ),
+                                    crate::math::Vec3::new(
+                                        tx as f32,
+                                        (ty + b.eye_height()) as f32,
+                                        tz as f32,
+                                    ),
+                                )
+                                .is_none(),
+                                None => false,
+                            },
+                            (Some((tx, ty, tz)), false) => {
+                                let eye = fight_target_id.and_then(|id| {
+                                    self.mobs
+                                        .iter()
+                                        .find(|m| m.id as u64 == id)
+                                        .map(|m| ty + m.kind.eye_height())
+                                });
+                                match eye {
+                                    Some(eh) => crate::body::clip_ray(
+                                        world,
+                                        crate::math::Vec3::new(
+                                            warden.x as f32,
+                                            (warden.y + crate::sculk::WARDEN_EYE_HEIGHT as f64) as f32,
+                                            warden.z as f32,
+                                        ),
+                                        crate::math::Vec3::new(
+                                            tx as f32,
+                                            eh as f32,
+                                            tz as f32,
+                                        ),
+                                    )
+                                    .is_none(),
+                                    None => false,
+                                }
+                            }
+                            _ => false,
+                        };
+                        let fight_in_reach = if fight_is_player {
+                            match self.body.as_ref() {
+                                Some(b) => {
+                                    let (bmin, bmax) = crate::sculk::warden_entity_box((
+                                        warden.x, warden.y, warden.z,
+                                    ));
+                                    let r = crate::sculk::WARDEN_MELEE_REACH;
+                                    let atk = (
+                                        (bmin.0 - r, bmin.1, bmin.2 - r),
+                                        (bmax.0 + r, bmax.1, bmax.2 + r),
+                                    );
+                                    let (p0, p1, p2, p3, p4, p5) =
+                                        crate::body::box_at(b.x, b.y, b.z, b.height());
+                                    let tgt = ((p0, p1, p2), (p3, p4, p5));
+                                    crate::sculk::aabb_intersects(atk, tgt)
+                                }
+                                None => false,
+                            }
+                        } else {
+                            // the mob-target dose the bite lane the next
+                            // round wires — the chase the walk target serves
+                            false
+                        };
+                        let melee_out =
+                            warden.fight_lane(fight_pos, fight_seen, fight_in_reach);
+                        if let Some(impact) = melee_out.impact {
+                            warden_impact_voices.push((warden.x, warden.y, warden.z, impact.pitch));
+                        }
+                        if melee_out.landed {
+                            warden_melee_doses.push(warden.yaw_deg);
+                        }
                         warden.ai_walk(world);
                     }
                 }
@@ -10456,6 +10589,49 @@ impl App {
                 // water/lava arm wears, the FIXED pair the voice
                 // carries)
                 self.play_warden_voice_v(word, wx, wy, wz, pitch, volume);
+            }
+            for (wx, wy, wz, pitch) in warden_impact_voices {
+                // THE ATTACK IMPACT'S OWN VOLUME (javap
+                // `Warden.doHurtTarget` pc 6-19 — the
+                // `playSound(WARDEN_ATTACK_IMPACT, 10.0f, getVoicePitch())`
+                // the landing swing speaks, the FIXED 10.0 the ldc_w
+                // wears, the two-draw pitch the swing's own stream
+                // banks)
+                self.play_warden_voice_v(
+                    crate::sculk::WARDEN_ATTACK_IMPACT_SOUND,
+                    wx,
+                    wy,
+                    wz,
+                    pitch,
+                    crate::sculk::WARDEN_ATTACK_IMPACT_VOLUME,
+                );
+            }
+            for yaw in warden_melee_doses {
+                // THE MELEE DOSE'S OWN WALK (javap `Mob.doHurtTarget`
+                // pc 49-60 — the 30.0 the ATTACK_DAMAGE attr wears, the
+                // hurtServer the victim's own pipeline answers, the
+                // dying body the dose refuses): the KNOCKBACK the
+                // `causeExtraKnockback` pc 0-56 + the
+                // `Entity.knockback` pc 98-180 walk serves — the
+                // strength the ATTACK_KNOCKBACK 1.5 attr carries (the
+                // resistance the player's own 0.0 never scales), the
+                // direction the ATTACKER'S OWN YAW speaks (the
+                // sin/-cos negated pair the +push form folds: the
+                // push = vel/2 - dir·strength with dir = (sin(yRot),
+                // -cos(yRot)) = vel/2 + view·strength), the grounded
+                // bump min(0.4, vy/2 + strength) the tail keeps
+                if self.hurt(crate::sculk::WARDEN_ATTACK_DAMAGE) {
+                    let rad = yaw as f64 * std::f64::consts::PI / 180.0;
+                    let (nx, nz) = (-(rad.sin()), rad.cos());
+                    if let Some(b) = &mut self.body {
+                        b.vx = b.vx / 2.0 + nx * crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64;
+                        b.vz = b.vz / 2.0 + nz * crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64;
+                        if b.on_ground {
+                            b.vy = (b.vy / 2.0 + crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64)
+                                .min(0.4);
+                        }
+                    }
+                }
             }
 
             // THE WARDEN'S PUSH ENTITIES (javap `LivingEntity.aiStep`
@@ -44673,6 +44849,10 @@ mod tests {
         );
         let before = app.game_events.len();
         for _ in 0..pulse_tick {
+            // THE FIGHT LANE STILLED (the same-cell warden the summon's
+            // own roar the swing arms — the 18l window the pin keeps:
+            // the pulse law's own scene the combat-free body wears)
+            app.wardens[0].attack_cooldown = crate::sculk::WARDEN_MELEE_COOLDOWN_TICKS;
             app.update();
         }
         assert!(
@@ -44706,6 +44886,8 @@ mod tests {
         );
         let before2 = app.game_events.len();
         for _ in 0..interval {
+            // THE FIGHT LANE STILLED (the same pin the case wears)
+            app.wardens[0].attack_cooldown = crate::sculk::WARDEN_MELEE_COOLDOWN_TICKS;
             app.update();
         }
         let pulse2 = app.game_events[before2..]
@@ -52558,6 +52740,103 @@ mod tests {
                 "the cooldown the second voice refuses"
             );
         }
+    }
+
+    /// THE MELEE'S OWN DOSE (javap `WardenAi.initFightActivity` +
+    /// `MeleeAttack.create(18)` + `Mob.doHurtTarget` over the offline
+    /// world — the warden the reach's own box law the swing serves,
+    /// the 30.0 the health wears, the 1.5 push the yaw speaks, the
+    /// impact voice the landing plays, the 18l the cooldown banks).
+    #[test]
+    fn the_warden_melee_the_dose_the_push_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE AIR NEIGHBORHOOD (the stab lane's own sky the eye ray
+        // never fears — both feet the same altitude the boxes
+        // intersect)
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body = Some(crate::body::PlayerBody::new(
+            px,
+            feet_y,
+            pz,
+            180.0,
+            0.0,
+        ));
+        // THE WARDEN THE +X NEIGHBOR (the boxes the 1.0 gap the
+        // 0.45 + 0.828 + 0.3 reach intersects), THE YAW THE -X
+        // FACING WEARS (the push toward the player the yaw answers)
+        app.wardens
+            .push(crate::sculk::WardenMob::new(201, px + 1.0, feet_y, pz));
+        app.wardens[0].attack_target = Some(crate::sculk::WARDEN_PLAYER_SUSPECT);
+        app.wardens[0].yaw_deg = 90.0;
+        let health_before = app.health;
+        let (vx_before, vz_before) = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.vx, b.vz)
+        };
+        app.update();
+        // THE DOSE (the 30.0 the ATTACK_DAMAGE attr wears — the
+        // health the hurt pipeline wears, the raw dose the 20.0 pool
+        // the death answers)
+        assert!(
+            app.health < health_before,
+            "the melee dose the health wears: {} vs {}",
+            app.health,
+            health_before
+        );
+        // THE KNOCKBACK (the -X push the yaw wears — nx = -sin(90°)
+        // = -1, the strength 1.5 the push carries; the +Z the cos
+        // never wears)
+        let (vx, vz) = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.vx, b.vz)
+        };
+        assert!(
+            vx - vx_before < -0.5,
+            "the 1.5 push the -X yaw wears: {} vs {}",
+            vx,
+            vx_before
+        );
+        assert!(
+            (vz - vz_before).abs() < 1e-6,
+            "the push the +Z the yaw never wears: {} vs {}",
+            vz,
+            vz_before
+        );
+        // THE IMPACT VOICE (the 10.0 the landing speaks)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.contains("entity.warden.attack_impact")),
+            "the impact voice the landing plays: {:?}",
+            app.sounds
+                .events
+                .iter()
+                .filter(|e| e.contains("warden"))
+                .collect::<Vec<_>>()
+        );
+        // THE SWING'S OWN BANKS (the 18l the cooldown banks, the
+        // event-4 the start tick banks, the 40l the sonic banks)
+        assert_eq!(
+            app.wardens[0].attack_cooldown,
+            crate::sculk::WARDEN_MELEE_COOLDOWN_TICKS,
+            "the 18l the setWithExpiry banks"
+        );
+        assert!(
+            app.wardens[0].attack_start.is_some(),
+            "the event-4 the attackAnimationState.start banks"
+        );
+        assert_eq!(
+            app.wardens[0].sonic_boom_cooldown,
+            crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS,
+            "the 40l the doHurtTarget's own setCooldown banks"
+        );
     }
 
     /// THE USE-TICK STAB'S OWN WALK REFUSAL (the 4.6 relative gate the

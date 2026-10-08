@@ -336,7 +336,7 @@ pub struct Collision {
 
 /// The player's bounding box (the feet-anchored AABB the collision
 /// sweeps).
-fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64) {
+pub(crate) fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64, f64, f64) {
     let h = WIDTH / 2.0;
     (x - h, y, z - h, x + h, y + height, z + h)
 }
