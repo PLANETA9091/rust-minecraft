@@ -4796,6 +4796,16 @@ pub struct Zombie {
     /// the natural walk reads — the locked baby the walk never grows),
     /// the toggle the golden-dandelion press walks both directions.
     pub age_locked: bool,
+    /// THE STATUS-EFFECTS' OWN STORE (the same `EffectsStore` the
+    /// player's body carries — the /effect give/clear walk the mob
+    /// roster's lane rides): the insert-or-update law the
+    /// `LivingEntity.addEffect` walk speaks, the tick-down the same
+    /// `tickEffects` beat the player's fold wears, the regen heal and
+    /// the instant heal/harm the tick's outcome bank. The AI/render
+    /// consumption (the speed attribute, the swirl particles) the
+    /// documented absence keeps — the doses the HEALTH field the body
+    /// owns alone speak.
+    pub effects: crate::effects::EffectsStore,
     /// `AgeableMob.ageLockParticleTimer` — the 40-tick PAUSE/RESET
     /// window the toggle's own walk marks (the aiStep's `% 2` cadence
     /// the makeAgeLockedParticle spawns speak — the glint sprite the
@@ -5272,6 +5282,7 @@ impl Zombie {
             farm_variant: None,
             farm_sound_variant: None,
             eat_animation_tick: 0,
+            effects: crate::effects::EffectsStore::new(),
             custom_name: None,
             name_visible: false,
             score_text: None,
@@ -5934,6 +5945,25 @@ impl Zombie {
         // a new target)
         self.prev_head_yaw_off = self.head_yaw_off;
         self.prev_head_pitch = self.head_pitch;
+        // THE STATUS-EFFECTS' OWN TICK (javap `LivingEntity.tick` pc
+        // 604 — the `tickEffects()` call the tick body's own tail
+        // speaks): the durations' tick-down, the regeneration's heal
+        // and the instant heal/harm the outcome banks, the expiry the
+        // same-tick removal answers. The DEAD body the store the
+        // isAlive gate never ticks (the frozen durations the corpse
+        // carries — the vanilla walk the same gate keeps). The
+        // saturation's eat the `instanceof Player` gate the mob body
+        // never answers (SaturationMobEffect.applyEffectTick's own
+        // walk — the non-player body the empty dose wears).
+        if self.health > 0.0 && !self.effects.is_empty() {
+            let effects = self.effects.tick_offline();
+            for h in effects.heals {
+                self.health = (self.health + h).min(self.kind.max_health());
+            }
+            for d in effects.harms {
+                self.hurt(d as f64, false);
+            }
+        }
         // THE SWELL MACHINE'S OWN ARITHMETIC (javap `Creeper.tick` the
         // 26.2 jar speaks — the fold the isAlive gate wraps FIRST, the
         // super.tick() the goals' own walk serves AFTER: the one-tick

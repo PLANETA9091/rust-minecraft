@@ -12279,9 +12279,24 @@ impl App {
                 // (the absorption value rides past the expiry — the
                 // 26.2's own no-removal-hook law)
                 if self.health > 0.0 {
-                    let heals = self.effects.tick_offline();
-                    for h in heals.heals {
+                    let tick = self.effects.tick_offline();
+                    for h in tick.heals {
                         self.health = (self.health + h).min(MAX_HEALTH);
+                    }
+                    // THE SATURATION'S OWN LIFT (javap
+                    // `SaturationMobEffect.applyEffectTick` — the
+                    // `getFoodData().eat(amplifier + 1, 1.0F)` dose
+                    // the FoodData's own walk runs)
+                    for e in tick.eats {
+                        self.food_data.eat(e, 1.0);
+                    }
+                    // THE INSTANT HARM'S OWN DOSE (javap
+                    // `HealOrHarmMobEffect.applyEffectTick` — the
+                    // `hurtServer(magic, 6 << amp)` walk the damage
+                    // pipeline runs; the dead body the same isAlive
+                    // gate the heals fold wears refuses)
+                    for d in tick.harms {
+                        self.hurt(d);
                     }
                 }
             } else if self.health > 0.0 {
@@ -24261,6 +24276,119 @@ impl App {
                     self.push_chat_message(msg);
                 }
             }
+            // THE EFFECT LITERAL (javap EffectCommands.register — the
+            // clear/give tree the 26.2 bytecode carries: the root node
+            // NO `executes` the parse-failure lane keeps, the `clear`
+            // sub-tree the SELF / targets / targets+effect arms wear
+            // (lambda$register$0/$1/$2), the `give` sub-tree the
+            // targets+effect walk the seconds(1..1000000)/
+            // amplifier(0..255)/hideParticles(bool) args and the
+            // `infinite` literal (-1 the sentinel the seconds arg's
+            // own range never speaks) arm (lambda$register$3..$9)).
+            // THE APPLICATION the [`Self::effect_give`] walk runs —
+            // the real `EffectsStore` insert-or-update law the
+            // player's body carries, the per-mob store the roster's
+            // lane answers.
+            ["effect"] => {
+                self.push_local_command_error();
+            }
+            ["effect", "clear"] => {
+                // THE SELF LANE (lambda$register$0 — the
+                // `getEntityOrException()` source entity the
+                // single-player collection answers, the
+                // clearEffects walk the body rides)
+                self.effect_clear_command(None, None);
+            }
+            ["effect", "clear", targets] => {
+                // THE TARGETS LANE (lambda$register$1 — the
+                // EntityArgument.entities() collection the
+                // clearEffects walk rides)
+                self.effect_clear_command(Some(targets), None);
+            }
+            ["effect", "clear", targets, effect_word] => {
+                // THE SPECIFIC LANE (lambda$register$2 — the
+                // ResourceArgument effect the clearEffect walk
+                // removes)
+                self.effect_clear_command(Some(targets), Some(effect_word));
+            }
+            ["effect", "give", targets, effect_word] => {
+                // THE DEFAULT GIVE (lambda$register$3 — the
+                // `aconst_null` seconds the 600/1-tick defaults the
+                // duration law answers, the amplifier-0 the visible
+                // pair the instance carries)
+                self.effect_give_command(targets, effect_word, None, 0, false);
+            }
+            ["effect", "give", targets, effect_word, "infinite"] => {
+                // THE INFINITE LITERAL (lambda$register$7 — the
+                // `iconst_m1` seconds the -1 sentinel the duration
+                // law carries)
+                self.effect_give_command(targets, effect_word, Some(-1), 0, false);
+            }
+            ["effect", "give", targets, effect_word, "infinite", amplifier] => {
+                // THE INFINITE + AMPLIFIER (lambda$register$8 — the
+                // integer(0, 255) range the parse verdicts wear)
+                let Some(amplifier) = Self::parse_int_arg(amplifier, 0, 255) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.effect_give_command(targets, effect_word, Some(-1), amplifier, false);
+            }
+            ["effect", "give", targets, effect_word, "infinite", amplifier, hide_particles] => {
+                // THE INFINITE + AMPLIFIER + HIDE (lambda$register$9
+                // — the BoolArgumentType word the visible flag the
+                // !-inversion answers)
+                let Some(amplifier) = Self::parse_int_arg(amplifier, 0, 255) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                let Some(hide) = Self::parse_bool_arg(hide_particles) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.effect_give_command(targets, effect_word, Some(-1), amplifier, hide);
+            }
+            ["effect", "give", targets, effect_word, seconds] => {
+                // THE SECONDS ARM (lambda$register$4 — the
+                // integer(1, 1000000) range the parse verdicts wear:
+                // the below-one / above-million the failure keeps)
+                let Some(seconds) = Self::parse_int_arg(seconds, 1, 1_000_000) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.effect_give_command(targets, effect_word, Some(seconds), 0, false);
+            }
+            ["effect", "give", targets, effect_word, seconds, amplifier] => {
+                // THE SECONDS + AMPLIFIER (lambda$register$5 — the
+                // two int ranges the same verdicts wear)
+                let Some(seconds) = Self::parse_int_arg(seconds, 1, 1_000_000) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                let Some(amplifier) = Self::parse_int_arg(amplifier, 0, 255) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.effect_give_command(targets, effect_word, Some(seconds), amplifier, false);
+            }
+            ["effect", "give", targets, effect_word, seconds, amplifier, hide_particles] => {
+                // THE FULL GIVE (lambda$register$6 — the hideParticles
+                // bool the visible flag the !-inversion answers — the
+                // `ifne/iconst_1:iconst_0` fold the lambda body
+                // speaks)
+                let Some(seconds) = Self::parse_int_arg(seconds, 1, 1_000_000) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                let Some(amplifier) = Self::parse_int_arg(amplifier, 0, 255) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                let Some(hide) = Self::parse_bool_arg(hide_particles) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.effect_give_command(targets, effect_word, Some(seconds), amplifier, hide);
+            }
             _ => {
                 // THE UNKNOWN DISPATCH (the brigadier parse failure the
                 // client-side submit answers — command.unknown.command
@@ -24293,6 +24421,317 @@ impl App {
                 );
                 tr(&key).unwrap_or(key.as_str()).to_string()
             }
+        }
+    }
+
+    /// THE EFFECT WORD'S OWN PARSE (javap `ResourceArgument.resource`
+    /// — the ResourceLocation reader the registry lookup rides): the
+    /// bare path the default namespace wears (`speed` the
+    /// `minecraft:speed` key becomes), the namespaced word the
+    /// verbatim lookup answers, the unknown key the registry-miss
+    /// failure keeps. THE CHARSET (the ResourceLocation's own law —
+    /// the [a-z0-9._-/] body the ':' separator joins; the upper-case
+    /// or odd-char word the reader the parse failure answers).
+    fn parse_effect_word(word: &str) -> Option<i32> {
+        let normalized = match word.split_once(':') {
+            Some((ns, path)) => {
+                if ns.is_empty() || path.is_empty() {
+                    return None;
+                }
+                word.to_string()
+            }
+            None => format!("minecraft:{word}"),
+        };
+        let charset_ok = normalized.chars().all(|c| {
+            c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '.' | '_' | '-' | '/' | ':')
+        });
+        if !charset_ok {
+            return None;
+        }
+        crate::effects::effect_id_by_name(&normalized)
+    }
+
+    /// THE INT ARG'S OWN PARSE (javap `IntegerArgumentType` — the
+    /// reader the range verdicts wear: the non-numeric word the parse
+    /// failure keeps, the below-min / above-max the too-low/too-high
+    /// failure answers).
+    fn parse_int_arg(word: &str, min: i32, max: i32) -> Option<i32> {
+        word.parse::<i64>().ok().and_then(|n| {
+            if n < min as i64 || n > max as i64 {
+                None
+            } else {
+                Some(n as i32)
+            }
+        })
+    }
+
+    /// THE BOOL ARG'S OWN PARSE (javap `BoolArgumentType.bool` — the
+    /// exact `true`/`false` words the reader answers, everything else
+    /// the parse failure keeps).
+    fn parse_bool_arg(word: &str) -> Option<bool> {
+        match word {
+            "true" => Some(true),
+            "false" => Some(false),
+            _ => None,
+        }
+    }
+
+    /// THE EFFECT'S OWN DISPLAY NAME (javap `MobEffect.getDisplayName`
+    /// — the descriptionId translatable the en_us table answers: the
+    /// `effect.minecraft.speed` key the "Speed" row wears; the missing
+    /// key the getOrDefault law the KEY ITSELF renders).
+    fn effect_display_name(effect_id: i32) -> String {
+        let Some(name) = mc_registry::generated::mob_effects::MOB_EFFECT_ORDER
+            .get(effect_id as usize)
+        else {
+            return effect_id.to_string();
+        };
+        let key = format!("effect.{}", name.replace(':', "."));
+        tr(&key).unwrap_or(key.as_str()).to_string()
+    }
+
+    /// THE GIVE WALK (javap `EffectCommands.giveEffect` — the
+    /// collection loop the LivingEntity instances the addEffect dose
+    /// rides, the count the true returns bank): the PLAYER target the
+    /// own store speaks, the MOB target the kind's canBeAffected gate
+    /// the undead refusal wears and the per-mob store the same
+    /// insert-or-update law answers.
+    fn effect_give(
+        &mut self,
+        targets: &[KillTarget],
+        effect_id: i32,
+        duration: i32,
+        amplifier: i32,
+        flags: u8,
+    ) -> usize {
+        let mut count = 0;
+        for target in targets {
+            let applied = match target {
+                KillTarget::Player => {
+                    self.effects
+                        .add_effect(effect_id, amplifier, duration, flags)
+                }
+                KillTarget::Mob(i) => match self.mobs.get_mut(*i) {
+                    None => false,
+                    Some(mob) => {
+                        // THE CAN-BE-AFFECTED GATE (javap
+                        // `LivingEntity.canBeAffected` pcs 52-87 —
+                        // the IGNORES_POISON_AND_REGEN member the
+                        // REGENERATION/POISON instance refuses; the
+                        // offline roster's undead the
+                        // zombie/skeleton kinds speak, every other
+                        // kind the accept law keeps)
+                        if crate::effects::undead_ignores(effect_id)
+                            && matches!(
+                                mob.kind,
+                                crate::mob::MobKind::Zombie | crate::mob::MobKind::Skeleton
+                            )
+                        {
+                            false
+                        } else {
+                            mob.effects
+                                .add_effect(effect_id, amplifier, duration, flags)
+                        }
+                    }
+                },
+            };
+            if applied {
+                count += 1;
+            }
+        }
+        count
+    }
+
+    /// THE CLEAR WALK (javap `EffectCommands.clearEffects` /
+    /// `clearEffect` — the collection loop the
+    /// `removeAllEffects()`/`removeEffect(effect)` true returns
+    /// count): the player's and the mobs' own stores the same
+    /// removal law answers, the effect-less body the false return
+    /// the count never banks.
+    fn effect_clear(&mut self, targets: &[KillTarget], effect_id: Option<i32>) -> usize {
+        let mut count = 0;
+        for target in targets {
+            let removed = match target {
+                KillTarget::Player => match effect_id {
+                    None => self.effects.remove_all(),
+                    Some(id) => self.effects.remove_effect(id),
+                },
+                KillTarget::Mob(i) => match self.mobs.get_mut(*i) {
+                    None => false,
+                    Some(mob) => match effect_id {
+                        None => mob.effects.remove_all(),
+                        Some(id) => mob.effects.remove_effect(id),
+                    },
+                },
+            };
+            if removed {
+                count += 1;
+            }
+        }
+        count
+    }
+
+    /// THE GIVE COMMAND'S OWN WALK (the seven `give` arms the tree
+    /// shares): the parse the selector + effect words keep, the
+    /// duration the giveEffect law computes, the count the feedback
+    /// wears and the empty count the red exception answers.
+    fn effect_give_command(
+        &mut self,
+        targets_word: &str,
+        effect_word: &str,
+        seconds: Option<i32>,
+        amplifier: i32,
+        hide_particles: bool,
+    ) {
+        let Some(targets) = self.selector_kill_targets(targets_word) else {
+            self.push_local_command_error();
+            return;
+        };
+        let Some(effect_id) = Self::parse_effect_word(effect_word) else {
+            self.push_local_command_error();
+            return;
+        };
+        // THE DURATION LAW (javap giveEffect pcs 14-80 — the
+        // instantaneous body the seconds the TICKS speaks, the
+        // non-instant the *20 fold wears, the -1 sentinel the
+        // `infinite` literal carries; the no-seconds arm the 600
+        // default the instant body the 1-tick default answers)
+        let duration = match seconds {
+            None => {
+                if crate::effects::is_instantaneous(effect_id) {
+                    1
+                } else {
+                    600
+                }
+            }
+            Some(n) if crate::effects::is_instantaneous(effect_id) => n,
+            Some(-1) => -1,
+            Some(n) => n * 20,
+        };
+        // THE FLAGS' OWN PACK (javap giveEffect pc 134 — the 5-arg
+        // `MobEffectInstance` ctor the ambient=false,
+        // visible=!hideParticles pair speaks; the 6-arg tail the
+        // showIcon the SAME visible word the ctor's own
+        // delegation answers — pcs 60-69 the (.., visible, visible)
+        // fold)
+        let flags = if hide_particles {
+            0
+        } else {
+            crate::effects::DEFAULT_EFFECT_FLAGS
+        };
+        let count = self.effect_give(&targets, effect_id, duration, amplifier, flags);
+        if count == 0 {
+            // THE FAILED VERDICT (javap giveEffect pcs 162-173 —
+            // ERROR_GIVE_FAILED the red exception renders, the
+            // commands.effect.give.failed translatable the lang
+            // table carries)
+            let msg = tr("commands.effect.give.failed").unwrap_or(
+                "Unable to apply this effect (target is either immune to effects, or has something stronger)",
+            );
+            self.push_chat_message(format!("\u{a7}c{msg}"));
+            return;
+        }
+        // THE FEEDBACK (lambda$giveEffect$0/$1 — the size-1
+        // COLLECTION the single key's entity name wears, every OTHER
+        // size the multiple key's count carries)
+        let effect_name = Self::effect_display_name(effect_id);
+        if targets.len() == 1 {
+            let name = self.kill_target_display_name(&targets[0]);
+            let msg = format_positional(
+                tr("commands.effect.give.success.single").unwrap_or("Applied effect %s to %s"),
+                &[&effect_name, &name],
+            );
+            self.push_chat_message(msg);
+        } else {
+            let msg = format_positional(
+                tr("commands.effect.give.success.multiple")
+                    .unwrap_or("Applied effect %s to %s targets"),
+                &[&effect_name, &targets.len().to_string()],
+            );
+            self.push_chat_message(msg);
+        }
+    }
+
+    /// THE CLEAR COMMAND'S OWN WALK (the three `clear` arms the tree
+    /// shares): the no-targets walk the SOURCE entity the
+    /// single-player collection answers, the no-effect walk the
+    /// every-removal lane runs, the specific walk the one effect
+    /// removes; the zero count the failed verdicts the red
+    /// exception wears.
+    fn effect_clear_command(&mut self, targets_word: Option<&str>, effect_word: Option<&str>) {
+        let targets: Vec<KillTarget> = match targets_word {
+            None => vec![KillTarget::Player],
+            Some(word) => {
+                let Some(targets) = self.selector_kill_targets(word) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                targets
+            }
+        };
+        let effect_id = match effect_word {
+            None => None,
+            Some(word) => match Self::parse_effect_word(word) {
+                None => {
+                    self.push_local_command_error();
+                    return;
+                }
+                Some(id) => Some(id),
+            },
+        };
+        let count = self.effect_clear(&targets, effect_id);
+        if count == 0 {
+            // THE FAILED VERDICTS (javap clearEffects pcs 58-68 /
+            // clearEffect pcs 73-84 — ERROR_CLEAR_EVERYTHING_FAILED
+            // and ERROR_CLEAR_SPECIFIC_FAILED the red exceptions
+            // render)
+            let (key, fallback) = if effect_id.is_none() {
+                (
+                    "commands.effect.clear.everything.failed",
+                    "Target has no effects to remove",
+                )
+            } else {
+                (
+                    "commands.effect.clear.specific.failed",
+                    "Target doesn't have the requested effect",
+                )
+            };
+            let msg = tr(key).unwrap_or(fallback);
+            self.push_chat_message(format!("\u{a7}c{msg}"));
+            return;
+        }
+        // THE FEEDBACK (lambda$clearEffects$0/$1, lambda$clearEffect$0
+        // /$1 — the collection-size law the give walk wears)
+        let effect_name = effect_id.map(Self::effect_display_name);
+        if targets.len() == 1 {
+            let name = self.kill_target_display_name(&targets[0]);
+            let msg = match &effect_name {
+                None => format_positional(
+                    tr("commands.effect.clear.everything.success.single")
+                        .unwrap_or("Removed every effect from %s"),
+                    &[&name],
+                ),
+                Some(effect) => format_positional(
+                    tr("commands.effect.clear.specific.success.single")
+                        .unwrap_or("Removed effect %s from %s"),
+                    &[effect, &name],
+                ),
+            };
+            self.push_chat_message(msg);
+        } else {
+            let msg = match &effect_name {
+                None => format_positional(
+                    tr("commands.effect.clear.everything.success.multiple")
+                        .unwrap_or("Removed every effect from %s targets"),
+                    &[&targets.len().to_string()],
+                ),
+                Some(effect) => format_positional(
+                    tr("commands.effect.clear.specific.success.multiple")
+                        .unwrap_or("Removed effect %s from %s targets"),
+                    &[effect, &targets.len().to_string()],
+                ),
+            };
+            self.push_chat_message(msg);
         }
     }
 
@@ -44649,6 +45088,346 @@ mod tests {
         assert!(err.starts_with("\u{a7}c"), "the RED error rides: {err:?}");
         assert!(app.mobs.iter().all(|m| m.health > 0.0));
         assert!(!app.dead);
+    }
+
+    /// THE EFFECT FAMILY'S OWN SPEECH (javap `EffectCommands` — the
+    /// clear/give tree the dispatch arms wear, the ResourceArgument
+    /// word the registry lookup answers, the IntegerArgumentType
+    /// ranges the parse verdicts keep, the `infinite` literal the -1
+    /// sentinel carries, the feedback keys the size-1 collection law
+    /// wears, the failed verdicts the red exceptions render): the
+    /// parse the pure law keeps, the app walk the stores the chat
+    /// both speak.
+    #[test]
+    fn the_offline_command_the_effect_family_speaks() {
+        // THE PURE PARSE (the ResourceArgument word law)
+        let speed = crate::effects::effect_id_by_name("minecraft:speed").unwrap();
+        assert_eq!(crate::effects::effect_id_by_name("minecraft:slowness"), Some(1));
+        assert_eq!(super::App::parse_effect_word("speed"), Some(speed));
+        assert_eq!(super::App::parse_effect_word("minecraft:speed"), Some(speed));
+        assert_eq!(
+            super::App::parse_effect_word("saturation"),
+            Some(crate::effects::MOB_EFFECT_SATURATION),
+        );
+        assert_eq!(
+            super::App::parse_effect_word("instant_health"),
+            Some(crate::effects::MOB_EFFECT_INSTANT_HEALTH),
+        );
+        assert_eq!(
+            super::App::parse_effect_word("instant_damage"),
+            Some(crate::effects::MOB_EFFECT_INSTANT_DAMAGE),
+        );
+        // THE FAILURES (the upper-case word, the unknown key, the
+        // empty namespace, the empty path, the bare colon)
+        for bad in ["Speed", "haste_speed_unknown", "minecraft:", ":speed", ""] {
+            assert!(
+                super::App::parse_effect_word(bad).is_none(),
+                "the {bad:?} the parse failure keeps"
+            );
+        }
+        // THE INT RANGES (the seconds 1..=1000000, the amplifier
+        // 0..=255 — the below/above/non-numeric the failures keep)
+        assert_eq!(super::App::parse_int_arg("1", 1, 1_000_000), Some(1));
+        assert_eq!(
+            super::App::parse_int_arg("1000000", 1, 1_000_000),
+            Some(1_000_000),
+        );
+        assert_eq!(super::App::parse_int_arg("0", 1, 1_000_000), None);
+        assert_eq!(super::App::parse_int_arg("1000001", 1, 1_000_000), None);
+        assert_eq!(super::App::parse_int_arg("abc", 1, 1_000_000), None);
+        assert_eq!(super::App::parse_int_arg("255", 0, 255), Some(255));
+        assert_eq!(super::App::parse_int_arg("256", 0, 255), None);
+        // THE BOOL WORD (the exact pair the reader answers)
+        assert_eq!(super::App::parse_bool_arg("true"), Some(true));
+        assert_eq!(super::App::parse_bool_arg("false"), Some(false));
+        assert_eq!(super::App::parse_bool_arg("maybe"), None);
+        // THE APP WALK (the staged roster the matcher answers)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the spawned body");
+            (b.x, b.y, b.z)
+        };
+        let mut pig = crate::mob::Zombie::new(111, bx + 1.0, by, bz, 5);
+        pig.kind = crate::mob::MobKind::Pig;
+        app.mobs.push(pig);
+        // THE DEFAULT GIVE (the 600-tick default the visible flags
+        // wear, the single target the entity name speaks)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s speed".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Applied effect Speed to mc2rs"),
+        );
+        let inst = app
+            .effects
+            .get(speed)
+            .expect("the speed the store carries");
+        assert_eq!(inst.duration, 600);
+        assert_eq!(inst.amplifier, 0);
+        assert_eq!(inst.flags, crate::effects::DEFAULT_EFFECT_FLAGS);
+        // THE SECONDS FOLD (the *20 the non-instant body wears — the
+        // upgrade the strictly-greater amplifier replaces)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s minecraft:speed 30 1".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Applied effect Speed to mc2rs"),
+        );
+        let inst = app.effects.get(speed).expect("the upgrade rides");
+        assert_eq!(inst.duration, 600, "the 30 seconds the 600 ticks wear");
+        assert_eq!(inst.amplifier, 1);
+        // THE WEAKER REFUSAL (the equal-amp SHORTER duration the
+        // update law keeps — the count the false return empties, the
+        // failed verdict the red exception renders)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s speed 10".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some(
+                "\u{a7}cUnable to apply this effect (target is either immune to effects, or has something stronger)"
+            ),
+        );
+        assert_eq!(app.effects.get(speed).unwrap().amplifier, 1);
+        // THE HIDE FLAGS (the hidden pair the zero pack wears)
+        let jump = crate::effects::effect_id_by_name("minecraft:jump_boost").unwrap();
+        app.chat_open = true;
+        app.chat_input = "/effect give @s jump_boost 30 0 true".into();
+        app.on_chat_submit();
+        let inst = app.effects.get(jump).expect("the jump rides");
+        assert_eq!(inst.flags, 0, "the hideParticles the zero flags wear");
+        // THE INFINITE LITERAL (the -1 sentinel the never-expiry wears)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s speed infinite 2".into();
+        app.on_chat_submit();
+        let inst = app.effects.get(speed).expect("the infinite rides");
+        assert_eq!(inst.duration, -1);
+        assert_eq!(inst.amplifier, 2);
+        assert!(inst.is_infinite());
+        // THE MOB LANE (the pig the store carries — the single-target
+        // collection the entity name speaks)
+        app.chat_open = true;
+        app.chat_input = "/effect give @e[type=pig] speed".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Applied effect Speed to Pig"),
+        );
+        assert!(app.mobs[0].effects.has_effect(speed));
+        // THE ROSTER COUNT (the @e the player AND the mobs the
+        // multiple key wears — the 2-target collection the count
+        // speaks EVEN THOUGH the player's standing amp-2 infinite the
+        // weaker dose refuses — the collection-size law the
+        // feedback's own bytecode keeps)
+        app.chat_open = true;
+        app.chat_input = "/effect give @e speed 45".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Applied effect Speed to 2 targets"),
+        );
+        // THE PARSE FAILURES (the bad word, the range verdicts, the
+        // bool word — the RED error rides, the stores untouched)
+        for bad in [
+            "/effect give @s haste_speed_unknown",
+            "/effect give @s speed 0",
+            "/effect give @s speed 1000001",
+            "/effect give @s speed 30 256",
+            "/effect give @s speed 30 0 maybe",
+            "/effect give @s",
+            "/effect",
+        ] {
+            app.chat_open = true;
+            app.chat_input = bad.into();
+            app.on_chat_submit();
+            let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+            assert!(err.starts_with("\u{a7}c"), "the {bad} the RED error rides: {err:?}");
+        }
+        // THE CLEAR WALKS (the everything and the specific lanes, the
+        // self and the target collections)
+        app.chat_open = true;
+        app.chat_input = "/effect clear @s speed".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Removed effect Speed from mc2rs"),
+        );
+        assert!(!app.effects.has_effect(speed));
+        // THE MOB'S OWN CLEAR (the pig's store the everything lane
+        // empties)
+        app.chat_open = true;
+        app.chat_input = "/effect clear @e[type=pig]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Removed every effect from Pig"),
+        );
+        assert!(app.mobs[0].effects.is_empty());
+        // THE EVERYTHING SELF CLEAR (the standing jump_boost the
+        // every-lane removes — the ONE body the single key wears)
+        app.chat_open = true;
+        app.chat_input = "/effect clear".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Removed every effect from mc2rs"),
+        );
+        assert!(app.effects.is_empty());
+        // THE FAILED VERDICTS (the effect-less body the every lane
+        // refuses — the red exceptions render)
+        app.chat_open = true;
+        app.chat_input = "/effect clear".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("\u{a7}cTarget has no effects to remove"),
+        );
+        app.chat_open = true;
+        app.chat_input = "/effect clear @s speed".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("\u{a7}cTarget doesn't have the requested effect"),
+        );
+    }
+
+    /// THE EFFECT DOSES' OWN TICK (javap the applyEffectTick laws —
+    /// the HealOrHarm body the heal/harm doses the tick speaks, the
+    /// Saturation's eat the food walk runs, the RegenerationMobEffect
+    /// beat the mob's own body heals, the undead's refusal the store
+    /// never fills): the doses the bodies the one update each wear.
+    #[test]
+    fn the_effect_doses_the_bodies_wear() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        // THE BODY'S OWN GATES (the food lane the below-18 walk never
+        // heals — the doses the assertions the alone effects own)
+        app.food_data.set_food_level(1);
+        app.food_data.set_saturation(0.0);
+        // THE INSTANT HEAL (the default 1-tick duration the ONE
+        // application the same law keeps, the 4<<amp dose the health
+        // lift speaks, the expiry the same-tick removal answers)
+        app.health = 10.0;
+        app.chat_open = true;
+        app.chat_input = "/effect give @s instant_health".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.effects
+                .get(crate::effects::MOB_EFFECT_INSTANT_HEALTH)
+                .unwrap()
+                .duration,
+            1,
+            "the instant body the 1-tick default wears"
+        );
+        app.update();
+        assert_eq!(app.health, 14.0, "the 4<<0 dose the health lifts");
+        assert!(
+            !app.effects.has_effect(crate::effects::MOB_EFFECT_INSTANT_HEALTH),
+            "the spent instant the store leaves"
+        );
+        // THE SECONDS-AS-TICKS LAW (the instant body the seconds the
+        // TICKS speaks — the 3-tick duration the THREE doses wear)
+        app.health = 6.0;
+        app.chat_open = true;
+        app.chat_input = "/effect give @s instant_health 3".into();
+        app.on_chat_submit();
+        for _ in 0..3 {
+            app.update();
+        }
+        assert_eq!(app.health, 18.0, "the three 4-tick doses the 12 lift");
+        assert!(!app.effects.has_effect(crate::effects::MOB_EFFECT_INSTANT_HEALTH));
+        // THE INSTANT HARM (the 6<<amp dose the hurt pipeline runs)
+        app.health = 20.0;
+        app.chat_open = true;
+        app.chat_input = "/effect give @s instant_damage".into();
+        app.on_chat_submit();
+        app.update();
+        assert_eq!(app.health, 14.0, "the 6<<0 dose the pipeline lands");
+        // THE SATURATION'S EAT (the amplifier+1 dose the food walk
+        // runs, the two ticks the two lifts wear)
+        app.food_data.set_food_level(10);
+        app.food_data.set_saturation(0.0);
+        app.chat_open = true;
+        app.chat_input = "/effect give @s saturation 2".into();
+        app.on_chat_submit();
+        for _ in 0..2 {
+            app.update();
+        }
+        assert_eq!(app.food_data.food_level(), 12, "the 1+amp doses land");
+        assert!(!app.effects.has_effect(crate::effects::MOB_EFFECT_SATURATION));
+        // THE MOB LANE (the pig's regen beat the pig's own body
+        // heals, the instant harm the pig's health drops, the
+        // undead's refusal the store never fills)
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the body");
+            (b.x, b.y, b.z)
+        };
+        let mut pig = crate::mob::Zombie::new(121, bx + 1.0, by, bz, 15);
+        pig.kind = crate::mob::MobKind::Pig;
+        pig.health = 4.0;
+        app.mobs.push(pig);
+        app.chat_open = true;
+        app.chat_input = "/effect give @e[type=pig] regeneration".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Applied effect Regeneration to Pig"),
+        );
+        app.update();
+        assert_eq!(
+            app.mobs[0].health, 5.0,
+            "the pig's regen beat the pig's body heals"
+        );
+        app.chat_open = true;
+        app.chat_input = "/effect give @e[type=pig] instant_damage".into();
+        app.on_chat_submit();
+        app.update();
+        assert!(
+            app.mobs[0].health <= 0.0,
+            "the 6<<0 dose the 5.0 body the kill tail arms"
+        );
+        // THE UNDEAD'S REFUSAL (the skeleton the regen the
+        // canBeAffected gate refuses — the failed verdict the red
+        // exception renders, the store the empty law keeps; the
+        // FAR stage the shoot-range the idle body keeps)
+        let mut skel = crate::mob::Zombie::new(122, bx + 30.0, by, bz, 25);
+        skel.kind = crate::mob::MobKind::Skeleton;
+        app.mobs.push(skel);
+        app.chat_open = true;
+        app.chat_input = "/effect give @e[type=skeleton] regeneration".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some(
+                "\u{a7}cUnable to apply this effect (target is either immune to effects, or has something stronger)"
+            ),
+        );
+        assert!(
+            app.mobs[1]
+                .effects
+                .is_empty(),
+            "the refused dose the skeleton's store never fills"
+        );
+        // THE INFINITE NEVER EXPIRES (the -1 sentinel the tick-down
+        // never touches, the 200 updates the store the same effect
+        // keeps — the namespaced form the walk rides)
+        app.chat_open = true;
+        app.chat_input = "/effect give @s minecraft:speed infinite".into();
+        app.on_chat_submit();
+        let speed = crate::effects::effect_id_by_name("minecraft:speed").unwrap();
+        for _ in 0..200 {
+            app.update();
+        }
+        let inst = app.effects.get(speed).expect("the infinite never expires");
+        assert_eq!(inst.duration, -1);
+        assert_eq!(inst.amplifier, 0, "the no-amplifier arm the zero wears");
     }
 
     #[test]

@@ -40,6 +40,23 @@ pub const MOB_EFFECT_FIRE_RESISTANCE: i32 = 11;
 /// `minecraft:absorption`'s mob-effect registry id (the test pins it).
 pub const MOB_EFFECT_ABSORPTION: i32 = 21;
 
+/// `minecraft:instant_health`'s mob-effect registry id — the 0-based
+/// wire order's own slot (the generated `MOB_EFFECT_ORDER` table's 6th
+/// row, the HealOrHarmMobEffect's beneficial row).
+pub const MOB_EFFECT_INSTANT_HEALTH: i32 = 5;
+
+/// `minecraft:instant_damage`'s mob-effect registry id (the wire
+/// order's own 7th row, the HealOrHarmMobEffect's harmful row).
+pub const MOB_EFFECT_INSTANT_DAMAGE: i32 = 6;
+
+/// `minecraft:poison`'s mob-effect registry id (the wire order's own
+/// 19th row — the undead-refusal lane's one arm reads it).
+pub const MOB_EFFECT_POISON: i32 = 18;
+
+/// `minecraft:saturation`'s mob-effect registry id (the wire order's
+/// own 23rd row, the InstantaneousMobEffect's food row).
+pub const MOB_EFFECT_SATURATION: i32 = 22;
+
 /// `minecraft:darkness`'s mob-effect registry id — the 0-based wire
 /// order's own slot (the generated `MOB_EFFECT_ORDER` table's 33rd row,
 /// the index the warden's lightmap lane consumes).
@@ -100,6 +117,33 @@ pub const MAX_ABSORPTION: f32 = 20.0;
 /// amplifier level times two.
 pub fn absorption_amount_for(amplifier: i32) -> f32 {
     (4 * (1 + amplifier)) as f32
+}
+
+/// THE INSTANT WALK'S OWN SET (javap `MobEffects` clinit — the effects
+/// the `InstantaneousMobEffect` subclasses carry: the `instant_health`
+/// and `instant_damage` rows the `HealOrHarmMobEffect` ctor arms and
+/// the `saturation` row the `SaturationMobEffect` (extends
+/// `InstantaneousMobEffect`) banks; every OTHER row the plain
+/// `MobEffect`/`RegenerationMobEffect`/`AbsorptionMobEffect` family
+/// the base's `isInstantaneous` 0-ireturn keeps). The /effect give
+/// walk's duration law reads it (the seconds the TICKS the instant
+/// body speaks, the *20 fold every other body wears).
+pub fn is_instantaneous(effect_id: i32) -> bool {
+    effect_id == MOB_EFFECT_INSTANT_HEALTH
+        || effect_id == MOB_EFFECT_INSTANT_DAMAGE
+        || effect_id == MOB_EFFECT_SATURATION
+}
+
+/// THE UNDEAD'S OWN REFUSAL (javap `LivingEntity.canBeAffected` pcs
+/// 52-87 — the `EntityTypeTags.IGNORES_POISON_AND_REGEN` member the
+/// `REGENERATION` OR `POISON` instance the false return answers,
+/// everything else the 1-ireturn accept wears): the two effects the
+/// undead roster the /effect give walk refuses. The OFFLINE roster's
+/// own undead the `Zombie`/`Skeleton` kinds speak — the tag's wider
+/// roster (the wither, the phantom, the drowned) the offline kinds
+/// the single pair the honest absence keeps.
+pub fn undead_ignores(effect_id: i32) -> bool {
+    effect_id == MOB_EFFECT_REGENERATION || effect_id == MOB_EFFECT_POISON
 }
 
 /// The effect-icons row's blink alpha (javap `Hud.extractEffects`'s
@@ -270,12 +314,17 @@ pub struct EffectsStore {
 }
 
 /// The offline tick's outcome: the heals the regeneration beat wanted
-/// (1.0 each — the caller folds them through the `Entity.heal` clamp)
-/// and the ids that expired this tick (the removal the server's
-/// `tickServer` false return speaks).
+/// (1.0 each — the caller folds them through the `Entity.heal` clamp),
+/// the magic doses the instant-harm beat wanted (the `hurtServer`
+/// pipeline the caller runs), the saturation's food lifts (the
+/// `FoodData.eat(amplifier + 1, 1.0)` doses — the caller folds them
+/// through the food walk) and the ids that expired this tick (the
+/// removal the server's `tickServer` false return speaks).
 #[derive(Debug, Default, Clone, PartialEq)]
 pub struct OfflineTick {
     pub heals: Vec<f32>,
+    pub harms: Vec<f32>,
+    pub eats: Vec<i32>,
     pub expired: Vec<i32>,
 }
 
@@ -345,8 +394,9 @@ impl EffectsStore {
     }
 
     /// `LivingEntity.removeEffect` — the map's removal; the absorption
-    /// value persists (no removal hook — the module head's law).
-    #[cfg_attr(not(test), expect(dead_code))]
+    /// value persists (no removal hook — the module head's law). The
+    /// /effect clear walk the offline dispatch runs the non-test
+    /// caller the lane keeps.
     pub fn remove_effect(&mut self, effect_id: i32) -> bool {
         self.effects.remove(&effect_id).is_some()
     }
@@ -382,6 +432,29 @@ impl EffectsStore {
                         let due = if period > 0 { inst.duration % period == 0 } else { true };
                         if due {
                             out.heals.push(1.0);
+                        }
+                    }
+                    // THE INSTANT WALK (javap `InstantaneousMobEffect
+                    // .shouldApplyEffectTickThisTick` pcs 0-11 — the
+                    // `duration >= 1` word the every-remaining-tick
+                    // law answers; the applyEffectTick doses the
+                    // HealOrHarm/Saturation bodies carry: the heal
+                    // `4 << amp` (the Java shift the mask-31
+                    // wrapping_shl law speaks), the harm `6 << amp`
+                    // the magic source wears, the eat
+                    // `amplifier + 1` the FoodData dose speaks). The
+                    // DEFAULT 1-tick duration the /effect give walk
+                    // arms the ONE application the same law keeps.
+                    if is_instantaneous(id) {
+                        let amp = inst.amplifier;
+                        if id == MOB_EFFECT_INSTANT_HEALTH {
+                            out.heals.push((4i32).wrapping_shl(amp as u32).max(0) as f32);
+                        }
+                        if id == MOB_EFFECT_INSTANT_DAMAGE {
+                            out.harms.push((6i32).wrapping_shl(amp as u32) as f32);
+                        }
+                        if id == MOB_EFFECT_SATURATION {
+                            out.eats.push(1 + amp);
                         }
                     }
                     if !inst.is_infinite() {
