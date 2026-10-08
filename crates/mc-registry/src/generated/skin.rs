@@ -366,8 +366,8 @@ pub const WARDEN_BIOLUM_RUNTIME_PATH: &str = "entity/warden/warden_bioluminescen
 /// The WARDEN PULSATING SPOTS 1 (the first spot layer's own emissive
 /// texture), generated from the same jar: the source sha1 the first
 /// spots layer verifies before it draws (javap `WardenRenderer`'s
-/// PULSATING_SPOTS_TEXTURE_1 — the `cos(age * 0.045) * 0.25` max-0.25
-/// alpha the lambda speaks).
+/// PULSATING_SPOTS_TEXTURE_1 — the `cos(age * 0.045) * 0.25` max-0.0
+/// alpha the lambda's FCONST_0 first arg speaks).
 pub const WARDEN_SPOTS1_PNG_SHA1: &str = "61e98ebadb670b948dca35cb9b39176d29f73336";
 pub const WARDEN_SPOTS1_RUNTIME_PATH: &str = "entity/warden/warden_pulsating_spots_1.png";
 

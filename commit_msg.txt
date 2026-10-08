@@ -1,70 +1,60 @@
-v0.3.628: the warden the beam the rings the boom the eyes see (dev-15)
+v0.3.632: the warden the SPOTS the pulse the floor the blink (autopush-573)
 
-THE SONIC BOOM PARTICLE LANE — the beam's own rings the client now
-draws (jar evidence: 26.2 javap verbatim):
+THE PULSATING SPOTS THE REAL PULSE WEARS — the emissive layers' own
+alpha functions the fresh bytecode re-speaks (jar evidence: 26.2 javap
+verbatim, /tmp/client.jar sha1 2dc72797acbc1b63fc16a11c4ac393605f453754):
 
-- javap SonicBoomParticle pc 0-32 — the ctor verbatim: the
-  HugeExplosionParticle chain the base ctor's walk serves, the
-  `lifetime = 16` the ctor's own putfield overrides (the base's
-  `6 + nextInt(4)` draw the override retires — NO draw the fixed 16
-  spends), the `quadSize = 1.5f` the ldc keeps (the base's 6.0 the
-  override retires), the setSpriteFromAge the ctor tail wears.
-- javap HugeExplosionParticle pc 0-74 — the base verbatim: the
-  dconst_0 velocity trio the ctor args pass (the motion the
-  sendParticles count-1 zero speeds speak — the static ring the
-  walk plants), the grey draw `nextFloat() * 0.6f + 0.4f` pc 41-69
-  the r/g/b ONE draw shares, the OPAQUE layer the getLayer
-  override returns, the tick the age walk keeps (the no-fade the
-  body speaks — the prev trio + the age++ + the removal gate + the
-  setSpriteFromAge tail, no motion, no friction the body reads).
-- javap Particle.setSpriteFromAge + MutableSpriteSet.get(int, int)
-  — the frame law verbatim: `sprites.get(age * (size - 1) /
-  lifetime)` — the 16-frame ascending set the `sonic_boom.json`
-  lists (`sonic_boom_0..15`, 32x32 the IHDR keeps), the last frame
-  the integer division never reaches (the age walk removes the
-  particle at the lifetime first — the buffer-frame quirk the law's
-  own shape speaks).
-- javap Particle.getLightCoords pc 0-38 — the world-light default
-  the no-override class keeps (the chunk-missing arm the 0xF000F0
-  fullbright answers).
-- javap SonicBoom.lambda$tick$2 pc 40-108 — THE BEAM WALK verbatim
-  (the lane the prior round's beam_len + beam fields served): the
-  `i = Mth.floor(len) + 7` length the walk banks, the
-  `for (j = 1; j < i; j++)` loop the `chest + dir * j` exact points
-  plants, the `sendParticles(SONIC_BOOM, point, 1, 0, 0, 0, 0)`
-  count-1 zero-offset the spread never scatters.
+WardenRenderer lambda$new$3 (spots-1) pc 0-15: fconst_0, fload_1, ldc
+0.045f, fmul, f2d, invokestatic Mth.cos(D)F, ldc 0.25f, fmul,
+invokestatic Math.max(FF)F — the max's FIRST arg the FCONST_0 keeps:
+Math.max(0.0f, Mth.cos(age * 0.045f) * 0.25f). lambda$new$5 (spots-2)
+the same walk the +3.1415927f shift wears. The submit call-site
+(LivingEntityEmissiveLayer pc 17-27) the getfield ageInTicks:F the
+second arg passes — the alpha the age clock consults.
 
-implemented:
-- mc-registry skin.rs: the PARTICLE_SONIC_BOOM_PNG_SHA1S 16 rows +
-  the PARTICLE_SONIC_BOOM_RUNTIME_PATHS (particle/sonic_boom_0..15
-  .png) — the sha1-verified loader stream the sculk rows keep.
-- avatar.rs: the SonicBoomFrames loader (the 16 frames the cache
-  root serves, each sha1 the stream verifies, the 32x32 the shape
-  check keeps, the pixel walk the nearest texel answers — the
-  honest absence the missing file keeps).
-- particles.rs: the ParticleKind::SonicBoom variant + the
-  SONIC_BOOM_FRAME_COUNT 16 + the sonic_boom_frame walk (the
-  `age * 15 / lifetime` fold, the min clamp the bound keeps) + the
-  sonic_boom_ring ctor (the fixed 16 the lifetime banks, the 1.5f
-  the quad carries, the zero velocity the trio keeps, the grey the
-  ONE draw shares — the caller's pre-drawn answer the stream order
-  keeps).
-- screens.rs: the App field + the lazy load; THE BEAM'S OWN PLANTS
-  — the boom arm the (chest, dir, floor(len) + 7) tuple banks, the
-  spawn walk after the loop the grey draws spends (the
-  level_ambient_rng's ONE draw per ring the base ctor's law wears,
-  the j = 1..i points the exact positions plant) — the render the
-  frame-keyed sonic_boom_groups serves (the 32x32 uv the plain
-  order keeps, the OPAQUE lane the draw_sampled_quads callback
-  wears, the frame groups the draw walk joins the sculk lanes).
-- tests +1 (screens::the_sonic_boom_the_beam_the_rings_plant — the
-  mid-window surgical state one update wears, the 26l the fired
-  voice banks, the 11 rings the floor(5) + 7 walk plants, each
-  ring the exact chest + dir * j point 1e-9 keeps, the grey band
-  0.4..1.0 the draw wears) + the frame-law + ctor asserts the
-  particles suite's own walk extends.
-- verified: cargo test --workspace (CARGO_INCREMENTAL=0) 2120
-  passed / 0 failed / 21 ignored; verify_goldens.sh 13/13 rms
-  0.000 (no golden regenerated — the combat-free golden scenes the
-  particle groups never feed, the empty groups the draw never
-  spends).
+THE LAW the fresh bytecode banks: the cos halves the [-0.25, 0.25]
+band swing, the max-0.0 floor the NEGATIVE halves swallows — the
+spots-1 the peak 0.25 and the trough 0.0 the age clock alternates,
+the spots-2 the +π shift the anti-phase twin wears (the one the peak
+keeps the instant the other the trough sleeps). The max-0.25 floor
+the autopush-560 round banked the fresh javap REFUTES — the constant
+alpha the misread kept the "pulsating" name never wore (the fconst_0
+the bytecode speaks, the 0.25f ldc the lambda's SECOND max arg alone
+carries — the multiply, not the floor).
+
+Implemented: avatar.rs alpha_at — the two spot arms' floor 0.25 →
+0.0 (the f32::max(0.0, ...) the Math.max semantics the normal values
+share), the doc comment the fresh walk re-speaks; mc-registry
+generated/skin.rs the hand-maintained warden spots-1 doc row the
+same correction wears (doc-only; the sha1 rows untouched).
+
+Tests: the_warden_layer_alphas_the_lambdas_wear re-pins — the sweep
+the lambda walk the same Mth table re-computes (the exact-equality
+the alpha's own fn answers), the [0.0, 0.25] band the pair keeps,
+the ENDS the pulse speaks: age 0.0 the spots-1 peak 0.25 / the
+anti-phase spots-2 trough 0.0 the floor keeps, age π/0.045 the pair
+SWAPS (the spots-1 the cos(π) trough the floor swallows, the
+spots-2 the near-peak > 0.24 the contrast pins); the const biolum /
+the tendrils + heart clock words / the drained gates the prior pins
+keep. Test count unchanged (2107 passed / 0 failed / 21 ignored,
+CARGO_INCREMENTAL=0 — the law's correction the same baseline wears).
+
+Goldens: verify_goldens.sh 13/13 PASS rms 0.000 — NO regeneration
+(verified, not assumed: the golden scenes the warden never renders,
+the pulse the age clock blinks the combat-free frames never feed;
+the render-path change the matrix re-ran green end to end).
+
+Version: workspace Cargo.toml 0.3.631 → 0.3.632 (scripts/
+bump_version.py, the 6 lock entries the tool refreshes).
+
+NEXT CANDIDATES (one per round):
+1. the EAT gameEvent lane (the cake bite f8 eating row).
+2. the mob-victim RETALIATION lane (the MobKind::Warden variant the
+   kind tables need, the hunt the HurtByTargetGoal arms).
+3. the SONIC BOOM'S OWN ALL-VICTIMS WALK (the getEntities box the
+   beam's own path wears — the multi-victim dose the single
+   fight-target pair the stand-in keeps).
+4. interactivity queue (resident priority): any GUI/input/sound lane.
+5. the warden render polish the CHARGE serves (the layer quads the
+   sonic keyframes ride — the wiring the 570 round landed, the
+   render-arm call-sites the pass-through keeps).

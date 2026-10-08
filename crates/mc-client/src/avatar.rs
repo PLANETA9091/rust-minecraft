@@ -10043,20 +10043,25 @@ impl WardenLayer {
     /// THE LAYER'S OWN ALPHA FUNCTION (javap `LivingEntityEmissiveLayer
     /// .submit` pc 16-32 — the AlphaFunction the render state's age
     /// clock consults; the `<= 1.0E-5` gate the caller's skip keeps):
-    /// the bioluminescent the 1.0 const keeps, the TWO spot layers the
-    /// `max(0.25, Mth.cos(age * 0.045 [* + 3.1415927]) * 0.25)` pair
-    /// wears — the cos halves the max-0.25 floor CLAMPS (the pulse the
-    /// bytecode's own arithmetic keeps: the product never exceeds the
-    /// floor, the constant 0.25 the honest answer), the tendrils the
-    /// shiver clock's getter word, the heart the heartbeat's.
+    /// the bioluminescent the 1.0 const keeps (`lambda$new$1` the
+    /// fconst_1), the TWO spot layers the `max(0.0, Mth.cos(age *
+    /// 0.045 [* + 3.1415927]) * 0.25)` pair wears — `lambda$new$3` /
+    /// `lambda$new$5` the FCONST_0 first arg the fresh 26.2 javap
+    /// speaks (the REAL pulse: the cos halves the [-0.25, 0.25] band
+    /// swings, the max-0.0 floor the negative halves swallows, the
+    /// anti-phase pair the +3.1415927f shift wears — the spots the
+    /// name promises the age clock blinks; the max-0.25 constant the
+    /// prior round's misread kept, the floor the fresh bytecode
+    /// refutes), the tendrils the shiver clock's getter word, the
+    /// heart the heartbeat's.
     pub fn alpha_at(self, state: &WardenState, tendril: f32, heart: f32) -> f32 {
         match self {
             WardenLayer::Bioluminescent => 1.0,
             WardenLayer::PulsatingSpots1 => {
-                0.25f32.max(mth_cos(state.age_ticks * 0.045) * 0.25)
+                0.0f32.max(mth_cos(state.age_ticks * 0.045) * 0.25)
             }
             WardenLayer::PulsatingSpots2 => {
-                0.25f32.max(mth_cos(state.age_ticks * 0.045 + std::f32::consts::PI) * 0.25)
+                0.0f32.max(mth_cos(state.age_ticks * 0.045 + std::f32::consts::PI) * 0.25)
             }
             WardenLayer::Tendrils => tendril,
             WardenLayer::Heart => heart,
@@ -17791,12 +17796,16 @@ mod tests {
     }
 
     /// THE LAYERS' OWN ALPHA LAMBDAS (javap `WardenRenderer` the 26.2
-    /// jar speaks — `lambda$new$1` the 1.0 const, `lambda$new$3` /
-    /// `lambda$new$5` the `max(0.25, Mth.cos(age * 0.045 [+ PI]) *
-    /// 0.25)` pair, `lambda$new$7` / `lambda$new$9` the clock words):
-    /// the bioluminescent the constant keeps, the spot pair the
-    /// max-0.25 floor CLAMPS (the cos product never exceeds the
-    /// floor), the tendrils/heart the getters' own words wear.
+    /// jar speaks — `lambda$new$1` the fconst_1 const, `lambda$new$3`
+    /// / `lambda$new$5` the `max(0.0, Mth.cos(age * 0.045 [+
+    /// 3.1415927f]) * 0.25)` pair the FCONST_0 first arg banks, the
+    /// REAL pulse the age clock blinks, `lambda$new$7` /
+    /// `lambda$new$9` the clock words): the bioluminescent the
+    /// constant keeps, the spot pair the [-0.25, 0.25] cos band the
+    /// max-0.0 floor folds (the negative halves the floor swallows —
+    /// the peak the +0.25 wears, the trough the 0.0 keeps, the
+    /// anti-phase twin the +π shift swaps), the tendrils/heart the
+    /// getters' own words wear.
     #[test]
     fn the_warden_layer_alphas_the_lambdas_wear() {
         let state = WardenState {
@@ -17820,16 +17829,57 @@ mod tests {
             1.0,
             "the biolum lambda the 1.0 const keeps"
         );
-        // THE SPOT PAIR (the max-0.25 floor — the sweep the clamp
-        // pins: cos ranges the [-1, 1] band, the product the [-0.25,
-        // 0.25] one, the max the 0.25 floor keeps)
+        // THE SPOT PAIR (the max-0.0 floor the REAL pulse wears — the
+        // sweep the lambda walk the test re-computes through the same
+        // Mth table the alpha consults: the cos halves the [-0.25,
+        // 0.25] band swings, the floor the negative halves folds)
         for age in [0.0f32, 3.5, 7.0, 11.3, 40.0, 137.0, 900.0] {
             let s = WardenState { age_ticks: age, ..state };
             let a1 = WardenLayer::PulsatingSpots1.alpha_at(&s, 0.0, 0.0);
             let a2 = WardenLayer::PulsatingSpots2.alpha_at(&s, 0.0, 0.0);
-            assert_eq!(a1, 0.25, "the spots-1 lambda the max floor keeps at {age}");
-            assert_eq!(a2, 0.25, "the spots-2 lambda the max floor keeps at {age}");
+            assert_eq!(
+                a1,
+                0.0f32.max(mth_cos(age * 0.045) * 0.25),
+                "the spots-1 lambda the max-0.0 walk keeps at {age}"
+            );
+            assert_eq!(
+                a2,
+                0.0f32.max(mth_cos(age * 0.045 + std::f32::consts::PI) * 0.25),
+                "the spots-2 lambda the +PI walk keeps at {age}"
+            );
+            assert!(
+                (0.0..=0.25).contains(&a1) && (0.0..=0.25).contains(&a2),
+                "the pulse band the [0.0, 0.25] pair keeps at {age}"
+            );
         }
+        // THE PULSE'S OWN ENDS (the age-0 cos the 1.0 peak speaks —
+        // the spots-1 the 0.25 peak wears, the anti-phase spots-2 the
+        // cos(π) trough the floor SWALLOWS — and the half-period later
+        // (age = π/0.045) the pair SWAPS: the spots-1 the trough keeps,
+        // the spots-2 the peak wears — the blink the constant the
+        // prior round banked never spoke)
+        let s0 = WardenState { age_ticks: 0.0, ..state };
+        assert_eq!(
+            WardenLayer::PulsatingSpots1.alpha_at(&s0, 0.0, 0.0),
+            0.25,
+            "the spots-1 the age-0 peak the 0.25 keeps"
+        );
+        assert_eq!(
+            WardenLayer::PulsatingSpots2.alpha_at(&s0, 0.0, 0.0),
+            0.0,
+            "the spots-2 the age-0 anti-phase trough the floor keeps"
+        );
+        let trough_age = std::f32::consts::PI / 0.045;
+        let st = WardenState { age_ticks: trough_age, ..state };
+        assert_eq!(
+            WardenLayer::PulsatingSpots1.alpha_at(&st, 0.0, 0.0),
+            0.0,
+            "the spots-1 the cos(π) trough the floor swallows"
+        );
+        assert!(
+            WardenLayer::PulsatingSpots2.alpha_at(&st, 0.0, 0.0) > 0.24,
+            "the spots-2 the anti-phase peak the swap wears"
+        );
         // THE CLOCK WORDS (the pass-through the getters serve)
         assert_eq!(
             WardenLayer::Tendrils.alpha_at(&state, 0.55, 0.7),
