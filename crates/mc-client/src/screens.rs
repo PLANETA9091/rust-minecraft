@@ -2352,14 +2352,82 @@ enum KillTarget {
     Mob(usize),
 }
 
-/// THE PARSED SELECTOR'S OWN SHAPE (the head + the `type=` filter
-/// elements the options region carries — each the negation flag the
-/// `!` prefix wears and the registry id the minecraft: prefix the
-/// strip keeps).
-#[derive(Debug, Clone, PartialEq, Eq)]
+/// THE SORT ORDER'S OWN WORD (javap `EntitySelectorParser`'s
+/// ORDER_NEAREST/ORDER_FURTHEST/ORDER_RANDOM BiConsumers — the four
+/// spellings the `sort=` option's readUnquotedString switch speaks,
+/// the unknown word the ERROR_SORT_UNKNOWN verdict answers).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SelectorSort {
+    Nearest,
+    Furthest,
+    Random,
+    Arbitrary,
+}
+
+impl SelectorSort {
+    /// THE WORD'S OWN PARSE (lambda$bootStrap$25's hashCode switch —
+    /// the four words the order enum answers, everything else the
+    /// ERROR_SORT_UNKNOWN failure wears).
+    fn parse(word: &str) -> Option<Self> {
+        match word {
+            "nearest" => Some(Self::Nearest),
+            "furthest" => Some(Self::Furthest),
+            "random" => Some(Self::Random),
+            "arbitrary" => Some(Self::Arbitrary),
+            _ => None,
+        }
+    }
+}
+
+/// THE DOUBLES RANGE'S OWN PARSE (javap `MinMaxBounds$Bounds
+/// .fromReader` — the no-dot word the EXACT form wears (max := min,
+/// pc 74-76), the `..` split the bounded sides read, the readNumber
+/// walk the empty run the Optional.empty keeps, the BOTH-empty
+/// verdict the ERROR_EMPTY answers (pc 78-101), the min>max the
+/// ERROR_SWAPPED wears). The bounds the caller the SQUARED distance
+/// compares (the matchesSqr law the square the caller folds).
+fn parse_selector_distance(value: &str) -> Option<(f64, f64)> {
+    let (min_part, max_part) = match value.split_once("..") {
+        Some((min_part, max_part)) => (min_part, max_part),
+        // THE EXACT FORM (pc 74-76 — the no-dot word the SAME number
+        // both sides wears)
+        None => (value, value),
+    };
+    // THE BOTH-EMPTY VERDICT (pc 78-101 — `..` alone the ERROR_EMPTY
+    // keeps, the bare empty the canRead head refuses)
+    if min_part.is_empty() && max_part.is_empty() {
+        return None;
+    }
+    let min = if min_part.is_empty() {
+        f64::NEG_INFINITY
+    } else {
+        min_part.parse().ok()?
+    };
+    let max = if max_part.is_empty() {
+        f64::INFINITY
+    } else {
+        max_part.parse().ok()?
+    };
+    // THE SWAPPED VERDICT (MinMaxBounds.ERROR_SWAPPED — the areSwapped
+    // walk the min>max range refuses)
+    if min > max {
+        return None;
+    }
+    Some((min, max))
+}
+
+/// THE PARSED SELECTOR'S OWN SHAPE (the head + the options the region
+/// carries: the `type=` filters the negation flag the `!` prefix
+/// wears, the `distance=` range the squared compare answers, the
+/// `limit=` the maxResults cap, the `sort=` the order word the
+/// sortAndLimit walk applies).
+#[derive(Debug, Clone, PartialEq)]
 struct ParsedEntitySelector {
     head: SelectorHead,
     types: Vec<(bool, String)>,
+    distance: Option<(f64, f64)>,
+    limit: Option<usize>,
+    sort: Option<SelectorSort>,
 }
 
 /// THE ENTITY TYPE'S OWN REGISTRY ID (the mob kind the wire name the
@@ -2404,20 +2472,44 @@ fn parse_entity_selector_word(word: &str) -> Option<ParsedEntitySelector> {
         _ => return None,
     };
     let tail = chars.as_str();
-    let types = if tail.is_empty() {
-        Vec::new()
+    let (types, distance, limit, sort) = if tail.is_empty() {
+        (Vec::new(), None, None, None)
     } else {
         // THE OPTIONS REGION (the `[` open the bracket walk demands —
         // the close the region's own tail wears)
         let interior = tail.strip_prefix('[')?.strip_suffix(']')?;
         let mut types = Vec::new();
+        let mut distance: Option<(f64, f64)> = None;
+        let mut limit: Option<usize> = None;
+        let mut sort: Option<SelectorSort> = None;
         for element in interior.split(',') {
-            // THE KEY=VALUE SPLIT (the `type` key the honored lane
-            // answers — the other registered keys the parse failure
-            // the offline vocabulary speaks)
+            // THE KEY=VALUE SPLIT (the four registered keys the
+            // honored lanes answer — the other registered keys the
+            // parse failure the offline vocabulary speaks)
             let (key, value) = element.split_once('=')?;
-            if key != "type" {
-                return None;
+            match key {
+                "type" => {}
+                "distance" => {
+                    // THE RANGE LANE (the parse_selector_distance walk
+                    // the fromReader law keeps)
+                    distance = Some(parse_selector_distance(value)?);
+                    continue;
+                }
+                "limit" => {
+                    // THE MAXRESULTS LANE (lambda$bootStrap$23 — the
+                    // readInt walk the below-1 the
+                    // ERROR_LIMIT_TOO_SMALL refuses)
+                    limit = Some(value.parse::<usize>().ok().filter(|&n| n >= 1)?);
+                    continue;
+                }
+                "sort" => {
+                    // THE ORDER LANE (lambda$bootStrap$25 — the four
+                    // words the switch answers, the rest the
+                    // ERROR_SORT_UNKNOWN failure wears)
+                    sort = Some(SelectorSort::parse(value)?);
+                    continue;
+                }
+                _ => return None,
             }
             // THE NEGATION PREFIX (the `!` the type walk strips — the
             // excluded id the negation set joins)
@@ -2449,9 +2541,15 @@ fn parse_entity_selector_word(word: &str) -> Option<ParsedEntitySelector> {
                 types.push((negated, format!("minecraft:{path}")));
             }
         }
-        types
+        (types, distance, limit, sort)
     };
-    Some(ParsedEntitySelector { head, types })
+    Some(ParsedEntitySelector {
+        head,
+        types,
+        distance,
+        limit,
+        sort,
+    })
 }
 
 /// THE TYPE PATH'S OWN KIND RESOLVE (the parse's registry walk — the
@@ -24211,8 +24309,18 @@ impl App {
     /// query's own shape). THE TYPE FILTER the predicate's own law
     /// keeps: the positive ids the set the membership demands, the
     /// `!`-negated ids the exclusion wears, the empty-positive set
-    /// the negations-alone the match keeps.
-    fn selector_kill_targets(&self, word: &str) -> Option<Vec<KillTarget>> {
+    /// the negations-alone the match keeps. THE DISTANCE FILTER
+    /// (javap `EntitySelector` lambda$getPredicate$2 — the SQUARED
+    /// feet distance the squared bounds answer:
+    /// `range.matchesSqr(entity.distanceToSqr(source))`, the linear
+    /// block law the square-fold equivalence keeps). THE SORT + THE
+    /// LIMIT (javap `EntitySelector.sortAndLimit` — the size>1 list
+    /// the order BiConsumer sorts, the subList the maxResults cap
+    /// truncates: the nearest the ascending distanceToSqr comparator
+    /// wears, the furthest the swapped args the descending law keeps,
+    /// the random the Collections.shuffle backward walk speaks, the
+    /// arbitrary the noop answers).
+    fn selector_kill_targets(&mut self, word: &str) -> Option<Vec<KillTarget>> {
         let parsed = parse_entity_selector_word(word)?;
         // THE TYPE FILTER (the predicate's own law — the positive ids
         // the membership set demands, the negated ids the exclusion
@@ -24237,24 +24345,105 @@ impl App {
             }
             !excluded && (!any_positive || included)
         };
-        let player_id = "player";
-        let mut targets = Vec::new();
+        // THE SOURCE POSITION (the command source's own feet — the
+        // distanceToSqr arg the distance predicate and the
+        // nearest/furthest orders read)
+        let source = self
+            .body
+            .as_ref()
+            .map(|b| (b.x, b.y, b.z));
+        let squared = |x: f64, y: f64, z: f64| -> f64 {
+            match source {
+                Some((sx, sy, sz)) => {
+                    (x - sx) * (x - sx) + (y - sy) * (y - sy) + (z - sz) * (z - sz)
+                }
+                // THE SOURCELESS WALK (the degenerate no-body state the
+                // offline dispatch never serves — the no-filter lane the
+                // arbitrary order keeps)
+                None => 0.0,
+            }
+        };
+        // THE DISTANCE PREDICATE (lambda$getPredicate$2's matchesSqr
+        // walk — the squared bounds the squared distance answers; the
+        // filter the parse carries the no-range lane the always-true
+        // keeps, the sourceless state the no-match wears)
+        let distance_ok = |x: f64, y: f64, z: f64| -> bool {
+            match parsed.distance {
+                None => true,
+                Some((min, max)) => {
+                    // THE SQUARED BOUNDS (the optional side the square
+                    // NEVER touches — the empty min the vanilla square
+                    // walk keeps: -inf squared the +inf poison the
+                    // unbounded side refuses, the guard the -inf the
+                    // -inf carries)
+                    let min2 = if min == f64::NEG_INFINITY {
+                        f64::NEG_INFINITY
+                    } else {
+                        min * min
+                    };
+                    let d2 = squared(x, y, z);
+                    d2 >= min2 && d2 <= max * max
+                }
+            }
+        };
+        // THE CANDIDATE COLLECTION (the predicates the world's roster
+        // filter, the order the sortAndLimit walk applies, the limit
+        // the maxResults cap wears)
+        let mut candidates: Vec<(KillTarget, f64)> = Vec::new();
         // THE MOBS' OWN WALK (the world's entity roster — the type
         // filter the kind's own registry id the predicate reads; the
         // all-entities head alone the mob roster answers)
         for (i, mob) in self.mobs.iter().enumerate() {
-            if parsed.head.all_entities() && type_filter(Some(mob_kind_entity_id(mob.kind))) {
-                targets.push(KillTarget::Mob(i));
+            if parsed.head.all_entities()
+                && type_filter(Some(mob_kind_entity_id(mob.kind)))
+                && distance_ok(mob.x, mob.y, mob.z)
+            {
+                let d2 = squared(mob.x, mob.y, mob.z);
+                candidates.push((KillTarget::Mob(i), d2));
             }
         }
         // THE PLAYER'S OWN LANE (the single-player roster — every
         // head the player answers: the @s source, the @p/@a/@r
         // player lanes, and the @e all-entities walk the player
-        // includes; the type filter the same predicate runs)
-        if type_filter(Some(player_id)) {
-            targets.push(KillTarget::Player);
+        // includes; the type AND the distance filters the same
+        // predicates run — the source IS the player the zero distance
+        // the in-range law answers)
+        if type_filter(Some("player")) {
+            let (px, py, pz) = source.unwrap_or((0.0, 0.0, 0.0));
+            if distance_ok(px, py, pz) {
+                let d2 = squared(px, py, pz);
+                candidates.push((KillTarget::Player, d2));
+            }
         }
-        Some(targets)
+        // THE SORT (EntitySelectorParser's ORDER_* BiConsumers — the
+        // comparator the Doubles.compare law keeps, the shuffle the
+        // world's own mob RNG stream draws, the singleton the order
+        // skips — sortAndLimit's size>1 gate)
+        let size = candidates.len();
+        match parsed.sort {
+            Some(SelectorSort::Nearest) if size > 1 => {
+                candidates.sort_by(|a, b| a.1.total_cmp(&b.1));
+            }
+            Some(SelectorSort::Furthest) if size > 1 => {
+                candidates.sort_by(|a, b| b.1.total_cmp(&a.1));
+            }
+            Some(SelectorSort::Random) if size > 1 => {
+                // THE SHUFFLE (Collections.shuffle's backward
+                // Fisher-Yates — the bound draw `nextInt(i+1)` the
+                // modulo walk mirrors, the swap the draw's index wears)
+                for i in (1..size).rev() {
+                    let j = (self.mob_rng.next() % (i as u64 + 1)) as usize;
+                    candidates.swap(i, j);
+                }
+            }
+            _ => {}
+        }
+        // THE LIMIT (sortAndLimit's subList cap — the maxResults the
+        // size min wears)
+        if let Some(l) = parsed.limit {
+            candidates.truncate(l);
+        }
+        Some(candidates.into_iter().map(|(t, _)| t).collect())
     }
 
     /// THE GAME MODE WORD'S OWN PARSE (GameModeArgument's byName walk
@@ -44040,10 +44229,11 @@ mod tests {
         );
         // THE FAILURES (the non-selector word, the unknown head, the
         // trailing junk the options region never opens, the unclosed
-        // bracket, the other registered keys the offline walk never
-        // serves, the tag form)
+        // bracket, the below-min limit the offline walk refuses, the
+        // other registered keys the offline walk never serves, the
+        // tag form)
         for bad in [
-            "pig", "@", "@x", "@ee", "@e[", "@e[type=pig", "@e[limit=1]",
+            "pig", "@", "@x", "@ee", "@e[", "@e[type=pig", "@e[limit=0]",
             "@e[name=Steve]", "@e[type=#minecraft:pig]", "@e[type=]",
         ] {
             assert!(
@@ -44179,7 +44369,7 @@ mod tests {
         }
         // THE PARSE FAILURES (the invalid word the brigadier verdict
         // keeps — the red error rides, the roster untouched)
-        for bad in ["pig", "@x", "@e[limit=1]", "@e[type=dragon]"] {
+        for bad in ["pig", "@x", "@e[limit=0]", "@e[type=dragon]"] {
             app.chat_open = true;
             app.chat_input = format!("/kill {bad}");
             app.on_chat_submit();
@@ -44198,6 +44388,267 @@ mod tests {
             app.chat_messages.last().map(|(m, _)| m.as_str()),
             Some("Killed 0 entities"),
         );
+    }
+
+    /// THE DISTANCE/LIMIT/SORT OPTIONS' OWN WALK (javap
+    /// `MinMaxBounds$Bounds.fromReader` the range the parse wears,
+    /// `lambda$bootStrap$23` the below-min limit refuses,
+    /// `lambda$bootStrap$25` the four order words switch,
+    /// `EntitySelector.sortAndLimit` the order-then-cap the match
+    /// applies, `lambda$getPredicate$2` the squared distance answers):
+    /// the parse the pure law keeps, the app walk the staged roster
+    /// the bodies the distances wear (the pigs the 1.0/2.0 blocks the
+    /// skeleton the mirrored 1.0 speaks).
+    #[test]
+    fn the_offline_command_the_kill_targets_the_distance_limit_sort_speak() {
+        // THE PURE PARSE (the fromReader law the range wears)
+        assert_eq!(
+            parse_entity_selector_word("@e[distance=..8]").unwrap().distance,
+            Some((f64::NEG_INFINITY, 8.0)),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[distance=4..]").unwrap().distance,
+            Some((4.0, f64::INFINITY)),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[distance=4..8]").unwrap().distance,
+            Some((4.0, 8.0)),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[distance=5]").unwrap().distance,
+            Some((5.0, 5.0)),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[distance=5.5]").unwrap().distance,
+            Some((5.5, 5.5)),
+        );
+        // THE LIMIT + THE SORT (the below-1 the maxResults keeps, the
+        // four words the order enum answers)
+        assert_eq!(
+            parse_entity_selector_word("@e[limit=3]").unwrap().limit,
+            Some(3),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[sort=nearest]").unwrap().sort,
+            Some(SelectorSort::Nearest),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[sort=furthest]").unwrap().sort,
+            Some(SelectorSort::Furthest),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[sort=random]").unwrap().sort,
+            Some(SelectorSort::Random),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@e[sort=arbitrary]").unwrap().sort,
+            Some(SelectorSort::Arbitrary),
+        );
+        // THE COMBINED REGION (the four keys the one options region
+        // answers — the type lane the old law keeps)
+        let parsed =
+            parse_entity_selector_word("@e[type=pig,distance=..10,limit=2,sort=nearest]").unwrap();
+        assert_eq!(parsed.types, vec![(false, "minecraft:pig".to_string())]);
+        assert_eq!(parsed.distance, Some((f64::NEG_INFINITY, 10.0)));
+        assert_eq!(parsed.limit, Some(2));
+        assert_eq!(parsed.sort, Some(SelectorSort::Nearest));
+        // THE FAILURES (the both-empty `..` the ERROR_EMPTY keeps, the
+        // swapped the ERROR_SWAPPED wears, the garbage number the
+        // readNumber refuses, the limit-0 the ERROR_LIMIT_TOO_SMALL
+        // answers, the unknown word the ERROR_SORT_UNKNOWN speaks)
+        for bad in [
+            "@e[distance=..]",
+            "@e[distance=]",
+            "@e[distance=8..4]",
+            "@e[distance=abc]",
+            "@e[distance=4..8..2]",
+            "@e[limit=0]",
+            "@e[limit=-1]",
+            "@e[limit=abc]",
+            "@e[sort=bogus]",
+            "@e[sort=]",
+        ] {
+            assert!(
+                parse_entity_selector_word(bad).is_none(),
+                "the {bad} the parse failure keeps"
+            );
+        }
+        // THE APP WALK (the staged roster the distance law answers —
+        // the body the source position wears, the pigs the 1.0/2.0
+        // blocks ride, the skeleton the mirrored 1.0 keeps)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        let stage = |app: &mut App, base: i32| {
+            app.mobs.clear();
+            let (bx, by, bz) = {
+                let b = app.body.as_ref().expect("the staged body");
+                (b.x, b.y, b.z)
+            };
+            let mut pig_a = crate::mob::Zombie::new(base, bx + 1.0, by, bz, 5);
+            pig_a.kind = crate::mob::MobKind::Pig;
+            let mut pig_b = crate::mob::Zombie::new(base + 1, bx + 2.0, by, bz, 6);
+            pig_b.kind = crate::mob::MobKind::Pig;
+            let mut skeleton = crate::mob::Zombie::new(base + 2, bx - 1.0, by, bz, 7);
+            skeleton.kind = crate::mob::MobKind::Skeleton;
+            app.mobs.push(pig_a);
+            app.mobs.push(pig_b);
+            app.mobs.push(skeleton);
+        };
+        // THE MAX SIDE (distance=..1.5 — the player 0.0, the pigs the
+        // 1.0/2.0 split, the skeleton the 1.0 keeps: THREE the count
+        // wears, the far pig the dose never lands)
+        stage(&mut app, 301);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[distance=..1.5]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed 3 entities"),
+        );
+        assert!(app.dead, "the zero distance the player includes");
+        assert!(app.mobs[0].health <= 0.0, "the 1.0 pig the range lands");
+        assert!(app.mobs[1].health > 0.0, "the 2.0 pig the range spares");
+        assert!(app.mobs[2].health <= 0.0, "the 1.0 skeleton the range lands");
+        // THE MIN SIDE (distance=1.5.. — the far pig ALONE the range
+        // answers: the player the 0.0 the min excludes)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 311);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[distance=1.5..]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed Pig"),
+        );
+        assert!(!app.dead, "the min side the 0.0 player excludes");
+        assert!(app.mobs[0].health > 0.0, "the near pig the min spares");
+        assert!(app.mobs[1].health <= 0.0, "the far pig the min lands");
+        // THE BOUNDED SIDES (distance=1.5..2.5 — the far pig the band
+        // answers, the 0.0 the 1.0s the band spares)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 321);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[distance=1.5..2.5]".into();
+        app.on_chat_submit();
+        assert!(app.mobs[1].health <= 0.0, "the 2.0 pig the band lands");
+        assert!(app.mobs[0].health > 0.0 && app.mobs[2].health > 0.0);
+        assert!(!app.dead);
+        // THE BOUNDARY (distance=1.. — the EXACT 1.0 the min-inclusive
+        // law lands, the 0.0 player the band spares)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 331);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=pig,distance=1..]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed 2 entities"),
+        );
+        assert!(!app.dead, "the exact min the boundary includes");
+        // THE ZERO BAND (distance=..0 — the AT-SOURCE entities alone
+        // the band answers: the player the single key wears)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 341);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[distance=..0]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed mc2rs"),
+        );
+        assert!(app.dead, "the zero band the player alone answers");
+        // THE LIMIT (the arbitrary order the FIRST candidates keeps —
+        // the roster order the pigs the first two wear, the skeleton
+        // the player the cap spares)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 351);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[limit=2]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed 2 entities"),
+        );
+        assert!(!app.dead, "the cap the player never reaches");
+        assert!(app.mobs[0].health <= 0.0 && app.mobs[1].health <= 0.0);
+        assert!(app.mobs[2].health > 0.0, "the skeleton the cap spares");
+        // THE NEAREST ORDER (sort=nearest,limit=1 — the 1.0 pig the
+        // ascending comparator answers, the 2.0 pig the cap spares)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 361);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=pig,sort=nearest,limit=1]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed Pig"),
+        );
+        assert!(app.mobs[0].health <= 0.0, "the near pig the sort lands");
+        assert!(app.mobs[1].health > 0.0, "the far pig the cap spares");
+        // THE FURTHEST ORDER (sort=furthest,limit=1 — the 2.0 pig the
+        // descending comparator answers, the 1.0 pig the cap spares)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 371);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=pig,sort=furthest,limit=1]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed Pig"),
+        );
+        assert!(app.mobs[1].health <= 0.0, "the far pig the sort lands");
+        assert!(app.mobs[0].health > 0.0, "the near pig the cap spares");
+        // THE RANDOM ORDER (the seeded stream the SAME victim wears —
+        // the two identical worlds the same draw answers: the exact
+        // ONE pig the cap keeps, the pair the same side loses)
+        app.mob_rng = crate::drops::Lcg::new(77);
+        stage(&mut app, 381);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=pig,sort=random,limit=1]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed Pig"),
+        );
+        let app_dead_a = app.mobs[0].health <= 0.0;
+        let app_dead_b = app.mobs[1].health <= 0.0;
+        assert!(
+            app_dead_a != app_dead_b,
+            "the random order the EXACT one pig keeps"
+        );
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        app2.spawn_offline_body();
+        app2.mob_rng = crate::drops::Lcg::new(77);
+        stage(&mut app2, 381);
+        app2.chat_open = true;
+        app2.chat_input = "/kill @e[type=pig,sort=random,limit=1]".into();
+        app2.on_chat_submit();
+        assert_eq!(
+            app.mobs[0].health <= 0.0,
+            app2.mobs[0].health <= 0.0,
+            "the seeded stream the same victim wears"
+        );
+        // THE PARSE FAILURE (the limit-0 the dispatch refuses — the
+        // red error rides, the roster untouched)
+        app.respawn();
+        app.spawn_offline_body();
+        stage(&mut app, 391);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[limit=0]".into();
+        app.on_chat_submit();
+        let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+        assert!(err.starts_with("\u{a7}c"), "the RED error rides: {err:?}");
+        assert!(app.mobs.iter().all(|m| m.health > 0.0));
+        assert!(!app.dead);
     }
 
     #[test]
