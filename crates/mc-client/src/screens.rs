@@ -10173,6 +10173,13 @@ impl App {
             // keeps)
             let mut emerge_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
                 Vec::new();
+            // THE DIG'S OWN VOICES (the Digging.start's own arms the
+            // volume-carrying pair speaks — the play_warden_voice_v the
+            // 5.0f volume serves, the FIXED pitch 1.0f the fconst_1
+            // keeps; the WARDEN_DIG the on-ground arm banks, the
+            // AGITATED the water/lava arm carries)
+            let mut dig_voices: Vec<(&'static str, f64, f64, f64, f32, f32)> =
+                Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
@@ -10370,6 +10377,26 @@ impl App {
                     if let Some((word, pitch)) = sniff_out.listening {
                         sniff_listen_voices.push((word, warden.x, warden.y, warden.z, pitch));
                     }
+                    // THE DIG LANE (javap `Digging` verbatim — the DIG
+                    // activity the ladder's second lane wears, the calm
+                    // body the trigger's gates arm): the start the
+                    // checkExtraStartConditions split serves — the
+                    // on-ground arm the DIGGING pose + the WARDEN_DIG
+                    // voice banks, the water/lava arm the AGITATED
+                    // voice + the immediate discard wears, the 100th
+                    // drain the stop's own removal answers — the
+                    // discarded verdict the retain walk consumes
+                    let dig_out = warden.dig_lane();
+                    if let Some(sound) = dig_out.voice {
+                        dig_voices.push((
+                            sound.word,
+                            warden.x,
+                            warden.y,
+                            warden.z,
+                            sound.pitch,
+                            sound.volume,
+                        ));
+                    }
                     // THE TRAVEL (the walk the impulse consults, the
                     // coast the tail keeps — the world the collision
                     // sweep consults, the fused singleplayer frame the
@@ -10385,6 +10412,11 @@ impl App {
                     }
                 }
             }
+            // THE REMOVAL'S OWN RETAIN (javap `Digging.stop` pc 0-14 —
+            // the `remove(DISCARDED)` the retired body answers, the
+            // world's own list the discarded warden drops — the same
+            // tick the dig lane's out the verdict carried)
+            self.wardens.retain(|w| !w.discarded);
             for (word, wx, wy, wz, pitch) in warden_voices {
                 self.play_warden_voice(word, wx, wy, wz, pitch);
             }
@@ -10414,6 +10446,14 @@ impl App {
                 // THE EMERGE'S OWN VOLUME (javap `Emerging.start` pc
                 // 8-14 — the `playSound(WARDEN_EMERGE, 5.0f, 1.0f)` the
                 // explicit-arg walk speaks, the FIXED pair the voice
+                // carries)
+                self.play_warden_voice_v(word, wx, wy, wz, pitch, volume);
+            }
+            for (word, wx, wy, wz, pitch, volume) in dig_voices {
+                // THE DIG'S OWN VOLUME (javap `Digging.start` pc 14-24
+                // + pc 27-36 — the `playSound(WARDEN_DIG, 5.0f, 1.0f)`
+                // the on-ground arm speaks, the AGITATED twin the
+                // water/lava arm wears, the FIXED pair the voice
                 // carries)
                 self.play_warden_voice_v(word, wx, wy, wz, pitch, volume);
             }
@@ -36503,6 +36543,23 @@ impl App {
                     Some(
                         (crate::sculk::WARDEN_EMERGE_DURATION_TICKS - warden.emerge_ticks)
                             as f32
+                            + self.partial_tick,
+                    )
+                } else {
+                    None
+                },
+                // THE DIG'S OWN CLOCK (javap `Warden.onSyncedDataUpdated`
+                // tableswitch case 2 — the DATA_POSE sync the DIGGING
+                // pose's own arrival wears, the
+                // `diggingAnimationState.start(tickCount)` pc 94-102
+                // the pose arm banks): the elapsed ticks the window's
+                // own `100 - dig_ticks` walk derives (the countdown the
+                // dig_start banks, the removal the window's end serves),
+                // the partial the lerp adds — the clock the discarded
+                // body never reads
+                dig_time: if warden.digging {
+                    Some(
+                        (crate::sculk::WARDEN_DIG_DURATION_TICKS - warden.dig_ticks) as f32
                             + self.partial_tick,
                     )
                 } else {

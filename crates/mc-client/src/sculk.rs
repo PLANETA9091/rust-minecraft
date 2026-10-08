@@ -1625,6 +1625,56 @@ pub const WARDEN_AGITATED_SOUND: &str = "entity.warden.agitated";
 pub const WARDEN_EMERGE_VOLUME: f32 = 5.0;
 pub const WARDEN_EMERGE_PITCH: f32 = 1.0;
 
+/// `WardenAi` clinit pc 0-6 — the `ldc_w 100.0f` the `Mth.ceil` the
+/// `putstatic DIGGING_DURATION` banks: the Digging behavior's own
+/// 100-tick window (the `new Digging(duration)` ctor the Behavior
+/// duration carries, the canStillUse the removal-reason null keeps,
+/// the tickOrStop the expiry the stop serves — the stop's own walk
+/// the DISCARD banks).
+pub const WARDEN_DIG_DURATION_TICKS: i32 = 100;
+
+/// `SoundEvents.WARDEN_DIG` — the registry name the SoundEvents
+/// clinit's ldc row keeps (`entity.warden.dig` — the Digging.start's
+/// on-ground arm the `playSound(WARDEN_DIG, 5.0f, 1.0f)` speaks).
+pub const WARDEN_DIG_SOUND: &str = "entity.warden.dig";
+
+/// `Digging.start` pc 14-24 + pc 27-36 — the `ldc 5.0f` + the
+/// `fconst_1` pair BOTH playSound arms wear (the WARDEN_DIG the
+/// on-ground arm keeps, the WARDEN_AGITATED the water/lava arm
+/// serves — the FIXED volume/pitch the explicit-arg walk carries).
+pub const WARDEN_DIG_VOLUME: f32 = 5.0;
+pub const WARDEN_DIG_PITCH: f32 = 1.0;
+
+/// THE DIG'S OWN VOICE (the Digging.start's own arms the pair
+/// speaks — the WARDEN_DIG the on-ground arm banks, the WARDEN_AGITATED
+/// the water/lava arm carries the same trio with its own word).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenDigSound {
+    /// the registry name the SoundEvents row keeps
+    pub word: &'static str,
+    /// the 5.0f the ldc wears
+    pub volume: f32,
+    /// the 1.0f the fconst_1 keeps
+    pub pitch: f32,
+}
+
+/// THE DIG LANE'S OWN OUT (the Digging behavior's own walk the lane
+/// serves — the voice the start's arms bank, the DISCARD the stop's
+/// own removal law answers): the discarded verdict the caller's
+/// retain walk consumes — the warden the world's own list retires.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenDigLaneOut {
+    /// the start's own voice (the WARDEN_DIG the on-ground arm, the
+    /// AGITATED the water/lava arm — the window's ticks the None
+    /// keeps)
+    pub voice: Option<WardenDigSound>,
+    /// the stop's own law (javap `Digging.stop` pc 0-14 — the
+    /// `getRemovalReason() == null` the `remove(DISCARDED)` walk
+    /// serves): the window's own end the verdict banks, the
+    /// water/lava start's immediate stop the same discard wears
+    pub discarded: bool,
+}
+
 /// THE EMERGE'S OWN VOICE (the Emerging.start's own tail the pair
 /// speaks — the FIXED volume/pitch the explicit-arg walk carries;
 /// the AGITATED voice the finalize's own arm banks the same trio
@@ -2266,6 +2316,25 @@ pub struct WardenMob {
     /// the Brain expiry walk the tick drains; the fresh zero the JVM
     /// init keeps — the dig lane the future round wires)
     pub dig_cooldown: i32,
+    /// THE DIGGING POSE (javap `Pose.DIGGING` — the Digging.start's
+    /// on-ground arm the `setPose(DIGGING)` pc 7-11 serves, the
+    /// onSyncedDataUpdated case 2 the diggingAnimationState the pose's
+    /// arrival starts; the fresh false the JVM init keeps — the
+    /// DIGGING pose the stop's own removal never clears, the warden
+    /// the world retires)
+    pub digging: bool,
+    /// THE DIGGING BEHAVIOR'S OWN WINDOW (the `new
+    /// Digging(DIGGING_DURATION)` ctor's 100-tick duration the
+    /// behavior carries — the canStillUse the removal-reason null
+    /// keeps, the countdown the window drains, the expiry the stop
+    /// serves)
+    pub dig_ticks: i32,
+    /// THE REMOVAL'S OWN VERDICT (javap `Digging.stop` pc 0-14 — the
+    /// `getRemovalReason() == null` gate the `remove(DISCARDED)` walk
+    /// serves: the window's own end the verdict banks, the
+    /// water/lava start's immediate stop the same discard wears; the
+    /// caller's retain walk the retired body drops)
+    pub discarded: bool,
 }
 
 impl WardenMob {
@@ -2288,6 +2357,9 @@ impl WardenMob {
             tick_count: 0,
             roaring: false,
             digging_or_emerging: false,
+            digging: false,
+            dig_ticks: 0,
+            discarded: false,
             ambient_time: -crate::mob::AMBIENT_INTERVAL_TICKS,
             rng: crate::drops::Lcg::new(crate::mob::entity_voice_seed(id)),
             tendril_animation: 0,
@@ -2934,6 +3006,113 @@ impl WardenMob {
         None
     }
 
+    /// THE DIG ACTIVITY'S OWN GATES (javap `WardenAi
+    /// .initDiggingActivity` pc 37-55 — the `ActivityData.create` the
+    /// `ImmutableSet.of(Pair(ROAR_TARGET, VALUE_ABSENT),
+    /// Pair(DIG_COOLDOWN, VALUE_ABSENT))` set the activity's
+    /// eligibility keeps, + javap `Digging` ctor pc 0-17 — the
+    /// `ImmutableMap.of(ATTACK_TARGET, VALUE_ABSENT, WALK_TARGET,
+    /// VALUE_ABSENT)` pair the BEHAVIOR's own start conditions wear):
+    /// the calm body the gates arm (the 1200-tick cooldown the
+    /// finalize/anger walks bank, the expiry the trigger lifts), the
+    /// provoked body the re-arms refuse (the increaseAngerAt pc 15-16
+    /// the setDigCooldown walk serves — the suspect the cooldown
+    /// re-banks), the standing windows the exclusivity keeps (the
+    /// EMERGE the ladder's FIRST lane, the DIG the second — the
+    /// ROAR/FIGHT/SNIFF lanes the anger pair the same gates exclude).
+    /// The ForceUnmount pair (pc 7-14 — the `isPassenger ->
+    /// unRide()` walk the activity's prio-0 behavior banks) the
+    /// passenger-less client never arms — the warden the mount
+    /// concept the model never wears.
+    fn dig_trigger(&self) -> bool {
+        self.dig_cooldown == 0
+            && self.roar_target.is_none()
+            && self.attack_target.is_none()
+            && self.walk_target.is_none()
+            && !self.emerging
+            && !self.sniffing
+            && !self.roaring
+            && !self.digging
+    }
+
+    /// THE DIGGING BEHAVIOR'S OWN LANE (javap `Digging` verbatim —
+    /// the DIG activity's own behavior the ladder's second lane
+    /// wears): the trigger the gates consult (the calm body the dig
+    /// arms), the start the `checkExtraStartConditions` pc 0-26 walk
+    /// splits — the `onGround()` arm the DIGGING pose + the
+    /// `playSound(WARDEN_DIG, 5.0f, 1.0f)` pair banks, the
+    /// water/lava arm the `playSound(WARDEN_AGITATED, 5.0f, 1.0f)`
+    /// + the IMMEDIATE stop serves (the stop's own walk the discard
+    /// banks — the sunk warden the ground the body the world never
+    /// holds), the canStillUse the removal-reason null the window
+    /// drains, the 100th drain the STOP serves (the
+    /// `remove(DISCARDED)` the retired body answers — the out the
+    /// discarded verdict carries).
+    pub fn dig_lane(&mut self) -> WardenDigLaneOut {
+        let mut out = WardenDigLaneOut {
+            voice: None,
+            discarded: false,
+        };
+        if self.digging {
+            // THE WINDOW (the tickOrStop law — the expiry the stop
+            // serves, the canStillUse the removal-reason null the
+            // drain keeps — nothing preempts a digging warden: the
+            // hearing gate the DIGGING pose refuses, the anger walk
+            // the same flag gates)
+            self.dig_ticks -= 1;
+            if self.dig_ticks <= 0 {
+                // THE STOP (javap pc 0-14 — the removal-reason null
+                // the alive body keeps, the `remove(DISCARDED)` the
+                // removal serves): the pose the removal retires, the
+                // discarded verdict the caller's retain walk drops
+                self.digging = false;
+                self.digging_or_emerging = false;
+                self.discarded = true;
+                out.discarded = true;
+            }
+            return out;
+        }
+        // THE TRIGGER CONSULT (the DIG activity's gates + the
+        // behavior's own conditions — the provoked body the re-arms
+        // refuse)
+        if !self.dig_trigger() {
+            return out;
+        }
+        // THE START CONDITIONS (javap `checkExtraStartConditions`
+        // pc 0-26 — the `onGround() || isInWater() || isInLava()`
+        // the or-chain wears; the client's honest walk the on-ground
+        // body the dig serves, the water/lava the same AGITATED arm
+        // the submerged verdict never distinguishes — the in-fluid
+        // body the off-ground arm banks)
+        if self.on_ground {
+            // pc 7-11: the DIGGING pose
+            self.digging = true;
+            self.digging_or_emerging = true;
+            // the IS-SNIFFING/walk memory tail — the start's own walk
+            // the window banks
+            self.dig_ticks = WARDEN_DIG_DURATION_TICKS;
+            // pc 14-24: the `playSound(WARDEN_DIG, 5.0f, 1.0f)` voice
+            out.voice = Some(WardenDigSound {
+                word: WARDEN_DIG_SOUND,
+                volume: WARDEN_DIG_VOLUME,
+                pitch: WARDEN_DIG_PITCH,
+            });
+        } else {
+            // pc 27-36: the AGITATED voice + the immediate stop —
+            // pc 37-44 the `stop(level, this, gameTime)` call the
+            // stop's own removal walk serves, the warden the world
+            // retires the same tick
+            out.voice = Some(WardenDigSound {
+                word: WARDEN_AGITATED_SOUND,
+                volume: WARDEN_DIG_VOLUME,
+                pitch: WARDEN_DIG_PITCH,
+            });
+            self.discarded = true;
+            out.discarded = true;
+        }
+        out
+    }
+
     /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
     /// mob.rs lane speaks — the travel fold the LivingEntity's own
     /// bytecode keeps, the warden's attribute 0.3 the gain wears):
@@ -3377,6 +3556,17 @@ impl WardenMob {
     ) -> Option<(&'static str, f32)> {
         if !suspect_targetable {
             return None;
+        }
+        // javap `WardenAi.setDigCooldown` pc 0-29 via
+        // `Warden.increaseAngerAt` pc 15-16 — the canTargetEntity pass
+        // the re-arm serves: the `hasMemoryValue(DIG_COOLDOWN)` gate
+        // pc 7-10 the PRESENT memory the refresh keeps (the
+        // `setMemoryWithExpiry(DIG_COOLDOWN, UNIT, 1200l)` pc 13-26
+        // re-banks), the EXPIRED memory the pass never re-arms (the
+        // provoked-after-expiry warden the dig the calm window
+        // keeps)
+        if self.dig_cooldown > 0 {
+            self.dig_cooldown = WARDEN_DIG_COOLDOWN_TICKS;
         }
         if suspect_is_player && self.anger.player_suspect.is_none() {
             self.anger.player_suspect = Some(suspect);
@@ -9004,6 +9194,189 @@ mod tests {
         // THE RETIRED WINDOW (the stop the behavior retires — the
         // quiet body the lane never speaks)
         assert!(warden.emerge_lane().is_none(), "the retired lane never speaks");
+    }
+
+    /// THE DIG ACTIVITY'S OWN GATES (javap `WardenAi
+    /// .initDiggingActivity` + `Digging` ctor verbatim): the calm
+    /// body the gates arm, the provoked pair the re-arms refuse, the
+    /// standing windows the exclusivity keeps, the anger increase
+    /// the setDigCooldown walk serves (the hasMemoryValue gate the
+    /// PRESENT memory re-banks, the EXPIRED the pass never arms).
+    #[test]
+    fn the_dig_trigger_the_gates_the_calm_keeps() {
+        // THE CALM BODY (the fresh entity the zero cooldown the
+        // JVM init keeps — the expired memory the trigger's own
+        // absent gate lifts): the dig the start arms
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        assert!(warden.on_ground, "the fresh body the ground stands");
+        let out = warden.dig_lane();
+        assert!(
+            !out.discarded,
+            "the on-ground start the dig serves, the discard never banks"
+        );
+        assert!(warden.digging, "the DIGGING pose the start arms");
+        assert_eq!(
+            warden.dig_ticks,
+            WARDEN_DIG_DURATION_TICKS,
+            "the Digging(DIGGING_DURATION) window banks"
+        );
+        // THE PROVOKED PAIR (the activity's ROAR_TARGET/DIG_COOLDOWN
+        // set + the behavior's ATTACK_TARGET/WALK_TARGET set — the
+        // four gates the calm body the windows the refusals keep):
+        // each the standing state the start refuses
+        let mut cooldown = WardenMob::new(4, 10.5, 32.0, 3.5);
+        cooldown.dig_cooldown = 1;
+        assert!(
+            !cooldown.dig_lane().discarded && !cooldown.digging,
+            "the standing cooldown the trigger refuses"
+        );
+        let mut roaring = WardenMob::new(5, 10.5, 32.0, 3.5);
+        roaring.roar_target = Some(9);
+        assert!(
+            !roaring.digging,
+            "the standing ROAR_TARGET the trigger refuses"
+        );
+        let mut fighting = WardenMob::new(6, 10.5, 32.0, 3.5);
+        fighting.attack_target = Some(9);
+        assert!(
+            !fighting.digging,
+            "the standing ATTACK_TARGET the trigger refuses"
+        );
+        let mut strolling = WardenMob::new(7, 10.5, 32.0, 3.5);
+        strolling.walk_target = Some(WardenWalkTarget {
+            block: (10, 32, 3),
+            pos: (10.5, 32.0, 3.5),
+            speed_modifier: 0.7,
+            close_enough: 2,
+        });
+        assert!(
+            !strolling.digging,
+            "the standing WALK_TARGET the trigger refuses"
+        );
+        let mut risen = WardenMob::new(8, 10.5, 32.0, 3.5);
+        risen.emerging = true;
+        assert!(
+            !risen.digging,
+            "the EMERGE window the ladder's first lane keeps"
+        );
+        let mut sniffer = WardenMob::new(9, 10.5, 32.0, 3.5);
+        sniffer.sniffing = true;
+        assert!(
+            !sniffer.digging,
+            "the SNIFF window the standing pose refuses"
+        );
+        // THE ANGER RE-ARM (javap `Warden.increaseAngerAt` pc 15-16
+        // the setDigCooldown walk serves): the PRESENT memory the
+        // refresh re-banks, the EXPIRED the pass never arms
+        let mut provoked = WardenMob::new(10, 10.5, 32.0, 3.5);
+        provoked.finalize_spawn(false);
+        provoked.dig_cooldown = 100;
+        provoked.increase_anger_at(7, true, true, 35, false);
+        assert_eq!(
+            provoked.dig_cooldown,
+            WARDEN_DIG_COOLDOWN_TICKS,
+            "the present memory the re-arm the 1200l re-banks"
+        );
+        let mut expired = WardenMob::new(11, 10.5, 32.0, 3.5);
+        expired.dig_cooldown = 0;
+        expired.increase_anger_at(7, true, true, 35, false);
+        assert_eq!(
+            expired.dig_cooldown, 0,
+            "the expired memory the re-arm never banks"
+        );
+        // THE OFF-GROUND START (javap `checkExtraStartConditions`
+        // pc 0-26 — the water/lava body the or-chain the false
+        // refuses, the start the AGITATED arm + the immediate stop
+        // serves): the voice the AGITATED word banks, the discard
+        // the same tick wears
+        let mut sunk = WardenMob::new(12, 10.5, 32.0, 3.5);
+        sunk.on_ground = false;
+        let out = sunk.dig_lane();
+        let voice = out.voice.expect("the AGITATED arm the voice banks");
+        assert_eq!(
+            voice.word, WARDEN_AGITATED_SOUND,
+            "the water/lava arm the AGITATED word speaks"
+        );
+        assert_eq!(voice.volume, WARDEN_DIG_VOLUME, "the 5.0f the ldc wears");
+        assert_eq!(voice.pitch, WARDEN_DIG_PITCH, "the fconst_1 the pitch keeps");
+        assert!(
+            out.discarded && sunk.discarded,
+            "the immediate stop the removal law banks"
+        );
+        assert!(
+            !sunk.digging,
+            "the water/lava body the DIGGING pose never banks"
+        );
+    }
+
+    /// THE DIGGING BEHAVIOR'S OWN LANE (javap `Digging` verbatim):
+    /// the start's own tick the WARDEN voice banks, the window the
+    /// tickOrStop law drains, the 100th drain the stop serves, the
+    /// stop's own removal the discarded verdict banks, the digging
+    /// body the hearing + the ambient gates the pose refuses.
+    #[test]
+    fn the_dig_lane_the_window_the_discard_banks() {
+        let mut warden = WardenMob::new(3, 10.5, 32.0, 3.5);
+        // THE START (the window's own head — the fresh 100): the
+        // WARDEN_DIG voice the behavior's own start tick banks
+        let out = warden.dig_lane();
+        let voice = out.voice.expect("the start the voice banks");
+        assert_eq!(
+            voice.word, WARDEN_DIG_SOUND,
+            "the WARDEN_DIG registry name the start speaks"
+        );
+        assert_eq!(voice.volume, WARDEN_DIG_VOLUME, "the 5.0f the ldc wears");
+        assert_eq!(voice.pitch, WARDEN_DIG_PITCH, "the fconst_1 the pitch keeps");
+        assert!(warden.digging, "the DIGGING pose the start arms");
+        assert!(
+            warden.digging_or_emerging,
+            "the isDiggingOrEmerging verdict the DIGGING pose arms"
+        );
+        // THE HEARING + THE AMBIENT GATES (javap
+        // `canReceiveVibration` + `Warden.getAmbientSound` — the
+        // isDiggingOrEmerging() gate the digging body the same
+        // verdict consults)
+        assert!(
+            !warden.can_receive_vibration(None),
+            "the DIGGING pose the hearing gate refuses"
+        );
+        assert!(
+            crate::sculk::warden_ambient_sound(
+                warden.active_anger(),
+                warden.roaring,
+                warden.digging_or_emerging,
+            )
+            .is_none(),
+            "the DIGGING pose the ambient gate refuses"
+        );
+        // THE WINDOW (the tickOrStop law — the 99 mid drains the
+        // silence keeps, the digging body the drains hold)
+        let mut sounds = 0;
+        for _ in 0..99 {
+            let out = warden.dig_lane();
+            if out.voice.is_some() {
+                sounds += 1;
+            }
+        }
+        assert_eq!(sounds, 0, "the mid-window ticks the silence keeps");
+        assert!(warden.digging, "the mid-window the digging holds");
+        assert_eq!(
+            warden.dig_ticks, 1,
+            "the 99th drain the window's own tail keeps"
+        );
+        // THE STOP (javap pc 0-14 — the removal-reason null the
+        // `remove(DISCARDED)` walk serves): the 100th drain the
+        // discard banks
+        let out = warden.dig_lane();
+        assert!(out.discarded, "the window's own end the discard banks");
+        assert!(warden.discarded, "the verdict the body banks");
+        assert!(!warden.digging, "the removal the pose retires");
+        // THE RETIRED BODY (the caller's retain walk — the
+        // discarded body the world's own list drops)
+        let list: Vec<&WardenMob> = std::iter::once(&warden)
+            .filter(|w| !w.discarded)
+            .collect();
+        assert!(list.is_empty(), "the retain walk the retired body drops");
     }
 }
 

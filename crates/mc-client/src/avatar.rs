@@ -8226,6 +8226,19 @@ pub struct WardenState {
     /// no-op keeps — the definition's own 6.64s rest tail the past-end
     /// walk the same pixels wears).
     pub emerge_time: Option<f32>,
+    /// THE DIG'S OWN CLOCK (javap `Warden.onSyncedDataUpdated`
+    /// tableswitch case 2 — the DATA_POSE sync the DIGGING pose's own
+    /// arrival wears, the `diggingAnimationState.start(tickCount)`
+    /// pc 94-102 the pose arm banks): the elapsed TICKS since the
+    /// pose's own start (the window's own `100 - dig_ticks` walk the
+    /// caller derives, the partial the lerp adds — the
+    /// `AnimationState.getTimeInMillis` `(age - startTick) * 50` the
+    /// millis fold keeps, the KeyframeAnimation's `/1000.0f` the
+    /// elapsed seconds speak). The `None` the never-armed state
+    /// keeps — the `ifStarted` gate the apply no-op wears (the
+    /// removal the window's own end the world serves, the clock the
+    /// retired body never reads).
+    pub dig_time: Option<f32>,
 }
 
 /// The full warden model — the 26.2 `WardenModel.createBodyLayer`
@@ -9004,6 +9017,308 @@ fn warden_emerge_deltas(state: &WardenState) -> WardenEmergeDeltas {
     }
 }
 
+/// ONE DIG KEYFRAME (javap `Keyframe` the record the interpolation
+/// field the END keyframe's own choice wears — the DIG definition
+/// the CATMULLROM walk the MAJORITY keeps, the NINE final keyframes
+/// the LINEAR choice bank: the `Interpolations.LINEAR` the plain
+/// lerp speaks, the `getstatic #273 LINEAR` the head POS /
+/// left_arm POS / the settle tails the bytecode's own rows wear).
+/// The vecs the RAW definition words keep — the degrees the
+/// 0.017453292 bake multiplies, the POSITION's y the posVec fneg
+/// negates — the conversion the EVAL's own head serves.
+struct WardenDigKeyframe {
+    t: f32,
+    v: [f32; 3],
+    /// the END keyframe's own interpolation — the vanilla
+    /// `Entry.apply` the `keyframe.interpolation()` read speaks: the
+    /// false the CATMULLROM quartet answers, the true the LINEAR
+    /// lerp keeps
+    lin: bool,
+}
+
+/// THE WARDEN_DIG DEFINITION (javap `WardenAnimation` clinit pc
+/// 4841-7765, verbatim — the `withLength(5.0f)` head the
+/// `Mth.ceil(100.0f)` DIGGING_DURATION the 100-tick window wears,
+/// the SIX bones the addAnimation chain names — body, head,
+/// right_arm, left_arm, right_leg, left_leg — each its ROTATION +
+/// POSITION pair the 19/11, 7/2, 10/5, 12/8, 9/8, 9/8 keyframe
+/// arrays bank (108 kfs total); the NINE settle keyframes the
+/// LINEAR choice wear — the body's (147.5) dive + (0,-40,-8) sink,
+/// the head POS (0,0,0) rest, the left arm (-120) fold + (0,0,4)
+/// tuck, the legs' (90) stand + (0,-28,-5) drag — the rest the
+/// CATMULLROM keeps). THE TIMELINE the pose window wears: the
+/// lunge the body's 50° pitch the 0.5s bite banks, the dig the
+/// 82-121° shake pairs the 1.0-3.0s window rides, the dive the
+/// 147° head-down the 3.4-4.5 tail speaks, the sink the (0,-40,-8)
+/// LINEAR the body's own grave wears — the final keyframes the
+/// window's own end the removal answers, the warden the world
+/// retires the same tick the pose holds.
+const WARDEN_DIG_BODY_ROT: [WardenDigKeyframe; 19] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.25, v: [4.13441, 0.94736, 1.2694], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [50.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [54.4541, -13.5394, -18.1418], lin: false },
+    WardenDigKeyframe { t: 1.042, v: [59.4644, -10.8885, 35.7954], lin: false },
+    WardenDigKeyframe { t: 1.333, v: [82.2826, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 1.625, v: [53.2361, 10.0472, -29.7293], lin: false },
+    WardenDigKeyframe { t: 2.208, v: [-17.7174, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 2.542, v: [112.283, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 2.667, v: [116.069, 5.11581, -24.5012], lin: false },
+    WardenDigKeyframe { t: 2.833, v: [121.562, -4.17248, 19.5774], lin: false },
+    WardenDigKeyframe { t: 3.042, v: [138.569, 5.11581, -24.5012], lin: false },
+    WardenDigKeyframe { t: 3.25, v: [144.062, -4.17248, 19.5774], lin: false },
+    WardenDigKeyframe { t: 3.375, v: [147.283, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.625, v: [147.283, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.875, v: [134.362, 8.81113, -8.90172], lin: false },
+    WardenDigKeyframe { t: 4.042, v: [132.06, -8.35927, 9.70506], lin: false },
+    WardenDigKeyframe { t: 4.25, v: [134.362, 8.81113, -8.90172], lin: false },
+    WardenDigKeyframe { t: 4.5, v: [147.5, 0.0, 0.0], lin: true },
+];
+const WARDEN_DIG_BODY_POS: [WardenDigKeyframe; 11] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [0.0, -16.4845, -6.5784], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [0.0, -16.4845, -6.5784], lin: false },
+    WardenDigKeyframe { t: 1.042, v: [0.0, -16.97, -7.11], lin: false },
+    WardenDigKeyframe { t: 1.625, v: [0.0, -13.97, -7.11], lin: false },
+    WardenDigKeyframe { t: 2.208, v: [0.0, -11.4845, -0.5784], lin: false },
+    WardenDigKeyframe { t: 2.542, v: [0.0, -16.4845, -6.5784], lin: false },
+    WardenDigKeyframe { t: 2.667, v: [0.0, -20.27, -5.42], lin: false },
+    WardenDigKeyframe { t: 3.375, v: [0.0, -21.4845, -5.5784], lin: false },
+    WardenDigKeyframe { t: 4.042, v: [0.0, -22.4845, -5.5784], lin: false },
+    WardenDigKeyframe { t: 4.5, v: [0.0, -40.0, -8.0], lin: true },
+];
+const WARDEN_DIG_HEAD_ROT: [WardenDigKeyframe; 7] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.667, v: [12.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 1.208, v: [12.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 1.75, v: [45.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 2.375, v: [-22.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 2.542, v: [67.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.375, v: [67.5, 0.0, 0.0], lin: false },
+];
+const WARDEN_DIG_HEAD_POS: [WardenDigKeyframe; 2] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.375, v: [0.0, 0.0, 0.0], lin: true },
+];
+const WARDEN_DIG_RIGHT_ARM_ROT: [WardenDigKeyframe; 10] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [-101.804, -21.2959, 30.6148], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [-101.804, -21.2959, 30.6148], lin: false },
+    WardenDigKeyframe { t: 1.0, v: [48.7585, -17.6194, 9.9865], lin: false },
+    WardenDigKeyframe { t: 1.167, v: [48.7585, -17.6194, 9.9865], lin: false },
+    WardenDigKeyframe { t: 1.458, v: [-101.804, -21.2959, 30.6148], lin: false },
+    WardenDigKeyframe { t: 1.75, v: [-89.0499, -4.19657, -1.47845], lin: false },
+    WardenDigKeyframe { t: 2.208, v: [-158.307, 3.7152, -1.52352], lin: false },
+    WardenDigKeyframe { t: 2.542, v: [-89.0499, -4.19657, -1.47845], lin: false },
+    WardenDigKeyframe { t: 4.375, v: [-120.0, 0.0, 0.0], lin: false },
+];
+const WARDEN_DIG_RIGHT_ARM_POS: [WardenDigKeyframe; 5] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [2.22, 0.0, 0.86], lin: false },
+    WardenDigKeyframe { t: 1.0, v: [3.12, 0.0, 4.29], lin: false },
+    WardenDigKeyframe { t: 2.208, v: [1.0, 0.0, 4.0], lin: false },
+    WardenDigKeyframe { t: 4.375, v: [0.0, 0.0, 4.0], lin: false },
+];
+const WARDEN_DIG_LEFT_ARM_ROT: [WardenDigKeyframe; 12] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.292, v: [-63.8929, -0.52011, 2.09491], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [-63.8929, -0.52011, 2.09491], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [-62.8786, 15.1506, 9.97445], lin: false },
+    WardenDigKeyframe { t: 0.917, v: [-86.9364, 17.4503, 4.05284], lin: false },
+    WardenDigKeyframe { t: 1.167, v: [-86.9364, 17.4503, 4.05284], lin: false },
+    WardenDigKeyframe { t: 1.458, v: [-86.9364, 17.4503, 4.05284], lin: false },
+    WardenDigKeyframe { t: 1.667, v: [63.0984, 8.83573, -8.71284], lin: false },
+    WardenDigKeyframe { t: 1.833, v: [35.5984, 8.83573, -8.71284], lin: false },
+    WardenDigKeyframe { t: 2.208, v: [-153.275, -0.02953, 3.5235], lin: false },
+    WardenDigKeyframe { t: 2.542, v: [-87.0775, -0.02625, 3.132], lin: false },
+    WardenDigKeyframe { t: 4.375, v: [-120.0, 0.0, 0.0], lin: true },
+];
+const WARDEN_DIG_LEFT_ARM_POS: [WardenDigKeyframe; 8] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [-0.28, 5.0, 10.0], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [-1.51, 4.35, 4.33], lin: false },
+    WardenDigKeyframe { t: 0.917, v: [-0.6, 3.61, 4.63], lin: false },
+    WardenDigKeyframe { t: 1.167, v: [-0.6, 3.61, 0.63], lin: false },
+    WardenDigKeyframe { t: 1.667, v: [-2.85, -0.1, 3.33], lin: false },
+    WardenDigKeyframe { t: 2.208, v: [-1.0, 0.0, 4.0], lin: false },
+    WardenDigKeyframe { t: 4.375, v: [0.0, 0.0, 4.0], lin: true },
+];
+const WARDEN_DIG_RIGHT_LEG_ROT: [WardenDigKeyframe; 9] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [113.27, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [113.27, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.333, v: [113.27, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.583, v: [182.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.833, v: [120.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.083, v: [182.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.292, v: [120.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.5, v: [90.0, 0.0, 0.0], lin: true },
+];
+const WARDEN_DIG_RIGHT_LEG_POS: [WardenDigKeyframe; 8] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [0.0, -13.98, -2.37], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [0.0, -13.98, -2.37], lin: false },
+    WardenDigKeyframe { t: 3.333, v: [0.0, -13.98, -2.37], lin: false },
+    WardenDigKeyframe { t: 3.583, v: [0.0, -7.0, -3.0], lin: false },
+    WardenDigKeyframe { t: 3.833, v: [0.0, -9.0, -3.0], lin: false },
+    WardenDigKeyframe { t: 4.083, v: [0.0, -16.71, -3.69], lin: false },
+    WardenDigKeyframe { t: 4.292, v: [0.0, -28.0, -5.0], lin: true },
+];
+const WARDEN_DIG_LEFT_LEG_ROT: [WardenDigKeyframe; 9] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [114.98, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [114.98, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.333, v: [114.98, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.583, v: [90.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 3.833, v: [172.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.083, v: [90.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.292, v: [197.5, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 4.5, v: [90.0, 0.0, 0.0], lin: true },
+];
+const WARDEN_DIG_LEFT_LEG_POS: [WardenDigKeyframe; 8] = [
+    WardenDigKeyframe { t: 0.0, v: [0.0, 0.0, 0.0], lin: false },
+    WardenDigKeyframe { t: 0.5, v: [0.0, -14.01, -2.35], lin: false },
+    WardenDigKeyframe { t: 0.708, v: [0.0, -14.01, -2.35], lin: false },
+    WardenDigKeyframe { t: 3.333, v: [0.0, -14.01, -2.35], lin: false },
+    WardenDigKeyframe { t: 3.583, v: [0.0, -5.0, -4.0], lin: false },
+    WardenDigKeyframe { t: 3.833, v: [0.0, -7.0, -4.0], lin: false },
+    WardenDigKeyframe { t: 4.083, v: [0.0, -15.5, -3.76], lin: false },
+    WardenDigKeyframe { t: 4.292, v: [0.0, -28.0, -5.0], lin: true },
+];
+/// (the definition's own `withLength(5.0f)` head — the 100-tick
+/// window the 20-tick second wears — the final LINEAR keyframes'
+/// own timestamps the settle speaks, the removal the window's own
+/// end the world serves)
+
+/// THE DIG'S OWN CHANNEL WALK (javap `KeyframeAnimation$Entry.apply`
+/// pc 0-138 the SAME binary-search walk the roar lane shares — the
+/// END keyframe's own interpolation the delta's apply wears: the
+/// `keyframe.interpolation()` read the LIN flag banks, the LINEAR
+/// the plain lerp keeps (javap `Interpolations$1.apply` — the
+/// `offset(start, end, delta)` the `start + (end - start) * delta`
+/// fold speaks), the CATMULLROM the quartet the clamped p0/p3 the
+/// same walk answers)
+fn warden_dig_channel(kfs: &[WardenDigKeyframe], elapsed: f32, pos: bool) -> [f32; 3] {
+    // THE BINARY SEARCH (Mth.binarySearch pc 0-43, verbatim)
+    let n = kfs.len();
+    let mut lo = 0usize;
+    let mut len = n;
+    while len > 0 {
+        let half = len / 2;
+        let mid = lo + half;
+        if elapsed <= kfs[mid].t {
+            len = half;
+        } else {
+            lo = mid + 1;
+            len -= half + 1;
+        }
+    }
+    let i = lo.saturating_sub(1);
+    let j = (i + 1).min(n - 1);
+    let delta = if j == i {
+        0.0_f32
+    } else {
+        ((elapsed - kfs[i].t) / (kfs[j].t - kfs[i].t)).clamp(0.0, 1.0)
+    };
+    // THE BAKE (the degreeVec/posVec the clinit serves — the
+    // rotation the 0.017453292 xyz multiply keeps, the position
+    // the y-only fneg wears)
+    let bake = |kf: &WardenDigKeyframe| -> [f32; 3] {
+        if pos {
+            [kf.v[0], -kf.v[1], kf.v[2]]
+        } else {
+            [
+                kf.v[0] * 0.017_453_292_f32,
+                kf.v[1] * 0.017_453_292_f32,
+                kf.v[2] * 0.017_453_292_f32,
+            ]
+        }
+    };
+    let p1 = bake(&kfs[i]);
+    let p2 = bake(&kfs[j]);
+    // THE END KEYFRAME'S OWN INTERPOLATION (the vanilla
+    // `Entry.apply` the end kf's read wears): the LINEAR the plain
+    // lerp keeps, the CATMULLROM the quartet the clamped
+    // neighbors answer
+    if kfs[j].lin {
+        return [
+            p1[0] + (p2[0] - p1[0]) * delta,
+            p1[1] + (p2[1] - p1[1]) * delta,
+            p1[2] + (p2[2] - p1[2]) * delta,
+        ];
+    }
+    let p0 = bake(&kfs[i.saturating_sub(1)]);
+    let p3 = bake(&kfs[(j + 1).min(n - 1)]);
+    [
+        mth_catmullrom(delta, p0[0], p1[0], p2[0], p3[0]),
+        mth_catmullrom(delta, p0[1], p1[1], p2[1], p3[1]),
+        mth_catmullrom(delta, p0[2], p1[2], p2[2], p3[2]),
+    ]
+}
+
+/// THE DIG'S OWN DELTAS (the WARDEN_DIG definition the 12 channels
+/// evaluate — the SAME Entry.apply walk the roar/sniff/emerge lanes
+/// share, the additive offsets the `ModelPart
+/// .offsetRotation`/`offsetPos` walk speaks, the setupAnim's own
+/// order the dig apply the EMERGE's own apply PRECEDES): the `None`
+/// the never-armed state keeps (the `ifStarted` gate the ALL-ZERO
+/// no-op wears — the standing warden the dig clock the None keeps),
+/// the `Some(ticks)` the `getTimeInMillis` *50 /1000 the elapsed
+/// seconds answer.
+struct WardenDigDeltas {
+    body_rot: [f32; 3],
+    body_pos: [f32; 3],
+    head_rot: [f32; 3],
+    head_pos: [f32; 3],
+    right_arm_rot: [f32; 3],
+    right_arm_pos: [f32; 3],
+    left_arm_rot: [f32; 3],
+    left_arm_pos: [f32; 3],
+    right_leg_rot: [f32; 3],
+    right_leg_pos: [f32; 3],
+    left_leg_rot: [f32; 3],
+    left_leg_pos: [f32; 3],
+}
+
+fn warden_dig_deltas(state: &WardenState) -> WardenDigDeltas {
+    let zero = [0.0_f32; 3];
+    let Some(dig_ticks) = state.dig_time else {
+        // the never-started state the apply no-op wears
+        return WardenDigDeltas {
+            body_rot: zero,
+            body_pos: zero,
+            head_rot: zero,
+            head_pos: zero,
+            right_arm_rot: zero,
+            right_arm_pos: zero,
+            left_arm_rot: zero,
+            left_arm_pos: zero,
+            right_leg_rot: zero,
+            right_leg_pos: zero,
+            left_leg_rot: zero,
+            left_leg_pos: zero,
+        };
+    };
+    // THE ELAPSED SECONDS (the `(age - startTick) * 50` the millis
+    // fold keeps, the `/1000.0f` the seconds speak — the two-step
+    // the bytecode's own order wears)
+    let elapsed = (dig_ticks * 50.0) / 1000.0;
+    WardenDigDeltas {
+        body_rot: warden_dig_channel(&WARDEN_DIG_BODY_ROT, elapsed, false),
+        body_pos: warden_dig_channel(&WARDEN_DIG_BODY_POS, elapsed, true),
+        head_rot: warden_dig_channel(&WARDEN_DIG_HEAD_ROT, elapsed, false),
+        head_pos: warden_dig_channel(&WARDEN_DIG_HEAD_POS, elapsed, true),
+        right_arm_rot: warden_dig_channel(&WARDEN_DIG_RIGHT_ARM_ROT, elapsed, false),
+        right_arm_pos: warden_dig_channel(&WARDEN_DIG_RIGHT_ARM_POS, elapsed, true),
+        left_arm_rot: warden_dig_channel(&WARDEN_DIG_LEFT_ARM_ROT, elapsed, false),
+        left_arm_pos: warden_dig_channel(&WARDEN_DIG_LEFT_ARM_POS, elapsed, true),
+        right_leg_rot: warden_dig_channel(&WARDEN_DIG_RIGHT_LEG_ROT, elapsed, false),
+        right_leg_pos: warden_dig_channel(&WARDEN_DIG_RIGHT_LEG_POS, elapsed, true),
+        left_leg_rot: warden_dig_channel(&WARDEN_DIG_LEFT_LEG_ROT, elapsed, false),
+        left_leg_pos: warden_dig_channel(&WARDEN_DIG_LEFT_LEG_POS, elapsed, true),
+    }
+}
+
 fn build_warden_parts(state: &WardenState) -> Part {
     let f = warden_folds(state);
     // THE ROAR'S OWN OFFSETS (the keyframe deltas the folds' own
@@ -9022,17 +9337,22 @@ fn build_warden_parts(state: &WardenState) -> Part {
     // the same law wears; the legs the def the rot + pos pairs the
     // body's own depth carries)
     let e = warden_emerge_deltas(state);
+    // THE DIG'S OWN OFFSETS (the setupAnim's own order the dig apply
+    // the EMERGE's own apply PRECEDES — the additive walk the same
+    // law wears; the dive the body's own 147° pitch the sink's
+    // (0,-40,-8) grave serves)
+    let d = warden_dig_deltas(state);
     // THE BODY CUBE (the one cube the two ribcages' parent wears —
     // texOffs(0,0) addBox(-9,-13,-4,18,21,11))
     let body_part = Part {
         pivot: [
-            0.0 + r.body_pos[0] + e.body_pos[0],
-            -21.0 + r.body_pos[1] + e.body_pos[1],
-            0.0 + r.body_pos[2] + e.body_pos[2],
+            0.0 + d.body_pos[0] + r.body_pos[0] + e.body_pos[0],
+            -21.0 + d.body_pos[1] + r.body_pos[1] + e.body_pos[1],
+            0.0 + d.body_pos[2] + r.body_pos[2] + e.body_pos[2],
         ],
-        x_rot: f.body_x + e.body_rot[0] + r.body_rot[0] + s.body_rot[0],
-        y_rot: e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
-        z_rot: f.body_z + e.body_rot[2] + r.body_rot[2] + s.body_rot[2],
+        x_rot: f.body_x + d.body_rot[0] + e.body_rot[0] + r.body_rot[0] + s.body_rot[0],
+        y_rot: d.body_rot[1] + e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
+        z_rot: f.body_z + d.body_rot[2] + e.body_rot[2] + r.body_rot[2] + s.body_rot[2],
         cubes: vec![Cube {
             tex: (0.0, 0.0),
             origin: [-9.0, -13.0, -4.0],
@@ -9045,13 +9365,13 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // (0,-13,0) — the tendrils its children ride)
             Part {
                 pivot: [
-                    0.0 + r.head_pos[0] + e.head_pos[0],
-                    -13.0 + r.head_pos[1] + e.head_pos[1],
-                    0.0 + r.head_pos[2] + e.head_pos[2],
+                    0.0 + d.head_pos[0] + r.head_pos[0] + e.head_pos[0],
+                    -13.0 + d.head_pos[1] + r.head_pos[1] + e.head_pos[1],
+                    0.0 + d.head_pos[2] + r.head_pos[2] + e.head_pos[2],
                 ],
-                x_rot: f.head_x + e.head_rot[0] + r.head_rot[0] + s.head_rot[0],
-                y_rot: f.head_y + e.head_rot[1] + r.head_rot[1] + s.head_rot[1],
-                z_rot: f.head_z + e.head_rot[2] + r.head_rot[2] + s.head_rot[2],
+                x_rot: f.head_x + d.head_rot[0] + e.head_rot[0] + r.head_rot[0] + s.head_rot[0],
+                y_rot: f.head_y + d.head_rot[1] + e.head_rot[1] + r.head_rot[1] + s.head_rot[1],
+                z_rot: f.head_z + d.head_rot[2] + e.head_rot[2] + r.head_rot[2] + s.head_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 32.0),
                     origin: [-8.0, -16.0, -5.0],
@@ -9131,14 +9451,16 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // at (-13,-13,1))
             Part {
                 pivot: [
-                    -13.0 + r.right_arm_pos[0] + e.right_arm_pos[0],
-                    -13.0 + r.right_arm_pos[1] + e.right_arm_pos[1],
-                    1.0 + r.right_arm_pos[2] + e.right_arm_pos[2],
+                    -13.0 + d.right_arm_pos[0] + r.right_arm_pos[0] + e.right_arm_pos[0],
+                    -13.0 + d.right_arm_pos[1] + r.right_arm_pos[1] + e.right_arm_pos[1],
+                    1.0 + d.right_arm_pos[2] + r.right_arm_pos[2] + e.right_arm_pos[2],
                 ],
-                x_rot: f.right_arm_x + e.right_arm_rot[0] + r.right_arm_rot[0]
-                    + s.right_arm_rot[0],
-                y_rot: e.right_arm_rot[1] + r.right_arm_rot[1] + s.right_arm_rot[1],
-                z_rot: e.right_arm_rot[2] + r.right_arm_rot[2] + s.right_arm_rot[2],
+                x_rot: f.right_arm_x + d.right_arm_rot[0] + e.right_arm_rot[0]
+                    + r.right_arm_rot[0] + s.right_arm_rot[0],
+                y_rot: d.right_arm_rot[1] + e.right_arm_rot[1] + r.right_arm_rot[1]
+                    + s.right_arm_rot[1],
+                z_rot: d.right_arm_rot[2] + e.right_arm_rot[2] + r.right_arm_rot[2]
+                    + s.right_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (44.0, 50.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -9152,14 +9474,16 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // (13,-13,1))
             Part {
                 pivot: [
-                    13.0 + r.left_arm_pos[0] + e.left_arm_pos[0],
-                    -13.0 + r.left_arm_pos[1] + e.left_arm_pos[1],
-                    1.0 + r.left_arm_pos[2] + e.left_arm_pos[2],
+                    13.0 + d.left_arm_pos[0] + r.left_arm_pos[0] + e.left_arm_pos[0],
+                    -13.0 + d.left_arm_pos[1] + r.left_arm_pos[1] + e.left_arm_pos[1],
+                    1.0 + d.left_arm_pos[2] + r.left_arm_pos[2] + e.left_arm_pos[2],
                 ],
-                x_rot: f.left_arm_x + e.left_arm_rot[0] + r.left_arm_rot[0]
-                    + s.left_arm_rot[0],
-                y_rot: e.left_arm_rot[1] + r.left_arm_rot[1] + s.left_arm_rot[1],
-                z_rot: e.left_arm_rot[2] + r.left_arm_rot[2] + s.left_arm_rot[2],
+                x_rot: f.left_arm_x + d.left_arm_rot[0] + e.left_arm_rot[0]
+                    + r.left_arm_rot[0] + s.left_arm_rot[0],
+                y_rot: d.left_arm_rot[1] + e.left_arm_rot[1] + r.left_arm_rot[1]
+                    + s.left_arm_rot[1],
+                z_rot: d.left_arm_rot[2] + e.left_arm_rot[2] + r.left_arm_rot[2]
+                    + s.left_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 58.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -9187,13 +9511,13 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // risen depth carries)
             Part {
                 pivot: [
-                    -5.9 + e.right_leg_pos[0],
-                    -13.0 + e.right_leg_pos[1],
-                    0.0 + e.right_leg_pos[2],
+                    -5.9 + d.right_leg_pos[0] + e.right_leg_pos[0],
+                    -13.0 + d.right_leg_pos[1] + e.right_leg_pos[1],
+                    0.0 + d.right_leg_pos[2] + e.right_leg_pos[2],
                 ],
-                x_rot: f.right_leg_x + e.right_leg_rot[0],
-                y_rot: e.right_leg_rot[1],
-                z_rot: e.right_leg_rot[2],
+                x_rot: f.right_leg_x + d.right_leg_rot[0] + e.right_leg_rot[0],
+                y_rot: d.right_leg_rot[1] + e.right_leg_rot[1],
+                z_rot: d.right_leg_rot[2] + e.right_leg_rot[2],
                 cubes: vec![Cube {
                     tex: (76.0, 48.0),
                     origin: [-3.1, 0.0, -3.0],
@@ -9208,13 +9532,13 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // risen depth carries)
             Part {
                 pivot: [
-                    5.9 + e.left_leg_pos[0],
-                    -13.0 + e.left_leg_pos[1],
-                    0.0 + e.left_leg_pos[2],
+                    5.9 + d.left_leg_pos[0] + e.left_leg_pos[0],
+                    -13.0 + d.left_leg_pos[1] + e.left_leg_pos[1],
+                    0.0 + d.left_leg_pos[2] + e.left_leg_pos[2],
                 ],
-                x_rot: f.left_leg_x + e.left_leg_rot[0],
-                y_rot: e.left_leg_rot[1],
-                z_rot: e.left_leg_rot[2],
+                x_rot: f.left_leg_x + d.left_leg_rot[0] + e.left_leg_rot[0],
+                y_rot: d.left_leg_rot[1] + e.left_leg_rot[1],
+                z_rot: d.left_leg_rot[2] + e.left_leg_rot[2],
                 cubes: vec![Cube {
                     tex: (76.0, 76.0),
                     origin: [-2.9, 0.0, -3.0],
@@ -9347,6 +9671,11 @@ pub fn warden_layer_quads(
     // SAME dig→emerge order wears — the additive walk the same law
     // keeps here too)
     let e = warden_emerge_deltas(state);
+    // THE DIG'S OWN OFFSETS (the setupAnim's own order the dig apply
+    // the EMERGE's own apply PRECEDES — the additive walk the same
+    // law wears; the dive the body's own 147° pitch the sink's
+    // (0,-40,-8) grave serves)
+    let d = warden_dig_deltas(state);
     // the retain law's per-part verdicts (the named sets the lambdas
     // bank: biolum {head, arms, legs}, spots {body, head, arms, legs},
     // tendrils {the tendril pair}, heart {body})
@@ -9363,13 +9692,13 @@ pub fn warden_layer_quads(
     // rides — the head/limb children the merge law re-parents)
     let body_part = Part {
         pivot: [
-            0.0 + r.body_pos[0] + e.body_pos[0],
-            -21.0 + r.body_pos[1] + e.body_pos[1],
-            0.0 + r.body_pos[2] + e.body_pos[2],
+            0.0 + d.body_pos[0] + r.body_pos[0] + e.body_pos[0],
+            -21.0 + d.body_pos[1] + r.body_pos[1] + e.body_pos[1],
+            0.0 + d.body_pos[2] + r.body_pos[2] + e.body_pos[2],
         ],
-        x_rot: f.body_x + e.body_rot[0] + r.body_rot[0] + s.body_rot[0],
-        y_rot: e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
-        z_rot: f.body_z + e.body_rot[2] + r.body_rot[2] + s.body_rot[2],
+        x_rot: f.body_x + d.body_rot[0] + e.body_rot[0] + r.body_rot[0] + s.body_rot[0],
+        y_rot: d.body_rot[1] + e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
+        z_rot: f.body_z + d.body_rot[2] + e.body_rot[2] + r.body_rot[2] + s.body_rot[2],
         cubes: if body_kept {
             vec![Cube {
                 tex: (0.0, 0.0),
@@ -9387,13 +9716,13 @@ pub fn warden_layer_quads(
             // re-parent law keeps riding)
             Part {
                 pivot: [
-                    0.0 + r.head_pos[0] + e.head_pos[0],
-                    -13.0 + r.head_pos[1] + e.head_pos[1],
-                    0.0 + r.head_pos[2] + e.head_pos[2],
+                    0.0 + d.head_pos[0] + r.head_pos[0] + e.head_pos[0],
+                    -13.0 + d.head_pos[1] + r.head_pos[1] + e.head_pos[1],
+                    0.0 + d.head_pos[2] + r.head_pos[2] + e.head_pos[2],
                 ],
-                x_rot: f.head_x + e.head_rot[0] + r.head_rot[0] + s.head_rot[0],
-                y_rot: f.head_y + e.head_rot[1] + r.head_rot[1] + s.head_rot[1],
-                z_rot: f.head_z + e.head_rot[2] + r.head_rot[2] + s.head_rot[2],
+                x_rot: f.head_x + d.head_rot[0] + e.head_rot[0] + r.head_rot[0] + s.head_rot[0],
+                y_rot: f.head_y + d.head_rot[1] + e.head_rot[1] + r.head_rot[1] + s.head_rot[1],
+                z_rot: f.head_z + d.head_rot[2] + e.head_rot[2] + r.head_rot[2] + s.head_rot[2],
                 cubes: if head_kept {
                     vec![Cube {
                         tex: (0.0, 32.0),
@@ -9465,14 +9794,16 @@ pub fn warden_layer_quads(
             // THE ARMS
             Part {
                 pivot: [
-                    -13.0 + r.right_arm_pos[0] + e.right_arm_pos[0],
-                    -13.0 + r.right_arm_pos[1] + e.right_arm_pos[1],
-                    1.0 + r.right_arm_pos[2] + e.right_arm_pos[2],
+                    -13.0 + d.right_arm_pos[0] + r.right_arm_pos[0] + e.right_arm_pos[0],
+                    -13.0 + d.right_arm_pos[1] + r.right_arm_pos[1] + e.right_arm_pos[1],
+                    1.0 + d.right_arm_pos[2] + r.right_arm_pos[2] + e.right_arm_pos[2],
                 ],
-                x_rot: f.right_arm_x + e.right_arm_rot[0] + r.right_arm_rot[0]
-                    + s.right_arm_rot[0],
-                y_rot: e.right_arm_rot[1] + r.right_arm_rot[1] + s.right_arm_rot[1],
-                z_rot: e.right_arm_rot[2] + r.right_arm_rot[2] + s.right_arm_rot[2],
+                x_rot: f.right_arm_x + d.right_arm_rot[0] + e.right_arm_rot[0]
+                    + r.right_arm_rot[0] + s.right_arm_rot[0],
+                y_rot: d.right_arm_rot[1] + e.right_arm_rot[1] + r.right_arm_rot[1]
+                    + s.right_arm_rot[1],
+                z_rot: d.right_arm_rot[2] + e.right_arm_rot[2] + r.right_arm_rot[2]
+                    + s.right_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (44.0, 50.0),
@@ -9488,14 +9819,16 @@ pub fn warden_layer_quads(
             },
             Part {
                 pivot: [
-                    13.0 + r.left_arm_pos[0] + e.left_arm_pos[0],
-                    -13.0 + r.left_arm_pos[1] + e.left_arm_pos[1],
-                    1.0 + r.left_arm_pos[2] + e.left_arm_pos[2],
+                    13.0 + d.left_arm_pos[0] + r.left_arm_pos[0] + e.left_arm_pos[0],
+                    -13.0 + d.left_arm_pos[1] + r.left_arm_pos[1] + e.left_arm_pos[1],
+                    1.0 + d.left_arm_pos[2] + r.left_arm_pos[2] + e.left_arm_pos[2],
                 ],
-                x_rot: f.left_arm_x + e.left_arm_rot[0] + r.left_arm_rot[0]
-                    + s.left_arm_rot[0],
-                y_rot: e.left_arm_rot[1] + r.left_arm_rot[1] + s.left_arm_rot[1],
-                z_rot: e.left_arm_rot[2] + r.left_arm_rot[2] + s.left_arm_rot[2],
+                x_rot: f.left_arm_x + d.left_arm_rot[0] + e.left_arm_rot[0]
+                    + r.left_arm_rot[0] + s.left_arm_rot[0],
+                y_rot: d.left_arm_rot[1] + e.left_arm_rot[1] + r.left_arm_rot[1]
+                    + s.left_arm_rot[1],
+                z_rot: d.left_arm_rot[2] + e.left_arm_rot[2] + r.left_arm_rot[2]
+                    + s.left_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (0.0, 58.0),
@@ -9522,13 +9855,13 @@ pub fn warden_layer_quads(
             body_part,
             Part {
                 pivot: [
-                    -5.9 + e.right_leg_pos[0],
-                    -13.0 + e.right_leg_pos[1],
-                    0.0 + e.right_leg_pos[2],
+                    -5.9 + d.right_leg_pos[0] + e.right_leg_pos[0],
+                    -13.0 + d.right_leg_pos[1] + e.right_leg_pos[1],
+                    0.0 + d.right_leg_pos[2] + e.right_leg_pos[2],
                 ],
-                x_rot: f.right_leg_x + e.right_leg_rot[0],
-                y_rot: e.right_leg_rot[1],
-                z_rot: e.right_leg_rot[2],
+                x_rot: f.right_leg_x + d.right_leg_rot[0] + e.right_leg_rot[0],
+                y_rot: d.right_leg_rot[1] + e.right_leg_rot[1],
+                z_rot: d.right_leg_rot[2] + e.right_leg_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (76.0, 48.0),
@@ -9544,13 +9877,13 @@ pub fn warden_layer_quads(
             },
             Part {
                 pivot: [
-                    5.9 + e.left_leg_pos[0],
-                    -13.0 + e.left_leg_pos[1],
-                    0.0 + e.left_leg_pos[2],
+                    5.9 + d.left_leg_pos[0] + e.left_leg_pos[0],
+                    -13.0 + d.left_leg_pos[1] + e.left_leg_pos[1],
+                    0.0 + d.left_leg_pos[2] + e.left_leg_pos[2],
                 ],
-                x_rot: f.left_leg_x + e.left_leg_rot[0],
-                y_rot: e.left_leg_rot[1],
-                z_rot: e.left_leg_rot[2],
+                x_rot: f.left_leg_x + d.left_leg_rot[0] + e.left_leg_rot[0],
+                y_rot: d.left_leg_rot[1] + e.left_leg_rot[1],
+                z_rot: d.left_leg_rot[2] + e.left_leg_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (76.0, 76.0),
@@ -15237,6 +15570,7 @@ mod tests {
             roar_time: None,
             sniff_time: None,
             emerge_time: None,
+            dig_time: None,
         };
         let feet = Vec3::new(10.0, 32.0, -4.0);
         let quads = model.quads(&state, feet, 0.0, 0.0);
@@ -16063,6 +16397,7 @@ mod tests {
         let calm = build_warden_parts(&WardenState::rest());
         let emerging = build_warden_parts(&WardenState {
             emerge_time: Some(0.0),
+            dig_time: None,
             ..WardenState::rest()
         });
         let calm_body = &calm.children[0];
@@ -16086,6 +16421,7 @@ mod tests {
         // -32 plateau the same law keeps)
         let parts = build_warden_parts(&WardenState {
             emerge_time: Some(40.0),
+            dig_time: None,
             ..WardenState::rest()
         });
         let body = &parts.children[0];
@@ -16114,6 +16450,7 @@ mod tests {
         };
         let emerging_walker = WardenState {
             emerge_time: Some(40.0),
+            dig_time: None,
             ..walker
         };
         let calm_parts = build_warden_parts(&walker);
@@ -16144,6 +16481,7 @@ mod tests {
         // pivot keeps)
         let emerging = build_warden_parts(&WardenState {
             emerge_time: Some(0.0),
+            dig_time: None,
             ..WardenState::rest()
         });
         let right_leg = &emerging.children[1];
@@ -16161,6 +16499,7 @@ mod tests {
         let emerge_layer = warden_layer_quads(
             &WardenState {
                 emerge_time: Some(14.0),
+                dig_time: None,
                 ..WardenState::rest()
             },
             feet,
@@ -16183,6 +16522,301 @@ mod tests {
         assert!(moved > 0.5, "the emerge the layer quads move: {moved}");
     }
 
+    /// THE WARDEN_DIG DEFINITION (javap `WardenAnimation` clinit pc
+    /// 4841-7765): the twelve channels the 19/11, 7/2, 10/5, 12/8,
+    /// 9/8, 9/8 arrays bank, the spot constants the ldc rows wear,
+    /// the NINE settle keyframes the LINEAR choice bank, the
+    /// withLength(5.0f) the final keyframes' own timestamps keep.
+    #[test]
+    fn the_dig_definition_the_jar_banks() {
+        // THE CHANNEL COUNTS (the anewarray sizes the bytecode
+        // speaks)
+        assert_eq!(WARDEN_DIG_BODY_ROT.len(), 19, "the body's rot bank");
+        assert_eq!(WARDEN_DIG_BODY_POS.len(), 11, "the body's pos bank");
+        assert_eq!(WARDEN_DIG_HEAD_ROT.len(), 7, "the head's rot bank");
+        assert_eq!(WARDEN_DIG_HEAD_POS.len(), 2, "the head's pos bank");
+        assert_eq!(WARDEN_DIG_RIGHT_ARM_ROT.len(), 10, "the right arm's rot bank");
+        assert_eq!(WARDEN_DIG_RIGHT_ARM_POS.len(), 5, "the right arm's pos bank");
+        assert_eq!(WARDEN_DIG_LEFT_ARM_ROT.len(), 12, "the left arm's rot bank");
+        assert_eq!(WARDEN_DIG_LEFT_ARM_POS.len(), 8, "the left arm's pos bank");
+        assert_eq!(WARDEN_DIG_RIGHT_LEG_ROT.len(), 9, "the right leg's rot bank");
+        assert_eq!(WARDEN_DIG_RIGHT_LEG_POS.len(), 8, "the right leg's pos bank");
+        assert_eq!(WARDEN_DIG_LEFT_LEG_ROT.len(), 9, "the left leg's rot bank");
+        assert_eq!(WARDEN_DIG_LEFT_LEG_POS.len(), 8, "the left leg's pos bank");
+        // THE SPOT CONSTANTS (the ldc float rows the clinit wears)
+        assert_eq!(WARDEN_DIG_BODY_ROT[2].v, [50.0, 0.0, 0.0], "the 0.5s lunge");
+        assert_eq!(
+            WARDEN_DIG_BODY_ROT[8].v,
+            [112.283, 0.0, 0.0],
+            "the 2.542s dive pair the body wears"
+        );
+        assert_eq!(
+            WARDEN_DIG_BODY_ROT[18].v,
+            [147.5, 0.0, 0.0],
+            "the 4.5s settle the head-down dive keeps"
+        );
+        assert_eq!(
+            WARDEN_DIG_BODY_POS[10].v,
+            [0.0, -40.0, -8.0],
+            "the 4.5s sink the body's own grave wears"
+        );
+        assert_eq!(WARDEN_DIG_HEAD_ROT[5].v, [67.5, 0.0, 0.0], "the head's dig glance");
+        assert_eq!(
+            WARDEN_DIG_RIGHT_ARM_ROT[1].v,
+            [-101.804, -21.2959, 30.6148],
+            "the right arm's dig pair"
+        );
+        assert_eq!(
+            WARDEN_DIG_LEFT_ARM_ROT[9].v,
+            [-153.275, -0.02953, 3.5235],
+            "the left arm's deep grab"
+        );
+        assert_eq!(WARDEN_DIG_RIGHT_LEG_ROT[1].v, [113.27, 0.0, 0.0], "the leg's burrow kick");
+        assert_eq!(WARDEN_DIG_LEFT_LEG_ROT[1].v, [114.98, 0.0, 0.0], "the left kick the anti-phase keeps");
+        assert_eq!(
+            WARDEN_DIG_RIGHT_LEG_POS[7].v,
+            [0.0, -28.0, -5.0],
+            "the settle drag the leg wears"
+        );
+        // THE LINEAR SETTLES (the `getstatic #273 LINEAR` rows the
+        // NINE final keyframes wear)
+        let lin_count = [
+            &WARDEN_DIG_BODY_ROT[..],
+            &WARDEN_DIG_BODY_POS[..],
+            &WARDEN_DIG_HEAD_ROT[..],
+            &WARDEN_DIG_HEAD_POS[..],
+            &WARDEN_DIG_RIGHT_ARM_ROT[..],
+            &WARDEN_DIG_RIGHT_ARM_POS[..],
+            &WARDEN_DIG_LEFT_ARM_ROT[..],
+            &WARDEN_DIG_LEFT_ARM_POS[..],
+            &WARDEN_DIG_RIGHT_LEG_ROT[..],
+            &WARDEN_DIG_RIGHT_LEG_POS[..],
+            &WARDEN_DIG_LEFT_LEG_ROT[..],
+            &WARDEN_DIG_LEFT_LEG_POS[..],
+        ]
+        .iter()
+        .map(|c| c.iter().filter(|kf| kf.lin).count())
+        .sum::<usize>();
+        assert_eq!(lin_count, 9, "the NINE LINEAR settles the definition banks");
+        assert!(WARDEN_DIG_BODY_ROT[18].lin, "the body's settle the LINEAR wears");
+        assert!(!WARDEN_DIG_BODY_ROT[17].lin, "the mid kfs the CATMULLROM keeps");
+        // THE TIMESTAMPS ASCEND (the binary-search walk the ordered
+        // arrays the pred consults — the monotone the every channel
+        // keeps) + THE WITHLENGTH (the 5.0f the final kf the
+        // timestamp never exceeds)
+        for (name, c) in [
+            ("body rot", &WARDEN_DIG_BODY_ROT[..]),
+            ("body pos", &WARDEN_DIG_BODY_POS[..]),
+            ("head rot", &WARDEN_DIG_HEAD_ROT[..]),
+            ("head pos", &WARDEN_DIG_HEAD_POS[..]),
+            ("right arm rot", &WARDEN_DIG_RIGHT_ARM_ROT[..]),
+            ("right arm pos", &WARDEN_DIG_RIGHT_ARM_POS[..]),
+            ("left arm rot", &WARDEN_DIG_LEFT_ARM_ROT[..]),
+            ("left arm pos", &WARDEN_DIG_LEFT_ARM_POS[..]),
+            ("right leg rot", &WARDEN_DIG_RIGHT_LEG_ROT[..]),
+            ("right leg pos", &WARDEN_DIG_RIGHT_LEG_POS[..]),
+            ("left leg rot", &WARDEN_DIG_LEFT_LEG_ROT[..]),
+            ("left leg pos", &WARDEN_DIG_LEFT_LEG_POS[..]),
+] {
+            for w in c.windows(2) {
+                assert!(
+                    w[0].t < w[1].t,
+                    "the {name} timestamps ascend: {} vs {}",
+                    w[0].t,
+                    w[1].t
+                );
+            }
+            assert!(
+                c.last().expect("the non-empty bank").t <= 5.0,
+                "the {name} tail the withLength(5.0f) keeps"
+            );
+        }
+    }
+
+    /// THE DIG'S OWN CHANNEL WALK (javap `KeyframeAnimation$Entry
+    /// .apply` + the END keyframe's own interpolation): the LINEAR
+    /// settle the plain lerp keeps, the CATMULLROM segments the
+    /// quartet the bytecode's own f32 order replicates, the past-end
+    /// walk the final LINEAR kf the rest wears, the pos y-neg bake
+    /// the sink serves.
+    #[test]
+    fn the_dig_channel_the_linear_the_catmullrom_keeps() {
+        // THE ELAPSED-0 (the fresh start the (0,0,0) rest keeps)
+        let zero = warden_dig_channel(&WARDEN_DIG_BODY_ROT, 0.0, false);
+        assert_eq!(zero, [0.0, 0.0, 0.0], "the elapsed-0 the rest keeps");
+        // THE CATMULLROM SEGMENT (the [1.333, 1.625] rot pair rides —
+        // elapsed 1.4 the delta walk the quartet answers, the
+        // bytecode's own f32 order the inline chain replicates)
+        let got = warden_dig_channel(&WARDEN_DIG_BODY_ROT, 1.4, false);
+        let deg = 0.017_453_292_f32;
+        let p0 = WARDEN_DIG_BODY_ROT[4].v[0] * deg;
+        let p1 = WARDEN_DIG_BODY_ROT[5].v[0] * deg;
+        let p2 = WARDEN_DIG_BODY_ROT[6].v[0] * deg;
+        let p3 = WARDEN_DIG_BODY_ROT[7].v[0] * deg;
+        let d = ((1.4 - WARDEN_DIG_BODY_ROT[5].t)
+            / (WARDEN_DIG_BODY_ROT[6].t - WARDEN_DIG_BODY_ROT[5].t))
+            .clamp(0.0, 1.0);
+        let want = mth_catmullrom(d, p0, p1, p2, p3);
+        assert!(
+            (got[0] - want).abs() < 1e-6,
+            "the catmullrom segment the quartet wears: {:?} vs {want:?}",
+            got[0]
+        );
+        // THE LINEAR SETTLE (the [4.25, 4.5] rot pair the END kf's
+        // own LINEAR choice wears — elapsed 4.375 the delta 0.5 the
+        // plain lerp answers, the quartet the settle NEVER reads)
+        let got = warden_dig_channel(&WARDEN_DIG_BODY_ROT, 4.375, false);
+        let start = WARDEN_DIG_BODY_ROT[17].v[0] * deg;
+        let end = WARDEN_DIG_BODY_ROT[18].v[0] * deg;
+        let want = start + (end - start) * 0.5;
+        assert!(
+            (got[0] - want).abs() < 1e-6,
+            "the LINEAR settle the plain lerp wears: {:?} vs {want:?}",
+            got[0]
+        );
+        // THE ENDPOINT (the elapsed the final kf's own timestamp the
+        // delta 1.0 answers — the settle the exact value wears)
+        let got = warden_dig_channel(&WARDEN_DIG_BODY_ROT, 4.5, false);
+        assert!(
+            (got[0] - end).abs() < 1e-6,
+            "the endpoint the settle value keeps: {:?}",
+            got[0]
+        );
+        // THE PAST-END REST (the j==i the delta 0 keeps — the final
+        // LINEAR kf the rest wears, the walk the never-outrun law)
+        let got = warden_dig_channel(&WARDEN_DIG_BODY_ROT, 5.0, false);
+        assert!(
+            (got[0] - end).abs() < 1e-6,
+            "the past-end walk the rest pose keeps: {:?}",
+            got[0]
+        );
+        // THE POS Y-NEG BAKE (the posVec's own fneg — the sink the
+        // (0,-40,-8) the +40 baked wears)
+        let got = warden_dig_channel(&WARDEN_DIG_BODY_POS, 4.5, true);
+        assert_eq!(got, [0.0, 40.0, -8.0], "the sink the y-neg bake wears");
+    }
+
+    /// THE DIG'S OWN DELTAS (the WARDEN_DIG definition the 12
+    /// channels evaluate): the None the all-zero no-op keeps, the
+    /// mid-dig the dive the parts wear, the additivity the walker's
+    /// own fold the sum keeps, the layer the same deltas the shared
+    /// walk speaks.
+    #[test]
+    fn the_dig_deltas_the_pose_window_banks() {
+        // THE NO-OP (the never-armed None — the parts the rest pose
+        // keeps: the +0.0 sums the folds' own numbers exactly wear)
+        let calm = build_warden_parts(&WardenState::rest());
+        let digging = build_warden_parts(&WardenState {
+            dig_time: Some(0.0),
+            ..WardenState::rest()
+        });
+        let calm_body = &calm.children[0];
+        let dig_body = &digging.children[0];
+        // THE START (the elapsed-0 the definition's own first
+        // keyframe the (0,0,0) rest wears — the pivot the folds the
+        // same numbers keep)
+        assert_eq!(
+            dig_body.pivot[1], calm_body.pivot[1],
+            "the elapsed-0 the rest start the same pivot wears"
+        );
+        // THE DIVE (the elapsed 2.5s the [2.208, 2.542] segment the
+        // catmullrom walk answers — the xRot the deg-baked wears,
+        // the elapsed the *50/1000 two-step derives)
+        let parts = build_warden_parts(&WardenState {
+            dig_time: Some(50.0),
+            ..WardenState::rest()
+        });
+        let body = &parts.children[0];
+        let deg = 0.017_453_292_f32;
+        let d = ((2.5 - WARDEN_DIG_BODY_ROT[7].t)
+            / (WARDEN_DIG_BODY_ROT[8].t - WARDEN_DIG_BODY_ROT[7].t))
+            .clamp(0.0, 1.0);
+        let p0 = WARDEN_DIG_BODY_ROT[6].v[0] * deg;
+        let p1 = WARDEN_DIG_BODY_ROT[7].v[0] * deg;
+        let p2 = WARDEN_DIG_BODY_ROT[8].v[0] * deg;
+        let p3 = WARDEN_DIG_BODY_ROT[9].v[0] * deg;
+        let want = mth_catmullrom(d, p0, p1, p2, p3);
+        // the idle sway's own +0.025 the age-0 clock wears — the
+        // cos(0) the fold's ahead word banks (the same law the sniff
+        // deltas' tests keep)
+        assert!(
+            (body.x_rot - 0.025 - want).abs() < 1e-5,
+            "the 2.5s the dive the catmullrom wears: {:?} vs {want:?}",
+            body.x_rot - 0.025
+        );
+        // THE SINK (the elapsed 5.0s the past-end rest the (0,+40,-8)
+        // baked wears — the pivot the -21 + 40 the grave speaks)
+        let sunk = build_warden_parts(&WardenState {
+            dig_time: Some(100.0),
+            ..WardenState::rest()
+        });
+        let body = &sunk.children[0];
+        assert!(
+            (body.pivot[1] - (-21.0 + 40.0)).abs() < 1e-5,
+            "the sink the +40 baked wears: {:?}",
+            body.pivot[1]
+        );
+        // THE ADDITIVITY (the digging WALKER — the deltas the walk
+        // folds' own tail ADDS, the xRot the exact sum the
+        // floats keep)
+        let walker = WardenState {
+            walk_pos: 1.0,
+            walk_speed: 0.5,
+            ..WardenState::rest()
+        };
+        let digging_walker = WardenState {
+            dig_time: Some(50.0),
+            ..walker
+        };
+        let plain = build_warden_parts(&walker);
+        let dug = build_warden_parts(&digging_walker);
+        let fold = plain.children[0].x_rot;
+        let want = fold + want;
+        assert!(
+            (dug.children[0].x_rot - want).abs() < 1e-5,
+            "the walker's own fold the dig deltas the sum wears"
+        );
+        // THE LEGS THE SAME DEPTH (the settle drag the leg pivots
+        // wear — the y the -13 + 28 the grave keeps)
+        let legs_right = &sunk.children[1];
+        assert!(
+            (legs_right.pivot[1] - (-13.0 + 28.0)).abs() < 1e-5,
+            "the settle drag the leg pivot wears: {:?}",
+            legs_right.pivot[1]
+        );
+        // THE BIOLUM LAYER THE SAME DELTAS (the layer models' own
+        // setupAnim the SAME walk serves — the head pivot the body
+        // build's own number keeps)
+        let feet = crate::math::Vec3::new(10.5, 32.0, 3.5);
+        let dug_layer = warden_layer_quads(
+            &digging_walker,
+            feet,
+            0.0,
+            0.0,
+            WardenLayer::Bioluminescent,
+        );
+        let calm_layer = warden_layer_quads(
+            &walker,
+            feet,
+            0.0,
+            0.0,
+            WardenLayer::Bioluminescent,
+        );
+        assert_eq!(calm_layer.len(), dug_layer.len(), "the layer the mesh keeps");
+        let moved: f32 = dug_layer
+            .iter()
+            .zip(calm_layer.iter())
+            .map(|(s, r)| {
+                s.pts
+                    .iter()
+                    .zip(r.pts.iter())
+                    .map(|(a, b)| (a[0] - b[0]).abs() + (a[1] - b[1]).abs() + (a[2] - b[2]).abs())
+                    .sum::<f32>()
+            })
+            .sum();
+        assert!(moved > 0.5, "the dig the layer quads move: {moved}");
+    }
+
     impl WardenState {
         /// THE STANDING REST (the zero pair the fresh warden's
         /// stillness wears — the look pair zero, the walk pair zero,
@@ -16199,6 +16833,7 @@ mod tests {
                 roar_time: None,
                 sniff_time: None,
                 emerge_time: None,
+                dig_time: None,
             }
         }
     }
@@ -16227,6 +16862,7 @@ mod tests {
             roar_time: None,
             sniff_time: None,
             emerge_time: None,
+            dig_time: None,
         };
         let feet = Vec3::new(3.0, 20.0, -7.0);
         // THE HEART (Set.of("body")): the body cube's six faces the
@@ -16315,6 +16951,7 @@ mod tests {
             roar_time: None,
             sniff_time: None,
             emerge_time: None,
+            dig_time: None,
         };
         // THE CONST (the always-on glow)
         assert_eq!(
