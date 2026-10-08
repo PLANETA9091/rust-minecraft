@@ -2099,7 +2099,11 @@ cow_sound_variant: None,
                 // 0 never was (the tick sat the timeline's dawn wrap,
                 // the sky the sunrise tint and the faint stars wore
                 // while the terrain baked the full-day fold).
-                app.day_time_base = 6000;
+                // THE NOON PIN, OWNED (the accumulated clock the staged
+                // frame folds — the old base+frame read the same total
+                // wears, bit for bit)
+                app.frame = frame;
+                app.clock_total = 6000 + frame;
             }
         }
         "worldnight" => {
@@ -2108,23 +2112,25 @@ cow_sound_variant: None,
             // camera), stars at the official full brightness 0.5, night
             // sky/fog colors from the timeline.
             app.enter_world();
-            app.day_time_base = 14010;
             app.frame = frame;
+            app.clock_total = 14_010 + frame;
         }
         "pause" => {
             app.enter_world();
             app.paused = true;
             // THE NOON PIN (the world arm's own law — the day look the
-            // full-day fold keeps, the noon tracks the sky renders)
-            app.day_time_base = 6000;
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
             app.frame = frame;
+            app.clock_total = 6000 + frame;
         }
         "chest" => {
             app.open_chest();
             // THE NOON PIN (the world arm's own law — the day look the
-            // full-day fold keeps, the noon tracks the sky renders)
-            app.day_time_base = 6000;
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
             app.frame = frame;
+            app.clock_total = 6000 + frame;
         }
         "inventory" => {
             // THE E-KEY SCREEN'S OWN STAGING: the offline world stands
@@ -2138,9 +2144,10 @@ cow_sound_variant: None,
             app.hotbar_slots = app.inventory.hotbar();
             app.open_inventory();
             // THE NOON PIN (the world arm's own law — the day look the
-            // full-day fold keeps, the noon tracks the sky renders)
-            app.day_time_base = 6000;
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
             app.frame = frame;
+            app.clock_total = 6000 + frame;
         }
         "crafting" => {
             // THE TABLE SCREEN'S OWN STAGING (the autopush-328 round):
@@ -2157,9 +2164,10 @@ cow_sound_variant: None,
             app.table_grid[3] = (planks, 7);
             app.refresh_table_result();
             // THE NOON PIN (the world arm's own law — the day look the
-            // full-day fold keeps, the noon tracks the sky renders)
-            app.day_time_base = 6000;
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
             app.frame = frame;
+            app.clock_total = 6000 + frame;
         }
         other => anyhow::bail!(
             "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|inventory|crafting)"

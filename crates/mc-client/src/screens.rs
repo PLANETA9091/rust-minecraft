@@ -145,6 +145,21 @@ pub(crate) fn format_chat_decoration(key: &str, args: &[&str]) -> String {
 /// THE SIBLING RESET rides both substitutions (the template's literals
 /// wear the TEMPLATE's style, never the argument's: the §-codes the arg
 /// carried the §r closes).
+/// THE FLOAT'S OWN JAVA WORD (vanilla `Float.toString` the
+/// `commands.time.rate` feedback's second arg wears): the integral
+/// floats the trailing `.0` keep (`2.0` — Rust's bare `2` never
+/// speaks), the fractional values the shortest round-trip display
+/// renders (`0.5`). The practical command range (1.0e-5..=1000.0)
+/// the two laws cover — the scientific-notation extremes the
+/// `Float.toString` switches to never seat this command's bounds.
+pub(crate) fn java_float_string(v: f32) -> String {
+    if v.fract() == 0.0 && v.abs() < 1.0e7 {
+        format!("{:.1}", v)
+    } else {
+        format!("{}", v)
+    }
+}
+
 pub(crate) fn format_positional(fmt: &str, args: &[&str]) -> String {
     let mut out = String::with_capacity(fmt.len());
     let mut chars = fmt.chars().peekable();
@@ -6196,9 +6211,34 @@ pub struct App {
     /// prediction walks mutate (the offline world's `inv_carried`
     /// stays the offline truth — the two lanes never mix).
     pub live_inv_carried: (i32, i32),
-    /// Base world tick for the day-night cycle (0 = vanilla dawn; the frame
-    /// counter advances time 1 tick per frame like the vanilla clock).
-    pub day_time_base: u64,
+    /// THE WORLD CLOCK'S OWN ACCUMULATED TIME (the 26.2 `WorldClock`
+    /// walk — javap `ServerClockManager` the clock's own `time` the
+    /// manager accumulates, the shared tick counter the clock NO
+    /// LONGER rides: `getOverworldClockTime()` this field reads, the
+    /// pause/rate state below the advance shapes). 0 = vanilla dawn;
+    /// the default walk adds exactly 1 tick per [`Self::update`] —
+    /// the bit-exact successor the old `day_time_base + frame` fold
+    /// wore (the staged writes fold the frame at write time — the
+    /// read the single field answers).
+    pub clock_total: u64,
+    /// THE CLOCK'S OWN PAUSE FLAG (javap `ServerClockManager.setPaused`
+    /// — the `/time pause` literal the `setPaused(clock, true)` arm
+    /// serves, the `/time resume` the false arm answers): the frozen
+    /// clock the day advance never earns while the WORLD's own ticks
+    /// (the frame counter, the mobs, the weather walk) keep speaking —
+    /// the vanilla pause semantics the clock alone freezes.
+    pub clock_paused: bool,
+    /// THE CLOCK'S OWN RATE (javap `ServerClockManager.setRate` — the
+    /// `/time rate <f>` literal the `FloatArgumentType.floatArg(
+    /// 1.0E-5, 1000.0)` bounds wear): the per-tick advance the rate
+    /// scales, the fractional carry the floor below folds — 1.0 the
+    /// default one-tick step keeps.
+    pub clock_rate: f32,
+    /// THE RATE'S OWN FRACTIONAL CARRY (the sub-tick remainder the
+    /// scaled advance accrues — the 0.5 rate the every-other-tick
+    /// step walks, the floor the whole ticks the clock banks and the
+    /// fraction the carry keeps).
+    clock_rate_carry: f64,
     /// THE DAY BAKE'S OWN INPUT PAIR (the quantized sky-factor step + the
     /// moonlight tint bytes the CURRENT offline mesh's lightmap fold
     /// spoke — the day-varying pair the baked-lightmap architecture
@@ -7955,7 +7995,10 @@ impl App {
             live_inv_slots: [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS],
             live_inv_state_id: 0,
             live_inv_carried: (0, 0),
-            day_time_base: 0,
+            clock_total: 0,
+            clock_paused: false,
+            clock_rate: 1.0,
+            clock_rate_carry: 0.0,
             day_bake: None,
             darkness_bake: None,
             partial_tick: 1.0,
@@ -8568,6 +8611,24 @@ impl App {
     /// Advance deterministic boot progress; transitions to title.
     pub fn update(&mut self) {
         self.frame += 1;
+        // THE WORLD CLOCK'S OWN ADVANCE (the 26.2 WorldClock walk —
+        // the accumulated time the clock OWNS, the shared tick
+        // counter no longer the day's ride): the pause the advance
+        // gates (`setPaused` — the day alone freezes, the world's
+        // own ticks keep), the rate the per-tick step scales
+        // (`setRate` — the fractional carry the floor folds, the
+        // whole ticks the clock banks), the default 1.0 the
+        // bit-exact one-tick step the old `base + frame` fold wore.
+        if self.clock_paused {
+            // THE FROZEN CLOCK — the advance the pause never earns.
+        } else if self.clock_rate == 1.0 {
+            self.clock_total += 1;
+        } else {
+            self.clock_rate_carry += self.clock_rate as f64;
+            let whole = self.clock_rate_carry.floor();
+            self.clock_rate_carry -= whole;
+            self.clock_total = self.clock_total.saturating_add(whole as u64);
+        }
         match self.screen {
             ScreenKind::Loading => {
                 self.boot_progress += 0.05;
@@ -9176,7 +9237,7 @@ impl App {
                 // interesting hand arms)
                 held_item_id: self.held_id(),
             });
-            let day_time = (self.day_time_base + self.frame) as i64;
+            let day_time = self.day_time_now();
             // THE MAYFLY READ HOISTED (the accessor's whole-self borrow
             // the field-split body args cannot ride — the vanilla's own
             // single `abilities` read the tick's head speaks once)
@@ -12283,8 +12344,9 @@ impl App {
                 // raw the same darken wears; the render's own set the
                 // same value the lightmap fold consumes — the clock the
                 // SIMULATION carries, never the render alone)
+                let clock_now = self.day_time_now();
                 if let Some(world) = self.offline_world.as_mut() {
-                    world.day_tick = Some((self.day_time_base + self.frame) as i64);
+                    world.day_tick = Some(clock_now);
                 }
                 // THE SPAWNER'S BEAT (the vanilla spawn cycle's
                 // stand-in): one attempt per SPAWN_CYCLE_TICKS, the
@@ -12300,7 +12362,7 @@ impl App {
                 // vanilla dusk spawns the beat never offered.
                 self.spawn_clock += 1;
                 if self.spawn_clock % crate::mob::SPAWN_CYCLE_TICKS == 0 {
-                    let day_time = (self.day_time_base + self.frame) as i64;
+                    let day_time = self.day_time_now();
                     if !crate::mob::is_bright_outside(day_time) {
                         if let (Some(world), Some(b)) =
                             (self.offline_world.as_ref(), self.body.as_ref())
@@ -12760,7 +12822,7 @@ impl App {
                 let mut egg_lays: Vec<(f32, f64, f64, f64)> = Vec::new();
                 // the day tick the burn lane's tracks read (the same
                 // clock the sky samples)
-                let day_time = (self.day_time_base + self.frame) as i64;
+                let day_time = self.day_time_now();
                 {
                     let world = self.offline_world.as_ref();
                     if let Some(world) = world {
@@ -15506,7 +15568,7 @@ impl App {
             .as_ref()
             .map(|b| (b.x, b.z))
             .unwrap_or((0.0, 0.0));
-        let now = (self.day_time_base + self.frame) as i64;
+        let now = self.day_time_now();
         // THE ATTACKER'S OWN TARGETABLE VERDICT (the hurtServer anger
         // walk's canTargetEntity consult — the survival+alive pair the
         // dispatch's own SOURCE tail wears)
@@ -22094,15 +22156,24 @@ impl App {
     /// world (the vanilla closeContainer's own return). The offline
     /// deterministic chest (open_chest) is never touched: the live
     /// flag gates the close, the flows stay separate.
+    /// THE WORLD CLOCK'S OWN READ (the 26.2 `getOverworldClockTime`
+    /// accessor the sky, the spawner, the burn lane, the debug and the
+    /// command feedback all consult): the accumulated clock as the
+    /// i64 the day walks speak — the single source the old
+    /// `day_time_base + frame` fold answered, bit for bit.
+    pub fn day_time_now(&self) -> i64 {
+        self.clock_total as i64
+    }
+
     /// THE DAY CLOCK'S WIRE RE-SYNC (vanilla ClientLevel's own absolute
-    /// SetTime fold): the wire's day opinion re-bases the fixed clock —
-    /// `day_time_base + frame` reads the server's day NOW, the frame
-    /// keeps the local 20-tps advance between the syncs, the drift the
-    /// syncs absorb. No opinion (`None` — no Set Time ever arrived)
-    /// is the honest no-op: the clock keeps the client's own base.
+    /// SetTime fold): the wire's day opinion SETS the accumulated clock —
+    /// `clock_total` reads the server's day NOW, the local 20-tps advance
+    /// keeps walking between the syncs, the drift the syncs absorb. No
+    /// opinion (`None` — no Set Time ever arrived) is the honest no-op:
+    /// the clock keeps the client's own accumulation.
     fn align_day_clock_to_wire(&mut self) {
         if let Some(day) = self.net_world.as_ref().and_then(|w| w.day_tick) {
-            self.day_time_base = (day - self.frame as i64).max(0) as u64;
+            self.clock_total = day.max(0) as u64;
         }
     }
 
@@ -23661,7 +23732,8 @@ impl App {
             // the `set` AND the `add` lambdas both wear, the
             // `query` the `commands.time.query.absolute` the
             // `query gametime` the `commands.time.query.gametime`
-            // sibling answers.
+            // sibling answers; the `pause`/`resume`/`rate` siblings
+            // the SAME builder serves — the arms below speak them.
             ["time", "set", word] => {
                 // THE ZERO FLOOR (the `TimeArgument.time()` register
                 // walk — the negatives the tick_count_too_low verdict
@@ -23670,15 +23742,14 @@ impl App {
                     self.push_local_command_error();
                     return;
                 };
-                // THE CLOCK SET (the wire's own day seam — the
-                // `day_time_base + frame` read the server's day NOW
-                // speaks, the base the new total the frame offset
-                // answers; the u64 clock the below-zero wrap the
-                // clamp keeps)
-                self.day_time_base = (ticks as i64 - self.frame as i64).max(0) as u64;
+                // THE CLOCK SET (the accumulated clock the SET total
+                // owns — the vanilla `setTotalTicks` walk the
+                // ServerClockManager's own time the write arms, the
+                // shared tick counter the clock never rides)
+                self.clock_total = ticks as u64;
                 // THE FEEDBACK (lambda$setTotalTicks$0 — the clock's
                 // registered name + the ticks the two-arg order wears)
-                let total = self.day_time_base + self.frame;
+                let total = self.clock_total;
                 let msg = format_positional(
                     tr("commands.time.set.absolute")
                         .unwrap_or("Set %s to %s tick(s)"),
@@ -23694,14 +23765,14 @@ impl App {
                     return;
                 };
                 // THE CLOCK ADD (the vanilla `setDayTime(getDayTime()
-                // + amount)` walk — the u64 clock the negative rewind
-                // the clamp-at-zero the wrap never speaks)
-                let total_i64 = (self.day_time_base + self.frame) as i64;
-                let new_total = (total_i64.saturating_add(ticks)).max(0);
-                self.day_time_base = (new_total - self.frame as i64).max(0) as u64;
+                // + amount)` walk — the accumulated clock the delta
+                // grows, the negative rewind the clamp-at-zero the
+                // wrap never speaks)
+                let new_total = self.day_time_now().saturating_add(ticks).max(0);
+                self.clock_total = new_total as u64;
                 // THE FEEDBACK (lambda$addTime$0 — the SAME
                 // set.absolute key the NEW total the arg carries)
-                let total = self.day_time_base + self.frame;
+                let total = self.clock_total;
                 let msg = format_positional(
                     tr("commands.time.set.absolute")
                         .unwrap_or("Set %s to %s tick(s)"),
@@ -23713,7 +23784,7 @@ impl App {
                 // THE BARE QUERY (the default clock's own read — the
                 // `commands.time.query.absolute` the clock name + the
                 // ticks the two args wear)
-                let total = self.day_time_base + self.frame;
+                let total = self.clock_total;
                 let msg = format_positional(
                     tr("commands.time.query.absolute")
                         .unwrap_or("Clock %s is at %s tick(s)"),
@@ -23727,11 +23798,70 @@ impl App {
                 // day_time lane serves; the separate gameTime register
                 // the offline world the same clock the honest fold
                 // keeps)
-                let total = self.day_time_base + self.frame;
+                let total = self.clock_total;
                 let msg = format_positional(
                     tr("commands.time.query.gametime")
                         .unwrap_or("The game time is %s tick(s)"),
                     &[&total.to_string()],
+                );
+                self.push_chat_message(msg);
+            }
+            ["time", "pause"] => {
+                // THE PAUSE LITERAL (javap lambda$addClockNodes$4 —
+                // the `iconst_1` walk the `setPaused(clock, true)`
+                // arm speaks, the `commands.time.pause` feedback the
+                // lambda$setPaused$0's own branch wears: the clock's
+                // registered name the one arg carries). THE FROZEN
+                // ADVANCE the `update` walk's gate keeps — the DAY
+                // clock alone stops, the world's own ticks (the mobs,
+                // the weather, the frame) never do: the vanilla
+                // clock-pause semantics the 26.2 WorldClock speaks.
+                self.clock_paused = true;
+                let msg = format_positional(
+                    tr("commands.time.pause").unwrap_or("Paused clock %s"),
+                    &["minecraft:overworld"],
+                );
+                self.push_chat_message(msg);
+            }
+            ["time", "resume"] => {
+                // THE RESUME LITERAL (javap lambda$addClockNodes$5 —
+                // the `iconst_0` walk the `setPaused(clock, false)`
+                // arm speaks, the `commands.time.resume` feedback the
+                // same lambda's else branch wears). The paused flag
+                // the false write retires — the clock the per-tick
+                // walk the rate still shapes.
+                self.clock_paused = false;
+                let msg = format_positional(
+                    tr("commands.time.resume").unwrap_or("Resumed clock %s"),
+                    &["minecraft:overworld"],
+                );
+                self.push_chat_message(msg);
+            }
+            ["time", "rate", word] => {
+                // THE RATE LITERAL (javap lambda$addClockNodes$6 —
+                // the `FloatArgumentType.getFloat(ctx, "rate")` walk
+                // the `floatArg(1.0E-5, 1000.0)` bounds serve, the
+                // `setRate` the clock's per-tick advance scales, the
+                // `commands.time.rate` feedback the
+                // lambda$setRate$0's two-arg order wears: the clock
+                // name + the float the %s seats). THE PARSE the
+                // brigadier walk shapes — the non-numeric word AND
+                // the out-of-bounds float the verdict rejects BEFORE
+                // the arm applies (the range the INCLUSIVE bounds
+                // keep: 1.0e-5 and 1000.0 both parse).
+                let Some(rate) = word
+                    .parse::<f32>()
+                    .ok()
+                    .filter(|r| r.is_finite() && (1.0e-5..=1000.0).contains(r))
+                else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.clock_rate = rate;
+                let msg = format_positional(
+                    tr("commands.time.rate")
+                        .unwrap_or("Clock %s will now advance at %sx normal rate"),
+                    &["minecraft:overworld", &java_float_string(rate)],
                 );
                 self.push_chat_message(msg);
             }
@@ -25987,8 +26117,8 @@ impl App {
         // the networked world's rows never speak), the
         // `isInsideBuildHeight(feetY)` the grid's own 0..CHUNK_Y law
         // mirrors. THE INPUTS the jar's walk names: the
-        // `getOverworldClockTime()` total the day_time_base + frame
-        // clock rides (the same world clock the Day row wears), the
+        // `getOverworldClockTime()` total the owned clock_total rides
+        // (the same world clock the Day row wears), the
         // `getInhabitedTime()` the chunk's own dwell bank keeps (the
         // host world's accumulator the tick_inhabited walk drives),
         // the `getMoonBrightness(pos)` the
@@ -26008,7 +26138,7 @@ impl App {
                     let side = world.chunks_per_side as i32;
                     if bcx >= 0 && bcz >= 0 && bcx < side && bcz < side {
                         let banked = inhabited[(bcx + bcz * side) as usize];
-                        let day_time = (self.day_time_base + self.frame) as i64;
+                        let day_time = self.day_time_now();
                         let moon_brightness = crate::difficulty::MOON_BRIGHTNESS_PER_PHASE
                             [crate::sky::moon_phase_at(day_time) as usize];
                         let effective = crate::difficulty::effective_difficulty(
@@ -26034,10 +26164,10 @@ impl App {
         // OVERWORLD_DAY the period always wears), the period the
         // client's own DAY_PERIOD_TICKS constant mirrors (the
         // compile-time snapshot the timeline.rs walk keeps), the total
-        // the day_time_base + frame clock rides (the same game time
+        // the owned clock_total rides (the same game time
         // the celestials' sample walk reads — the vanilla Level's own
         // clock the entry's display param speaks).
-        let day_time = (self.day_time_base + self.frame) as i64;
+        let day_time = self.day_time_now();
         lines.push(format!(
             "Day #{}",
             day_time / crate::timeline::DAY_PERIOD_TICKS
@@ -28879,7 +29009,7 @@ impl App {
             // never speaks twice within (the saturating fold the
             // i64::MIN stamp the fresh world wears — the vanilla
             // `gameTime - last > 20` lcmp the huge gap answers)
-            let now = (self.day_time_base + self.frame) as i64;
+            let now = self.day_time_now();
             if now.saturating_sub(self.last_kinetic_hit_feedback_time) <= 20 {
                 continue;
             }
@@ -28942,7 +29072,7 @@ impl App {
         }
         let row = spear_kinetic_row(name)?;
         let time_held = active.ticks as f32 - 1.0 + self.partial_tick;
-        let now = (self.day_time_base + self.frame) as i64;
+        let now = self.day_time_now();
         // the feedback tick: `getTicksSinceLastKineticHitFeedback`'s own
         // `< 0` guard — the NEGATIVE stamp (the ctor's -2147483648L) the
         // 0 keeps until the first hit banks, then `(gameTime - last) +
@@ -34167,7 +34297,7 @@ impl App {
         self.ensure_world();
         let n = self.world_size as f32;
         let cam = self.world_camera();
-        let day_time = (self.day_time_base + self.frame) as i64;
+        let day_time = self.day_time_now();
         // THE OFFLINE WORLD'S OWN DAY CLOCK (the integrated-server
         // fiction the singleplayer's ClientLevel speaks): the procedural
         // world's day_tick the app's own clock answers — the timeline's
@@ -34326,7 +34456,7 @@ impl App {
             // networked world's clock the same app tick the render's own
             // frame carries, the day_tick the server's Set Time word
             // never gates.
-            fire_anim_tick: self.day_time_base.wrapping_add(self.frame),
+            fire_anim_tick: self.clock_total,
         };
         // Official render order: sky color -> sun/moon/stars -> terrain ->
         // clouds (depth-tested against terrain, the CLOUDS pass runs with
@@ -34385,7 +34515,7 @@ impl App {
         // submit — the zombies render in EVERY perspective, the
         // first-person's own-body gate never touches them; the day
         // tick feeds the flame feature's frame law)
-        let render_day_time = (self.day_time_base + self.frame) as i64;
+        let render_day_time = self.day_time_now();
         self.render_mobs(fb, &ctx, &cam, render_day_time, a);
         // THE PRIMED TNT'S OWN PASS (the entity pass's own lane — the
         // fuse machines the block-model flash render wears)
@@ -35338,7 +35468,7 @@ impl App {
             ticks_since_kinetic_hit: if self.last_kinetic_hit_feedback_time < 0 {
                 0.0
             } else {
-                ((self.day_time_base + self.frame) as i64
+                (self.day_time_now()
                     - self.last_kinetic_hit_feedback_time) as f32
                     + self.partial_tick
             },
@@ -35618,7 +35748,7 @@ impl App {
                     crate::avatar::FireStrips::load(std::path::Path::new("assets-cache/jar"));
             }
             if let Some(strips) = &self.fire_strips {
-                let day_time = (self.day_time_base + self.frame) as i64;
+                let day_time = self.day_time_now();
                 let flames = crate::avatar::flame_quads(
                     feet,
                     crate::body::WIDTH as f32,
@@ -43293,7 +43423,7 @@ mod tests {
         app.chat_open = true;
         app.chat_input = "/time set 6000".into();
         app.on_chat_submit();
-        assert_eq!(app.day_time_base + app.frame, 6000);
+        assert_eq!(app.day_time_now(), 6000);
         assert_eq!(
             app.chat_messages.last().map(|(m, _)| m.as_str()),
             Some("Set minecraft:overworld to 6000 tick(s)"),
@@ -43304,7 +43434,7 @@ mod tests {
         app.chat_open = true;
         app.chat_input = "/time set 90s".into();
         app.on_chat_submit();
-        assert_eq!(app.day_time_base + app.frame, 1800);
+        assert_eq!(app.day_time_now(), 1800);
         assert_eq!(
             app.chat_messages.last().map(|(m, _)| m.as_str()),
             Some("Set minecraft:overworld to 1800 tick(s)"),
@@ -43312,13 +43442,13 @@ mod tests {
         app.chat_open = true;
         app.chat_input = "/time set 3d".into();
         app.on_chat_submit();
-        assert_eq!(app.day_time_base + app.frame, 72000);
+        assert_eq!(app.day_time_now(), 72000);
         // THE ADD (the same set.absolute key the NEW total the arg
         // carries — the negative rewind the int-min floor allows)
         app.chat_open = true;
         app.chat_input = "/time add 1000".into();
         app.on_chat_submit();
-        assert_eq!(app.day_time_base + app.frame, 73000);
+        assert_eq!(app.day_time_now(), 73000);
         assert_eq!(
             app.chat_messages.last().map(|(m, _)| m.as_str()),
             Some("Set minecraft:overworld to 73000 tick(s)"),
@@ -43326,7 +43456,7 @@ mod tests {
         app.chat_open = true;
         app.chat_input = "/time add -2000".into();
         app.on_chat_submit();
-        assert_eq!(app.day_time_base + app.frame, 71000);
+        assert_eq!(app.day_time_now(), 71000);
         // THE QUERIES (the bare query the clock.absolute wording the
         // gametime sibling the game-time lane wears)
         app.chat_open = true;
@@ -43347,15 +43477,145 @@ mod tests {
         // the invalid unit the UNITS map's miss keeps, the bare
         // literal and the unknown query arg the dispatch's error
         // render)
-        let ok = app.day_time_base + app.frame;
+        let ok = app.day_time_now();
         for bad in ["/time set -5", "/time set 5x", "/time", "/time query daytime"] {
             app.chat_open = true;
             app.chat_input = bad.into();
             app.on_chat_submit();
             let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
             assert!(err.starts_with("\u{a7}c"), "the {bad} the RED error rides: {err:?}");
-            assert_eq!(app.day_time_base + app.frame, ok, "the failure the clock unmoved keeps");
+            assert_eq!(app.day_time_now(), ok, "the failure the clock unmoved keeps");
         }
+    }
+
+    #[test]
+    fn the_offline_command_the_clock_pause_resume_rate_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE PAUSE (javap lambda$addClockNodes$4 — the setPaused(true)
+        // arm the `commands.time.pause` feedback wears): the day clock
+        // FREEZES while the world's own ticks keep speaking — the
+        // frame counter the advance still earns, the mob/walk lanes
+        // the world's own beat rides
+        app.chat_open = true;
+        app.chat_input = "/time pause".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Paused clock minecraft:overworld"),
+        );
+        assert!(app.clock_paused);
+        let frozen_at = app.day_time_now();
+        for _ in 0..10 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), frozen_at, "the pause the day advance gates");
+        assert_eq!(app.frame, 10, "the world's own ticks the pause never gates");
+        // THE SET UNDER THE PAUSE (the frozen walk the manual write
+        // still arms — the clock the set arm re-anchors, the pause
+        // the advance keeps gating)
+        app.chat_open = true;
+        app.chat_input = "/time set 6000".into();
+        app.on_chat_submit();
+        assert_eq!(app.day_time_now(), 6000);
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6000, "the re-frozen clock the set cannot thaw");
+        // THE RESUME (javap lambda$addClockNodes$5 — the
+        // setPaused(false) arm the `commands.time.resume` feedback
+        // wears): the advance the walk re-arms, the default rate the
+        // one-tick step keeps
+        app.chat_open = true;
+        app.chat_input = "/time resume".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Resumed clock minecraft:overworld"),
+        );
+        assert!(!app.clock_paused);
+        for _ in 0..7 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6007, "the resumed walk the 1:1 step keeps");
+        // THE RATE 2.0 (javap lambda$addClockNodes$6 — the
+        // floatArg(1.0E-5, 1000.0) bound the setRate walk serves, the
+        // `commands.time.rate` feedback the Float.toString word
+        // wears: the `2.0x` the integral float's own law keeps)
+        app.chat_open = true;
+        app.chat_input = "/time rate 2".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Clock minecraft:overworld will now advance at 2.0x normal rate"),
+        );
+        assert_eq!(app.clock_rate, 2.0);
+        for _ in 0..5 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6017, "the doubled rate the step doubles");
+        // THE RATE 0.5 (the sub-tick carry the floor folds — the
+        // every-other-tick step the fractional remainder banks)
+        app.chat_open = true;
+        app.chat_input = "/time rate 0.5".into();
+        app.on_chat_submit();
+        assert_eq!(app.clock_rate, 0.5);
+        for _ in 0..6 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6020, "the half rate the carry fold walks");
+        // THE PAUSE+RATE INTERPLAY (the frozen gate the rate never
+        // thaws — the pause the advance's FIRST gate keeps)
+        app.chat_open = true;
+        app.chat_input = "/time pause".into();
+        app.on_chat_submit();
+        for _ in 0..9 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6020, "the pause the scaled walk also gates");
+        app.chat_open = true;
+        app.chat_input = "/time resume".into();
+        app.on_chat_submit();
+        for _ in 0..4 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), 6022, "the resumed half-rate the carry resumes");
+        // THE BOUNDS (the floatArg(1.0E-5, 1000.0) the parse verdict
+        // keeps — the non-numeric word, the zero, the over-max and
+        // the below-min float the RED error rides, the rate AND the
+        // carry the rejection never touches; the bounds themselves
+        // the INCLUSIVE arms accept)
+        let rate_ok = app.clock_rate;
+        let total_ok = app.day_time_now();
+        for bad in ["/time rate abc", "/time rate 0", "/time rate 1000.1", "/time rate 9e-6", "/time rate"] {
+            app.chat_open = true;
+            app.chat_input = bad.into();
+            app.on_chat_submit();
+            let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+            assert!(err.starts_with("\u{a7}c"), "the {bad} the RED error rides: {err:?}");
+            assert_eq!(app.clock_rate, rate_ok, "the failed parse the rate unmoved keeps");
+        }
+        app.chat_open = true;
+        app.chat_input = "/time rate 1000".into();
+        app.on_chat_submit();
+        assert_eq!(app.clock_rate, 1000.0, "the upper bound the inclusive arm keeps");
+        app.chat_open = true;
+        app.chat_input = "/time rate 0.00001".into();
+        app.on_chat_submit();
+        assert_eq!(app.clock_rate, 0.00001, "the lower bound the inclusive arm keeps");
+        assert_eq!(app.day_time_now(), total_ok, "the parse alone the clock never moves");
+        // THE DEFAULT RESTORE (the 1.0 rate the bit-exact one-tick
+        // step the old fold wore)
+        app.chat_open = true;
+        app.chat_input = "/time rate 1".into();
+        app.on_chat_submit();
+        assert_eq!(app.clock_rate, 1.0);
+        let base_now = app.day_time_now();
+        for _ in 0..3 {
+            app.update();
+        }
+        assert_eq!(app.day_time_now(), base_now + 3, "the default rate the exact step keeps");
     }
 
     #[test]
@@ -43898,8 +44158,8 @@ mod tests {
         let mut app = App::new(3);
         app.enter_world();
         app.spawn_offline_body();
-        app.day_time_base = 3 * crate::timeline::DAY_PERIOD_TICKS as u64 + 500;
         app.frame = 23_000;
+        app.clock_total = 3 * crate::timeline::DAY_PERIOD_TICKS as u64 + 500 + 23_000;
         // the total (72_000 + 500 + 23_000) the 95_500 wears — the
         // floor division the 3 days + 23_500 ticks the row speaks (the
         // index the LocalDifficulty row's own insertion the +1 shift
@@ -43907,11 +44167,14 @@ mod tests {
         // banks)
         assert_eq!(app.debug_lines()[9], "Day #3");
         // the EXACT period boundary: the total the 4 full days the
-        // count 4 wears (the next dawn the day rollover speaks)
+        // count 4 wears (the next dawn the day rollover speaks; the
+        // clock the frame's step rides — the old base+frame fold the
+        // pair moved together)
         app.frame = 24_000;
+        app.clock_total = 3 * crate::timeline::DAY_PERIOD_TICKS as u64 + 500 + 24_000;
         assert_eq!(app.debug_lines()[9], "Day #4");
         // the dawn's own zero: the fresh clock the day 0 keeps
-        app.day_time_base = 0;
+        app.clock_total = 0;
         app.frame = 0;
         assert_eq!(app.debug_lines()[9], "Day #0");
     }
@@ -43969,7 +44232,7 @@ mod tests {
         // effective wears (the banked tick the tiny ramp adds): the
         // %.2f HALF_UP the `2.38` word keeps; the special the
         // (eff-2)/2 the `0.19` half-step answers)
-        app.day_time_base = 72000 + 1_440_000;
+        app.clock_total = 72000 + 1_440_000;
         app.frame = 0;
         let lines = app.debug_lines();
         let idx = lines.iter().position(|l| l.starts_with("Local Difficulty: ")).unwrap();
@@ -51362,11 +51625,11 @@ mod tests {
         app.enter_world();
         app.spawn_offline_body();
         // THE DAY CLOCK'S OWN PLATEAU (the frame == tick model the sky
-        // lane rides — the day_time_base the test pins into the flat day
+        // lane rides — the clock_total the test pins into the flat day
         // plateau 133..11867: the shown/hidden pair the SAME frame
         // renders, the sky's dawn ramp the pinned clock never crosses,
         // the diff the HUD layer ALONE answers)
-        app.day_time_base = 6000;
+        app.clock_total = 6000 + app.frame;
         let mut assets = GuiAssets::open(&root);
         let mut fb = crate::raster::Framebuf::new(640, 360);
         app.render(&mut fb, &mut assets);
@@ -56019,6 +56282,7 @@ mod tests {
         }
         let pre = app.mobs[0].health;
         app.frame = 30;
+        app.clock_total = 30;
         app.spear_use_tick_stab(12); // the iron tier's own 12 the walk passes
         assert_eq!(app.mobs[0].health, pre, "the walk the damage refuses");
         assert_eq!(
@@ -61684,7 +61948,7 @@ mod tests {
         // 133..11867: the bare frame and the 201-tick aged frame the
         // SAME flat sky sample, the byte-equality the fade's zero
         // answers)
-        app.day_time_base = 6000;
+        app.clock_total = 6000 + app.frame;
         let mut assets = GuiAssets::open(&root);
         let mut fb = crate::raster::Framebuf::new(640, 360);
         app.render(&mut fb, &mut assets);
@@ -61709,6 +61973,9 @@ mod tests {
         // outlives, the plateau the same flat sky sample keeps (6000 +
         // 1216 = 7216 < 11867).
         app.frame += 1216;
+        // THE CLOCK RIDES THE SHIFT (the old base+frame fold the pair
+        // moved together — the sky band the 7216 sample answers)
+        app.clock_total += 1216;
         app.render(&mut fb, &mut assets);
         let aged_band = diff_count(&bare, &fb.color, 2, y - 1, 200, 10);
         assert_eq!(
@@ -61716,6 +61983,7 @@ mod tests {
             "the aged line the fade never draws — the bare band returns"
         );
         app.frame -= 1216;
+        app.clock_total -= 1216;
         // THE FOCUSED INPUT (the ChatScreen's own layer — the band the
         // hidden HUD's frame still paints, the F1 law the Screen never
         // gates)
@@ -64603,7 +64871,7 @@ mod tests {
         // base + frame reads the server's day NOW (the first frame
         // renders the server's hour, never the client's dawn)
         assert_eq!(
-            (app.day_time_base as i64) + app.frame as i64,
+            app.day_time_now(),
             18_000,
             "the join's own clock lands the server's day"
         );
@@ -64616,7 +64884,7 @@ mod tests {
         drifted.day_tick = Some(18_100);
         app.live_view_updated(drifted, None, None, None);
         assert_eq!(
-            (app.day_time_base as i64) + app.frame as i64,
+            app.day_time_now(),
             18_100,
             "the refresh absorbs the drift"
         );
@@ -64626,7 +64894,7 @@ mod tests {
         let silent = air_net_world(2, 0);
         app.live_view_updated(silent, None, None, None);
         assert_eq!(
-            (app.day_time_base as i64) + app.frame as i64,
+            app.day_time_now(),
             18_100,
             "no opinion keeps the clock"
         );
@@ -65463,6 +65731,7 @@ mod tests {
         // clears — the hit voice speaks
         app.live_held = Some(spear);
         app.frame = 30;
+        app.clock_total = 30;
         app.live_kinetic_hit_events_updated(vec![arm.clone()]);
         if !sounds_loaded() {
             assert!(
@@ -65480,11 +65749,13 @@ mod tests {
         );
         // THE ECHO (frame 40): the 10-tick gap under the 20 — silent
         app.frame = 40;
+        app.clock_total = 40;
         let voiced = app.sounds.events.len();
         app.live_kinetic_hit_events_updated(vec![arm.clone()]);
         assert_eq!(app.sounds.events.len(), voiced, "the throttle's silence");
         // THE SECOND WINDOW (frame 51): the 21-tick gap clears — speaks
         app.frame = 51;
+        app.clock_total = 51;
         app.live_kinetic_hit_events_updated(vec![arm.clone()]);
         assert!(
             app.sounds.events.len() > voiced,
@@ -65496,6 +65767,7 @@ mod tests {
         // weapon gate)
         app.live_held = None;
         app.frame = 100;
+        app.clock_total = 100;
         let voiced = app.sounds.events.len();
         app.live_kinetic_hit_events_updated(vec![arm.clone()]);
         assert_eq!(app.sounds.events.len(), voiced, "the fist's silence");
@@ -65504,12 +65776,14 @@ mod tests {
         // order keeps)
         app.live_held = Some(spear);
         app.frame = 110;
+        app.clock_total = 110;
         app.live_kinetic_hit_events_updated(vec![arm.clone()]);
         assert_eq!(app.sounds.events.len(), voiced, "the eaten window");
         // THE WOOD TIER (frame 130): the factory's WOOD branch the row
         // names — `item.spear_wood.hit`
         app.live_held = Some(wooden);
         app.frame = 130;
+        app.clock_total = 130;
         app.live_kinetic_hit_events_updated(vec![arm.clone()]);
         assert!(
             app.sounds.events.iter().any(|e| e
@@ -80306,7 +80580,7 @@ cow_sound_variant: None,
         let day_tick = (0..24_000i64)
             .find(|t| crate::mob::is_bright_outside(*t))
             .expect("a day band the sky keeps");
-        app.day_time_base = day_tick as u64;
+        app.clock_total = day_tick as u64 + app.frame;
         // THE BEAT (the spawn_clock the 40th update the % SPAWN_CYCLE
         // arm — the beats the walk repeats, the cap the lane stops)
         for _ in 0..400 {
@@ -80367,7 +80641,7 @@ cow_sound_variant: None,
             crate::sky::sample(1_000).sun_angle.sin() < 0.0,
             "the old gate's sin the morning the monster arm rode"
         );
-        app.day_time_base = 1_000u64;
+        app.clock_total = 1_000 + app.frame;
         // THE BEAT (the day beat's own 400-update walk — the creature
         // arm the whole window the bright word keeps)
         for _ in 0..400 {
@@ -80817,7 +81091,7 @@ cow_sound_variant: None,
         let night_tick = (0..24_000i64)
             .find(|t| !crate::mob::is_bright_outside(*t))
             .expect("a night band the sky keeps");
-        app.day_time_base = night_tick as u64;
+        app.clock_total = night_tick as u64 + app.frame;
         for _ in 0..400 {
             app.update();
         }
@@ -80849,7 +81123,7 @@ cow_sound_variant: None,
         // THE TRACK'S OWN MIDNIGHT (the darken's plateau the gate's
         // stage 3 subtracts — 18_500 the skyDarken 11 the beat's
         // monster arm the bright-outside word keeps)
-        app.day_time_base = 18_500u64;
+        app.clock_total = 18_500 + app.frame;
         // the beats the gate's own texture absorbs (the midnight
         // surface the raw 4 the uniform's upper half admits — the
         // 60-beat band the spawn the vanilla texture lands)
@@ -84087,7 +84361,7 @@ cow_sound_variant: None,
         assert!(app.body.is_some(), "the offline body stands");
         // THE NIGHT GATE: the base lands deep night (the sky lane's own
         // celestial track — the sun below the horizon plane)
-        app.day_time_base = 18000u64.saturating_sub(app.frame);
+        app.clock_total = 18_000;
         let mut spawned_at = None;
         for t in 0..4800u64 {
             app.update();
@@ -90120,8 +90394,8 @@ cow_sound_variant: None,
         );
         // THE NOON RENDER: the day plateau's pair the seed already
         // wears — the SAME allocation the plateau's no-op keeps
-        app.day_time_base = 6_000;
         app.frame = 30;
+        app.clock_total = 6_000 + 30;
         let mut fb = crate::raster::Framebuf::new(64, 64);
         let mut assets = GuiAssets::open("assets-cache/jar");
         app.render_world_3d(&mut fb, &mut assets);
@@ -90136,7 +90410,9 @@ cow_sound_variant: None,
         assert_eq!(app.offline_world.as_ref().unwrap().day_tick, Some(6_030));
         // THE NIGHT RENDER: the worldnight tick's step the re-bake
         // answers — a fresh allocation, the moonlight pair banked
-        app.day_time_base = 14_010;
+        // (the frame's 30 the staged render keeps — 14_010 + 30 the
+        // old fold's total the owned clock banks directly)
+        app.clock_total = 14_040;
         let mut fb2 = crate::raster::Framebuf::new(64, 64);
         app.render_world_3d(&mut fb2, &mut assets);
         assert_eq!(app.day_bake, Some((31, [122, 122, 255])));
@@ -90194,8 +90470,8 @@ cow_sound_variant: None,
         let mut net = crate::world::World::new(1, 0);
         net.day_tick = Some(12_345); // the server's own Set Time word
         app.net_world = Some(net);
-        app.day_time_base = 14_010;
         app.frame = 30;
+        app.clock_total = 14_040;
         let mut fb = crate::raster::Framebuf::new(64, 64);
         let mut assets = GuiAssets::open("assets-cache/jar");
         app.render_world_3d(&mut fb, &mut assets);
