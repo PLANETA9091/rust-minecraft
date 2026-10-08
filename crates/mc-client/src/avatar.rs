@@ -8239,6 +8239,17 @@ pub struct WardenState {
     /// removal the window's own end the world serves, the clock the
     /// retired body never reads).
     pub dig_time: Option<f32>,
+    /// THE ATTACK'S OWN CLOCK (javap `Warden.handleEntityEvent` case
+    /// 4 — the `attackAnimationState.start(tickCount)` pc 12-20 the
+    /// melee-swing event arm banks): the elapsed TICKS since the
+    /// start (the start tick the `attack_start` field keeps, the
+    /// `tick_count - attack_start` the elapsed answers, the partial
+    /// the lerp adds — the `AnimationState.getTimeInMillis` the
+    /// millis fold keeps). The `None` the never-armed state keeps —
+    /// the swing the AnimationState stop call NEVER carries, the
+    /// stale start the definition's own rest tail the past-end walk
+    /// the same zeros the never-armed state speaks.
+    pub attack_time: Option<f32>,
 }
 
 /// The full warden model — the 26.2 `WardenModel.createBodyLayer`
@@ -9185,6 +9196,71 @@ const WARDEN_DIG_LEFT_LEG_POS: [WardenDigKeyframe; 8] = [
     WardenDigKeyframe { t: 4.083, v: [0.0, -15.5, -3.76], lin: false },
     WardenDigKeyframe { t: 4.292, v: [0.0, -28.0, -5.0], lin: true },
 ];
+
+/// THE WARDEN_ATTACK DEFINITION (javap `WardenAnimation` clinit pc
+/// 9801-10684, verbatim — the `withLength(0.33333f)` head the
+/// melee-swing window the AnimationState's own startTick wears, the
+/// FOUR bones the addAnimation chain names — body, head, right_arm,
+/// left_arm — each its ROTATION + POSITION pair the 4/4, 4/4, 4/4,
+/// 4/4 keyframe arrays bank (32 kfs total); EVERY keyframe the
+/// CATMULLROM interpolation wears — the plain `WardenKeyframe`
+/// record the ROAR/EMERGE channels share). THE TIMELINE the swing
+/// wears: the wind-up the -22.5° body dip + the arms' -120.36°
+/// grab pair bank (t=0.0417s — the swing's own 0.83-tick beat),
+/// the strike the +22.5° body lunge + the right arm's -90/-45
+/// smash + the left arm's -61.16/+42.86/+11.52 cross + the body's
+/// (0,-1,-2) drop bank (t=0.1667-0.2083s), the head's +22.5 dip →
+/// -30.17 recover + the (0,-2,-2) head drop the 0.25 beat rides,
+/// the 0.3333 the (0,0,0) rest the window's own end banks — the
+/// past-end walk the same zeros the stale start keeps.
+const WARDEN_ATTACK_BODY_ROT: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [-22.5, 0.0, 0.0] },
+    WardenKeyframe { t: 0.2083, v: [22.5, 0.0, 0.0] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ATTACK_BODY_POS: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.2083, v: [0.0, -1.0, -2.0] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ATTACK_HEAD_ROT: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [22.5, 0.0, 0.0] },
+    WardenKeyframe { t: 0.25, v: [-30.17493, 0.0, 0.0] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ATTACK_HEAD_POS: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.25, v: [0.0, -2.0, -2.0] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ATTACK_RIGHT_ARM_ROT: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [-120.36119, 40.78947, -20.94102] },
+    WardenKeyframe { t: 0.1667, v: [-90.0, -45.0, 0.0] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ATTACK_RIGHT_ARM_POS: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [4.0, 0.0, 5.0] },
+    WardenKeyframe { t: 0.1667, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ATTACK_LEFT_ARM_ROT: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [-120.36119, -40.78947, 20.94102] },
+    WardenKeyframe { t: 0.1667, v: [-61.1632, 42.85882, 11.52421] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
+const WARDEN_ATTACK_LEFT_ARM_POS: [WardenKeyframe; 4] = [
+    WardenKeyframe { t: 0.0, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.0417, v: [-4.0, 0.0, 5.0] },
+    WardenKeyframe { t: 0.1667, v: [0.0, 0.0, 0.0] },
+    WardenKeyframe { t: 0.3333, v: [0.0, 0.0, 0.0] },
+];
 /// (the definition's own `withLength(5.0f)` head — the 100-tick
 /// window the 20-tick second wears — the final LINEAR keyframes'
 /// own timestamps the settle speaks, the removal the window's own
@@ -9319,8 +9395,68 @@ fn warden_dig_deltas(state: &WardenState) -> WardenDigDeltas {
     }
 }
 
+/// THE ATTACK'S OWN DELTAS (the WARDEN_ATTACK definition the 8
+/// channels evaluate — the SAME Entry.apply walk the roar/sniff/
+/// emerge/dig lanes share, the additive offsets the `ModelPart
+/// .offsetRotation`/`offsetPos` walk speaks, the setupAnim's own
+/// order the ATTACK apply the sonicBoom/dig/emerge/roar/sniff
+/// applies PRECEDES — the FIRST keyframe lane the chain wears): the
+/// `None` the never-armed state keeps (the `ifStarted` gate the
+/// ALL-ZERO no-op wears — the standing warden the attack clock the
+/// None keeps), the `Some(ticks)` the `getTimeInMillis` *50 /1000
+/// the elapsed seconds answer — the past-end walk the rest tail
+/// the same zeros the swing's own end keeps (the AnimationState
+/// the stop call never carries, the stale start the no-op wears).
+struct WardenAttackDeltas {
+    body_rot: [f32; 3],
+    body_pos: [f32; 3],
+    head_rot: [f32; 3],
+    head_pos: [f32; 3],
+    right_arm_rot: [f32; 3],
+    right_arm_pos: [f32; 3],
+    left_arm_rot: [f32; 3],
+    left_arm_pos: [f32; 3],
+}
+
+fn warden_attack_deltas(state: &WardenState) -> WardenAttackDeltas {
+    let zero = [0.0_f32; 3];
+    let Some(attack_ticks) = state.attack_time else {
+        // the never-started state the apply no-op wears
+        return WardenAttackDeltas {
+            body_rot: zero,
+            body_pos: zero,
+            head_rot: zero,
+            head_pos: zero,
+            right_arm_rot: zero,
+            right_arm_pos: zero,
+            left_arm_rot: zero,
+            left_arm_pos: zero,
+        };
+    };
+    // THE ELAPSED SECONDS (the `(age - startTick) * 50` the millis
+    // fold keeps, the `/1000.0f` the seconds speak — the two-step
+    // the bytecode's own order wears)
+    let elapsed = (attack_ticks * 50.0) / 1000.0;
+    WardenAttackDeltas {
+        body_rot: warden_roar_channel(&WARDEN_ATTACK_BODY_ROT, elapsed, false),
+        body_pos: warden_roar_channel(&WARDEN_ATTACK_BODY_POS, elapsed, true),
+        head_rot: warden_roar_channel(&WARDEN_ATTACK_HEAD_ROT, elapsed, false),
+        head_pos: warden_roar_channel(&WARDEN_ATTACK_HEAD_POS, elapsed, true),
+        right_arm_rot: warden_roar_channel(&WARDEN_ATTACK_RIGHT_ARM_ROT, elapsed, false),
+        right_arm_pos: warden_roar_channel(&WARDEN_ATTACK_RIGHT_ARM_POS, elapsed, true),
+        left_arm_rot: warden_roar_channel(&WARDEN_ATTACK_LEFT_ARM_ROT, elapsed, false),
+        left_arm_pos: warden_roar_channel(&WARDEN_ATTACK_LEFT_ARM_POS, elapsed, true),
+    }
+}
+
 fn build_warden_parts(state: &WardenState) -> Part {
     let f = warden_folds(state);
+    // THE ATTACK'S OWN OFFSETS (the setupAnim's own order the ATTACK
+    // apply the sonicBoom/dig/emerge/roar/sniff applies PRECEDES —
+    // the FIRST keyframe lane the additive chain wears; the swing
+    // the body/head/arms the def names, the legs the attack never
+    // moves)
+    let a = warden_attack_deltas(state);
     // THE ROAR'S OWN OFFSETS (the keyframe deltas the folds' own
     // tail ADDS — the `offsetRotation`/`offsetPos` the vanilla walk
     // speaks, the setupAnim order the keyframe applies the LAST
@@ -9346,13 +9482,15 @@ fn build_warden_parts(state: &WardenState) -> Part {
     // texOffs(0,0) addBox(-9,-13,-4,18,21,11))
     let body_part = Part {
         pivot: [
-            0.0 + d.body_pos[0] + r.body_pos[0] + e.body_pos[0],
-            -21.0 + d.body_pos[1] + r.body_pos[1] + e.body_pos[1],
-            0.0 + d.body_pos[2] + r.body_pos[2] + e.body_pos[2],
+            0.0 + a.body_pos[0] + d.body_pos[0] + r.body_pos[0] + e.body_pos[0],
+            -21.0 + a.body_pos[1] + d.body_pos[1] + r.body_pos[1] + e.body_pos[1],
+            0.0 + a.body_pos[2] + d.body_pos[2] + r.body_pos[2] + e.body_pos[2],
         ],
-        x_rot: f.body_x + d.body_rot[0] + e.body_rot[0] + r.body_rot[0] + s.body_rot[0],
-        y_rot: d.body_rot[1] + e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
-        z_rot: f.body_z + d.body_rot[2] + e.body_rot[2] + r.body_rot[2] + s.body_rot[2],
+        x_rot: f.body_x + a.body_rot[0] + d.body_rot[0] + e.body_rot[0] + r.body_rot[0]
+            + s.body_rot[0],
+        y_rot: a.body_rot[1] + d.body_rot[1] + e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
+        z_rot: f.body_z + a.body_rot[2] + d.body_rot[2] + e.body_rot[2] + r.body_rot[2]
+            + s.body_rot[2],
         cubes: vec![Cube {
             tex: (0.0, 0.0),
             origin: [-9.0, -13.0, -4.0],
@@ -9365,13 +9503,16 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // (0,-13,0) — the tendrils its children ride)
             Part {
                 pivot: [
-                    0.0 + d.head_pos[0] + r.head_pos[0] + e.head_pos[0],
-                    -13.0 + d.head_pos[1] + r.head_pos[1] + e.head_pos[1],
-                    0.0 + d.head_pos[2] + r.head_pos[2] + e.head_pos[2],
+                    0.0 + a.head_pos[0] + d.head_pos[0] + r.head_pos[0] + e.head_pos[0],
+                    -13.0 + a.head_pos[1] + d.head_pos[1] + r.head_pos[1] + e.head_pos[1],
+                    0.0 + a.head_pos[2] + d.head_pos[2] + r.head_pos[2] + e.head_pos[2],
                 ],
-                x_rot: f.head_x + d.head_rot[0] + e.head_rot[0] + r.head_rot[0] + s.head_rot[0],
-                y_rot: f.head_y + d.head_rot[1] + e.head_rot[1] + r.head_rot[1] + s.head_rot[1],
-                z_rot: f.head_z + d.head_rot[2] + e.head_rot[2] + r.head_rot[2] + s.head_rot[2],
+                x_rot: f.head_x + a.head_rot[0] + d.head_rot[0] + e.head_rot[0]
+                    + r.head_rot[0] + s.head_rot[0],
+                y_rot: f.head_y + a.head_rot[1] + d.head_rot[1] + e.head_rot[1]
+                    + r.head_rot[1] + s.head_rot[1],
+                z_rot: f.head_z + a.head_rot[2] + d.head_rot[2] + e.head_rot[2]
+                    + r.head_rot[2] + s.head_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 32.0),
                     origin: [-8.0, -16.0, -5.0],
@@ -9451,16 +9592,19 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // at (-13,-13,1))
             Part {
                 pivot: [
-                    -13.0 + d.right_arm_pos[0] + r.right_arm_pos[0] + e.right_arm_pos[0],
-                    -13.0 + d.right_arm_pos[1] + r.right_arm_pos[1] + e.right_arm_pos[1],
-                    1.0 + d.right_arm_pos[2] + r.right_arm_pos[2] + e.right_arm_pos[2],
+                    -13.0 + a.right_arm_pos[0] + d.right_arm_pos[0] + r.right_arm_pos[0]
+                        + e.right_arm_pos[0],
+                    -13.0 + a.right_arm_pos[1] + d.right_arm_pos[1] + r.right_arm_pos[1]
+                        + e.right_arm_pos[1],
+                    1.0 + a.right_arm_pos[2] + d.right_arm_pos[2] + r.right_arm_pos[2]
+                        + e.right_arm_pos[2],
                 ],
-                x_rot: f.right_arm_x + d.right_arm_rot[0] + e.right_arm_rot[0]
-                    + r.right_arm_rot[0] + s.right_arm_rot[0],
-                y_rot: d.right_arm_rot[1] + e.right_arm_rot[1] + r.right_arm_rot[1]
-                    + s.right_arm_rot[1],
-                z_rot: d.right_arm_rot[2] + e.right_arm_rot[2] + r.right_arm_rot[2]
-                    + s.right_arm_rot[2],
+                x_rot: f.right_arm_x + a.right_arm_rot[0] + d.right_arm_rot[0]
+                    + e.right_arm_rot[0] + r.right_arm_rot[0] + s.right_arm_rot[0],
+                y_rot: a.right_arm_rot[1] + d.right_arm_rot[1] + e.right_arm_rot[1]
+                    + r.right_arm_rot[1] + s.right_arm_rot[1],
+                z_rot: a.right_arm_rot[2] + d.right_arm_rot[2] + e.right_arm_rot[2]
+                    + r.right_arm_rot[2] + s.right_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (44.0, 50.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -9474,16 +9618,19 @@ fn build_warden_parts(state: &WardenState) -> Part {
             // (13,-13,1))
             Part {
                 pivot: [
-                    13.0 + d.left_arm_pos[0] + r.left_arm_pos[0] + e.left_arm_pos[0],
-                    -13.0 + d.left_arm_pos[1] + r.left_arm_pos[1] + e.left_arm_pos[1],
-                    1.0 + d.left_arm_pos[2] + r.left_arm_pos[2] + e.left_arm_pos[2],
+                    13.0 + a.left_arm_pos[0] + d.left_arm_pos[0] + r.left_arm_pos[0]
+                        + e.left_arm_pos[0],
+                    -13.0 + a.left_arm_pos[1] + d.left_arm_pos[1] + r.left_arm_pos[1]
+                        + e.left_arm_pos[1],
+                    1.0 + a.left_arm_pos[2] + d.left_arm_pos[2] + r.left_arm_pos[2]
+                        + e.left_arm_pos[2],
                 ],
-                x_rot: f.left_arm_x + d.left_arm_rot[0] + e.left_arm_rot[0]
-                    + r.left_arm_rot[0] + s.left_arm_rot[0],
-                y_rot: d.left_arm_rot[1] + e.left_arm_rot[1] + r.left_arm_rot[1]
-                    + s.left_arm_rot[1],
-                z_rot: d.left_arm_rot[2] + e.left_arm_rot[2] + r.left_arm_rot[2]
-                    + s.left_arm_rot[2],
+                x_rot: f.left_arm_x + a.left_arm_rot[0] + d.left_arm_rot[0]
+                    + e.left_arm_rot[0] + r.left_arm_rot[0] + s.left_arm_rot[0],
+                y_rot: a.left_arm_rot[1] + d.left_arm_rot[1] + e.left_arm_rot[1]
+                    + r.left_arm_rot[1] + s.left_arm_rot[1],
+                z_rot: a.left_arm_rot[2] + d.left_arm_rot[2] + e.left_arm_rot[2]
+                    + r.left_arm_rot[2] + s.left_arm_rot[2],
                 cubes: vec![Cube {
                     tex: (0.0, 58.0),
                     origin: [-4.0, 0.0, -4.0],
@@ -9676,6 +9823,11 @@ pub fn warden_layer_quads(
     // law wears; the dive the body's own 147° pitch the sink's
     // (0,-40,-8) grave serves)
     let d = warden_dig_deltas(state);
+    // THE ATTACK'S OWN OFFSETS (the layer models' own setupAnim the
+    // SAME attack-first order wears — the ATTACK apply the
+    // sonicBoom/dig/emerge/roar/sniff applies PRECEDES, the
+    // additive walk the same law keeps here too)
+    let a = warden_attack_deltas(state);
     // the retain law's per-part verdicts (the named sets the lambdas
     // bank: biolum {head, arms, legs}, spots {body, head, arms, legs},
     // tendrils {the tendril pair}, heart {body})
@@ -9692,13 +9844,15 @@ pub fn warden_layer_quads(
     // rides — the head/limb children the merge law re-parents)
     let body_part = Part {
         pivot: [
-            0.0 + d.body_pos[0] + r.body_pos[0] + e.body_pos[0],
-            -21.0 + d.body_pos[1] + r.body_pos[1] + e.body_pos[1],
-            0.0 + d.body_pos[2] + r.body_pos[2] + e.body_pos[2],
+            0.0 + a.body_pos[0] + d.body_pos[0] + r.body_pos[0] + e.body_pos[0],
+            -21.0 + a.body_pos[1] + d.body_pos[1] + r.body_pos[1] + e.body_pos[1],
+            0.0 + a.body_pos[2] + d.body_pos[2] + r.body_pos[2] + e.body_pos[2],
         ],
-        x_rot: f.body_x + d.body_rot[0] + e.body_rot[0] + r.body_rot[0] + s.body_rot[0],
-        y_rot: d.body_rot[1] + e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
-        z_rot: f.body_z + d.body_rot[2] + e.body_rot[2] + r.body_rot[2] + s.body_rot[2],
+        x_rot: f.body_x + a.body_rot[0] + d.body_rot[0] + e.body_rot[0] + r.body_rot[0]
+            + s.body_rot[0],
+        y_rot: a.body_rot[1] + d.body_rot[1] + e.body_rot[1] + r.body_rot[1] + s.body_rot[1],
+        z_rot: f.body_z + a.body_rot[2] + d.body_rot[2] + e.body_rot[2] + r.body_rot[2]
+            + s.body_rot[2],
         cubes: if body_kept {
             vec![Cube {
                 tex: (0.0, 0.0),
@@ -9716,13 +9870,16 @@ pub fn warden_layer_quads(
             // re-parent law keeps riding)
             Part {
                 pivot: [
-                    0.0 + d.head_pos[0] + r.head_pos[0] + e.head_pos[0],
-                    -13.0 + d.head_pos[1] + r.head_pos[1] + e.head_pos[1],
-                    0.0 + d.head_pos[2] + r.head_pos[2] + e.head_pos[2],
+                    0.0 + a.head_pos[0] + d.head_pos[0] + r.head_pos[0] + e.head_pos[0],
+                    -13.0 + a.head_pos[1] + d.head_pos[1] + r.head_pos[1] + e.head_pos[1],
+                    0.0 + a.head_pos[2] + d.head_pos[2] + r.head_pos[2] + e.head_pos[2],
                 ],
-                x_rot: f.head_x + d.head_rot[0] + e.head_rot[0] + r.head_rot[0] + s.head_rot[0],
-                y_rot: f.head_y + d.head_rot[1] + e.head_rot[1] + r.head_rot[1] + s.head_rot[1],
-                z_rot: f.head_z + d.head_rot[2] + e.head_rot[2] + r.head_rot[2] + s.head_rot[2],
+                x_rot: f.head_x + a.head_rot[0] + d.head_rot[0] + e.head_rot[0]
+                    + r.head_rot[0] + s.head_rot[0],
+                y_rot: f.head_y + a.head_rot[1] + d.head_rot[1] + e.head_rot[1]
+                    + r.head_rot[1] + s.head_rot[1],
+                z_rot: f.head_z + a.head_rot[2] + d.head_rot[2] + e.head_rot[2]
+                    + r.head_rot[2] + s.head_rot[2],
                 cubes: if head_kept {
                     vec![Cube {
                         tex: (0.0, 32.0),
@@ -9794,16 +9951,19 @@ pub fn warden_layer_quads(
             // THE ARMS
             Part {
                 pivot: [
-                    -13.0 + d.right_arm_pos[0] + r.right_arm_pos[0] + e.right_arm_pos[0],
-                    -13.0 + d.right_arm_pos[1] + r.right_arm_pos[1] + e.right_arm_pos[1],
-                    1.0 + d.right_arm_pos[2] + r.right_arm_pos[2] + e.right_arm_pos[2],
+                    -13.0 + a.right_arm_pos[0] + d.right_arm_pos[0] + r.right_arm_pos[0]
+                        + e.right_arm_pos[0],
+                    -13.0 + a.right_arm_pos[1] + d.right_arm_pos[1] + r.right_arm_pos[1]
+                        + e.right_arm_pos[1],
+                    1.0 + a.right_arm_pos[2] + d.right_arm_pos[2] + r.right_arm_pos[2]
+                        + e.right_arm_pos[2],
                 ],
-                x_rot: f.right_arm_x + d.right_arm_rot[0] + e.right_arm_rot[0]
-                    + r.right_arm_rot[0] + s.right_arm_rot[0],
-                y_rot: d.right_arm_rot[1] + e.right_arm_rot[1] + r.right_arm_rot[1]
-                    + s.right_arm_rot[1],
-                z_rot: d.right_arm_rot[2] + e.right_arm_rot[2] + r.right_arm_rot[2]
-                    + s.right_arm_rot[2],
+                x_rot: f.right_arm_x + a.right_arm_rot[0] + d.right_arm_rot[0]
+                    + e.right_arm_rot[0] + r.right_arm_rot[0] + s.right_arm_rot[0],
+                y_rot: a.right_arm_rot[1] + d.right_arm_rot[1] + e.right_arm_rot[1]
+                    + r.right_arm_rot[1] + s.right_arm_rot[1],
+                z_rot: a.right_arm_rot[2] + d.right_arm_rot[2] + e.right_arm_rot[2]
+                    + r.right_arm_rot[2] + s.right_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (44.0, 50.0),
@@ -9819,16 +9979,19 @@ pub fn warden_layer_quads(
             },
             Part {
                 pivot: [
-                    13.0 + d.left_arm_pos[0] + r.left_arm_pos[0] + e.left_arm_pos[0],
-                    -13.0 + d.left_arm_pos[1] + r.left_arm_pos[1] + e.left_arm_pos[1],
-                    1.0 + d.left_arm_pos[2] + r.left_arm_pos[2] + e.left_arm_pos[2],
+                    13.0 + a.left_arm_pos[0] + d.left_arm_pos[0] + r.left_arm_pos[0]
+                        + e.left_arm_pos[0],
+                    -13.0 + a.left_arm_pos[1] + d.left_arm_pos[1] + r.left_arm_pos[1]
+                        + e.left_arm_pos[1],
+                    1.0 + a.left_arm_pos[2] + d.left_arm_pos[2] + r.left_arm_pos[2]
+                        + e.left_arm_pos[2],
                 ],
-                x_rot: f.left_arm_x + d.left_arm_rot[0] + e.left_arm_rot[0]
-                    + r.left_arm_rot[0] + s.left_arm_rot[0],
-                y_rot: d.left_arm_rot[1] + e.left_arm_rot[1] + r.left_arm_rot[1]
-                    + s.left_arm_rot[1],
-                z_rot: d.left_arm_rot[2] + e.left_arm_rot[2] + r.left_arm_rot[2]
-                    + s.left_arm_rot[2],
+                x_rot: f.left_arm_x + a.left_arm_rot[0] + d.left_arm_rot[0]
+                    + e.left_arm_rot[0] + r.left_arm_rot[0] + s.left_arm_rot[0],
+                y_rot: a.left_arm_rot[1] + d.left_arm_rot[1] + e.left_arm_rot[1]
+                    + r.left_arm_rot[1] + s.left_arm_rot[1],
+                z_rot: a.left_arm_rot[2] + d.left_arm_rot[2] + e.left_arm_rot[2]
+                    + r.left_arm_rot[2] + s.left_arm_rot[2],
                 cubes: if limbs_kept {
                     vec![Cube {
                         tex: (0.0, 58.0),
@@ -15571,6 +15734,7 @@ mod tests {
             sniff_time: None,
             emerge_time: None,
             dig_time: None,
+            attack_time: None,
         };
         let feet = Vec3::new(10.0, 32.0, -4.0);
         let quads = model.quads(&state, feet, 0.0, 0.0);
@@ -16817,6 +16981,270 @@ mod tests {
         assert!(moved > 0.5, "the dig the layer quads move: {moved}");
     }
 
+    /// THE WARDEN_ATTACK DEFINITION (javap `WardenAnimation` clinit
+    /// pc 9801-10684 — the `withLength(0.33333f)` head, the FOUR
+    /// bones the addAnimation chain names, each its ROTATION +
+    /// POSITION pair the 4/4 arrays bank, EVERY keyframe the
+    /// CATMULLROM interpolation wears — the plain `WardenKeyframe`
+    /// record the ROAR/EMERGE channels share): the counts the
+    /// anewarray sizes keep, the spot constants the ldc rows bank,
+    /// the timestamps the ascending window the melee-swing beats
+    /// wear — the wind-up 0.0417s, the strikes 0.1667-0.25s, the
+    /// rest 0.3333s.
+    #[test]
+    fn the_attack_definition_the_jar_banks() {
+        // THE CHANNEL COUNTS (the anewarray sizes the bytecode
+        // speaks — the FOUR bones the rot+pos pairs bank)
+        assert_eq!(WARDEN_ATTACK_BODY_ROT.len(), 4, "the body's rot bank");
+        assert_eq!(WARDEN_ATTACK_BODY_POS.len(), 4, "the body's pos bank");
+        assert_eq!(WARDEN_ATTACK_HEAD_ROT.len(), 4, "the head's rot bank");
+        assert_eq!(WARDEN_ATTACK_HEAD_POS.len(), 4, "the head's pos bank");
+        assert_eq!(WARDEN_ATTACK_RIGHT_ARM_ROT.len(), 4, "the right arm's rot bank");
+        assert_eq!(WARDEN_ATTACK_RIGHT_ARM_POS.len(), 4, "the right arm's pos bank");
+        assert_eq!(WARDEN_ATTACK_LEFT_ARM_ROT.len(), 4, "the left arm's rot bank");
+        assert_eq!(WARDEN_ATTACK_LEFT_ARM_POS.len(), 4, "the left arm's pos bank");
+        // THE SPOT CONSTANTS (the ldc float rows the clinit wears)
+        assert_eq!(
+            WARDEN_ATTACK_BODY_ROT[1].v,
+            [-22.5, 0.0, 0.0],
+            "the 0.0417s wind-up the body dip wears"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_BODY_ROT[2].v,
+            [22.5, 0.0, 0.0],
+            "the 0.2083s strike the body lunge keeps"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_BODY_POS[2].v,
+            [0.0, -1.0, -2.0],
+            "the strike drop the body pos wears"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_HEAD_ROT[1].v,
+            [22.5, 0.0, 0.0],
+            "the head's wind-up dip the anti-phase wears"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_HEAD_ROT[2].v,
+            [-30.17493, 0.0, 0.0],
+            "the head's 0.25s recover keeps"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_HEAD_POS[2].v,
+            [0.0, -2.0, -2.0],
+            "the head drop the 0.25s beat wears"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_RIGHT_ARM_ROT[1].v,
+            [-120.36119, 40.78947, -20.94102],
+            "the right arm's wind-up grab trio"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_RIGHT_ARM_ROT[2].v,
+            [-90.0, -45.0, 0.0],
+            "the right arm's 0.1667s smash keeps"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_RIGHT_ARM_POS[1].v,
+            [4.0, 0.0, 5.0],
+            "the right arm's 0.0417s reach wears"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_LEFT_ARM_ROT[1].v,
+            [-120.36119, -40.78947, 20.94102],
+            "the left arm's wind-up grab the mirror trio keeps"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_LEFT_ARM_ROT[2].v,
+            [-61.1632, 42.85882, 11.52421],
+            "the left arm's 0.1667s cross wears"
+        );
+        assert_eq!(
+            WARDEN_ATTACK_LEFT_ARM_POS[1].v,
+            [-4.0, 0.0, 5.0],
+            "the left arm's 0.0417s reach the mirror keeps"
+        );
+        // THE REST TAILS (the 0.3333 final keyframes the (0,0,0)
+        // zeros the window's own end banks — ALL EIGHT channels the
+        // same rest wears)
+        for (name, ch) in [
+            ("body rot", &WARDEN_ATTACK_BODY_ROT[..]),
+            ("body pos", &WARDEN_ATTACK_BODY_POS[..]),
+            ("head rot", &WARDEN_ATTACK_HEAD_ROT[..]),
+            ("head pos", &WARDEN_ATTACK_HEAD_POS[..]),
+            ("right arm rot", &WARDEN_ATTACK_RIGHT_ARM_ROT[..]),
+            ("right arm pos", &WARDEN_ATTACK_RIGHT_ARM_POS[..]),
+            ("left arm rot", &WARDEN_ATTACK_LEFT_ARM_ROT[..]),
+            ("left arm pos", &WARDEN_ATTACK_LEFT_ARM_POS[..]),
+        ] {
+            assert_eq!(
+                ch[3].v,
+                [0.0, 0.0, 0.0],
+                "the {name} rest the window's own end banks"
+            );
+            assert_eq!(ch[3].t, 0.3333, "the {name} tail the 0.3333s window keeps");
+            // THE ASCENDING TIMESTAMPS (the builder's own order the
+            // binary-search walk consults)
+            assert!(ch[0].t < ch[1].t && ch[1].t < ch[2].t && ch[2].t < ch[3].t,
+                "the {name} timestamps the ascending order keeps");
+        }
+        // THE WIND-UP/STRIKE BEATS (the shared keyframe timestamps
+        // the 0.0417/0.1667/0.2083/0.25 rows wear)
+        assert_eq!(WARDEN_ATTACK_BODY_ROT[1].t, 0.0417, "the wind-up beat");
+        assert_eq!(WARDEN_ATTACK_RIGHT_ARM_ROT[2].t, 0.1667, "the right smash beat");
+        assert_eq!(WARDEN_ATTACK_BODY_ROT[2].t, 0.2083, "the body strike beat");
+        assert_eq!(WARDEN_ATTACK_HEAD_ROT[2].t, 0.25, "the head recover beat");
+    }
+
+    /// THE ATTACK'S OWN DELTAS (the WARDEN_ATTACK definition the 8
+    /// channels evaluate — the additive offsets the
+    /// build_warden_parts + the layer walk ADDS, the ATTACK the
+    /// setupAnim's own FIRST apply wears): the None no-op, the
+    /// wind-up/strike window the catmullrom walk answers, the
+    /// past-end rest the zeros the stale start keeps, the additivity
+    /// the walker's own fold the sum wears, the legs the attack
+    /// never moves, the biolum layer the same deltas speaks.
+    #[test]
+    fn the_attack_deltas_the_pose_window_banks() {
+        let deg = 0.017_453_292_f32;
+        // THE NO-OP (the never-armed None — the parts the rest pose
+        // keeps: the +0.0 sums the folds' own numbers exactly wear)
+        let calm = build_warden_parts(&WardenState::rest());
+        let started = build_warden_parts(&WardenState {
+            attack_time: Some(0.0),
+            ..WardenState::rest()
+        });
+        let calm_body = &calm.children[0];
+        let start_body = &started.children[0];
+        assert_eq!(
+            start_body.pivot[1], calm_body.pivot[1],
+            "the elapsed-0 the rest start the same pivot wears"
+        );
+        // THE WIND-UP (the elapsed 0.0417s = 0.834 ticks the
+        // catmullrom's own overshoot wears — the segment the
+        // [0.0, 0.0417] window banks, the quartet's f32 order the
+        // vanilla Entry.apply walk keeps; the elapsed the *50/1000
+        // two-step derives)
+        let elapsed = 0.834_f32;
+        let secs = (elapsed * 50.0) / 1000.0;
+        let d = (secs / WARDEN_ATTACK_BODY_ROT[1].t).clamp(0.0, 1.0);
+        let want_x = mth_catmullrom(d, 0.0, 0.0, -22.5 * deg, 22.5 * deg);
+        let swung = build_warden_parts(&WardenState {
+            attack_time: Some(elapsed),
+            ..WardenState::rest()
+        });
+        let body = &swung.children[0];
+        // the idle sway's own +0.025 the age-0 clock wears (the same
+        // law the dig deltas' test keeps)
+        assert!(
+            (body.x_rot - 0.025 - want_x).abs() < 1e-5,
+            "the wind-up the body dip the catmullrom wears: {:?} vs {want_x:?}",
+            body.x_rot - 0.025
+        );
+        // THE PAST-END REST (the elapsed 10 ticks the 0.3333s tail
+        // outlasts — the deltas the (0,0,0) zeros the stale start
+        // keeps, the pivot the folds' own numbers wear)
+        let stale = build_warden_parts(&WardenState {
+            attack_time: Some(10.0),
+            ..WardenState::rest()
+        });
+        let calm_parts = build_warden_parts(&WardenState::rest());
+        assert_eq!(
+            stale.children[0].pivot,
+            calm_parts.children[0].pivot,
+            "the past-end rest the stale start the zeros keeps"
+        );
+        // THE ADDITIVITY (the attacking WALKER — the deltas the walk
+        // folds' own tail ADDS, the strike's own xRot the exact sum
+        // the floats keep)
+        let walker = WardenState {
+            walk_pos: 1.0,
+            walk_speed: 0.5,
+            ..WardenState::rest()
+        };
+        let striking_walker = WardenState {
+            attack_time: Some(elapsed),
+            ..walker.clone()
+        };
+        let plain = build_warden_parts(&walker);
+        let struck = build_warden_parts(&striking_walker);
+        let fold = plain.children[0].x_rot;
+        assert!(
+            (struck.children[0].x_rot - (fold + want_x)).abs() < 1e-5,
+            "the walker's own fold the attack deltas the sum wears"
+        );
+        // THE RIGHT ARM'S WIND-UP GRAB (the elapsed-0.834 the
+        // [0.0, 0.0417] segment the trio's own catmullrom walk
+        // answers — the x component the -120.36° bank wears)
+        let want_arm_x = mth_catmullrom(d, 0.0, 0.0, -120.36119 * deg, -90.0 * deg);
+        let arm = &struck.children[0].children[3];
+        let arm_fold = &plain.children[0].children[3];
+        assert!(
+            (arm.x_rot - (arm_fold.x_rot + want_arm_x)).abs() < 1e-5,
+            "the wind-up the right arm's grab the sum wears: {:?} vs {want_arm_x:?}",
+            arm.x_rot - arm_fold.x_rot
+        );
+        // THE ARM POS DELTA (the [4, 0, 5] reach the pivot ADDS —
+        // the elapsed 0.834 the segment's own d wears)
+        let want_pos = [
+            mth_catmullrom(d, 0.0, 0.0, 4.0, 0.0),
+            mth_catmullrom(d, 0.0, 0.0, 0.0, 0.0),
+            mth_catmullrom(d, 0.0, 0.0, 5.0, 0.0),
+        ];
+        for i in 0..3 {
+            let got = arm.pivot[i] - arm_fold.pivot[i];
+            assert!(
+                (got - want_pos[i]).abs() < 1e-5,
+                "the arm pos delta the [{i}] the reach wears: {got:?} vs {:?}",
+                want_pos[i]
+            );
+        }
+        // THE LEGS THE ATTACK NEVER MOVES (the def the FOUR bones
+        // names — the legs the walker's own pivots the exact words
+        // keep)
+        assert_eq!(
+            struck.children[1].pivot,
+            plain.children[1].pivot,
+            "the right leg the attack never moves"
+        );
+        assert_eq!(
+            struck.children[2].pivot,
+            plain.children[2].pivot,
+            "the left leg the attack never moves"
+        );
+        // THE BIOLUM LAYER THE SAME DELTAS (the layer models' own
+        // setupAnim the SAME walk serves — the attack the layer
+        // quads move)
+        let feet = crate::math::Vec3::new(10.5, 32.0, 3.5);
+        let struck_layer = warden_layer_quads(
+            &striking_walker,
+            feet,
+            0.0,
+            0.0,
+            WardenLayer::Bioluminescent,
+        );
+        let plain_layer = warden_layer_quads(
+            &walker,
+            feet,
+            0.0,
+            0.0,
+            WardenLayer::Bioluminescent,
+        );
+        assert_eq!(plain_layer.len(), struck_layer.len(), "the layer the mesh keeps");
+        let moved: f32 = struck_layer
+            .iter()
+            .zip(plain_layer.iter())
+            .map(|(s, r)| {
+                s.pts
+                    .iter()
+                    .zip(r.pts.iter())
+                    .map(|(a, b)| (a[0] - b[0]).abs() + (a[1] - b[1]).abs() + (a[2] - b[2]).abs())
+                    .sum::<f32>()
+            })
+            .sum();
+        assert!(moved > 0.5, "the attack the layer quads move: {moved}");
+    }
+
     impl WardenState {
         /// THE STANDING REST (the zero pair the fresh warden's
         /// stillness wears — the look pair zero, the walk pair zero,
@@ -16834,6 +17262,7 @@ mod tests {
                 sniff_time: None,
                 emerge_time: None,
                 dig_time: None,
+                attack_time: None,
             }
         }
     }
@@ -16863,6 +17292,7 @@ mod tests {
             sniff_time: None,
             emerge_time: None,
             dig_time: None,
+            attack_time: None,
         };
         let feet = Vec3::new(3.0, 20.0, -7.0);
         // THE HEART (Set.of("body")): the body cube's six faces the
@@ -16952,6 +17382,7 @@ mod tests {
             sniff_time: None,
             emerge_time: None,
             dig_time: None,
+            attack_time: None,
         };
         // THE CONST (the always-on glow)
         assert_eq!(

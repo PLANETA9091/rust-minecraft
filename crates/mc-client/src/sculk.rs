@@ -1675,6 +1675,45 @@ pub struct WardenDigLaneOut {
     pub discarded: bool,
 }
 
+/// `SoundEvents.WARDEN_ATTACK_IMPACT` — the registry name the
+/// SoundEvents clinit's ldc row keeps (`entity.warden.attack_impact`
+/// — the doHurtTarget's own `playSound` walk the voice serves).
+pub const WARDEN_ATTACK_IMPACT_SOUND: &str = "entity.warden.attack_impact";
+
+/// `Warden.doHurtTarget` pc 7-17 — the `ldc_w 10.0f` the playSound's
+/// volume arg wears: the FIXED volume the explicit-arg walk speaks
+/// (the getSoundVolume 4.0 the impact NEVER reads — the walk's own
+/// 10.0 the swing answers). THE PITCH the `getVoicePitch()` arg
+/// carries — the TWO draws the entity's own stream spends (the same
+/// law the heartbeat/listening voices wear), the fixed-pair lanes
+/// the fconst_1 keeps this lane NEVER wears.
+pub const WARDEN_ATTACK_IMPACT_VOLUME: f32 = 10.0;
+
+/// `Warden.doHurtTarget` pc 20-23 — the `bipush 40` the
+/// `SonicBoom.setCooldown(this, 40)` call wears: the SONIC_BOOM_COOLDOWN
+/// memory the melee swing banks (javap `SonicBoom.setCooldown` pc 0-15 —
+/// the `setMemoryWithExpiry(SONIC_BOOM_COOLDOWN, UNIT, 40l)` the brain
+/// expiry walk serves): the melee hit the boom lane the 40-tick window
+/// refuses — the FIGHT round the SonicBoom behavior the same memory
+/// consults.
+pub const WARDEN_ATTACK_SONIC_COOLDOWN_TICKS: i32 = 40;
+
+/// THE MELEE SWING'S OWN VOICE (javap `Warden.doHurtTarget` pc 7-17 —
+/// the `playSound(WARDEN_ATTACK_IMPACT, 10.0f, getVoicePitch())` the
+/// landing swing speaks): the volume the FIXED 10.0 the ldc_w wears,
+/// the pitch the TWO draws the entity's own stream spends (the
+/// getVoicePitch law the other voice lanes share).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenAttackImpact {
+    /// the registry name the SoundEvents row keeps
+    /// (`entity.warden.attack_impact`)
+    pub word: &'static str,
+    /// the 10.0f the ldc_w wears
+    pub volume: f32,
+    /// the getVoicePitch() the two-draw law speaks
+    pub pitch: f32,
+}
+
 /// THE EMERGE'S OWN VOICE (the Emerging.start's own tail the pair
 /// speaks — the FIXED volume/pitch the explicit-arg walk carries;
 /// the AGITATED voice the finalize's own arm banks the same trio
@@ -2335,6 +2374,23 @@ pub struct WardenMob {
     /// water/lava start's immediate stop the same discard wears; the
     /// caller's retain walk the retired body drops)
     pub discarded: bool,
+    /// THE ATTACK ANIMATION'S OWN START (javap `Warden
+    /// .handleEntityEvent` case 4 — the `attackAnimationState
+    /// .start(tickCount)` the melee-swing event arm banks): the start
+    /// TICK the AnimationState stores (the `getTimeAtTick(age) = age
+    /// - startTick` the render's elapsed answers, the definition's
+    /// own 0.33333s the past-end walk the rest zeros wears — the
+    /// swing the stop call the AnimationState never carries, the
+    /// stale start the past-end pose the no-op keeps). The fresh
+    /// None the JVM init keeps.
+    pub attack_start: Option<i32>,
+    /// THE SONIC_BOOM_COOLDOWN'S OWN MEMORY (javap
+    /// `SonicBoom.setCooldown` pc 0-15 — the `setMemoryWithExpiry
+    /// (SONIC_BOOM_COOLDOWN, UNIT, 40l)` the doHurtTarget's own walk
+    /// banks, the Brain expiry walk the tick drains; the fresh zero
+    /// the JVM init keeps — the FIGHT round the SonicBoom behavior
+    /// the same memory consults)
+    pub sonic_boom_cooldown: i32,
 }
 
 impl WardenMob {
@@ -2390,6 +2446,8 @@ impl WardenMob {
             emerging: false,
             emerge_ticks: 0,
             dig_cooldown: 0,
+            attack_start: None,
+            sonic_boom_cooldown: 0,
         }
     }
 
@@ -3113,6 +3171,62 @@ impl WardenMob {
         out
     }
 
+    /// THE MELEE SWING'S OWN EVENT (javap `Warden.handleEntityEvent`
+    /// case 4 — the `iload_1 / iconst_4 / if_icmpne` gate the event
+    /// byte keeps, the arm the pair serves): the `roarAnimationState
+    /// .stop()` pc 5-11 the ROAR ANIMATION retires (the pose flag the
+    /// house's roar_time gate keeps — the animation the stop speaks,
+    /// the ROAR BEHAVIOR's own window the roar_target lane drains),
+    /// the `attackAnimationState.start(tickCount)` pc 12-20 the start
+    /// tick banks (the elapsed the `age - startTick` walk the render
+    /// derives, the definition's own rest tail the past-end walk
+    /// speaks).
+    pub fn handle_entity_event_4(&mut self) {
+        // pc 5-11: the roar animation stops — the pose flag the
+        // clear serves (the roar behavior's own window the
+        // roar_target lane keeps draining)
+        self.roaring = false;
+        // pc 12-20: the attack animation starts — the start tick the
+        // state banks
+        self.attack_start = Some(self.tick_count);
+    }
+
+    /// `Warden.doHurtTarget(ServerLevel, Entity)` (javap pc 0-32,
+    /// verbatim): the `broadcastEntityEvent(this, 4)` pc 0-5 the
+    /// melee-swing event serves (the client arm the
+    /// handle_entity_event_4 walk banks — the fused singleplayer
+    /// frame the same walk the caller's pass serves), the
+    /// `playSound(WARDEN_ATTACK_IMPACT, 10.0f, getVoicePitch())`
+    /// pc 6-19 the landing swing speaks (the volume the FIXED 10.0
+    /// the ldc_w wears, the pitch the TWO draws the entity's own
+    /// stream spends), the `SonicBoom.setCooldown(this, 40)` pc 20-23
+    /// the SONIC_BOOM_COOLDOWN memory banks (the 40l expiry the tick
+    /// drains), the super `Monster.doHurtTarget` tail pc 26-29 the
+    /// actual damage the FIGHT round wires (the target the caller's
+    /// reach consults — the swing the caller's own verdict arms).
+    /// THE VOICE the landing swing banks — the out the play lane
+    /// consumes.
+    #[cfg_attr(not(test), expect(dead_code))] // the FIGHT lane the melee round wires
+    pub fn do_hurt_target(&mut self) -> Option<WardenAttackImpact> {
+        // pc 0-5: the event-4 broadcast — the client arm the walk
+        // serves (the roar animation stops, the attack starts)
+        self.handle_entity_event_4();
+        // pc 6-19: the impact voice — the FIXED volume the ldc_w
+        // wears, the pitch the two-draw law spends
+        let pitch = self.voice_pitch();
+        let voice = WardenAttackImpact {
+            word: WARDEN_ATTACK_IMPACT_SOUND,
+            volume: WARDEN_ATTACK_IMPACT_VOLUME,
+            pitch,
+        };
+        // pc 20-23: the SONIC_BOOM_COOLDOWN memory — the 40l expiry
+        // the melee swing banks
+        self.sonic_boom_cooldown = WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
+        // pc 26-29: the super tail — the actual damage the FIGHT
+        // round wires
+        Some(voice)
+    }
+
     /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
     /// mob.rs lane speaks — the travel fold the LivingEntity's own
     /// bytecode keeps, the warden's attribute 0.3 the gain wears):
@@ -3451,6 +3565,13 @@ impl WardenMob {
         // memory expires)
         if self.dig_cooldown > 0 {
             self.dig_cooldown -= 1;
+        }
+        // THE SONIC_BOOM_COOLDOWN'S OWN DRAIN (the same Brain expiry
+        // walk — the 40-tick expiry the doHurtTarget's own setCooldown
+        // banks, the zero the memory expires, the boom lane the
+        // standing window refuses)
+        if self.sonic_boom_cooldown > 0 {
+            self.sonic_boom_cooldown -= 1;
         }
         self.ambient_time += 1;
         let fired = self.rng.next() % crate::mob::AMBIENT_DRAW_BOUND
@@ -9377,6 +9498,107 @@ mod tests {
             .filter(|w| !w.discarded)
             .collect();
         assert!(list.is_empty(), "the retain walk the retired body drops");
+    }
+
+    /// `Warden.doHurtTarget` (javap pc 0-32, verbatim): the event-4
+    /// broadcast the client arm serves (the ROAR ANIMATION the stop
+    /// retires, the attack the start tick banks), the impact voice
+    /// the FIXED 10.0 + the two-draw pitch speaks, the
+    /// SONIC_BOOM_COOLDOWN the 40l expiry banks (the tick drains) —
+    /// the render's own elapsed the start-tick difference answers.
+    #[test]
+    fn the_do_hurt_target_the_event_the_impact_keeps() {
+        let mut warden = WardenMob::new(7, 10.5, 32.0, 3.5);
+        // THE FRESH BODY (the JVM init — the None the never-armed
+        // state keeps, the zero the memory never banks)
+        assert_eq!(
+            warden.attack_start, None,
+            "the fresh body the attack never banks"
+        );
+        assert_eq!(
+            warden.sonic_boom_cooldown, 0,
+            "the fresh body the boom memory never banks"
+        );
+        // THE MID-ROAR ARM (the event-4's own stop walk — the roar
+        // animation the pose flag retires, the behavior's own window
+        // the roar_target lane keeps)
+        warden.roaring = true;
+        warden.tick_count = 55;
+        // the two-draw pitch the mirror's same seed wears
+        let mut mirror = WardenMob::new(7, 10.5, 32.0, 3.5);
+        let want_pitch = mirror.voice_pitch();
+        let voice = warden
+            .do_hurt_target()
+            .expect("the landing swing the voice banks");
+        assert_eq!(
+            voice.word, WARDEN_ATTACK_IMPACT_SOUND,
+            "the attack_impact registry name the SoundEvents row keeps"
+        );
+        assert_eq!(
+            voice.volume, WARDEN_ATTACK_IMPACT_VOLUME,
+            "the 10.0f the ldc_w wears"
+        );
+        assert_eq!(
+            voice.pitch, want_pitch,
+            "the getVoicePitch the two-draw law speaks"
+        );
+        // THE EVENT-4 WALK (javap `handleEntityEvent` case 4 — the
+        // `roarAnimationState.stop()` the pose retires, the
+        // `attackAnimationState.start(tickCount)` the tick banks)
+        assert!(
+            !warden.roaring,
+            "the roar animation the event-4 stop retires"
+        );
+        assert_eq!(
+            warden.attack_start,
+            Some(55),
+            "the attack start the tickCount banks"
+        );
+        // THE SONIC_BOOM_COOLDOWN BANK (javap `SonicBoom.setCooldown`
+        // pc 0-15 — the `setMemoryWithExpiry(UNIT, 40l)` the melee
+        // swing banks)
+        assert_eq!(
+            warden.sonic_boom_cooldown, WARDEN_ATTACK_SONIC_COOLDOWN_TICKS,
+            "the 40l the setCooldown banks"
+        );
+        // THE DRAIN (the Brain expiry walk — the 39 mid drains the
+        // tail keeps, the 40th the memory expires)
+        for _ in 0..39 {
+            warden.tick();
+        }
+        assert_eq!(
+            warden.sonic_boom_cooldown, 1,
+            "the 39th drain the window's own tail keeps"
+        );
+        warden.tick();
+        assert_eq!(
+            warden.sonic_boom_cooldown, 0,
+            "the 40th drain the memory expires"
+        );
+        // THE ELAPSED DERIVATION (the render's own walk — the
+        // `tick_count - attack_start` the getTimeAtTick answers, the
+        // elapsed the definition's own window the partial lerp wears)
+        let start = warden.attack_start.expect("the armed start the Some keeps");
+        let elapsed = warden.tick_count - start;
+        assert_eq!(
+            elapsed, 40,
+            "the 40 ticks since the swing the elapsed answers"
+        );
+        // THE SWING'S OWN BODY (the blast the anger's own walk — the
+        // melee the DIG_COOLDOWN re-arm the increaseAngerAt lane
+        // serves, the boom memory the provoke pair the same tick
+        // wears)
+        warden.vibration_cooldown = 0;
+        let hear = warden.hear_vibration(
+            Some(WARDEN_PLAYER_SUSPECT),
+            None,
+            None,
+            true,
+            true,
+            true,
+            (10, 32, 3),
+        );
+        assert!(hear.is_some(), "the standing body the hearing serves");
     }
 }
 

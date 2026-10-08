@@ -36565,6 +36565,18 @@ impl App {
                 } else {
                     None
                 },
+                // THE ATTACK'S OWN CLOCK (javap `Warden.handleEntityEvent`
+                // case 4 — the `attackAnimationState.start(tickCount)`
+                // pc 12-20 the melee-swing event arm banks): the elapsed
+                // ticks the start-tick difference derives (`tick_count -
+                // attack_start` the AnimationState's own getTimeAtTick
+                // walk speaks, the partial the lerp adds) — the swing
+                // the stop call the AnimationState never carries, the
+                // stale start the definition's own rest tail the
+                // past-end walk the zeros wears
+                attack_time: warden
+                    .attack_start
+                    .map(|start| (warden.tick_count - start) as f32 + self.partial_tick),
             };
             let quads = warden_model.quads(&state, feet, cam.yaw, cam.pitch);
             // THE DRAW (the same SampledQuad fold the mob chain
