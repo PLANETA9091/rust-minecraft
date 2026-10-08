@@ -1,1 +1,106 @@
-v0.3.606: the footsteps the world hears (dev-12): THE WALKING PLAYER'S OWN STEP VIBRATION THE SCULK WORLD ANSWERS (the worklog's own second candidate — the movement lane the interactivity queue's standing priority serves: every footstep the player takes now POSTS the gameEvent(STEP) the sensors hear and the warden's ears climb, the walk near a warden the anger ladder enrages — the real Minecraft's own sculk stealth gameplay the client now speaks). jar evidence (the 26.2 jar /tmp/client.jar): javap Entity.move pc 1955-2060 — the step walk verbatim: the `f7 = (float)(vec3.horizontalDistance() * 0.6000000238418579d)` accumulator fold the ldc2_w keeps (the moveDist += the climbable ? the FULL length : the horizontal * 0.6 — the isStateClimbable arm the iload-10 select serves), the `moveDist > nextStep` fcmpl/ifle head the STRICT crossing wears, the `!oldState.isAir()` gate the ifne pair keeps, the vibrationAndSoundEffectsFromBlock pair the two on-pos blocks consult (the samePos equals arm the istore-11 serves), the `nextStep = nextStep()` reset the fired arm wears; javap Entity.nextStep pc 0-8 — the `(float)((int)this.moveDist + 1)` i2f fold the one-step-per-~1.667-blocks cadence keeps (the client's body move_dist/next_step walk the prior rounds banked, the step_due the same law fires); javap Entity.vibrationAndSoundEffectsFromBlock pc 0-96 — the emission gate verbatim (the isAir refusal, the `(onGround() || climbable || (isCrouching() && vec.y != 0.0) || isOnRails()) && !isSwimming()` head the arms keep), THE SOUND ARM pc 59-66 the walkingStepSound walk serves BEFORE THE EVENT ARM pc 69-90 (the order the drain's own pair keeps — the step voice the block's own row plays, then the gameEvent the dispatch posts), the `level.gameEvent(GameEvent.STEP, this.position(), GameEvent.Context.of(this, state))` the tripthe arg walk speaks (the post-move feet vec the position() answer — the drain's own capture the body's borrow stashes, the dispatch the borrow's end speaks); javap Entity.walkingStepSound pc 0-18 — the playStepSound + the shouldPlayAmethystStepSound pair the walk serves; javap Entity.playStepSound pc 0-25 — the `playSound(state.getSoundType().getStepSound(), soundtype.getVolume() * 0.15f, soundtype.getPitch())` fold the ldc 0.15f speaks (the client's Lane::Step row the *0.15 fold already wears — the sound lane the prior rounds banked); javap Entity.move pc 168-208 — the else-water branch the `gameEvent(GameEvent.SWIM)` tail serves (the swim_due lane the same dispatch wears); javap Player.playStepSound pc 0-80 — the isInWater branch the waterSwimSound + playMuffledStepSound pair keeps (the wading step the STEP event STILL serves — the vibrationAndSoundEffectsFromBlock's own gate the onGround arm passes). Implemented: screens.rs (THE DISPATCH THE WALKS SHARE: dispatch_vibration_event(&mut self, event, pos) — the method the glide lane's own walk extracts verbatim — the record `{event} @{frame} x{:.6} y{:.6} z{:.6} r16 f{}` the vocabulary keeps, the sensors the sensor_hearing + the six-ray occlusion + the free-at/clicking_at/stop_at/resonate_frequency arms wear, the warden's ears the warden_hearing + the canReceive + the pending hear bank — the event/pos the args parameterize, the SOURCE tail the canReceive verdict the survival+alive pair answers); THE FOOTSTEP'S OWN VIBRATION: the step_due drain the position stash captures (the vanilla `this.position()` the post-move feet vec the body's own tick banks), the dispatch the borrow's end speaks (`step` the event the sensor loop + the warden lane answer); THE SWIM'S OWN VIBRATION: the swim_due drain the same stash serves (`swim` the else-water branch's own event); the glide lane the shared method calls (the record + the sensors + the warden lane the extraction preserves byte-for-byte — the glide tests the same verdicts keep). No mesher/raster/palette change — the dispatch/record lanes the render paths never touch, the golden scenes the extraction's own identity keeps. Tests +2: screens::the_step_the_sensor_the_hearing_answers (the standing player the silence keeps, the walk the step fires — the r16 f1 row the record wears, the sculk_hearing the registered sensor answers, the free_at the re-arm window arms, the step voice the block's own row speaks); screens::the_step_the_warden_hears_the_anger_climbs (the first heard step the +35 the Calm listening wears, the armed cooldown the steps refuse — the Calm plateau the ladder never crosses, the drain the memory expires mid-walk — the second heard step the Agitated crossing serves, the listening_angry the pair wears; the walk TURNS the earshot keeps — the decay the 20-tick cadence wears the asserts stay decay-independent). Adapted: the glide lane the extraction's own call wears (the warden-ears test the same verdicts keep). Verification: cargo test --workspace (CARGO_INCREMENTAL=0) 2024 passed / 0 failed / 21 ignored (+2), zero NEW build warnings (the non-test build the baseline's own 6 pre-existing non-test expectations keep). Goldens: golden_matrix.sh 14/14 PASS (every scene rms 0.000) — goldens untouched, NO regeneration (the dispatch/record lanes the render paths never touch). Version: workspace Cargo.toml 0.3.605 → 0.3.606 (scripts/bump_version.py). DISK: 2.6G free the round closes. NEXT CANDIDATES: 1. the dig/place vibration emissions (the block_change event the dig lane's stage changes speak — the sensors the digging suspect hears, the warden the same ears climb); 2. the hurt lane the melee integration (the warden the pick lanes join — the stab/melee walks the warden's own box consult, the hurtServer's increaseAngerAt(attacker, 100, false) law the ON_HURT_ANGER_BOOST const carries); 3. the projectile-owner hearing lane (the arrow landing the RECENT arm fires — the 35-anger ladder the repeat shots climb); 4. the warden's (tickCount + id) % 120 applyDarknessAround-20 pulse; 5. the warden RENDER (the WardenModel mesh); 6. the interactivity queue (the standing priority): any GUI/input/sound lane.
+v0.3.627: the warden the SONIC the charge the beam the boom the dose (autopush-569)
+
+THE SONIC BOOM LANE — the ranged dose the FIGHT list's own index-4
+behavior speaks (jar evidence: 26.2 javap verbatim):
+
+- javap SonicBoom clinit pc 0-15 — the constants the ceil walk
+  banks: the TICKS_BEFORE_PLAYING_SOUND ceil(34.0d) = 34, the
+  DURATION ceil(60.0f) = 60; the ConstantValue rows the finals keep:
+  DISTANCE_XZ 15, DISTANCE_Y 20, KNOCKBACK_VERTICAL 0.5d,
+  KNOCKBACK_HORIZONTAL 2.5d, COOLDOWN 40.
+- javap SonicBoom ctor pc 0-31 — the condition map verbatim: the
+  ATTACK_TARGET VALUE_PRESENT + the SONIC_BOOM_COOLDOWN
+  VALUE_ABSENT the start gates keep, the SOUND_COOLDOWN + the
+  SOUND_DELAY the REGISTERED pair banks.
+- javap Entity.closerThan(Entity, double, double) pc 0-63 — the
+  range law verbatim: the Mth.lengthSquared(dx, dz) < square(15.0)
+  XZ verdict + the square(dy) < square(20.0) FEET-Y the strict <
+  keeps (the exact touch the FALSE answers, the walls the law never
+  consults — the beam the LOS the behavior never reads).
+- javap SonicBoom.start pc 0-52 — the charge window verbatim: the
+  setMemoryWithExpiry(ATTACK_COOLING_DOWN, true, 60l) the window
+  arms, the setMemoryWithExpiry(SONIC_BOOM_SOUND_DELAY, UNIT, 34l)
+  the voice covers, the broadcastEntityEvent(62) the animation lane
+  a future round wears, the playSound(WARDEN_SONIC_CHARGE, 3.0f,
+  1.0f) the FIXED pair speaks. THE NAVIGATION the 26.2 start NEVER
+  stops — the chase the window's own walk keeps.
+- javap SonicBoom.tick pc 0-110 — the boom cadence verbatim: the
+  lookAt the lambda$tick$0 keeps, the SOUND_DELAY/SOUND_COOLDOWN
+  present pair the tick retires pc 19-45, the
+  setMemoryWithExpiry(SONIC_BOOM_SOUND_COOLDOWN, UNIT,
+  DURATION - TICKS_BEFORE_PLAYING_SOUND = 26l) pc 46-66 the fired
+  voice banks, the target filter chain pc 67-107 the
+  lambda$tick$1 closerThan(15, 20) + the Warden.canTargetEntity
+  method-ref pair keeps, the lambda$tick$2 the boom serves.
+- javap SonicBoom.lambda$tick$2 pc 0-198 — THE BOOM verbatim: the
+  WARDEN_CHEST origin the getAttachments().get(WARDEN_CHEST, 0,
+  yRot) read keeps (javap EntityTypes clinit pc 6633-6641 — the
+  attach(WARDEN_CHEST, 0.0f, 1.6f, 0.0f) row the registration
+  speaks: the yaw the XZ-zero offset never rotates), the eye delta
+  the normalize the direction serves, the Mth.floor(len) + 7 the
+  SONIC_BOOM particle walk a future round wears, the
+  playSound(WARDEN_SONIC_BOOM, 3.0f, 1.0f) pc 111-118, the
+  hurtServer(sonicBoom(warden), 10.0f) pc 121-137 the dose wears,
+  the push pc 140-195 the d0 = 0.5 * (1 - KNOCKBACK_RESISTANCE)
+  vertical + the d2 = 2.5 * (1 - resistance) horizontal the
+  Entity.push plain-add walk serves (javap Entity.push pc 0-42 —
+  the getDeltaMovement().add the isFinite guard keeps, the vel/2
+  half-fold the melee knockback's own law never wears here).
+- javap SonicBoom.stop pc 0-6 — the setCooldown(this, 40) the
+  window's own end banks (the fresh start the standing window
+  refuses).
+- javap WardenAi.initFightActivity pc 0-64 — the FIGHT list order
+  verbatim: the SetWalkTargetFromAttackTargetIfTargetOutOfReach
+  (13) the SonicBoom (14) the MeleeAttack.create(18) (15) precedes
+  — the start the ATTACK_COOLING_DOWN the same memory the melee's
+  absent gate reads arms: the fresh warden the in-reach target the
+  CHARGE arms, the same-tick swing the standing window refuses.
+
+implemented:
+- sculk.rs: the WARDEN_SONIC_DURATION_TICKS 60 + the
+  WARDEN_SONIC_SOUND_DELAY_TICKS 34 + the WARDEN_SONIC_SOUND_
+  COOLDOWN_TICKS 26 + the WARDEN_SONIC_RANGE_XZ 15.0 / the
+  WARDEN_SONIC_RANGE_Y 20.0 + the KNOCKBACK_VERTICAL 0.5 /
+  HORIZONTAL 2.5 + the WARDEN_SONIC_DAMAGE 10.0 + the
+  WARDEN_SONIC_CHEST_OFFSET_Y 1.6 + the WARDEN_SONIC_CHARGE_SOUND
+  entity.warden.sonic_charge / the WARDEN_SONIC_BOOM_SOUND
+  entity.warden.sonic_boom + the FIXED voice pair 3.0/1.0 consts;
+  the warden_sonic_closer_than range law; the WardenSonicOut
+  record; the WardenMob the sonic_sound_delay + the
+  sonic_sound_cooldown + the sonic_active fields (the Brain expiry
+  walk the tick drains); the sonic_lane — the start the charge
+  window arms (the cooldowns the absent pair keeps, the range the
+  feet keeps, the memories the same walk banks, the navigation the
+  start never stops), the running window the tick walk serves (the
+  both-absent gate the boom arms, the 26l the fired voice banks,
+  the closerThan + the targetable pair the beam walks keep, the
+  beam the chest→eye normalize serves), the stop the window's own
+  end the 40l bank keeps.
+- screens.rs: the sonic_lane the pass call the FIGHT order wears
+  (the melee prio-15 the sonic prio-14 follows — the same-tick
+  swing the standing window refuses), the feet + the eye views the
+  lane carries, the charge + the boom voices the collected vecs
+  play (the FIXED 3.0/1.0 pair both walks wear — the broadcast-62
+  the animation lane a future round wears), the sonic dose the
+  hurt walk wears (the 10.0f the sonicBoom source carries) + the
+  push the plain add serves (the beam the direction rides, the
+  0.5V/2.5H the resistance-zero player speaks, the isFinite the
+  normalization answers); the melee dose test the sonic bank the
+  fresh window keeps (the post-boom gameplay the bank serves).
+- tests +4: the_sonic_lane_the_charge_the_boom_the_stop_keeps (the
+  start the window banks, the same-tick swing refuses, the 34th
+  tick the boom arms, the 26l the re-boom refuses, the stop the
+  40l banks, the drain the melee re-arms),
+  the_sonic_lane_the_range_the_refusal_keeps (the 15/20 the strict
+  pair keeps, the cooldowns the fresh window refuses, the eye the
+  None the start never reads),
+  the_sonic_closer_than_the_law_keeps, the
+  _sonic_boom_the_beam_the_geometry_keeps.
+- environment recovery: the sandbox reset the workspace — the
+  rustup toolchain + the assets-cache rebuilt per the generator's
+  own lanes (mc2rs-gen generate --version 26.2 +
+  scripts/restore_jar_textures.py); the generated sources the
+  re-run rewrote reverted (the warden skin consts the generator's
+  current skin lane never emits — the checked-in rows the warden
+  renderer verifies); no render-path change — the goldens the
+  full matrix re-verified 13/13 rms 0.000.

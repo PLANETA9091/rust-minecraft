@@ -785,6 +785,25 @@ pub fn warden_entity_box(p: (f64, f64, f64)) -> ((f64, f64, f64), (f64, f64, f64
     )
 }
 
+/// THE SONIC RANGE LAW (javap `Entity.closerThan(Entity, double,
+/// double)` pc 0-63 — the `Mth.lengthSquared(dx, dz) < Mth.square(xz)`
+/// XZ verdict the strict `<` keeps, the `Mth.square(dy) < Mth.square(y)`
+/// the FEET-Y the same law answers): the SonicBoom start pc 17-26 +
+/// the tick's lambda$tick$1 the (15.0, 20.0) pair wear — the exact
+/// touch the FALSE answers, the walls the law never consults (the
+/// beam the LOS the behavior never reads — the memory the sensor's
+/// own seen walk banks).
+pub fn warden_sonic_closer_than(
+    warden: (f64, f64, f64),
+    target: (f64, f64, f64),
+) -> bool {
+    let dx = target.0 - warden.0;
+    let dy = target.1 - warden.1;
+    let dz = target.2 - warden.2;
+    dx * dx + dz * dz < WARDEN_SONIC_RANGE_XZ * WARDEN_SONIC_RANGE_XZ
+        && dy * dy < WARDEN_SONIC_RANGE_Y * WARDEN_SONIC_RANGE_Y
+}
+
 /// THE BLOCK-POS CLOSER WALK (javap `Vec3i.closerThan(Vec3i, double)`
 /// — the `distSqr(other) < Mth.square(dist)` fold the trigger's own
 /// gate consults: the CROSSWISE integer squares `dx*dx + dy*dy +
@@ -1698,6 +1717,77 @@ pub const WARDEN_ATTACK_IMPACT_VOLUME: f32 = 10.0;
 /// consults.
 pub const WARDEN_ATTACK_SONIC_COOLDOWN_TICKS: i32 = 40;
 
+/// `SonicBoom` clinit pc 9-15 — the `ldc_w 60.0f` the `Mth.ceil` walk
+/// serves: the DURATION the Behavior ctor's own arg carries (the
+/// charge window the start's `setMemoryWithExpiry(ATTACK_COOLING_DOWN,
+/// true, 60l)` banks, the behavior's own max run the same 60 keeps —
+/// the window's end the stop answers, the stop's own setCooldown the
+/// 40-tick bank speaks).
+pub const WARDEN_SONIC_DURATION_TICKS: i32 = 60;
+
+/// `SonicBoom` clinit pc 0-6 — the `ldc2_w 34.0d` the `Mth.ceil` walk
+/// serves: the TICKS_BEFORE_PLAYING_SOUND the start's
+/// `setMemoryWithExpiry(SONIC_BOOM_SOUND_DELAY, UNIT, 34l)` banks (the
+/// charge voice the delay covers, the boom the delay's own expiry
+/// arms).
+pub const WARDEN_SONIC_SOUND_DELAY_TICKS: i32 = 34;
+
+/// `SonicBoom.tick` pc 46-66 — the `DURATION - TICKS_BEFORE_PLAYING_SOUND`
+/// the `setMemoryWithExpiry(SONIC_BOOM_SOUND_COOLDOWN, UNIT, 26l)` the
+/// fired boom banks: the fired voice the re-boom the same window
+/// refuses (the expiry the DURATION's own end the stop race settles).
+pub const WARDEN_SONIC_SOUND_COOLDOWN_TICKS: i32 =
+    WARDEN_SONIC_DURATION_TICKS - WARDEN_SONIC_SOUND_DELAY_TICKS;
+
+/// `SonicBoom` — the private final ints the ConstantValue row keeps:
+/// the DISTANCE_XZ 15 the closerThan law's own horizontal keeps, the
+/// DISTANCE_Y 20 the vertical wears (javap `Entity.closerThan` pc
+/// 0-63 — the XZ lengthSquared + the FEET-Y square the strict `<`
+/// verdict keeps: the exact-touch the FALSE answers).
+pub const WARDEN_SONIC_RANGE_XZ: f64 = 15.0;
+pub const WARDEN_SONIC_RANGE_Y: f64 = 20.0;
+
+/// `SonicBoom` — the private final doubles the ConstantValue row
+/// keeps: the lambda$tick$2 pc 140-168 push the pair wears (the
+/// KNOCKBACK_VERTICAL 0.5 the beam-Y fold keeps, the
+/// KNOCKBACK_HORIZONTAL 2.5 the XZ the same `(1 − resistance)` fold
+/// answers — the player's own 0.0 resistance the raw dose speaks).
+pub const WARDEN_SONIC_KNOCKBACK_VERTICAL: f64 = 0.5;
+pub const WARDEN_SONIC_KNOCKBACK_HORIZONTAL: f64 = 2.5;
+
+/// `SonicBoom.lambda$tick$2` pc 121-137 — the `ldc_w 10.0f` the
+/// `hurtServer(level, damageSources().sonicBoom(warden), 10.0f)` dose
+/// wears: the beam's own hurt walk the victim's pipeline answers (the
+/// melee 30.0 the bare fist keeps, the ranged beam the 10.0 speaks).
+pub const WARDEN_SONIC_DAMAGE: f32 = 10.0;
+
+/// `EntityTypes` clinit pc 6633-6641 — the warden registration's own
+/// `attach(EntityAttachment.WARDEN_CHEST, 0.0f, 1.6f, 0.0f)` row the
+/// lambda$tick$2's `getAttachments().get(WARDEN_CHEST, 0, yRot)`
+/// origin reads: the chest the feet + 1.6 keeps (the yaw the XZ-zero
+/// offset never rotates — the rotation the zero vector identity
+/// answers).
+pub const WARDEN_SONIC_CHEST_OFFSET_Y: f64 = 1.6;
+
+/// `SoundEvents.WARDEN_SONIC_CHARGE` — the registry name the
+/// SoundEvents class's own string row keeps (`entity.warden.sonic_charge`
+/// — the start's `playSound(WARDEN_SONIC_CHARGE, 3.0f, 1.0f)` pc
+/// 42-51 the charge voice serves).
+pub const WARDEN_SONIC_CHARGE_SOUND: &str = "entity.warden.sonic_charge";
+
+/// `SoundEvents.WARDEN_SONIC_BOOM` — the registry name the
+/// SoundEvents class's own string row keeps (`entity.warden.sonic_boom`
+/// — the lambda$tick$2's `playSound(WARDEN_SONIC_BOOM, 3.0f, 1.0f)`
+/// pc 111-118 the boom voice serves).
+pub const WARDEN_SONIC_BOOM_SOUND: &str = "entity.warden.sonic_boom";
+
+/// THE SONIC VOICES' OWN PAIR (javap `SonicBoom.start` pc 42-51 +
+/// `lambda$tick$2` pc 111-118 — the `playSound(..., 3.0f, 1.0f)` the
+/// FIXED pair both walks wear: the 3.0 the volume the ldc keeps, the
+/// 1.0 the pitch the fconst answers).
+pub const WARDEN_SONIC_VOICE_VOLUME: f32 = 3.0;
+pub const WARDEN_SONIC_VOICE_PITCH: f32 = 1.0;
+
 /// `Warden.createAttributes` — the `Attributes.ATTACK_DAMAGE` add the
 /// `ldc2_w 30.0d` row keeps: the melee dose the bare fist speaks (the
 /// `Mob.doHurtTarget` pc 0-7 the `d2f` fold wears — the weapon the
@@ -1768,6 +1858,29 @@ pub struct WardenMeleeOut {
     /// speaks — the hurt the victim's own verdict gates, the dying
     /// body the dose refuses)
     pub landed: bool,
+}
+
+/// THE SONIC LANE'S OWN OUT (the SonicBoom behavior's own arms the
+/// lane serves — the start the charge window banks, the tick the
+/// boom speaks): the charge the caller's voice walk wears, the boom
+/// the dose + the push the victim's own pipeline answers.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct WardenSonicOut {
+    /// the start's own arms (javap `SonicBoom.start` pc 35-51 — the
+    /// broadcast-62 the animation lane a future round wears, the
+    /// WARDEN_SONIC_CHARGE 3.0f voice the play lane serves)
+    pub charge_started: bool,
+    /// the boom's own tick (javap `lambda$tick$2` — the beam + the
+    /// WARDEN_SONIC_BOOM voice + the 10.0f dose the caller's hurt
+    /// walk wears, the push the beam direction speaks)
+    pub boomed: bool,
+    /// the beam's own direction (pc 23-38 — the normalized
+    /// chest→eye walk the push rides; the zero vector the
+    /// degenerate-coincident arm keeps)
+    pub beam: (f64, f64, f64),
+    /// the beam's own length (pc 40-45 — the raw eye distance the
+    /// `Mth.floor(len) + 7` particle walk a future round wears)
+    pub beam_len: f64,
 }
 
 /// THE EMERGE'S OWN VOICE (the Emerging.start's own tail the pair
@@ -2453,6 +2566,24 @@ pub struct WardenMob {
     /// the fresh zero the JVM init keeps — the standing memory the
     /// next swing's absent gate refuses)
     pub attack_cooldown: i32,
+    /// THE SONIC_BOOM_SOUND_DELAY'S OWN MEMORY (javap
+    /// `SonicBoom.start` pc 18-34 — the `setMemoryWithExpiry
+    /// (SONIC_BOOM_SOUND_DELAY, UNIT, 34l)` the charge start banks,
+    /// the Brain expiry walk the tick drains; the fresh zero the JVM
+    /// init keeps — the both-absent tick the boom arms)
+    pub sonic_sound_delay: i32,
+    /// THE SONIC_BOOM_SOUND_COOLDOWN'S OWN MEMORY (javap
+    /// `SonicBoom.tick` pc 46-66 — the `(DURATION −
+    /// TICKS_BEFORE_PLAYING_SOUND)` the fired boom banks, the Brain
+    /// expiry walk the tick drains; the fresh zero the JVM init
+    /// keeps — the re-boom the same window the standing memory
+    /// refuses)
+    pub sonic_sound_cooldown: i32,
+    /// THE BEHAVIOR'S OWN RUNNING STATE (the `Behavior` run window
+    /// the DURATION keeps — the start arms, the window's own end the
+    /// stop answers: javap `SonicBoom.stop` pc 0-6 the
+    /// `setCooldown(this, 40)` bank the same walk speaks)
+    pub sonic_active: bool,
 }
 
 impl WardenMob {
@@ -2511,6 +2642,9 @@ impl WardenMob {
             attack_start: None,
             sonic_boom_cooldown: 0,
             attack_cooldown: 0,
+            sonic_sound_delay: 0,
+            sonic_sound_cooldown: 0,
+            sonic_active: false,
         }
     }
 
@@ -3381,6 +3515,130 @@ impl WardenMob {
         out
     }
 
+    /// THE SONIC BOOM LANE (javap `SonicBoom` 26.2 verbatim — the
+    /// FIGHT list's own index-4 behavior the MeleeAttack prio-15
+    /// follows: the start the ATTACK_COOLING_DOWN the same memory
+    /// the melee's absent gate reads arms, the swing the standing
+    /// window refuses — the warden.ai_step walk the lanes the FIGHT
+    /// order keeps: the chase prio-13 first, the sonic prio-14 the
+    /// melee precedes): the start the charge window banks (pc 0-52 —
+    /// the ATTACK_COOLING_DOWN the DURATION the charge keeps, the
+    /// SOUND_DELAY the 34 the voice covers, the broadcast-62 the
+    /// animation lane a future round wears, the WARDEN_SONIC_CHARGE
+    /// 3.0f voice the caller's play walk serves), the tick the
+    /// both-absent gate the boom arms (pc 19-110), the stop the
+    /// window's own end the 40-tick bank keeps (pc 0-6 — the
+    /// `setCooldown(this, 40)` the stop's own tail speaks). THE
+    /// INPUTS the caller's own views carry: the feet pos the
+    /// closerThan range reads, the eye pos the beam the
+    /// chest→eye walk serves — the targetable verdict the
+    /// invalid-target erase the same tick the memory keeps (the
+    /// lane the erased target never reads).
+    pub fn sonic_lane(
+        &mut self,
+        target_pos: Option<(f64, f64, f64)>,
+        target_eye: Option<(f64, f64, f64)>,
+    ) -> WardenSonicOut {
+        let mut out = WardenSonicOut {
+            charge_started: false,
+            boomed: false,
+            beam: (0.0, 0.0, 0.0),
+            beam_len: 0.0,
+        };
+        // THE REQUIRED ATTACK_TARGET (the ctor's own condition map pc
+        // 0-25 — the VALUE_PRESENT the FIGHT eligibility keeps: the
+        // unarmed brain the lane never runs)
+        if self.attack_target.is_none() {
+            return out;
+        }
+        // THE RUNNING WINDOW (the Behavior run the DURATION keeps —
+        // the start armed, the expiry walk the caller's memory drain
+        // banks): the zero the window's own end answers — the stop
+        // pc 0-6 the `setCooldown(this, 40)` bank speaks, the
+        // running state the same walk retires (the fresh start the
+        // 40-tick window refuses)
+        if self.sonic_active {
+            if self.attack_cooldown == 0 {
+                self.sonic_boom_cooldown = WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
+                self.sonic_active = false;
+                return out;
+            }
+            // THE TICK'S OWN GATES (pc 19-45 — the SOUND_DELAY
+            // present the tick retires, the SOUND_COOLDOWN present
+            // the same refusal wears): the both-absent tick the walk
+            // below arms
+            if self.sonic_sound_delay > 0 || self.sonic_sound_cooldown > 0 {
+                return out;
+            }
+            // pc 46-66: the SOUND_COOLDOWN the (DURATION −
+            // TICKS_BEFORE_PLAYING_SOUND) the fired voice banks —
+            // the re-boom the same window the standing memory refuses
+            self.sonic_sound_cooldown = WARDEN_SONIC_SOUND_COOLDOWN_TICKS;
+            // pc 67-88: the closerThan(15, 20) filter (lambda$tick$1)
+            // — the feet the strict pair keeps
+            let Some(pos) = target_pos else {
+                return out;
+            };
+            let warden_pos = (self.x, self.y, self.z);
+            if !warden_sonic_closer_than(warden_pos, pos) {
+                return out;
+            }
+            // pc 92-97: the canTargetEntity filter — the caller's own
+            // erase the verdict keeps (the eye the absent walk the
+            // deref never answers: the fresh window the None keeps)
+            let Some(eye) = target_eye else {
+                return out;
+            };
+            // lambda$tick$2 — THE BOOM: pc 0-22 the WARDEN_CHEST
+            // origin (the feet + 1.6 the attach row keeps, the yaw
+            // the XZ-zero offset never rotates), pc 23-38 the beam
+            // (the eye delta the normalize the direction serves — the
+            // degenerate-coincident arm the zero vector keeps), pc
+            // 40-45 the length the `Mth.floor(len) + 7` particle walk
+            // a future round wears, pc 111-118 the WARDEN_SONIC_BOOM
+            // 3.0f voice, pc 121-137 the 10.0f dose, pc 140-195 the
+            // push (the plain add the Entity.push pc 22-34 keeps —
+            // the caller's own walk serves; the LOS the behavior
+            // NEVER consults — the beam the walls the memory rides)
+            let bx = self.x;
+            let by = self.y + WARDEN_SONIC_CHEST_OFFSET_Y;
+            let bz = self.z;
+            let dx = eye.0 - bx;
+            let dy = eye.1 - by;
+            let dz = eye.2 - bz;
+            let len = (dx * dx + dy * dy + dz * dz).sqrt();
+            if len > 1e-9 {
+                out.beam = (dx / len, dy / len, dz / len);
+            }
+            out.beam_len = len;
+            out.boomed = true;
+            return out;
+        }
+        // THE START (checkExtraStartConditions pc 0-26 + the start's
+        // own walk pc 0-52): the SONIC_BOOM_COOLDOWN the VALUE_ABSENT
+        // the gate keeps (the melee landing's own bank the window
+        // refuses), the ATTACK_COOLING_DOWN the ABSENT the same gate
+        // answers (the standing melee the fresh window refuses), the
+        // closerThan(15, 20) the range keeps, the memories the same
+        // walk banks (the navigation the 26.2 start NEVER stops —
+        // the chase the window's own walk keeps)
+        if self.sonic_boom_cooldown > 0 || self.attack_cooldown > 0 {
+            return out;
+        }
+        let Some(pos) = target_pos else {
+            return out;
+        };
+        let warden_pos = (self.x, self.y, self.z);
+        if !warden_sonic_closer_than(warden_pos, pos) {
+            return out;
+        }
+        self.attack_cooldown = WARDEN_SONIC_DURATION_TICKS;
+        self.sonic_sound_delay = WARDEN_SONIC_SOUND_DELAY_TICKS;
+        self.sonic_active = true;
+        out.charge_started = true;
+        out
+    }
+
     /// THE WARDEN'S OWN TRAVEL (the zombie walker's own law the
     /// mob.rs lane speaks — the travel fold the LivingEntity's own
     /// bytecode keeps, the warden's attribute 0.3 the gain wears):
@@ -3726,6 +3984,17 @@ impl WardenMob {
         // standing window refuses)
         if self.sonic_boom_cooldown > 0 {
             self.sonic_boom_cooldown -= 1;
+        }
+        // THE SONIC BOOM SOUND MEMORIES' OWN DRAIN (the same Brain
+        // expiry walk — the 34-tick SOUND_DELAY expiry the charge
+        // start banks, the 26-tick SOUND_COOLDOWN the fired boom
+        // banks, the zero the memory expires, the both-absent tick
+        // the boom arms)
+        if self.sonic_sound_delay > 0 {
+            self.sonic_sound_delay -= 1;
+        }
+        if self.sonic_sound_cooldown > 0 {
+            self.sonic_sound_cooldown -= 1;
         }
         // THE ATTACK_COOLING_DOWN'S OWN DRAIN (the same Brain expiry
         // walk — the 18-tick expiry the melee's own setWithExpiry
@@ -9873,6 +10142,230 @@ mod tests {
             warden.walk_target.is_some(),
             "the unseen the chase still walks"
         );
+    }
+
+    /// THE SONIC LANE'S OWN WALK (javap `SonicBoom` 26.2 verbatim —
+    /// the start the charge window banks, the 34-tick delay the
+    /// expiry walk covers, the both-absent tick the boom arms, the
+    /// 26-tick sound cooldown the re-boom refuses, the window's own
+    /// end the stop the 40-tick bank keeps, the standing window the
+    /// same-tick swing refuses).
+    #[test]
+    fn the_sonic_lane_the_charge_the_boom_the_stop_keeps() {
+        let mut warden = WardenMob::new(9, 10.0, 32.0, 3.5);
+        // THE UNARMED GATE (the required ATTACK_TARGET — the fresh
+        // brain the None keeps, the lane never runs)
+        let out = warden.sonic_lane(Some((20.0, 32.0, 3.5)), Some((20.0, 34.8, 3.5)));
+        assert!(
+            !out.charge_started && !out.boomed,
+            "the unarmed brain the lane never runs"
+        );
+        // THE START (pc 0-52 — the memories the same walk banks, the
+        // charge the caller's voice wears, the boom the window
+        // covers)
+        warden.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        let out = warden.sonic_lane(Some((20.0, 32.0, 3.5)), Some((20.0, 34.8, 3.5)));
+        assert!(out.charge_started, "the fresh window the range arms");
+        assert!(!out.boomed, "the charge tick the boom never wears");
+        assert_eq!(
+            warden.attack_cooldown, WARDEN_SONIC_DURATION_TICKS,
+            "the 60l the ATTACK_COOLING_DOWN the start banks"
+        );
+        assert_eq!(
+            warden.sonic_sound_delay, WARDEN_SONIC_SOUND_DELAY_TICKS,
+            "the 34l the SOUND_DELAY the start banks"
+        );
+        assert!(warden.sonic_active, "the behavior the start arms");
+        // THE SAME-TICK SWING REFUSAL (the window the start arms —
+        // the melee's absent gate the standing window reads)
+        let melee = warden.fight_lane(Some((11.0, 32.0, 3.5)), true, true);
+        assert!(
+            !melee.landed && melee.impact.is_none(),
+            "the charge window the swing refuses"
+        );
+        // THE DELAY'S OWN WALK (the 33 ticks the expiry covers — the
+        // drain the walk serves, the gate the both-present keeps)
+        for _ in 0..33 {
+            warden.tick();
+            let out = warden.sonic_lane(Some((20.0, 32.0, 3.5)), Some((20.0, 34.8, 3.5)));
+            assert!(
+                !out.boomed && !out.charge_started,
+                "the sound delay the boom covers"
+            );
+        }
+        // THE 34th TICK — THE BOOM (the both-absent tick the lambda
+        // $tick$2 walk arms: the beam + the voice + the dose the
+        // caller's walk wears, the 26l the sound cooldown banks)
+        warden.tick();
+        let out = warden.sonic_lane(Some((20.0, 32.0, 3.5)), Some((20.0, 34.8, 3.5)));
+        assert!(out.boomed, "the expired delay the boom arms");
+        assert!(!out.charge_started, "the window the re-start refuses");
+        assert_eq!(
+            warden.sonic_sound_cooldown, WARDEN_SONIC_SOUND_COOLDOWN_TICKS,
+            "the 26l the fired boom banks"
+        );
+        // THE BEAM (the chest→eye the normalize keeps — the chest the
+        // feet + 1.6 wears, the flat XZ the beam the straight delta
+        // serves)
+        let dx = 20.0 - 10.0;
+        let dy = 34.8 - (32.0 + WARDEN_SONIC_CHEST_OFFSET_Y);
+        let len = (dx * dx + dy * dy).sqrt();
+        assert_eq!(out.beam_len, len, "the raw eye distance the walk keeps");
+        assert_eq!(out.beam, (dx / len, dy / len, 0.0), "the normalized beam");
+        // THE RE-BOOM'S OWN REFUSAL (the 26-tick window the fired
+        // voice banks — the same window the re-boom never wears)
+        for _ in 0..25 {
+            warden.tick();
+            let out = warden.sonic_lane(Some((20.0, 32.0, 3.5)), Some((20.0, 34.8, 3.5)));
+            assert!(!out.boomed, "the sound cooldown the re-boom refuses");
+        }
+        // THE WINDOW'S OWN END — THE STOP (the 60th drain the window
+        // retires, the stop pc 0-6 the 40l bank speaks, the fresh
+        // start the standing window refuses)
+        warden.tick();
+        let out = warden.sonic_lane(Some((20.0, 32.0, 3.5)), Some((20.0, 34.8, 3.5)));
+        assert!(
+            !out.boomed && !out.charge_started,
+            "the stop the tick retires"
+        );
+        assert_eq!(
+            warden.sonic_boom_cooldown, WARDEN_ATTACK_SONIC_COOLDOWN_TICKS,
+            "the 40l the stop's own setCooldown banks"
+        );
+        assert!(!warden.sonic_active, "the behavior the stop retires");
+        assert_eq!(warden.attack_cooldown, 0, "the window the stop drains");
+        let out = warden.sonic_lane(Some((20.0, 32.0, 3.5)), Some((20.0, 34.8, 3.5)));
+        assert!(
+            !out.charge_started,
+            "the 40-tick window the fresh start refuses"
+        );
+        // THE COOLDOWN'S OWN DRAIN — THE RE-ARM (the expiry walk the
+        // re-arm lifts, the melee the expired window answers)
+        for _ in 0..40 {
+            warden.tick();
+        }
+        let melee = warden.fight_lane(Some((11.0, 32.0, 3.5)), true, true);
+        assert!(melee.landed, "the expired window the swing lifts");
+    }
+
+    /// THE SONIC START'S OWN REFUSALS (javap `SonicBoom` — the
+    /// checkExtraStartConditions pc 0-26 the (15, 20) pair keeps, the
+    /// strict `<` the exact-touch answers, the cooldowns the fresh
+    /// window refuses, the eye the None the start never reads).
+    #[test]
+    fn the_sonic_lane_the_range_the_refusal_keeps() {
+        let mut warden = WardenMob::new(9, 10.0, 32.0, 3.5);
+        warden.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        // THE XZ RANGE (the 16.0 the fresh window refuses)
+        let out = warden.sonic_lane(Some((26.0, 32.0, 3.5)), Some((26.0, 34.8, 3.5)));
+        assert!(
+            !out.charge_started && !out.boomed,
+            "the 16.0 the XZ range refuses"
+        );
+        // THE EXACT-TOUCH (dx=9, dz=12 — the 15.0 length the strict
+        // `<` the FALSE answers)
+        let out = warden.sonic_lane(Some((19.0, 32.0, 15.5)), Some((19.0, 34.8, 15.5)));
+        assert!(!out.charge_started, "the exact 15 the strict law refuses");
+        // THE Y RANGE (the feet-Y the 20.0 keeps — the 21 refuses)
+        let out = warden.sonic_lane(Some((11.0, 53.0, 3.5)), Some((11.0, 55.8, 3.5)));
+        assert!(!out.charge_started, "the 21.0 the feet-Y refuses");
+        // THE MELEE LANDING'S OWN BANK (the 40l the setCooldown wears
+        // — the fresh window the standing memory refuses)
+        warden.sonic_boom_cooldown = WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
+        let out = warden.sonic_lane(Some((12.0, 32.0, 3.5)), Some((12.0, 34.8, 3.5)));
+        assert!(!out.charge_started, "the sonic bank the start refuses");
+        // THE STANDING MELEE'S OWN REFUSAL (the ATTACK_COOLING_DOWN
+        // the ABSENT gate keeps)
+        warden.sonic_boom_cooldown = 0;
+        warden.attack_cooldown = WARDEN_MELEE_COOLDOWN_TICKS;
+        let out = warden.sonic_lane(Some((12.0, 32.0, 3.5)), Some((12.0, 34.8, 3.5)));
+        assert!(!out.charge_started, "the melee window the start refuses");
+        // THE EYE THE NONE KEEPS (the start the feet-only view arms —
+        // the boom the deref never answers)
+        warden.attack_cooldown = 0;
+        let out = warden.sonic_lane(Some((12.0, 32.0, 3.5)), None);
+        assert!(out.charge_started, "the start the feet-only view arms");
+        assert!(!out.boomed, "the None eye the boom never wears");
+    }
+
+    /// THE SONIC RANGE LAW (javap `Entity.closerThan` pc 0-63 — the
+    /// XZ lengthSquared + the feet-Y square the strict `<` verdict
+    /// keeps, the negative deltas the squares fold, the eye the law
+    /// never reads).
+    #[test]
+    fn the_sonic_closer_than_the_law_keeps() {
+        // THE XZ VERDICT
+        assert!(
+            warden_sonic_closer_than((0.0, 0.0, 0.0), (14.0, 0.0, 0.0)),
+            "the 14.0 the XZ range keeps"
+        );
+        assert!(
+            !warden_sonic_closer_than((0.0, 0.0, 0.0), (15.0, 0.0, 0.0)),
+            "the exact 15 the strict law refuses"
+        );
+        assert!(
+            !warden_sonic_closer_than((0.0, 0.0, 0.0), (9.0, 0.0, 12.0)),
+            "the 9-12-15 the exact length refuses"
+        );
+        assert!(
+            warden_sonic_closer_than((0.0, 0.0, 0.0), (9.0, 0.0, 11.0)),
+            "the diagonal inside the range keeps"
+        );
+        // THE Y VERDICT (the feet-Y the strict pair keeps)
+        assert!(
+            warden_sonic_closer_than((0.0, 0.0, 0.0), (0.0, 19.0, 0.0)),
+            "the 19.0 the Y range keeps"
+        );
+        assert!(
+            !warden_sonic_closer_than((0.0, 0.0, 0.0), (0.0, 20.0, 0.0)),
+            "the exact 20 the strict law refuses"
+        );
+        // THE NEGATIVE DELTAS THE SQUARES FOLD
+        assert!(
+            warden_sonic_closer_than((0.0, 30.0, 0.0), (0.0, 10.5, 0.0)),
+            "the below the same verdict answers"
+        );
+        assert!(
+            warden_sonic_closer_than((0.0, 0.0, 0.0), (-14.0, 0.0, 0.0)),
+            "the negative XZ the square folds"
+        );
+    }
+
+    /// THE SONIC BEAM'S OWN GEOMETRY (javap `SonicBoom.lambda$tick$2`
+    /// pc 0-45 — the WARDEN_CHEST origin the feet + 1.6 keeps, the
+    /// eye delta the normalize the direction serves, the raw length
+    /// the `Mth.floor(len) + 7` particle walk a future round wears).
+    #[test]
+    fn the_sonic_boom_the_beam_the_geometry_keeps() {
+        let mut warden = WardenMob::new(9, 10.0, 32.0, 5.0);
+        warden.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        // THE START (the feet dy=8 + the XZ 5 — the range arms)
+        let out = warden.sonic_lane(Some((13.0, 40.0, 1.0)), Some((13.0, 41.6, 1.0)));
+        assert!(out.charge_started, "the range the start arms");
+        // THE DELAY'S OWN WALK (the 33 the expiry covers)
+        for _ in 0..33 {
+            warden.tick();
+            let _ = warden.sonic_lane(Some((13.0, 40.0, 1.0)), Some((13.0, 41.6, 1.0)));
+        }
+        warden.tick();
+        let out = warden.sonic_lane(Some((13.0, 40.0, 1.0)), Some((13.0, 41.6, 1.0)));
+        assert!(out.boomed, "the expired delay the boom arms");
+        // THE BEAM (the chest (10, 33.6, 5) — the eye delta the
+        // normalize keeps: the 3-8-4 the diagonal wears)
+        let dx: f64 = 13.0 - 10.0;
+        let dy: f64 = 41.6 - 33.6;
+        let dz: f64 = 1.0 - 5.0;
+        let len = (dx * dx + dy * dy + dz * dz).sqrt();
+        assert_eq!(
+            out.beam_len, len,
+            "the raw chest→eye distance the walk keeps"
+        );
+        assert_eq!(
+            out.beam,
+            (dx / len, dy / len, dz / len),
+            "the normalized beam the push rides"
+        );
+        assert!(out.beam.1 > 0.0, "the above eye the beam lifts");
     }
 }
 

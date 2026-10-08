@@ -10191,6 +10191,16 @@ impl App {
             // carries, the knockback the swing's own facing speaks: the
             // yaw the causeExtraKnockback walk consults)
             let mut warden_melee_doses: Vec<f32> = Vec::new();
+            // THE SONIC LANE'S OWN COLLECTS (the SonicBoom behavior's
+            // own arms the lanes serve — the charge the start's voice
+            // wears, the boom the dose + the push the victim's own
+            // pipeline answers: the beam the plain-add push rides, the
+            // yaws the melee walk keeps the sonic NEVER consults)
+            let mut warden_sonic_charge_voices: Vec<(f64, f64, f64)> =
+                Vec::new();
+            let mut warden_sonic_boom_voices: Vec<(f64, f64, f64)> =
+                Vec::new();
+            let mut warden_sonic_doses: Vec<(f64, f64, f64)> = Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
@@ -10533,6 +10543,38 @@ impl App {
                             // round wires — the chase the walk target serves
                             false
                         };
+                        // THE SONIC LANE'S OWN ARM (javap `SonicBoom`
+                        // 26.2 verbatim — the FIGHT list's own
+                        // index-4 the melee prio-15 precedes: the
+                        // start the ATTACK_COOLING_DOWN the same
+                        // memory the melee's absent gate reads arms,
+                        // the standing window the same-tick swing
+                        // refuses): the FEET the closerThan(15, 20)
+                        // range reads, the EYE the beam the
+                        // chest→eye walk serves — the charge voice
+                        // the start banks, the boom the dose + the
+                        // push the victim's own walk wears, the
+                        // canTargetEntity verdict the invalid-target
+                        // erase the memory's own target keeps
+                        let sonic_eye = if fight_is_player {
+                            self.body.as_ref().map(|b| {
+                                (b.x, b.y + b.eye_height(), b.z)
+                            })
+                        } else {
+                            fight_target_id.and_then(|id| {
+                                self.mobs.iter().find(|m| m.id as u64 == id).map(|m| {
+                                    (m.x, m.y + m.kind.eye_height(), m.z)
+                                })
+                            })
+                        };
+                        let sonic_out = warden.sonic_lane(fight_pos, sonic_eye);
+                        if sonic_out.charge_started {
+                            warden_sonic_charge_voices.push((warden.x, warden.y, warden.z));
+                        }
+                        if sonic_out.boomed {
+                            warden_sonic_doses.push(sonic_out.beam);
+                            warden_sonic_boom_voices.push((warden.x, warden.y, warden.z));
+                        }
                         let melee_out =
                             warden.fight_lane(fight_pos, fight_seen, fight_in_reach);
                         if let Some(impact) = melee_out.impact {
@@ -10606,6 +10648,36 @@ impl App {
                     crate::sculk::WARDEN_ATTACK_IMPACT_VOLUME,
                 );
             }
+            for (wx, wy, wz) in warden_sonic_charge_voices {
+                // THE SONIC CHARGE'S OWN VOICE (javap `SonicBoom.start`
+                // pc 42-51 — the
+                // `playSound(WARDEN_SONIC_CHARGE, 3.0f, 1.0f)` the
+                // charge start speaks, the FIXED pair the voice
+                // carries; the broadcast-62 the same start arms — the
+                // animation lane a future round wears)
+                self.play_warden_voice_v(
+                    crate::sculk::WARDEN_SONIC_CHARGE_SOUND,
+                    wx,
+                    wy,
+                    wz,
+                    crate::sculk::WARDEN_SONIC_VOICE_PITCH,
+                    crate::sculk::WARDEN_SONIC_VOICE_VOLUME,
+                );
+            }
+            for (wx, wy, wz) in warden_sonic_boom_voices {
+                // THE SONIC BOOM'S OWN VOICE (javap
+                // `SonicBoom.lambda$tick$2` pc 111-118 — the
+                // `playSound(WARDEN_SONIC_BOOM, 3.0f, 1.0f)` the fired
+                // boom speaks, the FIXED pair the voice carries)
+                self.play_warden_voice_v(
+                    crate::sculk::WARDEN_SONIC_BOOM_SOUND,
+                    wx,
+                    wy,
+                    wz,
+                    crate::sculk::WARDEN_SONIC_VOICE_PITCH,
+                    crate::sculk::WARDEN_SONIC_VOICE_VOLUME,
+                );
+            }
             for yaw in warden_melee_doses {
                 // THE MELEE DOSE'S OWN WALK (javap `Mob.doHurtTarget`
                 // pc 49-60 — the 30.0 the ATTACK_DAMAGE attr wears, the
@@ -10630,6 +10702,30 @@ impl App {
                             b.vy = (b.vy / 2.0 + crate::sculk::WARDEN_ATTACK_KNOCKBACK as f64)
                                 .min(0.4);
                         }
+                    }
+                }
+            }
+            for (bx, by, bz) in warden_sonic_doses {
+                // THE SONIC DOSE'S OWN WALK (javap `SonicBoom
+                // .lambda$tick$2` pc 121-137 — the 10.0f the
+                // `hurtServer(sonicBoom(warden), 10.0f)` dose wears,
+                // the hurtServer the victim's own pipeline answers,
+                // the dying body the dose refuses) + THE PUSH (pc
+                // 140-195 — the `target.push(vec5.x * d2, vec5.y *
+                // d1, vec5.z * d2)` the plain add the `Entity.push`
+                // pc 22-34 keeps — the vel the HALF the melee
+                // knockback's own fold never takes, the beam the
+                // direction the chest→eye normalized walk serves, the
+                // 2.5 the horizontal the KNOCKBACK_HORIZONTAL keeps,
+                // the 0.5 the vertical the KNOCKBACK_VERTICAL wears,
+                // the `(1 − resistance)` fold the player's own 0.0
+                // the raw dose speaks, the isFinite guard the
+                // normalization answers)
+                if self.hurt(crate::sculk::WARDEN_SONIC_DAMAGE) {
+                    if let Some(b) = &mut self.body {
+                        b.vx += bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
+                        b.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
+                        b.vz += bz * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
                     }
                 }
             }
@@ -52774,6 +52870,14 @@ mod tests {
             .push(crate::sculk::WardenMob::new(201, px + 1.0, feet_y, pz));
         app.wardens[0].attack_target = Some(crate::sculk::WARDEN_PLAYER_SUSPECT);
         app.wardens[0].yaw_deg = 90.0;
+        // THE SONIC BANK THE FRESH WINDOW KEEPS (javap `SonicBoom` —
+        // the FIGHT list's own index-4 the melee prio-15 precedes:
+        // the fresh warden the in-reach target the CHARGE arms, the
+        // swing the standing window refuses — the melee dose the
+        // post-boom gameplay the bank serves: the 40l the
+        // doHurtTarget's own setCooldown wears)
+        app.wardens[0].sonic_boom_cooldown =
+            crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
         let health_before = app.health;
         let (vx_before, vz_before) = {
             let b = app.body.as_ref().expect("the body rides");
