@@ -36896,6 +36896,16 @@ impl App {
                 attack_time: warden
                     .attack_start
                     .map(|start| (warden.tick_count - start) as f32 + self.partial_tick),
+                // THE SONIC CHARGE'S OWN CLOCK (javap
+                // `Warden.handleEntityEvent` case 62 — the
+                // `sonicBoomAnimationState.start(tickCount)` the
+                // broadcast-62 arms, the start-tick difference the
+                // elapsed answers, the partial the lerp adds): the
+                // `None` the never-armed state keeps — the charge
+                // the stop call the AnimationState never carries
+                sonic_time: warden
+                    .sonic_start
+                    .map(|start| (warden.tick_count - start) as f32 + self.partial_tick),
             };
             let quads = warden_model.quads(&state, feet, cam.yaw, cam.pitch);
             // THE DRAW (the same SampledQuad fold the mob chain

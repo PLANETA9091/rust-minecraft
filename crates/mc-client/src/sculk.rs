@@ -2553,6 +2553,21 @@ pub struct WardenMob {
     /// stale start the past-end pose the no-op keeps). The fresh
     /// None the JVM init keeps.
     pub attack_start: Option<i32>,
+    /// THE SONIC CHARGE'S OWN ANIMATION CLOCK (javap
+    /// `Warden.handleEntityEvent` case 62 — the
+    /// `sonicBoomAnimationState.start(tickCount)` pc 47-55 the
+    /// SonicBoom.start's own broadcast arms: `SonicBoom.start` pc
+    /// 35-41 the `broadcastEntityEvent(this, (byte)62)` serves, the
+    /// fused singleplayer frame the same tick banks — the start
+    /// TICK the AnimationState stores (the `getTimeAtTick(age) =
+    /// age - startTick` the render's elapsed answers, the
+    /// WARDEN_SONIC_BOOM definition's own 3.0s the past-end walk
+    /// the rest zeros wears — the charge the stop call the
+    /// AnimationState NEVER carries: javap the field's own reads
+    /// the clinit init + the event-62 start keep, the stale start
+    /// the past-end pose the no-op keeps). The fresh None the JVM
+    /// init keeps.
+    pub sonic_start: Option<i32>,
     /// THE SONIC_BOOM_COOLDOWN'S OWN MEMORY (javap
     /// `SonicBoom.setCooldown` pc 0-15 — the `setMemoryWithExpiry
     /// (SONIC_BOOM_COOLDOWN, UNIT, 40l)` the doHurtTarget's own walk
@@ -2640,6 +2655,7 @@ impl WardenMob {
             emerge_ticks: 0,
             dig_cooldown: 0,
             attack_start: None,
+            sonic_start: None,
             sonic_boom_cooldown: 0,
             attack_cooldown: 0,
             sonic_sound_delay: 0,
@@ -3388,6 +3404,18 @@ impl WardenMob {
         self.attack_start = Some(self.tick_count);
     }
 
+    /// `Warden.handleEntityEvent` case 62 (javap pc 41-58, verbatim):
+    /// the `sonicBoomAnimationState.start(tickCount)` pc 47-55 the
+    /// SonicBoom.start's own broadcast arms — the charge animation
+    /// the body/head/ribcage/arm keyframe lanes the WARDEN_SONIC_BOOM
+    /// definition serves. The AnimationState the stop call never
+    /// carries (the field's own reads the clinit init + this start
+    /// keep) — the stale start the definition's own 3.0s the past-end
+    /// walk the rest zeros wears.
+    pub fn handle_entity_event_62(&mut self) {
+        self.sonic_start = Some(self.tick_count);
+    }
+
     /// `Warden.doHurtTarget(ServerLevel, Entity)` (javap pc 0-32,
     /// verbatim): the `broadcastEntityEvent(this, 4)` pc 0-5 the
     /// melee-swing event serves (the client arm the
@@ -3635,6 +3663,12 @@ impl WardenMob {
         self.attack_cooldown = WARDEN_SONIC_DURATION_TICKS;
         self.sonic_sound_delay = WARDEN_SONIC_SOUND_DELAY_TICKS;
         self.sonic_active = true;
+        // pc 35-41: the broadcastEntityEvent(this, (byte)62) the
+        // charge animation arms — the fused singleplayer frame the
+        // client arm (handle_entity_event_62) the same tick banks,
+        // the playSound the pc 42-51 charge voice speaks (the
+        // caller's own charge_started pass serves)
+        self.handle_entity_event_62();
         out.charge_started = true;
         out
     }
@@ -10176,6 +10210,15 @@ mod tests {
             "the 34l the SOUND_DELAY the start banks"
         );
         assert!(warden.sonic_active, "the behavior the start arms");
+        // THE BROADCAST-62'S OWN ARM (javap `SonicBoom.start` pc 35-41
+        // + `Warden.handleEntityEvent` case 62 pc 47-55 — the fused
+        // singleplayer frame the same tick banks, the animation start
+        // the start-tick the state keeps)
+        assert_eq!(
+            warden.sonic_start,
+            Some(warden.tick_count),
+            "the broadcast-62 the charge start banks"
+        );
         // THE SAME-TICK SWING REFUSAL (the window the start arms —
         // the melee's absent gate the standing window reads)
         let melee = warden.fight_lane(Some((11.0, 32.0, 3.5)), true, true);
@@ -10246,6 +10289,52 @@ mod tests {
         }
         let melee = warden.fight_lane(Some((11.0, 32.0, 3.5)), true, true);
         assert!(melee.landed, "the expired window the swing lifts");
+    }
+
+    /// THE SONIC ANIMATION'S OWN CLOCK (javap `Warden
+    /// .handleEntityEvent` case 62 — the
+    /// `sonicBoomAnimationState.start(tickCount)` the fresh body the
+    /// None keeps, the charge the Some banks, the elapsed the
+    /// start-tick difference answers — the AnimationState the stop
+    /// call NEVER carries, the stale start the definition's own 3.0s
+    /// the past-end walk the rest zeros wears).
+    #[test]
+    fn the_sonic_charge_the_animation_clock_keeps() {
+        let mut warden = WardenMob::new(11, 10.0, 32.0, 3.5);
+        // THE FRESH BODY (the JVM init — the None the never-armed
+        // state keeps)
+        assert_eq!(
+            warden.sonic_start, None,
+            "the fresh body the charge never banks"
+        );
+        // THE EVENT-62 WALK (javap pc 41-58, verbatim — the direct
+        // dispatch the tick banks, the start the tickCount keeps)
+        warden.tick_count = 77;
+        warden.handle_entity_event_62();
+        assert_eq!(
+            warden.sonic_start,
+            Some(77),
+            "the event-62 the tickCount banks"
+        );
+        // THE ELAPSED DERIVATION (the render's own walk — the
+        // `tick_count - sonic_start` the getTimeAtTick answers, the
+        // *50/1000 fold the seconds speak: 103 - 77 = 26 ticks =
+        // 1.3s — the reach→pull segment the body's +47.5° thrust
+        // rides)
+        warden.tick_count = 103;
+        let start = warden.sonic_start.expect("the armed start the Some keeps");
+        let elapsed = ((warden.tick_count - start) * 50) as f32 / 1000.0;
+        assert_eq!(elapsed, 1.3, "the 26 ticks the 1.3s wears");
+        // THE STALE START'S OWN SURVIVAL (the AnimationState the stop
+        // call never carries — the re-arm the START the overwrites,
+        // the old tick the fresh window replaces)
+        warden.tick_count = 500;
+        warden.handle_entity_event_62();
+        assert_eq!(
+            warden.sonic_start,
+            Some(500),
+            "the re-armed event-62 the fresh tick banks"
+        );
     }
 
     /// THE SONIC START'S OWN REFUSALS (javap `SonicBoom` — the
