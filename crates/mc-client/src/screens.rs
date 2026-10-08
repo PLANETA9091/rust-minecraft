@@ -23474,7 +23474,228 @@ impl App {
             }
             return;
         }
+        // THE OFFLINE DISPATCH (the integrated server's own lane — the
+        // singleplayer world the local authority serves: the `/<word>`
+        // body the command walk runs, the plain text the chat history
+        // keeps)
+        if let Some(command) = normalized.strip_prefix('/') {
+            self.run_local_command(command);
+            return;
+        }
         self.push_chat_message(normalized);
+    }
+
+    /// THE OFFLINE COMMAND WALK (the singleplayer's integrated server
+    /// dispatch the client's offline world speaks — the wire session
+    /// the SendChatCommand lane carries above, the offline lane the
+    /// commands the local authority runs): the parse the brigadier
+    /// walk shapes — the literal, the args, the whitespace split the
+    /// StringReader's word consumption keeps — and the feedback the
+    /// `commands.*` lang keys wear (the translatable walk the
+    /// en_us table answers).
+    pub fn run_local_command(&mut self, command: &str) {
+        let tokens: Vec<&str> = command.split_whitespace().collect();
+        match tokens.as_slice() {
+            // THE GAMEMODE LITERAL (javap GameModeCommand — the
+            // `literal("gamemode")` node the GameModeArgument carries:
+            // the VALUES array the four GameTypes speak, the parse the
+            // byName walk keeps — the exact lowercase words the enum
+            // names wear). The UNCHANGED mode the setGameMode's false
+            // return the silence keeps — the feedback the changed mode
+            // alone earns.
+            ["gamemode", word] => {
+                let Some(mode) = Self::parse_game_mode_word(word) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                if mode != self.game_mode {
+                    // THE OFFLINE APPLY (the apply_gamemode_hovered's
+                    // own seam — the previous bank, the mode bank, the
+                    // abilities re-grant the updatePlayerAbilities walk
+                    // owns)
+                    self.previous_game_mode = Some(self.game_mode);
+                    self.game_mode = mode;
+                    self.abilities_regrant(mode);
+                    // THE SELF FEEDBACK (javap GameModeCommand's
+                    // sendSuccess — commands.gamemode.success.self the
+                    // `gameType.getDisplayName()` arg rides, the
+                    // name_key the lang table renders)
+                    let display = tr(mode.name_key()).unwrap_or(mode.name_key());
+                    self.push_chat_message(format_positional(
+                        tr("commands.gamemode.success.self")
+                            .unwrap_or("Set own game mode to %s"),
+                        &[display],
+                    ));
+                }
+            }
+            // THE TP LITERAL (javap TeleportCommand — the
+            // `literal("tp")` the `literal("teleport")` alias shares,
+            // the Vec3Argument the three doubles parse, the
+            // formatDouble the `String.format(Locale.ROOT, "%f", d)`
+            // six decimals keeps). The plain-number form the honest
+            // vocabulary carries — the `~` relative form the wire's
+            // own lane never served (the offline walk the absence
+            // documents, the error the non-number parse arms).
+            ["tp" | "teleport", xs, ys, zs] => {
+                let Some((x, y, z)) = Self::parse_triple(xs, ys, zs) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                // THE BODY RE-ANCHOR (the respawn's own pose-write seam
+                // — the teleport the entity's position moves, the
+                // momentum and the fall the fresh land resets)
+                let Some(b) = self.body.as_mut() else {
+                    return; // the no-body boot the teleport never serves
+                };
+                b.x = x;
+                b.y = y;
+                b.z = z;
+                b.vx = 0.0;
+                b.vy = 0.0;
+                b.vz = 0.0;
+                b.fall_distance = 0.0;
+                b.fall_event = None;
+                // THE FEEDBACK (commands.teleport.success.location.
+                // single — the entity display name + the three
+                // formatDouble coords the lambda's arg order wears)
+                let msg = format_positional(
+                    tr("commands.teleport.success.location.single")
+                        .unwrap_or("Teleported %s to %s, %s, %s"),
+                    &[
+                        PLAYER_NAME,
+                        &format!("{:.6}", x),
+                        &format!("{:.6}", y),
+                        &format!("{:.6}", z),
+                    ],
+                );
+                self.push_chat_message(msg);
+            }
+            // THE GIVE LITERAL (javap GiveCommand — the item argument
+            // the registry's own name vocabulary resolves, the count
+            // the IntegerArgumentType.integer(1) floor keeps, the
+            // grant the Inventory.add walk serves: the SAME-item top-up
+            // first, the empty slots second, the 64 the maxStackSize
+            // cap keeps)
+            ["give", rest @ ..] => {
+                // the arg shape the brigadier walk keeps — one arg the
+                // count-1 default, two args the explicit count, the
+                // extra words the parse failure
+                let (name, count): (&str, Option<&str>) = match rest {
+                    [name] => (name, None),
+                    [name, c] => (name, Some(c)),
+                    _ => {
+                        self.push_local_command_error();
+                        return;
+                    }
+                };
+                let Some(id) = Self::parse_item_id(name) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                let requested: i64 = match count {
+                    None => 1,
+                    Some(c) => match c.parse::<i64>() {
+                        Ok(n) if n >= 1 => n,
+                        _ => {
+                            self.push_local_command_error();
+                            return;
+                        }
+                    },
+                };
+                // THE INVENTORY ADD WALK (the vanilla add's own two
+                // passes — the merge the same-id partial stacks top up,
+                // the empties the fresh stacks fill, the 64 the cap)
+                let mut remaining = requested;
+                for slot in self.hotbar_slots.iter_mut() {
+                    if remaining == 0 {
+                        break;
+                    }
+                    let (sid, scount) = *slot;
+                    if sid == id && scount > 0 && scount < 64 {
+                        let take = 64 - scount;
+                        let add = take.min(remaining as i32);
+                        slot.1 = scount + add;
+                        remaining -= add as i64;
+                    }
+                }
+                for slot in self.hotbar_slots.iter_mut() {
+                    if remaining == 0 {
+                        break;
+                    }
+                    if *slot == (0, 0) {
+                        let add = 64.min(remaining);
+                        *slot = (id, add as i32);
+                        remaining -= add as i64;
+                    }
+                }
+                let granted = requested - remaining;
+                if granted > 0 {
+                    // THE FEEDBACK (javap GiveCommand's lambda —
+                    // commands.give.success.single the (count, item
+                    // display name, target name) arg order wears)
+                    let display = self.held_item_display_name(id);
+                    let msg = format_positional(
+                        tr("commands.give.success.single").unwrap_or("Gave %s %s to %s"),
+                        &[&granted.to_string(), &display, PLAYER_NAME],
+                    );
+                    self.push_chat_message(msg);
+                }
+                // the granted-zero the silence keeps — the no-room
+                // world the drop lane never speaks offline (the honest
+                // absence the vanilla's floor drop stands in for)
+            }
+            _ => {
+                // THE UNKNOWN DISPATCH (the brigadier parse failure the
+                // client-side submit answers — command.unknown.command
+                // the lang key wears, the RED the ChatFormatting error
+                // renders)
+                self.push_local_command_error();
+            }
+        }
+    }
+
+    /// THE GAME MODE WORD'S OWN PARSE (GameModeArgument's byName walk
+    /// — the exact lowercase names the GameType enum carries, the
+    /// unknown word the ERROR_INVALID verdict keeps).
+    fn parse_game_mode_word(word: &str) -> Option<GameMode> {
+        match word {
+            "survival" => Some(GameMode::Survival),
+            "creative" => Some(GameMode::Creative),
+            "adventure" => Some(GameMode::Adventure),
+            "spectator" => Some(GameMode::Spectator),
+            _ => None,
+        }
+    }
+
+    /// THE VEC3'S OWN PARSE (the Vec3Argument's plain-number form —
+    /// the three doubles the whitespace split carries, the finite
+    /// verdict the NaN/Inf rejection keeps, the `~` relative form the
+    /// honest absence documents).
+    fn parse_triple(xs: &str, ys: &str, zs: &str) -> Option<(f64, f64, f64)> {
+        let (x, y, z) = (xs.parse::<f64>().ok()?, ys.parse::<f64>().ok()?, zs.parse::<f64>().ok()?);
+        if x.is_finite() && y.is_finite() && z.is_finite() {
+            Some((x, y, z))
+        } else {
+            None
+        }
+    }
+
+    /// THE ITEM ARGUMENT'S OWN RESOLUTION (the ItemArgument's
+    /// `minecraft:<name>` id walk — the namespace prefix the strip
+    /// keeps, the registry name the wire order's own vocabulary
+    /// answers, the unknown name the honest None keeps).
+    fn parse_item_id(name: &str) -> Option<i32> {
+        let name = name.strip_prefix("minecraft:").unwrap_or(name);
+        mc_registry::item_id_by_name(name)
+    }
+
+    /// THE RED ERROR (the command.unknown.command key the lang table
+    /// renders, the §c the ChatFormatting RED prefix rides — the chat
+    /// draw's own § walk colors it).
+    fn push_local_command_error(&mut self) {
+        let msg = tr("command.unknown.command")
+            .unwrap_or("Unknown or incomplete command. See below for error");
+        self.push_chat_message(format!("\u{a7}c{msg}"));
     }
 
     /// THE RECENT DEQUE (javap ChatComponent.addRecentChat — the
@@ -42642,6 +42863,165 @@ mod tests {
         app.on_number_key(0);
         app.update();
         assert_eq!(app.held_name_timer, HELD_NAME_POP_TICKS);
+    }
+
+    #[test]
+    fn the_offline_command_the_gamemode_the_self_word_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert_eq!(app.game_mode, GameMode::Survival);
+        // THE APPLY (the GameModeCommand walk — the mode the local
+        // authority banks, the previous the change alone earns, the
+        // abilities the re-grant owns)
+        app.chat_open = true;
+        app.chat_input = "/gamemode creative".into();
+        app.on_chat_submit();
+        assert_eq!(app.game_mode, GameMode::Creative);
+        assert_eq!(app.previous_game_mode, Some(GameMode::Survival));
+        // THE FEEDBACK (commands.gamemode.success.self the
+        // gameMode.creative display arg wears)
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set own game mode to Creative Mode"),
+        );
+        assert!(!app.chat_open, "the submit the chat closes");
+        assert!(app.recent_chat.last().map(String::as_str) == Some("/gamemode creative"));
+        // THE UNCHANGED MODE the silence keeps (the setGameMode false
+        // return — no second message, the previous bank unmoved)
+        app.chat_open = true;
+        app.chat_input = "/gamemode creative".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set own game mode to Creative Mode"),
+        );
+        assert_eq!(app.previous_game_mode, Some(GameMode::Survival));
+        // THE INVALID WORD the error wears (the GameModeArgument
+        // ERROR_INVALID verdict — the red-prefixed unknown command)
+        app.chat_open = true;
+        app.chat_input = "/gamemode xyz".into();
+        app.on_chat_submit();
+        let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+        assert!(err.starts_with("\u{a7}c"), "the error the RED prefix rides: {err:?}");
+        assert!(err.contains("Unknown or incomplete command"));
+        // the plain (non-command) text the history keeps — the dispatch
+        // the slash-less message never touches
+        app.chat_open = true;
+        app.chat_input = "hello world".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("hello world"),
+        );
+    }
+
+    #[test]
+    fn the_offline_command_the_tp_the_body_reanchor_keeps() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.body = Some(crate::body::PlayerBody::new(8.5, 5.0, 8.5, 180.0, 0.0));
+        // the fall the teleport resets (the fresh land the zero keeps)
+        app.body.as_mut().unwrap().fall_distance = 12.0;
+        app.chat_open = true;
+        app.chat_input = "/tp 100.5 64 -200".into();
+        app.on_chat_submit();
+        let b = app.body.as_ref().unwrap();
+        assert_eq!((b.x, b.y, b.z), (100.5, 64.0, -200.0));
+        assert_eq!(b.fall_distance, 0.0, "the fresh land the fall resets");
+        assert!(b.fall_event.is_none());
+        // THE FEEDBACK (the formatDouble %f law — the six decimals the
+        // Locale.ROOT format keeps)
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Teleported mc2rs to 100.500000, 64.000000, -200.000000"),
+        );
+        // THE ALIAS (the literal("teleport") the same walk wears)
+        app.chat_open = true;
+        app.chat_input = "/teleport 0 70 0".into();
+        app.on_chat_submit();
+        let b = app.body.as_ref().unwrap();
+        assert_eq!((b.x, b.y, b.z), (0.0, 70.0, 0.0));
+        // THE BAD PARSE the error arms (the two-arg form the three the
+        // law keeps — the non-number the finite verdict rejects)
+        app.chat_open = true;
+        app.chat_input = "/tp 100 64".into();
+        app.on_chat_submit();
+        assert!(app.chat_messages.last().map(|(m, _)| m.starts_with("\u{a7}c")) == Some(true));
+        // the momentum the re-anchor zeroes (the teleport the velocity
+        // the fresh body keeps)
+        app.chat_open = true;
+        app.chat_input = "/tp 5 65 5".into();
+        app.on_chat_submit();
+        let b = app.body.as_ref().unwrap();
+        assert_eq!((b.vx, b.vy, b.vz), (0.0, 0.0, 0.0));
+    }
+
+    #[test]
+    fn the_offline_command_the_give_the_inventory_add_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert_eq!(app.hotbar_slots, [(0, 0); 9]);
+        // THE GRANT (the Inventory.add walk — the first empty slot the
+        // fresh stack fills)
+        app.chat_open = true;
+        app.chat_input = "/give dirt 32".into();
+        app.on_chat_submit();
+        assert_eq!(app.hotbar_slots[0], (55, 32));
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gave 32 Dirt to mc2rs"),
+        );
+        // THE DEFAULT COUNT (the missing arg the 1 the integer
+        // argument's floor keeps)
+        app.chat_open = true;
+        app.chat_input = "/give diamond_sword".into();
+        app.on_chat_submit();
+        assert_eq!(app.hotbar_slots[1], (964, 1));
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gave 1 Diamond Sword to mc2rs"),
+        );
+        // THE NAMESPACE FORM (the minecraft: prefix the strip keeps)
+        app.chat_open = true;
+        app.chat_input = "/give minecraft:cobblestone 3".into();
+        app.on_chat_submit();
+        assert_eq!(app.hotbar_slots[2], (62, 3));
+        // THE TOP-UP PASS (the same-id partial stack the merge fills —
+        // the 64 the maxStackSize cap keeps, the remainder the fresh
+        // slot carries)
+        app.chat_open = true;
+        app.chat_input = "/give dirt 40".into();
+        app.on_chat_submit();
+        assert_eq!(app.hotbar_slots[0], (55, 64), "the partial the merge tops up");
+        assert_eq!(app.hotbar_slots[3], (55, 8), "the remainder the fresh stack keeps");
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Gave 40 Dirt to mc2rs"),
+        );
+        // THE UNKNOWN ITEM the error wears (the honest None the
+        // vocabulary keeps)
+        app.chat_open = true;
+        app.chat_input = "/give unobtainium 1".into();
+        app.on_chat_submit();
+        assert!(app.chat_messages.last().map(|(m, _)| m.starts_with("\u{a7}c")) == Some(true));
+        // THE COUNT FLOOR (the integer argument's 1 — the zero the
+        // parse rejects)
+        app.chat_open = true;
+        app.chat_input = "/give dirt 0".into();
+        app.on_chat_submit();
+        assert!(app.chat_messages.last().map(|(m, _)| m.starts_with("\u{a7}c")) == Some(true));
+        // THE NO-ROOM the silence keeps (the full row the grant never
+        // earns — the vanilla floor-drop the offline world lacks)
+        let mut full = [(0, 0); 9];
+        for (i, slot) in full.iter_mut().enumerate() {
+            *slot = (62 + i as i32, 64);
+        }
+        app.live_hotbar_updated(full);
+        let before = app.chat_messages.len();
+        app.chat_open = true;
+        app.chat_input = "/give dirt 10".into();
+        app.on_chat_submit();
+        assert_eq!(app.chat_messages.len(), before, "the no-room the silence keeps");
     }
 
     #[test]

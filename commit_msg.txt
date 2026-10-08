@@ -1,55 +1,51 @@
-v0.3.640: the held name the pop the fade the rarity wears (autopush-580)
+v0.3.641: the offline command the dispatch the give wears (autopush-581)
 
-the HUD's own HELD-ITEM NAME lane the vanilla Hud keeps (javap
-`Hud.toolHighlightTimer` / `lastToolHighlight` / `extractSelectedItemName`
-the 26.2 jar's walk, client sha1 2dc72797acbc1b63fc16a11c4ac393605f453754):
+the OFFLINE COMMAND WALK the interactivity queue's chat lane serves —
+the singleplayer's integrated-server dispatch the client's offline
+world speaks (the wire session the SendChatCommand lane carries
+unchanged, the offline `/` body the local authority now RUNS — the
+push_chat_message echo the round retires):
 
-- the TICK law (Hud.update pcs 88-213): the selected stack read, the
-  EMPTY arm `toolHighlightTimer = 0` (pcs 102-114), the SAME-item arm
-  (the `is(getItem())` + `getHoverName().equals()` pair pcs 117-157)
-  the `> 0` gate one tick a step (pcs 191-205), the CHANGE arm the
-  `(int)(40.0d * notificationDisplayTime)` store (pcs 160-185 — the
-  default 1.0 the fresh install keeps, the 40 the HELD_NAME_POP_TICKS
-  constant carries), the `lastToolHighlight = selected` copy the tail
-  (pcs 208-210) — the PURE compare law the selection events never
-  hook: the number-key / scroll / pick-block lanes the same state the
-  honest read keeps, the `minecraft.player != null` gate the walk's
-  pc 85 branch speaks (the menu boot the silence wears).
-- the RENDER law (extractSelectedItemName pcs 0-162): the timer > 0
-  + non-empty pair opens, the hover name the rarity's ChatFormatting
-  style wears (Rarity.class's static init: COMMON WHITE / UNCOMMON
-  YELLOW / RARE AQUA / EPIC LIGHT_PURPLE, resolved through
-  TextColor.fromLegacyFormat's own switch — the 26.2 NAMED palette:
-  0xFFFFFF / 0xFFFF55 / 0x55FFFF / 0xFF55FF), the CUSTOM_NAME italic
-  branch the no-custom-names vocabulary never arms, the centered
-  `(w - textWidth) / 2` x walk, the `h - 59` y the `!canHurtPlayer()`
-  +14 creative shift lifts (the audited isSurvival fold), the
-  `(int)(timer * 256.0f / 10.0f)` alpha the 255 clamp carries (the
-  full window + the ten-step fade), the textWithBackdrop's own fill
-  the backgroundForChatOnly default gates OFF (Options.
-  getBackgroundOpacity the 0.0f arg keeps — the shadowed text the
-  law's tail renders), the SPECTATOR acmp the extract lane skips.
-- the RARITY table (generated/item_rarity.rs, 115 rows): the
-  Items.class static-init walk — each `Item$Properties.rarity(...)`
-  call paired with its registration statement (the putstatic
-  boundary, the ItemIds/BlockItemIds key window), the lambda lanes
-  mapped through BootstrapMethods (lambda$static$21 = EPIC rides
-  LIGHT, lambda$static$30 = UNCOMMON rides SNIFFER_EGG) — the
-  missing rows the Item.Properties field-init COMMON default keeps,
-  never a guessed level; `item_rarity` / `item_rarity_color` the
-  accessors the HUD walk consumes.
-- the hover-name resolution: the item's OWN translation key the
-  en_us table renders — the pure items `item.minecraft.<name>`
-  ("Diamond Sword"), the block items `BlockItem`'s
-  `block.minecraft.<name>` ("Dirt") — the two key lanes the
-  registry name never shares.
-- the interactivity queue's HUD lane the round serves: the slot
-  swap the player presses the name pop paints, the vanilla look.
+- the GAMEMODE literal (javap GameModeCommand + GameModeArgument the
+  26.2 jar): the GameModeArgument VALUES the four GameTypes speak,
+  the parse the exact lowercase byName walk keeps, the apply the
+  apply_gamemode_hovered's own seam wears (the previous bank + the
+  mode + the abilities re-grant the updatePlayerAbilities walk
+  owns), the UNCHANGED mode the setGameMode's false return the
+  silence keeps, the feedback commands.gamemode.success.self the
+  `gameType.getDisplayName()` arg rides (the gameMode.creative key
+  the lang table renders — "Set own game mode to Creative Mode").
+- the TP literal (javap TeleportCommand): the `literal("tp")` the
+  `literal("teleport")` alias shares, the Vec3Argument the three
+  doubles parse (the finite verdict the NaN/Inf rejection keeps),
+  the body re-anchor the respawn's own pose-write seam wears (the
+  position + the momentum + the fall the fresh land resets), the
+  feedback commands.teleport.success.location.single the
+  formatDouble `String.format(Locale.ROOT, "%f", d)` six decimals
+  keeps ("Teleported mc2rs to 100.500000, 64.000000, -200.000000").
+- the GIVE literal (javap GiveCommand): the item argument the
+  registry's own item_id_by_name vocabulary resolves (the
+  `minecraft:` prefix the strip keeps), the count the integer
+  argument's 1 floor keeps (the missing arg the 1 default), the
+  grant the Inventory.add walk serves — the SAME-id partial stacks
+  the merge tops up first, the empty slots the fresh stacks fill
+  second, the 64 the maxStackSize cap keeps, the granted-zero the
+  no-room silence keeps (the vanilla floor-drop the offline world
+  lacks), the feedback commands.give.success.single the (count,
+  item display name, target name) arg order the lambda's own walk
+  carries ("Gave 32 Dirt to mc2rs").
+- the UNKNOWN dispatch: command.unknown.command the lang key wears,
+  the §c the ChatFormatting RED prefix rides — the chat draw's own
+  § walk colors the error.
+- the TIME literal the round never serves: the 26.2 clock system
+  (WorldClock + ClockTimeMarker the TimeCommand's own refactor
+  carries) the deeper lane a future round names — the honest
+  absence the unknown-dispatch error documents, never a guessed
+  setDayTime law.
 
-verified: CARGO_INCREMENTAL=0 cargo test --workspace 2125 passed /
-0 failed / 21 ignored (baseline 2123 + 2 — the registry's rarity
-law pin + the client's pop/decay/swap walk pin); goldens 14/14
-PASS rms 0.000 (NO regeneration — the offline hotbar row the
-chrome-only shape keeps, the timer the zero the empty arm stores,
-the name the never-armed draw the goldens never name); build
+verified: CARGO_INCREMENTAL=0 cargo test --workspace 2128 passed /
+0 failed / 21 ignored (baseline 2125 + 3 — the gamemode self-word
+pin, the tp re-anchor pin, the give inventory-add pin); goldens
+14/14 PASS rms 0.000 (NO regeneration — the command walk the submit
+lane alone runs, the render path the round never names); build
 warnings 12 = 12 (the baseline the round never grows).
