@@ -23644,6 +23644,192 @@ impl App {
                 // world the drop lane never speaks offline (the honest
                 // absence the vanilla's floor drop stands in for)
             }
+            // THE TIME LITERAL (javap TimeCommand's 26.2 clock
+            // refactor — the `literal("time")` node the
+            // `addClockNodes` walk builds: the `set <time>` the
+            // TimeArgument parse wears, the `timemarker` lane the
+            // clock's own marker registry the offline vocabulary
+            // never carries, the `add`/`query`/`pause`/`resume`/`rate`
+            // siblings the same builder serves). The DEFAULT CLOCK
+            // lane the `getDefaultClock` walk answers — the
+            // dimension's `defaultClock()` Optional the overworld
+            // fills (`WorldClocks.OVERWORLD` = the
+            // `minecraft:overworld` registered name the feedback
+            // args carry). The `commands.time.set` bare key the
+            // 26.2 bytecode never speaks — the
+            // `commands.time.set.absolute` ("Set %s to %s tick(s)")
+            // the `set` AND the `add` lambdas both wear, the
+            // `query` the `commands.time.query.absolute` the
+            // `query gametime` the `commands.time.query.gametime`
+            // sibling answers.
+            ["time", "set", word] => {
+                // THE ZERO FLOOR (the `TimeArgument.time()` register
+                // walk — the negatives the tick_count_too_low verdict
+                // rejects)
+                let Some(ticks) = Self::parse_time_arg(word, 0) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                // THE CLOCK SET (the wire's own day seam — the
+                // `day_time_base + frame` read the server's day NOW
+                // speaks, the base the new total the frame offset
+                // answers; the u64 clock the below-zero wrap the
+                // clamp keeps)
+                self.day_time_base = (ticks as i64 - self.frame as i64).max(0) as u64;
+                // THE FEEDBACK (lambda$setTotalTicks$0 — the clock's
+                // registered name + the ticks the two-arg order wears)
+                let total = self.day_time_base + self.frame;
+                let msg = format_positional(
+                    tr("commands.time.set.absolute")
+                        .unwrap_or("Set %s to %s tick(s)"),
+                    &["minecraft:overworld", &total.to_string()],
+                );
+                self.push_chat_message(msg);
+            }
+            ["time", "add", word] => {
+                // THE INT-MIN FLOOR (the `time(-2147483648)` register
+                // walk — the negative adds the rewind the lane allows)
+                let Some(ticks) = Self::parse_time_arg(word, i64::MIN) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                // THE CLOCK ADD (the vanilla `setDayTime(getDayTime()
+                // + amount)` walk — the u64 clock the negative rewind
+                // the clamp-at-zero the wrap never speaks)
+                let total_i64 = (self.day_time_base + self.frame) as i64;
+                let new_total = (total_i64.saturating_add(ticks)).max(0);
+                self.day_time_base = (new_total - self.frame as i64).max(0) as u64;
+                // THE FEEDBACK (lambda$addTime$0 — the SAME
+                // set.absolute key the NEW total the arg carries)
+                let total = self.day_time_base + self.frame;
+                let msg = format_positional(
+                    tr("commands.time.set.absolute")
+                        .unwrap_or("Set %s to %s tick(s)"),
+                    &["minecraft:overworld", &total.to_string()],
+                );
+                self.push_chat_message(msg);
+            }
+            ["time", "query"] => {
+                // THE BARE QUERY (the default clock's own read — the
+                // `commands.time.query.absolute` the clock name + the
+                // ticks the two args wear)
+                let total = self.day_time_base + self.frame;
+                let msg = format_positional(
+                    tr("commands.time.query.absolute")
+                        .unwrap_or("Clock %s is at %s tick(s)"),
+                    &["minecraft:overworld", &total.to_string()],
+                );
+                self.push_chat_message(msg);
+            }
+            ["time", "query", "gametime"] => {
+                // THE GAMETIME QUERY (the `commands.time.query.gametime`
+                // — the accumulated clock the client's single
+                // day_time lane serves; the separate gameTime register
+                // the offline world the same clock the honest fold
+                // keeps)
+                let total = self.day_time_base + self.frame;
+                let msg = format_positional(
+                    tr("commands.time.query.gametime")
+                        .unwrap_or("The game time is %s tick(s)"),
+                    &[&total.to_string()],
+                );
+                self.push_chat_message(msg);
+            }
+            // THE WEATHER LITERAL (javap WeatherCommand — the
+            // `literal("weather")` node the three weather words wear,
+            // each the `duration` TimeArgument.time(1) sibling the
+            // no-arg form the DEFAULT_TIME lane answers). The OFFLINE
+            // APPLY the active world's rain/thunder levels the
+            // weather render + sound lanes read — the level pair the
+            // vanilla's own walk carries (clear = the dry sky, rain =
+            // the rain level alone, thunder = the rain AND the
+            // thunder both armed). The DURATION the parse accepts —
+            // the weather scheduler (the RAIN_DELAY /
+            // RAIN_DURATION IntProvider cycle the ServerLevel owns)
+            // the offline world the honest absence never carries,
+            // the levels the set-and-stay the command's own walk
+            // banks.
+            ["weather", word] => {
+                // THE PARSE-FIRST LAW (the brigadier walk — the whole
+                // command the parse failure rejects BEFORE the
+                // execution the apply never reaches)
+                let Some((rain, thunder)) = Self::weather_levels(word) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                self.set_offline_weather(rain, thunder);
+                // THE FEEDBACK (the set* lambdas' own translatables —
+                // the arg-less keys the plain wording wears)
+                let key = if rain > 0.0 {
+                    if thunder > 0.0 {
+                        "commands.weather.set.thunder"
+                    } else {
+                        "commands.weather.set.rain"
+                    }
+                } else {
+                    "commands.weather.set.clear"
+                };
+                let msg = tr(key)
+                    .unwrap_or(match key {
+                        "commands.weather.set.rain" => "Set the weather to rain",
+                        "commands.weather.set.thunder" => "Set the weather to rain & thunder",
+                        _ => "Set the weather to clear",
+                    })
+                    .to_string();
+                self.push_chat_message(msg);
+            }
+            ["weather", word, duration] => {
+                let Some((rain, thunder)) = Self::weather_levels(word) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                // THE DURATION FLOOR (the TimeArgument.time(1) — the
+                // below-one the parse failure keeps)
+                if Self::parse_time_arg(duration, 1).is_none() {
+                    self.push_local_command_error();
+                    return;
+                }
+                self.set_offline_weather(rain, thunder);
+                // THE FEEDBACK (the same translatables the no-arg
+                // form wears — the duration the wording never
+                // changes)
+                let key = if rain > 0.0 {
+                    if thunder > 0.0 {
+                        "commands.weather.set.thunder"
+                    } else {
+                        "commands.weather.set.rain"
+                    }
+                } else {
+                    "commands.weather.set.clear"
+                };
+                let msg = tr(key)
+                    .unwrap_or(match key {
+                        "commands.weather.set.rain" => "Set the weather to rain",
+                        "commands.weather.set.thunder" => "Set the weather to rain & thunder",
+                        _ => "Set the weather to clear",
+                    })
+                    .to_string();
+                self.push_chat_message(msg);
+            }
+            // THE KILL LITERAL (javap KillCommand — the no-arg
+            // executes the SELF collection rides, the `targets`
+            // EntityArgument lane the selector vocabulary the offline
+            // walk never carries). THE KILL WALK (LivingEntity.kill's
+            // own body — `hurt(level, damageSources().genericKill(),
+            // Float.MAX_VALUE)` the bytecode speaks: the genericKill
+            // source the armor/invulnerability gates bypass, the
+            // actuallyHurt path the full damage serves, the death
+            // screen the health-floor tail arms). The FEEDBACK
+            // (commands.kill.success.single the killed entity's
+            // display name wears).
+            ["kill"] => {
+                self.actually_hurt(f32::MAX);
+                let msg = format_positional(
+                    tr("commands.kill.success.single").unwrap_or("Killed %s"),
+                    &[PLAYER_NAME],
+                );
+                self.push_chat_message(msg);
+            }
             _ => {
                 // THE UNKNOWN DISPATCH (the brigadier parse failure the
                 // client-side submit answers — command.unknown.command
@@ -23687,6 +23873,79 @@ impl App {
     fn parse_item_id(name: &str) -> Option<i32> {
         let name = name.strip_prefix("minecraft:").unwrap_or(name);
         mc_registry::item_id_by_name(name)
+    }
+
+    /// THE TIME ARGUMENT'S OWN PARSE (javap TimeArgument.parse — the
+    /// float head the StringReader.readFloat consumes, the optional
+    /// unit word the readUnquotedString rides, the UNITS map the
+    /// static init fills: `d`=24000, `s`=20, `t`=1 — the bare number
+    /// the ticks the getOrDefault(1) keeps — and the `Math.round` the
+    /// float-to-ticks fold wears). The FLOOR the registered minimum
+    /// speaks (the `set` lane's `TimeArgument.time()` the zero floor
+    /// carries, the `add` lane's `time(-2147483648)` the negatives
+    /// allows, the weather `duration`'s `time(1)` the one-tick floor
+    /// wears) — the below-floor verdict the
+    /// `argument.time.tick_count_too_low` exception the parse throws,
+    /// the client's generic red the offline lane renders.
+    fn parse_time_arg(word: &str, min: i64) -> Option<i64> {
+        // THE UNIT SPLIT (the parse's own two reads — the float head,
+        // the trailing unit letters the remaining reader carries)
+        let split = word.len()
+            - word
+                .chars()
+                .rev()
+                .take_while(|c| c.is_ascii_alphabetic())
+                .map(|c| c.len_utf8())
+                .sum::<usize>();
+        let (head, unit) = word.split_at(split);
+        let mult: i64 = match unit {
+            "" | "t" => 1,
+            "s" => 20,
+            "d" => 24000,
+            // THE INVALID UNIT (the UNITS map's miss — the
+            // `argument.time.invalid_unit` exception the parse throws)
+            _ => return None,
+        };
+        let value: f32 = head.parse().ok()?;
+        if !value.is_finite() {
+            return None;
+        }
+        let ticks = (value * mult as f32).round() as i64;
+        if ticks < min {
+            return None;
+        }
+        Some(ticks)
+    }
+
+    /// THE WEATHER WORD'S OWN RESOLUTION (javap WeatherCommand's
+    /// `setClear`/`setRain`/`setThunder` walks — the literal words the
+    /// register's three branches carry, the level pair the vanilla's
+    /// own weather walk banks: the clear the dry sky wears, the rain
+    /// the rain level alone arms, the thunder the rain AND the thunder
+    /// both speak — the unknown word the parse failure keeps).
+    fn weather_levels(word: &str) -> Option<(f32, f32)> {
+        match word {
+            "clear" => Some((0.0, 0.0)),
+            "rain" => Some((1.0, 0.0)),
+            "thunder" => Some((1.0, 1.0)),
+            _ => None,
+        }
+    }
+
+    /// THE OFFLINE WEATHER APPLY (the active world's own level pair —
+    /// the `rain_level`/`thunder_level` fields the weather render
+    /// (`weather::extract_columns`) and the rain-sound clock
+    /// (`ClientLevel.rainSoundTime`'s raining gate) read: the set the
+    /// RAIN the visible columns and the splash voices serve). The
+    /// weather CYCLE (the RAIN_DELAY/RAIN_DURATION IntProvider
+    /// scheduler the ServerLevel ticks) the offline world the honest
+    /// absence never carries — the levels the set-and-stay the
+    /// command's own walk banks.
+    fn set_offline_weather(&mut self, rain: f32, thunder: f32) {
+        if let Some(w) = self.active_world_mut() {
+            w.rain_level = rain;
+            w.thunder_level = thunder;
+        }
     }
 
     /// THE RED ERROR (the command.unknown.command key the lang table
@@ -26766,8 +27025,9 @@ impl App {
 
     /// The dig lane's mutable world accessor (the ACTIVE world's own
     /// voxels — the machine reads them either way; the writes ride the
-    /// apply_locally flag the entry lanes set).
-    #[expect(dead_code)] // the accessor the wire-entry lanes arm — the ledger keeps
+    /// apply_locally flag the entry lanes set). The WEATHER lane the
+    /// accessor's own command walk arms (the `/weather` literal the
+    /// offline dispatch speaks).
     fn active_world_mut(&mut self) -> Option<&mut crate::world::World> {
         if self.world_is_network {
             self.net_world.as_mut()
@@ -43022,6 +43282,189 @@ mod tests {
         app.chat_input = "/give dirt 10".into();
         app.on_chat_submit();
         assert_eq!(app.chat_messages.len(), before, "the no-room the silence keeps");
+    }
+
+    #[test]
+    fn the_offline_command_the_time_the_clock_set_absolute_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE SET (the TimeCommand's `set <time>` walk — the clock the
+        // new total banks, the frame offset the base answers)
+        app.chat_open = true;
+        app.chat_input = "/time set 6000".into();
+        app.on_chat_submit();
+        assert_eq!(app.day_time_base + app.frame, 6000);
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set minecraft:overworld to 6000 tick(s)"),
+        );
+        assert!(!app.chat_open, "the submit the chat closes");
+        // THE UNITS WALK (the TimeArgument's UNITS map — the `s` the
+        // x20 the `d` the x24000 the bare number the ticks keeps)
+        app.chat_open = true;
+        app.chat_input = "/time set 90s".into();
+        app.on_chat_submit();
+        assert_eq!(app.day_time_base + app.frame, 1800);
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set minecraft:overworld to 1800 tick(s)"),
+        );
+        app.chat_open = true;
+        app.chat_input = "/time set 3d".into();
+        app.on_chat_submit();
+        assert_eq!(app.day_time_base + app.frame, 72000);
+        // THE ADD (the same set.absolute key the NEW total the arg
+        // carries — the negative rewind the int-min floor allows)
+        app.chat_open = true;
+        app.chat_input = "/time add 1000".into();
+        app.on_chat_submit();
+        assert_eq!(app.day_time_base + app.frame, 73000);
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set minecraft:overworld to 73000 tick(s)"),
+        );
+        app.chat_open = true;
+        app.chat_input = "/time add -2000".into();
+        app.on_chat_submit();
+        assert_eq!(app.day_time_base + app.frame, 71000);
+        // THE QUERIES (the bare query the clock.absolute wording the
+        // gametime sibling the game-time lane wears)
+        app.chat_open = true;
+        app.chat_input = "/time query".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Clock minecraft:overworld is at 71000 tick(s)"),
+        );
+        app.chat_open = true;
+        app.chat_input = "/time query gametime".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("The game time is 71000 tick(s)"),
+        );
+        // THE PARSE FAILURES (the negative set the zero floor rejects,
+        // the invalid unit the UNITS map's miss keeps, the bare
+        // literal and the unknown query arg the dispatch's error
+        // render)
+        let ok = app.day_time_base + app.frame;
+        for bad in ["/time set -5", "/time set 5x", "/time", "/time query daytime"] {
+            app.chat_open = true;
+            app.chat_input = bad.into();
+            app.on_chat_submit();
+            let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+            assert!(err.starts_with("\u{a7}c"), "the {bad} the RED error rides: {err:?}");
+            assert_eq!(app.day_time_base + app.frame, ok, "the failure the clock unmoved keeps");
+        }
+    }
+
+    #[test]
+    fn the_offline_command_the_weather_the_levels_speak() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE DRY BOOT (the procedural scene the dry world keeps)
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!((w.rain_level, w.thunder_level), (0.0, 0.0));
+        // THE RAIN (the setRain walk — the rain level alone arms, the
+        // weather render lane the level pair reads)
+        app.chat_open = true;
+        app.chat_input = "/weather rain".into();
+        app.on_chat_submit();
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!((w.rain_level, w.thunder_level), (1.0, 0.0));
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set the weather to rain"),
+        );
+        assert!(!app.chat_open, "the submit the chat closes");
+        // THE THUNDER (the setThunder walk — the rain AND the thunder
+        // both armed, the `rain & thunder` wording the table speaks)
+        app.chat_open = true;
+        app.chat_input = "/weather thunder".into();
+        app.on_chat_submit();
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!((w.rain_level, w.thunder_level), (1.0, 1.0));
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set the weather to rain & thunder"),
+        );
+        // THE CLEAR (the setClear walk — the dry sky the zero pair
+        // wears)
+        app.chat_open = true;
+        app.chat_input = "/weather clear".into();
+        app.on_chat_submit();
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!((w.rain_level, w.thunder_level), (0.0, 0.0));
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Set the weather to clear"),
+        );
+        // THE DURATION FORM (the `duration` TimeArgument.time(1)
+        // sibling — the valid the same apply earns)
+        app.chat_open = true;
+        app.chat_input = "/weather rain 5000".into();
+        app.on_chat_submit();
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!((w.rain_level, w.thunder_level), (1.0, 0.0));
+        // THE PARSE-FIRST LAW (the unknown word AND the below-one
+        // duration the apply never reaches — the levels the failure
+        // unmoved keeps)
+        app.chat_open = true;
+        app.chat_input = "/weather xyz".into();
+        app.on_chat_submit();
+        let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+        assert!(err.starts_with("\u{a7}c"), "the error the RED prefix rides: {err:?}");
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!((w.rain_level, w.thunder_level), (1.0, 0.0), "the bad word the levels unmoved keeps");
+        app.chat_open = true;
+        app.chat_input = "/weather clear 0".into();
+        app.on_chat_submit();
+        let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+        assert!(err.starts_with("\u{a7}c"), "the zero duration the RED error rides: {err:?}");
+        let w = app.offline_world.as_ref().unwrap();
+        assert_eq!((w.rain_level, w.thunder_level), (1.0, 0.0), "the bad duration the levels unmoved keeps");
+    }
+
+    #[test]
+    fn the_offline_command_the_kill_the_death_screen_arms() {
+        let mut app = App::new(3);
+        app.enter_world();
+        assert!(!app.dead, "the fresh boot the alive body keeps");
+        // THE KILL (the LivingEntity.kill's genericKill walk — the
+        // Float.MAX the actuallyHurt serves, the health floor the
+        // death tail arms)
+        app.chat_open = true;
+        app.chat_input = "/kill".into();
+        app.on_chat_submit();
+        assert!(app.dead, "the kill the death screen arms");
+        assert_eq!(app.health, 0.0);
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed mc2rs"),
+        );
+        assert!(!app.chat_open, "the submit the chat closes");
+        // THE ALREADY-DEAD KILL (the !self.dead guard the death tail
+        // keeps — the feedback the command layer still speaks)
+        app.chat_open = true;
+        app.chat_input = "/kill".into();
+        app.on_chat_submit();
+        assert!(app.dead);
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed mc2rs"),
+        );
+        // THE RESPAWN (the DeathScreen's own button walk — the fresh
+        // body the kill the spawn pose re-anchors)
+        app.respawn();
+        assert!(!app.dead);
+        assert_eq!(app.health, MAX_HEALTH);
+        // THE SECOND KILL (the respawned body the kill the same walk
+        // serves — the death the fresh body answers again)
+        app.chat_open = true;
+        app.chat_input = "/kill".into();
+        app.on_chat_submit();
+        assert!(app.dead);
+        assert_eq!(app.health, 0.0);
     }
 
     #[test]
