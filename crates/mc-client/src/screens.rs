@@ -7227,6 +7227,10 @@ pub struct App {
     /// arm's cosy column's own big_smoke pixels the lane draws; the
     /// missing file the honest absence keeps)
     pub big_smoke_frames: Option<crate::avatar::BigSmokeFrames>,
+    /// The sonic boom's 16-frame set (the lazy load — the warden's
+    /// boom beam's own SONIC_BOOM ring pixels the lane draws; the
+    /// missing file the honest absence keeps)
+    pub sonic_boom_frames: Option<crate::avatar::SonicBoomFrames>,
     /// The sculk shriek's single sprite (the lazy load — the
     /// LevelEvent-3007 arm's own ring pixels the lane draws; the
     /// missing file the honest absence keeps)
@@ -8117,6 +8121,7 @@ impl App {
             sculk_charge_frames: None,
             sculk_pop_frames: None,
             big_smoke_frames: None,
+            sonic_boom_frames: None,
             shriek_sprite: None,
             sculk_soul_frames: None,
             flash_sprite: None,
@@ -10201,6 +10206,14 @@ impl App {
             let mut warden_sonic_boom_voices: Vec<(f64, f64, f64)> =
                 Vec::new();
             let mut warden_sonic_doses: Vec<(f64, f64, f64)> = Vec::new();
+            // THE SONIC BEAM'S OWN PLANTS (javap `SonicBoom
+            // .lambda$tick$2` pc 40-108 — the `Mth.floor(len) + 7`
+            // walk's exact points the sendParticles count-1 plants: the
+            // chest origin + the beam dir * j for j in 1..i the
+            // sampled points bank — the grey draws the spawn walk
+            // spends AFTER the loop the borrow order keeps)
+            let mut warden_sonic_beams: Vec<((f64, f64, f64), (f64, f64, f64), i64)> =
+                Vec::new();
             for warden in &mut self.wardens {
                 if warden.tick() {
                     if let Some(word) = crate::sculk::warden_ambient_sound(
@@ -10574,6 +10587,20 @@ impl App {
                         if sonic_out.boomed {
                             warden_sonic_doses.push(sonic_out.beam);
                             warden_sonic_boom_voices.push((warden.x, warden.y, warden.z));
+                            // THE BEAM'S OWN WALK (pc 40-51 the `i =
+                            // Mth.floor(len) + 7` length banks, pc 53-108
+                            // the j = 1..i loop the exact points plants —
+                            // the chest + the dir * j the scale fold
+                            // serves, the count-1 zero-offset send the
+                            // spread never scatters)
+                            let chest = (
+                                warden.x,
+                                warden.y + crate::sculk::WARDEN_SONIC_CHEST_OFFSET_Y,
+                                warden.z,
+                            );
+                            let points =
+                                (sonic_out.beam_len.floor() as i64) + 7;
+                            warden_sonic_beams.push((chest, sonic_out.beam, points));
                         }
                         let melee_out =
                             warden.fight_lane(fight_pos, fight_seen, fight_in_reach);
@@ -10727,6 +10754,26 @@ impl App {
                         b.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
                         b.vz += bz * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
                     }
+                }
+            }
+            for ((cx, cy, cz), (dx, dy, dz), points) in warden_sonic_beams {
+                // THE BEAM'S OWN PLANTS (javap `SonicBoom.lambda$tick$2`
+                // pc 53-108 — the `for (j = 1; j < i; j++)` walk the
+                // `sendParticles(SONIC_BOOM, point, 1, 0, 0, 0, 0)`
+                // plants: the exact point the chest + the dir * j
+                // scale fold serves, the count-1 the spread never
+                // scatters, the ZERO velocity the base ctor's
+                // dconst_0 trio keeps, the grey draw `nextFloat() *
+                // 0.6f + 0.4f` the base ctor's own walk spends — the
+                // ONE draw the r/g/b trio shares, the level's own
+                // ambient stream the order keeps)
+                for j in 1..points.max(1) {
+                    let px = cx + dx * j as f64;
+                    let py = cy + dy * j as f64;
+                    let pz = cz + dz * j as f64;
+                    let grey = self.level_ambient_rng.next_f32() * 0.6f32 + 0.4f32;
+                    self.particles
+                        .push(crate::particles::sonic_boom_ring(px, py, pz, grey));
                 }
             }
 
@@ -37391,6 +37438,10 @@ impl App {
             self.sculk_charge_frames =
                 crate::avatar::SculkChargeFrames::load(std::path::Path::new("assets-cache/jar"));
         }
+        if self.sonic_boom_frames.is_none() {
+            self.sonic_boom_frames =
+                crate::avatar::SonicBoomFrames::load(std::path::Path::new("assets-cache/jar"));
+        }
         if self.sculk_pop_frames.is_none() {
             self.sculk_pop_frames =
                 crate::avatar::SculkPopFrames::load(std::path::Path::new("assets-cache/jar"));
@@ -37484,6 +37535,9 @@ impl App {
         // the sculk pop's own groups (the frame-keyed frames the age
         // walk rides — the LevelEvent-3006 pop arm's 16x16 set)
         let mut sculk_pop_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
+        // the sonic boom's own groups (the frame-keyed quads the age
+        // walk rides — the warden's boom beam's 32x32 ring set)
+        let mut sonic_boom_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         // the campfire smoke's own groups (the frame-keyed quads the
         // ONE static pick banks — the dowse arm's cosy column the
         // big_smoke pool the TRANSLUCENT lane draws)
@@ -37605,6 +37659,33 @@ impl App {
                     match sculk_pop_groups.iter_mut().find(|(f, _)| *f == frame) {
                         Some((_, quads)) => quads.push(quad),
                         None => sculk_pop_groups.push((frame, vec![quad])),
+                    }
+                }
+                crate::particles::ParticleKind::SonicBoom => {
+                    // the sonic ring's own quad (the 32x32 frame the
+                    // age's own walk speaks — the HugeExplosionParticle
+                    // chain the setSpriteFromAge chain rides, the get
+                    // law's `age * (size - 1) / lifetime` the frames
+                    // speak, the json's ASCENDING order the frame
+                    // index reads directly): the grey tint the base
+                    // ctor's ONE draw carries, the OPAQUE layer the
+                    // getLayer override returns, the no-roll uv the
+                    // static ring keeps
+                    let frame = crate::particles::sonic_boom_frame(p.age, p.lifetime);
+                    let quad = crate::raster::SampledQuad {
+                        pts,
+                        uv: [
+                            [0.0, 32.0],
+                            [32.0, 32.0],
+                            [32.0, 0.0],
+                            [0.0, 0.0],
+                        ],
+                        tex: "particle_sonic_boom",
+                        tint: p.col,
+                    };
+                    match sonic_boom_groups.iter_mut().find(|(f, _)| *f == frame) {
+                        Some((_, quads)) => quads.push(quad),
+                        None => sonic_boom_groups.push((frame, vec![quad])),
                     }
                 }
                 crate::particles::ParticleKind::SculkShriek { delay } => {
@@ -38416,6 +38497,16 @@ impl App {
         // frames the json's ascending order holds)
         if let Some(frames) = &self.sculk_pop_frames {
             for (frame, quads) in &sculk_pop_groups {
+                fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
+                    Some(frames.pixel(*frame, u, v))
+                });
+            }
+        }
+        // the sonic boom groups (the beam's own 32x32 pixels — the
+        // frames the json's ascending order holds, the age walk the
+        // setSpriteFromAge chain speaks)
+        if let Some(frames) = &self.sonic_boom_frames {
+            for (frame, quads) in &sonic_boom_groups {
                 fb.draw_sampled_quads(vp, quads, &mut |_tex, u, v| {
                     Some(frames.pixel(*frame, u, v))
                 });
@@ -52941,6 +53032,102 @@ mod tests {
             crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS,
             "the 40l the doHurtTarget's own setCooldown banks"
         );
+    }
+
+    /// THE SONIC BOOM'S OWN BEAM (javap `SonicBoom.lambda$tick$2`
+    /// pc 0-108 over the 26.2 jar — the mid-window state the
+    /// surgical setup banks, the both-absent tick the boom arms, the
+    /// `Mth.floor(len) + 7` walk the exact points plants, the grey
+    /// draw the base ctor's own walk spends, the 16-tick life the
+    /// rings wear).
+    #[test]
+    fn the_sonic_boom_the_beam_the_rings_plant() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE AIR NEIGHBORHOOD (the eye ray the sky never fears — the
+        // warden the +X FIVE the closerThan range keeps)
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body = Some(crate::body::PlayerBody::new(
+            px,
+            feet_y,
+            pz,
+            180.0,
+            0.0,
+        ));
+        // THE WARDEN THE +X FIVE (the XZ 5 the 15-range keeps, the
+        // feet dy 0 the 20-range answers)
+        let wx = px + 5.0;
+        app.wardens
+            .push(crate::sculk::WardenMob::new(202, wx, feet_y, pz));
+        app.wardens[0].attack_target = Some(crate::sculk::WARDEN_PLAYER_SUSPECT);
+        // THE MID-WINDOW STATE (the surgical setup the one update the
+        // boom arms wears: the active the running state keeps, the 2
+        // the window's own tail banks, the 1 the delay's last tick
+        // covers — the update's drain walk the both-absent tick the
+        // boom arms)
+        app.wardens[0].sonic_active = true;
+        app.wardens[0].attack_cooldown = 2;
+        app.wardens[0].sonic_sound_delay = 1;
+        app.wardens[0].sonic_sound_cooldown = 0;
+        app.update();
+        // THE BOOM'S OWN BANKS (the 26l the fired voice banks, the
+        // window the same walk keeps — the 1 the drain's tail wears)
+        assert!(
+            app.wardens[0].sonic_sound_cooldown
+                == crate::sculk::WARDEN_SONIC_SOUND_COOLDOWN_TICKS,
+            "the 26l the fired boom banks"
+        );
+        assert!(
+            app.wardens[0].sonic_active,
+            "the window the boom keeps"
+        );
+        // THE BEAM'S OWN RINGS (the chest + the dir * j for j in
+        // 1..floor(len) + 7 the exact points plants — the floor(5.0)
+        // + 7 = 12 the count the walk serves: 11 rings j = 1..12)
+        let chest_y = feet_y + crate::sculk::WARDEN_SONIC_CHEST_OFFSET_Y;
+        let eye_y = feet_y + 1.62;
+        let dx = px - wx;
+        let dy = eye_y - chest_y;
+        let len = (dx * dx + dy * dy).sqrt();
+        let want_points = (len.floor() as i64) + 7;
+        let rings: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::SonicBoom))
+            .collect();
+        assert_eq!(
+            rings.len(),
+            (want_points - 1) as usize,
+            "the beam walk the exact count plants"
+        );
+        for (k, ring) in rings.iter().enumerate() {
+            let j = (k + 1) as f64;
+            assert_eq!(ring.lifetime, 16, "the fixed 16 the ctor keeps");
+            assert_eq!(ring.age, 0, "the fresh ring the spawn banks");
+            assert_eq!(ring.vx, 0.0);
+            let want_x = wx + (dx / len) * j;
+            let want_y = chest_y + (dy / len) * j;
+            assert!(
+                (ring.x - want_x).abs() < 1e-9 && (ring.y - want_y).abs() < 1e-9,
+                "the exact point the walk plants: ring {k} at {} {} vs {} {}",
+                ring.x,
+                ring.y,
+                want_x,
+                want_y
+            );
+        }
+        // THE GREY TINT (the 0.4..1.0 band the base ctor's draw wears)
+        for ring in &rings {
+            assert!(
+                ring.col[0] >= 0.4 && ring.col[0] <= 1.0,
+                "the grey the draw band keeps"
+            );
+        }
     }
 
     /// THE USE-TICK STAB'S OWN WALK REFUSAL (the 4.6 relative gate the

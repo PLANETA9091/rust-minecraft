@@ -7843,6 +7843,60 @@ impl SculkPopFrames {
     }
 }
 
+/// The PARTICLE LANE's SONIC BOOM frames — the warden's boom beam's
+/// own 16-frame sprite set (javap `SonicBoomParticle`: the
+/// `sonic_boom` particle type's json lists ASCENDING
+/// `sonic_boom_0..15`, the HugeExplosionParticle chain the
+/// `setSpriteFromAge` walk the age law rides — the
+/// `MutableSpriteSet.get(age, lifetime)` fold the frame index
+/// serves), each file loaded and sha1-verified the same stream the
+/// sculk banks speak. A missing or tampered frame keeps the boom
+/// beam invisible (the honest absence the other lanes speak).
+pub struct SonicBoomFrames {
+    pub frames: Vec<Vec<u8>>,
+}
+
+/// The sonic boom texture's own layout (the jar's 32x32 the IHDR
+/// speaks).
+pub const SONIC_BOOM_SPRITE_SIDE: u32 = 32;
+
+impl SonicBoomFrames {
+    /// Load the 16 frames from the runtime cache root, verify each
+    /// sha1, decode, shape-check the 32x32 layout.
+    pub fn load(root: &std::path::Path) -> Option<SonicBoomFrames> {
+        let mut frames = Vec::with_capacity(crate::particles::SONIC_BOOM_FRAME_COUNT);
+        for i in 0..crate::particles::SONIC_BOOM_FRAME_COUNT {
+            let bytes =
+                std::fs::read(root.join(skin::PARTICLE_SONIC_BOOM_RUNTIME_PATHS[i])).ok()?;
+            if hex::encode(sha1::Sha1::digest(&bytes))
+                != skin::PARTICLE_SONIC_BOOM_PNG_SHA1S[i]
+            {
+                return None;
+            }
+            let (w, h, rgba) = decode_rgba(&bytes).ok()?;
+            if w != SONIC_BOOM_SPRITE_SIDE || h != SONIC_BOOM_SPRITE_SIDE {
+                return None;
+            }
+            frames.push(rgba);
+        }
+        Some(SonicBoomFrames { frames })
+    }
+
+    /// The frame pixel at (u, v) in TEXTURE UNITS (the 0..32 the
+    /// 32x32 quad's uv walk speaks), nearest texel.
+    pub fn pixel(&self, frame: usize, u: f32, v: f32) -> [u8; 4] {
+        let empty = [0u8; 4];
+        let f = match self.frames.get(frame) {
+            Some(f) => f,
+            None => return empty,
+        };
+        let x = (u.floor().clamp(0.0, SONIC_BOOM_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let y = (v.floor().clamp(0.0, SONIC_BOOM_SPRITE_SIDE as f32 - 1.0)) as usize;
+        let o = (y * SONIC_BOOM_SPRITE_SIDE as usize + x) * 4;
+        [f[o], f[o + 1], f[o + 2], f[o + 3]]
+    }
+}
+
 /// The PARTICLE LANE's SCULK_SOUL frames — the catalyst bloom's own
 /// 11-frame sprite set (javap: the
 /// `SculkCatalystBlockEntity$CatalystListener.bloom`'s

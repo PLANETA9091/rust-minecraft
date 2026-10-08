@@ -301,6 +301,14 @@ pub const PARTICLE_EFFECT_PNG_SHA1S: [&str; 8] = ["f782a4bfd2bded4f7f5c94fa15e0d
 pub const PARTICLE_EFFECT_RUNTIME_PATHS: [&str; 8] = ["particle/effect_0.png", "particle/effect_1.png", "particle/effect_2.png", "particle/effect_3.png", "particle/effect_4.png", "particle/effect_5.png", "particle/effect_6.png", "particle/effect_7.png"];
 pub const PARTICLE_SPELL_PNG_SHA1S: [&str; 8] = ["e06354bd73ca9bafc24d8062f3becf583169b0aa", "20d3e9cf2937ac02458a53e08c9a8a7ea098a387", "dd50e7c93443573ae8ed7c16925ae4a815118efb", "7e7acec2be9f57d6fb8d01760754a568f1fd4b64", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec", "83b3e8a2b2cfb21202f3941688ac8fa4657348ec"];
 pub const PARTICLE_SPELL_RUNTIME_PATHS: [&str; 8] = ["particle/spell_0.png", "particle/spell_1.png", "particle/spell_2.png", "particle/spell_3.png", "particle/spell_4.png", "particle/spell_5.png", "particle/spell_6.png", "particle/spell_7.png"];
+/// The SONIC BOOM particle's 16-frame set (javap `SonicBoomParticle` —
+/// the HugeExplosionParticle chain's own sprite the
+/// `sonic_boom` particle type's json lists ASCENDING
+/// `sonic_boom_0..15`, the setSpriteFromAge walk the age law
+/// rides), each sha1 the loader verifies the same stream the
+/// sculk charge rows speak.
+pub const PARTICLE_SONIC_BOOM_PNG_SHA1S: [&str; 16] = ["068ad21a358ecfbb25ab335adc1de11b1bdb4764", "6d1aa5872beca3de1e329f5ffe38c946ec64823f", "988567936e314157e409d5afe93011b487cf378c", "972900e2065db511c18edd35b8961d33c8c71e7f", "dd015be0c9658c05dd1ea2919a4c07a4c2f20962", "2bd88a1c7bb1afeca8fe0c1ae9459c7a9cfc53de", "6233dfda71cc71d6f8a6e06fd05da5585d5bcf7e", "2f3bdff023308ca83380fc984f262e4e33562cd1", "93c4370c1d8a3da9cbef5c5423fb1d376c4f2c67", "56c864ae74eef30f0985742a6b1bc50d20639673", "5d21a8a7e8cc7a2f066804cb6c3a8c5a942e337d", "560ca6750aec16fdf7bb7d51ae5376ce2b879e68", "a8e28011e03bd6035bae3d0a1502a5c752d3090c", "84b5e3c93c6aa1daff9c378d1909f625bfd6460c", "d4f850549f3c821c08e8b82711b184b8880bac80", "223aa2d4500153af52a8ed9c8be033d31fbd7f98"];
+pub const PARTICLE_SONIC_BOOM_RUNTIME_PATHS: [&str; 16] = ["particle/sonic_boom_0.png", "particle/sonic_boom_1.png", "particle/sonic_boom_2.png", "particle/sonic_boom_3.png", "particle/sonic_boom_4.png", "particle/sonic_boom_5.png", "particle/sonic_boom_6.png", "particle/sonic_boom_7.png", "particle/sonic_boom_8.png", "particle/sonic_boom_9.png", "particle/sonic_boom_10.png", "particle/sonic_boom_11.png", "particle/sonic_boom_12.png", "particle/sonic_boom_13.png", "particle/sonic_boom_14.png", "particle/sonic_boom_15.png"];
 pub const ITEM_POTION_OVERLAY_PNG_SHA1: &str = "edacedcd307eb0a8655fe1140ac8c257b87ac712";
 pub const ITEM_POTION_OVERLAY_RUNTIME_PATH: &str = "item/potion_overlay.png";
 pub const ITEM_SPLASH_POTION_PNG_SHA1: &str = "a4f2fa447a949deb361c48efa95bba67d31434da";

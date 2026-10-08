@@ -666,6 +666,19 @@ pub enum ParticleKind {
     /// gives, the ±0.07 cube speeds the caller's trio verbatim
     /// carries.
     SculkChargePop,
+    /// `SonicBoomParticle` — the warden's ranged dose's own beam
+    /// ring (javap the 26.2 class verbatim: the
+    /// `HugeExplosionParticle` chain the `lifetime 16` +
+    /// `quadSize 1.5f` overrides keep, the base ctor's grey draw
+    /// `nextFloat() * 0.6f + 0.4f` the r/g/b ONE draw shares, the
+    /// velocity the base's dconst_0 trio ZEROES — the static ring
+    /// the sendParticles count-1 walk plants, the OPAQUE layer the
+    /// `getLayer` override returns, the no-fade tick the age walk
+    /// keeps, the 16-frame `sonic_boom_0..15` set the json's
+    /// ASCENDING list orders — the `setSpriteFromAge` law the age
+    /// walk rides, the `MutableSpriteSet.get(age, lifetime)` fold
+    /// the frame index speaks).
+    SonicBoom,
     /// `ShriekParticle` — the LevelEvent-3007 arm's own ring (the
     /// single 13x13 `shriek` sprite the one-texture json keeps, the
     /// `SpriteSet.get(random)` pick the Provider speaks — the
@@ -765,6 +778,23 @@ pub const SCULK_CHARGE_FRAME_COUNT: usize = 7;
 /// textures the jar speaks — the sprite set the json's ASCENDING list
 /// orders, the list index the frame law reads directly).
 pub const SCULK_POP_FRAME_COUNT: usize = 4;
+
+/// The SONIC BOOM's 16 frames (the `sonic_boom_0..15` textures the
+/// jar speaks — the `sonic_boom` particle type's OWN set the json
+/// lists ASCENDING, the list index the frame law reads directly).
+pub const SONIC_BOOM_FRAME_COUNT: usize = 16;
+
+/// The sonic boom's own frame law (javap `Particle
+/// .setSpriteFromAge` → `MutableSpriteSet.get(age, lifetime)`
+/// verbatim: `sprites.get(age * (size - 1) / lifetime)` — 16
+/// frames, the 16-tick life walking the ascending list the json
+/// speaks; the min clamp the list.get's own bound speaks — the
+/// vanilla walk never fires it (the age walk removes the particle
+/// at the lifetime first), the Rust shape keeps it honest).
+pub fn sonic_boom_frame(age: u32, lifetime: u32) -> usize {
+    ((age as usize * (SONIC_BOOM_FRAME_COUNT - 1)) / lifetime.max(1) as usize)
+        .min(SONIC_BOOM_FRAME_COUNT - 1)
+}
 
 /// The sculk charge's own frame law (javap `Particle.setSpriteFromAge`
 /// -> `MutableSpriteSet.get(age, lifetime)` verbatim:
@@ -2812,6 +2842,46 @@ pub fn explosion_puff(
         uo: 0.0,
         vo: 0.0,
         col: [tint, tint, tint],
+    }
+}
+
+/// One sonic boom ring — javap `SonicBoomParticle` 26.2 verbatim:
+/// the `HugeExplosionParticle` chain the base ctor's walk serves (the
+/// dconst_0 velocity trio the base's own args keep — the motion the
+/// sendParticles count-1 walk's zero speeds speak), the `lifetime =
+/// 16` the ctor's own putfield overrides (the base's `6 +
+/// nextInt(4)` draw the override retires — NO draw the fixed 16
+/// spends), the `quadSize = 1.5f` the ctor's own write keeps (the
+/// base's 6.0 the override retires, the dead base draw the caller
+/// never needs — the caller's ONE grey draw the base ctor's f11 walk
+/// speaks), the grey tint `nextFloat() * 0.6f + 0.4f` the r/g/b
+/// ONE draw shares, the OPAQUE layer the getLayer override returns,
+/// the no-fade tick the age walk keeps. The caller's own position
+/// the lambda$tick$2 walk plants (the beam walk's exact points, the
+/// sendParticles count-1 zero-offset the spread never scatters).
+pub fn sonic_boom_ring(x: f64, y: f64, z: f64, grey: f32) -> Particle {
+    Particle {
+        kind: ParticleKind::SonicBoom,
+        x,
+        y,
+        z,
+        prev: None,
+        // the zero velocity the base ctor's dconst_0 trio passes
+        vx: 0.0,
+        vy: 0.0,
+        vz: 0.0,
+        age: 0,
+        // the ctor's own putfield — the fixed 16 the override keeps
+        lifetime: 16,
+        gravity: 0.0,
+        // the vanilla field default the stationary tick never reads
+        friction: 0.98,
+        // the ctor's own write — the 1.5f the ldc keeps
+        quad_size: 1.5f32,
+        uo: 0.0,
+        vo: 0.0,
+        // the base ctor's grey draw — the ONE answer the trio keeps
+        col: [grey, grey, grey],
     }
 }
 
@@ -9422,6 +9492,27 @@ mod tests {
         assert_eq!(sculk_charge_frame(19, 19), 6);
         assert_eq!(sculk_pop_frame(0, 9), 0);
         assert_eq!(sculk_pop_frame(9, 9), 3);
+        // THE SONIC RING'S OWN LAW (the 16-frame ascending set the
+        // `age * 15 / lifetime` fold walks — the age 0 the first frame
+        // banks, the last age the 14 the integer division keeps, the
+        // 15th texture the vanilla walk never reaches — the same
+        // buffer-frame quirk the law's own shape speaks)
+        assert_eq!(sonic_boom_frame(0, 16), 0);
+        assert_eq!(sonic_boom_frame(1, 16), 0);
+        assert_eq!(sonic_boom_frame(15, 16), 14);
+        assert_eq!(sonic_boom_frame(16, 16), 15);
+        // THE RING'S OWN CTOR (the fixed 16 the lifetime banks, the
+        // 1.5f the quad carries, the grey the ONE draw shares, the
+        // zero velocity the base trio keeps)
+        let ring = sonic_boom_ring(1.0, 2.0, 3.0, 0.85);
+        assert!(matches!(ring.kind, ParticleKind::SonicBoom));
+        assert_eq!(ring.lifetime, 16);
+        assert_eq!(ring.quad_size, 1.5);
+        assert_eq!(ring.age, 0);
+        assert_eq!(ring.vx, 0.0);
+        assert_eq!(ring.vy, 0.0);
+        assert_eq!(ring.vz, 0.0);
+        assert_eq!(ring.col, [0.85, 0.85, 0.85]);
     }
     #[test]
     fn the_shriek_ring_the_delays_the_draws_wear() {

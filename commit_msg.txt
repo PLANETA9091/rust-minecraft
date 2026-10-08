@@ -1,106 +1,70 @@
-v0.3.627: the warden the SONIC the charge the beam the boom the dose (autopush-569)
+v0.3.628: the warden the beam the rings the boom the eyes see (dev-15)
 
-THE SONIC BOOM LANE — the ranged dose the FIGHT list's own index-4
-behavior speaks (jar evidence: 26.2 javap verbatim):
+THE SONIC BOOM PARTICLE LANE — the beam's own rings the client now
+draws (jar evidence: 26.2 javap verbatim):
 
-- javap SonicBoom clinit pc 0-15 — the constants the ceil walk
-  banks: the TICKS_BEFORE_PLAYING_SOUND ceil(34.0d) = 34, the
-  DURATION ceil(60.0f) = 60; the ConstantValue rows the finals keep:
-  DISTANCE_XZ 15, DISTANCE_Y 20, KNOCKBACK_VERTICAL 0.5d,
-  KNOCKBACK_HORIZONTAL 2.5d, COOLDOWN 40.
-- javap SonicBoom ctor pc 0-31 — the condition map verbatim: the
-  ATTACK_TARGET VALUE_PRESENT + the SONIC_BOOM_COOLDOWN
-  VALUE_ABSENT the start gates keep, the SOUND_COOLDOWN + the
-  SOUND_DELAY the REGISTERED pair banks.
-- javap Entity.closerThan(Entity, double, double) pc 0-63 — the
-  range law verbatim: the Mth.lengthSquared(dx, dz) < square(15.0)
-  XZ verdict + the square(dy) < square(20.0) FEET-Y the strict <
-  keeps (the exact touch the FALSE answers, the walls the law never
-  consults — the beam the LOS the behavior never reads).
-- javap SonicBoom.start pc 0-52 — the charge window verbatim: the
-  setMemoryWithExpiry(ATTACK_COOLING_DOWN, true, 60l) the window
-  arms, the setMemoryWithExpiry(SONIC_BOOM_SOUND_DELAY, UNIT, 34l)
-  the voice covers, the broadcastEntityEvent(62) the animation lane
-  a future round wears, the playSound(WARDEN_SONIC_CHARGE, 3.0f,
-  1.0f) the FIXED pair speaks. THE NAVIGATION the 26.2 start NEVER
-  stops — the chase the window's own walk keeps.
-- javap SonicBoom.tick pc 0-110 — the boom cadence verbatim: the
-  lookAt the lambda$tick$0 keeps, the SOUND_DELAY/SOUND_COOLDOWN
-  present pair the tick retires pc 19-45, the
-  setMemoryWithExpiry(SONIC_BOOM_SOUND_COOLDOWN, UNIT,
-  DURATION - TICKS_BEFORE_PLAYING_SOUND = 26l) pc 46-66 the fired
-  voice banks, the target filter chain pc 67-107 the
-  lambda$tick$1 closerThan(15, 20) + the Warden.canTargetEntity
-  method-ref pair keeps, the lambda$tick$2 the boom serves.
-- javap SonicBoom.lambda$tick$2 pc 0-198 — THE BOOM verbatim: the
-  WARDEN_CHEST origin the getAttachments().get(WARDEN_CHEST, 0,
-  yRot) read keeps (javap EntityTypes clinit pc 6633-6641 — the
-  attach(WARDEN_CHEST, 0.0f, 1.6f, 0.0f) row the registration
-  speaks: the yaw the XZ-zero offset never rotates), the eye delta
-  the normalize the direction serves, the Mth.floor(len) + 7 the
-  SONIC_BOOM particle walk a future round wears, the
-  playSound(WARDEN_SONIC_BOOM, 3.0f, 1.0f) pc 111-118, the
-  hurtServer(sonicBoom(warden), 10.0f) pc 121-137 the dose wears,
-  the push pc 140-195 the d0 = 0.5 * (1 - KNOCKBACK_RESISTANCE)
-  vertical + the d2 = 2.5 * (1 - resistance) horizontal the
-  Entity.push plain-add walk serves (javap Entity.push pc 0-42 —
-  the getDeltaMovement().add the isFinite guard keeps, the vel/2
-  half-fold the melee knockback's own law never wears here).
-- javap SonicBoom.stop pc 0-6 — the setCooldown(this, 40) the
-  window's own end banks (the fresh start the standing window
-  refuses).
-- javap WardenAi.initFightActivity pc 0-64 — the FIGHT list order
-  verbatim: the SetWalkTargetFromAttackTargetIfTargetOutOfReach
-  (13) the SonicBoom (14) the MeleeAttack.create(18) (15) precedes
-  — the start the ATTACK_COOLING_DOWN the same memory the melee's
-  absent gate reads arms: the fresh warden the in-reach target the
-  CHARGE arms, the same-tick swing the standing window refuses.
+- javap SonicBoomParticle pc 0-32 — the ctor verbatim: the
+  HugeExplosionParticle chain the base ctor's walk serves, the
+  `lifetime = 16` the ctor's own putfield overrides (the base's
+  `6 + nextInt(4)` draw the override retires — NO draw the fixed 16
+  spends), the `quadSize = 1.5f` the ldc keeps (the base's 6.0 the
+  override retires), the setSpriteFromAge the ctor tail wears.
+- javap HugeExplosionParticle pc 0-74 — the base verbatim: the
+  dconst_0 velocity trio the ctor args pass (the motion the
+  sendParticles count-1 zero speeds speak — the static ring the
+  walk plants), the grey draw `nextFloat() * 0.6f + 0.4f` pc 41-69
+  the r/g/b ONE draw shares, the OPAQUE layer the getLayer
+  override returns, the tick the age walk keeps (the no-fade the
+  body speaks — the prev trio + the age++ + the removal gate + the
+  setSpriteFromAge tail, no motion, no friction the body reads).
+- javap Particle.setSpriteFromAge + MutableSpriteSet.get(int, int)
+  — the frame law verbatim: `sprites.get(age * (size - 1) /
+  lifetime)` — the 16-frame ascending set the `sonic_boom.json`
+  lists (`sonic_boom_0..15`, 32x32 the IHDR keeps), the last frame
+  the integer division never reaches (the age walk removes the
+  particle at the lifetime first — the buffer-frame quirk the law's
+  own shape speaks).
+- javap Particle.getLightCoords pc 0-38 — the world-light default
+  the no-override class keeps (the chunk-missing arm the 0xF000F0
+  fullbright answers).
+- javap SonicBoom.lambda$tick$2 pc 40-108 — THE BEAM WALK verbatim
+  (the lane the prior round's beam_len + beam fields served): the
+  `i = Mth.floor(len) + 7` length the walk banks, the
+  `for (j = 1; j < i; j++)` loop the `chest + dir * j` exact points
+  plants, the `sendParticles(SONIC_BOOM, point, 1, 0, 0, 0, 0)`
+  count-1 zero-offset the spread never scatters.
 
 implemented:
-- sculk.rs: the WARDEN_SONIC_DURATION_TICKS 60 + the
-  WARDEN_SONIC_SOUND_DELAY_TICKS 34 + the WARDEN_SONIC_SOUND_
-  COOLDOWN_TICKS 26 + the WARDEN_SONIC_RANGE_XZ 15.0 / the
-  WARDEN_SONIC_RANGE_Y 20.0 + the KNOCKBACK_VERTICAL 0.5 /
-  HORIZONTAL 2.5 + the WARDEN_SONIC_DAMAGE 10.0 + the
-  WARDEN_SONIC_CHEST_OFFSET_Y 1.6 + the WARDEN_SONIC_CHARGE_SOUND
-  entity.warden.sonic_charge / the WARDEN_SONIC_BOOM_SOUND
-  entity.warden.sonic_boom + the FIXED voice pair 3.0/1.0 consts;
-  the warden_sonic_closer_than range law; the WardenSonicOut
-  record; the WardenMob the sonic_sound_delay + the
-  sonic_sound_cooldown + the sonic_active fields (the Brain expiry
-  walk the tick drains); the sonic_lane — the start the charge
-  window arms (the cooldowns the absent pair keeps, the range the
-  feet keeps, the memories the same walk banks, the navigation the
-  start never stops), the running window the tick walk serves (the
-  both-absent gate the boom arms, the 26l the fired voice banks,
-  the closerThan + the targetable pair the beam walks keep, the
-  beam the chest→eye normalize serves), the stop the window's own
-  end the 40l bank keeps.
-- screens.rs: the sonic_lane the pass call the FIGHT order wears
-  (the melee prio-15 the sonic prio-14 follows — the same-tick
-  swing the standing window refuses), the feet + the eye views the
-  lane carries, the charge + the boom voices the collected vecs
-  play (the FIXED 3.0/1.0 pair both walks wear — the broadcast-62
-  the animation lane a future round wears), the sonic dose the
-  hurt walk wears (the 10.0f the sonicBoom source carries) + the
-  push the plain add serves (the beam the direction rides, the
-  0.5V/2.5H the resistance-zero player speaks, the isFinite the
-  normalization answers); the melee dose test the sonic bank the
-  fresh window keeps (the post-boom gameplay the bank serves).
-- tests +4: the_sonic_lane_the_charge_the_boom_the_stop_keeps (the
-  start the window banks, the same-tick swing refuses, the 34th
-  tick the boom arms, the 26l the re-boom refuses, the stop the
-  40l banks, the drain the melee re-arms),
-  the_sonic_lane_the_range_the_refusal_keeps (the 15/20 the strict
-  pair keeps, the cooldowns the fresh window refuses, the eye the
-  None the start never reads),
-  the_sonic_closer_than_the_law_keeps, the
-  _sonic_boom_the_beam_the_geometry_keeps.
-- environment recovery: the sandbox reset the workspace — the
-  rustup toolchain + the assets-cache rebuilt per the generator's
-  own lanes (mc2rs-gen generate --version 26.2 +
-  scripts/restore_jar_textures.py); the generated sources the
-  re-run rewrote reverted (the warden skin consts the generator's
-  current skin lane never emits — the checked-in rows the warden
-  renderer verifies); no render-path change — the goldens the
-  full matrix re-verified 13/13 rms 0.000.
+- mc-registry skin.rs: the PARTICLE_SONIC_BOOM_PNG_SHA1S 16 rows +
+  the PARTICLE_SONIC_BOOM_RUNTIME_PATHS (particle/sonic_boom_0..15
+  .png) — the sha1-verified loader stream the sculk rows keep.
+- avatar.rs: the SonicBoomFrames loader (the 16 frames the cache
+  root serves, each sha1 the stream verifies, the 32x32 the shape
+  check keeps, the pixel walk the nearest texel answers — the
+  honest absence the missing file keeps).
+- particles.rs: the ParticleKind::SonicBoom variant + the
+  SONIC_BOOM_FRAME_COUNT 16 + the sonic_boom_frame walk (the
+  `age * 15 / lifetime` fold, the min clamp the bound keeps) + the
+  sonic_boom_ring ctor (the fixed 16 the lifetime banks, the 1.5f
+  the quad carries, the zero velocity the trio keeps, the grey the
+  ONE draw shares — the caller's pre-drawn answer the stream order
+  keeps).
+- screens.rs: the App field + the lazy load; THE BEAM'S OWN PLANTS
+  — the boom arm the (chest, dir, floor(len) + 7) tuple banks, the
+  spawn walk after the loop the grey draws spends (the
+  level_ambient_rng's ONE draw per ring the base ctor's law wears,
+  the j = 1..i points the exact positions plant) — the render the
+  frame-keyed sonic_boom_groups serves (the 32x32 uv the plain
+  order keeps, the OPAQUE lane the draw_sampled_quads callback
+  wears, the frame groups the draw walk joins the sculk lanes).
+- tests +1 (screens::the_sonic_boom_the_beam_the_rings_plant — the
+  mid-window surgical state one update wears, the 26l the fired
+  voice banks, the 11 rings the floor(5) + 7 walk plants, each
+  ring the exact chest + dir * j point 1e-9 keeps, the grey band
+  0.4..1.0 the draw wears) + the frame-law + ctor asserts the
+  particles suite's own walk extends.
+- verified: cargo test --workspace (CARGO_INCREMENTAL=0) 2120
+  passed / 0 failed / 21 ignored; verify_goldens.sh 13/13 rms
+  0.000 (no golden regenerated — the combat-free golden scenes the
+  particle groups never feed, the empty groups the draw never
+  spends).
