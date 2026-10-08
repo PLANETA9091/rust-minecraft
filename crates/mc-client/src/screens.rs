@@ -2320,6 +2320,159 @@ fn selector_suggestion(name: &str, key: &str, fallback: &str) -> mc_protocol::pl
     }
 }
 
+/// THE ENTITY SELECTOR'S OWN HEAD (the EntitySelectorParser's five
+/// letters the `@` prefix wears — each the vanilla selector's own
+/// constructor answers: SELF the command source, NEAREST the
+/// all-players distance sort's first, ALL_PLAYERS the roster,
+/// RANDOM_PLAYER the shuffle's pick, ALL_ENTITIES the world's own
+/// entity query).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum SelectorHead {
+    SelfEntity,
+    NearestPlayer,
+    AllPlayers,
+    RandomPlayer,
+    AllEntities,
+}
+
+impl SelectorHead {
+    /// THE ALL-ENTITIES VERDICT (the `@e` head alone the world's mob
+    /// roster answers — the player heads the player lanes speak).
+    fn all_entities(self) -> bool {
+        matches!(self, SelectorHead::AllEntities)
+    }
+}
+
+/// THE KILL TARGET'S OWN WORD (the collection's element the
+/// EntityArgument's find walk banks): the player OR the world mob
+/// the index names.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum KillTarget {
+    Player,
+    Mob(usize),
+}
+
+/// THE PARSED SELECTOR'S OWN SHAPE (the head + the `type=` filter
+/// elements the options region carries — each the negation flag the
+/// `!` prefix wears and the registry id the minecraft: prefix the
+/// strip keeps).
+#[derive(Debug, Clone, PartialEq, Eq)]
+struct ParsedEntitySelector {
+    head: SelectorHead,
+    types: Vec<(bool, String)>,
+}
+
+/// THE ENTITY TYPE'S OWN REGISTRY ID (the mob kind the wire name the
+/// from_wire_name walk answers — the reverse the type filter's
+/// predicate reads; the ten kinds the enum speaks the total match
+/// wears).
+fn mob_kind_entity_id(kind: crate::mob::MobKind) -> &'static str {
+    match kind {
+        crate::mob::MobKind::Zombie => "minecraft:zombie",
+        crate::mob::MobKind::Pig => "minecraft:pig",
+        crate::mob::MobKind::Cow => "minecraft:cow",
+        crate::mob::MobKind::Sheep => "minecraft:sheep",
+        crate::mob::MobKind::Chicken => "minecraft:chicken",
+        crate::mob::MobKind::Skeleton => "minecraft:skeleton",
+        crate::mob::MobKind::Spider => "minecraft:spider",
+        crate::mob::MobKind::Wolf => "minecraft:wolf",
+        crate::mob::MobKind::Creeper => "minecraft:creeper",
+        crate::mob::MobKind::Warden => "minecraft:warden",
+    }
+}
+
+/// THE ENTITY SELECTOR WORD'S OWN PARSE (javap
+/// `EntitySelectorParser` — the `@` the readStartingWord verdict
+/// keeps, the head letter the five selectors' own words answer, the
+/// `[` the options region the readOptions loop consumes to the
+/// `]` close). THE OPTIONS the type lane alone carries (the
+/// `type=` elements the negation `!` prefix rides — the OTHER
+/// registered keys the offline vocabulary the honest absence keeps,
+/// the parse failure the brigadier verdict answers). THE ID the
+/// registry the resolve keeps: the ten mob ids AND the player the
+/// entity types speak, the unknown id the ERROR_INVALID_TYPE
+/// verdict wears, the tag `#` form the offline walk never serves.
+fn parse_entity_selector_word(word: &str) -> Option<ParsedEntitySelector> {
+    let rest = word.strip_prefix('@')?;
+    let mut chars = rest.chars();
+    let head = match chars.next()? {
+        's' => SelectorHead::SelfEntity,
+        'p' => SelectorHead::NearestPlayer,
+        'a' => SelectorHead::AllPlayers,
+        'r' => SelectorHead::RandomPlayer,
+        'e' => SelectorHead::AllEntities,
+        _ => return None,
+    };
+    let tail = chars.as_str();
+    let types = if tail.is_empty() {
+        Vec::new()
+    } else {
+        // THE OPTIONS REGION (the `[` open the bracket walk demands —
+        // the close the region's own tail wears)
+        let interior = tail.strip_prefix('[')?.strip_suffix(']')?;
+        let mut types = Vec::new();
+        for element in interior.split(',') {
+            // THE KEY=VALUE SPLIT (the `type` key the honored lane
+            // answers — the other registered keys the parse failure
+            // the offline vocabulary speaks)
+            let (key, value) = element.split_once('=')?;
+            if key != "type" {
+                return None;
+            }
+            // THE NEGATION PREFIX (the `!` the type walk strips — the
+            // excluded id the negation set joins)
+            let (negated, id) = match value.strip_prefix('!') {
+                Some(rest) => (true, rest),
+                None => (false, value),
+            };
+            // THE ID RUN (the [a-z0-9_.-] charset the identifier walk
+            // keeps, the `:` the namespace separator rides, the
+            // minecraft: prefix the strip answers, the tag `#` the
+            // offline walk never serves)
+            if id.starts_with('#')
+                || !id
+                    .chars()
+                    .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || matches!(c, '_' | '.' | '-' | ':'))
+            {
+                return None;
+            }
+            let path = id.strip_prefix("minecraft:").unwrap_or(id);
+            // THE REGISTRY RESOLVE (the ten mob ids AND the player the
+            // entity registry speaks — the unknown id the
+            // ERROR_INVALID_TYPE verdict keeps)
+            if path != "player" && parse_kind_path(path).is_none() {
+                return None;
+            }
+            if path == "player" {
+                types.push((negated, "player".to_string()));
+            } else {
+                types.push((negated, format!("minecraft:{path}")));
+            }
+        }
+        types
+    };
+    Some(ParsedEntitySelector { head, types })
+}
+
+/// THE TYPE PATH'S OWN KIND RESOLVE (the parse's registry walk — the
+/// bare path the MobKind the from_wire_name law answers, the unknown
+/// path the honest None keeps).
+fn parse_kind_path(path: &str) -> Option<crate::mob::MobKind> {
+    Some(match path {
+        "zombie" => crate::mob::MobKind::Zombie,
+        "pig" => crate::mob::MobKind::Pig,
+        "cow" => crate::mob::MobKind::Cow,
+        "sheep" => crate::mob::MobKind::Sheep,
+        "chicken" => crate::mob::MobKind::Chicken,
+        "skeleton" => crate::mob::MobKind::Skeleton,
+        "spider" => crate::mob::MobKind::Spider,
+        "wolf" => crate::mob::MobKind::Wolf,
+        "creeper" => crate::mob::MobKind::Creeper,
+        "warden" => crate::mob::MobKind::Warden,
+        _ => return None,
+    })
+}
+
 /// THE SELECTOR OPTIONS' OWN TABLE (javap
 /// `EntitySelectorOptions.bootStrap` — the 21 `register` calls the
 /// 26.2 bytecode banks, the keys in the registration order the
@@ -23960,6 +24113,56 @@ impl App {
                 );
                 self.push_chat_message(msg);
             }
+            ["kill", targets] => {
+                // THE TARGETS LANE (javap KillCommand.register's
+                // `argument("targets", EntityArgument.entities())`
+                // node — the `lambda$register$1` walk the
+                // getEntities(ctx, "targets") collection answers, the
+                // kill walk `entity.kill(level)` each element rides:
+                // the genericKill dose the armor/invulnerability gates
+                // bypass, the actuallyHurt path the full damage
+                // serves). THE PARSE the selector word's own walk
+                // keeps — the '@' heads the EntitySelectorParser
+                // speaks, the failure the brigadier verdict the RED
+                // error renders.
+                let Some(targets) = self.selector_kill_targets(targets) else {
+                    self.push_local_command_error();
+                    return;
+                };
+                // THE KILL WALK (lambda$kill's iterator loop — every
+                // matched entity the genericKill dose wears, the
+                // already-dead the dose's own gate refuses while the
+                // collection the count still speaks)
+                for target in &targets {
+                    match target {
+                        KillTarget::Player => self.actually_hurt(f32::MAX),
+                        KillTarget::Mob(i) => {
+                            if let Some(mob) = self.mobs.get_mut(*i) {
+                                mob.hurt(f64::MAX, false);
+                            }
+                        }
+                    }
+                }
+                // THE FEEDBACK (lambda$kill$0 / lambda$kill$1 — the
+                // size-1 collection the single key's display name
+                // wears, every OTHER size — 0 included — the multiple
+                // key's count carries)
+                let n = targets.len();
+                if n == 1 {
+                    let name = self.kill_target_display_name(&targets[0]);
+                    let msg = format_positional(
+                        tr("commands.kill.success.single").unwrap_or("Killed %s"),
+                        &[&name],
+                    );
+                    self.push_chat_message(msg);
+                } else {
+                    let msg = format_positional(
+                        tr("commands.kill.success.multiple").unwrap_or("Killed %s entities"),
+                        &[&n.to_string()],
+                    );
+                    self.push_chat_message(msg);
+                }
+            }
             _ => {
                 // THE UNKNOWN DISPATCH (the brigadier parse failure the
                 // client-side submit answers — command.unknown.command
@@ -23968,6 +24171,90 @@ impl App {
                 self.push_local_command_error();
             }
         }
+    }
+
+    /// THE KILLED ENTITY'S OWN DISPLAY NAME (lambda$kill$0's
+    /// `getDisplayName()` arg walk): the player the own name wears,
+    /// the mob the entity-type lang key the en_us table answers
+    /// (`entity.minecraft.pig` = "Pig") — the missing key the
+    /// getOrDefault law the key ITSELF renders.
+    fn kill_target_display_name(&self, target: &KillTarget) -> String {
+        match target {
+            KillTarget::Player => PLAYER_NAME.to_string(),
+            KillTarget::Mob(i) => {
+                // THE LANG KEY'S OWN SHAPE (entity.minecraft.pig — the
+                // registry id's colon the DOT the key section
+                // replaces)
+                let key = format!(
+                    "entity.{}",
+                    self.mobs
+                        .get(*i)
+                        .map(|m| mob_kind_entity_id(m.kind))
+                        .unwrap_or("minecraft:mob")
+                        .replace(':', ".")
+                );
+                tr(&key).unwrap_or(key.as_str()).to_string()
+            }
+        }
+    }
+
+    /// THE ENTITY SELECTOR'S OWN TARGET WALK (EntityArgument.entities'
+    /// `getEntities` find walk — the source the offline dispatch's
+    /// own player speaks, the world the selector's predicate runs
+    /// against): the parse the [`parse_entity_selector_word`] walk
+    /// keeps, the match the world's own roster answers. THE HEADS:
+    /// `@s`/`@p`/`@a`/`@r` the single-player source the same ONE
+    /// player each answers (the nearest/all/random-player lanes the
+    /// multiplayer rosters alone widen — the offline walk the honest
+    /// single roster keeps), `@e` the world's own entities — the
+    /// mobs AND the player both ride (the vanilla all-entities
+    /// query's own shape). THE TYPE FILTER the predicate's own law
+    /// keeps: the positive ids the set the membership demands, the
+    /// `!`-negated ids the exclusion wears, the empty-positive set
+    /// the negations-alone the match keeps.
+    fn selector_kill_targets(&self, word: &str) -> Option<Vec<KillTarget>> {
+        let parsed = parse_entity_selector_word(word)?;
+        // THE TYPE FILTER (the predicate's own law — the positive ids
+        // the membership set demands, the negated ids the exclusion
+        // wears, the empty-positive set the negations-alone the match
+        // keeps: excluded-by-none AND (no-positives OR included))
+        let type_filter = |id: Option<&str>| -> bool {
+            let mut any_positive = false;
+            let mut included = false;
+            let mut excluded = false;
+            for (negated, filter_id) in &parsed.types {
+                let hit = id == Some(filter_id.as_str());
+                if *negated {
+                    if hit {
+                        excluded = true;
+                    }
+                } else {
+                    any_positive = true;
+                    if hit {
+                        included = true;
+                    }
+                }
+            }
+            !excluded && (!any_positive || included)
+        };
+        let player_id = "player";
+        let mut targets = Vec::new();
+        // THE MOBS' OWN WALK (the world's entity roster — the type
+        // filter the kind's own registry id the predicate reads; the
+        // all-entities head alone the mob roster answers)
+        for (i, mob) in self.mobs.iter().enumerate() {
+            if parsed.head.all_entities() && type_filter(Some(mob_kind_entity_id(mob.kind))) {
+                targets.push(KillTarget::Mob(i));
+            }
+        }
+        // THE PLAYER'S OWN LANE (the single-player roster — every
+        // head the player answers: the @s source, the @p/@a/@r
+        // player lanes, and the @e all-entities walk the player
+        // includes; the type filter the same predicate runs)
+        if type_filter(Some(player_id)) {
+            targets.push(KillTarget::Player);
+        }
+        Some(targets)
     }
 
     /// THE GAME MODE WORD'S OWN PARSE (GameModeArgument's byName walk
@@ -43725,6 +44012,192 @@ mod tests {
         app.on_chat_submit();
         assert!(app.dead);
         assert_eq!(app.health, 0.0);
+    }
+
+    #[test]
+    fn the_offline_command_the_kill_targets_the_selector_walk_speaks() {
+        // THE PURE PARSE (the EntitySelectorParser's own word law —
+        // the five heads, the options region, the failures)
+        assert_eq!(
+            parse_entity_selector_word("@e").map(|p| p.head),
+            Some(SelectorHead::AllEntities),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@s").map(|p| p.head),
+            Some(SelectorHead::SelfEntity),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@p").map(|p| p.head),
+            Some(SelectorHead::NearestPlayer),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@a").map(|p| p.head),
+            Some(SelectorHead::AllPlayers),
+        );
+        assert_eq!(
+            parse_entity_selector_word("@r").map(|p| p.head),
+            Some(SelectorHead::RandomPlayer),
+        );
+        // THE FAILURES (the non-selector word, the unknown head, the
+        // trailing junk the options region never opens, the unclosed
+        // bracket, the other registered keys the offline walk never
+        // serves, the tag form)
+        for bad in [
+            "pig", "@", "@x", "@ee", "@e[", "@e[type=pig", "@e[limit=1]",
+            "@e[name=Steve]", "@e[type=#minecraft:pig]", "@e[type=]",
+        ] {
+            assert!(
+                parse_entity_selector_word(bad).is_none(),
+                "the {bad} the parse failure keeps"
+            );
+        }
+        // THE TYPE OPTIONS (the bare, the negated, the multiple, the
+        // minecraft:-prefixed, the player id)
+        let parsed = parse_entity_selector_word("@e[type=pig]").unwrap();
+        assert_eq!(
+            parsed.types,
+            vec![(false, "minecraft:pig".to_string())],
+        );
+        let parsed = parse_entity_selector_word("@e[type=!skeleton]").unwrap();
+        assert_eq!(
+            parsed.types,
+            vec![(true, "minecraft:skeleton".to_string())],
+        );
+        let parsed = parse_entity_selector_word("@a[type=minecraft:pig,type=cow]").unwrap();
+        assert_eq!(
+            parsed.types,
+            vec![
+                (false, "minecraft:pig".to_string()),
+                (false, "minecraft:cow".to_string()),
+            ],
+        );
+        let parsed = parse_entity_selector_word("@e[type=player]").unwrap();
+        assert_eq!(parsed.types, vec![(false, "player".to_string())]);
+        // THE APP WALK (the world's own roster the matcher answers —
+        // the staged roster the clear first keeps, the counts the
+        // ctor's own spawn never drifts)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the spawned body");
+            (b.x, b.y, b.z)
+        };
+        // TWO PIGS + ONE SKELETON the kind re-arm speaks
+        let mut pig_a = crate::mob::Zombie::new(101, bx + 1.0, by, bz, 5);
+        pig_a.kind = crate::mob::MobKind::Pig;
+        let mut pig_b = crate::mob::Zombie::new(102, bx + 2.0, by, bz, 6);
+        pig_b.kind = crate::mob::MobKind::Pig;
+        let mut skeleton = crate::mob::Zombie::new(103, bx - 1.0, by, bz, 7);
+        skeleton.kind = crate::mob::MobKind::Skeleton;
+        app.mobs.push(pig_a);
+        app.mobs.push(pig_b);
+        app.mobs.push(skeleton);
+        // THE @e WALK (the mobs AND the player the all-entities query
+        // answers — the count the multiple key wears)
+        app.chat_open = true;
+        app.chat_input = "/kill @e".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed 4 entities"),
+        );
+        assert!(app.dead, "the @e the player includes");
+        assert_eq!(app.health, 0.0);
+        for mob in &app.mobs {
+            assert!(mob.health <= 0.0, "the dose the every mob lands");
+        }
+        // THE RESPAWN (the fresh body the type walks the alive body
+        // stages)
+        app.respawn();
+        app.spawn_offline_body();
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the respawned body");
+            (b.x, b.y, b.z)
+        };
+        let mut pig = crate::mob::Zombie::new(104, bx + 1.0, by, bz, 8);
+        pig.kind = crate::mob::MobKind::Pig;
+        app.mobs.clear();
+        app.mobs.push(pig);
+        // THE TYPE FILTER (the pig alone the positive set answers —
+        // the ONE match the single key's display name wears)
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=pig]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed Pig"),
+        );
+        assert!(!app.dead, "the filter the player excludes");
+        assert!(app.mobs.last().unwrap().health <= 0.0);
+        // THE NEGATION (the skeleton the exclusion spares — the dead
+        // pig the corpse the collection STILL counts, the player the
+        // negation the all-entities head includes: the pair the
+        // multiple key wears)
+        let mut skel = crate::mob::Zombie::new(105, bx + 2.0, by, bz, 9);
+        skel.kind = crate::mob::MobKind::Skeleton;
+        app.mobs.push(skel);
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=!skeleton]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed 2 entities"),
+        );
+        assert!(app.dead, "the negation the player spares never");
+        assert!(
+            app.mobs.last().unwrap().health > 0.0,
+            "the excluded skeleton the dose never lands"
+        );
+        // THE RESPAWN + THE PLAYER-ONLY WALK (the type=player filter
+        // the mob roster excludes)
+        app.respawn();
+        app.spawn_offline_body();
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=player]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed mc2rs"),
+        );
+        assert!(app.dead);
+        // THE PLAYER HEADS (the @s/@p/@a/@r the single-player source
+        // the same ONE player answers)
+        app.respawn();
+        for head in ["@s", "@p", "@a", "@r"] {
+            app.chat_open = true;
+            app.chat_input = format!("/kill {head}");
+            app.on_chat_submit();
+            assert_eq!(
+                app.chat_messages.last().map(|(m, _)| m.as_str()),
+                Some("Killed mc2rs"),
+                "the {head} head the single player answers"
+            );
+            assert!(app.dead);
+            app.respawn();
+        }
+        // THE PARSE FAILURES (the invalid word the brigadier verdict
+        // keeps — the red error rides, the roster untouched)
+        for bad in ["pig", "@x", "@e[limit=1]", "@e[type=dragon]"] {
+            app.chat_open = true;
+            app.chat_input = format!("/kill {bad}");
+            app.on_chat_submit();
+            let err = app.chat_messages.last().map(|(m, _)| m.clone()).unwrap();
+            assert!(err.starts_with("\u{a7}c"), "the {bad} the RED error rides: {err:?}");
+        }
+        assert!(!app.dead);
+        // THE EMPTY MATCH (the valid command the zero answers — the
+        // world's pig-free roster the type walk the empty collection
+        // the count still speaks)
+        app.mobs.clear();
+        app.chat_open = true;
+        app.chat_input = "/kill @e[type=pig]".into();
+        app.on_chat_submit();
+        assert_eq!(
+            app.chat_messages.last().map(|(m, _)| m.as_str()),
+            Some("Killed 0 entities"),
+        );
     }
 
     #[test]
