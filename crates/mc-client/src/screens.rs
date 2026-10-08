@@ -15269,8 +15269,22 @@ impl App {
         let charge = ((self.attack_ticker as f32 + 0.5)
             / held_charge_delay(held_name) as f32)
             .clamp(0.0, 1.0);
-        let mut dmg = (PLAYER_ATTACK_DAMAGE + held_attack_addend(held_name)) as f32
-            * (0.2 + 0.8 * charge * charge);
+        // THE ATTACK-DAMAGE ATTRIBUTE'S OWN SUM (javap
+        // `RangedAttribute("attribute.name.attack_damage", 2.0, 0.0,
+        // 2048.0)` the Attributes clinit keeps + the ADD_VALUE
+        // modifiers the holder's table carries: the weapon's own
+        // addend + the WEAKNESS row's −4.0×(amp+1) the
+        // `effect.weakness` template wears) — the sanitizeValue law's
+        // own 0.0 floor the attribute value speaks (the Mth.clamp
+        // the RangedAttribute's min keeps) BEFORE the charge scale
+        // reads it: the weakened fist the zero attribute the dose
+        // never carries, the full charge the floor's own product
+        // keeps.
+        let attribute = (PLAYER_ATTACK_DAMAGE
+            + held_attack_addend(held_name)
+            + crate::effects::weakness_addend(&self.effects))
+        .max(0.0) as f32;
+        let mut dmg = attribute * (0.2 + 0.8 * charge * charge);
         let full = charge > 0.9;
         let (on_ground, eye_water) = self.body_state();
         let (falling, sprinting, bx, by, bz, bvx, bvz, vyaw, by_mid) = self
@@ -45925,6 +45939,186 @@ mod tests {
         app.on_chat_submit();
         assert!(app.dead, "the generic_kill the resistance never gates");
         assert_eq!(app.health, 0.0, "the kill walk the health floors");
+    }
+
+    /// THE WEAKNESS'S OWN MELEE WALK (javap MobEffects clinit pcs
+    /// 469-503 the addAttributeModifier(ATTACK_DAMAGE, "effect.weakness",
+    /// -4.0d, ADD_VALUE) row + the AttributeTemplate.create(int) the
+    /// amount × (amp+1) product + the RangedAttribute's sanitizeValue
+    /// the 0.0 floor keeps): the amp-0 fist the zero attribute the
+    /// full charge the 0.0 product speaks (the dose the delivery
+    /// never carries, the onAttack reset the gate still walks), the
+    /// diamond blade the 2.0+6.0−4.0 the 4.0 survivor wears (the
+    /// armor fold the zombie's own 2.0 the ×0.94 speaks), the bare
+    /// contrast the 8.0 attribute the identity rides.
+    #[test]
+    fn the_weakness_the_fist_the_floor_wears() {
+        let wire = |name: &str| {
+            mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                .iter()
+                .position(|&n| n == name)
+                .expect("the item rides the wire") as i32
+        };
+        // THE FLOOR WALK (the amp-0 fist the 2.0−4.0 the clamp floors)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_WEAKNESS,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.mobs.push(crate::mob::Zombie::new(
+            7,
+            c as f64 + 3.0,
+            top as f64 + 1.62,
+            c as f64 + 0.5,
+            3,
+        ));
+        {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[0];
+                (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees()
+                as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        }
+        // the fist's own charge window (the 5.0 delay the 5 ticker the
+        // full charge speaks)
+        app.attack_ticker = 5;
+        app.attack_mob(0);
+        assert_eq!(
+            app.mobs[0].health,
+            crate::mob::ZOMBIE_MAX_HEALTH,
+            "the zero attribute the dose never carries"
+        );
+        // the swing still re-armed (onAttack's own reset the dmg gate
+        // never blocks)
+        assert_eq!(app.attack_ticker, 0, "the reset the floor walk keeps");
+
+        // THE BLADE WALK (the 2.0+6.0−4.0 the 4.0 survivor wears — the
+        // armor fold the zombie's own law speaks)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_WEAKNESS,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        app.inventory.items[app.selected_hotbar] = (wire("diamond_sword"), 1);
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.mobs.push(crate::mob::Zombie::new(
+            7,
+            c as f64 + 3.0,
+            top as f64 + 1.62,
+            c as f64 + 0.5,
+            3,
+        ));
+        {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[0];
+                (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees()
+                as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        }
+        // the sword's own charge window (the 12.5 delay the 13 ticker
+        // the full charge speaks)
+        app.attack_ticker = 13;
+        app.attack_mob(0);
+        // the exact f32 mirror: the 4.0 dose the armor law's own f6
+        // fold (the f6 the DOSE's own word wears — armor − amount/2
+        // the 0.4 floor clamps, the magic lane the unworn identity
+        // rides)
+        let f6_for = |amount: f32| {
+            (crate::mob::ZOMBIE_ARMOR as f32 - amount / 2.0_f32)
+                .clamp(crate::mob::ZOMBIE_ARMOR as f32 * 0.2, 20.0)
+        };
+        assert_eq!(
+            app.mobs[0].health,
+            crate::mob::ZOMBIE_MAX_HEALTH - 4.0_f32 * (1.0 - f6_for(4.0) / 25.0),
+            "the weakened blade the 4.0 survivor wears"
+        );
+
+        // THE BARE CONTRAST (the unworn body the 8.0 attribute the
+        // identity rides — the same blade the weakness's absence
+        // speaks)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.inventory.items[app.selected_hotbar] = (wire("diamond_sword"), 1);
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.body = Some(crate::body::PlayerBody::new(
+            c as f64 + 0.5,
+            top as f64,
+            c as f64 + 0.5,
+            0.0,
+            0.0,
+        ));
+        app.mobs.push(crate::mob::Zombie::new(
+            7,
+            c as f64 + 3.0,
+            top as f64 + 1.62,
+            c as f64 + 0.5,
+            3,
+        ));
+        {
+            let (tx, ty, tz) = {
+                let m = &app.mobs[0];
+                (m.x, m.y + crate::mob::ZOMBIE_HEIGHT * 0.5, m.z)
+            };
+            let b = app.body.as_mut().unwrap();
+            let (dx, dy, dz) = (tx - b.x, ty - (b.y + b.eye_height()), tz - b.z);
+            let horiz = (dx * dx + dz * dz).sqrt().max(1e-9);
+            let len3 = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+            b.yaw = ((dx / horiz).atan2(-dz / horiz) - std::f64::consts::PI).to_degrees()
+                as f32;
+            b.pitch = -(dy / len3).asin().to_degrees() as f32;
+        }
+        app.attack_ticker = 13;
+        app.attack_mob(0);
+        assert_eq!(
+            app.mobs[0].health,
+            crate::mob::ZOMBIE_MAX_HEALTH - 8.0_f32 * (1.0 - f6_for(8.0) / 25.0),
+            "the bare blade the 8.0 attribute wears"
+        );
     }
 
     /// THE EFFECT DOSES' OWN MOTION WIRING (javap the attribute lanes

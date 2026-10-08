@@ -64,6 +64,13 @@ pub const MOB_EFFECT_WITHER: i32 = 19;
 /// 17th row — the exhaustion-drain lane's every-tick beat reads it).
 pub const MOB_EFFECT_HUNGER: i32 = 16;
 
+/// `minecraft:weakness`'s mob-effect registry id (the wire order's own
+/// 18th row — the hunger-16/poison-18 pair brackets the slot the
+/// MobEffects clinit's own registration order keeps: the `hunger` row
+/// puts at pc 466, the `weakness` row at pc 503, the `poison` row
+/// follows). The attack-damage attribute lane's harmful arm reads it.
+pub const MOB_EFFECT_WEAKNESS: i32 = 17;
+
 /// `minecraft:saturation`'s mob-effect registry id (the wire order's
 /// own 23rd row, the InstantaneousMobEffect's food row).
 pub const MOB_EFFECT_SATURATION: i32 = 22;
@@ -175,6 +182,29 @@ pub fn folded_by_resistance(store: &EffectsStore, damage: f32) -> f32 {
     match store.get(MOB_EFFECT_RESISTANCE) {
         Some(inst) => resistance_scale(inst.amplifier, damage),
         None => damage,
+    }
+}
+
+/// THE WEAKNESS MODIFIER'S OWN AMOUNT (javap `MobEffects` clinit pcs
+/// 469-503 — the WEAKNESS row the PLAIN `MobEffect(HARMFUL, 4738376)`
+/// ctor keeps, no subclass the jar speaks — the addAttributeModifier
+/// call the row's own attribute lane arms:
+/// `(Attributes.ATTACK_DAMAGE, Identifier.withDefaultNamespace(
+/// "effect.weakness"), -4.0d, AttributeModifier.Operation.ADD_VALUE)`).
+/// The ldc2_w the constant's own word speaks.
+pub const WEAKNESS_ATTACK_ADDEND: f64 = -4.0;
+
+/// THE ATTACK-DAMAGE MODIFIER THE WEAKNESS WEARS (javap
+/// `MobEffect$AttributeTemplate.create` pcs 0-24 — the
+/// `amount * (amplifier + 1)` product the iload/iconst_1/iadd/i2d/dmul
+/// walk keeps, the ADD_VALUE operation the modifier's own ctor pass
+/// speaks): the store read the two melee dose sites share — the
+/// unworn body the 0.0 identity rides, the amp-N body the
+/// −4.0×(N+1) addend the attribute sum wears.
+pub fn weakness_addend(store: &EffectsStore) -> f64 {
+    match store.get(MOB_EFFECT_WEAKNESS) {
+        Some(inst) => WEAKNESS_ATTACK_ADDEND * (inst.amplifier + 1) as f64,
+        None => 0.0,
     }
 }
 
@@ -938,6 +968,48 @@ mod tests {
             folded_by_resistance(&s, 10.0),
             10.0,
             "the expired brand the fold never reads"
+        );
+    }
+
+    /// THE WEAKNESS'S OWN ADDEND (javap MobEffects clinit pcs 469-503 —
+    /// the addAttributeModifier(ATTACK_DAMAGE, "effect.weakness",
+    /// -4.0d, ADD_VALUE) row the plain MobEffect ctor keeps + the
+    /// MobEffect$AttributeTemplate.create(int) pcs 8-16 the
+    /// amount × (amplifier + 1) product speaks): the amp ladder the
+    /// exact f64s wear, the unworn body the 0.0 identity rides, the
+    /// expiry the identity restores (the clock's own walk).
+    #[test]
+    fn the_weakness_the_addend_ladder_the_attribute_wears() {
+        let mut s = EffectsStore::new();
+        assert_eq!(weakness_addend(&s), 0.0, "the bare body the 0.0 rides");
+        s.add_effect(MOB_EFFECT_WEAKNESS, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            weakness_addend(&s),
+            -4.0,
+            "the amp-0 the amount x1 the exact f64 wears"
+        );
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_WEAKNESS, 1, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            weakness_addend(&s2),
+            -8.0,
+            "the amp-1 the amount x2 the exact f64 wears"
+        );
+        let mut s3 = EffectsStore::new();
+        s3.add_effect(MOB_EFFECT_WEAKNESS, 3, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            weakness_addend(&s3),
+            -16.0,
+            "the amp-3 the amount x4 the exact f64 wears"
+        );
+        // the expiry the identity restores (the clock's own walk)
+        for _ in 0..400 {
+            s3.tick_offline();
+        }
+        assert_eq!(
+            weakness_addend(&s3),
+            0.0,
+            "the expired brand the 0.0 identity rides"
         );
     }
 

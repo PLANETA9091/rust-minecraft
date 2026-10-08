@@ -6942,8 +6942,18 @@ impl Zombie {
                         self.ticks_until_attack = ATTACK_INTERVAL_TICKS;
                     } else {
                         let (kx, kz) = (p.x - self.x, p.z - self.z);
-                        let dmg = attack_base
-                            + crate::screens::held_attack_addend(self.held_weapon);
+                        // THE ATTACKER'S OWN WEAKNESS (javap MobEffects
+                        // clinit pcs 469-503 — the addAttributeModifier(
+                        // ATTACK_DAMAGE, "effect.weakness", -4.0d,
+                        // ADD_VALUE) row the ANY-holder attribute law
+                        // arms: the branded mob's own dose the modifier
+                        // folds, the RangedAttribute's 0.0 floor the
+                        // sanitizeValue law keeps — the weakened fang
+                        // the zero dose wears)
+                        let dmg = (attack_base
+                            + crate::screens::held_attack_addend(self.held_weapon)
+                            + crate::effects::weakness_addend(&self.effects))
+                        .max(0.0);
                         // THE VICTIM'S OWN LANE (the player the
                         // MobEvents.attack lane hurts, the prey the
                         // mob-vs-mob lane the caller's own pass serves — the
@@ -18447,6 +18457,86 @@ mod tests {
             ZOMBIE_MAX_HEALTH - after_armor,
             "the armor-alone survivor the bare body wears"
         );
+    }
+
+    /// THE WEAKNESS'S OWN FANG (javap MobEffects clinit pcs 469-503 —
+    /// the addAttributeModifier(ATTACK_DAMAGE, "effect.weakness",
+    /// -4.0d, ADD_VALUE) row the ANY-holder's own attribute law arms +
+    /// the RangedAttribute's sanitizeValue the 0.0 floor keeps): the
+    /// branded zombie the 3.0−4.0 the clamp the zero dose wears, the
+    /// diamond blade the 3.0+6.0−4.0 the 5.0 survivor speaks, the
+    /// bare fang the 3.0 the identity keeps.
+    #[test]
+    fn the_weakness_the_zombie_fang_the_floor_wears() {
+        let world = flat_world();
+        // THE BRANDED FANG (the amp-0 the −4.0 modifier the dose
+        // floors)
+        let mut z = Zombie::new(1, 8.0, 5.0, 8.0, 7);
+        z.on_ground = true;
+        z.effects.add_effect(
+            crate::effects::MOB_EFFECT_WEAKNESS,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        let player = player_at(5.0, 5.0, 8.0); // 3 blocks west, on the pad
+        let mut landed = None;
+        for _ in 0..400 {
+            let ev = z.tick(&world, Some(&player), NIGHT);
+            if let Some(atk) = ev.attack {
+                assert!(
+                    (atk.damage - 0.0).abs() < 1e-9,
+                    "the weakened fang the zero dose wears: {}",
+                    atk.damage
+                );
+                landed = Some(atk);
+                break;
+            }
+        }
+        assert!(landed.is_some(), "the weakened melee never landed (x {})", z.x);
+        // THE ARMED FANG (the diamond blade the +6.0 addend the
+        // attribute sum wears — the 3.0+6.0−4.0 the 5.0 survivor)
+        let mut armed = Zombie::new(2, 8.0, 5.0, 8.0, 9);
+        armed.on_ground = true;
+        armed.held_weapon = Some("diamond_sword");
+        armed.effects.add_effect(
+            crate::effects::MOB_EFFECT_WEAKNESS,
+            0,
+            400,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        let mut landed = None;
+        for _ in 0..400 {
+            let ev = armed.tick(&world, Some(&player), NIGHT);
+            if let Some(atk) = ev.attack {
+                assert!(
+                    (atk.damage - 5.0).abs() < 1e-9,
+                    "the armed fang the 5.0 survivor wears: {}",
+                    atk.damage
+                );
+                landed = Some(atk);
+                break;
+            }
+        }
+        assert!(landed.is_some(), "the armed melee never landed (x {})", armed.x);
+        // THE BARE CONTRAST (the unworn body the 3.0 the identity
+        // keeps)
+        let mut bare = Zombie::new(3, 8.0, 5.0, 8.0, 11);
+        bare.on_ground = true;
+        let mut landed = None;
+        for _ in 0..400 {
+            let ev = bare.tick(&world, Some(&player), NIGHT);
+            if let Some(atk) = ev.attack {
+                assert!(
+                    (atk.damage - ZOMBIE_ATTACK_DAMAGE).abs() < 1e-9,
+                    "the bare fang the identity wears: {}",
+                    atk.damage
+                );
+                landed = Some(atk);
+                break;
+            }
+        }
+        assert!(landed.is_some(), "the bare melee never landed (x {})", bare.x);
     }
 
     /// THE NIGHT HIDES THEM — the MONSTERS_BURN track false, the same
