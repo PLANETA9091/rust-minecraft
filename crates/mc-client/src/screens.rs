@@ -53629,6 +53629,101 @@ mod tests {
         );
     }
 
+    /// THE SONIC DOSE'S OWN REFERENCE (javap `SonicBoom.lambda$tick$2`
+    /// pc 121-137 + `LivingEntity.hurtServer` the resolve walk's tail
+    /// over the offline world — the boom the setLastHurtByMob(warden)
+    /// reference banks the SAME law the melee bite wears: the 10.0 the
+    /// hurt_by_mob walk wears, the reference the warden's own view
+    /// banks, the bitten mob's own HurtBy prio-1 goal the next tick's
+    /// walk arms — the refresh pass's own warden views the live pos
+    /// the chase serves).
+    #[test]
+    fn the_sonic_boom_the_mob_victim_the_reference_arms() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE AIR NEIGHBORHOOD (the melee reference test's own stage —
+        // the zombie the +X neighbor the beam the chest→eye walk
+        // serves)
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body = Some(crate::body::PlayerBody::new(
+            px,
+            feet_y,
+            pz,
+            180.0,
+            0.0,
+        ));
+        // THE ZOMBIE THE PLAYER'S SPOT KEEPS (the +X neighbor the beam
+        // crosses), THE AGE THE DOSE'S TIMESTAMP ARMS (the fresh
+        // body's first tick the pre-update runs — the reacted-event
+        // timestamp the NON-ZERO word the goal's own compare answers:
+        // the age-0 dose the timestamp the goal's stored zero the
+        // EQUAL pair never arms)
+        app.mobs
+            .push(crate::mob::Zombie::new(77, px + 1.0, feet_y, pz, 4));
+        app.mobs[0].on_ground = true;
+        app.update();
+        app.mobs[0].health = 500.0;
+        app.wardens
+            .push(crate::sculk::WardenMob::new(201, px, feet_y, pz));
+        app.wardens[0].attack_target = Some(77);
+        // THE MID-WINDOW STATE (the rings test's own surgical setup —
+        // the active the running state keeps, the 2 the window's own
+        // tail banks, the 1 the delay's last tick covers — the update's
+        // drain walk the both-absent tick the boom arms; the standing
+        // window the melee swing the same tick refuses)
+        app.wardens[0].sonic_active = true;
+        app.wardens[0].attack_cooldown = 2;
+        app.wardens[0].sonic_sound_delay = 1;
+        app.wardens[0].sonic_sound_cooldown = 0;
+        app.update();
+        // THE DOSE (the 9.84 the ARMOR LAW wears — the zombie's own 2
+        // armor the CombatRules fold speaks: f6 = clamp(2 - 10/2,
+        // armor*0.2, 20) = 0.4, the survivor `10 * (1 - 0.4/25)` the
+        // 0.984 factor answers — the 500.0 pool the survivor keeps)
+        let f6 = (crate::mob::ZOMBIE_ARMOR as f32 - 10.0f32 / 2.0)
+            .clamp((crate::mob::ZOMBIE_ARMOR * 0.2) as f32, 20.0);
+        assert_eq!(
+            app.mobs[0].health,
+            500.0 - 10.0 * (1.0 - f6 / 25.0),
+            "the boom the armor-absorbed dose wears: {}",
+            app.mobs[0].health
+        );
+        // THE REFERENCE (the setLastHurtByMob the warden's own view
+        // banks — the kind the WARDEN word carries, the live pos the
+        // snapshot wears)
+        let reference = app.mobs[0]
+            .hurt_by_reference()
+            .expect("the boom the reference banks");
+        assert_eq!(reference.id, 201, "the warden's id the reference names");
+        assert_eq!(
+            reference.kind,
+            crate::mob::MobKind::Warden,
+            "the kind the variant banks"
+        );
+        assert_eq!(
+            (reference.x, reference.z),
+            (px, pz),
+            "the live pos the snapshot wears"
+        );
+        // THE NEXT TICK'S OWN WALK (the warden's own views the refresh
+        // pass serves — the reference the live body keeps, the
+        // retaliation the HurtBy's own start arms)
+        app.update();
+        assert!(
+            app.mobs[0].hurt_by_reference().is_some(),
+            "the warden's views the reference the refresh keeps"
+        );
+        assert!(
+            app.mobs[0].retaliation_armed(),
+            "the HurtBy goal the boom's reference arms"
+        );
+    }
+
     /// THE COUNTER-BITE'S OWN WALK (javap `Warden.hurtServer` pc 0-103
     /// over the offline world — the zombie's own bite the MOB-SOURCE
     /// dose wears, the +100 the ON_HURT_ANGER_BOOST the ANGRY_MIN
