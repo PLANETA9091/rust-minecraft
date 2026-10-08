@@ -53724,6 +53724,166 @@ mod tests {
         );
     }
 
+    /// THE CHASE'S OWN WALK (javap `SetWalkTargetFromAttackTargetIfTargetOutOfReach`
+    /// lambda$create$3 pc 59-75 + `MoveToTargetSink` + `MeleeAttack` over the
+    /// offline world — the out-of-reach MOB target the 1.2f chase serves, the
+    /// walk the travel fold answers, the arrival the melee ring the dose
+    /// wears: the walk target the mob's LIVE spot banks (the
+    /// `EntityTracker(target, 1)` tracker the 1.2f modifier carries), the
+    /// body the atan2 law faces, the walk animation the move distance fills,
+    /// the in-reach pair the WALK_TARGET erase serves, the bite the 29.52
+    /// the zombie's own armor law lands, the setLastHurtByMob the reference
+    /// banks, the HurtBy prio-1 goal the retaliation arms — the loop the
+    /// 576/577 rounds closed the chase's own legs the round verifies
+    /// end-to-end).
+    #[test]
+    fn the_chase_the_walk_the_arrival_the_dose_lands() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE FLAT FLOOR (the walk test's own world the app wears — the
+        // stone 0..5 the air above; the light grid the fresh build never
+        // relights — the burn roll's canSeeSky the zero channel refuses:
+        // the zombie the sky never brands, the 500.0 pool the health law
+        // the exact keeps)
+        let mut flat = crate::world::World::new(WORLD_CHUNKS, app.seed);
+        for x in 0..flat.size_blocks() {
+            for z in 0..flat.size_blocks() {
+                for y in 0..5 {
+                    flat.set(x, y as i32, z, crate::world::STONE);
+                }
+                for y in 5..crate::world::CHUNK_Y {
+                    flat.set(x, y as i32, z, crate::world::AIR);
+                }
+            }
+        }
+        app.offline_world = Some(flat);
+        app.spawn_y = 5;
+        // THE STAGE (the player the center keeps, the zombie 3.0 east, the
+        // warden 2.0 west — the 5.0 gap the 1.578 reach edge REFUSES: the
+        // chase the out-of-reach pair arms, the swing the far window
+        // refuses)
+        let (px, pz) = (8.5f64, 8.5f64);
+        app.body = Some(crate::body::PlayerBody::new(px, 5.0, pz, 180.0, 0.0));
+        app.mobs
+            .push(crate::mob::Zombie::new(77, px + 3.0, 5.0, pz, 4));
+        app.mobs[0].on_ground = true;
+        app.update();
+        // THE POOL THE REPEAT SWINGS SURVIVE (the melee reference test's
+        // own law — the 500.0 the dose the armor law answers)
+        app.mobs[0].health = 500.0;
+        app.wardens
+            .push(crate::sculk::WardenMob::new(201, px - 2.0, 5.0, pz));
+        app.wardens[0].attack_target = Some(77);
+        // THE SONIC BANK THE FRESH WINDOW KEEPS (the melee dose test's own
+        // law — the chase the pure lane keeps, the boom the standing
+        // window refuses: the 40l the bank the walk the whole serves)
+        app.wardens[0].sonic_boom_cooldown =
+            crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
+        // THE MOB'S OWN SPOT THE CHASE READS (the tick order the warden
+        // loop FIRST serves — the mob's fields the previous tick the read
+        // keeps)
+        let (zx, zy, zz) = (app.mobs[0].x, app.mobs[0].y, app.mobs[0].z);
+        app.update();
+        // THE WALK TARGET THE MOB'S LIVE SPOT BANKS (the out-of-reach pair
+        // — the EntityTracker(target, 1) tracker the 1.2f modifier
+        // carries)
+        let t = app.wardens[0]
+            .walk_target
+            .expect("the chase the walk target banks");
+        assert_eq!(
+            t.speed_modifier,
+            crate::sculk::WARDEN_FIGHT_SPEED_MODIFIER,
+            "the 1.2f the chase wears"
+        );
+        assert_eq!(t.close_enough, 1, "the tracker's own arg keeps");
+        assert_eq!(
+            t.pos, (zx, zy, zz),
+            "the mob's live spot the tracker banks"
+        );
+        assert_eq!(
+            t.block,
+            (zx.floor() as i32, zy.floor() as i32, zz.floor() as i32),
+            "the block the spot floors"
+        );
+        // THE BODY THE CHASE FACES (the atan2 law the +X walk answers) —
+        // the WALK ANIMATION the move distance fills, the EASTWARD walk
+        // the x serves
+        assert!(
+            (app.wardens[0].yaw_deg + 90.0).abs() < 1e-3,
+            "the atan2 law the chase yaw wears: {}",
+            app.wardens[0].yaw_deg
+        );
+        assert!(
+            app.wardens[0].walk.speed > 0.0,
+            "the walk speed the move distance fills"
+        );
+        assert!(
+            app.wardens[0].x > px - 2.0,
+            "the eastward walk the x serves: {}",
+            app.wardens[0].x
+        );
+        // THE CHASE THE GAP CLOSES (the zombie's own player-chase the -X
+        // walk serves, the warden the +X chase rides — the arrival the
+        // melee ring the dose answers)
+        let mut dose_seen = false;
+        for _ in 0..200 {
+            app.update();
+            if app.mobs[0].health < 500.0 {
+                dose_seen = true;
+                break;
+            }
+        }
+        assert!(dose_seen, "the arrival the dose lands");
+        // THE DOSE (the 29.52 the ARMOR LAW wears — the zombie's own 2
+        // armor the CombatRules fold speaks: f6 = clamp(2 - 30/2, 0.4, 20)
+        // = 0.4, the survivor `30 * (1 - 0.4/25)` the 0.984 factor answers)
+        assert_eq!(
+            app.mobs[0].health, 470.48,
+            "the bite the armor-absorbed dose wears: {}",
+            app.mobs[0].health
+        );
+        // THE ERASE (lambda$create$3 pc 52-56 — the in-reach pair the
+        // WALK_TARGET drop serves: the arrival the warden stands, the
+        // swing the same tick the melee arm wears)
+        assert!(
+            app.wardens[0].walk_target.is_none(),
+            "the in-reach pair the arrival erase serves"
+        );
+        // THE SWING'S OWN BANK (the 18l the cooldown banks)
+        assert_eq!(
+            app.wardens[0].attack_cooldown,
+            crate::sculk::WARDEN_MELEE_COOLDOWN_TICKS,
+            "the 18l the setWithExpiry banks"
+        );
+        // THE IMPACT VOICE (the 10.0 the landing speaks)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.contains("entity.warden.attack_impact")),
+            "the impact voice the landing plays"
+        );
+        // THE REFERENCE (the setLastHurtByMob the warden's own view banks
+        // — the id the 201 the kind the WARDEN word carries)
+        let reference = app.mobs[0]
+            .hurt_by_reference()
+            .expect("the bite the reference banks");
+        assert_eq!(reference.id, 201, "the warden's id the reference names");
+        assert_eq!(
+            reference.kind,
+            crate::mob::MobKind::Warden,
+            "the kind the variant banks"
+        );
+        // THE RETALIATION (the HurtBy prio-1 goal the next tick's walk
+        // arms — the loop the counter-bite the warden's own hurtServer
+        // answers)
+        app.update();
+        assert!(
+            app.mobs[0].retaliation_armed(),
+            "the HurtBy goal the chase's dose arms"
+        );
+    }
+
     /// THE COUNTER-BITE'S OWN WALK (javap `Warden.hurtServer` pc 0-103
     /// over the offline world — the zombie's own bite the MOB-SOURCE
     /// dose wears, the +100 the ON_HURT_ANGER_BOOST the ANGRY_MIN

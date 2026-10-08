@@ -1,38 +1,47 @@
-v0.3.637: the sonic dose's OWN reference test the melee pin's sibling
-wears (autopush-577)
+v0.3.638: the warden's own FIGHT CHASE the walk the arrival the dose
+wears (autopush-578)
 
-THE ROUND (the queue's top candidate the 576 worklog named — the
-sonic walk the reference banks, the integration test the melee lane
-the round pinned, the sonic arm the same walk the lighter pin the
-round wears):
-- `the_sonic_boom_the_mob_victim_the_reference_arms` (screens.rs,
-  the melee reference test's own sibling) — javap `SonicBoom
-  .lambda$tick$2` pc 121-137 + `LivingEntity.hurtServer` the resolve
-  walk's tail over the offline world: the warden the MOB target the
-  mid-window surgical staging serves (the active window the rings
-  test's own setup keeps, the 2l the window's tail banks, the 1l the
-  delay's last tick covers — the standing window the melee swing the
-  same tick refuses), the boom the 9.84 the ARMOR LAW wears (the
-  zombie's own 2 armor the CombatRules fold speaks: f6 = clamp(2 -
-  10/2, armor*0.2, 20) = 0.4, the survivor `10 * (1 - 0.4/25)` the
-  0.984 factor answers — the 500.0 pool the survivor keeps), the
-  setLastHurtByMob the warden's own view banks (the id 201 the kind
-  the WARDEN variant names, the live pos the snapshot wears), the
-  next tick's refresh pass the warden's own views the reference
-  keeps, the HurtBy prio-1 goal the reacted-event timestamp the
-  NON-ZERO word arms (the age-0 dose the EQUAL pair never arms — the
-  pre-update walk the age the stage serves).
+THE ROUND (the queue's top candidate the 577 worklog named — the
+loop the 576/577 rounds closed the reference the tests wear, the
+chase's own LEGS the round verifies end-to-end: the out-of-reach mob
+target the 1.2f walk target banks, the body the walk moves, the
+arrival the melee ring the dose answers):
+- `the_chase_the_walk_the_arrival_the_dose_lands` (screens.rs, the
+  dose tests' own stage the chase the legs ride) — javap
+  `SetWalkTargetFromAttackTargetIfTargetOutOfReach` lambda$create$3
+  pc 59-75 + `MoveToTargetSink` + `MeleeAttack` over the offline
+  world: the FLAT FLOOR the app's own world wears (the stone 0..5
+  the air above; the light grid the fresh build never relights — the
+  burn roll's canSeeSky the zero channel refuses: the zombie the sky
+  never brands, the 500.0 pool the health law the exact keeps), the
+  warden 5.0 from the zombie the 1.578 reach edge REFUSES (the chase
+  the out-of-reach pair arms, the swing the far window refuses), the
+  40l sonic bank the walk the whole covers (the melee dose test's
+  own law — the chase the pure lane keeps), the walk target the
+  zombie's LIVE spot banks (the EntityTracker(target, 1) tracker the
+  1.2f modifier carries, the close-enough 1 the tracker's own arg
+  keeps), the body the atan2 law faces (the +X walk the -90 yaw
+  answers), the walk animation the move distance fills, the tick
+  loop the gap CLOSES (the zombie's own player-chase the -X walk
+  serves, the warden the +X chase rides), the arrival the 29.52 the
+  ARMOR LAW lands (the zombie's own 2 armor the CombatRules fold
+  speaks: f6 = clamp(2 - 30/2, 0.4, 20) = 0.4, the survivor
+  `30 * (1 - 0.4/25)` the 0.984 factor answers), the in-reach pair
+  the WALK_TARGET erase serves, the 18l the setWithExpiry banks, the
+  impact voice the landing plays, the setLastHurtByMob the warden's
+  own view banks (the id 201 the kind the WARDEN word carries), the
+  HurtBy prio-1 goal the retaliation arms — the loop the warden the
+  mob's spot the walk target banks the dose the arrival answers the
+  round pins END-TO-END.
 - NO production code the round touches — the test-only round the
   pixel contract never rides.
 
 THE VERIFIED:
-- CARGO_INCREMENTAL=0 cargo test --workspace: 2121 passed / 0 failed
-  / 21 ignored (baseline 2120 + 1 — the sonic reference's own pin).
+- CARGO_INCREMENTAL=0 cargo test --workspace: 2122 passed / 0 failed
+  / 21 ignored (baseline 2121 + 1 — the chase's own legs the new pin
+  answers).
 - goldens 14/14 PASS rms 0.000 (NO regeneration — the golden scenes
-  the test-only round never re-renders).
-- build warnings 12 = 12 (the check count the honest recount keeps —
-  the 576 round's `11` the accessor dead-code word the recount
-  corrects: `hurt_by_reference`/`set_hurt_by_reference`/
-  `retaliation_armed` the tests-only usage the non-test build names;
-  the +1 the 576 round's own miscount the audit retires, the round
-  itself never grows).
+  the test-only round never re-renders; the matrix the release build
+  the fresh walk answers).
+- build warnings 12 = 12 (the release binary the cfg(test) blocks
+  the round never compiles — the baseline the honest hold keeps).
