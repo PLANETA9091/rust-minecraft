@@ -10647,36 +10647,56 @@ impl App {
                         let disturbance_block =
                             warden.disturbance.as_ref().map(|d| d.pos);
                         warden.calm_look_trigger(roar_block, disturbance_block);
+                        // THE FIGHT'S OWN LOOK BANK (javap `WardenAi
+                        // .initFightActivity` pc 23-37 + `SetEntityLook
+                        // Target.lambda$create$5` — the FIGHT list's own
+                        // index-2 the OneShot wears: the `isTarget` pred
+                        // the ATTACK_TARGET memory's own identity answers,
+                        // the `findClosest(pred.and(range))` the VISIBLE
+                        // target the walk serves, the `set(new Entity
+                        // Tracker(entity, true))` the NO-EXPIRY bank the
+                        // sink's own stop-erase alone retires): the range
+                        // the `lambda$create$6`'s `distanceToSqr <= 24.0²`
+                        // dcmpg fold keeps — the FEET the `Entity
+                        // .distanceToSqr` walk reads, the `!hasPassenger`
+                        // second arm the carry-free warden always wears —
+                        // the FOLLOW_RANGE 24.0 the attribute value speaks
+                        // (`Warden.createAttributes` pc 46-52)
+                        let fight_look_eye = sonic_eye.filter(|_| {
+                            fight_pos.map_or(false, |(fx, fy, fz)| {
+                                let dx = fx - warden.x;
+                                let dy = fy - warden.y;
+                                let dz = fz - warden.z;
+                                dx * dx + dy * dy + dz * dz
+                                    <= crate::sculk::WARDEN_FOLLOW_RANGE
+                                        * crate::sculk::WARDEN_FOLLOW_RANGE
+                            })
+                        });
+                        warden.fight_look_trigger(fight_look_eye);
                         warden.calm_look_tick();
-                        // THE FIGHT'S OWN LOOK-AT (javap `MeleeAttackGoal
-                        // .tick` pc 13-25 + `SonicBoom.tick` pc 0-18 — the
-                        // FIGHT list's own goals the look-at walks wear):
-                        // the SONIC's running window the 3-ARG chain serves
-                        // (`setLookAt(position())` the FEET the Vec3 keeps,
-                        // the ±10/±40 the mob's own getHeadRotSpeed /
-                        // getMaxHeadXRot answers, EVERY tick the gates the
-                        // walk precedes) — the melee's own tick the 5-ARG
-                        // serves (`setLookAt(target, 30.0f, 30.0f)` the EYE
-                        // the getEyeY keeps, the FIXED pair the goal's own
-                        // ldcs carry, the cooldown window the goal still
-                        // runs); the goals' own order the LAST bank the
-                        // wanted wins — the charge window the melee's
-                        // absent gate keeps the sonic's alone
+                        // THE LOOK SERVE (javap `LookAtTargetSink` +
+                        // `SonicBoom.tick` pc 0-18 — the CORE's sink the
+                        // LOOK_TARGET memory serves, the FIGHT's own
+                        // direct call the window the tick order wins):
+                        // the SONIC's running window the 1-ARG direct
+                        // chain serves (`setLookAt(position())` the FEET
+                        // the Vec3 keeps, the ±10/±40 the mob's own
+                        // getHeadRotSpeed / getMaxHeadXRot answers, EVERY
+                        // tick the gates the walk precedes) — the SINK
+                        // the memory serves (`setLookAt(tracker
+                        // .currentPosition())` the 3-ARG chain the
+                        // ±10/±40 answers: the FIGHT's eye tracker the
+                        // FIGHT's bank arms, the calm's bottom-center
+                        // BlockPosTracker the CORE picker arms — the
+                        // SAME memory the ONE sink serves; the 26.2
+                        // FIGHT list the MeleeAttack BEHAVIOR keeps, the
+                        // MeleeAttackGoal's 5-ARG ±30/±30 the OTHER
+                        // mobs' goal API the warden's brain never wears)
                         if warden.sonic_active {
                             if let Some((fx, fy, fz)) = fight_pos {
                                 warden.look_at_feet(fx, fy, fz);
                             }
-                        } else if let Some((ex, ey, ez)) = sonic_eye {
-                            warden.look_at_eye(ex, ey, ez, 30.0, 30.0);
                         } else if let Some((lx, ly, lz)) = warden.look_target {
-                            // THE SINK'S OWN TICK (javap `LookAtTargetSink
-                            // .lambda$tick$0` pc 0-13 — the
-                            // `lookControl.setLookAt(tracker
-                            // .currentPosition())` walk the 3-ARG chain
-                            // serves, the ±10/±40 the mob's own
-                            // getHeadRotSpeed/getMaxHeadXRot answers —
-                            // the CORE's priority the fight's own goals
-                            // the wanted WIN the order keeps)
                             warden.look_at_feet(lx, ly, lz);
                         }
                         let sonic_out = warden.sonic_lane(fight_pos, sonic_eye);
@@ -53400,34 +53420,38 @@ mod tests {
             .push(crate::sculk::WardenMob::new(201, px + 1.0, feet_y, pz));
         app.wardens[0].attack_target = Some(crate::sculk::WARDEN_PLAYER_SUSPECT);
         // THE SONIC BANK THE FRESH WINDOW KEEPS (the melee look the
-        // sonic-free window serves — the 5-arg the 30.0f pair banks)
+        // sonic-free window serves — the SINK the memory serves: the
+        // fight's bank the eye tracker arms, the ±10/±40 the mob's own
+        // words answer — the 26.2 FIGHT list the MeleeAttack BEHAVIOR
+        // keeps, the MeleeAttackGoal's ±30/±30 the warden never wears)
         app.wardens[0].sonic_boom_cooldown =
             crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
         app.update();
-        // THE HEAD (the ±30 the first tick bounds — the wanted +90 the
-        // -X wing answers: atan2(dz=0, dx=-1)·C − 90, the clamp the
-        // exact 30.0 the sweep wears)
+        // THE HEAD (the ±10 the first tick bounds — the wanted +90 the
+        // -X wing answers: atan2(dz=0, dx=-1)·C − 90, the sink's own
+        // getHeadRotSpeed the exact 10.0 the clamp wears)
         assert_eq!(
-            app.wardens[0].head_yaw, 30.0,
-            "the +90 wanted the ±30 clamp bounds the first tick"
+            app.wardens[0].head_yaw, 10.0,
+            "the +90 wanted the ±10 sink clamp bounds the first tick"
         );
         // THE O-PAIR (the pre-tick snapshot the render lerp keeps —
         // the fresh spawn's 0.0 the O banks)
         assert_eq!(app.wardens[0].head_yaw_o, 0.0);
         // THE PITCH (the player's eye BELOW the warden's own: the
-        // −0.845 dy the +40.26 wanted wears, the ±30 the first tick
-        // bounds — the exact 30.0 the clamp wears)
+        // −0.845 dy the +40.26 wanted wears, the ±40 the getMaxHead
+        // XRot the first tick bounds — the exact 40.0 the clamp wears)
         assert_eq!(
-            app.wardens[0].head_pitch, 30.0,
-            "the below eye the pitch the ±30 turn bounds"
+            app.wardens[0].head_pitch, 40.0,
+            "the below eye the pitch the ±40 sink turn bounds"
         );
-        // THE BODY (the standing fight the swing arm serves — the 30°
-        // swing the |head − lastStable| > 15 gate answers, the ±75 the
-        // body the head's own spot turns: the warden the TARGET both
-        // the head and the body wear)
+        // THE BODY (the standing fight the swing arm keeps SILENT —
+        // the 10° first-tick swing the |head − lastStable| > 15 gate
+        // never answers: the standing body the small swing never
+        // turns — the sink's own pace the body's ±75 swing the later
+        // stable walks keep)
         assert_eq!(
-            app.wardens[0].yaw_deg, 30.0,
-            "the swing the body the head's own spot turns"
+            app.wardens[0].yaw_deg, 0.0,
+            "the 10° swing the 15° gate the body never turns"
         );
     }
 

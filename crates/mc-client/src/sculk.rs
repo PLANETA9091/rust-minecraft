@@ -2288,6 +2288,13 @@ impl AngerStore {
 /// the lanes the brain rounds ride).
 pub const WARDEN_MOB_MAX_HEALTH: f32 = 500.0;
 
+/// `Warden.createAttributes` (javap the 26.2 jar pc 46-52) — the
+/// `Attributes.FOLLOW_RANGE` add the `ldc2_w 24.0d` speaks: the range
+/// the FIGHT's own SetEntityLookTarget the radius argument reads (the
+/// `getAttributeValue(FOLLOW_RANGE)` the WardenAi call site keeps —
+/// the dcmpg `distanceToSqr <= r²` fold the lambda$create$6 answers).
+pub const WARDEN_FOLLOW_RANGE: f64 = 24.0;
+
 /// `Warden.getSoundVolume` (javap pc 0-3) — the `ldc_w 4.0f` the
 /// volume speaks: the warden the LOUD entity the default 1.0 mobs
 /// never wear, the makeSound fold the play's own input keeps.
@@ -2954,6 +2961,56 @@ impl WardenMob {
                 self.look_sink_ticks = 0;
             }
         }
+    }
+
+    /// THE FIGHT'S OWN LOOK BANK (javap `WardenAi.initFightActivity`
+    /// pc 23-37 + `SetEntityLookTarget.lambda$create$5` pc 0-59 — the
+    /// FIGHT list's index-2 the OneShot wears: the `isTarget` predicate
+    /// the `ATTACK_TARGET` memory's own identity answers — the
+    /// `Optional.filter(lambda$isTarget$0)` the isTarget walk keeps —,
+    /// the `findClosest(pred.and(lambda$create$6))` the VISIBLE target
+    /// the range gate serves, the `MemoryAccessor.set(new
+    /// EntityTracker(entity, true))` the bank wears). THE BANK'S OWN
+    /// LAWS the bytecode speaks:
+    /// - NO EXPIRY (the `set` the `setWithExpiry` never is — the
+    ///   memory the sink's own 45-tick stop-erase alone serves, the
+    ///   OneShot's every-tick re-attempt the erased window re-arms),
+    /// - the EYE (the EntityTracker's `trackEyeHeight=true` the
+    ///   `currentPosition()` = `getEyePosition()` answer keeps — the
+    ///   BlockPosTracker's bottom-center the CALM lane wears),
+    /// - the FRESH WINDOW (the memory the erased window's re-bank
+    ///   arms — the clock the fresh arm resets, the running window the
+    ///   re-bank never restarts: the same law the calm trigger's own
+    ///   arm wears).
+    /// The caller's own gates (the range the
+    /// `lambda$create$6`'s `distanceToSqr <= 24.0²` dcmpg fold keeps —
+    /// the FEET the `Entity.distanceToSqr` walk reads — and the
+    /// `!hasPassenger` second arm the carry-free warden always wears)
+    /// the `None` the caller passes answer: the empty findClosest the
+    /// false return keeps, the PRIOR bank the memory's own `set` law
+    /// preserves (the out-of-range or the unseable target the memory
+    /// the window's stop alone retires).
+    pub fn fight_look_trigger(&mut self, target_eye: Option<(f64, f64, f64)>) -> bool {
+        // THE IS-TARGET GATE (the `Optional.filter(isTarget)` the pred
+        // serves — the absent ATTACK_TARGET the bank refuses, the calm
+        // picker's own gate the same absent arm keeps)
+        if self.attack_target.is_none() {
+            return false;
+        }
+        // THE FIND-CLOSEST'S EMPTY (the visible-in-range target the
+        // caller resolves — the None the false return keeps)
+        let Some(eye) = target_eye else {
+            return false;
+        };
+        // THE BANK (pc 55 — the `set` the no-expiry law wears, the
+        // EntityTracker's eye the coordinates carry, the fresh arm the
+        // sink's own window resets)
+        let fresh = self.look_target.is_none();
+        self.look_target = Some(eye);
+        if fresh {
+            self.look_sink_ticks = 0;
+        }
+        true
     }
 
     /// `Warden.getActiveAnger` (javap pc 0-11, verbatim): the
@@ -11028,5 +11085,97 @@ mod tests {
             "the re-fire the trigger arms"
         );
         assert_eq!(warden.look_sink_ticks, 0, "the fresh arm the clock restarts");
+    }
+
+    /// THE FIGHT'S OWN LOOK BANK (javap `WardenAi.initFightActivity`
+    /// pc 23-37 + `SetEntityLookTarget.lambda$create$5` — the isTarget
+    /// gate the ATTACK_TARGET's presence keeps, the `set` the
+    /// no-expiry law wears, the EntityTracker's eye the bank carries,
+    /// the fresh window the erased memory's re-bank arms).
+    #[test]
+    fn the_fight_look_the_bank_the_sinks_laws_keep() {
+        let mut warden = WardenMob::new(11, 10.0, 32.0, 5.0);
+        // THE RANGE PIN (javap pc 46-52 — the `ldc2_w 24.0d` the
+        // FOLLOW_RANGE add speaks)
+        assert_eq!(WARDEN_FOLLOW_RANGE, 24.0);
+        // THE ABSENT-TARGET REFUSAL (the isTarget pred the memory's
+        // own identity keeps — the calm body the fight bank refuses)
+        assert!(
+            !warden.fight_look_trigger(Some((14.0, 33.0, 5.0))),
+            "the calm body the bank refuses"
+        );
+        assert_eq!(warden.look_target, None, "the refusal no bank wears");
+        // THE EMPTY FIND-CLOSEST (the out-of-range or the unseable
+        // target the caller's None keeps — the false the no-bank
+        // answer wears)
+        warden.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        assert!(
+            !warden.fight_look_trigger(None),
+            "the empty findClosest the false answers"
+        );
+        assert_eq!(warden.look_target, None, "the refusal no bank wears");
+        // THE BANK (the eye the EntityTracker carries — the
+        // `trackEyeHeight=true` the currentPosition law speaks)
+        assert!(
+            warden.fight_look_trigger(Some((14.0, 33.0, 5.0))),
+            "the in-range eye the bank arms"
+        );
+        assert_eq!(
+            warden.look_target,
+            Some((14.0, 33.0, 5.0)),
+            "the eye the tracker banks"
+        );
+        assert_eq!(
+            warden.look_sink_ticks, 0,
+            "the fresh arm the window resets"
+        );
+        // THE RE-BANK (the armed state the bank re-arms — the position
+        // the LIVE tracker's own move wears, the clock the running
+        // window never restarts)
+        warden.look_sink_ticks = 12;
+        assert!(
+            warden.fight_look_trigger(Some((15.0, 33.5, 5.0))),
+            "the re-bank the armed state answers"
+        );
+        assert_eq!(
+            warden.look_target,
+            Some((15.0, 33.5, 5.0)),
+            "the re-bank the live eye wears"
+        );
+        assert_eq!(
+            warden.look_sink_ticks, 12,
+            "the running window the re-bank never restarts"
+        );
+        // THE LAPSE (the out-of-range tick the caller's None keeps —
+        // the PRIOR bank the memory's own `set` law preserves, the
+        // window the sink's own run keeps)
+        assert!(
+            !warden.fight_look_trigger(None),
+            "the out-of-range tick the false answers"
+        );
+        assert_eq!(
+            warden.look_target,
+            Some((15.0, 33.5, 5.0)),
+            "the prior bank the no-expiry law keeps"
+        );
+        // THE SINK'S OWN STOP (the window's end the erase serves — the
+        // next in-range bank the fresh window arms, the clock the
+        // restart wears)
+        for _ in 0..WARDEN_LOOK_SINK_DURATION_TICKS {
+            warden.calm_look_tick();
+        }
+        warden.calm_look_tick();
+        assert!(
+            warden.look_target.is_none(),
+            "the 46th tick the stop's erase serves"
+        );
+        assert!(
+            warden.fight_look_trigger(Some((16.0, 34.0, 5.0))),
+            "the re-fire the bank arms"
+        );
+        assert_eq!(
+            warden.look_sink_ticks, 0,
+            "the fresh arm the clock restarts"
+        );
     }
 }
