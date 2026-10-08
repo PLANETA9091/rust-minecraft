@@ -1388,6 +1388,21 @@ pub const WARDEN_INVESTIGATE_CLOSE_ENOUGH: i32 = 2;
 /// modifier multiplies, the attribute 0.3 the walk rides).
 pub const WARDEN_INVESTIGATE_SPEED: f32 = 0.7;
 
+/// THE CORE'S OWN SINK PAIR (javap `WardenAi.initCoreActivity` pc 16-24
+/// — the `LookAtTargetSink.<init>(II)` the `bipush 45` / `bipush 90`
+/// pair banks): the DURATION the look window keeps (the sink's own run
+/// the stop's erase serves at the 45th tick, the re-bank the trigger's
+/// fresh arm re-fires), the MAX_DISTANCE the ctor's second int wears
+/// (the sink's own canStillUse the distance word never reads — the
+/// `isVisibleBy` filter the bytecode alone consults, the
+/// `BlockPosTracker.isVisibleBy` the `iconst_1` const keeps).
+pub const WARDEN_LOOK_SINK_DURATION_TICKS: i32 = 45;
+/// the ctor's second int the sink's own canStillUse the distance word
+/// never reads (the `isVisibleBy` filter the bytecode alone consults)
+/// — the bank the jar pins, the walk the future lane reads.
+#[cfg_attr(not(test), expect(dead_code))]
+pub const WARDEN_LOOK_SINK_MAX_DISTANCE: i32 = 90;
+
 /// `GoToTargetLocation.getRandomOffset` (javap pc 0-9, verbatim):
 /// `nextInt(3) - 1` — the nextInt bound the iconst_3 speaks, the
 /// isub the -1 keeps — the ±1 jitter the nearby pos wears (the x
@@ -2633,6 +2648,16 @@ pub struct WardenMob {
     /// the fresh zero/zero the JVM init keeps)
     pub head_stable_time: i32,
     pub last_stable_head_yaw: f32,
+    /// THE LOOK_TARGET'S OWN MEMORY (javap `MemoryModuleType
+    /// .LOOK_TARGET` — the BlockPosTracker the SetWardenLookTarget
+    /// trigger banks, the `currentPosition` the bottom-center Vec3 the
+    /// `(x + 0.5, y, z + 0.5)` law wears; the fresh None the unarmed
+    /// look keeps)
+    pub look_target: Option<(f64, f64, f64)>,
+    /// THE SINK'S OWN RUN CLOCK (the Behavior's own duration window —
+    /// the startedAt the sink's start banks, the 45-tick expiry the
+    /// stop's erase serves; the fresh zero the JVM init keeps)
+    pub look_sink_ticks: i32,
 }
 
 impl WardenMob {
@@ -2705,6 +2730,8 @@ impl WardenMob {
             head_pitch_o: 0.0,
             head_stable_time: 0,
             last_stable_head_yaw: 0.0,
+            look_target: None,
+            look_sink_ticks: 0,
         }
     }
 
@@ -2866,6 +2893,65 @@ impl WardenMob {
                 let speed = max_y * (1.0 - g);
                 self.yaw_deg =
                     crate::mth::rotate_if_necessary(self.yaw_deg, self.head_yaw, speed);
+            }
+        }
+    }
+
+    /// THE CALM LOOK'S OWN TRIGGER (javap `SetWardenLookTarget
+    /// .lambda$create$0` pc 0-42 + `lambda$create$2` pc 0-55 — the CORE
+    /// activity's own look the declarative gates arm): the
+    /// `registered` trio the containers' own existence the warden's
+    /// fields always answer, the `absent(ATTACK_TARGET)` the fighting
+    /// body's refusal keeps, the ROAR_TARGET the `Entity.blockPosition`
+    /// map captures FIRST, the DISTURBANCE_LOCATION the `or()`
+    /// fallback serves, the empty pair the false answer keeps — the
+    /// LOOK_TARGET the `new BlockPosTracker(pos)` bank wears, the
+    /// bottom-center `(x + 0.5, y, z + 0.5)` the currentPosition law
+    /// serves. The trigger EVERY tick the CORE runs — the moving roar
+    /// target the re-capture follows (the ROAR_TARGET the entity ref
+    /// the map the fresh block pos captures).
+    pub fn calm_look_trigger(
+        &mut self,
+        roar_block: Option<(i32, i32, i32)>,
+        disturbance_block: Option<(i32, i32, i32)>,
+    ) -> bool {
+        // THE ABSENT GATE (lambda$create$0 pc 22-26 — the
+        // absent(ATTACK_TARGET) the fighting body the trigger refuses)
+        if self.attack_target.is_some() {
+            return false;
+        }
+        // THE OR-CHAIN (lambda$create$2 pc 0-23 — the roar first, the
+        // disturbance the fallback, the empty the false keeps)
+        let Some(block) = roar_block.or(disturbance_block) else {
+            return false;
+        };
+        // THE BANK (pc 35-51 — the BlockPosTracker the LOOK_TARGET
+        // setter banks, the bottom-center the +0.5 pair wears; the
+        // SINK'S OWN CLOCK the fresh arm resets — the running window
+        // the re-bank never restarts, the position the update keeps)
+        let fresh = self.look_target.is_none();
+        self.look_target = Some((block.0 as f64 + 0.5, block.1 as f64, block.2 as f64 + 0.5));
+        if fresh {
+            self.look_sink_ticks = 0;
+        }
+        true
+    }
+
+    /// THE SINK'S OWN WINDOW (javap `LookAtTargetSink` — the Behavior
+    /// run the `(45, 90)` pair the core init keeps: the armed memory
+    /// the clock climbs, the 45th tick the `stop`'s eraseMemory serves,
+    /// the next tick the trigger's re-bank the fresh window arms; the
+    /// `canStillUse`'s `isVisibleBy` filter the BlockPosTracker's
+    /// `iconst_1` const the true answer always wears — the erase the
+    /// DURATION alone serves).
+    pub fn calm_look_tick(&mut self) {
+        if self.look_target.is_some() {
+            self.look_sink_ticks += 1;
+            if self.look_sink_ticks > WARDEN_LOOK_SINK_DURATION_TICKS {
+                // THE STOP (pc 0-10 — the eraseMemory(LOOK_TARGET) the
+                // window's end serves, the clock the reset keeps)
+                self.look_target = None;
+                self.look_sink_ticks = 0;
             }
         }
     }
@@ -10837,5 +10923,110 @@ mod tests {
             moved * moved > 2.500000277905201e-7,
             "the bigger square the moving flag arms"
         );
+    }
+
+    /// THE CALM LOOK'S OWN LAWS (javap `SetWardenLookTarget
+    /// .lambda$create$0/$2` + `LookAtTargetSink` — the absent gate the
+    /// fighting body keeps, the ROAR_TARGET the or() chain serves
+    /// first, the DISTURBANCE the fallback wears, the bottom-center
+    /// the +0.5 pair banks, the 45-tick window the erase serves, the
+    /// re-bank the running clock never restarts).
+    #[test]
+    fn the_calm_look_the_trigger_the_sinks_window_keep() {
+        let mut warden = WardenMob::new(9, 10.0, 32.0, 5.0);
+        // THE FRESH BODY (the unarmed look the JVM init keeps)
+        assert_eq!(warden.look_target, None);
+        assert_eq!(warden.look_sink_ticks, 0);
+        // THE SINK PAIR (the (45, 90) the core init's own bipushes
+        // keep — the duration the window wears, the maxDistance the
+        // canStillUse never reads)
+        assert_eq!(WARDEN_LOOK_SINK_DURATION_TICKS, 45);
+        assert_eq!(WARDEN_LOOK_SINK_MAX_DISTANCE, 90);
+        // THE BOTH-ABSENT REFUSAL (the or() chain the empty keeps —
+        // the false the no-bank answer wears)
+        assert!(!warden.calm_look_trigger(None, None), "the empty the false answers");
+        assert_eq!(warden.look_target, None, "the refusal no bank wears");
+        // THE DISTURBANCE FALLBACK (the disturbance the or() serves —
+        // the bottom-center the +0.5 pair the BlockPosTracker banks)
+        assert!(
+            warden.calm_look_trigger(None, Some((13, 32, 5))),
+            "the disturbance the trigger arms"
+        );
+        assert_eq!(
+            warden.look_target,
+            Some((13.5, 32.0, 5.5)),
+            "the bottom-center the currentPosition law wears"
+        );
+        // THE RE-BANK (the armed state the trigger re-banks — the
+        // position the update wears, the clock the running window
+        // never restarts)
+        warden.look_sink_ticks = 7;
+        assert!(
+            warden.calm_look_trigger(None, Some((13, 32, 4))),
+            "the re-bank the armed state answers"
+        );
+        assert_eq!(
+            warden.look_target,
+            Some((13.5, 32.0, 4.5)),
+            "the re-bank the position update wears"
+        );
+        assert_eq!(
+            warden.look_sink_ticks, 7,
+            "the running window the re-bank never restarts"
+        );
+        // THE FIGHT REFUSAL (the absent(ATTACK_TARGET) gate the
+        // fighting body keeps — the false the no-bank answer wears)
+        warden.attack_target = Some(WARDEN_PLAYER_SUSPECT);
+        assert!(
+            !warden.calm_look_trigger(Some((5, 32, 5)), Some((13, 32, 5))),
+            "the fighting body the trigger refuses"
+        );
+        assert_eq!(
+            warden.look_target,
+            Some((13.5, 32.0, 4.5)),
+            "the refusal the armed memory keeps"
+        );
+        warden.attack_target = None;
+        // THE ROAR FIRST (the or() chain the ROAR_TARGET's own map the
+        // first arm serves — the entity's block pos the capture banks)
+        assert!(
+            warden.calm_look_trigger(Some((6, 32, 7)), Some((13, 32, 5))),
+            "the roar target the trigger arms"
+        );
+        assert_eq!(
+            warden.look_target,
+            Some((6.5, 32.0, 7.5)),
+            "the roar's own pos the or() first arm banks"
+        );
+        // THE FRESH WINDOW (the scenario's own stage the clock resets —
+        // the armed-state re-bank the running window the prior pin kept)
+        warden.look_sink_ticks = 0;
+        // THE SINK'S OWN WINDOW (the 45-tick climb the stop's erase
+        // serves — the 46th tick the memory retires, the re-bank the
+        // fresh window arms)
+        for _ in 0..WARDEN_LOOK_SINK_DURATION_TICKS {
+            warden.calm_look_tick();
+        }
+        assert_eq!(
+            warden.look_sink_ticks, WARDEN_LOOK_SINK_DURATION_TICKS,
+            "the 45th tick the window still keeps"
+        );
+        assert!(
+            warden.look_target.is_some(),
+            "the window the 45-tick run wears"
+        );
+        warden.calm_look_tick();
+        assert!(
+            warden.look_target.is_none(),
+            "the 46th tick the stop's erase serves"
+        );
+        assert_eq!(warden.look_sink_ticks, 0, "the erase the clock resets");
+        // THE RE-FIRE (the trigger the fresh arm the next tick wears —
+        // the fresh window the clock restarts)
+        assert!(
+            warden.calm_look_trigger(None, Some((13, 32, 5))),
+            "the re-fire the trigger arms"
+        );
+        assert_eq!(warden.look_sink_ticks, 0, "the fresh arm the clock restarts");
     }
 }

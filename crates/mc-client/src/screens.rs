@@ -10612,6 +10612,42 @@ impl App {
                                 })
                             })
                         };
+                        // THE CALM LOOK'S OWN LANE (javap `SetWardenLook
+                        // Target` + `LookAtTargetSink` — the CORE
+                        // activity's own look the trigger banks and the
+                        // sink's 45-tick window wears: the roar target's
+                        // LIVE block pos the `blockPosition` map
+                        // captures first, the disturbance the or()
+                        // fallback serves, the window the erase the stop
+                        // answers; the trigger the sink's own tick the
+                        // same goal pass the order keeps — the bank the
+                        // first tick the look feeds)
+                        let roar_block = warden.roar_target.and_then(|t| {
+                            if t == crate::sculk::WARDEN_PLAYER_SUSPECT {
+                                self.body.as_ref().map(|b| {
+                                    (
+                                        b.x.floor() as i32,
+                                        b.y.floor() as i32,
+                                        b.z.floor() as i32,
+                                    )
+                                })
+                            } else {
+                                self.mobs
+                                    .iter()
+                                    .find(|m| m.id as u64 == t)
+                                    .map(|m| {
+                                        (
+                                            m.x.floor() as i32,
+                                            m.y.floor() as i32,
+                                            m.z.floor() as i32,
+                                        )
+                                    })
+                            }
+                        });
+                        let disturbance_block =
+                            warden.disturbance.as_ref().map(|d| d.pos);
+                        warden.calm_look_trigger(roar_block, disturbance_block);
+                        warden.calm_look_tick();
                         // THE FIGHT'S OWN LOOK-AT (javap `MeleeAttackGoal
                         // .tick` pc 13-25 + `SonicBoom.tick` pc 0-18 — the
                         // FIGHT list's own goals the look-at walks wear):
@@ -10632,6 +10668,16 @@ impl App {
                             }
                         } else if let Some((ex, ey, ez)) = sonic_eye {
                             warden.look_at_eye(ex, ey, ez, 30.0, 30.0);
+                        } else if let Some((lx, ly, lz)) = warden.look_target {
+                            // THE SINK'S OWN TICK (javap `LookAtTargetSink
+                            // .lambda$tick$0` pc 0-13 — the
+                            // `lookControl.setLookAt(tracker
+                            // .currentPosition())` walk the 3-ARG chain
+                            // serves, the ±10/±40 the mob's own
+                            // getHeadRotSpeed/getMaxHeadXRot answers —
+                            // the CORE's priority the fight's own goals
+                            // the wanted WIN the order keeps)
+                            warden.look_at_feet(lx, ly, lz);
                         }
                         let sonic_out = warden.sonic_lane(fight_pos, sonic_eye);
                         if sonic_out.charge_started {
@@ -53382,6 +53428,79 @@ mod tests {
         assert_eq!(
             app.wardens[0].yaw_deg, 30.0,
             "the swing the body the head's own spot turns"
+        );
+    }
+
+    /// THE CALM LOOK'S OWN INTEGRATION (javap `SetWardenLookTarget` +
+    /// `LookAtTargetSink` over the offline world — the disturbance the
+    /// CORE's trigger banks, the sink's 3-arg the ±10 the first tick
+    /// wears, the small swing the body the standing body keeps: the
+    /// calm warden the DISTURBANCE the head turns — the stealth
+    /// gameplay the sound's own echo answers).
+    #[test]
+    fn the_calm_look_the_disturbance_the_head_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let feet_y = (app.spawn_y + 6) as f64 - 1.62;
+        let (px, pz) = {
+            let size = app.offline_world.as_ref().unwrap().size_blocks();
+            let c = size / 2;
+            (c as f64 + 0.5, c as f64 + 0.5)
+        };
+        app.body = Some(crate::body::PlayerBody::new(
+            px,
+            feet_y,
+            pz,
+            180.0,
+            0.0,
+        ));
+        // THE WARDEN THE +X NEIGHBOR, THE CALM BODY (the attack target
+        // never armed — the CORE's own look the trigger serves)
+        app.wardens
+            .push(crate::sculk::WardenMob::new(201, px + 1.0, feet_y, pz));
+        // THE DISTURBANCE (the ONE-BLOCK wing the vibration rode — the
+        // Manhattan 1 the investigate's close-enough 2 REFUSES (the
+        // walk the calm body never starts), the CORE's own look the
+        // distance gate never carries: the bank the sink serves)
+        app.wardens[0].disturbance = Some(crate::sculk::WardenDisturbance {
+            pos: (px as i32 + 2, feet_y as i32, pz as i32),
+            remaining: 100,
+        });
+        app.update();
+        // THE BANK (the bottom-center the BlockPosTracker wears — the
+        // disturbance block the or() fallback serves)
+        assert_eq!(
+            app.wardens[0].look_target,
+            Some((
+                px as i32 as f64 + 2.5,
+                feet_y as i32 as f64,
+                pz as i32 as f64 + 0.5
+            )),
+            "the disturbance the trigger banks the bottom-center"
+        );
+        // THE INVESTIGATE'S OWN REFUSAL (the closer-than walk the walk
+        // target never arms — the warden the standing body keeps)
+        assert!(
+            app.wardens[0].walk_target.is_none(),
+            "the Manhattan-1 the investigate trigger refuses"
+        );
+        // THE SINK'S OWN CLOCK (the first tick the window banks)
+        assert_eq!(
+            app.wardens[0].look_sink_ticks, 1,
+            "the first tick the sink's window banks"
+        );
+        // THE HEAD (the ±10 the 3-arg the mob's own getHeadRotSpeed
+        // serves — the wanted −90 the +X wing answers: the slower turn
+        // the fight's ±30 never wears)
+        assert_eq!(
+            app.wardens[0].head_yaw, -10.0,
+            "the −90 wanted the ±10 clamp bounds the first tick"
+        );
+        // THE BODY (the 10° swing the 15.0f threshold refuses — the
+        // calm warden the body the standing body keeps)
+        assert_eq!(
+            app.wardens[0].yaw_deg, 0.0,
+            "the ≤15 swing the body the standing body keeps"
         );
     }
 
