@@ -12434,6 +12434,13 @@ impl App {
                         if kind != crate::world::AIR {
                             let held = self.held_id();
                             let (on_ground, eye_water) = self.body_state();
+                            // THE FATIGUE'S OWN STORE READ (the amplifier
+                            // the dig lane's tableswitch speaks — the
+                            // unworn body the None identity rides)
+                            let mining_fatigue = self
+                                .effects
+                                .get(crate::effects::MOB_EFFECT_MINING_FATIGUE)
+                                .map(|inst| inst.amplifier);
                             // THE GAMEMODE DISPATCH's own folds (the
                             // audited instabuild grant + the restricted
                             // head — the LIVE reads the vanilla
@@ -12455,7 +12462,7 @@ impl App {
                                     world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
                                 let (s, b) = dig.continue_destroy_block(
                                     pos, face, held, world, on_ground, eye_water, instabuild,
-                                    restricted,
+                                    restricted, mining_fatigue,
                                 );
                                 sends = s;
                                 beat = b;
@@ -14971,6 +14978,13 @@ impl App {
             if kind != crate::world::AIR {
                 let held = self.held_id();
                 let (on_ground, eye_water) = self.body_state();
+                // THE FATIGUE'S OWN STORE READ (the amplifier the dig
+                // lane's tableswitch speaks — the unworn body the None
+                // identity rides)
+                let mining_fatigue = self
+                    .effects
+                    .get(crate::effects::MOB_EFFECT_MINING_FATIGUE)
+                    .map(|inst| inst.amplifier);
                 // THE GAMEMODE DISPATCH's own folds (the audited
                 // instabuild grant + the restricted head — the press
                 // the startDestroyBlock's own walk speaks first, the
@@ -14996,6 +15010,7 @@ impl App {
                         eye_water,
                         instabuild,
                         restricted,
+                        mining_fatigue,
                     );
                     dug = was_solid
                         && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
@@ -50893,6 +50908,59 @@ mod tests {
                 .any(|e| e.starts_with("entity.warden.listening_angry ")),
             "the AGITATED verdict the listening_angry wears"
         );
+    }
+
+    /// THE FATIGUE THE DIG LANE THE APP WEARS (javap
+    /// `Player.getDestroySpeed` pcs 52-125 — the hasEffect(MINING_FATIGUE)
+    /// branch the tableswitch keeps): the branded body the per-tick
+    /// progress the ×0.3 speed wears (the live block row the
+    /// expectation reads, the completion the stretch the 2000-tick cap
+    /// keeps), the /effect give the store the app's own dig walk reads.
+    #[test]
+    fn the_fatigue_the_dig_lane_the_app_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.effects.add_effect(
+            crate::effects::MOB_EFFECT_MINING_FATIGUE,
+            0,
+            600,
+            crate::effects::DEFAULT_EFFECT_FLAGS,
+        );
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let surface = app.spawn_y - 1; // the top SOLID cell the ray hits
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, app.spawn_y as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.on_press(0, 0);
+        assert!(app.dig.is_destroying, "the press armed the destroy");
+        // THE FIRST MINING TICK (the fatigue the ×0.3 the per-tick
+        // progress wears — the live block row + the dry grounded body
+        // the exact f32 the mirror keeps)
+        app.update();
+        let kind = app.offline_world.as_ref().unwrap().get(c, surface, c);
+        let (destroy_speed, requires) = crate::dig::DigState::block_dig_row(kind);
+        let expected = crate::dig::DigState::destroy_progress(
+            crate::dig::DigState::player_dig_speed(true, false, Some(0)),
+            destroy_speed,
+            !requires,
+        );
+        assert!(
+            (app.dig.progress - expected).abs() < 1e-9,
+            "the first tick the fatigued progress wears: {} vs {}",
+            app.dig.progress,
+            expected
+        );
+        // THE COMPLETION (the ×3.33 stretch the honest cap keeps — the
+        // block the same lane the bare body's own <400 pace wore)
+        let mut ticks = 1;
+        while app.offline_world.as_ref().unwrap().get(c, surface, c) != crate::world::AIR {
+            app.update();
+            ticks += 1;
+            assert!(ticks < 2000, "the dig completed in time");
+        }
     }
 
     /// THE DIG THE SENSOR THE DESTROY HEARS (javap

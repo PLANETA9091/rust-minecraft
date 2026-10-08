@@ -84,6 +84,11 @@ pub const MOB_EFFECT_DARKNESS: i32 = 32;
 /// order's own FIRST row (the attribute lane's movement fold reads it).
 pub const MOB_EFFECT_SPEED: i32 = 0;
 
+/// `minecraft:mining_fatigue`'s mob-effect registry id (the wire
+/// order's own FOURTH row — the haste-2 slot follows, the dig-speed
+/// lane's harmful arm reads it).
+pub const MOB_EFFECT_MINING_FATIGUE: i32 = 3;
+
 /// `minecraft:slowness`'s mob-effect registry id (the wire order's own
 /// SECOND row, the movement fold's harmful arm).
 pub const MOB_EFFECT_SLOWNESS: i32 = 1;
