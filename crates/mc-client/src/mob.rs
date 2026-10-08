@@ -5197,6 +5197,15 @@ pub struct Zombie {
     /// follow-range gate + the mustSee's 300-tick memory the start's
     /// sipush arms). The alertOthers' sibling write arms the same word.
     retaliation_target: bool,
+    /// THE ALERTOTHER'S OWN TARGET WORD (javap
+    /// `HurtByTargetGoal.alertOther` — the `mob.setTarget(target)`
+    /// write the box's same-kind walk serves: the ATTACKER reference
+    /// the victim's own setLastHurtByMob banks — the warden-source
+    /// dose the pack's own fangs name). The sibling's own hurt memory
+    /// the write never rides — the canUse's timestamp pair the EQUAL
+    /// words keeps (the cascade the vanilla law never arms), the
+    /// target the retaliation flag's own continue walk serves.
+    alerted_target: Option<PreyView>,
     /// `TargetGoal.unseenTicks` under the retaliation's run (the
     /// mustSee memory's own clock — the 300 the HurtBy start keeps).
     retaliation_unseen_ticks: i32,
@@ -5327,6 +5336,7 @@ impl Zombie {
             last_hurt_by_mob_timestamp: 0,
             hurt_by_goal_timestamp: 0,
             retaliation_target: false,
+            alerted_target: None,
             retaliation_unseen_ticks: 0,
             scan_target: false,
             scan_unseen_ticks: 0,
@@ -5670,11 +5680,26 @@ impl Zombie {
     /// start event arms — the run word the prio-1 goal's own shape
     /// keeps (the 300-tick memory the start's sipush arms, the
     /// follow-range gate the canContinueToUse counts), the TARGET flag
-    /// the sibling's own prio-2 scan's conflict law clears.
-    pub fn alert_hurt_by(&mut self) {
+    /// the sibling's own prio-2 scan's conflict law clears. THE
+    /// ATTACKER'S OWN WORD the mob-source dose names (the
+    /// setTarget(warden) write the Some arm serves — the pack the
+    /// warden's own view chases, the bite the counter-fire answers);
+    /// the PLAYER-source dose the None keeps — the player the
+    /// sibling's own player lane the flag's run answers (the vanilla
+    /// getLastHurtByMob() the player's own word the client's
+    /// vocabulary never banks).
+    pub fn alert_hurt_by(&mut self, attacker: Option<PreyView>) {
         self.retaliation_target = true;
         self.retaliation_unseen_ticks = 0;
         self.scan_target = false;
+        self.alerted_target = attacker;
+    }
+
+    /// THE ALERTOTHER'S OWN TARGET READ (the setTarget write the
+    /// alertOther walk banks — the integration tests' assertions
+    /// consult; the mob-source dose the warden's own view names).
+    pub fn alerted_reference(&self) -> Option<PreyView> {
+        self.alerted_target
     }
 
     /// THE NOTARGET GATE THE ALERTOTHERS READS (javap the alertOthers
@@ -5728,7 +5753,12 @@ impl Zombie {
         world: &World,
         events: &mut MobEvents,
     ) -> Option<PreyView> {
-        let victim = self.last_hurt_by_mob?;
+        // THE VICTIM'S OWN WORD (the hurt memory the prio-1 goal's own
+        // canUse reads, the ALERTED reference the alertOther's own
+        // setTarget write banks — the .or fold the two words the same
+        // continue walk serves: the hurt memory the fresh start arms,
+        // the alerted write the flag's own run keeps)
+        let victim = self.last_hurt_by_mob.or(self.alerted_target)?;
         if self.last_hurt_by_mob_timestamp != self.hurt_by_goal_timestamp {
             // THE START (javap the goal's own walk — the setTarget +
             // the timestamp's store + the unseenMemoryTicks = 300
@@ -5786,6 +5816,11 @@ impl Zombie {
         }
         if !in_range || self.retaliation_unseen_ticks > HURT_BY_UNSEEN_MEMORY_TICKS {
             self.retaliation_target = false;
+            // THE GOAL'S OWN STOP (javap `TargetGoal.stop` — the
+            // setTarget(null) write the drop walk serves: the stale
+            // alerted reference the drop clears, the next alert the
+            // fresh write re-arms)
+            self.alerted_target = None;
             return None;
         }
         Some(victim)
@@ -9922,6 +9957,19 @@ pub fn refresh_hurt_by_mob_views(mobs: &mut [Zombie], warden_views: &[PreyView])
                 Some(a) => mobs[i].last_hurt_by_mob = Some(*a),
                 None => {
                     mobs[i].last_hurt_by_mob = None;
+                    mobs[i].retaliation_target = false;
+                }
+            }
+        }
+        // THE ALERTED TARGET'S OWN REFRESH (the alertOther's own
+        // setTarget write the same live walk serves — the warden's own
+        // pos the pack's chase reads, the dead attacker the run's drop
+        // answers: the flag the stop's own word clears)
+        if let Some(victim) = mobs[i].alerted_target {
+            match attackers.iter().find(|a| a.id == victim.id) {
+                Some(a) => mobs[i].alerted_target = Some(*a),
+                None => {
+                    mobs[i].alerted_target = None;
                     mobs[i].retaliation_target = false;
                 }
             }

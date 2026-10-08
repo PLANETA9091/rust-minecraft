@@ -12699,7 +12699,19 @@ impl App {
                 // box the sibling pass answers AFTER the loop the
                 // disjoint-borrow pattern keeps: the (kind, id, feet)
                 // tuple the box's own shape reads)
-                let mut retaliation_alerts: Vec<(crate::mob::MobKind, i32, f64, f64, f64)> =
+                // THE SIBLING PASS'S OWN ATTACKER WORD (the tuple the
+                // alertOther's own setTarget write carries — the
+                // mob-source dose the victim's own reference names, the
+                // PLAYER-source dose the None keeps — the player the
+                // sibling's own player lane the flag's run answers)
+                let mut retaliation_alerts: Vec<(
+                    crate::mob::MobKind,
+                    i32,
+                    f64,
+                    f64,
+                    f64,
+                    Option<crate::mob::PreyView>,
+                )> =
                     Vec::new();
                 // the love walk's own boxes (the aiStep's ambient gate
                 // the in-love mobs arm — the spawns land AFTER the
@@ -12826,6 +12838,17 @@ impl App {
                                     mob.x,
                                     mob.y,
                                     mob.z,
+                                    // THE ATTACKER'S OWN WORD (javap
+                                    // `alertOther(m,
+                                    // getLastHurtByMob())` — the victim's
+                                    // own reference the setTarget write
+                                    // names: the mob-source dose the
+                                    // warden's live view banks, the
+                                    // player-source the None the client's
+                                    // own vocabulary keeps — the player
+                                    // the sibling's own player lane
+                                    // answers)
+                                    mob.hurt_by_reference(),
                                 ));
                             }
                             // THE AISTEP'S OWN AMBIENT GATE (javap
@@ -13029,7 +13052,7 @@ impl App {
                         // follow-range gate the canContinueToUse's own
                         // walk counts, the 300-tick memory the start's
                         // sipush arms)
-                        for (kind, id, ax, ay, az) in retaliation_alerts {
+                        for (kind, id, ax, ay, az, attacker) in retaliation_alerts {
                             for m in self.mobs.iter_mut() {
                                 if m.id == id || m.kind != kind {
                                     continue;
@@ -13044,7 +13067,12 @@ impl App {
                                     && m.z >= az - crate::mob::ZOMBIE_FOLLOW_RANGE
                                     && m.z <= az + 1.0 + crate::mob::ZOMBIE_FOLLOW_RANGE;
                                 if in_box {
-                                    m.alert_hurt_by();
+                                    // THE ALERTOTHER'S OWN WRITE (javap
+                                    // `m.setTarget(attacker)` — the mob
+                                    // word the Some arm serves, the
+                                    // player-source the None the flag's
+                                    // own run keeps)
+                                    m.alert_hurt_by(attacker);
                                 }
                             }
                         }
@@ -53881,6 +53909,205 @@ mod tests {
         assert!(
             app.mobs[0].retaliation_armed(),
             "the HurtBy goal the chase's dose arms"
+        );
+    }
+
+    /// THE ALERT'S OWN PACK WALK (javap `HurtByTargetGoal.alertOthers`
+    /// + `alertOther(m, getLastHurtByMob())` over the offline world —
+    /// the warden-source dose the victim's own start event arms, the
+    /// sibling pass the same-kind box serves, the setTarget(attacker)
+    /// write the ALERTED sibling's own retaliation lane rides: the
+    /// pack the WARDEN's own view chases (the hurt memory the write
+    /// never rides — the canUse's timestamp pair the EQUAL words keeps,
+    /// the cascade the vanilla law never arms), the chase the melee
+    /// ring the pack's own fangs answer (the +100 the sibling's key
+    /// banks, the suspect78 row the dose's own walk records), the
+    /// standing ATTACK_TARGET the hurt walk's empty-brain gate keeps).
+    #[test]
+    fn the_alert_arms_the_pack_the_warden_the_sibling_chases() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE FLAT FLOOR (the chase test's own world the app wears —
+        // the stone 0..5 the air above, the ROOF 12..14 the sky column
+        // breaks — the burn roll's canSeeSky the broken column refuses:
+        // the zombie the sun never brands, the 500.0 pool the health
+        // law the exact keeps)
+        let mut flat = crate::world::World::new(WORLD_CHUNKS, app.seed);
+        for x in 0..flat.size_blocks() {
+            for z in 0..flat.size_blocks() {
+                for y in 0..5 {
+                    flat.set(x, y as i32, z, crate::world::STONE);
+                }
+                for y in 5..12 {
+                    flat.set(x, y as i32, z, crate::world::AIR);
+                }
+                // THE ROOF THE BURN ROLL'S SKY GATE REFUSES (the eye
+                // column the 12..14 band breaks: the sky channel the
+                // canSeeSky word never reads 15)
+                for y in 12..14 {
+                    flat.set(x, y as i32, z, crate::world::STONE);
+                }
+                for y in 14..crate::world::CHUNK_Y {
+                    flat.set(x, y as i32, z, crate::world::AIR);
+                }
+            }
+        }
+        app.offline_world = Some(flat);
+        app.spawn_y = 5;
+        // THE WALL THE SCAN'S OWN REFUSAL KEEPS (the player west, the
+        // pack east — the eye rays the wall's 6..9 band blocks: the
+        // prio-2 scan never arms — the alert's getTarget() != null
+        // gate the fresh sibling the alert's own reach arms)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for y in 6..=9 {
+                for z in 2..=18 {
+                    world.set(16, y, z, crate::world::STONE);
+                    world.set(17, y, z, crate::world::STONE);
+                }
+            }
+        }
+        // THE STAGE (the player west of the wall, the pack east: the
+        // victim the warden's 3.0 west gap keeps, the sibling 3.0
+        // south — the alert box the victim's own follow range the
+        // sibling's spot answers)
+        app.body = Some(crate::body::PlayerBody::new(
+            10.5, 5.0, 10.5, 180.0, 0.0,
+        ));
+        app.mobs
+            .push(crate::mob::Zombie::new(77, 20.5, 5.0, 10.5, 4));
+        app.mobs
+            .push(crate::mob::Zombie::new(78, 20.5, 5.0, 13.5, 5));
+        app.mobs[0].on_ground = true;
+        app.mobs[1].on_ground = true;
+        app.update();
+        // THE POOL THE REPEAT SWINGS SURVIVE (the chase test's own law)
+        app.mobs[0].health = 500.0;
+        app.wardens
+            .push(crate::sculk::WardenMob::new(201, 23.5, 5.0, 10.5));
+        app.wardens[0].attack_target = Some(77);
+        // THE DIG COOLDOWN THE PROVOKED LAW KEEPS (the counter-bite
+        // test's own law — the provoked body the calm-dig refuses),
+        // THE SONIC BANK THE FRESH WINDOW KEEPS (the chase the pure
+        // lane keeps — the 40l the walk the whole covers)
+        app.wardens[0].dig_cooldown = crate::sculk::WARDEN_DIG_COOLDOWN_TICKS;
+        app.wardens[0].sonic_boom_cooldown =
+            crate::sculk::WARDEN_ATTACK_SONIC_COOLDOWN_TICKS;
+        // THE CHASE THE GAP CLOSES (the 578 test's own law — the
+        // arrival the 29.52 the armor law lands)
+        let mut dose_seen = false;
+        for _ in 0..200 {
+            app.update();
+            if app.mobs[0].health < 500.0 {
+                dose_seen = true;
+                break;
+            }
+        }
+        assert!(dose_seen, "the arrival the dose lands");
+        assert_eq!(
+            app.mobs[0].health, 470.48,
+            "the bite the armor-absorbed dose wears: {}",
+            app.mobs[0].health
+        );
+        // THE ALERT'S OWN TICK (the victim's own start the event fires
+        // — the sibling pass the same update's tail serves)
+        app.update();
+        // THE SIBLING THE ALERT ARMS (the setTarget write the Some arm
+        // serves — the warden's own view the pack's chase names)
+        assert!(
+            app.mobs[1].retaliation_armed(),
+            "the pack the alert arms"
+        );
+        let alerted = app.mobs[1]
+            .alerted_reference()
+            .expect("the setTarget write banks");
+        assert_eq!(alerted.id, 201, "the warden's id the alert names");
+        assert_eq!(
+            alerted.kind,
+            crate::mob::MobKind::Warden,
+            "the kind the variant banks"
+        );
+        assert!(
+            (alerted.x - app.wardens[0].x).abs() < 1.0,
+            "the live pos the snapshot wears: {} vs {}",
+            alerted.x,
+            app.wardens[0].x
+        );
+        // THE NO-CASCADE (the sibling's own hurt memory the setTarget
+        // write never rides — the canUse's timestamp pair the EQUAL
+        // words keeps: the alert the target alone arms, the HurtBy
+        // goal's own start the sibling's hurt-less body never speaks)
+        assert!(
+            app.mobs[1].hurt_by_reference().is_none(),
+            "the alert the hurt memory never rides"
+        );
+        // THE VICTIM'S OWN REFERENCE (the 576 law the dose banks — the
+        // warden's own view the victim's retaliation names)
+        assert!(
+            app.mobs[0].hurt_by_reference().is_some(),
+            "the dose the victim's reference banks"
+        );
+        // THE CHASE (the sibling the warden's own spot walks — the
+        // approach the alerted lane serves: the warden's own coast the
+        // dose's wake keeps, the gap the sibling's own walk CLOSES)
+        let wpos = (app.wardens[0].x, app.wardens[0].y, app.wardens[0].z);
+        let dist0 = {
+            let dx = wpos.0 - app.mobs[1].x;
+            let dz = wpos.2 - app.mobs[1].z;
+            (dx * dx + dz * dz).sqrt()
+        };
+        for _ in 0..12 {
+            app.update();
+        }
+        let dist1 = {
+            let dx = app.wardens[0].x - app.mobs[1].x;
+            let dz = app.wardens[0].z - app.mobs[1].z;
+            (dx * dx + dz * dz).sqrt()
+        };
+        assert!(
+            dist1 < dist0,
+            "the chase the warden's own spot closes: {} -> {}",
+            dist0,
+            dist1
+        );
+        // THE PACK'S OWN BITE (the +100 the sibling's key banks — the
+        // suspect78 +100 row the dose's own walk records; the steps'
+        // own +35 rows the hearing walk banks the bite's row never
+        // speaks)
+        let mut sib_bite = false;
+        for _ in 0..200 {
+            app.update();
+            if app
+                .game_events
+                .iter()
+                .any(|e| e.starts_with("warden_anger @") && e.contains("suspect78 +100"))
+            {
+                sib_bite = true;
+                break;
+            }
+        }
+        assert!(
+            sib_bite,
+            "the pack's own bite the anger row records: {:?}",
+            app.game_events
+                .iter()
+                .filter(|e| e.contains("suspect78"))
+                .collect::<Vec<_>>()
+        );
+        // THE WARDEN'S OWN HEALTH (the pack's fangs the raw no-armor
+        // body wears — the 3.0 the zombie's bare fangs deal)
+        assert!(
+            app.wardens[0].health < crate::sculk::WARDEN_MOB_MAX_HEALTH,
+            "the pack's bite the warden's pool wears: {}",
+            app.wardens[0].health
+        );
+        // THE BRAIN'S OWN KEEP (the standing ATTACK_TARGET the hurt
+        // walk's empty-brain gate never re-banks — the victim's id the
+        // brain holds, the sibling's +100 the anger map alone banks)
+        assert_eq!(
+            app.wardens[0].attack_target,
+            Some(77),
+            "the standing target the brain keeps"
         );
     }
 

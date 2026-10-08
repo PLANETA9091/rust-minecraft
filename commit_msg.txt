@@ -1,47 +1,60 @@
-v0.3.638: the warden's own FIGHT CHASE the walk the arrival the dose
-wears (autopush-578)
+v0.3.639: the ALERTOTHER'S OWN ATTACKER WORD the pack's fangs wear
+(autopush-579)
 
-THE ROUND (the queue's top candidate the 577 worklog named — the
-loop the 576/577 rounds closed the reference the tests wear, the
-chase's own LEGS the round verifies end-to-end: the out-of-reach mob
-target the 1.2f walk target banks, the body the walk moves, the
-arrival the melee ring the dose answers):
-- `the_chase_the_walk_the_arrival_the_dose_lands` (screens.rs, the
-  dose tests' own stage the chase the legs ride) — javap
-  `SetWalkTargetFromAttackTargetIfTargetOutOfReach` lambda$create$3
-  pc 59-75 + `MoveToTargetSink` + `MeleeAttack` over the offline
-  world: the FLAT FLOOR the app's own world wears (the stone 0..5
-  the air above; the light grid the fresh build never relights — the
-  burn roll's canSeeSky the zero channel refuses: the zombie the sky
-  never brands, the 500.0 pool the health law the exact keeps), the
-  warden 5.0 from the zombie the 1.578 reach edge REFUSES (the chase
-  the out-of-reach pair arms, the swing the far window refuses), the
-  40l sonic bank the walk the whole covers (the melee dose test's
-  own law — the chase the pure lane keeps), the walk target the
-  zombie's LIVE spot banks (the EntityTracker(target, 1) tracker the
-  1.2f modifier carries, the close-enough 1 the tracker's own arg
-  keeps), the body the atan2 law faces (the +X walk the -90 yaw
-  answers), the walk animation the move distance fills, the tick
-  loop the gap CLOSES (the zombie's own player-chase the -X walk
-  serves, the warden the +X chase rides), the arrival the 29.52 the
-  ARMOR LAW lands (the zombie's own 2 armor the CombatRules fold
-  speaks: f6 = clamp(2 - 30/2, 0.4, 20) = 0.4, the survivor
-  `30 * (1 - 0.4/25)` the 0.984 factor answers), the in-reach pair
-  the WALK_TARGET erase serves, the 18l the setWithExpiry banks, the
-  impact voice the landing plays, the setLastHurtByMob the warden's
-  own view banks (the id 201 the kind the WARDEN word carries), the
-  HurtBy prio-1 goal the retaliation arms — the loop the warden the
-  mob's spot the walk target banks the dose the arrival answers the
-  round pins END-TO-END.
-- NO production code the round touches — the test-only round the
-  pixel contract never rides.
+THE ROUND (the queue's top candidate the 578 worklog named — the
+mob-victim retaliation's own SIBLING ALERT: the warden-source dose
+the victim's own start event arms, the alertOther(m,
+getLastHurtByMob()) setTarget write the pack's own chase the round
+wires — the alerted sibling the WARDEN's own view the pack law
+serves):
+- mob.rs: the `alerted_target: Option<PreyView>` field the
+  alertOther's own setTarget write banks (javap `HurtByTargetGoal
+  .alertOther` — the `m.setTarget(attacker)` the box's same-kind
+  walk speaks; the sibling's OWN hurt memory the write never rides —
+  the canUse's timestamp pair the EQUAL words keeps, the cascade the
+  vanilla law never arms); `alert_hurt_by` the attacker word the
+  Option arg carries (the mob-source dose the Some arm serves, the
+  PLAYER-source the None the client's own vocabulary keeps — the
+  player the sibling's own player lane the flag's run answers); the
+  retaliation lane's victim read the `.or()` fold the two words the
+  same continue walk serves (the hurt memory the fresh start arms,
+  the alerted write the flag's own run keeps), the drop walk the
+  setTarget(null) the stop's own word clears; the refresh pass the
+  alerted target's OWN LIVE walk joins (the warden's own pos the
+  pack's chase reads, the dead attacker the run's drop answers).
+- screens.rs: the sibling pass's tuple the attacker word carries
+  (the push the victim's own hurt_by_reference names — the
+  mob-source dose the warden's live view banks), the pass the
+  `m.alert_hurt_by(attacker)` the vanilla setTarget write serves.
+- `the_alert_arms_the_pack_the_warden_the_sibling_chases` (screens.rs,
+  the chase test's own flat-floor stage the ROOF 12..14 the sky
+  column breaks — the burn roll's canSeeSky the broken column
+  refuses, the 500.0 pool the health law the exact keeps; the WALL
+  16..17 the eye rays blocks — the prio-2 scan the fresh sibling
+  never arms, the alert's getTarget() != null gate the alert's own
+  reach arms): the warden the 3.0 gap the chase the dose the 29.52
+  the armor law lands (the 578 law the same stage wears), the
+  victim's own start the event fires, the sibling pass the alert
+  arms — the setTarget write the warden's own view banks (the id
+  201 the kind the WARDEN word carries, the live pos the snapshot
+  wears), the NO-CASCADE the sibling's own hurt memory the write
+  never rides the round pins, the chase the warden's own spot the
+  sibling's walk CLOSES (the coast the dose's wake keeps — the
+  distance the pair the honest pin speaks), the pack's own bite the
+  +100 the suspect78 row the dose's own walk records (the steps'
+  own +35 rows the hearing walk banks the bite's row never speaks),
+  the warden's pool the pack's fangs wear, the standing
+  ATTACK_TARGET the hurt walk's empty-brain gate keeps.
+- PRODUCTION code the round touches (the alert's own wire — the
+  target lanes the pack law rides) — the RENDER path the round
+  never names.
 
 THE VERIFIED:
-- CARGO_INCREMENTAL=0 cargo test --workspace: 2122 passed / 0 failed
-  / 21 ignored (baseline 2121 + 1 — the chase's own legs the new pin
-  answers).
-- goldens 14/14 PASS rms 0.000 (NO regeneration — the golden scenes
-  the test-only round never re-renders; the matrix the release build
-  the fresh walk answers).
-- build warnings 12 = 12 (the release binary the cfg(test) blocks
-  the round never compiles — the baseline the honest hold keeps).
+- CARGO_INCREMENTAL=0 cargo test --workspace: 2123 passed / 0 failed
+  / 21 ignored (baseline 2122 + 1 — the alert's own pack walk the
+  new pin answers; the player-source alert test the None word the
+  same law keeps).
+- goldens 14/14 PASS rms 0.000 (NO regeneration — the render path
+  the round never names; the matrix the fresh release build the
+  walk answers).
+- build warnings 12 = 12 (the baseline the round never grows).
