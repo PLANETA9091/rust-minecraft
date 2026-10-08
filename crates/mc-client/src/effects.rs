@@ -60,6 +60,10 @@ pub const MOB_EFFECT_POISON: i32 = 18;
 /// 20th row — the periodic-dose lane's ungated arm reads it).
 pub const MOB_EFFECT_WITHER: i32 = 19;
 
+/// `minecraft:hunger`'s mob-effect registry id (the wire order's own
+/// 17th row — the exhaustion-drain lane's every-tick beat reads it).
+pub const MOB_EFFECT_HUNGER: i32 = 16;
+
 /// `minecraft:saturation`'s mob-effect registry id (the wire order's
 /// own 23rd row, the InstantaneousMobEffect's food row).
 pub const MOB_EFFECT_SATURATION: i32 = 22;
@@ -137,6 +141,13 @@ pub const MAX_ABSORPTION: f32 = 20.0;
 pub fn absorption_amount_for(amplifier: i32) -> f32 {
     (4 * (1 + amplifier)) as f32
 }
+
+/// THE HUNGER'S OWN FEED (javap `HungerMobEffect.applyEffectTick` pcs
+/// 13-22 — the `0.005f * (amplifier + 1)` product the
+/// causeFoodExhaustion call wears): the per-beat exhaustion the
+/// every-tick law repeats (the shouldApplyEffectTickThisTick pcs 0-4
+/// iconst_1 the period gate's absence speaks).
+pub const HUNGER_EXHAUSTION_PER_TICK: f32 = 0.005;
 
 /// THE RESISTANCE'S OWN FOLD (javap `LivingEntity
 /// .getDamageAfterMagicAbsorb` pcs 32-73 — the fold the RESISTANCE
@@ -378,6 +389,10 @@ pub struct OfflineTick {
     pub eats: Vec<i32>,
     pub poisons: Vec<f32>,
     pub withers: Vec<f32>,
+    /// The hunger's own per-beat exhaustion feeds — the values the
+    /// caller's food_data bank spends (the Player walk the vanilla
+    /// instance-check serves; the mobs the dose never reaches).
+    pub exhaustions: Vec<f32>,
     pub expired: Vec<i32>,
 }
 
@@ -519,6 +534,18 @@ impl EffectsStore {
                         if due {
                             out.withers.push(1.0);
                         }
+                    }
+                    // THE HUNGER'S OWN BEAT (javap HungerMobEffect —
+                    // the shouldApplyEffectTickThisTick pcs 0-4 the
+                    // iconst_1 EVERY-TICK law speaks, the applyEffectTick
+                    // pcs 1-24 the Player instance check wears: the
+                    // `causeFoodExhaustion(0.005f * (amp + 1))` dose the
+                    // exhaustion bank rides, the caller's own food_data
+                    // the Player walk alone serves, the mobs the dose
+                    // never reaches)
+                    if id == MOB_EFFECT_HUNGER {
+                        out.exhaustions
+                            .push(HUNGER_EXHAUSTION_PER_TICK * (inst.amplifier + 1) as f32);
                     }
                     // THE INSTANT WALK (javap `InstantaneousMobEffect
                     // .shouldApplyEffectTickThisTick` pcs 0-11 — the
@@ -911,6 +938,70 @@ mod tests {
             folded_by_resistance(&s, 10.0),
             10.0,
             "the expired brand the fold never reads"
+        );
+    }
+
+    /// THE HUNGER'S OWN BEAT (javap HungerMobEffect — the
+    /// shouldApplyEffectTickThisTick pcs 0-4 the iconst_1 EVERY-TICK
+    /// law speaks, the applyEffectTick the 0.005 × (amp+1) feed the
+    /// exhaustion bank rides): the 25-tick window the 25 feeds speak
+    /// (the poison's 25-period the contrast the one beat wears), the
+    /// amp-2 the tripled feed wears, the expiry the silence keeps,
+    /// the non-hunger rows the lanes never fill.
+    #[test]
+    fn the_hunger_the_every_tick_beat_the_bank_wears() {
+        // THE EVERY-TICK LAW (the 25 ticks the 25 feeds speak)
+        let mut s = EffectsStore::new();
+        s.add_effect(MOB_EFFECT_HUNGER, 0, 25, DEFAULT_EFFECT_FLAGS);
+        let mut feeds = 0;
+        for _ in 0..25 {
+            let tick = s.tick_offline();
+            assert_eq!(
+                tick.exhaustions,
+                vec![HUNGER_EXHAUSTION_PER_TICK],
+                "the every-tick beat the amp-0 feed wears"
+            );
+            feeds += 1;
+        }
+        assert_eq!(feeds, 25, "the 25-tick window the 25 beats speak");
+        assert!(
+            s.get(MOB_EFFECT_HUNGER).is_none(),
+            "the 25th tick the expiry spends"
+        );
+        // the silence the expiry keeps
+        for _ in 0..5 {
+            assert!(s.tick_offline().exhaustions.is_empty());
+        }
+        // THE AMP-2 LIFT (the tripled feed the ×(amp+1) product wears)
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_HUNGER, 2, 10, DEFAULT_EFFECT_FLAGS);
+        for _ in 0..10 {
+            let tick = s2.tick_offline();
+            assert_eq!(
+                tick.exhaustions,
+                vec![HUNGER_EXHAUSTION_PER_TICK * 3.0],
+                "the amp-2 the tripled feed wears"
+            );
+        }
+        // THE SILENT ROWS' CONTRAST (the hunger the EVERY-tick feed
+        // keeps, the poison the 25-multiple beat alone speaks — the
+        // two lanes the same window's own rhythms wear)
+        let mut s3 = EffectsStore::new();
+        s3.add_effect(MOB_EFFECT_POISON, 0, 30, DEFAULT_EFFECT_FLAGS);
+        s3.add_effect(MOB_EFFECT_HUNGER, 0, 30, DEFAULT_EFFECT_FLAGS);
+        let mut poison_beats = 0;
+        for _ in 0..30 {
+            let tick = s3.tick_offline();
+            assert_eq!(
+                tick.exhaustions,
+                vec![HUNGER_EXHAUSTION_PER_TICK],
+                "the hunger beat the every-tick law keeps"
+            );
+            poison_beats += tick.poisons.len();
+        }
+        assert_eq!(
+            poison_beats, 1,
+            "the poison the 25-multiple beat alone speaks"
         );
     }
 

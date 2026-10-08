@@ -12368,6 +12368,16 @@ impl App {
                     for d in tick.withers {
                         self.hurt(d);
                     }
+                    // THE HUNGER'S OWN DRAIN (javap
+                    // `HungerMobEffect.applyEffectTick` — the
+                    // causeFoodExhaustion dose the Player walk serves:
+                    // the exhaustion the THIS tick's effects beat
+                    // banks, the NEXT fold's FoodData.tick the sources
+                    // spend — the same one-tick bank the movement's
+                    // own sources wear)
+                    for e in tick.exhaustions {
+                        self.food_data.add_exhaustion(e);
+                    }
                 }
             } else if self.health > 0.0 {
                 // THE NETWORKED LANE'S CLIENT COPY (the LocalPlayer's
@@ -45654,6 +45664,99 @@ mod tests {
             app.health, 0.0,
             "the ungated wither dose the 1.0 body kills"
         );
+    }
+
+    /// THE HUNGER'S OWN DRAIN (javap HungerMobEffect — the
+    /// every-tick `causeFoodExhaustion(0.005f × (amp+1))` the
+    /// exhaustion bank rides): the amp-0 walk the bank the exact
+    /// f32 accumulation keeps, the amp-3 walk the > 4.0 fold the
+    /// saturation drains (the FoodData.tick's own spend the mirror
+    /// law walks), the bar the fold's own drop wears.
+    #[test]
+    fn the_hunger_the_food_bank_drains() {
+        // THE AMP-0 WALK (the 10 updates the 0.005-each feed banks —
+        // the fold the sub-4.0 bank never fires, the exhaustion the
+        // exact accumulation speaks)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.chat_open = true;
+        app.chat_input = "/effect give @s hunger 30".into();
+        app.on_chat_submit();
+        app.update();
+        assert!(
+            app.effects
+                .has_effect(crate::effects::MOB_EFFECT_HUNGER),
+            "the give the store banks"
+        );
+        let mut bank = 0.0_f32;
+        for _ in 0..10 {
+            // the effects beat's own feed (the add_exhaustion the
+            // bank's own min walk wears)
+            bank = (bank + crate::effects::HUNGER_EXHAUSTION_PER_TICK).min(40.0);
+        }
+        // the first update's feed rode the give-tick beat — the nine
+        // more updates the same walk wears (the bank the 10 feeds
+        // speak)
+        for _ in 0..9 {
+            app.update();
+        }
+        assert_eq!(
+            app.food_data.exhaustion(),
+            bank,
+            "the 10 feeds the exact f32 accumulation wears"
+        );
+        assert_eq!(
+            app.food_data.saturation(),
+            5.0,
+            "the sub-4.0 bank the fold never fires"
+        );
+
+        // THE AMP-3 WALK (the 0.02-per-tick feed the > 4.0 fold
+        // crosses: the saturation the fold's own -1.0 drains, the
+        // bar the saturation's after wears — the mirror the FoodData
+        // tick's own spend walk keeps)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.chat_open = true;
+        app.chat_input = "/effect give @s hunger 30 3".into();
+        app.on_chat_submit();
+        app.update();
+        let mut bank = 0.0_f32;
+        let mut saturation = 5.0_f32;
+        let mut food = 20_i32;
+        for _ in 0..210 {
+            // the FoodData.tick's own fold (the strictly-over 4.0 the
+            // fcmpl's own shape wears)
+            if bank > 4.0 {
+                bank -= 4.0;
+                if saturation > 0.0 {
+                    saturation = (saturation - 1.0).max(0.0);
+                } else {
+                    food = (food - 1).max(0);
+                }
+            }
+            // the effects beat's own feed (the amp-3 the ×4 product
+            // wears)
+            bank = (bank + crate::effects::HUNGER_EXHAUSTION_PER_TICK * 4.0).min(40.0);
+        }
+        for _ in 0..209 {
+            app.update();
+        }
+        assert_eq!(
+            app.food_data.exhaustion(),
+            bank,
+            "the crossed fold the exact bank speaks"
+        );
+        assert_eq!(
+            app.food_data.saturation(),
+            saturation,
+            "the fold's own -1.0 the saturation drains"
+        );
+        assert_eq!(app.food_data.food_level(), food, "the fed body the bar keeps");
     }
 
     /// THE FIRE IMMUNITY'S OWN VERDICT (javap hurtServer pcs 20-41 —
