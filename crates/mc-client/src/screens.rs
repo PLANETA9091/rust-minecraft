@@ -5247,6 +5247,7 @@ pub fn particle_tile(kind: u16) -> u16 {
         crate::world::DIAMOND_ORE => 23, // "diamond_ore"
         crate::world::EMERALD_ORE => 24, // "emerald_ore"
         crate::world::NETHERRACK => 25, // "netherrack"
+        crate::world::HONEY_BLOCK => atlas::TILE_HONEY_BLOCK_TOP, // the model's particle: honey_block_top
         _ => atlas::TILE_NONE,
     }
 }
@@ -9770,6 +9771,7 @@ impl App {
             let mut portal_trigger = false;
             let mut portal_inside = false;
             let mut portal_teleport = false;
+            let mut honey_slide = false;
             let mut drown_hurt = false;
             // THE ELYTRA BREAK's own drain slot (the body's borrow fills
             // it — the entityEvent 47's client arm runs after it ends:
@@ -10561,6 +10563,7 @@ impl App {
                     portal_trigger = std::mem::take(&mut b.portal_trigger_due);
                     portal_inside = std::mem::take(&mut b.portal_inside_consumed);
                     portal_teleport = std::mem::take(&mut b.portal_teleport_due);
+                    honey_slide = std::mem::take(&mut b.honey_slide_due);
                     // THE AIR ARC'S OWN DRAIN (the same per-tick flag
                     // law the fire arc's three speak — the -20 fold's
                     // own read, the body keeps it true until the NEXT
@@ -10581,6 +10584,33 @@ impl App {
                 }
             }
             if let Some(dmg) = fall_event {
+                // THE HONEY'S OWN LANDING (javap `HoneyBlock.fallOn` pc
+                // 0-24 — the slide voice the fconst_1 pair ALWAYS
+                // keeps, the event-54 broadcast the !isClientSide gate
+                // the server fiction folds — the jump crumbs the
+                // showJumpParticles walk spawns; the ×0.2 damage the
+                // multiplier row the body's calculate consumed [the
+                // block's own 0.2 the fall_damage_multiplier hook
+                // answers])
+                let below = self.body.as_ref().map(|b| {
+                    (
+                        b.x.floor() as i32,
+                        (b.y - 0.2).floor() as i32,
+                        b.z.floor() as i32,
+                    )
+                });
+                let on_honey = below
+                    .map(|(x, y, z)| {
+                        self.active_world()
+                            .map(|w| w.get(x, y, z) == crate::world::HONEY_BLOCK)
+                            .unwrap_or(false)
+                    })
+                    .unwrap_or(false);
+                if on_honey {
+                    self.sounds
+                        .play_voice_at_pan(self.frame, "block.honey_block.slide", 1.0, 1.0, 0.0, 0.0);
+                    self.spawn_honey_particles(10); // showJumpParticles — the ×10
+                }
                 self.apply_fall_damage(dmg);
             }
             // THE PORTAL TRIGGER'S OWN VOICE (javap
@@ -10608,6 +10638,28 @@ impl App {
             // answers)
             if portal_teleport {
                 self.swap_dimension();
+            }
+            // THE HONEY SLIDE'S OWN ROLLS (javap
+            // `HoneyBlock.maybeDoSlideEffects` pc 0-55 — the two
+            // nextInt(5) rolls the level random answers: the 1-in-5
+            // slide voice the fconst_1 pair keeps, the 1-in-5 event-53
+            // broadcast the !isClientSide gate the server fiction
+            // folds — the slide crumbs the showSlideParticles walk
+            // spawns)
+            if honey_slide {
+                if self.ambient_rng.next_int(5) == 0 {
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "block.honey_block.slide",
+                        1.0,
+                        1.0,
+                        0.0,
+                        0.0,
+                    );
+                }
+                if self.ambient_rng.next_int(5) == 0 {
+                    self.spawn_honey_particles(5); // showSlideParticles — the ×5
+                }
             }
             // THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken →
             // the entityEvent 47 → the client's breakItem walk): the
@@ -34274,6 +34326,40 @@ impl App {
         let pitch = self.level_ambient_rng.next_f32() * 0.4f32 + 0.8f32;
         self.sounds
             .play_voice_at_pan(self.frame, "block.portal.trigger", 0.25, pitch, 0.0, 0.0);
+    }
+
+    /// THE HONEY'S OWN CRUMBS (javap `HoneyBlock.showParticles` pc
+    /// 0-64 — the isClientSide gate the client walk passes, the count
+    /// loop the BlockParticleOption(HONEY_BLOCK default state) speak,
+    /// the entity's own feet the addParticle places): the ZERO speed
+    /// args the 7-arg Particle ctor's ±0.4 spread folds (`xd = 0 +
+    /// (rand*2 - 1) * 0.4f` the f32 math f2d keeps — the three draws
+    /// the spread spends, the terrain ctor's four the chain costs —
+    /// the level's own random the level_ambient_rng stands for, the
+    /// lava drip's own precedent). The count the two callers answer:
+    /// the showSlideParticles ×5 (the event-53 drain), the
+    /// showJumpParticles ×10 (the fallOn's event-54 fold).
+    fn spawn_honey_particles(&mut self, count: usize) {
+        let tile = particle_tile(crate::world::HONEY_BLOCK);
+        if tile == mc_registry::generated::atlas::TILE_NONE {
+            return; // the tile's honest absence the filter keeps
+        }
+        let Some(b) = self.body.as_ref() else {
+            return;
+        };
+        let (px, py, pz) = (b.x, b.y, b.z);
+        for _ in 0..count {
+            let vx = ((self.level_ambient_rng.next_f32() * 2.0 - 1.0) * 0.4) as f64;
+            let vy = ((self.level_ambient_rng.next_f32() * 2.0 - 1.0) * 0.4) as f64;
+            let vz = ((self.level_ambient_rng.next_f32() * 2.0 - 1.0) * 0.4) as f64;
+            let r_life = self.level_ambient_rng.next_f32();
+            let r_size = self.level_ambient_rng.next_f32();
+            let r_uo = self.level_ambient_rng.next_f32();
+            let r_vo = self.level_ambient_rng.next_f32();
+            self.particles.push(crate::particles::terrain(
+                tile, px, py, pz, vx, vy, vz, r_life, r_size, r_uo, r_vo,
+            ));
+        }
     }
 
     /// THE PORTAL'S OWN SCREEN GATE (javap `Screen.isAllowedInPortal`
@@ -97711,6 +97797,206 @@ cow_sound_variant: None,
                 "the return portal the interior the far slot keeps"
             );
         }
+    }
+
+    /// THE HONEY'S OWN APP LANE (javap `HoneyBlock` the 26.2 jar — the
+    /// entityInside's slide-down walk the body's family seat serves,
+    /// the fallOn's landing walk the fall-event arm serves): THE SLIDE
+    /// — the wall's edge the four-gate verdict keeps, the fold the
+    /// throttle's -0.1274 constant locks, the 1-in-5 rolls the
+    /// level-random stream speaks (the voice + the ×5 crumbs); THE
+    /// LANDING — the slide voice the fconst_1 pair ALWAYS keeps, the
+    /// ×10 jump crumbs the event-54 fold spawns, the damage the ×0.2
+    /// multiplier row the stone twin's own fall the relation keeps.
+    #[test]
+    fn the_honey_the_landing_the_slide_the_wears() {
+        // THE HONEY APP (the wall + the pad the same world stages)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.body = Some(crate::body::PlayerBody::new(
+            app.world_size as f64 / 2.0,
+            app.spawn_y as f64,
+            app.world_size as f64 / 2.0,
+            180.0,
+            0.0,
+        ));
+        for _ in 0..2 {
+            app.update();
+        }
+        {
+            let w = app.offline_world.as_mut().expect("the offline world rides");
+            // THE CLEAR ZONE (the stage the terrain's own body never
+            // claims — the body the air the slide's own four gates
+            // keep, the on-ground refusal the terrain's floor never
+            // arms)
+            for x in 6..=13 {
+                for y in 3..=30 {
+                    for z in 5..=11 {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+            for y in 4..=10 {
+                w.set(8, y, 8, crate::world::HONEY_BLOCK); // the wall the slide wears
+                w.set(12, y, 8, crate::world::HONEY_BLOCK); // the pad the fall lands on
+            }
+        }
+        // THE SLIDE'S OWN STAGE (the body at the wall's edge — the box
+        // the 1/16 inset the collision never overlaps, the cell the
+        // entityInside scan the 0.74 bound beyond answers; the x/z the
+        // zero keeps — the straight drop the wall's own face wears)
+        {
+            let b = app.body.as_mut().unwrap();
+            b.x = 9.24; // |9.24 - 8.5| = 0.74 > 0.4375 + 0.3
+            b.y = 9.5;
+            b.z = 8.5;
+            b.vx = 0.0;
+            b.vy = -0.5;
+            b.vz = 0.0;
+            b.on_ground = false;
+            b.fall_distance = 0.0;
+        }
+        for _ in 0..30 {
+            app.update();
+        }
+        {
+            let b = app.body.as_ref().unwrap();
+            // THE THROTTLE'S OWN LOCK (the plain arm the -0.1274
+            // constant re-applies — the vanilla's own slide cadence)
+            assert_eq!(
+                b.vy,
+                crate::body::honey_new_delta_y(-0.05),
+                "the slide's own velocity lock the fold keeps"
+            );
+            assert_eq!(
+                b.fall_distance, 0.0,
+                "the slide's own reset the descent never banks"
+            );
+            assert!(!b.on_ground, "the wall's side the ground never claims");
+        }
+        // THE 1-IN-5 ROLLS (the 60-roll arc the deterministic stream
+        // speaks — the voice AND the crumbs the drain's own pair
+        // serves)
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.honey_block.slide ")),
+            "the slide voice the roll speaks"
+        );
+        let honey_tile = particle_tile(crate::world::HONEY_BLOCK);
+        let slide_crumbs = app
+            .particles
+            .iter()
+            .filter(|p| {
+                matches!(
+                    p.kind,
+                    crate::particles::ParticleKind::Terrain { tile } if tile == honey_tile
+                )
+            })
+            .count();
+        assert!(slide_crumbs >= 1, "the slide crumbs the roll spawns");
+        // THE LANDING'S OWN STAGE (the body the pad's own 20-block
+        // drop wears — the multiplier row the damage the ×0.2 speaks)
+        {
+            let b = app.body.as_mut().unwrap();
+            b.x = 12.5;
+            b.y = 31.0;
+            b.z = 8.5;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.on_ground = false;
+            b.fall_distance = 0.0;
+            b.prev_x = b.x;
+            b.prev_y = b.y;
+            b.prev_z = b.z;
+        }
+        for _ in 0..80 {
+            app.update();
+            if app.body.as_ref().unwrap().on_ground {
+                break;
+            }
+        }
+        {
+            let b = app.body.as_ref().unwrap();
+            assert!(b.on_ground, "the landing the pad's own top keeps");
+            assert!(
+                app.sounds
+                    .events
+                    .iter()
+                    .any(|e| e.starts_with("block.honey_block.slide ")),
+                "the landing voice the fallOn ALWAYS speaks"
+            );
+        }
+        let landing_crumbs = app
+            .particles
+            .iter()
+            .filter(|p| {
+                matches!(
+                    p.kind,
+                    crate::particles::ParticleKind::Terrain { tile } if tile == honey_tile
+                )
+            })
+            .count();
+        assert!(
+            landing_crumbs >= 10,
+            "the jump crumbs the event-54 fold spawns"
+        );
+        // THE ×0.2 RELATION (the stone twin's own 20-block fall the
+        // same seed the same stage wears — the honey's damage the
+        // fraction speaks)
+        let honey_hp = app.health;
+        let mut stone = App::new(3);
+        stone.enter_world();
+        stone.body = Some(crate::body::PlayerBody::new(
+            stone.world_size as f64 / 2.0,
+            stone.spawn_y as f64,
+            stone.world_size as f64 / 2.0,
+            180.0,
+            0.0,
+        ));
+        for _ in 0..2 {
+            stone.update();
+        }
+        {
+            let w = stone.offline_world.as_mut().expect("the offline world rides");
+            for x in 6..=13 {
+                for y in 3..=30 {
+                    for z in 5..=11 {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+            for y in 4..=10 {
+                w.set(12, y, 8, crate::world::STONE); // the pad the stone kind wears
+            }
+        }
+        {
+            let b = stone.body.as_mut().unwrap();
+            b.x = 12.5;
+            b.y = 31.0;
+            b.z = 8.5;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.on_ground = false;
+            b.fall_distance = 0.0;
+            b.prev_x = b.x;
+            b.prev_y = b.y;
+            b.prev_z = b.z;
+        }
+        for _ in 0..80 {
+            stone.update();
+            if stone.body.as_ref().unwrap().on_ground {
+                break;
+            }
+        }
+        let stone_hp = stone.health;
+        assert!(
+            honey_hp > stone_hp,
+            "the honey's own 0.2 the stone's 1.0 the relation keeps"
+        );
     }
 
     /// THE PORTAL OVERLAY'S OWN TINT BLIT (javap `Hud

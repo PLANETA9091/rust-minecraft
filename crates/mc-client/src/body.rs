@@ -436,11 +436,17 @@ pub const DROWN_DAMAGE: f32 = 2.0;
 
 /// The landed block's fall-damage multiplier — javap
 /// `BlockBehaviour.getFallDamageMultiplier`'s default 1.0 (the
-/// overrides: slime block 0.0, hay/bed/honey 0.2 — none in this
-/// client's palette, the honest absence the table's single row
-/// speaks: every palette block multiplies by 1.0, the water never
-/// accumulates at all).
-pub fn fall_damage_multiplier(_block: u16) -> f64 {
+/// overrides: slime block 0.0, hay/bed 0.2 — none in this client's
+/// palette, the honest absence the table's single row speaks). THE
+/// HONEY'S OWN ROW (javap `HoneyBlock.fallOn` the 26.2 jar — the
+/// `entity.causeFallDamage(d, 0.2f, fall)` call's multiplier arg the
+/// pc 29-38 fconst_0.2 keeps: the landing the honey cell wears the
+/// damage the ×0.2 fold speaks; the palette's 599 round the kind
+/// woke, the row the hook now answers).
+pub fn fall_damage_multiplier(block: u16) -> f64 {
+    if block == crate::world::HONEY_BLOCK {
+        return 0.2;
+    }
     1.0
 }
 
@@ -461,8 +467,6 @@ pub fn calculate_fall_damage(
     (power * block_multiplier * FALL_DAMAGE_MULTIPLIER).floor() as i32
 }
 
-/// The sensitivity f: the vanilla OptionInstance's 0..1 slider. The
-/// default 0.5 gives the famous 0.15 deg/px.
 fn look_gain(sensitivity: f64) -> f64 {
     let f = sensitivity * 0.6000000238418579 + 0.20000000298023224;
     f * f * f * LOOK_GAIN * LOOK_SCALE
@@ -1426,6 +1430,13 @@ pub struct PlayerBody {
     /// rand * 0.4F + 0.8F, 0.25F) answer rides): the FIRST inside
     /// tick's beat the flag banks, the App's drain the play serves.
     pub portal_trigger_due: bool,
+    /// THE HONEY'S OWN SLIDE EFFECTS (javap `HoneyBlock
+    /// .maybeDoSlideEffects` pc 0-55 — the doesEntityDoHoneyBlockSlideEffects
+    /// gate the LivingEntity verdict keeps, the two nextInt(5) rolls
+    /// the level random answers): the slide-down tick the flag banks,
+    /// the App's drain the rolls serve (the 1-in-5 slide voice + the
+    /// 1-in-5 showSlideParticles event the server's broadcast folds).
+    pub honey_slide_due: bool,
     /// THE BODY'S OWN ALIVE VERDICT (javap `Entity.isAlive` — the
     /// canUsePortal consult the portal walks pass): the App's dead
     /// flag the feed banks, the dead body the portal's own usability
@@ -1638,6 +1649,7 @@ impl PlayerBody {
             portal_effect_intensity: 0.0,
             o_portal_effect_intensity: 0.0,
             portal_trigger_due: false,
+            honey_slide_due: false,
             alive: true,
             fire_doused_due: false,
             air_supply: TOTAL_AIR_SUPPLY,
@@ -1928,6 +1940,7 @@ impl PlayerBody {
         self.portal_inside_consumed = false;
         self.portal_trigger_due = false;
         self.portal_teleport_due = false;
+        self.honey_slide_due = false;
         // the pre-tick position — the walk distance law's own source
         // (calculateEntityAnimation's getX() - xo fold) AND the render
         // interpolation's own source (the prev the frame's lerp walks
@@ -3332,6 +3345,17 @@ impl PlayerBody {
                     }
                     if self.honey_is_sliding_down(cx, cy, cz) {
                         self.honey_do_slide_movement();
+                        // THE EFFECTS' OWN GATE (javap
+                        // `HoneyBlock.maybeDoSlideEffects` pc 0-55 —
+                        // the doesEntityDoHoneyBlockSlideEffects gate
+                        // the LivingEntity verdict keeps [the player
+                        // IS one], the two nextInt(5) rolls the level
+                        // random answers): the slide-down tick the
+                        // flag banks, the App's drain the rolls serve
+                        // (the 1-in-5 slide voice + the 1-in-5
+                        // showSlideParticles event the server's
+                        // broadcast folds)
+                        self.honey_slide_due = true;
                     }
                 }
             }
@@ -3392,6 +3416,12 @@ impl PlayerBody {
         } else {
             self.vy = honey_new_delta_y(-0.05);
         }
+        // THE FALL'S OWN RESET (javap doSlideMovement pc 94-97 — the
+        // `resetFallDistance()` call the fold's tail speaks: the
+        // slide the descent never banks — the per-tick gravity's own
+        // accumulation the reset washes, the landing the slide's own
+        // body never earns)
+        self.fall_distance = 0.0;
     }
 
     /// THE SUPPORTING BLOCK'S OWN PROBE (javap Entity.checkSupportingBlock
@@ -3917,6 +3947,51 @@ mod tests {
             1,
             "the jump_boost III the 7th block the next damage speaks"
         );
+    }
+
+    /// THE HONEY'S OWN GATES THE METHOD WEARS (javap isSlidingDown
+    /// pcs 0-129 — the four-gate verdict the dev-23 round's own
+    /// method keeps, the body's own staged state the truth table
+    /// reads) + THE MULTIPLIER'S OWN ROW (javap `HoneyBlock.fallOn`
+    /// — the `causeFallDamage(d, 0.2f, fall)` call's multiplier arg
+    /// the pc 29-38 fconst_0.2 keeps, the hook the row answers).
+    #[test]
+    fn the_honey_the_slide_the_folds_wear() {
+        // (1) THE ON-GROUND REFUSAL — the standing body never slides
+        // (the edge-positioned falling body the contrast stages)
+        let mut b = PlayerBody::new(9.24, 8.5, 8.5, 0.0, 0.0);
+        b.vy = -0.5;
+        b.on_ground = false;
+        assert!(b.honey_is_sliding_down(8, 8, 8), "the wall's edge the verdict speaks");
+        b.on_ground = true;
+        assert!(!b.honey_is_sliding_down(8, 8, 8), "the standing body the refusal keeps");
+        // (2) THE HEIGHT BAND — the feet above the 15/16 top refuse
+        b.on_ground = false;
+        b.y = 8.0 + 0.9375;
+        assert!(!b.honey_is_sliding_down(8, 8, 8), "the feet above the top the band refuses");
+        // the band's own edge the 1e-7 slack admits — the CENTERED
+        // body the edge band refuses (the margin 0.7375 the ax 0.5
+        // never crosses)
+        b.y = 8.0 + 0.9375 - 2.0e-7;
+        b.x = 8.5;
+        assert!(!b.honey_is_sliding_down(8, 8, 8), "the centered body the edge band refuses");
+        // (3) THE OLD-VELOCITY BAND — old(0.0) = 0.08 >= -0.08 refuses
+        b.x = 9.24;
+        b.vy = 0.0;
+        assert!(!b.honey_is_sliding_down(8, 8, 8), "the resting vy the band refuses");
+        // (4) THE EDGE BAND — the body beyond the 0.7375 margin the
+        // verdict speaks, either axis the law keeps
+        b.vy = -0.5;
+        b.x = 9.24;
+        b.z = 8.5;
+        assert!(b.honey_is_sliding_down(8, 8, 8), "the wall's edge the verdict speaks");
+        b.x = 8.5;
+        b.z = 9.24;
+        assert!(b.honey_is_sliding_down(8, 8, 8), "the z edge the same verdict wears");
+        // THE MULTIPLIER'S OWN ROW (the fallOn's 0.2 the hook answers)
+        assert_eq!(fall_damage_multiplier(crate::world::HONEY_BLOCK), 0.2);
+        assert_eq!(fall_damage_multiplier(crate::world::STONE), 1.0);
+        assert_eq!(fall_damage_multiplier(crate::world::AIR), 1.0);
     }
 
     /// THE LONG FALL SPEAKS (the 10-block descent banks 10.0 through
