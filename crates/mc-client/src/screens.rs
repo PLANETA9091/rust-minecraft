@@ -5203,6 +5203,11 @@ pub fn is_view_blocking(kind: u16) -> bool {
             | crate::world::LEAVES
             | crate::world::PALE_LEAVES
             | crate::world::LEAF_LITTER
+            // THE WEB'S OWN ROW (the dev-22 round — the noCollision()
+            // pc 4247 the WebBlock registration speaks: blocksMotion()
+            // false the isSuffocating conjunction refuses, the body
+            // the web cell the view never screens)
+            | crate::world::COBWEB
     )
 }
 
@@ -87761,7 +87766,9 @@ cow_sound_variant: None,
         ] {
             assert!(is_view_blocking(kind), "the solid kind {kind} blocks");
         }
-        // THE NON-BLOCKERS: the fluids, the leaves, the flat cover
+        // THE NON-BLOCKERS: the fluids, the leaves, the flat cover, THE
+        // WEB (the dev-22 round — the noCollision pc 4247 the suffocation
+        // conjunction refuses)
         for kind in [
             crate::world::AIR,
             crate::world::WATER,
@@ -87769,9 +87776,16 @@ cow_sound_variant: None,
             crate::world::LEAVES,
             crate::world::PALE_LEAVES,
             crate::world::LEAF_LITTER,
+            crate::world::COBWEB,
         ] {
             assert!(!is_view_blocking(kind), "the kind {kind} never blocks");
         }
+        // THE WOOL'S OWN SOLID (the dev-22 round — the full-cube default
+        // the isSuffocating conjunction keeps)
+        assert!(
+            is_view_blocking(crate::world::WHITE_WOOL),
+            "the wool the full-cube suffocation keeps"
+        );
         // THE PARTICLE ENTRIES: the models' own choice
         assert_eq!(
             mc_registry::generated::atlas::tile_name(particle_tile(crate::world::GRASS)),
@@ -87807,6 +87821,83 @@ cow_sound_variant: None,
                 "the kind {kind} owns no particle screen"
             );
         }
+    }
+
+    // THE TOOL WAKE'S OWN PALETTE ROWS (the dev-22 round): the cobweb +
+    // white_wool kinds the atlas tiles bank (the cobweb the cross arm's
+    // tile, the wool the full-cube generic walk's), the collision the
+    // noCollision vs full-cube rows speak, the placeable lookup the
+    // item ids' reverse walk serves (the cobweb the BlockItemIds.COBWEB
+    // item form HAS, the wool the collection's own member), the cross
+    // mesh the diagonal quads the web's own lane wears.
+    #[test]
+    fn the_web_and_wool_the_palette_rows_wear() {
+        use mc_registry::generated::atlas;
+        let web = crate::world::COBWEB;
+        let wool = crate::world::WHITE_WOOL;
+        // THE ATLAS'S OWN ROWS (the tiles the regenerated walk banks —
+        // the cobweb tile the cross arm resolves, the wool the
+        // cube_all's `all` ref answers; both untinted)
+        assert_eq!(atlas::N_KINDS, 77, "the palette the pair banks");
+        assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
+        assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
+        assert_eq!(atlas::REGISTRY_NAMES[web as usize], "cobweb");
+        assert_eq!(atlas::REGISTRY_NAMES[wool as usize], "white_wool");
+        let web_tile = atlas::FACE_TILES[web as usize][0];
+        let wool_tile = atlas::FACE_TILES[wool as usize][0];
+        assert_ne!(web_tile, atlas::TILE_NONE, "the web the atlas tile banks");
+        assert_ne!(wool_tile, atlas::TILE_NONE, "the wool the atlas tile banks");
+        assert_eq!(atlas::tile_name(web_tile), "cobweb", "the web tile the cross master names");
+        assert_eq!(
+            atlas::tile_name(wool_tile),
+            "white_wool",
+            "the wool tile the cube master names"
+        );
+        for face in 0..6 {
+            assert_eq!(
+                atlas::FACE_TILES[wool as usize][face],
+                wool_tile,
+                "the wool face {face} the cube_all's same tile keeps"
+            );
+            assert_eq!(
+                atlas::TINTS[wool as usize][face],
+                0,
+                "the wool face {face} untinted"
+            );
+            assert_eq!(
+                atlas::TINTS[web as usize][face],
+                0,
+                "the web face {face} untinted"
+            );
+        }
+        // THE COLLISION (the web the noCollision Empty row, the wool the
+        // full-cube default)
+        assert_eq!(
+            crate::world::collision_shape(web),
+            crate::world::CollisionShape::Empty,
+            "the web the pass-through shape keeps"
+        );
+        assert_eq!(
+            crate::world::collision_shape(wool),
+            crate::world::CollisionShape::Full,
+            "the wool the full-cube shape keeps"
+        );
+        // THE PLACEABLE LOOKUP (the item ids' reverse walk — the web the
+        // BlockItemIds.COBWEB form places, the wool the collection
+        // member places)
+        assert_eq!(
+            crate::world::World::placeable_block("cobweb"),
+            Some(web),
+            "the web the item form places"
+        );
+        assert_eq!(
+            crate::world::World::placeable_block("white_wool"),
+            Some(wool),
+            "the wool the item form places"
+        );
+        // THE MESH QUADS the mesher's own test module pins (the empty
+        // stage the helpers keep — the web the cross planes, the wool
+        // the six-face cube)
     }
 
     // THE WATER FOG PAIR (javap WaterFogEnvironment.setupFog +

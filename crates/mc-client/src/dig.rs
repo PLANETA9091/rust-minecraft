@@ -1409,6 +1409,124 @@ mod tests {
         );
     }
 
+    /// THE WAKE'S OWN LANE (the dev-22 round — the palette's cobweb +
+    /// white_wool rows the pinned SWORD/SHEARS tables finally reach):
+    /// the web the sword/shears 15.0-correct pair the palette kind
+    /// speaks (the bare hand the 1.0 default + the requires-tool
+    /// refusal the pc 4250 walk wears), the 15/(4×30) share the
+    /// eight-tick walk banks, the string the verdict's own drop serves;
+    /// the wool the shears' 5.0 the 0.8 hardness wears (the bare hand
+    /// the no-tool-demand harvest keeps — the wool the self-entry
+    /// drops), the fire odds the wool lambda's pair the tables speak.
+    #[test]
+    fn the_web_and_wool_the_wake_wears() {
+        let sword = wire_id("iron_sword");
+        let shears = wire_id("shears");
+        let web = crate::world::COBWEB;
+        let wool = crate::world::WHITE_WOOL;
+        // THE PALETTE'S OWN WAKE (the kind rows the NAME_OF walk speaks)
+        assert_eq!(crate::world::NAME_OF[web as usize], "cobweb", "the web the palette banks");
+        assert_eq!(
+            crate::world::NAME_OF[wool as usize],
+            "white_wool",
+            "the wool the palette banks"
+        );
+        // THE DIG ROWS (the generated table's own numbers — the web the
+        // strength(4.0f) pc 4253 + requiresCorrectToolForDrops pc 4250
+        // the pair keeps, the wool the 0.8 the no-demand wears)
+        assert_eq!(DigState::block_dig_row(web), (4.0, true), "the web the 4.0/demand row");
+        assert_eq!(
+            DigState::block_dig_row(wool),
+            (0.8, false),
+            "the wool the 0.8/no-demand row"
+        );
+        // THE SWORD'S WAKE (the web row the palette kind finally reaches)
+        assert_eq!(
+            DigState::held_destroy_speed(web, Some(sword)),
+            15.0,
+            "the sword the web's 15.0 wears"
+        );
+        assert!(DigState::correct_tool(web, Some(sword)), "the sword the web's TRUE keeps");
+        // THE SHEARS' WAKE (the same pair the shears table speaks)
+        assert_eq!(
+            DigState::held_destroy_speed(web, Some(shears)),
+            15.0,
+            "the shears the web's 15.0 wears"
+        );
+        assert!(DigState::correct_tool(web, Some(shears)), "the shears the web's TRUE keeps");
+        // THE BARE HAND (the 1.0 default the no-rule walk keeps, the
+        // verdict the requires-tool refusal wears)
+        assert_eq!(DigState::held_destroy_speed(web, None), 1.0, "the hand the 1.0 keeps");
+        assert!(!DigState::correct_tool(web, None), "the hand the web's refusal wears");
+        // THE PROGRESS LAW (the 15/(4×30) share the honest walk banks)
+        let web_prog = DigState::destroy_progress(15.0, 4.0, true);
+        assert!((web_prog - 0.125).abs() < 1e-9, "the web the 0.125/tick share");
+        // THE EIGHT-TICK WALK (the START arms at progress zero — the
+        // continue walk the shares speak: seven keeps the 0.875 rides,
+        // the eighth the 1.0 the completion wears — the shears the same
+        // pace speaks)
+        let mut world = small_world();
+        world.set(1, 1, 1, web);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None,
+        );
+        assert_eq!(world.get(1, 1, 1), web, "the START the web keeps (the arm at zero)");
+        for tick in 0..7 {
+            let _ = d.continue_destroy_block(
+                (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None,
+            );
+            assert_eq!(
+                world.get(1, 1, 1),
+                web,
+                "the share {} the web keeps",
+                tick + 1
+            );
+        }
+        let (sends, _) = d.continue_destroy_block(
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None,
+        );
+        assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the eighth share the web breaks");
+        assert_eq!(sends.len(), 1, "the STOP send the completion wears");
+        // THE WOOL'S OWN LANE (the shears the 5.0 the 0.8 hardness
+        // wears — the bare hand the harvest keeps, the sword the
+        // no-row default rides)
+        assert_eq!(
+            DigState::held_destroy_speed(wool, Some(shears)),
+            5.0,
+            "the shears the wool's 5.0 wears"
+        );
+        assert_eq!(
+            DigState::held_destroy_speed(wool, Some(sword)),
+            1.0,
+            "the sword the wool's no-row default keeps"
+        );
+        assert!(
+            DigState::correct_tool(wool, None),
+            "the wool the no-tool-demand true keeps"
+        );
+        // THE DROPS (the verdict's own gate — the web the string the
+        // sword's TRUE serves, the bare hand the refusal empties, the
+        // wool the self-entry the bare hand keeps)
+        let mut rng = crate::drops::Lcg::new(7);
+        assert_eq!(
+            crate::drops::roll_drops(web, Some(sword), &mut rng),
+            vec![(wire_id("string"), 1)],
+            "the web the string the sword drops"
+        );
+        let mut rng = crate::drops::Lcg::new(7);
+        assert!(
+            crate::drops::roll_drops(web, None, &mut rng).is_empty(),
+            "the bare hand the web's refusal empties"
+        );
+        let mut rng = crate::drops::Lcg::new(7);
+        assert_eq!(
+            crate::drops::roll_drops(wool, None, &mut rng),
+            vec![(wire_id("white_wool"), 1)],
+            "the wool the self-entry the hand drops"
+        );
+    }
+
     /// THE TOOL'S OWN ROWS (the name suffix the class lanes keep + the
     /// javap ToolMaterial clinit speed the material rows wear): the
     /// pickaxe the `axe`-containing name's OWN head keeps, the bare

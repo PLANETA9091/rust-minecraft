@@ -551,8 +551,36 @@ pub const CAKE_SLICE6: u16 = 73;
 /// lanes the generated hay_block rows the name lookup answers.
 pub const HAY_BLOCK: u16 = 74;
 
+/// THE TOOL WAKE'S OWN PAIR (the dev-22 round): the cobweb the
+/// SWORD/SHEARS pinned rows' first palette-native consumer — javap
+/// Blocks clinit pc 4221-4268 the 26.2 jar: register(BlockItemIds.
+/// COBWEB, ...) the ITEM FORM HAS (the placeable lookup the reverse
+/// walk answers), mapColor(WOOL) pc 4232, sound(SoundType.COBWEB)
+/// pc 4238-4241, forceSolidOn() pc 4244, noCollision() pc 4247 the
+/// collision's Empty row speaks, requiresCorrectToolForDrops() pc
+/// 4250 the dig row's own true the bare-hand harvest the verdict
+/// refuses, strength(4.0f) pc 4253-4256, pushReaction(DESTROY)
+/// pc 4259-4262. The cross model the atlas's cobweb arm resolves —
+/// the two diagonal planes the flowers' own path meshes (plant_offset
+/// the NONE row the web never carries — no offset the plants' jitter
+/// never speaks). The entityInside walk the SLOW lane keeps (javap
+/// WebBlock.entityInSide — the Vec3(0.25, 0.05, 0.25) clamp the
+/// living body's motion wears, the WEAVING effect the 0.5/0.25/0.5
+/// wider clamp speaks) a future movement round serves. THE WHITE
+/// WOOL the ColorCollection.registerBlocks walk's own member (javap
+/// Blocks pc 4725-4746 — the 16 colors one lambda family): the
+/// full-cube generic walk resolves (blockstates white_wool.json ""
+/// -> block/white_wool parent block/cube_all), the strength(0.8f)
+/// the wool lambda speaks, NO requiresCorrectToolForDrops the
+/// bare-hand harvest the dig row's false wears, the fire lambda
+/// bootStrap$0 the (30, 60) pair the odds tables bank (javap
+/// FireBlock BootstrapMethods #1 — the WOOL ColorCollection.forEach
+/// the lambda's bipush 30/bipush 60 pair keeps).
+pub const COBWEB: u16 = 75;
+pub const WHITE_WOOL: u16 = 76;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 75] = [
+pub const NAME_OF: [&str; 77] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -634,6 +662,17 @@ pub const NAME_OF: [&str; 75] = [
     // row answers (the below-campfire placement the signal verdict
     // lights)
     "hay_block",
+    // THE TOOL WAKE'S OWN PAIR (the dev-22 round): the cobweb the dig
+    // row (4.0 hardness + requiresCorrectToolForDrops — the clinit's
+    // strength(4.0f) pc 4253 + requiresCorrectToolForDrops() pc 4250
+    // the generated rows speak), the drops table (the string entry the
+    // sword/shears verdicts the gate serves), the sounds' COBWEB row
+    // and the item id the placeable lookup answers; the white wool the
+    // dig row (0.8 hardness, no tool demand — the bare-hand harvest
+    // the requiresCorrectTool absence wears), the drops table (the
+    // self-entry), the sounds' WOOL row and the item id the reverse
+    // walk answers
+    "cobweb", "white_wool",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -646,6 +685,16 @@ pub const NAME_OF: [&str; 75] = [
 pub fn is_flower(id: u16) -> bool {
     (DANDELION..=POPPY).contains(&id)
         || (AZURE_BLUET..=WHITE_TULIP).contains(&id)
+}
+
+/// THE WEB'S OWN FAMILY — the cross kind the sword/shears rows wake
+/// (the dev-22 round): the mesher's non-occluding verdict and the
+/// cross-path mesh predicate read the family, the collision's Empty
+/// row the noCollision() clinit walk keeps, the plant_offset the NONE
+/// row the web never carries (no jitter the plants' own render offset
+/// speaks — the rigid cross the vanilla model renders).
+pub fn is_web(id: u16) -> bool {
+    id == COBWEB
 }
 
 /// THE CANDLE PAIR'S OWN FAMILY — the canLight consult's own kinds the
@@ -997,6 +1046,12 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // THROUGH the flame cell the entityInside walk then brands)
         || id == FIRE
         || id == SOUL_FIRE
+        // THE WEB'S OWN ROW (the dev-22 round — the blocks clinit's
+        // noCollision() pc 4247 the WebBlock registration speaks — the
+        // body walks THROUGH the web the entityInside slow lane a
+        // future round serves, the placement's obstruction the empty
+        // shape never refuses)
+        || is_web(id)
         // THE CANDLE PAIR'S OWN ROW (the autopush-522 round — the
         // blocks clinit's CandleBlock registration the SHAPE boxes
         // speak: the 1-candle box [7,0,7]->[9,6,9] a 2x6x2-px center
@@ -1073,6 +1128,12 @@ pub fn fire_can_burn(id: u16) -> bool {
             | PALE_LEAVES
             | LEAF_LITTER
             | TNT
+            // THE WOOL FAMILY'S OWN ROW (the dev-22 round — javap
+            // FireBlock BootstrapMethods #1: the WOOL collection's
+            // forEach the lambda$bootStrap$0 (30, 60) pair speaks; the
+            // COBWEB the setFlammable walk's own silence keeps — no
+            // Web row the grep of the full dump answers)
+            | WHITE_WOOL
             | SHORT_GRASS
             | BUSH
             | TALL_GRASS
@@ -1153,6 +1214,12 @@ pub fn fire_ignite_odds(id: u16) -> i32 {
         LOG => 5,
         LEAVES | PALE_LEAVES => 30,
         TNT => 15,
+        // THE WOOL FAMILY'S OWN ROW (the dev-22 round — javap FireBlock
+        // BootstrapMethods #1: the WOOL ColorCollection.forEach the
+        // lambda$bootStrap$0 body's bipush 30/bipush 60 pair keeps —
+        // the carpet family the bootStrap$1 60/20 pair the separate
+        // collection wears)
+        WHITE_WOOL => 30,
         LEAF_LITTER | SHORT_GRASS | BUSH | TALL_GRASS | TALL_GRASS_UPPER | LARGE_FERN
         | LARGE_FERN_UPPER => 60,
         _ if is_flower(id) => 60,
@@ -1174,6 +1241,9 @@ pub fn fire_burn_odds(id: u16) -> i32 {
     match id {
         LOG => 5,
         LEAVES | PALE_LEAVES => 60,
+        // THE WOOL FAMILY'S OWN ROW (the same lambda's second bipush —
+        // the burn column the checkBurnOut roll reads)
+        WHITE_WOOL => 60,
         TNT | LEAF_LITTER | SHORT_GRASS | BUSH | TALL_GRASS | TALL_GRASS_UPPER | LARGE_FERN
         | LARGE_FERN_UPPER => 100,
         _ if is_flower(id) => 100,
@@ -3504,6 +3574,15 @@ mod tests {
         assert_eq!(fire_ignite_odds(PALE_LEAVES), 30);
         assert_eq!(fire_ignite_odds(LEAF_LITTER), 60);
         assert_eq!(fire_ignite_odds(TNT), 15, "the tnt the 15/100 pair keeps");
+        // THE WOOL FAMILY'S OWN ROW (the dev-22 round — the collection
+        // lambda's 30/60 pair the odds columns speak)
+        assert_eq!(fire_ignite_odds(WHITE_WOOL), 30, "the wool the 30/60 pair keeps");
+        assert_eq!(fire_can_burn(WHITE_WOOL), true, "the wool the burnable verdict keeps");
+        // THE WEB'S OWN SILENCE (the setFlammable walk the Web row never
+        // speaks — the cobweb the zero odds the refusal wears)
+        assert_eq!(fire_ignite_odds(COBWEB), 0, "the web the silence keeps");
+        assert_eq!(fire_burn_odds(COBWEB), 0, "the web the silence keeps");
+        assert_eq!(fire_can_burn(COBWEB), false, "the web the refusal keeps");
         for id in [
             SHORT_GRASS, BUSH, TALL_GRASS, TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER,
             DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP,
@@ -3523,6 +3602,7 @@ mod tests {
         assert_eq!(fire_burn_odds(LEAVES), 60);
         assert_eq!(fire_burn_odds(PALE_LEAVES), 60);
         assert_eq!(fire_burn_odds(TNT), 100, "the tnt the prime chain's own 100 wears");
+        assert_eq!(fire_burn_odds(WHITE_WOOL), 60, "the wool the 60 burn keeps");
         assert_eq!(fire_burn_odds(LEAF_LITTER), 100);
         for id in [
             SHORT_GRASS, BUSH, TALL_GRASS, TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER,

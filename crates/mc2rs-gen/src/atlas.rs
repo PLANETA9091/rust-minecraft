@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 75] = [
+pub const RUNTIME_PALETTE: [&str; 77] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -355,6 +355,27 @@ pub const RUNTIME_PALETTE: [&str; 75] = [
     // SIGNAL_FIRE property's own law speaks), the palette row the
     // offline signal-fire lane the kind-only vocabulary now carries.
     "hay_block",
+    // THE TOOL WAKE'S OWN PAIR (the dev-22 round): the cobweb the
+    // SWORD/SHEARS pinned rows' first palette-native consumer — javap
+    // Blocks clinit pc 4221-4268 the 26.2 jar: register(
+    // BlockItemIds.COBWEB, ...) the ITEM FORM HAS (the placeable
+    // lookup the reverse walk answers), mapColor(WOOL) the pc 4232
+    // row, sound(SoundType.COBWEB) pc 4238-4241, forceSolidOn()
+    // pc 4244, noCollision() pc 4247, requiresCorrectToolForDrops()
+    // pc 4250 the dig row's own true the generated table speaks,
+    // strength(4.0f) pc 4253-4256, pushReaction(DESTROY) pc 4259-
+    // 4262 — the cross model the blockstate's single "" variant
+    // resolves (block/cobweb parent block/cross), the cobweb arm the
+    // resolve walk's cross family reads; the WHITE WOOL the
+    // ColorCollection.registerBlocks walk's own member (javap Blocks
+    // pc 4725-4746 — the 16 colors one lambda family) the full-cube
+    // generic walk resolves (blockstates white_wool.json "" ->
+    // block/white_wool parent block/cube_all), sound(WOOL) the wool
+    // lambda (encourage 30 / burn 60 the bootStrap$0 pair the fire
+    // tables bank) the wool sounds' own rows keep, no
+    // requiresCorrectToolForDrops the dig row's false the bare-hand
+    // harvest wears.
+    "cobweb", "white_wool",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1062,6 +1083,46 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
                 .to_string();
             let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
                 .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("cross")
+                .with_context(|| format!("model {model_ref}: no cross texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
+        if block == "cobweb" {
+            // THE WEB'S OWN CROSS ROW (the dev-22 round, the official
+            // 26.2 jar): the blockstate is a single variant map ("") —
+            // the model ref -> block/cobweb whose PARENT is block/cross
+            // (the flowers' own two diagonal plane elements the 45°
+            // rotY + rescale fold bakes, `shade: false` faces under
+            // model-level `ambientocclusion: false`), so resolve_block's
+            // full-cube six-face requirement cannot apply. The texture
+            // stem resolves through the REAL chain (the blockstate
+            // variant's model ref -> the merged texture map's `cross`
+            // ref — cobweb -> block/cobweb), tinted = false (the faces
+            // carry NO tintindex — the pre-colored master renders as
+            // authored; the audited BlockColors walk the web never
+            // covers, the WEAVING effect the entity walk alone reads).
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/cobweb.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate cobweb: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(""))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| "blockstate cobweb: no empty-variant model")?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block cobweb: model chain {model_ref}"))?;
             let tex = tex_map
                 .get("cross")
                 .with_context(|| format!("model {model_ref}: no cross texture ref"))?;
@@ -2084,6 +2145,12 @@ mod tests {
         // the signal fire's own kind (the autopush-530 round): the hay
         // bale the campfire's below-cell the isSmokeSource verdict reads
         assert_eq!(RUNTIME_PALETTE[74], "hay_block");
+        // the TOOL WAKE'S OWN PAIR (the dev-22 round): the cobweb the
+        // sword/shears pinned rows' first palette-native consumer (the
+        // cross model the cobweb arm resolves), the white wool the
+        // ColorCollection member the full-cube generic walk resolves
+        assert_eq!(RUNTIME_PALETTE[75], "cobweb");
+        assert_eq!(RUNTIME_PALETTE[76], "white_wool");
         // the shared-row law the registry-name walk speaks: every
         // stage the BASE "cake" row the dig/drop/sound/item lanes keep
         let names = registry_names();

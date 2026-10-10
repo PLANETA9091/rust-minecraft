@@ -106,6 +106,11 @@ fn is_transparent(kind: u16) -> bool {
         // stick box the neighbors' faces draw against, the noCollision
         // row the Properties chain speaks)
         || crate::world::is_torch(kind)
+        // THE WEB the same verdict keeps (the dev-22 round — the
+        // noCollision() pc 4247 the WebBlock registration speaks, the
+        // cross planes non-occluding, no AO, the neighbors' faces the
+        // web's own diagonals draw against)
+        || crate::world::is_web(kind)
         // THE FIRE KINDS the same verdict keeps (the blocks clinit's
         // replaceable().noCollision() rows the registrations speak —
         // the ground's top face under the flame draws, the flame casts
@@ -750,6 +755,12 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     || crate::world::is_flower(id)
                     || crate::world::is_tuft(id)
                     || crate::world::is_double_plant(id)
+                    // THE WEB the same path keeps (the dev-22 round —
+                    // the block/cobweb parent block/cross the two
+                    // diagonal planes the flowers' own bake carries,
+                    // the tint the pre-colored master never rides,
+                    // the offset the NONE row the web never speaks)
+                    || crate::world::is_web(id)
                 {
                     let tile = if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
@@ -859,6 +870,12 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     if crate::world::is_flower(id)
                         || crate::world::is_tuft(id)
                         || crate::world::is_double_plant(id)
+                        // THE WEB the same path keeps (the dev-22 round
+                        // — the cross geometry the flowers' own bake
+                        // repeats, the offset the plant walk's NONE row
+                        // zeroes — the rigid diagonal planes the vanilla
+                        // model renders)
+                        || crate::world::is_web(id)
                     {
                         // THE PLANT'S OWN RENDER OFFSET (the dev-27 round
                         // — the javap 26.2 law the world.rs walk keeps):
@@ -4323,6 +4340,42 @@ mod tests {
                 .all(|c| (c[0] - 0.8).abs() < 1e-5 || (c[0] - 0.6).abs() < 1e-5)),
             "the side faces the 0.8/0.6 shade terms wear"
         );
+    }
+
+    #[test]
+    fn the_web_the_cross_planes_and_wool_the_cube_wear() {
+        use mc_registry::generated::atlas as gen_atlas;
+        let web_tile = gen_atlas::FACE_TILES[crate::world::COBWEB as usize][2];
+        let wool_tile = gen_atlas::FACE_TILES[crate::world::WHITE_WOOL as usize][0];
+        assert_ne!(web_tile, gen_atlas::TILE_NONE, "the web tile the regen banks");
+        assert_ne!(wool_tile, gen_atlas::TILE_NONE, "the wool tile the regen banks");
+        // THE WEB'S OWN CROSS (the freestanding cell the two diagonal
+        // planes the flowers' own path wears — the 4 quads the two
+        // planes × two windings speak, the offset the NONE row zeroes
+        // — the rigid diagonals the vanilla model renders)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::COBWEB);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let webs: Vec<_> = q.iter().filter(|quad| quad.tile == web_tile).collect();
+        assert_eq!(webs.len(), 4, "the web the two diagonals × two windings keeps");
+        // THE RIGID PLANE (the offset zero — every point the cell's own
+        // 8..9 x-band the no-jitter walk keeps)
+        for quad in &webs {
+            for pt in quad.pts {
+                assert!(
+                    (8.0..9.0).contains(&pt[0]),
+                    "the web point the cell band keeps"
+                );
+            }
+        }
+        // THE WOOL'S OWN CUBE (the freestanding cell the six faces the
+        // full-cube path wears — the 6 quads the backface-culled walk
+        // keeps, one quad per face)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::WHITE_WOOL);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let wools: Vec<_> = q2.iter().filter(|quad| quad.tile == wool_tile).collect();
+        assert_eq!(wools.len(), 6, "the wool the six faces the cube path keeps");
     }
 
     #[test]
