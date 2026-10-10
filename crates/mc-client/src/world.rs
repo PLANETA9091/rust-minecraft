@@ -745,6 +745,82 @@ pub const SMOKER_LIT: u16 = 84;
 /// NetherPortalBlock.animateTick over the 26.2 jar — the walk below).
 pub const NETHER_PORTAL: u16 = 85;
 
+/// THE FRAME'S OWN KIND — the obsidian the portal frame-scan lane's
+/// own building block (the autopush-606 round): javap Blocks clinit
+/// pc 6491-6524 the 26.2 jar — `register(BlockItemIds.OBSIDIAN,
+/// of().mapColor(COLOR_BLACK) pc 6497-6500 + instrument(BASEDRUM) pc
+/// 6503-6506 + requiresCorrectToolForDrops() pc 6509 +
+/// strength(50.0f, 1200.0f) pc 6512-6518)` the ITEM FORM HAS (the
+/// placeable lookup the reverse walk answers — the frame the player
+/// BUILDS the placement lane serves), the dig row (50.0, true) the
+/// generated table banks (the full-block registry's own dump the
+/// runtime walk reads), the sounds' STONE family the generated rows
+/// keep (the NO SoundType call the clinit arm carries — the default
+/// the registration keeps), the full-cube collision the BlockBehaviour
+/// default the collision's Full arm answers, the emission the
+/// NO-lightLevel call the 0 keeps (the frame's own glow the PORTAL
+/// kind's emission-11 row the interior alone paints). The FRAME tag
+/// the scan's own test answers (javap PortalShape.lambda$static$0 —
+/// the `state.is(Blocks.OBSIDIAN)` verdict the FRAME StatePredicate
+/// lambda speaks, the invokedynamic #334 the static{} walk banks).
+pub const OBSIDIAN: u16 = 86;
+
+/// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
+/// (javap PortalShape's own fields the ctor pc 0-115 carries): the
+/// bottom-left interior corner, the width/height the bands answer,
+/// the axis the trial's own arm wears, the numPortalBlocks the
+/// EMPTY-shape predicate (javap lambda$findEmptyPortalShape$0 pc
+/// 0-19 — `isValid() && numPortalBlocks == 0` the verdict the lit
+/// gate the re-scan never refills) reads.
+pub struct PortalShapeFill {
+    pub bottom_left: (i32, i32, i32),
+    pub width: i32,
+    pub height: i32,
+    pub axis_x: bool,
+    pub num_portal_blocks: i32,
+}
+
+impl PortalShapeFill {
+    /// THE VALIDITY'S OWN CONJUNCTION (javap isValid pc 0-39 — the
+    /// `width in [2,21] && height in [3,21]` pair the verdict keeps,
+    /// MIN_WIDTH 2 / MAX_WIDTH 21 / MIN_HEIGHT 3 / MAX_HEIGHT 21 the
+    /// ConstantValue attributes speak)
+    pub fn is_valid(&self) -> bool {
+        (2..=21).contains(&self.width) && (3..=21).contains(&self.height)
+    }
+
+    /// THE FILL'S OWN CELLS (javap createPortalBlocks pc 20-53 — the
+    /// `betweenClosed(bottomLeft, bottomLeft + UP*(h-1) + rightDir*
+    /// (w-1))` box the interior walks, the rightDir the axis arm
+    /// picks [X -> WEST, Z -> SOUTH] the findAnyShape's own law
+    /// keeps)
+    pub fn cells(&self) -> Vec<(i32, i32, i32)> {
+        let (rx, rz) = if self.axis_x { (-1, 0) } else { (0, 1) };
+        let mut out = Vec::with_capacity((self.width * self.height) as usize);
+        for y in 0..self.height {
+            for x in 0..self.width {
+                out.push((
+                    self.bottom_left.0 + rx * x,
+                    self.bottom_left.1 + y,
+                    self.bottom_left.2 + rz * x,
+                ));
+            }
+        }
+        out
+    }
+}
+
+/// THE EMPTY PREDICATE'S OWN ROW (javap PortalShape.isEmpty pc 0-32
+/// over the real 26.2 jar): `state.isAir() || state.is(BlockTags.
+/// FIRE) || state.is(NETHER_PORTAL)` the three-way verdict the
+/// interior cells answer — THE FIRE CELL ITSELF the scan's own start
+/// the rule admits (the just-placed flame the igniter arms bank the
+/// BlockTags.FIRE row the walk reads), the portal cells the interior
+/// count the numPortalBlocks gate reads
+pub fn portal_cell_empty(id: u16) -> bool {
+    id == AIR || is_fire(id) || id == NETHER_PORTAL
+}
+
 /// THE FURNACE'S OWN FAMILY — the two kinds the palette row wakes
 /// (the unlit kind the wire world's own furnaces land through, the
 /// lit kind the burning state's own product the block updates wear):
@@ -792,7 +868,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 86] = [
+pub const NAME_OF: [&str; 87] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -936,6 +1012,19 @@ pub const NAME_OF: [&str; 86] = [
     // able lookup the vanilla itself refuses, the frame-lighting
     // scan a future round keeps)
     "nether_portal",
+    // THE FRAME'S OWN ROW (the autopush-606 round): the obsidian the
+    // dig row (50.0 hardness + requiresCorrectToolForDrops — the
+    // strength(50.0f, 1200.0f) pc 6512-6518 + requiresCorrectTool
+    // ForDrops() pc 6509 the clinit arm speaks — the generated
+    // table's own dump banks (50.0, true)), the drops table (the
+    // self-entry the generated DROPS_OBSIDIAN row banks), the
+    // sounds' STONE family (the NO SoundType call the clinit arm
+    // carries — the default the registration keeps) and the item id
+    // the placeable lookup answers (BlockItemIds.OBSIDIAN pc 6491
+    // the ITEM FORM HAS — the frame the player BUILDS the placement
+    // lane serves, the portal frame-scan the igniter arm's own tail
+    // lights)
+    "obsidian",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -2961,6 +3050,337 @@ impl World {
         Some(id)
     }
 
+    /// THE PORTAL FRAME'S OWN SCAN — javap
+    /// `net.minecraft.world.level.portal.PortalShape` over the real
+    /// 26.2 jar (the full walk the `BaseFireBlock.onPlace` tail
+    /// serves, the autopush-606 round): the fire the igniter arms
+    /// place the scan's own start cell wears, the EMPTY predicate
+    /// (javap PortalShape.isEmpty pc 0-32 — `state.isAir() ||
+    /// state.is(BlockTags.FIRE) || state.is(NETHER_PORTAL)` the
+    /// three-way verdict the walk keeps — THE FIRE CELL ITSELF the
+    /// scan's own start the rule admits, the just-placed flame the
+    /// interior's own member the fill overwrites) the interior test
+    /// answers, the FRAME predicate (javap lambda$static$0 pc 0-7 —
+    /// `state.is(Blocks.OBSIDIAN)` the verdict the static{}'s
+    /// invokedynamic #334 banks) the frame cells test. THE WALK
+    /// (javap findEmptyPortalShape pc 0-11 → findPortalShape pc 0-58
+    /// → findAnyShape pc 0-115): the X-axis trial FIRST (rightDir
+    /// WEST pc 7-10 the axis-X arm keeps), the predicate filter
+    /// (javap lambda$findEmptyPortalShape$0 — `isValid() &&
+    /// numPortalBlocks == 0` the EMPTY-shape verdict the interior's
+    /// own portal blocks the gate refuses — the lit gate the re-scan
+    /// never refills), the Z-axis trial the failed filter's own
+    /// else-branch speaks (pc 26-58 the otherAxis the X arm's
+    /// refusal keeps). THE DESCENT (javap calculateBottomLeft pc
+    /// 0-81): the floor bound `Math.max(level.getMinY(), y - 21)`
+    /// pc 0-16 the 21-step cap the walk wears (the offline world's
+    /// own floor the y=0 the below-world STONE read never crosses —
+    /// the getMinY fold the same bound the client's own vertical
+    /// range banks), the while `y > i && isEmpty(below)` loop pc
+    /// 17-46 the air column descends, the OPPOSITE-edge walk pc
+    /// 55-62 (`getDistanceUntilEdgeAboveFrame(level, pos,
+    /// rightDir.opposite())` the -1 the pc 62-64 subtraction keeps)
+    /// the bottom-left cell the last interior column answers, the
+    /// negative distance pc 66-72 the null the degenerate shape
+    /// (width 0, height 0, bottomLeft the start cell the findAny
+    /// Shape's pc 30-43 arm keeps) wears. THE EDGE WALK (javap
+    /// getDistanceUntilEdgeAboveFrame pc 0-105): the `for i in
+    /// 0..=21` loop pc 11-101 the INCLUSIVE bound the if_icmpgt 21
+    /// keeps — the cursor `pos.move(dir, i)` the cell reads, the
+    /// non-empty cell the edge candidate answers (FRAME test pc
+    /// 47-64 the obsidian the distance returns, the non-obsidian
+    /// solid the 0 the pc 104 fallback banks), the empty cell the
+    /// below-FRAME check pc 65-97 keeps (the floor the non-obsidian
+    /// cell the 0 the walk refuses — the stone floor the scan's own
+    /// refusal speaks), the bound-exhaust the 0 keeps. THE WIDTH
+    /// (javap calculateWidth pc 0-21): the same edge walk the
+    /// rightDir arm answers, the `< 2 || > 21` band pc 7-20 the 0
+    /// the out-of-band walk keeps (MIN_WIDTH 2 / MAX_WIDTH 21 the
+    /// ConstantValue attributes speak). THE HEIGHT (javap calculate
+    /// Height pc 0-53 → getDistanceUntilTop pc 0-175): the `while y
+    /// < 21` row walk pc 3-170 — per row the LEFT frame cell
+    /// `bottomLeft + UP*y + rightDir*(-1)` pc 10-51 the FRAME test
+    /// the failed walk returns y keeps, the RIGHT frame cell
+    /// `+ rightDir*width` pc 52-94 the same test keeps, the interior
+    /// row pc 95-164 the EMPTY test the non-empty cell the y keeps +
+    /// the portal count pc 145-160 the NETHER_PORTAL cell the
+    /// MutableInt increments — the 21 the bound-exhaust keeps (pc
+    /// 173-175); the `d < 3 || d > 21` band pc 22-49 the 0 keeps
+    /// (MIN_HEIGHT 3 / MAX_HEIGHT 21 the ConstantValue pair speaks)
+    /// and the TOP FRAME (javap hasTopFrame pc 0-62) the row ABOVE
+    /// the measured height the `bottomLeft + UP*d + rightDir*x` walk
+    /// the every-column FRAME test answers (the missing top the 0
+    /// the pc 49-50 refusal keeps). THE VALIDITY (javap isValid pc
+    /// 0-39): `width in [2,21] && height in [3,21]` the conjunction
+    /// the shape verdict keeps. THE FILL (javap createPortalBlocks pc
+    /// 0-68): `NETHER_PORTAL.defaultBlockState().setValue(AXIS, axis)`
+    /// the state the kind-only vocabulary never stores (the mesher's
+    /// axis lane the NEIGHBOR reads derive — the autopush-605 round's
+    /// own law the west/east short-circuit keeps), the
+    /// `betweenClosed(bottomLeft, bottomLeft + UP*(h-1) + rightDir*
+    /// (w-1))` box the interior cells the setBlock(state, 18) walk
+    /// fills (flags 18 = UPDATE_CLIENTS | UPDATE_NOOBSERVER — the
+    /// neighbor-less broadcast the kind-only client never needs), the
+    /// FIRE CELL the scan's own start the interior member the fill
+    /// OVERWRITES (the vanilla setBlock the later call the same pos
+    /// the portal state wears — the scheduled fire tick the stale
+    /// entry the block-match gate drops). THE DIMENSION GATE (javap
+    /// BaseFireBlock.inPortalDimension pc 0-25): `dimension() ==
+    /// OVERWORLD || NETHER` the verdict the scan's own caller
+    /// consults — the offline client the OVERWORLD's own dimension
+    /// wears, the gate the TRUE the single-dimension walk keeps.
+    pub fn find_empty_portal_shape(&self, start: (i32, i32, i32)) -> Option<PortalShapeFill> {
+        // THE X-AXIS TRIAL FIRST (findPortalShape pc 0-25 — the axis
+        // the caller's own X arg carries, the rightDir WEST the
+        // findAnyShape's pc 1-10 arm keeps), the predicate the empty
+        // verdict filters, THE Z-AXIS TRIAL the failed filter's own
+        // else speaks (pc 26-58 — the otherAxis the X arm's refusal
+        // keeps, the SOUTH rightDir the axis-Z arm answers)
+        let x_trial = self.portal_find_any_shape(start, true);
+        if x_trial.is_valid() && x_trial.num_portal_blocks == 0 {
+            return Some(x_trial);
+        }
+        let z_trial = self.portal_find_any_shape(start, false);
+        if z_trial.is_valid() && z_trial.num_portal_blocks == 0 {
+            return Some(z_trial);
+        }
+        None
+    }
+
+    /// THE ONPLACE TAIL'S OWN FILL — javap `BaseFireBlock.onPlace` pc
+    /// 0-50 over the 26.2 jar: the `inPortalDimension(level)` gate pc
+    /// 13-17 the scan consults (the OVERWORLD/NETHER disjunction the
+    /// offline client's own overworld the TRUE answers), the
+    /// `findEmptyPortalShape(level, pos, Axis.X)` pc 20-28 the scan
+    /// the fire's own cell starts, the `createPortalBlocks` pc 38-47
+    /// the present shape the interior fills — the TRUE the fill's own
+    /// verdict carries, the failed scan the FALSE the fire's own
+    /// landing keeps (the vanilla's own pc 50 return the portal-less
+    /// arm the canSurvive check the arm's own gate already answered).
+    pub fn check_portal_spawn(&mut self, pos: (i32, i32, i32)) -> bool {
+        if let Some(fill) = self.find_empty_portal_shape(pos) {
+            for (x, y, z) in fill.cells() {
+                self.set(x, y, z, NETHER_PORTAL);
+            }
+            true
+        } else {
+            false
+        }
+    }
+
+    /// THE ONE-AXIS SHAPE WALK (javap findAnyShape pc 0-115 — the
+    /// rightDir the axis arm picks [X -> WEST pc 7-10, else SOUTH pc
+    /// 13-16], the bottom-left the descent answers, the degenerate
+    /// shapes the 0x0 the pc 30-43 / 58-72 arms bank, the full walk
+    /// the width + height the ctor pc 95-115 carries)
+    fn portal_find_any_shape(&self, start: (i32, i32, i32), axis_x: bool) -> PortalShapeFill {
+        // THE RIGHT DIR (pc 1-16): X -> WEST (-1,0), Z -> SOUTH (0,+1)
+        let right = if axis_x { (-1, 0) } else { (0, 1) };
+        // THE BOTTOM-LEFT (pc 17-48 — the null the degenerate shape
+        // the pc 30-43 arm wears: width 0, height 0, the START cell
+        // the bottomLeft the ctor keeps)
+        let bl = match self.portal_calculate_bottom_left(right, start) {
+            Some(bl) => bl,
+            None => {
+                return PortalShapeFill {
+                    bottom_left: start,
+                    width: 0,
+                    height: 0,
+                    axis_x,
+                    num_portal_blocks: 0,
+                }
+            }
+        };
+        // THE WIDTH (pc 44-72 — the 0 the degenerate shape the pc
+        // 58-72 arm wears: width 0, height 0, the bottomLeft the
+        // ctor keeps)
+        let width = self.portal_calculate_width(bl, right);
+        if width == 0 {
+            return PortalShapeFill {
+                bottom_left: bl,
+                width: 0,
+                height: 0,
+                axis_x,
+                num_portal_blocks: 0,
+            };
+        }
+        // THE HEIGHT (pc 73-115 — the MutableInt the numPortalBlocks
+        // the calculateHeight's own count banks, the ctor the full
+        // shape pc 95-115 carries)
+        let mut num_portal_blocks = 0;
+        let height = self.portal_calculate_height(bl, right, width, &mut num_portal_blocks);
+        PortalShapeFill {
+            bottom_left: bl,
+            width,
+            height,
+            axis_x,
+            num_portal_blocks,
+        }
+    }
+
+    /// THE DESCENT'S OWN FLOOR (javap calculateBottomLeft pc 0-81):
+    /// the floor bound `Math.max(getMinY(), y - 21)` pc 0-16 (the
+    /// offline world's own floor the 0 the below-world STONE read
+    /// never crosses), the `while y > i && isEmpty(below)` descent pc
+    /// 17-46, the opposite-edge walk pc 55-62 the -1 pc 62-64 keeps,
+    /// the negative pc 66-72 the None the caller's degenerate arm
+    /// wears
+    fn portal_calculate_bottom_left(
+        &self,
+        right: (i32, i32),
+        start: (i32, i32, i32),
+    ) -> Option<(i32, i32, i32)> {
+        let floor_bound = std::cmp::max(0, start.1 - 21);
+        let mut p = start;
+        while p.1 > floor_bound && portal_cell_empty(self.get(p.0, p.1 - 1, p.2)) {
+            p.1 -= 1;
+        }
+        // THE OPPOSITE WALK (pc 49-64 — the getOpposite() the pc 49-53
+        // fold keeps, the distance the -1 the interior cell answers)
+        let opp = (-right.0, -right.1);
+        let d = self.portal_distance_until_edge_above_frame(p, opp) - 1;
+        if d < 0 {
+            return None; // pc 66-72 — the null the degenerate shape wears
+        }
+        // pc 73-81 — the relative(opposite, d) the last interior
+        // column the bottom-left keeps
+        Some((p.0 + opp.0 * d, p.1, p.2 + opp.1 * d))
+    }
+
+    /// THE EDGE WALK (javap getDistanceUntilEdgeAboveFrame pc 0-105):
+    /// the `for i in 0..=21` INCLUSIVE loop pc 11-101, the non-empty
+    /// cell the FRAME test pc 47-64 answers (the obsidian the
+    /// distance returns, the non-obsidian solid the 0 keeps), the
+    /// empty cell the below-FRAME check pc 65-97 keeps (the floor
+    /// the non-obsidian cell the 0 refuses), the bound-exhaust the 0
+    /// pc 104-105 keeps
+    fn portal_distance_until_edge_above_frame(
+        &self,
+        from: (i32, i32, i32),
+        dir: (i32, i32),
+    ) -> i32 {
+        for i in 0..=21 {
+            let cx = from.0 + dir.0 * i;
+            let cz = from.2 + dir.1 * i;
+            let s = self.get(cx, from.1, cz);
+            if !portal_cell_empty(s) {
+                if s == OBSIDIAN {
+                    return i; // pc 62-64 — the edge the distance answers
+                }
+                return 0; // pc 47-59 ifeq 104 — the solid non-frame the walk refuses
+            }
+            // pc 65-97 — the below cell the FRAME test the failed
+            // floor the walk refuses
+            if self.get(cx, from.1 - 1, cz) != OBSIDIAN {
+                return 0;
+            }
+        }
+        0 // pc 104-105 — the bound-exhaust the 0 keeps
+    }
+
+    /// THE WIDTH'S OWN BAND (javap calculateWidth pc 0-21): the edge
+    /// walk the rightDir arm answers, the `< 2 || > 21` band pc 7-20
+    /// the 0 keeps (MIN_WIDTH 2 / MAX_WIDTH 21 the ConstantValue
+    /// pair speaks)
+    fn portal_calculate_width(&self, bl: (i32, i32, i32), right: (i32, i32)) -> i32 {
+        let d = self.portal_distance_until_edge_above_frame(bl, right);
+        if d < 2 || d > 21 {
+            0
+        } else {
+            d
+        }
+    }
+
+    /// THE HEIGHT'S OWN WALK (javap calculateHeight pc 0-53 →
+    /// getDistanceUntilTop pc 0-175): the row walk pc 3-170 — the
+    /// LEFT frame `rightDir*(-1)` pc 10-51, the RIGHT frame
+    /// `rightDir*width` pc 52-94, the interior row pc 95-164 the
+    /// EMPTY test + the portal count pc 145-160 the MutableInt keeps,
+    /// the bound-exhaust the 21 pc 173-175 keeps; the `d < 3 || d >
+    /// 21` band pc 22-49 the 0 keeps and the TOP FRAME (javap
+    /// hasTopFrame pc 0-62) the row ABOVE the measured height the
+    /// every-column FRAME test answers
+    fn portal_calculate_height(
+        &self,
+        bl: (i32, i32, i32),
+        right: (i32, i32),
+        width: i32,
+        num_portal_blocks: &mut i32,
+    ) -> i32 {
+        // THE ROW WALK'S OWN PRODUCT (javap getDistanceUntilTop's own
+        // EVERY return path the calculateHeight's verdicts the walk's
+        // d answers — the early arms the y the row the walk keeps, the
+        // bound-exhaust the 21 the cap keeps)
+        let d = self.portal_get_distance_until_top(bl, right, width, num_portal_blocks);
+        // THE BAND (javap calculateHeight pc 22-49 — the `d < 3 ||
+        // d > 21` pair the 0 the out-of-band walk keeps: MIN_HEIGHT 3
+        // / MAX_HEIGHT 21 the ConstantValue pair speaks)
+        if d < 3 || d > 21 {
+            return 0;
+        }
+        // THE TOP FRAME (javap calculateHeight pc 35-46 — the
+        // hasTopFrame consult the missing top the 0 keeps)
+        if !self.portal_has_top_frame(bl, right, width, d) {
+            return 0;
+        }
+        d
+    }
+
+    /// THE ROW WALK'S OWN DISTANCE (javap getDistanceUntilTop pc
+    /// 0-175): the `while y < 21` row walk — per row the LEFT frame
+    /// cell pc 10-51 the FRAME test the failed walk returns y keeps,
+    /// the RIGHT frame cell pc 52-94 the same test keeps, the
+    /// interior row pc 95-164 the EMPTY test + the portal count pc
+    /// 145-160 the MutableInt increments — the 21 the bound-exhaust
+    /// pc 173-175 keeps
+    fn portal_get_distance_until_top(
+        &self,
+        bl: (i32, i32, i32),
+        right: (i32, i32),
+        width: i32,
+        num_portal_blocks: &mut i32,
+    ) -> i32 {
+        let mut y = 0;
+        while y < 21 {
+            // pc 10-51 — the LEFT frame cell the FRAME test answers
+            if self.get(bl.0 - right.0, bl.1 + y, bl.2 - right.1) != OBSIDIAN {
+                return y;
+            }
+            // pc 52-94 — the RIGHT frame cell the same test keeps
+            if self.get(bl.0 + right.0 * width, bl.1 + y, bl.2 + right.1 * width) != OBSIDIAN {
+                return y;
+            }
+            // pc 95-164 — the interior row the EMPTY test + the
+            // portal count the MutableInt increments
+            for x in 0..width {
+                let s = self.get(bl.0 + right.0 * x, bl.1 + y, bl.2 + right.1 * x);
+                if !portal_cell_empty(s) {
+                    return y; // pc 142-144 — the non-empty the walk keeps
+                }
+                if s == NETHER_PORTAL {
+                    *num_portal_blocks += 1; // pc 156-160 — the count the gate reads
+                }
+            }
+            y += 1;
+        }
+        21 // pc 173-175 — the bound-exhaust the cap keeps
+    }
+
+    /// THE TOP FRAME'S OWN ROW (javap hasTopFrame pc 0-62 — the
+    /// every-column FRAME test the row ABOVE the measured height
+    /// answers: the `bottomLeft + UP*d + rightDir*x` cursor walk pc
+    /// 10-45, the failed cell the false the pc 50-54 refusal keeps,
+    /// the full row the true the pc 61-62 tail keeps)
+    fn portal_has_top_frame(
+        &self,
+        bl: (i32, i32, i32),
+        right: (i32, i32),
+        width: i32,
+        height: i32,
+    ) -> bool {
+        (0..width).all(|x| self.get(bl.0 + right.0 * x, bl.1 + height, bl.2 + right.1 * x) == OBSIDIAN)
+    }
+
     /// THE FARMLAND'S OWN HYDRATION SCAN — javap
     /// FarmlandBlock.isNearWater over the real 26.2 jar: the
     /// `BlockPos.betweenClosed(pos.offset(-4, 0, -4), pos.offset(4, 1,
@@ -4382,6 +4802,246 @@ mod tests {
             rate
         );
     }
+
+
+    /// THE FRAME SCAN'S OWN WALKS (javap `PortalShape` over the 26.2
+    /// jar — the autopush-606 round's doc block): the minimal 2x3
+    /// frame the corners the vanilla itself never demands, the EMPTY
+    /// predicate the fire cell the scan's own start admits, the axis
+    /// trials the X first the Z the failed filter's else keeps, the
+    /// descent the clicked-above-floor cell wears, the rejects the
+    /// narrow/tall/stone-floor/missing-top walks keep, the fill the
+    /// interior the NETHER_PORTAL kind wears (the FIRE CELL the
+    /// interior member the fill OVERWRITES, the lit gate the re-scan
+    /// never refills).
+    #[test]
+    fn the_frame_scan_the_walks_the_fills_wear() {
+        // THE CLEAR BOX (the generated terrain the frame's own
+        // neighborhood never names — the scan's walks the cleared air
+        // alone reads, the frame the explicit sets speak)
+        let clear = |w: &mut World| {
+            for x in 6..=13 {
+                for y in 8..=16 {
+                    for z in 1..=12 {
+                        w.set(x, y, z, AIR);
+                    }
+                }
+            }
+        };
+        // THE X-PLANE'S OWN FRAME: the floor row y=10 x in 8..=11, the
+        // side columns x=8/x=11 y 11..=13, the top row y=14 x in
+        // 8..=11 — the interior rows 11..=13 the ring's own three the
+        // 2x3 shape wears, the CORNER CELLS the full-width rows keep
+        // (the frame predicate the ring cells alone tests — the
+        // corners the vanilla's own law never demands, the presence
+        // the optional the scan never reads)
+        let frame_x = |w: &mut World| {
+            for y in 11..=13 {
+                w.set(8, y, 4, OBSIDIAN);
+                w.set(11, y, 4, OBSIDIAN);
+            }
+            for x in 8..=11 {
+                w.set(x, 10, 4, OBSIDIAN);
+                w.set(x, 14, 4, OBSIDIAN);
+            }
+        };
+        let mut w = World::new(1, 0x600D);
+        clear(&mut w);
+        frame_x(&mut w);
+        // THE FIRE'S OWN START: the scan the fire cell the interior
+        // member admits (the EMPTY predicate the BlockTags.FIRE row
+        // speaks — the just-placed flame the igniter arms bank)
+        w.set(9, 11, 4, FIRE);
+        let fill = w
+            .find_empty_portal_shape((9, 11, 4))
+            .expect("the 2x3 frame the scan answers");
+        assert_eq!(fill.width, 2, "the interior the two columns keeps");
+        assert_eq!(fill.height, 3, "the interior the three rows keeps");
+        assert!(fill.axis_x, "the x-extending frame the first trial wears");
+        assert_eq!(
+            fill.bottom_left, (10, 11, 4),
+            "the bottom-left the interior corner the EAST-edge walk \
+             answers (javap calculateBottomLeft pc 73-81 — the \
+             relative(opposite, d) the last interior column keeps)"
+        );
+        assert_eq!(
+            fill.num_portal_blocks, 0,
+            "the empty interior the count keeps"
+        );
+        assert!(fill.is_valid(), "the 2x3 the validity conjunction passes");
+        // THE FILL (check_portal_spawn — javap BaseFireBlock.onPlace
+        // pc 13-50): the interior the portal kind wears — the FIRE
+        // CELL the scan's own start the interior member the fill
+        // OVERWRITES
+        assert!(
+            w.check_portal_spawn((9, 11, 4)),
+            "the fill the verdict speaks"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                w.get(x, y, 4),
+                NETHER_PORTAL,
+                "the interior cell ({x},{y}) the portal kind wears"
+            );
+        }
+        // THE LIT GATE'S OWN REFUSAL (javap lambda$findEmptyPortal
+        // Shape$0 — the numPortalBlocks == 0 the filled interior the
+        // predicate refuses): the re-scan the same frame never
+        // refills (the portal cells the EMPTY predicate admits — the
+        // interior the count the gate reads)
+        assert!(
+            !w.check_portal_spawn((9, 12, 4)),
+            "the filled interior the re-scan refuses"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                w.get(x, y, 4),
+                NETHER_PORTAL,
+                "the refused re-scan the cells keep"
+            );
+        }
+        // THE Z-PLANE'S OWN FRAME (javap findPortalShape pc 26-58 —
+        // the failed X-trial the Z-axis trial the else branch speaks,
+        // the SOUTH rightDir the axis-Z arm answers)
+        let mut wz = World::new(1, 0x600D);
+        clear(&mut wz);
+        for z in 6..=9 {
+            wz.set(8, 10, z, OBSIDIAN);
+            wz.set(8, 14, z, OBSIDIAN);
+        }
+        for y in 11..=13 {
+            wz.set(8, y, 6, OBSIDIAN);
+            wz.set(8, y, 9, OBSIDIAN);
+        }
+        wz.set(8, 11, 7, FIRE);
+        let fill_z = wz
+            .find_empty_portal_shape((8, 11, 7))
+            .expect("the z-frame the scan answers");
+        assert!(
+            !fill_z.axis_x,
+            "the z-extending frame the second trial wears"
+        );
+        assert_eq!(
+            (fill_z.width, fill_z.height),
+            (2, 3),
+            "the z-interior the same band keeps"
+        );
+        assert_eq!(
+            fill_z.bottom_left, (8, 11, 7),
+            "the z-descent the NORTH-edge walk the adjacent cell keeps"
+        );
+        // THE NARROW'S OWN REFUSAL (javap calculateWidth pc 7-20 — the
+        // d < 2 band the 0 keeps): the 1-wide interior the width walk
+        // refuses
+        let mut wn = World::new(1, 0x600D);
+        clear(&mut wn);
+        for y in 11..=13 {
+            wn.set(8, y, 4, OBSIDIAN);
+            wn.set(10, y, 4, OBSIDIAN);
+        }
+        for x in 8..=10 {
+            wn.set(x, 10, 4, OBSIDIAN);
+            wn.set(x, 14, 4, OBSIDIAN);
+        }
+        wn.set(9, 11, 4, FIRE);
+        assert!(
+            wn.find_empty_portal_shape((9, 11, 4)).is_none(),
+            "the 1-wide interior the width band refuses"
+        );
+        // THE SHORT'S OWN REFUSAL (javap calculateHeight pc 22-49 —
+        // the d < 3 band the 0 keeps): the 2-tall interior the height
+        // walk refuses (the interior rows 11..=12 the top row y=13
+        // the row walk's third the obsidian keeps)
+        let mut ws = World::new(1, 0x600D);
+        clear(&mut ws);
+        for y in 11..=12 {
+            ws.set(8, y, 4, OBSIDIAN);
+            ws.set(11, y, 4, OBSIDIAN);
+        }
+        for x in 8..=11 {
+            ws.set(x, 10, 4, OBSIDIAN);
+            ws.set(x, 13, 4, OBSIDIAN);
+        }
+        ws.set(9, 11, 4, FIRE);
+        assert!(
+            ws.find_empty_portal_shape((9, 11, 4)).is_none(),
+            "the 2-tall interior the height band refuses"
+        );
+        // THE STONE FLOOR'S OWN REFUSAL (javap getDistanceUntilEdge
+        // AboveFrame pc 65-97 — the below-FRAME check the non-obsidian
+        // floor the 0 keeps, the -1 the null the degenerate shape
+        // wears): the stone under one interior cell the scan refuses
+        let mut wf = World::new(1, 0x600D);
+        clear(&mut wf);
+        frame_x(&mut wf);
+        wf.set(10, 10, 4, STONE); // the stone the interior floor cell wears
+        wf.set(9, 11, 4, FIRE);
+        assert!(
+            wf.find_empty_portal_shape((9, 11, 4)).is_none(),
+            "the stone floor the edge walk refuses"
+        );
+        // THE MISSING TOP'S OWN REFUSAL (javap hasTopFrame pc 0-62 —
+        // the row ABOVE the measured height the every-column FRAME
+        // test answers, the missing top the 0 the refusal keeps): the
+        // side columns the y=13 the ring's own last the top row
+        // y=14 never speaks
+        let mut wt = World::new(1, 0x600D);
+        clear(&mut wt);
+        for y in 11..=13 {
+            wt.set(8, y, 4, OBSIDIAN);
+            wt.set(11, y, 4, OBSIDIAN);
+        }
+        for x in 8..=11 {
+            wt.set(x, 10, 4, OBSIDIAN);
+        }
+        wt.set(9, 11, 4, FIRE);
+        assert!(
+            wt.find_empty_portal_shape((9, 11, 4)).is_none(),
+            "the missing top row the hasTopFrame refuses"
+        );
+        // THE MISSING SIDE'S OWN REFUSAL (javap getDistanceUntilEdge
+        // AboveFrame — the empty cells the below-FRAME floor the
+        // cleared air the walk refuses): the absent east column the
+        // opposite-edge walk exhausts
+        let mut we = World::new(1, 0x600D);
+        clear(&mut we);
+        for y in 11..=13 {
+            we.set(8, y, 4, OBSIDIAN); // the west column only
+        }
+        for x in 8..=11 {
+            we.set(x, 10, 4, OBSIDIAN);
+            we.set(x, 14, 4, OBSIDIAN);
+        }
+        we.set(9, 11, 4, FIRE);
+        assert!(
+            we.find_empty_portal_shape((9, 11, 4)).is_none(),
+            "the missing east column the edge walk refuses"
+        );
+        // THE DESCENT'S OWN WALK (javap calculateBottomLeft pc 17-46 —
+        // the while isEmpty(below) loop the air column descends): the
+        // scan from the interior's TOP row the same shape answers —
+        // the clicked-above-floor cell the same bottom-left keeps
+        let mut wd = World::new(1, 0x600D);
+        clear(&mut wd);
+        frame_x(&mut wd);
+        let fill_d = wd
+            .find_empty_portal_shape((9, 13, 4))
+            .expect("the top-start scan the descent answers");
+        assert_eq!(
+            fill_d.bottom_left.1, 11,
+            "the descent the interior floor keeps"
+        );
+        assert_eq!(
+            (fill_d.width, fill_d.height),
+            (2, 3),
+            "the descended walk the same band keeps"
+        );
+        assert_eq!(
+            fill_d.bottom_left, (10, 11, 4),
+            "the descended walk the same interior corner keeps"
+        );
+    }
+
 
     /// THE PORTAL'S OWN ANIMATE VERDICT (javap `NetherPortalBlock.
     /// animateTick` over the 26.2 jar): the 1/100 sound gate the FIXED

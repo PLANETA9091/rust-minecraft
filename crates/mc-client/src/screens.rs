@@ -34476,6 +34476,23 @@ impl App {
         // grid's own walk bakes).
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(cell.0, cell.1, cell.2, crate::world::FIRE);
+            // THE ONPLACE'S PORTAL TAIL (javap BaseFireBlock.onPlace
+            // pc 13-50 over the 26.2 jar — the checkPortalSpawn walk
+            // the super's own body serves, the setBlock's markAnd
+            // Notify the onPlace call the placement's own beat keeps:
+            // the inPortalDimension gate pc 13-17 the OVERWORLD/NETHER
+            // disjunction the offline client's own overworld the TRUE
+            // answers, the findEmptyPortalShape(level, pos, Axis.X)
+            // pc 20-28 the scan the fire's own cell starts [the EMPTY
+            // predicate the BlockTags.FIRE row the just-placed flame
+            // admits], the createPortalBlocks pc 38-47 the present
+            // shape the interior fills — the NETHER_PORTAL kind the
+            // kind-only vocabulary wears, the FIRE CELL the scan's own
+            // start the interior member the fill OVERWRITES, the
+            // stale fire-age entry the scheduled tick's own
+            // block-match gate drops, the emission-11 the light
+            // grid's own relight the same beat bakes)
+            world.check_portal_spawn(cell);
             // THE ONPLACE LAW'S OWN FIRST SCHEDULE (javap
             // `FireBlock.onPlace` — the super's canSurvive removal the
             // arm's own gate already answered, the `scheduleTick(pos,
@@ -34681,6 +34698,23 @@ impl App {
         // grid's own walk bakes).
         if let (Some(world), false) = (self.offline_world.as_mut(), self.world_is_network) {
             world.set(cell.0, cell.1, cell.2, crate::world::FIRE);
+            // THE ONPLACE'S PORTAL TAIL (javap BaseFireBlock.onPlace
+            // pc 13-50 over the 26.2 jar — the checkPortalSpawn walk
+            // the super's own body serves, the setBlock's markAnd
+            // Notify the onPlace call the placement's own beat keeps:
+            // the inPortalDimension gate pc 13-17 the OVERWORLD/NETHER
+            // disjunction the offline client's own overworld the TRUE
+            // answers, the findEmptyPortalShape(level, pos, Axis.X)
+            // pc 20-28 the scan the fire's own cell starts [the EMPTY
+            // predicate the BlockTags.FIRE row the just-placed flame
+            // admits], the createPortalBlocks pc 38-47 the present
+            // shape the interior fills — the NETHER_PORTAL kind the
+            // kind-only vocabulary wears, the FIRE CELL the scan's own
+            // start the interior member the fill OVERWRITES, the
+            // stale fire-age entry the scheduled tick's own
+            // block-match gate drops, the emission-11 the light
+            // grid's own relight the same beat bakes)
+            world.check_portal_spawn(cell);
             // THE ONPLACE LAW'S OWN FIRST SCHEDULE (javap
             // `FireBlock.onPlace` — the super's canSurvive removal the
             // arm's own gate already answered, the `scheduleTick(pos,
@@ -90070,8 +90104,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            86,
-            "the palette the portal's own tail row banks"
+            87,
+            "the palette the frame's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -90151,8 +90185,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            86,
-            "the palette the portal's own tail row banks"
+            87,
+            "the palette the frame's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -90224,6 +90258,218 @@ cow_sound_variant: None,
         );
     }
 
+    /// THE OBSIDIAN'S OWN PALETTE ROW (the autopush-606 round — javap
+    /// Blocks clinit pc 6491-6524 the 26.2 jar): the frame-scan lane's
+    /// own building block the item form places — the dig row (50.0
+    /// hardness + requiresCorrectToolForDrops — the strength(50.0f,
+    /// 1200.0f) pc 6512-6518 + requiresCorrectToolForDrops() pc 6509
+    /// the clinit arm speaks), the drops table (the self-entry the
+    /// generated DROPS_OBSIDIAN row banks), the sounds' STONE family
+    /// (the NO SoundType call the clinit arm carries — the default the
+    /// registration keeps), the full-cube collision the BlockBehaviour
+    /// default the collision's Full arm answers, the pickaxe class the
+    /// mineable table banks (the correct-tool verdict the class match
+    /// answers — the bare hand the requires-tool gate refuses), the
+    /// fire tables the silence keeps (the NO setFlammable row the
+    /// obsidian's own registration never speaks).
+    #[test]
+    fn the_obsidian_the_palette_row_the_dig_row_wears() {
+        use mc_registry::generated::atlas;
+        let obs = crate::world::OBSIDIAN;
+        assert_eq!(obs, 86, "the tail slot the palette wake banks");
+        assert_eq!(
+            atlas::KIND_NAMES[obs as usize],
+            "obsidian",
+            "the kind name the palette row banks"
+        );
+        assert_eq!(
+            atlas::REGISTRY_NAMES[obs as usize],
+            "obsidian",
+            "the registry name the mapper lane reads"
+        );
+        assert_eq!(
+            crate::world::NAME_OF[obs as usize],
+            "obsidian",
+            "the name row the dig/drop/sound lanes read"
+        );
+        // THE ATLAS'S OWN ROW (the tile the cube_all's `all` ref banks —
+        // every face the same master, untinted)
+        let obs_tile = atlas::FACE_TILES[obs as usize][0];
+        assert_ne!(obs_tile, atlas::TILE_NONE, "the obsidian the atlas tile banks");
+        assert_eq!(atlas::tile_name(obs_tile), "obsidian");
+        for face in 0..6 {
+            assert_eq!(atlas::FACE_TILES[obs as usize][face], obs_tile);
+            assert_eq!(atlas::TINTS[obs as usize][face], 0, "the obsidian face {face} untinted");
+        }
+        // THE FULL-CUBE COLLISION (the BlockBehaviour default the
+        // collision's Full arm answers) + THE DIG ROW (the strength
+        // (50.0f, 1200.0f) pc 6512-6518 + requiresCorrectToolForDrops
+        // pc 6509 the clinit arm speaks — the generated table's own
+        // dump banks (50.0, true))
+        assert_eq!(
+            crate::world::collision_shape(obs),
+            crate::world::CollisionShape::Full,
+            "the obsidian the full-cube default keeps"
+        );
+        assert_eq!(
+            mc_registry::generated::block_dig::dig_row("obsidian"),
+            Some((50.0, true)),
+            "the dig row the clinit strength speaks"
+        );
+        // THE MINEABLE CLASS'S OWN VERDICT (the pickaxe the class
+        // match answers, the bare hand the requires-tool gate refuses)
+        let pickaxe = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|n| *n == "iron_pickaxe")
+            .expect("the pickaxe the wire order banks") as i32;
+        assert!(
+            crate::dig::DigState::correct_tool(obs, Some(pickaxe)),
+            "the pickaxe the correct-tool verdict answers"
+        );
+        assert!(
+            !crate::dig::DigState::correct_tool(obs, None),
+            "the bare hand the requires-tool gate refuses"
+        );
+        // THE PLACEABLE LOOKUP + THE VIEW-BLOCKING WALK (the item form
+        // places, the opaque footprint the suffocation conjunction
+        // admits)
+        assert_eq!(
+            crate::world::World::placeable_block("obsidian"),
+            Some(obs),
+            "the obsidian the item form places"
+        );
+        assert!(
+            crate::screens::is_view_blocking(obs),
+            "the obsidian the view blocks"
+        );
+        // THE DROPS TABLE'S OWN SELF-ENTRY (the generated DROPS_OBSIDIAN
+        // row the loot lane reads)
+        assert_eq!(
+            mc_registry::generated::block_drops::drops("obsidian")
+                .map(|pools| pools.len()),
+            Some(1),
+            "the self-entry the drops table banks"
+        );
+    }
+
+    /// THE FLINT THE FRAME THE GATE THE FILL WEARS (javap
+    /// FlintAndSteelItem.useOn pc 135-265 + BaseFireBlock.onPlace pc
+    /// 0-50 over the 26.2 jar — the fire the placement arm sets the
+    /// onPlace tail's scan the interior fills): the obsidian frame the
+    /// player builds the placement lane serves, the flint the floor's
+    /// top face sparks, the fire cell the scan's own start the EMPTY
+    /// predicate admits, the fill the interior the NETHER_PORTAL kind
+    /// wears (the FIRE CELL the interior member the fill OVERWRITES),
+    /// the relight the emission-11 the light grid bakes, the frame
+    /// cells the fill never touches; the frame-less spark the fire's
+    /// own landing keeps (the failed scan the FALSE the vanilla's own
+    /// pc 50 return the portal-less arm speaks).
+    #[test]
+    fn the_flint_the_frame_the_gate_the_fill_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/flint_and_steel"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            // THE CLEAR BOX (the generated terrain the frame's own
+            // neighborhood never names — the scan the cleared air
+            // alone reads)
+            for x in (c - 4)..=(c + 4) {
+                for y in (top - 2)..=(top + 5) {
+                    for z in (c - 3)..=(c + 3) {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+            }
+            // THE OBSIDIAN FLOOR (the frame's own bottom row the
+            // click's target the top face wears) + THE RING: the side
+            // columns + the top row the interior rows the 2x3 wears
+            for x in (c - 2)..=(c + 2) {
+                w.set(x, top - 1, c, crate::world::OBSIDIAN); // the floor row
+                w.set(x, top + 3, c, crate::world::OBSIDIAN); // the top row
+            }
+            for y in top..=(top + 2) {
+                w.set(c - 2, y, c, crate::world::OBSIDIAN); // the west column
+                w.set(c + 2, y, c, crate::world::OBSIDIAN); // the east column
+            }
+        }
+        // THE INTERIOR'S OWN EYE (the camera the frame's own interior
+        // wears — the straight-down ray the floor's top face the clip
+        // answers, the frame's own top row the ray never crosses)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 2.5, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the spark consumed the press");
+        // THE FILL'S OWN VERDICT: the interior the portal kind wears —
+        // the fire cell the scan's own start the interior member the
+        // fill OVERWRITES
+        for y in top..=(top + 2) {
+            for x in (c - 1)..=(c + 1) {
+                assert_eq!(
+                    app.offline_world.as_ref().unwrap().get(x, y, c),
+                    crate::world::NETHER_PORTAL,
+                    "the interior cell ({x},{y}) the portal kind wears"
+                );
+            }
+        }
+        // THE FRAME'S OWN INTEGRITY: the ring cells the fill never
+        // touches
+        for x in (c - 2)..=(c + 2) {
+            assert_eq!(
+                app.offline_world.as_ref().unwrap().get(x, top - 1, c),
+                crate::world::OBSIDIAN,
+                "the floor cell ({x}) the fill never touches"
+            );
+            assert_eq!(
+                app.offline_world.as_ref().unwrap().get(x, top + 3, c),
+                crate::world::OBSIDIAN,
+                "the top cell ({x}) the fill never touches"
+            );
+        }
+        // THE FRAME-LESS CONTROL'S OWN SPARK: the failed scan the
+        // fire's own landing keeps — the plain floor the flint the
+        // fire the canBePlacedAt walk serves, the portal the scan
+        // never fills
+        let mut app2 = App::new(3);
+        app2.enter_world();
+        app2.offline_held_updated(Some("item/flint_and_steel"));
+        let size2 = app2.offline_world.as_ref().unwrap().size_blocks();
+        let c2 = size2 / 2;
+        let top2 = app2.spawn_y;
+        {
+            let w = app2.offline_world.as_mut().unwrap();
+            for x in (c2 - 3)..=(c2 + 3) {
+                for y in (top2 - 2)..=(top2 + 4) {
+                    for z in (c2 - 3)..=(c2 + 3) {
+                        w.set(x, y, z, crate::world::AIR);
+                    }
+                }
+                w.set(x, top2 - 1, c2, crate::world::OBSIDIAN); // the plain floor
+            }
+        }
+        app2.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c2 as f32 + 0.5, top2 as f32 + 4.0, c2 as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app2.on_right_press(0, 0), "the frame-less spark consumed");
+        assert_eq!(
+            app2.offline_world.as_ref().unwrap().get(c2, top2, c2),
+            crate::world::FIRE,
+            "the frame-less spark the fire's own landing keeps"
+        );
+        assert!(
+            app2.offline_world.as_ref().unwrap().get(c2 + 1, top2, c2)
+                != crate::world::NETHER_PORTAL,
+            "the frame-less spark the portal never fills"
+        );
+    }
+
     /// THE HONEY'S OWN PALETTE ROW (the autopush-599 round — javap
     /// Blocks clinit pc 26860-26900 the 26.2 jar): the speedFactor(0.4f)
     /// + jumpFactor(0.5f) rows' first palette-native consumer — the
@@ -90241,8 +90487,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            86,
-            "the palette the portal's own tail row banks"
+            87,
+            "the palette the frame's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");

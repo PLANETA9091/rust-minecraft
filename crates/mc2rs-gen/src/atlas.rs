@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 86] = [
+pub const RUNTIME_PALETTE: [&str; 87] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -457,6 +457,21 @@ pub const RUNTIME_PALETTE: [&str; 86] = [
     // empty animation the frametime-1 cadence wears), the NETHER_
     // PORTAL strip consts the draw-time remap reads
     "nether_portal",
+    // THE FRAME'S OWN ROW (the autopush-606 round): the obsidian the
+    // portal frame-scan lane's own BUILDING BLOCK the player places —
+    // javap Blocks clinit pc 6491-6524 the 26.2 jar: register(
+    // BlockItemIds.OBSIDIAN, of().mapColor(COLOR_BLACK) pc 6497-6500 +
+    // instrument(BASEDRUM) pc 6503-6506 + requiresCorrectToolForDrops()
+    // pc 6509 + strength(50.0f, 1200.0f) pc 6512-6518) the ITEM FORM
+    // HAS — the placeable lookup the reverse walk answers, the dig row
+    // (50.0, true) the generated table banks, the sounds' STONE family
+    // the generated rows keep, the NO sound()/lightLevel call the
+    // emission-0 default the light grid keeps, the full-cube shape the
+    // BlockBehaviour default the collision's Full arm answers. The
+    // blockstates obsidian.json's "" variant resolves (block/obsidian
+    // parent block/cube_all — the #all texture the six faces the
+    // generic walk banks, the tintless row the TINTS' 0 keeps)
+    "obsidian",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.

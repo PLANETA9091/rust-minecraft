@@ -47,8 +47,8 @@ use crate::world::{
     BLAST_FURNACE_LIT, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE,
     DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, FIRE, FURNACE, FURNACE_LIT, GOLD_ORE,
     GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
-    NETHER_PORTAL, NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, SMOKER, SMOKER_LIT, SOUL_FIRE,
-    STONE, TORCH, WATER,
+    NETHER_PORTAL, NETHERRACK, OBSIDIAN, PALE_LEAVES, REDSTONE_ORE, SAND, SMOKER, SMOKER_LIT,
+    SOUL_FIRE, STONE, TORCH, WATER,
 };
 use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -5490,6 +5490,15 @@ pub fn runtime_mapper(id: u32) -> u16 {
         // stores), the collision the Empty row keeps, the emission-11
         // the light grid paints
         Some("minecraft:nether_portal") => NETHER_PORTAL,
+        // THE FRAME'S OWN ARM (the autopush-606 round — the wire
+        // world's own obsidian the server's chunks stream, the
+        // generated block_ids row the state ids resolve [3369..=3370
+        // the two-state range the vanilla's own registration banks]):
+        // the ONE kind the every-state verdict wears, the full-cube
+        // collision the default arm keeps, the emission the 0 the
+        // NO-lightLevel clinit keeps, the dig row (50.0, true) the
+        // generated table banks
+        Some("minecraft:obsidian") => OBSIDIAN,
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }
