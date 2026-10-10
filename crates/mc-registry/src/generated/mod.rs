@@ -11,6 +11,7 @@ pub mod blockstates;
 pub mod blocks;
 pub mod elements;
 pub mod equipment;
+pub mod furnace_data;
 pub mod gui;
 pub mod item_models;
 pub mod item_order;

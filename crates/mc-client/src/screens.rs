@@ -7290,6 +7290,23 @@ pub struct App {
     /// The furnace panel's GUI origin the LAST render laid out (the
     /// inventory's own centered origin — the same 176x166 canvas).
     pub furnace_panel: (i32, i32),
+    /// THE OFFLINE SIM'S OWN FURNACE (the opened block entity's cell
+    /// the right-press door records — the [`crate::furnace_sim::FurnaceSim`]
+    /// tick's own world walk the lit flip wears). `None` while the
+    /// wire lane owns the screen (the live window the server's own
+    /// words drive) and before any offline door ever spoke.
+    pub furnace_pos: Option<(i32, i32, i32)>,
+    /// THE OFFLINE SIM'S OWN CARRIED (the vanilla doClick's own
+    /// cursor stack the offline furnace's clicks mutate — the live
+    /// lane's [`Self::live_furnace_carried`] the wire window's
+    /// believed cursor keeps; the two never ride together). The
+    /// close's add-back walk returns it (the vanilla
+    /// AbstractContainerMenu.removed's own shape).
+    pub furnace_carried: (i32, i32),
+    /// THE OFFLINE SIM'S OWN MEMORY (the block entity's setItem
+    /// detector the cooking-words reset answers — the tick walk's
+    /// own state).
+    pub furnace_sim: crate::furnace_sim::FurnaceSim,
     /// The mouse position in GUI units the LAST loop tick tracked —
     /// the carried stack renders here (the vanilla cursor-follow).
     /// `None` wherever no live mouse has moved (the headless scenes:
@@ -8474,6 +8491,9 @@ impl App {
             furnace_data: [0; 4],
             furnace_slot_rects: Vec::new(),
             furnace_panel: (0, 0),
+            furnace_pos: None,
+            furnace_carried: (0, 0),
+            furnace_sim: crate::furnace_sim::FurnaceSim::default(),
             mouse_pos: None,
             shift_down: false,
             inv_carried: (0, 0),
@@ -8970,6 +8990,56 @@ impl App {
             let whole = self.clock_rate_carry.floor();
             self.clock_rate_carry -= whole;
             self.clock_total = self.clock_total.saturating_add(whole as u64);
+        }
+        // THE FURNACE'S OWN OFFLINE TICK (the block entity's
+        // serverTick walk the sim module pins — javap 26.2
+        // AbstractFurnaceBlockEntity.serverTick): the opened
+        // furnace's cells the tick reads, the words the render's
+        // flame and arrow folds already consume, the LIT FLIP the
+        // world's placed kind wears (FURNACE / FURNACE_LIT — the
+        // setValue(LIT, ...) setBlock walk pc 379-403 answers, the
+        // emission-13 light the flood re-speaks, the front tile
+        // the mesher's furnace arm re-renders). THE WORLD GATE the
+        // mined furnace the dead block entity answers (the chunk
+        // the block lost the BE the vanilla setRemoved kills —
+        // the words the frozen walk keeps). The live lane never
+        // rides (the wire window the server's own words drive).
+        if !self.world_is_network
+            && !self.furnace_is_live
+            && self.furnace_pos.is_some()
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_furnace(w.get(
+                    self.furnace_pos.unwrap().0,
+                    self.furnace_pos.unwrap().1,
+                    self.furnace_pos.unwrap().2,
+                )))
+        {
+            let pos = self.furnace_pos.unwrap();
+            let flipped =
+                self.furnace_sim
+                    .tick(&mut self.furnace_slots, &mut self.furnace_data);
+            if flipped {
+                let lit_now =
+                    self.furnace_data[crate::furnace_sim::DATA_LIT_TIME] > 0;
+                let next = if lit_now {
+                    crate::world::FURNACE_LIT
+                } else {
+                    crate::world::FURNACE
+                };
+                if let Some(world) = self.offline_world.as_mut() {
+                    let cur = world.get(pos.0, pos.1, pos.2);
+                    if cur != next && crate::world::is_furnace(cur) {
+                        world.set(pos.0, pos.1, pos.2, next);
+                        // THE KIND SWAP'S OWN LIGHT (the lit state
+                        // the emission-13 row the flood re-speaks —
+                        // the placement walk's own ensure walk)
+                        world.ensure_light_current();
+                        self.world_quads =
+                            Some(crate::mesher::mesh_world(world, None));
+                    }
+                }
+            }
         }
         match self.screen {
             ScreenKind::Loading => {
@@ -16715,12 +16785,50 @@ impl App {
                 let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
             }
             self.furnace_is_live = false;
+            // the LIVE window's own block entity the server speaks —
+            // the offline sim's memory retires with it
+            self.furnace_pos = None;
         }
         self.furnace_live_window = None;
         // the player's OWN close returns the held stack to the
         // inventory server-side (vanilla containerClose): the local
         // belief resets with the window
         self.live_furnace_carried = (0, 0);
+        // THE OFFLINE WALK'S OWN RETURN (the super.removed walk the
+        // AbstractContainerMenu resetCarried wears): the carried stack
+        // rides home (the same-item merges, the first-empty pass, the
+        // full store the remainder drops — the close_inventory shape).
+        // THE SIM'S BLOCK ENTITY the slots KEEP (the furnace's items
+        // the world remembers — the vanilla furnace menu's close never
+        // clears the block entity), the words keep, the burn continues
+        // (the sim tick the world screen's own walk serves).
+        if self.furnace_carried.1 > 0 {
+            let (id, count) = self.furnace_carried;
+            let mut rest = count;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
+                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            if rest > 0 {
+                self.spawn_drop_at_player(id, rest);
+            }
+            self.furnace_carried = (0, 0);
+        }
         self.open(ScreenKind::World);
     }
 
@@ -16826,6 +16934,48 @@ impl App {
         self.table_result = (0, 0);
         self.inv_carried = (0, 0);
         self.open(ScreenKind::Crafting);
+    }
+
+    /// THE FURNACE'S OWN OFFLINE OPEN (javap 26.2 AbstractFurnaceBlock.
+    /// use — the openMenu walk the right-press door speaks): the
+    /// screen the fresh stand-in opens over the standing world, the
+    /// cell the sim's own block entity records. THE STAND-IN
+    /// RETENTION: the SAME furnace the words and slots KEEP (the
+    /// block entity the world remembers — reopening continues the
+    /// burn), a DIFFERENT cell the fresh state speaks (the new
+    /// FurnaceMenu's own zeros the ctor wears). The live lane's
+    /// flags reset (the wire window the projection feeds never
+    /// rides here).
+    pub fn open_furnace(&mut self, pos: (i32, i32, i32)) {
+        self.enter_world();
+        if self.furnace_pos != Some(pos) {
+            self.furnace_slots = vec![(0, 0); 39];
+            self.furnace_data = [0, 0, 0, 0];
+            self.furnace_sim = crate::furnace_sim::FurnaceSim::default();
+        }
+        // THE STANDARD ROWS' OWN PROJECTION (the menu's
+        // addStandardInventorySlots(8, 84) walk — the player's own
+        // store the 36 rows mirror: the main grid items 9..35 ride
+        // menu 3..29, the hotbar items 0..8 ride menu 30..38 — the
+        // live test's own "menu 30 the hotbar's head" pin speaks).
+        // THE FRESH ROWS EVERY OPEN speaks (the projection the
+        // inventory IS — the block-entity cells 0..2 the retention
+        // keeps alone).
+        for i in 0..27 {
+            self.furnace_slots[3 + i] = self.inventory.items[9 + i];
+        }
+        for i in 0..9 {
+            self.furnace_slots[30 + i] = self.inventory.items[i];
+        }
+        self.furnace_pos = Some(pos);
+        self.furnace_is_live = false;
+        self.furnace_live_window = None;
+        self.live_furnace_carried = (0, 0);
+        // the offline world's screen opens from the standing use — no
+        // carried stack survives a world press (the crafting table's
+        // own convention)
+        self.furnace_carried = (0, 0);
+        self.open(ScreenKind::Furnace);
     }
 
     /// THE TABLE'S OWN CLOSE (the vanilla CraftingMenu.removed walk —
@@ -18106,6 +18256,21 @@ impl App {
         self.inv_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
     }
 
+    /// THE FURNACE CARRIED'S OWN THROW (the 26.2 mouseClicked's own
+    /// walk the doClick-OUTSIDE lane serves — the
+    /// [`Self::throw_carried_outside`] shape the offline sim's cursor
+    /// wears: the whole stack the LEFT press drops, the one item the
+    /// RIGHT split keeps, the aimed impulse the drop walk speaks).
+    fn throw_furnace_carried_outside(&mut self, button: i8) {
+        let (id, count) = self.furnace_carried;
+        if count <= 0 {
+            return; // the doClick THROW's own isEmpty guard — silence
+        }
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        self.furnace_carried = if button == 0 { (0, 0) } else { (id, count - 1) };
+    }
+
     /// The chest screen render: the frozen world dimmed underneath (the
     /// container background's own treatment), the classic gray panel
     /// with its white/0x555555 bevels, the real `container/slot` insets,
@@ -19024,12 +19189,18 @@ impl App {
         }
         // THE HELD STACK follows the cursor (the vanilla carried
         // render — the chest's own gate keeps: the live session's
-        // believed stack alone, the headless scenes track no mouse)
-        if self.furnace_is_live && self.live_furnace_carried.1 > 0 {
+        // believed stack, the OFFLINE SIM's local cursor the second
+        // arm draws, the headless scenes track no mouse)
+        let (carried_id, carried_count) = if self.furnace_is_live {
+            self.live_furnace_carried
+        } else {
+            self.furnace_carried
+        };
+        if carried_count > 0 {
             if let Some((mx, my)) = self.mouse_pos {
-                draw_item_icon(g, self.live_furnace_carried.0, mx - 8, my - 8);
-                if self.live_furnace_carried.1 > 1 {
-                    let s = self.live_furnace_carried.1.to_string();
+                draw_item_icon(g, carried_id, mx - 8, my - 8);
+                if carried_count > 1 {
+                    let s = carried_count.to_string();
                     let tw = g.text_width(&s);
                     g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
                 }
@@ -22305,11 +22476,80 @@ impl App {
     /// the generic chest predictor never speaks — so the local belief
     /// stays PUT, the honest empty-delta command rides, the server's
     /// own walk lands the truth and the next sync corrects wholesale
-    /// (the chest's correction convention). The OFFLINE stand-in has
-    /// no window and no session: its presses are the honest no-op.
+    /// (the chest's correction convention). THE OFFLINE SIM'S OWN
+    /// LANE the fresh stand-in's clicks wear (the local pickup /
+    /// split predictions the [`Self::furnace_carried`] cursor
+    /// mutates — no window, no echo, the result cell the mayPlace
+    /// false never takes).
     fn click_furnace_slot(&mut self, mx: i32, my: i32, button: i8) {
+        // THE OFFLINE SIM'S OWN CLICK LANE (the vanilla doClick's
+        // local walk — the believed stack the pickup/split prediction
+        // mutates, the carried the local cursor keeps, NO echo: the
+        // fresh stand-in has no window and no session). THE STANDARD
+        // ROWS the player's own store wear (the menu 3..29 the main
+        // grid rides, the menu 30..38 the hotbar — the write-through
+        // projection the inventory IS). THE RESULT SLOT'S OWN
+        // mayPlace (javap FurnaceResultSlot.mayPlace — the false the
+        // class returns): a carried stack NEVER lands on the result
+        // cell (the take-alone verdict the pickup-from-empty-cursor
+        // walk answers — the carried the gate needs).
         if !self.furnace_is_live {
-            return; // the fresh stand-in: no window, no click
+            let Some(&(_, _, slot)) = self
+                .furnace_slot_rects
+                .iter()
+                .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+            else {
+                // THE DROP-OUTSIDE LANE (the 26.2 mouseClicked's own
+                // walk — the crafting table's own shape, the laid-out
+                // panel the strict rect compare speaks)
+                if self.furnace_panel != (0, 0)
+                    && (mx < self.furnace_panel.0
+                        || my < self.furnace_panel.1
+                        || mx >= self.furnace_panel.0 + 176
+                        || my >= self.furnace_panel.1 + 166)
+                {
+                    self.throw_furnace_carried_outside(button);
+                }
+                return;
+            };
+            if slot == 2 && self.furnace_carried.1 > 0 {
+                return; // the result cell the place refuses
+            }
+            // THE STANDARD ROW'S OWN WRITE-THROUGH (the projection the
+            // inventory IS — the menu slot the inventory cell answers)
+            if slot >= 3 {
+                let idx = if slot < 30 {
+                    9 + slot as usize - 3
+                } else {
+                    (slot - 30) as usize
+                };
+                let believed = self.inventory.items[idx];
+                let (new_slot, new_carried) = if button == 0 {
+                    crate::world_view::predict_pickup(believed, self.furnace_carried)
+                } else {
+                    crate::world_view::predict_pickup_right(believed, self.furnace_carried)
+                };
+                self.inventory.items[idx] = new_slot;
+                self.furnace_slots[slot as usize] = new_slot;
+                self.furnace_carried = new_carried;
+                self.hotbar_slots = self.inventory.hotbar();
+                return;
+            }
+            let believed = self
+                .furnace_slots
+                .get(slot as usize)
+                .copied()
+                .unwrap_or((0, 0));
+            let (new_slot, new_carried) = if button == 0 {
+                crate::world_view::predict_pickup(believed, self.furnace_carried)
+            } else {
+                crate::world_view::predict_pickup_right(believed, self.furnace_carried)
+            };
+            if (slot as usize) < self.furnace_slots.len() {
+                self.furnace_slots[slot as usize] = new_slot;
+            }
+            self.furnace_carried = new_carried;
+            return;
         }
         let Some((window_id, state_id)) = self.furnace_live_window else {
             return; // no window identity — nothing to echo against
@@ -29039,6 +29279,25 @@ impl App {
             self.open_crafting_table();
             return true;
         }
+        // THE FURNACE'S OWN DOOR (javap 26.2 AbstractFurnaceBlock.use
+        // — the openMenu the block's use walk speaks, the sneaking
+        // player the arm SKIPS the crafting-table's own gate wears):
+        // the hit cell's furnace kind the OFFLINE world answers — the
+        // screen the fresh stand-in opens, the cell the sim's own
+        // block entity records (the lit kind the SAME door opens —
+        // the burning furnace the use walk never gates). The WIRE
+        // session the local screen never opens (the server's own
+        // OpenScreen word owns the container — the menu type 14 lane
+        // the projection feeds).
+        if !self.shift_down
+            && !self.world_is_network
+            && self
+                .active_world()
+                .is_some_and(|w| crate::world::is_furnace(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+        {
+            self.open_furnace(hit.pos);
+            return true;
+        }
         // THE CAKE'S OWN BLOCK-USE ARM (javap 26.2 CakeBlock — the
         // useItemOn/useWithoutItem walk the BLOCK-use pass serves
         // BEFORE the item lanes reach, the crafting-table arm's own
@@ -35396,7 +35655,12 @@ impl App {
                     // own projection shape, the menu's own numbering:
                     // input 0, fuel 1, result 2, the standard rows
                     // 3..39 — padded to the layout's full shape, the
-                    // wire's own (0, 0) emptiness riding verbatim)
+                    // wire's own (0, 0) emptiness riding verbatim).
+                    // THE OFFLINE SIM RETIRES (the server's own block
+                    // entity the window speaks — the local memory the
+                    // door recorded the live lane never rides).
+                    self.furnace_pos = None;
+                    self.furnace_carried = (0, 0);
                     let mut slots = vec![(0i32, 0i32); 39];
                     for (i, &(id, count)) in c.slots.iter().take(39).enumerate() {
                         slots[i] = (id, count);
@@ -83471,7 +83735,12 @@ cow_sound_variant: None,
         // THE NORTH LOOK (cam.yaw 0 — the vanilla -180): the stack's
         // next cell the SOUTH byte 3 wears — the camera the +5 lift
         // the clip's own 4.5 range keeps (the furnace's top face the
-        // 4.0 read answers; the +6 the range never speaks)
+        // 4.0 read answers; the +6 the range never speaks). THE SNEAK
+        // the block-use arm's own gate wears (the door the offline
+        // sim's round added answers the un-sneaked press — the
+        // vanilla shift the stacking walk's own answer keeps, the
+        // use arm the sneak skips and the item lanes place).
+        app.shift_down = true;
         app.offline_camera_updated(crate::camera::Camera {
             pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 5.0, c as f32 + 0.5),
             yaw: 0.0,
@@ -83507,6 +83776,179 @@ cow_sound_variant: None,
                 "the dirt cell the facing byte never earns"
             );
         }
+    }
+
+    /// THE FURNACE'S OWN DOOR + THE SIM'S OWN ARC (the offline
+    /// right-press the use lane's block-use arm opens, the sim's
+    /// tick the block entity walks, the LIT FLIP the world's placed
+    /// kind wears — the emission-13 light the flood re-speaks, the
+    /// unlit kind the exhaustion restores; the clicks the local
+    /// cursor wears, the close the block entity keeps).
+    #[test]
+    fn the_furnace_the_door_the_sim_the_world_glows() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let furnace_id = mc_registry::item_id_by_name("furnace").unwrap();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        // THE LOADOUT (the hotbar head the furnace rides, the main
+        // grid the coal and the raw iron carry)
+        app.inventory.items[0] = (furnace_id, 4);
+        app.inventory.items[1] = (coal, 3);
+        app.inventory.items[9] = (raw_iron, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the furnace placement consumed");
+        assert_eq!(app.offline_world.as_ref().unwrap().get(c, top, c), crate::world::FURNACE);
+        // THE DOOR (the second press the block-use arm answers — the
+        // held furnace item the placement lane never reaches; the
+        // furnace's top face the 3.0 read the clip answers)
+        assert!(app.on_right_press(0, 0), "the door consumed the press");
+        assert_eq!(app.screen, ScreenKind::Furnace, "the door opened the screen");
+        assert_eq!(app.furnace_pos, Some((c, top, c)), "the cell the sim records");
+        assert!(!app.furnace_is_live, "the offline stand-in the door keeps");
+        assert_eq!(app.furnace_slots[1], (0, 0), "the cells the fresh zeros wear");
+        // THE STANDARD ROWS' OWN PROJECTION (the hotbar head the
+        // menu 30 speaks — the leftover furnaces the placement's own
+        // shrink wore, the coal the menu 31 carries, the main grid
+        // head the menu 3)
+        assert_eq!(app.furnace_slots[30], (furnace_id, 3), "the hotbar head rode");
+        assert_eq!(app.furnace_slots[31], (coal, 3), "the coal rode menu 31");
+        assert_eq!(app.furnace_slots[3], (raw_iron, 5), "the main head rode");
+        // THE CLICKS (the geometry the test lays — the coal the fuel
+        // slot takes, the raw iron the input wears)
+        app.furnace_panel = (0, 0);
+        app.furnace_slot_rects = vec![
+            (100, 100, 0),  // input
+            (140, 100, 1),  // fuel
+            (180, 100, 2),  // result
+            (220, 100, 31), // hotbar's coal (menu 31 = items[1])
+            (260, 100, 3),  // main head (raw iron)
+        ];
+        app.on_press(220, 100); // pickup the coal
+        assert_eq!(app.furnace_carried, (coal, 3), "the coal the cursor carries");
+        app.on_press(140, 100); // place on the fuel cell
+        assert_eq!(app.furnace_slots[1], (coal, 3), "the fuel cell speaks");
+        assert_eq!(app.furnace_carried, (0, 0), "the cursor the place empties");
+        app.on_press(260, 100); // pickup the raw iron
+        app.on_press(100, 100); // place on the input cell
+        assert_eq!(app.furnace_slots[0], (raw_iron, 5), "the input cell speaks");
+        // THE RESULT'S OWN mayPlace (the carried the refusal keeps —
+        // the fuel cell's own coal the cursor rides out)
+        app.on_press(180, 100); // take the (empty) result — no-op
+        assert_eq!(app.furnace_carried, (0, 0), "the empty take no-op");
+        app.on_press(140, 100); // pickup the coal from the fuel cell
+        assert_eq!(app.furnace_carried, (coal, 3), "the coal the cursor carries");
+        app.furnace_slots[2] = (iron_ingot, 2);
+        app.on_press(180, 100); // place on the result — REFUSED
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 2), "the result the place refuses");
+        assert_eq!(app.furnace_carried, (coal, 3), "the carried the refusal keeps");
+        app.on_press(140, 100); // the coal rides home to the fuel cell
+        assert_eq!(app.furnace_slots[1], (coal, 3), "the coal the fuel keeps");
+        assert_eq!(app.furnace_carried, (0, 0), "the cursor the place empties");
+        // THE MERGE (the same item the input takes — a second raw
+        // iron stack the projection rides)
+        app.inventory.items[9] = (raw_iron, 4);
+        app.furnace_slots[3] = (raw_iron, 4);
+        app.on_press(260, 100); // pickup the second stack
+        app.on_press(100, 100); // the input cell takes the carried (merge)
+        assert_eq!(app.furnace_slots[0], (raw_iron, 9), "the merge the same item wears");
+        assert_eq!(app.furnace_carried, (0, 0), "the cursor the merge empties");
+        // THE FIRST TICK (the ignite the sim speaks — the words bank,
+        // the world's kind the LIT flip wears, the light the flood
+        // spreads)
+        let (chunks, _sx, _sz) = {
+            let w = app.offline_world.as_ref().unwrap();
+            (w.chunks_per_side, 0, 0)
+        };
+        let light_before = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .light
+            .as_ref()
+            .map(|l| l.cell(chunks, c, top + 1, c))
+            .unwrap();
+        app.update();
+        assert_eq!(app.furnace_data[0], 1600, "the coal's own burn banks");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FURNACE_LIT,
+            "the world's kind the flip wears"
+        );
+        let light_after = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .light
+            .as_ref()
+            .map(|l| l.cell(chunks, c, top + 1, c))
+            .unwrap();
+        assert!(
+            light_after.1.unwrap_or(0) > light_before.1.unwrap_or(0),
+            "the emission-13 the flood re-spoke ({light_before:?} -> {light_after:?})"
+        );
+        assert_eq!(app.furnace_slots[1], (coal, 2), "the coal the consume loses");
+        // THE SMELT'S OWN COMPLETION (the mayPlace fixture the empty
+        // wears first — the fresh result the arc grows; 200 ticks the
+        // arc walks, the 1st tick already spoke, 199 the rest carry)
+        app.furnace_slots[2] = (0, 0);
+        for _ in 0..199 {
+            app.update();
+        }
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 1), "the ingot the burn lands");
+        assert_eq!(app.furnace_slots[0], (raw_iron, 8), "the input the shrink loses");
+        // THE EXHAUSTION'S OWN RESTORE (the fuel the empty wears —
+        // the flip back the unlit kind the world keeps)
+        app.furnace_slots[1] = (0, 0);
+        app.furnace_data[0] = 2;
+        app.update();
+        assert_eq!(app.furnace_data[0], 1, "the lit tick the walk spends");
+        app.update();
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FURNACE,
+            "the unlit kind the exhaustion restores"
+        );
+        // THE CLOSE (the block entity the world keeps — the words and
+        // the cells the retention banks)
+        app.on_inventory_key(); // the E key's own close
+        assert_eq!(app.screen, ScreenKind::World, "the close returned");
+        assert_eq!(app.furnace_pos, Some((c, top, c)), "the cell the close keeps");
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 1), "the result the close keeps");
+        // THE REOPEN (the same furnace the words and cells ride in —
+        // the burn's own memory never died)
+        assert!(app.on_right_press(0, 0), "the door consumed again");
+        assert_eq!(app.screen, ScreenKind::Furnace, "the door opened again");
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 1), "the ingot the reopen keeps");
+        assert_eq!(app.furnace_slots[0], (raw_iron, 8), "the input the reopen keeps");
+        assert_eq!(app.furnace_data[3], 200, "the words the reopen keeps");
+        // THE RESULT'S OWN TAKE (the EMPTY cursor the take speaks —
+        // the carried the mayPlace refusal gates, the take-alone
+        // verdict the empty cursor answers)
+        app.on_press(180, 100); // take the ingot
+        assert_eq!(app.furnace_carried, (iron_ingot, 1), "the ingot the cursor takes");
+        assert_eq!(app.furnace_slots[2], (0, 0), "the result the take empties");
+        // THE CARRIED'S OWN RETURN (the close the add-back walk
+        // serves — the ingot the inventory takes home)
+        app.on_inventory_key(); // the close's add-back
+        assert_eq!(app.screen, ScreenKind::World, "the close returned again");
+        assert_eq!(app.furnace_carried, (0, 0), "the cursor the close empties");
+        let inv_had = app
+            .inventory
+            .items
+            .iter()
+            .filter(|&&(id, n)| id == iron_ingot && n > 0)
+            .count();
+        assert!(inv_had > 0, "the ingot the add-back walked home");
     }
 
     /// THE FALL DAMAGE ARC (the hurt round's own headline): the body
