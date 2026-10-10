@@ -485,7 +485,11 @@ impl Framebuf {
                                     c0[ch] = bg * (1.0 - a) + fg * a;
                                 }
                             } else {
-                                if textured {
+                                // the sampled texel the textured arm binds —
+                                // the per-texel translucent arm the alpha reads
+                                // (the untextured translucent quad the None keeps:
+                                // the fixed water seed the flag's own fallback wears)
+                                let texel = if textured {
                                     // perspective-correct texture coordinates, nearest texel
                                     let u = (b0 * ua * a_ow + b1 * ub * b_ow + b2 * uc * c_ow)
                                         * dist;
@@ -498,10 +502,25 @@ impl Framebuf {
                                     for ch in 0..3 {
                                         c0[ch] *= texel[ch];
                                     }
-                                }
+                                    Some(texel)
+                                } else {
+                                    None
+                                };
                                 if translucent {
                                     // vanilla-style water translucency over background
-                                    let a = WATER_OPACITY;
+                                    // — the WATER the fixed 0.80 opacity the seed
+                                    // keeps (the audited bit-exact law), the FLAGGED
+                                    // quads the TEXEL's own alpha the vanilla
+                                    // translucent shader composites (SRC_ALPHA /
+                                    // ONE_MINUS_SRC_ALPHA — the honey textures'
+                                    // uniform 191/189/129 the per-texel arm reads,
+                                    // the double-layer stack the submit order
+                                    // serves)
+                                    let a = if quad.per_texel_alpha {
+                                        texel.map(|t| t[3]).unwrap_or(WATER_OPACITY)
+                                    } else {
+                                        WATER_OPACITY
+                                    };
                                     for ch in 0..3 {
                                         let bg = self.color[o + ch] as f32 / 255.0;
                                         c0[ch] = bg * (1.0 - a) + c0[ch] * a;

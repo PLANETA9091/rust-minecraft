@@ -6605,13 +6605,27 @@ mod tests {
         );
     }
 
+    /// THE HONEY FLOOR'S OWN PATCH (the autopush-599 round — the y=0
+    /// row the honey replaces: the FULL-cube collision the body the
+    /// 1.0 top rests on, the feet cell the air above speaks, the below
+    /// cell the honey banks — the layered read the full-cube case
+    /// answers).
+    fn honeyed_world() -> World {
+        let mut w = flat_world();
+        for x in 6..10 {
+            for z in 6..10 {
+                w.set(x, 0, z, crate::world::HONEY_BLOCK);
+            }
+        }
+        w
+    }
+
     /// THE BLOCK JUMP FACTOR'S OWN BANK (javap Entity.getBlockJumpFactor
     /// pcs 0-48 + getJumpPower pcs 0-19 the 26.2 jar): the banked 1.0
     /// the sand's no-row default keeps (the getJumpPower fold the
-    /// JUMP_STRENGTH value the exact 0.42 wears), the honey wake's 0.5
-    /// the banked fold the `(0.42 × 0.5) + boost` f32 chain the f2d
-    /// widen keeps — the no-row sand the same law the bit-exact 0.42
-    /// preserves.
+    /// JUMP_STRENGTH value the exact 0.42 wears — the embedded rest the
+    /// feet cell's own no-row verdict banks, the below read the
+    /// non-default feet never reaches).
     #[test]
     fn the_jump_factor_the_bank_the_power_wears() {
         let w = soul_sanded_world();
@@ -6632,16 +6646,70 @@ mod tests {
             ((JUMP_POWER * 1.0f32) + 0.0f32) as f64,
             "the 1.0 fold the exact 0.42 preserves"
         );
-        // THE HONEY WAKE'S OWN VALUE (the banked 0.5 the table's row
-        // banks — the fold the ×0.5 chain wears: the f32 multiply the
-        // f2d widen keeps)
-        b.block_jump_factor = 0.5;
-        b.vy = 0.0;
-        b.jump_from_ground();
+    }
+
+    /// THE HONEY WAKE'S OWN LANES (javap Blocks pc 26877-26885 the 26.2
+    /// jar — the speedFactor(0.4f) + jumpFactor(0.5f) rows the palette
+    /// wake feeds): the honey-standing body the BELOW cell's 0.4 the
+    /// layered read banks (the feet the air above the full cube wears,
+    /// the getBlockPosBelowThatAffectsMyMovement cell the default-1.0
+    /// feet falls through), the JUMP the below cell's 0.5 the same
+    /// layered walk banks (Entity.getBlockJumpFactor pcs 0-48 — NO
+    /// water arm the jump walk carries) — the getJumpPower fold the
+    /// 0.42 x 0.5 = 0.21 f32 chain the f2d widen keeps, the move tail
+    /// the x/z the 0.4 scales (the drag the same single-tick order
+    /// after — the soul sand's own law the second consumer wears).
+    #[test]
+    fn the_honey_the_below_cell_the_jump_the_wake_wears() {
+        let w = honeyed_world();
+        let mut b = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        assert!(b.on_ground, "the honey rest the full top grounds");
+        // THE SPEED FACTOR (the below cell the layered read banks)
+        assert_eq!(
+            b.block_speed_factor(&w),
+            0.4,
+            "the honey below the layered walk banks"
+        );
+        // THE JUMP FACTOR'S OWN BANK (the tick's head the below cell's
+        // 0.5 banks — the honey row the generated table speaks)
+        assert_eq!(
+            b.block_jump_factor, 0.5,
+            "the honey below the jump factor banks"
+        );
+        // THE JUMP GATE'S OWN E2E (the held jump the tick's gate arms —
+        // the fold the 0.21 f32 chain keeps, the same tick's travel the
+        // gravity line folds after: (0.42 x 0.5 - g) x 0.98 the post-
+        // drag vy the carried velocity speaks)
+        b.jumping = true;
+        b.tick(&w, false);
         assert_eq!(
             b.vy,
-            ((JUMP_POWER * 0.5f32) + 0.0f32) as f64,
-            "the honey fold the ×0.5 chain keeps"
+            (((JUMP_POWER * 0.5f32) + 0.0f32) as f64 - GRAVITY) * VERTICAL_DRAG as f64,
+            "the honey jump the x0.5 chain keeps — the gravity the same tick folds"
+        );
+        // THE MOVE TAIL'S OWN E2E (the re-armed vx the factor x drag
+        // chain folds — the re-grounded body the SAME drag lane keeps:
+        // the jump tick's airborne arc the settle ticks clear, the
+        // ground drag the fold shares)
+        let drag = (BLOCK_FRICTION * GROUND_DRAG) as f64;
+        b.jumping = false;
+        for _ in 0..20 {
+            b.tick(&w, false);
+            if b.on_ground {
+                break;
+            }
+        }
+        assert!(b.on_ground, "the re-settle the honey top grounds");
+        b.vx = 1.0;
+        b.x = 8.5;
+        b.tick(&w, false);
+        assert_eq!(
+            b.vx,
+            (1.0f64 * (0.4f32 as f64)) * drag,
+            "the honey walk the factor x drag the bit-exact chain keeps"
         );
     }
 }

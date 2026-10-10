@@ -600,8 +600,32 @@ pub const WHITE_WOOL: u16 = 76;
 /// walk banks).
 pub const SOUL_SAND: u16 = 77;
 
+/// THE HONEY WAKE'S OWN ROW (the autopush-599 round — javap Blocks
+/// clinit pc 26860-26900 the 26.2 jar): register(BlockItemIds.
+/// HONEY_BLOCK, ...) the ITEM FORM HAS (the placeable lookup the
+/// reverse walk answers), mapColor(COLOR_ORANGE) pc 26871, **
+/// speedFactor(0.4f) pc 26877-26880 + jumpFactor(0.5f) pc 26883-26885
+/// ** — the generated block_factors rows the body's move tail + jump
+/// fold the wake finally feeds, noOcclusion() pc 26888 the
+/// non-occluding verdict keeps (the is_transparent row the mesher
+/// banks — the neighbors' faces the honey against draw; the
+/// suffocation conjunction the noOcclusion shape refuses — the
+/// view-blocking walk the honey never admits), sound(SoundType.
+/// HONEY_BLOCK) pc 26891-26894, NO strength call the instabreak dig
+/// row keeps (the generated 0.0 the bootstrapped registry speaks —
+/// the bare fist the instant break arms). The TWO-ELEMENT model the
+/// element walk resolves (blockstates honey_block.json "" ->
+/// block/honey_block: the full outer cube the #down texture carries
+/// + the 1..15 inset cube the #up/#side/#down skins wear — the
+/// textures' UNIFORM partial alpha the per-texel translucent arm
+/// composites, the double-layer stack the back-to-front submit order
+/// serves). The collision the full-cube default keeps (no
+/// getCollisionShape override the class speaks — the body the full
+/// top stands on).
+pub const HONEY_BLOCK: u16 = 78;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 78] = [
+pub const NAME_OF: [&str; 79] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -702,6 +726,16 @@ pub const NAME_OF: [&str; 78] = [
     // speedFactor(0.4f) pc 10667 the body's move-tail walk reads (the
     // generated block_factors row the name-driven lane banks)
     "soul_sand",
+    // THE HONEY WAKE'S OWN ROW (the autopush-599 round): the honey
+    // block the dig row (the instabreak 0.0 the no-strength default
+    // the bootstrapped registry speaks), the drops table (the
+    // self-entry the generated honey_block rows bank), the sounds'
+    // HONEY_BLOCK row and the item id the reverse walk answers — the
+    // speedFactor(0.4f) + jumpFactor(0.5f) rows the body's move tail
+    // + jump fold read (the generated block_factors rows the name-
+    // driven lanes bank), the two-element model the mesher's element
+    // walk resolves
+    "honey_block",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass

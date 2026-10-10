@@ -30,6 +30,15 @@ pub struct Quad {
     pub uvs: [[f32; 2]; 4],
     pub tile: u16,
     pub translucent: bool,
+    /// THE PER-TEXEL ALPHA ARM (the autopush-599 round — the honey
+    /// wake): the translucent pass the FIXED water opacity the
+    /// texture-less quads keep, the FLAGGED quads the TEXEL's own
+    /// alpha the vanilla translucent shader composites (SRC_ALPHA /
+    /// ONE_MINUS_SRC_ALPHA over the framebuffer — the honey textures'
+    /// uniform 191/189/129 the arm reads). The water quads the flag
+    /// never sets (the fixed seed the bit-exact law keeps — the
+    /// goldens the same pixels speak).
+    pub per_texel_alpha: bool,
 }
 
 /// Brightness multiplier per ambient-occlusion level (reference curve).
@@ -123,6 +132,13 @@ fn is_transparent(kind: u16) -> bool {
         // neighbor reads keep, the fire planes the cell's own light
         // the lane renders)
         || crate::world::is_campfire(kind)
+        // THE HONEY BLOCK the same verdict keeps (the autopush-599
+        // round — the blocks clinit's noOcclusion() pc 26888 the
+        // registration speaks: the non-occluding cube the neighbors'
+        // faces draw against, the AO the opaque walk never casts, the
+        // two-element model the honey arm's own translucent quads
+        // render)
+        || kind == crate::world::HONEY_BLOCK
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -501,6 +517,7 @@ pub fn destroy_overlay_quads(pos: (i32, i32, i32), tile: u16) -> Vec<Quad> {
             uvs,
             tile,
             translucent: false,
+                            per_texel_alpha: false,
         });
     }
     out
@@ -722,6 +739,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 uvs,
                                 tile,
                                 translucent: false,
+                            per_texel_alpha: false,
                             });
                         }
                     }
@@ -938,6 +956,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                     uvs,
                                     tile,
                                     translucent: false,
+                            per_texel_alpha: false,
                                 });
                             }
                         }
@@ -988,6 +1007,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 uvs,
                                 tile,
                                 translucent: false,
+                            per_texel_alpha: false,
                             });
                         }
                     }
@@ -1107,6 +1127,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             uvs,
                             tile,
                             translucent: false,
+                            per_texel_alpha: false,
                         });
                     }
                     continue;
@@ -1246,6 +1267,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             uvs,
                             tile,
                             translucent: false,
+                            per_texel_alpha: false,
                         });
                     }
                     continue;
@@ -1427,6 +1449,165 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             uvs,
                             tile,
                             translucent: false,
+                            per_texel_alpha: false,
+                        });
+                    }
+                    continue;
+                }
+                // THE HONEY BLOCK'S OWN ELEMENT LANE (the autopush-599
+                // round — javap the 26.2 jar: blockstates/honey_block.
+                // json's "" variant -> block/honey_block, the
+                // TWO-ELEMENT model the generated elements table banks:
+                // the FULL outer cube [0,0,0]->[16,16,16] all six faces
+                // the #down ref (honey_block_bottom) with cullface rows
+                // + the 1..15 INSET cube the #up/#side/#down skins
+                // wear, uv [1,1,15,15] the 14-texel crop the inset's
+                // own texel-space rows keep). The textures' UNIFORM
+                // PARTIAL ALPHA (the PNG alpha maps: top 191 / side 189
+                // / bottom 129 — every texel the same value speaks) the
+                // per-texel translucent arm composites (the vanilla
+                // translucent layer's SRC_ALPHA / ONE_MINUS_SRC_ALPHA
+                // fold — the DOUBLE-LAYER stack the combined
+                // 1-(1-0.506)*(1-0.749) ~= 0.876 opacity the outside
+                // view wears). The SUBMIT ORDER the depth-write law
+                // speaks: the translucent pass the framebuffer
+                // overdraw composites, the depth the pass writes — the
+                // INSET quads the back-to-front order FIRST banks (the
+                // derive walk's element order the outer cube first
+                // keeps — the reversed vec the inset quads the outer
+                // layer's own depth-write the closer plane never
+                // erases), the camera-inside cell the backface cull the
+                // walls never shows (the one-sided faces the vanilla
+                // cull keeps — the neighbors' faces the non-occluding
+                // verdict draws). The elements carry `shade: true` —
+                // the FACE_SHADE term the cube path's own table wears
+                // (up 1.0, down 0.5, the four horizontals 0.8/0.6), the
+                // noOcclusion verdict the AO never casts (the
+                // is_transparent row the walk keeps). The cullfaces the
+                // outer cube's six rows carry the six-direction
+                // neighbor read culls (the campfire lane's general
+                // verdict — the honey-against-stone shared face the
+                // cull speaks, the rim the neighbor's own face
+                // answers).
+                if id == crate::world::HONEY_BLOCK {
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    let base = [1.0f32; 3];
+                    for q in honey_model_quads() {
+                        // THE CULLFACE'S OWN READ — the neighbor cell the
+                        // solid-render verdict samples (the campfire lane's
+                        // general walk — the shared plane the opaque
+                        // neighbor culls)
+                        if let Some(cf) = q.cullface {
+                            let (dx, dy, dz) = match cf {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TEXTURE VERDICT — the resolved
+                        // texture name the honey masters' tiles answer
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let tile = match tex_stem {
+                            "honey_block_bottom" => atlas::TILE_HONEY_BLOCK_BOTTOM,
+                            "honey_block_top" => atlas::TILE_HONEY_BLOCK_TOP,
+                            "honey_block_side" => atlas::TILE_HONEY_BLOCK_SIDE,
+                            _ => atlas::FACE_TILES[crate::world::HONEY_BLOCK as usize][2],
+                        };
+                        // THE SHADE TERM'S OWN READ — the model's
+                        // shade:true elements the direction table answers
+                        let face_shade = if q.shade {
+                            match q.direction {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            // the texel-space uv the /16 fold normalizes
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: true,
+                            per_texel_alpha: true,
                         });
                     }
                     continue;
@@ -1603,6 +1784,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             uvs,
                             tile,
                             translucent: false,
+                            per_texel_alpha: false,
                         });
                     }
                     continue;
@@ -1774,6 +1956,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             uvs,
                             tile,
                             translucent: false,
+                            per_texel_alpha: false,
                         });
                     }
                     continue;
@@ -1985,6 +2168,7 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 uvs,
                                 tile,
                                 translucent: false,
+                            per_texel_alpha: false,
                             });
                         }
                     }
@@ -2174,7 +2358,8 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         colors,
                         uvs,
                         tile,
-                        translucent: water_self, // the lava stays opaque
+                        translucent: water_self,
+                            per_texel_alpha: false, // the lava stays opaque
                     });
                 }
             }
@@ -2220,6 +2405,28 @@ fn candle_model_quads(lit: bool) -> &'static [mc_registry::element_quads::Quad] 
             "block/candle_one_candle"
         };
         mc_registry::element_quads::derive_model_inherited(model).unwrap_or_default()
+    })
+}
+
+/// THE HONEY MODEL'S OWN BAKE — the block/honey_block chain the
+/// registry's derive walk resolves (the candle lane's own cache
+/// pattern): the TWO-ELEMENT model the generated elements table banks
+/// — the full outer cube the #down texture carries + the 1..15 inset
+/// cube the #up/#side/#down skins wear — the REVERSED vec the
+/// back-to-front submit order serves (the derive walk's element order
+/// the outer cube first keeps; the reversed vec the inset quads the
+/// translucent depth-write the outside view's own overdraw admits —
+/// the inner layer composites BEFORE the outer the closer plane
+/// writes).
+fn honey_model_quads() -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<Vec<mc_registry::element_quads::Quad>> =
+        std::sync::OnceLock::new();
+    QUADS.get_or_init(|| {
+        let mut quads =
+            mc_registry::element_quads::derive_model_inherited("block/honey_block")
+                .unwrap_or_default();
+        quads.reverse();
+        quads
     })
 }
 
@@ -4397,6 +4604,108 @@ mod tests {
         let q3 = mesh_chunk(&w3, 0, 0, None);
         let sands: Vec<_> = q3.iter().filter(|quad| quad.tile == sand_tile).collect();
         assert_eq!(sands.len(), 6, "the sand the six faces the cube path keeps");
+    }
+
+    /// THE HONEY'S OWN TWO LAYERS (the autopush-599 round — javap the
+    /// 26.2 jar: the TWO-ELEMENT model the element walk resolves): the
+    /// freestanding cell the TWELVE quads the two cubes speak — the
+    /// INSET quads the back-to-front order FIRST banks (the reversed
+    /// derive walk the depth-write law serves), the per-quad tiles the
+    /// three masters answer (#down the outer cube all six faces, the
+    /// inset's #up/#side/#down skins the 14-texel crop wears), the
+    /// translucent + per-texel flags the arm reads, the shared face
+    /// the opaque neighbor culls (the outer cube's cullface row the
+    /// stone verdict answers — the inset's own faces the no-cullframe
+    /// rows keep).
+    #[test]
+    fn the_honey_the_two_layers_the_inset_first_wears() {
+        use mc_registry::generated::atlas as gen_atlas;
+        let bottom_tile = gen_atlas::TILE_HONEY_BLOCK_BOTTOM;
+        let top_tile = gen_atlas::TILE_HONEY_BLOCK_TOP;
+        let side_tile = gen_atlas::TILE_HONEY_BLOCK_SIDE;
+        assert_eq!(gen_atlas::tile_name(bottom_tile), "honey_block_bottom");
+        assert_eq!(gen_atlas::tile_name(top_tile), "honey_block_top");
+        assert_eq!(gen_atlas::tile_name(side_tile), "honey_block_side");
+        // THE FREESTANDING CELL (all neighbors air — no cull fires)
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::HONEY_BLOCK);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let honey: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.tile == bottom_tile || quad.tile == top_tile || quad.tile == side_tile
+            })
+            .collect();
+        assert_eq!(honey.len(), 12, "the two cubes the twelve quads keep");
+        // THE PER-TILE SPLIT (the outer cube's 6x #down + the inset's
+        // 1x #down / 1x #up / 4x #side the model's texture map speaks)
+        let bottoms = honey.iter().filter(|quad| quad.tile == bottom_tile).count();
+        let tops = honey.iter().filter(|quad| quad.tile == top_tile).count();
+        let sides = honey.iter().filter(|quad| quad.tile == side_tile).count();
+        assert_eq!(bottoms, 7, "the outer six + the inset's own down the #down master wears");
+        assert_eq!(tops, 1, "the inset's up the #up master wears");
+        assert_eq!(sides, 4, "the inset's four sides the #side master wears");
+        // THE INSET-FIRST ORDER (the reversed derive walk — the first
+        // six quads the inset cube's own band keeps: the derive walk's
+        // 0..1 NORMALIZED units the /16 fold carries — the 1/16..15/16
+        // band the 1..15 texel from/to speaks, the tail six the outer
+        // cube's full 0..1 band wears)
+        for quad in &honey[..6] {
+            for pt in quad.pts {
+                let fx = pt[0] - 8.0;
+                let fy = pt[1] - 8.0;
+                let fz = pt[2] - 8.0;
+                assert!(
+                    (0.0625..=0.9375).contains(&fx)
+                        && (0.0625..=0.9375).contains(&fy)
+                        && (0.0625..=0.9375).contains(&fz),
+                    "the inset quad the 1/16..15/16 band keeps: {pt:?}"
+                );
+            }
+        }
+        for quad in &honey[6..] {
+            assert!(
+                quad.pts.iter().any(|pt| (pt[0] - 8.0).abs() < 1e-6)
+                    || quad.pts.iter().any(|pt| (pt[0] - 9.0).abs() < 1e-6),
+                "the outer quad the full-cube plane wears"
+            );
+        }
+        // THE 14-TEXEL CROP (the inset's uv [1,1,15,15] the /16 fold
+        // normalizes — the first quad the inset's down face speaks)
+        let first = &honey[0];
+        for uv in first.uvs {
+            assert!(
+                (0.0625..=0.9375).contains(&uv[0]) && (0.0625..=0.9375).contains(&uv[1]),
+                "the inset uv the 1..15 texel crop keeps: {uv:?}"
+            );
+        }
+        // THE FLAGS (translucent + per-texel — the raster's arm reads)
+        for quad in &honey {
+            assert!(quad.translucent, "the honey quad the translucent pass rides");
+            assert!(
+                quad.per_texel_alpha,
+                "the honey quad the texel's own alpha composites"
+            );
+        }
+        // THE SHARED-FACE CULL (the opaque stone the +X neighbor — the
+        // outer cube's cullface row the verdict answers, the inset's
+        // own faces the no-cullframe rows keep: the eleven quads)
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::HONEY_BLOCK);
+        put(&mut w2, 9, 8, 8, crate::world::STONE);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        let honey2: Vec<_> = q2
+            .iter()
+            .filter(|quad| {
+                quad.tile == bottom_tile || quad.tile == top_tile || quad.tile == side_tile
+            })
+            .collect();
+        assert_eq!(honey2.len(), 11, "the stone neighbor the shared outer face culls");
+        assert_eq!(
+            honey2.iter().filter(|quad| quad.tile == bottom_tile).count(),
+            6,
+            "the culled face the outer cube's own #down wears — the inset's down the count keeps"
+        );
     }
 
     #[test]

@@ -5208,6 +5208,12 @@ pub fn is_view_blocking(kind: u16) -> bool {
             // false the isSuffocating conjunction refuses, the body
             // the web cell the view never screens)
             | crate::world::COBWEB
+            // THE HONEY BLOCK'S OWN ROW (the autopush-599 round — the
+            // noOcclusion() pc 26888 the clinit registration speaks:
+            // the isSuffocating conjunction the non-occluding shape
+            // refuses, the body the honey cell the view never screens
+            // — the web's own verdict the same walk wears)
+            | crate::world::HONEY_BLOCK
     )
 }
 
@@ -87845,7 +87851,7 @@ cow_sound_variant: None,
         // the cobweb tile the cross arm resolves, the wool the
         // cube_all's `all` ref answers; both untinted — the 78 the
         // soul sand's tail row the autopush-598 wake banks)
-        assert_eq!(atlas::N_KINDS, 78, "the palette the pair banks");
+        assert_eq!(atlas::N_KINDS, 79, "the palette the pair banks");
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
         assert_eq!(atlas::REGISTRY_NAMES[web as usize], "cobweb");
@@ -87922,7 +87928,7 @@ cow_sound_variant: None,
         use mc_registry::generated::atlas;
         let sand = crate::world::SOUL_SAND;
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
-        assert_eq!(atlas::N_KINDS, 78, "the palette the sand row banks");
+        assert_eq!(atlas::N_KINDS, 79, "the palette the sand row banks");
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
         assert_eq!(
@@ -87991,6 +87997,90 @@ cow_sound_variant: None,
             1.0,
             "the unmatched block the 1.0 default rides"
         );
+    }
+
+    /// THE HONEY'S OWN PALETTE ROW (the autopush-599 round — javap
+    /// Blocks clinit pc 26860-26900 the 26.2 jar): the speedFactor(0.4f)
+    /// + jumpFactor(0.5f) rows' first palette-native consumer — the
+    /// atlas the two-element walk resolves (the #down master the kind
+    /// tile banks, the #up/#side skins the static bank appends), the
+    /// dig row the NO-strength default keeps (the instabreak 0.0 the
+    /// bootstrapped registry speaks), the collision the full-cube
+    /// default keeps, the placeable lookup the item form answers, the
+    /// view-blocking walk the noOcclusion shape refuses, the fire
+    /// tables the silence keeps.
+    #[test]
+    fn the_honey_the_palette_row_wears() {
+        use mc_registry::generated::atlas;
+        let honey = crate::world::HONEY_BLOCK;
+        assert_eq!(honey, 78, "the tail slot the palette wake banks");
+        assert_eq!(atlas::N_KINDS, 79, "the palette the honey row banks");
+        assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
+        assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
+        assert_eq!(
+            crate::world::NAME_OF[honey as usize],
+            "honey_block",
+            "the name row the dig/drop/sound lanes read"
+        );
+        // THE ATLAS'S OWN ROWS (the #down master the kind tile banks,
+        // the two skins the static bank appends — the named consts the
+        // mesher's per-quad verdict reads)
+        assert_eq!(atlas::TILE_HONEY_BLOCK_BOTTOM, 78, "the kind's own tile");
+        assert_eq!(
+            atlas::tile_name(atlas::TILE_HONEY_BLOCK_TOP),
+            "honey_block_top"
+        );
+        assert_eq!(
+            atlas::tile_name(atlas::TILE_HONEY_BLOCK_SIDE),
+            "honey_block_side"
+        );
+        // THE COLLISION (the full-cube default the no-override class
+        // keeps) + THE DIG ROW (the instabreak 0.0 the no-demand arm
+        // speaks — the bare fist the instant break arms)
+        assert_eq!(
+            crate::world::collision_shape(honey),
+            crate::world::CollisionShape::Full,
+            "the honey the full-cube shape keeps"
+        );
+        assert_eq!(
+            mc_registry::generated::block_dig::dig_row("honey_block"),
+            Some((0.0, false)),
+            "the dig row the no-strength default speaks"
+        );
+        // THE PLACEABLE LOOKUP + THE VIEW-BLOCKING WALK (the item form
+        // places, the noOcclusion shape the suffocation conjunction
+        // refuses — the web's own verdict the same walk wears)
+        assert_eq!(
+            crate::world::World::placeable_block("honey_block"),
+            Some(honey),
+            "the honey the item form places"
+        );
+        assert!(
+            !crate::screens::is_view_blocking(honey),
+            "the honey the view never screens"
+        );
+        // THE FACTOR LANES' OWN TABLE ROWS (the generated walk the
+        // body's move tail + jump fold read — the palette wake the
+        // kind name feeds)
+        assert_eq!(
+            mc_registry::generated::block_factors::speed_factor(
+                crate::world::NAME_OF[honey as usize]
+            ),
+            0.4,
+            "the speed factor the clinit row banks"
+        );
+        assert_eq!(
+            mc_registry::generated::block_factors::jump_factor(
+                crate::world::NAME_OF[honey as usize]
+            ),
+            0.5,
+            "the jump factor the 0.5 row banks"
+        );
+        // THE FIRE TABLES' OWN SILENCE (the setFlammable walk the honey
+        // row never wears — the parity law the canBurn verdict agrees)
+        assert_eq!(crate::world::fire_ignite_odds(honey), 0);
+        assert_eq!(crate::world::fire_burn_odds(honey), 0);
+        assert_eq!(crate::world::fire_can_burn(honey), false);
     }
 
     // THE WATER FOG PAIR (javap WaterFogEnvironment.setupFog +

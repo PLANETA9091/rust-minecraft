@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 78] = [
+pub const RUNTIME_PALETTE: [&str; 79] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -389,6 +389,23 @@ pub const RUNTIME_PALETTE: [&str; 78] = [
     // speaks, NO requiresCorrectToolForDrops the bare-hand harvest
     // the dig row's false wears
     "soul_sand",
+    // THE HONEY WAKE'S OWN ROW (the autopush-599 round): the honey
+    // block the speedFactor(0.4f) + jumpFactor(0.5f) rows' first
+    // palette-native consumer (javap Blocks pc 26860-26900 the 26.2
+    // jar — the generated block_factors table the rows already bank,
+    // the body's move tail + jump fold the wake finally feeds), the
+    // NO-strength default the instabreak dig row keeps (the generated
+    // 0.0 the bootstrapped registry speaks), noOcclusion() pc 26888
+    // the non-occluding verdict keeps (the is_transparent row the
+    // neighbors' faces the honey against draws), the TWO-ELEMENT model
+    // the element walk resolves (blockstates "" -> block/honey_block
+    // — the full outer cube the #down texture carries + the 1..15
+    // inset cube the #up/#side/#down skins wear, the textures'
+    // UNIFORM partial alpha the per-texel translucent arm composites:
+    // top 191 / side 189 / bottom 129 the PNG alpha maps bank — the
+    // double-layer stack the back-to-front submit order serves), the
+    // SoundType.HONEY_BLOCK row the sounds' own lane banks
+    "honey_block",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -1659,6 +1676,37 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         tile_bytes.push(bytes);
         let _ = idx;
     }
+    // THE HONEY MASTERS' OWN STATIC BANK (the autopush-599 round): the
+    // two skin textures the honey model's INSET element names — #up
+    // (honey_block_top) and #side (honey_block_side) the two-element
+    // walk's per-quad verdict reads; the #down master the palette's
+    // own kind row already banks (the generic walk's first-element
+    // resolution — tile 78 the six slots wear). The UNIFORM PARTIAL
+    // ALPHA the textures keep (the PNG alpha maps: top 191 / side 189
+    // / bottom 129 — every texel the same value speaks) the per-texel
+    // translucent arm composites. APPENDED after the palette rows —
+    // the block palette's tile indices stay byte-identical (the
+    // deterministic scenes keep their exact pixels).
+    for stem in ["honey_block_top", "honey_block_side"] {
+        if tile_names.iter().any(|n| n == stem) {
+            continue; // the dedup the walk keeps
+        }
+        let raw = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png"),
+        )
+        .with_context(|| format!("texture block/{stem}.png"))?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        if w != 16 || h != 16 {
+            bail!("texture {stem}: expected 16x16, got {w}x{h}");
+        }
+        let mut bytes = rgba;
+        bake_tint(&mut bytes, tint_for_texture(stem));
+        let idx = tile_names.len() as u16;
+        tile_names.push(stem.to_string());
+        tile_bytes.push(bytes);
+        let _ = idx;
+    }
     // THE FLOW STRIPS' OWN QUADRANT BANK (the autopush-529 round): the
     // two flow textures the fluid SIDE faces wear — the still-only
     // world the lane never drew. 32x32-PER-FRAME strips (water_flow
@@ -1880,6 +1928,9 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         ("cake_top", "TILE_CAKE_TOP"),
         ("cake_side", "TILE_CAKE_SIDE"),
         ("cake_inner", "TILE_CAKE_INNER"),
+        ("honey_block_bottom", "TILE_HONEY_BLOCK_BOTTOM"),
+        ("honey_block_top", "TILE_HONEY_BLOCK_TOP"),
+        ("honey_block_side", "TILE_HONEY_BLOCK_SIDE"),
     ] {
         let idx = tile_const(&tile_names, stem)?;
         src.push_str(&format!(
@@ -2169,6 +2220,10 @@ mod tests {
         // consumer (the full-cube generic walk resolves, the Column(14)
         // collision the Block.column(16.0, 0.0, 14.0) SHAPE keeps)
         assert_eq!(RUNTIME_PALETTE[77], "soul_sand");
+        // the honey wake's own row (the autopush-599 round): the speed
+        // factor 0.4 + jump factor 0.5 rows' first palette-native consumer
+        // (the two-element model the element walk resolves)
+        assert_eq!(RUNTIME_PALETTE[78], "honey_block");
         // the shared-row law the registry-name walk speaks: every
         // stage the BASE "cake" row the dig/drop/sound/item lanes keep
         let names = registry_names();
