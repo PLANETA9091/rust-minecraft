@@ -74,11 +74,27 @@ def main():
             os.makedirs(os.path.dirname(dest2), exist_ok=True)
             if not os.path.exists(dest2):
                 os.link(src, dest2)
+            # layout 3: the loader's own bare lane — the index key minus
+            # the leading `textures/` (the generated SpriteDef files ride
+            # `gui/sprites/...`, the FlashSprite rides `particle/flash.png`,
+            # the legacy inventory background rides
+            # `gui/container/inventory.png` — all root-relative walks the
+            # `textures/` prefix never carried)
+            dest3 = os.path.join(jar_root, rest[len("textures/"):])
+            os.makedirs(os.path.dirname(dest3), exist_ok=True)
+            if not os.path.exists(dest3):
+                os.link(src, dest3)
             n_bare += 1
 
     # the jar-native files the loaders read verbatim (the index carries
     # sounds.json too in 26.x, but the jar copy is the generator's own
     # source — keep both honest)
+    # PLUS the jar-native TEXTURES the 26.x asset index no longer ships
+    # (particle/flash.png, gui/container/inventory.png, the armor
+    # layers, ...): the loaders' bare lanes read them root-relative, so
+    # extract every `assets/minecraft/textures/<rest>` jar entry into
+    # `jar/<rest>` (the bare law, only-if-absent — the generated table's
+    # own sha1 pins keep the copies honest).
     with zipfile.ZipFile(jar_path) as z:
         for name in ("assets/minecraft/sounds.json",):
             try:
@@ -90,6 +106,20 @@ def main():
             if not os.path.exists(dest):
                 with open(dest, "wb") as f:
                     f.write(data)
+        n_jar_tex = 0
+        prefix = "assets/minecraft/textures/"
+        for name in z.namelist():
+            if not name.startswith(prefix) or not name.endswith(".png"):
+                continue
+            rest = name[len(prefix):]
+            dest = os.path.join(jar_root, rest)
+            if os.path.exists(dest):
+                continue
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            with z.open(name) as src_f, open(dest, "wb") as out_f:
+                out_f.write(src_f.read())
+            n_jar_tex += 1
+        print(f"extracted: {n_jar_tex} jar-native textures -> bare layout")
 
     print(f"linked: {n_assets} assets paths, {n_bare} bare-mirror paths -> assets-cache/jar")
 

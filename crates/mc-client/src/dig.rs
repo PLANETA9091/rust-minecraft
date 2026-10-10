@@ -92,6 +92,19 @@ impl DigState {
     /// the tool components' speeds ride the item tables when they land),
     /// the `BLOCK_BREAK_SPEED` attribute's default 1.0 multiply, the
     /// `SUBGERGED_MINING_SPEED` 0.2 in a water eye, the off-ground /5.
+    /// THE HASTE LANE (javap getDestroySpeed pcs 29-51 — the
+    /// MobEffectUtil.hasDigSpeed branch the fatigue's own head keeps):
+    /// the amplifier the simple PRODUCT reads (NOT the tableswitch the
+    /// harmful arm speaks) — `f *= 1.0f + (amplifier + 1) as f32 *
+    /// 0.2f` — the amp-0 the ×1.2, the amp-1 the ×1.4, the amp-2 the
+    /// ×1.6, the amp-9 the ×3.0 (the ladder NEVER caps: the amplifier's
+    /// own arithmetic the rung grows every +1 wears), the lane the
+    /// chain's HEAD the haste's own seat before the fatigue speaks.
+    /// The DOSE's own source (javap MobEffectUtil — the
+    /// getDigSpeedAmplification the Math.max wears): the haste amp and
+    /// the conduit amp the max folds, the conduit's own half the
+    /// future CONDUIT_POWER round carries (the haste slice the lane
+    /// here speaks).
     /// THE FATIGUE LANE (javap pcs 52-125 — the
     /// hasEffect(MINING_FATIGUE) branch the haste's own tail keeps): the
     /// amplifier the TABLESWITCH reads (NOT the per-amp product the
@@ -99,14 +112,20 @@ impl DigState {
     /// ×0.09f (0.3²), the amp-2 the ×0.0027f, the amp-3 AND BEYOND the
     /// default arm the ×8.1E-4 CAP wears — the fold the haste's own
     /// product rides and the block-break-speed/water/air arms the
-    /// vanilla order keeps (the fatigue the HEAD of the remaining
-    /// chain, the f32 order the exact walk preserves).
+    /// vanilla order keeps (the haste the head, the fatigue the NEXT
+    /// fold, the f32 order the exact walk preserves).
     pub fn player_dig_speed(
         on_ground: bool,
         eye_in_water: bool,
+        haste: Option<i32>,
         mining_fatigue: Option<i32>,
     ) -> f32 {
         let mut f = 1.0f32;
+        if let Some(amp) = haste {
+            // the DIG_SPEED product: 1.0 + 0.2 × (amplifier + 1) — the
+            // f32 multiply the vanilla's own `1.0F + f * 0.2F` speaks
+            f *= 1.0 + (amp + 1) as f32 * 0.2;
+        }
         if let Some(amp) = mining_fatigue {
             f *= match amp {
                 0 => 0.3,
@@ -214,6 +233,7 @@ impl DigState {
         instabuild: bool,
         restricted: bool,
         mining_fatigue: Option<i32>,
+        haste: Option<i32>,
     ) -> Vec<DigSend> {
         // THE RESTRICTED HEAD (audited pcs 0-26): the press speaks
         // NOTHING — no break, no send, no arm. The survival machine's
@@ -261,7 +281,7 @@ impl DigState {
             // the insta-break: the START press's own completion (the
             // vanilla lambda: getDestroyProgress >= 1.0 -> destroyBlock,
             // the dig state never arms)
-            let speed = Self::player_dig_speed(on_ground, eye_in_water, mining_fatigue);
+            let speed = Self::player_dig_speed(on_ground, eye_in_water, haste, mining_fatigue);
             let (destroy_speed, _) = Self::block_dig_row(kind);
             let progress =
                 Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind));
@@ -311,6 +331,7 @@ impl DigState {
         instabuild: bool,
         restricted: bool,
         mining_fatigue: Option<i32>,
+        haste: Option<i32>,
     ) -> (Vec<DigSend>, bool) {
         // the completion cooldown ticks first (the vanilla's own order)
         if self.delay > 0 {
@@ -342,7 +363,7 @@ impl DigState {
             // keeps)
             let sends = self.start_destroy_block(
                 pos, face, held, world, on_ground, eye_in_water, instabuild, restricted,
-                mining_fatigue,
+                mining_fatigue, haste,
             );
             let retargeted = !sends.is_empty();
             return (sends, retargeted);
@@ -355,7 +376,7 @@ impl DigState {
             return (Vec::new(), false);
         }
         let (destroy_speed, _) = Self::block_dig_row(kind);
-        let speed = Self::player_dig_speed(on_ground, eye_in_water, mining_fatigue);
+        let speed = Self::player_dig_speed(on_ground, eye_in_water, haste, mining_fatigue);
         self.progress +=
             Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind));
         // the hit-sound beat: every 4th tick (destroyTicks % 4 == 0) —
@@ -420,11 +441,11 @@ mod tests {
         let dirt = DigState::destroy_progress(1.0, 0.5, true);
         assert!((dirt - 1.0 / 0.5 / 30.0).abs() < 1e-9);
         // the off-ground penalty: the speed's /5 rides BEFORE the law
-        let air = DigState::player_dig_speed(false, false, None);
+        let air = DigState::player_dig_speed(false, false, None, None);
         assert!((air - 0.2).abs() < 1e-9);
-        let water_eye = DigState::player_dig_speed(true, true, None);
+        let water_eye = DigState::player_dig_speed(true, true, None, None);
         assert!((water_eye - 0.2).abs() < 1e-9);
-        let both = DigState::player_dig_speed(false, true, None);
+        let both = DigState::player_dig_speed(false, true, None, None);
         assert!((both - 0.2 / 5.0).abs() < 1e-9);
     }
 
@@ -464,7 +485,7 @@ mod tests {
         // seed a stone cell
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         assert_eq!(
             sends,
             vec![DigSend {
@@ -476,7 +497,7 @@ mod tests {
         assert!(d.is_destroying);
         assert_eq!(d.progress, 0.0);
         // the same-target re-press: NO second send (the vanilla's no-op)
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         assert!(sends.is_empty());
     }
 
@@ -485,7 +506,7 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::LEAF_LITTER);
         let mut d = DigState::new();
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         // the START still speaks (the vanilla lambda's own return) and
         // the cell is ALREADY air — no dig state armed
         assert_eq!(sends.len(), 1);
@@ -500,15 +521,15 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         world.set(2, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         // dig a few ticks into the first cell
         for _ in 0..3 {
-            let _ = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+            let _ = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         }
         assert!(d.progress > 0.0);
         // the switch to the neighbor: ABORT(old pos, the NEW face) + the
         // fresh START, the progress zeroed (the vanilla's own reset)
-        let sends = d.start_destroy_block((2, 1, 1), 4, None, &mut world, true, false, false, false, None);
+        let sends = d.start_destroy_block((2, 1, 1), 4, None, &mut world, true, false, false, false, None, None);
         assert_eq!(sends.len(), 2);
         assert_eq!(
             sends[0],
@@ -529,10 +550,10 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, Some(7), &mut world, true, false, false, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, Some(7), &mut world, true, false, false, false, None, None);
         // the same cell with a DIFFERENT held item: the vanilla's
         // sameDestroyTarget refuses — the abort + the fresh start
-        let sends = d.start_destroy_block((1, 1, 1), 1, Some(9), &mut world, true, false, false, false, None);
+        let sends = d.start_destroy_block((1, 1, 1), 1, Some(9), &mut world, true, false, false, false, None, None);
         assert_eq!(sends.len(), 2, "the item switch retargets");
         assert_eq!(sends[0].action, ACTION_ABORT);
         assert_eq!(sends[1].action, ACTION_START);
@@ -543,13 +564,13 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let start = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let start = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         assert_eq!(start.len(), 1);
         let mut beats = 0;
         let mut stop_seen = false;
         while beats < 400 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 stop_seen = true;
                 break;
@@ -569,7 +590,7 @@ mod tests {
         assert!(!d.is_destroying);
         assert_eq!(d.delay, 5);
         // the cooldown: the next continue tick does nothing but tick it
-        let (sends, _) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let (sends, _) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         assert!(sends.is_empty());
         assert_eq!(d.delay, 4);
     }
@@ -579,13 +600,13 @@ mod tests {
         // THE TABLESWITCH'S OWN RUNGS (javap getDestroySpeed pcs 69-124
         // — the amp-0 the 0.3f, the amp-1 the 0.09f (0.3²), the amp-2
         // the 0.0027f, the amp-3 the default arm the 8.1E-4f speaks)
-        let amp0 = DigState::player_dig_speed(true, false, Some(0));
+        let amp0 = DigState::player_dig_speed(true, false, None, Some(0));
         assert!((amp0 - 0.3).abs() < 1e-9, "the amp-0 the x0.3 wears");
-        let amp1 = DigState::player_dig_speed(true, false, Some(1));
+        let amp1 = DigState::player_dig_speed(true, false, None, Some(1));
         assert!((amp1 - 0.09).abs() < 1e-9, "the amp-1 the x0.09 wears");
-        let amp2 = DigState::player_dig_speed(true, false, Some(2));
+        let amp2 = DigState::player_dig_speed(true, false, None, Some(2));
         assert!((amp2 - 0.0027).abs() < 1e-9, "the amp-2 the x0.0027 wears");
-        let amp3 = DigState::player_dig_speed(true, false, Some(3));
+        let amp3 = DigState::player_dig_speed(true, false, None, Some(3));
         assert!(
             (amp3 - 8.1E-4).abs() < 1e-9,
             "the amp-3 the default arm wears: {}",
@@ -594,17 +615,90 @@ mod tests {
         // THE CAP (the amp-4+ the DEFAULT arm the same 8.1E-4 wears —
         // the ladder the 4th rung never grows past, the tableswitch's
         // own three-case walk keeps)
-        let amp4 = DigState::player_dig_speed(true, false, Some(4));
+        let amp4 = DigState::player_dig_speed(true, false, None, Some(4));
         assert_eq!(amp4, amp3, "the amp-4 the default cap wears");
-        let amp9 = DigState::player_dig_speed(true, false, Some(9));
+        let amp9 = DigState::player_dig_speed(true, false, None, Some(9));
         assert_eq!(amp9, amp3, "the amp-9 the same cap wears");
         // THE ORDER (the fatigue the HEAD of the chain — the water and
         // air arms the f32 walk rides AFTER the ladder, the vanilla
         // body's own sequence keeps)
-        let tired_wet = DigState::player_dig_speed(true, true, Some(0));
+        let tired_wet = DigState::player_dig_speed(true, true, None, Some(0));
         assert!((tired_wet - 0.3 * 0.2).abs() < 1e-9, "the wet eye the ladder first wears");
-        let tired_air = DigState::player_dig_speed(false, false, Some(0));
+        let tired_air = DigState::player_dig_speed(false, false, None, Some(0));
         assert!((tired_air - 0.3 / 5.0).abs() < 1e-9, "the air the ladder first wears");
+    }
+
+    #[test]
+    fn the_haste_ladder_the_product_never_caps_wears() {
+        // THE PRODUCT'S OWN RUNGS (javap getDigSpeed — the
+        // hasEffect(DIG_SPEED) arm the simple multiply speaks, NOT the
+        // tableswitch the fatigue's own arm reads): the amp-0 the ×1.2,
+        // the amp-1 the ×1.4, the amp-2 the ×1.6, the amp-3 the ×1.8 —
+        // the rung the +0.2 every amplifier wears, the ladder the CAP
+        // never knows (the fatigue's own 8.1E-4 floor the opposite
+        // pole keeps)
+        let amp0 = DigState::player_dig_speed(true, false, Some(0), None);
+        assert!((amp0 - 1.2).abs() < 1e-9, "the amp-0 the x1.2 wears");
+        let amp1 = DigState::player_dig_speed(true, false, Some(1), None);
+        assert!((amp1 - 1.4).abs() < 1e-9, "the amp-1 the x1.4 wears");
+        let amp2 = DigState::player_dig_speed(true, false, Some(2), None);
+        assert!((amp2 - 1.6).abs() < 1e-9, "the amp-2 the x1.6 wears");
+        let amp3 = DigState::player_dig_speed(true, false, Some(3), None);
+        assert!((amp3 - 1.8).abs() < 1e-9, "the amp-3 the x1.8 wears");
+        // THE NO-CAP (the amp-9 the ×3.0 the arithmetic wears — the
+        // amplifier the rung keeps growing past the fatigue's own
+        // tableswitch the 4th rung caps)
+        let amp9 = DigState::player_dig_speed(true, false, Some(9), None);
+        assert!((amp9 - 3.0).abs() < 1e-9, "the amp-9 the x3.0 wears");
+        // THE SEAT (the haste the chain's HEAD — the water and air arms
+        // the f32 walk rides AFTER the product, the vanilla body's own
+        // sequence keeps)
+        let hasty_wet = DigState::player_dig_speed(true, true, Some(0), None);
+        assert!(
+            (hasty_wet - 1.2 * 0.2).abs() < 1e-9,
+            "the wet eye the product first wears"
+        );
+        let hasty_air = DigState::player_dig_speed(false, false, Some(0), None);
+        assert!(
+            (hasty_air - 1.2 / 5.0).abs() < 1e-9,
+            "the air the product first wears"
+        );
+    }
+
+    #[test]
+    fn the_haste_and_the_fatigue_the_head_then_the_table_wears() {
+        // THE COMPOSITION (the vanilla's own order: the DIG_SPEED
+        // product the chain's head speaks, the DIG_SLOWDOWN tableswitch
+        // the NEXT fold wears — 1.2 × 0.3 the amp-pair-0 the exact f32
+        // keeps, 3.0 × 8.1E-4 the amp-pair-9 the cap tail keeps)
+        let both0 = DigState::player_dig_speed(true, false, Some(0), Some(0));
+        assert!(
+            (both0 - 1.2 * 0.3).abs() < 1e-9,
+            "the head the product wears: {}",
+            both0
+        );
+        let both9 = DigState::player_dig_speed(true, false, Some(9), Some(3));
+        assert!(
+            (both9 - 3.0 * 8.1E-4).abs() < 1e-9,
+            "the tail the cap wears: {}",
+            both9
+        );
+        // THE HASTE THE DIG THE STONE'S BEATS THE STRETCH WEARS: the
+        // ×1.2 speed the per-tick 1.2/1.5/100 the ladder speaks
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, Some(0),
+        );
+        let _ = d.continue_destroy_block(
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, Some(0),
+        );
+        assert!(
+            (d.progress - 1.2_f32 / 1.5 / 100.0).abs() < 1e-12,
+            "the hasty per-tick the exact f32 wears: {}",
+            d.progress
+        );
     }
 
     #[test]
@@ -613,12 +707,12 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         let _ = d.start_destroy_block(
-            (1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0),
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None,
         );
         // THE FIRST BEAT (the per-tick progress the ×0.3 speed wears —
         // 0.3/1.5/100 the exact f32 the mirror keeps)
         let (sends, _) =
-            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0));
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None);
         assert!(sends.is_empty(), "the hold beat speaks no send");
         assert!(
             (d.progress - 0.3_f32 / 1.5 / 100.0).abs() < 1e-12,
@@ -632,7 +726,7 @@ mod tests {
         let mut stop_seen = false;
         while beats < 2000 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0));
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, Some(0), None);
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 stop_seen = true;
                 break;
@@ -655,11 +749,11 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::DIRT);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         let mut beats = 0;
         loop {
             let (sends, _) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
             beats += 1;
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 break;
@@ -674,11 +768,11 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::DIRT);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         let mut beats = 0;
         loop {
             let (sends, _) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, false, false, false, false, None);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, false, false, false, false, None, None);
             beats += 1;
             if sends.iter().any(|s| s.action == ACTION_STOP) {
                 break;
@@ -695,9 +789,9 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None, None);
         for _ in 0..2 {
-            let _ = d.continue_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None);
+            let _ = d.continue_destroy_block((1, 1, 1), 4, None, &mut world, true, false, false, false, None, None);
         }
         let sends = d.stop_destroy_block();
         assert_eq!(
@@ -721,10 +815,10 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         // the cell vanishes under the dig (a neighbor's completion)
         world.set(1, 1, 1, crate::world::AIR);
-        let (sends, dug) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+        let (sends, dug) = d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         assert!(sends.is_empty());
         assert!(!dug, "the air beat counts nothing");
         assert!(!d.is_destroying);
@@ -739,7 +833,7 @@ mod tests {
         // THE PRESS: the cell vanishes the SAME tick, the START rides,
         // the delay arms, isDestroying never speaks (the audited
         // instabuild branch's own shape)
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the instant break");
         assert_eq!(sends.len(), 1, "the single prediction send");
         assert_eq!(sends[0].action, ACTION_START, "the lambda$0's own action");
@@ -750,7 +844,7 @@ mod tests {
         // THE RE-PRESS: the delay never gates the start (the audited
         // pcs 46-136 carry no delay check — the fast click breaks
         // faster than the hold)
-        let sends = d.start_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None);
+        let sends = d.start_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(2, 1, 1), crate::world::AIR, "the second instant break");
         assert_eq!(sends.len(), 1);
         assert_eq!(d.delay, 5, "the delay re-armed");
@@ -769,12 +863,12 @@ mod tests {
         world.set(2, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         // the press breaks the first cell
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         // THE HOLD: five decrement ticks speak nothing (the delay
         // head), each still beating the swing (the TRUE return)
         for t in 0..5 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
             assert!(sends.is_empty(), "the decrement tick {t} sends nothing");
             assert!(dug, "the decrement tick still beats the swing");
         }
@@ -782,7 +876,7 @@ mod tests {
         // carve walks where the aim walks (the same-target check the
         // hold lane never asks)
         let (sends, dug) =
-            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None);
+            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert!(dug);
         assert_eq!(sends.len(), 1);
         assert_eq!(sends[0].action, ACTION_START, "the hold's own START send");
@@ -798,7 +892,7 @@ mod tests {
         let mut d = DigState::new();
         // THE RESTRICTED HEAD: the spectator's acmp lane, the
         // adventure's mayBuild/item walk — no break, no send, no arm
-        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None);
+        let sends = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None, None);
         assert!(sends.is_empty(), "the press sends nothing");
         assert_eq!(world.get(1, 1, 1), crate::world::STONE, "the block stands");
         assert!(!d.is_destroying, "the dig never arms");
@@ -806,7 +900,7 @@ mod tests {
         // THE HOLD after the refused press: the retarget tail re-enters
         // the refused start — the same silence, the beat never counts
         let (sends, dug) =
-            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None);
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, true, None, None);
         assert!(sends.is_empty());
         assert!(!dug, "the refused continue never beats");
     }
@@ -817,7 +911,7 @@ mod tests {
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
         // the creative press breaks and arms the delay
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(d.delay, 5);
         // THE FLICK TO SURVIVAL (the F4 switcher's own revoke): the
         // survival machine resumes — the creative press's delay the
@@ -826,19 +920,19 @@ mod tests {
         // arms) and the survival start re-arms through the tail
         for i in 0..5 {
             let (sends, dug) =
-                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+                d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
             assert!(sends.is_empty(), "the spent delay tick {i} sends nothing");
             assert!(dug, "the delay tick {i} still beats");
         }
         let (sends, dug) =
-            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None);
+            d.continue_destroy_block((1, 1, 1), 1, None, &mut world, true, false, false, false, None, None);
         assert!(dug, "the survival re-arm beats");
         assert!(d.is_destroying, "the survival dig armed");
         assert!(!sends.is_empty(), "the survival START rode the re-arm");
         // THE FLICK TO SPECTATOR: the retarget tail the restricted head
         // refuses — the carve stops where the flick lands
         let (sends, dug) =
-            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, false, true, None);
+            d.continue_destroy_block((2, 1, 1), 1, None, &mut world, true, false, false, true, None, None);
         assert!(sends.is_empty());
         assert!(!dug, "the refused retarget never beats");
     }
@@ -866,7 +960,7 @@ mod tests {
         // THE CREATIVE PRESS: the log breaks, the chain fires, the
         // flame above the SAME beat douses (the stale schedule entry
         // the block-match gate later drops)
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the log the press breaks");
         assert_eq!(
             world.get(1, 2, 1),
@@ -896,7 +990,7 @@ mod tests {
         world.set(1, 3, 1, crate::world::FIRE);
         world.fire_age.insert((1, 3, 1), 0);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(1, 2, 1), crate::world::AIR, "the bottom flame douses");
         assert_eq!(world.get(1, 3, 1), crate::world::AIR, "the top flame the cascade douses");
         // THE AIR PRESS (the chain's own silence): the fireless dig
@@ -905,7 +999,7 @@ mod tests {
         let mut world = small_world();
         world.set(1, 1, 1, crate::world::STONE);
         let mut d = DigState::new();
-        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None);
+        let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the stone breaks as ever");
     }
 }

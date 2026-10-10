@@ -12441,6 +12441,13 @@ impl App {
                                 .effects
                                 .get(crate::effects::MOB_EFFECT_MINING_FATIGUE)
                                 .map(|inst| inst.amplifier);
+                            // THE HASTE'S OWN STORE READ (the amplifier
+                            // the dig lane's ×0.2 product speaks — the
+                            // unworn body the None identity rides)
+                            let haste = self
+                                .effects
+                                .get(crate::effects::MOB_EFFECT_HASTE)
+                                .map(|inst| inst.amplifier);
                             // THE GAMEMODE DISPATCH's own folds (the
                             // audited instabuild grant + the restricted
                             // head — the LIVE reads the vanilla
@@ -12462,7 +12469,7 @@ impl App {
                                     world.get(pos.0, pos.1, pos.2) != crate::world::AIR;
                                 let (s, b) = dig.continue_destroy_block(
                                     pos, face, held, world, on_ground, eye_water, instabuild,
-                                    restricted, mining_fatigue,
+                                    restricted, mining_fatigue, haste,
                                 );
                                 sends = s;
                                 beat = b;
@@ -14985,6 +14992,13 @@ impl App {
                     .effects
                     .get(crate::effects::MOB_EFFECT_MINING_FATIGUE)
                     .map(|inst| inst.amplifier);
+                // THE HASTE'S OWN STORE READ (the amplifier the dig
+                // lane's ×0.2 product speaks — the unworn body the None
+                // identity rides)
+                let haste = self
+                    .effects
+                    .get(crate::effects::MOB_EFFECT_HASTE)
+                    .map(|inst| inst.amplifier);
                 // THE GAMEMODE DISPATCH's own folds (the audited
                 // instabuild grant + the restricted head — the press
                 // the startDestroyBlock's own walk speaks first, the
@@ -15011,6 +15025,7 @@ impl App {
                         instabuild,
                         restricted,
                         mining_fatigue,
+                        haste,
                     );
                     dug = was_solid
                         && world.get(h.pos.0, h.pos.1, h.pos.2) == crate::world::AIR;
@@ -50943,7 +50958,7 @@ mod tests {
         let kind = app.offline_world.as_ref().unwrap().get(c, surface, c);
         let (destroy_speed, requires) = crate::dig::DigState::block_dig_row(kind);
         let expected = crate::dig::DigState::destroy_progress(
-            crate::dig::DigState::player_dig_speed(true, false, Some(0)),
+            crate::dig::DigState::player_dig_speed(true, false, None, Some(0)),
             destroy_speed,
             !requires,
         );
