@@ -624,8 +624,54 @@ pub const SOUL_SAND: u16 = 77;
 /// top stands on).
 pub const HONEY_BLOCK: u16 = 78;
 
+/// Kind 79 (the eightieth entry, the autopush-601 round): THE FURNACE
+/// itself — the dev-24 GUI lane's own block finally renders in the
+/// world. javap Blocks clinit pcs 7156-7199 the 26.2 jar:
+/// register(BlockItemIds.FURNACE, ...) mapColor(STONE) pc 7170,
+/// instrument(BASEDRUM) pc 7173, requiresCorrectToolForDrops() pc 7179
+/// (the dig row's own true the generated table speaks), strength(3.5f)
+/// pc 7182-7185, `bipush 13; litBlockEmission(I)` pc 7188-7190 the
+/// lightLevel row the lit state's own 13 banks (light.rs's FURNACE_LIT
+/// row keeps; the unlit kind the dark 0 the else arm wears). The
+/// full-cube generic walk resolves the atlas rows (blockstates
+/// furnace.json's facing=north,lit=false -> block/furnace, the model
+/// chain block/orientable -> block/orientable_with_bottom ->
+/// block/cube the north=#front authoring keeps — the FACE_TILES row's
+/// north entry the front tile banks), the FACING property the variant
+/// byte carries (world_view's furnace_variant decode — 1..=4 the
+/// north/east/south/west order the blockstate's y-rotation keeps),
+/// the mesher's front-tile swap the facing serves (the front tile the
+/// facing direction wears, the vacated north slot the side tile
+/// keeps). The collision the full-cube default speaks (no
+/// getCollisionShape override the FurnaceBlock class carries), the
+/// occlusion the full-cube verdict keeps (the neighbors' faces the
+/// furnace against cull).
+pub const FURNACE: u16 = 79;
+
+/// Kind 80 (the eighty-first entry, the autopush-601 round): THE LIT
+/// FURNACE — the same furnace.json's "facing=north,lit=true" row
+/// resolves (block/furnace_on, the furnace_front_on the #front ref
+/// answers; the blockstate has NO furnace_lit.json — the half-kind
+/// name the campfire_lit precedent wears), the `bipush 13`
+/// litBlockEmission(I) pc 7188-7190 the lightLevel row the lit
+/// state's own 13 banks (light.rs's row the flicker's own source
+/// feeds), the shared "furnace" NAME_OF row the dig/drop/sound/item
+/// lanes keep (the lit swap the smelt lane's own product never
+/// places). The facing variant byte the same furnace_variant decode
+/// carries, the front-tile swap the same mesher arm serves.
+pub const FURNACE_LIT: u16 = 80;
+
+/// THE FURNACE'S OWN FAMILY — the two kinds the palette row wakes
+/// (the unlit kind the wire world's own furnaces land through, the
+/// lit kind the burning state's own product the block updates wear):
+/// the mesher's front-tile swap and the emission's lit-13 row the
+/// same family predicate reads.
+pub fn is_furnace(id: u16) -> bool {
+    id == FURNACE || id == FURNACE_LIT
+}
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 79] = [
+pub const NAME_OF: [&str; 81] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -736,6 +782,16 @@ pub const NAME_OF: [&str; 79] = [
     // driven lanes bank), the two-element model the mesher's element
     // walk resolves
     "honey_block",
+    // THE FURNACE PAIR'S OWN ROWS (the autopush-601 round — the lit
+    // kind the BASE name the shared-row law keeps: the dig row (3.5
+    // hardness + requiresCorrectToolForDrops — the strength(3.5f) pc
+    // 7182 + requiresCorrectToolForDrops() pc 7179 the clinit arm
+    // speaks), the drops table (the self-entry the generated furnace
+    // rows bank), the sounds' STONE row (no SoundType call the clinit
+    // arm carries — the default the registration keeps) and the item
+    // id the placeable lookup answers; BOTH kinds the same row the
+    // lit swap the smelt lane's own product never places)
+    "furnace", "furnace",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass

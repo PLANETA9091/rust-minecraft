@@ -88381,7 +88381,7 @@ cow_sound_variant: None,
         // the cobweb tile the cross arm resolves, the wool the
         // cube_all's `all` ref answers; both untinted — the 78 the
         // soul sand's tail row the autopush-598 wake banks)
-        assert_eq!(atlas::N_KINDS, 79, "the palette the pair banks");
+        assert_eq!(atlas::N_KINDS, 81, "the palette the furnace pair's tail rows bank");
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
         assert_eq!(atlas::REGISTRY_NAMES[web as usize], "cobweb");
@@ -88458,7 +88458,7 @@ cow_sound_variant: None,
         use mc_registry::generated::atlas;
         let sand = crate::world::SOUL_SAND;
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
-        assert_eq!(atlas::N_KINDS, 79, "the palette the sand row banks");
+        assert_eq!(atlas::N_KINDS, 81, "the palette the furnace pair's tail rows bank");
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
         assert_eq!(
@@ -88544,7 +88544,7 @@ cow_sound_variant: None,
         use mc_registry::generated::atlas;
         let honey = crate::world::HONEY_BLOCK;
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
-        assert_eq!(atlas::N_KINDS, 79, "the palette the honey row banks");
+        assert_eq!(atlas::N_KINDS, 81, "the palette the furnace pair's tail rows bank");
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
         assert_eq!(

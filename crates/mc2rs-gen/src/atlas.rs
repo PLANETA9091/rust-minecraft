@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 79] = [
+pub const RUNTIME_PALETTE: [&str; 81] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -406,6 +406,21 @@ pub const RUNTIME_PALETTE: [&str; 79] = [
     // double-layer stack the back-to-front submit order serves), the
     // SoundType.HONEY_BLOCK row the sounds' own lane banks
     "honey_block",
+    // THE FURNACE'S OWN PAIR (the autopush-601 round): the smelter the
+    // dev-24 GUI lane's own block finally renders — javap Blocks clinit
+    // pcs 7156-7199 the 26.2 jar: register(BlockItemIds.FURNACE, ...)
+    // mapColor(STONE) pc 7170, instrument(BASEDRUM) pc 7173,
+    // requiresCorrectToolForDrops() pc 7179 the dig row's own true the
+    // generated table speaks, strength(3.5f) pc 7182-7185, bipush 13
+    // litBlockEmission(I) pc 7188-7190 the lightLevel row the lit
+    // state's own 13 banks (the unlit the 0 — light.rs's row keeps).
+    // The full-cube generic walk resolves (blockstates furnace.json's
+    // facing=north rows — block/furnace / block/furnace_on, the model
+    // chain block/orientable -> block/orientable_with_bottom ->
+    // block/cube the north=#front authoring keeps), the facing
+    // property the variant byte carries (world_view's furnace_variant
+    // decode), the mesher's front-tile swap the facing serves
+    "furnace", "furnace_lit",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -484,6 +499,44 @@ fn resolve_block(
         return Ok(resolve_flat_stem("lava_still", false));
     }
 
+    if block == "furnace" || block == "furnace_lit" {
+        // THE FURNACE'S OWN ROWS (the autopush-601 round, the official
+        // 26.2 jar): the blockstate's facing=north rows the
+        // y-rotation-FREE pair the palette's kind-only vocabulary keeps
+        // — the facing property the variant byte carries (world_view's
+        // furnace_variant decode), the mesher's front-tile swap the
+        // facing serves. The LIT kind the SAME furnace.json's
+        // "facing=north,lit=true" row resolves (block/furnace_on — the
+        // furnace_front_on the #front ref answers; the blockstate has
+        // NO furnace_lit.json — the half-kind name the campfire_lit
+        // precedent wears). The model chain block/furnace ->
+        // block/orientable -> block/orientable_with_bottom ->
+        // block/cube the full-cube element walk resolves (north=#front,
+        // east/south/west=#side, up=#top, down=#bottom=#top — the
+        // vanilla's own six-face authoring), tinted = false (no
+        // tintindex anywhere). The dig row the registration's
+        // requiresCorrectToolForDrops pc 7179 + strength(3.5f) pc
+        // 7182-7185 the clinit walk speaks; the lightLevel the bipush
+        // 13 litBlockEmission pc 7188-7190 pair banks (the lit state's
+        // own 13, the unlit the 0 — light.rs's row keeps).
+        let stem = "furnace";
+        let lit = block == "furnace_lit";
+        let bs_bytes =
+            read_jar(archive, &format!("assets/minecraft/blockstates/{stem}.json"))?;
+        let bs: Value = serde_json::from_slice(&bs_bytes)
+            .with_context(|| format!("blockstate {stem}: json parse"))?;
+        let model_ref = bs
+            .get("variants")
+            .and_then(|v| v.get(format!("facing=north,lit={lit}").as_str()))
+            .and_then(|v| v.get("model"))
+            .and_then(|m| m.as_str())
+            .with_context(|| format!("blockstate {stem}: no facing=north,lit={lit} model"))?
+            .trim_start_matches("minecraft:")
+            .to_string();
+        return full_cube_faces(archive, &model_ref)
+            .with_context(|| format!("block {block}: model chain {model_ref}"));
+    }
+
     let bs_bytes = read_jar(archive, &format!("assets/minecraft/blockstates/{block}.json"))?;
     let bs: Value = serde_json::from_slice(&bs_bytes)
         .with_context(|| format!("blockstate {block}: json parse"))?;
@@ -509,8 +562,20 @@ fn resolve_block(
         .trim_start_matches("minecraft:")
         .to_string();
 
-    let model = load_model_chain(archive, &model_ref)
-        .with_context(|| format!("block {block}: model chain {model_ref}"))?;
+    full_cube_faces(archive, &model_ref).with_context(|| format!("block {block}: model chain {model_ref}"))
+}
+
+/// The full-cube face walk ONE resolved model wears (the generic
+/// resolve_block's own tail, extracted so the furnace rows' variant
+/// selection shares the exact walk): the first element defining all six
+/// faces answers, each face's texture ref the merged texture map
+/// resolves, the tintindex the tinted verdict keeps.
+fn full_cube_faces(
+    archive: &mut ZipArchive<std::io::Cursor<&[u8]>>,
+    model_ref: &str,
+) -> Result<[ResolvedFace; 6]> {
+    let model = load_model_chain(archive, model_ref)
+        .with_context(|| format!("model chain {model_ref}"))?;
 
     // Find the first element that defines all six faces (full cube).
     let elements = model
@@ -2224,6 +2289,11 @@ mod tests {
         // factor 0.4 + jump factor 0.5 rows' first palette-native consumer
         // (the two-element model the element walk resolves)
         assert_eq!(RUNTIME_PALETTE[78], "honey_block");
+        // the furnace's own pair (the autopush-601 round): the smelter
+        // the facing=north rows resolve (block/furnace, the lit kind
+        // block/furnace_on the facing=north,lit=true row answers)
+        assert_eq!(RUNTIME_PALETTE[79], "furnace");
+        assert_eq!(RUNTIME_PALETTE[80], "furnace_lit");
         // the shared-row law the registry-name walk speaks: every
         // stage the BASE "cake" row the dig/drop/sound/item lanes keep
         let names = registry_names();

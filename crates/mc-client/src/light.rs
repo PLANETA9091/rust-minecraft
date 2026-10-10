@@ -120,6 +120,14 @@ fn emission(id: u16) -> u8 {
         // call banks: the soul flame the dimmer row the vanilla's
         // own two registrations speak)
         10
+    } else if id == FURNACE_LIT {
+        // THE LIT FURNACE'S OWN ROW (the autopush-601 round — javap
+        // the blocks clinit's furnace registration over the 26.2 jar:
+        // the `bipush 13; litBlockEmission(I)` lightLevel call the
+        // putstatic FURNACE walk pc 7188-7190 banks — the lit-state
+        // read the emission's own verdict keeps, the 13 the lit row's
+        // own answer, the UNLIT kind the dark 0 the else arm keeps)
+        13
     } else {
         0
     }
@@ -796,6 +804,29 @@ mod tests {
             "the soul campfire's own cell"
         );
         assert_eq!(light_at(&w, 15, 6, 3).1, Some(9), "one east of the soul");
+    }
+
+    #[test]
+    fn the_furnace_speaks_the_litblockemission_thirteen() {
+        // THE LIT FURNACE'S OWN ROW (the autopush-601 round — javap
+        // the blocks clinit's furnace registration over the 26.2 jar:
+        // the `bipush 13; litBlockEmission(I)` lightLevel call the
+        // putstatic FURNACE walk pc 7188-7190 banks — the lit-state
+        // read the emission's own verdict keeps, the UNLIT kind the
+        // dark 0 the else arm keeps, the flood's own spread the
+        // relight answers)
+        let mut w = empty_world();
+        w.set(3, 6, 3, FURNACE);
+        w.set(8, 6, 3, FURNACE_LIT);
+        w.relight();
+        assert_eq!(light_at(&w, 3, 6, 3).1, Some(0), "the unlit kind dark");
+        assert_eq!(
+            light_at(&w, 8, 6, 3).1,
+            Some(13),
+            "the lit furnace's own cell"
+        );
+        assert_eq!(light_at(&w, 9, 6, 3).1, Some(12), "one east of the flame");
+        assert_eq!(light_at(&w, 8, 7, 3).1, Some(12), "one above the flame");
     }
 
     #[test]

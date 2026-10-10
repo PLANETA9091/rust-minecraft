@@ -2223,6 +2223,38 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 atlas::LAVA_FLOW_FRAME0
                             }
+                        } else if crate::world::is_furnace(id) {
+                            // THE FURNACE'S OWN FRONT-TILE SWAP (the
+                            // autopush-601 round — the orientable model's
+                            // one textured direction the facing byte
+                            // rotates): the variant byte 1..=4 the
+                            // north/east/south/west order the blockstate's
+                            // y-rotation keeps (world_view's
+                            // furnace_variant decode, the materialize walk
+                            // stamps), the front tile (the FACE_TILES
+                            // row's north entry — the model's own
+                            // north=#front authoring) MOVES to the facing
+                            // direction's face index, the vacated north
+                            // slot the side tile wears (the three side
+                            // entries the same tile banks — east/west/
+                            // south symmetric, only the front travels).
+                            // The byte's no-opinion answer (the offline
+                            // scenes, the unpropertied state) the
+                            // north-facing default keeps — the blockstate's
+                            // own y=0 row the kind resolution banks. The
+                            // face-to-rotation law the leaf_litter path's
+                            // own theta walk speaks: facing=east (y=90)
+                            // the model's north face lands at +X (east).
+                            let facing = world.variant(wx, wy, wz);
+                            let front = atlas::FACE_TILES[id as usize][5];
+                            match face {
+                                0 if facing == 2 => front,  // east-facing: +X
+                                4 if facing == 3 => front,  // south-facing: +Z
+                                1 if facing == 4 => front,  // west-facing: -X
+                                5 if facing != 2 && facing != 3 && facing != 4 => front, // north (default)
+                                5 => atlas::FACE_TILES[id as usize][0], // the vacated north
+                                _ => atlas::FACE_TILES[id as usize][face],
+                            }
                         } else {
                             atlas::FACE_TILES[id as usize][face]
                         }
@@ -3942,6 +3974,104 @@ mod tests {
                 |quad| quad.pts[0][1] == 9.0 && quad.tile == atlas::TILE_FARMLAND_MOIST
             ),
             "the wet top the second fill wears"
+        );
+    }
+
+    #[test]
+    fn the_furnace_the_front_tile_the_facing_wears() {
+        // THE FURNACE'S OWN FRONT-TILE SWAP (the autopush-601 round —
+        // the orientable model's one textured direction the facing
+        // byte rotates: the variant 1..=4 the north/east/south/west
+        // order the blockstate's y-rotation keeps, the front tile the
+        // facing direction's face wears, the vacated north slot the
+        // side tile keeps; the byte's no-opinion answer the
+        // north-facing default the blockstate's own y=0 row banks)
+        let cell = |x: i32, y: i32, z: i32| {
+            (x as usize)
+                + (z as usize) * CHUNK_X
+                + (y as usize) * CHUNK_X * CHUNK_Z
+        };
+        let front = atlas::FACE_TILES[crate::world::FURNACE as usize][5];
+        let side = atlas::FACE_TILES[crate::world::FURNACE as usize][0];
+        let top = atlas::FACE_TILES[crate::world::FURNACE as usize][2];
+
+        // facing=east (the variant byte 2): the +X face the front
+        // wears, the vacated north (-Z) the side keeps, the top the
+        // top tile banks
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, crate::world::FURNACE);
+        let mut variants = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+        variants[0][cell(8, 8, 8)] = 2;
+        w.variants = Some(variants);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert!(
+            q.iter().any(|quad| quad.pts[0][0] == 9.0 && quad.tile == front),
+            "the east-facing front the +X face wears"
+        );
+        assert!(
+            q.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == side),
+            "the vacated north the side tile wears"
+        );
+        assert!(
+            q.iter().any(|quad| quad.pts[0][1] == 9.0 && quad.tile == top),
+            "the top the top tile keeps"
+        );
+        // exactly six quads: the full cube the generic path meshes
+        let furnace_quads = q
+            .iter()
+            .filter(|quad| {
+                quad.tile == front
+                    || quad.tile == side
+                    || quad.tile == top
+                    || quad.tile == atlas::FACE_TILES[crate::world::FURNACE as usize][3]
+            })
+            .count();
+        assert_eq!(furnace_quads, 6, "the lone cube's own six faces");
+
+        // the no-opinion byte: the north face the front wears (the
+        // default state the blockstate's y=0 row banks), the +X the
+        // side keeps
+        let mut w2 = empty_world();
+        put(&mut w2, 8, 8, 8, crate::world::FURNACE);
+        let q2 = mesh_chunk(&w2, 0, 0, None);
+        assert!(
+            q2.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == front),
+            "the north-facing front the -Z face wears"
+        );
+        assert!(
+            q2.iter().any(|quad| quad.pts[0][0] == 9.0 && quad.tile == side),
+            "the east side the side tile keeps"
+        );
+
+        // THE LIT KIND: the front_on tile the same north default wears
+        // (the FACE_TILES row's own north entry the lit kind banks)
+        let front_on = atlas::FACE_TILES[crate::world::FURNACE_LIT as usize][5];
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::FURNACE_LIT);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        assert!(
+            q3.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == front_on),
+            "the lit furnace's front_on the north face wears"
+        );
+        assert!(
+            !q3.iter().any(|quad| quad.tile == front),
+            "the lit kind the unlit front never wears"
+        );
+
+        // facing=south (the variant byte 3): the +Z face the front wears
+        let mut w4 = empty_world();
+        put(&mut w4, 8, 8, 8, crate::world::FURNACE);
+        let mut variants4 = vec![vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z]];
+        variants4[0][cell(8, 8, 8)] = 3;
+        w4.variants = Some(variants4);
+        let q4 = mesh_chunk(&w4, 0, 0, None);
+        assert!(
+            q4.iter().any(|quad| quad.pts[0][2] == 9.0 && quad.tile == front),
+            "the south-facing front the +Z face wears"
+        );
+        assert!(
+            q4.iter().any(|quad| quad.pts[0][2] == 8.0 && quad.tile == side),
+            "the vacated north the side tile keeps"
         );
     }
 

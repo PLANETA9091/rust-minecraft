@@ -45,9 +45,9 @@ use crate::math::Vec3;
 use crate::world::{
     BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
     COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
-    FIRE, GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES,
-    LIGHT_UNKNOWN, LOG, NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, SOUL_FIRE, STONE, TORCH,
-    WATER,
+    FIRE, FURNACE, FURNACE_LIT, GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE,
+    LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG, NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND,
+    SOUL_FIRE, STONE, TORCH, WATER,
 };
 use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -230,6 +230,17 @@ pub fn materialize(
                             variant
                         } else {
                             bubble_column_variant(id)
+                        };
+                        // the furnace's facing rides the SAME byte (the
+                        // leaf_litter family speaks 1..=16 on LEAF_LITTER
+                        // cells, the column 1/2 on WATER cells, the
+                        // furnace 1..=4 on FURNACE cells — the id gate
+                        // the readers keep is what keeps the three
+                        // vocabularies apart)
+                        let variant = if variant != 0 {
+                            variant
+                        } else {
+                            furnace_variant(id)
                         };
                         if variant != 0 {
                             variants[(gx + gz * side_i) as usize]
@@ -5109,6 +5120,39 @@ pub fn bubble_column_variant(id: u32) -> u8 {
     }
 }
 
+/// THE FURNACE'S OWN FACING BYTE (the state property the generated
+/// per-state table keeps — the same decode law [`leaf_litter_variant`]
+/// speaks): the furnace's one orientable property `facing` (the
+/// blockstate's y-rotation order north=0, east=1, south=2, west=3 —
+/// the SAME 1..=16 encoding [`leaf_litter_variant`] keeps, facing
+/// alone packs 1..=4), every other block — and any props string that
+/// fails to parse — the 0 no-opinion keeps: the mesher's north-facing
+/// default (the blockstate's own y=0 row the kind resolution banks).
+/// The LIT bit the mapper's kind split reads (furnace vs furnace_lit),
+/// never the byte — the two vocabularies the id gate keeps apart.
+pub fn furnace_variant(id: u32) -> u8 {
+    if mc_registry::generated::block_ids::block_name_of(id) != Some("minecraft:furnace") {
+        return 0;
+    }
+    let Some(props) = mc_registry::generated::block_ids::props_of(id) else {
+        return 0;
+    };
+    for pair in props.split(',') {
+        if let Some((k, v)) = pair.split_once('=') {
+            if k == "facing" {
+                return match v {
+                    "north" => 1,
+                    "east" => 2,
+                    "south" => 3,
+                    "west" => 4,
+                    _ => 0,
+                };
+            }
+        }
+    }
+    0
+}
+
 /// The column's own variant at a world cell — the TWO vocabularies the
 /// grid holds: the offline terrain's REAL ids the props decode names
 /// (the 15294/15295 walk above — 1 = the whirlpool, 2 = the upward),
@@ -5195,6 +5239,23 @@ pub fn runtime_mapper(id: u32) -> u16 {
         // bank), the collision the Empty row keeps
         Some("minecraft:fire") => FIRE,
         Some("minecraft:soul_fire") => SOUL_FIRE,
+        // THE FURNACE'S OWN ARMS (the autopush-601 round — the wire
+        // world's own furnaces the server's chunks stream, the
+        // generated block_ids rows the state ids resolve): the LIT bit
+        // the state's own property the kind split reads (the burning
+        // furnace the FURNACE_LIT kind the smelt lane's own product
+        // wears, the emission's 13 the light.rs row banks), the FACING
+        // property the variant byte carries (see [`furnace_variant`]),
+        // the full-cube collision the default arm keeps
+        Some("minecraft:furnace") => {
+            let lit = mc_registry::generated::block_ids::props_of(id)
+                .is_some_and(|p| p.split(',').any(|kv| kv == "lit=true"));
+            if lit {
+                FURNACE_LIT
+            } else {
+                FURNACE
+            }
+        }
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }
@@ -5259,6 +5320,25 @@ mod tests {
         let mut entries = vec![0u32; 4096];
         entries[idx(2, 3, 4)] = 15294;
         entries[idx(5, 7, 6)] = 15295;
+        let mut s = Vec::new();
+        s.extend_from_slice(&2i16.to_be_bytes());
+        s.push(15); // direct: global ids, no palette
+        s.extend_from_slice(&mc_protocol::pack_entries(&entries, 15));
+        s.push(0); // biomes: single valued
+        write_varint(&mut s, 1);
+        parse_one_section(s)
+    }
+
+    /// One section whose block states ride the DIRECT palette (15 bits:
+    /// the entries ARE the global state ids — vanilla's own encoding for
+    /// big palettes). The furnace's own pair: the default state 5328
+    /// (north, lit=false) at (2,3,4), the lit east state 5333 at (5,7,6)
+    /// — the facing byte's and the lit bit's own decode input.
+    fn furnace_section() -> mc_protocol::ChunkSection {
+        let idx = |x: usize, y: usize, z: usize| (y << 8) | (z << 4) | x;
+        let mut entries = vec![0u32; 4096];
+        entries[idx(2, 3, 4)] = 5328;
+        entries[idx(5, 7, 6)] = 5333;
         let mut s = Vec::new();
         s.extend_from_slice(&2i16.to_be_bytes());
         s.push(15); // direct: global ids, no palette
@@ -7161,6 +7241,59 @@ mod tests {
         assert_eq!(runtime_mapper(15294), WATER, "drag=true");
         assert_eq!(runtime_mapper(15295), WATER, "drag=false");
         assert_eq!(runtime_mapper(15296), AIR, "past the pair: polished_granite_stairs");
+    }
+
+    #[test]
+    fn furnace_variant_decodes_the_real_state_ids() {
+        // the generated table's real ids (5327..=5334, the furnace's
+        // whole state ladder): facing OUTER (north, south, west, east —
+        // the registry order) x lit INNER; the packing is 1 + facing
+        // with the blockstate's y-rotation order
+        // north/east/south/west = 0..=3, the LIT bit the byte never
+        // carries (the mapper's kind split reads it)
+        assert_eq!(furnace_variant(5327), 1, "north, lit=true");
+        assert_eq!(furnace_variant(5328), 1, "north, lit=false (the default)");
+        assert_eq!(furnace_variant(5329), 3, "south, lit=true");
+        assert_eq!(furnace_variant(5330), 3, "south, lit=false");
+        assert_eq!(furnace_variant(5331), 4, "west, lit=true");
+        assert_eq!(furnace_variant(5332), 4, "west, lit=false");
+        assert_eq!(furnace_variant(5333), 2, "east, lit=true");
+        assert_eq!(furnace_variant(5334), 2, "east, lit=false");
+        // outside the block: the no-opinion byte
+        assert_eq!(furnace_variant(1), 0, "stone");
+        assert_eq!(furnace_variant(0), 0, "air");
+    }
+
+    #[test]
+    fn runtime_mapper_splits_the_furnace_kinds_the_lit_bit_reads() {
+        // the furnace's own arms (the autopush-601 round): the LIT bit
+        // the state's own property the kind split reads — the burning
+        // furnace the FURNACE_LIT kind the emission's 13 banks, the
+        // unlit the FURNACE kind the world's own furnaces land through
+        assert_eq!(runtime_mapper(5328), FURNACE, "north+unlit, the default state");
+        assert_eq!(runtime_mapper(5330), FURNACE, "south+unlit");
+        assert_eq!(runtime_mapper(5327), FURNACE_LIT, "north+lit");
+        assert_eq!(runtime_mapper(5333), FURNACE_LIT, "east+lit");
+    }
+
+    #[test]
+    fn materialize_decodes_the_furnace_facing_into_the_grid() {
+        let mut m = WorldModel::new();
+        m.apply(PlayEvent::Chunk(ChunkColumn {
+            x: 0,
+            z: 0,
+            sections: vec![furnace_section()],
+            light: ChunkLight::default(),
+        }));
+        let world = materialize(&m, (0, 0), 1, 0, runtime_mapper);
+        assert_eq!(world.get(2, 3, 4), FURNACE, "the unlit kind through the mapper");
+        assert_eq!(world.get(5, 7, 6), FURNACE_LIT, "the lit kind through the mapper");
+        let idx = |x: usize, y: usize, z: usize| x + z * CHUNK_X + y * CHUNK_X * CHUNK_Z;
+        let variants = world.variants.as_ref().expect("materialize always builds it");
+        assert_eq!(variants[0][idx(2, 3, 4)], 1, "the north facing the byte 1 banks");
+        assert_eq!(variants[0][idx(5, 7, 6)], 2, "the east facing the byte 2 banks");
+        // every other cell: the no-opinion byte
+        assert_eq!(variants[0][0], 0, "air carries none");
     }
 
     #[test]
