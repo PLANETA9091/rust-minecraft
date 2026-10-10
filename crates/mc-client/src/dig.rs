@@ -290,15 +290,34 @@ impl DigState {
 
     /// `Item.getDestroySpeed` = the TOOL component's `getMiningSpeed`
     /// walk (javap — the first matching rule's speed freturn, the
-    /// unmatched state the `defaultMiningSpeed` 1.0 keeps): the held
-    /// tool's class the block's own mineable class answers — the
+    /// unmatched state the `defaultMiningSpeed` 1.0 keeps): the shears'
+    /// own rule rows the generated table keeps (the cobweb 15.0, the
+    /// leaves 15.0, the wool 5.0, the lichen+vine 2.0 — javap
+    /// ShearsItem.createToolProperties the rule List.of arms), then the
+    /// held tool's class the block's own mineable class answers — the
     /// matching pair the material's speed wears, every other pair the
     /// 1.0 default keeps (the bare hand included).
     pub fn held_destroy_speed(kind: u16, held: Option<i32>) -> f32 {
+        // THE SHEARS' OWN RULES (the first matching rule the component
+        // walk keeps — the speed the row wears, the unmatched block the
+        // 1.0 default rides)
+        if Self::held_is_shears(held) {
+            let name = crate::world::NAME_OF[kind as usize];
+            return mc_registry::generated::block_shears::shears_rule(name)
+                .map(|(speed, _)| speed)
+                .unwrap_or(1.0);
+        }
         match (Self::block_tool_class(kind), Self::held_tool_class(held)) {
             (Some(bc), Some(hc)) if bc == hc => Self::held_material_speed(held),
             _ => 1.0,
         }
+    }
+
+    /// The held stack's own shears verdict (the name the wire order
+    /// resolves — the plain `shears` item the ShearsItem ctor keeps).
+    pub fn held_is_shears(held: Option<i32>) -> bool {
+        held.and_then(|id| mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize))
+            == Some(&"shears")
     }
 
     /// `hasCorrectToolForDrops` with the held tool's own belief (javap
@@ -306,15 +325,26 @@ impl DigState {
     /// `ItemStack.isCorrectToolForDrops` verdict answers, the
     /// undemanding block the iconst_1 true arm keeps): the TOOL
     /// component's `isCorrectForDrops` rule the mineable class match
-    /// speaks — the demanding block the matching tool the 30-divisor
-    /// path earns, the bare hand (and the wrong class) the false the
-    /// 100-divisor wears. No tool data feeds the client's stacks
-    /// BEYOND the name — the enchant/efficiency lanes the honest
-    /// absence keeps.
+    /// speaks — the shears' own verdicts the generated table's
+    /// correct flags keep (the cobweb's TRUE the minesAndDrops arm
+    /// wears — the web the shears alone harvests, the overrideSpeed
+    /// rules the no-verdict False keep), the demanding block the
+    /// matching tool the 30-divisor path earns, the bare hand (and
+    /// the wrong class) the false the 100-divisor wears. No tool data
+    /// feeds the client's stacks BEYOND the name — the
+    /// enchant/efficiency lanes the honest absence keeps.
     pub fn correct_tool(kind: u16, held: Option<i32>) -> bool {
         let (_, requires_tool) = Self::block_dig_row(kind);
         if !requires_tool {
             return true;
+        }
+        // THE SHEARS' OWN VERDICTS (the cobweb's TRUE the
+        // minesAndDrops rule wears, the no-row block the false keeps)
+        if Self::held_is_shears(held) {
+            let name = crate::world::NAME_OF[kind as usize];
+            return mc_registry::generated::block_shears::shears_rule(name)
+                .map(|(_, correct)| correct)
+                .unwrap_or(false);
         }
         match (Self::block_tool_class(kind), Self::held_tool_class(held)) {
             (Some(bc), Some(hc)) => bc == hc,
@@ -1202,6 +1232,76 @@ mod tests {
         let mut d = DigState::new();
         let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the stone breaks as ever");
+    }
+
+    /// THE SHEARS' OWN RULES (javap ShearsItem.createToolProperties —
+    /// the cobweb minesAndDrops(15.0) direct rule, the leaves 15.0 /
+    /// wool 5.0 / lichen+vine 2.0 overrideSpeed rows, the unmatched
+    /// block the defaultMiningSpeed 1.0 keeps): the generated table's
+    /// own rows the registry test pins, the palette-reachable lane the
+    /// oak_leaves kind speaks — the shears the ×15.0 seed the leaves'
+    /// per-tick damage wears (the pickaxe the class mismatch keeps at
+    /// the 1.0), the demanding stone the shears' no-row refusal
+    /// wears, the insta-strip the START press completes (the 15/0.2/30
+    /// = 2.5 progress the press's own completion branch fires).
+    #[test]
+    fn the_shears_the_rules_the_speed_wears() {
+        use mc_registry::generated::block_shears::shears_rule;
+        let shears = wire_id("shears");
+        // THE NAME'S OWN VERDICT
+        assert!(DigState::held_is_shears(Some(shears)), "the shears the verdict wears");
+        assert!(
+            !DigState::held_is_shears(Some(wire_id("iron_pickaxe"))),
+            "the pickaxe the shears verdict refuses"
+        );
+        assert!(!DigState::held_is_shears(None), "the bare hand the shears verdict refuses");
+        // THE TABLE'S OWN ROWS (the palette-unreachable blocks the fn
+        // speaks — the cobweb's TRUE the minesAndDrops arm keeps)
+        assert_eq!(shears_rule("cobweb"), Some((15.0, true)), "the web the drops TRUE wears");
+        assert_eq!(shears_rule("oak_leaves"), Some((15.0, false)));
+        assert_eq!(shears_rule("white_wool"), Some((5.0, false)));
+        assert_eq!(shears_rule("glow_lichen"), Some((2.0, false)));
+        assert_eq!(shears_rule("vine"), Some((2.0, false)));
+        assert_eq!(shears_rule("stone"), None, "the stone the shears rules never carry");
+        // THE SEED (the palette-reachable lane: the leaves kind)
+        let leaves = crate::world::LEAVES;
+        assert_eq!(
+            DigState::held_destroy_speed(leaves, Some(shears)),
+            15.0,
+            "the shears the leaves' 15.0 wears"
+        );
+        assert_eq!(
+            DigState::held_destroy_speed(leaves, Some(iron_pickaxe_id())),
+            1.0,
+            "the pickaxe the class mismatch keeps at the 1.0"
+        );
+        assert_eq!(
+            DigState::held_destroy_speed(crate::world::STONE, Some(shears)),
+            1.0,
+            "the stone the shears' default keeps"
+        );
+        // THE VERDICT (the demanding stone the shears refuse, the
+        // undemanding leaves the early true arm keeps)
+        assert!(
+            !DigState::correct_tool(crate::world::STONE, Some(shears)),
+            "the stone the shears' no-row refusal wears"
+        );
+        assert!(
+            DigState::correct_tool(leaves, Some(shears)),
+            "the leaves the undemanding true arm keeps"
+        );
+        // THE INSTA-STRIP (the START press the 2.5 progress completes)
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::LEAVES);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (1, 1, 1), 1, Some(shears), &mut world, true, false, false, false, None, None,
+        );
+        assert_eq!(
+            world.get(1, 1, 1),
+            crate::world::AIR,
+            "the shears the leaves insta-strip"
+        );
     }
 
     /// THE TOOL'S OWN ROWS (the name suffix the class lanes keep + the
