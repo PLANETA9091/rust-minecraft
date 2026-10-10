@@ -139,6 +139,13 @@ fn is_transparent(kind: u16) -> bool {
         // two-element model the honey arm's own translucent quads
         // render)
         || kind == crate::world::HONEY_BLOCK
+        // THE PORTAL the same verdict keeps (the autopush-605 round —
+        // the blocks clinit's noCollision() pc 11091 the NETHER_PORTAL
+        // registration speaks: the non-occluding plane the neighbors'
+        // faces draw against, the AO the opaque walk never casts, the
+        // thin-plane models the portal arm's own translucent quads
+        // render)
+        || kind == crate::world::NETHER_PORTAL
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -1612,6 +1619,178 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE PORTAL'S OWN ELEMENT LANE (the autopush-605 round
+                // — the dimension gate finally RENDERS). The axis
+                // verdict the NEIGHBOR reads derive (javap
+                // NetherPortalBlock.animateTick pc 190-217 the same
+                // short-circuit the sampler arm speaks: the west/east
+                // portal pair the X-EXTENDING gate answers) — the
+                // blockstates' own axis vocabulary the kind-only
+                // palette never stores, the plane's own thin axis the
+                // gate's neighbors answer: the x-extending gate the ns
+                // model's thin-in-Z plane [0,0,6]->[16,16,10] wears,
+                // the else arm the ew model's thin-in-X plane
+                // [6,0,0]->[10,16,16] keeps. The TWO faces each
+                // element carries the #portal ref (the merged texture
+                // map block/nether_portal resolves — the strip's
+                // FRAME0 base the draw-time remap animates, the
+                // 32-frame sequential playlist the mcmeta's empty
+                // animation wears). The texels' PARTIAL alpha (the
+                // PNG's own alpha map the 120-distinct-value noise
+                // speaks) the per-texel translucent arm composites
+                // (the vanilla translucent layer's SRC_ALPHA /
+                // ONE_MINUS_SRC_ALPHA fold — the honey lane's own
+                // verdict). The elements carry `shade: true` — the
+                // FACE_SHADE term the cube path's own table wears (up
+                // 1.0, down 0.5, the four horizontals 0.8/0.6), the
+                // cullfaces the elements never carry (the walk the
+                // None arms skips — the neighbors' faces the
+                // non-occluding verdict draws), the cell's own light
+                // every corner samples (no AO diagonals — the same
+                // withoutAO fold the element lanes keep).
+                if id == crate::world::NETHER_PORTAL {
+                    let x_extending = world.get(wx - 1, wy, wz) == crate::world::NETHER_PORTAL
+                        || world.get(wx + 1, wy, wz) == crate::world::NETHER_PORTAL;
+                    let model_id = if x_extending {
+                        "block/nether_portal_ns"
+                    } else {
+                        "block/nether_portal_ew"
+                    };
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // the kind's own FACE_TILES row — the unknown ref's
+                    // fallback (the portal ref the palette row banks —
+                    // the resolved texture verdict the strip base
+                    // duplicates)
+                    let fallback_tile = if (id as usize) < atlas::N_KINDS {
+                        atlas::FACE_TILES[id as usize][2]
+                    } else {
+                        atlas::TILE_NONE
+                    };
+                    let base = if fallback_tile == atlas::TILE_NONE {
+                        crate::colors::palette_color(id, 2)
+                            .or_else(|| lut.and_then(|l| l.color(id, 2)))
+                            .unwrap_or_else(|| default_color(id, 2))
+                    } else {
+                        [1.0; 3]
+                    };
+                    for q in portal_model_quads(model_id) {
+                        // THE SIX-DIRECTION CULLFACE VERDICT — the
+                        // elements' own None rows the walk skips (the
+                        // campfire lane's general verdict the portal's
+                        // cullface-less faces never consults)
+                        if let Some(dir) = q.cullface {
+                            let (dx, dy, dz) = match dir {
+                                mc_registry::element_quads::Direction::Down => (0, -1, 0),
+                                mc_registry::element_quads::Direction::Up => (0, 1, 0),
+                                mc_registry::element_quads::Direction::North => (0, 0, -1),
+                                mc_registry::element_quads::Direction::South => (0, 0, 1),
+                                mc_registry::element_quads::Direction::West => (-1, 0, 0),
+                                mc_registry::element_quads::Direction::East => (1, 0, 0),
+                            };
+                            if !is_transparent(world.get(wx + dx, wy + dy, wz + dz)) {
+                                continue;
+                            }
+                        }
+                        // THE PER-QUAD TEXTURE VERDICT — the #portal
+                        // ref the strip's FRAME0 base answers (the
+                        // unknown ref the kind's own row keeps)
+                        let tex_stem = q
+                            .texture
+                            .trim_start_matches("minecraft:")
+                            .trim_start_matches("block/");
+                        let tile = match tex_stem {
+                            "nether_portal" => atlas::NETHER_PORTAL_FRAME0,
+                            _ => fallback_tile,
+                        };
+                        // THE SHADE TERM'S OWN READ — the model's
+                        // shade:true element the direction table answers
+                        let face_shade = if q.shade {
+                            match q.direction {
+                                mc_registry::element_quads::Direction::Up => 1.0f32,
+                                mc_registry::element_quads::Direction::Down => 0.5,
+                                mc_registry::element_quads::Direction::North
+                                | mc_registry::element_quads::Direction::South => 0.8,
+                                mc_registry::element_quads::Direction::West
+                                | mc_registry::element_quads::Direction::East => 0.6,
+                            }
+                        } else {
+                            1.0
+                        };
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut colors = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, v) in q.vertices.iter().enumerate() {
+                            pts[i] = [
+                                wx as f32 + v[0],
+                                wy as f32 + v[1],
+                                wz as f32 + v[2],
+                            ];
+                            uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                            let lm = lightmap_combine(
+                                cell_sky,
+                                cell_block,
+                                sky_factor,
+                                sky_tint,
+                                ambient,
+                                block_tint,
+                                night_vision,
+                                world.night_vision_factor,
+                                world.darkness_scale,
+                            );
+                            colors[i] = [
+                                base[0] * lm[0] * face_shade,
+                                base[1] * lm[1] * face_shade,
+                                base[2] * lm[2] * face_shade,
+                            ];
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors,
+                            uvs,
+                            tile,
+                            translucent: true,
+                            per_texel_alpha: true,
+                        });
+                    }
+                    continue;
+                }
                 // THE CANDLE CAKE PAIR'S OWN ELEMENT LANE (the
                 // autopush-523 round — the canLight consult's third row
                 // finally RENDERS). blockstates/candle_cake.json's two
@@ -2479,6 +2658,36 @@ fn campfire_model_quads(model_id: &str) -> &'static [mc_registry::element_quads:
         std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
     > = std::sync::OnceLock::new();
     let models = ["block/campfire_off", "block/campfire", "block/soul_campfire"];
+    let map = QUADS.get_or_init(|| {
+        models
+            .into_iter()
+            .map(|m| {
+                (
+                    m,
+                    mc_registry::element_quads::derive_model_inherited(m).unwrap_or_default(),
+                )
+            })
+            .collect()
+    });
+    map.get(model_id).map(|v| v.as_slice()).unwrap_or(&[])
+}
+
+/// THE PORTAL'S OWN MODEL BAKES — the block/nether_portal_ns and
+/// block/nether_portal_ew chains the registry's derive walk resolves
+/// (the campfire lane's own cache pattern): BOTH the standalone
+/// one-element models the blockstates axis variants name (the ns the
+/// axis=x row — the thin-in-Z plane [0,0,6]->[16,16,10] the
+/// west/east-portal verdict wears, the ew the axis=z row — the
+/// thin-in-X plane [6,0,0]->[10,16,16]), the TWO faces each element
+/// carries the #portal ref (block/nether_portal the merged texture
+/// map resolves — the strip's per-quad verdict the FRAME0 base
+/// answers). The failed derive the honest empty slice keeps (the
+/// portal the nothing renders).
+fn portal_model_quads(model_id: &str) -> &'static [mc_registry::element_quads::Quad] {
+    static QUADS: std::sync::OnceLock<
+        std::collections::HashMap<&'static str, Vec<mc_registry::element_quads::Quad>>,
+    > = std::sync::OnceLock::new();
+    let models = ["block/nether_portal_ns", "block/nether_portal_ew"];
     let map = QUADS.get_or_init(|| {
         models
             .into_iter()

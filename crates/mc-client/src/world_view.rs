@@ -47,8 +47,8 @@ use crate::world::{
     BLAST_FURNACE_LIT, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE,
     DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, FIRE, FURNACE, FURNACE_LIT, GOLD_ORE,
     GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
-    NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, SMOKER, SMOKER_LIT, SOUL_FIRE, STONE, TORCH,
-    WATER,
+    NETHER_PORTAL, NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, SMOKER, SMOKER_LIT, SOUL_FIRE,
+    STONE, TORCH, WATER,
 };
 use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -5478,6 +5478,18 @@ pub fn runtime_mapper(id: u32) -> u16 {
                 SMOKER
             }
         }
+        // THE PORTAL'S OWN ARM (the autopush-605 round — the wire
+        // world's own gates the server's chunks stream, the generated
+        // block_ids row the state ids resolve [7017..=7019, the axis
+        // property's two states the range keeps]): the ONE kind the
+        // every-state verdict wears (the LIT-style split the kind
+        // never speaks — the axis property the blockstate's own
+        // vocabulary the NEIGHBOR reads derive, the mesher's
+        // x-extending walk the same short-circuit the animate arm
+        // speaks, the mapper the property the kind-only palette never
+        // stores), the collision the Empty row keeps, the emission-11
+        // the light grid paints
+        Some("minecraft:nether_portal") => NETHER_PORTAL,
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }

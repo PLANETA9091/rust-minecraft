@@ -720,6 +720,31 @@ pub const SMOKER: u16 = 83;
 /// banks, "block.smoker.smoke" the registration name carries).
 pub const SMOKER_LIT: u16 = 84;
 
+/// Kind 85: THE NETHER PORTAL — the dimension gate's own kind (javap
+/// Blocks clinit pc 11083-11126 over the 26.2 jar: register(
+/// ResourceKey, lambda$static$218, Properties.of() — the FACTORY
+/// register the BlockItemIds register overload never wears, the
+/// NO-ITEM block the vanilla itself refuses to grant). The props
+/// chain the walk speaks: noCollision() pc 11091 the pass-through
+/// collision row keeps, randomTicks() pc 11094, strength(-1.0f)
+/// pc 11097-11100 the unbreakable -1 the dig row's own instabreak
+/// the generated table banks, sound(SoundType.GLASS) pc 11103-11106
+/// the glass sounds' rows the NAME_OF row wires, the lightLevel
+/// lambda the bootstrap #219 walk answers — lambda$static$143 the
+/// `bipush 11; ireturn` the portal's own emission-11 row banks (the
+/// purple glow the light grid paints), pushReaction(BLOCK) pc
+/// 11117-11120. The blockstates nether_portal.json's axis variants
+/// resolve (axis=x -> block/nether_portal_ns — the thin-in-Z plane
+/// the X-EXTENDING gate the west/east neighbors' own verdict
+/// derives; axis=z -> block/nether_portal_ew the thin-in-X plane),
+/// the element tables both models bank (the #portal ref the
+/// block/nether_portal animated strip answers — the 32-frame
+/// sequential strip the mcmeta's empty animation wears), the mesher's
+/// axis lane the neighbor reads the same walk the animate arm
+/// speaks. The ANIMATE-TICK LANE the sampler's own arm serves (javap
+/// NetherPortalBlock.animateTick over the 26.2 jar — the walk below).
+pub const NETHER_PORTAL: u16 = 85;
+
 /// THE FURNACE'S OWN FAMILY — the two kinds the palette row wakes
 /// (the unlit kind the wire world's own furnaces land through, the
 /// lit kind the burning state's own product the block updates wear):
@@ -767,7 +792,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 85] = [
+pub const NAME_OF: [&str; 86] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -901,6 +926,16 @@ pub const NAME_OF: [&str; 85] = [
     // place)
     "blast_furnace", "blast_furnace",
     "smoker", "smoker",
+    // THE PORTAL'S OWN ROW (the autopush-605 round): the gate the
+    // dig row (the strength(-1.0f) pc 11097 the clinit arm speaks —
+    // the unbreakable -1 the generated table's own row banks), the
+    // drops table (the NOTHING the no-loot block the vanilla keeps),
+    // the sounds' GLASS row (sound(SoundType.GLASS) pc 11103 the
+    // registration speaks) and NO item id the vanilla itself grants
+    // (the FACTORY register walk carries NO BlockItemId — the place-
+    // able lookup the vanilla itself refuses, the frame-lighting
+    // scan a future round keeps)
+    "nether_portal",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -1347,6 +1382,12 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // the placement-obstruction refusal the coarse fold never
         // wears — the documented gap the small-shape family keeps)
         || is_candle(id)
+        // THE PORTAL'S OWN ROW (the autopush-605 round — the blocks
+        // clinit's noCollision() pc 11091 the NETHER_PORTAL
+        // registration speaks — the body walks THROUGH the gate the
+        // dimension-change walk a future round serves, the placement's
+        // obstruction the empty shape never refuses)
+        || id == NETHER_PORTAL
     {
         CollisionShape::Empty
     } else if id == FARMLAND || id == DIRT_PATH {
@@ -1589,6 +1630,109 @@ pub fn fire_animate_tick(
         pitch,
         smokes,
     }
+}
+
+/// THE PORTAL'S OWN ANIMATE-TICK VERDICT (javap `NetherPortalBlock.
+/// animateTick` over the 26.2 jar — the block display tick's own lane
+/// the doAnimateTick sampler feeds, the purple particles + the
+/// 1-in-100 ambient voice the gate cells speak). THE SOUND ARM pc
+/// 0-67: the `nextInt(100) == 0` gate the draw ALWAYS spends, the
+/// playLocalSound(x+0.5, y+0.5, z+0.5, PORTAL_AMBIENT, BLOCKS, 0.5f,
+/// nextFloat() * 0.4f + 0.8f, false) tail the ONE float the passing
+/// body alone keeps (the volume the `ldc_w 0.5f` FIXED arg the no-
+/// draw law keeps; the pitch the `nextFloat() * 0.4f + 0.8f` fold
+/// pc 49-63 the [0.8, 1.2) band wears; the pc 9 ifne 68 jump the
+/// failed gate past speaks — no float the failed gate spends),
+/// 'block.portal.ambient' the SoundEvents ldc pc 5454-ish banks.
+/// THE PARTICLE ARM pc 68-318: the FOUR iterations NO gate keeps,
+/// per iteration the SEVEN-OR-EIGHT draw walk — the base trio the
+/// three nextDouble draws speak (d6 = x + d, d8 = y + d, d10 = z +
+/// d the raw cell folds), the velocity trio the THREE nextFloat
+/// draws wear (d12/d14/d16 = (nextFloat - 0.5) * 0.5 each — the
+/// dsub/dmul pair the ±0.25 band folds), the ±1 pick the
+/// `nextInt(2) * 2 - 1` fold pc 176-188 keeps, then the NEIGHBOR
+/// arm's ONE replacement draw: the west/east-portal verdict (the
+/// `getBlockState(pos.west()).is(this) || getBlockState(pos.east())
+/// .is(this)` short-circuit pc 190-217 — the X-EXTENDING gate the
+/// plane's own thin axis answers) TRUE the z-arm takes (pc 220-253:
+/// d10 = z + 0.5 + 0.25 * i18 the snapped z the thin-in-Z plane's
+/// own mid-band keeps, d16 = nextFloat() * 2.0f * i18 the OUT-OF-
+/// PLANE push the NO-centering fold speaks), FALSE the x-arm keeps
+/// (pc 258-291: d6 = x + 0.5 + 0.25 * i18, d12 = nextFloat() *
+/// 2.0f * i18 — the SAME folds the other thin axis serves). The
+/// addParticle(PORTAL, d6, d8, d10, d12, d14, d16) tail the verdict's
+/// own sextet carries (the ctor's plain stores the velocities
+/// verbatim keep — PortalParticle's own spread the recompute never
+/// folds). The `body` stream the block's own draws ride (the
+/// doAnimateTick's thread-local the stand-in serves); the returned
+/// offsets/speeds RELATIVE to the portal cell's origin (the
+/// addParticle args the caller's cell folds), the ctor chains the
+/// caller's own level stream feeds (the sampler rounds' established
+/// policy).
+pub struct PortalAnimateTick {
+    /// the 1/100 gate's own answer — the voice the caller plays
+    pub sound: bool,
+    /// `nextFloat() * 0.4f + 0.8f` the pitch the passing gate folds
+    /// (0.0 the failed gate never speaks; the volume the FIXED 0.5
+    /// the caller's own constant keeps)
+    pub pitch: f32,
+    /// the PORTAL particle births, `(dx, dy, dz, vx, vy, vz)`
+    /// relative to the cell origin — four the no-gate arm always
+    /// keeps, the bytecode's own order
+    pub purples: Vec<(f64, f64, f64, f64, f64, f64)>,
+}
+
+pub fn portal_animate_tick(
+    west_portal: bool,
+    east_portal: bool,
+    body: &mut crate::drops::Lcg,
+) -> PortalAnimateTick {
+    // THE SOUND ARM (pc 0-67): the gate the draw always spends, the
+    // one float the passing body alone keeps (the volume the FIXED
+    // 0.5f arg the caller's own constant keeps)
+    let sound = body.next_int(100) == 0;
+    let pitch = if sound {
+        body.next_f32() * 0.4 + 0.8
+    } else {
+        0.0
+    };
+    let mut purples = Vec::new();
+    // THE PARTICLE ARM (pc 68-318): the four iterations the no-gate
+    // walk keeps — per iteration the base trio + the velocity trio +
+    // the ±1 pick + the arm's own replacement draw the bytecode's
+    // order speaks
+    for _ in 0..4 {
+        let dx = body.next_f64();
+        let dy = body.next_f64();
+        let dz = body.next_f64();
+        // the f2d FIRST the dsub/dmul pair keeps (the vanilla fold the
+        // double-space widening wears — the f32-space subtract a
+        // 25-bit mantissa the rounding error invents)
+        let vx = (f64::from(body.next_f32()) - 0.5) * 0.5;
+        let vy = (f64::from(body.next_f32()) - 0.5) * 0.5;
+        let vz = (f64::from(body.next_f32()) - 0.5) * 0.5;
+        // THE ±1 PICK (pc 176-188): `nextInt(2) * 2 - 1` the fold
+        let pick = body.next_int(2) as i64 * 2 - 1;
+        let pick = pick as f64;
+        if west_portal || east_portal {
+            // THE X-EXTENDING ARM (pc 220-253): the z snapped to the
+            // plane's own mid-band, the vz the out-of-plane push
+            // carries (the fconst_2 fmul + i2f fmul the f32-space
+            // chain the f2d widening TAILS — the folded f32 pair the
+            // exact half picks keep)
+            let rz = 0.5 + 0.25 * pick;
+            let vz = f64::from(body.next_f32() * 2.0f32 * pick as f32);
+            purples.push((dx, dy, rz, vx, vy, vz));
+        } else {
+            // THE Z-EXTENDING ARM (pc 258-291): the x snapped, the vx
+            // the out-of-plane push carries (the same f32-space chain
+            // the f2d widening tails)
+            let rx = 0.5 + 0.25 * pick;
+            let vx = f64::from(body.next_f32() * 2.0f32 * pick as f32);
+            purples.push((rx, dy, dz, vx, vy, vz));
+        }
+    }
+    PortalAnimateTick { sound, pitch, purples }
 }
 
 /// THE FIRE KINDS' OWN FAMILY — the two kinds the placement's igniter
@@ -4235,6 +4379,147 @@ mod tests {
         assert!(
             (rate - 1.0 / 24.0).abs() < 0.02,
             "the gate rate {} the 1/24 odds keep",
+            rate
+        );
+    }
+
+    /// THE PORTAL'S OWN ANIMATE VERDICT (javap `NetherPortalBlock.
+    /// animateTick` over the 26.2 jar): the 1/100 sound gate the FIXED
+    /// 0.5 volume + the [0.8, 1.2) pitch band the passing body keeps,
+    /// the four-iteration particle arm the base trio + the velocity
+    /// trio + the ±1 pick + the neighbor arm's replacement draw the
+    /// exact folds pin, the draw parity the streams' own advance keeps.
+    #[test]
+    fn the_portal_animate_tick_the_arms_the_folds_wear() {
+        // THE X-EXTENDING ARM (the west neighbor the gate's own answer
+        // wears): the FOUR purples the no-gate arm keeps — the z the
+        // 0.5 + 0.25*±1 snap folds, the vz the nextFloat*2*±1 the
+        // out-of-plane push carries, the x/y the raw doubles speak
+        let mut body = crate::drops::Lcg::new(0xF117_F30);
+        let mut v = portal_animate_tick(true, false, &mut body);
+        assert_eq!(v.purples.len(), 4, "the four iterations the arm keeps");
+        let mut mirror = crate::drops::Lcg::new(0xF117_F30);
+        let gate = mirror.next_int(100) == 0;
+        assert_eq!(v.sound, gate, "the 1/100 gate the draw speaks");
+        if gate {
+            let pitch = mirror.next_f32() * 0.4 + 0.8;
+            assert_eq!(v.pitch, pitch, "the pitch the f*0.4+0.8 fold keeps");
+        }
+        for _ in 0..4 {
+            let dx = mirror.next_f64();
+            let dy = mirror.next_f64();
+            let _dz = mirror.next_f64();
+            let vx = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let vy = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let _vz = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let pick = mirror.next_int(2) as i64 * 2 - 1;
+            let pick = pick as f64;
+            let rvz = f64::from(mirror.next_f32() * 2.0f32 * pick as f32);
+            let expect = (dx, dy, 0.5 + 0.25 * pick, vx, vy, rvz);
+            assert_eq!(
+                v.purples.remove(0), expect,
+                "the x-arm fold (x+d, y+d, z+0.5+0.25*±1, vx, vy, r*2*±1) the bytecode speaks"
+            );
+        }
+        // THE Z-EXTENDING ARM (no portal neighbors the else lane wears):
+        // the x the 0.5 + 0.25*±1 snap folds, the vx the replacement
+        // push carries, the z the raw double keeps
+        let mut body = crate::drops::Lcg::new(0xF117_F31);
+        let mut v = portal_animate_tick(false, false, &mut body);
+        assert_eq!(v.purples.len(), 4, "the four iterations the else arm keeps");
+        let mut mirror = crate::drops::Lcg::new(0xF117_F31);
+        assert_eq!(v.sound, mirror.next_int(100) == 0, "the 1/100 gate the same seed speaks");
+        if v.sound {
+            assert_eq!(v.pitch, mirror.next_f32() * 0.4 + 0.8, "the pitch the fold keeps");
+        }
+        for _ in 0..4 {
+            let _dx = mirror.next_f64();
+            let dy = mirror.next_f64();
+            let dz = mirror.next_f64();
+            let _vx = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let vy = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let vz = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let pick = mirror.next_int(2) as i64 * 2 - 1;
+            let pick = pick as f64;
+            let rvx = f64::from(mirror.next_f32() * 2.0f32 * pick as f32);
+            let expect = (0.5 + 0.25 * pick, dy, dz, rvx, vy, vz);
+            assert_eq!(
+                v.purples.remove(0), expect,
+                "the z-arm fold (x+0.5+0.25*±1, y+d, z+d, r*2*±1, vy, vz) the pc 258-291 keeps"
+            );
+        }
+        // THE EAST SHORT-CIRCUIT (the east neighbor alone the same
+        // X-extending verdict wears — the || the west read the skipped
+        // lane the verdict's own args never consult)
+        let mut body = crate::drops::Lcg::new(0xF117_F32);
+        let mut v = portal_animate_tick(false, true, &mut body);
+        let mut mirror = crate::drops::Lcg::new(0xF117_F32);
+        assert_eq!(v.sound, mirror.next_int(100) == 0, "the 1/100 gate the same seed speaks");
+        if v.sound {
+            assert_eq!(v.pitch, mirror.next_f32() * 0.4 + 0.8, "the pitch the fold keeps");
+        }
+        for _ in 0..4 {
+            let dx = mirror.next_f64();
+            let dy = mirror.next_f64();
+            let _dz = mirror.next_f64();
+            let vx = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let vy = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let _vz = (f64::from(mirror.next_f32()) - 0.5) * 0.5;
+            let pick = mirror.next_int(2) as i64 * 2 - 1;
+            let pick = pick as f64;
+            let rvz = f64::from(mirror.next_f32() * 2.0f32 * pick as f32);
+            assert_eq!(
+                v.purples.remove(0),
+                (dx, dy, 0.5 + 0.25 * pick, vx, vy, rvz),
+                "the east arm's own z-snap the same fold keeps"
+            );
+        }
+        // THE SOUND GATE'S OWN BOUNDARY (the nextInt(100) the draw
+        // always spends, the one float the passing body alone keeps):
+        // the many seeds the verdict's own laws keep — the pitch the
+        // 0.8..1.2 band, the failed gate the zero pitch never draws
+        let mut passed = 0;
+        let mut failed = 0;
+        for seed in 0u64..2000 {
+            let mut body = crate::drops::Lcg::new(seed);
+            let v = portal_animate_tick(false, false, &mut body);
+            assert_eq!(v.purples.len(), 4, "the four purples seed {seed} keeps");
+            if v.sound {
+                passed += 1;
+                assert!(
+                    (0.8..1.2).contains(&v.pitch),
+                    "the pitch band {} the f*0.4+0.8 fold keeps",
+                    v.pitch
+                );
+            } else {
+                failed += 1;
+                assert_eq!(v.pitch, 0.0, "the failed gate the pitch keeps");
+            }
+            // THE DRAW PARITY (the streams advance the same walk): the
+            // body's post-verdict draw the mirror's own next answers —
+            // the gate 1 + the passing float 1 + the purples 32 the
+            // count the four iterations spend
+            let mut mirror = crate::drops::Lcg::new(seed);
+            if mirror.next_int(100) == 0 {
+                let _ = mirror.next_f32();
+            }
+            for _ in 0..32 {
+                let _ = mirror.next_f64();
+            }
+            assert_eq!(
+                body.next_f64(),
+                mirror.next_f64(),
+                "the draw parity seed {} keeps",
+                seed
+            );
+        }
+        assert!(passed > 0 && failed > 0, "both gate answers the walk speaks");
+        // THE 1/100 EXPECTED RATE (the gate's own odds the many-seed
+        // walk answers — 1/100 the ~20 the 2000-seed count speaks)
+        let rate = passed as f64 / (passed + failed) as f64;
+        assert!(
+            (rate - 1.0 / 100.0).abs() < 0.02,
+            "the gate rate {} the 1/100 odds keep",
             rate
         );
     }

@@ -141,6 +141,15 @@ fn emission(id: u16) -> u8 {
         // putstatic SMOKER walk pc 24241-24246 banks, the UNLIT kind
         // the dark 0 the else arm keeps)
         13
+    } else if id == crate::world::NETHER_PORTAL {
+        // THE PORTAL'S OWN ROW (the autopush-605 round — javap the
+        // blocks clinit's nether_portal registration over the 26.2
+        // jar: the lightLevel call pc 11109-11114 the bootstrap #219
+        // lambda walks, lambda$static$143 the `bipush 11; ireturn`
+        // body the constant the EVERY-state read answers — the
+        // unbreakable gate's own purple glow the light grid paints,
+        // the axis property the emission never reads)
+        11
     } else {
         0
     }

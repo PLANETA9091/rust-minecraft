@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 85] = [
+pub const RUNTIME_PALETTE: [&str; 86] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -439,6 +439,24 @@ pub const RUNTIME_PALETTE: [&str; 85] = [
     // strips the .mcmeta files bank (the furnace's own frame-0 law)
     "blast_furnace", "blast_furnace_lit",
     "smoker", "smoker_lit",
+    // THE PORTAL'S OWN ROW (the autopush-605 round): the gate the
+    // FACTORY register walk serves (javap Blocks clinit pc 11083-11126
+    // the 26.2 jar — register(ResourceKey, lambda$static$218, props)
+    // the NO-BlockItemId overload the item-less block wears), the
+    // noCollision() pc 11091 + strength(-1.0f) pc 11097 + GLASS sound
+    // pc 11103 + the lightLevel lambda$static$143 bipush 11 the
+    // light.rs row keeps. The blockstates nether_portal.json's axis
+    // variants resolve (axis=x -> block/nether_portal_ns, axis=z ->
+    // block/nether_portal_ew — the thin-plane models the ONE element
+    // the #portal texture two faces carry, the full-cube walk's six-
+    // face demand the element rows never speak), the flat-stem arm
+    // the palette row resolves (the strip's frame-0 crop the FACE_
+    // TILES row banks, the mesher's axis lane the element walk the
+    // real geometry serves), the block/nether_portal.png the 16x512
+    // 32-frame sequential strip the anim walk banks (the mcmeta's
+    // empty animation the frametime-1 cadence wears), the NETHER_
+    // PORTAL strip consts the draw-time remap reads
+    "nether_portal",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -557,6 +575,20 @@ fn resolve_block(
             .to_string();
         return full_cube_faces(archive, &model_ref)
             .with_context(|| format!("block {block}: model chain {model_ref}"));
+    }
+
+    // THE PORTAL'S OWN FLAT ROW (the autopush-605 round): the gate the
+    // ONE-element models resolve (block/nether_portal_ns the axis=x
+    // variant, block/nether_portal_ew the axis=z — the thin planes the
+    // TWO faces the #portal ref carries, the full-cube walk's 6-face
+    // demand the elements never speak), the FLAT STEM the palette row
+    // banks (the strip's frame-0 crop the first_frame read serves —
+    // the same law the water/lava fluid rows keep), the mesher's axis
+    // lane the derive walk the REAL geometry serves (the element
+    // tables both models bank, the per-quad #portal verdict the
+    // NETHER_PORTAL strip consts answer)
+    if block == "nether_portal" {
+        return Ok(resolve_flat_stem("nether_portal", false));
     }
 
     let bs_bytes = read_jar(archive, &format!("assets/minecraft/blockstates/{block}.json"))?;
@@ -1544,6 +1576,11 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         "lava_still",
         "campfire_fire",
         "soul_campfire_fire",
+        // THE PORTAL'S OWN STRIP (the autopush-605 round): the gate's
+        // purple noise the 16x512 32-frame strip animates (the mcmeta's
+        // empty animation the sequential 0..31 frametime-1 playlist
+        // wears), the NETHER_PORTAL strip consts the walk banks
+        "nether_portal",
     ] {
         let raw = read_jar(
             &mut archive,
@@ -2045,7 +2082,7 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
     // generated names the palette order carries: the const prefix the
     // strip's own stem maps (fire_0 -> FIRE_0 ... water_still -> WATER,
     // lava_still -> LAVA — the names the client's walks read).
-    let prefixes: [(&str, &str); 12] = [
+    let prefixes: [(&str, &str); 13] = [
         ("fire_0", "FIRE_0"),
         ("fire_1", "FIRE_1"),
         ("soul_fire_0", "SOUL_FIRE_0"),
@@ -2062,6 +2099,11 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
         // rows read).
         ("water_flow", "WATER_FLOW"),
         ("lava_flow", "LAVA_FLOW"),
+        // THE PORTAL'S OWN PREFIX (the autopush-605 round): the gate's
+        // strip the consts bank (the FRAME0 the palette row's own tile
+        // the strip_base lookup answers, the 32-frame playlist the
+        // anim_tile arm remaps)
+        ("nether_portal", "NETHER_PORTAL"),
     ];
     src.push_str(
         "\n/// THE ANIMATED STRIPS' OWN TABLES (the dev-5 round's fire, the\n\

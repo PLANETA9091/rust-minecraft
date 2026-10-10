@@ -16895,6 +16895,67 @@ impl App {
                         ));
                     }
                 }
+                // THE PORTAL'S OWN ANSWER (javap
+                // `NetherPortalBlock.animateTick` over the 26.2 jar —
+                // the walk the gate cells the sampler feeds, the purple
+                // particles the ring-puff provider's own chain rides):
+                // the 1/100 sound gate the positioned voice's own
+                // cell-center anchor keeps (the FIXED 0.5 volume the
+                // playLocalSound arg speaks, the pitch the [0.8, 1.2)
+                // band the passing gate folds), the four-iteration
+                // particle arm the NO-gate walk keeps — the west/east
+                // neighbor reads the X-extending verdict the same
+                // short-circuit the mesher's axis lane derives, the
+                // purples the portal_ring_puff chain the eye-of-ender
+                // round's own helper serves (the nextInt(8) frame pick
+                // + the size/tint/lifetime draws the LEVEL stream's
+                // own feeds, the verdict's verbatim sextet the ctor's
+                // plain stores keep)
+                if cell == crate::world::NETHER_PORTAL {
+                    let v = crate::world::portal_animate_tick(
+                        w.get(x - 1, y, z) == crate::world::NETHER_PORTAL,
+                        w.get(x + 1, y, z) == crate::world::NETHER_PORTAL,
+                        &mut self.ambient_rng,
+                    );
+                    if v.sound {
+                        // THE PLAYLOCALSOUND WALK (pc 12-65: the
+                        // (x+0.5, y+0.5, z+0.5) anchor the PORTAL_
+                        // AMBIENT event's own position keeps, the
+                        // BLOCKS source the FIXED 0.5f volume the no-
+                        // draw law carries, the nextFloat*0.4+0.8
+                        // pitch the verdict's own fold wears, the
+                        // distanceDelay the iconst_0 false keeps) —
+                        // the positioned voice the engine's distance+
+                        // pan law folds
+                        let (tx, ty, tz) = (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5);
+                        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let yaw = self.listener_yaw();
+                        self.sounds.play_voice_at_pan(
+                            self.frame,
+                            "block.portal.ambient",
+                            0.5,
+                            v.pitch,
+                            ear_distance(ear, tx, ty, tz),
+                            ear_pan(ear, yaw, tx, ty, tz),
+                        );
+                    }
+                    // THE PORTAL PURPLE TAIL (pc 293-309: the
+                    // addParticle(PORTAL, ...) args the verdict's own
+                    // sextet keeps — the ctor chains the level stream
+                    // feeds, the swirl the ring-puff kind's own tick
+                    // law walks)
+                    for (dx, dy, dz, vx, vy, vz) in v.purples {
+                        out.push(crate::particles::portal_ring_puff(
+                            x as f64 + dx,
+                            y as f64 + dy,
+                            z as f64 + dz,
+                            vx,
+                            vy,
+                            vz,
+                            &mut self.level_ambient_rng,
+                        ));
+                    }
+                }
             }
         }
         out
@@ -90009,8 +90070,8 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            85,
-            "the palette the furnace pair's tail rows bank"
+            86,
+            "the palette the portal's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
@@ -90090,8 +90151,8 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            85,
-            "the palette the furnace pair's tail rows bank"
+            86,
+            "the palette the portal's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
@@ -90180,8 +90241,8 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            85,
-            "the palette the furnace pair's tail rows bank"
+            86,
+            "the palette the portal's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
@@ -96622,6 +96683,202 @@ cow_sound_variant: None,
                 .events
                 .iter()
                 .all(|e| !e.starts_with("block.fire.ambient ")),
+            "the stone world the voice never logs"
+        );
+    }
+
+    /// THE PORTAL CELLS' OWN ANIMATE WALK — javap `NetherPortalBlock.
+    /// animateTick` the sampler's visits answer (the full-layer parity
+    /// world the every-portal-cell X-extending arm speaks — the west/
+    /// east portal pair the gate's own verdict wears; the stripe world
+    /// the stone x-neighbors the Z-extending else lane serves): the
+    /// FOUR purples the visit keeps, the snapped band the 0.5±0.25
+    /// fold speaks, the out-of-plane push the r*2*±1 fold carries, the
+    /// 1/100 voice the FIXED 0.5 volume the positioned lane plays, the
+    /// stone world the silence both lanes keep.
+    #[test]
+    fn the_portal_cells_the_purples_the_ambient_voice_wear() {
+        // THE X-ARM WORLD'S OWN STAMP (the even layers the stone floor
+        // keeps, the odd the kind's own gate wears — the every portal
+        // cell the west/east portal pair the x-extending verdict
+        // speaks)
+        let layer_stamp = |id: u16| -> crate::world::World {
+            let mut world = crate::world::World::new(1, 0);
+            world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+            for y in 0..48 {
+                for z in 0..16 {
+                    for x in 0..16 {
+                        world.set(
+                            x,
+                            y,
+                            z,
+                            if y % 2 == 0 { crate::world::STONE } else { id },
+                        );
+                    }
+                }
+            }
+            world
+        };
+        // THE WALK (the x-extending arm's own lane): the purples the
+        // visits speak, the z the snapped band the fold keeps
+        let mut app = App::new(3);
+        app.offline_world = Some(layer_stamp(crate::world::NETHER_PORTAL));
+        let out = app.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(!out.is_empty(), "the portal cells answer the walk");
+        assert_eq!(out.len() % 4, 0, "the four iterations per visit");
+        for p in &out {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Portal { .. }),
+                "the portal purple the only kind the walk speaks"
+            );
+            // THE SNAPPED BAND (the z + 0.5 ± 0.25 fold the x-arm keeps
+            // — the fract the exact 0.25/0.75 pair the snapped z wears,
+            // the x/y the raw doubles the [0,1) band rides)
+            let fz = p.z.fract();
+            assert!(
+                fz == 0.25 || fz == 0.75,
+                "the snapped z band the fold keeps: {}",
+                fz
+            );
+            // THE OUT-OF-PLANE PUSH (the vz the r*2*±1 fold speaks —
+            // the [−2, 2) band the no-centering fold wears), the
+            // in-plane velocities the base folds keep (the
+            // (r−0.5)*0.5 pair the ±0.25 bands ride)
+            assert!(
+                p.vz.abs() < 2.0,
+                "the out-of-plane band {} the r*2 fold keeps",
+                p.vz
+            );
+            assert!(
+                p.vx.abs() <= 0.25 && p.vy.abs() <= 0.25,
+                "the in-plane bands the base folds keep: {} {}",
+                p.vx,
+                p.vy
+            );
+            // THE PROVIDER'S OWN LAW (the 40..49 lifetime the
+            // (int)(r*10)+40 write gives, the quad the 0.1*(r*0.2+0.5)
+            // fold sizes)
+            assert!(
+                (40..=49).contains(&p.lifetime),
+                "the portal lifetime {} the +40 write keeps",
+                p.lifetime
+            );
+        }
+        // THE VOICE (the 1/100 gate the visits' own odds speak — the
+        // event the positioned lane logs, the FIXED 0.5 volume the
+        // no-draw law keeps, the pitch the 0.8..1.2 band the f*0.4+0.8
+        // fold wears)
+        let voices: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.portal.ambient "))
+            .collect();
+        assert!(
+            !voices.is_empty(),
+            "the portal world the sampler hears: {} voices",
+            voices.len()
+        );
+        for line in &voices {
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|rest| rest.split(' ').next())
+                .and_then(|p| p.parse().ok())
+                .expect("the pitch field the log keeps");
+            assert!(
+                (0.8..1.2).contains(&pitch),
+                "the pitch band {} the fold keeps",
+                pitch
+            );
+            let volume: f32 = line
+                .split(" v")
+                .nth(1)
+                .and_then(|rest| rest.split(' ').next())
+                .and_then(|v| v.parse().ok())
+                .expect("the volume field the log keeps");
+            assert_eq!(volume, 0.5, "the FIXED 0.5 the playLocalSound arg keeps");
+        }
+        // THE Z-ARM WORLD'S OWN STAMP (the even x stripes the gate
+        // wears — the every portal cell the stone x-neighbors the else
+        // lane serves): the x the snapped band folds, the vx the
+        // replacement push carries
+        let mut z_app = App::new(3);
+        let mut stripe = crate::world::World::new(1, 0);
+        stripe.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+        for y in 0..48 {
+            for z in 0..16 {
+                for x in 0..16 {
+                    stripe.set(
+                        x,
+                        y,
+                        z,
+                        if x % 2 == 0 {
+                            crate::world::NETHER_PORTAL
+                        } else {
+                            crate::world::STONE
+                        },
+                    );
+                }
+            }
+        }
+        z_app.offline_world = Some(stripe);
+        let z_out = z_app.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(!z_out.is_empty(), "the stripe world the walk answers");
+        assert_eq!(z_out.len() % 4, 0, "the four iterations per visit");
+        for p in &z_out {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Portal { .. }),
+                "the stripe's own purple"
+            );
+            let fx = p.x.fract();
+            assert!(
+                fx == 0.25 || fx == 0.75,
+                "the snapped x band the else arm keeps: {}",
+                fx
+            );
+            assert!(
+                p.vx.abs() < 2.0,
+                "the out-of-plane vx {} the r*2 fold keeps",
+                p.vx
+            );
+            assert!(
+                p.vz.abs() <= 0.25 && p.vy.abs() <= 0.25,
+                "the in-plane bands the base folds keep: {} {}",
+                p.vz,
+                p.vy
+            );
+        }
+        // THE DETERMINISM (the seeded walk the same stamps replay)
+        let run = |world: crate::world::World| -> (Vec<(u32, f64, f64, f64, f32)>, Vec<String>) {
+            let mut a = App::new(3);
+            a.offline_world = Some(world);
+            let out = a.animate_tick_walk((8.0, 12.0, 8.0));
+            let parts = out
+                .iter()
+                .map(|p| (p.lifetime, p.x, p.y, p.z, p.quad_size))
+                .collect();
+            (parts, a.sounds.events.clone())
+        };
+        let (pa, ea) = run(layer_stamp(crate::world::NETHER_PORTAL));
+        let (pb, eb) = run(layer_stamp(crate::world::NETHER_PORTAL));
+        assert_eq!(pa, pb, "the seeded walk replays");
+        assert_eq!(ea, eb, "the voice log replays");
+        // THE FLAMELESS STONE WORLD'S OWN SILENCE (no portal cell the
+        // sampler visits — the walk the empty vec the no-voice log
+        // keeps)
+        let mut cold = App::new(3);
+        cold.offline_world = Some(layer_stamp(crate::world::STONE));
+        let cold_out = cold.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(
+            cold_out.is_empty(),
+            "the stone world no purple the walk speaks"
+        );
+        assert!(
+            cold.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("block.portal.ambient ")),
             "the stone world the voice never logs"
         );
     }
