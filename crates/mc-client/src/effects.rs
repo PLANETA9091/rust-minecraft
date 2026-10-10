@@ -118,6 +118,11 @@ pub const MOB_EFFECT_WATER_BREATHING: i32 = 12;
 /// the air clock's freeze pair the refill gate reads).
 pub const MOB_EFFECT_BREATH_OF_THE_NAUTILUS: i32 = 39;
 
+/// `minecraft:dolphins_grace`'s mob-effect registry id (the wire
+/// order's own 30th row — the conduit_power-28 slot precedes, the
+/// water lane's drag override the travelInWater read arms).
+pub const MOB_EFFECT_DOLPHINS_GRACE: i32 = 29;
+
 /// `minecraft:slowness`'s mob-effect registry id (the wire order's own
 /// SECOND row, the movement fold's harmful arm).
 pub const MOB_EFFECT_SLOWNESS: i32 = 1;

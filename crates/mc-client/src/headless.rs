@@ -2708,13 +2708,29 @@ mod tests {
                 "the shallow water the sprint refuses"
             );
         }
-        // THE SUBMERGED ARC (the pond's depth): the eye under — the
-        // shallow gate off, the Ctrl lane the sprint re-arms (the
-        // sprint-swim the vanilla's own law keeps)
+        // THE SUBMERGED ARC (the pool's own stage): the dive carve the
+        // 3-deep basin speaks — the body on the basin floor, the eye
+        // one cell under (the vanilla isEyeInFluid geometry the carve
+        // pins), the Ctrl lane the sprint re-arms (the shallow gate
+        // the submerged verdict refuses). The natural pond the honest
+        // wade pace outgrew (the travelInWater lane the 0.02 input
+        // speaks — the vanilla wade the old air stand-in's pace never
+        // was), the staged basin the arc's own depth carries.
+        let mut app = crate::screens::App::new(262);
+        app.enter_world();
+        seed_scene(
+            &mut app,
+            &SceneOpts {
+                body: true,
+                water_pool: true,
+                ..SceneOpts::default()
+            },
+        )
+        .unwrap();
         tick_scene(
             &mut app,
             &SceneOpts {
-                walk_ticks: 7,
+                walk_ticks: 3,
                 body_sprint: true,
                 ..SceneOpts::default()
             },
@@ -2723,7 +2739,7 @@ mod tests {
         .unwrap();
         {
             let body = app.body.as_ref().expect("the body survives the swim");
-            assert!(body.eye_in_water, "the depth the walk reaches");
+            assert!(body.eye_in_water, "the pool's depth the stage carries");
             assert!(body.sprinting, "the submerged sprint re-arms");
             assert!(
                 body.fov_modifier > 1.1,

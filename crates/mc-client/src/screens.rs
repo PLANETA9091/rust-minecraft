@@ -10007,6 +10007,12 @@ impl App {
                     b.water_breathing = crate::effects::has_water_breathing(&self.effects);
                     b.effects_refill_air_supply =
                         crate::effects::should_effects_refill_air_supply(&self.effects);
+                    // THE DOLPHINS GRACE READ (javap travelInWater pcs
+                    // 85-98 — the hasEffect call the drag override
+                    // answers): the store's read the body's flag banks,
+                    // the water lane the glide speaks.
+                    b.dolphins_grace =
+                        self.effects.has_effect(crate::effects::MOB_EFFECT_DOLPHINS_GRACE);
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the

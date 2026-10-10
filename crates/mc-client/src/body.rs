@@ -62,6 +62,22 @@ pub const AIR_FRICTION: f32 = 1.0;
 pub const GROUND_DRAG: f32 = 0.91; // the horizontal drag's constant part
 pub const VERTICAL_DRAG: f32 = 0.98;
 pub const GRAVITY: f64 = 0.08;
+/// `LivingEntity.getWaterSlowDown`'s own constant — the `ldc_w 0.8f`
+/// the pcs 0-3 freturn returns (the travelInWater drag seed the
+/// non-sprint body wears).
+pub const WATER_DRAG: f32 = 0.8;
+/// travelInWater's own sprint arm — the `ldc_w 0.9f` pc 7 stores
+/// (the sprint-swim the faster decay seed keeps).
+pub const WATER_DRAG_SPRINT: f32 = 0.9;
+/// travelInWater's own Dolphins Grace override — the `ldc_w 0.96f`
+/// pc 95 stores (the drag the effect's glide speaks — the swim the
+/// ×0.04 decay the vanilla stride carries).
+pub const DOLPHINS_GRACE_WATER_DRAG: f32 = 0.96;
+/// travelInWater's own input seed — the `ldc_w 0.02f` pc 19 stores
+/// (the WATER_MOVEMENT_EFFICIENCY lerp the bare player's 0.0
+/// attribute default never folds — the depth-strider enchant the
+/// stacks' data absence keeps, the sprint body the SAME seed wears).
+pub const WATER_INPUT_SPEED: f32 = 0.02;
 pub const FLYING_SPEED: f32 = 0.02;
 /// THE FLY SPEED (javap Abilities <init> the 26.2 jar speaks — the
 /// `ldc #13` the flyingSpeed field's constructor default carries:
@@ -1262,6 +1278,12 @@ pub struct PlayerBody {
     /// keep — the bare player's own canBreatheUnderwater the base's
     /// 0-ireturn false rides). Set every tick from the effects store.
     pub water_breathing: bool,
+    /// THE DOLPHINS GRACE VERDICT (javap `LivingEntity.travelInWater`
+    /// pcs 85-98 — the hasEffect(DOLPHINS_GRACE) call the drag
+    /// override answers): the water lane's drag fold reads it — the
+    /// true body the 0.96 glide wears. Set every tick from the
+    /// effects store.
+    pub dolphins_grace: bool,
     /// THE UNDERWATER REFILL GATE (javap `MobEffectUtil
     /// .shouldEffectsRefillAirsupply` pcs 0-35 — the ¬NAUTILUS ∨
     /// WATER_BREATHING ∨ CONDUIT_POWER walk): the air clock's
@@ -1341,6 +1363,7 @@ impl PlayerBody {
             no_jump_delay: 0,
             effect_speed_mult: 1.0,
             water_breathing: false,
+            dolphins_grace: false,
             effects_refill_air_supply: true,
             jump_boost_power: 0.0,
             safe_fall_distance: SAFE_FALL_DISTANCE,
@@ -1948,7 +1971,7 @@ impl PlayerBody {
                 iz /= len;
             }
             let friction = if self.on_ground { BLOCK_FRICTION } else { AIR_FRICTION };
-            let speed = if self.on_ground {
+            let speed = if self.on_ground && !in_water {
                 if friction > 0.6 {
                     self.speed(using_item) * CUBE_SPEED_NUMERATOR / (friction * friction * friction)
                 } else {
@@ -1964,6 +1987,14 @@ impl PlayerBody {
                 } else {
                     self.flying_speed
                 }
+            } else if in_water {
+                // THE WATER INPUT SEED (javap travelInWater pcs 19-22
+                // — the 0.02 fload the seed keeps): the fluid route
+                // the on_ground verdict never gates (the wader the
+                // SAME seed wears), the WATER_MOVEMENT_EFFICIENCY
+                // lerp the bare player's 0.0 attribute default never
+                // folds
+                WATER_INPUT_SPEED
             } else if self.sprinting {
                 SPRINT_AIR_SPEED
             } else {
@@ -2276,10 +2307,53 @@ impl PlayerBody {
         // wears, the body's fluid lane the vocabulary keeps)
         let friction = if self.on_ground { BLOCK_FRICTION } else { AIR_FRICTION };
         if !glide_active {
-            self.vy = (self.vy - GRAVITY) * VERTICAL_DRAG as f64;
-            let drag = (friction * GROUND_DRAG) as f64;
-            self.vx *= drag;
-            self.vz *= drag;
+            if in_water && !self.flying {
+                // THE WATER LANE (javap `LivingEntity.travelInWater` the
+                // 26.2 jar — pcs 0-186 the FULL walk the fluid route
+                // keeps): the drag seed the sprint 0.9 /
+                // getWaterSlowDown 0.8 pair wears, the Dolphins Grace
+                // override the 0.96 glide speaks, the
+                // WATER_MOVEMENT_EFFICIENCY lerp the bare player's 0.0
+                // attribute default never folds (the depth-strider
+                // enchant the stacks' data absence keeps), the
+                // post-move multiply(drag, 0.8, drag) fold the
+                // velocity decay carries.
+                let mut drag = if self.sprinting {
+                    WATER_DRAG_SPRINT as f64
+                } else {
+                    WATER_DRAG as f64
+                };
+                if self.dolphins_grace {
+                    drag = DOLPHINS_GRACE_WATER_DRAG as f64;
+                }
+                self.vx *= drag;
+                self.vz *= drag;
+                self.vy *= 0.8f32 as f64;
+                // THE FALLING-ADJUSTED GRAVITY (javap
+                // getFluidFallingAdjustedMovement pcs 0-100): the
+                // sprint body the fold SKIPS (pc 7 the isSprinting
+                // ifne 98 keeps — the sprint-swim the buoyancy never
+                // pays), the falling flag the pre-impulse vy the
+                // travelInFluid read answers (vy_pre_travel — the
+                // impulse never touches vy), the terminal-sink clamp
+                // the |dy-0.005| / |dy-g/16| pair answers.
+                if !self.sprinting {
+                    let dy = self.vy;
+                    self.vy = if vy_pre_travel <= 0.0
+                        && (dy - 0.005).abs() >= 0.003
+                        && (dy - GRAVITY / 16.0).abs() < 0.003
+                    {
+                        -0.003
+                    } else {
+                        dy - GRAVITY / 16.0
+                    };
+                }
+            } else {
+                self.vy = (self.vy - GRAVITY) * VERTICAL_DRAG as f64;
+                let drag = (friction * GROUND_DRAG) as f64;
+                self.vx *= drag;
+                self.vz *= drag;
+            }
         }
         if self.flying {
             // THE PLAYER.TRAVEL RESTORE (javap the 26.2 jar pcs
@@ -4406,6 +4480,75 @@ mod tests {
         assert_eq!(
             drift_steps, 0,
             "the airborne drift never speaks the ground verdict"
+        );
+    }
+
+    /// THE WATER LANE'S OWN WALK (javap `LivingEntity.travelInWater`
+    /// the 26.2 jar — pcs 0-186 the FULL walk the fluid route keeps):
+    /// the sink the ×0.8 + the buoyancy fold wears (the terminal
+    /// −0.025 the old air stand-in never spoke), the Dolphins Grace
+    /// body the 0.96 glide wears (the swept ladder the two drags
+    /// speak), the sprint body the buoyancy fold SKIPS (the ×0.8
+    /// alone the vy wears).
+    #[test]
+    fn the_water_lane_the_sink_and_the_glide_speak() {
+        // THE DEEP POOL (the 64-wide world the glide's runway keeps)
+        let mut w = World::new(4, 42);
+        for x in 0..64 {
+            for z in 0..64 {
+                w.set(x, 0, z, crate::world::STONE);
+                for y in 1..crate::world::CHUNK_Y {
+                    w.set(x, y as i32, z, WATER);
+                }
+            }
+        }
+        // THE SINK (the falling-adjusted fold's own terminal — the
+        // slow descent the ×0.8 decay keeps, the mid-water verdict
+        // the never-grounded body wears)
+        let mut b = PlayerBody::new(8.0, 2.5, 8.0, 0.0, 0.0);
+        b.vy = 0.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(
+            b.vy > -0.05 && b.vy < 0.0,
+            "the slow sink the buoyancy fold keeps ({})",
+            b.vy
+        );
+        // THE GLIDE LADDER (the Dolphins Grace body the 0.96 drag
+        // wears — the SAME impulse the two drags the swept distance
+        // speaks)
+        let mut plain = PlayerBody::new(8.0, 2.5, 8.0, 0.0, 0.0);
+        plain.vy = 0.0;
+        plain.forward = 1.0;
+        let mut dg = PlayerBody::new(8.0, 2.5, 8.0, 0.0, 0.0);
+        dg.vy = 0.0;
+        dg.forward = 1.0;
+        dg.dolphins_grace = true;
+        for _ in 0..60 {
+            plain.tick(&w, false);
+            dg.tick(&w, false);
+        }
+        let swept_p = ((plain.x - 8.0) * (plain.x - 8.0) + (plain.z - 8.0) * (plain.z - 8.0))
+            .sqrt();
+        let swept_d = ((dg.x - 8.0) * (dg.x - 8.0) + (dg.z - 8.0) * (dg.z - 8.0)).sqrt();
+        assert!(
+            swept_d > swept_p * 2.0,
+            "the glide the 0.96 drag speaks ({} vs {})",
+            swept_d,
+            swept_p
+        );
+        // THE SPRINT SKIP (getFluidFallingAdjustedMovement pc 7 — the
+        // isSprinting body the buoyancy fold never pays, the ×0.8
+        // alone the vy wears)
+        let mut s = PlayerBody::new(8.0, 2.5, 8.0, 0.0, 0.0);
+        s.vy = -0.1;
+        s.sprinting = true;
+        s.tick(&w, false);
+        assert!(
+            (s.vy - (-0.1 * (0.8f32 as f64))).abs() < 1e-12,
+            "the sprint body the fold skips ({})",
+            s.vy
         );
     }
 
