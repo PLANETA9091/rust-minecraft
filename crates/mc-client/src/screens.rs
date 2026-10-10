@@ -16835,6 +16835,66 @@ impl App {
                         _ => {}
                     }
                 }
+                // THE FIRE FAMILY'S OWN ANSWER (javap
+                // `BaseFireBlock.animateTick` over the 26.2 jar — the
+                // walk BOTH fire kinds inherit, the block's own draw
+                // stream the ambient lane feeds, the smoke CTOR chains
+                // the level stream's own draws ride): the 1/24 sound
+                // gate the positioned voice's own cell-center anchor
+                // keeps, the below arm the canBurn || sturdy
+                // disjunction takes (the soul fire's own verdict the
+                // EVERY-block answer burns), the five side arms the
+                // skipped-below lane alone serves
+                if cell == crate::world::FIRE || cell == crate::world::SOUL_FIRE {
+                    let sides = [
+                        w.get(x - 1, y, z), // west
+                        w.get(x + 1, y, z), // east
+                        w.get(x, y, z - 1), // north
+                        w.get(x, y, z + 1), // south
+                        w.get(x, y + 1, z), // above
+                    ];
+                    let v = crate::world::fire_animate_tick(
+                        cell == crate::world::SOUL_FIRE,
+                        w.get(x, y - 1, z),
+                        sides,
+                        &mut self.ambient_rng,
+                    );
+                    if v.sound {
+                        // THE PLAYLOCALSOUND WALK (pc 12-69: the
+                        // (x+0.5, y+0.5, z+0.5) anchor the FIRE_AMBIENT
+                        // event's own position keeps, the BLOCKS source
+                        // the 1.0+nextFloat / nextFloat*0.7+0.3 pair the
+                        // verdict's own folds carry, the distanceDelay
+                        // false) — the positioned voice the engine's
+                        // distance+pan law folds
+                        let (tx, ty, tz) = (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5);
+                        let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                        let yaw = self.listener_yaw();
+                        self.sounds.play_voice_at_pan(
+                            self.frame,
+                            "block.fire.ambient",
+                            v.volume,
+                            v.pitch,
+                            ear_distance(ear, tx, ty, tz),
+                            ear_pan(ear, yaw, tx, ty, tz),
+                        );
+                    }
+                    // THE LARGE_SMOKE TAIL (pc 171-668: the addParticle
+                    // args the zero-velocity trio keeps, the birth the
+                    // cell's own fold + the verdict's offsets speak —
+                    // the ctor chains the level stream feeds)
+                    for (dx, dy, dz) in v.smokes {
+                        out.push(crate::particles::large_smoke_puff(
+                            x as f64 + dx,
+                            y as f64 + dy,
+                            z as f64 + dz,
+                            0.0,
+                            0.0,
+                            0.0,
+                            &mut self.level_ambient_rng,
+                        ));
+                    }
+                }
             }
         }
         out
@@ -96402,6 +96462,167 @@ cow_sound_variant: None,
                 .iter()
                 .all(|p| matches!(p.kind, crate::particles::ParticleKind::Lava)),
             "the lava world the torch pair never speaks"
+        );
+    }
+
+    /// THE FIRE CELLS' OWN ANIMATE WALK — javap `BaseFireBlock.
+    /// animateTick` the sampler's visits answer (the parity world the
+    /// every-fire-cell below arm speaks — the stone floor the sturdy
+    /// gate's TRUE answer wears): the THREE large smokes the visit
+    /// keeps, the interior band the y + d*0.5 + 0.5 fold speaks, the
+    /// 1/24 voice the cell-center anchor the positioned lane plays,
+    /// the soul fire's own verdict the EVERY-below answer burns (the
+    /// iconst_1 override the same three the air floor wears).
+    #[test]
+    fn the_fire_cells_the_smokes_the_ambient_voice_wear() {
+        // THE PARITY WORLD'S OWN STAMP (the even layers the stone
+        // floor keeps, the odd the kind's own flame wears — the every
+        // fire cell the below arm's TRUE gate speaks)
+        let stamp = |id: u16| -> crate::world::World {
+            let mut world = crate::world::World::new(1, 0);
+            world.variants = Some(vec![vec![0u8; 16 * 48 * 16]; 1]);
+            for y in 0..48 {
+                for z in 0..16 {
+                    for x in 0..16 {
+                        world.set(
+                            x,
+                            y,
+                            z,
+                            if y % 2 == 0 { crate::world::STONE } else { id },
+                        );
+                    }
+                }
+            }
+            world
+        };
+        // THE WALK (the plain flame's own lane): the smokes the visits
+        // speak, the sound gate the positioned voice's own log keeps
+        let mut app = App::new(3);
+        app.offline_world = Some(stamp(crate::world::FIRE));
+        let out = app.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(!out.is_empty(), "the fire cells answer the walk");
+        assert_eq!(out.len() % 3, 0, "the below arm's own three per visit");
+        for p in &out {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the large smoke the only kind the walk speaks"
+            );
+            // THE INTERIOR BAND (the y + d*0.5 + 0.5 fold the below arm
+            // keeps — the fract the [0.5, 1.0) band the d draw rides)
+            let fy = p.y.fract();
+            assert!(
+                fy >= 0.5,
+                "the interior band the fold keeps: {}",
+                fy
+            );
+            // THE LARGE PROVIDER'S OWN SCALE (the 2.5f the LargeSmoke-
+            // Particle's super arg speaks — the quad the plain smoke's
+            // own fold ×2.5 wears)
+            assert!(
+                p.quad_size > 0.15,
+                "the large provider's own scale: {}",
+                p.quad_size
+            );
+        }
+        // THE VOICE (the 1/24 gate the ~55 the visits' own odds speak —
+        // the event the positioned lane logs, the pitch the 0.3..1.0
+        // band the f*0.7+0.3 fold keeps, the volume the 1.0..2.0 the
+        // 1.0+f fold wears — the dist-zero ear the gain the plain fold
+        // keeps)
+        let voices: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.fire.ambient "))
+            .collect();
+        assert!(
+            !voices.is_empty(),
+            "the fire world the sampler hears: {} voices",
+            voices.len()
+        );
+        for line in &voices {
+            let pitch: f32 = line
+                .split(" p")
+                .nth(1)
+                .and_then(|rest| rest.split(' ').next())
+                .and_then(|p| p.parse().ok())
+                .expect("the pitch field the log keeps");
+            assert!(
+                (0.3..1.0).contains(&pitch),
+                "the pitch band {} the fold keeps",
+                pitch
+            );
+            let volume: f32 = line
+                .split(" v")
+                .nth(1)
+                .and_then(|rest| rest.split(' ').next())
+                .and_then(|v| v.parse().ok())
+                .expect("the volume field the log keeps");
+            assert!(
+                (1.0..2.0).contains(&volume),
+                "the volume band {} the fold keeps",
+                volume
+            );
+        }
+        // THE DETERMINISM (the seeded walk the same stamps replay)
+        let run = |id: u16| -> (Vec<(u32, f64, f64, f64, f32)>, Vec<String>) {
+            let mut a = App::new(3);
+            a.offline_world = Some(stamp(id));
+            let out = a.animate_tick_walk((8.0, 12.0, 8.0));
+            let parts = out
+                .iter()
+                .map(|p| (p.lifetime, p.x, p.y, p.z, p.quad_size))
+                .collect();
+            (parts, a.sounds.events.clone())
+        };
+        let (pa, ea) = run(crate::world::FIRE);
+        let (pb, eb) = run(crate::world::FIRE);
+        assert_eq!(pa, pb, "the seeded walk replays");
+        assert_eq!(ea, eb, "the voice log replays");
+        // THE SOUL FIRE'S OWN LANE (the EVERY-below verdict the override
+        // speaks — the same three the air-floor cells would wear, the
+        // voice the same event the BOTH kinds share)
+        let mut soul = App::new(3);
+        soul.offline_world = Some(stamp(crate::world::SOUL_FIRE));
+        let soul_out = soul.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(!soul_out.is_empty(), "the soul cells answer the walk");
+        assert_eq!(
+            soul_out.len() % 3,
+            0,
+            "the soul's own below arm per visit"
+        );
+        for p in &soul_out {
+            assert!(
+                matches!(p.kind, crate::particles::ParticleKind::Smoke),
+                "the soul's own smoke"
+            );
+            assert!(p.y.fract() >= 0.5, "the soul's own interior band");
+        }
+        assert!(
+            soul.sounds
+                .events
+                .iter()
+                .any(|e| e.starts_with("block.fire.ambient ")),
+            "the soul fire the same event the SoundEvents field shares"
+        );
+        // THE FLAMELESS STONE WORLD'S OWN SILENCE (no fire cell the
+        // sampler visits — the walk the empty vec the no-voice log
+        // keeps)
+        let mut cold = App::new(3);
+        cold.offline_world = Some(stamp(crate::world::STONE));
+        // the stone's own parity — the even layers the same kind wears,
+        // the odd too (the stamp's fold the STONE id answers)
+        let cold_out = cold.animate_tick_walk((8.0, 12.0, 8.0));
+        assert!(
+            cold_out.is_empty(),
+            "the stone world no smoke the walk speaks"
+        );
+        assert!(
+            cold.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("block.fire.ambient ")),
+            "the stone world the voice never logs"
         );
     }
 

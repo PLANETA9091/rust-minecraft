@@ -1471,6 +1471,126 @@ pub fn fire_can_survive(below: u16, neighbors: [u16; 6]) -> bool {
     collision_shape(below) == CollisionShape::Full || neighbors.into_iter().any(fire_can_burn)
 }
 
+/// THE FIRE'S OWN ANIMATE-TICK VERDICT — javap `BaseFireBlock.animateTick`
+/// (the 26.2 jar, the walk BOTH fire kinds inherit): the walk in order
+/// speaks
+/// (1) THE SOUND ARM (pc 0-69): the `nextInt(24) == 0` gate the draw
+///     ALWAYS spends; when the gate passes the `playLocalSound(x+0.5,
+///     y+0.5, z+0.5, FIRE_AMBIENT, BLOCKS, 1.0F + nextFloat(),
+///     nextFloat() * 0.7F + 0.3F, false)` tail rides — the two float
+///     draws the gate's own body keeps (the FAIL the pc 9 `ifne 72`
+///     jump past speaks — no float the failed gate spends);
+/// (2) THE BELOW ARM'S GATE (pc 72-106): `below = pos.below()`, the
+///     `canBurn(belowState) || belowState.isFaceSturdy(level, below,
+///     UP)` disjunction — the arm the TRUE answer takes, the pc 193
+///     `goto 677` return its tail keeps (the side arms the skipped
+///     below's else lane alone serves);
+/// (3) THE BELOW ARM (pc 109-193): the THREE LARGE_SMOKE loop — per
+///     iteration the THREE nextDouble draws speak `(x + d, y + d*0.5 +
+///     0.5, z + d)` the fire cell's own interior the offsets fold;
+/// (4) THE SIDE ARMS (pc 196-677, the below-skipped lane): each of the
+///     five faces the `canBurn(sideState)` gate reads (west, east,
+///     north, south, above — the bytecode's own order), the TWO
+///     LARGE_SMOKE loop the passing gate keeps — per iteration the
+///     three draws fold the face's own inset: west `(x + d*0.1, y + d,
+///     z + d)`, east `(x + 1 - d*0.1, y + d, z + d)` (the pc 333
+///     `dsub` the subtraction speaks), north `(x + d, y + d, z +
+///     d*0.1)`, south `(x + d, y + d, z + 1 - d*0.1)` (the pc 555
+///     dsub), above `(x + d, y + 1 - d*0.1, z + d)` (the pc 637 dsub);
+/// the SOUL FIRE'S OWN VERDICT (javap `SoulFireBlock.canBurn` — the
+/// `iconst_1; ireturn` the override speaks): the body the EVERY block
+/// answer burns — the below arm the ALWAYS-true gate takes, the side
+/// arms the never-skipped lane the walk never reaches. The canBurn
+/// consults the plain flame wears read the offline [`fire_can_burn`]
+/// table, the sturdy arm the offline collision table's own Full row
+/// answers (the [`fire_can_survive`] walk's own vocabulary).
+/// The `body` stream the block's own draws ride (the doAnimateTick's
+/// thread-local the stand-in serves); the returned offsets RELATIVE to
+/// the fire cell's origin (the addParticle args the caller's cell
+/// folds), the smoke CTOR draws the caller's own level stream feeds
+/// (the sampler rounds' established policy).
+pub struct FireAnimateTick {
+    /// the 1/24 gate's own answer — the voice the caller plays
+    pub sound: bool,
+    /// `1.0F + nextFloat()` the volume the passing gate folds (0.0 the
+    /// failed gate never speaks)
+    pub volume: f32,
+    /// `nextFloat() * 0.7F + 0.3F` the pitch the passing gate folds
+    pub pitch: f32,
+    /// the LARGE_SMOKE birth offsets, `(dx, dy, dz)` relative to the
+    /// cell origin — three the below arm speaks, two the passing side
+    /// arm each keeps, the bytecode's own order
+    pub smokes: Vec<(f64, f64, f64)>,
+}
+
+pub fn fire_animate_tick(
+    soul: bool,
+    below: u16,
+    sides: [u16; 5], // west, east, north, south, above
+    body: &mut crate::drops::Lcg,
+) -> FireAnimateTick {
+    // THE SOUND ARM (pc 0-69): the gate the draw always spends, the
+    // two floats the passing body alone keeps
+    let sound = body.next_int(24) == 0;
+    let (volume, pitch) = if sound {
+        (1.0 + body.next_f32(), body.next_f32() * 0.7 + 0.3)
+    } else {
+        (0.0, 0.0)
+    };
+    let mut smokes = Vec::new();
+    // THE BELOW ARM'S GATE (pc 86-106): the soul fire's own verdict the
+    // EVERY-block answer keeps, the plain flame's the canBurn || sturdy
+    // disjunction reads
+    let below_burns = soul || fire_can_burn(below);
+    let below_sturdy = collision_shape(below) == CollisionShape::Full;
+    if below_burns || below_sturdy {
+        // THE BELOW ARM (pc 109-193): the three-draw fold per smoke,
+        // the interior band the y + d*0.5 + 0.5 keeps; the pc 193 goto
+        // return the side arms never reaches
+        for _ in 0..3 {
+            let dx = body.next_f64();
+            let dy = body.next_f64();
+            let dz = body.next_f64();
+            smokes.push((dx, dy * 0.5 + 0.5, dz));
+        }
+    } else {
+        // THE SIDE ARMS (pc 196-677): the five faces the bytecode's own
+        // order keeps, each the canBurn gate reads, the TWO-smoke loop
+        // the passing gate speaks — the face's own inset fold the
+        // ±0.1d coefficient carries (the x+1/z+1/ y+1 the east/south/
+        // above faces subtract from)
+        const SIDE_FOLDS: [fn(f64, f64, f64) -> (f64, f64, f64); 5] = [
+            // west (pc 220-267): the x + d*0.1 the dadd keeps
+            |dx, dy, dz| (dx * 0.1, dy, dz),
+            // east (pc 315-363): the (x+1) - d*0.1 the dsub keeps
+            |dx, dy, dz| (1.0 - dx * 0.1, dy, dz),
+            // north (pc 412-458): the z + d*0.1 the dadd keeps
+            |dx, dy, dz| (dx, dy, dz * 0.1),
+            // south (pc 507-555): the (z+1) - d*0.1 the dsub keeps
+            |dx, dy, dz| (dx, dy, 1.0 - dz * 0.1),
+            // above (pc 604-652): the (y+1) - d*0.1 the dsub keeps
+            |dx, dy, dz| (dx, 1.0 - dy * 0.1, dz),
+        ];
+        for (i, &side) in sides.iter().enumerate() {
+            if !fire_can_burn(side) {
+                continue;
+            }
+            for _ in 0..2 {
+                let dx = body.next_f64();
+                let dy = body.next_f64();
+                let dz = body.next_f64();
+                smokes.push(SIDE_FOLDS[i](dx, dy, dz));
+            }
+        }
+    }
+    FireAnimateTick {
+        sound,
+        volume,
+        pitch,
+        smokes,
+    }
+}
+
 /// THE FIRE KINDS' OWN FAMILY — the two kinds the placement's igniter
 /// arms, the body's flame-branding walk, the light grid's emission rows
 /// and the mesher's multipart lane read (the family-fn shape the plant
@@ -3901,6 +4021,221 @@ mod tests {
         assert!(
             !fire_can_survive(AIR, stony),
             "the stone neighborhood the survival refuses"
+        );
+    }
+
+    /// THE FIRE'S OWN ANIMATE-TICK VERDICT — javap `BaseFireBlock.
+    /// animateTick` (the 26.2 jar) the walk the BOTH fire kinds inherit:
+    /// the 1/24 sound gate the two floats the passing body alone keeps,
+    /// the below arm the canBurn || sturdy disjunction takes (the THREE
+    /// smokes the y + d*0.5 + 0.5 interior band folds, the pc 193 goto
+    /// return the side arms never reaches), the five side arms the
+    /// skipped-below lane alone serves (the TWO smokes the passing
+    /// gate's own ±0.1 inset folds speak), the soul fire's own verdict
+    /// the EVERY-block answer burns (javap `SoulFireBlock.canBurn` —
+    /// the iconst_1 the override speaks).
+    #[test]
+    fn the_fire_animate_tick_the_arms_the_folds_wear() {
+        // THE BELOW ARM (the sturdy stone floor the gate's TRUE answer
+        // wears): the THREE smokes the interior band folds, the side
+        // arms the passing gate never reaches (the west log the lane's
+        // own refusal proves — no fourth smoke the skipped arms speak)
+        let mut body = crate::drops::Lcg::new(0xF117_F1A);
+        let mut v = fire_animate_tick(false, STONE, [LOG, AIR, AIR, AIR, AIR], &mut body);
+        assert_eq!(v.smokes.len(), 3, "the below arm's own three");
+        let mut mirror = crate::drops::Lcg::new(0xF117_F1A);
+        let gate = mirror.next_int(24) == 0;
+        assert_eq!(v.sound, gate, "the 1/24 gate the draw speaks");
+        if gate {
+            let vol = 1.0 + mirror.next_f32();
+            let pitch = mirror.next_f32() * 0.7 + 0.3;
+            assert_eq!(v.volume, vol, "the volume the 1.0+f fold keeps");
+            assert_eq!(v.pitch, pitch, "the pitch the f*0.7+0.3 fold keeps");
+        }
+        for _ in 0..3 {
+            let dx = mirror.next_f64();
+            let dy = mirror.next_f64();
+            let dz = mirror.next_f64();
+            let expect = (dx, dy * 0.5 + 0.5, dz);
+            assert_eq!(
+                v.smokes.remove(0), expect,
+                "the interior fold (x+d, y+d*0.5+0.5, z+d) the bytecode speaks"
+            );
+        }
+        // THE SIDE ARMS (the air floor the below-skip lane wears): the
+        // west log the FIRST gate passes — the TWO smokes the x+d*0.1
+        // inset folds keep, the east/north/south/above air the same
+        // silence the canBurn refusal keeps
+        let mut body = crate::drops::Lcg::new(0xF117_F1B);
+        let mut v = fire_animate_tick(false, AIR, [LOG, AIR, AIR, AIR, AIR], &mut body);
+        assert_eq!(v.smokes.len(), 2, "the west arm's own pair");
+        let mut mirror = crate::drops::Lcg::new(0xF117_F1B);
+        let _gate = mirror.next_int(24);
+        for _ in 0..2 {
+            let dx = mirror.next_f64();
+            let dy = mirror.next_f64();
+            let dz = mirror.next_f64();
+            let expect = (dx * 0.1, dy, dz);
+            assert_eq!(
+                v.smokes.remove(0), expect,
+                "the west inset (x + d*0.1, y+d, z+d) the pc 236 dadd keeps"
+            );
+        }
+        // THE EAST ARM'S OWN dsub (the pc 333 the subtraction speaks):
+        // the smoke the (x+1) - d*0.1 face folds — the offset the 1.0
+        // ceiling the inset never passes
+        let mut body = crate::drops::Lcg::new(0xF117_F1C);
+        let mut v = fire_animate_tick(false, AIR, [AIR, LOG, AIR, AIR, AIR], &mut body);
+        assert_eq!(v.smokes.len(), 2, "the east arm's own pair");
+        let mut mirror = crate::drops::Lcg::new(0xF117_F1C);
+        let _gate = mirror.next_int(24);
+        for _ in 0..2 {
+            let dx = mirror.next_f64();
+            let dy = mirror.next_f64();
+            let dz = mirror.next_f64();
+            let expect = (1.0 - dx * 0.1, dy, dz);
+            assert_eq!(
+                v.smokes.remove(0), expect,
+                "the east inset ((x+1) - d*0.1, y+d, z+d) the dsub keeps"
+            );
+        }
+        // THE NORTH/SOUTH/ABOVE ARMS' OWN FOLDS (the z+d*0.1 dadd, the
+        // (z+1) - d*0.1 and (y+1) - d*0.1 dsubs the pc 458/555/637
+        // speak): the three faces the same pair law keeps
+        for (seed, sides, fold, name) in [
+            (
+                0xF117_F1Du64,
+                [AIR, AIR, LOG, AIR, AIR],
+                2usize,
+                "the north inset (x+d, y+d, z + d*0.1)",
+            ),
+            (
+                0xF117_F1E,
+                [AIR, AIR, AIR, LOG, AIR],
+                3,
+                "the south inset (x+d, y+d, (z+1) - d*0.1)",
+            ),
+            (
+                0xF117_F1F,
+                [AIR, AIR, AIR, AIR, LOG],
+                4,
+                "the above inset (x+d, (y+1) - d*0.1, z+d)",
+            ),
+        ] {
+            let mut body = crate::drops::Lcg::new(seed);
+            let mut v = fire_animate_tick(false, AIR, sides, &mut body);
+            assert_eq!(v.smokes.len(), 2, "the arm's own pair");
+            let mut mirror = crate::drops::Lcg::new(seed);
+            let _gate = mirror.next_int(24);
+            for _ in 0..2 {
+                let dx = mirror.next_f64();
+                let dy = mirror.next_f64();
+                let dz = mirror.next_f64();
+                let expect = match fold {
+                    2 => (dx, dy, dz * 0.1),
+                    3 => (dx, dy, 1.0 - dz * 0.1),
+                    _ => (dx, 1.0 - dy * 0.1, dz),
+                };
+                assert_eq!(v.smokes.remove(0), expect, "{}", name);
+            }
+        }
+        // THE SIDE ARMS' OWN MULTI-GATE (the all-burnable lane the five
+        // faces speak): the TEN smokes the five pairs keep, the bytecode's
+        // own west-east-north-south-above order the folds name
+        let mut body = crate::drops::Lcg::new(0xF117_F20);
+        let mut v = fire_animate_tick(false, AIR, [LOG; 5], &mut body);
+        assert_eq!(v.smokes.len(), 10, "the five arms' own ten");
+        let mut mirror = crate::drops::Lcg::new(0xF117_F20);
+        let _gate = mirror.next_int(24);
+        let folds: [fn(f64, f64, f64) -> (f64, f64, f64); 5] = [
+            |dx, dy, dz| (dx * 0.1, dy, dz),
+            |dx, dy, dz| (1.0 - dx * 0.1, dy, dz),
+            |dx, dy, dz| (dx, dy, dz * 0.1),
+            |dx, dy, dz| (dx, dy, 1.0 - dz * 0.1),
+            |dx, dy, dz| (dx, 1.0 - dy * 0.1, dz),
+        ];
+        for fold in folds {
+            for _ in 0..2 {
+                let dx = mirror.next_f64();
+                let dy = mirror.next_f64();
+                let dz = mirror.next_f64();
+                assert_eq!(v.smokes.remove(0), fold(dx, dy, dz), "the arm order");
+            }
+        }
+        // THE SOUL FIRE'S OWN VERDICT (javap `SoulFireBlock.canBurn` —
+        // the iconst_1 the EVERY-block answer speaks): the AIR floor the
+        // below arm's own TRUE gate wears, the west log the unreachable
+        // side lane never names
+        let mut body = crate::drops::Lcg::new(0xF117_F21);
+        let mut v = fire_animate_tick(true, AIR, [LOG, AIR, AIR, AIR, AIR], &mut body);
+        assert_eq!(v.smokes.len(), 3, "the soul's own below arm");
+        let mut mirror = crate::drops::Lcg::new(0xF117_F21);
+        let _gate = mirror.next_int(24);
+        for _ in 0..3 {
+            let dx = mirror.next_f64();
+            let dy = mirror.next_f64();
+            let dz = mirror.next_f64();
+            assert_eq!(
+                v.smokes.remove(0),
+                (dx, dy * 0.5 + 0.5, dz),
+                "the soul fire's own interior fold"
+            );
+        }
+        // THE SOUND GATE'S OWN BOUNDARY (the nextInt(24) the draw always
+        // spends, the two floats the passing body alone keeps): the many
+        // seeds the verdict's own laws keep — the volume the 1.0..2.0
+        // band, the pitch the 0.3..1.0 band, the failed gate the zero
+        // pair never draws
+        let mut passed = 0;
+        let mut failed = 0;
+        for seed in 0u64..2000 {
+            let mut body = crate::drops::Lcg::new(seed);
+            let v = fire_animate_tick(false, STONE, [AIR; 5], &mut body);
+            if v.sound {
+                passed += 1;
+                assert!(
+                    (1.0..2.0).contains(&v.volume),
+                    "the volume band {} the 1.0+f fold keeps",
+                    v.volume
+                );
+                assert!(
+                    (0.3..1.0).contains(&v.pitch),
+                    "the pitch band {} the f*0.7+0.3 fold keeps",
+                    v.pitch
+                );
+            } else {
+                failed += 1;
+                assert_eq!(v.volume, 0.0, "the failed gate the volume keeps");
+                assert_eq!(v.pitch, 0.0, "the failed gate the pitch keeps");
+            }
+            // THE DRAW PARITY (the streams advance the same walk): the
+            // body's post-verdict draw the mirror's own next answers —
+            // the gate 1 + the passing floats 2 + the smokes 9 the count
+            // the below arm spends
+            let mut mirror = crate::drops::Lcg::new(seed);
+            let gate = mirror.next_int(24) == 0;
+            if gate {
+                let _ = mirror.next_f32();
+                let _ = mirror.next_f32();
+            }
+            for _ in 0..9 {
+                let _ = mirror.next_f64();
+            }
+            assert_eq!(
+                body.next_f64(),
+                mirror.next_f64(),
+                "the draw parity seed {} keeps",
+                seed
+            );
+        }
+        assert!(passed > 0 && failed > 0, "both gate answers the walk speaks");
+        // THE 1/24 EXPECTED RATE (the gate's own odds the many-seed walk
+        // answers — 1/24 the ~83 the 2000-seed count speaks)
+        let rate = passed as f64 / (passed + failed) as f64;
+        assert!(
+            (rate - 1.0 / 24.0).abs() < 0.02,
+            "the gate rate {} the 1/24 odds keep",
+            rate
         );
     }
 
