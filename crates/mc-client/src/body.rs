@@ -1366,6 +1366,18 @@ pub struct PlayerBody {
     /// momentum the zero-write never lets accumulate. ZERO = no stuck
     /// this tick (the default the ctor speaks).
     pub stuck_speed: (f64, f64, f64),
+    /// THE SUPPORTING BLOCK'S OWN BANK (the autopush-600 round — javap
+    /// Entity.mainSupportingBlockPos the 26.2 jar: the
+    /// `Optional<BlockPos>` field the checkSupportingBlock walk banks,
+    /// the 1e-6 under-bottom slab probe the Level.findSupportingBlock
+    /// closest-to-center verdict keeps): the (x, z) pair the probe
+    /// banks (the y the getOnPos(0.500001f) re-derive folds — the
+    /// fence/wall/gate raw-pos arm the palette never wears), the
+    /// BELOW/factor reads the layered walks serve (the edge-grace the
+    /// body hanging off a block's edge the factor keeps). `None` = the
+    /// legacy fold the body's own x/z wears (the absent the
+    /// getOnPos's own fallback keeps).
+    pub supporting_pos: Option<(i32, i32)>,
     /// The landing's damage the fall law spoke this tick (javap
     /// causeFallDamage's `calculateFallDamage > 0` beat) — the App
     /// drains it into the hurt pipeline (the voices, the cooldown, the
@@ -1480,6 +1492,7 @@ impl PlayerBody {
             },
             fall_distance: 0.0,
             stuck_speed: (0.0, 0.0, 0.0),
+            supporting_pos: None,
             fall_event: None,
             exhaustion_event: 0.0,
             position_reminder: 0,
@@ -2205,6 +2218,32 @@ impl PlayerBody {
             self.z += col.dz;
             self.horizontal_collision = col.horizontal_collision;
             self.on_ground = col.vertical_collision_below;
+            // THE SUPPORTING BLOCK'S OWN BANK (javap Entity.move pcs
+            // 466-480 the 26.2 jar — the verticalCollisionBelow fold
+            // the setOnGroundWithMovement(verticalCollisionBelow,
+            // horizontalCollision, aload 4) call follows, the COLLIDED
+            // movement the 4th slot keeps): the checkSupportingBlock
+            // walk the on-ground body the 1e-6 under-bottom slab probe
+            // answers (the Level.findSupportingBlock the
+            // closest-to-center verdict — the Y/Z/X lexicographic tie
+            // the Vec3i.compareTo keeps), the missing slab the
+            // MOVED-BACK probe the (movement != null) arm wears (the
+            // slab the -movement.x/0/-movement.z shift the pre-move
+            // under-bottom speaks), the airborne body the pos CLEARS
+            // (the isPresent the Optional.empty write denies). The
+            // noPhysics move the pcs 0-58 early return the walk never
+            // reaches — the spectator the pos keeps (the stale the
+            // vanilla spectator's own field wears — the factor folds
+            // the noPhysics gate never reads).
+            if self.on_ground {
+                self.supporting_pos = self.find_supporting_block(world, 0.0, 0.0);
+                if self.supporting_pos.is_none() {
+                    self.supporting_pos =
+                        self.find_supporting_block(world, col.dx, col.dz);
+                }
+            } else {
+                self.supporting_pos = None;
+            }
             // THE FALL DISTANCE (doCheckFallDamage's own law over the SWEPT
             // delta — the accumulation, the water's honest gate, the
             // landing's fold-and-reset)
@@ -3036,20 +3075,114 @@ impl PlayerBody {
         }
     }
 
-    /// THE TWO CELLS THE FACTOR LANES READ (javap getBlockSpeedFactor /
-    /// getBlockJumpFactor the 26.2 jar): the FEET cell the
-    /// blockPosition() floor speaks, the BELOW cell the
-    /// getOnPos(0.500001f) fold answers — the mainSupportingBlockPos
-    /// lane the body's own x/z fold keeps (the supporting-pos lane a
-    /// future round serves — the flat ground the two answers never
-    /// split), the offset the widen keeps (the > 0.5 arm the fence
-    /// family's tag walks never reach — the palette the fences never
-    /// carried), the below-world the STONE row the world.get speaks.
+    /// THE SUPPORTING BLOCK'S OWN PROBE (javap Entity.checkSupportingBlock
+    /// pcs 0-134 the 26.2 jar + CollisionGetter.findSupportingBlock pcs
+    /// 0-100): the 1e-6 under-bottom slab the getBoundingBox().minY -
+    /// 1.0E-6 pair banks (`new AABB(minX, minY - 1.0E-6, minZ, maxX,
+    /// minY, maxZ)`), the (ox, oz) shift the MOVED-BACK arm's
+    /// `probe.move(-movement.x, 0, -movement.z)` fold wears, the cells
+    /// the BlockCollisions' own ±1.0E-7 inflated floor bounds speak
+    /// (the Cursor3D the floor(v - 1e-7)..=floor(v + 1e-7) inclusive
+    /// range keeps — the touching edge cell the +1e-7 the range
+    /// admits), the collision shapes the strict-overlap verdict the
+    /// Empty/COLUMN/InsetColumn vocabulary answers, the WINNER the
+    /// closest-to-center cell the distToCenterSqr(position) minimizes
+    /// (the 3D distance the cell's own center (x+0.5, y+0.5, z+0.5)
+    /// speaks — the dcmpg strictly-less / dcmpl equal-and-smaller
+    /// walk) — the tie the Vec3i.compareTo lexicographic order keeps
+    /// (Y first, then Z, then X the SMALLER wins).
+    fn find_supporting_block(&self, world: &World, ox: f64, oz: f64) -> Option<(i32, i32)> {
+        let b = box_at(self.x - ox, self.y, self.z - oz, self.height());
+        let (bx0, by0, bz0, bx1, _, bz1) = b;
+        // THE SLAB'S OWN 1e-6 BAND (the minY - 1.0E-6 probe the ctor
+        // walk keeps) — the cells the ±1.0E-7 inflated bounds iterate
+        let (x_lo, x_hi) = ((bx0 - 1.0e-7).floor() as i32, (bx1 + 1.0e-7).floor() as i32);
+        let (y_lo, y_hi) = (
+            (by0 - 1.0e-6 - 1.0e-7).floor() as i32,
+            (by0 + 1.0e-7).floor() as i32,
+        );
+        let (z_lo, z_hi) = ((bz0 - 1.0e-7).floor() as i32, (bz1 + 1.0e-7).floor() as i32);
+        let mut best: Option<(i32, i32, i32, f64)> = None;
+        for cy in y_lo..=y_hi {
+            for cx in x_lo..=x_hi {
+                for cz in z_lo..=z_hi {
+                    let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                    if matches!(shape, crate::world::CollisionShape::Empty) {
+                        continue;
+                    }
+                    let (y_lo_band, y_hi_band) = match shape {
+                        crate::world::CollisionShape::Column(h)
+                        | crate::world::CollisionShape::InsetColumn(h, _) => {
+                            (cy as f64, cy as f64 + h as f64 / 16.0)
+                        }
+                        _ => (cy as f64, (cy + 1) as f64),
+                    };
+                    let inset = match shape {
+                        crate::world::CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
+                        _ => 0.0,
+                    };
+                    // THE STRICT OVERLAP (the vanilla AABB intersects the
+                    // shape walk — the touching edge the strict compare
+                    // admits, the 1e-6 slab the band's own top rides)
+                    if !((cx as f64 + inset) < bx1
+                        && ((cx + 1) as f64 - inset) > bx0
+                        && y_lo_band < by0
+                        && y_hi_band > by0 - 1.0e-6
+                        && (cz as f64 + inset) < bz1
+                        && ((cz + 1) as f64 - inset) > bz0)
+                    {
+                        continue;
+                    }
+                    // THE CLOSEST-TO-CENTER WALK (findSupportingBlock
+                    // pcs 43-93): the distToCenterSqr(position) the
+                    // cell's own center (x+0.5, y+0.5, z+0.5) speaks,
+                    // the strictly-less takes, the equal the smaller
+                    // BlockPos (Y/Z/X) takes
+                    let d = (cx as f64 + 0.5 - self.x).powi(2)
+                        + (cy as f64 + 0.5 - self.y).powi(2)
+                        + (cz as f64 + 0.5 - self.z).powi(2);
+                    let take = match best {
+                        None => true,
+                        Some((bx, by, bz, bd)) => {
+                            d < bd
+                                || (d == bd
+                                    && (cy, cz, cx) < (by, bz, bx))
+                        }
+                    };
+                    if take {
+                        best = Some((cx, cy, cz, d));
+                    }
+                }
+            }
+        }
+        best.map(|(cx, _, cz, _)| (cx, cz))
+    }
+
     fn factor_cells(&self, world: &World) -> (u16, u16) {
+        // THE TWO CELLS THE FACTOR LANES READ (javap getBlockSpeedFactor /
+        // getBlockJumpFactor the 26.2 jar): the FEET cell the
+        // blockPosition() floor speaks, the BELOW cell the
+        // getOnPos(0.500001f) fold answers — the supporting-pos x/z the
+        // autopush-600 round serves, the offset the widen keeps (the
+        // > 0.5 arm the fence family's tag walks never reach — the
+        // palette the fences never carried), the below-world the STONE
+        // row the world.get speaks.
         let fx = self.x.floor() as i32;
         let fz = self.z.floor() as i32;
         let feet = world.get(fx, self.y.floor() as i32, fz);
-        let below = world.get(fx, (self.y - 0.500001f64).floor() as i32, fz);
+        // THE SUPPORTING POS'S OWN X/Z (javap getOnPos(float) pcs 0-96
+        // the 26.2 jar — the autopush-600 round: the
+        // mainSupportingBlockPos the probe banks the below read's x/z
+        // KEEP (the edge-grace the body hanging off a block's edge the
+        // factor keeps), the y the floor(y - 0.500001f) re-derive folds
+        // (the pc 79-96 atY walk — the fence/wall/gate raw-pos arm the
+        // palette never wears), the absent the legacy fold the body's
+        // own x/z wears (the pc 99 fallback the old walk keeps))
+        let (bx, bz) = match self.supporting_pos {
+            Some((sx, sz)) => (sx, sz),
+            None => (fx, fz),
+        };
+        let below = world.get(bx, (self.y - 0.500001f64).floor() as i32, bz);
         (feet, below)
     }
 
@@ -6857,6 +6990,63 @@ mod tests {
             }
         }
         w
+    }
+
+    /// THE SUPPORTING POS'S OWN EDGE GRACE (the autopush-600 round —
+    /// javap Entity.checkSupportingBlock pcs 0-134 + CollisionGetter.
+    /// findSupportingBlock pcs 0-100 + getOnPos(float) pcs 0-96 the
+    /// 26.2 jar): the body hanging off a sand block's edge the probe
+    /// the sand cell banks — the below read the supporting x/z KEEPS
+    /// (the factor 0.4 the legacy fold the body's own x/z the hole
+    /// cell would wear), the centered rest the closest cell banks, the
+    /// airborne body the pos CLEARS, the exact tie the X-smaller arm
+    /// the Vec3i.compareTo keeps.
+    #[test]
+    fn the_supporting_pos_the_edge_grace_the_clear_wear() {
+        // THE EDGE GRACE (the soul sand at (8,0,8) the 0.4 row the
+        // generated table banks, the hole at (9,0,8)): the body
+        // resting at x = 9.0 the box the sand cell overlaps — the
+        // probe the sand banks, the below read the supporting x/z the
+        // 0.4 wears (the legacy x = 9 fold the AIR cell the 1.0 would
+        // wear)
+        let mut w = flat_world();
+        w.set(8, 0, 8, crate::world::SOUL_SAND);
+        w.set(9, 0, 8, crate::world::AIR);
+        let mut b = PlayerBody::new(9.0, 1.0, 8.5, 0.0, 0.0);
+        settle(&mut b, &w);
+        assert!(b.on_ground, "the edge-hanging body the sand stands on");
+        assert_eq!(
+            b.supporting_pos,
+            Some((8, 8)),
+            "the probe the sand cell banks"
+        );
+        assert_eq!(
+            b.block_speed_factor(&w),
+            0.4,
+            "the below read the supporting x/z keeps — the edge grace wears"
+        );
+        // THE AIRBORNE CLEAR (the same body jumped-free): the probe the
+        // empty optional banks
+        b.vy = 0.5;
+        b.tick(&w, false);
+        assert!(
+            !b.on_ground,
+            "the launch tick the body the floor leaves"
+        );
+        assert_eq!(
+            b.supporting_pos, None,
+            "the airborne body the pos clears"
+        );
+        // THE EXACT TIE (the flat stone the body equidistant between
+        // the cells 8 and 9): the X-smaller arm the compareTo keeps
+        let w = flat_world();
+        let mut c = PlayerBody::new(9.0, 1.0, 8.5, 0.0, 0.0);
+        settle(&mut c, &w);
+        assert_eq!(
+            c.supporting_pos,
+            Some((8, 8)),
+            "the tie the X-smaller cell banks"
+        );
     }
 
     /// THE BLOCK SPEED FACTOR'S OWN LANE (javap Entity.getBlockSpeedFactor
