@@ -43,11 +43,12 @@
 use crate::camera::Camera;
 use crate::math::Vec3;
 use crate::world::{
-    BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, CHUNK_X, CHUNK_Y, CHUNK_Z,
-    COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE,
-    FIRE, FURNACE, FURNACE_LIT, GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE,
-    LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG, NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND,
-    SOUL_FIRE, STONE, TORCH, WATER,
+    BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, BLAST_FURNACE,
+    BLAST_FURNACE_LIT, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE,
+    DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, FIRE, FURNACE, FURNACE_LIT, GOLD_ORE,
+    GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
+    NETHERRACK, PALE_LEAVES, REDSTONE_ORE, SAND, SMOKER, SMOKER_LIT, SOUL_FIRE, STONE, TORCH,
+    WATER,
 };
 use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
 use mc_protocol::{PlayEvent, PlayerPosition, WorldSnapshot};
@@ -236,11 +237,14 @@ pub fn materialize(
                         // cells, the column 1/2 on WATER cells, the
                         // furnace 1..=4 on FURNACE cells — the id gate
                         // the readers keep is what keeps the three
-                        // vocabularies apart)
+                        // vocabularies apart; the dev-26 round the
+                        // ORIENTABLE TRIO the dispatch answers — the
+                        // blast furnace and the smoker the same byte
+                        // vocabulary the facing property carries)
                         let variant = if variant != 0 {
                             variant
                         } else {
-                            furnace_variant(id)
+                            orientable_variant(id)
                         };
                         if variant != 0 {
                             variants[(gx + gz * side_i) as usize]
@@ -3033,7 +3037,27 @@ pub fn predict_quick_move_to_store(
 /// walk's own shape), 64 the slot max the model's own default
 /// carries. The cursor is NOT the quick-move's lane (the vanilla
 /// quickMoveStack never reads the carried stack).
+#[cfg_attr(not(test), allow(dead_code))]
 pub fn predict_furnace_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32, i32))> {
+    predict_furnace_quick_move_kind(
+        slots,
+        src,
+        crate::furnace_sim::FurnaceKind::Furnace,
+    )
+}
+
+/// THE KIND-AWARE QUICK MOVE (the dev-26 round — the same routing
+/// arms the furnace's predictor speaks, the canSmelt verdict the
+/// KIND'S OWN recipe table answers: the blast furnace the BLASTING
+/// rows, the smoker the SMOKING rows, the RecipePropertySet keys the
+/// three menu types carry [BlastFurnaceMenu/SmokerMenu ctors getstatic
+/// RecipePropertySet.BLAST_FURNACE_INPUT/SMOKER_INPUT]). The furnace's
+/// own fn above the base lane's wrapper keeps.
+pub fn predict_furnace_quick_move_kind(
+    slots: &[(i32, i32)],
+    src: usize,
+    kind: crate::furnace_sim::FurnaceKind,
+) -> Vec<(usize, (i32, i32))> {
     let src_item = slots.get(src).copied().unwrap_or((0, 0));
     if src_item.1 <= 0 {
         return Vec::new(); // the hasItem gate — nothing to move
@@ -3045,7 +3069,7 @@ pub fn predict_furnace_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usiz
         furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 3, 39, true)
     } else if src == 0 || src == 1 {
         furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 3, 39, false)
-    } else if mc_registry::generated::furnace_data::smelt_result(src_item.0).is_some() {
+    } else if kind.recipe(src_item.0).is_some() {
         furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 0, 1, false)
     } else if mc_registry::generated::furnace_data::fuel_ticks(src_item.0) > 0 {
         furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 1, 2, false)
@@ -5265,7 +5289,19 @@ pub fn bubble_column_variant(id: u32) -> u8 {
 /// The LIT bit the mapper's kind split reads (furnace vs furnace_lit),
 /// never the byte — the two vocabularies the id gate keeps apart.
 pub fn furnace_variant(id: u32) -> u8 {
-    if mc_registry::generated::block_ids::block_name_of(id) != Some("minecraft:furnace") {
+    orientable_facing_byte(id, "minecraft:furnace")
+}
+
+/// THE ORIENTABLE TRIO'S OWN FACING BYTE (the dev-26 round — the SAME
+/// decode law the furnace's fn speaks, the ABSTRACT shared walk the
+/// AbstractFurnaceBlock base class carries: the blast furnace and the
+/// smoker the same facing property the same y-rotation order wears —
+/// the blast_furnace.json / smoker.json y=90/180/270 rows the
+/// furnace's own law keep). The gate the caller's block name answers
+/// (`minecraft:furnace` / `minecraft:blast_furnace` /
+/// `minecraft:smoker`), the props parse the same split keeps.
+pub fn orientable_facing_byte(id: u32, block_name: &str) -> u8 {
+    if mc_registry::generated::block_ids::block_name_of(id) != Some(block_name) {
         return 0;
     }
     let Some(props) = mc_registry::generated::block_ids::props_of(id) else {
@@ -5285,6 +5321,34 @@ pub fn furnace_variant(id: u32) -> u8 {
         }
     }
     0
+}
+
+/// THE BLAST FURNACE'S OWN FACING BYTE (the same walk, the blast
+/// furnace's own name the gate answers).
+pub fn blast_furnace_variant(id: u32) -> u8 {
+    orientable_facing_byte(id, "minecraft:blast_furnace")
+}
+
+/// THE SMOKER'S OWN FACING BYTE (the same walk, the smoker's own name
+/// the gate answers).
+pub fn smoker_variant(id: u32) -> u8 {
+    orientable_facing_byte(id, "minecraft:smoker")
+}
+
+/// THE TRIO'S OWN DISPATCH (the materialize walk's own arm — the
+/// orientable family the three fns answer, the first non-zero byte
+/// the world's variant layer stamps; every other block the 0
+/// no-opinion keeps).
+pub fn orientable_variant(id: u32) -> u8 {
+    let v = furnace_variant(id);
+    if v != 0 {
+        return v;
+    }
+    let v = blast_furnace_variant(id);
+    if v != 0 {
+        return v;
+    }
+    smoker_variant(id)
 }
 
 /// The column's own variant at a world cell — the TWO vocabularies the
@@ -5388,6 +5452,30 @@ pub fn runtime_mapper(id: u32) -> u16 {
                 FURNACE_LIT
             } else {
                 FURNACE
+            }
+        }
+        // THE BLAST FURNACE / SMOKER'S OWN ARMS (the dev-26 round —
+        // the same lit-bit kind split the furnace's own arm speaks,
+        // the LIT kinds the burning state's own products wear, the
+        // emission-13 rows light.rs banks, the FACING property the
+        // variant bytes carry [see orientable_variant], the full-cube
+        // collision the default arm keeps)
+        Some("minecraft:blast_furnace") => {
+            let lit = mc_registry::generated::block_ids::props_of(id)
+                .is_some_and(|p| p.split(',').any(|kv| kv == "lit=true"));
+            if lit {
+                BLAST_FURNACE_LIT
+            } else {
+                BLAST_FURNACE
+            }
+        }
+        Some("minecraft:smoker") => {
+            let lit = mc_registry::generated::block_ids::props_of(id)
+                .is_some_and(|p| p.split(',').any(|kv| kv == "lit=true"));
+            if lit {
+                SMOKER_LIT
+            } else {
+                SMOKER
             }
         }
         _ => AIR, // air and every block the palette doesn't render yet
@@ -7408,6 +7496,43 @@ mod tests {
         assert_eq!(runtime_mapper(5330), FURNACE, "south+unlit");
         assert_eq!(runtime_mapper(5327), FURNACE_LIT, "north+lit");
         assert_eq!(runtime_mapper(5333), FURNACE_LIT, "east+lit");
+    }
+
+    #[test]
+    fn the_trio_the_variant_bytes_the_mapper_kinds_wear() {
+        // THE TRIO'S OWN FACING BYTES (the dev-26 round — the generated
+        // table's real ids: the smoker 20754..=20761, the blast furnace
+        // 20762..=20769, the SAME facing OUTER x lit INNER order the
+        // furnace's own ladder keeps [north, south, west, east], the
+        // SAME 1..=4 packing the orientable decode speaks)
+        assert_eq!(smoker_variant(20754), 1, "smoker north, lit=true");
+        assert_eq!(smoker_variant(20755), 1, "smoker north, lit=false");
+        assert_eq!(smoker_variant(20756), 3, "smoker south");
+        assert_eq!(smoker_variant(20758), 4, "smoker west");
+        assert_eq!(smoker_variant(20760), 2, "smoker east");
+        assert_eq!(blast_furnace_variant(20762), 1, "blast north, lit=true");
+        assert_eq!(blast_furnace_variant(20763), 1, "blast north, lit=false");
+        assert_eq!(blast_furnace_variant(20764), 3, "blast south");
+        assert_eq!(blast_furnace_variant(20766), 4, "blast west");
+        assert_eq!(blast_furnace_variant(20768), 2, "blast east");
+        // THE CROSS-GATE (the furnace's own fn the blast/smoker ids the
+        // no-opinion keeps — the block name the gate answers)
+        assert_eq!(furnace_variant(20763), 0, "the blast id the furnace gate refuses");
+        assert_eq!(blast_furnace_variant(5328), 0, "the furnace id the blast gate refuses");
+        assert_eq!(smoker_variant(20763), 0, "the blast id the smoker gate refuses");
+        // THE DISPATCH (the orientable walk the three fns answer — the
+        // first non-zero byte the materialize layer stamps)
+        assert_eq!(orientable_variant(5331), 4, "the furnace's west the dispatch answers");
+        assert_eq!(orientable_variant(20758), 4, "the smoker's west");
+        assert_eq!(orientable_variant(20766), 4, "the blast's west");
+        assert_eq!(orientable_variant(1), 0, "stone no opinion");
+        // THE MAPPER'S OWN KIND SPLIT (the LIT bit the same law keeps —
+        // the lit kinds the emission-13 rows bank, the unlit the world's
+        // own blocks land through)
+        assert_eq!(runtime_mapper(20755), SMOKER, "smoker north+unlit");
+        assert_eq!(runtime_mapper(20754), SMOKER_LIT, "smoker north+lit");
+        assert_eq!(runtime_mapper(20763), BLAST_FURNACE, "blast north+unlit");
+        assert_eq!(runtime_mapper(20762), BLAST_FURNACE_LIT, "blast north+lit");
     }
 
     #[test]

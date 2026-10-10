@@ -2193,6 +2193,20 @@ pub const MENU_TYPE_CRAFTING: i32 = 12;
 /// [`mc_protocol::play::ContainerSetData`] transport.
 pub const MENU_TYPE_FURNACE: i32 = 14;
 
+/// `MenuType`'s blast_furnace — the BlastFurnaceMenu's registry id
+/// (the SAME clinit order speaks: anvil 8, beacon 9, BLAST_FURNACE
+/// lands at 10 — the dev-26 round's javap walk the putstatic pc 140
+/// row keeps; the menu's own shape the AbstractFurnaceMenu subclass
+/// ctor banks — THREE slots + the standard 36, the BLASTING
+/// RecipeType the block entity's getBurnDuration/2 override speaks).
+pub const MENU_TYPE_BLAST_FURNACE: i32 = 10;
+
+/// `MenuType`'s smoker — the SmokerMenu's registry id (the SAME
+/// clinit order speaks: shulker_box 20, smithing 21, SMOKER lands at
+/// 22 — the dev-26 round's javap walk the putstatic pc 296 row keeps;
+/// the SMOKING RecipeType the same override's half speaks).
+pub const MENU_TYPE_SMOKER: i32 = 22;
+
 /// An OPEN container window — the `containerMenu` lane the audited
 /// consumer routes foreign-window container packets through (javap of
 /// the 26.2 `ClientPacketListener`): the Open Screen packet BIRTHS the

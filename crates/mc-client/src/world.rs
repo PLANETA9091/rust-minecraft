@@ -661,6 +661,65 @@ pub const FURNACE: u16 = 79;
 /// carries, the front-tile swap the same mesher arm serves.
 pub const FURNACE_LIT: u16 = 80;
 
+/// Kind 81 (the eighty-second entry, the dev-26 round): THE BLAST
+/// FURNACE — the ore-smelting family's own fast kind (javap Blocks
+/// clinit pcs 24255-24298 the 26.2 jar: register(BlockItemIds.BLAST_
+/// FURNACE, ...) mapColor(STONE) pc 24266-24269, instrument(BASEDRUM)
+/// pc 24272-24275, requiresCorrectToolForDrops() pc 24278,
+/// strength(3.5f) pc 24281-24284, bipush 13 litBlockEmission(I)
+/// pc 24287-24292 — the furnace's exact property walk the same
+/// constants keep). The blockstates blast_furnace.json's facing=north
+/// rows resolve (block/blast_furnace — the orientable chain the
+/// furnace's own #front authoring shares), the facing property the
+/// variant byte carries (world_view's orientable_variant decode), the
+/// front-tile swap the same mesher arm serves. The BLASTING recipes
+/// the sim's own table answers (the codec default 100 the
+/// BlastingRecipe clinit's `bipush 100` keeps), the fuel the HALF
+/// burn duration the getBurnDuration override's `iconst_2; idiv` walk
+/// speaks (javap BlastFurnaceBlockEntity pcs 0-8).
+pub const BLAST_FURNACE: u16 = 81;
+
+/// Kind 82: THE LIT BLAST FURNACE — the same blast_furnace.json's
+/// "facing=north,lit=true" row resolves (block/blast_furnace_on, the
+/// blast_furnace_front_on the #front ref answers — the ANIMATED strip
+/// the .mcmeta banks), the `bipush 13` litBlockEmission(I) pc 24287-
+/// 24292 the lightLevel row the lit state's own 13 banks, the shared
+/// "blast_furnace" NAME_OF row the dig/drop/sound/item lanes keep.
+/// The facing variant byte the same decode carries, the front-tile
+/// swap the same mesher arm serves; the animate-tick arm the SMOKE-
+/// ONLY pair the furnace's flame-less sibling wears (javap
+/// BlastFurnaceBlock.animateTick — the ONE addParticle call pc 187-
+/// 209, the FLAME pair the furnace speaks ABSENT).
+pub const BLAST_FURNACE_LIT: u16 = 82;
+
+/// Kind 83: THE SMOKER — the food-cooking family's own kind (javap
+/// Blocks clinit pcs 24209-24252: register(BlockItemIds.SMOKER, ...)
+/// mapColor(STONE) pc 24220-24223, instrument(BASEDRUM) pc 24226-
+/// 24229, requiresCorrectToolForDrops() pc 24232, strength(3.5f)
+/// pc 24235-24238, bipush 13 litBlockEmission(I) pc 24241-24246 —
+/// the same property walk again). The blockstates smoker.json's
+/// facing=north rows resolve (block/smoker — the orientable_with_
+/// bottom chain the #bottom texture the smoker_bottom.png answers),
+/// the facing property the variant byte carries, the front-tile swap
+/// the same mesher arm serves. The SMOKING recipes the sim's own
+/// table answers (the codec default 100 the SmokingRecipe clinit's
+/// `bipush 100` keeps), the fuel the HALF burn duration the same
+/// getBurnDuration override speaks (javap SmokerBlockEntity pcs 0-8).
+pub const SMOKER: u16 = 83;
+
+/// Kind 84: THE LIT SMOKER — the same smoker.json's
+/// "facing=north,lit=true" row resolves (block/smoker_on, the
+/// smoker_front_on the #front ref answers), the `bipush 13`
+/// lightLevel row the lit state's own 13 banks, the shared "smoker"
+/// NAME_OF row the dig/drop/sound/item lanes keep. The animate-tick
+/// arm the SIMPLEST tail the trio wears (javap SmokerBlock.animateTick
+/// — the sound gate draw the ONLY random the walk spends, the ONE
+/// addParticle(SMOKE) at (x+0.5, y+1.1, z+0.5) pc 79-96 the
+/// `ldc2_w 1.1; dadd` the +1.1 height speaks, NO facing reads, NO
+/// lateral/height draws — the SMOKER_SMOKE event the pc 67 field
+/// banks, "block.smoker.smoke" the registration name carries).
+pub const SMOKER_LIT: u16 = 84;
+
 /// THE FURNACE'S OWN FAMILY — the two kinds the palette row wakes
 /// (the unlit kind the wire world's own furnaces land through, the
 /// lit kind the burning state's own product the block updates wear):
@@ -670,8 +729,45 @@ pub fn is_furnace(id: u16) -> bool {
     id == FURNACE || id == FURNACE_LIT
 }
 
+/// THE BLAST FURNACE'S OWN FAMILY (the same two-kind shape the
+/// furnace's predicate keeps — the smelting family's fast lane the
+/// offline sim's own table answers).
+pub fn is_blast_furnace(id: u16) -> bool {
+    id == BLAST_FURNACE || id == BLAST_FURNACE_LIT
+}
+
+/// THE SMOKER'S OWN FAMILY (the same two-kind shape — the food lane's
+/// own cooker).
+pub fn is_smoker(id: u16) -> bool {
+    id == SMOKER || id == SMOKER_LIT
+}
+
+/// THE ORIENTABLE TRIO (the AbstractFurnaceBlock subclass family —
+/// the facing property + the lit flip + the front-tile swap the
+/// THREE registrations share): the mesher's front-tile arm and the
+/// placement facing walk the shared predicate reads.
+pub fn is_orientable_furnace(id: u16) -> bool {
+    is_furnace(id) || is_blast_furnace(id) || is_smoker(id)
+}
+
+/// The orientable kind's own UNLIT/LIT pair — the LIT flip's world
+/// walk the sim's verdict wears (the setBlock LIT swap the
+/// AbstractFurnaceBlockEntity pc 369-403 speaks). The unlit kind the
+/// pair's first half keeps.
+pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
+    if is_furnace(id) {
+        Some((FURNACE, FURNACE_LIT))
+    } else if is_blast_furnace(id) {
+        Some((BLAST_FURNACE, BLAST_FURNACE_LIT))
+    } else if is_smoker(id) {
+        Some((SMOKER, SMOKER_LIT))
+    } else {
+        None
+    }
+}
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 81] = [
+pub const NAME_OF: [&str; 85] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -792,6 +888,19 @@ pub const NAME_OF: [&str; 81] = [
     // id the placeable lookup answers; BOTH kinds the same row the
     // lit swap the smelt lane's own product never places)
     "furnace", "furnace",
+    // THE BLAST FURNACE / SMOKER QUARTET'S OWN ROWS (the dev-26
+    // round — the lit kinds the BASE name the shared-row law the
+    // furnace pair keeps: the dig row (3.5 hardness +
+    // requiresCorrectToolForDrops — the strength(3.5f) pc 24281 /
+    // 24235 + requiresCorrectToolForDrops() pc 24278 / 24232 the
+    // clinit arms speak), the drops tables (the self-entries the
+    // generated DROPS_BLAST_FURNACE / DROPS_SMOKER rows bank), the
+    // sounds' STONE rows (no SoundType call the clinit arms carry)
+    // and the item ids the placeable lookup answers; BOTH lit kinds
+    // the same row the lit swap the smelt lanes' own products never
+    // place)
+    "blast_furnace", "blast_furnace",
+    "smoker", "smoker",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass

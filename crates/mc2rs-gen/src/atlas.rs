@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 81] = [
+pub const RUNTIME_PALETTE: [&str; 85] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -421,6 +421,24 @@ pub const RUNTIME_PALETTE: [&str; 81] = [
     // property the variant byte carries (world_view's furnace_variant
     // decode), the mesher's front-tile swap the facing serves
     "furnace", "furnace_lit",
+    // THE BLAST FURNACE / SMOKER QUARTET (the dev-26 round): the
+    // furnace family's own two siblings the same orientable lane
+    // renders — javap Blocks clinit the 26.2 jar: SMOKER register
+    // pcs 24209-24252 (mapColor(STONE) pc 24220-24223, instrument(
+    // BASEDRUM) pc 24226-24229, requiresCorrectToolForDrops() pc
+    // 24232, strength(3.5f) pc 24235-24238, bipush 13
+    // litBlockEmission(I) pc 24241-24246), BLAST_FURNACE register
+    // pcs 24255-24298 (the same walk, pc 24266-24292) — the furnace's
+    // exact property pair both keep. The blockstates blast_furnace.json
+    // / smoker.json facing=north rows resolve (block/blast_furnace,
+    // block/blast_furnace_on / block/smoker, block/smoker_on — the
+    // smoker the orientable_with_bottom chain the #bottom texture
+    // speaks), the facing property the variant byte carries
+    // (world_view's orientable_variant decode), the mesher's
+    // front-tile swap the facing serves; the lit fronts the ANIMATED
+    // strips the .mcmeta files bank (the furnace's own frame-0 law)
+    "blast_furnace", "blast_furnace_lit",
+    "smoker", "smoker_lit",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -499,28 +517,32 @@ fn resolve_block(
         return Ok(resolve_flat_stem("lava_still", false));
     }
 
-    if block == "furnace" || block == "furnace_lit" {
-        // THE FURNACE'S OWN ROWS (the autopush-601 round, the official
-        // 26.2 jar): the blockstate's facing=north rows the
-        // y-rotation-FREE pair the palette's kind-only vocabulary keeps
-        // — the facing property the variant byte carries (world_view's
-        // furnace_variant decode), the mesher's front-tile swap the
-        // facing serves. The LIT kind the SAME furnace.json's
-        // "facing=north,lit=true" row resolves (block/furnace_on — the
-        // furnace_front_on the #front ref answers; the blockstate has
-        // NO furnace_lit.json — the half-kind name the campfire_lit
-        // precedent wears). The model chain block/furnace ->
-        // block/orientable -> block/orientable_with_bottom ->
-        // block/cube the full-cube element walk resolves (north=#front,
-        // east/south/west=#side, up=#top, down=#bottom=#top — the
-        // vanilla's own six-face authoring), tinted = false (no
-        // tintindex anywhere). The dig row the registration's
-        // requiresCorrectToolForDrops pc 7179 + strength(3.5f) pc
-        // 7182-7185 the clinit walk speaks; the lightLevel the bipush
-        // 13 litBlockEmission pc 7188-7190 pair banks (the lit state's
-        // own 13, the unlit the 0 — light.rs's row keeps).
-        let stem = "furnace";
-        let lit = block == "furnace_lit";
+    // THE ORIENTABLE FURNACE TRIO'S OWN ROWS (the autopush-601
+    // furnace arm, the dev-26 round GENERALIZED to the blast furnace
+    // and the smoker — the same blockstate shape the three
+    // registrations speak: facing x lit -> the orientable model, the
+    // y-rotation the variant byte carries, the palette's kind-only
+    // vocabulary the facing=north rows resolve). The LIT kinds the
+    // SAME <stem>.json's "facing=north,lit=true" rows resolve (block/
+    // <stem>_on — the <stem>_front_on the #front ref answers; the
+    // blockstate has NO <stem>_lit.json — the half-kind name the
+    // campfire_lit precedent wears). The model chains block/<stem> ->
+    // block/orientable -> block/orientable_with_bottom -> block/cube
+    // the full-cube element walk resolves (north=#front, east/south/
+    // west=#side, up=#top, down=#bottom or #top — the vanilla's own
+    // authoring; the smoker's #bottom the smoker_bottom.png answers),
+    // tinted = false (no tintindex anywhere). The dig rows the
+    // registrations' requiresCorrectToolForDrops pc 7179 / 24278 /
+    // 24232 + strength(3.5f) pc 7182-7185 / 24281-24284 / 24235-24238
+    // the clinit walks speak; the lightLevel the bipush 13
+    // litBlockEmission pc 7188-7190 / 24287-24292 / 24241-24246 pairs
+    // bank (the lit state's own 13, the unlit the 0 — light.rs's rows
+    // keep).
+    let orientable_stem = ["furnace", "blast_furnace", "smoker"].into_iter().find(|stem| {
+        *stem == block || block.strip_suffix("_lit") == Some(*stem)
+    });
+    if let Some(stem) = orientable_stem {
+        let lit = block.ends_with("_lit");
         let bs_bytes =
             read_jar(archive, &format!("assets/minecraft/blockstates/{stem}.json"))?;
         let bs: Value = serde_json::from_slice(&bs_bytes)

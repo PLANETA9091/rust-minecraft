@@ -4,15 +4,16 @@ Rust table: crates/mc-registry/src/generated/furnace_data.rs.
 
 Two walks, both pinned by javap against the same jar (26.2):
 
-1. THE SMELTING RECIPES — the jar's data/minecraft/recipe/*.json rows
-   whose "type" is "minecraft:smelting" (73 in 26.2). Every ingredient
-   is a plain item string (no tag rows — the 26.2 data pack's own
-   shape), every result is {"id": ..., "count"?}; the cookingtime
-   field is ABSENT from every row, so the SmeltingRecipe clinit's own
-   default speaks (javap SmeltingRecipe static{}: `sipush 200` the
-   cookingMapCodec(I) default wears — 200 ticks, the
+1. THE COOKING RECIPES — the jar's data/minecraft/recipe/*.json rows
+   whose "type" is one of the three cooking words (smelting 73,
+   blasting 25, smoking 9 in 26.2). Every ingredient is a plain item
+   string (no tag rows — the 26.2 data pack's own shape), every result
+   is {"id": ..., "count"?}; the cookingtime field is ABSENT from every
+   row, so each recipe class's clinit default speaks (javap
+   SmeltingRecipe static{}: `sipush 200`, BlastingRecipe/SmokingRecipe
+   static{}: `bipush 100` — the cookingMapCodec(I) defaults wear; the
    AbstractFurnaceBlockEntity.getTotalCookTime's `sipush 200` fallback
-   the no-recipe arm keeps).
+   the no-recipe arm keeps for EVERY type).
 
 2. THE FUEL VALUES — javap FuelValues.vanillaBurnTimes(Provider,
    FeatureFlagSet, I): the Builder.add walk over base 200
@@ -147,18 +148,28 @@ def main() -> None:
     wire, n_items = load_wire_order()
     with zipfile.ZipFile(JAR) as zf:
         tag_cache: dict = {}
-        # ---- THE SMELTING RECIPES (the jar's data rows) ----
-        recipes: dict[str, tuple[str, int]] = {}
+        # ---- THE COOKING RECIPES (the jar's data rows, the THREE
+        # types the furnace family speaks — the per-type codec defaults
+        # the clinit walks pin: smelting 200, blasting 100, smoking
+        # 100) ----
+        recipes_by_type: dict[str, dict[str, tuple[str, int]]] = {
+            "smelting": {},
+            "blasting": {},
+            "smoking": {},
+        }
+        type_defaults = {"smelting": 200, "blasting": 100, "smoking": 100}
         for path in sorted(zf.namelist()):
             if not path.startswith("data/minecraft/recipe/") or not path.endswith(".json"):
                 continue
             row = json.loads(zf.read(path))
-            if row.get("type") != "minecraft:smelting":
+            rtype = row.get("type", "").removeprefix("minecraft:")
+            if rtype not in recipes_by_type:
                 continue
+            recipes = recipes_by_type[rtype]
             result = row["result"]["id"].removeprefix("minecraft:")
             count = int(row["result"].get("count", 1))
-            cook = int(row.get("cookingtime", 200))  # the clinit's own default
-            if cook != 200:
+            cook = int(row.get("cookingtime", type_defaults[rtype]))
+            if cook != type_defaults[rtype]:
                 print(f"  note: {path} cookingtime {cook} rides its row")
             # THE INGREDIENT'S OWN SHAPES (the 26.2 data pack's rows):
             # the plain item string ("minecraft:raw_iron"), the tag
@@ -184,7 +195,7 @@ def main() -> None:
                     flat = [v.removeprefix("minecraft:")]
                 for name in flat:
                     if name in recipes and recipes[name] != (result, count):
-                        print(f"  note: duplicate smelting row for {name} — first kept")
+                        print(f"  note: duplicate {rtype} row for {name} — first kept")
                         continue
                     recipes[name] = (result, count)
 
@@ -202,15 +213,21 @@ def main() -> None:
             else:
                 print(f"  note: remove-tag member {member} was never a fuel")
 
-    # ---- THE WIRE-ID PROJECTION ----
-    smelt_ids: dict[int, tuple[int, int]] = {}
-    for name, (result, count) in recipes.items():
-        i = wire.get(name)
-        r = wire.get(result)
-        if i is None or r is None:
-            print(f"  note: smelting row {name} -> {result} outside the wire order — skipped")
-            continue
-        smelt_ids[i] = (r, count)
+    # ---- THE WIRE-ID PROJECTION (the three tables the sim reads) ----
+    ids_by_type: dict[str, dict[int, tuple[int, int]]] = {}
+    for tname, recipes in recipes_by_type.items():
+        ids: dict[int, tuple[int, int]] = {}
+        for name, (result, count) in recipes.items():
+            i = wire.get(name)
+            r = wire.get(result)
+            if i is None or r is None:
+                print(f"  note: {tname} row {name} -> {result} outside the wire order — skipped")
+                continue
+            ids[i] = (r, count)
+        ids_by_type[tname] = ids
+    smelt_ids = ids_by_type["smelting"]
+    blast_ids = ids_by_type["blasting"]
+    smoke_ids = ids_by_type["smoking"]
     fuel_ids: dict[int, int] = {}
     for name, ticks in fuel.items():
         i = wire.get(name)
@@ -222,15 +239,15 @@ def main() -> None:
     lines: list[str] = []
     a = lines.append
     a("// GENERATED from the client.jar by scripts/extract_furnace_data.py —")
-    a("// the furnace's own data tables the offline smelting sim reads:")
-    a("// the smelting rows (data/minecraft/recipe/*.json, type")
-    a("// minecraft:smelting — the cookingtime default 200 the")
-    a("// SmeltingRecipe clinit's `sipush 200` codec default speaks) and")
-    a("// the fuel rows (javap FuelValues.vanillaBurnTimes — the base 200")
-    a("// BURN_TIME_STANDARD walk, the tag rows the jar's item tags")
-    a("// answer, the tail remove(NON_FLAMMABLE_WOOD) the stems lose).")
-    a("// Indexed by the ITEM WIRE ID (the ITEM_WIRE_ORDER index space);")
-    a("// 0 = no row.")
+    a("// the furnace family's own data tables the offline smelting sim")
+    a("// reads: the three cooking rows (data/minecraft/recipe/*.json,")
+    a("// types minecraft:smelting / blasting / smoking — the cookingtime")
+    a("// defaults the clinit codec walks speak: 200 smelting, 100")
+    a("// blasting/smoking) and the fuel rows (javap")
+    a("// FuelValues.vanillaBurnTimes — the base 200 BURN_TIME_STANDARD")
+    a("// walk, the tag rows the jar's item tags answer, the tail")
+    a("// remove(NON_FLAMMABLE_WOOD) the stems lose). Indexed by the ITEM")
+    a("// WIRE ID (the ITEM_WIRE_ORDER index space); 0 = no row.")
     a(f"pub const ITEM_COUNT: usize = {n_items};")
     a("")
     a("/// The smelting result's wire id per ingredient id (0 = no row).")
@@ -251,6 +268,62 @@ def main() -> None:
     row = []
     for i in range(n_items):
         c = smelt_ids.get(i, (0, 0))[1]
+        row.append(str(c))
+        if len(row) == 20:
+            a("    " + ", ".join(row) + ",")
+            row = []
+    if row:
+        a("    " + ", ".join(row) + ",")
+    a("];")
+    a("")
+    a("/// The blasting result's wire id per ingredient id (0 = no row —")
+    a("/// the BLAST_FURNACE's own recipe rows, the codec default 100")
+    a("/// the BlastingRecipe clinit's `bipush 100` speaks).")
+    a("pub const BLAST_RESULT: [i32; ITEM_COUNT] = [")
+    row = []
+    for i in range(n_items):
+        r = blast_ids.get(i, (0, 0))[0]
+        row.append(str(r))
+        if len(row) == 20:
+            a("    " + ", ".join(row) + ",")
+            row = []
+    if row:
+        a("    " + ", ".join(row) + ",")
+    a("];")
+    a("")
+    a("/// The blasting result's stack count per ingredient id (0 = no row).")
+    a("pub const BLAST_RESULT_COUNT: [i32; ITEM_COUNT] = [")
+    row = []
+    for i in range(n_items):
+        c = blast_ids.get(i, (0, 0))[1]
+        row.append(str(c))
+        if len(row) == 20:
+            a("    " + ", ".join(row) + ",")
+            row = []
+    if row:
+        a("    " + ", ".join(row) + ",")
+    a("];")
+    a("")
+    a("/// The smoking result's wire id per ingredient id (0 = no row —")
+    a("/// the SMOKER's own recipe rows, the codec default 100 the")
+    a("/// SmokingRecipe clinit's `bipush 100` speaks).")
+    a("pub const SMOKE_RESULT: [i32; ITEM_COUNT] = [")
+    row = []
+    for i in range(n_items):
+        r = smoke_ids.get(i, (0, 0))[0]
+        row.append(str(r))
+        if len(row) == 20:
+            a("    " + ", ".join(row) + ",")
+            row = []
+    if row:
+        a("    " + ", ".join(row) + ",")
+    a("];")
+    a("")
+    a("/// The smoking result's stack count per ingredient id (0 = no row).")
+    a("pub const SMOKE_RESULT_COUNT: [i32; ITEM_COUNT] = [")
+    row = []
+    for i in range(n_items):
+        c = smoke_ids.get(i, (0, 0))[1]
         row.append(str(c))
         if len(row) == 20:
             a("    " + ", ".join(row) + ",")
@@ -281,12 +354,36 @@ def main() -> None:
     a("    Some((r, SMELT_RESULT_COUNT[i]))")
     a("}")
     a("")
+    a("/// The blasting row (the None the no-recipe arm keeps).")
+    a("pub fn blast_result(id: i32) -> Option<(i32, i32)> {")
+    a("    let i = usize::try_from(id).ok()?;")
+    a("    let r = *BLAST_RESULT.get(i)?;")
+    a("    if r == 0 {")
+    a("        return None;")
+    a("    }")
+    a("    Some((r, BLAST_RESULT_COUNT[i]))")
+    a("}")
+    a("")
+    a("/// The smoking row (the None the no-recipe arm keeps).")
+    a("pub fn smoke_result(id: i32) -> Option<(i32, i32)> {")
+    a("    let i = usize::try_from(id).ok()?;")
+    a("    let r = *SMOKE_RESULT.get(i)?;")
+    a("    if r == 0 {")
+    a("        return None;")
+    a("    }")
+    a("    Some((r, SMOKE_RESULT_COUNT[i]))")
+    a("}")
+    a("")
     a("/// The fuel's burn duration (the 0 the not-fuel arm keeps).")
     a("pub fn fuel_ticks(id: i32) -> i32 {")
     a("    usize::try_from(id).ok().and_then(|i| FUEL_TICKS.get(i).copied()).unwrap_or(0)")
     a("}")
     OUT.write_text("\n".join(lines) + "\n")
-    print(f"wrote {OUT}: {n_items} wire ids, {len(smelt_ids)} smelting rows, {len(fuel_ids)} fuel rows")
+    print(
+        f"wrote {OUT}: {n_items} wire ids, {len(smelt_ids)} smelting rows,"
+        f" {len(blast_ids)} blasting rows, {len(smoke_ids)} smoking rows,"
+        f" {len(fuel_ids)} fuel rows"
+    )
 
 
 if __name__ == "__main__":

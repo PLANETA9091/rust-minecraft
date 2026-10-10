@@ -8991,7 +8991,7 @@ impl App {
             self.clock_rate_carry -= whole;
             self.clock_total = self.clock_total.saturating_add(whole as u64);
         }
-        // THE FURNACE'S OWN OFFLINE TICK (the block entity's
+        // THE FURNACE FAMILY'S OWN OFFLINE TICK (the block entity's
         // serverTick walk the sim module pins — javap 26.2
         // AbstractFurnaceBlockEntity.serverTick): the opened
         // furnace's cells the tick reads, the words the render's
@@ -8999,17 +8999,19 @@ impl App {
         // world's placed kind wears (FURNACE / FURNACE_LIT — the
         // setValue(LIT, ...) setBlock walk pc 379-403 answers, the
         // emission-13 light the flood re-speaks, the front tile
-        // the mesher's furnace arm re-renders). THE WORLD GATE the
-        // mined furnace the dead block entity answers (the chunk
-        // the block lost the BE the vanilla setRemoved kills —
-        // the words the frozen walk keeps). The live lane never
-        // rides (the wire window the server's own words drive).
+        // the mesher's furnace arm re-renders; the dev-26 round the
+        // BLAST FURNACE / SMOKER pairs the SAME flip wears — the
+        // orientable pair the world cell's own family answers). THE
+        // WORLD GATE the mined furnace the dead block entity answers
+        // (the chunk the block lost the BE the vanilla setRemoved
+        // kills — the words the frozen walk keeps). The live lane
+        // never rides (the wire window the server's own words drive).
         if !self.world_is_network
             && !self.furnace_is_live
             && self.furnace_pos.is_some()
             && self
                 .active_world()
-                .is_some_and(|w| crate::world::is_furnace(w.get(
+                .is_some_and(|w| crate::world::is_orientable_furnace(w.get(
                     self.furnace_pos.unwrap().0,
                     self.furnace_pos.unwrap().1,
                     self.furnace_pos.unwrap().2,
@@ -9022,14 +9024,27 @@ impl App {
             if flipped {
                 let lit_now =
                     self.furnace_data[crate::furnace_sim::DATA_LIT_TIME] > 0;
+                // THE ORIENTABLE PAIR'S OWN WALK (the world cell's own
+                // family the UNLIT/LIT pair answers — the furnace the
+                // FURNACE/FURNACE_LIT pair keeps, the blast furnace /
+                // smoker their own pairs the kind kind's lanes speak)
+                let cell = self
+                    .offline_world
+                    .as_ref()
+                    .map(|w| w.get(pos.0, pos.1, pos.2))
+                    .unwrap_or(crate::world::FURNACE);
                 let next = if lit_now {
-                    crate::world::FURNACE_LIT
+                    crate::world::orientable_pair(cell)
+                        .map(|(_, lit)| lit)
+                        .unwrap_or(crate::world::FURNACE_LIT)
                 } else {
-                    crate::world::FURNACE
+                    crate::world::orientable_pair(cell)
+                        .map(|(unlit, _)| unlit)
+                        .unwrap_or(crate::world::FURNACE)
                 };
                 if let Some(world) = self.offline_world.as_mut() {
                     let cur = world.get(pos.0, pos.1, pos.2);
-                    if cur != next && crate::world::is_furnace(cur) {
+                    if cur != next && crate::world::is_orientable_furnace(cur) {
                         world.set(pos.0, pos.1, pos.2, next);
                         // THE KIND SWAP'S OWN LIGHT (the lit state
                         // the emission-13 row the flood re-speaks —
@@ -9085,64 +9100,143 @@ impl App {
                 // (the campfire lane's own shape)
                 let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
                 let yaw = self.listener_yaw();
-                let mut crackle_cells: Vec<(i32, i32, i32)> = Vec::new();
-                let mut embers: Vec<(f64, f64, f64)> = Vec::new();
+                // THE TRIO'S OWN BANKS (the dev-26 round — the crackle
+                // cells carry their OWN event names the three
+                // registrations speak, the embers carry their OWN
+                // flame flag the furnace's flame pair alone wears, the
+                // smoker's smokes the FIXED +1.1 anchor the simple
+                // tail speaks)
+                let mut crackle_cells: Vec<(i32, i32, i32, &'static str)> = Vec::new();
+                let mut embers: Vec<(f64, f64, f64, bool)> = Vec::new();
+                let mut smoker_smokes: Vec<(f64, f64, f64)> = Vec::new();
                 let animate = &mut self.ambient_rng;
                 let level = &mut self.level_ambient_rng;
                 crate::furnace_sim::animate_sample_walk(bx, by, bz, level, |sx, sy, sz| {
-                    // THE FURNACE'S OWN ARM (the LIT kind alone the
-                    // block walk answers — the unlit kind, the air,
-                    // every other block the sampled state the walk
-                    // never spends the three draws on)
-                    if world.get(sx, sy, sz) != crate::world::FURNACE_LIT {
-                        return;
+                    // THE ORIENTABLE TRIO'S OWN ARMS (the LIT kinds
+                    // alone the block walks answer — the unlit kinds,
+                    // the air, every other block the sampled state the
+                    // walks never spend the draws on; the draw counts
+                    // the three bytecode tails keep: the furnace and
+                    // the blast furnace the THREE-draw walk [gate,
+                    // lateral, height], the smoker the ONE-draw walk
+                    // [gate alone] — the bytecode's own spend the
+                    // streams obey)
+                    match world.get(sx, sy, sz) {
+                        crate::world::FURNACE_LIT => {
+                            let facing = world.variant(sx, sy, sz);
+                            let v = crate::furnace_sim::animate_tick(
+                                facing,
+                                animate.next_f64(),
+                                animate.next_f64(),
+                                animate.next_f64(),
+                            );
+                            if v.crackle {
+                                crackle_cells.push((
+                                    sx,
+                                    sy,
+                                    sz,
+                                    "block.furnace.fire_crackle",
+                                ));
+                            }
+                            // THE SMOKE-THEN-FLAME ORDER (pc 187-232 —
+                            // the flame flag TRUE the pair's own tail
+                            // keeps)
+                            embers.push((
+                                sx as f64 + 0.5 + v.dx,
+                                sy as f64 + v.dy,
+                                sz as f64 + 0.5 + v.dz,
+                                true,
+                            ));
+                        }
+                        crate::world::BLAST_FURNACE_LIT => {
+                            let facing = world.variant(sx, sy, sz);
+                            let v = crate::furnace_sim::blast_animate_tick(
+                                facing,
+                                animate.next_f64(),
+                                animate.next_f64(),
+                                animate.next_f64(),
+                            );
+                            if v.crackle {
+                                crackle_cells.push((
+                                    sx,
+                                    sy,
+                                    sz,
+                                    "block.blastfurnace.fire_crackle",
+                                ));
+                            }
+                            // THE SMOKE-ONLY TAIL (pc 187-209 — the
+                            // ONE addParticle the flame-less sibling
+                            // speaks, the 9.0/16.0 height band the
+                            // taller column answers)
+                            embers.push((
+                                sx as f64 + 0.5 + v.dx,
+                                sy as f64 + v.dy,
+                                sz as f64 + 0.5 + v.dz,
+                                false,
+                            ));
+                        }
+                        crate::world::SMOKER_LIT => {
+                            // THE ONE-DRAW WALK (the gate draw the ONLY
+                            // random the smoker's own animateTick
+                            // spends, the FIXED (x+0.5, y+1.1, z+0.5)
+                            // anchor the `ldc2_w 1.1; dadd` speaks)
+                            let v = crate::furnace_sim::smoker_animate_tick(
+                                animate.next_f64(),
+                            );
+                            if v.crackle {
+                                crackle_cells
+                                    .push((sx, sy, sz, "block.smoker.smoke"));
+                            }
+                            smoker_smokes
+                                .push((sx as f64 + 0.5, sy as f64 + 1.1, sz as f64 + 0.5));
+                        }
+                        _ => {}
                     }
-                    let facing = world.variant(sx, sy, sz);
-                    let v = crate::furnace_sim::animate_tick(
-                        facing,
-                        animate.next_f64(),
-                        animate.next_f64(),
-                        animate.next_f64(),
-                    );
-                    if v.crackle {
-                        crackle_cells.push((sx, sy, sz));
-                    }
-                    embers.push((
-                        sx as f64 + 0.5 + v.dx,
-                        sy as f64 + v.dy,
-                        sz as f64 + 0.5 + v.dz,
-                    ));
                 });
-                for (x, y, z) in crackle_cells {
+                for (x, y, z, event) in crackle_cells {
                     // THE PLAYLOCALSOUND WALK (pc 60-76: the (d0, d1,
-                    // d2) anchor = (x + 0.5, y, z + 0.5), the
-                    // FURNACE_FIRE_CRACKLE event the BLOCKS source
-                    // speaks, the fconst_1 volume/pitch pair, the
-                    // distanceDelay false — the positioned voice the
-                    // engine's distance law folds)
+                    // d2) anchor = (x + 0.5, y, z + 0.5), the kind's
+                    // OWN crackle event the BLOCKS source speaks —
+                    // block.furnace.fire_crackle / block.blastfurnace.
+                    // fire_crackle / block.smoker.smoke — the fconst_1
+                    // volume/pitch pair, the distanceDelay false — the
+                    // positioned voice the engine's distance law folds)
                     let (tx, ty, tz) = (x as f64 + 0.5, y as f64, z as f64 + 0.5);
                     self.sounds.play_voice_at_pan(
                         self.frame,
-                        "block.furnace.fire_crackle",
+                        event,
                         1.0,
                         1.0,
                         ear_distance(ear, tx, ty, tz),
                         ear_pan(ear, yaw, tx, ty, tz),
                     );
                 }
-                for (px, py, pz) in embers {
-                    // THE SMOKE-THEN-FLAME ORDER (pc 187-232: the
-                    // SMOKE addParticle FIRST, the FLAME SECOND — the
+                for (px, py, pz, flame) in embers {
+                    // THE SMOKE-FIRST ORDER (pc 187-209: the SMOKE
+                    // addParticle the trio's EVERY tail speaks — the
                     // zero velocity args the dconst_0 trio keeps, the
                     // provider chains the level stream's own draws
-                    // ride)
+                    // ride); the FLAME SECOND the furnace's pair alone
+                    // adds (the blast furnace the flame-less sibling,
+                    // the smoke the both keep)
                     let smoke = crate::particles::shoot_smoke_puff(
                         px, py, pz, 0.0, 0.0, 0.0, level,
                     );
                     self.particles.push(smoke);
-                    let flame =
-                        crate::particles::torch_flame(px, py, pz, level);
-                    self.particles.push(flame);
+                    if flame {
+                        let flame =
+                            crate::particles::torch_flame(px, py, pz, level);
+                        self.particles.push(flame);
+                    }
+                }
+                for (px, py, pz) in smoker_smokes {
+                    // THE SMOKER'S OWN SMOKE (pc 79-96: the ONE
+                    // addParticle(SMOKE) at the fixed +1.1 anchor — the
+                    // smoke above the block the simple tail speaks)
+                    let smoke = crate::particles::shoot_smoke_puff(
+                        px, py, pz, 0.0, 0.0, 0.0, level,
+                    );
+                    self.particles.push(smoke);
                 }
             }
         }
@@ -17053,10 +17147,31 @@ impl App {
     /// rides here).
     pub fn open_furnace(&mut self, pos: (i32, i32, i32)) {
         self.enter_world();
+        // THE KIND'S OWN LANE (the dev-26 round — the block kind's own
+        // family the sim's RecipeType answers: the furnace the
+        // SMELTING base lane keeps, the blast furnace / smoker the
+        // BLASTING/SMOKING overrides speak; a DIFFERENT block the
+        // fresh state speaks the same retention walk keeps — the same
+        // pos the cells retained)
+        let cell = self
+            .offline_world
+            .as_ref()
+            .map(|w| w.get(pos.0, pos.1, pos.2))
+            .unwrap_or(crate::world::FURNACE);
+        self.furnace_sim.kind = if crate::world::is_blast_furnace(cell) {
+            crate::furnace_sim::FurnaceKind::BlastFurnace
+        } else if crate::world::is_smoker(cell) {
+            crate::furnace_sim::FurnaceKind::Smoker
+        } else {
+            crate::furnace_sim::FurnaceKind::Furnace
+        };
         if self.furnace_pos != Some(pos) {
             self.furnace_slots = vec![(0, 0); 39];
             self.furnace_data = [0, 0, 0, 0];
-            self.furnace_sim = crate::furnace_sim::FurnaceSim::default();
+            self.furnace_sim = crate::furnace_sim::FurnaceSim {
+                kind: self.furnace_sim.kind,
+                ..Default::default()
+            };
         }
         // THE STANDARD ROWS' OWN PROJECTION (the menu's
         // addStandardInventorySlots(8, 84) walk — the player's own
@@ -19198,16 +19313,22 @@ impl App {
         self.render_bundle_tooltip(g, a);
     }
 
-    /// THE FURNACE'S OWN RENDER (javap 26.2 AbstractFurnaceScreen —
+    /// THE FURNACE FAMILY'S OWN RENDER (javap 26.2 AbstractFurnaceScreen —
     /// the extractBackground walk the CraftingScreen's texture lane
     /// shares, the progress pair the data words drive): the world
     /// dimmed beneath, the REAL `container/furnace.png` blitted
-    /// 176x166 at the centered panel, the centered title the init
-    /// walk speaks, the menu's own slots (the ctor's addSlot walk:
-    /// input 56,17 / fuel 56,53 / result 116,35 + the standard rows
-    /// addStandardInventorySlots(8,84) the inventory geometry
-    /// answers), the flame and arrow the pinned formulas bank, the
-    /// icons/counts the chest's own draw keeps, the carried follow.
+    /// 176x166 at the centered panel (the dev-26 round the BLAST
+    /// FURNACE / SMOKER's own backgrounds the same 176x166 blit
+    /// speaks — container/blast_furnace.png, container/smoker.png,
+    /// the same-layout panels the jar's three files keep), the
+    /// centered title the init walk speaks (the kind's own
+    /// container.* lang row), the menu's own slots (the ctor's
+    /// addSlot walk: input 56,17 / fuel 56,53 / result 116,35 + the
+    /// standard rows addStandardInventorySlots(8,84) the inventory
+    /// geometry answers), the flame and arrow the pinned formulas
+    /// bank (the kind's own sprite rows the three gui.rs tables
+    /// keep), the icons/counts the chest's own draw keeps, the
+    /// carried follow.
     fn render_furnace(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
         g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
         let panel = inventory_panel_origin(w, h);
@@ -19227,13 +19348,33 @@ impl App {
             (sx + 1, sy + 1, (3 + i) as i16)
         }))
         .collect();
-        g.sprite_file_region(a, "gui/container/furnace.png", 0, 0, 176, 166, panel.0, panel.1);
+        // THE KIND'S OWN LANE (the sim's RecipeType the block kind
+        // answers — the background file, the title lang row and the
+        // progress sprites the kind's own vocabulary speaks)
+        let (bg, title_key, sprites) = match self.furnace_sim.kind {
+            crate::furnace_sim::FurnaceKind::BlastFurnace => (
+                "gui/container/blast_furnace.png",
+                "container.blast_furnace",
+                "container/blast_furnace",
+            ),
+            crate::furnace_sim::FurnaceKind::Smoker => (
+                "gui/container/smoker.png",
+                "container.smoker",
+                "container/smoker",
+            ),
+            crate::furnace_sim::FurnaceKind::Furnace => (
+                "gui/container/furnace.png",
+                "container.furnace",
+                "container/furnace",
+            ),
+        };
+        g.sprite_file_region(a, bg, 0, 0, 176, 166, panel.0, panel.1);
         // THE CENTERED TITLE (the init walk's own formula:
         // `titleLabelX = (imageWidth - font.width(title)) / 2` — the
         // AbstractFurnaceScreen's own override the crafting's left
         // edge never speaks; titleLabelY 6 the base class keeps)
         let label = [0.251, 0.251, 0.251];
-        if let Some(t) = tr("container.furnace") {
+        if let Some(t) = tr(title_key) {
             let tx = panel.0 + (176 - g.text_width(t)) / 2;
             g.text(a, tx, panel.1 + 6, t, label, false);
         }
@@ -19253,7 +19394,7 @@ impl App {
             let fh = furnace_flame_height(&data);
             g.sprite_region(
                 a,
-                "container/furnace/lit_progress",
+                &format!("{sprites}/lit_progress"),
                 0,
                 (14 - fh) as u32,
                 14,
@@ -19266,7 +19407,7 @@ impl App {
         if aw > 0 {
             g.sprite_region(
                 a,
-                "container/furnace/burn_progress",
+                &format!("{sprites}/burn_progress"),
                 0,
                 0,
                 aw,
@@ -22629,9 +22770,10 @@ impl App {
             // mayPlace gate NEVER blocks (the quick-move FROM the
             // result the vanilla walk's own answer keeps).
             if self.shift_down {
-                let changed = crate::world_view::predict_furnace_quick_move(
+                let changed = crate::world_view::predict_furnace_quick_move_kind(
                     &self.furnace_slots,
                     slot as usize,
+                    self.furnace_sim.kind,
                 );
                 for (i, pair) in &changed {
                     self.furnace_slots[*i] = *pair;
@@ -22716,8 +22858,11 @@ impl App {
         // wholesale correction the truth lands. The cursor is NOT
         // the quick-move's lane.
         if self.shift_down {
-            let changed =
-                crate::world_view::predict_furnace_quick_move(&self.furnace_slots, slot as usize);
+            let changed = crate::world_view::predict_furnace_quick_move_kind(
+                &self.furnace_slots,
+                slot as usize,
+                self.furnace_sim.kind,
+            );
             for (i, pair) in &changed {
                 if (*i as usize) < self.furnace_slots.len() {
                     self.furnace_slots[*i] = *pair;
@@ -29426,21 +29571,23 @@ impl App {
             self.open_crafting_table();
             return true;
         }
-        // THE FURNACE'S OWN DOOR (javap 26.2 AbstractFurnaceBlock.use
+        // THE FURNACE FAMILY'S OWN DOOR (javap 26.2 AbstractFurnaceBlock.use
         // — the openMenu the block's use walk speaks, the sneaking
         // player the arm SKIPS the crafting-table's own gate wears):
-        // the hit cell's furnace kind the OFFLINE world answers — the
-        // screen the fresh stand-in opens, the cell the sim's own
+        // the hit cell's orientable kind the OFFLINE world answers —
+        // the screen the fresh stand-in opens, the cell the sim's own
         // block entity records (the lit kind the SAME door opens —
-        // the burning furnace the use walk never gates). The WIRE
-        // session the local screen never opens (the server's own
-        // OpenScreen word owns the container — the menu type 14 lane
-        // the projection feeds).
+        // the burning furnace the use walk never gates; the dev-26
+        // round the BLAST FURNACE / SMOKER the same door opens — the
+        // subclasses the same use walk the base class's openMenu
+        // answers). The WIRE session the local screen never opens
+        // (the server's own OpenScreen word owns the container — the
+        // menu type 14/10/22 lane the projection feeds).
         if !self.shift_down
             && !self.world_is_network
             && self
                 .active_world()
-                .is_some_and(|w| crate::world::is_furnace(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
+                .is_some_and(|w| crate::world::is_orientable_furnace(w.get(hit.pos.0, hit.pos.1, hit.pos.2)))
         {
             self.open_furnace(hit.pos);
             return true;
@@ -30112,20 +30259,22 @@ impl App {
                 }
             }
             world.set(cell.0, cell.1, cell.2, block);
-            // THE FURNACE'S OWN PLACEMENT FACING (javap 26.2
+            // THE ORIENTABLE TRIO'S OWN PLACEMENT FACING (javap 26.2
             // AbstractFurnaceBlock.getStateForPlacement pcs 0-20 — the
-            // FACING the placement state's own setValue wears): the
+            // FACING the placement state's own setValue wears, the
+            // ABSTRACT base walk the THREE subclasses speak): the
             // look the getDirection decode answers, the opposite the
             // front-toward-the-player flip speaks, the byte the
-            // variant layer's furnace_variant vocabulary keeps — the
+            // variant layer's orientable vocabulary keeps — the
             // offline world's own stamp the lazy layer banks, the
             // mesher's front-tile walk the byte consumes. THE UNLIT
-            // KIND ALONE (the item's own pairing the placeable lookup
-            // answers — the LIT kind the lit propagation's own walk
-            // wears, never the placement). The networked lane the
-            // server's own state rides (the guard the whole block
-            // keeps), the materialize walk the facing byte re-stamps.
-            if block == crate::world::FURNACE {
+            // KINDS ALONE (the item's own pairing the placeable
+            // lookup answers — the LIT kinds the lit propagation's
+            // own walk wears, never the placement). The networked
+            // lane the server's own state rides (the guard the whole
+            // block keeps), the materialize walk the facing byte
+            // re-stamps.
+            if crate::world::is_orientable_furnace(block) {
                 world.set_variant(
                     cell.0,
                     cell.1,
@@ -35796,16 +35945,33 @@ impl App {
                     }
                     return;
                 }
-                if c.menu_type_id == crate::world_model::MENU_TYPE_FURNACE {
-                    // THE FURNACE'S OWN WIRE LANE (the menu type id 14
-                    // the server's OpenScreen word speaks — the chest's
-                    // own projection shape, the menu's own numbering:
-                    // input 0, fuel 1, result 2, the standard rows
-                    // 3..39 — padded to the layout's full shape, the
-                    // wire's own (0, 0) emptiness riding verbatim).
+                if c.menu_type_id == crate::world_model::MENU_TYPE_FURNACE
+                    || c.menu_type_id == crate::world_model::MENU_TYPE_BLAST_FURNACE
+                    || c.menu_type_id == crate::world_model::MENU_TYPE_SMOKER
+                {
+                    // THE FURNACE FAMILY'S OWN WIRE LANE (the menu type
+                    // ids 14/10/22 the server's OpenScreen word speaks —
+                    // the chest's own projection shape, the menu's own
+                    // numbering: input 0, fuel 1, result 2, the standard
+                    // rows 3..39 — padded to the layout's full shape, the
+                    // wire's own (0, 0) emptiness riding verbatim; the
+                    // dev-26 round the BLAST FURNACE (10) / SMOKER (22)
+                    // windows the same lane routes, the kind's own
+                    // RecipeType the sim's lane records [the live lane
+                    // never ticks it — the record the render's own
+                    // background/title walk reads]).
                     // THE OFFLINE SIM RETIRES (the server's own block
                     // entity the window speaks — the local memory the
                     // door recorded the live lane never rides).
+                    self.furnace_sim.kind = match c.menu_type_id {
+                        crate::world_model::MENU_TYPE_BLAST_FURNACE => {
+                            crate::furnace_sim::FurnaceKind::BlastFurnace
+                        }
+                        crate::world_model::MENU_TYPE_SMOKER => {
+                            crate::furnace_sim::FurnaceKind::Smoker
+                        }
+                        _ => crate::furnace_sim::FurnaceKind::Furnace,
+                    };
                     self.furnace_pos = None;
                     self.furnace_carried = (0, 0);
                     let mut slots = vec![(0i32, 0i32); 39];
@@ -84433,6 +84599,361 @@ cow_sound_variant: None,
         );
     }
 
+    /// THE BLAST FURNACE'S OWN DOOR + THE HUNDRED-TICK ARC (the dev-26
+    /// round — the placement the family predicate stamps, the door the
+    /// orientable gate answers, the sim's BLASTING lane the kind
+    /// records, the LIT FLIP the world's BLAST_FURNACE_LIT kind wears,
+    /// the 100-tick arc the codec default keeps, the close the block
+    /// entity keeps).
+    #[test]
+    fn the_blast_furnace_the_door_the_hundred_arc_the_world_glows() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let blast_id = mc_registry::item_id_by_name("blast_furnace").unwrap();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let iron_ore = mc_registry::item_id_by_name("iron_ore").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        app.inventory.items[0] = (blast_id, 2);
+        app.inventory.items[1] = (coal, 3);
+        app.inventory.items[9] = (iron_ore, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the blast furnace placed");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::BLAST_FURNACE,
+            "the blast furnace the placement lands"
+        );
+        // THE FACING THE PLACEMENT STAMPED (the orientable trio's own
+        // byte the AbstractFurnaceBlock base walk keeps — the
+        // down-look's own decode the north byte wears: the vertical
+        // look the horizontal flip never flips, the y-rotation the
+        // byte vocabulary keeps)
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().variant(c, top, c),
+            1,
+            "the down-look's placement the north byte wears"
+        );
+        // THE DOOR (the second press the orientable gate answers)
+        assert!(app.on_right_press(0, 0), "the door consumed the press");
+        assert_eq!(app.screen, ScreenKind::Furnace, "the door opened the screen");
+        assert_eq!(app.furnace_pos, Some((c, top, c)), "the cell the sim records");
+        assert_eq!(
+            app.furnace_sim.kind,
+            crate::furnace_sim::FurnaceKind::BlastFurnace,
+            "the kind's own lane the door records"
+        );
+        // THE CLICKS (the coal the fuel takes, the ore the input wears)
+        app.furnace_panel = (0, 0);
+        app.furnace_slot_rects = vec![
+            (100, 100, 0),  // input
+            (140, 100, 1),  // fuel
+            (220, 100, 31), // hotbar's coal (menu 31 = items[1])
+            (260, 100, 3),  // main head (ore)
+        ];
+        app.on_press(220, 100);
+        app.on_press(140, 100);
+        assert_eq!(app.furnace_slots[1], (coal, 3), "the fuel cell speaks");
+        app.on_press(260, 100);
+        app.on_press(100, 100);
+        assert_eq!(app.furnace_slots[0], (iron_ore, 5), "the input cell speaks");
+        // THE FIRST TICK (the ignite the HALF coal banks — 1600/2 =
+        // 800 — the world's kind the BLAST flip wears, the light the
+        // flood re-speaks)
+        let (chunks, _sx, _sz) = {
+            let w = app.offline_world.as_ref().unwrap();
+            (w.chunks_per_side, 0, 0)
+        };
+        let light_before = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .light
+            .as_ref()
+            .map(|l| l.cell(chunks, c, top + 1, c))
+            .unwrap();
+        app.update();
+        assert_eq!(app.furnace_data[0], 800, "the coal the half banks");
+        assert_eq!(app.furnace_data[3], 100, "the blast's own 100 the reset speaks");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::BLAST_FURNACE_LIT,
+            "the world's kind the BLAST flip wears"
+        );
+        let light_after = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .light
+            .as_ref()
+            .map(|l| l.cell(chunks, c, top + 1, c))
+            .unwrap();
+        assert!(
+            light_after.1.unwrap_or(0) > light_before.1.unwrap_or(0),
+            "the emission-13 the flood re-spoke ({light_before:?} -> {light_after:?})"
+        );
+        // THE HUNDRED-TICK ARC (the first tick spoke, 99 the rest
+        // carry — the ingot the burn lands, the input the shrink loses)
+        for _ in 0..99 {
+            app.update();
+        }
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 1), "the ingot the burn lands");
+        assert_eq!(app.furnace_slots[0], (iron_ore, 4), "the input the shrink loses");
+        assert_eq!(
+            app.furnace_data[3],
+            100,
+            "the re-fetch the same 100 keeps"
+        );
+        // THE POTATO REFUSAL (the food row the BLASTING table never
+        // carries — the input swap the frozen walk wears, the fuel
+        // the burn keeps)
+        app.furnace_slots[0] = (
+            mc_registry::item_id_by_name("potato").unwrap(),
+            2,
+        );
+        let lit_before = app.furnace_data[0];
+        app.update();
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 1), "the result never grows");
+        assert_eq!(
+            app.furnace_data[0],
+            lit_before - 1,
+            "the lit state the burn keeps"
+        );
+        // THE CLOSE (the block entity the world keeps)
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "the close returned");
+        assert_eq!(app.furnace_pos, Some((c, top, c)), "the cell the close keeps");
+        // THE REOPEN (the kind's own lane the family re-answers)
+        assert!(app.on_right_press(0, 0), "the door consumed again");
+        assert_eq!(
+            app.furnace_sim.kind,
+            crate::furnace_sim::FurnaceKind::BlastFurnace,
+            "the kind the reopen re-answers"
+        );
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 1), "the ingot the reopen keeps");
+    }
+
+    /// THE FAST FAMILY'S OWN ANIMATE EVENTS (the dev-26 round — the
+    /// lit BLAST furnace the sampler hears the BLASTFURNACE event +
+    /// the SMOKE-ONLY pair the flame-less sibling speaks [no flame
+    /// particle the blast cell ever spawns], the lit SMOKER the
+    /// SMOKER_SMOKE event the ONE-draw walk answers + the smoke at
+    /// the FIXED +1.1 anchor the simple tail keeps).
+    #[test]
+    fn the_blast_the_smoker_the_animate_events_the_smoke_only_wears() {
+        // THE BLAST FURNACE'S OWN SCENE
+        let mut app = App::new(3);
+        app.enter_world();
+        let blast_id = mc_registry::item_id_by_name("blast_furnace").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.inventory.items[0] = (blast_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the blast placed");
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::BLAST_FURNACE_LIT);
+        for _ in 0..600 {
+            app.update();
+        }
+        let blast_crackles: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.blastfurnace.fire_crackle "))
+            .collect();
+        assert!(
+            !blast_crackles.is_empty(),
+            "the lit blast furnace the sampler hears: {} crackles",
+            blast_crackles.len()
+        );
+        for line in &blast_crackles {
+            assert!(
+                line.contains(" v1.000000 p1.000000"),
+                "the fixed fold the volume/pitch pair keeps: {line}"
+            );
+        }
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("block.furnace.fire_crackle ")),
+            "the furnace's own event the blast cell never speaks"
+        );
+        assert!(
+            app.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("block.smoker.smoke ")),
+            "the smoker's own event the blast cell never speaks"
+        );
+        // THE SMOKE-ONLY TAIL (the flame particle the blast's own
+        // animateTick NEVER spawns — the one addParticle the bytecode
+        // keeps — the smokes the front-face band the furnace's law
+        // keeps, the taller 9/16 height the [0, 0.5625) band answers)
+        assert!(
+            app.particles
+                .iter()
+                .all(|p| !matches!(p.kind, crate::particles::ParticleKind::Flame)),
+            "the blast furnace no flame speaks"
+        );
+        assert!(
+            app.particles
+                .iter()
+                .any(|p| matches!(p.kind, crate::particles::ParticleKind::Smoke)
+                    && p.y >= top as f64
+                    && p.y <= top as f64 + 9.0 / 16.0),
+            "the smoke the taller band the blast's own literal keeps"
+        );
+        // THE SMOKER'S OWN SCENE (the ONE-draw walk the fixed anchor
+        // answers — the smoke ABOVE the block the +1.1 speaks)
+        app.particles.clear();
+        app.sounds.events.clear();
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::SMOKER_LIT);
+        for _ in 0..600 {
+            app.update();
+        }
+        let smoker_events: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.smoker.smoke "))
+            .collect();
+        assert!(
+            !smoker_events.is_empty(),
+            "the lit smoker the sampler hears: {} events",
+            smoker_events.len()
+        );
+        for line in &smoker_events {
+            assert!(
+                line.contains(" v1.000000 p1.000000"),
+                "the fixed fold the volume/pitch pair keeps: {line}"
+            );
+        }
+        assert!(
+            app.particles
+                .iter()
+                .any(|p| matches!(p.kind, crate::particles::ParticleKind::Smoke)
+                    && (p.y - (top as f64 + 1.1)).abs() < 0.35
+                    && (p.x - (c as f64 + 0.5)).abs() < 0.35
+                    && (p.z - (c as f64 + 0.5)).abs() < 0.35),
+            "the smoke the FIXED +1.1 anchor the simple tail speaks: {:?}",
+            app
+                .particles
+                .iter()
+                .map(|p| (p.x, p.y, p.z))
+                .take(6)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    /// THE SMOKER'S OWN DOOR + THE FOOD LANE (the dev-26 round — the
+    /// SMOKING recipes the sim's own table answers, the potato the
+    /// baked potato the 100-tick arc wears, the LIT flip the world's
+    /// SMOKER_LIT kind wears).
+    #[test]
+    fn the_smoker_the_door_the_food_lane_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let smoker_id = mc_registry::item_id_by_name("smoker").unwrap();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let potato = mc_registry::item_id_by_name("potato").unwrap();
+        let baked = mc_registry::item_id_by_name("baked_potato").unwrap();
+        app.inventory.items[0] = (smoker_id, 1);
+        app.inventory.items[1] = (coal, 2);
+        app.inventory.items[9] = (potato, 4);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the smoker placed");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::SMOKER,
+            "the smoker the placement lands"
+        );
+        assert!(app.on_right_press(0, 0), "the door consumed the press");
+        assert_eq!(app.screen, ScreenKind::Furnace);
+        assert_eq!(
+            app.furnace_sim.kind,
+            crate::furnace_sim::FurnaceKind::Smoker,
+            "the kind's own lane the door records"
+        );
+        app.furnace_panel = (0, 0);
+        app.furnace_slot_rects = vec![
+            (100, 100, 0),  // input
+            (140, 100, 1),  // fuel
+            (220, 100, 31), // hotbar's coal
+            (260, 100, 3),  // main head (potato)
+            (300, 100, 4),  // main row's ore (menu 4)
+        ];
+        app.on_press(220, 100);
+        app.on_press(140, 100);
+        app.on_press(260, 100);
+        app.on_press(100, 100);
+        assert_eq!(app.furnace_slots[0], (potato, 4), "the input speaks");
+        // THE IRON ORE REFUSAL (the ore row the SMOKING table never
+        // carries — the quick-move the MAIN arm answers: the ore the
+        // hotbar rows take, the input the potato keeps)
+        let iron_ore = mc_registry::item_id_by_name("iron_ore").unwrap();
+        app.on_shift_down(true);
+        app.furnace_slots[4] = (iron_ore, 3); // the believed row the test lays
+        app.on_press(300, 100); // the shift-click the kind's OWN table answers
+        assert_eq!(
+            app.furnace_slots[0],
+            (potato, 4),
+            "the ore the SMOKING table refuses — the input the potato keeps"
+        );
+        assert_eq!(
+            app.furnace_slots[4],
+            (0, 0),
+            "the ore's row the quick-move empties"
+        );
+        assert_eq!(
+            app.furnace_slots[30],
+            (iron_ore, 3),
+            "the ore the hotbar's head row takes (the main arm's walk)"
+        );
+        app.on_shift_down(false);
+        // THE ARC (the ignite the half coal banks, the 100 ticks the
+        // baked potato lands, the world the SMOKER_LIT kind wears)
+        app.update();
+        assert_eq!(app.furnace_data[0], 800, "the coal the half banks");
+        assert_eq!(app.furnace_data[3], 100, "the smoker's own 100 speaks");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::SMOKER_LIT,
+            "the world's kind the SMOKER flip wears"
+        );
+        for _ in 0..99 {
+            app.update();
+        }
+        assert_eq!(app.furnace_slots[2], (baked, 1), "the baked potato lands");
+        assert_eq!(app.furnace_slots[0], (potato, 3), "the potato the shrink loses");
+    }
+
     /// THE FALL DAMAGE ARC (the hurt round's own headline): the body
     /// spawned ten blocks above the surface falls, the landing folds
     /// damage 7 through calculateFallDamage, the pipeline speaks the
@@ -89426,7 +89947,11 @@ cow_sound_variant: None,
         // the cobweb tile the cross arm resolves, the wool the
         // cube_all's `all` ref answers; both untinted — the 78 the
         // soul sand's tail row the autopush-598 wake banks)
-        assert_eq!(atlas::N_KINDS, 81, "the palette the furnace pair's tail rows bank");
+        assert_eq!(
+            atlas::N_KINDS,
+            85,
+            "the palette the furnace pair's tail rows bank"
+        );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
         assert_eq!(atlas::REGISTRY_NAMES[web as usize], "cobweb");
@@ -89503,7 +90028,11 @@ cow_sound_variant: None,
         use mc_registry::generated::atlas;
         let sand = crate::world::SOUL_SAND;
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
-        assert_eq!(atlas::N_KINDS, 81, "the palette the furnace pair's tail rows bank");
+        assert_eq!(
+            atlas::N_KINDS,
+            85,
+            "the palette the furnace pair's tail rows bank"
+        );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
         assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
         assert_eq!(
@@ -89589,7 +90118,11 @@ cow_sound_variant: None,
         use mc_registry::generated::atlas;
         let honey = crate::world::HONEY_BLOCK;
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
-        assert_eq!(atlas::N_KINDS, 81, "the palette the furnace pair's tail rows bank");
+        assert_eq!(
+            atlas::N_KINDS,
+            85,
+            "the palette the furnace pair's tail rows bank"
+        );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
         assert_eq!(atlas::REGISTRY_NAMES[honey as usize], "honey_block");
         assert_eq!(

@@ -27,6 +27,104 @@ pub const BURN_COOL_SPEED: i32 = 2;
 /// fallback speak ONE number).
 pub const DEFAULT_COOKING_TOTAL_TIME: i32 = 200;
 
+/// THE FAST FAMILY'S OWN COOKING DEFAULT (javap BlastingRecipe
+/// static{} pc 5-7 `bipush 100` + SmokingRecipe static{} pc 5-7
+/// `bipush 100` the cookingMapCodec(I) defaults wear — every 26.2
+/// blasting/smoking row omits the cookingtime field too, so the
+/// recipe-time fetch speaks 100 ticks — the furnace's HALF the fast
+/// pair's own speed the vanilla names).
+pub const FAST_COOKING_TOTAL_TIME: i32 = 100;
+
+/// THE COOKING FAMILY'S OWN KIND (the AbstractFurnaceBlockEntity
+/// subclass the three registrations speak — the RecipeType field the
+/// ctors bank: FURNACE pc 0-12 SMELTING, BLAST_FURNACE pc 0-12
+/// BLASTING, SMOKER pc 0-12 SMOKING; the menu type ids the MenuType
+/// clinit's registration order keeps — FURNACE 14, BLAST_FURNACE 10,
+/// SMOKER 22).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum FurnaceKind {
+    /// The FurnaceMenu's own slow lane (RecipeType.SMELTING, the
+    /// codec default 200 the SmeltingRecipe clinit keeps, the fuel
+    /// the FULL burn duration the base class's getBurnDuration
+    /// speaks).
+    #[default]
+    Furnace,
+    /// The BlastFurnaceMenu's own ore lane (RecipeType.BLASTING, the
+    /// codec default 100 the BlastingRecipe clinit keeps, the fuel
+    /// the HALF burn duration the getBurnDuration override's
+    /// `iconst_2; idiv` walk speaks — javap BlastFurnaceBlockEntity
+    /// pcs 0-8: the super call, the 2-divide, the return).
+    BlastFurnace,
+    /// The SmokerMenu's own food lane (RecipeType.SMOKING, the codec
+    /// default 100 the SmokingRecipe clinit keeps, the fuel the HALF
+    /// burn duration the same override speaks — javap
+    /// SmokerBlockEntity pcs 0-8).
+    Smoker,
+}
+
+impl FurnaceKind {
+    /// THE PER-TYPE RECIPE TABLE (the AbstractFurnaceBlockEntity's
+    /// own RecipeType field the subclass ctors bank — the
+    /// quickCheck walk the type's own recipe map answers).
+    pub fn recipe(self, input_id: i32) -> Option<(i32, i32)> {
+        match self {
+            FurnaceKind::Furnace => mc_registry::generated::furnace_data::smelt_result(input_id),
+            FurnaceKind::BlastFurnace => {
+                mc_registry::generated::furnace_data::blast_result(input_id)
+            }
+            FurnaceKind::Smoker => mc_registry::generated::furnace_data::smoke_result(input_id),
+        }
+    }
+
+    /// THE GETTOTALCOOKTIME WALK (javap getTotalCookTime — the
+    /// recipe's cookingTime() the Optional carries, the `sipush 200`
+    /// the no-recipe fallback keeps for EVERY type; the recipe rows
+    /// the per-type codec defaults answer — 200 smelting, 100
+    /// blasting/smoking, the cookingtime field every 26.2 row omits).
+    pub fn total_cook_time(self, input_id: i32) -> i32 {
+        match self.recipe(input_id) {
+            Some(_) if self != FurnaceKind::Furnace => FAST_COOKING_TOTAL_TIME,
+            Some(_) => DEFAULT_COOKING_TOTAL_TIME,
+            None => DEFAULT_COOKING_TOTAL_TIME,
+        }
+    }
+
+    /// THE GETBURNDURATION WALK (javap AbstractFurnaceBlockEntity.
+    /// getBurnDuration the base fuel-values fetch; the BLAST/SMOKER
+    /// subclasses' override the `iconst_2; idiv` HALF speaks —
+    /// BlastFurnaceBlockEntity pcs 0-8, SmokerBlockEntity pcs 0-8 —
+    /// the coal the 1600/2 = 800 the fast pair's own half-duration
+    /// keeps, the furnace the base itself wears). The integer
+    /// division the idiv speaks (odd base the floor keeps).
+    pub fn burn_ticks(self, base: i32) -> i32 {
+        match self {
+            FurnaceKind::Furnace => base,
+            FurnaceKind::BlastFurnace | FurnaceKind::Smoker => base / 2,
+        }
+    }
+
+    /// The kind's own lit kind (the LIT flip's world walk the sim's
+    /// verdict wears — the setBlock LIT swap the caller answers).
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub fn lit_kind(self) -> u16 {
+        match self {
+            FurnaceKind::Furnace => crate::world::FURNACE_LIT,
+            FurnaceKind::BlastFurnace => crate::world::BLAST_FURNACE_LIT,
+            FurnaceKind::Smoker => crate::world::SMOKER_LIT,
+        }
+    }
+
+    /// The kind's own unlit kind (the same pair's first half).
+    #[cfg_attr(not(test), allow(dead_code))]
+    pub fn unlit_kind(self) -> u16 {
+        match self {
+            FurnaceKind::Furnace => crate::world::FURNACE,
+            FurnaceKind::BlastFurnace => crate::world::BLAST_FURNACE,
+            FurnaceKind::Smoker => crate::world::SMOKER,
+        }
+    }
+}
+
 /// THE WIRE IDS THE SPECIAL WALKS WEAR (the item_order table's own
 /// rows — the bucket family the consume/burn walks answer).
 const BUCKET: i32 = 1040;
@@ -45,22 +143,29 @@ pub struct FurnaceSim {
     /// `cookingTotalTime = getTotalCookTime(); cookingTimer = 0` walk
     /// the ServerLevel branch speaks).
     pub last_input_id: i32,
+    /// THE KIND'S OWN LANE (the dev-26 round — the
+    /// AbstractFurnaceBlockEntity subclass the block kind answers: the
+    /// furnace the SMELTING base lane keeps, the blast furnace /
+    /// smoker the BLASTING/SMOKING overrides speak). The default the
+    /// furnace keeps (the base class lane).
+    pub kind: FurnaceKind,
 }
 
 impl FurnaceSim {
     /// THE SETITEM WALK'S OWN RESET (javap setItem pc 53-99 — the
     /// input slot's item CHANGE the cooking words re-fetch speaks:
     /// the recipe's own cooking time, the no-recipe arm the sipush-200
-    /// default keeps — both arms the same 200 in 26.2). The count
-    /// changes NEVER reset (the isSameItemSameComponents test the item
-    /// identity alone compares).
+    /// default keeps — both arms the same 200 in 26.2 for the furnace;
+    /// the blast/smoker the recipe arm's 100 the codec defaults keep).
+    /// The count changes NEVER reset (the isSameItemSameComponents
+    /// test the item identity alone compares).
     pub fn on_input_set(&mut self, data: &mut [i32; 4], input_id: i32) {
         if input_id != self.last_input_id {
             // THE GETTOTALCOOKTIME WALK (javap getTotalCookTime — the
             // recipe's cookingTime() the Optional carries, the
             // orElse(200) the no-recipe arm wears; the generated
             // table's row the same default answers)
-            data[DATA_COOKING_TOTAL_TIME] = DEFAULT_COOKING_TOTAL_TIME;
+            data[DATA_COOKING_TOTAL_TIME] = self.kind.total_cook_time(input_id);
             data[DATA_COOKING_PROGRESS] = 0;
             self.last_input_id = input_id;
         }
@@ -94,11 +199,10 @@ impl FurnaceSim {
         if now_lit || (has_fuel && has_input) {
             if has_input {
                 // THE RECIPE CHECK (pc 122-152 — the quickCheck the
-                // SingleRecipeInput walk serves)
+                // SingleRecipeInput walk serves; the kind's own
+                // RecipeType the subclass ctors bank the table answers)
                 let input = slots[0];
-                let Some(assembled) =
-                    mc_registry::generated::furnace_data::smelt_result(input.0)
-                else {
+                let Some(assembled) = self.kind.recipe(input.0) else {
                     // the no-recipe arm (pc 154-156 `ifnull 333`):
                     // NOTHING rides — the timer the frozen walk keeps
                     return was_lit != now_lit;
@@ -111,9 +215,15 @@ impl FurnaceSim {
                 }
                 // THE IGNITE ARM (pc 202-249): the NOT-lit state the
                 // fuel's own burn duration wears — the both-total
-                // write banks, the >0 gate the consume speaks
+                // write banks, the >0 gate the consume speaks. The
+                // GETBURNDURATION WALK the kind's override answers
+                // (the blast/smoker the `iconst_2; idiv` HALF keeps).
                 if !now_lit {
-                    let burn = mc_registry::generated::furnace_data::fuel_ticks(slots[1].0);
+                    let burn =
+                        self.kind
+                            .burn_ticks(mc_registry::generated::furnace_data::fuel_ticks(
+                                slots[1].0,
+                            ));
                     data[DATA_LIT_TIME] = burn;
                     data[DATA_LIT_DURATION] = burn;
                     if burn > 0 {
@@ -128,7 +238,11 @@ impl FurnaceSim {
                     data[DATA_COOKING_PROGRESS] += 1;
                     if data[DATA_COOKING_PROGRESS] == data[DATA_COOKING_TOTAL_TIME] {
                         data[DATA_COOKING_PROGRESS] = 0;
-                        data[DATA_COOKING_TOTAL_TIME] = DEFAULT_COOKING_TOTAL_TIME;
+                        // the getTotalCookTime re-fetch the burn walk
+                        // keeps (the same kind-aware fetch the reset
+                        // speaks)
+                        data[DATA_COOKING_TOTAL_TIME] =
+                            self.kind.total_cook_time(slots[0].0);
                         burn_items(slots, input, assembled);
                     }
                 } else {
@@ -278,6 +392,51 @@ pub fn animate_tick(facing: u8, draw1: f64, draw2: f64, draw3: f64) -> FurnaceAn
         dx,
         dy: draw3 * 6.0 / 16.0,
         dz,
+    }
+}
+
+/// THE BLAST FURNACE'S OWN ANIMATE TICK (javap `BlastFurnaceBlock.
+/// animateTick` over the 26.2 client.jar — the furnace's own walk the
+/// SAME constants keep, the ONE TEXTUAL DIFFERENCE the height draw's
+/// literal banks: pc 152-156 `ldc2_w 9.0d; dmul; ldc2_w 16.0d; ddiv`
+/// the furnace's `6.0d` literal the 9.0 replaces — the smoke the
+/// TALLER band the fast furnace's own flame column speaks). The ONE
+/// PARTICLE DIFFERENCE the tail keeps: pc 187-209 the SINGLE
+/// addParticle(SMOKE) call, the FLAME pair the furnace's pc 187-232
+/// speaks ABSENT — the blast furnace the smoke alone spawns at
+/// (x + 0.5 + d5, y + d6, z + 0.5 + d7), the zero velocity args the
+/// same dconst_0 trio keeps. The sound the BLASTFURNACE_FIRE_CRACKLE
+/// event the pc 67 field banks ("block.blastfurnace.fire_crackle" the
+/// registration name carries — javap SoundEvents ldc pc 1746), the
+/// same 0.1 gate the same BLOCKS source the same volume/pitch pair
+/// keeps. The draw order the furnace's own law keeps: gate, lateral,
+/// height — three draws per sample, the same lateral/axis folds.
+pub fn blast_animate_tick(facing: u8, draw1: f64, draw2: f64, draw3: f64) -> FurnaceAnimateTick {
+    let mut v = animate_tick(facing, draw1, draw2, draw3);
+    v.dy = draw3 * 9.0 / 16.0;
+    v
+}
+
+/// THE SMOKER'S OWN ANIMATE TICK (javap `SmokerBlock.animateTick` over
+/// the 26.2 client.jar — the SIMPLEST tail the trio wears): the LIT
+/// gate the same pair speaks, the (x+0.5, y, z+0.5) anchor reads the
+/// same banks, the sound gate the SAME 0.1 verdict draws (the
+/// SMOKER_SMOKE event the pc 67 field banks — "block.smoker.smoke"
+/// the registration name carries, javap SoundEvents ldc pc 13521) —
+/// and the tail the ONE addParticle(SMOKE) at (x + 0.5, y + 1.1,
+/// z + 0.5) speaks: the `ldc2_w 1.1; dadd` the +1.1 height the smoke
+/// ABOVE the block answers, NO facing reads, NO lateral/height draws
+/// — the ONLY random the walk spends is the gate's own. The draw law
+/// the caller's sample walk keeps: ONE draw per visit, the verdict's
+/// crackle flag the gate's own answer, the smoke the caller spawns at
+/// the fixed (x + 0.5, y + 1.1, z + 0.5) anchor (the verdict struct's
+/// offsets the no-opinion zeros keep).
+pub fn smoker_animate_tick(draw1: f64) -> FurnaceAnimateTick {
+    FurnaceAnimateTick {
+        crackle: draw1 < 0.1,
+        dx: 0.0,
+        dy: 0.0,
+        dz: 0.0,
     }
 }
 
@@ -605,6 +764,250 @@ mod tests {
         assert_eq!(slots[2], (wire("iron_ingot"), 64), "the full stack the burn refuses");
         assert_eq!(slots[0], (wire("raw_iron"), 1), "the input the refusal keeps");
         assert_eq!(data[DATA_COOKING_PROGRESS], 0, "the timer the refusal zeroes");
+    }
+
+    /// THE FAST LANES' OWN LAWS (javap the dev-26 round — the
+    /// BlastingRecipe/SmokingRecipe clinit `bipush 100` codec
+    /// defaults, the getBurnDuration overrides' `iconst_2; idiv`
+    /// halves, the three tables' own rows the extractor generated).
+    #[test]
+    fn the_fast_lanes_the_tables_the_halves_wear() {
+        // THE THREE TABLES' OWN ROWS (the extractor's type filter —
+        // the blasting rows the ORE-family answers, the smoking rows
+        // the FOOD answers, the cross-table rows the other types
+        // never speak)
+        assert_eq!(
+            FurnaceKind::BlastFurnace.recipe(wire("iron_ore")),
+            Some((wire("iron_ingot"), 1)),
+            "the blast furnace smelts the ore"
+        );
+        assert_eq!(
+            FurnaceKind::BlastFurnace.recipe(wire("raw_iron")),
+            Some((wire("iron_ingot"), 1)),
+            "the raw iron the blast answers too"
+        );
+        assert_eq!(
+            FurnaceKind::BlastFurnace.recipe(wire("potato")),
+            None,
+            "the food row the blast table never carries"
+        );
+        assert_eq!(
+            FurnaceKind::BlastFurnace.recipe(wire("cobblestone")),
+            None,
+            "the smelting-only stone row the blast refuses"
+        );
+        assert_eq!(
+            FurnaceKind::Smoker.recipe(wire("potato")),
+            Some((wire("baked_potato"), 1)),
+            "the smoker cooks the potato"
+        );
+        assert_eq!(
+            FurnaceKind::Smoker.recipe(wire("iron_ore")),
+            None,
+            "the ore row the smoker table never carries"
+        );
+        assert_eq!(
+            FurnaceKind::Furnace.recipe(wire("cobblestone")),
+            Some((wire("stone"), 1)),
+            "the furnace's own stone row keeps"
+        );
+        // THE GETTOTALCOOKTIME WALK (the recipe arm the per-type
+        // defaults keep — 200 smelting, 100 blasting/smoking; the
+        // no-recipe arm the sipush-200 fallback EVERY type keeps)
+        assert_eq!(
+            FurnaceKind::Furnace.total_cook_time(wire("raw_iron")),
+            200,
+            "the furnace's own 200 keeps"
+        );
+        assert_eq!(
+            FurnaceKind::BlastFurnace.total_cook_time(wire("iron_ore")),
+            100,
+            "the blast's own 100 the codec speaks"
+        );
+        assert_eq!(
+            FurnaceKind::Smoker.total_cook_time(wire("potato")),
+            100,
+            "the smoker's own 100 the codec speaks"
+        );
+        assert_eq!(
+            FurnaceKind::BlastFurnace.total_cook_time(wire("dirt")),
+            200,
+            "the no-recipe fallback the 200 keeps (every type)"
+        );
+        assert_eq!(
+            FurnaceKind::Smoker.total_cook_time(wire("dirt")),
+            200,
+            "the smoker's no-recipe fallback the 200 keeps too"
+        );
+        // THE GETBURNDURATION WALK (the override's `iconst_2; idiv` —
+        // the coal 1600/2 = 800, the lava bucket 20000/2 = 10000, the
+        // bamboo 50/2 = 25; the furnace the base itself wears; the
+        // integer division the odd-base floor keeps)
+        let coal = mc_registry::generated::furnace_data::fuel_ticks(wire("coal"));
+        assert_eq!(coal, 1600, "the coal's own base row keeps");
+        assert_eq!(
+            FurnaceKind::Furnace.burn_ticks(coal),
+            1600,
+            "the furnace the full duration wears"
+        );
+        assert_eq!(
+            FurnaceKind::BlastFurnace.burn_ticks(coal),
+            800,
+            "the blast the half speaks"
+        );
+        assert_eq!(
+            FurnaceKind::Smoker.burn_ticks(coal),
+            800,
+            "the smoker the half speaks too"
+        );
+        let lava = mc_registry::generated::furnace_data::fuel_ticks(wire("lava_bucket"));
+        assert_eq!(
+            FurnaceKind::BlastFurnace.burn_ticks(lava),
+            10000,
+            "the lava bucket the half keeps (20000/2)"
+        );
+        let bamboo = mc_registry::generated::furnace_data::fuel_ticks(wire("bamboo"));
+        assert_eq!(
+            FurnaceKind::Smoker.burn_ticks(bamboo),
+            25,
+            "the bamboo the half keeps (50/2)"
+        );
+        // THE LIT PAIRS (the world walk's own kinds the flip wears)
+        assert_eq!(FurnaceKind::Furnace.lit_kind(), crate::world::FURNACE_LIT);
+        assert_eq!(FurnaceKind::Furnace.unlit_kind(), crate::world::FURNACE);
+        assert_eq!(
+            FurnaceKind::BlastFurnace.lit_kind(),
+            crate::world::BLAST_FURNACE_LIT
+        );
+        assert_eq!(
+            FurnaceKind::BlastFurnace.unlit_kind(),
+            crate::world::BLAST_FURNACE
+        );
+        assert_eq!(FurnaceKind::Smoker.lit_kind(), crate::world::SMOKER_LIT);
+        assert_eq!(FurnaceKind::Smoker.unlit_kind(), crate::world::SMOKER);
+    }
+
+    /// THE BLAST FURNACE'S OWN TICK ARC (javap the same serverTick
+    /// walk the BLASTING recipe type + the halved burn duration
+    /// answer — the 800-tick coal, the 100-tick cook, the
+    /// total-time re-fetch the completion keeps; the potato the
+    /// blast table refuses the frozen walk wears). The SMOKER's own
+    /// analog the food lane speaks.
+    #[test]
+    fn the_blast_the_hundred_tick_arc_the_half_coal_wears() {
+        // THE COLD IGNITE (the blast furnace's own kind — the coal
+        // the HALF burn banks: 1600/2 = 800)
+        let mut sim = FurnaceSim::default();
+        sim.kind = FurnaceKind::BlastFurnace;
+        let mut slots = [(wire("iron_ore"), 5), (wire("coal"), 3), (0, 0)];
+        let mut data = [0; 4];
+        assert!(sim.tick(&mut slots, &mut data), "the ignite flips");
+        assert_eq!(data[DATA_LIT_TIME], 800, "the coal the half banks");
+        assert_eq!(data[DATA_LIT_DURATION], 800, "the total banks too");
+        assert_eq!(slots[1], (wire("coal"), 2), "the coal the consume loses");
+        assert_eq!(data[DATA_COOKING_PROGRESS], 1, "the same tick's cook speaks");
+        // THE COOK TOTAL (the kind's own 100 the reset banked)
+        assert_eq!(
+            data[DATA_COOKING_TOTAL_TIME],
+            100,
+            "the blast's own 100 the reset speaks"
+        );
+        // THE HUNDRED-TICK ARC (98 more ticks climb to 99, the 100th
+        // the burn lands — the ingot the copy takes, the input the
+        // shrink loses, the total the re-fetch keeps)
+        for _ in 0..98 {
+            sim.tick(&mut slots, &mut data);
+        }
+        assert_eq!(data[DATA_COOKING_PROGRESS], 99, "the climb speaks");
+        assert!(!sim.tick(&mut slots, &mut data), "the warm tick no flip");
+        assert_eq!(data[DATA_COOKING_PROGRESS], 0, "the completion zeroes");
+        assert_eq!(slots[2], (wire("iron_ingot"), 1), "the ingot the burn lands");
+        assert_eq!(slots[0], (wire("iron_ore"), 4), "the input the shrink loses");
+        assert_eq!(
+            data[DATA_COOKING_TOTAL_TIME],
+            100,
+            "the re-fetch the same 100 keeps"
+        );
+        // THE TABLE'S OWN REFUSAL (the potato the BLASTING rows never
+        // carry — the no-recipe arm the frozen walk wears, the lit
+        // state the burn keeps, the potato NEVER cooks)
+        let potato_slots = [(wire("potato"), 3), (wire("coal"), 3), (0, 0)];
+        let mut potato_slots = potato_slots;
+        let mut potato_data = [0; 4];
+        let mut potato_sim = FurnaceSim::default();
+        potato_sim.kind = FurnaceKind::BlastFurnace;
+        assert!(
+            !potato_sim.tick(&mut potato_slots, &mut potato_data),
+            "no ignite — the no-recipe arm freezes"
+        );
+        assert_eq!(potato_data[DATA_LIT_TIME], 0, "the fuel never burns");
+        assert_eq!(potato_slots[0], (wire("potato"), 3), "the potato uncooked");
+        // THE SMOKER'S OWN ARC (the food lane — the same 800-tick
+        // coal, the same 100-tick cook, the baked potato the SMOKING
+        // row answers)
+        let mut smoker = FurnaceSim::default();
+        smoker.kind = FurnaceKind::Smoker;
+        let mut food = [(wire("potato"), 2), (wire("coal"), 1), (0, 0)];
+        let mut food_data = [0; 4];
+        assert!(smoker.tick(&mut food, &mut food_data), "the smoker ignites");
+        assert_eq!(food_data[DATA_LIT_TIME], 800, "the coal the half banks");
+        assert_eq!(food_data[DATA_COOKING_TOTAL_TIME], 100, "the 100 speaks");
+        for _ in 0..99 {
+            smoker.tick(&mut food, &mut food_data);
+        }
+        assert_eq!(
+            food[2],
+            (wire("baked_potato"), 1),
+            "the baked potato the burn lands"
+        );
+        assert_eq!(food[0], (wire("potato"), 1), "the potato the shrink loses");
+    }
+
+    /// THE FAST FAMILY'S OWN ANIMATE ARMS (javap BlastFurnaceBlock /
+    /// SmokerBlock.animateTick over the 26.2 client.jar — the blast
+    /// furnace the furnace's own walk the 9.0/16.0 height literal
+    /// keeps, the smoker the ONE-draw walk the fixed +1.1 anchor
+    /// speaks).
+    #[test]
+    fn the_blast_the_smoke_only_the_smoker_the_one_draw_wear() {
+        // THE BLAST FURNACE'S OWN ARMS (the furnace's SAME lateral
+        // and axis folds, the ONE literal the 9.0 replaces — the
+        // height 1.0*9/16 = 0.5625 the furnace's 0.375 the taller
+        // band answers)
+        let v = blast_animate_tick(2, 0.05, 0.5, 1.0);
+        assert!(v.crackle, "the 0.05 the gate passes");
+        assert_eq!(v.dx, 0.52, "the east front +X the same stepX fold");
+        assert_eq!(v.dz, 0.0, "the lateral the same d4 fold keeps");
+        assert_eq!(v.dy, 9.0 / 16.0, "the 9.0/16.0 literal the taller band");
+        let base = animate_tick(2, 0.05, 0.5, 1.0);
+        assert_eq!(
+            (v.dx, v.dz, v.crackle),
+            (base.dx, base.dz, base.crackle),
+            "the folds the furnace's own law keeps"
+        );
+        assert_ne!(v.dy, base.dy, "the height the ONE difference speaks");
+        // THE WEST ARM (the same -0.52 the furnace's stepX keeps)
+        let v = blast_animate_tick(4, 0.05, 0.25, 0.5);
+        assert_eq!(v.dx, -0.52, "the west front −X");
+        assert_eq!(v.dy, 0.5 * 9.0 / 16.0, "the taller band the west keeps");
+        // THE SOUND GATE (the same 0.1 the furnace's boundary keeps)
+        assert!(
+            !blast_animate_tick(2, 0.1, 0.5, 1.0).crackle,
+            "the 0.1 itself refuses"
+        );
+        // THE SMOKER'S OWN ONE-DRAW VERDICT (the offsets the no-opinion
+        // zeros keep — the caller's fixed (x+0.5, y+1.1, z+0.5) anchor
+        // the smoke above the block speaks; the gate the same 0.1)
+        let v = smoker_animate_tick(0.05);
+        assert!(v.crackle, "the 0.05 the gate passes");
+        assert_eq!(v.dx, 0.0, "no lateral draw the smoker ever spends");
+        assert_eq!(v.dy, 0.0, "no height draw the smoker ever spends");
+        assert_eq!(v.dz, 0.0, "no facing read the smoker ever speaks");
+        assert!(!smoker_animate_tick(0.1).crackle, "the 0.1 itself refuses");
+        assert!(
+            !smoker_animate_tick(0.95).crackle,
+            "the high draw refuses — the smoke STILL spawns (the tail the gate never gates)"
+        );
     }
 
     /// THE ANIMATE TICK'S OWN LAWS (javap FurnaceBlock.animateTick over

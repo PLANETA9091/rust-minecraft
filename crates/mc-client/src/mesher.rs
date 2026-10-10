@@ -2223,14 +2223,16 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                             } else {
                                 atlas::LAVA_FLOW_FRAME0
                             }
-                        } else if crate::world::is_furnace(id) {
-                            // THE FURNACE'S OWN FRONT-TILE SWAP (the
-                            // autopush-601 round — the orientable model's
+                        } else if crate::world::is_orientable_furnace(id) {
+                            // THE ORIENTABLE TRIO'S OWN FRONT-TILE SWAP
+                            // (the autopush-601 furnace arm, the dev-26
+                            // round GENERALIZED to the blast furnace and
+                            // the smoker — the orientable model's
                             // one textured direction the facing byte
                             // rotates): the variant byte 1..=4 the
                             // north/east/south/west order the blockstate's
                             // y-rotation keeps (world_view's
-                            // furnace_variant decode, the materialize walk
+                            // orientable_variant decode, the materialize walk
                             // stamps), the front tile (the FACE_TILES
                             // row's north entry — the model's own
                             // north=#front authoring) MOVES to the facing

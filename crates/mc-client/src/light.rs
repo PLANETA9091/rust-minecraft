@@ -128,6 +128,19 @@ fn emission(id: u16) -> u8 {
         // read the emission's own verdict keeps, the 13 the lit row's
         // own answer, the UNLIT kind the dark 0 the else arm keeps)
         13
+    } else if id == crate::world::BLAST_FURNACE_LIT {
+        // THE LIT BLAST FURNACE'S OWN ROW (the dev-26 round — the same
+        // `bipush 13; litBlockEmission(I)` lightLevel call the
+        // putstatic BLAST_FURNACE walk pc 24287-24292 banks, the
+        // furnace's exact registration the same constant keeps, the
+        // UNLIT kind the dark 0 the else arm keeps)
+        13
+    } else if id == crate::world::SMOKER_LIT {
+        // THE LIT SMOKER'S OWN ROW (the dev-26 round — the same
+        // `bipush 13; litBlockEmission(I)` lightLevel call the
+        // putstatic SMOKER walk pc 24241-24246 banks, the UNLIT kind
+        // the dark 0 the else arm keeps)
+        13
     } else {
         0
     }
