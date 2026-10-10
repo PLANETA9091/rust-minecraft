@@ -2242,6 +2242,14 @@ pub struct LiveContainer {
     /// (the click packet's stateId lane; the server uses it to spot a
     /// stale client and correct it).
     pub state_id: i32,
+    /// THE MENU'S OWN DATA SLOTS (the Set Data packet's projection —
+    /// the furnace progress family's store): the id-indexed words the
+    /// store banks (the furnace's four: lit remaining, lit total,
+    /// cook progress, cook total — the AbstractFurnaceScreen's flame
+    /// and arrow folds the screen's own law reads). A word the packet
+    /// never spoke stays absent (the Vec's own length the store's
+    /// growth speaks, the screen's zeros the absent reads answer).
+    pub data_slots: Vec<i32>,
 }
 
 /// The click's input modes, the UI-facing mirror of the wire's own
@@ -3027,6 +3035,7 @@ fn open_container_view(model: &WorldModel) -> Option<LiveContainer> {
         bundle_rows,
         carried: (oc.carried.item_id, oc.carried.count),
         state_id: oc.state_id,
+        data_slots: oc.data_slots.clone(),
     })
 }
 

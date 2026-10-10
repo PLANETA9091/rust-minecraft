@@ -107,6 +107,7 @@ pub mod clientbound {
         CB_SET_EQUIPMENT as SET_EQUIPMENT, CB_CONTAINER_SET_CONTENT as CONTAINER_SET_CONTENT,
         CB_CONTAINER_SET_SLOT as CONTAINER_SET_SLOT, CB_SET_HELD_SLOT as SET_HELD_SLOT,
         CB_OPEN_SCREEN as OPEN_SCREEN, CB_CONTAINER_CLOSE as CONTAINER_CLOSE,
+        CB_CONTAINER_SET_DATA as CONTAINER_SET_DATA,
         CB_SET_TIME as SET_TIME,
         CB_GAME_EVENT as GAME_EVENT,
         CB_PLAYER_ABILITIES as PLAYER_ABILITIES,
@@ -10525,6 +10526,47 @@ pub fn parse_container_close(payload: &[u8]) -> Result<ContainerClose> {
     Ok(ContainerClose { container_id })
 }
 
+/// Set Container Data: ONE menu data slot's new value — the furnace
+/// progress family's own wire transport (javap 26.2 of the record's
+/// private decode ctor: `readContainerId()` (the UNSIGNED BYTE the
+/// Set Content packet's VarInt container lane never shares),
+/// `readShort()` for the id, `readShort()` for the value — BOTH
+/// SIGNED BE SHORTS, the value lane the wiki-era int claim would
+/// misshape; the write body's `writeShort` pair speaks the same
+/// shape back). The furnace menu's four slots (the
+/// `SimpleContainerData(4)` the AbstractFurnaceMenu ctor speaks): 0
+/// the lit ticks remaining, 1 the lit total, 2 the cooking progress,
+/// 3 the cooking total — the AbstractFurnaceScreen's flame and arrow
+/// folds the client's own law reads. NO revision counter rides (the
+/// stateId lane the slot/content packets carry is absent — the data
+/// words are progress, not inventory truth).
+#[derive(Debug, Clone, PartialEq)]
+pub struct ContainerSetData {
+    /// The window id — the UNSIGNED BYTE lane (readContainerId).
+    pub container_id: i32,
+    /// The data slot's index — a SIGNED BE SHORT (readShort).
+    pub id: i16,
+    /// The data slot's new value — a SIGNED BE SHORT too (the 26.2
+    /// decode's second readShort; the menu's DataSlot holds the
+    /// widened int, the wire's own truth is the short).
+    pub value: i16,
+}
+
+/// Set Container Data's wire walk (see [`ContainerSetData`] — the
+/// ubyte + short + short record, the generated-id guard).
+pub fn parse_container_set_data(payload: &[u8]) -> Result<ContainerSetData> {
+    let mut c: &[u8] = payload;
+    let id = read_varint(&mut c)?;
+    anyhow::ensure!(
+        id == clientbound::CONTAINER_SET_DATA,
+        "not a container set data packet (0x{id:02X})"
+    );
+    let container_id = read_u8(&mut c)? as i32;
+    let slot = read_i16(&mut c)?;
+    let value = read_i16(&mut c)?;
+    Ok(ContainerSetData { container_id, id: slot, value })
+}
+
 /// One clientbound play packet, handled.
 #[derive(Debug, Clone, PartialEq)]
 pub enum PlayEvent {
@@ -10674,6 +10716,13 @@ pub enum PlayEvent {
     /// bare-VarInt window id (the model consumes it in the
     /// open-container arm).
     ContainerClosed(ContainerClose),
+    /// Set Container Data: ONE menu data slot's new value — the
+    /// furnace progress family's own wire transport (the ubyte window
+    /// + the two BE shorts; NO revision counter — the data words are
+    /// progress, not inventory truth). The model consumes it in the
+    /// open-container arm (the window-id gate the Set Data handler's
+    /// if_icmpne speaks). See [`ContainerSetData`].
+    ContainerDataSet(ContainerSetData),
     /// Set Health: the LOCAL player's vitals snapshot — the health
     /// float, the food int, the saturation float (the HUD's hearts and
     /// the hunger row's own wire transport).
@@ -10901,6 +10950,9 @@ impl<S: Read + Write> PlaySession<S> {
             }
             clientbound::CONTAINER_CLOSE => {
                 Ok(PlayEvent::ContainerClosed(parse_container_close(&pkt)?))
+            }
+            clientbound::CONTAINER_SET_DATA => {
+                Ok(PlayEvent::ContainerDataSet(parse_container_set_data(&pkt)?))
             }
             clientbound::SET_HEALTH => Ok(PlayEvent::Health(parse_set_health(&pkt)?)),
             clientbound::HURT_ANIMATION => Ok(PlayEvent::Hurt(parse_hurt_animation(&pkt)?)),
@@ -17683,6 +17735,50 @@ mod tests {
         let mut p = Vec::new();
         write_varint(&mut p, clientbound::OPEN_SCREEN);
         assert!(parse_container_close(&p).is_err());
+    }
+
+    /// Set Container Data's wire walk (javap 26.2 of the record's
+    /// private decode ctor): the ubyte container id + the TWO BE
+    /// SHORTS (the id, the value — the value lane the wiki-era int
+    /// claim would misshape), the truncation and wrong-id guards the
+    /// close's own test keeps.
+    #[test]
+    fn the_container_set_data_reads_the_ubyte_and_the_two_shorts() {
+        // the furnace progress shape: window 2, slot 0, the lit
+        // remaining 180 — the three lanes the decode reads in order
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_DATA);
+        p.push(2); // the UNSIGNED BYTE the readContainerId speaks
+        p.extend_from_slice(&0i16.to_be_bytes());
+        p.extend_from_slice(&180i16.to_be_bytes());
+        let d = parse_container_set_data(&p).unwrap();
+        assert_eq!(d.container_id, 2);
+        assert_eq!(d.id, 0);
+        assert_eq!(d.value, 180);
+        // NEGATIVE shorts ride (the signed BE lanes — the value's
+        // wire truth the i16 keeps, the menu's DataSlot widens)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_DATA);
+        p.push(255);
+        p.extend_from_slice(&(-1i16).to_be_bytes());
+        p.extend_from_slice(&(-2i16).to_be_bytes());
+        let d = parse_container_set_data(&p).unwrap();
+        assert_eq!(d.container_id, 255);
+        assert_eq!(d.id, -1);
+        assert_eq!(d.value, -2);
+        // the truncation map: the id alone, one short short
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_DATA);
+        assert!(parse_container_set_data(&p).is_err());
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_DATA);
+        p.push(2);
+        p.extend_from_slice(&0i16.to_be_bytes());
+        assert!(parse_container_set_data(&p).is_err());
+        // a wrong packet id refuses (the generated-id guard)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        assert!(parse_container_set_data(&p).is_err());
     }
 
     /// Mock server: login -> configuration -> play (the FULL vanilla

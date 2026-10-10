@@ -5954,6 +5954,34 @@ pub enum ScreenKind {
     /// projection the belief feeds, the clicks the ServerboundContainer
     /// ClickPacket the chest's lane shares speak).
     Crafting,
+    /// THE FURNACE'S OWN SCREEN (javap 26.2 FurnaceScreen +
+    /// AbstractFurnaceScreen — the live server's OpenScreen word (the
+    /// menu type id 14 the MenuType clinit's own registration order
+    /// pins) opens it over the frozen world): the REAL
+    /// `container/furnace.png` background blitted 176x166 at the
+    /// centered panel, the menu's own slots the ctor's addSlot walk
+    /// places (input 56,17 / fuel 56,53 / result 116,35 + the
+    /// standard rows addStandardInventorySlots(8,84)), the centered
+    /// title the init walk speaks (`titleLabelX = (imageWidth -
+    /// font.width(title)) / 2`, titleLabelY 6), and the PROGRESS
+    /// PAIR the data words drive — the flame the lit slots bank
+    /// (`ceil(getLitProgress() * 13.0) + 1` tall, growing UP from the
+    /// 14px band's bottom at leftPos+56/topPos+50, the
+    /// `container/furnace/lit_progress` sprite the bottom-crop blit
+    /// wears) and the arrow the cooking pair banks
+    /// (`ceil(getBurnProgress() * 24.0)` wide at leftPos+79/topPos+34,
+    /// the `container/furnace/burn_progress` sprite). The WIRE lane:
+    /// the Set Content/Set Slot packets feed the slots (the chest's
+    /// store policy), the SET DATA packet feeds the progress words
+    /// (the ubyte-window + BE-short-pair transport the parse pins,
+    /// the handleContainerSetData's window-id gate the model arm
+    /// mirrors); the clicks ride the chest's own ContainerClick lane
+    /// (the pickup/split predictions the player's own store speaks —
+    /// the SHIFT quick-move the menu-specific quickMoveStack walk
+    /// OWNS server-side, the local belief stays put, the next sync's
+    /// wholesale correction the honest answer), the carried follows
+    /// the cursor, the close echoes the Container Close packet.
+    Furnace,
     /// THE WORLD OPTIONS' OWN DIAL (javap 26.2 WorldOptionsScreen +
     /// DifficultyButtons — the OptionsScreen's in-world
     /// `options.worldOptions.button` the header row opens): the
@@ -7224,6 +7252,44 @@ pub struct App {
     /// pickup prediction — see [`crate::world_view::predict_pickup`]);
     /// the close/drop resets it. The (0, 0) sentinel is the emptiness.
     pub chest_carried: (i32, i32),
+    /// THE FURNACE'S OWN LIVE SHAPE (the menu type 14 lane's own
+    /// projection — the menu's 39 slots as (item_id, count) pairs:
+    /// input 0, fuel 1, result 2, the standard rows 3..39 the
+    /// AbstractFurnaceMenu ctor's addStandardInventorySlots(8, 84)
+    /// speaks). The store's snapshot REPLACES the list wholesale (the
+    /// chest's own lane); the wire's (0, 0) emptiness rides verbatim.
+    pub furnace_slots: Vec<(i32, i32)>,
+    /// The furnace's live flag (the store's menu-type-14 window the
+    /// projection feeds): `false` = the offline/fresh stand-in, the
+    /// clicks and the close echo stay local acts.
+    pub furnace_is_live: bool,
+    /// The furnace window's identity the clicks echo against: (window
+    /// id, the revision the client last saw) — the chest's own pair
+    /// shape (the Set Data packet does NOT carry the revision — the
+    /// progress words ride the state_id the slot/content packets last
+    /// spoke).
+    pub furnace_live_window: Option<(i32, i32)>,
+    /// THE FURNACE'S OWN BELIEVED CURSOR (the chest's own lane — the
+    /// authoritative carried lands on every container update, the
+    /// player's pickup clicks mutate between corrections, the close
+    /// resets).
+    pub live_furnace_carried: (i32, i32),
+    /// THE PROGRESS WORDS (the `SimpleContainerData(4)` the
+    /// AbstractFurnaceMenu ctor speaks — the Set Data packet's own
+    /// projection, the window's law): 0 the lit ticks remaining, 1
+    /// the lit total, 2 the cooking progress, 3 the cooking total.
+    /// The render's flame and arrow folds read these (the pinned
+    /// formulas); a word the wire never spoke stays 0 (the fresh
+    /// menu's own zeros).
+    pub furnace_data: [i32; 4],
+    /// The furnace slot hit boxes the LAST render laid out (the
+    /// chest's own shape): (x, y, the MENU's own slot number) — the
+    /// three furnace cells then the standard rows, the 16x16 inner
+    /// boxes the clicks hit-test against.
+    pub furnace_slot_rects: Vec<(i32, i32, i16)>,
+    /// The furnace panel's GUI origin the LAST render laid out (the
+    /// inventory's own centered origin — the same 176x166 canvas).
+    pub furnace_panel: (i32, i32),
     /// The mouse position in GUI units the LAST loop tick tracked —
     /// the carried stack renders here (the vanilla cursor-follow).
     /// `None` wherever no live mouse has moved (the headless scenes:
@@ -8401,6 +8467,13 @@ impl App {
             chest_live_window: None,
             chest_slot_rects: Vec::new(),
             chest_carried: (0, 0),
+            furnace_slots: vec![(0, 0); 39],
+            furnace_is_live: false,
+            furnace_live_window: None,
+            live_furnace_carried: (0, 0),
+            furnace_data: [0; 4],
+            furnace_slot_rects: Vec::new(),
+            furnace_panel: (0, 0),
             mouse_pos: None,
             shift_down: false,
             inv_carried: (0, 0),
@@ -16627,6 +16700,30 @@ impl App {
         self.open(ScreenKind::Chest);
     }
 
+    /// THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the furnace's
+    /// screen — the chest's own close walk the menu type 14 window
+    /// mirrors): the player's OWN close echoes the serverbound
+    /// Container Close packet through the live session's send lane
+    /// (the offline fresh stand-in has no window and no session — its
+    /// close stays a local act), the belief resets with the window,
+    /// the screen back to the world.
+    pub fn close_furnace(&mut self) {
+        if self.furnace_is_live {
+            if let (Some((window_id, _)), Some(sink)) =
+                (self.furnace_live_window, self.live_clicks.as_ref())
+            {
+                let _ = sink.send(crate::world_view::ContainerCommand::Close { window_id });
+            }
+            self.furnace_is_live = false;
+        }
+        self.furnace_live_window = None;
+        // the player's OWN close returns the held stack to the
+        // inventory server-side (vanilla containerClose): the local
+        // belief resets with the window
+        self.live_furnace_carried = (0, 0);
+        self.open(ScreenKind::World);
+    }
+
     /// THE E KEY'S OWN LANE (the vanilla KeyMapping `key.inventory`
     /// toggle): the world screen opens the survival inventory, the
     /// inventory screen closes it back — the death gate keeps the
@@ -16638,6 +16735,7 @@ impl App {
             ScreenKind::World if !self.dead => self.open_inventory(),
             ScreenKind::Inventory => self.close_inventory(),
             ScreenKind::Crafting => self.close_crafting_table(),
+            ScreenKind::Furnace => self.close_furnace(),
             _ => {}
         }
     }
@@ -18830,6 +18928,116 @@ impl App {
         self.render_bundle_tooltip(g, a);
     }
 
+    /// THE FURNACE'S OWN RENDER (javap 26.2 AbstractFurnaceScreen —
+    /// the extractBackground walk the CraftingScreen's texture lane
+    /// shares, the progress pair the data words drive): the world
+    /// dimmed beneath, the REAL `container/furnace.png` blitted
+    /// 176x166 at the centered panel, the centered title the init
+    /// walk speaks, the menu's own slots (the ctor's addSlot walk:
+    /// input 56,17 / fuel 56,53 / result 116,35 + the standard rows
+    /// addStandardInventorySlots(8,84) the inventory geometry
+    /// answers), the flame and arrow the pinned formulas bank, the
+    /// icons/counts the chest's own draw keeps, the carried follow.
+    fn render_furnace(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = inventory_panel_origin(w, h);
+        self.furnace_panel = panel;
+        // the hit boxes: the menu's own numbering — the three furnace
+        // cells (0 input, 1 fuel, 2 result) then the standard rows
+        // (3..39, the addStandardInventorySlots walk's own order: the
+        // main grid 3..29 then the hotbar 30..38)
+        self.furnace_slot_rects = [
+            (panel.0 + 56 + 1, panel.1 + 17 + 1, 0i16),
+            (panel.0 + 56 + 1, panel.1 + 53 + 1, 1i16),
+            (panel.0 + 116 + 1, panel.1 + 35 + 1, 2i16),
+        ]
+        .into_iter()
+        .chain((0..36).map(|i| {
+            let (sx, sy) = inventory_slot_origin(panel, i);
+            (sx + 1, sy + 1, (3 + i) as i16)
+        }))
+        .collect();
+        g.sprite_file_region(a, "gui/container/furnace.png", 0, 0, 176, 166, panel.0, panel.1);
+        // THE CENTERED TITLE (the init walk's own formula:
+        // `titleLabelX = (imageWidth - font.width(title)) / 2` — the
+        // AbstractFurnaceScreen's own override the crafting's left
+        // edge never speaks; titleLabelY 6 the base class keeps)
+        let label = [0.251, 0.251, 0.251];
+        if let Some(t) = tr("container.furnace") {
+            let tx = panel.0 + (176 - g.text_width(t)) / 2;
+            g.text(a, tx, panel.1 + 6, t, label, false);
+        }
+        if let Some(t) = tr("container.inventory") {
+            g.text(a, panel.0 + 8, panel.1 + 166 - 94, t, label, false);
+        }
+        // THE PROGRESS PAIR (the extractBackground walk's own two
+        // blits — the data words the Set Data packet's bank feeds):
+        // the flame the lit pair drives (the isLit gate data[0] > 0,
+        // the height the ceil(litProgress * 13.0) + 1 formula speaks,
+        // the bottom-crop the v-offset 14 - h and the y topPos + 36 +
+        // 14 - h keep — the flame grows UP from the band's bottom),
+        // the arrow the cooking pair drives (the width the
+        // ceil(burnProgress * 24.0) formula speaks, growing RIGHT).
+        let data = self.furnace_data;
+        if data[0] > 0 {
+            let fh = furnace_flame_height(&data);
+            g.sprite_region(
+                a,
+                "container/furnace/lit_progress",
+                0,
+                (14 - fh) as u32,
+                14,
+                fh,
+                panel.0 + 56,
+                panel.1 + 36 + 14 - fh,
+            );
+        }
+        let aw = furnace_arrow_width(&data);
+        if aw > 0 {
+            g.sprite_region(
+                a,
+                "container/furnace/burn_progress",
+                0,
+                0,
+                aw,
+                16,
+                panel.0 + 79,
+                panel.1 + 34,
+            );
+        }
+        // THE SLOT ICONS (the chest's own draw — the believed rows the
+        // two lanes keep: the live store's projection, the fresh
+        // stand-in's zeros the offline world answers)
+        for &(sx, sy, slot) in &self.furnace_slot_rects {
+            let Some(&(id, count)) = self.furnace_slots.get(slot as usize) else {
+                continue;
+            };
+            if count <= 0 {
+                continue; // the wire's own emptiness sentinel
+            }
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 16 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried
+        // render — the chest's own gate keeps: the live session's
+        // believed stack alone, the headless scenes track no mouse)
+        if self.furnace_is_live && self.live_furnace_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.live_furnace_carried.0, mx - 8, my - 8);
+                if self.live_furnace_carried.1 > 1 {
+                    let s = self.live_furnace_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        self.render_bundle_tooltip(g, a);
+    }
+
     /// Enter the world screen with the NETWORK world — the vanilla
     /// ConnectScreen → world handoff after a successful join. The screen
     /// machinery (sky, celestials, fog, clouds, HUD, pause) is shared
@@ -18939,6 +19147,14 @@ impl App {
             // belief resets with the window
             self.chest_carried = (0, 0);
             self.open(ScreenKind::World);
+        } else if self.screen == ScreenKind::Furnace {
+            // THE FURNACE'S OWN CLOSE (the vanilla Escape/E on the
+            // furnace's screen — the chest's own close walk the menu
+            // type 14 window mirrors): the live session's close echo
+            // rides (the offline fresh stand-in stays a local act),
+            // the belief resets with the window, the carried stack the
+            // server's own close returns.
+            self.close_furnace();
         } else if self.screen == ScreenKind::Inventory {
             // the survival inventory's own close (the vanilla Escape on
             // the E-key screen): the carried's add-back walk rides, the
@@ -19277,6 +19493,10 @@ impl App {
             self.click_chest_slot(mx, my, 0);
             return;
         }
+        if self.screen == ScreenKind::Furnace {
+            self.click_furnace_slot(mx, my, 0);
+            return;
+        }
         if self.screen == ScreenKind::Inventory {
             self.click_inventory_slot(mx, my, 0);
             return;
@@ -19309,6 +19529,10 @@ impl App {
     pub fn on_right_press(&mut self, mx: i32, my: i32) -> bool {
         if self.screen == ScreenKind::Chest {
             self.click_chest_slot(mx, my, 1);
+            return false;
+        }
+        if self.screen == ScreenKind::Furnace {
+            self.click_furnace_slot(mx, my, 1);
             return false;
         }
         if self.screen == ScreenKind::Inventory {
@@ -22058,6 +22282,82 @@ impl App {
             self.chest_mirror[slot as usize - 27] = new_slot;
         }
         self.chest_carried = new_carried;
+        let _ = sink.send(crate::world_view::ContainerCommand::Click(
+            crate::world_view::ContainerClick {
+                window_id,
+                state_id,
+                slot,
+                button,
+                input: crate::world_view::ContainerInput::Pickup,
+                changed: vec![(slot, new_slot)],
+                carried: new_carried,
+            },
+        ));
+    }
+
+    /// THE FURNACE'S OWN CLICK (javap 26.2 AbstractContainerMenu.clicked
+    /// — the chest's own lane the menu type 14 window shares): the
+    /// believed slot, the pickup/split prediction, the ContainerClick
+    /// echo, the wholesale correction the next sync speaks. THE
+    /// SHIFT-QUICK-MOVE the menu-specific quickMoveStack walk OWNS —
+    /// the FurnaceMenu's own slot routing (the smeltable the INPUT
+    /// slot takes, the fuel the FUEL slot, the result the inventory)
+    /// the generic chest predictor never speaks — so the local belief
+    /// stays PUT, the honest empty-delta command rides, the server's
+    /// own walk lands the truth and the next sync corrects wholesale
+    /// (the chest's correction convention). The OFFLINE stand-in has
+    /// no window and no session: its presses are the honest no-op.
+    fn click_furnace_slot(&mut self, mx: i32, my: i32, button: i8) {
+        if !self.furnace_is_live {
+            return; // the fresh stand-in: no window, no click
+        }
+        let Some((window_id, state_id)) = self.furnace_live_window else {
+            return; // no window identity — nothing to echo against
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return; // no live session — the command dies on the frame thread
+        };
+        let Some(&(_, _, slot)) = self
+            .furnace_slot_rects
+            .iter()
+            .find(|&&(x, y, _)| mx >= x && mx < x + 16 && my >= y && my < y + 16)
+        else {
+            return; // the press landed between the slots — no click
+        };
+        let believed = self
+            .furnace_slots
+            .get(slot as usize)
+            .copied()
+            .unwrap_or((0, 0));
+        // THE QUICK-MOVE LANE (the shift-click): the menu-specific
+        // quickMoveStack walk owns the routing server-side — the local
+        // belief stays put, the empty-delta command rides (the honest
+        // "the server's own walk answers"), the next sync's wholesale
+        // correction the truth lands. The cursor is NOT the
+        // quick-move's lane.
+        if self.shift_down {
+            let _ = sink.send(crate::world_view::ContainerCommand::Click(
+                crate::world_view::ContainerClick {
+                    window_id,
+                    state_id,
+                    slot,
+                    button,
+                    input: crate::world_view::ContainerInput::QuickMove,
+                    changed: Vec::new(),
+                    carried: self.live_furnace_carried,
+                },
+            ));
+            return;
+        }
+        let (new_slot, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.live_furnace_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.live_furnace_carried)
+        };
+        if (slot as usize) < self.furnace_slots.len() {
+            self.furnace_slots[slot as usize] = new_slot;
+        }
+        self.live_furnace_carried = new_carried;
         let _ = sink.send(crate::world_view::ContainerCommand::Click(
             crate::world_view::ContainerClick {
                 window_id,
@@ -35064,6 +35364,38 @@ impl App {
                     }
                     return;
                 }
+                if c.menu_type_id == crate::world_model::MENU_TYPE_FURNACE {
+                    // THE FURNACE'S OWN WIRE LANE (the menu type id 14
+                    // the server's OpenScreen word speaks — the chest's
+                    // own projection shape, the menu's own numbering:
+                    // input 0, fuel 1, result 2, the standard rows
+                    // 3..39 — padded to the layout's full shape, the
+                    // wire's own (0, 0) emptiness riding verbatim)
+                    let mut slots = vec![(0i32, 0i32); 39];
+                    for (i, &(id, count)) in c.slots.iter().take(39).enumerate() {
+                        slots[i] = (id, count);
+                    }
+                    self.furnace_slots = slots;
+                    self.furnace_is_live = true;
+                    // the window's identity rides in: the clicks echo
+                    // against THIS id and revision (the stateId lane)
+                    self.furnace_live_window = Some((c.id, c.state_id));
+                    // the AUTHORITATIVE carried lands too (the chest's
+                    // wholesale replacement speaks)
+                    self.live_furnace_carried = c.carried;
+                    // THE PROGRESS WORDS ride the projection (the Set
+                    // Data packet's own bank — the flame and arrow
+                    // folds the render reads; the words the wire never
+                    // spoke stay the fresh menu's zeros)
+                    self.furnace_data = [0, 0, 0, 0];
+                    for (i, v) in c.data_slots.iter().take(4).enumerate() {
+                        self.furnace_data[i] = *v;
+                    }
+                    if self.screen == ScreenKind::World {
+                        self.open(ScreenKind::Furnace);
+                    }
+                    return;
+                }
                 if c.menu_type_id != crate::world_model::MENU_TYPE_CHEST {
                     return; // not the wired menu — the honest drop
                 }
@@ -35143,6 +35475,16 @@ impl App {
                 }
                 self.chest_live_window = None;
                 self.chest_carried = (0, 0); // no window, no held stack
+                // the store dropped: a LIVE furnace closes back to the
+                // world (the same vanilla closeContainer return — the
+                // chest's own lane the menu-type-14 window mirrors);
+                // the fresh stand-in is not the live lane's to close
+                if self.screen == ScreenKind::Furnace && self.furnace_is_live {
+                    self.furnace_is_live = false;
+                    self.open(ScreenKind::World);
+                }
+                self.furnace_live_window = None;
+                self.live_furnace_carried = (0, 0); // no window, no held stack
                 // the window's OWN rows die with it (the lifecycle the
                 // open() switch keeps — no stale bundle rides a later
                 // screen, the next window re-learns from its own sync)
@@ -35282,6 +35624,19 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_chest(&mut g, a, gw, gh);
+            }
+            ScreenKind::Furnace => {
+                // THE FURNACE'S OWN ROUND (the vanilla FurnaceScreen
+                // over the frozen world — the CraftingScreen's own
+                // shape the abstract furnace base keeps): world
+                // underneath, dimmed, the REAL background texture, the
+                // progress pair the data words drive, the slot icons,
+                // the carried follow — no mannequin (the
+                // AbstractFurnaceScreen the vanilla PiP never renders).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_furnace(&mut g, a, gw, gh);
             }
             ScreenKind::Inventory => {
                 // the survival inventory's own round (the vanilla
@@ -42794,6 +43149,37 @@ fn chest_panel_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
 /// — the same centered canvas the chest lane speaks).
 fn inventory_panel_origin(gui_w: i32, gui_h: i32) -> (i32, i32) {
     ((gui_w - 176) / 2, (gui_h - 166) / 2)
+}
+
+/// THE FLAME'S OWN HEIGHT (javap 26.2 AbstractFurnaceScreen.extract-
+/// Background pcs 65-87 — the isLit arm the caller's data[0] > 0 gate
+/// keeps): the height `Mth.ceil(getLitProgress() * 13.0f) + 1` the ldc
+/// 13.0f pair speaks — the +1 the lit flame's minimum keeps, the
+/// getLitProgress law the AbstractFurnaceMenu's own walk answers:
+/// `litTotal = data.get(1); if (litTotal == 0) litTotal = 200;`
+/// then `clamp(litRemaining / (float) litTotal, 0, 1)` (the zero
+/// total's 200 fallback the sipush speaks — the fresh menu's zeros
+/// the division never splits).
+pub(crate) fn furnace_flame_height(data: &[i32; 4]) -> i32 {
+    let total = if data[1] == 0 { 200 } else { data[1] };
+    let progress = (data[0] as f32 / total as f32).clamp(0.0, 1.0);
+    (progress * 13.0f32).ceil() as i32 + 1
+}
+
+/// THE ARROW'S OWN WIDTH (javap 26.2 AbstractFurnaceMenu.getBurnProgress
+/// + AbstractFurnaceScreen.extractBackground pcs 130-150): the zero
+/// guards the menu's own walk keeps (`cookingTotal == 0 ||
+/// cookingProgress == 0` → 0.0f — the dcmp/if pair the fresh menu's
+/// zeros answers), the `clamp(cookingProgress / (float) cookingTotal,
+/// 0, 1)` the division speaks, the width `Mth.ceil(progress * 24.0f)`
+/// the ldc 24.0f keeps (the 0-width blit the empty draw answers).
+pub(crate) fn furnace_arrow_width(data: &[i32; 4]) -> i32 {
+    let progress = if data[3] == 0 || data[2] == 0 {
+        0.0f32
+    } else {
+        (data[2] as f32 / data[3] as f32).clamp(0.0, 1.0)
+    };
+    (progress * 24.0f32).ceil() as i32
 }
 
 /// The survival inventory's slot origin by STORE index (the 26.2
@@ -70089,6 +70475,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 7,
             bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest.clone()));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows over the world");
@@ -70111,7 +70498,7 @@ cow_sound_variant: None,
 
         // a NON-chest menu is the honest drop: the store keeps it, the
         // screen machinery does not move (its screen is its own round)
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new() };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Chest, "the wired screen stays");
         assert_eq!(app.chest_slots[9], (981, 3), "the hopper touched nothing");
@@ -70183,6 +70570,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 3,
             bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table.clone()));
         assert_eq!(app.screen, ScreenKind::Crafting, "the window shows over the world");
@@ -70208,7 +70596,7 @@ cow_sound_variant: None,
 
         // a NON-wired menu is the honest drop: the store keeps it, the
         // screen machinery does not move
-        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new() };
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
         app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
         assert_eq!(app.screen, ScreenKind::Crafting, "the wired screen stays");
         assert_eq!(app.live_table_slots[11], (981, 3), "the hopper touched nothing");
@@ -70239,6 +70627,135 @@ cow_sound_variant: None,
         assert!(app.table_is_live, "the live lane took the screen over");
         assert_eq!(app.live_table_slots[0], (925, 4), "the live slots replaced the fresh grid");
         assert_eq!(app.live_table_slots[10], (921, 5), "the store rows filled in");
+    }
+
+    /// THE WIRE FURNACE'S OWN ARC (the menu type 14 the OpenScreen
+    /// word speaks — the chest's own projection shape, the Set Data
+    /// packet's progress words riding the store): the screen SHOWS
+    /// over the world, the menu's own numbering lands (input 0, fuel
+    /// 1, result 2, the standard rows 3..39), the progress words bank,
+    /// a data-word update re-banks IN PLACE (the content update never
+    /// wipes the words), the unknown menu drops, the close returns to
+    /// the world, the E-key close walks the live arm, and the pinned
+    /// formulas speak the jar's own pairs.
+    #[test]
+    fn the_wire_furnace_opens_the_progress_words_bank() {
+        use crate::world_view::LiveContainer;
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+
+        // the server opens a furnace (Open Screen menu 14 → the store,
+        // the Set Content fills it, the Set Data words bank — here the
+        // store's PROJECTION arrives): the screen SHOWS over the
+        // world, the menu's own numbering rides the belief
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[0] = (raw_iron, 5); // the input slot
+                s[1] = (coal, 3); // the fuel slot
+                s[2] = (iron_ingot, 2); // the result slot
+                s[3] = (921, 5); // the standard rows' head (menu 3)
+                s[30] = (932, 64); // the hotbar row's head (menu 30)
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: vec![180, 200, 90, 200], // lit remaining/total, cook progress/total
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace.clone()));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the window shows over the world");
+        assert!(app.furnace_is_live, "the live lane owns the screen now");
+        assert_eq!(app.furnace_slots[0], (raw_iron, 5), "the input rode in");
+        assert_eq!(app.furnace_slots[1], (coal, 3), "the fuel rode in");
+        assert_eq!(app.furnace_slots[2], (iron_ingot, 2), "the result rode in");
+        assert_eq!(app.furnace_slots[3], (921, 5), "the standard rows' head = menu slot 3");
+        assert_eq!(app.furnace_slots[30], (932, 64), "the hotbar's head = menu slot 30");
+        assert_eq!(app.furnace_live_window, Some((7, 2)), "the window's identity rode in");
+        assert_eq!(app.furnace_data, [180, 200, 90, 200], "the progress words rode in");
+        // THE PINNED FORMULAS (javap AbstractFurnaceScreen): the flame
+        // ceil(180/200 * 13.0) + 1 = ceil(11.7) + 1 = 13, the arrow
+        // ceil(90/200 * 24.0) = ceil(10.8) = 11
+        assert_eq!(furnace_flame_height(&app.furnace_data), 13);
+        assert_eq!(furnace_arrow_width(&app.furnace_data), 11);
+
+        // a Set Data word re-banks IN PLACE through the store's
+        // projection (the cooking progresses; the slots never wipe)
+        let mut cooked = furnace.clone();
+        cooked.data_slots = vec![170, 200, 91, 200];
+        cooked.state_id = 3;
+        app.live_view_updated(air_net_world(2, 2), None, None, Some(cooked));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the update is in place");
+        assert_eq!(app.furnace_data, [170, 200, 91, 200], "the words re-banked");
+        assert_eq!(app.furnace_slots[0], (raw_iron, 5), "the slots never wiped");
+        assert_eq!(app.furnace_live_window, Some((7, 3)), "the revision followed");
+
+        // a NON-wired menu is the honest drop: the store keeps it, the
+        // screen machinery does not move
+        let hopper = LiveContainer { id: 6, menu_type_id: 15, slots: vec![], carried: (0, 0), state_id: 0, bundle_rows: Vec::new(), data_slots: Vec::new() };
+        app.live_view_updated(air_net_world(2, 3), None, None, Some(hopper));
+        assert_eq!(app.screen, ScreenKind::Furnace, "the wired screen stays");
+        assert_eq!(app.furnace_data, [170, 200, 91, 200], "the hopper touched nothing");
+
+        // the store DROPPED (the server's Container Close): the live
+        // furnace returns to the world — the vanilla closeContainer's
+        // own
+        app.live_view_updated(air_net_world(2, 4), None, None, None);
+        assert_eq!(app.screen, ScreenKind::World, "the close returns to the world");
+        assert!(!app.furnace_is_live, "the live flag dropped with the window");
+        assert_eq!(app.furnace_live_window, None, "the window's identity died");
+
+        // the lane re-arms on a NEW window and the E-KEY close walks
+        // the live arm (the inventory-key lane the table's arm shares)
+        app.net_world = Some(air_net_world(2, 6));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        assert_eq!(app.screen, ScreenKind::World);
+        app.live_view_updated(air_net_world(2, 7), None, None, Some(furnace));
+        assert_eq!(app.screen, ScreenKind::Furnace);
+        assert!(app.furnace_is_live, "the live lane took the screen over");
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "the E close returns");
+        assert!(!app.furnace_is_live);
+        assert_eq!(app.live_furnace_carried, (0, 0), "the belief reset with the window");
+    }
+
+    /// THE FURNACE'S OWN FORMULA WALK (javap AbstractFurnaceMenu +
+    /// AbstractFurnaceScreen — the pinned pairs the pure fns bank):
+    /// the lit pair's clamp, the zero-total's 200 fallback, the +1
+    /// minimum, the cooking pair's zero guards, the ceil rounding the
+    /// Mth.ceil law speaks.
+    #[test]
+    fn the_furnace_formulas_speak_the_pinned_pairs() {
+        // the fresh menu's zeros: the arrow 0 (the zero guards), the
+        // flame UNLIT (the data[0] > 0 gate the caller keeps)
+        let fresh = [0, 0, 0, 0];
+        assert_eq!(furnace_arrow_width(&fresh), 0);
+        // the zero-total fallback: lit remaining 100 of UNKNOWN total
+        // → the 200 fallback speaks, ceil(0.5 * 13.0) + 1 = 8
+        assert_eq!(furnace_flame_height(&[100, 0, 0, 0]), 8);
+        // the clamp pair: over-full lit (remaining > total) pins at
+        // 1.0 — ceil(13.0) + 1 = 14
+        assert_eq!(furnace_flame_height(&[500, 200, 0, 0]), 14);
+        // full lit: ceil(1.0 * 13.0) + 1 = 14
+        assert_eq!(furnace_flame_height(&[200, 200, 0, 0]), 14);
+        // the +1 minimum: the tiniest lit word speaks —
+        // ceil(1/200 * 13.0) + 1 = ceil(0.065) + 1 = 2
+        assert_eq!(furnace_flame_height(&[1, 200, 0, 0]), 2);
+        // the arrow's zero guards: progress 0 OR total 0 → 0
+        assert_eq!(furnace_arrow_width(&[180, 200, 0, 200]), 0);
+        assert_eq!(furnace_arrow_width(&[180, 200, 90, 0]), 0);
+        // the clamp: over-cooked progress pins at 1.0 → ceil(24.0) = 24
+        assert_eq!(furnace_arrow_width(&[180, 200, 300, 200]), 24);
+        // full arrow: ceil(1.0 * 24.0) = 24
+        assert_eq!(furnace_arrow_width(&[180, 200, 200, 200]), 24);
     }
 
     /// THE WIRE TABLE'S OWN CLICK ARC (the window-1 identity the
@@ -70276,6 +70793,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 3,
             bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
         };
         let table2 = table.clone(); // the re-arm's own fresh window
         app.live_view_updated(air_net_world(2, 1), None, None, Some(table));
@@ -70385,6 +70903,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 7,
             bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -70484,6 +71003,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 3,
             bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -70531,6 +71051,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 11,
             bundle_rows: Vec::new(),
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -70579,6 +71100,7 @@ cow_sound_variant: None,
         let truth = crate::world_view::LiveContainer {
             id: 9,
             menu_type_id: crate::world_model::MENU_TYPE_CHEST,
+            data_slots: Vec::new(),
             slots: {
                 let mut s = vec![(0i32, 0i32); 63];
                 s[8] = (926, 60); // the server never processed the clicks
@@ -70637,6 +71159,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 8,
             bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -70722,6 +71245,7 @@ cow_sound_variant: None,
             carried: (921, 3), // a held stack: QUICK_MOVE never touches it
             state_id: 7,
             bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);
@@ -84832,6 +85356,7 @@ cow_sound_variant: None,
             bundle_rows: vec![(4, vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)])],
             carried: (0, 0),
             state_id: 7,
+        data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
@@ -84857,6 +85382,7 @@ cow_sound_variant: None,
             bundle_rows: vec![(4, vec![(62, 16), (63, 12), (4, 1), (5, 7), (17, 3)])],
             carried: (0, 0),
             state_id: 8,
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(
@@ -84873,6 +85399,7 @@ cow_sound_variant: None,
             bundle_rows: vec![(4, vec![(62, 16)])],
             carried: (0, 0),
             state_id: 9,
+        data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.bundle_contents[&4].items.len(), 1, "the changed row");
@@ -84890,6 +85417,7 @@ cow_sound_variant: None,
             bundle_rows: Vec::new(),
             carried: (0, 0),
             state_id: 10,
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert!(app.bundle_contents.is_empty(), "the rowless sync");
@@ -84998,6 +85526,7 @@ cow_sound_variant: None,
             bundle_rows: vec![(9, vec![(5, 7)])],
             carried: (0, 0),
             state_id: 7,
+            data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest, "the window shows");
@@ -85207,6 +85736,7 @@ cow_sound_variant: None,
             carried: (0, 0),
             state_id: 3,
             bundle_rows: Vec::new(),
+        data_slots: Vec::new(),
         };
         app.live_view_updated(air_net_world(2, 1), None, None, Some(chest));
         assert_eq!(app.screen, ScreenKind::Chest);

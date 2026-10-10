@@ -2184,6 +2184,15 @@ pub const MENU_TYPE_CHEST: i32 = 2;
 /// lands at 12 — the wire's own word the live table lane routes on).
 pub const MENU_TYPE_CRAFTING: i32 = 12;
 
+/// `MenuType`'s furnace — the FurnaceMenu's registry id (the SAME
+/// clinit order speaks: crafting 12, enchantment 13, FURNACE lands
+/// at 14 — the wire's own word the live furnace lane routes on; the
+/// menu's own shape the AbstractFurnaceMenu ctor banks: THREE slots
+/// (input 0, fuel 1, result 2) + the standard 36, the
+/// `SimpleContainerData(4)` the progress words ride). See the
+/// [`mc_protocol::play::ContainerSetData`] transport.
+pub const MENU_TYPE_FURNACE: i32 = 14;
+
 /// An OPEN container window — the `containerMenu` lane the audited
 /// consumer routes foreign-window container packets through (javap of
 /// the 26.2 `ClientPacketListener`): the Open Screen packet BIRTHS the
@@ -2226,6 +2235,16 @@ pub struct OpenContainerState {
     /// The GUI cursor stack (the Set Content packet's carriedItem;
     /// the slot packet has no carried lane and leaves it untouched).
     pub carried: ItemStack,
+    /// THE MENU'S OWN DATA SLOTS (the Set Data packet's projection —
+    /// the furnace progress family's store): the id-indexed words the
+    /// `AbstractContainerMenu.setData(id, value)` walk banks (javap
+    /// 26.2: `dataSlots.get(id).set(value)` — the menu's own count
+    /// the furnace's `SimpleContainerData(4)` speaks, the index the
+    /// retention line grows with zeros the slot store's own policy
+    /// mirrors). The Set Data packet does NOT carry the revision
+    /// counter (the data words are progress, not inventory truth) —
+    /// the state_id lane never hears of them.
+    pub data_slots: Vec<i32>,
 }
 
 /// `InventoryMenu.isHotbarSlot`'s audited shape — NOTE THE QUIRK: the
@@ -4011,6 +4030,7 @@ impl WorldModel {
                         item_id: 0,
                         patch: ComponentPatch::default(),
                     },
+                    data_slots: Vec::new(),
                 });
                 true
             }
@@ -4027,6 +4047,47 @@ impl WorldModel {
                 // convention — the assignment would write the same
                 // value).
                 self.open_container.take().is_some()
+            }
+            PlayEvent::ContainerDataSet(s) => {
+                // The audited consumer (javap of
+                // handleContainerSetData): the WINDOW-ID GATE first —
+                // `player.containerMenu.containerId ==
+                // packet.getContainerId()` — the if_icmpne falls
+                // through to return, the mismatched window is DROPPED
+                // (the same shape the Set Slot lane speaks); the match
+                // calls `menu.setData(id, value)` —
+                // `dataSlots.get(id).set(value)` (javap of
+                // AbstractContainerMenu.setData). NO revision counter
+                // rides (the data words are progress, not inventory
+                // truth) — the state_id lane never hears of this
+                // packet. The store mirrors the slot policy's retention
+                // line: a NEGATIVE id cannot index anything and is
+                // ignored, an id past the current end GROWS the store
+                // with zeros; the same-value write is the no-op repeat
+                // (the CenterChunk convention).
+                if s.id < 0 {
+                    false
+                } else if let Some(o) = self
+                    .open_container
+                    .as_mut()
+                    .filter(|o| o.id == s.container_id)
+                {
+                    let idx = s.id as usize;
+                    if idx >= o.data_slots.len() {
+                        o.data_slots.resize(idx + 1, 0);
+                    }
+                    let v = s.value as i32;
+                    if o.data_slots[idx] != v {
+                        o.data_slots[idx] = v;
+                        true
+                    } else {
+                        false
+                    }
+                } else {
+                    // the mismatched window is DROPPED (the audited
+                    // if_icmpne falls through to return)
+                    false
+                }
             }
             PlayEvent::CenterChunk { x, z } => {
                 if self.center != (x, z) {
@@ -13341,6 +13402,95 @@ mod tests {
         write_varint(&mut p, 0);
         let c = parse_container_close(&p).unwrap();
         assert!(!m.apply(PlayEvent::ContainerClosed(c)));
+    }
+
+    /// The Set Data lane's own store walk (the furnace progress
+    /// family's consumer, the audited `handleContainerSetData` gate):
+    /// the MATCHING window's word lands (the `dataSlots.get(id).set`
+    /// walk the menu's own bank answers), a MISMATCHED window is
+    /// dropped (the `if_icmpne` falls through to return), an id past
+    /// the menu's count GROWS the store with zeros (the retention
+    /// line the slot store's own policy mirrors), a NEGATIVE id is
+    /// ignored, the same-value write is the no-op repeat, the stateId
+    /// lane never hears of the packet (NO revision rides), and the
+    /// Container Close takes the banked words with the store.
+    #[test]
+    fn the_container_set_data_words_bank_in_the_open_window() {
+        use mc_protocol::play::{clientbound, parse_container_close, parse_open_screen,
+            parse_container_set_data};
+        let mut m = WorldModel::new();
+
+        // Open Screen: window 3, the furnace (the clinit order's 14)
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::OPEN_SCREEN);
+        write_varint(&mut p, 3);
+        write_varint(&mut p, MENU_TYPE_FURNACE);
+        p.extend_from_slice(&[0x0A, 0x00]); // the minimal empty root
+        let o = parse_open_screen(&p).unwrap();
+        assert!(m.apply(PlayEvent::ScreenOpened(o)));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.menu_type_id, MENU_TYPE_FURNACE, "furnace, the 14");
+        assert!(oc.data_slots.is_empty(), "no words the wire never spoke");
+
+        // the word lands: window 3, slot 2 (the cooking progress), 90
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_SET_DATA);
+        p.push(3);
+        p.extend_from_slice(&2i16.to_be_bytes());
+        p.extend_from_slice(&90i16.to_be_bytes());
+        let d = parse_container_set_data(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerDataSet(d)));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.data_slots, vec![0, 0, 90], "the word banks at id 2");
+
+        // an id past the menu's count GROWS the store with zeros (the
+        // retention line) — id 4 banks, the gap stays zero
+        let raw = |window: u8, id: i16, value: i16| {
+            let mut p = Vec::new();
+            write_varint(&mut p, clientbound::CONTAINER_SET_DATA);
+            p.push(window);
+            p.extend_from_slice(&id.to_be_bytes());
+            p.extend_from_slice(&value.to_be_bytes());
+            parse_container_set_data(&p).unwrap()
+        };
+        assert!(m.apply(PlayEvent::ContainerDataSet(raw(3, 4, 7))));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.data_slots, vec![0, 0, 90, 0, 7], "the gap zeros, the word banks");
+
+        // the same-value write is the no-op repeat
+        assert!(!m.apply(PlayEvent::ContainerDataSet(raw(3, 4, 7))));
+        // a NEGATIVE id is ignored (the retention line's own half)
+        assert!(!m.apply(PlayEvent::ContainerDataSet(raw(3, -1, 9))));
+
+        // a MISMATCHED window is dropped: window 4 while 3 is open
+        assert!(!m.apply(PlayEvent::ContainerDataSet(raw(4, 0, 200))));
+        assert_eq!(m.open_container().unwrap().data_slots[4], 7, "untouched");
+
+        // the stateId lane NEVER hears of the packet (no revision
+        // rides — the data words are progress, not inventory truth):
+        // the store's state_id stays wherever the slot packets left it
+        let state_before = m.open_container().unwrap().state_id;
+
+        // the lit pair + the cooking total ride too (the four words
+        // the AbstractFurnaceMenu's SimpleContainerData(4) speaks)
+        assert!(m.apply(PlayEvent::ContainerDataSet(raw(3, 0, 180))));
+        assert!(m.apply(PlayEvent::ContainerDataSet(raw(3, 1, 200))));
+        assert!(m.apply(PlayEvent::ContainerDataSet(raw(3, 3, 200))));
+        let oc = m.open_container().unwrap();
+        assert_eq!(oc.data_slots, vec![180, 200, 90, 200, 7]);
+        assert_eq!(oc.state_id, state_before, "no revision rode");
+
+        // the CLOSE takes the banked words with the store
+        let mut p = Vec::new();
+        write_varint(&mut p, clientbound::CONTAINER_CLOSE);
+        write_varint(&mut p, 3);
+        let c = parse_container_close(&p).unwrap();
+        assert!(m.apply(PlayEvent::ContainerClosed(c)));
+        assert!(m.open_container().is_none());
+
+        // a word with NOTHING open is the honest drop (the audited
+        // containerMenu-null arm the gate speaks)
+        assert!(!m.apply(PlayEvent::ContainerDataSet(raw(3, 0, 50))));
     }
 
     /// Spawn ONE entity at the named position (the full-precision
