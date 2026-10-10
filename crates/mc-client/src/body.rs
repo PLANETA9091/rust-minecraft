@@ -1019,6 +1019,14 @@ pub struct PlayerBody {
     /// App's tick banks it from the store, the jumpFromGround floor
     /// the JUMP_STRENGTH value adds it.
     pub jump_boost_power: f32,
+    /// THE BLOCK JUMP FACTOR'S OWN BANK (javap Entity.getBlockJumpFactor
+    /// pcs 0-48 the 26.2 jar — the feet cell's getJumpFactor the
+    /// generated table answers, the DEFAULT 1.0 the below cell falls
+    /// through): the tick's head the walk banks, the jumpFromGround
+    /// floor the JUMP_STRENGTH value multiplies — the 1.0 default the
+    /// plain ground wears, the fly-law's launch hop the same-tick bank
+    /// reads (the App's pc 628 call the world-free fold keeps).
+    pub block_jump_factor: f32,
     /// THE JUMP BOOST EFFECT'S OWN SAFE FALL (javap the jump_boost
     /// row's `addAttributeModifier(SAFE_FALL_DISTANCE,
     /// "effect.jump_boost", 1.0, ADD_VALUE)` — the amount×(amp+1)
@@ -1385,6 +1393,7 @@ impl PlayerBody {
             weaving: false,
             effects_refill_air_supply: true,
             jump_boost_power: 0.0,
+            block_jump_factor: 1.0,
             safe_fall_distance: SAFE_FALL_DISTANCE,
             move_dist: 0.0,
             next_step: 1.0,
@@ -1472,9 +1481,12 @@ impl PlayerBody {
         // THE JUMP BOOST'S OWN POWER (javap getJumpPower(float) pcs
         // 0-19 — the JUMP_STRENGTH attribute value the
         // getJumpBoostPower() direct read ADDS: the
-        // `attribute * blockFactor + 0.1f * (amp + 1)` walk the
-        // blockJumpFactor's 1.0 default the plain ground wears)
-        self.vy = (self.vy as f64).max((JUMP_POWER + self.jump_boost_power) as f64);
+        // `attribute * mult * blockJumpFactor + 0.1f * (amp + 1)` walk
+        // the mult's 1.0 the jumpFromGround call passes — the
+        // blockJumpFactor the banked pair multiplies, the f2d widen
+        // the Math.max keeps — the banked 1.0 the plain ground wears)
+        self.vy = (self.vy as f64)
+            .max(((JUMP_POWER * self.block_jump_factor) + self.jump_boost_power) as f64);
         if self.sprinting {
             let rad = self.yaw as f64 * std::f64::consts::PI / 180.0;
             self.vx += -(rad.sin()) * SPRINT_JUMP_BOOST as f64;
@@ -1877,6 +1889,15 @@ impl PlayerBody {
                 self.vy += thrust as f64 * self.flying_speed as f64 * FLY_THRUST_SCALE;
             }
         }
+        // THE BLOCK JUMP FACTOR'S OWN BANK (javap Entity.getBlockJumpFactor
+        // pcs 0-48 the 26.2 jar — the feet cell the blockPosition read,
+        // the below cell the getBlockPosBelowThatAffectsMyMovement
+        // fallback the default-1.0 feet wears, the layered walk the
+        // standing-on-sand body answers): the bank the jump gate AND
+        // the fly-law's launch hop both read (the same tick's state
+        // the App's world-free fold answers — the frame the world
+        // never splits).
+        self.block_jump_factor = self.block_jump_factor(world);
         // THE JUMP GATE (the aiStep's own): held jump + ground + the
         // delay elapsed -> jumpFromGround
         if self.jumping && self.on_ground && self.no_jump_delay == 0 {
@@ -2360,6 +2381,23 @@ impl PlayerBody {
         }
         if col.collided_z {
             self.vz = 0.0;
+        }
+        // THE BLOCK SPEED FACTOR (javap Entity.move's own TAIL the 26.2
+        // jar — pcs 652-672: getBlockSpeedFactor the fstore 12 banks,
+        // setDeltaMovement(getDeltaMovement().multiply(f, 1.0, f)) the
+        // dconst_1 y the multiply keeps): the POST-MOVE cells the
+        // tail's own read answers (the strided body the new cell's
+        // factor the same tick banks — the feet the air above the sand
+        // wears, the below cell the default-1.0 feet falls through),
+        // the x/z ONLY the fold scales, the drag walk the scaled pair
+        // folds (the travelInAir's friction the same single-tick order
+        // after — the vanilla move INSIDE the travel's own walk sits).
+        // The noPhysics move the pcs 0-58 early return the tail never
+        // reaches — the spectator body the factor never folds.
+        if !self.no_physics {
+            let f = self.block_speed_factor(world) as f64;
+            self.vx *= f;
+            self.vz *= f;
         }
         // THE DRAGS + THE GRAVITY (travelInAir's own order): the
         // horizontal decay `friction * 0.91`, the vertical 0.98 with
@@ -2847,6 +2885,87 @@ impl PlayerBody {
         } else {
             (0.25, 0.05000000074505806, 0.25)
         };
+    }
+
+    /// THE TWO CELLS THE FACTOR LANES READ (javap getBlockSpeedFactor /
+    /// getBlockJumpFactor the 26.2 jar): the FEET cell the
+    /// blockPosition() floor speaks, the BELOW cell the
+    /// getOnPos(0.500001f) fold answers — the mainSupportingBlockPos
+    /// lane the body's own x/z fold keeps (the supporting-pos lane a
+    /// future round serves — the flat ground the two answers never
+    /// split), the offset the widen keeps (the > 0.5 arm the fence
+    /// family's tag walks never reach — the palette the fences never
+    /// carried), the below-world the STONE row the world.get speaks.
+    fn factor_cells(&self, world: &World) -> (u16, u16) {
+        let fx = self.x.floor() as i32;
+        let fz = self.z.floor() as i32;
+        let feet = world.get(fx, self.y.floor() as i32, fz);
+        let below = world.get(fx, (self.y - 0.500001f64).floor() as i32, fz);
+        (feet, below)
+    }
+
+    /// THE KIND'S OWN FACTOR READ (the networked vocabulary the stamped
+    /// ids never names — the synthesized kinds beyond the palette the
+    /// NAME_OF bound guards, the 1.0 default the anonymous stamp rides:
+    /// the bubble column's own drag the direct lane carries, the
+    /// factor the no-name default keeps — the vanilla column's own
+    /// getSpeedFactor the same 1.0 answers).
+    fn kind_speed_factor(id: u16) -> f32 {
+        crate::world::NAME_OF
+            .get(id as usize)
+            .map(|name| mc_registry::generated::block_factors::speed_factor(name))
+            .unwrap_or(1.0)
+    }
+
+    /// THE KIND'S OWN JUMP READ (the same bound the stamped ids keep).
+    fn kind_jump_factor(id: u16) -> f32 {
+        crate::world::NAME_OF
+            .get(id as usize)
+            .map(|name| mc_registry::generated::block_factors::jump_factor(name))
+            .unwrap_or(1.0)
+    }
+
+    /// THE BLOCK SPEED FACTOR (javap Entity.getBlockSpeedFactor pcs
+    /// 0-70 the 26.2 jar): the feet cell's getSpeedFactor the
+    /// generated table answers — the WATER cell the pass-through arm
+    /// keeps (the below-cell fallback the in-water body never
+    /// reaches: the pond above the sand the swim never slows — the
+    /// BUBBLE_COLUMN kind the palette never carried, the arm's second
+    /// disjunct the silence wears); the DEFAULT 1.0 feet the BELOW
+    /// cell's factor falls through (the layered walk the
+    /// standing-on-sand body answers — the feet the air above wears,
+    /// the sand the below cell banks); the LivingEntity override's
+    /// MOVEMENT_EFFICIENCY lerp the bare body's 0.0 attribute never
+    /// folds (lerp(0, f, 1.0) = f — the attribute lane the stacks'
+    /// data absence keeps). THE MOVE'S OWN TAIL consumes (Entity.move
+    /// pcs 652-672): the x/z ONLY, the post-move cells the tail's own
+    /// read answers.
+    pub fn block_speed_factor(&self, world: &World) -> f32 {
+        let (feet, below) = self.factor_cells(world);
+        if feet == crate::world::WATER {
+            return Self::kind_speed_factor(feet);
+        }
+        let f = Self::kind_speed_factor(feet);
+        if f == 1.0 {
+            return Self::kind_speed_factor(below);
+        }
+        f
+    }
+
+    /// THE BLOCK JUMP FACTOR (javap Entity.getBlockJumpFactor pcs
+    /// 0-48 the 26.2 jar): the feet cell's getJumpFactor, the DEFAULT
+    /// 1.0 the below cell falls through — NO water arm the walk
+    /// carries (the jump the in-water body the on_ground gate never
+    /// arms — the lane the gate never reaches). The getJumpPower's own
+    /// multiply the jump_from_ground fold consumes (the attribute ×
+    /// mult × factor + boost order the f2d widen keeps).
+    pub fn block_jump_factor(&self, world: &World) -> f32 {
+        let (feet, below) = self.factor_cells(world);
+        let f = Self::kind_jump_factor(feet);
+        if f == 1.0 {
+            return Self::kind_jump_factor(below);
+        }
+        f
     }
 
     /// THE COLUMN'S OWN WALK (javap `BubbleColumnBlock.entityInside`'s
@@ -6360,6 +6479,169 @@ mod tests {
             matches!(event, Some(d) if (3..=5).contains(&d)),
             "the free fall the landing hurt arms: {:?}",
             event
+        );
+    }
+
+    /// THE SOUL SAND'S OWN PATCH (the autopush-598 round — the y=0 row
+    /// the sand replaces, the patch the walk stands on: the resting
+    /// body the 14/16 column top wears, the feet cell the SAND cell
+    /// itself speaks — the floor(y) of the 0.875 rest the blockPosition
+    /// read answers).
+    fn soul_sanded_world() -> World {
+        let mut w = flat_world();
+        for x in 6..10 {
+            for z in 6..10 {
+                w.set(x, 0, z, crate::world::SOUL_SAND);
+            }
+        }
+        w
+    }
+
+    /// THE BLOCK SPEED FACTOR'S OWN LANE (javap Entity.getBlockSpeedFactor
+    /// pcs 0-70 + Entity.move tail pcs 652-672 the 26.2 jar): the
+    /// layered read the standing body answers — the sand-resting body
+    /// the FEET cell's 0.4 speaks (the floor(0.875) the sand cell is),
+    /// the stone-resting body the air feet the BELOW cell falls through
+    /// (getBlockPosBelowThatAffectsMyMovement — the getOnPos(0.500001f)
+    /// fold), the 0.4f32 the widened f64 the move tail multiplies —
+    /// and the e2e walk the x/z ONLY fold wears (the vy the dconst_1
+    /// multiply keeps), the drag the same single-tick order after.
+    #[test]
+    fn the_soul_sand_the_below_cell_the_walk_slows() {
+        let w = soul_sanded_world();
+        // THE SAND REST (the body the column top settles — the feet the
+        // sand cell itself wears, the factor the feet arm banks)
+        let mut b = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        assert!(b.on_ground, "the sand rest the column top grounds");
+        assert_eq!(
+            b.block_speed_factor(&w),
+            0.4,
+            "the resting body the feet cell's own 0.4 wears"
+        );
+        // THE STONE CONTROL (the flat world the same procedure — the
+        // air feet the below cell falls through, the no-row default
+        // the 1.0 keeps)
+        let flat = flat_world();
+        let mut c = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        for _ in 0..5 {
+            c.tick(&flat, false);
+        }
+        assert!(c.on_ground, "the stone rest the full top grounds");
+        assert_eq!(
+            c.block_speed_factor(&flat),
+            1.0,
+            "the stone below the default keeps"
+        );
+        // THE AIR-FEET LAYERED READ (the body the cube top floats —
+        // y 1.0 the feet cell the air above speaks, the below cell the
+        // sand banks: the getOnPos fold the standing-on-full-cube case
+        // answers)
+        assert_eq!(
+            PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0).block_speed_factor(&w),
+            0.4,
+            "the air feet the sand below the layered walk banks"
+        );
+        // THE E2E WALK (the re-armed vx the tick's own law folds — the
+        // factor lane the x/z ONLY scales, the drag the same tick
+        // after): the exact f64 chain the same fold order computes —
+        // the settled y the pair keeps (both grounded, the SAME drag
+        // lane the fold shares)
+        let drag = (BLOCK_FRICTION * GROUND_DRAG) as f64;
+        b.vx = 1.0;
+        b.x = 8.5;
+        b.tick(&w, false);
+        let expected_sand = (1.0f64 * (0.4f32 as f64)) * drag;
+        assert_eq!(
+            b.vx, expected_sand,
+            "the sand walk the factor × drag the bit-exact chain keeps"
+        );
+        c.vx = 1.0;
+        c.x = 8.5;
+        c.tick(&flat, false);
+        let expected_stone = 1.0f64 * drag;
+        assert_eq!(
+            c.vx, expected_stone,
+            "the stone walk the factor-less chain keeps"
+        );
+        // THE VERTICAL THE MULTIPLY NEVER TOUCHES (the dconst_1 y the
+        // vanilla multiply keeps — both grounded, the gravity the same
+        // pair re-arms, the x/z the factor alone splits)
+        assert_eq!(
+            b.vy, c.vy,
+            "the y the factor lane never folds — the gravity the same pair re-arms"
+        );
+    }
+
+    /// THE WATER FEET'S OWN PASS-THROUGH (javap getBlockSpeedFactor pcs
+    /// 20-41 the 26.2 jar — the WATER cell the arm keeps: the below
+    /// cell the in-water body NEVER falls through, the pond above the
+    /// sand the swim never slows — the BUBBLE_COLUMN kind the palette
+    /// never carried, the arm's second disjunct the silence wears).
+    #[test]
+    fn the_water_feet_the_below_fallback_denies() {
+        let mut w = soul_sanded_world();
+        w.set(8, 1, 8, crate::world::WATER);
+        // THE SUBMERGED READ (the feet cell the water speaks — the
+        // pass-through arm the 1.0 keeps, the sand below the walk never
+        // reaches)
+        let b = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        assert_eq!(
+            b.block_speed_factor(&w),
+            1.0,
+            "the water feet the pass-through arm keeps — the sand below the fallback denies"
+        );
+        // THE AIR-FEET CONTROL (the same pond's edge the air feet wear —
+        // the layered walk the sand below banks)
+        let mut w2 = soul_sanded_world();
+        w2.set(8, 2, 8, crate::world::WATER);
+        let c = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        assert_eq!(
+            c.block_speed_factor(&w2),
+            0.4,
+            "the air feet the water above never banks — the sand below the layered walk keeps"
+        );
+    }
+
+    /// THE BLOCK JUMP FACTOR'S OWN BANK (javap Entity.getBlockJumpFactor
+    /// pcs 0-48 + getJumpPower pcs 0-19 the 26.2 jar): the banked 1.0
+    /// the sand's no-row default keeps (the getJumpPower fold the
+    /// JUMP_STRENGTH value the exact 0.42 wears), the honey wake's 0.5
+    /// the banked fold the `(0.42 × 0.5) + boost` f32 chain the f2d
+    /// widen keeps — the no-row sand the same law the bit-exact 0.42
+    /// preserves.
+    #[test]
+    fn the_jump_factor_the_bank_the_power_wears() {
+        let w = soul_sanded_world();
+        let mut b = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        for _ in 0..5 {
+            b.tick(&w, false);
+        }
+        // THE BANKED DEFAULT (the sand the no-row 1.0 the tick's own
+        // walk banks — the jump the exact 0.42 the bit-exact law keeps)
+        assert_eq!(
+            b.block_jump_factor, 1.0,
+            "the sand the no-row default banks"
+        );
+        b.vy = 0.0;
+        b.jump_from_ground();
+        assert_eq!(
+            b.vy,
+            ((JUMP_POWER * 1.0f32) + 0.0f32) as f64,
+            "the 1.0 fold the exact 0.42 preserves"
+        );
+        // THE HONEY WAKE'S OWN VALUE (the banked 0.5 the table's row
+        // banks — the fold the ×0.5 chain wears: the f32 multiply the
+        // f2d widen keeps)
+        b.block_jump_factor = 0.5;
+        b.vy = 0.0;
+        b.jump_from_ground();
+        assert_eq!(
+            b.vy,
+            ((JUMP_POWER * 0.5f32) + 0.0f32) as f64,
+            "the honey fold the ×0.5 chain keeps"
         );
     }
 }

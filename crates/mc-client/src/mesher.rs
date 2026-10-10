@@ -4376,6 +4376,27 @@ mod tests {
         let q2 = mesh_chunk(&w2, 0, 0, None);
         let wools: Vec<_> = q2.iter().filter(|quad| quad.tile == wool_tile).collect();
         assert_eq!(wools.len(), 6, "the wool the six faces the cube path keeps");
+        // THE SOUL SAND'S OWN CUBE (the autopush-598 round — the
+        // freestanding cell the six faces the same full-cube path
+        // wears, the opaque verdict the is_transparent silence keeps —
+        // the AO the opaque walk casts, the same-tile six the
+        // cube_all's `all` ref banks)
+        let sand_tile = gen_atlas::FACE_TILES[crate::world::SOUL_SAND as usize][0];
+        assert_ne!(sand_tile, gen_atlas::TILE_NONE, "the sand tile the regen banks");
+        assert_eq!(gen_atlas::tile_name(sand_tile), "soul_sand", "the sand tile the master names");
+        for face in 0..6 {
+            assert_eq!(
+                gen_atlas::FACE_TILES[crate::world::SOUL_SAND as usize][face],
+                sand_tile,
+                "the sand face {face} the cube_all's same tile keeps"
+            );
+            assert_eq!(gen_atlas::TINTS[crate::world::SOUL_SAND as usize][face], 0, "the sand face {face} untinted");
+        }
+        let mut w3 = empty_world();
+        put(&mut w3, 8, 8, 8, crate::world::SOUL_SAND);
+        let q3 = mesh_chunk(&w3, 0, 0, None);
+        let sands: Vec<_> = q3.iter().filter(|quad| quad.tile == sand_tile).collect();
+        assert_eq!(sands.len(), 6, "the sand the six faces the cube path keeps");
     }
 
     #[test]

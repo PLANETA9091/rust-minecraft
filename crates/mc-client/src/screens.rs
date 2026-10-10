@@ -87843,8 +87843,9 @@ cow_sound_variant: None,
         let wool = crate::world::WHITE_WOOL;
         // THE ATLAS'S OWN ROWS (the tiles the regenerated walk banks —
         // the cobweb tile the cross arm resolves, the wool the
-        // cube_all's `all` ref answers; both untinted)
-        assert_eq!(atlas::N_KINDS, 77, "the palette the pair banks");
+        // cube_all's `all` ref answers; both untinted — the 78 the
+        // soul sand's tail row the autopush-598 wake banks)
+        assert_eq!(atlas::N_KINDS, 78, "the palette the pair banks");
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
         assert_eq!(atlas::KIND_NAMES[wool as usize], "white_wool");
         assert_eq!(atlas::REGISTRY_NAMES[web as usize], "cobweb");
@@ -87904,6 +87905,92 @@ cow_sound_variant: None,
         // THE MESH QUADS the mesher's own test module pins (the empty
         // stage the helpers keep — the web the cross planes, the wool
         // the six-face cube)
+    }
+
+    /// THE SOUL SAND'S OWN PALETTE ROW (the autopush-598 round — javap
+    /// Blocks clinit pc 10639-10722 the 26.2 jar): the speedFactor(0.4f)
+    /// row's first palette-native consumer — the atlas the cube_all
+    /// generic walk resolves (blockstates soul_sand.json "" ->
+    /// block/soul_sand), the dig row the strength(0.5f) pc 10662 the
+    /// no-demand arm speaks (NO requiresCorrectToolForDrops the
+    /// bare-hand harvest the verdict wears), the drops table the
+    /// self-entry banks, the collision the Column(14) SHAPE keeps, the
+    /// placeable lookup the item form answers, the view-blocking walk
+    /// the opaque full footprint the conjunction admits.
+    #[test]
+    fn the_soul_sand_the_palette_row_wears() {
+        use mc_registry::generated::atlas;
+        let sand = crate::world::SOUL_SAND;
+        assert_eq!(sand, 77, "the tail slot the palette wake banks");
+        assert_eq!(atlas::N_KINDS, 78, "the palette the sand row banks");
+        assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
+        assert_eq!(atlas::REGISTRY_NAMES[sand as usize], "soul_sand");
+        assert_eq!(
+            crate::world::NAME_OF[sand as usize],
+            "soul_sand",
+            "the name row the dig/drop/sound lanes read"
+        );
+        // THE ATLAS'S OWN ROW (the tile the cube_all's `all` ref banks —
+        // every face the same master, untinted)
+        let sand_tile = atlas::FACE_TILES[sand as usize][0];
+        assert_ne!(sand_tile, atlas::TILE_NONE, "the sand the atlas tile banks");
+        assert_eq!(atlas::tile_name(sand_tile), "soul_sand");
+        for face in 0..6 {
+            assert_eq!(atlas::FACE_TILES[sand as usize][face], sand_tile);
+            assert_eq!(atlas::TINTS[sand as usize][face], 0, "the sand face {face} untinted");
+        }
+        // THE COLLISION (the Block.column(16.0, 0.0, 14.0) SHAPE the
+        // 14/16 band keeps) + THE DIG ROW (the strength(0.5f) the
+        // no-demand arm speaks — the bare hand the verdict harvests)
+        assert_eq!(
+            crate::world::collision_shape(sand),
+            crate::world::CollisionShape::Column(14),
+            "the sand the 14/16 column keeps"
+        );
+        assert_eq!(
+            mc_registry::generated::block_dig::dig_row("soul_sand"),
+            Some((0.5, false)),
+            "the dig row the clinit strength speaks"
+        );
+        // THE PLACEABLE LOOKUP + THE VIEW-BLOCKING WALK (the item form
+        // places, the opaque footprint the suffocation conjunction
+        // admits — the wool's own verdict the same walk wears)
+        assert_eq!(
+            crate::world::World::placeable_block("soul_sand"),
+            Some(sand),
+            "the sand the item form places"
+        );
+        assert!(
+            crate::screens::is_view_blocking(sand),
+            "the sand the view blocks"
+        );
+        // THE SPEED FACTOR'S OWN TABLE ROW (the generated walk the
+        // body's move tail reads — the honey pair the same table banks)
+        assert_eq!(
+            mc_registry::generated::block_factors::speed_factor("soul_sand"),
+            0.4,
+            "the speed factor the clinit row banks"
+        );
+        assert_eq!(
+            mc_registry::generated::block_factors::jump_factor("soul_sand"),
+            1.0,
+            "the jump factor the no-row default keeps"
+        );
+        assert_eq!(
+            mc_registry::generated::block_factors::speed_factor("honey_block"),
+            0.4,
+            "the honey speed the same table banks"
+        );
+        assert_eq!(
+            mc_registry::generated::block_factors::jump_factor("honey_block"),
+            0.5,
+            "the honey jump the 0.5 row banks"
+        );
+        assert_eq!(
+            mc_registry::generated::block_factors::speed_factor("stone"),
+            1.0,
+            "the unmatched block the 1.0 default rides"
+        );
     }
 
     // THE WATER FOG PAIR (javap WaterFogEnvironment.setupFog +

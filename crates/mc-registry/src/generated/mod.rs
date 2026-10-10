@@ -1,6 +1,7 @@
 pub mod atlas;
 pub mod block_dig;
 pub mod block_drops;
+pub mod block_factors;
 pub mod block_ids;
 pub mod block_mineable;
 pub mod block_shears;

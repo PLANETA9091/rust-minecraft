@@ -579,8 +579,29 @@ pub const HAY_BLOCK: u16 = 74;
 pub const COBWEB: u16 = 75;
 pub const WHITE_WOOL: u16 = 76;
 
+/// THE SPEED FACTOR WAKE'S OWN ROW (the autopush-598 round — javap
+/// Blocks clinit pc 10639-10722 the 26.2 jar): register(BlockItemIds.
+/// SOUL_SAND, ...) the ITEM FORM HAS (the placeable lookup the
+/// reverse walk answers), mapColor(COLOR_BROWN) pc 10650,
+/// instrument(COW_BELL) pc 10656, strength(0.5f) pc 10662-10664 the
+/// dig row's own 0.5 the no-demand arm speaks (NO
+/// requiresCorrectToolForDrops the bare-hand harvest the verdict
+/// wears), **speedFactor(0.4f) pc 10667-10670** — THE SLOW THE
+/// PROPERTY ITSELF CARRIES (the makeStuckInBlock family the older
+/// versions wore RETIRED: javap SoulSandBlock the 26.2 jar — the
+/// entityInside override the class never speaks, the SHAPE
+/// `Block.column(16.0d, 0.0d, 14.0d)` pcs 11-21 the collision's
+/// Column(14) row keeps — the 14/16 band the body sinks the 2px
+/// wears), sound(SoundType.SOUL_SAND) pc 10673-10676, the
+/// isValidSpawn/isRedstoneConductor/isViewBlocking/isSuffocating
+/// predicate rows the same-lambda family keeps. The full-cube
+/// generic walk resolves (blockstates soul_sand.json "" ->
+/// block/soul_sand parent block/cube_all — the atlas tile the cube
+/// walk banks).
+pub const SOUL_SAND: u16 = 77;
+
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 77] = [
+pub const NAME_OF: [&str; 78] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -673,6 +694,14 @@ pub const NAME_OF: [&str; 77] = [
     // self-entry), the sounds' WOOL row and the item id the reverse
     // walk answers
     "cobweb", "white_wool",
+    // THE SPEED FACTOR WAKE'S OWN ROW (the autopush-598 round): the
+    // soul sand the dig row (0.5 hardness, no tool demand — the
+    // strength(0.5f) pc 10662 the clinit arm speaks), the drops table
+    // (the self-entry the generated soul_sand rows bank), the sounds'
+    // SOUL_SAND row and the item id the reverse walk answers — the
+    // speedFactor(0.4f) pc 10667 the body's move-tail walk reads (the
+    // generated block_factors row the name-driven lane banks)
+    "soul_sand",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -1067,6 +1096,18 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         CollisionShape::Empty
     } else if id == FARMLAND || id == DIRT_PATH {
         CollisionShape::Column(15)
+    } else if id == SOUL_SAND {
+        // THE SOUL SAND'S OWN COLUMN (the autopush-598 round — javap
+        // SoulSandBlock the 26.2 jar: `private static final VoxelShape
+        // SHAPE` the clinit's `Block.column(16.0d, 0.0d, 14.0d)` pcs
+        // 11-21 banks, getCollisionShape pcs 0-3 the field areturn
+        // keeps): the full 0..1 footprint under the 14/16-tall band —
+        // the 2px the body sinks below the cube top the feel speaks,
+        // the getBlockSupportShape/getVisualShape the Shapes.block()
+        // full answers keep (the support the FULL band the column's
+        // own top never splits — the redstone conductor the predicate
+        // row arms)
+        CollisionShape::Column(14)
     } else if is_candle_cake(id) || is_cake(id) {
         // THE CAKE FAMILY'S OWN COLUMN (the autopush-523/524 rounds —
         // javap CandleCakeBlock.getShape the SHAPE field returns, the
@@ -3355,6 +3396,13 @@ mod tests {
         // Block.column(16, 0, 15) the two SHAPE constants speak
         assert_eq!(collision_shape(FARMLAND), CollisionShape::Column(15));
         assert_eq!(collision_shape(DIRT_PATH), CollisionShape::Column(15));
+        // THE SOUL SAND'S OWN COLUMN (the autopush-598 round — javap
+        // SoulSandBlock the 26.2 jar: the SHAPE
+        // `Block.column(16.0d, 0.0d, 14.0d)` pcs 11-21 banks — the full
+        // 0..1 footprint under the 14/16 band the 2px sink the feel
+        // keeps, the getBlockSupportShape/getVisualShape the full
+        // answers the support law never splits)
+        assert_eq!(collision_shape(SOUL_SAND), CollisionShape::Column(14));
         // THE CAMPFIRE FAMILY'S OWN COLUMN (the dev-6 round — javap
         // CampfireBlock.getShape the SHAPE field returns, the static
         // init's `Block.column(16.0, 0.0, 7.0)` walk banks: the full
@@ -3583,6 +3631,13 @@ mod tests {
         assert_eq!(fire_ignite_odds(COBWEB), 0, "the web the silence keeps");
         assert_eq!(fire_burn_odds(COBWEB), 0, "the web the silence keeps");
         assert_eq!(fire_can_burn(COBWEB), false, "the web the refusal keeps");
+        // THE SOUL SAND'S OWN SILENCE (the autopush-598 round — javap
+        // FireBlock the 26.2 jar: NO SOUL_SAND row the full dump's grep
+        // answers, the setFlammable walk the nether sand never wears —
+        // the nether's own stone the same silence keeps)
+        assert_eq!(fire_ignite_odds(SOUL_SAND), 0, "the soul sand the silence keeps");
+        assert_eq!(fire_burn_odds(SOUL_SAND), 0, "the soul sand the silence keeps");
+        assert_eq!(fire_can_burn(SOUL_SAND), false, "the soul sand the refusal keeps");
         for id in [
             SHORT_GRASS, BUSH, TALL_GRASS, TALL_GRASS_UPPER, LARGE_FERN, LARGE_FERN_UPPER,
             DANDELION, POPPY, AZURE_BLUET, OXEYE_DAISY, CORNFLOWER, ORANGE_TULIP, RED_TULIP,

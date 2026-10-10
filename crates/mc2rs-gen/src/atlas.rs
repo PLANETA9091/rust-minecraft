@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 77] = [
+pub const RUNTIME_PALETTE: [&str; 78] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -376,6 +376,19 @@ pub const RUNTIME_PALETTE: [&str; 77] = [
     // requiresCorrectToolForDrops the dig row's false the bare-hand
     // harvest wears.
     "cobweb", "white_wool",
+    // THE SPEED FACTOR WAKE'S OWN ROW (the autopush-598 round): the
+    // soul sand the speedFactor(0.4f) clinit row's first palette-native
+    // consumer (javap Blocks pc 10667-10670 the 26.2 jar — the
+    // Entity.getBlockSpeedFactor walk the body's move tail reads, the
+    // Block.column(16.0, 0.0, 14.0) SHAPE the collision's Column(14)
+    // row keeps; the makeStuckInBlock family the older versions
+    // carried retired — the SoulSandBlock the entityInside override
+    // never carries), the full-cube generic walk resolves (blockstates
+    // soul_sand.json "" -> block/soul_sand parent block/cube_all), the
+    // strength(0.5f) pc 10662-10664 the dig row's own no-demand arm
+    // speaks, NO requiresCorrectToolForDrops the bare-hand harvest
+    // the dig row's false wears
+    "soul_sand",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -2151,6 +2164,11 @@ mod tests {
         // ColorCollection member the full-cube generic walk resolves
         assert_eq!(RUNTIME_PALETTE[75], "cobweb");
         assert_eq!(RUNTIME_PALETTE[76], "white_wool");
+        // the speed factor wake's own row (the autopush-598 round): the
+        // soul sand the speedFactor(0.4f) clinit row's first palette-native
+        // consumer (the full-cube generic walk resolves, the Column(14)
+        // collision the Block.column(16.0, 0.0, 14.0) SHAPE keeps)
+        assert_eq!(RUNTIME_PALETTE[77], "soul_sand");
         // the shared-row law the registry-name walk speaks: every
         // stage the BASE "cake" row the dig/drop/sound/item lanes keep
         let names = registry_names();
