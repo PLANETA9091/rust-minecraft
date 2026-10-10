@@ -43,11 +43,11 @@
 use crate::camera::Camera;
 use crate::math::Vec3;
 use crate::world::{
-    BiomeLayer, LightGrid, World, AIR, ANDESITE, BEDROCK, BIOME_UNKNOWN, BLAST_FURNACE,
-    BLAST_FURNACE_LIT, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE, COBBLED_DEEPSLATE, COPPER_ORE,
-    DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, FIRE, FURNACE, FURNACE_LIT, GOLD_ORE,
-    GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN, LOG,
-    NETHER_PORTAL, NETHERRACK, OBSIDIAN, PALE_LEAVES, REDSTONE_ORE, SAND, SMOKER, SMOKER_LIT,
+    BiomeLayer, LightGrid, World, AIR, ANDESITE, BAMBOO, BAMBOO_SAPLING, BEDROCK, BIOME_UNKNOWN,
+    BLAST_FURNACE, BLAST_FURNACE_LIT, CHUNK_X, CHUNK_Y, CHUNK_Z, COAL_ORE, COBBLED_DEEPSLATE,
+    COPPER_ORE, DEEPSLATE, DIAMOND_ORE, DIORITE, DIRT, EMERALD_ORE, FIRE, FURNACE, FURNACE_LIT,
+    GOLD_ORE, GRANITE, GRASS, GRAVEL, IRON_ORE, LAPIS_ORE, LEAF_LITTER, LEAVES, LIGHT_UNKNOWN,
+    LOG, NETHER_PORTAL, NETHERRACK, OBSIDIAN, PALE_LEAVES, REDSTONE_ORE, SAND, SMOKER, SMOKER_LIT,
     SOUL_FIRE, STONE, TORCH, WATER,
 };
 use crate::world_model::{USE_ROW_SLOT_END, USE_ROW_SLOT_START, WorldModel};
@@ -5503,6 +5503,25 @@ pub fn runtime_mapper(id: u32) -> u16 {
         // NO-lightLevel clinit keeps, the dig row (50.0, true) the
         // generated table banks
         Some("minecraft:obsidian") => OBSIDIAN,
+        // THE STALK'S OWN ARM (the autopush-608 round — the wire
+        // world's own bamboo the server's chunks stream, the generated
+        // block_ids row the state ids resolve [15279..=15290, the
+        // age x leaves x stage twelve-state range the vanilla's own
+        // registration banks]): the ONE kind the every-state verdict
+        // wears (the AGE/LEAVES/STAGE properties the kind-only
+        // vocabulary never stores — the default state's thin stalk the
+        // mesher's lane renders), the InsetColumn(16, 6) the
+        // SHAPE_COLLISION column(3.0) the collision's row keeps, the
+        // emission the 0 the NO-lightLevel clinit keeps
+        Some("minecraft:bamboo") => BAMBOO,
+        // THE SAPLING'S OWN ARM (the autopush-608 round — the wire
+        // world's own sapling the server's chunks stream, the
+        // generated block_ids row the state ids resolve [15278..=15278,
+        // the single-state range the item-less block's own registration
+        // banks]): the ONE kind the every-state verdict wears, the
+        // collision the Empty row the noCollision() pc 23110 keeps,
+        // the cross the tinted_cross parent the generic walk resolves
+        Some("minecraft:bamboo_sapling") => BAMBOO_SAPLING,
         _ => AIR, // air and every block the palette doesn't render yet
     }
 }

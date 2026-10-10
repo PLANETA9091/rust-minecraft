@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 87] = [
+pub const RUNTIME_PALETTE: [&str; 89] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -472,6 +472,57 @@ pub const RUNTIME_PALETTE: [&str; 87] = [
     // parent block/cube_all — the #all texture the six faces the
     // generic walk banks, the tintless row the TINTS' 0 keeps)
     "obsidian",
+    // THE STALK'S OWN ROW (the autopush-608 round): the bamboo the
+    // sword's f32::MAX instant lane the palette finally wakes — javap
+    // Blocks clinit pc 23144-23212 the 26.2 jar: register(
+    // BlockItemIds.BAMBOO, of().mapColor(PLANT) pc 23155-23158 +
+    // forceSolidOn() pc 23161 + randomTicks() pc 23164 + instabreak()
+    // pc 23167 OVERRIDDEN by strength(1.0f) pc 23170-23171 the dig
+    // row's own 1.0 the generated table banks + sound(BAMBOO) pc
+    // 23174-23177 + noOcclusion() pc 23180 + dynamicShape() pc 23183
+    // + offsetType(XZ) pc 23186-23189 the plant offset the XZ row
+    // wears + ignitedByLava() pc 23192 + pushReaction(DESTROY) pc
+    // 23195-23198 + isRedstoneConductor(never) pc 23201-23206) the
+    // ITEM FORM HAS — the placeable lookup the reverse walk answers.
+    // The NO lightLevel call the emission-0 default the light grid
+    // keeps; the collision SHAPE_COLLISION the BambooStalkBlock
+    // static{} pc 37-47 banks (Block.column(3.0, 0.0, 16.0) — the
+    // 3/16 stalk column the offset sweep the inset-6 band contains);
+    // the skylight the propagatesSkylightDown override pc 0-1 the
+    // iconst_1 TRUE keeps. The blockstates bamboo.json is a MULTIPART
+    // whose age arms apply FOUR overlapping stalk models each (the
+    // bamboo1..4_age0 fours the same [7,0,7]->[9,16,9] box wears,
+    // the side UV strips alone differ — the vanilla LEQUAL depth the
+    // LAST-declared apply's framebuffer verdict speaks, the mesher's
+    // LESS raster the REVERSED emission the same visible strip
+    // serves) and the leaves arms the crossed-plane pairs — the
+    // multipart the mesher's own lane selects, the palette row the
+    // FIRST age0 model's #all texture (block/bamboo_stalk) banks.
+    // The NO tint anywhere: the textures pre-colored (the BlockColors
+    // bamboo absence the jar's own registry speaks), the TINTS' 0
+    // keeps.
+    "bamboo",
+    // THE SAPLING'S OWN ROW (the autopush-608 round): the placement
+    // law's own FIRST product — the bamboo item on plain
+    // SUPPORTS_BAMBOO ground the BambooStalkBlock.getStateForPlacement
+    // pc 178-184 walk serves (the BAMBOO_SAPLING.defaultBlockState()
+    // return the vanilla's own quirk the bytecode pins), the sapling
+    // the only block the plain-ground placement places. javap Blocks
+    // clinit pc 23084-23141: register(BlockIds.BAMBOO_SAPLING, ...)
+    // the NO-BlockItemId overload the item-less block the vanilla
+    // itself grants (the portal arm's own law), mapColor(WOOD) pc
+    // 23095-23098 + forceSolidOn() pc 23101 + randomTicks() pc 23104
+    // + instabreak() pc 23107 OVERRIDDEN by strength(1.0f) pc
+    // 23113-23114 + noCollision() pc 23110 the Empty collision row
+    // + sound(BAMBOO_SAPLING) pc 23117-23120 + offsetType(XZ) pc
+    // 23123-23126 + ignitedByLava() pc 23129 + pushReaction(DESTROY)
+    // pc 23132-23135. The blockstates bamboo_sapling.json's ""
+    // variant resolves (block/bamboo_sapling parent block/tinted_cross
+    // — the #cross texture block/bamboo_stage0 the generic walk banks,
+    // the PRE-COLORED master the TINTS' 0 keeps — the tintindex the
+    // tinted_cross parent carries the resolver the BlockColors
+    // absence never serves, the pixels as authored).
+    "bamboo_sapling",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
@@ -932,6 +983,71 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block == "bamboo" {
+            // THE STALK'S OWN PALETTE ARM (the autopush-608 round, the
+            // official 26.2 jar): the blockstate is a MULTIPART whose
+            // age arms apply FOUR overlapping stalk models each (the
+            // bamboo1..4_age0 / bamboo1..4_age1 fours) and the leaves
+            // arms the crossed-plane pairs — resolve_block's full-cube
+            // six-face requirement cannot apply, and the generic
+            // multipart walk the fire arm serves picks a SINGLE
+            // canonical model. The FIRST age0 apply (block/
+            // bamboo1_age0 — the declaration order's own head) is the
+            // canonical stalk model: its merged texture map's `all`
+            // ref (block/bamboo_stalk — the 16x16 FULLY-OPAQUE master
+            // the six faces bank) is the palette row. The leaves
+            // masters (block/bamboo_small_leaves, block/
+            // bamboo_large_leaves) the mesher's per-quad texture
+            // verdict reads through the named consts the appended
+            // tiles carry — the palette row the stalk tile alone
+            // needs.
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/bamboo.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate bamboo: json parse")?;
+            let parts = bs
+                .get("multipart")
+                .and_then(|v| v.as_array())
+                .with_context(|| "blockstate bamboo: no multipart")?;
+            let mut model_ref: Option<String> = None;
+            for part in parts {
+                let when = part.get("when");
+                let age0 = when
+                    .and_then(|w| w.get("age"))
+                    .and_then(|v| v.as_str())
+                    .map(|v| v == "0")
+                    .unwrap_or(false);
+                if !age0 {
+                    continue;
+                }
+                let applies = part.get("apply").and_then(|v| v.as_array());
+                let Some(applies) = applies else { continue };
+                if let Some(first) = applies
+                    .first()
+                    .and_then(|a| a.get("model"))
+                    .and_then(|m| m.as_str())
+                {
+                    model_ref =
+                        Some(first.trim_start_matches("minecraft:").to_string());
+                    break;
+                }
+            }
+            let model_ref = model_ref
+                .with_context(|| "blockstate bamboo: no age0 apply")?;
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block bamboo: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("all")
+                .with_context(|| format!("model {model_ref}: no all texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         if block == "candle_lit" {
             // THE LIT KIND'S OWN ROW (the autopush-522 round, the
             // official 26.2 jar): the palette name the client's own
@@ -1297,6 +1413,50 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             faces.push(resolve_flat_stem(&stem, false));
             continue;
         }
+        if block == "bamboo_sapling" {
+            // THE SAPLING'S OWN CROSS ROW (the autopush-608 round, the
+            // official 26.2 jar): the blockstate is a single variant
+            // map ("") — the model ref -> block/bamboo_sapling whose
+            // PARENT is block/tinted_cross (the flowers' own two
+            // diagonal plane elements the 45° rotY + rescale fold
+            // bakes, `shade: false` faces under model-level
+            // `ambientocclusion: false`), so resolve_block's full-cube
+            // six-face requirement cannot apply. The texture stem
+            // resolves through the REAL chain (the blockstate
+            // variant's model ref -> the merged texture map's `cross`
+            // ref — bamboo_sapling -> block/bamboo_stage0), tinted =
+            // FALSE despite the tinted_cross parent's tintindex-0
+            // faces — the PRE-COLORED master renders as authored (the
+            // audited BlockColors register walk covers
+            // FERN/SHORT_GRASS/POTTED_FERN/BUSH + the TALL_GRASS/
+            // LARGE_FERN pair, the bamboo family the absence keeps —
+            // the tintindex the resolver never serves rides white).
+            let bs_bytes = read_jar(
+                &mut archive,
+                "assets/minecraft/blockstates/bamboo_sapling.json",
+            )?;
+            let bs: Value = serde_json::from_slice(&bs_bytes)
+                .with_context(|| "blockstate bamboo_sapling: json parse")?;
+            let model_ref = bs
+                .get("variants")
+                .and_then(|v| v.get(""))
+                .and_then(|v| v.get("model"))
+                .and_then(|m| m.as_str())
+                .with_context(|| "blockstate bamboo_sapling: no empty-variant model")?
+                .trim_start_matches("minecraft:")
+                .to_string();
+            let (tex_map, _) = load_model_chain(&mut archive, &model_ref)
+                .with_context(|| format!("block bamboo_sapling: model chain {model_ref}"))?;
+            let tex = tex_map
+                .get("cross")
+                .with_context(|| format!("model {model_ref}: no cross texture ref"))?;
+            let stem = tex
+                .trim_start_matches("minecraft:")
+                .trim_start_matches("block/")
+                .to_string();
+            faces.push(resolve_flat_stem(&stem, false));
+            continue;
+        }
         if block == "short_grass" || block == "bush" {
             // THE PLAINS' OWN GRASS TUFT (the autopush-412 round, the
             // official 26.2 jar): the blockstate is a single variant
@@ -1527,6 +1687,38 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
             }
         }
     };
+
+    // THE BAMBOO LEAVES' OWN APPEND (the autopush-608 round, the
+    // official 26.2 jar): the two crossed-plane masters the stalk
+    // multipart's leaves arms reference (block/bamboo_small_leaves,
+    // block/bamboo_large_leaves — the blockstates' own when-conditions
+    // the mesher's lane selects, the per-quad texture verdict the
+    // named consts read). NO palette row references them (the stalk
+    // row the #all texture banks), so the two tiles APPEND here
+    // after the block tiles — the existing indices stay byte-identical
+    // (the golden safety the append-at-the-end law keeps), the destroy
+    // stages the +2 shift the named DESTROY_TILES consts absorb. The
+    // PRE-COLORED masters ride no tint (the BlockColors bamboo
+    // absence the jar's own registry speaks — the pixels as authored).
+    let mut bamboo_leaf_tiles: Vec<u16> = Vec::with_capacity(2);
+    for stem in ["bamboo_small_leaves", "bamboo_large_leaves"] {
+        let raw = read_jar(
+            &mut archive,
+            &format!("assets/minecraft/textures/block/{stem}.png"),
+        )
+        .with_context(|| format!("texture block/{stem}.png"))?;
+        let (w, h, rgba) = decode_rgba(&raw)?;
+        let (w, h, rgba) = first_frame(w, h, &rgba);
+        if w != 16 || h != 16 {
+            bail!("texture {stem}: expected 16x16 (first frame), got {w}x{h}");
+        }
+        let mut bytes = rgba;
+        bake_tint(&mut bytes, 0);
+        let idx = tile_names.len() as u16;
+        tile_names.push(stem.to_string());
+        tile_bytes.push(bytes);
+        bamboo_leaf_tiles.push(idx);
+    }
 
     // THE DIG LANE's destroy stages: the crack textures the vanilla
     // breaking overlay speaks (`assets/minecraft/textures/block/
@@ -2088,6 +2280,24 @@ pub fn build(jar_bytes: &[u8], version: &str, client_sha1: &str) -> Result<Strin
          \x20    pub const DESTROY_TILES: [u16; 10] = {:?};\n",
         destroy_tiles
     ));
+    // THE BAMBOO LEAVES' OWN CONSTS (the autopush-608 round): the two
+    // appended masters the stalk lane's per-quad texture verdict reads
+    // (the leaves arms' crossed-plane quads the tiles carry; the
+    // stalk's own tile the FACE_TILES row the palette arm banks).
+    let bamboo_leaves_consts: [(&str, &str, u16); 2] = [
+        ("bamboo_small_leaves", "TILE_BAMBOO_SMALL_LEAVES", bamboo_leaf_tiles[0]),
+        ("bamboo_large_leaves", "TILE_BAMBOO_LARGE_LEAVES", bamboo_leaf_tiles[1]),
+    ];
+    for (stem, prefix, idx) in bamboo_leaves_consts {
+        src.push_str(&format!(
+            "\n/// The bamboo lane's own {} tile (the autopush-608\n\
+             \x20    /// round — the stalk multipart's leaves arms'\n\
+             \x20    /// per-quad texture verdict reads it; the appended\n\
+             \x20    /// master the palette walk never references).\n\
+             \x20    pub const {}: u16 = {};\n",
+            stem, prefix, idx
+        ));
+    }
     // THE ANIMATED STRIPS' OWN TABLES (the dev-5 round's fire, the
     // autopush-521 round's fluids): per-strip constants the draw-time
     // remap walks — the frame-tile arrays, the mcmeta playlists, the

@@ -30240,6 +30240,48 @@ impl App {
         } else {
             block
         };
+        // THE BAMBOO'S OWN PLACEMENT VERDICT (javap BambooStalkBlock.
+        // getStateForPlacement over the 26.2 jar — pc 0-20 the TARGET
+        // cell's fluid the non-empty refusal keeps (the water the
+        // replaceable law would admit, the bamboo's own law refuses —
+        // the aconst_null return the canPlace gate brands), pc 21-43
+        // the below cell's SUPPORTS_BAMBOO verdict the gate reads (the
+        // false the pc 185 aconst_null refusal keeps), pc 46-73 the
+        // below-BAMBOO_SAPLING arm the STALK's default state serves,
+        // pc 74-125 the below-BAMBOO arm the stalk's own state serves
+        // (the AGE the below's own age inherits — the kind-only
+        // vocabulary the age never stores, the default state's own arm
+        // the placed kind answers), pc 126-184 the PLAIN-GROUND arm
+        // the BAMBOO_SAPLING.defaultBlockState() return serves — the
+        // vanilla's own quirk: the bamboo item on plain
+        // SUPPORTS_BAMBOO ground places the SAPLING block (the
+        // getStateForPlacement walk the item's own kind never is —
+        // the stalk the bamboo/sapling-below arms alone wear). The
+        // placed kind the downstream gates, the set and the place
+        // voice all read.
+        let block = if block == crate::world::BAMBOO {
+            let target_fluid = self
+                .active_world()
+                .is_some_and(|w| {
+                    matches!(
+                        w.get(cell.0, cell.1, cell.2),
+                        crate::world::WATER | crate::world::LAVA
+                    )
+                });
+            if target_fluid {
+                return false; // pc 0-20: the fluid the placement never arms
+            }
+            let below = self
+                .active_world()
+                .map(|w| w.get(cell.0, cell.1 - 1, cell.2))
+                .unwrap_or(crate::world::AIR);
+            match crate::world::bamboo_placement_kind(below) {
+                Some(kind) => kind,
+                None => return false, // pc 21-43: the gate the refusal keeps
+            }
+        } else {
+            block
+        };
         // the replaceable-cell law: the air and the fluid give way (the
         // vanilla state.canBeReplaced's own set for our vocabulary) —
         // the REPLACEABLE PLANT FAMILY the same law keeps (the tuft the
@@ -90117,7 +90159,7 @@ cow_sound_variant: None,
         // soul sand's tail row the autopush-598 wake banks)
         assert_eq!(
             atlas::N_KINDS,
-            87,
+            89,
             "the palette the frame's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[web as usize], "cobweb");
@@ -90198,7 +90240,7 @@ cow_sound_variant: None,
         assert_eq!(sand, 77, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            87,
+            89,
             "the palette the frame's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[sand as usize], "soul_sand");
@@ -90500,7 +90542,7 @@ cow_sound_variant: None,
         assert_eq!(honey, 78, "the tail slot the palette wake banks");
         assert_eq!(
             atlas::N_KINDS,
-            87,
+            89,
             "the palette the frame's own tail row banks"
         );
         assert_eq!(atlas::KIND_NAMES[honey as usize], "honey_block");
@@ -92009,6 +92051,90 @@ cow_sound_variant: None,
             crate::world::World::placeable_block("dandelion"),
             Some(crate::world::DANDELION),
             "the flower the placeable lookup names"
+        );
+    }
+
+    #[test]
+    fn the_bamboo_the_item_the_sapling_the_stalk_wears() {
+        // THE PLACEMENT LAW'S OWN E2E (javap BambooStalkBlock.
+        // getStateForPlacement over the 26.2 jar — the three-way the
+        // walk serves): the plain ground the SAPLING arm's own product
+        // places (pc 126-184 the BAMBOO_SAPLING.defaultBlockState()
+        // return the vanilla's own quirk pins — the bamboo item on
+        // grass the SAPLING block places, the stalk the item's own
+        // kind never is), the sapling-below the STALK arm serves
+        // (pc 46-73 the AGE=0 default the arm keeps), the water target
+        // the pc 0-20 fluid refusal keeps (the replaceable law would
+        // admit, the bamboo's own law refuses).
+        let mut app = App::new(3);
+        app.enter_world();
+        app.offline_held_updated(Some("item/bamboo"));
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE POOL'S OWN SETUP (the water cell the ray passes through —
+        // the clip's own law the fluid ignores, the floor beneath the
+        // hit the pool's own surface never decides; the column the
+        // generated terrain never carries — the clear the assert's own
+        // guard keeps)
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(c + 2, top - 1, c, crate::world::STONE);
+            w.set(c + 2, top, c, crate::world::WATER);
+            w.set(c + 2, top + 1, c, crate::world::AIR);
+        }
+        // PRESS 1: the plain ground the SAPLING arm serves (the
+        // generated surface's own top the SUPPORTS_BAMBOO subset
+        // answers — the grass/dirt rows the tag banks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the bamboo on the plain ground the placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::BAMBOO_SAPLING,
+            "the placed block the SAPLING arm's own product wears (the vanilla's own quirk)"
+        );
+        // PRESS 2: the sapling-below the STALK arm serves (the ray the
+        // sapling's own cell hits — the clip predicate the non-air
+        // cell answers, the clicked non-replaceable the normal-offset
+        // target keeps, the below read the STALK arm's own verdict)
+        app.offline_held_updated(Some("item/bamboo"));
+        assert!(
+            app.on_right_press(0, 0),
+            "the bamboo on the sapling the placement consumes"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top + 1, c),
+            crate::world::BAMBOO,
+            "the placed block the STALK arm's own kind wears (the age the kind-only vocabulary never stores)"
+        );
+        // THE WATER'S OWN REFUSAL (pc 0-20 the target cell's fluid the
+        // non-empty refusal keeps — the press the PASS verdict carries,
+        // the water cell the water kind keeps)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 2.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            !app.on_right_press(0, 0),
+            "the bamboo into the water the fluid refusal keeps"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 2, top, c),
+            crate::world::WATER,
+            "the water cell the refusal guards"
+        );
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c + 2, top + 1, c),
+            crate::world::AIR,
+            "the pool's above the placement never fills"
         );
     }
 

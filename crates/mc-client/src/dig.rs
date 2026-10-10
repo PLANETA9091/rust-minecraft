@@ -1523,6 +1523,98 @@ mod tests {
         );
     }
 
+    /// THE BAMBOO PAIR'S OWN INSTANT (the autopush-608 round — the
+    /// palette's bamboo + bamboo_sapling rows the pinned SWORD table
+    /// finally reaches): the NAME_OF rows the dig lane wakes (the
+    /// sword speed the f32::MAX the SWORD_INSTANTLY_MINES tag banks,
+    /// the bare hand the 1.0 default the strength(1.0f) override
+    /// keeps), the verdict the no-tool-demand rows the early-true arm
+    /// wears (the sword's own bamboo verdict FALSE the demand absence
+    /// never consults), the START press the instant break serves (the
+    /// MAX/(1.0×30) progress the completion wears — the cell AIR the
+    /// same beat keeps, the drops the no-tool-demand self-entry the
+    /// verdict serves).
+    #[test]
+    fn the_bamboo_pair_the_sword_the_instant_wears() {
+        let sword = wire_id("iron_sword");
+        // THE WAKE'S OWN SPEED ROWS (the NAME_OF rows the sword lane
+        // reads — the f32::MAX the instant the generated table banks)
+        assert_eq!(
+            DigState::held_destroy_speed(crate::world::BAMBOO, Some(sword)),
+            3.4028235e38,
+            "the stalk the f32::MAX instant the sword row wears"
+        );
+        assert_eq!(
+            DigState::held_destroy_speed(crate::world::BAMBOO_SAPLING, Some(sword)),
+            3.4028235e38,
+            "the sapling the same instant row wears"
+        );
+        // THE BARE HAND the 1.0 default keeps (the strength(1.0f)
+        // override the dig row's own hardness serves, the no-tool rule
+        // the hand's own default speed wears)
+        assert_eq!(
+            DigState::held_destroy_speed(crate::world::BAMBOO, None),
+            1.0,
+            "the bare hand the 1.0 default wears"
+        );
+        assert_eq!(
+            DigState::held_destroy_speed(crate::world::BAMBOO_SAPLING, None),
+            1.0,
+            "the sapling the same default wears"
+        );
+        // THE VERDICT the no-tool-demand rows the early-true arm keeps
+        // (the sword's own bamboo verdict FALSE the demand absence
+        // never consults — the requires-tool gate the dig rows' own
+        // false answers)
+        assert!(
+            DigState::correct_tool(crate::world::BAMBOO, Some(sword)),
+            "the stalk the no-demand harvest keeps"
+        );
+        assert!(
+            DigState::correct_tool(crate::world::BAMBOO_SAPLING, Some(sword)),
+            "the sapling the no-demand harvest keeps"
+        );
+        // THE INSTANT'S OWN WALK (the START press the f32::MAX the
+        // destroy completes — the cell AIR the same beat wears, the
+        // drops the no-demand verdict serves)
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::BAMBOO);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None,
+        );
+        assert_eq!(
+            world.get(1, 1, 1),
+            crate::world::AIR,
+            "the sword the stalk the instant break serves"
+        );
+        // THE SAPLING the same instant wears
+        world.set(1, 1, 1, crate::world::BAMBOO_SAPLING);
+        let mut d2 = DigState::new();
+        let _ = d2.start_destroy_block(
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None,
+        );
+        assert_eq!(
+            world.get(1, 1, 1),
+            crate::world::AIR,
+            "the sword the sapling the instant break serves"
+        );
+        // THE BARE HAND the 1.0/(1.0×30) share the slow walk keeps
+        // (the completion the single press never wears — the cell the
+        // bamboo kind keeps, the 30-tick walk the destroyTime law
+        // serves)
+        world.set(1, 1, 1, crate::world::BAMBOO);
+        let mut d3 = DigState::new();
+        let _ = d3.start_destroy_block(
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None,
+        );
+        assert_eq!(
+            world.get(1, 1, 1),
+            crate::world::BAMBOO,
+            "the bare hand the bamboo cell keeps (the slow walk the 1.0 hardness wears)"
+        );
+    }
+
     /// THE WAKE'S OWN LANE (the dev-22 round — the palette's cobweb +
     /// white_wool rows the pinned SWORD/SHEARS tables finally reach):
     /// the web the sword/shears 15.0-correct pair the palette kind

@@ -765,6 +765,70 @@ pub const NETHER_PORTAL: u16 = 85;
 /// lambda speaks, the invokedynamic #334 the static{} walk banks).
 pub const OBSIDIAN: u16 = 86;
 
+/// THE STALK'S OWN KIND (the autopush-608 round): the bamboo the sword's
+/// f32::MAX instant lane the palette finally wakes — javap Blocks clinit
+/// pc 23144-23212 the 26.2 jar — `register(BlockItemIds.BAMBOO,
+/// of().mapColor(PLANT) pc 23155-23158 + forceSolidOn() pc 23161 +
+/// randomTicks() pc 23164 + instabreak() pc 23167 OVERRIDDEN by
+/// strength(1.0f) pc 23170-23171 + sound(BAMBOO) pc 23174-23177 +
+/// noOcclusion() pc 23180 + dynamicShape() pc 23183 + offsetType(XZ) pc
+/// 23186-23189 + ignitedByLava() pc 23192 + pushReaction(DESTROY) pc
+/// 23195-23198 + isRedstoneConductor(never) pc 23201-23206)` the ITEM
+/// FORM HAS — the placeable lookup the reverse walk answers, the dig
+/// row (1.0, false) the generated table banks (the instabreak's own 0
+/// the strength(1.0f) arm overrides — the LAST call the clinit's own
+/// order speaks), the SWORD lane the generated block_sword row banks
+/// (SWORD_INSTANTLY_MINES = bamboo, bamboo_sapling — the f32::MAX
+/// overrideSpeed the autopush-595 round pinned, the instant mine the
+/// e2e lane the held-sword press now serves), the sounds' BAMBOO family
+/// the generated rows keep, the XZ offset the plant walk's own row
+/// keeps (the stalk the offset the vanilla getShape's move(getOffset)
+/// walk rides — the render and the collision the same seed-sliced
+/// fold), the collision SHAPE_COLLISION the BambooStalkBlock static{}
+/// pc 37-47 banks (javap `Block.column(3.0, 0.0, 16.0)` — the 3/16
+/// stalk column the InsetColumn(16, 6) band the offset sweep
+/// [6.25..9.75] contains — the half-16th the u8 inset rounds WIDE,
+/// the honest cell-slab band the sweep never escapes), the emission
+/// the NO-lightLevel call the 0 keeps, the skylight the
+/// propagatesSkylightDown override pc 0-1 the iconst_1 TRUE keeps
+/// (the stalk cell the shadow never casts), the outline the getShape
+/// walk answers (leaves == LARGE ? SHAPE_LARGE : SHAPE_SMALL — javap
+/// pc 0-22 the acmp branch the SHAPE_LARGE/SHAPE_SMALL statics keep,
+/// the shape the getOffset move rides). The KIND-ONLY vocabulary the
+/// AGE/LEAVES/STAGE properties never stores — the placement law the
+/// default state (age 0, leaves NONE, stage 0) always serves: the
+/// placed stalk the thin arm renders, the growth the offline client
+/// never runs (the honest limitation the palette-wake test pins).
+pub const BAMBOO: u16 = 87;
+
+/// THE SAPLING'S OWN KIND (the autopush-608 round): the placement
+/// law's own FIRST product — the bamboo item on plain SUPPORTS_BAMBOO
+/// ground the BambooStalkBlock.getStateForPlacement pc 178-184 walk
+/// serves (`getstatic Blocks.BAMBOO_SAPLING;
+/// invokevirtual Block.defaultBlockState()` the return the vanilla's
+/// own quirk pins — the sapling the ONLY block the plain-ground
+/// placement places, the stalk the bamboo/sapling-below arms alone
+/// wear). javap Blocks clinit pc 23084-23141 — `register(
+/// BlockIds.BAMBOO_SAPLING, ...)` the NO-BlockItemId overload the
+/// item-less block the vanilla itself grants (the FACTORY walk the
+/// portal kind's own law wears), mapColor(WOOD) pc 23095-23098 +
+/// forceSolidOn() pc 23101 + randomTicks() pc 23104 + instabreak() pc
+/// 23107 OVERRIDDEN by strength(1.0f) pc 23113-23114 + noCollision()
+/// pc 23110 the Empty collision row + sound(BAMBOO_SAPLING) pc
+/// 23117-23120 + offsetType(XZ) pc 23123-23126 + ignitedByLava() pc
+/// 23129 + pushReaction(DESTROY) pc 23132-23135. The dig row (1.0,
+/// false) the generated table banks, the SWORD lane the same
+/// SWORD_INSTANTLY_MINES row banks (the f32::MAX instant the sapling
+/// cell wears too), the drops table the BAMBOO item entry keeps (the
+/// sapling block the ITEM the loot serves — the item-less block the
+/// dig the bamboo item drops), the cross model the tinted_cross
+/// parent resolves (block/bamboo_sapling -> block/cross — the #cross
+/// texture block/bamboo_stage0 the pre-colored master renders as
+/// authored — the BlockColors bamboo absence the tintindex the
+/// resolver never serves), the collision the noCollision() pc 23110
+/// the Empty row keeps, the XZ offset the plant walk's own row keeps.
+pub const BAMBOO_SAPLING: u16 = 88;
+
 /// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
 /// (javap PortalShape's own fields the ctor pc 0-115 carries): the
 /// bottom-left interior corner, the width/height the bands answer,
@@ -879,7 +943,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 87] = [
+pub const NAME_OF: [&str; 89] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1036,6 +1100,38 @@ pub const NAME_OF: [&str; 87] = [
     // lane serves, the portal frame-scan the igniter arm's own tail
     // lights)
     "obsidian",
+    // THE STALK'S OWN ROW (the autopush-608 round): the bamboo the
+    // dig row (1.0 hardness, no tool demand — the instabreak() pc
+    // 23167 the strength(1.0f) pc 23170-23171 arm overrides, the
+    // generated table's own dump banks (1.0, false)), the SWORD lane
+    // the f32::MAX instant row the block_sword table banks (the
+    // SWORD_INSTANTLY_MINES tag the autopush-595 round pinned — the
+    // held-sword press the instant break the e2e lane serves), the
+    // drops table (the self-entry the generated DROPS_BAMBOO row
+    // banks), the sounds' BAMBOO family (sound(SoundType.BAMBOO) pc
+    // 23174 the registration speaks) and the item id the placeable
+    // lookup answers (BlockItemIds.BAMBOO pc 23144 the ITEM FORM HAS
+    // — the placement law the sapling/stalk three-way the getStateFor
+    // Placement walk serves), the XZ offset the plant walk's row
+    // keeps (offsetType(XZ) pc 23186), the InsetColumn(16, 6) the
+    // SHAPE_COLLISION column(3.0) the sweep band contains
+    "bamboo",
+    // THE SAPLING'S OWN ROW (the autopush-608 round): the placement
+    // law's own FIRST product (the plain-ground placement the
+    // getStateForPlacement pc 178-184 walk serves — the
+    // BAMBOO_SAPLING.defaultBlockState() return the vanilla's own
+    // quirk pins), the dig row (1.0, false — the instabreak() pc
+    // 23107 the strength(1.0f) pc 23113-23114 arm overrides), the
+    // SWORD lane the same f32::MAX instant row banks, the drops
+    // table (the BAMBOO item entry the loot serves — the item-less
+    // block the dig the bamboo item drops), the sounds'
+    // BAMBOO_SAPLING family (sound(SoundType.BAMBOO_SAPLING) pc
+    // 23117) and NO item id the vanilla itself grants (the register
+    // walk carries NO BlockItemId — the placeable lookup the vanilla
+    // itself refuses), the XZ offset the plant walk's row keeps
+    // (offsetType(XZ) pc 23123), the Empty collision the
+    // noCollision() pc 23110 row keeps
+    "bamboo_sapling",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -1058,6 +1154,70 @@ pub fn is_flower(id: u16) -> bool {
 /// speaks — the rigid cross the vanilla model renders).
 pub fn is_web(id: u16) -> bool {
     id == COBWEB
+}
+
+/// THE BAMBOO PAIR'S OWN FAMILY (the autopush-608 round): the stalk
+/// kind the multipart lane renders (the four-model age arms the
+/// blockstate's own when-conditions speak) and the sapling kind the
+/// cross lane renders (the tinted_cross parent the flowers' own bake
+/// carries) — the placement law the sapling/stalk three-way the
+/// [`bamboo_placement_kind`] walk serves, the offset the XZ rows the
+/// offsetType(XZ) clinit calls keep, the sword's f32::MAX instant the
+/// NAME_OF rows the dig lane wakes.
+pub fn is_bamboo_stalk(id: u16) -> bool {
+    id == BAMBOO
+}
+
+pub fn is_bamboo_sapling(id: u16) -> bool {
+    id == BAMBOO_SAPLING
+}
+
+/// THE SUPPORTS_BAMBOO GATE'S OWN PALETTE SUBSET (javap
+/// BambooStalkBlock.canSurvive pc 0-16 the 26.2 jar — the
+/// `below.is(BlockTags.SUPPORTS_BAMBOO)` verdict the placement's own
+/// gate refuses through; the tag the jar's own data walk banks:
+/// #sand ∪ #substrate_overworld ∪ {bamboo, bamboo_sapling, gravel,
+/// suspicious_gravel} — the subtags the extracted jsons speak:
+/// #sand = sand, red_sand, suspicious_sand; #substrate_overworld =
+/// #dirt ∪ #mud ∪ #moss_blocks ∪ #grass_blocks). The CLIENT'S OWN
+/// PALETTE the tag's members the NAME_OF vocabulary speaks: sand,
+/// gravel, dirt, grass_block — the red_sand/suspicious_gravel/
+/// podzol/mycelium/moss/mud rows the palette never carries (the
+/// honest subset the placeable kinds alone serve — the gate the
+/// below cell's kind verdict reads).
+pub fn supports_bamboo(id: u16) -> bool {
+    matches!(
+        id,
+        SAND | GRAVEL | DIRT | GRASS | BAMBOO | BAMBOO_SAPLING
+    )
+}
+
+/// THE PLACEMENT LAW'S OWN THREE-WAY (javap BambooStalkBlock.
+/// getStateForPlacement pc 0-186 the 26.2 jar — the walk the bamboo
+/// item's placement serves, the state the item's own kind NEVER is):
+/// pc 0-20 the TARGET cell's fluid the non-empty refusal keeps (the
+/// water the placement never arms); pc 21-43 the below cell's
+/// SUPPORTS_BAMBOO verdict the gate reads (the false the pc 185
+/// aconst_null refusal keeps); pc 46-73 the below BAMBOO_SAPLING
+/// arm the STALK's default state (AGE=0) serves; pc 74-125 the
+/// below BAMBOO arm the stalk's own state serves (the AGE the
+/// below's own age inherits — `age > 0 ? 1 : 0` pc 94-105 the
+/// branch walks — the kind-only vocabulary the age never stores,
+/// the stalk kind the default the arm answers); pc 126-184 the
+/// PLAIN-GROUND arm the BAMBOO_SAPLING.defaultBlockState() return
+/// serves (the vanilla's own quirk — the sapling the only block the
+/// plain-ground placement places). The stage/leaves the default
+/// state's own arms keep (stage 0, leaves NONE — the growth the
+/// offline client never runs). The None the caller's own refusal
+/// keeps (the canPlace gate the PASS never brands).
+pub fn bamboo_placement_kind(below: u16) -> Option<u16> {
+    if !supports_bamboo(below) {
+        return None;
+    }
+    Some(match below {
+        BAMBOO_SAPLING | BAMBOO => BAMBOO,
+        _ => BAMBOO_SAPLING,
+    })
 }
 
 /// THE CANDLE PAIR'S OWN FAMILY — the canLight consult's own kinds the
@@ -1488,8 +1648,27 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // dimension-change walk a future round serves, the placement's
         // obstruction the empty shape never refuses)
         || id == NETHER_PORTAL
+        // THE SAPLING'S OWN ROW (the autopush-608 round — the blocks
+        // clinit's noCollision() pc 23110 the BAMBOO_SAPLING
+        // registration speaks — the body walks THROUGH the cross the
+        // flowers' own pass-through keeps, the placement's
+        // obstruction the empty shape never refuses)
+        || is_bamboo_sapling(id)
     {
         CollisionShape::Empty
+    } else if is_bamboo_stalk(id) {
+        // THE STALK'S OWN INSET ROW (the autopush-608 round — javap
+        // BambooStalkBlock.getCollisionShape pc 0-11 the 26.2 jar: the
+        // SHAPE_COLLISION static returns (the static{} pc 37-47 walk
+        // banks `Block.column(3.0, 0.0, 16.0)` — the 3/16 stalk column
+        // [6.5, 0, 6.5] -> [9.5, 16, 9.5] the half-16th box the
+        // getOffset move rides), the InsetColumn(16, 6) band the
+        // [6..10] x/z slabs speak — the half-16th the u8 inset rounds
+        // WIDE, the sweep band the offset jitter's own reach
+        // ([6.25..9.75] the ±0.25 lattice holds) the wider slab
+        // never lets the body clip into; the height the full 16/16
+        // band the column's own 0..16 walk keeps)
+        CollisionShape::InsetColumn(16, 6)
     } else if id == FARMLAND || id == DIRT_PATH {
         CollisionShape::Column(15)
     } else if id == SOUL_SAND {
@@ -1974,6 +2153,15 @@ pub fn plant_offset_type(id: u16) -> PlantOffset {
         PlantOffset::XZ
     } else if is_tuft(id) {
         PlantOffset::XYZ
+    }
+    // THE BAMBOO PAIR'S OWN ROW (the autopush-608 round — the two
+    // offsetType(XZ) clinit calls the registrations both speak: the
+    // stalk pc 23186-23189 the OffsetType.XZ row banks, the sapling
+    // pc 23123-23126 the same row keeps — the stalk's getShape the
+    // getOffset move the collision walk rides, the sapling the
+    // flowers' own jitter the cross bake wears)
+    else if is_bamboo_stalk(id) || is_bamboo_sapling(id) {
+        PlantOffset::XZ
     } else {
         PlantOffset::None
     }
@@ -3052,9 +3240,21 @@ impl World {
     /// simple cubes): the reverse of [`NAME_OF`], `air` refused (the
     /// empty id is the void, never a stack's payload) and `water`
     /// refused (no vanilla item carries the fluid as its block).
-    /// `None` = the item places nothing this client's world vocabulary
-    /// can render — the honest no-place, never a guessed voxel.
+    /// THE ITEM REGISTRY'S OWN CONSULT (the autopush-608 round — the
+    /// item-less blocks the vanilla itself grants: the
+    /// BAMBOO_SAPLING the register(BlockIds.BAMBOO_SAPLING, ...)
+    /// NO-BlockItemId overload places nothing (the plain-ground
+    /// placement the bamboo item's own getStateForPlacement walk
+    /// serves — the SAPLING BLOCK the product, never the item), the
+    /// NETHER_PORTAL the FACTORY walk the same law keeps): the name
+    /// the ITEM registry never carries the lookup refuses (the honest
+    /// no-place, never a guessed voxel). `None` = the item places
+    /// nothing this client's world vocabulary can render.
     pub fn placeable_block(item_name: &str) -> Option<u16> {
+        // the item the registry never carries — the item-less block
+        // the vanilla's own registration refuses (the BlockItem
+        // pairing the item's own existence demands)
+        mc_registry::item_id_by_name(item_name)?;
         let id = NAME_OF.iter().position(|n| *n == item_name)? as u16;
         if id == AIR || id == WATER {
             return None;
@@ -7908,5 +8108,144 @@ mod tests {
         assert_eq!(plant_offset(WHEAT_STAGE7, 8, 9, 8), (0.0, 0.0, 0.0));
         assert_eq!(plant_offset(GRASS, 8, 9, 8), (0.0, 0.0, 0.0));
         assert_eq!(plant_offset(WATER, 8, 9, 8), (0.0, 0.0, 0.0));
+    }
+
+    /// THE BAMBOO PAIR'S OWN PALETTE ROWS (the autopush-608 round —
+    /// javap Blocks clinit pc 23084-23141 the sapling + pc 23144-23212
+    /// the stalk the 26.2 jar): the tail slots the palette wake banks,
+    /// the dig rows (1.0, false) the instabreak-then-strength(1.0f)
+    /// override pairs the generated tables bank, the SWORD lane the
+    /// f32::MAX instant rows the block_sword table banks (the
+    /// SWORD_INSTANTLY_MINES tag the autopush-595 round pinned — the
+    /// NAME_OF rows the lane finally wakes), the drops the generated
+    /// rows speak (the stalk the self-entry, the sapling the BAMBOO
+    /// item entry the loot serves), the sounds the BAMBOO families the
+    /// name-driven lane reads, the XZ offset rows the offsetType(XZ)
+    /// clinit calls keep, the collision rows the SHAPE_COLLISION
+    /// column(3.0) + the noCollision() pc 23110 speak, the SUPPORTS_
+    /// BAMBOO gate the tag's palette subset keeps, the placement law
+    /// the three-way getStateForPlacement walk serves, the placeable
+    /// lookups the item form's own law answers.
+    #[test]
+    fn the_bamboo_pair_the_palette_rows_the_wake_wears() {
+        // THE TAIL SLOTS the palette wake banks
+        assert_eq!(BAMBOO, 87, "the stalk the 87th slot banks");
+        assert_eq!(BAMBOO_SAPLING, 88, "the sapling the 88th slot banks");
+        assert_eq!(NAME_OF[BAMBOO as usize], "bamboo");
+        assert_eq!(NAME_OF[BAMBOO_SAPLING as usize], "bamboo_sapling");
+        // THE DIG ROWS the instabreak-then-strength pairs bank (the
+        // generated tables' own dumps the clinit walks agree)
+        assert_eq!(
+            mc_registry::generated::block_dig::dig_row("bamboo"),
+            Some((1.0, false)),
+            "the stalk the (1.0, false) the strength(1.0f) override banks"
+        );
+        assert_eq!(
+            mc_registry::generated::block_dig::dig_row("bamboo_sapling"),
+            Some((1.0, false)),
+            "the sapling the same pair the override banks"
+        );
+        // THE SWORD LANE the f32::MAX instant rows the NAME_OF wakes
+        assert_eq!(
+            mc_registry::generated::block_sword::sword_rule("bamboo"),
+            Some((3.4028235e38, false)),
+            "the stalk the instant MAX the SWORD_INSTANTLY_MINES row banks"
+        );
+        assert_eq!(
+            mc_registry::generated::block_sword::sword_rule("bamboo_sapling"),
+            Some((3.4028235e38, false)),
+            "the sapling the same instant row banks"
+        );
+        // THE DROPS the generated rows speak (the stalk the self-entry,
+        // the sapling the bamboo item the loot serves)
+        let stalk_drops = mc_registry::generated::block_drops::drops("bamboo")
+            .expect("the stalk's drops row");
+        assert!(
+            stalk_drops.iter().any(|p| p.entries.iter().any(|e| e.item == "bamboo")),
+            "the stalk the self-entry drops"
+        );
+        let sapling_drops = mc_registry::generated::block_drops::drops("bamboo_sapling")
+            .expect("the sapling's drops row");
+        assert!(
+            sapling_drops.iter().any(|p| p.entries.iter().any(|e| e.item == "bamboo")),
+            "the sapling the bamboo item drops (the item-less block the loot law keeps)"
+        );
+        // THE SOUNDS the name-driven lane reads (the break events the
+        // BAMBOO families carry)
+        let stalk_idx = mc_registry::generated::block_sounds::sound_index("bamboo")
+            .expect("the stalk in the sound table");
+        assert_eq!(
+            mc_registry::generated::block_sounds::SOUND_BREAK[stalk_idx],
+            "block.bamboo.break",
+            "the stalk the BAMBOO family banks"
+        );
+        let sapling_idx = mc_registry::generated::block_sounds::sound_index("bamboo_sapling")
+            .expect("the sapling in the sound table");
+        assert_eq!(
+            mc_registry::generated::block_sounds::SOUND_BREAK[sapling_idx],
+            "block.bamboo_sapling.break",
+            "the sapling the BAMBOO_SAPLING family banks"
+        );
+        // THE XZ OFFSET ROWS the offsetType(XZ) clinit calls keep
+        assert_eq!(plant_offset_type(BAMBOO), PlantOffset::XZ);
+        assert_eq!(plant_offset_type(BAMBOO_SAPLING), PlantOffset::XZ);
+        // THE COLLISION ROWS the SHAPE_COLLISION + noCollision speak
+        assert_eq!(
+            collision_shape(BAMBOO),
+            CollisionShape::InsetColumn(16, 6),
+            "the stalk the 3/16 column the inset-6 band the sweep contains"
+        );
+        assert_eq!(
+            collision_shape(BAMBOO_SAPLING),
+            CollisionShape::Empty,
+            "the sapling the noCollision row keeps"
+        );
+        // THE SUPPORTS GATE the tag's palette subset keeps
+        assert!(supports_bamboo(GRASS), "the grass_block the tag banks");
+        assert!(supports_bamboo(DIRT), "the dirt the #dirt subtag banks");
+        assert!(supports_bamboo(SAND), "the sand the #sand subtag banks");
+        assert!(supports_bamboo(GRAVEL), "the gravel the tag banks");
+        assert!(supports_bamboo(BAMBOO), "the stalk the tag's own member keeps");
+        assert!(
+            supports_bamboo(BAMBOO_SAPLING),
+            "the sapling the tag's own member keeps"
+        );
+        assert!(!supports_bamboo(STONE), "the stone the tag refuses");
+        assert!(!supports_bamboo(AIR), "the air the tag refuses");
+        assert!(!supports_bamboo(WATER), "the water the tag refuses");
+        // THE PLACEMENT LAW the three-way walk serves (pc 46-73 the
+        // sapling-below stalk arm, pc 74-125 the bamboo-below arm,
+        // pc 126-184 the plain-ground sapling arm, pc 21-43 the gate)
+        assert_eq!(
+            bamboo_placement_kind(GRASS),
+            Some(BAMBOO_SAPLING),
+            "the plain ground the SAPLING arm serves (the vanilla's own quirk)"
+        );
+        assert_eq!(
+            bamboo_placement_kind(BAMBOO_SAPLING),
+            Some(BAMBOO),
+            "the sapling-below the STALK arm serves"
+        );
+        assert_eq!(
+            bamboo_placement_kind(BAMBOO),
+            Some(BAMBOO),
+            "the bamboo-below the STALK arm serves (the age the kind-only vocabulary never stores)"
+        );
+        assert_eq!(
+            bamboo_placement_kind(STONE),
+            None,
+            "the stone the gate's refusal keeps"
+        );
+        // THE PLACEABLE LOOKUPS the item form's own law answers
+        assert_eq!(
+            World::placeable_block("bamboo"),
+            Some(BAMBOO),
+            "the bamboo item the BlockItem pairing places"
+        );
+        assert_eq!(
+            World::placeable_block("bamboo_sapling"),
+            None,
+            "the sapling the NO-item block the lookup refuses"
+        );
     }
 }

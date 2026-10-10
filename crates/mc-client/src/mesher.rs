@@ -146,6 +146,16 @@ fn is_transparent(kind: u16) -> bool {
         // thin-plane models the portal arm's own translucent quads
         // render)
         || kind == crate::world::NETHER_PORTAL
+        // THE BAMBOO PAIR the same verdict keeps (the autopush-608
+        // round — the blocks clinit's noOcclusion() pc 23180 the
+        // BAMBOO registration speaks (the non-occluding stalk the
+        // neighbors' faces draw against, the skylight the
+        // propagatesSkylightDown override's iconst_1 keeps) and the
+        // noCollision() pc 23110 the BAMBOO_SAPLING registration
+        // speaks (the pass-through cross the flowers' own law keeps,
+        // the AO the opaque walk never casts)
+        || crate::world::is_bamboo_stalk(kind)
+        || crate::world::is_bamboo_sapling(kind)
 }
 
 /// Only opaque blocks cast ambient occlusion (air/water/leaves never darken
@@ -786,6 +796,13 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     // the tint the pre-colored master never rides,
                     // the offset the NONE row the web never speaks)
                     || crate::world::is_web(id)
+                    // THE SAPLING the same path keeps (the autopush-608
+                    // round — the block/bamboo_sapling parent
+                    // block/tinted_cross the flowers' own bake carries,
+                    // the stage0 master the PRE-COLORED pixels speak,
+                    // the XZ offset the offsetType(XZ) pc 23123 row
+                    // wears)
+                    || crate::world::is_bamboo_sapling(id)
                 {
                     let tile = if (id as usize) < atlas::N_KINDS {
                         atlas::FACE_TILES[id as usize][2]
@@ -901,6 +918,12 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                         // zeroes — the rigid diagonal planes the vanilla
                         // model renders)
                         || crate::world::is_web(id)
+                        // THE SAPLING the same path keeps (the
+                        // autopush-608 round — the tinted_cross parent
+                        // the cross geometry the flowers' own bake
+                        // repeats, the XZ offset the sapling's own row
+                        // wears)
+                        || crate::world::is_bamboo_sapling(id)
                     {
                         // THE PLANT'S OWN RENDER OFFSET (the dev-27 round
                         // — the javap 26.2 law the world.rs walk keeps):
@@ -2353,6 +2376,223 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                     }
                     continue;
                 }
+                // THE BAMBOO STALK'S OWN MULTIPART LANE (the autopush-
+                // 608 round — the sword's f32::MAX instant lane the
+                // palette finally wakes, the render the multipart's own
+                // walk serves). blockstates/bamboo.json is a MULTIPART
+                // over the AGE and the LEAVES properties: the age arms
+                // apply FOUR overlapping stalk models each (the
+                // bamboo1..4_age0 fours the SAME [7,0,7]->[9,16,9] box
+                // wear — the side UV strips alone differ: [0..2]/[3..5]/
+                // [6..8]/[9..11] of the bamboo_stalk master; the age1
+                // fours the [6.5,0,6.5]->[9.5,16,9.5] box the same four
+                // strips wear), the leaves arms the crossed-plane pairs
+                // (the flowers' own 0.8..15.2 inset geometry the
+                // shade:false faces speak).
+                // THE PROPS' OWN DEFAULT — the kind-only vocabulary the
+                // AGE/LEAVES/STAGE properties never stores: the
+                // placement law the default state (age 0, leaves NONE —
+                // javap BambooStalkBlock.getStateForPlacement the
+                // defaultBlockState walks serve, the growth the offline
+                // client never runs) always answers: the placed stalk
+                // the thin age0 arms render, the leaves arms the
+                // selection the NONE verdict never picks (the leaves
+                // arms the selection tests pin — the honest limitation
+                // the growth-less client keeps).
+                // THE FOUR-MODEL OVERLAP'S OWN DRAW LAW — the vanilla
+                // chunk mesh draws with the GL LEQUAL depth func (the
+                // RenderSystem.depthFunc(515) law), so the depth-equal
+                // coplanar quads the LAST-declared apply's fragments
+                // WIN — the framebuffer holds bamboo4's UV strip. This
+                // raster's depth law is STRICT LESS (the first-drawn
+                // quad wins — the fire lane's own floor0/floor1
+                // precedent), so the lane EMITS THE AGE GROUP'S MODELS
+                // IN REVERSED DECLARATION ORDER: the last-declared
+                // model first, the raster's LESS the same winner the
+                // vanilla LEQUAL keeps, the visible strip the vanilla
+                // framebuffer's own verdict.
+                // THE SHADE TERM the stalk elements' default TRUE
+                // carries (the FACE_SHADE constants the cube path wears
+                // — the derive quads' own direction the term reads);
+                // the leaves pairs' shade:false the lightmap alone
+                // multiplies. NO tint anywhere (the textures PRE-
+                // COLORED — the BlockColors bamboo absence the jar's
+                // own registry speaks, the tintindex the resolver never
+                // serves). The XZ offset the plant walk's own row keeps
+                // (the offsetType(XZ) pc 23186 the clinit arm speaks —
+                // the stalk the getOffset move the vanilla getShape
+                // rides). The cullface verdicts the down/up faces carry
+                // (the element tables' own cullface Down/Up rows — the
+                // torch lane's own law the neighbor reads keep).
+                if crate::world::is_bamboo_stalk(id) {
+                    let props = [("age", "0"), ("leaves", "none")];
+                    // The attribute-system fold (the shared per-mesh
+                    // uniforms the fire lane's own walk speaks — the
+                    // javap-proven arithmetic).
+                    let sky_factor = world.sky_light_factor.unwrap_or(1.0)
+                        * world
+                            .day_tick
+                            .map(crate::timeline::sky_light_factor)
+                            .unwrap_or(1.0);
+                    let sky_tint = match world.sky_light_color {
+                        None => world
+                            .day_tick
+                            .map(crate::timeline::sky_light_color)
+                            .unwrap_or([1.0; 3]),
+                        Some(stated) => {
+                            let track = world
+                                .day_tick
+                                .map(crate::timeline::sky_light_color_bytes)
+                                .unwrap_or([255; 3]);
+                            [
+                                ((stated[0] as u32 * track[0] as u32) / 255) as f32 / 255.0,
+                                ((stated[1] as u32 * track[1] as u32) / 255) as f32 / 255.0,
+                                ((stated[2] as u32 * track[2] as u32) / 255) as f32 / 255.0,
+                            ]
+                        }
+                    };
+                    let ambient = world.ambient_light.map_or([0.0f32; 3], |a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let block_tint = world.block_light_tint.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    let night_vision = world.night_vision_color.map(|a| {
+                        [a[0] as f32 / 255.0, a[1] as f32 / 255.0, a[2] as f32 / 255.0]
+                    });
+                    // THE CELL'S OWN LIGHT — the withoutAO walk's
+                    // getLightColor(state, pos): both layers sampled AT
+                    // the stalk cell, all corners the same sample (the
+                    // fire lane's own law the thin geometry keeps).
+                    let (cell_sky, cell_block) = match light {
+                        Some(l) => {
+                            let (s, b) = cell_layers(l, world.chunks_per_side, wx, wy, wz);
+                            (s.map(|v| v as f32), b.map(|v| v as f32))
+                        }
+                        None => (None, None),
+                    };
+                    // THE PLANT'S OWN RENDER OFFSET — the XZ row the
+                    // plant walk keeps (the stalk the getOffset move
+                    // the vanilla shape law rides).
+                    let (off_x, off_y, off_z) = crate::world::plant_offset(id, wx, wy, wz);
+                    let (off_x, off_y, off_z) =
+                        (off_x as f32, off_y as f32, off_z as f32);
+                    for apply in select_parts(bamboo_parts(), &props)
+                        .into_iter()
+                        .rev()
+                    {
+                        let model_id =
+                            apply.model.strip_prefix("minecraft:").unwrap_or(apply.model);
+                        let Some(model) = bamboo_model_quads().get(model_id) else {
+                            continue;
+                        };
+                        // the per-quad texture verdict the names speak:
+                        // the stalk masters the kind's own atlas tile
+                        // (the FACE_TILES row the palette arm banks —
+                        // every face the #all ref answers), the leaves
+                        // masters the appended consts (the palette walk
+                        // never references them — the tile_names walk
+                        // the append banks)
+                        let stalk_tile = if (id as usize) < atlas::N_KINDS {
+                            atlas::FACE_TILES[id as usize][2]
+                        } else {
+                            atlas::TILE_NONE
+                        };
+                        let tile_of_texture = |texture: &str| -> u16 {
+                            if texture.ends_with("bamboo_small_leaves") {
+                                atlas::TILE_BAMBOO_SMALL_LEAVES
+                            } else if texture.ends_with("bamboo_large_leaves") {
+                                atlas::TILE_BAMBOO_LARGE_LEAVES
+                            } else {
+                                stalk_tile
+                            }
+                        };
+                        // THE REVERSED EMISSION (the four-model
+                        // overlap's own draw law — the vanilla LEQUAL's
+                        // last-pass verdict the LESS raster the reversed
+                        // order serves; the within-model quads the
+                        // derive order keeps — the coplanar fight the
+                        // applies' own fours alone speak)
+                        for q in model.iter() {
+                            let tile = tile_of_texture(q.texture);
+                            // THE SHADE TERM'S OWN READ — the element's
+                            // `shade` the vanilla tesselation's
+                            // direction table answers (the stalk's
+                            // default-true elements the cube path's
+                            // constants keep, the leaves' shade:false
+                            // the 1.0 keeps)
+                            let face_shade = if q.shade {
+                                match q.direction {
+                                    mc_registry::element_quads::Direction::Up => 1.0f32,
+                                    mc_registry::element_quads::Direction::Down => 0.5,
+                                    mc_registry::element_quads::Direction::North
+                                    | mc_registry::element_quads::Direction::South => 0.8,
+                                    mc_registry::element_quads::Direction::West
+                                    | mc_registry::element_quads::Direction::East => 0.6,
+                                }
+                            } else {
+                                1.0
+                            };
+                            // THE CULLFACE VERDICTS the down/up faces
+                            // carry (the torch lane's own law — the
+                            // neighbor the solid render answers)
+                            let below = world.get(wx, wy - 1, wz);
+                            if q.cullface
+                                == Some(mc_registry::element_quads::Direction::Down)
+                                && !is_transparent(below)
+                            {
+                                continue;
+                            }
+                            let above = world.get(wx, wy + 1, wz);
+                            if q.cullface
+                                == Some(mc_registry::element_quads::Direction::Up)
+                                && !is_transparent(above)
+                            {
+                                continue;
+                            }
+                            let mut pts = [[0f32; 3]; 4];
+                            let mut colors = [[0f32; 3]; 4];
+                            let mut uvs = [[0f32; 2]; 4];
+                            for (i, v) in q.vertices.iter().enumerate() {
+                                let lm = lightmap_combine(
+                                    cell_sky,
+                                    cell_block,
+                                    sky_factor,
+                                    sky_tint,
+                                    ambient,
+                                    block_tint,
+                                    night_vision,
+                                    world.night_vision_factor,
+                                    world.darkness_scale,
+                                );
+                                // the model plane the offset + inset
+                                // fold rides (the flower lane's own law
+                                // — the section origin adds later, the
+                                // block-local bake keeps)
+                                pts[i] = [
+                                    wx as f32 + v[0] + off_x,
+                                    wy as f32 + v[1] + off_y,
+                                    wz as f32 + v[2] + off_z,
+                                ];
+                                uvs[i] = [q.uvs[i][0] / 16.0, q.uvs[i][1] / 16.0];
+                                colors[i] = [
+                                    lm[0] * face_shade,
+                                    lm[1] * face_shade,
+                                    lm[2] * face_shade,
+                                ];
+                            }
+                            out.push(Quad {
+                                pts,
+                                colors,
+                                uvs,
+                                tile,
+                                translucent: false,
+                                per_texel_alpha: false,
+                            });
+                        }
+                    }
+                    continue;
+                }
                 for face in 0..6usize {
                     let (dx, dy, dz) = NEIGHBOR[face];
                     let n = world.get(wx + dx, wy + dy, wz + dz);
@@ -2812,6 +3052,53 @@ fn fire_model_quads() -> &'static std::collections::HashMap<&'static str, Vec<De
             "block/soul_fire_side1",
             "block/soul_fire_side_alt0",
             "block/soul_fire_side_alt1",
+        ];
+        models
+            .into_iter()
+            .map(|m| (m, derive_model_inherited(m).unwrap_or_default()))
+            .collect()
+    })
+}
+
+/// THE BAMBOO MULTIPART'S OWN CACHED PARTS — the parsed blockstate
+/// definition the selection rides, derived ONCE (the fire lane's own
+/// cache pattern): the blockstates/bamboo.json's multipart the
+/// generated BLOCKSTATES row banks (the age arms apply FOUR overlapping
+/// stalk models each, the leaves arms the crossed-plane pairs — the
+/// jar's own when-conditions).
+fn bamboo_parts() -> &'static [Part<'static>] {
+    static PARTS: std::sync::OnceLock<Vec<Part<'static>>> = std::sync::OnceLock::new();
+    PARTS.get_or_init(|| {
+        match mc_registry::blockstate_lookup::parse("bamboo") {
+            Some(Ok(mc_registry::blockstate_lookup::Definition::Multipart(parts))) => {
+                parts.to_vec()
+            }
+            _ => Vec::new(),
+        }
+    })
+}
+
+/// THE BAMBOO MODELS' OWN CACHED BAKES — the derive walk's quads per
+/// model id, derived ONCE for the ten-model set (the four thin age0
+/// stalks, the four thick age1 stalks, the small and the large leaves
+/// crossed-plane pairs; the elements table the generated census banks,
+/// the shade the stalk elements' default TRUE carries — the leaves
+/// pairs' shade:false the fire lane's own law wears).
+fn bamboo_model_quads() -> &'static std::collections::HashMap<&'static str, Vec<DerivedQuad>> {
+    static QUADS: std::sync::OnceLock<std::collections::HashMap<&'static str, Vec<DerivedQuad>>> =
+        std::sync::OnceLock::new();
+    QUADS.get_or_init(|| {
+        let models = [
+            "block/bamboo1_age0",
+            "block/bamboo2_age0",
+            "block/bamboo3_age0",
+            "block/bamboo4_age0",
+            "block/bamboo1_age1",
+            "block/bamboo2_age1",
+            "block/bamboo3_age1",
+            "block/bamboo4_age1",
+            "block/bamboo_small_leaves",
+            "block/bamboo_large_leaves",
         ];
         models
             .into_iter()
@@ -4605,6 +4892,226 @@ mod tests {
             let soul: Vec<_> = select_parts(fire_parts(true), &state);
             assert_eq!(soul.len(), 18, "the soul fan the no-when column always speaks");
             assert!(soul.iter().all(|a| !a.model.contains("up")), "the up pair the soul column never wears");
+        }
+    }
+
+    #[test]
+    fn the_bamboo_the_multipart_the_arms_select() {
+        // THE SELECTION'S OWN ARMS (the real blockstate engine the lane
+        // rides — parse("bamboo") over the jar's own multipart, the
+        // same select_parts walk the fire test pins): the four parts
+        // the blockstate's own array banks (the age0 fours, the age1
+        // fours, the small-leaves arm, the large-leaves arm).
+        assert_eq!(bamboo_parts().len(), 4, "the four parts the blockstate banks");
+        // THE DEFAULT STATE'S OWN VERDICT (age 0, leaves NONE — the
+        // kind-only vocabulary the placement law serves): the four
+        // overlapping age0 stalks ALONE (the leaves arms the NONE
+        // verdict never picks)
+        let default_state: Vec<_> =
+            select_parts(bamboo_parts(), &[("age", "0"), ("leaves", "none")]);
+        assert_eq!(default_state.len(), 4, "the four age0 stalks the default state wears");
+        assert!(
+            default_state
+                .iter()
+                .all(|a| a.model.contains("bamboo") && a.model.ends_with("_age0")),
+            "the age0 fours the default arm picks: {:?}",
+            default_state.iter().map(|a| a.model).collect::<Vec<_>>()
+        );
+        assert!(
+            default_state.iter().all(|a| a.y == 0),
+            "the applies the rotation never carries (the bare models the jar speaks)"
+        );
+        // THE AGE1 ARM the thick fours picks (the growth the offline
+        // client never runs — the arms the selection tests pin)
+        let age1: Vec<_> = select_parts(bamboo_parts(), &[("age", "1"), ("leaves", "none")]);
+        assert_eq!(age1.len(), 4, "the four age1 stalks the age arm picks");
+        assert!(age1.iter().all(|a| a.model.ends_with("_age1")));
+        // THE LEAVES ARMS the pairs pick (the small and the large the
+        // blockstate's own when-conditions serve)
+        let small: Vec<_> = select_parts(bamboo_parts(), &[("age", "0"), ("leaves", "small")]);
+        assert_eq!(small.len(), 5, "the four stalks + the small pair's model");
+        assert_eq!(
+            small.iter().filter(|a| a.model.ends_with("bamboo_small_leaves")).count(),
+            1,
+            "the small-leaves arm the when verdict picks"
+        );
+        let large: Vec<_> = select_parts(bamboo_parts(), &[("age", "0"), ("leaves", "large")]);
+        assert_eq!(large.len(), 5, "the four stalks + the large pair's model");
+        assert_eq!(
+            large.iter().filter(|a| a.model.ends_with("bamboo_large_leaves")).count(),
+            1,
+            "the large-leaves arm the when verdict picks"
+        );
+        // THE BAKES' OWN GEOMETRY (the elements table the census banks):
+        // the age0 stalks the SAME [7,0,7]->[9,16,9] box (six faces
+        // each), the age1 fours the [6.5,0,6.5]->[9.5,16,9.5] box, the
+        // leaves pairs the crossed planes (the shade:false faces the
+        // fire lane's own law keeps)
+        let quads = bamboo_model_quads();
+        for m in ["block/bamboo1_age0", "block/bamboo2_age0", "block/bamboo3_age0", "block/bamboo4_age0"] {
+            assert_eq!(quads.get(m).map(|v| v.len()), Some(6), "{m}: the box's six faces");
+        }
+        for m in ["block/bamboo1_age1", "block/bamboo2_age1", "block/bamboo3_age1", "block/bamboo4_age1"] {
+            assert_eq!(quads.get(m).map(|v| v.len()), Some(6), "{m}: the box's six faces");
+        }
+        for m in ["block/bamboo_small_leaves", "block/bamboo_large_leaves"] {
+            let q = quads.get(m).expect("the leaves pair's bake");
+            assert_eq!(q.len(), 4, "{m}: the two planes the two faces each");
+            assert!(q.iter().all(|d| !d.shade), "{m}: the shade:false the pairs keep");
+        }
+        // THE AGE0 STALKS' OWN UV STRIPS (the four masters the same box
+        // wears — the side faces' u bounds the strips speak: [0..2]/
+        // [3..5]/[6..8]/[9..11] the bamboo_stalk master's columns)
+        for (m, u0) in [
+            ("block/bamboo1_age0", 0.0f32),
+            ("block/bamboo2_age0", 3.0),
+            ("block/bamboo3_age0", 6.0),
+            ("block/bamboo4_age0", 9.0),
+        ] {
+            let q = quads.get(m).expect("the stalk bake");
+            // the SIDE face the full-height v band carries (uv v 0..16
+            // — the down/up faces' small bands the [4..6]/[0..2] rows
+            // keep)
+            let side = q
+                .iter()
+                .find(|d| d.uvs.iter().any(|uv| uv[1] >= 16.0 - 1e-3))
+                .expect("the side face");
+            let min_u = side.uvs.iter().map(|uv| uv[0]).fold(f32::MAX, f32::min);
+            let max_u = side.uvs.iter().map(|uv| uv[0]).fold(f32::MIN, f32::max);
+            assert!((min_u - u0).abs() < 1e-4, "{m}: the strip's min u {min_u} the {u0} speaks");
+            assert!((max_u - (u0 + 2.0)).abs() < 1e-4, "{m}: the strip's max u {max_u}");
+        }
+    }
+
+    #[test]
+    fn the_bamboo_stalk_the_lane_the_reversed_fours_wear() {
+        // THE LANE'S OWN E2E (the stone floor the stalk cell wears):
+        // the 20 quads the 24-face fours keep (the four down cullfaces
+        // the solid ground culled — the torch lane's own law the
+        // neighbor reads keep), the reversed emission the bamboo4's
+        // strip the first side speaks (the vanilla LEQUAL's own
+        // last-pass verdict the LESS raster the reversed order
+        // serves), the tile the kind's own atlas row banks, the shade
+        // term the stalk elements' default TRUE carries, the XZ offset
+        // the plant walk's row rides.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::BAMBOO);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let stalk_tile = atlas::FACE_TILES[crate::world::BAMBOO as usize][2];
+        let (off_x, off_y, off_z) = crate::world::plant_offset(crate::world::BAMBOO, 8, 9, 8);
+        let (off_x, off_y, off_z) = (off_x as f32, off_y as f32, off_z as f32);
+        // THE CELL'S OWN QUADS: the stalk box [7,0,7]->[9,16,9] + the
+        // offset — the four sides' bottoms at y=9.0, the four ups at
+        // y=10.0, the downs the ground culled
+        let stalk: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| {
+                    p[0] >= 8.0 + 7.0 / 16.0 + off_x - 1e-4
+                        && p[0] <= 8.0 + 9.0 / 16.0 + off_x + 1e-4
+                        && p[2] >= 8.0 + 7.0 / 16.0 + off_z - 1e-4
+                        && p[2] <= 8.0 + 9.0 / 16.0 + off_z + 1e-4
+                        && p[1] >= 9.0 - 1e-4
+                        && p[1] <= 10.0 + 1e-4
+                })
+            })
+            .collect();
+        assert_eq!(stalk.len(), 20, "the 24-face fours the four culled downs keep: {}", stalk.len());
+        assert!(
+            stalk.iter().all(|quad| quad.tile == stalk_tile),
+            "every quad the kind's own atlas tile wears"
+        );
+        assert!(stalk.iter().all(|quad| !quad.translucent && !quad.per_texel_alpha));
+        // THE UP FACES the air-above draw keeps (the four models' own
+        // up quads — the [13,0,15,2] uv band the masters share), the
+        // colors the shade-1.0 lm-1.0 fold keeps
+        let ups: Vec<_> = stalk
+            .iter()
+            .filter(|quad| quad.pts.iter().all(|p| (p[1] - 10.0).abs() < 1e-4))
+            .collect();
+        assert_eq!(ups.len(), 4, "the four models' own up quads");
+        for quad in &ups {
+            for c in &quad.colors {
+                for v in c {
+                    assert!((v - 1.0).abs() < 1e-6, "the up face the 1.0 shade wears: {v}");
+                }
+            }
+        }
+        // THE SIDE FACES the reversed emission's own winner: the FIRST
+        // side quad the bamboo4_age0's [9..11] strip wears (the
+        // vanilla LEQUAL's framebuffer verdict the LESS raster the
+        // reversed order serves), the 0.8 shade the N/S pair keeps
+        let sides: Vec<_> = stalk
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().filter(|p| (p[1] - 9.0).abs() < 1e-4).count() == 2
+                    && quad.pts.iter().filter(|p| (p[1] - 10.0).abs() < 1e-4).count() == 2
+            })
+            .collect();
+        assert_eq!(sides.len(), 16, "the four models' own four sides each");
+        let first_side = sides[0];
+        let min_u = first_side.uvs.iter().map(|uv| uv[0]).fold(f32::MAX, f32::min);
+        let max_u = first_side.uvs.iter().map(|uv| uv[0]).fold(f32::MIN, f32::max);
+        assert!(
+            (min_u - 9.0 / 16.0).abs() < 1e-4 && (max_u - 11.0 / 16.0).abs() < 1e-4,
+            "the first side the bamboo4 strip [9..11] wears: {min_u}..{max_u}"
+        );
+        // THE SHADE TERM the N/S 0.8 the direction table keeps (the
+        // lm-1.0 no-grid fold the legacy look wears)
+        for c in &first_side.colors {
+            for v in c {
+                assert!((v - 0.8).abs() < 1e-6, "the side face the 0.8 shade wears: {v}");
+            }
+        }
+        // THE OFFSET the pts carry (the XZ row the seed-sliced fold
+        // serves — the non-zero shift the stalk's own jitter wears)
+        let straight = stalk
+            .iter()
+            .any(|quad| quad.pts.iter().any(|p| (p[0] - (8.0 + 7.0 / 16.0 + off_x)).abs() < 1e-5));
+        assert!(straight, "the pts the offset shift carries (off={off_x},{off_y},{off_z})");
+        assert!(off_y == 0.0, "the XZ row the y the zero keeps");
+    }
+
+    #[test]
+    fn the_bamboo_sapling_the_cross_the_stage0_wears() {
+        // THE SAPLING'S OWN CROSS (the tinted_cross parent the
+        // flowers' own bake carries): the 4 quads the two diagonal
+        // planes x the two windings wear, the tile the kind's own
+        // atlas row banks (the stage0 master the generic walk
+        // resolves), the XZ offset the plant walk's own row rides,
+        // the pre-colored pixels the no-tint fold keeps.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        put(&mut w, 8, 9, 8, crate::world::BAMBOO_SAPLING);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let (dx, dy, dz) = crate::world::plant_offset(crate::world::BAMBOO_SAPLING, 8, 9, 8);
+        let (dx, dy, dz) = (dx as f32, dy as f32, dz as f32);
+        assert_eq!(dy, 0.0, "the XZ row the y the zero keeps");
+        let a = 0.8 / 16.0;
+        let b = 15.2 / 16.0;
+        let cross: Vec<_> = q
+            .iter()
+            .filter(|quad| {
+                quad.pts.iter().all(|p| (9.0..=10.0).contains(&p[1]))
+                    && quad.pts.iter().any(|p| p[1] == 10.0)
+            })
+            .collect();
+        assert_eq!(cross.len(), 4, "the two planes the two windings wear: {}", cross.len());
+        let sapling_tile = atlas::FACE_TILES[crate::world::BAMBOO_SAPLING as usize][2];
+        for quad in &cross {
+            assert_eq!(quad.tile, sapling_tile, "the kind's own atlas tile wears");
+            for p in &quad.pts {
+                let (fx, fz) = (p[0] - 8.0 - dx, p[2] - 8.0 - dz);
+                assert!(
+                    (fx - a).abs() < 1e-6 || (fx - b).abs() < 1e-6,
+                    "the x the diagonal corner inset keeps: {fx}"
+                );
+                assert!(
+                    (fz - a).abs() < 1e-6 || (fz - b).abs() < 1e-6,
+                    "the z the diagonal corner inset keeps: {fz}"
+                );
+            }
         }
     }
 
