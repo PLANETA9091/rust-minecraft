@@ -19,6 +19,18 @@ pub const WATER_LEVEL: i32 = 10;
 /// [`World::generate_nether`] walk the cells the level below fills).
 pub const NETHER_LAVA_LEVEL: i32 = 11;
 
+/// THE END'S OWN ISLAND SURFACE (the autopush-612 round — the island
+/// top the 48-tall grid scales: the real dimension's y≈64 surface the
+/// 256-tall height keeps, the proportional ~12 the fiction's band
+/// wears — the pillars' heads the +10 climb answers, the pedestal the
+/// surface wears; the [`World::generate_end`] walk the cells raise).
+pub const END_ISLAND_TOP: i32 = 12;
+
+/// THE END'S OWN ISLAND DEPTH (the center's own thickness the cone
+/// tapers from — the real island's ~40-block underside the 48-tall
+/// grid proportionally keeps; the rim the zero the taper speaks).
+pub const END_ISLAND_DEPTH: i32 = 8;
+
 use crate::tint;
 use mc_registry::generated::atlas;
 
@@ -835,6 +847,26 @@ pub const BAMBOO: u16 = 87;
 /// the Empty row keeps, the XZ offset the plant walk's own row keeps.
 pub const BAMBOO_SAPLING: u16 = 88;
 
+/// THE END'S OWN BUILDING BLOCK (the autopush-612 round): the island
+/// stone the END world build raises — javap Blocks clinit pc 13680-
+/// 13713 the 26.2 jar: `register(BlockItemIds.END_STONE, of()
+/// .mapColor(MapColor.SAND).instrument(NoteBlockInstrument.BASEDRUM)
+/// .requiresCorrectToolForDrops().strength(3.0f, 9.0f))` the ITEM
+/// FORM HAS (the placeable lookup the reverse walk answers — the dug
+/// blocks the drops table's self-entry grants). The dig row (3.0,
+/// true) the generated table banks (the requiresCorrectToolForDrops()
+/// pc 13698 the pickaxe-demand arm speaks — the bare hand's 3.0/100
+/// crawl the correct-tool 30 divisor serves), the drops table the
+/// DROPS_END_STONE self-entry keeps, the sounds' STONE family the NO
+/// sound() call the clinit arm carries (the generated rows bank
+/// block.stone.break / block.stone.step), the full-cube shape the
+/// collision's Full default arm answers (no noCollision()/noOcclusion
+/// call the clinit arm carries), the mesher's generic cube path the
+/// blockstates end_stone.json's "" variant resolves (block/end_stone
+/// parent block/cube_all — the one #all texture block/end_stone the
+/// six faces wear, atlas tile 96 the regen banks).
+pub const END_STONE: u16 = 89;
+
 /// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
 /// (javap PortalShape's own fields the ctor pc 0-115 carries): the
 /// bottom-left interior corner, the width/height the bands answer,
@@ -949,7 +981,7 @@ pub fn orientable_pair(id: u16) -> Option<(u16, u16)> {
 }
 
 /// Block -> texture-group mapping used by the real-colors LUT.
-pub const NAME_OF: [&str; 89] = [
+pub const NAME_OF: [&str; 90] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -1138,6 +1170,18 @@ pub const NAME_OF: [&str; 89] = [
     // (offsetType(XZ) pc 23123), the Empty collision the
     // noCollision() pc 23110 row keeps
     "bamboo_sapling",
+    // THE END'S OWN ROW (the autopush-612 round): the island stone
+    // the dig row (3.0 hardness + requiresCorrectToolForDrops — the
+    // strength(3.0f, 9.0f) pc 13701-13707 + requiresCorrectTool
+    // ForDrops() pc 13698 the clinit arm speaks — the generated
+    // table's own dump banks (3.0, true)), the drops table (the
+    // self-entry the generated DROPS_END_STONE row banks), the
+    // sounds' STONE family (no SoundType call the clinit arm carries
+    // — the default the registration keeps — the generated rows bank
+    // block.stone.break / block.stone.step) and the item id the
+    // placeable lookup answers (BlockItemIds.END_STONE pc 13680 the
+    // ITEM FORM HAS — the dug island the pick lane grants)
+    "end_stone",
 ];
 
 /// The plains' own FLOWER FAMILY — the cross kinds the decorate pass
@@ -2954,6 +2998,122 @@ impl World {
         w.has_skylight = false;
         w.generate_nether();
         w
+    }
+
+    /// THE END'S OWN WORLD BUILD (the autopush-612 round — the
+    /// dimension_type's own the_end row the registry banks, the
+    /// deterministic fiction the nether build's own shape wears): the
+    /// has_skylight TRUE the 26.2 jar row keeps (javap the
+    /// `data/minecraft/dimension_type/the_end.json` — the
+    /// `"has_skylight": true` pair the sky-column pass RUNS, the
+    /// stated `visual/sky_light_factor: 0.0` the lightmap's sky term
+    /// the mesher's multiply pins to zero — the grid fills, the
+    /// brightness the zero factor never feeds), the sky_light_factor
+    /// Some(0.0) the stated row stamps, the sky_light_color #ac60cd
+    /// the `visual/sky_light_color` row carries, the ambient_light
+    /// #3f473f the `visual/ambient_light_color` row stamps (the
+    /// lightmap's own base the [63, 71, 63] bytes speak). THE VOID
+    /// the dimension's own law: NO bedrock floor — the island the
+    /// end_stone disc the center raises, the rim the taper thins,
+    /// everything below AIR (the body's fall the void damage walk a
+    /// future round arms); the obsidian pillars the ring raises (the
+    /// dragon fight's own perches the scaled ring keeps); the exit
+    /// pedestal the bedrock base keeps (the fountain's own shape the
+    /// center wears — the END_PORTAL surface the special renderer
+    /// lane a future round serves, the blockstates end_portal.json's
+    /// NO-elements model the generic walk cannot resolve).
+    #[cfg_attr(not(test), expect(dead_code))] // the swap's END arm a future round calls
+    pub fn new_end(chunks_per_side: usize, seed: u64) -> Self {
+        let mut w = Self::blank(chunks_per_side, seed);
+        w.sky_light_factor = Some(0.0); // the jar's stated 0.0 — the sky term pinned
+        w.sky_light_color = Some([172, 96, 205]); // #ac60cd the stated moonlight base
+        w.ambient_light = Some([63, 71, 63]); // #3f473f the stated ambient base
+        w.generate_end();
+        w
+    }
+
+    /// THE END'S OWN TERRAIN (the client's deterministic stand-in the
+    /// PortalForcer-less jar keeps): the end_stone island the disc
+    /// the center raises (the top END_ISLAND_TOP the 48-tall grid
+    /// scales — the real dimension's y≈64 surface the proportion
+    /// keeps), the depth the rim taper thins (the inverted cone the
+    /// real island's own underside speaks), the obsidian pillars the
+    /// ring raises (the real fight's radius-43 ring the scaled band
+    /// keeps, the heights the hash roll varies), the exit pedestal
+    /// the bedrock base the center wears (the fountain's own rows —
+    /// the return walk's own site the future portal lane lights).
+    /// No skylight law here — [`Self::new_end`] the factor 0.0
+    /// stamps, the lightmap the mesher's multiply pins.
+    fn generate_end(&mut self) {
+        let n = self.size_blocks();
+        let top = END_ISLAND_TOP;
+        let cx = (n - 1) as f64 / 2.0;
+        let cz = cx;
+        let radius = n as f64 / 4.0;
+        for wx in 0..n {
+            for wz in 0..n {
+                let dx = wx as f64 - cx;
+                let dz = wz as f64 - cz;
+                let dist = (dx * dx + dz * dz).sqrt();
+                // THE RIM'S OWN TAPER (the island's own edge the hash
+                // jitter roughens — the deterministic roll the
+                // overworld tree roll's own hash lane keeps)
+                let jitter =
+                    (hash2(wx as i64, wz as i64, self.seed ^ 0x3E4D) % 3) as f64 - 1.0;
+                if dist > radius + jitter {
+                    continue; // the void the rim never fills
+                }
+                // THE DEPTH'S OWN CONE (the center's full depth the
+                // rim's zero keeps — the underside the taper speaks)
+                let depth =
+                    ((radius - dist) / radius * END_ISLAND_DEPTH as f64).ceil() as i32;
+                let bottom = (top - depth).max(1);
+                for y in bottom..=top {
+                    self.set(wx, y, wz, END_STONE);
+                }
+            }
+        }
+        // THE PILLAR RING (the real fight's 10 pillars the scaled
+        // ring keeps — the radius the island's own band speaks, the
+        // heights the hash roll varies, the 2x2 columns the
+        // proportion wears; the island's own TOP the ground the
+        // build's own geometry keeps — the height() fn the
+        // overworld's hills the END never carries, the footprint the
+        // island's END_STONE verdict the rim straddles refuse)
+        let count = 10;
+        let ring = radius * 0.72;
+        for i in 0..count {
+            let angle = std::f64::consts::TAU * i as f64 / count as f64;
+            let px = (cx + ring * angle.cos()).round() as i32;
+            let pz = (cz + ring * angle.sin()).round() as i32;
+            let corners = [(px, pz), (px + 1, pz), (px, pz + 1), (px + 1, pz + 1)];
+            if corners.iter().any(|&(x, z)| {
+                x < 0 || z < 0 || x >= n || z >= n || self.get(x, top, z) != END_STONE
+            }) {
+                continue; // the void's rim the pillar never straddles
+            }
+            let height = 4 + (hash2(px as i64, pz as i64, self.seed ^ 0x911) % 5) as i32;
+            for y in top..=(top + height) {
+                self.set(px, y, pz, OBSIDIAN);
+                self.set(px + 1, y, pz, OBSIDIAN);
+                self.set(px, y, pz + 1, OBSIDIAN);
+                self.set(px + 1, y, pz + 1, OBSIDIAN);
+            }
+        }
+        // THE EXIT PEDESTAL (the fountain's own base rows the center
+        // wears — the bedrock the real structure's own material keeps,
+        // the portal cells the future lane a round arms)
+        let (ix, iz) = (cx.round() as i32, cz.round() as i32);
+        for dx in -2i32..=2 {
+            for dz in -2i32..=2 {
+                if dx.abs() + dz.abs() <= 2 {
+                    self.set(ix + dx, top, iz + dz, BEDROCK);
+                }
+            }
+        }
+        self.set(ix, top + 1, iz, BEDROCK);
+        self.set(ix, top + 2, iz, BEDROCK);
+        self.set(ix, top + 3, iz, BEDROCK);
     }
 
     /// THE BLANK WORLD'S OWN CANVAS — the struct literal the `new`
@@ -5763,6 +5923,207 @@ mod tests {
             }
         }
         assert!(lava_glow, "the lava's own glow the block flood keeps");
+    }
+
+    /// THE END'S OWN WORLD BUILD (the autopush-612 round — the
+    /// dimension's own row the registry banks, the deterministic
+    /// fiction the nether build's own shape wears): the island the
+    /// disc the center raises, the taper the cone thins, the void the
+    /// rim's outside keeps, the pillars the ring raises, the exit
+    /// pedestal the bedrock rows the center wears, the dimension's
+    /// own light rows the jar's stated values stamp.
+    #[test]
+    fn the_end_the_world_the_island_the_void_wears() {
+        let w = World::new_end(2, 0xC0FFEE);
+        let n = w.size_blocks();
+        // THE DIMENSION'S OWN LIGHT ROWS (the jar's the_end.json the
+        // registry row banks — the has_skylight TRUE the 26.2 data
+        // keeps, the stated factor/color/ambient the build stamps)
+        assert!(w.has_skylight, "the end's own sky gate the jar row keeps");
+        assert_eq!(
+            w.sky_light_factor,
+            Some(0.0),
+            "the stated sky factor the sky term pins"
+        );
+        assert_eq!(
+            w.sky_light_color,
+            Some([172, 96, 205]),
+            "the #ac60cd the stated moonlight base keeps"
+        );
+        assert_eq!(
+            w.ambient_light,
+            Some([63, 71, 63]),
+            "the #3f473f the stated ambient base keeps"
+        );
+        // THE ISLAND'S OWN CELLS (the center the pedestal wears — the
+        // bedrock rows the fountain's shape keeps, the island body
+        // the end_stone kind below keeps, the column the cap the AIR
+        // above answers)
+        let (cx, cz) = ((n as f64 / 2.0).round() as i32, (n as f64 / 2.0).round() as i32);
+        assert_eq!(w.get(cx, END_ISLAND_TOP, cz), BEDROCK, "the pedestal's own base");
+        assert_eq!(w.get(cx, END_ISLAND_TOP + 3, cz), BEDROCK, "the column's own head");
+        assert_eq!(
+            w.get(cx, END_ISLAND_TOP + 4, cz),
+            AIR,
+            "the column the AIR cap keeps"
+        );
+        assert_eq!(
+            w.get(cx, END_ISLAND_TOP - 1, cz),
+            END_STONE,
+            "the island body the pedestal's below keeps"
+        );
+        // THE PEDESTAL'S OWN RING (the manhattan band the ±2 cells
+        // keep, the +3 cell the band's outside the island keeps)
+        assert_eq!(
+            w.get(cx - 2, END_ISLAND_TOP, cz),
+            BEDROCK,
+            "the ring's own arm the band keeps"
+        );
+        assert_ne!(
+            w.get(cx - 3, END_ISLAND_TOP, cz),
+            BEDROCK,
+            "the band's outside the ring refuses"
+        );
+        // THE VOID'S OWN LAW (the corner the rim never fills — NO
+        // bedrock floor the dimension keeps, every depth the AIR
+        // answers)
+        for y in 1..CHUNK_Y {
+            assert_eq!(
+                w.get(0, y as i32, 0),
+                AIR,
+                "the void's own column the y={} keeps",
+                y
+            );
+        }
+        // THE TAPER'S OWN CONE (the center's full depth the rim's
+        // thin keeps — the island's bottom the taper's own band
+        // banks)
+        let dist_center = ((cx as f64 - (n as f64 - 1.0) / 2.0).powi(2)
+            + (cz as f64 - (n as f64 - 1.0) / 2.0).powi(2))
+        .sqrt();
+        assert!(dist_center < 1.0, "the center cell the island's own middle keeps");
+        let depth = ((n as f64 / 4.0 - dist_center) / (n as f64 / 4.0)
+            * END_ISLAND_DEPTH as f64)
+            .ceil() as i32;
+        let bottom = (END_ISLAND_TOP - depth).max(1);
+        assert_eq!(
+            w.get(cx, bottom, cz),
+            END_STONE,
+            "the cone's own bottom the center's depth keeps"
+        );
+        assert_eq!(
+            w.get(cx, bottom - 1, cz),
+            AIR,
+            "the cone's below the taper never fills"
+        );
+        // THE PILLAR RING'S OWN COLUMNS (the obsidian the ring raises
+        // — the θ=0 arm the ring's own band keeps, the heights the
+        // hash roll varies, the island's TOP the ground the build
+        // keeps)
+        let mut obsidian = 0usize;
+        for x in 0..n {
+            for z in 0..n {
+                for y in 0..CHUNK_Y {
+                    if w.get(x, y as i32, z) == OBSIDIAN {
+                        obsidian += 1;
+                    }
+                }
+            }
+        }
+        assert!(
+            obsidian >= 10 * 2 * 2 * 4,
+            "the ring's ten 2x2 columns the ≥4-tall band raises — got {}",
+            obsidian
+        );
+        // the θ=0 arm's own column (the ring px = round(cx' + ring) the
+        // build's own walk computes — the obsidian the top cell keeps,
+        // the head the AIR above answers)
+        let ring = n as f64 / 4.0 * 0.72;
+        let px = ((n as f64 - 1.0) / 2.0 + ring).round() as i32;
+        let pz = ((n as f64 - 1.0) / 2.0).round() as i32;
+        assert_eq!(
+            w.get(px, END_ISLAND_TOP, pz),
+            OBSIDIAN,
+            "the θ=0 pillar's own base the ring raises"
+        );
+        // THE KIND'S OWN ROWS (the palette id, the NAME_OF row, the
+        // generated atlas mirror the regen re-binds, the dig row
+        // (3.0, true) the clinit arm speaks, the drops self-entry the
+        // generated table banks, the item the reverse walk answers)
+        assert_eq!(END_STONE, 89);
+        assert_eq!(NAME_OF[END_STONE as usize], "end_stone");
+        assert_eq!(
+            mc_registry::generated::atlas::KIND_NAMES[END_STONE as usize],
+            "end_stone",
+            "the atlas mirror the regen re-binds"
+        );
+        assert_eq!(
+            crate::dig::DigState::block_dig_row(END_STONE),
+            (3.0, true),
+            "the clinit's strength(3.0f, 9.0f) + requiresCorrectToolForDrops the rows bank"
+        );
+        assert!(
+            mc_registry::generated::block_drops::drops("end_stone").is_some(),
+            "the self-entry the drops table banks"
+        );
+        assert!(
+            mc_registry::item_id_by_name("end_stone").is_some(),
+            "the item form the placeable lookup answers"
+        );
+        // THE DIG FRACTIONS' OWN PAIR (javap the destroy walk — the
+        // bare hand's 3.0/100 crawl the correct-tool 30 divisor
+        // serves)
+        let bare = crate::dig::DigState::destroy_progress(1.0, 3.0, false);
+        let pick = crate::dig::DigState::destroy_progress(1.0, 3.0, true);
+        assert!((bare - 1.0 / 300.0).abs() < 1e-6, "the bare crawl the 100 keeps");
+        assert!((pick - 1.0 / 90.0).abs() < 1e-6, "the pick divisor the 30 serves");
+        assert!(pick > bare, "the correct tool the progress hastens");
+    }
+
+    /// THE END'S OWN SKY GRID (the autopush-612 round — the
+    /// has_skylight TRUE the column pass runs, the void's own column
+    /// the 15 keeps, the stated factor 0.0 the lightmap's sky term
+    /// the mesher's multiply pins — the grid fills, the brightness
+    /// the zero never feeds; the nether's own zero the gate keeps).
+    #[test]
+    fn the_end_the_sky_grid_the_factor_pins() {
+        let end = World::new_end(2, 0xC0FFEE);
+        let nether = World::new_nether(2, 0xC0FFEE);
+        let end_light = crate::light::compute(&end);
+        let nether_light = crate::light::compute(&nether);
+        // the void corner's open column (1, 47, 1): the end's own the
+        // 15 keeps (the flag true the pass runs), the nether's the 0
+        // wears (the flag false the pass never runs)
+        let cell = 1 + 1 * CHUNK_X + 47 * CHUNK_X * CHUNK_Z;
+        assert_eq!(
+            end_light.sky[0][cell],
+            15,
+            "the end's void column the sky pass fills"
+        );
+        assert_eq!(
+            nether_light.sky[0][cell],
+            0,
+            "the nether's ceiling cell the gate keeps dark"
+        );
+        // THE ISLAND'S OWN HEAD (the open cell above the pillar tops
+        // the chunk (1,1) keeps — the sky the island's own columns
+        // never shade)
+        let head = 4 + 4 * CHUNK_X + 47 * CHUNK_X * CHUNK_Z;
+        assert_eq!(
+            end_light.sky[3][head],
+            15,
+            "the island's own head the sky fills"
+        );
+        // THE FACTOR'S OWN PIN (the mesher's sky-term multiply the
+        // world's stated row feeds — the unwrap_or default 1.0 the
+        // overworld keeps, the end's 0.0 the lightmap's sky term the
+        // zero wears)
+        assert_eq!(end.sky_light_factor.unwrap_or(1.0), 0.0);
+        assert_eq!(
+            World::new(2, 0xC0FFEE).sky_light_factor.unwrap_or(1.0),
+            1.0,
+            "the overworld's None default the identity keeps"
+        );
     }
 
     /// THE RETURN PORTAL'S OWN BUILD (the PortalForcer fiction — the

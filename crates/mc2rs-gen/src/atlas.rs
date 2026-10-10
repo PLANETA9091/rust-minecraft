@@ -329,7 +329,7 @@ use zip::ZipArchive;
 /// removeBlock the AIR the cell returns — the candle-on-cake arm
 /// the useItemOn walk the CANDLES tag + bites==0 consult answers
 /// (the CAKE_ADD_CANDLE voice the swap plays).
-pub const RUNTIME_PALETTE: [&str; 89] = [
+pub const RUNTIME_PALETTE: [&str; 90] = [
     "air", "stone", "dirt", "grass_block", "oak_log", "oak_leaves", "water", "sand",
     "granite", "diorite", "andesite", "deepslate", "cobbled_deepslate", "gravel",
     "bedrock", "coal_ore", "copper_ore", "iron_ore", "gold_ore", "redstone_ore",
@@ -523,6 +523,22 @@ pub const RUNTIME_PALETTE: [&str; 89] = [
     // tinted_cross parent carries the resolver the BlockColors
     // absence never serves, the pixels as authored).
     "bamboo_sapling",
+    // THE END'S OWN BUILDING BLOCK (the autopush-612 round): the
+    // island the END world build raises — javap Blocks clinit pc
+    // 13680-13713 the 26.2 jar: register(BlockItemIds.END_STONE, ...)
+    // the ITEM FORM HAS (the placeable lookup the reverse walk
+    // answers), mapColor(SAND) pc 13686-13689 + instrument(BASEDRUM)
+    // pc 13692-13695 + requiresCorrectToolForDrops() pc 13698 the dig
+    // row's own true the generated table banks + strength(3.0f, 9.0f)
+    // pc 13701-13707 the (3.0, true) row speaks. The full-cube
+    // generic walk resolves (blockstates end_stone.json's "" variant
+    // -> block/end_stone parent block/cube_all — the one #all texture
+    // block/end_stone the six faces wear), the sounds' STONE family
+    // the NO sound() call the clinit arm carries (the generated rows
+    // bank block.stone.break / block.stone.step), the NO
+    // sound()/lightLevel call the emission-0 default the light grid
+    // keeps.
+    "end_stone",
 ];
 
 /// Renderer face order: 0:+X 1:-X 2:+Y 3:-Y 4:+Z 5:-Z.
