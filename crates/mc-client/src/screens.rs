@@ -9773,6 +9773,11 @@ impl App {
             // fire kinds' own entityInside doses (the 1.0/2.0 the ctor
             // floats speak)
             let mut lava_hurt = false;
+            // THE VOID'S OWN DRAIN SLOT (the body's borrow fills it —
+            // the checkBelowWorld verdict the tick-head banks, the
+            // hurt the pipeline's own cooldown answers after the
+            // borrow ends)
+            let mut void_hurt = false;
             let mut on_fire_hurt = false;
             let mut fire_doused = false;
             let mut in_fire_hurt = false;
@@ -10558,6 +10563,10 @@ impl App {
                     // per-tick flags' law speaks — the body keeps them
                     // true until the NEXT tick's head clears)
                     lava_hurt = std::mem::take(&mut b.lava_hurt_due);
+                    // THE VOID'S OWN DRAIN (the same-tick read the
+                    // fire arc's own drains speak — the below-world
+                    // verdict the tick-head banked)
+                    void_hurt = std::mem::take(&mut b.void_hurt_due);
                     on_fire_hurt = std::mem::take(&mut b.on_fire_hurt_due);
                     fire_doused = std::mem::take(&mut b.fire_doused_due);
                     // THE FIRE KINDS' OWN DRAIN (the same-tick read the
@@ -12756,6 +12765,19 @@ impl App {
                 if self.hurt_burning(crate::body::SOUL_CAMPFIRE_DAMAGE) {
                     self.sounds.play_burn(self.frame);
                 }
+            }
+            // THE VOID'S OWN DOSE (javap `LivingEntity.onBelowWorld` —
+            // the hurt(damageSources().fellOutOfWorld(), 4.0F) the
+            // checkBelowWorld's own verdict answers, the pipeline's
+            // own cooldown the every-tick flag the repeats bury [the
+            // 4.0 the window's comparison the second dose never
+            // exceeds — the 10-tick re-arm the next speaks]): the
+            // BYPASSES_INVULNERABILITY roster the invulnerable head
+            // the verdict turns (the creative player the void kills),
+            // the exhaustion the type's own JSON 0.0 the law keeps,
+            // the plain voice the no-effects row wears
+            if void_hurt {
+                self.hurt_void(crate::body::VOID_DAMAGE);
             }
             // THE DROWN HURT (the air branch's own dose — the DROWNING
             // voice the damage type speaks: hurtServer(drown(), 2.0F)
@@ -36442,10 +36464,33 @@ impl App {
         self.hurt_inner(amount, HurtVoice::Starving)
     }
 
+    /// THE VOID SOURCE'S OWN GATE (the same pipeline, the
+    /// `out_of_world` type's own name — the BYPASSES_INVULNERABILITY
+    /// tag's own roster the jar's tag json keeps: `[out_of_world,
+    /// generic_kill]` — the invulnerable head the verdict answers
+    /// FALSE, the creative player the void kills, the /kill's own law
+    /// the pair wears; the LivingEntity.onBelowWorld's own call the
+    /// hurtServer(fellOutOfWorld(), 4.0F) walk wears). The rest the
+    /// pipeline rides whole — the 20-tick window the comparison the
+    /// repeats bury, the flash, the plain HURT voice (the type's
+    /// no-effects row), the death tail.
+    pub fn hurt_void(&mut self, amount: f32) -> bool {
+        self.hurt_inner_gated(amount, HurtVoice::Plain, true)
+    }
+
     /// THE VOICE THE DAMAGE TYPE'S EFFECTS NAME (the getHurtSound
     /// override's three arms the pipeline speaks: the plain HURT, the
     /// BURNING (lava, onFire), the DROWNING).
     fn hurt_inner(&mut self, amount: f32, voice: HurtVoice) -> bool {
+        self.hurt_inner_gated(amount, voice, false)
+    }
+
+    fn hurt_inner_gated(
+        &mut self,
+        amount: f32,
+        voice: HurtVoice,
+        bypass_invulnerable: bool,
+    ) -> bool {
         // THE INVULNERABLE HEAD (javap hurtServer pcs 0-10 — the
         // pipeline's own opening verdict
         // `isInvulnerableTo(level, source) -> false` the flag alone
@@ -36455,8 +36500,12 @@ impl App {
         // cooldown, the flash, the health, the voice and the
         // exhaustion the hurt never lands to earn. The fall lane's
         // wrapper the same verdict its own head keeps — the voice and
-        // the exhaustion the landing never spends.)
-        if self.game_mode.invulnerable() {
+        // the exhaustion the landing never spends. THE BYPASS the
+        // tag's own roster speaks: the out_of_world source the
+        // membership the verdict turns — the head the void lane never
+        // reads [the generic_kill the /kill lane's direct
+        // actuallyHurt walk the same law wears].)
+        if !bypass_invulnerable && self.game_mode.invulnerable() {
             return false;
         }
         if amount <= 0.0 || self.dead {
@@ -47656,6 +47705,137 @@ mod tests {
             20.0 - crate::body::ON_FIRE_DAMAGE,
             "the bare body's own drop the landed dose speaks"
         );
+    }
+
+    /// THE VOID'S OWN DOSE (javap `LivingEntity.onBelowWorld` — the
+    /// hurtServer(fellOutOfWorld(), 4.0F) the pipeline's own law
+    /// keeps): the 4.0 the health drop speaks, the 20-tick window the
+    /// same-dose repeat buries, the 10-tick re-arm the next speaks,
+    /// the BYPASSES_INVULNERABILITY roster the creative body the void
+    /// kills (the plain hurt the head refuses), the exhaustion the
+    /// type's own JSON 0.0 the food bank never feeds.
+    #[test]
+    fn the_void_the_dose_the_bypass_the_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.health = 20.0;
+        // THE FIRST DOSE (the 4.0 the health drop speaks, the true
+        // the landed hurt wears)
+        assert!(
+            app.hurt_void(crate::body::VOID_DAMAGE),
+            "the void dose the survival body lands"
+        );
+        assert_eq!(app.health, 20.0 - crate::body::VOID_DAMAGE);
+        // THE WINDOW'S OWN BURY (the same 4.0 the comparison the
+        // repeat never exceeds — the false the health keeps)
+        assert!(
+            !app.hurt_void(crate::body::VOID_DAMAGE),
+            "the window the same-dose repeat buries"
+        );
+        assert_eq!(app.health, 20.0 - crate::body::VOID_DAMAGE);
+        // THE RE-ARM'S OWN SPEAK (the window's tail the <=10 the else
+        // arm answers — the fresh window the dose re-arms)
+        app.invulnerable_time = 10;
+        assert!(app.hurt_void(crate::body::VOID_DAMAGE), "the re-arm the dose lands");
+        assert_eq!(app.health, 20.0 - 2.0 * crate::body::VOID_DAMAGE);
+        // THE BYPASS'S OWN VERDICT (the creative the plain head
+        // refuses — the void the roster turns: the /kill's own law
+        // the pair wears, the void the creative kills)
+        app.game_mode = GameMode::Creative;
+        app.health = 20.0;
+        app.invulnerable_time = 0;
+        assert!(
+            !app.hurt(4.0),
+            "the plain head the creative body refuses"
+        );
+        assert_eq!(app.health, 20.0, "the refusal the health keeps");
+        assert!(
+            app.hurt_void(crate::body::VOID_DAMAGE),
+            "the roster the invulnerable head turns"
+        );
+        assert_eq!(
+            app.health,
+            20.0 - crate::body::VOID_DAMAGE,
+            "the void the creative body kills"
+        );
+        // THE EXHAUSTION'S OWN SILENCE (the out_of_world JSON's 0.0 —
+        // the food bank the dose never feeds)
+        assert_eq!(
+            app.food_data.exhaustion(),
+            0.0,
+            "the 0.0 the type's own JSON keeps"
+        );
+    }
+
+    /// THE VOID'S OWN DRAIN (the e2e — the staged fall the tick head
+    /// banks, the App's drain the post-borrow tail answers): the one
+    /// update the dose lands, the next update the window the repeat
+    /// buries, the fall bank the groundless void never folds (the
+    /// landing the void never serves — the dose the below-world walk
+    /// answers instead).
+    #[test]
+    fn the_void_the_drain_the_dose_the_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        app.health = 20.0;
+        // THE REGEN'S OWN SILENCE (the food under 18 the regen lane
+        // never arms — the cadence's own arithmetic the heal the
+        // count never sways)
+        app.food_data.set_food_level(6);
+        // THE STAGED FALL (the body below the margin — the tick-head
+        // read the crossing the previous tick's settled position
+        // speaks)
+        {
+            let b = app.body.as_mut().unwrap();
+            b.y = -64.5;
+            b.vy = 0.0;
+            b.on_ground = false;
+        }
+        app.update();
+        assert_eq!(
+            app.health,
+            20.0 - crate::body::VOID_DAMAGE,
+            "the drain the dose the pipeline serves"
+        );
+        // THE REPEAT'S OWN BURY (the next update the window the same
+        // dose never exceeds — the flag re-banks, the hurt the
+        // cooldown refuses)
+        app.update();
+        assert_eq!(
+            app.health,
+            20.0 - crate::body::VOID_DAMAGE,
+            "the window the repeat buries"
+        );
+        // THE CADENCE'S OWN SPEAK (the nine more updates the 20-tick
+        // window's decay walks — the 10-tick re-arm the every-tick
+        // flag the next dose admits: the 4.0 the second speaks, the
+        // vanilla's own void-death cadence the pipeline keeps)
+        for _ in 0..9 {
+            app.update();
+        }
+        assert_eq!(
+            app.health,
+            20.0 - 2.0 * crate::body::VOID_DAMAGE,
+            "the re-arm the second dose lands"
+        );
+        {
+            let b = app.body.as_ref().unwrap();
+            assert!(
+                b.y < -crate::body::VOID_MARGIN - 1.0,
+                "the body the void's own descent keeps ({:.3})",
+                b.y
+            );
+            assert_eq!(
+                b.fall_event, None,
+                "the groundless fall the void never lands"
+            );
+        }
+        // THE EXHAUSTION'S OWN SILENCE (the 0.0 the JSON keeps)
+        assert_eq!(app.food_data.exhaustion(), 0.0);
     }
 
     /// THE RESISTANCE'S OWN FOLD (javap getDamageAfterMagicAbsorb pcs

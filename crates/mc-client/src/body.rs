@@ -289,6 +289,30 @@ pub const ON_FIRE_DAMAGE: f32 = 1.0;
 /// names; the body keeps its own — the laws speak per-owner).
 pub const FIRE_DAMAGE_INTERVAL: i32 = 20;
 
+// THE VOID'S OWN ARC (javap the 26.2 jar — the below-world walk the
+// baseTick serves):
+/// `LivingEntity.onBelowWorld`'s own dose — `hurt(damageSources()
+/// .fellOutOfWorld(), 4.0F)` (the ldc_w 4.0f the bytecode speaks; the
+/// Entity base the `discard()` wears — the player the LivingEntity
+/// override answers instead, the hurt the pipeline's own law keeps).
+/// The `out_of_world` damage type the BYPASSES_INVULNERABILITY tag's
+/// own roster keeps (the jar's tag json: `[out_of_world,
+/// generic_kill]`) — the invulnerable head the pipeline's verdict
+/// refuses, the creative player the void kills, the /kill's own law
+/// the pair wears. The type's own JSON the exhaustion 0.0 speaks (no
+/// food cost the dose carries) and the no-effects row the plain HURT
+/// voice wears.
+pub const VOID_DAMAGE: f32 = 4.0;
+/// `Entity.checkBelowWorld`'s own margin — `getY() < (double)(
+/// level.getMinY() - 64)` (the bipush 64; isub the bytecode speaks).
+/// The client's own floor the grid's row 0 keeps (the stated min_y's
+/// own identity — the world's buildable bottom the row answers), so
+/// the threshold the client's own space wears is `y < -64.0` in EVERY
+/// dimension (the law `min_y - 64` the stated rows [-64, 0, -64] the
+/// same margin speaks — the 64-row grace the vanilla law carries
+/// below the world's own floor).
+pub const VOID_MARGIN: f64 = 64.0;
+
 // THE FIRE BLOCK'S OWN ARC (javap the 26.2 jar — the fire kinds the
 // entityInside walk reads):
 /// `BaseFireBlock::fireIgnite`'s own floor — the igniteForSeconds(8.0F)
@@ -520,9 +544,27 @@ pub(crate) fn box_at(x: f64, y: f64, z: f64, height: f64) -> (f64, f64, f64, f64
 /// the item physics speak the same law.
 pub fn solid(world: &World, x: i32, y: i32, z: i32) -> bool {
     !matches!(
-        crate::world::collision_shape(world.get(x, y, z)),
+        crate::world::collision_shape(collision_cell(world, x, y, z)),
         crate::world::CollisionShape::Empty
     )
+}
+
+/// THE COLLISION'S OWN VOID LAW (the below-world read the collision
+/// vocabulary answers): the [`World::get`] STONE answer the MESHER's
+/// bottom-face culling wears (the render path's own semantic — no
+/// bottom faces the world's underside never shows), the collision the
+/// PASSABLE AIR the vanilla walk answers (the dimension's own min_y
+/// the void keeps — the End island's rim the walk makes fallable, the
+/// checkBelowWorld's own margin the fall arms, the item physics the
+/// same descent the vanilla drop keeps). The ONE cell read the
+/// collision lanes speak — the sweep, the step heights, the edge
+/// ladder, the supporting probe, the shared [`solid`] verdict.
+fn collision_cell(world: &World, cx: i32, cy: i32, cz: i32) -> u16 {
+    if cy < 0 {
+        crate::world::AIR
+    } else {
+        world.get(cx, cy, cz)
+    }
 }
 
 /// The per-axis clip (the classic AABB clipXCollide law the VoxelShape
@@ -579,7 +621,7 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                 // 15/16 floor wears, the horizontal sweep the band the
                 // strict overlap reads), the X/Z footprint the full
                 // cell keeps, the full-cube roster the whole cell.
-                let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                let shape = crate::world::collision_shape(collision_cell(world, cx, cy, cz));
                 if matches!(shape, crate::world::CollisionShape::Empty) {
                     continue;
                 }
@@ -802,7 +844,7 @@ pub fn collide_stepped(
     for cx in swept.0.floor() as i32..=(swept.3 - 1e-9).floor() as i32 {
         for cy in swept.1.floor() as i32..=(swept.4 - 1e-9).floor() as i32 {
             for cz in swept.2.floor() as i32..=(swept.5 - 1e-9).floor() as i32 {
-                let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                let shape = crate::world::collision_shape(collision_cell(world, cx, cy, cz));
                 if matches!(shape, crate::world::CollisionShape::Empty) {
                     continue;
                 }
@@ -1344,6 +1386,18 @@ pub struct PlayerBody {
     /// speaks the GENERIC_BURN on the hurt's success (the playSound's
     /// own ifeq gate). The body never clears it, the reader does.
     pub lava_hurt_due: bool,
+    /// THE VOID HURT (javap `Entity.checkBelowWorld` — the baseTick
+    /// pc-214 call the head serves: `getY() < (double)(level.getMinY()
+    /// - 64)` -> `onBelowWorld()`, the LivingEntity override the
+    /// hurt(fellOutOfWorld(), 4.0F) speaks): the below-world fall the
+    /// flag fires EVERY tick it crosses — the End island's rim the
+    /// walk makes lethal, the nether's bedrock floor the overworld's
+    /// stone base the fall never invites. The App answers through the
+    /// pipeline's own cooldown (the 4.0 the window's comparison the
+    /// repeats bury), the BYPASSES_INVULNERABILITY roster the
+    /// invulnerable head the verdict refuses. The body never clears
+    /// it, the reader does.
+    pub void_hurt_due: bool,
     /// THE FIRE CLOCK'S HURT (baseTick's own onFire verdict:
     /// remainingFireTicks % 20 == 0 && !isInLava -> hurtServer(
     /// onFire(), 1.0F)): the burn's own dose once the body LEFT the
@@ -1635,6 +1689,7 @@ impl PlayerBody {
             remaining_fire_ticks: 0,
             in_lava: false,
             lava_hurt_due: false,
+            void_hurt_due: false,
             on_fire_hurt_due: false,
             in_fire_hurt_due: false,
             in_soul_fire_hurt_due: false,
@@ -1852,7 +1907,7 @@ impl PlayerBody {
         for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
             for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
-                    let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                    let shape = crate::world::collision_shape(collision_cell(world, cx, cy, cz));
                     if matches!(shape, crate::world::CollisionShape::Empty) {
                         continue;
                     }
@@ -1926,6 +1981,7 @@ impl PlayerBody {
         self.splash_due = false;
         self.splash_pose = None;
         self.lava_hurt_due = false;
+        self.void_hurt_due = false;
         self.on_fire_hurt_due = false;
         self.in_fire_hurt_due = false;
         self.in_soul_fire_hurt_due = false;
@@ -1941,6 +1997,19 @@ impl PlayerBody {
         self.portal_trigger_due = false;
         self.portal_teleport_due = false;
         self.honey_slide_due = false;
+        // THE VOID'S OWN CHECK (javap `Entity.checkBelowWorld` — the
+        // baseTick pc-214 call the head serves, the read the PREVIOUS
+        // tick's settled position speaks [the physics the walk below
+        // runs AFTER — the vanilla baseTick -> aiStep order the seat
+        // keeps]): `getY() < (double)(level.getMinY() - 64)` -> the
+        // `onBelowWorld()` walk. Unconditional the bytecode keeps —
+        // the noPhysics body the check still reads (the spectator's
+        // own void death the vanilla law speaks). The client's own
+        // floor the grid's row 0 keeps, the 64-row margin the
+        // threshold wears: y < -64.0.
+        if self.y < -VOID_MARGIN {
+            self.void_hurt_due = true;
+        }
         // the pre-tick position — the walk distance law's own source
         // (calculateEntityAnimation's getX() - xo fold) AND the render
         // interpolation's own source (the prev the frame's lerp walks
@@ -3455,7 +3524,8 @@ impl PlayerBody {
         for cy in y_lo..=y_hi {
             for cx in x_lo..=x_hi {
                 for cz in z_lo..=z_hi {
-                    let shape = crate::world::collision_shape(world.get(cx, cy, cz));
+                    let shape =
+                        crate::world::collision_shape(collision_cell(world, cx, cy, cz));
                     if matches!(shape, crate::world::CollisionShape::Empty) {
                         continue;
                     }
@@ -4095,11 +4165,20 @@ mod tests {
         let mut v = 0.0f64;
         let mut last_z = b.z;
         let mut move_delta = 0.0f64;
+        let mut walked = 0.0f64;
         for _ in 0..60 {
             b.tick(&w, false);
             v = b.vz;
             move_delta = b.z - last_z;
+            walked += move_delta;
             last_z = b.z;
+            // THE EDGE'S OWN WALK-BACK (the 16-wide stage the 60-tick
+            // walk outpaces — the z re-staged the rhythm's own
+            // platform keeps; the void the edge the vanilla law keeps
+            // fallable, the below-world solid the collision walk never
+            // answers again)
+            b.z = 8.0;
+            last_z = 8.0;
         }
         let carried = 0.1 * (BLOCK_FRICTION * GROUND_DRAG) as f64
             / (1.0 - (BLOCK_FRICTION * GROUND_DRAG) as f64);
@@ -4110,7 +4189,7 @@ mod tests {
             move_delta,
             carried + 0.1
         );
-        assert!(b.z > 8.0, "the body moved south");
+        assert!(walked > 10.0, "the body walked south {}", walked);
     }
 
     #[test]
@@ -4225,6 +4304,76 @@ mod tests {
             assert_eq!(p.fall_distance, 0.0, "the bank the skip never feeds");
         }
         assert!(p.y < 0.0, "the body phased beneath the floor at {:.3}", p.y);
+    }
+
+    /// THE VOID'S OWN MARGIN (javap `Entity.checkBelowWorld` — the
+    /// `getY() < (double)(level.getMinY() - 64)` the bipush 64 the
+    /// threshold speaks): the 64-row grace the client's own floor
+    /// wears (the world's buildable bottom the row 0 answers, the
+    /// stated min_y's own identity), the boundary the strict-less
+    /// dcmpg keeps, the crossing the every-tick flag the repeated
+    /// ticks re-bank, the noPhysics body the check still reads (the
+    /// spectator's own void death the unconditional bytecode keeps),
+    /// the fall bank the groundless void never folds.
+    #[test]
+    fn the_void_the_margin_the_every_tick_wears() {
+        let w = flat_world();
+        // THE GRACE'S OWN ARM (the body at -63.5 — the threshold's
+        // own above-verdict the 0.5 the margin keeps)
+        let mut b = PlayerBody::new(8.0, -63.5, 8.0, 0.0, 0.0);
+        b.vy = 0.0;
+        b.on_ground = false;
+        b.tick(&w, false);
+        assert!(
+            !b.void_hurt_due,
+            "the grace the margin never crossed speaks"
+        );
+        // THE BOUNDARY'S OWN LAW (the body AT -64.0 — the strict-less
+        // dcmpg the equality the skip speaks)
+        let mut b = PlayerBody::new(8.0, -VOID_MARGIN, 8.0, 0.0, 0.0);
+        b.vy = 0.0;
+        b.on_ground = false;
+        b.tick(&w, false);
+        assert!(
+            !b.void_hurt_due,
+            "the boundary the strict-less verdict keeps"
+        );
+        // THE CROSSING'S OWN ARM (the body at -64.5 — the tick-head
+        // read the staged y the previous tick's settled position
+        // speaks)
+        let mut b = PlayerBody::new(8.0, -64.5, 8.0, 0.0, 0.0);
+        b.vy = 0.0;
+        b.on_ground = false;
+        b.tick(&w, false);
+        assert!(b.void_hurt_due, "the crossing the flag banks");
+        // THE EVERY-TICK LAW (the head clears, the check re-banks —
+        // the repeated ticks the flag keeps true while the body
+        // falls, the App's hurt pipeline the repeats the cooldown
+        // buries)
+        b.tick(&w, false);
+        assert!(b.void_hurt_due, "the second tick the check re-banks");
+        // THE GROUNDLESS FALL'S OWN SILENCE (the bank the descent
+        // feeds, the landing the void never serves — the fall_event
+        // None, the dose the below-world walk the App answers)
+        assert_eq!(b.fall_event, None, "the void never lands the fall");
+        assert!(b.fall_distance > 0.0, "the descent the bank feeds");
+        // THE NOPHYSICS BODY THE CHECK STILL READS (the unconditional
+        // bytecode the walk the flag keeps — the spectator's own void
+        // death the vanilla law speaks)
+        let mut p = PlayerBody::new(8.0, -64.5, 8.0, 0.0, 0.0);
+        p.no_physics = true;
+        p.tick(&w, false);
+        assert!(
+            p.void_hurt_due,
+            "the noPhysics body the below-world check still reads"
+        );
+        // THE SURFACE CONTROL (the body on the world's own floor —
+        // the check the above-verdict never banks)
+        let mut g = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..3 {
+            g.tick(&w, false);
+            assert!(!g.void_hurt_due, "the floor the check never banks");
+        }
     }
 
     /// THE INSIDE-BLOCKS REFUSALS (javap isAffectedByBlocks —
