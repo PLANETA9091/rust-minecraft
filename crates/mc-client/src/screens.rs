@@ -10018,6 +10018,12 @@ impl App {
                     // the water lane the glide speaks.
                     b.dolphins_grace =
                         self.effects.has_effect(crate::effects::MOB_EFFECT_DOLPHINS_GRACE);
+                    // THE WEAVING READ (javap WebBlock.entityInside pc
+                    // 35-41 — the hasEffect(WEAVING) call the wider
+                    // stuck clamp answers): the store's read the body's
+                    // flag banks, the web beat the clamp speaks.
+                    b.weaving =
+                        self.effects.has_effect(crate::effects::MOB_EFFECT_WEAVING);
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the

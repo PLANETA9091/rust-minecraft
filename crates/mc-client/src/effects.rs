@@ -123,6 +123,16 @@ pub const MOB_EFFECT_BREATH_OF_THE_NAUTILUS: i32 = 39;
 /// water lane's drag override the travelInWater read arms).
 pub const MOB_EFFECT_DOLPHINS_GRACE: i32 = 29;
 
+/// `minecraft:weaving`'s mob-effect registry id (the wire order's own
+/// 37th row — the slow_falling-27 / conduit_power-28 / dolphins_grace-29
+/// trio precedes, the bad_omen-31 / trial_omen-34 / raid_omen-35 rows
+/// between the grace and the weave: javap MobEffects clinit the
+/// `String weaving` register walk the 0-based law banks — the same
+/// count the STRENGTH-4 / WEAKNESS-17 / CONDUIT_POWER-28 pins speak).
+/// The web's own entityInside hasEffect arm reads it — the wider stuck
+/// clamp the living body wears.
+pub const MOB_EFFECT_WEAVING: i32 = 36;
+
 /// `minecraft:slowness`'s mob-effect registry id (the wire order's own
 /// SECOND row, the movement fold's harmful arm).
 pub const MOB_EFFECT_SLOWNESS: i32 = 1;

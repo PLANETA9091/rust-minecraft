@@ -1284,6 +1284,14 @@ pub struct PlayerBody {
     /// true body the 0.96 glide wears. Set every tick from the
     /// effects store.
     pub dolphins_grace: bool,
+    /// THE WEAVING VERDICT (javap `WebBlock.entityInside` pc 35-41 —
+    /// the hasEffect(WEAVING) call the wider stuck clamp answers): the
+    /// web beat reads it — the true body the 0.5/0.25/0.5 clamp wears,
+    /// the bare body the 0.25/0.05/0.25 pair keeps. Set every tick
+    /// from the effects store (the LivingEntity instanceof the
+    /// bytecode's own gate — the player body IS one, the verdict the
+    /// effect store alone carries).
+    pub weaving: bool,
     /// THE UNDERWATER REFILL GATE (javap `MobEffectUtil
     /// .shouldEffectsRefillAirsupply` pcs 0-35 — the ¬NAUTILUS ∨
     /// WATER_BREATHING ∨ CONDUIT_POWER walk): the air clock's
@@ -1304,6 +1312,16 @@ pub struct PlayerBody {
     /// accumulates, the landing folds the damage through
     /// calculateFallDamage and resets (checkFallDamage's own law).
     pub fall_distance: f64,
+    /// THE STUCK SLOT (javap `Entity.stuckSpeedMultiplier`'s own Vec3 —
+    /// the field the WebBlock.entityInside's makeStuckInBlock write
+    /// banks): the next move's HEAD the lengthSqr > 1.0E-7 gate reads,
+    /// the movement the ×clamp fold scales, the slot the ZERO reset
+    /// and the deltaMovement the ZERO write clear (Entity.move pcs
+    /// 97-137). The web beat banks it each overlapping tick, the move
+    /// consumes it the NEXT tick — the vanilla's own rhythm, the
+    /// momentum the zero-write never lets accumulate. ZERO = no stuck
+    /// this tick (the default the ctor speaks).
+    pub stuck_speed: (f64, f64, f64),
     /// The landing's damage the fall law spoke this tick (javap
     /// causeFallDamage's `calculateFallDamage > 0` beat) — the App
     /// drains it into the hurt pipeline (the voices, the cooldown, the
@@ -1364,6 +1382,7 @@ impl PlayerBody {
             effect_speed_mult: 1.0,
             water_breathing: false,
             dolphins_grace: false,
+            weaving: false,
             effects_refill_air_supply: true,
             jump_boost_power: 0.0,
             safe_fall_distance: SAFE_FALL_DISTANCE,
@@ -1415,6 +1434,7 @@ impl PlayerBody {
                 position_scale: 1.0,
             },
             fall_distance: 0.0,
+            stuck_speed: (0.0, 0.0, 0.0),
             fall_event: None,
             exhaustion_event: 0.0,
             position_reminder: 0,
@@ -2015,6 +2035,32 @@ impl PlayerBody {
         // THE COLLIDE (maybeBackOffFromEdge first: the sneak never
         // walks off its ledge)
         let mut mv = (self.vx, self.vy, self.vz);
+        // THE STUCK WALK (javap `Entity.move` pcs 97-137 the 26.2 jar —
+        // the move's own head, the edge walk the pcs 143 call never
+        // precedes): the stuck slot's lengthSqr > 1.0E-7 gate the
+        // movement the ×stuck fold scales — the MoverType the != PISTON
+        // branch admits (the self-move lane the client body always
+        // wears — the piston lane no palette row carries), the slot the
+        // ZERO reset, the deltaMovement the ZERO write clear — the
+        // momentum the zero-write never lets accumulate (the web's own
+        // rhythm: each tick's velocity is the input/gravity the tick
+        // itself armed, the drag the post-move walk the ZEROED fields
+        // folds). The noPhysics move the pcs 0-58 early return the walk
+        // never reaches — the spectator body the slot never banks and
+        // the raw add the scale never folds. The edge walk and the
+        // collide the SCALED movement consume — the vanilla's own order.
+        if !self.no_physics {
+            let (sx, sy, sz) = self.stuck_speed;
+            if sx * sx + sy * sy + sz * sz > 1.0e-7 {
+                mv = (mv.0 * sx, mv.1 * sy, mv.2 * sz);
+                self.stuck_speed = (0.0, 0.0, 0.0);
+                self.vx = 0.0;
+                self.vy = 0.0;
+                self.vz = 0.0;
+            }
+        }
+        // THE SNEAK EDGE (maybeBackOffFromEdge first: the sneak never
+        // walks off its ledge)
         if self.crouching && self.on_ground {
             // the X probe, the Z probe, then the vanilla's JOINT
             // diagonal probe — each zeroes the movement stepwise while
@@ -2198,6 +2244,24 @@ impl PlayerBody {
         // the three beats never hears)
         if !self.no_physics {
             self.apply_bubble_column_drag(world);
+        }
+        // THE WEB'S OWN STUCK (javap `WebBlock.entityInside` the 26.2
+        // jar — the inside-blocks walk the move's tail speaks, the
+        // DIRECT makeStuckInBlock call the bubble column's drag calls
+        // the same per-cell lane wears): the overlapped web cell the
+        // clamp vec banks — the LivingEntity arm the WEAVING verdict
+        // the (0.5, 0.25, 0.5) wider clamp speaks, the bare body the
+        // (0.25, 0.05000000074505806, 0.25) pair keeps (the 0.05F the
+        // bytecode's own widened double — the fconst's d2f-less literal
+        // the ldc2_w banks) — and the makeStuckInBlock walk's own tail
+        // the fall distance RESETS (resetFallDistance the dconst_0
+        // putfield keeps — the web the fall's bank never lets stack,
+        // the landing hurt the walk denies). The NEXT move's head the
+        // clamp consumes (the stuck walk's own law), the overlap the
+        // every-tick walk re-banks (the stationary body the box arm
+        // keeps — the bubble's own comment the rhythm speaks).
+        if !self.no_physics && self.touches_web(world) {
+            self.apply_web_stuck();
         }
         // THE LAVA CONTACT (javap `LavaFluid.entityInside`'s own beat —
         // the aiStep tail's applyEffectsFromBlocks the tick's move
@@ -2737,6 +2801,52 @@ impl PlayerBody {
             }
         }
         false
+    }
+
+    /// THE WEB CELL'S OWN GATE (the vanilla `isInBlock`'s box shape —
+    /// the SAME box-overlap walk the lava/fire scans wear): TRUE when
+    /// any cell the body box overlaps is the cobweb — the noCollision
+    /// shape the body walks THROUGH (the collision's Empty row the
+    /// palette wake keeps), the contact the inside walk brands.
+    fn touches_web(&self, world: &World) -> bool {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::COBWEB {
+                        return true;
+                    }
+                }
+            }
+        }
+        false
+    }
+
+    /// THE WEB'S OWN MAKE-STUCK (javap `WebBlock.entityInside` pcs 0-70
+    /// the 26.2 jar + `Entity.makeStuckInBlock` pcs 0-9): the clamp vec
+    /// the LivingEntity/WEAVING arm picks — the bare body the
+    /// `(0.25, 0.05000000074505806, 0.25)` pair keeps (the 0.05F the
+    /// bytecode's own widened double — the float literal the dconst
+    /// never rounds), the weaving body the `(0.5, 0.25, 0.5)` wider
+    /// arm speaks — and the stuck walk's own head the fall distance
+    /// RESETS (resetFallDistance the dconst_0 putfield keeps) BEFORE
+    /// the slot the vec write banks. The player body IS the
+    /// LivingEntity the instanceof gate admits (the verdict the
+    /// weaving flag alone carries — the store sync the App's tick
+    /// banks).
+    pub fn apply_web_stuck(&mut self) {
+        // resetFallDistance() — the dconst_0 putfield the bytecode
+        // keeps (the web the banked descent never lets land)
+        self.fall_distance = 0.0;
+        // the WEAVING arm's Vec3 first (the pc 44-57 walk — the
+        // astore 7 the wider pair banks), the bare pair the pc 0-16
+        // walk keeps (the ldc2_w 0.05000000074505806 the widened
+        // float rides)
+        self.stuck_speed = if self.weaving {
+            (0.5, 0.25, 0.5)
+        } else {
+            (0.25, 0.05000000074505806, 0.25)
+        };
     }
 
     /// THE COLUMN'S OWN WALK (javap `BubbleColumnBlock.entityInside`'s
@@ -6011,6 +6121,245 @@ mod tests {
             "the tick's carried velocity: {} vs {}",
             b.vy,
             expected
+        );
+    }
+
+    /// A flat stone floor with the COBWEB cell the body stands in (the
+    /// web's own y the feet cell keeps — the noCollision shape the
+    /// body walks through, the stone the ground law keeps).
+    fn webbed_world() -> World {
+        let mut w = flat_world();
+        w.set(8, 1, 8, crate::world::COBWEB);
+        w
+    }
+
+    /// THE WEB BEAT'S OWN PAIR (javap WebBlock.entityInside pcs 0-70 —
+    /// the clamp vecs the two arms keep, the makeStuckInBlock walk's
+    /// resetFallDistance the banked descent clears): the standing body
+    /// the web cell overlaps banks the (0.25, 0.05000000074505806,
+    /// 0.25) pair VERBATIM (the widened float the dconst never
+    /// rounds), the weaving verdict the (0.5, 0.25, 0.5) wider arm
+    /// speaks, the web-less cell the slot never banks, the overlap
+    /// the every-tick walk re-banks (the stationary body the box arm
+    /// keeps).
+    #[test]
+    fn the_web_beat_banks_the_clamp_vecs_verbatim() {
+        // THE BARE PAIR (the standing body the web cell overlaps): the
+        // exact vec the beat banks, the banked descent the beat clears
+        let w = webbed_world();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 90.0, 0.0);
+        b.fall_distance = 3.0;
+        assert!(b.touches_web(&w), "the standing box the web cell overlaps");
+        b.tick(&w, false);
+        assert_eq!(b.stuck_speed, (0.25, 0.05000000074505806, 0.25));
+        // THE FALL RESET THE BEAT ALONE EXPLAINS (the fresh body the
+        // first tick never grounds — the zero move the collision never
+        // arms, the grounded reset arm the walk never fires): the
+        // banked 3.0 the makeStuckInBlock walk's own tail clears
+        assert!(!b.on_ground, "the fresh body the first tick never grounds");
+        assert_eq!(
+            b.fall_distance, 0.0,
+            "the banked descent the beat's resetFallDistance clears"
+        );
+        // THE WEAVING WIDER ARM (the hasEffect verdict the flag the
+        // App's store sync banks — the LivingEntity instanceof the
+        // player body IS)
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 90.0, 0.0);
+        b.weaving = true;
+        b.tick(&w, false);
+        assert_eq!(b.stuck_speed, (0.5, 0.25, 0.5), "the weave the wider arm wears");
+        // THE WEB-LESS SILENCE (the flat stone never banks): the slot
+        // the ctor's ZERO keeps
+        let w = flat_world();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 90.0, 0.0);
+        b.tick(&w, false);
+        assert_eq!(b.stuck_speed, (0.0, 0.0, 0.0), "no web the slot never banks");
+        // THE RE-BANK (the stationary body the box arm keeps): the
+        // consumed slot the overlapping tick restores
+        let w = webbed_world();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 90.0, 0.0);
+        b.tick(&w, false); // the bank
+        b.tick(&w, false); // the head consumed, the tail re-banked
+        assert_eq!(
+            b.stuck_speed,
+            (0.25, 0.05000000074505806, 0.25),
+            "the overlap the every-tick walk re-banks"
+        );
+    }
+
+    /// THE STUCK WALK'S OWN LAW (javap Entity.move pcs 97-137): the
+    /// slot's lengthSqr > 1.0E-7 gate the movement the ×clamp fold
+    /// scales, the slot the ZERO reset, the deltaMovement the ZERO
+    /// write clear — the drag the ZEROED fields the gravity alone
+    /// re-arms, the consumed slot the NEXT tick's move never sees.
+    #[test]
+    fn the_stuck_move_scales_once_and_zeroes_the_fields() {
+        let w = flat_world();
+        let mut b = PlayerBody::new(8.0, 5.0, 8.0, 0.0, 0.0);
+        // the banked slot the web beat's own vec wears, the descent
+        // the pre-web fall armed
+        b.stuck_speed = (0.25, 0.05000000074505806, 0.25);
+        b.vy = -0.5;
+        b.tick(&w, false);
+        // the move the ×0.05 fold scales (the air lane no collision —
+        // the scaled dy the collide hands through)
+        let expected_y = 5.0 + (-0.5 * 0.05000000074505806);
+        assert_eq!(b.y, expected_y, "the descent the clamp folds");
+        // the slot the ZERO reset, the fields the ZERO write clear —
+        // the gravity the post-move walk the zeroed vy alone re-arms
+        assert_eq!(b.stuck_speed, (0.0, 0.0, 0.0), "the slot consumed");
+        let expected_vy = (0.0f64 - GRAVITY) * VERTICAL_DRAG as f64;
+        assert_eq!(b.vy, expected_vy, "the zeroed fields the gravity re-arms");
+        assert_eq!(b.vx, 0.0);
+        assert_eq!(b.vz, 0.0);
+        // the ONE-SHOT (the consumed slot the next move never sees):
+        // the second tick's descent the FULL vy speaks — the clamp
+        // never folds it again
+        let y_after_stuck = b.y;
+        b.tick(&w, false);
+        let expected_y2 = y_after_stuck + expected_vy;
+        assert_eq!(b.y, expected_y2, "the next move the consumed slot never scales");
+    }
+
+    /// THE WEB CRAWL'S OWN RHYTHM (the e2e walk the vanilla speak):
+    /// the stuck tick's velocity the input the tick itself arms (the
+    /// zero-write the momentum never lets accumulate) — the per-tick
+    /// crawl the impulse × 0.25 constant keeps, the weave the ×0.5
+    /// wider crawl wears, the falling body the per-tick descent the
+    /// (gravity × drag) × 0.05 constant keeps and the fall bank the
+    /// beat's own reset never lets stack.
+    #[test]
+    fn the_web_crawl_the_rearmed_rhythm_the_fall_bank_denies() {
+        // THE STEADY CRAWL (the settled body the web cell holds): the
+        // control's first walk tick the raw impulse measures, the web
+        // body's every tick the impulse × 0.25 constant wears
+        let w_flat = flat_world();
+        let mut control = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..4 {
+            control.tick(&w_flat, false);
+        }
+        control.forward = 1.0;
+        control.tick(&w_flat, false);
+        let impulse = control.z - 8.0;
+        assert!(impulse > 0.0, "the raw impulse the control measures: {}", impulse);
+        let w = webbed_world();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        for _ in 0..4 {
+            b.tick(&w, false);
+        }
+        b.forward = 1.0;
+        let zs: Vec<f64> = (0..4)
+            .map(|_| {
+                b.tick(&w, false);
+                b.z
+            })
+            .collect();
+        let dz = |prev: f64, cur: f64| cur - prev;
+        let d1 = dz(8.0, zs[0]);
+        let d2 = dz(zs[0], zs[1]);
+        let d3 = dz(zs[1], zs[2]);
+        let d4 = dz(zs[2], zs[3]);
+        assert_eq!(d1, impulse * 0.25, "the crawl the clamp keeps");
+        assert_eq!(d1, d2, "the re-armed rhythm the constant keeps");
+        assert_eq!(d2, d3, "the third tick the same impulse speaks");
+        assert_eq!(d3, d4, "the fourth tick the same");
+        // THE WEAVE'S WIDER CRAWL (the ×0.5 arm the wider vec keeps)
+        let mut wb = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        wb.weaving = true;
+        for _ in 0..4 {
+            wb.tick(&w, false);
+        }
+        wb.forward = 1.0;
+        wb.tick(&w, false); // the narrow-vec warmup the settle banked
+        let z_warm = wb.z;
+        wb.tick(&w, false);
+        let dz_wide = wb.z - z_warm;
+        assert_eq!(dz_wide, impulse * 0.5, "the weave the wider crawl wears");
+        // THE FALLING BODY'S OWN CONSTANTS (the web column the descent
+        // crawls): the per-tick dy the (gravity × drag) × 0.05
+        // constant keeps from the second stuck tick, the fall bank the
+        // beat's reset clears (the control's free fall the bank stacks)
+        let mut wcol = flat_world();
+        for y in 1..=6 {
+            wcol.set(8, y, 8, crate::world::COBWEB);
+        }
+        let mut fb = PlayerBody::new(8.0, 5.0, 8.0, 0.0, 0.0);
+        let mut dys: Vec<f64> = Vec::new();
+        let mut prev_y = fb.y;
+        for _ in 0..6 {
+            fb.tick(&wcol, false);
+            dys.push(prev_y - fb.y);
+            prev_y = fb.y;
+        }
+        let expected_fall =
+            -(((0.0f64 - GRAVITY) * VERTICAL_DRAG as f64) * 0.05000000074505806);
+        assert!(dys[0] < expected_fall, "the entry tick the fresh slot never scales");
+        // the position subtraction's own ulp (the y the sum rounding
+        // carries — the 8.9e-16 ulp at 5.0 the noise keeps): the
+        // constant descent the 1e-15 band the arithmetic speaks
+        assert!((dys[3] - expected_fall).abs() < 1e-15, "the third tick the constant descent: {} vs {}", dys[3], expected_fall);
+        assert!((dys[4] - dys[3]).abs() < 1e-15, "the fourth the same");
+        assert!((dys[5] - dys[3]).abs() < 1e-15, "the fifth the same");
+        assert!(
+            fb.fall_distance < 0.01,
+            "the fall bank the beat's reset clears: {}",
+            fb.fall_distance
+        );
+        // the control's free fall the bank stacks (the same spawn, the
+        // web-less column the beat never speaks)
+        let mut cb = PlayerBody::new(8.0, 5.0, 8.0, 0.0, 0.0);
+        for _ in 0..6 {
+            cb.tick(&w_flat, false);
+        }
+        assert!(
+            cb.fall_distance > 0.1,
+            "the free fall the bank stacks: {}",
+            cb.fall_distance
+        );
+    }
+
+    /// THE LANDING HURT THE WEB DENIES (the e2e fall the vanilla's own
+    /// mercy speaks): the seven-block descent the web cell catches —
+    /// the banked descent the beat's resetFallDistance clears and the
+    /// crawl the landing dy shrinks — the fall event the pipeline
+    /// never sees; the web-less control the SAME spawn the hurt the
+    /// landing arms.
+    #[test]
+    fn the_web_fall_the_landing_hurt_denies() {
+        let w = webbed_world();
+        let mut b = PlayerBody::new(8.0, 8.0, 8.0, 0.0, 0.0);
+        let mut saw_event = false;
+        for _ in 0..300 {
+            b.tick(&w, false);
+            if b.fall_event.is_some() {
+                saw_event = true;
+                b.fall_event = None;
+            }
+            if b.on_ground {
+                break;
+            }
+        }
+        assert!(b.on_ground, "the caught body the floor lands");
+        assert!(
+            !saw_event,
+            "the web the fall event denies (the bank the beat clears)"
+        );
+        // THE CONTROL'S OWN HURT (the web-less column the same spawn):
+        // the landing the event arms
+        let w = flat_world();
+        let mut c = PlayerBody::new(8.0, 8.0, 8.0, 0.0, 0.0);
+        let mut event = None;
+        for _ in 0..60 {
+            c.tick(&w, false);
+            if c.fall_event.is_some() {
+                event = c.fall_event.take();
+                break;
+            }
+        }
+        assert!(
+            matches!(event, Some(d) if (3..=5).contains(&d)),
+            "the free fall the landing hurt arms: {:?}",
+            event
         );
     }
 }
