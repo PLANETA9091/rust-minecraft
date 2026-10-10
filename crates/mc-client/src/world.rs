@@ -3022,7 +3022,9 @@ impl World {
     /// center wears — the END_PORTAL surface the special renderer
     /// lane a future round serves, the blockstates end_portal.json's
     /// NO-elements model the generic walk cannot resolve).
-    #[cfg_attr(not(test), expect(dead_code))] // the swap's END arm a future round calls
+    /// THE END'S OWN WORLD BUILD (the swap's END arm the destination
+    /// builds — the [`crate::screens::App::swap_dimension_to`] walk
+    /// the far slot's fresh build answers)
     pub fn new_end(chunks_per_side: usize, seed: u64) -> Self {
         let mut w = Self::blank(chunks_per_side, seed);
         w.sky_light_factor = Some(0.0); // the jar's stated 0.0 — the sky term pinned

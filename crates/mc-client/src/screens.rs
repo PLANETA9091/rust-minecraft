@@ -6387,6 +6387,19 @@ pub(crate) struct BundleTooltipView {
     pub total: i32,
 }
 
+/// THE THREE DIMENSIONS (the vanilla `Level.OVERWORLD`/`NETHER`/`END`
+/// registry keys the client's own enum wears — the swap's lane the
+/// per-dimension table answers: the `coordinate_scale` the rows carry
+/// (the nether's 8.0 the division speaks, the End's 1.0 the
+/// pass-through keeps), the skybox/fog/ambient the environment pins
+/// serve, the destination's own arrival law the site walk reads).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Dimension {
+    Overworld,
+    Nether,
+    End,
+}
+
 pub struct App {
     pub screen: ScreenKind,
     pub boot_progress: f32,
@@ -6776,11 +6789,13 @@ pub struct App {
     /// the `mem::swap` serves, the edits the each side keeps). `None`
     /// until the first portal walk builds the destination.
     pub far_world: Option<crate::world::World>,
-    /// THE DIMENSION'S OWN FLAG (the swap's direction read — the
-    /// false the overworld keeps, the true the nether's side banks;
-    /// the scale walk's `/8` climb `*8` the flag answers, the
-    /// skybox/fog/ambient pins the nether row's own pair wears).
-    pub world_is_nether: bool,
+    /// THE DIMENSION'S OWN ID (the swap's direction read — the
+    /// three-way [`Dimension`] the vanilla Level keys wear; the scale
+    /// walk's per-dimension table the id answers, the skybox/fog/
+    /// ambient pins the destination's own row wears, the arrival law
+    /// the site walk reads — the End's own [`Self::swap_dimension_to`]
+    /// arm the platform law serves).
+    pub world_dimension: Dimension,
     /// The dimension's STATED cloud-fog end (blocks) — pinned at level
     /// entry like the fog pair; `None` = no dimension states one (the
     /// cloud fog rides the 2048.0 bytecode default, `sky::DEFAULT_CLOUD_FOG_END`).
@@ -8405,7 +8420,7 @@ impl App {
             world_fog: None,
             world_cloud_fog_end: None,
             far_world: None, // the far side's slot: the first portal walk builds
-            world_is_nether: false, // the overworld the default build keeps
+            world_dimension: Dimension::Overworld, // the overworld the default build keeps
             water_vision_time: 0,
             net_biome: None,
             live_runs: Vec::new(),
@@ -19699,6 +19714,37 @@ impl App {
     /// server's own packets carry — the network lane the early return
     /// keeps.
     pub fn swap_dimension(&mut self) {
+        // THE NETHER CHAIN'S OWN TOGGLE (the nether portal's verdict
+        // the overworld pair the cycle keeps — the End's own entry the
+        // [`Self::swap_dimension_to`] walk the direct lane serves)
+        let target = if self.world_dimension == Dimension::Nether {
+            Dimension::Overworld
+        } else {
+            Dimension::Nether
+        };
+        self.swap_dimension_to(target);
+    }
+
+    /// THE SWAP'S OWN GENERAL WALK (the destination the target names —
+    /// the nether chain the toggle serves, the End's own arm the
+    /// platform law wears: the vanilla handlePortal walk the
+    /// countdown's TRUE return serves; the offline fiction's own lane:
+    /// the far side's slot the `mem::swap` answers, the scaled coords
+    /// the dimension_type's coordinate_scale table speaks (the source's
+    /// own scale the division carries — the nether's 8.0 the overworld
+    /// descent `/8` the return climb `*8`, the End's 1.0 the
+    /// pass-through), the arrival the destination's own law reads —
+    /// the End's `EndPortalBlock.getPortalDestination` the
+    /// END_SPAWN_POINT absolute + the EndPlatformFeature the platform
+    /// raises, the respawn walk the exit keeps, the nether chain the
+    /// return portal the [`crate::world::World::build_portal_frame`] +
+    /// [`crate::world::World::check_portal_spawn`] walk lights, the
+    /// body the arrival cell the cooldown's own refresh keeps, the
+    /// entities the old level carried DROP WITH the level — the same
+    /// law the enter_world walk keeps). The WIRE world's swap the
+    /// server's own packets carry — the network lane the early return
+    /// keeps.
+    pub fn swap_dimension_to(&mut self, target: Dimension) {
         if self.world_is_network || self.offline_world.is_none() {
             return;
         }
@@ -19710,24 +19756,36 @@ impl App {
             .as_ref()
             .and_then(|b| b.portal_entry)
             .unwrap_or((self.world_size / 2, 20, self.world_size / 2));
-        // THE SCALE WALK (javap DimensionType — the nether's
-        // coordinate_scale 8.0: the overworld descent `/8`, the return
-        // climb `*8`, the f64 fold the vanilla's own mul/div wears)
-        let scale = 8.0f64;
-        let (sx, sz) = if self.world_is_nether {
-            (entry.0 as f64 * scale, entry.2 as f64 * scale)
-        } else {
-            (entry.0 as f64 / scale, entry.2 as f64 / scale)
+        // THE SCALE WALK (javap DimensionType — the coordinate_scale
+        // the per-dimension table keeps: the destination the source's
+        // own scale the division carries — the nether's 8.0 the
+        // overworld descent `/8`, the return climb `*8`, the End's 1.0
+        // the pass-through wears; the f64 fold the vanilla's own
+        // mul/div speaks. The END'S OWN ARRIVAL the absolute
+        // END_SPAWN_POINT the destination keeps — the scaled coords
+        // the walk computes, the End arm's site law the own position
+        // banks)
+        let src_scale = match self.world_dimension {
+            Dimension::Nether => 8.0f64,
+            _ => 1.0,
         };
+        let dst_scale = match target {
+            Dimension::Nether => 8.0f64,
+            _ => 1.0,
+        };
+        let (sx, sz) = (
+            entry.0 as f64 * src_scale / dst_scale,
+            entry.2 as f64 * src_scale / dst_scale,
+        );
         // THE FAR SIDE'S OWN WORLD (the vanilla server's
         // both-levels-loaded fiction the slot folds — the empty slot
         // the fresh build answers, the kept slot the mem::swap
         // restores with the edits the side carried)
         if self.far_world.is_none() {
-            self.far_world = Some(if self.world_is_nether {
-                crate::world::World::new(WORLD_CHUNKS, self.seed)
-            } else {
-                crate::world::World::new_nether(WORLD_CHUNKS, self.seed)
+            self.far_world = Some(match target {
+                Dimension::Overworld => crate::world::World::new(WORLD_CHUNKS, self.seed),
+                Dimension::Nether => crate::world::World::new_nether(WORLD_CHUNKS, self.seed),
+                Dimension::End => crate::world::World::new_end(WORLD_CHUNKS, self.seed),
             });
         }
         std::mem::swap(
@@ -19736,45 +19794,108 @@ impl App {
                 .as_mut()
                 .expect("the offline world rides"),
         );
-        self.world_is_nether = !self.world_is_nether;
+        let source = self.world_dimension;
+        self.world_dimension = target;
         let world = self
             .offline_world
             .as_mut()
             .expect("the offline world rides");
         let n = world.size_blocks();
-        // THE SITE'S OWN WALK (the destination's bounds the scaled
-        // coords answer, the clamp the frame's own margin keeps, the
-        // floor scan the first free cell the solid walk above answers
-        // — the lava sea the free cell the fluids' own non-solid pair
-        // keeps)
-        let bx = (sx.round() as i32).clamp(2, n - 6);
-        let bz = (sz.round() as i32).clamp(2, n - 2);
-        let mut by = 1i32;
-        while by < crate::world::CHUNK_Y as i32 - 6 {
-            let id = world.get(bx + 1, by, bz);
-            if !(id == crate::world::WATER
-                || id == crate::world::LAVA
-                || crate::world::collision_shape(id) != crate::world::CollisionShape::Empty)
-            {
-                break;
+        // THE SITE'S OWN WALK (the destination's own law the dimension
+        // speaks — the nether chain the scaled scan + the frame
+        // answers, the End's own arms the javap laws wear)
+        let (spawn_by, fx, fy, fz, face_yaw) = match target {
+            // THE END'S OWN ARRIVAL (javap EndPortalBlock
+            // .getPortalDestination pc 58-61 the
+            // `ServerLevel.END_SPAWN_POINT` absolute the destination
+            // keeps — clinit pc 0-12 `BlockPos(100, 50, 0)`; pc 88-106
+            // the `EndPlatformFeature.createEndPlatform(center.below(),
+            // true)` the platform law serves — the 5x5 obsidian disc
+            // ONE below the platform center pc 50-65 the y==-1 arm
+            // speaks, the 5x5x5 air box pc 28-118 the -1..=3 loop
+            // wears, the replaced blocks the destroyBlock(true) drop
+            // pc 83-97 — the void's AIR the drop never carries; pc
+            // 107-113 the `Direction.WEST.toYRot()` yaw the transition
+            // banks, pc 142-159 the ServerPlayer arm the feet the
+            // bottom-center minus 1 the block walk wears). The
+            // vanilla's own absolute the scale 1.0 passes, the world's
+            // own bounds the clamp keeps (the walk's own margin law),
+            // the y the dimension's own proportion speaks — the stated
+            // 50 of the 256 height the 48-tall grid the ratio carries.
+            Dimension::End => {
+                let vx = 100i32.clamp(2, n - 6);
+                let vz = 0i32.clamp(2, n - 2);
+                let py = ((50.0f64 / 256.0) * crate::world::CHUNK_Y as f64).round() as i32;
+                for dz in -2i32..=2 {
+                    for dx in -2i32..=2 {
+                        // THE OBSIDIAN'S OWN ROW (the feature's y==-1
+                        // arm — the platform ONE below the box's base)
+                        world.set(vx + dx, py - 2, vz + dz, crate::world::OBSIDIAN);
+                        // THE AIR BOX (the feature's -1..=3 walk — the
+                        // center..center+3 the base wears; the
+                        // already-clear cells the is() check skips)
+                        for dy in -1i32..=2 {
+                            if world.get(vx + dx, py + dy, vz + dz) != crate::world::AIR {
+                                world.set(vx + dx, py + dy, vz + dz, crate::world::AIR);
+                            }
+                        }
+                    }
+                }
+                let (fx, fy, fz) = (vx as f64 + 0.5, (py - 1) as f64, vz as f64 + 0.5);
+                (py - 1, fx, fy, fz, Some(90.0f32))
             }
-            by += 1;
-        }
-        // THE FRAME + THE FILL (the builder's own shape the
-        // check_portal_spawn walk's own scan lights — the interior the
-        // NETHER_PORTAL kind the fill speaks)
-        let (ix, iy, iz) = world.build_portal_frame((bx, by, bz));
-        let _ = world.check_portal_spawn((ix, iy, iz));
+            // THE RESPAWN'S OWN WALK (the End's exit — javap
+            // getPortalDestination pc 25-61 the respawn data's
+            // dimension + pos the destination keeps, pc 162-174 the
+            // respawn's own yaw/pitch: the spawn point NO portal the
+            // exit builds, NO platform the void raises; the fiction's
+            // own respawn the world's center column the spawn keeps)
+            Dimension::Overworld if source == Dimension::End => {
+                let bx = (n / 2).clamp(2, n - 6);
+                let bz = (n / 2).clamp(2, n - 2);
+                let by = top_solid_y(world, bx, bz).min(crate::world::CHUNK_Y as i32 - 6);
+                let (fx, fy, fz) = (bx as f64 + 0.5, by as f64, bz as f64 + 0.5);
+                (by, fx, fy, fz, None)
+            }
+            // THE NETHER CHAIN'S OWN SCAN (the destination's bounds the
+            // scaled coords answer, the clamp the frame's own margin
+            // keeps, the floor scan the first free cell the solid walk
+            // above answers — the lava sea the free cell the fluids'
+            // own non-solid pair keeps)
+            _ => {
+                let bx = (sx.round() as i32).clamp(2, n - 6);
+                let bz = (sz.round() as i32).clamp(2, n - 2);
+                let mut by = 1i32;
+                while by < crate::world::CHUNK_Y as i32 - 6 {
+                    let id = world.get(bx + 1, by, bz);
+                    if !(id == crate::world::WATER
+                        || id == crate::world::LAVA
+                        || crate::world::collision_shape(id) != crate::world::CollisionShape::Empty)
+                    {
+                        break;
+                    }
+                    by += 1;
+                }
+                // THE FRAME + THE FILL (the builder's own shape the
+                // check_portal_spawn walk's own scan lights — the
+                // interior the NETHER_PORTAL kind the fill speaks)
+                let (ix, iy, iz) = world.build_portal_frame((bx, by, bz));
+                let _ = world.check_portal_spawn((ix, iy, iz));
+                let (fx, fy, fz) = (ix as f64 + 0.5, iy as f64, iz as f64 + 0.5);
+                (iy, fx, fy, fz, None)
+            }
+        };
         // THE BODY'S OWN RELOCATION (the vanilla teleportTo's own
         // snap — the prev trio the render lerp's anchors, the
-        // velocity the teleport zeroes, the interior's center the
-        // +0.5 the block walk wears) + THE POST-TELEPORT COOLDOWN
-        // (javap the teleport tail's own setPortalCooldown — the
-        // player's 10 the getDimensionChangingDelay keeps) + THE
-        // MACHINERY'S OWN DRY (the consumed verdict the count's zero
-        // keeps)
+        // velocity the teleport zeroes, the arrival's center the
+        // +0.5 the block walk wears) + THE ARRIVAL'S OWN FACING (the
+        // End's WEST arm the transition banks — the yaw the set
+        // speaks, the pitch the X_ROT-relative keeps) + THE
+        // POST-TELEPORT COOLDOWN (javap the teleport tail's own
+        // setPortalCooldown — the player's 10 the
+        // getDimensionChangingDelay keeps) + THE MACHINERY'S OWN DRY
+        // (the consumed verdict the count's zero keeps)
         if let Some(b) = self.body.as_mut() {
-            let (fx, fy, fz) = (ix as f64 + 0.5, iy as f64, iz as f64 + 0.5);
             b.prev_x = fx;
             b.prev_y = fy;
             b.prev_z = fz;
@@ -19785,6 +19906,9 @@ impl App {
             b.vy = 0.0;
             b.vz = 0.0;
             b.on_ground = false;
+            if let Some(yaw) = face_yaw {
+                b.yaw = yaw;
+            }
             b.portal_cooldown = crate::body::PLAYER_PORTAL_COOLDOWN_TICKS;
             b.portal_time = 0;
             b.portal_entry = None;
@@ -19793,23 +19917,37 @@ impl App {
         }
         // THE ENVIRONMENT'S OWN PIN (the enter_world's own walk — the
         // skybox the extract pins, the fog the dimension's stated
-        // pair, the ambient base the lightmap's floor; the nether's
-        // own row the registry table answers — Skybox::None the sky
+        // pair, the ambient base the lightmap's floor; the registry
+        // rows the table answers — the nether's Skybox::None the sky
         // pipeline renders nothing at, the (10, 96) fog the stated
         // pair keeps, the #302821 ambient the [48, 40, 33] bytes
+        // speak; the End's Skybox::End the stated skybox "end" row
+        // wears — the sky lane's own End arm the celestials' absence
+        // keeps, the stated fog_start/end_distance None the window
+        // treatment keeps, the #3f473f ambient the [63, 71, 63] bytes
         // speak)
-        if self.world_is_nether {
-            self.world_skybox = Skybox::None;
-            self.world_fog = Some((10.0, 96.0));
-            self.world_cloud_fog_end = None;
-            world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:the_nether")
-                .map(|d| d.ambient_light_color);
-        } else {
-            self.world_skybox = Skybox::Overworld;
-            self.world_fog = None;
-            self.world_cloud_fog_end = None;
-            world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
-                .map(|d| d.ambient_light_color);
+        match self.world_dimension {
+            Dimension::Nether => {
+                self.world_skybox = Skybox::None;
+                self.world_fog = Some((10.0, 96.0));
+                self.world_cloud_fog_end = None;
+                world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:the_nether")
+                    .map(|d| d.ambient_light_color);
+            }
+            Dimension::End => {
+                self.world_skybox = Skybox::End;
+                self.world_fog = None;
+                self.world_cloud_fog_end = None;
+                world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:the_end")
+                    .map(|d| d.ambient_light_color);
+            }
+            Dimension::Overworld => {
+                self.world_skybox = Skybox::Overworld;
+                self.world_fog = None;
+                self.world_cloud_fog_end = None;
+                world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
+                    .map(|d| d.ambient_light_color);
+            }
         }
         world.relight();
         // THE MESH'S OWN REBUILD (the enter_world's own walk — the
@@ -19818,7 +19956,7 @@ impl App {
         self.world_size = world.size_blocks();
         self.world_quads = Some(crate::mesher::mesh_world(world, None));
         self.day_bake = Some(day_bake_inputs(world));
-        self.spawn_y = by;
+        self.spawn_y = spawn_by;
         // THE FRESH LEVEL'S OWN ENTITIES (the vanilla world swap the
         // ClientLevel's own map answers — the entities the old level
         // carried DROP WITH the level: the offline mobs the old
@@ -97703,7 +97841,7 @@ cow_sound_variant: None,
             );
         }
         // THE NETHER'S OWN PIN (the destination the swap serves)
-        assert!(app.world_is_nether, "the nether side the swap banks");
+        assert_eq!(app.world_dimension, Dimension::Nether, "the nether side the swap banks");
         assert_eq!(app.world_skybox, Skybox::None, "the nether pin");
         assert_eq!(app.world_fog, Some((10.0, 96.0)), "the stated fog pair");
         let w = app
@@ -97767,7 +97905,7 @@ cow_sound_variant: None,
             b.portal_time = crate::body::PLAYERS_NETHER_PORTAL_DEFAULT_DELAY_TICKS - 1;
         }
         app.update(); // the verdict → THE SWAP BACK
-        assert!(!app.world_is_nether, "the overworld restored");
+        assert_eq!(app.world_dimension, Dimension::Overworld, "the overworld restored");
         assert_eq!(app.world_skybox, Skybox::Overworld, "the pin returns");
         assert_eq!(app.world_fog, None, "the overworld's unstated fog");
         // THE EDITS' OWN PERSISTENCE (the marker the mem::swap kept)
@@ -97797,6 +97935,231 @@ cow_sound_variant: None,
                 "the return portal the interior the far slot keeps"
             );
         }
+    }
+
+    /// THE END'S OWN SWAP LANE (javap `EndPortalBlock
+    /// .getPortalDestination` + `EndPlatformFeature.createEndPlatform`
+    /// + `ServerLevel` clinit the 26.2 jar — the destination the
+    /// absolute `END_SPAWN_POINT (100, 50, 0)` keeps, the platform the
+    /// feature's 5x5 loops wear, the arrival the WEST yaw the
+    /// transition banks; the environment the stated rows pin — the
+    /// Skybox::End the skybox "end" row wears, the fog the stated
+    /// None keeps, the #3f473f ambient the [63, 71, 63] bytes speak;
+    /// the EXIT the respawn law serves — the spawn point NO portal
+    /// the exit builds): the e2e the direct drive walks — the swap
+    /// the third world banks, the step-back the respawn restores, the
+    /// marker the far slot's own mem::swap keeps.
+    #[test]
+    fn the_end_the_swap_the_platform_the_skybox_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE MARKER'S OWN EDIT (the overworld's own cell the far slot
+        // carries — the mem::swap persistence proof the round trip
+        // wears)
+        app.offline_world
+            .as_mut()
+            .expect("the offline world rides")
+            .set(20, 40, 20, crate::world::CRAFTING_TABLE);
+        // THE BODY THE SPAWN'S OWN CONSTRUCTION WEARS (the swap test's
+        // own pair)
+        app.body = Some(crate::body::PlayerBody::new(
+            app.world_size as f64 / 2.0,
+            app.spawn_y as f64,
+            app.world_size as f64 / 2.0,
+            180.0,
+            0.0,
+        ));
+        // THE SWAP'S OWN WALK (the End arm the direct drive serves)
+        app.swap_dimension_to(Dimension::End);
+        // THE DIMENSION'S OWN ID (the third world the id banks)
+        assert_eq!(app.world_dimension, Dimension::End, "the End the swap banks");
+        // THE ENVIRONMENT'S OWN PIN (the stated rows the table wears)
+        assert_eq!(app.world_skybox, Skybox::End, "the stated skybox end");
+        assert_eq!(app.world_fog, None, "the stated fog pair None");
+        assert_eq!(app.world_cloud_fog_end, None, "the stated cloud pair None");
+        // THE WORLD'S OWN ROWS (the fresh build the destination keeps
+        // — the skylight TRUE the stated has_skylight wears, the
+        // factor 0.0 the lightmap's sky term pins, the ambient the
+        // registry row answers)
+        let w = app
+            .offline_world
+            .as_ref()
+            .expect("the offline world rides");
+        assert!(w.has_skylight, "the End's own skylight the stated TRUE keeps");
+        assert_eq!(
+            w.sky_light_factor,
+            Some(0.0),
+            "the factor the stated 0.0 pins"
+        );
+        assert_eq!(
+            w.ambient_light,
+            Some([63, 71, 63]),
+            "the #3f473f ambient the row wears"
+        );
+        // THE PLATFORM'S OWN CENTER (the arrival site the clamp keeps
+        // — the vanilla's own absolute (100, 0) the 80-wide world's
+        // bounds answer (74, 2), the obsidian row the proportion's
+        // py-2 wears: 50 of the stated 256 the 48-tall grid the ratio
+        // carries → 9)
+        let (vx, vz, py) = (74, 2, 9);
+        assert_eq!(
+            w.get(vx, py - 2, vz),
+            crate::world::OBSIDIAN,
+            "the platform's own row the arrival wears"
+        );
+        // THE BODY'S OWN ARRIVAL (the vanilla's own feet the
+        // bottom-center law keeps — the obsidian's top the walk banks,
+        // the WEST yaw the transition sets, the pitch the X_ROT-
+        // relative keeps, the cooldown the teleport tail refreshes,
+        // the machinery the zero keeps)
+        {
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(b.x, vx as f64 + 0.5, "the absolute site the clamp keeps");
+            assert_eq!(b.y, (py - 1) as f64, "the feet the obsidian's top wears");
+            assert_eq!(b.z, vz as f64 + 0.5, "the absolute site the clamp keeps");
+            assert_eq!(b.yaw, 90.0, "the WEST arm the transition banks");
+            assert_eq!(b.pitch, 0.0, "the X_ROT-relative pitch the body keeps");
+            assert_eq!(
+                b.portal_cooldown,
+                crate::body::PLAYER_PORTAL_COOLDOWN_TICKS,
+                "the post-teleport cooldown the tail speaks"
+            );
+            assert_eq!(b.portal_time, 0, "the machinery the zero keeps");
+            assert_eq!(b.portal_entry, None, "the entry the fresh side's None keeps");
+        }
+        assert_eq!(app.spawn_y, py - 1, "the spawn the arrival cell keeps");
+        assert_eq!(
+            app.day_bake.expect("the bake rides").0,
+            0,
+            "the factor 0.0 the bake's own term pins"
+        );
+        // THE FAR SLOT'S OWN KEEP (the overworld the edits persist)
+        {
+            let far = app.far_world.as_ref().expect("the far slot rides");
+            assert!(far.has_skylight, "the overworld the slot keeps");
+            assert_eq!(
+                far.get(20, 40, 20),
+                crate::world::CRAFTING_TABLE,
+                "the marker the slot carries"
+            );
+        }
+        // THE STEP-BACK'S OWN RESPAWN (the End's exit the vanilla's
+        // own law — the spawn point NO portal the exit builds, NO
+        // platform: the center column the respawn walk serves, the
+        // pins the overworld's own rows restore)
+        app.swap_dimension_to(Dimension::Overworld);
+        assert_eq!(
+            app.world_dimension,
+            Dimension::Overworld,
+            "the respawn the overworld restores"
+        );
+        assert_eq!(
+            app.world_skybox,
+            Skybox::Overworld,
+            "the pin the respawn restores"
+        );
+        assert_eq!(app.world_fog, None, "the overworld's unstated fog");
+        {
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(
+                b.x,
+                app.world_size as f64 / 2.0 + 0.5,
+                "the spawn point the respawn walk serves"
+            );
+            assert_eq!(
+                b.z,
+                app.world_size as f64 / 2.0 + 0.5,
+                "the spawn point the respawn walk serves"
+            );
+            let feet = app
+                .offline_world
+                .as_ref()
+                .expect("the offline world rides")
+                .get(b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32);
+            assert_ne!(
+                feet,
+                crate::world::NETHER_PORTAL,
+                "NO portal the respawn builds"
+            );
+        }
+        // THE MARKER'S OWN RETURN (the round trip the mem::swap pair
+        // keeps — the edits the each side carries)
+        assert_eq!(
+            app.offline_world
+                .as_ref()
+                .expect("the offline world rides")
+                .get(20, 40, 20),
+            crate::world::CRAFTING_TABLE,
+            "the marker the round trip keeps"
+        );
+    }
+
+    /// THE PLATFORM'S OWN GEOMETRY (javap `EndPlatformFeature
+    /// .createEndPlatform` pc 5-131 — the 5x5 loops the dx/dz bands
+    /// wear, the obsidian the y==-1 arm speaks, the air the -1..=3
+    /// inner loop wears, the already-matching cells the is() check
+    /// skips; the ABSOLUTE the `END_SPAWN_POINT` keeps — the
+    /// processor's banked entry the scaled walk computes, the End
+    /// arm's own site law the bank never sways): the extent, the
+    /// thinness (the single row the feature keeps), the box's cap,
+    /// the void the rim's outside keeps.
+    #[test]
+    fn the_end_the_platform_the_absolute_the_thinness_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.body = Some(crate::body::PlayerBody::new(
+            app.world_size as f64 / 2.0,
+            app.spawn_y as f64,
+            app.world_size as f64 / 2.0,
+            180.0,
+            0.0,
+        ));
+        // THE ENTRY'S OWN BANK (the processor's staged entry the
+        // nether chain's scaled walk would follow)
+        app.body
+            .as_mut()
+            .unwrap()
+            .portal_entry = Some((10, 20, 10));
+        app.swap_dimension_to(Dimension::End);
+        // THE ABSOLUTE THE SITE KEEPS (the entry the platform's law
+        // ignores — the vanilla's own (100, 50, 0) the clamp answers)
+        {
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(
+                (b.x, b.y, b.z),
+                (74.5, 8.0, 2.5),
+                "the absolute site the bank never sways"
+            );
+        }
+        let w = app
+            .offline_world
+            .as_ref()
+            .expect("the offline world rides");
+        // THE EXTENT'S OWN FIVE (the dx/dz -2..=2 bands the loops wear)
+        for dz in -2i32..=2 {
+            for dx in -2i32..=2 {
+                assert_eq!(
+                    w.get(74 + dx, 7, 2 + dz),
+                    crate::world::OBSIDIAN,
+                    "the 5x5 disc the loops raise"
+                );
+            }
+        }
+        // THE THINNESS'S OWN ROW (the obsidian ONE below the box's
+        // base — the row below the feature's loops never fill, the
+        // void's own AIR keeps)
+        assert_eq!(w.get(74, 6, 2), crate::world::AIR, "the thinness the void keeps");
+        // THE BOX'S OWN BAND (the center..center+3 air the inner loop
+        // wears — the feet cell the band contains, the cap the +3
+        // outside keeps)
+        for dy in 8i32..=11 {
+            assert_eq!(
+                w.get(74, dy, 2),
+                crate::world::AIR,
+                "the air box the inner loop clears"
+            );
+        }
+        assert_eq!(w.get(74, 12, 2), crate::world::AIR, "the cap the void keeps");
     }
 
     /// THE HONEY'S OWN APP LANE (javap `HoneyBlock` the 26.2 jar — the
