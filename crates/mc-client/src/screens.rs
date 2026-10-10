@@ -28547,9 +28547,12 @@ impl App {
         // THE MINE'S OWN COST (javap Block.playerDestroy: the
         // awardStat(BLOCK_MINED) tail's inlined 0.005 — the
         // causeFoodExhaustion the destroyBlock's own reward lane
-        // speaks; the offline gate rides the drops' own)
+        // speaks; the offline gate rides the drops') — the HELD TOOL
+        // the gate's own verdict feeds (the vanilla canHarvestBlock
+        // reads the LIVE mainhand the break wears)
+        let held = self.held_id();
         self.food_data.add_exhaustion(crate::food::EXHAUSTION_MINE);
-        for (item, count) in crate::drops::roll_drops(kind, &mut self.drop_rng) {
+        for (item, count) in crate::drops::roll_drops(kind, held, &mut self.drop_rng) {
             let id = self.next_drop_id;
             self.next_drop_id += 1;
             self.drops.push(crate::drops::ItemDrop::spawn(
@@ -28567,7 +28570,7 @@ impl App {
         // the tryDropExperience's own gate speaks); the silent ores
         // (copper/iron/gold) burn no roll — the non-XpBlock gate never
         // samples.
-        if crate::dig::DigState::correct_tool(kind) {
+        if crate::dig::DigState::correct_tool(kind, held) {
             let amount = crate::xp::ore_xp(kind, &mut self.drop_rng);
             if amount > 0 {
                 let (bx, by, bz) = (pos.0 as f64 + 0.5, pos.1 as f64 + 0.5, pos.2 as f64 + 0.5);
@@ -28963,7 +28966,7 @@ impl App {
                     // arm's hungry gate the verdict's own precondition
                     // keeps, the full bar the tail never sees)
                     for (item, count) in
-                        crate::drops::roll_drops(cell_kind.unwrap(), &mut self.drop_rng)
+                        crate::drops::roll_drops(cell_kind.unwrap(), self.held_id(), &mut self.drop_rng)
                     {
                         let id = self.next_drop_id;
                         self.next_drop_id += 1;

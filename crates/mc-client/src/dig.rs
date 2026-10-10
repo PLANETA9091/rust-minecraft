@@ -121,7 +121,29 @@ impl DigState {
         haste: Option<i32>,
         mining_fatigue: Option<i32>,
     ) -> f32 {
-        let mut f = 1.0f32;
+        Self::player_dig_speed_seeded(1.0, on_ground, eye_in_water, haste, mining_fatigue)
+    }
+
+    /// THE SEEDED WALK (the vanilla `getDestroySpeed(BlockState)`'s own
+    /// order — javap Player pcs 0-174 verbatim: `f2 = mainhand
+    /// .getDestroySpeed(state)` the SEED the item lane speaks, the
+    /// `if f2 > 1.0: f2 += MINING_EFFICIENCY` addend the attribute's
+    /// honest 0.0 default keeps, the haste product, the fatigue
+    /// tableswitch, the BLOCK_BREAK_SPEED multiply the 1.0 default
+    /// keeps, the water arm, the air arm): the seed the held tool's
+    /// own destroy speed rides, the f32 order the exact walk
+    /// preserves.
+    pub fn player_dig_speed_seeded(
+        seed: f32,
+        on_ground: bool,
+        eye_in_water: bool,
+        haste: Option<i32>,
+        mining_fatigue: Option<i32>,
+    ) -> f32 {
+        let mut f = seed;
+        // the MINING_EFFICIENCY attribute's honest absence (the
+        // `if f2 > 1.0f: f2 += attr` branch the 0.0 default keeps —
+        // the enchantment lane the client's stacks never carry)
         if let Some(amp) = haste {
             // the DIG_SPEED product: 1.0 + 0.2 × (amplifier + 1) — the
             // f32 multiply the vanilla's own `1.0F + f * 0.2F` speaks
@@ -135,6 +157,8 @@ impl DigState {
                 _ => 8.1E-4,
             };
         }
+        // the BLOCK_BREAK_SPEED attribute's 1.0 default (the pc 126-136
+        // multiply the vanilla's own no-op keeps)
         if eye_in_water {
             f *= 0.2; // Attributes.SUBGERGED_MINING_SPEED's default
         }
@@ -142,6 +166,29 @@ impl DigState {
             f /= 5.0; // the airborne mining penalty's own law
         }
         f
+    }
+
+    /// THE FULL `getDestroySpeed(BlockState)` WALK (the seed the held
+    /// tool's own destroy speed feeds — `held_destroy_speed(kind,
+    /// held)` the TOOL component's getMiningSpeed law speaks — then
+    /// the SAME lane walk the seeded fn keeps): the iron pickaxe the
+    /// ×6.0 seed the stone's per-tick damage wears, the bare fist the
+    /// 1.0 the old walk keeps.
+    pub fn player_destroy_speed(
+        on_ground: bool,
+        eye_in_water: bool,
+        haste: Option<i32>,
+        mining_fatigue: Option<i32>,
+        kind: u16,
+        held: Option<i32>,
+    ) -> f32 {
+        Self::player_dig_speed_seeded(
+            Self::held_destroy_speed(kind, held),
+            on_ground,
+            eye_in_water,
+            haste,
+            mining_fatigue,
+        )
     }
 
     /// `BlockBehaviour.getDestroyProgress` verbatim: the per-tick
@@ -168,13 +215,111 @@ impl DigState {
         }
     }
 
-    /// `hasCorrectToolForDrops` with the client's honest tool belief: the
-    /// block's demand answered by the hand (no tool data feeds the
-    /// client's stacks yet — the demanding blocks (stone family) take
-    /// the 100 divisor, the rest the 30, exactly the bare-hand rates).
-    pub fn correct_tool(kind: u16) -> bool {
+    /// THE TOOL CLASS BYTES (the mineable tag the generated table
+    /// carries — the TOOL component's own rule order the class lanes
+    /// keep).
+    pub const TOOL_PICKAXE: u8 = 0;
+    pub const TOOL_AXE: u8 = 1;
+    pub const TOOL_SHOVEL: u8 = 2;
+    pub const TOOL_HOE: u8 = 3;
+
+    /// The held item's own tool class (the name's own suffix the
+    /// Items clinit's factory rows speak — the pickaxe the
+    /// `pickaxe(material, ..)` rows keep, the axe the AxeItem ctor
+    /// bodies, the shovel the ShovelItem, the hoe the HoeItem): the
+    /// None the bare hand and the non-tool stack the default rule
+    /// rides. The pickaxe suffix the axe's own `axe` tail contains —
+    /// the pickaxe arm the match's OWN head keeps.
+    pub fn held_tool_class(held: Option<i32>) -> Option<u8> {
+        let name = held
+            .and_then(|id| mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize))
+            .copied()?;
+        if name.ends_with("pickaxe") {
+            Some(Self::TOOL_PICKAXE)
+        } else if name.ends_with("axe") {
+            Some(Self::TOOL_AXE)
+        } else if name.ends_with("shovel") {
+            Some(Self::TOOL_SHOVEL)
+        } else if name.ends_with("hoe") {
+            Some(Self::TOOL_HOE)
+        } else {
+            None
+        }
+    }
+
+    /// THE MATERIAL'S OWN SPEED ROW (javap `ToolMaterial` clinit — the
+    /// ctor's `(incorrectForDrops, durability, SPEED, bonus, ench,
+    /// repair)` walk the putstatic rows keep: WOOD the fconst_2 2.0,
+    /// STONE the 4.0, COPPER the 5.0, IRON the 6.0, DIAMOND the 8.0,
+    /// GOLD the 12.0, NETHERITE the 9.0): the speed the TOOL
+    /// component's mineable rule carries (the rule the
+    /// `applyToolProperties` walk arms), the unknown the honest 1.0
+    /// default keeps.
+    pub fn held_material_speed(held: Option<i32>) -> f32 {
+        let Some(id) = held else { return 1.0 };
+        let Some(name) = mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize)
+        else {
+            return 1.0;
+        };
+        if name.starts_with("wooden_") {
+            2.0
+        } else if name.starts_with("stone_") {
+            4.0
+        } else if name.starts_with("copper_") {
+            5.0
+        } else if name.starts_with("iron_") {
+            6.0
+        } else if name.starts_with("diamond_") {
+            8.0
+        } else if name.starts_with("golden_") {
+            12.0
+        } else if name.starts_with("netherite_") {
+            9.0
+        } else {
+            1.0
+        }
+    }
+
+    /// The block's own mineable class (the generated table the tag
+    /// rows keep — the None the undemanding block the default rule
+    /// rides).
+    pub fn block_tool_class(kind: u16) -> Option<u8> {
+        let name = crate::world::NAME_OF[kind as usize];
+        mc_registry::generated::block_mineable::mineable_class(name)
+    }
+
+    /// `Item.getDestroySpeed` = the TOOL component's `getMiningSpeed`
+    /// walk (javap — the first matching rule's speed freturn, the
+    /// unmatched state the `defaultMiningSpeed` 1.0 keeps): the held
+    /// tool's class the block's own mineable class answers — the
+    /// matching pair the material's speed wears, every other pair the
+    /// 1.0 default keeps (the bare hand included).
+    pub fn held_destroy_speed(kind: u16, held: Option<i32>) -> f32 {
+        match (Self::block_tool_class(kind), Self::held_tool_class(held)) {
+            (Some(bc), Some(hc)) if bc == hc => Self::held_material_speed(held),
+            _ => 1.0,
+        }
+    }
+
+    /// `hasCorrectToolForDrops` with the held tool's own belief (javap
+    /// Player pc 0-26 — the `requiresCorrectToolForDrops` gate the
+    /// `ItemStack.isCorrectToolForDrops` verdict answers, the
+    /// undemanding block the iconst_1 true arm keeps): the TOOL
+    /// component's `isCorrectForDrops` rule the mineable class match
+    /// speaks — the demanding block the matching tool the 30-divisor
+    /// path earns, the bare hand (and the wrong class) the false the
+    /// 100-divisor wears. No tool data feeds the client's stacks
+    /// BEYOND the name — the enchant/efficiency lanes the honest
+    /// absence keeps.
+    pub fn correct_tool(kind: u16, held: Option<i32>) -> bool {
         let (_, requires_tool) = Self::block_dig_row(kind);
-        !requires_tool
+        if !requires_tool {
+            return true;
+        }
+        match (Self::block_tool_class(kind), Self::held_tool_class(held)) {
+            (Some(bc), Some(hc)) => bc == hc,
+            _ => false,
+        }
     }
 
     /// `MultiPlayerGameMode.destroyBlock` — the completion's local half:
@@ -281,11 +426,13 @@ impl DigState {
         if !air {
             // the insta-break: the START press's own completion (the
             // vanilla lambda: getDestroyProgress >= 1.0 -> destroyBlock,
-            // the dig state never arms)
-            let speed = Self::player_dig_speed(on_ground, eye_in_water, haste, mining_fatigue);
+            // the dig state never arms) — the speed the FULL walk
+            // speaks (the held tool's own seed the lane feeds)
+            let speed =
+                Self::player_destroy_speed(on_ground, eye_in_water, haste, mining_fatigue, kind, held);
             let (destroy_speed, _) = Self::block_dig_row(kind);
             let progress =
-                Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind));
+                Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind, held));
             if progress >= 1.0 {
                 self.destroy_local(world, pos);
                 sends.push(DigSend {
@@ -377,9 +524,12 @@ impl DigState {
             return (Vec::new(), false);
         }
         let (destroy_speed, _) = Self::block_dig_row(kind);
-        let speed = Self::player_dig_speed(on_ground, eye_in_water, haste, mining_fatigue);
+        // the speed the FULL walk speaks (the held tool's own seed the
+        // lane feeds, the divisor the held tool's own verdict wears)
+        let speed =
+            Self::player_destroy_speed(on_ground, eye_in_water, haste, mining_fatigue, kind, held);
         self.progress +=
-            Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind));
+            Self::destroy_progress(speed, destroy_speed, Self::correct_tool(kind, held));
         // the hit-sound beat: every 4th tick (destroyTicks % 4 == 0) —
         // the audio lane plays the block's hit sound here when sound
         // data lands; the beat itself is the law
@@ -430,6 +580,18 @@ mod tests {
 
     fn small_world() -> World {
         World::new(2, 42)
+    }
+
+    /// The item's wire id (the generated order's own index).
+    fn wire_id(name: &str) -> i32 {
+        mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .position(|n| *n == name)
+            .expect(name) as i32
+    }
+
+    fn iron_pickaxe_id() -> i32 {
+        wire_id("iron_pickaxe")
     }
 
     #[test]
@@ -1040,5 +1202,133 @@ mod tests {
         let mut d = DigState::new();
         let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the stone breaks as ever");
+    }
+
+    /// THE TOOL'S OWN ROWS (the name suffix the class lanes keep + the
+    /// javap ToolMaterial clinit speed the material rows wear): the
+    /// pickaxe the `axe`-containing name's OWN head keeps, the bare
+    /// hand the None identity rides, the tier ladder the exact f32s
+    /// speak (WOOD 2.0, STONE 4.0, COPPER 5.0, IRON 6.0, DIAMOND 8.0,
+    /// GOLD 12.0, NETHERITE 9.0).
+    #[test]
+    fn the_tool_rows_the_class_and_speed_the_name_wears() {
+        let pick = iron_pickaxe_id();
+        assert_eq!(
+            DigState::held_tool_class(Some(pick)),
+            Some(DigState::TOOL_PICKAXE),
+            "the pickaxe the class head wears"
+        );
+        let axe = wire_id("iron_axe");
+        assert_eq!(
+            DigState::held_tool_class(Some(axe)),
+            Some(DigState::TOOL_AXE),
+            "the axe the axe tail wears"
+        );
+        assert_eq!(
+            DigState::held_tool_class(Some(wire_id("netherite_shovel"))),
+            Some(DigState::TOOL_SHOVEL),
+            "the shovel the shovel tail wears"
+        );
+        assert_eq!(
+            DigState::held_tool_class(Some(wire_id("golden_hoe"))),
+            Some(DigState::TOOL_HOE),
+            "the hoe the hoe tail wears"
+        );
+        assert_eq!(
+            DigState::held_tool_class(Some(wire_id("iron_sword"))),
+            None,
+            "the sword the tool table never carries"
+        );
+        assert_eq!(DigState::held_tool_class(None), None, "the bare hand the None rides");
+        // THE TIER LADDER (the clinit's own rows)
+        assert_eq!(DigState::held_material_speed(Some(wire_id("wooden_pickaxe"))), 2.0);
+        assert_eq!(DigState::held_material_speed(Some(wire_id("stone_pickaxe"))), 4.0);
+        assert_eq!(DigState::held_material_speed(Some(wire_id("copper_pickaxe"))), 5.0);
+        assert_eq!(DigState::held_material_speed(Some(pick)), 6.0);
+        assert_eq!(DigState::held_material_speed(Some(wire_id("diamond_pickaxe"))), 8.0);
+        assert_eq!(DigState::held_material_speed(Some(wire_id("golden_pickaxe"))), 12.0);
+        assert_eq!(DigState::held_material_speed(Some(wire_id("netherite_pickaxe"))), 9.0);
+        assert_eq!(DigState::held_material_speed(None), 1.0, "the bare hand the 1.0 keeps");
+    }
+
+    /// THE CORRECT TOOL'S OWN VERDICT (javap Player.hasCorrectToolForDrops
+    /// pcs 0-26 — the requiresCorrectToolForDrops gate the TOOL
+    /// component's isCorrectForDrops verdict answers) + THE SEED'S OWN
+    /// CLASS MATCH (the Tool.getMiningSpeed walk — the matching pair
+    /// the material speed wears, the mismatched the 1.0 default
+    /// keeps): the iron pickaxe the stone's ×6.0 and the 30-divisor
+    /// verdict wears, the wooden axe the 1.0 and the 100 keeps, the
+    /// undemanding dirt the true arm the bare hand earns.
+    #[test]
+    fn the_correct_tool_the_verdict_the_seed_wears() {
+        let pick = iron_pickaxe_id();
+        let stone = crate::world::STONE;
+        // the SEED (the item lane's own speed)
+        assert_eq!(DigState::held_destroy_speed(stone, Some(pick)), 6.0, "the matching pair the 6.0 wears");
+        assert_eq!(
+            DigState::held_destroy_speed(stone, Some(wire_id("wooden_axe"))),
+            1.0,
+            "the mismatched class the 1.0 keeps"
+        );
+        assert_eq!(DigState::held_destroy_speed(stone, None), 1.0, "the bare hand the 1.0 keeps");
+        assert_eq!(
+            DigState::held_destroy_speed(crate::world::DIRT, Some(wire_id("iron_shovel"))),
+            6.0,
+            "the dirt the shovel's own 6.0 wears"
+        );
+        // the VERDICT (the divisor's own gate)
+        assert!(DigState::correct_tool(stone, Some(pick)), "the pickaxe the stone harvests");
+        assert!(!DigState::correct_tool(stone, None), "the bare hand the stone refuses");
+        assert!(
+            !DigState::correct_tool(stone, Some(wire_id("wooden_axe"))),
+            "the axe the stone's demand refuses"
+        );
+        assert!(DigState::correct_tool(crate::world::DIRT, None), "the undemanding dirt the true arm keeps");
+        // the FULL WALK (the seeded lanes: 6.0 × the haste-0 product)
+        let hasty = DigState::player_destroy_speed(true, false, Some(0), None, stone, Some(pick));
+        assert!(
+            (hasty - 6.0 * 1.2).abs() < 1e-6,
+            "the seeded walk the product wears: {}",
+            hasty
+        );
+    }
+
+    /// THE IRON PICKAXE'S OWN RATE (the end-to-end the per-tick law
+    /// wears): the stone with the pick = 6.0/1.5/30 per tick (the
+    /// divisor the correct verdict keeps), the bare hand the
+    /// 1/1.5/100 the honest refusal keeps.
+    #[test]
+    fn the_iron_pickaxe_the_stone_dig_the_rate_wears() {
+        let pick = iron_pickaxe_id();
+        // THE PICKAXE'S OWN BEAT (the /30 divisor the verdict earns)
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (1, 1, 1), 1, Some(pick), &mut world, true, false, false, false, None, None,
+        );
+        let _ = d.continue_destroy_block(
+            (1, 1, 1), 1, Some(pick), &mut world, true, false, false, false, None, None,
+        );
+        assert!(
+            (d.progress - 6.0_f32 / 1.5 / 30.0).abs() < 1e-12,
+            "the pickaxe the 6/1.5/30 rate wears: {}",
+            d.progress
+        );
+        // THE BARE HAND'S OWN BEAT (the /100 divisor the refusal wears)
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::STONE);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None,
+        );
+        let _ = d.continue_destroy_block(
+            (1, 1, 1), 1, None, &mut world, true, false, false, false, None, None,
+        );
+        assert!(
+            (d.progress - 1.0_f32 / 1.5 / 100.0).abs() < 1e-12,
+            "the bare hand the 1/1.5/100 rate wears: {}",
+            d.progress
+        );
     }
 }

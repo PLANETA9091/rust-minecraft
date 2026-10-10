@@ -651,9 +651,9 @@ impl Inventory {
 /// INCLUSIVE int law and names the item by its wire id. `None` ids (a
 /// table row outside the wire vocabulary) drop nothing — the honest
 /// absence.
-pub fn roll_drops(kind: u16, rng: &mut Lcg) -> Vec<(i32, i32)> {
+pub fn roll_drops(kind: u16, held: Option<i32>, rng: &mut Lcg) -> Vec<(i32, i32)> {
     let name = crate::world::NAME_OF[kind as usize];
-    if !crate::dig::DigState::correct_tool(kind) {
+    if !crate::dig::DigState::correct_tool(kind, held) {
         return Vec::new();
     }
     // THE HARVEST'S FAMILY GATE — the wheat ladder's age law the
@@ -1178,25 +1178,25 @@ mod tests {
     fn tool_gate_refuses_the_stone_family() {
         // the bare hand cannot harvest: the vanilla drops NOTHING
         let mut rng = Lcg::new(17);
-        assert!(roll_drops(crate::world::STONE, &mut rng).is_empty(), "stone demands the pickaxe");
-        assert!(roll_drops(crate::world::GRANITE, &mut rng).is_empty());
-        assert!(roll_drops(crate::world::DEEPSLATE, &mut rng).is_empty());
-        assert!(roll_drops(crate::world::COAL_ORE, &mut rng).is_empty());
-        assert!(roll_drops(crate::world::NETHERRACK, &mut rng).is_empty());
-        assert!(roll_drops(crate::world::BEDROCK, &mut rng).is_empty(), "bedrock's -1 hardness never harvests");
+        assert!(roll_drops(crate::world::STONE, None, &mut rng).is_empty(), "stone demands the pickaxe");
+        assert!(roll_drops(crate::world::GRANITE, None, &mut rng).is_empty());
+        assert!(roll_drops(crate::world::DEEPSLATE, None, &mut rng).is_empty());
+        assert!(roll_drops(crate::world::COAL_ORE, None, &mut rng).is_empty());
+        assert!(roll_drops(crate::world::NETHERRACK, None, &mut rng).is_empty());
+        assert!(roll_drops(crate::world::BEDROCK, None, &mut rng).is_empty(), "bedrock's -1 hardness never harvests");
     }
 
     #[test]
     fn simple_drops_speak_the_table() {
         let mut rng = Lcg::new(18);
         // dirt -> dirt; grass -> dirt; oak_log -> oak_log; sand -> sand
-        let drops = roll_drops(crate::world::DIRT, &mut rng);
+        let drops = roll_drops(crate::world::DIRT, None, &mut rng);
         assert_eq!(drops, vec![(mc_registry::item_id_by_name("dirt").unwrap(), 1)]);
-        let drops = roll_drops(crate::world::GRASS, &mut rng);
+        let drops = roll_drops(crate::world::GRASS, None, &mut rng);
         assert_eq!(drops, vec![(mc_registry::item_id_by_name("dirt").unwrap(), 1)], "the grass block drops dirt");
-        let drops = roll_drops(crate::world::LOG, &mut rng);
+        let drops = roll_drops(crate::world::LOG, None, &mut rng);
         assert_eq!(drops, vec![(mc_registry::item_id_by_name("oak_log").unwrap(), 1)]);
-        let drops = roll_drops(crate::world::SAND, &mut rng);
+        let drops = roll_drops(crate::world::SAND, None, &mut rng);
         assert_eq!(drops, vec![(mc_registry::item_id_by_name("sand").unwrap(), 1)]);
     }
 
@@ -1206,9 +1206,9 @@ mod tests {
         // the vanilla drops NOTHING (the pickaxe tables ride a future
         // round; the generated table carries the counts verbatim)
         let mut rng = Lcg::new(19);
-        assert!(roll_drops(crate::world::COPPER_ORE, &mut rng).is_empty());
-        assert!(roll_drops(crate::world::REDSTONE_ORE, &mut rng).is_empty());
-        assert!(roll_drops(crate::world::DIAMOND_ORE, &mut rng).is_empty());
+        assert!(roll_drops(crate::world::COPPER_ORE, None, &mut rng).is_empty());
+        assert!(roll_drops(crate::world::REDSTONE_ORE, None, &mut rng).is_empty());
+        assert!(roll_drops(crate::world::DIAMOND_ORE, None, &mut rng).is_empty());
         // the generated table's own rows: the INCLUSIVE count spans the
         // loot JSONs speak (javap Mth.nextInt)
         let pools = mc_registry::generated::block_drops::drops("copper_ore").unwrap();
@@ -1232,7 +1232,7 @@ mod tests {
         let mut gravel = 0;
         let mut rng = Lcg::new(23);
         for _ in 0..4096 {
-            let drops = roll_drops(crate::world::GRAVEL, &mut rng);
+            let drops = roll_drops(crate::world::GRAVEL, None, &mut rng);
             assert_eq!(drops.len(), 1, "one case wins the pool");
             if drops[0].0 == mc_registry::item_id_by_name("flint").unwrap() {
                 flint += 1;
@@ -1261,7 +1261,7 @@ mod tests {
         let stick_id = mc_registry::item_id_by_name("stick").unwrap();
         let apple_id = mc_registry::item_id_by_name("apple").unwrap();
         for _ in 0..8192 {
-            let drops = roll_drops(crate::world::LEAVES, &mut rng);
+            let drops = roll_drops(crate::world::LEAVES, None, &mut rng);
             let mut lanes = 0;
             if drops.iter().any(|d| d.0 == sap_id) {
                 sapling += 1;
@@ -1292,7 +1292,7 @@ mod tests {
     fn leaf_litter_drops_itself() {
         // the default state's segment_amount=1 gate (the probe's own
         // verdict) — the set_count 1 branch matches
-        let drops = roll_drops(crate::world::LEAF_LITTER, &mut Lcg::new(25));
+        let drops = roll_drops(crate::world::LEAF_LITTER, None, &mut Lcg::new(25));
         assert_eq!(drops, vec![(mc_registry::item_id_by_name("leaf_litter").unwrap(), 1)]);
     }
 
@@ -1395,7 +1395,7 @@ mod tests {
             // the FAMILY GATE the roll_drops' own early verdict rides —
             // the whole ladder the flat DROPS_WHEAT row's blanket the
             // arm replaces
-            let drops = roll_drops(stage, &mut rng);
+            let drops = roll_drops(stage, None, &mut rng);
             assert_eq!(drops, vec![(seeds, 1)], "stage kind {stage}: the bare seed");
             // the zero-draw law: the probe's next draw the arm's own
             // untouched stream answers (a draw the mirror would split)
@@ -1419,10 +1419,10 @@ mod tests {
         // table keeps, the stone's tool refusal the gate's own verdict
         let mut rng = Lcg::new(9);
         assert_eq!(
-            roll_drops(crate::world::DIRT, &mut rng),
+            roll_drops(crate::world::DIRT, None, &mut rng),
             vec![(mc_registry::item_id_by_name("dirt").unwrap(), 1)],
             "the generic table the non-crop kinds keep"
         );
-        assert!(roll_drops(crate::world::STONE, &mut Lcg::new(9)).is_empty());
+        assert!(roll_drops(crate::world::STONE, None, &mut Lcg::new(9)).is_empty());
     }
 }
