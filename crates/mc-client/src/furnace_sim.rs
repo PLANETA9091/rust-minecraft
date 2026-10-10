@@ -219,6 +219,107 @@ fn burn_items(slots: &mut [(i32, i32)], input: (i32, i32), assembled: (i32, i32)
     }
 }
 
+/// THE FURNACE'S OWN ANIMATE-TICK VERDICT (javap `FurnaceBlock.animateTick`
+/// pcs 0-2xx over the 26.2 client.jar — the LIT state's own client walk
+/// the crackle + the front-face ember pair speak): the sound gate's
+/// verdict + the particle position's three offsets (the d5/d6/d7
+/// dstore lanes the bytecode banks).
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct FurnaceAnimateTick {
+    /// The `nextDouble() < 0.1` gate's verdict (draw 1) — the
+    /// playLocalSound arm the BLOCKS source speaks at the block's own
+    /// bottom-center anchor (x + 0.5, y, z + 0.5), volume 1.0, pitch
+    /// 1.0 (the fconst_1 pair pc 73-74 keeps), distanceDelay false.
+    pub crackle: bool,
+    /// d5 — the lateral x offset: the axis-X facing the
+    /// `getStepX() * 0.52` fold speaks, the lateral draw d4 the rest
+    /// answers.
+    pub dx: f64,
+    /// d6 — the height offset (draw 3: `nextDouble() * 6.0 / 16.0`).
+    pub dy: f64,
+    /// d7 — the lateral z offset: the axis-Z facing the
+    /// `getStepZ() * 0.52` fold speaks, the lateral draw d4 the rest
+    /// answers.
+    pub dz: f64,
+}
+
+/// THE FURNACE'S OWN ANIMATE TICK (javap FurnaceBlock.animateTick over
+/// the 26.2 client.jar, the walk's own draw order kept — draw 1 the
+/// sound gate pc 46-56, draw 2 the lateral d4 = r × 0.6 − 0.3
+/// pc 103-118, draw 3 the height d6 = r × 6.0 / 16.0 pc 145-160; the
+/// two axis arms the facing's own vocabulary decodes: pc 120-143
+/// `axis == X ? getStepX() * 0.52 : d4` into d5, pc 162-185
+/// `axis == Z ? getStepZ() * 0.52 : d4` into d7; the byte law the
+/// no-opinion 0 the north default the mesher's front-tile law keeps):
+/// * facing 2 east — axis X, stepX +1: dx = +0.52, dz = d4
+/// * facing 4 west — axis X, stepX −1: dx = −0.52, dz = d4
+/// * facing 3 south — axis Z, stepZ +1: dz = +0.52, dx = d4
+/// * facing 1 north / 0 the no-opinion — axis Z, stepZ −1:
+///   dz = −0.52, dx = d4
+///
+/// The caller spends the three draws ONLY for the LIT kind (the gate
+/// pc 13-16 `ifne 17 / return` the unlit never passes — the sampled
+/// air the walk never reaches), and the draws ride even when the
+/// sound gate fails (the smoke/flame pair the tail always speaks —
+/// the particles the level's addParticle walk spawns at
+/// (x + 0.5 + d5, y + d6, z + 0.5 + d7), SMOKE first, FLAME second,
+/// the zero velocity args the dconst_0 trio keeps).
+pub fn animate_tick(facing: u8, draw1: f64, draw2: f64, draw3: f64) -> FurnaceAnimateTick {
+    let lateral = draw2 * 0.6 - 0.3;
+    let (dx, dz) = match facing {
+        2 => (0.52, lateral),
+        4 => (-0.52, lateral),
+        3 => (lateral, 0.52),
+        // 1 north + the 0 no-opinion: the mesher's own default arm
+        _ => (lateral, -0.52),
+    };
+    FurnaceAnimateTick {
+        crackle: draw1 < 0.1,
+        dx,
+        dy: draw3 * 6.0 / 16.0,
+        dz,
+    }
+}
+
+/// THE LEVEL'S OWN ANIMATE-TICK SAMPLER (javap ClientLevel.animateTick
+/// pcs 0-71 + doAnimateTick pcs 0-92 over the 26.2 client.jar): the
+/// 667-iteration loop the TWO ranges wears — per iteration the first
+/// doAnimateTick the `bipush 16` arm speaks, the second the
+/// `bipush 32` — each the `pos + nextInt(range) − nextInt(range)`
+/// fold per axis draws (the SIX draws per sample the level's own
+/// stream spends — the `getfield random` pair pc 1-19/27-45/54-72 the
+/// bytecode keeps), the sampled cell the visitor answers. The call
+/// order the bytecode keeps: the range-16 arm FIRST, the range-32 arm
+/// SECOND, per iteration; the sampled state the block's own
+/// animateTick the caller's furnace arm answers (the fluid tail the
+/// client's vocabulary never hears — no fluid animate-tick voice
+/// speaks yet).
+///
+/// The generator law the replay policy keeps: the sampler's positions
+/// ride the LEVEL random analog (vanilla `ClientLevel.random` — the
+/// `level_ambient_rng` lane the client names), the block's own three
+/// draws the `animate_rng` lane the thread-local random analog
+/// carries (vanilla `RandomSource.createThreadLocalInstance()` the
+/// animateTick prologue creates fresh per tick — non-replayable by
+/// nature, the persistent seeded LCG the stand-in the house law
+/// speaks).
+pub fn animate_sample_walk(
+    px: i32,
+    py: i32,
+    pz: i32,
+    rng: &mut crate::drops::Lcg,
+    mut visit: impl FnMut(i32, i32, i32),
+) {
+    for _ in 0..667 {
+        for range in [16u64, 32] {
+            let sx = px + rng.next_int(range) - rng.next_int(range);
+            let sy = py + rng.next_int(range) - rng.next_int(range);
+            let sz = pz + rng.next_int(range) - rng.next_int(range);
+            visit(sx, sy, sz);
+        }
+    }
+}
+
 /// THE SIM'S OWN PIN WALKS (the tables the extractor generated, the
 /// tick the javap walk serves — the arcs the bytecode's own order
 /// keeps).
@@ -506,4 +607,94 @@ mod tests {
         assert_eq!(data[DATA_COOKING_PROGRESS], 0, "the timer the refusal zeroes");
     }
 
+    /// THE ANIMATE TICK'S OWN LAWS (javap FurnaceBlock.animateTick over
+    /// the 26.2 jar — the sound gate, the two axis arms, the exact
+    /// folds, the draw order the caller's three-draw spend keeps).
+    #[test]
+    fn the_animate_tick_the_gate_the_axis_arms_wear() {
+        // THE SOUND GATE (pc 46-56: dcmpg 0.1, ifge 79 — the draw
+        // BELOW 0.1 the playLocalSound arm speaks, the 0.1 itself the
+        // `>=` arm keeps)
+        assert!(animate_tick(2, 0.05, 0.5, 1.0).crackle, "the 0.05 the gate passes");
+        assert!(!animate_tick(2, 0.1, 0.5, 1.0).crackle, "the 0.1 itself refuses");
+        assert!(!animate_tick(2, 0.95, 0.5, 1.0).crackle, "the high draw refuses");
+        assert!(
+            animate_tick(2, 0.09999999999999995, 0.5, 1.0).crackle,
+            "the hair below the gate passes"
+        );
+        // THE EAST ARM (pc 120-143: axis X, stepX +1 — d5 = +0.52,
+        // d7 = d4 the lateral fold keeps)
+        let v = animate_tick(2, 0.05, 0.5, 1.0);
+        assert_eq!(v.dx, 0.52, "the east front +X the stepX fold speaks");
+        assert_eq!(v.dz, 0.0, "the lateral 0.5*0.6-0.3 the d4 fold keeps");
+        assert_eq!(v.dy, 0.375, "the height 1.0*6/16 the d6 fold keeps");
+        // THE WEST ARM (stepX −1)
+        let v = animate_tick(4, 0.05, 0.25, 0.5);
+        assert_eq!(v.dx, -0.52, "the west front −X");
+        assert_eq!(v.dz, 0.25 * 0.6 - 0.3, "the lateral the d4 fold wears");
+        assert_eq!(v.dy, 0.5 * 6.0 / 16.0, "the height the d6 fold wears");
+        // THE SOUTH ARM (pc 162-185: axis Z, stepZ +1 — d7 = +0.52,
+        // d5 = d4 the lateral rides x)
+        let v = animate_tick(3, 0.05, 1.0, 0.0);
+        assert_eq!(v.dz, 0.52, "the south front +Z");
+        assert_eq!(v.dx, 0.3, "the lateral 1.0*0.6-0.3 rides x");
+        assert_eq!(v.dy, 0.0, "the height 0.0 the d6 fold keeps");
+        // THE NORTH ARM (stepZ −1) + THE 0 NO-OPINION (the mesher's
+        // own default the same north answers)
+        for facing in [1u8, 0] {
+            let v = animate_tick(facing, 0.05, 0.75, 0.25);
+            assert_eq!(v.dz, -0.52, "the north front −Z (facing {facing})");
+            assert_eq!(v.dx, 0.75 * 0.6 - 0.3, "the lateral rides x (facing {facing})");
+        }
+        // THE DRAWS THE GATE FAIL NEVER SKIPS (the caller's three-draw
+        // spend the LIT kind alone gates — the verdict shape the
+        // failing gate's own offsets keep: the folds speak regardless)
+        let passed = animate_tick(2, 0.05, 0.5, 1.0);
+        let failed = animate_tick(2, 0.9, 0.5, 1.0);
+        assert_eq!(passed.dx, failed.dx, "the offsets the gate never gates");
+        assert_eq!(passed.dz, failed.dz, "the lateral the gate never gates");
+        assert_eq!(passed.dy, failed.dy, "the height the gate never gates");
+    }
+
+    /// THE SAMPLER'S OWN LAWS (javap ClientLevel.animateTick
+    /// pcs 0-71 — the 667 iterations, the two arms' order, the fold
+    /// the level stream's own draws keep, the determinism the seed
+    /// replays).
+    #[test]
+    fn the_sampler_the_counts_the_order_the_fold_wears() {
+        // THE COUNT + THE ORDER (the 667×2 samples the walk visits;
+        // the FIRST visit the range-16 arm speaks, the SECOND the
+        // range-32 — the exact fold the test's own stream mirrors:
+        // the same LCG walked by hand answers visit-for-visit)
+        let mut walked: Vec<(i32, i32, i32)> = Vec::new();
+        animate_sample_walk(10, 20, 30, &mut crate::drops::Lcg::new(7), |x, y, z| {
+            walked.push((x, y, z));
+        });
+        assert_eq!(walked.len(), 1334, "the 667×2 the loop banks");
+        let mut mirror = crate::drops::Lcg::new(7);
+        for i in 0..667 {
+            for range in [16u64, 32] {
+                let ex = 10 + mirror.next_int(range) - mirror.next_int(range);
+                let ey = 20 + mirror.next_int(range) - mirror.next_int(range);
+                let ez = 30 + mirror.next_int(range) - mirror.next_int(range);
+                assert_eq!(
+                    walked[i * 2 + if range == 16 { 0 } else { 1 }],
+                    (ex, ey, ez),
+                    "the visit the stream's own fold computes (iteration {i}, range {range})"
+                );
+            }
+        }
+        // THE RANGES' OWN SPREAD (the 16 arm never walks past ±15 —
+        // the |Δ| bound every odd-positioned visit keeps; the 32 arm
+        // the mirror walk above already answers visit-for-visit)
+        for (x, y, z) in walked.iter().step_by(2) {
+            assert!((x - 10).abs() <= 15 && (y - 20).abs() <= 15 && (z - 30).abs() <= 15);
+        }
+        // THE DETERMINISM (the same seed the same 1334 walks)
+        let mut again: Vec<(i32, i32, i32)> = Vec::new();
+        animate_sample_walk(10, 20, 30, &mut crate::drops::Lcg::new(7), |x, y, z| {
+            again.push((x, y, z));
+        });
+        assert_eq!(walked, again, "the seed the walk replays");
+    }
 }

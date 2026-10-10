@@ -9041,6 +9041,111 @@ impl App {
                 }
             }
         }
+        // THE LEVEL'S OWN ANIMATE TICK (javap Minecraft.tick's
+        // "animateTick" section — the `!pause && isLevelRunningNormally`
+        // gate pc 452-463 the player's block pos the getBlockX/Y/Z trio
+        // feeds, ClientLevel.animateTick(int,int,int) the 667×2 sampler
+        // the doAnimateTick pairs speak, FurnaceBlock.animateTick the
+        // FURNACE_LIT state's own walk the crackle + the front-face
+        // ember pair answers). The body's block cell the vanilla
+        // player's own center keeps (the headless scenes the camera's
+        // own cell proxies — the placement lane's convention), the
+        // clock's pause the vanilla pause gate answers. The verdicts
+        // the tick banks LOCALLY first (the borrow the apply walk
+        // ends): the crackles the positioned voice plays at the block's
+        // own bottom-center anchor, the embers the smoke-then-flame
+        // order the level's addParticle pair keeps.
+        if !self.clock_paused {
+            let body_cell = self
+                .body
+                .as_ref()
+                .map(|b| (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32))
+                .or_else(|| {
+                    let cam = if self.world_is_network {
+                        self.net_camera.as_ref()
+                    } else {
+                        self.offline_camera.as_ref()
+                    };
+                    cam.map(|c| {
+                        (
+                            c.pos.x.floor() as i32,
+                            c.pos.y.floor() as i32,
+                            c.pos.z.floor() as i32,
+                        )
+                    })
+                });
+            if let (Some(world), Some((bx, by, bz))) =
+                (if self.world_is_network {
+                    self.net_world.as_ref()
+                } else {
+                    self.offline_world.as_ref()
+                }, body_cell)
+            {
+                // the ear the positioned voices hoist before the walk
+                // (the campfire lane's own shape)
+                let ear = self.body.as_ref().map(|b| (b.x, b.y + b.eye_height(), b.z));
+                let yaw = self.listener_yaw();
+                let mut crackle_cells: Vec<(i32, i32, i32)> = Vec::new();
+                let mut embers: Vec<(f64, f64, f64)> = Vec::new();
+                let animate = &mut self.ambient_rng;
+                let level = &mut self.level_ambient_rng;
+                crate::furnace_sim::animate_sample_walk(bx, by, bz, level, |sx, sy, sz| {
+                    // THE FURNACE'S OWN ARM (the LIT kind alone the
+                    // block walk answers — the unlit kind, the air,
+                    // every other block the sampled state the walk
+                    // never spends the three draws on)
+                    if world.get(sx, sy, sz) != crate::world::FURNACE_LIT {
+                        return;
+                    }
+                    let facing = world.variant(sx, sy, sz);
+                    let v = crate::furnace_sim::animate_tick(
+                        facing,
+                        animate.next_f64(),
+                        animate.next_f64(),
+                        animate.next_f64(),
+                    );
+                    if v.crackle {
+                        crackle_cells.push((sx, sy, sz));
+                    }
+                    embers.push((
+                        sx as f64 + 0.5 + v.dx,
+                        sy as f64 + v.dy,
+                        sz as f64 + 0.5 + v.dz,
+                    ));
+                });
+                for (x, y, z) in crackle_cells {
+                    // THE PLAYLOCALSOUND WALK (pc 60-76: the (d0, d1,
+                    // d2) anchor = (x + 0.5, y, z + 0.5), the
+                    // FURNACE_FIRE_CRACKLE event the BLOCKS source
+                    // speaks, the fconst_1 volume/pitch pair, the
+                    // distanceDelay false — the positioned voice the
+                    // engine's distance law folds)
+                    let (tx, ty, tz) = (x as f64 + 0.5, y as f64, z as f64 + 0.5);
+                    self.sounds.play_voice_at_pan(
+                        self.frame,
+                        "block.furnace.fire_crackle",
+                        1.0,
+                        1.0,
+                        ear_distance(ear, tx, ty, tz),
+                        ear_pan(ear, yaw, tx, ty, tz),
+                    );
+                }
+                for (px, py, pz) in embers {
+                    // THE SMOKE-THEN-FLAME ORDER (pc 187-232: the
+                    // SMOKE addParticle FIRST, the FLAME SECOND — the
+                    // zero velocity args the dconst_0 trio keeps, the
+                    // provider chains the level stream's own draws
+                    // ride)
+                    let smoke = crate::particles::shoot_smoke_puff(
+                        px, py, pz, 0.0, 0.0, 0.0, level,
+                    );
+                    self.particles.push(smoke);
+                    let flame =
+                        crate::particles::torch_flame(px, py, pz, level);
+                    self.particles.push(flame);
+                }
+            }
+        }
         match self.screen {
             ScreenKind::Loading => {
                 self.boot_progress += 0.05;
@@ -51603,6 +51708,17 @@ mod tests {
         // number never serves; the drain the 1/tick walk the test's
         // window never exhausts)
         app.wardens[0].sniff_cooldown = i32::MAX;
+        // THE TOUCH LANE THE TEST ISOLATES (the standing TOUCH_COOLDOWN
+        // memory the doPush's own gate refuses — the investigate
+        // jitter's draws the LEVEL stream carries shifted when the
+        // animate-tick sampler landed (the same stream the six
+        // draws-per-sample ride — javap ClientLevel.doAnimateTick's
+        // `getfield random` pair), the warden's walk target the
+        // shifted jitter banks now crosses the retreating body's box
+        // mid-walk: the vanilla touch lane's own +35 the isolation
+        // keeps OUT of the hearing lane's pins, the law the drain the
+        // window never exhausts serves)
+        app.wardens[0].touch_cooldown = i32::MAX;
         // THE EMERGE WINDOW THE TEST SKIPS (the finalizeSpawn's own
         // arm the summoned body wears — the isDiggingOrEmerging() gate
         // the hearing the window REFUSES; the steady-state body the
@@ -53392,12 +53508,24 @@ mod tests {
             app.sculk_catalysts[0].cursors[0].pos, (6, 32, 0),
             "the death inside the sculk cell the cursor banks"
         );
-        // TICK 1 (the full update the sculk law serves): the growth arm
-        // the far cursor wears (the dist 6 the STRICT 16 bound refuses
-        // the radius, the above air + the empty box the canPlace keeps,
-        // the nextInt(10) < 15 draw the placement wears ALWAYS — the
-        // state draw the kind answers), the charge the cost drops to 5
+        // THE DRAIN'S OWN GATE (javap attemptUseCharge's head — the
+        // `nextInt(CHARGE_DECAY_RATE) != 0` draw the charge walk's own
+        // skip keeps): the animate-tick sampler's own six draws per
+        // sample the LEVEL stream carries shifted the drain's position
+        // in the stream (javap ClientLevel.doAnimateTick's
+        // `getfield random` pair — the bodyful app's tick the sampler
+        // spends), the first passing tick the walk's own determinism
+        // banks — the loop the gate's 1-in-10 rolls (the countdown
+        // ticks the zero-draw early return keeps, the full walks the
+        // gate alone rolls), the growth the window never misses
         app.update();
+        let mut growth_lag = 1usize;
+        while app.sculk_growth_cells.is_empty() {
+            growth_lag += 1;
+            assert!(growth_lag <= 40, "the gate the window passes");
+            app.update();
+        }
+        let growth_frame = walk_frame + growth_lag as u64;
         assert_eq!(
             app.sculk_growth_cells,
             vec![(6, 33, 0, false)],
@@ -53421,7 +53549,7 @@ mod tests {
             .expect("the growth the record banks");
         assert_eq!(
             *record,
-            format!("sculk_growth @{} x6.500000 y33.500000 z0.500000 sensor", walk_frame + 1),
+            format!("sculk_growth @{} x6.500000 y33.500000 z0.500000 sensor", growth_frame),
             "the growth record the walk's own frame wears"
         );
         // THE CURSOR (the charge the cost drops, the facings the sculk
@@ -53440,7 +53568,7 @@ mod tests {
                 .sounds
                 .events
                 .iter()
-                .find(|e| e.starts_with(&format!("block.sculk_sensor.place @{}", walk_frame + 1)))
+                .find(|e| e.starts_with(&format!("block.sculk_sensor.place @{}", growth_frame)))
                 .expect("the growth voice the sensor key wears");
             assert!(
                 voice.contains(" p1.000000"),
@@ -84155,6 +84283,154 @@ cow_sound_variant: None,
         assert_eq!(app.furnace_slots[38], (mc_registry::item_id_by_name("iron_ingot").unwrap(), 1), "the hotbar's tail took it");
         assert_eq!(app.inventory.items[8], (mc_registry::item_id_by_name("iron_ingot").unwrap(), 1), "the write-through rode the hotbar's tail");
         app.on_shift_down(false);
+    }
+
+    /// THE FURNACE'S OWN ANIMATE-TICK LANE (the crackle + the ember
+    /// pair the level sampler speaks — javap 26.2 Minecraft.tick's
+    /// "animateTick" section + ClientLevel.animateTick/doAnimateTick +
+    /// FurnaceBlock.animateTick): the lit furnace the sampler hears,
+    /// the 0.1 gate the seeded stream rolls, the positioned voice the
+    /// fixed 1.0/1.0 fold speaks, the smoke-then-flame pair the
+    /// front-face offsets place.
+    #[test]
+    fn the_furnace_the_crackle_the_embers_the_sampler_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let furnace_id = mc_registry::item_id_by_name("furnace").unwrap();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE HEADLESS CAMERA (the body none stands — the camera's own
+        // cell the sampler center proxies, the placement lane's own
+        // convention)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        app.inventory.items[0] = (furnace_id, 1);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the placement consumed");
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(c, top, c),
+            crate::world::FURNACE,
+            "the furnace the placement lands"
+        );
+        // THE FACING THE PLACEMENT STAMPED (the ember's front face the
+        // axis term reads — the byte the set_variant walk banked)
+        let facing = app.offline_world.as_ref().unwrap().variant(c, top, c);
+        // THE LIT STAMP (the kind the sim's flip would wear — the
+        // animate walk the LIT cell alone answers)
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(c, top, c, crate::world::FURNACE_LIT);
+        // THE WALK (the ticks the sampler spends — ~0.025 visits/tick
+        // the single furnace the two ranges' cells speak, the seeded
+        // streams the visits answer deterministically)
+        for _ in 0..600 {
+            app.update();
+        }
+        // THE CRACKLES (the gate's 10% the visits roll — the event
+        // the log speaks, the fixed 1.0/1.0 fold the distance-zero ear
+        // (no body) the v1.000000 keeps, the weighted file pick the
+        // engine's own LCG banks)
+        let crackles: Vec<&String> = app
+            .sounds
+            .events
+            .iter()
+            .filter(|e| e.starts_with("block.furnace.fire_crackle "))
+            .collect();
+        assert!(
+            !crackles.is_empty(),
+            "the lit furnace the sampler hears: {} crackles over 600 ticks",
+            crackles.len()
+        );
+        for line in &crackles {
+            assert!(
+                line.contains(" v1.000000 p1.000000"),
+                "the fixed fold the volume/pitch pair keeps: {line}"
+            );
+        }
+        // THE UNLIT WORLD'S OWN SILENCE (the gate the unlit kind never
+        // passes — a fresh scene's unlit furnace the sampler hears
+        // NOTHING from)
+        let mut cold = App::new(3);
+        cold.enter_world();
+        cold.inventory.items[0] = (furnace_id, 1);
+        cold.hotbar_slots = cold.inventory.hotbar();
+        let cold_top = cold.spawn_y;
+        let cold_c = cold.offline_world.as_ref().unwrap().size_blocks() / 2;
+        cold.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(
+                cold_c as f32 + 0.5,
+                cold_top as f32 + 4.0,
+                cold_c as f32 + 0.5,
+            ),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(cold.on_right_press(0, 0), "the cold placement consumed");
+        assert_eq!(
+            cold.offline_world.as_ref().unwrap().get(cold_c, cold_top, cold_c),
+            crate::world::FURNACE,
+            "the unlit kind the placement wears"
+        );
+        for _ in 0..600 {
+            cold.update();
+        }
+        assert!(
+            cold.sounds
+                .events
+                .iter()
+                .all(|e| !e.starts_with("block.furnace.fire_crackle ")),
+            "the unlit furnace the walk never hears"
+        );
+        assert!(
+            cold.particles
+                .iter()
+                .all(|p| !matches!(p.kind, crate::particles::ParticleKind::Flame)),
+            "the unlit furnace no flame speaks"
+        );
+        // THE EMBERS (the smoke-then-flame pair the visits speak — the
+        // front-face anchor the axis term names, the lateral draw the
+        // ±0.3 band the d4 fold keeps, the height the [0, 0.375) band
+        // the d6 fold keeps; the drift the first ticks' tiny walk
+        // wears the bands absorb)
+        let (adx, adz) = match facing {
+            2 => (0.52, 0.0),
+            4 => (-0.52, 0.0),
+            3 => (0.0, 0.52),
+            _ => (0.0, -0.52),
+        };
+        let ax = c as f64 + 0.5 + adx;
+        let az = c as f64 + 0.5 + adz;
+        let near_front = |p: &crate::particles::Particle| {
+            (p.x - ax).abs() <= 0.45
+                && (p.z - az).abs() <= 0.45
+                && p.y >= top as f64
+                && p.y <= top as f64 + 0.45
+        };
+        let flames: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Flame))
+            .collect();
+        let smokes: Vec<&crate::particles::Particle> = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::Smoke))
+            .collect();
+        assert!(
+            flames.iter().any(|p| near_front(p)),
+            "the flame the front face wears (facing {facing}, anchor ({ax}, {az})): {:?}",
+            flames.iter().map(|p| (p.x, p.y, p.z)).take(6).collect::<Vec<_>>()
+        );
+        assert!(
+            smokes.iter().any(|p| near_front(p)),
+            "the smoke the front face wears (facing {facing}): {} smokes alive",
+            smokes.len()
+        );
     }
 
     /// THE FALL DAMAGE ARC (the hurt round's own headline): the body
