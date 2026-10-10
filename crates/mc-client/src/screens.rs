@@ -29669,6 +29669,11 @@ impl App {
         // offline guard the networked world's server-owned scheduler
         // answers)
         self.schedule_falling_check_block_update(cell.0, cell.1, cell.2);
+        // THE PLACEMENT CONTEXT'S OWN LOOK (the furnace facing's own
+        // input — the read rides BEFORE the mutable prediction borrow,
+        // the camera's own yaw the wire_angles conversion's raw form
+        // keeps)
+        let cam_yaw = self.world_camera().yaw;
         // THE OFFLINE PREDICTION: the voxel lands in the App's own
         // terrain and the mesh re-speaks (the networked world's
         // placement rides the server's chunk refresh — no local edit)
@@ -29701,6 +29706,27 @@ impl App {
                 }
             }
             world.set(cell.0, cell.1, cell.2, block);
+            // THE FURNACE'S OWN PLACEMENT FACING (javap 26.2
+            // AbstractFurnaceBlock.getStateForPlacement pcs 0-20 — the
+            // FACING the placement state's own setValue wears): the
+            // look the getDirection decode answers, the opposite the
+            // front-toward-the-player flip speaks, the byte the
+            // variant layer's furnace_variant vocabulary keeps — the
+            // offline world's own stamp the lazy layer banks, the
+            // mesher's front-tile walk the byte consumes. THE UNLIT
+            // KIND ALONE (the item's own pairing the placeable lookup
+            // answers — the LIT kind the lit propagation's own walk
+            // wears, never the placement). The networked lane the
+            // server's own state rides (the guard the whole block
+            // keeps), the materialize walk the facing byte re-stamps.
+            if block == crate::world::FURNACE {
+                world.set_variant(
+                    cell.0,
+                    cell.1,
+                    cell.2,
+                    crate::world::furnace_facing_byte(cam_yaw),
+                );
+            }
             // THE PLACEMENT'S OWN CHAIN (javap BlockItem.placeBlock pc
             // 9 `bipush 11` — the setBlock the UPDATE_NEIGHBORS bit the
             // broadcast keeps): the REPLACED cell the placement's own
@@ -83386,6 +83412,101 @@ cow_sound_variant: None,
         assert!(app.on_right_press(0, 0), "the third place spoke");
         assert_eq!(app.inventory.items[0], (0, 0), "the empty slot cleared");
         assert!(!app.on_right_press(0, 0), "the empty selection never places");
+    }
+
+    /// THE FURNACE'S OWN PLACEMENT FACING (the dev-24 GUI lane's own
+    /// block the world's placement walk finally aims — javap 26.2
+    /// AbstractFurnaceBlock.getStateForPlacement the FACING the
+    /// placement state's own setValue wears): the south look the
+    /// north byte 1 answers, the north look the south 3, the fresh
+    /// cell the lazy variant layer banks, the non-furnace the byte
+    /// never earns.
+    #[test]
+    fn the_furnace_the_placement_facing_the_look_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let furnace_id = mc_registry::item_id_by_name("furnace").unwrap();
+        app.inventory.items[0] = (furnace_id, 4);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE LAYER'S OWN ABSENCE (the offline scene the lazy
+        // allocation serves — the furnace's own byte the first
+        // stamp banks)
+        assert!(
+            app.offline_world.as_ref().unwrap().variants.is_none(),
+            "the offline scene carries no variant layer yet"
+        );
+        // THE SOUTH LOOK (cam.yaw = PI — the vanilla yaw 0 the
+        // wire_angles conversion speaks): the getDirection SOUTH
+        // verdict, the opposite the front's NORTH byte 1 wears
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(
+            app.on_right_press(0, 0),
+            "the furnace placement consumed the press"
+        );
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top, c), crate::world::FURNACE, "the furnace landed");
+            assert_eq!(
+                w.variant(c, top, c),
+                1,
+                "the south look faces the front north"
+            );
+            assert!(
+                w.variants.is_some(),
+                "the furnace's own byte the lazy layer banks"
+            );
+            assert_eq!(
+                w.variant(c + 1, top, c),
+                0,
+                "the neighbor the no-opinion answer keeps"
+            );
+        }
+        // THE NORTH LOOK (cam.yaw 0 — the vanilla -180): the stack's
+        // next cell the SOUTH byte 3 wears — the camera the +5 lift
+        // the clip's own 4.5 range keeps (the furnace's top face the
+        // 4.0 read answers; the +6 the range never speaks)
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 5.0, c as f32 + 0.5),
+            yaw: 0.0,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the second furnace placement spoke");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(
+                w.get(c, top + 1, c),
+                crate::world::FURNACE,
+                "the second furnace landed"
+            );
+            assert_eq!(
+                w.variant(c, top + 1, c),
+                3,
+                "the north look faces the front south"
+            );
+        }
+        // THE NON-FURNACE STAMP'S OWN REFUSAL (the dirt the byte
+        // never earns — the no-opinion answer the fresh cell keeps,
+        // the layer the allocation the furnace stamps already paid)
+        let dirt_id = mc_registry::item_id_by_name("dirt").unwrap();
+        app.inventory.items[0] = (dirt_id, 2);
+        app.hotbar_slots = app.inventory.hotbar();
+        assert!(app.on_right_press(0, 0), "the dirt placement spoke");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            assert_eq!(w.get(c, top + 2, c), crate::world::DIRT, "the dirt landed");
+            assert_eq!(
+                w.variant(c, top + 2, c),
+                0,
+                "the dirt cell the facing byte never earns"
+            );
+        }
     }
 
     /// THE FALL DAMAGE ARC (the hurt round's own headline): the body

@@ -967,6 +967,50 @@ pub fn is_replaceable(id: u16) -> bool {
     is_tuft(id) || is_double_plant(id)
 }
 
+/// THE HORIZONTAL LOOK TABLE (javap 26.2 Direction clinit — the
+/// BY_2D_DATA rows the data2d sort keeps: the ctor rows' own
+/// literals speak SOUTH data2d 0, WEST 1, NORTH 2, EAST 3, the
+/// `lambda$static$4` comparator the values() sort serves). The
+/// values the [`crate::world_view::furnace_variant`] decode's own
+/// byte vocabulary wears (north 1, east 2, south 3, west 4).
+const FACING_BY_2D: [u8; 4] = [3, 4, 1, 2]; // south, west, north, east
+
+/// THE LOOK-YAW'S OWN DECODE (javap 26.2 Direction.fromYRot pcs 0-17
+/// — the `Mth.floor(yaw / 90.0 + 0.5) & 3` walk the from2DDataValue
+/// read serves; Entity.getDirection pcs 0-8 the
+/// `fromYRot((double) getYRot())` f2d widen wears). The &3 walk the
+/// negative floor results the same two's-complement answer keeps —
+/// from2DDataValue's own `Mth.abs(i % 4)` the dead shape there wears
+/// (fromYRot's &3 the input 0..3 already bounds; the two folds every
+/// int the same row answers). The return the FACING_BY_2D row's own
+/// index speaks: 0 south, 1 west, 2 north, 3 east.
+pub fn direction_index_from_y_rot(yaw_degrees: f64) -> usize {
+    ((yaw_degrees / 90.0 + 0.5).floor() as i32 & 3) as usize
+}
+
+/// THE FURNACE'S OWN PLACEMENT FACING (javap 26.2 chain —
+/// AbstractFurnaceBlock.getStateForPlacement pcs 0-20: the
+/// `defaultBlockState().setValue(FACING, ctx.getHorizontalDirection()
+/// .getOpposite())` walk the placement state's own facing speaks;
+/// UseOnContext.getHorizontalDirection pcs 0-20 the
+/// `player == null ? NORTH : player.getDirection()` answer wears;
+/// Entity.getDirection pcs 0-8 the fromYRot yaw decode keeps;
+/// getOpposite pcs 0-7 the oppositeIndex read — the horizontal four
+/// the +2 &3 flip in the BY_2D table speaks (SOUTH(3).opposite =
+/// NORTH(2), WEST(4).opposite = EAST(5), the data3d rows the ±1
+/// pairs keep)). The client's own yaw the [`crate::world_view::
+/// wire_angles`] law wears (vanilla degrees = (cam.yaw - PI) as
+/// degrees — the f32 subtract the same walk keeps): the look the
+/// fromYRot decode answers, the opposite flip the +2 index the
+/// table serves. The byte the furnace_variant vocabulary keeps —
+/// the placement lane's own stamp the [`World::set_variant`] layer
+/// banks, the mesher's front-tile walk the byte consumes.
+pub fn furnace_facing_byte(cam_yaw_radians: f32) -> u8 {
+    let vanilla_yaw = (cam_yaw_radians - std::f32::consts::PI).to_degrees();
+    let look = direction_index_from_y_rot(f64::from(vanilla_yaw));
+    FACING_BY_2D[(look + 2) & 3]
+}
+
 /// The plains' own DOUBLE PLANT FAMILY — the two-cell kinds the
 /// decorate pass plants and the placeAt walk pairs (javap the Blocks
 /// clinit pc 17244/17297: the tall_grass/large_fern chains the
@@ -2475,6 +2519,35 @@ impl World {
         let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
         let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
         vs[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z]
+    }
+
+    /// THE OFFLINE VARIANT'S OWN STAMP (the networked world's layer the
+    /// materialize walk builds wholesale — the offline world's own edits
+    /// the lazy allocation serves: the furnace's placement facing the
+    /// first byte the grid keeps, every other cell the 0 no-opinion
+    /// answer the materialize walk's fresh layer wears — the same
+    /// `vec![vec![0u8; CHUNK_X*CHUNK_Y*CHUNK_Z]; chunks_per_side²]`
+    /// layout the [`crate::world_view::materialize`] walk banks). The
+    /// bounds the [`Self::variant`] read's own walks keep — the
+    /// outside-grid cell the honest no-write carries.
+    pub fn set_variant(&mut self, wx: i32, wy: i32, wz: i32, v: u8) {
+        if wy < 0 || wy >= CHUNK_Y as i32 {
+            return;
+        }
+        let cx = wx.div_euclid(CHUNK_X as i32);
+        let cz = wz.div_euclid(CHUNK_Z as i32);
+        let Some(ci) = self.chunk_index(cx, cz) else {
+            return;
+        };
+        let layer = self.variants.get_or_insert_with(|| {
+            vec![
+                vec![0u8; CHUNK_X * CHUNK_Y * CHUNK_Z];
+                self.chunks_per_side * self.chunks_per_side
+            ]
+        });
+        let lx = wx.rem_euclid(CHUNK_X as i32) as usize;
+        let lz = wz.rem_euclid(CHUNK_Z as i32) as usize;
+        layer[ci][lx + lz * CHUNK_X + wy as usize * CHUNK_X * CHUNK_Z] = v;
     }
 
     /// The entry face's own normal offsets, indexed by the Direction
@@ -5462,6 +5535,95 @@ mod tests {
         assert_eq!(World::placeable_block("air"), None, "the void is never a stack");
         assert_eq!(World::placeable_block("diamond"), None, "an item is not a block");
         assert_eq!(World::placeable_block("water"), None, "no water item places");
+    }
+
+    #[test]
+    fn the_furnace_facing_byte_the_looks_wear() {
+        use std::f32::consts::FRAC_PI_2;
+        use std::f32::consts::PI;
+        // THE SOUTH LOOK (cam.yaw = PI — the vanilla yaw 0 the
+        // wire_angles conversion speaks): the getDirection SOUTH
+        // verdict the BY_2D_DATA[0] row keeps, the opposite the
+        // NORTH byte 1 answers — the front toward the player
+        assert_eq!(
+            furnace_facing_byte(PI),
+            1,
+            "the south look faces the front north"
+        );
+        // THE NORTH LOOK (cam.yaw 0 — the vanilla -180): the NORTH
+        // verdict the BY_2D_DATA[2] row keeps, the opposite the
+        // SOUTH byte 3 wears
+        assert_eq!(
+            furnace_facing_byte(0.0),
+            3,
+            "the north look faces the front south"
+        );
+        // THE EAST LOOK (cam.yaw FRAC_PI_2 — the vanilla -90): the
+        // EAST verdict the BY_2D_DATA[3] row keeps, the opposite the
+        // WEST byte 4 wears
+        assert_eq!(
+            furnace_facing_byte(FRAC_PI_2),
+            4,
+            "the east look faces the front west"
+        );
+        // THE WEST LOOK (cam.yaw -FRAC_PI_2 — the vanilla -270): the
+        // WEST verdict the BY_2D_DATA[1] row keeps, the opposite the
+        // EAST byte 2 wears
+        assert_eq!(
+            furnace_facing_byte(-FRAC_PI_2),
+            2,
+            "the west look faces the front east"
+        );
+        // THE WRAP (the same look the full turn carries — the floor
+        // walk the &3 the negative index answers): -PI the south
+        // look again (the forward walk the -cos(-PI) +Z speaks),
+        // 3*PI the same south look the +360 wears, -5*FRAC_PI_2 the
+        // west look the -630 floor the &3=1 row keeps
+        assert_eq!(
+            furnace_facing_byte(-PI),
+            1,
+            "the -PI look is the same south the byte keeps"
+        );
+        assert_eq!(
+            furnace_facing_byte(3.0 * PI),
+            1,
+            "the wrapped south look the same byte wears"
+        );
+        assert_eq!(
+            furnace_facing_byte(-5.0 * FRAC_PI_2),
+            2,
+            "the wrapped west look the east byte wears"
+        );
+    }
+
+    #[test]
+    fn the_variant_stamp_the_lazy_layer_the_bounds_wear() {
+        let mut w = World::new(2, 42);
+        // THE LAYER'S OWN ABSENCE (the procedural scene the offline
+        // ctor keeps — the variant read the 0 no-opinion answers)
+        assert!(w.variants.is_none(), "the fresh world carries no layer");
+        assert_eq!(w.variant(3, 4, 5), 0, "the layerless read answers none");
+        // THE STAMP'S OWN ALLOCATION (the furnace byte the lazy layer
+        // banks — the materialize walk's own layout the shapes keep)
+        w.set_variant(3, 4, 5, 2);
+        assert!(w.variants.is_some(), "the stamp the layer banks");
+        assert_eq!(w.variant(3, 4, 5), 2, "the stamped byte the read answers");
+        assert_eq!(w.variant(4, 4, 5), 0, "the neighbor the no-opinion keeps");
+        // THE OVERWRITE (the re-placement facing the byte re-speaks)
+        w.set_variant(3, 4, 5, 1);
+        assert_eq!(w.variant(3, 4, 5), 1, "the new facing the byte wears");
+        // THE BOUNDS (the outside-grid cell the honest no-write
+        // carries — the layer the allocation never pays, the panics
+        // the walks never speak)
+        w.set_variant(3, -1, 5, 3);
+        w.set_variant(3, 48, 5, 3); // CHUNK_Y the top bound refuses
+        w.set_variant(100, 4, 5, 3); // the unsent chunk the guard keeps
+        w.set_variant(3, 4, -9, 3);
+        assert_eq!(w.variant(3, 4, 5), 1, "the refused writes the byte keeps");
+        // THE BOUNDLESS READ (the outside walks the 0 no-opinion
+        // answers — the variant read's own law the same shape keeps)
+        assert_eq!(w.variant(100, 4, 5), 0, "the unsent chunk reads none");
+        assert_eq!(w.variant(3, -1, 5), 0, "the below reads none");
     }
 
     #[test]
