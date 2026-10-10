@@ -22512,6 +22512,39 @@ impl App {
                 }
                 return;
             };
+            // THE QUICK-MOVE LANE (the shift-click — the vanilla
+            // doClick's own precedence: the hasShiftDown test the
+            // pickup/split branches PRECEDES, the button byte keeps
+            // its press's own value, the cursor is NOT the lane). THE
+            // FURNACE'S OWN ROUTING the predictor wears (javap
+            // AbstractFurnaceMenu.quickMoveStack — the smeltable the
+            // INPUT takes, the fuel the FUEL, the result the
+            // inventory, the main/hotbar swap; the write-through the
+            // standard rows' projection keeps). The result cell the
+            // mayPlace gate NEVER blocks (the quick-move FROM the
+            // result the vanilla walk's own answer keeps).
+            if self.shift_down {
+                let changed = crate::world_view::predict_furnace_quick_move(
+                    &self.furnace_slots,
+                    slot as usize,
+                );
+                for (i, pair) in &changed {
+                    self.furnace_slots[*i] = *pair;
+                    if *i >= 3 {
+                        // THE WRITE-THROUGH (the projection the
+                        // inventory IS — the menu slot the inventory
+                        // cell answers)
+                        let idx = if *i < 30 {
+                            9 + *i - 3
+                        } else {
+                            *i - 30
+                        };
+                        self.inventory.items[idx] = *pair;
+                    }
+                }
+                self.hotbar_slots = self.inventory.hotbar();
+                return;
+            }
             if slot == 2 && self.furnace_carried.1 > 0 {
                 return; // the result cell the place refuses
             }
@@ -22569,13 +22602,22 @@ impl App {
             .get(slot as usize)
             .copied()
             .unwrap_or((0, 0));
-        // THE QUICK-MOVE LANE (the shift-click): the menu-specific
-        // quickMoveStack walk owns the routing server-side — the local
-        // belief stays put, the empty-delta command rides (the honest
-        // "the server's own walk answers"), the next sync's wholesale
-        // correction the truth lands. The cursor is NOT the
-        // quick-move's lane.
+        // THE QUICK-MOVE LANE (the shift-click): the FURNACE'S OWN
+        // ROUTING the predictor wears (javap AbstractFurnaceMenu.
+        // quickMoveStack — the smeltable the INPUT takes, the fuel
+        // the FUEL, the result the inventory, the main/hotbar swap) —
+        // the chest's own convention the local belief mutates with,
+        // the multi-slot deltas the command rides, the next sync's
+        // wholesale correction the truth lands. The cursor is NOT
+        // the quick-move's lane.
         if self.shift_down {
+            let changed =
+                crate::world_view::predict_furnace_quick_move(&self.furnace_slots, slot as usize);
+            for (i, pair) in &changed {
+                if (*i as usize) < self.furnace_slots.len() {
+                    self.furnace_slots[*i] = *pair;
+                }
+            }
             let _ = sink.send(crate::world_view::ContainerCommand::Click(
                 crate::world_view::ContainerClick {
                     window_id,
@@ -22583,7 +22625,7 @@ impl App {
                     slot,
                     button,
                     input: crate::world_view::ContainerInput::QuickMove,
-                    changed: Vec::new(),
+                    changed: changed.iter().map(|(i, p)| (*i as i16, *p)).collect(),
                     carried: self.live_furnace_carried,
                 },
             ));
@@ -71017,6 +71059,93 @@ cow_sound_variant: None,
         assert_eq!(app.live_furnace_carried, (0, 0), "the belief reset with the window");
     }
 
+    /// THE WIRE FURNACE'S OWN SHIFT-CLICK (the quick-move lane the
+    /// dev-24 round deferred now the chest's own convention wears:
+    /// the predictor's multi-slot deltas the command rides, the local
+    /// belief the same walk mutates — javap 26.2
+    /// AbstractFurnaceMenu.quickMoveStack).
+    #[test]
+    fn the_wire_furnace_the_shift_click_the_deltas_wear() {
+        use crate::world_view::LiveContainer;
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        let furnace = LiveContainer {
+            id: 7,
+            menu_type_id: crate::world_model::MENU_TYPE_FURNACE,
+            slots: {
+                let mut s = vec![(0i32, 0i32); 39];
+                s[0] = (raw_iron, 5); // the input slot
+                s[1] = (coal, 3); // the fuel slot
+                s[2] = (iron_ingot, 2); // the result slot
+                s[30] = (raw_iron, 5); // the hotbar's head carries the ore
+                s
+            },
+            carried: (0, 0),
+            state_id: 2,
+            bundle_rows: Vec::new(),
+            data_slots: vec![180, 200, 90, 200],
+        };
+        app.live_view_updated(air_net_world(2, 1), None, None, Some(furnace));
+        assert_eq!(app.screen, ScreenKind::Furnace);
+        // THE SHIFT-CLICK ON THE HOTBAR'S ORE (menu 30 — the smeltable
+        // arm the routing speaks: the INPUT slot the merge takes)
+        app.furnace_panel = (0, 0);
+        app.furnace_slot_rects = vec![(100, 100, 30)];
+        app.on_shift_down(true);
+        app.on_press(108, 108);
+        assert_eq!(
+            app.furnace_slots[0],
+            (raw_iron, 10),
+            "the merge the input took"
+        );
+        assert_eq!(app.furnace_slots[30], (0, 0), "the source emptied");
+        assert_eq!(app.live_furnace_carried, (0, 0), "the cursor not the lane");
+        match click_rx.try_recv().expect("the shift click rode the lane") {
+            crate::world_view::ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 7, "the window's own id");
+                assert_eq!(c.state_id, 2, "the revision rides");
+                assert_eq!(c.slot, 30, "the hotbar's own numbering");
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickMove);
+                assert_eq!(
+                    c.changed,
+                    vec![(30, (0, 0)), (0, (raw_iron, 10))],
+                    "the multi-slot belief rides the command"
+                );
+                assert_eq!(c.carried, (0, 0), "the carried lane untouched");
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+        // THE SHIFT-CLICK ON THE RESULT (menu 2 — the reverse walk the
+        // inventory takes: the main rows' first empty the merge
+        // misses, the forward range the reverse flag never names...
+        // the hotbar-first order the reverse walk speaks — the empty
+        // slot 38 the ONE-empty pass takes)
+        app.furnace_slot_rects = vec![(100, 100, 2)];
+        app.on_press(108, 108);
+        assert_eq!(app.furnace_slots[2], (0, 0), "the result emptied");
+        assert_eq!(app.furnace_slots[38], (iron_ingot, 2), "the hotbar's tail took it");
+        match click_rx.try_recv().expect("the result shift rode") {
+            crate::world_view::ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 2);
+                assert_eq!(c.input, crate::world_view::ContainerInput::QuickMove);
+                assert_eq!(
+                    c.changed,
+                    vec![(2, (0, 0)), (38, (iron_ingot, 2))],
+                    "the reverse walk the deltas speak"
+                );
+            }
+            other => panic!("expected a click, got {other:?}"),
+        }
+        app.on_shift_down(false);
+    }
+
     /// THE FURNACE'S OWN FORMULA WALK (javap AbstractFurnaceMenu +
     /// AbstractFurnaceScreen — the pinned pairs the pure fns bank):
     /// the lit pair's clamp, the zero-total's 200 fallback, the +1
@@ -83949,6 +84078,83 @@ cow_sound_variant: None,
             .filter(|&&(id, n)| id == iron_ingot && n > 0)
             .count();
         assert!(inv_had > 0, "the ingot the add-back walked home");
+    }
+
+    /// THE OFFLINE FURNACE'S OWN SHIFT-CLICK (the quick-move lane the
+    /// predictor wears — the smeltable the INPUT takes, the fuel the
+    /// FUEL, the write-through the standard rows' projection keeps,
+    /// the shift-fed furnace the sim ignites: javap 26.2
+    /// AbstractFurnaceMenu.quickMoveStack).
+    #[test]
+    fn the_furnace_the_shift_click_the_write_through_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        let furnace_id = mc_registry::item_id_by_name("furnace").unwrap();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        app.inventory.items[0] = (furnace_id, 1);
+        app.inventory.items[1] = (coal, 12);
+        app.inventory.items[9] = (raw_iron, 5);
+        app.hotbar_slots = app.inventory.hotbar();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        app.offline_camera_updated(crate::camera::Camera {
+            pos: crate::math::Vec3::new(c as f32 + 0.5, top as f32 + 4.0, c as f32 + 0.5),
+            yaw: std::f32::consts::PI,
+            pitch: -std::f32::consts::FRAC_PI_2,
+        });
+        assert!(app.on_right_press(0, 0), "the furnace placed");
+        assert!(app.on_right_press(0, 0), "the door opened");
+        assert_eq!(app.screen, ScreenKind::Furnace);
+        app.furnace_panel = (0, 0);
+        app.furnace_slot_rects = vec![
+            (100, 100, 0),  // input
+            (140, 100, 1),  // fuel
+            (220, 100, 31), // the hotbar's coal (menu 31 = items[1])
+            (260, 100, 3),  // the main's ore (menu 3 = items[9])
+        ];
+        // THE SHIFT-CLICK ON THE COAL (the fuel arm the routing
+        // speaks — the FUEL cell takes, the write-through the
+        // projection empties, the cursor never rides)
+        app.on_shift_down(true);
+        app.on_press(220, 100);
+        assert_eq!(app.furnace_slots[1], (coal, 12), "the fuel cell the shift took");
+        assert_eq!(app.inventory.items[1], (0, 0), "the hotbar cell the write-through emptied");
+        assert_eq!(app.furnace_carried, (0, 0), "the cursor the quick-move never rides");
+        // THE SHIFT-CLICK ON THE ORE (the smeltable arm — the INPUT
+        // cell takes, the main row's projection follows)
+        app.on_press(260, 100);
+        assert_eq!(app.furnace_slots[0], (raw_iron, 5), "the input cell the shift took");
+        assert_eq!(app.inventory.items[9], (0, 0), "the main cell the write-through emptied");
+        // THE SHIFT-FED FURNACE BURNS (the next update the sim walks —
+        // the ignite the shift-click's own placement earned)
+        app.shift_down = false;
+        app.update();
+        assert_eq!(app.furnace_data[0], 1600, "the coal's own burn banks");
+        assert_eq!(app.furnace_slots[1], (coal, 11), "the coal the consume loses");
+        assert_eq!(app.furnace_data[2], 1, "the same tick's cook speaks");
+        // THE SHIFT-CLICK FROM THE RESULT (the reverse walk the
+        // inventory takes — the hotbar's tail the one-empty pass
+        // fills)
+        app.furnace_data[2] = 199;
+        app.furnace_slots[2] = (0, 0);
+        for _ in 0..200 {
+            app.update();
+        }
+        assert_eq!(app.furnace_slots[2], (mc_registry::item_id_by_name("iron_ingot").unwrap(), 1), "the ingot the arc landed");
+        app.shift_down = true;
+        let rects = app.furnace_slot_rects.clone();
+        let (_, _, result_slot) = rects[0];
+        assert_eq!(result_slot, 0);
+        // the result cell's rect the fresh geometry needs — the test
+        // lays it directly
+        app.furnace_slot_rects = vec![(100, 100, 2), (300, 100, 38)];
+        app.on_press(108, 108);
+        assert_eq!(app.furnace_slots[2], (0, 0), "the result the shift emptied");
+        assert_eq!(app.furnace_slots[38], (mc_registry::item_id_by_name("iron_ingot").unwrap(), 1), "the hotbar's tail took it");
+        assert_eq!(app.inventory.items[8], (mc_registry::item_id_by_name("iron_ingot").unwrap(), 1), "the write-through rode the hotbar's tail");
+        app.on_shift_down(false);
     }
 
     /// THE FALL DAMAGE ARC (the hurt round's own headline): the body

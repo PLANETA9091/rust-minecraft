@@ -2997,6 +2997,140 @@ pub fn predict_quick_move_to_store(
     (changed, remaining)
 }
 
+/// THE FURNACE'S OWN QUICK-MOVE (javap 26.2
+/// AbstractFurnaceMenu.quickMoveStack — the routing arms the
+/// bytecode speaks in order; javap
+/// AbstractContainerMenu.moveItemStackTo — the two passes the range
+/// walk keeps). `slots` the menu's own 39 rows (input 0, fuel 1,
+/// result 2, the standard rows 3..38: main 3..29, hotbar 30..38),
+/// `src` the quick-moved slot. Returns the believed CHANGES as
+/// (index, stack) pairs — the source first (its remainder or the
+/// emptied row), the targets after; the EMPTY vec the failed walk
+/// wears (the `moveItemStackTo` false the EMPTY return keeps —
+/// nothing changed).
+///
+/// THE ROUTING (quickMoveStack pc 43-209):
+/// 1. THE RESULT ARM (index == 2): `moveItemStackTo(3, 39, true)` —
+///    the REVERSE walk the hotbar rows first speak;
+/// 2. THE INPUT/FUEL ARM (index == 0 or 1):
+///    `moveItemStackTo(3, 39, false)` — the main rows forward;
+/// 3. THE SMELTABLE ARM (canSmelt — the registry's own smelt row
+///    the furnace_data table answers): `moveItemStackTo(0, 1, false)`
+///    — the INPUT slot;
+/// 4. THE FUEL ARM (isFuel — the furnace_data table's tick row):
+///    `moveItemStackTo(1, 2, false)` — the FUEL slot (the
+///    FurnaceFuelSlot's own mayPlace the isFuel pre-gate answers);
+/// 5. THE MAIN ARM (index 3..30): `moveItemStackTo(30, 39, false)`
+///    — the hotbar rows;
+/// 6. THE HOTBAR ARM (index 30..39): `moveItemStackTo(3, 30, false)`
+///    — the main rows.
+///
+/// THE MOVE WALK (moveItemStackTo pc 0-330): the merge pass over the
+/// WHOLE range first (the same-item test the mayPlace never
+/// consults — the full merge the `total <= max` speaks, the partial
+/// the `target < max` wears), the EMPTY-slot pass after — AT MOST
+/// ONE slot (the break the pc 308 `goto 328` speaks: the modern
+/// walk's own shape), 64 the slot max the model's own default
+/// carries. The cursor is NOT the quick-move's lane (the vanilla
+/// quickMoveStack never reads the carried stack).
+pub fn predict_furnace_quick_move(slots: &[(i32, i32)], src: usize) -> Vec<(usize, (i32, i32))> {
+    let src_item = slots.get(src).copied().unwrap_or((0, 0));
+    if src_item.1 <= 0 {
+        return Vec::new(); // the hasItem gate — nothing to move
+    }
+    let mut rows = slots.to_vec();
+    let mut remaining = src_item.1;
+    let mut changed: Vec<(usize, (i32, i32))> = Vec::new();
+    let moved = if src == 2 {
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 3, 39, true)
+    } else if src == 0 || src == 1 {
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 3, 39, false)
+    } else if mc_registry::generated::furnace_data::smelt_result(src_item.0).is_some() {
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 0, 1, false)
+    } else if mc_registry::generated::furnace_data::fuel_ticks(src_item.0) > 0 {
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 1, 2, false)
+    } else if (3..30).contains(&src) {
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 30, 39, false)
+    } else if (30..39).contains(&src) {
+        furnace_move_item_stack_to(&mut rows, src, &mut remaining, &mut changed, 3, 30, false)
+    } else {
+        false
+    };
+    if !moved {
+        return Vec::new(); // the EMPTY return the failed walk wears
+    }
+    let src_new = if remaining > 0 {
+        (src_item.0, remaining)
+    } else {
+        (0, 0)
+    };
+    if src_new != src_item {
+        changed.insert(0, (src, src_new));
+    }
+    changed
+}
+
+/// THE FURNACE'S OWN MOVE WALK (javap
+/// AbstractContainerMenu.moveItemStackTo — the `stack` the (src,
+/// remaining) pair models): the merge pass over the whole range, the
+/// single-empty pass after the break the pc 308 `goto 328` speaks.
+/// Returns the `moved` flag the quickMoveStack's EMPTY returns wear.
+fn furnace_move_item_stack_to(
+    rows: &mut [(i32, i32)],
+    src: usize,
+    remaining: &mut i32,
+    changed: &mut Vec<(usize, (i32, i32))>,
+    start: usize,
+    end: usize,
+    reverse: bool,
+) -> bool {
+    let src_id = rows[src].0;
+    let mut moved = false;
+    let order: Vec<usize> = if reverse {
+        (start..end).rev().collect()
+    } else {
+        (start..end).collect()
+    };
+    // PASS 1: the same-item merge (the mayPlace the merge never
+    // consults — the isSameItemSameComponents test alone answers)
+    for &i in &order {
+        if *remaining == 0 {
+            break;
+        }
+        let d = rows[i];
+        if d.1 > 0 && d.0 == src_id && d.1 < ITEM_MAX_STACK_DEFAULT {
+            let total = d.1 + *remaining;
+            if total <= ITEM_MAX_STACK_DEFAULT {
+                rows[i] = (d.0, total);
+                *remaining = 0;
+            } else {
+                // the partial merge the `target < max` arm speaks
+                rows[i] = (d.0, ITEM_MAX_STACK_DEFAULT);
+                *remaining = total - ITEM_MAX_STACK_DEFAULT;
+            }
+            changed.push((i, rows[i]));
+            moved = true;
+        }
+    }
+    // PASS 2: the first EMPTY slot the walk takes — AT MOST ONE (the
+    // break the goto 328 speaks; the mayPlace the routed ranges'
+    // plain slots never refuse — the fuel range the routing's own
+    // isFuel arm pre-gates)
+    if *remaining > 0 {
+        for &i in &order {
+            if rows[i].1 <= 0 {
+                let take = (*remaining).min(ITEM_MAX_STACK_DEFAULT);
+                rows[i] = (src_id, take);
+                *remaining -= take;
+                changed.push((i, rows[i]));
+                moved = true;
+                break;
+            }
+        }
+    }
+    moved
+}
+
 /// The component patch's OWN bundle rows (the set-slot sync's
 /// projection, shared by both container lanes): the slots whose
 /// component patch carries the `bundle_contents` value — the slot's
@@ -8421,6 +8555,89 @@ mod tests {
             vec![(2, (0, 0)), (50, (926, 64)), (62, (926, 60))],
             "the merge took 4, the empty fill took the 60"
         );
+    }
+
+    /// THE FURNACE'S OWN QUICK-MOVE WALK (javap 26.2
+    /// AbstractFurnaceMenu.quickMoveStack — the routing arms + the
+    /// moveItemStackTo's two passes the predictor models).
+    #[test]
+    fn the_furnace_quick_move_the_routing_the_passes_wear() {
+        let raw_iron = mc_registry::item_id_by_name("raw_iron").unwrap();
+        let coal = mc_registry::item_id_by_name("coal").unwrap();
+        let iron_ingot = mc_registry::item_id_by_name("iron_ingot").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        // THE SMELTABLE ARM (the hotbar source the INPUT slot takes —
+        // the canSmelt the routing's own arm speaks, reverse=false)
+        let mut m = vec![(0, 0); 39];
+        m[35] = (raw_iron, 10);
+        assert_eq!(
+            predict_furnace_quick_move(&m, 35),
+            vec![(35, (0, 0)), (0, (raw_iron, 10))],
+            "the smeltable the input takes"
+        );
+        // THE FUEL ARM (the coal the FUEL slot takes)
+        let mut m = vec![(0, 0); 39];
+        m[30] = (coal, 7);
+        assert_eq!(
+            predict_furnace_quick_move(&m, 30),
+            vec![(30, (0, 0)), (1, (coal, 7))],
+            "the fuel the fuel slot takes"
+        );
+        // THE NON-SPECIAL HOTBAR ARM (the dirt neither smelts nor
+        // burns — the main rows the walk takes, slot 3 forward)
+        let mut m = vec![(0, 0); 39];
+        m[30] = (dirt, 4);
+        assert_eq!(
+            predict_furnace_quick_move(&m, 30),
+            vec![(30, (0, 0)), (3, (dirt, 4))],
+            "the hotbar's plain stack the main rows take"
+        );
+        // THE MAIN ARM (a plain main-row stack the hotbar takes)
+        let mut m = vec![(0, 0); 39];
+        m[3] = (dirt, 4);
+        assert_eq!(
+            predict_furnace_quick_move(&m, 3),
+            vec![(3, (0, 0)), (30, (dirt, 4))],
+            "the main's plain stack the hotbar takes"
+        );
+        // THE MERGE (the input's room the pass-1 walk fills — the
+        // partial the remainder keeps: 60 + 10 -> 64 + 6)
+        let mut m = vec![(0, 0); 39];
+        m[0] = (raw_iron, 60);
+        m[35] = (raw_iron, 10);
+        assert_eq!(
+            predict_furnace_quick_move(&m, 35),
+            vec![(35, (raw_iron, 6)), (0, (raw_iron, 64))],
+            "the merge filled the input, the remainder stayed"
+        );
+        // THE FULL-INPUT REFUSAL (the merge the full stack never
+        // speaks, no empty in 0..1 — the moved flag false, the EMPTY
+        // vec the walk wears)
+        let mut m = vec![(0, 0); 39];
+        m[0] = (raw_iron, 64);
+        m[35] = (raw_iron, 5);
+        assert!(
+            predict_furnace_quick_move(&m, 35).is_empty(),
+            "the full input the walk refuses"
+        );
+        // THE RESULT'S REVERSE WALK (the hotbar rows first: the merge
+        // the pass-1 walk speaks into slot 38's partial stack, the
+        // pass-2 the NEXT hotbar slot takes — the break the goto 328
+        // speaks)
+        let mut m = vec![(0, 0); 39];
+        m[2] = (iron_ingot, 3);
+        m[38] = (iron_ingot, 62);
+        assert_eq!(
+            predict_furnace_quick_move(&m, 2),
+            vec![
+                (2, (0, 0)),
+                (38, (iron_ingot, 64)),
+                (37, (iron_ingot, 1)),
+            ],
+            "the result the hotbar's partial merge took, the one-empty pass the tail"
+        );
+        // THE EMPTY SOURCE (the hasItem gate the walk never enters)
+        assert!(predict_furnace_quick_move(&[(0, 0); 39], 10).is_empty());
     }
 
     #[test]
