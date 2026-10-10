@@ -6949,10 +6949,16 @@ impl Zombie {
                         // arms: the branded mob's own dose the modifier
                         // folds, the RangedAttribute's 0.0 floor the
                         // sanitizeValue law keeps — the weakened fang
-                        // the zero dose wears)
+                        // the zero dose wears) + THE ATTACKER'S OWN
+                        // STRENGTH (pcs 148-182 — the +3.0d ADD_VALUE
+                        // `effect.strength` row the SAME template law
+                        // arms: the strengthened fang the +3.0×(amp+1)
+                        // addend the dose wears, the pair the sum
+                        // folds)
                         let dmg = (attack_base
                             + crate::screens::held_attack_addend(self.held_weapon)
-                            + crate::effects::weakness_addend(&self.effects))
+                            + crate::effects::weakness_addend(&self.effects)
+                            + crate::effects::strength_addend(&self.effects))
                         .max(0.0);
                         // THE VICTIM'S OWN LANE (the player the
                         // MobEvents.attack lane hurts, the prey the

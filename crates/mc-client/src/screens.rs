@@ -15304,15 +15304,18 @@ impl App {
         // 2048.0)` the Attributes clinit keeps + the ADD_VALUE
         // modifiers the holder's table carries: the weapon's own
         // addend + the WEAKNESS row's −4.0×(amp+1) the
-        // `effect.weakness` template wears) — the sanitizeValue law's
+        // `effect.weakness` template wears + the STRENGTH row's
+        // +3.0×(amp+1) the `effect.strength` template wears — the
+        // pair the sum folds together) — the sanitizeValue law's
         // own 0.0 floor the attribute value speaks (the Mth.clamp
         // the RangedAttribute's min keeps) BEFORE the charge scale
         // reads it: the weakened fist the zero attribute the dose
-        // never carries, the full charge the floor's own product
-        // keeps.
+        // never carries, the strengthened the 5.0 the bare base
+        // wears, the full charge the floor's own product keeps.
         let attribute = (PLAYER_ATTACK_DAMAGE
             + held_attack_addend(held_name)
-            + crate::effects::weakness_addend(&self.effects))
+            + crate::effects::weakness_addend(&self.effects)
+            + crate::effects::strength_addend(&self.effects))
         .max(0.0) as f32;
         let mut dmg = attribute * (0.2 + 0.8 * charge * charge);
         let full = charge > 0.9;

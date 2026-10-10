@@ -94,6 +94,11 @@ pub const MOB_EFFECT_HASTE: i32 = 2;
 /// lane's harmful arm reads it).
 pub const MOB_EFFECT_MINING_FATIGUE: i32 = 3;
 
+/// `minecraft:strength`'s mob-effect registry id (the wire order's own
+/// FIFTH row — the fatigue-3 slot follows, the attack-damage attribute
+/// lane's helpful arm reads it).
+pub const MOB_EFFECT_STRENGTH: i32 = 4;
+
 /// `minecraft:slowness`'s mob-effect registry id (the wire order's own
 /// SECOND row, the movement fold's harmful arm).
 pub const MOB_EFFECT_SLOWNESS: i32 = 1;
@@ -214,6 +219,31 @@ pub const WEAKNESS_ATTACK_ADDEND: f64 = -4.0;
 pub fn weakness_addend(store: &EffectsStore) -> f64 {
     match store.get(MOB_EFFECT_WEAKNESS) {
         Some(inst) => WEAKNESS_ATTACK_ADDEND * (inst.amplifier + 1) as f64,
+        None => 0.0,
+    }
+}
+
+/// THE STRENGTH MODIFIER'S OWN AMOUNT (javap `MobEffects` clinit pcs
+/// 148-182 — the STRENGTH row the PLAIN `MobEffect(BENEFICIAL,
+/// 16762624)` ctor keeps, no subclass the jar speaks — the
+/// addAttributeModifier call the row's own attribute lane arms:
+/// `(Attributes.ATTACK_DAMAGE, Identifier.withDefaultNamespace(
+/// "effect.strength"), 3.0d, AttributeModifier.Operation.ADD_VALUE)`).
+/// The ldc2_w the constant's own word speaks.
+pub const STRENGTH_ATTACK_ADDEND: f64 = 3.0;
+
+/// THE ATTACK-DAMAGE MODIFIER THE STRENGTH WEARS (the SAME
+/// `MobEffect$AttributeTemplate.create` product law the WEAKNESS
+/// pair's doc pins — the `amount * (amplifier + 1)` walk the
+/// ADD_VALUE operation arms): the store read the two melee dose
+/// sites share — the unworn body the 0.0 identity rides, the amp-N
+/// body the +3.0×(N+1) addend the attribute sum wears. The pair the
+/// RangedAttribute's 0.0 floor folds together: the strengthened
+/// bare fist the 5.0 attribute carries, the weakened the zero the
+/// floor keeps.
+pub fn strength_addend(store: &EffectsStore) -> f64 {
+    match store.get(MOB_EFFECT_STRENGTH) {
+        Some(inst) => STRENGTH_ATTACK_ADDEND * (inst.amplifier + 1) as f64,
         None => 0.0,
     }
 }
@@ -1020,6 +1050,68 @@ mod tests {
             weakness_addend(&s3),
             0.0,
             "the expired brand the 0.0 identity rides"
+        );
+    }
+
+    /// THE STRENGTH'S OWN LADDER (javap `MobEffects` clinit pcs
+    /// 148-182 — the addAttributeModifier(ATTACK_DAMAGE,
+    /// "effect.strength", 3.0d, ADD_VALUE) row the plain
+    /// MobEffect(BENEFICIAL, 16762624) ctor keeps + the
+    /// MobEffect$AttributeTemplate.create(int) pcs 8-16 the
+    /// amount × (amplifier + 1) product speaks): the amp ladder the
+    /// exact f64s wear, the unworn body the 0.0 identity rides, the
+    /// expiry the identity restores (the clock's own walk), the
+    /// WEAKNESS pair the sum folds (the +3.0 the −4.0 the 2.0 base
+    /// the 5.0/1.0 attribute the two stores' own brands wear).
+    #[test]
+    fn the_strength_the_addend_ladder_the_attribute_wears() {
+        let mut s = EffectsStore::new();
+        assert_eq!(strength_addend(&s), 0.0, "the bare body the 0.0 rides");
+        s.add_effect(MOB_EFFECT_STRENGTH, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            strength_addend(&s),
+            3.0,
+            "the amp-0 the amount x1 the exact f64 wears"
+        );
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_STRENGTH, 1, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            strength_addend(&s2),
+            6.0,
+            "the amp-1 the amount x2 the exact f64 wears"
+        );
+        let mut s3 = EffectsStore::new();
+        s3.add_effect(MOB_EFFECT_STRENGTH, 3, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            strength_addend(&s3),
+            12.0,
+            "the amp-3 the amount x4 the exact f64 wears"
+        );
+        // the expiry the identity restores (the clock's own walk)
+        for _ in 0..400 {
+            s3.tick_offline();
+        }
+        assert_eq!(
+            strength_addend(&s3),
+            0.0,
+            "the expired brand the 0.0 identity rides"
+        );
+        // the PAIR the sum folds (the attribute law the two melee
+        // sites the same sum wears): the strength-0 fist the 5.0
+        // the base+addend wears, the strength-0 weakness-0 the 1.0
+        // the cancelling pair keeps
+        let mut s4 = EffectsStore::new();
+        s4.add_effect(MOB_EFFECT_STRENGTH, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            2.0 + strength_addend(&s4),
+            5.0,
+            "the strengthened fist the 5.0 attribute carries"
+        );
+        s4.add_effect(MOB_EFFECT_WEAKNESS, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            2.0 + strength_addend(&s4) + weakness_addend(&s4),
+            1.0,
+            "the cancelling pair the 1.0 attribute keeps"
         );
     }
 
