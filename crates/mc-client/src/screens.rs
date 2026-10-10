@@ -9999,6 +9999,14 @@ impl App {
                         .unwrap_or(0.0);
                     b.safe_fall_distance = crate::body::SAFE_FALL_DISTANCE
                         + jump_amp.map(|levels| levels as f64).unwrap_or(0.0);
+                    // THE AIR CLOCK'S OWN GATES (javap `MobEffectUtil` —
+                    // the hasWaterBreathing triple the drain arm reads,
+                    // the shouldEffectsRefillAirsupply walk the
+                    // underwater refill arm reads): the store's reads
+                    // the body's flags bank, the tick the gates speak.
+                    b.water_breathing = crate::effects::has_water_breathing(&self.effects);
+                    b.effects_refill_air_supply =
+                        crate::effects::should_effects_refill_air_supply(&self.effects);
                     b.tick(w, using);
                     // THE LANDING RETIRE (javap LocalPlayer.aiStep the
                     // 26.2 jar — pcs 1098-1133, the tail AFTER the

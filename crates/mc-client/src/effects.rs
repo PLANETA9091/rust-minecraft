@@ -108,6 +108,16 @@ pub const MOB_EFFECT_STRENGTH: i32 = 4;
 /// the amplifier's max the MobEffectUtil pair speaks).
 pub const MOB_EFFECT_CONDUIT_POWER: i32 = 28;
 
+/// `minecraft:water_breathing`'s mob-effect registry id (the wire
+/// order's own 13th row — the fire_resistance-11 slot precedes, the
+/// air clock's breathe-free gate the MobEffectUtil triple reads).
+pub const MOB_EFFECT_WATER_BREATHING: i32 = 12;
+
+/// `minecraft:breath_of_the_nautilus`'s mob-effect registry id (the
+/// wire order's own 40th row — the LAST row the 40-name order keeps,
+/// the air clock's freeze pair the refill gate reads).
+pub const MOB_EFFECT_BREATH_OF_THE_NAUTILUS: i32 = 39;
+
 /// `minecraft:slowness`'s mob-effect registry id (the wire order's own
 /// SECOND row, the movement fold's harmful arm).
 pub const MOB_EFFECT_SLOWNESS: i32 = 1;
@@ -273,6 +283,39 @@ pub fn dig_speed_amplification(store: &EffectsStore) -> Option<i32> {
         .get(MOB_EFFECT_HASTE)
         .map(|inst| inst.amplifier)
         .max(store.get(MOB_EFFECT_CONDUIT_POWER).map(|inst| inst.amplifier))
+}
+
+/// THE WATER-BREATHING TRIO'S OWN GATE (javap `MobEffectUtil`
+/// .hasWaterBreathing pcs 0-35 — the `WATER_BREATHING ∨ CONDUIT_POWER
+/// ∨ BREATH_OF_THE_NAUTILUS` triple the three hasEffect calls keep:
+/// pc 7 `ifne 30` the water-breathing true arm answers, pc 17 `ifne
+/// 30` the conduit true arm answers, pc 27 `ifeq 34` the nautilus
+/// false arm refuses): the air clock's breathe-free verdict — the
+/// eye-under-water drain the gate's true arm refuses (the 26.2
+/// baseTick pcs 244-255 the `!canBreatheUnderwater() &&
+/// !hasWaterBreathing(this)` conjuncts keep — the bare player's own
+/// canBreatheUnderwater the base's 0-ireturn false rides).
+pub fn has_water_breathing(store: &EffectsStore) -> bool {
+    store.has_effect(MOB_EFFECT_WATER_BREATHING)
+        || store.has_effect(MOB_EFFECT_CONDUIT_POWER)
+        || store.has_effect(MOB_EFFECT_BREATH_OF_THE_NAUTILUS)
+}
+
+/// THE UNDERWATER REFILL'S OWN GATE (javap `MobEffectUtil`
+/// .shouldEffectsRefillAirsupply pcs 0-35 — the `¬NAUTILUS ∨
+/// WATER_BREATHING ∨ CONDUIT_POWER` walk the jump pair keeps: pc 7
+/// `ifeq 30` the nautilus-ABSENT true arm answers, pc 17 `ifne 30`
+/// the water-breathing true arm answers, pc 27 `ifeq 34` the
+/// conduit-absent false arm refuses): the baseTick pcs 335-362
+/// underwater refill arm reads it — the nautilus-ONLY body the
+/// drain-refusal the hasWaterBreathing triple keeps and the refill
+/// the gate's false refusal wears (the air the FREEZE holds), the
+/// water-breathing or conduit body the refill the true arm grants,
+/// the effect-less body the nautilus-absent true arm keeps.
+pub fn should_effects_refill_air_supply(store: &EffectsStore) -> bool {
+    !store.has_effect(MOB_EFFECT_BREATH_OF_THE_NAUTILUS)
+        || store.has_effect(MOB_EFFECT_WATER_BREATHING)
+        || store.has_effect(MOB_EFFECT_CONDUIT_POWER)
 }
 
 /// THE INSTANT WALK'S OWN SET (javap `MobEffects` clinit — the effects
@@ -1193,6 +1236,75 @@ mod tests {
             dig_speed_amplification(&s3),
             None,
             "the expired pair the None identity rides"
+        );
+    }
+
+    /// THE WATER-BREATHING PAIR'S OWN GATES (javap `MobEffectUtil` —
+    /// the hasWaterBreathing pcs 0-35 triple and the
+    /// shouldEffectsRefillAirsupply pcs 0-35 walk): the empty store
+    /// the breathe-free false and the refill true wears (the
+    /// ¬NAUTILUS arm), each trio member the breathe-free true speaks,
+    /// the NAUTILUS-only body the FREEZE pair keeps (the drain the
+    /// triple refuses, the refill the gate refuses), the WB/CP bodies
+    /// the refill the true arm grants, the expiry the identities
+    /// restore.
+    #[test]
+    fn the_water_breathing_pair_the_air_gates_wear() {
+        let mut s = EffectsStore::new();
+        assert!(
+            !has_water_breathing(&s),
+            "the empty store the breathe-free false wears"
+        );
+        assert!(
+            should_effects_refill_air_supply(&s),
+            "the empty store the refill true arm keeps"
+        );
+        s.add_effect(MOB_EFFECT_WATER_BREATHING, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert!(
+            has_water_breathing(&s),
+            "the water-breathing body the true arm wears"
+        );
+        assert!(
+            should_effects_refill_air_supply(&s),
+            "the WB body the refill the true arm grants"
+        );
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_CONDUIT_POWER, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert!(
+            has_water_breathing(&s2),
+            "the conduit body the triple's true wears"
+        );
+        assert!(
+            should_effects_refill_air_supply(&s2),
+            "the CP body the refill the true arm grants"
+        );
+        let mut s3 = EffectsStore::new();
+        s3.add_effect(MOB_EFFECT_BREATH_OF_THE_NAUTILUS, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert!(
+            has_water_breathing(&s3),
+            "the nautilus body the triple's true wears"
+        );
+        assert!(
+            !should_effects_refill_air_supply(&s3),
+            "the nautilus-ONLY body the FREEZE the false refusal wears"
+        );
+        // the WB pair the nautilus freeze lifts (the true arm answers)
+        s3.add_effect(MOB_EFFECT_WATER_BREATHING, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert!(
+            should_effects_refill_air_supply(&s3),
+            "the nautilus+WB body the refill the true arm grants"
+        );
+        // the expiry the identities restore (the clock's own walk)
+        for _ in 0..400 {
+            s3.tick_offline();
+        }
+        assert!(
+            !has_water_breathing(&s3),
+            "the expired trio the false identity rides"
+        );
+        assert!(
+            should_effects_refill_air_supply(&s3),
+            "the expired store the refill true keeps"
         );
     }
 

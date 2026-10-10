@@ -1254,6 +1254,23 @@ pub struct PlayerBody {
     /// hurt pipeline's cooldown, the DROWNING voice the damage type's
     /// effects speak. The body never clears it, the reader does.
     pub drown_hurt_due: bool,
+    /// THE WATER-BREATHING GATE (javap `MobEffectUtil.hasWaterBreathing`
+    /// pcs 0-35 — the WATER_BREATHING ∨ CONDUIT_POWER ∨ NAUTILUS
+    /// triple): the air clock's drain arm reads it — the true body the
+    /// eye-under-water drain refuses (the baseTick pcs 244-255 the
+    /// `!canBreatheUnderwater() && !hasWaterBreathing(this)` conjuncts
+    /// keep — the bare player's own canBreatheUnderwater the base's
+    /// 0-ireturn false rides). Set every tick from the effects store.
+    pub water_breathing: bool,
+    /// THE UNDERWATER REFILL GATE (javap `MobEffectUtil
+    /// .shouldEffectsRefillAirsupply` pcs 0-35 — the ¬NAUTILUS ∨
+    /// WATER_BREATHING ∨ CONDUIT_POWER walk): the air clock's
+    /// underwater refill arm reads it (the baseTick pcs 335-362 the
+    /// `air < max && shouldEffectsRefillAirsupply` pair keeps) — the
+    /// nautilus-ONLY body the air the FREEZE holds, the effect-less
+    /// body the nautilus-absent true arm the constructor's default
+    /// wears. Set every tick from the effects store.
+    pub effects_refill_air_supply: bool,
     /// THE WALK ANIMATION STORE (WalkAnimationState, javap): the
     /// speed/position pair the third-person avatar's limb cosines
     /// speak. Updated every tick from the 3D move distance (the
@@ -1323,6 +1340,8 @@ impl PlayerBody {
             jumping: false,
             no_jump_delay: 0,
             effect_speed_mult: 1.0,
+            water_breathing: false,
+            effects_refill_air_supply: true,
             jump_boost_power: 0.0,
             safe_fall_distance: SAFE_FALL_DISTANCE,
             move_dist: 0.0,
@@ -1738,30 +1757,38 @@ impl PlayerBody {
         // `air - 1` — the clock goes UNDER zero, the -20 floor the
         // dose's rhythm needs), the floor fold resets the store and
         // rides the dose flag; the else arm refills four a tick
-        // (increaseAirSupply's `Math.min(air + 4, max)`). The
-        // bubble-column and water-breathing gates the vanilla arm
-        // carries ride vocabulary this body never speaks — the bare
-        // player's own path. THE DECREASE GATE (javap pcs 258-280):
-        // the player's arm `(!bl2 || !abilities.invulnerable)` folds —
-        // the local 3 the `instanceof Player` head stores (pcs 92-95),
-        // so the body's own verdict is the flag alone — the
-        // invulnerable body the drain never speaks, the gated arm the
-        // vanilla else-if refills four a tick UNDERWATER too (the
-        // decrease gate false the refill arm answers, air < max the
-        // same `min(air + 4, max)` fold wears).
+        // (increaseAirSupply's `Math.min(air + 4, max)`). THE DRAIN'S
+        // OWN GATES (javap pcs 244-280): the
+        // `!canBreatheUnderwater() && !hasWaterBreathing(this) &&
+        // (!isPlayer || !abilities.invulnerable)` flag the drain arm
+        // stores — the water-breathing body (the MobEffectUtil triple
+        // the store's read answers) and the invulnerable body the
+        // drain never speak, the bubble-column check the vanilla arm
+        // carries rides vocabulary this body never speaks (no bubble
+        // blocks in the palette — the honest absence). THE REFILL'S
+        // OWN GATES (javap pcs 335-362 the underwater arm, pcs 396-416
+        // the dry arm): the DRY body (and the bubble column) the
+        // unconditional `air < max` refill keeps, the UNDERWATER
+        // drain-refused body the `air < max &&
+        // shouldEffectsRefillAirsupply` pair wears — the nautilus-ONLY
+        // body the freeze holds (the triple refuses the drain, the
+        // ¬NAUTILUS ∨ WB ∨ CP walk refuses the refill), the
+        // water-breathing body the refill the true arm grants.
         let eye_water = world.get(
             self.x.floor() as i32,
             (self.y + self.eye_height()).floor() as i32,
             self.z.floor() as i32,
         ) == WATER;
         self.eye_in_water = eye_water;
-        if eye_water && !self.invulnerable {
+        if eye_water && !self.invulnerable && !self.water_breathing {
             self.air_supply -= 1;
             if self.air_supply <= DROWN_HURT_FLOOR {
                 self.air_supply = 0;
                 self.drown_hurt_due = true;
             }
-        } else if self.air_supply < TOTAL_AIR_SUPPLY {
+        } else if self.air_supply < TOTAL_AIR_SUPPLY
+            && (!eye_water || self.effects_refill_air_supply)
+        {
             self.air_supply = (self.air_supply + AIR_REFILL_PER_TICK).min(TOTAL_AIR_SUPPLY);
         }
         if self.no_jump_delay > 0 {
@@ -5386,6 +5413,56 @@ mod tests {
             b.air_supply, TOTAL_AIR_SUPPLY,
             "the cap rides the 300 the sipush names"
         );
+    }
+
+    /// THE BREATH EFFECTS' OWN GATES (javap `MobEffectUtil` the pair
+    /// + baseTick pcs 244-362): the water-breathing body the
+    /// eye-under-water drain refuses and the refill the gate's true
+    /// arm grants (the +4 climb wears), the nautilus-ONLY body the
+    /// FREEZE keeps (the drain the triple refuses, the refill the
+    /// gate refuses — the clock the stillness speaks), the
+    /// invulnerable body the drain refused and the refill the
+    /// nautilus-absent true arm keeps.
+    #[test]
+    fn the_breath_effects_the_air_clock_gates_wear() {
+        // THE WATER-BREATHING BODY: no drain, the +4 climb
+        let w = diver_pool();
+        let mut b = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        b.vy = 0.0;
+        b.on_ground = true;
+        b.water_breathing = true;
+        b.tick(&w, false);
+        assert!(b.eye_in_water, "the diver's own eye reads water");
+        assert_eq!(
+            b.air_supply, TOTAL_AIR_SUPPLY,
+            "the breathing body the drain refuses"
+        );
+        b.air_supply = 100;
+        b.tick(&w, false);
+        assert_eq!(
+            b.air_supply, 104,
+            "the underwater refill the gate's true arm grants"
+        );
+        // THE NAUTILUS-ONLY BODY: the freeze (no drain, no refill)
+        let mut n = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        n.vy = 0.0;
+        n.on_ground = true;
+        n.water_breathing = true;
+        n.effects_refill_air_supply = false;
+        n.air_supply = 150;
+        n.tick(&w, false);
+        assert_eq!(n.air_supply, 150, "the nautilus-ONLY body the freeze holds");
+        n.tick(&w, false);
+        assert_eq!(n.air_supply, 150, "the freeze the second tick keeps");
+        // THE INVULNERABLE BODY: the drain refused, the refill the
+        // gate's true (the nautilus-absent) arm keeps
+        let mut i = PlayerBody::new(8.0, 1.0, 8.0, 0.0, 0.0);
+        i.vy = 0.0;
+        i.on_ground = true;
+        i.invulnerable = true;
+        i.air_supply = 100;
+        i.tick(&w, false);
+        assert_eq!(i.air_supply, 104, "the invulnerable body the refill keeps");
     }
 
     /// THE DOSE'S OWN RHYTHM (javap shouldTakeDrowningDamage's -20
