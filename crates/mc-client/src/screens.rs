@@ -12441,13 +12441,15 @@ impl App {
                                 .effects
                                 .get(crate::effects::MOB_EFFECT_MINING_FATIGUE)
                                 .map(|inst| inst.amplifier);
-                            // THE HASTE'S OWN STORE READ (the amplifier
-                            // the dig lane's ×0.2 product speaks — the
-                            // unworn body the None identity rides)
-                            let haste = self
-                                .effects
-                                .get(crate::effects::MOB_EFFECT_HASTE)
-                                .map(|inst| inst.amplifier);
+                            // THE DIG AMPLIFICATION'S OWN FOLD (javap
+                            // MobEffectUtil — the hasDigSpeed ∨-gate and
+                            // the getDigSpeedAmplification Math.max the
+                            // HASTE and CONDUIT_POWER amps the shared read
+                            // folds — the unworn pair the None identity
+                            // rides, the greater amp the Some wears)
+                            let haste = crate::effects::dig_speed_amplification(
+                                &self.effects,
+                            );
                             // THE GAMEMODE DISPATCH's own folds (the
                             // audited instabuild grant + the restricted
                             // head — the LIVE reads the vanilla
@@ -14992,13 +14994,15 @@ impl App {
                     .effects
                     .get(crate::effects::MOB_EFFECT_MINING_FATIGUE)
                     .map(|inst| inst.amplifier);
-                // THE HASTE'S OWN STORE READ (the amplifier the dig
-                // lane's ×0.2 product speaks — the unworn body the None
-                // identity rides)
-                let haste = self
-                    .effects
-                    .get(crate::effects::MOB_EFFECT_HASTE)
-                    .map(|inst| inst.amplifier);
+                // THE DIG AMPLIFICATION'S OWN FOLD (javap
+                // MobEffectUtil — the hasDigSpeed ∨-gate and the
+                // getDigSpeedAmplification Math.max the HASTE and
+                // CONDUIT_POWER amps the shared read folds — the
+                // unworn pair the None identity rides, the greater
+                // amp the Some wears)
+                let haste = crate::effects::dig_speed_amplification(
+                    &self.effects,
+                );
                 // THE GAMEMODE DISPATCH's own folds (the audited
                 // instabuild grant + the restricted head — the press
                 // the startDestroyBlock's own walk speaks first, the

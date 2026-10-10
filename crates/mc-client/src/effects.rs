@@ -99,6 +99,15 @@ pub const MOB_EFFECT_MINING_FATIGUE: i32 = 3;
 /// lane's helpful arm reads it).
 pub const MOB_EFFECT_STRENGTH: i32 = 4;
 
+/// `minecraft:conduit_power`'s mob-effect registry id (the wire
+/// order's own 29th row — the slow_falling-27 slot precedes, the
+/// dig-speed lane's conduit arm the Math.max fold reads: javap
+/// MobEffects clinit pcs 790-809 — the PLAIN
+/// `MobEffect(BENEFICIAL, 1950417)` ctor the row keeps, no
+/// attribute modifier the conduit's own lane arms — the dig lane
+/// the amplifier's max the MobEffectUtil pair speaks).
+pub const MOB_EFFECT_CONDUIT_POWER: i32 = 28;
+
 /// `minecraft:slowness`'s mob-effect registry id (the wire order's own
 /// SECOND row, the movement fold's harmful arm).
 pub const MOB_EFFECT_SLOWNESS: i32 = 1;
@@ -246,6 +255,24 @@ pub fn strength_addend(store: &EffectsStore) -> f64 {
         Some(inst) => STRENGTH_ATTACK_ADDEND * (inst.amplifier + 1) as f64,
         None => 0.0,
     }
+}
+
+/// THE DIG-SPEED AMPLIFICATION'S OWN FOLD (javap `MobEffectUtil` —
+/// the `hasDigSpeed` pcs 0-25 the `HASTE ∨ CONDUIT_POWER` gate keeps
+/// and the `getDigSpeedAmplification` pcs 0-51 the
+/// `Math.max(haste_amp, conduit_amp)` walk speaks, the absent arm
+/// the islot_1/islot_2 0.0 defaults ride): the ONE read the two dig
+/// sites share — the unworn pair the None identity rides (the gate
+/// the caller's own `if` keeps), the ONE-worn body the worn amp the
+/// Some wears, the BOTH-worn body the greater amp the max keeps.
+/// The conduit's own half (the 1950417 row the plain ctor keeps)
+/// the SAME ×0.2 ladder the haste product speaks — the conduit
+/// player the dig speed the haste's own multiplier wears.
+pub fn dig_speed_amplification(store: &EffectsStore) -> Option<i32> {
+    store
+        .get(MOB_EFFECT_HASTE)
+        .map(|inst| inst.amplifier)
+        .max(store.get(MOB_EFFECT_CONDUIT_POWER).map(|inst| inst.amplifier))
 }
 
 /// THE INSTANT WALK'S OWN SET (javap `MobEffects` clinit — the effects
@@ -1112,6 +1139,60 @@ mod tests {
             2.0 + strength_addend(&s4) + weakness_addend(&s4),
             1.0,
             "the cancelling pair the 1.0 attribute keeps"
+        );
+    }
+
+    /// THE DIG-SPEED AMPLIFICATION'S OWN FOLD (javap `MobEffectUtil` —
+    /// the hasDigSpeed HASTE-∨-CONDUIT_POWER gate the pcs 0-25 walk
+    /// keeps and the getDigSpeedAmplification Math.max the pcs 0-51
+    /// walk speaks): the unworn pair the None identity rides, the
+    /// conduit-only body the conduit amp the Some wears, the
+    /// haste-only body the haste amp the Some wears, the both-worn
+    /// body the GREATER amp the max keeps (the haste-2/conduit-3 the
+    /// 3 the fold speaks), the expiry the identity restores (the
+    /// clock's own walk).
+    #[test]
+    fn the_dig_amplification_the_conduit_pair_the_max_folds() {
+        let mut s = EffectsStore::new();
+        assert_eq!(
+            dig_speed_amplification(&s),
+            None,
+            "the unworn pair the None identity rides"
+        );
+        s.add_effect(MOB_EFFECT_CONDUIT_POWER, 0, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            dig_speed_amplification(&s),
+            Some(0),
+            "the conduit-only body the conduit amp wears"
+        );
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_CONDUIT_POWER, 3, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            dig_speed_amplification(&s2),
+            Some(3),
+            "the conduit-3 body the 3 the Some wears"
+        );
+        let mut s3 = EffectsStore::new();
+        s3.add_effect(MOB_EFFECT_HASTE, 2, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            dig_speed_amplification(&s3),
+            Some(2),
+            "the haste-only body the haste amp wears"
+        );
+        s3.add_effect(MOB_EFFECT_CONDUIT_POWER, 3, 400, DEFAULT_EFFECT_FLAGS);
+        assert_eq!(
+            dig_speed_amplification(&s3),
+            Some(3),
+            "the both-worn body the greater amp the max keeps"
+        );
+        // the expiry the identity restores (the clock's own walk)
+        for _ in 0..400 {
+            s3.tick_offline();
+        }
+        assert_eq!(
+            dig_speed_amplification(&s3),
+            None,
+            "the expired pair the None identity rides"
         );
     }
 

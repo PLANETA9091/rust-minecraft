@@ -102,9 +102,10 @@ impl DigState {
     /// chain's HEAD the haste's own seat before the fatigue speaks.
     /// The DOSE's own source (javap MobEffectUtil — the
     /// getDigSpeedAmplification the Math.max wears): the haste amp and
-    /// the conduit amp the max folds, the conduit's own half the
-    /// future CONDUIT_POWER round carries (the haste slice the lane
-    /// here speaks).
+    /// the conduit amp the max folds — the fold the
+    /// `effects::dig_speed_amplification` shared read speaks, the
+    /// conduit's own half the CONDUIT_POWER round carried (the
+    /// greater amp the Some the lane here speaks).
     /// THE FATIGUE LANE (javap pcs 52-125 — the
     /// hasEffect(MINING_FATIGUE) branch the haste's own tail keeps): the
     /// amplifier the TABLESWITCH reads (NOT the per-amp product the
@@ -662,6 +663,44 @@ mod tests {
         assert!(
             (hasty_air - 1.2 / 5.0).abs() < 1e-9,
             "the air the product first wears"
+        );
+    }
+
+    #[test]
+    fn the_conduit_power_the_max_fold_the_lane_wears() {
+        // THE CONDUIT'S OWN HALF (javap MobEffectUtil — the
+        // hasDigSpeed HASTE-∨-CONDUIT_POWER gate and the
+        // getDigSpeedAmplification Math.max the shared read speaks,
+        // effects::dig_speed_amplification the fold the two dig
+        // sites feed): the conduit-only store the SAME ×0.2 ladder
+        // the haste lane wears — the amp-0 the ×1.2, the amp-3 the
+        // ×1.8 — the conduit the haste's own multiplier keeps
+        use crate::effects::{
+            dig_speed_amplification, EffectsStore, MOB_EFFECT_CONDUIT_POWER,
+            DEFAULT_EFFECT_FLAGS,
+        };
+        let mut s = EffectsStore::new();
+        s.add_effect(MOB_EFFECT_CONDUIT_POWER, 0, 400, DEFAULT_EFFECT_FLAGS);
+        let amp = dig_speed_amplification(&s).expect("the conduit the Some wears");
+        let conduit0 = DigState::player_dig_speed(true, false, Some(amp), None);
+        assert!(
+            (conduit0 - 1.2).abs() < 1e-9,
+            "the conduit amp-0 the x1.2 wears: {}",
+            conduit0
+        );
+        // the BOTH-WORN body the greater amp the max keeps (the
+        // haste-1 the ×1.4, the conduit-3 the ×1.8 — the conduit the
+        // fold the lane feeds)
+        let mut s2 = EffectsStore::new();
+        s2.add_effect(MOB_EFFECT_CONDUIT_POWER, 3, 400, DEFAULT_EFFECT_FLAGS);
+        s2.add_effect(crate::effects::MOB_EFFECT_HASTE, 1, 400, DEFAULT_EFFECT_FLAGS);
+        let both = dig_speed_amplification(&s2).expect("the pair the Some wears");
+        assert_eq!(both, 3, "the max the greater amp keeps");
+        let conduit3 = DigState::player_dig_speed(true, false, Some(both), None);
+        assert!(
+            (conduit3 - 1.8).abs() < 1e-9,
+            "the folded amp the x1.8 wears: {}",
+            conduit3
         );
     }
 
