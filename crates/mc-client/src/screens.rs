@@ -12721,7 +12721,7 @@ impl App {
             // the in-window repeats the cooldown blocks never speak
             // it)
             if lava_hurt {
-                if self.hurt_burning(crate::body::LAVA_DAMAGE) {
+                if self.hurt_burning_keyed(crate::body::LAVA_DAMAGE, "death.attack.lava") {
                     self.sounds.play_burn(self.frame);
                 }
             }
@@ -12729,7 +12729,7 @@ impl App {
             // BURNING voice the DamageEffects speaks, no burn sound —
             // the baseTick hurt never carried one)
             if on_fire_hurt {
-                self.hurt_burning(crate::body::ON_FIRE_DAMAGE);
+                self.hurt_burning_keyed(crate::body::ON_FIRE_DAMAGE, "death.attack.onFire");
             }
             // THE IN-FIRE HURTS (BaseFireBlock.entityInside's runAfter
             // tail — the hurt(inFire(), fireDamage) the fire kind's
@@ -12742,12 +12742,14 @@ impl App {
             // invulnerable cooldown the two doses' overlap buries (the
             // vanilla's own per-tick beat the window folds)
             if in_fire_hurt {
-                if self.hurt_burning(crate::body::IN_FIRE_DAMAGE) {
+                if self.hurt_burning_keyed(crate::body::IN_FIRE_DAMAGE, "death.attack.inFire") {
                     self.sounds.play_burn(self.frame);
                 }
             }
             if in_soul_fire_hurt {
-                if self.hurt_burning(crate::body::IN_SOUL_FIRE_DAMAGE) {
+                if self
+                    .hurt_burning_keyed(crate::body::IN_SOUL_FIRE_DAMAGE, "death.attack.inFire")
+                {
                     self.sounds.play_burn(self.frame);
                 }
             }
@@ -12757,12 +12759,15 @@ impl App {
             // BURNING voice the same pipeline wears, the invulnerable
             // window the same cooldown the repeats bury)
             if in_campfire_hurt {
-                if self.hurt_burning(crate::body::CAMPFIRE_DAMAGE) {
+                if self.hurt_burning_keyed(crate::body::CAMPFIRE_DAMAGE, "death.attack.inFire") {
                     self.sounds.play_burn(self.frame);
                 }
             }
             if in_soul_campfire_hurt {
-                if self.hurt_burning(crate::body::SOUL_CAMPFIRE_DAMAGE) {
+                if self.hurt_burning_keyed(
+                    crate::body::SOUL_CAMPFIRE_DAMAGE,
+                    "death.attack.inFire",
+                ) {
                     self.sounds.play_burn(self.frame);
                 }
             }
@@ -25767,7 +25772,11 @@ impl App {
             // (commands.kill.success.single the killed entity's
             // display name wears).
             ["kill"] => {
-                self.actually_hurt(f32::MAX, HurtVoice::GenericKill);
+                self.actually_hurt(
+                    f32::MAX,
+                    HurtVoice::GenericKill,
+                    Some("death.attack.genericKill"),
+                );
                 let msg = format_positional(
                     tr("commands.kill.success.single").unwrap_or("Killed %s"),
                     &[PLAYER_NAME],
@@ -25796,7 +25805,13 @@ impl App {
                 // collection the count still speaks)
                 for target in &targets {
                     match target {
-                        KillTarget::Player => self.actually_hurt(f32::MAX, HurtVoice::GenericKill),
+                        KillTarget::Player => {
+                            self.actually_hurt(
+                                f32::MAX,
+                                HurtVoice::GenericKill,
+                                Some("death.attack.genericKill"),
+                            )
+                        }
                         KillTarget::Mob(i) => {
                             if let Some(mob) = self.mobs.get_mut(*i) {
                                 mob.hurt(f64::MAX, false);
@@ -36425,7 +36440,14 @@ impl App {
         // verdict 0.0, the lane's visibility the law keeps)
         self.food_data
             .add_exhaustion(crate::food::FALL_DAMAGE_EXHAUSTION);
-        self.hurt(damage as f32);
+        // THE FALL DEATH'S OWN NAME (the vanilla die's CombatTracker
+        // walk — the fall type's own lang key the death message speaks:
+        // death.fell.accident.generic the en_us table carries)
+        self.hurt_inner(
+            damage as f32,
+            HurtVoice::Plain,
+            Some("death.fell.accident.generic"),
+        );
     }
 
     /// THE HURT LAW (javap `hurtServer`'s own pipeline, the LOCAL
@@ -36440,28 +36462,50 @@ impl App {
     /// DamageEffects.HURT voice, the BURNING sources (lava, onFire)
     /// PLAYER_HURT_ON_FIRE).
     pub fn hurt(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, HurtVoice::Plain)
+        self.hurt_inner(amount, HurtVoice::Plain, None)
     }
-    /// THE BURNING SOURCES' OWN GATE (the same pipeline, the
-    /// DamageEffects.BURNING voice the lava and the onFire damage
-    /// types speak).
+    /// THE BURNING SOURCES' OWN GATE — the UNNAMED arm (the tests' and
+    /// the fire-immunity walk's own doses; the death message the None
+    /// keeps, the death screen the title-only law wears). The
+    /// production drains the keyed entry speaks (the vanilla die's
+    /// own name the source carries — the unnamed walk the tests' own
+    /// dose wears).
+    #[cfg_attr(not(test), expect(dead_code))]
     pub fn hurt_burning(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, HurtVoice::Burning)
+        self.hurt_inner(amount, HurtVoice::Burning, None)
+    }
+    /// THE BURNING SOURCE'S OWN NAME (the vanilla die's CombatTracker
+    /// walk — the damage type's own lang key the caller speaks: the
+    /// lava death.attack.lava, the onFire clock death.attack.onFire,
+    /// the inFire family [the fire kinds + the campfires' own
+    /// message_id rows the jar's json carries] death.attack.inFire).
+    pub fn hurt_burning_keyed(&mut self, amount: f32, death_key: &'static str) -> bool {
+        self.hurt_inner(amount, HurtVoice::Burning, Some(death_key))
     }
 
     /// THE DROWNING SOURCE'S OWN GATE (the same pipeline, the
     /// DamageEffects.DROWNING voice the drown damage type speaks —
-    /// the air clock's -20 fold the body banks).
+    /// the air clock's -20 fold the body banks; the death message the
+    /// type's own lang key names).
     pub fn hurt_drowning(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, HurtVoice::Drowning)
+        self.hurt_inner(
+            amount,
+            HurtVoice::Drowning,
+            Some("death.attack.drown"),
+        )
     }
 
     /// THE STARVE SOURCE'S OWN GATE (the same pipeline, the starve
     /// damage type's own name — the BYPASSES_EFFECTS member the
     /// getDamageAfterMagicAbsorb's pcs 0-11 early return answers:
-    /// the fold the hunger's own bite never wears).
+    /// the fold the hunger's own bite never wears; the death message
+    /// the type's own lang key names).
     pub fn hurt_starving(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, HurtVoice::Starving)
+        self.hurt_inner(
+            amount,
+            HurtVoice::Starving,
+            Some("death.attack.starve"),
+        )
     }
 
     /// THE VOID SOURCE'S OWN GATE (the same pipeline, the
@@ -36473,16 +36517,27 @@ impl App {
     /// hurtServer(fellOutOfWorld(), 4.0F) walk wears). The rest the
     /// pipeline rides whole — the 20-tick window the comparison the
     /// repeats bury, the flash, the plain HURT voice (the type's
-    /// no-effects row), the death tail.
+    /// no-effects row), the death tail; the death message the
+    /// outOfWorld lang key names.
     pub fn hurt_void(&mut self, amount: f32) -> bool {
-        self.hurt_inner_gated(amount, HurtVoice::Plain, true)
+        self.hurt_inner_gated(
+            amount,
+            HurtVoice::Plain,
+            true,
+            Some("death.attack.outOfWorld"),
+        )
     }
 
     /// THE VOICE THE DAMAGE TYPE'S EFFECTS NAME (the getHurtSound
     /// override's three arms the pipeline speaks: the plain HURT, the
     /// BURNING (lava, onFire), the DROWNING).
-    fn hurt_inner(&mut self, amount: f32, voice: HurtVoice) -> bool {
-        self.hurt_inner_gated(amount, voice, false)
+    fn hurt_inner(
+        &mut self,
+        amount: f32,
+        voice: HurtVoice,
+        death_key: Option<&'static str>,
+    ) -> bool {
+        self.hurt_inner_gated(amount, voice, false, death_key)
     }
 
     fn hurt_inner_gated(
@@ -36490,6 +36545,7 @@ impl App {
         amount: f32,
         voice: HurtVoice,
         bypass_invulnerable: bool,
+        death_key: Option<&'static str>,
     ) -> bool {
         // THE INVULNERABLE HEAD (javap hurtServer pcs 0-10 — the
         // pipeline's own opening verdict
@@ -36531,7 +36587,7 @@ impl App {
             if amount <= self.last_hurt {
                 return false;
             }
-            self.actually_hurt(amount - self.last_hurt, voice);
+            self.actually_hurt(amount - self.last_hurt, voice, death_key);
             self.last_hurt = amount;
             true
         } else {
@@ -36539,7 +36595,7 @@ impl App {
             self.invulnerable_time = 20;
             self.hurt_duration = 10;
             self.hurt_time = self.hurt_duration;
-            self.actually_hurt(amount, voice);
+            self.actually_hurt(amount, voice, death_key);
             // the hurt voice (handleDamageEvent's own call — the
             // client's own law speaks the (r - r) * 0.2 + 1.0 pitch;
             // the damage type's effects name the event — the plain
@@ -36573,7 +36629,7 @@ impl App {
     /// bytecode speaks). A fully-absorbed hit never touches the health
     /// and never reaches the combat/death tail (the `amount == 0`
     /// return).
-    fn actually_hurt(&mut self, amount: f32, voice: HurtVoice) {
+    fn actually_hurt(&mut self, amount: f32, voice: HurtVoice, death_key: Option<&'static str>) {
         // THE RESISTANCE'S OWN FOLD (javap actuallyHurt's own order —
         // the armor lane the bare body skips, the getDamageAfterMagicAbsorb
         // call the magic fold serves, the ABSORPTION lane the survivor
@@ -36607,6 +36663,17 @@ impl App {
             .set_absorption(self.effects.absorption() - health_share);
         if self.health <= 0.0 && !self.dead {
             self.dead = true;
+            // THE DEATH'S OWN MESSAGE (the vanilla die's CombatTracker
+            // walk — the damage source's own lang key the death
+            // message speaks, the %1$s the player's own name answers:
+            // the format_chat_decoration the TranslatableContents law
+            // keeps; the UNNAMED sources the None keeps — the death
+            // screen the title-only law wears, the wire's Combat Kill
+            // message the networked lane carries)
+            if let Some(key) = death_key {
+                self.death_message =
+                    Some(format_chat_decoration(key, &[PLAYER_NAME]));
+            }
             // THE DEATH SCREEN'S OWN TAKEOVER (the vanilla death's own
             // setScreen(new DeathScreen) — the open ChatScreen the
             // replacement's removed() answers, the exit verdict the
@@ -47838,6 +47905,104 @@ mod tests {
         assert_eq!(app.food_data.exhaustion(), 0.0);
     }
 
+    /// THE DEATH'S OWN MESSAGE (the vanilla die's CombatTracker walk —
+    /// the damage source's own lang key the death screen names, the
+    /// %1$s the player's own name answers): the void's outOfWorld row,
+    /// the fall's fell.accident.generic row, the lava/inFire/drown/
+    /// starve rows the en_us table carries, the UNNAMED sources the
+    /// None keeps (the title-only law the generic lanes wear), the
+    /// /kill's own genericKill row, the respawn the message clears.
+    #[test]
+    fn the_death_the_message_the_source_names() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        // THE VOID'S OWN NAME (the crossing dose the health zero
+        // banks — the outOfWorld row the message speaks)
+        app.health = 4.0;
+        assert!(
+            app.hurt_void(crate::body::VOID_DAMAGE),
+            "the void dose the crossing lands"
+        );
+        assert!(app.dead, "the zero the death crossing arms");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs fell out of the world"),
+            "the outOfWorld row the vanilla lang carries"
+        );
+        // THE RESPAWN CLEARS (the fresh vitals the message None
+        // answers)
+        app.respawn();
+        assert!(!app.dead);
+        assert_eq!(app.death_message, None, "the respawn the message clears");
+        // THE FALL'S OWN NAME (the single 20.0 blow the crossing
+        // banks — the fell.accident.generic row)
+        app.apply_fall_damage(20);
+        assert!(app.dead, "the 20 the fall crossing banks");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs fell from a high place"),
+            "the fell.accident.generic row speaks"
+        );
+        app.respawn();
+        // THE BURNING SOURCES' OWN NAMES (the lava row, the inFire
+        // family row the campfires' own message_id carries)
+        assert!(app.hurt_burning_keyed(20.0, "death.attack.lava"));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs tried to swim in lava"),
+            "the lava row speaks"
+        );
+        app.respawn();
+        assert!(app.hurt_burning_keyed(20.0, "death.attack.inFire"));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs went up in flames"),
+            "the inFire row speaks"
+        );
+        app.respawn();
+        // THE DROWN'S OWN NAME
+        assert!(app.hurt_drowning(20.0));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs drowned"),
+            "the drown row speaks"
+        );
+        app.respawn();
+        // THE STARVE'S OWN NAME
+        assert!(app.hurt_starving(20.0));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs starved to death"),
+            "the starve row speaks"
+        );
+        app.respawn();
+        // THE UNNAMED SOURCES' OWN LAW (the None the title-only
+        // screen wears — the mob/magic/explosion lanes the future
+        // round names)
+        assert!(app.hurt(20.0));
+        assert!(app.dead);
+        assert_eq!(
+            app.death_message, None,
+            "the unnamed source the title-only law keeps"
+        );
+        app.respawn();
+        // THE /KILL'S OWN NAME (the genericKill row the direct walk
+        // speaks — the command's own dose the crossing banks)
+        app.actually_hurt(
+            f32::MAX,
+            HurtVoice::GenericKill,
+            Some("death.attack.genericKill"),
+        );
+        assert!(app.dead, "the /kill dose the crossing banks");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was killed"),
+            "the genericKill row speaks"
+        );
+    }
+
     /// THE RESISTANCE'S OWN FOLD (javap getDamageAfterMagicAbsorb pcs
     /// 0-73 — the fold the actuallyHurt's magic lane wears): the amp-0
     /// body the 5.0 blow the 4.0 survivor spends, the cooldown's
@@ -57286,7 +57451,7 @@ mod tests {
             app.on_chat_char(c);
         }
         assert!(app.chat_open);
-        app.actually_hurt(100.0, HurtVoice::Plain);
+        app.actually_hurt(100.0, HurtVoice::Plain, None);
         // THE INTERRUPTED WALK (the close the save lane banks — the
         // method the startsWith walk names, the chat the death overlay
         // the input never shares)
@@ -57336,7 +57501,7 @@ mod tests {
         for c in "   ".chars() {
             app.on_chat_char(c);
         }
-        app.actually_hurt(100.0, HurtVoice::Plain);
+        app.actually_hurt(100.0, HurtVoice::Plain, None);
         assert!(app.dead);
         assert!(!app.chat_open);
         assert_eq!(
@@ -57363,7 +57528,7 @@ mod tests {
         // untouched draft the skip-save keeps — the bank unchanged)
         app.on_chat_key();
         assert!(app.chat_input_is_draft);
-        app.actually_hurt(100.0, HurtVoice::Plain);
+        app.actually_hurt(100.0, HurtVoice::Plain, None);
         assert!(app.dead);
         assert!(!app.chat_open);
         assert_eq!(
@@ -57388,7 +57553,7 @@ mod tests {
     fn the_death_screen_the_modal_keeps() {
         let mut app = App::new(3);
         app.enter_world();
-        app.actually_hurt(100.0, HurtVoice::Plain);
+        app.actually_hurt(100.0, HurtVoice::Plain, None);
         assert!(app.dead && !app.chat_open);
         // THE DEAD ESC (the on_escape death gate — the pause the modal
         // never arms, the screen the World keeps)
@@ -57419,7 +57584,7 @@ mod tests {
         for c in "tp 1 2 3".chars() {
             app.on_chat_char(c);
         }
-        app.actually_hurt(100.0, HurtVoice::Plain);
+        app.actually_hurt(100.0, HurtVoice::Plain, None);
         assert!(app.dead && !app.chat_open);
         assert_eq!(
             app.chat_latest_draft,
@@ -57573,7 +57738,7 @@ mod tests {
         }
         // THE DEATH (the INTERRUPTED verdict — the option the lane
         // never reads, the draft the replacement close banks)
-        app.actually_hurt(100.0, HurtVoice::Plain);
+        app.actually_hurt(100.0, HurtVoice::Plain, None);
         assert!(app.dead && !app.chat_open);
         assert_eq!(
             app.chat_latest_draft,
@@ -95920,7 +96085,7 @@ cow_sound_variant: None,
             ride_height: 0.9,
         });
         // THE FATAL DOSE (the health the 0.0 crossing speaks)
-        app.actually_hurt(100.0, HurtVoice::Plain);
+        app.actually_hurt(100.0, HurtVoice::Plain, None);
         assert!(app.dead, "the dose the player kills");
         assert!(
             app.offline_ride.is_none(),
