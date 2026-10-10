@@ -629,6 +629,48 @@ impl<'a> Gui<'a> {
         }
     }
 
+    /// The BLOCK TEXTURE's own tinted stretch blit (the
+    /// sprite_at_tinted walk over the sprite_file loader — the
+    /// `assets-cache/jar/block/*.png` source the atlas's own block
+    /// tiles keep): every sampled channel rides the tint, the alpha
+    /// included (the portal overlay's `ARGB.white(alpha)` pass the
+    /// extractPortalOverlay walk speaks).
+    pub fn sprite_file_at_tinted(
+        &mut self,
+        a: &mut GuiAssets,
+        rel: &'static str,
+        x: i32,
+        y: i32,
+        dw: i32,
+        dh: i32,
+        tint: [f32; 4],
+    ) {
+        let Some(s) = a.sprite_file(rel).cloned() else { return };
+        if dw <= 0 || dh <= 0 || s.w == 0 || s.h == 0 {
+            return;
+        }
+        for dy in 0..dh {
+            let sy = (dy as u32 * s.h / dh as u32).min(s.h - 1);
+            for dx in 0..dw {
+                let sx = (dx as u32 * s.w / dw as u32).min(s.w - 1);
+                let c = s.sample(sx, sy);
+                if c[3] <= 0.0 {
+                    continue;
+                }
+                self.px(
+                    x + dx,
+                    y + dy,
+                    [
+                        c[0] * tint[0],
+                        c[1] * tint[1],
+                        c[2] * tint[2],
+                        c[3] * tint[3],
+                    ],
+                );
+            }
+        }
+    }
+
     /// Vanilla nine-slice blit per the sprite's .mcmeta border.
     pub fn sprite_9slice(
         &mut self,

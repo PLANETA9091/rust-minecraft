@@ -9751,6 +9751,12 @@ impl App {
             let mut in_soul_fire_hurt = false;
             let mut in_campfire_hurt = false;
             let mut in_soul_campfire_hurt = false;
+            // THE PORTAL ARC'S OWN DRAIN SLOTS (the body's borrow fills
+            // them — the trigger voice's play AND the screen-dismiss
+            // law run after it ends: the App the screens the body never
+            // sees, the sounds the same post-borrow tail speaks)
+            let mut portal_trigger = false;
+            let mut portal_inside = false;
             let mut drown_hurt = false;
             // THE ELYTRA BREAK's own drain slot (the body's borrow fills
             // it — the entityEvent 47's client arm runs after it ends:
@@ -10268,6 +10274,12 @@ impl App {
                     // F4 flick the bank feeds instantly, the
                     // survival/adventure flick the grant retires)
                     b.invulnerable = self.game_mode.invulnerable();
+                    // THE PORTAL'S OWN ALIVE FEED (javap `Entity.isAlive`
+                    // — the canUsePortal consult the portal walks pass):
+                    // the dead body the portal's own usability gate
+                    // refuses (the arm AND the count the same verdict
+                    // gates), the alive body the walk answers
+                    b.alive = !self.dead;
                     // THE CHEST'S OWN GLIDE VERDICT (javap canGlideUsing
                     // the 26.2 walk — the GLIDER component the elytra
                     // item carries + the equippable slot pair + the
@@ -10529,6 +10541,12 @@ impl App {
                     // the same-tick flag law the fire pair speaks)
                     in_campfire_hurt = std::mem::take(&mut b.in_campfire_hurt_due);
                     in_soul_campfire_hurt = std::mem::take(&mut b.in_soul_campfire_hurt_due);
+                    // THE PORTAL ARC'S OWN DRAIN (the same per-tick flag
+                    // law the fire arc speaks — the trigger voice + the
+                    // consume fact the walks banked, the answers the
+                    // post-borrow tail serves)
+                    portal_trigger = std::mem::take(&mut b.portal_trigger_due);
+                    portal_inside = std::mem::take(&mut b.portal_inside_consumed);
                     // THE AIR ARC'S OWN DRAIN (the same per-tick flag
                     // law the fire arc's three speak — the -20 fold's
                     // own read, the body keeps it true until the NEXT
@@ -10550,6 +10568,24 @@ impl App {
             }
             if let Some(dmg) = fall_event {
                 self.apply_fall_damage(dmg);
+            }
+            // THE PORTAL TRIGGER'S OWN VOICE (javap
+            // LocalPlayer.handlePortalTransitionEffect pcs 100-136 —
+            // the `intensity == 0.0` gate the forLocalAmbience answer
+            // rides): the first inside tick's beat the drain's own
+            // fact serves, the listener ride the travel's own lane
+            // keeps (the same pitch chain the case-1032 body speaks)
+            if portal_trigger {
+                self.play_portal_trigger();
+            }
+            // THE PORTAL'S OWN SCREEN DISMISS (javap the same walk
+            // pcs 31-88 — the screen the `!isAllowedInPortal()` gate
+            // the close serves: `closeContainer()` the container's own
+            // walk keeps, `setScreen((Screen) null)` the null the
+            // World screen's own shape answers): the App the screens
+            // the body never sees — the same drain the law reads
+            if portal_inside && !self.screen_allowed_in_portal() {
+                self.portal_screen_dismiss();
             }
             // THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken →
             // the entityEvent 47 → the client's breakItem walk): the
@@ -34036,6 +34072,79 @@ impl App {
         self.sounds.play_voice_at_pan(self.frame, "block.portal.travel", 0.25, pitch, 0.0, 0.0);
     }
 
+    /// THE PORTAL-TRIGGER WALK (javap
+    /// `LocalPlayer.handlePortalTransitionEffect` pcs 100-136 — the
+    /// `intensity == 0.0` gate the
+    /// `getSoundManager().play(SimpleSoundInstance.forLocalAmbience(
+    /// PORTAL_TRIGGER, random.nextFloat() * 0.4F + 0.8F, 0.25F))`
+    /// answer rides — the FIRST inside tick's zero-intensity beat the
+    /// body's flag banks): the SAME pitch chain the travel's case-1032
+    /// body keeps, the listener ride the same lane wears (no anchor,
+    /// no attenuation, no pan — the dist-0 ear the 0.25 whisper the
+    /// gain keeps). The sound key the official sounds.json table the
+    /// runtime cache keeps (the `block.portal.trigger` voice — the
+    /// portal/trigger file the jar banks, NO new assets the lane
+    /// demands).
+    fn play_portal_trigger(&mut self) {
+        let pitch = self.level_ambient_rng.next_f32() * 0.4f32 + 0.8f32;
+        self.sounds
+            .play_voice_at_pan(self.frame, "block.portal.trigger", 0.25, pitch, 0.0, 0.0);
+    }
+
+    /// THE PORTAL'S OWN SCREEN GATE (javap `Screen.isAllowedInPortal`
+    /// the 26.2 jar pc 0-4 — the `isPauseScreen()` delegate the whole
+    /// law keeps; the arms the overrides speak: the Screen DEFAULT's
+    /// iconst_1 the allowed verdict banks (PauseScreen/OptionsScreen
+    /// the no-override default keeps), AbstractContainerScreen's
+    /// iconst_0 the container family closes, ChatScreen's iconst_0
+    /// the chat closes, DeathScreen's iconst_0 the death closes):
+    /// the repo's own screen map the same law wears — the FOUR
+    /// container kinds the dismiss serves, the pause/options/world-
+    /// options/mode-switcher families the allowed verdict keeps, the
+    /// World screen the `screen == null` shape the vanilla walk
+    /// consults first (the pc 38-41 ifnull the gate skips).
+    fn screen_allowed_in_portal(&self) -> bool {
+        !matches!(
+            self.screen,
+            ScreenKind::Chest | ScreenKind::Inventory | ScreenKind::Crafting | ScreenKind::Furnace
+        )
+    }
+
+    /// THE PORTAL'S OWN SCREEN CLOSE (javap
+    /// `LocalPlayer.handlePortalTransitionEffect` pcs 44-88 — the
+    /// `closeContainer()` walk the AbstractContainerScreen arm keeps
+    /// (the removed() reconciliation the container's own close
+    /// serves), the `setScreen((Screen) null)` the tail speaks): the
+    /// four container kinds the Escape lane's own close walks keep
+    /// (the chest's close echo the ContainerClose packet the live
+    /// lane speaks, the carried's return the removed() walk serves),
+    /// the non-container screens the gate never reaches.
+    fn portal_screen_dismiss(&mut self) {
+        match self.screen {
+            ScreenKind::Chest => {
+                // the container's own close (the Escape lane's walk
+                // the chest arm keeps — the same echo the serverbound
+                // Container Close packet speaks)
+                if self.chest_is_live {
+                    if let (Some((window_id, _)), Some(sink)) =
+                        (self.chest_live_window, self.live_clicks.as_ref())
+                    {
+                        let _ =
+                            sink.send(crate::world_view::ContainerCommand::Close { window_id });
+                    }
+                }
+                self.chest_is_live = false;
+                self.chest_live_window = None;
+                self.chest_carried = (0, 0);
+                self.open(ScreenKind::World);
+            }
+            ScreenKind::Furnace => self.close_furnace(),
+            ScreenKind::Inventory => self.close_inventory(),
+            ScreenKind::Crafting => self.close_crafting_table(),
+            _ => {}
+        }
+    }
+
     /// THE DRAGON BLOCK-BREAK WIRE LANE (javap `LevelEventHandler`
     /// case 2008 — offset 3440 — over the 26.2 jar): the server's
     /// own dragon the event broadcast, the ONE EXPLOSION puff the
@@ -42847,6 +42956,43 @@ impl App {
         self.record_fps_window();
         if self.hud_hidden {
             return;
+        }
+        // THE PORTAL OVERLAY (javap `Hud.extractCameraOverlays` pcs
+        // 236-286 — the camera-overlay slot the vignette's own lane
+        // precedes, the `Mth.lerp(partialTick, oPortalEffectIntensity,
+        // portalEffectIntensity)` fold the pc 245-258 walk speaks, the
+        // `fload 6 fconst_0 fcmpl ifle` gate the >0 verdict keeps, the
+        // `extractPortalOverlay(gfx, alpha)` the pc 278-282 call
+        // serves; the camera-overlays group the F1 gate the first
+        // skip speaks — the hidden HUD the overlay never draws): the
+        // alpha the extractPortalOverlay pc 0-23 curve folds (the
+        // < 1.0 body the fourth-power + 0.8/0.2 answer wears), the
+        // ARGB.white(alpha) tint the full-screen blit's own color arg
+        // keeps — the NETHER_PORTAL block's default-state PARTICLE
+        // sprite (javap pc 29-51 — the getParticleMaterial walk the
+        // model's own particle element the #portal texture answers,
+        // the `block/nether_portal.png` source the jar banks) the
+        // (0, 0, guiWidth, guiHeight) stretch the pc 53-72 blit wears.
+        // No golden scene carries a body inside a portal — the zero
+        // intensity the goldens' own frames the draw never speaks.
+        if let Some(b) = self.body.as_ref() {
+            let alpha = b.o_portal_effect_intensity
+                + (b.portal_effect_intensity - b.o_portal_effect_intensity)
+                    * self.partial_tick;
+            if alpha > 0.0 {
+                // pc 0-23 — the fourth-power + 0.8/0.2 curve the under-1.0 body wears
+                let t = crate::body::portal_overlay_alpha(alpha);
+                // the ARGB.white(t) tint — every channel the multiply rides
+                g.sprite_file_at_tinted(
+                    a,
+                    "block/nether_portal.png",
+                    0,
+                    0,
+                    w,
+                    h,
+                    [t, t, t, t],
+                );
+            }
         }
         // THE EXPERIENCE BAR (javap `Hud`'s contextual-bar extract: the
         // `gameMode.hasExperience()` gate the survival client speaks —
@@ -97070,6 +97216,186 @@ cow_sound_variant: None,
                 .all(|e| !e.starts_with("block.fire.ambient ")),
             "the stone world the voice never logs"
         );
+    }
+
+    /// THE PORTAL STANDING'S OWN APP LANE (javap `LocalPlayer
+    /// .handlePortalTransitionEffect` — the trigger voice the
+    /// zero-intensity beat banks, the screen-dismiss law the
+    /// `!isAllowedInPortal()` gate the closeContainer + setScreen(null)
+    /// tail serves; the countdown the body's own walk wears): the
+    /// standing body the offline world's own portal cell speaks, the
+    /// chest screen the container family the dismiss closes, the
+    /// World screen the allowed verdict keeps.
+    #[test]
+    fn the_portal_the_trigger_the_dismiss_the_app_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // the body the spawn point's own construction wears (the
+        // offline spawn walk's own pair — the center + the feet_y the
+        // top_solid_y scan keeps); the settle ticks the grounded body
+        // the ground keeps
+        app.body = Some(crate::body::PlayerBody::new(
+            app.world_size as f64 / 2.0,
+            app.spawn_y as f64,
+            app.world_size as f64 / 2.0,
+            0.0,
+            0.0,
+        ));
+        for _ in 0..4 {
+            app.update();
+        }
+        // the body's own feet cell the portal kind wears
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32)
+        };
+        app.offline_world
+            .as_mut()
+            .expect("the offline world rides")
+            .set(bx, by, bz, crate::world::NETHER_PORTAL);
+        // THE ARM TICK (the entityInside walk the inside-blocks family
+        // serves — the World screen the body tick's own gate keeps):
+        // the entry the feet cell banks — the consume the NEXT tick's
+        // head serves
+        app.update();
+        {
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(b.portal_entry, Some((bx, by, bz)), "the feet cell the arm banks");
+            assert!(b.portal_inside_this_tick, "the arm the flag wears");
+        }
+        // THE CONSUME TICK (the baseTick law the head serves): the
+        // trigger beat the zero-intensity gate speaks (the drain the
+        // play_portal_trigger answer consumed — the flag the take
+        // clears), the count's own one, the rise the +0.0125 walk wears
+        app.update();
+        {
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(b.portal_time, 1, "the consume the one speaks");
+            assert!(
+                (b.portal_effect_intensity - crate::body::PORTAL_RISE_PER_TICK).abs() < 1e-9,
+                "the first consume the rise wears — the trigger's own proof"
+            );
+            assert!(
+                !b.portal_trigger_due,
+                "the drained voice the take clears"
+            );
+        }
+        assert_eq!(
+            app.screen,
+            ScreenKind::World,
+            "the World screen the gate never reaches"
+        );
+        // THE STANDING HOLD (the body the portal keeps): the count the
+        // every-tick consume climbs
+        for _ in 0..4 {
+            app.update();
+        }
+        {
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(b.portal_time, 5, "the standing hold the count climbs");
+        }
+        // THE SCREEN GATE'S OWN TABLE (javap isAllowedInPortal = the
+        // isPauseScreen delegate — the container family the refusal
+        // keeps, the World/pause the allowed verdict banks)
+        app.open(ScreenKind::Inventory);
+        assert!(!app.screen_allowed_in_portal());
+        app.open(ScreenKind::Chest);
+        assert!(!app.screen_allowed_in_portal());
+        app.open(ScreenKind::Furnace);
+        assert!(!app.screen_allowed_in_portal());
+        app.open(ScreenKind::Crafting);
+        assert!(!app.screen_allowed_in_portal());
+        app.open(ScreenKind::World);
+        assert!(app.screen_allowed_in_portal(), "the null-screen the allowed keeps");
+        app.paused = true;
+        assert!(
+            app.screen_allowed_in_portal(),
+            "the pause the Screen-default's iconst_1 keeps"
+        );
+        app.paused = false;
+        // THE DISMISS WALK'S OWN ARM (javap pcs 44-88 — the
+        // closeContainer + setScreen(null) tail the container family
+        // serves): the walk the law's own answer keeps — the chest's
+        // close walk the Escape lane shares, the carried reset the
+        // removed() reconciliation wears. (The law's e2e reach the
+        // body-tick gate's own World-screen shape keeps — the
+        // frozen-container convention the SCREEN round chose, the
+        // container-open standing the freeze denies: the walk the
+        // direct drive tests, the reach the honest doc banks.)
+        app.open(ScreenKind::Chest);
+        app.chest_carried = (55, 3);
+        app.portal_screen_dismiss();
+        assert_eq!(
+            app.screen,
+            ScreenKind::World,
+            "the dismiss the container closes"
+        );
+        assert_eq!(
+            app.chest_carried,
+            (0, 0),
+            "the carried the reconciliation clears"
+        );
+    }
+
+    /// THE PORTAL OVERLAY'S OWN TINT BLIT (javap `Hud
+    /// .extractPortalOverlay` — the ARGB.white(alpha) color the blit's
+    /// own tint arg speaks, the NETHER_PORTAL block's default-state
+    /// PARTICLE sprite the `block/nether_portal.png` source the jar
+    /// banks): the sprite_file_at_tinted walk the multiply rides — the
+    /// every channel the tint folds, the alpha included.
+    #[test]
+    fn the_portal_overlay_the_tint_the_blit_wears() {
+        // the real assets the honest source keeps (the MC2RS_ASSETS
+        // root the gui tests' own discovery keeps, the absent cache
+        // the early return the same law wears)
+        let root = std::env::var("MC2RS_ASSETS")
+            .ok()
+            .map(std::path::PathBuf::from)
+            .or_else(|| {
+                std::env::current_dir()
+                    .ok()
+                    .map(|d| d.join("assets-cache"))
+                    .filter(|p| p.join("jar").exists())
+            });
+        let Some(root) = root else { return };
+        let mut fb = crate::raster::Framebuf::new(32, 32);
+        fb.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+        let mut g = Gui::new(&mut fb, 1);
+        let mut assets = GuiAssets::open(&root.join("jar"));
+        // the full tint the sprite's own pixel the center sample keeps
+        g.sprite_file_at_tinted(
+            &mut assets,
+            "block/nether_portal.png",
+            0,
+            0,
+            32,
+            32,
+            [1.0, 1.0, 1.0, 1.0],
+        );
+        let full = fb.color[(16 * 32 + 16) * 3..(16 * 32 + 16) * 3 + 3].to_vec();
+        // the half tint the multiply the same texel wears
+        let mut fb2 = crate::raster::Framebuf::new(32, 32);
+        fb2.clear([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]);
+        let mut g2 = Gui::new(&mut fb2, 1);
+        let mut assets2 = GuiAssets::open(&root.join("jar"));
+        g2.sprite_file_at_tinted(
+            &mut assets2,
+            "block/nether_portal.png",
+            0,
+            0,
+            32,
+            32,
+            [0.5, 0.5, 0.5, 0.5],
+        );
+        let half = fb2.color[(16 * 32 + 16) * 3..(16 * 32 + 16) * 3 + 3].to_vec();
+        for ch in 0..3 {
+            let f = full[ch] as f32 / 255.0;
+            let h = half[ch] as f32 / 255.0;
+            assert!(
+                (h - f * 0.5).abs() < 0.02,
+                "the half tint the multiply the channel wears"
+            );
+        }
     }
 
     /// THE PORTAL CELLS' OWN ANIMATE WALK — javap `NetherPortalBlock.

@@ -299,6 +299,95 @@ pub const FIRE_DAMAGE_INTERVAL: i32 = 20;
 /// keeps). Both fire kinds ride the SAME parent law — the entityInside
 /// the SoulFireBlock never overrides.
 pub const FIRE_IGNITE_TICKS: i32 = 160;
+
+/// THE PORTAL COOLDOWN'S OWN GRANT (javap `Player.getDimensionChangingDelay`
+/// the 26.2 jar — the `bipush 10` the override's whole body speaks, the
+/// Entity default's `sipush 300` the non-player vehicles wear): the tick
+/// count `setPortalCooldown()` banks — the teleport's own tail AND the
+/// on-cooldown touch's refresh the setAsInsidePortal walk speaks.
+pub const PLAYER_PORTAL_COOLDOWN_TICKS: i32 = 10;
+/// THE PORTAL CLOCK'S OWN DECAY (javap `PortalProcessor.decayTick` pcs
+/// 0-14 — the `portalTime = Math.max(portalTime - 4, 0)` fold the
+/// iconst_4 isub the max-arg pair banks): the every-tick step the
+/// flag-false consume wears, the exited body's countdown the four-a-
+/// tick walk bleeds dry.
+pub const PORTAL_TIME_DECAY_PER_TICK: i32 = 4;
+/// THE TRANSITION INTENSITY'S OWN RISE (javap `LocalPlayer
+/// .handlePortalTransitionEffect` pc 137-139 — the `ldc_w 0.0125f`
+/// the inside-tick delta banks): the every-inside-tick step the
+/// clamp walk spends, the 80-tick arc the survival delay's own count
+/// the full-screen fade takes.
+pub const PORTAL_RISE_PER_TICK: f32 = 0.0125;
+/// THE TRANSITION INTENSITY'S OWN FALL (javap the same walk pc
+/// 152-164 — the `ldc_w -0.05f` the outside-tick delta banks — the
+/// NEGATIVE literal the constant pool speaks, the magnitude the
+/// const keeps): the 20-tick fade-out the exited body's overlay
+/// speaks.
+pub const PORTAL_FALL_PER_TICK: f32 = 0.05;
+/// THE GAMERULE DEFAULT'S OWN ROW (javap `GameRules` clinit pc
+/// 510-522 — `registerInteger("players_nether_portal_default_delay",
+/// PLAYER, bipush 80, iconst_0)` the DEFAULT_DELAY register call
+/// speaks): the survival body's transition time the gamerule's own
+/// default banks (no gamerule table the client carries — the
+/// defaults ARE the law the jar's own clinit speaks).
+pub const PLAYERS_NETHER_PORTAL_DEFAULT_DELAY_TICKS: i32 = 80;
+/// THE CREATIVE GAMERULE'S OWN ROW (javap the same clinit pc
+/// 496-507 — `registerInteger("players_nether_portal_creative_delay",
+/// PLAYER, iconst_0, iconst_0)` the CREATIVE_DELAY register call
+/// speaks — the default int the FIRST iconst_0 banks): the
+/// invulnerable body's transition time ZERO — the first consume the
+/// `1 >= 0` verdict the same-tick teleport wears.
+pub const PLAYERS_NETHER_PORTAL_CREATIVE_DELAY_TICKS: i32 = 0;
+
+/// THE PORTAL'S OWN USABILITY GATE (javap `Entity.canUsePortal(boolean)`
+/// the 26.2 jar pc 0-23): the `!allowNonPost && isPassenger()` pair the
+/// ifeq/ifne chain keeps (the false arg the entityInside +
+/// processPortalTeleportation callers pass — the passenger the walk
+/// refuses), the `isAlive()` verdict the tail's own answer serves.
+/// The merged fiction's own constants the body's walks pass: the
+/// passenger FALSE (the ride branches never reach the body tick — the
+/// vehicle's own walk owns those ticks) and the alive the App's own
+/// dead flag feeds.
+pub fn can_use_portal(allow_non_post: bool, passenger: bool, alive: bool) -> bool {
+    if !allow_non_post && passenger {
+        return false; // pc 1-8 — the non-post arg the passenger refusal answers
+    }
+    alive // pc 11-15 — the isAlive verdict the tail keeps
+}
+
+/// THE NETHER PORTAL'S OWN TRANSITION TIME (javap
+/// `NetherPortalBlock.getPortalTransitionTime` pc 0-50 — the Player
+/// instanceof gate the non-player's `iconst_0` instant answer keeps,
+/// the `Math.max(0, gamerules.get(invulnerable ? CREATIVE_DELAY :
+/// DEFAULT_DELAY))` fold the player arm speaks): the invulnerable
+/// (creative) body the 0-default gamerule rides — the FIRST consume's
+/// `1 >= 0` verdict the same-tick teleport wears; the survival body
+/// the 80-tick default the four-second countdown keeps.
+pub fn nether_portal_transition_time(invulnerable: bool) -> i32 {
+    let rule = if invulnerable {
+        PLAYERS_NETHER_PORTAL_CREATIVE_DELAY_TICKS
+    } else {
+        PLAYERS_NETHER_PORTAL_DEFAULT_DELAY_TICKS
+    };
+    rule.max(0) // pc 45-48 — the Math.max(0, ...) fold the walk keeps
+}
+
+/// THE PORTAL OVERLAY'S OWN ALPHA CURVE (javap `Hud.extractPortalOverlay`
+/// pc 0-23 — the `fload_2 fconst_1 fcmpg ifge 24` gate the under-1.0 arm
+/// keeps: `alpha = alpha * alpha` twice (pc 6-13 — the fourth power the
+/// two muls speak), then `alpha = alpha * 0.8f + 0.2f` (pc 14-22); the
+/// >= 1.0 body the curve never touches): the ARGB.white(alpha) tint the
+/// blit's own color arg wears, the 0.2 floor the faintest first-tick
+/// draw keeps.
+pub fn portal_overlay_alpha(alpha: f32) -> f32 {
+    if alpha < 1.0 {
+        let a = alpha * alpha; // pc 6-9
+        let a = a * a; // pc 10-13
+        a * 0.8 + 0.2 // pc 14-22
+    } else {
+        alpha
+    }
+}
 /// `BaseFireBlock.entityInside`'s runAfter tail's own dose for the
 /// plain fire — the `hurt(inFire(), fireDamage)` the applier queue
 /// speaks, the FireBlock ctor's `super(properties, 1.0F)` the
@@ -1283,6 +1372,66 @@ pub struct PlayerBody {
     /// 2) row the fireDamage int keeps, the soul campfire's dose the
     /// plain's amount doubles).
     pub in_soul_campfire_hurt_due: bool,
+    /// THE PORTAL COOLDOWN (javap `Entity.portalCooldown` — the int
+    /// field the setPortalCooldown walks bank, the `> 0` verdict the
+    /// isOnPortalCooldown walk answers): the teleport's own tail AND
+    /// the on-cooldown touch's refresh grant it (the player's 10 the
+    /// getDimensionChangingDelay override keeps), the
+    /// processPortalCooldown walk the one-a-tick decrement wears.
+    pub portal_cooldown: i32,
+    /// THE PORTAL PROCESSOR'S OWN ENTRY (javap `PortalProcessor
+    /// .entryPosition` — the BlockPos the ctor's immutable() copy
+    /// banks, the Some presence the processor's existence the
+    /// kind-only vocabulary keeps: the NETHER_PORTAL kind the only
+    /// Portal the client banks, the isSamePortal reference verdict
+    /// the same-kind trivially-true answer wears): the first overlapped
+    /// cell the arm walk banks, the updateEntryPosition walk the
+    /// re-arm's own tail speaks.
+    pub portal_entry: Option<(i32, i32, i32)>,
+    /// THE PORTAL CLOCK (javap `PortalProcessor.portalTime` — the int
+    /// the processPortalTeleportation walk increments one a consume,
+    /// the decayTick walk bleeds four a tick the exited body wears,
+    /// the verdict the `>= transitionTime` compare speaks).
+    pub portal_time: i32,
+    /// THE PORTAL PROCESSOR'S INSIDE FLAG (javap
+    /// `PortalProcessor.insidePortalThisTick` — the boolean the ctor
+    /// iconst_1 arms, the entityInside's same-portal arm re-arms, the
+    /// processPortalTeleportation consume clears): the arm walk banks
+    /// it for the NEXT tick's consume (the vanilla arm-at-move /
+    /// consume-at-baseTick order the merged tick keeps).
+    pub portal_inside_this_tick: bool,
+    /// THE CONSUME FACT (the merged fiction's own face — the process
+    /// walk's this-tick sighting of the inside flag): the effect walk
+    /// AND the App's screen law read it, the tick-head clear the
+    /// per-tick flag family's own law keeps.
+    pub portal_inside_consumed: bool,
+    /// THE TELEPORT VERDICT (javap `processPortalTeleportation`'s
+    /// boolean return — the `portalTime >= transitionTime` compare the
+    /// handlePortal walk's teleport tail serves): the verdict tick the
+    /// flag banks, the dimension swap the NEXT round's own line
+    /// consumes (the countdown round the flag alone banks).
+    pub portal_teleport_due: bool,
+    /// THE TRANSITION INTENSITY (javap `LocalPlayer.portalEffectIntensity`
+    /// — the float the handlePortalTransitionEffect walk ramps
+    /// +0.0125 a inside-tick / -0.05 a outside-tick, the [0, 1] clamp
+    /// the fold keeps): the overlay's alpha the Hud's lerp reads.
+    pub portal_effect_intensity: f32,
+    /// THE TRANSITION INTENSITY'S PREVIOUS STORE (javap
+    /// `LocalPlayer.oPortalEffectIntensity` — the pc 0-5 copy the
+    /// effect walk's own head speaks): the partial-tick lerp the
+    /// Hud's camera-overlay extract walks between.
+    pub o_portal_effect_intensity: f32,
+    /// THE PORTAL TRIGGER VOICE (javap the same walk pcs 100-136 — the
+    /// `intensity == 0.0` gate the forLocalAmbience(PORTAL_TRIGGER,
+    /// rand * 0.4F + 0.8F, 0.25F) answer rides): the FIRST inside
+    /// tick's beat the flag banks, the App's drain the play serves.
+    pub portal_trigger_due: bool,
+    /// THE BODY'S OWN ALIVE VERDICT (javap `Entity.isAlive` — the
+    /// canUsePortal consult the portal walks pass): the App's dead
+    /// flag the feed banks, the dead body the portal's own usability
+    /// gate refuses (the merged fiction's passenger constant FALSE
+    /// the ride-free tick keeps).
+    pub alive: bool,
     /// THE WATER DOUSE (InsideBlockEffectType.EXTINGUISH =
     /// Entity::clearFire, the water block's own inside-effect): the
     /// burning body touching water dies to min(0, remaining) and the
@@ -1480,6 +1629,16 @@ impl PlayerBody {
             in_soul_fire_hurt_due: false,
             in_campfire_hurt_due: false,
             in_soul_campfire_hurt_due: false,
+            portal_cooldown: 0,
+            portal_entry: None,
+            portal_time: 0,
+            portal_inside_this_tick: false,
+            portal_inside_consumed: false,
+            portal_teleport_due: false,
+            portal_effect_intensity: 0.0,
+            o_portal_effect_intensity: 0.0,
+            portal_trigger_due: false,
+            alive: true,
             fire_doused_due: false,
             air_supply: TOTAL_AIR_SUPPLY,
             eye_in_water: false,
@@ -1762,6 +1921,13 @@ impl PlayerBody {
         self.in_soul_campfire_hurt_due = false;
         self.fire_doused_due = false;
         self.drown_hurt_due = false;
+        // THE PORTAL ARC'S OWN HEAD-CLEAR (the same per-tick flag law
+        // the fire arc's three speak — the consume fact + the trigger
+        // voice + the teleport verdict the walks below re-bank, the
+        // App's drain the same-tick read the family's own law keeps)
+        self.portal_inside_consumed = false;
+        self.portal_trigger_due = false;
+        self.portal_teleport_due = false;
         // the pre-tick position — the walk distance law's own source
         // (calculateEntityAnimation's getX() - xo fold) AND the render
         // interpolation's own source (the prev the frame's lerp walks
@@ -1791,6 +1957,46 @@ impl PlayerBody {
         // apex can never bank more than one block of fall)
         if self.vy > FALL_ACCUM_VY_GATE && self.fall_distance > 1.0 {
             self.fall_distance = 1.0;
+        }
+        // THE PORTAL PROCESSOR'S OWN SERVER WALK (javap
+        // `Entity.handlePortal` the 26.2 jar — the baseTick pc 61 call
+        // the fluid/fire lanes PRECEDE the vanilla order keeps; the
+        // ServerLevel instanceof gate the offline fiction's own
+        // stand-in-server shape the fire clock's comment already
+        // speaks — this body IS the integrated server's own): the
+        // cooldown the processPortalCooldown pc 21-24 walk decrements
+        // one a tick, the processor the consume walk answers:
+        // `processPortalTeleportation(level, this, canUsePortal(false))`
+        // (javap PortalProcessor pcs 0-52) — the inside flag the pc
+        // 7-9 clear ALWAYS consumes, the pc 12-13 canUse gate the
+        // false arm the count AND the decay both skip, the pc 16-24
+        // `portalTime++` the usable body's own count wears, the
+        // pc 27-42 `portalTime >= getPortalTransitionTime(...)` the
+        // TRUE return the teleport verdict banks, the flag-false arm
+        // the decayTick's `max(portalTime - 4, 0)` fold wears. The
+        // AI-STEP'S OWN COOLDOWN (javap LocalPlayer.aiStep pc 52-53 —
+        // the client's own processPortalCooldown call the same
+        // decrement speaks): the two vanilla callers the merged
+        // fiction's ONE walk folds — the one-a-tick step either way
+        // the wall-clock keeps.
+        if self.portal_cooldown > 0 {
+            self.portal_cooldown -= 1; // processPortalCooldown pcs 7-14
+        }
+        if self.portal_inside_this_tick {
+            self.portal_inside_this_tick = false; // pc 7-9 — the ALWAYS clear
+            self.portal_inside_consumed = true; // the merged fact the effect walk reads
+            if can_use_portal(false, false, self.alive) {
+                self.portal_time += 1; // pc 16-24
+                if self.portal_time >= nether_portal_transition_time(self.invulnerable) {
+                    // pc 41-46 — the TRUE return the handlePortal walk's
+                    // teleport tail serves; the dimension swap the NEXT
+                    // round's own line consumes
+                    self.portal_teleport_due = true;
+                }
+            }
+        } else {
+            // decayTick pcs 0-14 — the flag-false arm the -4 fold wears
+            self.portal_time = (self.portal_time - PORTAL_TIME_DECAY_PER_TICK).max(0);
         }
         // THE FLUID LANE'S OWN UPDATE (javap
         // Entity.updateFluidInteraction: the per-tick fluid scan ->
@@ -1921,6 +2127,45 @@ impl PlayerBody {
             STANDING_EYE
         };
         self.eye_height += (eye_target - self.eye_height) * EYE_HEIGHT_BLEND;
+        // THE PORTAL TRANSITION EFFECT'S OWN CLIENT WALK (javap
+        // `LocalPlayer.handlePortalTransitionEffect` the 26.2 jar —
+        // the aiStep pc 33-49 call the `getActivePortalLocalTransition()
+        // == CONFUSION` arg the NetherPortalBlock's own CONFUSION
+        // answer the inside gate rides; the LevelLoadingScreen arg the
+        // aiStep pc 17-30 gate never reaches — the repo's screens the
+        // loading kind the world's own tick the gate keeps): the
+        // pc 0-5 copy the o-store's own head speaks, the consumed
+        // fact the pc 21-28 inside-flag consult the merged fiction's
+        // own face keeps (the process walk's this-tick sighting the
+        // same tick-fact the vanilla client's own flag-answer wears —
+        // the one-machine fold the two callers' honest shape speaks),
+        // the pc 91-97 `intensity == 0.0` gate the PORTAL_TRIGGER
+        // voice the App's drain answers, the pc 137-139 the +0.0125
+        // rise the inside tick wears, the pc 152-164 the -0.05 fall
+        // the outside tick keeps, the pc 165-177 the [0, 1] clamp the
+        // fold speaks. The pc 141-146 setAsInsidePortalThisTick(false)
+        // the client's own clear the merged process walk's consume
+        // already banked (the one-flag fold the fiction speaks — the
+        // two vanilla machines' separate copies the honest shape
+        // collapses). The pc 31-88 SCREEN-CLOSE arm the App's own law
+        // serves (the body the screens never sees — the App the
+        // dismiss walk answers through the same drain).
+        self.o_portal_effect_intensity = self.portal_effect_intensity; // pc 0-5
+        let mut delta = 0.0f32; // pc 8-9
+        if self.portal_inside_consumed {
+            if self.portal_effect_intensity == 0.0 {
+                // pc 100-136 — the zero-intensity beat the trigger voice banks
+                self.portal_trigger_due = true;
+            }
+            delta = PORTAL_RISE_PER_TICK; // pc 137-139
+        } else if self.portal_effect_intensity > 0.0 {
+            // pc 161-164 — the `ldc_w -0.05f` the NEGATIVE literal the
+            // constant pool speaks (the magnitude the const keeps)
+            delta = -PORTAL_FALL_PER_TICK;
+        }
+        // pc 165-177 — the clamp walk the fold speaks
+        self.portal_effect_intensity =
+            (self.portal_effect_intensity + delta).clamp(0.0, 1.0);
         // THE FLYING THRUST (javap LocalPlayer.aiStep pcs 815-894 —
         // the audited 26.2 walk: `abilities.flying &&
         // isControlledCamera()` gates, the int local folds
@@ -2437,6 +2682,28 @@ impl PlayerBody {
         if !self.no_physics && self.touches_soul_campfire(world) {
             self.in_soul_campfire_hurt_due = true;
         }
+        // THE NETHER PORTAL'S OWN ENTITY-INSIDE (javap
+        // `NetherPortalBlock.entityInside` the 26.2 jar — the
+        // `canUsePortal(false)` gate the pc 0-6 ifeq keeps, the
+        // `setAsInsidePortal(this, pos)` the pc 9-13 call serves):
+        // the overlapped portal cell the FIRST the betweenClosed
+        // order's own x-outer/y-mid/z-inner walk banks (javap
+        // `BlockPos.betweenClosed`'s own loop order — the per-block
+        // entityInside call the first-hit cell the entry's honesty
+        // wears), the arm the NEXT tick's consume the vanilla
+        // arm-at-move / consume-at-baseTick order keeps (the
+        // checkInsideBlocks walk the move's own tail speaks, the
+        // baseTick pc 61 the NEXT tick's head answers). The
+        // isAffectedByBlocks gate the inside-blocks family's own
+        // !noPhysics prefix keeps (the spectator body the whole walk
+        // skips).
+        if !self.no_physics {
+            if let Some(cell) = self.first_portal_cell(world) {
+                if can_use_portal(false, false, self.alive) {
+                    self.set_as_inside_portal(cell);
+                }
+            }
+        }
         // THE WATER'S EXTINGUISH (javap `WaterFluid.entityInside`'s own
         // InsideBlockEffectType.EXTINGUISH = `Entity::clearFire` — the
         // same contact beat the lava's brand rides, the inside-effect
@@ -2898,6 +3165,58 @@ impl PlayerBody {
             }
         }
         false
+    }
+
+    /// THE PORTAL CELL'S OWN SCAN (the inside-blocks family's own
+    /// box-overlap walk the fire scans wear — the ORDER the vanilla
+    /// `BlockPos.betweenClosed`'s own loop speaks: X outer, Y mid, Z
+    /// inner, the betweenClosed(AABB) walk the checkInsideBlocks
+    /// per-cell calls ride): the FIRST overlapped NETHER_PORTAL cell
+    /// the Some answer banks — the entry position the
+    /// setAsInsidePortal walk's immutable() copy keeps.
+    fn first_portal_cell(&self, world: &World) -> Option<(i32, i32, i32)> {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+            for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::NETHER_PORTAL {
+                        return Some((cx, cy, cz));
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// THE PORTAL PROCESSOR'S OWN ARM (javap `Entity.setAsInsidePortal`
+    /// the 26.2 jar pc 0-78): the on-cooldown body the pc 0-11 arm
+    /// REFRESHES (`setPortalCooldown()` — the player's 10 the
+    /// getDimensionChangingDelay override keeps) and returns — the
+    /// processor the touch never touches; the pc 12-27 no-processor /
+    /// different-portal arm the NEW PortalProcessor(portal, pos)
+    /// ctor speaks (the entry the immutable() copy banks, the
+    /// insidePortalThisTick the ctor's iconst_1 arms); the pc 49-75
+    /// same-portal arm the !isInsidePortalThisTick gate keeps — the
+    /// entry the FIRST cell of the tick banks (the flag-already-set
+    /// body the update never rides), the re-arm the tail's own
+    /// setAsInsidePortalThisTick(true) speaks. The kind-only
+    /// isSamePortal (javap PortalProcessor.isSamePortal pc 0-13 — the
+    /// reference acmp the verdict keeps): the NETHER_PORTAL kind the
+    /// only Portal the client banks — the same-kind verdict the
+    /// existing processor trivially answers.
+    fn set_as_inside_portal(&mut self, cell: (i32, i32, i32)) {
+        if self.portal_cooldown > 0 {
+            // pc 0-11 — the refresh-and-return arm the touch speaks
+            self.portal_cooldown = PLAYER_PORTAL_COOLDOWN_TICKS;
+            return;
+        }
+        if !self.portal_inside_this_tick {
+            // pc 30-43 (the create) AND pc 49-75 (the same-portal
+            // re-arm) the one fold keeps — the fresh processor's
+            // ctor the same entry+flag pair banks
+            self.portal_entry = Some(cell);
+            self.portal_inside_this_tick = true;
+        }
     }
 
     /// THE LIT CAMPFIRE'S OWN GATE (the dev-6 round — the body lane's
@@ -7263,5 +7582,212 @@ mod tests {
             (1.0f64 * (0.4f32 as f64)) * drag,
             "the honey walk the factor x drag the bit-exact chain keeps"
         );
+    }
+
+    /// THE PORTAL COLUMN'S OWN WORLD (the flat floor the standing body
+    /// wears — the two-tall NETHER_PORTAL column the body's own box
+    /// overlaps, the vanilla portal's 2x3 interior the feet+head pair
+    /// the column speaks).
+    fn portal_world() -> World {
+        let mut w = flat_world();
+        w.set(8, 1, 8, crate::world::NETHER_PORTAL);
+        w.set(8, 2, 8, crate::world::NETHER_PORTAL);
+        w
+    }
+
+    #[test]
+    fn the_portal_the_stand_the_countdown_the_verdict_wears() {
+        let w = portal_world();
+        // the survival body settles OFF the portal (the bare column's
+        // own east), the move the box's own overlap speaks
+        let mut b = PlayerBody::new(6.5, 1.0, 8.5, 0.0, 0.0);
+        settle(&mut b, &w);
+        assert!(!b.touches_web(&w), "the body starts off the portal");
+        b.x = 8.5;
+        b.vx = 0.0;
+        // THE ARM TICK (the entityInside walk the inside-blocks family
+        // serves): the entry the FIRST cell banks, the flag arms for
+        // the NEXT tick's consume — the clock the decay arm keeps
+        b.tick(&w, false);
+        assert_eq!(
+            b.portal_entry,
+            Some((8, 1, 8)),
+            "the first cell the betweenClosed order banks"
+        );
+        assert!(b.portal_inside_this_tick, "the arm the flag wears");
+        assert!(!b.portal_inside_consumed, "the arm tick the consume never earns");
+        assert_eq!(b.portal_time, 0, "the arm tick the decay arm keeps");
+        assert_eq!(b.portal_effect_intensity, 0.0);
+        // THE FIRST CONSUME (the baseTick law the next tick's head
+        // serves): the count's own one, the TRIGGER VOICE the
+        // zero-intensity beat banks, the rise the +0.0125 walk wears
+        b.tick(&w, false);
+        assert!(b.portal_inside_consumed, "the consume the fact banks");
+        assert_eq!(b.portal_time, 1);
+        assert!(
+            b.portal_trigger_due,
+            "the zero-intensity beat the trigger speaks"
+        );
+        assert!((b.portal_effect_intensity - PORTAL_RISE_PER_TICK).abs() < 1e-9);
+        // THE CLIMB (the every-inside-tick +0.0125 the ramp wears): the
+        // second consume the trigger never repeats, the 80-tick arc the
+        // survival delay's own count the verdict wears
+        b.tick(&w, false);
+        assert_eq!(b.portal_time, 2);
+        assert!(!b.portal_trigger_due, "the non-zero intensity the voice never repeats");
+        assert!((b.portal_effect_intensity - 2.0 * PORTAL_RISE_PER_TICK).abs() < 1e-6);
+        assert!(
+            !b.portal_teleport_due,
+            "the under-80 count the verdict never speaks"
+        );
+        for expected in 3..=80 {
+            b.tick(&w, false);
+            assert_eq!(b.portal_time, expected, "the consume the one-a-tick keeps");
+        }
+        // THE VERDICT (the `>= transitionTime` compare the 80th consume
+        // answers): the teleport flag the swap's own line banks
+        assert!(
+            b.portal_teleport_due,
+            "the 80th consume the verdict speaks"
+        );
+        // THE EXIT (the body leaves the column): the decay the
+        // -4-a-tick fold wears, the fall the -0.05 walk keeps, the
+        // zero the floor keeps
+        b.x = 3.5;
+        b.vx = 0.0;
+        for _ in 0..25 {
+            b.tick(&w, false);
+        }
+        assert_eq!(b.portal_time, 0, "the exit the decay bleeds dry");
+        assert_eq!(b.portal_effect_intensity, 0.0, "the exit the fade dries");
+        assert!(!b.portal_teleport_due, "the exited body the verdict never speaks");
+    }
+
+    #[test]
+    fn the_portal_the_cooldown_the_refresh_the_arm_refuses() {
+        let w = portal_world();
+        // the standing body's own cooldown the teleport's tail banks
+        // (the test drives the state the walk consumes)
+        let mut b = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        b.portal_cooldown = 5;
+        // THE ON-COOLDOWN TOUCH (javap setAsInsidePortal pc 0-11 — the
+        // refresh-and-return arm the touch speaks): the player's 10
+        // the refresh banks, the processor the touch never touches —
+        // no entry, no flag, no count, no voice
+        for _ in 0..6 {
+            b.tick(&w, false);
+            assert_eq!(
+                b.portal_cooldown, PLAYER_PORTAL_COOLDOWN_TICKS,
+                "the touch's refresh the player's own 10 keeps"
+            );
+            assert!(
+                b.portal_entry.is_none(),
+                "the on-cooldown arm the processor never touches"
+            );
+            assert!(!b.portal_inside_consumed);
+            assert_eq!(b.portal_time, 0);
+            assert_eq!(b.portal_effect_intensity, 0.0);
+        }
+        // THE EXIT'S OWN BLEED (the processPortalCooldown walk the
+        // one-a-tick decrement keeps): the 10 the refresh banked, the
+        // leave the walk bleeds to the zero floor
+        b.x = 3.5;
+        b.vx = 0.0;
+        for expected in (0..PLAYER_PORTAL_COOLDOWN_TICKS).rev() {
+            b.tick(&w, false);
+            assert_eq!(b.portal_cooldown, expected, "the leave the decrement wears");
+        }
+        b.tick(&w, false);
+        assert_eq!(b.portal_cooldown, 0, "the zero the floor keeps");
+        // THE RE-ARM (the expired cooldown the standing body's own
+        // touch answers): the flag arms, the next tick's consume counts
+        b.x = 8.5;
+        b.vx = 0.0;
+        b.tick(&w, false);
+        assert!(
+            b.portal_inside_this_tick,
+            "the expired cooldown the arm answers"
+        );
+        b.tick(&w, false);
+        assert_eq!(b.portal_time, 1, "the re-armed count the consume walks");
+    }
+
+    #[test]
+    fn the_portal_the_creative_the_instant_the_verdict_wears() {
+        let w = portal_world();
+        // the invulnerable body the CREATIVE_DELAY 0 keeps (javap
+        // GameRules clinit pc 502 — the iconst_0 default the register
+        // call banks): the FIRST consume's `1 >= 0` verdict the
+        // same-tick teleport wears
+        let mut b = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        b.invulnerable = true;
+        b.tick(&w, false); // the arm tick
+        assert!(
+            !b.portal_teleport_due,
+            "the arm tick the verdict never earns"
+        );
+        b.tick(&w, false); // the consume tick
+        assert_eq!(b.portal_time, 1);
+        assert!(
+            b.portal_teleport_due,
+            "the 1 >= 0 verdict the first consume speaks"
+        );
+        assert!(b.portal_trigger_due, "the zero-intensity beat the voice rides");
+        assert!((b.portal_effect_intensity - PORTAL_RISE_PER_TICK).abs() < 1e-9);
+    }
+
+    #[test]
+    fn the_portal_the_pures_the_dead_the_refusals_wear() {
+        // THE USABILITY GATE'S OWN TRUTH TABLE (javap canUsePortal
+        // pc 0-23): the passenger refusal the non-post arg keeps, the
+        // alive verdict the tail speaks, the post-allowed arg the
+        // passenger answers
+        assert!(can_use_portal(false, false, true));
+        assert!(
+            !can_use_portal(false, true, true),
+            "the passenger the walk refuses"
+        );
+        assert!(
+            !can_use_portal(false, false, false),
+            "the dead body the verdict refuses"
+        );
+        assert!(
+            can_use_portal(true, true, true),
+            "the post-allowed arg the passenger answers"
+        );
+        // THE TRANSITION TIME'S OWN ROWS (javap
+        // getPortalTransitionTime + the gamerule defaults the clinit
+        // banks): the survival 80, the creative 0
+        assert_eq!(
+            nether_portal_transition_time(false),
+            PLAYERS_NETHER_PORTAL_DEFAULT_DELAY_TICKS
+        );
+        assert_eq!(
+            nether_portal_transition_time(true),
+            PLAYERS_NETHER_PORTAL_CREATIVE_DELAY_TICKS
+        );
+        // THE OVERLAY CURVE'S OWN FOLDS (javap extractPortalOverlay
+        // pc 0-23): the 0.5 the fourth-power answer speaks, the 1.0
+        // body the curve never touches, the first-tick faint the 0.2
+        // floor keeps
+        let a = portal_overlay_alpha(0.5);
+        assert!((a - 0.25).abs() < 1e-6, "the 0.5^4 * 0.8 + 0.2 the curve speaks");
+        assert_eq!(portal_overlay_alpha(1.0), 1.0, "the 1.0 body the curve never touches");
+        assert_eq!(portal_overlay_alpha(2.0), 2.0, "the over-1 body the curve never touches");
+        let faint = portal_overlay_alpha(PORTAL_RISE_PER_TICK);
+        assert!((faint - 0.2).abs() < 1e-4, "the faint the 0.2 floor keeps");
+        // THE DEAD BODY'S OWN ARM (the alive feed the App banks): the
+        // portal cell the walk never names — no entry, no flag, the
+        // clock the zero keeps
+        let w = portal_world();
+        let mut b = PlayerBody::new(8.5, 1.0, 8.5, 0.0, 0.0);
+        b.alive = false;
+        b.tick(&w, false);
+        assert!(b.portal_entry.is_none(), "the dead body the arm refuses");
+        assert!(!b.portal_inside_this_tick);
+        b.tick(&w, false);
+        assert_eq!(b.portal_time, 0, "the dead body the clock never counts");
+        assert!(!b.portal_inside_consumed);
+        assert_eq!(b.portal_effect_intensity, 0.0);
     }
 }
