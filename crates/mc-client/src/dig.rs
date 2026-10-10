@@ -400,6 +400,12 @@ impl DigState {
         }
         world.set(pos.0, pos.1, pos.2, crate::world::AIR);
         let _ = world.fire_shape_updates(pos);
+        // THE PORTAL'S OWN DOUSE BEAT (javap NetherPortalBlock.
+        // updateShape pc 0-93 over the 26.2 jar — the broken block's
+        // own neighborhood the frame-scan verdict re-reads, the lit
+        // interior the failed isComplete walk the chain douses): the
+        // same law the fire walk's own beat wears
+        let _ = world.portal_shape_updates(pos);
         true
     }
 
@@ -1261,6 +1267,114 @@ mod tests {
         let mut d = DigState::new();
         let _ = d.start_destroy_block((1, 1, 1), 1, None, &mut world, true, false, true, false, None, None);
         assert_eq!(world.get(1, 1, 1), crate::world::AIR, "the stone breaks as ever");
+    }
+
+    /// THE DUG FRAME'S OWN PORTAL CHAIN (javap NetherPortalBlock.
+    /// updateShape pc 0-93 over the real 26.2 jar — the dig's own
+    /// destroyBlock broadcast the frame-scan verdict re-reads, the
+    /// lit interior the failed isComplete walk the cascade douses,
+    /// the vanilla the frame's own dig the douse law the SAME beat
+    /// serves): the creative press the west wall's middle cell
+    /// breaks, the whole interior the chain douses, the ring the dig
+    /// never touches, the axis store the douse drops.
+    #[test]
+    fn the_dig_the_frame_the_portal_the_chain_douses() {
+        let mut world = small_world();
+        // THE STAGE (the frame-scan test's own 2x3 x-plane frame the
+        // same shape wears): the clear zone the terrain the walk
+        // never reads
+        for x in 6..=13 {
+            for y in 8..=16 {
+                for z in 1..=12 {
+                    world.set(x, y, z, crate::world::AIR);
+                }
+            }
+        }
+        for y in 11..=13 {
+            world.set(8, y, 4, crate::world::OBSIDIAN);
+            world.set(11, y, 4, crate::world::OBSIDIAN);
+        }
+        for x in 8..=11 {
+            world.set(x, 10, 4, crate::world::OBSIDIAN);
+            world.set(x, 14, 4, crate::world::OBSIDIAN);
+        }
+        world.set(9, 11, 4, crate::world::FIRE);
+        assert!(
+            world.check_portal_spawn((9, 11, 4)),
+            "the lit gate the fill speaks"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                world.get(x, y, 4),
+                crate::world::NETHER_PORTAL,
+                "the interior cell ({x},{y}) the fill wears"
+            );
+        }
+        // THE CREATIVE PRESS: the west wall's middle cell breaks, the
+        // chain the SAME beat serves (the destroy_block the douse
+        // walk the fire lane's own rhythm wears)
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (8, 12, 4),
+            1,
+            None,
+            &mut world,
+            true,
+            false,
+            true,
+            false,
+            None,
+            None,
+        );
+        assert_eq!(
+            world.get(8, 12, 4),
+            crate::world::AIR,
+            "the wall cell the press breaks"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                world.get(x, y, 4),
+                crate::world::AIR,
+                "the interior cell ({x},{y}) the chain douses"
+            );
+        }
+        assert!(
+            world.portal_axis.is_empty(),
+            "the dead cells' axis entries the douse drops"
+        );
+        // THE RING'S OWN INTEGRITY (the douse the frame cells never
+        // touches — the dug gap the only loss the walk wears)
+        for (x, y) in [
+            (8, 11),
+            (8, 13),
+            (11, 11),
+            (11, 12),
+            (11, 13),
+            (9, 10),
+            (10, 10),
+            (9, 14),
+            (10, 14),
+        ] {
+            assert_eq!(
+                world.get(x, y, 4),
+                crate::world::OBSIDIAN,
+                "the ring cell ({x},{y}) the walk keeps"
+            );
+        }
+        // THE RELIGHT'S OWN REFUSAL (the broken wall the scan's own
+        // refusal keeps — the re-ignition the same frame the scan
+        // never answers): the flint's own lane the fire lands, the
+        // fill the verdict refuses
+        world.set(9, 11, 4, crate::world::FIRE);
+        assert!(
+            !world.check_portal_spawn((9, 11, 4)),
+            "the broken frame the re-scan refuses"
+        );
+        assert_eq!(
+            world.get(9, 11, 4),
+            crate::world::FIRE,
+            "the plain flame the refused fill keeps"
+        );
     }
 
     /// THE SHEARS' OWN RULES (javap ShearsItem.createToolProperties —

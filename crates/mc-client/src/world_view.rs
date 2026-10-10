@@ -189,6 +189,10 @@ pub fn materialize(
         // block updates land
         fire_ticks: Vec::new(),
         fire_age: std::collections::HashMap::new(),
+        // the portal's own axis store rides the SAME empty start (the
+        // wire world's portals the server's own fills the updates land,
+        // the local check_portal_spawn the store the same beat banks)
+        portal_axis: std::collections::HashMap::new(),
         campfire_ticks: Vec::new(), // the campfire's own queue: empty
     };
     let side_i = side as i32;

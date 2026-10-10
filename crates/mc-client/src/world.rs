@@ -789,6 +789,17 @@ impl PortalShapeFill {
         (2..=21).contains(&self.width) && (3..=21).contains(&self.height)
     }
 
+    /// THE COMPLETENESS THE LIT GATE READS (javap PortalShape.
+    /// isComplete pc 0-28 over the real 26.2 jar — `isValid() && num
+    /// PortalBlocks == width * height` the conjunction the douse
+    /// verdict consults: the intact interior the every-cell count the
+    /// w*h equality keeps, the doused or never-filled cell the count
+    /// the equality refuses — the updateShape's own third arm the
+    /// walk's verdict reads)
+    pub fn is_complete(&self) -> bool {
+        self.is_valid() && self.num_portal_blocks == self.width * self.height
+    }
+
     /// THE FILL'S OWN CELLS (javap createPortalBlocks pc 20-53 — the
     /// `betweenClosed(bottomLeft, bottomLeft + UP*(h-1) + rightDir*
     /// (w-1))` box the interior walks, the rightDir the axis arm
@@ -2561,6 +2572,15 @@ pub struct World {
     /// age 0 (the placement's own default the getStateForPlacement
     /// walk banks).
     pub fire_age: std::collections::HashMap<(i32, i32, i32), u8>,
+    /// THE PORTAL'S OWN AXIS STORE (javap createPortalBlocks pc 24-28
+    /// over the real 26.2 jar — the `NetherPortalBlock.defaultBlock
+    /// State().setValue(AXIS, axis)` state the kind-only vocabulary
+    /// never keeps): the fill's own trial the truth banks (true = the
+    /// X-extending portal the X-trial's win wears), the updateShape's
+    /// flag11 verdict the store reads. The `fire_age` precedent the
+    /// side map wears; the store-less cell the west/east derive the
+    /// mesher's own short-circuit answers.
+    pub portal_axis: std::collections::HashMap<(i32, i32, i32), bool>,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -2739,6 +2759,7 @@ impl World {
             fire_ticks: Vec::new(), // the fire's own queue: no fire, no schedule
             campfire_ticks: Vec::new(), // the campfire's own queue: no lit campfire, no walk
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
+            portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
         };
         w.generate();
         w
@@ -3161,6 +3182,13 @@ impl World {
         if let Some(fill) = self.find_empty_portal_shape(pos) {
             for (x, y, z) in fill.cells() {
                 self.set(x, y, z, NETHER_PORTAL);
+                // THE AXIS PROPERTY THE SETVALUE WALK BANKS (javap
+                // createPortalBlocks pc 24-28 — the `setValue(AXIS,
+                // axis)` state the kind-only vocabulary never keeps,
+                // the side map the fire_age precedent wears): the
+                // winning trial's own axis the store carries, the
+                // updateShape's flag11 verdict the douse walk reads
+                self.portal_axis.insert((x, y, z), fill.axis_x);
             }
             true
         } else {
@@ -3706,6 +3734,110 @@ impl World {
                 (x, y, z + 1),
                 (x - 1, y, z),
                 (x + 1, y, z),
+            ]);
+        }
+        changed_any
+    }
+
+    /// THE PORTAL CELL'S OWN AXIS (javap NetherPortalBlock.AXIS — the
+    /// EnumProperty the updateShape's flag11 verdict reads): the fill's
+    /// own store the truth carries (the winning trial the bank wears),
+    /// the store-less cell the mesher's own west/east short-circuit
+    /// the derive fallback keeps (the autopush-605 animate arm's own
+    /// verdict — the x-extending gate the sampled cell's west/east
+    /// answers, the else the Z the default wears)
+    fn portal_cell_axis_x(&self, pos: (i32, i32, i32)) -> bool {
+        if let Some(&x) = self.portal_axis.get(&pos) {
+            return x;
+        }
+        self.get(pos.0 - 1, pos.1, pos.2) == NETHER_PORTAL
+            || self.get(pos.0 + 1, pos.1, pos.2) == NETHER_PORTAL
+    }
+
+    /// THE PORTAL'S OWN UPDATE-SHAPE DOUSE (javap NetherPortalBlock.
+    /// updateShape pc 0-93 over the real 26.2 jar — the walk the
+    /// changed neighbor's own beat serves; the canSurvive/onRemove
+    /// overrides the class dump REFUSES, the updateShape the douse
+    /// law ALONE carries). THE VERDICT the pc map keeps in order:
+    ///
+    /// 1. pc 0-17 — `axis9 = direction.getAxis()` the changed
+    ///    neighbor's own axis, `axis10 = state.getValue(AXIS)` the
+    ///    portal's own axis the store carries;
+    /// 2. pc 19-39 — `flag11 = axis10 != axis9 && axis9.isHorizontal()`
+    ///    the conjunction (the Y-direction change the vertical refusal
+    ///    the flag never passes — the top/bottom frame's own loss the
+    ///    douse path takes);
+    /// 3. pc 41-66 — the KEEP disjunction: `flag11 || neighborState.
+    ///    is(this) || PortalShape.findAnyShape(level, pos, axis10).
+    ///    isComplete()` (the in-front block the flag11 arm keeps, the
+    ///    sibling portal cell the is() arm keeps, the intact frame
+    ///    the every-cell count the isComplete arm keeps);
+    /// 4. pc 87-93 — the douse: the failed verdict the
+    ///    `Blocks.AIR.defaultBlockState()` return serves.
+    ///
+    /// THE CASCADE the vanilla's own flag-3 recursion keeps: the
+    /// doused cell the changed block its own neighbors re-read (the
+    /// count the w*h equality the every-douse walk refuses — the
+    /// whole interior the chain the tail cell's own store-backed
+    /// axis the verdict keeps). The queue the (cell, changed
+    /// neighbor) PAIR carries — the updateShape's own arg list the
+    /// direction the pair's delta answers. The DOWN..EAST order the
+    /// fire walk's own queue wears (the verdict the per-cell read
+    /// the order never gates).
+    pub fn portal_shape_updates(&mut self, changed: (i32, i32, i32)) -> bool {
+        let (cx, cy, cz) = changed;
+        let mut queue: Vec<((i32, i32, i32), (i32, i32, i32))> = vec![
+            ((cx, cy - 1, cz), (cx, cy, cz)),
+            ((cx, cy + 1, cz), (cx, cy, cz)),
+            ((cx, cy, cz - 1), (cx, cy, cz)),
+            ((cx, cy, cz + 1), (cx, cy, cz)),
+            ((cx - 1, cy, cz), (cx, cy, cz)),
+            ((cx + 1, cy, cz), (cx, cy, cz)),
+        ];
+        let mut changed_any = false;
+        while let Some(((x, y, z), (nx, ny, nz))) = queue.pop() {
+            if self.get(x, y, z) != NETHER_PORTAL {
+                continue;
+            }
+            // THE NEIGHBORSTATE ARG — the changed cell's NEW kind the
+            // verdict reads (the AIR the dig's own set serves, the
+            // placed kind the placement's own set carries)
+            let neighbor_kind = self.get(nx, ny, nz);
+            // THE FLAG11 (pc 19-39): the delta the changed pair's own
+            // axis answers — the Y the vertical refusal keeps, the
+            // horizontal the axis pair the equality gate reads
+            let axis10_x = self.portal_cell_axis_x((x, y, z));
+            let flag11 = if ny != y {
+                false
+            } else {
+                axis10_x != (nx != x)
+            };
+            // THE KEEP DISJUNCTION (pc 41-66): the flag11 arm + the
+            // neighborState.is(this) arm + the isComplete arm the
+            // findAnyShape walk (the lit portal's own re-scan the
+            // EMPTY predicate never filters) banks
+            let keeps = flag11
+                || neighbor_kind == NETHER_PORTAL
+                || self.portal_find_any_shape((x, y, z), axis10_x).is_complete();
+            if keeps {
+                continue;
+            }
+            // THE DOUSE (pc 87-93): the AIR the failed verdict serves,
+            // the axis entry the map drops (the fire_age removal the
+            // same law keeps)
+            self.set(x, y, z, AIR);
+            self.portal_axis.remove(&(x, y, z));
+            changed_any = true;
+            // THE CASCADE: the doused cell the changed block its own
+            // neighbors re-read (the vanilla's own flag-3 recursion —
+            // the count the w*h equality the every-douse walk refuses)
+            queue.extend([
+                ((x, y - 1, z), (x, y, z)),
+                ((x, y + 1, z), (x, y, z)),
+                ((x, y, z - 1), (x, y, z)),
+                ((x, y, z + 1), (x, y, z)),
+                ((x - 1, y, z), (x, y, z)),
+                ((x + 1, y, z), (x, y, z)),
             ]);
         }
         changed_any
@@ -5040,6 +5172,223 @@ mod tests {
             fill_d.bottom_left, (10, 11, 4),
             "the descended walk the same interior corner keeps"
         );
+    }
+
+    /// THE PORTAL'S OWN UPDATE-SHAPE DOUSE (javap NetherPortalBlock.
+    /// updateShape pc 0-93 over the real 26.2 jar — the changed
+    /// neighbor's own beat the douse walk serves): the flag11 arm the
+    /// in-front block keeps, the intact frame the isComplete arm the
+    /// every-cell count keeps, the side/top frame's own loss the
+    /// whole interior the cascade douses, the interior block the
+    /// count the w*h equality refuses, the axis store the fill
+    /// banks the douse drops.
+    #[test]
+    fn the_portal_the_frame_the_douse_the_chain_wears() {
+        // THE STAGE CLOSURES (the frame-scan test's own shapes the
+        // same law wears): the 2x3 interior x-plane frame the fill
+        // walk answers
+        let clear = |w: &mut World| {
+            for x in 6..=13 {
+                for y in 8..=16 {
+                    for z in 1..=12 {
+                        w.set(x, y, z, AIR);
+                    }
+                }
+            }
+        };
+        let frame_x = |w: &mut World| {
+            for y in 11..=13 {
+                w.set(8, y, 4, OBSIDIAN);
+                w.set(11, y, 4, OBSIDIAN);
+            }
+            for x in 8..=11 {
+                w.set(x, 10, 4, OBSIDIAN);
+                w.set(x, 14, 4, OBSIDIAN);
+            }
+        };
+        let lit = |w: &mut World| {
+            clear(w);
+            frame_x(w);
+            w.set(9, 11, 4, FIRE);
+            assert!(w.check_portal_spawn((9, 11, 4)), "the fill the verdict speaks");
+        };
+        // THE FLAG11 ARM'S OWN KEEP (javap pc 19-66 — the changed
+        // neighbor the Z-direction the portal's own X-axis the flag
+        // the in-front block's own placement wears): the placed block
+        // the plane's own face the verdict never douses
+        let mut w = World::new(1, 0x600D);
+        lit(&mut w);
+        w.set(9, 12, 5, STONE);
+        assert!(
+            !w.portal_shape_updates((9, 12, 5)),
+            "the in-front block the flag11 arm keeps (axis X vs the Z change)"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                w.get(x, y, 4),
+                NETHER_PORTAL,
+                "the kept portal cell ({x},{y}) the fill wears"
+            );
+        }
+        // THE IS-COMPLETE CONJUNCTION'S OWN UNIT (javap PortalShape.
+        // isComplete pc 0-28 — `isValid() && numPortalBlocks == width
+        // * height` the pair the verdict keeps): the lit interior the
+        // every-cell count the equality keeps, the doused cell the
+        // count the walk refuses
+        let mut w = World::new(1, 0x600D);
+        lit(&mut w);
+        let fill = w.portal_find_any_shape((9, 12, 4), true);
+        assert!(
+            fill.is_complete(),
+            "the lit interior the every-cell count the w*h equality keeps"
+        );
+        assert_eq!(
+            fill.num_portal_blocks,
+            fill.width * fill.height,
+            "the count the equality's own product speaks"
+        );
+        // THE STONE-PATCHED FLOOR'S OWN DOUSE (javap getDistanceUntil
+        // EdgeAboveFrame pc 65-97 — the empty cell the below-FRAME
+        // check the non-obsidian floor the walk refuses): the bottom
+        // frame's stone patch the width walk refuses, the verdict the
+        // douse serves (the stone floor the scan's own refusal the
+        // frame-scan test's own law wears)
+        w.set(9, 10, 4, STONE);
+        assert!(
+            w.portal_shape_updates((9, 10, 4)),
+            "the stone-patched floor the below-FRAME check refuses"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                w.get(x, y, 4),
+                AIR,
+                "the interior cell ({x},{y}) the refused scan douses"
+            );
+        }
+        // THE IS() ARM'S OWN KEEP (javap pc 46-52 — the neighborState
+        // .is(this) verdict the sibling portal cell keeps, the
+        // disjunction's own order the arm's TRUE the isComplete
+        // consult never reaches): the direct-set portal cell the
+        // bottom frame replaces, the above cell the arm keeps
+        let mut w = World::new(1, 0x600D);
+        lit(&mut w);
+        w.set(9, 10, 4, NETHER_PORTAL); // a portal cell the frame cell replaces
+        assert!(
+            !w.portal_shape_updates((9, 10, 4)),
+            "the sibling portal cell the is() arm keeps"
+        );
+        assert_eq!(
+            w.get(9, 11, 4),
+            NETHER_PORTAL,
+            "the kept cell the fill wears"
+        );
+        // THE SIDE FRAME'S OWN LOSS (javap pc 87-93 — the failed
+        // verdict the AIR return serves): the broken wall cell the
+        // width walk the gap reads, the height the 1 the band refuses,
+        // the WHOLE interior the cascade douses (the doused cell the
+        // changed block the neighbors re-read), the ring the fill
+        // never touches, the axis entries the map drops
+        let mut w = World::new(1, 0x600D);
+        lit(&mut w);
+        assert_eq!(
+            w.portal_axis.len(),
+            6,
+            "the fill the every-cell axis entry banks"
+        );
+        w.set(8, 12, 4, AIR); // the west wall's middle cell the dig breaks
+        assert!(
+            w.portal_shape_updates((8, 12, 4)),
+            "the broken wall the douse verdict speaks"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                w.get(x, y, 4),
+                AIR,
+                "the interior cell ({x},{y}) the cascade douses"
+            );
+        }
+        assert!(w.portal_axis.is_empty(), "the dead cells' entries the map drops");
+        // THE RING'S OWN INTEGRITY (the douse the frame cells never
+        // touches — the dug gap the only loss the walk wears)
+        for y in 11..=13 {
+            assert_eq!(w.get(11, y, 4), OBSIDIAN, "the east wall the walk keeps");
+        }
+        for (x, y) in [(8, 11), (8, 13), (9, 10), (10, 10), (9, 14), (10, 14)] {
+            assert_eq!(w.get(x, y, 4), OBSIDIAN, "the ring cell ({x},{y}) the walk keeps");
+        }
+        // THE TOP FRAME'S OWN LOSS (javap calculateHeight pc 35-46 —
+        // the hasTopFrame consult the missing top the 0 keeps, the
+        // height band the invalid shape the verdict refuses): the
+        // Y-direction change the flag11 never passes, the top gap the
+        // whole interior the cascade douses
+        let mut w = World::new(1, 0x600D);
+        lit(&mut w);
+        w.set(9, 14, 4, AIR); // the top row's middle cell the dig breaks
+        assert!(
+            w.portal_shape_updates((9, 14, 4)),
+            "the missing top the douse verdict speaks"
+        );
+        for (x, y) in [(9, 11), (10, 11), (9, 12), (10, 12), (9, 13), (10, 13)] {
+            assert_eq!(
+                w.get(x, y, 4),
+                AIR,
+                "the interior cell ({x},{y}) the top-gap cascade douses"
+            );
+        }
+        // THE INTERIOR BLOCK'S OWN REFUSAL (javap pc 55-66 — the
+        // count the w*h equality the placed cell the walk refuses):
+        // the replaced portal cell the sibling cells the cascade
+        // douses
+        let mut w = World::new(1, 0x600D);
+        lit(&mut w);
+        w.set(9, 12, 4, STONE);
+        assert!(
+            w.portal_shape_updates((9, 12, 4)),
+            "the interior block the count refuses"
+        );
+        for (x, y) in [(10, 11), (10, 12), (10, 13), (9, 11), (9, 13)] {
+            assert_eq!(
+                w.get(x, y, 4),
+                AIR,
+                "the sibling cell ({x},{y}) the short count douses"
+            );
+        }
+        assert_eq!(w.get(9, 12, 4), STONE, "the placed block the walk keeps");
+        // THE Z-PLANE'S OWN DOUSE (the z-extending portal the same law
+        // wears — the axis store the second trial banks, the front
+        // block the X-direction change the flag11 keeps): the z-frame
+        // the single column x=8 the interior z 7..=8 wears
+        let mut wz = World::new(1, 0x600D);
+        clear(&mut wz);
+        for z in 6..=9 {
+            wz.set(8, 10, z, OBSIDIAN);
+            wz.set(8, 14, z, OBSIDIAN);
+        }
+        for y in 11..=13 {
+            wz.set(8, y, 6, OBSIDIAN);
+            wz.set(8, y, 9, OBSIDIAN);
+        }
+        wz.set(8, 11, 7, FIRE);
+        assert!(wz.check_portal_spawn((8, 11, 7)), "the z-fill the verdict speaks");
+        wz.set(8, 12, 10, STONE); // the block in FRONT of the z-plane the X arm reads
+        assert!(
+            !wz.portal_shape_updates((8, 12, 10)),
+            "the z-portal's front block the flag11 arm keeps (axis Z vs the X change)"
+        );
+        wz.set(8, 12, 6, AIR); // the z-frame's near wall the dig breaks
+        assert!(
+            wz.portal_shape_updates((8, 12, 6)),
+            "the broken z-wall the douse verdict speaks"
+        );
+        for z in 7..=8 {
+            for y in 11..=13 {
+                assert_eq!(
+                    wz.get(8, y, z),
+                    AIR,
+                    "the z-interior cell (8,{y},{z}) the cascade douses"
+                );
+            }
+        }
     }
 
 

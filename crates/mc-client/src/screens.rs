@@ -30411,6 +30411,12 @@ impl App {
             // SAME beat douses); the surviving branch the verdict the
             // added support never gates (the chain the false fold keeps)
             let _ = world.fire_shape_updates(cell);
+            // THE PORTAL'S OWN DOUSE BEAT (javap NetherPortalBlock.
+            // updateShape pc 0-93 over the 26.2 jar — the placed or
+            // replaced cell's own neighborhood the frame-scan verdict
+            // re-reads, the interior block the count the w*h equality
+            // the walk refuses): the same law the dig's own beat wears
+            let _ = world.portal_shape_updates(cell);
             if crate::world::is_double_plant(block) {
                 if let Some(upper) = crate::world::double_plant_mate(block) {
                     // the is_double_plant mate IS the upper half (the
@@ -67394,6 +67400,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -67966,6 +67973,7 @@ mod tests {
                     // the empty store the offline walk alone fills
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
+                    portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68411,6 +68419,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68482,6 +68491,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68555,6 +68565,7 @@ mod tests {
                     // the empty store the offline walk alone fills
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
+                    portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68605,6 +68616,7 @@ mod tests {
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -87714,6 +87726,7 @@ cow_sound_variant: None,
             // the empty store the offline walk alone fills
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
+            portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
