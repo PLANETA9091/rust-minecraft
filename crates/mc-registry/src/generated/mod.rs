@@ -5,6 +5,7 @@ pub mod block_ids;
 pub mod block_mineable;
 pub mod block_shears;
 pub mod block_sounds;
+pub mod block_sword;
 pub mod blockstates;
 pub mod blocks;
 pub mod elements;

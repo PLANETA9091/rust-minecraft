@@ -165,6 +165,68 @@ def main() -> None:
     OUT_SHEARS.write_text("\n".join(lines) + "\n")
     print(f"wrote {OUT_SHEARS} ({len(snames)} blocks)")
 
+    # ---- THE SWORD'S OWN RULES (javap ToolMaterial.applySwordProperties
+    # pcs 0-106 — the rules the Tool ctor's List.of keeps IN ORDER: the
+    # cobweb minesAndDrops(15.0) direct rule (speed 15.0, drops TRUE),
+    # the #minecraft:sword_instantly_mines overrideSpeed(3.4028235E38 —
+    # the f32::MAX the ldc wears), the #minecraft:sword_efficient
+    # overrideSpeed(1.5); the defaultMiningSpeed the fconst_1 1.0 keeps,
+    # the ctor's last arg the iconst_0 false wears — the no-rule
+    # fallback the Tool.isCorrectForDrops's own pc-67 iconst_0 answers).
+    # overrideSpeed carries NO drop verdict — the cobweb's TRUE the
+    # minesAndDrops arm alone keeps.
+    with zipfile.ZipFile(JAR) as zf3:
+        cache3: dict = {}
+        instant = set(load_tag(zf3, "sword_instantly_mines", cache3, ()))
+        efficient = set(load_tag(zf3, "sword_efficient", cache3, ()))
+    sword: dict[str, (float, bool)] = {"cobweb": (15.0, True)}
+    for n in instant:
+        if n in sword and sword[n][1]:
+            continue  # the first matching rule the walk keeps
+        sword[n] = (3.4028235e38, False)
+    for n in efficient:
+        if n in sword and sword[n][1]:
+            continue
+        sword[n] = (1.5, False)
+    snames2 = sorted(sword)
+
+    lines = []
+    a = lines.append
+    a("// GENERATED from the client.jar's tags (#minecraft:sword_instantly_mines,")
+    a("// #minecraft:sword_efficient, the cobweb direct rule javap")
+    a("// ToolMaterial.applySwordProperties keeps) by")
+    a("// scripts/extract_mineable_tags.py — the SWORD TOOL component's")
+    a("// rule rows the dig lane's getMiningSpeed walk reads: (speed,")
+    a("// correct_for_drops) — the cobweb's TRUE the minesAndDrops arm")
+    a("// keeps, the overrideSpeed rules the no-verdict False wear, the")
+    a("// unmatched block the defaultMiningSpeed 1.0 default rides.")
+    a(f"pub const SWORD_BLOCK_COUNT: usize = {len(snames2)};")
+    a("")
+    a("pub const SWORD_NAMES: [&str; SWORD_BLOCK_COUNT] = [")
+    for n in snames2:
+        a(f'    "{n}",')
+    a("];")
+    a("")
+    a("/// (speed, correct_for_drops) per name — the first matching rule")
+    a("/// the component walk keeps.")
+    a("pub const SWORD_SPEED: [f32; SWORD_BLOCK_COUNT] = [")
+    a("    " + ", ".join(f"{sword[n][0]}" for n in snames2))
+    a("];")
+    a("")
+    a("pub const SWORD_CORRECT: [bool; SWORD_BLOCK_COUNT] = [")
+    a("    " + ", ".join(str(sword[n][1]).lower() for n in snames2))
+    a("];")
+    a("")
+    a("/// The sword's own rule row (the None the unmatched block the")
+    a("/// defaultMiningSpeed 1.0 default rides).")
+    a("pub fn sword_rule(name: &str) -> Option<(f32, bool)> {")
+    a("    let pos = SWORD_NAMES.binary_search(&name).ok()?;")
+    a("    Some((SWORD_SPEED[pos], SWORD_CORRECT[pos]))")
+    a("}")
+    OUT_SWORD = Path(__file__).resolve().parent.parent / "crates/mc-registry/src/generated/block_sword.rs"
+    OUT_SWORD.write_text("\n".join(lines) + "\n")
+    print(f"wrote {OUT_SWORD} ({len(snames2)} blocks)")
+
 
 if __name__ == "__main__":
     main()

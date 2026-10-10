@@ -307,6 +307,17 @@ impl DigState {
                 .map(|(speed, _)| speed)
                 .unwrap_or(1.0);
         }
+        // THE SWORD'S OWN RULES (javap ToolMaterial.applySwordProperties
+        // pcs 0-106 — the first matching rule the component walk keeps:
+        // the web's 15.0 the minesAndDrops arm wears, the instantly-mine
+        // tag the f32::MAX override keeps, the efficient tag the 1.5
+        // wears, the unmatched block the 1.0 default rides)
+        if Self::held_is_sword(held) {
+            let name = crate::world::NAME_OF[kind as usize];
+            return mc_registry::generated::block_sword::sword_rule(name)
+                .map(|(speed, _)| speed)
+                .unwrap_or(1.0);
+        }
         match (Self::block_tool_class(kind), Self::held_tool_class(held)) {
             (Some(bc), Some(hc)) if bc == hc => Self::held_material_speed(held),
             _ => 1.0,
@@ -318,6 +329,15 @@ impl DigState {
     pub fn held_is_shears(held: Option<i32>) -> bool {
         held.and_then(|id| mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize))
             == Some(&"shears")
+    }
+
+    /// The held stack's own sword verdict (the name suffix the
+    /// `applySwordProperties` rows keep — every `*_sword` the Items
+    /// clinit's seven sword rows wears, the shears the suffix never
+    /// carries).
+    pub fn held_is_sword(held: Option<i32>) -> bool {
+        held.and_then(|id| mc_registry::generated::item_order::ITEM_WIRE_ORDER.get(id as usize))
+            .is_some_and(|name| name.ends_with("sword"))
     }
 
     /// `hasCorrectToolForDrops` with the held tool's own belief (javap
@@ -343,6 +363,15 @@ impl DigState {
         if Self::held_is_shears(held) {
             let name = crate::world::NAME_OF[kind as usize];
             return mc_registry::generated::block_shears::shears_rule(name)
+                .map(|(_, correct)| correct)
+                .unwrap_or(false);
+        }
+        // THE SWORD'S OWN VERDICTS (the cobweb's TRUE the
+        // minesAndDrops arm keeps, the no-verdict block the Tool
+        // walk's own pc-67 iconst_0 false the fallback answers)
+        if Self::held_is_sword(held) {
+            let name = crate::world::NAME_OF[kind as usize];
+            return mc_registry::generated::block_sword::sword_rule(name)
                 .map(|(_, correct)| correct)
                 .unwrap_or(false);
         }
@@ -1301,6 +1330,82 @@ mod tests {
             world.get(1, 1, 1),
             crate::world::AIR,
             "the shears the leaves insta-strip"
+        );
+    }
+
+    /// THE SWORD'S OWN ROWS (javap ToolMaterial.applySwordProperties
+    /// pcs 0-106 — the Tool component the seven sword rows wear: the
+    /// cobweb minesAndDrops(15.0, drops TRUE) direct rule, the
+    /// #minecraft:sword_instantly_mines overrideSpeed the f32::MAX
+    /// keeps, the #minecraft:sword_efficient overrideSpeed the 1.5
+    /// wears, the defaultMiningSpeed 1.0 the unmatched state keeps,
+    /// the ctor's canDropBlocks false the no-rule verdict answers):
+    /// the generated table's own rows the registry test pins, the
+    /// palette-reachable lane the oak_leaves kind speaks — the sword
+    /// the ×1.5 seed the leaves' per-tick damage wears (the shears'
+    /// own ×15.0 the insta-strip completes, the sword's 0.25 progress
+    /// the completion refuses), the demanding stone the sword's
+    /// no-verdict refusal wears.
+    #[test]
+    fn the_sword_the_rules_the_speed_wears() {
+        use mc_registry::generated::block_sword::sword_rule;
+        let sword = wire_id("iron_sword");
+        // THE NAME'S OWN VERDICT (the suffix the seven sword rows
+        // wear, the pickaxe and the bare hand the suffix refuse)
+        assert!(DigState::held_is_sword(Some(sword)), "the sword the verdict wears");
+        assert!(
+            !DigState::held_is_sword(Some(wire_id("iron_pickaxe"))),
+            "the pickaxe the sword verdict refuses"
+        );
+        assert!(!DigState::held_is_sword(None), "the bare hand the sword verdict refuses");
+        // THE TABLE'S OWN ROWS (the palette-unreachable blocks the fn
+        // speaks — the web's TRUE the minesAndDrops arm keeps, the
+        // bamboo the f32::MAX instant keeps, the no-row stone None)
+        assert_eq!(sword_rule("cobweb"), Some((15.0, true)), "the web the drops TRUE wears");
+        assert_eq!(
+            sword_rule("bamboo"),
+            Some((3.4028235e38, false)),
+            "the bamboo the instant MAX keeps"
+        );
+        assert_eq!(sword_rule("oak_leaves"), Some((1.5, false)));
+        assert_eq!(sword_rule("pumpkin"), Some((1.5, false)));
+        assert_eq!(sword_rule("stone"), None, "the stone the sword rules never carry");
+        // THE SEED (the palette-reachable lane: the leaves kind)
+        let leaves = crate::world::LEAVES;
+        assert_eq!(
+            DigState::held_destroy_speed(leaves, Some(sword)),
+            1.5,
+            "the sword the leaves' 1.5 wears"
+        );
+        assert_eq!(
+            DigState::held_destroy_speed(crate::world::STONE, Some(sword)),
+            1.0,
+            "the stone the sword's default keeps"
+        );
+        // THE VERDICT (the demanding stone the sword's no-verdict
+        // refusal wears, the undemanding leaves the early true arm
+        // keeps)
+        assert!(
+            !DigState::correct_tool(crate::world::STONE, Some(sword)),
+            "the stone the sword's no-verdict refusal wears"
+        );
+        assert!(
+            DigState::correct_tool(leaves, Some(sword)),
+            "the leaves the undemanding true arm keeps"
+        );
+        // THE 0.25 STRIP (the START press the 1.5/0.2/30 progress
+        // wears — the completion the <1.0 refuses, the cell the
+        // leaves kind keeps)
+        let mut world = small_world();
+        world.set(1, 1, 1, crate::world::LEAVES);
+        let mut d = DigState::new();
+        let _ = d.start_destroy_block(
+            (1, 1, 1), 1, Some(sword), &mut world, true, false, false, false, None, None,
+        );
+        assert_eq!(
+            world.get(1, 1, 1),
+            crate::world::LEAVES,
+            "the sword the leaves' 0.25 progress keeps"
         );
     }
 
