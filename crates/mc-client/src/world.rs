@@ -13,6 +13,12 @@ pub const CHUNK_Y: usize = 48;
 pub const CHUNK_Z: usize = 16;
 pub const WATER_LEVEL: i32 = 10;
 
+/// THE NETHER'S OWN SEA LEVEL (the lava ocean's own surface the
+/// 48-tall grid scales — the vanilla y=31 the 128-tall dimension
+/// keeps, the proportional ~11 the fiction's band wears; the
+/// [`World::generate_nether`] walk the cells the level below fills).
+pub const NETHER_LAVA_LEVEL: i32 = 11;
+
 use crate::tint;
 use mc_registry::generated::atlas;
 
@@ -2769,6 +2775,12 @@ pub struct World {
     /// side map wears; the store-less cell the west/east derive the
     /// mesher's own short-circuit answers.
     pub portal_axis: std::collections::HashMap<(i32, i32, i32), bool>,
+    /// THE DIMENSION'S OWN SKY GATE (javap `DimensionType.hasSkylight`
+    /// — the nether's false the light engine's sky-column pass never
+    /// runs: the grid the block flood alone answers, the sky layer
+    /// the zero keeps). The overworld's true the default build speaks;
+    /// [`Self::new_nether`] the false the nether build banks.
+    pub has_skylight: bool,
 }
 
 /// A biome cell with no opinion — the server never answered for the
@@ -2924,7 +2936,33 @@ pub fn hash2(x: i64, z: i64, seed: u64) -> u32 {
 
 impl World {
     pub fn new(chunks_per_side: usize, seed: u64) -> Self {
-        let mut w = Self {
+        let mut w = Self::blank(chunks_per_side, seed);
+        w.generate();
+        w
+    }
+
+    /// THE NETHER'S OWN WORLD BUILD (the dimension_type's own
+    /// has_skylight false the light walk's sky-column skip reads —
+    /// [`crate::light::compute`] the gate consumes; the terrain the
+    /// deterministic fiction raises — the bedrock floor the real
+    /// dimension's y=0 keeps, the bedrock ceiling the roof the
+    /// 48-tall grid scales, the netherrack rise the hash band speaks,
+    /// the lava sea the ocean level the shoreline's soul sand wears,
+    /// the pillars the spike roll raises).
+    pub fn new_nether(chunks_per_side: usize, seed: u64) -> Self {
+        let mut w = Self::blank(chunks_per_side, seed);
+        w.has_skylight = false;
+        w.generate_nether();
+        w
+    }
+
+    /// THE BLANK WORLD'S OWN CANVAS — the struct literal the `new`
+    /// walk carried verbatim (the defaults the procedural scene
+    /// speaks), the generate call the two dimensional builds answer
+    /// each their own (the overworld the terrain walk, the nether
+    /// the cavern build).
+    fn blank(chunks_per_side: usize, seed: u64) -> Self {
+        Self {
             chunks_per_side,
             seed,
             chunks: vec![vec![AIR; CHUNK_X * CHUNK_Y * CHUNK_Z]; chunks_per_side * chunks_per_side],
@@ -2948,9 +2986,86 @@ impl World {
             campfire_ticks: Vec::new(), // the campfire's own queue: no lit campfire, no walk
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
-        };
-        w.generate();
-        w
+            has_skylight: true, // the overworld default: the sky light the column pass speaks
+        }
+    }
+
+    /// THE NETHER'S OWN TERRAIN (the client's deterministic stand-in
+    /// the PortalForcer-less jar keeps): the bedrock floor y=0 and
+    /// ceiling y=47 the real dimension's roof/floor the 48-tall grid
+    /// scales, the netherrack rise the hash band 6..=13 speaks, the
+    /// lava sea NETHER_LAVA_LEVEL the ocean's own level
+    /// keeps, the soul sand the shoreline's patch roll wears, the
+    /// pillars the spike roll raises (the classic cavern's own
+    /// columns). No skylight law here — [`Self::new_nether`] the flag
+    /// banks, the light walk the gate reads.
+    fn generate_nether(&mut self) {
+        const NETHER_SEED_SALT: u64 = 0x4E7B_0D; // the nether's own salt
+        let n = self.size_blocks();
+        let top = CHUNK_Y as i32 - 1;
+        for wx in 0..n {
+            for wz in 0..n {
+                let ground =
+                    6 + (hash2(wx as i64, wz as i64, self.seed ^ NETHER_SEED_SALT) % 8) as i32;
+                let shore =
+                    hash2(wx as i64, wz as i64, self.seed ^ (NETHER_SEED_SALT << 8)) % 7 == 0;
+                let spike =
+                    hash2(wx as i64, wz as i64, self.seed ^ (NETHER_SEED_SALT << 16)) % 23 == 0;
+                for y in 0..=top {
+                    let id = if y == 0 || y == top {
+                        BEDROCK
+                    } else if y <= ground {
+                        if y >= ground - 1 && shore {
+                            SOUL_SAND
+                        } else {
+                            NETHERRACK
+                        }
+                    } else if y <= NETHER_LAVA_LEVEL {
+                        LAVA
+                    } else if spike {
+                        NETHERRACK
+                    } else {
+                        AIR
+                    };
+                    self.set(wx, y, wz, id);
+                }
+            }
+        }
+    }
+
+    /// THE RETURN PORTAL'S OWN BUILD (the PortalForcer fiction — the
+    /// server-side class the client jar never carries, the swap's
+    /// deterministic stand-in the vanilla createPortal's own shape
+    /// keeps: the 4x5 obsidian frame the interior 2x3 the portal
+    /// room's platform floor wears; the X axis the RNG arm's
+    /// determinism the client fiction pins — the interior the
+    /// [`Self::check_portal_spawn`] walk's own scan lights).
+    pub fn build_portal_frame(&mut self, bottom_left: (i32, i32, i32)) -> (i32, i32, i32) {
+        let (bx, by, bz) = bottom_left;
+        // THE SITE'S OWN CLEAR (the PortalForcer's clearing walk —
+        // the frame plane the terrain's intrusions never keep)
+        for i in 0..4 {
+            for j in 0..5 {
+                self.set(bx + i, by + j, bz, AIR);
+            }
+        }
+        // THE PLATFORM (the portal room's own floor — the descent's
+        // stop the fill's bottom-left walk wears)
+        for i in 0..4 {
+            self.set(bx + i, by - 1, bz, NETHERRACK);
+        }
+        // THE FRAME (the 4x5 obsidian the vanilla shape keeps)
+        for i in 0..4 {
+            self.set(bx + i, by, bz, OBSIDIAN);
+            self.set(bx + i, by + 4, bz, OBSIDIAN);
+        }
+        for j in 1..4 {
+            self.set(bx, by + j, bz, OBSIDIAN);
+            self.set(bx + 3, by + j, bz, OBSIDIAN);
+        }
+        // THE INTERIOR'S OWN START CELL (the fill's start the finder
+        // walk reads)
+        (bx + 1, by + 1, bz)
     }
 
     /// THE OFFLINE WORLD'S OWN RELIGHT — the light engine's grid the
@@ -5591,6 +5706,122 @@ mod tests {
         }
     }
 
+    /// THE NETHER'S OWN WORLD BUILD (the dimension swap's own
+    /// destination the new build answers): the has_skylight false the
+    /// light walk's sky-column skip reads (javap DimensionType
+    /// .hasSkylight — the nether's false the pass never runs), the
+    /// bedrock floor y=0 + ceiling y=47 the real dimension's roof the
+    /// 48-tall grid scales, the lava sea the level below fills, the
+    /// sky grid the ZERO the gate keeps (the overworld's own the
+    /// contrast speaks).
+    #[test]
+    fn the_nether_the_world_the_skylight_the_sea_wears() {
+        let w = World::new_nether(2, 0xC0FFEE);
+        assert!(!w.has_skylight, "the nether's own flag the build banks");
+        assert_eq!(
+            w.get(0, 0, 0),
+            BEDROCK,
+            "the floor the bedrock kind keeps"
+        );
+        assert_eq!(
+            w.get(7, 47, 3),
+            BEDROCK,
+            "the ceiling the bedrock kind keeps"
+        );
+        // THE SEA'S OWN FILL (the level below the cells the lava kind
+        // keeps — the ocean the overworld's water walk never wears)
+        let mut sea = 0usize;
+        for x in 0..w.size_blocks() {
+            for z in 0..w.size_blocks() {
+                for y in 1..NETHER_LAVA_LEVEL {
+                    if w.get(x, y, z) == LAVA {
+                        sea += 1;
+                    }
+                }
+            }
+        }
+        assert!(sea > 0, "the lava sea the level's own cells keep");
+        // THE SKY GRID'S OWN CONTRAST (the same grid the two builds
+        // wear): the overworld's open column the 15 speaks, the
+        // nether's own the ZERO the gate keeps — the compute walk the
+        // has_skylight flag reads
+        let ow = World::new(2, 0xC0FFEE);
+        let ow_light = crate::light::compute(&ow);
+        let n_light = crate::light::compute(&w);
+        // the top open cell (1, 47, 1): the overworld's own the 15
+        // keeps, the nether's ceiling cell the 0 wears
+        let cell = 1 + 1 * CHUNK_X + 47 * CHUNK_X * CHUNK_Z;
+        assert_eq!(ow_light.sky[0][cell], 15, "the overworld sky lights");
+        assert_eq!(n_light.sky[0][cell], 0, "the nether sky stays dark");
+        // THE BLOCK LIGHT'S OWN SURVIVAL (the gate the sky pass alone
+        // gates — the lava's own 15 the flood keeps)
+        let mut lava_glow = false;
+        for ci in 0..n_light.block.len() {
+            if n_light.block[ci].iter().any(|&v| v == 15) {
+                lava_glow = true;
+                break;
+            }
+        }
+        assert!(lava_glow, "the lava's own glow the block flood keeps");
+    }
+
+    /// THE RETURN PORTAL'S OWN BUILD (the PortalForcer fiction — the
+    /// swap's deterministic stand-in the vanilla createPortal's own
+    /// shape keeps): the 4x5 obsidian frame the interior 2x3 the
+    /// platform floor wears, the interior the
+    /// check_portal_spawn walk's own scan lights (the num_portal_blocks
+    /// 0 the empty-shape verdict banks, the 6 cells the fill speaks).
+    #[test]
+    fn the_frame_the_builder_the_interior_the_fill_wears() {
+        let mut w = World::new(2, 7);
+        // THE CLEAR STAGE (the flat pad the build's own site keeps)
+        for x in 4..=12 {
+            for y in 6..=16 {
+                for z in 4..=12 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        for x in 4..=12 {
+            for z in 4..=12 {
+                w.set(x, 5, z, STONE);
+            }
+        }
+        let (ix, iy, iz) = w.build_portal_frame((6, 6, 8));
+        assert_eq!((ix, iy, iz), (7, 7, 8), "the interior's start cell");
+        // THE FRAME'S OWN CELLS (the 4x5 obsidian the shape keeps)
+        for i in 0..4 {
+            assert_eq!(w.get(6 + i, 6, 8), OBSIDIAN, "the bottom row");
+            assert_eq!(w.get(6 + i, 10, 8), OBSIDIAN, "the top row");
+        }
+        for j in 1..4 {
+            assert_eq!(w.get(6, 6 + j, 8), OBSIDIAN, "the west column");
+            assert_eq!(w.get(9, 6 + j, 8), OBSIDIAN, "the east column");
+        }
+        // THE PLATFORM'S OWN ROW (the descent's stop the build wears)
+        for i in 0..4 {
+            assert_eq!(w.get(6 + i, 5, 8), NETHERRACK, "the platform row");
+        }
+        // THE FILL (the check_portal_spawn walk the built frame
+        // answers — the empty interior the verdict speaks)
+        assert!(
+            w.check_portal_spawn((ix, iy, iz)),
+            "the fill the verdict speaks"
+        );
+        for (x, y) in [(7, 7), (8, 7), (7, 8), (8, 8), (7, 9), (8, 9)] {
+            assert_eq!(
+                w.get(x, y, 8),
+                NETHER_PORTAL,
+                "the interior cell ({x},{y}) the fill wears"
+            );
+        }
+        // THE AXIS STORE'S OWN BANK (the fill's own walk the winning
+        // trial's axis keeps — the X trial the first answer wears)
+        assert!(
+            w.portal_axis.contains_key(&(7, 7, 8)),
+            "the axis the store banks"
+        );
+    }
 
     /// THE PORTAL'S OWN ANIMATE VERDICT (javap `NetherPortalBlock.
     /// animateTick` over the 26.2 jar): the 1/100 sound gate the FIXED

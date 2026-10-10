@@ -6770,6 +6770,16 @@ pub struct App {
     /// this client's 5x5-chunk window, where the documented window
     /// treatment renders).
     pub world_fog: Option<(f32, f32)>,
+    /// THE FAR SIDE'S OWN WORLD SLOT (the dimension swap's pair — the
+    /// vanilla server keeps both dimensions' levels loaded, the swap
+    /// the `mem::swap` serves, the edits the each side keeps). `None`
+    /// until the first portal walk builds the destination.
+    pub far_world: Option<crate::world::World>,
+    /// THE DIMENSION'S OWN FLAG (the swap's direction read — the
+    /// false the overworld keeps, the true the nether's side banks;
+    /// the scale walk's `/8` climb `*8` the flag answers, the
+    /// skybox/fog/ambient pins the nether row's own pair wears).
+    pub world_is_nether: bool,
     /// The dimension's STATED cloud-fog end (blocks) — pinned at level
     /// entry like the fog pair; `None` = no dimension states one (the
     /// cloud fog rides the 2048.0 bytecode default, `sky::DEFAULT_CLOUD_FOG_END`).
@@ -8393,6 +8403,8 @@ impl App {
             world_skybox: Skybox::Overworld,
             world_fog: None,
             world_cloud_fog_end: None,
+            far_world: None, // the far side's slot: the first portal walk builds
+            world_is_nether: false, // the overworld the default build keeps
             water_vision_time: 0,
             net_biome: None,
             live_runs: Vec::new(),
@@ -9757,6 +9769,7 @@ impl App {
             // sees, the sounds the same post-borrow tail speaks)
             let mut portal_trigger = false;
             let mut portal_inside = false;
+            let mut portal_teleport = false;
             let mut drown_hurt = false;
             // THE ELYTRA BREAK's own drain slot (the body's borrow fills
             // it — the entityEvent 47's client arm runs after it ends:
@@ -10547,6 +10560,7 @@ impl App {
                     // post-borrow tail serves)
                     portal_trigger = std::mem::take(&mut b.portal_trigger_due);
                     portal_inside = std::mem::take(&mut b.portal_inside_consumed);
+                    portal_teleport = std::mem::take(&mut b.portal_teleport_due);
                     // THE AIR ARC'S OWN DRAIN (the same per-tick flag
                     // law the fire arc's three speak — the -20 fold's
                     // own read, the body keeps it true until the NEXT
@@ -10586,6 +10600,14 @@ impl App {
             // the body never sees — the same drain the law reads
             if portal_inside && !self.screen_allowed_in_portal() {
                 self.portal_screen_dismiss();
+            }
+            // THE SWAP'S OWN CONSUME (the verdict the countdown banks —
+            // the vanilla handlePortal's own teleport tail the
+            // destination walk serves; the wire lane the server's
+            // packets carry, the offline fiction the local walk
+            // answers)
+            if portal_teleport {
+                self.swap_dimension();
             }
             // THE ELYTRA BREAK'S OWN TAIL (javap onEquippedItemBroken →
             // the entityEvent 47 → the client's breakItem walk): the
@@ -19610,6 +19632,169 @@ impl App {
             }
         }
         self.render_bundle_tooltip(g, a);
+    }
+
+    /// THE DIMENSION SWAP (the verdict's own teleport tail — the
+    /// vanilla handlePortal walk the countdown's TRUE return serves;
+    /// the offline fiction's own lane: the far side's slot the
+    /// `mem::swap` answers, the scaled coords the dimension_type's
+    /// coordinate_scale 8.0 speaks, the return portal the
+    /// [`crate::world::World::build_portal_frame`] + the
+    /// [`crate::world::World::check_portal_spawn`] walk lights, the
+    /// body the interior cell the cooldown's own refresh keeps, the
+    /// entities the old level carried DROP WITH the level — the same
+    /// law the enter_world walk keeps). The WIRE world's swap the
+    /// server's own packets carry — the network lane the early return
+    /// keeps.
+    pub fn swap_dimension(&mut self) {
+        if self.world_is_network || self.offline_world.is_none() {
+            return;
+        }
+        // THE ENTRY CELL (the processor's own banked entry — the
+        // fallback the bare verdict's own feet the world's center
+        // keeps)
+        let entry = self
+            .body
+            .as_ref()
+            .and_then(|b| b.portal_entry)
+            .unwrap_or((self.world_size / 2, 20, self.world_size / 2));
+        // THE SCALE WALK (javap DimensionType — the nether's
+        // coordinate_scale 8.0: the overworld descent `/8`, the return
+        // climb `*8`, the f64 fold the vanilla's own mul/div wears)
+        let scale = 8.0f64;
+        let (sx, sz) = if self.world_is_nether {
+            (entry.0 as f64 * scale, entry.2 as f64 * scale)
+        } else {
+            (entry.0 as f64 / scale, entry.2 as f64 / scale)
+        };
+        // THE FAR SIDE'S OWN WORLD (the vanilla server's
+        // both-levels-loaded fiction the slot folds — the empty slot
+        // the fresh build answers, the kept slot the mem::swap
+        // restores with the edits the side carried)
+        if self.far_world.is_none() {
+            self.far_world = Some(if self.world_is_nether {
+                crate::world::World::new(WORLD_CHUNKS, self.seed)
+            } else {
+                crate::world::World::new_nether(WORLD_CHUNKS, self.seed)
+            });
+        }
+        std::mem::swap(
+            self.far_world.as_mut().expect("the far slot rides"),
+            self.offline_world
+                .as_mut()
+                .expect("the offline world rides"),
+        );
+        self.world_is_nether = !self.world_is_nether;
+        let world = self
+            .offline_world
+            .as_mut()
+            .expect("the offline world rides");
+        let n = world.size_blocks();
+        // THE SITE'S OWN WALK (the destination's bounds the scaled
+        // coords answer, the clamp the frame's own margin keeps, the
+        // floor scan the first free cell the solid walk above answers
+        // — the lava sea the free cell the fluids' own non-solid pair
+        // keeps)
+        let bx = (sx.round() as i32).clamp(2, n - 6);
+        let bz = (sz.round() as i32).clamp(2, n - 2);
+        let mut by = 1i32;
+        while by < crate::world::CHUNK_Y as i32 - 6 {
+            let id = world.get(bx + 1, by, bz);
+            if !(id == crate::world::WATER
+                || id == crate::world::LAVA
+                || crate::world::collision_shape(id) != crate::world::CollisionShape::Empty)
+            {
+                break;
+            }
+            by += 1;
+        }
+        // THE FRAME + THE FILL (the builder's own shape the
+        // check_portal_spawn walk's own scan lights — the interior the
+        // NETHER_PORTAL kind the fill speaks)
+        let (ix, iy, iz) = world.build_portal_frame((bx, by, bz));
+        let _ = world.check_portal_spawn((ix, iy, iz));
+        // THE BODY'S OWN RELOCATION (the vanilla teleportTo's own
+        // snap — the prev trio the render lerp's anchors, the
+        // velocity the teleport zeroes, the interior's center the
+        // +0.5 the block walk wears) + THE POST-TELEPORT COOLDOWN
+        // (javap the teleport tail's own setPortalCooldown — the
+        // player's 10 the getDimensionChangingDelay keeps) + THE
+        // MACHINERY'S OWN DRY (the consumed verdict the count's zero
+        // keeps)
+        if let Some(b) = self.body.as_mut() {
+            let (fx, fy, fz) = (ix as f64 + 0.5, iy as f64, iz as f64 + 0.5);
+            b.prev_x = fx;
+            b.prev_y = fy;
+            b.prev_z = fz;
+            b.x = fx;
+            b.y = fy;
+            b.z = fz;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.on_ground = false;
+            b.portal_cooldown = crate::body::PLAYER_PORTAL_COOLDOWN_TICKS;
+            b.portal_time = 0;
+            b.portal_entry = None;
+            b.portal_inside_this_tick = false;
+            b.portal_teleport_due = false;
+        }
+        // THE ENVIRONMENT'S OWN PIN (the enter_world's own walk — the
+        // skybox the extract pins, the fog the dimension's stated
+        // pair, the ambient base the lightmap's floor; the nether's
+        // own row the registry table answers — Skybox::None the sky
+        // pipeline renders nothing at, the (10, 96) fog the stated
+        // pair keeps, the #302821 ambient the [48, 40, 33] bytes
+        // speak)
+        if self.world_is_nether {
+            self.world_skybox = Skybox::None;
+            self.world_fog = Some((10.0, 96.0));
+            self.world_cloud_fog_end = None;
+            world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:the_nether")
+                .map(|d| d.ambient_light_color);
+        } else {
+            self.world_skybox = Skybox::Overworld;
+            self.world_fog = None;
+            self.world_cloud_fog_end = None;
+            world.ambient_light = mc_registry::generated::worldgen::dimension_type("minecraft:overworld")
+                .map(|d| d.ambient_light_color);
+        }
+        world.relight();
+        // THE MESH'S OWN REBUILD (the enter_world's own walk — the
+        // destination terrain the quad grid wears, the day bake the
+        // fresh world's own inputs keep)
+        self.world_size = world.size_blocks();
+        self.world_quads = Some(crate::mesher::mesh_world(world, None));
+        self.day_bake = Some(day_bake_inputs(world));
+        self.spawn_y = by;
+        // THE FRESH LEVEL'S OWN ENTITIES (the vanilla world swap the
+        // ClientLevel's own map answers — the entities the old level
+        // carried DROP WITH the level: the offline mobs the old
+        // voxels raised, the wire's lane the server's own bodies, the
+        // ride belief the gone hulls never honor, the drops the orbs
+        // the particles the old world's own weather, the dig the old
+        // voxels' progress, the pick the old terrain named — the
+        // fresh terrain none of them speaks)
+        self.mobs.clear();
+        self.net_mobs.clear();
+        self.net_ride = None;
+        self.offline_ride = None;
+        self.drops.clear();
+        self.orbs.clear();
+        self.particles.clear();
+        self.dig = crate::dig::DigState::new();
+        self.frame_pick = None;
+        self.dig_held = false;
+        self.offline_boats.clear();
+        self.offline_boat_phys.clear();
+        self.offline_bubbles.clear();
+        self.net_boats.clear();
+        self.net_boat_lerp.clear();
+        self.paddle_positions.clear();
+        self.bubble_state.clear();
+        // the dig lane predicts locally on the offline terrain (the
+        // singleplayer behavior — the machine's own default re-armed)
+        self.dig.apply_locally = true;
     }
 
     /// Enter the world screen with the NETWORK world — the vanilla
@@ -67589,6 +67774,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68162,6 +68348,7 @@ mod tests {
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+                    has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68608,6 +68795,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68680,6 +68868,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68754,6 +68943,7 @@ mod tests {
                     fire_ticks: Vec::new(),
                     fire_age: std::collections::HashMap::new(),
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+                    has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -68805,6 +68995,7 @@ mod tests {
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -87915,6 +88106,7 @@ cow_sound_variant: None,
             fire_ticks: Vec::new(),
             fire_age: std::collections::HashMap::new(),
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
+            has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
@@ -97335,6 +97527,190 @@ cow_sound_variant: None,
             (0, 0),
             "the carried the reconciliation clears"
         );
+    }
+
+    /// THE SWAP'S OWN APP LANE (the verdict's own teleport tail the
+    /// drain slot serves — the vanilla handlePortal walk the
+    /// destination's own build answers): the lit gate the body stands
+    /// in, the 80th consume the verdict banks, THE SWAP the same tick
+    /// serves — the nether side the destination world keeps (the
+    /// has_skylight false the light walk's gate reads, the Skybox::None
+    /// + the (10, 96) fog + the #302821 ambient the nether row's own
+    /// pair wears), the return portal the builder + the fill walk
+    /// lights, the body the interior cell the cooldown's own refresh
+    /// keeps, the far slot the OLD world the edits persist. THE RETURN
+    /// WALK: the step-out the cooldown's own bleed drains, the
+    /// step-back the re-arm the expired body answers, the climb `*8`
+    /// the scale law wears, the marker block the slot's own mem::swap
+    /// keeps.
+    #[test]
+    fn the_swap_the_destination_the_return_the_scale_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE MARKER'S OWN EDIT (the overworld's own cell the far slot
+        // carries — the mem::swap persistence proof the return wears)
+        app.offline_world
+            .as_mut()
+            .expect("the offline world rides")
+            .set(20, 40, 20, crate::world::CRAFTING_TABLE);
+        // THE BODY THE SPAWN'S OWN CONSTRUCTION WEARS (the portal
+        // test's own pair — the settle ticks the grounded body keeps)
+        app.body = Some(crate::body::PlayerBody::new(
+            app.world_size as f64 / 2.0,
+            app.spawn_y as f64,
+            app.world_size as f64 / 2.0,
+            180.0,
+            0.0,
+        ));
+        for _ in 0..2 {
+            app.update();
+        }
+        // THE LIT GATE (the feet cell the portal kind wears — the
+        // overlay test's own staging keeps)
+        let (bx, by, bz) = {
+            let b = app.body.as_ref().expect("the body rides");
+            (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32)
+        };
+        app.offline_world
+            .as_mut()
+            .expect("the offline world rides")
+            .set(bx, by, bz, crate::world::NETHER_PORTAL);
+        app.update(); // the arm banks the entry
+        assert_eq!(
+            app.body.as_ref().unwrap().portal_entry,
+            Some((bx, by, bz)),
+            "the feet cell the arm banks"
+        );
+        // THE COUNT'S OWN CLIMB (the survival 80 the direct drive
+        // walks — the 80th consume the verdict banks, THE SWAP the
+        // same tick's drain serves)
+        {
+            let b = app.body.as_mut().unwrap();
+            b.portal_time = crate::body::PLAYERS_NETHER_PORTAL_DEFAULT_DELAY_TICKS - 1;
+        }
+        app.update();
+        {
+            let b = app.body.as_ref().unwrap();
+            assert!(
+                !b.portal_teleport_due,
+                "the consumed verdict the take drains"
+            );
+            assert_eq!(
+                b.portal_cooldown,
+                crate::body::PLAYER_PORTAL_COOLDOWN_TICKS,
+                "the post-teleport cooldown the tail speaks"
+            );
+            assert_eq!(b.portal_time, 0, "the machinery the zero keeps");
+            assert_eq!(
+                b.portal_entry, None,
+                "the entry the fresh side's own None keeps"
+            );
+            let feet = app
+                .offline_world
+                .as_ref()
+                .expect("the offline world rides")
+                .get(b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32);
+            assert_eq!(
+                feet,
+                crate::world::NETHER_PORTAL,
+                "the body the return portal keeps"
+            );
+        }
+        // THE NETHER'S OWN PIN (the destination the swap serves)
+        assert!(app.world_is_nether, "the nether side the swap banks");
+        assert_eq!(app.world_skybox, Skybox::None, "the nether pin");
+        assert_eq!(app.world_fog, Some((10.0, 96.0)), "the stated fog pair");
+        let w = app
+            .offline_world
+            .as_ref()
+            .expect("the offline world rides");
+        assert!(!w.has_skylight, "the destination's own flag");
+        assert_eq!(
+            w.ambient_light,
+            Some([48, 40, 33]),
+            "the nether's ambient base the row wears"
+        );
+        // THE FAR SLOT'S OWN KEEP (the overworld the edits persist)
+        {
+            let far = app.far_world.as_ref().expect("the far slot rides");
+            assert!(far.has_skylight, "the overworld the slot keeps");
+            assert_eq!(
+                far.get(20, 40, 20),
+                crate::world::CRAFTING_TABLE,
+                "the marker the slot carries"
+            );
+        }
+        // THE RETURN WALK (the step-out the cooldown's own bleed
+        // drains — the refresh arm the touching body keeps, the exit
+        // the decrement speaks — then the step-back the re-arm the
+        // expired answers, the climb `*8` the scale law wears)
+        let (ix, iy, iz) = {
+            let b = app.body.as_ref().unwrap();
+            (b.x.floor() as i32, b.y.floor() as i32, b.z.floor() as i32)
+        };
+        // THE PAD (the step-out's own landing the lava sea never
+        // claims — the deterministic floor the walk's own site wears)
+        app.offline_world
+            .as_mut()
+            .expect("the offline world rides")
+            .set(ix, iy - 1, iz + 2, crate::world::NETHERRACK);
+        {
+            let b = app.body.as_mut().unwrap();
+            b.z += 2.0; // the step-out the portal's own plane leaves
+        }
+        for _ in 0..11 {
+            app.update(); // the bleed the exit's own ticks drain
+        }
+        {
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(b.portal_cooldown, 0, "the bleed the exit drains");
+            assert_eq!(b.portal_entry, None, "the arm the exit never banks");
+        }
+        {
+            let b = app.body.as_mut().unwrap();
+            b.z -= 2.0; // the step-back the portal's own plane re-enters
+        }
+        app.update(); // the re-arm the expired cooldown answers
+        {
+            let b = app.body.as_ref().unwrap();
+            assert!(
+                b.portal_entry.is_some(),
+                "the re-arm the expired body answers"
+            );
+            let b = app.body.as_mut().unwrap();
+            b.portal_time = crate::body::PLAYERS_NETHER_PORTAL_DEFAULT_DELAY_TICKS - 1;
+        }
+        app.update(); // the verdict → THE SWAP BACK
+        assert!(!app.world_is_nether, "the overworld restored");
+        assert_eq!(app.world_skybox, Skybox::Overworld, "the pin returns");
+        assert_eq!(app.world_fog, None, "the overworld's unstated fog");
+        // THE EDITS' OWN PERSISTENCE (the marker the mem::swap kept)
+        assert_eq!(
+            app.offline_world
+                .as_ref()
+                .expect("the offline world rides")
+                .get(20, 40, 20),
+            crate::world::CRAFTING_TABLE,
+            "the marker the slot's own swap keeps"
+        );
+        // THE RETURN PORTAL'S OWN KEEP (the nether the far slot carries
+        // — the return walk's own build the destination's own cells
+        // bank)
+        {
+            let far = app.far_world.as_ref().expect("the far slot rides");
+            assert!(
+                !far.has_skylight,
+                "the nether the far slot keeps"
+            );
+            let mut portal_cells = 0;
+            for c in &far.chunks {
+                portal_cells += c.iter().filter(|&&v| v == crate::world::NETHER_PORTAL).count();
+            }
+            assert!(
+                portal_cells >= 6,
+                "the return portal the interior the far slot keeps"
+            );
+        }
     }
 
     /// THE PORTAL OVERLAY'S OWN TINT BLIT (javap `Hud

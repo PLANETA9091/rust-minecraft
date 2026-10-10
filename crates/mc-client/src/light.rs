@@ -202,16 +202,21 @@ pub fn compute(world: &World) -> LightGrid {
     // THE SKY COLUMN PASS (the direct light the heightmap speaks):
     // from the world's top down, 15 through opacity-0 cells, the
     // column STOPS at the first attenuator — the cells below the stop
-    // the flood alone answers.
+    // the flood alone answers. THE DIMENSION'S OWN GATE (javap
+    // `DimensionType.hasSkylight` — the nether's false the pass never
+    // runs: the sky layer the zero keeps, the grid the block flood
+    // alone answers; the overworld's true the default build speaks).
     let mut flood = Flood::new();
-    for z in 0..n {
-        for x in 0..n {
-            for y in (0..h).rev() {
-                if sky_opacity(world.get(x, y, z)) != 0 {
-                    break;
+    if world.has_skylight {
+        for z in 0..n {
+            for x in 0..n {
+                for y in (0..h).rev() {
+                    if sky_opacity(world.get(x, y, z)) != 0 {
+                        break;
+                    }
+                    sky[idx(x, y, z)] = 15;
+                    flood.push(x, y, z);
                 }
-                sky[idx(x, y, z)] = 15;
-                flood.push(x, y, z);
             }
         }
     }
