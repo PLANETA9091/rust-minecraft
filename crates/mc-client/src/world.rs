@@ -1084,6 +1084,18 @@ pub enum CollisionShape {
     /// footprint under a 15/16-tall band — the `Block.column(16, 0, 15)`
     /// the two SHAPE constants speak.
     Column(u8),
+    /// THE INSET COLUMN FAMILY (the honey block — the dev-23 round):
+    /// the `Block.column(14.0, 0.0, 15.0)` the SHAPE constant speaks —
+    /// the (height, inset) pair the (15, 1) honey row banks: the
+    /// 15/16-tall band under a 14/16 footprint (the 1/16 the four
+    /// sides shrink — javap Block.column(DDDD) the box(8-w/2, y0,
+    /// 8-d/2, 8+w/2, y1, 8+d/2) walk keeps). THE INSET IS THE SLIDE'S
+    /// OWN GEOMETRY: the body pressed against the VISUAL face stops at
+    /// the 14/16 collision band — its box overlaps the honey CELL by
+    /// exactly 1/16 — the entityInside walk the box scan speaks, the
+    /// isSlidingDown margin (0.4375 + bbWidth/2) the pressed center
+    /// distance (15/16 - 0.5 + 0.3 = 0.7375) the +1e-7 slack admits.
+    InsetColumn(u8, u8),
     /// The full-cube family — the default `Shapes.block()` registration
     /// the collision the body's box intersects refuses.
     Full,
@@ -1142,6 +1154,21 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // own top never splits — the redstone conductor the predicate
         // row arms)
         CollisionShape::Column(14)
+    } else if id == HONEY_BLOCK {
+        // THE HONEY BLOCK'S OWN INSET COLUMN (the dev-23 round — javap
+        // HoneyBlock the 26.2 jar: `private static final VoxelShape
+        // SHAPE` the clinit's `Block.column(14.0d, 0.0d, 15.0d)` pcs
+        // 11-21 banks, getCollisionShape pcs 0-3 the field areturn
+        // keeps): the 15/16-tall band under a 14/16 footprint — the
+        // 1/16 the four sides shrink and the top short the slide's own
+        // geometry speaks (the pressed body's box the honey CELL the
+        // 1/16 overlap wears — the full-cube row the 599 round kept
+        // the noOcclusion() call alone answered, the shape constant
+        // the jar's own clinit retires), the getBlockSupportShape the
+        // BlockBehaviour default the soul sand's own precedent keeps
+        // (the support the FULL band the column's own top never
+        // splits — the redstone conductor the predicate row arms)
+        CollisionShape::InsetColumn(15, 1)
     } else if is_candle_cake(id) || is_cake(id) {
         // THE CAKE FAMILY'S OWN COLUMN (the autopush-523/524 rounds —
         // javap CandleCakeBlock.getShape the SHAPE field returns, the

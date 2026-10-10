@@ -88034,13 +88034,18 @@ cow_sound_variant: None,
             atlas::tile_name(atlas::TILE_HONEY_BLOCK_SIDE),
             "honey_block_side"
         );
-        // THE COLLISION (the full-cube default the no-override class
-        // keeps) + THE DIG ROW (the instabreak 0.0 the no-demand arm
-        // speaks — the bare fist the instant break arms)
+        // THE COLLISION (the dev-23 round — javap HoneyBlock
+        // getCollisionShape the SHAPE field the clinit's
+        // `Block.column(14.0d, 0.0d, 15.0d)` pcs 11-21 the 26.2 jar
+        // keeps: the InsetColumn(15, 1) pair the 15/16 band and the
+        // 1/16 side inset banks — the full-cube row the 599 round
+        // kept the jar's own constant retires) + THE DIG ROW (the
+        // instabreak 0.0 the no-demand arm speaks — the bare fist the
+        // instant break arms)
         assert_eq!(
             crate::world::collision_shape(honey),
-            crate::world::CollisionShape::Full,
-            "the honey the full-cube shape keeps"
+            crate::world::CollisionShape::InsetColumn(15, 1),
+            "the honey the 14/16 inset column keeps"
         );
         assert_eq!(
             mc_registry::generated::block_dig::dig_row("honey_block"),

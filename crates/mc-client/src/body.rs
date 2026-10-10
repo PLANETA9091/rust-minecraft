@@ -229,6 +229,27 @@ pub fn bubble_column_drag(vy: f64, drag: bool, surface: bool) -> f64 {
     }
 }
 
+// THE HONEY SLIDE's own helpers (javap HoneyBlock the 26.2 jar — the
+// dev-23 round):
+/// `HoneyBlock.getOldDeltaY` pcs 0-9: `y / 0.9800000190734863 + 0.08`
+/// — the widened f32 0.98F the ldc2_w literal keeps (the
+/// `VERTICAL_DRAG as f64` the same bits the travel's own drag fold
+/// wears), the pre-drag speed the +0.08 gravity the fold restores
+/// (the drag's exact inverse — the pair the isSlidingDown gate and
+/// the doSlideMovement scale both read).
+pub fn honey_old_delta_y(y: f64) -> f64 {
+    y / VERTICAL_DRAG as f64 + 0.08
+}
+
+/// `HoneyBlock.getNewDeltaY` pcs 0-9: `(y - 0.08) * 0.9800000190734863`
+/// — the -0.05 slide target the drag PRE-folds (the next travel's own
+/// drag the pair inverts — the terminal descent the move the
+/// drag(-0.05) value consumes, the -0.12740000247955322 the f64 fold
+/// speaks).
+pub fn honey_new_delta_y(y: f64) -> f64 {
+    (y - 0.08) * VERTICAL_DRAG as f64
+}
+
 // THE FALL-DAMAGE ARC's constants (javap, the same jar):
 /// `Attributes.SAFE_FALL_DISTANCE`'s default — the fall's own grace.
 /// javap `LivingEntity.calculateFallPower`: `(distance + 1.0E-6) -
@@ -470,22 +491,36 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                     continue;
                 }
                 let (y_lo, y_hi) = match shape {
-                    crate::world::CollisionShape::Column(h) => {
+                    crate::world::CollisionShape::Column(h)
+                    | crate::world::CollisionShape::InsetColumn(h, _) => {
                         (cy as f64, cy as f64 + h as f64 / 16.0)
                     }
                     _ => (cy as f64, (cy + 1) as f64),
                 };
+                // THE INSET COLUMN'S OWN SIDES (the dev-23 round — the
+                // honey row the (15, 1) pair banks): the x/z slabs the
+                // 1/16 inset wears — the pressed body's box the 14/16
+                // collision band stops at, the CELL the 1/16 overlap
+                // the slide's own geometry keeps — the Y band the
+                // inset never touches
+                let inset = match shape {
+                    crate::world::CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
+                    _ => 0.0,
+                };
+                let (x_lo, x_hi) = (cx as f64 + inset, (cx + 1) as f64 - inset);
+                let (z_lo, z_hi) = (cz as f64 + inset, (cz + 1) as f64 - inset);
                 // the cell's slabs on the other two axes must strictly
                 // overlap the box (the epsilon the vanilla's
                 // findIndex bounds carry) — the Y slab the shape's own
-                // band wears, the X/Z footprint the full cell keeps
+                // band wears, the X/Z footprint the inset column's
+                // shrunk band wears
                 let (c1lo, c1hi) = match axis {
-                    1 => (cx as f64, (cx + 1) as f64),
+                    1 => (x_lo, x_hi),
                     _ => (y_lo, y_hi),
                 };
                 let (c2lo, c2hi) = match axis {
-                    2 => (cx as f64, (cx + 1) as f64),
-                    _ => (cz as f64, (cz + 1) as f64),
+                    2 => (x_lo, x_hi),
+                    _ => (z_lo, z_hi),
                 };
                 if !(c1lo < a1hi - COLLISION_SKIN && c1hi > a1lo + COLLISION_SKIN) {
                     continue;
@@ -494,9 +529,9 @@ fn clip_axis(world: &World, b: (f64, f64, f64, f64, f64, f64), axis: usize, d: f
                     continue;
                 }
                 let (c_lo, c_hi) = match axis {
-                    0 => (cx as f64, (cx + 1) as f64),
+                    0 => (x_lo, x_hi),
                     1 => (y_lo, y_hi),
-                    _ => (cz as f64, (cz + 1) as f64),
+                    _ => (z_lo, z_hi),
                 };
                 let overlapping = bm < c_hi - COLLISION_EPSILON && bx > c_lo + COLLISION_EPSILON;
                 if d > 0.0 {
@@ -679,7 +714,8 @@ pub fn collide_stepped(
                     continue;
                 }
                 let top = match shape {
-                    crate::world::CollisionShape::Column(h) => h as f64 / 16.0,
+                    crate::world::CollisionShape::Column(h)
+                    | crate::world::CollisionShape::InsetColumn(h, _) => h as f64 / 16.0,
                     _ => 1.0,
                 };
                 for f in [cy as f64 - ly0, cy as f64 + top - ly0] {
@@ -1637,17 +1673,25 @@ impl PlayerBody {
                         continue;
                     }
                     let (y_lo, y_hi) = match shape {
-                        crate::world::CollisionShape::Column(h) => {
+                        crate::world::CollisionShape::Column(h)
+                        | crate::world::CollisionShape::InsetColumn(h, _) => {
                             (cy as f64, cy as f64 + h as f64 / 16.0)
                         }
                         _ => (cy as f64, (cy + 1) as f64),
                     };
-                    if (cx as f64) < x1
-                        && ((cx + 1) as f64) > x0
+                    // THE INSET COLUMN'S OWN SIDES (the dev-23 round —
+                    // the honey row): the x/z strict overlap the 1/16
+                    // inset wears, the Y band the shape's own top keeps
+                    let inset = match shape {
+                        crate::world::CollisionShape::InsetColumn(_, i) => i as f64 / 16.0,
+                        _ => 0.0,
+                    };
+                    if (cx as f64 + inset) < x1
+                        && ((cx + 1) as f64 - inset) > x0
                         && y_lo < y1
                         && y_hi > y0
-                        && (cz as f64) < z1
-                        && ((cz + 1) as f64) > z0
+                        && (cz as f64 + inset) < z1
+                        && ((cz + 1) as f64 - inset) > z0
                     {
                         hit = true;
                     }
@@ -2468,6 +2512,18 @@ impl PlayerBody {
             // tick, the thrust the next tick's lane re-adds)
             self.vy = vy_pre_travel * FLY_VY_RESTORE;
         }
+        // THE HONEY'S OWN SLIDE (javap LivingEntity.aiStep pcs 617-638
+        // the 26.2 jar — the travel's own fold the applyEffectsFromBlocks
+        // call follows, the entityInside walk the beat's own position
+        // keeps): the POST-DRAG velocity state the gate reads, the set
+        // value the NEXT move consumes un-dragged (the terminal descent
+        // the drag(-0.05) fold keeps). The isAffectedByBlocks law the
+        // inside-blocks walk keeps (`!isRemoved() && !noPhysics` — the
+        // noPhysics body the whole walk skips, the spectator the beat
+        // never hears).
+        if !self.no_physics {
+            self.honey_slide_beat(world);
+        }
         // THE WALK ANIMATION (LivingEntity.calculateEntityAnimation(true)
         // + updateWalkAnimation, javap): the tick's 3D move distance,
         // `min(distance * 4.0, 1.0)` into the store's 0.4 blend. The
@@ -2885,6 +2941,99 @@ impl PlayerBody {
         } else {
             (0.25, 0.05000000074505806, 0.25)
         };
+    }
+
+    /// THE HONEY'S OWN SLIDE BEAT (the dev-23 round — javap
+    /// HoneyBlock.entityInside the 26.2 jar pcs 0-43): the overlapped
+    /// honey cells the body box scan answers (the touches_web family's
+    /// own floor-coords walk — the CELL the scan tests, the 14/16
+    /// collision band the pressed body's box the 1/16 overlap wears),
+    /// the isSlidingDown verdict per cell the slide admits, the
+    /// doSlideMovement the velocity fold fires. THE FIRST PASSING CELL
+    /// WINS: the slide the carried vy SETS (-0.1274…) — the next
+    /// cell's own gate the getOldDeltaY(-0.1274) = -0.05 < -0.08
+    /// verdict refuses (the loop the fresh read keeps — the vanilla
+    /// per-cell walk's own rhythm).
+    ///
+    /// THE BEAT'S OWN POSITION (javap LivingEntity.aiStep pcs 617-638:
+    /// the travel's [moveRelative, move, drag] the applyEffectsFromBlocks
+    /// call PRECEDES): the walk rides AFTER the tick's drag fold — the
+    /// gate the POST-DRAG velocity state reads (the getOldDeltaY the
+    /// pre-drag speed the fold un-drags), the set value the NEXT
+    /// move consumes un-dragged (the terminal descent the drag(-0.05)
+    /// fold keeps). The inside-blocks walk's own isAffectedByBlocks
+    /// gate the caller wears (the noPhysics body the beat never
+    /// reaches).
+    fn honey_slide_beat(&mut self, world: &World) {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+            for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) != crate::world::HONEY_BLOCK {
+                        continue;
+                    }
+                    if self.honey_is_sliding_down(cx, cy, cz) {
+                        self.honey_do_slide_movement();
+                    }
+                }
+            }
+        }
+    }
+
+    /// THE FOUR ARMS THE VERDICT WEARS (javap isSlidingDown pcs 0-129
+    /// the 26.2 jar): the dcmpl/dcmpg NaN walks the Rust comparisons
+    /// the negated forms keep (the NaN the dcmpl's +1 the refusals
+    /// speak). THE MARGIN'S OWN GEOMETRY (pc 88-99): `0.4375 +
+    /// getBbWidth()/2` — the pressed body's center distance
+    /// (15/16 - 0.5 + 0.3 = 0.7375) the +1.0E-7 slack the verdict
+    /// admits, the standing-inside body the walk-slow lane the
+    /// verdict refuses (the deeper-than-margin center the second arm
+    /// denies).
+    fn honey_is_sliding_down(&self, cx: i32, cy: i32, cz: i32) -> bool {
+        // pc 0-8: onGround() the first arm refuses
+        if self.on_ground {
+            return false;
+        }
+        // pc 9-31: getY() <= pos.y + 0.9375 - 1.0E-7 — the collision's
+        // own 15/16 top the gate reads (the feet the top 1/16 band
+        // refuses — the climb-onto walk the slide never arms)
+        if !(self.y <= cy as f64 + 0.9375 - 1.0e-7) {
+            return false;
+        }
+        // pc 32-50: getOldDeltaY(vy) < -0.08 — the pre-drag speed the
+        // un-drag fold reads (SLIDE_STARTS_WHEN_VERTICAL_SPEED_IS_
+        // AT_LEAST 0.08 the field the constant keeps)
+        if !(honey_old_delta_y(self.vy) < -0.08) {
+            return false;
+        }
+        // pc 51-129: the EDGE margin — (|dx| + 1e-7 > margin) ||
+        // (|dz| + 1e-7 > margin) the verdict keeps
+        let margin = 0.4375 + WIDTH / 2.0;
+        let ax = (self.x - (cx as f64 + 0.5)).abs();
+        let az = (self.z - (cz as f64 + 0.5)).abs();
+        !(ax + 1.0e-7 <= margin) || !(az + 1.0e-7 <= margin)
+    }
+
+    /// THE VELOCITY FOLD (javap doSlideMovement pcs 0-94 the 26.2
+    /// jar): the y the getNewDeltaY(-0.05) fold SETS — the drag(-0.05)
+    /// pre-drag equivalent the next travel's own drag folds back to
+    /// the -0.05 terminal the slide speaks (THROTTLE_SLIDE_SPEED_TO
+    /// the field the constant keeps) — the fast-catch arm
+    /// (getOldDeltaY < -0.13, MIN_FALL_SPEED_TO_BE_CONSIDERED_SLIDING)
+    /// the x/z the -0.05/old scale crushes (the dcmpg NaN the else
+    /// branch keeps), the steady arm the pair keeps. The dload_2 vec
+    /// the read lands before the write — the in-place multiply the
+    /// same fold wears.
+    fn honey_do_slide_movement(&mut self) {
+        let old_y = honey_old_delta_y(self.vy);
+        if old_y < -0.13 {
+            let scale = -0.05 / old_y;
+            self.vx *= scale;
+            self.vy = honey_new_delta_y(-0.05);
+            self.vz *= scale;
+        } else {
+            self.vy = honey_new_delta_y(-0.05);
+        }
     }
 
     /// THE TWO CELLS THE FACTOR LANES READ (javap getBlockSpeedFactor /
@@ -6482,6 +6631,219 @@ mod tests {
         );
     }
 
+    /// THE HONEY WALL'S OWN PATCH (the dev-23 round — the wall the
+    /// body presses, the slide the descent wears): the y=1..=8 column
+    /// at (8,8) the pressed body's box the CELL the 1/16 overlap wears
+    /// (the collision's own 14/16 band the inset arms).
+    fn honeyed_wall_world() -> World {
+        let mut w = flat_world();
+        for y in 1..=8 {
+            w.set(8, y, 8, crate::world::HONEY_BLOCK);
+        }
+        w
+    }
+
+    /// THE HONEY SLIDE'S OWN PAIR + THE VERDICT'S FOUR ARMS (the
+    /// dev-23 round — javap HoneyBlock getOldDeltaY/getNewDeltaY pcs
+    /// 0-9, isSlidingDown pcs 0-129, the SHAPE's own
+    /// `Block.column(14.0, 0.0, 15.0)` clinit pcs 11-21 the 26.2 jar):
+    /// the widened 0.98 the helpers' bits keep (the round-trip the
+    /// exact -0.05 restores), the collision row the (15, 1) inset pair
+    /// banks, the pressed body the verdict admits (the 0.7375 center
+    /// distance the +1e-7 slack rides), the four refusal arms the
+    /// verdict keeps.
+    #[test]
+    fn the_honey_the_pair_the_verdict_the_arms_wear() {
+        // THE DRAG PAIR'S OWN BITS: the widened f32 0.98F the
+        // VERTICAL_DRAG as f64 the same bits the ldc2_w literal keeps,
+        // the -0.05 target the pre-drag fold the exact f64 value banks,
+        // the un-drag the exact -0.05 restores (the inverse pair)
+        assert_eq!(honey_new_delta_y(-0.05), (-0.05 - 0.08) * 0.9800000190734863);
+        assert_eq!(honey_old_delta_y(honey_new_delta_y(-0.05)), -0.05);
+        assert_eq!(honey_new_delta_y(0.08), 0.0);
+        // THE COLLISION ROW (the jar's own clinit): the (15, 1) pair
+        // the InsetColumn arm banks — the 15/16 band the top short
+        // keeps, the 1/16 the four sides shrink
+        assert_eq!(
+            crate::world::collision_shape(crate::world::HONEY_BLOCK),
+            crate::world::CollisionShape::InsetColumn(15, 1)
+        );
+        // THE PRESSED BODY ADMITS (the margin 0.4375 + 0.3 the
+        // 15/16-face rest the +1e-7 slack rides): the collision's own
+        // inset the walk-in body the 8.9375 band stops at — the rest
+        // center 9.2375 the pressed distance 0.7375 exactly wears
+        let w = honeyed_wall_world();
+        let mut b = PlayerBody::new(9.2375, 5.0, 8.5, 0.0, 0.0);
+        b.vy = -0.5;
+        assert!(
+            b.honey_is_sliding_down(8, 5, 8),
+            "the pressed body the verdict admits"
+        );
+        // ARM 1: the on_ground body the verdict refuses
+        b.on_ground = true;
+        assert!(!b.honey_is_sliding_down(8, 5, 8), "the grounded arm refuses");
+        b.on_ground = false;
+        // ARM 2: the feet above the collision's 15/16 band refuse (the
+        // climb-onto walk the slide never arms)
+        let mut c = PlayerBody::new(9.2375, 5.9375, 8.5, 0.0, 0.0);
+        c.vy = -0.5;
+        assert!(
+            !c.honey_is_sliding_down(8, 5, 8),
+            "the top-band feet the verdict refuses"
+        );
+        // ARM 3: the slow fall the un-drag fold refuses (the -0.1 the
+        // pre-drag -0.0220 the 0.08 gate never admits)
+        let mut c = PlayerBody::new(9.2375, 5.0, 8.5, 0.0, 0.0);
+        c.vy = -0.1;
+        assert!(
+            !c.honey_is_sliding_down(8, 5, 8),
+            "the slow fall the verdict refuses"
+        );
+        // ARM 4: the standing-inside body the walk-slow lane the margin
+        // refuses (the 0.2 center distance the verdict denies)
+        let mut c = PlayerBody::new(8.7, 5.0, 8.5, 0.0, 0.0);
+        c.vy = -0.5;
+        assert!(
+            !c.honey_is_sliding_down(8, 5, 8),
+            "the standing body the margin refuses"
+        );
+    }
+
+    /// THE FOLD'S OWN TWO ARMS (the dev-23 round — javap
+    /// doSlideMovement pcs 0-94 the 26.2 jar): the steady carried vy
+    /// the else branch wears (the x/z the pair keeps, the y the
+    /// drag(-0.05) fold banks), the fast catch the scale arm the x/z
+    /// crushes (-0.05/old the ratio the dcmpg gate picks).
+    #[test]
+    fn the_honey_the_fold_the_two_arms_wear() {
+        // THE STEADY ARM: the post-drag -0.203252… the getOldDeltaY
+        // -0.1274… the (-0.13, -0.08) band the else branch picks
+        let mut b = PlayerBody::new(0.0, 0.0, 0.0, 0.0, 0.0);
+        b.vx = 0.4;
+        b.vz = -0.4;
+        b.vy = -0.20325200638580326;
+        b.honey_do_slide_movement();
+        assert_eq!(b.vx, 0.4, "the steady arm the pair keeps");
+        assert_eq!(b.vz, -0.4);
+        assert_eq!(b.vy, -0.12740000247955321, "the drag(-0.05) fold banks");
+        // THE FAST CATCH: the -0.5684… post-drag the -0.5 pre-drag the
+        // dcmpg < -0.13 gate the scale arm picks — the x/z the ratio
+        // crushes, the y the same fold banks
+        let mut c = PlayerBody::new(0.0, 0.0, 0.0, 0.0, 0.0);
+        c.vx = 0.4;
+        c.vz = -0.4;
+        c.vy = -0.5684000110626221;
+        c.honey_do_slide_movement();
+        assert_eq!(c.vy, -0.12740000247955321);
+        let scale = -0.05 / honey_old_delta_y(-0.5684000110626221);
+        assert_eq!(c.vx, 0.4 * scale, "the x the scale crushes");
+        assert_eq!(c.vz, -0.4 * scale, "the z the scale crushes");
+    }
+
+    /// THE COLLISION'S OWN INSET (the dev-23 round — javap
+    /// HoneyBlock.getCollisionShape the SHAPE field the
+    /// `Block.column(14.0, 0.0, 15.0)` clinit keeps): the walk-in body
+    /// the 14/16 collision band stops at — the +x approach the 8.9375
+    /// face wears, the -x approach the 8.0625 face the same inset
+    /// keeps (the full-cube row the 599 round kept the jar's own
+    /// constant retires).
+    #[test]
+    fn the_honey_the_inset_the_press_stops_at_the_band() {
+        let w = honeyed_wall_world();
+        // THE +X APPROACH (the yaw 90 the forward -X walk): the body
+        // rests at 8.9375 + 0.3 — the full-cube row the 8.0 face would
+        // rest at — the horizontal flag the wall's own verdict rides
+        let mut b = PlayerBody::new(9.6, 1.0, 8.5, 90.0, 0.0);
+        settle(&mut b, &w);
+        b.forward = 1.0;
+        for _ in 0..40 {
+            b.tick(&w, false);
+        }
+        assert!(
+            (b.x - (8.0 + 15.0 / 16.0 + WIDTH / 2.0)).abs() < 1e-9,
+            "the +x face the 14/16 band holds, got x={}",
+            b.x
+        );
+        assert!(b.horizontal_collision, "the inset face the flag rides");
+        // THE -X APPROACH: the same inset the 8.0625 face wears
+        let mut c = PlayerBody::new(7.0, 1.0, 8.5, 270.0, 0.0);
+        settle(&mut c, &w);
+        c.forward = 1.0;
+        for _ in 0..40 {
+            c.tick(&w, false);
+        }
+        assert!(
+            (c.x - (8.0 + 1.0 / 16.0 - WIDTH / 2.0)).abs() < 1e-9,
+            "the -x face the 14/16 band holds, got x={}",
+            c.x
+        );
+        assert!(c.horizontal_collision, "the inset face the flag rides");
+    }
+
+    /// THE SLIDE'S OWN TERMINAL (the dev-23 round — the whole chain
+    /// the tick folds: the move consumes the carried vy, the drag the
+    /// gravity fold wears, the slide beat the post-drag state the
+    /// getNewDeltaY(-0.05) fold sets — the NEXT move the set value
+    /// consumes un-dragged, the terminal descent the drag(-0.05) the
+    /// bit-exact value keeps): the pressed body the fast catch the
+    /// first tick wears, the steady -0.12740000247955321 the every
+    /// tick keeps, the honey-less control the gravity the fall keeps
+    /// (the descent the acceleration grows).
+    #[test]
+    fn the_honey_the_wall_the_terminal_descent_wears() {
+        let w = honeyed_wall_world();
+        let mut b = PlayerBody::new(9.2375, 5.0, 8.5, 0.0, 0.0);
+        b.vy = -0.5;
+        // THE FAST CATCH (the first tick: the move consumes -0.5, the
+        // drag -0.5684… folds, the scale arm the vy the -0.1274…
+        // banks)
+        b.tick(&w, false);
+        assert_eq!(
+            b.vy, -0.12740000247955321,
+            "the fast catch the drag(-0.05) value banks"
+        );
+        // THE STEADY (the every tick the move consumes the set value —
+        // the descent the bit-exact terminal keeps, the else arm the
+        // same value re-sets)
+        for _ in 0..8 {
+            assert_eq!(
+                b.vy, -0.12740000247955321,
+                "the steady tick the else arm re-sets"
+            );
+            let y0 = b.y;
+            b.tick(&w, false);
+            // THE ULP BAND (the web fall test's own precedent — the
+            // position subtraction's own rounding the f64 accumulate
+            // keeps: the MOVE consumed the bit-exact vy the assert
+            // above banks, the y the add's rounding the 1e-15 band
+            // wears)
+            assert!(
+                (b.y - y0 - -0.12740000247955321).abs() < 1e-15,
+                "the descent the terminal value keeps: {}",
+                b.y - y0
+            );
+        }
+        // THE CONTROL (the honey-less world the same spawn): the fall
+        // the gravity accelerates — the descent the terminal never
+        // settles
+        let w = flat_world();
+        let mut c = PlayerBody::new(9.2375, 5.0, 8.5, 0.0, 0.0);
+        c.vy = -0.5;
+        c.tick(&w, false);
+        assert_eq!(c.vy, (-0.5 - 0.08) * 0.9800000190734863);
+        let y0 = c.y;
+        c.tick(&w, false);
+        assert!(
+            c.y - y0 < -0.13,
+            "the free fall the descent grows: {}",
+            c.y - y0
+        );
+        assert_ne!(
+            c.vy, -0.12740000247955321,
+            "the honey-less body the slide never arms"
+        );
+    }
+
     /// THE SOUL SAND'S OWN PATCH (the autopush-598 round — the y=0 row
     /// the sand replaces, the patch the walk stands on: the resting
     /// body the 14/16 column top wears, the feet cell the SAND cell
@@ -6606,10 +6968,10 @@ mod tests {
     }
 
     /// THE HONEY FLOOR'S OWN PATCH (the autopush-599 round — the y=0
-    /// row the honey replaces: the FULL-cube collision the body the
-    /// 1.0 top rests on, the feet cell the air above speaks, the below
-    /// cell the honey banks — the layered read the full-cube case
-    /// answers).
+    /// row the honey replaces: the INSET column collision the dev-23
+    /// round retires the full-cube row — the body the 15/16 top rests
+    /// on, the feet cell the air above speaks, the below cell the
+    /// honey banks — the layered read the inset-floor case answers).
     fn honeyed_world() -> World {
         let mut w = flat_world();
         for x in 6..10 {
@@ -6666,7 +7028,7 @@ mod tests {
         for _ in 0..5 {
             b.tick(&w, false);
         }
-        assert!(b.on_ground, "the honey rest the full top grounds");
+        assert!(b.on_ground, "the honey rest the 15/16 top grounds");
         // THE SPEED FACTOR (the below cell the layered read banks)
         assert_eq!(
             b.block_speed_factor(&w),
