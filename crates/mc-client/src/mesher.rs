@@ -77,6 +77,13 @@ const FACE_CORNERS: [[[f32; 3]; 4]; 6] = [
     [[0.0, 0.0, 0.0], [0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [1.0, 0.0, 0.0]],
 ];
 
+/// THE END PORTAL'S OWN SENTINEL (the dev-29 round — the tile id the
+/// starry quads carry: the render pass partitions on it, the shader
+/// law the sampled walk serves; the ATLAS never banks a tile here —
+/// the 16x16 tile the 256x256 noise cannot carry, the two textures
+/// the loader's own lane reads)
+pub const TILE_END_PORTAL: u16 = 65534;
+
 fn is_transparent(kind: u16) -> bool {
     // the leaves FAMILY: oak (foliage-tinted) and pale oak (the audited
     // no-tint verdict — still cutout leaves, non-occluding, no AO);
@@ -94,6 +101,13 @@ fn is_transparent(kind: u16) -> bool {
         || kind == PALE_LEAVES
         || kind == LEAF_LITTER
         || kind == LAVA
+        // THE END PORTAL'S OWN ROW (the dev-29 round — the starry cell
+        // the ring's inner walls draw against: the noCollision law the
+        // collision shape keeps, the AO the emissive field never casts,
+        // the portal's own cube the special arm the sentinel tile
+        // emits — the generic tile walk the NO-elements model cannot
+        // resolve)
+        || kind == crate::world::END_PORTAL
         // the whole AGE LADDER the non-occluding verdict keeps (the
         // farmland's top face under ANY stage draws — the same
         // noCollision family the 15th audit and the growth round speak)
@@ -2646,6 +2660,46 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                                 per_texel_alpha: false,
                             });
                         }
+                    }
+                    continue;
+                }
+                // THE END PORTAL'S OWN ARM (the dev-29 round — the
+                // starry volume the special pass draws: the
+                // EndPortalRenderer's own cube the shader law serves,
+                // the faces the transparent-neighbor gate the terrain
+                // walk speaks, the EPS inset the coplanar fight the
+                // BE's own polygon offset answers — the sentinel tile
+                // the render pass partitions on, the fullbright the
+                // render type's packedLight ignore keeps)
+                if id == crate::world::END_PORTAL {
+                    const PORTAL_EPS: f32 = 0.001;
+                    for face in 0..6usize {
+                        let (dx, dy, dz) = NEIGHBOR[face];
+                        let n = world.get(wx + dx, wy + dy, wz + dz);
+                        if !is_transparent(n) {
+                            continue; // the terrain gate the same law keeps
+                        }
+                        let mut pts = [[0f32; 3]; 4];
+                        let mut uvs = [[0f32; 2]; 4];
+                        for (i, c) in FACE_CORNERS[face].iter().enumerate() {
+                            pts[i] = [
+                                wx as f32
+                                    + (if c[0] < 0.5 { PORTAL_EPS } else { 1.0 - PORTAL_EPS }),
+                                wy as f32
+                                    + (if c[1] < 0.5 { PORTAL_EPS } else { 1.0 - PORTAL_EPS }),
+                                wz as f32
+                                    + (if c[2] < 0.5 { PORTAL_EPS } else { 1.0 - PORTAL_EPS }),
+                            ];
+                            uvs[i] = face_uv(face, *c);
+                        }
+                        out.push(Quad {
+                            pts,
+                            colors: [[1.0; 3]; 4], // the fullbright the BE pass keeps
+                            uvs,
+                            tile: TILE_END_PORTAL,
+                            translucent: false,
+                            per_texel_alpha: false,
+                        });
                     }
                     continue;
                 }

@@ -315,9 +315,17 @@ pub fn extract_runtime_assets(
 /// `heart`, `sweep_attack`, `wax_on`, `wax_off`, `scrape`,
 /// `sculk_charge` and `sculk_charge_pop` particle types' own sources
 /// the dust lane sha1-verifies).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 48] = [
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 50] = [
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
+    // THE END PORTAL'S OWN PAIR (the dev-29 round): the starfield the
+    // portal's shader law samples — the EndPortalRenderer's own two
+    // textures the rendertype_end_portal.fsh walk reads (Sampler0 the
+    // environment/end_sky.png the base layer wears, Sampler1 the
+    // entity/end_portal/end_portal.png the 16-layer noise the portal
+    // render type serves), the loaders' own sha1 gates verify
+    "assets/minecraft/textures/entity/end_portal/end_portal.png",
+    "assets/minecraft/textures/environment/end_sky.png",
     "assets/minecraft/textures/misc/underwater.png",
     "assets/minecraft/textures/entity/experience/experience_orb.png",
     "assets/minecraft/textures/entity/spider/spider.png",

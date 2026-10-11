@@ -359,6 +359,13 @@ impl Framebuf {
             if quad.translucent != translucent {
                 continue;
             }
+            // THE END PORTAL'S OWN SENTINEL (the dev-29 round — the
+            // starry quads the render walk's own pass answers, the
+            // shader law the sampled walk serves; the tile pass the
+            // sentinel NEVER resolves — the atlas no such tile keeps)
+            if quad.tile == super::mesher::TILE_END_PORTAL {
+                continue;
+            }
             // THE FIRE ANIMATION'S DRAW-TIME REMAP (the vanilla
             // TextureAtlasSprite animator's own seat — the sprite's frame
             // the atlas's tick walk swaps WITHOUT a re-mesh, the mesher's

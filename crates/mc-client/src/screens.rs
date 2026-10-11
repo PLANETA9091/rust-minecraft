@@ -7010,6 +7010,14 @@ pub struct App {
     pub chicken_warm_model: Option<crate::avatar::ChickenModel>,
     pub baby_chicken_cold_model: Option<crate::avatar::BabyChickenModel>,
     pub baby_chicken_warm_model: Option<crate::avatar::BabyChickenModel>,
+    /// THE END PORTAL'S OWN PAIR (the dev-29 round — the starfield's
+    /// two textures the shader law samples: the END_SKY base the
+    /// COLORS[0] weight wears, the 256x256 noise the 16-layer walk
+    /// reads; the loaders' own sha1 gates verify the cache's bytes —
+    /// `None` = the portal's quads stay unseen, the honesty the
+    /// failed-overlay lanes keep)
+    pub end_portal_sky: Option<(u32, u32, Vec<u8>)>,
+    pub end_portal_noise: Option<(u32, u32, Vec<u8>)>,
     /// THE PIG/COW VARIANTS' OWN SKINS (the same cold/warm pairs the
     /// variant tables keep — the cold pig the ColdPigModel's coat
     /// draws, the cold cow the ColdCowModel's coat, the warm cow the
@@ -8468,6 +8476,8 @@ impl App {
             chicken_model: None,
             baby_chicken_model: None,
             chicken_cold_model: None,
+            end_portal_sky: None,
+            end_portal_noise: None,
             chicken_warm_model: None,
             baby_chicken_cold_model: None,
             baby_chicken_warm_model: None,
@@ -9804,6 +9814,10 @@ impl App {
             let mut portal_trigger = false;
             let mut portal_inside = false;
             let mut portal_teleport = false;
+            // THE END PORTAL'S OWN DRAIN (the same per-tick flag law
+            // the portal arc speaks — the instant touch the body's
+            // tick arms, the reader the swap answers)
+            let mut end_portal_due = false;
             let mut honey_slide = false;
             let mut drown_hurt = false;
             // THE ELYTRA BREAK's own drain slot (the body's borrow fills
@@ -10600,6 +10614,7 @@ impl App {
                     portal_trigger = std::mem::take(&mut b.portal_trigger_due);
                     portal_inside = std::mem::take(&mut b.portal_inside_consumed);
                     portal_teleport = std::mem::take(&mut b.portal_teleport_due);
+                    end_portal_due = std::mem::take(&mut b.end_portal_due);
                     honey_slide = std::mem::take(&mut b.honey_slide_due);
                     // THE AIR ARC'S OWN DRAIN (the same per-tick flag
                     // law the fire arc's three speak — the -20 fold's
@@ -10675,6 +10690,20 @@ impl App {
             // answers)
             if portal_teleport {
                 self.swap_dimension();
+            }
+            // THE END'S OWN SWAP (javap EndPortalBlock
+            // .getPortalDestination — the overworld touch the END
+            // spawn the arrival wears, the End's own touch the exit
+            // the respawn law serves; the instant walk the countdown
+            // never runs — the touch the flag banks, the swap the
+            // cooldown's own grant keeps)
+            if end_portal_due {
+                let target = if self.world_dimension == Dimension::End {
+                    Dimension::Overworld
+                } else {
+                    Dimension::End
+                };
+                self.swap_dimension_to(target);
             }
             // THE HONEY SLIDE'S OWN ROLLS (javap
             // `HoneyBlock.maybeDoSlideEffects` pc 0-55 — the two
@@ -37680,6 +37709,26 @@ impl App {
                 rain_brightness,
             );
         }
+        // THE END PORTAL'S OWN PASS (the BE-renderer lane the terrain
+        // pass never tiles — the sentinel quads the mesher's own arm
+        // banks, the shader law the sampled walk serves; the pass
+        // draws BEFORE the terrain, the depth the terrain then tests —
+        // the vanilla's own opaque-order verdict the coplanar walls
+        // the inset answers)
+        if let Some(quads) = &self.world_quads {
+            let portal_count = quads
+                .iter()
+                .filter(|q| q.tile == crate::mesher::TILE_END_PORTAL)
+                .count();
+            if portal_count > 0 {
+                let portals: Vec<crate::mesher::Quad> = quads
+                    .iter()
+                    .filter(|q| q.tile == crate::mesher::TILE_END_PORTAL)
+                    .cloned()
+                    .collect();
+                self.render_end_portal(fb, &ctx, &portals);
+            }
+        }
         if let Some(quads) = &self.world_quads {
             fb.draw_quads(&ctx, quads);
         }
@@ -41465,6 +41514,179 @@ impl App {
                 );
             }
         }
+    }
+
+    /// THE END PORTAL'S OWN SHADER PASS (the dev-29 round — the
+    /// EndPortalRenderer's own cube the rendertype_end_portal law
+    /// draws; the 26.2 jar's own fsh the walk pins verbatim: the base
+    /// `textureProj(Sampler0, texProj0).rgb * COLORS[0]` the END_SKY
+    /// texture wears, the SIXTEEN-layer loop the noise texture the
+    /// end_portal_layer matrix serves — the `SCALE_TRANSLATE` fixed
+    /// 0.5/0.25 fold, the translate the `17.0 / layer` x-shift the
+    /// `(2.0 + layer / 1.5) * (GameTime * 1.5)` y-scroll keeps, the
+    /// `mat2_rotate_z(radians((layer * layer * 4321.0 + layer * 9.0)
+    /// * 2.0))` the `mat2((4.5 - layer / 4.0) * 2.0)` scale rides,
+    /// the COLORS table the fsh's own sixteen vec3s speak — the uv
+    /// the `projection_from_position` law's screen-space projection
+    /// the per-vertex clip walk answers, the sampler's REPEAT wrap
+    /// the layer transforms push past the edge, the NEAREST the
+    /// pixel look keeps, the fullbright the render type's
+    /// packedLight ignore speaks).
+    fn render_end_portal(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        portals: &[crate::mesher::Quad],
+    ) {
+        // THE PAIR'S OWN LOAD (the lazy lane the avatar models keep —
+        // the sha1 gates the cache's bytes verify, `None` the unseen
+        // portal the failed-overlay honesty keeps)
+        if self.end_portal_sky.is_none() {
+            self.end_portal_sky = Self::load_end_portal_texture(
+                "assets-cache/jar/environment/end_sky.png",
+                "b9da532dd98befc1a7cbd6420c17532239485788",
+            );
+        }
+        if self.end_portal_noise.is_none() {
+            self.end_portal_noise = Self::load_end_portal_texture(
+                "assets-cache/jar/entity/end_portal/end_portal.png",
+                "04099306b075ead427f5c95d8a8d896715c5bde6",
+            );
+        }
+        let (Some((sw, sh, sky)), Some((nw, nh, noise))) =
+            (self.end_portal_sky.clone(), self.end_portal_noise.clone())
+        else {
+            return; // the pair's absence the portal stays unseen
+        };
+        // THE GAMETIME UNIFORM (the globals.glsl law the layer scroll
+        // reads — the day fraction the clock's own 24000 cycle keeps,
+        // the partial the frame's own lerp ride)
+        let game_time =
+            ((self.day_time_now() % 24000) as f64 + self.partial_tick as f64) / 24000.0;
+        // THE FSH'S OWN COLORS (the sixteen vec3s the constant table
+        // speaks verbatim — the base weight the [0] row carries, the
+        // layer weights the 0..16 rows keep)
+        const COLORS: [[f32; 3]; 16] = [
+            [0.022087, 0.098399, 0.110818],
+            [0.011892, 0.095924, 0.089485],
+            [0.027636, 0.101689, 0.100326],
+            [0.046564, 0.109883, 0.114838],
+            [0.064901, 0.117696, 0.097189],
+            [0.063761, 0.086895, 0.123646],
+            [0.084817, 0.111994, 0.166380],
+            [0.097489, 0.154120, 0.091064],
+            [0.106152, 0.131144, 0.195191],
+            [0.097721, 0.110188, 0.187229],
+            [0.133516, 0.138278, 0.148582],
+            [0.070006, 0.243332, 0.235792],
+            [0.196766, 0.142899, 0.214696],
+            [0.047281, 0.315338, 0.321970],
+            [0.204675, 0.390010, 0.302066],
+            [0.080955, 0.314821, 0.661491],
+        ];
+        // THE PROJECTED UV (the vsh's `projection_from_position` law —
+        // the clip-space xy the `* 0.5 + w * 0.5` fold answers, the
+        // perspective divide the [0,1] window speaks; the raster's own
+        // perspective-correct interpolation the per-pixel walk
+        // reconstructs exactly)
+        let vp = ctx.proj.mul(&ctx.view);
+        let sampled: Vec<crate::raster::SampledQuad> = portals
+            .iter()
+            .map(|q| {
+                let mut uv = [[0f32; 2]; 4];
+                for (i, p) in q.pts.iter().enumerate() {
+                    let c = vp.transform_point(Vec3::new(p[0], p[1], p[2]));
+                    uv[i] = if c[3] > 0.0 {
+                        [c[0] / c[3] * 0.5 + 0.5, c[1] / c[3] * 0.5 + 0.5]
+                    } else {
+                        [0.0, 0.0] // the near-plane sliver the clip walk drops
+                    };
+                }
+                crate::raster::SampledQuad {
+                    pts: q.pts,
+                    uv,
+                    tex: "end_portal",
+                    tint: [1.0, 1.0, 1.0], // the fullbright the BE pass keeps
+                }
+            })
+            .collect();
+        // THE TEXEL'S OWN PICK (the NEAREST walk the wrap the REPEAT
+        // law keeps — the layer transforms the uv past the edge the
+        // modulo folds, the noise the seamless tiling speaks)
+        let pick =
+            |px: &[u8], w: u32, h: u32, u: f32, v: f32| -> [f32; 3] {
+                let (uw, uh) = (w as usize, h as usize);
+                let uu = (u.rem_euclid(1.0) * w as f32) as usize % uw;
+                let vv = (v.rem_euclid(1.0) * h as f32) as usize % uh;
+                let o = (vv * uw + uu) * 4;
+                [px[o] as f32, px[o + 1] as f32, px[o + 2] as f32]
+            };
+        fb.draw_sampled_quads(
+            ctx.proj.mul(&ctx.view),
+            &sampled,
+            &mut |_tex, u, v| {
+                // THE BASE (Sampler0 the END_SKY texture — the
+                // COLORS[0] weight the shader's own head wears)
+                let s = pick(&sky, sw, sh, u, v);
+                let mut r = (s[0] / 255.0) * COLORS[0][0];
+                let mut g = (s[1] / 255.0) * COLORS[0][1];
+                let mut b = (s[2] / 255.0) * COLORS[0][2];
+                // THE SIXTEEN LAYERS (Sampler1 the noise texture — the
+                // end_portal_layer matrix the fsh's own walk serves)
+                for i in 0..16usize {
+                    let l = (i + 1) as f32;
+                    let th =
+                        ((l * l * 4321.0 + l * 9.0) * 2.0).to_radians();
+                    let (c, s) = th.sin_cos();
+                    let sc = (4.5 - l / 4.0) * 2.0;
+                    let u1 = 0.5 * u + 0.25 + 17.0 / l;
+                    let v1 = 0.5 * v + 0.25 + (2.0 + l / 1.5) * (game_time as f32 * 1.5);
+                    let u2 = sc * (c * u1 + s * v1);
+                    let v2 = sc * (-s * u1 + c * v1);
+                    let p = pick(&noise, nw, nh, u2, v2);
+                    r += (p[0] / 255.0) * COLORS[i][0];
+                    g += (p[1] / 255.0) * COLORS[i][1];
+                    b += (p[2] / 255.0) * COLORS[i][2];
+                }
+                Some([
+                    (r * 255.0).clamp(0.0, 255.0) as u8,
+                    (g * 255.0).clamp(0.0, 255.0) as u8,
+                    (b * 255.0).clamp(0.0, 255.0) as u8,
+                    255,
+                ])
+            },
+        );
+    }
+
+    /// THE PAIR'S OWN LOADER (the sha1 gate the cache's bytes verify —
+    /// the decode the avatar lane's own walk serves, the tuple the
+    /// sampler closure reads)
+    fn load_end_portal_texture(path: &str, sha: &str) -> Option<(u32, u32, Vec<u8>)> {
+        use sha1::Digest;
+        let bytes = std::fs::read(path).ok()?;
+        let digest = sha1::Sha1::digest(&bytes);
+        if hex::encode(digest) != sha {
+            return None;
+        }
+        let (w, h, rgba) = crate::avatar::decode_rgba(&bytes).ok()?;
+        // THE CHANNEL'S OWN WIDEN (the noise the GRAYSCALE 8-bit master
+        // keeps — the EXPAND transform the palette/alpha rows widens,
+        // the 1-channel gray the RGBA stride the sampler's own walk
+        // needs; the RGB master the same fold the 3-channel case wears)
+        let rgba = if rgba.len() == (w * h) as usize {
+            rgba.iter()
+                .flat_map(|&g| [g, g, g, 255u8])
+                .collect::<Vec<u8>>()
+        } else if rgba.len() == (w * h * 3) as usize {
+            rgba.chunks_exact(3)
+                .flat_map(|c| [c[0], c[1], c[2], 255u8])
+                .collect::<Vec<u8>>()
+        } else if rgba.len() == (w * h * 4) as usize {
+            rgba
+        } else {
+            return None;
+        };
+        Some((w, h, rgba))
     }
 
     /// THE DROP LANE's render — the vanilla `ItemEntityRenderer`'s own
@@ -99170,6 +99392,163 @@ cow_sound_variant: None,
             crate::world::CRAFTING_TABLE,
             "the marker the round trip keeps"
         );
+    }
+
+    /// THE END PORTAL'S OWN E2E (the dev-29 round — the starry cell
+    /// the touch lane answers END TO END: the overworld touch the
+    /// instant swap the End arrival wears, the platform the spawn
+    /// point keeps, THE PEDESTAL'S OWN DIAMOND the touch the exit
+    /// serves — the respawn the overworld center restores)
+    #[test]
+    fn the_end_portal_the_touch_the_swap_wears() {
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        // THE STARRY CELL (the feet's own cell the portal wears — the
+        // collision the empty shape keeps, the body the cell stands)
+        let (px, py, pz) = (
+            app.body.as_ref().unwrap().x,
+            app.body.as_ref().unwrap().y,
+            app.body.as_ref().unwrap().z,
+        );
+        let (cx, cy, cz) = (px.floor() as i32, py.floor() as i32, pz.floor() as i32);
+        app.offline_world
+            .as_mut()
+            .unwrap()
+            .set(cx, cy, cz, crate::world::END_PORTAL);
+        app.update();
+        // THE INSTANT SWAP (the zero-transition walk the touch serves
+        // — the countdown the nether gate's 4s walk never runs)
+        assert_eq!(
+            app.world_dimension,
+            Dimension::End,
+            "the touch the instant swap serves"
+        );
+        assert_eq!(app.world_skybox, Skybox::End, "the End's own skybox");
+        // THE PLATFORM'S OWN ARRIVAL (the spawn point the clamp keeps
+        // — the body AWAY from the pedestal the echo never touches)
+        {
+            let n = app
+                .offline_world
+                .as_ref()
+                .unwrap()
+                .size_blocks();
+            let vx = 100i32.clamp(2, n - 6);
+            let b = app.body.as_ref().unwrap();
+            assert_eq!(
+                b.x,
+                vx as f64 + 0.5,
+                "the spawn point's own x the clamp keeps"
+            );
+        }
+        // THE PEDESTAL'S OWN DIAMOND (the End world's center the exit
+        // portal wears — the cooldown the arrival's grant the test
+        // clears, the body the starry cell the touch re-arms)
+        app.body.as_mut().unwrap().portal_cooldown = 0;
+        let n = app
+            .offline_world
+            .as_ref()
+            .unwrap()
+            .size_blocks();
+        let (ix, iz) = ((n as f64 / 2.0).round() as i32, (n as f64 / 2.0).round() as i32);
+        let top = crate::world::END_ISLAND_TOP;
+        assert_eq!(
+            app.offline_world.as_ref().unwrap().get(ix, top, iz),
+            crate::world::END_PORTAL,
+            "the pedestal's own center the portal keeps"
+        );
+        {
+            let b = app.body.as_mut().unwrap();
+            b.x = ix as f64 + 0.5;
+            b.y = top as f64;
+            b.z = iz as f64 + 0.5;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+        }
+        app.update();
+        assert_eq!(
+            app.world_dimension,
+            Dimension::Overworld,
+            "the exit the respawn law serves"
+        );
+    }
+
+    /// THE END PORTAL'S OWN MESH (the dev-29 round — the sentinel tile
+    /// the starry quads carry: the open-air cell ALL SIX faces wear,
+    /// the EPS inset the boundary contact the coplanar fight refuses,
+    /// the fullbright the vertex colors keep)
+    #[test]
+    fn the_end_portal_cell_the_sentinel_quads_mesh() {
+        let mut w = crate::world::World::new(1, 42);
+        // the open-air cell (the terrain's own height the cell outrides
+        // — the neighbors ALL air the six faces the volume wears)
+        w.set(8, 30, 8, crate::world::END_PORTAL);
+        let quads = crate::mesher::mesh_world(&w, None);
+        let portal: Vec<&crate::mesher::Quad> = quads
+            .iter()
+            .filter(|q| q.tile == crate::mesher::TILE_END_PORTAL)
+            .collect();
+        assert_eq!(
+            portal.len(),
+            6,
+            "the open-air cell all six faces the volume wears"
+        );
+        for q in &portal {
+            for p in &q.pts {
+                assert!(
+                    p[0] > 8.0 && p[0] < 9.0 && p[1] > 30.0 && p[1] < 31.0,
+                    "the inset the boundary contact refuses ({:?})",
+                    p
+                );
+            }
+            for c in &q.colors {
+                assert_eq!(*c, [1.0; 3], "the fullbright the BE pass keeps");
+            }
+        }
+        // THE SHADER PASS'S OWN PAIR (the sha1 gates the cache's bytes
+        // verify — the wrong sha the honest None keeps; the root the
+        // walk-up the ignored asset tests' own pattern keeps)
+        let mut dir = std::env::current_dir().unwrap();
+        let root = loop {
+            let cand = dir.join("assets-cache/jar");
+            if cand.exists() {
+                break cand;
+            }
+            dir = dir.parent().expect("the runtime root above").to_path_buf();
+        };
+        let noise_path = root.join("entity/end_portal/end_portal.png");
+        let sky_path = root.join("environment/end_sky.png");
+        let noise_str = noise_path.to_str().unwrap();
+        let sky_str = sky_path.to_str().unwrap();
+        assert!(App::load_end_portal_texture(
+            noise_str,
+            "04099306b075ead427f5c95d8a8d896715c5bde6",
+        )
+        .is_some(), "the noise texture loads (256x256)");
+        if let Some((w, h, px)) = App::load_end_portal_texture(
+            noise_str,
+            "04099306b075ead427f5c95d8a8d896715c5bde6",
+        ) {
+            assert_eq!((w, h), (256, 256), "the noise the 256x256 master keeps");
+            assert_eq!(px.len(), 256 * 256 * 4, "the RGBA stride the decode keeps");
+        }
+        assert!(
+            App::load_end_portal_texture(
+                noise_str,
+                "0000000000000000000000000000000000000000",
+            )
+            .is_none(),
+            "the wrong sha the honest None keeps"
+        );
+        let Some((w2, h2, _)) = App::load_end_portal_texture(
+            sky_str,
+            "b9da532dd98befc1a7cbd6420c17532239485788",
+        ) else {
+            panic!("the sky texture loads");
+        };
+        assert_eq!((w2, h2), (128, 128), "the sky the 128x128 base keeps");
     }
 
     /// THE PLATFORM'S OWN GEOMETRY (javap `EndPlatformFeature

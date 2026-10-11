@@ -1463,6 +1463,13 @@ pub struct PlayerBody {
     /// AND the App's screen law read it, the tick-head clear the
     /// per-tick flag family's own law keeps.
     pub portal_inside_consumed: bool,
+    /// THE END PORTAL'S OWN DOSE (javap EndPortalBlock.entityInside —
+    /// the Portal.END kind the zero-transition walk serves: the touch
+    /// the instant teleport arms, the cooldown the refresh arm banks,
+    /// the reader the swap answers — the overworld touch the END
+    /// spawn the arrival wears, the End's own touch the exit the
+    /// respawn law serves). The body never clears it, the reader does.
+    pub end_portal_due: bool,
     /// THE TELEPORT VERDICT (javap `processPortalTeleportation`'s
     /// boolean return — the `portalTime >= transitionTime` compare the
     /// handlePortal walk's teleport tail serves): the verdict tick the
@@ -1700,6 +1707,7 @@ impl PlayerBody {
             portal_time: 0,
             portal_inside_this_tick: false,
             portal_inside_consumed: false,
+            end_portal_due: false,
             portal_teleport_due: false,
             portal_effect_intensity: 0.0,
             o_portal_effect_intensity: 0.0,
@@ -2786,6 +2794,20 @@ impl PlayerBody {
                 }
             }
         }
+        // THE END PORTAL'S OWN TOUCH (javap EndPortalBlock.entityInside
+        // — the canUsePortal gate the same walk keeps, the Portal.END
+        // kind the ZERO transition the instant teleport serves — the
+        // countdown the nether gate's 4s walk never runs; the COOLDOWN
+        // the same refresh arm the nether gate's processor speaks —
+        // the on-cooldown touch the 10-tick refresh banks, the flag
+        // the fresh touch arms, the reader the swap answers)
+        if !self.no_physics && self.alive && self.first_end_portal_cell(world).is_some() {
+            if self.portal_cooldown > 0 {
+                self.portal_cooldown = PLAYER_PORTAL_COOLDOWN_TICKS;
+            } else {
+                self.end_portal_due = true;
+            }
+        }
         // THE WATER'S EXTINGUISH (javap `WaterFluid.entityInside`'s own
         // InsideBlockEffectType.EXTINGUISH = `Entity::clearFire` — the
         // same contact beat the lava's brand rides, the inside-effect
@@ -3262,6 +3284,24 @@ impl PlayerBody {
             for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
                 for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
                     if world.get(cx, cy, cz) == crate::world::NETHER_PORTAL {
+                        return Some((cx, cy, cz));
+                    }
+                }
+            }
+        }
+        None
+    }
+
+    /// THE END PORTAL'S OWN SCAN (the nether walk's own shape the
+    /// END_PORTAL cells the body's inflated box answers — the starry
+    /// cell the touch lane arms, the instant walk the cooldown's own
+    /// refresh wears)
+    fn first_end_portal_cell(&self, world: &World) -> Option<(i32, i32, i32)> {
+        let (x0, y0, z0, x1, y1, z1) = box_at(self.x, self.y, self.z, self.height());
+        for cx in x0.floor() as i32..=((x1 - 1e-9).floor()) as i32 {
+            for cy in y0.floor() as i32..=((y1 - 1e-9).floor()) as i32 {
+                for cz in z0.floor() as i32..=((z1 - 1e-9).floor()) as i32 {
+                    if world.get(cx, cy, cz) == crate::world::END_PORTAL {
                         return Some((cx, cy, cz));
                     }
                 }
@@ -3831,6 +3871,44 @@ mod tests {
             }
         }
         w
+    }
+
+    /// THE END PORTAL'S OWN TOUCH (the dev-29 round — the instant walk
+    /// the Portal.END kind's zero-transition serves: the overlap the
+    /// flag arms, the cooldown the refresh arm banks, the nether
+    /// countdown the walk never runs)
+    #[test]
+    fn the_end_portal_touch_the_instant_flag_arms() {
+        // the world: the floor + the starry cell the feet stand in
+        let mut w = flat_world();
+        w.set(8, 1, 8, crate::world::END_PORTAL);
+        let mut b = PlayerBody::new(8.5, 1.0, 8.5, 180.0, 0.0);
+        b.on_ground = true;
+        b.tick(&w, false);
+        assert!(
+            b.end_portal_due,
+            "the overlap the instant flag arms"
+        );
+        assert!(
+            !b.portal_teleport_due,
+            "the nether countdown the walk never runs"
+        );
+        // THE COOLDOWN'S OWN ARM (the refresh the flag never fires —
+        // the 10-tick ceiling the same law the nether gate's
+        // processor keeps)
+        let mut b2 = PlayerBody::new(8.5, 1.0, 8.5, 180.0, 0.0);
+        b2.on_ground = true;
+        b2.portal_cooldown = 5;
+        b2.tick(&w, false);
+        assert!(
+            !b2.end_portal_due,
+            "the on-cooldown touch the flag never arms"
+        );
+        assert_eq!(
+            b2.portal_cooldown,
+            PLAYER_PORTAL_COOLDOWN_TICKS,
+            "the refresh the ceiling banks"
+        );
     }
 
     /// A one-block wall at x=5 (y 1..=2) the body walks into.

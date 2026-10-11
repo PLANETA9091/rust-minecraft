@@ -150,6 +150,13 @@ fn emission(id: u16) -> u8 {
         // unbreakable gate's own purple glow the light grid paints,
         // the axis property the emission never reads)
         11
+    } else if id == crate::world::END_PORTAL {
+        // THE END PORTAL'S OWN ROW (the dev-29 round — the blocks
+        // clinit's end_portal registration the lightLevel lambda
+        // bipush 15 the properties chain banks: the starry field the
+        // full brightness the light grid paints, the unbreakable gate
+        // the same every-state read keeps)
+        15
     } else {
         0
     }

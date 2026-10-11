@@ -867,6 +867,18 @@ pub const BAMBOO_SAPLING: u16 = 88;
 /// six faces wear, atlas tile 96 the regen banks).
 pub const END_STONE: u16 = 89;
 
+/// THE END PORTAL'S OWN ROW (the dev-29 round — the exit pedestal's
+/// starry surface the special renderer lane serves; javap the blocks
+/// clinit the 26.2 jar: the END_PORTAL registration the noCollision()
+/// + strength(-1.0f, 3600000.0f) + lightLevel 15 the properties
+/// chain wears — the generated tables the same rows bank [the dig
+/// row's own -1.0 the bedrock law keeps], the blockstates
+/// end_portal.json's NO-elements model the generic walk never
+/// resolves, the EndPortalRenderer's own cube the starfield shader
+/// draws — the mesher's sentinel tile the surface quads carry, the
+/// render walk's own pass the shader law serves)
+pub const END_PORTAL: u16 = 90;
+
 /// THE SCAN'S OWN SHAPE — the PortalShape verdict the walks bank
 /// (javap PortalShape's own fields the ctor pc 0-115 carries): the
 /// bottom-left interior corner, the width/height the bands answer,
@@ -1698,6 +1710,11 @@ pub fn collision_shape(id: u16) -> CollisionShape {
         // dimension-change walk a future round serves, the placement's
         // obstruction the empty shape never refuses)
         || id == NETHER_PORTAL
+        // THE END PORTAL'S OWN ROW (the dev-29 round — the blocks
+        // clinit's noCollision() the END_PORTAL registration speaks:
+        // the body FALLS INTO the starry cell the touch lane arms,
+        // the instant teleport the vanilla walk serves)
+        || id == END_PORTAL
         // THE SAPLING'S OWN ROW (the autopush-608 round — the blocks
         // clinit's noCollision() pc 23110 the BAMBOO_SAPLING
         // registration speaks — the body walks THROUGH the cross the
@@ -3122,12 +3139,21 @@ impl World {
         }
         // THE EXIT PEDESTAL (the fountain's own base rows the center
         // wears — the bedrock the real structure's own material keeps,
-        // the portal cells the future lane a round arms)
+        // THE PORTAL'S OWN SURFACE (javap EndPortalBlock — the
+        // diamond's interior the portal cells the vanilla exit
+        // portal's own shape keeps: the bedrock ring the |dx|+|dz|<=2
+        // band speaks, the starry field the inner 5 cells wear — the
+        // touch lane the instant teleport arms)
         let (ix, iz) = (cx.round() as i32, cz.round() as i32);
         for dx in -2i32..=2 {
             for dz in -2i32..=2 {
                 if dx.abs() + dz.abs() <= 2 {
-                    self.set(ix + dx, top, iz + dz, BEDROCK);
+                    let cell = if dx.abs() + dz.abs() <= 1 {
+                        END_PORTAL
+                    } else {
+                        BEDROCK
+                    };
+                    self.set(ix + dx, top, iz + dz, cell);
                 }
             }
         }
@@ -6293,7 +6319,16 @@ mod tests {
         // the end_stone kind below keeps, the column the cap the AIR
         // above answers)
         let (cx, cz) = ((n as f64 / 2.0).round() as i32, (n as f64 / 2.0).round() as i32);
-        assert_eq!(w.get(cx, END_ISLAND_TOP, cz), BEDROCK, "the pedestal's own base");
+        // THE PORTAL'S OWN DIAMOND (the dev-29 round — the interior the
+        // END_PORTAL cells the exit portal's own shape keeps: the
+        // center + the four orthogonal arms the starry field wears,
+        // the ring the bedrock cells keep — the fountain's own base
+        // rows the vanilla structure's law banks)
+        assert_eq!(w.get(cx, END_ISLAND_TOP, cz), END_PORTAL, "the portal's own center cell");
+        assert_eq!(w.get(cx + 1, END_ISLAND_TOP, cz), END_PORTAL, "the portal's own east arm");
+        assert_eq!(w.get(cx - 1, END_ISLAND_TOP, cz), END_PORTAL, "the portal's own west arm");
+        assert_eq!(w.get(cx, END_ISLAND_TOP, cz + 1), END_PORTAL, "the portal's own south arm");
+        assert_eq!(w.get(cx, END_ISLAND_TOP, cz - 1), END_PORTAL, "the portal's own north arm");
         assert_eq!(w.get(cx, END_ISLAND_TOP + 3, cz), BEDROCK, "the column's own head");
         assert_eq!(
             w.get(cx, END_ISLAND_TOP + 4, cz),
