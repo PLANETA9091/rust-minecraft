@@ -13682,7 +13682,7 @@ impl App {
                 // THE ARROW'S OWN OUT-EDGES (the hits the flight tick
                 // carried — the player's damage the hurt walk answers,
                 // the block's voice the stick's own pitch keeps)
-                let mut arrow_player_hits: Vec<f64> = Vec::new();
+                let mut arrow_player_hits: Vec<(f64, Option<i32>)> = Vec::new();
                 let mut arrow_block_hits: Vec<(f64, f64, f64, f32)> = Vec::new();
                 // THE FIREWORK'S OWN OUT-EDGE (the launch word the
                 // flight tick carries — the positioned voice the
@@ -14169,7 +14169,11 @@ impl App {
                         for arrow in self.arrows.iter_mut() {
                             let mut aev = arrow.tick(world, player.as_ref(), &self.mobs);
                             if let Some(dmg) = aev.hit_player {
-                                arrow_player_hits.push(dmg);
+                                // THE SHOT'S OWN OWNER (the ref the
+                                // death's walk answers — the causing
+                                // entity the %2$s read names, the id
+                                // the flight lane carried)
+                                arrow_player_hits.push((dmg, arrow.owner));
                             }
                             if let Some((mob_id, dmg)) = aev.hit_mob {
                                 // THE SHOOTER'S OWN WORD (the arrow's
@@ -14873,8 +14877,24 @@ impl App {
                 // carries, the honest no-push the vanilla law keeps;
                 // the block's own voice the onHitBlock draw plays at
                 // the stick's own spot)
-                for dmg in arrow_player_hits {
-                    self.hurt(dmg as f32);
+                // THE SHOT'S OWN NAME (the DamageSource law the 26.2
+                // AbstractArrow NEVER overrides — the constant pool no
+                // death key keeps: "death.attack.arrow" the msgId the
+                // arrow damage type wears, the %2$s the
+                // causing-vs-direct read answers — the owner-present
+                // walk the shooter's display name fills, the ownerless
+                // walk the DIRECT entity the arrow's own en_us display
+                // name speaks)
+                for (dmg, owner_id) in arrow_player_hits {
+                    let killer = owner_id
+                        .and_then(|id| self.mobs.iter().find(|m| m.id == id))
+                        .map(|m| mob_kind_display_name(m.kind))
+                        .unwrap_or_else(|| {
+                            tr("entity.minecraft.arrow")
+                                .unwrap_or("Arrow")
+                                .to_string()
+                        });
+                    self.hurt_by_named(dmg as f32, "death.attack.arrow", &killer);
                 }
                 // THE CRIT TRAIL'S OWN SPAWNS (the words the flight
                 // ticks carried — the crit() ctor each six-pack answers,
@@ -48325,6 +48345,109 @@ mod tests {
             &mob_kind_display_name(crate::mob::MobKind::Spider),
         ));
         assert!(!app.dead, "the refused dose the alive body keeps");
+    }
+
+    /// THE SHOT'S OWN ARCHER (the arrow damage source's own
+    /// getLocalizedDeathMessage walk — the 26.2 AbstractArrow the
+    /// override NEVER carries, the constant pool's death-key absence
+    /// the generic DamageSource law serves: "death.attack.arrow" the
+    /// msgId the en_us row wears "%1$s was shot by %2$s", the %2$s
+    /// the causing-vs-direct read answers — the owner-present walk
+    /// the shooter's display name fills, the ownerless walk the
+    /// DIRECT entity the arrow's own en_us display name speaks).
+    #[test]
+    fn the_shot_names_its_archer() {
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        // THE OPEN FLANK (the world's own terrain the probe answers —
+        // the head-height cell one block out the solid step the
+        // spawn's own ground sometimes keeps, the arrow the AIR lane
+        // the head check demands: the west the probe prefers, the
+        // solid verdict the east flank the same 1.5-speed shot wears)
+        let open_lane = |app: &App| -> (f64, f64, f64, f64, f64) {
+            let b = app.body.as_ref().unwrap();
+            let w = app.offline_world.as_ref().unwrap();
+            let (px, py, pz) = (b.x, b.y, b.z);
+            let west = crate::body::solid(
+                w,
+                px.floor() as i32 - 1,
+                (py + 1.0).floor() as i32,
+                pz.floor() as i32,
+            );
+            if west {
+                (px + 1.0, py + 1.0, pz, -1.5, -90.0)
+            } else {
+                (px - 1.0, py + 1.0, pz, 1.5, 90.0)
+            }
+        };
+        // THE ARCHER (the owner ref the flight lane carries — the id
+        // the death's walk the mobs slice answers)
+        let mut sk = crate::mob::Zombie::new(
+            40,
+            app.body.as_ref().unwrap().x + 6.0,
+            app.body.as_ref().unwrap().y,
+            app.body.as_ref().unwrap().z,
+            41,
+        );
+        sk.kind = crate::mob::MobKind::Skeleton;
+        sk.on_ground = true;
+        app.mobs = vec![sk];
+        // THE LETHAL BODY (the arrow's own ceil(|v|·2.0) dose the
+        // two-point health never survives — the death the lane's own
+        // walk speaks, the fresh window the first hit banks)
+        app.health = 2.0;
+        // THE OWNED SHOT (the segment the player's own inflated box
+        // crosses — the hand-placed pose the spread's draw never
+        // speaks, the flight the one tick's own walk answers)
+        let (sx, sy, sz, svx, syr) = open_lane(&app);
+        app.arrows.push(crate::mob::Arrow::from_spawn(&crate::mob::ArrowShot {
+            id: 9001,
+            x: sx,
+            y: sy,
+            z: sz,
+            vx: svx,
+            vy: 0.0,
+            vz: 0.0,
+            y_rot: syr as f32,
+            x_rot: 0.0,
+            crit: false,
+            pitch: 1.0,
+            seed: 11,
+            owner: Some(40),
+        }));
+        app.update();
+        for _ in 0..8 {
+            if app.dead {
+                break;
+            }
+            app.update();
+        }
+        assert!(
+            app.dead,
+            "the lethal dose the body takes (health={} arrows={} msg={:?} ax={:?})",
+            app.health,
+            app.arrows.len(),
+            app.death_message,
+            app.arrows.first().map(|a| (a.x, a.y, a.z))
+        );
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was shot by Skeleton"),
+            "the shot row the archer's own name wears"
+        );
+        // THE OWNERLESS ARM'S OWN WORD (the causing entity the null
+        // keeps — the DIRECT entity the %2$s answers: the arrow's own
+        // en_us display name the generic walk fills; the flight the
+        // sim's own walk never speaks — the ownerless arrows the
+        // client's tick the player sweep NEVER answers, the wire's
+        // visual lane the server's authority keeps — so the row the
+        // lang table's own answer pins)
+        assert_eq!(
+            tr("entity.minecraft.arrow"),
+            Some("Arrow"),
+            "the ownerless row the direct entity's own name wears"
+        );
     }
 
     /// THE RESISTANCE'S OWN FOLD (javap getDamageAfterMagicAbsorb pcs
