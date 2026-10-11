@@ -315,7 +315,14 @@ pub fn extract_runtime_assets(
 /// `heart`, `sweep_attack`, `wax_on`, `wax_off`, `scrape`,
 /// `sculk_charge` and `sculk_charge_pop` particle types' own sources
 /// the dust lane sha1-verifies).
-const RUNTIME_TEXTURE_JAR_PATHS: [&str; 50] = [
+const RUNTIME_TEXTURE_JAR_PATHS: [&str; 53] = [
+    // THE CREATIVE PICKER'S OWN BACKGROUNDS (the dev-30 round): the
+    // 195x136 panels the CreativeModeInventoryScreen's
+    // getBackgroundTexture lane blits — tab_items.png the category
+    // seats keep, tab_item_search.png the search seat wears
+    "assets/minecraft/textures/gui/container/creative_inventory/tab_items.png",
+    "assets/minecraft/textures/gui/container/creative_inventory/tab_item_search.png",
+    "assets/minecraft/textures/gui/container/creative_inventory/tab_inventory.png",
     "assets/minecraft/textures/block/fire_0.png",
     "assets/minecraft/textures/block/fire_1.png",
     // THE END PORTAL'S OWN PAIR (the dev-29 round): the starfield the

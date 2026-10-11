@@ -1747,7 +1747,16 @@ pub fn run_gui_app(
         // chars the open screen's EditBox answers, the closed screen
         // the on_chat_char gate keeps silent)
         for c in chat_chars.borrow_mut().drain(..) {
-            app.on_chat_char(c);
+            // THE CREATIVE SEARCH'S OWN CHARS (the charTyped lane the
+            // focused search box answers — the open chat the drain's
+            // first arm keeps, the closed chat + the picker's search
+            // seat the EditBox arm serves, the other screens the gate
+            // never passes)
+            if !app.chat_open {
+                app.on_creative_char(c);
+            } else {
+                app.on_chat_char(c);
+            }
         }
         if window.is_key_pressed(Key::Escape, minifb::KeyRepeat::No) {
             // THE ESCAPE'S OWN ROUTE (the ChatScreen.keyPressed law —
@@ -1771,6 +1780,14 @@ pub fn run_gui_app(
         // ChatScreen the world keys never reads)
         if !app.chat_open && window.is_key_pressed(Key::E, minifb::KeyRepeat::No) {
             app.on_inventory_key();
+        }
+        // THE PICKER'S SEARCH BACKSPACE (the EditBox's own keyPressed
+        // arm — the search seat the pop answers, the other screens the
+        // gate never passes)
+        if !app.chat_open
+            && window.is_key_pressed(Key::Backspace, minifb::KeyRepeat::No)
+        {
+            app.on_creative_backspace();
         }
         // THE INVENTORY'S OWN Q (the AbstractContainerScreen.keyPressed's
         // keyDrop arm — the container screen's own chain beside the
@@ -1914,6 +1931,17 @@ pub fn run_gui_app(
         // the vanilla's own pause law. The open chat the same freeze
         // wears (the ChatScreen a Screen the in-world keys never read,
         // the cursor the typing lane shows)
+        // THE PICKER'S OWN CLONE (the slotClicked walk's CLONE arm —
+        // the middle press the open creative screen the palette's
+        // full-stack grab answers; the in-world block the screen gate
+        // never reaches — the lane hoisted to the screen level the
+        // container screens' own input order keeps)
+        let middle_down = window.get_mouse_down(minifb::MouseButton::Middle);
+        if middle_down && !was_middle_down && !app.chat_open
+            && app.screen == crate::screens::ScreenKind::Creative
+        {
+            app.on_creative_clone_click(gmx, gmy);
+        }
         let in_world =
             app.screen == crate::screens::ScreenKind::World && !app.paused && !app.chat_open;
         if in_world != was_in_world {
@@ -2178,6 +2206,11 @@ pub fn run_gui_app(
                 crate::screens::ScreenKind::Chest | crate::screens::ScreenKind::Inventory
             ) {
                 app.on_container_scroll(sdx as f64, sdy as f64, gmx, gmy);
+            } else if app.screen == crate::screens::ScreenKind::Creative {
+                // THE PICKER'S OWN SCROLL (the mouseScrolled walk's
+                // creative arm — the delta / scrollableRows subtraction
+                // the scrollTo refill rides)
+                app.on_creative_scroll(sdy as f64);
             }
         }
         // THE FIXED CLOCK SPENDS (vanilla `Minecraft.runTick`'s own

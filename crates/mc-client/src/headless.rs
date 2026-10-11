@@ -2169,8 +2169,25 @@ cow_sound_variant: None,
             app.frame = frame;
             app.clock_total = 6000 + frame;
         }
+        "creative" => {
+            // THE PICKER'S OWN STAGING (the dev-30 round): the offline
+            // world stands first, the CREATIVE mode the picker's own
+            // gate arms, the store's demo loadout (the bottom row's
+            // hotbar the store paints) — and the screen opens (the E
+            // key's own creative lane, the default tab the
+            // building-blocks seat keeps).
+            app.game_mode = crate::screens::GameMode::Creative;
+            stage_inventory_loadout(&mut app);
+            app.hotbar_slots = app.inventory.hotbar();
+            app.open_inventory();
+            // THE NOON PIN (the world arm's own law — the day look the
+            // full-day fold keeps, the noon tracks the sky renders;
+            // the clock the staged frame folds)
+            app.frame = frame;
+            app.clock_total = 6000 + frame;
+        }
         other => anyhow::bail!(
-            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|inventory|crafting)"
+            "unknown screen {other} (loading|title|servers|options|world|worldnight|pause|chest|inventory|crafting|creative)"
         ),
     }
 

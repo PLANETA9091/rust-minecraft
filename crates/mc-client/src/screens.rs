@@ -6044,6 +6044,35 @@ pub enum ScreenKind {
     /// over the live world — the body freeze the container convention
     /// keeps (the frame==tick model).
     GameModeSwitcher,
+    /// THE CREATIVE PICKER'S OWN SCREEN (javap 26.2 CreativeModeInventoryScreen
+    /// — the E key's own lane in the creative mode, the init's own
+    /// `hasInfiniteMaterials` gate the survival fallback speaks: the
+    /// screen the infinite-materials player ALONE wears): the real
+    /// 195x136 panel the tab's own background blitted (tab_items.png the
+    /// category seat, tab_item_search.png the search seat), the 14-tab
+    /// strip the 27px pitch keeps (7 top + 7 bottom, the aligned-right
+    /// pair the hotbar/search/inventory tabs speak), the 45-slot palette
+    /// (9 + col*18, 18 + row*18 — the ItemPickerMenu ctor's own numbers)
+    /// the tab's display items fill, the bottom row the
+    /// addInventoryHotbarSlots(9, 112) walk places (18 slots — the
+    /// hotbar 9 the player's Inventory container indices 0..8 keep, the
+    /// main row's head the 9..17 indices spill), the scroller the
+    /// 12x15 handle at (175, 18 + 77*scroll) rides. THE CLICK LAWS the
+    /// slotClicked walk banks verbatim: the palette PICKUP the
+    /// copyWithCount law answers (the hovered stack's own count — the
+    /// display list's 'Stack size must be exactly 1' the count-1
+    /// palette feeds: the plain click ONE, the shift the max), the
+    /// same-item left the grow(1) dial rides, the right the shrink(1)
+    /// the palette eats, the empty-hole click the carried DESTROYS
+    /// (left) / one eats (right), the CLONE the middle-click full
+    /// stack speaks, the THROW the copy drops (the palette keeps its
+    /// item), the outside the THROW drop arms answers (the whole
+    /// carried left, the split(1) right). The search tab the EditBox
+    /// (82, 6, 80x9) + the identifier filter wears. The WIRE sessions
+    /// the survival screen keeps (the ServerboundSetCreativeModeSlot
+    /// packet lane the follow-up round owes — the offline world the
+    /// picker's own seat holds).
+    Creative,
 }
 
 /// THE GAME MODE THE SWITCHER SPEAKS (javap 26.2 GameType's own client
@@ -7442,6 +7471,39 @@ pub struct App {
     /// prediction walks mutate (the offline world's `inv_carried`
     /// stays the offline truth — the two lanes never mix).
     pub live_table_carried: (i32, i32),
+    /// THE CREATIVE PICKER'S SOURCE LIST (the ItemPickerMenu's own
+    /// `items` NonNullList the tab switch refills — the registry's
+    /// wire order the sim's vocabulary speaks, the DISPLAY LAW the
+    /// `ItemDisplayBuilder`'s 'Stack size must be exactly 1'
+    /// IllegalArgumentException banks: every entry count 1). The (id,
+    /// count) pairs the palette's scrollTo slices; the air the
+    /// registry's id 0 the display list never carried.
+    pub creative_source: Vec<(i32, i32)>,
+    /// THE PICKER'S TAB-FILTERED LIST (the selectedTab's own display
+    /// items the refreshCurrentTabContents addAll feeds — the full
+    /// source on the category seats, the identifier-filtered list on
+    /// the search tab). The scrollTo + the render read this.
+    pub creative_items: Vec<(i32, i32)>,
+    /// THE SEARCH TAB'S EDIT TEXT (the EditBox the init's
+    /// (leftPos+82, topPos+6, 80x9) walk builds — the selectTab's
+    /// setValue("") clears the both-way walk keeps).
+    pub creative_search: String,
+    /// THE SCROLL OFFSET (the `scrollOffs` field — 0..1 the
+    /// subtractInputFromScroll clamp keeps, the wheel the delta /
+    /// scrollableRows walk drives).
+    pub creative_scroll: f32,
+    /// THE 45 VISIBLE PALETTE SLOTS (the CONTAINER SimpleContainer the
+    /// scrollTo walk refills: cell r*9+c = items[(r+row)*9+c] or
+    /// EMPTY — the display stacks the click walk never depletes).
+    pub creative_palette: [(i32, i32); 45],
+    /// THE SELECTED TAB (the static `selectedTab` field the opens
+    /// persist — the index into [`CREATIVE_TABS`]; the INVENTORY seat
+    /// the survival screen's own door wears, the persisted tab the
+    /// palette seats alone keep).
+    pub creative_tab: usize,
+    /// The panel's GUI origin the LAST render laid out — the click
+    /// lane's own geometry (the inventory's render-then-hit pattern).
+    pub creative_panel: (i32, i32),
     /// The keyboard lane's shift state the LAST loop tick tracked —
     /// the vanilla `Screen.hasShiftDown()` query: the press's rising
     /// edge reads it to route the shift-click's QUICK_MOVE lane. Fed
@@ -8582,6 +8644,13 @@ impl App {
             table_live_window: None,
             table_is_live: false,
             live_table_carried: (0, 0),
+            creative_source: Vec::new(),
+            creative_items: Vec::new(),
+            creative_search: String::new(),
+            creative_scroll: 0.0,
+            creative_palette: [(0, 0); 45],
+            creative_tab: 0,
+            creative_panel: (0, 0),
             live_held: None,
             drops: Vec::new(),
             inventory: crate::drops::Inventory::default(),
@@ -17807,6 +17876,7 @@ impl App {
         match self.screen {
             ScreenKind::World if !self.dead => self.open_inventory(),
             ScreenKind::Inventory => self.close_inventory(),
+            ScreenKind::Creative => self.close_creative_picker(),
             ScreenKind::Crafting => self.close_crafting_table(),
             ScreenKind::Furnace => self.close_furnace(),
             _ => {}
@@ -17825,6 +17895,15 @@ impl App {
     /// rows the live lane feeds; the rows survive the toggle, the
     /// component data the vanilla screen-open never touches).
     pub fn open_inventory(&mut self) {
+        // THE CREATIVE ARM (the init's own hasInfiniteMaterials gate —
+        // the creative screen the infinite-materials player alone
+        // wears; the WIRE sessions the survival screen keeps — the
+        // ServerboundSetCreativeModeSlot packet lane the follow-up
+        // round owes)
+        if self.game_mode == GameMode::Creative && !self.world_is_network {
+            self.open_creative_picker();
+            return;
+        }
         self.inv_carried = (0, 0);
         self.open(ScreenKind::Inventory);
     }
@@ -17863,6 +17942,466 @@ impl App {
             // a full store drops the remainder on the floor (the vanilla
             // close's own Player.drop tail) — the spawn lane the dig's
             // own drop walk keeps
+            if rest > 0 {
+                if let Some(b) = self.body.as_ref() {
+                    let (dx, dy, dz) = (b.x, b.y + 1.0, b.z);
+                    let did = self.next_drop_id;
+                    self.next_drop_id += 1;
+                    self.drops.push(crate::drops::ItemDrop::spawn_entity_loot(
+                        did,
+                        id,
+                        rest,
+                        dx,
+                        dy,
+                        dz,
+                        &mut self.mob_rng,
+                    ));
+                }
+            }
+            self.inv_carried = (0, 0);
+            self.hotbar_slots = self.inventory.hotbar();
+        }
+        self.open(ScreenKind::World);
+    }
+
+    // ===== THE CREATIVE PICKER'S OWN WALKS (javap 26.2
+    // CreativeModeInventoryScreen + its ItemPickerMenu, the decoded
+    // bytecode the constants bank verbatim) =====
+
+    /// THE PICKER'S SOURCE (the ItemPickerMenu's `items` NonNullList —
+    /// the registry's wire order the sim's vocabulary speaks, the
+    /// DISPLAY LAW the `ItemDisplayBuilder`'s 'Stack size must be
+    /// exactly 1' enforcement banks: every entry count 1; the air the
+    /// registry's id 0 the display list never carried).
+    fn creative_source_items() -> Vec<(i32, i32)> {
+        mc_registry::generated::item_order::ITEM_WIRE_ORDER
+            .iter()
+            .enumerate()
+            .filter(|&(i, _)| i != 0)
+            .map(|(i, _)| (i as i32, 1))
+            .collect()
+    }
+
+    /// THE SEARCH TAB'S OWN FILTER (the refreshSearchResults walk's
+    /// honest stand-in — the identifier substring the case-insensitive
+    /// ask answers; the vanilla's tooltip search tree the full-name
+    /// lane rides, the identifier the sim's vocabulary keeps).
+    fn refresh_creative_search(&mut self) {
+        let q = self.creative_search.to_lowercase();
+        if q.is_empty() {
+            self.creative_items = self.creative_source.clone();
+            return;
+        }
+        self.creative_items = self
+            .creative_source
+            .iter()
+            .filter(|&&(id, _)| {
+                let name = mc_registry::generated::item_order::ITEM_WIRE_ORDER
+                    .get(id as usize)
+                    .copied()
+                    .unwrap_or("");
+                name.contains(&q)
+            })
+            .copied()
+            .collect();
+    }
+
+    /// THE SCROLLABLE ROW COUNT (the ItemPickerMenu.calculateRowCount's
+    /// own walk — `positiveCeilDiv(items.size(), 9) - 5`: the rows the
+    /// scroll can START at, the five visible rows the viewport never
+    /// counts).
+    fn creative_row_count(&self) -> i32 {
+        (self.creative_items.len() as i32 + 8) / 9 - 5
+    }
+
+    /// THE PICKER'S CAN-SCROLL (the ItemPickerMenu.canScroll's own law
+    /// — `items.size() > 45`).
+    fn creative_can_scroll(&self) -> bool {
+        self.creative_items.len() > 45
+    }
+
+    /// THE SCROLL-TO-ROW LAW (the ItemPickerMenu.getRowIndexForScroll's
+    /// own walk — `max((int)(scroll * rowCount + 0.5), 0)`: the rounded
+    /// product the 0.5 dadd banks, the negative row counts the clamp
+    /// refuses).
+    fn creative_row_index_for_scroll(&self, scroll: f32) -> i32 {
+        let scaled = (self.creative_row_count() as f32 * scroll + 0.5) as i32;
+        scaled.max(0)
+    }
+
+    /// THE 45-CELL REFILL (the ItemPickerMenu.scrollTo's own walk —
+    /// `container[row*9+col] = items[(row+offset)*9+col]` or EMPTY: the
+    /// display stacks the palette references, the out-of-range tail the
+    /// empty cells keep).
+    fn creative_scroll_to(&mut self, scroll: f32) {
+        let offset = self.creative_row_index_for_scroll(scroll);
+        for r in 0..5usize {
+            for c in 0..9usize {
+                let idx = (r + offset as usize) * 9 + c;
+                self.creative_palette[r * 9 + c] = self
+                    .creative_items
+                    .get(idx)
+                    .copied()
+                    .unwrap_or((0, 0));
+            }
+        }
+    }
+
+    /// THE PICKER'S OWN OPEN (the E key's creative arm — the
+    /// `Minecraft.handleKeybinds` key.inventory lane's
+    /// `setScreen(new CreativeModeInventoryScreen(...))` the creative
+    /// mode wears): the source list the registry builds (the fresh
+    /// open the init's `tryRebuildTabContents` walk speaks), the
+    /// PERSISTED TAB the static `selectedTab` field keeps (the palette
+    /// seats alone — the INVENTORY seat the survival screen's own door
+    /// wears, the re-open the building-blocks default answers), the
+    /// scroll the selectTab's fresh 0.0 + scrollTo(0.0) tail resets,
+    /// the search text the tab switch's setValue("") law clears.
+    pub fn open_creative_picker(&mut self) {
+        if self.creative_source.is_empty() {
+            self.creative_source = Self::creative_source_items();
+        }
+        // the persisted tab the palette seats alone keep (the INVENTORY
+        // seat the survival screen's own door wore — the re-open the
+        // vanilla default's building-blocks tab answers)
+        if self.creative_tab >= CREATIVE_TABS.len()
+            || CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory
+        {
+            self.creative_tab = 0;
+        }
+        self.creative_search.clear();
+        self.creative_items = self.creative_source.clone();
+        self.creative_scroll = 0.0;
+        self.creative_scroll_to(0.0);
+        self.open(ScreenKind::Creative);
+    }
+
+    /// THE TAB SWITCH (the selectTab walk's own shape — the fresh
+    /// scroll the 0.0 + scrollTo(0.0) tail resets, the search text the
+    /// both-way setValue("") clears, the list the tab's own items
+    /// refills; the CATEGORY seats the full vocabulary share (the sim's
+    /// grouping tables the follow-up round owes — the honest stand-in
+    /// the commit notes), the SEARCH seat the filter wears, the
+    /// INVENTORY seat the survival screen's own door speaks).
+    pub fn select_creative_tab(&mut self, idx: usize) {
+        let Some(tab) = CREATIVE_TABS.get(idx) else {
+            return;
+        };
+        match tab.kind {
+            CreativeTabKind::Inventory => {
+                // THE INVENTORY SEAT'S OWN DOOR (the selectTab's
+                // INVENTORY rebuild the vanilla walk speaks — the
+                // wrapped inventory the player's own store keeps; the
+                // survival screen the sim's own panel answers, the
+                // store the same 36 rows)
+                self.creative_tab = idx;
+                self.open(ScreenKind::Inventory);
+                return;
+            }
+            CreativeTabKind::SavedHotbar | CreativeTabKind::Operator => {
+                // THE HONEST SILENCE (the hotbar pages the
+                // HotbarManager file lane rides — the follow-up round
+                // owes; the operator tab the hasPermissions gate keeps
+                // — the sim's permission lane never armed). The click
+                // the selection never banks.
+                return;
+            }
+            CreativeTabKind::Search => {
+                // the both-way clear (the selectTab's setValue("") walk:
+                // entering from another seat the fresh box arms, the
+                // categories the same clear keep)
+                self.creative_search.clear();
+                self.refresh_creative_search();
+            }
+            _ => {
+                // THE CATEGORY SEAT (the selectTab's CATEGORY arm — the
+                // tab's display items the list refills; the sim's
+                // vocabulary the every-category seat shares until the
+                // grouping tables land)
+                self.creative_search.clear();
+                self.creative_items = self.creative_source.clone();
+            }
+        }
+        self.creative_tab = idx;
+        self.creative_scroll = 0.0;
+        self.creative_scroll_to(0.0);
+    }
+
+    /// THE WHEEL'S OWN WALK (the mouseScrolled walk's creative arm —
+    /// the parent's scroll first the super call answers, the
+    /// canScroll gate the false keeps, then
+    /// `scrollOffs = menu.subtractInputFromScroll(scrollOffs, delta)`
+    /// + `menu.scrollTo(scrollOffs)`: the delta / scrollableRows
+    /// subtraction the clamp 0..1 keeps).
+    pub fn on_creative_scroll(&mut self, delta_y: f64) {
+        if !self.creative_can_scroll() {
+            return;
+        }
+        let rows = self.creative_row_count();
+        if rows <= 0 {
+            return; // the zero span the divide-by rows never rides
+        }
+        let next = self.creative_scroll - (delta_y / rows as f64) as f32;
+        self.creative_scroll = next.clamp(0.0, 1.0);
+        self.creative_scroll_to(self.creative_scroll);
+    }
+
+    /// THE SEARCH BOX'S OWN CHARS (the EditBox the init's (82, 6, 80x9)
+    /// walk builds — the charTyped lane the focused box answers, the
+    /// max length 50 the setMaxLength walk keeps, the refresh the
+    /// onEdited walk speaks).
+    pub fn on_creative_char(&mut self, c: char) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+            || self.creative_search.chars().count() >= 50
+        {
+            return;
+        }
+        self.creative_search.push(c);
+        self.refresh_creative_search();
+        self.creative_scroll = 0.0;
+        self.creative_scroll_to(0.0);
+    }
+
+    /// THE SEARCH BOX'S OWN BACKSPACE (the keyPressed's Backspace arm —
+    /// the popped char the refresh answers).
+    pub fn on_creative_backspace(&mut self) {
+        if self.screen != ScreenKind::Creative
+            || CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Search
+        {
+            return;
+        }
+        if self.creative_search.pop().is_some() {
+            self.refresh_creative_search();
+            self.creative_scroll = 0.0;
+            self.creative_scroll_to(0.0);
+        }
+    }
+
+    /// THE MIDDLE-CLICK CLONE (the slotClicked walk's CLONE arm —
+    /// `if getCarried().isEmpty() && slot.hasItem():
+    /// setCarried(hovered.copyWithCount(hovered.getMaxStackSize()))`:
+    /// the full stack the palette's own max feeds).
+    pub fn on_creative_clone_click(&mut self, mx: i32, my: i32) {
+        if self.screen != ScreenKind::Creative || self.inv_carried.1 > 0 {
+            return;
+        }
+        let Some(cell) = self.creative_palette_cell(mx, my) else {
+            return;
+        };
+        let (id, count) = self.creative_palette[cell];
+        if count <= 0 || id == 0 {
+            return;
+        }
+        let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+        self.inv_carried = (id, max);
+    }
+
+    /// The palette cell (0..45) the GUI point rides — the slot box the
+    /// AbstractContainerScreen's isHovering 16x16 law keeps, the panel
+    /// origin the last render banked.
+    fn creative_palette_cell(&self, mx: i32, my: i32) -> Option<usize> {
+        if self.creative_panel == (0, 0) {
+            return None;
+        }
+        let (px, py) = self.creative_panel;
+        let (lx, ly) = (mx - px, my - py);
+        for r in 0..5usize {
+            for c in 0..9usize {
+                let (sx, sy) = (9 + c as i32 * 18, 18 + r as i32 * 18);
+                if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
+                    return Some(r * 9 + c);
+                }
+            }
+        }
+        None
+    }
+
+    /// The bottom row's slot index (0..18) the GUI point rides — the
+    /// addInventoryHotbarSlots(9, 112) geometry, the same 16x16 hit
+    /// law.
+    fn creative_store_cell(&self, mx: i32, my: i32) -> Option<usize> {
+        if self.creative_panel == (0, 0) {
+            return None;
+        }
+        let (px, py) = self.creative_panel;
+        let (lx, ly) = (mx - px, my - py);
+        for i in 0..18usize {
+            let (sx, sy) = (9 + i as i32 * 18, 112);
+            if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    /// The tab (index into [`CREATIVE_TABS`]) the GUI point rides —
+    /// the checkTabClicked law the draw box answers (26x32 at the
+    /// getTabX/getTabY geometry, the LEFT button the mouseClicked
+    /// guard keeps).
+    fn creative_tab_at(&self, mx: i32, my: i32) -> Option<usize> {
+        if self.creative_panel == (0, 0) {
+            return None;
+        }
+        let (px, py) = self.creative_panel;
+        let (lx, ly) = (mx - px, my - py);
+        for (i, tab) in CREATIVE_TABS.iter().enumerate() {
+            let (tx, ty) = creative_tab_origin(tab, 195, 136);
+            if lx >= tx && lx < tx + 26 && ly >= ty && ly < ty + 32 {
+                return Some(i);
+            }
+        }
+        None
+    }
+
+    /// THE PICKER'S OWN CLICK (the slotClicked walk's arms, the decoded
+    /// order kept): the tabs first (the LEFT button the mouseClicked
+    /// guard keeps), the palette slots' PICKUP law, the bottom row's
+    /// store walk, the outside the THROW drop arms answers.
+    pub fn click_creative(&mut self, mx: i32, my: i32, button: i8) {
+        // THE TAB STRIP (the mouseClicked's own first lane — the left
+        // button alone the checkTabClicked walk reads)
+        if button == 0 {
+            if let Some(tab) = self.creative_tab_at(mx, my) {
+                self.select_creative_tab(tab);
+                return;
+            }
+        }
+        // THE PALETTE SLOTS (the `slot.container == CONTAINER` arm —
+        // the PICKUP walk the decoded order keeps)
+        if let Some(cell) = self.creative_palette_cell(mx, my) {
+            self.click_creative_palette(cell, button);
+            return;
+        }
+        // THE BOTTOM ROW (the helper's 18 slots — the generic
+        // menu.clicked walk the store's own prediction answers)
+        if let Some(slot) = self.creative_store_cell(mx, my) {
+            self.click_creative_store(slot, button);
+            return;
+        }
+        // THE OUTSIDE (the THROW drop arms — the canDropItems gate the
+        // creative mode always answers, the carried the arms spend)
+        self.creative_outside_drop(button);
+    }
+
+    /// THE PALETTE PICKUP LAW (the slotClicked walk's palette arms —
+    /// the decoded order verbatim): the same-item carried the left
+    /// grow / right shrink dial rides, the empty-hole click the
+    /// carried DESTROYS (left) / one eats (right), the empty carried
+    /// the copyWithCount take answers (the shift the max count speaks,
+    /// the plain the hovered stack's own count — the display list's
+    /// count-1 law the ONE-per-click palette feeds).
+    fn click_creative_palette(&mut self, cell: usize, button: i8) {
+        let carried = self.inv_carried;
+        let hovered = self.creative_palette[cell];
+        // the sim's id-only stack model the merge walks keep (the
+        // per-item max table the follow-up round owes — the same 64
+        // law the store's own merges speak)
+        let max = crate::world_view::ITEM_MAX_STACK_DEFAULT;
+        if carried.1 > 0 && hovered.1 > 0 && carried.0 == hovered.0 {
+            if button == 0 {
+                if self.shift_down {
+                    // the quickMove arm: the carried the max count banks
+                    self.inv_carried = (carried.0, max);
+                } else if carried.1 < max {
+                    // the grow(1) dial the plain left click rides
+                    self.inv_carried = (carried.0, carried.1 + 1);
+                }
+            } else {
+                // the shrink(1) the palette eats
+                self.inv_carried = (carried.0, carried.1 - 1);
+            }
+            return;
+        }
+        if carried.1 > 0 {
+            // the palette EATS (the hovered empty OR the different
+            // item): the left the whole carried destroys, the right
+            // one takes off
+            if button == 0 {
+                self.inv_carried = (0, 0);
+            } else {
+                let left = carried.1 - 1;
+                self.inv_carried = if left > 0 { (carried.0, left) } else { (0, 0) };
+            }
+            return;
+        }
+        // the empty carried: the take (the hovered stack's own count —
+        // the shift the max)
+        if hovered.1 > 0 && hovered.0 != 0 {
+            let count = if self.shift_down {
+                crate::world_view::ITEM_MAX_STACK_DEFAULT
+            } else {
+                hovered.1
+            };
+            self.inv_carried = (hovered.0, count);
+        }
+    }
+
+    /// THE BOTTOM ROW'S STORE WALK (the generic menu.clicked walk the
+    /// picker's wrapped inventory slots ride — the predict_pickup pair
+    /// the survival screen's store rows speak verbatim, the store
+    /// index the Inventory container's own order keeps: 0..8 the
+    /// hotbar, 9..17 the main row's head).
+    fn click_creative_store(&mut self, slot: usize, button: i8) {
+        let believed = self.inventory.items[slot];
+        let (new_cell, new_carried) = if button == 0 {
+            crate::world_view::predict_pickup(believed, self.inv_carried)
+        } else {
+            crate::world_view::predict_pickup_right(believed, self.inv_carried)
+        };
+        self.inventory.items[slot] = new_cell;
+        self.inv_carried = new_carried;
+        self.hotbar_slots = self.inventory.hotbar();
+    }
+
+    /// THE OUTSIDE DROP (the slotClicked tail's THROW arms — the
+    /// whole-carried drop the LEFT click speaks, the split(1) the
+    /// RIGHT keeps; the aimed throw the player.drop(stack, true) walk
+    /// rides — the Q lane's own helper).
+    fn creative_outside_drop(&mut self, button: i8) {
+        if self.inv_carried.1 <= 0 {
+            return;
+        }
+        let (id, count) = self.inv_carried;
+        let dropped = if button == 0 { count } else { 1 };
+        self.drop_item_entity_aimed(id, dropped);
+        let left = count - dropped;
+        self.inv_carried = if left > 0 { (id, left) } else { (0, 0) };
+    }
+
+    /// THE PICKER'S OWN CLOSE (the removed() walk's carried law — the
+    /// generic AbstractContainerMenu.removed the alive player's
+    /// placeItemBackInInventory answers: the same-item merges first,
+    /// the first empty slot the remainder takes, the full store the
+    /// floor drop keeps — the close_inventory's own add-back walk the
+    /// helper shares).
+    pub fn close_creative_picker(&mut self) {
+        if self.inv_carried.1 > 0 {
+            let (id, count) = self.inv_carried;
+            let mut rest = count;
+            // pass 1: the same-item merges (the add walk's own order)
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 > 0 && it.0 == id && it.1 < crate::world_view::ITEM_MAX_STACK_DEFAULT {
+                    let take = (crate::world_view::ITEM_MAX_STACK_DEFAULT - it.1).min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            // pass 2: the first empty slot takes the remainder
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                if it.1 <= 0 {
+                    *it = (id, rest);
+                    rest = 0;
+                }
+            }
+            // the full store drops the remainder on the floor (the
+            // vanilla close's own Player.drop tail)
             if rest > 0 {
                 if let Some(b) = self.body.as_ref() {
                     let (dx, dy, dz) = (b.x, b.y + 1.0, b.z);
@@ -20079,6 +20618,168 @@ impl App {
         self.render_bundle_tooltip(g, a);
     }
 
+    /// THE CREATIVE PICKER'S OWN RENDER (javap 26.2
+    /// CreativeModeInventoryScreen — the extractBackground +
+    /// extractTabButton + extractRenderState walks the decoded
+    /// constants bank): the world dimmed beneath, the REAL tab
+    /// background blitted 195x136 at the centered panel (tab_items.png
+    /// the category seats, tab_item_search.png the search seat — the
+    /// getBackgroundTexture lane), the 14-tab strip the 26x32 sprites
+    /// ride (the unselected first, the selected last — the vanilla
+    /// draw order the extractBackground loop keeps, the icons the
+    /// x+5 / y+9|y+7 offset speaks), the scroller the 12x15 handle at
+    /// (175, 18 + 77*scroll) (the canScroll pair the disabled sprite
+    /// answers), the 45 palette icons the display law keeps (the
+    /// count-1 stacks the count overlay never renders), the bottom
+    /// row's 18 store slots the icons + counts speak, the search box
+    /// the EditBox (82, 6, 80x9) renders (the hint the empty box
+    /// wears, the caret the blink law keeps), the carried stack the
+    /// cursor follows, the hovered slot's tooltip the bundle walk
+    /// serves.
+    fn render_creative(&mut self, g: &mut Gui, a: &mut GuiAssets, w: i32, h: i32) {
+        g.fill(0, 0, w, h, [0.0, 0.0, 0.0, 0.35]);
+        let panel = creative_panel_origin(w, h);
+        self.creative_panel = panel;
+        // THE TAB'S OWN BACKGROUND (the getBackgroundTexture lane — the
+        // search seat the tab_item_search texture wears, the category
+        // seats the tab_items texture keep)
+        let background = if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search {
+            "gui/container/creative_inventory/tab_item_search.png"
+        } else {
+            "gui/container/creative_inventory/tab_items.png"
+        };
+        g.sprite_file_region(a, background, 0, 0, 195, 136, panel.0, panel.1);
+        // THE TAB STRIP (the extractBackground's own draw order — the
+        // unselected tabs first, the selected last)
+        let selected = self.creative_tab;
+        for i in 0..CREATIVE_TABS.len() {
+            if i == selected {
+                continue;
+            }
+            self.render_creative_tab(g, a, panel, i, false);
+        }
+        self.render_creative_tab(g, a, panel, selected, true);
+        // THE SCROLLER (the tab's canScroll seat — the handle the
+        // enabled/disabled pair the canScroll law picks)
+        if matches!(
+            CREATIVE_TABS[self.creative_tab].kind,
+            CreativeTabKind::Category | CreativeTabKind::Search
+        ) {
+            let sprite = if self.creative_can_scroll() {
+                CREATIVE_SCROLLER
+            } else {
+                CREATIVE_SCROLLER_DISABLED
+            };
+            let hy = panel.1 + 18 + (77.0 * self.creative_scroll) as i32;
+            g.sprite_file_region(a, sprite, 0, 0, 12, 15, panel.0 + 175, hy);
+        }
+        // THE 45 PALETTE ICONS (the display law: count-1 stacks — the
+        // count overlay the never-over-1 counts never render)
+        for r in 0..5usize {
+            for c in 0..9usize {
+                let (id, count) = self.creative_palette[r * 9 + c];
+                if count <= 0 || id == 0 {
+                    continue;
+                }
+                let (sx, sy) = (
+                    panel.0 + 9 + c as i32 * 18 + 1,
+                    panel.1 + 18 + r as i32 * 18 + 1,
+                );
+                draw_item_icon(g, id, sx, sy);
+            }
+        }
+        // THE BOTTOM ROW (the helper's 18 store slots — the icons +
+        // counts the store's own draw keeps)
+        let hotbar = self.inventory.hotbar();
+        for i in 0..18usize {
+            let (id, count) = if i < 9 { hotbar[i] } else { self.inventory.items[i] };
+            if count <= 0 || id == 0 {
+                continue;
+            }
+            let (sx, sy) = (panel.0 + 9 + i as i32 * 18 + 1, panel.1 + 112 + 1);
+            draw_item_icon(g, id, sx, sy);
+            if count > 1 {
+                let s = count.to_string();
+                let tw = g.text_width(&s);
+                g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+            }
+        }
+        // THE SEARCH BOX (the search tab's EditBox — the text the
+        // (82, 6) origin wears, the hint the empty box keeps, the
+        // caret the blink law speaks)
+        if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search {
+            let tx = panel.0 + 82;
+            let ty = panel.1 + 6 + (9 - 8) / 2;
+            if self.creative_search.is_empty() {
+                if let Some(hint) = tr("itemGroup.search") {
+                    g.text(a, tx, ty, &hint, [0.5, 0.5, 0.5], false);
+                }
+            } else {
+                g.text(a, tx, ty, &self.creative_search, WHITE, false);
+                let tw = g.text_width(&self.creative_search);
+                if (self.frame / 6) % 2 == 0 {
+                    g.fill(tx + tw + 1, ty, 1, 8, [1.0, 1.0, 1.0, 1.0]);
+                }
+            }
+        }
+        // THE HELD STACK follows the cursor (the vanilla carried render)
+        if self.inv_carried.1 > 0 {
+            if let Some((mx, my)) = self.mouse_pos {
+                draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                if self.inv_carried.1 > 1 {
+                    let s = self.inv_carried.1.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                }
+            }
+        }
+        // THE TAB'S OWN HOVER LABEL (the checkTabHovering walk — the
+        // hovered tab the tooltip lane serves, the name the
+        // translatable row keeps)
+        if let Some((mx, my)) = self.mouse_pos {
+            if let Some(idx) = self.creative_tab_at(mx, my) {
+                if let Some(label) = tr(CREATIVE_TABS[idx].label_key) {
+                    let tw = g.text_width(&label);
+                    let tab = &CREATIVE_TABS[idx];
+                    let (tx, ty) = creative_tab_origin(tab, 195, 136);
+                    let lx = panel.0 + tx + 13 - tw / 2;
+                    let ly = if tab.top {
+                        panel.1 + ty - 10
+                    } else {
+                        panel.1 + ty + 34
+                    };
+                    g.fill(lx - 1, ly - 1, tw + 2, 10, [0.06, 0.06, 0.06, 0.94]);
+                    g.text(a, lx, ly, &label, WHITE, false);
+                }
+            }
+        }
+        self.render_bundle_tooltip(g, a);
+    }
+
+    /// ONE TAB OF THE STRIP (the extractTabButton walk — the sprite the
+    /// row/state/column triple picks, the icon the x+5 / y+9|y+7
+    /// offset draws, the missing registry entry the honest skip keeps).
+    fn render_creative_tab(
+        &mut self,
+        g: &mut Gui,
+        a: &mut GuiAssets,
+        panel: (i32, i32),
+        idx: usize,
+        selected: bool,
+    ) {
+        let tab = &CREATIVE_TABS[idx];
+        let (tx, ty) = creative_tab_origin(tab, 195, 136);
+        let row = if tab.top { 0 } else { 2 };
+        let state = if selected { 0 } else { 1 };
+        let sprite = CREATIVE_TAB_SPRITES[row + state][tab.column.min(6)];
+        g.sprite_file_region(a, sprite, 0, 0, 26, 32, panel.0 + tx, panel.1 + ty);
+        let Some(icon_id) = mc_registry::item_id_by_name(tab.icon) else {
+            return;
+        };
+        let iy = ty + if tab.top { 9 } else { 7 };
+        draw_item_icon(g, icon_id, panel.0 + tx + 5, panel.1 + iy);
+    }
+
     /// THE FURNACE FAMILY'S OWN RENDER (javap 26.2 AbstractFurnaceScreen —
     /// the extractBackground walk the CraftingScreen's texture lane
     /// shares, the progress pair the data words drive): the world
@@ -20629,6 +21330,11 @@ impl App {
             // the E-key screen): the carried's add-back walk rides, the
             // screen back to the world
             self.close_inventory();
+        } else if self.screen == ScreenKind::Creative {
+            // THE PICKER'S OWN CLOSE (the vanilla Escape on the
+            // creative screen — the removed() walk's carried law the
+            // E lane's close shares)
+            self.close_creative_picker();
         } else if self.screen == ScreenKind::Crafting {
             // THE TABLE'S OWN CLOSE (the vanilla Escape/E on the
             // table's screen): the clearContainer walk the
@@ -20974,6 +21680,12 @@ impl App {
             self.click_table_slot(mx, my, 0);
             return;
         }
+        if self.screen == ScreenKind::Creative {
+            // THE PICKER'S OWN PRESS (the slotClicked walk's left lane —
+            // the tabs, the palette, the store row, the outside drop)
+            self.click_creative(mx, my, 0);
+            return;
+        }
         self.on_attack();
     }
 
@@ -21010,6 +21722,13 @@ impl App {
         }
         if self.screen == ScreenKind::Crafting {
             self.click_table_slot(mx, my, 1);
+            return false;
+        }
+        if self.screen == ScreenKind::Creative {
+            // THE PICKER'S OWN RIGHT PRESS (the slotClicked walk's
+            // button-1 lane — the palette's split/eat arms, the store's
+            // place-one table, the outside split(1) drop)
+            self.click_creative(mx, my, 1);
             return false;
         }
         if self.screen == ScreenKind::World && !self.paused {
@@ -23227,6 +23946,21 @@ impl App {
                     }
                 }
                 None // the press between the slots — the hover's own miss
+            }
+            ScreenKind::Creative => {
+                // THE PICKER'S OWN HOVER (the palette cell first, the
+                // store row second — the slot id the palette's cell
+                // index carries, the store row the menu id 45+ keeps —
+                // the tooltip lane the same id space reads)
+                if let Some(cell) = self.creative_palette_cell(mx, my) {
+                    let (id, count) = self.creative_palette[cell];
+                    return Some((id, count, cell as i32));
+                }
+                if let Some(slot) = self.creative_store_cell(mx, my) {
+                    let (id, count) = self.inventory.items[slot];
+                    return Some((id, count, 45 + slot as i32));
+                }
+                None // the tabs, the scrollbar, the outside — the miss
             }
             _ => None, // the walk only the container screens answer
         }
@@ -35160,6 +35894,7 @@ impl App {
             }
             ScreenKind::Furnace => self.close_furnace(),
             ScreenKind::Inventory => self.close_inventory(),
+            ScreenKind::Creative => self.close_creative_picker(),
             ScreenKind::Crafting => self.close_crafting_table(),
             _ => {}
         }
@@ -37812,6 +38547,19 @@ impl App {
                 let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
                 let (gw, gh) = (g.w(), g.h());
                 self.render_crafting_table(&mut g, a, gw, gh);
+            }
+            ScreenKind::Creative => {
+                // THE PICKER'S OWN ROUND (the vanilla
+                // CreativeModeInventoryScreen over the frozen world):
+                // world underneath, dimmed, the tab's own background,
+                // the 14-tab strip, the palette, the scroller, the
+                // carried follow — the GameModeSwitcher's own shape the
+                // isPauseScreen-false screen keeps (the body freeze the
+                // container convention wears).
+                self.render_world_3d(fb, a);
+                let mut g = Gui::new(fb, Gui::auto_scale(fb.w, fb.h)).with_scramble(self.frame);
+                let (gw, gh) = (g.w(), g.h());
+                self.render_creative(&mut g, a, gw, gh);
             }
             ScreenKind::GameModeSwitcher => {
                 // THE F4 SWITCHER'S OWN ROUND (the vanilla
@@ -46492,6 +47240,140 @@ fn craft_result_packed(packed: &[i32], w: i32, h: i32) -> (i32, i32) {
 /// y2 = topPos + 78 — the 49x70 window the PiP renders the player
 /// into, panel-relative.
 pub const MANNEQUIN_RECT: (i32, i32, i32, i32) = (26, 8, 75, 78);
+
+/// THE CREATIVE TAB'S OWN SEAT KIND (the `CreativeModeTab$Type` the
+/// selectTab walk branches on — the CATEGORY the display items feed,
+/// the SEARCH the filter box wears, the INVENTORY the wrapped store,
+/// the HOTBAR the saved pages, the OPERATOR the permission gate).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum CreativeTabKind {
+    Category,
+    Search,
+    SavedHotbar,
+    Inventory,
+    Operator,
+}
+
+/// ONE TAB OF THE STRIP (the CreativeModeTabs.bootstrap walk's own
+/// registrations verbatim — the row/column/aligned-right/icons the
+/// decoded bytecode banks: TOP buildingBlocks/coloredBlocks/natural/
+/// functional/redstone/hotbar/search, BOTTOM tools/combat/foodAndDrink/
+/// ingredients/spawnEggs/op/inventory; the icons the icon-supplier
+/// lambdas' getstatic Items constants speak).
+pub struct CreativeTab {
+    /// The tab's lang key (the title's translatable row — the
+    /// `itemGroup.*` table the en_us file speaks).
+    pub label_key: &'static str,
+    /// The row/column/aligned-right the getTabX/getTabY geometry reads.
+    pub top: bool,
+    pub column: usize,
+    pub aligned_right: bool,
+    /// The icon item's registry name (the icon supplier's own Items
+    /// constant — the missing registry entry the honest skip keeps).
+    pub icon: &'static str,
+    /// The seat kind the selectTab walk branches on.
+    pub kind: CreativeTabKind,
+}
+
+/// THE 14 TABS (the bootstrap walk's own order — the TOP row the
+/// columns 0..6, the BOTTOM row the same pitch; the hotbar/search/
+/// inventory trio the aligned-right edge keeps).
+pub const CREATIVE_TABS: [CreativeTab; 14] = [
+    CreativeTab { label_key: "itemGroup.buildingBlocks", top: true, column: 0, aligned_right: false, icon: "bricks", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.coloredBlocks", top: true, column: 1, aligned_right: false, icon: "white_wool", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.natural", top: true, column: 2, aligned_right: false, icon: "grass_block", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.functional", top: true, column: 3, aligned_right: false, icon: "oak_sign", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.redstone", top: true, column: 4, aligned_right: false, icon: "redstone", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.hotbar", top: true, column: 5, aligned_right: true, icon: "bookshelf", kind: CreativeTabKind::SavedHotbar },
+    CreativeTab { label_key: "itemGroup.search", top: true, column: 6, aligned_right: true, icon: "compass", kind: CreativeTabKind::Search },
+    CreativeTab { label_key: "itemGroup.tools", top: false, column: 0, aligned_right: false, icon: "diamond_pickaxe", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.combat", top: false, column: 1, aligned_right: false, icon: "netherite_sword", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.foodAndDrink", top: false, column: 2, aligned_right: false, icon: "golden_apple", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.ingredients", top: false, column: 3, aligned_right: false, icon: "iron_ingot", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.spawnEggs", top: false, column: 4, aligned_right: false, icon: "creeper_spawn_egg", kind: CreativeTabKind::Category },
+    CreativeTab { label_key: "itemGroup.op", top: false, column: 5, aligned_right: true, icon: "command_block", kind: CreativeTabKind::Operator },
+    CreativeTab { label_key: "itemGroup.inventory", top: false, column: 6, aligned_right: true, icon: "chest", kind: CreativeTabKind::Inventory },
+];
+
+/// THE TAB'S PANEL-RELATIVE DRAW ORIGIN (the getTabX/getTabY +
+/// extractTabButton walks' own geometry: x = 27*column, the
+/// aligned-right x = imageWidth - 27*(7-column) + 1; y = -28 the TOP
+/// row's overhang keeps (the 32-tall sprite the panel edge overlaps
+/// 4px), y = imageHeight - 4 the BOTTOM row's own overhang).
+fn creative_tab_origin(tab: &CreativeTab, image_width: i32, image_height: i32) -> (i32, i32) {
+    let mut x = 27 * tab.column as i32;
+    if tab.aligned_right {
+        x = image_width - 27 * (7 - tab.column as i32) + 1;
+    }
+    let y = if tab.top {
+        -28
+    } else {
+        image_height - 4
+    };
+    (x, y)
+}
+
+/// THE TAB SPRITE PATHS (the extractTabButton walk's SELECTED/UNSELECTED
+/// arrays — the `container/creative_inventory/tab_{top,bottom}_{state}_{n}`
+/// sprites the 26.2 jar's gui/sprites tree carries; the file paths the
+/// sprite_file lane reads under the cache root).
+pub const CREATIVE_TAB_SPRITES: [[&str; 7]; 4] = [
+    // top, selected
+    [
+        "gui/sprites/container/creative_inventory/tab_top_selected_1.png",
+        "gui/sprites/container/creative_inventory/tab_top_selected_2.png",
+        "gui/sprites/container/creative_inventory/tab_top_selected_3.png",
+        "gui/sprites/container/creative_inventory/tab_top_selected_4.png",
+        "gui/sprites/container/creative_inventory/tab_top_selected_5.png",
+        "gui/sprites/container/creative_inventory/tab_top_selected_6.png",
+        "gui/sprites/container/creative_inventory/tab_top_selected_7.png",
+    ],
+    // top, unselected
+    [
+        "gui/sprites/container/creative_inventory/tab_top_unselected_1.png",
+        "gui/sprites/container/creative_inventory/tab_top_unselected_2.png",
+        "gui/sprites/container/creative_inventory/tab_top_unselected_3.png",
+        "gui/sprites/container/creative_inventory/tab_top_unselected_4.png",
+        "gui/sprites/container/creative_inventory/tab_top_unselected_5.png",
+        "gui/sprites/container/creative_inventory/tab_top_unselected_6.png",
+        "gui/sprites/container/creative_inventory/tab_top_unselected_7.png",
+    ],
+    // bottom, selected
+    [
+        "gui/sprites/container/creative_inventory/tab_bottom_selected_1.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_selected_2.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_selected_3.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_selected_4.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_selected_5.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_selected_6.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_selected_7.png",
+    ],
+    // bottom, unselected
+    [
+        "gui/sprites/container/creative_inventory/tab_bottom_unselected_1.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_unselected_2.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_unselected_3.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_unselected_4.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_unselected_5.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_unselected_6.png",
+        "gui/sprites/container/creative_inventory/tab_bottom_unselected_7.png",
+    ],
+];
+
+/// THE SCROLLER PAIR (the extractBackground walk's SCROLLER_SPRITE /
+/// SCROLLER_DISABLED_SPRITE constants — the 12x15 handle the
+/// (175, 18 + 77*scroll) position rides).
+pub const CREATIVE_SCROLLER: &str =
+    "gui/sprites/container/creative_inventory/scroller.png";
+pub const CREATIVE_SCROLLER_DISABLED: &str =
+    "gui/sprites/container/creative_inventory/scroller_disabled.png";
+
+/// THE PICKER'S PANEL ORIGIN (the AbstractContainerScreen's own
+/// centered law — `leftPos = (width - imageWidth) / 2` over the
+/// 195x136 panel the ctor's init walk keeps).
+fn creative_panel_origin(w: i32, h: i32) -> (i32, i32) {
+    ((w - 195) / 2, (h - 136) / 2)
+}
 
 /// THE MANNEQUIN'S TURN LAW (javap 26.2 extractEntityInInventory-
 /// FollowsMouse verbatim): the rect-center minus the mouse, /40.0,
@@ -101644,6 +102526,213 @@ cow_sound_variant: None,
         assert_eq!(app.craft_grid[0], (0, 0), "the cell spent");
         assert_eq!(app.craft_result, (0, 0), "the empty grid's EMPTY verdict");
         assert_eq!(app.inventory.items[5], (0, 0), "the store slot still empty");
+    }
+
+    /// THE CREATIVE E (the 26.2 CreativeModeInventoryScreen's own
+    /// hasInfiniteMaterials gate the init walk speaks — the creative
+    /// screen the infinite-materials player alone wears): the survival
+    /// E the inventory screen keeps, the creative E the picker opens,
+    /// the source the display law feeds (the count-1 entries the
+    /// ItemDisplayBuilder's 'Stack size must be exactly 1'
+    /// IllegalArgumentException banks, the air the registry's id 0 the
+    /// display list never carried), the palette head the scrollTo(0)
+    /// refill speaks, the default tab the building-blocks seat keeps,
+    /// the WIRE session the survival screen keeps (the
+    /// ServerboundSetCreativeModeSlot packet lane the follow-up owes).
+    #[test]
+    fn the_creative_e_opens_the_picker_and_the_palette_holds() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        // the survival E the inventory screen keeps
+        app.game_mode = GameMode::Survival;
+        app.open_inventory();
+        assert_eq!(app.screen, ScreenKind::Inventory, "the survival seat");
+        app.close_inventory();
+        assert_eq!(app.screen, ScreenKind::World);
+        // the creative E the picker wears
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        assert_eq!(app.screen, ScreenKind::Creative, "the picker's seat");
+        assert_eq!(app.creative_tab, 0, "the building-blocks default");
+        // THE SOURCE (the display law)
+        assert!(!app.creative_source.is_empty(), "the registry's own list");
+        assert!(
+            app.creative_source
+                .iter()
+                .all(|&(_, count)| count == 1),
+            "the count-1 display law"
+        );
+        assert!(
+            app.creative_source.iter().all(|&(id, _)| id != 0),
+            "the air the display list never carried"
+        );
+        assert_eq!(
+            app.creative_source[0],
+            (stone, 1),
+            "stone the wire order's head"
+        );
+        // the palette head the scrollTo(0) refill speaks
+        assert_eq!(app.creative_palette[0], (stone, 1), "cell 0 = stone");
+        assert_eq!(
+            app.creative_palette[44],
+            app.creative_source[44],
+            "the head page full"
+        );
+        // THE WIRE GATE (the live session the survival screen keeps)
+        app.world_is_network = true;
+        app.open_inventory();
+        assert_eq!(app.screen, ScreenKind::Inventory, "the wire the survival keeps");
+        app.world_is_network = false;
+        // the E closes back to the world (the removed()'s carried law —
+        // the empty carried the plain close keeps)
+        app.open_inventory();
+        assert_eq!(app.screen, ScreenKind::Creative);
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "the E close");
+    }
+
+    /// THE PALETTE'S OWN CLICK LAW (the slotClicked walk's decoded
+    /// arms verbatim): the plain take the hovered stack's own count
+    /// speaks (the display law's count-1 = ONE per click), the
+    /// same-item left the grow(1) dial rides, the right the shrink(1)
+    /// the palette eats, the shift the max-stack take banks, the
+    /// different-item click the whole carried DESTROYS, the
+    /// empty-hole right one eats, the CLONE the middle-click full
+    /// stack speaks, the bottom row the predict_pickup pair rides.
+    #[test]
+    fn the_creative_palette_the_grab_the_dial_the_eat() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        // the palette cell 0's hit center (the 16x16 rect at (9, 18))
+        let cell0 = (px + 9 + 8, py + 18 + 8);
+        let cell1 = (px + 27 + 8, py + 18 + 8); // the granite seat
+        // THE PLAIN TAKE (the display law: count-1 → ONE)
+        app.on_press(cell0.0, cell0.1);
+        assert_eq!(app.inv_carried, (stone, 1), "the one-per-click take");
+        // THE GROW DIAL (the same-slot left click)
+        app.on_press(cell0.0, cell0.1);
+        assert_eq!(app.inv_carried, (stone, 2), "the grow(1) dial");
+        // THE SHRINK (the palette eats one)
+        app.on_right_press(cell0.0, cell0.1);
+        assert_eq!(app.inv_carried, (stone, 1), "the shrink(1) eat");
+        // THE SHIFT TAKE (the max-stack arm)
+        app.inv_carried = (0, 0);
+        app.shift_down = true;
+        app.on_press(cell0.0, cell0.1);
+        assert_eq!(app.inv_carried, (stone, 64), "the max take");
+        app.shift_down = false;
+        // THE EAT (the different-item click destroys the whole carried)
+        app.on_press(cell1.0, cell1.1);
+        assert_eq!(app.inv_carried, (0, 0), "the palette ate the stack");
+        // THE CLONE (the middle-click full stack)
+        app.on_creative_clone_click(cell0.0, cell0.1);
+        assert_eq!(app.inv_carried, (stone, 64), "the CLONE max");
+        // THE EMPTY-HOLE EAT (the search seat the short list keeps —
+        // the tail cells the empty holes speak)
+        app.select_creative_tab(6);
+        for c in "compass".chars() {
+            app.on_creative_char(c);
+        }
+        assert!(
+            app.creative_items.len() < 45,
+            "the compass query the short list keeps"
+        );
+        let hole = (px + 9 + 5 * 18 + 8, py + 18 + 4 * 18 + 8); // the tail row's cell
+        app.on_right_press(hole.0, hole.1);
+        assert_eq!(app.inv_carried, (stone, 63), "the hole ate one");
+        // THE STORE ROW (the bottom row's slot 0 — the place + the
+        // pickup the predict pair speaks)
+        app.on_press(px + 9 + 8, py + 112 + 8);
+        assert_eq!(app.inventory.items[0], (stone, 63), "the store placed");
+        assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
+        app.on_press(px + 9 + 8, py + 112 + 8);
+        assert_eq!(app.inv_carried, (stone, 63), "the store picked back");
+        assert_eq!(app.inventory.items[0], (0, 0), "the store emptied");
+    }
+
+    /// THE SCROLL, THE SEARCH AND THE CLOSE (the mouseScrolled walk's
+    /// law — the delta / scrollableRows subtraction the clamp keeps,
+    /// the rowIndex the rounded product answers, the tail page the
+    /// empty cells speak; the search the identifier filter wears, the
+    /// tab switch the both-way clear keeps; the close the carried's
+    /// add-back walk serves, the persisted INVENTORY tab the re-open's
+    /// building-blocks default answers).
+    #[test]
+    fn the_creative_scroll_the_search_and_the_close_return() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        // THE SCROLL LAW (the scrollable rows the calculateRowCount
+        // walk keeps: ceil(n/9) - 5)
+        let rows = (app.creative_items.len() as i32 + 8) / 9 - 5;
+        assert!(rows > 0, "the full registry the scroll span holds");
+        assert_eq!(app.creative_scroll, 0.0, "the fresh open's 0");
+        // the wheel-up at 0 the clamp keeps (the top page stays)
+        app.on_creative_scroll(1.0);
+        assert_eq!(app.creative_scroll, 0.0, "the up-clamp");
+        // the wheel-down one step: scroll = 1/rows, the rowIndex = 1
+        // — the palette the source's second row wears
+        let second_row_head = app.creative_items[9];
+        app.on_creative_scroll(-1.0);
+        assert_eq!(app.creative_palette[0], second_row_head, "the row-1 refill");
+        // the full scroll: the tail page the last row's remainder
+        // keeps (1536 items = 170 rows + the 6-item tail)
+        app.on_creative_scroll(-1.0e9);
+        assert_eq!(app.creative_scroll, 1.0, "the down-clamp");
+        let tail_head = app.creative_items[9 * (rows as usize + 4)];
+        assert_eq!(app.creative_palette[36], tail_head, "the tail page's head");
+        assert_eq!(app.creative_palette[42], (0, 0), "the tail's empty cells");
+        // THE SEARCH (the identifier filter — the case the lowercased
+        // ask keeps)
+        app.select_creative_tab(6);
+        assert!(app.creative_search.is_empty(), "the both-way clear");
+        for c in "COMPASS".chars() {
+            app.on_creative_char(c);
+        }
+        assert_eq!(app.creative_search, "COMPASS", "the box holds the text");
+        assert!(
+            app.creative_items.len() < app.creative_source.len(),
+            "the filter narrows"
+        );
+        assert!(
+            app.creative_items.iter().all(|&(id, _)| {
+                mc_registry::generated::item_order::ITEM_WIRE_ORDER[id as usize]
+                    .contains("compass")
+            }),
+            "the identifier filter"
+        );
+        app.on_creative_backspace();
+        assert_eq!(app.creative_search, "COMPAS", "the pop");
+        // the category seat the full list restores
+        app.select_creative_tab(0);
+        assert_eq!(app.creative_items.len(), app.creative_source.len());
+        assert_eq!(app.creative_scroll, 0.0, "the fresh scroll");
+        // THE CLOSE RETURN (the carried's add-back walk — the empty
+        // store the whole stack takes)
+        app.inv_carried = (stone, 30);
+        app.close_creative_picker();
+        assert_eq!(app.screen, ScreenKind::World, "the close's return");
+        assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
+        assert_eq!(app.inventory.items[0], (stone, 30), "the store took it");
+        // THE PERSISTED TAB (the INVENTORY seat the re-open's default
+        // answers — the loop the palette tab keeps)
+        app.creative_tab = 13;
+        app.open_inventory();
+        assert_eq!(app.screen, ScreenKind::Creative);
+        assert_eq!(app.creative_tab, 0, "the default's re-answer");
     }
 
     /// THE ARMOR COLUMN (the 26.2 ArmorSlot's own mayPlace law — the
