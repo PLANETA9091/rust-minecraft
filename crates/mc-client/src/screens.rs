@@ -13735,7 +13735,10 @@ impl App {
                 // the exploded TNT cells queue — the creeper's blast the
                 // mob loop fills, the tnt's own boom the primed lane
                 // extends, the spawns the post-loop walk wears)
-                let mut tnt_chain_spawns: Vec<(i32, i32, i32, i32)> = Vec::new();
+                let mut tnt_chain_spawns: Vec<(
+                    (i32, i32, i32, i32),
+                    Option<crate::mob::BlastSource>,
+                )> = Vec::new();
                 let mut explosion_cells: Vec<(i32, i32, i32)> = Vec::new();
                 // THE BLAST'S OWN DROPS (javap `ServerExplosion.
                 // interactWithBlocks` the 26.2 jar speaks — the shuffled
@@ -13744,7 +13747,7 @@ impl App {
                 // wear (the popResource law the ItemDrop::spawn keeps)
                 let mut explosion_drops: Vec<crate::mob::ExplosionDropStack> = Vec::new();
                 let mut blast_player: Option<
-                    (crate::mob::ExplosionBlast, Option<crate::mob::MobKind>),
+                    (crate::mob::ExplosionBlast, Option<crate::mob::BlastSource>),
                 > = None;
                 let mut blast_sources: Vec<(
                     i32,
@@ -14005,16 +14008,27 @@ impl App {
                             // THE CHAIN'S OWN QUEUE (the creeper's blast
                             // the exploded TNT cells the wasExploded law
                             // queues — the post-loop walk the spawns
-                            // serves)
-                            tnt_chain_spawns
-                                .extend(ev.explosion_tnt_chains.iter().copied());
+                            // serves) THE CHAIN'S OWN INHERITANCE (the
+                            // new PrimedTnt the explosion's own indirect
+                            // source the ctor's owner arg speaks — the
+                            // creeper the chain's own word wears)
+                            tnt_chain_spawns.extend(
+                                ev.explosion_tnt_chains
+                                    .iter()
+                                    .copied()
+                                    .map(|c| {
+                                        (c, Some(crate::mob::BlastSource::Mob(mob.kind)))
+                                    }),
+                            );
                             if ev.blast_player.is_some() {
                                 // THE CREEPER'S OWN NAME (the explosion's
                                 // source entity the getIndirectSourceEntity
                                 // walk returns — the entity row the death
                                 // message speaks)
                                 blast_player =
-                                    ev.blast_player.map(|b| (b, Some(mob.kind)));
+                                    ev.blast_player.map(|b| {
+                                        (b, Some(crate::mob::BlastSource::Mob(mob.kind)))
+                                    });
                             }
                             if ev.ambient {
                                 // THE PLAY'S OWN NULL GATE (javap
@@ -14362,16 +14376,25 @@ impl App {
                                     .extend(ev.explosion_blocks.iter().copied());
                                 explosion_drops
                                     .extend(ev.explosion_drops.iter().copied());
-                                tnt_chain_spawns
-                                    .extend(ev.explosion_tnt_chains.iter().copied());
+                                tnt_chain_spawns.extend(
+                                    ev.explosion_tnt_chains
+                                        .iter()
+                                        .copied()
+                                        .map(|c| (c, t.owner)),
+                                );
                                 if ev.blast_player.is_some() {
-                                    // THE OWNERLESS BLAST'S OWN ROW (the
-                                    // PrimedTnt's own explosion the
-                                    // owner-less source wears — the
-                                    // getIndirectSourceEntity null the
-                                    // generic row keeps: "mc2rs blew up")
+                                    // THE OWNER'S OWN ROW (javap
+                                    // `PrimedTnt.getOwner` the
+                                    // getIndirectSourceEntity walk reads —
+                                    // the flint arm's own prime the player
+                                    // names: "mc2rs was blown up by
+                                    // mc2rs" the vanilla row the owner
+                                    // word wears EVEN WHEN the owner IS
+                                    // the killed body; the fire walk's
+                                    // None the generic row keeps: "mc2rs
+                                    // blew up")
                                     blast_player =
-                                        ev.blast_player.map(|b| (b, None));
+                                        ev.blast_player.map(|b| (b, t.owner));
                                 }
                             } else {
                                 // the client-side SMOKE (the addParticle
@@ -14406,7 +14429,7 @@ impl App {
                         // moment answers (the vanilla's own entity
                         // order — the fresh body the same-tick scan
                         // never rides).
-                        for (bx, by, bz, fuse) in tnt_chain_spawns.iter().copied() {
+                        for ((bx, by, bz, fuse), owner) in tnt_chain_spawns.iter().copied() {
                             let id = self.next_mob_id;
                             self.next_mob_id += 1;
                             let mut t = crate::mob::PrimedTnt::new(
@@ -14417,6 +14440,12 @@ impl App {
                                 self.mob_rng.next(),
                             );
                             t.fuse = fuse;
+                            // THE CHAIN'S OWN WORD (the parent's own
+                            // indirect source the wasExploded walk
+                            // speaks — the player the flint-primed
+                            // chain names, the creeper the mob chain
+                            // wears, the fire the None keeps)
+                            t.owner = owner;
                             self.primed_tnts.push(t);
                         }
                         // THE BLAST'S OWN SIBLING DOSES (the hurtEntities
@@ -14663,11 +14692,21 @@ impl App {
                 // creeper's own name the %2$s answers —, the null the
                 // generic row keeps ("mc2rs blew up"))
                 if let Some((blast, source)) = blast_player {
+                    // THE SOURCE'S OWN ROW (the getIndirectSourceEntity
+                    // walk the die answers): the MOB the creeper's own
+                    // name fills, the PLAYER the flint arm's own prime
+                    // speaks, the null the generic row keeps ("mc2rs
+                    // blew up")
                     let landed = match source {
-                        Some(kind) => self.hurt_by_named(
+                        Some(crate::mob::BlastSource::Mob(kind)) => self.hurt_by_named(
                             blast.dose as f32,
                             "death.attack.explosion.player",
                             &mob_kind_display_name(kind),
+                        ),
+                        Some(crate::mob::BlastSource::Player) => self.hurt_by_named(
+                            blast.dose as f32,
+                            "death.attack.explosion.player",
+                            PLAYER_NAME,
                         ),
                         None => {
                             self.hurt_keyed(blast.dose as f32, "death.attack.explosion")
@@ -35024,13 +35063,19 @@ impl App {
         }
         let id = self.next_mob_id;
         self.next_mob_id += 1;
-        let tnt = crate::mob::PrimedTnt::new(
+        let mut tnt = crate::mob::PrimedTnt::new(
             id,
             hit.pos.0 as f64 + 0.5,
             hit.pos.1 as f64,
             hit.pos.2 as f64 + 0.5,
             self.mob_rng.next(),
         );
+        // THE PRIME'S OWN OWNER (javap the prime walk the player arg
+        // speaks — the setOwner the ctor's caller serves, the
+        // getIndirectSourceEntity read the death row answers: the
+        // blast the flint arm's own hand names, "was blown up by
+        // mc2rs" the pair fills)
+        tnt.owner = Some(crate::mob::BlastSource::Player);
         self.primed_tnts.push(tnt);
         // THE PRIME'S OWN VOICE (the playSound law — the BLOCKS source
         // the 1.0F/1.0F pair keeps, the stereo tail the distance law
@@ -48447,6 +48492,121 @@ mod tests {
             tr("entity.minecraft.arrow"),
             Some("Arrow"),
             "the ownerless row the direct entity's own name wears"
+        );
+    }
+
+    /// THE BLAST'S OWN PRIMER (javap `PrimedTnt.getOwner` the
+    /// getIndirectSourceEntity walk reads — the flint arm's own prime
+    /// the player names: "mc2rs was blown up by mc2rs" the pair fills
+    /// EVEN WHEN the owner IS the killed body, the fire walk's None
+    /// the generic row keeps; the chain the wasExploded walk the
+    /// parent's own word inherits — the chained cell the SAME row
+    /// speaks).
+    #[test]
+    fn the_blast_names_its_primer() {
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        // THE PLAYER-PRIMED SHOT (the owner word the flint lane's own
+        // prime banks — the dose the point-blank body takes)
+        app.health = 1.0;
+        let (px, py, pz) = (
+            app.body.as_ref().unwrap().x,
+            app.body.as_ref().unwrap().y,
+            app.body.as_ref().unwrap().z,
+        );
+        let mut t = crate::mob::PrimedTnt::new(9, px + 1.5, py, pz, 7);
+        t.fuse = 2;
+        t.owner = Some(crate::mob::BlastSource::Player);
+        app.primed_tnts.push(t);
+        for _ in 0..40 {
+            if app.dead {
+                break;
+            }
+            app.update();
+        }
+        assert!(
+            app.dead,
+            "the point-blank dose the body takes (health={} msg={:?})",
+            app.health, app.death_message
+        );
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was blown up by mc2rs"),
+            "the primer row the owner's own name wears"
+        );
+        // THE FIRE-PRIMED SHOT (the ctor's own None the fire walk
+        // keeps — the getIndirectSourceEntity null the generic row
+        // answers)
+        app.respawn();
+        app.health = 1.0;
+        let (px, py, pz) = (
+            app.body.as_ref().unwrap().x,
+            app.body.as_ref().unwrap().y,
+            app.body.as_ref().unwrap().z,
+        );
+        let mut t2 = crate::mob::PrimedTnt::new(10, px + 1.5, py, pz, 7);
+        t2.fuse = 2;
+        app.primed_tnts.push(t2);
+        for _ in 0..40 {
+            if app.dead {
+                break;
+            }
+            app.update();
+        }
+        assert!(
+            app.dead,
+            "the ownerless dose the body takes too (msg={:?})",
+            app.death_message
+        );
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs blew up"),
+            "the fire walk's row the name never carries"
+        );
+        // THE CHAIN'S OWN INHERITANCE (javap `TntBlock.wasExploded` —
+        // the chained cell the explosion's own indirect source the
+        // ctor arg speaks: the player-primed boom the chained body's
+        // word wears; the WALL the both booms survive — the words the
+        // chain alone proves)
+        app.respawn();
+        app.health = 40.0;
+        let (px, py, pz) = (
+            app.body.as_ref().unwrap().x,
+            app.body.as_ref().unwrap().y,
+            app.body.as_ref().unwrap().z,
+        );
+        // the chained cell the radius answers (3 cells east — the
+        // entity the 1.5 gap the blast walk reaches)
+        app.offline_world.as_mut().unwrap().set(
+            px.floor() as i32 + 3,
+            py.floor() as i32,
+            pz.floor() as i32,
+            crate::world::TNT,
+        );
+        let mut t3 = crate::mob::PrimedTnt::new(11, px + 1.5, py, pz, 7);
+        t3.fuse = 2;
+        t3.owner = Some(crate::mob::BlastSource::Player);
+        app.primed_tnts.push(t3);
+        let mut chain_named = false;
+        for _ in 0..120 {
+            app.update();
+            if app
+                .primed_tnts
+                .iter()
+                .any(|t| t.id != 11 && t.owner == Some(crate::mob::BlastSource::Player))
+            {
+                chain_named = true;
+            }
+            if chain_named && app.primed_tnts.is_empty() {
+                break; // the chain body's own boom the walk spent
+            }
+        }
+        assert!(
+            chain_named,
+            "the chain the parent's own word inherits (tnts left: {})",
+            app.primed_tnts.len()
         );
     }
 

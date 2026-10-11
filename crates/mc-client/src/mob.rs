@@ -2661,6 +2661,19 @@ pub struct ExplosionBlast {
     pub push_z: f64,
 }
 
+/// THE BLAST'S OWN NAMED SOURCE (the getDeathMessage indirect-entity
+/// read the explosion row wears — the LIVING source the creeper's own
+/// body answers, the TNT the owner ref the prime arm's setOwner
+/// names, the null the generic row keeps). The death lane's own word
+/// the blast_player tuple carries — the mob the entity row's display
+/// name fills, the player the flint arm's own name speaks, the chain
+/// the wasExploded walk the parent's own word inherits.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum BlastSource {
+    Mob(MobKind),
+    Player,
+}
+
 /// The zombie's attack out-edge (the doHurtTarget the melee goal
 /// speaks — the damage attribute and the knockback direction).
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -10714,6 +10727,12 @@ pub struct PrimedTnt {
     pub fuse: i32,
     pub on_ground: bool,
     pub dead: bool,
+    /// THE OWNER'S OWN WORD (javap `PrimedTnt.getOwner` the
+    /// getIndirectSourceEntity walk reads — the flint arm's own prime
+    /// the player names, the chain the wasExploded walk the parent's
+    /// own indirect source inherits, the fire walk the None keeps —
+    /// the death row the causing-vs-direct read wears)
+    pub owner: Option<BlastSource>,
     /// the entity's own stream (the ctor's angle draw + the explode
     /// walk's ray/shuffle/drop draws the shared walk serves)
     pub rng: Lcg,
@@ -10741,6 +10760,7 @@ impl PrimedTnt {
             fuse: TNT_FUSE,
             on_ground: false,
             dead: false,
+            owner: None,
             rng,
         }
     }
