@@ -7717,6 +7717,15 @@ pub struct App {
     pub hurt_duration: i32,
     pub invulnerable_time: i32,
     pub last_hurt: f32,
+    /// THE COMBAT TRACKER'S OWN SHOVER MEMORY (the 26.2 CombatTracker
+    /// entries the fall death's die walk consults): the mob-caused hurt
+    /// the (kind, stamp) pair banks — the tracker's addRecord walk the
+    /// landed dose arms — and the FALL's own word the memory picks: the
+    /// open window the assist row speaks ("was doomed to fall by %2$s"),
+    /// the expired retention the accident row keeps ("fell from a high
+    /// place"). The respawn the fresh body's fresh tracker the None
+    /// clears.
+    pub last_hurt_by_mob: Option<(crate::mob::MobKind, u64)>,
     /// THE STATUS-EFFECT STORE (the effects.rs module's own laws — the
     /// add/update/compare chain the wire and the eat arc ride, the
     /// absorption value the white hearts row speaks): the OFFLINE lane's
@@ -8618,6 +8627,7 @@ impl App {
             hurt_duration: 0,
             invulnerable_time: 0,
             last_hurt: 0.0,
+            last_hurt_by_mob: None,
             hurt_yaw: 0.0,
             health_blink_time: 0,
             last_bubble_pop_sound_played: 0,
@@ -11933,6 +11943,12 @@ impl App {
                             "death.attack.mob",
                             &mob_kind_display_name(crate::mob::MobKind::Warden),
                         ) {
+                            // THE SHOVER'S OWN ENTRY (the tracker's
+                            // addRecord walk the landed dose arms —
+                            // the warden's shove the fall's own word
+                            // the assist row later speaks)
+                            self.last_hurt_by_mob =
+                                Some((crate::mob::MobKind::Warden, self.frame));
                             let rad = yaw as f64 * std::f64::consts::PI / 180.0;
                             let (nx, nz) = (-(rad.sin()), rad.cos());
                             if let Some(b) = &mut self.body {
@@ -12083,6 +12099,13 @@ impl App {
                             crate::sculk::WARDEN_SONIC_DAMAGE,
                             "death.attack.sonic_boom",
                         ) {
+                            // THE SHOVER'S OWN ENTRY (the sonicBoom
+                            // source the warden the causing entity
+                            // names — the beam's shove the fall's own
+                            // word the assist row later speaks, the
+                            // death row the shriek alone wears)
+                            self.last_hurt_by_mob =
+                                Some((crate::mob::MobKind::Warden, self.frame));
                             if let Some(b) = &mut self.body {
                                 b.vx += bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
                                 b.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
@@ -14693,6 +14716,12 @@ impl App {
                         "death.attack.mob",
                         &mob_kind_display_name(kind),
                     ) {
+                        // THE SHOVER'S OWN ENTRY (the tracker's
+                        // addRecord walk the landed dose arms — the
+                        // mob-caused hurt the (kind, stamp) pair
+                        // banks, the fall's own word the entry the
+                        // assist row later speaks)
+                        self.last_hurt_by_mob = Some((kind, self.frame));
                         // THE KNOCKBACK (dealDefaultKnockback's own law
                         // over the victim): the impulse rides the minus
                         // of the attacker-minus-victim direction —
@@ -14727,11 +14756,21 @@ impl App {
                     // speaks, the null the generic row keeps ("mc2rs
                     // blew up")
                     let landed = match source {
-                        Some(crate::mob::BlastSource::Mob(kind)) => self.hurt_by_named(
-                            blast.dose as f32,
-                            "death.attack.explosion.player",
-                            &mob_kind_display_name(kind),
-                        ),
+                        Some(crate::mob::BlastSource::Mob(kind)) => {
+                            // THE SHOVER'S OWN ENTRY (the explosion's
+                            // causing entity the creeper's own body
+                            // answers — the blast's shove the fall's
+                            // own word the assist row later speaks)
+                            let hit = self.hurt_by_named(
+                                blast.dose as f32,
+                                "death.attack.explosion.player",
+                                &mob_kind_display_name(kind),
+                            );
+                            if hit {
+                                self.last_hurt_by_mob = Some((kind, self.frame));
+                            }
+                            hit
+                        }
                         Some(crate::mob::BlastSource::Player) => self.hurt_by_named(
                             blast.dose as f32,
                             "death.attack.explosion.player",
@@ -14954,15 +14993,31 @@ impl App {
                 // walk the DIRECT entity the arrow's own en_us display
                 // name speaks)
                 for (dmg, owner_id) in arrow_player_hits {
-                    let killer = owner_id
+                    // THE SHOOTER'S OWN KIND FIRST (the borrow the
+                    // hurt walk's own mutable pass never rides — the
+                    // kind the Copy the lookup's end speaks)
+                    let shooter_kind = owner_id
                         .and_then(|id| self.mobs.iter().find(|m| m.id == id))
-                        .map(|m| mob_kind_display_name(m.kind))
+                        .map(|m| m.kind);
+                    let killer = shooter_kind
+                        .map(mob_kind_display_name)
                         .unwrap_or_else(|| {
                             tr("entity.minecraft.arrow")
                                 .unwrap_or("Arrow")
                                 .to_string()
                         });
-                    self.hurt_by_named(dmg as f32, "death.attack.arrow", &killer);
+                    if self.hurt_by_named(dmg as f32, "death.attack.arrow", &killer) {
+                        // THE SHOVER'S OWN ENTRY (the arrow's causing
+                        // entity the shooter names — the skeleton's
+                        // knock the fall's own word the assist row
+                        // later speaks; the ownerless shot the DIRECT
+                        // entity the arrow itself the tracker entry
+                        // never credits, the null attacker the assist
+                        // walk refuses)
+                        if let Some(kind) = shooter_kind {
+                            self.last_hurt_by_mob = Some((kind, self.frame));
+                        }
+                    }
                 }
                 // THE CRIT TRAIL'S OWN SPAWNS (the words the flight
                 // ticks carried — the crit() ctor each six-pack answers,
@@ -36681,6 +36736,15 @@ impl App {
         }
     }
 
+    /// THE COMBAT TRACKER'S OWN RETENTION (the 26.2 CombatTracker.class
+    /// the constant-pool field walk pins — javap absent, the class-file
+    /// field parser the ConstantValue attributes read:
+    /// RESET_DAMAGE_STATUS_TIME = 100 the taking-damage grace keeps,
+    /// RESET_COMBAT_STATUS_TIME = 300 the IN-COMBAT shelf the entries
+    /// speak — the shover's record the 300-tick walk consults, the
+    /// tracker's own tick the lastDamageTime distance reads).
+    const COMBAT_TRACKER_RETENTION_TICKS: u64 = 300;
+
     fn apply_fall_damage(&mut self, damage: i32) {
         // THE INVULNERABLE HEAD'S OWN WRAPPER ARM (javap hurtServer
         // pcs 0-10 — the isInvulnerableTo verdict the fall source's
@@ -36699,14 +36763,38 @@ impl App {
         self.food_data
             .add_exhaustion(crate::food::FALL_DAMAGE_EXHAUSTION);
         // THE FALL DEATH'S OWN NAME (the vanilla die's CombatTracker
-        // walk — the fall type's own lang key the death message speaks:
-        // death.fell.accident.generic the en_us table carries)
-        self.hurt_inner(
-            damage as f32,
-            HurtVoice::Plain,
-            Some("death.fell.accident.generic"),
-            None,
-        );
+        // walk — the getMostSignificantFall entry the IS_FALL read
+        // answers): the shover's entry the assist row wears
+        // ("death.fell.assist" = "%1$s was doomed to fall by %2$s" the
+        // en_us table carries), the expired entries the accident row
+        // keeps ("death.fell.accident.generic" = "%1$s fell from a
+        // high place"). THE ENTRY'S OWN SHELF the
+        // RESET_COMBAT_STATUS_TIME 300 speaks; the fall's own damage
+        // the lastDamageTime re-stamp wears — the open window's stamp
+        // the landing refreshes, the entry the tracker's in-combat
+        // shelf keeps alive. The MOB-caused entries only the banks
+        // wear — the player-attack gate (IS_PLAYER_ATTACK the assist
+        // arm refuses) the sim's own shape never crosses (the single
+        // player the only shove source the blast lane banks, the
+        // vanilla row the name suppresses), the ownerless arrow the
+        // null attacker the tracker entry never credits.
+        let shover = match self.last_hurt_by_mob {
+            Some((kind, stamp)) => {
+                if self.frame - stamp <= Self::COMBAT_TRACKER_RETENTION_TICKS {
+                    self.last_hurt_by_mob = Some((kind, self.frame));
+                    Some(mob_kind_display_name(kind))
+                } else {
+                    self.last_hurt_by_mob = None;
+                    None
+                }
+            }
+            None => None,
+        };
+        let (death_key, killer) = match &shover {
+            Some(name) => (Some("death.fell.assist"), Some(name.as_str())),
+            None => (Some("death.fell.accident.generic"), None),
+        };
+        self.hurt_inner(damage as f32, HurtVoice::Plain, death_key, killer);
     }
 
     /// THE HURT LAW (javap `hurtServer`'s own pipeline, the LOCAL
@@ -37016,6 +37104,10 @@ impl App {
         self.hurt_duration = 0;
         self.invulnerable_time = 0;
         self.last_hurt = 0.0;
+        // THE TRACKER'S OWN DEATH (the vanilla respawn re-creates the
+        // LivingEntity — the fresh CombatTracker's empty entries the
+        // new body carries, the shover memory the None answers)
+        self.last_hurt_by_mob = None;
         if let (Some(b), Some((x, y, z, yaw, pitch))) = (self.body.as_mut(), self.spawn_pose) {
             b.x = x;
             b.y = y;
@@ -48703,6 +48795,15 @@ mod tests {
             Some("mc2rs was shot by Skeleton"),
             "the shot row the archer's own name wears"
         );
+        // THE SHOVER'S OWN ENTRY (the arrow's causing entity the
+        // shooter names — the landed shot the (kind, stamp) pair
+        // banks, the fall's own word the assist row the skeleton
+        // later speaks)
+        assert_eq!(
+            app.last_hurt_by_mob.map(|(k, _)| k),
+            Some(crate::mob::MobKind::Skeleton),
+            "the shot the shover entry banks"
+        );
         // THE OWNERLESS ARM'S OWN WORD (the causing entity the null
         // keeps — the DIRECT entity the %2$s answers: the arrow's own
         // en_us display name the generic walk fills; the flight the
@@ -48829,6 +48930,130 @@ mod tests {
             chain_named,
             "the chain the parent's own word inherits (tnts left: {})",
             app.primed_tnts.len()
+        );
+    }
+
+    /// THE FALL NAMES ITS SHOVER (the 26.2 CombatTracker's die walk —
+    /// the getMostSignificantFall entry the IS_FALL read answers, the
+    /// attacker's own name the assist row speaks "was doomed to fall
+    /// by %2$s", the expired entries the accident row keeps "fell
+    /// from a high place"; the entry's own shelf the
+    /// RESET_COMBAT_STATUS_TIME 300 the class-file constant walk
+    /// pins, the fall's own landing the lastDamageTime re-stamp
+    /// wears): the REAL melee lane banks the (kind, stamp) pair (the
+    /// zombie's bite the addRecord arm walks), the fall's lethal
+    /// dose the shover's own name the death row wears, the respawn
+    /// the fresh tracker the None clears, the expired window the
+    /// accident row keeps.
+    #[test]
+    fn the_fall_names_its_shover() {
+        // THE REAL MELEE'S OWN BANK (the zombie's bite the hit_events
+        // walk lands — the hurt_by_named success the addRecord arm
+        // rides, the (kind, stamp) pair the memory banks)
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        let (px, pz) = {
+            let b = app.body.as_ref().expect("the spawned body");
+            (b.x, b.z)
+        };
+        // THE SKY PAD (the spawn's enclosure the generated terrain
+        // keeps — the flat stand the test's own world-set builds: the
+        // stone row the y=60 plane wears, the body and the zombie the
+        // same stand share, the sky the eye-to-eye ray the open air
+        // answers — the melee's canUse the range+LOS pair the pad
+        // serves)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -2i32..=2 {
+                for dz in -2i32..=2 {
+                    world.set(px.floor() as i32 + dx, 60, pz.floor() as i32 + dz, crate::world::STONE);
+                }
+            }
+        }
+        if let Some(b) = app.body.as_mut() {
+            b.y = 61.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.fall_distance = 0.0;
+            b.on_ground = true;
+        }
+        let mut zombie = crate::mob::Zombie::new(60, px + 1.0, 61.0, pz, 61);
+        zombie.on_ground = true;
+        app.mobs.push(zombie);
+        let mut bitten = false;
+        for _ in 0..200 {
+            app.update();
+            if app.last_hurt_by_mob.is_some() && app.health < 20.0 {
+                bitten = true;
+                break;
+            }
+        }
+        assert!(
+            bitten,
+            "the bite the memory banks (health: {}, zombie at {:.1},{:.1},{:.1}, player at {:.1},{:.1}, fire: {}, aggr: {}, mobs: {}, diff: {:?})",
+            app.health,
+            app.mobs.first().map(|m| m.x).unwrap_or(-1.0),
+            app.mobs.first().map(|m| m.y).unwrap_or(-1.0),
+            app.mobs.first().map(|m| m.z).unwrap_or(-1.0),
+            px, pz,
+            app.mobs.first().map(|m| m.fire_ticks).unwrap_or(-1),
+            app.mobs.first().map(|m| m.aggressive).unwrap_or(false),
+            app.mobs.len(),
+            app.offline_world.as_ref().map(|w| w.difficulty),
+        );
+        assert_eq!(
+            app.last_hurt_by_mob.map(|(k, _)| k),
+            Some(crate::mob::MobKind::Zombie),
+            "the zombie's own kind the entry banks"
+        );
+        // THE FALL'S OWN WORD (the open window the assist row wears —
+        // the shover's own display name the %2$s fills; the zombie
+        // the cleared mobs the repeat bites never land, the lethal
+        // dose the walk's own unit arms the established shape drives)
+        app.mobs.clear();
+        app.apply_fall_damage(20);
+        assert!(app.dead, "the lethal fall the crossing banks");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was doomed to fall by Zombie"),
+            "the assist row the shover names"
+        );
+        // THE RESPAWN'S OWN CLEAR (the vanilla respawn re-creates the
+        // LivingEntity — the fresh CombatTracker's empty entries the
+        // new body carries)
+        app.respawn();
+        assert!(
+            app.last_hurt_by_mob.is_none(),
+            "the respawn the tracker clears"
+        );
+        // THE EXPIRED SHELF'S OWN ROW (the 300-tick retention the
+        // stamp long past speaks — the entries the recheckStatus
+        // walk cleared, the accident row the name never carries;
+        // the tick walk the frame far ahead rides, the stamp the
+        // expired shelf reads)
+        app.frame = 1000;
+        app.last_hurt_by_mob = Some((crate::mob::MobKind::Zombie, 0));
+        app.apply_fall_damage(20);
+        assert!(app.dead, "the second fall the crossing banks");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs fell from a high place"),
+            "the expired entry the accident row keeps"
+        );
+        assert!(app.last_hurt_by_mob.is_none(), "the expired the memory drops");
+        app.respawn();
+        // THE KIND'S OWN FLOW (the skeleton's shot the same pair
+        // banks — the display name the assist row's %2$s the
+        // shooter's own kind wears)
+        app.last_hurt_by_mob = Some((crate::mob::MobKind::Skeleton, app.frame));
+        app.apply_fall_damage(20);
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was doomed to fall by Skeleton"),
+            "the assist row the skeleton names"
         );
     }
 
