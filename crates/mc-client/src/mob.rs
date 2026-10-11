@@ -11597,6 +11597,157 @@ pub fn pick_all_entities(
     hits
 }
 
+/// THE THROWN EGG'S OWN BODY (javap `ThrownEgg` the 26.2 law speaks —
+/// the `ThrowableProjectile` base's own arc the tick walk keeps: the
+/// drag 0.99 the per-tick scale ride, the gravity 0.03 the fall fold
+/// (`getDefaultGravity`'s own fconst answer), the hit the
+/// `onHitHitResult` walk answers — the block/mob overlap the
+/// `getHitResultOnMoveVector` walk scans, the 1/8 roll the chick
+/// banks, the nested 1/32 the four-chick family speaks, the
+/// broadcast-3 the break particles the client lane wears, the
+/// discard the removal). The egg never sticks, never crits, never
+/// carries the player dose — the honest ThrowableItemProjectile the
+/// arrows' walk never shares.
+pub struct EggProjectile {
+    /// The level's own entity counter word (the next_drop_id the
+    /// shared id space keeps — the wire's Add Entity word the live
+    /// lane's future reads, the offline lane's honest silence the
+    /// counter's own spend answers).
+    #[expect(dead_code)]
+    pub id: i32,
+    pub x: f64,
+    pub y: f64,
+    pub z: f64,
+    pub vx: f64,
+    pub vy: f64,
+    pub vz: f64,
+    /// The rotation's own words (the updateRotation walk the tick
+    /// keeps — `atan2(x, z)` the yaw speaks, `atan2(y, horiz)` the
+    /// pitch answers, the lerp the `lerpRotation` fold rides).
+    pub yaw: f32,
+    pub pitch: f32,
+    pub dead: bool,
+}
+
+/// THE SHOOT'S OWN POWER (javap `EggItem.use`'s
+/// `shootFromRotation(player, xRot, yRot, 0.0F, 1.5F, 1.0F)` — the
+/// velocity 1.5 the inaccuracy 1.0 the spread's own scale speaks).
+pub const EGG_THROW_POWER: f64 = 1.5;
+/// THE THROWN PROJECTILE'S OWN ARC (javap `ThrowableProjectile.tick`
+/// — the drag 0.99 the water 0.8 keeps, the gravity 0.03 the
+/// `getDefaultGravity`'s own answer carries).
+pub const EGG_DRAG: f64 = 0.99;
+pub const EGG_GRAVITY: f64 = 0.03;
+
+impl EggProjectile {
+    /// THE SHOOT'S OWN TRIANGLE (javap `Projectile.shoot` — the look
+    /// vector normalized, the gaussian spread
+    /// `nextGaussian() * 0.0075 * inaccuracy` the three axes ride, the
+    /// power 1.5 the scale keeps; the spawn pose the ctor's
+    /// `getEyeY() - 0.10000000149011612` law keeps — the same -0.1 the
+    /// arrow's own walk speaks) + THE ROTATION'S OWN WORDS (the
+    /// updateRotation law the ctor's initial flight word banks).
+    #[allow(clippy::too_many_arguments)]
+    pub fn throw_from(
+        id: i32,
+        ox: f64,
+        oy: f64,
+        oz: f64,
+        dir: (f64, f64, f64),
+        rng: &mut Lcg,
+    ) -> Self {
+        let (dx, dy, dz) = dir;
+        let len = (dx * dx + dy * dy + dz * dz).sqrt().max(1e-9);
+        let (nx, ny, nz) = (dx / len, dy / len, dz / len);
+        let inaccuracy = 1.0;
+        let vx = nx + rng.next_gaussian() * 0.0075 * inaccuracy;
+        let vy = ny + rng.next_gaussian() * 0.0075 * inaccuracy;
+        let vz = nz + rng.next_gaussian() * 0.0075 * inaccuracy;
+        let (vx, vy, vz) = (vx * EGG_THROW_POWER, vy * EGG_THROW_POWER, vz * EGG_THROW_POWER);
+        let horiz = (vx * vx + vz * vz).sqrt();
+        let pitch = (vy).atan2(horiz) * 57.295_776_367_187_5;
+        let yaw = (-vx).atan2(-vz) * 57.295_776_367_187_5;
+        Self {
+            id,
+            x: ox,
+            y: oy,
+            z: oz,
+            vx,
+            vy,
+            vz,
+            yaw: yaw as f32,
+            pitch: pitch as f32,
+            dead: false,
+        }
+    }
+
+    /// THE ROTATION'S OWN LERP (javap `Projectile.updateRotation` —
+    /// the target the velocity's own words speak, the
+    /// `lerpRotation` fold the arrow's own walk shares).
+    pub fn update_rotation(&mut self) {
+        let horiz = (self.vx * self.vx + self.vz * self.vz).sqrt();
+        let target_x = ((self.vy).atan2(horiz) * 57.295_776_367_187_5) as f32;
+        let target_y = ((-self.vx).atan2(-self.vz) * 57.295_776_367_187_5) as f32;
+        self.pitch = lerp_rotation(self.pitch, target_x);
+        self.yaw = lerp_rotation(self.yaw, target_y);
+    }
+
+    /// THE CHICK'S OWN ROLLS (javap `ThrownEgg.onHitHitResult` — the
+    /// `nextInt(8) == 0` roll the chick banks, the nested
+    /// `nextInt(32) == 0` the four-chick family speaks): the count the
+    /// rolls' own answer carries, `None` the miss the roll never
+    /// banks.
+    pub fn chick_count(rng: &mut Lcg) -> Option<i32> {
+        if rng.next_int_inclusive(0, 7) == 0 {
+            let count = if rng.next_int_inclusive(0, 31) == 0 { 4 } else { 1 };
+            Some(count)
+        } else {
+            None
+        }
+    }
+}
+
+/// THE SEGMENT'S OWN SLAB WALK (the ray-AABB intersection the
+/// ClipContext's own box law speaks — the param window the t-min/
+/// t-max the slabs clamp, the hit's own t the distance order
+/// answers, None the MISS). The thrown egg's own sweep the arrow's
+/// `segment_hit_param` walk shares — the free fn the app-level walk
+/// carries (the arrow's own method the prev-pos anchor keeps).
+pub fn segment_box_param(
+    from: (f64, f64, f64),
+    to: (f64, f64, f64),
+    lo: (f64, f64, f64),
+    hi: (f64, f64, f64),
+) -> Option<f64> {
+    let (dx, dy, dz) = (to.0 - from.0, to.1 - from.1, to.2 - from.2);
+    let mut tmin = 0.0f64;
+    let mut tmax = 1.0f64;
+    for (o, d, l, h) in [
+        (from.0, dx, lo.0, hi.0),
+        (from.1, dy, lo.1, hi.1),
+        (from.2, dz, lo.2, hi.2),
+    ] {
+        if d.abs() < 1e-12 {
+            if o < l || o > h {
+                return None;
+            }
+        } else {
+            let mut t0 = (l - o) / d;
+            let mut t1 = (h - o) / d;
+            if t0 > t1 {
+                std::mem::swap(&mut t0, &mut t1);
+            }
+            tmin = tmin.max(t0);
+            tmax = tmax.min(t1);
+            if tmin > tmax {
+                return None;
+            }
+        }
+    }
+    Some(tmin)
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;

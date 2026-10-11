@@ -628,6 +628,21 @@ pub enum ParticleKind {
     /// — the single layer the `nextInt(1)` pick draws, the draw the
     /// stream still spends), the white tint the item pixels wear.
     EyeItem,
+    /// `BreakingItemParticle` the EGG shard wears — the thrown egg's
+    /// own debris (javap `ClientLevel.handleEntityEvent` case 3 — the
+    /// `spawnItemCrackParticles` walk the ThrownEgg's own discard
+    /// broadcasts: the `bipush 10` loop the ten shards speak, the
+    /// `ItemParticleOption(ParticleTypes.ITEM, stack)` the egg's own
+    /// sprite wears — the SAME class the eye's shard rides, the
+    /// quarter-region uv walk the terrain dust shares, the uo/vo the
+    /// ctor's own `nextFloat() * 3.0` draws give, the gravity 1.0 the
+    /// ctor passes, the base 0.98 friction, the `/2` size fold, the
+    /// base lifetime the ctor never overrides): the ONE sprite the
+    /// egg's own model keeps (the `item/egg.png` layer0 the generated
+    /// stanza speaks — the single layer the `nextInt(1)` pick draws,
+    /// the draw the stream still spends), the white tint the item
+    /// pixels wear.
+    EggItem,
     /// `GlowParticle` — the wax trio's own puff (the single `glow`
     /// sprite the `wax_on` / `wax_off` / `scrape` jsons' one-texture
     /// sets keep, the provider tints the ctor's own `setColor` rows
@@ -3059,6 +3074,59 @@ pub fn breaking_eye_shard(
     let scale = f64::from(0.1f32);
     Particle {
         kind: ParticleKind::EyeItem,
+        x,
+        y,
+        z,
+        prev: None,
+        vx: sx * scale + wire_vx,
+        vy: sy * scale + wire_vy,
+        vz: sz * scale + wire_vz,
+        age: 0,
+        lifetime: life,
+        gravity: 1.0,
+        friction: 0.98,
+        quad_size: base_quad_size(r_size) / 2.0,
+        uo,
+        vo,
+        col: [1.0, 1.0, 1.0],
+    }
+}
+
+/// The thrown egg's own shatter (javap `ClientLevel.handleEntityEvent`
+/// case 3 — the `spawnItemCrackParticles` walk the ThrownEgg's own
+/// discard broadcasts): the SAME `BreakingItemParticle` chain the
+/// eye's shard wears — the `bipush 10` loop the caller speaks, the
+/// `ItemParticleOption(ParticleTypes.ITEM, stack)` the egg's own
+/// sprite wears, the ONE sprite the egg's model keeps (the
+/// `nextInt(1)` draw the stream spends), the 9-draw ctor chain the
+/// eye's own walk banks (the base lifetime, the three spreads, the d0
+/// pair, the size draw, the uo/vo pair — then the 7-arg ctor's
+/// `xd = xd * 0.1 + xSpeed` fold the wire velocity rides, the gravity
+/// 1.0, the `/2` size fold, the base 0.98 friction). The wire
+/// velocity the caller's own gaussian trio carries (the
+/// `nextGaussian() * 0.02` shard spread the event walk speaks).
+#[allow(clippy::too_many_arguments)]
+pub fn breaking_egg_shard(
+    x: f64,
+    y: f64,
+    z: f64,
+    wire_vx: f64,
+    wire_vy: f64,
+    wire_vz: f64,
+    rng: &mut crate::drops::Lcg,
+) -> Particle {
+    // THE SPRITE PICK (the `nextInt(1)` the single-layer model's
+    // activeLayerCount speaks — the draw the stream spends, the zero
+    // answer the pick keeps)
+    let _layer = rng.next_int(1);
+    let life = base_lifetime(rng.next_f32());
+    let (sx, sy, sz) = ctor_spread_and_normalize(rng);
+    let r_size = rng.next_f32();
+    let uo = rng.next_f32() * 3.0;
+    let vo = rng.next_f32() * 3.0;
+    let scale = f64::from(0.1f32);
+    Particle {
+        kind: ParticleKind::EggItem,
         x,
         y,
         z,

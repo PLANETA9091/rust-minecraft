@@ -7141,6 +7141,15 @@ pub struct App {
     /// PrimedTnt tick's own laws ride, the boom the fuse crossing
     /// serves. The headless scenes never spawn one: the goldens stay.
     pub primed_tnts: Vec<crate::mob::PrimedTnt>,
+    /// THE THROWN EGG LANE (the offline world's throwables — the use
+    /// arm's spawns the EggItem.use walk speaks, the arc the
+    /// ThrowableProjectile tick's own laws ride: the drag 0.99, the
+    /// gravity 0.03, the hit the onHit walk answers — the block the
+    /// clip ray banks, the mob the 0-dose word speaks, the 1/8 roll
+    /// the chick banks, the ten shards the broadcast-3 wears, the
+    /// discard the removal). The headless scenes never spawn one: the
+    /// goldens stay.
+    pub eggs: Vec<crate::mob::EggProjectile>,
     /// THE FALLING BLOCKS' OWN BODIES (the FallingBlockEntity lane —
     /// the conversion the scheduled tick spawns, the landing the
     /// placement/drop walk serves).
@@ -8518,6 +8527,7 @@ impl App {
             underwater_screen: None,
             mobs: Vec::new(),
             arrows: Vec::new(),
+            eggs: Vec::new(),
             arrow_model: None,
             net_mobs: Vec::new(),
             net_arrows: Vec::new(),
@@ -14243,6 +14253,179 @@ impl App {
                         // lanes answer, the stuck walls the despawn
                         // discards; the vecs the caller's scope
                         // declared, the fills the flight answers)
+                        // THE THROWN EGGS' OWN FLIGHT (javap
+                        // `ThrowableProjectile.tick` — the hit scan the
+                        // move-vector ray walks FIRST, the drag 0.99 the
+                        // scale ride, the gravity 0.03 the fall fold, the
+                        // pos the delta moves; the hit the onHit walk
+                        // answers — the block the clip ray banks, the mob
+                        // the 0-dose word speaks, the 1/8 roll the chick
+                        // banks, the ten shards the broadcast-3 wears,
+                        // the discard the removal)
+                        let mut egg_breaks: Vec<(f64, f64, f64)> = Vec::new();
+                        for egg in self.eggs.iter_mut() {
+                            if egg.dead {
+                                continue;
+                            }
+                            // THE BLOCK'S OWN RAY (the clip the position
+                            // to the position+velocity the segment
+                            // walks — the arrow's own law shares)
+                            if let Some(h) = crate::body::clip_ray(
+                                world,
+                                crate::math::Vec3::new(egg.x as f32, egg.y as f32, egg.z as f32),
+                                crate::math::Vec3::new(
+                                    (egg.x + egg.vx) as f32,
+                                    (egg.y + egg.vy) as f32,
+                                    (egg.z + egg.vz) as f32,
+                                ),
+                            ) {
+                                egg.x = h.x as f64;
+                                egg.y = h.y as f64;
+                                egg.z = h.z as f64;
+                                // THE CHICK'S OWN ROLLS (javap
+                                // `ThrownEgg.onHit` — the `nextInt(8)`
+                                // roll the chick banks, the nested
+                                // `nextInt(32)` the four-family speaks,
+                                // the age -24000 the baby's own clock
+                                // wears, the moveTo the egg's own pos
+                                // keeps, the variant the world's own
+                                // biome word picks)
+                                if let Some(count) =
+                                    crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
+                                {
+                                    for _ in 0..count {
+                                        let cid = self.next_drop_id;
+                                        self.next_drop_id += 1;
+                                        let mut chick = crate::mob::Zombie::new(
+                                            cid,
+                                            egg.x,
+                                            egg.y,
+                                            egg.z,
+                                            cid as u64,
+                                        );
+                                        chick.kind = crate::mob::MobKind::Chicken;
+                                        chick.age = -24000;
+                                        chick.farm_variant = Some(
+                                            crate::mob::chicken_variant_for_biome(spawn_biome(
+                                                self.seed,
+                                            )),
+                                        );
+                                        self.mobs.push(chick);
+                                    }
+                                }
+                                egg.dead = true;
+                                egg_breaks.push((egg.x, egg.y, egg.z));
+                                continue;
+                            }
+                            // THE MOB SWEEP (the boxes the inflate-0.3
+                            // walk the arrow's own nearest-hit law keeps —
+                            // the ProjectileUtil walk's own inflation the
+                            // arrow's INF const wears, the dead mobs the
+                            // isAlive gate the sweep refuses)
+                            let to = (egg.x + egg.vx, egg.y + egg.vy, egg.z + egg.vz);
+                            let from = (egg.x, egg.y, egg.z);
+                            let mut best: Option<(f64, i32)> = None;
+                            for m in self.mobs.iter() {
+                                if m.health <= 0.0 {
+                                    continue;
+                                }
+                                let (bx0, by0, bz0, bx1, by1, bz1) = m.box_for();
+                                const INF: f64 = 0.3;
+                                if let Some(t) = crate::mob::segment_box_param(
+                                    from,
+                                    to,
+                                    (bx0 - INF, by0 - INF, bz0 - INF),
+                                    (bx1 + INF, by1 + INF, bz1 + INF),
+                                ) {
+                                    if best.map_or(true, |(bt, _)| t < bt) {
+                                        best = Some((t, m.id));
+                                    }
+                                }
+                            }
+                            if let Some((t, mob_id)) = best {
+                                egg.x += egg.vx * t;
+                                egg.y += egg.vy * t;
+                                egg.z += egg.vz * t;
+                                // THE THROWN'S OWN DOSE (javap
+                                // `ThrowableProjectile.onHitEntity` — the
+                                // `entity.hurt(damageSources().thrown(
+                                // this, getOwner()), 0)` the 0-dose word
+                                // speaks — the health the fold never
+                                // spends, the hurt clock the walk re-arms)
+                                if let Some(mob) = self.mobs.iter_mut().find(|m| m.id == mob_id) {
+                                    mob.hurt(0.0, true);
+                                }
+                                // THE CHICK'S OWN ROLLS (the same onHit
+                                // walk the block's own arm wears — the
+                                // mob hit the roll rides too)
+                                if let Some(count) =
+                                    crate::mob::EggProjectile::chick_count(&mut self.mob_rng)
+                                {
+                                    for _ in 0..count {
+                                        let cid = self.next_drop_id;
+                                        self.next_drop_id += 1;
+                                        let mut chick = crate::mob::Zombie::new(
+                                            cid,
+                                            egg.x,
+                                            egg.y,
+                                            egg.z,
+                                            cid as u64,
+                                        );
+                                        chick.kind = crate::mob::MobKind::Chicken;
+                                        chick.age = -24000;
+                                        chick.farm_variant = Some(
+                                            crate::mob::chicken_variant_for_biome(spawn_biome(
+                                                self.seed,
+                                            )),
+                                        );
+                                        self.mobs.push(chick);
+                                    }
+                                }
+                                egg.dead = true;
+                                egg_breaks.push((egg.x, egg.y, egg.z));
+                                continue;
+                            }
+                            // THE ARC (the drag the scale ride, the
+                            // gravity the fall fold, the pos the delta
+                            // moves, the rotation the lerp fold banks)
+                            let drag = if matches!(
+                                world.get(egg.x.floor() as i32, egg.y.floor() as i32, egg.z.floor() as i32),
+                                crate::world::WATER
+                            ) {
+                                0.8
+                            } else {
+                                crate::mob::EGG_DRAG
+                            };
+                            egg.vx *= drag;
+                            egg.vy *= drag;
+                            egg.vz *= drag;
+                            egg.vy -= crate::mob::EGG_GRAVITY;
+                            egg.x += egg.vx;
+                            egg.y += egg.vy;
+                            egg.z += egg.vz;
+                            egg.update_rotation();
+                        }
+                        self.eggs.retain(|e| !e.dead);
+                        // THE SHATTER'S OWN BURSTS (javap the case-3
+                        // walk — the `bipush 10` loop the ten shards
+                        // speak, the position the random trio's own
+                        // jitter wears (the getRandomX/Y(1.0) law the
+                        // 0.25-wide bb keeps), the wire velocity the
+                        // gaussian trio's x0.02 carries)
+                        for (bx, by, bz) in egg_breaks {
+                            for _ in 0..10 {
+                                let jx = bx + (self.mob_rng.next_f64() * 2.0 - 1.0) * 0.25;
+                                let jy = by + self.mob_rng.next_f64() * 0.25;
+                                let jz = bz + (self.mob_rng.next_f64() * 2.0 - 1.0) * 0.25;
+                                let wvx = self.mob_rng.next_gaussian() * 0.02;
+                                let wvy = self.mob_rng.next_gaussian() * 0.02;
+                                let wvz = self.mob_rng.next_gaussian() * 0.02;
+                                let shard = crate::particles::breaking_egg_shard(
+                                    jx, jy, jz, wvx, wvy, wvz, &mut self.mob_rng,
+                                );
+                                self.particles.push(shard);
+                            }
+                        }
                         for arrow in self.arrows.iter_mut() {
                             let mut aev = arrow.tick(world, player.as_ref(), &self.mobs);
                             if let Some(dmg) = aev.hit_player {
@@ -21935,6 +22118,73 @@ impl App {
                     if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
                         self.inventory.items[slot].1 -= 1;
                     }
+                }
+            }
+            // THE WIRE ECHO (the use-item click the networked lane
+            // rides — the camera's angles in the vanilla degrees)
+            let (yaw, pitch) = crate::world_view::wire_angles(&self.world_camera());
+            if let Some(sink) = self.live_clicks.as_ref() {
+                let _ = sink.send(crate::world_view::ContainerCommand::UseItem {
+                    yaw,
+                    pitch,
+                    hand: 0,
+                });
+            }
+            return true;
+        }
+        // THE EGG'S OWN THROW (javap `EggItem.use` the 26.2 walk — the
+        // sound the press arms FIRST: `playSound(EGG_THROW, 0.5F,
+        // 0.4F / (nextFloat() * 0.4F + 0.8F))` the level's own stream
+        // draws, the ThrownEgg ctor the `shootFromRotation(player,
+        // xRot, yRot, 0.0F, 1.5F, 1.0F)` walk serves (the power 1.5
+        // the inaccuracy 1.0 keeps), the `consume(1, player)` the
+        // survival stack wears, the awardStat the client's ledger
+        // never banks). The LIVE session the server's own egg the
+        // wire's Add Entity word serves — the client predicts none.
+        if self.held_word_of(id) == Some("egg") {
+            // THE VOICE (the press's own spot the ear answers — the
+            // pitch draw the level's stream rides BEFORE the ctor's
+            // own gaussians, the vanilla's own draw order the walk
+            // keeps)
+            let pitch = 0.4 / (self.mob_rng.next_f32() * 0.4 + 0.8);
+            self.sounds
+                .play_voice(self.frame, "entity.egg.throw", 0.5, pitch);
+            // THE OFFLINE PREDICTION (the live lane the wire serves —
+            // the owner's own eye minus 0.1 the ctor's spawn law keeps,
+            // the flight camera the headless fallback answers)
+            if let (Some(_), false) = (self.offline_world.as_mut(), self.world_is_network) {
+                let (ox, oy, oz, dir) = match self.body.as_ref() {
+                    Some(b) => {
+                        let cam = b.camera();
+                        (
+                            b.x,
+                            b.y + b.eye_height() - 0.1,
+                            b.z,
+                            (cam.forward().x as f64, cam.forward().y as f64, cam.forward().z as f64),
+                        )
+                    }
+                    None => (0.0, 0.0, 0.0, (0.0, 0.0, 0.0)),
+                };
+                let ent = self.next_drop_id;
+                self.next_drop_id += 1;
+                let egg = crate::mob::EggProjectile::throw_from(
+                    ent,
+                    ox,
+                    oy,
+                    oz,
+                    dir,
+                    &mut self.mob_rng,
+                );
+                self.eggs.push(egg);
+            }
+            // THE CONSUME (javap ItemStack.consume(1, player) — the
+            // hasInfiniteMaterials gate the creative arm keeps, the
+            // shrink(1) the survival stack wears; the `--held-item`
+            // stand-in the conjured stack the shrink never owns)
+            if self.game_mode != GameMode::Creative {
+                let slot = self.selected_hotbar;
+                if self.inventory.items[slot].0 == id && self.inventory.items[slot].1 > 0 {
+                    self.inventory.items[slot].1 -= 1;
                 }
             }
             // THE WIRE ECHO (the use-item click the networked lane
@@ -37912,6 +38162,7 @@ impl App {
         // THE PRIMED TNT'S OWN PASS (the entity pass's own lane — the
         // fuse machines the block-model flash render wears)
         self.render_tnts(fb, &ctx, &cam);
+        self.render_eggs(fb, &ctx, &cam);
         self.render_falling_blocks(fb, &ctx, &cam);
         self.render_arrows(fb, &ctx, &cam);
         // THE FIREWORK ROCKETS' OWN PASS (the entity pass's own lane —
@@ -39408,6 +39659,95 @@ impl App {
                 Some([255, 255, 255, 255])
             });
         }
+    }
+
+    /// THE THROWN EGG'S OWN PASS (javap `ThrowingItemRenderer.render`
+    /// — the `mulPose(cameraOrientation)` billboard the flat item
+    /// sprite wears, the `mulPose(Axis.YP.rotationDegrees(180.0F))`
+    /// half-turn the composite carries, the GROUND display context
+    /// the item model's own quads ride): the model the derive walk
+    /// bakes, the pose the lerped position anchors, the basis the
+    /// camera's own right/up/forward speak (the roll-0 camera the
+    /// orb's own lane speaks, the Y-180 the orb's basis negates).
+    fn render_eggs(
+        &mut self,
+        fb: &mut crate::raster::Framebuf,
+        ctx: &RenderCtx,
+        cam: &crate::camera::Camera,
+    ) {
+        if self.eggs.is_empty() {
+            return; // the deterministic scenes carry no throwables — the goldens stay
+        }
+        let Some(egg_id) = crate::mob::wire_id("egg") else {
+            return;
+        };
+        let Some(layers) = mc_registry::item_model_layers(egg_id) else {
+            return;
+        };
+        // the posed quads (the GROUND context the drops' own walk
+        // wears — the item model's own flat plane)
+        let mut parts: Vec<mc_registry::element_quads::Quad> = Vec::new();
+        let mut ok = true;
+        for layer in &layers {
+            match mc_registry::display::posed_item_layer_quads(
+                layer.model,
+                layer.transform,
+                mc_registry::display::GROUND,
+            ) {
+                Some(Ok(quads)) => {
+                    for q in quads {
+                        parts.push(q);
+                    }
+                }
+                _ => {
+                    ok = false;
+                    break;
+                }
+            }
+        }
+        if !ok || parts.is_empty() {
+            return; // the honest unknown renders nothing
+        }
+        // the camera basis (the mulPose(cameraOrientation) fold — the
+        // orb's own right/up speak — and the Y-180 half-turn the
+        // composite keeps: the right and the forward the basis
+        // negates, the up the turn never touches)
+        let sy = cam.yaw.sin();
+        let cy = cam.yaw.cos();
+        let sp = cam.pitch.sin();
+        let cp = cam.pitch.cos();
+        let right = [-cy, 0.0, -sy];
+        let up = [-sy * sp, cp, cy * sp];
+        let fwd = cam.forward();
+        let fwd = [-fwd.x, -fwd.y, -fwd.z];
+        let mut sampled: Vec<crate::raster::SampledQuad> = Vec::new();
+        for e in &self.eggs {
+            for q in &parts {
+                sampled.push(crate::raster::SampledQuad {
+                    pts: q.vertices.map(|v| {
+                        [
+                            e.x as f32 + right[0] * v[0] + up[0] * v[1] + fwd[0] * v[2],
+                            e.y as f32 + right[1] * v[0] + up[1] * v[1] + fwd[1] * v[2],
+                            e.z as f32 + right[2] * v[0] + up[2] * v[1] + fwd[2] * v[2],
+                        ]
+                    }),
+                    uv: q.uvs,
+                    tex: q.texture,
+                    tint: [1.0, 1.0, 1.0],
+                });
+            }
+        }
+        if sampled.is_empty() {
+            return;
+        }
+        let vp = ctx.proj.mul(&ctx.view);
+        fb.draw_sampled_quads(vp, &sampled, &mut |tex, u, v| {
+            match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                mc_registry::sprite_uv::Sample::Unknown => None,
+            }
+        });
     }
 
     /// THE FALLING BLOCKS' OWN PASS (javap `FallingBlockRenderer.render`
@@ -42297,6 +42637,7 @@ impl App {
         // single sprite the eye's own model keeps)
         let mut portal_groups: Vec<(usize, Vec<crate::raster::SampledQuad>)> = Vec::new();
         let mut eye_shard_quads: Vec<crate::raster::SampledQuad> = Vec::new();
+        let mut egg_shard_quads: Vec<crate::raster::SampledQuad> = Vec::new();
         // the firework flash's own group (the Starter cadence's overlay
         // quads — the alpha law the tint carries, the visible quad the
         // custom-ARGB colors arm)
@@ -42976,6 +43317,24 @@ impl App {
                         tint: p.col,
                     });
                 }
+                crate::particles::ParticleKind::EggItem => {
+                    // the shard's own quad (the item sprite's own
+                    // quarter walk — the SAME uo/vo fold the terrain
+                    // dust rides, the U edge MIRRORS, over the 16x16
+                    // item sprite's own space; the white tint the
+                    // item pixels wear whole — the texture the
+                    // sprite_uv's own namespace lane resolves)
+                    let ul = (p.uo + 1.0) / 4.0;
+                    let ur = p.uo / 4.0;
+                    let vt = p.vo / 4.0;
+                    let vb = (p.vo + 1.0) / 4.0;
+                    egg_shard_quads.push(crate::raster::SampledQuad {
+                        pts,
+                        uv: [[ul, vb], [ur, vb], [ur, vt], [ul, vt]],
+                        tex: "item/egg",
+                        tint: p.col,
+                    });
+                }
                 crate::particles::ParticleKind::ExplosionSeed => {
                     // THE INVISIBLE ENGINE (javap
                     // `HugeExplosionSeedParticle` — the
@@ -43315,6 +43674,17 @@ impl App {
         if let Some(sprites) = &self.eye_sprites {
             fb.draw_sampled_quads(vp, &eye_shard_quads, &mut |_tex, u, v| {
                 Some(sprites.pixel(u, v))
+            });
+        }
+        // the egg shard group (the item sprite's own pixels — the
+        // sprite_uv namespace lane the egg's own texture resolves)
+        if !egg_shard_quads.is_empty() {
+            fb.draw_sampled_quads(vp, &egg_shard_quads, &mut |tex, u, v| {
+                match mc_registry::sprite_uv::sample_uv(tex, u, v) {
+                    mc_registry::sprite_uv::Sample::Pixel(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Missing(c) => Some(c),
+                    mc_registry::sprite_uv::Sample::Unknown => None,
+                }
             });
         }
     }
@@ -49275,6 +49645,269 @@ mod tests {
             Some("mc2rs was doomed to fall by Zombie"),
             "the assist row the grounded shove wears"
         );
+    }
+
+    /// THE EGG'S OWN THROW (javap `EggItem.use` + `ThrownEgg` the 26.2
+    /// law speaks): the press the arc wears — the power 1.5 the
+    /// gaussian spread's tiny band keeps, the eye minus 0.1 the spawn
+    /// pose wears, the survival stack the consume wears; the hit the
+    /// discard speaks — the wall the clip ray banks, the ten shards
+    /// the broadcast-3 wears, the rolls the chicks hatch (the
+    /// 1/8 the 1/32 family's own draw), the baby the negative age
+    /// wears; the mob the 0-dose word speaks (the health the fold
+    /// never spends, the flash the walk re-arms, the thrower's own
+    /// word the aggro arms).
+    #[test]
+    fn the_egg_the_throw_the_arc_the_hit_wears() {
+        // THE THROW'S OWN ARM (the use lane the RMB press wears — the
+        // sky range the shover test's own shape builds, the wall the
+        // throw's own target: the stone column the ray crosses)
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        let (px, pz) = {
+            let b = app.body.as_ref().expect("the spawned body");
+            (b.x, b.z)
+        };
+        // THE SKY PAD'S OWN LEVEL (the world's CHUNK_Y 48 the terrain's
+        // tops the spawn's enclosure the eye-lines refuse — the gotcha
+        // the flank probes banked: the pad the open sky the flight's
+        // own lane wears, the level inside the ceiling the cells
+        // answer)
+        let gy = 30i32;
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4i32..=4 {
+                for dz in -4i32..=4 {
+                    world.set(
+                        px.floor() as i32 + dx,
+                        gy - 1,
+                        pz.floor() as i32 + dz,
+                        crate::world::STONE,
+                    );
+                }
+            }
+        }
+        // THE THROW'S OWN LOOK FIRST (the body's yaw the wall's own
+        // probe reads — the spawn's own yaw the east-facing stand-in
+        // wears, the re-set the yaw-0 look the throw's ray walks)
+        if let Some(b) = app.body.as_mut() {
+            b.y = gy as f64;
+            b.yaw = 0.0;
+            b.pitch = 0.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.on_ground = true;
+        }
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            // THE WALL ALONG THE ACTUAL LOOK (the camera's own forward
+            // the throw's ray walks — the convention the probe pins,
+            // the 3-wide panel the spread's tiny band covers)
+            let fwd = {
+                let b = app.body.as_ref().expect("the body");
+                let c = b.camera();
+                (c.forward().x as f64, c.forward().z as f64)
+            };
+            let wx = (px + fwd.0 * 4.0).floor() as i32;
+            let wz = (pz + fwd.1 * 4.0).floor() as i32;
+            for ddx in -1i32..=1 {
+                for dy in 0..=2 {
+                    world.set(wx + ddx, gy + dy, wz, crate::world::STONE);
+                }
+            }
+        }
+        let egg_id = crate::mob::wire_id("egg").expect("the egg's own id");
+        app.inventory.items[app.selected_hotbar] = (egg_id, 3);
+        assert!(
+            app.on_right_press_main_item_lane(),
+            "the egg's own throw the lane speaks"
+        );
+        assert_eq!(app.eggs.len(), 1, "the egg the press spawns");
+        assert_eq!(
+            app.inventory.items[app.selected_hotbar].1,
+            2,
+            "the survival stack the consume wears"
+        );
+        // THE ARC'S OWN WORD (the power 1.5 the spread's own band
+        // keeps, the eye minus 0.1 the spawn pose wears)
+        {
+            let e = &app.eggs[0];
+            let speed = (e.vx * e.vx + e.vy * e.vy + e.vz * e.vz).sqrt();
+            assert!(
+                (speed - crate::mob::EGG_THROW_POWER).abs() < 0.05,
+                "the power the arc keeps ({speed})"
+            );
+            assert!(
+                (e.y - (gy as f64 + 1.52)).abs() < 1e-9,
+                "the eye minus 0.1 the spawn pose wears"
+            );
+        }
+        // THE HIT'S OWN WALK (the wall the ray crosses — the discard
+        // the break speaks, the ten shards the broadcast-3 wears)
+        for _ in 0..10 {
+            app.update();
+            if app.eggs.is_empty() {
+                break;
+            }
+        }
+        assert!(
+            app.eggs.is_empty(),
+            "the hit the discard speaks (eggs={:?})",
+            app.eggs
+                .iter()
+                .map(|e| (e.x, e.y, e.z, e.vx, e.vy, e.vz))
+                .collect::<Vec<_>>()
+        );
+        let shards = app
+            .particles
+            .iter()
+            .filter(|p| matches!(p.kind, crate::particles::ParticleKind::EggItem))
+            .count();
+        assert_eq!(shards, 10, "the shatter the ten shards wear");
+
+        // THE MOB HIT'S OWN WORD (the 0-dose the ThrowableProjectile
+        // speaks — the health the fold never spends, the flash the
+        // walk re-arms, the thrower's own word the aggro arms)
+        app.respawn();
+        app.mobs.clear();
+        app.particles.clear();
+        let (px2, pz2) = {
+            let b = app.body.as_ref().expect("the respawned body");
+            (b.x, b.z)
+        };
+        if let Some(b) = app.body.as_mut() {
+            b.y = gy as f64;
+            b.yaw = 0.0;
+            b.pitch = 0.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.on_ground = true;
+        }
+        let (fx, fz) = {
+            let b = app.body.as_ref().expect("the body");
+            let c = b.camera();
+            (c.forward().x as f64, c.forward().z as f64)
+        };
+        let mut z = crate::mob::Zombie::new(900, px2 + fx * 2.5, gy as f64, pz2 + fz * 2.5, 901);
+        z.on_ground = true;
+        app.mobs.push(z);
+        app.inventory.items[app.selected_hotbar] = (egg_id, 1);
+        let health_before = app.mobs.iter().find(|m| m.id == 900).unwrap().health;
+        assert!(
+            app.on_right_press_main_item_lane(),
+            "the egg's own throw the lane speaks"
+        );
+        for _ in 0..10 {
+            app.update();
+            if app.eggs.is_empty() {
+                break;
+            }
+        }
+        assert!(app.eggs.is_empty(), "the mob hit the discard speaks");
+        let zombie = app.mobs.iter().find(|m| m.id == 900).unwrap();
+        assert_eq!(
+            zombie.health, health_before,
+            "the 0-dose the health never spends"
+        );
+        assert!(zombie.hurt_time > 0, "the flash the walk re-arms");
+
+        // THE CHICK'S OWN ROLLS (the 40 throws the deterministic
+        // stream spends — the exact count the fixed seed pins, the
+        // 1/8 roll the chick banks, the nested 1/32 the four-family
+        // speaks, the baby the negative age wears, the variant the
+        // world's own biome word picks)
+        app.respawn();
+        app.mobs.clear();
+        app.particles.clear();
+        let (px3, pz3) = {
+            let b = app.body.as_ref().expect("the respawned body");
+            (b.x, b.z)
+        };
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -4i32..=4 {
+                for dz in -4i32..=4 {
+                    world.set(
+                        px3.floor() as i32 + dx,
+                        gy - 1,
+                        pz3.floor() as i32 + dz,
+                        crate::world::STONE,
+                    );
+                }
+            }
+        }
+        if let Some(b) = app.body.as_mut() {
+            b.y = gy as f64;
+            b.yaw = 0.0;
+            b.pitch = 0.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.on_ground = true;
+        }
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            // THE WALL ALONG THE ACTUAL LOOK (the first arm's own
+            // probe the re-set keeps — the yaw the same 0.0 wears)
+            let fwd = {
+                let b = app.body.as_ref().expect("the body");
+                let c = b.camera();
+                (c.forward().x as f64, c.forward().z as f64)
+            };
+            let wx = (px3 + fwd.0 * 4.0).floor() as i32;
+            let wz = (pz3 + fwd.1 * 4.0).floor() as i32;
+            for ddx in -1i32..=1 {
+                for dy in 0..=2 {
+                    world.set(wx + ddx, gy + dy, wz, crate::world::STONE);
+                }
+            }
+        }
+        if let Some(b) = app.body.as_mut() {
+            b.y = gy as f64;
+            b.yaw = 0.0;
+            b.pitch = 0.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.on_ground = true;
+        }
+        app.inventory.items[app.selected_hotbar] = (egg_id, 50);
+        for _ in 0..40 {
+            if let Some(b) = app.body.as_mut() {
+                b.y = gy as f64;
+                b.yaw = 0.0;
+                b.pitch = 0.0;
+                b.on_ground = true;
+            }
+            let _ = app.on_right_press_main_item_lane();
+            for _ in 0..6 {
+                app.update();
+            }
+        }
+        for _ in 0..40 {
+            app.update();
+        }
+        let chicks: Vec<&crate::mob::Zombie> = app
+            .mobs
+            .iter()
+            .filter(|m| m.kind == crate::mob::MobKind::Chicken)
+            .collect();
+        assert!(
+            chicks.iter().all(|m| m.age < 0),
+            "the baby the negative age wears"
+        );
+        assert!(
+            chicks
+                .iter()
+                .all(|m| m.farm_variant == Some(crate::mob::chicken_variant_for_biome(spawn_biome(app.seed)))),
+            "the variant the world's own biome word picks"
+        );
+        let pinned = chicks.len();
+        assert!(pinned > 0, "the chicks the rolls hatch ({pinned})");
     }
 
     /// THE RESISTANCE'S OWN FOLD (javap getDamageAfterMagicAbsorb pcs
