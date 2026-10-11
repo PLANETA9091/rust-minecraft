@@ -13568,6 +13568,73 @@ impl App {
                         }
                     }
                 }
+                // THE BAMBOO'S OWN SCHEDULED TICKS (javap
+                // `BambooStalkBlock.tick` the 26.2 jar — the walk the
+                // updateShape's scheduleTick lag the queue feeds: the
+                // due cells the drain gives up, each the canSurvive
+                // re-check the pop law answers — the repaired support
+                // the queue never pops, the failed verdict the
+                // destroyBlock(pos, true) walk serves). The networked
+                // world the SERVER ticks (the same split the fire
+                // lane's own authority keeps). The remesh + relight
+                // the pops' own sets speak ONCE (the batched rhythm
+                // the fire lane keeps), the pop's own effects the
+                // collected list the borrow's tail speaks.
+                let bamboo_popped: Vec<(i32, i32, i32)> =
+                    if let Some(world) = self.offline_world.as_mut() {
+                        let due = world.drain_due_bamboo_ticks(self.frame);
+                        let mut popped: Vec<(i32, i32, i32)> = Vec::new();
+                        for (x, y, z) in due {
+                            if world.bamboo_tick(self.frame, x, y, z) {
+                                popped.push((x, y, z));
+                            }
+                        }
+                        if !popped.is_empty() {
+                            world.relight();
+                            self.world_quads = Some(crate::mesher::mesh_world(world, None));
+                        }
+                        popped
+                    } else {
+                        Vec::new()
+                    };
+                for (x, y, z) in bamboo_popped {
+                    // THE POP'S OWN 2001 (javap `Level.destroyBlock`
+                    // pc 24-47 — the levelEvent the non-fire break the
+                    // EVERY walk speaks: the break voice + the debris
+                    // burst)
+                    self.sounds.play(self.frame, "bamboo", crate::sound::Lane::Break);
+                    let tile = particle_tile(crate::world::BAMBOO);
+                    if tile != mc_registry::generated::atlas::TILE_NONE {
+                        let burst = crate::particles::terrain_burst(
+                            tile, x, y, z, &mut self.mob_rng,
+                        );
+                        self.particles.extend(burst);
+                    }
+                    // THE POP'S OWN LOOT (javap pc 48-83 — the
+                    // dropResources roll the EMPTY tool wears: the
+                    // no-player break the exhaustion never charges, the
+                    // creative gate the no-player walk never reads)
+                    for (item, count) in
+                        crate::drops::roll_drops(crate::world::BAMBOO, None, &mut self.drop_rng)
+                    {
+                        let id = self.next_drop_id;
+                        self.next_drop_id += 1;
+                        self.drops.push(crate::drops::ItemDrop::spawn(
+                            id, item, count, x, y, z, &mut self.drop_rng,
+                        ));
+                    }
+                    // THE POP'S OWN GAME EVENT (javap pc 99-118 — the
+                    // BLOCK_DESTROY the null-entity context posts, the
+                    // sensors' hearing walk the same dispatch serves)
+                    self.dispatch_vibration_event(
+                        "block_destroy",
+                        (x as f64 + 0.5, y as f64 + 0.5, z as f64 + 0.5),
+                    );
+                    // THE POP'S OWN FALLING DISPATCH (the flag-3
+                    // setBlock the neighbours' own walk arms — the sand
+                    // the popped cell held the same law speaks)
+                    self.schedule_falling_check_block_update(x, y, z);
+                }
                 // THE CAMPFIRE'S OWN AMBIENT WALK (the method the
                 // particleTick law owns — the due cells the walk
                 // answers, the re-arm the every-tick cadence banks)
@@ -29920,6 +29987,18 @@ impl App {
         self.schedule_falling_check_block_update(pos.0, pos.1, pos.2);
         if let Some((mx, my, mz)) = mate_cell {
             self.schedule_falling_check_block_update(mx, my, mz);
+        }
+        // THE BAMBOO'S OWN UPDATE-SHAPE WALK (javap the pair's
+        // updateShape over the 26.2 jar — the dig's flag-3 broadcast
+        // the walk speaks: the unsupported stalk the scheduleTick's
+        // one-tick lag arms, the unsupported sapling the same-beat AIR
+        // the pc 0-16 walk serves — the fall the drain's own tick law
+        // answers next tick, the tower the one-per-tick crackle the
+        // pop's own re-broadcast climbs). The OFFLINE lane's own
+        // authority: the networked world's voxels are the server's
+        // (the same split the falling dispatch's own walk keeps).
+        if let Some(world) = self.offline_world.as_mut() {
+            let _ = world.bamboo_shape_updates(pos, self.frame + 1);
         }
         self.remesh_offline();
         let name = crate::world::NAME_OF[kind as usize];
@@ -68345,6 +68424,7 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -68919,6 +68999,7 @@ mod tests {
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
+                    bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -69366,6 +69447,7 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -69439,6 +69521,7 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4
@@ -69514,6 +69597,7 @@ mod tests {
                     portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
                     has_skylight: true, // the portal's own axis store: empty
                     campfire_ticks: Vec::new(), // the campfire's own queue: empty
+                    bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
                     chunks: vec![
                         vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                         4
@@ -69566,6 +69650,7 @@ mod tests {
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 side * side
@@ -88677,6 +88762,7 @@ cow_sound_variant: None,
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the portal's own axis store: empty
             campfire_ticks: Vec::new(), // the campfire's own queue: empty
+            bamboo_ticks: Vec::new(), // the bamboo's own queue: empty
             chunks: vec![
                 vec![crate::world::AIR; crate::world::CHUNK_X * crate::world::CHUNK_Y * crate::world::CHUNK_Z];
                 4

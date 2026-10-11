@@ -2799,6 +2799,24 @@ pub struct World {
     /// SERVER's word rides (the same split the fire lane's own
     /// authority keeps) — the queue the offline world alone fills.
     pub campfire_ticks: Vec<(u64, i32, i32, i32)>,
+    /// THE BAMBOO'S OWN FALL QUEUE (the dig-side cascade's scheduled
+    /// ticks — the fire queue's own shape the walk's one-tick lag
+    /// wears): the (due game tick, x, y, z) entries the UNSUPPORTED
+    /// stalks the updateShape walk arms (javap BambooStalkBlock.
+    /// updateShape pc 0-19 — the canSurvive verdict the failed branch
+    /// `scheduleTick(pos, this, 1)` serves). THE SET'S OWN LAW the
+    /// fire queue's walk keeps: ONE live entry per cell (the
+    /// LevelChunkTicks' add-returns-false dedup — the re-schedule the
+    /// tower's stacked broadcasts the dedup refuses), the pop's own
+    /// fire the re-broadcast the next level arms. The DRAIN'S OWN
+    /// VERDICT the tick law keeps (javap BambooStalkBlock.tick pc
+    /// 0-15): the block-match gate the stale rows drop, the
+    /// canSurvive re-check the repaired support the queue never pops
+    /// (the dirt the placement's own repair the verdict answers), the
+    /// pop the destroyBlock(pos, true) walk serves. The networked
+    /// world the SERVER ticks (the same split the fire lane's own
+    /// authority keeps) — the queue the offline world alone fills.
+    pub bamboo_ticks: Vec<(u64, i32, i32, i32)>,
     /// THE FIRE'S OWN AGE LADDER — the per-cell AGE property the
     /// offline kind-only world the `FIRE`/`SOUL_FIRE` kind ids alone
     /// cannot carry (the SOUL_FIRE 58 the FIRE+age arithmetic the
@@ -3146,6 +3164,7 @@ impl World {
             inhabited: Some(vec![0u64; chunks_per_side * chunks_per_side]), // the host world's own dwell clock
             fire_ticks: Vec::new(), // the fire's own queue: no fire, no schedule
             campfire_ticks: Vec::new(), // the campfire's own queue: no lit campfire, no walk
+            bamboo_ticks: Vec::new(), // the bamboo's own queue: no unsupported stalk, no fall
             fire_age: std::collections::HashMap::new(), // the ladder's store: empty
             portal_axis: std::collections::HashMap::new(), // the portal's own axis store: empty
             has_skylight: true, // the overworld default: the sky light the column pass speaks
@@ -4434,6 +4453,195 @@ impl World {
         changed_any
     }
 
+    /// THE BAMBOO'S OWN SCHEDULE (the fire schedule's own dedup law —
+    /// javap `LevelChunkTicks.schedule` the add-returns-false pair
+    /// keeps): the (due, x, y, z) entry the queue gains UNLESS the
+    /// cell already rides one. The stalk the ONE live entry the law
+    /// keeps — the tower's stacked broadcasts the dedup refuses (the
+    /// dig's own schedule + the pop's re-broadcast the same cell the
+    /// duplicate entry never banks), the exponential the queue never
+    /// grows.
+    pub fn schedule_bamboo_tick(&mut self, due: u64, x: i32, y: i32, z: i32) {
+        if self
+            .bamboo_ticks
+            .iter()
+            .any(|&(_, px, py, pz)| px == x && py == y && pz == z)
+        {
+            return; // the Set's own verdict — the duplicate the add refuses
+        }
+        self.bamboo_ticks.push((due, x, y, z));
+    }
+
+    /// THE BAMBOO QUEUE'S OWN DRAIN (the fire drain's own shape — the
+    /// `ServerLevel.tick` scheduled lane the due entries the time
+    /// order the stable sort banks): the due-at-or-before-`now`
+    /// entries the queue gives UP, the caller's own tick law the pop
+    /// verdicts answer ([`World::bamboo_tick`]).
+    pub fn drain_due_bamboo_ticks(&mut self, now: u64) -> Vec<(i32, i32, i32)> {
+        let mut due_cells: Vec<(u64, i32, i32, i32)> = Vec::new();
+        self.bamboo_ticks.retain(|&(at, x, y, z)| {
+            if at <= now {
+                due_cells.push((at, x, y, z));
+                false
+            } else {
+                true
+            }
+        });
+        due_cells.sort_by_key(|&(at, _, _, _)| at);
+        due_cells
+            .into_iter()
+            .map(|(_, x, y, z)| (x, y, z))
+            .collect()
+    }
+
+    /// THE BAMBOO'S OWN UPDATE-SHAPE WALK — javap the pair's
+    /// updateShape over the real 26.2 jar, the two bytecodes the
+    /// flag-3 broadcast the dig's own beat serves:
+    ///
+    /// **Stalk** (`BambooStalkBlock.updateShape` pc 0-19): the
+    /// canSurvive verdict the UNCONDITIONAL head keeps (the direction
+    /// the pc 20 UP gate the age cycle alone gates — the below read
+    /// every changed neighbor re-answers); the failed branch the
+    /// `scheduleTick(pos, this, 1)` lag arms (NO state change — the
+    /// broadcast the schedule alone speaks, the walk's own recursion
+    /// the schedule never fires).
+    ///
+    /// **Sapling** (`BambooSaplingBlock.updateShape` pc 0-16): the
+    /// same verdict the failed branch the `Blocks.AIR.
+    /// defaultBlockState()` RETURN serves — the IMMEDIATE death the
+    /// one-tick lag never waits (the vanilla's own asymmetry the
+    /// pair's two arms wear). The pc 17-42 conversion arm the
+    /// UP-neighbor pair reads (direction == UP — the changed cell the
+    /// sapling's own ABOVE is — and the neighborState.is(BAMBOO) the
+    /// placed bamboo alone arms): the sapling itself becomes
+    /// BAMBOO (the growth walk's own conversion the same law speaks).
+    ///
+    /// THE VERDICT the [`World::bamboo_can_survive`] law reads — the
+    /// `below.is(SUPPORTS_BAMBOO)` read BOTH bytecodes' canSurvive
+    /// speak (javap BambooStalkBlock.canSurvive pc 0-16 =
+    /// BambooSaplingBlock.canSurvive pc 0-16 — the SAME walk the two
+    /// classes wear). The SIX neighbors the broadcast serves (the
+    /// DOWN..EAST order the Direction.values() walk keeps — the
+    /// verdict the per-cell read the order never gates); the CHANGED
+    /// cell itself the walk never reads. The sapling's death the
+    /// CHAIN re-reads (the dying cell's own broadcast the queue
+    /// extends — the stalk the sapling held the schedule arms, the
+    /// vanilla's own flag-3 recursion). The STALK'S schedule the
+    /// changed_any flag never sets (no state change — the mesh the
+    /// schedule never re-speaks); the sapling's death the flag
+    /// answers (the caller's own remesh folds).
+    pub fn bamboo_shape_updates(&mut self, changed: (i32, i32, i32), due: u64) -> bool {
+        let (cx, cy, cz) = changed;
+        // the DOWN..EAST order the Direction.values() walk keeps
+        let mut queue: Vec<(i32, i32, i32)> = vec![
+            (cx, cy - 1, cz),
+            (cx, cy + 1, cz),
+            (cx, cy, cz - 1),
+            (cx, cy, cz + 1),
+            (cx - 1, cy, cz),
+            (cx + 1, cy, cz),
+        ];
+        let changed_kind = self.get(cx, cy, cz);
+        let mut changed_any = false;
+        while let Some((x, y, z)) = queue.pop() {
+            let kind = self.get(x, y, z);
+            if is_bamboo_stalk(kind) {
+                // THE STALK'S OWN HEAD (pc 0-19): the failed verdict
+                // the scheduleTick's one-tick lag arms — the pop the
+                // drain's own tick law answers
+                if !self.bamboo_can_survive(x, y, z) {
+                    self.schedule_bamboo_tick(due, x, y, z);
+                }
+            } else if is_bamboo_sapling(kind) {
+                // THE SAPLING'S OWN ARMS (pc 0-16 the death, pc 17-42
+                // the conversion): the below-support loss the AIR the
+                // same beat serves, the placed-bamboo-above pair the
+                // stalk the conversion wears
+                if !self.bamboo_can_survive(x, y, z) {
+                    self.set(x, y, z, AIR);
+                    changed_any = true;
+                    // THE CHAIN: the dying cell's own broadcast the
+                    // stalk above re-reads (the vanilla's own flag-3
+                    // recursion — the queue the same walk keeps)
+                    queue.extend([
+                        (x, y - 1, z),
+                        (x, y + 1, z),
+                        (x, y, z - 1),
+                        (x, y, z + 1),
+                        (x - 1, y, z),
+                        (x + 1, y, z),
+                    ]);
+                } else if y == cy - 1 && x == cx && z == cz && changed_kind == BAMBOO {
+                    // THE CONVERSION ARM (pc 17-42): the UP-neighbor
+                    // read the direction the pair's delta answers —
+                    // the changed cell the sapling's own above is, the
+                    // bamboo kind the is() read arms — the sapling
+                    // itself becomes BAMBOO (the defaultBlockState
+                    // return the walk's own product wears)
+                    self.set(x, y, z, BAMBOO);
+                    changed_any = true;
+                    queue.extend([
+                        (x, y - 1, z),
+                        (x, y + 1, z),
+                        (x, y, z - 1),
+                        (x, y, z + 1),
+                        (x - 1, y, z),
+                        (x + 1, y, z),
+                    ]);
+                }
+            }
+        }
+        changed_any
+    }
+
+    /// THE BAMBOO'S OWN canSurvive — javap `BambooStalkBlock.
+    /// canSurvive` pc 0-16 over the 26.2 jar: the below read the
+    /// `BlockTags.SUPPORTS_BAMBOO` tag the verdict alone carries (the
+    /// sapling's own canSurvive the IDENTICAL walk speaks — the same
+    /// law the pair wears). The tag the palette subset the
+    /// [`supports_bamboo`] walk keeps (the generated table the jar's
+    /// tags/block/supports_bamboo.json banks).
+    pub fn bamboo_can_survive(&self, x: i32, y: i32, z: i32) -> bool {
+        supports_bamboo(self.get(x, y - 1, z))
+    }
+
+    /// THE BAMBOO'S OWN SCHEDULED TICK — javap `BambooStalkBlock.tick`
+    /// pc 0-15 over the 26.2 jar, the walk the drain's own verdict
+    /// keeps:
+    ///
+    /// 1. the canSurvive re-check the pop's own gate keeps — the
+    ///    support the placement's own repair the verdict answers (the
+    ///    dirt placed beneath the scheduled stalk the queue never
+    ///    pops);
+    /// 2. the failed verdict the `destroyBlock(pos, true)` walk
+    ///    serves — the pop the drop=true arg wears (the loot the
+    ///    caller's own lane rolls), the AIR the cell wears, the
+    ///    flag-3 broadcast the pop's own re-read arms (the next
+    ///    level's scheduleTick the cascade the one-per-tick rhythm
+    ///    keeps — the tower the bottom-up crackle the vanilla's own
+    ///    cadence speaks).
+    ///
+    /// THE BLOCK-MATCH GATE the stale rows the drain's own verdict
+    /// refuses (the fire tick's own head the same law keeps): the
+    /// kind-only cell the stalk kinds alone walk — the dug cell's
+    /// stale entry the re-dig the queue never pops. Returns whether
+    /// the cell POPPED (the caller's own voice/particles/drops the
+    /// flag arms).
+    pub fn bamboo_tick(&mut self, now: u64, x: i32, y: i32, z: i32) -> bool {
+        if !is_bamboo_stalk(self.get(x, y, z)) {
+            return false; // the block-match gate — the stale row the drain drops
+        }
+        if self.bamboo_can_survive(x, y, z) {
+            return false; // the surviving arm — the repaired support the queue never pops
+        }
+        self.set(x, y, z, AIR);
+        // THE POP'S OWN FLAG-3 BROADCAST (the destroyBlock walk the
+        // setBlock keeps): the next level's schedule the cascade the
+        // one-per-tick rhythm arms
+        let _ = self.bamboo_shape_updates((x, y, z), now + 1);
+        true
+    }
+
     /// THE FIRE'S OWN SCHEDULED TICK — javap `FireBlock.tick(state,
     /// level, pos, random)` over the real 26.2 jar, the walk the
     /// tick's own pc map keeps in ORDER:
@@ -4720,6 +4928,11 @@ impl World {
             // wore the flame replaces, the canSurvive verdict the loss
             // the chain re-reads
             let _ = self.fire_shape_updates((x, y, z));
+            // THE BAMBOO'S OWN RE-READ (the same flag-3 broadcast the
+            // pair's updateShape serves — the stalk the burnt block
+            // held the scheduleTick lag arms, the sapling the AIR the
+            // same beat serves)
+            let _ = self.bamboo_shape_updates((x, y, z), now + 1);
         } else {
             self.set(x, y, z, AIR);
             self.fire_age.remove(&(x, y, z));
@@ -4729,6 +4942,10 @@ impl World {
             // beat douses (the updateShape walk the scheduled tick's
             // 30..=39 lag never waits)
             let _ = self.fire_shape_updates((x, y, z));
+            // THE BAMBOO'S OWN RE-READ (the same removal the pair's
+            // updateShape serves — the support the fire ate the fall
+            // arms)
+            let _ = self.bamboo_shape_updates((x, y, z), now + 1);
         }
         out.changed = true;
         if pre == TNT {
@@ -8866,6 +9083,191 @@ mod tests {
             w2.get(6, 22, 6),
             BAMBOO,
             "the walk's growth the top places"
+        );
+    }
+
+    #[test]
+    fn the_bamboo_the_dig_the_cascade_the_wears() {
+        // THE CONTROLLED FIELD: the void world the reads isolate (the
+        // growth lane's own staging the walk keeps)
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 0..48 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        // THE FOUR-TALL COLUMN: the grass floor the stalks the
+        // supports_bamboo tag the pair the plant wears
+        w.set(8, 19, 8, GRASS);
+        for y in 20..24 {
+            w.set(8, y, 8, BAMBOO);
+        }
+        // THE DIG'S OWN BROADCAST (the flag-3 beat the dug cell's own
+        // walk serves — the base the hand's own dig removes): the
+        // ONLY unsupported stalk the direct-above cell is — the
+        // second level's below the FIRST stalk's kind keeps (the
+        // supports_bamboo BAMBOO row the verdict passes), the upper
+        // two the same support the verdict answers
+        w.set(8, 20, 8, AIR);
+        assert!(
+            !w.bamboo_shape_updates((8, 20, 8), 101),
+            "the schedule the mesh never re-speaks"
+        );
+        assert_eq!(
+            w.bamboo_ticks.len(),
+            1,
+            "the ONE live entry the Set's own dedup keeps"
+        );
+        assert_eq!(
+            w.bamboo_ticks[0],
+            (101, 8, 21, 8),
+            "the direct-above stalk the scheduleTick lag arms"
+        );
+        assert_eq!(w.get(8, 21, 8), BAMBOO, "the lag the stalk keeps");
+        // THE ONE-PER-TICK CASCADE (the pop's own re-broadcast the
+        // next level's schedule the rhythm keeps): the drain's due
+        // list the tick's own law answers, the bottom-up crackle the
+        // vanilla's own cadence speaks
+        assert!(
+            w.drain_due_bamboo_ticks(100).is_empty(),
+            "the not-yet-due entry the drain refuses"
+        );
+        assert_eq!(
+            w.drain_due_bamboo_ticks(101),
+            vec![(8, 21, 8)],
+            "the due cell the drain gives up"
+        );
+        assert!(
+            w.bamboo_tick(101, 8, 21, 8),
+            "the failed verdict the pop serves"
+        );
+        assert_eq!(w.get(8, 21, 8), AIR, "the pop the AIR wears");
+        assert_eq!(
+            w.bamboo_ticks[0],
+            (102, 8, 22, 8),
+            "the pop's own re-broadcast the next level arms"
+        );
+        assert_eq!(
+            w.drain_due_bamboo_ticks(102),
+            vec![(8, 22, 8)],
+            "the second level the next tick pops"
+        );
+        assert!(w.bamboo_tick(102, 8, 22, 8), "the cascade climbs");
+        assert_eq!(
+            w.drain_due_bamboo_ticks(103),
+            vec![(8, 23, 8)],
+            "the top the third tick pops"
+        );
+        assert!(w.bamboo_tick(103, 8, 23, 8), "the column gone");
+        assert!(w.bamboo_ticks.is_empty(), "the queue the walk drains");
+        for y in 21..24 {
+            assert_eq!(w.get(8, y, 8), AIR, "the fall the column clears");
+        }
+        assert_eq!(
+            w.get(8, 19, 8),
+            GRASS,
+            "the floor the walk never reads"
+        );
+        // THE REPAIRED SUPPORT THE QUEUE NEVER POPS (the tick's own
+        // surviving arm the re-check keeps): the scheduled stalk the
+        // dirt beneath the placement's own repair answers
+        w.set(8, 20, 8, BAMBOO);
+        w.set(8, 21, 8, BAMBOO);
+        assert!(
+            w.bamboo_can_survive(8, 21, 8),
+            "the stalk-below the tag row keeps"
+        );
+        w.set(8, 20, 8, AIR);
+        w.bamboo_shape_updates((8, 20, 8), 201);
+        w.set(8, 20, 8, DIRT);
+        assert!(
+            w.bamboo_can_survive(8, 21, 8),
+            "the dirt the supports_bamboo row keeps"
+        );
+        assert_eq!(
+            w.drain_due_bamboo_ticks(201),
+            vec![(8, 21, 8)],
+            "the scheduled entry the drain still gives up"
+        );
+        assert!(
+            !w.bamboo_tick(201, 8, 21, 8),
+            "the repaired support the surviving arm keeps"
+        );
+        assert_eq!(
+            w.get(8, 21, 8),
+            BAMBOO,
+            "the stalk the repair saves"
+        );
+        // THE STALE ROW THE BLOCK-MATCH GATE DROPS (the re-dig the
+        // queue's stale entry the verdict refuses)
+        w.set(8, 21, 8, AIR);
+        assert!(
+            !w.bamboo_tick(202, 8, 21, 8),
+            "the stale row the gate drops"
+        );
+        // THE SAPLING'S OWN SAME-BEAT DEATH (the pc 0-16 AIR return
+        // the one-tick lag never waits): the dug floor the sapling
+        // the SAME walk clears, the queue the sapling never fills
+        w.set(12, 19, 8, GRASS);
+        w.set(12, 20, 8, BAMBOO_SAPLING);
+        w.set(12, 19, 8, AIR);
+        assert!(
+            w.bamboo_shape_updates((12, 19, 8), 301),
+            "the sapling's death the mesh re-speaks"
+        );
+        assert_eq!(
+            w.get(12, 20, 8),
+            AIR,
+            "the sapling the same-beat AIR serves"
+        );
+        assert!(w.bamboo_ticks.is_empty(), "the sapling never schedules");
+        // THE DEATH'S OWN CHAIN (the dying cell's own broadcast the
+        // queue extends): the stalk the sapling held the schedule arms
+        // (the sapling the supports_bamboo row the stalk's verdict
+        // keeps — the support's loss the schedule speaks)
+        w.set(12, 19, 8, GRASS);
+        w.set(12, 20, 8, BAMBOO_SAPLING);
+        w.set(12, 21, 8, BAMBOO);
+        w.set(12, 19, 8, AIR);
+        w.bamboo_shape_updates((12, 19, 8), 401);
+        assert_eq!(w.get(12, 20, 8), AIR, "the sapling the same beat dies");
+        assert_eq!(
+            w.bamboo_ticks[0],
+            (401, 12, 21, 8),
+            "the held stalk the chain's schedule arms"
+        );
+        // THE CONVERSION ARM (the sapling's own updateShape pc 17-42 —
+        // the UP-neighbor bamboo the placed pair the sapling itself
+        // becomes): the placed bamboo the changed cell's own kind
+        // arms, the sapling the stalk the conversion wears
+        w.set(14, 19, 8, DIRT);
+        w.set(14, 20, 8, BAMBOO_SAPLING);
+        w.set(14, 21, 8, BAMBOO);
+        assert!(
+            w.bamboo_shape_updates((14, 21, 8), 501),
+            "the conversion the mesh re-speaks"
+        );
+        assert_eq!(
+            w.get(14, 20, 8),
+            BAMBOO,
+            "the sapling itself the conversion wears"
+        );
+        // THE DIRT-UNDER REFUSAL THE CONVERSION NEVER ARMS (the pc 33
+        // is(BAMBOO) read the placed kind alone passes): the dirt the
+        // changed cell wears the sapling the AIR verdict keeps — the
+        // below-support read the sapling's own survival answers
+        w.set(14, 20, 8, BAMBOO_SAPLING);
+        w.set(14, 21, 8, DIRT);
+        assert!(
+            !w.bamboo_shape_updates((14, 21, 8), 601),
+            "the non-bamboo neighbor the conversion refuses"
+        );
+        assert_eq!(
+            w.get(14, 20, 8),
+            BAMBOO_SAPLING,
+            "the supported sapling the walk keeps"
         );
     }
 

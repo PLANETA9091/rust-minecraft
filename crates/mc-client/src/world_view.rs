@@ -195,6 +195,7 @@ pub fn materialize(
         portal_axis: std::collections::HashMap::new(),
         has_skylight: true,
         campfire_ticks: Vec::new(), // the campfire's own queue: empty
+        bamboo_ticks: Vec::new(), // the bamboo's own queue: empty (the wire world the server's own falls land)
     };
     let side_i = side as i32;
     for gz in 0..side_i {
