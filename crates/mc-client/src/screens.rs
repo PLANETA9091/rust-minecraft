@@ -7719,13 +7719,16 @@ pub struct App {
     pub last_hurt: f32,
     /// THE COMBAT TRACKER'S OWN SHOVER MEMORY (the 26.2 CombatTracker
     /// entries the fall death's die walk consults): the mob-caused hurt
-    /// the (kind, stamp) pair banks — the tracker's addRecord walk the
-    /// landed dose arms — and the FALL's own word the memory picks: the
-    /// open window the assist row speaks ("was doomed to fall by %2$s"),
-    /// the expired retention the accident row keeps ("fell from a high
+    /// the (kind, stamp, mid-fall) triple banks — the tracker's
+    /// addRecord walk the landed dose arms, the body's falling
+    /// predicate the hit's own instant reads — and the FALL's own word
+    /// the memory picks: the open window the GROUNDED shove the assist
+    /// row speaks ("was doomed to fall by %2$s"), the MID-AIR blow the
+    /// finish row wears ("fell too far and was finished by %2$s"), the
+    /// expired retention the accident row keeps ("fell from a high
     /// place"). The respawn the fresh body's fresh tracker the None
     /// clears.
-    pub last_hurt_by_mob: Option<(crate::mob::MobKind, u64)>,
+    pub last_hurt_by_mob: Option<(crate::mob::MobKind, u64, bool)>,
     /// THE STATUS-EFFECT STORE (the effects.rs module's own laws — the
     /// add/update/compare chain the wire and the eat arc ride, the
     /// absorption value the white hearts row speaks): the OFFLINE lane's
@@ -11947,8 +11950,11 @@ impl App {
                             // addRecord walk the landed dose arms —
                             // the warden's shove the fall's own word
                             // the assist row later speaks)
-                            self.last_hurt_by_mob =
-                                Some((crate::mob::MobKind::Warden, self.frame));
+                            self.last_hurt_by_mob = Some((
+                                crate::mob::MobKind::Warden,
+                                self.frame,
+                                self.hit_lands_mid_fall(),
+                            ));
                             let rad = yaw as f64 * std::f64::consts::PI / 180.0;
                             let (nx, nz) = (-(rad.sin()), rad.cos());
                             if let Some(b) = &mut self.body {
@@ -12104,8 +12110,11 @@ impl App {
                             // names — the beam's shove the fall's own
                             // word the assist row later speaks, the
                             // death row the shriek alone wears)
-                            self.last_hurt_by_mob =
-                                Some((crate::mob::MobKind::Warden, self.frame));
+                            self.last_hurt_by_mob = Some((
+                                crate::mob::MobKind::Warden,
+                                self.frame,
+                                self.hit_lands_mid_fall(),
+                            ));
                             if let Some(b) = &mut self.body {
                                 b.vx += bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
                                 b.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
@@ -14718,10 +14727,11 @@ impl App {
                     ) {
                         // THE SHOVER'S OWN ENTRY (the tracker's
                         // addRecord walk the landed dose arms — the
-                        // mob-caused hurt the (kind, stamp) pair
-                        // banks, the fall's own word the entry the
-                        // assist row later speaks)
-                        self.last_hurt_by_mob = Some((kind, self.frame));
+                        // mob-caused hurt the (kind, stamp, mid-fall)
+                        // triple banks, the fall's own word the entry
+                        // the assist/finish row later speaks)
+                        self.last_hurt_by_mob =
+                            Some((kind, self.frame, self.hit_lands_mid_fall()));
                         // THE KNOCKBACK (dealDefaultKnockback's own law
                         // over the victim): the impulse rides the minus
                         // of the attacker-minus-victim direction —
@@ -14767,7 +14777,11 @@ impl App {
                                 &mob_kind_display_name(kind),
                             );
                             if hit {
-                                self.last_hurt_by_mob = Some((kind, self.frame));
+                                self.last_hurt_by_mob = Some((
+                                    kind,
+                                    self.frame,
+                                    self.hit_lands_mid_fall(),
+                                ));
                             }
                             hit
                         }
@@ -15015,7 +15029,8 @@ impl App {
                         // never credits, the null attacker the assist
                         // walk refuses)
                         if let Some(kind) = shooter_kind {
-                            self.last_hurt_by_mob = Some((kind, self.frame));
+                            self.last_hurt_by_mob =
+                                Some((kind, self.frame, self.hit_lands_mid_fall()));
                         }
                     }
                 }
@@ -36745,6 +36760,20 @@ impl App {
     /// tracker's own tick the lastDamageTime distance reads).
     const COMBAT_TRACKER_RETENTION_TICKS: u64 = 300;
 
+    /// THE MID-FALL BLOW'S OWN FLAG (the body's falling predicate at
+    /// the hurt instant — the airborne the fall distance carries the
+    /// hit the tracker entry's own flavor banks): the vanilla law the
+    /// getMessageForAssistedFall pair rides — the hit DURING the fall
+    /// the finish row speaks ("death.fell.finish" = "%1$s fell too far
+    /// and was finished by %2$s"), the grounded shove the assist row
+    /// keeps ("death.fell.assist" = "was doomed to fall by %2$s").
+    fn hit_lands_mid_fall(&self) -> bool {
+        self.body
+            .as_ref()
+            .map(|b| !b.on_ground && b.fall_distance > 0.0)
+            .unwrap_or(false)
+    }
+
     fn apply_fall_damage(&mut self, damage: i32) {
         // THE INVULNERABLE HEAD'S OWN WRAPPER ARM (javap hurtServer
         // pcs 0-10 — the isInvulnerableTo verdict the fall source's
@@ -36764,11 +36793,14 @@ impl App {
             .add_exhaustion(crate::food::FALL_DAMAGE_EXHAUSTION);
         // THE FALL DEATH'S OWN NAME (the vanilla die's CombatTracker
         // walk — the getMostSignificantFall entry the IS_FALL read
-        // answers): the shover's entry the assist row wears
-        // ("death.fell.assist" = "%1$s was doomed to fall by %2$s" the
-        // en_us table carries), the expired entries the accident row
-        // keeps ("death.fell.accident.generic" = "%1$s fell from a
-        // high place"). THE ENTRY'S OWN SHELF the
+        // answers): the shover's entry the GROUNDED shove the assist
+        // row wears ("death.fell.assist" = "%1$s was doomed to fall by
+        // %2$s" the en_us table carries), the MID-AIR blow the finish
+        // row wears ("death.fell.finish" = "%1$s fell too far and was
+        // finished by %2$s" — the getMessageForAssistedFall pair the
+        // entry's own mid-fall flavor picks), the expired entries the
+        // accident row keeps ("death.fell.accident.generic" = "%1$s
+        // fell from a high place"). THE ENTRY'S OWN SHELF the
         // RESET_COMBAT_STATUS_TIME 300 speaks; the fall's own damage
         // the lastDamageTime re-stamp wears — the open window's stamp
         // the landing refreshes, the entry the tracker's in-combat
@@ -36779,10 +36811,10 @@ impl App {
         // vanilla row the name suppresses), the ownerless arrow the
         // null attacker the tracker entry never credits.
         let shover = match self.last_hurt_by_mob {
-            Some((kind, stamp)) => {
+            Some((kind, stamp, mid_fall)) => {
                 if self.frame - stamp <= Self::COMBAT_TRACKER_RETENTION_TICKS {
-                    self.last_hurt_by_mob = Some((kind, self.frame));
-                    Some(mob_kind_display_name(kind))
+                    self.last_hurt_by_mob = Some((kind, self.frame, mid_fall));
+                    Some((mob_kind_display_name(kind), mid_fall))
                 } else {
                     self.last_hurt_by_mob = None;
                     None
@@ -36791,7 +36823,14 @@ impl App {
             None => None,
         };
         let (death_key, killer) = match &shover {
-            Some(name) => (Some("death.fell.assist"), Some(name.as_str())),
+            Some((name, mid_fall)) => (
+                Some(if *mid_fall {
+                    "death.fell.finish"
+                } else {
+                    "death.fell.assist"
+                }),
+                Some(name.as_str()),
+            ),
             None => (Some("death.fell.accident.generic"), None),
         };
         self.hurt_inner(damage as f32, HurtVoice::Plain, death_key, killer);
@@ -48800,7 +48839,7 @@ mod tests {
         // banks, the fall's own word the assist row the skeleton
         // later speaks)
         assert_eq!(
-            app.last_hurt_by_mob.map(|(k, _)| k),
+            app.last_hurt_by_mob.map(|(k, _, _)| k),
             Some(crate::mob::MobKind::Skeleton),
             "the shot the shover entry banks"
         );
@@ -48940,8 +48979,8 @@ mod tests {
     /// from a high place"; the entry's own shelf the
     /// RESET_COMBAT_STATUS_TIME 300 the class-file constant walk
     /// pins, the fall's own landing the lastDamageTime re-stamp
-    /// wears): the REAL melee lane banks the (kind, stamp) pair (the
-    /// zombie's bite the addRecord arm walks), the fall's lethal
+    /// wears): the REAL melee lane banks the (kind, stamp, mid-fall)
+    /// triple (the zombie's bite the addRecord arm walks), the fall's lethal
     /// dose the shover's own name the death row wears, the respawn
     /// the fresh tracker the None clears, the expired window the
     /// accident row keeps.
@@ -49005,7 +49044,7 @@ mod tests {
             app.offline_world.as_ref().map(|w| w.difficulty),
         );
         assert_eq!(
-            app.last_hurt_by_mob.map(|(k, _)| k),
+            app.last_hurt_by_mob.map(|(k, _, _)| k),
             Some(crate::mob::MobKind::Zombie),
             "the zombie's own kind the entry banks"
         );
@@ -49035,7 +49074,7 @@ mod tests {
         // the tick walk the frame far ahead rides, the stamp the
         // expired shelf reads)
         app.frame = 1000;
-        app.last_hurt_by_mob = Some((crate::mob::MobKind::Zombie, 0));
+        app.last_hurt_by_mob = Some((crate::mob::MobKind::Zombie, 0, false));
         app.apply_fall_damage(20);
         assert!(app.dead, "the second fall the crossing banks");
         assert_eq!(
@@ -49048,12 +49087,154 @@ mod tests {
         // THE KIND'S OWN FLOW (the skeleton's shot the same pair
         // banks — the display name the assist row's %2$s the
         // shooter's own kind wears)
-        app.last_hurt_by_mob = Some((crate::mob::MobKind::Skeleton, app.frame));
+        app.last_hurt_by_mob = Some((crate::mob::MobKind::Skeleton, app.frame, false));
         app.apply_fall_damage(20);
         assert_eq!(
             app.death_message.as_deref(),
             Some("mc2rs was doomed to fall by Skeleton"),
             "the assist row the skeleton names"
+        );
+    }
+
+    /// THE FALL THE MID-AIR BLOW THE FINISH ROW WEARS (the 26.2
+    /// CombatTracker's getMessageForAssistedFall the assist/finish
+    /// pair rides — the entry's own mid-fall flavor the row pick
+    /// answers): the hit DURING the fall the finish row speaks
+    /// ("death.fell.finish" = "%1$s fell too far and was finished by
+    /// %2$s" the en_us carries), the grounded shove the assist row
+    /// keeps ("death.fell.assist" = "was doomed to fall by %2$s" the
+    /// autopush-622 walk serves), the sim's bare-handed mobs the
+    /// .item row the honest absence never speaks.
+    #[test]
+    fn the_fall_is_finished_by_its_hitter() {
+        // THE MID-AIR BITE'S OWN BANK (the float shape the race-free
+        // read keeps — the body the pad's own open sky hovers, the
+        // melee gate the horizontal read the dy never reads
+        // (dist2_xz the within_melee_range_width law walks), the
+        // airborne the fall distance carries the flag the TRUE
+        // banks)
+        let mut app = App::new(5);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.mobs.clear();
+        let (px, pz) = {
+            let b = app.body.as_ref().expect("the spawned body");
+            (b.x, b.z)
+        };
+        // THE SKY PAD (the shover test's own shape — the flat stand
+        // the test's world-set builds)
+        {
+            let world = app.offline_world.as_mut().unwrap();
+            for dx in -2i32..=2 {
+                for dz in -2i32..=2 {
+                    world.set(
+                        px.floor() as i32 + dx,
+                        60,
+                        pz.floor() as i32 + dz,
+                        crate::world::STONE,
+                    );
+                }
+            }
+        }
+        if let Some(b) = app.body.as_mut() {
+            b.y = 62.5;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.fall_distance = 0.5;
+            b.on_ground = false;
+        }
+        let mut zombie = crate::mob::Zombie::new(60, px + 1.0, 61.0, pz, 61);
+        zombie.on_ground = true;
+        app.mobs.push(zombie);
+        let mut bitten_mid_fall = false;
+        for _ in 0..200 {
+            // THE HOVER'S OWN RE-ARM (the airborne state the tick's
+            // own step re-arms — the gravity's tick-pull the next arm
+            // answers, the pad 1.5 below the collision never reaches)
+            if let Some(b) = app.body.as_mut() {
+                b.on_ground = false;
+                b.vy = 0.0;
+                b.fall_distance = b.fall_distance.max(0.5);
+            }
+            app.update();
+            if app.last_hurt_by_mob.map(|(_, _, m)| m) == Some(true)
+                && app.health < 20.0
+            {
+                bitten_mid_fall = true;
+                break;
+            }
+        }
+        assert!(
+            bitten_mid_fall,
+            "the mid-air bite the flag banks (health={} entry={:?})",
+            app.health, app.last_hurt_by_mob
+        );
+        assert_eq!(
+            app.last_hurt_by_mob.map(|(k, _, _)| k),
+            Some(crate::mob::MobKind::Zombie),
+            "the zombie's own kind the entry banks"
+        );
+        // THE FINISH'S OWN ROW (the open window the mid-fall flavor
+        // the finish row wears — the shover's own display name the
+        // %2$s fills, the mobs cleared the repeat bites never land)
+        app.mobs.clear();
+        app.apply_fall_damage(20);
+        assert!(app.dead, "the lethal fall the crossing banks");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs fell too far and was finished by Zombie"),
+            "the finish row the mid-fall blow's own word wears"
+        );
+        // THE LANG ROW'S OWN PIN (the 26.2 en_us the walk's own word
+        // keeps; the .item row the sim's bare hands the honest
+        // absence never speaks)
+        assert_eq!(
+            tr("death.fell.finish"),
+            Some("%1$s fell too far and was finished by %2$s"),
+            "the finish row the lang table carries"
+        );
+        // THE GROUNDED SHOVE'S OWN CONTRAST (the same bite the ground
+        // lands — the flag the FALSE banks, the assist row the same
+        // walk wears: the split the hit's own instant decides)
+        app.respawn();
+        app.mobs.clear();
+        let (px2, pz2) = {
+            let b = app.body.as_ref().expect("the respawned body");
+            (b.x, b.z)
+        };
+        if let Some(b) = app.body.as_mut() {
+            b.y = 61.0;
+            b.vx = 0.0;
+            b.vy = 0.0;
+            b.vz = 0.0;
+            b.fall_distance = 0.0;
+            b.on_ground = true;
+        }
+        let mut z2 = crate::mob::Zombie::new(62, px2 + 1.0, 61.0, pz2, 63);
+        z2.on_ground = true;
+        app.mobs.push(z2);
+        let mut bitten_ground = false;
+        for _ in 0..200 {
+            app.update();
+            if app.last_hurt_by_mob.map(|(_, _, m)| m) == Some(false)
+                && app.health < 20.0
+            {
+                bitten_ground = true;
+                break;
+            }
+        }
+        assert!(
+            bitten_ground,
+            "the grounded bite the FALSE flag banks (health={} entry={:?})",
+            app.health, app.last_hurt_by_mob
+        );
+        app.mobs.clear();
+        app.apply_fall_damage(20);
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was doomed to fall by Zombie"),
+            "the assist row the grounded shove wears"
         );
     }
 
