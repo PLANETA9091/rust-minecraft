@@ -2449,6 +2449,19 @@ fn mob_kind_entity_id(kind: crate::mob::MobKind) -> &'static str {
     }
 }
 
+/// THE ATTACKER'S OWN DISPLAY NAME (vanilla `Entity.getDisplayName()`'s
+/// walk — the entity-type lang key the en_us table answers,
+/// `entity.minecraft.zombie` = "Zombie"): the killer word the death
+/// message's %2$s arg wears, the missing key the getOrDefault law the
+/// key ITSELF renders.
+fn mob_kind_display_name(kind: crate::mob::MobKind) -> String {
+    let key = format!(
+        "entity.{}",
+        mob_kind_entity_id(kind).replace(':', ".")
+    );
+    tr(&key).unwrap_or(key.as_str()).to_string()
+}
+
 /// THE ENTITY SELECTOR WORD'S OWN PARSE (javap
 /// `EntitySelectorParser` — the `@` the readStartingWord verdict
 /// keeps, the head letter the five selectors' own words answer, the
@@ -11882,9 +11895,15 @@ impl App {
                         }
                     }
                     // THE PLAYER ARM (the dose the body's own pipeline
-                    // wears — the same walk the pre-victim rounds kept)
+                    // wears — the same walk the pre-victim rounds kept;
+                    // the mobAttack source the death row names — the
+                    // Warden the %2$s the slain row carries)
                     None => {
-                        if self.hurt(crate::sculk::WARDEN_ATTACK_DAMAGE) {
+                        if self.hurt_by_named(
+                            crate::sculk::WARDEN_ATTACK_DAMAGE,
+                            "death.attack.mob",
+                            &mob_kind_display_name(crate::mob::MobKind::Warden),
+                        ) {
                             let rad = yaw as f64 * std::f64::consts::PI / 180.0;
                             let (nx, nz) = (-(rad.sin()), rad.cos());
                             if let Some(b) = &mut self.body {
@@ -12027,9 +12046,14 @@ impl App {
                         }
                     }
                     // THE PLAYER ARM (the dose the body's own pipeline
-                    // wears — the same walk the pre-victim rounds kept)
+                    // wears — the same walk the pre-victim rounds kept;
+                    // the sonic_boom source's own row the mob name never
+                    // appends — the 26.2 en_us row the shriek alone wears)
                     None => {
-                        if self.hurt(crate::sculk::WARDEN_SONIC_DAMAGE) {
+                        if self.hurt_keyed(
+                            crate::sculk::WARDEN_SONIC_DAMAGE,
+                            "death.attack.sonic_boom",
+                        ) {
                             if let Some(b) = &mut self.body {
                                 b.vx += bx * crate::sculk::WARDEN_SONIC_KNOCKBACK_HORIZONTAL;
                                 b.vy += by * crate::sculk::WARDEN_SONIC_KNOCKBACK_VERTICAL;
@@ -13645,7 +13669,8 @@ impl App {
                 // out-edges ride the hurt pipeline (the knockback the
                 // dealDefaultKnockback law speaks), the ambient groans
                 // draw their pitch from the entity's own stream.
-                let mut hit_events: Vec<(f64, f64, f64)> = Vec::new();
+                let mut hit_events: Vec<(f64, f64, f64, crate::mob::MobKind)> =
+                    Vec::new();
                 // THE WOLF'S OWN BITES (the events the mob ticks queued
                 // — the (prey id, damage, dir) tuples the caller's own
                 // pass hurts the mob slice by)
@@ -13718,7 +13743,9 @@ impl App {
                 // answer): the caller's spawn lane the ItemEntities
                 // wear (the popResource law the ItemDrop::spawn keeps)
                 let mut explosion_drops: Vec<crate::mob::ExplosionDropStack> = Vec::new();
-                let mut blast_player: Option<crate::mob::ExplosionBlast> = None;
+                let mut blast_player: Option<
+                    (crate::mob::ExplosionBlast, Option<crate::mob::MobKind>),
+                > = None;
                 let mut blast_sources: Vec<(
                     i32,
                     crate::mob::PreyView,
@@ -13934,7 +13961,12 @@ impl App {
                                 ));
                             }
                             if let Some(atk) = ev.attack {
-                                hit_events.push((atk.damage, atk.dir_x, atk.dir_z));
+                                hit_events.push((
+                                    atk.damage,
+                                    atk.dir_x,
+                                    atk.dir_z,
+                                    mob.kind,
+                                ));
                             }
                             if let Some((prey_id, atk)) = ev.attack_prey {
                                 // THE ATTACKER'S OWN ID (the event's
@@ -13977,7 +14009,12 @@ impl App {
                             tnt_chain_spawns
                                 .extend(ev.explosion_tnt_chains.iter().copied());
                             if ev.blast_player.is_some() {
-                                blast_player = ev.blast_player;
+                                // THE CREEPER'S OWN NAME (the explosion's
+                                // source entity the getIndirectSourceEntity
+                                // walk returns — the entity row the death
+                                // message speaks)
+                                blast_player =
+                                    ev.blast_player.map(|b| (b, Some(mob.kind)));
                             }
                             if ev.ambient {
                                 // THE PLAY'S OWN NULL GATE (javap
@@ -14324,7 +14361,13 @@ impl App {
                                 tnt_chain_spawns
                                     .extend(ev.explosion_tnt_chains.iter().copied());
                                 if ev.blast_player.is_some() {
-                                    blast_player = ev.blast_player;
+                                    // THE OWNERLESS BLAST'S OWN ROW (the
+                                    // PrimedTnt's own explosion the
+                                    // owner-less source wears — the
+                                    // getIndirectSourceEntity null the
+                                    // generic row keeps: "mc2rs blew up")
+                                    blast_player =
+                                        ev.blast_player.map(|b| (b, None));
                                 }
                             } else {
                                 // the client-side SMOKE (the addParticle
@@ -14577,8 +14620,17 @@ impl App {
                     let heart = crate::particles::heart_ambient(bbox, &mut self.mob_rng);
                     self.particles.push(heart);
                 }
-                for (dmg, dir_x, dir_z) in hit_events {
-                    if self.hurt(dmg as f32) {
+                // THE NAMED SOURCE'S OWN DOSE (javap `Mob.doHurtTarget`
+                // the mobAttack source the death row names —
+                // death.attack.mob the %2$s the attacker's display
+                // name answers, the en_us row the getDisplayName walk
+                // fills)
+                for (dmg, dir_x, dir_z, kind) in hit_events {
+                    if self.hurt_by_named(
+                        dmg as f32,
+                        "death.attack.mob",
+                        &mob_kind_display_name(kind),
+                    ) {
                         // THE KNOCKBACK (dealDefaultKnockback's own law
                         // over the victim): the impulse rides the minus
                         // of the attacker-minus-victim direction —
@@ -14601,9 +14653,23 @@ impl App {
                 // serves, the push the velocity add speaks DIRECTLY:
                 // `entity.push(dir.scale(strength))` the deltaMovement
                 // add the vanilla law keeps, the melee knockback's
-                // halve law the blast never wears)
-                if let Some(blast) = blast_player {
-                    if self.hurt(blast.dose as f32) {
+                // halve law the blast never wears. THE SOURCE'S OWN ROW
+                // (vanilla getDeathMessage's indirect-entity read): the
+                // named entity the explosion.player row speaks — the
+                // creeper's own name the %2$s answers —, the null the
+                // generic row keeps ("mc2rs blew up"))
+                if let Some((blast, source)) = blast_player {
+                    let landed = match source {
+                        Some(kind) => self.hurt_by_named(
+                            blast.dose as f32,
+                            "death.attack.explosion.player",
+                            &mob_kind_display_name(kind),
+                        ),
+                        None => {
+                            self.hurt_keyed(blast.dose as f32, "death.attack.explosion")
+                        }
+                    };
+                    if landed {
                         if let Some(b) = &mut self.body {
                             b.vx += blast.push_x;
                             b.vy += blast.push_y;
@@ -25860,6 +25926,7 @@ impl App {
                     f32::MAX,
                     HurtVoice::GenericKill,
                     Some("death.attack.genericKill"),
+                    None,
                 );
                 let msg = format_positional(
                     tr("commands.kill.success.single").unwrap_or("Killed %s"),
@@ -25894,6 +25961,7 @@ impl App {
                                 f32::MAX,
                                 HurtVoice::GenericKill,
                                 Some("death.attack.genericKill"),
+                                None,
                             )
                         }
                         KillTarget::Mob(i) => {
@@ -36543,6 +36611,7 @@ impl App {
             damage as f32,
             HurtVoice::Plain,
             Some("death.fell.accident.generic"),
+            None,
         );
     }
 
@@ -36558,7 +36627,7 @@ impl App {
     /// DamageEffects.HURT voice, the BURNING sources (lava, onFire)
     /// PLAYER_HURT_ON_FIRE).
     pub fn hurt(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, HurtVoice::Plain, None)
+        self.hurt_inner(amount, HurtVoice::Plain, None, None)
     }
     /// THE BURNING SOURCES' OWN GATE — the UNNAMED arm (the tests' and
     /// the fire-immunity walk's own doses; the death message the None
@@ -36568,7 +36637,7 @@ impl App {
     /// dose wears).
     #[cfg_attr(not(test), expect(dead_code))]
     pub fn hurt_burning(&mut self, amount: f32) -> bool {
-        self.hurt_inner(amount, HurtVoice::Burning, None)
+        self.hurt_inner(amount, HurtVoice::Burning, None, None)
     }
     /// THE BURNING SOURCE'S OWN NAME (the vanilla die's CombatTracker
     /// walk — the damage type's own lang key the caller speaks: the
@@ -36576,7 +36645,32 @@ impl App {
     /// the inFire family [the fire kinds + the campfires' own
     /// message_id rows the jar's json carries] death.attack.inFire).
     pub fn hurt_burning_keyed(&mut self, amount: f32, death_key: &'static str) -> bool {
-        self.hurt_inner(amount, HurtVoice::Burning, Some(death_key))
+        self.hurt_inner(amount, HurtVoice::Burning, Some(death_key), None)
+    }
+
+    /// THE PLAIN SOURCE'S OWN NAME (the death message the caller's own
+    /// key speaks — the single-arg rows the %1$s alone carries: the
+    /// warden's sonic boom death.attack.sonic_boom the mob name never
+    /// appends [the 26.2 row the shriek alone wears], the generic
+    /// explosion death.attack.explosion the ownerless blast answers).
+    pub fn hurt_keyed(&mut self, amount: f32, death_key: &'static str) -> bool {
+        self.hurt_inner(amount, HurtVoice::Plain, Some(death_key), None)
+    }
+
+    /// THE NAMED SOURCE'S OWN GATE (the mob/explosion-entity lanes —
+    /// `damageSources().mobAttack(mob)` / the explosion's own source
+    /// the vanilla die walk names: death.attack.mob the %2$s the
+    /// attacker's display name answers, death.attack.explosion.player
+    /// the creeper's own row wears). The voice the plain HURT law
+    /// keeps (the mob sources' DamageEffects.HURT row), the killer
+    /// word the death tail's own args pair carries.
+    pub fn hurt_by_named(
+        &mut self,
+        amount: f32,
+        death_key: &'static str,
+        killer: &str,
+    ) -> bool {
+        self.hurt_inner(amount, HurtVoice::Plain, Some(death_key), Some(killer))
     }
 
     /// THE DROWNING SOURCE'S OWN GATE (the same pipeline, the
@@ -36588,6 +36682,7 @@ impl App {
             amount,
             HurtVoice::Drowning,
             Some("death.attack.drown"),
+            None,
         )
     }
 
@@ -36601,6 +36696,7 @@ impl App {
             amount,
             HurtVoice::Starving,
             Some("death.attack.starve"),
+            None,
         )
     }
 
@@ -36621,6 +36717,7 @@ impl App {
             HurtVoice::Plain,
             true,
             Some("death.attack.outOfWorld"),
+            None,
         )
     }
 
@@ -36632,8 +36729,9 @@ impl App {
         amount: f32,
         voice: HurtVoice,
         death_key: Option<&'static str>,
+        killer: Option<&str>,
     ) -> bool {
-        self.hurt_inner_gated(amount, voice, false, death_key)
+        self.hurt_inner_gated(amount, voice, false, death_key, killer)
     }
 
     fn hurt_inner_gated(
@@ -36642,6 +36740,7 @@ impl App {
         voice: HurtVoice,
         bypass_invulnerable: bool,
         death_key: Option<&'static str>,
+        killer: Option<&str>,
     ) -> bool {
         // THE INVULNERABLE HEAD (javap hurtServer pcs 0-10 — the
         // pipeline's own opening verdict
@@ -36683,7 +36782,7 @@ impl App {
             if amount <= self.last_hurt {
                 return false;
             }
-            self.actually_hurt(amount - self.last_hurt, voice, death_key);
+            self.actually_hurt(amount - self.last_hurt, voice, death_key, killer);
             self.last_hurt = amount;
             true
         } else {
@@ -36691,7 +36790,7 @@ impl App {
             self.invulnerable_time = 20;
             self.hurt_duration = 10;
             self.hurt_time = self.hurt_duration;
-            self.actually_hurt(amount, voice, death_key);
+            self.actually_hurt(amount, voice, death_key, killer);
             // the hurt voice (handleDamageEvent's own call — the
             // client's own law speaks the (r - r) * 0.2 + 1.0 pitch;
             // the damage type's effects name the event — the plain
@@ -36725,7 +36824,13 @@ impl App {
     /// bytecode speaks). A fully-absorbed hit never touches the health
     /// and never reaches the combat/death tail (the `amount == 0`
     /// return).
-    fn actually_hurt(&mut self, amount: f32, voice: HurtVoice, death_key: Option<&'static str>) {
+    fn actually_hurt(
+        &mut self,
+        amount: f32,
+        voice: HurtVoice,
+        death_key: Option<&'static str>,
+        killer: Option<&str>,
+    ) {
         // THE RESISTANCE'S OWN FOLD (javap actuallyHurt's own order —
         // the armor lane the bare body skips, the getDamageAfterMagicAbsorb
         // call the magic fold serves, the ABSORPTION lane the survivor
@@ -36767,8 +36872,14 @@ impl App {
             // screen the title-only law wears, the wire's Combat Kill
             // message the networked lane carries)
             if let Some(key) = death_key {
-                self.death_message =
-                    Some(format_chat_decoration(key, &[PLAYER_NAME]));
+                self.death_message = Some(match killer {
+                    // THE NAMED SOURCE'S OWN ROW (death.attack.mob the
+                    // %2$s arg wears — the attacker's display name the
+                    // getDeathMessage walk appends, the vanilla pair
+                    // the combat tracker's own law keeps)
+                    Some(k) => format_chat_decoration(key, &[PLAYER_NAME, k]),
+                    None => format_chat_decoration(key, &[PLAYER_NAME]),
+                });
             }
             // THE DEATH SCREEN'S OWN TAKEOVER (the vanilla death's own
             // setScreen(new DeathScreen) — the open ChatScreen the
@@ -48075,8 +48186,9 @@ mod tests {
         );
         app.respawn();
         // THE UNNAMED SOURCES' OWN LAW (the None the title-only
-        // screen wears — the mob/magic/explosion lanes the future
-        // round names)
+        // screen wears — the doses the caller's own lane the killer
+        // word never passes: the magic/poison family the no-name
+        // sources keep)
         assert!(app.hurt(20.0));
         assert!(app.dead);
         assert_eq!(
@@ -48090,6 +48202,7 @@ mod tests {
             f32::MAX,
             HurtVoice::GenericKill,
             Some("death.attack.genericKill"),
+            None,
         );
         assert!(app.dead, "the /kill dose the crossing banks");
         assert_eq!(
@@ -48097,6 +48210,121 @@ mod tests {
             Some("mc2rs was killed"),
             "the genericKill row speaks"
         );
+    }
+
+    /// THE DEATH NAMES ITS KILLER (javap the 26.2 jar's own
+    /// getDeathMessage walks — the mobAttack source the %2$s the
+    /// attacker's display name answers, the sonic_boom row the
+    /// shriek alone wears, the explosion's own indirect entity the
+    /// explosion.player row speaks, the ownerless blast the generic
+    /// row keeps; the display names the en_us entity rows carry).
+    #[test]
+    fn the_death_names_its_killer() {
+        let mut app = App::new(3);
+        app.enter_world();
+        // THE SLAIN ROW (death.attack.mob — the zombie's melee the
+        // mobAttack source names, the en_us row the pair fills:
+        // "mc2rs was slain by Zombie")
+        assert!(app.hurt_by_named(
+            20.0,
+            "death.attack.mob",
+            &mob_kind_display_name(crate::mob::MobKind::Zombie),
+        ));
+        assert!(app.dead);
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was slain by Zombie"),
+            "the slain row the killer word wears"
+        );
+        app.respawn();
+        // THE SONIC ROW (death.attack.sonic_boom — the 26.2 row the
+        // %2$s never carries: the shriek the warden name never
+        // appends; the lethal dose the crossing banks — the lane's
+        // own 10.0 the fresh body survives)
+        assert!(app.hurt_keyed(20.0, "death.attack.sonic_boom"));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was obliterated by a sonically-charged shriek"),
+            "the sonic row the shriek alone wears"
+        );
+        app.respawn();
+        // THE WARDEN'S MELEE ROW (the same mobAttack source — the
+        // Warden the slain row's own display name answers)
+        assert!(app.hurt_by_named(
+            20.0,
+            "death.attack.mob",
+            &mob_kind_display_name(crate::mob::MobKind::Warden),
+        ));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was slain by Warden"),
+            "the warden row speaks"
+        );
+        app.respawn();
+        // THE CREEPER'S OWN ROW (death.attack.explosion.player — the
+        // explosion's own source entity the indirect read names:
+        // "mc2rs was blown up by Creeper")
+        assert!(app.hurt_by_named(
+            20.0,
+            "death.attack.explosion.player",
+            &mob_kind_display_name(crate::mob::MobKind::Creeper),
+        ));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs was blown up by Creeper"),
+            "the blown-up row the creeper names"
+        );
+        app.respawn();
+        // THE OWNERLESS BLAST'S OWN ROW (death.attack.explosion — the
+        // null indirect entity the generic row keeps: "mc2rs blew up")
+        assert!(app.hurt_keyed(20.0, "death.attack.explosion"));
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs blew up"),
+            "the generic blast row the name never carries"
+        );
+        app.respawn();
+        // THE DISPLAY NAMES' OWN TABLE (the en_us entity rows the
+        // helper answers — the killer word each drawn kind speaks)
+        assert_eq!(mob_kind_display_name(crate::mob::MobKind::Zombie), "Zombie");
+        assert_eq!(
+            mob_kind_display_name(crate::mob::MobKind::Skeleton),
+            "Skeleton"
+        );
+        assert_eq!(mob_kind_display_name(crate::mob::MobKind::Spider), "Spider");
+        assert_eq!(
+            mob_kind_display_name(crate::mob::MobKind::Creeper),
+            "Creeper"
+        );
+        assert_eq!(
+            mob_kind_display_name(crate::mob::MobKind::Warden),
+            "Warden"
+        );
+        // THE PASSIVE KINDS' OWN ROWS (the animals the helper's own
+        // walk answers — the display name the same entity key speaks)
+        assert_eq!(mob_kind_display_name(crate::mob::MobKind::Pig), "Pig");
+        assert_eq!(mob_kind_display_name(crate::mob::MobKind::Cow), "Cow");
+        assert_eq!(mob_kind_display_name(crate::mob::MobKind::Sheep), "Sheep");
+        assert_eq!(
+            mob_kind_display_name(crate::mob::MobKind::Chicken),
+            "Chicken"
+        );
+        assert_eq!(mob_kind_display_name(crate::mob::MobKind::Wolf), "Wolf");
+        // THE COOLDOWN'S OWN WINDOW (the 20-tick law — the landed dose
+        // arms the raw word, the weaker repeat the window's comparison
+        // refuses; the respawn the fresh window banks)
+        assert!(app.hurt_by_named(
+            4.0,
+            "death.attack.mob",
+            &mob_kind_display_name(crate::mob::MobKind::Zombie),
+        ));
+        assert!(!app.dead, "the arming dose the alive body keeps");
+        assert!(!app.hurt_by_named(
+            2.0,
+            "death.attack.mob",
+            &mob_kind_display_name(crate::mob::MobKind::Spider),
+        ));
+        assert!(!app.dead, "the refused dose the alive body keeps");
     }
 
     /// THE RESISTANCE'S OWN FOLD (javap getDamageAfterMagicAbsorb pcs
@@ -57547,7 +57775,7 @@ mod tests {
             app.on_chat_char(c);
         }
         assert!(app.chat_open);
-        app.actually_hurt(100.0, HurtVoice::Plain, None);
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
         // THE INTERRUPTED WALK (the close the save lane banks — the
         // method the startsWith walk names, the chat the death overlay
         // the input never shares)
@@ -57597,7 +57825,7 @@ mod tests {
         for c in "   ".chars() {
             app.on_chat_char(c);
         }
-        app.actually_hurt(100.0, HurtVoice::Plain, None);
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
         assert!(app.dead);
         assert!(!app.chat_open);
         assert_eq!(
@@ -57624,7 +57852,7 @@ mod tests {
         // untouched draft the skip-save keeps — the bank unchanged)
         app.on_chat_key();
         assert!(app.chat_input_is_draft);
-        app.actually_hurt(100.0, HurtVoice::Plain, None);
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
         assert!(app.dead);
         assert!(!app.chat_open);
         assert_eq!(
@@ -57649,7 +57877,7 @@ mod tests {
     fn the_death_screen_the_modal_keeps() {
         let mut app = App::new(3);
         app.enter_world();
-        app.actually_hurt(100.0, HurtVoice::Plain, None);
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
         assert!(app.dead && !app.chat_open);
         // THE DEAD ESC (the on_escape death gate — the pause the modal
         // never arms, the screen the World keeps)
@@ -57680,7 +57908,7 @@ mod tests {
         for c in "tp 1 2 3".chars() {
             app.on_chat_char(c);
         }
-        app.actually_hurt(100.0, HurtVoice::Plain, None);
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
         assert!(app.dead && !app.chat_open);
         assert_eq!(
             app.chat_latest_draft,
@@ -57834,7 +58062,7 @@ mod tests {
         }
         // THE DEATH (the INTERRUPTED verdict — the option the lane
         // never reads, the draft the replacement close banks)
-        app.actually_hurt(100.0, HurtVoice::Plain, None);
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
         assert!(app.dead && !app.chat_open);
         assert_eq!(
             app.chat_latest_draft,
@@ -96188,7 +96416,7 @@ cow_sound_variant: None,
             ride_height: 0.9,
         });
         // THE FATAL DOSE (the health the 0.0 crossing speaks)
-        app.actually_hurt(100.0, HurtVoice::Plain, None);
+        app.actually_hurt(100.0, HurtVoice::Plain, None, None);
         assert!(app.dead, "the dose the player kills");
         assert!(
             app.offline_ride.is_none(),
