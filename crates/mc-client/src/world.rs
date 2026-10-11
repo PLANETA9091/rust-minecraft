@@ -4019,6 +4019,118 @@ impl World {
         }
     }
 
+    /// THE BAMBOO'S OWN HEIGHT (javap BambooStalkBlock.
+    /// getHeightBelowUpToMax pc 0-37 the real 26.2 jar): the
+    /// contiguous bamboo-below count the `i < 16` loop guard caps —
+    /// each round the `pos.below(i + 1)` read the BAMBOO verdict the
+    /// count walks (pc 8-27), the non-bamboo cell the loop ends.
+    fn bamboo_height_below(&self, x: i32, y: i32, z: i32) -> u32 {
+        let mut count = 0u32;
+        while count < 16 && self.get(x, y - count as i32 - 1, z) == BAMBOO {
+            count += 1;
+        }
+        count
+    }
+
+    /// THE BAMBOO'S OWN RANDOM TICK (javap BambooSaplingBlock.
+    /// randomTick pc 0-42 + BambooStalkBlock.randomTick pc 0-81 over
+    /// the real 26.2 jar — the pair the two classes' own walks
+    /// speak):
+    ///
+    /// THE SAPLING ARM (pc 0-42): `nextInt(3) == 0` FIRST (the pc 0-8
+    /// roll the empty/light checks PRECEDE — the draw the occupied
+    /// cell still consumes), `isEmptyBlock(pos.above())` (pc 11-19 —
+    /// the strict-air verdict the kind-only store speaks), the
+    /// `getRawBrightness(pos.above(), 0) >= 9` gate (pc 22-33 — the
+    /// wheat's own light fold the grid-absent lane keeps), then
+    /// growBamboo pc 0-28: `setBlock(pos.above(), BAMBOO(LEAVES=
+    /// SMALL), 3)` — AND the sapling's own updateShape pc 17-43 (the
+    /// flag-3 update the setBlock fires): the bamboo-above neighbor
+    /// the sapling ITSELF converts (`Blocks.BAMBOO.defaultBlockState()
+    /// ` the pc 36-42 return speaks) — the pair the store's net state
+    /// wears (the base stalk + the top the growth's own two-block
+    /// product answers).
+    ///
+    /// THE STALK ARM (pc 0-81): the STAGE==0 gate (pc 0-16 — the
+    /// kind-only vocabulary the stage never stores: the fold EVERY
+    /// stalk stage 0 keeps, the bone-meal lane the client never
+    /// serves), the same `nextInt(3)` roll (pc 17-25), the same
+    /// empty-above + light-above pair (pc 28-50), the height law
+    /// `getHeightBelowUpToMax(...) + 1 < 16` (pc 53-67 — the bipush
+    /// 16 the max height speaks), then growBamboo: the new top the
+    /// `pos.above()` cell wears (the LEAVES cascade / the AGE / the
+    /// STAGE properties the kind-only vocabulary cannot store — the
+    /// steady-state pattern the mesher's own neighbor derivation
+    /// answers).
+    ///
+    /// Returns whether the plant GREW (the caller's remesh batch rides).
+    pub fn bamboo_random_tick(
+        &mut self,
+        rng: &mut crate::drops::Lcg,
+        x: i32,
+        y: i32,
+        z: i32,
+    ) -> bool {
+        let kind = self.get(x, y, z);
+        if is_bamboo_sapling(kind) {
+            // the pc 0-8 roll FIRST — the draw the occupied cell still consumes
+            if rng.next_int(3) != 0 {
+                return false;
+            }
+            if self.get(x, y + 1, z) != AIR {
+                return false; // the isEmptyBlock verdict pc 11-19
+            }
+            // the light-above gate pc 22-33 — the fold passes (the doc above)
+            // growBamboo pc 0-28 + the updateShape conversion pc 17-43
+            self.set(x, y + 1, z, BAMBOO);
+            self.set(x, y, z, BAMBOO);
+            true
+        } else if is_bamboo_stalk(kind) {
+            // the STAGE gate pc 0-16 — the fold the kind-only store keeps
+            if rng.next_int(3) != 0 {
+                return false; // the pc 17-25 roll
+            }
+            if self.get(x, y + 1, z) != AIR {
+                return false; // the isEmptyBlock verdict pc 28-36
+            }
+            // the light-above gate pc 39-50 — the fold passes
+            let height = self.bamboo_height_below(x, y, z) + 1;
+            if height >= 16 {
+                return false; // the pc 63-67 law — the 16-tall plant refuses
+            }
+            // growBamboo: the new top (the leaves cascade the kind-only
+            // vocabulary cannot store — the derived-render steady state
+            // the mesher's walk answers)
+            self.set(x, y + 1, z, BAMBOO);
+            true
+        } else {
+            false
+        }
+    }
+
+    /// THE RANDOM TICK'S OWN DISPATCH (the ServerLevel's ONE
+    /// randomTick per picked cell — the block class the kind verdict
+    /// answers): the wheat cell the [`World::crop_random_tick`] arm,
+    /// the bamboo pair the [`World::bamboo_random_tick`] arm, the
+    /// rest the isRandomlyTicking refusal keeps (the zero-draw law
+    /// the walk's 27-draw bare budget never sways).
+    pub fn random_tick_block(
+        &mut self,
+        rng: &mut crate::drops::Lcg,
+        x: i32,
+        y: i32,
+        z: i32,
+    ) -> bool {
+        let kind = self.get(x, y, z);
+        if is_wheat(kind) {
+            self.crop_random_tick(rng, x, y, z)
+        } else if is_bamboo_stalk(kind) || is_bamboo_sapling(kind) {
+            self.bamboo_random_tick(rng, x, y, z)
+        } else {
+            false
+        }
+    }
+
     /// THE RANDOM TICK WALK (the ServerLevel's per-tick lane the vanilla
     /// game law speaks: `randomTickSpeed = 3` — THREE random cells per
     /// 16³ chunk section per game tick, each the block's
@@ -4026,9 +4138,11 @@ impl World {
     /// world's own authority (the networked world the server ticks —
     /// the same split the mob lane speaks): every section the walk
     /// sweeps (the chunk-major order the tickChunk walk keeps), three
-    /// `nextInt(16)` draws per axis the pick wears, the wheat cell the
-    /// [`World::crop_random_tick`] law answers. Returns whether ANY
-    /// crop grew (the caller's remesh the batch grew speaks once).
+    /// `nextInt(16)` draws per axis the pick wears, the picked cell
+    /// the [`World::random_tick_block`] dispatch answers (the wheat
+    /// arm the crop lane, the bamboo pair the growth walk, the rest
+    /// the zero-draw refusal keeps). Returns whether ANY block grew
+    /// (the caller's remesh the batch grew speaks once).
     pub fn random_tick_walk(&mut self, rng: &mut crate::drops::Lcg) -> bool {
         let mut grew = false;
         let sections_y = CHUNK_Y / 16;
@@ -4042,7 +4156,7 @@ impl World {
                         let wx = cx as i32 * CHUNK_X as i32 + lx;
                         let wy = sy as i32 * 16 + ly;
                         let wz = cz as i32 * CHUNK_Z as i32 + lz;
-                        grew |= self.crop_random_tick(rng, wx, wy, wz);
+                        grew |= self.random_tick_block(rng, wx, wy, wz);
                     }
                 }
             }
@@ -8574,6 +8688,185 @@ mod tests {
         // alone mutates — the setBlock's own pos the soil keeps)
         assert_eq!(w.get(0, 24, 0), FARMLAND);
         assert_eq!(w.get(15, 24, 15), FARMLAND);
+    }
+
+    /// THE BAMBOO'S OWN GROWTH — the two classes' randomTick laws over
+    /// chosen seeds (the autopush-616 round): the sapling arm the
+    /// roll->empty->light order the pc 0-33 walk keeps (the roll the
+    /// occupied cell still consumes), the growth pair the store's net
+    /// state wears (the base conversion + the top the growBamboo
+    /// places), the stalk arm the height law the 16 ceiling speaks,
+    /// the dispatcher the one-tick one-arm law keeps, the walk the
+    /// planted field lives.
+    #[test]
+    fn the_bamboo_the_growth_the_arms_the_wear() {
+        // THE CONTROLLED FIELD: the void world the reads isolate (the
+        // light fold the pass verdict keeps — no grid the gates read)
+        let mut w = World::new(1, 42);
+        for x in 0..16 {
+            for z in 0..16 {
+                for y in 0..48 {
+                    w.set(x, y, z, AIR);
+                }
+            }
+        }
+        w.set(8, 20, 8, BAMBOO_SAPLING);
+        // THE SEED WALK: a seed the modulus-3 roll lands (the pc 0-8
+        // FIRST draw the sapling's own law speaks)
+        let mut landed = None;
+        for s in 0..64u64 {
+            let mut rng = crate::drops::Lcg::new(s);
+            if w.bamboo_random_tick(&mut rng, 8, 20, 8) {
+                landed = Some(s);
+                break;
+            }
+        }
+        let s = landed.expect("a modulus-3 seed within the walk");
+        // THE PAIR THE GROWTH WEARS: the sapling's growBamboo the
+        // BAMBOO top places (pc 0-28), the updateShape conversion the
+        // base speaks (pc 17-43) — the store's net state the pair keeps
+        assert_eq!(
+            w.get(8, 21, 8),
+            BAMBOO,
+            "the SMALL-leaved top growBamboo places"
+        );
+        assert_eq!(
+            w.get(8, 20, 8),
+            BAMBOO,
+            "the base the updateShape conversion wears"
+        );
+        // THE MIRROR PAIR: the fresh-seed replay's first draw IS the roll
+        let mut mirror = crate::drops::Lcg::new(s);
+        assert_eq!(
+            mirror.next_int(3),
+            0,
+            "the sapling's own modulus-3 roll"
+        );
+        // THE OCCUPIED-ABOVE REFUSAL still consumes the roll (the pc
+        // 11-19 empty check the roll PRECEDES): the grown pair's base —
+        // the roll lands, the empty verdict refuses, ONE draw spent
+        let mut rng = crate::drops::Lcg::new(s);
+        assert!(
+            !w.bamboo_random_tick(&mut rng, 8, 20, 8),
+            "the occupied above refuses"
+        );
+        let mut probe = crate::drops::Lcg::new(s);
+        probe.next_int(3); // the roll the refusal consumed
+        assert_eq!(
+            rng.next_int(1000),
+            probe.next_int(1000),
+            "the one roll the occupied refusal spends"
+        );
+        // THE STALK'S OWN GROWTH: the pair's top cell grows the third
+        // block (the same roll->empty->light walk the stalk arm keeps)
+        let mut grew_top = false;
+        for s2 in 0..64u64 {
+            let mut rng = crate::drops::Lcg::new(s2);
+            if w.bamboo_random_tick(&mut rng, 8, 21, 8) {
+                grew_top = true;
+                break;
+            }
+        }
+        assert!(grew_top, "the 2-tall top grew the third block");
+        assert_eq!(
+            w.get(8, 22, 8),
+            BAMBOO,
+            "the new top the pos.above cell wears"
+        );
+        // THE MAX HEIGHT LAW (the pc 63-67 verdict): a roll-landing
+        // seed the probes wear — the 16-tall column refuses, the
+        // 15-tall grows the 16th
+        let mut roll_seed = None;
+        for s3 in 0..64u64 {
+            let mut rng = crate::drops::Lcg::new(s3);
+            if rng.next_int(3) == 0 {
+                roll_seed = Some(s3);
+                break;
+            }
+        }
+        let s3 = roll_seed.expect("a modulus-3 seed within the walk");
+        for y in 20..36 {
+            w.set(12, y, 8, BAMBOO); // the 16-tall column 20..=35
+        }
+        let mut rng = crate::drops::Lcg::new(s3);
+        assert!(
+            !w.bamboo_random_tick(&mut rng, 12, 35, 8),
+            "the 16-tall plant refuses"
+        );
+        assert_eq!(
+            w.get(12, 36, 8),
+            AIR,
+            "the ceiling the new top never places"
+        );
+        for y in 20..35 {
+            w.set(14, y, 8, BAMBOO); // the 15-tall column 20..=34
+        }
+        let mut rng = crate::drops::Lcg::new(s3);
+        assert!(
+            w.bamboo_random_tick(&mut rng, 14, 34, 8),
+            "the 15-tall grows the 16th"
+        );
+        assert_eq!(
+            w.get(14, 35, 8),
+            BAMBOO,
+            "the 16th block the growth places"
+        );
+        // THE DISPATCH'S OWN ROUTES (the one-tick one-arm law): the
+        // wheat cell the crop arm, the rest the zero-draw refusal keeps
+        w.set(4, 20, 4, WHEAT);
+        let mut routed = false;
+        for s4 in 0..8192u64 {
+            let mut rng = crate::drops::Lcg::new(s4);
+            if w.random_tick_block(&mut rng, 4, 20, 4) {
+                routed = true;
+                break;
+            }
+        }
+        assert!(routed, "the wheat cell the crop arm routed");
+        assert_eq!(
+            w.get(4, 20, 4),
+            WHEAT + 1,
+            "the crop arm the ladder climbed"
+        );
+        let mut rng = crate::drops::Lcg::new(7);
+        let mut probe = rng.clone();
+        assert!(
+            !w.random_tick_block(&mut rng, 8, 30, 8),
+            "the air cell the dispatcher refuses"
+        );
+        assert_eq!(
+            rng.next_int(1000),
+            probe.next_int(1000),
+            "zero draws on air"
+        );
+        // THE WALK'S OWN SWEEP: the planted bamboo the walk lives on —
+        // the sapling cell the picks eventually serve, the growth the
+        // pair wears (the 9 picks per walk the one chunk speaks)
+        let mut w2 = World::new(1, 0xB00B00);
+        for y in 22..40 {
+            w2.set(6, y, 6, AIR);
+        }
+        w2.set(6, 20, 6, GRASS);
+        w2.set(6, 21, 6, BAMBOO_SAPLING);
+        let mut rng = crate::drops::Lcg::new(0xB00B10CA);
+        let mut grew_any = false;
+        for _ in 0..20000 {
+            grew_any |= w2.random_tick_walk(&mut rng);
+            if grew_any {
+                break;
+            }
+        }
+        assert!(grew_any, "the walk lived — the bamboo grew");
+        assert_eq!(
+            w2.get(6, 21, 6),
+            BAMBOO,
+            "the walk's growth the base conversion wears"
+        );
+        assert_eq!(
+            w2.get(6, 22, 6),
+            BAMBOO,
+            "the walk's growth the top places"
+        );
     }
 
     #[test]

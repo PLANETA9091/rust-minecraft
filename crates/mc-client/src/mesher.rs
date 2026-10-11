@@ -2389,16 +2389,37 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // strips wear), the leaves arms the crossed-plane pairs
                 // (the flowers' own 0.8..15.2 inset geometry the
                 // shade:false faces speak).
-                // THE PROPS' OWN DEFAULT — the kind-only vocabulary the
-                // AGE/LEAVES/STAGE properties never stores: the
-                // placement law the default state (age 0, leaves NONE —
-                // javap BambooStalkBlock.getStateForPlacement the
-                // defaultBlockState walks serve, the growth the offline
-                // client never runs) always answers: the placed stalk
-                // the thin age0 arms render, the leaves arms the
-                // selection the NONE verdict never picks (the leaves
-                // arms the selection tests pin — the honest limitation
-                // the growth-less client keeps).
+                // THE PROPS' OWN DERIVATION — the kind-only vocabulary
+                // the AGE/LEAVES/STAGE properties never STORES, but the
+                // tick-grown steady state the GEOMETRY answers (the
+                // autopush-616 growth walk the store's net state wears):
+                // the contiguous bamboo-below count b and the
+                // bamboo-above count k the capped reads speak (the
+                // thresholds the laws demand the caps never sway — the
+                // age law b>=3 the 3-cap pins, the leaves law the
+                // k∈{0,1,2,3+} bands the 3-cap answers), h = b+k+1 the
+                // plant's own height. THE LEAVES LAW the grown plants'
+                // growth trace wears (the growBamboo cascade the
+                // below->SMALL / twoBelow->NONE pair the large branch
+                // fires): the TOP segment (k=0) the LARGE pair renders
+                // once the plant reaches 4 (the below-SMALL verdict the
+                // large branch serves), the h=2/3 tops the SMALL pair
+                // (the sapling's own growBamboo the SMALL-leaved top
+                // places); k=1 the SMALL pair (the h>=3 plants the
+                // cascade's own below arm banks), k=2 the SMALL pair
+                // (the h>=4 plants — the h=3 base the NONE keeps),
+                // k>=3 NONE (the steady state's own floor — the
+                // twoBelow->NONE arm the fourth-from-top segment
+                // answers). THE H=1 LONE STALK the DEFAULT state keeps
+                // (the placement law's own product — the tick-grown
+                // plants the 2-tall minimum wear, the lone stalk the
+                // hand-staged cell the none verdict renders). THE AGE
+                // LAW the growBamboo flag speaks (the twoBelow-bamboo
+                // OR the ticked-state's own age-1 the flag wears): the
+                // tick-grown plants the b>=3 segments the thick age1
+                // fours render, the younger the thin age0 keeps. The
+                // STAGE property the fold keeps (every stalk stage 0 —
+                // the bone-meal lane the client never serves).
                 // THE FOUR-MODEL OVERLAP'S OWN DRAW LAW — the vanilla
                 // chunk mesh draws with the GL LEQUAL depth func (the
                 // RenderSystem.depthFunc(515) law), so the depth-equal
@@ -2425,7 +2446,42 @@ pub fn mesh_chunk(world: &World, cx: usize, cz: usize, lut: Option<&TextureLut>)
                 // (the element tables' own cullface Down/Up rows — the
                 // torch lane's own law the neighbor reads keep).
                 if crate::world::is_bamboo_stalk(id) {
-                    let props = [("age", "0"), ("leaves", "none")];
+                    // THE CAPPED NEIGHBOR COUNTS (the thresholds the
+                    // caps never sway — the doc above): b the below
+                    // count the age law pins at 3, k the above count
+                    // the leaves bands demand at 3
+                    let b = (1..4)
+                        .take_while(|&d| world.get(wx, wy - d, wz) == crate::world::BAMBOO)
+                        .count();
+                    let k = (1..4)
+                        .take_while(|&d| world.get(wx, wy + d, wz) == crate::world::BAMBOO)
+                        .count();
+                    let h = b + k + 1;
+                    let leaves = if k == 0 {
+                        if h >= 4 {
+                            "large"
+                        } else if h >= 2 {
+                            "small"
+                        } else {
+                            "none"
+                        }
+                    } else if k == 1 {
+                        if h >= 3 {
+                            "small"
+                        } else {
+                            "none"
+                        }
+                    } else if k == 2 {
+                        if h >= 4 {
+                            "small"
+                        } else {
+                            "none"
+                        }
+                    } else {
+                        "none"
+                    };
+                    let age = if b >= 3 { "1" } else { "0" };
+                    let props = [("age", age), ("leaves", leaves)];
                     // The attribute-system fold (the shared per-mesh
                     // uniforms the fire lane's own walk speaks — the
                     // javap-proven arithmetic).
@@ -5072,6 +5128,195 @@ mod tests {
             .any(|quad| quad.pts.iter().any(|p| (p[0] - (8.0 + 7.0 / 16.0 + off_x)).abs() < 1e-5));
         assert!(straight, "the pts the offset shift carries (off={off_x},{off_y},{off_z})");
         assert!(off_y == 0.0, "the XZ row the y the zero keeps");
+    }
+
+    #[test]
+    fn the_bamboo_the_growth_the_leaves_the_derived_wears() {
+        // THE DERIVATION'S OWN HEIGHTS (the autopush-616 round): the
+        // tick-grown steady state the neighbor reads answer — the
+        // leaves arms the grown plants' segments ride, the h=1 lone
+        // stalk the default state keeps (the lane test's own 20-quad
+        // pin the same verdict wears), the age law the b>=3 thick box
+        // speaks.
+        let mut w = empty_world();
+        put(&mut w, 8, 8, 8, STONE);
+        // THE H=1 LONE STALK: b=0, k=0 -> age 0, leaves none — the
+        // leaves tiles ABSENT (the default state the placement law
+        // serves, the grown plants the 2-tall minimum wear)
+        put(&mut w, 8, 9, 8, crate::world::BAMBOO);
+        let q = mesh_chunk(&w, 0, 0, None);
+        assert!(
+            q.iter().all(|quad| {
+                quad.tile != atlas::TILE_BAMBOO_SMALL_LEAVES
+                    && quad.tile != atlas::TILE_BAMBOO_LARGE_LEAVES
+            }),
+            "the lone stalk the leaves never renders"
+        );
+        // THE H=2 PAIR (the sapling-growth product): the base the NONE
+        // keeps (k=1, h=2), the top the SMALL pair rides (k=0, h=2 —
+        // the 4 quads the crossed planes speak)
+        put(&mut w, 8, 10, 8, crate::world::BAMBOO);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let smalls = |y0: f32, y1: f32| -> usize {
+            q.iter()
+                .filter(|quad| {
+                    quad.tile == atlas::TILE_BAMBOO_SMALL_LEAVES
+                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                })
+                .count()
+        };
+        assert_eq!(
+            smalls(10.0, 11.0),
+            4,
+            "the h=2 top the SMALL pair renders"
+        );
+        assert_eq!(smalls(9.0, 10.0), 0, "the h=2 base the NONE keeps");
+        assert_eq!(
+            q.iter()
+                .filter(|quad| quad.tile == atlas::TILE_BAMBOO_LARGE_LEAVES)
+                .count(),
+            0,
+            "the h=2 plant the LARGE pair never wears"
+        );
+        // THE H=3 PLANT: the top SMALL (k=0, h=3), the middle SMALL
+        // (k=1, h=3), the base NONE (k=2, h=3 — the h>=4 band the base
+        // refuses)
+        put(&mut w, 8, 11, 8, crate::world::BAMBOO);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let smalls = |y0: f32, y1: f32| -> usize {
+            q.iter()
+                .filter(|quad| {
+                    quad.tile == atlas::TILE_BAMBOO_SMALL_LEAVES
+                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                })
+                .count()
+        };
+        assert_eq!(smalls(11.0, 12.0), 4, "the h=3 top the SMALL pair wears");
+        assert_eq!(smalls(10.0, 11.0), 4, "the h=3 middle the SMALL pair wears");
+        assert_eq!(smalls(9.0, 10.0), 0, "the h=3 base the NONE keeps");
+        // THE H=4 PLANT: the top the LARGE pair (k=0, h=4 — the
+        // below-SMALL verdict the large branch serves), the two below
+        // SMALL (k=1/k=2, h=4), the base NONE (k=3); THE AGE LAW the
+        // top's b=3 the thick box renders
+        put(&mut w, 8, 12, 8, crate::world::BAMBOO);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let in_band = |tile: u16, y0: f32, y1: f32| -> Vec<_> {
+            q.iter()
+                .filter(|quad| {
+                    quad.tile == tile
+                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                })
+                .collect()
+        };
+        assert_eq!(
+            in_band(atlas::TILE_BAMBOO_LARGE_LEAVES, 12.0, 13.0).len(),
+            4,
+            "the h=4 top the LARGE pair renders"
+        );
+        assert_eq!(
+            in_band(atlas::TILE_BAMBOO_SMALL_LEAVES, 11.0, 12.0).len(),
+            4,
+            "the h=4 third the SMALL pair wears"
+        );
+        assert_eq!(
+            in_band(atlas::TILE_BAMBOO_SMALL_LEAVES, 10.0, 11.0).len(),
+            4,
+            "the h=4 second the SMALL pair wears"
+        );
+        assert_eq!(
+            in_band(atlas::TILE_BAMBOO_SMALL_LEAVES, 9.0, 10.0).len(),
+            0,
+            "the h=4 base the NONE keeps"
+        );
+        // THE THICK BOX the top's age1 fours render (the b=3 the
+        // growBamboo flag serves — the [6.5,0,6.5]->[9.5,16,9.5] box
+        // the x band speaks), the base's thin fours the [7,9] keep
+        let top_off = crate::world::plant_offset(crate::world::BAMBOO, 8, 12, 8);
+        let (top_ox, _, top_oz) = (top_off.0 as f32, top_off.1 as f32, top_off.2 as f32);
+        let stalk_tile = atlas::FACE_TILES[crate::world::BAMBOO as usize][2];
+        let thick: Vec<_> = in_band(stalk_tile, 12.0, 13.0);
+        assert!(!thick.is_empty(), "the top's stalk quads render");
+        let min_x = thick
+            .iter()
+            .flat_map(|quad| quad.pts.iter())
+            .map(|p| p[0])
+            .fold(f32::MAX, f32::min);
+        let max_x = thick
+            .iter()
+            .flat_map(|quad| quad.pts.iter())
+            .map(|p| p[0])
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (min_x - (8.0 + 6.5 / 16.0 + top_ox)).abs() < 1e-4
+                && (max_x - (8.0 + 9.5 / 16.0 + top_ox)).abs() < 1e-4,
+            "the h=4 top the thick age1 box wears: {min_x}..{max_x}"
+        );
+        let base_off = crate::world::plant_offset(crate::world::BAMBOO, 8, 9, 8);
+        let (base_ox, _, base_oz) = (base_off.0 as f32, base_off.1 as f32, base_off.2 as f32);
+        let thin: Vec<_> = in_band(stalk_tile, 9.0, 10.0);
+        assert!(!thin.is_empty(), "the base's stalk quads render");
+        let bmin_x = thin
+            .iter()
+            .flat_map(|quad| quad.pts.iter())
+            .map(|p| p[0])
+            .fold(f32::MAX, f32::min);
+        let bmax_x = thin
+            .iter()
+            .flat_map(|quad| quad.pts.iter())
+            .map(|p| p[0])
+            .fold(f32::MIN, f32::max);
+        assert!(
+            (bmin_x - (8.0 + 7.0 / 16.0 + base_ox)).abs() < 1e-4
+                && (bmax_x - (8.0 + 9.0 / 16.0 + base_ox)).abs() < 1e-4,
+            "the h=4 base the thin age0 box keeps: {bmin_x}..{bmax_x}"
+        );
+        // THE H=6 PLANT (the steady state): the top LARGE, the two
+        // below SMALL, the floor the NONE keeps (the k>=3 band the
+        // y=9..12 cells wear)
+        put(&mut w, 8, 13, 8, crate::world::BAMBOO);
+        put(&mut w, 8, 14, 8, crate::world::BAMBOO);
+        let q = mesh_chunk(&w, 0, 0, None);
+        let smalls = |y0: f32, y1: f32| -> usize {
+            q.iter()
+                .filter(|quad| {
+                    quad.tile == atlas::TILE_BAMBOO_SMALL_LEAVES
+                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                })
+                .count()
+        };
+        let larges = |y0: f32, y1: f32| -> usize {
+            q.iter()
+                .filter(|quad| {
+                    quad.tile == atlas::TILE_BAMBOO_LARGE_LEAVES
+                        && quad.pts.iter().all(|p| p[1] >= y0 - 1e-4 && p[1] <= y1 + 1e-4)
+                })
+                .count()
+        };
+        assert_eq!(
+            larges(14.0, 15.0),
+            4,
+            "the h=6 top the LARGE pair wears"
+        );
+        assert_eq!(
+            smalls(13.0, 14.0),
+            4,
+            "the h=6 second the SMALL pair wears"
+        );
+        assert_eq!(
+            smalls(12.0, 13.0),
+            4,
+            "the h=6 third the SMALL pair wears"
+        );
+        assert_eq!(
+            smalls(9.0, 12.0),
+            0,
+            "the h=6 floor the NONE steady state keeps"
+        );
+        assert_eq!(
+            larges(9.0, 14.0),
+            0,
+            "the LARGE pair the top alone wears"
+        );
     }
 
     #[test]
