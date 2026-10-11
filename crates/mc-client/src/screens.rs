@@ -7725,9 +7725,11 @@ pub struct App {
     /// the memory picks: the open window the GROUNDED shove the assist
     /// row speaks ("was doomed to fall by %2$s"), the MID-AIR blow the
     /// finish row wears ("fell too far and was finished by %2$s"), the
-    /// expired retention the accident row keeps ("fell from a high
-    /// place"). The respawn the fresh body's fresh tracker the None
-    /// clears.
+    /// expired retention the KILL CREDIT the escape row wears ("hit
+    /// the ground too hard while trying to escape %2$s" — the memory
+    /// the expired shelf never drops), the creditless fall the
+    /// accident row keeps ("fell from a high place"). The respawn the
+    /// fresh body's fresh tracker the None clears.
     pub last_hurt_by_mob: Option<(crate::mob::MobKind, u64, bool)>,
     /// THE STATUS-EFFECT STORE (the effects.rs module's own laws — the
     /// add/update/compare chain the wire and the eat arc ride, the
@@ -36798,9 +36800,14 @@ impl App {
         // %2$s" the en_us table carries), the MID-AIR blow the finish
         // row wears ("death.fell.finish" = "%1$s fell too far and was
         // finished by %2$s" — the getMessageForAssistedFall pair the
-        // entry's own mid-fall flavor picks), the expired entries the
-        // accident row keeps ("death.fell.accident.generic" = "%1$s
-        // fell from a high place"). THE ENTRY'S OWN SHELF the
+        // entry's own mid-fall flavor picks), the expired shelf the
+        // KILL CREDIT the escape row wears ("death.attack.fall.player"
+        // = "%1$s hit the ground too hard while trying to escape %2$s"
+        // — the vanilla getKillCredit walk the lastHurtByMob field
+        // answers, the field the hurt walk sets and ONLY the respawn
+        // clears, no tick decay the field ever wears), the creditless
+        // fall the accident row keeps ("death.fell.accident.generic" =
+        // "%1$s fell from a high place"). THE ENTRY'S OWN SHELF the
         // RESET_COMBAT_STATUS_TIME 300 speaks; the fall's own damage
         // the lastDamageTime re-stamp wears — the open window's stamp
         // the landing refreshes, the entry the tracker's in-combat
@@ -36816,11 +36823,21 @@ impl App {
                     self.last_hurt_by_mob = Some((kind, self.frame, mid_fall));
                     Some((mob_kind_display_name(kind), mid_fall))
                 } else {
-                    self.last_hurt_by_mob = None;
-                    None
+                    None // the entry stale — the kill credit below persists
                 }
             }
             None => None,
+        };
+        // THE KILL CREDIT'S OWN ESCAPE ROW (the expired shelf the
+        // memory never drops — the vanilla lastHurtByMob the respawn
+        // alone clears): the fall death beyond the 300-tick shelf the
+        // escape row wears, the creditless fall the accident row
+        // keeps.
+        let credit = if shover.is_none() {
+            self.last_hurt_by_mob
+                .map(|(kind, _, _)| mob_kind_display_name(kind))
+        } else {
+            None
         };
         let (death_key, killer) = match &shover {
             Some((name, mid_fall)) => (
@@ -36831,7 +36848,10 @@ impl App {
                 }),
                 Some(name.as_str()),
             ),
-            None => (Some("death.fell.accident.generic"), None),
+            None => match credit.as_deref() {
+                Some(escape_name) => (Some("death.attack.fall.player"), Some(escape_name)),
+                None => (Some("death.fell.accident.generic"), None),
+            },
         };
         self.hurt_inner(damage as f32, HurtVoice::Plain, death_key, killer);
     }
@@ -48975,14 +48995,17 @@ mod tests {
     /// THE FALL NAMES ITS SHOVER (the 26.2 CombatTracker's die walk —
     /// the getMostSignificantFall entry the IS_FALL read answers, the
     /// attacker's own name the assist row speaks "was doomed to fall
-    /// by %2$s", the expired entries the accident row keeps "fell
-    /// from a high place"; the entry's own shelf the
+    /// by %2$s", the expired shelf the kill credit the escape row
+    /// wears "hit the ground too hard while trying to escape %2$s", the
+    /// creditless fall the accident row keeps "fell from a high
+    /// place"; the entry's own shelf the
     /// RESET_COMBAT_STATUS_TIME 300 the class-file constant walk
     /// pins, the fall's own landing the lastDamageTime re-stamp
     /// wears): the REAL melee lane banks the (kind, stamp, mid-fall)
     /// triple (the zombie's bite the addRecord arm walks), the fall's lethal
     /// dose the shover's own name the death row wears, the respawn
     /// the fresh tracker the None clears, the expired window the
+    /// kill credit the escape row wears, the creditless fall the
     /// accident row keeps.
     #[test]
     fn the_fall_names_its_shover() {
@@ -49070,19 +49093,35 @@ mod tests {
         );
         // THE EXPIRED SHELF'S OWN ROW (the 300-tick retention the
         // stamp long past speaks — the entries the recheckStatus
-        // walk cleared, the accident row the name never carries;
-        // the tick walk the frame far ahead rides, the stamp the
-        // expired shelf reads)
+        // walk cleared, the kill credit the memory keeps the escape
+        // row wears; the tick walk the frame far ahead rides, the
+        // stamp the expired shelf reads)
         app.frame = 1000;
         app.last_hurt_by_mob = Some((crate::mob::MobKind::Zombie, 0, false));
         app.apply_fall_damage(20);
         assert!(app.dead, "the second fall the crossing banks");
         assert_eq!(
             app.death_message.as_deref(),
-            Some("mc2rs fell from a high place"),
-            "the expired entry the accident row keeps"
+            Some("mc2rs hit the ground too hard while trying to escape Zombie"),
+            "the expired shelf the kill credit the escape row wears"
         );
-        assert!(app.last_hurt_by_mob.is_none(), "the expired the memory drops");
+        assert!(
+            app.last_hurt_by_mob.is_some(),
+            "the expired shelf the kill credit keeps"
+        );
+        app.respawn();
+        // THE CREDITLESS FALL'S OWN ROW (the no-credit lane the
+        // accident row keeps — the vanilla getKillCredit null the
+        // source's own walk refuses; the respawn the memory cleared,
+        // the fresh body the fall the plain accident row wears)
+        app.frame = 2000;
+        app.apply_fall_damage(20);
+        assert!(app.dead, "the third fall the crossing banks");
+        assert_eq!(
+            app.death_message.as_deref(),
+            Some("mc2rs fell from a high place"),
+            "the creditless fall the accident row keeps"
+        );
         app.respawn();
         // THE KIND'S OWN FLOW (the skeleton's shot the same pair
         // banks — the display name the assist row's %2$s the
