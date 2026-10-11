@@ -10248,6 +10248,13 @@ fn blast_resistance(id: u16) -> Option<f32> {
         "tnt" => 0.0,
         // the log helper's own strength(2.0) — Blocks.logProperties
         "oak_log" => 2.0,
+        // the bamboo pair's own rows (javap Blocks clinit the 26.2 jar
+        // speaks — BAMBOO pc 23167 + BAMBOO_SAPLING pc 23107 BOTH the
+        // instabreak() call wear, the pc 23170/23113 `fconst_1;
+        // strength(1.0F)` tail the OVERWRITE serves: the later
+        // strength(F) both fields the same 1.0 answers — the
+        // instabreak's 0.0 the chain's own tail replaces)
+        "bamboo" | "bamboo_sapling" => 1.0,
         // the leaves helper's own strength(0.2) — Blocks.leavesProperties
         "oak_leaves" | "pale_oak_leaves" => 0.20000000298023224,
         // the strength(FF) rows

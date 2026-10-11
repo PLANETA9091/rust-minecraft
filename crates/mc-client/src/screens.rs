@@ -15075,6 +15075,23 @@ impl App {
                     for (bx, by, bz) in explosion_cells.iter().copied() {
                         self.schedule_falling_check_block_update(bx, by, bz);
                     }
+                    // THE BLAST'S OWN BAMBOO WALK (javap
+                    // `BlockBehaviour.onExplosionHit` pc 179-191 the
+                    // 26.2 jar speaks — EVERY non-air exploded cell the
+                    // `setBlock(pos, AIR, 3)` tail answers, the flag-3
+                    // broadcast the neighbor updateShape walk serves:
+                    // the unsupported stalk the scheduleTick lag arms,
+                    // the unsupported sapling the same-beat AIR the
+                    // dig's own dispatch wears — the crater-edge tower
+                    // the one-per-tick cascade the drain's own consumer
+                    // answers). The OFFLINE lane's own authority: the
+                    // networked world's voxels are the server's (the
+                    // same split the falling dispatch's walk keeps).
+                    for (bx, by, bz) in explosion_cells.iter().copied() {
+                        if let Some(w) = self.offline_world.as_mut() {
+                            let _ = w.bamboo_shape_updates((bx, by, bz), self.frame + 1);
+                        }
+                    }
                     // THE BLAST'S OWN RE-SPEAK: the crater the mesh
                     // wears THIS tick — the same batched rhythm the
                     // bite lane wears, the silent clears the fresh
@@ -96817,6 +96834,125 @@ cow_sound_variant: None,
             app.world_quads.as_ref().unwrap(),
             &fresh,
             "the crater the mesh the boom tick wears"
+        );
+    }
+
+    #[test]
+    fn the_blast_the_bamboo_the_cascade_the_wears() {
+        // THE BLAST'S OWN BAMBOO WALK (javap `BlockBehaviour.
+        // onExplosionHit` pc 179-191 the 26.2 jar speaks — every
+        // non-air exploded cell the flag-3 AIR setBlock tail answers,
+        // the neighbor broadcast the bamboo's own updateShape arms):
+        // the boom the tower's base clears, the surviving stalks the
+        // scheduleTick lag banks, the one-per-tick crackle the
+        // drain's own consumer answers — the bottom-up pop the
+        // vanilla's own cadence keeps.
+        let mut app = App::new(3);
+        app.enter_world();
+        let size = app.offline_world.as_ref().unwrap().size_blocks();
+        let c = size / 2;
+        let top = app.spawn_y;
+        // THE TOWER the blast reads: the 16-tall column the max-height
+        // law grows (the stalks the surface cell upward wear, the
+        // grass floor the supports_bamboo row keeps)
+        let (px, pz) = (c + 6, c);
+        {
+            let w = app.offline_world.as_mut().unwrap();
+            w.set(px, top - 1, pz, crate::world::GRASS);
+            for dy in 0..16 {
+                w.set(px, top + dy, pz, crate::world::BAMBOO);
+            }
+        }
+        app.remesh_offline();
+        // THE TNT the tower's base owns (the thin plant the body's
+        // collide never blocks — the fuse=1 test seed the crossing
+        // arms): the blast's own center cell the base stalk wears
+        let mut t = crate::mob::PrimedTnt::new(
+            9,
+            px as f64 + 0.5,
+            top as f64,
+            pz as f64 + 0.5,
+            7,
+        );
+        t.fuse = 1;
+        app.primed_tnts.push(t);
+        app.update();
+        assert!(app.primed_tnts.is_empty(), "the discard the boom speaks");
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            // THE CRATER THE BASE CARVES: the center cell the ray's own
+            // t=0 start clears (the base stalk the blast's own cell
+            // wears), the floor the blast's reach answers
+            assert_eq!(
+                w.get(px, top, pz),
+                crate::world::AIR,
+                "the base the blast clears"
+            );
+            // THE TOP THE REACH NEVER CLEARS: the stalks the ray's
+            // 5.2-cap refuses (the distance the 16-tall tower banks —
+            // 4.0 power's max draw 5.2 the cap speaks)
+            assert_eq!(
+                w.get(px, top + 15, pz),
+                crate::world::BAMBOO,
+                "the top the reach keeps"
+            );
+            // THE ONE LIVE ENTRY (the Set's own dedup the cleared
+            // cells' walks keep): the lowest survivor the only
+            // unsupported stalk the 6-neighbor broadcasts speak, the
+            // scheduleTick lag the due frame+1 banks
+            assert_eq!(
+                w.bamboo_ticks.len(),
+                1,
+                "the ONE live entry the dedup keeps"
+            );
+            let lowest = (0..16)
+                .find(|dy| w.get(px, top + dy, pz) == crate::world::BAMBOO)
+                .map(|dy| top + dy)
+                .expect("the survivors the reach banks");
+            assert!(
+                lowest > top,
+                "the base the blast cleared, the survivor the prefix law keeps"
+            );
+            assert_eq!(
+                w.bamboo_ticks[0],
+                (app.frame as u64 + 1, px, lowest, pz),
+                "the lowest survivor the lag arms"
+            );
+        }
+        // THE ONE-PER-TICK CASCADE (the drain's own consumer the tick
+        // walk answers): the next update the lowest survivor pops, the
+        // higher stalks the lag keeps, the pop's own re-broadcast the
+        // next level arms — the bottom-up crackle the vanilla's own
+        // cadence speaks
+        app.update();
+        {
+            let w = app.offline_world.as_ref().unwrap();
+            let lowest = (0..16)
+                .find(|dy| w.get(px, top + dy, pz) == crate::world::BAMBOO)
+                .map(|dy| top + dy)
+                .expect("the cascade the first pop still leaves");
+            assert!(
+                lowest > top + 1,
+                "the first pop the lowest survivor cleared, the next the lag keeps"
+            );
+        }
+        // THE WHOLE TOWER FALLS: the re-broadcast chain the drain's
+        // own rhythm answers — the survivors the one-per-tick pops
+        // clear (16 stalks the 16-tick ceiling the cadence caps)
+        for _ in 0..20 {
+            app.update();
+        }
+        let w = app.offline_world.as_ref().unwrap();
+        for dy in 0..16 {
+            assert_eq!(
+                w.get(px, top + dy, pz),
+                crate::world::AIR,
+                "the fall the column clears"
+            );
+        }
+        assert!(
+            w.bamboo_ticks.is_empty(),
+            "the queue the cascade drains"
         );
     }
 
