@@ -18353,6 +18353,215 @@ impl App {
         self.hotbar_slots = self.inventory.hotbar();
     }
 
+    /// THE PICKER'S OWN SWAP (javap 26.2 — the number-key walk the
+    /// 2dc72797 jar's own classes speak: CreativeModeInventoryScreen
+    /// .keyPressed pcs 54-114 the numeric arm gates (the flag2 =
+    /// `isCreativeSlot ? hoveredSlot.hasItem() : true` verdict, the
+    /// search box the focused verdict keeps), AbstractContainerScreen
+    /// .checkHotbarKeyPressed pcs 0-114 the carried-empty +
+    /// hovered-slot gates the loop answers (the offhand key FIRST —
+    /// `slotClicked(hovered, index, 40, SWAP)`), AbstractContainerMenu
+    /// .doClick pcs 1079-1382 the ContainerInput.SWAP table rides).
+    /// THE SWAP TABLE (the bytecode's own cases):
+    /// - the hotbar slot empty && the hovered slot empty → NOTHING
+    ///   (pc 1130-1146);
+    /// - CASE B (pc 1149-1202, the hotbar empty): the hovered stack
+    ///   rides the hotbar row AS-IS (the palette's count-1 display
+    ///   law the whole count keeps — never a max), the hovered cell
+    ///   EMPTIES (onSwapCraft + setByPlayer(EMPTY) the walk speaks);
+    /// - CASE C (pc 1205-1273, the hovered empty): the hovered cell
+    ///   takes `min(count, getMaxStackSize(stack))` — the base Slot's
+    ///   own per-item max the stack's law answers (the egg the 16, the
+    ///   stone the 64 — the item_max_stack table the previous round
+    ///   banked) — the remainder STAYS in the hotbar row;
+    /// - CASE D (pc 1276-1382, both filled): the count > max arm the
+    ///   cell's max takes (the remainder stays, the hovered old stack
+    ///   rides `inventory.add` — the add-back walk the merge-then-
+    ///   first-empty order keeps, the NO-room tail the world drop
+    ///   speaks) — the count <= max arm the straight SWAP wears (the
+    ///   hotbar takes the hovered stack, the cell takes the hotbar's).
+    /// The digit's key the screen CONSUMES whenever the walk answered
+    /// or the search seat holds the focus (the world's hotbar-select
+    /// keybind the open picker never reads — the keyPressed true the
+    /// chain keeps); the gates' misses the world chain answers (the
+    /// vanilla's own false-return law).
+    pub fn on_creative_swap_key(&mut self, button: usize) -> bool {
+        if self.screen != ScreenKind::Creative || self.dead {
+            return false;
+        }
+        // THE CARRIED GATE (checkHotbarKeyPressed pc 4-10 — the
+        // getCarried().isEmpty() the walk opens with). The search
+        // seat's own verdict rides the refusal: the focused box the
+        // digit still consumes (keyPressed pc 156-184 — the isFocused
+        // && isVisible && !isEscape arm), the other tabs the world
+        // chain answers (the vanilla false-return law)
+        if self.inv_carried.1 > 0 {
+            return CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search;
+        }
+        // THE GEOMETRY GATE (the hoveredSlot null arm pc 13-17 — the
+        // panel the render never spoke the screen keeps silent)
+        if self.creative_panel == (0, 0) {
+            return false;
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false; // the headless scenes track no mouse
+        };
+        // THE HOVERED SLOT (the two containers the picker owns — the
+        // palette cells first, the bottom rows after; the elsewhere
+        // point the hoveredSlot null verdict wears)
+        let palette_cell = self.creative_palette_cell(mx, my);
+        let store_slot = if palette_cell.is_none() {
+            self.creative_store_cell(mx, my)
+        } else {
+            None
+        };
+        // THE SEARCH SEAT'S OWN VERDICTS (keyPressed pc 54-80 + the
+        // focused-box tail): the palette cell WITHOUT an item the
+        // flag2 keeps (the hasItem gate the walk requires), the
+        // NOTHING-hover the focused box keeps — BOTH consume the key
+        // (the world keybinds the search tab never reads)
+        let search_seat =
+            CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search;
+        if palette_cell.is_none() && store_slot.is_none() {
+            return search_seat;
+        }
+        if search_seat && palette_cell.is_some() {
+            let has_item = palette_cell
+                .and_then(|c| self.creative_palette.get(c))
+                .is_some_and(|&(id, count)| count > 0 && id != 0);
+            if !has_item {
+                return true;
+            }
+        }
+        let button = if button == 40 { 40 } else { button.min(8) };
+        // THE OFFHAND ROW (the doClick pc 1086-1101 gate — the button
+        // 40 the offhand container's own getItem answers, the digits
+        // 0..8 the hotbar rows keep)
+        let (hotbar_id, hotbar_count) = if button == 40 {
+            self.inventory.offhand[0]
+        } else {
+            self.inventory.items[button]
+        };
+        // THE HOVERED STACK + ITS WRITE-BACK SEAT
+        let hovered = if let Some(cell) = palette_cell {
+            self.creative_palette[cell]
+        } else {
+            let s = store_slot.unwrap();
+            self.inventory.items[s]
+        };
+        if hotbar_count <= 0 && hovered.1 <= 0 {
+            return true; // pc 1130-1146: the both-empty silence
+        }
+        // the max the base Slot.getMaxStackSize(stack) law answers —
+        // the HOTBAR stack's own per-item ceiling (the egg the 16, the
+        // stone the 64)
+        let max = crate::world_view::item_max_stack(hotbar_id);
+        // the target the walk's three cases answer
+        let target: (i32, i32);
+        if hotbar_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides AS-IS
+            // (the palette's count-1 the whole count keeps), the cell
+            // EMPTIES. The mayPickup gate the palette's own law wears
+            // (the hasItem the flag2 verified, the bare stacks the
+            // CREATIVE_SLOT_LOCK never carry, the enabled-features the
+            // registry's vocabulary answers)
+            if hovered.1 <= 0 || hovered.0 == 0 {
+                return true; // the mayPickup refusal — silence
+            }
+            if button == 40 {
+                self.inventory.offhand[0] = hovered;
+            } else {
+                self.inventory.items[button] = hovered;
+            }
+            target = (0, 0);
+        } else if hovered.1 <= 0 {
+            // CASE C (pc 1205-1273): the cell takes min(count, max),
+            // the remainder stays in the row
+            if hotbar_count > max {
+                target = (hotbar_id, max);
+                let rest = hotbar_count - max;
+                if button == 40 {
+                    // the offhand's own max the walk splits — the
+                    // remainder rides the row
+                    self.inventory.offhand[0] = (hotbar_id, rest);
+                } else {
+                    self.inventory.items[button] = (hotbar_id, rest);
+                }
+            } else {
+                target = (hotbar_id, hotbar_count);
+                if button == 40 {
+                    self.inventory.offhand[0] = (0, 0);
+                } else {
+                    self.inventory.items[button] = (0, 0);
+                }
+            }
+        } else if hotbar_count > max {
+            // CASE D's split arm (pc 1276-1355): the cell takes the
+            // max, the remainder stays, the hovered old stack rides
+            // the inventory.add walk — the merge-then-first-empty
+            // order the add-back walks keep, the NO-room tail the
+            // world drop speaks
+            target = (hotbar_id, max);
+            let rest = hotbar_count - max;
+            if button == 40 {
+                self.inventory.offhand[0] = (hotbar_id, rest);
+            } else {
+                self.inventory.items[button] = (hotbar_id, rest);
+            }
+            // the add-back walk (the close arms' own shape, the
+            // per-item max the merges speak)
+            let mut rest = hovered.1;
+            for it in self.inventory.items.iter_mut() {
+                if rest == 0 {
+                    break;
+                }
+                let room =
+                    crate::world_view::item_max_stack(it.0) - it.1;
+                if it.1 > 0 && it.0 == hovered.0 && room > 0 {
+                    let take = room.min(rest);
+                    it.1 += take;
+                    rest -= take;
+                }
+            }
+            if rest > 0 {
+                for it in self.inventory.items.iter_mut() {
+                    if rest == 0 {
+                        break;
+                    }
+                    if it.1 <= 0 {
+                        let take = rest
+                            .min(crate::world_view::item_max_stack(hovered.0));
+                        *it = (hovered.0, take);
+                        rest -= take;
+                    }
+                }
+            }
+            if rest > 0 {
+                // the NO-room tail (pc 1340-1355): the world the
+                // player.drop walk serves
+                self.drop_item_entity_aimed(hovered.0, rest);
+            }
+        } else {
+            // CASE D's straight swap (pc 1358-1382): the hotbar takes
+            // the hovered stack, the cell takes the hotbar's whole
+            if button == 40 {
+                self.inventory.offhand[0] = hovered;
+            } else {
+                self.inventory.items[button] = hovered;
+            }
+            target = (hotbar_id, hotbar_count);
+        }
+        // the target lands (the setByPlayer the cell's own seat wears)
+        if let Some(cell) = palette_cell {
+            self.creative_palette[cell] = target;
+        } else {
+            let s = store_slot.unwrap();
+            self.inventory.items[s] = target;
+        }
+        self.hotbar_slots = self.inventory.hotbar();
+        true
+    }
+
     /// THE OUTSIDE DROP (the slotClicked tail's THROW arms — the
     /// whole-carried drop the LEFT click speaks, the split(1) the
     /// RIGHT keeps; the aimed throw the player.drop(stack, true) walk
@@ -102734,6 +102943,103 @@ cow_sound_variant: None,
         app.open_inventory();
         assert_eq!(app.screen, ScreenKind::Creative);
         assert_eq!(app.creative_tab, 0, "the default's re-answer");
+    }
+
+    /// THE PICKER'S OWN SWAP (the number-key walk the jar's decoded
+    /// table keeps — doClick's ContainerInput.SWAP cases B/C/D): the
+    /// empty row takes the palette's count-1 AS-IS (the cell the take
+    /// empties), the same-item filled row the straight swap wears,
+    /// the egg's 40 the cell's 16 max splits (the row the rest keeps,
+    /// the old stack the add-back keeps), the empty cell takes
+    /// min(count, max), the bottom rows the same table wear, the
+    /// search seat's empty hole the digit consumes (the focused box
+    /// verdict), the carried gate the world chain answers (false).
+    #[test]
+    fn the_creative_swap_the_digit_the_table_wears() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let cell0 = (px + 9 + 8, py + 18 + 8);
+        let cell5 = (px + 9 + 5 * 18 + 8, py + 18 + 8);
+        let store9 = (px + 9 + 9 * 18 + 8, py + 112 + 8);
+        // THE EMPTY-ROW TAKE (case B — the palette's count-1 rides
+        // AS-IS, never a max; the cell the take EMPTIES)
+        app.mouse_pos = Some(cell0);
+        assert!(app.on_creative_swap_key(0), "the walk the take answers");
+        assert_eq!(
+            app.inventory.items[0],
+            (stone, 1),
+            "the count-1 the whole law keeps"
+        );
+        assert_eq!(app.creative_palette[0], (0, 0), "the cell the take empties");
+        // THE SAME-ITEM SWAP (case D <= max — the straight swap)
+        app.inventory.items[0] = (stone, 10);
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(app.inventory.items[0], (stone, 1), "the row the hovered took");
+        assert_eq!(app.creative_palette[0], (stone, 10), "the cell the row took");
+        // THE EGG'S OWN SPLIT (case D > max — the cell takes the 16,
+        // the row keeps the rest, the old stack the add-back keeps)
+        app.inventory.items[0] = (egg, 40);
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(app.creative_palette[0], (egg, 16), "the cell the max takes");
+        assert_eq!(app.inventory.items[0], (egg, 24), "the row the rest keeps");
+        assert!(
+            app.inventory.items.iter().any(|&s| s == (stone, 1)),
+            "the old stack the add-back keeps"
+        );
+        // THE EMPTY-CELL MOVE (case C — the cell takes min(count,max))
+        app.inventory.items[1] = (egg, 40);
+        app.creative_palette[5] = (0, 0);
+        app.mouse_pos = Some(cell5);
+        assert!(app.on_creative_swap_key(1));
+        assert_eq!(app.creative_palette[5], (egg, 16), "the cell the min takes");
+        assert_eq!(app.inventory.items[1], (egg, 24), "the row the remainder keeps");
+        // THE STORE ROW SWAP (the bottom rows the same table wears)
+        app.inventory.items[0] = (stone, 7);
+        app.inventory.items[9] = (egg, 3);
+        app.mouse_pos = Some(store9);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(app.inventory.items[0], (egg, 3), "the row the swap speaks");
+        assert_eq!(app.inventory.items[9], (stone, 7), "the slot the swap takes");
+        // THE OFFHAND SWAP (button 40 — the F key's own first arm)
+        app.inventory.offhand[0] = (0, 0);
+        app.creative_palette[0] = (stone, 1);
+        app.mouse_pos = Some(cell0);
+        assert!(app.on_creative_swap_key(40));
+        assert_eq!(app.inventory.offhand[0], (stone, 1), "the offhand the take wears");
+        assert_eq!(app.creative_palette[0], (0, 0), "the cell the offhand took");
+        // THE SEARCH SEAT'S EMPTY HOLE (the digit the box consumes —
+        // no change rides)
+        app.select_creative_tab(6);
+        let tail = (px + 9 + 8 * 18 + 8, py + 18 + 4 * 18 + 8);
+        app.mouse_pos = Some(tail);
+        assert!(app.on_creative_swap_key(0), "the focused box consumes");
+        // THE CARRIED GATE (the world chain answers — false on the
+        // non-search tab; the search seat the box verdict keeps true)
+        app.select_creative_tab(0);
+        app.inv_carried = (stone, 1);
+        assert!(!app.on_creative_swap_key(0), "the carried gate refuses");
+        app.select_creative_tab(6);
+        assert!(
+            app.on_creative_swap_key(0),
+            "the search seat the verdict keeps"
+        );
+        app.inv_carried = (0, 0);
+        // THE NOWHERE HOVER (the non-search tab the world chain
+        // answers — the keybind lane the vanilla keeps)
+        app.select_creative_tab(0);
+        app.mouse_pos = Some((px - 40, py - 40));
+        assert!(!app.on_creative_swap_key(0), "the no-slot miss");
     }
 
     /// THE ARMOR COLUMN (the 26.2 ArmorSlot's own mayPlace law — the

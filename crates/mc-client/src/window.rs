@@ -1808,7 +1808,13 @@ pub fn run_gui_app(
         // screen/death gates the App's own verdict keeps — the swap the
         // container screens never read)
         if !app.chat_open && window.is_key_pressed(Key::F, minifb::KeyRepeat::No) {
-            app.on_swap_offhand_key();
+            // THE PICKER'S OWN OFFHAND SWAP (checkHotbarKeyPressed's
+            // own FIRST arm — the keySwapOffhand match the
+            // slotClicked(hovered, index, 40, SWAP) walk rides; the
+            // world lane the open picker's consumption keeps)
+            if !app.on_creative_swap_key(40) {
+                app.on_swap_offhand_key();
+            }
         }
         // the number keys' hotbar selection (the vanilla keyPress's own
         // lane): 1..9 move the selection, the live session's belief
@@ -1838,7 +1844,16 @@ pub fn run_gui_app(
             .enumerate()
             {
                 if window.is_key_pressed(*key, minifb::KeyRepeat::No) {
-                    if !app.on_profiler_chart_digit(i as i32 + 1) {
+                    // THE PICKER'S OWN SWAP (the container screen's
+                    // keyPressed the screen consumes FIRST — the world
+                    // keybinds the open picker never read; the walk's
+                    // own false the non-answer arms keep — the gates'
+                    // misses the world chain answers. The hover rides
+                    // the LAST frame's cursor the stream keeps — the
+                    // resting mouse the key press reads)
+                    if !app.on_creative_swap_key(i)
+                        && !app.on_profiler_chart_digit(i as i32 + 1)
+                    {
                         // THE SAVE/LOAD CHORDS' OWN ROUTE (vanilla
                         // handleKeybinds's keySaveHotbarActivator (C) /
                         // keyLoadHotbarActivator (X) isDown pair the
