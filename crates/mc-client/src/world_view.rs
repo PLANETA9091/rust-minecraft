@@ -2287,7 +2287,9 @@ pub struct LiveContainer {
 pub enum ContainerInput {
     Pickup,
     QuickMove,
-    #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
+    // THE SWAP LANE RIDES (the checkHotbarKeyPressed walk's own wire —
+    // the digit press the live session's ServerboundContainerClickPacket
+    // speaks, the button the hotbar row / the 40 the offhand keys)
     Swap,
     #[expect(dead_code)] // the 26.2 ClickType set's own line — the menu rounds' lane
     Clone,

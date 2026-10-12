@@ -23001,9 +23001,11 @@ impl App {
     /// - the hovered-slot gate (pc 13-17 — `hoveredSlot != null`):
     ///   the panel the render never spoke, the cursor the frame
     ///   stream never fed — the null verdict the false return keeps;
-    /// - the wire gate (the store the server owns — the window-0
-    ///   swap lane rides later, the Q-throw lane's own refusal
-    ///   shape).
+    /// - the wire gate (the store the server owns — the LIVE session
+    ///   the swap lane's own wire speaks: the BELIEF the same table
+    ///   answers, the ServerboundContainerClickPacket the click lane's
+    ///   command channel carries, the [`Self::on_inventory_swap_key_wire`]
+    ///   walk the offline store's twin).
     /// THE SEATS (the InventoryMenu's own slot list the ctor speaks —
     /// the result 0, the craft cells 1..4, the armor 5..8, the store
     /// rows 9..44, the offhand 45):
@@ -23055,7 +23057,10 @@ impl App {
             return false;
         }
         if self.world_is_network {
-            return false; // the wire's window-0 swap lane rides later
+            // THE WIRE GATE: the live session's swap the BELIEF the
+            // same table answers, the packet the command lane speaks —
+            // the offline store NOT the truth there.
+            return self.on_inventory_swap_key_wire(button);
         }
         // THE CARRIED GATE (checkHotbarKeyPressed pc 0-10 — the
         // getCarried().isEmpty() the walk opens with)
@@ -23075,6 +23080,47 @@ impl App {
             return false;
         };
         self.inventory_swap_table(button, hover)
+    }
+
+    /// THE WIRE GATE'S OWN WALK (the offline walk's twin — the same
+    /// checkHotbarKeyPressed gates, the LIVE store's belief the table
+    /// answers): the carried gate the LIVE cursor's pair speaks, the
+    /// panel/hover gates the SAME geometry walk the offline lane
+    /// keeps, and the table the [`wire_inventory_swap`] free fn rides
+    /// (the frame thread's disjoint field borrows — the chest lane's
+    /// own shape). The true verdict the digit CONSUMES either way.
+    fn on_inventory_swap_key_wire(&mut self, button: usize) -> bool {
+        // THE CARRIED GATE (the LIVE cursor's own pair — the getCarried
+        // .isEmpty() arm the belief's projection feeds)
+        if self.live_inv_carried.1 > 0 {
+            return false;
+        }
+        // THE HOVERED-SLOT GATE (the same geometry the offline walk
+        // reads — the panel the render never spoke, the null the false
+        // return keeps)
+        if self.inv_panel == (0, 0) {
+            return false;
+        }
+        let Some((mx, my)) = self.mouse_pos else {
+            return false;
+        };
+        let Some(hover) = self.inventory_hover(mx, my) else {
+            return false;
+        };
+        let Some(sink) = self.live_clicks.as_ref() else {
+            return false; // no live session — the command dies on the frame thread
+        };
+        wire_inventory_swap(
+            sink,
+            &mut self.live_inv_slots,
+            &mut self.hotbar_slots,
+            self.selected_hotbar,
+            hover,
+            button,
+            self.live_inv_state_id,
+            self.live_inv_carried,
+        );
+        true
     }
 
     /// THE HOVERED SEAT'S OWN WALK (the click lane's own order — the
@@ -48264,6 +48310,229 @@ fn wire_inventory_pickup(
             input: crate::world_view::ContainerInput::Pickup,
             changed: vec![(menu as i16, new_slot)],
             carried: new_carried,
+        },
+    ));
+}
+
+/// The hovered seat's own MENU id (the window-0 numbering the swap
+/// packet's slot field speaks — the same mapping the hover walk's
+/// array law keeps): the result 0, the craft cells 1..4, the armor
+/// 5..8, the store rows the [`store_menu_id`] law keys (the hotbar
+/// 36..44, the main grid 9..35), the offhand 45.
+fn inventory_hover_menu_id(hover: InventoryHover) -> usize {
+    match hover {
+        InventoryHover::Result => 0,
+        InventoryHover::Craft(cell) => 1 + cell,
+        InventoryHover::Armor(k) => 5 + k,
+        InventoryHover::Store(i) => store_menu_id(i) as usize,
+        InventoryHover::Offhand => 45,
+    }
+}
+
+/// THE BELIEF'S OWN INVENTORY ADD (the `Inventory.add` walk the offline
+/// [`drops::Inventory::add`] models, over the window-0 projection's
+/// rows): the SELECTED hotbar slot first (the getSlotWithRemainingSpace
+/// walk's own head), the OFFHAND menu 45 second (the getItem(40) arm),
+/// the full merge scan after (the hotbar ids 36..44 the store's own
+/// order keeps, the main grid 9..36 after), the first-empty fallback
+/// the same order speaks. The flat-64 space law the model's banked
+/// (id, count) simplification wears (the 64 the addResource's own
+/// constant, NOT the item's own max). Each landing rides the changed
+/// vec (the note_batch_change law — the repeated slot the map's own
+/// put replaces), the leftover the caller's honest tail (the add's
+/// FALSE the server's own drop lane speaks — the belief the sync
+/// replaces).
+fn belief_inventory_add(
+    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    selected: usize,
+    id: i32,
+    count: i32,
+    changed: &mut Vec<(i16, (i32, i32))>,
+) -> i32 {
+    if count <= 0 {
+        return 0; // the isEmpty gate (pc 0-8) — nothing walks
+    }
+    // THE SCAN ORDER (the offline getSlotWithRemainingSpace's own
+    // lanes, the menu ids the window-0 projection keys): the selected
+    // hotbar slot, the offhand, the merge scan (hotbar 36..44 then
+    // main 9..36), the first-empty the same order answers.
+    let has_space = |(sid, sc): (i32, i32)| sc > 0 && sid == id && sc < 64;
+    let candidate = |slots: &[(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS]| {
+        let sel_menu = 36 + selected;
+        if has_space(slots[sel_menu]) {
+            Some(sel_menu)
+        } else if has_space(slots[45]) {
+            Some(45)
+        } else {
+            (36..45)
+                .find(|&m| has_space(slots[m]))
+                .or_else(|| (9..36).find(|&m| has_space(slots[m])))
+                .or_else(|| {
+                    (36..45)
+                        .find(|&m| slots[m].1 <= 0)
+                        .or_else(|| (9..36).find(|&m| slots[m].1 <= 0))
+                })
+        }
+    };
+    let mut remaining = count;
+    loop {
+        let before = remaining; // count_in — the loop head's own refresh
+        let Some(slot) = candidate(live_slots) else {
+            return remaining; // the pass stalled — the no-home arm
+        };
+        // addResource's own walk: the empty slot takes the id, the
+        // fill rides the flat-64 space, the leftover returns
+        let (_, cur_count) = live_slots[slot];
+        if cur_count <= 0 {
+            live_slots[slot] = (id, 0);
+        }
+        let space = 64 - live_slots[slot].1;
+        let take = remaining.min(space);
+        if take > 0 {
+            live_slots[slot].1 += take;
+            remaining -= take;
+            note_batch_change(changed, slot as i16, live_slots[slot]);
+        }
+        if remaining <= 0 || remaining >= before {
+            return remaining; // the empty stack's exit / the stalled pass
+        }
+        // the pass spoke (pc 60's `count < count_in`) — re-locate
+    }
+}
+
+/// THE WINDOW-0 SWAP WIRE ROUND (the doClick SWAP table the offline
+/// [`App::inventory_swap_table`] models, over the LIVE store's belief —
+/// the checkHotbarKeyPressed walk's own ServerboundContainerClickPacket):
+/// the hovered seat and the button row the BELIEF's pairs answer, the
+/// table's arms the walk speaks — the both-empty press (pcs 1130-1146)
+/// the consumed silence keeps (the packet STILL rides — the slotClicked
+/// call the keyPressed walk keeps unconditional, the changed map the
+/// menu's own untouched state keeps empty), CASE B (pc 1149-1202) the
+/// row empty — the hovered stack rides the button row AS-IS, the
+/// hovered cell EMPTIES (the result seat's CASE B the onTake's
+/// ingredient decrement + the recompute the [`wire_craft_on_take`]
+/// speaks), CASE C (pc 1205-1273) the hovered empty — the mayPlace
+/// gate the seat's own verdict keeps (the result's iconst_0 the place
+/// arms refuse), the SPLIT law the max wears (`getMaxStackSize(stack)`
+/// = min(64, the item's own)), CASE D (pc 1276-1379) both filled — the
+/// mayPlace gate answers, the count > max arm the split(max) + the
+/// ORIGINAL hovered stack the [`belief_inventory_add`] rides (the add's
+/// leftover the belief's honest tail — the server's own drop lane the
+/// correction speaks), the count <= max arm the straight trade wears.
+/// The changed vec the walk's actual mutations names (the
+/// broadcastChanges diff law), the HUD row's belief follows the
+/// hotbar's menu ids, the cursor the SWAP arm NEVER touches (the
+/// carried pair rides unchanged). A free function — the frame thread's
+/// disjoint field borrows (the live_clicks sink stays held across the
+/// walk, the pickup lane's own shape).
+#[allow(clippy::too_many_arguments)]
+fn wire_inventory_swap(
+    sink: &std::sync::mpsc::Sender<crate::world_view::ContainerCommand>,
+    live_slots: &mut [(i32, i32); crate::world_view::INVENTORY_MENU_SLOTS],
+    hotbar: &mut [(i32, i32); 9],
+    selected: usize,
+    hover: InventoryHover,
+    button: usize,
+    state_id: i32,
+    carried: (i32, i32),
+) {
+    debug_assert!(button < 9 || button == 40, "the SWAP input's own gate");
+    let hover_menu = inventory_hover_menu_id(hover);
+    let row_menu = if button == 40 { 45usize } else { 36 + button };
+    let (hover_id, hover_count) = live_slots[hover_menu];
+    let (row_id, row_count) = live_slots[row_menu];
+    let mut changed: Vec<(i16, (i32, i32))> = Vec::new();
+    let fired = !(row_count <= 0 && hover_count <= 0);
+    if fired {
+        // THE SEAT'S mayPlace (the Slot.mayPlace walk — the base
+        // slots' iconst_1, the armor's matching-piece verdict, the
+        // result's iconst_0 the place arms refuse)
+        let may_place = match hover {
+            InventoryHover::Result => false,
+            InventoryHover::Craft(_) | InventoryHover::Store(_) | InventoryHover::Offhand => true,
+            InventoryHover::Armor(k) => crate::world_view::equippable_loop_k(row_id) == Some(k),
+        };
+        if row_count <= 0 {
+            // CASE B (pc 1149-1202): the hovered stack rides the
+            // button row AS-IS, the hovered cell EMPTIES
+            live_slots[hover_menu] = (0, 0);
+            note_batch_change(&mut changed, hover_menu as i16, (0, 0));
+            live_slots[row_menu] = (hover_id, hover_count);
+            note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+            if let InventoryHover::Result = hover {
+                // the result seat's own onTake — the ingredient
+                // decrement + the recompute the result's entry the
+                // map's own put replaces (the empty cell the recompute
+                // refills)
+                for (slot, pair) in wire_craft_on_take(live_slots) {
+                    note_batch_change(&mut changed, slot, pair);
+                }
+            }
+        } else if hover_count <= 0 {
+            // CASE C (pc 1205-1273): the row's stack places — the
+            // mayPlace gate the seat's own verdict keeps, the SPLIT
+            // law the max wears
+            if may_place {
+                let max = crate::world_view::item_max_stack(row_id);
+                if row_count > max {
+                    live_slots[hover_menu] = (row_id, max);
+                    note_batch_change(&mut changed, hover_menu as i16, (row_id, max));
+                    live_slots[row_menu] = (row_id, row_count - max);
+                    note_batch_change(&mut changed, row_menu as i16, (row_id, row_count - max));
+                } else {
+                    live_slots[row_menu] = (0, 0);
+                    note_batch_change(&mut changed, row_menu as i16, (0, 0));
+                    live_slots[hover_menu] = (row_id, row_count);
+                    note_batch_change(&mut changed, hover_menu as i16, (row_id, row_count));
+                }
+            }
+        } else if may_place {
+            // CASE D (pc 1276-1379): both filled — the gates answer
+            let max = crate::world_view::item_max_stack(row_id);
+            if row_count > max {
+                // the split(max) — the cell takes max, the row the
+                // remainder keeps, the ORIGINAL hovered stack the
+                // add rides (the add's leftover the belief's tail —
+                // the server's drop the wire speaks)
+                let rest = row_count - max;
+                live_slots[hover_menu] = (row_id, max);
+                note_batch_change(&mut changed, hover_menu as i16, (row_id, max));
+                live_slots[row_menu] = (row_id, rest);
+                note_batch_change(&mut changed, row_menu as i16, (row_id, rest));
+                let _leftover = belief_inventory_add(
+                    live_slots,
+                    selected,
+                    hover_id,
+                    hover_count,
+                    &mut changed,
+                );
+            } else {
+                // the straight trade — the row the hovered stack
+                // takes, the cell the row's stack wears
+                live_slots[row_menu] = (hover_id, hover_count);
+                note_batch_change(&mut changed, row_menu as i16, (hover_id, hover_count));
+                live_slots[hover_menu] = (row_id, row_count);
+                note_batch_change(&mut changed, hover_menu as i16, (row_id, row_count));
+            }
+        }
+        // THE HUD ROW'S BELIEF — the every-mutation law syncs (the
+        // hotbar's menu ids 36..44 the row's own slice)
+        let mut row = [(0, 0); 9];
+        row.copy_from_slice(&live_slots[36..45]);
+        *hotbar = row;
+    }
+    // THE PACKET ALWAYS RIDES (the slotClicked walk the wire speaks
+    // even when the prediction refuses — the changed map the menu's
+    // own state keeps, the cursor the SWAP arm never touches)
+    let _ = sink.send(crate::world_view::ContainerCommand::Click(
+        crate::world_view::ContainerClick {
+            window_id: 0,
+            state_id,
+            slot: hover_menu as i16,
+            button: button as i8,
+            input: crate::world_view::ContainerInput::Swap,
+            changed,
+            carried,
         },
     ));
 }
@@ -108521,6 +108790,300 @@ cow_sound_variant: None,
             other => panic!("expected a container click, got {other:?}"),
         }
         app.on_shift_down(false);
+    }
+
+    /// THE SWAP KEY'S OWN WIRE (the digit press the live session's
+    /// ServerboundContainerClickPacket speaks — the doClick SWAP table
+    /// over the BELIEF): CASE B the hovered store stack rides the
+    /// empty hotbar row AS-IS (the cell EMPTIES, the HUD row's belief
+    /// synced, the packet the walk's own mutations names, the cursor
+    /// the SWAP arm never touches), the OFFLINE store the wire world
+    /// never touches.
+    #[test]
+    fn the_wire_swap_key_rides_the_swap_table() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        // the window-0 sync: store 12 (menu 12) carries 32 dirt, the
+        // hotbar row 0 (menu 36) empty, the revision 7 the packets
+        // spoke last
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[12] = (dirt, 32);
+        app.live_inventory_updated(slots, Vec::new(), 7, (0, 0));
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 12);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.live_inv_slots[12], (0, 0), "the cell emptied");
+        assert_eq!(app.live_inv_slots[36], (dirt, 32), "the row rides AS-IS");
+        assert_eq!(app.hotbar_slots[0], (dirt, 32), "the HUD belief synced");
+        assert_eq!(
+            app.inventory.items[12], (0, 0),
+            "the offline store the wire world never touches"
+        );
+        assert_eq!(app.screen, ScreenKind::Inventory, "the screen stays");
+        assert_eq!(app.live_inv_carried, (0, 0), "the cursor the SWAP never touches");
+        match click_rx.try_recv().expect("the packet rode the lane") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.window_id, 0, "the player's OWN menu the ctor pins");
+                assert_eq!(c.state_id, 7, "the revision the feed spoke");
+                assert_eq!(c.slot, 12, "the hovered seat's own menu id");
+                assert_eq!(c.button, 0, "the digit the button byte keys");
+                assert_eq!(
+                    c.input,
+                    crate::world_view::ContainerInput::Swap,
+                    "the SWAP input the keyPressed walk speaks"
+                );
+                assert_eq!(
+                    c.changed,
+                    vec![(12, (0, 0)), (36, (dirt, 32))],
+                    "the walk's own mutations the changed map names"
+                );
+                assert_eq!(c.carried, (0, 0));
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE SWAP WIRE'S OWN GATES AND THE ALWAYS PACKET (the
+    /// checkHotbarKeyPressed walk's own shape over the belief): the
+    /// both-empty press the consumed silence keeps AND the packet STILL
+    /// rides (the slotClicked call the keyPressed walk keeps
+    /// unconditional — the changed map the menu's own untouched state
+    /// keeps empty), the carried cursor the false verdict keeps BEFORE
+    /// the packet lane (the getCarried().isEmpty() gate the world chain
+    /// answers), the null hover and the no-panel the same refusals
+    /// speak, and the F key the OFFHAND row (button 40 the menu 45's
+    /// own seat) the same CASE B answers.
+    #[test]
+    fn the_wire_swap_key_the_silences_and_the_always_packet() {
+        use crate::world_view::ContainerCommand;
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[20] = (stone, 5);
+        app.live_inventory_updated(slots, Vec::new(), 2, (0, 0));
+        // THE BOTH-EMPTY PRESS (pcs 1130-1146): store 13 and the row 1
+        // both empty — the consumed silence, the belief whole, the
+        // packet rides EMPTY
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 13);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(1), "the silence CONSUMES");
+        assert_eq!(app.live_inv_slots[13], (0, 0), "the cell whole");
+        assert_eq!(app.live_inv_slots[37], (0, 0), "the row whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert!(c.changed.is_empty(), "the untouched state keeps no entry");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE CARRIED CURSOR (the getCarried().isEmpty() gate): the
+        // false verdict BEFORE the packet lane — the world chain answers
+        app.live_inv_carried = (stone, 5);
+        let (sx, sy) = inventory_slot_origin(app.inv_panel, 20);
+        assert!(!app.on_inventory_swap_key(2), "the carried cursor refuses");
+        assert_eq!(app.live_inv_slots[20], (stone, 5), "the cell whole");
+        assert!(
+            click_rx.try_recv().is_err(),
+            "the gate's refusal never rides the lane"
+        );
+        app.live_inv_carried = (0, 0);
+        // THE NULL HOVER (the hoveredSlot null arm): the cursor between
+        // the slots
+        app.mouse_pos = Some((332, 157));
+        assert!(!app.on_inventory_swap_key(2), "the null hover refuses");
+        assert!(click_rx.try_recv().is_err(), "still silence");
+        // THE NO-PANEL (the render never spoke): the gate keeps
+        let panel = app.inv_panel;
+        app.inv_panel = (0, 0);
+        assert!(!app.on_inventory_swap_key(2), "the no-panel refuses");
+        app.inv_panel = panel;
+        assert!(click_rx.try_recv().is_err(), "still silence");
+        // THE F KEY'S OFFHAND ROW (the button 40 the menu 45's seat):
+        // the hovered stack rides the EMPTY offhand AS-IS — CASE B the
+        // same walk answers
+        app.mouse_pos = Some((sx + 8, sy + 8));
+        assert!(app.on_inventory_swap_key(40), "the offhand chord consumes");
+        assert_eq!(app.live_inv_slots[20], (0, 0), "the cell emptied");
+        assert_eq!(app.live_inv_slots[45], (stone, 5), "the offhand took");
+        match click_rx.try_recv().expect("the offhand packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 20);
+                assert_eq!(c.button, 40, "the offhand key the button byte keys");
+                assert_eq!(c.input, crate::world_view::ContainerInput::Swap);
+                assert_eq!(c.changed, vec![(20, (0, 0)), (45, (stone, 5))]);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE SWAP WIRE'S OWN CASE C (the SPLIT law the max wears): the
+    /// row 20 eggs over the empty hovered cell — the cell takes the
+    /// max 16, the row the remainder 4 keeps; the count <= max arm the
+    /// row EMPTIES, the cell the whole wears. The RESULT seat's
+    /// mayPlace-false verdict the place arms refuse (the packet rides,
+    /// the belief whole — the consumed silence the lane speaks).
+    #[test]
+    fn the_wire_swap_key_splits_the_max_and_refuses_the_result() {
+        use crate::world_view::ContainerCommand;
+        let egg = crate::mob::wire_id("egg").expect("the egg's own id");
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let planks = mc_registry::item_id_by_name("oak_planks").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE SPLIT ARM: the row 0 (menu 36) 20 eggs, the hover the
+        // empty store 15 (menu 15), the digit 0
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[36] = (egg, 20);
+        app.live_inventory_updated(slots, Vec::new(), 5, (0, 0));
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 15);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.live_inv_slots[15], (egg, 16), "the cell the max takes");
+        assert_eq!(app.live_inv_slots[36], (egg, 4), "the row the remainder keeps");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.changed, vec![(15, (egg, 16)), (36, (egg, 4))]);
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE WHOLE ARM: the row 12 stone, the hover the empty store 16
+        app.live_inv_slots[36] = (stone, 12);
+        let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 16);
+        app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.live_inv_slots[16], (stone, 12), "the cell the whole wears");
+        assert_eq!(app.live_inv_slots[36], (0, 0), "the row empties");
+        assert_eq!(app.hotbar_slots[0], (0, 0), "the HUD belief synced");
+        click_rx.try_recv().expect("the packet rode");
+        // THE RESULT SEAT'S REFUSAL (the mayPlace-false slot 0 — the
+        // place arms refuse): the believed result 8 planks, the row 4
+        // dirt, the digit 0 — the consumed silence, the belief whole,
+        // the packet STILL rides
+        app.live_inv_slots[0] = (planks, 8);
+        app.live_inv_slots[36] = (stone, 4);
+        let (rx, ry) = craft_slot_origin(app.inv_panel, 4);
+        app.mouse_pos = Some((rx + 8, ry + 8));
+        assert!(app.on_inventory_swap_key(0), "the refusal consumes");
+        assert_eq!(app.live_inv_slots[0], (planks, 8), "the result whole");
+        assert_eq!(app.live_inv_slots[36], (stone, 4), "the row whole");
+        match click_rx.try_recv().expect("the always packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(c.slot, 0, "the result's own menu id");
+                assert!(c.changed.is_empty(), "the refusal keeps no entry");
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+    }
+
+    /// THE SWAP WIRE'S OWN CASE D (both filled — the mayPlace gate
+    /// answers): the count <= max arm the STRAIGHT TRADE wears (the two
+    /// stacks trade), the count > max arm the split(max) + the ORIGINAL
+    /// hovered stack the BELIEF's add rides (the add's merge-then-
+    /// first-empty law over the window-0 rows — the row's own remaining
+    /// space the whole hover lands, the FULL store the stall speaks —
+    /// the leftover the belief's honest tail, the server's drop lane
+    /// the correction speaks).
+    #[test]
+    fn the_wire_swap_key_trades_and_splits_with_the_add() {
+        use crate::world_view::ContainerCommand;
+        let egg = crate::mob::wire_id("egg").expect("the egg's own id");
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let cobble = mc_registry::item_id_by_name("cobblestone").unwrap();
+        let mut app = App::new(3);
+        app.open(ScreenKind::Connect);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (click_tx, click_rx) = std::sync::mpsc::channel::<ContainerCommand>();
+        app.attach_live_clicks(click_tx);
+        app.open_inventory();
+        app.inv_panel = inventory_panel_origin(640, 360);
+        // THE STRAIGHT TRADE: the row 0 (menu 36) 12 stone, the hover
+        // store 14 (menu 14) 32 dirt, the digit 0 — the stacks trade
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[36] = (stone, 12);
+        slots[14] = (dirt, 32);
+        app.live_inventory_updated(slots, Vec::new(), 6, (0, 0));
+        let (ox, oy) = inventory_slot_origin(app.inv_panel, 14);
+        app.mouse_pos = Some((ox + 8, oy + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.live_inv_slots[14], (stone, 12), "the cell the row's stack wears");
+        assert_eq!(app.live_inv_slots[36], (dirt, 32), "the row the hover's stack takes");
+        click_rx.try_recv().expect("the packet rode");
+        // THE SPLIT + THE ADD'S MERGE: the row 20 eggs, the hover 30
+        // eggs — the cell takes 16, the row keeps 4, the add's scan
+        // finds the row's own remaining space and lands the WHOLE 30
+        // (4 + 30 = 34, no drop) — the row's entry the map's own put
+        // replaces
+        app.live_inv_slots[14] = (0, 0);
+        app.live_inv_slots[36] = (egg, 20);
+        app.live_inv_slots[15] = (egg, 30);
+        let (ox2, oy2) = inventory_slot_origin(app.inv_panel, 15);
+        app.mouse_pos = Some((ox2 + 8, oy2 + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.live_inv_slots[15], (egg, 16), "the cell the max takes");
+        assert_eq!(app.live_inv_slots[36], (egg, 34), "the add's merge the row fills");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(
+                    c.changed,
+                    vec![(15, (egg, 16)), (36, (egg, 34))],
+                    "the repeated slot the map's own put replaces"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
+        // THE SPLIT + THE ADD'S STALL: the row 3 helmets (the max 1),
+        // the hover 30 stone, EVERY row full — the cell takes 1, the
+        // row keeps 2, the add's scan finds no home (no merge, no free
+        // slot), the leftover the belief drops (the server's drop lane
+        // the correction speaks)
+        app.live_inv_slots[15] = (0, 0);
+        app.live_inv_slots[36] = (helmet, 3);
+        for m in 9..45 {
+            if m != 36 {
+                app.live_inv_slots[m] = (cobble, 64);
+            }
+        }
+        app.live_inv_slots[16] = (stone, 30);
+        let (ox3, oy3) = inventory_slot_origin(app.inv_panel, 16);
+        app.mouse_pos = Some((ox3 + 8, oy3 + 8));
+        assert!(app.on_inventory_swap_key(0), "the digit consumes");
+        assert_eq!(app.live_inv_slots[16], (helmet, 1), "the cell the max takes");
+        assert_eq!(app.live_inv_slots[36], (helmet, 2), "the row the remainder keeps");
+        assert_eq!(app.live_inv_slots[17], (cobble, 64), "the store whole");
+        match click_rx.try_recv().expect("the packet rode") {
+            ContainerCommand::Click(c) => {
+                assert_eq!(
+                    c.changed,
+                    vec![(16, (helmet, 1)), (36, (helmet, 2))],
+                    "the stall's own tail the changed map never names"
+                );
+            }
+            other => panic!("expected a container click, got {other:?}"),
+        }
     }
 
     /// THE ARMOR COLUMN'S OWN LANES (the piece slot's click the
