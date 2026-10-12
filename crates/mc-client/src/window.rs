@@ -1924,6 +1924,15 @@ pub fn run_gui_app(
         if left_down && !was_left_down && app.chat_open {
             app.on_chat_click(gmx, gmy);
         }
+        // THE PICKER'S OWN SCROLL DRAG (the mouseDragged walk's armed
+        // lane — the scrollbar press armed the flag, the HELD button's
+        // every frame the track math answers ((y - y1 - 7.5) / 97 the
+        // clamp keeps), the release the disarm speaks below; the armed
+        // lane the RECT never re-checks — the vanilla's own once-armed
+        // drag the track's outside rides)
+        if left_down && app.creative_scroll_drag {
+            app.on_creative_scroll_drag(gmy);
+        }
         // the LEFT press's falling edge (the vanilla's own release lane):
         // the dig's hold flag drops and the destroy state ABORTs (the
         // continueAttack(false) tail — the crack overlay clears)

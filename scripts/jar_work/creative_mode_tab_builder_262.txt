@@ -1,0 +1,193 @@
+Compiled from "CreativeModeTab.java"
+public class net.minecraft.world.item.CreativeModeTab$Builder {
+  private static final net.minecraft.world.item.CreativeModeTab$DisplayItemsGenerator EMPTY_GENERATOR;
+
+  private final net.minecraft.world.item.CreativeModeTab$Row row;
+
+  private final int column;
+
+  private net.minecraft.network.chat.Component displayName;
+
+  private java.util.function.Supplier<net.minecraft.world.item.ItemStack> iconGenerator;
+
+  private net.minecraft.world.item.CreativeModeTab$DisplayItemsGenerator displayItemsGenerator;
+
+  private boolean canScroll;
+
+  private boolean showTitle;
+
+  private boolean alignedRight;
+
+  private net.minecraft.world.item.CreativeModeTab$Type type;
+
+  private net.minecraft.resources.Identifier backgroundTexture;
+
+  public net.minecraft.world.item.CreativeModeTab$Builder(net.minecraft.world.item.CreativeModeTab$Row, int);
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: invokestatic  #7                  // InterfaceMethod net/minecraft/network/chat/Component.empty:()Lnet/minecraft/network/chat/MutableComponent;
+       8: putfield      #13                 // Field displayName:Lnet/minecraft/network/chat/Component;
+      11: aload_0
+      12: invokedynamic #19,  0             // InvokeDynamic #0:get:()Ljava/util/function/Supplier;
+      17: putfield      #23                 // Field iconGenerator:Ljava/util/function/Supplier;
+      20: aload_0
+      21: getstatic     #27                 // Field EMPTY_GENERATOR:Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+      24: putfield      #31                 // Field displayItemsGenerator:Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+      27: aload_0
+      28: iconst_1
+      29: putfield      #34                 // Field canScroll:Z
+      32: aload_0
+      33: iconst_1
+      34: putfield      #38                 // Field showTitle:Z
+      37: aload_0
+      38: iconst_0
+      39: putfield      #41                 // Field alignedRight:Z
+      42: aload_0
+      43: getstatic     #44                 // Field net/minecraft/world/item/CreativeModeTab$Type.CATEGORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      46: putfield      #50                 // Field type:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      49: aload_0
+      50: getstatic     #53                 // Field net/minecraft/world/item/CreativeModeTab.DEFAULT_BACKGROUND:Lnet/minecraft/resources/Identifier;
+      53: putfield      #59                 // Field backgroundTexture:Lnet/minecraft/resources/Identifier;
+      56: aload_0
+      57: aload_1
+      58: putfield      #62                 // Field row:Lnet/minecraft/world/item/CreativeModeTab$Row;
+      61: aload_0
+      62: iload_2
+      63: putfield      #66                 // Field column:I
+      66: return
+
+  public net.minecraft.world.item.CreativeModeTab$Builder title(net.minecraft.network.chat.Component);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #13                 // Field displayName:Lnet/minecraft/network/chat/Component;
+       5: aload_0
+       6: areturn
+
+  public net.minecraft.world.item.CreativeModeTab$Builder icon(java.util.function.Supplier<net.minecraft.world.item.ItemStack>);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #23                 // Field iconGenerator:Ljava/util/function/Supplier;
+       5: aload_0
+       6: areturn
+
+  public net.minecraft.world.item.CreativeModeTab$Builder displayItems(net.minecraft.world.item.CreativeModeTab$DisplayItemsGenerator);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #31                 // Field displayItemsGenerator:Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+       5: aload_0
+       6: areturn
+
+  public net.minecraft.world.item.CreativeModeTab$Builder alignedRight();
+    Code:
+       0: aload_0
+       1: iconst_1
+       2: putfield      #41                 // Field alignedRight:Z
+       5: aload_0
+       6: areturn
+
+  public net.minecraft.world.item.CreativeModeTab$Builder hideTitle();
+    Code:
+       0: aload_0
+       1: iconst_0
+       2: putfield      #38                 // Field showTitle:Z
+       5: aload_0
+       6: areturn
+
+  public net.minecraft.world.item.CreativeModeTab$Builder noScrollBar();
+    Code:
+       0: aload_0
+       1: iconst_0
+       2: putfield      #34                 // Field canScroll:Z
+       5: aload_0
+       6: areturn
+
+  protected net.minecraft.world.item.CreativeModeTab$Builder type(net.minecraft.world.item.CreativeModeTab$Type);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #50                 // Field type:Lnet/minecraft/world/item/CreativeModeTab$Type;
+       5: aload_0
+       6: areturn
+
+  public net.minecraft.world.item.CreativeModeTab$Builder backgroundTexture(net.minecraft.resources.Identifier);
+    Code:
+       0: aload_0
+       1: aload_1
+       2: putfield      #59                 // Field backgroundTexture:Lnet/minecraft/resources/Identifier;
+       5: aload_0
+       6: areturn
+
+  public net.minecraft.world.item.CreativeModeTab build();
+    Code:
+       0: aload_0
+       1: getfield      #50                 // Field type:Lnet/minecraft/world/item/CreativeModeTab$Type;
+       4: getstatic     #70                 // Field net/minecraft/world/item/CreativeModeTab$Type.HOTBAR:Lnet/minecraft/world/item/CreativeModeTab$Type;
+       7: if_acmpeq     20
+      10: aload_0
+      11: getfield      #50                 // Field type:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      14: getstatic     #73                 // Field net/minecraft/world/item/CreativeModeTab$Type.INVENTORY:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      17: if_acmpne     40
+      20: aload_0
+      21: getfield      #31                 // Field displayItemsGenerator:Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+      24: getstatic     #27                 // Field EMPTY_GENERATOR:Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+      27: if_acmpeq     40
+      30: new           #76                 // class java/lang/IllegalStateException
+      33: dup
+      34: ldc           #78                 // String Special tabs can\'t have display items
+      36: invokespecial #80                 // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+      39: athrow
+      40: new           #54                 // class net/minecraft/world/item/CreativeModeTab
+      43: dup
+      44: aload_0
+      45: getfield      #62                 // Field row:Lnet/minecraft/world/item/CreativeModeTab$Row;
+      48: aload_0
+      49: getfield      #66                 // Field column:I
+      52: aload_0
+      53: getfield      #50                 // Field type:Lnet/minecraft/world/item/CreativeModeTab$Type;
+      56: aload_0
+      57: getfield      #13                 // Field displayName:Lnet/minecraft/network/chat/Component;
+      60: aload_0
+      61: getfield      #23                 // Field iconGenerator:Ljava/util/function/Supplier;
+      64: aload_0
+      65: getfield      #31                 // Field displayItemsGenerator:Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+      68: invokespecial #83                 // Method net/minecraft/world/item/CreativeModeTab."<init>":(Lnet/minecraft/world/item/CreativeModeTab$Row;ILnet/minecraft/world/item/CreativeModeTab$Type;Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;)V
+      71: astore_1
+      72: aload_1
+      73: aload_0
+      74: getfield      #41                 // Field alignedRight:Z
+      77: putfield      #86                 // Field net/minecraft/world/item/CreativeModeTab.alignedRight:Z
+      80: aload_1
+      81: aload_0
+      82: getfield      #38                 // Field showTitle:Z
+      85: putfield      #87                 // Field net/minecraft/world/item/CreativeModeTab.showTitle:Z
+      88: aload_1
+      89: aload_0
+      90: getfield      #34                 // Field canScroll:Z
+      93: putfield      #88                 // Field net/minecraft/world/item/CreativeModeTab.canScroll:Z
+      96: aload_1
+      97: aload_0
+      98: getfield      #59                 // Field backgroundTexture:Lnet/minecraft/resources/Identifier;
+     101: putfield      #89                 // Field net/minecraft/world/item/CreativeModeTab.backgroundTexture:Lnet/minecraft/resources/Identifier;
+     104: aload_1
+     105: areturn
+
+  private static net.minecraft.world.item.ItemStack lambda$new$0();
+    Code:
+       0: getstatic     #90                 // Field net/minecraft/world/item/ItemStack.EMPTY:Lnet/minecraft/world/item/ItemStack;
+       3: areturn
+
+  private static void lambda$static$0(net.minecraft.world.item.CreativeModeTab$ItemDisplayParameters, net.minecraft.world.item.CreativeModeTab$Output);
+    Code:
+       0: return
+
+  static {};
+    Code:
+       0: invokedynamic #96,  0             // InvokeDynamic #1:accept:()Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+       5: putstatic     #27                 // Field EMPTY_GENERATOR:Lnet/minecraft/world/item/CreativeModeTab$DisplayItemsGenerator;
+       8: return
+}

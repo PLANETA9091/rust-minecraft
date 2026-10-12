@@ -7492,6 +7492,11 @@ pub struct App {
     /// subtractInputFromScroll clamp keeps, the wheel the delta /
     /// scrollableRows walk drives).
     pub creative_scroll: f32,
+    /// THE DRAG'S OWN FLAG (the `scrolling` field — the mouseClicked's
+    /// scrollbar arm the canScroll verdict stores, the mouseReleased
+    /// the unconditional disarm speaks, the armed drag the
+    /// mouseDragged lane alone reads).
+    pub creative_scroll_drag: bool,
     /// THE 45 VISIBLE PALETTE SLOTS (the CONTAINER SimpleContainer the
     /// scrollTo walk refills: cell r*9+c = items[(r+row)*9+c] or
     /// EMPTY — the display stacks the click walk never depletes).
@@ -8648,6 +8653,7 @@ impl App {
             creative_items: Vec::new(),
             creative_search: String::new(),
             creative_scroll: 0.0,
+            creative_scroll_drag: false,
             creative_palette: [(0, 0); 45],
             creative_tab: 0,
             creative_panel: (0, 0),
@@ -17285,6 +17291,12 @@ impl App {
     /// order — a bow release does not speak a dig abort).
     pub fn on_left_release(&mut self) {
         self.dig_held = false;
+        // THE SCROLLBAR'S OWN DISARM (the mouseReleased walk's own first
+        // lane — the button-0 release the `scrolling` flag the
+        // unconditional false speaks BEFORE the tab walk; the sim's
+        // press-select the tab lane never rides, the flag the release
+        // alone clears)
+        self.creative_scroll_drag = false;
         if self.screen != ScreenKind::World || self.paused {
             return;
         }
@@ -18020,6 +18032,28 @@ impl App {
         self.creative_items.len() > 45
     }
 
+    /// THE SCROLLBAR'S OWN RECT (the insideScrollbar walk verbatim —
+    /// `k = leftPos + 175, l = topPos + 18, m = k + 14, n = l + 112`:
+    /// the 14x112 hit lane the 12-wide handle rides, the TAB's
+    /// canScroll gate the tail keeps — the field the ctor's iconst_1
+    /// default speaks (scripts/jar_work/creative_mode_tab_262.txt),
+    /// the noScrollBar() builder call the INVENTORY tab ALONE wears
+    /// (the CreativeModeTabs registration bytecode pc 730), the every
+    /// other seat the default true keeps — the ITEM COUNT the gate
+    /// never reads, the arm's own value the menu law answers).
+    fn creative_inside_scrollbar(&self, mx: i32, my: i32) -> bool {
+        if self.creative_panel == (0, 0) {
+            return false;
+        }
+        let (px, py) = self.creative_panel;
+        let (k, l) = (px + 175, py + 18);
+        mx >= k
+            && my >= l
+            && mx < k + 14
+            && my < l + 112
+            && CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Inventory
+    }
+
     /// THE SCROLL-TO-ROW LAW (the ItemPickerMenu.getRowIndexForScroll's
     /// own walk — `max((int)(scroll * rowCount + 0.5), 0)`: the rounded
     /// product the 0.5 dadd banks, the negative row counts the clamp
@@ -18074,6 +18108,11 @@ impl App {
         self.creative_items = self.creative_source.clone();
         self.creative_scroll = 0.0;
         self.creative_scroll_to(0.0);
+        // THE FRESH SCREEN'S OWN FIELD (the setScreen walk builds a NEW
+        // CreativeModeInventoryScreen every open — the `scrolling` flag
+        // the fresh object's false default keeps, the stale arm a
+        // mid-drag close the rebuild never inherits)
+        self.creative_scroll_drag = false;
         self.open(ScreenKind::Creative);
     }
 
@@ -18158,6 +18197,27 @@ impl App {
             return; // the zero span the divide-by rows never rides
         }
         let next = self.creative_scroll - (delta_y / rows as f64) as f32;
+        self.creative_scroll = next.clamp(0.0, 1.0);
+        self.creative_scroll_to(self.creative_scroll);
+    }
+
+    /// THE DRAG'S OWN WALK (the mouseDragged walk's armed lane —
+    /// `if (this.scrolling) { y1 = topPos + 18; y2 = y1 + 112;
+    /// scrollOffs = Mth.clamp(((float)event.y() - y1 - 7.5f) /
+    /// ((float)(y2 - y1) - 15.0f), 0.0f, 1.0f); menu.scrollTo(scrollOffs);
+    /// return true; }`: the 7.5f the 15-high handle's own half speaks
+    /// (the handle's CENTER the cursor follows, the 97px travel the
+    /// 112 track minus the handle keeps), the RECT the armed lane
+    /// never re-checks — the once-armed drag the track's outside
+    /// rides, the unarmed call the silence keeps).
+    pub fn on_creative_scroll_drag(&mut self, my: i32) {
+        if !self.creative_scroll_drag {
+            return;
+        }
+        let (_, py) = self.creative_panel;
+        let y1 = py + 18;
+        let y2 = y1 + 112;
+        let next = (my as f32 - y1 as f32 - 7.5) / ((y2 - y1) as f32 - 15.0);
         self.creative_scroll = next.clamp(0.0, 1.0);
         self.creative_scroll_to(self.creative_scroll);
     }
@@ -18437,6 +18497,25 @@ impl App {
         if button == 0 {
             if let Some(tab) = self.creative_tab_at(mx, my) {
                 self.select_creative_tab(tab);
+                return;
+            }
+            // THE SCROLLBAR'S OWN ARM (the mouseClicked walk's pc 79-115
+            // — the INVENTORY gate the wrapped seat the arm never rides
+            // (the BIN the wrapped panel's own (173, 112) hole the
+            // scrollbar's rect x 175..189 y 18..130 OVERLAPS — the gate
+            // the destroy slot's walk keeps), the insideScrollbar rect
+            // the 14x112 lane keeps (the TAB's canScroll — the INVENTORY
+            // tab's noScrollBar() the only false), the flag the SCREEN's
+            // canScroll verdict stores (`tab.canScroll() &&
+            // menu.canScroll()` — the tab part the helper's gate already
+            // true keeps, the menu's items>45 law the value alone
+            // answers), the CONSUMED verdict the outside-drop throw the
+            // scrollbar's press never answers — the disabled scroller's
+            // press the flag-false consumption wears)
+            if CREATIVE_TABS[self.creative_tab].kind != CreativeTabKind::Inventory
+                && self.creative_inside_scrollbar(mx, my)
+            {
+                self.creative_scroll_drag = self.creative_can_scroll();
                 return;
             }
         }
@@ -103964,6 +104043,159 @@ cow_sound_variant: None,
             !app.on_creative_drop_key(false),
             "the empty cell the miss wears"
         );
+    }
+
+    /// THE SCROLLBAR'S OWN DRAG (the 26.2 mouseClicked / mouseDragged /
+    /// mouseReleased walk verbatim — the press the 14x112 rect the
+    /// canScroll verdict arms and CONSUMES (the outside-drop throw the
+    /// scrollbar's press never answers), the armed drag the
+    /// `(y - y1 - 7.5) / (112 - 15)` track math the clamp 0..1 keeps
+    /// (the 7.5 the 15-high handle's own half — the handle's CENTER
+    /// the cursor follows), the release the unconditional disarm
+    /// speaks, the unarmed drag the silence keeps).
+    #[test]
+    fn the_creative_scrollbar_the_drag_wears() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let bar_x = px + 180; // the 14-wide rect x 175..189
+        let track_top = py + 18; // y1
+        let track_bottom = py + 130; // y2 = y1 + 112
+        let rows = (app.creative_source.len() as i32 + 8) / 9 - 5;
+        // THE PRESS ARMS (the flag the canScroll verdict stores — the
+        // true the full registry wears) AND CONSUMES (the carried
+        // stack the outside-drop throw never reads)
+        app.inv_carried = (stone, 5);
+        app.on_press(bar_x, py + 74);
+        assert!(app.creative_scroll_drag, "the press the flag arms");
+        assert_eq!(app.inv_carried, (stone, 5), "the press no throw wears");
+        assert_eq!(app.creative_scroll, 0.0, "the press alone no move speaks");
+        // THE DRAG TO THE BOTTOM (the clamp 1.0 — the refill the row
+        // offset = the row count wears)
+        app.on_creative_scroll_drag(track_bottom);
+        assert_eq!(app.creative_scroll, 1.0, "the bottom the clamp wears");
+        assert_eq!(
+            app.creative_palette[0],
+            app.creative_source[(rows * 9) as usize],
+            "the refill the bottom row wears"
+        );
+        // THE DRAG TO THE TOP (the clamp 0.0 — the first row back)
+        app.on_creative_scroll_drag(track_top);
+        assert_eq!(app.creative_scroll, 0.0, "the top the clamp wears");
+        assert_eq!(
+            app.creative_palette[0],
+            app.creative_source[0],
+            "the refill the first row wears"
+        );
+        // THE MID DRAG (the 48.5/97 = 0.5 exact — the handle's CENTER
+        // the cursor rides, the half list the row offset wears)
+        app.on_creative_scroll_drag(py + 74);
+        assert_eq!(app.creative_scroll, 0.5, "the mid the half wears");
+        let half_row = (rows as f32 * 0.5 + 0.5) as i32;
+        assert_eq!(
+            app.creative_palette[0],
+            app.creative_source[(half_row * 9) as usize],
+            "the refill the half row wears"
+        );
+        // THE ARMED DRAG OUTSIDE THE RECT (the lane the rect never
+        // re-checks — the once-armed drag the track's below rides)
+        app.on_creative_scroll_drag(track_bottom + 100);
+        assert_eq!(
+            app.creative_scroll, 1.0,
+            "the armed lane the outside the clamp keeps"
+        );
+        // THE RELEASE DISARMS (the unconditional false — the unarmed
+        // drag the silence keeps)
+        app.on_left_release();
+        assert!(!app.creative_scroll_drag, "the release the flag clears");
+        app.on_creative_scroll_drag(py + 74);
+        assert_eq!(app.creative_scroll, 1.0, "the unarmed drag no ride");
+        // THE RE-ARM / THE ELSEWHERE PRESS (the outside point the
+        // THROW arm the vanilla's own lane keeps, the flag the
+        // non-scrollbar press never arms)
+        app.on_press(bar_x, py + 74);
+        assert!(app.creative_scroll_drag, "the re-arm wears");
+        app.on_left_release();
+        let before = app.drops.len();
+        app.on_press(px + 2, py + 74); // the outside — the drop arm
+        assert!(
+            !app.creative_scroll_drag,
+            "the outside press the arm never wears"
+        );
+        assert_eq!(app.drops.len(), before + 1, "the outside the throw wears");
+    }
+
+    /// THE SCROLLBAR'S OWN CONSUMPTION (the arm's refusal lanes — the
+    /// canScroll-false list the press CONSUMED keeps (no throw, no
+    /// flag), the right press the button-0 arm never reads (the
+    /// outside split(1) drop the super.mouseClicked walk answers), the
+    /// INVENTORY gate the wrapped seat the arm refuses (the
+    /// scrollbar's rect ∩ the BIN the destroy slot's own walk keeps)).
+    #[test]
+    fn the_creative_scrollbar_the_press_consumes() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let bar_x = px + 180;
+        // THE DISABLED SCROLLER'S CONSUMED PRESS (the search seat's
+        // rare query — the one-item list the canScroll false speaks)
+        app.select_creative_tab(6); // the SEARCH seat
+        app.creative_search.push_str("iron_helmet");
+        app.refresh_creative_search();
+        assert!(
+            !app.creative_can_scroll(),
+            "the rare query the small list speaks"
+        );
+        app.inv_carried = (stone, 5);
+        app.on_press(bar_x, py + 74);
+        assert!(
+            !app.creative_scroll_drag,
+            "the disabled scroller the arm refuses"
+        );
+        assert_eq!(
+            app.inv_carried,
+            (stone, 5),
+            "the consumed press the throw never speaks"
+        );
+        app.on_creative_scroll_drag(py + 130);
+        assert_eq!(app.creative_scroll, 0.0, "the unarmed drag no ride");
+        // THE RIGHT PRESS (the button-0 arm the button-1 press never
+        // reads — the outside split drop the fall-through answers)
+        app.select_creative_tab(0); // the category seat — the full list
+        assert!(
+            app.creative_can_scroll(),
+            "the category seat the full list wears"
+        );
+        let before = app.drops.len();
+        app.on_right_press(bar_x, py + 74);
+        assert!(
+            !app.creative_scroll_drag,
+            "the right press the arm never wears"
+        );
+        assert_eq!(app.drops.len(), before + 1, "the split drop rides");
+        assert_eq!(app.inv_carried, (stone, 4), "the one the drop spends");
+        // THE WRAPPED SEAT'S BIN (the INVENTORY gate the arm refuses —
+        // the same rect the destroy slot's plain press answers: the
+        // carried the BIN spends)
+        app.select_creative_tab(13); // the INVENTORY seat
+        app.inv_carried = (egg, 3);
+        app.on_press(bar_x, py + 120); // the rect ∩ the BIN (173..189, 112..128)
+        assert!(
+            !app.creative_scroll_drag,
+            "the wrapped seat the arm refuses"
+        );
+        assert_eq!(app.inv_carried, (0, 0), "the bin the carried destroys");
     }
 
     /// THE ARMOR COLUMN (the 26.2 ArmorSlot's own mayPlace law — the
