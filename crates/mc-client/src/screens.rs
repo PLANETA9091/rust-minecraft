@@ -18061,12 +18061,13 @@ impl App {
         if self.creative_source.is_empty() {
             self.creative_source = Self::creative_source_items();
         }
-        // the persisted tab the palette seats alone keep (the INVENTORY
-        // seat the survival screen's own door wore — the re-open the
-        // vanilla default's building-blocks tab answers)
-        if self.creative_tab >= CREATIVE_TABS.len()
-            || CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory
-        {
+        // THE PERSISTED TAB (the init walk's own law — the static
+        // `selectedTab` field the local saves, the selectTab(savedTab)
+        // re-select the walk speaks: the tab the screen wore the
+        // re-open keeps, EVERY seat — the INVENTORY wrapped seat the
+        // same walk's own rebuild answers now. The out-of-range index
+        // the bounds reset alone refuses.)
+        if self.creative_tab >= CREATIVE_TABS.len() {
             self.creative_tab = 0;
         }
         self.creative_search.clear();
@@ -18082,21 +18083,25 @@ impl App {
     /// refills; the CATEGORY seats the full vocabulary share (the sim's
     /// grouping tables the follow-up round owes — the honest stand-in
     /// the commit notes), the SEARCH seat the filter wears, the
-    /// INVENTORY seat the survival screen's own door speaks).
+    /// INVENTORY seat the WRAPPED rebuild speaks — the screen the
+    /// same Creative seat keeps (the selectTab's slot-list swap the
+    /// bytecode 306-607 wears: the originalSlots the ImmutableList
+    /// copy saves, the 46 wrapped slots the custom origins place, the
+    /// destroyItemSlot (173, 112) rides; the sim the same store fields
+    /// the survival screen reads, the wrapped origins the geometry
+    /// helper serves).
     pub fn select_creative_tab(&mut self, idx: usize) {
         let Some(tab) = CREATIVE_TABS.get(idx) else {
             return;
         };
         match tab.kind {
             CreativeTabKind::Inventory => {
-                // THE INVENTORY SEAT'S OWN DOOR (the selectTab's
-                // INVENTORY rebuild the vanilla walk speaks — the
-                // wrapped inventory the player's own store keeps; the
-                // survival screen the sim's own panel answers, the
-                // store the same 36 rows)
-                self.creative_tab = idx;
-                self.open(ScreenKind::Inventory);
-                return;
+                // THE WRAPPED SEAT (the selectTab's INVENTORY arm —
+                // the menu the screen never swaps, the slot LIST the
+                // rebuild answers: the sim stays on the Creative seat,
+                // the wrapped rows the store's own fields read, the
+                // fresh-scroll tail the walk's own order keeps)
+                self.creative_search.clear();
             }
             CreativeTabKind::SavedHotbar | CreativeTabKind::Operator => {
                 // THE HONEST SILENCE (the hotbar pages the
@@ -18122,6 +18127,11 @@ impl App {
                 self.creative_items = self.creative_source.clone();
             }
         }
+        // THE FRESH-SCROLL TAIL (the selectTab's own order — the
+        // scroll the 0.0 resets, the scrollTo(0.0) the 45-cell refill
+        // walks; the WRAPPED seat the palette never draws — the refill
+        // the dead list serves, the canScroll-false law the cleared
+        // items the vanilla walk answers)
         self.creative_tab = idx;
         self.creative_scroll = 0.0;
         self.creative_scroll_to(0.0);
@@ -18134,6 +18144,12 @@ impl App {
     /// + `menu.scrollTo(scrollOffs)`: the delta / scrollableRows
     /// subtraction the clamp 0..1 keeps).
     pub fn on_creative_scroll(&mut self, delta_y: f64) {
+        // THE WRAPPED SEAT THE WHEEL NEVER RIDES (the selectTab's
+        // INVENTORY arm the items list CLEARS — the canScroll's size
+        // > 45 gate the zero answers, the scroll the dead seat keeps)
+        if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
+            return;
+        }
         if !self.creative_can_scroll() {
             return;
         }
@@ -18217,16 +18233,21 @@ impl App {
         None
     }
 
-    /// The bottom row's slot index (0..18) the GUI point rides — the
-    /// addInventoryHotbarSlots(9, 112) geometry, the same 16x16 hit
-    /// law.
+    /// The bottom row's slot index (0..9) the GUI point rides — the
+    /// addInventoryHotbarSlots(inventory, 9, 112) geometry, the same
+    /// 16x16 hit law. THE NINE the bytecode's own loop bound speaks
+    /// (AbstractContainerMenu.addInventoryHotbarSlots's `i < 9` — the
+    /// helper the hotbar row alone places; the picker's bottom row NO
+    /// main-head spill wears — the 0..18 walk the previous round's
+    /// pitch/bound misread served, the phantom 9..18 cells the fix
+    /// retires).
     fn creative_store_cell(&self, mx: i32, my: i32) -> Option<usize> {
         if self.creative_panel == (0, 0) {
             return None;
         }
         let (px, py) = self.creative_panel;
         let (lx, ly) = (mx - px, my - py);
-        for i in 0..18usize {
+        for i in 0..9usize {
             let (sx, sy) = (9 + i as i32 * 18, 112);
             if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
                 return Some(i);
@@ -18254,10 +18275,162 @@ impl App {
         None
     }
 
+    /// THE WRAPPED SEAT'S OWN HIT (the selectTab's wrapped rebuild
+    /// the bytecode 341-607 speaks — the InventoryMenu's 46 slots the
+    /// custom origins place, the destroyItemSlot the walk appends):
+    /// the armor 2x2 the SPREAD pitch keeps (`x = 54 + (i-5)/2*54`,
+    /// `y = 6 + (i-5)%2*27` — the wide (54/108, 6/33) pair the player
+    /// model rides between), the crafting slots the (-2000, -2000)
+    /// off-screen the walk hides, the offhand (35, 20), the main 27
+    /// (`9 + col*18, 54 + row*18`), the hotbar 9 (`9 + col*18, 112`),
+    /// the BIN (173, 112). The 16x16 hit rect at the +1 inset the
+    /// store walk keeps. The regions never overlap (the armor x
+    /// ≥ 54 vs the offhand x ≤ 51, the BIN x = 173 vs the hotbar tail
+    /// x ≤ 169).
+    fn creative_wrap_cell(&self, mx: i32, my: i32) -> Option<CreativeWrapSlot> {
+        if self.creative_panel == (0, 0) {
+            return None;
+        }
+        let (px, py) = self.creative_panel;
+        let (lx, ly) = (mx - px, my - py);
+        for k in 0..4usize {
+            let (sx, sy) = (54 + (k / 2) as i32 * 54, 6 + (k % 2) as i32 * 27);
+            if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
+                return Some(CreativeWrapSlot::Armor(k));
+            }
+        }
+        {
+            let (sx, sy) = (35, 20);
+            if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
+                return Some(CreativeWrapSlot::Offhand);
+            }
+        }
+        // the main 27 — the menu's own order the walk keeps: menu 9
+        // ..35 = the sim store's 9..35 (the hotbar the store's 0..8
+        // rides, the main the same index space the InventoryMenu
+        // speaks), row = (i-9)/9, col = (i-9)%9
+        for i in 9..36usize {
+            let (sx, sy) = (
+                9 + ((i - 9) % 9) as i32 * 18,
+                54 + ((i - 9) / 9) as i32 * 18,
+            );
+            if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
+                return Some(CreativeWrapSlot::Main(i));
+            }
+        }
+        for i in 0..9usize {
+            let (sx, sy) = (9 + i as i32 * 18, 112);
+            if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
+                return Some(CreativeWrapSlot::Hotbar(i));
+            }
+        }
+        {
+            let (sx, sy) = (173, 112);
+            if lx >= sx && lx < sx + 16 && ly >= sy && ly < sy + 16 {
+                return Some(CreativeWrapSlot::Bin);
+            }
+        }
+        None
+    }
+
+    /// THE WRAPPED SEAT'S OWN CLICKS (the slotClicked walk's
+    /// INVENTORY arms — the decoded order kept):
+    /// - the BIN's SHIFT press (pc 136-215): the getItems walk the
+    ///   one-entry-per-slot law speaks (46 slots the InventoryMenu
+    ///   holds) — the WHOLE inventory the walk clears: the store 36,
+    ///   the armor 4, the offhand, the craft cells 4 + the result
+    ///   (the recompute the empty cells answer).
+    /// - the BIN's plain press (pc 230-251): `menu.setCarried(EMPTY)`
+    ///   — the carried DESTROYS whatever the button the press rides
+    ///   (the left the whole stack spends, the right the same walk
+    ///   wears — no split the destroy slot keeps).
+    /// - the armor / offhand / store rows (pc 440-494's default arm):
+    ///   `inventoryMenu.clicked(target.index, ...)` — the survival
+    ///   click semantics the real menu answers, the sim the same
+    ///   predict_* helpers the survival screen's own lanes speak.
+    fn click_creative_wrap(&mut self, mx: i32, my: i32, button: i8) {
+        let Some(slot) = self.creative_wrap_cell(mx, my) else {
+            // THE NULL-SLOT PRESS (the slotClicked's own order — the
+            // INVENTORY seat the outside arms NEVER rides: pc 93-115
+            // `slot == null && type != INVENTORY` the THROW walk gates,
+            // the wrapped seat the walk falls through to the default
+            // arm the InventoryMenu.clicked(-1) silence keeps)
+            return;
+        };
+        match slot {
+            CreativeWrapSlot::Bin => {
+                if self.shift_down {
+                    // THE WHOLE-CLEAR (pc 152-212: every slot the
+                    // getItems walk lists the EMPTY wears — the
+                    // handleCreativeModeItemAdd tail the wire the
+                    // follow-up owes)
+                    for it in self.inventory.items.iter_mut() {
+                        *it = (0, 0);
+                    }
+                    for a in self.inventory.armor.iter_mut() {
+                        *a = (0, 0);
+                    }
+                    self.inventory.offhand[0] = (0, 0);
+                    for cell in self.craft_grid.iter_mut() {
+                        *cell = (0, 0);
+                    }
+                    self.craft_result = (0, 0);
+                    self.hotbar_slots = self.inventory.hotbar();
+                } else {
+                    // THE CARRIED DESTROYS (pc 238-251 —
+                    // setCarried(EMPTY), both buttons the same walk)
+                    self.inv_carried = (0, 0);
+                }
+            }
+            CreativeWrapSlot::Armor(k) => {
+                self.click_armor_slot(k, button);
+            }
+            CreativeWrapSlot::Offhand => {
+                self.click_offhand_slot(button);
+            }
+            CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => {
+                if self.shift_down {
+                    // THE QUICK-MOVE LANE (the InventoryMenu's own
+                    // quickMoveStack walk — the same predict pair the
+                    // survival store's shift lane speaks: the armor arm
+                    // first, the section routing after)
+                    let changed = crate::world_view::predict_quick_move_inventory(
+                        &self.inventory.items,
+                        &self.inventory.armor,
+                        &self.inventory.offhand[0],
+                        i,
+                    );
+                    for (idx, pair) in &changed {
+                        if *idx >= 36 {
+                            self.inventory.armor[*idx - 36] = *pair;
+                        } else {
+                            self.inventory.items[*idx] = *pair;
+                        }
+                    }
+                    self.hotbar_slots = self.inventory.hotbar();
+                    return;
+                }
+                // THE PICKUP PAIR (the doClick PICKUP arms the base
+                // Slot's law answers — the same walk the survival
+                // store's rows keep)
+                let believed = self.inventory.items[i];
+                let (new_cell, new_carried) = if button == 0 {
+                    crate::world_view::predict_pickup(believed, self.inv_carried)
+                } else {
+                    crate::world_view::predict_pickup_right(believed, self.inv_carried)
+                };
+                self.inventory.items[i] = new_cell;
+                self.inv_carried = new_carried;
+                self.hotbar_slots = self.inventory.hotbar();
+            }
+        }
+    }
+
     /// THE PICKER'S OWN CLICK (the slotClicked walk's arms, the decoded
     /// order kept): the tabs first (the LEFT button the mouseClicked
-    /// guard keeps), the palette slots' PICKUP law, the bottom row's
-    /// store walk, the outside the THROW drop arms answers.
+    /// guard keeps), the WRAPPED seat the INVENTORY tab answers, the
+    /// palette slots' PICKUP law, the bottom row's store walk, the
+    /// outside the THROW drop arms answers.
     pub fn click_creative(&mut self, mx: i32, my: i32, button: i8) {
         // THE TAB STRIP (the mouseClicked's own first lane — the left
         // button alone the checkTabClicked walk reads)
@@ -18266,6 +18439,13 @@ impl App {
                 self.select_creative_tab(tab);
                 return;
             }
+        }
+        // THE WRAPPED SEAT (the INVENTORY tab's own click walk — the
+        // palette lanes the wrapped panel never shows, the route the
+        // seat's own arms keep)
+        if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
+            self.click_creative_wrap(mx, my, button);
+            return;
         }
         // THE PALETTE SLOTS (the `slot.container == CONTAINER` arm —
         // the PICKUP walk the decoded order keeps)
@@ -18406,25 +18586,152 @@ impl App {
         let Some((mx, my)) = self.mouse_pos else {
             return false; // the headless scenes track no mouse
         };
-        // THE HOVERED SLOT (the two containers the picker owns — the
-        // palette cells first, the bottom rows after; the elsewhere
+        // THE HOVERED SLOT (the three containers the picker owns —
+        // the WRAPPED seat's regions the INVENTORY tab rides first,
+        // the palette cells after, the bottom rows last; the elsewhere
         // point the hoveredSlot null verdict wears)
-        let palette_cell = self.creative_palette_cell(mx, my);
-        let store_slot = if palette_cell.is_none() {
+        let wrap_seat = CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory;
+        let wrap_slot = if wrap_seat {
+            self.creative_wrap_cell(mx, my)
+        } else {
+            None
+        };
+        let palette_cell = if wrap_seat {
+            None
+        } else {
+            self.creative_palette_cell(mx, my)
+        };
+        let store_slot = if palette_cell.is_none() && !wrap_seat {
             self.creative_store_cell(mx, my)
         } else {
             None
         };
+        let search_seat =
+            CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search;
+        // THE WRAPPED SEAT'S OWN SWAP (the default arm's
+        // InventoryMenu.clicked walk — the Main/Hotbar/Offhand rows
+        // the base Slot's law the table answers, the Armor the
+        // mayPlace gate the follow-up owes — the hover the walk ran,
+        // the consumed the checkHotbarKeyPressed's own verdict keeps;
+        // the BIN the never-a-row slot the silence keeps)
+        if let Some(slot) = wrap_slot {
+            let row = match slot {
+                CreativeWrapSlot::Main(i) | CreativeWrapSlot::Hotbar(i) => Some(i),
+                CreativeWrapSlot::Offhand => Some(usize::MAX),
+                CreativeWrapSlot::Armor(_) | CreativeWrapSlot::Bin => None,
+            };
+            let Some(row) = row else {
+                return true; // the armor's mayPlace / the bin's silence
+            };
+            let (hotbar_id, hotbar_count) = if button == 40 {
+                self.inventory.offhand[0]
+            } else {
+                self.inventory.items[button]
+            };
+            let hovered = if row == usize::MAX {
+                self.inventory.offhand[0]
+            } else {
+                self.inventory.items[row]
+            };
+            if hotbar_count <= 0 && hovered.1 <= 0 {
+                return true; // pc 1130-1146: the both-empty silence
+            }
+            let max = crate::world_view::item_max_stack(hotbar_id);
+            // THE TWO SEATS (the table's own pair — the BUTTON row the
+            // put_row seat wears, the HOVERED cell the put_hover seat
+            // keeps: the offhand's row usize::MAX the offhand's own
+            // slot answers, the store rows the items' index space
+            // rides)
+            let put_row = |app: &mut Self, stack: (i32, i32)| {
+                if button == 40 {
+                    app.inventory.offhand[0] = stack;
+                } else {
+                    app.inventory.items[button] = stack;
+                }
+            };
+            let put_hover = |app: &mut Self, stack: (i32, i32)| {
+                if row == usize::MAX {
+                    app.inventory.offhand[0] = stack;
+                } else {
+                    app.inventory.items[row] = stack;
+                }
+            };
+            if hotbar_count <= 0 {
+                // CASE B (pc 1149-1202): the hovered stack rides the
+                // button row AS-IS, the hovered cell EMPTIES
+                if hovered.1 <= 0 || hovered.0 == 0 {
+                    return true; // the mayPickup refusal — silence
+                }
+                put_row(self, hovered);
+                put_hover(self, (0, 0));
+            } else if hovered.1 <= 0 {
+                // CASE C (pc 1205-1273): the hovered cell takes
+                // min(count, max), the button row the remainder keeps
+                let take = hotbar_count.min(max);
+                put_hover(self, (hotbar_id, take));
+                put_row(
+                    self,
+                    if hotbar_count > take {
+                        (hotbar_id, hotbar_count - take)
+                    } else {
+                        (0, 0)
+                    },
+                );
+            } else if hotbar_count > max {
+                // CASE D's split arm (pc 1276-1355): the hovered cell
+                // takes the max, the button row the remainder keeps,
+                // the hovered OLD stack the add-back walk rides — the
+                // merge-then-first-empty order, the NO-room tail the
+                // world drop speaks
+                let old = hovered;
+                put_hover(self, (hotbar_id, max));
+                put_row(self, (hotbar_id, hotbar_count - max));
+                let mut rest = old.1;
+                for it in self.inventory.items.iter_mut() {
+                    if rest == 0 {
+                        break;
+                    }
+                    let room = crate::world_view::item_max_stack(it.0) - it.1;
+                    if it.1 > 0 && it.0 == old.0 && room > 0 {
+                        let take = room.min(rest);
+                        it.1 += take;
+                        rest -= take;
+                    }
+                }
+                if rest > 0 {
+                    for it in self.inventory.items.iter_mut() {
+                        if rest == 0 {
+                            break;
+                        }
+                        if it.1 <= 0 {
+                            let take =
+                                rest.min(crate::world_view::item_max_stack(old.0));
+                            *it = (old.0, take);
+                            rest -= take;
+                        }
+                    }
+                }
+                if rest > 0 {
+                    self.drop_item_entity_aimed(old.0, rest);
+                }
+            } else {
+                // CASE D's straight swap (pc 1358-1382): the hovered
+                // cell takes the button row's whole, the row the
+                // hovered's
+                put_hover(self, (hotbar_id, hotbar_count));
+                put_row(self, hovered);
+            }
+            self.hotbar_slots = self.inventory.hotbar();
+            return true;
+        }
+        if palette_cell.is_none() && store_slot.is_none() {
+            return search_seat;
+        }
         // THE SEARCH SEAT'S OWN VERDICTS (keyPressed pc 54-80 + the
         // focused-box tail): the palette cell WITHOUT an item the
         // flag2 keeps (the hasItem gate the walk requires), the
         // NOTHING-hover the focused box keeps — BOTH consume the key
         // (the world keybinds the search tab never reads)
-        let search_seat =
-            CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search;
-        if palette_cell.is_none() && store_slot.is_none() {
-            return search_seat;
-        }
         if search_seat && palette_cell.is_some() {
             let has_item = palette_cell
                 .and_then(|c| self.creative_palette.get(c))
@@ -20849,12 +21156,13 @@ impl App {
         let panel = creative_panel_origin(w, h);
         self.creative_panel = panel;
         // THE TAB'S OWN BACKGROUND (the getBackgroundTexture lane — the
-        // search seat the tab_item_search texture wears, the category
-        // seats the tab_items texture keep)
-        let background = if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Search {
-            "gui/container/creative_inventory/tab_item_search.png"
-        } else {
-            "gui/container/creative_inventory/tab_items.png"
+        // search seat the tab_item_search texture wears, the INVENTORY
+        // wrapped seat the tab_inventory sheet keeps, the category
+        // seats the tab_items texture ride)
+        let background = match CREATIVE_TABS[self.creative_tab].kind {
+            CreativeTabKind::Search => "gui/container/creative_inventory/tab_item_search.png",
+            CreativeTabKind::Inventory => "gui/container/creative_inventory/tab_inventory.png",
+            _ => "gui/container/creative_inventory/tab_items.png",
         };
         g.sprite_file_region(a, background, 0, 0, 195, 136, panel.0, panel.1);
         // THE TAB STRIP (the extractBackground's own draw order — the
@@ -20881,6 +21189,90 @@ impl App {
             let hy = panel.1 + 18 + (77.0 * self.creative_scroll) as i32;
             g.sprite_file_region(a, sprite, 0, 0, 12, 15, panel.0 + 175, hy);
         }
+        // THE WRAPPED SEAT (the INVENTORY tab's own panel — the
+        // palette/scroller/search lanes the seat never shows, the
+        // wrapped rows the rebuild's own origins wear: the armor 2x2
+        // the spread pitch keeps, the offhand, the main 27, the
+        // hotbar 9 — the BIN's hole the tab_inventory sheet bakes)
+        if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
+            for k in 0..4usize {
+                let (id, count) = self.inventory.armor[k];
+                if count <= 0 || id == 0 {
+                    continue;
+                }
+                let (sx, sy) = (
+                    panel.0 + 54 + (k / 2) as i32 * 54 + 1,
+                    panel.1 + 6 + (k % 2) as i32 * 27 + 1,
+                );
+                draw_item_icon(g, id, sx, sy);
+            }
+            {
+                let (id, count) = self.inventory.offhand[0];
+                if count > 0 && id != 0 {
+                    draw_item_icon(g, id, panel.0 + 35 + 1, panel.1 + 20 + 1);
+                }
+            }
+            for i in 9..36usize {
+                let (id, count) = self.inventory.items[i];
+                if count <= 0 || id == 0 {
+                    continue;
+                }
+                let (sx, sy) = (
+                    panel.0 + 9 + ((i - 9) % 9) as i32 * 18 + 1,
+                    panel.1 + 54 + ((i - 9) / 9) as i32 * 18 + 1,
+                );
+                draw_item_icon(g, id, sx, sy);
+                if count > 1 {
+                    let s = count.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+                }
+            }
+            for i in 0..9usize {
+                let (id, count) = self.inventory.items[i];
+                if count <= 0 || id == 0 {
+                    continue;
+                }
+                let (sx, sy) = (panel.0 + 9 + i as i32 * 18 + 1, panel.1 + 112 + 1);
+                draw_item_icon(g, id, sx, sy);
+                if count > 1 {
+                    let s = count.to_string();
+                    let tw = g.text_width(&s);
+                    g.text(a, sx + 17 - tw, sy + 9, &s, WHITE, true);
+                }
+            }
+            // the carried follows (the shared law — the tail walk the
+            // picker's own seats keep)
+            if self.inv_carried.1 > 0 {
+                if let Some((mx, my)) = self.mouse_pos {
+                    draw_item_icon(g, self.inv_carried.0, mx - 8, my - 8);
+                    if self.inv_carried.1 > 1 {
+                        let s = self.inv_carried.1.to_string();
+                        let tw = g.text_width(&s);
+                        g.text(a, mx - 8 + 17 - tw, my - 8 + 9, &s, WHITE, true);
+                    }
+                }
+            }
+            if let Some((mx, my)) = self.mouse_pos {
+                if let Some(idx) = self.creative_tab_at(mx, my) {
+                    if let Some(label) = tr(CREATIVE_TABS[idx].label_key) {
+                        let tw = g.text_width(&label);
+                        let tab = &CREATIVE_TABS[idx];
+                        let (tx, ty) = creative_tab_origin(tab, 195, 136);
+                        let lx = panel.0 + tx + 13 - tw / 2;
+                        let ly = if tab.top {
+                            panel.1 + ty - 10
+                        } else {
+                            panel.1 + ty + 34
+                        };
+                        g.fill(lx - 1, ly - 1, tw + 2, 10, [0.06, 0.06, 0.06, 0.94]);
+                        g.text(a, lx, ly, &label, WHITE, false);
+                    }
+                }
+            }
+            self.render_bundle_tooltip(g, a);
+            return;
+        }
         // THE 45 PALETTE ICONS (the display law: count-1 stacks — the
         // count overlay the never-over-1 counts never render)
         for r in 0..5usize {
@@ -20896,11 +21288,12 @@ impl App {
                 draw_item_icon(g, id, sx, sy);
             }
         }
-        // THE BOTTOM ROW (the helper's 18 store slots — the icons +
-        // counts the store's own draw keeps)
+        // THE BOTTOM ROW (the helper's 9 hotbar slots — the icons +
+        // counts the store's own draw keeps; the phantom 9..18 cells
+        // the bytecode's own loop bound retires)
         let hotbar = self.inventory.hotbar();
-        for i in 0..18usize {
-            let (id, count) = if i < 9 { hotbar[i] } else { self.inventory.items[i] };
+        for i in 0..9usize {
+            let (id, count) = hotbar[i];
             if count <= 0 || id == 0 {
                 continue;
             }
@@ -24156,10 +24549,35 @@ impl App {
                 None // the press between the slots — the hover's own miss
             }
             ScreenKind::Creative => {
-                // THE PICKER'S OWN HOVER (the palette cell first, the
-                // store row second — the slot id the palette's cell
-                // index carries, the store row the menu id 45+ keeps —
-                // the tooltip lane the same id space reads)
+                // THE PICKER'S OWN HOVER (the WRAPPED seat's regions
+                // the INVENTORY tab rides first — the InventoryMenu's
+                // own id space the slot ids speak: the armor 5..8, the
+                // main 9..35, the hotbar 36..44, the offhand 45, the
+                // BIN the never-a-stack slot the miss keeps — the
+                // palette cell next (the cell index the id carries),
+                // the store row last (the menu id 45+ keeps — the
+                // tooltip lane the same id space reads))
+                if CREATIVE_TABS[self.creative_tab].kind == CreativeTabKind::Inventory {
+                    return match self.creative_wrap_cell(mx, my) {
+                        Some(CreativeWrapSlot::Armor(k)) => {
+                            let (id, count) = self.inventory.armor[k];
+                            Some((id, count, (5 + k) as i32))
+                        }
+                        Some(CreativeWrapSlot::Main(i)) => {
+                            let (id, count) = self.inventory.items[i];
+                            Some((id, count, i as i32))
+                        }
+                        Some(CreativeWrapSlot::Hotbar(i)) => {
+                            let (id, count) = self.inventory.items[i];
+                            Some((id, count, (36 + i) as i32))
+                        }
+                        Some(CreativeWrapSlot::Offhand) => {
+                            let (id, count) = self.inventory.offhand[0];
+                            Some((id, count, 45))
+                        }
+                        Some(CreativeWrapSlot::Bin) | None => None,
+                    };
+                }
                 if let Some(cell) = self.creative_palette_cell(mx, my) {
                     let (id, count) = self.creative_palette[cell];
                     return Some((id, count, cell as i32));
@@ -47462,6 +47880,22 @@ pub enum CreativeTabKind {
     SavedHotbar,
     Inventory,
     Operator,
+}
+
+/// THE WRAPPED SEAT'S OWN SLOT KIND (the selectTab rebuild's regions
+/// — the InventoryMenu's 46 slots the custom origins place, the
+/// destroyItemSlot the walk appends): the armor 2x2 (the sim store's
+/// armor[k]), the offhand, the main 27 + the hotbar 9 (the sim
+/// store's items — Main the menu's own 9..35 index space rides, the
+/// Hotbar the 36..44 → the store's 0..8), the BIN (the destroy slot
+/// the (173, 112) origin wears).
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+enum CreativeWrapSlot {
+    Armor(usize),
+    Offhand,
+    Main(usize),
+    Hotbar(usize),
+    Bin,
 }
 
 /// ONE TAB OF THE STRIP (the CreativeModeTabs.bootstrap walk's own
@@ -102937,12 +103371,14 @@ cow_sound_variant: None,
         assert_eq!(app.screen, ScreenKind::World, "the close's return");
         assert_eq!(app.inv_carried, (0, 0), "the hand emptied");
         assert_eq!(app.inventory.items[0], (stone, 30), "the store took it");
-        // THE PERSISTED TAB (the INVENTORY seat the re-open's default
-        // answers — the loop the palette tab keeps)
+        // THE PERSISTED TAB (the init walk's own law — the static
+        // selectedTab the local saves, the selectTab(savedTab) the
+        // re-open speaks: the INVENTORY seat the WRAPPED rebuild
+        // answers now, the screen the same Creative seat keeps)
         app.creative_tab = 13;
         app.open_inventory();
-        assert_eq!(app.screen, ScreenKind::Creative);
-        assert_eq!(app.creative_tab, 0, "the default's re-answer");
+        assert_eq!(app.screen, ScreenKind::Creative, "the wrapped seat the re-open keeps");
+        assert_eq!(app.creative_tab, 13, "the persisted tab the init walk answers");
     }
 
     /// THE PICKER'S OWN SWAP (the number-key walk the jar's decoded
@@ -102967,6 +103403,7 @@ cow_sound_variant: None,
         let (px, py) = app.creative_panel;
         let cell0 = (px + 9 + 8, py + 18 + 8);
         let cell5 = (px + 9 + 5 * 18 + 8, py + 18 + 8);
+        let store8 = (px + 9 + 8 * 18 + 8, py + 112 + 8);
         let store9 = (px + 9 + 9 * 18 + 8, py + 112 + 8);
         // THE EMPTY-ROW TAKE (case B — the palette's count-1 rides
         // AS-IS, never a max; the cell the take EMPTIES)
@@ -103004,13 +103441,24 @@ cow_sound_variant: None,
         assert!(app.on_creative_swap_key(1));
         assert_eq!(app.creative_palette[5], (egg, 16), "the cell the min takes");
         assert_eq!(app.inventory.items[1], (egg, 24), "the row the remainder keeps");
-        // THE STORE ROW SWAP (the bottom rows the same table wears)
+        // THE STORE ROW SWAP (the bottom rows the same table wears —
+        // the hotbar tail's real cell 8 the loop's own bound speaks)
+        app.inventory.items[0] = (stone, 7);
+        app.inventory.items[8] = (egg, 3);
+        app.mouse_pos = Some(store8);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(app.inventory.items[0], (egg, 3), "the row the swap speaks");
+        assert_eq!(app.inventory.items[8], (stone, 7), "the slot the swap takes");
+        // THE PHANTOM CELL RETIRED (the bytecode's own `i < 9` bound —
+        // the 10th cell the old 0..18 walk answered the helper NEVER
+        // places: the hover the miss wears, the walk the world chain
+        // answers, the store the silence keeps)
         app.inventory.items[0] = (stone, 7);
         app.inventory.items[9] = (egg, 3);
         app.mouse_pos = Some(store9);
-        assert!(app.on_creative_swap_key(0));
-        assert_eq!(app.inventory.items[0], (egg, 3), "the row the swap speaks");
-        assert_eq!(app.inventory.items[9], (stone, 7), "the slot the swap takes");
+        assert!(!app.on_creative_swap_key(0), "the phantom the miss wears");
+        assert_eq!(app.inventory.items[0], (stone, 7), "the row untouched");
+        assert_eq!(app.inventory.items[9], (egg, 3), "the slot untouched");
         // THE OFFHAND SWAP (button 40 — the F key's own first arm)
         app.inventory.offhand[0] = (0, 0);
         app.creative_palette[0] = (stone, 1);
@@ -103038,6 +103486,183 @@ cow_sound_variant: None,
         // THE NOWHERE HOVER (the non-search tab the world chain
         // answers — the keybind lane the vanilla keeps)
         app.select_creative_tab(0);
+        app.mouse_pos = Some((px - 40, py - 40));
+        assert!(!app.on_creative_swap_key(0), "the no-slot miss");
+    }
+
+    /// THE WRAPPED SEAT (the selectTab's INVENTORY arm the bytecode
+    /// 306-607 wears — the screen the same Creative seat keeps, the
+    /// wrapped rows the store's own fields read): the plain pickup
+    /// the predict pair the survival rows speak, the shift the
+    /// quick-move lane wears, the armor the matching piece takes, the
+    /// offhand the plain walk keeps, the BIN the plain press the
+    /// carried DESTROYS (the store the same press never touches) and
+    /// the SHIFT press the WHOLE inventory clears (the getItems walk's
+    /// one-entry-per-slot law — the 46 slots the store + the armor +
+    /// the offhand + the craft cells the clear covers).
+    #[test]
+    fn the_creative_wrap_the_bin_and_the_rows_wear() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        // THE WRAPPED SEAT (the tab switch the screen keeps)
+        app.select_creative_tab(13);
+        assert_eq!(app.creative_tab, 13, "the seat the switch banks");
+        assert_eq!(
+            app.screen,
+            ScreenKind::Creative,
+            "the same Creative seat — never the survival door"
+        );
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let main0 = (px + 9 + 8, py + 54 + 8); // the store's 9
+        let hot0 = (px + 9 + 8, py + 112 + 8); // the store's 0
+        let armor_head = (px + 54 + 8, py + 6 + 8);
+        let offhand = (px + 35 + 8, py + 20 + 8);
+        let bin = (px + 173 + 8, py + 112 + 8);
+        // THE PLAIN PICKUP (the main row's stack the carried rides)
+        app.inventory.items[9] = (stone, 12);
+        app.on_press(main0.0, main0.1);
+        assert_eq!(app.inv_carried, (stone, 12), "the main the pickup wears");
+        assert_eq!(app.inventory.items[9], (0, 0), "the cell the take empties");
+        // the place back
+        app.on_press(main0.0, main0.1);
+        assert_eq!(app.inventory.items[9], (stone, 12), "the place back");
+        // THE SHIFT QUICK-MOVE (the main row's stack the hotbar takes)
+        app.shift_down = true;
+        app.on_press(main0.0, main0.1);
+        assert_eq!(app.inventory.items[9], (0, 0), "the main the move empties");
+        assert_eq!(app.inventory.items[0], (stone, 12), "the hotbar the move takes");
+        // THE ARMOR (the matching piece the empty head takes)
+        app.shift_down = false;
+        app.inv_carried = (helmet, 1);
+        app.on_press(armor_head.0, armor_head.1);
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the head wears it");
+        assert_eq!(app.inv_carried, (0, 0), "the cursor emptied");
+        // THE OFFHAND (the plain walk the anonymous slot keeps)
+        app.inventory.items[1] = (stone, 4);
+        app.on_press(hot0.0, hot0.1); // pick the hotbar's stone up
+        assert_eq!(app.inv_carried, (stone, 12), "the hotbar the pickup rides");
+        app.on_press(offhand.0, offhand.1);
+        assert_eq!(app.inventory.offhand[0], (stone, 12), "the offhand the place wears");
+        // THE BIN'S PLAIN PRESS (the carried DESTROYS — the store the
+        // same press never touches; both buttons the same walk)
+        app.on_press(main0.0, main0.1); // nothing — the main's empty
+        app.inv_carried = (stone, 9);
+        app.on_press(bin.0, bin.1);
+        assert_eq!(app.inv_carried, (0, 0), "the bin the carried spends");
+        assert_eq!(app.inventory.offhand[0], (stone, 12), "the store the bin keeps");
+        // THE BIN'S SHIFT PRESS (the WHOLE inventory clears — the
+        // store 36, the armor 4, the offhand, the craft cells)
+        app.shift_down = false;
+        app.on_press(main0.0, main0.1); // empty — the carried stays
+        app.inventory.items[20] = (stone, 5);
+        app.craft_grid[2] = (stone, 1);
+        app.shift_down = true;
+        app.on_press(bin.0, bin.1);
+        assert!(
+            app.inventory.items.iter().all(|&s| s == (0, 0)),
+            "the store the shift-clear empties"
+        );
+        assert!(
+            app.inventory.armor.iter().all(|&s| s == (0, 0)),
+            "the armor the shift-clear empties"
+        );
+        assert_eq!(app.inventory.offhand[0], (0, 0), "the offhand the clear takes");
+        assert_eq!(app.craft_grid[2], (0, 0), "the craft cell the clear takes");
+        assert_eq!(app.craft_result, (0, 0), "the result the recompute empties");
+        app.shift_down = false;
+        // THE NULL-SLOT PRESS (the wrapped seat the outside arms never
+        // rides — the carried the silence keeps; the point the player
+        // model's own gap rides, no slot rect the spread keeps there)
+        app.inv_carried = (stone, 3);
+        app.on_press(px + 95, py + 15);
+        assert_eq!(app.inv_carried, (stone, 3), "the wrapped seat the drop refuses");
+    }
+
+    /// THE WRAPPED SEAT'S KEYS AND HOVER (the SWAP digit the same
+    /// table the wrapped rows wear — case B the take, case D the
+    /// straight swap, the offhand's F, the armor the mayPlace silence
+    /// consumes; the wheel the wrapped seat never rides; the hover
+    /// the InventoryMenu's own id space the tooltip lane reads).
+    #[test]
+    fn the_creative_wrap_the_keys_and_the_hover_wear() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        let mut app = App::new(3);
+        app.enter_world();
+        app.spawn_offline_body();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.select_creative_tab(13);
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        let main1 = (px + 9 + 1 * 18 + 8, py + 54 + 8); // the store's 10
+        let hot3 = (px + 9 + 3 * 18 + 8, py + 112 + 8); // the store's 3
+        let armor_head = (px + 54 + 8, py + 6 + 8);
+        let offhand = (px + 35 + 8, py + 20 + 8);
+        // THE CASE B (the empty hotbar row takes the main row's stack
+        // AS-IS, the cell empties)
+        app.inventory.items[10] = (stone, 6);
+        app.mouse_pos = Some(main1);
+        assert!(app.on_creative_swap_key(0), "the walk the take answers");
+        assert_eq!(app.inventory.items[0], (stone, 6), "the row the take rides");
+        assert_eq!(app.inventory.items[10], (0, 0), "the cell the take empties");
+        // THE CASE D (the straight swap)
+        app.inventory.items[10] = (egg, 2);
+        app.mouse_pos = Some(main1);
+        assert!(app.on_creative_swap_key(0));
+        assert_eq!(app.inventory.items[0], (egg, 2), "the row the swap takes");
+        assert_eq!(app.inventory.items[10], (stone, 6), "the cell the row takes");
+        // THE OFFHAND'S F (button 40 — the row the offhand answers:
+        // the empty offhand the main row's stack takes, case B)
+        app.mouse_pos = Some(main1);
+        assert!(app.on_creative_swap_key(40), "the F the offhand answers");
+        assert_eq!(app.inventory.offhand[0], (stone, 6), "the offhand the take wears");
+        assert_eq!(app.inventory.items[10], (0, 0), "the cell the F empties");
+        // THE ARMOR (the mayPlace gate the silence consumes — no
+        // change rides, the walk the run banks)
+        app.inventory.armor[0] = (helmet, 1);
+        app.mouse_pos = Some(armor_head);
+        assert!(app.on_creative_swap_key(0), "the armor the consume keeps");
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the head untouched");
+        assert_eq!(app.inventory.items[0], (egg, 2), "the row untouched");
+        // THE WHEEL (the wrapped seat the scroll never rides — the
+        // palette's dead list the canScroll-false law answers)
+        let scroll_before = app.creative_scroll;
+        app.on_creative_scroll(-1.0);
+        assert_eq!(app.creative_scroll, scroll_before, "the wheel the wrapped seat dead");
+        // THE HOVER IDS (the InventoryMenu's own space — the armor 5,
+        // the main 10, the hotbar 36+3, the offhand 45)
+        app.inventory.items[10] = (stone, 6);
+        assert_eq!(
+            app.hovered_container(armor_head.0, armor_head.1),
+            Some((helmet, 1, 5)),
+            "the head the menu id 5 wears"
+        );
+        assert_eq!(
+            app.hovered_container(main1.0, main1.1),
+            Some((stone, 6, 10)),
+            "the main the menu id 10 wears"
+        );
+        app.inventory.items[3] = (egg, 1);
+        assert_eq!(
+            app.hovered_container(hot3.0, hot3.1),
+            Some((egg, 1, 39)),
+            "the hotbar the menu id 39 wears"
+        );
+        app.inventory.offhand[0] = (stone, 6);
+        assert_eq!(
+            app.hovered_container(offhand.0, offhand.1),
+            Some((stone, 6, 45)),
+            "the offhand the menu id 45 wears"
+        );
+        // THE NOWHERE (the miss the world chain answers)
         app.mouse_pos = Some((px - 40, py - 40));
         assert!(!app.on_creative_swap_key(0), "the no-slot miss");
     }
