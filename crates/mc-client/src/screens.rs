@@ -18121,28 +18121,49 @@ impl App {
         // the fresh object's false default keeps, the stale arm a
         // mid-drag close the rebuild never inherits)
         self.creative_scroll_drag = false;
-        // THE LIVE BELIEF'S OWN RECONCILE (the wrapped seats the
-        // client's own Inventory object reads — the ONE belief the
-        // vanilla keeps; the sim's live session the window-0 belief
-        // the same slots wear, the open's own sync the offline belief
-        // the live truth wears: the store rows the menu ids 36..44 +
-        // 9..35 speak, the armor the 5..8, the offhand the 45 — the
-        // picker's rows the server's belief display, the clicks' own
-        // diff words the walk speaks keep the two in step after)
-        if self.world_is_network {
-            for i in 0..9 {
-                self.inventory.items[i] = self.live_inv_slots[36 + i];
-            }
-            for i in 9..36 {
-                self.inventory.items[i] = self.live_inv_slots[i];
-            }
-            for k in 0..4 {
-                self.inventory.armor[k] = self.live_inv_slots[5 + k];
-            }
-            self.inventory.offhand[0] = self.live_inv_slots[45];
-            self.hotbar_slots = self.live_hotbar_row();
-        }
+        // THE LIVE BELIEF'S OWN RECONCILE (the wrapped seats the open's
+        // own sync the live truth wears — the shared helper the ONE
+        // walk keeps, the mid-session lane the same copy rides)
+        self.reconcile_wrapped_from_live();
         self.open(ScreenKind::Creative);
+    }
+
+    /// THE WRAPPED SEAT'S OWN RECONCILE (the container-0 SetSlot walk's
+    /// client tail — scripts/jar_work/cpl_full_262.txt
+    /// handleContainerSetSlot: the window-0 slot the
+    /// `inventoryMenu.setItem(slot, stateId, stack)` pcs 151-162 the
+    /// UNCONDITIONAL answer wears (the `isInventoryOpen` gate
+    /// pcs 54-90 the FOREIGN-window lane ALONE consults — pc 182-191
+    /// the containerId-0 path never rides, the wrapped rows the fresh
+    /// truth the SAME render frame display, EVERY tab the seat keeps),
+    /// the walk's tail pcs 208-238 the `setRemoteSlot` +
+    /// `broadcastChanges` the server's own change the ECHO never
+    /// speaks — the sim the ONE pure copy wears: the wrapped rows the
+    /// client's own Inventory object the live belief's truth lands
+    /// (the store rows the menu ids 36..44 + 9..35 speak, the armor
+    /// the 5..8, the offhand the 45), the HUD row the same belief
+    /// re-speaks, NO word the sink ever spends. The carried the walk
+    /// never wears (the 26.2 container-0 lane the carried arm lacks —
+    /// the creative carried the client-local lane the SetCursorItem
+    /// walk pcs 36-39 the creative seat REFUSES), the click lanes' own
+    /// carried the belief keeps. The offline session the lane never
+    /// rides (the world_is_network precondition the caller's own gate
+    /// wears, the helper the same verdict re-arms).)
+    fn reconcile_wrapped_from_live(&mut self) {
+        if !self.world_is_network {
+            return;
+        }
+        for i in 0..9 {
+            self.inventory.items[i] = self.live_inv_slots[36 + i];
+        }
+        for i in 9..36 {
+            self.inventory.items[i] = self.live_inv_slots[i];
+        }
+        for k in 0..4 {
+            self.inventory.armor[k] = self.live_inv_slots[5 + k];
+        }
+        self.inventory.offhand[0] = self.live_inv_slots[45];
+        self.hotbar_slots = self.live_hotbar_row();
     }
 
     /// THE TAB SWITCH (the selectTab walk's own shape — the fresh
@@ -39533,6 +39554,17 @@ impl App {
         // player's inventory lives whether or not the screen stands)
         self.live_inv_state_id = state_id;
         self.live_inv_carried = carried;
+        // THE WRAPPED SEAT'S OWN MID-SESSION SYNC (the container-0
+        // SetSlot walk's UNCONDITIONAL lane — cpl_full_262.txt
+        // handleContainerSetSlot pcs 151-162: the server's slot the
+        // inventoryMenu.setItem answers the creative seat's tab never
+        // gates, the wrapped rows the fresh truth the SAME render
+        // frame display; the open's own seed the same helper rides,
+        // the tail's setRemoteSlot + broadcastChanges the ECHO the
+        // pure copy never speaks)
+        if self.screen == ScreenKind::Creative {
+            self.reconcile_wrapped_from_live();
+        }
         if self.chest_live_window.is_some() {
             return; // the foreign window owns the map — the inventory rows wait
         }
@@ -104690,6 +104722,138 @@ cow_sound_variant: None,
             rx2.try_recv().is_err(),
             "the offline the wire never spends"
         );
+    }
+
+    /// THE WRAPPED SEAT'S OWN MID-SESSION SYNC (the container-0
+    /// SetSlot walk the fresh javap banks — cpl_full_262.txt
+    /// handleContainerSetSlot: the window-0 slot the
+    /// `inventoryMenu.setItem` pcs 151-162 the UNCONDITIONAL answer
+    /// wears, the `isInventoryOpen` gate pcs 54-90 the FOREIGN-window
+    /// lane ALONE consults — pc 182-191 the containerId-0 path never
+    /// rides, the picker's wrapped rows the server's truth the
+    /// mid-session sync the same frame display, EVERY tab the seat
+    /// keeps; the tail pcs 208-238 the `setRemoteSlot` +
+    /// `broadcastChanges` the server's own change the client's words
+    /// never re-answer — the sim the ONE pure copy wears, NO word the
+    /// sink ever spends). The carried the walk never wears (the 26.2
+    /// container-0 lane the carried arm lacks — the creative carried
+    /// the client-local lane the SetCursorItem walk pcs 36-39 the
+    /// creative seat REFUSES, the sync's own carried the projection
+    /// the store's belief wears alone). The closed seat the sync the
+    /// wrapped fields never wears (the creative screen the walk's
+    /// only consumer — the offline belief the survival/HUD lanes the
+    /// live projections serve, the wrapped copy the seat's own
+    /// display bridge rides).
+    #[test]
+    fn the_creative_wrapped_the_session_sync_the_rows_wear() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        let dirt = mc_registry::item_id_by_name("dirt").unwrap();
+        let helmet = mc_registry::item_id_by_name("iron_helmet").unwrap();
+        let egg = mc_registry::item_id_by_name("egg").unwrap();
+        // THE LIVE SESSION (the 632 harness's own shape)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        app.body = Some(crate::body::PlayerBody::new(0.0, 64.0, 0.0, 0.0, 0.0));
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.game_mode = GameMode::Creative;
+        // THE SERVER'S OWN BELIEF (the window-0 slots the sync speaks)
+        app.live_inv_slots[38] = (stone, 5);
+        app.live_inv_slots[10] = (dirt, 3);
+        app.live_inv_slots[5] = (helmet, 1);
+        app.live_inv_slots[45] = (stone, 2);
+        // THE SEED (the open's own reconcile — the picker the live
+        // truth display)
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Creative, "the picker the live E opens");
+        assert_eq!(app.inventory.items[2], (stone, 5), "the hotbar the seed wears");
+        assert_eq!(app.inventory.items[10], (dirt, 3), "the main the seed wears");
+        assert_eq!(app.inventory.armor[0], (helmet, 1), "the head the seed wears");
+        assert_eq!(
+            app.inventory.offhand[0],
+            (stone, 2),
+            "the offhand the seed wears"
+        );
+        // THE CARRIED'S OWN PIN (the palette pick's own lane — the
+        // client-local belief the sync the walk never wears)
+        app.inv_carried = (egg, 1);
+        // THE MID-SESSION SYNC (the server's truth the wholesale lane
+        // lands — the picker STAYS OPEN, the wrapped rows the fresh
+        // belief wear: the hotbar the swap speaks, the spent cell the
+        // server emptied, the fresh row the egg rides, the head the
+        // server took, the offhand the one the server keeps)
+        let mut slots = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots[38] = (dirt, 7);
+        slots[12] = (egg, 4);
+        slots[45] = (stone, 1);
+        app.live_inventory_updated(slots, Vec::new(), 41, (stone, 2));
+        assert_eq!(app.live_inv_state_id, 41, "the revision the sync wears");
+        assert_eq!(
+            app.inventory.items[2],
+            (dirt, 7),
+            "the hotbar the truth follows"
+        );
+        assert_eq!(app.inventory.items[10], (0, 0), "the spent cell the truth keeps");
+        assert_eq!(
+            app.inventory.items[12],
+            (egg, 4),
+            "the fresh row the truth wears"
+        );
+        assert_eq!(app.inventory.armor[0], (0, 0), "the head the truth keeps");
+        assert_eq!(
+            app.inventory.offhand[0],
+            (stone, 1),
+            "the offhand the truth follows"
+        );
+        assert_eq!(
+            app.hotbar_slots[2],
+            (dirt, 7),
+            "the HUD row the same truth wears"
+        );
+        // THE ECHO THE WALK NEVER SPEAKS (the tail's setRemoteSlot +
+        // broadcastChanges — the server's own change the client's
+        // words never re-answer, the sink the silence keeps)
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert!(
+            words.is_empty(),
+            "the sync the pure copy wears, no word rides"
+        );
+        // THE CARRIED THE WALK NEVER WEARS (the 26.2 lane the carried
+        // arm lacks — the creative carried the client-local keeps,
+        // the sync's own carried the projection the store wears)
+        assert_eq!(app.inv_carried, (egg, 1), "the carried the client-local keeps");
+        assert_eq!(
+            app.live_inv_carried,
+            (stone, 2),
+            "the store's own cursor the projection wears"
+        );
+        // THE CLOSED SEAT (the sync the wrapped fields never wears —
+        // the creative screen the walk's only consumer, the offline
+        // belief the closed lane keeps)
+        app.screen = ScreenKind::World;
+        app.inventory.items[2] = (egg, 9);
+        let mut slots2 = [(0, 0); crate::world_view::INVENTORY_MENU_SLOTS];
+        slots2[38] = (stone, 1);
+        app.live_inventory_updated(slots2, Vec::new(), 42, (0, 0));
+        assert_eq!(
+            app.inventory.items[2],
+            (egg, 9),
+            "the closed seat the sync never wears"
+        );
+        assert_eq!(
+            app.live_inv_slots[38],
+            (stone, 1),
+            "the store's own truth the sync still lands"
+        );
+        // THE OFFLINE PRECONDITION (the wholesale lane the
+        // world_is_network gate refuses — the store the offline
+        // belief keeps)
+        let mut off = App::new(3);
+        off.enter_world();
+        off.spawn_offline_body();
+        off.live_inventory_updated(slots, Vec::new(), 7, (0, 0));
+        assert_eq!(off.live_inv_state_id, 0, "the offline the lane refuses");
     }
 
     /// THE WRAPPED SEAT (the selectTab's INVENTORY arm the bytecode
