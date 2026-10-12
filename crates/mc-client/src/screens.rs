@@ -17909,10 +17909,18 @@ impl App {
     pub fn open_inventory(&mut self) {
         // THE CREATIVE ARM (the init's own hasInfiniteMaterials gate —
         // the creative screen the infinite-materials player alone
-        // wears; the WIRE sessions the survival screen keeps — the
-        // ServerboundSetCreativeModeSlot packet lane the follow-up
-        // round owes)
-        if self.game_mode == GameMode::Creative && !self.world_is_network {
+        // wears, the NETWORK session INCLUDED — the 26.2 init walk the
+        // gate never splits: the hasInfiniteMaterials verdict ALONE
+        // the setScreen decision keeps, the picker the client-local
+        // screen whose mutations' wire the OWN words speak — the
+        // ServerboundSetCreativeModeSlot lane the swap round banked,
+        // the palette/CLONE arms the setCarried walks the vanilla
+        // keeps client-local). THE WIRE GATE THE E-ROUND RETIRES: the
+        // prior !world_is_network condition the survival screen the
+        // live session kept — the creative multiplayer the picker
+        // never reached, the flagship surface the wire lane's own
+        // absence hid.
+        if self.game_mode == GameMode::Creative {
             self.open_creative_picker();
             return;
         }
@@ -18409,6 +18417,14 @@ impl App {
     ///   click semantics the real menu answers, the sim the same
     ///   predict_* helpers the survival screen's own lanes speak.
     fn click_creative_wrap(&mut self, mx: i32, my: i32, button: i8) {
+        // THE LIVE REFUSAL (the Q round's own precedent — the wrapped
+        // lanes' wire the follow-up round banks: the armor/BIN/shift
+        // arms the offline beliefs mutate, the live session the
+        // server's belief the stale fill would split — the walk never
+        // serves until the words land)
+        if self.world_is_network {
+            return;
+        }
         let Some(slot) = self.creative_wrap_cell(mx, my) else {
             // THE NULL-SLOT PRESS (the slotClicked's own order — the
             // INVENTORY seat the outside arms NEVER rides: pc 93-115
@@ -18610,6 +18626,12 @@ impl App {
         self.inventory.items[slot] = new_cell;
         self.inv_carried = new_carried;
         self.hotbar_slots = self.inventory.hotbar();
+        // THE LIVE WORD (the listener law the swap lane speaks — the
+        // store cell's own change the ONE packet rides, the carried
+        // the client-local belief the vanilla's setCarried walk keeps
+        // — the doClick PICKUP arm the wire never spends on the
+        // cursor)
+        self.creative_swap_live_words(&[(36 + slot as i32, new_cell)]);
     }
 
     /// THE PICKER'S OWN SWAP (javap 26.2 — the number-key walk the
@@ -19227,8 +19249,13 @@ impl App {
         if self.inv_carried.1 > 0 {
             let (id, count) = self.inv_carried;
             let mut rest = count;
+            // THE LIVE WORDS' OWN LEDGER (the add-back's touched slots
+            // the client-authoritative creative write speaks — the
+            // CreativeSetSlot commands the menu ids wear, the same law
+            // the swap lane and the hotbar load speak)
+            let mut words: Vec<(i32, (i32, i32))> = Vec::new();
             // pass 1: the same-item merges (the add walk's own order)
-            for it in self.inventory.items.iter_mut() {
+            for (idx, it) in self.inventory.items.iter_mut().enumerate() {
                 if rest == 0 {
                     break;
                 }
@@ -19236,16 +19263,18 @@ impl App {
                     let take = (crate::world_view::item_max_stack(id) - it.1).min(rest);
                     it.1 += take;
                     rest -= take;
+                    words.push((store_menu_id(idx), *it));
                 }
             }
             // pass 2: the first empty slot takes the remainder
-            for it in self.inventory.items.iter_mut() {
+            for (idx, it) in self.inventory.items.iter_mut().enumerate() {
                 if rest == 0 {
                     break;
                 }
                 if it.1 <= 0 {
                     *it = (id, rest);
                     rest = 0;
+                    words.push((store_menu_id(idx), *it));
                 }
             }
             // the full store drops the remainder on the floor (the
@@ -19268,6 +19297,12 @@ impl App {
             }
             self.inv_carried = (0, 0);
             self.hotbar_slots = self.inventory.hotbar();
+            // THE LIVE WORDS (the touched slots the ascending order
+            // speak — the client-authoritative creative write the
+            // server's belief the own words move; the floor-drop
+            // remainder the wire never spends — the Q lane's own
+            // precedent the follow-up banks)
+            self.creative_swap_live_words(&words);
         }
         self.open(ScreenKind::World);
     }
@@ -103557,10 +103592,13 @@ cow_sound_variant: None,
             app.creative_source[44],
             "the head page full"
         );
-        // THE WIRE GATE (the live session the survival screen keeps)
+        // THE WIRE GATE RETIRED (the 26.2 init walk the
+        // hasInfiniteMaterials verdict ALONE keeps — the network
+        // session the gate never splits: the creative live E the
+        // picker opens, the survival E the inventory screen keeps)
         app.world_is_network = true;
         app.open_inventory();
-        assert_eq!(app.screen, ScreenKind::Inventory, "the wire the survival keeps");
+        assert_eq!(app.screen, ScreenKind::Creative, "the wire the picker opens");
         app.world_is_network = false;
         // the E closes back to the world (the removed()'s carried law —
         // the empty carried the plain close keeps)
@@ -103955,6 +103993,121 @@ cow_sound_variant: None,
         assert!(
             rx.try_recv().is_err(),
             "the offline session the words never spends"
+        );
+    }
+
+    /// THE LIVE SESSION'S OWN PICKER GATE (the 26.2 init walk the
+    /// hasInfiniteMaterials verdict ALONE keeps — the network session
+    /// the gate never splits): the creative live E opens the picker
+    /// (the wire gate the survival screen wore the E-round retires —
+    /// the flagship surface the wire lane's own absence hid), the
+    /// palette pick the client-local carried fills (the setCarried
+    /// walk the wire never spends), the store put-back the cell's ONE
+    /// word rides, the wrapped seat the live refusal keeps (the wrap's
+    /// wire the follow-up banks), the close's add-back the touched
+    /// slots' words speak, the survival E the inventory screen keeps;
+    /// the offline session the same arms the words never spends.
+    #[test]
+    fn the_creative_picker_the_live_session_the_gate_wears() {
+        let stone = mc_registry::item_id_by_name("stone").unwrap();
+        // THE LIVE SESSION (the glide harness's own shape — the sink
+        // the attach speaks, the creative gate the E arm reads)
+        let mut app = App::new(3);
+        app.net_world = Some(air_net_world(2, 0));
+        app.enter_network_world(None, Skybox::Overworld, None, None);
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.game_mode = GameMode::Creative;
+        // THE GATE (the live creative E the picker opens — the survival
+        // screen the wire gate wore the retire speaks)
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Creative, "the picker the live E opens");
+        assert_eq!(app.creative_scroll, 0.0, "the fresh scroll the open keeps");
+        // THE PALETTE PICK (the client-local law — the carried the
+        // setCarried walk fills, NO word the wire never spends)
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (px, py) = app.creative_panel;
+        app.on_press(px + 9 + 8, py + 18 + 8);
+        assert_eq!(app.inv_carried, (stone, 1), "the pick the carried fills");
+        assert!(
+            rx.try_recv().is_err(),
+            "the palette pick the wire never spends"
+        );
+        // THE STORE ROW'S PUT-BACK (the cell the ONE word rides — the
+        // carried the client-local belief keeps, the HUD the row syncs)
+        app.on_press(px + 9 + 2 * 18 + 8, py + 112 + 8);
+        assert_eq!(app.inventory.items[2], (stone, 1), "the cell the put takes");
+        assert_eq!(app.inv_carried, (0, 0), "the carried the put drains");
+        assert_eq!(app.hotbar_slots[2], (stone, 1), "the HUD the row syncs");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![crate::world_view::ContainerCommand::CreativeSetSlot {
+                slot: 38,
+                item: (stone, 1)
+            }],
+            "the cell's word the put rides"
+        );
+        // THE WRAPPED SEAT'S REFUSAL (the wrap's wire the follow-up
+        // banks — the beliefs the refusal keeps)
+        app.select_creative_tab(13);
+        app.on_press(px + 9 + 8, py + 54 + 8);
+        assert_eq!(app.inventory.items[0], (0, 0), "the refusal the row keeps");
+        assert!(
+            rx.try_recv().is_err(),
+            "the wrap the wire never spends"
+        );
+        // THE CLOSE'S ADD-BACK (the carried the merges + the first-empty
+        // walk serves, the touched slots the words speak — the
+        // ascending menu ids the BTreeMap orders; the 70 the merge's
+        // room the split speaks — the cell takes the 63, the rest the
+        // first empty keeps)
+        app.inv_carried = (stone, 70);
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::World, "the close returns");
+        assert_eq!(app.inventory.items[2], (stone, 64), "the merge the room fills");
+        assert_eq!(app.inventory.items[0], (stone, 7), "the rest the empty keeps");
+        assert_eq!(app.inv_carried, (0, 0), "the hand the close drains");
+        let words: Vec<_> = std::iter::from_fn(|| rx.try_recv().ok()).collect();
+        assert_eq!(
+            words,
+            vec![
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 36,
+                    item: (stone, 7)
+                },
+                crate::world_view::ContainerCommand::CreativeSetSlot {
+                    slot: 38,
+                    item: (stone, 64)
+                },
+            ],
+            "the add-back's words the touched slots ride"
+        );
+        assert_eq!(app.live_held, Some(stone), "the selected slot the hand follows");
+        // THE SURVIVAL E (the mode the gate reads — the inventory
+        // screen the non-creative E keeps)
+        app.game_mode = GameMode::Survival;
+        app.on_inventory_key();
+        assert_eq!(app.screen, ScreenKind::Inventory, "the survival the E keeps");
+        // THE OFFLINE CONTROL ARM (the same arms the words never
+        // spends — the sink the early return never reads)
+        let mut app = App::new(3);
+        app.enter_world();
+        app.game_mode = GameMode::Creative;
+        app.open_inventory();
+        app.creative_panel = creative_panel_origin(640, 360);
+        let (tx, rx) = std::sync::mpsc::channel::<crate::world_view::ContainerCommand>();
+        app.attach_live_clicks(tx);
+        app.inventory.items[2] = (stone, 4);
+        app.on_press(
+            app.creative_panel.0 + 9 + 2 * 18 + 8,
+            app.creative_panel.1 + 112 + 8,
+        );
+        assert_eq!(app.inventory.items[2], (0, 0), "the pickup the offline wears");
+        assert_eq!(app.inv_carried, (stone, 4), "the carried the pickup takes");
+        assert!(
+            rx.try_recv().is_err(),
+            "the offline the words never spends"
         );
     }
 
